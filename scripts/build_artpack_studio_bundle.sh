@@ -10,28 +10,45 @@ OUT_DIR="${1:-$ROOT/build/artpack-studio-bundle}"
 WORK_DIR="$OUT_DIR/work"
 SPEC_DIR="$OUT_DIR/spec"
 SCRIPT="$ROOT/scripts/firestaff_artpack_studio.py"
+VENV_DIR="$OUT_DIR/venv"
 
 if [[ ! -f "$SCRIPT" ]]; then
   echo "Missing Artpack Studio source: $SCRIPT" >&2
   exit 1
 fi
 
-python3 -m pip install --user --upgrade Pillow pyinstaller
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON="$(command -v python3)"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON="$(command -v python)"
+else
+  echo "Python 3 is required to bundle Artpack Studio" >&2
+  exit 1
+fi
 
-rm -rf "$OUT_DIR/dist" "$WORK_DIR" "$SPEC_DIR"
+rm -rf "$OUT_DIR/dist" "$WORK_DIR" "$SPEC_DIR" "$VENV_DIR"
 mkdir -p "$OUT_DIR/dist" "$WORK_DIR" "$SPEC_DIR"
+
+# CI images may mark their system Python as externally managed.  A local venv
+# keeps Pillow and PyInstaller self-contained without modifying that runtime.
+"$PYTHON" -m venv "$VENV_DIR"
+PYTHON="$VENV_DIR/bin/python"
+if [[ "$(uname -s)" == "MINGW"* || "$(uname -s)" == "MSYS"* ]]; then
+  PYTHON="$VENV_DIR/Scripts/python.exe"
+fi
+"$PYTHON" -m pip install --upgrade Pillow pyinstaller
 
 case "$(uname -s)" in
   Darwin)
     # A real .app appears in Finder and Launchpad alongside Firestaff.
     if [[ -f "$ROOT/assets/icons/firestaff.icns" ]]; then
-      python3 -m PyInstaller --noconfirm --clean --windowed --onedir \
+      "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onedir \
         --name "Firestaff Artpack Studio" \
         --icon "$ROOT/assets/icons/firestaff.icns" \
         --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
         "$SCRIPT"
     else
-      python3 -m PyInstaller --noconfirm --clean --windowed --onedir \
+      "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onedir \
         --name "Firestaff Artpack Studio" \
         --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
         "$SCRIPT"
@@ -39,7 +56,7 @@ case "$(uname -s)" in
     ;;
   *)
     # One executable carries Python, Pillow, Tk and the studio source.
-    python3 -m PyInstaller --noconfirm --clean --windowed --onefile \
+    "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onefile \
       --name firestaff_artpack_studio \
       --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
       "$SCRIPT"

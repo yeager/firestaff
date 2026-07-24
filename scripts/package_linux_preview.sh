@@ -86,8 +86,10 @@ chmod 0755 "$RPM_ROOT/usr/bin/firestaff"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$README_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/README.md"
 cp "$RELEASE_NOTES_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
+RPM_ICON_ENTRY=""
 if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
   cp "$ROOT/assets/branding/firestaff-logo.png" "$RPM_ROOT/usr/share/pixmaps/firestaff.png"
+  RPM_ICON_ENTRY="/usr/share/pixmaps/firestaff.png"
 fi
 cp "$DEB_ROOT/usr/share/applications/firestaff.desktop" "$RPM_ROOT/usr/share/applications/firestaff.desktop"
 cp "$DEB_ROOT/usr/share/applications/firestaff-artpack-studio.desktop" "$RPM_ROOT/usr/share/applications/firestaff-artpack-studio.desktop"
@@ -110,6 +112,7 @@ $DESCRIPTION
 /usr/share/doc/$PKG_NAME/RELEASE_NOTES.md
 /usr/share/applications/firestaff.desktop
 /usr/share/applications/firestaff-artpack-studio.desktop
+$RPM_ICON_ENTRY
 SPEC
 rpmbuild --define "_topdir $RPM_TOP" --define "buildroot $RPM_ROOT" --target "$ARCH_RPM" -bb "$RPM_TOP/SPECS/firestaff.spec"
 RPM_PATH="$(find "$RPM_TOP/RPMS" -type f -name '*.rpm' | head -1)"
