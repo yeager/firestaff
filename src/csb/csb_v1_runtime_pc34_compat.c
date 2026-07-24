@@ -19144,7 +19144,8 @@ int csb_v1_runtime_apply_csbwin_resume_report(
     CSB_V1_RuntimeProfile candidate;
     int previous_dungeon_level;
 
-    if (!profile || !summary) return -1;
+    if (!profile || !summary ||
+        !csb_v1_csbwin_512_validate_appended_expool_tail(summary)) return -1;
     candidate = *profile;
     previous_dungeon_level = csb_v1_dungeon_get_current_level();
     if (csb_v1_runtime_stage_csbwin_resume_report(&candidate, summary) != 0) {
@@ -19241,7 +19242,8 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     rc = csb_v1_csbwin_512_verify_save_body(bytes + core_offset,
                                              file_size - core_offset,
                                              0u, &report);
-    if (rc != CSB_V1_CSBWIN_512_OK) {
+    if (rc != CSB_V1_CSBWIN_512_OK ||
+        !csb_v1_csbwin_512_validate_appended_expool_tail(&report)) {
         free(bytes);
         return -1;
     }
@@ -19264,10 +19266,37 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         csb_v1_chaos_init(&candidate.csbwin_extended_dsa_state);
         csb_v1_runtime_reset_csbwin_extended_metadata(&candidate);
     }
+    memset(&candidate.csbwin_save_provenance, 0,
+           sizeof(candidate.csbwin_save_provenance));
+    candidate.csbwin_save_provenance.valid = 1;
+    candidate.csbwin_save_provenance.source_size = file_size;
+    candidate.csbwin_save_provenance.core_offset = core_offset;
+    candidate.csbwin_save_provenance.source_fnv1a =
+        csb_v1_runtime_fnv1a32(bytes, file_size);
+    candidate.csbwin_save_provenance.core_fnv1a =
+        csb_v1_runtime_fnv1a32(bytes + core_offset, file_size - core_offset);
+    candidate.csbwin_save_provenance.appended_fnv1a = report.appended_fnv1a;
+    candidate.csbwin_save_provenance.random_game_id =
+        report.header.public_fields.csbwin_random_game_id;
+    candidate.csbwin_save_provenance.key_verdict =
+        (uint8_t)report.header.verdict;
+    candidate.csbwin_save_provenance.format_id =
+        report.header.public_fields.format_id;
+    strncpy(candidate.csbwin_save_provenance.source_path, path,
+            sizeof(candidate.csbwin_save_provenance.source_path) - 1u);
     free(bytes);
     csb_v1_runtime_cleanup_csbwin_extended_state(profile);
     *profile = candidate;
     (void)csb_v1_runtime_claim_csbwin_item16_ai_ownership(profile);
+    return 0;
+}
+
+int csb_v1_runtime_get_csbwin_save_provenance(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWinSaveProvenance_PC34 *out)
+{
+    if (!profile || !out || !profile->csbwin_save_provenance.valid) return -1;
+    *out = profile->csbwin_save_provenance;
     return 0;
 }
 

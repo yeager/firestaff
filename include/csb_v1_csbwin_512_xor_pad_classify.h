@@ -796,6 +796,16 @@ int csb_v1_csbwin_512_appended_expool_locate_record(
     const uint8_t **out_bytes,
     size_t *out_size);
 
+/* Validate the complete preserved DB11/EXPOOL tail before a caller promotes
+ * it into a live save owner.  Every bucket and linked record reachable from
+ * the source hash table must stay in bounds, refer to its owning 64-word
+ * block, and have a non-zero, bounded payload extent.  An empty tail is
+ * valid; a non-empty tail must be a whole EXPOOL block sequence.  This is a
+ * structural admission gate only: it neither selects records nor changes
+ * runtime state. */
+int csb_v1_csbwin_512_validate_appended_expool_tail(
+    const CSB_V1_CSBWin512BodyReport *report);
+
 /* Inspect the source-locked CSBWin DSA tracing record after save-body
  * verification has preserved a complete DB11/EXPOOL tail. A missing record
  * is valid evidence with `present == 0`; a present record must be exactly

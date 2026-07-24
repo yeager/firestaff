@@ -85,6 +85,22 @@ extern "C" {
 #define CSB_V1_CSBWIN_TIMER_QUEUE_NONE 0xffffu
 #define CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS 192
 #define CSB_V1_RUNTIME_POST_TELEPORT_PROJECTILE_MAX_PC34 8
+#define CSB_V1_CSBWIN_SAVE_SOURCE_PATH_CAP 256
+
+/* Receipt for a CSBWin save accepted by the live resume path.  It identifies
+ * source bytes, rather than inventing a Firestaff-native provenance token. */
+typedef struct {
+    int valid;
+    size_t source_size;
+    size_t core_offset;
+    uint32_t source_fnv1a;
+    uint32_t core_fnv1a;
+    uint32_t appended_fnv1a;
+    uint32_t random_game_id;
+    uint8_t key_verdict;
+    uint8_t format_id;
+    char source_path[CSB_V1_CSBWIN_SAVE_SOURCE_PATH_CAP];
+} CSB_V1_CSBWinSaveProvenance_PC34;
 
 /* Transient F0219 receipt.  The runtime produces this only after the live
  * C05 chain has committed the C14 to its resolved square.  The boot renderer
@@ -612,6 +628,7 @@ typedef struct {
     uint32_t                csbwin_appended_tail_fnv1a;
     int                     csbwin_appended_tail_truncated;
     uint8_t                 csbwin_appended_tail[CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES];
+    CSB_V1_CSBWinSaveProvenance_PC34 csbwin_save_provenance;
     /* CSBWin SaveGame.cpp ReadExtendedFeatures()/ReadDSAs()/ReadGameInfo()
      * owns this separately from the regular GAMEBLOCK sections. Imported DSA
      * programs remain opaque source words; no compatibility opcode runner
@@ -1294,6 +1311,9 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     CSB_V1_RuntimeProfile *profile,
     const char *path,
     size_t max_size);
+int csb_v1_runtime_get_csbwin_save_provenance(
+    const CSB_V1_RuntimeProfile *profile,
+    CSB_V1_CSBWinSaveProvenance_PC34 *out);
 int csb_v1_runtime_export_csbwin_core_save_to_memory(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t *out,
