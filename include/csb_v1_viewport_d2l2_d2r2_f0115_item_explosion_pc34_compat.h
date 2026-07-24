@@ -52,6 +52,57 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_ViewportD2L2D2R2F0115ItemExplosionSpec;
 
+/* F0115 receives decoded indexed pixels from CSBGRAPHICS.DAT. Keeping the
+ * source identity beside them prevents the old marker/icon fallback from
+ * masquerading as a real object or explosion surface. */
+typedef enum {
+    CSB_V1_F0115_REAL_OVERLAY_ITEM_PC34 = 1,
+    CSB_V1_F0115_REAL_OVERLAY_EXPLOSION_PC34 = 2
+} CSB_V1_F0115RealOverlayKindPc34;
+
+typedef struct {
+    int valid;
+    int original_csbgraphics_dat;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    const char *source_path;
+    const char *source_md5;
+    const uint8_t *decoded_palette;
+    size_t decoded_palette_size;
+    uint32_t decoded_palette_fnv1a;
+    const uint8_t *decoded_pixels;
+    size_t decoded_size;
+    uint32_t decoded_fnv1a;
+    int width;
+    int height;
+    int transparent_color;
+} CSB_V1_F0115RealOverlaySourcePc34;
+
+typedef struct {
+    CSB_V1_F0115RealOverlayKindPc34 kind;
+    int source_zone;
+    int destination_x;
+    int destination_y;
+    int clip_x;
+    int clip_y;
+    int clip_w;
+    int clip_h;
+} CSB_V1_F0115RealOverlayPlacementPc34;
+
+typedef struct {
+    int valid;
+    int consumed_real_csbgraphics_surface;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    CSB_V1_F0115RealOverlayKindPc34 kind;
+    int source_zone;
+    int copied_pixel_count;
+    uint32_t source_identity_hash;
+    uint32_t palette_hash;
+    uint32_t surface_hash;
+    uint32_t composed_raster_hash;
+} CSB_V1_F0115RealOverlayCompositionReceiptPc34;
+
 size_t csb_v1_viewport_d2l2_d2r2_f0115_item_explosion_spec_count_pc34(void);
 
 const CSB_V1_ViewportD2L2D2R2F0115ItemExplosionSpec *
@@ -89,6 +140,17 @@ int csb_v1_viewport_d2l2_d2r2_f0115_apply_c10_blit_pc34(
     int destination_stride,
     int width,
     int height);
+
+/* Compose a source-owned item or explosion bitmap through F0791/C10. This
+ * rejects stale hashes, non-package sources, invalid palettes and clipping
+ * without touching the target framebuffer. */
+int csb_v1_viewport_f0115_compose_real_overlay_pc34(
+    const CSB_V1_F0115RealOverlaySourcePc34 *source,
+    const CSB_V1_F0115RealOverlayPlacementPc34 *placement,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    CSB_V1_F0115RealOverlayCompositionReceiptPc34 *out_receipt);
 
 const char *csb_v1_viewport_d2l2_d2r2_f0115_item_explosion_source_evidence_pc34(void);
 

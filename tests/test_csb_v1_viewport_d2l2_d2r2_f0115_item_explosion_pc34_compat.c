@@ -6,6 +6,34 @@
 
 static int g_assertions = 0;
 
+/* This focused D2L2/D2R2 contract deliberately verifies that these squares
+ * have no generic F0115 item/explosion route. Keep the probe independent of
+ * the full runtime viewport linkage. */
+const CSB_V1_ViewportObjectBlitSpec *
+csb_v1_viewport_get_object_blit_spec_for_square(int view_square)
+{
+    (void)view_square;
+    return NULL;
+}
+
+const CSB_V1_ViewportExplosionBlitSpec *
+csb_v1_viewport_get_explosion_blit_spec_for_square(int view_square)
+{
+    (void)view_square;
+    return NULL;
+}
+
+static uint32_t fnv1a_bytes(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static int expect_int(const char *label, int got, int want, const char *anchor)
 {
     ++g_assertions;
@@ -365,6 +393,94 @@ static int test_source_evidence(void)
     return ok;
 }
 
+static int test_real_package_item_and_explosion_composition(void)
+{
+    int ok = 1;
+    uint8_t palette[16] = { 0, 1, 2, 3, 4, 5, 6, 7,
+                            8, 9, 10, 11, 12, 13, 14, 15 };
+    uint8_t pixels[12] = { 10, 2, 3, 10, 4, 5, 6, 7, 8, 10, 9, 1 };
+    uint8_t frame[48];
+    uint8_t before[48];
+    CSB_V1_F0115RealOverlaySourcePc34 source;
+    CSB_V1_F0115RealOverlayPlacementPc34 placement;
+    CSB_V1_F0115RealOverlayCompositionReceiptPc34 receipt;
+
+    memset(frame, 77, sizeof(frame));
+    memset(&source, 0, sizeof(source));
+    source.valid = 1;
+    source.original_csbgraphics_dat = 1;
+    source.no_synthetic_pixels = 1;
+    source.no_fallback_visuals = 1;
+    source.source_path = "CSBGRAPHICS.DAT";
+    source.source_md5 = "0123456789abcdef0123456789abcdef";
+    source.decoded_palette = palette;
+    source.decoded_palette_size = sizeof(palette);
+    source.decoded_palette_fnv1a = fnv1a_bytes(palette, sizeof(palette));
+    source.decoded_pixels = pixels;
+    source.decoded_size = sizeof(pixels);
+    source.decoded_fnv1a = fnv1a_bytes(pixels, sizeof(pixels));
+    source.width = 4;
+    source.height = 3;
+    source.transparent_color = 10;
+    placement.kind = CSB_V1_F0115_REAL_OVERLAY_ITEM_PC34;
+    placement.source_zone = 2505;
+    placement.destination_x = 2;
+    placement.destination_y = 1;
+    placement.clip_x = 0;
+    placement.clip_y = 0;
+    placement.clip_w = 4;
+    placement.clip_h = 3;
+
+    ok &= expect_int("real.item.compose",
+                     csb_v1_viewport_f0115_compose_real_overlay_pc34(
+                         &source, &placement, frame, 8, 6, &receipt), 1,
+                     "ReDMCSB DUNVIEW.C:5109 F0791; real CSBGRAPHICS.DAT only");
+    ok &= expect_int("real.item.receipt", receipt.valid, 1,
+                     "F0115 source-owned item receipt");
+    ok &= expect_int("real.item.no.synthetic", receipt.no_synthetic_pixels, 1,
+                     "No marker/icon fallback");
+    ok &= expect_int("real.item.copied", receipt.copied_pixel_count, 9,
+                     "ReDMCSB DUNVIEW.C:5109 C10 transparent blit");
+    ok &= expect_int("real.item.transparent", frame[8 + 2], 77,
+                     "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
+    ok &= expect_int("real.item.opaque", frame[8 + 3], 2,
+                     "ReDMCSB DUNVIEW.C:5109 opaque source pixel");
+
+    placement.kind = CSB_V1_F0115_REAL_OVERLAY_EXPLOSION_PC34;
+    placement.source_zone = 3017;
+    placement.destination_x = 0;
+    placement.destination_y = 3;
+    placement.clip_x = 1;
+    placement.clip_y = 1;
+    placement.clip_w = 2;
+    placement.clip_h = 2;
+    ok &= expect_int("real.explosion.compose",
+                     csb_v1_viewport_f0115_compose_real_overlay_pc34(
+                         &source, &placement, frame, 8, 6, &receipt), 1,
+                     "ReDMCSB DUNVIEW.C:6192-6193 F0791 explosion blit");
+    ok &= expect_int("real.explosion.kind", receipt.kind,
+                     CSB_V1_F0115_REAL_OVERLAY_EXPLOSION_PC34,
+                     "F0115 explosion receipt");
+    ok &= expect_int("real.explosion.zone", receipt.source_zone, 3017,
+                     "ReDMCSB DEFS.H:4234 C3014 explosion zone");
+
+    memcpy(before, frame, sizeof(frame));
+    source.decoded_fnv1a ^= 1u;
+    ok &= expect_int("real.rejects.stale.surface",
+                     csb_v1_viewport_f0115_compose_real_overlay_pc34(
+                         &source, &placement, frame, 8, 6, &receipt), 0,
+                     "Source hash must match CSBGRAPHICS.DAT decoded span");
+    ok &= expect_int("real.reject.no.mutation", memcmp(before, frame, sizeof(frame)) == 0,
+                     1, "Fail closed before F0791 writes");
+    source.decoded_fnv1a ^= 1u;
+    source.no_synthetic_pixels = 0;
+    ok &= expect_int("real.rejects.synthetic",
+                     csb_v1_viewport_f0115_compose_real_overlay_pc34(
+                         &source, &placement, frame, 8, 6, &receipt), 0,
+                     "Synthetic source is never admissible");
+    return ok;
+}
+
 int main(void)
 {
     int ok = 1;
@@ -376,6 +492,7 @@ int main(void)
     ok &= test_f0111_f0107_fluxcage_dispatch();
     ok &= test_c10_blit_and_lineage();
     ok &= test_source_evidence();
+    ok &= test_real_package_item_and_explosion_composition();
 
     printf("%s assertions=%d\n", ok ? "PASS" : "FAIL", g_assertions);
     return ok ? 0 : 1;

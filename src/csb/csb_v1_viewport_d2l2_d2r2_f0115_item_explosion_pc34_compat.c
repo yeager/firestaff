@@ -1,6 +1,8 @@
 #include "csb_v1_viewport_d2l2_d2r2_f0115_item_explosion_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 
+#include <string.h>
+
 enum {
     CSB_ROUTE_PRESENT = 1,
     CSB_ROUTE_ABSENT = 0,
@@ -239,6 +241,126 @@ int csb_v1_viewport_d2l2_d2r2_f0115_apply_c10_blit_pc34(
         }
     }
     return copied;
+}
+
+static uint32_t csb_v1_f0115_fnv1a_bytes_pc34(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    if (!bytes || size == 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint32_t csb_v1_f0115_mix_u32_pc34(uint32_t hash, uint32_t value)
+{
+    hash ^= value & 0xffu; hash *= 16777619u;
+    hash ^= (value >> 8) & 0xffu; hash *= 16777619u;
+    hash ^= (value >> 16) & 0xffu; hash *= 16777619u;
+    hash ^= (value >> 24) & 0xffu; hash *= 16777619u;
+    return hash;
+}
+
+static int csb_v1_f0115_md5_text_pc34(const char *text)
+{
+    size_t i;
+    if (!text || strlen(text) != 32u) return 0;
+    for (i = 0u; i < 32u; ++i) {
+        const char c = text[i];
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return 0;
+    }
+    return 1;
+}
+
+static uint32_t csb_v1_f0115_source_identity_pc34(
+    const CSB_V1_F0115RealOverlaySourcePc34 *source,
+    uint32_t palette_hash)
+{
+    uint32_t hash;
+    if (!source || !source->source_path || !source->source_md5) return 0u;
+    hash = csb_v1_f0115_fnv1a_bytes_pc34(
+        (const uint8_t *)source->source_path, strlen(source->source_path));
+    hash = csb_v1_f0115_mix_u32_pc34(hash, csb_v1_f0115_fnv1a_bytes_pc34(
+        (const uint8_t *)source->source_md5, strlen(source->source_md5)));
+    return csb_v1_f0115_mix_u32_pc34(hash, palette_hash);
+}
+
+int csb_v1_viewport_f0115_compose_real_overlay_pc34(
+    const CSB_V1_F0115RealOverlaySourcePc34 *source,
+    const CSB_V1_F0115RealOverlayPlacementPc34 *placement,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    CSB_V1_F0115RealOverlayCompositionReceiptPc34 *out_receipt)
+{
+    uint32_t palette_hash;
+    uint32_t surface_hash;
+    uint32_t identity_hash;
+    int copied = 0;
+    int y;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!source || !placement || !framebuffer || framebuffer_width <= 0 ||
+        framebuffer_height <= 0 || !source->valid ||
+        !source->original_csbgraphics_dat || !source->no_synthetic_pixels ||
+        !source->no_fallback_visuals || !source->source_path ||
+        !source->source_path[0] || !csb_v1_f0115_md5_text_pc34(source->source_md5) ||
+        !source->decoded_palette || source->decoded_palette_size == 0u ||
+        !source->decoded_pixels || source->width <= 0 || source->height <= 0 ||
+        source->decoded_size != (size_t)source->width * (size_t)source->height ||
+        source->transparent_color != CSB_TRANSPARENT_COLOR ||
+        (placement->kind != CSB_V1_F0115_REAL_OVERLAY_ITEM_PC34 &&
+         placement->kind != CSB_V1_F0115_REAL_OVERLAY_EXPLOSION_PC34) ||
+        placement->source_zone < 0 || placement->clip_w <= 0 ||
+        placement->clip_h <= 0 || placement->clip_x < 0 || placement->clip_y < 0 ||
+        placement->clip_x + placement->clip_w > source->width ||
+        placement->clip_y + placement->clip_h > source->height ||
+        placement->destination_x < 0 || placement->destination_y < 0 ||
+        placement->destination_x + placement->clip_w > framebuffer_width ||
+        placement->destination_y + placement->clip_h > framebuffer_height) return 0;
+
+    palette_hash = csb_v1_f0115_fnv1a_bytes_pc34(
+        source->decoded_palette, source->decoded_palette_size);
+    surface_hash = csb_v1_f0115_fnv1a_bytes_pc34(
+        source->decoded_pixels, source->decoded_size);
+    identity_hash = csb_v1_f0115_source_identity_pc34(source, palette_hash);
+    if (palette_hash == 0u || palette_hash != source->decoded_palette_fnv1a ||
+        surface_hash == 0u || surface_hash != source->decoded_fnv1a ||
+        identity_hash == 0u) return 0;
+
+    for (y = 0; y < placement->clip_h; ++y) {
+        int x;
+        const uint8_t *src = source->decoded_pixels +
+            (size_t)(placement->clip_y + y) * source->width + placement->clip_x;
+        uint8_t *dst = framebuffer +
+            (size_t)(placement->destination_y + y) * framebuffer_width +
+            placement->destination_x;
+        for (x = 0; x < placement->clip_w; ++x) {
+            if (src[x] != (uint8_t)source->transparent_color) {
+                dst[x] = src[x];
+                ++copied;
+            }
+        }
+    }
+
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->consumed_real_csbgraphics_surface = 1;
+        out_receipt->no_synthetic_pixels = 1;
+        out_receipt->no_fallback_visuals = 1;
+        out_receipt->kind = placement->kind;
+        out_receipt->source_zone = placement->source_zone;
+        out_receipt->copied_pixel_count = copied;
+        out_receipt->source_identity_hash = identity_hash;
+        out_receipt->palette_hash = palette_hash;
+        out_receipt->surface_hash = surface_hash;
+        out_receipt->composed_raster_hash = csb_v1_f0115_fnv1a_bytes_pc34(
+            framebuffer, (size_t)framebuffer_width * (size_t)framebuffer_height);
+    }
+    return 1;
 }
 
 const char *csb_v1_viewport_d2l2_d2r2_f0115_item_explosion_source_evidence_pc34(void)
