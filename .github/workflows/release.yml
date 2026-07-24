@@ -130,6 +130,9 @@ jobs:
       - name: Build
         run: cmake --build build --parallel 4 --target firestaff firestaff_artpack_studio firestaff_m11_phase_a_probe firestaff_m11_audio_probe
 
+      - name: Bundle Artpack Studio
+        run: ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
+
       - name: Smoke probes
         shell: bash
         run: |
@@ -165,6 +168,7 @@ jobs:
           VERSION="$FIRESTAFF_VERSION" \
           SHORT_VERSION="$FIRESTAFF_VERSION" \
           PACKAGE_SUFFIX="-macos-$FIRESTAFF_ARCH" \
+          ARTPACK_STUDIO_APP_SRC="$PWD/build/artpack-studio-bundle/dist/Firestaff Artpack Studio.app" \
           RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
           ./scripts/package_macos_preview.sh
 
@@ -219,6 +223,9 @@ jobs:
       - name: Build
         run: cmake --build build --parallel --target firestaff firestaff_artpack_studio firestaff_m11_phase_a_probe firestaff_m11_audio_probe
 
+      - name: Bundle Artpack Studio
+        run: ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
+
       - name: Smoke probes
         run: |
           set -euo pipefail
@@ -250,6 +257,7 @@ jobs:
         run: |
           set -euo pipefail
           VERSION="$FIRESTAFF_VERSION" \
+          ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio.exe" \
           RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
           ./scripts/package_windows_preview.sh
           VERSION="$FIRESTAFF_VERSION" ./scripts/package_windows_installer_preview.sh
@@ -337,6 +345,9 @@ jobs:
       - name: Build
         run: cmake --build build --parallel --target firestaff firestaff_artpack_studio firestaff_m11_phase_a_probe firestaff_m11_audio_probe
 
+      - name: Bundle Artpack Studio
+        run: ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
+
       - name: Smoke probes
         run: |
           set -euo pipefail
@@ -370,6 +381,7 @@ jobs:
           VERSION="$FIRESTAFF_VERSION" \
           ARCH_DEB="$DEB_ARCH" \
           ARCH_RPM="$RPM_ARCH" \
+          ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio" \
           RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
           ./scripts/package_linux_preview.sh
 
@@ -382,6 +394,7 @@ jobs:
           if [[ "$STEAMDECK_PACKAGE" == "true" ]]; then
             cd "$GITHUB_WORKSPACE"
             VERSION="$FIRESTAFF_VERSION" \
+            ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio" \
             RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
             ./scripts/package_steamdeck_preview.sh
 
@@ -390,6 +403,7 @@ jobs:
               https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
             chmod 0755 /tmp/appimagetool-x86_64.AppImage
             VERSION="$FIRESTAFF_VERSION" \
+            ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio" \
             RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
             APPIMAGETOOL=/tmp/appimagetool-x86_64.AppImage \
             ./scripts/package_steamdeck_appimage.sh

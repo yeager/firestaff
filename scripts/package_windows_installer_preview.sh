@@ -61,6 +61,7 @@ Source: "{#FirestaffSource}\\*"; DestDir: "{app}"; Flags: ignoreversion recurses
 [Icons]
 Name: "{autodesktop}\\Firestaff Preview"; Filename: "{app}\\firestaff.exe"
 Name: "{group}\\Firestaff Preview"; Filename: "{app}\\firestaff.exe"
+Name: "{group}\\Firestaff Artpack Studio"; Filename: "{app}\\firestaff_artpack_studio.exe"
 Name: "{group}\\Uninstall Firestaff Preview"; Filename: "{uninstallexe}"
 ISS
 

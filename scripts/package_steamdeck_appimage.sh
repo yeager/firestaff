@@ -7,7 +7,7 @@ VERSION="${VERSION:-0.2.9-preview}"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 APPIMAGETOOL="${APPIMAGETOOL:-appimagetool}"
 BIN_SRC="$BUILD_DIR/firestaff"
-ARTPACK_STUDIO_BIN_SRC="$BUILD_DIR/firestaff_artpack_studio"
+ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio}"
 OUT_DIR="$ROOT/release"
 APPDIR="$OUT_DIR/steamdeck-appimage-stage/AppDir"
 APPIMAGE_PATH="$OUT_DIR/Firestaff-${VERSION}-steamdeck-x86_64.AppImage"
@@ -48,12 +48,27 @@ cp "$BIN_SRC" "$APPDIR/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$APPDIR/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$APPDIR/usr/bin/firestaff"
 chmod 0755 "$APPDIR/usr/bin/firestaff_artpack_studio"
-cp "$ROOT/scripts/firestaff_artpack_studio.py" \
-  "$APPDIR/usr/share/firestaff/scripts/firestaff_artpack_studio.py"
 cp -L "$SDL3_LIB" "$APPDIR/usr/lib/firestaff/libSDL3.so.0"
 chmod 0755 "$APPDIR/usr/lib/firestaff/libSDL3.so.0"
-cp "$ROOT/assets/branding/firestaff-logo.png" \
-  "$APPDIR/usr/share/icons/hicolor/256x256/apps/firestaff.png"
+if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
+  cp "$ROOT/assets/branding/firestaff-logo.png" \
+    "$APPDIR/usr/share/icons/hicolor/256x256/apps/firestaff.png"
+else
+  # AppImage requires a real root icon even when a branded source icon is
+  # unavailable in a source checkout.  Emit a tiny opaque PNG fallback.
+  python3 - "$APPDIR/usr/share/icons/hicolor/256x256/apps/firestaff.png" <<'PY'
+import struct
+import sys
+import zlib
+
+pixel = b'\x00\x22\xD7\xC8\xFF'
+chunk = lambda kind, data: (struct.pack('>I', len(data)) + kind + data +
+                            struct.pack('>I', zlib.crc32(kind + data) & 0xffffffff))
+png = b'\x89PNG\r\n\x1a\n' + chunk(b'IHDR', struct.pack('>IIBBBBB', 1, 1, 8, 6, 0, 0, 0))
+png += chunk(b'IDAT', zlib.compress(pixel)) + chunk(b'IEND', b'')
+open(sys.argv[1], 'wb').write(png)
+PY
+fi
 cp "$ROOT/README.md" "$APPDIR/usr/share/doc/firestaff/README.md"
 cp "$RELEASE_NOTES_SRC" "$APPDIR/usr/share/doc/firestaff/RELEASE_NOTES.md"
 
@@ -68,6 +83,16 @@ Categories=Game;RolePlaying;
 Terminal=false
 DESKTOP
 cp "$APPDIR/firestaff.desktop" "$APPDIR/usr/share/applications/firestaff.desktop"
+cat > "$APPDIR/usr/share/applications/firestaff-artpack-studio.desktop" <<'DESKTOP'
+[Desktop Entry]
+Type=Application
+Name=Firestaff Artpack Studio
+Comment=Create and edit Firestaff V2.2 artpacks
+Exec=firestaff_artpack_studio
+Icon=firestaff
+Categories=Graphics;Game;RolePlaying;
+Terminal=false
+DESKTOP
 ln -sf usr/share/icons/hicolor/256x256/apps/firestaff.png "$APPDIR/firestaff.png"
 
 cat > "$APPDIR/AppRun" <<'APPRUN'

@@ -20,15 +20,15 @@ ZIP_PATH="$DMG_DIR/Firestaff-${ARTIFACT_VERSION}.zip"
 README_SRC="$ROOT/README.md"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 BIN_SRC="$BUILD_DIR/firestaff"
-ARTPACK_STUDIO_BIN_SRC="$BUILD_DIR/firestaff_artpack_studio"
+ARTPACK_STUDIO_APP_SRC="${ARTPACK_STUDIO_APP_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/Firestaff Artpack Studio.app}"
 SDL_DYLIB="$(otool -L "$BIN_SRC" | awk '/libSDL3.*dylib/ {print $1; exit}')"
 
 if [[ ! -x "$BIN_SRC" ]]; then
   echo "Missing built binary: $BIN_SRC" >&2
   exit 1
 fi
-if [[ ! -x "$ARTPACK_STUDIO_BIN_SRC" ]]; then
-  echo "Missing built Artpack Studio launcher: $ARTPACK_STUDIO_BIN_SRC" >&2
+if [[ ! -d "$ARTPACK_STUDIO_APP_SRC/Contents/MacOS" ]]; then
+  echo "Missing bundled Artpack Studio app: $ARTPACK_STUDIO_APP_SRC" >&2
   exit 1
 fi
 
@@ -42,13 +42,16 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$FRAMEWORKS_DIR" "$DMG_DIR"
 mkdir -p "$RESOURCES_DIR/scripts"
 
 cp "$BIN_SRC" "$MACOS_DIR/Firestaff"
-cp "$ARTPACK_STUDIO_BIN_SRC" "$MACOS_DIR/firestaff_artpack_studio"
-cp "$ROOT/scripts/firestaff_artpack_studio.py" "$RESOURCES_DIR/scripts/firestaff_artpack_studio.py"
+cp -R "$ARTPACK_STUDIO_APP_SRC" "$STAGE_DIR/Firestaff Artpack Studio.app"
 cp "$SDL_DYLIB" "$FRAMEWORKS_DIR/$(basename "$SDL_DYLIB")"
 cp "$README_SRC" "$STAGE_DIR/README.md"
 cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"
-cp "$ROOT/assets/icons/firestaff.icns" "$RESOURCES_DIR/firestaff.icns"
-cp "$ROOT/assets/branding/firestaff-logo.png" "$RESOURCES_DIR/firestaff-logo.png"
+if [[ -f "$ROOT/assets/icons/firestaff.icns" ]]; then
+  cp "$ROOT/assets/icons/firestaff.icns" "$RESOURCES_DIR/firestaff.icns"
+fi
+if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
+  cp "$ROOT/assets/branding/firestaff-logo.png" "$RESOURCES_DIR/firestaff-logo.png"
+fi
 
 cat > "$CONTENTS_DIR/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -83,12 +86,15 @@ EOF
 
 install_name_tool -change "$SDL_DYLIB" "@executable_path/../Frameworks/$(basename "$SDL_DYLIB")" "$MACOS_DIR/Firestaff"
 chmod +x "$MACOS_DIR/Firestaff"
-chmod +x "$MACOS_DIR/firestaff_artpack_studio"
 ln -s /Applications "$STAGE_DIR/Applications"
 
 codesign --force --deep --sign - "$APP_DIR" >/dev/null 2>&1 || true
 rm -f "$DMG_PATH" "$ZIP_PATH"
-/usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_DIR" "$ZIP_PATH"
+# Keep both launchable applications in the ZIP, not just Firestaff.app.
+(
+  cd "$STAGE_DIR"
+  /usr/bin/ditto -c -k --sequesterRsrc . "$ZIP_PATH"
+)
 hdiutil create -volname "Firestaff" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_PATH" >/dev/null
 
 echo "Created: $DMG_PATH"
