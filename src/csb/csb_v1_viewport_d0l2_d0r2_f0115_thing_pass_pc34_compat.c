@@ -430,6 +430,73 @@ int csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_real_asset_receipt_pc34(
     return 1;
 }
 
+int csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_pc34(
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
+    const CSB_V1_D0L2D0R2F0115TeleporterSourceRasterPc34 *source,
+    unsigned char *viewport,
+    size_t viewport_size,
+    int viewport_stride,
+    CSB_V1_D0L2D0R2F0115TeleporterRenderReceiptPc34 *out_receipt)
+{
+    CSB_V1_D0L2D0R2F0115TeleporterRenderReceiptPc34 receipt = {0};
+    int x;
+    int y;
+
+    if (out_receipt) {
+        *out_receipt = (CSB_V1_D0L2D0R2F0115TeleporterRenderReceiptPc34){0};
+    }
+    if (!fixture || !source || !viewport || !out_receipt ||
+        !source->source_graphics_dat_bound || !source->no_synthetic_pixels ||
+        !source->no_fallback_visuals || !source->pixels ||
+        source->source_payload_hash == 0u ||
+        source->source_graphics_item_index != fixture->field_aspect_index ||
+        source->width != fixture->wall_frame_x2 - fixture->wall_frame_x1 + 1 ||
+        source->height != fixture->wall_frame_height ||
+        source->stride < source->width ||
+        source->pixel_count < (size_t)source->stride * (size_t)source->height ||
+        viewport_stride < fixture->viewport_clip_x2 + 1 ||
+        viewport_size < (size_t)viewport_stride *
+                            (size_t)(fixture->viewport_clip_y2 + 1)) {
+        return 0;
+    }
+
+    /* F0125/F0126 lay this field over the completed F0115 thing pass.  Both
+     * source and destination coordinates are constrained to G0163's D0 row;
+     * C10 remains transparent exactly as the native bitmap blit does. */
+    for (y = 0; y < source->height; ++y) {
+        int dst_y = fixture->viewport_clip_y1 + y;
+        for (x = 0; x < source->width; ++x) {
+            int dst_x = fixture->wall_frame_x1 + x;
+            unsigned char pixel;
+
+            if (!csb_v1_viewport_d0l2_d0r2_f0115_viewport_clip_contains_pc34(
+                    fixture, dst_x, dst_y)) {
+                ++receipt.clipped_pixels;
+                continue;
+            }
+            pixel = source->pixels[(size_t)y * (size_t)source->stride + (size_t)x];
+            if (pixel == CSB_C10_COLOR_FLESH) {
+                ++receipt.transparent_pixels;
+                continue;
+            }
+            viewport[(size_t)dst_y * (size_t)viewport_stride + (size_t)dst_x] =
+                pixel;
+            ++receipt.copied_pixels;
+        }
+    }
+
+    if (receipt.copied_pixels == 0u) {
+        return 0;
+    }
+    receipt.valid = CSB_PRESENT;
+    receipt.side = fixture->side;
+    receipt.field_aspect_index = fixture->field_aspect_index;
+    receipt.source_graphics_item_index = source->source_graphics_item_index;
+    receipt.source_payload_hash = source->source_payload_hash;
+    *out_receipt = receipt;
+    return 1;
+}
+
 const char *csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_source_evidence_pc34(void)
 {
     return s_source_evidence;
