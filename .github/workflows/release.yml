@@ -214,7 +214,7 @@ jobs:
             mingw-w64-ucrt-x86_64-python
             mingw-w64-ucrt-x86_64-python-pip
             mingw-w64-ucrt-x86_64-python-pillow
-            mingw-w64-ucrt-x86_64-python-pyinstaller
+            mingw-w64-ucrt-x86_64-pyinstaller
             p7zip
 
       - name: Install Inno Setup
