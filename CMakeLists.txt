@@ -29340,6 +29340,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_swsh_source_audio_pc34_
              COMMAND test_csb_v1_swsh_source_audio_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_boot_swoosh_source_pc34_compat.c")
+    add_executable(test_csb_v1_boot_swoosh_source_pc34_compat
+        tests/test_csb_v1_boot_swoosh_source_pc34_compat.c)
+    target_include_directories(test_csb_v1_boot_swoosh_source_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_boot_swoosh_source_pc34_compat PRIVATE
+        firestaff_m11 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_boot_swoosh_source_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_boot_swoosh_source_pc34_compat
+             COMMAND test_csb_v1_boot_swoosh_source_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0809_f0811_copypro_media_gate.c")
     add_executable(test_dm1_v1_f0809_f0811_copypro_media_gate
         tests/test_dm1_v1_f0809_f0811_copypro_media_gate.c
@@ -44686,6 +44700,19 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME csb_v1_f0265_group_retry_receipt_pc34_compat
         COMMAND test_csb_v1_f0265_group_retry_receipt_pc34_compat)
+
+    add_executable(test_csb_v1_f0252_f0266_group_move_transaction_pc34_compat
+        tests/test_csb_v1_f0252_f0266_group_move_transaction_pc34_compat.c)
+    target_include_directories(test_csb_v1_f0252_f0266_group_move_transaction_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0252_f0266_group_move_transaction_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0252_f0266_group_move_transaction_pc34_compat PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_f0252_f0266_group_move_transaction_pc34_compat
+        COMMAND test_csb_v1_f0252_f0266_group_move_transaction_pc34_compat)
 endif()
 
 if(BUILD_TESTING)
