@@ -9006,6 +9006,146 @@ static int csb_v1_runtime_apply_projectile_group_action(
     return 0;
 }
 
+/* Return a Firestaff projectile subtype only where the CSB source RN value
+ * has a matching live projectile owner.  Dispell Missile intentionally has
+ * no substitute: treating it as Harm Non-Material would invent gameplay. */
+static int csb_v1_runtime_csb_monster_projectile_subtype(
+    int source_projectile, int *out_subtype, int *out_attack_type,
+    int *out_poison)
+{
+    int subtype;
+    int attack_type;
+    int poison = 0;
+
+    switch (source_projectile) {
+    case CSB_PROJECTILE_FIREBALL:
+        subtype = PROJECTILE_SUBTYPE_FIREBALL;
+        attack_type = COMBAT_ATTACK_FIRE;
+        break;
+    case CSB_PROJECTILE_POISON:
+        subtype = PROJECTILE_SUBTYPE_POISON_BOLT;
+        attack_type = COMBAT_ATTACK_NORMAL;
+        poison = 1;
+        break;
+    case CSB_PROJECTILE_LIGHTNING:
+        subtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+        attack_type = COMBAT_ATTACK_LIGHTNING;
+        break;
+    case CSB_PROJECTILE_POISON_CLOUD:
+        subtype = PROJECTILE_SUBTYPE_POISON_CLOUD;
+        attack_type = COMBAT_ATTACK_NORMAL;
+        poison = 1;
+        break;
+    case CSB_PROJECTILE_ZO_SPELL:
+        subtype = PROJECTILE_SUBTYPE_OPEN_DOOR;
+        attack_type = COMBAT_ATTACK_MAGIC;
+        break;
+    default:
+        return 0;
+    }
+    if (out_subtype) *out_subtype = subtype;
+    if (out_attack_type) *out_attack_type = attack_type;
+    if (out_poison) *out_poison = poison;
+    return 1;
+}
+
+/* ReDMCSB GROUP.C F0207 (1685-1755) creates a C14 from the attacking
+ * creature's C04 record before F0219 owns its movement.  The CSB-specific
+ * source RN selection comes from CSBWin Monster.cpp (1049-1124).  Return -1
+ * only when this is not a ranged source attack, so the caller may take the
+ * original melee path.  Any supported ranged source attack is consumed even
+ * when its C14 cannot be admitted; it must never become an invented melee. */
+static int csb_v1_runtime_try_launch_creature_projectile(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    uint16_t group_thing,
+    const uint8_t *group_record,
+    int creature_index,
+    int creature_count)
+{
+    const struct CreatureBehaviorProfile_Compat *creature;
+    struct RngState_Compat rng;
+    struct ProjectileCreateInput_Compat input;
+    struct TimelineEvent_Compat first_move;
+    int creature_type;
+    int direction;
+    int distance;
+    int source_projectile;
+    int subtype;
+    int attack_type;
+    int poison;
+    int slot = -1;
+
+    if (!profile || !record || !group_record || creature_index < 0 ||
+        creature_index >= creature_count) {
+        return -1;
+    }
+    creature_type = (int)group_record[4];
+    switch (creature_type) {
+    case CSB_CREATURE_TYPE_VEXIRK:
+    case CSB_CREATURE_TYPE_LORD_CHAOS:
+    case CSB_CREATURE_TYPE_SWAMP_SLIME:
+    case CSB_CREATURE_TYPE_WIZARD_EYE:
+    case CSB_CREATURE_TYPE_ZYTAZ:
+    case CSB_CREATURE_TYPE_DEMON:
+    case CSB_CREATURE_TYPE_RED_DRAGON:
+        break;
+    default:
+        return -1;
+    }
+    if ((record->mapX != profile->party_x && record->mapY != profile->party_y) ||
+        (record->mapX == profile->party_x && record->mapY == profile->party_y)) {
+        return -1;
+    }
+    creature = CREATURE_GetProfile_Compat(creature_type);
+    if (!creature || creature->baseAttack <= 0) return 0;
+    direction = csb_v1_runtime_direction_from_source_to_destination(
+        record->mapX, record->mapY, profile->party_x, profile->party_y);
+    distance = (record->mapX == profile->party_x)
+        ? abs((int)record->mapY - profile->party_y)
+        : abs((int)record->mapX - profile->party_x);
+    if (distance < 1 || distance > creature->sightRange) return -1;
+
+    F0730_COMBAT_RngInit_Compat(
+        &rng, csb_v1_runtime_creature_attack_seed(
+                  profile, record, creature_type, creature_index, -1));
+    source_projectile = csb_v1_projectile_type_for_creature(
+        creature_type, &rng);
+    if (!csb_v1_runtime_csb_monster_projectile_subtype(
+            source_projectile, &subtype, &attack_type, &poison)) {
+        return 0;
+    }
+
+    memset(&input, 0, sizeof(input));
+    memset(&first_move, 0, sizeof(first_move));
+    input.category = PROJECTILE_CATEGORY_MAGICAL;
+    input.subtype = subtype;
+    input.ownerKind = PROJECTILE_OWNER_CREATURE;
+    input.ownerIndex = ((int)group_thing << 2) | (creature_index & 3);
+    input.mapIndex = record->mapIndex;
+    input.mapX = record->mapX;
+    input.mapY = record->mapY;
+    input.cell = (group_record[3] == 0xffu) ? 0 :
+        ((group_record[3] >> (creature_index * 2)) & 3);
+    input.direction = direction;
+    input.kineticEnergy = csb_v1_missile_range_compute(
+        creature->baseAttack, &rng);
+    input.attack = creature->baseAttack;
+    input.launcherStrength = creature->baseAttack;
+    input.stepEnergy = 8; /* CSBWin Monster.cpp:1124 */
+    input.currentTick = (int)profile->game_time;
+    input.poisonAttack = poison ? creature->poisonAttack : 0;
+    input.attackTypeCode = attack_type;
+    input.associatedThing = THING_NONE;
+    input.firstMoveGraceFlag = 1;
+    if (F0810_PROJECTILE_Create_Compat(
+            &input, &profile->projectiles, &slot, &first_move)) {
+        csb_v1_runtime_schedule_projectile_move_event(profile, &first_move);
+        return 1;
+    }
+    return 0;
+}
+
 static void csb_v1_runtime_apply_creature_attack_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -9114,6 +9254,23 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                     creature_index,
                     champion_index);
                 return;
+            }
+            {
+                int projectile_result =
+                    csb_v1_runtime_try_launch_creature_projectile(
+                        profile, record, (uint16_t)thing, thing_record,
+                        creature_index, creature_count);
+                if (projectile_result >= 0) {
+                    if (!profile->game_over) {
+                        csb_v1_runtime_schedule_c38_followup_event(
+                            profile, record->mapIndex, record->mapX,
+                            record->mapY, (int)thing_record[4],
+                            creature_index, (uint32_t)
+                            csb_v1_runtime_creature_attack_ticks(
+                                (int)thing_record[4]));
+                    }
+                    return;
+                }
             }
             memset(&combat, 0, sizeof(combat));
             if (!csb_v1_runtime_fill_creature_combat_snapshot(
