@@ -33,7 +33,9 @@ mkdir -p "$OUT_DIR/dist" "$WORK_DIR" "$SPEC_DIR"
 # keeps Pillow and PyInstaller self-contained without modifying that runtime.
 "$PYTHON" -m venv "$VENV_DIR"
 PYTHON="$VENV_DIR/bin/python"
-if [[ "$(uname -s)" == "MINGW"* || "$(uname -s)" == "MSYS"* ]]; then
+# MSYS Python uses the POSIX venv layout even on Windows; native Windows
+# Python creates Scripts/python.exe.  Prefer the layout that actually exists.
+if [[ ! -x "$PYTHON" && -x "$VENV_DIR/Scripts/python.exe" ]]; then
   PYTHON="$VENV_DIR/Scripts/python.exe"
 fi
 "$PYTHON" -m pip install --upgrade Pillow pyinstaller
