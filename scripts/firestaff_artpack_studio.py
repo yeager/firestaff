@@ -44,6 +44,15 @@ except Exception as exc:  # pragma: no cover - exercised by startup path
         f"Import error: {exc}"
     )
 
+if "--check-tkinter" in sys.argv:
+    try:
+        import tkinter as tk
+        from PIL import ImageTk
+    except Exception as exc:  # pragma: no cover - packaged runtime smoke check
+        raise SystemExit(f"Tkinter is required for the GUI: {exc}")
+    print(f"Tkinter runtime check: PASS (Tk {tk.TkVersion})")
+    raise SystemExit(0)
+
 if "--self-test" in sys.argv:
     class _DummyTk:
         Tk = object

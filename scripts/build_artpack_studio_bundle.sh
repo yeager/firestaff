@@ -17,7 +17,21 @@ if [[ ! -f "$SCRIPT" ]]; then
   exit 1
 fi
 
-if command -v python3 >/dev/null 2>&1; then
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  # GitHub's Homebrew Python can be built without Tk. Prefer a Python that has
+  # the GUI module available; the Xcode Python bundled on macOS runners does.
+  for candidate in "$(command -v python3 2>/dev/null || true)" /usr/bin/python3 \
+    /Applications/Xcode.app/Contents/Developer/usr/bin/python3; do
+    if [[ -n "$candidate" && -x "$candidate" ]] && "$candidate" -c 'import tkinter' >/dev/null 2>&1; then
+      PYTHON="$candidate"
+      break
+    fi
+  done
+  if [[ -z "${PYTHON:-}" ]]; then
+    echo "A Python 3 installation with Tkinter is required to bundle Artpack Studio" >&2
+    exit 1
+  fi
+elif command -v python3 >/dev/null 2>&1; then
   PYTHON="$(command -v python3)"
 elif command -v python >/dev/null 2>&1; then
   PYTHON="$(command -v python)"
@@ -55,18 +69,21 @@ if [[ "$IS_MSYS" == "true" ]]; then
 else
   "$PYTHON" -m pip install --upgrade Pillow pyinstaller
 fi
+"$PYTHON" -c 'import tkinter; from PIL import ImageTk'
 
 case "$(uname -s)" in
   Darwin)
     # A real .app appears in Finder and Launchpad alongside Firestaff.
     if [[ -f "$ROOT/assets/icons/firestaff.icns" ]]; then
       "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onedir \
+        --collect-all tkinter --hidden-import tkinter.ttk --hidden-import PIL.ImageTk \
         --name "Firestaff Artpack Studio" \
         --icon "$ROOT/assets/icons/firestaff.icns" \
         --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
         "$SCRIPT"
     else
       "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onedir \
+        --collect-all tkinter --hidden-import tkinter.ttk --hidden-import PIL.ImageTk \
         --name "Firestaff Artpack Studio" \
         --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
         "$SCRIPT"
@@ -75,10 +92,17 @@ case "$(uname -s)" in
   *)
     # One executable carries Python, Pillow, Tk and the studio source.
     "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onefile \
+      --collect-all tkinter --hidden-import tkinter.ttk --hidden-import PIL.ImageTk \
       --name firestaff_artpack_studio \
       --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
       "$SCRIPT"
     ;;
 esac
+
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  "$OUT_DIR/dist/Firestaff Artpack Studio.app/Contents/MacOS/Firestaff Artpack Studio" --check-tkinter
+else
+  "$OUT_DIR/dist/firestaff_artpack_studio" --check-tkinter
+fi
 
 find "$OUT_DIR/dist" -maxdepth 2 -type f -o -type d
