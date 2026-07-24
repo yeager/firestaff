@@ -76,6 +76,7 @@ static int dm1_v1_validate_active_group_owner_pc34(
     int *outGroupIndex)
 {
     int groupIndex;
+    const unsigned char *rawGroup;
     if (outGroupIndex) *outGroupIndex = -1;
     if (!world || !world->things || activeGroupIndex < 0 ||
         activeGroupIndex >= world->creatureAICount ||
@@ -87,6 +88,14 @@ static int dm1_v1_validate_active_group_owner_pc34(
     if (groupIndex < 0 || groupIndex >= world->things->groupCount ||
         groupIndex >= world->things->thingCounts[THING_TYPE_GROUP] ||
         world->things->groups[groupIndex].next == THING_NONE) return 0;
+    rawGroup = world->things->rawThingData[THING_TYPE_GROUP] +
+        (size_t)groupIndex * DM1_V1_GROUP_RAW_BYTES_PC34;
+    /* F0182 receives an ACTIVE_GROUP, but its C04 backing must remain the
+     * same raw Thing owner.  Reject a stale decoded group rather than
+     * clearing attack state against a host-created replacement. */
+    if (dm1_v1_read_u16_pc34(rawGroup) != world->things->groups[groupIndex].next) {
+        return 0;
+    }
     if (outGroupIndex) *outGroupIndex = groupIndex;
     return 1;
 }

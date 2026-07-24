@@ -54,6 +54,7 @@ static void make_world(struct GameWorld_Compat *world,
     squares[4] = DUNGEON_SQUARE_MASK_THING_LIST;
 
     groups[0].next = THING_ENDOFLIST;
+    put_u16(groupRaw, THING_ENDOFLIST);
     things->loaded = 1;
     things->groups = groups;
     things->groupCount = 1;
