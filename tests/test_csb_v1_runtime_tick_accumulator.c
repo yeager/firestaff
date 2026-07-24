@@ -2644,6 +2644,49 @@ static void test_c38_giggler_steals_hand_slots_into_group_slot_chain(void)
           "C38 Giggler theft search stays within the bounded regression window");
 }
 
+static void test_c38_red_dragon_launches_source_projectile(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[160];
+
+    printf("\n-- CSB C38 source monster projectile --\n");
+
+    make_c38_giggler_steal_fixture(
+        &profile, &dungeon, raw, sizeof(raw), 41u);
+    /* Keep the verified C04 layout and C38 scheduling, but bind the group to
+     * the real red-dragon descriptor.  It always selects RNFireball in
+     * CSBWin Monster.cpp and therefore needs no synthetic fallback. */
+    raw[86] = CSB_CREATURE_TYPE_RED_DRAGON;
+    profile.party_state.Champions[0].CurrentHealth = 500;
+
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
+          "C38 red-dragon attack dispatches at the source timeline boundary");
+    CHECK(profile.projectiles.count == 1,
+          "C38 red dragon admits one real C14 projectile");
+    CHECK(profile.projectiles.entries[0].projectileCategory ==
+              PROJECTILE_CATEGORY_MAGICAL &&
+              profile.projectiles.entries[0].projectileSubtype ==
+                  PROJECTILE_SUBTYPE_FIREBALL,
+          "C38 red dragon preserves CSB RNFireball subtype and magical class");
+    CHECK(profile.projectiles.entries[0].ownerKind == PROJECTILE_OWNER_CREATURE &&
+              profile.projectiles.entries[0].ownerIndex == (4 << 12) &&
+              profile.projectiles.entries[0].mapX == 1 &&
+              profile.projectiles.entries[0].mapY == 1 &&
+              profile.projectiles.entries[0].direction == 2,
+          "C38 C14 retains source group/creature ownership and geometry");
+    CHECK(profile.projectiles.entries[0].stepEnergy == 8 &&
+              profile.projectiles.entries[0].firstMoveGraceFlag == 1 &&
+              profile.projectiles.entries[0].attack > 0,
+          "C38 C14 uses CSB monster missile cadence and source attack");
+    CHECK(count_queued_event_type(&profile, DM1_EVENT_MOVE_PROJECTILE) == 1 &&
+              count_queued_event_type(&profile,
+                  DM1_EVENT_UPDATE_ASPECT_CREATURE_0) == 1,
+          "C38 projectile queues C49 movement and C33/C38 source cadence");
+    CHECK(profile.party_state.Champions[0].CurrentHealth == 500,
+          "ranged C38 does not substitute an immediate melee hit");
+}
+
 static void test_c38_updates_only_attacking_creature_direction(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -6674,6 +6717,7 @@ int main(void)
     test_c37_attack_entry_turns_active_group_per_creature();
     test_c38_poison_followup_and_c75_tick();
     test_c38_giggler_steals_hand_slots_into_group_slot_chain();
+    test_c38_red_dragon_launches_source_projectile();
     test_c38_updates_only_attacking_creature_direction();
     test_c37_group_approach_teleporter_rotation();
     test_explosion_c25_persistent_smoke_requeues_until_depleted();
