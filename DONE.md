@@ -1,3 +1,10 @@
+- ✅ 2026-07-24 CSB C001-C005 startup session timeline: M11 now derives a
+  monotonic source tick across TITLE.C and ENTRANCE.C, so the C004/C005/F0128
+  handoff cannot reuse entrance-local tick zero after title completion.
+  Real `GRAPHICS.DAT` C001-C005 startup and F0128 consumer tests pass. The
+  remaining Q-CSB-04 work is the source-rendered F0128 micro-dungeon, not a
+  duplicate credits implementation.
+
 - ✅ 2026-07-23 DM1 HoC champion/mirror/resurrection verification: C127,
   C160, C161, and C162 are covered with real C026 portrait data, sensor
   ownership, party handoff, and multiple Mac HiDPI/fullscreen click scales.
