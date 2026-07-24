@@ -3953,6 +3953,69 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
           "C25 final group stairs drop terminates the moved carried thing chain");
 }
 
+static void test_f0190_death_transaction_rolls_back_bad_slot_chain(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[192];
+    uint8_t before[sizeof(raw)];
+    struct ExplosionCreateInput_Compat input;
+    struct TimelineEvent_Compat first_advance;
+    int slot = -1;
+
+    printf("\n-- CSB F0190 transactional death rollback --\n");
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[4] = 82;
+    dungeon.thing_type_counts[4] = 1;
+    dungeon.thing_data_bases[5] = 98;
+    dungeon.thing_type_counts[5] = 1;
+    raw[real_format_square_offset(1, 1)] = (uint8_t)((1u << 5) | 0x10u);
+    test_put_le16(raw, 60 + 1 * 2, 0u);
+    test_put_le16(raw, 66, (uint16_t)(4u << 10));
+    test_put_le16(raw, 82, 0xfffeu);
+    test_put_le16(raw, 84, (uint16_t)(5u << 10));
+    raw[86] = 9u;
+    raw[87] = 0xffu;
+    test_put_le16(raw, 88, 1u);
+    test_put_le16(raw, 96, 0u);
+    /* A C05 record whose Next points outside its type pool.  F0188 reaches
+     * the invalid successor only after it has staged the first floor drop. */
+    test_put_le16(raw, 98, 0x1fffu);
+    test_put_le16(raw, 100, 27u);
+    memcpy(before, raw, sizeof(raw));
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
+    memset(&input, 0, sizeof(input));
+    input.explosionType = C000_EXPLOSION_FIREBALL;
+    input.attack = 160;
+    input.mapIndex = 0;
+    input.mapX = 1;
+    input.mapY = 1;
+    input.cell = EXPLOSION_CELL_CENTERED;
+    input.centered = 1;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.creatorProjectileSlot = -1;
+    CHECK(F0821_EXPLOSION_Create_Compat(
+              &input, &profile.explosions, &slot, &first_advance) == 1 &&
+              slot == 0,
+          "F0190 rollback fixture creates a source C25 impact");
+    queue_explosion_advance_event(&profile, &first_advance);
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1 &&
+              csb_v1_runtime_tick_v1(&profile) == 1,
+          "F0190 rollback fixture reaches the lethal C25 boundary");
+    CHECK(memcmp(raw, before, sizeof(raw)) == 0,
+          "F0190 rejects malformed C04 Slot ownership without partial drops");
+    CHECK(find_live_explosion_type(&profile, C040_EXPLOSION_SMOKE) < 0 &&
+              count_queued_event_type(&profile, DM1_EVENT_EXPLOSION) == 0,
+          "F0190 rollback removes staged C15 smoke and C14 follow-up state");
+}
+
 static void test_explosion_c25_door_destruction_writeback(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -6723,6 +6786,7 @@ int main(void)
     test_explosion_c25_persistent_smoke_requeues_until_depleted();
     test_runtime_save_roundtrips_projectiles_and_explosions();
     test_explosion_c25_party_damage_and_group_hp_writeback();
+    test_f0190_death_transaction_rolls_back_bad_slot_chain();
     test_explosion_c25_door_destruction_writeback();
     test_timeline_wall_gate_and_generator_sensor_mutations();
     test_input_forward_c008_party_possession_sensor();

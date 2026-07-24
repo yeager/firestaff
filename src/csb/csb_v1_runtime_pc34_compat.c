@@ -7156,7 +7156,13 @@ static uint16_t csb_v1_runtime_allocate_new_object_launcher_thing(
     return receipt.allocated_thing;
 }
 
-static void csb_v1_runtime_drop_creature_fixed_possessions(
+/* GROUP.C F0190 is a single mutation boundary: it creates the C25 smoke,
+ * resolves F0186/F0188 drops, rewrites C14 events and finally removes or
+ * compacts the C04 group.  The individual helpers predate the source-owned
+ * runtime bridge and therefore used best-effort returns.  Keep their normal
+ * resource-exhaustion behaviour, but report malformed live chains so the
+ * caller can restore the complete C04/C14/C15 transaction. */
+static int csb_v1_runtime_drop_creature_fixed_possessions(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     int creature_type,
@@ -7171,7 +7177,7 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
     int weapon_dropped = 0;
     int i;
 
-    if (!profile || !dungeon) return;
+    if (!profile || !dungeon) return 0;
     F0730_COMBAT_RngInit_Compat(
         &rng,
         profile->dungeon_seed ^ profile->game_time ^
@@ -7187,7 +7193,9 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
             DM1_MAX_FIXED_POSSESSION_DROPS,
             &drop_count,
             &weapon_dropped)) {
-        return;
+        /* The source resolver uses a false return for creatures without a
+         * fixed possession descriptor.  That is a valid zero-drop result. */
+        return 1;
     }
     /* ReDMCSB GROUP.C F0186 lines 580-645 resolves fixed creature
      * possessions, allocates unused C05/C06/C10 records, stores item type
@@ -7216,6 +7224,10 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
             if (record && thing_size >= 2) {
                 csb_v1_runtime_write_u16(record, 0xFFFFu);
             }
+            /* A real allocation may run out of records before this point;
+             * a freshly allocated record that cannot join its source square
+             * is instead a broken C04 ownership chain. */
+            return 0;
         } else {
             int drop_level = level;
             int drop_x = map_x;
@@ -7255,9 +7267,10 @@ static void csb_v1_runtime_drop_creature_fixed_possessions(
          * not on successful F0166 allocations. */
         (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
     }
+    return 1;
 }
 
-static void csb_v1_runtime_drop_group_slot_possessions(
+static int csb_v1_runtime_drop_group_slot_possessions(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     uint8_t *group_record,
@@ -7271,9 +7284,9 @@ static void csb_v1_runtime_drop_group_slot_possessions(
     int weapon_dropped = 0;
     int saw_possession = 0;
 
-    if (!profile || !dungeon || !group_record) return;
+    if (!profile || !dungeon || !group_record) return 0;
     thing = csb_v1_runtime_read_u16(group_record + 2);
-    if (thing == 0xFFFEu || thing == 0xFFFFu) return;
+    if (thing == 0xFFFEu || thing == 0xFFFFu) return 1;
     F0730_COMBAT_RngInit_Compat(
         &rng,
         profile->dungeon_seed ^ profile->game_time ^
@@ -7297,7 +7310,7 @@ static void csb_v1_runtime_drop_group_slot_possessions(
             thing,
             &thing_type,
             &thing_size);
-        if (!record || thing_size < 2) break;
+        if (!record || thing_size < 2) return 0;
         next_thing = csb_v1_runtime_read_u16(record);
         saw_possession = 1;
         if (thing_type == DM1_DROP_THING_TYPE_WEAPON) {
@@ -7313,7 +7326,7 @@ static void csb_v1_runtime_drop_group_slot_possessions(
                 level,
                 map_x,
                 map_y)) {
-            break;
+            return 0;
         }
         {
             int drop_level = level;
@@ -7354,6 +7367,10 @@ static void csb_v1_runtime_drop_group_slot_possessions(
          * complete Slot chain is moved, choosing C00 if any item was C05. */
         (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
     }
+    /* A non-terminating Slot chain is not a valid GROUP.C F0188 source
+     * record.  Do not clear C04.Slot after walking only a prefix. */
+    if (thing != 0xFFFEu && thing != 0xFFFFu) return 0;
+    return 1;
 }
 
 static uint32_t csb_v1_runtime_champion_occupied_slot_mask(
@@ -8427,7 +8444,55 @@ static void csb_v1_runtime_spawn_f0190_death_smoke(
     }
 }
 
-static void csb_v1_runtime_pack_dead_group_creature(
+typedef struct {
+    CSB_V1_RuntimeProfile profile_before;
+    uint8_t *dungeon_bytes_before;
+    size_t dungeon_byte_count;
+} CSB_V1_F0190DeathTransactionPc34;
+
+static int csb_v1_runtime_begin_f0190_death_transaction(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    CSB_V1_F0190DeathTransactionPc34 *out_transaction)
+{
+    if (!profile || !dungeon || !out_transaction || !dungeon->raw_data ||
+        dungeon->raw_size <= 0) {
+        return 0;
+    }
+    memset(out_transaction, 0, sizeof(*out_transaction));
+    out_transaction->dungeon_byte_count = (size_t)dungeon->raw_size;
+    out_transaction->dungeon_bytes_before =
+        (uint8_t *)malloc(out_transaction->dungeon_byte_count);
+    if (!out_transaction->dungeon_bytes_before) return 0;
+    memcpy(out_transaction->dungeon_bytes_before, dungeon->raw_data,
+           out_transaction->dungeon_byte_count);
+    out_transaction->profile_before = *profile;
+    return 1;
+}
+
+static void csb_v1_runtime_rollback_f0190_death_transaction(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    const CSB_V1_F0190DeathTransactionPc34 *transaction)
+{
+    if (!profile || !dungeon || !transaction) return;
+    if (transaction->dungeon_bytes_before && dungeon->raw_data &&
+        transaction->dungeon_byte_count == (size_t)dungeon->raw_size) {
+        memcpy(dungeon->raw_data, transaction->dungeon_bytes_before,
+               transaction->dungeon_byte_count);
+    }
+    *profile = transaction->profile_before;
+}
+
+static void csb_v1_runtime_end_f0190_death_transaction(
+    CSB_V1_F0190DeathTransactionPc34 *transaction)
+{
+    if (!transaction) return;
+    free(transaction->dungeon_bytes_before);
+    memset(transaction, 0, sizeof(*transaction));
+}
+
+static int csb_v1_runtime_pack_dead_group_creature(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     uint8_t *group_record,
@@ -8445,25 +8510,30 @@ static void csb_v1_runtime_pack_dead_group_creature(
     int killed_cell;
     int creature_type;
     CSB_V1_F0178GroupCellsCompactReceiptPc34 cells_receipt;
+    CSB_V1_F0190DeathTransactionPc34 transaction;
     int i;
 
     if (!dungeon || !group_record ||
         creature_index < 0 || creature_index > 3) {
-        return;
+        return 0;
     }
     flags = csb_v1_runtime_read_u16(group_record + 14);
     raw_count = (int)((flags >> 5) & 0x03u);
     creature_count = raw_count + 1;
     if (creature_count < 1) creature_count = 1;
     if (creature_count > 4) creature_count = 4;
-    if (creature_index >= creature_count) return;
+    if (creature_index >= creature_count) return 0;
     cells = group_record[5];
     memset(&cells_receipt, 0, sizeof(cells_receipt));
     if (creature_count > 1 &&
         !csb_v1_runtime_f0178_group_cells_compact_receipt_pc34(
             dungeon, group_thing, level, map_x, map_y, creature_count,
             creature_index, &cells_receipt)) {
-        return;
+        return 0;
+    }
+    if (!csb_v1_runtime_begin_f0190_death_transaction(
+            profile, dungeon, &transaction)) {
+        return 0;
     }
     killed_cell = (cells == 0xFF)
         ? EXPLOSION_CELL_CENTERED
@@ -8476,14 +8546,16 @@ static void csb_v1_runtime_pack_dead_group_creature(
         level,
         map_x,
         map_y);
-    csb_v1_runtime_drop_creature_fixed_possessions(
+    if (!csb_v1_runtime_drop_creature_fixed_possessions(
         profile,
         dungeon,
         creature_type,
         killed_cell,
         level,
         map_x,
-        map_y);
+        map_y)) {
+        goto rollback;
+    }
 
     if (creature_count <= 1) {
         CSB_V1_F0189GroupDeleteReceiptPc34 delete_receipt;
@@ -8493,19 +8565,21 @@ static void csb_v1_runtime_pack_dead_group_creature(
          * C04 thing from the square chain, drops the carried Slot chain, and
          * marks the real-format record unused; fixed possessions, sounds, and
          * active-group side state are later slices. */
-        csb_v1_runtime_drop_group_slot_possessions(
+        if (!csb_v1_runtime_drop_group_slot_possessions(
             profile,
             dungeon,
             group_record,
             level,
             map_x,
-            map_y);
+            map_y)) {
+            goto rollback;
+        }
         if (!csb_v1_runtime_f0189_group_delete_receipt_pc34(
                 profile, group_thing, level, map_x, map_y,
                 &delete_receipt) ||
             csb_v1_runtime_fnv1a32(group_record, 16u) !=
                 delete_receipt.group_record_fnv1a) {
-            return;
+            goto rollback;
         }
         csb_v1_runtime_delete_group_events_at_square(
             profile,
@@ -8527,7 +8601,8 @@ static void csb_v1_runtime_pack_dead_group_creature(
         memset(group_record, 0, 16);
         csb_v1_runtime_write_u16(group_record + 0, 0xFFFFu);
         csb_v1_runtime_write_u16(group_record + 2, 0xFFFEu);
-        return;
+        csb_v1_runtime_end_f0190_death_transaction(&transaction);
+        return 1;
     }
 
     if ((flags & 0x000fu) == 6u) {
@@ -8572,6 +8647,14 @@ static void csb_v1_runtime_pack_dead_group_creature(
     flags = (uint16_t)((flags & ~(uint16_t)(0x03u << 5)) |
                        (uint16_t)(((raw_count - 1) & 0x03) << 5));
     csb_v1_runtime_write_u16(group_record + 14, flags);
+    csb_v1_runtime_end_f0190_death_transaction(&transaction);
+    return 1;
+
+rollback:
+    csb_v1_runtime_rollback_f0190_death_transaction(
+        profile, dungeon, &transaction);
+    csb_v1_runtime_end_f0190_death_transaction(&transaction);
+    return 0;
 }
 
 static int csb_v1_runtime_apply_group_fall_damage(
@@ -8647,8 +8730,7 @@ static int csb_v1_runtime_apply_group_fall_damage(
             random_window);
         if (damage < 1) damage = 1;
         if (damage >= (int)hp) {
-            killed_some = 1;
-            csb_v1_runtime_pack_dead_group_creature(
+            if (!csb_v1_runtime_pack_dead_group_creature(
                 profile,
                 dungeon,
                 group_record,
@@ -8657,7 +8739,10 @@ static int csb_v1_runtime_apply_group_fall_damage(
                 map_x,
                 map_y,
                 i,
-                &rng);
+                &rng)) {
+                return killed_some ? 1 : 0;
+            }
+            killed_some = 1;
             if (creature_count <= 1) {
                 return 2;
             }
@@ -8751,7 +8836,7 @@ static int csb_v1_runtime_apply_explosion_group_action(
                     F0732_COMBAT_RngRandom_Compat(rng, random_window);
                 if (damage < 1) damage = 1;
                 if (damage >= (int)hp) {
-                    csb_v1_runtime_pack_dead_group_creature(
+                    if (!csb_v1_runtime_pack_dead_group_creature(
                         profile,
                         dungeon,
                         thing_record,
@@ -8760,7 +8845,9 @@ static int csb_v1_runtime_apply_explosion_group_action(
                         action->targetMapX,
                         action->targetMapY,
                         i,
-                        rng);
+                        rng)) {
+                        return applied;
+                    }
                     creature_count--;
                     if (creature_count <= 0) {
                         applied++;
@@ -8978,7 +9065,7 @@ static int csb_v1_runtime_apply_projectile_group_action(
             hp = csb_v1_runtime_read_u16(hp_ptr);
             if (hp == 0) return 0;
             if (action->rawAttackValue >= (int)hp) {
-                csb_v1_runtime_pack_dead_group_creature(
+                return csb_v1_runtime_pack_dead_group_creature(
                     profile,
                     dungeon,
                     thing_record,
@@ -8988,7 +9075,6 @@ static int csb_v1_runtime_apply_projectile_group_action(
                     action->targetMapY,
                     creature_index,
                     &rng);
-                return 1;
             }
 
             csb_v1_runtime_write_u16(
@@ -14232,7 +14318,7 @@ int csb_v1_runtime_perform_melee_action(
         }
         if (combat.damageApplied > 0) {
             if (combat.damageApplied >= (int)hp) {
-                csb_v1_runtime_pack_dead_group_creature(
+                if (!csb_v1_runtime_pack_dead_group_creature(
                     profile,
                     dungeon,
                     record,
@@ -14241,7 +14327,9 @@ int csb_v1_runtime_perform_melee_action(
                     target_x,
                     target_y,
                     creature_index,
-                    &rng);
+                    &rng)) {
+                    return 0;
+                }
                 if (out_result) {
                     out_result->killed_group =
                         (csb_v1_runtime_read_u16(record + 0) == 0xFFFFu);
