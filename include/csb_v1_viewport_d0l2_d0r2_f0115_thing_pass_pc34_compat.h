@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "csb_v1_csbgraphics_dat_real_scan.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -155,6 +157,33 @@ typedef struct {
     uint32_t source_payload_hash;
 } CSB_V1_D0L2D0R2F0115TeleporterRenderReceiptPc34;
 
+/*
+ * Direct CSBgraphics.dat material path for the D0 teleporter field.  The
+ * entry index is deliberately independent of the ReDMCSB field-aspect zone:
+ * CSBWin overrides are archive entries while G2035 still owns the in-world
+ * field selection.  The palette receipt must have been admitted from the
+ * exact same hash-owned cache; neither pixels nor palette are inferred.
+ */
+typedef struct {
+    uint32_t csbgraphics_entry_index;
+    const CSB_V1_CSBGraphicsDatPaletteSourceReceipt *palette_receipt;
+} CSB_V1_D0L2D0R2F0115CacheTeleporterRequestPc34;
+
+typedef struct {
+    int valid;
+    int consumed_hash_admitted_csbgraphics_dat;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int side;
+    int field_aspect_index;
+    uint32_t csbgraphics_entry_index;
+    uint32_t palette_entry_index;
+    uint32_t decoded_raster_hash;
+    uint32_t palette_hash;
+    size_t copied_pixels;
+    size_t transparent_pixels;
+} CSB_V1_D0L2D0R2F0115CacheTeleporterReceiptPc34;
+
 int csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_init_pc34(void);
 
 size_t csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_count_pc34(void);
@@ -230,6 +259,18 @@ int csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_pc34(
     size_t viewport_size,
     int viewport_stride,
     CSB_V1_D0L2D0R2F0115TeleporterRenderReceiptPc34 *out_receipt);
+
+/* Decode and composite a field directly from the admitted CSBgraphics.dat
+ * cache.  A malformed cache, unrelated palette receipt, size mismatch, or
+ * decode failure is a strict no-draw and leaves the viewport unchanged. */
+int csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_from_cache_pc34(
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_D0L2D0R2F0115CacheTeleporterRequestPc34 *request,
+    unsigned char *viewport,
+    size_t viewport_size,
+    int viewport_stride,
+    CSB_V1_D0L2D0R2F0115CacheTeleporterReceiptPc34 *out_receipt);
 
 const char *csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_source_evidence_pc34(void);
 
