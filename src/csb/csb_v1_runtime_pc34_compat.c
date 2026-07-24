@@ -5152,7 +5152,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
     }
 }
 
-static void csb_v1_runtime_apply_move_group_timeline_record(
+static int csb_v1_runtime_apply_move_group_timeline_record_uncommitted(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
 {
@@ -5167,7 +5167,7 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
     int group_alive = 1;
     CSB_V1_F0252GroupMoveReceiptPc34 move_receipt;
 
-    if (!profile || !record || !profile->dungeon_handle) return;
+    if (!profile || !record || !profile->dungeon_handle) return -1;
     dungeon = profile->dungeon_handle;
     group_thing = (uint16_t)(((uint16_t)(record->effect & 0xFF) << 8) |
                              (uint16_t)(record->cell & 0xFF));
@@ -5177,7 +5177,7 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
     if (group_thing == 0xFFFEu || group_thing == 0xFFFFu ||
         !csb_v1_runtime_f0252_group_move_receipt_pc34(
             profile, record, &move_receipt)) {
-        return;
+        return -1;
     }
     source_level = move_receipt.source_map_index;
     source_x = move_receipt.source_map_x;
@@ -5187,7 +5187,7 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
             target_level,
             target_x,
             target_y)) {
-        return;
+        return 0;
     }
     if (csb_v1_runtime_group_destination_has_party_or_group(
             profile,
@@ -5201,7 +5201,7 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
             target_x,
             target_y,
             record->eventType == DM1_EVENT_MOVE_GROUP_AUDIBLE);
-        return;
+        return 1;
     }
     {
         int thing_type = -1;
@@ -5232,7 +5232,7 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
             target_level,
             target_x,
             target_y)) {
-        return;
+        return -1;
     }
     /* ReDMCSB TIMELINE.C F0252 emits C17 only for C61 after its linked
      * C04 admission.  Keep the sound behind the committed move so a stale
@@ -5288,6 +5288,88 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
                 1);
         }
     }
+    return 1;
+}
+
+int csb_v1_runtime_f0252_f0266_group_move_transaction_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    CSB_V1_F0252F0266GroupMoveTransactionReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0252F0266GroupMoveTransactionReceiptPc34 receipt;
+    CSB_V1_RuntimeProfile profile_snapshot;
+    CSB_V1_DungeonData *dungeon;
+    uint8_t *raw_snapshot = NULL;
+    uint16_t group_thing;
+    int destination_busy;
+    int status;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !record || !profile->dungeon_handle ||
+        !profile->dungeon_handle->raw_data ||
+        profile->dungeon_handle->raw_size <= 0 ||
+        (record->eventType != DM1_EVENT_MOVE_GROUP_SILENT &&
+         record->eventType != DM1_EVENT_MOVE_GROUP_AUDIBLE)) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle;
+    group_thing = (uint16_t)(((uint16_t)(record->effect & 0xff) << 8) |
+                             (uint16_t)(record->cell & 0xff));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!csb_v1_runtime_f0252_group_move_receipt_pc34(
+            profile, record, &receipt.move) ||
+        !csb_v1_runtime_f0266_group_move_projectile_receipt_pc34(
+            dungeon, group_thing,
+            receipt.move.source_map_index, receipt.move.source_map_x,
+            receipt.move.source_map_y, receipt.move.target_map_x,
+            receipt.move.target_map_y, &receipt.projectile)) {
+        return 0;
+    }
+
+    /* F0252 may relink C04, schedule C60/C61, and trigger destination
+     * consequences.  Keep a full raw/profile snapshot so a late failed
+     * F0163/F0164 write cannot leave either the Thing chain or TIMER heap
+     * half-mutated. */
+    raw_snapshot = (uint8_t *)malloc((size_t)dungeon->raw_size);
+    if (!raw_snapshot) return 0;
+    memcpy(raw_snapshot, dungeon->raw_data, (size_t)dungeon->raw_size);
+    profile_snapshot = *profile;
+    receipt.raw_dungeon_fnv1a_before = csb_v1_runtime_fnv1a32(
+        dungeon->raw_data, (size_t)dungeon->raw_size);
+    receipt.timeline_dispatch_count_before = profile->timeline_dispatch_count;
+    destination_busy = csb_v1_runtime_group_destination_has_party_or_group(
+        profile, receipt.move.target_map_index, receipt.move.target_map_x,
+        receipt.move.target_map_y);
+
+    status = csb_v1_runtime_apply_move_group_timeline_record_uncommitted(
+        profile, record);
+    if (status < 0) {
+        memcpy(dungeon->raw_data, raw_snapshot, (size_t)dungeon->raw_size);
+        *profile = profile_snapshot;
+        receipt.rolled_back = 1;
+        receipt.raw_dungeon_fnv1a_after = receipt.raw_dungeon_fnv1a_before;
+        receipt.timeline_dispatch_count_after =
+            receipt.timeline_dispatch_count_before;
+        free(raw_snapshot);
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.committed = status > 0 && !destination_busy;
+    receipt.retry_scheduled = status > 0 && !receipt.committed;
+    receipt.group_destroyed_by_consequence = status > 0 &&
+        !csb_v1_runtime_find_group_thing_location(
+            dungeon, group_thing, NULL, NULL, NULL);
+    receipt.raw_dungeon_fnv1a_after = csb_v1_runtime_fnv1a32(
+        dungeon->raw_data, (size_t)dungeon->raw_size);
+    receipt.timeline_dispatch_count_after = profile->timeline_dispatch_count;
+    receipt.source_evidence =
+        "ReDMCSB TIMELINE.C F0252 C60/C61 -> MOVE.C F0266 -> F0163/F0164 "
+        "linked C04 transaction; rejected late mutation restores C04/TIMER";
+    free(raw_snapshot);
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }
 
 static int csb_v1_runtime_stat_or_default(
@@ -16948,7 +17030,8 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             break;
         case DM1_EVENT_MOVE_GROUP_SILENT:
         case DM1_EVENT_MOVE_GROUP_AUDIBLE:
-            csb_v1_runtime_apply_move_group_timeline_record(profile, record);
+            (void)csb_v1_runtime_f0252_f0266_group_move_transaction_pc34(
+                profile, record, NULL);
             break;
         case DM1_EVENT_UPDATE_ASPECT_CREATURE_0:
         case DM1_EVENT_UPDATE_ASPECT_CREATURE_1:

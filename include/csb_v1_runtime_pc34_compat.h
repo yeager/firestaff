@@ -1110,6 +1110,25 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0266GroupMoveProjectileReceiptPc34;
 
+/* TIMELINE.C F0252 and MOVE.C F0266 share one source transaction.  The
+ * receipt ties the scheduled C60/C61 record to the linked C04 and its live
+ * C14 census before a move mutates either Thing chain.  A rejected late
+ * mutation restores both the raw dungeon bytes and the runtime timeline. */
+typedef struct {
+    int valid;
+    int committed;
+    int retry_scheduled;
+    int rolled_back;
+    int group_destroyed_by_consequence;
+    uint32_t raw_dungeon_fnv1a_before;
+    uint32_t raw_dungeon_fnv1a_after;
+    uint32_t timeline_dispatch_count_before;
+    uint32_t timeline_dispatch_count_after;
+    CSB_V1_F0252GroupMoveReceiptPc34 move;
+    CSB_V1_F0266GroupMoveProjectileReceiptPc34 projectile;
+    const char *source_evidence;
+} CSB_V1_F0252F0266GroupMoveTransactionReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -2415,6 +2434,16 @@ int csb_v1_runtime_f0266_group_move_projectile_receipt_pc34(
     int destination_map_x,
     int destination_map_y,
     CSB_V1_F0266GroupMoveProjectileReceiptPc34 *out_receipt);
+
+/* Execute one already-dispatched C60/C61 group move.  Unlike the old
+ * side-effect-only bridge this validates both F0252 and F0266 before any
+ * write, then rolls the C04/Thing chains and timeline state back if the
+ * actual source move cannot commit.  A blocked party/group destination is a
+ * successful source retry schedule, not a partial move. */
+int csb_v1_runtime_f0252_f0266_group_move_transaction_pc34(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    CSB_V1_F0252F0266GroupMoveTransactionReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
