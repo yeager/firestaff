@@ -37,6 +37,27 @@ typedef struct DM1_V1_GroupStateBundleReceiptPc34Compat {
     const char *sourceSymbol;
 } DM1_V1_GroupStateBundleReceiptPc34Compat;
 
+/* GROUP.C F0182, F0226 and MOVESENS.C F0273 share the live C04/SFT world.
+ * Keep that ownership at one boundary: callers receive a raw-source receipt
+ * rather than being allowed to construct a group or square-chain surrogate. */
+typedef struct DM1_V1_GroupSensorReceiptPc34Compat {
+    int valid;
+    int mapIndex;
+    int mapX;
+    int mapY;
+    int activeGroupIndex;
+    int groupIndex;
+    int squareDistance;
+    uint16_t requestedThingType;
+    int requestedCell;
+    uint16_t matchedThing;
+    int matchedThingType;
+    int matchedThingIndex;
+    int matchedCell;
+    int removedReactionCount;
+    const char *sourceSymbol;
+} DM1_V1_GroupSensorReceiptPc34Compat;
+
 /* GROUP.C F0196 for PC 3.4.  The exact sixty source owners are staged before
  * publishing, preserving any host-only storage beyond that range. */
 int dm1_v1_group_state_initialize_f0196_pc34(
@@ -65,6 +86,41 @@ int dm1_v1_group_state_apply_save_handoff_pc34(
     DM1_V1_GroupStateBundleReceiptPc34Compat *outReceipt);
 
 const char *dm1_v1_group_state_bundle_source_evidence_pc34(void);
+
+/* GROUP.C F0182: validates the ACTIVE_GROUP -> raw C04 owner first, then
+ * commits the four Aspect updates and exact-square C29..C41 deletion as one
+ * transaction.  Invalid C04, map, or timeline state leaves both unchanged. */
+int dm1_v1_group_stop_attacking_f0182_pc34(
+    struct GameWorld_Compat *world,
+    int activeGroupIndex,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    DM1_V1_GroupSensorReceiptPc34Compat *outReceipt);
+
+/* GROUP.C F0226: source-owned Manhattan distance.  Coordinates must name
+ * squares in the currently loaded original map; no host coordinates are
+ * admitted. */
+int dm1_v1_group_square_distance_f0226_pc34(
+    const struct GameWorld_Compat *world,
+    int mapIndex,
+    int sourceMapX,
+    int sourceMapY,
+    int destinationMapX,
+    int destinationMapY,
+    DM1_V1_GroupSensorReceiptPc34Compat *outReceipt);
+
+/* MOVESENS.C F0273: walks the selected raw SquareFirstThing chain in source
+ * order and returns the first matching F0032 object type/cell.  A valid
+ * no-match has matchedThing == 0xffff; malformed ownership fails closed. */
+int dm1_v1_sensor_get_object_of_type_f0273_pc34(
+    const struct GameWorld_Compat *world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int cell,
+    uint16_t objectType,
+    DM1_V1_GroupSensorReceiptPc34Compat *outReceipt);
 
 #ifdef __cplusplus
 }

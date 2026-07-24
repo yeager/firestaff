@@ -620,6 +620,17 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_group_state_bundle_pc34
              COMMAND test_dm1_v1_group_state_bundle_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_group_sensor_bundle_pc34_compat.c")
+    add_executable(test_dm1_v1_group_sensor_bundle_pc34_compat
+        tests/test_dm1_v1_group_sensor_bundle_pc34_compat.c)
+    target_link_libraries(test_dm1_v1_group_sensor_bundle_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_group_sensor_bundle_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_group_sensor_bundle_pc34_compat
+             COMMAND test_dm1_v1_group_sensor_bundle_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c")
     add_executable(test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat
