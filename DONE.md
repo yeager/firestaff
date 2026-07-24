@@ -40326,3 +40326,9 @@ passes all 27 checks from title through entrance and HUD.
   `dm1_v1_swsh_psg_audio_pc34_compat`, and
   `csb_v1_viewport_phase3_rendering`.
 - ✅ 2026-07-24 DM1 E0013/E0014/E0015/E0017/E0061 and S0080/S0081 platform timing bundle: a source-audited 20 ms PC34/PAL host scheduler now owns Timer-C no-op, keyboard/MIDI, palette, VBlank, Timer-A sound, DMA completion, and floppy power contracts. E0017 gates the live DM1 VBlank counter; unavailable host services fail closed instead of being synthesized. Verification: `dm1_v1_platform_timing_exception_pc34_compat` and `dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat` pass, and `firestaff` builds with Ninja.
+
+- ✅ 2026-07-24 CSB Utility import confirmation: a source-validated DM1
+  candidate is now isolated from the committed party during preview. Reject
+  and cancel discard it; explicit acceptance atomically commits it before
+  `NEW_GAME`. Verification: `csb_v1_utility_import_confirmation_pc34_compat`,
+  `csb_v1_utility_flow_action_contract`, and focused boot-handoff coverage.
