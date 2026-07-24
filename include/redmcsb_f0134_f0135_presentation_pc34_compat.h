@@ -43,6 +43,12 @@ int redmcsb_f0134_f0135_presentation_target_bind_pc34(
     int source_frame_verified,
     int no_synthetic_fallback);
 
+/* Exposes the admission check to adjacent ReDMCSB video-driver routines.
+ * Those routines may mutate the indexed target, but must never bypass the
+ * original-frame/palette ownership established by target_bind. */
+int redmcsb_f0134_f0135_presentation_target_is_bound_pc34(
+    const Redmcsb_F0134F0135_PresentationTargetPc34 *target);
+
 /* VIDEO.C F0134: replace the complete admitted indexed target with one
  * palette index. A fill has no transparency or palette remap semantic. */
 int redmcsb_f0134_fill_bitmap_pc34(
