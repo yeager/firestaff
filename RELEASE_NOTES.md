@@ -1,9 +1,12 @@
 
 # Unreleased
 
-# Firestaff v3.0.98
+# Firestaff v3.0.99
 
-## Highlights since v3.0.97
+## Highlights since v3.0.98
+
+- macOS Artpack Studio bundles and verifies Tkinter at package time, removing
+  the missing-Tkinter startup failure from the desktop application.
 
 - Artpack Studio is now self-contained: bundled Python, Pillow and Tk remove
   the system-Pillow dependency on macOS, Windows, Linux and Steam Deck.
