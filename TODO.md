@@ -62,7 +62,9 @@ that its exact runtime path is not already source-locked and tested.
     ornaments, creatures, items, projectiles, explosions and backgrounds.
     2026-07-24: F0115 item/explosion composition now accepts only a
     hash-verified decoded `CSBGRAPHICS.DAT` surface and its source palette,
-    using C10 transparency with no icon/marker fallback. Remaining: bind
+    using C10 transparency. Source-bound object drawers now also suppress
+    the older icon/marker fallback when their real surface is unavailable.
+    Remaining: bind
     every F0115 object, creature and projectile selector to this material
     route and cover the remaining wall/pit/background families.
 17. **Q-CSB-07 Thing/sensor runtime:** generic sensors, remote actions,
