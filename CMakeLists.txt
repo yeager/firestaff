@@ -1895,6 +1895,31 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0069_f0076_mouse_input
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_host_input_bridge_pc34_compat.c")
+    # DM1 host-device admission.  Controller aliases and scaled touch/pointer
+    # events must land on the original C001..C006 / F0358 command path, and a
+    # host modal must consume gameplay input before that queue is mutated.
+    add_executable(test_dm1_v1_host_input_bridge_pc34_compat
+        tests/test_dm1_v1_host_input_bridge_pc34_compat.c
+        src/dm1/dm1_v1_host_input_bridge_pc34_compat.c
+        src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+        src/shared/touch_pointer_input_pc34_compat.c
+        src/shared/touch_click_zone_matrix_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_host_input_bridge_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_host_input_bridge_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_host_input_bridge_pc34_compat
+        COMMAND test_dm1_v1_host_input_bridge_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat.c")
     add_executable(test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat
         tests/test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat.c
