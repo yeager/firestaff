@@ -107,12 +107,12 @@ F	0067	F0067_MOUSE_SetPointerToNormal	ATARIST.H;FMTOWNS.H;IIGS.H;REVIVE.C;IO.C;D
 F	067	F067_aaat_	ATARIST.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0068	F0068_MOUSE_SetPointerToObject	ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;IO.C;DEFS.H;CHAMPION.C;MOUSESET.C;GAMELOOP.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	068	F068_aagz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0069	F0069_MOUSE_SetPointer	ATARIST.H;FMTOWNS.H;IIGS.H;CHAMPRST.C;DEFS.H;CHAMPION.C;MOUSESET.C;STARTUP2.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0069	F0069_MOUSE_SetPointer	ATARIST.H;FMTOWNS.H;IIGS.H;CHAMPRST.C;DEFS.H;CHAMPION.C;MOUSESET.C;STARTUP2.C	implemented-narrow	implemented_narrow	source-owned pointer selection is verified through the F0069/F0076 PC34 mouse bundle
 F	069	F069_aaaL_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0070	F0070_MOUSE_ProcessCommands125To128_ClickOnChampionIcon	ATARIST.H;FMTOWNS.H;IIGS.H;COMMAND.C;IO.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0070	F0070_MOUSE_ProcessCommands125To128_ClickOnChampionIcon	ATARIST.H;FMTOWNS.H;IIGS.H;COMMAND.C;IO.C;DEFS.H	implemented-narrow	implemented_narrow	authenticated C028 champion-icon hit routing enters the existing COMMAND C125-C128 queue
 F	070	F070_aajz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0071	F0071_MOUSE_DropChampionIcon	IIGS.H;IO.C;BASE.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0073	F0073_MOUSE_BuildPointerScreenArea	INPUT.C;IIGS.H;IO.C;BASE.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0073	F0073_MOUSE_BuildPointerScreenArea	INPUT.C;IIGS.H;IO.C;BASE.C;DEFS.H	implemented-narrow	implemented_narrow	PC34 logical pointer-area capture preserves the original indexed pixels before draw
 F	0074	F0074_MOUSE_DrawPointerScreenArea	IIGS.H;IO.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0075	F0075_MOUSE_Exception70Handler_IKBD_MIDI_MouseStatus	ATARIST.H;IIGS.H;IO.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	075	F075_xxxx_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
@@ -2121,10 +2121,10 @@ S	0016	S0016_MAIN_DrawMousePointerHiddenScreenAreaIfNecessary_CPSDF	BASE.C;DEFS.
 S	0058	S0058_TOS_Exception257Handler_CriticalError	DEFS.H;TOS.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 S	0059	S0059_TOS_SetException257Vector_CriticalError	ATARIST.H;DEFS.H;TOS.C;STARTUP2.C;STARTUP1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 S	059	S059_aaac_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-S	0072	S0072_MOUSE_DrawPointerHiddenScreenArea	IO.C;BASE.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-S	0074	S0074_MOUSE_DrawPointerScreenArea	IO.C;BASE.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-S	0075	S0075_MOUSE_Exception70Handler_IKBD_MIDI_MouseStatus	IO.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-S	0076	S0076_MOUSE_OnMouseButtonsStatusChange	IO.C;DEFS.H;GAMELOOP.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+S	0072	S0072_MOUSE_DrawPointerHiddenScreenArea	IO.C;BASE.C;DEFS.H	implemented-narrow	implemented_narrow	restores the saved PC34 pointer area only after a valid source capture
+S	0074	S0074_MOUSE_DrawPointerScreenArea	IO.C;BASE.C;DEFS.H	implemented-narrow	implemented_narrow	captures then draws the caller-owned pointer bitmap with bounded coordinates
+S	0075	S0075_MOUSE_Exception70Handler_IKBD_MIDI_MouseStatus	IO.C;DEFS.H	implemented-narrow	implemented_narrow	caller-owned status packets are clamped and sampled before button dispatch
+S	0076	S0076_MOUSE_OnMouseButtonsStatusChange	IO.C;DEFS.H;GAMELOOP.C	implemented-narrow	implemented_narrow	button-edge dispatch authenticates F0069/F0070 before COMMAND queue insertion
 S	0080	S0080_CPSDF_CheckDMATransferCompletion	ATARIST.H;VBLANK.C;LOADSAVE.C;DEFS.H;STARTUP2.C;COPYPRO2.C;STARTUP1.C	implemented-source-audited	implemented_source_audited	explicit real host DMA callback only; unavailable host fails closed
 S	080	S080_aaat_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 S	0081	S0081_CPSDF_TurnOffFloppyDrive	ATARIST.H;VBLANK.C;DEFS.H;STARTUP2.C;COPYPRO2.C;STARTUP1.C	implemented-source-audited	implemented_source_audited	explicit real host floppy callback only; unavailable host fails closed
