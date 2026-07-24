@@ -9,7 +9,7 @@ ZIP_PATH="$ROOT/release/Firestaff-${VERSION}-windows.zip"
 README_SRC="$ROOT/README.md"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 BIN_SRC="$BUILD_DIR/firestaff.exe"
-ARTPACK_STUDIO_BIN_SRC="$BUILD_DIR/firestaff_artpack_studio.exe"
+ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio.exe}"
 
 if [[ ! -x "$BIN_SRC" ]]; then
   echo "Missing built binary: $BIN_SRC" >&2
@@ -21,10 +21,9 @@ if [[ ! -x "$ARTPACK_STUDIO_BIN_SRC" ]]; then
 fi
 
 rm -rf "$STAGE_DIR"
-mkdir -p "$STAGE_DIR/scripts" "$ROOT/release"
+mkdir -p "$STAGE_DIR" "$ROOT/release"
 cp "$BIN_SRC" "$STAGE_DIR/firestaff.exe"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$STAGE_DIR/firestaff_artpack_studio.exe"
-cp "$ROOT/scripts/firestaff_artpack_studio.py" "$STAGE_DIR/scripts/firestaff_artpack_studio.py"
 cp "$README_SRC" "$STAGE_DIR/README.md"
 cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"
 

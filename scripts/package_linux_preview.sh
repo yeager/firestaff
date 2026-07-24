@@ -9,7 +9,7 @@ ARCH_RPM="${ARCH_RPM:-$(uname -m)}"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 README_SRC="$ROOT/README.md"
 BIN_SRC="$BUILD_DIR/firestaff"
-ARTPACK_STUDIO_BIN_SRC="$BUILD_DIR/firestaff_artpack_studio"
+ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio}"
 OUT_DIR="$ROOT/release"
 PKG_NAME="firestaff"
 SUMMARY="Firestaff preview Dungeon Master engine"
@@ -32,12 +32,13 @@ rm -rf "$DEB_ROOT"
 mkdir -p "$DEB_ROOT/DEBIAN" "$DEB_ROOT/usr/bin" "$DEB_ROOT/usr/share/doc/$PKG_NAME" "$DEB_ROOT/usr/share/pixmaps" "$DEB_ROOT/usr/share/applications" "$DEB_ROOT/usr/share/firestaff/scripts"
 cp "$BIN_SRC" "$DEB_ROOT/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
-cp "$ROOT/scripts/firestaff_artpack_studio.py" "$DEB_ROOT/usr/share/firestaff/scripts/firestaff_artpack_studio.py"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$README_SRC" "$DEB_ROOT/usr/share/doc/$PKG_NAME/README.md"
 cp "$RELEASE_NOTES_SRC" "$DEB_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
-cp "$ROOT/assets/branding/firestaff-logo.png" "$DEB_ROOT/usr/share/pixmaps/firestaff.png"
+if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
+  cp "$ROOT/assets/branding/firestaff-logo.png" "$DEB_ROOT/usr/share/pixmaps/firestaff.png"
+fi
 cat > "$DEB_ROOT/usr/share/applications/firestaff.desktop" <<DESKTOP
 [Desktop Entry]
 Type=Application
@@ -46,6 +47,16 @@ Comment=Firestaff preview Dungeon Master engine
 Exec=firestaff
 Icon=firestaff
 Categories=Game;RolePlaying;
+Terminal=false
+DESKTOP
+cat > "$DEB_ROOT/usr/share/applications/firestaff-artpack-studio.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Firestaff Artpack Studio
+Comment=Create and edit Firestaff V2.2 artpacks
+Exec=firestaff_artpack_studio
+Icon=firestaff
+Categories=Graphics;Game;RolePlaying;
 Terminal=false
 DESKTOP
 cat > "$DEB_ROOT/DEBIAN/control" <<CONTROL
@@ -71,13 +82,15 @@ mkdir -p "$RPM_TOP/BUILD" "$RPM_TOP/RPMS" "$RPM_TOP/SOURCES" "$RPM_TOP/SPECS" "$
 mkdir -p "$RPM_ROOT/usr/bin" "$RPM_ROOT/usr/share/doc/$PKG_NAME" "$RPM_ROOT/usr/share/pixmaps" "$RPM_ROOT/usr/share/applications" "$RPM_ROOT/usr/share/firestaff/scripts"
 cp "$BIN_SRC" "$RPM_ROOT/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
-cp "$ROOT/scripts/firestaff_artpack_studio.py" "$RPM_ROOT/usr/share/firestaff/scripts/firestaff_artpack_studio.py"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$README_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/README.md"
 cp "$RELEASE_NOTES_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
-cp "$ROOT/assets/branding/firestaff-logo.png" "$RPM_ROOT/usr/share/pixmaps/firestaff.png"
+if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
+  cp "$ROOT/assets/branding/firestaff-logo.png" "$RPM_ROOT/usr/share/pixmaps/firestaff.png"
+fi
 cp "$DEB_ROOT/usr/share/applications/firestaff.desktop" "$RPM_ROOT/usr/share/applications/firestaff.desktop"
+cp "$DEB_ROOT/usr/share/applications/firestaff-artpack-studio.desktop" "$RPM_ROOT/usr/share/applications/firestaff-artpack-studio.desktop"
 cat > "$RPM_TOP/SPECS/firestaff.spec" <<SPEC
 Name:           $PKG_NAME
 Version:        ${VERSION//-/_}
@@ -95,9 +108,8 @@ $DESCRIPTION
 /usr/bin/firestaff_artpack_studio
 /usr/share/doc/$PKG_NAME/README.md
 /usr/share/doc/$PKG_NAME/RELEASE_NOTES.md
-/usr/share/pixmaps/firestaff.png
 /usr/share/applications/firestaff.desktop
-/usr/share/firestaff/scripts/firestaff_artpack_studio.py
+/usr/share/applications/firestaff-artpack-studio.desktop
 SPEC
 rpmbuild --define "_topdir $RPM_TOP" --define "buildroot $RPM_ROOT" --target "$ARCH_RPM" -bb "$RPM_TOP/SPECS/firestaff.spec"
 RPM_PATH="$(find "$RPM_TOP/RPMS" -type f -name '*.rpm' | head -1)"

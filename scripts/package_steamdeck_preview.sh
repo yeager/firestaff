@@ -7,7 +7,7 @@ VERSION="${VERSION:-0.2.9-preview}"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 README_SRC="$ROOT/README.md"
 BIN_SRC="$BUILD_DIR/firestaff"
-ARTPACK_STUDIO_BIN_SRC="$BUILD_DIR/firestaff_artpack_studio"
+ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio}"
 OUT_DIR="$ROOT/release"
 PKG_NAME="firestaff"
 PKG_ARCH="x86_64"
@@ -70,7 +70,6 @@ cp "$BIN_SRC" "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-bin"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-artpack-studio-bin"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-bin"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-artpack-studio-bin"
-cp "$ROOT/scripts/firestaff_artpack_studio.py" "$PKG_ROOT/usr/share/firestaff/scripts/firestaff_artpack_studio.py"
 cp -L "$SDL3_LIB" "$PKG_ROOT/usr/lib/$PKG_NAME/libSDL3.so.0"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/libSDL3.so.0"
 cat > "$PKG_ROOT/usr/bin/firestaff" <<'WRAPPER'
@@ -89,7 +88,9 @@ WRAPPER
 chmod 0755 "$PKG_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$README_SRC" "$PKG_ROOT/usr/share/doc/$PKG_NAME/README.md"
 cp "$RELEASE_NOTES_SRC" "$PKG_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
-cp "$ROOT/assets/branding/firestaff-logo.png" "$PKG_ROOT/usr/share/pixmaps/firestaff.png"
+if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
+  cp "$ROOT/assets/branding/firestaff-logo.png" "$PKG_ROOT/usr/share/pixmaps/firestaff.png"
+fi
 cat > "$PKG_ROOT/usr/share/applications/firestaff.desktop" <<DESKTOP
 [Desktop Entry]
 Type=Application
@@ -98,6 +99,16 @@ Comment=$SUMMARY
 Exec=firestaff
 Icon=firestaff
 Categories=Game;RolePlaying;
+Terminal=false
+DESKTOP
+cat > "$PKG_ROOT/usr/share/applications/firestaff-artpack-studio.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Firestaff Artpack Studio
+Comment=Create and edit Firestaff V2.2 artpacks
+Exec=firestaff_artpack_studio
+Icon=firestaff
+Categories=Graphics;Game;RolePlaying;
 Terminal=false
 DESKTOP
 
