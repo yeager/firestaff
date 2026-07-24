@@ -1,5 +1,8 @@
 #include "csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 enum {
     CSB_PRESENT = 1,
     CSB_ABSENT = 0,
@@ -493,6 +496,164 @@ int csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_pc34(
     receipt.field_aspect_index = fixture->field_aspect_index;
     receipt.source_graphics_item_index = source->source_graphics_item_index;
     receipt.source_payload_hash = source->source_payload_hash;
+    *out_receipt = receipt;
+    return 1;
+}
+
+static uint32_t csb_v1_viewport_d0_f0115_fnv1a_pc34(
+    const unsigned char *bytes,
+    size_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes || byte_count == 0u) {
+        return 0u;
+    }
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int csb_v1_viewport_d0_f0115_cache_palette_matches_pc34(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_CSBGraphicsDatPaletteSourceReceipt *palette)
+{
+    CSB_V1_CSBGraphicsEntrySpan current_span;
+    unsigned char decoded[CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES];
+    size_t written = 0u;
+
+    if (!cache || !palette || !cache->loaded || !cache->file_buffer ||
+        cache->file_size == 0u || cache->resolved_path[0] == '\0' ||
+        cache->matched_md5[0] == '\0' || !palette->valid ||
+        strcmp(palette->source_path, cache->resolved_path) != 0 ||
+        strcmp(palette->source_md5, cache->matched_md5) != 0 ||
+        palette->entry_span.compressed_size == 0u ||
+        palette->entry_span.decompressed_size !=
+            CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES ||
+        palette->decoded_fnv1a != csb_v1_viewport_d0_f0115_fnv1a_pc34(
+            palette->decoded_bytes, sizeof(palette->decoded_bytes)) ||
+        csb_v1_csbgraphics_dat_entry_span(cache->file_buffer,
+                                           cache->file_size,
+                                           palette->entry_span.entry_index,
+                                           &current_span) !=
+            CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        current_span.compressed_size != palette->entry_span.compressed_size ||
+        current_span.decompressed_size != palette->entry_span.decompressed_size ||
+        csb_v1_csbgraphics_dat_decode_entry(cache->file_buffer,
+                                             cache->file_size,
+                                             palette->entry_span.entry_index,
+                                             decoded,
+                                             sizeof(decoded),
+                                             &written) !=
+            CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        written != sizeof(decoded) ||
+        memcmp(decoded, palette->decoded_bytes, sizeof(decoded)) != 0) {
+        return 0;
+    }
+    return 1;
+}
+
+int csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_from_cache_pc34(
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    const CSB_V1_D0L2D0R2F0115CacheTeleporterRequestPc34 *request,
+    unsigned char *viewport,
+    size_t viewport_size,
+    int viewport_stride,
+    CSB_V1_D0L2D0R2F0115CacheTeleporterReceiptPc34 *out_receipt)
+{
+    CSB_V1_CSBGraphicsEntrySpan span;
+    CSB_V1_D0L2D0R2F0115TeleporterSourceRasterPc34 source;
+    CSB_V1_D0L2D0R2F0115TeleporterRenderReceiptPc34 composed;
+    CSB_V1_D0L2D0R2F0115CacheTeleporterReceiptPc34 receipt;
+    unsigned char *decoded = NULL;
+    size_t expected_size;
+    size_t written = 0u;
+    uint32_t raster_hash;
+    uint32_t palette_hash;
+    int rc;
+    int drawn;
+
+    if (out_receipt) {
+        *out_receipt = (CSB_V1_D0L2D0R2F0115CacheTeleporterReceiptPc34){0};
+    }
+    if (!fixture || !cache || !request || !out_receipt || !viewport ||
+        !csb_v1_viewport_d0_f0115_cache_palette_matches_pc34(
+            cache, request->palette_receipt) ||
+        fixture->field_aspect_index < 0 || fixture->wall_frame_height <= 0 ||
+        fixture->wall_frame_x2 < fixture->wall_frame_x1) {
+        return 0;
+    }
+
+    expected_size = (size_t)(fixture->wall_frame_x2 - fixture->wall_frame_x1 + 1) *
+                    (size_t)fixture->wall_frame_height;
+    if (expected_size == 0u || expected_size > 65535u ||
+        csb_v1_csbgraphics_dat_entry_span(cache->file_buffer,
+                                           cache->file_size,
+                                           request->csbgraphics_entry_index,
+                                           &span) !=
+            CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        span.compressed_size == 0u || span.decompressed_size != expected_size) {
+        return 0;
+    }
+
+    decoded = (unsigned char *)malloc(expected_size);
+    if (!decoded) {
+        return 0;
+    }
+    rc = csb_v1_csbgraphics_dat_decode_entry(cache->file_buffer,
+                                              cache->file_size,
+                                              request->csbgraphics_entry_index,
+                                              decoded,
+                                              expected_size,
+                                              &written);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK || written != expected_size) {
+        free(decoded);
+        return 0;
+    }
+    raster_hash = csb_v1_viewport_d0_f0115_fnv1a_pc34(decoded, written);
+    palette_hash = csb_v1_viewport_d0_f0115_fnv1a_pc34(
+        request->palette_receipt->decoded_bytes,
+        sizeof(request->palette_receipt->decoded_bytes));
+    if (raster_hash == 0u || palette_hash == 0u) {
+        free(decoded);
+        return 0;
+    }
+
+    source = (CSB_V1_D0L2D0R2F0115TeleporterSourceRasterPc34){
+        1,
+        1,
+        1,
+        fixture->field_aspect_index,
+        decoded,
+        written,
+        fixture->wall_frame_x2 - fixture->wall_frame_x1 + 1,
+        fixture->wall_frame_height,
+        fixture->wall_frame_x2 - fixture->wall_frame_x1 + 1,
+        raster_hash
+    };
+    drawn = csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_pc34(
+        fixture, &source, viewport, viewport_size, viewport_stride, &composed);
+    free(decoded);
+    if (!drawn) {
+        return 0;
+    }
+
+    receipt.valid = 1;
+    receipt.consumed_hash_admitted_csbgraphics_dat = 1;
+    receipt.no_synthetic_pixels = 1;
+    receipt.no_fallback_visuals = 1;
+    receipt.side = fixture->side;
+    receipt.field_aspect_index = fixture->field_aspect_index;
+    receipt.csbgraphics_entry_index = request->csbgraphics_entry_index;
+    receipt.palette_entry_index = request->palette_receipt->entry_span.entry_index;
+    receipt.decoded_raster_hash = raster_hash;
+    receipt.palette_hash = palette_hash;
+    receipt.copied_pixels = composed.copied_pixels;
+    receipt.transparent_pixels = composed.transparent_pixels;
     *out_receipt = receipt;
     return 1;
 }

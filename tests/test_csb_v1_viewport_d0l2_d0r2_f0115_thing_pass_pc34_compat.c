@@ -1,4 +1,5 @@
 #include "csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.h"
+#include "dm1_v1_graphics_loader_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,6 +84,93 @@ static uint32_t fnv1a32(const unsigned char *data, size_t size)
         hash *= 16777619u;
     }
     return hash;
+}
+
+static void write_be16(unsigned char *bytes, size_t offset, unsigned value)
+{
+    bytes[offset] = (unsigned char)((value >> 8) & 0xffu);
+    bytes[offset + 1u] = (unsigned char)(value & 0xffu);
+}
+
+/* The native decoder uses LSB-first 9-bit codes. Reset before the dictionary
+ * grows: this is a real, bounded CSBgraphics.dat LZW payload, not a decoded
+ * pixel injection. */
+static unsigned char *encode_lzw_literal_stream(const unsigned char *input,
+                                                 size_t input_size,
+                                                 size_t *out_size)
+{
+    size_t bit_count;
+    size_t bit_pos = 0u;
+    size_t i = 0u;
+    unsigned char *output;
+
+    if (!input || input_size == 0u || !out_size) return NULL;
+    bit_count = (input_size + (input_size / 200u) + 2u) * 9u;
+    output = (unsigned char *)calloc((bit_count + 7u) / 8u, 1u);
+    if (!output) return NULL;
+
+#define WRITE_CODE(value) do { \
+        unsigned code_value = (unsigned)(value); \
+        int bit; \
+        for (bit = 0; bit < 9; ++bit, ++bit_pos) { \
+            if (code_value & (1u << (unsigned)bit)) { \
+                output[bit_pos >> 3] |= (unsigned char)(1u << (bit_pos & 7u)); \
+            } \
+        } \
+    } while (0)
+    while (i < input_size) {
+        size_t end = i + 200u;
+        if (end > input_size) end = input_size;
+        WRITE_CODE(DM1_GFX_LZW_CLEAR_CODE);
+        while (i < end) {
+            WRITE_CODE(input[i]);
+            ++i;
+        }
+    }
+    WRITE_CODE(DM1_GFX_LZW_END_CODE);
+#undef WRITE_CODE
+    *out_size = (bit_pos + 7u) / 8u;
+    return output;
+}
+
+static unsigned char *build_cache_graphics(const unsigned char *palette,
+                                           const unsigned char *field,
+                                           size_t *out_size)
+{
+    unsigned char *compressed_palette = NULL;
+    unsigned char *compressed_field = NULL;
+    unsigned char *bytes = NULL;
+    size_t palette_size = 0u;
+    size_t field_size = 0u;
+    const size_t header_size = 10u;
+
+    if (!palette || !field || !out_size) return NULL;
+    compressed_palette = encode_lzw_literal_stream(
+        palette, CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES, &palette_size);
+    compressed_field = encode_lzw_literal_stream(field, 32u * 136u, &field_size);
+    if (!compressed_palette || !compressed_field || palette_size > 65535u ||
+        field_size > 65535u) {
+        free(compressed_palette);
+        free(compressed_field);
+        return NULL;
+    }
+    bytes = (unsigned char *)calloc(header_size + palette_size + field_size, 1u);
+    if (!bytes) {
+        free(compressed_palette);
+        free(compressed_field);
+        return NULL;
+    }
+    write_be16(bytes, 0u, 2u);
+    write_be16(bytes, 2u, (unsigned)palette_size);
+    write_be16(bytes, 4u, (unsigned)field_size);
+    write_be16(bytes, 6u, CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES);
+    write_be16(bytes, 8u, 32u * 136u);
+    memcpy(bytes + header_size, compressed_palette, palette_size);
+    memcpy(bytes + header_size + palette_size, compressed_field, field_size);
+    *out_size = header_size + palette_size + field_size;
+    free(compressed_palette);
+    free(compressed_field);
+    return bytes;
 }
 
 static int read_real_graphics_item_hash(const char *path,
@@ -788,6 +876,79 @@ static void test_source_bound_teleporter_field_composite(void)
     }
 }
 
+static void test_cache_bound_teleporter_field_decode(void)
+{
+    unsigned char palette[CSB_V1_CSBGRAPHICS_DAT_PALETTE_BYTES];
+    unsigned char field[32u * 136u];
+    unsigned char viewport[224u * 136u];
+    unsigned char *cache_bytes;
+    size_t cache_size = 0u;
+    CSB_V1_CSBGraphicsDatRealCache cache;
+    CSB_V1_CSBGraphicsDatPaletteSourceReceipt palette_receipt;
+    CSB_V1_CSBGraphicsEntrySpan palette_span;
+    CSB_V1_D0L2D0R2F0115CacheTeleporterRequestPc34 request;
+    CSB_V1_D0L2D0R2F0115CacheTeleporterReceiptPc34 receipt;
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *left = fixture_for_index(0);
+    uint32_t before;
+    size_t i;
+
+    for (i = 0u; i < sizeof(palette); ++i) palette[i] = (unsigned char)(i & 0x3fu);
+    memset(field, 0x6au, sizeof(field));
+    field[0] = 10u;
+    cache_bytes = build_cache_graphics(palette, field, &cache_size);
+    expect_int("cache_field.fixture", cache_bytes != NULL, 1, A_F0115);
+    if (!cache_bytes) return;
+
+    memset(&cache, 0, sizeof(cache));
+    cache.file_buffer = cache_bytes;
+    cache.file_size = cache_size;
+    cache.loaded = 1;
+    strcpy(cache.resolved_path, "/verified/CSBGRAPHICS.DAT");
+    strcpy(cache.matched_md5, "0123456789abcdef0123456789abcdef");
+    expect_int("cache_field.classify",
+               csb_v1_csbgraphics_dat_classify(cache.file_buffer, cache.file_size,
+                                                &cache.index),
+               CSB_V1_CSBGRAPHICS_CLASSIFY_OK, A_F0115);
+    expect_int("cache_field.palette_span",
+               csb_v1_csbgraphics_dat_entry_span(cache.file_buffer, cache.file_size,
+                                                  0u, &palette_span),
+               CSB_V1_CSBGRAPHICS_CLASSIFY_OK, A_F0115);
+
+    memset(&palette_receipt, 0, sizeof(palette_receipt));
+    palette_receipt.valid = 1;
+    strcpy(palette_receipt.source_path, cache.resolved_path);
+    strcpy(palette_receipt.source_md5, cache.matched_md5);
+    palette_receipt.entry_span = palette_span;
+    memcpy(palette_receipt.decoded_bytes, palette, sizeof(palette));
+    palette_receipt.decoded_fnv1a = fnv1a32(palette, sizeof(palette));
+    request.csbgraphics_entry_index = 1u;
+    request.palette_receipt = &palette_receipt;
+    memset(viewport, 0x55, sizeof(viewport));
+    expect_int("cache_field.render",
+               csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_from_cache_pc34(
+                   left, &cache, &request, viewport, sizeof(viewport), 224, &receipt),
+               1, A_D0L);
+    expect_int("cache_field.receipt", receipt.valid, 1, A_D0L);
+    expect_int("cache_field.archive", receipt.consumed_hash_admitted_csbgraphics_dat,
+               1, A_F0115);
+    expect_int("cache_field.entry", (int)receipt.csbgraphics_entry_index, 1, A_F0115);
+    expect_int("cache_field.transparent", (int)receipt.transparent_pixels, 1, A_DEFS);
+    expect_int("cache_field.pixel", viewport[1], 0x6a, A_D0L);
+    expect_int("cache_field.c10_kept", viewport[0], 0x55, A_DEFS);
+
+    before = fnv1a32(viewport, sizeof(viewport));
+    palette_receipt.decoded_bytes[0] ^= 0x01u;
+    expect_int("cache_field.reject_stale_palette",
+               csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_from_cache_pc34(
+                   left, &cache, &request, viewport, sizeof(viewport), 224, &receipt),
+               0, "same archive palette receipt required");
+    expect_int("cache_field.reject_keeps_viewport",
+               fnv1a32(viewport, sizeof(viewport)) == before, 1,
+               "no draw before source admission");
+
+    free(cache_bytes);
+}
+
 int main(void)
 {
     printf("probe=csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat\n");
@@ -801,6 +962,7 @@ int main(void)
     test_csb_lineage_cross_references();
     test_real_graphics_dat_frame_receipts();
     test_source_bound_teleporter_field_composite();
+    test_cache_bound_teleporter_field_decode();
     test_evidence_strings();
 
     expect_int("assertion_count_at_least_100", g_assertions >= 100, 1, A_F0115);

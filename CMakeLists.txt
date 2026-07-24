@@ -17502,6 +17502,8 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
         tests/test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
+        src/csb/csb_v1_csbgraphics_dat_classify.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     )
     target_include_directories(test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
