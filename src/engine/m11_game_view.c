@@ -4780,6 +4780,52 @@ static int m11_csb_startup_utility_raster_admitted(
     return admitted;
 }
 
+static void m11_csb_startup_consume_audio_action(
+    M11_GameViewState *state,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupAudioAction_PC34 action)
+{
+    if (!state || !session) {
+        return;
+    }
+    switch (action) {
+    case CSB_V1_STARTUP_AUDIO_ACTION_PLAY_FTL_SWOOSH_PC34:
+        /* F0908/F0909 may only reach SDL through the selected package's
+         * authenticated signed-PCM buffer.  Missing bytes deliberately stay
+         * silent: using an M11 marker here would fabricate the CSB intro. */
+        if (!state->csbStartupSwooshPlayConsumed &&
+            state->csbStartupSwooshBytesBound &&
+            M11_Audio_PlayCsbSwshPcm(
+                &state->audioState, state->csbStartupSwooshBytes,
+                (int)sizeof(state->csbStartupSwooshBytes), 334,
+                state->csbStartupSwooshHash)) {
+            state->csbStartupSwooshPlayConsumed = 1;
+        }
+        break;
+    case CSB_V1_STARTUP_AUDIO_ACTION_RELEASE_FTL_SWOOSH_PC34:
+        /* F0910 is a source-order release.  The raw sample stream has no
+         * procedural tail to cancel; retain the release only after F0909's
+         * exact buffer was accepted. */
+        if (state->csbStartupSwooshPlayConsumed) {
+            state->csbStartupSwooshReleaseConsumed = 1;
+        }
+        break;
+    case CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34:
+        /* Do not route this through DM1 SONG.DAT.  The transition is
+         * recorded only after the title's source-owned swoosh release; an
+         * actual CSB music decoder can consume this boundary later. */
+        if (session->playback.title_phase_mask == 0x0f &&
+            (!state->csbStartupSwooshBytesBound ||
+             state->csbStartupSwooshReleaseConsumed)) {
+            state->csbStartupEntranceMusicTransitionConsumed = 1;
+        }
+        break;
+    case CSB_V1_STARTUP_AUDIO_ACTION_NONE_PC34:
+    default:
+        break;
+    }
+}
+
 static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
                                           unsigned char *framebuffer,
                                           int framebufferWidth,
@@ -4832,10 +4878,17 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
     if (session &&
         session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_NONE_PC34) {
         CSB_V1_StartupAudioAction_PC34 audio_action;
-        if (!csb_v1_boot_startup_playback_begin_pc34(session, &audio_action) ||
-            !csb_v1_boot_startup_playback_complete_swoosh_pc34(
-                session, &audio_action)) {
+        if (!csb_v1_boot_startup_playback_begin_pc34(session, &audio_action)) {
             session = NULL;
+        } else {
+            m11_csb_startup_consume_audio_action(state, session, audio_action);
+            if (!csb_v1_boot_startup_playback_complete_swoosh_pc34(
+                    session, &audio_action)) {
+                session = NULL;
+            } else {
+                m11_csb_startup_consume_audio_action(state, session,
+                                                     audio_action);
+            }
         }
     }
     if (session &&
@@ -4879,6 +4932,7 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
                 session = NULL;
                 break;
             }
+            m11_csb_startup_consume_audio_action(state, session, audio_action);
         }
     }
     /* TITLE.C F0437 and ENTRANCE.C F0441/F0807 supply the source plan.
@@ -18072,6 +18126,41 @@ int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled) {
     state->dm1MusicOn = enabled ? 1 : 0;
     (void)M11_Audio_SetTitleMusicEnabled(&state->audioState, state->dm1MusicOn);
     return state->dm1MusicOn;
+}
+
+int M11_GameView_SetCsbStartupSwooshSource(M11_GameViewState* state,
+                                           const unsigned char* bytes,
+                                           int byteCount,
+                                           uint32_t expectedHash) {
+    uint32_t hash = 2166136261u;
+    int index;
+
+    if (!state) {
+        return 0;
+    }
+    memset(state->csbStartupSwooshBytes, 0,
+           sizeof(state->csbStartupSwooshBytes));
+    state->csbStartupSwooshBytesBound = 0;
+    state->csbStartupSwooshHash = 0u;
+    state->csbStartupSwooshPlayConsumed = 0;
+    state->csbStartupSwooshReleaseConsumed = 0;
+    state->csbStartupEntranceMusicTransitionConsumed = 0;
+    if (!bytes || byteCount != (int)sizeof(state->csbStartupSwooshBytes) ||
+        expectedHash == 0u) {
+        return 0;
+    }
+    for (index = 0; index < byteCount; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    if (hash == 0u || hash != expectedHash) {
+        return 0;
+    }
+    memcpy(state->csbStartupSwooshBytes, bytes,
+           sizeof(state->csbStartupSwooshBytes));
+    state->csbStartupSwooshHash = hash;
+    state->csbStartupSwooshBytesBound = 1;
+    return 1;
 }
 
 int M11_GameView_ToggleMusic(M11_GameViewState* state) {

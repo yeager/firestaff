@@ -7,6 +7,16 @@
 
 static int failures = 0;
 
+static uint32_t fnv1a(const unsigned char* bytes, int count) {
+    uint32_t hash = 2166136261u;
+    int index;
+    for (index = 0; index < count; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
 static void expect_interval(uint32_t actual, uint32_t expected,
                             const char* label) {
     if (actual != expected) {
@@ -18,6 +28,8 @@ static void expect_interval(uint32_t actual, uint32_t expected,
 
 int main(void) {
     M11_GameViewState view;
+    unsigned char swoosh[9078];
+    int index;
 
     memset(&view, 0, sizeof(view));
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 200u,
@@ -38,6 +50,25 @@ int main(void) {
     view.csbState.startup_entrance_active = 0;
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 200u,
                     "CSB runtime returns to ordinary gameplay cadence");
+
+    for (index = 0; index < (int)sizeof(swoosh); ++index) {
+        swoosh[index] = (unsigned char)((index * 13 + 7) & 0xff);
+    }
+    if (!M11_GameView_SetCsbStartupSwooshSource(
+            &view, swoosh, (int)sizeof(swoosh), fnv1a(swoosh,
+                                                       (int)sizeof(swoosh))) ||
+        !view.csbStartupSwooshBytesBound ||
+        view.csbStartupSwooshHash != fnv1a(swoosh, (int)sizeof(swoosh))) {
+        fprintf(stderr, "FAIL: authenticated raw CSB swoosh binds to M11\n");
+        ++failures;
+    }
+    swoosh[0] ^= 1u;
+    if (M11_GameView_SetCsbStartupSwooshSource(
+            &view, swoosh, (int)sizeof(swoosh),
+            view.csbStartupSwooshHash) || view.csbStartupSwooshBytesBound) {
+        fprintf(stderr, "FAIL: changed CSB source must clear M11 binding\n");
+        ++failures;
+    }
 
     if (failures != 0) return 1;
     puts("csb startup VBlank cadence tests passed");
