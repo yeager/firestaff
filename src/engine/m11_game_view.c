@@ -5546,6 +5546,16 @@ static int m11_csb_apply_boot_runtime_receipt(
         }
     }
     state->csbBootProfile = receipt->profile;
+    if (receipt->profile->swoosh_source_bound) {
+        (void)M11_GameView_SetCsbStartupSwooshSource(
+            state, receipt->profile->swoosh_source_bytes,
+            (int)sizeof(receipt->profile->swoosh_source_bytes),
+            receipt->profile->swoosh_source_fnv1a);
+    } else {
+        /* A new package without authenticated audio must not inherit an
+         * earlier package's intro buffer. */
+        (void)M11_GameView_SetCsbStartupSwooshSource(state, NULL, 0, 0u);
+    }
     state->csbStartupRuntimeAssetSession = calloc(
         1, sizeof(CSB_V1_StartupRuntimeAssetSession_PC34));
     if (!state->csbStartupRuntimeAssetSession ||

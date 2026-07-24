@@ -116,6 +116,77 @@ static const char *const g_csb_boot_fast_scan_subdirs[] = {
     NULL
 };
 
+static void csb_v1_boot_copy(char *dst, size_t dst_size, const char *src);
+
+enum { CSB_V1_BOOT_SWOOSH_SOURCE_BYTES_PC34 = 9078 };
+
+static uint32_t csb_v1_boot_swoosh_fnv1a_pc34(const uint8_t *bytes,
+                                               size_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t index;
+
+    if (!bytes || byte_count != CSB_V1_BOOT_SWOOSH_SOURCE_BYTES_PC34) {
+        return 0u;
+    }
+    for (index = 0u; index < byte_count; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+int csb_v1_boot_load_swoosh_source_pc34(CSB_V1_BootProfile *profile)
+{
+    static const char *const names[] = {
+        "SWSHSND.DAT", "SWSH.SND", "SWSHSDAT.BIN", "SWSHSDAT.DAT", NULL
+    };
+    static const char *const dirs[] = { "", "DATA", "data", NULL };
+    unsigned int directory;
+    unsigned int name;
+
+    if (!profile) return 0;
+    profile->swoosh_source_path[0] = '\0';
+    memset(profile->swoosh_source_bytes, 0, sizeof(profile->swoosh_source_bytes));
+    profile->swoosh_source_fnv1a = 0u;
+    profile->swoosh_source_bound = 0;
+    if (!profile->assets_verified || !profile->asset_root[0]) return 0;
+
+    for (directory = 0u; dirs[directory]; ++directory) {
+        for (name = 0u; names[name]; ++name) {
+            char path[sizeof(profile->swoosh_source_path)];
+            FILE *file;
+            size_t read_count;
+            int written;
+
+            written = dirs[directory][0]
+                ? snprintf(path, sizeof(path), "%s/%s/%s", profile->asset_root,
+                           dirs[directory], names[name])
+                : snprintf(path, sizeof(path), "%s/%s", profile->asset_root,
+                           names[name]);
+            if (written <= 0 || (size_t)written >= sizeof(path)) continue;
+            file = fopen(path, "rb");
+            if (!file) continue;
+            read_count = fread(profile->swoosh_source_bytes, 1u,
+                               sizeof(profile->swoosh_source_bytes), file);
+            if (fgetc(file) != EOF || fclose(file) != 0 ||
+                read_count != sizeof(profile->swoosh_source_bytes)) {
+                continue;
+            }
+            profile->swoosh_source_fnv1a = csb_v1_boot_swoosh_fnv1a_pc34(
+                profile->swoosh_source_bytes,
+                sizeof(profile->swoosh_source_bytes));
+            if (profile->swoosh_source_fnv1a == 0u) continue;
+            csb_v1_boot_copy(profile->swoosh_source_path,
+                             sizeof(profile->swoosh_source_path), path);
+            profile->swoosh_source_bound = 1;
+            return 1;
+        }
+    }
+    memset(profile->swoosh_source_bytes, 0, sizeof(profile->swoosh_source_bytes));
+    return 0;
+}
+
 enum {
     CSB_V1_GRAPHIC_TITLE = 1u,
     CSB_V1_GRAPHIC_ENTRANCE_LEFT_DOOR = 2u,
@@ -8085,6 +8156,9 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
     }
 
     profile->assets_verified = profile->graphics_verified && profile->dungeon_verified;
+    /* SWSHSND.C G0746 is optional startup media. Its absence must not turn a
+     * verified graphics/dungeon package into a synthetic sound route. */
+    (void)csb_v1_boot_load_swoosh_source_pc34(profile);
     if (profile->variant_id == CSB_V1_VARIANT_UNKNOWN && profile->dungeon_verified) {
         profile->variant_id = CSB_V1_VARIANT_UNKNOWN;
     }

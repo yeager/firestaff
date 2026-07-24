@@ -83,6 +83,14 @@ typedef struct CSB_V1_BootProfile {
     char graphics_md5[33];
     char dungeon_md5[33];
 
+    /* Optional raw PC34 SWSHSND.C G0746 payload.  It is accepted only from
+     * the selected CSB asset root, at the original byte count; callers must
+     * not substitute a DM1 sound bank or host-generated cue. */
+    char swoosh_source_path[512];
+    uint8_t swoosh_source_bytes[9078];
+    uint32_t swoosh_source_fnv1a;
+    int swoosh_source_bound;
+
     int assets_verified;
     int graphics_verified;
     int dungeon_verified;
@@ -1566,6 +1574,7 @@ void csb_v1_boot_startup_readiness_receipt_init_pc34(
     CSB_V1_BootStartupReadinessReceipt_PC34 *receipt);
 void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile);
 int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir);
+int csb_v1_boot_load_swoosh_source_pc34(CSB_V1_BootProfile *profile);
 int csb_v1_boot_profile_from_startup_real_receipt_pc34(
     const CSB_V1_StartupRealReceipt *receipt, CSB_V1_BootProfile *out_profile);
 
