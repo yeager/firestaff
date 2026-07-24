@@ -35655,6 +35655,19 @@ target_compile_options(test_dm1_v1_release_capture_manifest_pc34_compat PRIVATE 
 add_test(NAME dm1_v1_release_capture_manifest_pc34_compat
     COMMAND test_dm1_v1_release_capture_manifest_pc34_compat)
 
+# Final DM1-owned HoC material boundary.  This lives outside M11 so a host
+# renderer can only consume one frame after each native material lane has
+# independently established its PC3.4 ownership.
+add_executable(test_dm1_v1_hoc_presented_frame_consumer_pc34_compat
+    tests/test_dm1_v1_hoc_presented_frame_consumer_pc34_compat.c
+    src/dm1/dm1_v1_hoc_presented_frame_consumer_pc34_compat.c)
+target_include_directories(test_dm1_v1_hoc_presented_frame_consumer_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_options(test_dm1_v1_hoc_presented_frame_consumer_pc34_compat PRIVATE
+    -Wall -Wextra -O2)
+add_test(NAME dm1_v1_hoc_presented_frame_consumer_pc34_compat
+    COMMAND test_dm1_v1_hoc_presented_frame_consumer_pc34_compat)
+
 set_tests_properties(pass558_dm1_v1_pass514_io_blocker_classifier PROPERTIES WILL_FAIL TRUE)
 
 set_tests_properties(pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate PROPERTIES WILL_FAIL TRUE)
@@ -44997,3 +45010,15 @@ if(NOT MSVC)
 endif()
 add_test(NAME dm1_v1_platform_timing_exception_pc34_compat
   COMMAND test_dm1_v1_platform_timing_exception_pc34_compat)
+
+add_executable(test_csb_v1_viewport_f0115_real_overlay_pc34_compat
+  tests/test_csb_v1_viewport_d2l2_d2r2_f0115_item_explosion_pc34_compat.c
+  src/csb/csb_v1_viewport_d2l2_d2r2_f0115_item_explosion_pc34_compat.c)
+target_include_directories(test_csb_v1_viewport_f0115_real_overlay_pc34_compat PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+  target_compile_options(test_csb_v1_viewport_f0115_real_overlay_pc34_compat PRIVATE
+    -Wall -Wextra -Werror -pedantic -O2)
+endif()
+add_test(NAME csb_v1_viewport_f0115_real_overlay_pc34_compat
+  COMMAND test_csb_v1_viewport_f0115_real_overlay_pc34_compat)
