@@ -2051,6 +2051,45 @@ static void test_empty_hand_mouth_blits_source_food_water_panel_pixels(void) {
     M11_AssetLoader_Shutdown(&state.assetLoader);
 }
 
+static void test_mouth_consumption_commits_original_potion_record(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    struct DungeonPotion_Compat potion;
+    unsigned char rawPotion[4] = { 0xfe, 0xff, 80, 14 };
+    const unsigned short potionThing = (unsigned short)(THING_TYPE_POTION << 10);
+
+    seed_inventory_view(&state, &things, &weapon);
+    memset(&potion, 0, sizeof(potion));
+    potion.next = THING_ENDOFLIST;
+    potion.power = 80;
+    potion.type = 14;
+    things.potions = &potion;
+    things.potionCount = 1;
+    things.thingCounts[THING_TYPE_POTION] = 1;
+    things.rawThingData[THING_TYPE_POTION] = rawPotion;
+    state.world.party.champions[0].hp.current = 20;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].stamina.current = 50;
+    state.world.party.champions[0].stamina.maximum = 100;
+
+    ASSERT_TRUE(DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(&state,
+                                                                  potionThing),
+                "source potion enters the transient leader hand");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 56 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "mouth click admits only the source-backed C08 potion transaction");
+    ASSERT_EQ(rawPotion[3] & 0x7f, 20,
+              "F0349 commits C20 empty-flask type to the original C08 bytes");
+    ASSERT_EQ(potion.type, 20,
+              "decoded potion cache is refreshed from committed C08 bytes");
+    ASSERT_EQ(DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state),
+              potionThing,
+              "empty flask remains in the leader hand after the source transaction");
+    ASSERT_TRUE(state.world.party.champions[0].hp.current > 20,
+                "source potion result commits champion health only after raw admission");
+}
+
 static void test_open_chest_middle_pickup_compacts_visible_list(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
@@ -3041,6 +3080,7 @@ int main(void) {
     test_open_chest_seventh_visible_slot_uses_seventh_object_icon();
     test_open_chest_eighth_visible_slot_uses_eighth_object_icon();
     test_empty_hand_mouth_blits_source_food_water_panel_pixels();
+    test_mouth_consumption_commits_original_potion_record();
     test_open_chest_middle_pickup_compacts_visible_list();
     test_open_chest_pickup_preserves_mixed_type_tail_order();
     test_open_chest_close_trims_to_eight_visible_slots();

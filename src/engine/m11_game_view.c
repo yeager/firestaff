@@ -112,6 +112,7 @@
 #include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_inventory_consumables_pc34_compat.h"
+#include "dm1_v1_inventory_live_transaction_pc34_compat.h"
 #include "dm1_v1_dialog_layout_pc34_compat.h"
 #include "dm1_v1_endgame_layout_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
@@ -119,6 +120,7 @@
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_mouse_routes_pc34_compat.h"
+#include "action_area_routes_pc34_compat.h"
 #include "touch_click_zone_matrix_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
@@ -639,11 +641,23 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
                                      int framebufferWidth,
                                      int framebufferHeight);
+static void m11_draw_v1_action_area_overlay(const M11_GameViewState* state,
+                                            unsigned char* framebuffer,
+                                            int framebufferWidth,
+                                            int framebufferHeight);
+static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
+                                                unsigned char* framebuffer,
+                                                int framebufferWidth,
+                                                int framebufferHeight);
 static void m11_clear_csb_v1_message_area_source_owned(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
     int framebufferWidth,
     int framebufferHeight);
+static int m11_csb_startup_package_identity_current(
+    const M11_GameViewState *state);
+static int m11_count_source_action_menu_rows(
+    const unsigned char actions[3]);
 /* (M11_GameView_StartDm2 is the DM2 hand-off branch inlined inside
  * M11_GameView_Start above, mirroring the CSB-style handoff. The
  * Theron + Nexus handoffs also live inline; there is no separate
@@ -2049,6 +2063,46 @@ static const M11_GameViewState *m11_csb_v1_party_hud_source_state(
     return out_state;
 }
 
+/* PANEL.C owns the C017/C040 base raster.  Once that source page is live,
+ * CHAMDRAW.C, ACTIDRAW.C, CASTER.C, MENUDRAW.C, and TEXT.C may update their
+ * individual regions.  Keep their admission in one place: the generic M11
+ * DM1 panel code is only a drawing primitive here, never a replacement HUD.
+ * The cursor itself remains an SDL host cursor; its held-object/name state is
+ * represented by the source-owned C017 leader-hand field below. */
+static int m11_csb_v1_runtime_hud_materials_ready(
+    const M11_GameViewState *state)
+{
+    static const struct {
+        unsigned int graphic;
+        int width;
+        int height;
+    } required[] = {
+        { 28u, 76, 14 }, /* C028 champion direction strip */
+        { 10u, 87, 45 }, /* C010 action area */
+        { 9u, 87, 25 },  /* C009 spell-area background */
+        { 11u, 87, 33 }, /* C011 spell/rune lines */
+        { 13u, 87, 45 }  /* C013 movement controls */
+    };
+    size_t index;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile || !state->assetsAvailable ||
+        !M11_Font_IsLoaded(&state->originalFont) ||
+        !m11_csb_startup_package_identity_current(state)) {
+        return 0;
+    }
+    for (index = 0; index < sizeof(required) / sizeof(required[0]); ++index) {
+        const M11_AssetSlot *asset = M11_AssetLoader_Load(
+            (M11_AssetLoader *)&state->assetLoader, required[index].graphic);
+        if (!asset || !asset->loaded || !asset->pixels ||
+            asset->width != required[index].width ||
+            asset->height != required[index].height) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
@@ -2074,6 +2128,16 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
             state, framebuffer, framebufferWidth, framebufferHeight);
         return;
     }
+    if (!m11_csb_v1_runtime_hud_materials_ready(party_state)) {
+        /* A mixed CSB/host panel is worse than an absent panel: C017/C040
+         * stays as the only admitted base surface and all dynamic lanes are
+         * cleared instead of borrowing DM1 or procedural artwork. */
+        m11_clear_csb_v1_party_hud_source_surfaces(
+            framebuffer, framebufferWidth, framebufferHeight);
+        m11_clear_csb_v1_message_area_source_owned(
+            party_state, framebuffer, framebufferWidth, framebufferHeight);
+        return;
+    }
     /* ReDMCSB CHAMDRAW.C F0287/F0290 and DUNVIEW.C F0097 redraw the
      * champion/control surfaces after the dungeon view.  Use the V1 draw
      * lane already backed by the selected CSB GRAPHICS.DAT; do not insert
@@ -2086,10 +2150,14 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
                          framebufferHeight);
     m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,
                                    framebufferHeight);
+    m11_draw_v1_action_area_overlay(party_state, framebuffer,
+                                    framebufferWidth, framebufferHeight);
     m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
+    m11_draw_v1_leader_hand_object_name(party_state, framebuffer,
+                                        framebufferWidth, framebufferHeight);
     m11_clear_csb_v1_message_area_source_owned(
-        state, framebuffer, framebufferWidth, framebufferHeight);
+        party_state, framebuffer, framebufferWidth, framebufferHeight);
 }
 
 /* The ordinary CSB package identity is fixed when the hash-verified boot
@@ -2236,6 +2304,13 @@ static int m11_draw_csb_v1_inventory_surface(
         state->csbState.c040_panel_session_generation =
             receipt.session_generation;
     }
+    /* F0347 has supplied the complete C017 base before any live champion,
+     * action, spell, leader-hand/cursor text, or message lane is allowed to
+     * touch the page.  This is intentionally after the receipt validation:
+     * a failed C017/C040 transaction must never expose a generic inventory
+     * renderer in its place. */
+    m11_draw_csb_v1_runtime_hud(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
     return 1;
 }
 
@@ -4682,6 +4757,31 @@ static void m11_draw_csb_startup_plan_text(
                   m11_csb_startup_text_style(style));
 }
 
+/* TITLE.C and ENTRANCE.C share one package session, but the entrance-local
+ * frame counter deliberately resets when TITLE.C finishes.  It is therefore
+ * not a safe receipt identity by itself: using it as the session tick lets a
+ * later C004/C005 frame masquerade as an earlier C001 frame.  Keep the host
+ * receipt timeline monotonic across the original C001 -> C005 transition.
+ */
+static uint32_t m11_csb_startup_source_tick(const M11_GameViewState *state)
+{
+    uint32_t frame;
+    uint32_t title_ticks;
+
+    if (!state) {
+        return 0u;
+    }
+    title_ticks = (uint32_t)csb_v1_startup_title_total_ticks_pc34();
+    if (state->csbState.startup_title_active) {
+        frame = state->csbState.startup_title_frame < 0
+            ? 0u : (uint32_t)state->csbState.startup_title_frame;
+        return frame + 1u;
+    }
+    frame = state->csbState.startup_entrance_frame < 0
+        ? 0u : (uint32_t)state->csbState.startup_entrance_frame;
+    return title_ticks + frame + 1u;
+}
+
 /* TITLE.C and ENTRANCE.C own the indexed 320x200 page.  M11 owns only the
  * final presentation scale, so a maximized host surface cannot turn a valid
  * package raster into a black startup frame. */
@@ -4763,7 +4863,7 @@ static int m11_csb_startup_utility_raster_admitted(
     if (session &&
         csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
             session, &hud->startup_render_plan,
-            (uint32_t)state->csbState.startup_entrance_frame,
+            m11_csb_startup_source_tick(state),
             &host_surface) &&
         host_surface.valid && host_surface.real_asset_matched &&
         host_surface.no_legacy_wrappers && host_surface.no_synthetic_surface &&
@@ -4873,7 +4973,7 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
     }
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
         state->csbStartupRuntimeAssetSession;
-    entrance_source_tick = (uint32_t)state->csbState.startup_entrance_frame;
+    entrance_source_tick = m11_csb_startup_source_tick(state);
     memset(&host_surface, 0, sizeof(host_surface));
     if (session &&
         session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_NONE_PC34) {
@@ -15540,7 +15640,7 @@ int M11_GameView_CSBPresentedFrameMatchesCurrentSource(
     return csb_v1_boot_startup_runtime_host_surface_matches_indexed_frame_pc34(
         session,
         &host_view.render_draw.render_plan,
-        (uint32_t)state->csbState.startup_entrance_frame,
+        m11_csb_startup_source_tick(state),
         indexedPixels,
         width,
         height,
@@ -22403,7 +22503,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * in V1 mode once the authentic frames have rendered, mirroring
      * the visible-cells gate used in m11_draw_utility_panel. */
     if (!state->showDebugHUD) {
-        int slotHit;
+        ActionAreaRoutePc34Compat sourceRoute;
 
         /* When in action-menu mode, clicks on the three action
          * rows drive F0391_MENUS_DidClickTriggerAction: the
@@ -22422,34 +22522,49 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
          *
          * Ref: ReDMCSB MENU.C F0391_MENUS_DidClickTriggerAction. */
         if (state->actingChampionOrdinal != 0) {
-            int rowIdx;
-            for (rowIdx = 0; rowIdx < 3; ++rowIdx) {
-                DM1_V1_ActionAreaRectPc34 rowRect;
-                if (!dm1_v1_action_menu_row_zone_id_pc34(rowIdx)) {
-                    continue;
+            unsigned char actions[3];
+            int actionCount = 0;
+
+            if (M11_GameView_GetActingActionIndices(state, actions)) {
+                /* G0507's source list is contiguous: only the C113..C115
+                 * rows with a real ActionIndex may reach F0391. */
+                if (actions[0] != 0xFFu) {
+                    actionCount = 1;
+                    if (actions[1] != 0xFFu) {
+                        actionCount = 2;
+                        if (actions[2] != 0xFFu) {
+                            actionCount = 3;
+                        }
+                    }
                 }
-                rowRect = dm1_v1_action_menu_row_rect_pc34(rowIdx);
-                if (!m11_point_in_rect(x, y,
-                                       rowRect.x, rowRect.y,
-                                       rowRect.w, rowRect.h)) {
-                    continue;
+            }
+            /* F0371 resolves G0452 before it calls F0391.  The route table
+             * carries C112/C113/C114/C115 and is cross-checked against the
+             * source touch matrix; do not derive a command from pixels here. */
+            if (actionCount > 0 && action_area_routes_GetTouchMatrixInvariant() &&
+                action_area_routes_ResolveNameMenuClick(
+                    x, y, (unsigned int)actionCount, &sourceRoute)) {
+                if (sourceRoute.commandId >= 113u &&
+                    sourceRoute.commandId <= 115u &&
+                    sourceRoute.actionListIndex >= 0) {
+                    (void)M11_GameView_TriggerActionRow(
+                        state, sourceRoute.actionListIndex);
+                    return M11_GAME_INPUT_REDRAW;
                 }
-                (void)M11_GameView_TriggerActionRow(state, rowIdx);
-                return M11_GAME_INPUT_REDRAW;
+                /* C112 is the source-owned pass zone.  PC34 F0391 returns
+                 * without committing an action here, leaving the menu live. */
+                if (sourceRoute.commandId == 112u) {
+                    return M11_GAME_INPUT_REDRAW;
+                }
             }
         }
 
-        for (slotHit = 0; slotHit < CHAMPION_MAX_PARTY; ++slotHit) {
-            DM1_V1_ActionAreaRectPc34 cellRect;
-            if (!dm1_v1_action_icon_cell_zone_id_pc34(slotHit)) {
-                continue;
-            }
-            cellRect = dm1_v1_action_icon_cell_rect_pc34(slotHit);
-            if (!m11_point_in_rect(x, y,
-                                   cellRect.x, cellRect.y,
-                                   cellRect.w, cellRect.h)) {
-                continue;
-            }
+        if (state->actingChampionOrdinal == 0 &&
+            action_area_routes_GetTouchMatrixInvariant() &&
+            action_area_routes_ResolveIconClick(
+                x, y, (unsigned int)state->world.party.championCount,
+                &sourceRoute)) {
+            int slotHit = sourceRoute.championIndex;
             /* Toggle: click on already-acting champion clears. */
             if (state->actingChampionOrdinal ==
                     (unsigned int)(slotHit + 1)) {
@@ -38631,6 +38746,89 @@ static int m11_v1_action_spell_strip_zone(int* outX,
  * PANEL.C:1850-1917 applies potion effects and converts the potion to
  * C20 empty flask; PANEL.C:1918-1919 applies food amounts; PANEL.C:1944
  * plays swallow after successful consumption. */
+static int m11_v1_mouth_live_inventory_transaction(
+    M11_GameViewState* state,
+    struct ChampionState_Compat* champ,
+    unsigned short leaderThing,
+    DM1ConsumableChampionPc34* inOutChampion,
+    const uint16_t* woundRandomMasks,
+    int woundRandomMaskCount,
+    DM1_V1_InventoryLiveUseReceiptPc34* outReceipt)
+{
+    DM1_V1_InventoryLiveTransactionPc34 transaction;
+    uint16_t sourceSlots[DM1_PC34_INVENTORY_SLOT_COUNT];
+    int sourceSlot;
+
+    if (!state || !champ || !state->world.things || !inOutChampion ||
+        !outReceipt || leaderThing == THING_NONE ||
+        leaderThing == THING_ENDOFLIST) {
+        return 0;
+    }
+
+    /* G4055 is not a champion equipment slot.  F0349 consumes the mouse
+     * hand, but its object still has to pass the same C00..C29 source
+     * inventory admission as every other live Thing. */
+    for (sourceSlot = 0; sourceSlot < DM1_PC34_INVENTORY_SLOT_COUNT;
+         ++sourceSlot) {
+        int championSlot =
+            dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
+                sourceSlot + 8);
+        if (championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) {
+            return 0;
+        }
+        sourceSlots[sourceSlot] = champ->inventory[championSlot];
+    }
+    sourceSlots[DM1_PC34_SLOT_ACTION_HAND] = leaderThing;
+
+    if (!dm1_v1_inventory_live_begin_pc34(&transaction, state->world.things,
+                                           sourceSlots) ||
+        !dm1_v1_inventory_live_use_action_hand_pc34(
+            &transaction, inOutChampion, woundRandomMasks,
+            woundRandomMaskCount, outReceipt) ||
+        !outReceipt->valid ||
+        outReceipt->kind != DM1_V1_INVENTORY_LIVE_USE_CONSUMABLE_PC34) {
+        return 0;
+    }
+
+    /* The transaction commits the original bytes first.  Refresh the
+     * decoded cache only from those committed bytes; no host item record is
+     * allowed to become an alternate authority. */
+    if (THING_GET_TYPE(leaderThing) == THING_TYPE_POTION) {
+        int index = THING_GET_INDEX(leaderThing);
+        unsigned char* raw = state->world.things->rawThingData[THING_TYPE_POTION];
+        if (!state->world.things->potions || !raw || index < 0 ||
+            index >= state->world.things->potionCount ||
+            index >= state->world.things->thingCounts[THING_TYPE_POTION]) {
+            return 0;
+        }
+        raw += index * 4;
+        state->world.things->potions[index].next =
+            (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+        state->world.things->potions[index].power = raw[2];
+        state->world.things->potions[index].type = raw[3] & 0x7fu;
+        state->world.things->potions[index].doNotDiscard = raw[3] >> 7;
+    } else if (THING_GET_TYPE(leaderThing) == THING_TYPE_JUNK) {
+        int index = THING_GET_INDEX(leaderThing);
+        unsigned char* raw = state->world.things->rawThingData[THING_TYPE_JUNK];
+        if (!state->world.things->junks || !raw || index < 0 ||
+            index >= state->world.things->junkCount ||
+            index >= state->world.things->thingCounts[THING_TYPE_JUNK]) {
+            return 0;
+        }
+        raw += index * 4;
+        state->world.things->junks[index].next =
+            (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+        state->world.things->junks[index].type = raw[2] & 0x7fu;
+        state->world.things->junks[index].doNotDiscard = raw[2] >> 7;
+        state->world.things->junks[index].cursed = raw[3] & 0x01u;
+        state->world.things->junks[index].chargeCount = raw[3] >> 6;
+    } else {
+        return 0;
+    }
+
+    return 1;
+}
+
 static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     unsigned short thing;
     int iconIndex;
@@ -38640,6 +38838,7 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     struct ChampionState_Compat* champ;
     DM1ConsumableChampionPc34 consumableChampion;
     DM1ConsumableResultPc34 consumableResult;
+    DM1_V1_InventoryLiveUseReceiptPc34 liveReceipt;
 
     if (!state || !state->inventoryPanelActive) return 0;
 
@@ -38690,55 +38889,31 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
     consumableChampion.poisonDose = champ->poisonDose;
     consumableChampion.shieldDefense = (int16_t)state->world.magic.partyShieldDefense;
 
-    if (thingType == THING_TYPE_JUNK && state->world.things && state->world.things->junks &&
-        thingIndex >= 0 && thingIndex < state->world.things->junkCount) {
-        struct DungeonJunk_Compat* junk = &state->world.things->junks[thingIndex];
-        int foodIcon = dm1_inventory_junk_food_icon_from_type_pc34((int)junk->type);
-        if (iconIndex == 8 || iconIndex == 9) {
-            if (!dm1_inventory_consume_water_junk_pc34(&consumableChampion, iconIndex,
-                                                       (int)junk->chargeCount,
-                                                       &consumableResult)) {
-                m11_set_status(state, "DRINK", "EMPTY");
-                return 0;
-            }
-            junk->chargeCount = (unsigned char)consumableResult.chargeCountAfter;
-            champ->water = consumableChampion.water;
-            m11_set_status(state, "DRINK", "WATER");
-            m11_refresh_hash(state);
-            return 1;
-        }
-        if (foodIcon >= 0 && dm1_inventory_consume_food_junk_pc34(&consumableChampion,
-                                                                   foodIcon,
-                                                                   &consumableResult)) {
-            champ->food = consumableChampion.food;
-            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
-            (void)m11_start_v1_mouth_animation(state, &consumableResult);
-            m11_set_status(state, "EAT", "FOOD CONSUMED");
-            m11_refresh_hash(state);
-            return 1;
-        }
-    }
-
-    if (thingType == THING_TYPE_POTION && state->world.things && state->world.things->potions &&
-        thingIndex >= 0 && thingIndex < state->world.things->potionCount) {
-        struct DungeonPotion_Compat* potion = &state->world.things->potions[thingIndex];
+    if ((thingType == THING_TYPE_JUNK || thingType == THING_TYPE_POTION) &&
+        state->world.things) {
         uint16_t viWoundMasks[M11_DM1_V1_VI_WOUND_MASK_MAX_PC34];
         int viWoundMaskCount = 0;
-        if ((int)potion->type == M11_DM1_V1_POTION_VI_PC34 && champ->wounds) {
+        int potionType = -1;
+        int potionPower = 0;
+        if (thingType == THING_TYPE_POTION && state->world.things->potions &&
+            thingIndex >= 0 && thingIndex < state->world.things->potionCount) {
+            potionType = (int)state->world.things->potions[thingIndex].type;
+            potionPower = (int)state->world.things->potions[thingIndex].power;
+        }
+        if (potionType == M11_DM1_V1_POTION_VI_PC34 && champ->wounds) {
             viWoundMaskCount = m11_dm1_v1_fill_vi_wound_random_masks_pc34(
                 &state->world.masterRng,
-                (int)potion->power,
+                potionPower,
                 viWoundMasks,
                 M11_DM1_V1_VI_WOUND_MASK_MAX_PC34);
         }
-        if (!dm1_inventory_consume_potion_pc34(&consumableChampion,
-                                               (int)potion->type,
-                                               (int)potion->power,
-                                               viWoundMaskCount ? viWoundMasks : NULL,
-                                               viWoundMaskCount,
-                                               &consumableResult)) {
+        if (!m11_v1_mouth_live_inventory_transaction(
+                state, champ, thing, &consumableChampion,
+                viWoundMaskCount ? viWoundMasks : NULL, viWoundMaskCount,
+                &liveReceipt)) {
             return 0;
         }
+        consumableResult = liveReceipt.consumable;
         champ->attributes[CHAMPION_ATTR_STRENGTH] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_STRENGTH];
         champ->attributes[CHAMPION_ATTR_DEXTERITY] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_DEXTERITY];
         champ->attributes[CHAMPION_ATTR_WISDOM] = (unsigned short)consumableChampion.statistic[DM1_CONSUMABLE_STAT_WISDOM];
@@ -38751,8 +38926,15 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
         champ->wounds = consumableChampion.wounds;
         champ->poisonDose = consumableChampion.poisonDose;
         state->world.magic.partyShieldDefense = consumableChampion.shieldDefense;
-        potion->type = (unsigned char)consumableResult.potionTypeAfter;
-        m11_set_status(state, "DRINK", "POTION CONSUMED");
+        if (consumableResult.removeLeaderHandObject) {
+            DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+            (void)m11_start_v1_mouth_animation(state, &consumableResult);
+        }
+        m11_set_status(state,
+                       thingType == THING_TYPE_POTION ? "DRINK" :
+                       (iconIndex == 8 || iconIndex == 9 ? "DRINK" : "EAT"),
+                       thingType == THING_TYPE_POTION ? "POTION CONSUMED" :
+                       (iconIndex == 8 || iconIndex == 9 ? "WATER" : "FOOD CONSUMED"));
         m11_refresh_hash(state);
         return 1;
     }

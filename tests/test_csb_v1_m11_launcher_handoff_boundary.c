@@ -793,7 +793,8 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     expect_true(view.csbStartupF0128EntranceBound &&
                     view.csbStartupF0128EntranceSourceTick ==
-                        (uint32_t)view.csbState.startup_entrance_frame &&
+                        (uint32_t)csb_v1_startup_title_total_ticks_pc34() +
+                            (uint32_t)view.csbState.startup_entrance_frame + 1u &&
                     view.csbStartupF0128EntranceSessionGeneration ==
                         ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
                              view.csbStartupRuntimeAssetSession)->generation &&
