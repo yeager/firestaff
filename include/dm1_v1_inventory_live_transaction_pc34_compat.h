@@ -39,6 +39,21 @@ typedef struct DM1_V1_InventoryLiveUseReceiptPc34 {
     const char *sourceEvidence;
 } DM1_V1_InventoryLiveUseReceiptPc34;
 
+/* TIMELINE.C F0258/F0259 refills an emptied hand from the four original
+ * quiver cells in source order.  The receipt records the exact C05 Thing
+ * that crossed the panel boundary; decoded-only weapon records never count
+ * as a refill. */
+typedef struct DM1_V1_InventoryLiveQuiverRefillReceiptPc34 {
+    int valid;
+    int moved;
+    int destinationSlot;
+    int sourceSlot;
+    uint16_t thing;
+    uint32_t generationBefore;
+    uint32_t generationAfter;
+    const char *sourceEvidence;
+} DM1_V1_InventoryLiveQuiverRefillReceiptPc34;
+
 /* Initializes C00..C29 from authenticated raw Things.  Any unknown, stale,
  * or non-inventory Thing rejects the whole panel rather than synthesizing an
  * object record.  Empty slots must be THING_NONE. */
@@ -61,6 +76,14 @@ int dm1_v1_inventory_live_open_chest_pc34(
 int dm1_v1_inventory_live_close_chest_pc34(
     DM1_V1_InventoryLiveTransactionPc34 *state,
     DM1_ChestAdmissionReceiptF0333F0334Pc34 *outReceipt);
+
+/* Source-owned F0259 hand refill.  It is valid only for an empty ordinary
+ * inventory slot, reads the loaded C05 weapon record before moving it, and
+ * leaves the complete panel unchanged when source ownership or slot masks
+ * do not agree. */
+int dm1_v1_inventory_live_refill_from_quiver_pc34(
+    DM1_V1_InventoryLiveTransactionPc34 *state, int destinationPc34Slot,
+    DM1_V1_InventoryLiveQuiverRefillReceiptPc34 *outReceipt);
 
 /* F0341/F0349 dispatch for the action hand.  Scrolls expose only their raw
  * text-record index; no substitute text/font is produced.  Food, water, and
