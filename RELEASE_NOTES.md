@@ -1,9 +1,9 @@
 
 # Unreleased
 
-# Firestaff v3.0.96
+# Firestaff v3.0.97
 
-## Highlights since v3.0.95
+## Highlights since v3.0.96
 
 - Artpack Studio is now self-contained: bundled Python, Pillow and Tk remove
   the system-Pillow dependency on macOS, Windows, Linux and Steam Deck.
