@@ -1,3 +1,9 @@
+- ✅ 2026-07-24 CSBWin DSA `OVERLAY`/`PALETTE`: authenticated DSA actions
+  now preserve the original stack order for `STKOP_Overlay` and
+  `STKOP_Palette`, stage package-owned changes until full bytecode acceptance,
+  and reject unavailable or synthetic overlay owners. Verification:
+  `test_csb_v1_dsa_pure_control_pc34_compat`.
+
 - ✅ 2026-07-24 DM1 HoC source-frame boundary: C127/C026 mirror, M648
   inscription and F0115 object receipts must agree in a DM1-owned module
   before a HoC frame is publishable; missing or synthetic material fails

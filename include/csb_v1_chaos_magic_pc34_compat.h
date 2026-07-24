@@ -430,6 +430,16 @@ typedef int (*CSB_V1_CSBWinDSAReadCharacterNameFn)(
  * authenticated action has passed. */
 typedef int (*CSB_V1_CSBWinDSASetGlobalTextFn)(
     void *user, uint32_t global_index, const char *text);
+/* DSA.cpp STKOP_Overlay/STKOP_Palette alter CSBWin's live overlay catalog.
+ * The renderer/package owner validates that the selected overlay and palette
+ * belong to loaded CSB media; the interpreter only stages the exact source
+ * operands until the authenticated action has been fully accepted. */
+typedef int (*CSB_V1_CSBWinDSASetOverlayFn)(
+    void *user, uint32_t overlay_number, uint32_t parameter1,
+    uint32_t parameter2, uint32_t parameter3, uint32_t parameter4);
+typedef int (*CSB_V1_CSBWinDSASetOverlayPaletteFn)(
+    void *user, uint32_t overlay_number, uint32_t parameter1,
+    uint32_t parameter2, uint32_t density);
 
 typedef struct {
     uint32_t master_location;
@@ -495,6 +505,9 @@ typedef struct {
     CSB_V1_CSBWinDSAReadCharacterNameFn read_character_name;
     CSB_V1_CSBWinDSASetGlobalTextFn set_global_text;
     void *text_user;
+    CSB_V1_CSBWinDSASetOverlayFn set_overlay;
+    CSB_V1_CSBWinDSASetOverlayPaletteFn set_overlay_palette;
+    void *overlay_user;
     /* CSBWin DSA.cpp EX_GLOBALFETCH/EX_GLOBALSTORE address the source
      * numGlobalVariables/globalVariables bank. The caller owns this narrow
      * runtime surface; the executor stages it and publishes it only after a
@@ -715,6 +728,12 @@ typedef struct {
     uint16_t text_discard_count;
     uint16_t global_text_store_count;
     uint32_t last_global_text_store_index;
+    uint16_t overlay_store_count;
+    uint32_t last_overlay_number;
+    uint32_t last_overlay_parameters[4];
+    uint16_t overlay_palette_store_count;
+    uint32_t last_overlay_palette_number;
+    uint32_t last_overlay_palette_parameters[3];
     uint16_t sound_notification_count;
     int32_t last_sound_number;
     int32_t last_sound_volume;
@@ -906,6 +925,9 @@ typedef struct {
     CSB_V1_CSBWinDSAReadCharacterNameFn read_character_name;
     CSB_V1_CSBWinDSASetGlobalTextFn set_global_text;
     void *text_user;
+    CSB_V1_CSBWinDSASetOverlayFn set_overlay;
+    CSB_V1_CSBWinDSASetOverlayPaletteFn set_overlay_palette;
+    void *overlay_user;
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
     CSB_V1_CSBWinDSAGetSkinFn get_skin;

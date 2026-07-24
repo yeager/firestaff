@@ -105,8 +105,42 @@ static int teleporter_copy_enabled;
 static int teleporter_copy_count;
 static uint32_t teleporter_copy_source;
 static uint32_t teleporter_copy_destination;
+static int overlay_owner_enabled;
+static int overlay_store_count;
+static int overlay_palette_store_count;
+static uint32_t overlay_number;
+static uint32_t overlay_parameters[4];
+static uint32_t overlay_palette_number;
+static uint32_t overlay_palette_parameters[3];
 
 static int wing_talents_enabled;
+
+static int set_overlay(void *user, uint32_t number, uint32_t p1,
+                       uint32_t p2, uint32_t p3, uint32_t p4)
+{
+    (void)user;
+    if (!overlay_owner_enabled || number != 9u) return 0;
+    ++overlay_store_count;
+    overlay_number = number;
+    overlay_parameters[0] = p1;
+    overlay_parameters[1] = p2;
+    overlay_parameters[2] = p3;
+    overlay_parameters[3] = p4;
+    return 1;
+}
+
+static int set_overlay_palette(void *user, uint32_t number, uint32_t p1,
+                               uint32_t p2, uint32_t density)
+{
+    (void)user;
+    if (!overlay_owner_enabled || number != 9u) return 0;
+    ++overlay_palette_store_count;
+    overlay_palette_number = number;
+    overlay_palette_parameters[0] = p1;
+    overlay_palette_parameters[1] = p2;
+    overlay_palette_parameters[2] = density;
+    return 1;
+}
 
 static int get_wing_talents(void *user, uint16_t fingerprint,
                             uint32_t *out_talents)
@@ -828,6 +862,10 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     if (describe_enabled) context.describe = describe;
     if (switch_action_enabled) context.queue_switch_action = queue_switch_action;
     if (teleporter_copy_enabled) context.copy_teleporter = copy_teleporter;
+    if (overlay_owner_enabled) {
+        context.set_overlay = set_overlay;
+        context.set_overlay_palette = set_overlay_palette;
+    }
     context.monster_move_inhibit_valid = monster_move_inhibit_enabled;
     context.most_recent_interesting_object_valid =
         most_recent_interesting_object_enabled;
@@ -1016,6 +1054,20 @@ int main(void)
     };
     uint16_t generator_delay_store_then_bad[] = {
         0x0686u, 91u, 0x0686u, 0x0c82u, 0x088bu, 0x0000u
+    };
+    /* STKOP_Overlay consumes p1,p2,p3,p4,onum; STKOP_Palette consumes
+     * p1,p2,onum,density. These are exact Data.h subcodes 35 and 78. */
+    uint16_t overlay_select[] = {
+        0x0686u, 1u, 0x0686u, 2u, 0x0686u, 3u, 0x0686u, 4u,
+        0x0686u, 9u, 0x08cbu
+    };
+    uint16_t overlay_select_then_bad[] = {
+        0x0686u, 1u, 0x0686u, 2u, 0x0686u, 3u, 0x0686u, 4u,
+        0x0686u, 9u, 0x08cbu, 0x0000u
+    };
+    uint16_t overlay_palette[] = {
+        0x0686u, 7u, 0x0686u, 8u, 0x0686u, 9u, 0x0686u, 10u,
+        0x138bu
     };
     uint16_t skin_store[] = {
         0x0686u, 42u, 0x0686u, 0x0c82u, 0x0115u
@@ -1496,6 +1548,37 @@ int main(void)
           "GeneratorDelay! rejects a stale DB3 owner before candidate publication");
     generator_delay_owner_valid = 1;
     generator_delay_enabled = 0;
+    overlay_owner_enabled = 1;
+    overlay_store_count = 0;
+    overlay_palette_store_count = 0;
+    memset(overlay_parameters, 0, sizeof(overlay_parameters));
+    memset(overlay_palette_parameters, 0, sizeof(overlay_palette_parameters));
+    check(run(&state, &action, overlay_select,
+              (int)(sizeof(overlay_select) / sizeof(overlay_select[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              overlay_store_count == 1 && overlay_number == 9u &&
+              overlay_parameters[0] == 1u && overlay_parameters[1] == 2u &&
+              overlay_parameters[2] == 3u && overlay_parameters[3] == 4u &&
+              execution.overlay_store_count == 1u &&
+              execution.last_overlay_number == 9u,
+          "OVERLAY preserves CSBWin stack order through the source package owner");
+    overlay_store_count = 0;
+    check(run(&state, &action, overlay_select_then_bad,
+              (int)(sizeof(overlay_select_then_bad) /
+                    sizeof(overlay_select_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              overlay_store_count == 0,
+          "OVERLAY does not publish before a later rejected source word");
+    check(run(&state, &action, overlay_palette,
+              (int)(sizeof(overlay_palette) / sizeof(overlay_palette[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              overlay_palette_store_count == 1 && overlay_palette_number == 9u &&
+              overlay_palette_parameters[0] == 7u &&
+              overlay_palette_parameters[1] == 8u &&
+              overlay_palette_parameters[2] == 10u &&
+              execution.overlay_palette_store_count == 1u,
+          "PALETTE preserves CSBWin stack order through the source package owner");
+    overlay_owner_enabled = 0;
 
     skin_owner_enabled = 1;
     skin_owner_value = 4u;
