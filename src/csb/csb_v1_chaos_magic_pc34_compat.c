@@ -575,11 +575,11 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 59u: case 67u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
     case 133u: case 136u: case 139u:
         return 1;
-    case 8u: case 33u: case 34u: case 36u: case 44u: case 45u:
+    case 8u: case 33u: case 34u: case 35u: case 36u: case 44u: case 45u:
     case 46u: case 49u: case 51u: case 52u: case 53u: case 54u: case 55u:
     case 56u: case 57u: case 58u: case 60u: case 63u: case 64u: case 65u:
     case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
-    case 77u: case 92u: case 100u: case 101u: case 102u: case 106u:
+    case 77u: case 78u: case 92u: case 100u: case 101u: case 102u: case 106u:
     case 103u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
     case 115u: case 116u: case 117u: case 118u: case 123u: case 124u: case 125u:
     case 121u: case 122u: case 130u: case 131u: case 132u: case 134u: case 135u: case 137u:
@@ -1307,6 +1307,8 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_GLOBAL_TEXT_STORES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_OVERLAY_WRITES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_OVERLAY_PALETTE_WRITES 100
 #define CSB_V1_CSBWIN_DSA_TEXT_SLOT_COUNT 10
 #define CSB_V1_CSBWIN_DSA_TEXT_BYTES 1001
 
@@ -1399,6 +1401,14 @@ typedef struct {
     uint32_t global_index;
     char text[CSB_V1_CSBWIN_DSA_TEXT_BYTES];
 } CSB_V1_CSBWinDSAPendingGlobalTextStore;
+typedef struct {
+    uint32_t overlay_number;
+    uint32_t parameters[4];
+} CSB_V1_CSBWinDSAPendingOverlayWrite;
+typedef struct {
+    uint32_t overlay_number;
+    uint32_t parameters[3];
+} CSB_V1_CSBWinDSAPendingOverlayPaletteWrite;
 typedef struct {
     uint32_t delay;
     uint32_t action;
@@ -1536,12 +1546,17 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     char local_text[CSB_V1_CSBWIN_DSA_TEXT_SLOT_COUNT]
                    [CSB_V1_CSBWIN_DSA_TEXT_BYTES],
     CSB_V1_CSBWinDSAPendingGlobalTextStore *pending_global_text_stores,
-    int *pending_global_text_store_count)
+    int *pending_global_text_store_count,
+    CSB_V1_CSBWinDSAPendingOverlayWrite *pending_overlay_writes,
+    int *pending_overlay_write_count,
+    CSB_V1_CSBWinDSAPendingOverlayPaletteWrite *pending_overlay_palette_writes,
+    int *pending_overlay_palette_write_count)
 {
     uint32_t v;
     uint32_t w;
     uint32_t count;
     uint32_t result;
+    uint32_t aux;
     uint8_t skin;
     int32_t sv;
     int32_t sw;
@@ -1573,6 +1588,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_descriptions || !pending_description_count ||
         !local_text || !pending_global_text_stores ||
         !pending_global_text_store_count ||
+        !pending_overlay_writes || !pending_overlay_write_count ||
+        !pending_overlay_palette_writes || !pending_overlay_palette_write_count ||
         !discard_text_requested ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
@@ -1587,6 +1604,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_actuator_copy_count < 0 ||
         *pending_sound_request_count < 0 ||
         *pending_global_text_store_count < 0 ||
+        *pending_overlay_write_count < 0 ||
+        *pending_overlay_palette_write_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -1870,6 +1889,28 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
         *staged_saves_disabled = v != 0u;
+        break;
+    case 78u: /* STKOP_Palette, CSBWin DSA.cpp:2931-2944. */
+        /* SetOverlayPalette consumes density, onum, p2, p1. Its owner checks
+         * the real selected package surface and palette on commit. */
+        if (!context->set_overlay_palette ||
+            *pending_overlay_palette_write_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_OVERLAY_PALETTE_WRITES ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &result)) {
+            goto underflow;
+        }
+        pending_overlay_palette_writes[*pending_overlay_palette_write_count]
+            .overlay_number = w;
+        pending_overlay_palette_writes[*pending_overlay_palette_write_count]
+            .parameters[0] = result;
+        pending_overlay_palette_writes[*pending_overlay_palette_write_count]
+            .parameters[1] = count;
+        pending_overlay_palette_writes[*pending_overlay_palette_write_count]
+            .parameters[2] = v;
+        ++*pending_overlay_palette_write_count;
         break;
     case 49u: /* STKOP_Mastery, CSBWin DSA.cpp:3389-3409. */
         /* Keep DetermineMastery's sleeping, temporary-XP, and possession
@@ -2767,6 +2808,27 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             sv != -1;
         ++*pending_generator_write_count;
         break;
+    case 35u: /* STKOP_Overlay, CSBWin DSA.cpp:2916-2930. */
+        /* SelectOverlay pops onum, p4, p3, p2, p1. It is intentionally
+         * package-owned: a missing CSBGRAPHICS surface is rejected instead
+         * of synthesizing a host overlay. */
+        if (!context->set_overlay ||
+            *pending_overlay_write_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_OVERLAY_WRITES ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &result) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &aux)) {
+            goto underflow;
+        }
+        pending_overlay_writes[*pending_overlay_write_count].overlay_number = v;
+        pending_overlay_writes[*pending_overlay_write_count].parameters[0] = aux;
+        pending_overlay_writes[*pending_overlay_write_count].parameters[1] = result;
+        pending_overlay_writes[*pending_overlay_write_count].parameters[2] = count;
+        pending_overlay_writes[*pending_overlay_write_count].parameters[3] = w;
+        ++*pending_overlay_write_count;
+        break;
     case 105u: /* STKOP_MonLandD */
         /* CSBWin DSA.cpp:4769-4790 exposes the source movement callback's
          * first three words as LOCATIONREL and the Manhattan distance to its
@@ -3395,6 +3457,10 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS];
     CSB_V1_CSBWinDSAPendingGlobalTextStore pending_global_text_stores[
         CSB_V1_CSBWIN_DSA_PENDING_GLOBAL_TEXT_STORES];
+    CSB_V1_CSBWinDSAPendingOverlayWrite pending_overlay_writes[
+        CSB_V1_CSBWIN_DSA_PENDING_OVERLAY_WRITES];
+    CSB_V1_CSBWinDSAPendingOverlayPaletteWrite pending_overlay_palette_writes[
+        CSB_V1_CSBWIN_DSA_PENDING_OVERLAY_PALETTE_WRITES];
     CSB_V1_CSBWinDSAPendingSwitchAction pending_switch_actions[
         CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS];
     CSB_V1_CSBWinDSAPendingTeleporterCopy pending_teleporter_copies[
@@ -3420,6 +3486,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int adjust_skills_parameters_requested = 0;
     int pending_description_count = 0;
     int pending_global_text_store_count = 0;
+    int pending_overlay_write_count = 0;
+    int pending_overlay_palette_write_count = 0;
     int pending_switch_action_count = 0;
     int pending_teleporter_copy_count = 0;
     int override_requested = 0;
@@ -4011,7 +4079,10 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     pending_adjust_skills_parameters, pending_descriptions,
                     &pending_description_count, local_text,
                     pending_global_text_stores,
-                    &pending_global_text_store_count);
+                    &pending_global_text_store_count,
+                    pending_overlay_writes, &pending_overlay_write_count,
+                    pending_overlay_palette_writes,
+                    &pending_overlay_palette_write_count);
                 if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
             }
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
@@ -4282,6 +4353,35 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         ++candidate.global_text_store_count;
         candidate.last_global_text_store_index =
             pending_global_text_stores[i].global_index;
+    }
+    for (i = 0; i < pending_overlay_write_count; ++i) {
+        CSB_V1_CSBWinDSAPendingOverlayWrite *write = &pending_overlay_writes[i];
+
+        if (!context->set_overlay || !context->set_overlay(
+                context->overlay_user, write->overlay_number,
+                write->parameters[0], write->parameters[1],
+                write->parameters[2], write->parameters[3])) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        ++candidate.overlay_store_count;
+        candidate.last_overlay_number = write->overlay_number;
+        memcpy(candidate.last_overlay_parameters, write->parameters,
+               sizeof(candidate.last_overlay_parameters));
+    }
+    for (i = 0; i < pending_overlay_palette_write_count; ++i) {
+        CSB_V1_CSBWinDSAPendingOverlayPaletteWrite *write =
+            &pending_overlay_palette_writes[i];
+
+        if (!context->set_overlay_palette || !context->set_overlay_palette(
+                context->overlay_user, write->overlay_number,
+                write->parameters[0], write->parameters[1],
+                write->parameters[2])) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        ++candidate.overlay_palette_store_count;
+        candidate.last_overlay_palette_number = write->overlay_number;
+        memcpy(candidate.last_overlay_palette_parameters, write->parameters,
+               sizeof(candidate.last_overlay_palette_parameters));
     }
     for (i = 0; i < pending_switch_action_count; ++i) {
         uint8_t event_type = 0u;
@@ -4578,6 +4678,9 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.read_character_name = runner->read_character_name;
     context.set_global_text = runner->set_global_text;
     context.text_user = runner->text_user;
+    context.set_overlay = runner->set_overlay;
+    context.set_overlay_palette = runner->set_overlay_palette;
+    context.overlay_user = runner->overlay_user;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
