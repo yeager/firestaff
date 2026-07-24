@@ -322,7 +322,7 @@ jobs:
           for attempt in 1 2 3 4 5; do
             if sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=120 update && \
               sudo apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=120 install -y \
-                build-essential cmake ninja-build rpm dpkg-dev git pkg-config \
+                build-essential cmake ninja-build rpm dpkg-dev git pkg-config python3-tk \
                 zstd libarchive-tools curl \
                 libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev \
                 libxss-dev libxtst-dev libwayland-dev libxkbcommon-dev wayland-protocols; then
