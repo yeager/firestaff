@@ -740,6 +740,52 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
           "full champion name is preserved through utility flow handoff");
 }
 
+static void test_utility_import_confirmation_is_transactional(void)
+{
+    CSB_V1_UtilFlowContext ctx;
+    const char *save_path = "/tmp/firestaff-csb-v1-utility-confirm.sav";
+
+    CHECK(write_synthetic_dm1_save_for_utility_flow(save_path) == 0,
+          "utility confirmation fixture writes a bounded DM1 save");
+    csb_v1_util_flow_init(&ctx);
+    snprintf(ctx.imported_party.Champions[0].Name,
+             sizeof(ctx.imported_party.Champions[0].Name), "%s", "KEEP");
+    ctx.imported_party.ChampionCount = 1;
+    ctx.imported_champion_count = 1;
+    ctx.state = CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS;
+    csb_v1_util_flow_set_dm1_path(&ctx, save_path);
+
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_CONFIRM_IMPORT &&
+              ctx.pending_import_active &&
+              ctx.pending_import_champion_count == 1,
+          "utility import stages a validated candidate for confirmation");
+    CHECK(ctx.imported_party.ChampionCount == 1 &&
+              strcmp(ctx.imported_party.Champions[0].Name, "KEEP") == 0 &&
+              strcmp(ctx.pending_import_party.Champions[0].Name, "ALPHA   ") == 0,
+          "utility preview cannot replace the committed party before confirm");
+    CHECK(csb_v1_util_flow_cancel_to_menu(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_SELECT_ACTION &&
+              !ctx.pending_import_active &&
+              ctx.pending_import_champion_count == 0 &&
+              ctx.imported_party.ChampionCount == 1 &&
+              strcmp(ctx.imported_party.Champions[0].Name, "KEEP") == 0,
+          "utility cancel rolls the preview candidate back without party mutation");
+
+    ctx.state = CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS;
+    ctx.action = CSB_V1_UTIL_ACTION_IMPORT;
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 && ctx.pending_import_active,
+          "utility import can stage a fresh candidate after cancel");
+    csb_v1_util_flow_confirm_import(&ctx, 1);
+    CHECK(csb_v1_util_flow_step(&ctx) == 0 &&
+              ctx.state == CSB_V1_UTIL_FLOW_NEW_GAME &&
+              !ctx.pending_import_active &&
+              ctx.imported_party.ChampionCount == 1 &&
+              strcmp(ctx.imported_party.Champions[0].Name, "ALPHA   ") == 0,
+          "utility confirmation atomically commits the staged original-save party");
+    remove(save_path);
+}
+
 static void test_utility_flow_load_game_uses_runtime_loader(void)
 {
     CSB_V1_UtilFlowContext ctx;
@@ -5110,6 +5156,7 @@ int main(void)
     test_enter_game_rejects_partial_or_misrouted_profiles();
     test_enter_game_v2_profile_labels_do_not_change_v1_handoff();
     test_utility_flow_new_game_handoff_preserves_leader_index();
+    test_utility_import_confirmation_is_transactional();
     test_utility_flow_load_game_uses_runtime_loader();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
