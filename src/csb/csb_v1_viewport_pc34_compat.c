@@ -3154,7 +3154,23 @@ static void csb_v1_viewport_draw_runtime_thing_overlays(
                 &overlay->object_placement;
             const int icon = placement->icon_index;
 
-            if (placement->sprite_subtype_index >= 0 &&
+            if (cfg->object_sprite_drawer_source_bound) {
+                /* A real CSBGRAPHICS.DAT session cannot replace a missing
+                 * F0115 object bitmap with an icon or a diagnostic marker. */
+                if (placement->sprite_subtype_index >= 0 &&
+                    cfg->object_sprite_drawer) {
+                    CSB_V1_ViewportRuntimeObjectSpriteBlit blit;
+                    if (csb_v1_viewport_runtime_object_sprite_blit(
+                            placement, &blit) &&
+                        cfg->object_sprite_drawer(
+                            cfg->object_sprite_user,
+                            &blit,
+                            cfg->viewport_pixels,
+                            cfg->viewport_stride)) {
+                        ++cfg->runtime_object_sprite_drawn_count;
+                    }
+                }
+            } else if (placement->sprite_subtype_index >= 0 &&
                 cfg->object_sprite_drawer) {
                 CSB_V1_ViewportRuntimeObjectSpriteBlit blit;
                 if (csb_v1_viewport_runtime_object_sprite_blit(
@@ -4175,6 +4191,7 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
     if (!binding) {
         cfg->object_sprite_drawer = NULL;
         cfg->object_sprite_user = NULL;
+        cfg->object_sprite_drawer_source_bound = 0;
         cfg->object_icon_drawer = NULL;
         cfg->object_icon_user = NULL;
         cfg->group_sprite_drawer = NULL;
@@ -4209,6 +4226,8 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
     }
     cfg->object_sprite_drawer = binding->object_sprite_drawer;
     cfg->object_sprite_user = binding->object_sprite_user;
+    cfg->object_sprite_drawer_source_bound =
+        binding->object_sprite_drawer_source_bound ? 1 : 0;
     cfg->object_icon_drawer = binding->object_icon_drawer;
     cfg->object_icon_user = binding->object_icon_user;
     cfg->group_sprite_drawer = binding->group_sprite_drawer;
