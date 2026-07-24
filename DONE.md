@@ -40346,3 +40346,10 @@ passes all 27 checks from title through entrance and HUD.
   and cancel discard it; explicit acceptance atomically commits it before
   `NEW_GAME`. Verification: `csb_v1_utility_import_confirmation_pc34_compat`,
   `csb_v1_utility_flow_action_contract`, and focused boot-handoff coverage.
+- ✅ 2026-07-24 CSBWin original-save admission: the resume path now validates
+  the complete preserved DB11/EXPOOL chain before it stages runtime state and
+  retains the accepted file's FNV, core offset, CSB key verdict, game id and
+  path as source provenance. A malformed tail rolls back without touching the
+  prior live runtime. Verification:
+  `csb_v1_csbwin_save_provenance_pc34_compat` and
+  `csb_v1_save_import_path_pc34_compat`.

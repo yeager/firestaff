@@ -63,6 +63,10 @@ that its exact runtime path is not already source-locked and tested.
     projectiles, damage, drops and timer ordering.
 19. **Q-CSB-09 Original saves and Utility Disk:** save corpus interop and
     Utility Disk import, edit, inventory, dialogs and confirmations.
+    2026-07-24: CSBWin GAMEBLOCK1/body import now also rejects malformed
+    non-empty DB11/EXPOOL tails before atomic runtime staging and records
+    source-file provenance after commit. Remaining: a real CSBWin corpus,
+    full opaque-tail roundtrip after live mutation, and Utility Disk editing.
 20. **Q-CSB-10 Media, input and expansion packages:** sound/music,
     controller/touch/focus, release capture and safe custom-dungeon handling.
     2026-07-24: original and explicitly hash-pinned custom expansion packages

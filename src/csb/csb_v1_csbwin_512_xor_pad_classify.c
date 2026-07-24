@@ -1956,6 +1956,63 @@ int csb_v1_csbwin_512_appended_expool_locate_record(
     return 0;
 }
 
+int csb_v1_csbwin_512_validate_appended_expool_tail(
+    const CSB_V1_CSBWin512BodyReport *report)
+{
+    const uint8_t *bytes;
+    uint32_t total_words;
+    uint32_t bucket_index;
+
+    if (!report || report->appended_truncated ||
+        report->appended_size != report->appended_preserved_size) {
+        return 0;
+    }
+    if (report->appended_size == 0u) return 1;
+    if (!report->appended_expool_candidate ||
+        (report->appended_size & 3u) != 0u ||
+        report->appended_size > CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+        return 0;
+    }
+    total_words = (uint32_t)(report->appended_size / 4u);
+    if (total_words < 64u) return 0;
+    bytes = report->appended_preserved;
+
+    /* data.cpp EXPOOL::Locate starts at the 32 primary hash buckets.  Check
+     * every reachable DB11 chain now, so later runtime lookups cannot turn a
+     * malformed source tail into a partially trusted owner. */
+    for (bucket_index = 32u; bucket_index < 64u; ++bucket_index) {
+        uint32_t bucket = read_le32_word(bytes, bucket_index);
+        uint32_t guard = 0u;
+        if ((bucket & 0x80000000u) != 0u) {
+            uint32_t secondary = bucket & 0x7fffffffu;
+            if (secondary > total_words || total_words - secondary < 64u) {
+                return 0;
+            }
+            /* A secondary table is another complete 64-word bucket page. */
+            bucket = read_le32_word(bytes, secondary + (bucket_index - 32u));
+        }
+        while (bucket != 0u) {
+            uint32_t block_base;
+            uint32_t size_words;
+            if (bucket >= total_words || bucket + 2u >= total_words ||
+                guard++ >= total_words) {
+                return 0;
+            }
+            block_base = bucket & 0xffffffc0u;
+            if (block_base >= total_words ||
+                read_le32_word(bytes, bucket + 1u) == 0u) {
+                return 0;
+            }
+            size_words = read_le16(bytes, (size_t)block_base * 4u + 2u);
+            if (size_words < 2u || bucket > total_words - size_words) {
+                return 0;
+            }
+            bucket = read_le32_word(bytes, bucket);
+        }
+    }
+    return 1;
+}
+
 int csb_v1_csbwin_512_inspect_appended_dsa_tracing(
     const CSB_V1_CSBWin512BodyReport *report,
     CSB_V1_CSBWinDSATracingReport *out_report)
