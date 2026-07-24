@@ -1527,10 +1527,15 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     FILE* f = NULL; long fsize = 0;
     SWSH_CompatLogoPayload logoPayload;
     unsigned char swshPalette[16][3];
+    M11_AudioState swshAudio;
+    const unsigned char* dosoundProgram = NULL;
+    unsigned int dosoundProgramBytes = 0U;
+    int swshAudioInitialized = 0;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media = 0;
     if (skipSwoosh) return;
     memset(&logoPayload, 0, sizeof(logoPayload));
+    memset(&swshAudio, 0, sizeof(swshAudio));
     memset(&dm1Media, 0, sizeof(dm1Media));
     if (dm1MediaReceipt && dm1MediaReceipt->handled) {
         dm1Media = *dm1MediaReceipt;
@@ -1576,6 +1581,29 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     memset(swshPalette, 0, sizeof(swshPalette));
     {
       unsigned int sourceStep;
+      /* SWSH.C:10-14 starts the immutable V0901005 Dosound program before
+       * it mutates a single palette register.  It is deliberately scoped to
+       * DM1: CSB owns a different F0908 DMA source path.  A media receipt
+       * whose cadence is not the PC34 PAL 20 ms VBlank cannot authorize this
+       * PSG program, so leave audio silent rather than inventing a host cue. */
+      if (gameId && strcmp(gameId, "dm1") == 0 &&
+          (!hasDm1Media ||
+           dm1Media.swsh_vblank_ms == SWSH_COMPAT_RUNTIME_VBLANK_MS) &&
+          M11_Audio_Init(&swshAudio)) {
+          dosoundProgram = SWSH_Compat_GetPc34DosoundProgram(
+              &dosoundProgramBytes);
+          if (dosoundProgram &&
+              M11_Audio_PlayDm1SwshDosoundProgram(
+                  &swshAudio,
+                  dosoundProgram,
+                  (int)dosoundProgramBytes,
+                  hasDm1Media ? dm1Media.swsh_vblank_ms :
+                                SWSH_COMPAT_RUNTIME_VBLANK_MS)) {
+              swshAudioInitialized = 1;
+          } else {
+              M11_Audio_Shutdown(&swshAudio);
+          }
+      }
       m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
       M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
       if (m11_delay_ms_with_intro_event_pump(
@@ -1616,6 +1644,9 @@ static void m11_play_ftl_swoosh_for_game_if_available(
           hasDm1Media ? dm1Media.swsh_final_hold_ms :
                         SWSH_Compat_GetRuntimeFinalHoldMs()); }
 cleanup:
+    if (swshAudioInitialized) {
+        M11_Audio_Shutdown(&swshAudio);
+    }
     SWSH_Compat_ReleaseLogoImagePayload(&logoPayload);
     if (logoImg) free(logoImg);
     if (screenFbPacked) free(screenFbPacked);
