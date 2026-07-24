@@ -724,6 +724,70 @@ static void test_evidence_strings(void)
                     "1903-1915", A_LINEAGE_CENTER);
 }
 
+static void test_source_bound_teleporter_field_composite(void)
+{
+    unsigned char source[32u * 136u];
+    unsigned char viewport[224u * 136u];
+    CSB_V1_D0L2D0R2F0115TeleporterSourceRasterPc34 raster;
+    CSB_V1_D0L2D0R2F0115TeleporterRenderReceiptPc34 receipt;
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *left = fixture_for_index(0);
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *right = fixture_for_index(1);
+    size_t i;
+
+    memset(source, 0x6au, sizeof(source));
+    memset(viewport, 0x55, sizeof(viewport));
+    source[0] = 10u;
+    raster = (CSB_V1_D0L2D0R2F0115TeleporterSourceRasterPc34){
+        1, 1, 1, left->field_aspect_index, source, sizeof(source),
+        32, 136, 32, fnv1a32(source, sizeof(source))
+    };
+    expect_int("teleporter.left.render",
+               csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_pc34(
+                   left, &raster, viewport, sizeof(viewport), 224, &receipt),
+               1, A_D0L);
+    expect_int("teleporter.left.receipt.valid", receipt.valid, 1, A_D0L);
+    expect_int("teleporter.left.receipt.field", receipt.field_aspect_index,
+               left->field_aspect_index, A_D0L);
+    expect_int("teleporter.left.transparent", (int)receipt.transparent_pixels,
+               1, A_DEFS);
+    expect_int("teleporter.left.copied", (int)receipt.copied_pixels,
+               32 * 136 - 1, A_D0L);
+    expect_int("teleporter.left.c10_kept", viewport[0], 0x55, A_DEFS);
+    expect_int("teleporter.left.real_pixel", viewport[1], 0x6a, A_D0L);
+    expect_int("teleporter.left.outside_kept", viewport[32], 0x55, A_D0L);
+
+    memset(viewport, 0x55, sizeof(viewport));
+    raster.source_graphics_item_index = right->field_aspect_index;
+    expect_int("teleporter.right.render",
+               csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_pc34(
+                   right, &raster, viewport, sizeof(viewport), 224, &receipt),
+               1, A_D0R);
+    expect_int("teleporter.right.origin", viewport[192], 0x55, A_DEFS);
+    expect_int("teleporter.right.pixel", viewport[193], 0x6a, A_D0R);
+    expect_int("teleporter.right.outside_kept", viewport[191], 0x55, A_D0R);
+
+    raster.source_graphics_item_index = left->field_aspect_index;
+    raster.no_synthetic_pixels = 0;
+    expect_int("teleporter.reject_synthetic",
+               csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_pc34(
+                   left, &raster, viewport, sizeof(viewport), 224, &receipt),
+               0, "source-owned teleporter material only");
+    raster.no_synthetic_pixels = 1;
+    raster.width = 31;
+    expect_int("teleporter.reject_partial_geometry",
+               csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_pc34(
+                   left, &raster, viewport, sizeof(viewport), 224, &receipt),
+               0, "complete G0163 lane required");
+
+    /* Ensure the fixture filled every source pixel deterministically. */
+    for (i = 1u; i < sizeof(source); ++i) {
+        if (source[i] != 0x6au) {
+            expect_int("teleporter.fixture.source", 0, 1, A_D0L);
+            break;
+        }
+    }
+}
+
 int main(void)
 {
     printf("probe=csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat\n");
@@ -736,6 +800,7 @@ int main(void)
     test_zone_bindings_and_draw_order();
     test_csb_lineage_cross_references();
     test_real_graphics_dat_frame_receipts();
+    test_source_bound_teleporter_field_composite();
     test_evidence_strings();
 
     expect_int("assertion_count_at_least_100", g_assertions >= 100, 1, A_F0115);

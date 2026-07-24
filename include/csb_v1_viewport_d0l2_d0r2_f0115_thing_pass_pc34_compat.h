@@ -124,6 +124,37 @@ typedef struct {
     const char *redmcsb_f0115_anchor;
 } CSB_V1_D0L2D0R2F0115ThingPassRealAssetReceiptPc34;
 
+/*
+ * The D0 teleporter field is drawn after F0115 (DUNVIEW.C:8050-8059 and
+ * 8150-8159).  Unlike the older route fixture, this surface is a caller
+ * supplied, package-decoded CSBgraphics raster.  Firestaff never invents
+ * pixels for it: the source item must be the field aspect selected by the
+ * corresponding G2035 row and must cover the complete clipped D0 lane.
+ */
+typedef struct {
+    int source_graphics_dat_bound;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int source_graphics_item_index;
+    const unsigned char *pixels;
+    size_t pixel_count;
+    int width;
+    int height;
+    int stride;
+    uint32_t source_payload_hash;
+} CSB_V1_D0L2D0R2F0115TeleporterSourceRasterPc34;
+
+typedef struct {
+    int valid;
+    int side;
+    int field_aspect_index;
+    int source_graphics_item_index;
+    size_t copied_pixels;
+    size_t transparent_pixels;
+    size_t clipped_pixels;
+    uint32_t source_payload_hash;
+} CSB_V1_D0L2D0R2F0115TeleporterRenderReceiptPc34;
+
 int csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_init_pc34(void);
 
 size_t csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_count_pc34(void);
@@ -187,6 +218,18 @@ int csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_real_asset_receipt_pc34(
     size_t source_byte_count,
     uint32_t source_payload_hash,
     CSB_V1_D0L2D0R2F0115ThingPassRealAssetReceiptPc34 *out_receipt);
+
+/* Render a real CSBgraphics teleporter field into a 224x136 indexed D0
+ * viewport. Returns one only when the complete source-owned lane was
+ * admitted and composited; malformed or synthetic input is a strict no-draw.
+ */
+int csb_v1_viewport_d0l2_d0r2_f0115_render_teleporter_field_pc34(
+    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
+    const CSB_V1_D0L2D0R2F0115TeleporterSourceRasterPc34 *source,
+    unsigned char *viewport,
+    size_t viewport_size,
+    int viewport_stride,
+    CSB_V1_D0L2D0R2F0115TeleporterRenderReceiptPc34 *out_receipt);
 
 const char *csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_source_evidence_pc34(void);
 
