@@ -77,6 +77,8 @@ extern "C" {
 #define CSB_V1_MAX_PARTY_X  32
 #define CSB_V1_MAX_PARTY_Y  32
 #define CSB_V1_RUNTIME_ACTIVE_GROUP_CAP 110
+#define CSB_V1_DUNGEON_PACKAGE_MD5_CAP 33
+#define CSB_V1_DUNGEON_SAVE_NAMESPACE_CAP 48
 /* CSBWin SaveGame.cpp serializes the active overlay palette as twenty-four
  * consecutive EDT_Palette EXPOOL records: 3 channels * 512 entries. */
 #define CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES (3u * 512u)
@@ -539,6 +541,14 @@ typedef struct {
     uint16_t                dungeon_game_id; /* serial from dungeon header */
     CSB_V1_AssetResult      dungeon_asset;
     CSB_V1_AssetResult      graphics_asset;
+    /* Every running dungeon owns a hash-pinned save namespace.  Original
+     * packages use the CSB registry; custom packages must be registered with
+     * their exact bytes before LOADSAVE.C may switch to them. */
+    char                    dungeon_package_md5[CSB_V1_DUNGEON_PACKAGE_MD5_CAP];
+    char                    dungeon_save_namespace[CSB_V1_DUNGEON_SAVE_NAMESPACE_CAP];
+    char                    custom_bonus_dungeon_path[ASSET_PATH_MAX];
+    char                    custom_bonus_dungeon_md5[CSB_V1_DUNGEON_PACKAGE_MD5_CAP];
+    int                     custom_bonus_dungeon_registered;
 
     /* ── Dungeon world ──────────────────────────── */
     int                     current_level;   /* 0-based dungeon level */
@@ -1244,8 +1254,16 @@ int csb_v1_runtime_get_load_bonus_dungeon(
 int csb_v1_runtime_bonus_dungeon_candidate_admitted(const char *path);
 int csb_v1_runtime_bonus_dungeon_active_owner_admitted(
     const CSB_V1_RuntimeProfile *profile);
+/* Register one explicit custom expansion from a caller-selected path.  The
+ * candidate remains rejected until its live bytes match expected_md5; merely
+ * naming a file DUNGEONB.DAT never admits it. */
+int csb_v1_runtime_register_custom_bonus_dungeon(
+    CSB_V1_RuntimeProfile *profile, const char *path,
+    const char *expected_md5);
 int csb_v1_runtime_try_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile);
 const char *csb_v1_runtime_get_bonus_dungeon_path(
+    const CSB_V1_RuntimeProfile *profile);
+const char *csb_v1_runtime_get_dungeon_save_namespace(
     const CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_get_champion_skill_level(
     const CSB_V1_RuntimeProfile *profile,

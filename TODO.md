@@ -65,6 +65,10 @@ that its exact runtime path is not already source-locked and tested.
     Utility Disk import, edit, inventory, dialogs and confirmations.
 20. **Q-CSB-10 Media, input and expansion packages:** sound/music,
     controller/touch/focus, release capture and safe custom-dungeon handling.
+    2026-07-24: original and explicitly hash-pinned custom expansion packages
+    now receive distinct runtime/save identities; foreign package saves fail
+    before state mutation. Remaining: real CSB expansion corpus and launcher
+    selection/UI consumption.
 
 ### DM2
 

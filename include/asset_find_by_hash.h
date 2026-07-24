@@ -17,6 +17,11 @@
  * Virtual archive paths are not accepted by this direct-file helper. */
 int asset_file_matches_md5(const char *path, const char *expectedMd5);
 
+/* Compute an ordinary file's lowercase MD5 identity.  This is intentionally
+ * exposed alongside asset_file_matches_md5 so a user-selected package can be
+ * pinned once and subsequently revalidated without trusting its filename. */
+int asset_file_md5_hex(const char *path, char outHex[33]);
+
 /*
  * Search for a file matching the given MD5 hash.
  *

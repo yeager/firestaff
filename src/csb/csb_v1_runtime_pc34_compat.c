@@ -652,7 +652,7 @@ static int csb_v1_runtime_first_living_champion(
     const CSB_V1_PartyState *party);
 
 #define CSB_V1_RUNTIME_SAVE_MAGIC   0x46534352u /* FSCR */
-#define CSB_V1_RUNTIME_SAVE_VERSION 11u
+#define CSB_V1_RUNTIME_SAVE_VERSION 12u
 
 typedef struct {
     int valid;
@@ -750,6 +750,11 @@ typedef struct {
     CSB_V1_RuntimeActiveGroupState
         active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
     CsbV1AudioSaveSnapshot audio_snapshot;
+    /* Version 12 binds native Firestaff saves to exactly one selected CSB
+     * package.  This prevents a standard CSB save from resuming against a
+     * custom DUNGEONB (and vice versa). */
+    char dungeon_package_md5[CSB_V1_DUNGEON_PACKAGE_MD5_CAP];
+    char dungeon_save_namespace[CSB_V1_DUNGEON_SAVE_NAMESPACE_CAP];
 } CSB_V1_RuntimeSaveImageV1;
 
 #define CSB_V1_RUNTIME_SAVE_V1_SIZE \
@@ -778,6 +783,8 @@ typedef struct {
       (uint32_t)sizeof(CSB_V1_RuntimeActiveGroupStateV9)))
 #define CSB_V1_RUNTIME_SAVE_V10_SIZE \
     ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, audio_snapshot))
+#define CSB_V1_RUNTIME_SAVE_V11_SIZE \
+    ((uint32_t)offsetof(CSB_V1_RuntimeSaveImageV1, dungeon_package_md5))
 
 _Static_assert(sizeof(CSB_V1_RuntimeActiveGroupStateV7) == 24u,
                "CSB native save v7 active-group entry size drifted");
@@ -1145,6 +1152,10 @@ static void csb_v1_runtime_capture_save_image(
            sizeof(image->active_group_state));
     csb_v1_audio_runtime_save_snapshot(&profile->audio_runtime,
                                        &image->audio_snapshot);
+    memcpy(image->dungeon_package_md5, profile->dungeon_package_md5,
+           sizeof(image->dungeon_package_md5));
+    memcpy(image->dungeon_save_namespace, profile->dungeon_save_namespace,
+           sizeof(image->dungeon_save_namespace));
 }
 
 static int csb_v1_runtime_validate_projectile_list(
@@ -1398,6 +1409,8 @@ static int csb_v1_runtime_apply_save_image(
            image->byte_size == CSB_V1_RUNTIME_SAVE_V8_SIZE) ||
           (image->version == 10u &&
            image->byte_size == CSB_V1_RUNTIME_SAVE_V10_SIZE) ||
+          (image->version == 11u &&
+           image->byte_size == CSB_V1_RUNTIME_SAVE_V11_SIZE) ||
           (image->version == CSB_V1_RUNTIME_SAVE_VERSION &&
            image->byte_size == sizeof(*image)))) {
         return -1;
@@ -1417,6 +1430,20 @@ static int csb_v1_runtime_apply_save_image(
         image->party_state.ChampionCount > CSB_V1_MAX_CHAMPIONS ||
         image->party_dir < 0 || image->party_dir > 3) {
         return -1;
+    }
+    /* A version-12 native image belongs to the exact loaded package.  This
+     * is deliberately checked before live party/timer mutation so opening a
+     * custom-dungeon save from standard CSB cannot borrow its world state. */
+    if (image->version >= 12u &&
+        (profile->dungeon_package_md5[0] || image->dungeon_package_md5[0])) {
+        if (!profile->dungeon_package_md5[0] ||
+            !image->dungeon_package_md5[0] ||
+            strcmp(profile->dungeon_package_md5,
+                   image->dungeon_package_md5) != 0 ||
+            strcmp(profile->dungeon_save_namespace,
+                   image->dungeon_save_namespace) != 0) {
+            return -1;
+        }
     }
 
     /* ReDMCSB LOADSAVE.C F0435 lines 2721-2800 restores GLOBAL_DATA,
@@ -17330,6 +17357,33 @@ int csb_v1_runtime_bonus_dungeon_candidate_admitted(const char *path)
     return 0;
 }
 
+static int csb_v1_runtime_package_identity_matches(
+    const char *path, const char *expected_md5)
+{
+    return path && path[0] && expected_md5 && strlen(expected_md5) == 32u &&
+        asset_file_matches_md5(path, expected_md5);
+}
+
+static void csb_v1_runtime_set_package_namespace(
+    CSB_V1_RuntimeProfile *profile, const char *md5)
+{
+    if (!profile) return;
+    snprintf(profile->dungeon_package_md5,
+             sizeof(profile->dungeon_package_md5), "%s", md5 ? md5 : "");
+    snprintf(profile->dungeon_save_namespace,
+             sizeof(profile->dungeon_save_namespace), "csb-%s",
+             md5 ? md5 : "unbound");
+}
+
+static int csb_v1_runtime_custom_bonus_candidate_admitted(
+    const CSB_V1_RuntimeProfile *profile, const char *path)
+{
+    return profile && profile->custom_bonus_dungeon_registered && path &&
+        strcmp(path, profile->custom_bonus_dungeon_path) == 0 &&
+        csb_v1_runtime_package_identity_matches(
+            path, profile->custom_bonus_dungeon_md5);
+}
+
 int csb_v1_runtime_bonus_dungeon_active_owner_admitted(
     const CSB_V1_RuntimeProfile *profile)
 {
@@ -17341,9 +17395,47 @@ int csb_v1_runtime_bonus_dungeon_active_owner_admitted(
 
     /* The active dungeon is the save namespace owner. Do not let C201 swap
      * an otherwise hash-matching DUNGEONB into a profile which was not
-     * established from the authenticated CSB package. */
-    return csb_v1_runtime_bonus_dungeon_candidate_admitted(
-        profile->dungeon_path);
+     * established from the authenticated CSB package. A registered custom
+     * package is an equally strict owner: its current bytes and namespace
+     * must still equal the registration receipt. */
+    if (csb_v1_runtime_bonus_dungeon_candidate_admitted(
+            profile->dungeon_path)) {
+        return !profile->dungeon_package_md5[0] ||
+            csb_v1_runtime_package_identity_matches(
+                profile->dungeon_path, profile->dungeon_package_md5);
+    }
+    return csb_v1_runtime_custom_bonus_candidate_admitted(
+        profile, profile->dungeon_path) &&
+        strcmp(profile->dungeon_package_md5,
+               profile->custom_bonus_dungeon_md5) == 0;
+}
+
+int csb_v1_runtime_register_custom_bonus_dungeon(
+    CSB_V1_RuntimeProfile *profile, const char *path,
+    const char *expected_md5)
+{
+    char actual_md5[CSB_V1_DUNGEON_PACKAGE_MD5_CAP];
+
+    if (!profile || !path || !path[0] || !expected_md5 ||
+        strlen(expected_md5) != 32u ||
+        !csb_v1_runtime_bonus_dungeon_active_owner_admitted(profile) ||
+        !csb_v1_runtime_file_exists(path) ||
+        !asset_file_md5_hex(path, actual_md5) ||
+        strcmp(actual_md5, expected_md5) != 0) {
+        return 0;
+    }
+    /* A package that is already in the original registry needs no custom
+     * exception. Keeping that distinction prevents a custom registration
+     * from weakening the registry's standard-CSB identity. */
+    if (csb_v1_runtime_bonus_dungeon_candidate_admitted(path)) {
+        return 0;
+    }
+    snprintf(profile->custom_bonus_dungeon_path,
+             sizeof(profile->custom_bonus_dungeon_path), "%s", path);
+    snprintf(profile->custom_bonus_dungeon_md5,
+             sizeof(profile->custom_bonus_dungeon_md5), "%s", actual_md5);
+    profile->custom_bonus_dungeon_registered = 1;
+    return 1;
 }
 
 static int csb_v1_runtime_try_bonus_candidate(CSB_V1_RuntimeProfile *profile,
@@ -17351,15 +17443,18 @@ static int csb_v1_runtime_try_bonus_candidate(CSB_V1_RuntimeProfile *profile,
                                               const char *name)
 {
     char candidate[ASSET_PATH_MAX];
+    char candidate_md5[CSB_V1_DUNGEON_PACKAGE_MD5_CAP];
     if (!csb_v1_runtime_join_path(candidate, sizeof(candidate), dir, name)) {
         return 0;
     }
     if (!csb_v1_runtime_file_exists(candidate)) {
         return 0;
     }
-    if (!csb_v1_runtime_bonus_dungeon_candidate_admitted(candidate)) {
+    if (!csb_v1_runtime_bonus_dungeon_candidate_admitted(candidate) &&
+        !csb_v1_runtime_custom_bonus_candidate_admitted(profile, candidate)) {
         return 0;
     }
+    if (!asset_file_md5_hex(candidate, candidate_md5)) return 0;
     if (!csb_v1_runtime_replace_dungeon_handle(profile, candidate)) {
         return 0;
     }
@@ -17368,6 +17463,8 @@ static int csb_v1_runtime_try_bonus_candidate(CSB_V1_RuntimeProfile *profile,
              "%s",
              candidate);
     profile->dungeon_path = profile->bonus_dungeon_path;
+    profile->dungeon_asset.path = profile->bonus_dungeon_path;
+    csb_v1_runtime_set_package_namespace(profile, candidate_md5);
     return 1;
 }
 
@@ -17389,6 +17486,22 @@ int csb_v1_runtime_try_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile)
         return 0;
     }
     profile->bonus_dungeon_path[0] = '\0';
+
+    /* A custom package is not discovered by a permissive filename scan.
+     * When a caller selected and hash-pinned one, consume that exact path
+     * first, including custom names used by CSBWin authors. */
+    if (profile->custom_bonus_dungeon_registered &&
+        csb_v1_runtime_custom_bonus_candidate_admitted(
+            profile, profile->custom_bonus_dungeon_path)) {
+        char custom_dir[ASSET_PATH_MAX];
+        const char *base = strrchr(profile->custom_bonus_dungeon_path, '/');
+        if (!base) base = strrchr(profile->custom_bonus_dungeon_path, '\\');
+        if (base && csb_v1_runtime_dirname(profile->custom_bonus_dungeon_path,
+                                            custom_dir, sizeof(custom_dir)) &&
+            csb_v1_runtime_try_bonus_candidate(profile, custom_dir, base + 1)) {
+            return 1;
+        }
+    }
 
     /* ReDMCSB LOADSAVE.C lines 2316-2334 tries the platform bonus dungeon
      * filename when G1147_B_LoadBonusDungeon is true, then falls back to the
@@ -17437,6 +17550,13 @@ const char *csb_v1_runtime_get_bonus_dungeon_path(
     return (profile && profile->bonus_dungeon_path[0] != '\0')
         ? profile->bonus_dungeon_path
         : NULL;
+}
+
+const char *csb_v1_runtime_get_dungeon_save_namespace(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    return (profile && profile->dungeon_save_namespace[0])
+        ? profile->dungeon_save_namespace : NULL;
 }
 
 int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,

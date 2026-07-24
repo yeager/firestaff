@@ -45,14 +45,18 @@ int main(void)
     char root[256];
     char active_path[320];
     char dm1_named_bonus_path[320];
+    char save_path[320];
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData active_dungeon;
+    CSB_V1_RuntimeProfile same_package;
+    CSB_V1_RuntimeProfile foreign_package;
 
     snprintf(root, sizeof(root), "/tmp/firestaff-csb-expansion-admission-%d",
              fs_pid());
     snprintf(active_path, sizeof(active_path), "%s/DUNGEON.DAT", root);
     snprintf(dm1_named_bonus_path, sizeof(dm1_named_bonus_path),
              "%s/DUNGEONB.DAT", root);
+    snprintf(save_path, sizeof(save_path), "%s/package.fsav", root);
     check(FS_MKDIR(root) == 0, "create expansion fixture directory");
     check(write_file(active_path), "write selected CSB package placeholder");
     check(write_file(dm1_named_bonus_path), "write neighboring DUNGEONB placeholder");
@@ -81,6 +85,37 @@ int main(void)
               profile.dungeon_path == active_path &&
               profile.bonus_dungeon_path[0] == '\0',
           "rejected package leaves the active CSB package and save identity intact");
+
+    /* A native save records the active package receipt. The runtime test uses
+     * explicit identities because this fixture deliberately has no original
+     * CSB bytes; production registration additionally verifies file MD5. */
+    csb_v1_runtime_init(&profile, NULL);
+    profile.game_time = 42u;
+    profile.timeline_queue.gameTick = profile.game_time;
+    snprintf(profile.dungeon_package_md5,
+             sizeof(profile.dungeon_package_md5),
+             "%s", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    snprintf(profile.dungeon_save_namespace,
+             sizeof(profile.dungeon_save_namespace), "%s", "csb-aaaaaaaa");
+    check(csb_v1_runtime_save_game_to_path(&profile, save_path) == 0,
+          "package-owned native save writes with a pinned identity");
+    csb_v1_runtime_init(&same_package, NULL);
+    snprintf(same_package.dungeon_package_md5,
+             sizeof(same_package.dungeon_package_md5),
+             "%s", "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+    snprintf(same_package.dungeon_save_namespace,
+             sizeof(same_package.dungeon_save_namespace), "%s", "csb-aaaaaaaa");
+    check(csb_v1_runtime_load_game_from_path(&same_package, save_path) == 0,
+          "same CSB package resumes its own save");
+    csb_v1_runtime_init(&foreign_package, NULL);
+    snprintf(foreign_package.dungeon_package_md5,
+             sizeof(foreign_package.dungeon_package_md5),
+             "%s", "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
+    snprintf(foreign_package.dungeon_save_namespace,
+             sizeof(foreign_package.dungeon_save_namespace), "%s", "csb-bbbbbbbb");
+    check(csb_v1_runtime_load_game_from_path(&foreign_package, save_path) != 0,
+          "foreign CSB package cannot consume the save");
+    remove(save_path);
 
     remove(dm1_named_bonus_path);
     remove(active_path);
