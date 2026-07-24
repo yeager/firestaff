@@ -8235,6 +8235,12 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     profile->runtime.graphics_path = profile->graphics_path;
     profile->runtime.dungeon_asset.path = profile->dungeon_path;
     profile->runtime.dungeon_asset.kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
+    snprintf(profile->runtime.dungeon_package_md5,
+             sizeof(profile->runtime.dungeon_package_md5), "%s",
+             profile->dungeon_md5);
+    snprintf(profile->runtime.dungeon_save_namespace,
+             sizeof(profile->runtime.dungeon_save_namespace), "csb-%s",
+             profile->dungeon_md5);
     profile->runtime.graphics_asset.path = profile->graphics_path;
     profile->runtime.graphics_asset.kind = profile->graphics_kind;
     /* Copy entrance/start map indices from the boot profile so the runtime

@@ -171,6 +171,12 @@ int asset_file_matches_md5(const char *path, const char *expectedMd5) {
         file_md5(path, actual) && strcmp(actual, expectedMd5) == 0;
 }
 
+int asset_file_md5_hex(const char *path, char outHex[33]) {
+    if (!outHex) return 0;
+    outHex[0] = '\0';
+    return path && file_md5(path, outHex);
+}
+
 static int stream_md5_update_file(FILE *fp, long offset, uint32_t size,
                                   AssetMd5Ctx *ctx) {
     unsigned char buf[8192];
