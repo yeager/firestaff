@@ -25,6 +25,9 @@ that its exact runtime path is not already source-locked and tested.
    prove F0417/F0418/F0435 import, live resume, export, backup and re-import.
 2. **Q-DM1-02 HoC presented-frame consumer:** finish source-backed mirrors,
    inscriptions, objects, action/spell surfaces and palettes at every depth.
+   2026-07-24: a DM1-owned final frame boundary now requires the independent
+   C127/C026, M648 and F0115 source receipts together and suppresses fallback
+   drawing. Remaining: consume it from all live side/depth render routes.
 3. **Q-DM1-03 Dungeon viewport material matrix:** complete F0107-F0115 wall,
    floor, ceiling, door, ornament, mirror, item, creature, projectile and
    explosion routing without fallback drawing.
@@ -65,7 +68,10 @@ that its exact runtime path is not already source-locked and tested.
 17. **Q-CSB-07 Thing/sensor runtime:** generic sensors, remote actions,
     actuators, pits, teleporters, stairs and door side effects.
 18. **Q-CSB-08 Combat and movement runtime:** group AI, melee, spells,
-    projectiles, damage, drops and timer ordering.
+   projectiles, damage, drops and timer ordering.
+   2026-07-24: C38 creature missiles now create source-owned C14/C49 entries
+   instead of degrading to invented melee. Remaining: more projectile
+   families plus impact, drop and live-capture coverage.
 19. **Q-CSB-09 Original saves and Utility Disk:** save corpus interop and
     Utility Disk import, edit, inventory, dialogs and confirmations.
     2026-07-24: CSBWin GAMEBLOCK1/body import now also rejects malformed

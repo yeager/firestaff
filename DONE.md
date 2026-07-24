@@ -1,3 +1,8 @@
+- ✅ 2026-07-24 DM1 HoC source-frame boundary: C127/C026 mirror, M648
+  inscription and F0115 object receipts must agree in a DM1-owned module
+  before a HoC frame is publishable; missing or synthetic material fails
+  closed. Verification: `dm1_v1_hoc_presented_frame_consumer_pc34_compat`.
+
 - ✅ 2026-07-24 CSB F0115 real item/explosion composition: dedicated
   viewport code now consumes only hash-verified, palette-bound decoded
   `CSBGRAPHICS.DAT` item and explosion surfaces through the original C10
