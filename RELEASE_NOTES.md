@@ -1,9 +1,9 @@
 
 # Unreleased
 
-# Firestaff v3.0.97
+# Firestaff v3.0.98
 
-## Highlights since v3.0.96
+## Highlights since v3.0.97
 
 - Artpack Studio is now self-contained: bundled Python, Pillow and Tk remove
   the system-Pillow dependency on macOS, Windows, Linux and Steam Deck.
@@ -14,6 +14,7 @@
 - Windows bundling now accepts both native and MSYS Python virtual-environment
   layouts.
 - MSYS releases use the distribution's matching Pillow and PyInstaller builds.
+- macOS packaging remains compatible with the runner's Bash 3 shell.
 - DM1 and CSB source-locked runtime work continues across viewport materials,
   DSA controls, save provenance, teleporter fields and combat timelines.
 
