@@ -31,14 +31,28 @@ mkdir -p "$OUT_DIR/dist" "$WORK_DIR" "$SPEC_DIR"
 
 # CI images may mark their system Python as externally managed.  A local venv
 # keeps Pillow and PyInstaller self-contained without modifying that runtime.
-"$PYTHON" -m venv "$VENV_DIR"
+SYSTEM_SITE_PACKAGES=()
+IS_MSYS=false
+case "$(uname -s)" in
+  MINGW*|MSYS*)
+    # MSYS provides matching binary Pillow/PyInstaller packages.  PyPI has no
+    # wheel for its rolling Python yet, so compiling Pillow is unreliable.
+    SYSTEM_SITE_PACKAGES=(--system-site-packages)
+    IS_MSYS=true
+    ;;
+esac
+"$PYTHON" -m venv "${SYSTEM_SITE_PACKAGES[@]}" "$VENV_DIR"
 PYTHON="$VENV_DIR/bin/python"
 # MSYS Python uses the POSIX venv layout even on Windows; native Windows
 # Python creates Scripts/python.exe.  Prefer the layout that actually exists.
 if [[ ! -x "$PYTHON" && -x "$VENV_DIR/Scripts/python.exe" ]]; then
   PYTHON="$VENV_DIR/Scripts/python.exe"
 fi
-"$PYTHON" -m pip install --upgrade Pillow pyinstaller
+if [[ "$IS_MSYS" == "true" ]]; then
+  "$PYTHON" -c 'import PIL, PyInstaller'
+else
+  "$PYTHON" -m pip install --upgrade Pillow pyinstaller
+fi
 
 case "$(uname -s)" in
   Darwin)
