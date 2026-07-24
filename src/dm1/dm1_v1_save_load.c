@@ -421,6 +421,169 @@ int DM1_SaveGamePC34(const struct GameWorld_Compat* world,
     return DM1_SAVE_OK;
 }
 
+static int dm1_save_and_quit_write_exact(const char* path,
+                                         const unsigned char* bytes,
+                                         size_t byte_count)
+{
+    FILE* file;
+    unsigned char* verify = NULL;
+    int result = 0;
+
+    if (!path || !bytes || byte_count == 0u) return 0;
+    file = fopen(path, "wb");
+    if (!file) return 0;
+    if (fwrite(bytes, 1u, byte_count, file) != byte_count ||
+        fclose(file) != 0) {
+        remove(path);
+        return 0;
+    }
+    /* F0433 returns only after every F0420 part was written. Re-read the
+     * host file before any old primary is renamed, so a short write cannot
+     * consume the sole user-save owner. */
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    verify = (unsigned char*)malloc(byte_count);
+    if (verify && fread(verify, 1u, byte_count, file) == byte_count &&
+        fgetc(file) == EOF && memcmp(verify, bytes, byte_count) == 0) {
+        result = 1;
+    }
+    free(verify);
+    fclose(file);
+    if (!result) remove(path);
+    return result;
+}
+
+static int dm1_save_and_quit_path_exists(const char* path)
+{
+    FILE* file;
+    if (!path) return 0;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    fclose(file);
+    return 1;
+}
+
+int DM1_SaveAndQuitOriginalPC34(
+    const struct DM1OriginalPC34SaveAndQuitRequest* request,
+    struct GameWorld_Compat* outResumedWorld,
+    struct DM1OriginalPC34SaveAndQuitReceipt* outReceipt)
+{
+    struct DM1OriginalPC34SaveAndQuitReceipt receipt;
+    DM1OriginalSavePC34RoundtripReport corpus_report;
+    DM1OriginalSavePC34HandoffReport resume_report;
+    struct GameWorld_Compat staged_resume;
+    unsigned char* bytes = NULL;
+    char temporary_path[512];
+    char backup_path[512];
+    int bytes_written = 0;
+    int had_primary;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&corpus_report, 0, sizeof(corpus_report));
+    memset(&resume_report, 0, sizeof(resume_report));
+    memset(&staged_resume, 0, sizeof(staged_resume));
+    if (outReceipt) *outReceipt = receipt;
+    if (!request || !request->world || !request->path || !request->path[0] ||
+        !outResumedWorld ||
+        snprintf(temporary_path, sizeof(temporary_path), "%s.tmp", request->path) <= 0 ||
+        snprintf(backup_path, sizeof(backup_path), "%s.bak", request->path) <= 0 ||
+        strlen(temporary_path) >= sizeof(temporary_path) ||
+        strlen(backup_path) >= sizeof(backup_path)) {
+        return DM1_SAVE_ERROR_NULL_ARG;
+    }
+    if (!request->originalCorpusPath || !request->originalCorpusPath[0]) {
+        return DM1_SAVE_ERROR_SOURCE_REQUIRED;
+    }
+
+    /* A generated fixture/header can exercise the parser but cannot own a
+     * user-facing original Save-and-Quit. Require the same external
+     * provenance sidecar and full F0435 -> F0433 -> F0435 proof used by the
+     * corpus admission route before target media is touched. */
+    bytes = (unsigned char*)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
+    if (!bytes) return DM1_SAVE_ERROR_OUT_OF_MEMORY;
+    if (dm1_v1_original_save_pc34_roundtrip_provenanced_file(
+            request->originalCorpusPath, request->gameID, bytes,
+            SAVEGAME_PC34_MAX_FILE_SIZE, &receipt.bytesWritten,
+            &corpus_report) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK ||
+        !corpus_report.core_state_matches ||
+        receipt.bytesWritten == 0u) {
+        free(bytes);
+        return DM1_SAVE_ERROR_SOURCE_REQUIRED;
+    }
+    receipt.corpusAccepted = 1;
+    receipt.corpusRoundtripHash = corpus_report.source_c3_event_fingerprint ^
+        corpus_report.source_c4_timeline_fingerprint ^
+        corpus_report.source_party_info_fingerprint;
+    receipt.bytesWritten = 0u;
+
+    if (F0803_SAVEGAME_ExportVanillaPC34FromWorld_Compat(
+            request->world, request->gameID, bytes,
+            SAVEGAME_PC34_MAX_FILE_SIZE, &bytes_written) != SAVEGAME_PC34_OK ||
+        bytes_written <= 0) {
+        free(bytes);
+        return DM1_SAVE_ERROR_SERIALIZE;
+    }
+    receipt.exportAccepted = 1;
+    receipt.bytesWritten = (size_t)bytes_written;
+    receipt.outputFingerprint = DM1_CRC32(bytes, receipt.bytesWritten);
+
+    /* Verify the exact F0433 bytes through the runtime reader before doing
+     * any filesystem mutation. The candidate owns the resume boundary until
+     * it has passed all parts and the dungeon tail. */
+    if (dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+            bytes, receipt.bytesWritten, &staged_resume, NULL,
+            &resume_report) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        free(bytes);
+        return DM1_SAVE_ERROR_RESUME;
+    }
+    F0883_WORLD_Free_Compat(&staged_resume);
+    memset(&staged_resume, 0, sizeof(staged_resume));
+
+    remove(temporary_path);
+    if (!dm1_save_and_quit_write_exact(temporary_path, bytes,
+                                        receipt.bytesWritten)) {
+        free(bytes);
+        return DM1_SAVE_ERROR_FILE_WRITE;
+    }
+    /* Re-open the concrete temporary file, not the in-memory export. */
+    if (dm1_v1_original_save_pc34_handoff_load_world_from_file(
+            temporary_path, &staged_resume, NULL,
+            &resume_report) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        remove(temporary_path);
+        free(bytes);
+        return DM1_SAVE_ERROR_RESUME;
+    }
+    receipt.outputReloaded = 1;
+
+    had_primary = dm1_save_and_quit_path_exists(request->path);
+    remove(backup_path);
+    if (had_primary) {
+        if (rename(request->path, backup_path) != 0) {
+            F0883_WORLD_Free_Compat(&staged_resume);
+            remove(temporary_path);
+            free(bytes);
+            return DM1_SAVE_ERROR_FILE_WRITE;
+        }
+        receipt.backupCreated = 1;
+    }
+    if (rename(temporary_path, request->path) != 0) {
+        if (receipt.backupCreated && rename(backup_path, request->path) == 0) {
+            receipt.backupRestored = 1;
+        }
+        F0883_WORLD_Free_Compat(&staged_resume);
+        remove(temporary_path);
+        free(bytes);
+        if (outReceipt) *outReceipt = receipt;
+        return DM1_SAVE_ERROR_FILE_WRITE;
+    }
+    receipt.primaryPublished = 1;
+    F0883_WORLD_Free_Compat(outResumedWorld);
+    *outResumedWorld = staged_resume;
+    free(bytes);
+    if (outReceipt) *outReceipt = receipt;
+    return DM1_SAVE_OK;
+}
+
 /* ── Load game ────────────────────────────────────────────────── */
 
 /*
@@ -936,6 +1099,8 @@ const char* DM1_SaveLoadErrorString(int code) {
         case DM1_SAVE_ERROR_SERIALIZE:        return "SERIALISE FAILED";
         case DM1_SAVE_ERROR_DESERIALIZE:      return "DESERIALISE FAILED";
         case DM1_SAVE_ERROR_OUT_OF_MEMORY:    return "OUT OF MEMORY";
+        case DM1_SAVE_ERROR_SOURCE_REQUIRED:  return "ORIGINAL PC34 CORPUS REQUIRED";
+        case DM1_SAVE_ERROR_RESUME:           return "PC34 RESUME VERIFICATION FAILED";
         case DM1_SAVE_ERROR_INTERNAL:         return "INTERNAL ERROR";
         default:                              return "UNKNOWN ERROR";
     }

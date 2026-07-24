@@ -1372,6 +1372,55 @@ static int test_pc34_writeback_path(void) {
     return 1;
 }
 
+static int test_path_exists(const char* path) {
+    FILE* file = fopen(path, "rb");
+    if (!file) return 0;
+    fclose(file);
+    return 1;
+}
+
+static int test_pc34_provenanced_save_and_quit(void) {
+    const char* target_path = "/tmp/dm1_pc34_sq_target.sav";
+    struct GameWorld_Compat before;
+    struct GameWorld_Compat resumed;
+    struct DM1OriginalPC34SaveAndQuitRequest request;
+    struct DM1OriginalPC34SaveAndQuitReceipt receipt;
+    int ok = 1;
+
+    remove(target_path);
+    remove("/tmp/dm1_pc34_sq_target.sav.bak");
+    remove("/tmp/dm1_pc34_sq_target.sav.tmp");
+    memset(&before, 0, sizeof(before));
+    memset(&resumed, 0, sizeof(resumed));
+    memset(&request, 0, sizeof(request));
+    memset(&receipt, 0, sizeof(receipt));
+    seed_party_state_gate_world(&before);
+
+    request.world = &before;
+    request.path = target_path;
+    request.gameID = 0xF0433001u;
+    /* No external corpus: Save-and-Quit must not create the target. */
+    ok &= expect_int_eq("pc34 save-and-quit missing corpus",
+                        DM1_SaveAndQuitOriginalPC34(&request, &resumed,
+                                                     &receipt),
+                        DM1_SAVE_ERROR_SOURCE_REQUIRED);
+    ok &= expect_int_eq("pc34 save-and-quit target untouched",
+                        test_path_exists(target_path), 0);
+    request.originalCorpusPath = "/tmp/not-an-original-pc34-corpus.sav";
+    ok &= expect_int_eq("pc34 save-and-quit absent provenance",
+                        DM1_SaveAndQuitOriginalPC34(&request, &resumed,
+                                                     &receipt),
+                        DM1_SAVE_ERROR_SOURCE_REQUIRED);
+    ok &= expect_int_eq("pc34 save-and-quit absent provenance untouched",
+                        test_path_exists(target_path), 0);
+
+    F0883_WORLD_Free_Compat(&before);
+    F0883_WORLD_Free_Compat(&resumed);
+    if (!ok) return 0;
+    printf("  PASS: provenanced original PC34 Save-and-Quit transaction\n");
+    return 1;
+}
+
 static int test_pc34_roundtrip_receipt(void) {
     const char* path = "/tmp/dm1_pc34_roundtrip_receipt.sav";
     const char* badPath = "/tmp/dm1_pc34_roundtrip_receipt_bad.sav";
@@ -1511,6 +1560,7 @@ int main(void) {
     if (test_resume_receipt_contract()) pass++; else fail++;
     if (test_party_state_save_resume_gate()) pass++; else fail++;
     if (test_pc34_writeback_path()) pass++; else fail++;
+    if (test_pc34_provenanced_save_and_quit()) pass++; else fail++;
     if (test_pc34_roundtrip_receipt()) pass++; else fail++;
 
     printf("\n=== Results: %d passed, %d failed ===\n", pass, fail);
