@@ -1443,6 +1443,15 @@ typedef struct {
     int csbStartupLiveHudAuthorized;
     uint32_t csbStartupTerminalSourceTick;
     uint32_t csbStartupTerminalGeneration;
+    /* F0908 owns this exact raw PC34 SWSH sample.  It is copied from the
+     * selected CSB package so the draw loop never consults a generic sound
+     * bank or an invented cue. */
+    unsigned char csbStartupSwooshBytes[9078];
+    int csbStartupSwooshBytesBound;
+    uint32_t csbStartupSwooshHash;
+    int csbStartupSwooshPlayConsumed;
+    int csbStartupSwooshReleaseConsumed;
+    int csbStartupEntranceMusicTransitionConsumed;
     struct {
         int level_loaded;
         int current_level;
@@ -1686,6 +1695,13 @@ int M11_GameView_GetSessionTimerForcedPauseDialogActive(
 int M11_GameView_GetSessionTimerReminderOverlayActive(
     const M11_GameViewState* state);
 int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled);
+/* Binds the authenticated raw PC34 SWSH sample for the active CSB package.
+ * Invalid/missing source data stays silent; no synthetic audio substitute is
+ * used for title or Entrance. */
+int M11_GameView_SetCsbStartupSwooshSource(M11_GameViewState* state,
+                                           const unsigned char* bytes,
+                                           int byteCount,
+                                           uint32_t expectedHash);
 int M11_GameView_ToggleMusic(M11_GameViewState* state);
 int M11_GameView_GetMusicEnabled(const M11_GameViewState* state);
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state);

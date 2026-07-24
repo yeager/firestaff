@@ -63,10 +63,16 @@ typedef struct {
     M11_SoundBuffer originalSounds[M11_AUDIO_ORIGINAL_SOUND_COUNT];
     M11_SoundBuffer titleMusic;
     M11_SoundBuffer dm1SwshProgram;
+    M11_SoundBuffer csbSwshPcm;
     int dm1SwshProgramAccepted;
     int dm1SwshRegisterWriteCount;
     int dm1SwshWaitVblankCount;
     int dm1SwshQueuedCount;
+    int csbSwshSourceAccepted;
+    int csbSwshSourceByteCount;
+    int csbSwshSourcePeriod;
+    unsigned int csbSwshSourceHash;
+    int csbSwshQueuedCount;
 } M11_AudioState;
 
 int M11_Audio_Init(M11_AudioState* state);
@@ -94,6 +100,14 @@ int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
                                         const unsigned char* program,
                                         int programBytes,
                                         unsigned int vblankMs);
+/* CSB PC34 SWSHSND.C F0908 owns a raw signed 8-bit DMA sample.  This
+ * accepts only the authenticated 9078-byte source buffer and never falls
+ * back to a marker, SND3 effect, or generated waveform. */
+int M11_Audio_PlayCsbSwshPcm(M11_AudioState* state,
+                             const unsigned char* source,
+                             int sourceBytes,
+                             int sourcePeriod,
+                             unsigned int sourceHash);
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled);
 int M11_Audio_TitleMusicEnabled(const M11_AudioState* state);

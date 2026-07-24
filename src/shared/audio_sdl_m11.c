@@ -19,6 +19,8 @@
 #define M11_AUDIO_SOUND_PACK_PATH_CAPACITY 1024
 #define M11_AUDIO_SOUND_PACK_MAX_SECONDS 10u
 #define M11_AUDIO_SOUND_PACK_MAX_BYTES (64u * 1024u * 1024u)
+#define M11_AUDIO_CSB_SWSH_BYTES 9078
+#define M11_AUDIO_CSB_SWSH_PERIOD 334
 
 /*
  * Guard: SDL3 headers are only included when we actually attempt real audio.
@@ -67,6 +69,18 @@ static int m11_sound_append_sample(M11_SoundBuffer* buf, float sample) {
     if (!buf || !m11_sound_reserve(buf, buf->sampleCount + 1)) return 0;
     buf->samples[buf->sampleCount++] = sample;
     return 1;
+}
+
+static unsigned int m11_fnv1a_bytes(const unsigned char* bytes, int count) {
+    unsigned int hash = 2166136261u;
+    int index;
+
+    if (!bytes || count <= 0) return 0u;
+    for (index = 0; index < count; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
 }
 
 /* The PC34 SWSH sound is an Atari ST PSG command stream, not PCM.  Its
@@ -813,6 +827,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         }
         m11_sound_free(&state->titleMusic);
         m11_sound_free(&state->dm1SwshProgram);
+        m11_sound_free(&state->csbSwshPcm);
     }
 
     state->initialized = 0;
@@ -838,6 +853,11 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->dm1SwshRegisterWriteCount = 0;
     state->dm1SwshWaitVblankCount = 0;
     state->dm1SwshQueuedCount = 0;
+    state->csbSwshSourceAccepted = 0;
+    state->csbSwshSourceByteCount = 0;
+    state->csbSwshSourcePeriod = 0;
+    state->csbSwshSourceHash = 0u;
+    state->csbSwshQueuedCount = 0;
 }
 
 int M11_Audio_IsAvailable(const M11_AudioState* state) {
@@ -1066,6 +1086,71 @@ int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
     }
     m11_sound_clear(&state->dm1SwshProgram);
     return 0;
+}
+
+int M11_Audio_PlayCsbSwshPcm(M11_AudioState* state,
+                             const unsigned char* source,
+                             int sourceBytes,
+                             int sourcePeriod,
+                             unsigned int sourceHash) {
+    /* ReDMCSB SWSHSND.C F0908 assigns G0746/G0745/G0744 directly to the
+     * two DMA channels.  PC34's 3.579545 MHz audio clock gives the source
+     * rate 3579545/(2*period).  Resampling those signed 8-bit source bytes
+     * to M11's mix rate is transport only: there is no marker, SND3, tone,
+     * noise, or generated substitute on either rejection or success. */
+    const unsigned int sourceRate =
+        3579545u / (2u * (unsigned int)M11_AUDIO_CSB_SWSH_PERIOD);
+    unsigned int outputCount;
+    unsigned int outputIndex;
+
+    if (!state || !state->initialized || !source ||
+        sourceBytes != M11_AUDIO_CSB_SWSH_BYTES ||
+        sourcePeriod != M11_AUDIO_CSB_SWSH_PERIOD || sourceHash == 0u ||
+        m11_fnv1a_bytes(source, sourceBytes) != sourceHash ||
+        sourceRate == 0u) {
+        if (state) {
+            m11_sound_clear(&state->csbSwshPcm);
+            state->csbSwshSourceAccepted = 0;
+            state->csbSwshSourceByteCount = 0;
+            state->csbSwshSourcePeriod = 0;
+            state->csbSwshSourceHash = 0u;
+        }
+        return 0;
+    }
+    outputCount = ((unsigned int)sourceBytes * M11_AUDIO_SAMPLE_RATE +
+                   sourceRate - 1u) / sourceRate;
+    if (outputCount == 0u || outputCount > 65536u ||
+        !m11_sound_reserve(&state->csbSwshPcm, (int)outputCount)) {
+        m11_sound_clear(&state->csbSwshPcm);
+        return 0;
+    }
+    for (outputIndex = 0u; outputIndex < outputCount; ++outputIndex) {
+        unsigned int sourceIndex =
+            (outputIndex * sourceRate) / M11_AUDIO_SAMPLE_RATE;
+        int signedSample;
+        if (sourceIndex >= (unsigned int)sourceBytes) {
+            sourceIndex = (unsigned int)sourceBytes - 1u;
+        }
+        signedSample = (int)(int8_t)source[sourceIndex];
+        state->csbSwshPcm.samples[outputIndex] =
+            (float)signedSample / 128.0f;
+    }
+    state->csbSwshPcm.sampleCount = (int)outputCount;
+    state->csbSwshSourceAccepted = 1;
+    state->csbSwshSourceByteCount = sourceBytes;
+    state->csbSwshSourcePeriod = sourcePeriod;
+    state->csbSwshSourceHash = sourceHash;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
+        SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
+                               state->csbSwshPcm.samples,
+                               state->csbSwshPcm.sampleCount *
+                                   (int)sizeof(float));
+        state->queuedSampleCount += state->csbSwshPcm.sampleCount;
+        ++state->csbSwshQueuedCount;
+    }
+#endif
+    return 1;
 }
 
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {
