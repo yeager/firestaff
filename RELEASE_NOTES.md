@@ -1,6 +1,19 @@
 
 # Unreleased
 
+# Firestaff v3.0.92
+
+Firestaff v3.0.92 packages the latest source-locked DM1 and CSB runtime work.
+
+## Highlights since v3.0.91
+
+- Artpack Studio is built and included as a runnable binary in every desktop
+  package: macOS, Windows, Linux and Steam Deck/AppImage.
+- DM1 gains source-owned pointer input, group/sensor transactions, source
+  presentation primitives, PC34 Save-and-Quit validation and SWSH cadence.
+- CSB gains source-backed startup/HUD/DSA paths, package isolation, Utility
+  import confirmation and transactional group movement.
+
 # Firestaff v3.0.91
 
 Firestaff v3.0.91 packages the latest source-locked DM1 and CSB runtime work
