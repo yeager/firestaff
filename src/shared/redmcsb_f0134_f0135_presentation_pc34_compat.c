@@ -72,6 +72,12 @@ int redmcsb_f0134_f0135_presentation_target_bind_pc34(
     return 1;
 }
 
+int redmcsb_f0134_f0135_presentation_target_is_bound_pc34(
+    const Redmcsb_F0134F0135_PresentationTargetPc34 *target)
+{
+    return target_valid(target);
+}
+
 int redmcsb_f0134_fill_bitmap_pc34(
     Redmcsb_F0134F0135_PresentationTargetPc34 *target,
     uint8_t color)

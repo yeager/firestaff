@@ -43269,6 +43269,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8151_vidrv_blit_pc34_
              COMMAND test_redmcsb_f8151_vidrv_blit_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat.c")
+    add_executable(test_redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat
+        tests/test_redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat.c
+        src/shared/redmcsb_f0134_f0135_presentation_pc34_compat.c
+        src/shared/redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat
+             COMMAND test_redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f1918_hintload_pc34_compat.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/redmcsb_f1918_hintload_pc34_compat.c")
     add_executable(test_redmcsb_f1918_hintload_pc34_compat
