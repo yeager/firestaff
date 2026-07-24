@@ -1,3 +1,10 @@
+- ✅ 2026-07-24 CSB F0115 real item/explosion composition: dedicated
+  viewport code now consumes only hash-verified, palette-bound decoded
+  `CSBGRAPHICS.DAT` item and explosion surfaces through the original C10
+  transparency route. It rejects stale, synthetic, fallback, malformed and
+  out-of-bounds material before modifying the framebuffer. Verification:
+  `csb_v1_viewport_f0115_real_overlay_pc34_compat`.
+
 - ✅ 2026-07-24 CSB C001-C005 startup session timeline: M11 now derives a
   monotonic source tick across TITLE.C and ENTRANCE.C, so the C004/C005/F0128
   handoff cannot reuse entrance-local tick zero after title completion.
