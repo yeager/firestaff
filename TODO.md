@@ -13,6 +13,82 @@ is still open before starting it, reuse original game material where it is
 available, and move a completed item to DONE.md only after focused tests and
 an integration build pass.
 
+## Top 30 Implementation Queue
+
+These are the next thirty substantial coding jobs. They refine, rather than
+duplicate, the numbered requirements below. Take one only after confirming
+that its exact runtime path is not already source-locked and tested.
+
+### DM1
+
+1. **Q-DM1-01 PC34 save corpus and round trip:** admit a real `DMSAVE.DAT`;
+   prove F0417/F0418/F0435 import, live resume, export, backup and re-import.
+2. **Q-DM1-02 HoC presented-frame consumer:** finish source-backed mirrors,
+   inscriptions, objects, action/spell surfaces and palettes at every depth.
+3. **Q-DM1-03 Dungeon viewport material matrix:** complete F0107-F0115 wall,
+   floor, ceiling, door, ornament, mirror, item, creature, projectile and
+   explosion routing without fallback drawing.
+4. **Q-DM1-04 Door, sensor and topology runtime:** buttons, fakewalls, pits,
+   teleporters, stairs, door animations and Thing-driven movement.
+5. **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,
+   projectile impacts, drops, deaths and spell ticks with raw ownership.
+6. **Q-DM1-06 Inventory interaction matrix:** C05-C13 placement, chest,
+   quiver, food, potion, scroll, weapon, armour and drag/drop records.
+7. **Q-DM1-07 Action and spell HUD:** C010/C011 typography, cursor, hit
+   routing, cooldown and live M11 presentation using original surfaces.
+8. **Q-DM1-08 Startup audio and cadence:** SWSH/title/Entrance palette,
+   timing, music and runtime sound events from original media.
+9. **Q-DM1-09 Input and controller coverage:** command behavior for keyboard,
+   mouse, touch, controller, fullscreen scaling and modal focus.
+10. **Q-DM1-10 New-game and release evidence:** F0803/F0433 ownership plus
+    app/Mac captures for title, Entrance, HoC, HUD and viewport.
+
+### CSB
+
+11. **Q-CSB-01 DSA opcode core:** remaining CSBWin stack/control families,
+    state transitions and strict bounds.
+12. **Q-CSB-02 DSA monster/world execution:** timers, filters, monsters,
+    level context and world mutation from loaded dungeon/save data.
+13. **Q-CSB-03 Startup presentation chain:** C001-C005 FTL/PRESENTS/CHAOS/
+    STRIKES/Entrance timing, palette and audio in live M11.
+14. **Q-CSB-04 Entrance and credits handoff:** opening door, credits, prompts,
+    input timing, sound and first runtime frame from package data.
+15. **Q-CSB-05 HUD and champion panels:** C017/C040 champion, inventory,
+    action/spell, cursor, text and transparency rendering.
+16. **Q-CSB-06 Dungeon viewport geometry:** walls, doors, teleporters, pits,
+    ornaments, creatures, items, projectiles, explosions and backgrounds.
+17. **Q-CSB-07 Thing/sensor runtime:** generic sensors, remote actions,
+    actuators, pits, teleporters, stairs and door side effects.
+18. **Q-CSB-08 Combat and movement runtime:** group AI, melee, spells,
+    projectiles, damage, drops and timer ordering.
+19. **Q-CSB-09 Original saves and Utility Disk:** save corpus interop and
+    Utility Disk import, edit, inventory, dialogs and confirmations.
+20. **Q-CSB-10 Media, input and expansion packages:** sound/music,
+    controller/touch/focus, release capture and safe custom-dungeon handling.
+
+### DM2
+
+21. **Q-DM2-01 GDAT core renderer:** skproject GDAT decode for indoor HUD,
+    walls, doors, floors, ceilings and source receipts.
+22. **Q-DM2-02 GDAT material families:** map chips, ornaments, items,
+    projectiles, clouds, animations and every dungeon style.
+23. **Q-DM2-03 Creature renderer:** orientation, animation, lighting,
+    occlusion, death/drop and flying/static objects.
+24. **Q-DM2-04 G1 map and c_record runtime:** addressing, triggers, doors,
+    stairs, teleporters and scene semantics.
+25. **Q-DM2-05 SKSAVE interop:** original corpus import/export/resume, party,
+    map, timers, objects, weather and backups.
+26. **Q-DM2-06 Menu, title and audio:** clickable controls, palette, animation,
+    sound, options, errors and HUD handoff with actual data.
+27. **Q-DM2-07 Party, inventory and spells:** champions, items, skills,
+    action/spell widgets, damage, conditions and UI mutations.
+28. **Q-DM2-08 Creature AI and combat:** occupancy, movement, combat,
+    projectiles, clouds, drops and timeline behavior.
+29. **Q-DM2-09 CCM and world scripts:** opcode, actuator, message, trigger,
+    shop, NPC, puzzle and map-transition paths.
+30. **Q-DM2-10 Outdoor scenes and end-to-end play:** light, weather, outdoors,
+    doors, input, sound, capture and real-data start-to-play session.
+
 1. **DM1-PC34-SAVE-CORPUS:** Admit a real original PC 3.4 `DMSAVE.DAT`,
    complete F0417/F0418/F0435 byte round-trip validation, and use it through
    M11/M12 save and resume paths. No generated corpus may satisfy this.
