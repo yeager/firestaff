@@ -517,6 +517,9 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     const struct ExplosionList_Compat *runtime_explosions;
     CSB_V1_ViewportObjectSpriteDrawer object_sprite_drawer;
     void *object_sprite_user;
+    /* A verified CSBGRAPHICS.DAT object drawer must fail closed. Diagnostic
+     * icons/markers remain available only to data-free geometry probes. */
+    int object_sprite_drawer_source_bound;
     int runtime_object_sprite_drawn_count;
     CSB_V1_ViewportObjectIconDrawer object_icon_drawer;
     void *object_icon_user;
@@ -598,6 +601,7 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
 typedef struct {
     CSB_V1_ViewportObjectSpriteDrawer object_sprite_drawer;
     void *object_sprite_user;
+    int object_sprite_drawer_source_bound;
     CSB_V1_ViewportObjectIconDrawer object_icon_drawer;
     void *object_icon_user;
     CSB_V1_ViewportGroupSpriteDrawer group_sprite_drawer;

@@ -231,6 +231,19 @@ static int test_object_icon_drawer(
     return 1;
 }
 
+static int test_object_sprite_reject_drawer(
+    void *user,
+    const CSB_V1_ViewportRuntimeObjectSpriteBlit *blit,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    (void)user;
+    (void)blit;
+    (void)screen_pixels;
+    (void)screen_stride;
+    return 0;
+}
+
 static int test_group_sprite_drawer(
     void *user,
     const CSB_V1_ViewportRuntimeGroupSpriteBlit *blit,
@@ -322,6 +335,8 @@ static void test_runtime_drawer_binding_and_count_helpers(void)
                cfg.object_sprite_drawer == test_object_sprite_drawer);
     check_true("runtime.binding.object_sprite_user",
                cfg.object_sprite_user == &thing_capture);
+    check_int("runtime.binding.object_source_bound",
+              cfg.object_sprite_drawer_source_bound, 0);
     check_true("runtime.binding.object_icon",
                cfg.object_icon_drawer == test_object_icon_drawer);
     check_true("runtime.binding.group_sprite",
@@ -3817,6 +3832,18 @@ static void test_csb_runtime_thing_pass_render_config(void)
               cfg.runtime_group_sprite_drawn_count, 0);
     check_int("csb.runtime_thing_pass.render.source_group_markers_suppressed",
               cfg.runtime_group_marker_drawn_count, 0);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    cfg.object_sprite_drawer = test_object_sprite_reject_drawer;
+    cfg.object_sprite_drawer_source_bound = 1;
+    cfg.object_icon_drawer = test_object_icon_drawer;
+    csb_v1_viewport_render_frame(&cfg, 1, 0, 0);
+    check_int("csb.runtime_thing_pass.render.source_object_sprites_fail_closed",
+              cfg.runtime_object_sprite_drawn_count, 0);
+    check_int("csb.runtime_thing_pass.render.source_object_icons_suppressed",
+              cfg.runtime_object_icon_drawn_count, 0);
+    check_int("csb.runtime_thing_pass.render.source_object_markers_suppressed",
+              cfg.runtime_object_marker_drawn_count, 0);
 }
 
 static void test_csb_d3l2_d3r2_thing_pass_route_binding_contracts(void)
