@@ -294,18 +294,283 @@ int CSB_ChampionPanel_FormatStatusValue(int valueIndex,
     return 1;
 }
 
+/* ReDMCSB CHAMDRAW.C F0288 — space-padded integer formatting. */
+int CSB_ChampionPanel_FormatIntegerF0288(int value, int paddingEnabled,
+                                         int width, char *out,
+                                         size_t outSize)
+{
+    char digits[32];
+    int digitCount;
+    int padCount;
+    int i;
+
+    if (!out || outSize == 0) return 0;
+    out[0] = '\0';
+
+    digitCount = snprintf(digits, sizeof(digits), "%d", value);
+    if (digitCount < 0 || (size_t)digitCount >= sizeof(digits))
+        return 0;
+    if (!paddingEnabled || width <= digitCount) {
+        if ((size_t)digitCount >= outSize) return 0;
+        memcpy(out, digits, (size_t)digitCount + 1u);
+        return 1;
+    }
+    if ((size_t)width >= outSize) return 0;
+    padCount = width - digitCount;
+    for (i = 0; i < padCount; ++i)
+        out[i] = ' ';
+    memcpy(out + padCount, digits, (size_t)digitCount + 1u);
+    return 1;
+}
+
+/* ReDMCSB layout-696 C507..C536 — inventory slot XY. */
+static const int s_inventorySlotX[30] = {
+    /* SlotBox  8: Ready Hand  */   4,
+    /* SlotBox  9: Action Hand */  24,
+    /* SlotBox 10: Head        */  62,
+    /* SlotBox 11: Torso       */  62,
+    /* SlotBox 12: Legs        */  62,
+    /* SlotBox 13: Feet        */  62,
+    /* SlotBox 14: Pouch 2     */  98,
+    /* SlotBox 15: Quiver L2/1 */ 116,
+    /* SlotBox 16: Quiver L1/2 */ 134,
+    /* SlotBox 17: Quiver L2/2 */ 152,
+    /* SlotBox 18: Neck        */ 170,
+    /* SlotBox 19: Pouch 1     */ 188,
+    /* SlotBox 20: Quiver L1/1 */ 206,
+    /* SlotBox 21: BP L1/1     */  98,
+    /* SlotBox 22: BP L2/2     */ 116,
+    /* SlotBox 23: BP L2/3     */ 134,
+    /* SlotBox 24: BP L2/4     */ 152,
+    /* SlotBox 25: BP L2/5     */ 170,
+    /* SlotBox 26: BP L2/6     */ 188,
+    /* SlotBox 27: BP L2/7     */ 206,
+    /* SlotBox 28: BP L2/8     */  98,
+    /* SlotBox 29: BP L2/9     */ 116,
+    /* SlotBox 30: BP L1/2     */ 134,
+    /* SlotBox 31: BP L1/3     */ 152,
+    /* SlotBox 32: BP L1/4     */ 170,
+    /* SlotBox 33: BP L1/5     */ 188,
+    /* SlotBox 34: BP L1/6     */ 206,
+    /* SlotBox 35: BP L1/7     */  98,
+    /* SlotBox 36: BP L1/8     */ 116,
+    /* SlotBox 37: BP L1/9     */ 134,
+};
+
+static const int s_inventorySlotY[30] = {
+    /* SlotBox  8: Ready Hand  */  10,
+    /* SlotBox  9: Action Hand */  10,
+    /* SlotBox 10: Head        */  10,
+    /* SlotBox 11: Torso       */  29,
+    /* SlotBox 12: Legs        */  48,
+    /* SlotBox 13: Feet        */  67,
+    /* SlotBox 14: Pouch 2     */  10,
+    /* SlotBox 15: Quiver L2/1 */  10,
+    /* SlotBox 16: Quiver L1/2 */  10,
+    /* SlotBox 17: Quiver L2/2 */  10,
+    /* SlotBox 18: Neck        */  10,
+    /* SlotBox 19: Pouch 1     */  10,
+    /* SlotBox 20: Quiver L1/1 */  10,
+    /* SlotBox 21: BP L1/1     */  29,
+    /* SlotBox 22: BP L2/2     */  29,
+    /* SlotBox 23: BP L2/3     */  29,
+    /* SlotBox 24: BP L2/4     */  29,
+    /* SlotBox 25: BP L2/5     */  29,
+    /* SlotBox 26: BP L2/6     */  29,
+    /* SlotBox 27: BP L2/7     */  29,
+    /* SlotBox 28: BP L2/8     */  48,
+    /* SlotBox 29: BP L2/9     */  48,
+    /* SlotBox 30: BP L1/2     */  48,
+    /* SlotBox 31: BP L1/3     */  48,
+    /* SlotBox 32: BP L1/4     */  48,
+    /* SlotBox 33: BP L1/5     */  48,
+    /* SlotBox 34: BP L1/6     */  48,
+    /* SlotBox 35: BP L1/7     */  67,
+    /* SlotBox 36: BP L1/8     */  67,
+    /* SlotBox 37: BP L1/9     */  67,
+};
+
+int CSB_ChampionPanel_InventorySlotXY(int slotBoxIndex,
+                                       int *outX, int *outY)
+{
+    int idx = slotBoxIndex - CSB_SLOTBOX_FIRST_INVENTORY;
+    if (idx < 0 || idx >= 30) return 0;
+    if (outX) *outX = s_inventorySlotX[idx];
+    if (outY) *outY = s_inventorySlotY[idx];
+    return 1;
+}
+
+/* ReDMCSB DEFS.H C212 — empty hand icon index. */
+int CSB_ChampionPanel_EmptyHandIconIndex(int slotIndex, uint16_t wounds)
+{
+    if (slotIndex < 0 || slotIndex > 1) return -1;
+    return CSB_GFX_READY_HAND_ICON + slotIndex * 2 +
+           ((wounds & (1u << slotIndex)) ? 1 : 0);
+}
+
+/* ReDMCSB PANEL.C F0351 — statistic current color. */
+int CSB_ChampionPanel_StatisticCurrentColor(int currentValue, int maximumValue)
+{
+    if (currentValue < maximumValue) return CSB_COLOR_RED;
+    if (currentValue > maximumValue) return CSB_COLOR_LIGHT_GREEN;
+    return CSB_COLOR_LIGHTEST_GRAY;
+}
+
+int CSB_ChampionPanel_StatisticMaximumColor(void)
+{
+    return CSB_COLOR_LIGHTEST_GRAY;
+}
+
+int CSB_ChampionPanel_FormatStatisticValue(int currentValue, int maximumValue,
+                                           char *currentOut, size_t currentOutSize,
+                                           char *maximumOut, size_t maximumOutSize)
+{
+    int currentWritten;
+    int maximumWritten;
+
+    if (!currentOut || !maximumOut || currentOutSize == 0 || maximumOutSize == 0)
+        return 0;
+
+    currentWritten = CSB_ChampionPanel_FormatIntegerF0288(
+        currentValue, 1, 3, currentOut, currentOutSize);
+    if (maximumOutSize < 2) {
+        if (maximumOutSize > 0) maximumOut[0] = '\0';
+        return 0;
+    }
+    maximumOut[0] = '/';
+    maximumWritten = CSB_ChampionPanel_FormatIntegerF0288(
+        maximumValue, 1, 3, maximumOut + 1, maximumOutSize - 1u);
+    return currentWritten && maximumWritten;
+}
+
+int CSB_ChampionPanel_BuildStatisticRowModel(
+    int currentValue, int maximumValue,
+    CSB_ChampionPanel_StatisticRowModel *outRow)
+{
+    if (!outRow) return 0;
+    outRow->currentValue = currentValue;
+    outRow->maximumValue = maximumValue;
+    outRow->currentColor = CSB_ChampionPanel_StatisticCurrentColor(currentValue, maximumValue);
+    outRow->maximumColor = CSB_ChampionPanel_StatisticMaximumColor();
+    return CSB_ChampionPanel_FormatStatisticValue(currentValue, maximumValue,
+                                                  outRow->currentText, sizeof(outRow->currentText),
+                                                  outRow->maximumText, sizeof(outRow->maximumText));
+}
+
+int CSB_ChampionPanel_BuildStatisticTextRunModel(
+    int statisticIndex, int currentValue, int maximumValue,
+    CSB_ChampionPanel_StatisticTextRunModel *outRun)
+{
+    if (!outRun) return 0;
+    if (statisticIndex < 0 || statisticIndex >= CSB_STATISTIC_ROW_COUNT) return 0;
+
+    outRun->statisticIndex = statisticIndex;
+    outRun->nameZone = CSB_ZONE_SKILL_VALUE;
+    outRun->valueZone = CSB_ZONE_STATISTIC_VALUE;
+    outRun->nameX = CSB_STATISTIC_NAME_REL_X;
+    outRun->currentX = CSB_STATISTIC_CURRENT_REL_X;
+    outRun->maximumX = CSB_STATISTIC_CURRENT_REL_X +
+                       CSB_PANEL_TEXT_CHAR_WIDTH * 3;
+    outRun->y = CSB_STATISTIC_FIRST_REL_Y +
+                CSB_PANEL_TEXT_LINE_HEIGHT * statisticIndex;
+    outRun->nameColor = CSB_COLOR_LIGHTEST_GRAY;
+    outRun->currentColor =
+        CSB_ChampionPanel_StatisticCurrentColor(currentValue, maximumValue);
+    outRun->maximumColor = CSB_ChampionPanel_StatisticMaximumColor();
+    return CSB_ChampionPanel_FormatStatisticValue(currentValue, maximumValue,
+                                                  outRun->currentText, sizeof(outRun->currentText),
+                                                  outRun->maximumText, sizeof(outRun->maximumText));
+}
+
+/* ReDMCSB CHAMDRAW.C F0292 — load color. */
+int CSB_ChampionPanel_LoadColor(int load, int maximumLoad)
+{
+    if (maximumLoad <= 0)
+        return load > 0 ? CSB_COLOR_RED : CSB_COLOR_LIGHTEST_GRAY;
+    if (load > maximumLoad)
+        return CSB_COLOR_RED;
+    if (((long)load << 3) > ((long)maximumLoad * 5L))
+        return CSB_COLOR_YELLOW;
+    return CSB_COLOR_LIGHTEST_GRAY;
+}
+
+int CSB_ChampionPanel_FormatLoadValue(int load, int maximumLoad,
+                                      char *out, size_t outSize)
+{
+    int loadKg, loadTenths, maximumKg;
+    char loadKgText[16], maximumKgText[16];
+
+    if (!out || outSize == 0) return 0;
+
+    loadKg = load / 10;
+    loadTenths = load - (loadKg * 10);
+    maximumKg = (maximumLoad + 5) / 10;
+    if (!CSB_ChampionPanel_FormatIntegerF0288(
+            loadKg, 1, 3, loadKgText, sizeof(loadKgText)) ||
+        !CSB_ChampionPanel_FormatIntegerF0288(
+            maximumKg, 1, 3, maximumKgText, sizeof(maximumKgText))) {
+        out[0] = '\0';
+        return 0;
+    }
+    return snprintf(out, outSize, "%s.%d/%s KG",
+                    loadKgText, loadTenths, maximumKgText) >= 0 &&
+           strlen(out) + 1u <= outSize;
+}
+
+int CSB_ChampionPanel_LoadValueZone(void)
+{
+    return CSB_ZONE_CHAMPION_LOAD_VALUE;
+}
+
+/* ReDMCSB PANEL.C F0345 — food/water/poison label blit spec. */
+static const char k_csbChampionPanelF0658PoisonedBlitEvidence[] =
+    "ReDMCSB PANEL.C:1563-1606 F0345_INVENTORY_DrawPanel_FoodWaterPoisoned; "
+    "PANEL.C:1598-1606 F0658(C030,C500,C12), F0658(C031,C501,C12), "
+    "if(PoisonEventCount) F0658(C032,C502,C12); "
+    "CHAMDRAW.C:1060-1063 F0292 mouth-panel call; "
+    "BASE.C:1341-1361 F0658_BlitBitmapIndexToZoneIndexWithTransparency; "
+    "DEFS.H:2090 C12, 2190-2192 C030/C031/C032, 3869-3871 C500/C501/C502";
+
+static const CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec
+    k_csbChampionPanelF0658PoisonedBlitSpec = {
+        CSB_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT,
+        1598,
+        1606,
+        1601,
+        k_csbChampionPanelF0658PoisonedBlitEvidence,
+        {
+            { CSB_GFX_FOOD_LABEL, CSB_ZONE_FOOD, CSB_COLOR_DARKEST_GRAY, 1598, 0 },
+            { CSB_GFX_WATER_LABEL, CSB_ZONE_WATER, CSB_COLOR_DARKEST_GRAY, 1599, 0 },
+            { CSB_GFX_POISONED_LABEL, CSB_ZONE_POISONED, CSB_COLOR_DARKEST_GRAY, 1606, 1 },
+        }
+    };
+
+const CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *
+CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked(void)
+{
+    return &k_csbChampionPanelF0658PoisonedBlitSpec;
+}
+
 const char *CSB_ChampionPanel_SourceEvidence(void)
 {
     return
         "CSB V1 Champion Panel HUD — ReDMCSB_WIP20210206\n"
         "  CHAMDRAW.C F0287: bar graph height (ceil(current*25/max))\n"
         "  CHAMDRAW.C F0287 PC34: bar fill model (zone C195+champIdx, stride 4)\n"
+        "  CHAMDRAW.C F0288: integer formatting (space-padded width)\n"
         "  CHAMDRAW.C F0289/F0290: status value format (nnn/nnn, stamina/10)\n"
         "  CHAMDRAW.C F0291: slot box graphic (C033/C034/C035 cascade)\n"
         "  CHAMDRAW.C F0292: status box model (alive/dead, attribute masks)\n"
+        "  CHAMDRAW.C F0292: load color (red/yellow/gray thresholds)\n"
+        "  CHAMDRAW.C F0292: load value format (nnn.n/nnn KG)\n"
         "  CHAMDRAW.C F0622: icon bitmap model (19x14, direction-indexed)\n"
+        "  PANEL.C F0345: food/water/poison label blit spec (C030-C032)\n"
+        "  PANEL.C F0351: statistic row model (current/max color, text)\n"
+        "  PANEL.C F0351: statistic text run (zone/XY/color layout)\n"
         "  INVNTORY.C F0354: portrait screen X (champIdx*69+7)\n"
         "  Layout-696 C195..C206: bar graph XY (champIdx*69+46, +7, +14)\n"
         "  Layout-696 C211..C218: hand slot XY (champIdx*69+4/+24, y=10)\n"
+        "  Layout-696 C507..C536: inventory slot XY (30 slots)\n"
+        "  DEFS.H C212: empty hand icon index\n"
         "  G0046_auc_Graphic562_ChampionColor[4] = {7,11,8,14}\n";
 }

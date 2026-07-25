@@ -251,6 +251,100 @@ int CSB_ChampionPanel_FormatStatusValue(int valueIndex,
     char *out, size_t outSize);
 int CSB_ChampionPanel_StatusValueZone(int valueIndex);
 
+/* ── Integer formatting — CHAMDRAW.C F0288 ── */
+int CSB_ChampionPanel_FormatIntegerF0288(int value, int paddingEnabled,
+                                         int width, char *out,
+                                         size_t outSize);
+
+/* ── Inventory slot XY — layout-696 C507..C536 ── */
+#define CSB_SLOTBOX_FIRST_STATUS     0
+#define CSB_SLOTBOX_FIRST_INVENTORY  8
+#define CSB_SLOTBOX_FIRST_CHEST     38
+
+int CSB_ChampionPanel_InventorySlotXY(int slotBoxIndex,
+                                       int *outX, int *outY);
+
+/* ── Empty hand icon — DEFS.H C212 ── */
+int CSB_ChampionPanel_EmptyHandIconIndex(int slotIndex, uint16_t wounds);
+
+/* ── Statistic panel — PANEL.C F0351 ── */
+#define CSB_ZONE_SKILL_VALUE      557
+#define CSB_ZONE_STATISTIC_VALUE  559
+#define CSB_STATISTIC_ROW_COUNT     6
+#define CSB_PANEL_TEXT_CHAR_WIDTH   6
+#define CSB_PANEL_TEXT_LINE_HEIGHT  7
+#define CSB_STATISTIC_NAME_REL_X    28
+#define CSB_STATISTIC_CURRENT_REL_X 94
+#define CSB_STATISTIC_FIRST_REL_Y   34
+
+typedef struct CSB_ChampionPanel_StatisticRowModel {
+    int currentValue;
+    int maximumValue;
+    int currentColor;
+    int maximumColor;
+    char currentText[4];
+    char maximumText[5];
+} CSB_ChampionPanel_StatisticRowModel;
+
+typedef struct CSB_ChampionPanel_StatisticTextRunModel {
+    int statisticIndex;
+    int nameZone;
+    int valueZone;
+    int nameX;
+    int currentX;
+    int maximumX;
+    int y;
+    int nameColor;
+    int currentColor;
+    int maximumColor;
+    char currentText[4];
+    char maximumText[5];
+} CSB_ChampionPanel_StatisticTextRunModel;
+
+int CSB_ChampionPanel_StatisticCurrentColor(int currentValue, int maximumValue);
+int CSB_ChampionPanel_StatisticMaximumColor(void);
+int CSB_ChampionPanel_FormatStatisticValue(int currentValue, int maximumValue,
+                                           char *currentOut, size_t currentOutSize,
+                                           char *maximumOut, size_t maximumOutSize);
+int CSB_ChampionPanel_BuildStatisticRowModel(
+    int currentValue, int maximumValue,
+    CSB_ChampionPanel_StatisticRowModel *outRow);
+int CSB_ChampionPanel_BuildStatisticTextRunModel(
+    int statisticIndex, int currentValue, int maximumValue,
+    CSB_ChampionPanel_StatisticTextRunModel *outRun);
+
+/* ── Load display — CHAMDRAW.C F0292 ── */
+#define CSB_ZONE_CHAMPION_LOAD_LABEL 554
+#define CSB_ZONE_CHAMPION_LOAD_VALUE 555
+
+int CSB_ChampionPanel_LoadColor(int load, int maximumLoad);
+int CSB_ChampionPanel_FormatLoadValue(int load, int maximumLoad,
+                                      char *out, size_t outSize);
+int CSB_ChampionPanel_LoadValueZone(void);
+
+/* ── Food/Water/Poison labels — PANEL.C F0345 ── */
+#define CSB_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT 3
+
+typedef struct CSB_ChampionPanel_F0658BlitStepSpec {
+    int bitmapId;
+    int zoneId;
+    int transparentColor;
+    int sourceLine;
+    int requiresPoisoned;
+} CSB_ChampionPanel_F0658BlitStepSpec;
+
+typedef struct CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec {
+    int blitCount;
+    int sourceStartLine;
+    int sourceEndLine;
+    int conditionalLine;
+    const char *sourceEvidence;
+    CSB_ChampionPanel_F0658BlitStepSpec blits[CSB_CHAMPION_PANEL_F0658_POISONED_BLIT_COUNT];
+} CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec;
+
+const CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *
+CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked(void);
+
 /* ── Source evidence ── */
 const char *CSB_ChampionPanel_SourceEvidence(void);
 

@@ -70,8 +70,13 @@ that its exact runtime path is not already source-locked and tested.
     portrait screen X (F0354), name zone X, status value format
     (F0289/F0290 with stamina/10), champion color table G0046.
     19-case test covering all functions.
-    Remaining: hand slot refresh, inventory walk, food/water/poison
-    labels, damage flash, spell area, clock tick repaint, portrait
+    2026-07-25: inventory walk module with F0288 integer formatting,
+    30-slot inventory layout (C507-C536), empty hand icon index (C212),
+    statistic panel (F0351 current/max color, row model, text run with
+    zone/XY layout), load display (F0292 red/yellow/gray thresholds,
+    nnn.n/nnn KG format), food/water/poison label F0658 blit spec
+    (C030-C032, conditional poison gate). 29-case test.
+    Remaining: damage flash, spell area, clock tick repaint, portrait
     box blit, V2 HUD runtime tests.
 16. **Q-CSB-06 Dungeon viewport geometry:** walls, doors, teleporters, pits,
     ornaments, creatures, items, projectiles, explosions and backgrounds.

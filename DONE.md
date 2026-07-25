@@ -1,3 +1,13 @@
+- ✅ 2026-07-25 CSB champion panel inventory walk module (Q-CSB-05):
+  F0288 integer formatting, 30-slot inventory layout (C507-C536) with
+  source-locked XY tables, empty hand icon index (C212 + wound bit),
+  statistic panel F0351 (current/max color, row model, text run with
+  zone/XY/color layout at nameX=28 currentX=94 y=34+7*row), load
+  display F0292 (red/yellow/gray thresholds, nnn.n/nnn KG format with
+  deci-kg and rounded max), food/water/poison label F0658 blit spec
+  (C030/C031/C032 at zones 500/501/502 with conditional poison gate).
+  29-case test covering all new and existing functions.
+
 - ✅ 2026-07-25 Release CI: added ctest unit test gate to verify.yml
   and release.yml (all 3 platforms), fixed DM2 linker error in
   test_dm2_v1_update_weather (missing firestaff_m10 link), release
