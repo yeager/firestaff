@@ -1,3 +1,11 @@
+- ✅ 2026-07-25 Add 6 DM1 test suites (50 tests total): spell effect render (10),
+  screen framebuffer (9), game loop integration (7), portrait panel (9),
+  object world (9), graphics loader (6). Covers Q-DM1-07 HUD/action (spell
+  symbol add/remove/clear/draw, portrait init/bars/flash/layout), Q-DM1-03
+  viewport (screen framebuffer init/clear/palette/present/dirty), Q-DM1-08
+  startup (game loop state machine/timing/restart, graphics loader init/LZW),
+  and Q-DM1-04 dungeon (object world init/getters/cleanup).
+
 - ✅ 2026-07-25 Add 6 DM1 test suites (60 tests total): door bash feedback (13),
   door bash stamina feedback (13), menu render (13), dungeon data (6),
   inscription host material (7), CEDT006 champion editor (8). Covers Q-DM1-05
