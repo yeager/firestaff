@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.124
+
+## New test suites (6 material suites, 32 tests)
+
+- `test_dm1_v1_f0732_f0735_fill_material_pc34_compat` — 6 tests (Q-DM1-07): spell/viewport fill material
+- `test_dm1_v1_f0115_f0219_creature_item_material_pc34_compat` — 6 tests (Q-DM1-03): creature/item viewport material
+- `test_dm1_v1_f0115_near_object_decoration_material_pc34_compat` — 5 tests (Q-DM1-03): near-field decoration material
+- `test_dm1_v1_f0342_object_description_material_pc34_compat` — 5 tests (Q-DM1-06): object description panel material
+- `test_dm1_v1_f0731_f0734_inventory_zone_material_pc34_compat` — 5 tests (Q-DM1-06): inventory zone material
+- `test_dm1_v1_f0675_scaled_material_pc34_compat` — 5 tests (Q-DM1-03): scaled bitmap material
+
 # Firestaff v3.0.123
 
 ## New test suites (6 material suites, 30 tests)

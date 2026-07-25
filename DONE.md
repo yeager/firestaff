@@ -40628,3 +40628,14 @@ passes all 27 checks from title through entrance and HUD.
   (5 tests, Q-DM1-07): champion icon constants, palette changes table, FNV1a.
   f0663_smoke_material (5 tests, Q-DM1-03): smoke pattern constants, palette
   changes table, FNV1a.
+
+- **DM1 test batch v3.0.124 — 6 material suites, 32 tests:** Done 2026-07-25.
+  f0732_f0735_fill_material (6 tests, Q-DM1-07): spell/viewport fill
+  constants, box struct, FNV1a, clear null. f0115_f0219_creature_item_material
+  (6 tests, Q-DM1-03): item/creature kinds, provenance, receipt null.
+  f0115_near_object_decoration_material (5 tests, Q-DM1-03): near material
+  kinds, provenance, receipt null. f0342_object_description_material (5 tests,
+  Q-DM1-06): panel constants, operation kinds, FNV1a, receipt empty.
+  f0731_f0734_inventory_zone_material (5 tests, Q-DM1-06): zone constants,
+  receipt struct, FNV1a. f0675_scaled_material (5 tests, Q-DM1-03): struct
+  layouts, FNV1a, receipt null.
