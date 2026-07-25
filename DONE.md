@@ -1,3 +1,11 @@
+- ✅ 2026-07-25 Add DM1 movement test (10 tests, Q-DM1-08), collision/door test
+  (12 tests, Q-DM1-04), teleporter/pit test (19 tests, Q-DM1-04), and input
+  poll test (16 tests, Q-DM1-08). Covers queue init/enqueue/dequeue, step
+  execution, VBlank timing, orchestrator route plan, collision constants,
+  door passability, pit detection, teleporter rotation, group move removal,
+  pit fall planning, key buffer FIFO, mouse position, button state, source
+  evidence gates.
+
 - ✅ 2026-07-25 Add DM1 dungeon thing data test (17 tests, Q-DM1-04) and melee
   action F0402 test (30 tests, Q-DM1-05). Covers null rejection on ~30 plan
   functions, damage emission zero-input, strength calculation with load,
