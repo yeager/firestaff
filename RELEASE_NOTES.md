@@ -1,6 +1,20 @@
 
 # Unreleased
 
+# Firestaff v3.0.113
+
+## Highlights since v3.0.112
+
+- Add DM1 dungeon thing data test (Q-DM1-04): 17 test cases covering null
+  rejection on thing/object/creature accessors, source evidence gates,
+  group cells/directions/ordinals, and creature map allowance.
+- Add DM1 melee action F0402 test (Q-DM1-05): 30 test cases covering null
+  rejection on ~25 plan functions (tick, damage emission, runtime outcome,
+  kill notify, reach gate, weapon profile, strength, snapshots, aftermath,
+  death smoke, possession drop, timeline cleanup, mutation dispatch), plus
+  damage emission zero-input, strength calculation with load, and death
+  smoke attack index.
+
 # Firestaff v3.0.112
 
 ## Highlights since v3.0.111
