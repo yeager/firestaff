@@ -1,3 +1,8 @@
+- ✅ 2026-07-25 Add DM1 startup sequence test (Q-DM1-08): 15 test cases
+  covering stage names, ordering, launch path bypass, source order/evidence,
+  title timing constants, null rejection on 6 receipt types, full graphics
+  media receipt for "dm1", handoff prelude plan, and receipt phase string.
+
 - ✅ 2026-07-25 Add 3 viewport material tests (Q-DM1-03): planar fill
   F0134/F0135, food/water bar F0344, wall/field material receipt gates.
   Bulk fix ~230 GCC -Werror unused-variable/parameter/function warnings

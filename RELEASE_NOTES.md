@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.110
+
+## Highlights since v3.0.109
+
+- Add DM1 startup sequence test (Q-DM1-08): 15 test cases covering stage
+  names, ordering, launch path bypass, source order/evidence, title timing
+  constants, null rejection on 6 receipt types, full graphics media receipt,
+  handoff prelude plan, and receipt phase string return.
+
 # Firestaff v3.0.109
 
 ## Highlights since v3.0.108
