@@ -4,8 +4,9 @@
 #include <string.h>
 
 int main(void) {
-    const DM1_V1_F0726F0745OwnershipPc34 *entry;
+    const DM1_V1_F0726F0745OwnershipPc34 *entry = 0;
     volatile unsigned int sentinel = 0x5A17u;
+    (void)entry; (void)sentinel;
     unsigned int functionId;
 
     for (functionId = 726U; functionId <= 745U; ++functionId) {

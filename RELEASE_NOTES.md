@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.106
+
+## Highlights since v3.0.105
+
+- Fix more cross-platform -Werror CI failures: GCC misleading-indentation
+  in f0141_f0160 test, macOS unused-variable with NDEBUG in f0726_f0745
+  test, Windows mkdir arity in slev_sal test.
+
 # Firestaff v3.0.105
 
 ## Highlights since v3.0.104

@@ -13,5 +13,6 @@ int main(void) {
     evidence = dm1_v1_f0141_f0160_source_evidence_pc34();
     ok &= check(strstr(evidence, "F0141/F0142") && strstr(evidence, "F0143-F0149") && strstr(evidence, "F0150-F0155") && strstr(evidence, "F0156-F0160"), "audit covers the complete disjoint range");
     ok &= check(dm1_v1_f0141_f0160_fnv1a_pc34(0, 0U) == 0U, "empty source cannot authenticate");
-    if (!ok) return 1; puts("PASS dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat"); return 0;
+    if (!ok) return 1;
+    puts("PASS dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat"); return 0;
 }

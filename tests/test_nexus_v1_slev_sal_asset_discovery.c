@@ -53,7 +53,11 @@ int main(void)
           !receipt.payload_materialized,
           "production SLEV/SAL discovery skips safely without retail files");
     CHECK(snprintf(directory, sizeof(directory), "/tmp/firestaff-nexus-slev-sal-%ld",
+#ifdef _WIN32
+                   (long)getpid()) > 0 && mkdir(directory) == 0,
+#else
                    (long)getpid()) > 0 && mkdir(directory, 0700) == 0,
+#endif
           "temporary direct asset directory exists");
     for (level = 0U; level < 16U; ++level) {
         snprintf(slev[level], sizeof(slev[level]), "SLEV%02u.BIN", level);
