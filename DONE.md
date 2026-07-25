@@ -1,3 +1,11 @@
+- ✅ 2026-07-25 Add 6 DM1 test suites (33 tests total): fade transition (10),
+  save load system (6), title screen (6), group active lifecycle (4),
+  CEDT019 portrait save (4), wall inscription presentation (3). Covers
+  Q-DM1-08 startup (fade palette/overlay/swoosh, save/load init/slots/header,
+  title screen init/cleanup/receipt, portrait save decode/encode), Q-DM1-04
+  dungeon (group active lifecycle stop-attacking/init-groups), and Q-DM1-03
+  viewport (wall inscription projection/receipt structs).
+
 - ✅ 2026-07-25 Add 6 DM1 test suites (50 tests total): spell effect render (10),
   screen framebuffer (9), game loop integration (7), portrait panel (9),
   object world (9), graphics loader (6). Covers Q-DM1-07 HUD/action (spell

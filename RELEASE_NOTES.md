@@ -1,6 +1,16 @@
 
 # Unreleased
 
+# Firestaff v3.0.120
+
+## Highlights since v3.0.119
+
+- Add 6 DM1 test suites with 33 test cases total covering startup (fade
+  transition palette/overlay/swoosh/cancel, save/load system init/slots/header/
+  runtime-slot, title screen init/cleanup/receipt), dungeon (group active
+  lifecycle stop-attacking/init-groups, CEDT019 portrait save decode/encode),
+  and viewport (wall inscription presentation projection/receipt structs)
+
 # Firestaff v3.0.119
 
 ## Highlights since v3.0.118
