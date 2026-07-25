@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.127
+
+## New test suites (3 suites, 16 tests)
+
+- `test_dm1_v1_champion_live_m11_capture_lifecycle_pc34_compat` — 6 tests (Q-DM1-07): state/receipt structs, init, step null state/receipt, source evidence
+- `test_dm1_v1_f0259_quiver_refill_pc34_compat` — 5 tests (Q-DM1-06): plan struct, plan null out/champion, plan empty champion (no weapon), apply null
+- `test_dm1_v1_champion_panel_material_pc34_compat` — 5 tests (Q-DM1-07): receipt struct, FNV1a null/data, from loader null receipt/loader
+
 # Firestaff v3.0.126
 
 ## New test suites (4 suites, 27 tests)

@@ -1,3 +1,7 @@
+- ✅ 2026-07-25 Add 3 DM1 test suites (16 tests total): champion live M11
+  capture lifecycle (6), F0259 quiver refill (5), champion panel material (5).
+  Covers Q-DM1-07 HUD/action (capture lifecycle init/step, panel material
+  FNV1a/receipt), Q-DM1-06 inventory (quiver refill plan/apply). [v3.0.127]
 - ✅ 2026-07-25 Add 4 DM1 test suites (27 tests total): action spell M11
   blit plan (8), C14/C15 graphics catalog (7), dungeon stairs (5),
   F0693/F0699 video material (7). Covers Q-DM1-07 HUD/action (spell/action
