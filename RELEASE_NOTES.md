@@ -1,6 +1,26 @@
 
 # Unreleased
 
+# Firestaff v3.0.103
+
+## Highlights since v3.0.102
+
+- CSB champion panel HUD complete: portrait blit (F0354), damage flash
+  (F0320), spell area (COMMAND.C:473), clock tick repaint (F0293) models
+  with 33-case test. Q-CSB-05 HUD model layer done.
+- CSB V2 HUD runtime test: 18 cases covering init/shutdown, all setters,
+  phase gate render gating, apply_frame, and source evidence.
+- 248 CSB viewport tests wired into CMake (48 viewport geometry tests plus
+  200 batch-wired CSB/ReDMCSB tests covering chaos, DSA, startup, swoosh,
+  entrance, dialog, text, sensor, champion, inventory, save, package, and
+  platform boundary audit).
+- ReDMCSB source-name wrapper macros added to F0050, F0425, F0426 headers
+  for test compatibility with original ReDMCSB function names.
+- CSB champion panel inventory walk: F0288 formatting, 30-slot layout,
+  statistic panel, load display, food/water/poison labels. 29-case test.
+- F0115 first-object native graphic mapper with G0209 tables and creature
+  group mapper with per-creature transparency.
+
 # Firestaff v3.0.102
 
 ## Highlights since v3.0.101
