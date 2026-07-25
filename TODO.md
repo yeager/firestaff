@@ -63,8 +63,16 @@ that its exact runtime path is not already source-locked and tested.
     action, hit flash, toggle, opacity, chaos, render, source evidence).
     Left-click inventory and F0703 champion icon release tests wired.
     DM2 startup music queue test wired.
-    Remaining: champion panel subsystem (CSB equivalent of DM1's 25k-line
-    panel code), V2 HUD runtime tests.
+    2026-07-25: CSB champion panel HUD module (csb_v1_champion_panel_hud)
+    with bar graph height (F0287 fixed-point), bar fill model, status
+    box model (alive/dead/inventory), icon bitmap model (F0622),
+    slot box graphic cascade (F0291 C033/C034/C035), hand slot model,
+    portrait screen X (F0354), name zone X, status value format
+    (F0289/F0290 with stamina/10), champion color table G0046.
+    19-case test covering all functions.
+    Remaining: hand slot refresh, inventory walk, food/water/poison
+    labels, damage flash, spell area, clock tick repaint, portrait
+    box blit, V2 HUD runtime tests.
 16. **Q-CSB-06 Dungeon viewport geometry:** walls, doors, teleporters, pits,
     ornaments, creatures, items, projectiles, explosions and backgrounds.
     2026-07-24: F0115 item/explosion composition now accepts only a

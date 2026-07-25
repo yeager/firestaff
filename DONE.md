@@ -1,3 +1,13 @@
+- ✅ 2026-07-25 CSB champion panel HUD module (Q-CSB-05): first CSB
+  champion panel subsystem module implementing bar graph height (F0287
+  fixed-point ceil), bar fill model with zone/geometry, status box model
+  (alive/dead/inventory attribute masks), icon bitmap model (F0622
+  direction-indexed 19x14), slot box graphic cascade (F0291 acting >
+  wounded > normal), hand slot box model with layout-696 geometry,
+  portrait X (F0354 champIdx*69+7), name zone X, name color (gold/gray),
+  status value format (F0289/F0290, stamina/10), champion color table
+  G0046 {7,11,8,14}. 19-case test. Source-locked to ReDMCSB CHAMDRAW.C.
+
 - ✅ 2026-07-25 CSB V2 HUD overlay test coverage and HUD test wiring:
   19-case test for all 13 public CSB V2 HUD overlay functions (compass,
   depth, gold, champion bars, action strip, chaos indicator, hit flash,
