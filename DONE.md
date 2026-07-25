@@ -1,3 +1,10 @@
+- ✅ 2026-07-25 Wire 25 CSB/DM2 tests into CMakeLists: batch-wire
+  CSB sensor, DSA, dialog, decompdu, boot, save, expansion, touch,
+  viewport, ReDMCSB function, and DM2 direct query/file tests against
+  firestaff_m10. All 25 build and pass. 87 tests with compile/link/
+  runtime failures excluded (Amiga/x68000 platform boundary, missing
+  headers, struct mismatches, deeper DM2 deps).
+
 - ✅ 2026-07-25 Wire 211 DM1 tests into CMakeLists: batch-wire chest,
   mirror candidate, champion panel, inventory, HoC, viewport, hidpi,
   sensor, movement, save/load, and source ownership tests against
