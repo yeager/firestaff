@@ -1,3 +1,9 @@
+- ✅ 2026-07-25 Add 4 DM1 test suites (27 tests total): action spell M11
+  blit plan (8), C14/C15 graphics catalog (7), dungeon stairs (5),
+  F0693/F0699 video material (7). Covers Q-DM1-07 HUD/action (spell/action
+  blit plan build with presentation kinds), Q-DM1-03 viewport (C14/C15
+  catalog build/admit, video material FNV1a/present), Q-DM1-04 dungeon
+  (stairs transition resolution). [v3.0.126]
 - ✅ 2026-07-25 Add 5 DM1 test suites (36 tests total): F0682 transparent
   material (6), F0809/F0811 copy protection media (9), group destination
   visibility (10), input platform boundary (5), ornament cache owner (6).

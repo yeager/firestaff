@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.125 LANGUAGES C)
+project(Firestaff VERSION 3.0.126 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -47893,3 +47893,23 @@ add_executable(test_dm1_v1_ornament_cache_owner_pc34_compat tests/test_dm1_v1_or
 target_include_directories(test_dm1_v1_ornament_cache_owner_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_ornament_cache_owner_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_ornament_cache_owner_pc34_compat COMMAND test_dm1_v1_ornament_cache_owner_pc34_compat)
+
+add_executable(test_dm1_v1_action_spell_m11_blit_plan_pc34_compat tests/test_dm1_v1_action_spell_m11_blit_plan_pc34_compat.c)
+target_include_directories(test_dm1_v1_action_spell_m11_blit_plan_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_action_spell_m11_blit_plan_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_action_spell_m11_blit_plan_pc34_compat COMMAND test_dm1_v1_action_spell_m11_blit_plan_pc34_compat)
+
+add_executable(test_dm1_v1_c14_c15_graphics_catalog_pc34_compat tests/test_dm1_v1_c14_c15_graphics_catalog_pc34_compat.c)
+target_include_directories(test_dm1_v1_c14_c15_graphics_catalog_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_c14_c15_graphics_catalog_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_c14_c15_graphics_catalog_pc34_compat COMMAND test_dm1_v1_c14_c15_graphics_catalog_pc34_compat)
+
+add_executable(test_dm1_v1_dungeon_stairs_pc34_compat tests/test_dm1_v1_dungeon_stairs_pc34_compat.c)
+target_include_directories(test_dm1_v1_dungeon_stairs_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_dungeon_stairs_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_dungeon_stairs_pc34_compat COMMAND test_dm1_v1_dungeon_stairs_pc34_compat)
+
+add_executable(test_dm1_v1_f0693_f0699_video_material_pc34_compat tests/test_dm1_v1_f0693_f0699_video_material_pc34_compat.c)
+target_include_directories(test_dm1_v1_f0693_f0699_video_material_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_f0693_f0699_video_material_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_f0693_f0699_video_material_pc34_compat COMMAND test_dm1_v1_f0693_f0699_video_material_pc34_compat)
