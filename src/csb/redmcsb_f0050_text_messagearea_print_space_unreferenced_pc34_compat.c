@@ -11,3 +11,9 @@ bool F0050_TEXT_MESSAGEAREA_PrintSpace_Unreferenced_PC34(
     print_message(context, 15, " ");
     return true;
 }
+
+const char *redmcsb_f0050_text_messagearea_print_space_source_evidence_pc34(void)
+{
+    return "ReDMCSB TEXT.C F0050_TEXT_MESSAGEAREA_PrintSpace_Unreferenced "
+           "C15 white space through F0047_TEXT_MESSAGEAREA_PrintMessage";
+}

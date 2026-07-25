@@ -16,6 +16,9 @@ int csb_v1_f0426_dialog_is_message_on_two_lines_pc34_compat(
     char *part1,
     char *part2);
 
+#define F0426_DIALOG_IsMessageOnTwoLines \
+    csb_v1_f0426_dialog_is_message_on_two_lines_pc34_compat
+
 const char *csb_v1_f0426_dialog_is_message_on_two_lines_source_evidence_pc34(void);
 
 #ifdef __cplusplus
