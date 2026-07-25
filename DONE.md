@@ -1,3 +1,11 @@
+- ✅ 2026-07-25 CSB V2 HUD overlay test coverage and HUD test wiring:
+  19-case test for all 13 public CSB V2 HUD overlay functions (compass,
+  depth, gold, champion bars, action strip, chaos indicator, hit flash,
+  toggle, opacity, render, source evidence). Left-click inventory
+  (CHANGE7_28) and F0703 champion icon release tests wired. DM2 startup
+  music queue test wired. Startup verification passed for all three
+  engines (DM1, CSB, DM2) against ReDMCSB/skproject references.
+
 - ✅ 2026-07-25 CSB F0115 creature group and projectile native graphic
   mappers: creature blit with per-type transparency from G0219
   (coordinateSet_transparentColor), D2/D3 palette remap (G0221/G0222),

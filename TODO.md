@@ -58,6 +58,13 @@ that its exact runtime path is not already source-locked and tested.
     input timing, sound and first runtime frame from package data.
 15. **Q-CSB-05 HUD and champion panels:** C017/C040 champion, inventory,
     action/spell, cursor, text and transparency rendering.
+    2026-07-25: V2 HUD overlay test (19 cases covering all 13 public
+    functions: init, reset, direction, level, gold, champion bars,
+    action, hit flash, toggle, opacity, chaos, render, source evidence).
+    Left-click inventory and F0703 champion icon release tests wired.
+    DM2 startup music queue test wired.
+    Remaining: champion panel subsystem (CSB equivalent of DM1's 25k-line
+    panel code), V2 HUD runtime tests.
 16. **Q-CSB-06 Dungeon viewport geometry:** walls, doors, teleporters, pits,
     ornaments, creatures, items, projectiles, explosions and backgrounds.
     2026-07-24: F0115 item/explosion composition now accepts only a

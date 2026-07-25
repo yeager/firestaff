@@ -13208,6 +13208,23 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_startup_pointer_hit_contract
     )
 
+    add_executable(test_dm2_v1_startup_music_queue
+        tests/test_dm2_v1_startup_music_queue.c
+    )
+    target_include_directories(test_dm2_v1_startup_music_queue PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_startup_music_queue PRIVATE
+        firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_startup_music_queue PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_startup_music_queue
+        COMMAND test_dm2_v1_startup_music_queue
+    )
+
     add_executable(test_dm2_v1_m11_runtime_frame_receipt_gate
         tests/test_dm2_v1_m11_runtime_frame_receipt_gate.c
         src/engine/m11_dm2_runtime_frame_receipt_gate.c
@@ -43962,6 +43979,48 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0347_inventory_draw_pa
     add_test(NAME csb_v1_f0347_inventory_draw_panel_pc34_compat
              COMMAND test_csb_v1_f0347_inventory_draw_panel_pc34_compat)
 endif()
+
+    add_executable(test_csb_v2_hud_overlay_pc34
+        tests/test_csb_v2_hud_overlay_pc34.c
+    )
+    target_include_directories(test_csb_v2_hud_overlay_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v2_hud_overlay_pc34 PRIVATE
+        firestaff_csb_v2 firestaff_v2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v2_hud_overlay_pc34
+            PRIVATE -std=c11 -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v2_hud_overlay_pc34
+             COMMAND test_csb_v2_hud_overlay_pc34)
+
+    add_executable(test_csb_v1_champions_left_click_inventory_pc34_compat
+        tests/test_csb_v1_champions_left_click_inventory_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_champions_left_click_inventory_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_champions_left_click_inventory_pc34_compat PRIVATE
+        firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_champions_left_click_inventory_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_champions_left_click_inventory_pc34_compat
+             COMMAND test_csb_v1_champions_left_click_inventory_pc34_compat)
+
+    add_executable(test_redmcsb_f0703_release_champion_icon_pc34_compat
+        tests/test_redmcsb_f0703_release_champion_icon_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0703_release_champion_icon_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_redmcsb_f0703_release_champion_icon_pc34_compat PRIVATE
+        firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0703_release_champion_icon_pc34_compat
+            PRIVATE -std=c11 -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME redmcsb_f0703_release_champion_icon_pc34_compat
+             COMMAND test_redmcsb_f0703_release_champion_icon_pc34_compat)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f2262_timer_a_event_pc34_compat.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f2262_timer_a_event_pc34_compat.c")
