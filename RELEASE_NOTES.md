@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.112
+
+## Highlights since v3.0.111
+
+- Add DM1 inventory test (Q-DM1-06): 17 test cases covering item set/get,
+  remove, hand swap, mouse pickup/drop, chest open/close, load recalc,
+  PC34 slot mapping, equip gates, panel content, and source evidence.
+- Add DM1 dungeon square structs test (Q-DM1-04): 10 test cases covering
+  square decode, element classification, relative coords, movement blocking,
+  viewport build with reader callback, front wall occlusion, and flip check.
+
 # Firestaff v3.0.111
 
 ## Highlights since v3.0.110
