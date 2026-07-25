@@ -40590,3 +40590,16 @@ passes all 27 checks from title through entrance and HUD.
   d2l2_d2r2_f0111_partly_open) deferred until they can link against the full
   library. Pre-existing build failures in chaos_magic (unused static
   functions) fixed with __attribute__((unused)).
+
+- **DM1 test batch v3.0.121 — 6 suites, 44 tests:** Done 2026-07-25.
+  stairs_level (9 tests, Q-DM1-04): init/add/check/use stair, add level,
+  transition query, tick. palette_font (8 tests, Q-DM1-03): constants,
+  palette/font init, default palette, set palette, custom colors, skill
+  names, font alloc. amiga_platform_boundary (7 tests, Q-DM1-08): boundary
+  queries for F0513/F0535/F0551/F0557/F1111, is_portable, source evidence.
+  f0740_f0743_music_source (7 tests, Q-DM1-08): constants, state init
+  (musicOn=1 default), struct layouts, bind nonexistent, pause unauthenticated.
+  floor_feature_material (7 tests, Q-DM1-03): palette route enum, struct
+  layouts, FNV1a hash (null/data), find source (null/no match).
+  champion_runtime_source_m11_bridge (6 tests, Q-DM1-07): command kind enum,
+  init, struct layouts, source evidence.
