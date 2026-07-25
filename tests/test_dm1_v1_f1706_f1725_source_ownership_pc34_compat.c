@@ -7,6 +7,7 @@
 int main(void)
 {
     const DM1_V1_F1706F1725OwnershipPc34 *entry;
+    (void)entry;
     unsigned int number;
 
     for (number = 1706U; number <= 1725U; ++number) {

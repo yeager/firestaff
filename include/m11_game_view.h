@@ -2,6 +2,7 @@
 #define FIRESTAFF_M11_GAME_VIEW_H
 
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_hoc_presented_frame_consumer_pc34_compat.h"
 #include "dm1_v1_center_door_render_pc34_compat.h"
 #include "dm1_v1_inscription_host_material_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
@@ -3021,6 +3022,9 @@ typedef struct M11_Dm1InscriptionHostPresentationReceipt {
 
 void M11_GameView_GetDm1InscriptionHostPresentationReceipt(
     M11_Dm1InscriptionHostPresentationReceipt* outReceipt);
+
+void M11_GameView_GetDm1HocPresentedFrameConsumerReceipt(
+    DM1_V1_HocPresentedFrameConsumerReceiptPc34* outReceipt);
 
 /* Restored diagnostic probe exports (lost to the worktree merge drift;
  * tests/test_m11_overlay_command_queue_block.c consumes them). */
