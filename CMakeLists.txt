@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.114 LANGUAGES C)
+project(Firestaff VERSION 3.0.115 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -47573,3 +47573,18 @@ add_executable(test_dm1_v1_input_poll_pc34_compat tests/test_dm1_v1_input_poll_p
 target_include_directories(test_dm1_v1_input_poll_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_input_poll_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_input_poll_pc34_compat COMMAND test_dm1_v1_input_poll_pc34_compat)
+
+add_executable(test_dm1_v1_game_state_pc34_compat tests/test_dm1_v1_game_state_pc34_compat.c)
+target_include_directories(test_dm1_v1_game_state_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_game_state_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_game_state_pc34_compat COMMAND test_dm1_v1_game_state_pc34_compat)
+
+add_executable(test_dm1_v1_game_over_pc34_compat tests/test_dm1_v1_game_over_pc34_compat.c)
+target_include_directories(test_dm1_v1_game_over_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_game_over_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_game_over_pc34_compat COMMAND test_dm1_v1_game_over_pc34_compat)
+
+add_executable(test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat tests/test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat.c)
+target_include_directories(test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat COMMAND test_dm1_v1_door_bash_stamina_feedback_chain_pc34_compat)

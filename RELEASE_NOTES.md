@@ -1,6 +1,20 @@
 
 # Unreleased
 
+# Firestaff v3.0.115
+
+## Highlights since v3.0.114
+
+- Add DM1 game state test (Q-DM1-08): 12 test cases covering state machine
+  init, current/previous query, transition validation, new game start,
+  state names, callbacks, can-transition check, and enum constants.
+- Add DM1 game over/title test (Q-DM1-08): 15 test cases covering death
+  effect init/start/tick/fade/complete/restart, title screen init (with
+  memory check), start/tick/zoom/palette/complete, and animation constants.
+- Add DM1 door bash stamina feedback chain test (Q-DM1-04): 6 test cases
+  covering null rejection, non-door resolve, closed-door bash resolve with
+  cross-contract alignment, chain constants, and source lock evidence.
+
 # Firestaff v3.0.114
 
 ## Highlights since v3.0.113
