@@ -40603,3 +40603,18 @@ passes all 27 checks from title through entrance and HUD.
   layouts, FNV1a hash (null/data), find source (null/no match).
   champion_runtime_source_m11_bridge (6 tests, Q-DM1-07): command kind enum,
   init, struct layouts, source evidence.
+
+- **DM1 test batch v3.0.122 — 6 suites, 64 tests:** Done 2026-07-25.
+  champion_needs (12 tests, Q-DM1-07): constants, bar colors, scent capacity,
+  struct layouts, scent ordinal empty, bar width/color, stamina amount, bar
+  render command. sound (10 tests, Q-DM1-08): 35 sound constants, play modes,
+  music constants, emission routes, init, party position, music toggle, sound
+  name/data, request play. combat (15 tests, Q-DM1-05): attack types, wound
+  masks/indices, outcome enum, creature sizes, weapon constants, init
+  (alive=1, health=100), group init, armor defense, scaled product, max load,
+  movement ticks, source evidence. creature_render (14 tests, Q-DM1-03): 27
+  creature types, size constants, graphic masks, aspect masks, pose enum,
+  render list init, aspects table, direction delta, type name, coordinate set,
+  transparent color, palettes D3/D2. f0341_scroll_material (7 tests, Q-DM1-06):
+  constants, struct layouts, FNV1a, receipt empty. f0351_stats_material
+  (6 tests, Q-DM1-06): struct layouts, FNV1a, receipt empty.

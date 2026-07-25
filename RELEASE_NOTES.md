@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.122
+
+## New test suites (6 suites, 64 tests)
+
+- `test_dm1_v1_champion_needs_pc34_compat` — 12 tests (Q-DM1-07): needs constants, scent system, bar rendering
+- `test_dm1_v1_sound_pc34_compat` — 10 tests (Q-DM1-08): sound/music system init, play modes, party position
+- `test_dm1_v1_combat_pc34_compat` — 15 tests (Q-DM1-05): attack/wound/damage system, armor defense, weapon constants
+- `test_dm1_v1_creature_render_pc34_compat` — 14 tests (Q-DM1-03): 27 creature types, aspects table, palettes, poses
+- `test_dm1_v1_f0341_scroll_material_pc34_compat` — 7 tests (Q-DM1-06): scroll panel material, FNV1a hash
+- `test_dm1_v1_f0351_stats_material_pc34_compat` — 6 tests (Q-DM1-06): stats panel material, FNV1a hash
+
 # Firestaff v3.0.121
 
 ## New test suites (6 suites, 44 tests)
