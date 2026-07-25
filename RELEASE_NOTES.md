@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.108
+
+## Highlights since v3.0.107
+
+- Wire HoC presented-frame consumer into m11_game_view.c (Q-DM1-02):
+  C127/C026 mirror, M648 inscription, and F0115 object materials are
+  validated together. When all lanes pass, the procedural fallback
+  party-slot draw is suppressed.
+- Fix remaining -Werror unused-variable warnings in 12 source_ownership
+  test files.
+
 # Firestaff v3.0.107
 
 ## Highlights since v3.0.106
