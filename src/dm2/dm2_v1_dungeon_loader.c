@@ -2343,10 +2343,10 @@ int dm2_v1_DM2_ARRANGE_DUNGEON_receipt(
                                      (uint32_t)dungeon.column_index_base));
     arrangement_hash = dm2_arrange_hash_step(
         arrangement_hash, (uint32_t)(dungeon.square_first_thing_count < 0 ? 0u :
-                                     dungeon.square_first_thing_count));
+                                     (unsigned int)dungeon.square_first_thing_count));
     arrangement_hash = dm2_arrange_hash_step(
         arrangement_hash, (uint32_t)(dungeon.text_word_count < 0 ? 0u :
-                                     dungeon.text_word_count));
+                                     (unsigned int)dungeon.text_word_count));
     arrangement_hash = dm2_arrange_hash_step(
         arrangement_hash, (uint32_t)(dungeon.record_graph_complete != 0));
     arrangement_hash = dm2_arrange_hash_step(arrangement_hash,
@@ -5242,7 +5242,8 @@ int dm2_v1_g1_container_map_chip_matches_decoded_instance(
 
 int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int level,int dir,int x,int y,DM2_V1_StoneRoomInputReceipt *out){
  static const int dx[4]={0,1,0,-1},dy[4]={-1,0,1,0};int raw;
- if(!out)return 0;memset(out,0,sizeof(*out));if(!d||(dir&~3)!=0)return 0;raw=dm2_v1_dungeon_get_tile_raw(d,level,x,y);if(raw<0)return 0;
+ if(!out)return 0;
+ memset(out,0,sizeof(*out));if(!d||(dir&~3)!=0)return 0;raw=dm2_v1_dungeon_get_tile_raw(d,level,x,y);if(raw<0)return 0;
  out->dir=dir;out->x=x;out->y=y;out->tile_w2=(uint8_t)raw;out->tile_type=(uint8_t)((uint8_t)raw>>5);out->first_record_link=dm2_v1_dungeon_get_first_thing(d,level,x,y);
  for(int side=0;side<4;++side){out->oriented_bits[side]=(uint8_t)(raw&(1u<<((3-dir-side)&3)));int n=dm2_v1_dungeon_get_tile_raw(d,level,x+dx[(dir+side)&3],y+dy[(dir+side)&3]);if(n<0)return 0;out->neighbor_tile_w2[side]=(uint8_t)n;}out->valid=1;return 1;}
 
