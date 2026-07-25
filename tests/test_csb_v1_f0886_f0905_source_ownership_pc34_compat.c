@@ -6,6 +6,7 @@
 int main(void)
 {
     const CSB_V1_F0886F0905OwnershipPc34 *entry;
+    (void)entry;
     unsigned int number;
 
     for (number = 886u; number <= 905u; ++number) {

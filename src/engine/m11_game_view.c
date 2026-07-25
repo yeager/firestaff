@@ -149,6 +149,7 @@
 #include "dm1_v1_action_spell_render_consumption_pc34_compat.h"
 #include "dm1_v1_action_spell_source_asset_runtime_pc34_compat.h"
 #include "dm1_v1_action_spell_runtime_capture_pc34_compat.h"
+#include "dm1_v1_hoc_presented_frame_consumer_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_confirmation_apply_bridge_pc34_compat.h"
 #include "dm1_v1_hoc_mirror_candidate_click_admission_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_presentation_receipt_pc34_compat.h"
@@ -649,6 +650,8 @@ static M11_Dm1UnreadableInscriptionHostPresentationReceipt
  * Frame-local evidence: republished by every DM1 dungeon-view pass. */
 static M11_Dm1F0128PerSquareSchedulerReceipt
     s_m11_dm1_f0128_per_square_scheduler_receipt;
+static DM1_V1_HocPresentedFrameConsumerReceiptPc34
+    s_m11_dm1_hoc_presented_frame_consumer_receipt;
 
 static void m11_dm1_invalidate_wall_inscription_material(void)
 {
@@ -19621,6 +19624,105 @@ static uint32_t m11_dm1_hoc_source_hash(const unsigned char* pixels,
         hash *= 16777619u;
     }
     return hash ? hash : 1u;
+}
+
+static void m11_dm1_hoc_presented_frame_consumer_build(
+    const M11_GameViewState* state)
+{
+    DM1_V1_HocPresentedMirrorMaterialPc34 mirrorMat;
+    DM1_V1_HocPresentedInscriptionMaterialPc34 inscriptionMat;
+    DM1_V1_HocPresentedObjectMaterialPc34 objectMat;
+    DM1_V1_HocPresentedFrameConsumerInputPc34 input;
+    const M11_Dm1HoCMirrorHostPresentationReceipt* mirror;
+    const M11_Dm1InscriptionHostPresentationReceipt* inscription;
+    const M11_Dm1FloorItemHostPresentationReceipt* floorItem;
+
+    memset(&s_m11_dm1_hoc_presented_frame_consumer_receipt, 0,
+           sizeof(s_m11_dm1_hoc_presented_frame_consumer_receipt));
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind))
+        return;
+
+    mirror = &s_m11_dm1_hoc_mirror_host_presentation_receipt;
+    inscription = &s_m11_dm1_inscription_host_presentation_receipt;
+    floorItem = &s_m11_dm1_floor_item_host_presentation_receipt;
+
+    memset(&mirrorMat, 0, sizeof(mirrorMat));
+    if (mirror->valid) {
+        mirrorMat.valid = 1;
+        mirrorMat.backingGraphicIndex = mirror->backingGraphicIndex;
+        mirrorMat.portraitGraphicIndex = mirror->portraitGraphicIndex;
+        mirrorMat.backingWidth = mirror->backingWidth;
+        mirrorMat.backingHeight = mirror->backingHeight;
+        mirrorMat.portraitWidth = mirror->portraitWidth;
+        mirrorMat.portraitHeight = mirror->portraitHeight;
+        mirrorMat.backingTransparentColor = mirror->backingTransparentColor;
+        mirrorMat.portraitTransparentColor = mirror->portraitTransparentColor;
+        mirrorMat.backingHash = m11_dm1_hoc_source_hash(NULL, 0, 0);
+        mirrorMat.portraitHash = m11_dm1_hoc_source_hash(NULL, 0, 0);
+        {
+            const M11_AssetSlot* backing = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)mirror->backingGraphicIndex);
+            const M11_AssetSlot* portraits = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)mirror->portraitGraphicIndex);
+            if (backing && backing->loaded && backing->pixels)
+                mirrorMat.backingHash = m11_dm1_hoc_source_hash(
+                    backing->pixels, (int)backing->width, (int)backing->height);
+            if (portraits && portraits->loaded && portraits->pixels)
+                mirrorMat.portraitHash = m11_dm1_hoc_source_hash(
+                    portraits->pixels, (int)portraits->width,
+                    (int)portraits->height);
+        }
+    }
+
+    memset(&inscriptionMat, 0, sizeof(inscriptionMat));
+    if (inscription->valid) {
+        inscriptionMat.valid = 1;
+        inscriptionMat.fontGraphicIndex = inscription->fontGraphicIndex;
+        inscriptionMat.glyphByteCount = inscription->glyphByteCount;
+        inscriptionMat.lineCount = inscription->lineCount;
+        inscriptionMat.glyphSourceWidth = inscription->glyphSourceWidth;
+        inscriptionMat.glyphSourceHeight = inscription->glyphSourceHeight;
+        inscriptionMat.glyphCellCount = inscription->glyphCellCount;
+        inscriptionMat.opaqueGlyphPixelCount = inscription->opaqueGlyphPixelCount;
+        inscriptionMat.transparentGlyphPixelCount =
+            inscription->transparentGlyphPixelCount;
+        inscriptionMat.textDataHash = inscription->textDataFNV1a;
+        inscriptionMat.glyphBytesHash = inscription->glyphBytesFNV1a;
+        inscriptionMat.fontPixelsHash = inscription->fontPixelsFNV1a;
+        inscriptionMat.sourceCellsHash = inscription->sourceCellsFNV1a;
+    }
+
+    memset(&objectMat, 0, sizeof(objectMat));
+    if (floorItem->valid && floorItem->floorItemLane) {
+        objectMat.valid = 1;
+        objectMat.graphicsId = floorItem->graphicsId;
+        objectMat.transparentColor = floorItem->transparentColor;
+        objectMat.sourceZone = floorItem->sourceZone;
+        objectMat.destinationW = floorItem->destinationW;
+        objectMat.destinationH = floorItem->destinationH;
+        objectMat.assetWidth = floorItem->assetWidth;
+        objectMat.assetHeight = floorItem->assetHeight;
+        objectMat.materialHash = m11_dm1_hoc_source_hash(NULL, 0, 0);
+        if (floorItem->graphicsId > 0) {
+            const M11_AssetSlot* objSlot = M11_AssetLoader_Load(
+                (M11_AssetLoader*)&state->assetLoader,
+                (unsigned int)floorItem->graphicsId);
+            if (objSlot && objSlot->loaded && objSlot->pixels)
+                objectMat.materialHash = m11_dm1_hoc_source_hash(
+                    objSlot->pixels, (int)objSlot->width,
+                    (int)objSlot->height);
+        }
+    }
+
+    memset(&input, 0, sizeof(input));
+    input.runtimeTick = (uint32_t)state->world.gameTick;
+    input.mirror = mirrorMat.valid ? &mirrorMat : NULL;
+    input.inscription = inscriptionMat.valid ? &inscriptionMat : NULL;
+    input.object = objectMat.valid ? &objectMat : NULL;
+    dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
+        &input, &s_m11_dm1_hoc_presented_frame_consumer_receipt);
 }
 
 /* The C040 candidate panel and C026 atlas must arrive at the actual M11
@@ -44650,7 +44752,8 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 }
             }
             if (!drewStatusBox && !m11_v1_chrome_mode_enabled() &&
-                !m11_is_dm1_source_kind(state->sourceKind)) {
+                !m11_is_dm1_source_kind(state->sourceKind) &&
+                !s_m11_dm1_hoc_presented_frame_consumer_receipt.suppressFallbackVisuals) {
                 /* Procedural fallback.  V1 uses the same source status-box
                  * rectangle as C007/C008 (67x29); V2 keeps the legacy
                  * 71x28 shell baked into its vertical-slice HUD assets. */
@@ -47508,6 +47611,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
            sizeof(s_m11_dm1_hoc_mirror_host_presentation_receipt));
     memset(&s_m11_dm1_hoc_mirror_viewport_material_frame_receipt, 0,
            sizeof(s_m11_dm1_hoc_mirror_viewport_material_frame_receipt));
+    memset(&s_m11_dm1_hoc_presented_frame_consumer_receipt, 0,
+           sizeof(s_m11_dm1_hoc_presented_frame_consumer_receipt));
     /* ReDMCSB DUNVIEW.C F0128:8318-8616 rebuilds a full viewport from the
      * current party tuple. A side/depth F0107 inscription publishes only
      * its original-ornament receipt, so invalidate both M648 surfaces before
@@ -48076,6 +48181,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_dm1_f0115_floor_item_runtime_capture_consume(state);
     m11_dm1_f0115_c15_runtime_capture_consume(state);
     m11_dm1_f0115_c2900_runtime_capture_consume(state);
+    m11_dm1_hoc_presented_frame_consumer_build(state);
     m11_draw_dm1_v2_enhanced_effects_framepath(
         state, framebuffer, framebufferWidth, framebufferHeight);
 
@@ -49564,6 +49670,14 @@ void M11_GameView_GetDm1InscriptionHostPresentationReceipt(
 {
     if (outReceipt) {
         *outReceipt = s_m11_dm1_inscription_host_presentation_receipt;
+    }
+}
+
+void M11_GameView_GetDm1HocPresentedFrameConsumerReceipt(
+    DM1_V1_HocPresentedFrameConsumerReceiptPc34* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_hoc_presented_frame_consumer_receipt;
     }
 }
 
