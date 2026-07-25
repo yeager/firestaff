@@ -1,3 +1,11 @@
+- ✅ 2026-07-25 Wire 200 CSB/ReDMCSB tests into CMakeLists: batch-wire
+  chaos, DSA, startup, swoosh, entrance, dialog, text, viewport,
+  sensor, champion, inventory, save, package, platform boundary audit,
+  and source ownership tests against firestaff_m10. All 200 build and
+  pass. 46 tests with compile/link/runtime failures excluded (missing
+  headers, transitive link deps, or assertion failures needing deeper
+  implementation work).
+
 - ✅ 2026-07-25 Wire 3 CSB startup/dialog tests: F0806 entrance loop
   runtime handoff (firestaff_m10 linked), F0050 text message area print
   space with ReDMCSB source-name wrapper macro and source_evidence
