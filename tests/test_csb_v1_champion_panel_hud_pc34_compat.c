@@ -286,6 +286,155 @@ static void test_source_evidence(void)
     printf("  source_evidence OK\n");
 }
 
+static void test_format_integer_f0288(void)
+{
+    char buf[16];
+    assert(CSB_ChampionPanel_FormatIntegerF0288(42, 1, 3, buf, sizeof(buf)));
+    assert(strcmp(buf, " 42") == 0);
+    assert(CSB_ChampionPanel_FormatIntegerF0288(7, 1, 3, buf, sizeof(buf)));
+    assert(strcmp(buf, "  7") == 0);
+    assert(CSB_ChampionPanel_FormatIntegerF0288(123, 1, 3, buf, sizeof(buf)));
+    assert(strcmp(buf, "123") == 0);
+    assert(CSB_ChampionPanel_FormatIntegerF0288(1234, 1, 3, buf, sizeof(buf)));
+    assert(strcmp(buf, "1234") == 0);
+    assert(CSB_ChampionPanel_FormatIntegerF0288(5, 0, 3, buf, sizeof(buf)));
+    assert(strcmp(buf, "5") == 0);
+    assert(!CSB_ChampionPanel_FormatIntegerF0288(42, 1, 3, NULL, 16));
+    printf("  format_integer_f0288 OK\n");
+}
+
+static void test_inventory_slot_xy(void)
+{
+    int x, y;
+    assert(CSB_ChampionPanel_InventorySlotXY(8, &x, &y));
+    assert(x == 4 && y == 10);
+    assert(CSB_ChampionPanel_InventorySlotXY(9, &x, &y));
+    assert(x == 24 && y == 10);
+    assert(CSB_ChampionPanel_InventorySlotXY(10, &x, &y));
+    assert(x == 62 && y == 10);
+    assert(CSB_ChampionPanel_InventorySlotXY(11, &x, &y));
+    assert(x == 62 && y == 29);
+    assert(CSB_ChampionPanel_InventorySlotXY(13, &x, &y));
+    assert(x == 62 && y == 67);
+    assert(CSB_ChampionPanel_InventorySlotXY(14, &x, &y));
+    assert(x == 98 && y == 10);
+    assert(CSB_ChampionPanel_InventorySlotXY(37, &x, &y));
+    assert(x == 134 && y == 67);
+    assert(!CSB_ChampionPanel_InventorySlotXY(7, &x, &y));
+    assert(!CSB_ChampionPanel_InventorySlotXY(38, &x, &y));
+    printf("  inventory_slot_xy OK\n");
+}
+
+static void test_empty_hand_icon(void)
+{
+    assert(CSB_ChampionPanel_EmptyHandIconIndex(0, 0) == 212);
+    assert(CSB_ChampionPanel_EmptyHandIconIndex(1, 0) == 214);
+    assert(CSB_ChampionPanel_EmptyHandIconIndex(0, 0x0001) == 213);
+    assert(CSB_ChampionPanel_EmptyHandIconIndex(1, 0x0002) == 215);
+    assert(CSB_ChampionPanel_EmptyHandIconIndex(0, 0x0002) == 212);
+    assert(CSB_ChampionPanel_EmptyHandIconIndex(-1, 0) == -1);
+    assert(CSB_ChampionPanel_EmptyHandIconIndex(2, 0) == -1);
+    printf("  empty_hand_icon OK\n");
+}
+
+static void test_statistic_colors(void)
+{
+    assert(CSB_ChampionPanel_StatisticCurrentColor(40, 50) == CSB_COLOR_RED);
+    assert(CSB_ChampionPanel_StatisticCurrentColor(50, 50) == CSB_COLOR_LIGHTEST_GRAY);
+    assert(CSB_ChampionPanel_StatisticCurrentColor(60, 50) == CSB_COLOR_LIGHT_GREEN);
+    assert(CSB_ChampionPanel_StatisticMaximumColor() == CSB_COLOR_LIGHTEST_GRAY);
+    printf("  statistic_colors OK\n");
+}
+
+static void test_format_statistic_value(void)
+{
+    char cur[4], mx[5];
+    assert(CSB_ChampionPanel_FormatStatisticValue(42, 50, cur, sizeof(cur), mx, sizeof(mx)));
+    assert(strcmp(cur, " 42") == 0);
+    assert(strcmp(mx, "/ 50") == 0);
+    assert(!CSB_ChampionPanel_FormatStatisticValue(42, 50, NULL, 4, mx, 5));
+    printf("  format_statistic_value OK\n");
+}
+
+static void test_statistic_row_model(void)
+{
+    CSB_ChampionPanel_StatisticRowModel row;
+    assert(CSB_ChampionPanel_BuildStatisticRowModel(30, 50, &row));
+    assert(row.currentValue == 30);
+    assert(row.maximumValue == 50);
+    assert(row.currentColor == CSB_COLOR_RED);
+    assert(row.maximumColor == CSB_COLOR_LIGHTEST_GRAY);
+    assert(strcmp(row.currentText, " 30") == 0);
+    assert(strcmp(row.maximumText, "/ 50") == 0);
+    assert(!CSB_ChampionPanel_BuildStatisticRowModel(30, 50, NULL));
+    printf("  statistic_row_model OK\n");
+}
+
+static void test_statistic_text_run_model(void)
+{
+    CSB_ChampionPanel_StatisticTextRunModel run;
+    assert(CSB_ChampionPanel_BuildStatisticTextRunModel(0, 30, 50, &run));
+    assert(run.statisticIndex == 0);
+    assert(run.nameZone == CSB_ZONE_SKILL_VALUE);
+    assert(run.valueZone == CSB_ZONE_STATISTIC_VALUE);
+    assert(run.nameX == 28);
+    assert(run.currentX == 94);
+    assert(run.maximumX == 94 + 6 * 3);
+    assert(run.y == 34);
+    assert(run.nameColor == CSB_COLOR_LIGHTEST_GRAY);
+    assert(run.currentColor == CSB_COLOR_RED);
+
+    assert(CSB_ChampionPanel_BuildStatisticTextRunModel(3, 50, 50, &run));
+    assert(run.y == 34 + 7 * 3);
+    assert(run.currentColor == CSB_COLOR_LIGHTEST_GRAY);
+
+    assert(!CSB_ChampionPanel_BuildStatisticTextRunModel(-1, 0, 0, &run));
+    assert(!CSB_ChampionPanel_BuildStatisticTextRunModel(6, 0, 0, &run));
+    printf("  statistic_text_run_model OK\n");
+}
+
+static void test_load_color(void)
+{
+    assert(CSB_ChampionPanel_LoadColor(50, 100) == CSB_COLOR_LIGHTEST_GRAY);
+    assert(CSB_ChampionPanel_LoadColor(101, 100) == CSB_COLOR_RED);
+    assert(CSB_ChampionPanel_LoadColor(70, 100) == CSB_COLOR_YELLOW);
+    assert(CSB_ChampionPanel_LoadColor(62, 100) == CSB_COLOR_LIGHTEST_GRAY);
+    assert(CSB_ChampionPanel_LoadColor(63, 100) == CSB_COLOR_YELLOW);
+    assert(CSB_ChampionPanel_LoadColor(10, 0) == CSB_COLOR_RED);
+    assert(CSB_ChampionPanel_LoadColor(0, 0) == CSB_COLOR_LIGHTEST_GRAY);
+    printf("  load_color OK\n");
+}
+
+static void test_format_load_value(void)
+{
+    char buf[32];
+    assert(CSB_ChampionPanel_FormatLoadValue(125, 500, buf, sizeof(buf)));
+    assert(strcmp(buf, " 12.5/ 50 KG") == 0);
+    assert(CSB_ChampionPanel_FormatLoadValue(0, 300, buf, sizeof(buf)));
+    assert(strcmp(buf, "  0.0/ 30 KG") == 0);
+    assert(CSB_ChampionPanel_LoadValueZone() == 555);
+    printf("  format_load_value OK\n");
+}
+
+static void test_food_water_poison_blit(void)
+{
+    const CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *spec =
+        CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked();
+    assert(spec != NULL);
+    assert(spec->blitCount == 3);
+    assert(spec->sourceStartLine == 1598);
+    assert(spec->sourceEndLine == 1606);
+    assert(spec->blits[0].bitmapId == CSB_GFX_FOOD_LABEL);
+    assert(spec->blits[0].zoneId == CSB_ZONE_FOOD);
+    assert(spec->blits[0].requiresPoisoned == 0);
+    assert(spec->blits[1].bitmapId == CSB_GFX_WATER_LABEL);
+    assert(spec->blits[2].bitmapId == CSB_GFX_POISONED_LABEL);
+    assert(spec->blits[2].requiresPoisoned == 1);
+    assert(spec->sourceEvidence != NULL);
+    assert(strstr(spec->sourceEvidence, "F0345") != NULL);
+    printf("  food_water_poison_blit OK\n");
+}
+
 static void test_null_safety(void)
 {
     CSB_ChampionPanel_BarFillModel bm;
@@ -296,6 +445,8 @@ static void test_null_safety(void)
     assert(!CSB_ChampionPanel_BuildStatusBoxModel(0, 0, 0, 100, NULL));
     assert(!CSB_ChampionPanel_BuildIconBitmapModel(0, 0, 0, NULL));
     assert(!CSB_ChampionPanel_BuildStatusHandSlotBoxModel(0, 0, 0, NULL));
+    assert(!CSB_ChampionPanel_BuildStatisticRowModel(30, 50, NULL));
+    assert(!CSB_ChampionPanel_BuildStatisticTextRunModel(0, 30, 50, NULL));
     (void)bm; (void)sm; (void)im; (void)hm;
     printf("  null_safety OK\n");
 }
@@ -320,6 +471,16 @@ int main(void)
     test_status_value_zone();
     test_format_status_value();
     test_hand_slot_xy();
+    test_format_integer_f0288();
+    test_inventory_slot_xy();
+    test_empty_hand_icon();
+    test_statistic_colors();
+    test_format_statistic_value();
+    test_statistic_row_model();
+    test_statistic_text_run_model();
+    test_load_color();
+    test_format_load_value();
+    test_food_water_poison_blit();
     test_source_evidence();
     test_null_safety();
     printf("  ALL PASSED\n");
