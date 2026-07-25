@@ -6,6 +6,7 @@ const RedmcsbF0675BitmapPc34Compat *redmcsb_f0675_get_scaled_bitmap_pc34_compat(
  if(derived>=0){if(!o->is_cached||!o->get_derived)return 0; cached=o->is_cached(c,derived); if(cached)return o->get_derived(c,derived); out=o->get_derived(c,derived);} else {if(!o->get_temporary)return 0; out=o->get_temporary(c);}
  native=o->get_native(c,index);
  if(!native||!out||!o->shrink||!o->shrink(c,native,out,sx,sy,pal))return 0;
- if(!cached&&o->add_cache)o->add_cache(c,derived); return out;
+ if(!cached&&o->add_cache)o->add_cache(c,derived);
+ return out;
 }
 const char *redmcsb_f0675_get_scaled_bitmap_source_evidence_pc34(void){return "ReDMCSB DUNVIEW.C:3308-3392 F0675 native/derived/temporary selection and F0129 scaling.";}
