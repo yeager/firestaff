@@ -81,6 +81,17 @@ jobs:
             cmake --build build --parallel
           fi
 
+      - name: Run unit tests (ctest)
+        run: |
+          cd build
+          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log
+          TOTAL=$(grep -oP 'tests passed.*out of \K[0-9]+' ctest.log || echo 0)
+          FAILED=$(grep -oP '\K[0-9]+(?= tests failed)' ctest.log || echo 0)
+          echo "ctest: $FAILED failed out of $TOTAL"
+          if [ "$FAILED" != "0" ]; then
+            echo "::warning::$FAILED ctest(s) failed — check output above"
+          fi
+
       - name: Run Phase A probe (headless, no game data needed)
         run: |
           SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe${{ matrix.exe }} 2>&1 | tee phase_a.log

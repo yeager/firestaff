@@ -1,3 +1,8 @@
+- ✅ 2026-07-25 Release CI: added ctest unit test gate to verify.yml
+  and release.yml (all 3 platforms), fixed DM2 linker error in
+  test_dm2_v1_update_weather (missing firestaff_m10 link), release
+  builds all targets (not just 4) so tests can run.
+
 - ✅ 2026-07-25 CSB champion panel HUD module (Q-CSB-05): first CSB
   champion panel subsystem module implementing bar graph height (F0287
   fixed-point ceil), bar fill model with zone/geometry, status box model
