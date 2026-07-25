@@ -1,6 +1,22 @@
 
 # Unreleased
 
+# Firestaff v3.0.114
+
+## Highlights since v3.0.113
+
+- Add DM1 movement test (Q-DM1-08): 10 test cases covering init, step cost,
+  queue operations, step execution, VBlank timing, and orchestrator route plan.
+- Add DM1 collision/door test (Q-DM1-04): 12 test cases covering null rejection
+  on collision/pit/door APIs, constant verification, source evidence, and
+  tile index computation.
+- Add DM1 teleporter/pit test (Q-DM1-04): 19 test cases covering teleporter
+  rotation (party/group), group value update, move removal planning (fall killed
+  and not-allowed paths), pit fall detection, and source evidence.
+- Add DM1 input poll test (Q-DM1-08): 16 test cases covering init/deinit,
+  key buffer store/get/discard, mouse position, button state, numpad mapping,
+  F1690/F1691/F1692 accessors, and source evidence.
+
 # Firestaff v3.0.113
 
 ## Highlights since v3.0.112
