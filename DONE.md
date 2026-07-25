@@ -1,3 +1,9 @@
+- ✅ 2026-07-25 Add DM1 game state test (12 tests, Q-DM1-08), game over/title
+  test (15 tests, Q-DM1-08), and door bash stamina feedback chain test
+  (6 tests, Q-DM1-04). Covers state machine init/transitions/callbacks,
+  death effect animation/fade, title screen zoom/palette/memory check,
+  and cross-contract bash chain resolve with divergence surfacing.
+
 - ✅ 2026-07-25 Add DM1 movement test (10 tests, Q-DM1-08), collision/door test
   (12 tests, Q-DM1-04), teleporter/pit test (19 tests, Q-DM1-04), and input
   poll test (16 tests, Q-DM1-08). Covers queue init/enqueue/dequeue, step
