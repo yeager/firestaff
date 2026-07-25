@@ -1,3 +1,10 @@
+- ✅ 2026-07-25 Add 10 DM1/CSB test suites (91 tests total): dungeon loader (8),
+  weapon info (3), combat log (5), click routing (10), dialog scroll (12),
+  blit fill (8), dungeon decompressor (12), door source material (10),
+  ceiling pit viewport (8), draw primitives (15). Covers Q-DM1-03 viewport
+  rendering, Q-DM1-04 dungeon topology, Q-DM1-05 combat, Q-DM1-07 HUD/action,
+  and Q-DM1-09 input routing.
+
 - ✅ 2026-07-25 Add CSB dungeon loader test (16 tests, Q-CSB-04), dungeon world
   test (22 tests, Q-CSB-04), character test (19 tests, Q-CSB-05), and chaos
   magic/DSA test (15 tests, Q-CSB-04). Covers dungeon.dat load/decode/tile,
