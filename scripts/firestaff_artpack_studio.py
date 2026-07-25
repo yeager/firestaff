@@ -44,10 +44,20 @@ except Exception as exc:  # pragma: no cover - exercised by startup path
         f"Import error: {exc}"
     )
 
+def require_supported_tk(tk_module: Any) -> None:
+    """Reject the Apple-supplied Tk 8.5 runtime before it can paint a blank UI."""
+    version = tuple(int(part) for part in str(tk_module.TkVersion).split(".")[:2])
+    if version < (8, 6):
+        raise RuntimeError(
+            f"Tk {tk_module.TkVersion} is unsupported; Firestaff Artpack Studio needs Tk 8.6 or newer"
+        )
+
+
 if "--check-tkinter" in sys.argv:
     try:
         import tkinter as tk
         from PIL import ImageTk
+        require_supported_tk(tk)
     except Exception as exc:  # pragma: no cover - packaged runtime smoke check
         raise SystemExit(f"Tkinter is required for the GUI: {exc}")
     print(f"Tkinter runtime check: PASS (Tk {tk.TkVersion})")
@@ -2000,6 +2010,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     ap.add_argument("--pack-dir", type=Path)
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--screenshot", type=Path, help="Render a static UI screenshot preview and exit")
+    ap.add_argument("--smoke-ui", action="store_true", help="Create and validate the GUI widget tree, then exit")
     return ap.parse_args(argv)
 
 
@@ -2012,6 +2023,14 @@ def main(argv: list[str]) -> int:
         print(out)
         return 0
     app = ArtpackStudio(args.game, args.pack_dir)
+    if args.smoke_ui:
+        app.withdraw()
+        app.update_idletasks()
+        if not app.winfo_children() or not app.asset_list.winfo_exists():
+            raise RuntimeError("Artpack Studio UI did not create its widget tree")
+        app.destroy()
+        print("Artpack Studio UI smoke test: PASS")
+        return 0
     app.mainloop()
     return 0
 

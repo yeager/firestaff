@@ -122,7 +122,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
-        run: brew install cmake pkg-config sdl3 || true
+        run: brew install cmake pkg-config sdl3 python@3.13 python-tk@3.13 || true
 
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
@@ -131,7 +131,7 @@ jobs:
         run: cmake --build build --parallel 4 --target firestaff firestaff_artpack_studio firestaff_m11_phase_a_probe firestaff_m11_audio_probe
 
       - name: Bundle Artpack Studio
-        run: ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
+        run: FIRESTAFF_ARTPACK_PYTHON="$(brew --prefix python@3.13)/bin/python3.13" ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
 
       - name: Smoke probes
         shell: bash

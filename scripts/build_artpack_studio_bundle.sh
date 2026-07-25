@@ -18,17 +18,20 @@ if [[ ! -f "$SCRIPT" ]]; then
 fi
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
-  # GitHub's Homebrew Python can be built without Tk. Prefer a Python that has
-  # the GUI module available; the Xcode Python bundled on macOS runners does.
-  for candidate in "$(command -v python3 2>/dev/null || true)" /usr/bin/python3 \
+  # Tk 8.5 supplied by Xcode paints an empty, CPU-hungry window on current
+  # macOS. The release workflow supplies Homebrew's python-tk runtime.
+  for candidate in "${FIRESTAFF_ARTPACK_PYTHON:-}" "$(command -v python3 2>/dev/null || true)" /usr/bin/python3 \
     /Applications/Xcode.app/Contents/Developer/usr/bin/python3; do
-    if [[ -n "$candidate" && -x "$candidate" ]] && "$candidate" -c 'import tkinter' >/dev/null 2>&1; then
+    if [[ -n "$candidate" && -x "$candidate" ]] && "$candidate" -c '
+import tkinter as tk
+raise SystemExit(0 if tuple(map(int, str(tk.TkVersion).split(".")[:2])) >= (8, 6) else 1)
+' >/dev/null 2>&1; then
       PYTHON="$candidate"
       break
     fi
   done
   if [[ -z "${PYTHON:-}" ]]; then
-    echo "A Python 3 installation with Tkinter is required to bundle Artpack Studio" >&2
+    echo "A Python 3 installation with Tk 8.6 or newer is required to bundle Artpack Studio" >&2
     exit 1
   fi
 elif command -v python3 >/dev/null 2>&1; then
@@ -101,8 +104,10 @@ esac
 
 if [[ "$(uname -s)" == "Darwin" ]]; then
   "$OUT_DIR/dist/Firestaff Artpack Studio.app/Contents/MacOS/Firestaff Artpack Studio" --check-tkinter
+  "$OUT_DIR/dist/Firestaff Artpack Studio.app/Contents/MacOS/Firestaff Artpack Studio" --smoke-ui
 else
   "$OUT_DIR/dist/firestaff_artpack_studio" --check-tkinter
+  "$OUT_DIR/dist/firestaff_artpack_studio" --smoke-ui
 fi
 
 find "$OUT_DIR/dist" -maxdepth 2 -type f -o -type d
