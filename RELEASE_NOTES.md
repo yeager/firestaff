@@ -1,6 +1,34 @@
 
 # Unreleased
 
+# Firestaff v3.0.116
+
+## Highlights since v3.0.115
+
+- Add CSB dungeon loader test (Q-CSB-04): 16 test cases covering file/buffer
+  load with null/nonexistent/truncated inputs, current dungeon context
+  get/set/unload, level management, square decoding, tile decoding,
+  thing record lookup, and source evidence.
+
+- Add CSB dungeon world test (Q-CSB-04): 22 test cases covering world
+  init/add_level, tile get/set/const, walkability/wall checks, wall/ornament
+  mutation, sensor type/data extraction, endgame trigger sequence,
+  CHANGE7_18 bit-15 bugfix, version checker gate, door defense/attack,
+  and sensor/door/effect constant verification.
+
+- Add CSB character test (Q-CSB-05): 19 test cases covering champion
+  init, party init, kill/resurrect/reincarnate lifecycle, stat/skill
+  get/set, load/maximum-load/movement-ticks computation, overload
+  detection, DM1 save import null rejection, slot/stat/skill counts,
+  DM1 save format offsets, and source evidence.
+
+- Add CSB chaos magic/DSA test (Q-CSB-04): 15 test cases covering DSA
+  state init/cleanup/double-cleanup, script load null, trigger invalid,
+  tick empty, extended save DSA import null/truncated, imported action
+  find/column/master-filter on empty state, stack/global/variable
+  capacity constants, jump result enum, object property enum, and
+  source evidence.
+
 # Firestaff v3.0.115
 
 ## Highlights since v3.0.114
