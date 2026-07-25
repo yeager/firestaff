@@ -1,3 +1,8 @@
+- ✅ 2026-07-25 Add DM1 inventory test (17 tests, Q-DM1-06) and dungeon
+  square structs test (10 tests, Q-DM1-04). Covers init/set/get/remove,
+  mouse pickup/drop, chest open/close, load recalc, slot mapping, equip
+  gates, and square decode/viewport build/occlusion/movement blocking.
+
 - ✅ 2026-07-25 Add 4 DM1 tests: action XP graphic560 (30 tests, Q-DM1-07),
   F0344/F0658 HUD material (6 tests, Q-DM1-07), creature viewport (6 tests,
   Q-DM1-03), explosion bitmap viewport (4 tests, Q-DM1-03). Total 46 new
