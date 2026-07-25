@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.104
+
+## Highlights since v3.0.103
+
+- Fix GCC -Werror build failure on Linux: sign-compare and misleading-indentation
+  in dm2_v1_dungeon_loader.c (stone room input receipt, arrangement hash).
+
 # Firestaff v3.0.103
 
 ## Highlights since v3.0.102
