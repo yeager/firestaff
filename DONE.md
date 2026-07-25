@@ -1,3 +1,11 @@
+- ✅ 2026-07-25 CSB V2 HUD runtime test (Q-CSB-05): 18-case test
+  covering init/shutdown lifecycle, double init idempotency, lazy init
+  via setters, all state setters (gold, direction, level, champion,
+  action, hit flash, chaos), toggle/opacity, atomic apply_frame with
+  full 4-champion data, render with/without phase gate (allowed vs
+  blocked), null safety, and source evidence. Q-CSB-05 model layer
+  complete.
+
 - ✅ 2026-07-25 CSB champion panel HUD completion (Q-CSB-05): portrait
   blit model (F0354 graphic 26, 32x29, championIndex*29 row stride,
   C12 transparency), damage flash model (F0320 champion G0046 color,
