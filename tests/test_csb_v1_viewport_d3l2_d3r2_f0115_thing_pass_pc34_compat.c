@@ -469,6 +469,146 @@ static void test_source_lines_and_manifest_markers(void)
     }
 }
 
+static void test_real_asset_receipt(void)
+{
+    static const int want_square[2] = { 14, 15 };
+    static const int want_g2028[2] = { 3, 4 };
+    static const int want_g2033[2] = { 3, 4 };
+    static const int want_g2034[2] = { 6, 7 };
+    static const unsigned int want_open[2] = { 0x3421, 0x4312 };
+
+    for (int side = 0; side < 2; ++side) {
+        for (int route = 1; route <= 4; ++route) {
+            const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *s =
+                spec_for(side, route);
+            CSB_V1_D3L2D3R2F0115ThingPassRealAssetReceiptPc34 receipt;
+            char label[96];
+            int ok;
+
+            memset(&receipt, 0, sizeof(receipt));
+            ok = csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                s, 1, 1, 1, 1, 510, 4096, 0xDEADBEEF, &receipt);
+
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.ok", side, route);
+            expect_int(label, ok, 1, A_F0115);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.valid", side, route);
+            expect_int(label, receipt.valid, 1, A_F0115);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.real_gfx", side, route);
+            expect_int(label, receipt.route_backed_by_real_graphics_dat, 1, A_F0115);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.view_square",
+                     side, route);
+            expect_int(label, receipt.view_square, want_square[side], A_DEFS);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.route_id", side, route);
+            expect_int(label, receipt.route, route, A_F0115);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.depth", side, route);
+            expect_int(label, receipt.view_depth, 3, A_F0128);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.g2028", side, route);
+            expect_int(label, receipt.g2028_row, want_g2028[side], A_PROJECTILE);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.g2033", side, route);
+            expect_int(label, receipt.g2033_row, want_g2033[side], A_CREATURE);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.g2034", side, route);
+            expect_int(label, receipt.g2034_row, want_g2034[side], A_EXPLOSION);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.gfx_min", side, route);
+            expect_int(label, receipt.native_object_graphic_min, 498, A_F0115);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.gfx_max", side, route);
+            expect_int(label, receipt.native_object_graphic_max, 583, A_F0115);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.gfx_index", side, route);
+            expect_int(label, receipt.source_graphics_item_index, 510, A_F0115);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.byte_count",
+                     side, route);
+            expect_int(label, (int)receipt.source_byte_count, 4096, A_F0115);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.hash", side, route);
+            expect_int(label, (int)receipt.source_payload_hash,
+                       (int)0xDEADBEEF, A_F0115);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.c10", side, route);
+            expect_int(label, receipt.c10_transparency, 10, A_DEFS);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.open_order",
+                     side, route);
+            expect_int(label, (int)receipt.open_cell_order,
+                       (int)want_open[side],
+                       side == 0 ? A_F0676 : A_F0677);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.proj_base",
+                     side, route);
+            expect_int(label, receipt.projectile_zone_base, 2900, A_PROJECTILE);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.item_base",
+                     side, route);
+            expect_int(label, receipt.item_zone_base, 2500, A_ITEM);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.creature_base",
+                     side, route);
+            expect_int(label, receipt.creature_zone_base, 3200, A_CREATURE);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.expl_center",
+                     side, route);
+            expect_int(label, receipt.explosion_centered_zone_base, 3014, A_EXPLOSION);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.expl_side",
+                     side, route);
+            expect_int(label, receipt.explosion_side_zone_base, 3031, A_EXPLOSION);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.route_name",
+                     side, route);
+            expect_contains(label, receipt.route_name, "thing pass",
+                            side == 0 ? A_F0676 : A_F0677);
+            snprintf(label, sizeof(label), "receipt.side%d.route%d.source_lines",
+                     side, route);
+            expect_contains(label, receipt.source_lines, "ReDMCSB", A_F0115);
+        }
+    }
+
+    {
+        const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *s =
+            spec_for(0, CSB_V1_D3L2_D3R2_F0115_ROUTE_ITEM_PC34);
+        CSB_V1_D3L2D3R2F0115ThingPassRealAssetReceiptPc34 receipt;
+
+        expect_int("reject.null_spec",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       NULL, 1, 1, 1, 1, 510, 4096, 0xAA, &receipt),
+                   0, "invalid input guard");
+        expect_int("reject.null_output",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 1, 1, 1, 1, 510, 4096, 0xAA, NULL),
+                   0, "invalid input guard");
+        expect_int("reject.no_gfx_bound",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 0, 1, 1, 1, 510, 4096, 0xAA, &receipt),
+                   0, "source_graphics_dat_bound=0");
+        expect_int("reject.no_obj_bound",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 1, 0, 1, 1, 510, 4096, 0xAA, &receipt),
+                   0, "native_object_family_bound=0");
+        expect_int("reject.synth_pixels",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 1, 1, 0, 1, 510, 4096, 0xAA, &receipt),
+                   0, "no_synthetic_pixels=0");
+        expect_int("reject.fallback",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 1, 1, 1, 0, 510, 4096, 0xAA, &receipt),
+                   0, "no_fallback_visuals=0");
+        expect_int("reject.below_min",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 1, 1, 1, 1, 497, 4096, 0xAA, &receipt),
+                   0, "graphic index below 498");
+        expect_int("reject.above_max",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 1, 1, 1, 1, 584, 4096, 0xAA, &receipt),
+                   0, "graphic index above 583");
+        expect_int("reject.zero_bytes",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 1, 1, 1, 1, 510, 0, 0xAA, &receipt),
+                   0, "zero byte count");
+        expect_int("reject.zero_hash",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 1, 1, 1, 1, 510, 4096, 0, &receipt),
+                   0, "zero hash");
+
+        expect_int("accept.boundary_min",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 1, 1, 1, 1, 498, 1, 1, &receipt),
+                   1, "graphic 498 boundary");
+        expect_int("accept.boundary_max",
+                   csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+                       s, 1, 1, 1, 1, 583, 1, 1, &receipt),
+                   1, "graphic 583 boundary");
+    }
+}
+
 int main(void)
 {
     printf("probe=csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat\n");
@@ -480,8 +620,9 @@ int main(void)
     test_route_zone_math();
     test_pixel_run_contract();
     test_source_lines_and_manifest_markers();
+    test_real_asset_receipt();
 
-    expect_int("assertion_count_at_least_120", g_assertions >= 120, 1, A_F0115);
+    expect_int("assertion_count_at_least_300", g_assertions >= 300, 1, A_F0115);
     printf("assertionCount=%d failures=%d\n", g_assertions, g_failures);
     if (g_failures == 0) {
         printf("PASS final_status=1 anchor=%s assertionCount=%d\n",

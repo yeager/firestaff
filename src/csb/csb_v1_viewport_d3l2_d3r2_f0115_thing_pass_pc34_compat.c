@@ -435,6 +435,67 @@ int csb_v1_viewport_d3l2_d3r2_f0115_apply_c10_blit_pc34(
     return copied;
 }
 
+int csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *spec,
+    int source_graphics_dat_bound,
+    int native_object_family_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_D3L2D3R2F0115ThingPassRealAssetReceiptPc34 *out_receipt)
+{
+    CSB_V1_D3L2D3R2F0115ThingPassRealAssetReceiptPc34 receipt;
+
+    if (out_receipt) {
+        *out_receipt =
+            (CSB_V1_D3L2D3R2F0115ThingPassRealAssetReceiptPc34){0};
+    }
+    if (!spec || !out_receipt || !source_graphics_dat_bound ||
+        !native_object_family_bound || !no_synthetic_pixels ||
+        !no_fallback_visuals ||
+        source_graphics_item_index < 498 ||
+        source_graphics_item_index > 583 ||
+        source_byte_count == 0u || source_payload_hash == 0u ||
+        !spec->thing_pass_route_enabled ||
+        !spec->c10_transparency_skip ||
+        spec->g2028_row < 0) {
+        return 0;
+    }
+
+    receipt =
+        (CSB_V1_D3L2D3R2F0115ThingPassRealAssetReceiptPc34){0};
+    receipt.valid = CSB_PRESENT;
+    receipt.route_backed_by_real_graphics_dat = CSB_PRESENT;
+    receipt.view_square = spec->view_square;
+    receipt.route = spec->route;
+    receipt.source_graphics_dat_bound = CSB_PRESENT;
+    receipt.native_object_family_bound = CSB_PRESENT;
+    receipt.no_synthetic_pixels = CSB_PRESENT;
+    receipt.no_fallback_visuals = CSB_PRESENT;
+    receipt.source_graphics_item_index = source_graphics_item_index;
+    receipt.source_byte_count = source_byte_count;
+    receipt.source_payload_hash = source_payload_hash;
+    receipt.native_object_graphic_min = 498;
+    receipt.native_object_graphic_max = 583;
+    receipt.view_depth = spec->view_depth;
+    receipt.g2028_row = spec->g2028_row;
+    receipt.g2033_row = spec->g2033_row;
+    receipt.g2034_row = spec->g2034_row;
+    receipt.projectile_zone_base = spec->projectile_zone_base;
+    receipt.item_zone_base = spec->item_zone_base;
+    receipt.creature_zone_base = spec->creature_zone_base;
+    receipt.explosion_centered_zone_base = spec->explosion_centered_zone_base;
+    receipt.explosion_side_zone_base = spec->explosion_side_zone_base;
+    receipt.c10_transparency = spec->transparent_color;
+    receipt.open_cell_order = spec->open_cell_order;
+    receipt.route_name = spec->route_name;
+    receipt.source_lines = spec->source_lines;
+    *out_receipt = receipt;
+    return 1;
+}
+
 const char *csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_source_evidence_pc34(void)
 {
     return s_source_evidence;

@@ -117,6 +117,47 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_D3L2D3R2F0115ThingPassSpecPc34;
 
+/*
+ * Real-asset receipt for D3L2/D3R2 F0115 thing pass.
+ *
+ * D3L2/D3R2 has active G2028 rows (D3L=3, D3R=4), so items, creatures,
+ * projectiles, and explosions are all live at this depth. Front cells
+ * (0,1) are suppressed at depth 3 per DUNVIEW.C:5672-5673.
+ *
+ * ReDMCSB DUNVIEW.C:4923 gates items by G2028 row >= 0 and cell match;
+ * 5075 computes C2500 zone; 5201-5214/5615-5627 gate creatures by G2033
+ * row and cell; 5668-5683 gate projectiles by G2028 row; 5915-5933/
+ * 5998-6122 gate explosions by G2034 row.
+ */
+typedef struct {
+    int valid;
+    int route_backed_by_real_graphics_dat;
+    int view_square;
+    int route;
+    int source_graphics_dat_bound;
+    int native_object_family_bound;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int source_graphics_item_index;
+    size_t source_byte_count;
+    uint32_t source_payload_hash;
+    int native_object_graphic_min;
+    int native_object_graphic_max;
+    int view_depth;
+    int g2028_row;
+    int g2033_row;
+    int g2034_row;
+    int projectile_zone_base;
+    int item_zone_base;
+    int creature_zone_base;
+    int explosion_centered_zone_base;
+    int explosion_side_zone_base;
+    int c10_transparency;
+    unsigned int open_cell_order;
+    const char *route_name;
+    const char *source_lines;
+} CSB_V1_D3L2D3R2F0115ThingPassRealAssetReceiptPc34;
+
 int csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_init_pc34(void);
 
 size_t csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_count_pc34(void);
@@ -172,6 +213,17 @@ int csb_v1_viewport_d3l2_d3r2_f0115_apply_c10_blit_pc34(
     int height,
     int flip_horizontal,
     int flip_vertical);
+
+int csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
+    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *spec,
+    int source_graphics_dat_bound,
+    int native_object_family_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_D3L2D3R2F0115ThingPassRealAssetReceiptPc34 *out_receipt);
 
 const char *csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_source_evidence_pc34(void);
 

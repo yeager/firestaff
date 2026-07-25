@@ -369,6 +369,233 @@ static int test_evidence_strings(void)
     return ok;
 }
 
+static int test_zone_computation(void)
+{
+    int ok = 1;
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *d1l2 =
+        csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_for_square_pc34(1);
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *d1r2 =
+        csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_for_square_pc34(2);
+
+    /* D1L2 item zones: C2500 + 9*4 + cell | 0x8000 */
+    ok &= expect_int("d1l2.item_zone.cell0",
+                     csb_v1_viewport_d1l2_d1r2_f0115_item_zone_pc34(d1l2, 0),
+                     (2500 + 9 * 4 + 0) | 0x8000, A_F0115_ITEM);
+    ok &= expect_int("d1l2.item_zone.cell3",
+                     csb_v1_viewport_d1l2_d1r2_f0115_item_zone_pc34(d1l2, 3),
+                     (2500 + 9 * 4 + 3) | 0x8000, A_F0115_ITEM);
+    /* D1R2 item zones: C2500 + 10*4 + cell | 0x8000 */
+    ok &= expect_int("d1r2.item_zone.cell0",
+                     csb_v1_viewport_d1l2_d1r2_f0115_item_zone_pc34(d1r2, 0),
+                     (2500 + 10 * 4 + 0) | 0x8000, A_F0115_ITEM);
+    ok &= expect_int("d1r2.item_zone.cell2",
+                     csb_v1_viewport_d1l2_d1r2_f0115_item_zone_pc34(d1r2, 2),
+                     (2500 + 10 * 4 + 2) | 0x8000, A_F0115_ITEM);
+    /* Out-of-range cell */
+    ok &= expect_int("d1l2.item_zone.bad_cell",
+                     csb_v1_viewport_d1l2_d1r2_f0115_item_zone_pc34(d1l2, 4),
+                     -1, A_F0115_ITEM);
+    ok &= expect_int("null.item_zone",
+                     csb_v1_viewport_d1l2_d1r2_f0115_item_zone_pc34(0, 0),
+                     -1, A_F0115_ITEM);
+
+    /* D1L2 projectile zones: C2900 + 9*4 + cell */
+    ok &= expect_int("d1l2.proj_zone.cell0",
+                     csb_v1_viewport_d1l2_d1r2_f0115_projectile_zone_pc34(d1l2, 0),
+                     2900 + 9 * 4 + 0, A_F0115_PROJECTILE);
+    ok &= expect_int("d1l2.proj_zone.cell1",
+                     csb_v1_viewport_d1l2_d1r2_f0115_projectile_zone_pc34(d1l2, 1),
+                     2900 + 9 * 4 + 1, A_F0115_PROJECTILE);
+    /* D1R2 projectile zones: C2900 + 10*4 + cell */
+    ok &= expect_int("d1r2.proj_zone.cell3",
+                     csb_v1_viewport_d1l2_d1r2_f0115_projectile_zone_pc34(d1r2, 3),
+                     2900 + 10 * 4 + 3, A_F0115_PROJECTILE);
+    ok &= expect_int("null.proj_zone",
+                     csb_v1_viewport_d1l2_d1r2_f0115_projectile_zone_pc34(0, 0),
+                     -1, A_F0115_PROJECTILE);
+
+    /* D1L2 creature zones: C3200 + 9*5 + cell | 0x8000 */
+    ok &= expect_int("d1l2.creature_zone.cell0",
+                     csb_v1_viewport_d1l2_d1r2_f0115_creature_zone_pc34(d1l2, 0),
+                     (3200 + 9 * 5 + 0) | 0x8000, A_F0115_CREATURE);
+    ok &= expect_int("d1l2.creature_zone.cell2",
+                     csb_v1_viewport_d1l2_d1r2_f0115_creature_zone_pc34(d1l2, 2),
+                     (3200 + 9 * 5 + 2) | 0x8000, A_F0115_CREATURE);
+    /* D1R2 creature zones: C3200 + 10*5 + cell | 0x8000 */
+    ok &= expect_int("d1r2.creature_zone.cell1",
+                     csb_v1_viewport_d1l2_d1r2_f0115_creature_zone_pc34(d1r2, 1),
+                     (3200 + 10 * 5 + 1) | 0x8000, A_F0115_CREATURE);
+    ok &= expect_int("null.creature_zone",
+                     csb_v1_viewport_d1l2_d1r2_f0115_creature_zone_pc34(0, 0),
+                     -1, A_F0115_CREATURE);
+
+    /* D1L2 centered explosion: C3014 + 12 */
+    ok &= expect_int("d1l2.explosion_center",
+                     csb_v1_viewport_d1l2_d1r2_f0115_centered_explosion_zone_pc34(d1l2),
+                     3014 + 12, A_F0115_EXPLOSION);
+    /* D1R2 centered explosion: C3014 + 13 */
+    ok &= expect_int("d1r2.explosion_center",
+                     csb_v1_viewport_d1l2_d1r2_f0115_centered_explosion_zone_pc34(d1r2),
+                     3014 + 13, A_F0115_EXPLOSION);
+    ok &= expect_int("null.explosion_center",
+                     csb_v1_viewport_d1l2_d1r2_f0115_centered_explosion_zone_pc34(0),
+                     -1, A_F0115_EXPLOSION);
+
+    /* D1L2 side explosion: C3031 + 12*2 + cell (FRONT_LEFT=0 / FRONT_RIGHT=1) */
+    ok &= expect_int("d1l2.explosion_side.cell0",
+                     csb_v1_viewport_d1l2_d1r2_f0115_side_explosion_zone_pc34(d1l2, 0),
+                     3031 + 12 * 2 + 0, A_F0115_EXPLOSION);
+    ok &= expect_int("d1l2.explosion_side.cell1",
+                     csb_v1_viewport_d1l2_d1r2_f0115_side_explosion_zone_pc34(d1l2, 1),
+                     3031 + 12 * 2 + 1, A_F0115_EXPLOSION);
+    /* Side explosion rejects BACK cells */
+    ok &= expect_int("d1l2.explosion_side.cell2",
+                     csb_v1_viewport_d1l2_d1r2_f0115_side_explosion_zone_pc34(d1l2, 2),
+                     -1, A_F0115_EXPLOSION);
+    ok &= expect_int("d1l2.explosion_side.cell3",
+                     csb_v1_viewport_d1l2_d1r2_f0115_side_explosion_zone_pc34(d1l2, 3),
+                     -1, A_F0115_EXPLOSION);
+    ok &= expect_int("null.explosion_side",
+                     csb_v1_viewport_d1l2_d1r2_f0115_side_explosion_zone_pc34(0, 0),
+                     -1, A_F0115_EXPLOSION);
+
+    return ok;
+}
+
+static int test_real_asset_receipt(void)
+{
+    int ok = 1;
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *d1l2 =
+        csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_for_square_pc34(1);
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *d1r2 =
+        csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_for_square_pc34(2);
+    CSB_V1_ViewportD1L2D1R2F0115ThingPassRealAssetReceiptPc34 receipt;
+    int rc;
+
+    /* Valid D1L2 receipt */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1l2, 1, 1, 1, 1, 510, 256, 0xdeadbeef, &receipt);
+    ok &= expect_int("d1l2.receipt.rc", rc, 1, A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.valid", receipt.valid, 1, A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.backed", receipt.route_backed_by_real_graphics_dat, 1,
+                     A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.side", receipt.side, 1, A_D1L);
+    ok &= expect_int("d1l2.receipt.gfx_bound", receipt.source_graphics_dat_bound, 1,
+                     A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.obj_bound", receipt.native_object_family_bound, 1,
+                     A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.no_synth", receipt.no_synthetic_pixels, 1,
+                     A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.no_fb", receipt.no_fallback_visuals, 1,
+                     A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.gfx_idx", receipt.source_graphics_item_index, 510,
+                     A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.bytes", (int)receipt.source_byte_count, 256,
+                     A_F0115_ITEM);
+    ok &= expect_uint("d1l2.receipt.hash", receipt.source_payload_hash, 0xdeadbeef,
+                      A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.min", receipt.native_object_graphic_min, 498,
+                     A_DEFS);
+    ok &= expect_int("d1l2.receipt.max", receipt.native_object_graphic_max, 583,
+                     A_DEFS);
+    ok &= expect_int("d1l2.receipt.vsq", receipt.view_square_index, 4, A_DEFS);
+    ok &= expect_int("d1l2.receipt.depth", receipt.view_depth, 1, A_DEFS);
+    ok &= expect_int("d1l2.receipt.g2028", receipt.object_g2028_row, 9, A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.g2033", receipt.creature_g2033_row, 9,
+                     A_F0115_CREATURE);
+    ok &= expect_int("d1l2.receipt.g2034", receipt.explosion_g2034_row, 12,
+                     A_F0115_EXPLOSION);
+    ok &= expect_int("d1l2.receipt.item_base", receipt.item_zone_base, 2500,
+                     A_F0115_ITEM);
+    ok &= expect_int("d1l2.receipt.proj_base", receipt.projectile_zone_base, 2900,
+                     A_F0115_PROJECTILE);
+    ok &= expect_int("d1l2.receipt.creature_base", receipt.creature_zone_base, 3200,
+                     A_F0115_CREATURE);
+    ok &= expect_int("d1l2.receipt.explosion_base", receipt.explosion_zone_base, 3000,
+                     A_F0115_EXPLOSION);
+    ok &= expect_int("d1l2.receipt.c10", receipt.c10_transparency, 10, A_DEFS);
+    ok &= expect_uint("d1l2.receipt.order", receipt.f0115_cell_order, 0x0032u, A_D1L);
+
+    /* Valid D1R2 receipt */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1r2, 1, 1, 1, 1, 583, 128, 0xcafebabe, &receipt);
+    ok &= expect_int("d1r2.receipt.rc", rc, 1, A_F0115_ITEM);
+    ok &= expect_int("d1r2.receipt.valid", receipt.valid, 1, A_F0115_ITEM);
+    ok &= expect_int("d1r2.receipt.side", receipt.side, 2, A_D1R);
+    ok &= expect_int("d1r2.receipt.vsq", receipt.view_square_index, 5, A_DEFS);
+    ok &= expect_int("d1r2.receipt.g2028", receipt.object_g2028_row, 10,
+                     A_F0115_ITEM);
+    ok &= expect_int("d1r2.receipt.g2033", receipt.creature_g2033_row, 10,
+                     A_F0115_CREATURE);
+    ok &= expect_int("d1r2.receipt.g2034", receipt.explosion_g2034_row, 13,
+                     A_F0115_EXPLOSION);
+    ok &= expect_uint("d1r2.receipt.order", receipt.f0115_cell_order, 0x0041u,
+                      A_D1R);
+
+    /* Reject: graphic index below native range */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1l2, 1, 1, 1, 1, 497, 256, 0xdeadbeef, &receipt);
+    ok &= expect_int("reject.below_min", rc, 0, A_F0115_ITEM);
+
+    /* Reject: graphic index above native range */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1l2, 1, 1, 1, 1, 584, 256, 0xdeadbeef, &receipt);
+    ok &= expect_int("reject.above_max", rc, 0, A_F0115_ITEM);
+
+    /* Reject: no source_graphics_dat_bound */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1l2, 0, 1, 1, 1, 510, 256, 0xdeadbeef, &receipt);
+    ok &= expect_int("reject.no_gfx_bound", rc, 0, A_F0115_ITEM);
+
+    /* Reject: no native_object_family_bound */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1l2, 1, 0, 1, 1, 510, 256, 0xdeadbeef, &receipt);
+    ok &= expect_int("reject.no_obj_bound", rc, 0, A_F0115_ITEM);
+
+    /* Reject: synthetic pixels */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1l2, 1, 1, 0, 1, 510, 256, 0xdeadbeef, &receipt);
+    ok &= expect_int("reject.synth_pixels", rc, 0, A_F0115_ITEM);
+
+    /* Reject: fallback visuals */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1l2, 1, 1, 1, 0, 510, 256, 0xdeadbeef, &receipt);
+    ok &= expect_int("reject.fallback", rc, 0, A_F0115_ITEM);
+
+    /* Reject: zero byte count */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1l2, 1, 1, 1, 1, 510, 0, 0xdeadbeef, &receipt);
+    ok &= expect_int("reject.zero_bytes", rc, 0, A_F0115_ITEM);
+
+    /* Reject: zero hash */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1l2, 1, 1, 1, 1, 510, 256, 0, &receipt);
+    ok &= expect_int("reject.zero_hash", rc, 0, A_F0115_ITEM);
+
+    /* Reject: null fixture */
+    memset(&receipt, 0, sizeof(receipt));
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        0, 1, 1, 1, 1, 510, 256, 0xdeadbeef, &receipt);
+    ok &= expect_int("reject.null_fixture", rc, 0, A_F0115_ITEM);
+
+    /* Reject: null output */
+    rc = csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+        d1l2, 1, 1, 1, 1, 510, 256, 0xdeadbeef, 0);
+    ok &= expect_int("reject.null_output", rc, 0, A_F0115_ITEM);
+
+    return ok;
+}
+
 int main(void)
 {
     int ok = 1;
@@ -384,8 +611,10 @@ int main(void)
     ok &= test_route_exclusions_and_draw_order();
     ok &= test_cross_source_bindings();
     ok &= test_evidence_strings();
+    ok &= test_zone_computation();
+    ok &= test_real_asset_receipt();
 
-    ok &= expect_int("assertion_count_at_least_60", g_assertions >= 60, 1,
+    ok &= expect_int("assertion_count_at_least_120", g_assertions >= 120, 1,
                      A_F0115);
     printf("assertionCount=%d\n", g_assertions);
     if (ok) {
