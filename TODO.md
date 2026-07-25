@@ -102,7 +102,11 @@ that its exact runtime path is not already source-locked and tested.
     (G0221/G0222), plus F0093 map-order blit variant. Projectile mapper
     for M715-M718 graphics 454-464 with C10 blit. 30 additional CSB tests
     wired (startup, chaos, decompdu, swoosh, entrance, etc.).
-    Remaining: wire 8 deferred tests with transitive link deps.
+    2026-07-25: 48 additional CSB viewport tests wired into CMake
+    (walls D0-D3 all sides, doors, partly-open doors, floor/ceiling
+    ornaments, center fields, custom backgrounds 11 variants,
+    projectile metadata, footprints, door frames, item explosions).
+    All pass. Q-CSB-06 viewport test wiring complete.
 17. **Q-CSB-07 Thing/sensor runtime:** generic sensors, remote actions,
     actuators, pits, teleporters, stairs and door side effects.
 18. **Q-CSB-08 Combat and movement runtime:** group AI, melee, spells,
