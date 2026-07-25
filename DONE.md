@@ -1,3 +1,11 @@
+- ✅ 2026-07-25 Add 6 DM1 test suites (60 tests total): door bash feedback (13),
+  door bash stamina feedback (13), menu render (13), dungeon data (6),
+  inscription host material (7), CEDT006 champion editor (8). Covers Q-DM1-05
+  combat (door bash constants/enums/resolve, stamina cost/adjusted strength),
+  Q-DM1-07 HUD/action (menu zone enable/draw/highlight), Q-DM1-08 startup
+  (dungeon data init/party/tick/shutdown, champion editor draw/keyboard),
+  and Q-DM1-03 viewport (inscription material/raster gate).
+
 - ✅ 2026-07-25 Add 10 DM1/CSB test suites (91 tests total): dungeon loader (8),
   weapon info (3), combat log (5), click routing (10), dialog scroll (12),
   blit fill (8), dungeon decompressor (12), door source material (10),

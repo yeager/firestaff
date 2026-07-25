@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.118
+
+## Highlights since v3.0.117
+
+- Add 6 DM1 test suites with 60 test cases total covering combat (door bash
+  feedback constants/enums/resolve/action-is-bash, door bash stamina feedback
+  costs/adjusted-strength/action-cost), HUD/action (menu render zone
+  enable/draw/highlight/leader-hand), startup (dungeon data init/party-pos/
+  tick/shutdown, CEDT006 champion editor draw-button/keyboard/status-line),
+  and viewport (inscription host material raster-cell/layout/capture gates)
+
 # Firestaff v3.0.117
 
 ## Highlights since v3.0.116
