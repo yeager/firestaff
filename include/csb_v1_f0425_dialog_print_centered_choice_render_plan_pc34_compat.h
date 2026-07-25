@@ -38,6 +38,9 @@ int csb_v1_f0425_dialog_print_centered_choice_render_plan_pc34_compat(
     int text_y,
     CsbV1F0425DialogPrintCenteredChoiceRenderPlanPc34Compat *out_plan);
 
+#define F0425_DIALOG_PrintCenteredChoice \
+    csb_v1_f0425_dialog_print_centered_choice_render_plan_pc34_compat
+
 const char *csb_v1_f0425_dialog_print_centered_choice_source_evidence_pc34(void);
 
 #ifdef __cplusplus
