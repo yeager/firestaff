@@ -5,6 +5,15 @@ enum {
     CSB_ABSENT = 0,
     CSB_SIDE_D1L2 = 1,
     CSB_SIDE_D1R2 = 2,
+    CSB_CELL_FRONT_LEFT = 0,      /* ReDMCSB DEFS.H:2642. */
+    CSB_CELL_FRONT_RIGHT = 1,     /* ReDMCSB DEFS.H:2643. */
+    CSB_CELL_BACK_RIGHT = 2,      /* ReDMCSB DEFS.H:2644. */
+    CSB_CELL_BACK_LEFT = 3,       /* ReDMCSB DEFS.H:2645. */
+    CSB_OBJECT_CREATURE_SHIFT = 0x8000, /* ReDMCSB DEFS.H:3517. */
+    CSB_NATIVE_OBJECT_GRAPHIC_MIN = 498,
+    CSB_NATIVE_OBJECT_GRAPHIC_MAX = 583,
+    CSB_C3014_ZONE_CENTER_EXPLOSION = 3014, /* ReDMCSB DEFS.H:4234. */
+    CSB_C3031_ZONE_SIDE_EXPLOSION = 3031,   /* ReDMCSB DEFS.H:4235. */
     CSB_VIEW_SQUARE_D1L = 4,       /* ReDMCSB DEFS.H:2600 M607_VIEW_SQUARE_D1L. */
     CSB_VIEW_SQUARE_D1R = 5,       /* ReDMCSB DEFS.H:2601 M608_VIEW_SQUARE_D1R. */
     CSB_VIEW_DEPTH_D1 = 1,         /* ReDMCSB DUNVIEW.C:372 G2027[4/5]. */
@@ -203,4 +212,135 @@ csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_evidence_pc34(void)
 const char *csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_source_evidence_pc34(void)
 {
     return s_source_evidence;
+}
+
+int csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture,
+    int source_graphics_dat_bound,
+    int native_object_family_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_ViewportD1L2D1R2F0115ThingPassRealAssetReceiptPc34 *out_receipt)
+{
+    CSB_V1_ViewportD1L2D1R2F0115ThingPassRealAssetReceiptPc34 receipt;
+
+    if (out_receipt) {
+        *out_receipt =
+            (CSB_V1_ViewportD1L2D1R2F0115ThingPassRealAssetReceiptPc34){0};
+    }
+    if (!fixture || !out_receipt || !source_graphics_dat_bound ||
+        !native_object_family_bound || !no_synthetic_pixels ||
+        !no_fallback_visuals ||
+        source_graphics_item_index < CSB_NATIVE_OBJECT_GRAPHIC_MIN ||
+        source_graphics_item_index > CSB_NATIVE_OBJECT_GRAPHIC_MAX ||
+        source_byte_count == 0u || source_payload_hash == 0u ||
+        fixture->f0115_call_count != 1 ||
+        !fixture->c10_transparency_flag ||
+        !fixture->f0115_draw_order_objects_first ||
+        !fixture->f0115_draw_order_creatures_second ||
+        !fixture->f0115_draw_order_projectiles_third ||
+        !fixture->f0115_draw_order_explosions_last ||
+        fixture->object_g2028_row < 0) {
+        return 0;
+    }
+
+    receipt =
+        (CSB_V1_ViewportD1L2D1R2F0115ThingPassRealAssetReceiptPc34){0};
+    receipt.valid = CSB_PRESENT;
+    receipt.route_backed_by_real_graphics_dat = CSB_PRESENT;
+    receipt.side = fixture->side;
+    receipt.source_graphics_dat_bound = CSB_PRESENT;
+    receipt.native_object_family_bound = CSB_PRESENT;
+    receipt.no_synthetic_pixels = CSB_PRESENT;
+    receipt.no_fallback_visuals = CSB_PRESENT;
+    receipt.source_graphics_item_index = source_graphics_item_index;
+    receipt.source_byte_count = source_byte_count;
+    receipt.source_payload_hash = source_payload_hash;
+    receipt.native_object_graphic_min = CSB_NATIVE_OBJECT_GRAPHIC_MIN;
+    receipt.native_object_graphic_max = CSB_NATIVE_OBJECT_GRAPHIC_MAX;
+    receipt.view_square_index = fixture->view_square_index;
+    receipt.view_depth = fixture->view_depth;
+    receipt.object_g2028_row = fixture->object_g2028_row;
+    receipt.creature_g2033_row = fixture->creature_g2033_row;
+    receipt.explosion_g2034_row = fixture->explosion_g2034_row;
+    receipt.item_zone_base = fixture->item_zone_base;
+    receipt.projectile_zone_base = fixture->projectile_zone_base;
+    receipt.creature_zone_base = fixture->creature_zone_base;
+    receipt.explosion_zone_base = fixture->explosion_zone_base;
+    receipt.c10_transparency = fixture->transparent_color;
+    receipt.f0115_cell_order = fixture->f0115_cell_order;
+    receipt.route_name = fixture->route_name;
+    receipt.source_lines = fixture->source_lines;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int csb_v1_viewport_d1l2_d1r2_f0115_item_zone_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture,
+    int view_cell)
+{
+    if (!fixture) return -1;
+    /* ReDMCSB DUNVIEW.C:4923 gates items by G2028 row >= 0 and cell match;
+     * 5075 computes C2500 + row*4 + ViewCell with MASK0x8000. */
+    if (fixture->object_g2028_row < 0) return -1;
+    if (view_cell < CSB_CELL_FRONT_LEFT || view_cell > CSB_CELL_BACK_LEFT)
+        return -1;
+    return (CSB_C2500_ZONE_ITEM +
+            fixture->object_g2028_row * 4 + view_cell) |
+           CSB_OBJECT_CREATURE_SHIFT;
+}
+
+int csb_v1_viewport_d1l2_d1r2_f0115_projectile_zone_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture,
+    int view_cell)
+{
+    if (!fixture) return -1;
+    /* ReDMCSB DUNVIEW.C:5668-5683 gates projectiles by G2028 row >= 0
+     * and cell match; zone = C2900 + row*4 + ViewCell. */
+    if (fixture->object_g2028_row < 0) return -1;
+    if (view_cell < CSB_CELL_FRONT_LEFT || view_cell > CSB_CELL_BACK_LEFT)
+        return -1;
+    return CSB_C2900_ZONE_PROJECTILE +
+           fixture->object_g2028_row * 4 + view_cell;
+}
+
+int csb_v1_viewport_d1l2_d1r2_f0115_creature_zone_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture,
+    int view_cell)
+{
+    if (!fixture) return -1;
+    /* ReDMCSB DUNVIEW.C:5201-5214,5615-5617 gate creatures by G2033 row
+     * and cell; zone = C3200 + row*5 + ViewCell with MASK0x8000. */
+    if (fixture->creature_g2033_row < 0) return -1;
+    if (view_cell < CSB_CELL_FRONT_LEFT || view_cell > CSB_CELL_BACK_LEFT)
+        return -1;
+    return (CSB_C3200_ZONE_CREATURE +
+            fixture->creature_g2033_row * 5 + view_cell) |
+           CSB_OBJECT_CREATURE_SHIFT;
+}
+
+int csb_v1_viewport_d1l2_d1r2_f0115_centered_explosion_zone_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture)
+{
+    if (!fixture) return -1;
+    /* ReDMCSB DUNVIEW.C:6107 C3014 + G2034 row. */
+    if (fixture->explosion_g2034_row < 0) return -1;
+    return CSB_C3014_ZONE_CENTER_EXPLOSION + fixture->explosion_g2034_row;
+}
+
+int csb_v1_viewport_d1l2_d1r2_f0115_side_explosion_zone_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture,
+    int view_cell)
+{
+    if (!fixture) return -1;
+    /* ReDMCSB DUNVIEW.C:6121-6122 C3031 + G2034_row*2 + ViewCell;
+     * only FRONT_LEFT and FRONT_RIGHT cells receive side explosions. */
+    if (fixture->explosion_g2034_row < 0) return -1;
+    if (view_cell != CSB_CELL_FRONT_LEFT && view_cell != CSB_CELL_FRONT_RIGHT)
+        return -1;
+    return CSB_C3031_ZONE_SIDE_EXPLOSION +
+           fixture->explosion_g2034_row * 2 + view_cell;
 }

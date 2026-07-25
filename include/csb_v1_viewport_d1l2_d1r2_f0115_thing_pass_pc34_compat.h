@@ -2,6 +2,7 @@
 #define FIRESTAFF_CSB_V1_VIEWPORT_D1L2_D1R2_F0115_THING_PASS_PC34_COMPAT_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,6 +75,46 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34;
 
+/*
+ * Real-asset receipt for D1L2/D1R2 F0115 thing pass.
+ *
+ * Unlike D0L2/D0R2 where G2028=-1 disables items/projectiles, D1L2/D1R2
+ * has active G2028 rows (D1L=9, D1R=10), so items, creatures, projectiles,
+ * and explosions are all live at this depth.
+ *
+ * ReDMCSB DUNVIEW.C:4923 gates items by G2028 row >= 0 and cell match;
+ * 5075 computes C2500 zone; 5201-5214/5615-5617 gate creatures by G2033
+ * row and cell; 5668-5683 gate projectiles by G2028 row; 5916-5923/
+ * 5998-5999 gate explosions by G2034 row.
+ */
+typedef struct {
+    int valid;
+    int route_backed_by_real_graphics_dat;
+    int side;
+    int source_graphics_dat_bound;
+    int native_object_family_bound;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    int source_graphics_item_index;
+    size_t source_byte_count;
+    uint32_t source_payload_hash;
+    int native_object_graphic_min;
+    int native_object_graphic_max;
+    int view_square_index;
+    int view_depth;
+    int object_g2028_row;
+    int creature_g2033_row;
+    int explosion_g2034_row;
+    int item_zone_base;
+    int projectile_zone_base;
+    int creature_zone_base;
+    int explosion_zone_base;
+    int c10_transparency;
+    unsigned int f0115_cell_order;
+    const char *route_name;
+    const char *source_lines;
+} CSB_V1_ViewportD1L2D1R2F0115ThingPassRealAssetReceiptPc34;
+
 int csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_init_pc34(void);
 
 size_t csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_count_pc34(void);
@@ -88,6 +129,36 @@ const CSB_V1_ViewportD1L2D1R2F0115ThingPassEvidencePc34 *
 csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_evidence_pc34(void);
 
 const char *csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_source_evidence_pc34(void);
+
+int csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_real_asset_receipt_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture,
+    int source_graphics_dat_bound,
+    int native_object_family_bound,
+    int no_synthetic_pixels,
+    int no_fallback_visuals,
+    int source_graphics_item_index,
+    size_t source_byte_count,
+    uint32_t source_payload_hash,
+    CSB_V1_ViewportD1L2D1R2F0115ThingPassRealAssetReceiptPc34 *out_receipt);
+
+int csb_v1_viewport_d1l2_d1r2_f0115_item_zone_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture,
+    int view_cell);
+
+int csb_v1_viewport_d1l2_d1r2_f0115_projectile_zone_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture,
+    int view_cell);
+
+int csb_v1_viewport_d1l2_d1r2_f0115_creature_zone_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture,
+    int view_cell);
+
+int csb_v1_viewport_d1l2_d1r2_f0115_centered_explosion_zone_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture);
+
+int csb_v1_viewport_d1l2_d1r2_f0115_side_explosion_zone_pc34(
+    const CSB_V1_ViewportD1L2D1R2F0115ThingPassPc34 *fixture,
+    int view_cell);
 
 #ifdef __cplusplus
 }
