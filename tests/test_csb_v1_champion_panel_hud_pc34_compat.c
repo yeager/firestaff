@@ -435,6 +435,90 @@ static void test_food_water_poison_blit(void)
     printf("  food_water_poison_blit OK\n");
 }
 
+static void test_portrait_blit_model(void)
+{
+    CSB_ChampionPanel_PortraitBlitModel m;
+    assert(CSB_ChampionPanel_BuildPortraitBlitModel(0, &m));
+    assert(m.graphicId == CSB_GFX_PORTRAITS);
+    assert(m.sourceX == 0);
+    assert(m.sourceY == 0);
+    assert(m.destX == 7);
+    assert(m.destY == CSB_PORTRAIT_Y);
+    assert(m.width == CSB_PORTRAIT_WIDTH);
+    assert(m.height == CSB_PORTRAIT_HEIGHT);
+    assert(m.transparentColor == CSB_COLOR_DARKEST_GRAY);
+
+    assert(CSB_ChampionPanel_BuildPortraitBlitModel(2, &m));
+    assert(m.sourceY == 2 * 29);
+    assert(m.destX == 2 * 69 + 7);
+
+    assert(CSB_ChampionPanel_BuildPortraitBlitModel(3, &m));
+    assert(m.sourceY == 3 * 29);
+    assert(m.destX == 3 * 69 + 7);
+
+    assert(!CSB_ChampionPanel_BuildPortraitBlitModel(-1, &m));
+    assert(!CSB_ChampionPanel_BuildPortraitBlitModel(4, &m));
+    assert(!CSB_ChampionPanel_BuildPortraitBlitModel(0, NULL));
+    printf("  portrait_blit_model OK\n");
+}
+
+static void test_damage_flash_model(void)
+{
+    CSB_ChampionPanel_DamageFlashModel m;
+    assert(CSB_ChampionPanel_BuildDamageFlashModel(0, 0, &m));
+    assert(m.championIndex == 0);
+    assert(m.flashColor == 7);
+    assert(m.normalColor == CSB_COLOR_DARKEST_GRAY);
+    assert(m.flashTickCount == 2);
+    assert(m.scheduledAttributes == CSB_ATTR_STATISTICS);
+    assert(m.hasNewWounds == 0);
+
+    assert(CSB_ChampionPanel_BuildDamageFlashModel(1, 0x0004, &m));
+    assert(m.flashColor == 11);
+    assert(m.hasNewWounds == 1);
+    assert(m.scheduledAttributes == (CSB_ATTR_STATISTICS | CSB_ATTR_WOUNDS));
+
+    assert(!CSB_ChampionPanel_BuildDamageFlashModel(-1, 0, &m));
+    assert(!CSB_ChampionPanel_BuildDamageFlashModel(4, 0, &m));
+    assert(!CSB_ChampionPanel_BuildDamageFlashModel(0, 0, NULL));
+    printf("  damage_flash_model OK\n");
+}
+
+static void test_spell_area_model(void)
+{
+    CSB_ChampionPanel_SpellAreaModel m;
+    assert(CSB_ChampionPanel_BuildSpellAreaModel(&m));
+    assert(m.backgroundGraphicId == CSB_GFX_SPELL_AREA);
+    assert(m.areaX == 233);
+    assert(m.areaY == 42);
+    assert(m.areaW == 87);
+    assert(m.areaH == 33);
+    assert(m.casterZone == 221);
+    assert(m.casterCommandId == 109);
+    assert(m.runeZones[0] == 245);
+    assert(m.runeZones[5] == 250);
+    assert(m.runeCommandIds[0] == 101);
+    assert(m.runeCommandIds[5] == 106);
+    assert(m.castZone == 252);
+    assert(m.castCommandId == 108);
+    assert(m.recantZone == 254);
+    assert(m.recantCommandId == 107);
+    assert(!CSB_ChampionPanel_BuildSpellAreaModel(NULL));
+    printf("  spell_area_model OK\n");
+}
+
+static void test_clock_tick_repaint_model(void)
+{
+    CSB_ChampionPanel_ClockTickRepaintModel m;
+    assert(CSB_ChampionPanel_BuildClockTickRepaintModel(&m));
+    assert(m.repaintMask == CSB_ATTR_STATISTICS);
+    assert(m.affectsBarGraphs == 1);
+    assert(m.affectsStatValues == 1);
+    assert(m.affectsLoadDisplay == 1);
+    assert(!CSB_ChampionPanel_BuildClockTickRepaintModel(NULL));
+    printf("  clock_tick_repaint_model OK\n");
+}
+
 static void test_null_safety(void)
 {
     CSB_ChampionPanel_BarFillModel bm;
@@ -447,6 +531,10 @@ static void test_null_safety(void)
     assert(!CSB_ChampionPanel_BuildStatusHandSlotBoxModel(0, 0, 0, NULL));
     assert(!CSB_ChampionPanel_BuildStatisticRowModel(30, 50, NULL));
     assert(!CSB_ChampionPanel_BuildStatisticTextRunModel(0, 30, 50, NULL));
+    assert(!CSB_ChampionPanel_BuildPortraitBlitModel(0, NULL));
+    assert(!CSB_ChampionPanel_BuildDamageFlashModel(0, 0, NULL));
+    assert(!CSB_ChampionPanel_BuildSpellAreaModel(NULL));
+    assert(!CSB_ChampionPanel_BuildClockTickRepaintModel(NULL));
     (void)bm; (void)sm; (void)im; (void)hm;
     printf("  null_safety OK\n");
 }
@@ -481,6 +569,10 @@ int main(void)
     test_load_color();
     test_format_load_value();
     test_food_water_poison_blit();
+    test_portrait_blit_model();
+    test_damage_flash_model();
+    test_spell_area_model();
+    test_clock_tick_repaint_model();
     test_source_evidence();
     test_null_safety();
     printf("  ALL PASSED\n");

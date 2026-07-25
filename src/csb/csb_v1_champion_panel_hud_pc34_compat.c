@@ -551,6 +551,90 @@ CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked(void)
     return &k_csbChampionPanelF0658PoisonedBlitSpec;
 }
 
+/* ReDMCSB INVNTORY.C F0354 — portrait box blit model.
+ * Extracts championIndex * 29 row from graphic 26. */
+int CSB_ChampionPanel_BuildPortraitBlitModel(
+    int championIndex,
+    CSB_ChampionPanel_PortraitBlitModel *outModel)
+{
+    if (!outModel || championIndex < 0 || championIndex >= CSB_CHAMPION_COUNT)
+        return 0;
+
+    memset(outModel, 0, sizeof(*outModel));
+    outModel->championIndex = championIndex;
+    outModel->graphicId = CSB_GFX_PORTRAITS;
+    outModel->sourceX = 0;
+    outModel->sourceY = championIndex * CSB_PORTRAIT_SOURCE_Y_STRIDE;
+    outModel->destX = CSB_ChampionPanel_PortraitScreenX(championIndex);
+    outModel->destY = CSB_PORTRAIT_Y;
+    outModel->width = CSB_PORTRAIT_WIDTH;
+    outModel->height = CSB_PORTRAIT_HEIGHT;
+    outModel->transparentColor = CSB_COLOR_DARKEST_GRAY;
+    return 1;
+}
+
+/* ReDMCSB CHAMPION.C F0320 — damage flash model.
+ * After F0319 damage application, F0320:1735-1740 schedules redraws.
+ * Flash = champion color on name zone for 2 ticks. */
+int CSB_ChampionPanel_BuildDamageFlashModel(
+    int championIndex, int newWoundsBitmask,
+    CSB_ChampionPanel_DamageFlashModel *outModel)
+{
+    if (!outModel || championIndex < 0 || championIndex >= CSB_CHAMPION_COUNT)
+        return 0;
+
+    memset(outModel, 0, sizeof(*outModel));
+    outModel->championIndex = championIndex;
+    outModel->flashColor = CSB_ChampionColor[championIndex];
+    outModel->normalColor = CSB_COLOR_DARKEST_GRAY;
+    outModel->flashTickCount = CSB_DAMAGE_FLASH_TICK_COUNT;
+    outModel->scheduledAttributes = CSB_ATTR_STATISTICS;
+    outModel->hasNewWounds = newWoundsBitmask != 0 ? 1 : 0;
+    if (outModel->hasNewWounds)
+        outModel->scheduledAttributes |= CSB_ATTR_WOUNDS;
+    return 1;
+}
+
+/* ReDMCSB COMMAND.C:473-483 — spell area panel model. */
+int CSB_ChampionPanel_BuildSpellAreaModel(
+    CSB_ChampionPanel_SpellAreaModel *outModel)
+{
+    int i;
+    if (!outModel) return 0;
+
+    memset(outModel, 0, sizeof(*outModel));
+    outModel->backgroundGraphicId = CSB_GFX_SPELL_AREA;
+    outModel->areaX = CSB_SPELL_AREA_X;
+    outModel->areaY = CSB_SPELL_AREA_Y;
+    outModel->areaW = CSB_SPELL_AREA_W;
+    outModel->areaH = CSB_SPELL_AREA_H;
+    outModel->casterZone = CSB_SPELL_ZONE_CASTER;
+    outModel->casterCommandId = 109;
+    for (i = 0; i < CSB_SPELL_RUNE_COUNT; ++i) {
+        outModel->runeZones[i] = CSB_SPELL_ZONE_RUNE_0 + i;
+        outModel->runeCommandIds[i] = 101 + i;
+    }
+    outModel->castZone = CSB_SPELL_ZONE_CAST;
+    outModel->castCommandId = 108;
+    outModel->recantZone = CSB_SPELL_ZONE_RECANT;
+    outModel->recantCommandId = 107;
+    return 1;
+}
+
+/* ReDMCSB CHAMDRAW.C F0293 — clock tick repaint model. */
+int CSB_ChampionPanel_BuildClockTickRepaintModel(
+    CSB_ChampionPanel_ClockTickRepaintModel *outModel)
+{
+    if (!outModel) return 0;
+
+    memset(outModel, 0, sizeof(*outModel));
+    outModel->repaintMask = CSB_CLOCK_TICK_REPAINT_MASK;
+    outModel->affectsBarGraphs = 1;
+    outModel->affectsStatValues = 1;
+    outModel->affectsLoadDisplay = 1;
+    return 1;
+}
+
 const char *CSB_ChampionPanel_SourceEvidence(void)
 {
     return
@@ -568,6 +652,10 @@ const char *CSB_ChampionPanel_SourceEvidence(void)
         "  PANEL.C F0351: statistic row model (current/max color, text)\n"
         "  PANEL.C F0351: statistic text run (zone/XY/color layout)\n"
         "  INVNTORY.C F0354: portrait screen X (champIdx*69+7)\n"
+        "  INVNTORY.C F0354: portrait blit model (32x29 from graphic 26)\n"
+        "  CHAMPION.C F0320: damage flash model (champion color, 2 ticks)\n"
+        "  COMMAND.C:473-483: spell area panel model (caster/runes/cast/recant)\n"
+        "  CHAMDRAW.C F0293: clock tick repaint model (STATISTICS mask)\n"
         "  Layout-696 C195..C206: bar graph XY (champIdx*69+46, +7, +14)\n"
         "  Layout-696 C211..C218: hand slot XY (champIdx*69+4/+24, y=10)\n"
         "  Layout-696 C507..C536: inventory slot XY (30 slots)\n"

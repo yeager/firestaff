@@ -345,6 +345,106 @@ typedef struct CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec {
 const CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *
 CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked(void);
 
+/* ── Portrait box blit model — INVNTORY.C F0354 ──
+ * Extracts a 32x29 champion portrait from graphic 26 (G0027 portraits
+ * bitmap) and blits it to the status box at PortraitScreenX, y=10.
+ * Source row in the portraits bitmap = championIndex * 29.
+ * Transparency = C12 (darkest gray). */
+#define CSB_PORTRAIT_Y           10
+#define CSB_PORTRAIT_SOURCE_Y_STRIDE 29
+
+typedef struct CSB_ChampionPanel_PortraitBlitModel {
+    int championIndex;
+    int graphicId;
+    int sourceX;
+    int sourceY;
+    int destX;
+    int destY;
+    int width;
+    int height;
+    int transparentColor;
+} CSB_ChampionPanel_PortraitBlitModel;
+
+int CSB_ChampionPanel_BuildPortraitBlitModel(
+    int championIndex,
+    CSB_ChampionPanel_PortraitBlitModel *outModel);
+
+/* ── Damage flash model — CHAMPION.C F0320 ──
+ * After F0319 applies damage, F0320:1735-1740 schedules attribute
+ * redraws on the status box. The "flash" is a champion-color fill
+ * blink on the status box name zone (2 frames at game tick rate).
+ * F0320:1737 always sets STATISTICS; F0320:1738-1739 conditionally
+ * sets WOUNDS if new wounds appeared.
+ * The flash color is the champion's G0046 color for 2 ticks, then
+ * reverts to C12 darkest gray. */
+#define CSB_DAMAGE_FLASH_TICK_COUNT 2
+
+typedef struct CSB_ChampionPanel_DamageFlashModel {
+    int championIndex;
+    int flashColor;
+    int normalColor;
+    int flashTickCount;
+    int scheduledAttributes;
+    int hasNewWounds;
+} CSB_ChampionPanel_DamageFlashModel;
+
+int CSB_ChampionPanel_BuildDamageFlashModel(
+    int championIndex, int newWoundsBitmask,
+    CSB_ChampionPanel_DamageFlashModel *outModel);
+
+/* ── Spell area panel model — COMMAND.C:473-483 ──
+ * The spell area is a fixed region at (233, 42, 87x33) containing
+ * the caster selector (C109/zone 221), 6 rune symbols (C101-C106,
+ * zones 245-250), cast button (C108/zone 252), and recant (C107/
+ * zone 254). Graphic 27 is the spell area background. */
+#define CSB_GFX_SPELL_AREA       27
+#define CSB_SPELL_AREA_X        233
+#define CSB_SPELL_AREA_Y         42
+#define CSB_SPELL_AREA_W         87
+#define CSB_SPELL_AREA_H         33
+#define CSB_SPELL_RUNE_COUNT      6
+#define CSB_SPELL_ZONE_CASTER   221
+#define CSB_SPELL_ZONE_CAST     252
+#define CSB_SPELL_ZONE_RECANT   254
+#define CSB_SPELL_ZONE_RUNE_0   245
+
+typedef struct CSB_ChampionPanel_SpellAreaModel {
+    int backgroundGraphicId;
+    int areaX;
+    int areaY;
+    int areaW;
+    int areaH;
+    int casterZone;
+    int casterCommandId;
+    int runeZones[CSB_SPELL_RUNE_COUNT];
+    int runeCommandIds[CSB_SPELL_RUNE_COUNT];
+    int castZone;
+    int castCommandId;
+    int recantZone;
+    int recantCommandId;
+} CSB_ChampionPanel_SpellAreaModel;
+
+int CSB_ChampionPanel_BuildSpellAreaModel(
+    CSB_ChampionPanel_SpellAreaModel *outModel);
+
+/* ── Clock tick repaint model — CHAMDRAW.C F0293 ──
+ * F0293_CHAMPION_DrawChangedMembers iterates all champions and
+ * redraws any with nonzero Attributes. At each game tick the
+ * engine schedules ATTR_STATISTICS on all living champions so
+ * bar graphs and stat values update. The model captures which
+ * attribute mask triggers a full repaint cycle. */
+#define CSB_CLOCK_TICK_REPAINT_MASK  CSB_ATTR_STATISTICS
+
+typedef struct CSB_ChampionPanel_ClockTickRepaintModel {
+    int repaintMask;
+    int affectsBarGraphs;
+    int affectsStatValues;
+    int affectsLoadDisplay;
+} CSB_ChampionPanel_ClockTickRepaintModel;
+
+int CSB_ChampionPanel_BuildClockTickRepaintModel(
+    CSB_ChampionPanel_ClockTickRepaintModel *outModel);
+
 /* ── Source evidence ── */
 const char *CSB_ChampionPanel_SourceEvidence(void);
 

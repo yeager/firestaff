@@ -1,3 +1,13 @@
+- ✅ 2026-07-25 CSB champion panel HUD completion (Q-CSB-05): portrait
+  blit model (F0354 graphic 26, 32x29, championIndex*29 row stride,
+  C12 transparency), damage flash model (F0320 champion G0046 color,
+  2-tick flash, STATISTICS+WOUNDS attribute scheduling), spell area
+  panel model (COMMAND.C:473-483 caster C109/zone 221, runes C101-C106/
+  zones 245-250, cast C108/zone 252, recant C107/zone 254, background
+  graphic 27 at 233,42 87x33), clock tick repaint model (F0293
+  STATISTICS mask, bar/stat/load flags). 33-case test. 3 CSB viewport
+  tests wired with headers copied to include/.
+
 - ✅ 2026-07-25 CSB champion panel inventory walk module (Q-CSB-05):
   F0288 integer formatting, 30-slot inventory layout (C507-C536) with
   source-locked XY tables, empty hand icon index (C212 + wound bit),

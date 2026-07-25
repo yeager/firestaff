@@ -76,8 +76,12 @@ that its exact runtime path is not already source-locked and tested.
     zone/XY layout), load display (F0292 red/yellow/gray thresholds,
     nnn.n/nnn KG format), food/water/poison label F0658 blit spec
     (C030-C032, conditional poison gate). 29-case test.
-    Remaining: damage flash, spell area, clock tick repaint, portrait
-    box blit, V2 HUD runtime tests.
+    2026-07-25: portrait blit model (F0354 graphic 26, 32x29, champion
+    row stride), damage flash model (F0320 champion color, 2-tick flash,
+    STATISTICS+WOUNDS scheduling), spell area panel model (COMMAND.C:473
+    caster/runes/cast/recant zones and command IDs), clock tick repaint
+    model (F0293 STATISTICS mask, bar/stat/load flags). 33-case test.
+    Remaining: V2 HUD runtime tests.
 16. **Q-CSB-06 Dungeon viewport geometry:** walls, doors, teleporters, pits,
     ornaments, creatures, items, projectiles, explosions and backgrounds.
     2026-07-24: F0115 item/explosion composition now accepts only a
