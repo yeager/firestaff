@@ -1,3 +1,14 @@
+- ✅ 2026-07-25 Wire HoC presented-frame consumer into m11_game_view.c
+  (Q-DM1-02 integration): bridge function populates consumer input from
+  M11's mirror (C346/C026), inscription (M648), and object (F0115)
+  presentation receipts. Consumer validates all three lanes together and
+  sets suppressFallbackVisuals to gate the procedural fallback party-slot
+  draw. Public getter M11_GameView_GetDm1HocPresentedFrameConsumerReceipt
+  added for test verification.
+
+- ✅ 2026-07-25 Bulk fix ~50 GCC -Werror misleading-indentation patterns
+  and 12+ unused-variable-with-NDEBUG warnings across src/ and tests/.
+
 - ✅ 2026-07-25 Wire 25 CSB/DM2 tests into CMakeLists: batch-wire
   CSB sensor, DSA, dialog, decompdu, boot, save, expansion, touch,
   viewport, ReDMCSB function, and DM2 direct query/file tests against

@@ -28,6 +28,11 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-24: a DM1-owned final frame boundary now requires the independent
    C127/C026, M648 and F0115 source receipts together and suppresses fallback
    drawing. Remaining: consume it from all live side/depth render routes.
+   2026-07-25: consumer wired into m11_game_view.c — bridge populates input
+   from mirror/inscription/object presentation receipts, calls the DM1
+   consumer, and gates the procedural fallback party-slot draw on
+   suppressFallbackVisuals. Remaining: action/spell surfaces, palettes,
+   and side/depth render routes beyond D1C front mirror.
 3. **Q-DM1-03 Dungeon viewport material matrix:** complete F0107-F0115 wall,
    floor, ceiling, door, ornament, mirror, item, creature, projectile and
    explosion routing without fallback drawing.
