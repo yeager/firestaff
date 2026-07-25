@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.117
+
+## Highlights since v3.0.116
+
+- Add 10 DM1 test suites with 91 test cases total covering viewport rendering
+  (blit fill, draw primitives, ceiling pit, door source material), dungeon
+  topology (loader, decompressor), combat (weapon info, combat log), HUD/action
+  (dialog scroll), and input routing (click routing zones).
+
 # Firestaff v3.0.116
 
 ## Highlights since v3.0.115
