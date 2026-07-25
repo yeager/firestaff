@@ -1,3 +1,10 @@
+- ✅ 2026-07-25 Wire 3 CSB startup/dialog tests: F0806 entrance loop
+  runtime handoff (firestaff_m10 linked), F0050 text message area print
+  space with ReDMCSB source-name wrapper macro and source_evidence
+  function, F0425/F0426 dialog symbol tests with ReDMCSB wrapper macros
+  (F0425_DIALOG_PrintCenteredChoice, F0426_DIALOG_IsMessageOnTwoLines).
+  All 3 pass.
+
 - ✅ 2026-07-25 Wire 48 CSB viewport tests (Q-CSB-06): walls D0-D3
   all sides (l/r/l2/r2/c), doors, partly-open doors at all depths,
   floor/ceiling ornaments (d1c/d1l-r/d1l2-r2/d2c), center fields

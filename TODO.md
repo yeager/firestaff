@@ -85,6 +85,9 @@ that its exact runtime path is not already source-locked and tested.
     init, lazy init, all setters, action+clear, hit flash, chaos,
     toggle/opacity, apply_frame, render with/without gate, null safety,
     source evidence). Q-CSB-05 HUD model layer complete.
+    2026-07-25: F0806 entrance loop runtime handoff, F0050 text message
+    area print space, and F0425/F0426 dialog symbol tests wired with
+    ReDMCSB source-name wrapper macros. 3 new tests pass.
 16. **Q-CSB-06 Dungeon viewport geometry:** walls, doors, teleporters, pits,
     ornaments, creatures, items, projectiles, explosions and backgrounds.
     2026-07-24: F0115 item/explosion composition now accepts only a
