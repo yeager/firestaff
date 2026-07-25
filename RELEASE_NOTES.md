@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.119
+
+## Highlights since v3.0.118
+
+- Add 6 DM1 test suites with 50 test cases total covering HUD/action (spell
+  effect render symbol add/remove/clear/draw, portrait panel init/bars/flash/
+  layout/m11-aliases), viewport (screen framebuffer init/clear/palette/present/
+  dirty/copy-region), startup (game loop integration state-machine/timing/
+  restart/stop, graphics loader init/open/LZW-state), and dungeon (object
+  world init/getters/cleanup)
+
 # Firestaff v3.0.118
 
 ## Highlights since v3.0.117
