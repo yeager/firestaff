@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.110 LANGUAGES C)
+project(Firestaff VERSION 3.0.111 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -47512,3 +47512,23 @@ add_executable(test_dm1_v1_startup_sequence_pc34_compat tests/test_dm1_v1_startu
 target_include_directories(test_dm1_v1_startup_sequence_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_startup_sequence_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_startup_sequence_pc34_compat COMMAND test_dm1_v1_startup_sequence_pc34_compat)
+
+add_executable(test_dm1_v1_action_xp_graphic560_pc34_compat tests/test_dm1_v1_action_xp_graphic560_pc34_compat.c)
+target_include_directories(test_dm1_v1_action_xp_graphic560_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_action_xp_graphic560_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_action_xp_graphic560_pc34_compat COMMAND test_dm1_v1_action_xp_graphic560_pc34_compat)
+
+add_executable(test_dm1_v1_f0344_f0658_hud_material_pc34_compat tests/test_dm1_v1_f0344_f0658_hud_material_pc34_compat.c)
+target_include_directories(test_dm1_v1_f0344_f0658_hud_material_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_f0344_f0658_hud_material_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_f0344_f0658_hud_material_pc34_compat COMMAND test_dm1_v1_f0344_f0658_hud_material_pc34_compat)
+
+add_executable(test_dm1_v1_creature_viewport_pc34_compat tests/test_dm1_v1_creature_viewport_pc34_compat.c)
+target_include_directories(test_dm1_v1_creature_viewport_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_creature_viewport_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_creature_viewport_pc34_compat COMMAND test_dm1_v1_creature_viewport_pc34_compat)
+
+add_executable(test_dm1_v1_explosion_bitmap_viewport_pc34_compat tests/test_dm1_v1_explosion_bitmap_viewport_pc34_compat.c)
+target_include_directories(test_dm1_v1_explosion_bitmap_viewport_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_explosion_bitmap_viewport_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_explosion_bitmap_viewport_pc34_compat COMMAND test_dm1_v1_explosion_bitmap_viewport_pc34_compat)

@@ -1,6 +1,20 @@
 
 # Unreleased
 
+# Firestaff v3.0.111
+
+## Highlights since v3.0.110
+
+- Add action XP graphic560 test (Q-DM1-07): 30 test cases covering XP
+  routing, melee contact, party shield, stamina apply, prelude/tail/begin
+  plans, heal, flip, climb down, and completion plans.
+- Add F0344/F0658 HUD material test (Q-DM1-07): 6 test cases covering
+  FNV1a hashing and receipt null/empty/unowned rejection gates.
+- Add creature viewport test (Q-DM1-03): 6 test cases covering init,
+  sprite table setup, add/damage/kill, visibility, and animation.
+- Add explosion bitmap viewport test (Q-DM1-03): 4 test cases covering
+  derived index and bitmap lookup with flip.
+
 # Firestaff v3.0.110
 
 ## Highlights since v3.0.109

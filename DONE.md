@@ -1,3 +1,8 @@
+- ✅ 2026-07-25 Add 4 DM1 tests: action XP graphic560 (30 tests, Q-DM1-07),
+  F0344/F0658 HUD material (6 tests, Q-DM1-07), creature viewport (6 tests,
+  Q-DM1-03), explosion bitmap viewport (4 tests, Q-DM1-03). Total 46 new
+  test cases covering 1281+149+197+107 = 1734 lines of source.
+
 - ✅ 2026-07-25 Add DM1 startup sequence test (Q-DM1-08): 15 test cases
   covering stage names, ordering, launch path bypass, source order/evidence,
   title timing constants, null rejection on 6 receipt types, full graphics
