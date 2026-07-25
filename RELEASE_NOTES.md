@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.105
+
+## Highlights since v3.0.104
+
+- 211 DM1 tests batch-wired into CMake: chest, mirror candidate, champion
+  panel, inventory, HoC, viewport, hidpi, sensor, movement, save/load, and
+  source ownership tests. All pass.
+- Fix cross-platform -Werror CI build failures: GCC misleading-indentation
+  (redmcsb_f0675, dm2_v1_dungeon_loader), Windows mkdir arity, macOS
+  unused-variable with NDEBUG, GCC sign-compare.
+
 # Firestaff v3.0.104
 
 ## Highlights since v3.0.103
