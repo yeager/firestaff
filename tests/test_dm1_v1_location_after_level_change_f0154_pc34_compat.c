@@ -6,6 +6,7 @@
 static void test_source_evidence(void)
 {
     const char *evidence = DM1_V1_F0154_SourceEvidencePc34();
+    (void)evidence;
 
     assert(evidence != 0);
     assert(strstr(evidence, "F0154_DUNGEON_GetLocationAfterLevelChange") != 0);
@@ -19,9 +20,13 @@ static void test_offset_target_map_selection(void)
         { 1, 30, 5, 3, 3 },
         { 1, 11, 4, 5, 5 }
     };
+    (void)maps;
     int x = 2;
+    (void)x;
     int y = 1;
+    (void)y;
     int target = -1;
+    (void)target;
 
     assert(F0154_DUNGEON_GetLocationAfterLevelChange(
         maps, 3, 0, 1, &x, &y, &target) == 1);
@@ -37,6 +42,7 @@ static void test_up_and_down_level_delta(void)
         { 1, 20, 20, 4, 4 },
         { 1, 0, 0, 4, 4 }
     };
+    (void)maps;
     DM1_V1_DungeonLocationAfterLevelChangeF0154Pc34 down;
     DM1_V1_DungeonLocationAfterLevelChangeF0154Pc34 up;
 
@@ -71,9 +77,13 @@ static void test_first_matching_target_wins(void)
         { 1, 0, 0, 4, 4 },
         { 1, 0, 0, 4, 4 }
     };
+    (void)maps;
     int x = 3;
+    (void)x;
     int y = 3;
+    (void)y;
     int target = -1;
+    (void)target;
 
     assert(F0154_DUNGEON_GetLocationAfterLevelChange(
         maps, 3, 0, 1, &x, &y, &target) == 1);
@@ -90,10 +100,14 @@ static void test_fail_closed_inputs(void)
         { 1, 10, 10, 2, 2 },
         { 1, 0, 0, 0, 4 }
     };
+    (void)maps;
     DM1_V1_DungeonLocationAfterLevelChangeF0154Pc34 result;
     int x = 1;
+    (void)x;
     int y = 1;
+    (void)y;
     int target = 99;
+    (void)target;
 
     assert(F0154_DUNGEON_GetLocationAfterLevelChange(
         maps, 4, 0, 1, &x, &y, &target) == 0);

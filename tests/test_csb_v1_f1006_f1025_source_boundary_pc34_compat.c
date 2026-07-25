@@ -5,6 +5,7 @@
 int main(void)
 {
     CSB_V1_F1006F1025SourceBoundaryReceiptPc34 receipt;
+    (void)receipt;
     unsigned int number;
     for (number = 1006u; number <= 1025u; ++number) {
         assert(csb_v1_f1006_f1025_source_boundary_admit_pc34(number, &receipt) == 0);

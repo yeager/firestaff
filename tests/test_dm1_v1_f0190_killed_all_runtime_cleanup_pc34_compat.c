@@ -12,11 +12,11 @@ static unsigned short thing_ref(int type, int index) {
     return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
 }
 
-static unsigned short read_u16(const unsigned char* bytes) {
+static __attribute__((unused)) unsigned short read_u16(const unsigned char* bytes) {
     return (unsigned short)(bytes[0] | ((unsigned short)bytes[1] << 8));
 }
 
-static int same_thing_identity(unsigned short a, unsigned short b) {
+static __attribute__((unused)) int same_thing_identity(unsigned short a, unsigned short b) {
     return (a & 0x3fffu) == (b & 0x3fffu);
 }
 
@@ -41,10 +41,15 @@ int main(void) {
     struct TickResult_Compat result;
     int i;
     int stale = 0;
+    (void)stale;
     int otherSquare = 0;
+    (void)otherSquare;
     int delayedThudCount = 0;
+    (void)delayedThudCount;
     int emittedThudCount = 0;
+    (void)emittedThudCount;
     int killedAllNotified = 0;
+    (void)killedAllNotified;
 
     memset(&world, 0, sizeof(world));
     memset(&things, 0, sizeof(things));

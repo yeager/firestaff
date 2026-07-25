@@ -125,6 +125,7 @@ static void t_chaos_rune_colors(void) {
     CSB_V22_ShapeParams r1 = csb_v22_shape_for_chaos_rune(1);
     CSB_V22_ShapeParams r2 = csb_v22_shape_for_chaos_rune(2);
     CSB_V22_ShapeParams r3 = csb_v22_shape_for_chaos_rune(3);
+    (void)r3;
     check(r0.type == CSB_V22_SHAPE_CHAOS_RUNE, "r0 type");
     check(r0.lighting_mode == CSB_V22_LIGHT_CHAOS_GLOW, "r0 chaos glow");
     /* At least one channel must differ between consecutive runes. */

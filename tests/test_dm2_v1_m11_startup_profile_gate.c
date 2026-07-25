@@ -147,7 +147,7 @@ static int framebuffer_zone_differs(const unsigned char *a,
     return 0;
 }
 
-static int framebuffer_zone_has_nonzero(const unsigned char *fb,
+static __attribute__((unused)) int framebuffer_zone_has_nonzero(const unsigned char *fb,
                                         int width,
                                         int height,
                                         int x,

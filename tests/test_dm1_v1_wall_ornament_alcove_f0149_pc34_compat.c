@@ -8,12 +8,15 @@ int main(void)
     const int defaultAlcoves[DM1_V1_F0149_ALCOVE_ORNAMENT_COUNT_PC34] = {
         1, 2, 3
     };
+    (void)defaultAlcoves;
     const int customAlcoves[DM1_V1_F0149_ALCOVE_ORNAMENT_COUNT_PC34] = {
         4, 7, 11
     };
+    (void)customAlcoves;
     const int duplicateAlcoves[DM1_V1_F0149_ALCOVE_ORNAMENT_COUNT_PC34] = {
         5, 5, 8
     };
+    (void)duplicateAlcoves;
 
     assert(strstr(DM1_V1_F0149_SourceEvidencePc34(),
                   "F0149_DUNGEON_IsWallOrnamentAnAlcove") != 0);

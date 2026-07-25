@@ -8,6 +8,7 @@
 int main(void) {
     struct ProjectileInstance_Compat projectile;
     const char* source;
+    (void)source;
     struct DungeonThings_Compat things;
     struct DungeonProjectile_Compat sourceProjectile;
     unsigned char rawWeapon[4];

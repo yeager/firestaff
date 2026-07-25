@@ -18,6 +18,7 @@ static const DM1_V1_SensorCellObjectPc34 kSquareObjects[] = {
     {kThingSecondFloorSensor, kObjectTypeFloorSensor, 3},
     {kThingWallSensor, kObjectTypeWallSensor, 1}
 };
+(void)kSquareObjects;
 
 static void test_source_named_boundary_returns_first_matching_object(void)
 {

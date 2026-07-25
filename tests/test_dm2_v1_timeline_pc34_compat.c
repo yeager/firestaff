@@ -23,7 +23,7 @@ static DM2_V1_SourceTimer make_timer(uint32_t tick, uint8_t type,
     return timer;
 }
 
-static DM2_V1_SourceTimerResult enqueue_timer(DM2_V1_SourceTimerQueue *queue,
+static __attribute__((unused)) DM2_V1_SourceTimerResult enqueue_timer(DM2_V1_SourceTimerQueue *queue,
                                                uint32_t tick, uint8_t type,
                                                uint8_t actor,
                                                uint16_t source_index)
@@ -33,7 +33,7 @@ static DM2_V1_SourceTimerResult enqueue_timer(DM2_V1_SourceTimerQueue *queue,
     return dm2_v1_source_timer_enqueue(queue, &timer, source_index);
 }
 
-static bool capture_dispatch(void *context, const DM2_V1_SourceTimer *timer,
+static __attribute__((unused)) bool capture_dispatch(void *context, const DM2_V1_SourceTimer *timer,
                              uint16_t source_index)
 {
     dispatch_capture *capture = context;
@@ -48,9 +48,12 @@ int main(void)
 {
     DM2_V1_SourceTimerQueue queue;
     DM2_V1_SourceTimer timer;
+    (void)timer;
     uint16_t source_index = 0U;
+    (void)source_index;
     dispatch_capture capture = { 0U, { 0U }, { 0U }, -1 };
     size_t dispatched = 0U;
+    (void)dispatched;
 
     assert(sizeof(DM2_V1_SourceTimer) == DM2_V1_SOURCE_TIMER_SIZE);
     dm2_v1_source_timer_queue_init(&queue);

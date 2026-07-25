@@ -65,6 +65,7 @@ static void *capture_allocate_chip_memory(void *context, int32_t byte_count)
 static void capture_free_chip_memory(void *context, void *memory,
                                      int32_t byte_count)
 {
+    (void)memory;
     redmcsb_f1066_capture *capture = context;
 
     assert(memory == &capture->allocation_token);
@@ -95,9 +96,11 @@ static const redmcsb_f1066_chip_memory_io capture_io = {
     capture_alert_csb_system_error,
     capture_permit
 };
+(void)capture_io;
 
 static void assert_lock_pair(const redmcsb_f1066_capture *capture)
 {
+    (void)capture;
     assert(capture->forbid_count == 1u);
     assert(capture->permit_count == 1u);
 }
@@ -123,6 +126,7 @@ int main(void)
                                                    { 0, 0, 0, 0 }, 0, 0, 0,
                                                    0 };
     const char *evidence;
+    (void)evidence;
 
     assert(redmcsb_f1066_get_usable_chip_memory_byte_count(
                &capture_io, &insufficient_largest) == 0);

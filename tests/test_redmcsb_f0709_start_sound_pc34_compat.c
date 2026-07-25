@@ -39,6 +39,7 @@ int main(void)
         { 42, (void *)0x1234 }, 0, 0, 0, NULL, 0, 0
     };
     redmcsb_f0709_sound_route_pc34_compat route = { lookup, play, &capture };
+    (void)route;
 
     assert(redmcsb_f0709_start_sound_pc34_compat(&route, 3, 17));
     assert(capture.lookup_calls == 1);

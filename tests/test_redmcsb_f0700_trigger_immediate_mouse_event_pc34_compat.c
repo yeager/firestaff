@@ -22,6 +22,7 @@ static void capture_set_mouse_bound_event(void *context, const int16_t box[4],
 int main(void)
 {
     const int16_t expected_box[4] = { 1, 0, 1, 0 };
+    (void)expected_box;
     redmcsb_f0700_capture_pc34_compat capture = { 0 };
     redmcsb_f0700_io_driver_pc34_compat driver = {
         capture_set_mouse_bound_event,

@@ -148,6 +148,7 @@ static void test_f0196_rejects_small_storage_before_write(void)
 static void test_source_evidence_names_all_three_symbols(void)
 {
     const char* evidence = DM1_V1_GroupActiveLifecycle_SourceEvidencePc34();
+    (void)evidence;
 
     assert(evidence != NULL);
     assert(strstr(evidence, "F0182") != NULL);

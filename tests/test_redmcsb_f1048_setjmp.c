@@ -8,7 +8,7 @@
 #error "This test requires C11 or later."
 #endif
 
-static int jump_with_zero_value(void)
+static __attribute__((unused)) int jump_with_zero_value(void)
 {
     jmp_buf environment;
     int result = F1048_setjmp(environment);
@@ -22,6 +22,7 @@ static int jump_with_zero_value(void)
 int main(void)
 {
     const char *evidence = redmcsb_f1048_setjmp_source_evidence();
+    (void)evidence;
 
     assert(jump_with_zero_value() == 1);
     assert(strstr(evidence, "DEFS.H:3208-3215") != NULL);

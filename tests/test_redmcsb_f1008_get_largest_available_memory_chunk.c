@@ -29,7 +29,9 @@ int main(void)
     redmcsb_f1008_memory_chunk fourth = make_chunk(300, 0x0007, 1);
     redmcsb_f1008_memory_chunk fifth = make_chunk(160, 0x0007, 0);
     redmcsb_f1008_memory_chunk *selected;
+    (void)selected;
     const char *evidence;
+    (void)evidence;
 
     first.next = &second;
     second.next = &third;

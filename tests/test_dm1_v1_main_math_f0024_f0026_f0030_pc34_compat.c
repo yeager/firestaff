@@ -5,6 +5,7 @@
 
 int main(void) {
     const char* source;
+    (void)source;
 
     assert(F0024_MAIN_GetMinimumValue(4, 9) == 4);
     assert(F0024_MAIN_GetMinimumValue(9, 4) == 4);

@@ -101,6 +101,7 @@ int main(void)
     uint8_t sound_idx = 0;
     uint8_t sound_field = 0;
     uint16_t index;
+    (void)index;
     int failures = 0;
 
     if (!load_graphics_dat(&graphics, &graphics_size)) {
@@ -149,6 +150,7 @@ int main(void)
     /* ── DM2_QUERY_SND_ENTRY_INDEX with GDAT fallback ── */
     if (find_first_sound_entry(&loader, &sound_cat, &sound_idx, &sound_field)) {
         int q;
+        (void)q;
         DM2_V1_GdatSoundEntryReceipt receipt;
 
         /* The same GDAT triple resolves to a real raw-entry sample binding. */
@@ -171,11 +173,13 @@ int main(void)
         {
             DM2_V1_SoundPcmReceipt pcm;
             DM2_V1_SoundPlaybackReceipt play;
+            (void)play;
             uint32_t count = dm2_v1_sound_gdat_pcm_sample_count(
                 sound_cat, sound_idx, sound_field);
             uint8_t *decoded;
             size_t raw_size = 0u;
             const uint8_t *raw;
+            (void)raw;
             uint32_t i;
 
             assert(count == receipt.payload_length);

@@ -12,6 +12,7 @@
 int main(void)
 {
     const char *evidence =
+    (void)evidence;
         redmcsb_f1027_supervisor_source_evidence_pc34();
 
     assert(!redmcsb_f1027_supervisor_pc34_compat(0L));

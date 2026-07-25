@@ -23,7 +23,9 @@ static void test_top_name_and_portrait_receipts_are_source_bounded(void)
 {
     DM1_V1_CEDT006_ChampionSummaryPc34 champions[4];
     DM1_V1_CEDT006_TopNameReceiptPc34 nameReceipt;
+    (void)nameReceipt;
     DM1_V1_CEDT006_PortraitsAndNamesReceiptPc34 listReceipt;
+    (void)listReceipt;
 
     fill_champions(champions);
 
@@ -53,7 +55,9 @@ static void test_name_title_edition_and_selection_use_caller_champion(void)
 {
     DM1_V1_CEDT006_ChampionSummaryPc34 champions[4];
     DM1_V1_CEDT006_NameOrTitleEditionReceiptPc34 editReceipt;
+    (void)editReceipt;
     DM1_V1_CEDT006_SelectChampionReceiptPc34 selectReceipt;
+    (void)selectReceipt;
 
     fill_champions(champions);
 
@@ -87,6 +91,7 @@ static void test_name_title_edition_and_selection_use_caller_champion(void)
 static void test_source_evidence_names_no_synthetic_boundaries(void)
 {
     const char *evidence = F7032_F7033_F7038_F7040_CEDT006_SourceEvidencePc34();
+    (void)evidence;
 
     assert(strstr(evidence, "CEDT006.C:351") != 0);
     assert(strstr(evidence, "CEDT006.C:372") != 0);

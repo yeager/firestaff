@@ -57,8 +57,11 @@ int main(void)
     DM2_V1_SoundQueueState st;
     DM2_V1_SoundQueueEnv env;
     DM2_V1_SoundQueueReceipt r;
+    (void)r;
     DM2_V1_SoundPlayReceipt pr;
+    (void)pr;
     uint16_t idx;
+    (void)idx;
 
     /* ── init order (c_sound::init + DM2_SOUND6) ── */
     dm2_v1_sound_queue_state_init(&st, 4);

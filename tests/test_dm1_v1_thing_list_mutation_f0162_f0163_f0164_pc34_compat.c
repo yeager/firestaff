@@ -11,7 +11,7 @@ static uint16_t thing_ref(int type, int index)
     return (uint16_t)(((type & 15) << 10) | (index & 0x03ff));
 }
 
-static uint16_t next_of(const uint8_t *record)
+static __attribute__((unused)) uint16_t next_of(const uint8_t *record)
 {
     return (uint16_t)((uint16_t)record[0] | ((uint16_t)record[1] << 8));
 }
@@ -84,6 +84,7 @@ static void build_context(
 static void test_source_evidence(void)
 {
     const char *evidence = DM1_V1_F0162_F0163_F0164_SourceEvidencePc34();
+    (void)evidence;
 
     assert(evidence != 0);
     assert(strstr(evidence, "F0162_DUNGEON_GetSquareFirstObject") != 0);
@@ -116,6 +117,7 @@ static void test_f0163_append_and_create_square_head(void)
 {
     DM1_V1_MutableThingListContextF0162F0164Pc34 context;
     DM1_V1_ThingListMutationResultF0163F0164Pc34 result;
+    (void)result;
     uint8_t map[MAP_W * MAP_H];
     uint16_t columnCounts[MAP_W];
     uint16_t squareFirstThings[8];
@@ -150,6 +152,7 @@ static void test_f0164_unlink_middle_and_head(void)
 {
     DM1_V1_MutableThingListContextF0162F0164Pc34 context;
     DM1_V1_ThingListMutationResultF0163F0164Pc34 result;
+    (void)result;
     uint8_t map[MAP_W * MAP_H];
     uint16_t columnCounts[MAP_W];
     uint16_t squareFirstThings[8];
@@ -180,6 +183,7 @@ static void test_fail_closed_inputs(void)
 {
     DM1_V1_MutableThingListContextF0162F0164Pc34 context;
     DM1_V1_ThingListMutationResultF0163F0164Pc34 result;
+    (void)result;
     uint8_t map[MAP_W * MAP_H];
     uint16_t columnCounts[MAP_W];
     uint16_t squareFirstThings[8];

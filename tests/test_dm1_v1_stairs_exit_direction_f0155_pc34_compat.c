@@ -31,6 +31,7 @@ static void fill_corridor(uint8_t map[MAP_W * MAP_H])
 static void test_source_evidence(void)
 {
     const char *evidence = DM1_V1_F0155_SourceEvidencePc34();
+    (void)evidence;
 
     assert(evidence != 0);
     assert(strstr(evidence, "F0155_DUNGEON_GetStairsExitDirection") != 0);
@@ -41,6 +42,7 @@ static void test_east_west_oriented_stairs(void)
 {
     uint8_t map[MAP_W * MAP_H];
     DM1_V1_StairsExitDirectionF0155Pc34 result;
+    (void)result;
 
     fill_corridor(map);
     set_square(map, 1, 1, sqb(DM1_V1_F0155_ELEMENT_STAIRS_PC34, 0));
@@ -70,6 +72,7 @@ static void test_north_south_oriented_stairs(void)
 {
     uint8_t map[MAP_W * MAP_H];
     DM1_V1_StairsExitDirectionF0155Pc34 result;
+    (void)result;
 
     fill_corridor(map);
     set_square(map, 1, 1,

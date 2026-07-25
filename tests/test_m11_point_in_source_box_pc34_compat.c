@@ -62,7 +62,7 @@ static void check_int(const char *id, int got, int want)
     }
 }
 
-static void check_str_contains(const char *id, const char *hay, const char *needle)
+static __attribute__((unused)) void check_str_contains(const char *id, const char *hay, const char *needle)
 {
     ++g_assertions;
     if (!hay || !needle || !strstr(hay, needle)) {

@@ -8,6 +8,7 @@
 int main(void) {
     int i;
     const char* source;
+    (void)source;
 
     assert(dm1_v1_slot_boxes_size_pc34() ==
            DM1_V1_SLOT_BOX_PC34_COMPAT_COUNT);

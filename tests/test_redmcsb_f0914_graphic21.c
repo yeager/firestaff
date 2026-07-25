@@ -34,6 +34,7 @@ int main(void)
     int32_t last_event22_time = INT32_C(91);
     int16_t check_last_event22_time = INT16_C(-1);
     redmcsb_f0914_graphic21_result result = make_result(
+    (void)result;
         fuzzy_bits, &analyzed, &last_event22_time, &check_last_event22_time);
 
     assert(redmcsb_f0914_graphic21_a20e(a20e_sector, &result) == 0);

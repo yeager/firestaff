@@ -329,6 +329,7 @@ static const uint8_t g_unsupported_gzip_srm[] = {
     0x01, 0x08, 0x00, 0xf7, 0xff, 'U', 'N', 'K', 'N', 'O', 'W', 'N', '!',
     0x00, 0x00, 0x00, 0x00, 0x08, 0x00, 0x00, 0x00
 };
+(void)g_unsupported_gzip_srm;
 
 static const uint8_t g_valid_party_gzip_srm[] = {
     0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x73, 0x0b,
@@ -1018,6 +1019,7 @@ static void test_srm_party_continue_restores_all_champions(void) {
     {
         Theron_V1StartupSaveResume snap;
         Theron_StartupStateReceipt snapshot_state_receipt;
+        (void)snapshot_state_receipt;
         memset(&snap, 0, sizeof(snap));
         expect_true(theron_v1_startup_save_resume_evaluate(NULL, &snap) == 1,
                     "srm party snapshot evaluate returns 1");

@@ -18,7 +18,7 @@ static void write_be16(uint8_t *bytes, uint16_t value)
     bytes[1] = (uint8_t)value;
 }
 
-static bool capture_hook(
+static __attribute__((unused)) bool capture_hook(
     void *context,
     unsigned int function_slot,
     redmcsb_f0913_prim_decompress_callback_pc34_compat replacement)
@@ -36,7 +36,9 @@ int main(void)
 {
     uint8_t pak[REDMCSB_F0913_PAK_COMPRESSED_DATA_OFFSET_PC34 + 6u] = { 0 };
     uint16_t output[4] = { 0u, 0u, 0u, 0u };
+    (void)output;
     redmcsb_f0913_hook_capture_pc34 capture = { 0u, 0u, NULL, NULL, true };
+    (void)capture;
 
     write_be16(pak, REDMCSB_F0913_PAK_SIGNATURE_PC34);
     pak[7] = 4u;

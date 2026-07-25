@@ -12,6 +12,7 @@
 int main(void)
 {
     const char *evidence = redmcsb_f1017_malloc_source_evidence_pc34();
+    (void)evidence;
 
     assert(redmcsb_f1017_malloc_pc34_compat(0U) == NULL);
     assert(redmcsb_f1017_malloc_pc34_compat(SIZE_MAX) == NULL);

@@ -15,6 +15,7 @@ int main(void)
     struct TickResult_Compat result;
     int i;
     int sawXp = 0;
+    (void)sawXp;
 
     memset(&world, 0, sizeof(world));
     memset(&things, 0, sizeof(things));

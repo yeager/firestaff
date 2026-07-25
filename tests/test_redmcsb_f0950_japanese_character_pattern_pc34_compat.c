@@ -40,6 +40,7 @@ static void capture_port_write(void *context, uint16_t port, uint8_t value)
 
 static uint8_t capture_port_read(void *context, uint16_t port)
 {
+    (void)port;
     redmcsb_f0950_capture_pc34_compat *capture = context;
 
     assert(port == UINT16_C(0x00A9));
@@ -80,6 +81,7 @@ int main(void)
     };
     unsigned int index;
     const char *evidence;
+    (void)evidence;
 
     for (index = 0U; index < REDMCSB_F0950_READ_EVENT_COUNT; ++index) {
         capture.read_values[index] = (uint8_t)(UINT8_C(0x80) + index);
@@ -103,6 +105,7 @@ int main(void)
     for (index = 0U; index < 16U; ++index) {
         unsigned int selected_write = 3U + (index * 2U);
         unsigned int unselected_write = selected_write + 1U;
+        (void)unselected_write;
 
         assert(capture.write_ports[selected_write] == UINT16_C(0x00A5));
         assert(capture.write_values[selected_write] ==

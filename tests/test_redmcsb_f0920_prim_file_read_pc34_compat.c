@@ -17,7 +17,7 @@ typedef struct {
     int32_t result;
 } redmcsb_f0920_capture_pc34_compat;
 
-static int32_t capture_read(
+static __attribute__((unused)) int32_t capture_read(
     void *context,
     int32_t file_handle,
     void *buffer,
@@ -36,6 +36,7 @@ static int32_t capture_read(
 int main(void)
 {
     unsigned char buffer[4] = { 0U, 0U, 0U, 0U };
+    (void)buffer;
     redmcsb_f0920_capture_pc34_compat capture = {
         0U, NULL, 0, NULL, 0, INT32_C(4)
     };

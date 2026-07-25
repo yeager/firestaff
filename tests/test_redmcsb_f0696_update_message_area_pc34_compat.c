@@ -25,6 +25,7 @@ static void enable(void *context) { Capture *c = context; c->enabled_at = ++c->s
 static void disable(void *context) { Capture *c = context; c->disabled_at = ++c->step; }
 static void zone(void *context, uint16_t zone_id, RedmcsbF0696BoxPc34Compat *box)
 {
+    (void)zone_id;
     Capture *c = context;
     assert(zone_id == 15U);
     c->zone_at = ++c->step;
@@ -32,12 +33,15 @@ static void zone(void *context, uint16_t zone_id, RedmcsbF0696BoxPc34Compat *box
 }
 static void write_page(void *context, int16_t work, int16_t write)
 {
+    (void)write;
+    (void)work;
     Capture *c = context;
     assert(work == 2 && write == 1);
     c->write_page_at = ++c->step;
 }
 static void viewport(void *context, int16_t work, const RedmcsbF0696BoxPc34Compat *box)
 {
+    (void)work;
     Capture *c = context;
     assert(work == 2);
     c->viewport = *box;
@@ -46,6 +50,9 @@ static void viewport(void *context, int16_t work, const RedmcsbF0696BoxPc34Compa
 static void scroll(void *context, int16_t work, int16_t x, int16_t y,
                    int16_t lines, const RedmcsbF0696BoxPc34Compat *box)
 {
+    (void)y;
+    (void)x;
+    (void)work;
     Capture *c = context;
     assert(work == 2 && x == 0 && y == 0);
     c->scroll_lines = lines;
@@ -56,6 +63,9 @@ static void blit(void *context, const uint8_t *bitmap,
                  const RedmcsbF0696BoxPc34Compat *box, int16_t sx, int16_t sy,
                  int16_t sw, int16_t dw, int16_t transparent)
 {
+    (void)transparent;
+    (void)sy;
+    (void)sx;
     Capture *c = context;
     assert(sx == 0 && sy == 0 && transparent == -1);
     c->blit_bitmap = bitmap;
@@ -68,11 +78,14 @@ static void blit(void *context, const uint8_t *bitmap,
 int main(void)
 {
     static const uint8_t new_row[] = { 1U, 2U, 3U };
+    (void)new_row;
     Capture capture = { 0 };
     const RedmcsbF0696VideoOpsPc34Compat ops = {
         enable, disable, zone, write_page, viewport, scroll, blit, &capture
     };
+    (void)ops;
     const RedmcsbF0696StatePc34Compat state = { 2, 1, 7, 320, 320, -1 };
+    (void)state;
 
     assert(redmcsb_f0696_update_message_area_pc34_compat(&ops, &state, new_row) == 1);
     assert(capture.enabled_at == 1U && capture.write_page_at == 2U);

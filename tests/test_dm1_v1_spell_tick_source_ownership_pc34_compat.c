@@ -59,6 +59,7 @@ static void seed_case(struct GameWorld_Compat* world,
 static void assert_consumed(const struct GameWorld_Compat* world,
                             const struct SourceStatusCase* source)
 {
+    (void)world;
     switch (source->eventType) {
     case DM1_EVENT_INVISIBILITY:
         assert(world->magic.event71CountInvisibility == 0);

@@ -46,6 +46,9 @@ static void make_timer(DM2_V1_SaveTimerRecord *t,
 static size_t encode_timers(const DM2_V1_SaveTimerRecord *records,
                             uint16_t count, uint8_t *out, size_t cap)
 {
+    (void)cap;
+    (void)out;
+    (void)records;
     /* Source order: the mask is re-armed per record while the bit state
      * carries across records (c_savegame.cpp:655-733). */
     DM2_SuppressWriter writer;
@@ -70,10 +73,12 @@ int main(void)
         0xffu, 0xffu, 0xffu, 0x3fu, 0x7fu, 0xffu,
         0xffu, 0xffu, 0xffu, 0xffu, 0x00u, 0x00u
     };
+    (void)expected_mask;
     DM2_V1_SaveTimerRecord src[5];
     DM2_V1_SaveTimerRecord out_records[DM2_V1_SAVE_TIMER_MAX];
     int16_t indices[DM2_V1_SAVE_TIMER_MAX];
     DM2_V1_SaveTimerReceipt receipt;
+    (void)receipt;
     DM2_SuppressReader reader;
     uint8_t stream[512];
     size_t stream_size;
@@ -149,8 +154,11 @@ int main(void)
     {
         DM2_V1_SaveTimerRecord heap_src[5];
         DM2_V1_SaveTimerRecord heap_out[DM2_V1_SAVE_TIMER_MAX];
+        (void)heap_out;
         int16_t heap_idx[DM2_V1_SAVE_TIMER_MAX];
+        (void)heap_idx;
         static const int16_t expected_idx[5] = { 3, 1, 2, 0, 4 };
+        (void)expected_idx;
         make_timer(&heap_src[0], 0, 50, 1, 0, 0, 0);
         make_timer(&heap_src[1], 0, 20, 1, 0, 0, 0);
         make_timer(&heap_src[2], 0, 30, 1, 0, 0, 0);

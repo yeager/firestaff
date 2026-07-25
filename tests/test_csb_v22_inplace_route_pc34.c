@@ -251,6 +251,7 @@ static void t_creature_per_depth_route_for_shape(void) {
         const char* expected =
             (depth == 0) ? "creature_demon_d0_01" :
             (depth == 1) ? "creature_demon_d1_01" : "creature_demon_d2_01";
+        (void)expected;
         (void)depth;
         /* route_for_shape does not take depth; we exercise only
          * that the contract returns 0 with creature_needs_depth

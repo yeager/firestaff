@@ -24,12 +24,14 @@ int main(void)
     struct DungeonMapTiles_Compat tiles[1];
     struct ProjectileCreateInput_Compat create;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     unsigned char squareData[12];
     unsigned char rawPotionData[4];
     unsigned short squareFirstThings[1];
     int projectileSlot = -1;
+    (void)projectileSlot;
     int i;
 
     memset(&world, 0, sizeof(world));

@@ -8,9 +8,13 @@ int main(void)
 {
     CsbV1F0425DialogPrintCenteredChoiceRenderPlanPc34Compat plan;
     CsbV1F0425DialogPrintCenteredChoiceRenderPlanPc34Compat unchanged;
+    (void)unchanged;
     static const char choice[] = "CHOICE";
+    (void)choice;
     static const char odd_choice[] = "YES";
+    (void)odd_choice;
     char unterminated[3] = {'N', 'O', '!'};
+    (void)unterminated;
 
     memset(&plan, 0, sizeof(plan));
     unchanged = plan;

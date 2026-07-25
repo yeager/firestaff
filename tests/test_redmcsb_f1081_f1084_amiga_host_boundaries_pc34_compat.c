@@ -14,9 +14,13 @@
 int main(void)
 {
     const char *open_nil = redmcsb_f1081_open_nil_source_evidence_pc34();
+    (void)open_nil;
     const char *close_nil = redmcsb_f1082_close_nil_source_evidence_pc34();
+    (void)close_nil;
     const char *allocate = redmcsb_f1083_allocate_724_bytes_source_evidence_pc34();
+    (void)allocate;
     const char *free_bytes = redmcsb_f1084_free_724_bytes_source_evidence_pc34();
+    (void)free_bytes;
 
     redmcsb_f1081_open_nil_pc34_compat();
     redmcsb_f1082_close_nil_pc34_compat();

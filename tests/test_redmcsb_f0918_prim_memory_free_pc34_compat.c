@@ -11,8 +11,9 @@ typedef struct {
     bool result;
 } ReleaseObservation;
 
-static bool observe_release(void *buffer, void *context)
+static __attribute__((unused)) bool observe_release(void *buffer, void *context)
 {
+    (void)buffer;
     ReleaseObservation *observation = context;
 
     assert(buffer == observation->expected_buffer);

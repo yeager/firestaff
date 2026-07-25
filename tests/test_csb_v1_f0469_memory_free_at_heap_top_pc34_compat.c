@@ -9,6 +9,7 @@ int main(void)
 {
     CsbV1F0469MemoryHeapAccountingPc34Compat heap = {0U, 64U, 40U, 24U};
     CsbV1F0469MemoryHeapAccountingPc34Compat unchanged;
+    (void)unchanged;
 
     assert(csb_v1_f0469_memory_free_at_heap_top_pc34_compat(&heap, 7U));
     assert(heap.available_heap_top == 48U);

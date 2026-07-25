@@ -13,7 +13,7 @@ static void clear_fb(void) {
     memset(g_fb, 0, sizeof(g_fb));
 }
 
-static int fb_has_nonzero(void) {
+static __attribute__((unused)) int fb_has_nonzero(void) {
     for (int i = 0; i < FB_W * FB_H; i++) {
         if (g_fb[i] != 0) return 1;
     }
@@ -23,6 +23,7 @@ static int fb_has_nonzero(void) {
 static void test_init_shutdown(void) {
     csb_v2_hud_runtime_init();
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud != NULL);
     assert(hud->visible == true);
     assert(hud->opacity == 255);
@@ -34,6 +35,7 @@ static void test_double_init(void) {
     csb_v2_hud_runtime_init();
     csb_v2_hud_runtime_init();
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud != NULL);
     csb_v2_hud_runtime_shutdown();
     printf("  double_init OK\n");
@@ -43,6 +45,7 @@ static void test_lazy_init(void) {
     csb_v2_hud_runtime_shutdown();
     csb_v2_hud_runtime_set_direction(2);
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud != NULL);
     assert(hud->compass.direction == 2);
     csb_v2_hud_runtime_shutdown();
@@ -53,6 +56,7 @@ static void test_set_party_gold(void) {
     csb_v2_hud_runtime_init();
     csb_v2_hud_runtime_set_party_gold(999);
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud->gold.party_gold == 999);
     csb_v2_hud_runtime_shutdown();
     printf("  set_party_gold OK\n");
@@ -62,6 +66,7 @@ static void test_set_direction(void) {
     csb_v2_hud_runtime_init();
     csb_v2_hud_runtime_set_direction(3);
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud->compass.direction == 3);
     csb_v2_hud_runtime_shutdown();
     printf("  set_direction OK\n");
@@ -71,6 +76,7 @@ static void test_set_level(void) {
     csb_v2_hud_runtime_init();
     csb_v2_hud_runtime_set_level(5, 12);
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud->depth.current_level == 5);
     assert(hud->depth.max_level == 12);
     csb_v2_hud_runtime_shutdown();
@@ -81,6 +87,7 @@ static void test_set_champion(void) {
     csb_v2_hud_runtime_init();
     csb_v2_hud_runtime_set_champion(1, 80, 60, 40, true, true);
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud->champion_bars[1].hp_pct == 80);
     assert(hud->champion_bars[1].stamina_pct == 60);
     assert(hud->champion_bars[1].mana_pct == 40);
@@ -94,6 +101,7 @@ static void test_action_and_clear(void) {
     csb_v2_hud_runtime_init();
     csb_v2_hud_runtime_set_action_active(CSB_V2_ACTION_CAST);
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud->action_strip.icons[CSB_V2_ACTION_CAST].active == true);
     assert(hud->action_strip.icons[CSB_V2_ACTION_ATTACK].active == false);
     csb_v2_hud_runtime_clear_action();
@@ -106,6 +114,7 @@ static void test_hit_flash(void) {
     csb_v2_hud_runtime_init();
     csb_v2_hud_runtime_trigger_hit_flash();
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud->hit_flash_active == true);
     assert(hud->hit_flash_timer == 6);
     csb_v2_hud_runtime_shutdown();
@@ -116,6 +125,7 @@ static void test_chaos(void) {
     csb_v2_hud_runtime_init();
     csb_v2_hud_runtime_set_chaos_active(true, 2);
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud->chaos.chaos_active == true);
     assert(hud->chaos.power_rune_count == 2);
     csb_v2_hud_runtime_shutdown();
@@ -125,6 +135,7 @@ static void test_chaos(void) {
 static void test_toggle_and_opacity(void) {
     csb_v2_hud_runtime_init();
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud->visible == true);
     csb_v2_hud_runtime_toggle();
     assert(hud->visible == false);
@@ -155,6 +166,7 @@ static void test_apply_frame(void) {
 
     csb_v2_hud_runtime_apply_frame(&frame);
     CSB_V2_HudOverlay *hud = csb_v2_hud_runtime_get_hud();
+    (void)hud;
     assert(hud->compass.direction == 2);
     assert(hud->depth.current_level == 3);
     assert(hud->depth.max_level == 8);
@@ -227,6 +239,7 @@ static void test_render_null_safety(void) {
 
 static void test_source_evidence(void) {
     const char *ev = csb_v2_hud_runtime_source_evidence();
+    (void)ev;
     assert(ev != NULL);
     assert(strstr(ev, "CSB V2") != NULL);
     assert(strstr(ev, "F0354") != NULL);

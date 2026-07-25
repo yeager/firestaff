@@ -55,6 +55,7 @@ static void test_f0173_sets_current_map_only(void)
     DM1_V1_MapDescriptorF0173F0174Pc34 maps[3];
     DM1_V1_CurrentMapRuntimeF0173F0174Pc34 runtime;
     DM1_V1_CurrentMapResultF0173F0174Pc34 result;
+    (void)result;
 
     make_maps(maps);
     DM1_V1_CurrentMap_InitF0173F0174Pc34Compat(&runtime);
@@ -94,6 +95,7 @@ static void test_f0174_sets_current_and_party_map(void)
     DM1_V1_MapDescriptorF0173F0174Pc34 maps[3];
     DM1_V1_CurrentMapRuntimeF0173F0174Pc34 runtime;
     DM1_V1_CurrentMapResultF0173F0174Pc34 result;
+    (void)result;
 
     make_maps(maps);
     DM1_V1_CurrentMap_InitF0173F0174Pc34Compat(&runtime);
@@ -132,6 +134,7 @@ static void test_fail_closed_without_state_mutation(void)
     DM1_V1_MapDescriptorF0173F0174Pc34 maps[3];
     DM1_V1_CurrentMapRuntimeF0173F0174Pc34 runtime;
     DM1_V1_CurrentMapResultF0173F0174Pc34 result;
+    (void)result;
 
     make_maps(maps);
     DM1_V1_CurrentMap_InitF0173F0174Pc34Compat(&runtime);
@@ -159,6 +162,7 @@ static void test_fail_closed_without_state_mutation(void)
 int main(void)
 {
     const char *evidence = DM1_V1_F0173_F0174_SourceEvidencePc34();
+    (void)evidence;
 
     assert(strstr(evidence, "F0173_DUNGEON_SetCurrentMap") != 0);
     assert(strstr(evidence, "F0174_DUNGEON_SetCurrentMapAndPartyMap") != 0);

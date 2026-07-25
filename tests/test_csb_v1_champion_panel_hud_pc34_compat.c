@@ -36,6 +36,7 @@ static void test_bar_graph_height(void)
 static void test_bar_fill_model(void)
 {
     CSB_ChampionPanel_BarFillModel m;
+    (void)m;
     assert(CSB_ChampionPanel_BuildPc34BarFillModel(0, 0, 50, 100, &m));
     assert(m.zoneId == 195);
     assert(m.width == 4);
@@ -93,6 +94,7 @@ static void test_bar_graph_screen_xy(void)
 static void test_status_box_model_alive(void)
 {
     CSB_ChampionPanel_StatusBoxModel m;
+    (void)m;
     assert(CSB_ChampionPanel_BuildStatusBoxModel(0, 0, 0, 100, &m));
     assert(m.drawKind == CSB_STATUS_BOX_DRAW_ALIVE);
     assert(m.fillColor == CSB_COLOR_DARKEST_GRAY);
@@ -107,6 +109,7 @@ static void test_status_box_model_alive(void)
 static void test_status_box_model_inventory(void)
 {
     CSB_ChampionPanel_StatusBoxModel m;
+    (void)m;
     assert(CSB_ChampionPanel_BuildStatusBoxModel(2, 0, 1, 100, &m));
     assert(m.drawKind == CSB_STATUS_BOX_DRAW_ALIVE);
     assert(m.drawPortrait == 1);
@@ -117,6 +120,7 @@ static void test_status_box_model_inventory(void)
 static void test_status_box_model_dead(void)
 {
     CSB_ChampionPanel_StatusBoxModel m;
+    (void)m;
     assert(CSB_ChampionPanel_BuildStatusBoxModel(1, 0, 0, 0, &m));
     assert(m.drawKind == CSB_STATUS_BOX_DRAW_DEAD);
     assert(m.graphicId == CSB_GFX_DEAD_CHAMPION);
@@ -130,6 +134,7 @@ static void test_status_box_model_dead(void)
 static void test_icon_bitmap_model(void)
 {
     CSB_ChampionPanel_IconBitmapModel m;
+    (void)m;
     assert(CSB_ChampionPanel_BuildIconBitmapModel(0, 0, 0, &m));
     assert(m.width == 19);
     assert(m.height == 14);
@@ -166,6 +171,7 @@ static void test_slot_box_graphic(void)
 static void test_hand_slot_model(void)
 {
     CSB_ChampionPanel_StatusHandSlotBoxModel m;
+    (void)m;
     assert(CSB_ChampionPanel_BuildStatusHandSlotBoxModel(0, 0, 0, &m));
     assert(m.championIndex == 0);
     assert(m.handIndex == 0);
@@ -239,6 +245,7 @@ static void test_status_value_zone(void)
 static void test_format_status_value(void)
 {
     char buf[16];
+    (void)buf;
     assert(CSB_ChampionPanel_FormatStatusValue(0, 100, 200,
         0, 0, 0, 0, buf, sizeof(buf)));
     assert(strcmp(buf, "100/200") == 0);
@@ -277,6 +284,7 @@ static void test_hand_slot_xy(void)
 static void test_source_evidence(void)
 {
     const char *ev = CSB_ChampionPanel_SourceEvidence();
+    (void)ev;
     assert(ev != NULL);
     assert(strstr(ev, "ReDMCSB") != NULL);
     assert(strstr(ev, "F0287") != NULL);
@@ -289,6 +297,7 @@ static void test_source_evidence(void)
 static void test_format_integer_f0288(void)
 {
     char buf[16];
+    (void)buf;
     assert(CSB_ChampionPanel_FormatIntegerF0288(42, 1, 3, buf, sizeof(buf)));
     assert(strcmp(buf, " 42") == 0);
     assert(CSB_ChampionPanel_FormatIntegerF0288(7, 1, 3, buf, sizeof(buf)));
@@ -306,6 +315,8 @@ static void test_format_integer_f0288(void)
 static void test_inventory_slot_xy(void)
 {
     int x, y;
+    (void)y;
+    (void)x;
     assert(CSB_ChampionPanel_InventorySlotXY(8, &x, &y));
     assert(x == 4 && y == 10);
     assert(CSB_ChampionPanel_InventorySlotXY(9, &x, &y));
@@ -349,6 +360,8 @@ static void test_statistic_colors(void)
 static void test_format_statistic_value(void)
 {
     char cur[4], mx[5];
+    (void)mx;
+    (void)cur;
     assert(CSB_ChampionPanel_FormatStatisticValue(42, 50, cur, sizeof(cur), mx, sizeof(mx)));
     assert(strcmp(cur, " 42") == 0);
     assert(strcmp(mx, "/ 50") == 0);
@@ -359,6 +372,7 @@ static void test_format_statistic_value(void)
 static void test_statistic_row_model(void)
 {
     CSB_ChampionPanel_StatisticRowModel row;
+    (void)row;
     assert(CSB_ChampionPanel_BuildStatisticRowModel(30, 50, &row));
     assert(row.currentValue == 30);
     assert(row.maximumValue == 50);
@@ -373,6 +387,7 @@ static void test_statistic_row_model(void)
 static void test_statistic_text_run_model(void)
 {
     CSB_ChampionPanel_StatisticTextRunModel run;
+    (void)run;
     assert(CSB_ChampionPanel_BuildStatisticTextRunModel(0, 30, 50, &run));
     assert(run.statisticIndex == 0);
     assert(run.nameZone == CSB_ZONE_SKILL_VALUE);
@@ -408,6 +423,7 @@ static void test_load_color(void)
 static void test_format_load_value(void)
 {
     char buf[32];
+    (void)buf;
     assert(CSB_ChampionPanel_FormatLoadValue(125, 500, buf, sizeof(buf)));
     assert(strcmp(buf, " 12.5/ 50 KG") == 0);
     assert(CSB_ChampionPanel_FormatLoadValue(0, 300, buf, sizeof(buf)));
@@ -419,6 +435,7 @@ static void test_format_load_value(void)
 static void test_food_water_poison_blit(void)
 {
     const CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *spec =
+    (void)spec;
         CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked();
     assert(spec != NULL);
     assert(spec->blitCount == 3);
@@ -438,6 +455,7 @@ static void test_food_water_poison_blit(void)
 static void test_portrait_blit_model(void)
 {
     CSB_ChampionPanel_PortraitBlitModel m;
+    (void)m;
     assert(CSB_ChampionPanel_BuildPortraitBlitModel(0, &m));
     assert(m.graphicId == CSB_GFX_PORTRAITS);
     assert(m.sourceX == 0);
@@ -465,6 +483,7 @@ static void test_portrait_blit_model(void)
 static void test_damage_flash_model(void)
 {
     CSB_ChampionPanel_DamageFlashModel m;
+    (void)m;
     assert(CSB_ChampionPanel_BuildDamageFlashModel(0, 0, &m));
     assert(m.championIndex == 0);
     assert(m.flashColor == 7);
@@ -487,6 +506,7 @@ static void test_damage_flash_model(void)
 static void test_spell_area_model(void)
 {
     CSB_ChampionPanel_SpellAreaModel m;
+    (void)m;
     assert(CSB_ChampionPanel_BuildSpellAreaModel(&m));
     assert(m.backgroundGraphicId == CSB_GFX_SPELL_AREA);
     assert(m.areaX == 233);
@@ -510,6 +530,7 @@ static void test_spell_area_model(void)
 static void test_clock_tick_repaint_model(void)
 {
     CSB_ChampionPanel_ClockTickRepaintModel m;
+    (void)m;
     assert(CSB_ChampionPanel_BuildClockTickRepaintModel(&m));
     assert(m.repaintMask == CSB_ATTR_STATISTICS);
     assert(m.affectsBarGraphs == 1);

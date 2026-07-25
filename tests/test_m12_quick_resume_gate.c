@@ -774,7 +774,7 @@ static int write_theron_tqsv_save(const char* root,
     return 1;
 }
 
-static int write_theron_srm_save(const char* root,
+static __attribute__((unused)) int write_theron_srm_save(const char* root,
                                  int slot,
                                  char* outPath,
                                  size_t outPathSize) {
@@ -834,6 +834,7 @@ int main(void) {
     char theronSaveRoot[512];
     char theronSlotSavePath[512];
     char theronSrmSavePath[512];
+    (void)theronSrmSavePath;
     char nativeSavePath[512];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;

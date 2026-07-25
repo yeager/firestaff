@@ -37,6 +37,7 @@ static void test_cconis_and_crawcin_read_caller_owned_key_buffer(void)
 static void test_source_evidence_names_exact_boundaries(void)
 {
     const char *evidence = F1690_GetASCIICode_SourceEvidence();
+    (void)evidence;
     assert(strstr(evidence, "USIO2.C:287") != 0);
     assert(strstr(evidence, "low-byte ASCII") != 0);
     assert(strstr(evidence, "no scan-code table") != 0);

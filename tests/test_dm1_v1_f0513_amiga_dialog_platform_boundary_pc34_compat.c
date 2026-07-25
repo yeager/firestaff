@@ -7,6 +7,10 @@ static void assert_boundary(const DM1_V1_AmigaPlatformBoundaryPc34* boundary,
                             const char* symbol,
                             const char* source_anchor,
                             const char* rationale_fragment) {
+                                (void)rationale_fragment;
+                                (void)source_anchor;
+                                (void)symbol;
+                                (void)boundary;
     assert(boundary != 0);
     assert(strcmp(boundary->symbol, symbol) == 0);
     assert(strstr(boundary->source_anchor, source_anchor) != 0);
@@ -17,7 +21,9 @@ static void assert_boundary(const DM1_V1_AmigaPlatformBoundaryPc34* boundary,
 
 int main(void) {
     const DM1_V1_AmigaPlatformBoundaryPc34* boundary;
+    (void)boundary;
     const char* evidence;
+    (void)evidence;
 
     boundary = F0513_DIALOG_DrawGameReadyToPlay_Unreferenced_PlatformBoundaryPc34();
     assert(boundary != 0);

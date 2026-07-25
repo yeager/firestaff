@@ -22,7 +22,7 @@ typedef struct {
     const char *title_string;
 } redmcsb_f0925_capture_pc34_compat;
 
-static void capture_force_media_change_detection(void *context,
+static __attribute__((unused)) void capture_force_media_change_detection(void *context,
                                                   int device_number)
 {
     redmcsb_f0925_capture_pc34_compat *capture = context;
@@ -31,7 +31,7 @@ static void capture_force_media_change_detection(void *context,
     capture->seen_device_number = device_number;
 }
 
-static int capture_floprd(void *context,
+static __attribute__((unused)) int capture_floprd(void *context,
                           char *buffer,
                           long reserved,
                           int device_number,

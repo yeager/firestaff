@@ -38,6 +38,12 @@ static void redmcsb_f0745_assert_file_names(
     const char *save,
     const char *backup)
 {
+    (void)backup;
+    (void)save;
+    (void)bonus;
+    (void)expansion;
+    (void)dungeon;
+    (void)fixture;
     assert(strcmp(fixture->dungeon, dungeon) == 0);
     assert(strcmp(fixture->expansion, expansion) == 0);
     assert(strcmp(fixture->bonus, bonus) == 0);

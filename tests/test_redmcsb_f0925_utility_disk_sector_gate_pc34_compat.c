@@ -24,7 +24,7 @@ typedef struct RedmcsbF0925Capture {
     const char *title_string;
 } RedmcsbF0925Capture;
 
-static void capture_force_media_change_detection(void *context,
+static __attribute__((unused)) void capture_force_media_change_detection(void *context,
                                                   int device_number)
 {
     RedmcsbF0925Capture *capture = (RedmcsbF0925Capture *)context;
@@ -33,7 +33,7 @@ static void capture_force_media_change_detection(void *context,
     capture->seen_device_number = device_number;
 }
 
-static int capture_floprd(void *context,
+static __attribute__((unused)) int capture_floprd(void *context,
                           char *buffer,
                           long reserved,
                           int device_number,

@@ -10,7 +10,7 @@ typedef struct {
     uint8_t snapshot[32][3];
 } upload_capture;
 
-static void capture_upload(void *context, const uint8_t full_palette[32][3])
+static __attribute__((unused)) void capture_upload(void *context, const uint8_t full_palette[32][3])
 {
     upload_capture *capture = context;
 
@@ -33,6 +33,7 @@ int main(void)
         { entries, sizeof(entries) / sizeof(entries[0]) },
         { unterminated, sizeof(unterminated) / sizeof(unterminated[0]) }
     };
+    (void)palettes;
     uint8_t palette[32][3];
     upload_capture capture;
 

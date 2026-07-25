@@ -193,8 +193,10 @@ static void test_insufficient_mana_preserves_partial_rune_chain(void) {
     assert(ok == 1);
 
     DM1_ChampionSpellInput beforeInput = s.input[0];
+    (void)beforeInput;
     DM1_ChampionSpellStats beforeStats = stats;
     int beforeCaster = s.magicCasterIndex;
+    (void)beforeCaster;
 
     /* ReDMCSB SYMBOL.C F0399 lines 18-30 computes cost, then only mutates
      * CurrentMana/Symbols/SymbolStep inside the line 26 mana-success branch. */
@@ -227,11 +229,17 @@ static void test_insufficient_mana_preserves_partial_rune_chain(void) {
 
     {
         DM1_ChampionSpellInput beforeInput = s.input[0];
+        (void)beforeInput;
         DM1_ChampionSpellInput beforeOtherInput = s.input[1];
+        (void)beforeOtherInput;
         DM1_ChampionSpellStats beforeStats = stats;
+        (void)beforeStats;
         int beforeCaster = s.magicCasterIndex;
+        (void)beforeCaster;
         int expectedClassCost = dm1_spell_symbolManaCost(&s, 0, DM1_CLASS_IR);
+        (void)expectedClassCost;
         const DM1_Spell* beforeSpell = dm1_spell_lookup(&s, 0);
+        (void)beforeSpell;
 
         assert(expectedClassCost == 7);
         assert(beforeSpell == &dm1_spells[7]);  /* Lo Ful / Torch */
@@ -375,7 +383,9 @@ static void test_malformed_symbol_step_rejected_without_mutation(void) {
     dm1_spell_init(&s);
     DM1_ChampionSpellStats stats = makeStats(77, 100, 50, 40);
     DM1_ChampionSpellInput beforeInput;
+    (void)beforeInput;
     DM1_ChampionSpellStats beforeStats;
+    (void)beforeStats;
 
     /* ReDMCSB SYMBOL.C F0399:17-32 indexes G0485[SymbolStep][SymbolIndex]
      * under the invariant that SymbolStep is kept in 0..3 by F0399/F0400.
@@ -415,8 +425,11 @@ static void test_malformed_power_rune_cannot_dispatch_spell(void) {
     dm1_spell_init(&s);
     DM1_ChampionSpellStats stats = makeStats(77, 100, 50, 40);
     int failure = -1;
+    (void)failure;
     int powerOrdinal = -1;
+    (void)powerOrdinal;
     const DM1_Spell* outSpell = NULL;
+    (void)outSpell;
 
     stats.skillLevels[DM1_SKILL_FIRE] = 10;
 
@@ -551,9 +564,13 @@ static void test_spell_cast_potion_flask_inventory_mutation(void) {
     DM1_ChampionSpellStats stats;
     DM1_SpellPotionInventory inventory;
     DM1_SpellPotionCastResult result;
+    (void)result;
     DM1_SpellPotionInventory beforeInventory;
+    (void)beforeInventory;
     DM1_ChampionSpellInput beforeInput;
+    (void)beforeInput;
     DM1_ChampionSpellStats beforeStats;
+    (void)beforeStats;
 
     dm1_spell_init(&s);
     stats = makeStats(200, 200, 50, 60);
@@ -840,8 +857,11 @@ static void test_spell_cast_uses_live_f0303_skill_override(void) {
     DM1_SpellCastingState s;
     DM1_ChampionSpellStats stats = makeStats(200, 200, 50, 0);
     const DM1_Spell* outSpell = NULL;
+    (void)outSpell;
     int failure = -1;
+    (void)failure;
     int powerOrdinal = -1;
+    (void)powerOrdinal;
 
     dm1_spell_init(&s);
     stats.skillLevels[DM1_SKILL_FIRE] = 0;
@@ -987,6 +1007,7 @@ static void test_f0412_runtime_receipt_projectile_open_door(void) {
     DM1_SpellCastingState s;
     DM1_ChampionSpellStats stats = makeStats(200, 24, 50, 60);
     DM1_SpellF0412RuntimeReceipt receipt;
+    (void)receipt;
 
     dm1_spell_init(&s);
     stats.skillLevels[DM1_SKILL_AIR] = 5;
@@ -1014,6 +1035,7 @@ static void test_f0412_runtime_receipt_needs_practice_no_projectile(void) {
     DM1_SpellCastingState s;
     DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 0);
     DM1_SpellF0412RuntimeReceipt receipt;
+    (void)receipt;
 
     dm1_spell_init(&s);
     stats.skillLevels[DM1_SKILL_FIRE] = 0;
@@ -1041,6 +1063,7 @@ static void test_f0412_runtime_receipt_light_event(void) {
     DM1_SpellCastingState s;
     DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
     DM1_SpellF0412RuntimeReceipt receipt;
+    (void)receipt;
 
     dm1_spell_init(&s);
     stats.skillLevels[DM1_SKILL_AIR] = 10;
@@ -1074,6 +1097,7 @@ static void test_f0412_runtime_receipt_status_durations(void) {
 
     DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
     DM1_SpellF0412RuntimeReceipt receipt;
+    (void)receipt;
 
     stats.skillLevels[DM1_SKILL_EARTH] = 10;
     stats.skillLevels[DM1_SKILL_AIR] = 10;
@@ -1103,6 +1127,7 @@ static void test_f0412_receipt_to_spell_effect(void) {
 
     DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
     DM1_SpellF0412RuntimeReceipt receipt;
+    (void)receipt;
     struct SpellEffect_Compat effect;
 
     stats.skillLevels[DM1_SKILL_AIR] = 10;
@@ -1138,6 +1163,7 @@ static void test_f0412_potion_receipt_to_spell_effect(void) {
     DM1_ChampionSpellStats stats = makeStats(200, 64, 50, 60);
     DM1_SpellF0412RuntimeReceipt receipt;
     struct SpellEffect_Compat effect;
+    (void)effect;
 
     stats.skillLevels[DM1_SKILL_HEAL] = 10;
     assert(dm1_spell_f0412PotionReceiptForTableIndex(

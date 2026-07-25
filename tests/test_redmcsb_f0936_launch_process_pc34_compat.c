@@ -51,6 +51,8 @@ static void *capture_create_proc(void *context,
                                  void *segment_list,
                                  long stack_size)
 {
+    (void)segment_list;
+    (void)name;
     redmcsb_f0936_capture_pc34_compat *capture = context;
 
     assert(name == capture->name);
@@ -63,6 +65,7 @@ static void *capture_create_proc(void *context,
 
 static void capture_put_msg(void *context, void *process, void *message)
 {
+    (void)process;
     redmcsb_f0936_capture_pc34_compat *capture = context;
 
     assert(process == capture->process);
@@ -80,6 +83,7 @@ static void capture_wait_port(void *context, void *reply_port)
 
 static void *capture_get_msg(void *context, void *reply_port)
 {
+    (void)reply_port;
     redmcsb_f0936_capture_pc34_compat *capture = context;
 
     assert(reply_port == capture->reply_port);
@@ -89,6 +93,7 @@ static void *capture_get_msg(void *context, void *reply_port)
 
 static void capture_unload_seg(void *context, void *segment_list)
 {
+    (void)segment_list;
     redmcsb_f0936_capture_pc34_compat *capture = context;
 
     assert(segment_list == capture->segment_list);

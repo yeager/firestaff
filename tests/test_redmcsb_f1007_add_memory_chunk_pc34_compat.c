@@ -27,6 +27,7 @@ int main(void)
     redmcsb_f1007_memory_chunk_pc34_compat *memory_chunk =
         (redmcsb_f1007_memory_chunk_pc34_compat *)(void *)storage.bytes;
     const char *evidence;
+    (void)evidence;
     int32_t byte_count = (int32_t)sizeof(storage.bytes);
 
     redmcsb_f1007_first_memory_chunk_pc34_compat = &existing;

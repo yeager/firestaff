@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
-static uint8_t get_pixel(const uint8_t *bitmap, size_t width, size_t x, size_t y)
+static __attribute__((unused)) uint8_t get_pixel(const uint8_t *bitmap, size_t width, size_t x, size_t y)
 {
     const uint8_t value = bitmap[(y * (width / 2U)) + (x / 2U)];
 
@@ -26,6 +26,7 @@ static void test_builds_pc34_shadow_then_object(void)
 {
     uint8_t object[REDMCSB_F0702_OBJECT_BITMAP_BYTES_PC34];
     uint8_t pointer[REDMCSB_F0702_POINTER_BITMAP_BYTES_PC34];
+    (void)pointer;
 
     memset(object, 0xcc, sizeof(object));
     set_pixel(object, 16U, 0U, 0U, 5U);
@@ -49,6 +50,7 @@ static void test_builds_pc34_shadow_then_object(void)
 static void test_rejects_undersized_input_without_writing_target(void)
 {
     uint8_t object[REDMCSB_F0702_OBJECT_BITMAP_BYTES_PC34] = { 0 };
+    (void)object;
     uint8_t pointer[REDMCSB_F0702_POINTER_BITMAP_BYTES_PC34];
     uint8_t before[sizeof(pointer)];
 

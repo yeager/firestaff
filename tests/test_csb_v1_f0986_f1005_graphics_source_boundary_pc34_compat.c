@@ -6,6 +6,7 @@
 int main(void)
 {
     CSB_V1_F0986F1005SourceBoundaryReceiptPc34 receipt;
+    (void)receipt;
     unsigned int function_number;
 
     for (function_number = 986u; function_number <= 1005u; ++function_number) {

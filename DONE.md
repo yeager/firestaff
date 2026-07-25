@@ -1,3 +1,8 @@
+- ✅ 2026-07-25 Add 3 viewport material tests (Q-DM1-03): planar fill
+  F0134/F0135, food/water bar F0344, wall/field material receipt gates.
+  Bulk fix ~230 GCC -Werror unused-variable/parameter/function warnings
+  across ~220 test files for NDEBUG Release builds.
+
 - ✅ 2026-07-25 Wire HoC presented-frame consumer into m11_game_view.c
   (Q-DM1-02 integration): bridge function populates consumer input from
   M11's mirror (C346/C026), inscription (M648), and object (F0115)

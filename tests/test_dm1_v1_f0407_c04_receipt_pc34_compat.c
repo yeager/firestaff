@@ -31,12 +31,18 @@ int main(void)
     unsigned short squareFirstThings[1];
     unsigned char actions[3];
     int swingRow = -1;
+    (void)swingRow;
     int i;
     int sawNativeC20 = 0;
+    (void)sawNativeC20;
     int sawHistoricC11 = 0;
+    (void)sawHistoricC11;
     int sawSoundAfterStaleC11 = 0;
+    (void)sawSoundAfterStaleC11;
     int sawActionEnabledAfterPartyCellMove = 0;
+    (void)sawActionEnabledAfterPartyCellMove;
     int sawSoundAfterPartyCellMove = 0;
+    (void)sawSoundAfterPartyCellMove;
     uint32_t historicC11FireAtTick = 0u;
     struct TickResult_Compat dispatchResult;
     struct ChampionState_Compat reRecruitedChampion;

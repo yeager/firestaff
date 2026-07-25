@@ -5,10 +5,13 @@
 
 int main(void) {
     char text[] = "AbC-Z 09 !\x7f";
+    (void)text;
     char dst[8];
     char tiny[4];
     char zeroGuard = 'x';
+    (void)zeroGuard;
     const char* source;
+    (void)source;
 
     assert(F1984_ConvertCharacterToLowerCase('A') == 'a');
     assert(F1984_ConvertCharacterToLowerCase('Z') == 'z');

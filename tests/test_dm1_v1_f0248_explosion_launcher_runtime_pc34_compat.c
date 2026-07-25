@@ -21,7 +21,7 @@ static void schedule_wall_event(struct GameWorld_Compat* world, int cell)
     assert(F0721_TIMELINE_Schedule_Compat(&world->timeline, &event));
 }
 
-static int pending_projectile_moves(const struct GameWorld_Compat* world)
+static __attribute__((unused)) int pending_projectile_moves(const struct GameWorld_Compat* world)
 {
     int i;
     int count = 0;
@@ -117,6 +117,7 @@ int main(void)
     for (int i = 0; i < 2; ++i) {
         unsigned short eventIndex = (unsigned short)(projectileRaw[i * 8 + 6] |
             ((unsigned short)projectileRaw[i * 8 + 7] << 8));
+        (void)eventIndex;
         assert(eventIndex == projectiles[i].eventIndex);
         assert(eventIndex < (unsigned short)world.timeline.count);
         assert(world.timeline.events[eventIndex].kind == TIMELINE_EVENT_PROJECTILE_MOVE);
@@ -143,6 +144,7 @@ int main(void)
      * master RNG untouched. */
     {
         uint32_t seedBefore = world.masterRng.seed;
+        (void)seedBefore;
         assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
         schedule_wall_event(&world, 2);
         memset(&result, 0, sizeof(result));

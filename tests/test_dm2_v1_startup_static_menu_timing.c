@@ -11,7 +11,9 @@
  * TITLE/0/dt07/4 is static while MessageLoop(true) waits for GAME_LOAD(). */
 static void assert_static_menu(int source_tick)
 {
+    (void)source_tick;
     DM2_V1_StartupRuntimeHandoffReceipt receipt;
+    (void)receipt;
 
     assert(dm2_v1_startup_runtime_handoff_receipt_from_tick(
         &receipt, 1, 1, source_tick));

@@ -62,6 +62,7 @@ int main(void)
     bitmap_storage destination = { 320, 200, { 0U } };
     int16_t xyz[] = { 11, 29, 13, 31 };
     const char *evidence;
+    (void)evidence;
 
     redmcsb_f1002_call_f0132_video_blit(
         source.pixels, destination.pixels, xyz, -7, 12, -1, 0x4000,

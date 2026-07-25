@@ -47,20 +47,30 @@ int main(void)
         load_pc98,
         load_ank
     };
+    (void)io;
     static const uint8_t control[] = { UINT8_C(0x1b) };
+    (void)control;
     static const uint8_t vertical_bar[] = { UINT8_C(0x7c) };
+    (void)vertical_bar;
     static const uint8_t ank[] = { UINT8_C(0x41) };
+    (void)ank;
     static const uint8_t kanji[] = { UINT8_C(0x81), UINT8_C(0x40) };
+    (void)kanji;
     static const uint8_t special_kanji[] = { UINT8_C(0xea), UINT8_C(0xa1) };
+    (void)special_kanji;
     uint8_t pixels[16U * 32U];
     redmcsb_f0952_japanese_print_bitmap_pc34_compat bitmap = {
         pixels,
         32U
     };
     glyph_log log = { 0U, 0U, 0, 0 };
+    (void)log;
     int16_t width = -1;
+    (void)width;
     int16_t height = -1;
+    (void)height;
     const char *evidence;
+    (void)evidence;
 
     assert(redmcsb_f0952_japanese_print_pc34_compat(
                control, 0, NULL, &width, &height, 2, 5,

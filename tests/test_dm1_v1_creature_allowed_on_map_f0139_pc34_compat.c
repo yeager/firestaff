@@ -12,9 +12,13 @@ int main(void)
     DM1_V1_F0139_MapRecordPc34 maps[3];
     DM1_V1_F0139_DungeonWorldPc34 world;
     uint16_t group0;
+    (void)group0;
     uint16_t group1;
+    (void)group1;
     uint16_t group2;
+    (void)group2;
     uint16_t weaponThing;
+    (void)weaponThing;
 
     groups[0].creatureType = 5;
     groups[1].creatureType = 7;

@@ -11,6 +11,7 @@
 static void schedule(struct GameWorld_Compat* world, int type, int effect,
                      int x, int y, int cell)
 {
+    (void)world;
     struct TimelineEvent_Compat event;
     memset(&event, 0, sizeof(event));
     event.kind = TIMELINE_EVENT_SQUARE_STATE;
@@ -24,7 +25,7 @@ static void schedule(struct GameWorld_Compat* world, int type, int effect,
     assert(F0721_TIMELINE_Schedule_Compat(&world->timeline, &event));
 }
 
-static int has_square_state_event(const struct GameWorld_Compat* world,
+static __attribute__((unused)) int has_square_state_event(const struct GameWorld_Compat* world,
                                   int type, int effect, int x, int y)
 {
     int i;
@@ -39,7 +40,7 @@ static int has_square_state_event(const struct GameWorld_Compat* world,
     return 0;
 }
 
-static int has_generator_reenable_event(const struct GameWorld_Compat* world,
+static __attribute__((unused)) int has_generator_reenable_event(const struct GameWorld_Compat* world,
                                         int x, int y)
 {
     int i;
@@ -54,7 +55,7 @@ static int has_generator_reenable_event(const struct GameWorld_Compat* world,
     return 0;
 }
 
-static int has_text_message_emission(const struct TickResult_Compat* result,
+static __attribute__((unused)) int has_text_message_emission(const struct TickResult_Compat* result,
                                      int textIndex, int mapIndex,
                                      int mapX, int mapY)
 {
@@ -73,7 +74,7 @@ static int has_text_message_emission(const struct TickResult_Compat* result,
     return 0;
 }
 
-static int has_action_enabled_emission(const struct TickResult_Compat* result,
+static __attribute__((unused)) int has_action_enabled_emission(const struct TickResult_Compat* result,
                                        int championIndex, int slotOrdinal)
 {
     int i;
@@ -451,6 +452,7 @@ int main(void)
      * order and refuses to overwrite a nonempty action hand. */
     {
         struct DM1F0259QuiverRefillPlanPc34 plan;
+        (void)plan;
 
         world.party.champions[0].present = 1;
         world.party.championCount = 1;

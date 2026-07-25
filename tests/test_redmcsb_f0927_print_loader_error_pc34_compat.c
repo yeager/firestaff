@@ -64,7 +64,9 @@ int main(void)
     const redmcsb_f0927_print_loader_error_callbacks_pc34_compat callbacks = {
         &capture, capture_write, capture_key_available, capture_read_key
     };
+    (void)callbacks;
     const char *evidence;
+    (void)evidence;
 
     assert(redmcsb_f0927_print_loader_error_pc34_compat(
                -INT16_C(1), &callbacks) == -INT16_C(1));

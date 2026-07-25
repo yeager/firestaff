@@ -26,6 +26,7 @@ int main(void)
     DM1_V1_F0140_ObjectRecordPc34 records[10];
     DM1_V1_F0140_ObjectWorldPc34 world;
     int weight = -99;
+    (void)weight;
 
     records[0] = record(0x0105u, DM1_V1_F0140_THING_TYPE_WEAPON_PC34, 1);
     records[1] = record(0x0206u, DM1_V1_F0140_THING_TYPE_ARMOUR_PC34, 4);

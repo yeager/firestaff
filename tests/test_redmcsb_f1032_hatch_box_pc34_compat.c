@@ -11,6 +11,7 @@
 int main(void)
 {
     const char *evidence = redmcsb_f1032_hatch_box_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f1032_hatch_box_pc34_compat());
     assert(strstr(evidence, "FILLBOX.C:624-718") != NULL);

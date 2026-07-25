@@ -17,6 +17,7 @@ static void set_test_home(void) {
 #else
     char path[] = "/tmp/firestaff-runtime-graphics-popup-XXXXXX";
     char* home = mkdtemp(path);
+    (void)home;
     assert(home != NULL);
     assert(setenv("HOME", home, 1) == 0);
     unsetenv("XDG_CONFIG_HOME");
@@ -29,10 +30,14 @@ int main(void) {
     M12_Config config;
     unsigned char framebuffer[320 * 200];
     M11_GameInputResult result;
+    (void)result;
     size_t i;
     int nonzero = 0;
+    (void)nonzero;
     int savedScanlineStrength;
+    (void)savedScanlineStrength;
     int savedPhosphor;
+    (void)savedPhosphor;
 
     set_test_home();
     M12_Config_SetDefaults(&config);

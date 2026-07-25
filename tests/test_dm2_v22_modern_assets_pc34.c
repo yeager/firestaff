@@ -62,6 +62,7 @@ static void test_manifest_path_from_data_dir(void) {
     /* dataDir = ~/.firestaff/data/dm2 → manifest = ~/.firestaff/assets/dm2/modern/modern_asset_manifest.json */
     dm2_v22_set_manifest_path("/home/user/.firestaff/data/dm2");
     const char* expected_suffix = "/.firestaff/assets/dm2/modern/modern_asset_manifest.json";
+    (void)expected_suffix;
     /* The exact path is captured by re-running with a controlled dataDir */
     /* Use a fake dataDir that we can verify the path transformation */
     dm2_v22_set_manifest_path("/tmp/scratch/firestaff-data/dm2");

@@ -6,6 +6,7 @@
 int main(void)
 {
     const CSB_V1_F1326F1365FioSourceBoundaryReceiptPc34 *entries;
+    (void)entries;
     size_t count;
     size_t index;
 

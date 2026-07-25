@@ -5,6 +5,8 @@
 
 static void assert_conversion(int16_t scan_code, int16_t expected)
 {
+    (void)expected;
+    (void)scan_code;
     assert(f0711_convert_scan_code_to_ascii_pc34_compat(scan_code) == expected);
 }
 

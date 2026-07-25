@@ -525,7 +525,7 @@ static void test_dungeon_decode_dsa_filter_location(void)
           "out-of-bounds DSA filter location is rejected");
 }
 
-static void test_runtime_csbwin_dsa_filter_binding(void)
+static __attribute__((unused)) void test_runtime_csbwin_dsa_filter_binding(void)
 {
     uint8_t actuator_record[8] = { 0, 0, 0x2f, 0x41, 0, 0, 0, 0 };
     uint8_t appended_tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
@@ -993,7 +993,7 @@ static uint32_t phase7_fnv1a32(const uint8_t *bytes, size_t size)
     return hash;
 }
 
-static void test_runtime_csbwin_dsa_skin_expool_bridge(void)
+static __attribute__((unused)) void test_runtime_csbwin_dsa_skin_expool_bridge(void)
 {
     /* CSBWin Data.h:1843-1844 assigns AMPERSAND2 slots 3/4 to GetSkin and
      * SetSkin.  This is a structurally valid DB11 fixture, not game data. */
@@ -1080,7 +1080,7 @@ static void test_runtime_csbwin_dsa_skin_expool_bridge(void)
     csb_v1_runtime_cleanup(&profile);
 }
 
-static void test_runtime_csbwin_expool_global_variable_handoff(void)
+static __attribute__((unused)) void test_runtime_csbwin_expool_global_variable_handoff(void)
 {
     uint8_t tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES * 2u];
     uint32_t record_id;
@@ -1140,7 +1140,7 @@ static void test_runtime_csbwin_expool_global_variable_handoff(void)
     csb_v1_runtime_cleanup(&profile);
 }
 
-static void test_runtime_csbwin_disable_saves_expool_policy(void)
+static __attribute__((unused)) void test_runtime_csbwin_disable_saves_expool_policy(void)
 {
     uint8_t tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
     const uint32_t record_id = (5u << 24) | (5u << 16);

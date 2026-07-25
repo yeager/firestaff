@@ -7,6 +7,10 @@ static void assert_boundary(const DM1_V1_InputPlatformBoundaryPc34* boundary,
                             const char* symbol,
                             const char* source_anchor_fragment,
                             const char* rationale_fragment) {
+                                (void)rationale_fragment;
+                                (void)source_anchor_fragment;
+                                (void)symbol;
+                                (void)boundary;
     assert(boundary != 0);
     assert(strcmp(boundary->symbol, symbol) == 0);
     assert(strstr(boundary->source_anchor, source_anchor_fragment) != 0);
@@ -17,6 +21,7 @@ static void assert_boundary(const DM1_V1_InputPlatformBoundaryPc34* boundary,
 
 int main(void) {
     const char* evidence;
+    (void)evidence;
 
     assert_boundary(F0537_INPUT_ReleaseResources_PlatformBoundaryPc34(),
                     "F0537_INPUT_ReleaseResources",

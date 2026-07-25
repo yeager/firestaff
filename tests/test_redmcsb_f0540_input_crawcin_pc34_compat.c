@@ -25,6 +25,7 @@ static void shifted_extended_arrows_map_to_pc34_command_keys(void)
     ReDMCSBF0540InputCrawcinPc34Compat input = {
         read_next_key, &feed, false
     };
+    (void)input;
 
     assert(redmcsb_f0540_input_crawcin_pc34_compat(&input) == (uint16_t)'L');
     assert(redmcsb_f0540_input_crawcin_pc34_compat(&input) == (uint16_t)'P');
@@ -41,6 +42,7 @@ static void exit_shortcuts_set_the_persistent_exit_flag_without_rewriting_key(vo
     ReDMCSBF0540InputCrawcinPc34Compat input = {
         read_next_key, &feed, false
     };
+    (void)input;
 
     assert(redmcsb_f0540_input_crawcin_pc34_compat(&input) == 0x0C53U);
     assert(input.exit_game_immediately);
@@ -53,6 +55,7 @@ static void exit_shortcuts_set_the_persistent_exit_flag_without_rewriting_key(vo
 static void absent_input_driver_returns_zero_without_side_effect(void)
 {
     ReDMCSBF0540InputCrawcinPc34Compat input = { NULL, NULL, false };
+    (void)input;
 
     assert(redmcsb_f0540_input_crawcin_pc34_compat(NULL) == 0U);
     assert(redmcsb_f0540_input_crawcin_pc34_compat(&input) == 0U);

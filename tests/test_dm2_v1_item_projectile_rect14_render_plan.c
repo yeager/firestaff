@@ -70,6 +70,7 @@ int main(void)
     int base_item_index;
     int rect14_item_index;
     int base_projectile_index;
+    (void)base_projectile_index;
     int rect14_projectile_index;
 
     memset(framebuffer, 0, sizeof(framebuffer));

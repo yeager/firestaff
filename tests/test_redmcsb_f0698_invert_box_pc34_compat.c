@@ -29,11 +29,13 @@ static void capture_invert(void *context,
 int main(void)
 {
     const RedmcsbF0698ZonePc34Compat zone = { -3, 319, 4, 199 };
+    (void)zone;
     RedmcsbF0698CapturePc34Compat capture = { 0 };
     const RedmcsbF0698VideoDriverPc34Compat driver = {
         capture_invert,
         &capture
     };
+    (void)driver;
 
     assert(redmcsb_f0698_invert_box_pc34_compat(&driver, &zone));
     assert(capture.calls == 1U);

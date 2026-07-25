@@ -87,6 +87,7 @@ int main(void)
         capture_close,
         &capture
     };
+    (void)dos;
 
     assert(redmcsb_f0746_is_ems_present_pc34_compat(
                &dos, INT16_C(1), INT16_C(-123)) == 0);

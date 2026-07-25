@@ -13,7 +13,7 @@ static void clear_fb(void) {
     memset(g_fb, 0, sizeof(g_fb));
 }
 
-static int fb_has_nonzero(void) {
+static __attribute__((unused)) int fb_has_nonzero(void) {
     for (int i = 0; i < FB_W * FB_H; i++) {
         if (g_fb[i] != 0) return 1;
     }
@@ -206,6 +206,7 @@ static void test_render_compass_region(void) {
     clear_fb();
     csb_v2_hud_render(&h, g_fb, FB_W, FB_H);
     int compass_pixels = 0;
+    (void)compass_pixels;
     for (int y = 0; y < 30; y++)
         for (int x = 0; x < 30; x++)
             if (fb_pixel(x, y) != 0) compass_pixels++;
@@ -220,6 +221,7 @@ static void test_render_action_strip_region(void) {
     clear_fb();
     csb_v2_hud_render(&h, g_fb, FB_W, FB_H);
     int action_pixels = 0;
+    (void)action_pixels;
     for (int y = CSB_ACTION_STRIP_Y; y < CSB_ACTION_STRIP_Y + 28; y++)
         for (int x = CSB_ACTION_ICONS_X_START;
              x < CSB_ACTION_ICONS_X_START + CSB_V2_ACTION_COUNT * (CSB_ACTION_ICON_W + 4);
@@ -271,6 +273,7 @@ static void test_render_null_safety(void) {
 
 static void test_source_evidence(void) {
     const char *ev = csb_v2_hud_source_evidence();
+    (void)ev;
     assert(ev != NULL);
     assert(strstr(ev, "CSBWin") != NULL);
     assert(strstr(ev, "ReDMCSB") != NULL);

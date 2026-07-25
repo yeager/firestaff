@@ -6,6 +6,7 @@
 int main(void)
 {
     CSB_V1_F1406F1445UnmappedSourceBoundaryReceiptPc34 receipt;
+    (void)receipt;
     unsigned int number;
 
     for (number = 1406u; number <= 1445u; ++number) {

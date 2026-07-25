@@ -9,7 +9,12 @@ static void assert_first_command(
     int x,
     int y)
 {
+    (void)y;
+    (void)x;
+    (void)command;
+    (void)queue;
     struct Dm1V1QueuedCommandPc34Compat out;
+    (void)out;
 
     assert(DM1_V1_InputCommandQueue_PeekPc34Compat(queue, &out) == 1);
     assert(out.command == command);
@@ -24,6 +29,7 @@ int main(void)
     struct Dm1V1UsioMouseStatusPc34Compat outStatus;
     int i;
     const char* evidence;
+    (void)evidence;
 
     hostStatus.mouseButtons = DM1_V1_BUTTON_LEFT;
     hostStatus.mouseX = 291;
