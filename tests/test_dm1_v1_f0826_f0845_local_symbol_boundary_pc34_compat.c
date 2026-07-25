@@ -6,6 +6,7 @@
 int main(void) {
     unsigned int number;
     const DM1_V1_F0826F0845LocalSymbolBoundaryPc34 *entry;
+    (void)entry;
 
     for (number = 826U; number <= 845U; ++number) {
         entry = dm1_v1_f0826_f0845_local_symbol_boundary_pc34(number);

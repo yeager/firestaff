@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.107
+
+## Highlights since v3.0.106
+
+- Bulk fix ~50 GCC -Werror=misleading-indentation patterns across src/ and tests/
+  (if(...)return 0; followed by code on same line).
+- Fix macOS -Werror,-Wunused-but-set-variable in f0826_f0845 test.
+
 # Firestaff v3.0.106
 
 ## Highlights since v3.0.105

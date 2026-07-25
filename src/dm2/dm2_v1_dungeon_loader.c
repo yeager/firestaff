@@ -5247,7 +5247,8 @@ int dm2_v1_dungeon_stone_room_input_receipt(const DM2_V1_DungeonData *d,int leve
  out->dir=dir;out->x=x;out->y=y;out->tile_w2=(uint8_t)raw;out->tile_type=(uint8_t)((uint8_t)raw>>5);out->first_record_link=dm2_v1_dungeon_get_first_thing(d,level,x,y);
  for(int side=0;side<4;++side){out->oriented_bits[side]=(uint8_t)(raw&(1u<<((3-dir-side)&3)));int n=dm2_v1_dungeon_get_tile_raw(d,level,x+dx[(dir+side)&3],y+dy[(dir+side)&3]);if(n<0)return 0;out->neighbor_tile_w2[side]=(uint8_t)n;}out->valid=1;return 1;}
 
-int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,DM2_V1_StoneRoomBaseCellReceipt *out){if(!out)return 0;memset(out,0,sizeof(*out));if(!in||!in->valid)return 0;out->w2=in->tile_w2;out->w0=(uint8_t)(in->tile_w2>>5);memset(out->w6,0xff,sizeof(out->w6));out->valid=1;return 1;}
+int dm2_v1_dungeon_stone_room_base_cell(const DM2_V1_StoneRoomInputReceipt *in,DM2_V1_StoneRoomBaseCellReceipt *out){if(!out)return 0;
+    memset(out,0,sizeof(*out));if(!in||!in->valid)return 0;out->w2=in->tile_w2;out->w0=(uint8_t)(in->tile_w2>>5);memset(out->w6,0xff,sizeof(out->w6));out->valid=1;return 1;}
 
 int dm2_v1_dungeon_is_outdoor(const DM2_V1_DungeonData *d, int level) {
     if (!d || level < 0 || level >= d->level_count) return 0;
