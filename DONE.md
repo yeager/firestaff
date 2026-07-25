@@ -1,3 +1,12 @@
+- ✅ 2026-07-25 Wire 48 CSB viewport tests (Q-CSB-06): walls D0-D3
+  all sides (l/r/l2/r2/c), doors, partly-open doors at all depths,
+  floor/ceiling ornaments (d1c/d1l-r/d1l2-r2/d2c), center fields
+  (d0c/d1c/d2c/d3c), custom backgrounds (11 variants: both backdrops,
+  d0c/d1lr first backdrop, mask after floor ceiling, room pass order,
+  room slot, source lock), projectile metadata, footprints, door
+  frames, item explosions. All 48 build and pass. Q-CSB-06 viewport
+  test wiring complete.
+
 - ✅ 2026-07-25 CSB V2 HUD runtime test (Q-CSB-05): 18-case test
   covering init/shutdown lifecycle, double init idempotency, lazy init
   via setters, all state setters (gold, direction, level, champion,
