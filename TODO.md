@@ -64,9 +64,18 @@ that its exact runtime path is not already source-locked and tested.
     hash-verified decoded `CSBGRAPHICS.DAT` surface and its source palette,
     using C10 transparency. Source-bound object drawers now also suppress
     the older icon/marker fallback when their real surface is unavailable.
-    Remaining: bind
-    every F0115 object, creature and projectile selector to this material
-    route and cover the remaining wall/pit/background families.
+    2026-07-25: F0115 first-object native graphic mapper with G0209
+    weapon[46]/armour[58]/junk[52]/potion[21] tables, C10 blit with
+    conditional horizontal flip, and m11_game_view.c stubs replaced.
+    44 CSB viewport tests (walls D0-D3, doors, ornaments, backgrounds,
+    center fields, footprints, projectile routing) wired into CMake and
+    passing.
+    2026-07-25: F0115 creature group mapper with per-creature transparency
+    (G0219 coordinateSet_transparentColor) and D2/D3 palette remap tables
+    (G0221/G0222), plus F0093 map-order blit variant. Projectile mapper
+    for M715-M718 graphics 454-464 with C10 blit. 30 additional CSB tests
+    wired (startup, chaos, decompdu, swoosh, entrance, etc.).
+    Remaining: wire 8 deferred tests with transitive link deps.
 17. **Q-CSB-07 Thing/sensor runtime:** generic sensors, remote actions,
     actuators, pits, teleporters, stairs and door side effects.
 18. **Q-CSB-08 Combat and movement runtime:** group AI, melee, spells,

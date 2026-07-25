@@ -1626,4 +1626,49 @@ int csb_v1_viewport_near_wall_d2_wall_zone(int view_square);
 
 int csb_v1_viewport_near_wall_d2_wall_uses_flipped_blit( int view_square, int use_flipped_wall_bitmaps);
 
+int csb_v1_viewport_f0115_object_native_graphic_pc34(
+    int thingType, int subtype, int alcoveSlot);
+
+int csb_v1_viewport_f0115_first_object_native_graphic_pc34(
+    int thingType, int subtype);
+
+int csb_v1_viewport_f0115_blit_first_object_native_family_pc34(
+    int nativeGraphic,
+    const uint8_t *sourcePixels,
+    int sourceWidth,
+    int sourceHeight,
+    uint8_t *framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int framebufferStride,
+    int drawX,
+    int drawY,
+    int drawW,
+    int drawH,
+    int depthOrdinal,
+    int mirror);
+
+int csb_v1_viewport_f0115_native_group_front_graphic_pc34(int creatureType);
+
+int csb_v1_viewport_f0115_blit_native_group_front_family_pc34(
+    int creatureType, int nativeGraphic,
+    const uint8_t *sourcePixels, int sourceWidth, int sourceHeight,
+    uint8_t *framebuffer, int framebufferWidth, int framebufferHeight,
+    int framebufferStride, int drawX, int drawY, int drawW, int drawH,
+    int depthOrdinal, int zone, int mirror);
+
+int csb_v1_viewport_f0115_blit_f0093_group_front_family_pc34(
+    int creatureType, const struct DungeonMapDesc_Compat *map,
+    const uint8_t *sourcePixels, int sourceWidth, int sourceHeight,
+    uint8_t *framebuffer, int framebufferWidth, int framebufferHeight,
+    int framebufferStride, int drawX, int drawY, int drawW, int drawH,
+    int depthOrdinal, int zone, int mirror);
+
+int csb_v1_viewport_f0115_blit_m715_m716_m717_m718_projectile_family_pc34(
+    int graphicIndex,
+    const uint8_t *sourcePixels, int sourceWidth, int sourceHeight,
+    uint8_t *framebuffer, int framebufferWidth, int framebufferHeight,
+    int framebufferStride, int drawX, int drawY, int drawW, int drawH,
+    int depthOrdinal, int mirror);
+
 #endif
