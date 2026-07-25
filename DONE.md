@@ -1,3 +1,10 @@
+- ✅ 2026-07-25 Wire 211 DM1 tests into CMakeLists: batch-wire chest,
+  mirror candidate, champion panel, inventory, HoC, viewport, hidpi,
+  sensor, movement, save/load, and source ownership tests against
+  firestaff_m10. All 211 build and pass. 44 tests with compile/link/
+  runtime failures excluded (missing headers, undeclared functions,
+  struct mismatches, link deps, or assertion/abort failures).
+
 - ✅ 2026-07-25 Wire 200 CSB/ReDMCSB tests into CMakeLists: batch-wire
   chaos, DSA, startup, swoosh, entrance, dialog, text, viewport,
   sensor, champion, inventory, save, package, platform boundary audit,
