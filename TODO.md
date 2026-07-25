@@ -81,7 +81,10 @@ that its exact runtime path is not already source-locked and tested.
     STATISTICS+WOUNDS scheduling), spell area panel model (COMMAND.C:473
     caster/runes/cast/recant zones and command IDs), clock tick repaint
     model (F0293 STATISTICS mask, bar/stat/load flags). 33-case test.
-    Remaining: V2 HUD runtime tests.
+    2026-07-25: V2 HUD runtime test (18 cases: init/shutdown, double
+    init, lazy init, all setters, action+clear, hit flash, chaos,
+    toggle/opacity, apply_frame, render with/without gate, null safety,
+    source evidence). Q-CSB-05 HUD model layer complete.
 16. **Q-CSB-06 Dungeon viewport geometry:** walls, doors, teleporters, pits,
     ornaments, creatures, items, projectiles, explosions and backgrounds.
     2026-07-24: F0115 item/explosion composition now accepts only a
