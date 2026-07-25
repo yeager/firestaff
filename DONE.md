@@ -1,3 +1,10 @@
+- ✅ 2026-07-25 CSB F0115 creature group and projectile native graphic
+  mappers: creature blit with per-type transparency from G0219
+  (coordinateSet_transparentColor), D2/D3 palette remap (G0221/G0222),
+  F0093 map-order variant, and M715-M718 projectile blit for graphics
+  454-464 with C10 transparency. 30 additional CSB tests wired into
+  CMake covering startup, chaos, decompdu, swoosh, entrance and more.
+
 - ✅ 2026-07-24 CSB D0 F0115 cache-material path: D0L/D0R teleporter fields
   now decode their exact 32x136 indexed raster directly from a hash-admitted
   `CSBGRAPHICS.DAT` entry, with a palette receipt decoded from that same
@@ -40384,3 +40391,24 @@ passes all 27 checks from title through entrance and HUD.
   prior live runtime. Verification:
   `csb_v1_csbwin_save_provenance_pc34_compat` and
   `csb_v1_save_import_path_pc34_compat`.
+
+- **CSB F0115 first-object native graphic mapper (G0209):** Done 2026-07-25.
+  Implements `csb_v1_viewport_f0115_object_native_graphic_pc34` and
+  `csb_v1_viewport_f0115_blit_first_object_native_family_pc34` with
+  CSB-specific direct-table mapping for all 6 thing types
+  (weapon[46]/armour[58]/junk[52]/potion[21]/container/scroll) to native
+  graphics 498-583. Blit applies C10 transparency and conditional horizontal
+  flip for multi-graphic aspect leaders. Replaces m11_game_view.c stubs.
+  Verification: `csb_v1_f0115_first_object_real_asset_pc34_compat`.
+
+- **CSB viewport test suite bulk integration:** Done 2026-07-25.
+  Wired 44 CSB viewport tests into CMakeLists.txt covering walls (D0-D3,
+  all positions), doors (F0111 partly-open, front-clipped, door frames),
+  floor/ceiling ornaments (F0095, F0108), center fields, custom backgrounds
+  (backdrops, room slots, masks, pass order, source locks), sidewall
+  backdrops, F0108 footprints, wall ornaments (F0107), and F0115 projectile
+  routing. All 44 build and pass. Three tests with deep transitive
+  dependencies (f0115_projectile_metadata, d0l2_d0r2_f0111_f0115_route_receipt,
+  d2l2_d2r2_f0111_partly_open) deferred until they can link against the full
+  library. Pre-existing build failures in chaos_magic (unused static
+  functions) fixed with __attribute__((unused)).

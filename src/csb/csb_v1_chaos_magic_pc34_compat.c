@@ -547,16 +547,19 @@ static int csb_v1_csbwin_dsa_sign_extend(uint16_t value, int bits) {
     return (int)((value ^ sign) - sign);
 }
 
+__attribute__((unused))
 static int csb_v1_csbwin_dsa_location_level(uint32_t location)
 {
     return (int)((location >> 10) & 0x3fu);
 }
 
+__attribute__((unused))
 static int csb_v1_csbwin_dsa_location_x(uint32_t location)
 {
     return (int)((location >> 5) & 0x1fu);
 }
 
+__attribute__((unused))
 static int csb_v1_csbwin_dsa_location_y(uint32_t location)
 {
     return (int)(location & 0x1fu);

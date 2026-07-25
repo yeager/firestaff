@@ -389,45 +389,6 @@ static int dm1_v1_champion_panel_action_icon_map_palette_color_pc34(
     return color;
 }
 
-static int csb_v1_viewport_f0115_first_object_native_graphic_pc34(
-        int thingType,
-        int subtype) {
-    (void)thingType;
-    (void)subtype;
-    return -1;
-}
-
-static int csb_v1_viewport_f0115_blit_first_object_native_family_pc34(
-        int nativeGraphic,
-        const unsigned char* sourcePixels,
-        int sourceWidth,
-        int sourceHeight,
-        unsigned char* framebuffer,
-        int framebufferWidth,
-        int framebufferHeight,
-        int framebufferStride,
-        int drawX,
-        int drawY,
-        int drawW,
-        int drawH,
-        int depthOrdinal,
-        int mirror) {
-    (void)nativeGraphic;
-    (void)sourcePixels;
-    (void)sourceWidth;
-    (void)sourceHeight;
-    (void)framebuffer;
-    (void)framebufferWidth;
-    (void)framebufferHeight;
-    (void)framebufferStride;
-    (void)drawX;
-    (void)drawY;
-    (void)drawW;
-    (void)drawH;
-    (void)depthOrdinal;
-    (void)mirror;
-    return 0;
-}
 
 static int dm1_v1_graphic_materialized_wallset_index_pc34(
         int wallSet,

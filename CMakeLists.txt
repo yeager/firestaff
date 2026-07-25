@@ -3970,6 +3970,9 @@ set(M11_SOURCES
     src/shared/session_timer_runtime.c
     src/engine/runtime_gesture_navigation_gate.c
     src/engine/m11_dm2_runtime_frame_receipt_gate.c
+    src/csb/csb_v1_viewport_f0115_first_object_pc34_compat.c
+    src/csb/csb_v1_viewport_f0115_first_group_pc34_compat.c
+    src/csb/csb_v1_viewport_f0115_first_projectile_pc34_compat.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -17599,6 +17602,489 @@ if(BUILD_TESTING)
     )
     set_tests_properties(csb_v1_viewport_f0115_wall_text_ornament_pc34_compat PROPERTIES
         LABELS "tier2;csb;viewport;wall_text;palette;data_free"
+    )
+
+    add_executable(test_csb_v1_f0115_first_object_real_asset_pc34_compat
+        tests/test_csb_v1_f0115_first_object_real_asset_pc34_compat.c
+        src/csb/csb_v1_viewport_f0115_first_object_pc34_compat.c
+        tests/stub_asset_loader_m11.c
+    )
+    target_include_directories(test_csb_v1_f0115_first_object_real_asset_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0115_first_object_real_asset_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0115_first_object_real_asset_pc34_compat
+        COMMAND test_csb_v1_f0115_first_object_real_asset_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0115_first_group_real_asset_pc34_compat
+        tests/test_csb_v1_f0115_first_group_real_asset_pc34_compat.c
+        src/csb/csb_v1_viewport_f0115_first_group_pc34_compat.c
+        tests/stub_asset_loader_m11.c
+    )
+    target_include_directories(test_csb_v1_f0115_first_group_real_asset_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0115_first_group_real_asset_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0115_first_group_real_asset_pc34_compat
+        COMMAND test_csb_v1_f0115_first_group_real_asset_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0115_first_projectile_real_asset_pc34_compat
+        tests/test_csb_v1_f0115_first_projectile_real_asset_pc34_compat.c
+        src/csb/csb_v1_viewport_f0115_first_projectile_pc34_compat.c
+        tests/stub_asset_loader_m11.c
+    )
+    target_include_directories(test_csb_v1_f0115_first_projectile_real_asset_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0115_first_projectile_real_asset_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0115_first_projectile_real_asset_pc34_compat
+        COMMAND test_csb_v1_f0115_first_projectile_real_asset_pc34_compat
+    )
+
+    add_executable(test_csb_v1_chaos_cast_targeting_pc34_compat
+        tests/test_csb_v1_chaos_cast_targeting_pc34_compat.c
+        src/csb/csb_v1_chaos_cast_targeting_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_chaos_cast_targeting_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_chaos_cast_targeting_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_chaos_cast_targeting_pc34_compat
+        COMMAND test_csb_v1_chaos_cast_targeting_pc34_compat
+    )
+
+    add_executable(test_csb_v1_decompdu_pc34_compat
+        tests/test_csb_v1_decompdu_pc34_compat.c
+        src/csb/csb_v1_decompdu_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_decompdu_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_decompdu_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_decompdu_pc34_compat
+        COMMAND test_csb_v1_decompdu_pc34_compat
+    )
+
+    add_executable(test_csb_v1_dungeon_header_pc34_compat
+        tests/test_csb_v1_dungeon_header_pc34_compat.c
+        src/csb/csb_v1_dungeon_header_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_dungeon_header_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_dungeon_header_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_dungeon_header_pc34_compat
+        COMMAND test_csb_v1_dungeon_header_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0093_replacement_palette_pc34_compat
+        tests/test_csb_v1_f0093_replacement_palette_pc34_compat.c
+        src/csb/csb_v1_f0093_replacement_palette_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0093_replacement_palette_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0093_replacement_palette_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0093_replacement_palette_pc34_compat
+        COMMAND test_csb_v1_f0093_replacement_palette_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0436_startend_fade_palette_runtime_coupling_pc34_compat
+        tests/test_csb_v1_f0436_startend_fade_palette_runtime_coupling_pc34_compat.c
+        src/csb/csb_v1_f0436_startend_fade_palette_runtime_coupling_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0436_startend_fade_palette_runtime_coupling_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0436_startend_fade_palette_runtime_coupling_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0436_startend_fade_palette_runtime_coupling_pc34_compat
+        COMMAND test_csb_v1_f0436_startend_fade_palette_runtime_coupling_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0437_f0438_f0580_f0581_startup_runtime_coupling_pc34_compat
+        tests/test_csb_v1_f0437_f0438_f0580_f0581_startup_runtime_coupling_pc34_compat.c
+        src/csb/csb_v1_f0437_f0438_f0580_f0581_startup_runtime_coupling_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0437_f0438_f0580_f0581_startup_runtime_coupling_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0437_f0438_f0580_f0581_startup_runtime_coupling_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0437_f0438_f0580_f0581_startup_runtime_coupling_pc34_compat
+        COMMAND test_csb_v1_f0437_f0438_f0580_f0581_startup_runtime_coupling_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0439_f0441_f0442_startend_entrance_boundaries_pc34_compat
+        tests/test_csb_v1_f0439_f0441_f0442_startend_entrance_boundaries_pc34_compat.c
+        src/csb/csb_v1_f0439_f0441_f0442_startend_entrance_boundaries_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0439_f0441_f0442_startend_entrance_boundaries_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0439_f0441_f0442_startend_entrance_boundaries_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0439_f0441_f0442_startend_entrance_boundaries_pc34_compat
+        COMMAND test_csb_v1_f0439_f0441_f0442_startend_entrance_boundaries_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0440_startend_temporary_graphic_byte_count_pc34_compat
+        tests/test_csb_v1_f0440_startend_temporary_graphic_byte_count_pc34_compat.c
+        src/csb/csb_v1_f0440_startend_temporary_graphic_byte_count_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0440_startend_temporary_graphic_byte_count_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0440_startend_temporary_graphic_byte_count_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0440_startend_temporary_graphic_byte_count_pc34_compat
+        COMMAND test_csb_v1_f0440_startend_temporary_graphic_byte_count_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0468_memory_allocate_pc34_compat
+        tests/test_csb_v1_f0468_memory_allocate_pc34_compat.c
+        src/csb/csb_v1_f0468_memory_allocate_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0468_memory_allocate_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0468_memory_allocate_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0468_memory_allocate_pc34_compat
+        COMMAND test_csb_v1_f0468_memory_allocate_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0468_memory_allocate_plan_pc34_compat
+        tests/test_csb_v1_f0468_memory_allocate_plan_pc34_compat.c
+        src/csb/csb_v1_f0468_memory_allocate_plan_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0468_memory_allocate_plan_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0468_memory_allocate_plan_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0468_memory_allocate_plan_pc34_compat
+        COMMAND test_csb_v1_f0468_memory_allocate_plan_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0474_f0477_f0478_f0479_f0488_f0490_startup_graphics_boundaries_pc34_compat
+        tests/test_csb_v1_f0474_f0477_f0478_f0479_f0488_f0490_startup_graphics_boundaries_pc34_compat.c
+        src/csb/csb_v1_f0474_f0477_f0478_f0479_f0488_f0490_startup_graphics_boundaries_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0474_f0477_f0478_f0479_f0488_f0490_startup_graphics_boundaries_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0474_f0477_f0478_f0479_f0488_f0490_startup_graphics_boundaries_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0474_f0477_f0478_f0479_f0488_f0490_startup_graphics_boundaries_pc34_compat
+        COMMAND test_csb_v1_f0474_f0477_f0478_f0479_f0488_f0490_startup_graphics_boundaries_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0579_entrance_bitplanes_runtime_coupling_pc34_compat
+        tests/test_csb_v1_f0579_entrance_bitplanes_runtime_coupling_pc34_compat.c
+        src/csb/csb_v1_f0579_entrance_bitplanes_runtime_coupling_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0579_entrance_bitplanes_runtime_coupling_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0579_entrance_bitplanes_runtime_coupling_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0579_entrance_bitplanes_runtime_coupling_pc34_compat
+        COMMAND test_csb_v1_f0579_entrance_bitplanes_runtime_coupling_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat
+        tests/test_csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat.c
+        src/csb/csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat
+        COMMAND test_csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat
+        tests/test_csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat.c
+        src/csb/csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat
+        COMMAND test_csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0902_draw_ftl_logo_pc34_compat
+        tests/test_csb_v1_f0902_draw_ftl_logo_pc34_compat.c
+        src/csb/csb_v1_f0902_draw_ftl_logo_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0902_draw_ftl_logo_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0902_draw_ftl_logo_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0902_draw_ftl_logo_pc34_compat
+        COMMAND test_csb_v1_f0902_draw_ftl_logo_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat
+        tests/test_csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.c
+        src/csb/csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat
+        COMMAND test_csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f1070_f1071_f1072_f1074_library_helpers_pc34_compat
+        tests/test_csb_v1_f1070_f1071_f1072_f1074_library_helpers_pc34_compat.c
+        src/csb/csb_v1_f1070_f1071_f1072_f1074_library_helpers_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f1070_f1071_f1072_f1074_library_helpers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f1070_f1071_f1072_f1074_library_helpers_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f1070_f1071_f1072_f1074_library_helpers_pc34_compat
+        COMMAND test_csb_v1_f1070_f1071_f1072_f1074_library_helpers_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f1085_f1086_f1087_intuition_vector_helpers_pc34_compat
+        tests/test_csb_v1_f1085_f1086_f1087_intuition_vector_helpers_pc34_compat.c
+        src/csb/csb_v1_f1085_f1086_f1087_intuition_vector_helpers_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f1085_f1086_f1087_intuition_vector_helpers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f1085_f1086_f1087_intuition_vector_helpers_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f1085_f1086_f1087_intuition_vector_helpers_pc34_compat
+        COMMAND test_csb_v1_f1085_f1086_f1087_intuition_vector_helpers_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f1092_f1093_f1094_alert_helpers_pc34_compat
+        tests/test_csb_v1_f1092_f1093_f1094_alert_helpers_pc34_compat.c
+        src/csb/csb_v1_f1092_f1093_f1094_alert_helpers_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f1092_f1093_f1094_alert_helpers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f1092_f1093_f1094_alert_helpers_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f1092_f1093_f1094_alert_helpers_pc34_compat
+        COMMAND test_csb_v1_f1092_f1093_f1094_alert_helpers_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f1106_f1107_f1109_f1114_fio1_trackdisk_boundaries_pc34_compat
+        tests/test_csb_v1_f1106_f1107_f1109_f1114_fio1_trackdisk_boundaries_pc34_compat.c
+        src/csb/csb_v1_f1106_f1107_f1109_f1114_fio1_trackdisk_boundaries_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f1106_f1107_f1109_f1114_fio1_trackdisk_boundaries_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f1106_f1107_f1109_f1114_fio1_trackdisk_boundaries_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f1106_f1107_f1109_f1114_fio1_trackdisk_boundaries_pc34_compat
+        COMMAND test_csb_v1_f1106_f1107_f1109_f1114_fio1_trackdisk_boundaries_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f1159_f1160_f1161_f1162_f1163_usio_helpers_pc34_compat
+        tests/test_csb_v1_f1159_f1160_f1161_f1162_f1163_usio_helpers_pc34_compat.c
+        src/csb/csb_v1_f1159_f1160_f1161_f1162_f1163_usio_helpers_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f1159_f1160_f1161_f1162_f1163_usio_helpers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f1159_f1160_f1161_f1162_f1163_usio_helpers_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f1159_f1160_f1161_f1162_f1163_usio_helpers_pc34_compat
+        COMMAND test_csb_v1_f1159_f1160_f1161_f1162_f1163_usio_helpers_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f1168_f1170_f1171_f1305_f1307_usio_fio1_boundaries_pc34_compat
+        tests/test_csb_v1_f1168_f1170_f1171_f1305_f1307_usio_fio1_boundaries_pc34_compat.c
+        src/csb/csb_v1_f1168_f1170_f1171_f1305_f1307_usio_fio1_boundaries_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f1168_f1170_f1171_f1305_f1307_usio_fio1_boundaries_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f1168_f1170_f1171_f1305_f1307_usio_fio1_boundaries_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f1168_f1170_f1171_f1305_f1307_usio_fio1_boundaries_pc34_compat
+        COMMAND test_csb_v1_f1168_f1170_f1171_f1305_f1307_usio_fio1_boundaries_pc34_compat
+    )
+
+    add_executable(test_csb_v1_graphics_change7_16_pc34_compat
+        tests/test_csb_v1_graphics_change7_16_pc34_compat.c
+        src/csb/csb_v1_graphics_change7_16_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_graphics_change7_16_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_graphics_change7_16_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_graphics_change7_16_pc34_compat
+        COMMAND test_csb_v1_graphics_change7_16_pc34_compat
+    )
+
+    add_executable(test_csb_v1_grey_lord_combat_pc34_compat
+        tests/test_csb_v1_grey_lord_combat_pc34_compat.c
+        src/csb/csb_v1_grey_lord_combat_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_grey_lord_combat_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_grey_lord_combat_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_grey_lord_combat_pc34_compat
+        COMMAND test_csb_v1_grey_lord_combat_pc34_compat
+    )
+
+    add_executable(test_csb_v1_neophyte_mode_pc34_compat
+        tests/test_csb_v1_neophyte_mode_pc34_compat.c
+        src/csb/csb_v1_neophyte_mode_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_neophyte_mode_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_neophyte_mode_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_neophyte_mode_pc34_compat
+        COMMAND test_csb_v1_neophyte_mode_pc34_compat
+    )
+
+    add_executable(test_csb_v1_version_checker_pc34_compat
+        tests/test_csb_v1_version_checker_pc34_compat.c
+        src/csb/csb_v1_version_checker_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_version_checker_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_version_checker_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_version_checker_pc34_compat
+        COMMAND test_csb_v1_version_checker_pc34_compat
+    )
+
+    add_executable(test_csb_v1_zokathra_spell_pc34_compat
+        tests/test_csb_v1_zokathra_spell_pc34_compat.c
+        src/csb/csb_v1_zokathra_spell_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_zokathra_spell_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_zokathra_spell_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_zokathra_spell_pc34_compat
+        COMMAND test_csb_v1_zokathra_spell_pc34_compat
     )
 
     add_executable(test_csb_v1_boot_viewport_render_gate
