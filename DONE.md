@@ -1,3 +1,10 @@
+- ✅ 2026-07-25 Add 5 DM1 test suites (36 tests total): F0682 transparent
+  material (6), F0809/F0811 copy protection media (9), group destination
+  visibility (10), input platform boundary (5), ornament cache owner (6).
+  Covers Q-DM1-03 viewport (transparent surface/receipt/FNV1a), Q-DM1-08
+  startup (copy protection diagnostics/media kinds/verification, input
+  platform boundary queries/portability), Q-DM1-04 dungeon (group direction
+  visibility cone, ornament cache ordinal lookup). [v3.0.125]
 - ✅ 2026-07-25 Add 6 DM1 test suites (33 tests total): fade transition (10),
   save load system (6), title screen (6), group active lifecycle (4),
   CEDT019 portrait save (4), wall inscription presentation (3). Covers

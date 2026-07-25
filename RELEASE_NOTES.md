@@ -1,6 +1,16 @@
 
 # Unreleased
 
+# Firestaff v3.0.125
+
+## New test suites (5 suites, 36 tests)
+
+- `test_dm1_v1_f0682_transparent_material_pc34_compat` — 6 tests (Q-DM1-03): transparent surface struct, receipt, FNV1a hash
+- `test_dm1_v1_f0809_f0811_copypro_media_pc34_compat` — 9 tests (Q-DM1-08): copy protection diagnostic constants, media kinds, capture/receipt structs, verification
+- `test_dm1_v1_group_destination_visibility_pc34_compat` — 10 tests (Q-DM1-04): direction constants, cardinal visibility cone (N/E/S/W), same-square rejection, compat parity
+- `test_dm1_v1_input_platform_boundary_pc34_compat` — 5 tests (Q-DM1-08): F0537/F0544 boundary queries, portability check, source evidence
+- `test_dm1_v1_ornament_cache_owner_pc34_compat` — 6 tests (Q-DM1-04): cache not loaded, null output, ordinal zero/valid/out-of-range, negative global index
+
 # Firestaff v3.0.124
 
 ## New test suites (6 material suites, 32 tests)
