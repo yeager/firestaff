@@ -1,3 +1,9 @@
+- ✅ 2026-07-25 Add DM1 dungeon thing data test (17 tests, Q-DM1-04) and melee
+  action F0402 test (30 tests, Q-DM1-05). Covers null rejection on ~30 plan
+  functions, damage emission zero-input, strength calculation with load,
+  death smoke attack, creature attributes, group cells/directions/ordinals,
+  object subtype/type/icon/slots, and source evidence gates.
+
 - ✅ 2026-07-25 Add DM1 inventory test (17 tests, Q-DM1-06) and dungeon
   square structs test (10 tests, Q-DM1-04). Covers init/set/get/remove,
   mouse pickup/drop, chest open/close, load recalc, slot mapping, equip
