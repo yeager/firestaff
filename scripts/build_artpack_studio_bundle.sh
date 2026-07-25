@@ -107,7 +107,9 @@ if [[ "$(uname -s)" == "Darwin" ]]; then
   "$OUT_DIR/dist/Firestaff Artpack Studio.app/Contents/MacOS/Firestaff Artpack Studio" --smoke-ui
 else
   "$OUT_DIR/dist/firestaff_artpack_studio" --check-tkinter
-  "$OUT_DIR/dist/firestaff_artpack_studio" --smoke-ui
+  # Linux release runners are headless. Exercise the non-GUI paths there;
+  # macOS above performs the actual widget-tree test with a window server.
+  "$OUT_DIR/dist/firestaff_artpack_studio" --self-test
 fi
 
 find "$OUT_DIR/dist" -maxdepth 2 -type f -o -type d
