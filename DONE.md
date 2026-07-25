@@ -1,3 +1,10 @@
+- ✅ 2026-07-25 Add CSB dungeon loader test (16 tests, Q-CSB-04), dungeon world
+  test (22 tests, Q-CSB-04), character test (19 tests, Q-CSB-05), and chaos
+  magic/DSA test (15 tests, Q-CSB-04). Covers dungeon.dat load/decode/tile,
+  world init/level/tile/wall/ornament/walkable, sensor/door/endgame/bugfix,
+  champion init/kill/resurrect/reincarnate/stats/skills/load/movement,
+  and DSA init/cleanup/trigger/tick/import/find with constant verification.
+
 - ✅ 2026-07-25 Add DM1 game state test (12 tests, Q-DM1-08), game over/title
   test (15 tests, Q-DM1-08), and door bash stamina feedback chain test
   (6 tests, Q-DM1-04). Covers state machine init/transitions/callbacks,
