@@ -154,7 +154,11 @@ int main(void)
           "production LEV discovery skips safely when local retail media is absent");
     CHECK(snprintf(directory, sizeof(directory),
                    "/tmp/firestaff-nexus-lev-corpus-%ld", (long)getpid()) > 0 &&
+#ifdef _WIN32
+          mkdir(directory) == 0,
+#else
           mkdir(directory, 0700) == 0,
+#endif
           "temporary direct LEV corpus directory exists");
     for (i = 0U; i < 16U && failures == 0; ++i) {
         FILE *file = NULL;
