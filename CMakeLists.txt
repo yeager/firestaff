@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.127 LANGUAGES C)
+project(Firestaff VERSION 3.0.128 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -47928,3 +47928,13 @@ add_executable(test_dm1_v1_champion_panel_material_pc34_compat tests/test_dm1_v1
 target_include_directories(test_dm1_v1_champion_panel_material_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_champion_panel_material_pc34_compat PRIVATE firestaff_m11 firestaff_m10)
 add_test(NAME test_dm1_v1_champion_panel_material_pc34_compat COMMAND test_dm1_v1_champion_panel_material_pc34_compat)
+
+add_executable(test_dm1_v1_automap_pc34_compat tests/test_dm1_v1_automap_pc34_compat.c)
+target_include_directories(test_dm1_v1_automap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_automap_pc34_compat PRIVATE firestaff_m11 firestaff_m10)
+add_test(NAME test_dm1_v1_automap_pc34_compat COMMAND test_dm1_v1_automap_pc34_compat)
+
+add_executable(test_dm1_v1_minimap_pc34_compat tests/test_dm1_v1_minimap_pc34_compat.c)
+target_include_directories(test_dm1_v1_minimap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_minimap_pc34_compat PRIVATE firestaff_m11 firestaff_m10)
+add_test(NAME test_dm1_v1_minimap_pc34_compat COMMAND test_dm1_v1_minimap_pc34_compat)

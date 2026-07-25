@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.128
+
+## New test suites (2 suites, 5 tests)
+
+- `test_dm1_v1_automap_pc34_compat` — 3 tests (Q-DM1-03): record visit null, export current level null, export PNG null
+- `test_dm1_v1_minimap_pc34_compat` — 2 tests (Q-DM1-03): render null gameview, render null framebuffer
+
+Completes all testable non-mirror DM1 headers.
+
 # Firestaff v3.0.127
 
 ## New test suites (3 suites, 16 tests)

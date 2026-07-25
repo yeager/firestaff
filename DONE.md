@@ -1,3 +1,7 @@
+- ✅ 2026-07-25 Add 2 DM1 test suites (5 tests total): automap (3), minimap (2).
+  Covers Q-DM1-03 viewport (automap record/export null guards, minimap render
+  null guards). Completes all testable non-mirror DM1 headers — only engine
+  (master header) and manual_chest (no source) remain untestable. [v3.0.128]
 - ✅ 2026-07-25 Add 3 DM1 test suites (16 tests total): champion live M11
   capture lifecycle (6), F0259 quiver refill (5), champion panel material (5).
   Covers Q-DM1-07 HUD/action (capture lifecycle init/step, panel material
