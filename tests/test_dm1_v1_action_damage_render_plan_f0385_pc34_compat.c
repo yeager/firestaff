@@ -16,6 +16,7 @@ static int log_step(
     const DM1_V1_ActionDamageRenderPlanPc34Compat *plan,
     const DM1_V1_ActionDamageRenderStepPc34Compat *step)
 {
+    (void)plan;
     StepLog *log = (StepLog *)context;
 
     assert(plan != NULL);
@@ -37,6 +38,11 @@ static void assert_box(
     int top,
     int bottom)
 {
+    (void)bottom;
+    (void)top;
+    (void)right;
+    (void)left;
+    (void)box;
     assert(box->left == left);
     assert(box->right == right);
     assert(box->top == top);
@@ -46,6 +52,7 @@ static void assert_box(
 static void assert_standard_prefix_and_suffix(
     const DM1_V1_ActionDamageRenderPlanPc34Compat *plan)
 {
+    (void)plan;
     assert(plan->steps[0].kind ==
            DM1_V1_ACTION_DAMAGE_STEP_ENABLE_SCREEN_UPDATE_PC34);
     assert(plan->steps[1].kind ==
@@ -58,6 +65,7 @@ static void test_full_damage_uses_source_named_draw_boundary(void)
 {
     DM1_V1_ActionDamageRenderPlanPc34Compat plan;
     StepLog log = {0, -1, {0}};
+    (void)log;
 
     assert(F0385_MENUS_DrawActionDamage(123, log_step, &log, &plan) == 1);
 
@@ -115,6 +123,7 @@ static void test_negative_damage_text_routes(void)
 {
     DM1_V1_ActionDamageRenderPlanPc34Compat cantReach;
     DM1_V1_ActionDamageRenderPlanPc34Compat needAmmo;
+    (void)needAmmo;
 
     assert(F0385_MENUS_DrawActionDamage(-1, NULL, NULL, &cantReach) == 1);
     assert(cantReach.render_kind ==
@@ -137,7 +146,9 @@ static void test_negative_damage_text_routes(void)
 static void test_invalid_damage_and_consumer_failure_are_rejected(void)
 {
     DM1_V1_ActionDamageRenderPlanPc34Compat plan;
+    (void)plan;
     StepLog log = {0, 2, {0}};
+    (void)log;
 
     assert(F0385_MENUS_DrawActionDamage(32768, NULL, NULL, &plan) == 0);
     assert(F0385_MENUS_DrawActionDamage(1, NULL, NULL, NULL) == 0);
@@ -149,6 +160,7 @@ static void test_invalid_damage_and_consumer_failure_are_rejected(void)
 static void test_source_evidence_names_redmcsb_symbol(void)
 {
     const char *evidence =
+    (void)evidence;
         DM1_V1_ActionDamageRenderPlan_SourceEvidencePc34Compat();
 
     assert(evidence != NULL);

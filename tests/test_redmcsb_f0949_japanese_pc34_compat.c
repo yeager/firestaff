@@ -9,7 +9,7 @@
 #error "This test requires C11 or later."
 #endif
 
-static uint16_t expected_pc98_code(uint16_t packed_character)
+static __attribute__((unused)) uint16_t expected_pc98_code(uint16_t packed_character)
 {
     uint16_t lead = packed_character >> 8;
     uint16_t trail = packed_character & UINT16_C(0x00ff);
@@ -46,6 +46,7 @@ int main(void)
         { UINT16_C(0xfc4b), UINT16_C(0x972c) }
     };
     const char *evidence = redmcsb_f0949_japanese_source_evidence_pc34();
+    (void)evidence;
     uint32_t packed_character;
     size_t index;
 

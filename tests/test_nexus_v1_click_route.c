@@ -194,6 +194,7 @@ static void test_floor_item_pickup_at_current_square(void) {
     Nexus_MechanicsState st;
     Nexus_ClickTarget target;
     int cmd;
+    (void)cmd;
 
     nexus_floor_init();
     reset_engine_for_click_tests(&engine, &st);
@@ -218,6 +219,7 @@ static void test_floor_item_far_away_moves_toward(void) {
     Nexus_MechanicsState st;
     Nexus_ClickTarget target;
     int cmd;
+    (void)cmd;
 
     nexus_floor_init();
     reset_engine_for_click_tests(&engine, &st);

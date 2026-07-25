@@ -7,6 +7,7 @@ int main(void)
 {
     struct Dm1V1UsioMouseStatusPc34Compat status;
     const char* evidence;
+    (void)evidence;
 
     status.mouseButtons = DM1_V1_BUTTON_LEFT;
     status.mouseX = 123;

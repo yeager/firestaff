@@ -11,6 +11,7 @@ int main(void)
         { 0x0088u, 7u, 1 },
         { 0x00a0u, 7u, 3 }
     };
+    (void)objects;
 
     assert(F0273_SENSOR_GetObjectOfTypeInCell_Compat(
                objects, sizeof(objects) / sizeof(objects[0]), 1, 7u) == 0x0088u);

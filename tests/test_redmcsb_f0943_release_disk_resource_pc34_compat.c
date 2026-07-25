@@ -12,6 +12,7 @@
 int main(void)
 {
     const char *evidence =
+    (void)evidence;
         redmcsb_f0943_release_disk_resource_source_evidence_pc34();
 
     assert(!redmcsb_f0943_release_disk_resource_pc34_compat());

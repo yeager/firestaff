@@ -12,6 +12,7 @@
 int main(void)
 {
     const char *evidence =
+    (void)evidence;
         redmcsb_f1049_longjmp_source_evidence_pc34();
 
     assert(!redmcsb_f1049_longjmp_pc34_compat());

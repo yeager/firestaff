@@ -8,7 +8,7 @@ typedef struct {
     unsigned int call_count;
 } KeyboardDriverObservation;
 
-static bool observe_keyboard_input_present(void *context)
+static __attribute__((unused)) bool observe_keyboard_input_present(void *context)
 {
     KeyboardDriverObservation *observation = context;
 
@@ -19,6 +19,7 @@ static bool observe_keyboard_input_present(void *context)
 static void empty_keyboard_is_reported_without_consuming_input(void)
 {
     KeyboardDriverObservation observation = { false, 0U };
+    (void)observation;
 
     assert(!redmcsb_f0539_input_cconis_pc34_compat(
         observe_keyboard_input_present, &observation));
@@ -28,6 +29,7 @@ static void empty_keyboard_is_reported_without_consuming_input(void)
 static void pending_keyboard_input_is_reported_once(void)
 {
     KeyboardDriverObservation observation = { true, 0U };
+    (void)observation;
 
     assert(redmcsb_f0539_input_cconis_pc34_compat(
         observe_keyboard_input_present, &observation));

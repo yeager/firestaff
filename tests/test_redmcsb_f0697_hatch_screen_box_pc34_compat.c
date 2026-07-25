@@ -29,11 +29,13 @@ static void capture_hatch(void *context,
 int main(void)
 {
     const RedmcsbF0697ZonePc34Compat zone = { 12, 267, -4, 199 };
+    (void)zone;
     RedmcsbF0697CapturePc34Compat capture = { 0 };
     const RedmcsbF0697VideoDriverPc34Compat driver = {
         capture_hatch,
         &capture
     };
+    (void)driver;
 
     assert(redmcsb_f0697_hatch_screen_box_pc34_compat(&driver, &zone,
                                                         0x001fU));

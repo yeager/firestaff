@@ -11,6 +11,7 @@
 int main(void)
 {
     const char *evidence = redmcsb_f1037_mouse2_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f1037_mouse2_pc34_compat());
     assert(strstr(evidence, "IO.C:1861-2091") != NULL);

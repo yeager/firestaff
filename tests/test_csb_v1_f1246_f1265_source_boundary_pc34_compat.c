@@ -6,6 +6,7 @@
 int main(void)
 {
     const CSB_V1_F1246F1265SourceBoundaryReceiptPc34 *entries;
+    (void)entries;
     size_t count;
     size_t index;
 

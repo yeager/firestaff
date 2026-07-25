@@ -9,7 +9,12 @@ static void assert_peek_command(
     int expectedX,
     int expectedY)
 {
+    (void)expectedY;
+    (void)expectedX;
+    (void)expectedCommand;
+    (void)queue;
     struct Dm1V1QueuedCommandPc34Compat out;
+    (void)out;
 
     assert(DM1_V1_InputCommandQueue_PeekPc34Compat(queue, &out) == 1);
     assert(out.command == expectedCommand);
@@ -23,9 +28,12 @@ int main(void)
     struct Dm1V1UsioDataPc34Compat batch[3];
     struct Dm1V1UsioDataPc34Compat pending;
     struct Dm1V1QueuedCommandPc34Compat out;
+    (void)out;
     int pendingPresent;
+    (void)pendingPresent;
     int i;
     const char* evidence;
+    (void)evidence;
 
     DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
     memset(batch, 0, sizeof(batch));

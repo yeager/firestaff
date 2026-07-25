@@ -11,6 +11,7 @@
 int main(void)
 {
     const char *evidence =
+    (void)evidence;
         redmcsb_f1075_open_layers_library_source_evidence_pc34();
 
     redmcsb_f1075_open_layers_library_pc34_compat();

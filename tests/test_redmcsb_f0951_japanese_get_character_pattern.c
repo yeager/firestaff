@@ -29,6 +29,7 @@ int main(void)
     uint8_t pattern[REDMCSB_F0951_CHARACTER_PATTERN_BYTES] = { 0u };
     uint8_t expected[REDMCSB_F0951_CHARACTER_PATTERN_BYTES];
     const char *evidence;
+    (void)evidence;
     unsigned int byte_index;
 
     fill_pattern(ank_segment, 0x0021u, 0x40u);

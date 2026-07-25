@@ -28,6 +28,7 @@ int main(void)
 {
     redmcsb_f1022_capture capture = { 0 };
     const char *evidence;
+    (void)evidence;
 
     redmcsb_f1022_print_character(capture_console_print, &capture, '4');
     assert(capture.call_count == 1U);

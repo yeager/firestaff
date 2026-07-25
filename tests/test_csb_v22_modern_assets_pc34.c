@@ -62,6 +62,7 @@ static void test_manifest_path_from_data_dir(void) {
     /* dataDir = ~/.firestaff/data/csb → manifest = ~/.firestaff/assets/csb/modern/modern_asset_manifest.json */
     csb_v22_set_manifest_path("/home/user/.firestaff/data/csb");
     const char* expected_suffix = "/.firestaff/assets/csb/modern/modern_asset_manifest.json";
+    (void)expected_suffix;
     /* The exact path is captured by re-running with a controlled dataDir */
     /* Use a fake dataDir that we can verify the path transformation */
     csb_v22_set_manifest_path("/tmp/scratch/firestaff-data/csb");

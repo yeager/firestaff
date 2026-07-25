@@ -90,6 +90,7 @@ static void build_context(
 static void test_source_evidence(void)
 {
     const char *evidence =
+    (void)evidence;
         DM1_V1_F0156_F0159_F0160_F0161_SourceEvidencePc34();
 
     assert(evidence != 0);
@@ -109,6 +110,7 @@ static void test_thing_data_and_next(void)
     uint8_t weaponRecords[3][4];
     uint8_t sensorRecords[2][8];
     const uint8_t *record;
+    (void)record;
 
     build_context(&context, map, columnCounts, squareFirstThings,
                   weaponRecords, sensorRecords);

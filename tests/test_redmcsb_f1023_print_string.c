@@ -26,6 +26,7 @@ int main(void)
     redmcsb_f1023_capture capture = { 0 };
     const char text[] = "SYSTEM ERROR ";
     const char *evidence;
+    (void)evidence;
 
     redmcsb_f1023_print_string(capture_console_print, &capture, text);
     assert(capture.call_count == 1U);

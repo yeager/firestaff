@@ -67,6 +67,7 @@ int main(void)
     redmcsb_f1041_get_mouse_pointer_type_state state;
     test_context test;
     const char *evidence;
+    (void)evidence;
 
     memset(regions, 0, sizeof(regions));
     memset(&test, 0, sizeof(test));

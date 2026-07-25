@@ -182,6 +182,7 @@ static void test_source_named_boundary_discards_first_unprotected_group(void)
     DM1_CSB_F0165_DiscardState state = {{0}};
     TestWorld world;
     uint16_t result;
+    (void)result;
 
     init_world(&world);
     result = F0165_DUNGEON_GetDiscardedThing(
@@ -203,6 +204,7 @@ static void test_party_visible_square_and_enabled_sensor_block_candidates(void)
     DM1_CSB_F0165_DiscardState state = {{0}};
     TestWorld world;
     uint16_t result;
+    (void)result;
 
     init_world(&world);
     result = F0165_DUNGEON_GetDiscardedThing(
@@ -223,6 +225,7 @@ static void test_projectile_uses_projectile_discard_action(void)
     DM1_CSB_F0165_DiscardState state = {{0}};
     TestWorld world;
     uint16_t result;
+    (void)result;
 
     init_world(&world);
     result = F0165_DUNGEON_GetDiscardedThing_Compat(
@@ -237,6 +240,7 @@ static void test_projectile_uses_projectile_discard_action(void)
 static void test_invalid_inputs_and_explosions_return_none(void)
 {
     DM1_CSB_F0165_DiscardState state = {{0}};
+    (void)state;
     TestWorld world;
 
     init_world(&world);

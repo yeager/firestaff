@@ -12,6 +12,7 @@
 int main(void)
 {
     const char *evidence =
+    (void)evidence;
         redmcsb_f1052_wait_for_scan_line_source_evidence_pc34();
 
     redmcsb_f1052_wait_for_scan_line_pc34_compat(INT16_MIN);

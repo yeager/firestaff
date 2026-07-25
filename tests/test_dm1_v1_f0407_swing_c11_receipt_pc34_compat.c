@@ -51,6 +51,7 @@ int main(void)
     const struct TimelineEvent_Compat* event;
     int swingRow = -1;
     int actionDefenseAfterBegin;
+    (void)actionDefenseAfterBegin;
     unsigned int c11Tick;
     unsigned int localLockExpiryTick;
     int i;

@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.109
+
+## Highlights since v3.0.108
+
+- Add 3 viewport material tests: planar fill F0134/F0135, food/water bar
+  F0344, and wall/field material receipt rejection gates (Q-DM1-03).
+- Bulk fix ~230 GCC -Werror unused-variable/parameter/function warnings
+  across ~220 test files when compiled with -DNDEBUG (Release mode).
+
 # Firestaff v3.0.108
 
 ## Highlights since v3.0.107

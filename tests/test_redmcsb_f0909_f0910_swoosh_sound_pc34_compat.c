@@ -30,6 +30,7 @@ static void begin_io(void *context, void *request)
 
 static void do_io(void *context, void *request)
 {
+    (void)request;
     fixture *state = context;
     assert(request == (void *)3);
     push_event(state, 'D');
@@ -43,6 +44,7 @@ static void wait_io(void *context, void *request)
 
 static void set_command(void *context, void *request, uint16_t command)
 {
+    (void)request;
     fixture *state = context;
     assert(request == (void *)3);
     state->command = command;
@@ -51,6 +53,7 @@ static void set_command(void *context, void *request, uint16_t command)
 
 static void set_flag(void *context, void *request, uint8_t flag)
 {
+    (void)request;
     fixture *state = context;
     assert(request == (void *)3);
     state->flags = (uint8_t)(state->flags | flag);
@@ -59,6 +62,7 @@ static void set_flag(void *context, void *request, uint8_t flag)
 
 static void clear_flag(void *context, void *request, uint8_t flag)
 {
+    (void)request;
     fixture *state = context;
     assert(request == (void *)3);
     state->flags = (uint8_t)(state->flags & (uint8_t)~flag);

@@ -657,10 +657,14 @@ static void test_gzip_slot_party_body_import(void) {
     size_t payload_size = 0;
     Theron_V1SrmManifest m;
     Theron_DungeonProgression prog;
+    (void)prog;
     Theron_V1_Party party;
+    (void)party;
     Theron_V1SrmPartyImportReceipt receipt;
+    (void)receipt;
     Theron_V1SrmPayloadProbeStatus payload_status;
     Theron_V1SrmProgressImportStatus import_status;
+    (void)import_status;
 
     if (!make_temp_root(root)) {
         printf("SKIP: mkdtemp failed\n");

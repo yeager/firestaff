@@ -31,6 +31,7 @@ int main(void)
         capture_get_time,
         &capture
     };
+    (void)driver;
 
     assert(redmcsb_f0718_get_time_pc34_compat(&driver) == INT16_MAX);
     assert(capture.call_count == 1);

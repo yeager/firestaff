@@ -22,6 +22,8 @@ typedef struct {
 
 static int16_t get_pointer_type(void *context, int16_t x, int16_t y)
 {
+    (void)y;
+    (void)x;
     test_context *test = context;
 
     assert(x == 80);
@@ -58,6 +60,7 @@ int main(void)
     test_context test;
     redmcsb_f1038_update_mouse_pointer_state state;
     const char *evidence;
+    (void)evidence;
     unsigned int index;
 
     memset(&test, 0, sizeof(test));

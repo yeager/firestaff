@@ -25,7 +25,7 @@ static unsigned short make_thing(int type, int index) {
     return (unsigned short)(((type & 0x0f) << 10) | (index & 0x03ff));
 }
 
-static unsigned short read_u16_le_for_test(const unsigned char* raw) {
+static __attribute__((unused)) unsigned short read_u16_le_for_test(const unsigned char* raw) {
     return (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
 }
 
@@ -137,8 +137,11 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int skillLevel;
+    (void)skillLevel;
     int sawSpellEffect;
+    (void)sawSpellEffect;
     int spellXp;
+    (void)spellXp;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -216,6 +219,7 @@ static void test_orch_projectile_spell_uses_hidden_skill_query_value(void) {
     assert(sawSpellEffect == 1);
     {
         int sawDisable = 0;
+        (void)sawDisable;
         for (i = 0; i < result.emissionCount; ++i) {
             if (result.emissions[i].kind == EMIT_ACTION_DISABLED &&
                 result.emissions[i].payload[0] == 0 &&
@@ -521,6 +525,7 @@ static void test_orch_thieves_eye_spell_uses_f0412_square_duration(void) {
     struct TickResult_Compat result;
     uint32_t expiryTick;
     int sawSpellEffect = 0;
+    (void)sawSpellEffect;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -615,6 +620,7 @@ static void test_orch_party_shield_spell_mirrors_lifecycle_defense(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int defense;
+    (void)defense;
     uint32_t expiryTick;
 
     init_world(&world, &things, weapons, junks);
@@ -662,6 +668,7 @@ static void test_orch_fire_shield_spell_mirrors_lifecycle_defense(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int defense;
+    (void)defense;
     uint32_t expiryTick;
 
     init_world(&world, &things, weapons, junks);
@@ -762,7 +769,9 @@ static void test_orch_potion_spell_mutates_empty_flask_in_hand(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int sawSpellEffect = 0;
+    (void)sawSpellEffect;
     int spellXp;
+    (void)spellXp;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -826,6 +835,7 @@ static void test_orch_zokathra_spell_materializes_in_ready_hand(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     unsigned short zokathraThing = make_thing(THING_TYPE_JUNK, 0);
+    (void)zokathraThing;
 
     init_world(&world, &things, weapons, junks);
     make_spell_caster(&world, DM1_SKILL_IDX_WIZARD);
@@ -875,6 +885,7 @@ static void test_orch_zokathra_spell_falls_back_to_party_square(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     unsigned short zokathraThing = make_thing(THING_TYPE_JUNK, 0);
+    (void)zokathraThing;
 
     init_world(&world, &things, weapons, junks);
     make_spell_caster(&world, DM1_SKILL_IDX_WIZARD);
@@ -963,8 +974,11 @@ static void test_orch_f0312_skill_bonus_uses_live_f0303_values(void) {
 static void test_combat_f0313_wound_defense_final_shift_and_clamp(void) {
     struct CombatantChampionSnapshot_Compat champ;
     int defense = -1;
+    (void)defense;
     int rngCalls = -1;
+    (void)rngCalls;
     struct RngState_Compat rng;
+    (void)rng;
 
     memset(&champ, 0, sizeof(champ));
     champ.woundDefense[CHAMPION_SLOT_TORSO] = 65;
@@ -1070,7 +1084,9 @@ static void test_orch_projectile_create_preserves_associated_thing(void) {
     struct ProjectileList_Compat list;
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     int slot = -1;
+    (void)slot;
     unsigned short thrownThing = make_thing(THING_TYPE_WEAPON, 1);
 
     memset(&list, 0, sizeof(list));
@@ -1128,9 +1144,11 @@ static void test_orch_projectile_move_event_advances_and_reschedules(void) {
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -1323,10 +1341,13 @@ static void test_orch_projectile_ignores_inactive_same_cell_runtime_slot(void) {
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove0;
+    (void)firstMove0;
     struct TimelineEvent_Compat firstMove1;
+    (void)firstMove1;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot0 = -1;
+    (void)slot0;
     int slot1 = -1;
     int i;
 
@@ -1413,10 +1434,12 @@ static void test_orch_projectile_collision_despawns_both_projectiles(void) {
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove0;
+    (void)firstMove0;
     struct TimelineEvent_Compat firstMove1;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot0 = -1;
+    (void)slot0;
     int slot1 = -1;
     int i;
 
@@ -1502,12 +1525,15 @@ static void test_orch_projectile_collision_runs_both_impact_tails(void) {
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove0;
+    (void)firstMove0;
     struct TimelineEvent_Compat firstMove1;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot0 = -1;
+    (void)slot0;
     int slot1 = -1;
     int fireballAdvanceCount = 0;
+    (void)fireballAdvanceCount;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -1612,9 +1638,11 @@ static void test_orch_projectile_wall_impact_creates_explosion(void) {
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -1701,9 +1729,11 @@ static void run_orch_magical_wall_zero_adjusted_explosion_case(int projectileSub
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -1777,6 +1807,7 @@ static void run_orch_magical_wall_nonzero_adjusted_explosion_case(
     int expectedAttack,
     int expectedCell)
 {
+    (void)expectedCell;
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
@@ -1787,9 +1818,11 @@ static void run_orch_magical_wall_nonzero_adjusted_explosion_case(
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -1907,10 +1940,13 @@ static void test_orch_projectile_wall_impact_emits_non_explosion_sound(void) {
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawSound = 0;
+    (void)sawSound;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -1989,9 +2025,11 @@ static void test_orch_projectile_wall_impact_materializes_associated_weapon(void
     unsigned short squareFirstThings[1];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -2077,10 +2115,13 @@ static void test_orch_projectile_champion_hit_materializes_on_impact_square(void
     unsigned short squareFirstThings[2];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     unsigned short materializedThing;
+    (void)materializedThing;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -2172,11 +2213,14 @@ static void test_orch_projectile_wall_impact_appends_associated_weapon_raw_tail(
     unsigned char rawWeaponData[8];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     unsigned short existingThing;
     unsigned short materializedThing;
+    (void)materializedThing;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -2286,9 +2330,11 @@ static void run_orch_projectile_portcullis_allowed_slots_case(
     unsigned short squareFirstThings[2];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -2402,10 +2448,13 @@ static void test_orch_slime_wall_impact_emits_wooden_thud_without_explosion(void
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawSound = 0;
+    (void)sawSound;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -2483,10 +2532,13 @@ static void test_orch_projectile_closed_door_impact_destroys_door(void) {
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawSound = 0;
+    (void)sawSound;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -2583,10 +2635,13 @@ static void test_orch_non_weapon_door_impact_emits_wooden_thud(void) {
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawSound = 0;
+    (void)sawSound;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -2671,12 +2726,17 @@ static void test_orch_magical_door_impact_schedules_explosion_and_door_attack(vo
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawExplosionAdvance = 0;
+    (void)sawExplosionAdvance;
     int sawDoorDestruction = 0;
+    (void)sawDoorDestruction;
     int sawDoorState = 0;
+    (void)sawDoorState;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -2779,6 +2839,8 @@ static void run_orch_magical_door_adjusted_explosion_case(
     int expectedExplosionAttack,
     int expectedExplosionCell)
 {
+    (void)expectedExplosionCell;
+    (void)expectedExplosionAttack;
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
@@ -2789,11 +2851,15 @@ static void run_orch_magical_door_adjusted_explosion_case(
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawExplosionAdvance = 0;
+    (void)sawExplosionAdvance;
     int sawDoorDestruction = 0;
+    (void)sawDoorDestruction;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -2906,6 +2972,7 @@ static void run_orch_thrown_potion_door_impact_case(
     int expectedExplosionType,
     int expectedExplosionCell)
 {
+    (void)expectedExplosionCell;
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
@@ -2916,11 +2983,15 @@ static void run_orch_thrown_potion_door_impact_case(
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawExplosionAdvance = 0;
+    (void)sawExplosionAdvance;
     int sawDoorDestruction = 0;
+    (void)sawDoorDestruction;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -3032,12 +3103,16 @@ static void test_orch_open_door_projectile_toggles_button_door(void) {
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
     int sawDoorState = 0;
+    (void)sawDoorState;
     int sawSound = 0;
+    (void)sawSound;
 
     init_world(&world, &things, weapons, junks);
     memset(doors, 0, sizeof(doors));
@@ -3158,11 +3233,14 @@ static void test_orch_open_door_projectile_without_button_only_thuds(void) {
     unsigned char squareData[12];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
     int sawSound = 0;
+    (void)sawSound;
 
     init_world(&world, &things, weapons, junks);
     memset(doors, 0, sizeof(doors));
@@ -3255,9 +3333,11 @@ static void test_orch_projectile_champion_hit_applies_damage(void) {
     unsigned char squareData[6];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -3341,9 +3421,11 @@ static void test_orch_projectile_champion_hit_uses_lifecycle_shield_defense(void
     unsigned char squareData[6];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -3420,9 +3502,11 @@ static void test_orch_projectile_champion_hit_uses_equipped_armour_defense(void)
     unsigned char squareData[6];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -3508,9 +3592,11 @@ static void test_orch_projectile_champion_hit_uses_hand_shield_strength(void) {
     unsigned char squareData[6];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -3601,11 +3687,15 @@ static void test_orch_projectile_champion_hit_applies_poison(void) {
     unsigned char squareData[6];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawExplosionAdvance = 0;
+    (void)sawExplosionAdvance;
     int sawPoisonEvent = 0;
+    (void)sawPoisonEvent;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -3706,11 +3796,15 @@ static void test_orch_projectile_champion_hit_poison_kill_does_not_reschedule(vo
     unsigned char squareData[6];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawChampionDown = 0;
+    (void)sawChampionDown;
     int sawPoisonEvent = 0;
+    (void)sawPoisonEvent;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -3774,6 +3868,7 @@ static void test_orch_projectile_champion_hit_poison_kill_does_not_reschedule(vo
     memset(&result, 0, sizeof(result));
     {
         int rc = F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result);
+        (void)rc;
         assert(rc == ORCH_OK);
     }
     assert(world.projectiles.count == 0);
@@ -3809,9 +3904,11 @@ static void test_orch_projectile_champion_hit_uses_f0321_magic_scale(void) {
     unsigned char squareData[6];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -3892,9 +3989,11 @@ static void test_orch_projectile_champion_hit_uses_f0313_rng_scale(void) {
     unsigned char squareData[6];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -3979,9 +4078,11 @@ static void test_orch_projectile_group_hit_applies_damage(void) {
     struct DungeonGroup_Compat groups[1];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -4085,9 +4186,11 @@ static void test_orch_projectile_fireball_heals_black_flame_without_reaction(voi
     struct DungeonGroup_Compat groups[1];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -4186,9 +4289,11 @@ static void test_orch_projectile_group_hit_at_zero_coordinate(void) {
     struct DungeonGroup_Compat groups[1];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -4290,10 +4395,13 @@ static void test_orch_projectile_group_hit_all_kill_cleans_up_group(void) {
     struct DungeonGroup_Compat groups[1];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawKillNotify = 0;
+    (void)sawKillNotify;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -4412,15 +4520,22 @@ static void test_orch_projectile_group_hit_killed_some_applies_f0190_side_effect
     struct DungeonGroup_Compat groups[1];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TimelineEvent_Compat creatureEvent;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int sawKillNotify = 0;
+    (void)sawKillNotify;
     int sawExplosionAdvance = 0;
+    (void)sawExplosionAdvance;
     int sawProjectileReaction = 0;
+    (void)sawProjectileReaction;
     int sawShiftedAspect = 0;
+    (void)sawShiftedAspect;
     int sawShiftedBehavior = 0;
+    (void)sawShiftedBehavior;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -4637,6 +4752,7 @@ static void test_orch_projectile_group_hit_keeps_thrown_sharp_weapon(void) {
     struct DungeonGroup_Compat groups[1];
     struct ProjectileCreateInput_Compat createIn;
     struct TimelineEvent_Compat firstMove;
+    (void)firstMove;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
@@ -4874,9 +4990,11 @@ static void test_orch_explosion_advance_applies_group_damage(void) {
     struct DungeonGroup_Compat groups[1];
     struct ExplosionCreateInput_Compat explosionIn;
     struct TimelineEvent_Compat firstAdvance;
+    (void)firstAdvance;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -4961,9 +5079,11 @@ static void test_orch_explosion_advance_applies_party_damage(void) {
     unsigned char squareData[9];
     struct ExplosionCreateInput_Compat explosionIn;
     struct TimelineEvent_Compat firstAdvance;
+    (void)firstAdvance;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -5036,9 +5156,11 @@ static void test_orch_explosion_advance_fire_shield_blocks_party_damage(void) {
     unsigned char squareData[9];
     struct ExplosionCreateInput_Compat explosionIn;
     struct TimelineEvent_Compat firstAdvance;
+    (void)firstAdvance;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -5103,12 +5225,16 @@ static void test_orch_explosion_advance_emits_party_champion_down(void) {
     unsigned char squareData[9];
     struct ExplosionCreateInput_Compat explosionIn;
     struct TimelineEvent_Compat firstAdvance;
+    (void)firstAdvance;
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int slot = -1;
+    (void)slot;
     int i;
     int sawDown = 0;
+    (void)sawDown;
     int sawPartyDead = 0;
+    (void)sawPartyDead;
 
     init_world(&world, &things, weapons, junks);
     memset(&dungeon, 0, sizeof(dungeon));
@@ -5177,6 +5303,7 @@ static void test_champion_cell_serializes_through_reserved_v1_byte(void) {
     struct ChampionState_Compat decoded;
     struct PartyState_Compat party;
     unsigned char championBuf[CHAMPION_SERIALIZED_SIZE];
+    (void)championBuf;
     unsigned char partyV1[PARTY_SERIALIZED_V1_SIZE];
 
     F0600_CHAMPION_InitEmpty_Compat(&champion);
@@ -5248,6 +5375,7 @@ static void test_orch_cmd_attack_prefers_live_action_hand_weapon_class(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     DM1_WeaponInfo info;
+    (void)info;
 
     init_world(&world, &things, weapons, junks);
     weapons[0].type = 8; /* ReDMCSB DUNGEON.C weapon type 8: DAGGER, class 2. */
@@ -5296,6 +5424,7 @@ static void test_orch_cmd_attack_unresolved_weapon_without_marker_is_noop(void) 
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     uint32_t seedBefore;
+    (void)seedBefore;
 
     init_world(&world, &things, weapons, junks);
     assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 9753) == 1);
@@ -5329,6 +5458,7 @@ static void test_orch_creature_snapshot_uses_live_group_and_profile(void) {
     struct DungeonJunk_Compat junks[2];
     struct DungeonGroup_Compat groups[1];
     struct CombatantCreatureSnapshot_Compat snapshot;
+    (void)snapshot;
 
     init_world(&world, &things, weapons, junks);
     memset(groups, 0, sizeof(groups));
@@ -5367,6 +5497,7 @@ static int run_live_cmd_attack_damage_attempt(unsigned int seed,
                                               int* outDamage,
                                               int* outBefore,
                                               int* outAfter) {
+                                                  (void)seed;
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
@@ -5450,6 +5581,7 @@ static int run_live_cmd_attack_f0231_side_effect_attempt(
     int* outStaminaAfter,
     int* outXpBefore,
     int* outXpAfter) {
+        (void)seed;
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
@@ -5567,6 +5699,7 @@ static void test_orch_cmd_attack_f0231_stamina_underflow_emits_down(void) {
     struct TickResult_Compat result;
     struct ChampionState_Compat* champion;
     int sawDown = 0;
+    (void)sawDown;
     int i;
 
     init_world(&world, &things, weapons, junks);
@@ -5618,6 +5751,7 @@ static int run_live_cmd_attack_f0312_strength_attempt(
     unsigned int seed,
     int weakenedActionHand,
     int* outDamage) {
+        (void)seed;
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
@@ -5669,7 +5803,9 @@ static int run_live_cmd_attack_f0312_strength_attempt(
 static void test_orch_cmd_attack_uses_f0312_weight_stamina_wound_strength(void) {
     int sawF0312Drop = 0;
     int healthyDamage = 0;
+    (void)healthyDamage;
     int weakenedDamage = 0;
+    (void)weakenedDamage;
     unsigned int seed;
 
     for (seed = 1; seed <= 1024 && !sawF0312Drop; ++seed) {
@@ -5854,7 +5990,8 @@ static void test_orch_cmd_attack_f0407_closed_door_attack(void) {
     }
 }
 
-static int run_live_cmd_attack_reaction_schedule_attempt(unsigned int seed) {
+static __attribute__((unused)) int run_live_cmd_attack_reaction_schedule_attempt(unsigned int seed) {
+    (void)seed;
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -5958,6 +6095,7 @@ static void test_orch_cmd_attack_schedules_f0231_adjacent_reaction(void) {
 }
 
 static int run_live_cmd_attack_all_kill_attempt(unsigned int seed) {
+    (void)seed;
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -6072,6 +6210,7 @@ static void test_orch_cmd_attack_all_kill_unlinks_group_without_reaction(void) {
 }
 
 static int run_live_cmd_attack_killed_some_smoke_attempt(unsigned int seed) {
+    (void)seed;
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -6087,9 +6226,13 @@ static int run_live_cmd_attack_killed_some_smoke_attempt(unsigned int seed) {
     struct TickResult_Compat result;
     int sawKillNotify = 0;
     int sawExplosionAdvance = 0;
+    (void)sawExplosionAdvance;
     int sawReaction = 0;
+    (void)sawReaction;
     int sawShiftedAspect = 0;
+    (void)sawShiftedAspect;
     int sawShiftedBehavior = 0;
+    (void)sawShiftedBehavior;
     int e;
 
     init_world(&world, &things, weapons, junks);
@@ -6245,6 +6388,7 @@ static void test_orch_cmd_attack_killed_some_creates_f0190_smoke(void) {
 }
 
 static int run_live_cmd_attack_killed_some_fear_attempt(unsigned int seed) {
+    (void)seed;
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -6259,7 +6403,9 @@ static int run_live_cmd_attack_killed_some_fear_attempt(unsigned int seed) {
     struct TickResult_Compat result;
     int sawKillNotify = 0;
     int sawExplosionAdvance = 0;
+    (void)sawExplosionAdvance;
     int sawAdjacentReaction = 0;
+    (void)sawAdjacentReaction;
     int e;
 
     init_world(&world, &things, weapons, junks);
@@ -6412,6 +6558,7 @@ static void test_orch_cmd_attack_uses_reserved2_action_damage_factor(void) {
 static int run_live_cmd_attack_map_difficulty_attempt(unsigned int seed,
                                                       int mapDifficulty,
                                                       int* outDamage) {
+                                                          (void)seed;
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -6494,6 +6641,7 @@ static int run_live_cmd_attack_auto_front_group_attempt(unsigned int seed,
                                                         int* outDamage,
                                                         int* outAfter0,
                                                         int* outAfter1) {
+                                                            (void)seed;
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[1];
@@ -6608,6 +6756,7 @@ static void test_orch_cmd_attack_auto_target_without_group_is_noop(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     uint32_t seedBefore;
+    (void)seedBefore;
 
     init_world(&world, &things, weapons, junks);
     assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 1234) == 1);
@@ -6665,6 +6814,7 @@ static void test_orch_cmd_attack_direct_live_action_without_group_is_noop(void) 
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     uint32_t seedBefore;
+    (void)seedBefore;
 
     init_world(&world, &things, weapons, junks);
     assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 4321) == 1);
@@ -6703,6 +6853,7 @@ static void test_orch_cmd_attack_direct_invalid_group_with_live_table_is_noop(vo
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     uint32_t seedBefore;
+    (void)seedBefore;
 
     init_world(&world, &things, weapons, junks);
     assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 2468) == 1);
@@ -6747,6 +6898,7 @@ static void test_orch_cmd_attack_direct_invalid_creature_with_live_table_is_noop
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     uint32_t seedBefore;
+    (void)seedBefore;
 
     init_world(&world, &things, weapons, junks);
     assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 1357) == 1);
@@ -6789,6 +6941,7 @@ static int run_live_cmd_attack_empty_hand_punch_attempt(
     int* outDamage,
     int* outBefore,
     int* outAfter) {
+        (void)seed;
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
@@ -6865,6 +7018,7 @@ static void test_orch_cmd_attack_dead_champion_live_target_is_noop(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     uint32_t seedBefore;
+    (void)seedBefore;
 
     init_world(&world, &things, weapons, junks);
     assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 5678) == 1);
@@ -6944,6 +7098,7 @@ static void test_orch_cmd_attack_invalid_champion_auto_target_is_noop(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     uint32_t seedBefore;
+    (void)seedBefore;
 
     init_world(&world, &things, weapons, junks);
     assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 9012) == 1);
@@ -7012,6 +7167,7 @@ static void test_orch_cmd_attack_candidate_target_no_action_side_effects(void) {
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     uint32_t seedBefore;
+    (void)seedBefore;
 
     init_world(&world, &things, weapons, junks);
     assert(F0730_COMBAT_RngInit_Compat(&world.masterRng, 3456) == 1);
@@ -7248,6 +7404,7 @@ static int run_live_cmd_attack_skill_route_attempt(unsigned int seed,
                                                    int actionIndex,
                                                    int clubExperience,
                                                    int* outDamage) {
+                                                       (void)seed;
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
@@ -7296,6 +7453,7 @@ static int run_live_cmd_attack_skill_route_attempt(unsigned int seed,
 
 static void test_orch_cmd_attack_uses_reserved2_action_skill_index(void) {
     DM1_ActionXpRoute route;
+    (void)route;
     int sawSkillBoost = 0;
     int swingDamage = 0;
     int stunDamage = 0;
@@ -7339,8 +7497,10 @@ static void test_orch_cmd_attack_uses_reserved2_action_skill_index(void) {
         int defaultHit = run_live_cmd_attack_skill_route_attempt(
             seed, CMD_ATTACK_DEFAULT_ACTION_INDEX_PC34, 500000,
             &defaultDamage);
+        (void)defaultHit;
         int invalidHit = run_live_cmd_attack_skill_route_attempt(
             seed, DM1_GRAPHIC560_ACTION_COUNT, 500000, &invalidDamage);
+        (void)invalidHit;
         assert(defaultHit == invalidHit);
         assert(defaultDamage == invalidDamage);
     }
@@ -7349,6 +7509,7 @@ static void test_orch_cmd_attack_uses_reserved2_action_skill_index(void) {
 static int run_live_cmd_attack_luck_attempt(unsigned int seed,
                                             int* outBefore,
                                             int* outAfter) {
+                                                (void)seed;
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[2];
@@ -7510,6 +7671,7 @@ static void test_orch_closing_door_party_hazard_applies_f0324(void) {
     struct TickResult_Compat result;
     int i;
     int sawPartyDamaged = 0;
+    (void)sawPartyDamaged;
 
     init_world(&world, &things, weapons, junks);
     memset(&dungeon, 0, sizeof(dungeon));
@@ -7571,6 +7733,7 @@ static void test_orch_closing_door_creature_hazard_queues_f0209_danger(void) {
     struct TickResult_Compat result;
     int i;
     int sawDangerReaction = 0;
+    (void)sawDangerReaction;
 
     init_world(&world, &things, weapons, junks);
     memset(groups, 0, sizeof(groups));
@@ -7641,7 +7804,9 @@ static void test_orch_closing_door_creature_hazard_killed_all_runs_f0190_afterma
     struct TickResult_Compat result;
     int i;
     int sawDoorRetry = 0;
+    (void)sawDoorRetry;
     int sawSmokeAdvance = 0;
+    (void)sawSmokeAdvance;
 
     init_world(&world, &things, weapons, junks);
     memset(groups, 0, sizeof(groups));

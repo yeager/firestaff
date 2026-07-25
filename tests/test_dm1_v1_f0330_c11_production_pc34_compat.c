@@ -23,7 +23,7 @@ static int find_c11_enable_action(const struct GameWorld_Compat* world)
     return -1;
 }
 
-static int count_c11_enable_actions(const struct GameWorld_Compat* world)
+static __attribute__((unused)) int count_c11_enable_actions(const struct GameWorld_Compat* world)
 {
     int i;
     int count = 0;
@@ -73,7 +73,7 @@ static void prepare_open_door_spell_world(struct GameWorld_Compat* world,
         .skills20[DM1_SKILL_IDX_AIR].experience = 500;
 }
 
-static int cast_open_door(struct GameWorld_Compat* world,
+static __attribute__((unused)) int cast_open_door(struct GameWorld_Compat* world,
                           struct TickResult_Compat* result)
 {
     struct TickInput_Compat input;
@@ -95,7 +95,9 @@ int main(void)
     struct TickResult_Compat result;
     int eventIndex;
     uint32_t firstTick;
+    (void)firstTick;
     int disabledTicks = 0;
+    (void)disabledTicks;
     int i;
 
     prepare_open_door_spell_world(&world, &things, &weapon);

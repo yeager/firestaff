@@ -31,6 +31,7 @@ int main(void)
         capture_get_converted_device_type,
         &capture
     };
+    (void)driver;
 
     assert(redmcsb_f0715_get_converted_device_type_pc34_compat(
                &driver, INT16_C(2)) == INT16_C(1));

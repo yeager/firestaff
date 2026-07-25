@@ -53,6 +53,7 @@ static void prepare_portrait_buffers(
     uint8_t chunky[DM1_V1_CEDT019_PORTRAIT_COUNT_PC34]
                   [DM1_V1_CEDT019_PORTRAIT_CHUNKY_BYTES_PC34])
 {
+    (void)planar;
     uint8_t onePortrait[DM1_V1_CEDT019_PORTRAIT_CHUNKY_BYTES_PC34];
     size_t index;
 
@@ -77,6 +78,7 @@ static void test_load_and_post_save_decode_all_four_portraits(void)
                      [DM1_V1_CEDT019_PORTRAIT_CHUNKY_BYTES_PC34];
     DM1_V1_CEDT019_PortraitSlotPc34 slots[DM1_V1_CEDT019_PORTRAIT_COUNT_PC34];
     DM1_V1_CEDT019_PortraitBatchReceiptPc34 receipt;
+    (void)receipt;
 
     memset(planarOut, 0, sizeof(planarOut));
     memset(chunkyOut, 0, sizeof(chunkyOut));
@@ -113,6 +115,7 @@ static void test_save_encode_all_four_portraits(void)
                      [DM1_V1_CEDT019_PORTRAIT_CHUNKY_BYTES_PC34];
     DM1_V1_CEDT019_PortraitSlotPc34 slots[DM1_V1_CEDT019_PORTRAIT_COUNT_PC34];
     DM1_V1_CEDT019_PortraitBatchReceiptPc34 receipt;
+    (void)receipt;
 
     memset(planarOut, 0, sizeof(planarOut));
     memset(chunkyOut, 0, sizeof(chunkyOut));
@@ -141,6 +144,7 @@ static void test_missing_proof_or_wrong_count_fails_closed(void)
                      [DM1_V1_CEDT019_PORTRAIT_CHUNKY_BYTES_PC34];
     DM1_V1_CEDT019_PortraitSlotPc34 slots[DM1_V1_CEDT019_PORTRAIT_COUNT_PC34];
     DM1_V1_CEDT019_PortraitBatchReceiptPc34 receipt;
+    (void)receipt;
 
     memset(planarOut, 0, sizeof(planarOut));
     memset(chunkyOut, 0, sizeof(chunkyOut));
@@ -163,6 +167,7 @@ static void test_missing_proof_or_wrong_count_fails_closed(void)
 static void test_source_evidence_names_boundaries(void)
 {
     const char *evidence = F2122_F2123_F2124_CEDT019_SourceEvidencePc34();
+    (void)evidence;
 
     assert(strstr(evidence, "CEDT019.C:41") != 0);
     assert(strstr(evidence, "CEDT019.C:58") != 0);

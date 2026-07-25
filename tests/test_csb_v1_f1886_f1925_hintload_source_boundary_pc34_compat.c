@@ -9,6 +9,7 @@ int main(void)
     size_t count;
     size_t index;
     size_t owner_count = 0u;
+    (void)owner_count;
 
     entries = csb_v1_f1886_f1925_hintload_source_receipt_pc34(&count);
     assert(entries && count == 40u);

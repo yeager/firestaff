@@ -234,7 +234,7 @@ static int write_part(unsigned char *dst,
     return 2 + byte_count;
 }
 
-static int rewrite_fixture_timeline_with_duplicate_index(unsigned char *bytes,
+static __attribute__((unused)) int rewrite_fixture_timeline_with_duplicate_index(unsigned char *bytes,
                                                          int byte_count)
 {
     unsigned char *header;
@@ -411,7 +411,7 @@ fail:
     return 0;
 }
 
-static int rewrite_fixture_party_status_i16(unsigned char *bytes,
+static __attribute__((unused)) int rewrite_fixture_party_status_i16(unsigned char *bytes,
                                             int byte_count,
                                             int party_info_offset,
                                             int16_t value)
@@ -470,7 +470,7 @@ fail:
     return 0;
 }
 
-static const struct DM1_Event_V1 *find_report_event_by_type(
+static __attribute__((unused)) const struct DM1_Event_V1 *find_report_event_by_type(
     const DM1OriginalSavePC34HandoffReport *report,
     int type)
 {
@@ -485,7 +485,7 @@ static const struct DM1_Event_V1 *find_report_event_by_type(
     return NULL;
 }
 
-static int rewrite_fixture_global_with_invalid_active_champion(
+static __attribute__((unused)) int rewrite_fixture_global_with_invalid_active_champion(
     unsigned char *bytes,
     int byte_count)
 {
@@ -1117,7 +1117,7 @@ static int append_group_list_original_pc34_dungeon_tail(unsigned char *bytes,
     return 1;
 }
 
-static int append_weapon_inventory_original_pc34_dungeon_tail(
+static __attribute__((unused)) int append_weapon_inventory_original_pc34_dungeon_tail(
     unsigned char *bytes,
     int capacity,
     int *in_out_size)

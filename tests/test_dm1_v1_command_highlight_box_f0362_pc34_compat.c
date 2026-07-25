@@ -34,6 +34,11 @@ static void assert_box_equals(
     int top,
     int bottom)
 {
+    (void)bottom;
+    (void)top;
+    (void)right;
+    (void)left;
+    (void)box;
     assert(box->left == left);
     assert(box->right == right);
     assert(box->top == top);
@@ -45,6 +50,7 @@ static void test_source_named_boundary_builds_highlight_transaction(void)
     DM1_V1_CommandHighlightStatePc34Compat state = {{0, 0, 0, 0}, 0};
     DM1_V1_CommandHighlightRenderPlanPc34Compat plan;
     TestResolverContext resolver = {42, {224, 319, 77, 121}, 0};
+    (void)resolver;
 
     assert(F0362_COMMAND_HighlightBoxEnable(
                &state, 42, resolve_test_zone, &resolver, &plan) == 1);
@@ -65,8 +71,10 @@ static void test_source_named_boundary_builds_highlight_transaction(void)
 static void test_compat_boundary_delegates_to_source_named_boundary(void)
 {
     DM1_V1_CommandHighlightStatePc34Compat state = {{0, 0, 0, 0}, 0};
+    (void)state;
     DM1_V1_CommandHighlightRenderPlanPc34Compat plan;
     TestResolverContext resolver = {7, {10, 20, 30, 40}, 0};
+    (void)resolver;
 
     assert(dm1_v1_command_highlight_box_enable_pc34(
                &state, 7, resolve_test_zone, &resolver, &plan) == 1);
@@ -81,6 +89,7 @@ static void test_rejected_zone_does_not_publish_highlight(void)
     DM1_V1_CommandHighlightStatePc34Compat state = {{1, 2, 3, 4}, 0};
     DM1_V1_CommandHighlightRenderPlanPc34Compat plan;
     TestResolverContext resolver = {4, {10, 20, 30, 40}, 0};
+    (void)resolver;
 
     memset(&plan, 0x5a, sizeof(plan));
 
@@ -97,8 +106,11 @@ static void test_rejected_zone_does_not_publish_highlight(void)
 static void test_null_inputs_are_rejected(void)
 {
     DM1_V1_CommandHighlightStatePc34Compat state = {{0, 0, 0, 0}, 0};
+    (void)state;
     DM1_V1_CommandHighlightRenderPlanPc34Compat plan;
+    (void)plan;
     TestResolverContext resolver = {1, {1, 2, 3, 4}, 0};
+    (void)resolver;
 
     assert(F0362_COMMAND_HighlightBoxEnable(
                NULL, 1, resolve_test_zone, &resolver, &plan) == 0);
@@ -111,6 +123,7 @@ static void test_null_inputs_are_rejected(void)
 static void test_source_evidence_names_redmcsb_symbol(void)
 {
     const char *evidence =
+    (void)evidence;
         dm1_v1_command_highlight_box_enable_source_evidence_pc34();
 
     assert(evidence != NULL);

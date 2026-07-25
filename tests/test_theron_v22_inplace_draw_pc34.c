@@ -32,6 +32,7 @@ static int checks = 0;
 
 static void test_init_shutdown(void) {
     int active_before = theron_v22_inplace_draw_active();
+    (void)active_before;
     int r1 = theron_v22_inplace_draw_init();
     int r2 = theron_v22_inplace_draw_init();
     CHECK(r1 == r2, "init is idempotent (same return on repeat call)");

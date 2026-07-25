@@ -977,7 +977,7 @@ static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
-static void test_pc_g1_ground_stack_map_corpus_receipt(void)
+static __attribute__((unused)) void test_pc_g1_ground_stack_map_corpus_receipt(void)
 {
     uint8_t dat[384];
     DM2_V1_DungeonData dungeon;
@@ -1033,7 +1033,7 @@ static void test_pc_g1_ground_stack_map_corpus_receipt(void)
           "missing G1 map layout is reported as absence without tile decoding");
 }
 
-static void test_pc_g1_extension_record_transform(void)
+static __attribute__((unused)) void test_pc_g1_extension_record_transform(void)
 {
     uint8_t dat[14000];
     DM2_V1_DungeonData dungeon;
@@ -1063,7 +1063,7 @@ static void test_pc_g1_extension_record_transform(void)
     dm2_v1_dungeon_free(&dungeon);
 }
 
-static void test_pc_g1_partial_boot_is_transactional(void)
+static __attribute__((unused)) void test_pc_g1_partial_boot_is_transactional(void)
 {
     uint8_t dat[14000];
     DM2_V1_DungeonData dungeon;

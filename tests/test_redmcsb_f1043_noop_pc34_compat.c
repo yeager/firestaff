@@ -11,6 +11,7 @@
 int main(void)
 {
     const char *evidence = redmcsb_f1043_noop_source_evidence_pc34();
+    (void)evidence;
 
     redmcsb_f1043_noop_pc34_compat();
 

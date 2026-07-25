@@ -6,6 +6,7 @@
 int main(void)
 {
     CSB_V1_F2526F2565UnmappedSourceBoundaryReceiptPc34 receipt;
+    (void)receipt;
     unsigned int inventory_number;
 
     for (inventory_number = 2526u; inventory_number <= 2565u;

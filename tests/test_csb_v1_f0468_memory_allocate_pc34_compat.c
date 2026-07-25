@@ -11,7 +11,9 @@ int main(void)
     CsbV1F0468MemoryAllocateRequestPc34Compat request;
     CsbV1F0468MemoryAllocateResultPc34Compat result;
     CsbV1F0468MemoryStatePc34Compat unchanged_state;
+    (void)unchanged_state;
     CsbV1F0468MemoryAllocateResultPc34Compat unchanged_result;
+    (void)unchanged_result;
 
     request.byte_count = 5U;
     request.allocation_type = CSB_V1_F0468_MEMORY_PERMANENT_PC34;

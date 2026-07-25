@@ -10,7 +10,9 @@ int main(void)
 {
     DM2_V1_SkprojectSoundState state;
     DM2_V1_SkprojectSoundReceipt receipt;
+    (void)receipt;
     uint8_t music_map[4] = { 2u, 4u, 6u, 8u };
+    (void)music_map;
 
     assert(dm2_v1_sound_query_entry(0x0E, 0U, DM2_SOUND_STD_EXPLOSION) == -1);
     assert(dm2_v1_sound_play(DM2_SOUND_STD_EXPLOSION, 127) == -1);
@@ -22,7 +24,9 @@ int main(void)
      * verified GDAT loader and playback backend. */
     {
         DM2_V1_SoundPcmReceipt pcm;
+        (void)pcm;
         DM2_V1_SoundPlaybackReceipt play;
+        (void)play;
         assert(dm2_v1_sound_gdat_pcm_sample_count(3, 0, 129) == 0u);
         assert(dm2_v1_sound_decode_gdat_pcm(3, 0, 129, 0, 0, &pcm) == 0);
         assert(pcm.rejected_no_loader);

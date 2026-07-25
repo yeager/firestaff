@@ -7,8 +7,11 @@
 int main(void)
 {
     char shortMessage[] = "123456789012345678901234567890";
+    (void)shortMessage;
     char atMidpoint[] = "0123456789ABCDEF right-side-text";
+    (void)atMidpoint;
     char rightOfMidpoint[] = "0123456789ABCDEFx right-side-text";
+    (void)rightOfMidpoint;
     char part1[64];
     char part2[64];
 

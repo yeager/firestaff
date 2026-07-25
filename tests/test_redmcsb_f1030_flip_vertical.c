@@ -33,6 +33,7 @@ int main(void)
     int16_t bitmap_storage[] = { 48, 19, 0, 0, 0, 0, 0, 0 };
     uint8_t *bitmap = (uint8_t *)(void *)&bitmap_storage[2];
     const char *evidence;
+    (void)evidence;
 
     redmcsb_f1030_flip_vertical(capture_flip_vertical, bitmap);
     assert(redmcsb_f1030_last_capture.call_count == 1U);

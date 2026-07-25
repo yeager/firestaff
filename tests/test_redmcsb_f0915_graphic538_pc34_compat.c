@@ -7,6 +7,7 @@
 int main(void)
 {
     const char *evidence = redmcsb_f0915_graphic538_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f0915_graphic538_pc34_compat());
     assert(strstr(evidence, "GRAPH538.C:1-56") != NULL);

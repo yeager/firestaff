@@ -36,6 +36,7 @@ int main(void)
     uint8_t screen_bitmap[4] = { 0 };
     int16_t xyz[4] = { -3, 7, 18, 9 };
     const char *evidence;
+    (void)evidence;
 
     redmcsb_f1033_hatch_box(capture_hatch_box, screen_bitmap, xyz, 14, 320);
     assert(redmcsb_f1033_last_capture.call_count == 1U);

@@ -22,7 +22,9 @@ int main(void)
     uint16_t sprite_images[REDMCSB_F1036_POINTER_BANKS *
                            REDMCSB_F1036_POINTER_BANK_WORDS];
     uint16_t *bank;
+    (void)bank;
     const char *evidence;
+    (void)evidence;
 
     memset(sprite_images, 0xa5, sizeof(sprite_images));
     redmcsb_f1036_mouse1(sprite_images,

@@ -37,7 +37,9 @@ static void test_cedt004_wrappers_read_loaded_raw_thing_data(void)
     struct DungeonThings_Compat things;
     unsigned char weapon_records[8];
     unsigned short torch = make_thing(THING_TYPE_WEAPON, 0);
+    (void)torch;
     unsigned short axe = make_thing(THING_TYPE_WEAPON, 1);
+    (void)axe;
 
     memset(&things, 0, sizeof(things));
     memset(weapon_records, 0, sizeof(weapon_records));
@@ -63,6 +65,7 @@ static void test_cedt004_wrappers_fail_closed_without_raw_records(void)
 {
     struct DungeonThings_Compat things;
     unsigned short weapon = make_thing(THING_TYPE_WEAPON, 0);
+    (void)weapon;
 
     memset(&things, 0, sizeof(things));
 
@@ -83,6 +86,7 @@ static void test_cedt004_wrappers_fail_closed_without_raw_records(void)
 static void test_cedt004_source_evidence_names_no_synthetic_boundaries(void)
 {
     const char *evidence = F7017_F7018_F7019_CEDT004_SourceEvidencePc34();
+    (void)evidence;
 
     assert(strstr(evidence, "CEDT004.C:188") != 0);
     assert(strstr(evidence, "CEDT004.C:203") != 0);

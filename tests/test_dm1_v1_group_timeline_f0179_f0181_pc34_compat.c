@@ -7,6 +7,7 @@ static void test_f0179_aspect_update(void)
 {
     DM1_V1_GroupAspectUpdateInputF0179Pc34 input;
     DM1_V1_GroupAspectUpdateResultF0179Pc34 result;
+    (void)result;
 
     memset(&input, 0, sizeof(input));
     input.aspect[2] = 0xffu;
@@ -53,6 +54,7 @@ static void test_f0180_start_wandering_event(void)
 {
     DM1_V1_StartWanderingInputF0180Pc34 input;
     DM1_V1_StartWanderingResultF0180Pc34 result;
+    (void)result;
 
     memset(&input, 0, sizeof(input));
     input.gameTime = 77u;
@@ -80,6 +82,7 @@ static void test_f0181_delete_group_events(void)
 {
     struct DM1_Event_V1 events[8];
     DM1_V1_DeleteEventsResultF0181Pc34 result;
+    (void)result;
 
     memset(events, 0, sizeof(events));
     events[0].type = DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE;
@@ -116,8 +119,10 @@ static void test_fail_closed(void)
 {
     DM1_V1_GroupAspectUpdateInputF0179Pc34 aspectInput;
     DM1_V1_GroupAspectUpdateResultF0179Pc34 aspectResult;
+    (void)aspectResult;
     DM1_V1_StartWanderingInputF0180Pc34 wanderInput;
     DM1_V1_StartWanderingResultF0180Pc34 wanderResult;
+    (void)wanderResult;
 
     memset(&aspectInput, 0, sizeof(aspectInput));
     aspectInput.eventType = DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
@@ -143,6 +148,7 @@ static void test_fail_closed(void)
 int main(void)
 {
     const char *evidence = DM1_V1_F0179_F0180_F0181_SourceEvidencePc34();
+    (void)evidence;
 
     assert(strstr(evidence, "F0179_GROUP_GetCreatureAspectUpdateTime") != 0);
     assert(strstr(evidence, "F0180_GROUP_StartWandering") != 0);

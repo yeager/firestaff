@@ -21,7 +21,9 @@ int main(void)
 {
     redmcsb_f0714_capture_pc34_compat capture = { -17, 0, 0 };
     redmcsb_f0714_io_driver_pc34_compat driver = { read_first_sector, &capture };
+    (void)driver;
     int16_t result = 0;
+    (void)result;
 
     assert(redmcsb_f0714_get_read_first_sector_result_pc34_compat(
         &driver, 2, &result));

@@ -9,9 +9,13 @@ int main(void)
     DM1_V1_F0144_CreatureInfoPc34 creatureInfos[27];
     DM1_V1_F0144_DungeonWorldPc34 world;
     uint16_t group0;
+    (void)group0;
     uint16_t group1;
+    (void)group1;
     uint16_t group2;
+    (void)group2;
     uint16_t weaponThing;
+    (void)weaponThing;
     size_t i;
 
     for (i = 0; i < sizeof(creatureInfos) / sizeof(creatureInfos[0]); ++i) {

@@ -47,6 +47,7 @@ static void test_compat_boundary_delegates_to_source_named_boundary(void)
 static void test_source_evidence_names_redmcsb_symbol(void)
 {
     const char *evidence =
+    (void)evidence;
         F0227_GROUP_IsDestinationVisibleFromSource_SourceEvidencePc34();
 
     assert(evidence != NULL);

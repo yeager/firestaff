@@ -28,6 +28,7 @@ int main(void)
 {
     redmcsb_f1035_capture capture = { 0 };
     const char *evidence;
+    (void)evidence;
 
     redmcsb_f1035_unreferenced(capture_f1034, &capture, 'A');
     assert(capture.call_count == 1U);

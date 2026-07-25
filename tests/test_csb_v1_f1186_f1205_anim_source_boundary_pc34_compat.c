@@ -6,6 +6,7 @@
 int main(void)
 {
     CSB_V1_F1186F1205AnimSourceBoundaryReceiptPc34 receipt;
+    (void)receipt;
     unsigned int number;
 
     for (number = 1186u; number <= 1205u; ++number) {

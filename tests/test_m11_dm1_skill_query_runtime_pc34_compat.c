@@ -211,6 +211,7 @@ static void test_m11_f0352_potion_eye_uses_f0303_priest_query(void) {
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonJunk_Compat junks[2];
     char text[32];
+    (void)text;
 
     init_state(&state, &things, weapons, junks);
     state.world.party.champions[0].skillLevels[CHAMPION_SKILL_PRIEST] = 0;

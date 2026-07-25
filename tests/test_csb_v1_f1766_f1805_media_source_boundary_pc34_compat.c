@@ -6,6 +6,7 @@
 int main(void)
 {
     CSB_V1_F1766F1805MediaSourceBoundaryReceiptPc34 receipt;
+    (void)receipt;
     unsigned int number;
 
     for (number = 1766u; number <= 1805u; ++number) {

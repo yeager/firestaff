@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.108 LANGUAGES C)
+project(Firestaff VERSION 3.0.109 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -47492,3 +47492,18 @@ add_executable(test_dm2_v1_graphics_data_file_open tests/test_dm2_v1_graphics_da
 target_include_directories(test_dm2_v1_graphics_data_file_open PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm2_v1_graphics_data_file_open PRIVATE firestaff_m10)
 add_test(NAME test_dm2_v1_graphics_data_file_open COMMAND test_dm2_v1_graphics_data_file_open)
+
+add_executable(test_dm1_v1_viewport_planar_fill_material_pc34_compat tests/test_dm1_v1_viewport_planar_fill_material_pc34_compat.c)
+target_include_directories(test_dm1_v1_viewport_planar_fill_material_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_viewport_planar_fill_material_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_viewport_planar_fill_material_pc34_compat COMMAND test_dm1_v1_viewport_planar_fill_material_pc34_compat)
+
+add_executable(test_dm1_v1_viewport_food_water_fill_pc34_compat tests/test_dm1_v1_viewport_food_water_fill_pc34_compat.c)
+target_include_directories(test_dm1_v1_viewport_food_water_fill_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_viewport_food_water_fill_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_viewport_food_water_fill_pc34_compat COMMAND test_dm1_v1_viewport_food_water_fill_pc34_compat)
+
+add_executable(test_dm1_v1_viewport_wall_field_material_pc34_compat tests/test_dm1_v1_viewport_wall_field_material_pc34_compat.c)
+target_include_directories(test_dm1_v1_viewport_wall_field_material_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_viewport_wall_field_material_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_viewport_wall_field_material_pc34_compat COMMAND test_dm1_v1_viewport_wall_field_material_pc34_compat)

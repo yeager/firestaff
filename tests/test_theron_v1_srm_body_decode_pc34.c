@@ -84,7 +84,7 @@ static int bd_setenv(const char *name, const char *value) {
 #endif
 }
 
-static int make_temp_root(char out[THERON_V1_SRM_PATH_MAX]) {
+static __attribute__((unused)) int make_temp_root(char out[THERON_V1_SRM_PATH_MAX]) {
 #if defined(_WIN32) || defined(_WIN64)
     int pid = _getpid();
     for (int i = 0; i < 32; i++) {
@@ -104,7 +104,7 @@ static int make_temp_root(char out[THERON_V1_SRM_PATH_MAX]) {
 #endif
 }
 
-static void cleanup_root_with_slot0(const char *root) {
+static __attribute__((unused)) void cleanup_root_with_slot0(const char *root) {
     if (!root || !root[0]) return;
     char path[THERON_V1_SRM_PATH_MAX];
     if (theron_v1_srm_slot_path(root, 0, path)) {
@@ -113,7 +113,7 @@ static void cleanup_root_with_slot0(const char *root) {
     bd_rmdir(root);
 }
 
-static int write_bytes(const char *path, const uint8_t *buf, size_t size) {
+static __attribute__((unused)) int write_bytes(const char *path, const uint8_t *buf, size_t size) {
     FILE *fp = fopen(path, "wb");
     if (!fp) return 0;
     if (size > 0 && buf) {
@@ -193,7 +193,7 @@ static void fill_body_record(uint8_t *record,
 
 #define BD_PARTY_PAYLOAD_BYTES (44u + 4u + (4u * 40u))
 
-static void build_party_payload(uint8_t payload[BD_PARTY_PAYLOAD_BYTES]) {
+static __attribute__((unused)) void build_party_payload(uint8_t payload[BD_PARTY_PAYLOAD_BYTES]) {
     static const uint8_t magic[8] = {'F', 'S', 'T', 'Q', 'P', 'T', 'Y', '1'};
     uint8_t progress[44];
     memset(payload, 0, BD_PARTY_PAYLOAD_BYTES);
@@ -224,7 +224,7 @@ static void build_party_payload(uint8_t payload[BD_PARTY_PAYLOAD_BYTES]) {
  * uncompressed size mod 2^32 (per RFC 1952 §2.2).
  */
 
-static uint32_t bd_crc32(const uint8_t *buf, size_t size) {
+static __attribute__((unused)) uint32_t bd_crc32(const uint8_t *buf, size_t size) {
 #if FIRESTAFF_HAS_ZLIB
     return (uint32_t)crc32(crc32(0L, Z_NULL, 0), buf, (uInt)size);
 #else
@@ -277,7 +277,7 @@ static int deflate_raw(const uint8_t *src, size_t src_size,
 
 /* Build a complete gzip-wrapped deflate stream for `payload`.  On
  * success writes the wrapped bytes into `out` and updates *out_size. */
-static int build_synthetic_gzip_stream(const uint8_t *payload, size_t payload_size,
+static __attribute__((unused)) int build_synthetic_gzip_stream(const uint8_t *payload, size_t payload_size,
                                        uint8_t *out, size_t out_capacity,
                                        size_t *out_size) {
 #if FIRESTAFF_HAS_ZLIB

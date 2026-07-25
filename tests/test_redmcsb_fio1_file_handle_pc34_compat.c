@@ -22,11 +22,13 @@ typedef struct TestHost {
     int failRename;
 } TestHost;
 
-static int valid_handle(int16_t handle) { return handle == 7; }
+static __attribute__((unused)) int valid_handle(int16_t handle) { return handle == 7; }
 
 static bool open_file(void *context, const char *name, uint8_t mode,
                       int16_t *out_handle)
 {
+    (void)mode;
+    (void)name;
     TestHost *host = context;
     assert(strcmp(name, "SAVES/DM.DAT") == 0);
     assert(mode == REDMCSB_F0770_DOS_OPEN_READ_WRITE_PC34);
@@ -38,6 +40,8 @@ static bool open_file(void *context, const char *name, uint8_t mode,
 static bool create_file(void *context, const char *name, uint16_t attributes,
                         int16_t *out_handle)
 {
+    (void)attributes;
+    (void)name;
     TestHost *host = context;
     assert(strcmp(name, "SAVES/NEW.DAT") == 0 ||
            strcmp(name, "SAVES/DM.DAT") == 0);
@@ -51,6 +55,7 @@ static bool create_file(void *context, const char *name, uint16_t attributes,
 
 static void close_file(void *context, int16_t handle)
 {
+    (void)handle;
     TestHost *host = context;
     assert(valid_handle(handle));
     host->closeCount++;
@@ -59,6 +64,7 @@ static void close_file(void *context, int16_t handle)
 static size_t read_file(void *context, int16_t handle, unsigned char *buffer,
                         uint16_t count)
 {
+    (void)handle;
     TestHost *host = context;
     size_t available;
     assert(valid_handle(handle));
@@ -73,6 +79,7 @@ static size_t read_file(void *context, int16_t handle, unsigned char *buffer,
 static struct RedmcsbF0773FileWriteResult write_file(
     void *context, int16_t handle, const unsigned char *buffer, uint16_t count)
 {
+    (void)handle;
     TestHost *host = context;
     struct RedmcsbF0773FileWriteResult result = {0, 1};
     assert(valid_handle(handle));
@@ -88,6 +95,7 @@ static struct RedmcsbF0773FileWriteResult write_file(
 
 static bool seek_begin(void *context, int16_t handle, int32_t offset)
 {
+    (void)handle;
     TestHost *host = context;
     assert(valid_handle(handle));
     if (host->failSeek || offset < 0 || (size_t)offset > host->length) return false;
@@ -97,6 +105,7 @@ static bool seek_begin(void *context, int16_t handle, int32_t offset)
 
 static int32_t tell_file(void *context, int16_t handle)
 {
+    (void)handle;
     TestHost *host = context;
     assert(valid_handle(handle));
     return host->failTell ? -1 : (int32_t)host->offset;
@@ -104,6 +113,7 @@ static int32_t tell_file(void *context, int16_t handle)
 
 static uint32_t seek_end(void *context, int16_t handle)
 {
+    (void)handle;
     TestHost *host = context;
     assert(valid_handle(handle));
     if (host->failSize) return UINT32_MAX;
@@ -113,6 +123,7 @@ static uint32_t seek_end(void *context, int16_t handle)
 
 static int delete_file(void *context, const char *name)
 {
+    (void)name;
     TestHost *host = context;
     assert(strcmp(name, "SAVES/DM.DAT") == 0);
     host->deleteCount++;
@@ -121,6 +132,8 @@ static int delete_file(void *context, const char *name)
 
 static int rename_file(void *context, const char *source, const char *destination)
 {
+    (void)destination;
+    (void)source;
     TestHost *host = context;
     assert(strcmp(source, "SAVES/DM.DAT") == 0);
     assert(strcmp(destination, "SAVES/NEW.DAT") == 0);
@@ -132,6 +145,8 @@ static int enumerate_matches(void *context, const char *pattern, char *out_names
                              uint16_t stride, uint16_t max_names,
                              uint16_t *out_count)
 {
+    (void)max_names;
+    (void)pattern;
     (void)context;
     assert(strcmp(pattern, "SAVES/*.DAT") == 0);
     assert(stride >= 8 && max_names >= 2);
@@ -148,11 +163,17 @@ int main(void)
     RedmcsbFio1FileHandlePc34Compat file;
     RedmcsbFio1FileHandlePc34Compat destination;
     unsigned char input[] = {1, 2, 3, 4};
+    (void)input;
     unsigned char output[4] = {0};
+    (void)output;
     char names[32] = {0};
+    (void)names;
     uint16_t count = 0;
+    (void)count;
     uint32_t size = 0;
+    (void)size;
     int32_t offset = -1;
+    (void)offset;
 
     memset(&state, 0, sizeof(state));
     state.nextHandle = 7;

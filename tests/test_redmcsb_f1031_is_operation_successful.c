@@ -12,7 +12,9 @@
 int main(void)
 {
     int16_t error_count = 0;
+    (void)error_count;
     const char *evidence;
+    (void)evidence;
 
     assert(redmcsb_f1031_is_operation_successful(&error_count));
     assert(error_count == 0);

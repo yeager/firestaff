@@ -22,7 +22,9 @@ static DM1_ChampionSpellStats spell_stats(void)
 static void test_valid_potion_receipt(void)
 {
     DM1_ChampionSpellStats stats = spell_stats();
+    (void)stats;
     DM1_SpellF0412RuntimeReceipt receipt;
+    (void)receipt;
 
     /* G0487 row 16: Ya, the authentic Stamina Potion entry. */
     assert(dm1_spell_f0412PotionReceiptForTableIndex(
@@ -37,6 +39,7 @@ static void test_valid_potion_receipt(void)
 static void test_invalid_power_ordinal_publishes_no_receipt(void)
 {
     DM1_ChampionSpellStats stats = spell_stats();
+    (void)stats;
     DM1_SpellF0412RuntimeReceipt receipt;
 
     memset(&receipt, 0xA5, sizeof(receipt));
@@ -51,6 +54,7 @@ static void test_invalid_power_ordinal_publishes_no_receipt(void)
 static void test_invalid_potion_roll_publishes_no_receipt(void)
 {
     DM1_ChampionSpellStats stats = spell_stats();
+    (void)stats;
     DM1_SpellF0412RuntimeReceipt receipt;
 
     memset(&receipt, 0xA5, sizeof(receipt));

@@ -3,7 +3,7 @@
 #include <assert.h>
 #include <string.h>
 
-static uint16_t read_le16(const uint8_t *bytes)
+static __attribute__((unused)) uint16_t read_le16(const uint8_t *bytes)
 {
     return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
 }
@@ -14,7 +14,7 @@ static void write_le16(uint8_t *bytes, uint16_t value)
     bytes[1] = (uint8_t)((value >> 8) & 0xffu);
 }
 
-static uint16_t thing_ref(int type, int index)
+static __attribute__((unused)) uint16_t thing_ref(int type, int index)
 {
     return (uint16_t)(((type & 15) << 10) | (index & 0x03ff));
 }
@@ -49,6 +49,7 @@ static void build_context(
 static void test_source_evidence(void)
 {
     const char *evidence = DM1_V1_F0166_F0167_SourceEvidencePc34();
+    (void)evidence;
 
     assert(evidence != 0);
     assert(strstr(evidence, "F0166_DUNGEON_GetUnusedThing") != 0);
@@ -84,6 +85,7 @@ static void test_f0167_launcher_mapping_and_allocation(void)
     uint8_t weaponRecords[4][4];
     uint8_t junkRecords[3][4];
     uint16_t thing;
+    (void)thing;
 
     build_context(&context, weaponRecords, junkRecords);
 
@@ -139,6 +141,7 @@ static void test_f0167_full_supported_icon_subset(void)
         uint8_t weaponRecords[4][4];
         uint8_t junkRecords[3][4];
         uint16_t thing;
+        (void)thing;
 
         build_context(&context, weaponRecords, junkRecords);
         thing = F0167_DUNGEON_GetObjectForProjectileLauncherOrObjectGenerator(
@@ -156,6 +159,7 @@ static void test_fail_closed_inputs(void)
     DM1_V1_UnusedThingContextF0166Pc34 context;
     DM1_V1_UnusedThingResultF0166Pc34 result;
     DM1_V1_LauncherObjectResultF0167Pc34 launcher;
+    (void)launcher;
     uint8_t weaponRecords[4][4];
     uint8_t junkRecords[3][4];
 

@@ -38,6 +38,7 @@ static void test_needs_practice_awards_partial_spell_xp(void)
     struct TickInput_Compat input;
     struct TickResult_Compat result;
     int sawPartialXp = 0;
+    (void)sawPartialXp;
     int i;
 
     init_spell_world(&world, &things);

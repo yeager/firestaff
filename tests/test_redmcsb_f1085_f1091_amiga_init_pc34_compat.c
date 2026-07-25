@@ -18,7 +18,9 @@
 int main(void)
 {
     uint8_t *internal = redmcsb_f1090_get_csb_internal_error_message_pc34_compat();
+    (void)internal;
     uint8_t *system = redmcsb_f1091_get_csb_system_error_message_pc34_compat();
+    (void)system;
 
     assert(redmcsb_f1085_intuition_vector_replacement_pc34_compat() == 0);
     redmcsb_f1086_replace_intuition_vectors_pc34_compat();

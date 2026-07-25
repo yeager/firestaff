@@ -47,6 +47,7 @@ static void capture_port_write(void *context, uint16_t port, uint8_t value)
 
 static uint8_t capture_port_read(void *context, uint16_t port)
 {
+    (void)port;
     redmcsb_f1001_capture_pc34_compat *capture = context;
     unsigned int row = capture->read_count %
                        REDMCSB_F1001_ANK_CHARACTER_PATTERN_BYTES;
@@ -96,6 +97,7 @@ static void capture_get_interrupt_vector(
     redmcsb_f1001_interrupt_handler_pc34_compat *handler,
     void **handler_context)
 {
+    (void)interrupt_number;
     assert(interrupt_number == REDMCSB_F1001_TIMER_INTERRUPT);
     *handler = capture_previous_interrupt;
     *handler_context = context;
@@ -107,6 +109,7 @@ static void capture_set_interrupt_vector(
     redmcsb_f1001_interrupt_handler_pc34_compat handler,
     void *handler_context)
 {
+    (void)interrupt_number;
     redmcsb_f1001_capture_pc34_compat *capture = context;
 
     assert(interrupt_number == REDMCSB_F1001_TIMER_INTERRUPT);
@@ -126,6 +129,7 @@ static void capture_wait_for_interrupt(void *context)
 
 static void assert_port_sequence(const redmcsb_f1001_capture_pc34_compat *capture)
 {
+    (void)capture;
     unsigned int character_index;
 
     assert(capture->write_count == REDMCSB_F1001_WRITE_COUNT);
@@ -135,6 +139,7 @@ static void assert_port_sequence(const redmcsb_f1001_capture_pc34_compat *captur
          ++character_index) {
         unsigned int write_index =
             character_index * REDMCSB_F1001_WRITES_PER_CHARACTER;
+        (void)write_index;
         unsigned int row;
 
         assert(capture->write_ports[write_index] == UINT16_C(0x00a3));
@@ -168,6 +173,7 @@ int main(void)
         capture_wait_for_interrupt
     };
     const char *evidence;
+    (void)evidence;
     unsigned int index;
 
     redmcsb_f1001_japanese_load_ank_character_patterns_p20ja_pc34_compat(

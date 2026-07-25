@@ -8,9 +8,11 @@
 int main(void)
 {
     const CsbV1F0468MemoryHeapBoundsPc34Compat bounds = {0U, 64U, 16U, 48U};
+    (void)bounds;
     CsbV1F0468MemoryAllocateRequestPc34Compat request;
     CsbV1F0468MemoryAllocatePlanPc34Compat plan;
     CsbV1F0468MemoryAllocatePlanPc34Compat unchanged;
+    (void)unchanged;
 
     request.kind = CSB_V1_F0468_MEMORY_ALLOCATION_PERMANENT_PC34;
     request.allocation_type = 0U;

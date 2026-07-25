@@ -12,6 +12,7 @@
 int main(void)
 {
     const char *evidence =
+    (void)evidence;
         redmcsb_f0937_init_amiga_data_source_evidence_pc34();
 
     assert(!redmcsb_f0937_init_amiga_data_pc34_compat());

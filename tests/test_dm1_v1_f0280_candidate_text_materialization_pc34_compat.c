@@ -30,6 +30,7 @@ static void test_materializes_candidate_text_and_decoded_values(void)
     uint16_t vitals[3] = { 0, 0, 0 };
     uint16_t statistics[7] = { 0, 0, 0, 0, 0, 0, 0 };
     int rc;
+    (void)rc;
 
     memset(name, 0, sizeof(name));
     memset(title, 0, sizeof(title));
@@ -67,6 +68,7 @@ static void test_missing_proof_fails_without_mutation(void)
     uint16_t vitals[3] = { 11, 22, 33 };
     uint16_t statistics[7] = { 1, 2, 3, 4, 5, 6, 7 };
     int rc;
+    (void)rc;
 
     rc = dm1_v1_resurrection_materialize_candidate_text_stats_pc34(
         "WUUF", 4, "BIKA", 4, "AAAA", "AAAA", "AAAA",
@@ -87,6 +89,7 @@ static void test_malformed_encoded_values_fail_without_mutation(void)
     uint16_t vitals[3] = { 11, 22, 33 };
     uint16_t statistics[7] = { 1, 2, 3, 4, 5, 6, 7 };
     int rc;
+    (void)rc;
 
     rc = dm1_v1_resurrection_materialize_candidate_text_stats_pc34(
         "WUUF", 4, "BIKA", 4, "AAAZ", "AAAA", "AAAA",
@@ -114,6 +117,7 @@ static void test_text_capacity_fails_before_publication(void)
     uint16_t vitals[3] = { 11, 22, 33 };
     uint16_t statistics[7] = { 1, 2, 3, 4, 5, 6, 7 };
     int rc;
+    (void)rc;
 
     rc = dm1_v1_resurrection_materialize_candidate_text_stats_pc34(
         "TIGGY", 5, "BIKA", 4, "AAAA", "AAAA", "AAAA",

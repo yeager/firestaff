@@ -53,7 +53,9 @@ static void test_f0175_group_scan(void)
 {
     DM1_V1_GroupThingNodeF0175Pc34 nodes[5];
     DM1_V1_GroupThingResultF0175Pc34 result;
+    (void)result;
     uint16_t first = thing_ref(5, 1);
+    (void)first;
     uint16_t groupThing = thing_ref(DM1_V1_F0175_THING_TYPE_GROUP_PC34, 3);
 
     memset(nodes, 0, sizeof(nodes));
@@ -88,6 +90,7 @@ static void test_f0176_cell_ordinals(void)
 {
     DM1_V1_GroupCellContextF0176Pc34 group = make_group();
     DM1_V1_CreatureOrdinalResultF0176Pc34 result;
+    (void)result;
 
     assert(F0176_GROUP_GetCreatureOrdinalInCell(&group, 2, &result) == 3);
     assert(result.valid == 1);
@@ -124,6 +127,7 @@ static void test_f0177_melee_target(void)
     DM1_V1_GroupCellContextF0176Pc34 group = make_group();
     DM1_V1_MeleeTargetInputF0177Pc34 input;
     DM1_V1_MeleeTargetResultF0177Pc34 result;
+    (void)result;
 
     memset(&input, 0, sizeof(input));
     input.group = &group;
@@ -162,7 +166,9 @@ static void test_fail_closed(void)
     DM1_V1_GroupCellContextF0176Pc34 group = make_group();
     DM1_V1_MeleeTargetInputF0177Pc34 input;
     DM1_V1_MeleeTargetResultF0177Pc34 target;
+    (void)target;
     DM1_V1_CreatureOrdinalResultF0176Pc34 ordinal;
+    (void)ordinal;
 
     group.creatureCountMinusOne = 4;
     assert(F0176_GROUP_GetCreatureOrdinalInCell(&group, 0, &ordinal) == 0);
@@ -180,6 +186,7 @@ static void test_fail_closed(void)
 int main(void)
 {
     const char *evidence = DM1_V1_F0175_F0178_SourceEvidencePc34();
+    (void)evidence;
     assert(strstr(evidence, "F0175_GROUP_GetThing") != 0);
     assert(strstr(evidence, "F0176_GROUP_GetCreatureOrdinalInCell") != 0);
     assert(strstr(evidence, "F0177_GROUP_GetMeleeTargetCreatureOrdinal") != 0);

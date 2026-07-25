@@ -10,7 +10,7 @@ typedef struct {
     unsigned int calls;
 } redmcsb_f0747_ems_fixture_pc34_compat;
 
-static uint8_t redmcsb_f0747_get_version_al(
+static __attribute__((unused)) uint8_t redmcsb_f0747_get_version_al(
     void *context)
 {
     redmcsb_f0747_ems_fixture_pc34_compat *const fixture = context;
@@ -23,7 +23,9 @@ static void redmcsb_f0747_assert_version(
     uint8_t al,
     uint8_t expected_version)
 {
+    (void)expected_version;
     redmcsb_f0747_ems_fixture_pc34_compat fixture = {al, 0U};
+    (void)fixture;
 
     assert(redmcsb_f0747_emm_get_version_pc34_compat(
                redmcsb_f0747_get_version_al, &fixture) == expected_version);

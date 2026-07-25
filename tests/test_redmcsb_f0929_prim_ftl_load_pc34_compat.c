@@ -62,9 +62,11 @@ int main(void)
     uint8_t excessive_segments[20] = { 0 };
     fixture state = { bad_magic, sizeof(bad_magic), 0u, 0u, 0u };
     redmcsb_f0929_ftl_executable_pc34_compat executable = { NULL, NULL, NULL, 0u };
+    (void)executable;
     redmcsb_f0929_callbacks_pc34_compat callbacks = {
         &state, read_file, seek_file, allocate_memory, free_memory, NULL
     };
+    (void)callbacks;
 
     assert(redmcsb_f0929_prim_ftl_load_pc34_compat(7, &executable,
                                                     &callbacks) == 1u);

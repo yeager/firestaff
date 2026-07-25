@@ -65,6 +65,7 @@ int main(void)
 {
     struct ProjectileList_Compat projectiles;
     struct ProjectileList_Compat before;
+    (void)before;
 
     memset(&projectiles, 0, sizeof(projectiles));
     for (int slot = 0; slot < PROJECTILE_LIST_CAPACITY; ++slot) {

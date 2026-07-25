@@ -13,7 +13,9 @@ static uint8_t sqb(int element, int flags)
 static void test_f0169_index(void)
 {
     static const uint8_t enabled[] = { 0, 1, 0, 1, 1, 0 };
+    (void)enabled;
     DM1_V1_RandomOrnamentIndexF0169Pc34 out;
+    (void)out;
 
     assert(F0169_DUNGEON_GetRandomOrnamentIndex(enabled, 6, 0, &out) == 1);
     assert(out.valid == 1);
@@ -38,8 +40,11 @@ static void test_f0169_index(void)
 static void test_f0170_ordinal(void)
 {
     static const uint8_t enabled[] = { 0, 1, 0, 1, 1, 0 };
+    (void)enabled;
     static const uint8_t none[] = { 0, 0, 0 };
+    (void)none;
     DM1_V1_RandomOrnamentOrdinalF0170Pc34 out;
+    (void)out;
 
     assert(F0170_DUNGEON_GetRandomOrnamentOrdinal(enabled, 6, 0, &out) == 1);
     assert(out.valid == 1);
@@ -67,6 +72,7 @@ static void test_f0171_wall_relative_ordinals(void)
     };
     DM1_V1_SetSquareAspectRandomOrnamentsF0171InputPc34 input;
     DM1_V1_SetSquareAspectRandomOrnamentsF0171ResultPc34 out;
+    (void)out;
 
     memset(&input, 0, sizeof(input));
     input.catalog = &catalog;
@@ -117,6 +123,7 @@ static void test_f0171_floor_and_fail_closed(void)
     };
     DM1_V1_SetSquareAspectRandomOrnamentsF0171InputPc34 input;
     DM1_V1_SetSquareAspectRandomOrnamentsF0171ResultPc34 out;
+    (void)out;
 
     memset(&input, 0, sizeof(input));
     input.catalog = &catalog;
@@ -161,6 +168,7 @@ static void test_f0171_floor_and_fail_closed(void)
 int main(void)
 {
     const char *evidence = DM1_V1_F0169_F0170_F0171_SourceEvidencePc34();
+    (void)evidence;
     assert(strstr(evidence, "F0169_DUNGEON_GetRandomOrnamentIndex") != 0);
     assert(strstr(evidence, "F0170_DUNGEON_GetRandomOrnamentOrdinal") != 0);
     assert(strstr(evidence,

@@ -83,6 +83,7 @@ static void test_type_name(void) {
 static void test_use_delegates_to_consumables(void) {
     DM1_V1_ObjectStatePc34* state;
     DM1ConsumableChampionPc34 champ;
+    (void)champ;
     DM1ConsumableResultPc34 result;
     int idx;
 

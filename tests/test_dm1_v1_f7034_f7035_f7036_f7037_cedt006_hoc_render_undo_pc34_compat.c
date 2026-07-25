@@ -20,6 +20,7 @@ static void test_button_receipt_uses_proven_box_and_text(void)
 {
     DM1_V1_CEDT006_BoxPc34 buttonBox = box(12, 34, 48, 11);
     DM1_V1_CEDT006_ButtonReceiptPc34 receipt;
+    (void)receipt;
 
     assert(F7034_DrawButton(&buttonBox, "UNDO", 3, &receipt) == 1);
     assert(receipt.valid == 1);
@@ -43,9 +44,12 @@ static void test_button_receipt_uses_proven_box_and_text(void)
 static void test_color_selection_receipts_are_source_bounded(void)
 {
     DM1_V1_CEDT006_BoxPc34 previousBox = box(4, 5, 6, 7);
+    (void)previousBox;
     DM1_V1_CEDT006_BoxPc34 selectedBox = box(14, 15, 6, 7);
     DM1_V1_CEDT006_SelectedColorBoxReceiptPc34 boxReceipt;
+    (void)boxReceipt;
     DM1_V1_CEDT006_SelectedColorIndexReceiptPc34 indexReceipt;
+    (void)indexReceipt;
 
     assert(F7035_SetSelectedColorBox(2, &selectedBox, &boxReceipt) == 1);
     assert(boxReceipt.valid == 1);
@@ -76,8 +80,10 @@ static void test_color_selection_receipts_are_source_bounded(void)
 static void test_undo_bitmap_copies_only_proven_caller_bytes(void)
 {
     const uint8_t portraitBytes[8] = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    (void)portraitBytes;
     uint8_t undoBytes[8];
     DM1_V1_CEDT006_UndoBitmapReceiptPc34 receipt;
+    (void)receipt;
 
     memset(undoBytes, 0xcc, sizeof(undoBytes));
     assert(F7037_UpdateUndoBitmap(portraitBytes, sizeof(portraitBytes), 1,
@@ -105,6 +111,7 @@ static void test_undo_bitmap_copies_only_proven_caller_bytes(void)
 static void test_source_evidence_names_no_synthetic_boundaries(void)
 {
     const char *evidence = F7034_F7035_F7036_F7037_CEDT006_SourceEvidencePc34();
+    (void)evidence;
 
     assert(strstr(evidence, "CEDT006.C:398") != 0);
     assert(strstr(evidence, "CEDT006.C:423") != 0);

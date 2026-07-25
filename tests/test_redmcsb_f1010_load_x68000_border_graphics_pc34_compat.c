@@ -12,6 +12,7 @@
 int main(void)
 {
     const char *evidence =
+    (void)evidence;
         redmcsb_f1010_load_x68000_border_graphics_source_evidence_pc34();
 
     assert(!redmcsb_f1010_load_x68000_border_graphics_pc34_compat());

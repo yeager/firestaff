@@ -6,6 +6,7 @@
 static void copies_at_most_count_without_terminating(void)
 {
     char destination[] = { 'x', 'x', 'x', 'x', 'x' };
+    (void)destination;
 
     assert(redmcsb_f0089_strncpy(destination, "abcd", 3) == destination);
     assert(destination[0] == 'a');
@@ -18,6 +19,7 @@ static void copies_at_most_count_without_terminating(void)
 static void copies_nul_without_strncpy_padding(void)
 {
     char destination[] = { 'x', 'x', 'x', 'x', 'x' };
+    (void)destination;
 
     assert(redmcsb_f0089_strncpy(destination, "a", 4) == destination);
     assert(destination[0] == 'a');
@@ -30,6 +32,7 @@ static void copies_nul_without_strncpy_padding(void)
 static void handles_non_positive_counts_without_writing(void)
 {
     char destination[] = { 'x', 'x', 'x' };
+    (void)destination;
 
     assert(redmcsb_f0089_strncpy(destination, "a", 0) == destination);
     assert(destination[0] == 'x');
