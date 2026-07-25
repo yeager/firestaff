@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.121
+
+## New test suites (6 suites, 44 tests)
+
+- `test_dm1_v1_stairs_level_pc34_compat` — 9 tests (Q-DM1-04): stair definitions, level management, transition state
+- `test_dm1_v1_palette_font_pc34_compat` — 8 tests (Q-DM1-03): palette/font init, default palette, custom colors, skill names
+- `test_dm1_v1_amiga_platform_boundary_pc34_compat` — 7 tests (Q-DM1-08): platform boundary queries, portability check
+- `test_dm1_v1_f0740_f0743_music_source_pc34_compat` — 7 tests (Q-DM1-08): music state, SONG.DAT binding, pause unauthenticated
+- `test_dm1_v1_floor_feature_material_pc34_compat` — 7 tests (Q-DM1-03): FNV1a hash, source material search, palette routes
+- `test_dm1_v1_champion_runtime_source_m11_bridge_pc34_compat` — 6 tests (Q-DM1-07): M11 bridge init, command kinds, receipts
+
 # Firestaff v3.0.120
 
 ## Highlights since v3.0.119
