@@ -1,11 +1,14 @@
 
 # Unreleased
 
-# Firestaff v3.0.100
+# Firestaff v3.0.101
 
-## Highlights since v3.0.99
+## Highlights since v3.0.100
 
-- Linux release builders now install Tkinter before packaging Artpack Studio.
+- macOS Artpack Studio now bundles a modern Tk runtime instead of Xcode's
+  incompatible Tk 8.5, fixing the blank black application window.
+- Every packaged Artpack Studio now performs a GUI widget-tree smoke test
+  before its release archive is published.
 
 - Artpack Studio is now self-contained: bundled Python, Pillow and Tk remove
   the system-Pillow dependency on macOS, Windows, Linux and Steam Deck.
