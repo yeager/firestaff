@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.123
+
+## New test suites (6 material suites, 30 tests)
+
+- `test_dm1_v1_f0352_eye_material_pc34_compat` — 6 tests (Q-DM1-06): arrow/eye panel material
+- `test_dm1_v1_f0355_inventory_material_pc34_compat` — 5 tests (Q-DM1-06): inventory panel material
+- `test_dm1_v1_f0659_shield_material_pc34_compat` — 5 tests (Q-DM1-07): shield status border material
+- `test_dm1_v1_f0661_damage_material_pc34_compat` — 4 tests (Q-DM1-05): creature damage overlay material
+- `test_dm1_v1_f0662_invisibility_material_pc34_compat` — 5 tests (Q-DM1-07): invisibility palette material
+- `test_dm1_v1_f0663_smoke_material_pc34_compat` — 5 tests (Q-DM1-03): smoke/poison effect material
+
 # Firestaff v3.0.122
 
 ## New test suites (6 suites, 64 tests)

@@ -40618,3 +40618,13 @@ passes all 27 checks from title through entrance and HUD.
   transparent color, palettes D3/D2. f0341_scroll_material (7 tests, Q-DM1-06):
   constants, struct layouts, FNV1a, receipt empty. f0351_stats_material
   (6 tests, Q-DM1-06): struct layouts, FNV1a, receipt empty.
+
+- **DM1 test batch v3.0.123 — 6 material suites, 30 tests:** Done 2026-07-25.
+  f0352_eye_material (6 tests, Q-DM1-06): arrow/eye constants, struct layouts,
+  FNV1a, receipt empty. f0355_inventory_material (5 tests, Q-DM1-06): panel
+  constants, receipt struct, FNV1a. f0659_shield_material (5 tests, Q-DM1-07):
+  shield trio constants, receipt struct, FNV1a. f0661_damage_material (4 tests,
+  Q-DM1-05): damage dimensions, receipt struct, FNV1a. f0662_invisibility_material
+  (5 tests, Q-DM1-07): champion icon constants, palette changes table, FNV1a.
+  f0663_smoke_material (5 tests, Q-DM1-03): smoke pattern constants, palette
+  changes table, FNV1a.
