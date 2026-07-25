@@ -40,7 +40,8 @@ int csb_v1_f0621_f0645_champion_layout_text_audit_pc34(const CSB_V1_ChampionLayo
     CSB_V1_ChampionLayoutTextFunctionPc34 function_id, CSB_V1_ChampionLayoutTextAuditReceiptPc34 *out)
 {
     const ChampionLayoutTextSpec *spec; CSB_V1_ChampionLayoutTextAuditReceiptPc34 receipt;
-    if(!out)return 0;memset(&receipt,0,sizeof(receipt));*out=receipt;spec=find_spec(function_id);
+    if(!out)return 0;
+    memset(&receipt,0,sizeof(receipt));*out=receipt;spec=find_spec(function_id);
     if(!spec||!raw||!raw->authenticated_pc34||
        (spec->champion&&!has(raw->champion_material,raw->champion_material_size,raw->champion_material_identity))||
        (spec->zone&&!has(raw->zone_layout_material,raw->zone_layout_material_size,raw->zone_layout_material_identity))||
