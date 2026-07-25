@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.126
+
+## New test suites (4 suites, 27 tests)
+
+- `test_dm1_v1_action_spell_m11_blit_plan_pc34_compat` — 8 tests (Q-DM1-07): blit max, presentation kinds, plan struct, build action lock/spell/invalid
+- `test_dm1_v1_c14_c15_graphics_catalog_pc34_compat` — 7 tests (Q-DM1-03): max surfaces, catalog/entry structs, build null, source evidence, admit null
+- `test_dm1_v1_dungeon_stairs_pc34_compat` — 5 tests (Q-DM1-04): result struct, resolve null result/dungeon/party, source evidence
+- `test_dm1_v1_f0693_f0699_video_material_pc34_compat` — 7 tests (Q-DM1-03): video constants 320x200, raster/receipt structs, FNV1a null/data, present null
+
 # Firestaff v3.0.125
 
 ## New test suites (5 suites, 36 tests)
