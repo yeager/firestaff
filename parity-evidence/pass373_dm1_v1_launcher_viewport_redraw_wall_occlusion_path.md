@@ -10,8 +10,8 @@ The path is still blocked; inspect the manifest checks for the first failing sou
 
 - Script: enter,down,down,down,down,down,down,enter,right
 - Probe JSON: parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/launcher_route_viewport_redraw_probe.json
-- Party: {"championCount": 0, "direction": 3, "mapIndex": 0, "mapX": 1, "mapY": 3}
-- Pipeline: {"anyMovementOccurred": 0, "anyTurnOccurred": 1, "command": 2, "dequeued": 1, "movementBlocked": 0, "stepApplied": 0, "turnApplied": 1, "viewportDirty": 1}
+- Party: {"championCount": 0, "direction": 0, "mapIndex": 0, "mapX": 0, "mapY": 0}
+- Pipeline: {"anyMovementOccurred": 0, "anyTurnOccurred": 0, "command": 0, "dequeued": 0, "movementBlocked": 0, "stepApplied": 0, "turnApplied": 0, "viewportDirty": 0}
 
 ## ReDMCSB source audit anchors
 
@@ -39,8 +39,8 @@ The path is still blocked; inspect the manifest checks for the first failing sou
 - prior_wall_occlusion_gate ok=True
 - cmake_configure ok=True
 - cmake_build_firestaff ok=True
-- launcher_route_runtime_probe ok=True
-- live_runtime_redraw_state ok=True
+- launcher_route_runtime_probe ok=False
+- live_runtime_redraw_state ok=False
 
 ## Scope guard
 

@@ -1,6 +1,18 @@
 
 # Unreleased
 
+# Firestaff v3.0.143
+
+- **Fix FTL decoder and 7 source-audit gates:** FTL decode unit test fixed
+  (5 wrong expected bytes in synthetic frequency table round-trip). Seven
+  source-audit gates fixed: pass402 (far-to-near side content with
+  `m11_draw_dm1_side_contents` wrapper and `m11_dm1_center_line_clear_before_depth`/
+  `m11_dm1_side_lane_clear_before_depth` occlusion guards), pass456/pass489
+  (endgame THE END zone, restart box, quit box; center door button depth guard
+  `m11_dm1_nearest_blocking_center_door_depth`), pass490 (wall occlusion merge),
+  pass515 (D0 side wall source line drift), pass621 (champion stat pixel color
+  assertion messages).
+
 # Firestaff v3.0.142
 
 - **Fix combat test failures (Q-DM1-05):** Three fixes across creature movement,

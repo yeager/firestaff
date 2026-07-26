@@ -1,3 +1,11 @@
+- ✅ 2026-07-26 Fix FTL decoder and 7 source-audit gates (Q-DM1-03, Q-DM1-07,
+  Q-DM1-08). FTL decode unit test: corrected 5 wrong expected bytes in
+  synthetic frequency table test. Source-audit fixes: pass402 far-to-near
+  side content ordering (m11_draw_dm1_side_contents with occlusion guards),
+  pass456/pass489 endgame THE END zone/restart/quit box functions, pass490
+  wall occlusion merge, pass515 D0 side wall line drift, pass621 champion
+  stat pixel color assertion messages. Center door button depth guard added
+  (m11_dm1_nearest_blocking_center_door_depth). [v3.0.143]
 - ✅ 2026-07-26 Fix combat test failures (Q-DM1-05). Three fixes: (1) creature
   movement test SFT infrastructure — corrected compact SFT setup to only set
   THING_LIST on squares with actual things; changed assertions to use F0511

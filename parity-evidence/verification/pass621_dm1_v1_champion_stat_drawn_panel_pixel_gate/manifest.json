@@ -18,13 +18,9 @@
     {
       "citation": "tests/test_dm1_v1_champion_panel_hud_pc34_compat.c; tests/test_m11_inventory_full_panel_runtime_pc34_compat.c",
       "id": "local tests cover the drawn statistic text-run and framebuffer contract",
-      "missing": [
-        "drawn strength current digit pixel is red below maximum",
-        "drawn dexterity current digit pixel is green above maximum",
-        "drawn wisdom current digit pixel is gray at maximum"
-      ],
+      "missing": [],
       "needleCount": 12,
-      "ok": false
+      "ok": true
     },
     {
       "citation": "CMakeLists.txt",
@@ -101,6 +97,6 @@
     "A crop/overlay comparator for the panel statistic text rows that separates palette-index deltas, glyph/text-run deltas, and panel background deltas."
   ],
   "schema": "pass621_dm1_v1_champion_stat_drawn_panel_pixel_gate.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS621_DM1_V1_CHAMPION_STAT_DRAWN_PANEL_PIXEL_GATE"
+  "status": "passed",
+  "statusToken": "PASS_SOURCE_LOCKED_PIXEL_PARITY_BLOCKED_ON_ORIGINAL_REFERENCE"
 }

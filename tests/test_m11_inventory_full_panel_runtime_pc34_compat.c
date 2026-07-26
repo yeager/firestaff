@@ -3035,17 +3035,17 @@ static void test_eye_panel_champion_stats_and_skills(void) {
                     framebuffer, panelX + DM1_STATISTIC_CURRENT_REL_X,
                     33 + panelY + DM1_STATISTIC_FIRST_REL_Y,
                     18, M11_FONT_CHAR_VISIBLE_H, DM1_COLOR_RED),
-                "drawn strength source-M653 digits include red below maximum");
+                "drawn strength current digit pixel is red below maximum");
     ASSERT_TRUE(framebuffer_has_color_in_rect(
                     framebuffer, panelX + DM1_STATISTIC_CURRENT_REL_X,
                     33 + panelY + DM1_STATISTIC_FIRST_REL_Y + DM1_PANEL_TEXT_LINE_HEIGHT,
                     18, M11_FONT_CHAR_VISIBLE_H, DM1_COLOR_LIGHT_GREEN),
-                "drawn dexterity source-M653 digits include green above maximum");
+                "drawn dexterity current digit pixel is green above maximum");
     ASSERT_TRUE(framebuffer_has_color_in_rect(
                     framebuffer, panelX + DM1_STATISTIC_CURRENT_REL_X,
                     33 + panelY + DM1_STATISTIC_FIRST_REL_Y + 2 * DM1_PANEL_TEXT_LINE_HEIGHT,
                     18, M11_FONT_CHAR_VISIBLE_H, DM1_COLOR_LIGHTEST_GRAY),
-                "drawn wisdom source-M653 digits include gray at maximum");
+                "drawn wisdom current digit pixel is gray at maximum");
     ASSERT_EQ(framebuffer[(33 + panelY + DM1_STATISTIC_FIRST_REL_Y) * 320 +
                           (panelX + DM1_STATISTIC_CURRENT_REL_X + DM1_PANEL_TEXT_CHAR_WIDTH * 3 + 4)],
               DM1_COLOR_LIGHTEST_GRAY,

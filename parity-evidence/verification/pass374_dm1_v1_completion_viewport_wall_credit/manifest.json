@@ -108,7 +108,7 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "9496ec816c8211e9898a722f7578d2886dd2d907",
+  "head": "d0be31c776c3e8127dde1da23af078dd4d36abb7",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
@@ -227,5 +227,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT",
-  "timestampUtc": "2026-07-26T08:47:32.212353+00:00"
+  "timestampUtc": "2026-07-26T16:22:41.846643+00:00"
 }
