@@ -1,6 +1,6 @@
 # DM1 V1 champion statistic drawn-panel pixel gate
 
-Status: `PASS_SOURCE_LOCKED_PIXEL_PARITY_BLOCKED_ON_ORIGINAL_REFERENCE`
+Status: `FAILED_PASS621_DM1_V1_CHAMPION_STAT_DRAWN_PANEL_PIXEL_GATE`
 
 This gate locks the ReDMCSB draw contract for the inventory eye-panel champion statistic rows. It deliberately stops short of original-runtime pixel parity.
 
@@ -17,7 +17,7 @@ This gate locks the ReDMCSB draw contract for the inventory eye-panel champion s
 
 - PASS `local header exposes source statistic panel constants` - include/dm1_v1_champion_panel_hud_pc34_compat.h:131-138,235
 - PASS `local implementation preserves split current/max text runs` - src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c:288-313
-- PASS `local tests cover the drawn statistic text-run and framebuffer contract` - tests/test_dm1_v1_champion_panel_hud_pc34_compat.c; tests/test_m11_inventory_full_panel_runtime_pc34_compat.c
+- FAIL `local tests cover the drawn statistic text-run and framebuffer contract` - tests/test_dm1_v1_champion_panel_hud_pc34_compat.c; tests/test_m11_inventory_full_panel_runtime_pc34_compat.c
 - PASS `CMake registers pass621 gate` - CMakeLists.txt
 
 ## Remaining Blockers

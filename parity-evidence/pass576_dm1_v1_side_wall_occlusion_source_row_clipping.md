@@ -101,36 +101,36 @@ Side-wall lanes are source-locked separately from front-wall/front-cell gates. R
 
 - PASS firestaff_side_wall_metadata_has_returning_side_lanes_only (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - Firestaff metadata encodes side wall returns for far-side, D1, and D0 side lanes without center/front cells.
-  - line 1163: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - line 1163: DM1_PC34_ZONE_WALL_D2L2
-  - line 1163: DUNVIEW.C:6848-6862 wall case returns
-  - line 1164: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - line 1164: DM1_PC34_ZONE_WALL_D2R2
-  - line 1164: DUNVIEW.C:6882-6893 wall case returns
-  - line 1168: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 1168: DM1_PC34_ZONE_WALL_D1L
-  - line 1168: DUNVIEW.C:7459-7460 side ornament then return
-  - line 1169: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 1169: DM1_PC34_ZONE_WALL_D1R
-  - line 1169: DUNVIEW.C:7627-7628 side ornament then return
-  - line 1171: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
-  - line 1171: DM1_PC34_ZONE_WALL_D0L
-  - line 1171: DUNVIEW.C:8036-8038 wall case returns
-  - line 1172: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
-  - line 1172: DM1_PC34_ZONE_WALL_D0R
-  - line 1172: DUNVIEW.C:8142-8144 wall case returns
+  - line 1180: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 1180: DM1_PC34_ZONE_WALL_D2L2
+  - line 1180: DUNVIEW.C:6848-6862 wall case returns
+  - line 1181: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 1181: DM1_PC34_ZONE_WALL_D2R2
+  - line 1181: DUNVIEW.C:6882-6893 wall case returns
+  - line 1185: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 1185: DM1_PC34_ZONE_WALL_D1L
+  - line 1185: DUNVIEW.C:7459-7460 side ornament then return
+  - line 1186: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 1186: DM1_PC34_ZONE_WALL_D1R
+  - line 1186: DUNVIEW.C:7627-7628 side ornament then return
+  - line 1188: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
+  - line 1188: DM1_PC34_ZONE_WALL_D0L
+  - line 1188: DUNVIEW.C:8036-8038 wall case returns
+  - line 1189: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
+  - line 1189: DM1_PC34_ZONE_WALL_D0R
+  - line 1189: DUNVIEW.C:8142-8144 wall case returns
 
 - PASS firestaff_wall_clip_gate_retains_source_offsets_and_occlusion (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - The local wall clip gate preserves source X/Y offsets, clips to source and viewport bounds, and can mark fully occluded rows invisible.
-  - line 2238: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
-  - line 2250: int src_x = frame->blit_x;
-  - line 2251: int src_y = frame->blit_y;
-  - line 2258: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
-  - line 2265: if (src_x + width > source_width) width = source_width - src_x;
-  - line 2268: if (width <= 0 || height <= 0) return gate;
-  - line 2270: gate.visible = true;
-  - line 2271: gate.src_x = (int16_t)src_x;
-  - line 2272: gate.src_y = (int16_t)src_y;
+  - line 2292: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
+  - line 2304: int src_x = frame->blit_x;
+  - line 2305: int src_y = frame->blit_y;
+  - line 2312: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
+  - line 2319: if (src_x + width > source_width) width = source_width - src_x;
+  - line 2322: if (width <= 0 || height <= 0) return gate;
+  - line 2324: gate.visible = true;
+  - line 2325: gate.src_x = (int16_t)src_x;
+  - line 2326: gate.src_y = (int16_t)src_y;
 
 - PASS firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows (test_dm1_v1_viewport_3d_pc34_compat.c:754-763)
   - Existing narrow runtime assertions cover side wall zones/returns; the same file also asserts source-row clipping edge cases.

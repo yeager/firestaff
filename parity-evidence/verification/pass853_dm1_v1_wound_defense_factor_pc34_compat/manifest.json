@@ -79,11 +79,11 @@
     }
   ],
   "status": "PASS853_DM1_V1_WOUND_DEFENSE_FACTOR_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.974709+00:00",
+  "timestampUtc": "2026-07-26T07:16:44.209252+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_wound_defense_factor_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_wound_defense_factor_pc34_compat"
       ],
       "outputTail": "dm1_v1_wound_defense_factor: 46/46 assertions passed",
       "passed": true,

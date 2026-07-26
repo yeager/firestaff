@@ -24,7 +24,7 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat`: rc=0
 
 ## TODO
 

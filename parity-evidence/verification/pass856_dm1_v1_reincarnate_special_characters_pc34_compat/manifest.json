@@ -70,11 +70,11 @@
     }
   ],
   "status": "PASS856_DM1_V1_REINCARNATE_SPECIAL_CHARACTERS_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.291606+00:00",
+  "timestampUtc": "2026-07-26T07:16:44.619457+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_reincarnate_special_characters_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_reincarnate_special_characters_pc34_compat"
       ],
       "outputTail": "dm1_v1_reincarnate_special_characters: 39/39 assertions passed",
       "passed": true,

@@ -33,11 +33,11 @@
     }
   ],
   "status": "PASS841_DM1_V1_ENTRANCE_CLOSED_DOOR_LEFT_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.214833+00:00",
+  "timestampUtc": "2026-07-26T07:16:44.755429+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_entrance_closed_door_left_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_entrance_closed_door_left_pc34_compat"
       ],
       "outputTail": "dm1_v1_entrance_closed_door_left: 53/53 assertions passed",
       "passed": true,

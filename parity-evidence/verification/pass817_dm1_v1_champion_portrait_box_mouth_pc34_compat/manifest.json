@@ -85,11 +85,11 @@
     }
   ],
   "status": "PASS817_DM1_V1_CHAMPION_PORTRAIT_BOX_MOUTH_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.224582+00:00",
+  "timestampUtc": "2026-07-26T07:16:44.294556+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_champion_portrait_box_mouth_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_champion_portrait_box_mouth_pc34_compat"
       ],
       "outputTail": "dm1_v1_champion_portrait_box_mouth: 52/52 assertions passed",
       "passed": true,

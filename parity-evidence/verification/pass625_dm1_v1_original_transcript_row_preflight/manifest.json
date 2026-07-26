@@ -220,7 +220,7 @@
         "direction": 3,
         "label": "02_turn_right_west_1_3",
         "map": 0,
-        "sha": "f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600",
+        "sha": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5",
         "x": 1,
         "y": 3
       },
@@ -262,7 +262,7 @@
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     }
   },
-  "timestampUtc": "2026-07-18T22:24:52.791948+00:00",
+  "timestampUtc": "2026-07-26T07:14:11.835754+00:00",
   "transcriptTemplateAudit": {
     "missing": [],
     "ok": true,

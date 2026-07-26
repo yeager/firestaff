@@ -87,11 +87,11 @@
     }
   ],
   "status": "PASS789_DM1_V1_MIRROR_CANDIDATE_C040_SAVE_GAME_WHILE_PANEL_LIVE_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.382499+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.627652+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat"
       ],
       "outputTail": "dm1_v1_mirror_candidate_c040_save_game_while_panel_live: 43/43 assertions passed",
       "passed": true,

@@ -94,11 +94,11 @@
     }
   ],
   "status": "PASS790_DM1_V1_WOUND_PROBABILITY_INDEX_TO_MASK_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.408847+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.298698+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_wound_probability_index_to_mask_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_wound_probability_index_to_mask_pc34_compat"
       ],
       "outputTail": "dm1_v1_wound_probability_index_to_mask: 37/37 assertions passed",
       "passed": true,

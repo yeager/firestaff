@@ -36,14 +36,14 @@ Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1
 ## Firestaff Evidence
 
 - PASS firestaff-d1-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 1168: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 1168: DM1_PC34_ZONE_WALL_D1L
-  - line 1168: DUNVIEW.C:7445-7455
-  - line 1168: DUNVIEW.C:7459-7460 side ornament then return
-  - line 1169: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 1169: DM1_PC34_ZONE_WALL_D1R
-  - line 1169: DUNVIEW.C:7613-7623
-  - line 1169: DUNVIEW.C:7627-7628 side ornament then return
+  - line 1185: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 1185: DM1_PC34_ZONE_WALL_D1L
+  - line 1185: DUNVIEW.C:7445-7455
+  - line 1185: DUNVIEW.C:7459-7460 side ornament then return
+  - line 1186: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 1186: DM1_PC34_ZONE_WALL_D1R
+  - line 1186: DUNVIEW.C:7613-7623
+  - line 1186: DUNVIEW.C:7627-7628 side ornament then return
 
 - PASS firestaff-d1-side-wall-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - line 759: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
@@ -54,12 +54,12 @@ Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1
   - line 760: "7628"
 
 - PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 3907: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
-  - line 3908: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+  - line 4174: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+  - line 4175: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
 
 ## Verification
 
-- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -77,7 +77,7 @@ PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_ga
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=0
 ~~~
 PASS pass563 check-only
 ~~~

@@ -99,49 +99,49 @@
       "why": "ReDMCSB wall branch keeps PC34 bitmap/zone/parity and occlusion return or alcove exception contract."
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "local-spec-table-present",
-      "line": 1157,
+      "line": 1174,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "local-d3l2-spec-lock",
-      "line": 1158,
+      "line": 1175,
       "needle": "DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "local-d3c-center-alcove-spec-lock",
-      "line": 1162,
+      "line": 1179,
       "needle": "DM1_VIEW_SQUARE_D3C,  DM1_WALL_D3C,  DM1_WALL_D3C",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "local-d1c-no-hard-return-spec-lock",
-      "line": 1170,
+      "line": 1187,
       "needle": "DM1_PC34_ZONE_WALL_D1C,  false, true",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "probe-wall-matrix-present",
       "line": 66,
       "needle": "wallCompositionMatrix source=",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "probe-d3l2-expected-anchor",
       "line": 46,
       "needle": "DUNVIEW.C:6254-6260",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "probe-d0r-expected-anchor",
       "line": 60,
       "needle": "DUNVIEW.C:8126-8139",

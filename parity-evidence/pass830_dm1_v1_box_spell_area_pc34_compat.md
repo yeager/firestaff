@@ -24,6 +24,6 @@
 
 ## Verification
 
-- `/Users/bosse/workspace-main/firestaff/build/test_dm1_v1_box_spell_area_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_box_spell_area_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass830_dm1_v1_box_spell_area_pc34_compat/manifest.json`

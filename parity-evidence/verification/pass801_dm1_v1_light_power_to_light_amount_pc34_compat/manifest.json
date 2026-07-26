@@ -135,11 +135,11 @@
     }
   ],
   "status": "PASS801_DM1_V1_LIGHT_POWER_TO_LIGHT_AMOUNT_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:02.968425+00:00",
+  "timestampUtc": "2026-07-26T07:16:42.956566+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_light_power_to_light_amount_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_light_power_to_light_amount_pc34_compat"
       ],
       "outputTail": "dm1_v1_light_power_to_light_amount: 126/126 assertions passed",
       "passed": true,

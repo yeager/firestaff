@@ -71,11 +71,11 @@
     }
   ],
   "status": "PASS868_DM1_V1_PRINT_TEXT_MASKS1_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.248817+00:00",
+  "timestampUtc": "2026-07-26T07:16:44.512201+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_print_text_masks1_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_print_text_masks1_pc34_compat"
       ],
       "outputTail": "dm1_v1_print_text_masks1: 24/24 assertions passed",
       "passed": true,

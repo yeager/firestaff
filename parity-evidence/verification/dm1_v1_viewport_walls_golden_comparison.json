@@ -3,19 +3,19 @@
     "files": {
       "movement_viewport_wall_golden": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
+        "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
       },
       "pass177_draw_stack_verify_out": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
+        "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
       },
       "pass179_original_capture_manifest": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate/manifest.json"
+        "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate/manifest.json"
       },
       "pass207_original_movement_viewport_blocker_report": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md"
+        "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md"
       }
     },
     "movement_viewport_wall_golden": {

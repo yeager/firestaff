@@ -1,6 +1,6 @@
 # Pass560 DM1 V1 mirrored door-front source lock
 
-Status: passed
+Status: failed
 
 Claim: D3R, D2L, and D2R front-door branches use ReDMCSB's two-pass door-front order, including mirrored right-side cell orders for D3R/D2R.
 
@@ -37,14 +37,7 @@ Claim: D3R, D2L, and D2R front-door branches use ReDMCSB's two-pass door-front o
 
 ## Firestaff Evidence
 
-- PASS firestaff-mirrored-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:931-942)
-  - line 935: DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439
-  - line 935: DUNVIEW.C:6579 floor ornament under mirrored rear pass
-  - line 935: DUNVIEW.C:6592-6593 optional button before door panel
-  - line 937: DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349
-  - line 937: DUNVIEW.C:6988 floor ornament under rear pass
-  - line 938: DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439
-  - line 938: DUNVIEW.C:7181 floor ornament under mirrored rear pass
+- FAIL firestaff-mirrored-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:931-942)
 
 - PASS firestaff-mirrored-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1303-1340)
   - line 1307: { DM1_VIEW_SQUARE_D3R, "6579", "6580", "6582", "6592", "6598", "6601", 0x0128, 0x0439, {2, 1}, {3, 4} },
@@ -56,7 +49,7 @@ Claim: D3R, D2L, and D2R front-door branches use ReDMCSB's two-pass door-front o
 
 ## Verification
 
-- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -72,9 +65,9 @@ PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_ga
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py --check-only: rc=1
 ~~~
-PASS pass560 check-only
+FAIL pass560 check-only: firestaff-mirrored-door-front-metadata
 ~~~
 
 ## Non-Claims

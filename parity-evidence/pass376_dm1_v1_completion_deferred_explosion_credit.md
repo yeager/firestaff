@@ -16,7 +16,7 @@ The credit is narrow: it covers the source-locked layer boundary for viewport ex
 
 ## Gates
 
-- `pass375_deferred_explosion_prerequisite` ok=False
+- `pass375_deferred_explosion_prerequisite` ok=True
 - `pass375_evidence_marker` ok=True
 - `pass375_evidence_marker` ok=True
 - `pass375_evidence_marker` ok=True

@@ -7,4 +7,4 @@
 - DATA.C:48/362-376/120
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_bitmap_arrow_pointer_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_bitmap_arrow_pointer_pc34_compat`: rc=0

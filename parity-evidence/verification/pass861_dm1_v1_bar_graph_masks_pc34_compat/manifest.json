@@ -92,11 +92,11 @@
     }
   ],
   "status": "PASS861_DM1_V1_BAR_GRAPH_MASKS_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.282673+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.674282+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_bar_graph_masks_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_bar_graph_masks_pc34_compat"
       ],
       "outputTail": "dm1_v1_bar_graph_masks: 104/104 assertions passed",
       "passed": true,

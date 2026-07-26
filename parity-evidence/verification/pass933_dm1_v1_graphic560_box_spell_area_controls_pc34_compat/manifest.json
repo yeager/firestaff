@@ -71,11 +71,11 @@
     }
   ],
   "status": "PASS933_DM1_V1_G0504_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.350912+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.866668+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_graphic560_box_spell_area_controls_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_graphic560_box_spell_area_controls_pc34_compat"
       ],
       "outputTail": "dm1_v1_graphic560_box_spell_area_controls: 31/31 assertions passed",
       "passed": true,

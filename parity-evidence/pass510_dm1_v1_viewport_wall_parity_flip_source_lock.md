@@ -10,12 +10,12 @@ Status: PASS510_DM1_V1_VIEWPORT_WALL_PARITY_FLIP_SOURCE_LOCKED
 - DUNVIEW.C:6697-6714 redmcsb_center_walls_use_flip_flag status=PASS
 
 ## Firestaff anchors
-- m11_game_view.c:24440 firestaff_party_tuple_flip_predicate scope=whole-file-local-evidence status=PASS
-- dm1_v1_viewport_3d_pc34_compat.c:249 firestaff_party_tuple_flip_predicate_contract scope=whole-file-local-evidence status=PASS
-- m11_game_view.c:24446 firestaff_wallset_variant_binding_before_draw scope=whole-file-local-evidence status=PASS
-- m11_game_view.c:25231 firestaff_center_wall_flip_path scope=whole-file-local-evidence status=PASS
-- dm1_v1_viewport_3d_pc34_compat.c:1168 firestaff_side_wall_lr_swap_path scope=whole-file-local-evidence status=PASS
-- m11_game_view.c:26488 firestaff_side_wall_receipt_dispatch scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:27026 firestaff_party_tuple_flip_predicate scope=whole-file-local-evidence status=PASS
+- dm1_v1_viewport_3d_pc34_compat.c:266 firestaff_party_tuple_flip_predicate_contract scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:27032 firestaff_wallset_variant_binding_before_draw scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:27817 firestaff_center_wall_flip_path scope=whole-file-local-evidence status=PASS
+- dm1_v1_viewport_3d_pc34_compat.c:1185 firestaff_side_wall_lr_swap_path scope=whole-file-local-evidence status=PASS
+- m11_game_view.c:29249 firestaff_side_wall_receipt_dispatch scope=whole-file-local-evidence status=PASS
 
 ## Local references
 - dm1_pc34_graphics /Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT exists=True sha256=2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e

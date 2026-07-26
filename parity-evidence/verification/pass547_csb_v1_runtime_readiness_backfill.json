@@ -64,7 +64,7 @@
     {
       "id": "firestaff_m12_launch_guard_supports_csb",
       "role": "firestaff_positive",
-      "path": "/Volumes/Extern-disk/firestaff-work/src/ui/menu_startup_m12.c",
+      "path": "/Volumes/Extern-disk/firestaff-claude/src/ui/menu_startup_m12.c",
       "lines": "2669-2677",
       "needles": [
         "All five catalogued games now have runtime launch boundaries",
@@ -79,7 +79,7 @@
     {
       "id": "firestaff_m12_launch_intent_accepts_available_csb",
       "role": "firestaff_positive",
-      "path": "/Volumes/Extern-disk/firestaff-work/src/ui/menu_startup_m12.c",
+      "path": "/Volumes/Extern-disk/firestaff-claude/src/ui/menu_startup_m12.c",
       "lines": "8221-8293",
       "needles": [
         "M12_StartupMenu_GetLaunchIntent",
@@ -98,7 +98,7 @@
     {
       "id": "firestaff_m11_csb_handoff_to_game_loop",
       "role": "firestaff_positive",
-      "path": "/Volumes/Extern-disk/firestaff-work/src/engine/m11_game_view.c",
+      "path": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "lines": "7872-7901",
       "needles": [
         "FS_GAME_CSB path in firestaff_game_loop.c",
@@ -115,7 +115,7 @@
     {
       "id": "firestaff_csb_game_loop_boot_profile",
       "role": "firestaff_positive",
-      "path": "/Volumes/Extern-disk/firestaff-work/src/engine/firestaff_game_loop.c",
+      "path": "/Volumes/Extern-disk/firestaff-claude/src/engine/firestaff_game_loop.c",
       "lines": "420-436",
       "needles": [
         "FS_GAME_CSB",
@@ -132,7 +132,7 @@
     {
       "id": "firestaff_pc_csb_real_asset_probe",
       "role": "firestaff_positive",
-      "path": "/Volumes/Extern-disk/firestaff-work/probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c",
+      "path": "/Volumes/Extern-disk/firestaff-claude/probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c",
       "lines": "1-130",
       "needles": [
         "PC-first CSB V1 real-data launch gate",

@@ -116,11 +116,11 @@
     }
   ],
   "status": "PASS821_DM1_V1_PALETTE_DUNGEON_VIEW_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.786857+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.363591+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_palette_dungeon_view_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_palette_dungeon_view_pc34_compat"
       ],
       "outputTail": "dm1_v1_palette_dungeon_view: 329/329 assertions passed",
       "passed": true,

@@ -1,9 +1,9 @@
 {
   "capture_route_unblocked": true,
   "inputs": {
-    "pass249_report": "/Volumes/Extern-disk/firestaff-work/parity-evidence/dm1_v1_original_runtime_route_unblock_20260506.md",
-    "pass273_manifest": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json",
-    "pass278_manifest": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json"
+    "pass249_report": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/dm1_v1_original_runtime_route_unblock_20260506.md",
+    "pass273_manifest": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json",
+    "pass278_manifest": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json"
   },
   "proof_predicates": {
     "cpu_memdump_after_stops": true,

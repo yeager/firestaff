@@ -8,4 +8,4 @@
 - MOVESENS.C:1206
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_square_type_to_event_type_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_square_type_to_event_type_pc34_compat`: rc=0

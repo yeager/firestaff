@@ -71,11 +71,11 @@
     }
   ],
   "status": "PASS876_DM1_V1_ANIMTOWN_COLOR_ICON_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.729350+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.960083+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_animtown_color_icon_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_animtown_color_icon_pc34_compat"
       ],
       "outputTail": "dm1_v1_animtown_color_icon: 229/229 assertions passed",
       "passed": true,

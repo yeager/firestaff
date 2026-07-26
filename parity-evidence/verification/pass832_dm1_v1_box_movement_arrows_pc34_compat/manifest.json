@@ -103,11 +103,11 @@
     }
   ],
   "status": "PASS832_DM1_V1_BOX_MOVEMENT_ARROWS_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.144935+00:00",
+  "timestampUtc": "2026-07-26T07:16:44.229735+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_box_movement_arrows_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_box_movement_arrows_pc34_compat"
       ],
       "outputTail": "dm1_v1_box_movement_arrows: 127/127 assertions passed",
       "passed": true,

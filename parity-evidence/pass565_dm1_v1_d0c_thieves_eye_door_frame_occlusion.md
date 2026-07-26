@@ -27,12 +27,12 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
 ## Firestaff Evidence
 
 - PASS firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 957: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
-  - line 958: DUNVIEW.C:8185-8188
-  - line 959: DUNVIEW.C:8199-8201
-  - line 960: DUNVIEW.C:8206-8210
-  - line 961: DUNVIEW.C:8215-8216
-  - line 962: DUNVIEW.C:8240,8294
+  - line 974: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
+  - line 975: DUNVIEW.C:8185-8188
+  - line 976: DUNVIEW.C:8199-8201
+  - line 977: DUNVIEW.C:8206-8210
+  - line 978: DUNVIEW.C:8215-8216
+  - line 979: DUNVIEW.C:8240,8294
 
 - PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - line 1410: test_d0c_thieves_eye_door_frame_occlusion_order
@@ -43,12 +43,12 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
   - line 1426: 8294
 
 - PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 3926: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
-  - line 3926: copy front frame, composite hole, blit temporary frame before common F0115
+  - line 4193: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
+  - line 4193: copy front frame, composite hole, blit temporary frame before common F0115
 
 ## Verification
 
-- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -68,7 +68,7 @@ PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_ga
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=0
 ~~~
 PASS pass565 check-only
 ~~~

@@ -17,7 +17,7 @@ This gate checks the exact N2 prerequisites for the next original DM1 V1 movemen
 - `dosbox`: `/opt/homebrew/bin/dosbox` ok=`True`
 - `xvfb-run`: `None` ok=`True`
 - `xdotool`: `None` ok=`True`
-- `python3`: `/Users/bosse/Library/Application Support/kimi-desktop/daimon-share/daimon/runtime/python/.venv/bin/python3` ok=`True`
+- `python3`: `/usr/bin/python3` ok=`True`
 - `dosbox-debug`: `/opt/homebrew/bin/dosbox-debug` ok=`True`
 - `python3-pillow`: `python3 import PIL.Image` ok=`True`
 

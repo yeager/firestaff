@@ -14,4 +14,4 @@
 - COPYPRO6.C:99
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_fuzzy_sector_analyzed_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_fuzzy_sector_analyzed_pc34_compat`: rc=0

@@ -22,6 +22,6 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_box_title_strikes_back_destination_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_box_title_strikes_back_destination_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass835_dm1_v1_box_title_strikes_back_destination_pc34_compat/manifest.json`

@@ -296,7 +296,7 @@
     },
     {
       "path": "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
-      "size": 8511
+      "size": 8513
     },
     {
       "path": "verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys.swift",
@@ -438,7 +438,7 @@
     "no runtime movement code is changed",
     "candidate transcript-like files are listed for triage only and are not promoted"
   ],
-  "ok": false,
+  "ok": true,
   "priorGates": {
     "pass504_keyboard_buffer_state_delta_blocker": {
       "expectedStatus": "PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED",
@@ -454,9 +454,9 @@
     },
     "pass511_movement_original_route_contract": {
       "expectedStatus": "PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED",
-      "ok": false,
+      "ok": true,
       "path": "parity-evidence/verification/pass511_dm1_v1_movement_original_route_contract/manifest.json",
-      "status": "FAIL_PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT"
+      "status": "PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED"
     },
     "pass512_movement_cross_reference_audit": {
       "expectedStatus": "PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT",
@@ -465,9 +465,7 @@
       "status": "PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT"
     }
   },
-  "problems": [
-    "prior gate failed pass511_movement_original_route_contract: FAIL_PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT != PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED"
-  ],
+  "problems": [],
   "rejectAsNonPromotable": [
     "route labels without rawKeyCode plus normalizedKeyCode plus M528 value",
     "F0361 entry/exit records without G0432 slot, G0434 delta, and G2153 increment",
@@ -607,8 +605,8 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "FAIL_PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_CONTRACT",
-  "timestampUtc": "2026-07-18T22:24:51.646418+00:00",
+  "status": "BLOCKED_PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_REQUIRED",
+  "timestampUtc": "2026-07-26T07:16:40.585332+00:00",
   "transcriptValidation": {
     "counts": {
       "blockedOrNoopRows": 0,

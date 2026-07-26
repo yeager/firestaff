@@ -118,7 +118,7 @@
     "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
     "ok": true
   },
-  "ctestTail": "Test project /Volumes/Extern-disk/firestaff-work/build\n    Start  837: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #837: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.01 sec\n    Start  842: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #842: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.01 sec\n    Start 1136: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #1136: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.01 sec\n    Start 1380: dm1_v1_input_command_queue_source_lock\n4/4 Test #1380: dm1_v1_input_command_queue_source_lock .....   Passed    0.05 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   0.12 sec",
+  "ctestTail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1271: dm1_v1_input_command_queue_pc34_compat\n1/4 Test #1271: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.00 sec\n    Start 1280: dm1_v1_movement_command_core_pc34_compat\n2/4 Test #1280: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.00 sec\n    Start 1575: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #1575: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.01 sec\n    Start 1895: dm1_v1_input_command_queue_source_lock\n4/4 Test #1895: dm1_v1_input_command_queue_source_lock .....   Passed    0.03 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   0.09 sec",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -200,7 +200,7 @@
       "path": "tests/test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "7b9a757f1d689670ad67d5d07cc2c3fa96118f29",
+  "head": "7cf48fc37ee08188c6a81f6ab2c3de15f54ebae8",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
       "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
@@ -219,7 +219,7 @@
       "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED"
     }
   },
-  "repo": "/Volumes/Extern-disk/firestaff-work",
+  "repo": "/Volumes/Extern-disk/firestaff-claude",
   "residualScope": {
     "decision": "do not spend Firestaff M11 route work on original-DOS keyboard-buffer residual; treat it as an original-runtime transcript/debugger task",
     "firestaffRuntimeRoute": "closed: SDL/script keypad -> M12 input -> resolved C001..C006 command -> F0380/F0365/F0366 compat pipeline",
@@ -356,5 +356,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE",
-  "timestampUtc": "2026-07-18T22:24:37.514612+00:00"
+  "timestampUtc": "2026-07-26T07:14:09.919829+00:00"
 }

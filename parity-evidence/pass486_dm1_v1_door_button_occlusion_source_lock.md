@@ -15,9 +15,9 @@ Status: `PASS486_DM1_V1_DOOR_BUTTON_OCCLUSION_SOURCE_LOCKED`
 
 ## Firestaff seams
 {
-  "centerButtonChecks": 8,
+  "centerButtonChecks": 9,
   "centerCoordinateChecks": 3,
-  "d3rButtonChecks": 10,
+  "d3rButtonChecks": 11,
   "viewportOrderChecks": 6
 }
 

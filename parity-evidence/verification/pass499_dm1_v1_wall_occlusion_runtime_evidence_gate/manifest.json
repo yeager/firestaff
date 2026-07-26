@@ -8,65 +8,65 @@
   },
   "firestaffLocks": [
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_table",
-      "line": 1157,
+      "line": 1174,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_count",
-      "line": 2406,
+      "line": 2508,
       "needle": "dm1_viewport_3d_wall_draw_spec_count",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_by_square",
-      "line": 1931,
+      "line": 2033,
       "needle": "dm1_viewport_3d_get_wall_draw_spec_for_square",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "door_front_occlusion_specs",
-      "line": 931,
+      "line": 948,
       "needle": "s_door_front_occlusion_specs",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "wall_contract_probe_expected_matrix",
       "line": 30,
       "needle": "struct ExpectedWallContract",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "wall_contract_probe_source_output",
       "line": 66,
       "needle": "wallCompositionMatrix source=",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
+      "file": "/Volumes/Extern-disk/firestaff-claude/probes/dm1/firestaff_dm1_v1_wall_composition_contract_probe.c",
       "id": "door_contract_probe_output",
       "line": 128,
       "needle": "doorFrontComposition source=",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/include/dm1_v1_viewport_3d_pc34_compat.h",
+      "file": "/Volumes/Extern-disk/firestaff-claude/include/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_wall_spec_type",
-      "line": 701,
+      "line": 707,
       "needle": "DM1_ViewportWallDrawSpec",
       "ok": true
     },
     {
-      "file": "/Volumes/Extern-disk/firestaff-work/include/dm1_v1_viewport_3d_pc34_compat.h",
+      "file": "/Volumes/Extern-disk/firestaff-claude/include/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_door_front_spec_type",
-      "line": 343,
+      "line": 349,
       "needle": "DM1_ViewportDoorFrontOcclusionSpec",
       "ok": true
     }
@@ -86,14 +86,14 @@
     "cmd": [
       "ctest",
       "--test-dir",
-      "/Volumes/Extern-disk/firestaff-work/build",
+      "/Volumes/Extern-disk/firestaff-claude/build",
       "-R",
       "^(firestaff_dm1_v1_wall_composition_contract_probe|pass496_dm1_v1_wall_occlusion_spec_matrix|pass490_dm1_v1_wall_occlusion_merge_readiness|dm1_v1_viewport_3d_occlusion_metadata_gate)$",
       "--output-on-failure"
     ],
     "ok": false,
     "returncode": 8,
-    "tail": "Test project /Volumes/Extern-disk/firestaff-work/build\n    Start 1006: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1006: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.01 sec\n    Start 1547: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #1547: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.05 sec\n    Start 1565: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #1565: pass490_dm1_v1_wall_occlusion_merge_readiness ......***Failed    0.09 sec\nFAIL pass490_dm1_v1_wall_occlusion_merge_readiness firestaff-side-lane-clear\n\n    Start 1582: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #1582: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.04 sec\n\n75% tests passed, 1 tests failed out of 4\n\nTotal Test time (real) =   0.23 sec\n\nThe following tests FAILED:\n\t1565 - pass490_dm1_v1_wall_occlusion_merge_readiness (Failed)\nErrors while running CTest\n"
+    "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1444: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1444: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 2132: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2132: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.04 sec\n    Start 2150: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2150: pass490_dm1_v1_wall_occlusion_merge_readiness ......***Failed    0.06 sec\nFAIL pass490_dm1_v1_wall_occlusion_merge_readiness firestaff-side-lane-clear\n\n    Start 2167: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2167: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.03 sec\n\n75% tests passed, 1 tests failed out of 4\n\nTotal Test time (real) =   0.17 sec\n\nThe following tests FAILED:\n\t2150 - pass490_dm1_v1_wall_occlusion_merge_readiness (Failed)\nErrors while running CTest\n"
   },
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
   "problems": [
@@ -171,5 +171,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE",
-  "timestampUtc": "2026-07-18T22:24:52.119036+00:00"
+  "timestampUtc": "2026-07-26T07:14:11.127072+00:00"
 }

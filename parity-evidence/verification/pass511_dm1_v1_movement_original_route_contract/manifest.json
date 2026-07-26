@@ -79,7 +79,7 @@
     "no completion percentage change is claimed",
     "no viewport/wall implementation is modified"
   ],
-  "ok": false,
+  "ok": true,
   "priorGates": {
     "pass504_keyboard_buffer_state_delta_blocker": {
       "expectedStatus": "PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED",
@@ -118,10 +118,7 @@
       "status": "PASS510_ORIGINAL_CAPTURE_ROUTE_LABEL_FILENAME_FIXTURE"
     }
   },
-  "problems": [
-    "DM1 V1 matrix no longer has expected movement/original-overlay boundary",
-    "DM1 V1 matrix no longer names the keyboard-buffer transcript blocker"
-  ],
+  "problems": [],
   "schema": "firestaff.parity.pass511_dm1_v1_movement_original_route_contract.v1",
   "sourceAudit": [
     {
@@ -206,5 +203,5 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "FAIL_PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT"
+  "status": "PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED"
 }

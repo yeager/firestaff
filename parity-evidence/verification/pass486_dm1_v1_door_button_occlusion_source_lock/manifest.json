@@ -24,9 +24,9 @@
     "This gate is source/metadata evidence only; it makes no original-runtime or pixel parity claim."
   ],
   "firestaffNeedleCounts": {
-    "centerButtonChecks": 8,
+    "centerButtonChecks": 9,
     "centerCoordinateChecks": 3,
-    "d3rButtonChecks": 10,
+    "d3rButtonChecks": 11,
     "viewportOrderChecks": 6
   },
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",

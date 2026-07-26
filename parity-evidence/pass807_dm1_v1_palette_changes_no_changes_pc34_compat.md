@@ -25,6 +25,6 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_palette_changes_no_changes_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_palette_changes_no_changes_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass807_dm1_v1_palette_changes_no_changes_pc34_compat/manifest.json`

@@ -7,4 +7,4 @@
 - DRAWVIEW.C:304/287/413/624-629
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_animtown_color_swoosh1_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_animtown_color_swoosh1_pc34_compat`: rc=0
