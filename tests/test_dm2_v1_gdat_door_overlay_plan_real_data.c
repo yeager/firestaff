@@ -52,7 +52,7 @@ int main(void)
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
     const char *home = getenv("HOME");
     char default_root[1024];
-    char path[1024];
+    char path[2048];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;

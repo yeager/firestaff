@@ -12,7 +12,7 @@ int main(void)
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
     const unsigned char* paletteChanges;
     unsigned char alteredPalette[DM1_V1_F0662_PALETTE_CHANGE_COUNT_PC34];
-    char path[1024];
+    char path[2048];
     M11_AssetLoader loader;
     M11_FontState font;
     const M11_AssetSlot* icon;

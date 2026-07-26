@@ -200,7 +200,7 @@ static void test_dm_bin_prs3_catalog(void) {
     unsigned char fixture[48];
     Nexus_V1_Prs3DmBinCatalogReceipt receipt;
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
-    char path[1024];
+    char path[2048];
     FILE *file;
     long size;
     unsigned char *data;
@@ -262,7 +262,7 @@ static void test_dm_bin_prs3_catalog(void) {
 
 static unsigned char *read_asset(const char *data_dir, const char *name,
                                  size_t *out_size) {
-    char path[1024];
+    char path[2048];
     FILE *file;
     long size;
     unsigned char *data;

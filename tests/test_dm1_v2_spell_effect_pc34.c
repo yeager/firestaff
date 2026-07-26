@@ -10,7 +10,7 @@
 #endif
 
 static int file_contains(const char* rel, const char* needle) {
-    char path[1024];
+    char path[2048];
     snprintf(path, sizeof(path), "%s/%s", FIRESTAFF_SOURCE_DIR, rel);
     FILE* f = fopen(path, "rb");
     if (!f) return 0;

@@ -59,7 +59,7 @@ int main(void)
 {
     const char *home = getenv("HOME");
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    char path[1024];
+    char path[2048];
     char boot_root[1024];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;

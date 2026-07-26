@@ -5522,7 +5522,7 @@ static int load_local_dm1_dungeon_for_door_event(
 {
     const char *root = getenv("FIRESTAFF_DM1_DATA");
     const char *home;
-    char path[1024];
+    char path[2048];
 
     if (!dungeon || !things) return 0;
     if (!root || root[0] == '\0') {

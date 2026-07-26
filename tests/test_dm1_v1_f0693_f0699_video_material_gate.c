@@ -101,7 +101,7 @@ int main(void)
     DM1_V1_F0693F0699VideoReceiptPc34 receipt;
     RedmcsbF0698ZonePc34Compat zone = { 0, 319, 0, 199 };
     TestHost testHost;
-    char path[1024];
+    char path[2048];
     int result;
 
     memset(&loader, 0, sizeof(loader));

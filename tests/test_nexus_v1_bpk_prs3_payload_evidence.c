@@ -455,7 +455,7 @@ static void test_opcode_prefix_witness(void) {
 
 static void test_optional_local_menumenu_bpk(void) {
     const char *home = getenv("HOME");
-    char path[1024];
+    char path[2048];
     FILE *fp;
     long size;
     uint8_t *data;

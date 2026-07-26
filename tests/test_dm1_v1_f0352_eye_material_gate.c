@@ -10,7 +10,7 @@ int main(void)
 {
     const char* home = getenv("HOME");
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    char path[1024];
+    char path[2048];
     M11_AssetLoader loader;
     M11_FontState font;
     DM1_V1_F0352SourceSurfacePc34 surfaces[2];

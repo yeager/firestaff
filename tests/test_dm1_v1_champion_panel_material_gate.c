@@ -8,7 +8,7 @@
 
 int main(void)
 {
-    char path[1024];
+    char path[2048];
     const char *root = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char *home = getenv("HOME");
     M11_AssetLoader loader;

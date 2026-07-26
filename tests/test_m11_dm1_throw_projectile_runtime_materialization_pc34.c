@@ -30,7 +30,7 @@ static int data_dir_has_pc34(const char* dir)
 
 static const char* resolve_data_dir(void)
 {
-    static char path[1024];
+    static char path[2048];
     const char* env = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char* root;
     const char* home;

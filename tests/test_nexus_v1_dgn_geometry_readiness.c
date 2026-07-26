@@ -802,7 +802,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         }
     }
     for (level = 0; level <= 15; ++level) {
-        char path[1024];
+        char path[2048];
         FILE *file;
         long size;
         uint8_t *data;
@@ -4450,7 +4450,7 @@ static void test_real_structure1f_direct_cell_corpus(void) {
 
     if (!data_dir || !data_dir[0]) return;
     for (level_index = 0; level_index <= 15; ++level_index) {
-        char path[1024];
+        char path[2048];
         FILE *file;
         long size;
         uint8_t *data;
@@ -5470,7 +5470,7 @@ static void test_structure1f_item_ibs_material_binding(void) {
 
 static void test_real_item_ibs_special_floor_corpus(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
-    char path[1024];
+    char path[2048];
     uint8_t *data;
     FILE *file;
     Nexus_V1_ItemIbsBank bank;
@@ -5889,7 +5889,7 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
 
     data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     if (data_dir && data_dir[0]) {
-        char path[1024];
+        char path[2048];
         FILE *file;
         long size;
         uint8_t *real_archive;

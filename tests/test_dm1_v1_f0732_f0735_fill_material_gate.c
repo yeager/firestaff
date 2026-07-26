@@ -59,7 +59,7 @@ int main(void)
     DM1_V1_F0732F0735BoxPc34 viewportBox = { 0, 223, 0, 135 };
     DM1_V1_F0732F0735ReceiptPc34 receipt;
     TestFill fill;
-    char path[1024];
+    char path[2048];
 
     memset(&loader, 0, sizeof(loader));
     if (!load_graphics(&loader, path, sizeof(path))) {

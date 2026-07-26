@@ -2043,13 +2043,16 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     if (out_type) *out_type = -1;
     if (out_index) *out_index = -1;
     if (out_size) *out_size = 0;
-    if (!d || !d->raw_data || thing == DM2_THING_END_MARKER)
+    if (!d || !d->raw_data || thing == DM2_THING_END_MARKER ||
+        thing == DM2_THING_NULL_MARKER)
         return NULL;
     type = (int)((thing >> 10) & 0x0fu);
     index = (int)(thing & 0x03ffu);
     if (type < 0 || type >= DM2_THING_TYPE_COUNT) return NULL;
     size = (int)s_dm2_db_record_size[type];
     if (size <= 0 || index < 0 || index >= d->thing_type_counts[type])
+        return NULL;
+    if (d->thing_data_bases[type] < 0)
         return NULL;
     offset = d->thing_data_bases[type] + index * size;
     if (offset < 0 || offset + size > d->raw_size) return NULL;
@@ -2076,7 +2079,12 @@ int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
     }
     record = dm2_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
     if (!record || size < 2) return -1;
-    return (int)RD16(record);
+    {
+        uint16_t w0 = RD16(record);
+        if (w0 == DM2_THING_NULL_MARKER)
+            return -1;
+        return (int)w0;
+    }
 }
 
 int dm2_v1_dungeon_walk_square_things(

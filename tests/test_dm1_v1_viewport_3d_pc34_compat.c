@@ -4002,7 +4002,7 @@ static void test_source_evidence_mentions_visual_lane(void)
 
 static int read_whole_file(const char *rel, char **out, size_t *out_size)
 {
-    char path[1024];
+    char path[2048];
     snprintf(path, sizeof(path), "%s/%s", FIRESTAFF_SOURCE_DIR, rel);
     FILE *f = fopen(path, "rb");
     if (!f) return 0;
