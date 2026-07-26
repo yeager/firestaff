@@ -23,7 +23,7 @@
 
 ## Verification
 
-- `/Users/bosse/workspace-main/firestaff/build/test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat`: rc=0
 
 ## TODO
 

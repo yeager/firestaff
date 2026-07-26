@@ -23,7 +23,7 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_box_entrance_opening_door_right_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_box_entrance_opening_door_right_pc34_compat`: rc=0
 
 ## TODO
 

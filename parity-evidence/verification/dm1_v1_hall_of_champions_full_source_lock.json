@@ -4,11 +4,11 @@
   "scope": "DM1 V1 Hall of Champions: entrance, movement to mirrors, portrait render/click, candidate inventory, resurrect/reincarnate/cancel, candidate modal blockers",
   "existing_portrait_gates": [
     {
-      "path": "/Volumes/Extern-disk/firestaff-work/tools/verify_v1_champion_portrait_click_source_path.py",
+      "path": "/Volumes/Extern-disk/firestaff-claude/tools/verify_v1_champion_portrait_click_source_path.py",
       "verified": true
     },
     {
-      "path": "/Volumes/Extern-disk/firestaff-work/tools/verify_v1_champion_portrait_click_geometry.py",
+      "path": "/Volumes/Extern-disk/firestaff-claude/tools/verify_v1_champion_portrait_click_geometry.py",
       "verified": true
     }
   ],

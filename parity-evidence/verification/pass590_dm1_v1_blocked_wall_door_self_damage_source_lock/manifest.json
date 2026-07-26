@@ -3,20 +3,20 @@
   "closedGap": "blocked wall/door/closed-real-fakewall self-damage request fields and ordering are source-locked without touching viewport/occlusion rendering",
   "firestaffAudit": {
     "focusedCTest": "dm1_v1_movement_command_core_pc34_compat",
-    "src/dm1/dm1_v1_movement_command_core_pc34_compat.c:DM1_V1_MovementCommandCore_ProcessOnePc34Compat": {
+    "src/dm1/dm1_v1_movement_command_core_pc34_compat.c:DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat": {
       "lines": [
-        182,
-        376
+        80,
+        123
       ]
     },
-    "src/dm1/dm1_v1_movement_command_core_pc34_compat.c:dm1_v1_record_blocked_wall_or_door_damage_request": {
+    "src/dm1/dm1_v1_movement_command_core_pc34_compat.c:DM1_V1_MovementCommandCore_ProcessOnePc34Compat": {
       "lines": [
-        25,
-        52
+        394,
+        590
       ]
     }
   },
-  "head": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
+  "head": "7cf48fc37ee08188c6a81f6ab2c3de15f54ebae8",
   "notClaimed": [
     "new original DOS runtime trace",
     "actual random wound materialization parity beyond the recorded request",
@@ -64,8 +64,8 @@
     }
   },
   "status": "PASS590_DM1_V1_BLOCKED_WALL_DOOR_SELF_DAMAGE_SOURCE_LOCKED",
-  "testExecutable": "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_movement_command_core_pc34_compat",
+  "testExecutable": "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_movement_command_core_pc34_compat",
   "testOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1",
-  "timestampUtc": "2026-06-25T21:16:58.261345+00:00",
-  "worktree": "/Users/bosse/.openclaw/workspace-main"
+  "timestampUtc": "2026-07-26T07:16:42.287171+00:00",
+  "worktree": "/Volumes/Extern-disk/firestaff-claude"
 }

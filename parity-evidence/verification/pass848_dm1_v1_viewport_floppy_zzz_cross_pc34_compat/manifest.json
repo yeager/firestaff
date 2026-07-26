@@ -33,11 +33,11 @@
     }
   ],
   "status": "PASS848_DM1_V1_VIEWPORT_FLOPPY_ZZZ_CROSS_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.043825+00:00",
+  "timestampUtc": "2026-07-26T07:28:39.186269+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_floppy_zzz_cross_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_floppy_zzz_cross_pc34_compat"
       ],
       "outputTail": "dm1_v1_viewport_floppy_zzz_cross: 53/53 assertions passed",
       "passed": true,

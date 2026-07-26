@@ -6,9 +6,9 @@
     "present": false
   },
   "inputs": {
-    "fires_exenew": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
-    "runtime_image": "/Volumes/Extern-disk/firestaff-work/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
-    "symbol_map": "/Volumes/Extern-disk/firestaff-work/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
+    "fires_exenew": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass229_unlzexe_fires_runtime_unblock/FIRES.EXENEW",
+    "runtime_image": "/Volumes/Extern-disk/firestaff-claude/data/original_runtime/dm1_pc34_i34e_runtime_image.v1.json",
+    "symbol_map": "/Volumes/Extern-disk/firestaff-claude/data/original_runtime/dm1_pc34_i34e_symbol_map.v1.json"
   },
   "non_claims": [
     "does not commit FIRES.EXENEW",

@@ -1,10 +1,10 @@
 {
   "schema": "firestaff.parity.pass552_dm1_v1_movement_cooldown_queue_loop.v1",
   "status": "PASS552_DM1_V1_MOVEMENT_COOLDOWN_QUEUE_LOOP_LOCKED",
-  "timestampUtc": "2026-07-18T22:24:53.172085+00:00",
+  "timestampUtc": "2026-07-26T07:16:42.573645+00:00",
   "branch": "main",
-  "head": "7b9a757f1d689670ad67d5d07cc2c3fa96118f29",
-  "worktree": "/Volumes/Extern-disk/firestaff-work",
+  "head": "7cf48fc37ee08188c6a81f6ab2c3de15f54ebae8",
+  "worktree": "/Volumes/Extern-disk/firestaff-claude",
   "scope": "DM1 V1 PC-34 movement cooldown tick order and queued-step release",
   "primarySourceAudit": {
     "GAMELOOP.C:cooldownInputQueueLoop": "GAMELOOP.C:150-219",
@@ -21,7 +21,7 @@
     "regression": "test_dm1_v1_movement_timing_pc34_compat"
   },
   "runtimeProbe": {
-    "command": "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_movement_timing_pc34_compat",
+    "command": "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_movement_timing_pc34_compat",
     "statusNeedle": "dm1V1MovementTimingInvariantOk=1"
   },
   "notClaimed": [

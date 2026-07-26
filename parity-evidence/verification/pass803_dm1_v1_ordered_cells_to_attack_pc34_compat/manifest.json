@@ -103,11 +103,11 @@
     }
   ],
   "status": "PASS803_DM1_V1_ORDERED_CELLS_TO_ATTACK_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.069304+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.061617+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_ordered_cells_to_attack_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_ordered_cells_to_attack_pc34_compat"
       ],
       "outputTail": "dm1_v1_ordered_cells_to_attack: 222/222 assertions passed",
       "passed": true,

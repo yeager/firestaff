@@ -23,6 +23,6 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_champion_portrait_box_champion_portrait_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_champion_portrait_box_champion_portrait_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass819_dm1_v1_champion_portrait_box_champion_portrait_pc34_compat/manifest.json`

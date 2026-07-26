@@ -6,11 +6,11 @@
     "no TODO.md update"
   ],
   "ok": true,
-  "probeStdoutTail": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/DUNGEON.DAT]\nwrote /Volumes/Extern-disk/firestaff-work/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.json and /Volumes/Extern-disk/firestaff-work/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.md\nPASS dm1_v1_wall_collision_runtime_capture rows=4 out=/Volumes/Extern-disk/firestaff-work/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+  "probeStdoutTail": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/DUNGEON.DAT]\nwrote /Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.json and /Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.md\nPASS dm1_v1_wall_collision_runtime_capture rows=4 out=/Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
   "problems": [],
   "runtime": {
     "distinctViewportCropHashes": 3,
-    "outDir": "/Volumes/Extern-disk/firestaff-work/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+    "outDir": "/Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
     "rows": [
       {
         "label": "01_start_south_1_3",
@@ -21,9 +21,9 @@
           "mapY": 3
         },
         "screenshot": "01_start_south_1_3.ppm",
-        "screenshotSha256": "8ccd701c3746be57f3a15149e0e3470758f337f561a2533e31fc4eadd2abb062",
+        "screenshotSha256": "290142cd2a602d8c407606e99a763e44611e2838754c2c3f17d3e9a9eb5d9c2c",
         "viewportCrop": "01_start_south_1_3_viewport_224x136.ppm",
-        "viewportCropSha256": "09bf9bfd0614dbed0c7848b7fa624018f1c6541781b6721c8de8e23e447de427"
+        "viewportCropSha256": "c4a2fd67d88aa5b7872da33af2e969670fd2082d1b8c3547d6295f583daae2c2"
       },
       {
         "label": "02_turn_right_west_1_3",
@@ -34,9 +34,9 @@
           "mapY": 3
         },
         "screenshot": "02_turn_right_west_1_3.ppm",
-        "screenshotSha256": "66fb92332d58c27211d98ce465023a32d5bb3a44abc193db6af25eeff19e831a",
+        "screenshotSha256": "0ff5b732fc170f5f462bcd883b9c1e685dacf25c0caecd083117433b5c4fc62a",
         "viewportCrop": "02_turn_right_west_1_3_viewport_224x136.ppm",
-        "viewportCropSha256": "f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600"
+        "viewportCropSha256": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5"
       },
       {
         "label": "03_blocked_west_wall_1_3",
@@ -47,9 +47,9 @@
           "mapY": 3
         },
         "screenshot": "03_blocked_west_wall_1_3.ppm",
-        "screenshotSha256": "a60747eae2482fe60b401d474cd4c37b2ebb0f1bb6e51d40ecde8337abbf7d83",
+        "screenshotSha256": "498e9c12ec0212b3ee0520ed0639a60cec8dc1889e660597275203f7bbb163e4",
         "viewportCrop": "03_blocked_west_wall_1_3_viewport_224x136.ppm",
-        "viewportCropSha256": "f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600"
+        "viewportCropSha256": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5"
       },
       {
         "label": "04_forward_south_1_4",
@@ -60,9 +60,9 @@
           "mapY": 4
         },
         "screenshot": "04_forward_south_1_4.ppm",
-        "screenshotSha256": "07a82439de2d48386ba3fcab6122791e5402b4345710cef031c29ff30e3df85f",
+        "screenshotSha256": "4da8ae22c8e48ed0eb60ced5a8b1d042941091b87fc0ed160589fe97d4d3a41a",
         "viewportCrop": "04_forward_south_1_4_viewport_224x136.ppm",
-        "viewportCropSha256": "2cb0ba6d3a0388aea79673688353684465599f2e26c319ff479129f1fcd39048"
+        "viewportCropSha256": "99f4f2903fcdb28c5375c3fbc2aaf4352aede055f194ecbde95192d367d5dd8e"
       }
     ]
   },

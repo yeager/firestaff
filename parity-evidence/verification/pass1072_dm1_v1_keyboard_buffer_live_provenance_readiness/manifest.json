@@ -75,7 +75,7 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_ORIGINAL_I34E_KEYBOARD_BUFFER_LIVE_DEBUGGER_OBSERVATION_MISSING",
-  "timestampUtc": "2026-07-18T22:24:51.629871+00:00",
+  "timestampUtc": "2026-07-26T07:16:44.269684+00:00",
   "toolAudit": {
     "allRequiredToolsAvailable": true,
     "debuggerHarness": "tools/run_dosbox_debug_pty.py",

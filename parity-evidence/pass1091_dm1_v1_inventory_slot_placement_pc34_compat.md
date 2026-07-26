@@ -14,4 +14,4 @@
 - CHAMPION.C:1546
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_inventory_slot_placement_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_inventory_slot_placement_pc34_compat`: rc=0

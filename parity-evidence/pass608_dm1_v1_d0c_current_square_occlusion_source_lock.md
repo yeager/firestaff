@@ -1,6 +1,6 @@
 # Pass608 DM1 V1 D0C current-square occlusion source lock
 
-Status: failed
+Status: passed
 
 Claim: D0C current-square foreground blockers, common F0115 content handoff, and teleporter-field overlay order are source-locked for DM1 V1 PC34/I34E.
 
@@ -13,7 +13,7 @@ Primary evidence:
 - PASS DEFS.H:4055-4219: PC34/I34E zone ids bind D0C field, frame, thieves-eye, stairs, floor pit, and ceiling pit draw destinations.
 
 Verification:
-- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
+- /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 
 Non-claims:
 - Does not duplicate pass517 D3/D2 side-field occlusion.

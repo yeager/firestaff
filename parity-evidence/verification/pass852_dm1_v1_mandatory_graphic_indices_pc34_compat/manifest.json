@@ -141,11 +141,11 @@
     }
   ],
   "status": "PASS852_DM1_V1_MANDATORY_GRAPHIC_INDICES_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:02.915283+00:00",
+  "timestampUtc": "2026-07-26T07:16:42.018767+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_mandatory_graphic_indices_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_mandatory_graphic_indices_pc34_compat"
       ],
       "outputTail": "dm1_v1_mandatory_graphic_indices: 239/239 assertions passed",
       "passed": true,

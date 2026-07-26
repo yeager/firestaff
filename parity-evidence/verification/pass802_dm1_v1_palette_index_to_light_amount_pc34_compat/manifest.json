@@ -101,11 +101,11 @@
     }
   ],
   "status": "PASS802_DM1_V1_PALETTE_INDEX_TO_LIGHT_AMOUNT_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.015755+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.438081+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_palette_index_to_light_amount_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_palette_index_to_light_amount_pc34_compat"
       ],
       "outputTail": "dm1_v1_palette_index_to_light_amount: 82/82 assertions passed",
       "passed": true,

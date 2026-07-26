@@ -1,10 +1,10 @@
 {
   "schema": "pass450_dm1_v1_hall_original_candidate_artifact_inventory.v1",
-  "timestampUtc": "2026-07-18T22:23:50.715356+00:00",
+  "timestampUtc": "2026-07-26T07:16:41.977369+00:00",
   "status": "PASS_PASS450_CORRECTED_TERMINAL_ORIGINAL_FRAMES_INVENTORIED",
-  "repo": "/Volumes/Extern-disk/firestaff-work",
+  "repo": "/Volumes/Extern-disk/firestaff-claude",
   "branch": "main",
-  "head": "7b9a757f1d689670ad67d5d07cc2c3fa96118f29",
+  "head": "7cf48fc37ee08188c6a81f6ab2c3de15f54ebae8",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "dataHashLock": [
     {
@@ -3708,7 +3708,7 @@
     "localHostCaptureReady": true,
     "platform": "Darwin",
     "machine": "arm64",
-    "path": "/Users/bosse/Library/Application Support/kimi-desktop/daimon-share/daimon/runtime/python/.venv/bin:/Applications/Kimi.app/Contents/Resources/resources/runtime:/Applications/Kimi.app/Contents/Resources/resources/daimon-bundle/runtime/uv:/Applications/Kimi.app/Contents/Resources/resources/runtime:/Applications/Kimi.app/Contents/Resources/resources/daimon-bundle/runtime/uv:/Users/bosse/Library/Application Support/kimi-desktop/daimon-share/daimon/command-process-owner/bin:/Users/bosse/Library/Application Support/kimi-desktop/daimon-share/daimon/npm-global/bin:/Users/bosse/.kimi-work/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin:/Users/bosse/.cargo/bin:/Users/bosse/.local/bin:/System/Cryptexes/App/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin",
+    "path": "/Users/bosse/.cargo/bin:/Users/bosse/.local/bin:/usr/local/bin:/System/Cryptexes/App/usr/bin:/usr/bin:/bin:/usr/sbin:/sbin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/local/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/bin:/var/run/com.apple.security.cryptexd/codex.system/bootstrap/usr/appleinternal/bin:/pkg/env/global/bin:/Library/Apple/usr/bin:/opt/homebrew/bin:/Users/bosse/go/bin:/Users/bosse/.bun/bin:/Users/bosse/Library/pnpm:/Users/bosse/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/claude-code-setup/1.0.0/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/playground/unknown/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/pyright-lsp/1.0.0/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/typescript-lsp/1.0.0/bin:/Users/bosse/Library/Application Support/Claude/local-agent-mode-sessions/skills-plugin/f3575477-b803-4f63-8d1e-2a125b91c020/aa9bf537-6055-4cc3-a10d-a999a5e22e6f/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/pyright-lsp/1.0.0/bin:/Users/bosse/.claude/plugins/cache/claude-plugins-official/typescript-lsp/1.0.0/bin",
     "display": null,
     "dosboxCandidates": [
       {

@@ -87,11 +87,11 @@
     }
   ],
   "status": "PASS804_DM1_V1_CHARGE_COUNT_TO_TORCH_TYPE_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.160150+00:00",
+  "timestampUtc": "2026-07-26T07:16:44.165707+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_charge_count_to_torch_type_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_charge_count_to_torch_type_pc34_compat"
       ],
       "outputTail": "dm1_v1_charge_count_to_torch_type: 144/144 assertions passed",
       "passed": true,

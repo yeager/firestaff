@@ -90,7 +90,7 @@
     {
       "name": "python3",
       "ok": true,
-      "path": "/Users/bosse/Library/Application Support/kimi-desktop/daimon-share/daimon/runtime/python/.venv/bin/python3"
+      "path": "/usr/bin/python3"
     },
     {
       "name": "dosbox-debug",

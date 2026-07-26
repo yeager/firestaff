@@ -12,4 +12,4 @@
 - M531_MANDATORY_GRAPHIC_COUNT
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_mandatory_graphic_indices_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_mandatory_graphic_indices_pc34_compat`: rc=0

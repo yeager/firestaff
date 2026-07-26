@@ -14,4 +14,4 @@
 - VGA_PALETTE_PC34_SPECIAL_CREDITS
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/firestaff_v1_dm_title_palette_silicon_probe`: rc=0 (PASS)
+- `/Volumes/Extern-disk/firestaff-claude/build/firestaff_v1_dm_title_palette_silicon_probe`: rc=0 (PASS)

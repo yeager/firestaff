@@ -47,7 +47,7 @@ Status: passed
 
 ## Verification
 
-- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c

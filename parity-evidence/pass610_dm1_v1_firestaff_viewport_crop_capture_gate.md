@@ -10,10 +10,10 @@ Source evidence:
 - DRAWVIEW.C:842-857 ok=True - F0097 presents G0296 through C007_ZONE_VIEWPORT, so the crop is the compare boundary.
 
 Runtime crops:
-- 01_start_south_1_3 map=0 x=1 y=3 dir=2 crop=01_start_south_1_3_viewport_224x136.ppm sha256=09bf9bfd0614dbed0c7848b7fa624018f1c6541781b6721c8de8e23e447de427
-- 02_turn_right_west_1_3 map=0 x=1 y=3 dir=3 crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600
-- 03_blocked_west_wall_1_3 map=0 x=1 y=3 dir=3 crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600
-- 04_forward_south_1_4 map=0 x=1 y=4 dir=2 crop=04_forward_south_1_4_viewport_224x136.ppm sha256=2cb0ba6d3a0388aea79673688353684465599f2e26c319ff479129f1fcd39048
+- 01_start_south_1_3 map=0 x=1 y=3 dir=2 crop=01_start_south_1_3_viewport_224x136.ppm sha256=c4a2fd67d88aa5b7872da33af2e969670fd2082d1b8c3547d6295f583daae2c2
+- 02_turn_right_west_1_3 map=0 x=1 y=3 dir=3 crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5
+- 03_blocked_west_wall_1_3 map=0 x=1 y=3 dir=3 crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5
+- 04_forward_south_1_4 map=0 x=1 y=4 dir=2 crop=04_forward_south_1_4_viewport_224x136.ppm sha256=99f4f2903fcdb28c5375c3fbc2aaf4352aede055f194ecbde95192d367d5dd8e
 
 Non-claims:
 - no original PC34 frame was captured

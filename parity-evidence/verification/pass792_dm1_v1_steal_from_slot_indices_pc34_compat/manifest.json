@@ -107,11 +107,11 @@
     }
   ],
   "status": "PASS792_DM1_V1_STEAL_FROM_SLOT_INDICES_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.381326+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.110406+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_steal_from_slot_indices_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_steal_from_slot_indices_pc34_compat"
       ],
       "outputTail": "dm1_v1_steal_from_slot_indices: 96/96 assertions passed",
       "passed": true,

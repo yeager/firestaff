@@ -8,4 +8,4 @@
 - IO.C:165/1708/1711/2041
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_palette_changes_mouse_pointer_icon_shadow_pc34_compat`: rc=0

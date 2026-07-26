@@ -83,11 +83,11 @@
     }
   ],
   "status": "PASS811_DM1_V1_CHAMPION_PANEL_BOX_ARROW_OR_EYE_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.990366+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.911373+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_champion_panel_box_arrow_or_eye_pc34_compat"
       ],
       "outputTail": "dm1_v1_champion_panel_box_arrow_or_eye: 51/51 assertions passed",
       "passed": true,

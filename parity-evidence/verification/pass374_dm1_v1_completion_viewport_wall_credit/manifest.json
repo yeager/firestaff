@@ -72,11 +72,15 @@
         "points": 78,
         "viewport_ui_render": 17
       },
-      "ok": false
+      "ok": true
     },
     {
       "kind": "completion_doc_credit",
-      "ok": false
+      "observed": {
+        "dm1Row": "| DM1 V1 | 78% | 78/100 |",
+        "viewportRow": "| `viewport_ui_render` | 17/20 |"
+      },
+      "ok": true
     },
     {
       "kind": "firestaff_completion_matrix_verifier",
@@ -104,14 +108,14 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "7b9a757f1d689670ad67d5d07cc2c3fa96118f29",
+  "head": "cf2d0af4f8c64b7a2d40e9b7073aecf5930207a0",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
     "DOS keyboard-buffer true-stop proof"
   ],
   "pass373Manifest": "parity-evidence/verification/pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path/manifest.json",
-  "repo": "/Volumes/Extern-disk/firestaff-work",
+  "repo": "/Volumes/Extern-disk/firestaff-claude",
   "schema": "pass374_dm1_v1_completion_viewport_wall_credit.v1",
   "sourceLocks": [
     {
@@ -223,5 +227,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT",
-  "timestampUtc": "2026-07-18T22:24:23.620074+00:00"
+  "timestampUtc": "2026-07-26T07:28:40.489996+00:00"
 }

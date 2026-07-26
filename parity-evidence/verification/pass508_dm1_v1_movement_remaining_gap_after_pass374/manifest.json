@@ -26,21 +26,21 @@
         "points": 78,
         "viewport_ui_render": 17
       },
-      "ok": false
+      "ok": true
     },
     {
       "coreNote": "Input command queue, keypad route, movement timing/legal-target gates, touch/mouse queue routes, stairs transitions, and cooldown/F0380 ordering are source/runtime-gated.",
       "id": "completion-notes-name-next-gap",
-      "ok": false,
+      "ok": true,
       "originalOverlayNote": "Original overlay/capture work has partial artifacts and exact wall matches, but representative movement/HUD/viewport parity is not yet promoted."
     },
     {
       "id": "docs-carry-narrowed-nonclaim",
-      "ok": false
+      "ok": true
     },
     {
       "id": "prior-original-route-blocker-consulted",
-      "ok": false,
+      "ok": true,
       "path": "parity-evidence/verification/pass207_dm1_v1_original_movement_viewport_blocker_gate/manifest.json",
       "status": "BLOCKED_ORIGINAL_RUNNER_PREREQUISITES"
     }
@@ -124,7 +124,7 @@
       "binary-level direct F0380 body proof"
     ]
   },
-  "repo": "/Volumes/Extern-disk/firestaff-work",
+  "repo": "/Volumes/Extern-disk/firestaff-claude",
   "schema": "pass508_dm1_v1_movement_remaining_gap_after_pass374.v1",
   "status": "FAIL_PASS508_DM1_V1_MOVEMENT_REMAINING_GAP_AUDIT"
 }

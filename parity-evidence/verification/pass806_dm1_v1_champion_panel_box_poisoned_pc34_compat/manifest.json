@@ -89,11 +89,11 @@
     }
   ],
   "status": "PASS806_DM1_V1_CHAMPION_PANEL_BOX_POISONED_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.633828+00:00",
+  "timestampUtc": "2026-07-26T07:16:44.213245+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_champion_panel_box_poisoned_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_champion_panel_box_poisoned_pc34_compat"
       ],
       "outputTail": "dm1_v1_champion_panel_box_poisoned: 54/54 assertions passed",
       "passed": true,

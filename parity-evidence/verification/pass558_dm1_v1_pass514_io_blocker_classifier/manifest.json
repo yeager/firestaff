@@ -3,19 +3,19 @@
   "decision": "pass514/pass556/pass557 evidence chain incomplete",
   "externalEvidence": {
     "pass550": {
-      "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass558_external_evidence/pass550_pass514_manifest.json",
+      "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass558_external_evidence/pass550_pass514_manifest.json",
       "present": false
     },
     "pass556": {
-      "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass558_external_evidence/pass556_manifest.json",
+      "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass558_external_evidence/pass556_manifest.json",
       "present": false
     },
     "pass557": {
-      "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass558_external_evidence/pass557_manifest.json",
+      "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass558_external_evidence/pass557_manifest.json",
       "present": false
     }
   },
-  "head": "7b9a757f1d689670ad67d5d07cc2c3fa96118f29",
+  "head": "7cf48fc37ee08188c6a81f6ab2c3de15f54ebae8",
   "nextBoundary": "DOSBox window/event queue -> guest keyboard IRQ/int09 -> IBMIO buffer -> IO2 presence/read",
   "nonClaims": [
     "no new original runtime capture",
@@ -40,7 +40,7 @@
     "pass557RulesOutHostRouteGeneration": false,
     "sourceAuditOk": true
   },
-  "repo": "/Volumes/Extern-disk/firestaff-work",
+  "repo": "/Volumes/Extern-disk/firestaff-claude",
   "schema": "pass558_dm1_v1_pass514_io_blocker_classifier.v1",
   "sourceAudit": [
     {
@@ -151,5 +151,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE",
-  "timestampUtc": "2026-07-18T22:24:51.741214+00:00"
+  "timestampUtc": "2026-07-26T07:16:41.013013+00:00"
 }

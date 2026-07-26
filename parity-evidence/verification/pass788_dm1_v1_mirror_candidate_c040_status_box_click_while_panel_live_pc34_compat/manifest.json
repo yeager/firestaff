@@ -87,11 +87,11 @@
     }
   ],
   "status": "PASS788_DM1_V1_MIRROR_CANDIDATE_C040_STATUS_BOX_CLICK_WHILE_PANEL_LIVE_LOCKED",
-  "timestampUtc": "2026-07-18T22:21:42.418337+00:00",
+  "timestampUtc": "2026-07-26T07:16:42.583397+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat"
       ],
       "outputTail": "dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live: 46/46 assertions passed",
       "passed": true,

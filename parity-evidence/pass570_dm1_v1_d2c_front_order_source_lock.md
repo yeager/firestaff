@@ -49,34 +49,34 @@ Claim: ReDMCSB D2C is drawn after D2L/D2R and before D1. Its front wall returns 
 ## Firestaff Evidence
 
 - PASS firestaff-d2c-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 939: DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349
-  - line 939: DUNVIEW.C:7314 floor ornament under rear pass
-  - line 939: DUNVIEW.C:7315 pass1 rear cells before frame
-  - line 939: DUNVIEW.C:7317-7333 top/side frame and button draw
-  - line 939: DUNVIEW.C:7332-7334 optional button before door panel
-  - line 939: DUNVIEW.C:7339 F0111 door bitmap/ornament
-  - line 939: DUNVIEW.C:7341 pass2 front cells after door
+  - line 956: DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349
+  - line 956: DUNVIEW.C:7314 floor ornament under rear pass
+  - line 956: DUNVIEW.C:7315 pass1 rear cells before frame
+  - line 956: DUNVIEW.C:7317-7333 top/side frame and button draw
+  - line 956: DUNVIEW.C:7332-7334 optional button before door panel
+  - line 956: DUNVIEW.C:7339 F0111 door bitmap/ornament
+  - line 956: DUNVIEW.C:7341 pass2 front cells after door
 
 - PASS firestaff-d2c-floor-field-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 1045: DM1_VIEW_SQUARE_D2C, 0x3421
-  - line 1047: DUNVIEW.C:7260-7288 stairs front bitmap before common floor/thing path
-  - line 1048: DUNVIEW.C:7343-7353 pit bitmap before floor ornament
-  - line 1049: DUNVIEW.C:7355-7357 order then F0108 floor ornament
-  - line 1050: DUNVIEW.C:7367-7368 F0115 object/creature/projectile/explosion handoff
-  - line 1051: DUNVIEW.C:7370-7388 teleporter field after F0115
-  - line 1052: DUNVIEW.C:7289-7312 wall bitmap/ornament then return unless front alcove branches to F0115
+  - line 1062: DM1_VIEW_SQUARE_D2C, 0x3421
+  - line 1064: DUNVIEW.C:7260-7288 stairs front bitmap before common floor/thing path
+  - line 1065: DUNVIEW.C:7343-7353 pit bitmap before floor ornament
+  - line 1066: DUNVIEW.C:7355-7357 order then F0108 floor ornament
+  - line 1067: DUNVIEW.C:7367-7368 F0115 object/creature/projectile/explosion handoff
+  - line 1068: DUNVIEW.C:7370-7388 teleporter field after F0115
+  - line 1069: DUNVIEW.C:7289-7312 wall bitmap/ornament then return unless front alcove branches to F0115
 
 - PASS firestaff-d2c-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 1167: DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C
-  - line 1167: DM1_PC34_ZONE_WALL_D2C
-  - line 1167: DUNVIEW.C:7299-7306
-  - line 1167: DUNVIEW.C:7308-7312 front alcove branches to F0115, else return
+  - line 1184: DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C
+  - line 1184: DM1_PC34_ZONE_WALL_D2C
+  - line 1184: DUNVIEW.C:7299-7306
+  - line 1184: DUNVIEW.C:7308-7312 front alcove branches to F0115, else return
 
 - PASS firestaff-d2c-zone-defines (dm1_v1_viewport_3d_pc34_compat.h:1-9999)
-  - line 764: #define DM1_PC34_ZONE_WALL_D2C
-  - line 775: #define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724
-  - line 776: #define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725
-  - line 777: #define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730
+  - line 770: #define DM1_PC34_ZONE_WALL_D2C
+  - line 781: #define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724
+  - line 782: #define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725
+  - line 783: #define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730
 
 - PASS firestaff-d2c-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - line 1311: { DM1_VIEW_SQUARE_D2C, "7314", "7315", "7317", "7332", "7339", "7341", 0x0218, 0x0349, {1, 2}, {4, 3} },
@@ -85,14 +85,14 @@ Claim: ReDMCSB D2C is drawn after D2L/D2R and before D1. Its front wall returns 
   - line 1340: front.cells[0] == expected[i].front_cells[0]
 
 - PASS firestaff-d2c-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 3919: DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass
-  - line 3922: DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730
-  - line 3923: DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw
-  - line 3924: DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay
+  - line 4186: DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass
+  - line 4189: DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730
+  - line 4190: DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw
+  - line 4191: DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay
 
 ## Verification
 
-- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -110,7 +110,7 @@ PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_ga
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py --check-only: rc=0
 ~~~
 PASS pass570 check-only
 ~~~

@@ -3,27 +3,27 @@
     {
       "hits": [
         {
-          "line": 957,
+          "line": 974,
           "needle": "DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736"
         },
         {
-          "line": 958,
+          "line": 975,
           "needle": "DUNVIEW.C:8185-8188"
         },
         {
-          "line": 959,
+          "line": 976,
           "needle": "DUNVIEW.C:8199-8201"
         },
         {
-          "line": 960,
+          "line": 977,
           "needle": "DUNVIEW.C:8206-8210"
         },
         {
-          "line": 961,
+          "line": 978,
           "needle": "DUNVIEW.C:8215-8216"
         },
         {
-          "line": 962,
+          "line": 979,
           "needle": "DUNVIEW.C:8240,8294"
         }
       ],
@@ -69,11 +69,11 @@
     {
       "hits": [
         {
-          "line": 3926,
+          "line": 4193,
           "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion"
         },
         {
-          "line": 3926,
+          "line": 4193,
           "needle": "copy front frame, composite hole, blit temporary frame before common F0115"
         }
       ],
@@ -174,7 +174,7 @@
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -183,7 +183,7 @@
     {
       "command": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
-        "/Users/bosse/workspace-main/firestaff/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py",
+        "/Volumes/Extern-disk/firestaff-claude/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py",
         "--check-only"
       ],
       "outputTail": "PASS pass565 check-only",

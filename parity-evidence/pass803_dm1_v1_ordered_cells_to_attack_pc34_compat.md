@@ -26,6 +26,6 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_ordered_cells_to_attack_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_ordered_cells_to_attack_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass803_dm1_v1_ordered_cells_to_attack_pc34_compat/manifest.json`

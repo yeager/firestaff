@@ -1,6 +1,6 @@
 # Pass519 DM1 V1 D1C door-front field source lock
 
-Status: passed
+Status: failed
 
 Claim: D1C door-front renders rear cells before frame/button/door, composes door ornaments/masks before final door blit, draws front cells after the door, then leaves teleporter field as a final overlay after F0115.
 
@@ -34,13 +34,13 @@ Claim: D1C door-front renders rear cells before frame/button/door, composes door
 
 ## Firestaff Evidence
 
-- PASS firestaff-d1c-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:942-942)
+- FAIL firestaff-d1c-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:942-942)
 
 - PASS firestaff-d1c-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1314-1340)
 
 ## Verification
 
-- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -56,9 +56,9 @@ PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_ga
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py --check-only: rc=1
 ~~~
-PASS pass519 check-only
+FAIL pass519 check-only: firestaff-d1c-door-front-metadata
 ~~~
 
 ## Non-Claims

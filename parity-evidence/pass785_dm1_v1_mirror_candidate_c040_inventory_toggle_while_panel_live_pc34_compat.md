@@ -21,7 +21,7 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat`: rc=0
 
 ## TODO
 

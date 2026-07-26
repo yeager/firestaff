@@ -70,11 +70,11 @@
     }
   ],
   "status": "PASS883_DM1_V1_ANIMTOWN_COLOR_LIGHT5_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.435491+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.878374+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_animtown_color_light5_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_animtown_color_light5_pc34_compat"
       ],
       "outputTail": "dm1_v1_animtown_color_light5: 226/226 assertions passed",
       "passed": true,

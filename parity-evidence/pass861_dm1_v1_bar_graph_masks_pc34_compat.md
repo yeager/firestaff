@@ -11,4 +11,4 @@
 - CHAMDRAW.C:208
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_bar_graph_masks_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_bar_graph_masks_pc34_compat`: rc=0

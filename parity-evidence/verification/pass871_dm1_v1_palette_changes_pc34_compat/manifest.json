@@ -79,11 +79,11 @@
     }
   ],
   "status": "PASS871_DM1_V1_PALETTE_CHANGES_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.621500+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.538952+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_palette_changes_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_palette_changes_pc34_compat"
       ],
       "outputTail": "dm1_v1_palette_changes: 89/89 assertions passed",
       "passed": true,

@@ -8,4 +8,4 @@
 - MENU.C F0452 action/spell init
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_graphic560_action_disabled_ticks_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_graphic560_action_disabled_ticks_pc34_compat`: rc=0

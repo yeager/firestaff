@@ -71,11 +71,11 @@
     }
   ],
   "status": "PASS927_DM1_V1_G0496_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:03.932661+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.584315+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_graphic560_action_skill_index_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_graphic560_action_skill_index_pc34_compat"
       ],
       "outputTail": "dm1_v1_graphic560_action_skill_index: 151/151 assertions passed",
       "passed": true,

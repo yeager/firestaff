@@ -101,11 +101,11 @@
     }
   ],
   "status": "PASS830_DM1_V1_BOX_SPELL_AREA_LOCKED",
-  "timestampUtc": "2026-07-22T09:07:21.678279+00:00",
+  "timestampUtc": "2026-07-26T07:16:43.933950+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/workspace-main/firestaff/build/test_dm1_v1_box_spell_area_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_box_spell_area_pc34_compat"
       ],
       "outputTail": "dm1_v1_box_spell_area: 180/180 assertions passed",
       "passed": true,

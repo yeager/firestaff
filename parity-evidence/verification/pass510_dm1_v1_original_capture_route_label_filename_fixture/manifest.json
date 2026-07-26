@@ -89,7 +89,7 @@
       "forward_south_corridor",
       "post_redraw_after_vblank"
     ],
-    "stdoutLineCount": 20
+    "stdoutLineCount": 19
   },
   "greatstonePc34Manifest": {
     "exists": true,

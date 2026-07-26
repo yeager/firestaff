@@ -41,7 +41,7 @@ Exact remaining blocker: FIRES.EXENEW now supplies the decompressed runtime imag
 - The packed loader entry and static compressed offsets remain non-promotable.
 
 ## Artifacts
-- `/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/manifest.json`
-- `/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/runtime_address_formula.json`
-- `/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/symbol_map_gap.json`
-- `/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/breakpoint_promotion_contract.md`
+- `/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/manifest.json`
+- `/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/runtime_address_formula.json`
+- `/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/symbol_map_gap.json`
+- `/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass230_dm1_v1_fires_exenew_symbol_map_bootstrap/breakpoint_promotion_contract.md`

@@ -21,11 +21,11 @@
     },
     {
       "marker": "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 3177
+      "offset": 3790
     },
     {
       "marker": "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 17922
+      "offset": 21395
     },
     {
       "marker": "if (m11_v22_inplace_render_pass(framebuffer,",

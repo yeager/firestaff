@@ -7,4 +7,4 @@
 - DATA.C:90/429/1105
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_rename_champion_input_character_string_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_rename_champion_input_character_string_pc34_compat`: rc=0

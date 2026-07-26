@@ -63,11 +63,11 @@
     }
   ],
   "status": "PASS929_DM1_V1_G0500_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.108418+00:00",
+  "timestampUtc": "2026-07-26T07:16:44.269580+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_graphic560_box_action_area_2_actions_menu_pc34_compat"
       ],
       "outputTail": "dm1_v1_graphic560_box_action_area_2_actions_menu: 35/35 assertions passed",
       "passed": true,

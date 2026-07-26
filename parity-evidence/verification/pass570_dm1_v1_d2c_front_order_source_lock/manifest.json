@@ -3,31 +3,31 @@
     {
       "hits": [
         {
-          "line": 939,
+          "line": 956,
           "needle": "DM1_VIEW_SQUARE_D2C, 0x0218, 0x0349"
         },
         {
-          "line": 939,
+          "line": 956,
           "needle": "DUNVIEW.C:7314 floor ornament under rear pass"
         },
         {
-          "line": 939,
+          "line": 956,
           "needle": "DUNVIEW.C:7315 pass1 rear cells before frame"
         },
         {
-          "line": 939,
+          "line": 956,
           "needle": "DUNVIEW.C:7317-7333 top/side frame and button draw"
         },
         {
-          "line": 939,
+          "line": 956,
           "needle": "DUNVIEW.C:7332-7334 optional button before door panel"
         },
         {
-          "line": 939,
+          "line": 956,
           "needle": "DUNVIEW.C:7339 F0111 door bitmap/ornament"
         },
         {
-          "line": 939,
+          "line": 956,
           "needle": "DUNVIEW.C:7341 pass2 front cells after door"
         }
       ],
@@ -40,31 +40,31 @@
     {
       "hits": [
         {
-          "line": 1045,
+          "line": 1062,
           "needle": "DM1_VIEW_SQUARE_D2C, 0x3421"
         },
         {
-          "line": 1047,
+          "line": 1064,
           "needle": "DUNVIEW.C:7260-7288 stairs front bitmap before common floor/thing path"
         },
         {
-          "line": 1048,
+          "line": 1065,
           "needle": "DUNVIEW.C:7343-7353 pit bitmap before floor ornament"
         },
         {
-          "line": 1049,
+          "line": 1066,
           "needle": "DUNVIEW.C:7355-7357 order then F0108 floor ornament"
         },
         {
-          "line": 1050,
+          "line": 1067,
           "needle": "DUNVIEW.C:7367-7368 F0115 object/creature/projectile/explosion handoff"
         },
         {
-          "line": 1051,
+          "line": 1068,
           "needle": "DUNVIEW.C:7370-7388 teleporter field after F0115"
         },
         {
-          "line": 1052,
+          "line": 1069,
           "needle": "DUNVIEW.C:7289-7312 wall bitmap/ornament then return unless front alcove branches to F0115"
         }
       ],
@@ -77,19 +77,19 @@
     {
       "hits": [
         {
-          "line": 1167,
+          "line": 1184,
           "needle": "DM1_VIEW_SQUARE_D2C,  DM1_WALL_D2C,  DM1_WALL_D2C"
         },
         {
-          "line": 1167,
+          "line": 1184,
           "needle": "DM1_PC34_ZONE_WALL_D2C"
         },
         {
-          "line": 1167,
+          "line": 1184,
           "needle": "DUNVIEW.C:7299-7306"
         },
         {
-          "line": 1167,
+          "line": 1184,
           "needle": "DUNVIEW.C:7308-7312 front alcove branches to F0115, else return"
         }
       ],
@@ -102,19 +102,19 @@
     {
       "hits": [
         {
-          "line": 764,
+          "line": 770,
           "needle": "#define DM1_PC34_ZONE_WALL_D2C"
         },
         {
-          "line": 775,
+          "line": 781,
           "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_LEFT_D2C   724"
         },
         {
-          "line": 776,
+          "line": 782,
           "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_RIGHT_D2C  725"
         },
         {
-          "line": 777,
+          "line": 783,
           "needle": "#define DM1_PC34_ZONE_DOOR_FRAME_TOP_D2C    730"
         }
       ],
@@ -152,19 +152,19 @@
     {
       "hits": [
         {
-          "line": 3919,
+          "line": 4186,
           "needle": "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass"
         },
         {
-          "line": 3922,
+          "line": 4189,
           "needle": "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730"
         },
         {
-          "line": 3923,
+          "line": 4190,
           "needle": "DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw"
         },
         {
-          "line": 3924,
+          "line": 4191,
           "needle": "DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay"
         }
       ],
@@ -355,7 +355,7 @@
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
       "outputTail": "PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
       "passed": true,
@@ -364,7 +364,7 @@
     {
       "command": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
-        "/Users/bosse/workspace-main/firestaff/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py",
+        "/Volumes/Extern-disk/firestaff-claude/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py",
         "--check-only"
       ],
       "outputTail": "PASS pass570 check-only",

@@ -8,4 +8,4 @@
 - IO.C cursor-style-2 + champion-icon mask path
 
 ## Verification
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat`: rc=0

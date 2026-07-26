@@ -22,6 +22,6 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass813_dm1_v1_champion_panel_box_leader_hand_object_name_pc34_compat/manifest.json`
