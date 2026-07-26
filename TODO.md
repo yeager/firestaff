@@ -122,9 +122,11 @@ that its exact runtime path is not already source-locked and tested.
    C001 blit plans, palette mapping, cadence timing, handoff decisions.
    Entrance palette module and fade transition module exist.
    SWSH sound modules exist for CSB (F0908-F0910).
-   Remaining: DM1-specific SWSH sound binding (needs SND audio data
-   files not yet extracted), SONG.DAT not available for music tracks
-   beyond game-won C2.
+   Remaining: DM1-specific SWSH sound binding (DM1 PC 3.4 has no
+   separate SND files — audio is PSG-based, not sampled).
+   SONG.DAT now extracted and available at ~/.firestaff/data/dm1/SONG.DAT
+   (162482 bytes, from DOS PC 3.4 archive). Music tracks beyond game-won
+   C2 can now be bound and tested.
 9. **Q-DM1-09 Input and controller coverage:** command behavior for keyboard,
    mouse, touch, controller, fullscreen scaling and modal focus.
    2026-07-26: Host input bridge (dm1_v1_host_input_bridge), mouse input

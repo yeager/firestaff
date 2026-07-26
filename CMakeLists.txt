@@ -39515,6 +39515,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_bitmap_hand_pointer_pc3
     )
 endif()
 
+# DM1 V1 cursor icon swap — Q-DM1-07 action selection pointer transition
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_cursor_icon_swap_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_cursor_icon_swap_pc34_compat.c")
+    add_executable(test_dm1_v1_cursor_icon_swap_pc34_compat
+        tests/test_dm1_v1_cursor_icon_swap_pc34_compat.c
+        src/dm1/dm1_v1_cursor_icon_swap_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_cursor_icon_swap_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_cursor_icon_swap_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_cursor_icon_swap_pc34_compat
+        COMMAND test_dm1_v1_cursor_icon_swap_pc34_compat
+    )
+endif()
+
 # pass859 — DM1 V1 square-type to event-type: G0004_ai_Graphic562_SquareTypeToEventType[16]
 # — 16-entry table mapping DUNGEON.C square-type ordinals to F0920
 # event-type dispatch IDs. Source-locked against DATA.C:24/463-477
