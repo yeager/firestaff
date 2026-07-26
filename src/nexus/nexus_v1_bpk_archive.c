@@ -47,7 +47,6 @@ static int read_header(const uint8_t *data,
 
     count = rd32_be(data + 20);
     if (count == 0U || count > 4096U) return -1;
-    if ((size_t)count > (SIZE_MAX - 24U) / 4U) return -1;
     if (24U + (size_t)count * 4U > data_size) return -1;
 
     *out_count = count;

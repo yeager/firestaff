@@ -1,3 +1,6 @@
+#if !defined(_WIN32) && !defined(_DEFAULT_SOURCE)
+#define _DEFAULT_SOURCE
+#endif
 /*
  * asset_find_by_hash.c — Hash-based asset file discovery
  *
@@ -2265,7 +2268,7 @@ static int lha_parse_header(FILE *fp, long pos, char method[6],
         return 0;
     }
     if (headerSize == 0U) return 0;
-    if (headerSize < 21U || headerSize > 255U) return 0;
+    if (headerSize < 21U) return 0;
     if (fread(fixed, 1U, 21U, fp) != 21U) return 0;
     memcpy(method, fixed + 1, 5U);
     method[5] = '\0';
