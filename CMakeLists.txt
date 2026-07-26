@@ -172,7 +172,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_static_object_select
         firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_g1_static_object_selector PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME dm2_v1_g1_static_object_selector
              COMMAND test_dm2_v1_g1_static_object_selector)
@@ -185,7 +185,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_flying_item_source_r
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_g1_flying_item_source_receipt PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     target_link_libraries(test_dm2_v1_g1_flying_item_source_receipt PRIVATE
         firestaff_dm2 firestaff_m10 m)
@@ -213,7 +213,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_pit_m11_receipt.c"
         firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_gdat_pit_m11_receipt PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME dm2_v1_gdat_pit_m11_receipt
              COMMAND test_dm2_v1_gdat_pit_m11_receipt)
@@ -228,7 +228,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_front_m11_r
         firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_gdat_stairs_front_m11_receipt PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME dm2_v1_gdat_stairs_front_m11_receipt
              COMMAND test_dm2_v1_gdat_stairs_front_m11_receipt)
@@ -239,7 +239,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_side_m11_re
     target_include_directories(test_dm2_v1_gdat_stairs_side_m11_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_gdat_stairs_side_m11_receipt PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
-        target_compile_options(test_dm2_v1_gdat_stairs_side_m11_receipt PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_dm2_v1_gdat_stairs_side_m11_receipt PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME dm2_v1_gdat_stairs_side_m11_receipt COMMAND test_dm2_v1_gdat_stairs_side_m11_receipt)
 endif()
@@ -249,7 +249,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_side_transf
     target_include_directories(test_dm2_v1_gdat_stairs_side_transform_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_gdat_stairs_side_transform_receipt PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
-        target_compile_options(test_dm2_v1_gdat_stairs_side_transform_receipt PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_dm2_v1_gdat_stairs_side_transform_receipt PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME dm2_v1_gdat_stairs_side_transform_receipt COMMAND test_dm2_v1_gdat_stairs_side_transform_receipt)
 endif()
@@ -259,7 +259,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_wall_trim_receipt.
     target_include_directories(test_dm2_v1_gdat_wall_trim_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_gdat_wall_trim_receipt PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
-        target_compile_options(test_dm2_v1_gdat_wall_trim_receipt PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_dm2_v1_gdat_wall_trim_receipt PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME dm2_v1_gdat_wall_trim_receipt COMMAND test_dm2_v1_gdat_wall_trim_receipt)
 endif()
@@ -544,7 +544,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_pit_roof_m11_recei
         firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_gdat_pit_roof_m11_receipt PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME dm2_v1_gdat_pit_roof_m11_receipt
              COMMAND test_dm2_v1_gdat_pit_roof_m11_receipt)
@@ -592,7 +592,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_group_active_state_pc34
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_group_active_state_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME dm1_v1_group_active_state_pc34_compat
              COMMAND test_dm1_v1_group_active_state_pc34_compat)
@@ -643,7 +643,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0139_creature_allowed_
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat PRIVATE
-            -std=c11 -Wall -Wextra -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -pedantic -O2)
     endif()
     add_test(NAME dm1_v1_f0139_creature_allowed_on_map_pc34_compat
              COMMAND test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat)
@@ -660,7 +660,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0173_f0174_current_map
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_f0173_f0174_current_map_pc34_compat PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME dm1_v1_f0173_f0174_current_map_pc34_compat
              COMMAND test_dm1_v1_f0173_f0174_current_map_pc34_compat)
@@ -695,7 +695,7 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0675_get_scaled_bitmap_pc34_compat.c")
  add_executable(test_redmcsb_f0675_get_scaled_bitmap_pc34_compat tests/test_redmcsb_f0675_get_scaled_bitmap_pc34_compat.c src/shared/redmcsb_f0675_get_scaled_bitmap_pc34_compat.c)
  target_include_directories(test_redmcsb_f0675_get_scaled_bitmap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
- target_compile_options(test_redmcsb_f0675_get_scaled_bitmap_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+ target_compile_options(test_redmcsb_f0675_get_scaled_bitmap_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
  add_test(NAME redmcsb_f0675_get_scaled_bitmap_pc34_compat COMMAND test_redmcsb_f0675_get_scaled_bitmap_pc34_compat)
 endif()
 
@@ -710,7 +710,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7088_portrait_transfe
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f7088_portrait_transfer_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f7088_portrait_transfer_pc34_compat
              COMMAND test_redmcsb_f7088_portrait_transfer_pc34_compat)
@@ -726,7 +726,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7090_make_new_adventu
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f7090_make_new_adventure_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f7090_make_new_adventure_pc34_compat
              COMMAND test_redmcsb_f7090_make_new_adventure_pc34_compat)
@@ -803,7 +803,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_presentation_re
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_startup_presentation_receipt_pc34_compat PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_startup_presentation_receipt_pc34_compat
              COMMAND test_csb_v1_startup_presentation_receipt_pc34_compat)
@@ -3243,7 +3243,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0009_f0010_spaced_wri
     )
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0009_f0010_spaced_writes_pc34_compat PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic
+            -std=gnu11 -Wall -Wextra -Werror -pedantic
         )
     endif()
     add_test(
@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.159 LANGUAGES C)
+project(Firestaff VERSION 3.0.160 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -3558,6 +3558,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/generated/include include src)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # ── Compiler warnings ────────────────────────────────────────────────
@@ -9228,7 +9229,7 @@ if(BUILD_TESTING)
         target_include_directories(test_m11_dialog_choice_overlay_fit_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         target_link_libraries(test_m11_dialog_choice_overlay_fit_pc34_compat PRIVATE firestaff_m11)
         if(NOT MSVC)
-            target_compile_options(test_m11_dialog_choice_overlay_fit_pc34_compat PRIVATE -std=c11 -Wall -Wextra -O2)
+            target_compile_options(test_m11_dialog_choice_overlay_fit_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -O2)
         endif()
         add_test(
             NAME m11_dialog_choice_overlay_fit_pc34_compat
@@ -9262,7 +9263,7 @@ if(BUILD_TESTING)
         target_include_directories(test_csb_v1_csbgraphics_dat_lzw_boundary PRIVATE
             ${CMAKE_CURRENT_SOURCE_DIR}/include)
         if(NOT MSVC)
-            target_compile_options(test_csb_v1_csbgraphics_dat_lzw_boundary PRIVATE -std=c11 -Wall -Wextra -O2)
+            target_compile_options(test_csb_v1_csbgraphics_dat_lzw_boundary PRIVATE -std=gnu11 -Wall -Wextra -O2)
         endif()
         add_test(
             NAME csb_v1_csbgraphics_dat_lzw_boundary_unit
@@ -9309,7 +9310,7 @@ if(BUILD_TESTING)
         )
         target_include_directories(test_firestaff_x68k_media_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         if(NOT MSVC)
-            target_compile_options(test_firestaff_x68k_media_receipt PRIVATE -std=c11 -Wall -Wextra -O2)
+            target_compile_options(test_firestaff_x68k_media_receipt PRIVATE -std=gnu11 -Wall -Wextra -O2)
         endif()
         add_test(NAME firestaff_x68k_media_receipt_unit COMMAND test_firestaff_x68k_media_receipt)
     endif()
@@ -9327,7 +9328,7 @@ if(BUILD_TESTING)
         target_include_directories(firestaff_x68k_media_receipt_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         target_link_libraries(firestaff_x68k_media_receipt_probe PRIVATE firestaff_m10)
         if(NOT MSVC)
-            target_compile_options(firestaff_x68k_media_receipt_probe PRIVATE -std=c11 -Wall -Wextra -O2)
+            target_compile_options(firestaff_x68k_media_receipt_probe PRIVATE -std=gnu11 -Wall -Wextra -O2)
         endif()
         add_test(
             NAME firestaff_x68k_media_receipt
@@ -17462,7 +17463,7 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat
@@ -17478,7 +17479,7 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat
@@ -17495,7 +17496,7 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_d1c_f0111_door_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_viewport_d1c_f0111_door_pc34_compat
@@ -17512,7 +17513,7 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_d0c_f0111_door_panel_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_viewport_d0c_f0111_door_panel_pc34_compat
@@ -17529,7 +17530,7 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
@@ -17546,7 +17547,7 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_d2c_f0111_door_front_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_viewport_d2c_f0111_door_front_pc34_compat
@@ -17562,7 +17563,7 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat
@@ -17580,7 +17581,7 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
@@ -17597,7 +17598,7 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat
@@ -18436,7 +18437,7 @@ if(BUILD_TESTING)
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_champion_transfer_field_gate_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_champion_transfer_field_gate_pc34_compat
@@ -32104,7 +32105,7 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     if(NOT MSVC)
-        target_compile_options(test_csb_v1_audio_runtime_pc34_compat PRIVATE -std=c11 -Wall -Wextra -pedantic -O2)
+        target_compile_options(test_csb_v1_audio_runtime_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -pedantic -O2)
     endif()
     add_test(
         NAME csb_v1_audio_runtime_pc34_compat
@@ -43960,7 +43961,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0738_music_continue_p
     )
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0738_music_continue_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(
         NAME redmcsb_f0738_music_continue_pc34_compat
@@ -43994,7 +43995,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8140_scroll_message_a
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8140_scroll_message_area_up_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8140_scroll_message_area_up_pc34_compat
              COMMAND test_redmcsb_f8140_scroll_message_area_up_pc34_compat)
@@ -44011,7 +44012,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8162_vidrv_scroll_mes
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8162_vidrv_scroll_message_area_up_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8162_vidrv_scroll_message_area_up_pc34_compat
              COMMAND test_redmcsb_f8162_vidrv_scroll_message_area_up_pc34_compat)
@@ -44029,7 +44030,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8151_vidrv_blit_pc34_
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8151_vidrv_blit_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8151_vidrv_blit_pc34_compat
              COMMAND test_redmcsb_f8151_vidrv_blit_pc34_compat)
@@ -44046,7 +44047,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8151_f8154_vidrv_sour
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat
              COMMAND test_redmcsb_f8151_f8154_vidrv_source_bound_pc34_compat)
@@ -44064,7 +44065,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f1918_hintload_pc34_co
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f1918_hintload_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f1918_hintload_pc34_compat
              COMMAND test_redmcsb_f1918_hintload_pc34_compat)
@@ -44083,7 +44084,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f1918_hintload_initial_
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f1918_hintload_initial_load_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_f1918_hintload_initial_load_pc34_compat
              COMMAND test_csb_v1_f1918_hintload_initial_load_pc34_compat)
@@ -44099,7 +44100,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0347_inventory_draw_pa
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0347_inventory_draw_panel_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_f0347_inventory_draw_panel_pc34_compat
              COMMAND test_csb_v1_f0347_inventory_draw_panel_pc34_compat)
@@ -44114,7 +44115,7 @@ endif()
         firestaff_csb_v2 firestaff_v2 firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v2_hud_overlay_pc34
-            PRIVATE -std=c11 -Wall -Wextra -Werror -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -O2)
     endif()
     add_test(NAME csb_v2_hud_overlay_pc34
              COMMAND test_csb_v2_hud_overlay_pc34)
@@ -44128,7 +44129,7 @@ endif()
         firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_champions_left_click_inventory_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -O2)
     endif()
     add_test(NAME csb_v1_champions_left_click_inventory_pc34_compat
              COMMAND test_csb_v1_champions_left_click_inventory_pc34_compat)
@@ -44142,7 +44143,7 @@ endif()
         firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0703_release_champion_icon_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -O2)
     endif()
     add_test(NAME redmcsb_f0703_release_champion_icon_pc34_compat
              COMMAND test_redmcsb_f0703_release_champion_icon_pc34_compat)
@@ -44157,7 +44158,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f2262_timer_a_event_pc3
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f2262_timer_a_event_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_f2262_timer_a_event_pc34_compat
              COMMAND test_csb_v1_f2262_timer_a_event_pc34_compat)
@@ -44173,7 +44174,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8152_vidrv_fill_box_p
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8152_vidrv_fill_box_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8152_vidrv_fill_box_pc34_compat
              COMMAND test_redmcsb_f8152_vidrv_fill_box_pc34_compat)
@@ -44189,7 +44190,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7055_saveutil_pc34_co
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f7055_saveutil_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f7055_saveutil_pc34_compat
              COMMAND test_redmcsb_f7055_saveutil_pc34_compat)
@@ -44205,7 +44206,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7059_dungeon_part_che
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f7059_dungeon_part_checksum_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f7059_dungeon_part_checksum_pc34_compat
              COMMAND test_redmcsb_f7059_dungeon_part_checksum_pc34_compat)
@@ -44222,7 +44223,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7061_save_header_pc34
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f7061_save_header_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f7061_save_header_pc34_compat
              COMMAND test_redmcsb_f7061_save_header_pc34_compat)
@@ -44240,7 +44241,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7062_save_header_pc34
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f7062_save_header_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f7062_save_header_pc34_compat
              COMMAND test_redmcsb_f7062_save_header_pc34_compat)
@@ -44256,7 +44257,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7063_dungeon_stream_p
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f7063_dungeon_stream_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f7063_dungeon_stream_pc34_compat
              COMMAND test_redmcsb_f7063_dungeon_stream_pc34_compat)
@@ -44272,7 +44273,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7064_champion_text_pc
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f7064_champion_text_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f7064_champion_text_pc34_compat
              COMMAND test_redmcsb_f7064_champion_text_pc34_compat)
@@ -44288,7 +44289,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7065_portrait_slots_p
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f7065_portrait_slots_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f7065_portrait_slots_pc34_compat
              COMMAND test_redmcsb_f7065_portrait_slots_pc34_compat)
@@ -44305,7 +44306,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f7067_portrait_info_pc
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f7067_portrait_info_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f7067_portrait_info_pc34_compat
              COMMAND test_redmcsb_f7067_portrait_info_pc34_compat)
@@ -44324,7 +44325,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0435_save_tail_pc34_c
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0435_save_tail_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0435_save_tail_pc34_compat
              COMMAND test_redmcsb_f0435_save_tail_pc34_compat)
@@ -44340,7 +44341,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8143_copy_pixel_line_
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8143_copy_pixel_line_from_screen_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8143_copy_pixel_line_from_screen_pc34_compat
              COMMAND test_redmcsb_f8143_copy_pixel_line_from_screen_pc34_compat)
@@ -44359,7 +44360,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0434_dungeon_tail_pc3
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0434_dungeon_tail_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0434_dungeon_tail_pc34_compat
              COMMAND test_redmcsb_f0434_dungeon_tail_pc34_compat)
@@ -44375,7 +44376,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8154_vidrv_invert_box
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8154_vidrv_invert_box_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8154_vidrv_invert_box_pc34_compat
              COMMAND test_redmcsb_f8154_vidrv_invert_box_pc34_compat)
@@ -44391,7 +44392,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8155_vidrv_hatch_scre
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8155_vidrv_hatch_screen_box_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8155_vidrv_hatch_screen_box_pc34_compat
              COMMAND test_redmcsb_f8155_vidrv_hatch_screen_box_pc34_compat)
@@ -44407,7 +44408,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0651_timeline_free_li
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0651_timeline_free_list_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0651_timeline_free_list_pc34_compat
              COMMAND test_redmcsb_f0651_timeline_free_list_pc34_compat)
@@ -44424,7 +44425,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0652_merge_event_pc34
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0652_merge_event_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0652_merge_event_pc34_compat
              COMMAND test_redmcsb_f0652_merge_event_pc34_compat)
@@ -44440,7 +44441,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0655_f0656_viewport_b
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0655_f0656_viewport_bitmap_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0655_f0656_viewport_bitmap_pc34_compat
              COMMAND test_redmcsb_f0655_f0656_viewport_bitmap_pc34_compat)
@@ -44456,7 +44457,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0657_f0658_viewport_b
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0657_f0658_viewport_bitmap_index_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0657_f0658_viewport_bitmap_index_pc34_compat
              COMMAND test_redmcsb_f0657_f0658_viewport_bitmap_index_pc34_compat)
@@ -44472,7 +44473,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0662_f0663_palette_bi
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0662_f0663_palette_bitmap_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0662_f0663_palette_bitmap_pc34_compat
              COMMAND test_redmcsb_f0662_f0663_palette_bitmap_pc34_compat)
@@ -44488,7 +44489,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0661_get_shrinked_bit
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0661_get_shrinked_bitmap_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0661_get_shrinked_bitmap_pc34_compat
              COMMAND test_redmcsb_f0661_get_shrinked_bitmap_pc34_compat)
@@ -44504,7 +44505,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0664_knock_front_wall
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0664_knock_front_wall_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0664_knock_front_wall_pc34_compat
              COMMAND test_redmcsb_f0664_knock_front_wall_pc34_compat)
@@ -44520,7 +44521,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0665_highlight_box_pc
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0665_highlight_box_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0665_highlight_box_pc34_compat
              COMMAND test_redmcsb_f0665_highlight_box_pc34_compat)
@@ -44536,7 +44537,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0666_endgame_pc34_com
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0666_endgame_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0666_endgame_pc34_compat
              COMMAND test_redmcsb_f0666_endgame_pc34_compat)
@@ -44552,7 +44553,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0670_f0671_string_pc3
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0670_f0671_string_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0670_f0671_string_pc34_compat
              COMMAND test_redmcsb_f0670_f0671_string_pc34_compat)
@@ -44568,7 +44569,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0672_f0673_mouse_inpu
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0672_f0673_mouse_input_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0672_f0673_mouse_input_pc34_compat
              COMMAND test_redmcsb_f0672_f0673_mouse_input_pc34_compat)
@@ -44584,7 +44585,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0674_viewport_bitmap_
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f0674_viewport_bitmap_copy_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0674_viewport_bitmap_copy_pc34_compat
              COMMAND test_redmcsb_f0674_viewport_bitmap_copy_pc34_compat)
@@ -44595,7 +44596,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0676_f0677_d3_side_pc
     add_executable(test_redmcsb_f0676_f0677_d3_side_pc34_compat tests/test_redmcsb_f0676_f0677_d3_side_pc34_compat.c src/csb/redmcsb_f0676_f0677_d3_side_pc34_compat.c)
     target_include_directories(test_redmcsb_f0676_f0677_d3_side_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_redmcsb_f0676_f0677_d3_side_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_redmcsb_f0676_f0677_d3_side_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0676_f0677_d3_side_pc34_compat COMMAND test_redmcsb_f0676_f0677_d3_side_pc34_compat)
 endif()
@@ -44604,7 +44605,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0678_f0679_d2_side_pc
     add_executable(test_redmcsb_f0678_f0679_d2_side_pc34_compat tests/test_redmcsb_f0678_f0679_d2_side_pc34_compat.c src/csb/redmcsb_f0678_f0679_d2_side_pc34_compat.c)
     target_include_directories(test_redmcsb_f0678_f0679_d2_side_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_redmcsb_f0678_f0679_d2_side_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_redmcsb_f0678_f0679_d2_side_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0678_f0679_d2_side_pc34_compat COMMAND test_redmcsb_f0678_f0679_d2_side_pc34_compat)
 endif()
@@ -44613,7 +44614,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0685_img3_line_fill_p
     add_executable(test_redmcsb_f0685_img3_line_fill_pc34_compat tests/test_redmcsb_f0685_img3_line_fill_pc34_compat.c src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c)
     target_include_directories(test_redmcsb_f0685_img3_line_fill_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_redmcsb_f0685_img3_line_fill_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_redmcsb_f0685_img3_line_fill_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0685_img3_line_fill_pc34_compat COMMAND test_redmcsb_f0685_img3_line_fill_pc34_compat)
 endif()
@@ -44622,7 +44623,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0684_blit_pc34_compat
     add_executable(test_redmcsb_f0684_blit_pc34_compat tests/test_redmcsb_f0684_blit_pc34_compat.c src/csb/redmcsb_f0684_blit_pc34_compat.c)
     target_include_directories(test_redmcsb_f0684_blit_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_redmcsb_f0684_blit_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_redmcsb_f0684_blit_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0684_blit_pc34_compat COMMAND test_redmcsb_f0684_blit_pc34_compat)
 endif()
@@ -44631,7 +44632,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0686_copy_previous_li
     add_executable(test_redmcsb_f0686_copy_previous_line_pc34_compat tests/test_redmcsb_f0686_copy_previous_line_pc34_compat.c src/csb/redmcsb_f0686_copy_previous_line_pc34_compat.c)
     target_include_directories(test_redmcsb_f0686_copy_previous_line_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_redmcsb_f0686_copy_previous_line_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_redmcsb_f0686_copy_previous_line_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0686_copy_previous_line_pc34_compat COMMAND test_redmcsb_f0686_copy_previous_line_pc34_compat)
 endif()
@@ -44640,7 +44641,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0687_f0688_img3_pc34_
     add_executable(test_redmcsb_f0687_f0688_img3_pc34_compat tests/test_redmcsb_f0687_f0688_img3_pc34_compat.c src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c)
     target_include_directories(test_redmcsb_f0687_f0688_img3_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_redmcsb_f0687_f0688_img3_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_redmcsb_f0687_f0688_img3_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0687_f0688_img3_pc34_compat COMMAND test_redmcsb_f0687_f0688_img3_pc34_compat)
 endif()
@@ -44649,7 +44650,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0689_img3_expand_pc34
     add_executable(test_redmcsb_f0689_img3_expand_pc34_compat tests/test_redmcsb_f0689_img3_expand_pc34_compat.c src/csb/redmcsb_f0689_img3_expand_pc34_compat.c src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c src/csb/redmcsb_f0686_copy_previous_line_pc34_compat.c src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c)
     target_include_directories(test_redmcsb_f0689_img3_expand_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_redmcsb_f0689_img3_expand_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_redmcsb_f0689_img3_expand_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0689_img3_expand_pc34_compat COMMAND test_redmcsb_f0689_img3_expand_pc34_compat)
 endif()
@@ -44658,7 +44659,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_img3_asset_presentation
     add_executable(test_csb_v1_img3_asset_presentation_pc34_compat tests/test_csb_v1_img3_asset_presentation_pc34_compat.c src/csb/csb_v1_img3_asset_presentation_pc34_compat.c src/csb/redmcsb_f0689_img3_expand_pc34_compat.c src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c src/csb/redmcsb_f0686_copy_previous_line_pc34_compat.c src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c)
     target_include_directories(test_csb_v1_img3_asset_presentation_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_csb_v1_img3_asset_presentation_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_csb_v1_img3_asset_presentation_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_img3_asset_presentation_pc34_compat COMMAND test_csb_v1_img3_asset_presentation_pc34_compat)
 endif()
@@ -44667,7 +44668,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0691_draw_compressed_
     add_executable(test_redmcsb_f0691_draw_compressed_img3_pc34_compat tests/test_redmcsb_f0691_draw_compressed_img3_pc34_compat.c src/csb/redmcsb_f0690_copy_pixel_line_to_screen_pc34_compat.c src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c)
     target_include_directories(test_redmcsb_f0691_draw_compressed_img3_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_redmcsb_f0691_draw_compressed_img3_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_redmcsb_f0691_draw_compressed_img3_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0691_draw_compressed_img3_pc34_compat COMMAND test_redmcsb_f0691_draw_compressed_img3_pc34_compat)
 endif()
@@ -44676,7 +44677,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_img3_decode_pc3
     add_executable(test_csb_v1_startup_img3_decode_pc34_compat tests/test_csb_v1_startup_img3_decode_pc34_compat.c src/csb/csb_v1_startup_img3_decode_pc34_compat.c)
     target_include_directories(test_csb_v1_startup_img3_decode_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_csb_v1_startup_img3_decode_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_csb_v1_startup_img3_decode_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_startup_img3_decode_pc34_compat COMMAND test_csb_v1_startup_img3_decode_pc34_compat)
 endif()
@@ -44690,7 +44691,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_hud_csbgraphics
         firestaff_m11 firestaff_m10 firestaff_m12)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_startup_hud_csbgraphics_surface_pc34_compat PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_startup_hud_csbgraphics_surface_pc34_compat
              COMMAND test_csb_v1_startup_hud_csbgraphics_surface_pc34_compat)
@@ -44700,7 +44701,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_graphics_lzw_pc34_compa
     add_executable(test_csb_v1_graphics_lzw_pc34_compat tests/test_csb_v1_graphics_lzw_pc34_compat.c src/csb/csb_v1_graphics_lzw_pc34_compat.c)
     target_include_directories(test_csb_v1_graphics_lzw_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_csb_v1_graphics_lzw_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_csb_v1_graphics_lzw_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_graphics_lzw_pc34_compat COMMAND test_csb_v1_graphics_lzw_pc34_compat)
 endif()
@@ -44713,7 +44714,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_memory_graphics_dat_header_pc3
         src/memory/memory_graphics_dat_metadata_pc34_compat.c)
     target_include_directories(test_memory_graphics_dat_header_pc34_compat_integration PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_memory_graphics_dat_header_pc34_compat_integration PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_memory_graphics_dat_header_pc34_compat_integration PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME memory_graphics_dat_header_pc34_compat_integration COMMAND test_memory_graphics_dat_header_pc34_compat_integration)
 endif()
@@ -44722,7 +44723,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_raster_present_
     add_executable(test_csb_v1_startup_raster_present_pc34_compat tests/test_csb_v1_startup_raster_present_pc34_compat.c src/csb/csb_v1_startup_raster_present_pc34_compat.c src/csb/redmcsb_f0692_fill_box_pc34_compat.c src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c src/dm1/redmcsb_f0693_wait_vertical_blank_pc34_compat.c)
     target_include_directories(test_csb_v1_startup_raster_present_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_csb_v1_startup_raster_present_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_csb_v1_startup_raster_present_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_startup_raster_present_pc34_compat COMMAND test_csb_v1_startup_raster_present_pc34_compat)
 endif()
@@ -44736,7 +44737,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_title_capture_admission
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(test_csb_v1_title_capture_admission_pc34_compat PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_title_capture_admission_pc34_compat
         COMMAND test_csb_v1_title_capture_admission_pc34_compat)
@@ -44752,7 +44753,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8156_f8157_c25_palett
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8156_f8157_c25_palette_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8156_f8157_c25_palette_pc34_compat
              COMMAND test_redmcsb_f8156_f8157_c25_palette_pc34_compat)
@@ -44769,7 +44770,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8159_palette_curtain_
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8159_palette_curtain_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8159_palette_curtain_c25_pc34_compat
              COMMAND test_redmcsb_f8159_palette_curtain_c25_pc34_compat)
@@ -44788,7 +44789,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8161_vidrv_blit_viewp
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8161_vidrv_blit_viewport_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8161_vidrv_blit_viewport_pc34_compat
              COMMAND test_redmcsb_f8161_vidrv_blit_viewport_pc34_compat)
@@ -44804,7 +44805,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8160_creature_palette
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8160_creature_palette_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8160_creature_palette_c25_pc34_compat
              COMMAND test_redmcsb_f8160_creature_palette_c25_pc34_compat)
@@ -44820,7 +44821,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8165_prefixed_bitmap_
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8165_prefixed_bitmap_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8165_prefixed_bitmap_c25_pc34_compat
              COMMAND test_redmcsb_f8165_prefixed_bitmap_c25_pc34_compat)
@@ -44836,7 +44837,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8166_blit_prefixed_bi
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8166_blit_prefixed_bitmap_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8166_blit_prefixed_bitmap_c25_pc34_compat
              COMMAND test_redmcsb_f8166_blit_prefixed_bitmap_c25_pc34_compat)
@@ -44854,7 +44855,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8167_f8168_mouse_poin
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8167_f8168_mouse_pointer_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8167_f8168_mouse_pointer_c25_pc34_compat
              COMMAND test_redmcsb_f8167_f8168_mouse_pointer_c25_pc34_compat)
@@ -44870,7 +44871,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8169_blacken_pixels_c
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8169_blacken_pixels_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8169_blacken_pixels_c25_pc34_compat
              COMMAND test_redmcsb_f8169_blacken_pixels_c25_pc34_compat)
@@ -44887,7 +44888,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8230_palette_componen
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8230_palette_components_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8230_palette_components_c25_pc34_compat
              COMMAND test_redmcsb_f8230_palette_components_c25_pc34_compat)
@@ -44903,7 +44904,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8216_copy_previous_ro
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8216_copy_previous_row_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8216_copy_previous_row_c25_pc34_compat
              COMMAND test_redmcsb_f8216_copy_previous_row_c25_pc34_compat)
@@ -44920,7 +44921,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8163_copy_pixels_to_s
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8163_copy_pixels_to_screen_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8163_copy_pixels_to_screen_c25_pc34_compat
              COMMAND test_redmcsb_f8163_copy_pixels_to_screen_c25_pc34_compat)
@@ -44935,7 +44936,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8213_set_single_pixel
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8213_set_single_pixel_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8213_set_single_pixel_c25_pc34_compat
              COMMAND test_redmcsb_f8213_set_single_pixel_c25_pc34_compat)
@@ -44951,7 +44952,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8153_wait_vertical_bl
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8153_wait_vertical_blank_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8153_wait_vertical_blank_c25_pc34_compat
              COMMAND test_redmcsb_f8153_wait_vertical_blank_c25_pc34_compat)
@@ -44967,7 +44968,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8139_copy_packed_pixe
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8139_copy_packed_pixels_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8139_copy_packed_pixels_c25_pc34_compat
              COMMAND test_redmcsb_f8139_copy_packed_pixels_c25_pc34_compat)
@@ -44983,7 +44984,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f8137_pixels_c25_pc34_
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_redmcsb_f8137_pixels_c25_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f8137_pixels_c25_pc34_compat
              COMMAND test_redmcsb_f8137_pixels_c25_pc34_compat)
@@ -45000,7 +45001,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0684_blit_c25_pc34_co
         src/shared/redmcsb_f0684_blit_c25_pc34_compat.c)
     target_include_directories(test_redmcsb_f0684_blit_c25_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_redmcsb_f0684_blit_c25_pc34_compat PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+        target_compile_options(test_redmcsb_f0684_blit_c25_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0684_blit_c25_pc34_compat COMMAND test_redmcsb_f0684_blit_c25_pc34_compat)
 endif()
@@ -45015,7 +45016,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0151_f0153_dungeon_rel
         PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0151_f0153_dungeon_relative_square_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_f0151_f0153_dungeon_relative_square_pc34_compat
              COMMAND test_csb_v1_f0151_f0153_dungeon_relative_square_pc34_compat)
@@ -45031,7 +45032,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0159_f0162_dungeon_obj
         PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0159_f0162_dungeon_object_chain_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_f0159_f0162_dungeon_object_chain_pc34_compat
              COMMAND test_csb_v1_f0159_f0162_dungeon_object_chain_pc34_compat)
@@ -45047,7 +45048,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0154_f0155_level_chang
         PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0154_f0155_level_change_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_f0154_f0155_level_change_pc34_compat
              COMMAND test_csb_v1_f0154_f0155_level_change_pc34_compat)
@@ -45064,7 +45065,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0163_f0164_atomic_link
         PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0163_f0164_atomic_link_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_f0163_f0164_atomic_link_pc34_compat
              COMMAND test_csb_v1_f0163_f0164_atomic_link_pc34_compat)
@@ -45080,7 +45081,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0166_unused_thing_pc34
         PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0166_unused_thing_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_f0166_unused_thing_pc34_compat
              COMMAND test_csb_v1_f0166_unused_thing_pc34_compat)
@@ -45095,7 +45096,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_runtime_couplin
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_startup_runtime_coupling_adapter_pc34_compat PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_startup_runtime_coupling_adapter_pc34_compat
              COMMAND test_csb_v1_startup_runtime_coupling_adapter_pc34_compat)
@@ -45110,7 +45111,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_dsa_save_runtime_admiss
         PRIVATE firestaff_m11 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_dsa_save_runtime_admission_pc34_compat PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_dsa_save_runtime_admission_pc34_compat
              COMMAND test_csb_v1_dsa_save_runtime_admission_pc34_compat)
@@ -45126,7 +45127,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_csbwin_dsa_runtime_admi
         PRIVATE firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_csbwin_dsa_runtime_admission_pc34_compat PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_csbwin_dsa_runtime_admission_pc34_compat
              COMMAND test_csb_v1_csbwin_dsa_runtime_admission_pc34_compat)
@@ -45142,7 +45143,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_dsa_admitted_restored_t
         PRIVATE firestaff_m11 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_dsa_admitted_restored_timer_bridge PRIVATE
-            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME csb_v1_dsa_admitted_restored_timer_bridge
              COMMAND test_csb_v1_dsa_admitted_restored_timer_bridge)
@@ -45555,7 +45556,7 @@ if(BUILD_TESTING)
         firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_champion_panel_hud_pc34_compat
-            PRIVATE -std=c11 -Wall -Wextra -Werror -O2)
+            PRIVATE -std=gnu11 -Wall -Wextra -Werror -O2)
     endif()
     add_test(NAME csb_v1_champion_panel_hud_pc34_compat
              COMMAND test_csb_v1_champion_panel_hud_pc34_compat)

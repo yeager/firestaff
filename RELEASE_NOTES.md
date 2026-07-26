@@ -1,9 +1,9 @@
 
 # Unreleased
 
-# Firestaff v3.0.159
+# Firestaff v3.0.160
 
-- Add global _DEFAULT_SOURCE for POSIX extensions (mkstemp, mkdtemp, popen) on glibc
+- Switch from -std=c11 to -std=gnu11 globally (enables POSIX extensions on glibc)
 - Add Windows setenv/unsetenv shims for CSB F9 reload test
 - Suppress GCC -Wformat-truncation and -Wstringop-truncation globally
 - Fix GCC -Wunused-const-variable for dm2_graphics_hashes
