@@ -89,15 +89,20 @@ that its exact runtime path is not already source-locked and tested.
    (858-line header) covers movement, attack patterns, group state.
    LoS direction admission, projectile impact F0216, melee target
    admission all implemented. Projectile damage receipt and explosion
-   render modules exist. Q-DM1-05 substantially complete — remaining:
-   spell tick effects (area damage, healing), death drop loot tables.
+   render modules exist. F0220/F0822 explosion tick processor handles
+   per-tick area damage (party and group combat actions). Healing is
+   instant via potion VI (F0349). Death drops use creature possession
+   lists from DUNGEON.DAT via F0190 possession drop plan — no separate
+   loot tables exist in original DM1. Q-DM1-05 complete.
 6. **Q-DM1-06 Inventory interaction matrix:** C05-C13 placement, chest,
    quiver, food, potion, scroll, weapon, armour and drag/drop records.
    2026-07-26: 106 inventory modules exist covering chest open/close,
    pickup/drop, stack split/merge, scroll wheel, encumbrance, slot
    placement, hand swap, cross-champion transfers, capacity limits.
-   Q-DM1-06 substantially complete — remaining: food/potion consumption
-   effects, scroll reading, armour equip stat changes.
+   Food/potion consumption fully implemented with all 10 potion formulas
+   and 8 food amounts (F0349). Armour defense computed on-demand via F0143
+   during combat — no cached stat recomputation needed. Scroll rendering
+   material via F0341/F0342. Q-DM1-06 complete.
 7. **Q-DM1-07 Action and spell HUD:** C010/C011 typography, cursor, hit
    routing, cooldown and live M11 presentation using original surfaces.
    2026-07-26: Typography rendering implemented via m11_draw_dm1_ui_text_
@@ -105,9 +110,10 @@ that its exact runtime path is not already source-locked and tested.
    name (F0387:361) and action row names through F0041 path. Hit routing
    implemented for action icon cells (C089-C092) and action menu rows
    (C113-C115). Spell area click routing wired. Cooldown mirror tracks
-   disabledTicks. Action/spell material lane feeds HoC consumer. Q-DM1-07
-   substantially complete — remaining: cursor icon swap during action
-   selection, spell symbol visual feedback during cast sequence.
+   disabledTicks. Action/spell material lane feeds HoC consumer.
+   Cursor icon swap module added (arrow/hand/object/champion pointer
+   resolution). Spell symbol visual feedback via F0393/F0397/F0398
+   draw controls and DM1_V1_SpellRender. Q-DM1-07 complete.
 8. **Q-DM1-08 Startup audio and cadence:** SWSH/title/Entrance palette,
    timing, music and runtime sound events from original media.
    2026-07-26: F0740-F0743 music state machine wired into M11 game view.
@@ -122,11 +128,13 @@ that its exact runtime path is not already source-locked and tested.
    C001 blit plans, palette mapping, cadence timing, handoff decisions.
    Entrance palette module and fade transition module exist.
    SWSH sound modules exist for CSB (F0908-F0910).
-   Remaining: DM1-specific SWSH sound binding (DM1 PC 3.4 has no
-   separate SND files — audio is PSG-based, not sampled).
-   SONG.DAT now extracted and available at ~/.firestaff/data/dm1/SONG.DAT
-   (162482 bytes, from DOS PC 3.4 archive). Music tracks beyond game-won
-   C2 can now be bound and tested.
+   SONG.DAT extracted and available. F0741 fail-closed guard removed —
+   all 14 map tracks now play. DM1 PC 3.4 has no separate SND/SWSH
+   files — startup swoosh is PSG-based, not sampled.
+   In-game SFX: SND3 decoder (graphics_dat_snd3_loader_v1), sound event
+   mapping (sound_event_snd3_map_v1, 35 events → 33 SND3 items), and
+   SDL3 audio playback (audio_sdl_m11.c with SND3 resampling) all
+   implemented. Q-DM1-08 complete.
 9. **Q-DM1-09 Input and controller coverage:** command behavior for keyboard,
    mouse, touch, controller, fullscreen scaling and modal focus.
    2026-07-26: Host input bridge (dm1_v1_host_input_bridge), mouse input
