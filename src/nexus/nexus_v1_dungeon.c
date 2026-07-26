@@ -6,6 +6,10 @@
 #include <limits.h>
 #include <stdlib.h>
 
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wtype-limits"
+#endif
+
 static uint32_t rb32(const uint8_t *p) {
     return ((uint32_t)p[0]<<24)|((uint32_t)p[1]<<16)|((uint32_t)p[2]<<8)|p[3];
 }
@@ -4136,15 +4140,33 @@ int nexus_v1_level_structure1f_item_coordinate_pair_receipt(
 
 int nexus_v1_level_structure1f_floor_decoration_offset_pair_receipt(const Nexus_V1_Level *level, Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt *out)
 {
-    Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt r; Nexus_V1_DgnStructure1FSpatialReceipt s; unsigned char seen[UINT16_MAX + 1U]; int i;
-    if (!out) return -1; memset(&r, 0, sizeof(r)); memset(&s, 0, sizeof(s)); memset(seen, 0, sizeof(seen));
-    if (!level || nexus_v1_level_structure1f_spatial_receipt(level, &s) != 0) { *out = r; return 0; }
-    r.structure1f_spatial_valid = s.valid;
-    for (i = 0; i < level->structure1f_entry_count; ++i) { const Nexus_V1_DgnStructure1FEntry *e = &level->structure1f_entries[i]; uint16_t p;
-        if (e->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS) continue; ++r.entry_count; if (!s.valid) continue; ++r.resolved_pair_count;
-        p = (uint16_t)(((uint16_t)(uint8_t)e->offset_x << 8) | (uint8_t)e->offset_y); if (p) ++r.nonzero_pair_count; else ++r.zero_pair_count; if (seen[p]) ++r.duplicate_pair_count; else { seen[p] = 1; ++r.unique_pair_count; }
+    Nexus_V1_DgnStructure1FFloorDecorationOffsetPairReceipt r;
+    Nexus_V1_DgnStructure1FSpatialReceipt s;
+    unsigned char seen[UINT16_MAX + 1U];
+    int i;
+    if (!out) return -1;
+    memset(&r, 0, sizeof(r));
+    memset(&s, 0, sizeof(s));
+    memset(seen, 0, sizeof(seen));
+    if (!level || nexus_v1_level_structure1f_spatial_receipt(level, &s) != 0) {
+        *out = r;
+        return 0;
     }
-    r.complete = r.structure1f_spatial_valid && r.entry_count == r.resolved_pair_count; *out = r; return 0;
+    r.structure1f_spatial_valid = s.valid;
+    for (i = 0; i < level->structure1f_entry_count; ++i) {
+        const Nexus_V1_DgnStructure1FEntry *e = &level->structure1f_entries[i];
+        uint16_t p;
+        if (e->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS) continue;
+        ++r.entry_count;
+        if (!s.valid) continue;
+        ++r.resolved_pair_count;
+        p = (uint16_t)(((uint16_t)(uint8_t)e->offset_x << 8) | (uint8_t)e->offset_y);
+        if (p) ++r.nonzero_pair_count; else ++r.zero_pair_count;
+        if (seen[p]) ++r.duplicate_pair_count; else { seen[p] = 1; ++r.unique_pair_count; }
+    }
+    r.complete = r.structure1f_spatial_valid && r.entry_count == r.resolved_pair_count;
+    *out = r;
+    return 0;
 }
 
 int nexus_v1_level_structure3_payload_receipt(

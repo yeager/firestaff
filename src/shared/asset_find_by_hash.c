@@ -3103,13 +3103,10 @@ static void record_missing_extractor(const char *archivePath) {
     tools = is_external_tar_archive_path(archivePath)
                 ? "bsdtar/7zz/7z"
                 : "7zz/7z/bsdtar";
-    strncpy(g_missingExtractorPaths[g_missingExtractorCount], archivePath,
-            ASSET_PATH_MAX - 1U);
-    g_missingExtractorPaths[g_missingExtractorCount][ASSET_PATH_MAX - 1U] = '\0';
-    strncpy(g_missingExtractorTools[g_missingExtractorCount], tools,
-            sizeof(g_missingExtractorTools[0]) - 1U);
-    g_missingExtractorTools[g_missingExtractorCount]
-                           [sizeof(g_missingExtractorTools[0]) - 1U] = '\0';
+    snprintf(g_missingExtractorPaths[g_missingExtractorCount],
+             ASSET_PATH_MAX, "%s", archivePath);
+    snprintf(g_missingExtractorTools[g_missingExtractorCount],
+             sizeof(g_missingExtractorTools[0]), "%s", tools);
     ++g_missingExtractorCount;
 }
 
