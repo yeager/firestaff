@@ -1,6 +1,19 @@
 
 # Unreleased
 
+# Firestaff v3.0.129
+
+## F0107 wall ornament viewport wiring (Q-DM1-03)
+
+- Added `DM1_ViewportWallOrnamentOrdinalCallback` to `DM1_Viewport3DState` for host-provided wall ornament ordinal resolution
+- Wired F0107 wall ornament resolver + graphic provider blit into D3L2/D3R2, D3L/D3R, and D2L2/D2R2 wall draw paths in `dm1_v1_viewport_3d_pc34_compat.c`
+- New static helper `dm1_viewport_3d_draw_wall_ornament_f0107` resolves ordinal → F0107 render plan → graphic blit with C10 transparency
+
+## Viewport/movement completion matrix fixes
+
+- Fixed `verify_pass402_dm1_v1_movement_cooldown_order.py`: updated function boundary marker from `m11_apply_survival_drain` to `m11_apply_champion_time_effects`
+- Updated `dm1_v1_viewport_movement_completion_matrix.md`: all executable gates now PASS (was FAIL due to stale test target name and renamed function)
+
 # Firestaff v3.0.128
 
 ## New test suites (2 suites, 5 tests)

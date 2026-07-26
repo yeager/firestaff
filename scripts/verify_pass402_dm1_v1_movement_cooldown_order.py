@@ -62,7 +62,7 @@ index_or_die(func, comment, "same-tick cooldown preservation comment")
 spell_tick_lines = assert_cooldown_before_orch(
     m11,
     "int M11_GameView_CastSpell(M11_GameViewState* state) {",
-    "static void m11_apply_survival_drain",
+    "static void m11_apply_champion_time_effects",
     "M11_GameView_CastSpell",
 )
 

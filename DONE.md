@@ -1,3 +1,9 @@
+- ✅ 2026-07-26 Wire F0107 wall ornament rendering into DM1 viewport 3D pipeline.
+  Adds wall ornament ordinal callback to DM1_Viewport3DState and wires
+  F0107 resolver + graphic provider blit into D3L2/D3R2, D3L/D3R, and
+  D2L2/D2R2 wall draw paths. Fixes pass402 movement cooldown verification
+  (m11_apply_survival_drain renamed to m11_apply_champion_time_effects)
+  and updates viewport/movement completion matrix to PASS. [v3.0.129]
 - ✅ 2026-07-25 Add 2 DM1 test suites (5 tests total): automap (3), minimap (2).
   Covers Q-DM1-03 viewport (automap record/export null guards, minimap render
   null guards). Completes all testable non-mirror DM1 headers — only engine

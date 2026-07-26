@@ -36,6 +36,9 @@ that its exact runtime path is not already source-locked and tested.
 3. **Q-DM1-03 Dungeon viewport material matrix:** complete F0107-F0115 wall,
    floor, ceiling, door, ornament, mirror, item, creature, projectile and
    explosion routing without fallback drawing.
+   2026-07-26: F0107 wall ornament rendering wired into DM1 viewport 3D
+   pipeline for D3L2/D3R2, D3L/D3R, D2L2/D2R2 wall positions. Viewport
+   movement completion matrix cleared (pass402 + pass406 fixed).
 4. **Q-DM1-04 Door, sensor and topology runtime:** buttons, fakewalls, pits,
    teleporters, stairs, door animations and Thing-driven movement.
 5. **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,
