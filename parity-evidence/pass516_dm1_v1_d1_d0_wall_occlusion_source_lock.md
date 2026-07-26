@@ -84,7 +84,7 @@ PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_ga
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- command: /Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
+- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
   - returncode: 0
   - output tail:
 ~~~

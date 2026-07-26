@@ -9,9 +9,9 @@ Status: passed
 - DUNVIEW.C:8446-8542 far_to_near_wall_square_replay
 
 ## Firestaff evidence
-- dm1_v1_viewport_3d_pc34_compat.c:2238-2276 local_clip_gate_contract
-- dm1_v1_viewport_3d_pc34_compat.c:1427-1448 local_transparent_wall_rows_use_clip_gate
-- dm1_v1_viewport_3d_pc34_compat.c:1461-1478 local_opaque_wall_rows_use_clip_gate
+- dm1_v1_viewport_3d_pc34_compat.c:2292-2332 local_clip_gate_contract
+- dm1_v1_viewport_3d_pc34_compat.c:1444-1468 local_transparent_wall_rows_use_clip_gate
+- dm1_v1_viewport_3d_pc34_compat.c:1478-1496 local_opaque_wall_rows_use_clip_gate
 - test_dm1_v1_viewport_3d_pc34_compat.c:1729-1785 local_clip_tests_cover_source_and_viewport_occlusion
 
 ## Secondary references
