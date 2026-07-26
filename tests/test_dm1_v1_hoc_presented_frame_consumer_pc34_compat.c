@@ -53,7 +53,31 @@ int main(void)
     inscription.fontPixelsHash = 0u;
     ok &= expect(dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(&input, &receipt) && !receipt.valid,
                  "unhashed M648 source rejects the complete frame");
+    /* action/spell lane */
+    inscription.fontPixelsHash = 3u;
+    {
+        DM1_V1_HocPresentedActionSpellMaterialPc34 actionSpell;
+        memset(&actionSpell, 0, sizeof(actionSpell));
+        actionSpell.valid = 1;
+        actionSpell.primaryGraphicId = 560;
+        actionSpell.fontGraphicId = 557;
+        actionSpell.serial = 42u;
+        input.actionSpell = &actionSpell;
+        ok &= expect(dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(&input, &receipt) &&
+                     receipt.valid && receipt.consumedActionSpell &&
+                     receipt.suppressFallbackVisuals,
+                     "action/spell lane consumed with valid material");
+        actionSpell.primaryGraphicId = 0;
+        ok &= expect(dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(&input, &receipt) &&
+                     !receipt.valid,
+                     "action/spell with zero graphic rejects frame");
+        actionSpell.primaryGraphicId = 560;
+        actionSpell.serial = 0u;
+        ok &= expect(dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(&input, &receipt) &&
+                     !receipt.valid,
+                     "action/spell with zero serial rejects frame");
+    }
     if (!ok) return 1;
-    puts("ok: DM1 HoC frame consumer admits only source-owned mirror/text/object material");
+    puts("ok: DM1 HoC frame consumer admits source-owned mirror/text/object/action-spell material");
     return 0;
 }

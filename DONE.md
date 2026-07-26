@@ -1,3 +1,8 @@
+- ✅ 2026-07-26 HoC action/spell material lane (Q-DM1-02). Consumer now admits
+  four source lanes: mirror (C346/C026), inscription (M648), object (F0115),
+  and action/spell (G560). Action/spell validates graphic IDs and serial from
+  the live presentation receipt. M11 stores last presentation receipt during
+  draw and feeds it to the consumer build. 3 new tests. [v3.0.138]
 - ✅ 2026-07-26 Fakewall sensor toggle in M11 (Q-DM1-04). SENSOR_EFFECT_TOGGLE_REMOTE
   now handles DUNGEON_ELEMENT_FAKEWALL: toggles between element types 6 (fakewall)
   and 1 (corridor) via bits 7:5 rewrite. Also handles CLEAR-on-corridor to restore

@@ -1,6 +1,16 @@
 
 # Unreleased
 
+# Firestaff v3.0.138
+
+- **HoC action/spell material lane (Q-DM1-02):** Added action/spell surface
+  material to the HoC presented-frame consumer. The consumer now admits four
+  source lanes (mirror, inscription, object, action/spell) before suppressing
+  fallback drawing. Action/spell material validates primaryGraphicId, fontGraphicId,
+  and serial from the live ActionSpellHudPresentationReceipt. M11 populates the
+  material from s_m11_dm1_action_spell_last_presentation, stored during the
+  action/spell draw pass. 3 new test cases for the action/spell lane.
+
 # Firestaff v3.0.137
 
 - **Fakewall sensor toggle (Q-DM1-04):** M11 sensor effect handler now handles

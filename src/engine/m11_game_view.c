@@ -3041,6 +3041,9 @@ typedef struct {
 static M11_Dm1ActionSpellFinalPaintRuntime
     s_m11_dm1_action_spell_final_paint_runtime;
 
+static DM1_V1_ActionSpellHudPresentationReceiptPc34
+    s_m11_dm1_action_spell_last_presentation;
+
 typedef struct {
     const M11_GameViewState* owner;
     Dm1V1ChampionTopRowAtomicLifecycleStatePc34 atomicLifecycle;
@@ -19725,6 +19728,7 @@ static void m11_dm1_hoc_presented_frame_consumer_build(
     DM1_V1_HocPresentedMirrorMaterialPc34 mirrorMat;
     DM1_V1_HocPresentedInscriptionMaterialPc34 inscriptionMat;
     DM1_V1_HocPresentedObjectMaterialPc34 objectMat;
+    DM1_V1_HocPresentedActionSpellMaterialPc34 actionSpellMat;
     DM1_V1_HocPresentedFrameConsumerInputPc34 input;
     const M11_Dm1HoCMirrorHostPresentationReceipt* mirror;
     const M11_Dm1InscriptionHostPresentationReceipt* inscription;
@@ -19809,11 +19813,29 @@ static void m11_dm1_hoc_presented_frame_consumer_build(
         }
     }
 
+    memset(&actionSpellMat, 0, sizeof(actionSpellMat));
+    if (s_m11_dm1_action_spell_last_presentation.valid) {
+        const DM1_V1_ActionSpellHudPresentationReceiptPc34 *asp =
+            &s_m11_dm1_action_spell_last_presentation;
+        actionSpellMat.valid = 1;
+        actionSpellMat.primaryGraphicId = asp->requiredPrimaryGraphicId;
+        actionSpellMat.secondaryGraphicId = asp->requiredSecondaryGraphicId;
+        actionSpellMat.primaryZoneId = asp->requiredPrimaryZoneId;
+        actionSpellMat.secondaryZoneId = asp->requiredSecondaryZoneId;
+        actionSpellMat.fontGraphicId = asp->requiredFontGraphicId;
+        actionSpellMat.requiresRealActionMenuLayout = asp->requiresRealActionMenuLayout;
+        actionSpellMat.requiresRealSpellAreaLayout = asp->requiresRealSpellAreaLayout;
+        actionSpellMat.suppressSyntheticFallback = asp->suppressSyntheticFallback;
+        actionSpellMat.sourceTick = asp->sourceTick;
+        actionSpellMat.serial = asp->serial;
+    }
+
     memset(&input, 0, sizeof(input));
     input.runtimeTick = (uint32_t)state->world.gameTick;
     input.mirror = mirrorMat.valid ? &mirrorMat : NULL;
     input.inscription = inscriptionMat.valid ? &inscriptionMat : NULL;
     input.object = objectMat.valid ? &objectMat : NULL;
+    input.actionSpell = actionSpellMat.valid ? &actionSpellMat : NULL;
     dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
         &input, &s_m11_dm1_hoc_presented_frame_consumer_receipt);
 }
@@ -42241,6 +42263,7 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
         }
     }
     if (!live) return 0;
+    s_m11_dm1_action_spell_last_presentation = presentation;
 
     if (presentation.presentationKind ==
         DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34) {
