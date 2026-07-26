@@ -112,7 +112,7 @@ typedef struct {
     int     assets_verified;    /* 1 if MD5 hash matched a known version */
 
     /* ── Save namespace ───────────────────────────────────── */
-    char    save_root[512];    /* saves/dm2/ */
+    char    save_root[1024];   /* saves/dm2/ */
 
     /* ── Detected file sizes (diagnostic) ─────────────────── */
     size_t  graphics_size;

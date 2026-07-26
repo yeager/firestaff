@@ -120,7 +120,7 @@ typedef struct {
   int dealloc_performed;     /* BOUND: DM2_DEALLOC_RECORD free marker
                                 (c_record.cpp:1424 via 1205-1208) */
   DM2_V1_DropPossessionReceipt drop; /* the drop slice's own audit */
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_DeleteCreatureFullReceipt;
 
 /*
