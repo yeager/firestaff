@@ -19834,6 +19834,7 @@ static void m11_dm1_hoc_presented_frame_consumer_build(
     DM1_V1_HocPresentedInscriptionMaterialPc34 inscriptionMat;
     DM1_V1_HocPresentedObjectMaterialPc34 objectMat;
     DM1_V1_HocPresentedActionSpellMaterialPc34 actionSpellMat;
+    DM1_V1_HocPresentedPaletteMaterialPc34 paletteMat;
     DM1_V1_HocPresentedFrameConsumerInputPc34 input;
     const M11_Dm1HoCMirrorHostPresentationReceipt* mirror;
     const M11_Dm1InscriptionHostPresentationReceipt* inscription;
@@ -19935,12 +19936,30 @@ static void m11_dm1_hoc_presented_frame_consumer_build(
         actionSpellMat.serial = asp->serial;
     }
 
+    memset(&paletteMat, 0, sizeof(paletteMat));
+    {
+        uint32_t ph = 2166136261u;
+        int pi;
+        for (pi = 0; pi < 16; pi++) {
+            ph ^= G9010_auc_VgaPaletteBrightest_Compat[pi][0];
+            ph *= 16777619u;
+            ph ^= G9010_auc_VgaPaletteBrightest_Compat[pi][1];
+            ph *= 16777619u;
+            ph ^= G9010_auc_VgaPaletteBrightest_Compat[pi][2];
+            ph *= 16777619u;
+        }
+        paletteMat.valid = 1;
+        paletteMat.entryCount = 16;
+        paletteMat.paletteHash = ph;
+    }
+
     memset(&input, 0, sizeof(input));
     input.runtimeTick = (uint32_t)state->world.gameTick;
     input.mirror = mirrorMat.valid ? &mirrorMat : NULL;
     input.inscription = inscriptionMat.valid ? &inscriptionMat : NULL;
     input.object = objectMat.valid ? &objectMat : NULL;
     input.actionSpell = actionSpellMat.valid ? &actionSpellMat : NULL;
+    input.palette = paletteMat.valid ? &paletteMat : NULL;
     dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
         &input, &s_m11_dm1_hoc_presented_frame_consumer_receipt);
 }

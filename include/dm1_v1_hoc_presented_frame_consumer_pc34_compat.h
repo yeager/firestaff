@@ -67,11 +67,18 @@ typedef struct {
 } DM1_V1_HocPresentedActionSpellMaterialPc34;
 
 typedef struct {
+    int valid;
+    int entryCount;
+    uint32_t paletteHash;
+} DM1_V1_HocPresentedPaletteMaterialPc34;
+
+typedef struct {
     uint32_t runtimeTick;
     const DM1_V1_HocPresentedMirrorMaterialPc34 *mirror;
     const DM1_V1_HocPresentedInscriptionMaterialPc34 *inscription;
     const DM1_V1_HocPresentedObjectMaterialPc34 *object;
     const DM1_V1_HocPresentedActionSpellMaterialPc34 *actionSpell;
+    const DM1_V1_HocPresentedPaletteMaterialPc34 *palette;
 } DM1_V1_HocPresentedFrameConsumerInputPc34;
 
 typedef struct {
@@ -81,6 +88,7 @@ typedef struct {
     int consumedInscription;
     int consumedObject;
     int consumedActionSpell;
+    int consumedPalette;
     int suppressFallbackVisuals;
     uint32_t runtimeTick;
     uint32_t frameHash;

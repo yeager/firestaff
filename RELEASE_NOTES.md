@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.150
+
+- Wire VGA palette material lane into HoC presented-frame consumer (Q-DM1-02)
+- FNV-1a hash of G9010 16-entry VGA palette feeds palette lane in M11 consumer build
+- Consumer now admits 5 material lanes: mirror, inscription, object, action/spell, palette
+
 # Firestaff v3.0.149
 
 - Add DM1 startup handoff M11 bridge (Q-DM1-08)

@@ -48,6 +48,14 @@ static int action_spell_valid(const DM1_V1_HocPresentedActionSpellMaterialPc34 *
     return 1;
 }
 
+static int palette_valid(const DM1_V1_HocPresentedPaletteMaterialPc34 *p)
+{
+    if (!p || !p->valid) return 1;
+    if (p->entryCount != 16) return 0;
+    if (p->paletteHash == 0u) return 0;
+    return 1;
+}
+
 int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
     const DM1_V1_HocPresentedFrameConsumerInputPc34 *input,
     DM1_V1_HocPresentedFrameConsumerReceiptPc34 *outReceipt)
@@ -63,7 +71,8 @@ int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
         "ReDMCSB DUNVIEW.C F0107/F0115: C127 C346/C026, M648 and F0115 "
         "materials are admitted together only after their original PC34 blits";
     if (!mirror_valid(input->mirror) || !inscription_valid(input->inscription) ||
-        !object_valid(input->object) || !action_spell_valid(input->actionSpell)) {
+        !object_valid(input->object) || !action_spell_valid(input->actionSpell) ||
+        !palette_valid(input->palette)) {
         *outReceipt = receipt;
         return 1;
     }
@@ -73,8 +82,10 @@ int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
     receipt.consumedInscription = input->inscription && input->inscription->valid;
     receipt.consumedObject = input->object && input->object->valid;
     receipt.consumedActionSpell = input->actionSpell && input->actionSpell->valid;
+    receipt.consumedPalette = input->palette && input->palette->valid;
     if (!receipt.consumedMirror && !receipt.consumedInscription &&
-        !receipt.consumedObject && !receipt.consumedActionSpell) {
+        !receipt.consumedObject && !receipt.consumedActionSpell &&
+        !receipt.consumedPalette) {
         *outReceipt = receipt;
         return 1;
     }
@@ -96,6 +107,9 @@ int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
         hash = mix(hash, input->actionSpell->serial);
         hash = mix(hash, (uint32_t)input->actionSpell->primaryGraphicId);
         hash = mix(hash, (uint32_t)input->actionSpell->fontGraphicId);
+    }
+    if (receipt.consumedPalette) {
+        hash = mix(hash, input->palette->paletteHash);
     }
     receipt.valid = 1;
     receipt.sourceOwned = 1;

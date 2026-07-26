@@ -37,7 +37,11 @@ that its exact runtime path is not already source-locked and tested.
    consumer. Consumer now admits 4 lanes (mirror, inscription, object,
    action/spell). M11 stores last presentation receipt during draw pass
    and feeds it to consumer build. [v3.0.138]
-   Remaining: palettes and side/depth render routes beyond D1C front.
+   2026-07-26: VGA palette material lane wired into M11 consumer build.
+   FNV-1a hash of G9010_auc_VgaPaletteBrightest_Compat[16][3] feeds
+   palette lane. Consumer now admits 5 lanes (mirror, inscription, object,
+   action/spell, palette). [v3.0.150]
+   Remaining: side/depth render routes beyond D1C front.
 3. **Q-DM1-03 Dungeon viewport material matrix:** complete F0107-F0115 wall,
    floor, ceiling, door, ornament, mirror, item, creature, projectile and
    explosion routing without fallback drawing.
