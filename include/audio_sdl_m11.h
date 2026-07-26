@@ -51,6 +51,7 @@ typedef struct {
     int soundPackAvailable;
     int soundPackLoadedCount;
     int originalSongAvailable;
+    char originalSongDatPath[512];
     int originalSongPartCount;
     int originalSongSequenceWordCount;
     int originalSongPlayablePartCount;

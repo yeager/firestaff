@@ -600,6 +600,8 @@ static void m11_try_load_original_song(M11_AudioState* state) {
     if (getenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SONG")) return;
     path = m11_find_song_dat_path(homePath, sizeof(homePath));
     if (!path) return;
+    snprintf(state->originalSongDatPath, sizeof(state->originalSongDatPath),
+             "%s", path);
     if (!V1_Song_ParseManifest(path, &manifest, err, sizeof(err))) return;
     if (!V1_Song_DecodeSequence(path, &manifest, &seq, err, sizeof(err))) return;
     if (!seq.hasEndMarker || seq.wordCount == 0) return;

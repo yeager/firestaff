@@ -43,6 +43,8 @@ that its exact runtime path is not already source-locked and tested.
    D2L/D2R/D1L/D1R side walls. All 15 F0107 wall ornament positions now
    wired. Wall_ornament_ordinal_callback plumbed through CSB viewport config.
    Remaining: provide an actual ordinal callback from dungeon thing data.
+   2026-07-26: Center/side element routing refined to 3-state return
+   (wall/open-cell/door) for proper door frame gating. [v3.0.131]
 4. **Q-DM1-04 Door, sensor and topology runtime:** buttons, fakewalls, pits,
    teleporters, stairs, door animations and Thing-driven movement.
 5. **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,
@@ -53,6 +55,9 @@ that its exact runtime path is not already source-locked and tested.
    routing, cooldown and live M11 presentation using original surfaces.
 8. **Q-DM1-08 Startup audio and cadence:** SWSH/title/Entrance palette,
    timing, music and runtime sound events from original media.
+   2026-07-26: F0740-F0743 music state machine wired into M11 game view.
+   SONG.DAT binding at init, F0742 map track at stairs/teleporter transitions,
+   F0743 update_music per tick, F0740 pause on music disable. [v3.0.131]
 9. **Q-DM1-09 Input and controller coverage:** command behavior for keyboard,
    mouse, touch, controller, fullscreen scaling and modal focus.
 10. **Q-DM1-10 New-game and release evidence:** F0803/F0433 ownership plus
