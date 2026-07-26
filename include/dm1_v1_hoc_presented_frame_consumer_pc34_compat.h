@@ -53,10 +53,25 @@ typedef struct {
 } DM1_V1_HocPresentedObjectMaterialPc34;
 
 typedef struct {
+    int valid;
+    int primaryGraphicId;
+    int secondaryGraphicId;
+    int primaryZoneId;
+    int secondaryZoneId;
+    int fontGraphicId;
+    int requiresRealActionMenuLayout;
+    int requiresRealSpellAreaLayout;
+    int suppressSyntheticFallback;
+    uint32_t sourceTick;
+    uint32_t serial;
+} DM1_V1_HocPresentedActionSpellMaterialPc34;
+
+typedef struct {
     uint32_t runtimeTick;
     const DM1_V1_HocPresentedMirrorMaterialPc34 *mirror;
     const DM1_V1_HocPresentedInscriptionMaterialPc34 *inscription;
     const DM1_V1_HocPresentedObjectMaterialPc34 *object;
+    const DM1_V1_HocPresentedActionSpellMaterialPc34 *actionSpell;
 } DM1_V1_HocPresentedFrameConsumerInputPc34;
 
 typedef struct {
@@ -65,6 +80,7 @@ typedef struct {
     int consumedMirror;
     int consumedInscription;
     int consumedObject;
+    int consumedActionSpell;
     int suppressFallbackVisuals;
     uint32_t runtimeTick;
     uint32_t frameHash;

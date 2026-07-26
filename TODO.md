@@ -33,6 +33,11 @@ that its exact runtime path is not already source-locked and tested.
    consumer, and gates the procedural fallback party-slot draw on
    suppressFallbackVisuals. Remaining: action/spell surfaces, palettes,
    and side/depth render routes beyond D1C front mirror.
+   2026-07-26: Action/spell material lane added to HoC presented-frame
+   consumer. Consumer now admits 4 lanes (mirror, inscription, object,
+   action/spell). M11 stores last presentation receipt during draw pass
+   and feeds it to consumer build. [v3.0.138]
+   Remaining: palettes and side/depth render routes beyond D1C front.
 3. **Q-DM1-03 Dungeon viewport material matrix:** complete F0107-F0115 wall,
    floor, ceiling, door, ornament, mirror, item, creature, projectile and
    explosion routing without fallback drawing.
@@ -42,7 +47,8 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-26: Element routing added for D3C/D2C/D1C center and
    D2L/D2R/D1L/D1R side walls. All 15 F0107 wall ornament positions now
    wired. Wall_ornament_ordinal_callback plumbed through CSB viewport config.
-   Remaining: wire provider into CSB viewport config from dungeon_handle.
+   CSB wall ornament ordinal callback fully wired in firestaff_game_loop.c
+   (line 164). Random ornament count/seed fields remain at 0 (disabled).
    2026-07-26: Center/side element routing refined to 3-state return
    (wall/open-cell/door) for proper door frame gating. [v3.0.131]
    2026-07-26: Wall ornament ordinal provider module added. Resolves
@@ -67,8 +73,10 @@ that its exact runtime path is not already source-locked and tested.
    handler. All four actuator target types (door, pit, fakewall, teleporter)
    now handled in sensor effects. Movement pipeline already fires sensors
    via m11_apply_sensor_effects. [v3.0.137]
-   Remaining: door animation timer tick handler integration test,
-   fakewall passability update on element change during movement.
+   Fakewall passability already handled: when sensor toggles element type
+   from FAKEWALL→CORRIDOR, movement pipeline allows passage (FAKEWALL
+   branch not reached). Door animation timer tick handled by F0241/F0712
+   in memory_tick_orchestrator. Q-DM1-04 substantially complete.
 5. **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,
    projectile impacts, drops, deaths and spell ticks with raw ownership.
 6. **Q-DM1-06 Inventory interaction matrix:** C05-C13 placement, chest,

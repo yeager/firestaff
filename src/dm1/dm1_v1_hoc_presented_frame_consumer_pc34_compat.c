@@ -39,6 +39,15 @@ static int object_valid(const DM1_V1_HocPresentedObjectMaterialPc34 *object)
          object->assetHeight > 0 && object->materialHash != 0u);
 }
 
+static int action_spell_valid(const DM1_V1_HocPresentedActionSpellMaterialPc34 *as)
+{
+    if (!as || !as->valid) return 1;
+    if (as->primaryGraphicId <= 0) return 0;
+    if (as->fontGraphicId <= 0) return 0;
+    if (as->serial == 0u) return 0;
+    return 1;
+}
+
 int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
     const DM1_V1_HocPresentedFrameConsumerInputPc34 *input,
     DM1_V1_HocPresentedFrameConsumerReceiptPc34 *outReceipt)
@@ -54,7 +63,7 @@ int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
         "ReDMCSB DUNVIEW.C F0107/F0115: C127 C346/C026, M648 and F0115 "
         "materials are admitted together only after their original PC34 blits";
     if (!mirror_valid(input->mirror) || !inscription_valid(input->inscription) ||
-        !object_valid(input->object)) {
+        !object_valid(input->object) || !action_spell_valid(input->actionSpell)) {
         *outReceipt = receipt;
         return 1;
     }
@@ -63,7 +72,9 @@ int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
     receipt.consumedMirror = input->mirror && input->mirror->valid;
     receipt.consumedInscription = input->inscription && input->inscription->valid;
     receipt.consumedObject = input->object && input->object->valid;
-    if (!receipt.consumedMirror && !receipt.consumedInscription && !receipt.consumedObject) {
+    receipt.consumedActionSpell = input->actionSpell && input->actionSpell->valid;
+    if (!receipt.consumedMirror && !receipt.consumedInscription &&
+        !receipt.consumedObject && !receipt.consumedActionSpell) {
         *outReceipt = receipt;
         return 1;
     }
@@ -80,6 +91,11 @@ int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
     }
     if (receipt.consumedObject) {
         hash = mix(hash, input->object->materialHash);
+    }
+    if (receipt.consumedActionSpell) {
+        hash = mix(hash, input->actionSpell->serial);
+        hash = mix(hash, (uint32_t)input->actionSpell->primaryGraphicId);
+        hash = mix(hash, (uint32_t)input->actionSpell->fontGraphicId);
     }
     receipt.valid = 1;
     receipt.sourceOwned = 1;
