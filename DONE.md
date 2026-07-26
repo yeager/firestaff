@@ -1,3 +1,28 @@
+- ✅ 2026-07-26 Media, input and expansion complete (Q-CSB-10). Package
+  identity, sound filter, expansion save identity tested. 17 test files.
+- ✅ 2026-07-26 Original saves and Utility Disk complete (Q-CSB-09). 32
+  save/utility test files covering header build/read, F0435 provenance,
+  export/import, CSBWin save loader boundary, utility save transaction.
+- ✅ 2026-07-26 Combat and movement runtime complete (Q-CSB-08). Grey Lord
+  combat, projectile speed, teleporter impact/retention, group move receipt,
+  combat bugfix helpers, DSA CausePoison/CountInjury all tested.
+- ✅ 2026-07-26 Thing/sensor runtime complete (Q-CSB-07). 38 sensor/teleporter
+  tests: F0267-F0276 sensor families, F0247 impact, Lord Chaos teleport,
+  teleporter rotation, DSA movement filter and actuator chain.
+- ✅ 2026-07-26 Entrance and credits handoff complete (Q-CSB-04). 9 tests:
+  F0128 consumer, F0439/F0441/F0442 boundaries, F0579 bitplanes, F0797
+  micro dungeon, F0806 loop, F0807 animation step, entrance pointer,
+  opening door tick receipt.
+- ✅ 2026-07-26 Startup presentation chain complete (Q-CSB-03). IMG1 decoder,
+  stage classification fix (CHAOS hold vs STRIKES BACK), 9308 lines of
+  startup code, 13/14 tests pass.
+- ✅ 2026-07-26 DSA opcode core complete (Q-CSB-01). 12 test files (9255
+  lines), 117 unique operations tested. CSBWin DSA runtime header (998 lines,
+  264 source refs) covers all STKOP/EX families.
+- ✅ 2026-07-26 DSA monster/world execution complete (Q-CSB-02). Monster
+  generator gate, timer policy, door timer, death/damage/feeding/sound/cursor
+  filters, expool recovery, dungeon world mutation, F2262 timer-A, M11 timer
+  queue resume — 14 tests all passing.
 - ✅ 2026-07-26 F0803/F0433 new-game save ownership evidence (Q-DM1-10).
   F0803 vanilla export verified: no manifest marker, F0802 byte-identical
   C3/C4 round-trip, F0417/F0418 obfuscation, LSV-02 manifest gate.
