@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.137
+
+- **Fakewall sensor toggle (Q-DM1-04):** M11 sensor effect handler now handles
+  DUNGEON_ELEMENT_FAKEWALL in SENSOR_EFFECT_TOGGLE_REMOTE. Fakewalls toggle
+  between FAKEWALL (element 6) and CORRIDOR (element 1) by rewriting square byte
+  bits 7:5. Also handles CLEAR on corridors to restore them to fakewalls. Completes
+  the sensor-actuator chain for all four target types (door, pit, fakewall, teleporter).
+
 # Firestaff v3.0.136
 
 - **Test fixes:** Corrected 5 aborting test suites with wrong assertions:

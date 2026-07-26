@@ -63,9 +63,12 @@ that its exact runtime path is not already source-locked and tested.
    animation step function for timed C024 events. Fixed pit toggle bug
    in M11 sensor effects (was toggling bit 0/imaginary instead of bit
    3/MASK0x0008_PIT_OPEN). 18 tests. [v3.0.135]
-   Remaining: wire actuator dispatch into movement pipeline pressure
-   plate path, door animation timer tick handler, fakewall passability
-   on element change.
+   2026-07-26: Fakewall toggle added to M11 SENSOR_EFFECT_TOGGLE_REMOTE
+   handler. All four actuator target types (door, pit, fakewall, teleporter)
+   now handled in sensor effects. Movement pipeline already fires sensors
+   via m11_apply_sensor_effects. [v3.0.137]
+   Remaining: door animation timer tick handler integration test,
+   fakewall passability update on element change during movement.
 5. **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,
    projectile impacts, drops, deaths and spell ticks with raw ownership.
 6. **Q-DM1-06 Inventory interaction matrix:** C05-C13 placement, chest,

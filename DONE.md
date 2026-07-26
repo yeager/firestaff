@@ -1,3 +1,7 @@
+- ✅ 2026-07-26 Fakewall sensor toggle in M11 (Q-DM1-04). SENSOR_EFFECT_TOGGLE_REMOTE
+  now handles DUNGEON_ELEMENT_FAKEWALL: toggles between element types 6 (fakewall)
+  and 1 (corridor) via bits 7:5 rewrite. Also handles CLEAR-on-corridor to restore
+  fakewalls. Completes all four actuator target types in M11 sensor effects. [v3.0.137]
 - ✅ 2026-07-26 Fix 5 aborting test suites: startup sequence (NULL source_id returns
   success not failure for receipt and prelude plan), inventory (init sets PANEL_INVENTORY
   not PANEL_FOOD_WATER_POISONED), HUD material (FNV-1a returns 0 for NULL input),
