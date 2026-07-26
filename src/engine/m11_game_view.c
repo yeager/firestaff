@@ -29705,21 +29705,13 @@ static void m11_draw_dm1_center_thieves_eye_mask(const M11_GameViewState* state,
      * the source explicitly notes that the hole moves with opening doors. */
     for (panelIndex = 0; panelIndex < panelCount; ++panelIndex) {
         const M11_DM1ZoneBlit* panel = &panels[panelIndex];
-        m11_blit_scaled_palette_map_region(
-            slot,
-            panel->srcX,
-            panel->srcY,
-            panel->width,
-            panel->height,
-            framebuffer,
-            fbW,
-            fbH,
+        M11_AssetLoader_BlitScaled(
+            slot, framebuffer, fbW, fbH,
             M11_VIEWPORT_X + panel->dstX,
             M11_VIEWPORT_Y + panel->dstY,
             panel->width,
             panel->height,
-            9,
-            NULL);
+            9);
     }
 }
 
@@ -31283,10 +31275,20 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                 const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
                 const DM1_CreatureDrawPlacement *placement = &entry->placement;
                 if (g_drawState && g_drawState->assetsAvailable) {
-                    (void)m11_draw_creature_sprite_source_anchored(
-                        g_drawState, framebuffer, framebufferWidth,
-                        framebufferHeight, placement, entry->creature_type,
-                        entry->creature_direction);
+                    if (placement->source_anchor_valid) {
+                        (void)m11_draw_creature_sprite_source_anchored(
+                            g_drawState, framebuffer, framebufferWidth,
+                            framebufferHeight, placement, entry->creature_type,
+                            entry->creature_direction);
+                    } else {
+                        (void)m11_draw_creature_sprite_ex(
+                            g_drawState, framebuffer, framebufferWidth,
+                            framebufferHeight,
+                            placement->x, placement->y,
+                            placement->w, placement->h,
+                            entry->creature_type,
+                            depthIndex, side, entry->creature_direction);
+                    }
                 }
             }
         }
@@ -31529,8 +31531,8 @@ static void m11_draw_dm1_side_contents(
             frames, cells, depth, visibility, blockingCenterDepth);
     }
     (void)m11_draw_item_sprite;
-    (void)m11_draw_creature_sprite_ex;
     (void)m11_draw_projectile_sprite;
+    (void)m11_draw_creature_sprite_ex;
 }
 
 static void m11_draw_dm1_d0c_projectile_pass(const M11_GameViewState* state,
