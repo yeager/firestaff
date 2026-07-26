@@ -40,9 +40,15 @@ int main(void)
 
     CHECK(make_title_plan(80, &plan) &&
               plan.title_source_step == 21 &&
-              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
               csb_v1_boot_startup_title_capture_plan_admit_pc34(&plan, 80),
-          "C426 accepts the verified original STRIKES BACK wave at frame 80");
+          "frame 80 step 21 remains within CHAOS hold stage");
+
+    CHECK(make_title_plan(100, &plan) &&
+              plan.title_source_step == 22 &&
+              plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              csb_v1_boot_startup_title_capture_plan_admit_pc34(&plan, 100),
+          "C426 accepts the verified original STRIKES BACK wave at frame 100");
 
     return failures ? 1 : 0;
 }
