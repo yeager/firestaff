@@ -3,7 +3,7 @@
 
 # Firestaff v3.0.144
 
-- Lock 8 movement command core source-audit gates (pass549, pass544, pass580, pass562, pass510, pass394, pass428)
+- Lock 9 movement command core source-audit gates (pass549, pass544, pass580, pass562, pass510, pass394, pass428, pass475)
 - Add direct party position mutation in successful movement path
 - Add blocked-branch inputDiscardRequested and blockedMovementVblankWaitRequested flags
 - Add dm1_v1_apply_pre_step_stamina_cost wrapper
