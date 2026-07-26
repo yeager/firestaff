@@ -124,7 +124,7 @@ int main(void) {
     }
 
     for (level_index = 0; level_index < 16; ++level_index) {
-        char path[1024];
+        char path[2048];
         uint8_t *data;
         int size;
         Nexus_V1_Level level;

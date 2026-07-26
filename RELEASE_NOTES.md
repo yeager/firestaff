@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.155
+
+- Fix DM2 G1 c_record OBJECT_NULL/unmaterialized-base boundary (Q-DM2-04)
+- Reject OBJECT_NULL (0xffff) in dm2_v1_dungeon_get_thing_record
+- Reject OBJECT_NULL w0 in dm2_v1_dungeon_get_next_thing
+- Reject unmaterialized DB base (-1) before byte-address computation
+- Widen test path buffers to 2048 to fix GCC -Wformat-truncation
+
 # Firestaff v3.0.154
 
 - Suppress GCC -Wtype-limits for nexus_v1_dungeon.c (defensive uint16_t overflow checks)

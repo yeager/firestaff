@@ -7,7 +7,7 @@
 
 static const char* pc34_graphics_path(void)
 {
-    static char path[1024];
+    static char path[2048];
     const char* configured = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
     const char* home;
 

@@ -350,7 +350,7 @@ static int test_evidence_strings(void)
 
 static int read_whole_file(const char *rel, char **out_data, size_t *out_size)
 {
-    char path[1024];
+    char path[2048];
     FILE *fp;
     long size;
     char *data;

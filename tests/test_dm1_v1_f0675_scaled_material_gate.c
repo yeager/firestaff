@@ -11,7 +11,7 @@ int main(void)
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char* home = getenv("HOME");
     const int graphics[] = {486, 487, 488};
-    char path[1024];
+    char path[2048];
     M11_AssetLoader loader;
     int index;
 

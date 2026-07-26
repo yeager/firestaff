@@ -17,7 +17,7 @@ int main(void)
         DM1_V1_F0663_C499_SMOKE_PATTERN_MEDIUM_PC34,
         DM1_V1_F0663_C500_SMOKE_PATTERN_LARGE_PC34
     };
-    char path[1024];
+    char path[2048];
     M11_AssetLoader loader;
     DM1_V1_F0663SourceSurfacePc34 surfaces[DM1_V1_F0663_SURFACE_COUNT_PC34];
     DM1_V1_F0663SmokeMaterialReceiptPc34 receipt;

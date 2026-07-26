@@ -1259,7 +1259,7 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
 
 static void test_optional_local_menu_bpk(void) {
     const char *home = getenv("HOME");
-    char path[1024];
+    char path[2048];
     uint8_t *data = NULL;
     size_t size = 0;
     Nexus_V1_BpkSurfaceEntry entries[200];

@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char* graphics_path(char path[1024])
+static const char* graphics_path(char path[2048])
 {
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char* home;
@@ -42,7 +42,7 @@ static int load_surface(M11_AssetLoader* loader, int graphic,
 
 int main(void)
 {
-    char path[1024];
+    char path[2048];
     M11_AssetLoader loader;
     M11_FontState font;
     DM1_V1_F0342SourceSurfacePc34 surfaces[2];

@@ -51,7 +51,7 @@ static uint8_t *read_file(const char *path, int *out_size)
 
 static void check_real_level(const char *data_dir, int level_index)
 {
-    char path[1024];
+    char path[2048];
     uint8_t *data;
     uint8_t *tampered;
     int size = 0;

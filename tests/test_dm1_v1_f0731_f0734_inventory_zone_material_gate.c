@@ -75,7 +75,7 @@ int main(void)
     DM1_V1_F0731F0734ZonePc34 iconZone = { 562, 174, 218, 2, 12 };
     DM1_V1_F0731F0734ReceiptPc34 receipt;
     TestDraw draw;
-    char path[1024];
+    char path[2048];
 
     memset(&loader, 0, sizeof(loader));
     if (!load_graphics(&loader, path, sizeof(path))) {

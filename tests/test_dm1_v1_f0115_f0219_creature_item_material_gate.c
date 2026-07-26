@@ -12,7 +12,7 @@
 
 enum { kMaterialCount = 4 };
 
-static const char* data_path(const char* name, char path[1024])
+static const char* data_path(const char* name, char path[2048])
 {
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char* home;

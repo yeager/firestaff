@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 int main(void) {
-    char path[1024]; const char* home = getenv("HOME"); const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    char path[2048]; const char* home = getenv("HOME"); const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
     M11_AssetLoader loader; M11_FontState font; const M11_AssetSlot* slot;
     DM1_V1_F0351SourceSurfacePc34 panel; DM1_V1_F0351GlyphSourcePc34 glyph;
     DM1_V1_F0351StatsMaterialReceiptPc34 receipt;

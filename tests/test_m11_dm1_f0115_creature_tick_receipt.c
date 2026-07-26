@@ -7,7 +7,7 @@
 
 static const char* pc34_dungeon_path(void)
 {
-    static char path[1024];
+    static char path[2048];
     const char* configured = getenv("DM1_PC34_DUNGEON_DAT");
     const char* home;
 

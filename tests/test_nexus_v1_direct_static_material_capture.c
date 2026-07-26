@@ -154,7 +154,7 @@ static int count_canonical_transform_capture_targets(const char *data_dir,
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
-    char path[1024];
+    char path[2048];
     FILE *file;
     long file_size;
     uint8_t *data = NULL;

@@ -11,7 +11,7 @@ int main(void)
     const char* home = getenv("HOME");
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
     const unsigned char bogusPalette[16] = {0};
-    char path[1024];
+    char path[2048];
     M11_AssetLoader loader;
     M11_FontState font;
     const M11_AssetSlot* damage;

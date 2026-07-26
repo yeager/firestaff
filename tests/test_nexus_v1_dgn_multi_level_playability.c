@@ -51,7 +51,7 @@ static uint8_t *read_file(const char *path, int *out_size)
 static const char *resolve_data_dir(void)
 {
     const char *env = getenv("FIRESTAFF_NEXUS_DATA_DIR");
-    static char path[1024];
+    static char path[2048];
     const char *home;
 
     if (env && env[0]) return env;
@@ -140,7 +140,7 @@ int main(void)
     printf("Data dir: %s\n", data_dir);
 
     for (level_index = 0; level_index < 16; level_index++) {
-        char path[1024];
+        char path[2048];
         uint8_t *dgn_data;
         int dgn_size;
         Nexus_V1_Level level;

@@ -642,7 +642,7 @@ static void test_f0115_runtime_summary_from_world(void) {
 }
 
 static const char* dm1_pc34_dungeon_dat_path(void) {
-    static char path[1024];
+    static char path[2048];
     const char* configured = getenv("DM1_PC34_DUNGEON_DAT");
     const char* home;
 

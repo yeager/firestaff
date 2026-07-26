@@ -36,7 +36,7 @@ static void expect_true(int condition, const char *message)
 static unsigned char *read_local_nexus_file(const char *name, size_t *out_size)
 {
     const char *home = getenv("HOME");
-    char path[1024];
+    char path[2048];
     FILE *file;
     long size;
     unsigned char *data;

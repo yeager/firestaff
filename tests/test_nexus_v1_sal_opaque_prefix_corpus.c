@@ -41,7 +41,7 @@ int main(void) {
     }
 
     for (level = 0; level < NEXUS_V1_AUDIO_LEVEL_COUNT; ++level) {
-        char path[1024];
+        char path[2048];
         uint8_t *data;
         uint32_t size;
         Nexus_V1_AudioReceipt asset;

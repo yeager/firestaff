@@ -8,7 +8,7 @@ static const char *graphics_dat_path(void)
 {
     const char *configured = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
     const char *home = getenv("HOME");
-    static char path[1024];
+    static char path[2048];
     FILE *file;
 
     if (configured && configured[0] != '\0') {
