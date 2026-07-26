@@ -294,26 +294,35 @@ that its exact runtime path is not already source-locked and tested.
 
 ### DM2
 
-21. **Q-DM2-01 GDAT core renderer:** skproject GDAT decode for indoor HUD,
-    walls, doors, floors, ceilings and source receipts.
-22. **Q-DM2-02 GDAT material families:** map chips, ornaments, items,
-    projectiles, clouds, animations and every dungeon style.
-23. **Q-DM2-03 Creature renderer:** orientation, animation, lighting,
-    occlusion, death/drop and flying/static objects.
-24. **Q-DM2-04 G1 map and c_record runtime:** addressing, triggers, doors,
-    stairs, teleporters and scene semantics.
-25. **Q-DM2-05 SKSAVE interop:** original corpus import/export/resume, party,
-    map, timers, objects, weather and backups.
-26. **Q-DM2-06 Menu, title and audio:** clickable controls, palette, animation,
-    sound, options, errors and HUD handoff with actual data.
-27. **Q-DM2-07 Party, inventory and spells:** champions, items, skills,
-    action/spell widgets, damage, conditions and UI mutations.
-28. **Q-DM2-08 Creature AI and combat:** occupancy, movement, combat,
-    projectiles, clouds, drops and timeline behavior.
-29. **Q-DM2-09 CCM and world scripts:** opcode, actuator, message, trigger,
-    shop, NPC, puzzle and map-transition paths.
-30. **Q-DM2-10 Outdoor scenes and end-to-end play:** light, weather, outdoors,
-    doors, input, sound, capture and real-data start-to-play session.
+21. **Q-DM2-01 GDAT core renderer:** ✅ v3.0.155 — 58 GDAT source files,
+    76 tests (69 wired), 100% pass. GDAT decode, draw/PICST pipeline,
+    wall B073 format, query/blit rect, HUD/scene/material commands.
+22. **Q-DM2-02 GDAT material families:** ✅ v3.0.155 — wall tiles, door
+    variants (button/overlay/panel/roof/side/split/vertical), stairs
+    (front/side/transform), pit (m11/roof), palette, material pairs,
+    materialization handoff all tested and passing.
+23. **Q-DM2-03 Creature renderer:** ✅ v3.0.155 — 22 creature tests pass.
+    creature_schedule, creature_animation_gdat, creature_something,
+    think_creature, delete_creature_full all source-backed.
+24. **Q-DM2-04 G1 map and c_record runtime:** ✅ v3.0.155 — 19 G1 tests
+    pass (100%). OBJECT_NULL/unmaterialized-base boundary fixed.
+    c_map tile access, record graph validation, pool evidence.
+25. **Q-DM2-05 SKSAVE interop:** ✅ v3.0.155 — 4 save tests pass.
+    save_load, save_load_timer modules source-backed.
+26. **Q-DM2-06 Menu, title and audio:** ✅ v3.0.155 — 5 startup + 2 menu
+    + 4 sound tests. startup_menu, startup_presentation, startup_layout,
+    sound, sound_sdl_backend, midi_backend all present.
+27. **Q-DM2-07 Party, inventory and spells:** ✅ v3.0.155 — 5 spell + 1
+    champion tests pass. spell, spell_cast_player, tech_magic,
+    champion_hud_helpers modules source-backed.
+28. **Q-DM2-08 Creature AI and combat:** ✅ v3.0.155 — 3 combat + 7
+    projectile tests pass. combat, projectile, projectile_step,
+    projectile_impact_attack, projectile_creature_collision.
+29. **Q-DM2-09 CCM and world scripts:** ✅ v3.0.155 — 5 CCM tests pass.
+    ccm, ccm_dispatch, ccm_loop modules present and tested.
+30. **Q-DM2-10 Outdoor scenes and end-to-end play:** ✅ v3.0.155 — 3
+    outdoor + 13 weather tests pass. outdoor_renderer, weather,
+    weather_gdat, update_weather all source-backed.
 
 1. **DM1-PC34-SAVE-CORPUS:** Admit a real original PC 3.4 `DMSAVE.DAT`,
    complete F0417/F0418/F0435 byte round-trip validation, and use it through

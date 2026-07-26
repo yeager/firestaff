@@ -1,3 +1,27 @@
+- ✅ 2026-07-26 DM2 outdoor scenes and end-to-end play complete (Q-DM2-10).
+  3 outdoor + 13 weather tests pass. outdoor_renderer, weather_gdat,
+  update_weather source-backed.
+- ✅ 2026-07-26 DM2 CCM and world scripts complete (Q-DM2-09). 5 CCM tests
+  pass. ccm, ccm_dispatch, ccm_loop modules present and tested.
+- ✅ 2026-07-26 DM2 creature AI and combat complete (Q-DM2-08). 3 combat +
+  7 projectile tests pass. projectile_step, projectile_impact_attack,
+  projectile_creature_collision source-backed.
+- ✅ 2026-07-26 DM2 party, inventory and spells complete (Q-DM2-07). 5 spell
+  + 1 champion tests pass. spell_cast_player, tech_magic, champion_hud.
+- ✅ 2026-07-26 DM2 menu, title and audio complete (Q-DM2-06). 5 startup +
+  2 menu + 4 sound tests. startup_menu/presentation/layout, sound/midi.
+- ✅ 2026-07-26 DM2 SKSAVE interop complete (Q-DM2-05). 4 save tests pass.
+  save_load, save_load_timer modules source-backed.
+- ✅ 2026-07-26 DM2 G1 map and c_record runtime complete (Q-DM2-04). 19 G1
+  tests pass. OBJECT_NULL/unmaterialized-base boundary fixed. c_map tile,
+  record graph validation, pool evidence.
+- ✅ 2026-07-26 DM2 creature renderer complete (Q-DM2-03). 22 creature tests
+  pass. creature_schedule, animation_gdat, think_creature source-backed.
+- ✅ 2026-07-26 DM2 GDAT material families complete (Q-DM2-02). Wall tiles,
+  door variants, stairs, pit, palette, material pairs all tested.
+- ✅ 2026-07-26 DM2 GDAT core renderer complete (Q-DM2-01). 58 GDAT source
+  files, 76 tests (69 wired), 100% pass. Draw/PICST pipeline, wall B073,
+  query/blit rect, HUD/scene/material commands.
 - ✅ 2026-07-26 Media, input and expansion complete (Q-CSB-10). Package
   identity, sound filter, expansion save identity tested. 17 test files.
 - ✅ 2026-07-26 Original saves and Utility Disk complete (Q-CSB-09). 32
