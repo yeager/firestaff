@@ -49,6 +49,8 @@ typedef struct {
     const char *reason;
 } DM1_V1_TitleRealAssetCaptureReceiptPc34;
 
+typedef DM1_V1_TitleStatePc34 M11_TS_TitleState;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -63,6 +65,11 @@ bool DM1_V1_Title_BuildRealAssetCaptureReceiptPc34Compat(
     uint32_t frame,
     DM1_V1_TitleRealAssetCaptureReceiptPc34* out);
 void DM1_V1_Title_CleanupPc34Compat(DM1_V1_TitleStatePc34* state);
+
+void m11_ts_init(M11_TS_TitleState* state);
+bool m11_ts_load_title_graphics(M11_TS_TitleState* state, const uint8_t* data, uint32_t size);
+bool m11_ts_animate_zoom(M11_TS_TitleState* state, uint32_t frame);
+void m11_ts_cleanup(M11_TS_TitleState* state);
 
 #ifdef __cplusplus
 }
