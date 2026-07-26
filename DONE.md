@@ -1,3 +1,10 @@
+- ✅ 2026-07-26 DM1 startup handoff M11 bridge (Q-DM1-08). Created
+  dm1_v1_startup_handoff_m11_bridge_pc34_compat module with callback
+  implementations for play_swsh, play_title, play_entrance. Wired into
+  M11 launcher boot path via dm1_v1_startup_execute_handoff_prelude_pc34
+  and dm1_v1_startup_execute_handoff_post_launch_pc34. SWSH records
+  swoosh request (gated on swooshBound), title auto-acknowledges,
+  entrance auto-enters. 1 test, 20 assertions. [v3.0.149]
 - ✅ 2026-07-26 Fix GCC misleading-indentation CI failure. Split single-line
   `if (!out) return 0; memset(...)` into two lines in CSB, DM2, Theron, and
   Nexus source boundary files. Unblocks Ubuntu CI build. [v3.0.148]

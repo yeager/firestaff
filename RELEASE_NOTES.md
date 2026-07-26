@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.149
+
+- Add DM1 startup handoff M11 bridge (Q-DM1-08)
+- Wire SWSH/title/entrance callback implementations into M11
+- Execute DM1 startup prelude and post-launch handoff from launcher boot path
+- Add dm1StartupHandoffExecuted tracking to M11_GameViewState
+
 # Firestaff v3.0.148
 
 - Fix GCC misleading-indentation warning in csb_v1_f1126_f1145_source_boundary (Ubuntu CI)

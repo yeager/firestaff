@@ -88,6 +88,14 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-26: F0740-F0743 music state machine wired into M11 game view.
    SONG.DAT binding at init, F0742 map track at stairs/teleporter transitions,
    F0743 update_music per tick, F0740 pause on music disable. [v3.0.131]
+   2026-07-26: DM1 startup handoff M11 bridge created. Callback
+   implementations for play_swsh, play_title, play_entrance wired into
+   M11 launcher boot path. Prelude and post-launch phases execute through
+   DM1-owned handoff facade. SWSH gated on swooshBound, title auto-
+   acknowledges, entrance auto-enters. [v3.0.149]
+   Remaining: actual PSG audio playback in play_swsh callback, title
+   C001 animation frame stepping, entrance palette crossfade, title
+   screen music hookup.
 9. **Q-DM1-09 Input and controller coverage:** command behavior for keyboard,
    mouse, touch, controller, fullscreen scaling and modal focus.
 10. **Q-DM1-10 New-game and release evidence:** F0803/F0433 ownership plus
