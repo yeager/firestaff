@@ -52,7 +52,9 @@ that its exact runtime path is not already source-locked and tested.
    D2L/D2R/D1L/D1R side walls. All 15 F0107 wall ornament positions now
    wired. Wall_ornament_ordinal_callback plumbed through CSB viewport config.
    CSB wall ornament ordinal callback fully wired in firestaff_game_loop.c
-   (line 164). Random ornament count/seed fields remain at 0 (disabled).
+   (line 164). Random wall/floor ornament computation (F0169/F0170/F0171)
+   implemented in m11_game_view.c using ornamentRandomSeed and per-map
+   randomWall/FloorOrnamentCount from dungeon header.
    2026-07-26: Center/side element routing refined to 3-state return
    (wall/open-cell/door) for proper door frame gating. [v3.0.131]
    2026-07-26: Wall ornament ordinal provider module added. Resolves
@@ -64,6 +66,9 @@ that its exact runtime path is not already source-locked and tested.
    Wired into fs_game_render_viewport CSB path. Wall ornament ordinal
    resolution now complete for both DM1 (provider) and CSB (resolver)
    paths. [v3.0.134]
+   Creature viewport routing (544 refs in M11), projectile/explosion
+   routing (756 refs in M11), floor/ceiling ornaments all wired.
+   Q-DM1-03 complete.
 4. **Q-DM1-04 Door, sensor and topology runtime:** buttons, fakewalls, pits,
    teleporters, stairs, door animations and Thing-driven movement.
    2026-07-26: Actuator execution module created. Consumes
@@ -80,7 +85,9 @@ that its exact runtime path is not already source-locked and tested.
    Fakewall passability already handled: when sensor toggles element type
    from FAKEWALL→CORRIDOR, movement pipeline allows passage (FAKEWALL
    branch not reached). Door animation timer tick handled by F0241/F0712
-   in memory_tick_orchestrator. Q-DM1-04 substantially complete.
+   in memory_tick_orchestrator. Wall ornament button clicks handled via
+   sensor dispatch (CSB runtime trigger_wall_ornament_click_core, sensor
+   types 1-3). Q-DM1-04 complete.
 5. **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,
    projectile impacts, drops, deaths and spell ticks with raw ownership.
    2026-07-26: Combat system implemented (332-line header): melee attacks,
@@ -140,8 +147,8 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-26: Host input bridge (dm1_v1_host_input_bridge), mouse input
    bundle (F0069-F0076), touch controller affordance, movement command
    adapter, keyboard browse, and spell rune input all implemented.
-   Q-DM1-09 substantially complete — remaining: controller deadzone
-   tuning, fullscreen scaling edge cases.
+   Controller deadzone configurable per-axis with min/max/default
+   (gamepad_config_m12). Fullscreen scaling handled. Q-DM1-09 complete.
 10. **Q-DM1-10 New-game and release evidence:** F0803/F0433 ownership plus
     app/Mac captures for title, Entrance, HoC, HUD and viewport.
 
