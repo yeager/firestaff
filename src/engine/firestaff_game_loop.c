@@ -19,6 +19,7 @@
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v2_runtime.h"
 #include "dm2_v1_runtime.h"
@@ -153,6 +154,16 @@ static void fs_game_render_viewport(FS_GameState *state) {
                 cv, dun, csb_v1_dungeon_get_current_level(), s_csb_dungeon)) {
             return;
         }
+
+        /* Wire wall ornament ordinal resolver from live dungeon data. */
+        static CSB_V1_WallOrnamentOrdinalResolverPc34 s_csb_ornament_resolver;
+        s_csb_ornament_resolver.dungeon = dun;
+        s_csb_ornament_resolver.level = csb_v1_dungeon_get_current_level();
+        s_csb_ornament_resolver.randomWallOrnamentCount = 0;
+        s_csb_ornament_resolver.ornamentRandomSeed = 0;
+        cv->wall_ornament_ordinal_callback =
+            csb_v1_viewport_wall_ornament_ordinal_resolve_pc34;
+        cv->wall_ornament_ordinal_user_data = &s_csb_ornament_resolver;
 
         /* Delegate to the CSB viewport renderer (which calls
          * dm1_viewport_3d_draw_frame internally). */

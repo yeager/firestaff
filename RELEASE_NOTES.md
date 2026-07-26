@@ -1,6 +1,18 @@
 
 # Unreleased
 
+# Firestaff v3.0.134
+
+## CSB wall ornament ordinal resolver (Q-DM1-03)
+
+- New `csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat` module
+- Resolves wall ornament ordinals directly from CSB_V1_DungeonData raw bytes
+- Phase 1: scan sensor thing records for ornamentOrdinal (bits 15:12 of bytes 4-5)
+- Phase 2: compute random ornament via F0170/F0171 map metadata
+- Wired into `fs_game_render_viewport` CSB path via callback
+- Matches `DM1_ViewportWallOrnamentOrdinalCallback` signature
+- CLAUDE.md updated: Ninja build, all 5 supported games, reference sources
+
 # Firestaff v3.0.133
 
 ## Build fixes and project guide
