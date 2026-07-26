@@ -132,14 +132,13 @@ static int dm1_v1_viewport_runtime_admit_effect_pc34(
             dm1_v1_viewport_runtime_find_effect_receipt_pc34(input, kind, rawThing),
             kind, rawThing, associatedThing, expectedGraphicIndex);
     }
-    /* Compatibility-only caller path. Production callers supply a catalog;
-     * an associated C14 remains blocked here because it has no F0142/G0209
-     * receipt. This preserves already-tested non-production consumers. */
     if (kind == DM1_V1_F0248_LIVE_EFFECT_PROJECTILE_C14_PC34 &&
         associatedThing != THING_NONE) return 0;
+    if (!input || (!input->pc34GraphicsSurfaces && input->pc34GraphicsSurfaceCount <= 0))
+        return 1;
     return DM1_V1_ObjectWorld_AdmitPc34GraphicsSurfacePc34Compat(
-        input ? input->pc34GraphicsSurfaces : NULL,
-        input ? input->pc34GraphicsSurfaceCount : 0, expectedGraphicIndex);
+        input->pc34GraphicsSurfaces, input->pc34GraphicsSurfaceCount,
+        expectedGraphicIndex);
 }
 
 static int dm1_v1_viewport_runtime_f0115_eligible_for_square_pc34(

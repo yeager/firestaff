@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.142
+
+- **Fix combat test failures (Q-DM1-05):** Three fixes across creature movement,
+  explosion materialization, and projectile teleporter retention. Creature group
+  movement tests now use correct compact SFT setup and F0511 queries. Engine bug
+  fixed in `m11_group_sight_door_can_see_through_source` (compact SFT path).
+  Viewport materialization admits live effects in pure runtime (no graphics gate).
+  CSB F0247 teleporter retention uses correct fireAtTick timing.
+
 # Firestaff v3.0.141
 
 - **SDL3 app metadata and credits:** macOS About panel (Firestaff → About

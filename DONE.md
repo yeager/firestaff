@@ -1,3 +1,12 @@
+- ✅ 2026-07-26 Fix combat test failures (Q-DM1-05). Three fixes: (1) creature
+  movement test SFT infrastructure — corrected compact SFT setup to only set
+  THING_LIST on squares with actual things; changed assertions to use F0511
+  instead of direct array indexing; fixed m11_group_sight_door_can_see_through
+  to use m11_square_chain_head for compact SFT compatibility. (2) C040 explosion
+  materialization admit — viewport runtime materialization now admits live effects
+  when no graphics surfaces or catalog are loaded (pure runtime path). (3) CSB
+  F0247 projectile teleporter retention — fixed event timing to use fireAtTick
+  from projectile create result, matching scheduledAtTick. [v3.0.142]
 - ✅ 2026-07-26 SDL3 app metadata and credits. macOS About panel now shows
   "Daniel Nylander", copyright 2026, GitHub URL, and app type. In-menu credits
   updated with author, URL, and library credits (ReDMCSB, skproject, SDL3, zlib,

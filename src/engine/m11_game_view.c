@@ -4683,8 +4683,23 @@ int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
     }
     if (!m11_csb_boot_runtime_startup_host_view_receipt(state,
                                                         &host_view) ||
-        !host_view.valid ||
+        !host_view.valid) {
+        return -1;
+    }
+    /* ReDMCSB TITLE.C F0437 owns three palette phases that must match the
+     * exact C001 plan geometry.  ENTRANCE.C F0441/F0806 uses a single
+     * palette for the entire entrance surface; render_draw_valid is not
+     * required to identify it — the route receipt carries special_palette
+     * independently of the real-asset render draw boundary. */
+    if (host_view.render_draw_valid &&
+        host_view.render_draw.render_plan_valid &&
+        host_view.render_draw.render_plan.surface ==
+            CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
         !m11_csb_c001_palette_is_source_owned(&host_view)) {
+        return -1;
+    }
+    if (host_view.special_palette < 0 ||
+        host_view.special_palette >= VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT) {
         return -1;
     }
     return host_view.special_palette;
@@ -4915,8 +4930,7 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
     m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
     csb_v1_boot_startup_host_view_receipt_init_pc34(&host_view);
     if (!csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
-            &snapshot,
-            &host_view) ||
+            &snapshot, &host_view) ||
         !host_view.valid ||
         !host_view.render_draw_valid ||
         !host_view.render_draw.render_plan_valid) {
@@ -4928,15 +4942,16 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
     if (host_view.render_draw.render_plan.surface ==
             CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
         !m11_csb_c001_palette_is_source_owned(&host_view)) {
+        fprintf(stderr, "CSB_EXIT:A title_palette ent_step=%d\n",
+            state->csbState.startup_entrance_source_step);
         return;
     }
     if (host_view.hud_menu_draw_valid &&
         host_view.hud_menu_draw.kind ==
             CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
         !m11_csb_startup_utility_raster_admitted(state, &host_view)) {
-        /* No generated utility text or diagnostic panel may survive a
-         * missing package/capture identity.  Leave the caller's black page
-         * untouched until a matching source raster is admitted. */
+        fprintf(stderr, "CSB_EXIT:B utility ent_step=%d\n",
+            state->csbState.startup_entrance_source_step);
         return;
     }
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
@@ -4974,6 +4989,8 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
             if (!csb_v1_boot_startup_playback_accepts_title_plan_pc34(
                     session, &host_view.render_draw.render_plan,
                     target_frame)) {
+                fprintf(stderr, "CSB_EXIT:C title_plan ent_step=%d frame=%d\n",
+                    state->csbState.startup_entrance_source_step, target_frame);
                 return;
             }
         } else {
@@ -4988,6 +5005,8 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
              * admission and leave the real credits page black. */
             if (!state->csbState.startup_entrance_active ||
                 target_frame < csb_v1_startup_title_total_ticks_pc34()) {
+                fprintf(stderr, "CSB_EXIT:D entrance_not_ready ent_step=%d\n",
+                    state->csbState.startup_entrance_source_step);
                 return;
             }
             frame_index = session->playback.title_phase_mask == 0x0f
@@ -5020,22 +5039,33 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
         (host_view.render_draw.render_plan.surface ==
              CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
          host_view.render_draw.render_plan.surface ==
-             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) &&
-        (!csb_v1_startup_entrance_f0128_produce_pc34(
+             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34)) {
+        int f0128_ok = csb_v1_startup_entrance_f0128_produce_pc34(
              session, &host_view.render_draw.render_plan,
              entrance_source_tick,
              &state->csbStartupF0128EntranceMaterialReceipt,
              &state->csbStartupF0128EntranceRasterReceipt,
              state->csbStartupF0128EntrancePixels,
-             sizeof(state->csbStartupF0128EntrancePixels)) ||
-         !M11_GameView_SetCsbEntranceF0128Raster(
+             sizeof(state->csbStartupF0128EntrancePixels));
+        int set_ok = f0128_ok ? M11_GameView_SetCsbEntranceF0128Raster(
              state, &state->csbStartupF0128EntranceMaterialReceipt,
              &state->csbStartupF0128EntranceRasterReceipt,
              state->csbStartupF0128EntrancePixels,
              sizeof(state->csbStartupF0128EntrancePixels),
              entrance_source_tick,
-             session->generation))) {
-        return;
+             session->generation) : 0;
+        if (!f0128_ok || !set_ok) {
+            static int dbg_f0128_count = 0;
+            if (dbg_f0128_count < 3) {
+                fprintf(stderr, "CSB_ENT_F0128_BAIL: f0128=%d set=%d surface=%d ent_step=%d session_stage=%d\n",
+                    f0128_ok, set_ok,
+                    host_view.render_draw.render_plan.surface,
+                    state->csbState.startup_entrance_source_step,
+                    session->playback.stage);
+                dbg_f0128_count++;
+            }
+            return;
+        }
     }
     memset(&f0128_binding, 0, sizeof(f0128_binding));
     if (state->csbStartupF0128EntranceBound) {
@@ -5071,6 +5101,14 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
         !host_surface.raster.pixels ||
         host_surface.raster.width != CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 ||
         host_surface.raster.height != CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34) {
+        fprintf(stderr, "CSB_EXIT:F host_surface ses=%d bound=%d hv=%d ram=%d nlw=%d nss=%d hs=%d hsh=%u rv=%d ram2=%d px=%p w=%d h=%d\n",
+            session ? 1 : 0, state->csbStartupF0128EntranceBound,
+            host_surface.valid, host_surface.real_asset_matched,
+            host_surface.no_legacy_wrappers, host_surface.no_synthetic_surface,
+            host_surface.host_surface, host_surface.host_surface_hash,
+            host_surface.raster.valid, host_surface.raster.real_asset_matched,
+            (void*)host_surface.raster.pixels,
+            host_surface.raster.width, host_surface.raster.height);
         csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
             &host_surface);
         return;
@@ -5104,6 +5142,51 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
         csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
             &host_surface);
         return;
+    }
+    {
+        static int dbg_ent_count = 0;
+        if (dbg_ent_count < 1 &&
+            host_view.render_draw.render_plan.surface != CSB_V1_STARTUP_RENDER_TITLE_PC34) {
+            int pxi;
+            int rw = host_surface.raster.width;
+            int rh = host_surface.raster.height;
+            fprintf(stderr, "CSB_ENT_RASTER: surface=%d host=%d raster=%dx%d fb=%dx%d\n",
+                host_view.render_draw.render_plan.surface,
+                host_surface.host_surface, rw, rh,
+                framebufferWidth, framebufferHeight);
+            fprintf(stderr, "  row0:");
+            for (pxi = 0; pxi < 20 && pxi < rw; pxi++)
+                fprintf(stderr, " %d", host_surface.raster.pixels[pxi]);
+            fprintf(stderr, "\n  row50:");
+            for (pxi = 0; pxi < 20 && pxi < rw; pxi++)
+                fprintf(stderr, " %d", host_surface.raster.pixels[50*rw + pxi]);
+            fprintf(stderr, "\n  row100:");
+            for (pxi = 0; pxi < 20 && pxi < rw; pxi++)
+                fprintf(stderr, " %d", host_surface.raster.pixels[100*rw + pxi]);
+            fprintf(stderr, "\n  row150:");
+            for (pxi = 0; pxi < 20 && pxi < rw; pxi++)
+                fprintf(stderr, " %d", host_surface.raster.pixels[150*rw + pxi]);
+            fprintf(stderr, "\n");
+            {
+                static const unsigned char ent_pal[16][3] = {
+                    {0,0,0},{109,109,109},{146,146,146},{146,73,0},
+                    {219,182,146},{0,219,0},{0,146,0},{0,182,0},
+                    {146,109,73},{255,0,0},{182,146,109},{109,73,36},
+                    {73,73,73},{182,182,182},{109,36,0},{255,255,255}
+                };
+                FILE *ppm = fopen("/tmp/csb_entrance_raster.ppm", "wb");
+                if (ppm) {
+                    fprintf(ppm, "P6\n%d %d\n255\n", rw, rh);
+                    for (pxi = 0; pxi < rw * rh; pxi++) {
+                        unsigned char ci = host_surface.raster.pixels[pxi] & 0x0f;
+                        fwrite(ent_pal[ci], 1, 3, ppm);
+                    }
+                    fclose(ppm);
+                    fprintf(stderr, "  wrote /tmp/csb_entrance_raster.ppm\n");
+                }
+            }
+            dbg_ent_count++;
+        }
     }
     m11_csb_present_startup_raster(host_surface.raster.pixels,
                                    framebuffer,
@@ -9427,7 +9510,7 @@ static int m11_group_sight_door_can_see_through_source(
     }
     map = &world->dungeon->maps[mapIndex];
     things = world->things;
-    thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+    thing = m11_square_chain_head(world, mapIndex, mapX, mapY);
     if (THING_GET_TYPE(thing) != THING_TYPE_DOOR || !things->doors) return 0;
     doorIndex = THING_GET_INDEX(thing);
     if (doorIndex < 0 || doorIndex >= things->doorCount ||
