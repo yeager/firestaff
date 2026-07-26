@@ -1,20 +1,41 @@
 {
   "firestaffChecks": [
     {
-      "hits": [],
-      "id": "firestaff-mirrored-door-front-metadata",
-      "lines": "931-942",
-      "missing": [
-        "DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439",
-        "DUNVIEW.C:6579 floor ornament under mirrored rear pass",
-        "DUNVIEW.C:6592-6593 optional button before door panel",
-        "DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349",
-        "DUNVIEW.C:6988 floor ornament under rear pass",
-        "DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439",
-        "DUNVIEW.C:7181 floor ornament under mirrored rear pass"
+      "hits": [
+        {
+          "line": 952,
+          "needle": "DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439"
+        },
+        {
+          "line": 952,
+          "needle": "DUNVIEW.C:6579 floor ornament under mirrored rear pass"
+        },
+        {
+          "line": 952,
+          "needle": "DUNVIEW.C:6592-6593 optional button before door panel"
+        },
+        {
+          "line": 954,
+          "needle": "DM1_VIEW_SQUARE_D2L, 0x0218, 0x0349"
+        },
+        {
+          "line": 954,
+          "needle": "DUNVIEW.C:6988 floor ornament under rear pass"
+        },
+        {
+          "line": 955,
+          "needle": "DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439"
+        },
+        {
+          "line": 955,
+          "needle": "DUNVIEW.C:7181 floor ornament under mirrored rear pass"
+        }
       ],
+      "id": "firestaff-mirrored-door-front-metadata",
+      "lines": "948-959",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "hits": [
@@ -178,8 +199,8 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass560_dm1_v1_mirrored_door_front_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS560_DM1_V1_MIRRORED_DOOR_FRONT_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS560_DM1_V1_MIRRORED_DOOR_FRONT_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
@@ -191,13 +212,13 @@
     },
     {
       "command": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
         "/Volumes/Extern-disk/firestaff-claude/tools/verify_pass560_dm1_v1_mirrored_door_front_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass560 check-only: firestaff-mirrored-door-front-metadata",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass560 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

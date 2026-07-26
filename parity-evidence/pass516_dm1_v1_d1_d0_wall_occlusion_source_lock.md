@@ -1,6 +1,6 @@
 # Pass516 DM1 V1 D1/D0 wall occlusion source lock
 
-Status: failed
+Status: passed
 
 ## Claim
 
@@ -55,10 +55,10 @@ ReDMCSB composes D1 before D0, then D0C last. D1L/D1R and D0L/D0R side-wall case
 
 ## Firestaff Evidence
 
-- FAIL local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:1168-1172)
+- PASS local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:1185-1192)
   - Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.
 
-- FAIL local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:189-193)
+- PASS local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:206-212)
   - Open side branches keep their source cell-order contracts separate from wall-return blockers.
 
 - PASS local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:759-833)
@@ -84,11 +84,11 @@ PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_ga
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
-  - returncode: 1
+- command: /Applications/Xcode.app/Contents/Developer/usr/bin/python3 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
+  - returncode: 0
   - output tail:
 ~~~
-FAIL pass516 check-only: local-d1-d0-wall-specs-present,local-side-occlusion-d1-d0-cell-orders-present
+PASS pass516 check-only
 ~~~
 
 ## Non-Claims
