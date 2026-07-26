@@ -199,7 +199,7 @@ def main() -> int:
     ], "Firestaff movement pipeline state-before-redraw provenance order")
 
     build_dir = resolve_build_dir(ROOT, ROOT / "build")
-    turning_stdout = run([str(build_dir / "test_m11_v1_turning_presentation_pc34_compat")])
+    turning_stdout = run([str(build_dir / "test_dm1_v1_turning_presentation_pc34_compat")])
     pipeline_stdout = run([str(build_dir / "test_dm1_v1_movement_pipeline_pc34_compat")])
     diffcheck_stdout = run(["git", "diff", "--check"])
 
@@ -226,7 +226,7 @@ def main() -> int:
         },
         "driftProofLocalGuard": "Firestaff local checks are token/order guards over current function bodies; current line numbers are diagnostic only.",
         "checks": [
-            "build/test_m11_v1_turning_presentation_pc34_compat",
+            "build/test_dm1_v1_turning_presentation_pc34_compat",
             "build/test_dm1_v1_movement_pipeline_pc34_compat",
             "git diff --check",
         ],
@@ -260,7 +260,7 @@ def main() -> int:
         "- Firestaff line numbers above are diagnostics only; the verifier and CTest guard token presence/order so local line drift does not weaken or fail the source-lock claim.",
         "",
         "## Gates run",
-        "- `build/test_m11_v1_turning_presentation_pc34_compat`",
+        "- `build/test_dm1_v1_turning_presentation_pc34_compat`",
         "- `build/test_dm1_v1_movement_pipeline_pc34_compat`",
         "- `git diff --check` (also run inside this verifier)",
         "",

@@ -188,7 +188,7 @@ REQUIRED_BUILD_TARGETS = [
     "test_dm1_v1_movement_command_core_pc34_compat",
     "test_dm1_v1_command_movement_sensor_timing_pc34_compat",
     "test_dm1_v1_movement_core_pc34_compat",
-    "test_m11_v1_turning_presentation_pc34_compat",
+    "test_dm1_v1_turning_presentation_pc34_compat",
     "test_dm1_v1_movement_pipeline_pc34_compat",
 ]
 
