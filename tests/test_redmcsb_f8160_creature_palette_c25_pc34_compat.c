@@ -45,7 +45,7 @@ int main(void)
 
     expect_true("six RGB replacements",
                 redmcsb_f8160_set_creature_replacement_colors_c25_pc34_compat(
-                    table_bases, 4U, creature_palettes, 2, 3));
+                    table_bases, 4U, (const RedmcsbF8160ColorPc34Compat (*)[REDMCSB_F8160_CREATURE_REPLACEMENT_COUNT_PC34])creature_palettes, 2, 3));
     expect_byte("first target index retained", tables[0][2].index, 42U);
     expect_byte("first target red", tables[0][2].red, 10U);
     expect_byte("first target green", tables[0][2].green, 20U);
@@ -55,7 +55,7 @@ int main(void)
     tables[0][2].red = 99U;
     expect_true("invalid source set rejected",
                 !redmcsb_f8160_set_creature_replacement_colors_c25_pc34_compat(
-                    table_bases, 4U, creature_palettes, 2, 14));
+                    table_bases, 4U, (const RedmcsbF8160ColorPc34Compat (*)[REDMCSB_F8160_CREATURE_REPLACEMENT_COUNT_PC34])creature_palettes, 2, 14));
     expect_byte("invalid source leaves palette", tables[0][2].red, 99U);
 
     if (strstr(redmcsb_f8160_creature_palette_source_evidence_pc34(),
