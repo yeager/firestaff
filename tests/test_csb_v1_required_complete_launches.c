@@ -8,11 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <sys/stat.h>
 #ifdef _WIN32
 #include <direct.h>
 #define MKDIR(path) _mkdir(path)
 #else
-#include <sys/stat.h>
 #include <unistd.h>
 #define MKDIR(path) mkdir((path), 0700)
 #endif
