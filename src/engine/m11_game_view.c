@@ -8426,6 +8426,34 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                 }
                 m11_set_status(state, "SENSOR", pitBit ? "PIT OPENED" : "PIT CLOSED");
                 m11_refresh_hash(state);
+            } else if (targetElement == DUNGEON_ELEMENT_FAKEWALL) {
+                /* Toggle fakewall to corridor (or vice versa).
+                 * ReDMCSB MOVESENS.C F0268: rewrites bits 7:5. */
+                int makeCorridor = 1;
+                if (e->textIndex == 1) makeCorridor = 0; /* CLEAR = restore fakewall */
+                else if (e->textIndex == 2) makeCorridor = 1; /* TOGGLE when fakewall */
+                {
+                    unsigned char newSq = (unsigned char)(
+                        (targetSquare & 0x1F) |
+                        ((makeCorridor ? DUNGEON_ELEMENT_CORRIDOR : DUNGEON_ELEMENT_FAKEWALL) << 5));
+                    m11_set_square_byte(&state->world,
+                                        state->world.party.mapIndex,
+                                        e->destMapX, e->destMapY, newSq);
+                }
+                m11_set_status(state, "SENSOR",
+                               makeCorridor ? "WALL REVEALED" : "WALL HIDDEN");
+                m11_refresh_hash(state);
+            } else if (targetElement == DUNGEON_ELEMENT_CORRIDOR &&
+                       e->textIndex == 1) {
+                /* CLEAR on a corridor = restore it to fakewall */
+                unsigned char newSq = (unsigned char)(
+                    (targetSquare & 0x1F) |
+                    (DUNGEON_ELEMENT_FAKEWALL << 5));
+                m11_set_square_byte(&state->world,
+                                    state->world.party.mapIndex,
+                                    e->destMapX, e->destMapY, newSq);
+                m11_set_status(state, "SENSOR", "WALL HIDDEN");
+                m11_refresh_hash(state);
             } else if (targetElement == DUNGEON_ELEMENT_TELEPORTER) {
                 /* Toggle teleporter active/inactive */
                 int telBit = targetSquare & 0x01;
