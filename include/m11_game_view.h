@@ -628,6 +628,7 @@ typedef struct {
     char bootAssetMd5[M11_BOOT_RECEIPT_MD5_CAPACITY];
     int startedFromLauncher;
     int dm1StartupIntroBypassed;
+    int dm1StartupHandoffExecuted;
     int startupActive;
     char startupPhase[M11_BOOT_RECEIPT_PHASE_CAPACITY];
     int startupFrame;
@@ -727,6 +728,7 @@ typedef struct {
     int active;
     int startedFromLauncher;
     int dm1StartupIntroBypassed;
+    int dm1StartupHandoffExecuted;
     char title[64];
     char sourceId[32];
     char bootAssetMd5[M11_BOOT_RECEIPT_MD5_CAPACITY];
