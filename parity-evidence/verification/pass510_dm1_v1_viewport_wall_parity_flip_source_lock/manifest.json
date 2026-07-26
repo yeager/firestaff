@@ -38,7 +38,7 @@
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "771ccf258e45954afd3b1fbfd76791e0a9f1cad6cb6e38e69ead1dbf78c13d21",
+      "sha256": "cfd1104316dc179b41af313ac26cc6ab79946b6e5fd49ec6a0de567dd09145bd",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
@@ -81,7 +81,7 @@
           "needle": "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
         },
         {
-          "line": 30743,
+          "line": 30735,
           "needle": "(int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;"
         }
       ],
@@ -90,7 +90,7 @@
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "771ccf258e45954afd3b1fbfd76791e0a9f1cad6cb6e38e69ead1dbf78c13d21",
+      "sha256": "cfd1104316dc179b41af313ac26cc6ab79946b6e5fd49ec6a0de567dd09145bd",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
@@ -130,7 +130,7 @@
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "771ccf258e45954afd3b1fbfd76791e0a9f1cad6cb6e38e69ead1dbf78c13d21",
+      "sha256": "cfd1104316dc179b41af313ac26cc6ab79946b6e5fd49ec6a0de567dd09145bd",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
@@ -198,7 +198,7 @@
       "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "771ccf258e45954afd3b1fbfd76791e0a9f1cad6cb6e38e69ead1dbf78c13d21",
+      "sha256": "cfd1104316dc179b41af313ac26cc6ab79946b6e5fd49ec6a0de567dd09145bd",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     }

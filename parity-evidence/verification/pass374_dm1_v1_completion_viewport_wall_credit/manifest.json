@@ -87,7 +87,7 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/verify_firestaff_completion_matrix.py"
         ],
         "outputTail": "firestaff completion matrix verifier OK\n",
@@ -99,7 +99,7 @@
       "ok": true,
       "result": {
         "cmd": [
-          "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
+          "/opt/homebrew/opt/python@3.14/bin/python3.14",
           "tools/firestaff_completion_status.py"
         ],
         "outputTail": "DM1 V1 | completionPercent=78% | points=78/100 | status=playable_verified_partial | primaryBlocker=Representative original-vs-Firestaff overlay parity remains incomplete. Current DM1 blocker is the pass162 stock-original C080/F0377/F0275/F0280 live transcript gate: FIRES.MAP provides candidate addresses, DOSBox-debug break-start accepts the BP/BPM packet, and the surface-backend HoC, movement-click, movement double-click, autolock, keyboard-capture, external cliclick, System Events, and direct postToPid live probes now record FIRES startup, DATA\\DUNGEON.DAT load, mapped native macOS input, and 34 stock-original memory stops each, but no C080-chain code breakpoint fires. Pre-move, cursor-warp, first-click focus/capture, DOSBox-X autolock/mouse_emulation defaults, Ctrl-F10 capture toggling, replacing the Swift/CGEvent helper with cliclick, macOS Accessibility/System Events clicking, and direct CGEvent postToPid are now insufficient explanations. The OpenGL-output control is a separate harness/readiness blocker, not comparable F0359 evidence. The mouse=debug logs on the proven surface path show MOUSE/INT33 initialization but no route-click motion/button event. The generated pass162 manifest now makes this machine-readable with dosbox_mouse_log_summary and route_motion_button_line_count=0 on the proven surface controls. Next work is DOSBox-X SDL/Cocoa event ingestion or debugger event-pump work before pass435 six-shot promotion can continue.\nDM1 V2 | completionPercent=51% | points=51/100 | status=runtime_presentation_verified_partial | primaryBlocker=V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open.\nCSB V1 | completionPercent=43% | points=43/100 | status=runtime_boundary_verified_partial | primaryBlocker=CSB has launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates, but end-to-end gameplay/render capture proof is still being hardened.\nCSB V2 | completionPercent=31% | points=31/100 | status=presentation_verified_partial | primaryBlocker=CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open.\nDM2 V1 | completionPercent=34% | points=34/100 | status=runtime_slices_verified_partial | primaryBlocker=Door/button, projectile, creature, minimap, weather/timer, and save-adjacent slices exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work.\nDM2 V2 | completionPercent=16% | points=16/100 | status=presentation_scaffold_partial | primaryBlocker=V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete.\nDM Nexus V1 | completionPercent=37% | points=37/100 | status=runtime_slices_verified_partial | primaryBlocker=DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work.\nDM Nexus V2 | completionPercent=20% | points=20/100 | status=presentation_scaffold_partial | primaryBlocker=V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete.\nTheron V1 | completionPercent=39% | points=39/100 | status=track02_slices_verified_partial | primaryBlocker=Track 02 provenance, parser, save/progression/shop/mechanics slices exist; positive real-asset launch through Track 02 and broader runtime capture remain active work.\n",
@@ -108,7 +108,7 @@
     }
   ],
   "completionImpact": "DM1 V1 verified completion increases from 55/100 to 56/100 by crediting one additional viewport_ui_render point for the pass373 live launcher->movement->viewport redraw path into source-locked wall/door/occlusion rendering.",
-  "head": "72c219925d49cbb4c58bba136b4f574e335a1294",
+  "head": "0cf2a8589f6031fe691c931f528f1a7d89abca9a",
   "notClaimed": [
     "pixel-perfect viewport parity",
     "representative original overlay regression",
@@ -227,5 +227,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT",
-  "timestampUtc": "2026-07-26T17:20:49.058660+00:00"
+  "timestampUtc": "2026-07-26T17:53:15.645271+00:00"
 }

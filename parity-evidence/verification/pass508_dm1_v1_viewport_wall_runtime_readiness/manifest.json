@@ -12,43 +12,43 @@
       "missing": [],
       "positions": [
         {
-          "line": 43010,
+          "line": 43012,
           "marker": "m11_draw_viewport_background(state"
         },
         {
-          "line": 43029,
+          "line": 43031,
           "marker": "m11_draw_dm1_floor_pits(state"
         },
         {
-          "line": 43039,
+          "line": 43041,
           "marker": "m11_draw_dm1_side_walls(state"
         },
         {
-          "line": 43043,
+          "line": 43045,
           "marker": "m11_draw_dm1_front_walls(state"
         },
         {
-          "line": 43044,
+          "line": 43046,
           "marker": "m11_draw_dm1_wall_ornaments(state"
         },
         {
-          "line": 43061,
+          "line": 43063,
           "marker": "m11_draw_dm1_center_doors(state"
         },
         {
-          "line": 43076,
+          "line": 43078,
           "marker": "visibility.nearest_blocking_center_depth_index"
         },
         {
-          "line": 43170,
+          "line": 43172,
           "marker": "m11_draw_dm1_side_contents_at_depth("
         },
         {
-          "line": 43182,
+          "line": 43184,
           "marker": "m11_draw_dm1_deferred_explosion_pass(state"
         },
         {
-          "line": 43206,
+          "line": 43208,
           "marker": "if (state->showDebugHUD)"
         }
       ],
@@ -104,7 +104,7 @@
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
         "tools/verify_v1_viewport_d1c_doorpass_source_lock_gate.py"
       ],
-      "outputTail": "- Firestaff viewport side doors batch: line 43055\n- Firestaff viewport center doors batch: line 43061\n- Firestaff viewport center door ornaments batch: line 43062\n- Firestaff viewport center door buttons batch: line 43065\n- Firestaff viewport source gap warning: line 43071\n- Firestaff viewport near-side replay guard: line 43076\n- invariant: D1C front door draws floor ornament + doorpass1 contents before frame/button/slab, then doorpass2 contents via shared F0115 label\n- gap_guard: Firestaff is still protected as batched-with-replay, not full per-square DUNVIEW parity",
+      "outputTail": "- Firestaff viewport side doors batch: line 43057\n- Firestaff viewport center doors batch: line 43063\n- Firestaff viewport center door ornaments batch: line 43064\n- Firestaff viewport center door buttons batch: line 43067\n- Firestaff viewport source gap warning: line 43073\n- Firestaff viewport near-side replay guard: line 43078\n- invariant: D1C front door draws floor ornament + doorpass1 contents before frame/button/slab, then doorpass2 contents via shared F0115 label\n- gap_guard: Firestaff is still protected as batched-with-replay, not full per-square DUNVIEW parity",
       "passed": true,
       "returncode": 0
     },

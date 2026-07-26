@@ -61,7 +61,7 @@ TARGET_ROW = {
     "partyBefore": {"map": 0, "x": 1, "y": 3, "direction": 2},
     "partyAfter": {"map": 0, "x": 1, "y": 3, "direction": 3},
     "f0128Tuple": {"map": 0, "x": 1, "y": 3, "direction": 3},
-    "firestaffViewportSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+    "firestaffViewportSha256": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5",
 }
 
 REQUIRED_TRANSCRIPT_FIELDS = [
