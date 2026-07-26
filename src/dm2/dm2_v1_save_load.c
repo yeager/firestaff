@@ -503,7 +503,7 @@ static int dm2_sksave_basename_is_canonical_direct(const char *name)
     return 0;
 }
 
-static int dm2_sksave_basename_is_candidate_ci(const char *name)
+static int __attribute__((unused)) dm2_sksave_basename_is_candidate_ci(const char *name)
 {
     char canonical_slot[16];
 
@@ -658,7 +658,7 @@ static void dm2_sksave_corpus_classify_payload(
     fclose(f);
 }
 
-static void dm2_sksave_corpus_probe_candidate(
+static void __attribute__((unused)) dm2_sksave_corpus_probe_candidate(
     DM2_SKSaveCorpusReceipt *receipt,
     const char *path,
     const char *basename,
