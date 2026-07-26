@@ -5,7 +5,7 @@
     "commandCore": "blocked wall/door/fakewall/group returns before successful timing/sensor/viewport path",
     "focusedCTest": "dm1_v1_command_movement_sensor_timing_pc34_compat"
   },
-  "head": "d2aa775e7d7f9749cf3048114234b52e76beb064",
+  "head": "0577907e26361bbb067a8021dde7f12b0cb9ad47",
   "notClaimed": [
     "new original DOS runtime breakpoint hit",
     "pixel parity",

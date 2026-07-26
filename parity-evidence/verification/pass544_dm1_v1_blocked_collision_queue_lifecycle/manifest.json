@@ -10,7 +10,7 @@
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat",
     "runtimeOutputLastLine": "dm1V1MovementCommandCoreInvariantOk=1"
   },
-  "head": "d2aa775e7d7f9749cf3048114234b52e76beb064",
+  "head": "0577907e26361bbb067a8021dde7f12b0cb9ad47",
   "notClaimed": [
     "new original DOS runtime capture",
     "viewport or wall pixel parity",
@@ -27,7 +27,7 @@
   },
   "schema": "firestaff.parity.pass544_dm1_v1_blocked_collision_queue_lifecycle.v1",
   "status": "PASS544_DM1_V1_BLOCKED_COLLISION_QUEUE_LIFECYCLE_LOCKED",
-  "timestampUtc": "2026-07-26T16:57:01.640936+00:00",
+  "timestampUtc": "2026-07-26T17:04:43.059952+00:00",
   "whyNotPass542Duplicate": "pass542 locks pre-dequeue cooldown/projectile gating where the movement command remains queued; pass544 locks the adjacent post-dequeue blocked collision path where ordinary queued/pending input is discarded, reserved release/stop survives, one blocked VBlank is requested, and successful-step cooldown is not assigned.",
   "worktree": "/Volumes/Extern-disk/firestaff-claude"
 }
