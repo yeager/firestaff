@@ -155,3 +155,26 @@ void DM1_V1_Title_CleanupPc34Compat(DM1_V1_TitleStatePc34* state) {
     free(state->title_bitmap);
     memset(state, 0, sizeof(DM1_V1_TitleStatePc34));
 }
+
+void m11_ts_init(M11_TS_TitleState* state) {
+    if (!state) return;
+    memset(state, 0, sizeof(M11_TS_TitleState));
+    state->active_buffer = 0;
+    state->initialized = false;
+}
+
+bool m11_ts_load_title_graphics(M11_TS_TitleState* state, const uint8_t* data, uint32_t size) {
+    return DM1_V1_Title_LoadGraphicsPc34Compat(state, data, size);
+}
+
+bool m11_ts_animate_zoom(M11_TS_TitleState* state, uint32_t frame) {
+    return DM1_V1_Title_AnimateZoomPc34Compat(state, frame);
+}
+
+void m11_ts_cleanup(M11_TS_TitleState* state) {
+    if (!state) return;
+    free(state->screen_buffers[0]);
+    free(state->screen_buffers[1]);
+    free(state->title_bitmap);
+    memset(state, 0, sizeof(M11_TS_TitleState));
+}

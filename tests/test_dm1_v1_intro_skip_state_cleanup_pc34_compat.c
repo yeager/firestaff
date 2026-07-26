@@ -387,6 +387,36 @@ static int check_m11_ts_animate_zoom_skip(void) {
     return 1;
 }
 
+static int check_m11_ts_lifecycle(void) {
+    M11_TS_TitleState state;
+    static uint8_t fakeBitmap[DM1_V1_TITLE_C001_BYTES_PC34];
+    int i;
+
+    for (i = 0; i < DM1_V1_TITLE_C001_BYTES_PC34; ++i)
+        fakeBitmap[i] = (uint8_t)(i & 0xff);
+
+    m11_ts_init(&state);
+    expect_signed("m11_ts_init sets active_buffer=0", state.active_buffer, 0);
+    expect_signed("m11_ts_init sets initialized=false", state.initialized, 0);
+
+    if (!m11_ts_load_title_graphics(&state, fakeBitmap, sizeof(fakeBitmap))) {
+        printf("FAIL: m11_ts_load_title_graphics rejected valid bitmap\n");
+        g_failures++;
+        return 0;
+    }
+    expect_signed("m11_ts_load sets initialized", state.initialized, 1);
+    expect_truth("m11_ts_load sets title_bitmap", state.title_bitmap != 0, 1);
+
+    expect_truth("m11_ts_animate_zoom accepts frame 0",
+                 m11_ts_animate_zoom(&state, 0u) != 0, 1);
+
+    m11_ts_cleanup(&state);
+    expect_signed("m11_ts_cleanup zeroes initialized", state.initialized, 0);
+    expect_truth("m11_ts_cleanup zeroes screen_buffers[0]", state.screen_buffers[0] == 0, 1);
+    expect_truth("m11_ts_cleanup zeroes title_bitmap", state.title_bitmap == 0, 1);
+    return 1;
+}
+
 static int check_reachability_skip_phases(void) {
     /* F9012 phase machine: NOT_STARTED → BACKDROP_ESTABLISHED →
      * TITLE_ESTABLISHED → MENU_ESTABLISHED → MENU_HELD.  When the
@@ -515,6 +545,7 @@ int main(void) {
     ok = check_palette_skip() && ok;
     ok = check_m11_ts_state_cleanup() && ok;
     ok = check_m11_ts_animate_zoom_skip() && ok;
+    ok = check_m11_ts_lifecycle() && ok;
     ok = check_reachability_skip_phases() && ok;
     ok = check_source_animation_skip_count() && ok;
 
