@@ -11,8 +11,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f0924_set_critical_error_handler_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f0924_set_critical_error_handler_pc34_compat());
     assert(strstr(evidence, "CEDTINCI.C:306") != NULL);

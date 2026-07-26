@@ -12,8 +12,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1020_initialize_x68000_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f1020_initialize_x68000_pc34_compat());
     assert(strstr(evidence, "STARTUP2.C:1361-1374") != NULL);

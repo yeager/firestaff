@@ -54,8 +54,8 @@ Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1
   - line 760: "7628"
 
 - PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 4174: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
-  - line 4175: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+  - line 4191: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+  - line 4192: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
 
 ## Verification
 

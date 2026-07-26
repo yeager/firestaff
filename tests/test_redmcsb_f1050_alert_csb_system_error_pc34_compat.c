@@ -12,8 +12,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1050_alert_csb_system_error_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f1050_alert_csb_system_error_pc34_compat(0L));
     assert(!redmcsb_f1050_alert_csb_system_error_pc34_compat(0x80FF0001L));

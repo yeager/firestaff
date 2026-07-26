@@ -43,8 +43,8 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
   - line 1426: 8294
 
 - PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 4193: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
-  - line 4193: copy front frame, composite hole, blit temporary frame before common F0115
+  - line 4210: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
+  - line 4210: copy front frame, composite hole, blit temporary frame before common F0115
 
 ## Verification
 

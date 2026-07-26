@@ -11,8 +11,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1074_close_intuition_library_source_evidence_pc34();
+    (void)evidence;
 
     redmcsb_f1074_close_intuition_library_pc34_compat();
 

@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.132 LANGUAGES C)
+project(Firestaff VERSION 3.0.133 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -4027,6 +4027,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_source_material_h
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
         src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
         src/dm1/dm1_v1_f0115_square_material_scheduler_pc34_compat.c
         src/dm1/dm1_v1_f0128_per_square_scheduler_pc34_compat.c
     )
@@ -4060,6 +4062,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_near_object_decor
         src/dm1/dm1_v1_floor_ornament_pc34_compat.c
         src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
         src/shared/asset_loader_m11.c)
     target_include_directories(test_dm1_v1_f0115_near_object_decoration_material_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -4077,6 +4081,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_runtime_materi
         src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
         src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_viewport_runtime_materialization_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -4092,6 +4098,8 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_f0097_viewport_present_pc34_compat)
     add_executable(test_dm1_v1_f0097_viewport_present_pc34_compat
         tests/test_dm1_v1_f0097_viewport_present_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_f0097_viewport_present_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -4108,6 +4116,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0190_c040_m11_integrat
         tests/test_dm1_v1_f0190_c040_m11_integration_audit.c
         src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_f0190_c040_m11_integration_audit PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -4125,6 +4135,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_d0c_ordinary_c15_receip
         tests/test_dm1_v1_d0c_ordinary_c15_receipt_audit.c
         src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_d0c_ordinary_c15_receipt_audit PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -7124,6 +7136,8 @@ add_executable(firestaff_csb_v1_first_viewport_frame_probe
     src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
     src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     src/dm1/dm1_v1_input_command_queue_pc34_compat.c
     src/dm1/dm1_v1_event_timer_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
@@ -17363,6 +17377,8 @@ if(BUILD_TESTING)
         src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     target_include_directories(test_csb_v1_viewport_phase3_rendering PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -17388,6 +17404,8 @@ if(BUILD_TESTING)
         src/csb/csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     target_include_directories(test_csb_v1_viewport_first_frame_materialization_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -18116,6 +18134,8 @@ if(BUILD_TESTING)
         src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_csb_v1_boot_viewport_render_gate PRIVATE
@@ -18535,6 +18555,8 @@ if(BUILD_TESTING)
         src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
         src/dm1/dm1_v1_input_command_queue_pc34_compat.c
         src/dm1/dm1_v1_event_timer_pc34_compat.c
         src/shared/asset_find_by_hash.c
@@ -19395,6 +19417,8 @@ if(BUILD_TESTING)
         src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
     )
@@ -24522,6 +24546,8 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_movement_pipeline_pc34_compat
         tests/test_dm1_v1_movement_pipeline_pc34_compat.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     src/dm1/dm1_v1_creature_render_pc34_compat.c
     src/dm1v2/dm1_v2_viewport_renderer_pc34.c
     src/csb/csb_v1_dungeon_world_pc34_compat.c
@@ -24935,6 +24961,8 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_door_button_viewport_pc34_compat
         tests/test_dm1_v1_door_button_viewport_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_door_button_viewport_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -24959,6 +24987,8 @@ if(BUILD_TESTING)
     add_executable(test_dm1_v1_d3l1_viewport_no_write_gate
         tests/test_dm1_v1_d3l1_viewport_no_write_gate.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_d3l1_viewport_no_write_gate PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -25180,6 +25210,8 @@ if(BUILD_TESTING)
         tests/test_dm1_v1_viewport_d1c_center_field_pc34_compat.c
         src/dm1/dm1_v1_viewport_d1c_center_field_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_viewport_d1c_center_field_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -30498,46 +30530,68 @@ if(BUILD_TESTING AND NOT TARGET test_dm1_v1_viewport_3d_pc34_compat)
     add_executable(test_dm1_v1_viewport_3d_pc34_compat
         tests/test_dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     add_executable(firestaff_dm1_v1_door_occlusion_pixel_gate
         probes/dm1/firestaff_dm1_v1_door_occlusion_pixel_gate.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     add_executable(firestaff_dm1_v1_center_wall_parity_opaque_pixel_probe
         probes/dm1/firestaff_dm1_v1_center_wall_parity_opaque_pixel_probe.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     add_executable(firestaff_dm1_v1_stair_pit_occlusion_pixel_gate
         probes/dm1/firestaff_dm1_v1_stair_pit_occlusion_pixel_gate.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     add_executable(firestaff_dm1_v1_d4_far_object_d3_wall_pixel_gate
         probes/dm1/firestaff_dm1_v1_d4_far_object_d3_wall_pixel_gate.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     add_executable(firestaff_dm1_v1_d2c_front_alcove_pixel_gate
         probes/dm1/firestaff_dm1_v1_d2c_front_alcove_pixel_gate.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     add_executable(firestaff_dm1_v1_d0_side_door_cell_pixel_gate
         probes/dm1/firestaff_dm1_v1_d0_side_door_cell_pixel_gate.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     add_executable(firestaff_dm1_v1_side_wall_pixel_clip_probe
         probes/dm1/firestaff_dm1_v1_side_wall_pixel_clip_probe.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     add_executable(firestaff_dm1_v1_d0_side_wall_edge_pixel_probe
         probes/dm1/firestaff_dm1_v1_d0_side_wall_edge_pixel_probe.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     add_executable(firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe
         probes/dm1/firestaff_dm1_v1_d0c_wall_absence_pixel_slice_probe.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     )
     add_executable(firestaff_dm1_v1_d1l2_d1r2_absence_pixel_slice_probe
         probes/dm1/firestaff_dm1_v1_d1l2_d1r2_absence_pixel_slice_probe.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
         src/dm1/dm1_v1_dungeon_square_structs_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_viewport_3d_pc34_compat PRIVATE firestaff_m10)
@@ -32664,6 +32718,12 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/dm1/dm1_v1_g0206_pc34_compat.c
         src/dm1/dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_alcove_f0149_pc34_compat.c
+        src/dm1/dm1_v1_g0192_pc34_compat.c
+        src/dm1/dm1_v1_g0194_pc34_compat.c
+        src/dm1/dm1_v1_g0205_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
         src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c
@@ -32713,6 +32773,12 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/dm1/dm1_v1_g0206_pc34_compat.c
         src/dm1/dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_alcove_f0149_pc34_compat.c
+        src/dm1/dm1_v1_g0192_pc34_compat.c
+        src/dm1/dm1_v1_g0194_pc34_compat.c
+        src/dm1/dm1_v1_g0205_pc34_compat.c
         src/dm1/dm1_v1_graphics_loader_pc34_compat.c
         src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
         src/dm1/dm1_v1_ordered_cells_to_attack_pc34_compat.c

@@ -123,8 +123,8 @@ static void test_null_inputs_are_rejected(void)
 static void test_source_evidence_names_redmcsb_symbol(void)
 {
     const char *evidence =
-    (void)evidence;
         dm1_v1_command_highlight_box_enable_source_evidence_pc34();
+    (void)evidence;
 
     assert(evidence != NULL);
     assert(strstr(evidence, "CLIKMENU.C") != NULL);

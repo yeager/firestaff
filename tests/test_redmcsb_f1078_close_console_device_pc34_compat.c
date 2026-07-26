@@ -11,8 +11,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1078_close_console_device_source_evidence_pc34();
+    (void)evidence;
 
     redmcsb_f1078_close_console_device_pc34_compat();
 

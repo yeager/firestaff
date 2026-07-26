@@ -11,8 +11,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1079_open_input_device_source_evidence_pc34();
+    (void)evidence;
 
     redmcsb_f1079_open_input_device_pc34_compat();
 

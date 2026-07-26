@@ -12,8 +12,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f0943_release_disk_resource_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f0943_release_disk_resource_pc34_compat());
     assert(strstr(evidence, "EXEC.C:4-16") != NULL);

@@ -11,8 +11,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1067_init_amiga_stuff_source_evidence_pc34();
+    (void)evidence;
 
     redmcsb_f1067_init_amiga_stuff_pc34_compat();
 

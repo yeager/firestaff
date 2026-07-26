@@ -435,8 +435,8 @@ static void test_format_load_value(void)
 static void test_food_water_poison_blit(void)
 {
     const CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec *spec =
-    (void)spec;
         CSB_ChampionPanel_F0658FoodWaterPoisonedBlitSpec_SourceLocked();
+    (void)spec;
     assert(spec != NULL);
     assert(spec->blitCount == 3);
     assert(spec->sourceStartLine == 1598);

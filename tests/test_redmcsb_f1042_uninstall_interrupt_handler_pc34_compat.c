@@ -12,8 +12,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1042_uninstall_interrupt_handler_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f1042_uninstall_interrupt_handler_pc34_compat());
     assert(strstr(evidence, "IO.C:1076-1085") != NULL);
