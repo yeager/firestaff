@@ -11,6 +11,7 @@
  */
 
 #include "render_sdl_m11.h"
+#include "firestaff_version.h"
 #include <stdio.h>
 
 #include <SDL3/SDL.h>
@@ -991,6 +992,18 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         fprintf(stderr, "SDL2 init failed: %s\n", SDL_GetError());
         return M11_RENDER_ERR_SDL_INIT;
     }
+#endif
+
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    SDL_SetAppMetadata("Firestaff", FIRESTAFF_VERSION_STRING,
+                       "se.danielnylander.firestaff");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_CREATOR_STRING,
+                               "Daniel Nylander");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_COPYRIGHT_STRING,
+                               "\xC2\xA9 2026 Daniel Nylander");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_URL_STRING,
+                               "https://www.github.com/yeager/firestaff");
+    SDL_SetAppMetadataProperty(SDL_PROP_APP_METADATA_TYPE_STRING, "game");
 #endif
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
