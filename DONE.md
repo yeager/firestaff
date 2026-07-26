@@ -1,10 +1,11 @@
-- ✅ 2026-07-26 Movement command core source-lock sweep (Q-DM1-04). Locked 8
+- ✅ 2026-07-26 Movement command core source-lock sweep (Q-DM1-04). Locked 9
   pass gates: pass549 passable door movement/timing, pass544 blocked collision
   queue lifecycle, pass580 forward collision timing, pass562 front-cell
   collision, pass510 movement sensor rotation defer, pass394 dispatch to
-  movement state, pass428 route command to movement gap. Added direct party
-  position mutation, blocked-branch inputDiscardRequested/vblankWait flags,
-  pre-step stamina cost wrapper, turning presentation function. [v3.0.144]
+  movement state, pass428 route command to movement gap, pass475 input-to-F0366
+  runtime route. Added direct party position mutation, blocked-branch flags,
+  stamina cost wrapper, turning presentation function, pipeline command mapper.
+  [v3.0.144]
 - ✅ 2026-07-26 Fix FTL decoder and 7 source-audit gates (Q-DM1-03, Q-DM1-07,
   Q-DM1-08). FTL decode unit test: corrected 5 wrong expected bytes in
   synthetic frequency table test. Source-audit fixes: pass402 far-to-near
