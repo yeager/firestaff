@@ -130,7 +130,7 @@ static int nexus_v1_compare_u64(const void *left, const void *right)
 static uint64_t nexus_v1_fixed_vector_dot(int64_t ax, int64_t ay, int64_t az,
                                           int64_t bx, int64_t by, int64_t bz)
 {
-#if defined(__SIZEOF_INT128__) && !defined(__STRICT_ANSI__)
+#if defined(__SIZEOF_INT128__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic"
     __int128 value = (__int128)ax * bx + (__int128)ay * by +
@@ -161,11 +161,14 @@ static int nexus_v1_fixed_face_winding_sign(const int32_t *a,
     int64_t acy = (int64_t)c[1] - a[1];
     int64_t acz = (int64_t)c[2] - a[2];
 #if defined(__SIZEOF_INT128__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
     __int128 cross_x = (__int128)aby * acz - (__int128)abz * acy;
     __int128 cross_y = (__int128)abz * acx - (__int128)abx * acz;
     __int128 cross_z = (__int128)abx * acy - (__int128)aby * acx;
     __int128 winding = cross_x * normal[0] +
         (__int128)cross_y * normal[1] + (__int128)cross_z * normal[2];
+#pragma GCC diagnostic pop
 
     return winding > 0 ? 1 : winding < 0 ? -1 : 0;
 #else

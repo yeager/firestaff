@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.153
+
+- Fix remaining GCC/MinGW -Werror CI failures for v3.0.152
+- Apply pragma around both __int128 blocks in nexus_v1_dungeon.c (GCC -Wpedantic)
+- Fix unterminated-string-initialization warning in test_redmcsb_f0933 (GCC 15)
+
 # Firestaff v3.0.152
 
 - Fix GCC -Werror build failures on Ubuntu and Windows CI

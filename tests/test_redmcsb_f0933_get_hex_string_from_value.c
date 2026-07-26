@@ -13,7 +13,7 @@ static int failures;
 } while (0)
 
 static void check_value(uint32_t value, const char *expected) {
-    char string[9] = "unchanged";
+    char string[10] = "unchanged";
 
     CHECK(F0933_GetHexStringFromValue(value, string) == 0);
     CHECK(strcmp(string, expected) == 0);
