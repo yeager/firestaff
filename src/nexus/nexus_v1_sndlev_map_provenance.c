@@ -9,7 +9,8 @@ int nexus_v1_sndlev_map_provenance_parse(const uint8_t *bytes, uint64_t size,
     uint64_t expected, Nexus_V1_SndlevMapProvenanceReceipt *out)
 {
     Nexus_V1_SndlevMapProvenanceReceipt r; uint64_t h; uint64_t off;
-    if (!out) return 0; memset(&r,0,sizeof(r));
+    if (!out) return 0;
+    memset(&r,0,sizeof(r));
     if (!bytes || size > SIZE_MAX || size < NEXUS_V1_SNDLEV_MAP_HEADER_BYTES + 2U || !expected) { *out=r; return 0; }
     h=fnv(UINT64_C(1469598103934665603),bytes,(size_t)size);
     if (h!=expected) { *out=r; return 0; }

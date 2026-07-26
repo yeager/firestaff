@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.148
+
+- Fix GCC misleading-indentation warning in csb_v1_f1126_f1145_source_boundary (Ubuntu CI)
+- Fix same pattern in dm2, theron, nexus source boundary files
+
 # Firestaff v3.0.147
 
 - Update viewport hash in pass625 transcript preflight for creature sprite and thieves-eye changes

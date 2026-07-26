@@ -16,7 +16,8 @@ static const Spec kSpecs[] = {
 int csb_v1_f1126_f1145_source_boundary_admit_pc34(unsigned int number, CSB_V1_F1126F1145SourceBoundaryReceiptPc34 *out)
 {
  CSB_V1_F1126F1145SourceBoundaryReceiptPc34 receipt;
- if (!out) return 0; memset(&receipt,0,sizeof(receipt)); *out=receipt;
+ if (!out) return 0;
+ memset(&receipt,0,sizeof(receipt)); *out=receipt;
  if(number<1126u||number>1145u)return 0;
  receipt.function_number=number; receipt.symbol=kSpecs[number-1126u].symbol; receipt.source_anchor=kSpecs[number-1126u].anchor;
  receipt.authentic_pc34_material_required=1; receipt.runtime_execution_blocked=1; receipt.no_synthetic_ui_graphics_timing=1; *out=receipt; return 0;
