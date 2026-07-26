@@ -19835,6 +19835,7 @@ static void m11_dm1_hoc_presented_frame_consumer_build(
     DM1_V1_HocPresentedObjectMaterialPc34 objectMat;
     DM1_V1_HocPresentedActionSpellMaterialPc34 actionSpellMat;
     DM1_V1_HocPresentedPaletteMaterialPc34 paletteMat;
+    DM1_V1_HocPresentedViewportCoverageMaterialPc34 viewportCoverageMat;
     DM1_V1_HocPresentedFrameConsumerInputPc34 input;
     const M11_Dm1HoCMirrorHostPresentationReceipt* mirror;
     const M11_Dm1InscriptionHostPresentationReceipt* inscription;
@@ -19953,6 +19954,34 @@ static void m11_dm1_hoc_presented_frame_consumer_build(
         paletteMat.paletteHash = ph;
     }
 
+    memset(&viewportCoverageMat, 0, sizeof(viewportCoverageMat));
+    {
+        const M11_Dm1HoCMirrorViewportMaterialFrameReceipt *vpFrame =
+            &s_m11_dm1_hoc_mirror_viewport_material_frame_receipt;
+        if (vpFrame->count > 0) {
+            uint32_t vcHash = 2166136261u;
+            int vi;
+            int matCount = 0;
+            for (vi = 0; vi < vpFrame->count; vi++) {
+                const M11_Dm1HoCMirrorViewportMaterialReceipt *e =
+                    &vpFrame->entries[vi];
+                if (e->valid && e->materialized) matCount++;
+                vcHash ^= (uint32_t)e->viewWallIndex;
+                vcHash *= 16777619u;
+                vcHash ^= (uint32_t)e->backingGraphicIndex;
+                vcHash *= 16777619u;
+                vcHash ^= (uint32_t)e->materialized;
+                vcHash *= 16777619u;
+            }
+            viewportCoverageMat.valid = 1;
+            viewportCoverageMat.mirrorSquareCount = vpFrame->count;
+            viewportCoverageMat.materializedCount = matCount;
+            viewportCoverageMat.allMaterialized =
+                (matCount == vpFrame->count) ? 1 : 0;
+            viewportCoverageMat.coverageHash = vcHash;
+        }
+    }
+
     memset(&input, 0, sizeof(input));
     input.runtimeTick = (uint32_t)state->world.gameTick;
     input.mirror = mirrorMat.valid ? &mirrorMat : NULL;
@@ -19960,6 +19989,8 @@ static void m11_dm1_hoc_presented_frame_consumer_build(
     input.object = objectMat.valid ? &objectMat : NULL;
     input.actionSpell = actionSpellMat.valid ? &actionSpellMat : NULL;
     input.palette = paletteMat.valid ? &paletteMat : NULL;
+    input.viewportCoverage =
+        viewportCoverageMat.valid ? &viewportCoverageMat : NULL;
     dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
         &input, &s_m11_dm1_hoc_presented_frame_consumer_receipt);
 }

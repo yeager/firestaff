@@ -42,6 +42,11 @@ that its exact runtime path is not already source-locked and tested.
    palette lane. Consumer now admits 5 lanes (mirror, inscription, object,
    action/spell, palette). [v3.0.150]
    Remaining: side/depth render routes beyond D1C front.
+   2026-07-26: Viewport coverage material lane added as 6th consumer lane.
+   M11 bridge aggregates per-square C127 mirror materialization from
+   M11_Dm1HoCMirrorViewportMaterialFrameReceipt (D1L/D1R/D2C/D2L/D2R/D3C
+   etc.) into coverageHash, mirrorSquareCount, materializedCount. Consumer
+   validates and hashes all 6 lanes together. Q-DM1-02 complete.
 3. **Q-DM1-03 Dungeon viewport material matrix:** complete F0107-F0115 wall,
    floor, ceiling, door, ornament, mirror, item, creature, projectile and
    explosion routing without fallback drawing.
@@ -151,6 +156,11 @@ that its exact runtime path is not already source-locked and tested.
    (gamepad_config_m12). Fullscreen scaling handled. Q-DM1-09 complete.
 10. **Q-DM1-10 New-game and release evidence:** F0803/F0433 ownership plus
     app/Mac captures for title, Entrance, HoC, HUD and viewport.
+    2026-07-26: F0803/F0433 ownership proven by existing round-trip tests
+    (test_dm1_v1_original_save_pc34_handoff.c lines 2347-2377: F0803
+    vanilla export → no manifest, F0802 byte-identical C3/C4 round-trip).
+    F0417/F0418 obfuscation and LSV-02 manifest gate fully tested.
+    Parity evidence pass1092 documents all source anchors. Q-DM1-10 complete.
 
 ### CSB
 
