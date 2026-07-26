@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.147
+
+- Update viewport hash in pass625 transcript preflight for creature sprite and thieves-eye changes
+- Fix trailing newlines in parity-evidence files
+- Failing pass tests reduced from 12 to 9
+
 # Firestaff v3.0.146
 
 - Add m11_draw_creature_sprite_ex fallback path in side feature function

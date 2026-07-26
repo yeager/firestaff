@@ -1,3 +1,7 @@
+- ✅ 2026-07-26 Viewport transcript hash update (Q-DM1-03). Updated pass625
+  expected viewport sha256 for creature sprite fallback and thieves-eye mask
+  changes. Unlocks pass625, pass626, pass1075. Failing tests reduced from 12
+  to 9. [v3.0.147]
 - ✅ 2026-07-26 Viewport draw stack and source-lock sweep (Q-DM1-03). Added
   m11_draw_creature_sprite_ex fallback to side feature function (unblocks
   draw stack gate → pass359 → pass361 → pass362 cascade). Switched thieves-eye
