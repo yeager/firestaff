@@ -117,7 +117,7 @@ int main(void)
           "C49 fixture creates an arrow-associated C14");
     memset(&event, 0, sizeof(event));
     event.type = DM1_EVENT_MOVE_PROJECTILE;
-    event.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    event.map_time = DM1_MAP_TIME_MAKE(0, first_move.fireAtTick);
     event.priority = (unsigned char)first_move.aux0;
     event.b_mapX = (unsigned char)first_move.mapX;
     event.b_mapY = (unsigned char)first_move.mapY;
@@ -125,6 +125,7 @@ int main(void)
     event.c_effect = (unsigned char)first_move.aux3;
     CHECK(csb_v1_runtime_add_timeline_event(&profile, &event) >= 0,
           "C49 fixture queues a source-shaped projectile event");
+    profile.game_time = first_move.fireAtTick;
     CHECK(csb_v1_runtime_tick_v1(&profile) == 1,
           "C49 follows C05 before scanning the destination Thing chain");
     CHECK(profile.projectiles.count == 0 &&

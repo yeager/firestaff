@@ -296,6 +296,8 @@ static void make_kinetic_arrow(
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode     = COMBAT_ATTACK_NORMAL;
     p->flags              = 0;
+    p->reserved1          = (unsigned short)(THING_TYPE_WEAPON << 10);
+    p->reserved3          = 1;
 }
 
 static void make_magical_fireball(
@@ -319,6 +321,7 @@ static void make_magical_fireball(
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode     = COMBAT_ATTACK_FIRE;
     p->flags              = PROJECTILE_FLAG_CREATES_EXPLOSION;
+    p->reserved3          = 1;
 }
 
 static void make_magical_open_door_projectile(
@@ -342,6 +345,7 @@ static void make_magical_open_door_projectile(
     p->firstMoveGraceFlag = 0;
     p->attackTypeCode     = COMBAT_ATTACK_MAGIC;
     p->flags              = 0;
+    p->reserved3          = 1;
 }
 
 static void make_wall_digest(

@@ -12447,6 +12447,37 @@ static int orch_find_material_group_on_square_compat(
     return 0;
 }
 
+/* ReDMCSB COMMAND.C:2095-2110 movement gate.
+ * G0311_i_ProjectileDisabledMovementTicks suppresses only the
+ * cardinal movement whose absolute direction matches
+ * G0312_i_LastProjectileDisabledMovementDirection. */
+static int movement_action_absolute_direction(int partyDirection, int moveAction)
+{
+    switch (moveAction) {
+    case MOVE_FORWARD:  return partyDirection & 3;
+    case MOVE_RIGHT:    return (partyDirection + 1) & 3;
+    case MOVE_BACKWARD: return (partyDirection + 2) & 3;
+    case MOVE_LEFT:     return (partyDirection + 3) & 3;
+    default:            return -1;
+    }
+}
+
+static int movement_command_disabled_redmcsb_compat(
+    const struct GameWorld_Compat* world,
+    int moveAction)
+{
+    int absoluteDirection;
+    if (!world) return 1;
+    if (world->disabledMovementTicks > 0) return 1;
+    if (world->projectileDisabledMovementTicks > 0) {
+        absoluteDirection = movement_action_absolute_direction(world->party.direction, moveAction);
+        if (absoluteDirection >= 0 &&
+            (world->lastProjectileDisabledMovementDirection & 3) == absoluteDirection)
+            return 1;
+    }
+    return 0;
+}
+
 int F0888_ORCH_ApplyPlayerInput_Compat(
     struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
@@ -13995,9 +14026,9 @@ void F0890_ORCH_ApplyPeriodicEffects_Compat(
 {
     (void)result;
     if (!world) return;
-    DM1_V1_MovementTiming_DecrementCooldownsPc34Compat(
-        &world->disabledMovementTicks,
-        &world->projectileDisabledMovementTicks);
+    /* ReDMCSB GAMELOOP.C:150-155 decrements movement locks once per tick. */
+    if (world->disabledMovementTicks > 0) world->disabledMovementTicks--;
+    if (world->projectileDisabledMovementTicks > 0) world->projectileDisabledMovementTicks--;
     if (world->freezeLifeTicks > 0) world->freezeLifeTicks--;
     /* ReDMCSB MAIN.C decrements PARTY.FreezeLifeTicks. Keep the M10 magic
      * mirror on that saved-runtime owner rather than letting a resumed save

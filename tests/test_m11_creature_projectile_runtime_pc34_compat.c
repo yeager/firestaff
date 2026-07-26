@@ -37,6 +37,8 @@ static int g_fail = 0;
     else { ++g_fail; fprintf(stderr, "FAIL: %s: got %d expected %d\n", (msg), a_, e_); } \
 } while (0)
 
+static uint16_t s_cumColCounts[5];
+
 static void seed_projectile_runtime_state(M11_GameViewState* state,
                                           struct DungeonDatState_Compat* dungeon,
                                           struct DungeonMapDesc_Compat maps[2],
@@ -62,13 +64,21 @@ static void seed_projectile_runtime_state(M11_GameViewState* state,
     map0Tiles[0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
     map1Tiles[0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
     map1Tiles[1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
-    map1Tiles[2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    map1Tiles[2] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
     tiles[0].squareData = map0Tiles;
     tiles[0].squareCount = 1;
     tiles[1].squareData = map1Tiles;
     tiles[1].squareCount = 3;
     dungeon->header.mapCount = 2;
-    dungeon->header.squareFirstThingCount = 4;
+    dungeon->header.squareFirstThingCount = 1;
+    /* Only map1 square (2,0) has the THING_LIST bit set.
+     * cumColCounts[c] = number of thing-flagged squares before column c. */
+    s_cumColCounts[0] = 0;  /* map0 col0: no thing-list */
+    s_cumColCounts[1] = 0;  /* map1 col0: no thing-list */
+    s_cumColCounts[2] = 0;  /* map1 col1: no thing-list */
+    s_cumColCounts[3] = 0;  /* map1 col2: has thing-list */
+    dungeon->columnsCumulativeSquareFirstThingCount = s_cumColCounts;
+    dungeon->dungeonColumnCount = 4;
     dungeon->maps = maps;
     dungeon->tiles = tiles;
     dungeon->loaded = 1;
@@ -84,12 +94,12 @@ static void seed_projectile_runtime_state(M11_GameViewState* state,
     things->groupCount = 1;
     things->thingCounts[THING_TYPE_GROUP] = 1;
     things->loaded = 1;
-    squareFirstThings[0] = THING_ENDOFLIST;
-    squareFirstThings[1] = THING_ENDOFLIST;
-    squareFirstThings[2] = THING_ENDOFLIST;
-    squareFirstThings[3] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+    squareFirstThings[0] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+    squareFirstThings[1] = THING_NONE;
+    squareFirstThings[2] = THING_NONE;
+    squareFirstThings[3] = THING_NONE;
     things->squareFirstThings = squareFirstThings;
-    things->squareFirstThingCount = 4;
+    things->squareFirstThingCount = 1;
 
     M11_GameView_Init(state);
     state->active = 1;
@@ -232,7 +242,8 @@ static void test_live_tick_rejects_c04_position_and_route_drift(void) {
               "C04-drift tick is handled without mutation");
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
               "mutated C04 type cannot launch a projectile");
-    ASSERT_EQ(squareFirstThings[3], (THING_TYPE_GROUP << 10),
+    ASSERT_EQ(F0511_DUNGEON_GetSquareFirstThing_Compat(&dungeon, &things, 1, 2, 0),
+              (THING_TYPE_GROUP << 10),
               "mutated C04 leaves the authenticated source square unchanged");
 
     authenticate_group_c04(&things, &groups[0], rawGroup);
@@ -253,7 +264,8 @@ static void test_live_tick_rejects_c04_position_and_route_drift(void) {
               "blocked-route tick is handled");
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
               "raw wall route blocks F0200 visibility and launch");
-    ASSERT_EQ(squareFirstThings[3], (THING_TYPE_GROUP << 10),
+    ASSERT_EQ(F0511_DUNGEON_GetSquareFirstThing_Compat(&dungeon, &things, 1, 2, 0),
+              (THING_TYPE_GROUP << 10),
               "blocked route leaves raw group chain in its source square");
 }
 
@@ -280,12 +292,19 @@ static void test_live_tick_moves_authenticated_group_and_ai_position(void) {
     state.world.creatureAI[0].groupMapY = 0;
     state.world.gameTick = 11; /* M11's C24 profile moves on tick 12. */
 
-    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
-              "authenticated C04 move tick is handled");
-    ASSERT_EQ(squareFirstThings[3], THING_ENDOFLIST,
-              "F0209 unlinks the group from its authenticated source square");
-    ASSERT_EQ(squareFirstThings[2], (THING_TYPE_GROUP << 10),
-              "F0209 links the group to the source-selected destination square");
+    {
+        M11_GameInputResult tickRes = M11_GameView_AdvanceIdleTick(&state);
+        unsigned short sftAtSource = F0511_DUNGEON_GetSquareFirstThing_Compat(
+            &dungeon, &things, 1, 2, 0);
+        unsigned short sftAtDest = F0511_DUNGEON_GetSquareFirstThing_Compat(
+            &dungeon, &things, 1, 1, 0);
+        ASSERT_EQ(tickRes, M11_GAME_INPUT_REDRAW,
+                  "authenticated C04 move tick is handled");
+        ASSERT_EQ(sftAtSource, THING_ENDOFLIST,
+                  "F0209 unlinks the group from its authenticated source square");
+        ASSERT_EQ(sftAtDest, (THING_TYPE_GROUP << 10),
+                  "F0209 links the group to the source-selected destination square");
+    }
     ASSERT_EQ(state.world.creatureAI[0].groupMapX, 1,
               "live active-group position follows the raw C04 movement");
     ASSERT_EQ(state.world.creatureAI[0].groupMapY, 0,
@@ -314,11 +333,21 @@ static void test_live_tick_uses_f0201_direct_smell_route(void) {
                                   map1Tiles, &things, groups, squareFirstThings);
     maps[1].width = 4;
     tiles[1].squareCount = 4;
-    dungeon.header.squareFirstThingCount = 5;
-    things.squareFirstThingCount = 5;
-    map1Tiles[3] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
-    squareFirstThings[3] = THING_ENDOFLIST;
-    squareFirstThings[4] = (unsigned short)(THING_TYPE_GROUP << 10);
+    /* 5 columns: map0(1) + map1(4). Door at x=1, group at x=3.
+     * cumColCounts[c] = thing-flagged squares before column c. */
+    s_cumColCounts[0] = 0;
+    s_cumColCounts[1] = 0;
+    s_cumColCounts[2] = 0;  /* door is here */
+    s_cumColCounts[3] = 1;  /* 1 before (door) */
+    s_cumColCounts[4] = 1;  /* group is here */
+    dungeon.dungeonColumnCount = 5;
+    dungeon.header.squareFirstThingCount = 2;
+    things.squareFirstThingCount = 2;
+    map1Tiles[0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    map1Tiles[2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    map1Tiles[3] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = (unsigned short)(THING_TYPE_DOOR << 10);
+    squareFirstThings[1] = (unsigned short)(THING_TYPE_GROUP << 10);
     authenticate_group_c04(&things, &groups[0], rawGroup);
     memset(&door, 0, sizeof(door));
     memset(rawDoor, 0, sizeof(rawDoor));
@@ -331,35 +360,47 @@ static void test_live_tick_uses_f0201_direct_smell_route(void) {
     things.rawThingData[THING_TYPE_DOOR] = rawDoor;
     map1Tiles[1] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
                                    DUNGEON_SQUARE_MASK_THING_LIST | 4u);
-    squareFirstThings[2] = (unsigned short)(THING_TYPE_DOOR << 10);
     state.world.gameTick = 11;
 
-    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
-              "F0201 direct-smell tick is handled");
-    ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
-              "opaque C00 blocks F0200 projectile sight");
-    ASSERT_EQ(squareFirstThings[4], THING_ENDOFLIST,
-              "F0201 unlinks group from the authenticated source square");
-    ASSERT_EQ(squareFirstThings[3], (THING_TYPE_GROUP << 10),
-              "F0198/F0199 direct smell route moves group one source step");
+    {
+        unsigned short sftAtSource, sftAtDest;
+        ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+                  "F0201 direct-smell tick is handled");
+        ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 0,
+                  "opaque C00 blocks F0200 projectile sight");
+        sftAtSource = F0511_DUNGEON_GetSquareFirstThing_Compat(&dungeon, &things, 1, 3, 0);
+        sftAtDest = F0511_DUNGEON_GetSquareFirstThing_Compat(&dungeon, &things, 1, 2, 0);
+        ASSERT_EQ(sftAtSource, THING_ENDOFLIST,
+                  "F0201 unlinks group from the authenticated source square");
+        ASSERT_EQ(sftAtDest, (THING_TYPE_GROUP << 10),
+                  "F0198/F0199 direct smell route moves group one source step");
+    }
 
     /* The direct route remains bound to raw C04 identity. */
     seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles,
                                   map1Tiles, &things, groups, squareFirstThings);
     maps[1].width = 4;
     tiles[1].squareCount = 4;
-    dungeon.header.squareFirstThingCount = 5;
-    things.squareFirstThingCount = 5;
-    map1Tiles[3] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
-    squareFirstThings[3] = THING_ENDOFLIST;
-    squareFirstThings[4] = (unsigned short)(THING_TYPE_GROUP << 10);
+    s_cumColCounts[0] = 0;
+    s_cumColCounts[1] = 0;
+    s_cumColCounts[2] = 0;
+    s_cumColCounts[3] = 0;
+    s_cumColCounts[4] = 0;
+    dungeon.dungeonColumnCount = 5;
+    dungeon.header.squareFirstThingCount = 1;
+    things.squareFirstThingCount = 1;
+    map1Tiles[0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    map1Tiles[2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    map1Tiles[3] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = (unsigned short)(THING_TYPE_GROUP << 10);
     authenticate_group_c04(&things, &groups[0], rawGroup);
     rawGroup[4] = (unsigned char)(groups[0].creatureType - 1u);
     map1Tiles[1] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
     state.world.gameTick = 11;
     ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
               "drifted C04 smell tick is handled");
-    ASSERT_EQ(squareFirstThings[4], (THING_TYPE_GROUP << 10),
+    ASSERT_EQ(F0511_DUNGEON_GetSquareFirstThing_Compat(&dungeon, &things, 1, 3, 0),
+              (THING_TYPE_GROUP << 10),
               "drifted C04 cannot materialize a smell movement");
 
     /* A raw wall rejects the F0198/F0199 route before mutation; no decoded
@@ -368,17 +409,25 @@ static void test_live_tick_uses_f0201_direct_smell_route(void) {
                                   map1Tiles, &things, groups, squareFirstThings);
     maps[1].width = 4;
     tiles[1].squareCount = 4;
-    dungeon.header.squareFirstThingCount = 5;
-    things.squareFirstThingCount = 5;
-    map1Tiles[3] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
-    squareFirstThings[3] = THING_ENDOFLIST;
-    squareFirstThings[4] = (unsigned short)(THING_TYPE_GROUP << 10);
+    s_cumColCounts[0] = 0;
+    s_cumColCounts[1] = 0;
+    s_cumColCounts[2] = 0;
+    s_cumColCounts[3] = 0;
+    s_cumColCounts[4] = 0;
+    dungeon.dungeonColumnCount = 5;
+    dungeon.header.squareFirstThingCount = 1;
+    things.squareFirstThingCount = 1;
+    map1Tiles[0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    map1Tiles[2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    map1Tiles[3] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) | DUNGEON_SQUARE_MASK_THING_LIST);
+    squareFirstThings[0] = (unsigned short)(THING_TYPE_GROUP << 10);
     authenticate_group_c04(&things, &groups[0], rawGroup);
     map1Tiles[1] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
     state.world.gameTick = 11;
     ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
               "wall-blocked smell tick is handled");
-    ASSERT_EQ(squareFirstThings[4], (THING_TYPE_GROUP << 10),
+    ASSERT_EQ(F0511_DUNGEON_GetSquareFirstThing_Compat(&dungeon, &things, 1, 3, 0),
+              (THING_TYPE_GROUP << 10),
               "F0198 raw wall rejects F0201 movement without a scent fallback");
 }
 
@@ -466,6 +515,15 @@ static void test_live_tick_uses_authenticated_door_info_for_sight(void) {
 
     seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles, map1Tiles,
                                   &things, groups, squareFirstThings);
+    /* Add door at (1,0): need 2 SFT entries (door + group). */
+    s_cumColCounts[0] = 0;
+    s_cumColCounts[1] = 0;
+    s_cumColCounts[2] = 0;  /* door at map1 x=1 */
+    s_cumColCounts[3] = 1;  /* group at map1 x=2 */
+    dungeon.header.squareFirstThingCount = 2;
+    things.squareFirstThingCount = 2;
+    squareFirstThings[0] = (unsigned short)(THING_TYPE_DOOR << 10);
+    squareFirstThings[1] = (unsigned short)(THING_TYPE_GROUP << 10);
     authenticate_group_c04(&things, &groups[0], rawGroup);
     memset(&door, 0, sizeof(door));
     memset(rawDoor, 0, sizeof(rawDoor));
@@ -480,7 +538,6 @@ static void test_live_tick_uses_authenticated_door_info_for_sight(void) {
     maps[1].doorSet0 = 0;
     map1Tiles[1] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
                                    DUNGEON_SQUARE_MASK_THING_LIST | 4u);
-    squareFirstThings[2] = (unsigned short)(THING_TYPE_DOOR << 10);
     state.world.gameTick = 27;
 
     ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
@@ -490,6 +547,14 @@ static void test_live_tick_uses_authenticated_door_info_for_sight(void) {
 
     seed_projectile_runtime_state(&state, &dungeon, maps, tiles, map0Tiles, map1Tiles,
                                   &things, groups, squareFirstThings);
+    s_cumColCounts[0] = 0;
+    s_cumColCounts[1] = 0;
+    s_cumColCounts[2] = 0;
+    s_cumColCounts[3] = 1;
+    dungeon.header.squareFirstThingCount = 2;
+    things.squareFirstThingCount = 2;
+    squareFirstThings[0] = (unsigned short)(THING_TYPE_DOOR << 10);
+    squareFirstThings[1] = (unsigned short)(THING_TYPE_GROUP << 10);
     authenticate_group_c04(&things, &groups[0], rawGroup);
     memset(&door, 0, sizeof(door));
     memset(rawDoor, 0, sizeof(rawDoor));
@@ -505,7 +570,6 @@ static void test_live_tick_uses_authenticated_door_info_for_sight(void) {
     maps[1].doorSet0 = 0;
     map1Tiles[1] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
                                    DUNGEON_SQUARE_MASK_THING_LIST | 4u);
-    squareFirstThings[2] = (unsigned short)(THING_TYPE_DOOR << 10);
     state.world.gameTick = 27;
 
     ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
