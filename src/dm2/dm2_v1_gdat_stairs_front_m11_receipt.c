@@ -43,7 +43,8 @@ int dm2_v1_gdat_stairs_front_source_receipt(uint8_t cell, uint16_t state_word,
     uint8_t graphicsset, uint16_t light, int loadable, DM2_V1_GdatStairsFrontSourceReceipt *out)
 {
     uint8_t variant; uint16_t i; uint32_t h = 2166136261u;
-    if (!out) return 0; memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
     /* c_gui_vp.cpp:480-511; dm2data.cpp:289-310.  ptr1e1044 state selects
      * exactly one table lane; only the successful IF_LOADABLE lane is owned. */
     if (cell >= 16u || light > 640u || !loadable) return 0;
@@ -64,7 +65,8 @@ int dm2_v1_gdat_stairs_front_fallback_receipt(uint8_t cell, uint16_t state_word,
     DM2_V1_GdatStairsFrontFallbackReceipt *out)
 {
     uint8_t variant; uint16_t i; uint32_t h = 2166136261u;
-    if (!out) return 0; memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
     /* c_gui_vp.cpp:514-527, dm2data.cpp:289-302: this is reachable only
      * after the table1d6f5c IF_LOADABLE query failed. */
     if (cell >= 16u || light > 640u || primary_loadable) return 0;
@@ -84,7 +86,8 @@ int dm2_v1_gdat_stairs_front_material_receipt_build(const DM2_V1_AssetLoader *lo
     const DM2_V1_GdatStairsFrontSourceReceipt *source, DM2_V1_GdatStairsFrontMaterialReceipt *out)
 {
     DM2_V1_GdatStairsFrontMaterialReceipt c; uint8_t *pixels; int width = 0, height = 0; uint32_t h = 2166136261u;
-    if (!out) return 0; memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
     if (!loader || !source || !source->valid || !source->no_draw || !source->identity_hash) return 0;
     memset(&c, 0, sizeof(c)); c.source = *source;
     if (!dm2_v1_query_gdat_summary_image_receipt(loader, DM2_GDAT_CATEGORY_GRAPHICSSET,
@@ -124,7 +127,8 @@ int dm2_v1_gdat_stairs_front_raw4_receipt_build(const DM2_V1_AssetLoader *loader
     const DM2_V1_GdatStairsFrontMaterialReceipt *material, DM2_V1_GdatStairsFrontRaw4Receipt *out)
 {
     const uint8_t *table, *row; size_t size = 0u; uint32_t h = 2166136261u;
-    if (!out) return 0; memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
     if (!loader || !material || !material->valid || !material->no_draw || !material->identity_hash) return 0;
     table = dm2_v1_asset_load_typed_sized(loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0, DM2_GDAT_ENTRY_TYPE_RAW4, 0, &size);
     row = raw4_row(table, size, material->source.rect_number);
@@ -143,7 +147,8 @@ int dm2_v1_gdat_stairs_front_m11_receipt_build(const DM2_V1_GdatStairsFrontMater
     const DM2_V1_ViewportState *owner, DM2_V1_GdatStairsFrontM11Receipt *out)
 {
     DM2_V1_ViewportSurfaceSnapshot snap; uint32_t h = 2166136261u;
-    if (!out) return 0; memset(out, 0, sizeof(*out));
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
     if (!m || !r || !c || !owner || !m->valid || !m->no_draw || !r->valid || !r->no_draw ||
         r->material_identity_hash != m->identity_hash || r->width != m->width || r->height != m->height ||
         !c->valid || !c->no_draw || !c->session_identity || !c->data_epoch || !c->identity_hash ||
@@ -166,7 +171,8 @@ int dm2_v1_gdat_stairs_front_fallback_temp_picst_receipt_build(
     DM2_V1_GdatStairsFrontFallbackTempPicstReceipt *out)
 {
     uint32_t h = 2166136261u;
-    if (!out) return 0; memset(out,0,sizeof(*out));
+    if (!out) return 0;
+    memset(out,0,sizeof(*out));
     /* c_gui_vp.cpp:522-527 -> c_querydb.cpp:2381-2415 -> c_image.cpp:
      * 98-226/229-337. QUERY_TEMP_PICST passes normal 0x40 scales, hflip
      * mode 1, zero offsets, query1=rect, alpha=light and -1 palette args.

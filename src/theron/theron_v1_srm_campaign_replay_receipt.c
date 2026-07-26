@@ -17,7 +17,8 @@ int theron_v1_srm_campaign_replay_bind(const Theron_V1SrmOpaqueAdmissionReceipt 
     const Theron_V1Track02LoaderTraceReplayConsistencyReceipt *replay,
     uint32_t epoch, Theron_V1SrmCampaignReplayReceipt *out) {
     Theron_V1SrmCampaignReplayReceipt r = {0};
-    if (!out) return 0; *out = r;
+    if (!out) return 0;
+    *out = r;
     if (!save || save->status != THERON_V1_SRM_OPAQUE_READY ||
         !save->source_regular_file_verified || !save->source_md5_verified ||
         !save->source_size_verified || !save->admission_version_verified ||

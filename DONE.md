@@ -1,3 +1,6 @@
+- ✅ 2026-07-26 Fix GCC misleading-indentation CI failure. Split single-line
+  `if (!out) return 0; memset(...)` into two lines in CSB, DM2, Theron, and
+  Nexus source boundary files. Unblocks Ubuntu CI build. [v3.0.148]
 - ✅ 2026-07-26 Viewport transcript hash update (Q-DM1-03). Updated pass625
   expected viewport sha256 for creature sprite fallback and thieves-eye mask
   changes. Unlocks pass625, pass626, pass1075. Failing tests reduced from 12

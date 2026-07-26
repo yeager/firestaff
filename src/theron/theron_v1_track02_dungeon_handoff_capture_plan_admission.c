@@ -38,7 +38,8 @@ int theron_v1_track02_dungeon_capture_plan_admit(
     struct stat st; FILE *file; char value[1024], md5[33], trace_md5[33];
     unsigned long epoch, record, sector, identity;
     uint32_t plan_identity;
-    if (!out) return 0; *out = receipt;
+    if (!out) return 0;
+    *out = receipt;
     if (!plan_path || !plan_path[0] || stat(plan_path, &st) != 0) {
         receipt.status = THERON_V1_TRACK02_DUNGEON_CAPTURE_PLAN_UNAVAILABLE;
         *out = receipt; return 1;
