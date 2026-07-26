@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.166 LANGUAGES C)
+project(Firestaff VERSION 3.0.167 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -27873,6 +27873,9 @@ endif()
     if(APPLE)
         target_link_options(test_entrance_runtime_dispatch_source_lock PRIVATE
             "-Wl,-alias,_ENTRANCE_Compat_DispatchKeyCommand,_M11_Entrance_DispatchSourceLockedKeyCommand")
+    elseif(NOT MSVC)
+        target_link_options(test_entrance_runtime_dispatch_source_lock PRIVATE
+            "-Wl,--defsym=M11_Entrance_DispatchSourceLockedKeyCommand=ENTRANCE_Compat_DispatchKeyCommand")
     endif()
     if(NOT MSVC)
         target_compile_options(test_entrance_runtime_dispatch_source_lock PRIVATE -Wall -Wextra -O2)
