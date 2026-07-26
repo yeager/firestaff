@@ -1,3 +1,7 @@
+- ✅ 2026-07-26 Line-drift fix sweep: pass623 input capture bridge, pass512
+  wall clip source audit (Q-DM1-03, Q-DM1-09). Updated verify script line
+  ranges for m11_game_view.c pipeline code (7539→18683) and viewport 3D clip
+  gate/wall draw functions (2238→2292, 1427→1444, 1461→1478). [v3.0.145]
 - ✅ 2026-07-26 Movement command core source-lock sweep (Q-DM1-04). Locked 9
   pass gates: pass549 passable door movement/timing, pass544 blocked collision
   queue lifecycle, pass580 forward collision timing, pass562 front-cell

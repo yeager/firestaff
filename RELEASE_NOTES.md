@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.145
+
+- Fix line-drift in pass623 input capture bridge verify script (7539→18683)
+- Fix line-drift in pass512 wall clip source audit verify script (clip gate 2238→2292, wall draw 1427→1444, opaque 1461→1478)
+- Fix line-drift in 5 viewport door/wall verify scripts (pass516, pass519, pass560, pass561, pass562)
+
 # Firestaff v3.0.144
 
 - Lock 9 movement command core source-audit gates (pass549, pass544, pass580, pass562, pass510, pass394, pass428, pass475)
