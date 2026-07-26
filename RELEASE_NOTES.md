@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.146
+
+- Add m11_draw_creature_sprite_ex fallback path in side feature function
+- Switch thieves-eye door mask to M11_AssetLoader_BlitScaled
+- Add creature sprite reference to m11_draw_dm1_side_contents
+- Unlock 5 pass gates: pass359, pass361, pass362, pass402, pass447
+- Failing pass tests reduced from 17 to 12
+
 # Firestaff v3.0.145
 
 - Fix line-drift in pass623 input capture bridge verify script (7539→18683)

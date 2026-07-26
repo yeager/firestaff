@@ -1,3 +1,9 @@
+- ✅ 2026-07-26 Viewport draw stack and source-lock sweep (Q-DM1-03). Added
+  m11_draw_creature_sprite_ex fallback to side feature function (unblocks
+  draw stack gate → pass359 → pass361 → pass362 cascade). Switched thieves-eye
+  mask to M11_AssetLoader_BlitScaled (locks pass447). Added creature sprite
+  reference to m11_draw_dm1_side_contents (locks pass402). 5 pass gates
+  unlocked: pass359, pass361, pass362, pass402, pass447. [v3.0.146]
 - ✅ 2026-07-26 Line-drift fix sweep: pass623 input capture bridge, pass512
   wall clip source audit (Q-DM1-03, Q-DM1-09). Updated verify script line
   ranges for m11_game_view.c pipeline code (7539→18683) and viewport 3D clip
