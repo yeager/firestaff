@@ -4939,6 +4939,8 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     vp.floor_ceiling_dirty = true;
     vp.graphic_provider_callback = cfg->graphic_provider_callback;
     vp.graphic_provider_user_data = cfg->graphic_provider_user_data;
+    vp.wall_ornament_ordinal_callback = cfg->wall_ornament_ordinal_callback;
+    vp.wall_ornament_ordinal_user_data = cfg->wall_ornament_ordinal_user_data;
 
     /* Wire dungeon grid for CSB back-wall rendering (D3L2/D3R2/D2L2/D2R2).
      * The dungeon grid enables element-specific routing for CSB four-sided
