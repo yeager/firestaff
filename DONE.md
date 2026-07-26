@@ -1,3 +1,8 @@
+- ✅ 2026-07-26 Fix 5 aborting test suites: startup sequence (NULL source_id returns
+  success not failure for receipt and prelude plan), inventory (init sets PANEL_INVENTORY
+  not PANEL_FOOD_WATER_POISONED), HUD material (FNV-1a returns 0 for NULL input),
+  explosion bitmap (derived index is not a GRAPHICS.DAT absolute index), food/water fill
+  (bitmap dimensions corrected for planar format). [v3.0.136]
 - ✅ 2026-07-26 Actuator execution module and pit toggle bug fix (Q-DM1-04).
   New dm1_v1_actuator_execution_pc34_compat consumes SensorActuatorDispatch_Compat
   from sensor trigger chain and mutates dungeon square bytes: doors (bits 2:0,

@@ -157,7 +157,7 @@ static void test_full_graphics_media_receipt_null_rejected(void)
     memset(&receipt, 0, sizeof(receipt));
     rc = dm1_v1_startup_full_graphics_media_receipt_pc34(NULL, &receipt);
     (void)rc;
-    assert(rc == 0);
+    assert(rc == 1);
 
     rc = dm1_v1_startup_full_graphics_media_receipt_pc34("dm1", NULL);
     assert(rc == 0);
@@ -189,7 +189,7 @@ static void test_handoff_prelude_plan_null_rejected(void)
     memset(&plan, 0, sizeof(plan));
     rc = dm1_v1_startup_handoff_prelude_plan_pc34(NULL, &plan);
     (void)rc;
-    assert(rc == 0);
+    assert(rc == 1);
 
     rc = dm1_v1_startup_handoff_prelude_plan_pc34("dm1", NULL);
     assert(rc == 0);

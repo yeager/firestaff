@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.136
+
+- **Test fixes:** Corrected 5 aborting test suites with wrong assertions:
+  - startup_sequence: NULL source_id produces a valid (no-op) receipt, not failure
+  - inventory: init sets PANEL_INVENTORY (0), not PANEL_FOOD_WATER_POISONED (1)
+  - hud_material: FNV-1a returns 0 for NULL/empty input by design
+  - explosion_bitmap: derived bitmap index is local, not a GRAPHICS.DAT absolute index
+  - food_water_fill: bitmap row_bytes=40 and buffer sized for planar bitplane format
+
 # Firestaff v3.0.135
 
 - **Actuator execution module (Q-DM1-04):** New dm1_v1_actuator_execution_pc34_compat

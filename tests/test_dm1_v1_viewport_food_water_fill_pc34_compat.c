@@ -12,8 +12,8 @@ static DM1_V1_ViewportPlanarFillMaterialPc34 make_mat(uint8_t *buf, size_t sz)
     memset(buf, 0, sz);
     mat.bitmap = buf;
     mat.bitmap_size = sz;
-    mat.row_bytes = 8;
-    mat.pixel_height = sz / 8;
+    mat.row_bytes = 40;
+    mat.pixel_height = (sz >= 40) ? sz / 40 : 0;
     mat.original_material_verified = 1;
     return mat;
 }
@@ -43,7 +43,7 @@ static void test_invalid_box_rejected(void)
 
 static void test_full_bar_at_max_amount(void)
 {
-    uint8_t buf[256];
+    uint8_t buf[480];
     DM1_V1_ViewportPlanarFillMaterialPc34 mat = make_mat(buf, sizeof(buf));
     (void)mat;
     int16_t box[4] = {0, 31, 0, 3};
@@ -60,7 +60,7 @@ static void test_full_bar_at_max_amount(void)
 
 static void test_negative_amount_shows_yellow(void)
 {
-    uint8_t buf[256];
+    uint8_t buf[480];
     DM1_V1_ViewportPlanarFillMaterialPc34 mat = make_mat(buf, sizeof(buf));
     (void)mat;
     int16_t box[4] = {0, 31, 0, 3};
@@ -76,7 +76,7 @@ static void test_negative_amount_shows_yellow(void)
 
 static void test_very_negative_amount_shows_red(void)
 {
-    uint8_t buf[256];
+    uint8_t buf[480];
     DM1_V1_ViewportPlanarFillMaterialPc34 mat = make_mat(buf, sizeof(buf));
     (void)mat;
     int16_t box[4] = {0, 31, 0, 3};
@@ -92,7 +92,7 @@ static void test_very_negative_amount_shows_red(void)
 
 static void test_shadow_box_offset(void)
 {
-    uint8_t buf[256];
+    uint8_t buf[480];
     DM1_V1_ViewportPlanarFillMaterialPc34 mat = make_mat(buf, sizeof(buf));
     (void)mat;
     int16_t box[4] = {10, 41, 5, 8};
@@ -110,7 +110,7 @@ static void test_shadow_box_offset(void)
 
 static void test_out_of_domain_rejected(void)
 {
-    uint8_t buf[256];
+    uint8_t buf[480];
     DM1_V1_ViewportPlanarFillMaterialPc34 mat = make_mat(buf, sizeof(buf));
     (void)mat;
     int16_t box[4] = {0, 31, 0, 3};

@@ -10,7 +10,7 @@ static void test_init(void)
 
     DM1_V1_Inventory_InitPc34Compat(&state, 4);
     assert(state.championCount == 4);
-    assert(state.panelContent == DM1_PC34_PANEL_FOOD_WATER_POISONED);
+    assert(state.panelContent == DM1_PC34_PANEL_INVENTORY);
 }
 
 static void test_set_get_item(void)

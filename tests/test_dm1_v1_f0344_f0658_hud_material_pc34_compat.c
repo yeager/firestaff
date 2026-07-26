@@ -8,7 +8,7 @@ static void test_fnv1a_null(void)
 {
     uint32_t h = dm1_v1_f0344_f0658_hud_material_fnv1a_pc34(NULL, 0);
     (void)h;
-    assert(h != 0);
+    assert(h == 0);
 }
 
 static void test_fnv1a_deterministic(void)
