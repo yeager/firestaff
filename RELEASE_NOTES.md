@@ -1,6 +1,21 @@
 
 # Unreleased
 
+# Firestaff v3.0.151
+
+- Complete all Q-DM1 jobs (02-10) and all Q-CSB jobs (01-10)
+- Add viewport coverage material lane as 6th HoC consumer lane (Q-DM1-02)
+- Prove F0803/F0433 new-game save ownership (Q-DM1-10)
+- Fix CSB startup stage classification: step 21/frame 80 is CHAOS hold, not STRIKES BACK
+- DSA opcode core: 12 test files, 117 operations, 998-line runtime header (Q-CSB-01)
+- DSA monster/world: timer/filter/monster/world mutation, 14 tests (Q-CSB-02)
+- Startup presentation chain: IMG1 decoder, stage fix, 9308 lines (Q-CSB-03)
+- Entrance/credits handoff: 9 entrance/door tests (Q-CSB-04)
+- Thing/sensor runtime: 38 sensor/teleporter tests (Q-CSB-07)
+- Combat/movement runtime: Grey Lord, projectile, damage tests (Q-CSB-08)
+- Saves/Utility Disk: 32 test files (Q-CSB-09)
+- Media/input/expansion: 17 test files (Q-CSB-10)
+
 # Firestaff v3.0.150
 
 - Wire VGA palette material lane into HoC presented-frame consumer (Q-DM1-02)
