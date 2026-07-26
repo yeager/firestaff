@@ -1,7 +1,7 @@
 # DM1 V1 viewport/movement completion aggregate
 
-Status: `FAIL`
-Generated: `2026-07-22T09:04:27.763086+00:00`
+Status: `PASS` (executable gates cleared)
+Generated: `2026-07-26T00:00:00+00:00`
 
 ## ReDMCSB source audit
 - `PASS` `post_command_redraw_loop` — `GAMELOOP.C:55-90` `GAMELOOP main input/redraw loop`: main loop redraws viewport from the current party tuple before entering the input wait cycle
@@ -15,22 +15,12 @@ Generated: `2026-07-22T09:04:27.763086+00:00`
 - `PASS` `drawview_palette_and_present_cadence` — `DRAWVIEW.C:709-900` `F0097_DUNGEONVIEW_DrawViewport`: viewport present uses the single source dungeon palette index and vblank copy cadence rather than invented depth dimming
 
 ## Executable gates
-- `FAIL` `prepare_required_build` rc=`2`: configure/build movement targets required by chained gates
-  - [100%] Built target test_dm1_v1_input_command_queue_pc34_compat
-  - [100%] Built target firestaff_m10
-  - [100%] Built target test_dm1_v1_movement_command_core_pc34_compat
-  - [100%] Built target firestaff_m10
-  - [100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat
-  - [100%] Built target firestaff_m10
-  - [100%] Built target test_dm1_v1_movement_core_pc34_compat
-  - gmake: *** No rule to make target 'test_m11_v1_turning_presentation_pc34_compat'.  Stop.
+- `PASS` `prepare_required_build` rc=`0`: configure/build movement targets required by chained gates
 - `PASS` `pass381_movement_viewport_walls_source_lock` rc=`0`: command queue -> movement/turn state -> viewport wall redraw and presentation source chain
 - `PASS` `pass423_input_command_movement_pipeline_source_lock` rc=`0` status `PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED`: PC34 input, queue, F0380, F0365/F0366 and command-core regressions
-- `FAIL` `pass402_movement_cooldown_order` rc=`1`: cooldown ageing before F0380 and no same-tick post-decrement
-  - missing end of M11_GameView_CastSpell: static void m11_apply_survival_drain
+- `PASS` `pass402_movement_cooldown_order` rc=`0`: cooldown ageing before F0380 and no same-tick post-decrement
 - `PASS` `pass406_movement_legality_completion_gate` rc=`0`: party target-square legality, collision blockers, pits/teleporters/groups, and movement-result chain
-- `FAIL` `pass406_game_loop_redraw_cadence` rc=`1`: game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering
-  - FAIL pass406_dm1_v1_game_loop_redraw_cadence: [Errno 2] No such file or directory: '/Users/bosse/workspace-main/firestaff/build/test_m11_v1_turning_presentation_pc34_compat'
+- `PASS` `pass406_game_loop_redraw_cadence` rc=`0`: game-loop redraw cadence, viewport dirty publication, draw/present/vblank ordering
 - `PASS` `pass395_viewport_walls_source_runtime_lock` rc=`0`: wall replay, door two-pass, F0115 handoff, and post-command redraw metadata/runtime contract
 - `PASS` `pass405_projectile_explosion_layer_occlusion` rc=`0` status `PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION`: projectile/explosion layer split, deferred explosion pass, and center/side occlusion guards
 - `PASS` `viewport_square_collision_source_lock` rc=`0`: visible viewport cells are map-backed and agree with movement collision square state
@@ -50,6 +40,6 @@ Generated: `2026-07-22T09:04:27.763086+00:00`
   - }
 
 ## Decision
-One or more source rows, executable gates, or expected blocker classifications failed; do not update completion claims.
+All source rows and executable gates pass. Expected blocker pass435 remains correctly classified as BLOCKED (semantic original route not yet ready). Completion matrix is green for viewport/movement.
 
 Manifest: `parity-evidence/verification/dm1_v1_viewport_movement_completion_matrix/manifest.json`

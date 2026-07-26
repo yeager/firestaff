@@ -15,6 +15,8 @@
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
+#include "dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.h"
+#include "dm1_v1_wall_ornament_pc34_compat.h"
 #include <string.h>
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -112,6 +114,11 @@ static void dm1_viewport_3d_draw_d3_side_square(
     DM1_ViewSquareIndex square,
     int map_x,
     int map_y);
+
+static void dm1_viewport_3d_draw_wall_ornament_f0107(
+    DM1_Viewport3DState *state,
+    int view_wall_index,
+    int map_x, int map_y);
 
 /* View square → wall frame table index mapping.
  * Placed before csb_v1_vp_get_wall_frame to avoid forward-reference errors. */
@@ -3504,6 +3511,10 @@ static void dm1_viewport_3d_draw_d3_side_square(
         } else {
             dm1_viewport_3d_draw_wall(state, wall, frame);
         }
+        dm1_viewport_3d_draw_wall_ornament_f0107(state,
+            right ? DM1_V1_VIEW_WALL_D3R_LEFT_PC34
+                  : DM1_V1_VIEW_WALL_D3L_RIGHT_PC34,
+            map_x, map_y);
         return;
     }
 
@@ -3575,6 +3586,81 @@ static void dm1_viewport_3d_draw_d3_side_square(
  *
  * Source: ReDMCSB DUNVIEW.C F0676 (line 6226) · F0677 (line 6293)
  * ──────────────────────────────────────────────────────────────────────── */
+
+/* F0107 wall ornament overlay.  Resolves the ornament ordinal for (map_x,map_y)
+ * via the host callback, then uses the F0107 resolver to get the render plan
+ * and blits the ornament bitmap via the graphic provider.
+ * Source: DUNVIEW.C:3502-3938 F0107_IsDrawnWallOrnamentAnAlcove_CPSF */
+static void dm1_viewport_3d_draw_wall_ornament_f0107(
+    DM1_Viewport3DState *state,
+    int view_wall_index,
+    int map_x, int map_y)
+{
+    int ordinal;
+    DM1_V1_WallOrnamentOrdinalInputPc34 input;
+    DM1_V1_WallOrnamentOrdinalResultPc34 result;
+    int coord_set;
+    DM1_WallOrnamentRenderPlanPc34 plan;
+
+    if (!state || !state->wall_ornament_ordinal_callback ||
+        !state->graphic_provider_callback) {
+        return;
+    }
+
+    ordinal = state->wall_ornament_ordinal_callback(
+        state->wall_ornament_ordinal_user_data, map_x, map_y);
+    if (ordinal < 0) return;
+
+    coord_set = dm1_v1_wall_ornament_coord_set_index_pc34(ordinal);
+
+    memset(&input, 0, sizeof(input));
+    input.wall_ornament_ordinal = ordinal;
+    input.view_wall_index = view_wall_index;
+    input.coordinate_set = coord_set;
+    input.native_bitmap_index = -1;
+    input.is_alcove = dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(ordinal) != 0;
+
+    if (!dm1_v1_viewport_wall_ornament_resolve_f0107_pc34(&input, &result)) {
+        return;
+    }
+    if (!result.draws_ornament) return;
+
+    if (dm1_v1_wall_ornament_render_plan_pc34(
+            result.wall_ornament_index, view_wall_index, 136, &plan) && plan.graphicIndex >= 0) {
+        const uint8_t *pixels = NULL;
+        int gfx_w = 0, gfx_h = 0;
+        if (state->graphic_provider_callback(
+                state->graphic_provider_user_data,
+                plan.graphicIndex, &pixels, &gfx_w, &gfx_h) && pixels) {
+            int sx = plan.srcX;
+            int sy = plan.srcY;
+            int dx = plan.dstX;
+            int dy = plan.dstY;
+            int w = plan.width;
+            int h = plan.height;
+            int x, y;
+            if (sx < 0) sx = 0;
+            if (sy < 0) sy = 0;
+            if (w > gfx_w - sx) w = gfx_w - sx;
+            if (h > gfx_h - sy) h = gfx_h - sy;
+            if (w <= 0 || h <= 0) return;
+            if (dx < 0) { sx -= dx; w += dx; dx = 0; }
+            if (dy < 0) { sy -= dy; h += dy; dy = 0; }
+            if (dx + w > DM1_VIEWPORT_WIDTH) w = DM1_VIEWPORT_WIDTH - dx;
+            if (dy + h > DM1_VIEWPORT_HEIGHT) h = DM1_VIEWPORT_HEIGHT - dy;
+            if (w <= 0 || h <= 0) return;
+            for (y = 0; y < h; ++y) {
+                for (x = 0; x < w; ++x) {
+                    uint8_t px = pixels[(sy + y) * gfx_w + (sx + x)];
+                    if (px != (uint8_t)plan.transparentColor) {
+                        state->viewport_pixels[(dy + y) * state->viewport_stride + (dx + x)] = px;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
                                          DM1_ViewSquareIndex square,
                                          int direction,
@@ -3631,11 +3717,15 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
             dm1_viewport_3d_draw_wall(state, wall_bmp, fr);
         }
 
-        /* Wall ornament rendering via F0107 placeholder.
-         * F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF renders
-         * the wall ornament bitmap at the appropriate ornament slot.
+        /* F0107 wall ornament overlay.
          * Source: DUNVIEW.C:6263-6264 (D3L2) · DUNVIEW.C:6330-6331 (D3R2) */
-        (void)wall_zone; /* zone used once ornament module is wired */
+        {
+            int vwi = (square == DM1_VIEW_SQUARE_D3L2)
+                ? DM1_V1_VIEW_WALL_D3L2_RIGHT_PC34
+                : DM1_V1_VIEW_WALL_D3R2_LEFT_PC34;
+            (void)wall_zone;
+            dm1_viewport_3d_draw_wall_ornament_f0107(state, vwi, map_x, map_y);
+        }
         return;
     }
 
@@ -3825,9 +3915,7 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
     } else {
         return; /* Not a near-wall square */
     }
-    (void)wall_zone; /* kept as source-map evidence for F0678/F0679 comments */
-
-    /* ── WALL case: draw wall bitmap, then return ──
+    /* ── WALL case: draw wall bitmap + F0107 ornament, then return ──
      * ReDMCSB F0678 lines 6848-6862 / F0679 lines 6879-6893.
      * For D2L2/D2R2, the wall zone is C707/C708 and the bitmap
      * comes from G2107_WallSet[C06_WALL_D2L2] or C05_WALL_D2R2
@@ -3841,6 +3929,13 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
             dm1_viewport_3d_draw_wall_parity_mirrored(state, wall_bmp, fr);
         } else {
             dm1_viewport_3d_draw_wall(state, wall_bmp, fr);
+        }
+        {
+            int vwi = (square == DM1_VIEW_SQUARE_D2L2)
+                ? DM1_V1_VIEW_WALL_D2L_RIGHT_PC34
+                : DM1_V1_VIEW_WALL_D2R_LEFT_PC34;
+            (void)wall_zone;
+            dm1_viewport_3d_draw_wall_ornament_f0107(state, vwi, map_x, map_y);
         }
         return;
     }

@@ -193,6 +193,12 @@ typedef int (*DM1_ViewportGraphicProviderCallback)(
     int *out_width,
     int *out_height);
 
+/* F0107 wall ornament ordinal provider.  Returns the wall ornament ordinal
+ * (1-based) for the cell at (map_x, map_y), or -1 if no ornament. */
+typedef int (*DM1_ViewportWallOrnamentOrdinalCallback)(
+    void *user_data,
+    int map_x, int map_y);
+
 /* Wall set bitmap indices — from DUNVIEW.C G2107_WallSet[15] (I34E) */
 typedef enum {
     DM1_WALL_D0R = 0,
@@ -964,6 +970,12 @@ typedef struct {
      * one byte per pixel, as M11_AssetLoader_Load does after IMG3 expansion. */
     DM1_ViewportGraphicProviderCallback graphic_provider_callback;
     void *graphic_provider_user_data;
+
+    /* F0107 wall ornament ordinal provider and render plan callback.
+     * When set, the viewport calls this to obtain the wall ornament ordinal
+     * for a given map cell and draws the ornament via the graphic provider. */
+    DM1_ViewportWallOrnamentOrdinalCallback wall_ornament_ordinal_callback;
+    void *wall_ornament_ordinal_user_data;
 
     /* Last D3L2/D3R2 source-ordered F0115/door/field runtime decision.
      * Metadata only: this does not claim original pixel parity or install
