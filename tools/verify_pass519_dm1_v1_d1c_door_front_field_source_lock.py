@@ -41,7 +41,7 @@ SRC = [
 ]
 
 LOCAL = [
-    ("firestaff-d1c-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "942-942", [
+    ("firestaff-d1c-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "959-959", [
         "DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349",
         "DUNVIEW.C:7874-7875 pass1 rear cells before frame",
         "DUNVIEW.C:7877-7902 top/side frame and button draw",

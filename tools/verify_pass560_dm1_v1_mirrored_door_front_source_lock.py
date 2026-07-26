@@ -51,7 +51,7 @@ LOCAL = [
     # assertions live at test lines 1303-1340 (was 739-800).  The drift
     # regression in the test binary guards the same evidence by whole-file
     # scan, so these LOCAL spans track the table locations.
-    ("firestaff-mirrored-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "931-942", [
+    ("firestaff-mirrored-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "948-959", [
         "DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439",
         "DUNVIEW.C:6579 floor ornament under mirrored rear pass",
         "DUNVIEW.C:6592-6593 optional button before door panel",

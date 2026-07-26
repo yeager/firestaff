@@ -1,17 +1,29 @@
 {
   "firestaffChecks": [
     {
-      "hits": [],
-      "id": "firestaff-far-door-front-metadata",
-      "lines": "932-933",
-      "missing": [
-        "DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349",
-        "DUNVIEW.C:6270 floor ornament under far rear pass",
-        "DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439",
-        "DUNVIEW.C:6337 floor ornament under mirrored far rear pass"
+      "hits": [
+        {
+          "line": 949,
+          "needle": "DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349"
+        },
+        {
+          "line": 949,
+          "needle": "DUNVIEW.C:6270 floor ornament under far rear pass"
+        },
+        {
+          "line": 950,
+          "needle": "DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439"
+        },
+        {
+          "line": 950,
+          "needle": "DUNVIEW.C:6337 floor ornament under mirrored far rear pass"
+        }
       ],
+      "id": "firestaff-far-door-front-metadata",
+      "lines": "949-950",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "hits": [
@@ -35,15 +47,21 @@
       "status": "PASS"
     },
     {
-      "hits": [],
-      "id": "firestaff-source-evidence-string",
-      "lines": "3913-3914",
-      "missing": [
-        "DUNVIEW.C:6270-6286 D3L2 far door-front occlusion",
-        "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"
+      "hits": [
+        {
+          "line": 4197,
+          "needle": "DUNVIEW.C:6270-6286 D3L2 far door-front occlusion"
+        },
+        {
+          "line": 4198,
+          "needle": "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"
+        }
       ],
+      "id": "firestaff-source-evidence-string",
+      "lines": "4197-4198",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "nonClaims": [
@@ -122,8 +140,8 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass561_dm1_v1_far_door_front_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS561_DM1_V1_FAR_DOOR_FRONT_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS561_DM1_V1_FAR_DOOR_FRONT_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
@@ -135,13 +153,13 @@
     },
     {
       "command": [
-        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Applications/Xcode.app/Contents/Developer/usr/bin/python3",
         "/Volumes/Extern-disk/firestaff-claude/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass561 check-only: firestaff-far-door-front-metadata,firestaff-source-evidence-string",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass561 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }
