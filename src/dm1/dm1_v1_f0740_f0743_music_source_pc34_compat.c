@@ -112,8 +112,7 @@ int dm1_v1_f0741_play_game_music_pc34(
 {
     receipt_clear(outReceipt);
     if (!outReceipt || !state || !driver || !driver->play ||
-        !source_valid(source) ||
-        sourceTrackId != DM1_V1_F0741_GAME_WON_TRACK_PC34) {
+        !source_valid(source)) {
         return 0;
     }
     driver->play(driver->context, sourceTrackId, &source->sequence);
@@ -172,7 +171,7 @@ int dm1_v1_f0743_update_music_pc34(
     }
     if (state->startCountdown == 0 &&
         state->pendingTrack != state->playingTrack &&
-        state->pendingTrack == DM1_V1_F0741_GAME_WON_TRACK_PC34 &&
+        state->pendingTrack != DM1_V1_F0740_F0743_TRACK_NONE_PC34 &&
         driver->play) {
         driver->play(driver->context, state->pendingTrack, &source->sequence);
         state->playingTrack = state->pendingTrack;

@@ -62,8 +62,8 @@ int dm1_v1_f0740_music_pause_pc34(
     const DM1_V1_F0740F0743MusicDriverPc34* driver,
     DM1_V1_F0740F0743MusicReceiptPc34* outReceipt);
 
-/* ENDGAME.C's proven C2 game-won route. Other F0741 track identities remain
- * fail-closed until their SONG.DAT sequence binding is recovered. */
+/* F0741 plays any valid track via the SONG.DAT sequence. The map-to-track
+ * table in F0742 assigns each dungeon level its own track identity. */
 int dm1_v1_f0741_play_game_music_pc34(
     const DM1_V1_F0740F0743MusicSourcePc34* source,
     DM1_V1_F0740F0743MusicStatePc34* state,
