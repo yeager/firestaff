@@ -56,7 +56,8 @@ bool redmcsb_f8157_set_multiple_colors_c25_pc34_compat(
 
     if (curtain_flag == 1) {
         return redmcsb_f8156_set_palette_c25_pc34_compat(
-            full_palette, dac, wait_vertical_blank, context);
+            (const uint8_t (*)[REDMCSB_F8156_C25_PALETTE_COMPONENTS_PC34])full_palette,
+            dac, wait_vertical_blank, context);
     }
     return true;
 }

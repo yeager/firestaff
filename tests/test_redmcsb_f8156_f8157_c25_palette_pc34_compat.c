@@ -65,7 +65,7 @@ int main(void)
 
     wait_state.allow = 0;
     expect_int("failed VBlank rejects DAC publish", !redmcsb_f8156_set_palette_c25_pc34_compat(
-                   full, &dac, wait_vblank, &wait_state), 1);
+                   (const uint8_t (*)[REDMCSB_F8156_C25_PALETTE_COMPONENTS_PC34])full, &dac, wait_vblank, &wait_state), 1);
     expect_int("second VBlank call", wait_state.calls, 2);
 
     if (strstr(redmcsb_f8156_f8157_c25_palette_source_evidence_pc34(),
