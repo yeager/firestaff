@@ -73,12 +73,21 @@ typedef struct {
 } DM1_V1_HocPresentedPaletteMaterialPc34;
 
 typedef struct {
+    int valid;
+    int mirrorSquareCount;
+    int materializedCount;
+    int allMaterialized;
+    uint32_t coverageHash;
+} DM1_V1_HocPresentedViewportCoverageMaterialPc34;
+
+typedef struct {
     uint32_t runtimeTick;
     const DM1_V1_HocPresentedMirrorMaterialPc34 *mirror;
     const DM1_V1_HocPresentedInscriptionMaterialPc34 *inscription;
     const DM1_V1_HocPresentedObjectMaterialPc34 *object;
     const DM1_V1_HocPresentedActionSpellMaterialPc34 *actionSpell;
     const DM1_V1_HocPresentedPaletteMaterialPc34 *palette;
+    const DM1_V1_HocPresentedViewportCoverageMaterialPc34 *viewportCoverage;
 } DM1_V1_HocPresentedFrameConsumerInputPc34;
 
 typedef struct {
@@ -89,6 +98,7 @@ typedef struct {
     int consumedObject;
     int consumedActionSpell;
     int consumedPalette;
+    int consumedViewportCoverage;
     int suppressFallbackVisuals;
     uint32_t runtimeTick;
     uint32_t frameHash;

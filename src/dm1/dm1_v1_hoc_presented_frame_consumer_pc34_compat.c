@@ -56,6 +56,16 @@ static int palette_valid(const DM1_V1_HocPresentedPaletteMaterialPc34 *p)
     return 1;
 }
 
+static int viewport_coverage_valid(
+    const DM1_V1_HocPresentedViewportCoverageMaterialPc34 *vc)
+{
+    if (!vc || !vc->valid) return 1;
+    if (vc->mirrorSquareCount < 0) return 0;
+    if (vc->materializedCount < 0 ||
+        vc->materializedCount > vc->mirrorSquareCount) return 0;
+    return 1;
+}
+
 int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
     const DM1_V1_HocPresentedFrameConsumerInputPc34 *input,
     DM1_V1_HocPresentedFrameConsumerReceiptPc34 *outReceipt)
@@ -72,7 +82,8 @@ int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
         "materials are admitted together only after their original PC34 blits";
     if (!mirror_valid(input->mirror) || !inscription_valid(input->inscription) ||
         !object_valid(input->object) || !action_spell_valid(input->actionSpell) ||
-        !palette_valid(input->palette)) {
+        !palette_valid(input->palette) ||
+        !viewport_coverage_valid(input->viewportCoverage)) {
         *outReceipt = receipt;
         return 1;
     }
@@ -83,9 +94,11 @@ int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
     receipt.consumedObject = input->object && input->object->valid;
     receipt.consumedActionSpell = input->actionSpell && input->actionSpell->valid;
     receipt.consumedPalette = input->palette && input->palette->valid;
+    receipt.consumedViewportCoverage =
+        input->viewportCoverage && input->viewportCoverage->valid;
     if (!receipt.consumedMirror && !receipt.consumedInscription &&
         !receipt.consumedObject && !receipt.consumedActionSpell &&
-        !receipt.consumedPalette) {
+        !receipt.consumedPalette && !receipt.consumedViewportCoverage) {
         *outReceipt = receipt;
         return 1;
     }
@@ -110,6 +123,11 @@ int dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(
     }
     if (receipt.consumedPalette) {
         hash = mix(hash, input->palette->paletteHash);
+    }
+    if (receipt.consumedViewportCoverage) {
+        hash = mix(hash, (uint32_t)input->viewportCoverage->mirrorSquareCount);
+        hash = mix(hash, (uint32_t)input->viewportCoverage->materializedCount);
+        hash = mix(hash, input->viewportCoverage->coverageHash);
     }
     receipt.valid = 1;
     receipt.sourceOwned = 1;

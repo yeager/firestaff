@@ -77,7 +77,32 @@ int main(void)
                      !receipt.valid,
                      "action/spell with zero serial rejects frame");
     }
+    /* viewport coverage lane */
+    input.actionSpell = NULL;
+    {
+        DM1_V1_HocPresentedViewportCoverageMaterialPc34 vc;
+        memset(&vc, 0, sizeof(vc));
+        vc.valid = 1;
+        vc.mirrorSquareCount = 3;
+        vc.materializedCount = 3;
+        vc.allMaterialized = 1;
+        vc.coverageHash = 0xABCDu;
+        input.viewportCoverage = &vc;
+        ok &= expect(dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(&input, &receipt) &&
+                     receipt.valid && receipt.consumedViewportCoverage &&
+                     receipt.suppressFallbackVisuals,
+                     "viewport coverage lane consumed with all materialized");
+        vc.materializedCount = 2;
+        vc.allMaterialized = 0;
+        ok &= expect(dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(&input, &receipt) &&
+                     receipt.valid && receipt.consumedViewportCoverage,
+                     "partial viewport coverage still consumed");
+        vc.materializedCount = 4;
+        ok &= expect(dm1_v1_hoc_presented_frame_consumer_build_receipt_pc34(&input, &receipt) &&
+                     !receipt.valid,
+                     "materialized > squares rejects frame");
+    }
     if (!ok) return 1;
-    puts("ok: DM1 HoC frame consumer admits source-owned mirror/text/object/action-spell material");
+    puts("ok: DM1 HoC frame consumer admits source-owned mirror/text/object/action-spell/viewport-coverage material");
     return 0;
 }

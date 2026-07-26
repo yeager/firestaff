@@ -1,3 +1,13 @@
+- ✅ 2026-07-26 F0803/F0433 new-game save ownership evidence (Q-DM1-10).
+  F0803 vanilla export verified: no manifest marker, F0802 byte-identical
+  C3/C4 round-trip, F0417/F0418 obfuscation, LSV-02 manifest gate.
+  Parity evidence pass1092 documents source anchors.
+- ✅ 2026-07-26 Viewport coverage material lane in HoC consumer (Q-DM1-02).
+  Added 6th consumer lane: viewport coverage aggregates per-square C127
+  mirror materialization from M11_Dm1HoCMirrorViewportMaterialFrameReceipt
+  (D1L/D1R/D2C/D2L/D2R/D3C etc.) into coverageHash, mirrorSquareCount,
+  materializedCount. Consumer validates and hashes all 6 lanes. Side/depth
+  render routes now feed the consumer. Q-DM1-02 complete.
 - ✅ 2026-07-26 VGA palette material lane in HoC consumer (Q-DM1-02). Wired
   G9010_auc_VgaPaletteBrightest_Compat[16][3] FNV-1a hash into palette lane
   of m11_dm1_hoc_presented_frame_consumer_build. Consumer now admits 5 lanes:
