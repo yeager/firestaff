@@ -44,6 +44,7 @@ typedef struct {
     char path[M12_CONFIG_PATH_CAPACITY];
 
     /* Per-game options (indexed by game slot 0..M12_CONFIG_GAME_COUNT-1) */
+    int gameArchitectureIndex[M12_CONFIG_GAME_COUNT];
     int gameUsePatch[M12_CONFIG_GAME_COUNT];
     int gameVersionIndex[M12_CONFIG_GAME_COUNT];
     int gameLanguageIndex[M12_CONFIG_GAME_COUNT];

@@ -14,6 +14,7 @@
  * It is compiled into firestaff_v2 and linked via firestaff_m11 → firestaff_m12,
  * so the symbols are available at M12 link time. */
 #include "dm1_v2_asset_pipeline_pc34.h"
+#include "menu_startup_m12.h"
 
 #define M12_SEARCH_ROOT_COUNT 3
 
@@ -31,6 +32,7 @@ typedef struct {
     const char* shortLabel;
     const char* const* names;
     const char* md5;
+    int architecture;
 } M12_VersionSpec;
 
 typedef struct {
@@ -263,30 +265,30 @@ static const char* const g_nexusArchiveNames[] = {
 };
 
 static const M12_VersionSpec g_dm1Versions[] = {
-    {"dm1", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_dm1GraphicsNames, "fa6b1aa29e191418713bf2cda93d962e"},
-    {"dm1", "pc34-multi", "PC 3.4 Multilanguage", "PC 3.4 ML", g_dm1GraphicsNames, "f934d97e43e1ba6e5159839acbcd0611"},
-    {"dm1", "st12-en", "Atari ST 1.2 English", "ST 1.2 EN", g_dm1GraphicsNames, "9ce2eaf7a9e78620e3f17594437caffa"}
+    {"dm1", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_dm1GraphicsNames, "fa6b1aa29e191418713bf2cda93d962e", M12_ARCH_PC},
+    {"dm1", "pc34-multi", "PC 3.4 Multilanguage", "PC 3.4 ML", g_dm1GraphicsNames, "f934d97e43e1ba6e5159839acbcd0611", M12_ARCH_PC},
+    {"dm1", "st12-en", "Atari ST 1.2 English", "ST 1.2 EN", g_dm1GraphicsNames, "9ce2eaf7a9e78620e3f17594437caffa", M12_ARCH_ATARI_ST}
 };
 
 static const M12_VersionSpec g_csbVersions[] = {
-    {"csb", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611"},
-    {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e"},
-    {"csb", "st20-21-hd-en", "Atari ST 2.x English hard-disk", "ST 2.x HD", g_csbGraphicsNames, "e0ce7ac5160ca5540e90cf09ab9fad49"},
-    {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68"},
-    {"csb", "amiga35-multi", "Amiga 3.5 Multilanguage", "Amiga 3.5 ML", g_csbGraphicsNames, "cefaddfdf5651df2c91f61b5611a8362"}
+    {"csb", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_PC},
+    {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e", M12_ARCH_ATARI_ST},
+    {"csb", "st20-21-hd-en", "Atari ST 2.x English hard-disk", "ST 2.x HD", g_csbGraphicsNames, "e0ce7ac5160ca5540e90cf09ab9fad49", M12_ARCH_ATARI_ST},
+    {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68", M12_ARCH_AMIGA},
+    {"csb", "amiga35-multi", "Amiga 3.5 Multilanguage", "Amiga 3.5 ML", g_csbGraphicsNames, "cefaddfdf5651df2c91f61b5611a8362", M12_ARCH_AMIGA}
 };
 
 static const M12_VersionSpec g_dm2Versions[] = {
-    {"dm2", "pc-en", "PC English", "PC EN", g_dm2GraphicsNames, "25247ede4dabb6a71e5dabdfbcd5907d"},
-    {"dm2", "pc-fr", "PC French", "PC FR", g_dm2GraphicsNames, "b4d733576ea60c41737f79f212faf528"},
-    {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d"},
-    {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835"}
+    {"dm2", "pc-en", "PC English", "PC EN", g_dm2GraphicsNames, "25247ede4dabb6a71e5dabdfbcd5907d", M12_ARCH_PC},
+    {"dm2", "pc-fr", "PC French", "PC FR", g_dm2GraphicsNames, "b4d733576ea60c41737f79f212faf528", M12_ARCH_PC},
+    {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d", M12_ARCH_PC},
+    {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835", M12_ARCH_PC98}
 };
 
 static const M12_VersionSpec g_nexusVersions[] = {
-    {"nexus", "nexus-saturn-jp", "Nexus Sega Saturn JP (extracted)", "Saturn JP", g_nexusArchiveNames, "e88d60859f65f08fa622e1992b02280f"},
-    {"nexus", "nexus", "Nexus original Sega Saturn JP", "nexus", g_nexusArchiveNames, "96e511c8d36ccbe30a48ba36c59df194"},
-    {"nexus", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusArchiveNames, ""}
+    {"nexus", "nexus-saturn-jp", "Nexus Sega Saturn JP (extracted)", "Saturn JP", g_nexusArchiveNames, "e88d60859f65f08fa622e1992b02280f", M12_ARCH_SATURN},
+    {"nexus", "nexus", "Nexus original Sega Saturn JP", "nexus", g_nexusArchiveNames, "96e511c8d36ccbe30a48ba36c59df194", M12_ARCH_SATURN},
+    {"nexus", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusArchiveNames, "", M12_ARCH_SATURN}
 };
 
 /* Theron's Quest — PC Engine / TurboGrafx-16 (Hudson Soft, 1992).
@@ -320,13 +322,13 @@ static const char* const g_theronTrack02Names[] = {
 
 static const M12_VersionSpec g_theronVersions[] = {
     {"theron", "pce-jp", "PC Engine JP (Track 02)", "PCE JP",
-     g_theronTrack02Names, "b7afb338ad31be1025b53f9aff12d73a"},
+     g_theronTrack02Names, "b7afb338ad31be1025b53f9aff12d73a", M12_ARCH_PCE},
     {"theron", "pce-en", "TurboGrafx-16 US (Track 02)", "TG16 US",
-     g_theronTrack02Names, "f23601102138f87c33025877767ebf76"},
+     g_theronTrack02Names, "f23601102138f87c33025877767ebf76", M12_ARCH_PCE},
     {"theron", "pce-jp-rev1-iso", "PC Engine JP Rev 1 (Track 02 ISO)", "PCE JP Rev1",
-     g_theronTrack02Names, "397039af02d50d15c70b74088eb8a1cb"},
+     g_theronTrack02Names, "397039af02d50d15c70b74088eb8a1cb", M12_ARCH_PCE},
     {"theron", "pce-en-iso", "TurboGrafx-16 US (Track 02 ISO)", "TG16 US ISO",
-     g_theronTrack02Names, "3d8b78571dcd0e6eb8eb4b01eeb7fbba"}
+     g_theronTrack02Names, "3d8b78571dcd0e6eb8eb4b01eeb7fbba", M12_ARCH_PCE}
 };
 
 static const M12_GameVersionSpec g_games[] = {
@@ -3516,4 +3518,88 @@ int M12_AssetStatus_TheronCampaignMediaLaunchReady(const M12_AssetStatus* status
  * Set during M12_AssetStatus_Scan(). */
 int M12_AssetStatus_V22ModernAssetsInstalled(const M12_AssetStatus* status) {
     return status ? status->v22_modern_assets_installed : 0;
+}
+
+int M12_AssetStatus_GetVersionArchitecture(const char* gameId, size_t index) {
+    const M12_GameVersionSpec* spec = m12_find_game_spec(gameId);
+    if (!spec || index >= spec->versionCount) return M12_ARCH_AUTO;
+    return spec->versions[index].architecture;
+}
+
+const char* M12_Architecture_Label(int architecture) {
+    switch (architecture) {
+    case M12_ARCH_AUTO:      return "Auto";
+    case M12_ARCH_PC:        return "PC";
+    case M12_ARCH_AMIGA:     return "Amiga";
+    case M12_ARCH_ATARI_ST:  return "Atari ST";
+    case M12_ARCH_FM_TOWNS:  return "FM Towns";
+    case M12_ARCH_X68000:    return "X68000";
+    case M12_ARCH_PC98:      return "PC-9801";
+    case M12_ARCH_PCE:       return "PC Engine";
+    case M12_ARCH_SATURN:    return "Saturn";
+    case M12_ARCH_APPLE_IIGS: return "Apple IIGS";
+    default:                 return "Unknown";
+    }
+}
+
+const char* M12_Architecture_ShortLabel(int architecture) {
+    switch (architecture) {
+    case M12_ARCH_AUTO:      return "Auto";
+    case M12_ARCH_PC:        return "PC";
+    case M12_ARCH_AMIGA:     return "Amiga";
+    case M12_ARCH_ATARI_ST:  return "ST";
+    case M12_ARCH_FM_TOWNS:  return "FMT";
+    case M12_ARCH_X68000:    return "X68k";
+    case M12_ARCH_PC98:      return "PC-98";
+    case M12_ARCH_PCE:       return "PCE";
+    case M12_ARCH_SATURN:    return "Saturn";
+    case M12_ARCH_APPLE_IIGS: return "IIGS";
+    default:                 return "?";
+    }
+}
+
+int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+    const M12_AssetStatus* status, const char* gameId, int architecture) {
+    const M12_GameVersionSpec* spec;
+    int gameIndex;
+    size_t i;
+    static const int autoPriority[] = {
+        M12_ARCH_PC, M12_ARCH_AMIGA, M12_ARCH_ATARI_ST,
+        M12_ARCH_FM_TOWNS, M12_ARCH_X68000, M12_ARCH_PC98,
+        M12_ARCH_PCE, M12_ARCH_SATURN, M12_ARCH_APPLE_IIGS
+    };
+
+    if (!status || !gameId) return -1;
+    spec = m12_find_game_spec(gameId);
+    gameIndex = m12_game_index_from_id(gameId);
+    if (!spec || gameIndex < 0) return -1;
+
+    if (architecture == M12_ARCH_AUTO) {
+        size_t p;
+        for (p = 0U; p < sizeof(autoPriority) / sizeof(autoPriority[0]); ++p) {
+            for (i = 0U; i < spec->versionCount; ++i) {
+                if (spec->versions[i].architecture == autoPriority[p] &&
+                    i < M12_ASSET_MAX_VERSIONS_PER_GAME &&
+                    status->versions[gameIndex][i].matched) {
+                    return (int)i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    for (i = 0U; i < spec->versionCount; ++i) {
+        if (spec->versions[i].architecture == architecture &&
+            i < M12_ASSET_MAX_VERSIONS_PER_GAME &&
+            status->versions[gameIndex][i].matched) {
+            return (int)i;
+        }
+    }
+    return -1;
+}
+
+int M12_AssetStatus_GameHasMatchedArchitecture(
+    const M12_AssetStatus* status, const char* gameId, int architecture) {
+    return M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+        status, gameId, architecture) >= 0;
 }

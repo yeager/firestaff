@@ -1,6 +1,19 @@
 
 # Unreleased
 
+# Firestaff v3.0.140
+
+- **Architecture auto-detection and menu option:** Startup menu now includes an
+  ARCHITECTURE row per game, cycling through Auto, PC, Amiga, Atari ST, FM Towns,
+  X68000, PC-9801, PC Engine, Saturn, and Apple IIGS. Auto mode resolves with
+  PC→Amiga→Atari ST priority. Architecture preference persists across sessions
+  (INI and JSON config). Launch intent uses architecture preference to find the
+  best matched version. All known version specs tagged with their architecture.
+  New helper functions: `M12_AssetStatus_GetVersionArchitecture`,
+  `M12_Architecture_Label/ShortLabel`,
+  `M12_AssetStatus_FindFirstMatchedVersionForArchitecture`,
+  `M12_AssetStatus_GameHasMatchedArchitecture`.
+
 # Firestaff v3.0.139
 
 - **Fix CSB graphic decode: IMG1 format (Q-CSB-03, Q-CSB-04):** The CSB

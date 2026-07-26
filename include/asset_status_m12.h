@@ -163,6 +163,13 @@ const M12_AssetRequiredFileStatus* M12_AssetStatus_GetRequiredFile(const M12_Ass
 const M12_NexusBpkTrailerMetadata* M12_AssetStatus_GetNexusBpkTrailerMetadata(
     const M12_AssetStatus* status);
 int M12_AssetStatus_FindVersionIndex(const char* gameId, const char* versionId);
+int M12_AssetStatus_GetVersionArchitecture(const char* gameId, size_t index);
+const char* M12_Architecture_Label(int architecture);
+const char* M12_Architecture_ShortLabel(int architecture);
+int M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+    const M12_AssetStatus* status, const char* gameId, int architecture);
+int M12_AssetStatus_GameHasMatchedArchitecture(
+    const M12_AssetStatus* status, const char* gameId, int architecture);
 const FirestaffTheronMediaStatus* M12_AssetStatus_GetTheronMediaStatus(
     const M12_AssetStatus* status);
 const char* M12_AssetStatus_GetTheronLaunchMediaPath(

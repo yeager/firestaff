@@ -1,3 +1,8 @@
+- ✅ 2026-07-26 Architecture auto-detection and menu option. Startup menu now
+  has an ARCHITECTURE row (Auto/PC/Amiga/Atari ST/etc.) per game. Auto mode
+  resolves PC→Amiga→Atari ST→others priority. Architecture preference persists
+  in config (INI + JSON). Launch intent uses architecture to select the best
+  matched version. All version specs tagged with architecture. [v3.0.140]
 - ✅ 2026-07-26 Fix CSB graphic decode: IMG1 format (Q-CSB-03, Q-CSB-04). CSB
   GRAPHICS.DAT identified as Amiga v3.1 IMG1 nibble-RLE format via dmweb.free.fr
   documentation. Replaced incorrect ExpandGraphic byte-format decoder with IMG1
