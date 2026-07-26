@@ -145,10 +145,11 @@ static void test_title_capture_uses_source_owned_chaos_step(void)
     snapshot.title_frame = 80;
     snapshot.title_source_step = 21;
     CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
-              &snapshot, &view) && view.title_strikes_back_visible &&
-          view.title_phase_tick == 0 &&
-          view.title_phase_tick_count ==
-              csb_v1_startup_title_strikes_back_ticks_pc34());
+              &snapshot, &view) && view.title_chaos_visible &&
+          view.title_chaos_hold_visible &&
+          !view.title_strikes_back_visible);
+    CHECK(csb_v1_startup_title_stage_for_frame_pc34(100) ==
+          CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34);
 }
 
 static void test_entrance_delay_owns_no_door_frame(void)
