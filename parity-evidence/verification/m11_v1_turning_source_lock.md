@@ -17,7 +17,7 @@ Status: **pass**
 
 - `src/engine/m11_v1_turning_presentation_pc34_compat.c` — guarded V1 presentation turning seam stores one-step 90-degree endpoint render semantics with no wall block check
 - `src/dm1/dm1_v1_movement_command_core_pc34_compat.c` — turn dispatch uses guarded M11 V1 seam and handles stairs-before-turn source sequence
-- `tests/test_m11_v1_turning_presentation_pc34_compat.c` — ctest asserts direction delta, one endpoint frame, no intermediate yaw frames, no wall block, V1 guard, and champion pose rotation
+- `tests/test_dm1_v1_turning_presentation_pc34_compat.c` — ctest asserts direction delta, one endpoint frame, no intermediate yaw frames, no wall block, V1 guard, and champion pose rotation
 
 ## Answers
 

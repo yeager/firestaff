@@ -65,7 +65,7 @@ FIRESTAFF_FILES = [
         'needles': ['CLIKMENU.C:167-169 consumes a turn command on a stairs', 'F0705_MOVEMENT_ResolveStairsTransition_Compat', 'm11_v1_turning_apply_party_original_presentation_pc34_compat', 'M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL', 'CHAMPION.C:117-130'],
     },
     {
-        'path': ROOT / 'tests/test_m11_v1_turning_presentation_pc34_compat.c',
+        'path': ROOT / 'tests/test_dm1_v1_turning_presentation_pc34_compat.c',
         'claim': 'ctest asserts direction delta, one endpoint frame, no intermediate yaw frames, no wall block, V1 guard, and champion pose rotation',
         'needles': ['right one source step per ninety', 'right single rendered endpoint frame', 'right no intermediate yaw frames', 'right has no wall block check', 'non-v1 presentation guard no-op', 'champion0 direction rotated'],
     },
