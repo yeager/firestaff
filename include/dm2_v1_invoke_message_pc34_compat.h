@@ -57,7 +57,7 @@ typedef struct {
     uint32_t ticks_and_map;   /* setmticks word */
     uint32_t ticket;          /* stable session ticket (> 0 when queued) */
     int queue_rejected;       /* fail-closed: DM2_QUEUE_TIMER rejected */
-    char source_evidence[200];
+    char source_evidence[512];
 } DM2_V1_InvokeMessageReceipt;
 
 /* DM2_INVOKE_MESSAGE bounded slice.  `map_current` stands in for
