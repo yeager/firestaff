@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.132
+
+## Wall ornament ordinal provider (Q-DM1-03)
+
+- New `dm1_v1_viewport_wall_ornament_ordinal_provider_pc34_compat` module
+- Resolves wall ornament ordinals from dungeon thing data:
+  - Phase 1: scan sensor things for explicit ornamentOrdinal (overrides random)
+  - Phase 2: compute random ornament via F0170/F0171 map metadata formula
+- Provider struct carries DungeonThings_Compat + map metadata
+- Resolve function matches DM1_ViewportWallOrnamentOrdinalCallback signature
+
 # Firestaff v3.0.131
 
 ## F0740-F0743 music state machine wiring (Q-DM1-08)

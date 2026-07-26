@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.131 LANGUAGES C)
+project(Firestaff VERSION 3.0.132 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -3912,6 +3912,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_save_load.c
     src/dm1/dm1_v1_runtime_sidecar_pc34_compat.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    src/dm1/dm1_v1_viewport_wall_ornament_ordinal_provider_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
     src/dm1/dm1_v1_viewport_source_frame_pc34_compat.c
     src/dm1/dm1_v1_viewport_plane_material_matrix_pc34_compat.c
