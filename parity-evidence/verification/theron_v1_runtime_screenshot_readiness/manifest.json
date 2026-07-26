@@ -13,7 +13,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260726-184657.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260726-184657.bmp",
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260726-205243.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260726-205243.bmp",
         "stdout": "[TQR] No Track 03/04 markers in <canonical_pcengine_root-data-dir>/TQJP02.bin; keeping raw Track 02 data with deterministic fallback assets\n[TQR] viewport initialized: 256x224 planar fb, palette ready\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
       },
       "fallback_assets_used": true,
@@ -26,7 +26,7 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260726-184657.bmp",
+          "name": "firestaff-presented-20260726-205243.bmp",
           "non_black_pixels": 18168,
           "sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
           "size": 1555254,
@@ -75,7 +75,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260726-184657.bmp",
+          "name": "firestaff-20260726-205243.bmp",
           "non_black_pixels": 2294,
           "sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131",
           "size": 192054,
@@ -98,7 +98,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260726-184659.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260726-184659.bmp",
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260726-205245.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260726-205245.bmp",
         "stdout": "[TQR] No Track 03/04 markers in <jp_extras_track02_bin-data-dir>/Dungeon Master - Theron's Quest (Japan) (Track 02).bin; keeping raw Track 02 data with deterministic fallback assets\n[TQR] viewport initialized: 256x224 planar fb, palette ready\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
       },
       "fallback_assets_used": true,
@@ -111,7 +111,7 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260726-184659.bmp",
+          "name": "firestaff-presented-20260726-205245.bmp",
           "non_black_pixels": 18168,
           "sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
           "size": 1555254,
@@ -160,7 +160,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260726-184659.bmp",
+          "name": "firestaff-20260726-205245.bmp",
           "non_black_pixels": 2294,
           "sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131",
           "size": 192054,
@@ -183,7 +183,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260726-184701.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260726-184701.bmp",
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260726-205246.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260726-205246.bmp",
         "stdout": "[TQR] No Track 03/04 markers in <us_extras_track02_bin-data-dir>/Dungeon Master - Theron's Quest (USA) (Track 02).bin; keeping raw Track 02 data with deterministic fallback assets\n[TQR] viewport initialized: 256x224 planar fb, palette ready\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
       },
       "fallback_assets_used": true,
@@ -196,7 +196,7 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260726-184701.bmp",
+          "name": "firestaff-presented-20260726-205246.bmp",
           "non_black_pixels": 18168,
           "sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
           "size": 1555254,
@@ -245,7 +245,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260726-184701.bmp",
+          "name": "firestaff-20260726-205246.bmp",
           "non_black_pixels": 2294,
           "sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131",
           "size": 192054,
@@ -257,7 +257,7 @@
     }
   ],
   "firestaff": "build/firestaff",
-  "generated_at": "2026-07-26T16:46:56.360551+00:00",
+  "generated_at": "2026-07-26T18:52:41.839220+00:00",
   "non_claims": [
     "No public Theron screenshot image is promoted.",
     "No generated or mock image is used.",
