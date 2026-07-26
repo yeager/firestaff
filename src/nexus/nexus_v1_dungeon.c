@@ -130,12 +130,14 @@ static int nexus_v1_compare_u64(const void *left, const void *right)
 static uint64_t nexus_v1_fixed_vector_dot(int64_t ax, int64_t ay, int64_t az,
                                           int64_t bx, int64_t by, int64_t bz)
 {
-#if defined(__SIZEOF_INT128__)
+#if defined(__SIZEOF_INT128__) && !defined(__STRICT_ANSI__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wpedantic"
     __int128 value = (__int128)ax * bx + (__int128)ay * by +
         (__int128)az * bz;
     __uint128_t magnitude = value < 0 ? (__uint128_t)-value :
         (__uint128_t)value;
-
+#pragma GCC diagnostic pop
     return magnitude > UINT64_MAX ? UINT64_MAX : (uint64_t)magnitude;
 #else
     long double value = (long double)ax * bx + (long double)ay * by +

@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.152
+
+- Fix GCC -Werror build failures on Ubuntu and Windows CI
+- Remove type-limits false positive in nexus_v1_bpk_archive.c and asset_find_by_hash.c
+- Initialize maybe-uninitialized variables in nexus_v1_prs3_capture_trace_schema.c
+- Add _DEFAULT_SOURCE for mkdtemp/popen/pclose on Linux
+- Guard __int128 with pragma to suppress -Wpedantic on GCC
+- Fix incompatible-pointer-types in CSB wall ornament ordinal resolver
+
 # Firestaff v3.0.151
 
 - Complete all Q-DM1 jobs (02-10) and all Q-CSB jobs (01-10)

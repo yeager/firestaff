@@ -1176,12 +1176,12 @@ int nexus_v1_prs3_vdp1_capture_schema_parse(
     Nexus_V1_Prs3Vdp1CaptureReceipt receipt;
     uint32_t decoder_returned_success;
     uint32_t capture_complete;
-    uint32_t output_store_predecessor_observed;
-    uint32_t complete_output_store_range_observed;
-    uint32_t complete_control_branch_coverage_observed;
-    uint32_t dynamic_control_operands_observed;
-    uint32_t dynamic_nonzero_byte_transfer_observed;
-    uint32_t dynamic_zero_source_merge_observed;
+    uint32_t output_store_predecessor_observed = 0;
+    uint32_t complete_output_store_range_observed = 0;
+    uint32_t complete_control_branch_coverage_observed = 0;
+    uint32_t dynamic_control_operands_observed = 0;
+    uint32_t dynamic_nonzero_byte_transfer_observed = 0;
+    uint32_t dynamic_zero_source_merge_observed = 0;
     const char *cursor;
     size_t magic_size;
 
