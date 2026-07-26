@@ -1,3 +1,12 @@
+- ✅ 2026-07-26 Actuator execution module and pit toggle bug fix (Q-DM1-04).
+  New dm1_v1_actuator_execution_pc34_compat consumes SensorActuatorDispatch_Compat
+  from sensor trigger chain and mutates dungeon square bytes: doors (bits 2:0,
+  states 0-4 with animation step), pits (bit 3 MASK0x0008_PIT_OPEN), fakewalls
+  (element type FAKEWALL↔CORRIDOR). Fixed critical bug in M11 sensor effect
+  handler: pit toggle was using bit 0 (imaginary flag) instead of bit 3 (open
+  flag). 18 focused tests covering door open/close/toggle, animation stepping,
+  pit toggle, fakewall flip, null safety, bounds checking, and bit preservation.
+  [v3.0.135]
 - ✅ 2026-07-26 CSB wall ornament ordinal resolver wired into viewport (Q-DM1-03).
   New csb_v1_viewport_wall_ornament_ordinal_resolver resolves ornament ordinals
   directly from CSB_V1_DungeonData raw bytes: sensor scan (bits 15:12 of bytes
