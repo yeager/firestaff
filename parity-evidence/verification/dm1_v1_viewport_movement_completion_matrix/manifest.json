@@ -15,18 +15,8 @@
         "-j2"
       ],
       "outputTail": [
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_input_command_queue_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_movement_command_core_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_movement_core_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_turning_presentation_pc34_compat",
-        "[100%] Built target firestaff_m10",
-        "[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat"
+        "[0/2] Re-checking globbed directories...",
+        "ninja: no work to do."
       ],
       "passed": true,
       "returncode": 0
@@ -149,7 +139,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:18565-18764; main_loop_m11.c:5387-5404; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
+        "- Firestaff: m11_game_view.c:18683-18882; main_loop_m11.c:5387-5404; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -249,7 +239,7 @@
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
         "- Firestaff field rows/zones (DM1-owned): /Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c:19",
-        "- Firestaff source viewport draw order: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:42698",
+        "- Firestaff source viewport draw order: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:42836",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -276,8 +266,8 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:11557",
-        "- Firestaff palette apply: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:26930",
+        "- Firestaff palette compute: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:11675",
+        "- Firestaff palette apply: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:27067",
         "- ReDMCSB F0337: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
         "- ReDMCSB DRAWVIEW palette install: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
@@ -409,5 +399,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-07-26T08:56:29.792074+00:00"
+  "timestampUtc": "2026-07-26T16:05:03.194198+00:00"
 }

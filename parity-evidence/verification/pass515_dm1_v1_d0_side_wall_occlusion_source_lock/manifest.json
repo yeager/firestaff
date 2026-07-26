@@ -3,31 +3,43 @@
   "firestaffChecks": [
     {
       "claim": "Existing runtime metadata records direct D0 side-wall return evidence.",
-      "hits": [],
-      "id": "firestaff_existing_d0_side_wall_specs_cite_return_lines",
-      "lines": "1171-1172",
-      "missing": [
-        "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L,  true,  false, 0, -1, 0,   0,  33,  136, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8016-8033\", \"DUNVIEW.C:8036-8038 wall case returns\" },",
-        "{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, 0,  1, 191, 0,  33,  136, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8126-8139\", \"DUNVIEW.C:8142-8144 wall case returns\" },"
+      "hits": [
+        {
+          "line": 1188,
+          "needle": "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L,  true,  false, 0, -1, 0,   0,  33,  136, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8016-8033\", \"DUNVIEW.C:8036-8038 wall case returns\" },"
+        },
+        {
+          "line": 1189,
+          "needle": "{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, 0,  1, 191, 0,  33,  136, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8126-8139\", \"DUNVIEW.C:8142-8144 wall case returns\" },"
+        }
       ],
+      "id": "firestaff_existing_d0_side_wall_specs_cite_return_lines",
+      "lines": "1185-1192",
+      "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "d69f1d526aa58fce8dd8122c27f89e11b02b9655737bbeb8e8e40a703ade6434",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "claim": "Open D0 side lanes use one back cell each; wall is a separate return path.",
-      "hits": [],
-      "id": "firestaff_existing_d0_side_occlusion_orders_are_single_back_cells",
-      "lines": "952-953",
-      "missing": [
-        "{ DM1_VIEW_SQUARE_D0L, 0x0002, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8000-8005 door-side/teleporter branch\", \"DUNVIEW.C:8005 F0115 with C0x0002\" },",
-        "{ DM1_VIEW_SQUARE_D0R, 0x0001, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8110-8115 door-side/teleporter branch\", \"DUNVIEW.C:8115 F0115 with C0x0001\" },"
+      "hits": [
+        {
+          "line": 969,
+          "needle": "{ DM1_VIEW_SQUARE_D0L, 0x0002, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8000-8005 door-side/teleporter branch\", \"DUNVIEW.C:8005 F0115 with C0x0002\" },"
+        },
+        {
+          "line": 970,
+          "needle": "{ DM1_VIEW_SQUARE_D0R, 0x0001, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8110-8115 door-side/teleporter branch\", \"DUNVIEW.C:8115 F0115 with C0x0001\" },"
+        }
       ],
+      "id": "firestaff_existing_d0_side_occlusion_orders_are_single_back_cells",
+      "lines": "966-973",
+      "missing": [],
       "path": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "d69f1d526aa58fce8dd8122c27f89e11b02b9655737bbeb8e8e40a703ade6434",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "claim": "Focused runtime test asserts D0 side return lines and zone/wall pairing.",
@@ -224,8 +236,8 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass515_dm1_v1_d0_side_wall_occlusion_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS515_DM1_V1_D0_SIDE_WALL_OCCLUSION_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS515_DM1_V1_D0_SIDE_WALL_OCCLUSION_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
@@ -241,9 +253,9 @@
         "/Volumes/Extern-disk/firestaff-claude/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL check-only",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

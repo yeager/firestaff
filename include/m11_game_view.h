@@ -362,14 +362,12 @@ static inline int M11_GameView_GetV1MouseCommandForPoint(
         outZoneId);
 }
 
-static inline int M11_GameView_GetV1EndgameTheEndZone(
-    int* outX, int* outY, int* outW, int* outH) {
-    DM1_V1_EndgameRectPc34 rect;
-    if (!outX || !outY || !outW || !outH ||
-        !dm1_v1_endgame_the_end_rect_pc34(&rect)) return 0;
-    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
-    return 1;
-}
+int M11_GameView_GetV1EndgameTheEndZone(
+    int* outX, int* outY, int* outW, int* outH);
+int M11_GameView_GetV1EndgameRestartBox(
+    int inner, int* outX, int* outY, int* outW, int* outH);
+int M11_GameView_GetV1EndgameQuitBox(
+    int inner, int* outX, int* outY, int* outW, int* outH);
 
 static inline int M11_GameView_GetV1EndgameChampionMirrorZone(
     int slot, int* outX, int* outY, int* outW, int* outH) {

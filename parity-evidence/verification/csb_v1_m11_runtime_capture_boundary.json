@@ -141,9 +141,7 @@
       ],
       "missing": [
         "FS_GAME_CSB",
-        "csb_v1_boot_scan_assets",
-        "csb_v1_boot_enter_game",
-        "csb_v1_boot_print_summary"
+        "csb_v1_boot_scan_assets"
       ],
       "ok": false
     },
@@ -175,7 +173,7 @@
     "firestaff_m12_supports_csb_launch_intent missing ['All five catalogued games now have runtime launch boundaries', 'strcmp(gameId, \"csb\") == 0'] path_exists=True",
     "firestaff_m12_launch_intent_uses_supported_game_and_assets missing ['M12_StartupMenu_GetLaunchIntent', 'm12_game_supported(intent.gameId)', 'M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)', 'version && version->matched ? 1 : 0'] path_exists=True",
     "firestaff_m11_csb_handoff_bypasses_dm1_loader missing ['FS_GAME_CSB path in firestaff_game_loop.c', 'CSB READY (FS LOOP)', 'CSB READY: gameId=csb dataDir=%s'] path_exists=True",
-    "firestaff_game_loop_csb_boots_profile missing ['FS_GAME_CSB', 'csb_v1_boot_scan_assets', 'csb_v1_boot_enter_game', 'csb_v1_boot_print_summary'] path_exists=True",
+    "firestaff_game_loop_csb_boots_profile missing ['FS_GAME_CSB', 'csb_v1_boot_scan_assets'] path_exists=True",
     "firestaff_pc_real_asset_probe_ticks_csb missing ['CSB_V1_VARIANT_PC34_EN', 'csb_v1_boot_enter_game', 'csb_v1_runtime_tick'] path_exists=True"
   ]
 }

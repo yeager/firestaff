@@ -29740,6 +29740,18 @@ static void m11_draw_dm1_center_destroyed_door_masks(const M11_GameViewState* st
     }
 }
 
+static int m11_dm1_nearest_blocking_center_door_depth(
+    const M11_ViewportCell cells[3][3]) {
+    int d;
+    for (d = 2; d >= 0; --d) {
+        const M11_ViewportCell* c = &cells[d][1];
+        if (c->valid && !m11_viewport_cell_is_open(c)) {
+            return d;
+        }
+    }
+    return -1;
+}
+
 static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
                                              unsigned char* framebuffer,
                                              int fbW,
@@ -29750,6 +29762,7 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
     const M11_AssetSlot* slot;
     const DM1_WallFrame* frame;
     int viewIndex;
+    int nearestBlock = m11_dm1_nearest_blocking_center_door_depth(cells);
     if (!state || !state->assetsAvailable) {
         return;
     }
@@ -29758,6 +29771,9 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
     }
     /* F0110 is reached from each F0118/F0121/F0124 door-front route. */
     for (depth = 2; depth >= 0; --depth) {
+        if (nearestBlock >= 0 && depth > nearestBlock) {
+            continue;
+        }
         cell = &cells[depth][1];
         if (!cell->valid || cell->elementType != DUNGEON_ELEMENT_DOOR ||
             !cell->hasDoorThing) {
@@ -31449,6 +31465,62 @@ static void m11_draw_dm1_side_contents_at_depth(
              * creatures, and projectiles (ReDMCSB DUNVIEW.C:5915-5933). */
 
     }
+}
+
+static int m11_dm1_center_line_clear_before_depth(
+    const M11_ViewportCell cells[3][3], int depth) {
+    int d;
+    for (d = 2; d > depth; --d) {
+        const M11_ViewportCell* center = &cells[d][1];
+        if (center->valid && !m11_viewport_cell_is_open(center)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int m11_dm1_side_lane_clear_before_depth(
+    const M11_ViewportCell cells[3][3], int depth, int sideIndex) {
+    int d;
+    for (d = 2; d > depth; --d) {
+        if (!m11_dm1_side_lane_clear_for_rel(cells, d + 1, sideIndex == 0 ? -1 : 1)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static void m11_draw_dm1_side_contents(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const M11_ViewRect frames[4],
+    const M11_ViewportCell cells[3][3],
+    const DM1_ViewportLaneVisibilityReceiptPc34* visibility,
+    int blockingCenterDepth) {
+    int depth;
+    if (!state || !framebuffer || !frames || !cells || !visibility) {
+        return;
+    }
+    for (depth = 2; depth >= 0; --depth) {
+        int sideSlot;
+        if (!m11_dm1_center_line_clear_before_depth(cells, depth)) {
+            continue;
+        }
+        for (sideSlot = 0; sideSlot < 2; ++sideSlot) {
+            int sideIndex = sideSlot;
+            if (!m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)) {
+                continue;
+            }
+        }
+        m11_draw_dm1_side_contents_at_depth(
+            state, framebuffer, framebufferWidth, framebufferHeight,
+            frames, cells, depth, visibility, blockingCenterDepth);
+    }
+    (void)m11_draw_item_sprite;
+    (void)m11_draw_creature_sprite_ex;
+    (void)m11_draw_projectile_sprite;
 }
 
 static void m11_draw_dm1_d0c_projectile_pass(const M11_GameViewState* state,
@@ -50848,6 +50920,33 @@ int M11_GameView_GetV1EndgameTheEndGraphicId(void) {
     return dm1_v1_graphic_the_end_pc34();
 }
 
+int M11_GameView_GetV1EndgameTheEndZone(
+    int* outX, int* outY, int* outW, int* outH) {
+    if (!outX || !outY || !outW || !outH) return 0;
+    *outX = 120;
+    *outY = 95;
+    *outW = 80;
+    *outH = 14;
+    return 1;
+}
+
+int M11_GameView_GetV1EndgameRestartBox(
+    int inner, int* outX, int* outY, int* outW, int* outH) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_endgame_restart_box_pc34(inner, &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
+
+int M11_GameView_GetV1EndgameQuitBox(
+    int inner, int* outX, int* outY, int* outW, int* outH) {
+    DM1_V1_EndgameRectPc34 rect;
+    if (!outX || !outY || !outW || !outH ||
+        !dm1_v1_endgame_quit_box_pc34(inner, &rect)) return 0;
+    *outX = rect.x; *outY = rect.y; *outW = rect.w; *outH = rect.h;
+    return 1;
+}
 
 int M11_GameView_GetV1MovementArrowsGraphicId(void) {
     return dm1_v1_movement_arrows_graphic_id_pc34();

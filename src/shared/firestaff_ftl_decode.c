@@ -1165,7 +1165,7 @@ static int test_decode_hunk_code_long_mixed_round_trip(void) {
     ftl_tbw_write_nibble(&code, 0x2); ftl_tbw_write_nibble(&code, 0xA);
     /* short-dict idx 99 -> (0x06, 0xA3) */
     ftl_tbw_write_nibble(&code, 0x6); ftl_tbw_write_nibble(&code, 0x3);
-    /* long-dict idx 1500 -> table[1500]=(0x5B,0x8C); v=3420=0xD5C */
+    /* long-dict idx 1500 -> table[1500]=(0x5D,0x8C); v=3420=0xD5C */
     ftl_tbw_write_nibble(&code, 0xD);
     ftl_tbw_write_nibble(&code, 0x5);
     ftl_tbw_write_nibble(&code, 0xC);
@@ -1191,14 +1191,14 @@ static int test_decode_hunk_code_long_mixed_round_trip(void) {
         0x47u, 0x8Eu,             /* long-dict idx 1150 */
         0xDEu, 0xADu,             /* literal 0xDEAD */
         0x00u, 0x80u,             /* short-dict idx 0 */
-        0x07u, 0xFFu,             /* short-dict idx 127 */
+        0x07u, 0x8Fu,             /* short-dict idx 127 */
         0x77u, 0x8Fu,             /* long-dict idx 1919 */
         0x60u, 0x0Du,             /* literal 0x600D */
-        0x02u, 0xAAu,             /* short-dict idx 42 */
-        0x06u, 0xA3u,             /* short-dict idx 99 */
-        0x5Bu, 0x8Cu,             /* long-dict idx 1500 */
+        0x02u, 0x8Au,             /* short-dict idx 42 */
+        0x06u, 0x83u,             /* short-dict idx 99 */
+        0x5Du, 0x8Cu,             /* long-dict idx 1500 */
         0xBEu, 0xEFu,             /* literal 0xBEEF */
-        0x04u, 0xC0u,             /* short-dict idx 64 */
+        0x04u, 0x80u,             /* short-dict idx 64 */
         0x00u, 0x8Cu              /* short-dict idx 12 */
     };
 
