@@ -25,6 +25,8 @@ int main(void) {
     memset(bytes, 0xA5, sizeof(bytes));
     expect_true("transparent", redmcsb_f0684_blit_c25_pc34_compat(source, sizeof(source), &aperture, &box, 0, 0, 3, 3, 0, 0, 0x10U));
     expect_byte("opaque first", bytes[0], 0x11U); expect_byte("transparent retained", bytes[1], 0xA5U); expect_byte("opaque last", bytes[2], 0x13U);
-    if (strstr(redmcsb_f0684_blit_source_evidence_pc34(), "IMAGE3.C:831-928") == NULL) ++failures;
-    if (failures != 0) return 1; puts("PASSED: ReDMCSB F0684 PC 3.4 C25 packed bitmap blit"); return 0;
+    if (strstr(redmcsb_f0684_blit_source_evidence_pc34(), "IMAGE3.C:831-928") == NULL) { ++failures; }
+    if (failures != 0) { return 1; }
+    puts("PASSED: ReDMCSB F0684 PC 3.4 C25 packed bitmap blit");
+    return 0;
 }
