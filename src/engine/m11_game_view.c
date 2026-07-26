@@ -8841,6 +8841,12 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
     state->world.party.mapY = stairs.newMapY;
     state->world.party.direction = stairs.newDirection;
 
+    if (state->dm1MusicSourceBound) {
+        DM1_V1_F0740F0743MusicReceiptPc34 musicReceipt;
+        (void)dm1_v1_f0742_set_map_track_pc34(
+            &state->dm1MusicSource, &state->dm1MusicState,
+            stairs.toMapIndex, &musicReceipt);
+    }
     memset(state->exploredBits, 0, sizeof(state->exploredBits));
     m11_mark_explored(state);
     m11_refresh_hash(state);
@@ -8914,6 +8920,12 @@ static int m11_apply_post_move_environment_from_compat(M11_GameViewState* state)
     state->world.party.mapY = resolution.finalMapY;
     state->world.party.direction = resolution.finalDirection;
     state->world.party.mapIndex = resolution.finalMapIndex;
+    if (state->dm1MusicSourceBound) {
+        DM1_V1_F0740F0743MusicReceiptPc34 musicReceipt;
+        (void)dm1_v1_f0742_set_map_track_pc34(
+            &state->dm1MusicSource, &state->dm1MusicState,
+            resolution.finalMapIndex, &musicReceipt);
+    }
     for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
         if (resolution.championFallDamage[i] > 0 &&
             state->world.party.champions[i].present &&
@@ -13410,6 +13422,8 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
     m11_advance_explosions_v1(state);
 }
 
+static void m11_dm1_f0740_bind_driver(M11_GameViewState *state);
+
 void M11_GameView_Init(M11_GameViewState* state) {
     if (!state) {
         return;
@@ -13419,6 +13433,11 @@ void M11_GameView_Init(M11_GameViewState* state) {
     dm1_spell_init(&state->dm1SpellCasting);
     firestaff_ra_overlay_init(&state->retroAchievementsOverlay);
     (void)M11_Audio_Init(&state->audioState);
+    if (state->audioState.originalSongAvailable &&
+        state->audioState.originalSongDatPath[0]) {
+        state->dm1MusicSourceBound = dm1_v1_f0740_f0743_bind_song_dat_pc34(
+            state->audioState.originalSongDatPath, &state->dm1MusicSource);
+    }
     /* V1 presentation: debug HUD off by default, opt-in via env */
     {
         const char* dbg = getenv("FIRESTAFF_DEBUG_HUD");
@@ -13458,6 +13477,10 @@ void M11_GameView_Init(M11_GameViewState* state) {
     DM1_V1_MovementPipeline_InitPc34Compat(&state->dm1V1MovementPipeline);
     DM1_SaveMenu_Init(&state->saveMenu);
     state->dm1MusicOn = 1;
+    dm1_v1_f0740_f0743_music_state_init_pc34(&state->dm1MusicState);
+    memset(&state->dm1MusicSource, 0, sizeof(state->dm1MusicSource));
+    m11_dm1_f0740_bind_driver(state);
+    state->dm1MusicSourceBound = 0;
     /* Generate a random game ID (matches ReDMCSB G0525_l_GameID
      * = RANDOM(65536) * RANDOM(65536) in LOADSAVE.C F0435) */
     state->dm1GameID = ((uint32_t)(rand() & 0xFFFF) << 16) | (uint32_t)(rand() & 0xFFFF);
@@ -18195,10 +18218,42 @@ int M11_GameView_GetSessionTimerReminderOverlayActive(
     return state->sessionTimerReminderOverlayActive;
 }
 
+static void m11_dm1_f0740_pause_bridge(void *context)
+{
+    M11_GameViewState *state = (M11_GameViewState *)context;
+    if (state) {
+        (void)M11_Audio_SetTitleMusicEnabled(&state->audioState, 0);
+    }
+}
+
+static void m11_dm1_f0741_play_bridge(void *context, int sourceTrackId,
+                                       const V1_SongSequence *sequence)
+{
+    M11_GameViewState *state = (M11_GameViewState *)context;
+    (void)sequence;
+    if (state) {
+        (void)M11_Audio_RequestSourceMusicTrack(&state->audioState,
+                                                sourceTrackId);
+    }
+}
+
+static void m11_dm1_f0740_bind_driver(M11_GameViewState *state)
+{
+    state->dm1MusicDriver.pause = m11_dm1_f0740_pause_bridge;
+    state->dm1MusicDriver.play = m11_dm1_f0741_play_bridge;
+    state->dm1MusicDriver.context = state;
+}
+
 int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled) {
     if (!state) return 0;
     state->dm1MusicOn = enabled ? 1 : 0;
     (void)M11_Audio_SetTitleMusicEnabled(&state->audioState, state->dm1MusicOn);
+    if (!enabled && state->dm1MusicSourceBound) {
+        DM1_V1_F0740F0743MusicReceiptPc34 receipt;
+        (void)dm1_v1_f0740_music_pause_pc34(
+            &state->dm1MusicSource, &state->dm1MusicState,
+            &state->dm1MusicDriver, &receipt);
+    }
     return state->dm1MusicOn;
 }
 
@@ -18567,6 +18622,12 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
     }
 
     state->world.gameTick++;
+    if (state->dm1MusicSourceBound && state->dm1MusicOn) {
+        DM1_V1_F0740F0743MusicReceiptPc34 musicReceipt;
+        (void)dm1_v1_f0743_update_music_pc34(
+            &state->dm1MusicSource, &state->dm1MusicState,
+            &state->dm1MusicDriver, &musicReceipt);
+    }
     m11_decrement_action_disabled_ticks(state);
     if (state->lastDm1V1MovementPipelineResult.anyMovementOccurred) {
         /* ReDMCSB MOVESENS.C:763-775 updates

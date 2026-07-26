@@ -1,3 +1,11 @@
+- ✅ 2026-07-26 Wire F0740-F0743 DM1 music state machine into M11 game view
+  (Q-DM1-08). SONG.DAT source bound at init via audio state path. F0742
+  set_map_track called on stairs/teleporter map transitions. F0743
+  update_music called per game tick when music enabled. F0740 pause called
+  on music disable. Music driver bridges F0740 pause → M11_Audio disable,
+  F0741 play → M11_Audio_RequestSourceMusicTrack. Viewport element routing
+  refined to 3-state return (wall=1/open-cell=2/door=0) for proper door
+  frame gating in center and side squares (Q-DM1-03). [v3.0.131]
 - ✅ 2026-07-26 Add element routing for D3C/D2C/D1C center and D2L/D2R/D1L/D1R
   side wall squares in CSB viewport. Wall elements now draw wall bitmap +
   F0107 front/side ornament and skip door frame; non-wall elements fall

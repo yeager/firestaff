@@ -55,6 +55,7 @@
 #include "csb_v1_startup_entrance_f0128_m11_handoff_pc34_compat.h"
 #include "csb_v1_csbwin_dsa_runtime_admission_pc34_compat.h"
 #include "csb_v1_startup_runtime_coupling_adapter_pc34_compat.h"
+#include "dm1_v1_f0740_f0743_music_source_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -1057,6 +1058,11 @@ typedef struct {
     struct DM1SaveMenuContext saveMenu;
     uint32_t dm1GameID;  /* Persistent game ID for save file matching */
     int dm1MusicOn;      /* ReDMCSB G2024_B_PendingMusicOn runtime state */
+
+    DM1_V1_F0740F0743MusicSourcePc34 dm1MusicSource;
+    DM1_V1_F0740F0743MusicStatePc34  dm1MusicState;
+    DM1_V1_F0740F0743MusicDriverPc34 dm1MusicDriver;
+    int dm1MusicSourceBound;
 
     /* DM1 V2 Phase 5 smooth movement camera state.
      * These fields carry the presentation-layer interpolation offsets

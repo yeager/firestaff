@@ -1,6 +1,22 @@
 
 # Unreleased
 
+# Firestaff v3.0.131
+
+## F0740-F0743 music state machine wiring (Q-DM1-08)
+
+- Wire DM1 F0740-F0743 music state machine into M11 game view
+- SONG.DAT source binding at init from audio state discovered path
+- F0742 set_map_track called on stairs and teleporter map transitions
+- F0743 update_music called each game tick when music is enabled
+- F0740 pause on music disable via bridge to M11_Audio
+- Music driver bridges: pause → SetTitleMusicEnabled(0), play → RequestSourceMusicTrack
+
+## Viewport element routing refinement (Q-DM1-03)
+
+- Center and side wall element routing returns 3 states: wall(1)/open-cell(2)/door(0)
+- Door frames only draw for door elements; open cells (corridor/pit/stairs/teleporter) skip door frame entirely
+
 # Firestaff v3.0.130
 
 - Add element routing for D3C/D2C/D1C center and D2L/D2R/D1L/D1R side wall

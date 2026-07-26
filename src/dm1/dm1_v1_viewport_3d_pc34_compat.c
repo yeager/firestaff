@@ -3614,10 +3614,11 @@ static void dm1_viewport_3d_draw_d3_side_square(
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_draw_center_wall_element
  *
- * Element routing for center squares D3C/D2C/D1C.  If the element at
- * (map_x, map_y) is a WALL, draws the wall bitmap with parity + F0107
- * front ornament and returns 1.  Returns 0 for all other elements so
- * the caller can proceed with door frame / open-cell drawing.
+ * Element routing for center squares D3C/D2C/D1C.
+ * Returns:
+ *   1 = WALL drawn (wall bitmap + F0107 ornament); skip door frame
+ *   2 = open cell (corridor/pit/stairs/teleporter); skip door frame
+ *   0 = DOOR_FRONT element; caller should draw door frame
  *
  * Source: DUNVIEW.C:6707-6714 (D3C), 7299-7306 (D2C), 7833-7840 (D1C)
  * ──────────────────────────────────────────────────────────────────────── */
@@ -3643,7 +3644,14 @@ static int dm1_viewport_3d_draw_center_wall_element(
     element = state->dungeon_aspect_grid ? cell
                                          : dm1_viewport_3d_classify_grid_cell(cell);
 
-    if (element != DM1_VP_ELEMENT_WALL) return 0;
+    if (element != DM1_VP_ELEMENT_WALL) {
+        if (element == DM1_VP_ELEMENT_DOOR_FRONT ||
+            element == DM1_VP_ELEMENT_DOOR ||
+            element == DM1_VP_ELEMENT_DOOR_SIDE) {
+            return 0;
+        }
+        return 2;
+    }
 
     if (square == DM1_VIEW_SQUARE_D3C) {
         native_wall = DM1_WALL_D3C;
@@ -3676,9 +3684,11 @@ static int dm1_viewport_3d_draw_center_wall_element(
 /* ────────────────────────────────────────────────────────────────────────────
  * dm1_viewport_3d_draw_side_wall_element
  *
- * Element routing for side squares D2L/D2R/D1L/D1R.  If the element at
- * (map_x, map_y) is a WALL, draws the wall bitmap with parity + F0107
- * side ornament and returns 1.  Returns 0 for all other elements.
+ * Element routing for side squares D2L/D2R/D1L/D1R.
+ * Returns:
+ *   1 = WALL drawn (wall bitmap + F0107 ornament); skip door frame
+ *   2 = open cell (corridor/pit/stairs/teleporter); skip door frame
+ *   0 = DOOR_FRONT element; caller should draw door frame
  *
  * Source: DUNVIEW.C:6954-6964 (D2L), 7105-7115 (D2R),
  *         7445-7455 (D1L), 7613-7623 (D1R)
@@ -3699,7 +3709,14 @@ static int dm1_viewport_3d_draw_side_wall_element(
     cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
     element = state->dungeon_aspect_grid ? cell
                                          : dm1_viewport_3d_classify_grid_cell(cell);
-    if (element != DM1_VP_ELEMENT_WALL) return 0;
+    if (element != DM1_VP_ELEMENT_WALL) {
+        if (element == DM1_VP_ELEMENT_DOOR_FRONT ||
+            element == DM1_VP_ELEMENT_DOOR ||
+            element == DM1_VP_ELEMENT_DOOR_SIDE) {
+            return 0;
+        }
+        return 2;
+    }
 
     switch (square) {
     case DM1_VIEW_SQUARE_D2L:
