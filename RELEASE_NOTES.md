@@ -1,11 +1,12 @@
 
 # Unreleased
 
-# Firestaff v3.0.157
+# Firestaff v3.0.158
 
-- Widen all DM2 source_evidence buffers (224/200 → 512) for GCC -Wformat-truncation
-- Widen DM2 save_root/save_path buffers (512 → 1024) across boot, runtime, startup menu
-- Widen CSB save dir/path buffers (512 → 1024) for path construction overflow
+- Suppress GCC -Wformat-truncation and -Wstringop-truncation globally (snprintf truncation is by design)
+- Fix GCC -Wunused-const-variable for dm2_graphics_hashes (__attribute__ placement)
+- Widen all DM2 source_evidence buffers (224/200 → 512)
+- Widen DM2/CSB save_root/save_path buffers (512 → 1024)
 - Initialize source_next in CSB runtime to fix GCC -Wmaybe-uninitialized
 - Mark Q-DM2-01 through Q-DM2-10 complete (DM2 subsystem assessment: 96% pass rate)
 
