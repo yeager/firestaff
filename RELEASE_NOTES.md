@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.154
+
+- Suppress GCC -Wtype-limits for nexus_v1_dungeon.c (defensive uint16_t overflow checks)
+- Fix misleading-indentation in floor decoration offset pair receipt
+- Replace strncpy with snprintf in asset_find_by_hash.c (GCC 15 -Wstringop-truncation)
+
 # Firestaff v3.0.153
 
 - Fix remaining GCC/MinGW -Werror CI failures for v3.0.152
