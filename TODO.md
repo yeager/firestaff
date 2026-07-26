@@ -101,8 +101,15 @@ that its exact runtime path is not already source-locked and tested.
     level context and world mutation from loaded dungeon/save data.
 13. **Q-CSB-03 Startup presentation chain:** C001-C005 FTL/PRESENTS/CHAOS/
     STRIKES/Entrance timing, palette and audio in live M11.
+    2026-07-26: CSB GRAPHICS.DAT identified as Amiga v3.1 IMG1 format
+    (dmweb.free.fr "Data Files"). Replaced ExpandGraphic byte-format
+    decoder with IMG1 nibble-RLE decoder. C001 (320x153 title) and C004
+    (320x200 entrance) now decode 100% correctly. Remaining: palette
+    binding, title animation timing, swoosh→title→entrance transitions.
 14. **Q-CSB-04 Entrance and credits handoff:** opening door, credits, prompts,
     input timing, sound and first runtime frame from package data.
+    2026-07-26: Entrance graphic (C004) now decodes correctly with IMG1.
+    Remaining: button input handling, door animation, credits.
 15. **Q-CSB-05 HUD and champion panels:** C017/C040 champion, inventory,
     action/spell, cursor, text and transparency rendering.
     2026-07-25: V2 HUD overlay test (19 cases covering all 13 public

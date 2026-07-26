@@ -1,6 +1,18 @@
 
 # Unreleased
 
+# Firestaff v3.0.139
+
+- **Fix CSB graphic decode: IMG1 format (Q-CSB-03, Q-CSB-04):** The CSB
+  GRAPHICS.DAT (749 items, BE DMCSB2 header) is Amiga v3.1 format using
+  IMG1 nibble-RLE encoding, not the CSBWin ExpandGraphic byte format.
+  Identified via dmweb.free.fr "Data Files" documentation. Replaced the
+  entire ExpandGraphic planar decoder with a correct IMG1 nibble-based RLE
+  decoder. C001 (320x153 title "CHAOS STRIKES BACK Presents") and C004
+  (320x200 entrance with PRISON/RESUME buttons) now decode 100% with all
+  compressed bytes consumed. Removed temporary debug prints. Updated test
+  vectors.
+
 # Firestaff v3.0.138
 
 - **HoC action/spell material lane (Q-DM1-02):** Added action/spell surface
