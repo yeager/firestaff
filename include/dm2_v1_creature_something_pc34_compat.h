@@ -125,7 +125,7 @@ typedef struct {
   int sequence_end;          /* 4FCC ended the sequence (return 0) */
   int rand_draws;            /* session LCG draws consumed */
   int return_value;          /* the source RG1L */
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CreatureAnimFrameReceipt;
 
 /*
@@ -196,7 +196,7 @@ typedef struct {
   int delta;                 /* RG1L before the gametick add */
   int delta_band;            /* DM2_V1_ANIM_DELTA_BAND_* */
   int rand_draws;            /* session LCG draws consumed */
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CreatureSomethingReceipt;
 
 /*

@@ -145,7 +145,7 @@ typedef struct {
   int tail_enqueued;         /* m_15843: timer re-queued as-is */
   uint32_t tail_ticket;      /* m_15843: ticket stored in slot word@2 */
   int bitmap_would_copy;     /* m_157BC receipted (structurally 0) */
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CcmLoopReceipt;
 
 int dm2_v1_ccm_message_loop(

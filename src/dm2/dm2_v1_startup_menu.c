@@ -1754,7 +1754,7 @@ int dm2_v1_startup_execute_save_path_with_host_receipt(
     DM2_V1_StartupExecution *out_execution,
     DM2_V1_StartupDirectResumeReceipt *out_receipt)
 {
-    char save_root[512];
+    char save_root[1024];
     DM2_V1_StartupExecution local_execution;
     DM2_V1_StartupExecution *execution;
     DM2_V1_StartupResumeStatus status;

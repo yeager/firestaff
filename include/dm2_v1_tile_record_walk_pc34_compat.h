@@ -108,7 +108,7 @@ typedef struct {
     int ai_stop_invoked;    /* bound 0360 ran (walk-end path) */
     int ai_stop_completed;  /* 0360 receipt.completed */
     int ai_stop_guard_denied;/* 0360 receipt.guard_denied */
-    char source_evidence[224];
+    char source_evidence[512];
 } DM2_V1_Xact85Receipt;
 
 /* DM2_PROCEED_XACT_85 (c_ai.cpp:2078-2117) — bounded slice.
@@ -140,7 +140,7 @@ typedef struct {
     int attacks_completed;  /* bound ATTACK_CREATURE completions */
     int aborted;            /* action 0xb mode > 2: source return */
     int unknown_action;     /* action neither 0xb nor 0x28 (receipted) */
-    char source_evidence[224];
+    char source_evidence[512];
 } DM2_V1_CreatureKillerReceipt;
 
 /* DM2_ACTIVATE_CREATURE_KILLER (c_tim_proc.cpp:2907-2988) — bounded

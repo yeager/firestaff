@@ -644,8 +644,8 @@ _Static_assert(CSB_V1_VARIANT_ST_F20E == CSB_V1_VARIANT_COUNT - 1,
 #define CSB_PATH_SEP '/'
 #endif
 
-static char g_csb_save_dir_buf[512];
-static char g_csb_save_path_buf[512];
+static char g_csb_save_dir_buf[1024];
+static char g_csb_save_path_buf[1024];
 static int  g_save_dir_init = 0;
 
 static int csb_v1_runtime_first_living_champion(
@@ -12154,7 +12154,7 @@ int csb_v1_runtime_f0163_f0164_object_move_receipt_pc34(
     uint8_t *previous_record = NULL;
     uint8_t *destination_tail_record = NULL;
     uint16_t current;
-    uint16_t source_next;
+    uint16_t source_next = THING_NONE;
     uint16_t destination_first;
     int thing_type;
     int thing_size;

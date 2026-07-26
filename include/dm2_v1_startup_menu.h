@@ -126,7 +126,7 @@ typedef int (*DM2_V1_StartupSessionApplyFn)(
     const DM2_V1_SessionState *session);
 
 typedef struct {
-    char save_root[512];
+    char save_root[1024];
     int resume_available;
     unsigned int slot_mask;
     int row_count;
@@ -134,7 +134,7 @@ typedef struct {
 } DM2_V1_StartupMenu;
 
 typedef struct {
-    char save_root[512];
+    char save_root[1024];
     int resume_available;
     unsigned int slot_mask;
     int row_count;
@@ -142,7 +142,7 @@ typedef struct {
 } DM2_V1_StartupMenuSnapshot;
 
 typedef struct {
-    char save_root[512];
+    char save_root[1024];
     int resume_available;
     unsigned int slot_mask;
     int row_count;
@@ -156,7 +156,7 @@ typedef struct DM2_V1_StartupSaveMenuHandoffReceipt {
     DM2_V1_StartupExecutionKind execution_kind;
     int source_row;
     int source_slot;
-    char save_root[512];
+    char save_root[1024];
     int rescan_saves;
     int session_ready;
     int return_to_launcher;
@@ -256,7 +256,7 @@ typedef struct DM2_V1_StartupLaunchReceipt {
 typedef struct {
     DM2_V1_StartupHostReceipt host_receipt;
     int save_root_valid;
-    char save_root[512];
+    char save_root[1024];
     int session_ready;
     int session_applied;
 } DM2_V1_StartupDirectResumeReceipt;
