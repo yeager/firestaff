@@ -12,8 +12,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1024_set_trap14_vector_error_processing_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f1024_set_trap14_vector_error_processing_pc34_compat());
     assert(strstr(evidence, "FILE.C:806-836") != NULL);

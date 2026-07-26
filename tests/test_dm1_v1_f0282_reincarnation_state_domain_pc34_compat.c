@@ -10,8 +10,8 @@ static void test_valid_reincarnation_state_plan(void)
 {
     uint8_t draws[12] = {0, 1, 2, 3, 4, 5, 6, 0, 1, 2, 3, 4};
     ReincarnationResult_Compat result =
-    (void)result;
         F0864_RESURRECTION_ComputeReincarnation_Compat(
+    (void)result;
             200, 120, 180, 100, 80, 60, draws);
 
     assert(result.valid == 1);
@@ -34,8 +34,8 @@ static void test_invalid_draw_has_no_reincarnation_mutation(void)
 {
     uint8_t draws[12] = {0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3};
     ReincarnationResult_Compat result =
-    (void)result;
         F0864_RESURRECTION_ComputeReincarnation_Compat(
+    (void)result;
             200, 120, 180, 100, 80, 60, draws);
     int index;
 

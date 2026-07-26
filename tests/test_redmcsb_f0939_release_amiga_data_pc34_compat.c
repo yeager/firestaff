@@ -12,8 +12,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f0939_release_amiga_data_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f0939_release_amiga_data_pc34_compat());
     assert(strstr(evidence, "EXEC.C:4-16") != NULL);

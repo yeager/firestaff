@@ -11,8 +11,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1059_post_f0433_startend_process_command140_save_game_source_evidence_pc34();
+    (void)evidence;
 
     redmcsb_f1059_post_f0433_startend_process_command140_save_game_pc34_compat();
 

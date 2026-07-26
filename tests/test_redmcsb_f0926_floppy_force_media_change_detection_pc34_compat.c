@@ -11,8 +11,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f0926_floppy_force_media_change_detection_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f0926_floppy_force_media_change_detection_pc34_compat(0));
     assert(!redmcsb_f0926_floppy_force_media_change_detection_pc34_compat(1));

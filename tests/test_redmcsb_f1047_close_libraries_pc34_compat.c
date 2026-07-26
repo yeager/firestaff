@@ -12,8 +12,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1047_close_libraries_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f1047_close_libraries_pc34_compat());
     assert(strstr(evidence, "MAINLIB.C:4-60") != NULL);

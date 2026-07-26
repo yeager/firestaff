@@ -31,8 +31,8 @@ static void test_null_state_is_ignored(void)
 static void test_source_evidence_names_redmcsb_symbol(void)
 {
     const char* evidence =
-    (void)evidence;
         F0323_CHAMPION_Unpoison_SourceEvidencePc34Compat();
+    (void)evidence;
 
     assert(evidence != NULL);
     assert(strstr(evidence, "CHAMPION.C") != NULL);

@@ -12,8 +12,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f0944_exec_vector_patch_check_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f0944_exec_vector_patch_check_pc34_compat());
     assert(strstr(evidence, "EXEC.C:4-16") != NULL);

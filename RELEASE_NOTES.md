@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.133
+
+## Build fixes and project guide
+
+- Fix 50 test files with misplaced `(void)` cast between assignment and function call
+- Add wall ornament transitive link dependencies to 29 CMake targets
+- Fix `element_type` → `element` field name in dungeon square struct test
+- Add CLAUDE.md project guide (build, test, release, architecture, conventions)
+
 # Firestaff v3.0.132
 
 ## Wall ornament ordinal provider (Q-DM1-03)

@@ -90,8 +90,8 @@ static void build_context(
 static void test_source_evidence(void)
 {
     const char *evidence =
-    (void)evidence;
         DM1_V1_F0156_F0159_F0160_F0161_SourceEvidencePc34();
+    (void)evidence;
 
     assert(evidence != 0);
     assert(strstr(evidence, "F0156_DUNGEON_GetThingData") != 0);

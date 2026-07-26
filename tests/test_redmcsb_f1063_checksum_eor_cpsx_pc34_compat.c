@@ -11,8 +11,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1063_checksum_eor_cpsx_source_evidence_pc34();
+    (void)evidence;
 
     redmcsb_f1063_checksum_eor_cpsx_pc34_compat();
 

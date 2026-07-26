@@ -12,8 +12,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f0946_release_audio_data_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f0946_release_audio_data_pc34_compat());
     assert(strstr(evidence, "SOUND.C:496-557") != NULL);

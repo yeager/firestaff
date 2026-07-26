@@ -19,7 +19,7 @@
   "blocker": "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
   "branch": "main",
   "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "head": "7cf48fc37ee08188c6a81f6ab2c3de15f54ebae8",
+  "head": "9496ec816c8211e9898a722f7578d2886dd2d907",
   "nonClaims": [
     "no movement behavior changed",
     "no pass513 scaffold promoted",
@@ -221,5 +221,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
-  "timestampUtc": "2026-07-26T07:16:42.080844+00:00"
+  "timestampUtc": "2026-07-26T08:38:27.801557+00:00"
 }

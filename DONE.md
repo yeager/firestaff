@@ -1,3 +1,7 @@
+- ✅ 2026-07-26 Fix build: repair 50 test files with misplaced (void) cast,
+  add wall ornament transitive link deps to 29 CMake targets, fix
+  element_type→element field rename in dungeon square test. Add CLAUDE.md
+  project guide. [v3.0.133]
 - ✅ 2026-07-26 Add wall ornament ordinal provider module (Q-DM1-03).
   New dm1_v1_viewport_wall_ornament_ordinal_provider resolves ornament
   ordinals from dungeon thing data: sensor-placed ornaments (phase 1,

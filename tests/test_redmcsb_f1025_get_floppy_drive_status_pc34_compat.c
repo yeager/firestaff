@@ -12,8 +12,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1025_get_floppy_drive_status_source_evidence_pc34();
+    (void)evidence;
 
     assert(!redmcsb_f1025_get_floppy_drive_status_pc34_compat(0x90));
     assert(!redmcsb_f1025_get_floppy_drive_status_pc34_compat(0x91));

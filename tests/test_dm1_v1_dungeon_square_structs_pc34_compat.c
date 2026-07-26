@@ -26,7 +26,7 @@ static void test_decode_wall(void)
     uint8_t raw = (DM1_ELEMENT_WALL << 5);
 
     dm1_decode_square(raw, &sq);
-    assert(sq.element_type == DM1_ELEMENT_WALL);
+    assert(sq.element == DM1_ELEMENT_WALL);
     assert(sq.has_thing_list == false);
 }
 
@@ -36,7 +36,7 @@ static void test_decode_corridor_with_things(void)
     uint8_t raw = (DM1_ELEMENT_CORRIDOR << 5) | 0x10;
 
     dm1_decode_square(raw, &sq);
-    assert(sq.element_type == DM1_ELEMENT_CORRIDOR);
+    assert(sq.element == DM1_ELEMENT_CORRIDOR);
     assert(sq.has_thing_list == true);
 }
 
@@ -46,7 +46,7 @@ static void test_decode_door(void)
     uint8_t raw = (DM1_ELEMENT_DOOR << 5);
 
     dm1_decode_square(raw, &sq);
-    assert(sq.element_type == DM1_ELEMENT_DOOR);
+    assert(sq.element == DM1_ELEMENT_DOOR);
 }
 
 static void test_decode_all_elements(void)
@@ -56,7 +56,7 @@ static void test_decode_all_elements(void)
     for (int e = 0; e <= 6; e++) {
         uint8_t raw = (uint8_t)(e << 5);
         dm1_decode_square(raw, &sq);
-        assert(sq.element_type == e);
+        assert(sq.element == e);
     }
 }
 

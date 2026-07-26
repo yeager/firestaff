@@ -77,11 +77,11 @@
     {
       "hits": [
         {
-          "line": 4174,
+          "line": 4191,
           "needle": "DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"
         },
         {
-          "line": 4175,
+          "line": 4192,
           "needle": "DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"
         }
       ],

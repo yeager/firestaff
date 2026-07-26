@@ -93,7 +93,7 @@
       "source": "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c"
     }
   ],
-  "generatedAt": "2026-07-26T07:16:40.684502+00:00",
+  "generatedAt": "2026-07-26T08:37:28.232098+00:00",
   "lane": "Lane A movement/stairs/group-collision/timing only; no viewport/pass435 dependency",
   "redmcsbEvidence": [
     {

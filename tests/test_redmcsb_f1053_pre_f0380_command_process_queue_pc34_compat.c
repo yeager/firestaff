@@ -11,8 +11,8 @@
 int main(void)
 {
     const char *evidence =
-    (void)evidence;
         redmcsb_f1053_pre_f0380_command_process_queue_source_evidence_pc34();
+    (void)evidence;
 
     redmcsb_f1053_pre_f0380_command_process_queue_pc34_compat();
 

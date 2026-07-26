@@ -160,8 +160,8 @@ static void test_invalid_damage_and_consumer_failure_are_rejected(void)
 static void test_source_evidence_names_redmcsb_symbol(void)
 {
     const char *evidence =
-    (void)evidence;
         DM1_V1_ActionDamageRenderPlan_SourceEvidencePc34Compat();
+    (void)evidence;
 
     assert(evidence != NULL);
     assert(strstr(evidence, "ACTIDRAW.C") != NULL);
