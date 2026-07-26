@@ -1,9 +1,11 @@
 
 # Unreleased
 
-# Firestaff v3.0.160
+# Firestaff v3.0.161
 
 - Switch from -std=c11 to -std=gnu11 globally (enables POSIX extensions on glibc)
+- Add missing stdlib.h for mkstemp in Theron test files
+- Fix unused-function warnings on Windows for DM2 save corpus functions
 - Add Windows setenv/unsetenv shims for CSB F9 reload test
 - Suppress GCC -Wformat-truncation and -Wstringop-truncation globally
 - Fix GCC -Wunused-const-variable for dm2_graphics_hashes
