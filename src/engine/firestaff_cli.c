@@ -9,6 +9,7 @@
 
 void fs_cli_print_version(void) {
     printf("Firestaff %s — Dungeon Master Collection\n", FIRESTAFF_VERSION_STRING);
+    printf("\xC2\xA9 2026 Daniel Nylander — https://www.github.com/yeager/firestaff\n");
 }
 
 void fs_cli_print_help(const char *prog) {

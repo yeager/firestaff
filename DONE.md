@@ -1,3 +1,7 @@
+- ✅ 2026-07-26 SDL3 app metadata and credits. macOS About panel now shows
+  "Daniel Nylander", copyright 2026, GitHub URL, and app type. In-menu credits
+  updated with author, URL, and library credits (ReDMCSB, skproject, SDL3, zlib,
+  dmweb). CLI --version also prints author and URL. [v3.0.141]
 - ✅ 2026-07-26 Architecture auto-detection and menu option. Startup menu now
   has an ARCHITECTURE row (Auto/PC/Amiga/Atari ST/etc.) per game. Auto mode
   resolves PC→Amiga→Atari ST→others priority. Architecture preference persists

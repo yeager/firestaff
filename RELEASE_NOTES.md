@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.141
+
+- **SDL3 app metadata and credits:** macOS About panel (Firestaff → About
+  Firestaff) now shows Daniel Nylander, © 2026, and the GitHub URL. SDL3
+  `SDL_SetAppMetadata` and `SDL_SetAppMetadataProperty` populate the native
+  About dialog on macOS; other platforms receive the same metadata through SDL.
+  In-menu credits updated with author, GitHub URL, and library/project credits
+  (ReDMCSB, skproject, SDL3, zlib, dmweb). CLI `--version` prints author and URL.
+
 # Firestaff v3.0.140
 
 - **Architecture auto-detection and menu option:** Startup menu now includes an
