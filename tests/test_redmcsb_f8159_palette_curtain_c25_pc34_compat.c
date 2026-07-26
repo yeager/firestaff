@@ -41,7 +41,7 @@ int main(void)
     memset(&dac, 0xA5, sizeof(dac));
 
     expect_int("black curtain", redmcsb_f8159_palette_set_curtain_c25_pc34_compat(
-                   full, &dac, &curtain, REDMCSB_F8159_BLACK_PALETTE_PC34,
+                   (const uint8_t (*)[REDMCSB_F8156_C25_PALETTE_COMPONENTS_PC34])full, &dac, &curtain, REDMCSB_F8159_BLACK_PALETTE_PC34,
                    wait_vblank, &wait_state), 1);
     expect_int("black wait", wait_state.calls, 1);
     expect_int("black state", curtain, REDMCSB_F8159_BLACK_PALETTE_PC34);
@@ -49,7 +49,7 @@ int main(void)
     expect_int("black DAC last", dac.rgb6[31][2], 0);
 
     expect_int("normal curtain", redmcsb_f8159_palette_set_curtain_c25_pc34_compat(
-                   full, &dac, &curtain, REDMCSB_F8159_NORMAL_PALETTE_PC34,
+                   (const uint8_t (*)[REDMCSB_F8156_C25_PALETTE_COMPONENTS_PC34])full, &dac, &curtain, REDMCSB_F8159_NORMAL_PALETTE_PC34,
                    wait_vblank, &wait_state), 1);
     expect_int("normal wait", wait_state.calls, 2);
     expect_int("normal state", curtain, REDMCSB_F8159_NORMAL_PALETTE_PC34);
@@ -57,14 +57,14 @@ int main(void)
     expect_int("normal real blue", dac.rgb6[31][2], 33);
 
     expect_int("unknown source state", redmcsb_f8159_palette_set_curtain_c25_pc34_compat(
-                   full, &dac, &curtain, 7U, wait_vblank, &wait_state), 1);
+                   (const uint8_t (*)[REDMCSB_F8156_C25_PALETTE_COMPONENTS_PC34])full, &dac, &curtain, 7U, wait_vblank, &wait_state), 1);
     expect_int("unknown skips VBlank", wait_state.calls, 2);
     expect_int("unknown state stored", curtain, 7);
 
     wait_state.allow = 0;
     curtain = 9U;
     expect_int("failed VBlank", !redmcsb_f8159_palette_set_curtain_c25_pc34_compat(
-                   full, &dac, &curtain, REDMCSB_F8159_BLACK_PALETTE_PC34,
+                   (const uint8_t (*)[REDMCSB_F8156_C25_PALETTE_COMPONENTS_PC34])full, &dac, &curtain, REDMCSB_F8159_BLACK_PALETTE_PC34,
                    wait_vblank, &wait_state), 1);
     expect_int("failed state not stored", curtain, 9);
 
