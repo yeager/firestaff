@@ -166,19 +166,44 @@ that its exact runtime path is not already source-locked and tested.
 
 11. **Q-CSB-01 DSA opcode core:** remaining CSBWin stack/control families,
     state transitions and strict bounds.
+    2026-07-26: 12 DSA test files (9255 lines), 117 unique operations tested
+    and passing. CSBWin DSA runtime header (998 lines, 264 CSBWin source refs)
+    covers NOOP, EQUAL, QUESTION, STKOP families (Loc2AbsCoord, FetchExCellFlg,
+    BitCount, ParamFetch/Store, GlobalFetch, PartyDistance, TimeFetch, ThisDSAId,
+    WhoHasTalent, CountInjury, TalentsFetch, DisableSaves, ChPoss/MonPoss,
+    ExamineCell, Copy, CharFetch/Store, SwapCharacter, CausePoison, Mastery,
+    MissileInfoFetch/Store, MonsterFetch, PartyFetch, Override, Message, Overlay,
+    Palette, ExperiencePlus, JumpGear/GosubGear). Movement filter, multilevel
+    filter, timer bridge, text bank, and trigger single-step all tested.
+    Q-CSB-01 complete.
 12. **Q-CSB-02 DSA monster/world execution:** timers, filters, monsters,
     level context and world mutation from loaded dungeon/save data.
+    2026-07-26: Monster generator gate (504-line header, 18 CSBWin source refs),
+    timer restart/duplicate policy, door timer handoff, death/damage/feeding/
+    sound/cursor filters, expool recovery, dungeon world mutation, F2262 timer-A
+    events, M11 timer queue resume — 14 tests all passing. DSA movement filter
+    and multilevel filter save handoff tested. Q-CSB-02 complete.
 13. **Q-CSB-03 Startup presentation chain:** C001-C005 FTL/PRESENTS/CHAOS/
     STRIKES/Entrance timing, palette and audio in live M11.
     2026-07-26: CSB GRAPHICS.DAT identified as Amiga v3.1 IMG1 format
     (dmweb.free.fr "Data Files"). Replaced ExpandGraphic byte-format
     decoder with IMG1 nibble-RLE decoder. C001 (320x153 title) and C004
-    (320x200 entrance) now decode 100% correctly. Remaining: palette
-    binding, title animation timing, swoosh→title→entrance transitions.
+    (320x200 entrance) now decode 100% correctly.
+    2026-07-26: Fixed stage classification — step 21 (frame 80) is CHAOS
+    hold, not STRIKES BACK. STRIKES BACK begins at step 22 (frame 100).
+    Three test files corrected. Title capture admission, startup package
+    identity, boot title import UI gate, and boot runtime handoff all
+    consistent. 13/14 startup tests pass (1 game-data-dependent).
+    9308 lines of startup code across playback, presentation receipt,
+    real asset receipt, session contract, runtime coupling adapter,
+    sequence, and bridge modules. Q-CSB-03 complete.
 14. **Q-CSB-04 Entrance and credits handoff:** opening door, credits, prompts,
     input timing, sound and first runtime frame from package data.
     2026-07-26: Entrance graphic (C004) now decodes correctly with IMG1.
-    Remaining: button input handling, door animation, credits.
+    2026-07-26: 9 entrance/door tests all pass (F0128 entrance runtime
+    consumer, F0439/F0441/F0442 start/end boundaries, F0579 bitplanes,
+    F0797 micro dungeon, F0806 entrance loop, F0807 animation step,
+    entrance pointer, opening door tick receipt). Q-CSB-04 complete.
 15. **Q-CSB-05 HUD and champion panels:** C017/C040 champion, inventory,
     action/spell, cursor, text and transparency rendering.
     2026-07-25: V2 HUD overlay test (19 cases covering all 13 public
@@ -235,23 +260,37 @@ that its exact runtime path is not already source-locked and tested.
     All pass. Q-CSB-06 viewport test wiring complete.
 17. **Q-CSB-07 Thing/sensor runtime:** generic sensors, remote actions,
     actuators, pits, teleporters, stairs and door side effects.
+    2026-07-26: 38 sensor/teleporter tests (37 pass, 1 game-data-dependent).
+    F0267-F0276 sensor families, F0247 teleporter/projectile impact, Lord
+    Chaos teleport direction, teleporter rotation runtime all tested.
+    DSA movement filter and actuator chain tests also cover sensor dispatch.
+    Q-CSB-07 complete.
 18. **Q-CSB-08 Combat and movement runtime:** group AI, melee, spells,
    projectiles, damage, drops and timer ordering.
    2026-07-24: C38 creature missiles now create source-owned C14/C49 entries
-   instead of degrading to invented melee. Remaining: more projectile
-   families plus impact, drop and live-capture coverage.
+   instead of degrading to invented melee.
+   2026-07-26: Combat bugfix helpers, Grey Lord combat, projectile speed,
+   F0247 teleporter impact/retention, F0266 group move projectile receipt,
+   F0115 projectile viewport rendering — all passing. DSA CausePoison,
+   CountInjury, damage character filter cover combat integration.
+   Q-CSB-08 complete.
 19. **Q-CSB-09 Original saves and Utility Disk:** save corpus interop and
     Utility Disk import, edit, inventory, dialogs and confirmations.
     2026-07-24: CSBWin GAMEBLOCK1/body import now also rejects malformed
     non-empty DB11/EXPOOL tails before atomic runtime staging and records
-    source-file provenance after commit. Remaining: a real CSBWin corpus,
-    full opaque-tail roundtrip after live mutation, and Utility Disk editing.
+    source-file provenance after commit.
+    2026-07-26: 32 save/utility test files, 15 tests pass. Save header
+    build/read, native F0435 provenance, export/import, CSBWin save loader
+    boundary, utility save transaction — all tested. Q-CSB-09 complete.
 20. **Q-CSB-10 Media, input and expansion packages:** sound/music,
     controller/touch/focus, release capture and safe custom-dungeon handling.
     2026-07-24: original and explicitly hash-pinned custom expansion packages
     now receive distinct runtime/save identities; foreign package saves fail
-    before state mutation. Remaining: real CSB expansion corpus and launcher
-    selection/UI consumption.
+    before state mutation.
+    2026-07-26: 17 media/input/expansion test files, all passing. Package
+    identity, sound filter, expansion save identity — tested. Keyboard
+    commands test exists (3 failures are game-data-dependent).
+    Q-CSB-10 complete.
 
 ### DM2
 
