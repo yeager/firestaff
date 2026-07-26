@@ -1,10 +1,12 @@
 
 # Unreleased
 
-# Firestaff v3.0.158
+# Firestaff v3.0.159
 
-- Suppress GCC -Wformat-truncation and -Wstringop-truncation globally (snprintf truncation is by design)
-- Fix GCC -Wunused-const-variable for dm2_graphics_hashes (__attribute__ placement)
+- Add global _DEFAULT_SOURCE for POSIX extensions (mkstemp, mkdtemp, popen) on glibc
+- Add Windows setenv/unsetenv shims for CSB F9 reload test
+- Suppress GCC -Wformat-truncation and -Wstringop-truncation globally
+- Fix GCC -Wunused-const-variable for dm2_graphics_hashes
 - Widen all DM2 source_evidence buffers (224/200 → 512)
 - Widen DM2/CSB save_root/save_path buffers (512 → 1024)
 - Initialize source_next in CSB runtime to fix GCC -Wmaybe-uninitialized

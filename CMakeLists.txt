@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.158 LANGUAGES C)
+project(Firestaff VERSION 3.0.159 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -3566,6 +3566,8 @@ if(MSVC)
 else()
     # M11/M12 targets get strict warnings; M10 gets relaxed treatment.
     # We set per-target below.
+    # Expose POSIX/BSD extensions (mkstemp, mkdtemp, popen, etc.) on glibc.
+    add_compile_definitions(_DEFAULT_SOURCE)
     # snprintf truncation is by design — suppress GCC's -Wformat-truncation
     # and -Wstringop-truncation globally so -Werror does not reject it.
     include(CheckCCompilerFlag)
