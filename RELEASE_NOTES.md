@@ -1,11 +1,12 @@
 
 # Unreleased
 
-# Firestaff v3.0.156
+# Firestaff v3.0.157
 
-- Widen DM2 source_evidence buffers (224/200 → 512) to fix GCC -Wformat-truncation
-- Widen DM2 boot save_root buffer (512 → 1024) for path construction overflow
-- Fix sys/stat.h include order for Windows in CSB launch test
+- Widen all DM2 source_evidence buffers (224/200 → 512) for GCC -Wformat-truncation
+- Widen DM2 save_root/save_path buffers (512 → 1024) across boot, runtime, startup menu
+- Widen CSB save dir/path buffers (512 → 1024) for path construction overflow
+- Initialize source_next in CSB runtime to fix GCC -Wmaybe-uninitialized
 - Mark Q-DM2-01 through Q-DM2-10 complete (DM2 subsystem assessment: 96% pass rate)
 
 # Firestaff v3.0.155
