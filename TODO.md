@@ -56,6 +56,16 @@ that its exact runtime path is not already source-locked and tested.
    paths. [v3.0.134]
 4. **Q-DM1-04 Door, sensor and topology runtime:** buttons, fakewalls, pits,
    teleporters, stairs, door animations and Thing-driven movement.
+   2026-07-26: Actuator execution module created. Consumes
+   SensorActuatorDispatch_Compat from sensor trigger chain and mutates
+   dungeon square bytes: doors (bits 2:0 state 0-4), pits (bit 3 open
+   flag), fakewalls (bits 7:5 element type FAKEWALL↔CORRIDOR). Door
+   animation step function for timed C024 events. Fixed pit toggle bug
+   in M11 sensor effects (was toggling bit 0/imaginary instead of bit
+   3/MASK0x0008_PIT_OPEN). 18 tests. [v3.0.135]
+   Remaining: wire actuator dispatch into movement pipeline pressure
+   plate path, door animation timer tick handler, fakewall passability
+   on element change.
 5. **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,
    projectile impacts, drops, deaths and spell ticks with raw ownership.
 6. **Q-DM1-06 Inventory interaction matrix:** C05-C13 placement, chest,

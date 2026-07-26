@@ -106,6 +106,7 @@
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_collision_door_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
 #include "dm1_v1_creature_sound_pc34_compat.h"
@@ -8405,8 +8406,9 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                     m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR); /* C01_SOUND_SWITCH */
                 }
             } else if (targetElement == DUNGEON_ELEMENT_PIT) {
-                /* Toggle pit open/closed */
-                int pitBit = targetSquare & 0x01; /* bit 0 = open */
+                /* Toggle pit open/closed.
+                 * ReDMCSB DEFS.H: MASK0x0008_PIT_OPEN = bit 3. */
+                int pitBit = (targetSquare & DM1_PIT_MASK_OPEN) ? 1 : 0;
                 if (e->textIndex == 2) { /* TOGGLE */
                     pitBit = !pitBit;
                 } else if (e->textIndex == 0) { /* SET = open */
@@ -8415,7 +8417,9 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                     pitBit = 0;
                 }
                 {
-                    unsigned char newSq = (targetSquare & ~0x01) | (pitBit ? 0x01 : 0x00);
+                    unsigned char newSq = (unsigned char)(
+                        (targetSquare & ~DM1_PIT_MASK_OPEN) |
+                        (pitBit ? DM1_PIT_MASK_OPEN : 0));
                     m11_set_square_byte(&state->world,
                                         state->world.party.mapIndex,
                                         e->destMapX, e->destMapY, newSq);

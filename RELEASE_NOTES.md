@@ -1,6 +1,18 @@
 
 # Unreleased
 
+# Firestaff v3.0.135
+
+- **Actuator execution module (Q-DM1-04):** New dm1_v1_actuator_execution_pc34_compat
+  bridges sensor trigger evaluation to dungeon state mutation. Doors (square bits
+  2:0, states 0-4), pits (bit 3 MASK0x0008_PIT_OPEN), and fakewalls (element type
+  flip) are now actuated from SensorActuatorDispatch_Compat. Door animation step
+  function supports timed C024 event progression.
+- **Bug fix:** M11 sensor effect handler pit toggle was using bit 0 (imaginary flag)
+  instead of bit 3 (open flag). Pits now toggle correctly per ReDMCSB DEFS.H
+  MASK0x0008_PIT_OPEN.
+- 18 new tests for actuator execution (door, pit, fakewall, animation, safety).
+
 # Firestaff v3.0.134
 
 ## CSB wall ornament ordinal resolver (Q-DM1-03)
