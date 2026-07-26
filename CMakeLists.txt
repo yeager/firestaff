@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.161 LANGUAGES C)
+project(Firestaff VERSION 3.0.162 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -3579,6 +3579,10 @@ else()
     check_c_compiler_flag(-Wno-stringop-truncation HAS_WNO_STRINGOP_TRUNCATION)
     if(HAS_WNO_STRINGOP_TRUNCATION)
         add_compile_options(-Wno-stringop-truncation)
+    endif()
+    check_c_compiler_flag(-Wno-unused-but-set-variable HAS_WNO_UNUSED_BUT_SET_VARIABLE)
+    if(HAS_WNO_UNUSED_BUT_SET_VARIABLE)
+        add_compile_options(-Wno-unused-but-set-variable)
     endif()
 endif()
 

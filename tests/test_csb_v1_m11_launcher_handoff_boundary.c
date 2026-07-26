@@ -39,6 +39,7 @@
 #if defined(_WIN32)
 #include <direct.h>
 #include <process.h>
+#include <sys/stat.h>
 #define TEST_MKDIR(path) _mkdir(path)
 #define TEST_PATH_SEP "\\"
 #define TEST_GETPID() _getpid()
