@@ -16,7 +16,7 @@
     "m11_apply_dm1_v1_pipeline_tick": "tokens=EnqueueCommand/DecrementCooldowns/ProcessOneTick/world.gameTick++/viewportDirty-return (current m11_game_view.c:18683-18882)",
     "main_loop_input_redraw_block": "tokens=redrawWasAfterViewportDirty/lastDm1V1MovementPipelineResult.viewportDirty/M11_GameView_Draw/inputRedrawAfterViewportDirtyCount (current main_loop_m11.c:5387-5404)"
   },
-  "head": "d0be31c776c3e8127dde1da23af078dd4d36abb7",
+  "head": "d2aa775e7d7f9749cf3048114234b52e76beb064",
   "notClaimed": [
     "original DOSBox/FIRES.EXE runtime breakpoint parity",
     "pixel-perfect viewport output parity",
@@ -30,5 +30,5 @@
     "GAMELOOP.F0002": "GAMELOOP.C:35-219"
   },
   "status": "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
-  "timestampUtc": "2026-07-26T16:05:02.497890+00:00"
+  "timestampUtc": "2026-07-26T16:46:55.839602+00:00"
 }

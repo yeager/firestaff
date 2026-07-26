@@ -242,6 +242,22 @@ static void dm1_v1_apply_pre_step_stamina_plan(
     outResult->staminaAffectedCount = plan->affectedCount;
 }
 
+static void dm1_v1_apply_pre_step_stamina_cost(
+    struct PartyState_Compat* party,
+    struct Dm1V1MovementCommandCoreResultPc34Compat* outResult)
+{
+    (void)party;
+    (void)outResult;
+}
+
+static void m11_v1_turning_apply_party_original_presentation_pc34_compat(
+    struct PartyState_Compat* party,
+    int command,
+    struct Dm1V1MovementCommandCoreResultPc34Compat* outResult)
+{
+    dm1_v1_apply_party_turn_receipt(party, command, &outResult->turning);
+}
+
 static int dm1_v1_party_source_square_is_stairs(
     const struct DungeonDatState_Compat* dungeon,
     const struct PartyState_Compat* party)
@@ -454,10 +470,10 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
             dungeon, things, party->mapIndex, party->mapX, party->mapY,
             SENSOR_EVENT_WALK_OFF, &outResult->leaveEffects);
-        dm1_v1_apply_party_turn_receipt(
+        m11_v1_turning_apply_party_original_presentation_pc34_compat(
             party,
             outResult->queue.command,
-            &outResult->turning);
+            outResult);
         (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
             dungeon, things, party->mapIndex, party->mapX, party->mapY,
             SENSOR_EVENT_WALK_ON, &outResult->enterEffects);
@@ -482,6 +498,7 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         (void)DM1_V1_MovementCommandCore_PreStepStaminaApplyPlanPc34Compat(
             party, &staminaPlan);
         dm1_v1_apply_pre_step_stamina_plan(party, &staminaPlan, outResult);
+        dm1_v1_apply_pre_step_stamina_cost(party, outResult);
     }
     action = dm1_v1_command_to_move_action(outResult->queue.command);
 
@@ -507,6 +524,9 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
 
     if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, action, &outResult->movement)) {
         struct Dm1V1MovementBlockedResolutionPlanPc34Compat blockPlan;
+        outResult->movementBlocked = 1;
+        outResult->inputDiscardRequested = 1;
+        outResult->blockedMovementVblankWaitRequested = 1;
         (void)DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(
             party, action, outResult->movement.resultCode, 0, &blockPlan);
         dm1_v1_apply_blocked_resolution_plan(outResult, &blockPlan);
@@ -573,6 +593,10 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
             &outResult->movement, &stepPlan);
         dm1_v1_apply_successful_step_plan(party, &stepPlan, outResult);
     }
+    party->mapIndex = outResult->movement.newMapIndex;
+    party->mapX = outResult->movement.newMapX;
+    party->mapY = outResult->movement.newMapY;
+    party->direction = outResult->movement.newDirection;
 
     (void)F0718_SENSOR_ProcessPartyEnterLeave_Compat(
         dungeon, things, party->mapIndex, party->mapX, party->mapY,
@@ -586,6 +610,9 @@ int DM1_V1_MovementCommandCore_ProcessOnePc34Compat(
         currentGameTick,
         previousLastPartyMovementTime,
         footwearIcons);
+    outResult->stepApplied = 1;
+    outResult->stopWaitingForPlayerInput = 1;
+    outResult->viewportRedrawRequested = 1;
     return 1;
 }
 

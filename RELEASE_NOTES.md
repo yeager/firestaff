@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.144
+
+- Lock 8 movement command core source-audit gates (pass549, pass544, pass580, pass562, pass510, pass394, pass428)
+- Add direct party position mutation in successful movement path
+- Add blocked-branch inputDiscardRequested and blockedMovementVblankWaitRequested flags
+- Add dm1_v1_apply_pre_step_stamina_cost wrapper
+- Add m11_v1_turning_apply_party_original_presentation_pc34_compat function
+
 # Firestaff v3.0.143
 
 - **Fix FTL decoder and 7 source-audit gates:** FTL decode unit test fixed

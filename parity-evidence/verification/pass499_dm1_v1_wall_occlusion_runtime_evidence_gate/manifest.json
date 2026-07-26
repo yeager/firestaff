@@ -76,7 +76,7 @@
     "no original-vs-Firestaff pixel parity",
     "no promotion of static repeated screenshots"
   ],
-  "ok": false,
+  "ok": true,
   "priorGates": [
     "pass496_dm1_v1_wall_occlusion_spec_matrix",
     "pass490_dm1_v1_wall_occlusion_merge_readiness",
@@ -91,14 +91,12 @@
       "^(firestaff_dm1_v1_wall_composition_contract_probe|pass496_dm1_v1_wall_occlusion_spec_matrix|pass490_dm1_v1_wall_occlusion_merge_readiness|dm1_v1_viewport_3d_occlusion_metadata_gate)$",
       "--output-on-failure"
     ],
-    "ok": false,
-    "returncode": 8,
-    "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1444: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1444: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 2132: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2132: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.04 sec\n    Start 2150: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2150: pass490_dm1_v1_wall_occlusion_merge_readiness ......***Failed    0.07 sec\nFAIL pass490_dm1_v1_wall_occlusion_merge_readiness firestaff-side-lane-clear\n\n    Start 2167: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2167: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.04 sec\n\n75% tests passed, 1 tests failed out of 4\n\nTotal Test time (real) =   0.18 sec\n\nThe following tests FAILED:\n\t2150 - pass490_dm1_v1_wall_occlusion_merge_readiness (Failed)\nErrors while running CTest\n"
+    "ok": true,
+    "returncode": 0,
+    "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1444: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1444: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 2132: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2132: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.04 sec\n    Start 2150: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2150: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.06 sec\n    Start 2167: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2167: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.03 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   0.18 sec\n"
   },
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
-  "problems": [
-    "compiled probe/prior gates failed"
-  ],
+  "problems": [],
   "promotionPredicate": "Promote wall-occlusion runtime evidence only when pass496 source/spec matrix is ok, the compiled Firestaff wall-composition probe passes, and a runtime/capture lane reaches the F0128 to F0097 present boundary for the same viewport. This gate is source/probe coverage only.",
   "schema": "firestaff.parity.pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.v1",
   "sourceLocks": [
@@ -170,6 +168,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "FAIL_PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE",
-  "timestampUtc": "2026-07-26T16:15:37.063552+00:00"
+  "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
+  "timestampUtc": "2026-07-26T16:56:51.297575+00:00"
 }

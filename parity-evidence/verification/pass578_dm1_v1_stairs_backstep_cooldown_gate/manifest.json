@@ -11,16 +11,16 @@
     },
     "dm1_v1_movement_command_core_pc34_compat.c:DM1_V1_MovementCommandCore_ProcessOnePc34Compat": {
       "claim": "non-dequeued command returns before stamina/stairs/timing",
-      "focusedLines": "418-581",
+      "focusedLines": "434-605",
       "lines": [
-        394,
-        590
+        410,
+        617
       ]
     },
     "testExecutable": "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_movement_pipeline_pc34_compat",
     "testOutputLastLine": "403 passed, 0 failed"
   },
-  "head": "d0be31c776c3e8127dde1da23af078dd4d36abb7",
+  "head": "d2aa775e7d7f9749cf3048114234b52e76beb064",
   "nonClaims": [
     "does not replace pass571 turn no-step timing",
     "does not cover pass571 front-command queue/pending replay",
@@ -54,6 +54,6 @@
     }
   },
   "status": "PASS578_DM1_V1_STAIRS_BACKSTEP_COOLDOWN_GATE_SOURCE_LOCKED",
-  "timestampUtc": "2026-07-26T16:14:22.213624+00:00",
+  "timestampUtc": "2026-07-26T16:55:44.681591+00:00",
   "worktree": "/Volumes/Extern-disk/firestaff-claude"
 }
