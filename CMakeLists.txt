@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.133 LANGUAGES C)
+project(Firestaff VERSION 3.0.134 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -3913,6 +3913,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_runtime_sidecar_pc34_compat.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     src/dm1/dm1_v1_viewport_wall_ornament_ordinal_provider_pc34_compat.c
+    src/csb/csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
     src/dm1/dm1_v1_viewport_source_frame_pc34_compat.c
     src/dm1/dm1_v1_viewport_plane_material_matrix_pc34_compat.c
@@ -32746,6 +32747,32 @@ add_executable(test_nexus_v1_dgn_material_raster
     )
     set_tests_properties(csb_v1_viewport_custom_background_mask_pc34_compat PROPERTIES
         LABELS "tier2;csb;csbwin_custom_resource;runtime;viewport;data_free"
+    )
+
+    # CSB V1 wall ornament ordinal resolver. Resolves ornament ordinals
+    # directly from CSB_V1_DungeonData raw bytes without DungeonThings_Compat.
+    add_executable(test_csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat
+        tests/test_csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.c
+        src/csb/csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.c
+        src/csb/csb_v1_dungeon_loader_pc34_compat.c
+        src/dm1/dm1_v1_random_ornament_pc34_compat.c
+        src/memory/memory_dungeon_dat_pc34_compat.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat PRIVATE
+            -Wno-unused-function)
+    endif()
+    add_test(
+        NAME csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat
+        COMMAND test_csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat
+    )
+    set_tests_properties(csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat PROPERTIES
+        LABELS "tier2;csb;viewport;ornament;data_free"
     )
 
     # CSB V1 CSBgraphics.dat runtime plan. This is the startup-facing

@@ -1,3 +1,9 @@
+- ✅ 2026-07-26 CSB wall ornament ordinal resolver wired into viewport (Q-DM1-03).
+  New csb_v1_viewport_wall_ornament_ordinal_resolver resolves ornament ordinals
+  directly from CSB_V1_DungeonData raw bytes: sensor scan (bits 15:12 of bytes
+  4-5) overrides random F0170/F0171 ornaments. Wired into fs_game_render_viewport
+  CSB path. Matches DM1_ViewportWallOrnamentOrdinalCallback signature. CLAUDE.md
+  updated with Ninja build, all 5 games, reference sources. [v3.0.134]
 - ✅ 2026-07-26 Fix build: repair 50 test files with misplaced (void) cast,
   add wall ornament transitive link deps to 29 CMake targets, fix
   element_type→element field rename in dungeon square test. Add CLAUDE.md

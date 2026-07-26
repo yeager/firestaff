@@ -49,6 +49,11 @@ that its exact runtime path is not already source-locked and tested.
    ordinals from sensor things (phase 1) and random ornaments F0170/F0171
    (phase 2). Usable as DM1_ViewportWallOrnamentOrdinalCallback with
    DungeonThings_Compat data. [v3.0.132]
+   2026-07-26: CSB wall ornament ordinal resolver created. Works directly
+   with CSB_V1_DungeonData raw bytes (no DungeonThings_Compat adapter needed).
+   Wired into fs_game_render_viewport CSB path. Wall ornament ordinal
+   resolution now complete for both DM1 (provider) and CSB (resolver)
+   paths. [v3.0.134]
 4. **Q-DM1-04 Door, sensor and topology runtime:** buttons, fakewalls, pits,
    teleporters, stairs, door animations and Thing-driven movement.
 5. **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,
