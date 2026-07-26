@@ -49,7 +49,7 @@ typedef struct {
   int map_id;
   unsigned long due_tick;
   uint32_t timer_ticket;
-  char source_evidence[200];
+  char source_evidence[512];
 } DM2_V1_CreatureScheduleReceipt;
 
 /*

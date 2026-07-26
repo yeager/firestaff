@@ -122,7 +122,7 @@ typedef struct {
   unsigned long due_tick;
   int local_var_unbound;  /* PREPARE/UNPREPARE + 14cd_0802 host-owned */
   int group_scan_unbound; /* s350 group scan + 1c9a_0a48 host-owned */
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CaiiAllocReceipt;
 
 /*
@@ -153,7 +153,7 @@ typedef struct {
   int not_creature_db;
   int slot_index;
   uint32_t cancelled_ticket;
-  char source_evidence[200];
+  char source_evidence[512];
 } DM2_V1_CaiiDeleteTimerReceipt;
 
 /*
@@ -222,7 +222,7 @@ typedef struct {
   int record_delete_full_completed;/* the wired composition reached a
                                       source return */
   int record_index;
-  char source_evidence[200];
+  char source_evidence[512];
 } DM2_V1_CaiiFreeReceipt;
 
 /*
@@ -333,7 +333,7 @@ typedef struct {
                                  (c_record.cpp:1423, c_1c9a.cpp:5135-5160) */
   int dealloc_record_unbound;/* DM2_DEALLOC_RECORD pool free-chain
                                 (c_record.cpp:1424) — not modelled */
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CaiiDeleteCreatureRecordReceipt;
 
 /*
@@ -400,7 +400,7 @@ typedef struct {
   int dealloc_performed;     /* BOUND: DM2_DEALLOC_RECORD
                                 (c_record.cpp:1205-1208) — record word@0
                                 = 0xffff free marker */
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CaiiDeleteCreatureTailReceipt;
 
 /*
@@ -509,7 +509,7 @@ typedef struct {
   int timer_cancelled;       /* bound DM2_1c9a_0db0 removed a pending timer */
   int rescheduled;           /* bound DM2_1c9a_0cf7 enqueued the think timer */
   uint32_t timer_ticket;
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CaiiAttackReceipt;
 
 /*
@@ -624,7 +624,7 @@ typedef struct {
   int rescheduled;           /* bound DM2_1c9a_0cf7 re-queued the think
                                 timer (c_ai.cpp:5956-5958) */
   uint32_t timer_ticket;
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CaiiAiTurnReceipt;
 
 /*
@@ -686,7 +686,7 @@ typedef struct {
   int enqueued;              /* DM2_QUEUE_TIMER issued a ticket
                                 (c_ai.cpp:5644) */
   uint32_t timer_ticket;     /* stored into slot word@2 (c_ai.cpp:5646) */
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CaiiCcmEndRequeueReceipt;
 
 /*
@@ -742,7 +742,7 @@ typedef struct {
   int ccm_tail_unbound;      /* PREPARE/UNPREPARE_LOCAL_CREATURE_VAR +
                                 DM2_ai_13e4_0806/071b (c_tim_proc.cpp:2892-2900)
                                 stay host-owned — receipted, never simulated */
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CaiiAnimateActivationReceipt;
 
 /*
@@ -797,7 +797,7 @@ typedef struct {
   int alloc_failed;          /* the bound allocator failed closed */
   int minion_door_unbound;   /* DM2_SET_MINION_RECENT_OPEN_DOOR_LOCATION
                                 (c_moverec.cpp:964) stays host-owned */
-  char source_evidence[224];
+  char source_evidence[512];
 } DM2_V1_CaiiMoverecActivationReceipt;
 
 /*

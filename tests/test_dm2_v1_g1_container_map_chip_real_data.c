@@ -91,8 +91,8 @@ static int palette_read(void *user, int category, int index, int field,
 int main(int argc, char **argv)
 {
     char root_buf[1024];
-    char graphics_path[1024];
-    char dungeon_path[1024];
+    char graphics_path[2048];
+    char dungeon_path[2048];
     const char *root = resolve_dm2_data_root(argc, argv, root_buf, sizeof(root_buf));
     uint8_t *graphics = NULL;
     uint8_t *dungeon_bytes = NULL;

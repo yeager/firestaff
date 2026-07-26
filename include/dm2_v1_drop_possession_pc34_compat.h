@@ -80,7 +80,7 @@ typedef struct {
                                  walkable to its end */
     int walk_corrupt;         /* fail-closed: bounded possession chain */
     int rng_unbound;          /* fail-closed: a source draw had no LCG */
-    char source_evidence[224];
+    char source_evidence[512];
 } DM2_V1_DropPossessionReceipt;
 
 /* AI-spec flags provider for the walk's direction-randomization gate

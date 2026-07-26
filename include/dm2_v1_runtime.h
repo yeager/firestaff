@@ -1185,8 +1185,8 @@ typedef struct DM2_V1_QuicksaveReceipt {
     DM2_V1_QuicksaveResult result;
     const char *status_scope;
     const char *status;
-    char save_root[512];
-    char save_path[512];
+    char save_root[1024];
+    char save_path[1024];
     DM2_V1_SessionState session;
     DM2_V1_RuntimeGraphicsSetSceneReceipt graphicsset_scene;
     int session_valid;

@@ -230,7 +230,7 @@ static void check_record(int x, int y, int direction, int category,
 int main(int argc, char **argv)
 {
     char root_buf[1024];
-    char dungeon_path[1024];
+    char dungeon_path[2048];
     const char *root = resolve_dm2_data_root(argc, argv, root_buf,
                                              sizeof(root_buf));
     uint8_t *dungeon_bytes = NULL;
@@ -283,7 +283,7 @@ int main(int argc, char **argv)
      * dtImageOffset, an exact raw receipt, a decodable bitmap and a local
      * palette before the source blit may place it. */
     {
-        char graphics_path[1024];
+        char graphics_path[2048];
         uint8_t *graphics = NULL;
         size_t graphics_size = 0u;
         DM2_V1_AssetLoader loader;
