@@ -1,6 +1,16 @@
 
 # Unreleased
 
+# Firestaff v3.0.130
+
+- Add element routing for D3C/D2C/D1C center and D2L/D2R/D1L/D1R side wall
+  squares in the CSB viewport 3D pipeline. Wall elements now draw wall bitmap
+  with parity + F0107 front/side ornament and skip door frame drawing;
+  non-wall elements fall through to the existing door frame path. Wires
+  wall_ornament_ordinal_callback through CSB_V1_ViewportConfig to the DM1
+  viewport state. All 15 F0107 wall ornament positions are now structurally
+  wired in the draw pipeline.
+
 # Firestaff v3.0.129
 
 ## F0107 wall ornament viewport wiring (Q-DM1-03)

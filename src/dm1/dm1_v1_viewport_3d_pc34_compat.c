@@ -120,6 +120,16 @@ static void dm1_viewport_3d_draw_wall_ornament_f0107(
     int view_wall_index,
     int map_x, int map_y);
 
+static int dm1_viewport_3d_draw_center_wall_element(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int map_x, int map_y);
+
+static int dm1_viewport_3d_draw_side_wall_element(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int map_x, int map_y);
+
 /* View square → wall frame table index mapping.
  * Placed before csb_v1_vp_get_wall_frame to avoid forward-reference errors. */
 static int view_square_to_frame_index(DM1_ViewSquareIndex sq)
@@ -1833,107 +1843,144 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
                                              d3r_x, d3r_y);
     }
 
-    /* D3C -- front door (depth 3 center). Draws left + right pair from G2119.
-     * DUNVIEW.C:6725-6739. */
+    /* D3C -- center square at depth 3.
+     * DUNVIEW.C:6707-6714 wall case draws wall + F0107 ornament and returns.
+     * DUNVIEW.C:6725-6739 door-front case draws left + right pair from G2119. */
     {
-        const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3C);
+        int16_t d3c_x = 0, d3c_y = 0;
+        dm1_viewport_3d_resolve_relative_map_xy(direction, 3, 0, map_x, map_y,
+                                                 &d3c_x, &d3c_y);
         dm1_viewport_3d_notify_pre_square_draw(
             state, DM1_VIEW_SQUARE_D3C, 3, 0);
-        if (fr && bm_base) {
-            /* DUNVIEW.C:6725 MEDIA720_I34E -- F0104(G2119, C722) left native */
-            dm1_viewport_3d_draw_wall(state, bm_base + 19 * BMP_STRIDE, fr);
-            /* DUNVIEW.C:6727 MEDIA720_I34E -- F0105(G2119, C723) right flipped */
-            dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 19 * BMP_STRIDE, fr);
+        if (!dm1_viewport_3d_draw_center_wall_element(
+                state, DM1_VIEW_SQUARE_D3C, (int)d3c_x, (int)d3c_y)) {
+            const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3C);
+            if (fr && bm_base) {
+                dm1_viewport_3d_draw_wall(state, bm_base + 19 * BMP_STRIDE, fr);
+                dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 19 * BMP_STRIDE, fr);
+            }
         }
     }
 
     /* -- Depth 2 door frames -- */
 
-    /* D2L -- side door (depth 2 left). Single top frame via G2114.
-     * DUNVIEW.C:6991-6998. */
+    /* D2L -- side square at depth 2 left.
+     * DUNVIEW.C:6954-6964 wall case draws wall + F0107 ornament and returns.
+     * DUNVIEW.C:6991-6998 door-front case draws top frame via G2114. */
     {
-        const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L);
+        int16_t d2l_x = 0, d2l_y = 0;
+        dm1_viewport_3d_resolve_relative_map_xy(direction, 2, -1, map_x, map_y,
+                                                 &d2l_x, &d2l_y);
         dm1_viewport_3d_notify_pre_square_draw(
             state, DM1_VIEW_SQUARE_D2L, 2, -1);
-        if (fr && bm_base) {
-            /* DUNVIEW.C:6991 MEDIA720_I34E -- F0104(G2114, C729) */
-            dm1_viewport_3d_draw_wall(state, bm_base + 18 * BMP_STRIDE, fr);
+        if (!dm1_viewport_3d_draw_side_wall_element(
+                state, DM1_VIEW_SQUARE_D2L, (int)d2l_x, (int)d2l_y)) {
+            const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L);
+            if (fr && bm_base) {
+                dm1_viewport_3d_draw_wall(state, bm_base + 18 * BMP_STRIDE, fr);
+            }
         }
     }
 
-    /* D2R -- side door (depth 2 right). Single top frame via G2113.
-     * DUNVIEW.C:7184-7191. */
+    /* D2R -- side square at depth 2 right.
+     * DUNVIEW.C:7105-7115 wall case draws wall + F0107 ornament and returns.
+     * DUNVIEW.C:7184-7191 door-front case draws top frame via G2113. */
     {
-        const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2R);
+        int16_t d2r_x = 0, d2r_y = 0;
+        dm1_viewport_3d_resolve_relative_map_xy(direction, 2, 1, map_x, map_y,
+                                                 &d2r_x, &d2r_y);
         dm1_viewport_3d_notify_pre_square_draw(
             state, DM1_VIEW_SQUARE_D2R, 2, 1);
-        if (fr && bm_base) {
-            /* DUNVIEW.C:7184 MEDIA720_I34E -- F0104(G2113, C731) */
-            dm1_viewport_3d_draw_wall(state, bm_base + 17 * BMP_STRIDE, fr);
+        if (!dm1_viewport_3d_draw_side_wall_element(
+                state, DM1_VIEW_SQUARE_D2R, (int)d2r_x, (int)d2r_y)) {
+            const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2R);
+            if (fr && bm_base) {
+                dm1_viewport_3d_draw_wall(state, bm_base + 17 * BMP_STRIDE, fr);
+            }
         }
     }
 
-    /* D2C -- front door (depth 2 center). Top bar (G2115) + left/right pair (G2118).
-     * DUNVIEW.C:7317-7333. */
+    /* D2C -- center square at depth 2.
+     * DUNVIEW.C:7299-7306 wall case draws wall + F0107 ornament and returns.
+     * DUNVIEW.C:7317-7333 door-front case draws top bar (G2115) + left/right (G2118). */
     {
-        const DM1_WallFrame *fr_top  = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2C);
-        const DM1_WallFrame *fr_side = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L);
+        int16_t d2c_x = 0, d2c_y = 0;
+        dm1_viewport_3d_resolve_relative_map_xy(direction, 2, 0, map_x, map_y,
+                                                 &d2c_x, &d2c_y);
         dm1_viewport_3d_notify_pre_square_draw(
             state, DM1_VIEW_SQUARE_D2C, 2, 0);
-        if (fr_top && bm_base) {
-            /* DUNVIEW.C:7317 MEDIA720_I34E -- F0104(G2115, C730) top bar */
-            dm1_viewport_3d_draw_wall(state, bm_base + 19 * BMP_STRIDE, fr_top);
-        }
-        if (fr_side && bm_base) {
-            /* DUNVIEW.C:7319 MEDIA720_I34E -- F0104(G2118, C724) left */
-            dm1_viewport_3d_draw_wall(state, bm_base + 22 * BMP_STRIDE, fr_side);
-            /* DUNVIEW.C:7321 MEDIA720_I34E -- F0105(G2118, C725) right flipped */
-            dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 22 * BMP_STRIDE, fr_side);
+        if (!dm1_viewport_3d_draw_center_wall_element(
+                state, DM1_VIEW_SQUARE_D2C, (int)d2c_x, (int)d2c_y)) {
+            const DM1_WallFrame *fr_top  = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2C);
+            const DM1_WallFrame *fr_side = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L);
+            if (fr_top && bm_base) {
+                dm1_viewport_3d_draw_wall(state, bm_base + 19 * BMP_STRIDE, fr_top);
+            }
+            if (fr_side && bm_base) {
+                dm1_viewport_3d_draw_wall(state, bm_base + 22 * BMP_STRIDE, fr_side);
+                dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 22 * BMP_STRIDE, fr_side);
+            }
         }
     }
 
     /* -- Depth 1 door frames -- */
 
-    /* D1L -- side door (depth 1 left). Single top frame via G2110.
-     * DUNVIEW.C:7496-7504. */
+    /* D1L -- side square at depth 1 left.
+     * DUNVIEW.C:7445-7455 wall case draws wall + F0107 ornament and returns.
+     * DUNVIEW.C:7496-7504 door-front case draws top frame via G2110. */
     {
-        const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1L);
+        int16_t d1l_x = 0, d1l_y = 0;
+        dm1_viewport_3d_resolve_relative_map_xy(direction, 1, -1, map_x, map_y,
+                                                 &d1l_x, &d1l_y);
         dm1_viewport_3d_notify_pre_square_draw(
             state, DM1_VIEW_SQUARE_D1L, 1, -1);
-        if (fr && bm_base) {
-            /* DUNVIEW.C:7496 MEDIA720_I34E -- F0104(G2110, C734) */
-            dm1_viewport_3d_draw_wall(state, bm_base + 14 * BMP_STRIDE, fr);
+        if (!dm1_viewport_3d_draw_side_wall_element(
+                state, DM1_VIEW_SQUARE_D1L, (int)d1l_x, (int)d1l_y)) {
+            const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1L);
+            if (fr && bm_base) {
+                dm1_viewport_3d_draw_wall(state, bm_base + 14 * BMP_STRIDE, fr);
+            }
         }
     }
 
-    /* D1R -- side door (depth 1 right). Single top frame via G2110.
-     * DUNVIEW.C:7664-7672. */
+    /* D1R -- side square at depth 1 right.
+     * DUNVIEW.C:7613-7623 wall case draws wall + F0107 ornament and returns.
+     * DUNVIEW.C:7664-7672 door-front case draws top frame via G2110. */
     {
-        const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1R);
+        int16_t d1r_x = 0, d1r_y = 0;
+        dm1_viewport_3d_resolve_relative_map_xy(direction, 1, 1, map_x, map_y,
+                                                 &d1r_x, &d1r_y);
         dm1_viewport_3d_notify_pre_square_draw(
             state, DM1_VIEW_SQUARE_D1R, 1, 1);
-        if (fr && bm_base) {
-            /* DUNVIEW.C:7664 MEDIA720_I34E -- F0104(G2110, C734) */
-            dm1_viewport_3d_draw_wall(state, bm_base + 14 * BMP_STRIDE, fr);
+        if (!dm1_viewport_3d_draw_side_wall_element(
+                state, DM1_VIEW_SQUARE_D1R, (int)d1r_x, (int)d1r_y)) {
+            const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1R);
+            if (fr && bm_base) {
+                dm1_viewport_3d_draw_wall(state, bm_base + 14 * BMP_STRIDE, fr);
+            }
         }
     }
 
-    /* D1C -- front door (depth 1 center). Top bar (G2112) + left/right pair (G2117).
-     * DUNVIEW.C:7877-7902. */
+    /* D1C -- center square at depth 1.
+     * DUNVIEW.C:7833-7840 wall case draws wall + F0107 ornament and returns.
+     * DUNVIEW.C:7877-7902 door-front case draws top bar (G2112) + left/right (G2117). */
     {
-        const DM1_WallFrame *fr_top   = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1C);
-        const DM1_WallFrame *fr_side = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1L);
+        int16_t d1c_x = 0, d1c_y = 0;
+        dm1_viewport_3d_resolve_relative_map_xy(direction, 1, 0, map_x, map_y,
+                                                 &d1c_x, &d1c_y);
         dm1_viewport_3d_notify_pre_square_draw(
             state, DM1_VIEW_SQUARE_D1C, 1, 0);
-        if (fr_top && bm_base) {
-            /* DUNVIEW.C:7877 MEDIA720_I34E -- F0104(G2112, C733) top bar */
-            dm1_viewport_3d_draw_wall(state, bm_base + 16 * BMP_STRIDE, fr_top);
-        }
-        if (fr_side && bm_base) {
-            /* DUNVIEW.C:7879 MEDIA720_I34E -- F0104(G2117, C726) left */
-            dm1_viewport_3d_draw_wall(state, bm_base + 21 * BMP_STRIDE, fr_side);
-            /* DUNVIEW.C:7881 MEDIA720_I34E -- F0105(G2117, C727) right flipped */
-            dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 21 * BMP_STRIDE, fr_side);
+        if (!dm1_viewport_3d_draw_center_wall_element(
+                state, DM1_VIEW_SQUARE_D1C, (int)d1c_x, (int)d1c_y)) {
+            const DM1_WallFrame *fr_top   = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1C);
+            const DM1_WallFrame *fr_side = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1L);
+            if (fr_top && bm_base) {
+                dm1_viewport_3d_draw_wall(state, bm_base + 16 * BMP_STRIDE, fr_top);
+            }
+            if (fr_side && bm_base) {
+                dm1_viewport_3d_draw_wall(state, bm_base + 21 * BMP_STRIDE, fr_side);
+                dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 21 * BMP_STRIDE, fr_side);
+            }
         }
     }
 
@@ -3562,6 +3609,131 @@ static void dm1_viewport_3d_draw_d3_side_square(
     if (element == DM1_VP_ELEMENT_TELEPORTER) {
         dm1_viewport_3d_draw_field(state, 3, right ? 1 : -1, 0x1c);
     }
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * dm1_viewport_3d_draw_center_wall_element
+ *
+ * Element routing for center squares D3C/D2C/D1C.  If the element at
+ * (map_x, map_y) is a WALL, draws the wall bitmap with parity + F0107
+ * front ornament and returns 1.  Returns 0 for all other elements so
+ * the caller can proceed with door frame / open-cell drawing.
+ *
+ * Source: DUNVIEW.C:6707-6714 (D3C), 7299-7306 (D2C), 7833-7840 (D1C)
+ * ──────────────────────────────────────────────────────────────────────── */
+static int dm1_viewport_3d_draw_center_wall_element(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int map_x, int map_y)
+{
+    const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
+    int cell, element;
+    DM1_WallSetIndex native_wall;
+    const DM1_WallFrame *fr;
+    int vwi;
+
+    if (!state || !bm_base) return 0;
+    if (square != DM1_VIEW_SQUARE_D3C &&
+        square != DM1_VIEW_SQUARE_D2C &&
+        square != DM1_VIEW_SQUARE_D1C) {
+        return 0;
+    }
+
+    cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
+    element = state->dungeon_aspect_grid ? cell
+                                         : dm1_viewport_3d_classify_grid_cell(cell);
+
+    if (element != DM1_VP_ELEMENT_WALL) return 0;
+
+    if (square == DM1_VIEW_SQUARE_D3C) {
+        native_wall = DM1_WALL_D3C;
+        vwi = DM1_V1_VIEW_WALL_D3C_FRONT_PC34;
+    } else if (square == DM1_VIEW_SQUARE_D2C) {
+        native_wall = DM1_WALL_D2C;
+        vwi = DM1_V1_VIEW_WALL_D2C_FRONT_PC34;
+    } else {
+        native_wall = DM1_WALL_D1C;
+        vwi = DM1_V1_VIEW_WALL_D1C_FRONT_PC34;
+    }
+
+    fr = dm1_viewport_3d_get_wall_frame(square);
+    if (!fr) return 1;
+
+    {
+        const uint8_t *wall = dm1_viewport_3d_selected_wall_bitmap(
+            state, bm_base, native_wall);
+        if (state->parity_flip) {
+            dm1_viewport_3d_draw_wall_parity_mirrored(state, wall, fr);
+        } else {
+            dm1_viewport_3d_draw_wall(state, wall, fr);
+        }
+    }
+
+    dm1_viewport_3d_draw_wall_ornament_f0107(state, vwi, map_x, map_y);
+    return 1;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * dm1_viewport_3d_draw_side_wall_element
+ *
+ * Element routing for side squares D2L/D2R/D1L/D1R.  If the element at
+ * (map_x, map_y) is a WALL, draws the wall bitmap with parity + F0107
+ * side ornament and returns 1.  Returns 0 for all other elements.
+ *
+ * Source: DUNVIEW.C:6954-6964 (D2L), 7105-7115 (D2R),
+ *         7445-7455 (D1L), 7613-7623 (D1R)
+ * ──────────────────────────────────────────────────────────────────────── */
+static int dm1_viewport_3d_draw_side_wall_element(
+    DM1_Viewport3DState *state,
+    DM1_ViewSquareIndex square,
+    int map_x, int map_y)
+{
+    const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
+    int cell, element;
+    DM1_WallSetIndex native_wall, parity_wall;
+    const DM1_WallFrame *fr;
+    int vwi;
+
+    if (!state || !bm_base) return 0;
+
+    cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
+    element = state->dungeon_aspect_grid ? cell
+                                         : dm1_viewport_3d_classify_grid_cell(cell);
+    if (element != DM1_VP_ELEMENT_WALL) return 0;
+
+    switch (square) {
+    case DM1_VIEW_SQUARE_D2L:
+        native_wall = DM1_WALL_D2L; parity_wall = DM1_WALL_D2R;
+        vwi = DM1_V1_VIEW_WALL_D2L_FRONT_PC34; break;
+    case DM1_VIEW_SQUARE_D2R:
+        native_wall = DM1_WALL_D2R; parity_wall = DM1_WALL_D2L;
+        vwi = DM1_V1_VIEW_WALL_D2R_FRONT_PC34; break;
+    case DM1_VIEW_SQUARE_D1L:
+        native_wall = DM1_WALL_D1L; parity_wall = DM1_WALL_D1R;
+        vwi = DM1_V1_VIEW_WALL_D1L_RIGHT_PC34; break;
+    case DM1_VIEW_SQUARE_D1R:
+        native_wall = DM1_WALL_D1R; parity_wall = DM1_WALL_D1L;
+        vwi = DM1_V1_VIEW_WALL_D1R_LEFT_PC34; break;
+    default: return 0;
+    }
+
+    fr = dm1_viewport_3d_get_wall_frame(square);
+    if (!fr) return 1;
+
+    {
+        bool flip_h = state->parity_flip;
+        DM1_WallSetIndex wall_idx = flip_h ? parity_wall : native_wall;
+        const uint8_t *wall = dm1_viewport_3d_selected_wall_bitmap(
+            state, bm_base, wall_idx);
+        if (flip_h) {
+            dm1_viewport_3d_draw_wall_parity_mirrored(state, wall, fr);
+        } else {
+            dm1_viewport_3d_draw_wall(state, wall, fr);
+        }
+    }
+
+    dm1_viewport_3d_draw_wall_ornament_f0107(state, vwi, map_x, map_y);
+    return 1;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────

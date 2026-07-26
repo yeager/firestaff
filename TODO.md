@@ -39,6 +39,10 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-26: F0107 wall ornament rendering wired into DM1 viewport 3D
    pipeline for D3L2/D3R2, D3L/D3R, D2L2/D2R2 wall positions. Viewport
    movement completion matrix cleared (pass402 + pass406 fixed).
+   2026-07-26: Element routing added for D3C/D2C/D1C center and
+   D2L/D2R/D1L/D1R side walls. All 15 F0107 wall ornament positions now
+   wired. Wall_ornament_ordinal_callback plumbed through CSB viewport config.
+   Remaining: provide an actual ordinal callback from dungeon thing data.
 4. **Q-DM1-04 Door, sensor and topology runtime:** buttons, fakewalls, pits,
    teleporters, stairs, door animations and Thing-driven movement.
 5. **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,

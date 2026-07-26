@@ -1,3 +1,10 @@
+- ✅ 2026-07-26 Add element routing for D3C/D2C/D1C center and D2L/D2R/D1L/D1R
+  side wall squares in CSB viewport. Wall elements now draw wall bitmap +
+  F0107 front/side ornament and skip door frame; non-wall elements fall
+  through to door frame drawing. Wires wall_ornament_ordinal_callback
+  through CSB_V1_ViewportConfig to DM1_Viewport3DState. Covers 9 remaining
+  F0107 positions (D3L_FRONT, D3C_FRONT, D3R_FRONT, D2L_FRONT, D2C_FRONT,
+  D2R_FRONT, D1L_RIGHT, D1R_LEFT, D1C_FRONT). [v3.0.130]
 - ✅ 2026-07-26 Wire F0107 wall ornament rendering into DM1 viewport 3D pipeline.
   Adds wall ornament ordinal callback to DM1_Viewport3DState and wires
   F0107 resolver + graphic provider blit into D3L2/D3R2, D3L/D3R, and
