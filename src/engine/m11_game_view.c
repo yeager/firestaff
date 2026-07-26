@@ -18680,6 +18680,16 @@ int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state) {
     return state->vblankTiming.stopWaitingForInput ? 1 : 0;
 }
 
+static int m11_dm1_v1_pipeline_command_for_input(M12_MenuInput input) {
+    switch (input) {
+    case M12_MENU_INPUT_UP:    return DM1_V1_COMMAND_MOVE_FORWARD;
+    case M12_MENU_INPUT_DOWN:  return DM1_V1_COMMAND_MOVE_BACKWARD;
+    case M12_MENU_INPUT_LEFT:  return DM1_V1_COMMAND_TURN_LEFT;
+    case M12_MENU_INPUT_RIGHT: return DM1_V1_COMMAND_TURN_RIGHT;
+    default:                   return DM1_V1_COMMAND_NONE;
+    }
+}
+
 static int m11_apply_dm1_v1_pipeline_tick(M11_GameViewState* state,
                                            M12_MenuInput input,
                                            const char* actionLabel) {

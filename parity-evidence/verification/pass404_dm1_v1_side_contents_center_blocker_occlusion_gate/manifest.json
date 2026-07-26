@@ -3,11 +3,11 @@
   "closedBlocker": "side contents / side explosions no longer repaint same-depth-or-farther cells past the nearest non-open center wall/door",
   "driftProofLocalGuard": "Firestaff local checks are token/order guards over current function bodies; current line numbers are diagnostic only.",
   "firestaffGuards": [
-    "side contents gate before item/creature/projectile draws: tokens=m11_draw_dm1_side_contents_at_depth/blockingCenterDepth>=depth/m11_draw_dm1_f0115_floor_item_sprite (current m11_game_view.c:31310)",
-    "F0128 per-depth interleave: side contents dispatch precedes the same-depth center contents route in m11_draw_viewport (current m11_game_view.c:42908)",
-    "side explosion gate before deferred side explosion draw: tokens=m11_draw_dm1_deferred_explosion_pass/m11_dm1_nearest_blocking_center_depth_index/blockingCenterDepth>=depth/m11_draw_dm1_deferred_side_explosion (current m11_game_view.c:31704)"
+    "side contents gate before item/creature/projectile draws: tokens=m11_draw_dm1_side_contents_at_depth/blockingCenterDepth>=depth/m11_draw_dm1_f0115_floor_item_sprite (current m11_game_view.c:31320)",
+    "F0128 per-depth interleave: side contents dispatch precedes the same-depth center contents route in m11_draw_viewport (current m11_game_view.c:42918)",
+    "side explosion gate before deferred side explosion draw: tokens=m11_draw_dm1_deferred_explosion_pass/m11_dm1_nearest_blocking_center_depth_index/blockingCenterDepth>=depth/m11_draw_dm1_deferred_side_explosion (current m11_game_view.c:31714)"
   ],
-  "head": "d2aa775e7d7f9749cf3048114234b52e76beb064",
+  "head": "0577907e26361bbb067a8021dde7f12b0cb9ad47",
   "notClaimed": [
     "original pixel parity",
     "new original DOS runtime capture",
@@ -19,5 +19,5 @@
     "ReDMCSB": "DUNVIEW.C:8491-8533"
   },
   "status": "PASS404_DM1_V1_SIDE_CONTENTS_CENTER_BLOCKER_OCCLUSION_PROVEN",
-  "timestampUtc": "2026-07-26T16:55:40.246452+00:00"
+  "timestampUtc": "2026-07-26T17:04:42.687171+00:00"
 }
