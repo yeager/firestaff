@@ -42,9 +42,13 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-26: Element routing added for D3C/D2C/D1C center and
    D2L/D2R/D1L/D1R side walls. All 15 F0107 wall ornament positions now
    wired. Wall_ornament_ordinal_callback plumbed through CSB viewport config.
-   Remaining: provide an actual ordinal callback from dungeon thing data.
+   Remaining: wire provider into CSB viewport config from dungeon_handle.
    2026-07-26: Center/side element routing refined to 3-state return
    (wall/open-cell/door) for proper door frame gating. [v3.0.131]
+   2026-07-26: Wall ornament ordinal provider module added. Resolves
+   ordinals from sensor things (phase 1) and random ornaments F0170/F0171
+   (phase 2). Usable as DM1_ViewportWallOrnamentOrdinalCallback with
+   DungeonThings_Compat data. [v3.0.132]
 4. **Q-DM1-04 Door, sensor and topology runtime:** buttons, fakewalls, pits,
    teleporters, stairs, door animations and Thing-driven movement.
 5. **Q-DM1-05 Group/combat timeline:** F0190/F0207/F0209 AI, LoS, attacks,

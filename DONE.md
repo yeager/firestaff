@@ -1,3 +1,10 @@
+- ✅ 2026-07-26 Add wall ornament ordinal provider module (Q-DM1-03).
+  New dm1_v1_viewport_wall_ornament_ordinal_provider resolves ornament
+  ordinals from dungeon thing data: sensor-placed ornaments (phase 1,
+  sensor.ornamentOrdinal with thing-list walk) override random ornaments
+  (phase 2, F0170/F0171 map metadata formula). Provider struct carries
+  DungeonThings_Compat pointer + map metadata; resolve function matches
+  DM1_ViewportWallOrnamentOrdinalCallback signature. [v3.0.132]
 - ✅ 2026-07-26 Wire F0740-F0743 DM1 music state machine into M11 game view
   (Q-DM1-08). SONG.DAT source bound at init via audio state path. F0742
   set_map_track called on stairs/teleporter map transitions. F0743
