@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.167 LANGUAGES C)
+project(Firestaff VERSION 3.0.168 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -43716,6 +43716,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_midi_backend.c
         src/memory/memory_timeline_pc34_compat.c
     )
+    if(NOT MSVC)
+        target_link_libraries(test_dm2_v1_scene_light_control PRIVATE m)
+    endif()
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_scene_light_control PRIVATE -Wall -Wextra -O2)
     endif()
