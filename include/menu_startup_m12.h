@@ -235,7 +235,22 @@ typedef enum {
 } M12_GameSpeed;
 
 typedef enum {
+    M12_ARCH_AUTO = 0,
+    M12_ARCH_PC,
+    M12_ARCH_AMIGA,
+    M12_ARCH_ATARI_ST,
+    M12_ARCH_FM_TOWNS,
+    M12_ARCH_X68000,
+    M12_ARCH_PC98,
+    M12_ARCH_PCE,
+    M12_ARCH_SATURN,
+    M12_ARCH_APPLE_IIGS,
+    M12_ARCH_COUNT
+} M12_Architecture;
+
+typedef enum {
     M12_GAME_OPT_ROW_PRESENTATION = 0,
+    M12_GAME_OPT_ROW_ARCHITECTURE,
     M12_GAME_OPT_ROW_VERSION,
     M12_GAME_OPT_ROW_PATCH,
     M12_GAME_OPT_ROW_LANGUAGE,
@@ -248,6 +263,7 @@ typedef enum {
 
 typedef struct {
     int presentationModeIndex;
+    int architectureIndex;
     int versionIndex;
     int usePatch;
     int languageIndex;

@@ -599,6 +599,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
                 config->gameUsePatch[gameIndex] = m12_parse_int(value, config->gameUsePatch[gameIndex]);
                 return;
             }
+            if (m12_string_equals(field, "architecture_index")) {
+                config->gameArchitectureIndex[gameIndex] = m12_parse_int(value, config->gameArchitectureIndex[gameIndex]);
+                return;
+            }
             if (m12_string_equals(field, "version_index")) {
                 config->gameVersionIndex[gameIndex] = m12_parse_int(value, config->gameVersionIndex[gameIndex]);
                 return;
@@ -1038,6 +1042,7 @@ int M12_Config_Save(const M12_Config* config) {
         int gi;
         for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
             fprintf(fp, "game_%d_use_patch = %d\n", gi, config->gameUsePatch[gi]);
+            fprintf(fp, "game_%d_architecture_index = %d\n", gi, config->gameArchitectureIndex[gi]);
             fprintf(fp, "game_%d_version_index = %d\n", gi, config->gameVersionIndex[gi]);
             fprintf(fp, "game_%d_language_index = %d\n", gi, config->gameLanguageIndex[gi]);
             fprintf(fp, "game_%d_cheats_enabled = %d\n", gi, config->gameCheatsEnabled[gi]);
@@ -1447,6 +1452,7 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         fprintf(fp, "    {\n");
         fprintf(fp, "      \"use_patch\": %d,\n", config->gameUsePatch[gi]);
+        fprintf(fp, "      \"architecture_index\": %d,\n", config->gameArchitectureIndex[gi]);
         fprintf(fp, "      \"version_index\": %d,\n", config->gameVersionIndex[gi]);
         fprintf(fp, "      \"language_index\": %d,\n", config->gameLanguageIndex[gi]);
         fprintf(fp, "      \"cheats_enabled\": %d,\n", config->gameCheatsEnabled[gi]);
@@ -1815,6 +1821,8 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
                     if (gi < M12_CONFIG_GAME_COUNT) {
                         if (strcmp(key, "use_patch") == 0) {
                             config->gameUsePatch[gi] = m12_parse_int(t2, config->gameUsePatch[gi]);
+                        } else if (strcmp(key, "architecture_index") == 0) {
+                            config->gameArchitectureIndex[gi] = m12_parse_int(t2, config->gameArchitectureIndex[gi]);
                         } else if (strcmp(key, "version_index") == 0) {
                             config->gameVersionIndex[gi] = m12_parse_int(t2, config->gameVersionIndex[gi]);
                         } else if (strcmp(key, "language_index") == 0) {

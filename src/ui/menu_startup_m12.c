@@ -544,6 +544,8 @@ static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int del
                 opts->resolution = M12_RES_640x400;
             }
             break;
+        case M12_GAME_OPT_ROW_ARCHITECTURE:
+            break;
         case M12_GAME_OPT_ROW_VERSION:
             break;
         case M12_GAME_OPT_ROW_PATCH:
@@ -607,6 +609,8 @@ static void m12_clamp_game_options(M12_GameOptions* opts) {
     }
     opts->presentationModeIndex = m12_clamp_index(
         opts->presentationModeIndex, M12_PRESENTATION_MODE_COUNT);
+    opts->architectureIndex = m12_clamp_index(
+        opts->architectureIndex, M12_ARCH_COUNT);
     if (opts->versionIndex < 0) {
         opts->versionIndex = 0;
     }
@@ -3194,6 +3198,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         M12_GameOptions opts = state->gameOptions[gi];
         m12_clamp_game_options(&opts);
+        config.gameArchitectureIndex[gi] = opts.architectureIndex;
         config.gameVersionIndex[gi] = opts.versionIndex;
         config.gameUsePatch[gi] = opts.usePatch;
         config.gameLanguageIndex[gi] = opts.languageIndex;
@@ -3535,6 +3540,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     state->settings.windowHeight = config.windowHeight > 0 ? config.windowHeight : 540;
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         state->gameOptions[gi].presentationModeIndex = state->settings.graphicsIndex;
+        state->gameOptions[gi].architectureIndex = config.gameArchitectureIndex[gi];
         state->gameOptions[gi].versionIndex = config.gameVersionIndex[gi];
         state->gameOptions[gi].usePatch = config.gameUsePatch[gi];
         state->gameOptions[gi].languageIndex = config.gameLanguageIndex[gi];
@@ -5234,6 +5240,10 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->gameOptions[gi].versionIndex = m12_cycle_index(state->gameOptions[gi].versionIndex,
                                                                               -1,
                                                                               versionCount);
+                    } else if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_ARCHITECTURE) {
+                        state->gameOptions[gi].architectureIndex = m12_cycle_index(state->gameOptions[gi].architectureIndex,
+                                                                                   -1,
+                                                                                   M12_ARCH_COUNT);
                     } else {
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, -1, pmode);
@@ -5253,6 +5263,10 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->gameOptions[gi].versionIndex = m12_cycle_index(state->gameOptions[gi].versionIndex,
                                                                               1,
                                                                               versionCount);
+                    } else if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_ARCHITECTURE) {
+                        state->gameOptions[gi].architectureIndex = m12_cycle_index(state->gameOptions[gi].architectureIndex,
+                                                                                   1,
+                                                                                   M12_ARCH_COUNT);
                     } else {
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, 1, pmode);
@@ -5341,6 +5355,10 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->gameOptions[gi].versionIndex = m12_cycle_index(state->gameOptions[gi].versionIndex,
                                                                               1,
                                                                               versionCount);
+                    } else if (state->gameOptSelectedRow == M12_GAME_OPT_ROW_ARCHITECTURE) {
+                        state->gameOptions[gi].architectureIndex = m12_cycle_index(state->gameOptions[gi].architectureIndex,
+                                                                                   1,
+                                                                                   M12_ARCH_COUNT);
                     } else {
                         m12_cycle_game_opt_with_mode(&state->gameOptions[gi],
                                            state->gameOptSelectedRow, 1, pmode);
@@ -10594,6 +10612,19 @@ static void m12_draw_game_options_view_modern(const M12_StartupMenuState* state,
                           panelX + 10,
                           rowY,
                           panelW - 20,
+                          m12_tr(state, "ARCHITECTURE"),
+                          M12_Architecture_Label(opts->architectureIndex),
+                          state->gameOptSelectedRow == M12_GAME_OPT_ROW_ARCHITECTURE,
+                          0,
+                          0,
+                          0);
+    rowY += 32;
+    m12_draw_game_opt_row(framebuffer,
+                          framebufferWidth,
+                          framebufferHeight,
+                          panelX + 10,
+                          rowY,
+                          panelW - 20,
                           m12_tr(state, "VERSION"),
                           version ? m12_tr(state, version->shortLabel) : "UNKNOWN",
                           state->gameOptSelectedRow == M12_GAME_OPT_ROW_VERSION,
@@ -11824,11 +11855,21 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     }
     version = m12_selected_version_status(state, gi);
     selectedVersionIndex = state->gameOptions[gi].versionIndex;
-    if ((!version || !version->matched) && gate.autoSelectedVersionIndex >= 0) {
-        version = M12_AssetStatus_GetVersion(&state->assetStatus,
-                                             intent.gameId,
-                                             (size_t)gate.autoSelectedVersionIndex);
-        selectedVersionIndex = gate.autoSelectedVersionIndex;
+    if (!version || !version->matched) {
+        int archVersion = M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+            &state->assetStatus, intent.gameId,
+            state->gameOptions[gi].architectureIndex);
+        if (archVersion >= 0) {
+            version = M12_AssetStatus_GetVersion(&state->assetStatus,
+                                                 intent.gameId,
+                                                 (size_t)archVersion);
+            selectedVersionIndex = archVersion;
+        } else if (gate.autoSelectedVersionIndex >= 0) {
+            version = M12_AssetStatus_GetVersion(&state->assetStatus,
+                                                 intent.gameId,
+                                                 (size_t)gate.autoSelectedVersionIndex);
+            selectedVersionIndex = gate.autoSelectedVersionIndex;
+        }
     }
     intent.versionId = version ? version->versionId : NULL;
     intent.presentationMode = pmode;
