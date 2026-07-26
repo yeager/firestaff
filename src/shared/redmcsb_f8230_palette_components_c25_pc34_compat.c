@@ -28,7 +28,8 @@ bool redmcsb_f8230_set_single_color_components_c25_pc34_compat(
     full_palette[color_index][2] = redmcsb_f8230_expand_component(blue);
     if (curtain_flag == 1U) {
         return redmcsb_f8156_set_palette_c25_pc34_compat(
-            full_palette, dac, wait_vertical_blank, context);
+            (const uint8_t (*)[REDMCSB_F8156_C25_PALETTE_COMPONENTS_PC34])full_palette,
+            dac, wait_vertical_blank, context);
     }
     return true;
 }
