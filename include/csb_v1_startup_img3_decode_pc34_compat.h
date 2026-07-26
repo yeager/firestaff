@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* CSBWin Graphics.cpp::ExpandGraphic provenance for one C001--C005 stream.
+/* IMG1 (dmweb) decode provenance for one CSB Amiga C001--C005 stream.
  * This records decoder facts only; it does not assign palette meaning or
  * authorize presentation. */
 typedef struct CSB_V1_StartupGraphicDecodeReceipt_PC34 {
@@ -23,10 +23,9 @@ typedef struct CSB_V1_StartupGraphicDecodeReceipt_PC34 {
 } CSB_V1_StartupGraphicDecodeReceipt_PC34;
 
 /*
- * Converts one real, already-decompressed CSB PC 3.4 C001--C005 planar
- * stream into indexed pixels. This is the CSBWin ExpandGraphic format:
- * big-endian width/height followed by its four-plane command stream. The
- * legacy function name is retained at the startup compatibility boundary.
+ * Converts one decompressed CSB Amiga C001--C005 IMG1 stream into indexed
+ * pixels.  IMG1 is a nibble-based RLE with big-endian width/height header.
+ * The legacy function name is retained at the startup compatibility boundary.
  */
 int csb_v1_startup_img3_decode_to_indexed_pc34_compat(
     const uint8_t *graphic,

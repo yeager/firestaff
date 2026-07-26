@@ -1,3 +1,9 @@
+- ✅ 2026-07-26 Fix CSB graphic decode: IMG1 format (Q-CSB-03, Q-CSB-04). CSB
+  GRAPHICS.DAT identified as Amiga v3.1 IMG1 nibble-RLE format via dmweb.free.fr
+  documentation. Replaced incorrect ExpandGraphic byte-format decoder with IMG1
+  decoder. C001 title (320x153) and C004 entrance (320x200) now decode 100%.
+  Removed temporary C004 debug prints from main_loop_m11.c and surfaces module.
+  Updated test vectors to IMG1 format. [v3.0.139]
 - ✅ 2026-07-26 HoC action/spell material lane (Q-DM1-02). Consumer now admits
   four source lanes: mirror (C346/C026), inscription (M648), object (F0115),
   and action/spell (G560). Action/spell validates graphic IDs and serial from
