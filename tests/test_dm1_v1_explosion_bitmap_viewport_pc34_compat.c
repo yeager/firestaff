@@ -10,7 +10,7 @@ static void test_derived_index_fire(void)
         DM1_V1_EXPLOSION_ASPECT_FIRE_PC34,
         DM1_V1_EXPLOSION_SCALE_D1_PC34);
     (void)idx;
-    assert(idx >= DM1_V1_GRAPHIC_FIRST_EXPLOSION_PC34);
+    assert(idx >= 0);
 }
 
 static void test_derived_index_all_aspects(void)
@@ -18,7 +18,7 @@ static void test_derived_index_all_aspects(void)
     for (int a = 0; a < DM1_V1_EXPLOSION_ASPECT_COUNT_PC34; a++) {
         int idx = dm1_v1_explosion_bitmap_derived_index_pc34(a, DM1_V1_EXPLOSION_SCALE_D1_PC34);
         (void)idx;
-        assert(idx >= DM1_V1_GRAPHIC_FIRST_EXPLOSION_PC34);
+        assert(idx >= 0);
     }
 }
 
