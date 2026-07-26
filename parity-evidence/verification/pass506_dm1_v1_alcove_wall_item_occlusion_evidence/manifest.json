@@ -98,11 +98,11 @@
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "DM1 V1 viewport/world visuals: alcove wall-item occlusion evidence",
   "sourceHashes": {
-    "CMakeLists.txt": "63a552efde216f2e433841eb6077c70226935a3aedd42de0ebc5203860d346bf",
+    "CMakeLists.txt": "1df72aeff02dce72374ff5b5ed65d29d5882607743c46e640a78b1db2f4334cb",
     "DUNGEON.C": "57b2aba28bab373ce1cd0e09b906def30b7754210a7634595029c0611d79259c",
     "DUNVIEW.C": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
     "evidence": "122191ec472ad49a9dce4c4814b69489dd191e8be13105ef325940e4f5d89fd9",
-    "m11_game_view.c": "771ccf258e45954afd3b1fbfd76791e0a9f1cad6cb6e38e69ead1dbf78c13d21"
+    "m11_game_view.c": "cfd1104316dc179b41af313ac26cc6ab79946b6e5fd49ec6a0de567dd09145bd"
   },
   "status": "passed"
 }

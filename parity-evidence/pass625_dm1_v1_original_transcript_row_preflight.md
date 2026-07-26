@@ -1,6 +1,6 @@
 # Pass624 - DM1 V1 original transcript row preflight
 
-Status: FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT
+Status: PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED
 
 This gate narrows the pass622 blocker to one original runtime transcript row for `02_turn_right_west_1_3`. It does not run DOSBox and does not promote original-vs-Firestaff parity.
 
@@ -26,8 +26,8 @@ This gate narrows the pass622 blocker to one original runtime transcript row for
 
 ## Target transcript row
 - label=02_turn_right_west_1_3 input=M12_MENU_INPUT_RIGHT command=2 C002_COMMAND_TURN_RIGHT
-- partyAfter={'map': 0, 'x': 1, 'y': 3, 'direction': 3} firestaffViewportSha256=1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81
-- pass623 row ok=False
+- partyAfter={'map': 0, 'x': 1, 'y': 3, 'direction': 3} firestaffViewportSha256=48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5
+- pass623 row ok=True
 
 ## Consumed gates
 - PASS pass608_same_viewport_blocker observed=BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE
@@ -86,6 +86,3 @@ The next original capture attempt has a machine-checked, source-backed target ro
 - no renderer, movement, or input behavior is changed
 - no non-N2 original asset path is used
 - no push, tag, package, or release action
-
-## Problems
-- target Firestaff viewport hash drifted

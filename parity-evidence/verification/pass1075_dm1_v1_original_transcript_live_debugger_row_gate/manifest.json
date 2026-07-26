@@ -32,11 +32,8 @@
     "no original-vs-Firestaff pixel parity is promoted",
     "no gameplay, renderer, input, or asset-loading behavior is changed"
   ],
-  "ok": false,
-  "problems": [
-    "upstream gate drifted: parity-evidence/verification/pass625_dm1_v1_original_transcript_row_preflight/manifest.json",
-    "upstream gate drifted: parity-evidence/verification/pass626_dm1_v1_original_transcript_turn_redraw_route/manifest.json"
-  ],
+  "ok": true,
+  "problems": [],
   "requiredDebuggerFunctions": [
     "M528_GetCharacterInKeyboardBuffer",
     "F0361_COMMAND_ProcessKeyPress",
@@ -153,19 +150,19 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "FAIL_PASS1075_DM1_V1_ORIGINAL_TRANSCRIPT_LIVE_DEBUGGER_ROW",
-  "timestampUtc": "2026-07-26T17:23:22.096162+00:00",
+  "status": "BLOCKED_PASS1075_DM1_V1_ORIGINAL_I34E_LIVE_DEBUGGER_ROW_MISSING",
+  "timestampUtc": "2026-07-26T17:53:23.553585+00:00",
   "upstreamGates": [
     {
       "expected": "PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED",
-      "observed": "FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT",
-      "ok": false,
+      "observed": "PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED",
+      "ok": true,
       "path": "parity-evidence/verification/pass625_dm1_v1_original_transcript_row_preflight/manifest.json"
     },
     {
       "expected": "PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE_LOCKED",
-      "observed": "FAIL_PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE",
-      "ok": false,
+      "observed": "PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE_LOCKED",
+      "ok": true,
       "path": "parity-evidence/verification/pass626_dm1_v1_original_transcript_turn_redraw_route/manifest.json"
     }
   ]

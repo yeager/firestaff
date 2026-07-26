@@ -43,7 +43,7 @@
     "no non-N2 original asset path is used",
     "no push, tag, package, or release action"
   ],
-  "ok": false,
+  "ok": true,
   "originalAssetLocks": [
     {
       "bytes": 12002,
@@ -123,9 +123,7 @@
       "sha256": "aeb5a47f3b753206e474185f2c08b5e884dc8ddf4bd5cb82e2f28f9b7617f275"
     }
   ],
-  "problems": [
-    "target Firestaff viewport hash drifted"
-  ],
+  "problems": [],
   "schema": "firestaff.parity.pass625_dm1_v1_original_transcript_row_preflight.v1",
   "sourceAudit": [
     {
@@ -202,9 +200,9 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT",
+  "status": "PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED",
   "targetRowAudit": {
-    "ok": false,
+    "ok": true,
     "pass623Row": {
       "claim": "right input resolves to C002 turn-right and changes facing only",
       "commandIds": [
@@ -232,9 +230,7 @@
       },
       "problems": []
     },
-    "problems": [
-      "target Firestaff viewport hash drifted"
-    ],
+    "problems": [],
     "target": {
       "f0128Tuple": {
         "direction": 3,
@@ -242,7 +238,7 @@
         "x": 1,
         "y": 3
       },
-      "firestaffViewportSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+      "firestaffViewportSha256": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5",
       "inputToken": "M12_MENU_INPUT_RIGHT",
       "partyAfter": {
         "direction": 3,
@@ -261,7 +257,7 @@
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     }
   },
-  "timestampUtc": "2026-07-26T17:23:22.017890+00:00",
+  "timestampUtc": "2026-07-26T17:53:22.722071+00:00",
   "transcriptTemplateAudit": {
     "missing": [],
     "ok": true,
@@ -325,7 +321,7 @@
         "mapIndex": 0,
         "mapX": 1,
         "mapY": 3,
-        "viewportSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81"
+        "viewportSha256": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5"
       },
       "input": {
         "source": "original PC/I34E",
