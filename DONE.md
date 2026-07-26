@@ -1,3 +1,7 @@
+- ✅ 2026-07-26 VGA palette material lane in HoC consumer (Q-DM1-02). Wired
+  G9010_auc_VgaPaletteBrightest_Compat[16][3] FNV-1a hash into palette lane
+  of m11_dm1_hoc_presented_frame_consumer_build. Consumer now admits 5 lanes:
+  mirror, inscription, object, action/spell, palette. [v3.0.150]
 - ✅ 2026-07-26 DM1 startup handoff M11 bridge (Q-DM1-08). Created
   dm1_v1_startup_handoff_m11_bridge_pc34_compat module with callback
   implementations for play_swsh, play_title, play_entrance. Wired into
