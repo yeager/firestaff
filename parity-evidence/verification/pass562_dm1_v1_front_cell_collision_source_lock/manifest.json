@@ -1,13 +1,13 @@
 {
   "branch": "main",
   "firestaffGuards": {
-    "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:394-590",
+    "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:410-617",
     "F0702_MOVEMENT_TryMove_Compat": "memory_movement_pc34_compat.c:408-493",
     "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat": "memory_movement_pc34_compat.c:848-922",
-    "commandCoreBlockerSlice": "dm1_v1_movement_command_core_pc34_compat.c:484-574",
+    "commandCoreBlockerSlice": "dm1_v1_movement_command_core_pc34_compat.c:500-594",
     "runtimeExecutable": "test_dm1_v1_movement_command_core_pc34_compat (source assertions; executable build verified separately when link gate is available)"
   },
-  "head": "d0be31c776c3e8127dde1da23af078dd4d36abb7",
+  "head": "d2aa775e7d7f9749cf3048114234b52e76beb064",
   "notClaimed": [
     "original DOS overlay pixel parity",
     "combat RNG/wound materialization",
@@ -24,5 +24,5 @@
   "schema": "pass562_dm1_v1_front_cell_collision_source_lock.v1",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS562_DM1_V1_FRONT_CELL_COLLISION_SOURCE_LOCKED",
-  "timestampUtc": "2026-07-26T16:14:25.153196+00:00"
+  "timestampUtc": "2026-07-26T16:55:44.969200+00:00"
 }

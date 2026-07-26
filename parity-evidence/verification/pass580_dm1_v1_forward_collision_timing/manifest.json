@@ -1,9 +1,9 @@
 {
   "branch": "main",
   "firestaffGuards": {
-    "blockedBeforePartyCommit": "dm1_v1_movement_command_core_pc34_compat.c:414-581",
+    "blockedBeforePartyCommit": "dm1_v1_movement_command_core_pc34_compat.c:430-605",
     "f0325ClampPlan": "dm1_v1_action_xp_graphic560_pc34_compat.c:308-352",
-    "movementCommandCore": "dm1_v1_movement_command_core_pc34_compat.c:394-590",
+    "movementCommandCore": "dm1_v1_movement_command_core_pc34_compat.c:410-617",
     "queueDiscard": "dm1_v1_input_command_queue_pc34_compat.c:294-321",
     "queueDiscardSpan": "dm1_v1_input_command_queue_pc34_compat.c:307-320",
     "queueGateSpan": "dm1_v1_input_command_queue_pc34_compat.c:543-558",
@@ -12,7 +12,7 @@
     "successfulMovementTiming": "dm1_v1_movement_timing_pc34_compat.c:66-90",
     "successfulMovementTimingSpan": "dm1_v1_movement_timing_pc34_compat.c:76-86"
   },
-  "head": "d0be31c776c3e8127dde1da23af078dd4d36abb7",
+  "head": "d2aa775e7d7f9749cf3048114234b52e76beb064",
   "notClaimed": [
     "new original DOSBox capture",
     "viewport/touch/rendering parity",
@@ -34,6 +34,6 @@
   "schema": "firestaff.parity.pass580_dm1_v1_forward_collision_timing.v1",
   "scope": "DM1 V1 movement pipeline only: queued forward command dispatch, cooldown gating, blocked-square behavior, stamina and non-stamina stamina side effects, and unchanged party position on blocked movement.",
   "status": "PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED",
-  "timestampUtc": "2026-07-26T16:11:49.469505+00:00",
+  "timestampUtc": "2026-07-26T16:54:51.872840+00:00",
   "worktree": "/Volumes/Extern-disk/firestaff-claude"
 }

@@ -1,0 +1,144 @@
+{
+  "schema": "pass475_dm1_v1_movement_viewport_wall_live_click_capture.v1",
+  "timestampUtc": "2026-07-26T16:34:23.939180+00:00",
+  "status": "BLOCKED_PASS475_RUNTIME_NOT_RUN",
+  "summary": "missing tools: import",
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "sourceAudit": [
+    {
+      "file": "COMMAND.C",
+      "section": "pc34_click_boxes",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "ok": true,
+      "lineHits": {
+        "G0448_as_Graphic561_SecondaryMouseInput_Movement": 35,
+        "C001_COMMAND_TURN_LEFT,             234, 261, 125, 145": 108,
+        "C003_COMMAND_MOVE_FORWARD,          263, 289, 125, 145": 109,
+        "C002_COMMAND_TURN_RIGHT,            291, 318, 125, 145": 110,
+        "C080_COMMAND_CLICK_IN_DUNGEON_VIEW,   0, 223,  33, 168": 114
+      },
+      "missing": []
+    },
+    {
+      "file": "COMMAND.C",
+      "section": "queue_to_handlers",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "ok": true,
+      "lineHits": {
+        "F0380_COMMAND_ProcessQueue_CPSC": 1497,
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155
+      },
+      "missing": []
+    },
+    {
+      "file": "CLIKMENU.C",
+      "section": "turn_stop",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "ok": true,
+      "lineHits": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 142,
+        "F0284_CHAMPION_SetPartyDirection": 138,
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval": 171
+      },
+      "missing": []
+    },
+    {
+      "file": "CLIKMENU.C",
+      "section": "step_stop",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "ok": true,
+      "lineHits": {
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 180,
+        "F0267_MOVE_GetMoveResult_CPSCE": 135,
+        "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks": 345
+      },
+      "missing": []
+    },
+    {
+      "file": "DUNVIEW.C",
+      "section": "wall_composite",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "ok": true,
+      "lineHits": {
+        "F0098_DUNGEONVIEW_DrawFloorAndCeiling": 2962,
+        "G0296_puc_Bitmap_Viewport": 2101,
+        "F0100_DUNGEONVIEW_DrawWallSetBitmap": 3048,
+        "F0102_DUNGEONVIEW_DrawDoorBitmap": 3082,
+        "F0128_DUNGEONVIEW_Draw_CPSF": 7155,
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)": 8610
+      },
+      "missing": []
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "section": "post_present_seam",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C",
+      "ok": true,
+      "lineHits": {
+        "F0097_DUNGEONVIEW_DrawViewport": 709,
+        "F0638_GetZone(C007_ZONE_VIEWPORT": 847,
+        "G0296_puc_Bitmap_Viewport": 721,
+        "VIDRV_09_BlitViewPort": 857
+      },
+      "missing": []
+    }
+  ],
+  "addresses": {
+    "F0380_COMMAND_ProcessQueue_CPSC": "22F7:0699",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA7:010D",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA7:01AA",
+    "F0128_DUNGEONVIEW_Draw_CPSF": "23B0:40FE",
+    "F0097_VIDRV_09_BlitViewPort_indirect_call": "280C:1EFF"
+  },
+  "clickPrimitives": [
+    {
+      "label": "turn_left",
+      "command": "C001",
+      "xy": [
+        247,
+        135
+      ],
+      "handler": "F0365_COMMAND_ProcessTypes1To2_TurnParty"
+    },
+    {
+      "label": "move_forward",
+      "command": "C003",
+      "xy": [
+        276,
+        135
+      ],
+      "handler": "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+    },
+    {
+      "label": "turn_right",
+      "command": "C002",
+      "xy": [
+        304,
+        135
+      ],
+      "handler": "F0365_COMMAND_ProcessTypes1To2_TurnParty"
+    }
+  ],
+  "runtime": {
+    "ran": false,
+    "blocker": "missing tools: import"
+  },
+  "predicates": {
+    "sourceAuditOk": true,
+    "runtimeRan": false,
+    "handlersHit": [],
+    "f0380Hit": false,
+    "f0128Hit": false,
+    "postPresentHit": false,
+    "captureCount": 0,
+    "stopKinds": []
+  },
+  "artifacts": {
+    "manifest": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/manifest.json",
+    "transcript": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/pass475_dm1_v1_movement_viewport_wall_live_click_capture_runtime.clean.txt",
+    "commandLog": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/pass475_dm1_v1_movement_viewport_wall_live_click_capture_command_log.json",
+    "clickLog": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/pass475_dm1_v1_movement_viewport_wall_live_click_capture_click_log.json"
+  },
+  "promotionRule": "Fresh wall/viewport frames are promotable only when captured after F0128 composition and the F0097/VIDRV post-present seam; pass304/pass376/pass449 frames are not used."
+}

@@ -1,7 +1,7 @@
 {
   "blocker": "no promotable original overlay/capture frame exists yet; exact command: python3 tools/verify_pass475_dm1_v1_movement_viewport_wall_live_click_capture.py --seconds 10",
   "branch": "main",
-  "head": "d0be31c776c3e8127dde1da23af078dd4d36abb7",
+  "head": "d2aa775e7d7f9749cf3048114234b52e76beb064",
   "liveAttempt": null,
   "nonClaims": [
     "no original frame promoted as parity evidence",
@@ -9,8 +9,20 @@
     "no push"
   ],
   "pass475Snapshot": {
-    "exists": false,
-    "path": "parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/manifest.json"
+    "exists": true,
+    "path": "parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/manifest.json",
+    "predicates": {
+      "captureCount": 0,
+      "f0128Hit": false,
+      "f0380Hit": false,
+      "handlersHit": [],
+      "postPresentHit": false,
+      "runtimeRan": false,
+      "sourceAuditOk": true,
+      "stopKinds": []
+    },
+    "status": "BLOCKED_PASS475_RUNTIME_NOT_RUN",
+    "summary": "missing tools: import"
   },
   "prerequisites": {
     "dmExeExists": true,
@@ -138,5 +150,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS548_NO_PROMOTABLE_ORIGINAL_CAPTURE",
-  "timestampUtc": "2026-07-26T16:14:20.804555+00:00"
+  "timestampUtc": "2026-07-26T16:55:42.449658+00:00"
 }

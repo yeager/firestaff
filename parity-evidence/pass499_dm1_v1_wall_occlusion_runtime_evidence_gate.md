@@ -1,6 +1,6 @@
 # Pass499 — DM1 V1 wall occlusion runtime evidence gate
 
-Status: `FAIL_PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE`
+Status: `PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED`
 
 ## Decision
 
@@ -33,7 +33,3 @@ Promote wall-occlusion runtime evidence only when pass496 source/spec matrix is 
 - no new DOSBox debugger stop
 - no original-vs-Firestaff pixel parity
 - no promotion of static repeated screenshots
-
-## Problems
-
-- compiled probe/prior gates failed

@@ -1,12 +1,12 @@
 {
   "branch": "main",
   "firestaffGuards": {
-    "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:394-590",
-    "blockedBranch": "dm1_v1_movement_command_core_pc34_compat.c:431-513",
+    "DM1_V1_MovementCommandCore_ProcessOnePc34Compat": "dm1_v1_movement_command_core_pc34_compat.c:410-617",
+    "blockedBranch": "dm1_v1_movement_command_core_pc34_compat.c:447-533",
     "blockedDamageSeam": "dm1_v1_movement_command_core_pc34_compat.c:80-123",
     "runtimeExecutable": "build/test_dm1_v1_movement_command_core_pc34_compat"
   },
-  "head": "d0be31c776c3e8127dde1da23af078dd4d36abb7",
+  "head": "d2aa775e7d7f9749cf3048114234b52e76beb064",
   "notClaimed": [
     "combat RNG/wound materialization parity for the pending damage request",
     "representative original DOS overlay capture parity",
@@ -20,5 +20,5 @@
     "blockedSideEffects": "CLIKMENU.C:237-322"
   },
   "status": "PASS505_DM1_V1_BLOCKED_MOVEMENT_SIDE_EFFECT_SOURCE_LOCK_PROVEN",
-  "timestampUtc": "2026-07-26T16:14:25.355559+00:00"
+  "timestampUtc": "2026-07-26T16:55:44.990296+00:00"
 }

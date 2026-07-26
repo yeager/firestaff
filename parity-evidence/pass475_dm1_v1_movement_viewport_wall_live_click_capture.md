@@ -1,16 +1,16 @@
 # Pass475 — DM1 V1 movement/viewport/wall live click capture
 
-Status: `PASS_PASS475_FRESH_CLICK_POST_PRESENT_CAPTURED`
+Status: `BLOCKED_PASS475_RUNTIME_NOT_RUN`
 
-fresh click-driven run reached movement/viewport post-present seam and saved bounded capture artifacts
+missing tools: import
 
 ## Evidence summary
 - Source audit ok: `True`
-- Queue hit: `True`
+- Queue hit: `False`
 - Movement handlers hit: `[]`
-- F0128 hit: `True`
-- Post-present seam hit: `True`
-- Capture count: `2`
+- F0128 hit: `False`
+- Post-present seam hit: `False`
+- Capture count: `0`
 
 ## Artifacts
 - Manifest: `parity-evidence/verification/pass475_dm1_v1_movement_viewport_wall_live_click_capture/manifest.json`
