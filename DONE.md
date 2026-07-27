@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 DM1 V2.2 manifest syntax gate. The artpack manifest reader
+  now rejects invalid JSON and missing identity fields before it assesses
+  category completeness. The full DM1 V2.x test sweep passes 91/91.
+
 - ✅ 2026-07-27 DM1 champion HUD hand-cell clicks. A champion's visible hand
   cell is no longer inert while the inventory panel is closed: it opens that
   champion's inventory. With the panel open, the original C020..C027 item

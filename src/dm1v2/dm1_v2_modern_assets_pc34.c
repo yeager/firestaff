@@ -221,6 +221,130 @@ static void __attribute__((unused)) m11_v22_skip_to_next_object (FILE* fp) {
     }
 }
 
+/* The asset manifest is external input.  The field scanner below is enough
+ * to classify a well-formed pack, but it must never make malformed JSON look
+ * like a merely incomplete pack.  Keep a small complete JSON grammar here
+ * rather than accepting arbitrary text with a few matching substrings. */
+static void m11_v22_json_skip_ws(const char** cursor) {
+    while (cursor && *cursor && isspace((unsigned char)**cursor)) {
+        ++*cursor;
+    }
+}
+
+static int m11_v22_json_parse_value(const char** cursor, int depth);
+
+static int m11_v22_json_parse_string(const char** cursor) {
+    const char* p;
+    if (!cursor || !(p = *cursor) || *p != '"') return 0;
+    ++p;
+    while (*p && *p != '"') {
+        unsigned char ch = (unsigned char)*p++;
+        if (ch < 0x20u) return 0;
+        if (ch == '\\') {
+            if (*p == '\0') return 0;
+            if (*p == 'u') {
+                int i;
+                ++p;
+                for (i = 0; i < 4; ++i, ++p) {
+                    if (!isxdigit((unsigned char)*p)) return 0;
+                }
+            } else if (!strchr("\\\"/bfnrt", *p)) {
+                return 0;
+            } else {
+                ++p;
+            }
+        }
+    }
+    if (*p != '"') return 0;
+    *cursor = p + 1;
+    return 1;
+}
+
+static int m11_v22_json_parse_object(const char** cursor, int depth) {
+    const char* p;
+    if (!cursor || !(p = *cursor) || *p != '{' || depth > 64) return 0;
+    ++p;
+    m11_v22_json_skip_ws(&p);
+    if (*p == '}') {
+        *cursor = p + 1;
+        return 1;
+    }
+    for (;;) {
+        if (!m11_v22_json_parse_string(&p)) return 0;
+        m11_v22_json_skip_ws(&p);
+        if (*p++ != ':') return 0;
+        m11_v22_json_skip_ws(&p);
+        if (!m11_v22_json_parse_value(&p, depth + 1)) return 0;
+        m11_v22_json_skip_ws(&p);
+        if (*p == '}') {
+            *cursor = p + 1;
+            return 1;
+        }
+        if (*p++ != ',') return 0;
+        m11_v22_json_skip_ws(&p);
+    }
+}
+
+static int m11_v22_json_parse_array(const char** cursor, int depth) {
+    const char* p;
+    if (!cursor || !(p = *cursor) || *p != '[' || depth > 64) return 0;
+    ++p;
+    m11_v22_json_skip_ws(&p);
+    if (*p == ']') {
+        *cursor = p + 1;
+        return 1;
+    }
+    for (;;) {
+        if (!m11_v22_json_parse_value(&p, depth + 1)) return 0;
+        m11_v22_json_skip_ws(&p);
+        if (*p == ']') {
+            *cursor = p + 1;
+            return 1;
+        }
+        if (*p++ != ',') return 0;
+        m11_v22_json_skip_ws(&p);
+    }
+}
+
+static int m11_v22_json_parse_value(const char** cursor, int depth) {
+    const char* p;
+    char* end;
+    if (!cursor || !(p = *cursor) || depth > 64) return 0;
+    m11_v22_json_skip_ws(&p);
+    if (*p == '{') {
+        if (!m11_v22_json_parse_object(&p, depth)) return 0;
+        *cursor = p;
+        return 1;
+    }
+    if (*p == '[') {
+        if (!m11_v22_json_parse_array(&p, depth)) return 0;
+        *cursor = p;
+        return 1;
+    }
+    if (*p == '"') {
+        if (!m11_v22_json_parse_string(&p)) return 0;
+    } else if (strncmp(p, "true", 4) == 0 || strncmp(p, "null", 4) == 0) {
+        p += 4;
+    } else if (strncmp(p, "false", 5) == 0) {
+        p += 5;
+    } else {
+        (void)strtod(p, &end);
+        if (end == p) return 0;
+        p = end;
+    }
+    *cursor = p;
+    return 1;
+}
+
+static int m11_v22_json_document_is_object(const char* text) {
+    const char* p = text;
+    if (!p) return 0;
+    m11_v22_json_skip_ws(&p);
+    if (*p != '{' || !m11_v22_json_parse_object(&p, 0)) return 0;
+    m11_v22_json_skip_ws(&p);
+    return *p == '\0';
+}
+
 /* ── Public API ──────────────────────────────────────────────────── */
 
 /* m11_v22_set_manifest_path — set the path to the modern asset manifest.
@@ -328,6 +452,23 @@ int m11_v22_validate_manifest(const char* manifest_path) {
     }
     fclose(fp);
     text[file_size] = '\0';
+
+    if (!m11_v22_json_document_is_object(text)) {
+        free(text);
+        return -1;
+    }
+    {
+        char version[64] = {0};
+        char pack_id[128] = {0};
+        if (!m11_v22_extract_string(text, "manifestVersion", version,
+                                    sizeof(version)) ||
+            !m11_v22_extract_string(text, "packId", pack_id,
+                                    sizeof(pack_id)) ||
+            version[0] == '\0' || pack_id[0] == '\0') {
+            free(text);
+            return -1;
+        }
+    }
 
     /* Manifests are deliberately pretty-printed by Art Studio. Validate the
      * first object in each required array as one object, not one line. */
