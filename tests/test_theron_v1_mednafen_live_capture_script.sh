@@ -87,7 +87,8 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or sel
    ! grep -Fq 'set targetProcess to first application process whose unix id is $mednafen_ui_pid' "$script" ||
    ! grep -Fq 'cliclick "c:${host_focus_x},${host_focus_y}"' "$script" ||
    ! grep -Fq 'resolve_mednafen_ui_pid()' "$script" ||
-   ! grep -Fq 'mednafen_ui_pid=$(resolve_mednafen_ui_pid "$mednafen_pid" || true)' "$script" ||
+   ! grep -Fq 'resolve_mednafen_ui_pid_with_retry()' "$script" ||
+   ! grep -Fq 'mednafen_ui_pid=$(resolve_mednafen_ui_pid_with_retry "$mednafen_pid" || true)' "$script" ||
    grep -Fq 'pgrep -f "$mednafen_bin"' "$script" ||
    ! grep -Fq 'return) host_key_code=36' "$script" ||
    ! grep -Fq 'select) host_key_code=48' "$script" ||

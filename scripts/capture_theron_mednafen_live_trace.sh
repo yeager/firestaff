@@ -242,6 +242,23 @@ resolve_mednafen_ui_pid() {
     return 1
 }
 
+resolve_mednafen_ui_pid_with_retry() {
+    local parent_pid=$1
+    local attempts=${2:-40}
+    local attempt
+    local resolved_pid
+
+    for ((attempt = 0; attempt < attempts; ++attempt)); do
+        resolved_pid=$(resolve_mednafen_ui_pid "$parent_pid" || true)
+        if [[ "$resolved_pid" =~ ^[1-9][0-9]*$ ]]; then
+            printf '%s\n' "$resolved_pid"
+            return 0
+        fi
+        sleep 0.25
+    done
+    return 1
+}
+
 trace_dir=$(dirname -- "$trace")
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
@@ -287,18 +304,20 @@ launch=(
 set +e
 "${launch[@]}" >"$stdout_file" 2>"$stderr_file" &
 mednafen_pid=$!
+capture_launch_seconds=$SECONDS
 mednafen_ui_pid=0
 if [[ -n "$host_key" ]]; then
+    host_key_previous_delay=0
     if [[ -n "$host_key_delays" ]]; then
         IFS=',' read -r -a host_key_delay_entries <<<"$host_key_delays"
         host_key_repeats=${#host_key_delay_entries[@]}
-        host_key_previous_delay=0
     else
-        sleep "$host_key_delay"
+        host_key_delay_entries=("$host_key_delay")
     fi
     # Resolve only descendants of this capture's timeout/env launcher. A
     # global pgrep can select a stale Mednafen process from another capture.
-    mednafen_ui_pid=$(resolve_mednafen_ui_pid "$mednafen_pid" || true)
+    # The timeout/env process needs a short, bounded window to spawn Mednafen.
+    mednafen_ui_pid=$(resolve_mednafen_ui_pid_with_retry "$mednafen_pid" || true)
     if [[ ! "$mednafen_ui_pid" =~ ^[1-9][0-9]*$ ]]; then
         kill "$mednafen_pid" 2>/dev/null || true
         wait "$mednafen_pid" 2>/dev/null || true
@@ -336,15 +355,20 @@ APPLESCRIPT
     for ((host_key_attempt = 1; host_key_attempt <= host_key_repeats; ++host_key_attempt)); do
         if [[ -n "$host_key_delays" ]]; then
             host_key_current_delay=${host_key_delay_entries[$((host_key_attempt - 1))]}
-            if (( host_key_current_delay < host_key_previous_delay )); then
+            if (( host_key_attempt > 1 && host_key_current_delay < host_key_previous_delay )); then
                 kill "$mednafen_pid" 2>/dev/null || true
                 wait "$mednafen_pid" 2>/dev/null || true
                 printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_DELAYS must be ordered' >&2
                 exit 1
             fi
-            sleep "$((host_key_current_delay - host_key_previous_delay))"
-            host_key_previous_delay=$host_key_current_delay
+        else
+            host_key_current_delay=${host_key_delay_entries[0]}
         fi
+        host_key_elapsed_seconds=$((SECONDS - capture_launch_seconds))
+        if (( host_key_current_delay > host_key_elapsed_seconds )); then
+            sleep "$((host_key_current_delay - host_key_elapsed_seconds))"
+        fi
+        host_key_previous_delay=$host_key_current_delay
         quartz_arguments=("$host_key_code" "$host_key_hold" "$mednafen_ui_pid")
         if [[ "$input_route" == global_hid ]]; then
             quartz_arguments+=(--global-hid)

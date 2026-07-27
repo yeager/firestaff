@@ -40893,3 +40893,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   blocked: this capture has no dynamic sector read or loader-consumer row.
   Verification: trace patch dry-run, full external Mednafen rebuild, SDL2
   runtime verifier, and authentic 55-second capture.
+- ✅ 2026-07-27 Theron focused capture resolver. `capture_theron_mednafen_live_trace.sh`
+  now waits up to ten seconds for Mednafen's own timeout/env descendant, then
+  schedules host keys relative to capture launch instead of racing process
+  creation. Script gate passes; a real 55-second capture attests four Return
+  SDL events, PCE port `0000 -> 0008 -> 0000`, 31 raw-sector spans, and 56
+  SCSI reads. It remains non-promotable because the initial input trace cap
+  is reached before the host event.
