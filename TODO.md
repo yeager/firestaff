@@ -4197,6 +4197,11 @@ lane is carried forward in the sections below.
     former cap is gone. The verifier proceeds past its row-count gate and
     rejects only because that short run lacks the required later Track 02
     range; a longer route-specific capture is still required for that proof.
+    The longer authenticated dungeon route now passes the complete independent
+    raw-sector verifier: 256 captured sectors map with stable LBA-record delta
+    3009, include Stage-3 record `0x4e0` and later `0x72e..0x739`, and prove
+    that no Stage-3 descriptor binds the later range. This is media-coordinate
+    proof only; the verified absence keeps payload semantics blocked.
     A transient stale-PID capture exposed a host-side sequencing gap: Quartz
     delivery attestation alone was insufficient when Mednafen did not emit the
     corresponding SDL event. The harness now requires both preflight RUN

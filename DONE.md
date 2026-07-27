@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron complete later raw-sector witness. The full original
+  dungeon route captures 256 raw sectors and passes the independent verifier:
+  stable LBA-to-record delta 3009, Stage-3 `0x4e0`, and later
+  `0x72e..0x739`. The verifier also proves no Stage-3 descriptor binds that
+  later range, so payload semantics remain fail-closed.
 - ✅ 2026-07-27 Theron capture input-observation gate. The harness now waits
   for Mednafen's own preflight RUN key-down events and aborts immediately on a
   stale or non-observed PID; later original loading screens may defer SDL
