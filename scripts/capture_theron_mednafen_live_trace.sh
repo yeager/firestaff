@@ -159,11 +159,13 @@ if [[ "$host_input_requested" == 1 ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_REPEATS must be a positive integer' >&2
         exit 1
     fi
-    if [[ ! "$host_focus_x" =~ ^[1-9][0-9]*$ ||
-          ! "$host_focus_y" =~ ^[1-9][0-9]*$ ]] ||
-       ! command -v cliclick >/dev/null 2>&1; then
-        printf '%s\n' 'FAIL: host input requires cliclick and positive THERON_CAPTURE_FOCUS_X/Y coordinates' >&2
-        exit 1
+    if [[ "$input_route" == global_hid ]]; then
+        if [[ ! "$host_focus_x" =~ ^[1-9][0-9]*$ ||
+              ! "$host_focus_y" =~ ^[1-9][0-9]*$ ]] ||
+           ! command -v cliclick >/dev/null 2>&1; then
+            printf '%s\n' 'FAIL: host input requires cliclick and positive THERON_CAPTURE_FOCUS_X/Y coordinates' >&2
+            exit 1
+        fi
     fi
 fi
 
@@ -418,21 +420,16 @@ if [[ "$host_input_requested" == 1 ]]; then
         printf '%s\n' 'FAIL: could not resolve the launched Mednafen UI process' >&2
         exit 1
     fi
-    if ! cliclick "c:${host_focus_x},${host_focus_y}"; then
-        kill "$mednafen_pid" 2>/dev/null || true
-        wait "$mednafen_pid" 2>/dev/null || true
-        printf '%s\n' 'FAIL: macOS could not focus the Mednafen SDL surface' >&2
-        exit 1
-    fi
-    if ! activate_mednafen_ui_pid_with_retry "$mednafen_ui_pid"; then
-        kill "$mednafen_pid" 2>/dev/null || true
-        wait "$mednafen_pid" 2>/dev/null || true
-        printf '%s\n' 'FAIL: macOS could not focus Mednafen and send Return; grant accessibility permission to the invoking terminal' >&2
-        exit 1
-    fi
-    # Cocoa activation is asynchronous; wait until the activated process owns
-    # the foreground before using the global HID route.
     if [[ "$input_route" == global_hid ]]; then
+        if ! cliclick "c:${host_focus_x},${host_focus_y}" ||
+           ! activate_mednafen_ui_pid_with_retry "$mednafen_ui_pid"; then
+            kill "$mednafen_pid" 2>/dev/null || true
+            wait "$mednafen_pid" 2>/dev/null || true
+            printf '%s\n' 'FAIL: macOS could not focus Mednafen for global HID input; grant accessibility permission to the invoking terminal' >&2
+            exit 1
+        fi
+        # Cocoa activation is asynchronous; wait until the activated process
+        # owns the foreground before using the global HID route.
         sleep 1
     fi
     # Send real Quartz key-down/up pairs after PID-bound focus.
@@ -479,13 +476,15 @@ if [[ "$host_input_requested" == 1 ]]; then
             exit 1
         }
         expected_quartz_route=quartz_keypair=posted_to_pid
+        expected_quartz_activation=quartz_activation=not_required
         if [[ "$input_route" == global_hid ]]; then
             expected_quartz_route=quartz_keypair=posted_to_global_hid
+            expected_quartz_activation=quartz_activation=accepted
         fi
         if [[ "$quartz_receipt" != *$'quartz_event_access=granted'* ||
               "$quartz_receipt" != *"$expected_quartz_route"* ||
               "$quartz_receipt" != *"quartz_target_pid=$mednafen_ui_pid"* ||
-              "$quartz_receipt" != *"quartz_activation=accepted"* ]]; then
+              "$quartz_receipt" != *"$expected_quartz_activation"* ]]; then
             kill "$mednafen_pid" 2>/dev/null || true
             wait "$mednafen_pid" 2>/dev/null || true
             printf '%s\n' 'FAIL: Quartz helper did not attest requested key delivery' >&2

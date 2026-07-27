@@ -4226,6 +4226,15 @@ lane is carried forward in the sections below.
     semantic gate: a future authentic dungeon route must still observe one
     before any copied-loader control edge can be investigated, and a row
     remains neither a media binding nor a level/object/palette/bitmap claim.
+    The authentic PID-bound Quartz route no longer requires `System Events` to
+    enumerate Mednafen as a macOS application. That enumeration rejects the
+    terminal-launched SDL process even when CoreGraphics PID delivery is
+    allowed. Global HID still requires foreground activation; PID delivery now
+    posts directly and reports `quartz_activation=not_required`. A fresh
+    40-second original-US-CUE run records the Return SDL down/up pair and
+    5,082 PCE input transactions after it, while correctly reporting zero
+    game-main-RAM E009 rows. It is input-path proof only, not a loader or
+    Track 02 semantic handoff.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a

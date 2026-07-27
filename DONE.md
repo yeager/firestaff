@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 Theron PID Quartz capture repair. PID-targeted capture no
+  longer depends on `System Events` enumerating terminal-launched Mednafen as
+  a GUI app; global-HID delivery still requires foreground activation. A fresh
+  authentic US-CUE run records Return SDL down/up and 5,082 later PCE polls,
+  then reports zero game-main-RAM E009 dispatches. This proves host-input
+  delivery only and remains fail-closed for Track 02 semantics.
 - ✅ 2026-07-27 Theron game-main-RAM E009 observation gate. The active
   coherent Mednafen IRQ2 patch now emits a bounded raw receipt only for an
   actual `JSR $e009` executing at physical PCE main RAM `1f0000..1f7fff`,
