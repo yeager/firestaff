@@ -4171,6 +4171,12 @@ lane is carried forward in the sections below.
     it yields SDL scancode 91 and PCE I `raw=0001`. Menu navigation is now
     source-observed at the controller boundary, but a dungeon transition still
     requires the separate game-owned CD consumer evidence.
+    A manual-aligned sequence with two RUN presses (`return@10,return@20`)
+    reaches the animated title menu, and the verified I press at `i@75`
+    advances into the original framed `DUNGEON MASTER` story panel. This
+    establishes the real `NEW GAME` input edge; the following story pages and
+    save-slot/stage choices still need to reach a game-owned CD consumer before
+    a Track 02 dungeon handoff can be admitted.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a

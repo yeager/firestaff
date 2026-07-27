@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron real NEW GAME input edge. Using two RUN presses to
+  start/cancel the opening animation and the corrected PCE I key, an authentic
+  capture reaches the original title menu and then its framed `DUNGEON MASTER`
+  story presentation. This proves host-to-PCE menu activation only; no dungeon
+  loader semantics are claimed.
 - ✅ 2026-07-27 Theron PCE I-button capture repair. Corrected the macOS
   keypad mapping from keypad 1 to keypad 3 (`kVK_ANSI_Keypad3=85`). A fresh
   authentic US-cue run records SDL scancode 91 and PCE I `raw=0001`; the
