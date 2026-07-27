@@ -4206,6 +4206,7 @@ set(M12_SOURCES
     src/ui/menu_startup_m12.c
     src/ui/menu_startup_a11y_m12.c
     src/ui/menu_startup_render_modern_m12.c
+    src/ui/startup_intro_m12.c
     src/ui/menu_unicode_glyphs_m12.c
     src/shared/firestaff_l10n.c
     src/ui/firestaff_bestiary.c

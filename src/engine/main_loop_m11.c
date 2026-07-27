@@ -11,6 +11,8 @@
 
 #include "menu_startup_m12.h"
 #include "menu_startup_render_modern_m12.h"
+#include "startup_intro_m12.h"
+#include "firestaff_version.h"
 #include "menu_hit_m12.h"
 #include "m11_game_view.h"
 #include "firestaff_po_loader.h"
@@ -219,6 +221,34 @@ static int m11_present_launcher(unsigned char* launcherFramebuffer,
     return M11_Render_PresentIndexed(launcherFramebuffer,
                                      M11_LAUNCHER_FB_WIDTH,
                                      M11_LAUNCHER_FB_HEIGHT);
+}
+
+static int m11_play_firestaff_startup_intro(void) {
+    unsigned char* rgba;
+    Uint64 started;
+    rgba = (unsigned char*)malloc((size_t)M12_STARTUP_INTRO_WIDTH *
+                                  (size_t)M12_STARTUP_INTRO_HEIGHT * 4U);
+    if (!rgba) return 0;
+    started = SDL_GetTicks();
+    while ((SDL_GetTicks() - started) < M12_STARTUP_INTRO_DURATION_MS) {
+        Uint64 elapsed = SDL_GetTicks() - started;
+        M12_StartupIntro_Render(rgba,
+                                M12_STARTUP_INTRO_WIDTH,
+                                M12_STARTUP_INTRO_HEIGHT,
+                                (uint32_t)elapsed,
+                                M12_STARTUP_INTRO_DURATION_MS,
+                                FIRESTAFF_VERSION_NUMBER);
+        (void)M11_Render_PresentRGBA(rgba,
+                                     M12_STARTUP_INTRO_WIDTH,
+                                     M12_STARTUP_INTRO_HEIGHT);
+        if (M11_Render_PumpEvents()) {
+            free(rgba);
+            return 1;
+        }
+        SDL_Delay(33U);
+    }
+    free(rgba);
+    return 0;
 }
 
 int M11_GameView_PresentationIndexedScale(int presentationMode) {
@@ -4782,6 +4812,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int failIfNoLaunch = getenv("FIRESTAFF_FAIL_IF_NO_LAUNCH") != NULL;
     int runRc = 0;
     int startupTextInputActive = 0;
+    if (!o->bootProbe && !o->directLaunch && o->durationMs < 0 &&
+        getenv("FIRESTAFF_SKIP_INTRO") == NULL &&
+        m11_play_firestaff_startup_intro()) {
+        goto cleanup;
+    }
     M11_ApplyStartupMenuRuntime(&menuState);
     firestaff_ra_runtime_init(&raRuntime);
     if (o->retroAchievementsEnabled ||
