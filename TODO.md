@@ -3238,6 +3238,16 @@ lane is carried forward in the sections below.
     or any level/object/bitmap/palette semantics synthetic, and it cannot
     promote a decoder, route, or drawing path. The next required evidence is
     still an original data-read/consumer chain from a relevant window.
+  - 2026-07-27 update: the critical lane now also records PCE-CD control-port
+    writes only while a main-RAM `$e009` call is active. An authentic US-CUE
+    replay with the same three input pulses observed six windows, 117 bounded
+    writes, and zero active-window FIFO/data-register reads. The writers are
+    System Card control PCs (`$e90d`, `$e947`, `$e981`, `$ea3a`, `$ea34`),
+    which establishes the real call-bounded CD-control path but no game-owned
+    destination or record consumer. The `$3840` calls still resume nonlocally
+    at `$3b36`; no level, object, bitmap, palette, or route semantics are
+    assigned. Required next evidence remains an original FIFO-to-game-RAM
+    transfer joined to a game-owned consumer.
 
 - 2026-07-17 Theron Track 02 `0x0b52` multi-capture level-index/seed
   correlation blocker: the workspace contains one source-locked Stage-3

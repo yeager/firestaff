@@ -1,0 +1,17 @@
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -782,6 +782,14 @@
+ MDFN_FASTCALL int32 PCECD_Write(uint32 timestamp, uint32 physAddr, uint8 data)
+ {
+ 	const uint8 V = data;
++ if(TheronPCECDMainRAME009Active && (physAddr & 0xf) <= 4)
++  TheronTracePCECDCriticalState("main_ram_e009_register_write sequence=%u cpu_pc=%04x physical_pc=%06x port=%u data=%02x\n",
++                                TheronPCECDMainRAME009Sequence,
++                                HuCPU.GetRegister(HuC6280::GSREG_PC),
++                                (HuCPU.GetRegister(HuC6280::GSREG_MPR0 +
++                                                   (HuCPU.GetRegister(HuC6280::GSREG_PC) >> 13)) << 13) |
++                                (HuCPU.GetRegister(HuC6280::GSREG_PC) & 0x1fff),
++                                (unsigned)(physAddr & 0xf), data);
+  static FILE *theron_cd_register_trace = NULL;
+  static unsigned theron_cd_register_trace_count = 0;
+  if((physAddr & 0xf) == 1 && theron_cd_register_trace_count < 4096)

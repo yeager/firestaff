@@ -679,6 +679,7 @@ transition_main_ram_loader_e009_dispatch_count=$(trace_count '^main_ram_loader_e
 transition_main_ram_e009_enter_count=$(trace_count '^main_ram_e009_enter ' "$cd_trace")
 transition_main_ram_e009_data_read_count=$(trace_count '^main_ram_e009_data_read ' "$cd_trace")
 transition_main_ram_e009_return_count=$(trace_count '^main_ram_e009_return ' "$cd_trace")
+transition_main_ram_e009_register_write_count=$(trace_count '^main_ram_e009_register_write ' "$cd_trace")
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
@@ -712,6 +713,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'main_ram_e009_enters=%s\n' "$transition_main_ram_e009_enter_count"
     printf 'main_ram_e009_data_reads=%s\n' "$transition_main_ram_e009_data_read_count"
     printf 'main_ram_e009_returns=%s\n' "$transition_main_ram_e009_return_count"
+    printf 'main_ram_e009_register_writes=%s\n' "$transition_main_ram_e009_register_write_count"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     trace_input_order_receipt "$input_trace"
     if [[ "$host_input_requested" == 1 ]]; then

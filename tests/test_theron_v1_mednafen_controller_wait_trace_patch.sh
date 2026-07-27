@@ -21,6 +21,7 @@ generation7_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_generation7_
 main_ram_loader_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_trace.patch
 main_ram_e009_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_window_trace.patch
 main_ram_e009_critical_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch
+main_ram_e009_register_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_register_trace.patch
 main_ram_e009_dispatch_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_dispatch_trace.patch
 main_ram_e009_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_fifo_trace.patch
 g4_main_ram_read_patch_file=$repo/scripts/mednafen_1.32.1_theron_g4_main_ram_read_trace.patch
@@ -199,6 +200,12 @@ if ! grep -Fq 'TheronPCECDCriticalTraceCount >= 128' "$main_ram_e009_critical_pa
     printf 'FAIL: main-RAM e009 priority trace no longer bypasses the generic CD-state cap\n' >&2
     exit 1
 fi
+if ! grep -Fq 'TheronPCECDMainRAME009Active && (physAddr & 0xf) <= 4' "$main_ram_e009_register_patch_file" ||
+   ! grep -Fq 'main_ram_e009_register_write sequence=%u cpu_pc=%04x physical_pc=%06x port=%u data=%02x' "$main_ram_e009_register_patch_file" ||
+   ! grep -Fq 'TheronPCECDMainRAME009Sequence' "$main_ram_e009_register_patch_file"; then
+    printf 'FAIL: main-RAM e009 register trace no longer preserves call-bounded CD-control provenance\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'main_ram_loader_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x a=%02x x=%02x y=%02x' "$main_ram_e009_dispatch_patch_file" ||
    ! grep -Fq 'if(lastop == 0x20 && first == 0xe009)' "$main_ram_e009_dispatch_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMLoaderE009Call' "$main_ram_e009_dispatch_patch_file"; then
@@ -310,4 +317,5 @@ patch -d "$scratch/source" -p1 --batch --forward <"$caller_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_window_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_critical_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_register_patch_file"
 printf 'PASS: active Mednafen capture patches dry-run with controller, replay/host input, PCECD, main-RAM loader, and bounded e009 evidence\n'

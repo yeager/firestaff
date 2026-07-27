@@ -1,3 +1,11 @@
+- ✅ 2026-07-27 Theron `$e009` CD-control correlation. The active Mednafen
+  producer now records PCE-CD ports 0--4 only inside a bounded main-RAM
+  `$e009` call window, retaining the exact System Card writer PC, port, and
+  byte. Patch-chain and shell regressions pass. An authentic US-CUE replay
+  (`run@480,run@720,i@1200`) records six windows and 117 bounded writes from
+  `$e90d`/`$e947`/`$e981`/`$ea3a`/`$ea34`, with zero FIFO data reads. This
+  proves call-bounded original CD control only; it does not assign record,
+  level, object, bitmap, palette, or decoder semantics.
 - ✅ 2026-07-27 Theron replayable original-media capture and priority `$e009`
   trace. The instrumented Mednafen capture producer now accepts an opt-in,
   frame-indexed PCE replay sequence, labels every replay pulse and restores
