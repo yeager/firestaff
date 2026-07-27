@@ -1,8 +1,8 @@
 {
   "claims": [
     "M11 samples the source V1 viewport cells before V22 shape-cache update.",
-    "DM1 V2.2 start initializes the optional in-place bitmap cache only on the DM1 V22-active branch.",
-    "The viewport draw path prefers m11_v22_inplace_render_pass and calls the colored overlay only when that pass paints zero cells.",
+    "DM1 V2.2 boot initializes the optional in-place bitmap cache only on the DM1 V22-active branch.",
+    "The viewport draw path invokes m11_v22_inplace_render_pass only in the admitted V2.2 presentation mode.",
     "Pit and stairs have distinct asset ids, and teleporter/field shapes do not fall back to wall art.",
     "The in-place and placeholder overlay fallback passes share m11_v22_cell_rect() for D1/D2/D3 x L/C/R geometry."
   ],
@@ -28,27 +28,17 @@
       "offset": 21395
     },
     {
-      "marker": "if (m11_v22_inplace_render_pass(framebuffer,",
-      "offset": -1
+      "marker": "if (state->presentationMode == M12_PRESENTATION_V22_MODERN)",
+      "offset": 21954
     },
     {
-      "marker": "m11_v22_render_overlay_with_palette(framebuffer,",
-      "offset": -1
+      "marker": "(void)m11_v22_inplace_render_pass(framebuffer,",
+      "offset": 22228
     }
   ],
-  "errors": [
-    "m11_game_view.c missing marker: #include \"m11_v22_render_overlay_pc34.h\"",
-    "m11_game_view.c missing marker: if (dm1_v2_shape_runtime_v22_active() && spec->gameId",
-    "m11_game_view.c missing marker: (void)m11_v22_inplace_draw_init();",
-    "m11_game_view.c missing marker: if (m11_v22_inplace_render_pass(framebuffer,",
-    "m11_game_view.c missing marker: m11_v22_render_overlay_with_palette(framebuffer,",
-    "V22 in-place init is not visibly gated to DM1",
-    "V22 in-place init is not in the DM1 V22-active start branch",
-    "missing ordered marker: if (m11_v22_inplace_render_pass(framebuffer,",
-    "missing ordered marker: m11_v22_render_overlay_with_palette(framebuffer,",
-    "placeholder overlay is not guarded as the in-place-render fallback"
-  ],
+  "errors": [],
   "firestaffAnchors": {
+    "boot": "src/dm1v2/dm1_v2_boot_pc34.c",
     "cellRects": "src/dm1v2/m11_v22_cell_rects_pc34.c",
     "gameView": "src/engine/m11_game_view.c",
     "inplaceDraw": "src/dm1v2/m11_v22_inplace_draw_pc34.c",
@@ -57,10 +47,10 @@
   },
   "nonClaims": [
     "No original DOS screenshot or pixel-parity claim.",
-    "No finished PBR-art quality claim.",
+    "No finished PBR-art quality claim beyond the reviewed-art gate.",
     "No CSB V2 material gate."
   ],
   "redmcsbAnchor": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
   "scope": "DM1 V2.2 M11 in-place modern-art handoff source-lock",
-  "status": "failed"
+  "status": "passed"
 }

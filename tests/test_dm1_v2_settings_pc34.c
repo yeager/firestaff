@@ -106,7 +106,7 @@ int main(void) {
     CHECK(file_contains(path, "dm1_v2_aspect_mode = 1"));
     CHECK(file_contains(path, "dm1_v2_smooth_turn_pan_enabled = 1"));
     CHECK(file_contains(path, "display_aspect_mode = 0"));
-    CHECK(file_contains(path, "layout_migration_version = 1"));
+    CHECK(file_contains(path, "layout_migration_version = 2"));
 
     cfg.retroAchievementsEnabled = 1;
     cfg.retroAchievementsHardcore = 0;
@@ -154,16 +154,16 @@ int main(void) {
     CHECK(loaded.scaleModeIndex == 4);
     CHECK(loaded.displayAspectMode == 2);
     CHECK(loaded.integerScaling == 0);
-    CHECK(loaded.layoutMigrationVersion == 1);
+    CHECK(loaded.layoutMigrationVersion == 2);
     CHECK(file_contains(path, "scale_mode_index = 4"));
     CHECK(file_contains(path, "display_aspect_mode = 2"));
     CHECK(file_contains(path, "integer_scaling = 0"));
-    CHECK(file_contains(path, "layout_migration_version = 1"));
+    CHECK(file_contains(path, "layout_migration_version = 2"));
 
     loaded.scaleModeIndex = 1;
     loaded.displayAspectMode = 1;
     loaded.integerScaling = 1;
-    loaded.layoutMigrationVersion = 1;
+    loaded.layoutMigrationVersion = 2;
     CHECK(M12_Config_Save(&loaded) == 1);
     CHECK(M12_Config_Load(&loaded, NULL) == 1);
     CHECK(loaded.scaleModeIndex == 1);

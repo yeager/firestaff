@@ -41193,6 +41193,14 @@ passes all 27 checks from title through entrance and HUD.
   layouts, FNV1a, receipt null.
 # 2026-07-27 Theron hash-selected Track 02 media root
 
+- ✅ 2026-07-27 DM1 V2.2 reviewed-art admission repair. Formatted Art Studio
+  manifests are now parsed as JSON objects instead of line fragments, all
+  V2.2 manifest/receipt roots are configured together, and alias-safe path
+  joins support in-place path construction. A reviewed local pack passes the
+  real material gate and renders eight source-backed cells; an unsigned
+  cache remains fail-closed. Verification: V2.2 real-art material gate,
+  per-mode material signatures, settings persistence, and source-lock gate.
+
 Theron launcher campaign-media discovery now honours the caller's selected
 known Track 02 MD5 when scanning a directory. A data root containing both US
 and JP original releases is valid; the selected release remains launchable

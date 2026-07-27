@@ -49,11 +49,24 @@ static size_t fsp_copy(char* dst, size_t dstSize, const char* src) {
 
 int FSP_JoinPath(char* out, size_t outSize,
                  const char* left, const char* right) {
+    char leftCopy[FSP_PATH_MAX];
+    char rightCopy[FSP_PATH_MAX];
     int rc;
     size_t leftLen;
     if (!out || outSize == 0U || !left || !right) {
         return 0;
     }
+    /* Several asset callers intentionally extend a path in place, e.g.
+     * FSP_JoinPath(path, sizeof(path), path, "modern"). snprintf() does
+     * not permit its destination to overlap a %s argument, so preserve both
+     * segments before producing the joined path. */
+    if (strlen(left) >= sizeof(leftCopy) || strlen(right) >= sizeof(rightCopy)) {
+        return 0;
+    }
+    memcpy(leftCopy, left, strlen(left) + 1U);
+    memcpy(rightCopy, right, strlen(right) + 1U);
+    left = leftCopy;
+    right = rightCopy;
     leftLen = strlen(left);
     /* Skip leading separator on right when left already ends with one. */
     if (leftLen > 0U && fsp_is_separator(left[leftLen - 1U])) {

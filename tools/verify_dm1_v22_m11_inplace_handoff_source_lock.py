@@ -3,8 +3,8 @@
 
 This is a source/flow gate, not an original-DOS pixel-parity claim. It pins the
 current M11 path that samples the V1 source viewport cells, fills the V22 shape
-cache, prefers the in-place bitmap pass, and uses the old colored overlay only
-when no cached modern-art bitmap is available.
+cache, and admits the in-place bitmap pass only after the DM1 V2.2 reviewed-art
+gate has accepted the installed pack.
 """
 from __future__ import annotations
 
@@ -54,6 +54,7 @@ def ordered(text: str, needles: list[str]) -> tuple[list[dict[str, int | str]], 
 def main() -> int:
     errors: list[str] = []
     game_view_path = ROOT / "src/engine/m11_game_view.c"
+    boot_path = ROOT / "src/dm1v2/dm1_v2_boot_pc34.c"
     inplace_path = ROOT / "src/dm1v2/m11_v22_inplace_draw_pc34.c"
     cell_rects_path = ROOT / "src/dm1v2/m11_v22_cell_rects_pc34.c"
     cache_path = ROOT / "src/dm1v2/m11_v22_shape_cache_pc34.c"
@@ -61,6 +62,7 @@ def main() -> int:
     dunview_path = REDMCSB / "DUNVIEW.C"
 
     game_view = read(game_view_path)
+    boot = read(boot_path)
     inplace = read(inplace_path)
     cell_rects = read(cell_rects_path)
     cache = read(cache_path)
@@ -70,30 +72,27 @@ def main() -> int:
     required_game_view_markers = [
         '#include "m11_v22_shape_cache_pc34.h"',
         '#include "m11_v22_inplace_draw_pc34.h"',
-        '#include "m11_v22_render_overlay_pc34.h"',
-        "m11_v22_inplace_draw_shutdown();",
-        "if (dm1_v2_shape_runtime_v22_active() && spec->gameId",
-        "strcmp(spec->gameId, \"dm1\") == 0",
-        "(void)m11_v22_inplace_draw_init();",
         "m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])",
         "raw_squares[d][s] = cells[d][s].square;",
         "m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
         "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-        "if (m11_v22_inplace_render_pass(framebuffer,",
-        "m11_v22_render_overlay_with_palette(framebuffer,",
+        "if (state->presentationMode == M12_PRESENTATION_V22_MODERN)",
+        "(void)m11_v22_inplace_render_pass(framebuffer,",
         "m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,",
     ]
     for marker in required_game_view_markers:
         require(errors, marker in game_view, f"m11_game_view.c missing marker: {marker}")
 
-    init_window = game_view[
-        game_view.find("if (dm1_v2_shape_runtime_v22_active() && spec->gameId") :
-        game_view.find("/* ── Theron's Quest V1: Track 02 runtime handoff")
+    required_boot_markers = [
+        "if (!game_id || strcmp(game_id, \"dm1\") != 0)",
+        "if (dm1_v2_shape_runtime_v22_active())",
+        "int cache_ready = m11_v22_inplace_draw_init();",
+        "out_receipt->v22_inplace_cache_active =",
+        "cache_ready && m11_v22_inplace_draw_active();",
     ]
-    require(errors, "strcmp(spec->gameId, \"dm1\") == 0" in init_window,
-            "V22 in-place init is not visibly gated to DM1")
-    require(errors, "(void)m11_v22_inplace_draw_init();" in init_window,
-            "V22 in-place init is not in the DM1 V22-active start branch")
+    for marker in required_boot_markers:
+        require(errors, marker in boot,
+                f"dm1_v2_boot_pc34.c missing marker: {marker}")
 
     draw_start = game_view.find("m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])")
     draw_end = game_view.find("m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,")
@@ -106,14 +105,13 @@ def main() -> int:
             "m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
             "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,",
             "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-            "if (m11_v22_inplace_render_pass(framebuffer,",
-            "m11_v22_render_overlay_with_palette(framebuffer,",
+            "if (state->presentationMode == M12_PRESENTATION_V22_MODERN)",
+            "(void)m11_v22_inplace_render_pass(framebuffer,",
         ],
     )
     errors.extend(draw_errors)
-    require(errors, "== 0) {" in draw_window[draw_window.find("if (m11_v22_inplace_render_pass(") :
-                                           draw_window.find("m11_v22_render_overlay_with_palette(")],
-            "placeholder overlay is not guarded as the in-place-render fallback")
+    require(errors, "m11_v22_render_overlay_with_palette" not in game_view,
+            "DM1 V2.2 must not fall back to synthetic overlay art")
 
     inplace_required = [
         "static const char* v22_floor_pit_id = \"floor_pit_01\";",
@@ -176,6 +174,7 @@ def main() -> int:
         "scope": "DM1 V2.2 M11 in-place modern-art handoff source-lock",
         "firestaffAnchors": {
             "gameView": str(game_view_path.relative_to(ROOT)),
+            "boot": str(boot_path.relative_to(ROOT)),
             "inplaceDraw": str(inplace_path.relative_to(ROOT)),
             "cellRects": str(cell_rects_path.relative_to(ROOT)),
             "shapeCache": str(cache_path.relative_to(ROOT)),
@@ -185,14 +184,14 @@ def main() -> int:
         "drawOrder": draw_positions,
         "claims": [
             "M11 samples the source V1 viewport cells before V22 shape-cache update.",
-            "DM1 V2.2 start initializes the optional in-place bitmap cache only on the DM1 V22-active branch.",
-            "The viewport draw path prefers m11_v22_inplace_render_pass and calls the colored overlay only when that pass paints zero cells.",
+            "DM1 V2.2 boot initializes the optional in-place bitmap cache only on the DM1 V22-active branch.",
+            "The viewport draw path invokes m11_v22_inplace_render_pass only in the admitted V2.2 presentation mode.",
             "Pit and stairs have distinct asset ids, and teleporter/field shapes do not fall back to wall art.",
             "The in-place and placeholder overlay fallback passes share m11_v22_cell_rect() for D1/D2/D3 x L/C/R geometry.",
         ],
         "nonClaims": [
             "No original DOS screenshot or pixel-parity claim.",
-            "No finished PBR-art quality claim.",
+            "No finished PBR-art quality claim beyond the reviewed-art gate.",
             "No CSB V2 material gate.",
         ],
         "errors": errors,

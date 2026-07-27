@@ -279,8 +279,11 @@ static void test_v22_inplace_material_signature(uint32_t* out_signature) {
     CHECK(dm1_v2_presentation_mode_is_v22() == 1);
 
     m11_v22_inplace_draw_shutdown();
-    CHECK(m11_v22_inplace_draw_init() == 1);
-    CHECK(m11_v22_inplace_draw_active() == 1);
+    /* A cache without a reviewed manifest/receipt is deliberately not
+     * renderable. Real-pack coverage lives in the material-gate test; this
+     * fixture proves the per-mode path cannot revive synthetic pixels. */
+    CHECK(m11_v22_inplace_draw_init() == 0);
+    CHECK(m11_v22_inplace_draw_active() == 0);
 
     m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
     CHECK(strcmp(m11_v22_inplace_get_cell_asset_id(1, -1),
@@ -296,15 +299,15 @@ static void test_v22_inplace_material_signature(uint32_t* out_signature) {
 
     memset(fb, 0, sizeof(fb));
     painted = m11_v22_inplace_render_pass(fb, 320, 200);
-    CHECK(painted == 9);
-    CHECK(cell_center_pixel(fb, 320, 1, -1) == 0x30);
-    CHECK(cell_center_pixel(fb, 320, 1, 0) == 0x0c);
-    CHECK(cell_center_pixel(fb, 320, 1, 1) == 0x03);
-    CHECK(cell_center_pixel(fb, 320, 2, -1) == 0x3c);
-    CHECK(cell_center_pixel(fb, 320, 2, 1) == 0x33);
+    CHECK(painted == 0);
+    CHECK(cell_center_pixel(fb, 320, 1, -1) == 0x00);
+    CHECK(cell_center_pixel(fb, 320, 1, 0) == 0x00);
+    CHECK(cell_center_pixel(fb, 320, 1, 1) == 0x00);
+    CHECK(cell_center_pixel(fb, 320, 2, -1) == 0x00);
+    CHECK(cell_center_pixel(fb, 320, 2, 1) == 0x00);
 
     *out_signature = fnv1a_bytes(fb, sizeof(fb));
-    CHECK_EQ_U32(*out_signature, 0xbe1c77fdu);
+    CHECK_EQ_U32(*out_signature, 0x38c165c5u);
     m11_v22_inplace_draw_shutdown();
 }
 

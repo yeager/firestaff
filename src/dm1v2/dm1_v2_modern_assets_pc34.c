@@ -247,6 +247,10 @@ static void __attribute__((unused)) m11_v22_skip_to_next_object (FILE* fp) {
  *
  * Source: FSP_ParentDir finds the last separator and truncates there. */
 void m11_v22_set_manifest_path(const char* dataDir) {
+    /* The V2.2 admission path has two sibling checks: the manifest/material
+     * gate and the hash-bound review receipt. Keep their roots in lockstep
+     * whenever the host selects its DM1 data directory. */
+    dm1_v22_fpr_set_receipt_path(dataDir);
     if (!dataDir || dataDir[0] == '\0') {
         g_v22_manifest_path[0] = '\0';
         return;
@@ -301,105 +305,74 @@ const char* m11_v22_get_modern_asset_root(void) {
  * slow for startup; it is deferred to a background thread if needed. */
 int m11_v22_validate_manifest(const char* manifest_path) {
     FILE* fp;
-    char line[256];
-    int found_categories = 0;
-    int total_required = 0;  /* aggregate count reserved for future reporting */
-    int categories_with_entries = 0;
-    int current_category = -1;
-    int entries_in_current_category = 0;
-    int entry_has_all_fields = 1;
-    (void)total_required;
-    const size_t k_num_required_cats =
-        sizeof(k_required_categories) / sizeof(k_required_categories[0]) - 1U;
+    char* text = NULL;
+    long file_size;
+    int result = -1;
+    size_t ci;
 
     if (!manifest_path || manifest_path[0] == '\0') return -1;
 
     fp = fopen(manifest_path, "rb");
     if (!fp) return -1;
-
-    /* Scan the file for categories and validate first entry per category */
-    while (m11_v22_read_line(fp, line, sizeof(line))) {
-        /* Detect category line: "category_name": [ or "category_name": { */
-        int is_object = 0;
-        for (size_t ci = 0U; k_required_categories[ci] != NULL; ++ci) {
-            char cat_pattern[64];
-            snprintf(cat_pattern, sizeof(cat_pattern), "\"%s\":", k_required_categories[ci]);
-            /* Use strstr so we find the category anywhere in the line,
-             * not just at position 0 (the entire manifest is one line). */
-            if (strstr(line, cat_pattern) != NULL) {
-                /* Finish validating previous category */
-                if (current_category >= 0 && entry_has_all_fields) {
-                    categories_with_entries++;
-                }
-                /* Save previous count toward total */
-                total_required += (current_category >= 0 && entries_in_current_category > 0) ? 1 : 0;
-
-                current_category = (int)ci;
-                found_categories++;
-                entries_in_current_category = 0;
-                entry_has_all_fields = 1;
-                is_object = 1;
-                break;
-            }
-        }
-
-        if (!is_object) continue;
-
-        /* Consume the opening brace or bracket for this category */
-        if (strchr(line, '[') == NULL && strchr(line, '{') == NULL) {
-            /* Read next line to find opening */
-            if (!m11_v22_read_line(fp, line, sizeof(line))) break;
-        }
-
-        /* Scan entries within this category until we hit the closing bracket/brace */
-        int depth = 0;
-        for (;;) {
-            if (!m11_v22_read_line(fp, line, sizeof(line))) break;
-            for (char* c = line; *c; ++c) {
-                if (*c == '{') depth++;
-                if (*c == '}') { depth--; if (depth < 0) depth = 0; }
-                if (*c == '[') depth++;
-                if (*c == ']') { depth--; if (depth < 0) { depth = 0; break; } }
-            }
-            if (depth <= 0) {
-                /* At depth 0 or below, check if this line closes the array
-                 * (']') or if we're negative (mismatched brackets). Do NOT
-                 * exit on a '}' that belongs to an entry object nested in
-                 * the array — those are consumed inside the array before
-                 * the ']' line. */
-                if (strchr(line, ']') != NULL) break;
-                if (depth < 0) break;
-            }
-            /* This is an entry line — check required fields */
-            if (strchr(line, '{') != NULL || strchr(line, '"') != NULL) {
-                char id_val[128] = {0};
-                char file_val[256] = {0};
-                int width_val = 0, height_val = 0;
-                int has_id = m11_v22_extract_string(line, "id", id_val, sizeof(id_val));
-                int has_file = m11_v22_extract_string(line, "source_file", file_val, sizeof(file_val));
-                int has_width = m11_v22_extract_int(line, "width", &width_val);
-                int has_height = m11_v22_extract_int(line, "height", &height_val);
-                if (!has_id || !has_file || !has_width || !has_height || width_val <= 0 || height_val <= 0) {
-                    entry_has_all_fields = 0;
-                }
-                entries_in_current_category++;
-                /* We only validate the first entry; full validation is too slow for startup */
-                break;
-            }
-        }
+    if (fseek(fp, 0L, SEEK_END) != 0 ||
+        (file_size = ftell(fp)) <= 0L || file_size > 1024L * 1024L ||
+        fseek(fp, 0L, SEEK_SET) != 0) {
+        fclose(fp);
+        return -1;
     }
-
-    /* Close out the last category */
-    if (current_category >= 0) {
-        if (entry_has_all_fields) categories_with_entries++;
-        total_required += entries_in_current_category > 0 ? 1 : 0;
+    text = (char*)malloc((size_t)file_size + 1U);
+    if (!text || fread(text, 1U, (size_t)file_size, fp) != (size_t)file_size) {
+        free(text);
+        fclose(fp);
+        return -1;
     }
-
     fclose(fp);
+    text[file_size] = '\0';
 
-    if (found_categories == 0) return -1;
-    if (categories_with_entries < (int)k_num_required_cats) return 0;
-    return 1;
+    /* Manifests are deliberately pretty-printed by Art Studio. Validate the
+     * first object in each required array as one object, not one line. */
+    result = 1;
+    for (ci = 0U; k_required_categories[ci] != NULL; ++ci) {
+        char category_pattern[64];
+        const char* category;
+        const char* object_start;
+        const char* object_end;
+        char object[1024];
+        char id_val[128] = {0};
+        char file_val[256] = {0};
+        int width_val = 0;
+        int height_val = 0;
+        size_t object_len;
+
+        snprintf(category_pattern, sizeof(category_pattern), "\"%s\":",
+                 k_required_categories[ci]);
+        category = strstr(text, category_pattern);
+        object_start = category ? strchr(category, '{') : NULL;
+        object_end = object_start ? strchr(object_start, '}') : NULL;
+        if (!category || !object_start || !object_end) {
+            result = 0;
+            break;
+        }
+        object_len = (size_t)(object_end - object_start + 1);
+        if (object_len >= sizeof(object)) {
+            result = 0;
+            break;
+        }
+        memcpy(object, object_start, object_len);
+        object[object_len] = '\0';
+        if (!m11_v22_extract_string(object, "id", id_val, sizeof(id_val)) ||
+            !m11_v22_extract_string(object, "source_file", file_val,
+                                    sizeof(file_val)) ||
+            !m11_v22_extract_int(object, "width", &width_val) ||
+            !m11_v22_extract_int(object, "height", &height_val) ||
+            id_val[0] == '\0' || file_val[0] == '\0' ||
+            width_val <= 0 || height_val <= 0) {
+            result = 0;
+            break;
+        }
+    }
+    free(text);
+    return result;
 }
 
 /* m11_v22_modern_assets_available — checks if the modern asset pack
