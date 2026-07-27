@@ -147,6 +147,8 @@ index 347482c4..61d4758e 100644
 +{
 + if(!TheronIrq2Trace || MDFN_strazicmp(CurGame->shortname, "pce"))
 +  return;
++ const RegGroupType *trace_regs = (*CurGame->Debugger->RegGroups)[0];
++ const uint32 logical_pc = trace_regs->GetRegister(trace_regs->Regs[0].id, NULL, 0) & 0xffff;
 +
 + /* Once the System Card return is observed, retain the raw control edge from
 +  * its return target to the next observed CPU PC. This does not classify the
@@ -162,33 +164,6 @@ index 347482c4..61d4758e 100644
 +  TheronIrq2TraceLaterE009PostReturnStepPending = false;
 +  FlushTheronIrq2Trace();
 + }
-+
-+ if(TheronIrq2TraceReturnTransferPending)
-+ {
-+  TheronIrq2TraceSnapshotCount++;
-+  TheronIrq2TraceEventSequence++;
-+  TheronIrq2Trace->print_format("snapshot seq=%u logical_pc=%04x physical_pc=%08x cd_1800=%02x cd_1801=%02x cd_1802=%02x cd_1803=%02x f5=%02x f2=%02x\n",
-+                                TheronIrq2TraceEventSequence, logical_pc, PC,
-+                                controller[0], controller[1], controller[2], controller[3], f5, f2);
-+ }
-+ if(system_card_pc)
-+  TheronIrq2TraceSystemCardSeen[logical_pc - 0xe000] = true;
-+ controller_initialized = true;
-+ previous_controller[0] = controller[0];
-+ previous_controller[1] = controller[1];
-+ previous_controller[2] = controller[2];
-+ previous_controller[3] = controller[3];
-+}
-+
-+void Debugger_GTR_TheronIrq2PCECDWrite(uint32 timestamp, uint32 pc, uint32 phys_addr, uint8 data)
-+{
-+ if(!TheronIrq2Trace || MDFN_strazicmp(CurGame->shortname, "pce"))
-+  return;
-+ TheronIrq2TraceEventSequence++;
-+ TheronIrq2Trace->print_format("io_write seq=%u timestamp=%u logical_pc=%04x physical_addr=%08x port=%x data=%02x\n",
-+                               TheronIrq2TraceEventSequence, timestamp, pc & 0xffff,
-+                               phys_addr, phys_addr & 0xf, data);
-+}
 +
 +/* Begin recording only after the proven caller reaches C897. The hook reports
 + * raw register changes, deliberately not CD command or payload semantics. */

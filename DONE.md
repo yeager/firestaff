@@ -40869,3 +40869,11 @@ known Track 02 MD5 when scanning a directory. A data root containing both US
 and JP original releases is valid; the selected release remains launchable
 instead of being misreported as ambiguous. The optional real-media test uses
 the supplied root and selected MD5 to prove this without shipping game data.
+- ✅ 2026-07-27 Theron Mednafen live-capture build repaired. Repaired the
+  1.32.1 debugger trace patch so the core CPU/CD/input/sector instrumentation
+  builds again, removed stale extension patches from the required build path,
+  and made the local trace binary link a real SDL2 runtime with an embedded
+  rpath. Verified against authentic US Track 02 plus System Card 3.0:
+  Quartz-delivered Run input, two observed System Card calls, 25 CDIRQ events,
+  and 31 raw-sector receipts. Dynamic dungeon-handoff rows remain deliberately
+  unclaimed until an original run reaches them.

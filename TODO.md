@@ -4136,10 +4136,11 @@ lane is carried forward in the sections below.
     while its separate `TQUS02.bin` begins its user-data window at the actual
     file-local `INDEX 01` header offset. The known US MD5, layout, and raw
     trace preparation now pass without decoding a level/object/bitmap/palette
-    payload. Remaining blocker: an observed original Mednafen export with the
-    required loader and two consumer rows. Local no-launch preflight confirms
-    Mednafen 1.32.1 is installed, but no Theron debugger export/event log is
-    present under the documented user-data root; no row is synthesized.
+    payload. The local Mednafen 1.32.1 trace build now links genuine SDL2 and
+    has produced an authentic US Track 02 capture with Quartz-delivered Run
+    input, System Card calls, and raw-sector receipts. The remaining blocker
+    is narrower: the capture has not yet reached the required later dynamic
+    loader/consumer rows, so no row is synthesized or promoted to runtime.
   - 2026-07-16 Theron draw-route gate update: M11 now has a guarded
     dungeon draw-route receipt that can consume the proven level-1 media,
     multilevel handoff, live level geometry, party pose, object placement,

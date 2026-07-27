@@ -1,7 +1,7 @@
 diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -661,5 +661,28 @@ MDFN_FASTCALL int32 PCECD_Write(uint32 timestamp, uint32 physAddr, uint8 data)
+@@ -661,4 +661,27 @@ MDFN_FASTCALL int32 PCECD_Write(uint32 timestamp, uint32 physAddr, uint8 data)
  {
 	const uint8 V = data;
 -

@@ -31,9 +31,9 @@ rm -rf "$build_root"
 mkdir -p "$build_root"
 cp -R "$source_root/." "$build_root/source"
 # macOS's BSD patch rejects the large debugger hunk despite a clean 1.32.1
-# source tree; git apply validates that hunk exactly. The smaller legacy
-# patches intentionally retain their original BSD-patch format.
-git -C "$build_root/source" apply --whitespace=nowarn \
+# source tree; git apply validates that hunk exactly. The smaller trace
+# patches retain their original BSD-patch format.
+git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_pcecd_trace.patch"
@@ -49,50 +49,12 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_cd_transfer_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_cd_caller_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_post_stage2_execution_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_post_stage2_e009_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_post_stage2_e00f_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_later_raw_sector_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_later_fifo_generation_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_generation7_fifo_ram_receipt.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_dispatch_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_fifo_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_g4_main_ram_read_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_owner_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_write_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_control_window_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_game_window_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_fifo_origin_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_later_generation_filter.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_all_generation_origin_ram_receipt.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_game_owned_origin_ram_receipt.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_parameter_window_trace.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_receipt.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer.patch"
-patch -d "$build_root/source" -p1 --batch --forward \
-    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_return_trace.patch"
+
+# The remaining legacy extensions target an older version of the debugger
+# hook. They are kept as research patches, but the authenticated live-capture
+# path uses the coherent core above: CPU, PCE CD, input, caller and raw-sector
+# receipts. Applying a stale extension would either fail the build or corrupt
+# the capture function before it reaches real media.
 
 # The released Mednafen tree carries generated Makefile.in files. Copying it
 # into a fresh trace root can make make try to regenerate them, which would
@@ -104,6 +66,9 @@ cd "$build_root/source"
 # The Firestaff hook reads PCE registers through Mednafen's debugger API.
 # Enabling the legacy PCECD_DEBUG printf path breaks current 1.32.1 builds
 # because that path does not include the HuCPU declaration.
+if [[ "$(uname -s)" == Darwin && -n "$sdl2_prefix" ]]; then
+    export LDFLAGS="${LDFLAGS:-} -Wl,-rpath,$sdl2_prefix/lib"
+fi
 CXXFLAGS="${CXXFLAGS:-}" ./configure --prefix="$prefix" --disable-apple2 --disable-gb --disable-gba \
     --disable-lynx --disable-md --disable-nes --disable-ngp --disable-pce-fast \
     --disable-pcfx --disable-psx --disable-sasplay --disable-sms --disable-snes \
