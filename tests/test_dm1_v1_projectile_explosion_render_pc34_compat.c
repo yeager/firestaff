@@ -1225,11 +1225,11 @@ static void test_f0115_thing_route_receipt_filters_hoc_payload_items(void) {
                                                     4,
                                                     -1,
                                                     0,
-                                                    1,
+                                                    0,
                                                     0,
                                                     &receipt),
-              1, "route receipt accepts non-HoC items");
-    ASSERT_EQ(receipt.items, 2, "non-HoC items remain drawable");
+              1, "route receipt accepts ordinary HoC items");
+    ASSERT_EQ(receipt.items, 2, "ordinary HoC items remain drawable");
     ASSERT_EQ(receipt.visibleFloorItemCount, 2,
               "non-HoC item route keeps both visible items");
     ASSERT_EQ(receipt.visibleFloorItemThings[0],

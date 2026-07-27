@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 DM1 HoC F0115 real floor items. Removed the map-wide Hall
+  item suppression while retaining the C127 mirror-payload filter; real floor
+  and alcove item candidates now reach the source asset renderer.
+
 - ✅ 2026-07-27 Theron split Track 02 portable cache. Materialization now
   uses Windows-safe mkdir/PID APIs and `USERPROFILE` fallback while retaining
   the verified JP and US CUE startup paths.

@@ -921,7 +921,12 @@ int dm1_v1_f0115_world_candidates_pc34(
 
     if (!dm1_v1_f0115_thing_route_receipt_pc34(
             routeThings, routeThingCount, -1, 0, mapIndex,
-            mapIndex == 0 && elementType != DUNGEON_ELEMENT_WALL,
+            /* Map 0 is the Hall of Champions, not a blanket no-item zone.
+             * REVIVE.C candidate payload is identified by its C127 mirror
+             * control and filtered below by the receipt itself.  Suppressing
+             * every open Hall square here made real floor/alcove objects
+             * disappear before F0115 could select their source graphics. */
+            0,
             &outCandidates->staticReceipt) ||
         !outCandidates->staticReceipt.valid) {
         return 0;

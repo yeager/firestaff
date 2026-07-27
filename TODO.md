@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-HOC-F0115-REAL-FLOOR-ITEMS:** Closed 2026-07-27. The map-0 HoC
+  F0115 route no longer suppresses every open-square item. Only the
+  source-identified C127 mirror payload remains filtered, so real floor and
+  alcove items reach their original sprite-material route.
+
 - **THERON-SPLIT-TRACK02-PORTABLE-CACHE:** Closed 2026-07-27. The verified
   split-image cache now uses platform-specific directory and process APIs and
   falls back to `USERPROFILE` on Windows, keeping the same hash contract on
