@@ -7613,5 +7613,315 @@ void dm2_v1_skproject_1c9a_19d4(
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 
+/* --- Batch 19a: c_1c9a.cpp walk path / CAII symbols --- */
+
+typedef const uint8_t *(*DM2_V1_SkprojectGetAddressOfRecordFn)(
+    uint16_t record, void *user);
+typedef uint16_t (*DM2_V1_SkprojectGetNextRecordLinkFn)(
+    uint16_t record, void *user);
+
+/* SKULLWIN/c_1c9a.cpp:6273 DM2_1c9a_1a48 */
+typedef struct {
+    int valid;
+    int matched;
+    uint16_t result_bits;
+    int records_walked;
+} DM2_V1_Skproject1a48Receipt;
+
+int32_t dm2_v1_skproject_1c9a_1a48(
+    int16_t direction,
+    int16_t test_mask,
+    int16_t tile_record_link,
+    DM2_V1_SkprojectGetAddressOfRecordFn get_address_fn,
+    DM2_V1_SkprojectGetNextRecordLinkFn get_next_fn,
+    void *user,
+    DM2_V1_Skproject1a48Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:6354 DM2_1c9a_1b16 */
+typedef struct {
+    int valid;
+    int matched;
+    uint16_t result_bits;
+    int records_walked;
+} DM2_V1_Skproject1b16Receipt;
+
+int32_t dm2_v1_skproject_1c9a_1b16(
+    int16_t sensor_dir_wanted,
+    int16_t slot_wanted,
+    int16_t tile_record_link,
+    DM2_V1_SkprojectGetAddressOfRecordFn get_address_fn,
+    DM2_V1_SkprojectGetNextRecordLinkFn get_next_fn,
+    void *user,
+    DM2_V1_Skproject1b16Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:6420 DM2_1c9a_1bae */
+typedef int32_t (*DM2_V1_Skproject1baeFallbackFn)(int32_t x, int32_t y,
+                                                   void *user);
+typedef struct {
+    int valid;
+    int matched_creature_pos;
+    int used_fallback;
+    int32_t result;
+} DM2_V1_Skproject1baeReceipt;
+
+int32_t dm2_v1_skproject_1c9a_1bae(
+    int16_t x,
+    int16_t y,
+    int16_t creature_x,
+    int16_t creature_y,
+    DM2_V1_Skproject1baeFallbackFn fallback_fn,
+    void *user,
+    DM2_V1_Skproject1baeReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:6438 DM2_FIND_WALK_PATH */
+typedef struct {
+    int valid;
+    int path_found;
+    int steps;
+} DM2_V1_SkprojectFindWalkPathReceipt;
+
+void dm2_v1_skproject_find_walk_path_receipt_init(
+    DM2_V1_SkprojectFindWalkPathReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:9670 DM2___SET_CURRENT_THINKING_CREATURE_WALK_PATH */
+typedef struct {
+    void *creatures;
+    uint8_t walk_path_b00;
+    uint8_t walk_path_b01;
+    uint16_t v1e054c;
+    int16_t *v1e07e6;
+} DM2_V1_SkprojectWalkPathState;
+
+typedef int16_t *(*DM2_V1_SkprojectGetBmpFn)(int16_t id, void *user);
+
+typedef struct {
+    int valid;
+    int early_exit_no_creatures;
+    int early_exit_b00_zero;
+    int alloc_failed;
+    int alloc_succeeded;
+} DM2_V1_SkprojectSetWalkPathReceipt;
+
+void dm2_v1_skproject_set_current_thinking_creature_walk_path(
+    DM2_V1_SkprojectWalkPathState *state,
+    DM2_V1_SkprojectAllocation11Fn alloc_fn,
+    DM2_V1_SkprojectGetBmpFn get_bmp_fn,
+    void *user,
+    DM2_V1_SkprojectSetWalkPathReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:9696 DM2_1c9a_381c */
+typedef struct {
+    int valid;
+    int used_walk_path;
+    int used_fallback;
+    uint8_t direction;
+    uint8_t step_count;
+} DM2_V1_Skproject381cReceipt;
+
+int32_t dm2_v1_skproject_1c9a_381c(
+    DM2_V1_SkprojectWalkPathState *state,
+    uint8_t *creature_base,
+    DM2_V1_SkprojectAllocation11Fn alloc_fn,
+    DM2_V1_SkprojectGetBmpFn get_bmp_fn,
+    void *user,
+    DM2_V1_Skproject381cReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:9748 DM2_1c9a_38a8 */
+typedef struct {
+    int placeholder;
+} DM2_V1_Skproject38a8State;
+
+typedef struct {
+    int valid;
+    int searched_action_list;
+} DM2_V1_Skproject38a8Receipt;
+
+int32_t dm2_v1_skproject_1c9a_38a8(
+    const DM2_V1_Skproject38a8State *state,
+    DM2_V1_Skproject38a8Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:9895 DM2_FILL_CAII_CUR_MAP */
+typedef const uint8_t *(*DM2_V1_SkprojectQueryCreatureAISpecFn)(
+    uint8_t creature_type, void *user);
+typedef void (*DM2_V1_SkprojectAllocCaiiToCreatureFn)(
+    uint16_t record, uint16_t col, uint16_t row, void *user);
+
+typedef struct {
+    int16_t map_width;
+    int16_t map_height;
+    const uint8_t *tile_data;
+    const uint16_t *record_links;
+} DM2_V1_SkprojectFillCaiiState;
+
+typedef struct {
+    int valid;
+    int tiles_with_things;
+    int creatures_found;
+    int caii_allocated;
+} DM2_V1_SkprojectFillCaiiReceipt;
+
+int32_t dm2_v1_skproject_fill_caii_cur_map(
+    const DM2_V1_SkprojectFillCaiiState *map_state,
+    DM2_V1_SkprojectGetAddressOfRecordFn get_address_fn,
+    DM2_V1_SkprojectGetNextRecordLinkFn get_next_fn,
+    DM2_V1_SkprojectQueryCreatureAISpecFn query_ai_fn,
+    DM2_V1_SkprojectAllocCaiiToCreatureFn alloc_caii_fn,
+    void *user,
+    DM2_V1_SkprojectFillCaiiReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:9995 DM2_FILL_ORPHAN_CAII — iterates all maps,
+   calling DM2_FILL_CAII_CUR_MAP on each, then restores the original map. */
+typedef int32_t (*DM2_V1_SkprojectFillCaiiCurMapFn)(void *user);
+
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint16_t original_map;
+    uint16_t num_maps;
+    uint16_t maps_iterated;
+} DM2_V1_SkprojectFillOrphanCaiiReceipt;
+
+void dm2_v1_skproject_fill_orphan_caii(
+    uint16_t current_map,
+    uint16_t num_maps,
+    DM2_V1_SkprojectChangeMapFn change_map_fn,
+    DM2_V1_SkprojectFillCaiiCurMapFn fill_caii_fn,
+    void *user,
+    DM2_V1_SkprojectFillOrphanCaiiReceipt *out_receipt);
+
+/* SKULLWIN/c_addon.cpp:30 event_loop_T1 — platform event loop timing
+   logic.  The receipt captures the 25Hz sub-tick counter state and whether
+   a vsync blit should occur this iteration. */
+typedef struct {
+    int valid;
+    int tick_count;
+    int blit_due;
+    int vsync_triggered;
+} DM2_V1_SkprojectEventLoopT1Receipt;
+
+void dm2_v1_skproject_event_loop_t1(
+    int timer_events,
+    int vsync_counter_in,
+    int *vsync_counter_out,
+    int *tick_out,
+    DM2_V1_SkprojectEventLoopT1Receipt *out_receipt);
+
+/* SKULLWIN/c_addon.cpp:122 wait_for_vsync */
+void dm2_v1_skproject_wait_for_vsync(int *vsync_counter);
+
+/* SKULLWIN/c_addon.cpp:127 wft (wait-for-tick) */
+typedef struct {
+    int valid;
+    int would_block;
+} DM2_V1_SkprojectWftReceipt;
+
+void dm2_v1_skproject_wft(
+    int tick_in,
+    int *tick_out,
+    DM2_V1_SkprojectWftReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:364 DM2_PROCEED_XACT_65 */
+typedef uint16_t (*DM2_V1_SkprojectQueryCreatureAiSpecFlagsFn)(
+    int32_t creature_handle,
+    void *user);
+
+typedef struct {
+    uint16_t v1e08d6;
+    uint16_t v1e08d8;
+    uint16_t v1e08d4;
+    uint16_t current_map;
+} DM2_V1_SkprojectXact65State;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint16_t ahead_x;
+    uint16_t ahead_y;
+    int creature_found;
+    int ai_spec_allows;
+    int party_at_target;
+    int8_t result;
+    uint8_t out_b1a;
+} DM2_V1_SkprojectXact65Receipt;
+
+int dm2_v1_skproject_proceed_xact_65(
+    const DM2_V1_SkprojectXactContext *ctx,
+    const DM2_V1_SkprojectXact65State *state,
+    DM2_V1_SkprojectQueryCreatureAiSpecFlagsFn ai_spec_flags_fn,
+    DM2_V1_SkprojectXact65Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:400 DM2_14cd_2662 */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint16_t target_x;
+    uint16_t target_y;
+    int creature_at_target;
+    int found_handler;
+} DM2_V1_Skproject14cd2662Receipt;
+
+int dm2_v1_skproject_14cd_2662(
+    uint8_t adjust,
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_Skproject14cd2662Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:519 DM2_PROCEED_XACT_66 */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int handler_ahead;
+    int xact63_accepted;
+    int8_t result;
+    uint16_t out_w0e;
+    uint8_t out_b1a;
+    uint16_t out_v1e0572;
+} DM2_V1_SkprojectXact66Receipt;
+
+int dm2_v1_skproject_proceed_xact_66(
+    DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact66Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:571 DM2_PROCEED_XACT_67 */
+typedef int16_t (*DM2_V1_SkprojectAi14cd2886Fn)(
+    const uint16_t *record_chain,
+    uint16_t item_type,
+    int32_t adjust,
+    int flag1,
+    int flag2,
+    int flag3,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectQuery48ae0767Fn)(
+    int32_t value,
+    int32_t param,
+    int16_t *out_array,
+    int16_t *out_count,
+    void *user);
+
+typedef uint16_t (*DM2_V1_SkprojectRand16Fn)(uint16_t max, void *user);
+typedef uint16_t (*DM2_V1_SkprojectRandDirFn)(void *user);
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int handler_ahead;
+    int creature_at_facing;
+    int16_t damage_ratio;
+    int16_t defense_value;
+    int8_t result;
+    uint16_t out_w0e;
+    uint16_t out_w10;
+    uint8_t out_b1a;
+} DM2_V1_SkprojectXact67Receipt;
+
+int dm2_v1_skproject_proceed_xact_67(
+    DM2_V1_SkprojectXactContext *ctx,
+    const DM2_V1_SkprojectXact65State *state,
+    DM2_V1_SkprojectAi14cd2886Fn ai2886_fn,
+    DM2_V1_SkprojectQuery48ae0767Fn query0767_fn,
+    DM2_V1_SkprojectRand16Fn rand16_fn,
+    DM2_V1_SkprojectRandDirFn randdir_fn,
+    DM2_V1_SkprojectXact67Receipt *out_receipt);
+
 
 #endif

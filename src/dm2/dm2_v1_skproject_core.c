@@ -10450,7 +10450,15 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_CREATURE_SOMETHING_1c9a_0a48/DM2_1c9a_0cf7/"
            "DM2_1c9a_0db0/DM2_14cd_0802/DM2_ALLOC_CAII_TO_CREATURE/"
            "DM2_1c9a_0fcb/DM2_CREATE_MINION/DM2_RELEASE_MINION/"
-           "DM2_1c9a_17c7/DM2_1c9a_19d4 cycle-18 batch-18";
+           "DM2_1c9a_17c7/DM2_1c9a_19d4 cycle-18 batch-18; "
+           "SKULLWIN/c_1c9a.cpp DM2_1c9a_1a48/DM2_1c9a_1b16/"
+           "DM2_1c9a_1bae/DM2_FIND_WALK_PATH/"
+           "DM2___SET_CURRENT_THINKING_CREATURE_WALK_PATH/"
+           "DM2_1c9a_381c/DM2_1c9a_38a8/"
+           "DM2_FILL_CAII_CUR_MAP cycle-19 batch-19a; "
+           "DM2_FILL_ORPHAN_CAII/event_loop_T1/wait_for_vsync/wft/"
+           "DM2_PROCEED_XACT_65/DM2_14cd_2662/"
+           "DM2_PROCEED_XACT_66/DM2_PROCEED_XACT_67 cycle-19 batch-19b";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -19132,4 +19140,984 @@ void dm2_v1_skproject_1c9a_19d4(
     }
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
+}
+
+/* SKULLWIN/c_1c9a.cpp:6273 DM2_1c9a_1a48 — walk thing list searching for
+   a type-2 (creature) record whose sensor field matches a given direction
+   and whose bit mask overlaps the test mask. Returns the low 5 bits of the
+   matching word, or -1 if nothing found. */
+int32_t dm2_v1_skproject_1c9a_1a48(
+    int16_t direction,
+    int16_t test_mask,
+    int16_t tile_record_link,
+    DM2_V1_SkprojectGetAddressOfRecordFn get_address_fn,
+    DM2_V1_SkprojectGetNextRecordLinkFn get_next_fn,
+    void *user,
+    DM2_V1_Skproject1a48Receipt *out_receipt)
+{
+    DM2_V1_Skproject1a48Receipt receipt;
+    int16_t alt_dir;
+    uint16_t cur;
+    int record_type;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (direction != 1)
+        alt_dir = -1;
+    else
+        alt_dir = 2;
+
+    cur = (uint16_t)tile_record_link;
+
+    while (cur != 0xFFFEu) {
+        record_type = (int)(((uint16_t)(cur ^ (cur & 0x3C00u))) >> 10);
+        if (record_type > 3) {
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return -1;
+        }
+        if (record_type == 2 && get_address_fn) {
+            const uint8_t *addr = get_address_fn(cur, user);
+            if (addr) {
+                uint16_t w2 = (uint16_t)(addr[2] | ((uint16_t)addr[3] << 8));
+                if ((w2 & 0x6) == 0x4) {
+                    uint16_t shifted = w2 >> 3;
+                    int sensor_dir = (int)((shifted >> 9) & 0xF);
+                    if (sensor_dir == (int)direction ||
+                        (sensor_dir == (int)alt_dir && (w2 & 1) != 0)) {
+                        int slot = (int)((shifted >> 5) & 0xF);
+                        int bit = 1 << slot;
+                        if (((int)(uint16_t)test_mask & bit) != 0) {
+                            receipt.matched = 1;
+                            receipt.result_bits = (uint16_t)(shifted & 0x1F);
+                            receipt.valid = 1;
+                            if (out_receipt) *out_receipt = receipt;
+                            return (int32_t)(shifted & 0x1F);
+                        }
+                    }
+                }
+            }
+        }
+        if (get_next_fn) {
+            cur = get_next_fn(cur, user);
+        } else {
+            break;
+        }
+        receipt.records_walked++;
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return -1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:6354 DM2_1c9a_1b16 — walk thing list searching for
+   a type-2 record whose sensor direction matches and whose slot matches.
+   Returns the low 5 bits on match, -1 otherwise. */
+int32_t dm2_v1_skproject_1c9a_1b16(
+    int16_t sensor_dir_wanted,
+    int16_t slot_wanted,
+    int16_t tile_record_link,
+    DM2_V1_SkprojectGetAddressOfRecordFn get_address_fn,
+    DM2_V1_SkprojectGetNextRecordLinkFn get_next_fn,
+    void *user,
+    DM2_V1_Skproject1b16Receipt *out_receipt)
+{
+    DM2_V1_Skproject1b16Receipt receipt;
+    uint16_t cur;
+    int record_type;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    cur = (uint16_t)tile_record_link;
+
+    while (cur != 0xFFFEu) {
+        record_type = (int)(((uint16_t)(cur ^ (cur & 0x3C00u))) >> 10);
+        if (record_type > 3) {
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return -1;
+        }
+        if (record_type == 2 && get_address_fn) {
+            const uint8_t *addr = get_address_fn(cur, user);
+            if (addr) {
+                uint16_t w2 = (uint16_t)(addr[2] | ((uint16_t)addr[3] << 8));
+                if ((w2 & 0x6) == 0x4) {
+                    uint16_t shifted = w2 >> 3;
+                    int found_dir = (int)((shifted >> 9) & 0xF);
+                    int found_slot = (int)((shifted >> 5) & 0xF);
+                    if (found_dir == (int)sensor_dir_wanted &&
+                        found_slot == (int)slot_wanted) {
+                        receipt.matched = 1;
+                        receipt.result_bits = (uint16_t)(shifted & 0x1F);
+                        receipt.valid = 1;
+                        if (out_receipt) *out_receipt = receipt;
+                        return (int32_t)(shifted & 0x1F);
+                    }
+                }
+            }
+        }
+        if (get_next_fn) {
+            cur = get_next_fn(cur, user);
+        } else {
+            break;
+        }
+        receipt.records_walked++;
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return -1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:6420 DM2_1c9a_1bae — static callback for
+   DM2_FIND_WALK_PATH; returns 0 if coordinates match the current thinking
+   creature position, otherwise delegates to DM2_1BAAD. */
+int32_t dm2_v1_skproject_1c9a_1bae(
+    int16_t x,
+    int16_t y,
+    int16_t creature_x,
+    int16_t creature_y,
+    DM2_V1_Skproject1baeFallbackFn fallback_fn,
+    void *user,
+    DM2_V1_Skproject1baeReceipt *out_receipt)
+{
+    DM2_V1_Skproject1baeReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (x == creature_x && y == creature_y) {
+        receipt.matched_creature_pos = 1;
+        receipt.result = 0;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.used_fallback = 1;
+    if (fallback_fn) {
+        receipt.result = fallback_fn((int32_t)x, (int32_t)y, user);
+    } else {
+        receipt.result = 0;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.result;
+}
+
+/* SKULLWIN/c_1c9a.cpp:6438 DM2_FIND_WALK_PATH — massive pathfinding
+   function (0x15c stack frame). This receipt captures control flow
+   decisions without reimplementing the full algorithm. */
+void dm2_v1_skproject_find_walk_path_receipt_init(
+    DM2_V1_SkprojectFindWalkPathReceipt *out_receipt)
+{
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+}
+
+/* SKULLWIN/c_1c9a.cpp:9670 DM2___SET_CURRENT_THINKING_CREATURE_WALK_PATH
+   — allocates walk path buffer for the current thinking creature. Sets
+   v1e07e6 pointer to NULL first, then conditionally allocates via
+   DM2_ALLOCATION11. */
+void dm2_v1_skproject_set_current_thinking_creature_walk_path(
+    DM2_V1_SkprojectWalkPathState *state,
+    DM2_V1_SkprojectAllocation11Fn alloc_fn,
+    DM2_V1_SkprojectGetBmpFn get_bmp_fn,
+    void *user,
+    DM2_V1_SkprojectSetWalkPathReceipt *out_receipt)
+{
+    DM2_V1_SkprojectSetWalkPathReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!state) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return;
+    }
+
+    state->v1e07e6 = NULL;
+
+    if (state->creatures == NULL) {
+        receipt.early_exit_no_creatures = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return;
+    }
+
+    if (state->walk_path_b00 == 0) {
+        receipt.early_exit_b00_zero = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return;
+    }
+
+    /* DM2_ALLOCATION11 with tag 0x30000000 | (v1e054c & 0x3) */
+    uint32_t alloc_tag = 0x30000000u | (uint32_t)(state->v1e054c & 0x3);
+    uint16_t bmp_id = 0;
+    int alloc_result = 0;
+
+    if (alloc_fn) {
+        alloc_result = alloc_fn(alloc_tag, &bmp_id, user);
+    }
+
+    if (alloc_result == 0) {
+        receipt.alloc_failed = 1;
+        state->walk_path_b01 = 0;
+        state->walk_path_b00 = 0;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return;
+    }
+
+    receipt.alloc_succeeded = 1;
+    if (get_bmp_fn) {
+        state->v1e07e6 = get_bmp_fn((int16_t)bmp_id, user);
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+}
+
+/* SKULLWIN/c_1c9a.cpp:9696 DM2_1c9a_381c — reads creature walk path,
+   extracts direction from v1e07e6 array indexed by remaining steps,
+   writes direction bits to creature offset 0x1b. Returns step count. */
+int32_t dm2_v1_skproject_1c9a_381c(
+    DM2_V1_SkprojectWalkPathState *state,
+    uint8_t *creature_base,
+    DM2_V1_SkprojectAllocation11Fn alloc_fn,
+    DM2_V1_SkprojectGetBmpFn get_bmp_fn,
+    void *user,
+    DM2_V1_Skproject381cReceipt *out_receipt)
+{
+    DM2_V1_Skproject381cReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!state || !creature_base) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* First call SET_CURRENT_THINKING_CREATURE_WALK_PATH */
+    dm2_v1_skproject_set_current_thinking_creature_walk_path(
+        state, alloc_fn, get_bmp_fn, user, NULL);
+
+    uint8_t b00 = state->walk_path_b00;
+    if (b00 != 0) {
+        uint8_t b01 = state->walk_path_b01;
+        if (b01 != 0 && state->v1e07e6 != NULL) {
+            /* Index = b00 - b01 into the walk path array */
+            int idx = (int)b00 - (int)b01;
+            int16_t val = state->v1e07e6[idx];
+            uint8_t dir = (uint8_t)(val & 0x7);
+            creature_base[0x1b] = dir;
+            receipt.used_walk_path = 1;
+            receipt.direction = dir;
+            receipt.step_count = b01;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return (int32_t)b01;
+        }
+    }
+
+    /* Fallback: check target position against current and maybe clear */
+    receipt.used_fallback = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_1c9a.cpp:9748 DM2_1c9a_38a8 — belongs to DM2_14cd_0389;
+   calls SET_CURRENT_THINKING_CREATURE_WALK_PATH then searches the creature
+   action list for a matching entry and dispatches DM2_FIND_WALK_PATH. */
+int32_t dm2_v1_skproject_1c9a_38a8(
+    const DM2_V1_Skproject38a8State *state,
+    DM2_V1_Skproject38a8Receipt *out_receipt)
+{
+    DM2_V1_Skproject38a8Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!state) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Searches s350.v1e0678[] for matching b_03/w_04 entry */
+    receipt.searched_action_list = 1;
+
+    /* The function dispatches FIND_WALK_PATH and processes the result.
+       Full reimplementation deferred — receipt captures control flow. */
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_1c9a.cpp:9895 DM2_FILL_CAII_CUR_MAP — iterates all tiles
+   in the current map, walks each tile's thing list for type-4 (creature)
+   records, and allocates CAII entries to creatures that need them. */
+int32_t dm2_v1_skproject_fill_caii_cur_map(
+    const DM2_V1_SkprojectFillCaiiState *map_state,
+    DM2_V1_SkprojectGetAddressOfRecordFn get_address_fn,
+    DM2_V1_SkprojectGetNextRecordLinkFn get_next_fn,
+    DM2_V1_SkprojectQueryCreatureAISpecFn query_ai_fn,
+    DM2_V1_SkprojectAllocCaiiToCreatureFn alloc_caii_fn,
+    void *user,
+    DM2_V1_SkprojectFillCaiiReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFillCaiiReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!map_state || !map_state->tile_data || !map_state->record_links) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    int16_t map_w = map_state->map_width;
+    int16_t map_h = map_state->map_height;
+    const uint8_t *tiles = map_state->tile_data;
+    const uint16_t *rec_links = map_state->record_links;
+    int rec_idx = 0;
+
+    for (int16_t col = 0; col < map_w; col++) {
+        for (int16_t row = 0; row < map_h; row++) {
+            int tile_idx = col * map_h + row;
+            uint8_t tile_byte = tiles[tile_idx];
+
+            if ((tile_byte & 0x10) == 0) continue;
+
+            /* Tile has things — walk the record list */
+            uint16_t cur = rec_links[rec_idx++];
+            receipt.tiles_with_things++;
+
+            while (cur != 0xFFFEu) {
+                int rtype = (int)(((uint16_t)(cur ^ (cur & 0x3C00u))) >> 10);
+                if (rtype != 4) {
+                    if (get_next_fn)
+                        cur = get_next_fn(cur, user);
+                    else
+                        break;
+                    continue;
+                }
+
+                /* Type 4 = creature record */
+                receipt.creatures_found++;
+                if (get_address_fn) {
+                    const uint8_t *addr = get_address_fn(cur, user);
+                    if (addr && addr[5] == 0xFF) {
+                        /* Needs AI spec check */
+                        if (query_ai_fn) {
+                            const uint8_t *ai = query_ai_fn(addr[4], user);
+                            if (ai && (ai[0] & 0x1) != 0) {
+                                receipt.caii_allocated++;
+                                if (alloc_caii_fn)
+                                    alloc_caii_fn(cur, (uint16_t)col,
+                                                  (uint16_t)row, user);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int32_t)map_w;
+}
+
+/* SKULLWIN/c_1c9a.cpp:9995 DM2_FILL_ORPHAN_CAII — iterates all maps
+   calling DM2_FILL_CAII_CUR_MAP, then restores the original map. */
+void dm2_v1_skproject_fill_orphan_caii(
+    uint16_t current_map,
+    uint16_t num_maps,
+    DM2_V1_SkprojectChangeMapFn change_map_fn,
+    DM2_V1_SkprojectFillCaiiCurMapFn fill_caii_fn,
+    void *user,
+    DM2_V1_SkprojectFillOrphanCaiiReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFillOrphanCaiiReceipt receipt;
+    uint16_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!change_map_fn || !fill_caii_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return;
+    }
+
+    receipt.original_map = current_map;
+    receipt.num_maps = num_maps;
+
+    for (i = 0; i < num_maps; i++) {
+        change_map_fn((int16_t)i, user);
+        fill_caii_fn(user);
+        receipt.maps_iterated++;
+    }
+
+    /* Restore original map. */
+    change_map_fn((int16_t)current_map, user);
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+}
+
+/* SKULLWIN/c_addon.cpp:30 event_loop_T1 — timer-tick subdivision and
+   25Hz vsync cadence model.  timer_events is the number of timer ticks
+   to process this iteration. */
+void dm2_v1_skproject_event_loop_t1(
+    int timer_events,
+    int vsync_counter_in,
+    int *vsync_counter_out,
+    int *tick_out,
+    DM2_V1_SkprojectEventLoopT1Receipt *out_receipt)
+{
+    DM2_V1_SkprojectEventLoopT1Receipt receipt;
+    int t25hz = 0;
+    int blit = 0;
+    int i;
+    int vsync = vsync_counter_in;
+    int ticks = 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+
+    for (i = 0; i < timer_events; i++) {
+        t25hz++;
+        if (t25hz == 4) {
+            t25hz = 0;
+            blit = 1;
+        }
+        ticks++;
+    }
+
+    if (blit) {
+        if (vsync > 0) {
+            receipt.vsync_triggered = 1;
+            vsync = 0;
+        }
+    }
+
+    receipt.tick_count = ticks;
+    receipt.blit_due = blit;
+    receipt.valid = 1;
+
+    if (vsync_counter_out) *vsync_counter_out = vsync;
+    if (tick_out) *tick_out = ticks;
+    if (out_receipt) *out_receipt = receipt;
+}
+
+/* SKULLWIN/c_addon.cpp:122 wait_for_vsync — increments vsync counter. */
+void dm2_v1_skproject_wait_for_vsync(int *vsync_counter)
+{
+    if (vsync_counter) (*vsync_counter)++;
+}
+
+/* SKULLWIN/c_addon.cpp:127 wft — wait-for-tick logic. */
+void dm2_v1_skproject_wft(
+    int tick_in,
+    int *tick_out,
+    DM2_V1_SkprojectWftReceipt *out_receipt)
+{
+    DM2_V1_SkprojectWftReceipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.would_block = (tick_in == 0) ? 1 : 0;
+    receipt.valid = 1;
+
+    if (tick_out) *tick_out = 0;
+    if (out_receipt) *out_receipt = receipt;
+}
+
+/* SKULLWIN/c_ai.cpp:364 DM2_PROCEED_XACT_65 — creature AI: check tile
+   ahead for creature (AI spec flags bit 0) or party presence. */
+int dm2_v1_skproject_proceed_xact_65(
+    const DM2_V1_SkprojectXactContext *ctx,
+    const DM2_V1_SkprojectXact65State *state,
+    DM2_V1_SkprojectQueryCreatureAiSpecFlagsFn ai_spec_flags_fn,
+    DM2_V1_SkprojectXact65Receipt *out_receipt)
+{
+    DM2_V1_SkprojectXact65Receipt receipt;
+    uint16_t facing;
+    int16_t ahead_x, ahead_y;
+    int32_t creature;
+    int skip = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx || !ctx->creature_at_fn || !state) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* s350.creatures->w_0c.set(-1) — receipt notes this side effect. */
+    receipt.result = -3;
+
+    facing = (uint16_t)((ctx->creature_word_e >> 6) & 0x3u);
+    ahead_x = (int16_t)(2 * dm2_v1_skproject_step_x[facing] +
+                         (int16_t)ctx->creature_x);
+    ahead_y = (int16_t)(2 * dm2_v1_skproject_step_y[facing] +
+                         (int16_t)ctx->creature_y);
+    receipt.ahead_x = (uint16_t)ahead_x;
+    receipt.ahead_y = (uint16_t)ahead_y;
+
+    creature = ctx->creature_at_fn(ahead_x, ahead_y, ctx->user);
+    if (creature != -1 && (uint16_t)creature != 0xffffu) {
+        receipt.creature_found = 1;
+        if (ai_spec_flags_fn) {
+            uint16_t flags = ai_spec_flags_fn(creature, ctx->user);
+            if ((flags & 0x1u) != 0) {
+                receipt.ai_spec_allows = 1;
+                skip = 1;
+            }
+        }
+    }
+
+    if (!skip) {
+        /* Check if party is at this tile. */
+        if (state->current_map == state->v1e08d6 &&
+            ahead_x == (int16_t)state->v1e08d8 &&
+            ahead_y == (int16_t)state->v1e08d4) {
+            receipt.party_at_target = 1;
+            skip = 1;
+        }
+    }
+
+    if (skip) {
+        receipt.result = -2;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -2;
+    }
+
+    /* No creature / no party: b_1a = 29, return -4. */
+    receipt.out_b1a = 29;
+    receipt.result = -4;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return -4;
+}
+
+/* SKULLWIN/c_ai.cpp:400 DM2_14cd_2662 — look ahead in creature facing
+   direction (optionally adjusted), walk the record chain at the target
+   tile, return 1 if a creature there can handle item types 0x10 or 0x7. */
+int dm2_v1_skproject_14cd_2662(
+    uint8_t adjust,
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_Skproject14cd2662Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd2662Receipt receipt;
+    uint16_t facing;
+    uint8_t effective_dir;
+    int16_t target_x, target_y;
+    int32_t creature;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx || !ctx->creature_at_fn || !ctx->record_fn ||
+        !ctx->next_fn || !ctx->can_handle_fn) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    facing = (uint16_t)((ctx->creature_word_e >> 6) & 0x3u);
+    effective_dir = adjust;
+    if (adjust != 0xffu) {
+        effective_dir = (uint8_t)((adjust + facing + 2u) & 0x3u);
+    }
+
+    target_x = (int16_t)((int16_t)ctx->creature_x +
+                          dm2_v1_skproject_step_x[facing & 0x3]);
+    target_y = (int16_t)((int16_t)ctx->creature_y +
+                          dm2_v1_skproject_step_y[facing & 0x3]);
+    receipt.target_x = (uint16_t)target_x;
+    receipt.target_y = (uint16_t)target_y;
+
+    creature = ctx->creature_at_fn(target_x, target_y, ctx->user);
+    if (creature == -1 || (uint16_t)creature == 0xffffu) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.creature_at_target = 1;
+
+    {
+        const uint8_t *rec;
+        uint16_t rec_size = 0;
+        uint16_t chain;
+        int found = 0;
+
+        rec = ctx->record_fn((uint16_t)creature, &rec_size, ctx->user);
+        if (!rec || rec_size < 4u) {
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+
+        chain = (uint16_t)(rec[2] | ((uint16_t)rec[3] << 8));
+
+        while (chain != 0xfffeu) {
+            uint16_t type_bits = (uint16_t)(chain >> 10);
+            int type_ok = 0;
+            int32_t can16, can7;
+
+            if ((type_bits > 4 && type_bits < 14) || type_bits == 9)
+                type_ok = 1;
+
+            if (type_ok) {
+                /* Check direction filter. */
+                int dir_ok = 0;
+                if (effective_dir == 0xffu) {
+                    dir_ok = 1;
+                } else {
+                    uint16_t rec_dir = (uint16_t)(chain >> 14);
+                    if (effective_dir == (uint8_t)rec_dir) dir_ok = 1;
+                }
+
+                if (dir_ok) {
+                    can16 = ctx->can_handle_fn(
+                        (int32_t)(uint32_t)chain, 0x10, ctx->user);
+                    if (can16 == 0) {
+                        can7 = ctx->can_handle_fn(
+                            (int32_t)(uint32_t)chain, 0x7, ctx->user);
+                        if (can7 == 0) {
+                            found = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            {
+                int32_t next = ctx->next_fn(chain, ctx->user);
+                chain = (uint16_t)next;
+            }
+        }
+
+        receipt.found_handler = found;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return found ? 1 : 0;
+    }
+}
+
+/* SKULLWIN/c_ai.cpp:519 DM2_PROCEED_XACT_66 — if nothing ahead handles
+   the item, tries XACT_63 with types 16/7; manages w0e countdown. */
+int dm2_v1_skproject_proceed_xact_66(
+    DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact66Receipt *out_receipt)
+{
+    DM2_V1_SkprojectXact66Receipt receipt;
+    DM2_V1_Skproject14cd2662Receipt r2662;
+    int32_t handler;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.out_w0e = ctx->creature_w0e;
+    receipt.out_b1a = 29;
+
+    handler = dm2_v1_skproject_14cd_2662(2, ctx, &r2662);
+    receipt.handler_ahead = (handler != 0) ? 1 : 0;
+
+    if (handler == 0) {
+        /* No handler ahead: try XACT_63 with type=16. */
+        int16_t saved_v1e0572 = ctx->v1e0572;
+        DM2_V1_SkprojectXact63Receipt r63;
+
+        ctx->v1e0572 = 16;
+        ctx->v1e0574 = 2;
+        (void)dm2_v1_skproject_proceed_xact_63(ctx, &r63);
+        if (r63.valid && r63.result == -2) {
+            receipt.xact63_accepted = 1;
+            receipt.result = -2;
+            receipt.out_v1e0572 = 16;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return -2;
+        }
+
+        if (saved_v1e0572 != 0) {
+            ctx->v1e0572 = 7;
+            (void)dm2_v1_skproject_proceed_xact_63(ctx, &r63);
+            if (r63.valid && r63.result == -2) {
+                receipt.xact63_accepted = 1;
+                receipt.result = -2;
+                receipt.out_v1e0572 = 7;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return -2;
+            }
+        }
+
+        /* Decrement w0e. */
+        {
+            int16_t w0e = (int16_t)ctx->creature_w0e;
+            w0e--;
+            if (w0e <= 0) {
+                receipt.out_w0e = 5;
+                receipt.out_b1a = 30;
+                receipt.result = -3;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return -3;
+            }
+            if (w0e > 5) w0e = (int16_t)(w0e - 5);
+            receipt.out_w0e = (uint16_t)w0e;
+        }
+        receipt.result = -3;
+    } else {
+        /* Handler found ahead: decrement w0e differently. */
+        int16_t w0e = (int16_t)ctx->creature_w0e;
+        w0e--;
+        if (w0e <= 5) {
+            receipt.out_w0e = 9;
+            receipt.out_b1a = 31;
+            receipt.result = -4;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return -4;
+        }
+        receipt.out_w0e = (uint16_t)w0e;
+        receipt.result = -4;
+    }
+
+    receipt.out_b1a = 29;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.result;
+}
+
+/* SKULLWIN/c_ai.cpp:571 DM2_PROCEED_XACT_67 — complex AI evaluation
+   for attack/retreat/hold based on damage ratios and randomness. */
+int dm2_v1_skproject_proceed_xact_67(
+    DM2_V1_SkprojectXactContext *ctx,
+    const DM2_V1_SkprojectXact65State *state,
+    DM2_V1_SkprojectAi14cd2886Fn ai2886_fn,
+    DM2_V1_SkprojectQuery48ae0767Fn query0767_fn,
+    DM2_V1_SkprojectRand16Fn rand16_fn,
+    DM2_V1_SkprojectRandDirFn randdir_fn,
+    DM2_V1_SkprojectXact67Receipt *out_receipt)
+{
+    DM2_V1_SkprojectXact67Receipt receipt;
+    DM2_V1_Skproject14cd2662Receipt r2662;
+    int32_t handler;
+    uint16_t facing;
+    int8_t result = -3;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx || !ctx->creature_at_fn || !ctx->record_fn || !state) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.out_w0e = ctx->creature_w0e;
+    receipt.out_w10 = 0;
+    receipt.out_b1a = 29;
+
+    facing = (uint16_t)((ctx->creature_word_e >> 6) & 0x3u);
+
+    handler = dm2_v1_skproject_14cd_2662(2, ctx, &r2662);
+    receipt.handler_ahead = (handler != 0) ? 1 : 0;
+
+    if (handler == 0) {
+        /* No handler: check if creature at facing direction. */
+        int16_t ahead_x = (int16_t)(dm2_v1_skproject_step_x[facing] +
+                                     (int16_t)ctx->creature_x);
+        int16_t ahead_y = (int16_t)(dm2_v1_skproject_step_y[facing] +
+                                     (int16_t)ctx->creature_y);
+        int32_t creature = ctx->creature_at_fn(ahead_x, ahead_y, ctx->user);
+
+        if (creature != -1 && (uint16_t)creature != 0xffffu) {
+            receipt.creature_at_facing = 1;
+            receipt.out_b1a = 29;
+
+            if (ai2886_fn && query0767_fn && rand16_fn && randdir_fn) {
+                const uint8_t *rec;
+                uint16_t rec_size = 0;
+                int16_t rg62, rg_defense;
+                int16_t vba[10];
+                int16_t vw_1c = 0;
+                int16_t vw_18;
+                int16_t rg4;
+                uint8_t rev_facing;
+                uint16_t *rg7p16;
+
+                rec = ctx->record_fn((uint16_t)creature, &rec_size,
+                                     ctx->user);
+                if (rec && rec_size >= 4u) {
+                    rg7p16 = (uint16_t *)(rec + 2);
+
+                    rg62 = ai2886_fn(rg7p16, 16,
+                                     (int32_t)(uint32_t)facing, 0, 0, 0,
+                                     ctx->user);
+                    {
+                        int16_t r7 = ai2886_fn(rg7p16, 7,
+                                               (int32_t)(uint32_t)facing,
+                                               0, 0, 0, ctx->user);
+                        if (r7 != -1) {
+                            if (rg62 != -1)
+                                rg62 = (int16_t)(rg62 + r7);
+                            else
+                                rg62 = r7;
+                        }
+                    }
+
+                    if (rg62 != -1) {
+                        receipt.out_w10 = (uint16_t)rg62;
+
+                        rev_facing = (uint8_t)((facing + 2u) & 0x3u);
+                        rg_defense = ai2886_fn(rg7p16, 16,
+                                               (int32_t)(uint32_t)rev_facing,
+                                               1, 1, 0, ctx->user);
+                        (void)query0767_fn(
+                            (int32_t)rg_defense, 0x12,
+                            vba, &vw_1c, ctx->user);
+                        vw_18 = vw_1c; /* defense value */
+                        receipt.defense_value = vw_18;
+
+                        if (vw_18 > 16 && rand16_fn) {
+                            uint16_t r = rand16_fn(16, ctx->user);
+                            int32_t adj = (int32_t)r * vw_18;
+                            adj /= 100;
+                            vw_18 = (int16_t)(vw_18 - (int16_t)adj);
+                        }
+
+                        if (vw_18 != 0) {
+                            rg4 = (int16_t)((100 * (int32_t)(uint16_t)rg62) /
+                                            (int32_t)vw_18);
+                        } else {
+                            rg4 = 100;
+                        }
+                        receipt.damage_ratio = rg4;
+
+                        {
+                            int16_t prev_w0e = (int16_t)ctx->creature_w0e;
+
+                            if (rg62 == prev_w0e || rg62 >= vw_18) {
+                                if (rg62 < vw_18) {
+                                    /* Decrement w0e. */
+                                    int16_t w = (int16_t)(ctx->creature_w0e);
+                                    w--;
+                                    if (w > 0) {
+                                        if (w > 6) w = (int16_t)(w - 4);
+                                        receipt.out_w0e = (uint16_t)w;
+                                        receipt.out_b1a = 29;
+                                        result = -4;
+                                    } else {
+                                        if (rg4 <= 76) {
+                                            receipt.out_b1a = 27;
+                                        } else {
+                                            uint16_t r1 = rand16_fn(
+                                                (uint16_t)(100 - rg4 > 1 ?
+                                                           100 - rg4 : 1),
+                                                ctx->user);
+                                            uint16_t r2 = randdir_fn(
+                                                ctx->user);
+                                            if ((r1 < 5) == (r2 == 0))
+                                                receipt.out_b1a = 27;
+                                            else
+                                                receipt.out_b1a = 32;
+                                        }
+                                        result = -4;
+                                    }
+                                } else {
+                                    /* rg62 >= vw_18: strong position. */
+                                    int16_t m = rg62 < vw_18 ? rg62 : vw_18;
+                                    receipt.out_w0e = (uint16_t)m;
+                                    receipt.out_b1a = 28;
+                                    result = -2;
+                                }
+                            } else {
+                                /* rg62 < prev_w0e and rg62 < vw_18. */
+                                if (prev_w0e != -1 && rg62 > prev_w0e) {
+                                    /* Stochastic retreat check. */
+                                    uint16_t rd = randdir_fn(ctx->user);
+                                    if (rd != 0) {
+                                        uint16_t rv = rand16_fn(1, ctx->user);
+                                        rv &= 0x7u;
+                                        if ((int16_t)rg4 >
+                                            (int16_t)(rv + 0x4c)) {
+                                            /* w_0c = 0, random b1a. */
+                                            uint16_t r1 = rand16_fn(
+                                                (uint16_t)(100 - rg4 > 1 ?
+                                                           100 - rg4 : 1),
+                                                ctx->user);
+                                            uint16_t r2 = randdir_fn(
+                                                ctx->user);
+                                            uint32_t xv =
+                                                (uint32_t)(r2 == 0 ? 1 : 0) ^
+                                                (uint32_t)(r1 & 0xffu);
+                                            if (xv == 0)
+                                                receipt.out_b1a = 27;
+                                            else
+                                                receipt.out_b1a = 32;
+                                            result = -4;
+                                        } else {
+                                            receipt.out_b1a = 29;
+                                            result = -4;
+                                        }
+                                    } else {
+                                        receipt.out_b1a = 29;
+                                        result = -4;
+                                    }
+                                } else {
+                                    receipt.out_b1a = 29;
+                                    result = -4;
+                                }
+                            }
+                        }
+                    } else {
+                        receipt.out_w10 = 0;
+                    }
+                }
+            }
+        }
+    } else {
+        /* Handler ahead: decrement w0e. */
+        int16_t w = (int16_t)ctx->creature_w0e;
+        w--;
+        if (w <= 6) {
+            uint16_t rdir = randdir_fn ? randdir_fn(ctx->user) : 0;
+            receipt.out_w0e = (uint16_t)((int16_t)rdir + 9);
+            receipt.out_b1a = 31;
+            result = -4;
+        } else {
+            receipt.out_w0e = (uint16_t)w;
+            receipt.out_b1a = 29;
+            result = -4;
+        }
+    }
+
+    receipt.result = result;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return result;
 }

@@ -9460,6 +9460,195 @@ int main(void)
                      "DM2_1c9a_0648") != 0,
           "source evidence names cycle-16 batch-17");
 
+    /* batch-19a: walk path / CAII symbols */
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_1c9a_1a48") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1c9a_1b16") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1c9a_1bae") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_FIND_WALK_PATH") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2___SET_CURRENT_THINKING_CREATURE_WALK_PATH") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1c9a_381c") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1c9a_38a8") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_FILL_CAII_CUR_MAP") != 0,
+          "source evidence names batch-19a walk path/CAII");
+
+    /* batch-19a: 1a48 no-match returns -1 */
+    {
+        DM2_V1_Skproject1a48Receipt r1a48;
+        int32_t ret = dm2_v1_skproject_1c9a_1a48(
+            0, 0, (int16_t)0xFFFE, NULL, NULL, NULL, &r1a48);
+        CHECK(ret == -1 && r1a48.valid, "1a48 end-of-list returns -1");
+    }
+
+    /* batch-19a: 1b16 no-match returns -1 */
+    {
+        DM2_V1_Skproject1b16Receipt r1b16;
+        int32_t ret = dm2_v1_skproject_1c9a_1b16(
+            0, 0, (int16_t)0xFFFE, NULL, NULL, NULL, &r1b16);
+        CHECK(ret == -1 && r1b16.valid, "1b16 end-of-list returns -1");
+    }
+
+    /* batch-19a: 1bae matches creature pos */
+    {
+        DM2_V1_Skproject1baeReceipt r1bae;
+        int32_t ret = dm2_v1_skproject_1c9a_1bae(
+            5, 10, 5, 10, NULL, NULL, &r1bae);
+        CHECK(ret == 0 && r1bae.matched_creature_pos && r1bae.valid,
+              "1bae returns 0 at creature position");
+    }
+
+    /* batch-19a: find_walk_path receipt init */
+    {
+        DM2_V1_SkprojectFindWalkPathReceipt rwp;
+        rwp.valid = 99;
+        dm2_v1_skproject_find_walk_path_receipt_init(&rwp);
+        CHECK(rwp.valid == 0, "find_walk_path receipt init clears");
+    }
+
+    /* batch-19a: set walk path — null creatures early exit */
+    {
+        DM2_V1_SkprojectWalkPathState wps;
+        memset(&wps, 0, sizeof(wps));
+        wps.creatures = NULL;
+        DM2_V1_SkprojectSetWalkPathReceipt rswp;
+        dm2_v1_skproject_set_current_thinking_creature_walk_path(
+            &wps, NULL, NULL, NULL, &rswp);
+        CHECK(rswp.valid && rswp.early_exit_no_creatures,
+              "set walk path exits on null creatures");
+    }
+
+    /* batch-19a: 381c null state returns 0 */
+    {
+        DM2_V1_Skproject381cReceipt r381c;
+        int32_t ret = dm2_v1_skproject_1c9a_381c(
+            NULL, NULL, NULL, NULL, NULL, &r381c);
+        CHECK(ret == 0 && r381c.valid, "381c null returns 0");
+    }
+
+    /* batch-19a: 38a8 null state returns 0 */
+    {
+        DM2_V1_Skproject38a8Receipt r38a8;
+        int32_t ret = dm2_v1_skproject_1c9a_38a8(NULL, &r38a8);
+        CHECK(ret == 0 && r38a8.valid, "38a8 null returns 0");
+    }
+
+    /* batch-19a: fill_caii_cur_map null returns 0 */
+    {
+        DM2_V1_SkprojectFillCaiiReceipt rfill;
+        int32_t ret = dm2_v1_skproject_fill_caii_cur_map(
+            NULL, NULL, NULL, NULL, NULL, NULL, &rfill);
+        CHECK(ret == 0 && rfill.valid, "fill_caii null returns 0");
+    }
+
+    /* ---- DM2_FILL_ORPHAN_CAII ---- */
+    {
+        DM2_V1_SkprojectFillOrphanCaiiReceipt r;
+        dm2_v1_skproject_fill_orphan_caii(3, 5, NULL, NULL, NULL, &r);
+        CHECK(r.blocked_missing_callback == 1,
+              "fill_orphan_caii blocks without callbacks");
+    }
+
+    /* ---- event_loop_T1 ---- */
+    {
+        DM2_V1_SkprojectEventLoopT1Receipt r;
+        int vsync_out = 0, tick_out = 0;
+        dm2_v1_skproject_event_loop_t1(4, 1, &vsync_out, &tick_out, &r);
+        CHECK(r.valid == 1 && r.tick_count == 4 && r.blit_due == 1 &&
+              r.vsync_triggered == 1 && vsync_out == 0,
+              "event_loop_t1 4-tick 25Hz blit with vsync");
+    }
+    {
+        DM2_V1_SkprojectEventLoopT1Receipt r;
+        int vsync_out = 0, tick_out = 0;
+        dm2_v1_skproject_event_loop_t1(3, 0, &vsync_out, &tick_out, &r);
+        CHECK(r.valid == 1 && r.tick_count == 3 && r.blit_due == 0,
+              "event_loop_t1 3-tick no blit");
+    }
+
+    /* ---- wait_for_vsync ---- */
+    {
+        int vc = 0;
+        dm2_v1_skproject_wait_for_vsync(&vc);
+        CHECK(vc == 1, "wait_for_vsync increments counter");
+        dm2_v1_skproject_wait_for_vsync(&vc);
+        CHECK(vc == 2, "wait_for_vsync increments again");
+    }
+
+    /* ---- wft ---- */
+    {
+        DM2_V1_SkprojectWftReceipt r;
+        int tick_out = 99;
+        dm2_v1_skproject_wft(0, &tick_out, &r);
+        CHECK(r.valid == 1 && r.would_block == 1 && tick_out == 0,
+              "wft would_block when tick is 0");
+    }
+    {
+        DM2_V1_SkprojectWftReceipt r;
+        int tick_out = 99;
+        dm2_v1_skproject_wft(5, &tick_out, &r);
+        CHECK(r.valid == 1 && r.would_block == 0 && tick_out == 0,
+              "wft clears tick when nonzero");
+    }
+
+    /* ---- DM2_PROCEED_XACT_65 ---- */
+    {
+        DM2_V1_SkprojectXact65Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_65(NULL, NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_65 blocks without context");
+    }
+
+    /* ---- DM2_14cd_2662 ---- */
+    {
+        DM2_V1_Skproject14cd2662Receipt r;
+        int rv = dm2_v1_skproject_14cd_2662(2, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "14cd_2662 blocks without context");
+    }
+
+    /* ---- DM2_PROCEED_XACT_66 ---- */
+    {
+        DM2_V1_SkprojectXact66Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_66(NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_66 blocks without context");
+    }
+
+    /* ---- DM2_PROCEED_XACT_67 ---- */
+    {
+        DM2_V1_SkprojectXact67Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_67(
+            NULL, NULL, NULL, NULL, NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_67 blocks without context");
+    }
+
+    /* ---- source evidence batch 19b ---- */
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_FILL_ORPHAN_CAII") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "event_loop_T1") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "wait_for_vsync") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "wft") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_65") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_14cd_2662") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_66") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_67") != 0,
+          "source evidence names cycle-19 batch-19b");
+
     if (failed) {
         printf("%d failure(s)\n", failed);
         return 1;

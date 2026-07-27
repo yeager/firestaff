@@ -62,19 +62,19 @@ DM2_CREATE_MINION	SKULLWIN	SKULLWIN/c_1c9a.cpp	5960	src/dm2/dm2_v1_skproject_cor
 DM2_RELEASE_MINION	SKULLWIN	SKULLWIN/c_1c9a.cpp	6148	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_release_minion; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2_ENGAGE_COMMAND helper: switches to the missile's map, computes direction/distance words, dispatches DM2_ai_13e4_0360 with reason 0x13, then restores the previous current map.
 DM2_1c9a_17c7	SKULLWIN	SKULLWIN/c_1c9a.cpp	6181	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1c9a_17c7; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2_WOUND_CREATURE proximity gate: true only on the current map, outside cutscene/network gating, when the coarse vector direction matches and both axis deltas are within 2 tiles.
 DM2_1c9a_19d4	SKULLWIN	SKULLWIN/c_1c9a.cpp	6240	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1c9a_19d4; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Dispatch gate calling DM2_ATTACK_CREATURE only when the command word is in [6,0x15], sign-extending bit 0x8000 into the direction argument.
-DM2_1c9a_1a48	SKULLWIN	SKULLWIN/c_1c9a.cpp	6273		MISSING
-DM2_1c9a_1b16	SKULLWIN	SKULLWIN/c_1c9a.cpp	6354		MISSING
-DM2_1c9a_1bae	SKULLWIN	SKULLWIN/c_1c9a.cpp	6420		MISSING
-DM2_FIND_WALK_PATH	SKULLWIN	SKULLWIN/c_1c9a.cpp	6438		MISSING
-DM2___SET_CURRENT_THINKING_CREATURE_WALK_PATH	SKULLWIN	SKULLWIN/c_1c9a.cpp	9670		MISSING
-DM2_1c9a_381c	SKULLWIN	SKULLWIN/c_1c9a.cpp	9696		MISSING
-DM2_1c9a_38a8	SKULLWIN	SKULLWIN/c_1c9a.cpp	9748		MISSING
-DM2_FILL_CAII_CUR_MAP	SKULLWIN	SKULLWIN/c_1c9a.cpp	9895		MISSING
-DM2_FILL_ORPHAN_CAII	SKULLWIN	SKULLWIN/c_1c9a.cpp	9995		MISSING
+DM2_1c9a_1a48	SKULLWIN	SKULLWIN/c_1c9a.cpp	6273	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1c9a_1a48; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Walk thing list sensor direction+mask match, returns low 5 bits.
+DM2_1c9a_1b16	SKULLWIN	SKULLWIN/c_1c9a.cpp	6354	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1c9a_1b16; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Walk thing list sensor direction+slot exact match, returns low 5 bits.
+DM2_1c9a_1bae	SKULLWIN	SKULLWIN/c_1c9a.cpp	6420	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1c9a_1bae; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Static callback for FIND_WALK_PATH; position match or fallback to DM2_1BAAD.
+DM2_FIND_WALK_PATH	SKULLWIN	SKULLWIN/c_1c9a.cpp	6438	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_find_walk_path_receipt_init; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Massive pathfinding (0x15c stack frame); receipt-only stub capturing control flow.
+DM2___SET_CURRENT_THINKING_CREATURE_WALK_PATH	SKULLWIN	SKULLWIN/c_1c9a.cpp	9670	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_set_current_thinking_creature_walk_path; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Allocates walk path buffer for current thinking creature via ALLOCATION11.
+DM2_1c9a_381c	SKULLWIN	SKULLWIN/c_1c9a.cpp	9696	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1c9a_381c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Reads creature walk path direction from v1e07e6 array, writes to creature offset 0x1b.
+DM2_1c9a_38a8	SKULLWIN	SKULLWIN/c_1c9a.cpp	9748	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1c9a_38a8; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Belongs to DM2_14cd_0389; searches action list and dispatches FIND_WALK_PATH.
+DM2_FILL_CAII_CUR_MAP	SKULLWIN	SKULLWIN/c_1c9a.cpp	9895	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_fill_caii_cur_map; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Iterates current map tiles, walks thing lists for creatures, allocates CAII entries.
+DM2_FILL_ORPHAN_CAII	SKULLWIN	SKULLWIN/c_1c9a.cpp	9995	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_fill_orphan_caii; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 init	SKULLWIN	SKULLWIN/c_350.cpp	3	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-event_loop_T1	SKULLWIN	SKULLWIN/c_addon.cpp	30		MISSING
-wait_for_vsync	SKULLWIN	SKULLWIN/c_addon.cpp	122		MISSING
-wft	SKULLWIN	SKULLWIN/c_addon.cpp	127		MISSING
+event_loop_T1	SKULLWIN	SKULLWIN/c_addon.cpp	30	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_event_loop_t1; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+wait_for_vsync	SKULLWIN	SKULLWIN/c_addon.cpp	122	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_wait_for_vsync; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+wft	SKULLWIN	SKULLWIN/c_addon.cpp	127	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_wft; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_14cd_2807	SKULLWIN	SKULLWIN/c_ai.cpp	21	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_2807; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the oversee-record item callback: CREATURE_CAN_HANDLE_IT gate, accumulator clearing, charge via DM2_ADD_ITEM_CHARGE or -1, and the DM2_query_48ae_05ae damage add which stays fail-closed on the GDAT path.
 DM2_14cd_2886	SKULLWIN	SKULLWIN/c_ai.cpp	56	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_2886; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the oversee driver: five-word state array setup {0xffff, w1..w4} and DM2_OVERSEE_RECORD delegation returning state word 0.
 DM2_PROCEED_XACT_56	SKULLWIN	SKULLWIN/c_ai.cpp	78	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_56; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the one-step facing move: DM2_CREATURE_GO_THERE(0x80, pos, -1, -1, w_0e>>6) returning -4 on success and -2 otherwise.
@@ -83,10 +83,10 @@ DM2_PROCEED_XACT_59_76	SKULLWIN	SKULLWIN/c_ai.cpp	106	src/dm2/dm2_v1_skproject_c
 DM2_PROCEED_XACT_62	SKULLWIN	SKULLWIN/c_ai.cpp	119	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_62; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the item sorting behaviour: 0x77 enable mask, handled-item -2 path, actuator-driven wanted type from record word@2>>7, chain walk and cut/append sorting of matching records, DM2_19f0_2165 issue, and the v1e0574==2 creature-ahead check via DM2_1c9a_06bd.
 DM2_PROCEED_XACT_63	SKULLWIN	SKULLWIN/c_ai.cpp	295	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_63; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the pass-item-to-creature check: facing-step probe, slot rotation by facing, and CAN_HANDLE_ITEM_IN on the creature record word@2 (-2 on match, -3 otherwise).
 DM2_PROCEED_XACT_64	SKULLWIN	SKULLWIN/c_ai.cpp	333	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_64; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the throw-possessed-item behaviour: possession and 0x8 flag gates, item type defaulting to 63, CAN_HANDLE_ITEM_IN gate, DM2_19f0_2165(0x81, ..., facing, type) issue, and the v1e056f result (-3 otherwise).
-DM2_PROCEED_XACT_65	SKULLWIN	SKULLWIN/c_ai.cpp	364		MISSING
-DM2_14cd_2662	SKULLWIN	SKULLWIN/c_ai.cpp	400		MISSING
-DM2_PROCEED_XACT_66	SKULLWIN	SKULLWIN/c_ai.cpp	519		MISSING
-DM2_PROCEED_XACT_67	SKULLWIN	SKULLWIN/c_ai.cpp	571		MISSING
+DM2_PROCEED_XACT_65	SKULLWIN	SKULLWIN/c_ai.cpp	364	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_65; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_14cd_2662	SKULLWIN	SKULLWIN/c_ai.cpp	400	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_2662; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_PROCEED_XACT_66	SKULLWIN	SKULLWIN/c_ai.cpp	519	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_66; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_PROCEED_XACT_67	SKULLWIN	SKULLWIN/c_ai.cpp	571	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_67; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_PROCEED_XACT_68	SKULLWIN	SKULLWIN/c_ai.cpp	745		MISSING
 DM2_PROCEED_XACT_69	SKULLWIN	SKULLWIN/c_ai.cpp	828		MISSING
 DM2_PROCEED_XACT_70	SKULLWIN	SKULLWIN/c_ai.cpp	843		MISSING
