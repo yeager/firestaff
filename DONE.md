@@ -1,11 +1,16 @@
+- ✅ 2026-07-27 Theron PCE I-button capture mapping. Fixed the macOS Quartz
+  key used by the authentic capture harness: Theron's configured PCE I button
+  is keypad 3 (`kVK_ANSI_Keypad3=83`), rather than physical letter I. A fresh
+  US Track 02 run proves the SDL event is scancode 89 and the live PCE port
+  becomes `raw=0100` while held. Script regression coverage passes.
 - ✅ 2026-07-27 Theron authentic multi-key startup capture. Added ordered
   `THERON_CAPTURE_HOST_KEY_SEQUENCE` support for Return/I/Select in the
   SDL2-backed Mednafen capture harness, with strict validation, ordered Quartz
-  PID delivery, and receipt provenance. Verified a 175-second
-  `return@10,i@75,i@90,i@125` original US-cue run reaches later authentic
-  `NEW GAME` animation frames and records 51 SCSI commands. It deliberately
-  remains non-promoted: the receipt reports no game-owned PCECD consumer or
-  dynamic dungeon destination. Script regression tests and shell syntax pass.
+  PID delivery, and receipt provenance. The initial 175-second
+  `return@10,i@75,i@90,i@125` US-cue observation recorded 51 SCSI commands,
+  but its letter-I mapping was later corrected and it is deliberately not
+  treated as menu-choice or dungeon proof. Script regression tests and shell
+  syntax pass.
 - ✅ 2026-07-27 Lane C real-data gate repair. [v3.0.181] Fixed 5 of 7
   DM2 real-data gate tests. Refined g1_w0_chains_disabled flag: real PC G1
   data disables w0 chains; synthetic skproject fixtures preserve them.

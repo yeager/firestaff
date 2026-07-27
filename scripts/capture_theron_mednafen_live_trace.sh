@@ -121,7 +121,9 @@ if [[ "$host_input_requested" == 1 ]]; then
         case "$host_key" in
             return) host_key_code=36 ;;
             select) host_key_code=48 ;;
-            i) host_key_code=34 ;;
+            # The configured PCE I button is SDL keypad 3, not the physical
+            # I key. kVK_ANSI_Keypad3 is 83 on macOS.
+            i) host_key_code=83 ;;
         esac
     fi
     if [[ "$capture_sdl_video_driver" == dummy ]]; then
@@ -354,7 +356,7 @@ if [[ "$host_input_requested" == 1 ]]; then
             case "$host_key_sequence_label" in
                 return) host_key_sequence_codes+=(36) ;;
                 select) host_key_sequence_codes+=(48) ;;
-                i) host_key_sequence_codes+=(34) ;;
+                i) host_key_sequence_codes+=(83) ;;
             esac
         done
     elif [[ -n "$host_key_delays" ]]; then

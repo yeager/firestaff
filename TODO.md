@@ -4163,6 +4163,12 @@ lane is carried forward in the sections below.
     host-input receipts retained. That proves the boot/menu input route, not
     dungeon semantics: the same transcript still has no game-owned PCECD
     reader or dynamic destination receipt.
+    Capture input was corrected on 2026-07-27: the configured PCE I button is
+    SDL keypad 3, so the macOS Quartz sender must use `kVK_ANSI_Keypad3` (83),
+    not physical letter I (34). A fresh authentic input trace proves the
+    corrected key reaches PCE port 0 as `raw=0100`; earlier letter-I sequence
+    runs remain boot/menu observation only and cannot prove a menu choice or
+    dungeon transition.
     The follow-up 175-second sequence
     `return@10,i@75,i@90,i@125` advances further through the original animated
     `NEW GAME` presentation and records 51 real SCSI reads plus 25 CD IRQ

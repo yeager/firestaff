@@ -98,7 +98,7 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or sel
    grep -Fq 'pgrep -f "$mednafen_bin"' "$script" ||
    ! grep -Fq 'return) host_key_code=36' "$script" ||
    ! grep -Fq 'select) host_key_code=48' "$script" ||
-   ! grep -Fq 'i) host_key_code=34' "$script" ||
+   ! grep -Fq 'i) host_key_code=83' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_INPUT_ROUTE must be pid or global_hid' "$script" ||
    ! grep -Fq 'quartz_arguments+=(--global-hid)' "$script" ||
    ! grep -Fq 'if [[ "$input_route" == global_hid ]]; then' "$script" ||
@@ -108,6 +108,7 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or sel
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE must be comma-separated return|i|select@seconds entries' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE times must be ordered' "$script" ||
+   ! grep -Fq 'i) host_key_sequence_codes+=(83)' "$script" ||
    ! grep -Fq 'requested_host_key_sequence=%s' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLD must be a positive integer' "$script" ||
    ! grep -Fq 'requested host key was not observed by Mednafen SDL dispatch' "$script"; then
