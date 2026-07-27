@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-DIRECT-CUE-RUNTIME-REGRESSION:** Closed 2026-07-27. The real-media
+  raw-CUE runtime test now exercises both the CUE/BIN directory and the CUE
+  file itself through the full launcher path, requiring the same verified
+  Track 02 MD5 and startup animation route for both.
+
 - **THERON-DIRECT-CUE-LAUNCHER-PAYLOAD:** Closed 2026-07-27. M12 now publishes
   the CUE-declared, hash-verified Track 02 member as the direct-launch payload
   rather than mistakenly treating the CUE manifest as that payload. The full

@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 Theron direct-CUE runtime regression. The authentic 19-track
+  CUE/BIN test now launches from both its directory and its CUE file through
+  M12/M11, requiring identical Track 02 identity and startup animation.
+
 - ✅ 2026-07-27 Theron direct CUE launcher payload. M12 now carries the
   CUE-declared, hash-verified Track 02 member through cache materialization
   and M11, instead of publishing the CUE manifest as a payload. A real

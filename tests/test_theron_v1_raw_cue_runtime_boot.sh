@@ -24,21 +24,27 @@ fi
 output=$(mktemp "${TMPDIR:-/tmp}/firestaff-theron-raw-cue.XXXXXX")
 trap 'rm -f "$output"' EXIT
 
-SDL_VIDEODRIVER=dummy "$app" \
-    --game theron \
-    --data-dir "$media_root" \
-    --boot-probe \
-    --boot-probe-frames 32 \
-    --script 'enter,wait4,enter,wait4,enter,wait4' \
-    --duration 0 >"$output" 2>&1
+assert_startup_route() {
+    local data_source=$1
+    local label=$2
+    SDL_VIDEODRIVER=dummy "$app" \
+        --game theron \
+        --data-dir "$data_source" \
+        --boot-probe \
+        --boot-probe-frames 32 \
+        --script 'enter,wait4,enter,wait4,enter,wait4' \
+        --duration 0 >"$output" 2>&1
 
-if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
-   ! grep -Fq "assetMd5=$expected_md5" "$output" ||
-   ! grep -Fq 'phase=theron-startup-2' "$output" ||
-   ! grep -Fq 'startupAnimation=theron-startup' "$output"; then
-    cat "$output" >&2
-    printf 'FAIL: authentic raw CUE/BIN did not reach the Theron startup route\n' >&2
-    exit 1
-fi
+    if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
+       ! grep -Fq "assetMd5=$expected_md5" "$output" ||
+       ! grep -Fq 'phase=theron-startup-2' "$output" ||
+       ! grep -Fq 'startupAnimation=theron-startup' "$output"; then
+        cat "$output" >&2
+        printf 'FAIL: %s did not reach the Theron startup route\n' "$label" >&2
+        exit 1
+    fi
+}
 
-printf 'PASS: authentic Theron USA raw CUE/BIN reaches the startup route\n'
+assert_startup_route "$media_root" 'authentic raw CUE/BIN root'
+assert_startup_route "$cue" 'direct authentic CUE'
+printf 'PASS: authentic Theron USA raw CUE/BIN root and direct CUE reach the startup route\n'
