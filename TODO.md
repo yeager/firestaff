@@ -15,6 +15,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-CDDA-LOCAL-CUE-DISCOVERY:** Closed 2026-07-27. M11 now limits
+  strict CUE-pair discovery for a verified Track 02 payload to that payload's
+  own directory. This retains the exact original Track 01/02 provenance while
+  avoiding a recursive scan of unrelated game-data roots at Theron launch.
+  Authentic USA CUE availability, raw-CUE boot, and Track 01 CDDA handoff
+  regressions pass.
+
 - **THERON-CDDA-CUE-RUNTIME-BINDING:** Closed 2026-07-27. M11 now recovers
   only the strict CUE pair that declares the already hash-verified Track 02
   payload, so a normal BIN launch can bind original Track 01 CDDA without a

@@ -17762,6 +17762,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     Theron_V1_BootStartupRuntimeReceipt runtime_receipt;
     const char *cdda_cue_path = NULL;
     char discovered_cdda_cue_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
+    char cdda_search_root[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
     int savedDebugHUD;
     int raw_track02_bypass = 0;
 
@@ -17917,10 +17918,17 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         /* A normal launch receives the verified Track 02 payload, not the
          * CUE filename. Recover only a strict CUE pair that declares this
          * exact payload, so Track 01 audio keeps the same source provenance
-         * instead of being inferred from a sibling filename. */
+         * instead of being inferred from a sibling filename. Restrict the
+         * lookup to Track 02's own directory: launching Theron must not walk
+         * unrelated game-data roots merely to discover CDDA metadata. */
         FirestaffTheronMediaStatus cdda_media;
-        if (dataDir && FirestaffTheronMedia_FindCuePairForTrack02(
-                dataDir, verifiedPath, &cdda_media) == 0 &&
+        const char *cdda_root = dataDir;
+        if (FSP_ParentDir(cdda_search_root, sizeof(cdda_search_root),
+                          verifiedPath)) {
+            cdda_root = cdda_search_root;
+        }
+        if (cdda_root && FirestaffTheronMedia_FindCuePairForTrack02(
+                cdda_root, verifiedPath, &cdda_media) == 0 &&
             cdda_media.has_cue && cdda_media.paired_track01_track02 &&
             cdda_media.cue_path[0] &&
             strcmp(cdda_media.track02_path, verifiedPath) == 0) {

@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 Theron local CUE discovery. M11 now discovers the strict
+  Track 01/02 CUE pair only in the verified Track 02 payload's own directory.
+  This preserves original CDDA provenance without recursively inspecting
+  unrelated game-data roots during startup. Authentic USA availability,
+  raw-CUE runtime boot, and Track 01 handoff tests pass.
+
 - ✅ 2026-07-27 Theron runtime CDDA CUE binding. Normal M11 Track 02 launches
   now recover only a strict CUE declaration whose Track 02 path exactly
   matches the hash-verified payload, then bind Track 01 audio from that same
