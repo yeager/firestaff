@@ -1,3 +1,10 @@
+- ✅ 2026-07-27 DM1 HoC real F0115 object capture. The frame-local F0115
+  capture is no longer artificially disabled on map 0. The real-data HoC
+  probe now walks compact source chains, finds an ordinary visible object,
+  and requires its current-tick `GRAPHICS.DAT` F0791 bitmap receipt. This
+  proves the normal floor-object route without allowing REVIVE.C mirror
+  payloads to become floor art.
+
 - ✅ 2026-07-27 DM1 source HUD hand-object redraw. The F0291 receipt
   consumer now performs F0038's original 16x16 object-icon overlay after it
   presents C033/C034/C035 hand frames. Focused live runtime probes verify a

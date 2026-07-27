@@ -143,6 +143,69 @@ static int compact_item_count_for_cell(const M11_GameViewState* state,
     return count_item_chain(state->world.things, firstThing);
 }
 
+/* Count-only evidence is insufficient here.  An ordinary Hall object must
+ * reach the completed F0115 bitmap consumer; mirror payloads never do. */
+static int capture_real_hoc_floor_item(M11_GameViewState* state,
+                                       const struct DungeonMapDesc_Compat* map) {
+    static const int kForwardX[4] = { 0, 1, 0, -1 };
+    static const int kForwardY[4] = { -1, 0, 1, 0 };
+    unsigned char framebuffer[320 * 200];
+    int targetX;
+
+    if (!state || !map) return 0;
+    for (targetX = 0; targetX < (int)map->width; ++targetX) {
+        int targetY;
+        for (targetY = 0; targetY < (int)map->height; ++targetY) {
+            int direction;
+            if (compact_item_count_for_cell(state, targetX, targetY) <= 0 ||
+                square_element_for(state, targetX, targetY) == DUNGEON_ELEMENT_WALL) {
+                continue;
+            }
+            for (direction = 0; direction < 4; ++direction) {
+                M11_Dm1F0115FloorItemRuntimeCaptureReceipt receipt;
+                int partyX = targetX - kForwardX[direction];
+                int partyY = targetY - kForwardY[direction];
+                int mapX = -1, mapY = -1, elementType = -1;
+                int floorItems = 0, summaryItems = 0;
+
+                if (partyX < 0 || partyY < 0 ||
+                    partyX >= (int)map->width || partyY >= (int)map->height ||
+                    square_element_for(state, partyX, partyY) == DUNGEON_ELEMENT_WALL) {
+                    continue;
+                }
+                state->world.party.mapX = partyX;
+                state->world.party.mapY = partyY;
+                state->world.party.direction = direction;
+                if (!M11_GameView_ProbeViewportFloorItemCounts(
+                        state, 1, 0, &mapX, &mapY, &elementType,
+                        &floorItems, &summaryItems) ||
+                    mapX != targetX || mapY != targetY ||
+                    floorItems <= 0 || summaryItems != floorItems) {
+                    continue;
+                }
+                ++state->world.gameTick;
+                memset(framebuffer, 0, sizeof(framebuffer));
+                M11_GameView_Draw(state, framebuffer, 320, 200);
+                memset(&receipt, 0, sizeof(receipt));
+                M11_GameView_GetDm1F0115FloorItemRuntimeCaptureReceipt(&receipt);
+                if (receipt.valid &&
+                    receipt.runtimeTick == state->world.gameTick &&
+                    receipt.sourceTick == state->world.gameTick &&
+                    receipt.materialFNV1a != 0u &&
+                    receipt.presentation.valid &&
+                    receipt.presentation.floorItemLane &&
+                    receipt.presentation.usesF0791Blit &&
+                    receipt.presentation.graphicsId > 0 &&
+                    receipt.presentation.destinationW > 0 &&
+                    receipt.presentation.destinationH > 0) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 int main(int argc, char** argv) {
     const char* dataDir = argc > 1 ? argv[1] : getenv("FIRESTAFF_DATA");
     M12_StartupMenuState menu;
@@ -258,6 +321,8 @@ int main(int argc, char** argv) {
           renderedPayloadSamples, sourcePayloadSamples);
     CHECK(mismatches == 0, "viewport HoC floor item mismatches=%d",
           mismatches);
+    CHECK(capture_real_hoc_floor_item(&state, map),
+          "ordinary HoC item reaches the completed F0115 bitmap lane");
 
     M11_GameView_Shutdown(&state);
     printf("summary=%d passed %d failed\n", g_pass, g_fail);

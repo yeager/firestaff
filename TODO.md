@@ -15,6 +15,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-HOC-F0115-REAL-OBJECT-CAPTURE:** Closed 2026-07-27. The F0115
+  completed-bitmap capture now covers map 0 as well as later levels. The
+  real PC34 HoC probe must find an ordinary compact object chain, render it
+  through the normal source material path, and observe a current-frame
+  `GRAPHICS.DAT` F0791 blit. Mirror-controlled payloads remain excluded by
+  the existing REVIVE.C ownership decision.
+
 - **DM1-HUD-SOURCE-HAND-OBJECT-REDRAW:** Closed 2026-07-27. The F0291
   top-row receipt consumer now follows F0038 with the authenticated 16x16
   object-icon blit after C033/C034/C035 paints the hand frame. The focused

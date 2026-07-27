@@ -3491,7 +3491,7 @@ static void m11_dm1_f0115_floor_item_runtime_capture_consume(
     int accepted = 0;
 
     if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
-        m11_is_stock_dm1_hall_map0(state) || request->owner != state ||
+        request->owner != state ||
         request->runtimeTick != state->world.gameTick || !request->requested) {
         return;
     }
@@ -30688,7 +30688,6 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
     int depthIndex,
     int sourceZoneRow) {
     if (state && m11_is_dm1_source_kind(state->sourceKind) &&
-        !m11_is_stock_dm1_hall_map0(state) &&
         s_m11_dm1_f0115_floor_item_capture_request.owner == state &&
         s_m11_dm1_f0115_floor_item_capture_request.runtimeTick ==
             state->world.gameTick) {
