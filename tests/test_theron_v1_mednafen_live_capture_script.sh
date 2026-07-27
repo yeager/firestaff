@@ -123,7 +123,7 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    grep -Fq 'pgrep -f "$mednafen_bin"' "$script" ||
    ! grep -Fq 'return) host_key_code=36' "$script" ||
    ! grep -Fq 'select) host_key_code=48' "$script" ||
-   ! grep -Fq 'i) host_key_code=12' "$script" ||
+   ! grep -Fq 'i) host_key_code=34' "$script" ||
    ! grep -Fq 'ii) host_key_code=84' "$script" ||
    ! grep -Fq 'up) host_key_code=13' "$script" ||
    ! grep -Fq 'down) host_key_code=1' "$script" ||
@@ -138,7 +138,7 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE must be comma-separated PCE key@seconds entries' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE times must be ordered' "$script" ||
-   ! grep -Fq 'i) host_key_sequence_codes+=(12)' "$script" ||
+   ! grep -Fq 'i) host_key_sequence_codes+=(34)' "$script" ||
    ! grep -Fq 'ii) host_key_sequence_codes+=(84)' "$script" ||
    ! grep -Fq 'requested_host_key_sequence=%s' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLD must be a positive integer' "$script" ||

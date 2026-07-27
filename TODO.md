@@ -4164,13 +4164,13 @@ lane is carried forward in the sections below.
     dungeon semantics: the same transcript still has no game-owned PCECD
     reader or dynamic destination receipt.
     Capture input was re-verified on 2026-07-27 against the active isolated
-    Mednafen profile: PCE I is configured as SDL scancode 12, so the macOS
-    Quartz sender must use `kVK_ANSI_Q` (12). The previous keypad-3 code 85
-    reaches SDL scancode 91 but leaves the active PCE port at `raw=0000`; it
-    is not valid PCE-I/menu evidence for this profile. Capture now sends code
-    12 for `i`; the next authentic run must retain PCE `raw=0001` before it
-    may be used as controller evidence. A dungeon transition still separately
-    requires game-owned CD-consumer evidence.
+    Mednafen profile: PCE I is configured as SDL scancode 12, while the macOS
+    physical I key is `kVK_ANSI_I` (34). Quartz Q (12) reaches SDL 20 and
+    keypad 3 (85) reaches SDL 91, both leaving PCE at `raw=0000`; neither is
+    valid PCE-I/menu evidence for this profile. A fresh authenticated US-CUE
+    run with code 34 records SDL scancode 12 and PCE `raw=0001`. Controller
+    delivery is therefore proven for this profile; a dungeon transition still
+    separately requires game-owned CD-consumer evidence.
     A manual-aligned sequence with two RUN presses (`return@10,return@20`)
     reaches the animated title menu, and the verified I press at `i@75`
     advances into the original framed `DUNGEON MASTER` story panel. This

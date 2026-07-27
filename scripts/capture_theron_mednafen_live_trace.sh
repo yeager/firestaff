@@ -126,10 +126,10 @@ if [[ "$host_input_requested" == 1 ]]; then
         case "$host_key" in
             return) host_key_code=36 ;;
             select) host_key_code=48 ;;
-            # The configured PCE I button is SDL scancode 12. On this macOS
-            # capture profile that is the physical Q key, kVK_ANSI_Q=12.
-            # Keypad 3 delivers SDL scancode 91 here and is not PCE I.
-            i) host_key_code=12 ;;
+            # The configured PCE I button is SDL scancode 12. The macOS
+            # physical I key is kVK_ANSI_I=34 and emits that SDL scancode.
+            # Quartz Q (12) becomes SDL 20; keypad 3 becomes SDL 91.
+            i) host_key_code=34 ;;
             ii) host_key_code=84 ;;
             up) host_key_code=13 ;;
             down) host_key_code=1 ;;
@@ -439,7 +439,7 @@ if [[ "$host_input_requested" == 1 ]]; then
             case "$host_key_sequence_label" in
                 return) host_key_sequence_codes+=(36) ;;
                 select) host_key_sequence_codes+=(48) ;;
-                i) host_key_sequence_codes+=(12) ;;
+                i) host_key_sequence_codes+=(34) ;;
                 ii) host_key_sequence_codes+=(84) ;;
                 up) host_key_sequence_codes+=(13) ;;
                 down) host_key_sequence_codes+=(1) ;;

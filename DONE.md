@@ -65,12 +65,12 @@
   story presentation. This proves host-to-PCE menu activation only; no dungeon
   loader semantics are claimed.
 - ✅ 2026-07-27 Theron PCE I-button capture mapping correction. The active
-  isolated Mednafen profile maps PCE I to SDL scancode 12, so capture sends
-  `kVK_ANSI_Q=12`; keypad 3 (`85`) instead reaches SDL scancode 91 and does
-  not assert PCE I for this profile. Script regression coverage pins both
-  single-key and ordered-sequence mapping. This fixes host delivery only;
-  no menu or Track 02 semantic claim is made until a fresh run records
-  `raw=0001`.
+  isolated Mednafen profile maps PCE I to SDL scancode 12; macOS physical I
+  is `kVK_ANSI_I=34`. A fresh authentic US-CUE run records SDL 12 and PCE I
+  `raw=0001`. Quartz Q (`12` → SDL 20) and keypad 3 (`85` → SDL 91) both
+  leave PCE at `raw=0000`, so capture no longer uses either. Script regression
+  coverage pins both single-key and ordered-sequence mapping. This fixes host
+  delivery only; no Track 02 semantic claim is made.
 - ✅ 2026-07-27 Theron II and D-pad capture mapping. Added II and D-pad
   controls to the Quartz capture sequence, with macOS mappings verified
   against the live PCE port: II=`0002`, up=`0010`, down=`0040`, left=`0080`,
