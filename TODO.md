@@ -4158,6 +4158,11 @@ lane is carried forward in the sections below.
     `000b33/000b37`, even when their destinations are `001fxxxx`. Those rows
     are therefore not a game-loader handoff; the required game-owned consumer
     remains unobserved.
+    A 120-second authentic sequence `return@10,i@75,i@90` now visibly reaches
+    the original `NEW GAME` presentation after the title menu, with SDL/PCE
+    host-input receipts retained. That proves the boot/menu input route, not
+    dungeon semantics: the same transcript still has no game-owned PCECD
+    reader or dynamic destination receipt.
   - 2026-07-16 Theron draw-route gate update: M11 now has a guarded
     dungeon draw-route receipt that can consume the proven level-1 media,
     multilevel handoff, live level geometry, party pose, object placement,

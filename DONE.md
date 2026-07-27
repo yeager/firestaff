@@ -40922,3 +40922,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Card code `000a50/000a52` or `000b33/000b37`, including writes into
   `001fxxxx` main RAM. This closes the false inference that destination RAM
   alone proves a game loader; no game-owned CD consumer is promoted.
+- ✅ 2026-07-27 Theron authentic multi-key boot capture. The live Mednafen
+  capture harness now accepts one ordered absolute-time key sequence, keeping
+  every element constrained to `return`, `i`, or `select`. Authentic
+  `return@10,i@75,i@90` reaches the original Theron title menu and then real
+  NEW GAME presentation, with six host key events and 8,910 subsequent PCE
+  input transactions. This is boot/menu evidence only; no dungeon record,
+  game-owned CD reader, or destination semantics are inferred.

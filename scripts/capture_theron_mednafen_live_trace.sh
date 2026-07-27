@@ -17,10 +17,15 @@ host_key_delay=${THERON_CAPTURE_HOST_KEY_DELAY:-8}
 host_key_hold=${THERON_CAPTURE_HOST_KEY_HOLD:-1}
 host_key_repeats=${THERON_CAPTURE_HOST_KEY_REPEATS:-3}
 host_key_delays=${THERON_CAPTURE_HOST_KEY_DELAYS:-}
+host_key_sequence=${THERON_CAPTURE_HOST_KEY_SEQUENCE:-}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
 host_key_code=
+host_input_requested=0
+if [[ -n "$host_key" || -n "$host_key_sequence" ]]; then
+    host_input_requested=1
+fi
 quartz_keypair_script="$script_dir/send_theron_macos_quartz_keypair.swift"
 
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
@@ -91,12 +96,20 @@ if [[ -n "$configured_home" && ! -d "$configured_home" ]]; then
     printf '%s\n' 'FAIL: THERON_MEDNAFEN_HOME must name an existing Mednafen configuration directory' >&2
     exit 1
 fi
-if [[ -n "$host_key" ]]; then
+if [[ "$host_input_requested" == 1 ]]; then
     if [[ -z "$configured_home" ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY requires THERON_MEDNAFEN_HOME with an explicit PCE input mapping' >&2
         exit 1
     fi
-    if [[ "$host_key" != return && "$host_key" != i && "$host_key" != select ]]; then
+    if [[ -n "$host_key_sequence" && ( -n "$host_key" || -n "$host_key_delays" ) ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_SEQUENCE cannot be combined with HOST_KEY or HOST_KEY_DELAYS' >&2
+        exit 1
+    fi
+    if [[ -n "$host_key_sequence" && ! "$host_key_sequence" =~ ^(return|i|select)@[0-9]+(,(return|i|select)@[0-9]+)*$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_SEQUENCE must be comma-separated return|i|select@seconds entries' >&2
+        exit 1
+    fi
+    if [[ -z "$host_key_sequence" && "$host_key" != return && "$host_key" != i && "$host_key" != select ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY currently supports only return, i, or select' >&2
         exit 1
     fi
@@ -104,11 +117,13 @@ if [[ -n "$host_key" ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_INPUT_ROUTE must be pid or global_hid' >&2
         exit 1
     fi
-    case "$host_key" in
-        return) host_key_code=36 ;;
-        select) host_key_code=48 ;;
-        i) host_key_code=34 ;;
-    esac
+    if [[ -z "$host_key_sequence" ]]; then
+        case "$host_key" in
+            return) host_key_code=36 ;;
+            select) host_key_code=48 ;;
+            i) host_key_code=34 ;;
+        esac
+    fi
     if [[ "$capture_sdl_video_driver" == dummy ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY requires a non-dummy SDL video driver' >&2
         exit 1
@@ -326,9 +341,23 @@ set +e
 mednafen_pid=$!
 capture_launch_seconds=$SECONDS
 mednafen_ui_pid=0
-if [[ -n "$host_key" ]]; then
+if [[ "$host_input_requested" == 1 ]]; then
     host_key_previous_delay=0
-    if [[ -n "$host_key_delays" ]]; then
+    host_key_sequence_codes=()
+    host_key_sequence_delays=()
+    if [[ -n "$host_key_sequence" ]]; then
+        IFS=',' read -r -a host_key_sequence_entries <<<"$host_key_sequence"
+        host_key_repeats=${#host_key_sequence_entries[@]}
+        for host_key_sequence_entry in "${host_key_sequence_entries[@]}"; do
+            host_key_sequence_label=${host_key_sequence_entry%@*}
+            host_key_sequence_delays+=("${host_key_sequence_entry#*@}")
+            case "$host_key_sequence_label" in
+                return) host_key_sequence_codes+=(36) ;;
+                select) host_key_sequence_codes+=(48) ;;
+                i) host_key_sequence_codes+=(34) ;;
+            esac
+        done
+    elif [[ -n "$host_key_delays" ]]; then
         IFS=',' read -r -a host_key_delay_entries <<<"$host_key_delays"
         host_key_repeats=${#host_key_delay_entries[@]}
     else
@@ -367,8 +396,18 @@ if [[ -n "$host_key" ]]; then
     # requested duration and repeat count observable at the host boundary;
     # only Mednafen's own input trace can establish emulated delivery.
     for ((host_key_attempt = 1; host_key_attempt <= host_key_repeats; ++host_key_attempt)); do
-        if [[ -n "$host_key_delays" ]]; then
+        if [[ -n "$host_key_sequence" ]]; then
+            host_key_current_delay=${host_key_sequence_delays[$((host_key_attempt - 1))]}
+            host_key_current_code=${host_key_sequence_codes[$((host_key_attempt - 1))]}
+            if (( host_key_attempt > 1 && host_key_current_delay < host_key_previous_delay )); then
+                kill "$mednafen_pid" 2>/dev/null || true
+                wait "$mednafen_pid" 2>/dev/null || true
+                printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_SEQUENCE times must be ordered' >&2
+                exit 1
+            fi
+        elif [[ -n "$host_key_delays" ]]; then
             host_key_current_delay=${host_key_delay_entries[$((host_key_attempt - 1))]}
+            host_key_current_code=$host_key_code
             if (( host_key_attempt > 1 && host_key_current_delay < host_key_previous_delay )); then
                 kill "$mednafen_pid" 2>/dev/null || true
                 wait "$mednafen_pid" 2>/dev/null || true
@@ -377,13 +416,14 @@ if [[ -n "$host_key" ]]; then
             fi
         else
             host_key_current_delay=${host_key_delay_entries[0]}
+            host_key_current_code=$host_key_code
         fi
         host_key_elapsed_seconds=$((SECONDS - capture_launch_seconds))
         if (( host_key_current_delay > host_key_elapsed_seconds )); then
             sleep "$((host_key_current_delay - host_key_elapsed_seconds))"
         fi
         host_key_previous_delay=$host_key_current_delay
-        quartz_arguments=("$host_key_code" "$host_key_hold" "$mednafen_ui_pid")
+        quartz_arguments=("$host_key_current_code" "$host_key_hold" "$mednafen_ui_pid")
         if [[ "$input_route" == global_hid ]]; then
             quartz_arguments+=(--global-hid)
         fi
@@ -478,12 +518,20 @@ transition_main_ram_loader_bra_target_jsr_count=$(trace_count '^main_ram_loader_
     printf 'main_ram_loader_bra_targets=%s\n' "$transition_main_ram_loader_bra_target_count"
     printf 'main_ram_loader_bra_target_jsrs=%s\n' "$transition_main_ram_loader_bra_target_jsr_count"
     trace_input_order_receipt "$input_trace"
-    if [[ -n "$host_key" ]]; then
-        printf 'requested_host_key=%s\n' "$host_key"
+    if [[ "$host_input_requested" == 1 ]]; then
+        if [[ -n "$host_key_sequence" ]]; then
+            printf 'requested_host_key_sequence=%s\n' "$host_key_sequence"
+        else
+            printf 'requested_host_key=%s\n' "$host_key"
+        fi
         printf 'host_input_target_pid=%s\n' "$mednafen_ui_pid"
         printf 'host_input_focus=screen_click:%s,%s\n' "$host_focus_x" "$host_focus_y"
         printf 'host_input_delivery=quartz_%s_key_down_up\n' "$input_route"
-        printf 'host_input_delivery_key_code=%s\n' "$host_key_code"
+        if [[ -n "$host_key_sequence" ]]; then
+            printf 'host_input_delivery_key_code=sequence\n'
+        else
+            printf 'host_input_delivery_key_code=%s\n' "$host_key_code"
+        fi
         printf 'host_input_delivery_attempts=%s\n' "$host_key_repeats"
         printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
         printf 'requested_host_key_repeats=%s\n' "$host_key_repeats"
@@ -498,7 +546,7 @@ transition_main_ram_loader_bra_target_jsr_count=$(trace_count '^main_ram_loader_
         printf '%s\n' 'transition=missing'
     fi
 } >"$transition_receipt"
-if [[ -n "$host_key" && "$transition_host_key_count" -eq 0 ]]; then
+if [[ "$host_input_requested" == 1 && "$transition_host_key_count" -eq 0 ]]; then
     printf 'BLOCKED: requested host key was not observed by Mednafen SDL dispatch; sdl_events=%s window_events=%s focus_events=%s (exit=%s)\n' "$transition_host_sdl_event_count" "$transition_host_window_event_count" "$transition_host_focus_state_count" "$status"
     exit 1
 fi

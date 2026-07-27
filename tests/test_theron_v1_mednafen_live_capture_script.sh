@@ -106,6 +106,9 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or sel
    ! grep -Fq 'host input requires Swift and the checked-in Quartz keypair helper' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_REPEATS must be a positive integer' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE must be comma-separated return|i|select@seconds entries' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_HOST_KEY_SEQUENCE times must be ordered' "$script" ||
+   ! grep -Fq 'requested_host_key_sequence=%s' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLD must be a positive integer' "$script" ||
    ! grep -Fq 'requested host key was not observed by Mednafen SDL dispatch' "$script"; then
     printf 'FAIL: capture script must keep the opt-in macOS Return focus/input gate\n' >&2
