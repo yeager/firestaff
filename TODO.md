@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-HUD-CHAMPION-CLICK-ROUTES:** Closed 2026-07-27. The source-owned
+  C007..C010/C187..C190 left-click routes now open the selected champion's
+  inventory, while C012..C015 status-box clicks select the correct champion.
+  Switching champion no longer closes an already open inventory panel.
+
 - **DM1-HOC-F0115-REAL-FLOOR-ITEMS:** Closed 2026-07-27. The map-0 HoC
   F0115 route no longer suppresses every open-square item. Only the
   source-identified C127 mirror payload remains filtered, so real floor and

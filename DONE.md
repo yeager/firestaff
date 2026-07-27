@@ -1,3 +1,10 @@
+- ✅ 2026-07-27 DM1 HUD champion click routes. Wired the original
+  `COMMAND.C` G0447 C007..C010 bar zones C187..C190 to selected-champion
+  inventory toggling, restored C012..C015 status-box selection, and fixed
+  cross-champion switching so it does not close the already open panel.
+  Verified by `dm1_v1_inventory_panel_mouse_routes_pc34_compat` (332/332)
+  plus the focused CTest route suite (3/3).
+
 - ✅ 2026-07-27 DM1 HoC F0115 real floor items. Removed the map-wide Hall
   item suppression while retaining the C127 mirror-payload filter; real floor
   and alcove item candidates now reach the source asset renderer.

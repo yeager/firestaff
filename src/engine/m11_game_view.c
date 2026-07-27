@@ -8605,6 +8605,8 @@ static int m11_endgame_source_skill_level(const M11_GameViewState* state, int ch
 static const struct ChampionState_Compat* m11_get_active_champion(const M11_GameViewState* state);
 static int m11_cycle_active_champion(M11_GameViewState* state);
 static int m11_set_active_champion(M11_GameViewState* state, int championIndex);
+static M11_GameInputResult m11_toggle_champion_inventory(
+    M11_GameViewState* state, int championIndex);
 
 /* Update lastWorldHash after a click that mutated the world.
  * The click paths (inventory pickup, slot place, chest open, etc.)
@@ -22768,14 +22770,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             &zoneId);
         if (command >= 7 && command <= 10 && zoneId >= 151 && zoneId <= 154) {
             int championIndex = command - 7;
-            if (championIndex < state->world.party.championCount &&
-                state->world.party.champions[championIndex].present) {
-                state->world.party.activeChampionIndex = championIndex;
-                state->mapOverlayActive = 0;
-                M11_GameView_ToggleInventoryPanel(state);
-                return M11_GAME_INPUT_REDRAW;
-            }
-            return M11_GAME_INPUT_IGNORED;
+            return m11_toggle_champion_inventory(state, championIndex);
         }
 
         command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
@@ -22795,6 +22790,31 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
 
     if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* COMMAND.C G0447 maps C007..C010 to the visible C187..C190 bar
+     * regions.  They are the normal DM1 mouse path for opening a specific
+     * champion's inventory.  C012..C015 covers the remaining status-box
+     * surface and selects that champion through F0367/F0368. */
+    if (m11_v1_chrome_mode_enabled() && !state->showDebugHUD) {
+        int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
+        int zoneId = 0;
+        int command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+            DM1_V1_MOUSE_LIST_INTERFACE_PC34,
+            x, y,
+            DM1_V1_MOUSE_MASK_LEFT_PC34,
+            &space,
+            &zoneId);
+        (void)space;
+        if (command >= 7 && command <= 10 &&
+            zoneId >= 187 && zoneId <= 190) {
+            return m11_toggle_champion_inventory(state, command - 7);
+        }
+        if (command >= 12 && command <= 15 &&
+            zoneId >= 151 && zoneId <= 154) {
+            return m11_set_active_champion(state, command - 12)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
     }
 
     {
@@ -43721,8 +43741,12 @@ static int m11_source_is_csb(const M11_GameViewState* state) {
             strcmp(state->sourceId, "csb") == 0);
 }
 
-static M11_GameInputResult m11_csb_toggle_champion_inventory(M11_GameViewState* state,
-                                                             int championIndex) {
+/* COMMAND.C C007..C010 reaches this same toggle from the champion status
+ * boxes.  Keep the target selection and open/close decision together: the
+ * old pointer path assigned activeChampionIndex before testing sameOpen,
+ * which made a click on a different champion close the currently open panel. */
+static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* state,
+                                                          int championIndex) {
     int sameOpen;
     char champion[16];
 
@@ -43752,7 +43776,8 @@ static M11_GameInputResult m11_csb_toggle_champion_inventory(M11_GameViewState* 
     m11_set_status(state, "INVENTORY", "CHAMPION READY");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "%s INVENTORY", champion);
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-             "CSB F1-F4 CHAMPION INVENTORY TOGGLE");
+             "%s CHAMPION INVENTORY TOGGLE",
+             m11_source_is_csb(state) ? "CSB F1-F4" : "DM1 HUD");
     return M11_GAME_INPUT_REDRAW;
 }
 
@@ -43886,7 +43911,7 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
     if (input >= M12_MENU_INPUT_CHAMPION_1_INVENTORY &&
         input <= M12_MENU_INPUT_CHAMPION_4_INVENTORY) {
         championIndex = (int)(input - M12_MENU_INPUT_CHAMPION_1_INVENTORY);
-        return m11_csb_toggle_champion_inventory(state, championIndex);
+        return m11_toggle_champion_inventory(state, championIndex);
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {

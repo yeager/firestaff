@@ -431,6 +431,56 @@ static void test_inventory_control_icons_dispatch_runtime(void) {
               "C011 close icon closes the inventory panel");
 }
 
+/* COMMAND.C G0447 maps the visible C187..C190 champion bars to C007..C010.
+ * This is the normal left-click route for opening each champion inventory;
+ * selecting another champion must keep the panel open instead of toggling it
+ * closed against the newly assigned active slot. */
+static void test_champion_hud_left_click_opens_target_inventory(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonContainer_Compat containers[1];
+
+    seed_panel_view(&state, &things, weapons, containers);
+    state.inventoryPanelActive = 0;
+    state.world.party.championCount = 2;
+    state.world.party.champions[1].present = 1;
+    state.world.party.champions[1].hp.current = 100;
+    state.world.party.champions[1].hp.maximum = 100;
+
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 44, 14,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C187 left-click opens champion 0 inventory");
+    ASSERT_EQ(state.inventoryPanelActive, 1,
+              "C187 opens the inventory panel");
+    ASSERT_EQ(state.world.party.activeChampionIndex, 0,
+              "C187 keeps champion 0 active");
+
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 113, 14,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C188 left-click selects champion 1 inventory");
+    ASSERT_EQ(state.inventoryPanelActive, 1,
+              "C188 keeps the panel open while switching champions");
+    ASSERT_EQ(state.world.party.activeChampionIndex, 1,
+              "C188 makes champion 1 active");
+
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 113, 14,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "second C188 click toggles champion 1 inventory closed");
+    ASSERT_EQ(state.inventoryPanelActive, 0,
+              "same champion C188 click closes the panel");
+
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 1, 1,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C012 status-box click reaches champion selection");
+    ASSERT_EQ(state.world.party.activeChampionIndex, 0,
+              "C012 selects champion 0 through the source status box");
+}
+
 /* Detail 2: all eight chest slot routes C058..C065.  ReDMCSB
  * COMMAND.C:217-226 and 498-507 G0456 panel-chest input list. */
 static void test_inventory_chest_slot_routes_all_eight(void) {
@@ -1278,6 +1328,7 @@ int main(void) {
 
     test_inventory_close_panel_right_button_route();
     test_inventory_control_icons_dispatch_runtime();
+    test_champion_hud_left_click_opens_target_inventory();
     test_inventory_chest_slot_routes_all_eight();
     test_inventory_open_chest_panel_click_route_priority();
     test_inventory_mouth_eye_routes_runtime();
