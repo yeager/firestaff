@@ -15,6 +15,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-MEDNAFEN-REPLAY-HOLD-DURATIONS:** Closed 2026-07-27. The
+  authenticated scripted-PCE input route now accepts `key@frame:hold` in
+  addition to one-frame `key@frame` events. The instrumented Mednafen patch
+  applies each held original controller mask for the requested number of
+  emulated frames and records the hold in its receipt. This improves capture
+  reliability without asserting an unproven original menu sequence.
+
 - **NEXUS-BLOCKED-PRS3-LAUNCH-RETURN:** Closed 2026-07-27. A Nexus champion
   start whose real MENU.BPK route is blocked pending authentic PRS3/Saturn
   evidence now returns to the launcher with the source-backed blocker instead

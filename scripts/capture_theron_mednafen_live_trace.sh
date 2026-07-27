@@ -219,8 +219,8 @@ if [[ -n "$replay_input_script" ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_REPLAY_INPUT_SCRIPT cannot be combined with host-key input' >&2
         exit 1
     fi
-    if [[ ! "$replay_input_script" =~ ^(run|ii|i|select|up|down|left|right)@[1-9][0-9]*(,(run|ii|i|select|up|down|left|right)@[1-9][0-9]*)*$ ]]; then
-        printf '%s\n' 'FAIL: THERON_CAPTURE_REPLAY_INPUT_SCRIPT must be comma-separated PCE key@frame entries' >&2
+    if [[ ! "$replay_input_script" =~ ^(run|ii|i|select|up|down|left|right)@[1-9][0-9]*(:[1-9][0-9]*)?(,(run|ii|i|select|up|down|left|right)@[1-9][0-9]*(:[1-9][0-9]*)?)*$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_REPLAY_INPUT_SCRIPT must be comma-separated PCE key@frame or key@frame:hold entries' >&2
         exit 1
     fi
 fi

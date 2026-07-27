@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 Theron Mednafen replay hold durations. The authentic
+  scripted-PCE capture route accepts `key@frame:hold` alongside one-frame
+  events, applies held controller masks per emulated frame, and records each
+  hold in the trace. The patched Mednafen source applies after the complete
+  instrumentation chain and the capture-script regression passes.
+
 - ✅ 2026-07-27 Theron direct-CUE runtime regression. The authentic 19-track
   CUE/BIN test now launches from both its directory and its CUE file through
   M12/M11, requiring identical Track 02 identity and startup animation.

@@ -10,7 +10,7 @@
  
  namespace MDFN_IEN_PCE
  {
-@@ -178,6 +181,19 @@
+@@ -178,6 +181,20 @@
  {
   static FILE *theron_input_trace = NULL;
   static uint16 theron_previous_port0 = 0xffff;
@@ -18,19 +18,20 @@
 + static bool theron_script_valid = false;
 + static unsigned theron_script_frame = 0;
 + static unsigned theron_script_event_count = 0;
-+ static unsigned theron_script_event_index = 0;
 + uint16 theron_script_original_port0 = 0;
 + bool theron_script_applied = false;
 + static struct
 + {
 +  unsigned frame;
++  unsigned duration;
 +  uint16 mask;
++  bool emitted;
 +  char key[8];
 + } theron_script_events[32];
   if(!theron_input_trace)
   {
    const char *path = getenv("FIRESTAFF_THERON_IRQ2_INPUT_TRACE");
-@@ -191,6 +207,96 @@
+@@ -191,6 +208,105 @@
     }
    }
   }
@@ -47,6 +48,7 @@
 +   const size_t key_length = at ? (size_t)(at - cursor) : 0;
 +   char *end = NULL;
 +   unsigned long frame;
++   unsigned long duration = 1;
 +   uint16 mask = 0;
 +   if(!at || key_length == 0 || key_length >= sizeof(theron_script_events[0].key))
 +   {
@@ -54,7 +56,9 @@
 +    break;
 +   }
 +   frame = strtoul(at + 1, &end, 10);
-+   if(!frame || end != (next ? next : at + strlen(at)))
++   if(end && *end == ':')
++    duration = strtoul(end + 1, &end, 10);
++   if(!frame || !duration || end != (next ? next : at + strlen(at)))
 +   {
 +    theron_script_valid = false;
 +    break;
@@ -78,7 +82,9 @@
 +    break;
 +   }
 +   theron_script_events[theron_script_event_count].frame = (unsigned)frame;
++   theron_script_events[theron_script_event_count].duration = (unsigned)duration;
 +   theron_script_events[theron_script_event_count].mask = mask;
++   theron_script_events[theron_script_event_count].emitted = false;
 +   memcpy(theron_script_events[theron_script_event_count].key, cursor, key_length);
 +   theron_script_events[theron_script_event_count].key[key_length] = 0;
 +   theron_script_event_count++;
@@ -97,16 +103,20 @@
 + if(theron_script_valid && data_ptr[0])
 + {
 +  uint16 scripted_mask = 0;
-+  while(theron_script_event_index < theron_script_event_count &&
-+        theron_script_events[theron_script_event_index].frame == theron_script_frame)
++  for(unsigned event_index = 0; event_index < theron_script_event_count; event_index++)
 +  {
-+   scripted_mask |= theron_script_events[theron_script_event_index].mask;
-+   if(theron_input_trace)
-+    fprintf(theron_input_trace, "scripted_pce_input_event frame=%u key=%s mask=%04x\n",
-+            theron_script_frame,
-+            theron_script_events[theron_script_event_index].key,
-+            theron_script_events[theron_script_event_index].mask);
-+   theron_script_event_index++;
++   const unsigned start = theron_script_events[event_index].frame;
++   const unsigned duration = theron_script_events[event_index].duration;
++   if(!theron_script_events[event_index].emitted && theron_script_frame == start)
++   {
++    if(theron_input_trace)
++     fprintf(theron_input_trace, "scripted_pce_input_event frame=%u key=%s mask=%04x hold=%u\n",
++             theron_script_frame, theron_script_events[event_index].key,
++             theron_script_events[event_index].mask, duration);
++    theron_script_events[event_index].emitted = true;
++   }
++   if(theron_script_frame >= start && theron_script_frame - start < duration)
++    scripted_mask |= theron_script_events[event_index].mask;
 +  }
 +  if(scripted_mask)
 +  {
@@ -127,7 +137,7 @@
   if(theron_input_trace && data_ptr[0])
   {
    const uint16 port0 = MDFN_de16lsb(data_ptr[0]);
-@@ -204,6 +310,8 @@
+@@ -204,6 +319,8 @@
   for(int i = 0; i < 5; i++)
    if(devices[i])
     devices[i]->Update(data_ptr[i]);

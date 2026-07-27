@@ -175,7 +175,7 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
     exit 1
 fi
 if ! grep -Fq 'THERON_CAPTURE_REPLAY_INPUT_SCRIPT cannot be combined with host-key input' "$script" ||
-   ! grep -Fq 'THERON_CAPTURE_REPLAY_INPUT_SCRIPT must be comma-separated PCE key@frame entries' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_REPLAY_INPUT_SCRIPT must be comma-separated PCE key@frame or key@frame:hold entries' "$script" ||
    ! grep -Fq 'MEDNAFEN_BIN lacks the required Firestaff Theron scripted-PCE-input producer' "$script" ||
    ! grep -Fq "grep -aFq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' \"\$mednafen_bin\"" "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script"' "$script" ||
