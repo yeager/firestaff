@@ -1,3 +1,10 @@
+- ✅ 2026-07-27 DM1 HoC compact floor and alcove objects. Corrected the
+  F0115/REVIVE ownership boundary so only recognised mirror-control chains
+  are consumed by champion materialization. The original PC34 corpus proves
+  seven ordinary chains with eight objects, including a scroll; the real-data
+  viewport probe renders them in all 83 applicable views while rejecting 596
+  dense-index false positives.
+
 - ✅ 2026-07-27 DM1 V2 visible champion portrait hitboxes. The V2 HUD's
   x=12/77 visual layout now maps all four portrait/name regions to their
   corresponding C007..C010 inventory route. The V2 regression passes 24/24;

@@ -63,10 +63,11 @@ an integration build pass.
   inventory, while C012..C015 status-box clicks select the correct champion.
   Switching champion no longer closes an already open inventory panel.
 
-- **DM1-F0115-HOC-PAYLOAD-OWNERSHIP:** Closed 2026-07-27. Real PC34 HoC
-  compact object chains are owned by the REVIVE.C mirror/candidate path and
-  must not enter the loose F0115 floor lane. Non-HoC maps remain enabled and
-  now have a real-data capture proving original item material reaches M11.
+- **DM1-F0115-HOC-PAYLOAD-OWNERSHIP:** Closed 2026-07-27. F0115 now filters
+  only compact chains carrying a recognised REVIVE.C mirror control. It no
+  longer suppresses map 0 wholesale: the PC34 corpus has seven ordinary HoC
+  chains containing eight real loose objects, including a scroll, which stay
+  on the normal floor/alcove lane.
 
 - **THERON-SPLIT-TRACK02-PORTABLE-CACHE:** Closed 2026-07-27. The verified
   split-image cache now uses platform-specific directory and process APIs and

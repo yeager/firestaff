@@ -921,12 +921,11 @@ int dm1_v1_f0115_world_candidates_pc34(
 
     if (!dm1_v1_f0115_thing_route_receipt_pc34(
             routeThings, routeThingCount, -1, 0, mapIndex,
-            /* ReDMCSB REVIVE.C owns map-0 records as Hall candidate
-             * payload, not loose F0115 dungeon loot. The real PC34 Hall
-             * corpus confirms every compact object chain here is consumed by
-             * the mirror/revive route; ordinary maps keep the floor-object
-             * path open. */
-            mapIndex == 0,
+            /* Only a compact chain carrying a recognised C127/mirror
+             * control belongs to REVIVE.C. Map 0 also contains real loose
+             * dungeon objects (including the stock scroll); suppressing the
+             * whole Hall hid those source-backed floor and alcove items. */
+            0,
             &outCandidates->staticReceipt) ||
         !outCandidates->staticReceipt.valid) {
         return 0;
