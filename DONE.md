@@ -1,8 +1,10 @@
-- ✅ 2026-07-27 Theron instrumented-Mednafen preflight. The authentic
+- ✅ 2026-07-27 Theron instrumented-Mednafen preflight repair. The authentic
   Track 02 capture launcher now refuses a stock Mednafen binary before it
   launches a timed original-media run, requiring the compiled
-  `FIRESTAFF_THERON_IRQ2_TRACE` marker. The shell regression test passes;
-  this prevents false empty captures and does not promote any media semantics.
+  `FIRESTAFF_THERON_IRQ2_TRACE` marker without a `pipefail` false rejection.
+  The shell regression test passes, and an authentic six-second US-CUE boot
+  run emits its provenance-marked trace. This prevents false empty captures
+  and does not promote any media semantics.
 - ✅ 2026-07-27 Theron verified-media fallback closure. A verified Track 02
   now blocks preinitialized default palette/tile state unless an original bank
   and a proven palette route are both present. The runtime screenshot gate

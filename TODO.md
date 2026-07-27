@@ -3429,6 +3429,11 @@ lane is carried forward in the sections below.
     silently ignore trace variables cannot yield a misleading empty capture.
     This is capture hygiene only; the outstanding positive Track 02 consumer
     trace and its semantics remain unproved.
+  - 2026-07-27 verification: the local instrumented Mednafen build produced
+    a provenance-marked trace against the authenticated US CUE. Its six-second
+    no-input run observed only System Card boot (`transition=missing`, zero
+    game-main-RAM E009 rows), so it contributes no Track 02 layout or consumer
+    semantics. The next capture must use the configured real input route.
 
 - 2026-07-16 CSB runtime viewport follow-up: first-frame D0/D1/D2
   F0111/F0115 receipts now promote to a real-data M11 draw plan with shared

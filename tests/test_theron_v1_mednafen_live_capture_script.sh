@@ -82,8 +82,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
     exit 1
 fi
 if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
-   ! grep -Fq "strings \"\$binary\"" "$script" ||
-   ! grep -Fq "grep -Fqx 'FIRESTAFF_THERON_IRQ2_TRACE'" "$script" ||
+   ! grep -Fq "grep -aFq 'FIRESTAFF_THERON_IRQ2_TRACE' \"\$binary\"" "$script" ||
    ! grep -Fq 'MEDNAFEN_BIN lacks the Firestaff Theron instrumentation' "$script" ||
    ! grep -Fq 'build_mednafen_theron_irq2_trace.sh' "$script"; then
     printf 'FAIL: capture script must reject an uninstrumented Mednafen binary before launch\n' >&2
