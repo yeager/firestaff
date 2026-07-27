@@ -41151,3 +41151,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   NEW GAME presentation, with six host key events and 8,910 subsequent PCE
   input transactions. This is boot/menu evidence only; no dungeon record,
   game-owned CD reader, or destination semantics are inferred.
+# 2026-07-27 - Nexus blocked PRS3 launcher return
+
+- M11 now returns to the launcher when the authenticated Nexus MENU.BPK path
+  is blocked on missing PRS3/Saturn decoder evidence, rather than entering a
+  permanent black no-draw dungeon state. Updated runtime handoff coverage
+  verifies keyboard and pointer champion starts.

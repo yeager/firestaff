@@ -176,10 +176,10 @@ int main(void)
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION);
-    expect_true(result == M11_GAME_INPUT_REDRAW,
-                "M11 Nexus champion action starts dungeon");
+    expect_true(result == M11_GAME_INPUT_RETURN_TO_MENU,
+                "M11 Nexus rejects blocked PRS3 dungeon start back to launcher");
     expect_true(view.nexusState.champion_select_active == 0,
-                "M11 Nexus champion start clears startup menu");
+                "M11 Nexus clears startup menu before returning to launcher");
     expect_true(view.nexusState.startup_runtime_handoff_ready == 0 &&
                     view.nexusState.startup_dgn_render_ready == 0 &&
                     view.nexusState.startup_hud_ready == 0 &&
@@ -228,14 +228,14 @@ int main(void)
         expect_true(nexus_v1_startup_champion_footer_rect(&footer) == 1 &&
                         M11_GameView_HandlePointer(
                             &view, footer.x + 1, footer.y + 1, 1) ==
-                            M11_GAME_INPUT_REDRAW &&
+                            M11_GAME_INPUT_RETURN_TO_MENU &&
                         view.nexusState.champion_select_active == 0 &&
                         view.nexusState.startup_host_execute_dgn_draws == 0 &&
                         view.nexusState.startup_dgn_render_ready == 0 &&
                         view.nexusState.startup_dgn_render_cached_count == 0 &&
                         view.nexusState.startup_dgn_viewport_host_route_ready == 0 &&
                         view.nexusState.startup_dgn_viewport_host_blocks_runtime == 1,
-                    "M11 Nexus footer start blocks synthetic DGN route");
+                    "M11 Nexus footer start returns blocked DGN route to launcher");
     }
 
     fill_ready_engine(&engine);
@@ -365,7 +365,7 @@ int main(void)
     fill_view(&view, &engine);
     memset(&engine.floor_materials, 0, sizeof(engine.floor_materials));
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION);
-        expect_true(result == M11_GAME_INPUT_REDRAW &&
+        expect_true(result == M11_GAME_INPUT_RETURN_TO_MENU &&
                     view.nexusState.startup_runtime_handoff_ready == 0 &&
                     view.nexusState.startup_dgn_render_ready == 0 &&
                     view.nexusState.startup_dgn_render_blocked == 1 &&
@@ -377,7 +377,7 @@ int main(void)
     fill_view(&view, &engine);
     engine.current_level_structure2_source.materialization_bound = 0;
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION);
-    expect_true(result == M11_GAME_INPUT_REDRAW &&
+    expect_true(result == M11_GAME_INPUT_RETURN_TO_MENU &&
                     view.nexusState.champion_select_active == 0 &&
                     view.nexusState.startup_runtime_handoff_ready == 0 &&
                     view.nexusState.startup_dgn_render_ready == 0 &&
@@ -448,8 +448,8 @@ int main(void)
     engine.menu_bpk_decode_receipt.requires_prs3_decoder = 1;
     engine.menu_bpk_decode_receipt.decode_blocked = 1;
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION);
-    expect_true(result == M11_GAME_INPUT_REDRAW,
-                "M11 Nexus PRS3 startup action still redraws");
+    expect_true(result == M11_GAME_INPUT_RETURN_TO_MENU,
+                "M11 Nexus PRS3 startup action returns to launcher");
     expect_true(view.nexusState.champion_select_active == 1,
                 "M11 Nexus PRS3 startup action remains at the blocked champion route");
     expect_true(view.nexusState.startup_runtime_handoff_ready == 0 &&

@@ -21489,6 +21489,17 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             receipt = host_caller_receipt.ownership.runtime_route
                 .host_action_receipt;
             result = m11_nexus_apply_startup_action_receipt(state, &receipt);
+            /* A real MENU.BPK route can be correctly rejected while PRS3
+             * remains undecoded.  Do not strand the user in the deliberately
+             * no-draw dungeon state: report the source-backed blocker and
+             * return to the launcher, where another game or data package can
+             * be selected. */
+            if (input == M12_MENU_INPUT_ACTION &&
+                (state->nexusState.startup_dgn_render_blocked ||
+                 state->nexusState.startup_dgn_viewport_host_blocks_runtime)) {
+                m11_set_status(state, "ASSETS", "MENU.BPK PRS3 TRACE REQUIRED");
+                return M11_GAME_INPUT_RETURN_TO_MENU;
+            }
             return result;
         }
         if (input == M12_MENU_INPUT_BACK) {
@@ -22272,7 +22283,13 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
             }
             receipt = host_caller_receipt.ownership.runtime_route
                 .host_action_receipt;
-            return m11_nexus_apply_startup_action_receipt(state, &receipt);
+            result = m11_nexus_apply_startup_action_receipt(state, &receipt);
+            if (state->nexusState.startup_dgn_render_blocked ||
+                state->nexusState.startup_dgn_viewport_host_blocks_runtime) {
+                m11_set_status(state, "ASSETS", "MENU.BPK PRS3 TRACE REQUIRED");
+                return M11_GAME_INPUT_RETURN_TO_MENU;
+            }
+            return result;
         }
         m11_nexus_runtime_startup_snapshot(state, &snapshot);
         if (!nexus_v1_launcher_startup_execute_champion_pointer_from_snapshot(
@@ -22291,6 +22308,12 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
                 &host_caller_receipt);
         }
         result = m11_nexus_apply_startup_action_receipt(state, &receipt);
+        if (execution.kind == NEXUS_V1_STARTUP_CHAMPION_EXEC_START_DUNGEON &&
+            (state->nexusState.startup_dgn_render_blocked ||
+             state->nexusState.startup_dgn_viewport_host_blocks_runtime)) {
+            m11_set_status(state, "ASSETS", "MENU.BPK PRS3 TRACE REQUIRED");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
         if (!host_caller_valid) {
             (void)m11_nexus_refresh_startup_host_caller(
                 state, M12_MENU_INPUT_NONE, startup_commands,

@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **NEXUS-BLOCKED-PRS3-LAUNCH-RETURN:** Closed 2026-07-27. A Nexus champion
+  start whose real MENU.BPK route is blocked pending authentic PRS3/Saturn
+  evidence now returns to the launcher with the source-backed blocker instead
+  of leaving a black no-draw runtime. The decoder itself remains fail-closed.
+
 - **THERON-DIRECT-CUE-RUNTIME-REGRESSION:** Closed 2026-07-27. The real-media
   raw-CUE runtime test now exercises both the CUE/BIN directory and the CUE
   file itself through the full launcher path, requiring the same verified
