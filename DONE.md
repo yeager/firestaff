@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 Theron split Track 02 regression. The direct-ISO runtime
+  regression now expects the fully materialized original US Track 02 MD5,
+  guarding against treating `TQUS02End.iso` as complete media again.
+
 - ✅ 2026-07-27 Theron split Track 02 direct picker. Selecting the physical
   `TQUS02End.iso` extent now reaches the same hash-verified cached image as
   selecting `TQUS.cue`; it cannot be booted as a truncated standalone ISO.

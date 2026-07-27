@@ -8,7 +8,7 @@ fi
 
 app=$1
 media=${FIRESTAFF_THERON_CONVERTED_ISO:-"$HOME/.firestaff/data/theron/TQUS02End.iso"}
-expected_md5=3d8b78571dcd0e6eb8eb4b01eeb7fbba
+expected_md5=ceb02343868f80cec899e9b239aff2da
 
 if [[ ! -x "$app" ]]; then
     printf 'FAIL: Firestaff executable is unavailable: %s\n' "$app" >&2
@@ -39,4 +39,4 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=theron' "$output" ||
     exit 1
 fi
 
-printf '%s\n' 'PASS: authentic converted Theron USA ISO preserves selected launcher identity'
+printf '%s\n' 'PASS: authentic split Theron USA ISO preserves selected launcher identity'

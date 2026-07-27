@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-US-SPLIT-TRACK02-REGRESSION:** Closed 2026-07-27. The direct-ISO
+  runtime regression now requires the materialized original Track 02 hash
+  `ceb02343868f80cec899e9b239aff2da`, preventing a return to the truncated
+  `TQUS02End.iso` identity.
+
 - **THERON-US-SPLIT-TRACK02-DIRECT-PICKER:** Closed 2026-07-27. Selecting
   either `TQUS02End.iso` or the CUE-declared `TQUS02.iso` name now resolves
   only through the documented, hash-verified US split-image materializer;
