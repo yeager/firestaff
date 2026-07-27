@@ -247,6 +247,13 @@ static const char *tqr_skip_space(const char *text) {
     while (text && (*text == ' ' || *text == '\t' || *text == '\r' || *text == '\n')) {
         ++text;
     }
+    /* CUE sheets are plain text, but common macOS/Windows editors may emit a
+     * UTF-8 BOM before the first FILE directive. It is metadata, not part of
+     * the command; retain the strict FILE/TRACK/INDEX layout checks below. */
+    if (text && (unsigned char)text[0] == 0xefu &&
+        (unsigned char)text[1] == 0xbbu && (unsigned char)text[2] == 0xbfu) {
+        text += 3;
+    }
     return text;
 }
 

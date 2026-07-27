@@ -166,6 +166,13 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
         char *p = line;
 
         while (*p == ' ' || *p == '\t') ++p;
+        /* A UTF-8 BOM may prefix the first CUE directive. It carries no CUE
+         * syntax, so discard only the exact marker and keep every layout
+         * validation below unchanged. */
+        if ((unsigned char)p[0] == 0xefu &&
+            (unsigned char)p[1] == 0xbbu && (unsigned char)p[2] == 0xbfu) {
+            p += 3;
+        }
         if (theron_v1_track02_media_starts_with_i(p, "FILE ")) {
             char type[32];
             if (sscanf(p, "FILE \"%511[^\"]\" %31s", member, type) != 2 &&

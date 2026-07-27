@@ -1,3 +1,11 @@
+- ✅ 2026-07-27 Theron UTF-8-BOM CUE compatibility. Both production Track 02
+  CUE parsers now ignore only a leading UTF-8 BOM before the first directive,
+  preventing editor-added text metadata from being misreported as invalid
+  ISO/BIN media. `FILE`, `TRACK 02 MODE1`, `INDEX 01`, payload and known-MD5
+  checks remain strict. Registered `theron_v1_track02_cue_resolve` CTest now
+  covers this path; raw-media intake, authentic raw-CUE runtime boot, and a
+  local US CUE/BIN M11 boot probe pass.
+
 - ✅ 2026-07-27 DM1 direct TITLE launch path. `V1_TitleIntro_FindTitleDatPath()`
   now validates the canonical loose `TITLE`/`TITLE.DAT` before the recursive
   hash/archive fallback. This preserves hash-verified filename-independent

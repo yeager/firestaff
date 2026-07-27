@@ -15,6 +15,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-CUE-UTF8-BOM:** Closed 2026-07-27. The strict Track 02 CUE
+  resolvers now ignore only an initial UTF-8 BOM before parsing the original
+  `FILE` directive. Hash, `MODE1/2048|2352`, payload, and `INDEX 01`
+  validation remain unchanged. The direct resolver is registered in CTest and
+  covers BOM input; raw CUE intake and the local authentic USA CUE/BIN boot
+  both pass.
+
 - **DM1-TITLE-DIRECT-STARTUP:** Closed 2026-07-27. A verified loose PC34
   `TITLE`/`TITLE.DAT` is now selected before recursive archive hashing, so a
   mixed DM1 data directory reaches title/runtime without a launch-thread

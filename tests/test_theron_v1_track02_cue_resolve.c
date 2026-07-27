@@ -74,6 +74,24 @@ int main(void) {
         failed = 1;
     }
 
+    /* A CUE saved by a UTF-8 editor may have a BOM before its first FILE
+     * directive. It must resolve exactly like the source CUE, not report an
+     * invalid Track 02 solely because of text encoding metadata. */
+    failed |= !write_file(cue,
+        "\xef\xbb\xbf" "FILE \"track02.bin\" BINARY\n"
+        "  TRACK 02 MODE1/2352\n"
+        "    INDEX 01 00:00:00\n",
+        strlen("\xef\xbb\xbf" "FILE \"track02.bin\" BINARY\n"
+               "  TRACK 02 MODE1/2352\n"
+               "    INDEX 01 00:00:00\n"));
+    if (!failed && theron_v1_track02_resolve_media_path(cue, resolved) !=
+            THERON_TRACK02_SIGNAL_OK) {
+        failed = 1;
+    }
+    if (!failed && strcmp(resolved, data) != 0) {
+        failed = 1;
+    }
+
     failed |= !write_file(cue,
         "FILE \"track02.bin\" BINARY\n"
         "  TRACK 02 MODE1/2048\n"
