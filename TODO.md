@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-VIEWPORT-COMPACT-DOOR-CHAIN:** Closed 2026-07-27. Door type and
+  opening state now consume the same F0160/F0161 compact square thing-chain
+  as the object, sensor and ornament passes. This prevents real PC34 maps
+  from borrowing a door record from an unrelated square.
+
 - **DM1-HUD-CHAMPION-CLICK-ROUTES:** Closed 2026-07-27. The source-owned
   C007..C010/C187..C190 left-click routes now open the selected champion's
   inventory, while C012..C015 status-box clicks select the correct champion.

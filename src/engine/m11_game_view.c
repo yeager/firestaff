@@ -25126,14 +25126,15 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         return 0;
     }
 
-    firstThing = m11_get_first_square_thing(&state->world,
-                                            state->world.party.mapIndex,
-                                            mapX,
-                                            mapY);
     viewportStaticFirstThing = m11_get_viewport_static_first_thing(&state->world,
                                                                    state->world.party.mapIndex,
                                                                    mapX,
                                                                    mapY);
+    /* F0160/F0161 owns every viewport square's thing-chain lookup.  Door
+     * state/type must use that same compact table as the object, sensor and
+     * ornament passes; dense mapX*height+mapY indexing can otherwise borrow
+     * a door from an unrelated square in real PC34 data. */
+    firstThing = viewportStaticFirstThing;
     cell.valid = 1;
     cell.square = square;
     cell.elementType = (square & DUNGEON_SQUARE_MASK_TYPE) >> 5;

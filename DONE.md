@@ -1,3 +1,10 @@
+- ✅ 2026-07-27 DM1 viewport compact door chain. Door state and type now use
+  the F0160/F0161 compact square table already used by the viewport's
+  object/sensor/ornament routes, eliminating dense-index cross-square door
+  binding in real PC34 data. `firestaff` and the focused mouse/HUD CTest
+  suite build/pass; the broad M11 stamina executable retains two unrelated
+  pre-existing F0444 assertion failures.
+
 - ✅ 2026-07-27 DM1 HUD champion click routes. Wired the original
   `COMMAND.C` G0447 C007..C010 bar zones C187..C190 to selected-champion
   inventory toggling, restored C012..C015 status-box selection, and fixed
