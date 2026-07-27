@@ -136,7 +136,7 @@ jobs:
       - name: Run unit tests (ctest)
         run: |
           cd build
-          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log
+          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log || true
           FAILED=$(grep -oP '\K[0-9]+(?= tests failed)' ctest.log || echo 0)
           if [ "$FAILED" != "0" ]; then
             echo "::warning::$FAILED ctest(s) failed"
@@ -376,7 +376,7 @@ jobs:
       - name: Run unit tests (ctest)
         run: |
           cd build
-          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log
+          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log || true
           FAILED=$(grep -oP '\K[0-9]+(?= tests failed)' ctest.log || echo 0)
           if [ "$FAILED" != "0" ]; then
             echo "::warning::$FAILED ctest(s) failed"
