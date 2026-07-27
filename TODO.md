@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-TRACK02-SINGLE-MATERIALIZATION-OWNER:** Closed 2026-07-27.
+  Asset loading no longer performs an independent path-only Track 02 rebuild;
+  raw-media intake is the sole hash-gated owner, preventing truncated US
+  tails and duplicated JP complete images.
+
 - **THERON-US-SPLIT-CUE-PATH-FAIL-CLOSED:** Closed 2026-07-27. The
   path-only CUE resolver regression now requires the missing US `TQUS02.iso`
   member to remain unresolved; only raw-media intake may materialize it after
