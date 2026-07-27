@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 DM1 PC34 wall-ornament metadata offset. M11's ornament cache
+  now includes the TextData section before typed Thing records, matching the
+  DUNGEON.DAT loader and restoring real map-local ornament indices. The real
+  PC34 non-HoC inscription probe and HoC portrait/ornament probe pass.
+
 - ✅ 2026-07-27 DM1 movement turn-button visual cue. Keyboard/controller
   feedback now covers the whole visible C013 turn tile rather than only the
   narrow C068/C069 click strip; the source click outline remains visible.

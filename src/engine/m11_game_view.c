@@ -24887,8 +24887,10 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
         }
     }
 
-    /* Compute raw data section file offset (same formula as
-     * F0501_DUNGEON_LoadTileData_Compat). */
+    /* Compute the raw data section offset with the same complete layout as
+     * F0502_DUNGEON_LoadTileData_Compat.  Text words precede the typed Thing
+     * records in PC34 DUNGEON.DAT; omitting them shifts every map metadata
+     * table and turns real wall ornaments into unrelated graphic indices. */
     totalColumns = 0;
     for (i = 0; i < (int)dun->header.mapCount; ++i) {
         totalColumns += dun->maps[i].width;
@@ -24902,6 +24904,7 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
                         (long)dun->header.mapCount * DUNGEON_MAP_DESC_SIZE +
                         (long)totalColumns * 2 +
                         (long)dun->header.squareFirstThingCount * 2 +
+                        (long)dun->header.textDataWordCount * 2 +
                         thingDataTotalBytes;
     mapFileOffset = rawDataFileOffset + (long)m->rawMapDataByteOffset;
 
