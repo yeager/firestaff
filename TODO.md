@@ -4169,6 +4169,13 @@ lane is carried forward in the sections below.
     corrected key reaches PCE port 0 as `raw=0100`; earlier letter-I sequence
     runs remain boot/menu observation only and cannot prove a menu choice or
     dungeon transition.
+    A corrected 300-second US-cue sequence
+    `return@10,i@75,i@105,i@135,i@165,i@195,i@225,i@255` records seven live
+    keypad-I/PCE-port `raw=0100` observations and visibly advances through
+    original story-animation frames. Its authentic receipt still has zero
+    non-System-Card PCECD reads, zero main-RAM loader transfers, and
+    `transition=missing`; repeated menu input alone does not establish a
+    Track 02 dungeon handoff.
     The follow-up 175-second sequence
     `return@10,i@75,i@90,i@125` advances further through the original animated
     `NEW GAME` presentation and records 51 real SCSI reads plus 25 CD IRQ
