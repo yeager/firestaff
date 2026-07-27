@@ -4163,14 +4163,14 @@ lane is carried forward in the sections below.
     host-input receipts retained. That proves the boot/menu input route, not
     dungeon semantics: the same transcript still has no game-owned PCECD
     reader or dynamic destination receipt.
-    Capture input was corrected on 2026-07-27: the configured PCE I button is
-    SDL keypad 3, so the macOS Quartz sender must use `kVK_ANSI_Keypad3` (85),
-    not physical letter I (34). The earlier code 83 was keypad 1 and produced
-    PCE III (`raw=0100`), so its sequence runs are invalid as menu-choice
-    evidence. The corrected code 85 is now verified in a fresh original run:
-    it yields SDL scancode 91 and PCE I `raw=0001`. Menu navigation is now
-    source-observed at the controller boundary, but a dungeon transition still
-    requires the separate game-owned CD consumer evidence.
+    Capture input was re-verified on 2026-07-27 against the active isolated
+    Mednafen profile: PCE I is configured as SDL scancode 12, so the macOS
+    Quartz sender must use `kVK_ANSI_Q` (12). The previous keypad-3 code 85
+    reaches SDL scancode 91 but leaves the active PCE port at `raw=0000`; it
+    is not valid PCE-I/menu evidence for this profile. Capture now sends code
+    12 for `i`; the next authentic run must retain PCE `raw=0001` before it
+    may be used as controller evidence. A dungeon transition still separately
+    requires game-owned CD-consumer evidence.
     A manual-aligned sequence with two RUN presses (`return@10,return@20`)
     reaches the animated title menu, and the verified I press at `i@75`
     advances into the original framed `DUNGEON MASTER` story panel. This
