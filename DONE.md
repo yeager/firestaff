@@ -70,8 +70,9 @@
   Removed the non-ReDMCSB `READY: CLICK CENTER ...` producer from the direct
   DM1 startup receipt, leaving the C015 message strip empty until real
   TEXT.C wall/scroll material is presented. The real-data M11 regression now
-  confirms the visible C140 SAVE route writes a native save that reloads
-  immediately; original-PC34 corpus/timeline interop remains explicitly open.
+  confirms the visible C140 SAVE click hotspot writes a native save that
+  reloads immediately; original-PC34 corpus/timeline interop remains
+  explicitly open.
 
 - ✅ 2026-07-27 DM1 PC34 wall-ornament metadata offset. M11's ornament cache
   now includes the TextData section before typed Thing records, matching the

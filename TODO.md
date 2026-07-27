@@ -65,9 +65,9 @@ an integration build pass.
   ReDMCSB TEXT.C wall or scroll message owns it.
 
 - **DM1-C140-SAVE-ROUTE:** Closed 2026-07-27. The visible inventory SAVE
-  control writes a native DM1 save that M11 immediately reloads against the
-  real `DUNGEON.DAT`; this is separate from, and does not mask, the remaining
-  original-PC34 corpus/timeline work.
+  control's actual C140 click hotspot writes a native DM1 save that M11
+  immediately reloads against the real `DUNGEON.DAT`; this is separate from,
+  and does not mask, the remaining original-PC34 corpus/timeline work.
 
 - **DM1-C145-REST-RUNTIME-MIRRORS:** Closed 2026-07-27. The visible `Zz`
   control now sets the M11, world, and lifecycle resting flags together, so

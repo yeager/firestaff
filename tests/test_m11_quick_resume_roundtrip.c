@@ -305,17 +305,21 @@ int main(void) {
                 "DM1 start must not render Firestaff-only HoC help text")) return 1;
 
     /* COMMAND.C C140 reaches the native DM1 F0433 save route, whereas F9
-     * below owns Firestaff's quicksave envelope. Keep both paths covered:
-     * the visible inventory SAVE control must produce a file that M11 can
-     * immediately re-admit through its normal DM1 save loader. */
+     * below owns Firestaff's quicksave envelope. Exercise the actual visible
+     * inventory SAVE hotspot (C140) so the button cannot regress into inert
+     * artwork while its keyboard command remains healthy. */
     snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-command-save.sav",
              saveTemplate);
     m12_test_setenv("FIRESTAFF_QUICKSAVE_PATH", savePath);
-    if (!expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_SAVE_GAME) ==
+    view.inventoryPanelActive = 1;
+    if (!expect(M11_GameView_HandlePointerButton(
+                    &view, 179, 35, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                     M11_GAME_INPUT_REDRAW,
-                "C140 save command should be consumed by the live DM1 runtime")) return 1;
+                "C140 visible save control should be consumed by live DM1")) return 1;
+    if (!expect(view.inventoryPanelActive == 0,
+                "C140 visible save control should leave inventory input route")) return 1;
     if (!expect(M11_GameView_LoadDm1SavePath(&view, savePath, NULL),
-                "C140 save command should write a loadable DM1 save")) return 1;
+                "C140 visible save control should write a loadable DM1 save")) return 1;
 
     snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-quicksave.sav",
              saveTemplate);
