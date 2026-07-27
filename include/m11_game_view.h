@@ -2675,6 +2675,12 @@ typedef struct M11_Dm1FloorItemHostPresentationReceipt {
 void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
     M11_Dm1FloorItemHostPresentationReceipt* outReceipt);
 
+/* F0115's F0121/F0124 alcove invocation is a separate wall lane.  It uses
+ * the same original C10/F0791 object material but must never impersonate a
+ * floor-object capture. */
+void M11_GameView_GetDm1AlcoveItemHostPresentationReceipt(
+    M11_Dm1FloorItemHostPresentationReceipt* outReceipt);
+
 /* Final M11 capture consumption for a real, non-HoC F0115 floor item.
  * The receipt is frame-local and stays invalid when the current source item
  * cannot reach its GRAPHICS.DAT material blit. */

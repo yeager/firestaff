@@ -28,6 +28,12 @@ an integration build pass.
   `GRAPHICS.DAT` F0791 blit. Mirror-controlled payloads remain excluded by
   the existing REVIVE.C ownership decision.
 
+- **DM1-F0115-REAL-ALCOVE-OBJECT-CAPTURE:** Closed 2026-07-27. F0121/F0124
+  wall-alcove objects now publish a dedicated host receipt rather than being
+  invisible to presentation verification or mislabeled as floor capture. The
+  installed PC34 corpus reaches an original C2548 F0791 blit on map 1 with
+  graphic 511 and source zone 2558.
+
 - **DM1-HUD-SOURCE-HAND-OBJECT-REDRAW:** Closed 2026-07-27. The F0291
   top-row receipt consumer now follows F0038 with the authenticated 16x16
   object-icon blit after C033/C034/C035 paints the hand frame. The focused

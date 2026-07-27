@@ -7,6 +7,7 @@ int main(void)
 {
     M11_GameViewState state;
     M11_Dm1FloorItemHostPresentationReceipt receipt;
+    M11_Dm1FloorItemHostPresentationReceipt alcoveReceipt;
     unsigned char framebuffer[320 * 200];
     unsigned char sourcePixels[32 * 32];
     int i;
@@ -56,11 +57,18 @@ int main(void)
         M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(1)) {
         return 1;
     }
+    M11_GameView_GetDm1AlcoveItemHostPresentationReceipt(&alcoveReceipt);
+    if (!alcoveReceipt.valid || alcoveReceipt.floorItemLane ||
+        !alcoveReceipt.usesF0791Blit || alcoveReceipt.transparentColor != 10 ||
+        alcoveReceipt.sourceZone < 2548 || alcoveReceipt.destinationW <= 0 ||
+        alcoveReceipt.destinationH <= 0) {
+        return 1;
+    }
 
     state.assetLoader.cacheUsed = 0;
     state.assetLoader.initialized = 0;
     state.assetsAvailable = 0;
     M11_GameView_Shutdown(&state);
-    puts("ok: M11 DM1 floor-item host receipt only accepts the F0115 floor lane");
+    puts("ok: M11 keeps F0115 floor and alcove host receipts separate");
     return 0;
 }

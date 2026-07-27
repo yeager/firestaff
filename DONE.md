@@ -11,6 +11,12 @@
   proves the normal floor-object route without allowing REVIVE.C mirror
   payloads to become floor art.
 
+- ✅ 2026-07-27 DM1 real F0115 alcove-object capture. F0121/F0124's wall
+  lane now publishes its own C10/F0791 host receipt, separate from floor
+  capture. A real-data sweep finds and validates an original map-1 alcove
+  object at source zone 2558, graphic 511; the normal floor receipt remains
+  invalid for that wall-lane draw.
+
 - ✅ 2026-07-27 DM1 source HUD hand-object redraw. The F0291 receipt
   consumer now performs F0038's original 16x16 object-icon overlay after it
   presents C033/C034/C035 hand frames. Focused live runtime probes verify a

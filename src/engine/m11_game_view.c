@@ -634,6 +634,13 @@ static int m11_count_source_action_menu_rows(
 static const M11_GameViewState* g_drawState = NULL;
 static M11_Dm1FloorItemHostPresentationReceipt
     s_m11_dm1_floor_item_host_presentation_receipt;
+static M11_Dm1FloorItemHostPresentationReceipt
+    s_m11_dm1_alcove_item_host_presentation_receipt;
+enum {
+    M11_F0115_PRESENTATION_NONE = 0,
+    M11_F0115_PRESENTATION_FLOOR = 1,
+    M11_F0115_PRESENTATION_ALCOVE = 2
+};
 static M11_Dm1CreatureHostPresentationReceipt
     s_m11_dm1_creature_host_presentation_receipt;
 static M11_Dm1ProjectileHostPresentationReceipt
@@ -28505,7 +28512,7 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
             cell->floorItemTypes[ii], cell->floorItemSubtypes[ii],
             alcoveCellRelativeToParty, ii, cell->relForward - 1,
             material.source_zone, material.source_zone,
-            material.transparent_color, 1, 0);
+            material.transparent_color, 1, M11_F0115_PRESENTATION_ALCOVE);
     }
 }
 
@@ -30606,34 +30613,39 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
             depthIndex + 1, plan.use_mirror ? 1 : 0) > 0;
     }
     if (publishFloorItemHostReceipt) {
+        M11_Dm1FloorItemHostPresentationReceipt *presentation =
+            publishFloorItemHostReceipt == M11_F0115_PRESENTATION_ALCOVE
+                ? &s_m11_dm1_alcove_item_host_presentation_receipt
+                : &s_m11_dm1_floor_item_host_presentation_receipt;
         /* ReDMCSB DUNVIEW.C F0115:4820-5075 reaches F0791 only for the
-         * object pass. F0121/F0124's alcove invocation is still a real
-         * object blit, but it is a wall lane and cannot prove a floor item
-         * was presented in the HoC capture frame. */
+         * object pass. F0121/F0124's alcove invocation stays in its own
+         * wall-lane receipt, so it cannot prove a floor item was presented
+         * in the HoC capture frame. */
         if (!dm1_v1_f0115_floor_object_material_receipt_pc34(
                 thingType, subtype, sourceZone, effectiveSourceZoneRow,
                 effectiveTransparentColor, usesF0791Blit, gfxIdx,
                 (int)slot->width, (int)slot->height, &materialReceipt)) {
             return 0;
         }
-        s_m11_dm1_floor_item_host_presentation_receipt.valid = 1;
-        s_m11_dm1_floor_item_host_presentation_receipt.floorItemLane = 1;
-        s_m11_dm1_floor_item_host_presentation_receipt.graphicsId =
+        presentation->valid = 1;
+        presentation->floorItemLane =
+            publishFloorItemHostReceipt == M11_F0115_PRESENTATION_FLOOR;
+        presentation->graphicsId =
             (int)materialReceipt.graphic_index;
-        s_m11_dm1_floor_item_host_presentation_receipt.transparentColor =
+        presentation->transparentColor =
             materialReceipt.transparent_color;
-        s_m11_dm1_floor_item_host_presentation_receipt.usesF0791Blit =
+        presentation->usesF0791Blit =
             materialReceipt.uses_f0791_blit;
-        s_m11_dm1_floor_item_host_presentation_receipt.sourceZone =
+        presentation->sourceZone =
             materialReceipt.source_zone;
-        s_m11_dm1_floor_item_host_presentation_receipt.sourceZoneRow =
+        presentation->sourceZoneRow =
             effectiveSourceZoneRow;
-        s_m11_dm1_floor_item_host_presentation_receipt.destinationX = plan.draw_x;
-        s_m11_dm1_floor_item_host_presentation_receipt.destinationY = plan.draw_y;
-        s_m11_dm1_floor_item_host_presentation_receipt.destinationW = plan.draw_w;
-        s_m11_dm1_floor_item_host_presentation_receipt.destinationH = plan.draw_h;
-        s_m11_dm1_floor_item_host_presentation_receipt.assetWidth = (int)slot->width;
-        s_m11_dm1_floor_item_host_presentation_receipt.assetHeight = (int)slot->height;
+        presentation->destinationX = plan.draw_x;
+        presentation->destinationY = plan.draw_y;
+        presentation->destinationW = plan.draw_w;
+        presentation->destinationH = plan.draw_h;
+        presentation->assetWidth = (int)slot->width;
+        presentation->assetHeight = (int)slot->height;
     }
     if (plan.use_mirror) {
         M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
@@ -48198,6 +48210,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * blit. Do not let a prior frame authorize a later projectile-only view. */
     memset(&s_m11_dm1_floor_item_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_floor_item_host_presentation_receipt));
+    memset(&s_m11_dm1_alcove_item_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_alcove_item_host_presentation_receipt));
     memset(&s_m11_dm1_creature_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_creature_host_presentation_receipt));
     memset(&s_m11_dm1_projectile_host_presentation_receipt, 0,
@@ -50079,6 +50093,14 @@ void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
     }
 }
 
+void M11_GameView_GetDm1AlcoveItemHostPresentationReceipt(
+    M11_Dm1FloorItemHostPresentationReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_alcove_item_host_presentation_receipt;
+    }
+}
+
 void M11_GameView_GetDm1F0115FloorItemRuntimeCaptureReceipt(
     M11_Dm1F0115FloorItemRuntimeCaptureReceipt* outReceipt)
 {
@@ -50128,13 +50150,21 @@ int M11_GameView_ProbeDrawDm1AlcoveItemForFloorItemReceipt(
     int framebufferWidth,
     int framebufferHeight)
 {
+    DM1_F0115AlcoveItemMaterialPlanPc34 material;
     /* ReDMCSB DUNVIEW.C F0121/F0124 invokes F0115 immediately after an
      * alcove wall ornament. It remains a source-backed C10/F0791 object
      * material route, but must not publish the floor-only HoC receipt. */
+    if (!dm1_v1_f0115_alcove_item_material_plan_pc34(
+            &material, THING_TYPE_WEAPON, 0, 1, 0, 2) ||
+        !material.coordinate_binding_ready) {
+        return 0;
+    }
     return m11_draw_item_sprite_material(
         state, framebuffer, framebufferWidth, framebufferHeight,
         M11_VIEWPORT_X + 32, M11_VIEWPORT_Y + 32, 32, 20,
-        THING_TYPE_WEAPON, 0, 2, 0, 0, 0, 0, 10, 1, 0);
+        THING_TYPE_WEAPON, 0, 2, 0, 0,
+        material.source_zone, material.source_zone,
+        material.transparent_color, 1, M11_F0115_PRESENTATION_ALCOVE);
 }
 
 int M11_GameView_ProbeDrawDm1ProjectileForFloorItemReceipt(
