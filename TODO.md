@@ -80,7 +80,8 @@ an integration build pass.
   real PC34 map data instead of reading a shifted table. The real HoC probe
   now also walks every ordinary non-C127/non-inscription wall-ornament
   ordinal and proves each original GRAPHICS.DAT material reaches the M11
-  F0107 host pass.
+  F0107 host pass and writes an exact palette-mapped, scaled pixel to the
+  frame. This includes the real HoC wall-torch material.
 
 - **DM1-MOVEMENT-TURN-BUTTON-VISUAL-CUE:** Closed 2026-07-27. Keyboard and
   controller feedback now outlines the full visible C013 turn-button tile,

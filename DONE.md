@@ -36,7 +36,8 @@
 
 - ✅ 2026-07-27 DM1 HoC ordinary wall ornaments. The real-data HoC walk
   now proves every visible non-C127/non-inscription wall-ornament ordinal
-  reaches M11's F0107 host-material pass with its expected original graphic.
+  reaches M11's F0107 host-material pass with its expected original graphic
+  and writes a sampled, exact palette-mapped F0791 pixel to the framebuffer.
   This includes the wall-furniture/torch route and keeps it distinct from
   mirrors and text plaques.
 

@@ -154,6 +154,56 @@ static int verify_front_mirror_backing_pixel(
     return 1;
 }
 
+/* A receipt alone is not visual proof: F0107 may have selected the correct
+ * GRAPHICS.DAT surface but still fail to put its palette-mapped pixels on
+ * screen.  Find one opaque source pixel and verify the exact F0791-scaled
+ * destination pixel for each real HoC ornament. */
+static int verify_wall_ornament_pixel(
+    M11_GameViewState *state,
+    const unsigned char *framebuffer,
+    const M11_Dm1WallOrnamentHostPresentationReceipt *receipt)
+{
+    const M11_AssetSlot *slot;
+    int destinationY;
+
+    if (!state || !framebuffer || !receipt || !receipt->valid ||
+        receipt->graphicIndex < 0 || receipt->destinationX < 0 ||
+        receipt->destinationY < 0 || receipt->width <= 0 ||
+        receipt->height <= 0 ||
+        receipt->destinationX + receipt->width > kFramebufferWidth ||
+        receipt->destinationY + receipt->height > kFramebufferHeight) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load(&state->assetLoader,
+                                (unsigned int)receipt->graphicIndex);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) {
+        return 0;
+    }
+    for (destinationY = 0; destinationY < receipt->height; ++destinationY) {
+        int destinationX;
+        for (destinationX = 0; destinationX < receipt->width; ++destinationX) {
+            int sourceX = receipt->flipHorizontal
+                ? ((receipt->width - 1 - destinationX) * (int)slot->width) /
+                      receipt->width
+                : (destinationX * (int)slot->width) / receipt->width;
+            int sourceY = (destinationY * (int)slot->height) / receipt->height;
+            unsigned char expected = slot->pixels[
+                sourceY * (int)slot->width + sourceX];
+            if (expected == (unsigned char)receipt->transparentColor) {
+                continue;
+            }
+            if (receipt->paletteMapValid) {
+                expected = receipt->paletteMap[expected & 0x0f];
+            }
+            return framebuffer[(receipt->destinationY + destinationY) *
+                                   kFramebufferWidth +
+                               receipt->destinationX + destinationX] == expected;
+        }
+    }
+    return 0;
+}
+
 static int verify_all_ordinary_hoc_wall_ornaments(
     M11_GameViewState *state,
     unsigned char *framebuffer)
@@ -254,7 +304,9 @@ static int verify_all_ordinary_hoc_wall_ornaments(
                                 receipt.globalOrnamentIndex ==
                                     expectedGlobalByOrdinal[ordinal] &&
                                 receipt.graphicIndex >= 0 && receipt.width > 0 &&
-                                receipt.height > 0) {
+                                receipt.height > 0 &&
+                                verify_wall_ornament_pixel(state, framebuffer,
+                                                            &receipt)) {
                                 presented = 1;
                                 break;
                             }
