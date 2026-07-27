@@ -288,6 +288,14 @@ static void check_real_theron_cue_boot_provenance(const char *cue_path) {
                 "direct Theron CUE path remains hash-verified and consumed");
     expect_str_eq(profile.track02_cue_path, cue_path,
                   "direct Theron CUE path retains exact CUE provenance");
+
+    theron_v1_boot_profile_init(&profile);
+    expect_true(theron_v1_boot_scan_assets(&profile, media.track02_path) == 0,
+                "direct Theron Track 02 path scans successfully");
+    expect_true(profile.assets_verified == 1 && !profile.track02_cue_consumed,
+                "direct Track 02 remains hash-verified without inventing CUE provenance");
+    expect_str_eq(profile.graphics_path, media.track02_path,
+                  "direct Track 02 retains exact selected source path");
 }
 
 static void check_fake_iso_fallback(const char *region_dir,

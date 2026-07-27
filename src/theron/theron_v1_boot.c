@@ -449,17 +449,15 @@ static void theron_v1_boot_apply_known_md5_identity(
  * Use it first when it declares one readable MODE1 data track whose bytes are
  * still pinned to the canonical hash catalog. Unknown or malformed CUE files
  * do not block the existing hash-first loose/container scan. */
-static int theron_v1_boot_apply_verified_cue_package(
+static int theron_v1_boot_apply_verified_track02_path(
     Theron_V1_BootProfile *profile,
-    const FirestaffTheronMediaStatus *media)
+    const char *track02_path)
 {
     char md5[33] = {0};
     size_t i;
 
-    if (!profile || !media || !media->has_cue ||
-        !media->has_valid_track02_mode1 || !media->cue_path[0] ||
-        !media->track02_path[0] ||
-        !m12_file_md5_hex(media->track02_path, md5)) {
+    if (!profile || !track02_path || !track02_path[0] ||
+        !m12_file_md5_hex(track02_path, md5)) {
         return 0;
     }
     for (i = 0u; g_theron_known_md5s[i]; ++i) {
@@ -471,18 +469,32 @@ static int theron_v1_boot_apply_verified_cue_package(
         return 0;
     }
     snprintf(profile->graphics_path, sizeof(profile->graphics_path), "%s",
-             media->track02_path);
+             track02_path);
     snprintf(profile->dungeon_path, sizeof(profile->dungeon_path), "%s",
-             media->track02_path);
-    snprintf(profile->track02_cue_path, sizeof(profile->track02_cue_path), "%s",
-             media->cue_path);
-    profile->track02_cue_consumed = 1;
+             track02_path);
     profile->graphics_size = file_size_of(profile->graphics_path);
     profile->dungeon_size = profile->graphics_size;
     snprintf(profile->graphics_md5, sizeof(profile->graphics_md5), "%s", md5);
     snprintf(profile->dungeon_md5, sizeof(profile->dungeon_md5), "%s", md5);
     profile->assets_verified = 1;
     theron_v1_boot_apply_known_md5_identity(profile, md5);
+    return 1;
+}
+
+static int theron_v1_boot_apply_verified_cue_package(
+    Theron_V1_BootProfile *profile,
+    const FirestaffTheronMediaStatus *media)
+{
+    if (!profile || !media || !media->has_cue ||
+        !media->has_valid_track02_mode1 || !media->cue_path[0] ||
+        !media->track02_path[0] ||
+        !theron_v1_boot_apply_verified_track02_path(profile,
+                                                     media->track02_path)) {
+        return 0;
+    }
+    snprintf(profile->track02_cue_path, sizeof(profile->track02_cue_path), "%s",
+             media->cue_path);
+    profile->track02_cue_consumed = 1;
     return 1;
 }
 
@@ -508,6 +520,21 @@ static int theron_v1_boot_scan_verified_cue_package(
         return 1;
     }
     return 0;
+}
+
+static int theron_v1_boot_scan_verified_track02_file(
+    Theron_V1_BootProfile *profile,
+    const char *path)
+{
+    FirestaffTheronMediaStatus media;
+
+    if (!profile || !path ||
+        FirestaffTheronMedia_ClassifyPath(path, &media) != 0 ||
+        media.has_cue || !media.has_track02_data || !media.candidate_path[0]) {
+        return 0;
+    }
+    return theron_v1_boot_apply_verified_track02_path(profile,
+                                                        media.candidate_path);
 }
 
 /* ── Init defaults ────────────────────────────────────────────────── */
@@ -566,6 +593,9 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
      * whether the host file is named track02.bin. */
     if (theron_v1_boot_scan_verified_cue_package(profile, base)) {
         /* Strict CUE package selected above; retain its source provenance. */
+    } else if (theron_v1_boot_scan_verified_track02_file(profile, base)) {
+        /* An explicit BIN/ISO picker selection is already the complete,
+         * hash-verified Track 02 source. Do not recurse through its parent. */
     } else if (asset_find_by_md5_list(base,
                                g_theron_known_md5s,
                                profile->graphics_path,

@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron direct Track 02 boot. A selected Track 02 `.bin` or
+  `.iso` now enters canonical-MD5 boot directly, without a parent-directory
+  scan or invented CUE/CDDA provenance. The authentic USA direct-file path
+  and existing CUE/CDDA regressions pass.
+
 - ✅ 2026-07-27 Theron direct CUE boot. A file-picker-selected `.cue` now
   enters the same strict Track 02 MODE1/canonical-MD5 path as a directory,
   preserving the exact original CUE and Track 01/02 pairing. Authentic USA

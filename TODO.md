@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-DIRECT-TRACK02-BOOT:** Closed 2026-07-27. A directly selected
+  Track 02 `.bin` or `.iso` now uses the canonical-MD5 boot path without a
+  parent-directory rescan. It retains the exact selected payload and never
+  invents CUE/CDDA provenance; the adjacent strict CUE path remains available
+  when the CUE itself is selected.
+
 - **THERON-DIRECT-CUE-BOOT:** Closed 2026-07-27. A directly selected `.cue`
   now follows the same strict Track 02 MODE1 and canonical-MD5 intake as a
   selected directory, retaining the exact CUE provenance and Track 01/02
