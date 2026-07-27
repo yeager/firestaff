@@ -4140,10 +4140,13 @@ lane is carried forward in the sections below.
     has produced an authentic US Track 02 capture with Quartz-delivered Run
     input, System Card calls, and raw-sector receipts. The remaining blocker
     is narrower: the capture has not yet reached the required later dynamic
-    loader/consumer rows. Timed multi-key captures now prove that Quartz
-    events reach Mednafen after the authentic title sequence, but the PCE
-    input port has stopped polling before those events; no row is synthesized
-    or promoted to runtime.
+    loader/consumer rows. The earlier 128-transaction input observation was
+    a Mednafen trace-cap artifact, not proof that PCE polling stopped:
+    `live-input-pc-passive-20260727.trace.input` records 8,192 real
+    transactions at System Card PCs `e4b7`/`e4c8` after the cap was raised,
+    with CPU-PC provenance on every input read/write. Host-key-to-PCE ordering
+    still needs a separately successful focused capture; no row is
+    synthesized or promoted to runtime.
   - 2026-07-16 Theron draw-route gate update: M11 now has a guarded
     dungeon draw-route receipt that can consume the proven level-1 media,
     multilevel handoff, live level geometry, party pose, object placement,
@@ -12722,8 +12725,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     System Card input handling. This is ordering evidence only and never
     injects an emulated controller state.
     2026-07-13 authentic timing result: an immediate macOS Return hold reached
-    SDL and PCE port 0 (`0008`) but appeared after all 128 observed PCE input
-    transactions (`host_input_order=after_last_observed_pce_input_poll`). The
+    SDL and PCE port 0 (`0008`) but appeared after all 128 *then trace-capped*
+    observed PCE input transactions
+    (`host_input_order=after_last_observed_pce_input_poll`). The
     capture still had 25 CDIRQ callbacks and no non-System-Card PCECD read or
     raw sector. This proves a capture-order boundary only; it does not bind a
     key, controller poll, CD read, Track 02 record, or game route.

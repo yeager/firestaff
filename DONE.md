@@ -40884,3 +40884,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   host SDL/key event and emulated port state. The current original route stops
   polling the PCE port before the scheduled presses, which remains explicit
   evidence rather than being misreported as a successful dungeon handoff.
+- ✅ 2026-07-27 Theron Mednafen input-PC trace correction. Rebuilt the real
+  SDL2-linked Mednafen 1.32.1 trace binary with CPU-PC provenance on every
+  direct PCE input read/write and a configurable 4,096-per-direction cap.
+  Authentic passive US CUE + System Card capture records 8,192 input
+  transactions at System Card PCs `e4b7`/`e4c8`; the prior 128-row result was
+  trace truncation, not a stopped-poll conclusion. Track 02 handoff remains
+  blocked: this capture has no dynamic sector read or loader-consumer row.
+  Verification: trace patch dry-run, full external Mednafen rebuild, SDL2
+  runtime verifier, and authentic 55-second capture.
