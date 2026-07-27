@@ -31,7 +31,7 @@ static void test_invalid_level(void)
 
     CSB_V1_WallOrnamentOrdinalResolverPc34 res;
     memset(&res, 0, sizeof(res));
-    res.dungeon = &d;
+    res.dungeon = (const CSB_V1_DungeonData *)&d;
     res.level = 5;
 
     assert(csb_v1_viewport_wall_ornament_ordinal_resolve_pc34(
@@ -49,7 +49,7 @@ static void test_empty_dungeon_no_ornament(void)
 
     CSB_V1_WallOrnamentOrdinalResolverPc34 res;
     memset(&res, 0, sizeof(res));
-    res.dungeon = &d;
+    res.dungeon = (const CSB_V1_DungeonData *)&d;
     res.level = 0;
     res.randomWallOrnamentCount = 0;
 
