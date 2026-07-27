@@ -4235,6 +4235,13 @@ lane is carried forward in the sections below.
     5,082 PCE input transactions after it, while correctly reporting zero
     game-main-RAM E009 rows. It is input-path proof only, not a loader or
     Track 02 semantic handoff.
+    Host-input captures now wait for the provenance-marked instrumented trace
+    before scheduling their first key. The requested key times are measured
+    from that trace-ready point and the outer timeout receives a bounded
+    startup grace period. A missing producer fails explicitly rather than
+    letting an early key be mistaken for original-game behavior. This makes
+    capture startup deterministic; it does not create a media or semantic
+    receipt.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a

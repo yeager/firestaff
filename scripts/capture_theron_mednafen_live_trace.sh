@@ -7,6 +7,7 @@ cue=${THERON_US_CUE:-}
 system_card=${THERON_SYSTEM_CARD:-}
 trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
+capture_startup_grace=${THERON_CAPTURE_STARTUP_GRACE:-30}
 capture_sdl_video_driver=${THERON_CAPTURE_SDL_VIDEODRIVER:-dummy}
 configured_home=${THERON_MEDNAFEN_HOME:-}
 host_key=${THERON_CAPTURE_HOST_KEY:-}
@@ -92,6 +93,10 @@ if [[ ! "$seconds" =~ ^[1-9][0-9]*$ ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_SECONDS must be a positive integer' >&2
     exit 1
 fi
+if [[ ! "$capture_startup_grace" =~ ^[1-9][0-9]*$ ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_STARTUP_GRACE must be a positive integer' >&2
+    exit 1
+fi
 if [[ -n "$configured_home" && ! -d "$configured_home" ]]; then
     printf '%s\n' 'FAIL: THERON_MEDNAFEN_HOME must name an existing Mednafen configuration directory' >&2
     exit 1
@@ -169,10 +174,14 @@ if [[ "$host_input_requested" == 1 ]]; then
     fi
 fi
 
+capture_timeout_seconds=$seconds
+if [[ "$host_input_requested" == 1 ]]; then
+    capture_timeout_seconds=$((seconds + capture_startup_grace))
+fi
 if command -v gtimeout >/dev/null 2>&1; then
-    timeout_command=(gtimeout "$seconds")
+    timeout_command=(gtimeout "$capture_timeout_seconds")
 elif command -v timeout >/dev/null 2>&1; then
-    timeout_command=(timeout "$seconds")
+    timeout_command=(timeout "$capture_timeout_seconds")
 else
     printf '%s\n' 'FAIL: timeout or gtimeout is required for bounded live capture' >&2
     exit 1
@@ -271,6 +280,20 @@ wait_for_host_key_events() {
     for ((attempt = 0; attempt < attempts; ++attempt)); do
         observed_count=$(trace_count '^host_key_event ' "$file")
         if (( observed_count >= expected_count )); then
+            return 0
+        fi
+        sleep 0.25
+    done
+    return 1
+}
+
+wait_for_trace_producer() {
+    local file=$1
+    local attempts=$2
+    local attempt
+
+    for ((attempt = 0; attempt < attempts; ++attempt)); do
+        if [[ -s "$file" ]] && grep -Fqx 'source=mednafen-pce-instrumented' "$file"; then
             return 0
         fi
         sleep 0.25
@@ -381,7 +404,6 @@ launch=(
 set +e
 "${launch[@]}" >"$stdout_file" 2>"$stderr_file" &
 mednafen_pid=$!
-capture_launch_seconds=$SECONDS
 mednafen_ui_pid=0
 if [[ "$host_input_requested" == 1 ]]; then
     host_key_previous_delay=0
@@ -432,6 +454,13 @@ if [[ "$host_input_requested" == 1 ]]; then
         # owns the foreground before using the global HID route.
         sleep 1
     fi
+    if ! wait_for_trace_producer "$trace" "$((capture_startup_grace * 4))"; then
+        kill "$mednafen_pid" 2>/dev/null || true
+        wait "$mednafen_pid" 2>/dev/null || true
+        printf '%s\n' 'FAIL: Mednafen did not produce an instrumented trace before host-input scheduling' >&2
+        exit 1
+    fi
+    host_key_schedule_seconds=$SECONDS
     # Send real Quartz key-down/up pairs after PID-bound focus.
     # The old AppleScript tap never consumed THERON_CAPTURE_HOST_KEY_HOLD, so
     # its receipt overstated what reached SDL.  These explicit pairs make the
@@ -460,7 +489,7 @@ if [[ "$host_input_requested" == 1 ]]; then
             host_key_current_delay=${host_key_delay_entries[0]}
             host_key_current_code=$host_key_code
         fi
-        host_key_elapsed_seconds=$((SECONDS - capture_launch_seconds))
+        host_key_elapsed_seconds=$((SECONDS - host_key_schedule_seconds))
         if (( host_key_current_delay > host_key_elapsed_seconds )); then
             sleep "$((host_key_current_delay - host_key_elapsed_seconds))"
         fi
@@ -587,6 +616,8 @@ transition_main_ram_loader_bra_target_jsr_count=$(trace_count '^main_ram_loader_
         printf 'host_input_target_pid=%s\n' "$mednafen_ui_pid"
         printf 'host_input_focus=screen_click:%s,%s\n' "$host_focus_x" "$host_focus_y"
         printf 'host_input_delivery=quartz_%s_key_down_up\n' "$input_route"
+        printf '%s\n' 'host_input_schedule_origin=trace_ready'
+        printf 'host_input_startup_grace_seconds=%s\n' "$capture_startup_grace"
         if [[ -n "$host_key_sequence" ]]; then
             printf 'host_input_delivery_key_code=sequence\n'
         else

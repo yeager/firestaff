@@ -96,7 +96,12 @@ if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' 
     exit 1
 fi
 if ! grep -Fq 'THERON_MEDNAFEN_HOME must name an existing Mednafen configuration directory' "$script" ||
-   ! grep -Fq 'THERON_CAPTURE_SDL_VIDEODRIVER' "$script"; then
+   ! grep -Fq 'THERON_CAPTURE_SDL_VIDEODRIVER' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_STARTUP_GRACE must be a positive integer' "$script" ||
+   ! grep -Fq 'wait_for_trace_producer()' "$script" ||
+   ! grep -Fq 'Mednafen did not produce an instrumented trace before host-input scheduling' "$script" ||
+   ! grep -Fq 'host_key_schedule_seconds=$SECONDS' "$script" ||
+   ! grep -Fq 'host_input_schedule_origin=trace_ready' "$script"; then
     printf 'FAIL: capture script must gate an explicit GUI input configuration\n' >&2
     exit 1
 fi

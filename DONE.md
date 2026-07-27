@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 Theron trace-ready input scheduler. Authentic host-input
+  capture now waits for the provenance-marked instrumented producer before
+  starting its key schedule, grants a bounded startup grace interval, and
+  records the schedule origin in the transition receipt. Missing producer
+  startup fails explicitly. Shell and capture-script regression tests pass;
+  this is capture reliability only, not Track 02 semantic evidence.
 - ✅ 2026-07-27 Theron PID Quartz capture repair. PID-targeted capture no
   longer depends on `System Events` enumerating terminal-launched Mednafen as
   a GUI app; global-HID delivery still requires foreground activation. A fresh
