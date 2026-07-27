@@ -155,26 +155,34 @@ def main() -> int:
                     "A D3 side square first lets wall ornaments decide alcove reveal/return; door-front squares draw rear contents, frame, door panel, then front contents.", missing)
 
     local_text = (ROOT / "src/engine/m11_game_view.c").read_text(errors="replace")
+    door_ornament_text = (
+        ROOT / "src/dm1/dm1_v1_door_ornament_render_pc34_compat.c"
+    ).read_text(errors="replace")
 
     local = local_function(local_text, "m11_draw_dm1_door_ornament_on_panel")
     missing = unordered_missing(local, [
-        "kOrnD3Palette",
-        "kOrnD2Palette",
-        "kDoorOrnCoordSets[4][3][6]",
-        "viewIndex = (depthIndex == 0) ? 2 : ((depthIndex == 1) ? 1 : 0);",
-        "M11_VIEWPORT_X + panel->dstX + relX",
-        "depthIndex == 2 ? kOrnD3Palette :",
+        "dm1_v1_door_ornament_render_plan_pc34(",
+        "M11_VIEWPORT_X + renderPlan.dstX",
+        "renderPlan.paletteMapValid ? renderPlan.paletteMap : NULL",
+    ]) + unordered_missing(door_ornament_text, [
+        "s_doorOrnamentCoordSets[4][3][6]",
+        "s_doorOrnamentPaletteD3",
+        "s_doorOrnamentPaletteD2",
+        "viewIndex = depthIndex == 0 ? 2 : (depthIndex == 1 ? 1 : 0);",
+        "outPlan->dstX = panel->dstX + relX;",
+        "if (depthIndex == 2)",
+        "else if (depthIndex == 1)",
     ])
     ok &= add_check(checks, "firestaff-door-ornament-uses-redmcsb-panel-relative-coordinates", not missing,
-                    "m11_game_view.c:m11_draw_dm1_door_ornament_on_panel",
-                    "Firestaff applies G0207-style door ornament coordinates relative to the resolved door panel and uses D3/D2 palette remaps.", missing)
+                    "m11_game_view.c:m11_draw_dm1_door_ornament_on_panel + dm1_v1_door_ornament_render_pc34_compat.c",
+                    "Firestaff applies G0207-style door ornament coordinates relative to the resolved door panel and uses D3/D2 palette remaps in the DM1-owned planner.", missing)
 
     local = local_function(local_text, "m11_dm1_nearest_blocking_center_door_depth")
     missing = ordered_missing(local, [
-        "m11_dm1_nearest_blocking_center_depth_index(cells)",
-        "cells[depth][1].elementType != DUNGEON_ELEMENT_DOOR",
-        "m11_viewport_cell_is_open(&cells[depth][1])",
-        "return depth;",
+        "for (d = 2; d >= 0; --d)",
+        "const M11_ViewportCell* c = &cells[d][1];",
+        "if (c->valid && !m11_viewport_cell_is_open(c))",
+        "return d;",
     ])
     ok &= add_check(checks, "firestaff-center-door-ornaments-bound-to-nearest-blocker", not missing,
                     "m11_game_view.c:m11_dm1_nearest_blocking_center_door_depth",
@@ -182,11 +190,11 @@ def main() -> int:
 
     local = local_function(local_text, "m11_draw_dm1_side_door_ornaments")
     missing = ordered_missing(local, [
-        "if (kSpecs[i].relForward > maxVisibleForward)",
+        "if (plan.relForward > maxVisibleForward)",
         "m11_dm1_side_lane_clear_for_rel(cells,",
         "cell.elementType != DUNGEON_ELEMENT_DOOR",
         "m11_viewport_cell_is_open(&cell) || cell.doorOrnamentOrdinal <= 0",
-        "panelGraphic = m11_dm1_door_panel_graphic(state, &cell, kSpecs[i].depthIndex);",
+        "panelGraphic = m11_dm1_door_panel_graphic(state, &cell, plan.depthIndex);",
         "m11_draw_dm1_door_ornament_on_panel(state, framebuffer, fbW, fbH,",
     ])
     ok &= add_check(checks, "firestaff-side-door-ornaments-guarded-by-visibility-and-panel-state", not missing,
@@ -204,7 +212,7 @@ def main() -> int:
         "m11_draw_dm1_center_doors",
         "m11_draw_dm1_center_door_ornaments",
         "m11_draw_dm1_center_destroyed_door_masks",
-        "int blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
+        "int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;",
         "m11_draw_dm1_side_walls",
         "m11_draw_dm1_wall_ornaments",
         "m11_draw_dm1_side_doors",

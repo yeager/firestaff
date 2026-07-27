@@ -41304,3 +41304,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Improved the authentic capture failure receipt with main-RAM `e009` dispatch,
   enter, data-read, and control-write counts. A raw-sector-only trace now
   states precisely that the missing proof is a game-owned PCE-CD data read.
+- ✅ 2026-07-27 DM1 V1 door/wall-ornament source-lock maintenance. The
+  viewport audit now follows the DM1-owned F0111 ornament planner after its
+  coordinate sets and D2/D3 palette maps moved out of M11. It continues to
+  verify the real ReDMCSB F0107/F0111 ordering, clipping and occlusion
+  contract; `dm1_v1_viewport_door_wall_ornament_source_lock` passes.
