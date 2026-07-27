@@ -162,8 +162,12 @@ static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
         menuState->messageLine1 = "NEXUS LOAD FAILED";
         menuState->messageLine2 = "CHECK ISO/BIN OR EXTRACTED FILES";
     } else if (gameId && strcmp(gameId, "theron") == 0) {
-        menuState->messageLine1 = "THERON STARTUP GRAPHICS INVALID";
-        menuState->messageLine2 = "CHECK TRACK 02 ISO/BIN";
+        /* This generic launcher path covers both invalid media and a valid
+         * Track 02 whose original graphics route is not yet admitted. Do not
+         * tell an owner that verified CUE/BIN media is invalid in the latter
+         * case. */
+        menuState->messageLine1 = "THERON STARTUP FAILED";
+        menuState->messageLine2 = "CHECK TRACK 02 AND GRAPHICS DATA";
     } else if (gameId && strcmp(gameId, "dm2") == 0) {
         menuState->messageLine1 = "DM2 LOAD FAILED";
         menuState->messageLine2 = "CHECK GRAPHICS/DUNGEON DATA";

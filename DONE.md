@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 Theron startup error diagnosis. The launcher now distinguishes
+  its broad startup failure from a claim that Track 02 is invalid: verified
+  CUE/BIN media may instead be blocked by the separate graphics-route gate.
+
 - ✅ 2026-07-27 Theron local CUE discovery. M11 now discovers the strict
   Track 01/02 CUE pair only in the verified Track 02 payload's own directory.
   This preserves original CDDA provenance without recursively inspecting

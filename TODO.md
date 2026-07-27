@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-STARTUP-ERROR-DIAGNOSIS:** Closed 2026-07-27. The launcher no
+  longer labels every Theron launch failure as invalid Track 02 media. A
+  valid CUE/BIN can still be blocked by the separate original graphics-route
+  gate, so the message now accurately names both data classes.
+
 - **THERON-CDDA-LOCAL-CUE-DISCOVERY:** Closed 2026-07-27. M11 now limits
   strict CUE-pair discovery for a verified Track 02 payload to that payload's
   own directory. This retains the exact original Track 01/02 provenance while
