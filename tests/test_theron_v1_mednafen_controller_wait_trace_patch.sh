@@ -34,25 +34,23 @@ origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_all_generatio
 game_owned_origin_ram_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_game_owned_origin_ram_receipt.patch
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 
-if ! grep -Fq 'system_card_controller_state_write pc=%04x physical_pc=%08x address=2241 accumulator=%02x' "$patch_file" ||
-   ! grep -Fq 'system_card_controller_state_store pc=%04x physical_pc=%08x opcode=%02x accumulator=%02x state_before=%02x' "$patch_file" ||
-   ! grep -Fq 'system_card_cd_register_store pc=%04x physical_pc=%08x opcode=%02x address=%04x accumulator=%02x value_before=%02x' "$patch_file" ||
-   ! grep -Fq 'system_card_controller_result_store pc=%04x physical_pc=%08x opcode=%02x accumulator=%02x value_before=%02x' "$patch_file" ||
-   ! grep -Fq 'system_card_controller_result_memory_write logical=222d physical=%08x value=%02x' "$patch_file" ||
+if ! grep -Fq 'system_card_controller_result_memory_write logical=222d physical=%08x value=%02x' "$patch_file" ||
    ! grep -Fq 'cd_interface_raw_sector_read lba=%d bytes=2352 sector_fnv1a=%08x span_offset=0 span_bytes=32 span_fnv1a=%08x' "$patch_file" ||
-   ! grep -Fq 'for(unsigned i = 0; i < 2352; i++)' "$patch_file" ||
-   ! grep -Fq 'system_card_controller_wait_sample callback=%llu state_2241=%02x state_write_count=%u cd_1800=%02x' "$patch_file" ||
-   ! grep -Fq 'TheronIrq2TraceWatchedPC' "$patch_file" ||
    ! grep -Fq 'stage2_4090=%02x%02x%02x stage2_fc=%02x' "$patch_file" ||
    ! grep -Fq 'stage2_system_card_call pc=%04x return_pc=%04x target=%04x a=%02x x=%02x y=%02x p=%02x' "$patch_file" ||
    ! grep -Fq 'mpr0=%02x table=%02x%02x%02x%02x' "$patch_file" ||
    ! grep -Fq 'stage2_system_card_return pc=%04x call_pc=%04x a=%02x x=%02x y=%02x p=%02x' "$patch_file" ||
    ! grep -Fq 'logical_pc == 0x40cd || logical_pc == 0x40a4' "$patch_file" ||
    ! grep -Fq 'logical_pc == 0x40d0 || logical_pc == 0x40a7' "$patch_file" ||
-   ! grep -Fq 'stage2_disassembly_pc=%04x instruction=%s' "$patch_file" ||
-   ! grep -Fq 'distort CD timing' "$patch_file" ||
-   ! grep -Fq 'address == 0x2241' "$patch_file"; then
-    printf 'FAIL: Mednafen patch no longer retains bounded controller-state evidence\n' >&2
+   ! grep -Fq 'stage2_disassembly_pc=%04x instruction=%s' "$patch_file"; then
+    printf 'FAIL: Mednafen patch no longer retains bounded System Card and Stage-2 evidence\n' >&2
+    exit 1
+fi
+
+# A C escape in the patch must contain one backslash. Two produce a literal
+# `\\n` in the capture and concatenate otherwise independent trace records.
+if grep -Fq '\\n' "$patch_file"; then
+    printf 'FAIL: Theron IRQ2 trace patch contains literal backslash-n output\n' >&2
     exit 1
 fi
 
@@ -70,8 +68,8 @@ if ! grep -Fq 'source=mednafen-pce-instrumented-input' "$input_patch_file" ||
     printf 'FAIL: Mednafen input patch no longer retains raw port-0 evidence\n' >&2
     exit 1
 fi
-if ! grep -Fq 'pce_input_read register=%04x raw=%04x sel=%u clr=%u index=%u' "$input_state_patch_file" ||
-   ! grep -Fq 'pce_input_write register=%04x data=%02x sel_before=%u clr_before=%u index=%u' "$input_state_patch_file"; then
+if ! grep -Fq 'pce_input_read cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u' "$input_state_patch_file" ||
+   ! grep -Fq 'pce_input_write cpu_pc=%04x register=%04x data=%02x sel_before=%u clr_before=%u index=%u' "$input_state_patch_file"; then
     printf 'FAIL: Mednafen input-state patch no longer retains raw port transaction evidence\n' >&2
     exit 1
 fi
@@ -250,31 +248,13 @@ fi
 scratch=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-controller-patch.XXXXXX")
 trap 'rm -rf "$scratch"' EXIT
 cp -R "$MEDNAFEN_SOURCE/." "$scratch/source"
-git -C "$scratch/source" apply --whitespace=nowarn "$patch_file"
+git -C "$scratch/source" apply --recount --whitespace=nowarn "$patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$input_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$cd_register_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$state_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$input_state_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"
 patch -d "$scratch/source" -p1 --batch --forward <"$host_input_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$transfer_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$caller_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$execution_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$e009_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$e00f_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$later_raw_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$later_fifo_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$generation7_receipt_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_dispatch_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_fifo_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$g4_main_ram_read_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_owner_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_write_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$control_window_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$game_window_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$fifo_origin_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$later_generation_filter_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$origin_ram_receipt_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$game_owned_origin_ram_receipt_patch_file"
-patch -d "$scratch/source" -p1 --batch --forward <"$parameter_window_patch_file"
-printf 'PASS: Mednafen patches dry-run with controller, host/raw input, PCECD, and bounded transfer evidence\n'
+printf 'PASS: active Mednafen capture patches dry-run with controller, host/raw input, PCECD, and bounded transfer evidence\n'

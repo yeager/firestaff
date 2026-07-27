@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 Theron line-delimited trace repair. Fixed all active IRQ2
+  `print_format`/`fputs` rows that emitted literal `\\n` and merged independent
+  evidence. The harness now rejects that malformed output across every trace
+  sidecar, while the patch test dry-runs exactly the capture patch set used by
+  the build. This is trace-integrity work only; Track 02 semantics remain
+  fail-closed.
 - ✅ 2026-07-27 Theron complete later raw-sector witness. The full original
   dungeon route captures 256 raw sectors and passes the independent verifier:
   stable LBA-to-record delta 3009, Stage-3 `0x4e0`, and later

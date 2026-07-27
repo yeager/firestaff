@@ -185,6 +185,21 @@ trace_count() {
     printf '%s' "${count:-0}"
 }
 
+trace_files_are_line_delimited() {
+    local trace_file
+    local existing_trace_files=()
+
+    # A literal backslash-n comes from a misescaped instrumented C string.
+    # It merges independent observations and must never be admitted as evidence.
+    for trace_file in "$@"; do
+        [[ -e "$trace_file" ]] && existing_trace_files+=("$trace_file")
+    done
+    if (( ${#existing_trace_files[@]} == 0 )); then
+        return 0
+    fi
+    LC_ALL=C perl -ne 'exit 1 if index($_, chr(92) . chr(92) . "n") >= 0' "${existing_trace_files[@]}"
+}
+
 trace_event_types() {
     local file=$1
 
@@ -502,6 +517,10 @@ set -e
 
 if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace"; then
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
+    exit 1
+fi
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace"; then
+    printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
 # The loader receipt is separate from the later dynamic game-data handoff.

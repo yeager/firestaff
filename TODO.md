@@ -4209,6 +4209,15 @@ lane is carried forward in the sections below.
     defer SDL dispatch and are retained as final receipt counts. Missing
     preflight delivery still fails immediately instead of producing an invalid
     long capture.
+    Every active trace stream is now required to be line-delimited. The IRQ2
+    producer emitted several later `e009` records with literal `\\n`, which
+    merged independent dispatch, destination, return, and post-return facts
+    into one unparseable row. Those C strings now emit real newlines; the live
+    harness rejects any future literal-backslash-n trace, and its active-patch
+    dry-run matches the same coherent set that the build script applies. This
+    repairs trace integrity only: the earlier capture remains historical and
+    no later record gains loader, level, object, bitmap, palette, or payload
+    semantics from the repair.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a

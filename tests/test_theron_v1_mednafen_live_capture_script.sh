@@ -39,6 +39,13 @@ if [[ ! -f "$irq2_patch" ]] ||
     printf 'FAIL: raw-sector provenance trace must be parseable and retain its full witness window\n' >&2
     exit 1
 fi
+if ! grep -Fq 'trace_files_are_line_delimited()' "$script" ||
+   ! grep -Fq 'index($_, chr(92) . chr(92) . "n")' "$script" ||
+   ! grep -Fq 'existing_trace_files' "$script" ||
+   ! grep -Fq 'Mednafen emitted a literal backslash-n in a trace record' "$script"; then
+    printf 'FAIL: capture script must reject merged literal-backslash-n trace rows\n' >&2
+    exit 1
+fi
 if [[ ! -f "$quartz_helper" ]] ||
    ! grep -Fq 'CGEvent(keyboardEventSource: source' "$quartz_helper" ||
    ! grep -Fq 'CGPreflightPostEventAccess()' "$quartz_helper" ||
