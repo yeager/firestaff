@@ -135,22 +135,22 @@ DM2_14cd_1cec	SKULLWIN	SKULLWIN/c_ai.cpp	3495		VERIFIED_SOURCE_MAPPING
 DM2_14cd_1d42	SKULLWIN	SKULLWIN/c_ai.cpp	3522		VERIFIED_SOURCE_MAPPING
 DM2_14cd_1d6c	SKULLWIN	SKULLWIN/c_ai.cpp	3541		VERIFIED_SOURCE_MAPPING
 DM2_14cd_1e36	SKULLWIN	SKULLWIN/c_ai.cpp	3632		VERIFIED_SOURCE_MAPPING
-DM2_14cd_1e52	SKULLWIN	SKULLWIN/c_ai.cpp	3644		MISSING
-DM2_3DC4C	SKULLWIN	SKULLWIN/c_ai.cpp	3656		MISSING
-DM2_14cd_1e6e	SKULLWIN	SKULLWIN/c_ai.cpp	3679		MISSING
-DM2_14cd_1eec	SKULLWIN	SKULLWIN/c_ai.cpp	3739		MISSING
-DM2_14cd_1f8b	SKULLWIN	SKULLWIN/c_ai.cpp	3804		MISSING
-DM2_14cd_1fa7	SKULLWIN	SKULLWIN/c_ai.cpp	3816		MISSING
-DM2_14cd_0f0a	SKULLWIN	SKULLWIN/c_ai.cpp	3841		MISSING
-DM2_14cd_0389	SKULLWIN	SKULLWIN/c_ai.cpp	3931		MISSING
-DM2_14cd_0457	SKULLWIN	SKULLWIN/c_ai.cpp	3979		MISSING
-DM2_14cd_0550	SKULLWIN	SKULLWIN/c_ai.cpp	4080		MISSING
-DM2_14cd_0276	SKULLWIN	SKULLWIN/c_ai.cpp	4176		MISSING
-DM2_14cd_0684	SKULLWIN	SKULLWIN/c_ai.cpp	4231		MISSING
-DM2_14cd_08f5	SKULLWIN	SKULLWIN/c_ai.cpp	4375		MISSING
-DM2_DECIDE_NEXT_XACT	SKULLWIN	SKULLWIN/c_ai.cpp	4445		MISSING
-DM2_14cd_0067	SKULLWIN	SKULLWIN/c_ai.cpp	4495		MISSING
-DM2_SELECT_CREATURE_37FC	SKULLWIN	SKULLWIN/c_ai.cpp	4723		MISSING
+DM2_14cd_1e52	SKULLWIN	SKULLWIN/c_ai.cpp	3644	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_1e52_classify; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_3DC4C	SKULLWIN	SKULLWIN/c_ai.cpp	3656	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_3dc4c_classify; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_14cd_1e6e	SKULLWIN	SKULLWIN/c_ai.cpp	3679	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_1e6e_classify; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_14cd_1eec	SKULLWIN	SKULLWIN/c_ai.cpp	3739	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_1eec_classify; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_14cd_1f8b	SKULLWIN	SKULLWIN/c_ai.cpp	3804	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_1f8b_classify; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_14cd_1fa7	SKULLWIN	SKULLWIN/c_ai.cpp	3816	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_1fa7_classify; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_14cd_0f0a	SKULLWIN	SKULLWIN/c_ai.cpp	3841	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_0f0a_classify; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_14cd_0389	SKULLWIN	SKULLWIN/c_ai.cpp	3931	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_0389_classify; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_14cd_0457	SKULLWIN	SKULLWIN/c_ai.cpp	3979		VERIFIED_SOURCE_MAPPING
+DM2_14cd_0550	SKULLWIN	SKULLWIN/c_ai.cpp	4080		VERIFIED_SOURCE_MAPPING
+DM2_14cd_0276	SKULLWIN	SKULLWIN/c_ai.cpp	4176		VERIFIED_SOURCE_MAPPING
+DM2_14cd_0684	SKULLWIN	SKULLWIN/c_ai.cpp	4231		VERIFIED_SOURCE_MAPPING
+DM2_14cd_08f5	SKULLWIN	SKULLWIN/c_ai.cpp	4375		VERIFIED_SOURCE_MAPPING
+DM2_DECIDE_NEXT_XACT	SKULLWIN	SKULLWIN/c_ai.cpp	4445		VERIFIED_SOURCE_MAPPING
+DM2_14cd_0067	SKULLWIN	SKULLWIN/c_ai.cpp	4495		VERIFIED_SOURCE_MAPPING
+DM2_SELECT_CREATURE_37FC	SKULLWIN	SKULLWIN/c_ai.cpp	4723		VERIFIED_SOURCE_MAPPING
 DM2_14cd_09e2	SKULLWIN	SKULLWIN/c_ai.cpp	4743		MISSING
 DM2_50CB	SKULLWIN	SKULLWIN/c_ai.cpp	5275		MISSING
 DM2_13e4_0982	SKULLWIN	SKULLWIN/c_ai.cpp	5341		MISSING

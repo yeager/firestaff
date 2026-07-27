@@ -8783,5 +8783,318 @@ int dm2_v1_skproject_14cd_1e36_classify(
     int32_t eaxl, int32_t edxl,
     DM2_V1_Skproject14cd1e36Receipt *out_receipt);
 
+/* SKULLWIN/c_ai.cpp:3644 DM2_14cd_1e52 — sign-extends eaxl/edxl,
+   delegates to 1d6c with ecxl=0x10. */
+typedef struct {
+    int valid;
+    int32_t sign_ext_eax;
+    int32_t sign_ext_edx;
+    int ecxl;   /* always 0x10 */
+} DM2_V1_Skproject14cd1e52Receipt;
+
+int dm2_v1_skproject_14cd_1e52_classify(
+    int32_t eaxl, int32_t edxl,
+    DM2_V1_Skproject14cd1e52Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3656 DM2_3DC4C — creature type GDAT bit5 check. */
+typedef struct {
+    int valid;
+    int32_t map_index;
+    uint16_t table_word;
+    uint8_t creature_type;
+    uint16_t gdat_result;
+    int bit5_set;
+    int return_value;   /* 1 if bit5 NOT set, 0 if set */
+} DM2_V1_Skproject3DC4CReceipt;
+
+typedef uint16_t (*DM2_V1_QueryGdatEntryFn)(
+    uint8_t cls, uint8_t type, uint8_t idx, uint8_t sub, void *user);
+
+typedef uint16_t (*DM2_V1_ReadTableWordFn)(
+    int32_t offset, void *user);
+
+int dm2_v1_skproject_3dc4c_classify(
+    int32_t eaxl,
+    uint16_t v1e0571,
+    DM2_V1_ReadTableWordFn read_table_fn,
+    DM2_V1_QueryGdatEntryFn query_gdat_fn,
+    void *user,
+    DM2_V1_Skproject3DC4CReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3679 DM2_14cd_1e6e — random-based creature
+   word@0xa bit7 manipulation with 0f3c delegation. */
+typedef struct {
+    int valid;
+    int dc4c_result;        /* result of DM2_3DC4C call */
+    int eaxl_nonzero_path;  /* 1 if eaxl (RG3Blo) != 0 */
+    int rand_check;         /* 1 if rand condition met */
+    int bit7_state;         /* creature word@0xa bit7 before */
+    int delegated;          /* 1 if delegated to 0f3c */
+    int clear_bit7;         /* 1 if bit7 was cleared */
+} DM2_V1_Skproject14cd1e6eReceipt;
+
+typedef int32_t (*DM2_V1_RandFn)(void *user);
+
+int dm2_v1_skproject_14cd_1e6e_classify(
+    int32_t eaxl, int32_t edxl,
+    uint16_t v1e0571,
+    uint16_t creature_word_0a,
+    DM2_V1_ReadTableWordFn read_table_fn,
+    DM2_V1_QueryGdatEntryFn query_gdat_fn,
+    DM2_V1_RandFn rand_fn,
+    void *user,
+    DM2_V1_Skproject14cd1e6eReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3739 DM2_14cd_1eec — table walker, matches
+   byte@0xc == ecxl, delegates to 0f3c. */
+typedef struct {
+    int valid;
+    int blocked_null_ptr;
+    int entries_visited;
+    int entries_matched;
+    int entries_delegated;
+} DM2_V1_Skproject14cd1eecReceipt;
+
+int dm2_v1_skproject_14cd_1eec_classify(
+    int32_t eaxl, int32_t edxl, const uint8_t *xebxp, int32_t ecxl,
+    uint16_t creature_w8,
+    DM2_V1_1316CheckFn check_1316_fn,
+    DM2_V1_0f3cDelegateFn delegate_fn,
+    void *user,
+    DM2_V1_Skproject14cd1eecReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3804 DM2_14cd_1f8b — sign-extends, delegates
+   to 1eec with ecxl=0x15. */
+typedef struct {
+    int valid;
+    int32_t sign_ext_eax;
+    int32_t sign_ext_edx;
+    int ecxl;   /* always 0x15 */
+} DM2_V1_Skproject14cd1f8bReceipt;
+
+int dm2_v1_skproject_14cd_1f8b_classify(
+    int32_t eaxl, int32_t edxl,
+    DM2_V1_Skproject14cd1f8bReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3816 DM2_14cd_1fa7 — packs v1e08d8/d4/d6
+   into argw0, delegates to 18f2 with eaxb=0x16. */
+typedef struct {
+    int valid;
+    uint16_t packed_word;
+    int32_t sign_ext_edx;
+} DM2_V1_Skproject14cd1fa7Receipt;
+
+int dm2_v1_skproject_14cd_1fa7_classify(
+    int32_t edxl,
+    uint16_t v1e08d8, uint16_t v1e08d4, uint16_t v1e08d6,
+    DM2_V1_Skproject14cd1fa7Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3841 DM2_14cd_0f0a — 17-way switch dispatcher. */
+typedef struct {
+    int valid;
+    uint8_t sub_index;
+    int dispatched;     /* 1 if a case was taken */
+    int case_taken;     /* 0-16 or -1 if default */
+} DM2_V1_Skproject14cd0f0aReceipt;
+
+int dm2_v1_skproject_14cd_0f0a_classify(
+    int32_t eaxl, int32_t edxl, int32_t ebxl,
+    DM2_V1_Skproject14cd0f0aReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3931 DM2_14cd_0389 — v1e07d8 validity check,
+   creature b12/b13 table lookup, dispatches to 0f0a. */
+typedef struct {
+    int valid;
+    int blocked_b00;
+    int blocked_b01;
+    int blocked_b03;
+    int blocked_b12_ff;
+    uint8_t creature_b12;
+    uint8_t creature_b13;
+    uint8_t table_byte5;
+    uint8_t table_byte6;
+} DM2_V1_Skproject14cd0389Receipt;
+
+typedef const uint8_t *(*DM2_V1_TableLookupFn)(
+    int32_t b12_idx, void *user);
+
+int dm2_v1_skproject_14cd_0389_classify(
+    uint8_t v1e07d8_b00, uint8_t v1e07d8_b01, int32_t v1e07d8_b03,
+    const uint8_t *creature_ptr,
+    DM2_V1_TableLookupFn table_fn,
+    void *user,
+    DM2_V1_Skproject14cd0389Receipt *out_receipt);
+
+/* ---- batch 23b: SKULLWIN/c_ai.cpp DM2_14cd_0457, DM2_14cd_0550,
+   DM2_14cd_0276, DM2_14cd_0684, DM2_14cd_08f5, DM2_DECIDE_NEXT_XACT,
+   DM2_14cd_0067, DM2_SELECT_CREATURE_37FC ---- */
+
+typedef int16_t (*DM2V1_MinCallback)(int16_t a, int16_t b);
+typedef int16_t (*DM2V1_MaxCallback)(int16_t a, int16_t b);
+typedef void (*DM2V1_CopyMemoryCallback)(void *dst, const void *src, int32_t len);
+typedef int16_t (*DM2V1_Rand16Callback)(int16_t range);
+typedef int32_t (*DM2V1_RandCallback)(void);
+typedef int16_t (*DM2V1_RandDirCallback)(void);
+typedef int8_t (*DM2V1_Call0389Callback)(void);
+typedef int32_t (*DM2V1_Call062eCallback)(void);
+typedef void (*DM2V1_Call0f0aCallback)(int32_t a, int32_t b, int32_t c, void *d);
+typedef int32_t (*DM2V1_QueryGdatCreatureCallback)(int32_t type, int32_t param);
+typedef int32_t (*DM2V1_GetGlobVarCallback)(int32_t idx);
+
+typedef struct DM2_V1_Skproject0457Receipt {
+    int32_t entries_processed;
+    int32_t entries_removed;
+    int32_t final_count;
+    int32_t initial_count;
+    int8_t  b00_value;
+} DM2_V1_Skproject0457Receipt;
+
+int dm2_v1_skproject_0457_classify(
+    int8_t *plan_entries,
+    int32_t *entry_count,
+    int8_t b00_value,
+    DM2V1_MinCallback min_cb,
+    DM2V1_CopyMemoryCallback copy_cb,
+    DM2_V1_Skproject0457Receipt *out_receipt);
+
+typedef struct DM2_V1_Skproject0550Receipt {
+    int32_t entries_visited;
+    int32_t exact_match;
+    int32_t random_skipped;
+    int32_t entries_dispatched;
+    int8_t  match_key;
+    int8_t  terminator_hit;
+} DM2_V1_Skproject0550Receipt;
+
+int dm2_v1_skproject_0550_classify(
+    const int8_t *entry_table,
+    int8_t match_key,
+    int8_t secondary_key,
+    int32_t exact_flag,
+    int32_t v1e07ec,
+    const int8_t *table1d5f82,
+    DM2V1_Rand16Callback rand16_cb,
+    DM2V1_Call0f0aCallback call_0f0a_cb,
+    DM2_V1_Skproject0550Receipt *out_receipt);
+
+typedef struct DM2_V1_Skproject0276Receipt {
+    int8_t  b00_assigned;
+    int8_t  b01_assigned;
+    int8_t  b02_assigned;
+    int8_t  b03_assigned;
+    int16_t w04_assigned;
+    int16_t w06_assigned;
+    int16_t w08_assigned;
+    int32_t memory_allocated;
+    int32_t alloc_size;
+    int32_t xp_0a_set;
+} DM2_V1_Skproject0276Receipt;
+
+int dm2_v1_skproject_0276_classify(
+    const int8_t *input_struct,
+    int16_t v1e054c,
+    DM2V1_MaxCallback max_cb,
+    DM2_V1_Skproject0276Receipt *out_receipt);
+
+typedef struct DM2_V1_Skproject0684Receipt {
+    int32_t called_0389;
+    int32_t result_0389;
+    int32_t called_062e;
+    int32_t called_0550;
+    int32_t called_0457;
+    int32_t called_find_walk;
+    int32_t called_0276;
+    int32_t v1e0674_count;
+    int8_t  final_xact;
+    int32_t table_flag_skip;
+    int32_t rand_dir_taken;
+    int32_t walk_path_result;
+} DM2_V1_Skproject0684Receipt;
+
+int dm2_v1_skproject_0684_classify(
+    const int8_t *creatures,
+    int16_t v1e0584,
+    const int8_t *table1d607e,
+    DM2V1_Call0389Callback call_0389_cb,
+    DM2V1_RandDirCallback rand_dir_cb,
+    DM2V1_Call062eCallback call_062e_cb,
+    DM2_V1_Skproject0684Receipt *out_receipt);
+
+typedef struct DM2_V1_Skproject08f5Receipt {
+    int8_t  input_eaxl;
+    int8_t  vb_00_table_idx;
+    int8_t  entry_index;
+    int8_t  looked_up_byte;
+    int32_t reset_to_ff;
+    int32_t advance_result;
+    int8_t  new_entry_index;
+} DM2_V1_Skproject08f5Receipt;
+
+int dm2_v1_skproject_08f5_classify(
+    int32_t eaxl,
+    const int8_t *creatures,
+    const int8_t *table1d5f82,
+    DM2_V1_Skproject08f5Receipt *out_receipt);
+
+typedef struct DM2_V1_SkprojectDecideNextXactReceipt {
+    int8_t  table_index;
+    int8_t  initial_entry;
+    int8_t  final_entry;
+    int32_t f6_commands_seen;
+    int8_t  chosen_xact;
+    int16_t v1e0572_assigned;
+    int16_t v1e0574_assigned;
+} DM2_V1_SkprojectDecideNextXactReceipt;
+
+int dm2_v1_skproject_decide_next_xact_classify(
+    int32_t eaxl,
+    const int8_t *creatures,
+    const int8_t *table1d5f82,
+    DM2_V1_SkprojectDecideNextXactReceipt *out_receipt);
+
+typedef struct DM2_V1_Skproject0067Receipt {
+    int16_t creature_flags;
+    int32_t rand_value;
+    int32_t same_type_as_v1e08d6;
+    int32_t flags_modified;
+    int16_t final_flags;
+    int32_t entries_scanned;
+    int16_t selected_behavior;
+    int32_t exact_match_found;
+    int32_t partial_match_found;
+    int32_t glob_var_match;
+    int8_t  prev_behavior;
+    int32_t behavior_changed;
+} DM2_V1_Skproject0067Receipt;
+
+int dm2_v1_skproject_0067_classify(
+    const int8_t *behavior_table,
+    const int8_t *creatures,
+    const int8_t *spx_creature,
+    const int8_t *v1e0552,
+    int16_t v1e0571,
+    int16_t v1e08d6,
+    int16_t v1e0584,
+    int16_t v1e054c,
+    const int8_t *table1d607e,
+    DM2V1_RandCallback rand_cb,
+    DM2V1_Rand16Callback rand16_cb,
+    DM2V1_GetGlobVarCallback glob_var_cb,
+    DM2_V1_Skproject0067Receipt *out_receipt);
+
+typedef struct DM2_V1_SkprojectSelectCreature37FCReceipt {
+    int32_t queried_gdat;
+    int16_t v1e0584_resolved;
+    int16_t v1e0586_result;
+    int32_t v1e0588_offset;
+} DM2_V1_SkprojectSelectCreature37FCReceipt;
+
+int dm2_v1_skproject_select_creature_37fc_classify(
+    int16_t v1e0584,
+    const int8_t *spx_creature,
+    const int8_t **table1d6190,
+    DM2V1_QueryGdatCreatureCallback query_gdat_cb,
+    DM2_V1_SkprojectSelectCreature37FCReceipt *out_receipt);
+
 
 #endif

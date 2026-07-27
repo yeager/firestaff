@@ -10537,6 +10537,341 @@ int main(void)
           strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1e36") != 0,
           "source evidence names cycle-22 batch-22b");
 
+    /* ==== batch 23a: DM2_14cd_1e52 ==== */
+    {
+        DM2_V1_Skproject14cd1e52Receipt r;
+        int rv = dm2_v1_skproject_14cd_1e52_classify(0x83, 0x7f, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1e52 valid");
+        CHECK(r.sign_ext_eax == -125, "14cd_1e52 sign-ext eax 0x83 => -125");
+        CHECK(r.sign_ext_edx == 127, "14cd_1e52 sign-ext edx 0x7f => 127");
+        CHECK(r.ecxl == 0x10, "14cd_1e52 ecxl == 0x10");
+    }
+
+    /* ==== batch 23a: DM2_3DC4C (bit5 not set => returns 1) ==== */
+    {
+        DM2_V1_Skproject3DC4CReceipt r;
+        /* Provide callbacks that return known values */
+        int rv = dm2_v1_skproject_3dc4c_classify(
+            0, 5, NULL, NULL, NULL, &r);
+        CHECK(rv == 1 && r.valid == 1, "3dc4c valid no callbacks");
+        /* With no callbacks, table_word=0, gdat_result=0, bit5=0 => return 1 */
+        CHECK(r.return_value == 1, "3dc4c returns 1 when bit5 not set");
+        CHECK(r.bit5_set == 0, "3dc4c bit5 not set");
+    }
+
+    /* ==== batch 23a: DM2_14cd_1e6e (dc4c returns 0 => clear bit7) ==== */
+    {
+        DM2_V1_Skproject14cd1e6eReceipt r;
+        int rv = dm2_v1_skproject_14cd_1e6e_classify(
+            0x01, 0x05, 0, 0x0080, NULL, NULL, NULL, NULL, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1e6e valid");
+        /* No callbacks => dc4c gets gdat_result=0 => bit5 not set => dc4c returns 1.
+           But with no read_table/query_gdat callbacks, gdat_result stays 0,
+           so dc4c_result=1. eaxl=1 => nonzero path. No rand_fn => rand=0,
+           rand & 0x1f == 0 => clear bit7, delegate. */
+        CHECK(r.eaxl_nonzero_path == 1, "14cd_1e6e eaxl nonzero path");
+        CHECK(r.delegated == 1, "14cd_1e6e delegated");
+        CHECK(r.clear_bit7 == 1, "14cd_1e6e clear bit7");
+    }
+
+    /* ==== batch 23a: DM2_14cd_1e6e (eaxl=0, bit7 set => clear) ==== */
+    {
+        DM2_V1_Skproject14cd1e6eReceipt r;
+        int rv = dm2_v1_skproject_14cd_1e6e_classify(
+            0x00, 0x05, 0, 0x0080, NULL, NULL, NULL, NULL, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1e6e valid eax0 bit7set");
+        CHECK(r.eaxl_nonzero_path == 0, "14cd_1e6e eax zero path");
+        CHECK(r.bit7_state == 1, "14cd_1e6e bit7 was set");
+        CHECK(r.clear_bit7 == 1, "14cd_1e6e clears bit7 on bit7-set path");
+    }
+
+    /* ==== batch 23a: DM2_14cd_1eec (null ptr) ==== */
+    {
+        DM2_V1_Skproject14cd1eecReceipt r;
+        int rv = dm2_v1_skproject_14cd_1eec_classify(
+            0, 0, NULL, 0, 0, NULL, NULL, NULL, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1eec null ptr");
+        CHECK(r.blocked_null_ptr == 1, "14cd_1eec blocked null");
+    }
+
+    /* ==== batch 23a: DM2_14cd_1eec (single entry, no match) ==== */
+    {
+        uint8_t entry[14];
+        memset(entry, 0, sizeof(entry));
+        entry[0x0c] = 0x03;
+        entry[0x0d] = 0x00; /* sentinel */
+
+        DM2_V1_Skproject14cd1eecReceipt r;
+        int rv = dm2_v1_skproject_14cd_1eec_classify(
+            0, 0, entry, 0x15, 0, NULL, NULL, NULL, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1eec single no match");
+        CHECK(r.entries_visited == 1, "14cd_1eec visited 1");
+        CHECK(r.entries_matched == 0, "14cd_1eec matched 0");
+    }
+
+    /* ==== batch 23a: DM2_14cd_1f8b ==== */
+    {
+        DM2_V1_Skproject14cd1f8bReceipt r;
+        int rv = dm2_v1_skproject_14cd_1f8b_classify(0xfe, 0x02, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1f8b valid");
+        CHECK(r.sign_ext_eax == -2, "14cd_1f8b sign-ext eax 0xfe => -2");
+        CHECK(r.sign_ext_edx == 2, "14cd_1f8b sign-ext edx 0x02 => 2");
+        CHECK(r.ecxl == 0x15, "14cd_1f8b ecxl == 0x15");
+    }
+
+    /* ==== batch 23a: DM2_14cd_1fa7 ==== */
+    {
+        DM2_V1_Skproject14cd1fa7Receipt r;
+        /* v1e08d8=0x13, v1e08d4=0x0a, v1e08d6=0x2f */
+        int rv = dm2_v1_skproject_14cd_1fa7_classify(
+            0x05, 0x0013, 0x000a, 0x002f, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1fa7 valid");
+        /* packed = (0x13 & 0x1f) | ((0x0a & 0x1f) << 5) | ((0x2f & 0x3f) << 10)
+           = 0x13 | (0x0a << 5) | (0x2f << 10)
+           = 0x13 | 0x140 | 0xbc00
+           = 0xbd53 */
+        CHECK(r.packed_word == 0xbd53, "14cd_1fa7 packed word");
+        CHECK(r.sign_ext_edx == 5, "14cd_1fa7 sign-ext edx");
+    }
+
+    /* ==== batch 23a: DM2_14cd_0f0a (case 13) ==== */
+    {
+        DM2_V1_Skproject14cd0f0aReceipt r;
+        int rv = dm2_v1_skproject_14cd_0f0a_classify(0x0d, 0x05, 0x03, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_0f0a valid case 13");
+        CHECK(r.sub_index == 0x0d, "14cd_0f0a sub_index 13");
+        CHECK(r.dispatched == 1, "14cd_0f0a dispatched");
+        CHECK(r.case_taken == 13, "14cd_0f0a case 13");
+    }
+
+    /* ==== batch 23a: DM2_14cd_0f0a (case 16) ==== */
+    {
+        DM2_V1_Skproject14cd0f0aReceipt r;
+        int rv = dm2_v1_skproject_14cd_0f0a_classify(0x10, 0, 0, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_0f0a valid case 16");
+        CHECK(r.case_taken == 16, "14cd_0f0a case 16");
+    }
+
+    /* ==== batch 23a: DM2_14cd_0f0a (out of range) ==== */
+    {
+        DM2_V1_Skproject14cd0f0aReceipt r;
+        int rv = dm2_v1_skproject_14cd_0f0a_classify(0x11, 0, 0, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_0f0a valid out-of-range");
+        CHECK(r.dispatched == 0, "14cd_0f0a not dispatched");
+        CHECK(r.case_taken == -1, "14cd_0f0a case -1 default");
+    }
+
+    /* ==== batch 23a: DM2_14cd_0389 (blocked b00) ==== */
+    {
+        DM2_V1_Skproject14cd0389Receipt r;
+        uint8_t creature[0x20];
+        memset(creature, 0, sizeof(creature));
+        int rv = dm2_v1_skproject_14cd_0389_classify(
+            0, 1, 0, creature, NULL, NULL, &r);
+        CHECK(rv == 0, "14cd_0389 blocked b00");
+        CHECK(r.blocked_b00 == 1, "14cd_0389 b00 flag");
+    }
+
+    /* ==== batch 23a: DM2_14cd_0389 (blocked b03 == -1) ==== */
+    {
+        DM2_V1_Skproject14cd0389Receipt r;
+        uint8_t creature[0x20];
+        memset(creature, 0, sizeof(creature));
+        int rv = dm2_v1_skproject_14cd_0389_classify(
+            1, 1, (int32_t)0xffffffff, creature, NULL, NULL, &r);
+        CHECK(rv == 0, "14cd_0389 blocked b03");
+        CHECK(r.blocked_b03 == 1, "14cd_0389 b03 flag");
+    }
+
+    /* ==== batch 23a: DM2_14cd_0389 (blocked b12 == 0xff) ==== */
+    {
+        DM2_V1_Skproject14cd0389Receipt r;
+        uint8_t creature[0x20];
+        memset(creature, 0, sizeof(creature));
+        creature[0x12] = 0xff;
+        int rv = dm2_v1_skproject_14cd_0389_classify(
+            1, 1, 0, creature, NULL, NULL, &r);
+        CHECK(rv == 0, "14cd_0389 blocked b12 ff");
+        CHECK(r.blocked_b12_ff == 1, "14cd_0389 b12 ff flag");
+    }
+
+    /* ==== batch 23a: DM2_14cd_0389 (valid, reads b12/b13) ==== */
+    {
+        DM2_V1_Skproject14cd0389Receipt r;
+        uint8_t creature[0x20];
+        memset(creature, 0, sizeof(creature));
+        creature[0x12] = 0x03;
+        creature[0x13] = 0x02;
+        int rv = dm2_v1_skproject_14cd_0389_classify(
+            1, 1, 0, creature, NULL, NULL, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_0389 valid");
+        CHECK(r.creature_b12 == 0x03, "14cd_0389 b12");
+        CHECK(r.creature_b13 == 0x02, "14cd_0389 b13");
+    }
+
+    /* ---- batch 23a: source evidence ---- */
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1e52") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_3DC4C") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1e6e") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1eec") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1f8b") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1fa7") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_0f0a") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_0389") != 0,
+          "source evidence names cycle-23 batch-23a");
+
+    /* ---- batch 23b: 0457, 0550, 0276, 0684, 08f5, DECIDE_NEXT_XACT, 0067, SELECT_CREATURE_37FC ---- */
+
+    /* 0457 null receipt */
+    {
+        int32_t cnt = 3;
+        int8_t ents[66];
+        memset(ents, 0, sizeof(ents));
+        CHECK(dm2_v1_skproject_0457_classify(ents, &cnt, 4, NULL, NULL, NULL) == 0,
+              "0457 null receipt blocked");
+    }
+    /* 0457 null entries */
+    {
+        DM2_V1_Skproject0457Receipt r;
+        int32_t cnt = 3;
+        CHECK(dm2_v1_skproject_0457_classify(NULL, &cnt, 4, NULL, NULL, &r) == 0,
+              "0457 null entries blocked");
+    }
+    /* 0457 zero count */
+    {
+        DM2_V1_Skproject0457Receipt r;
+        int32_t cnt = 0;
+        int8_t ents[22]; memset(ents, 0, sizeof(ents));
+        CHECK(dm2_v1_skproject_0457_classify(ents, &cnt, 4, NULL, NULL, &r) == 1 &&
+              r.initial_count == 0 && r.final_count == 0,
+              "0457 zero count");
+    }
+
+    /* 0550 null receipt */
+    {
+        int8_t tbl[7] = {0};
+        CHECK(dm2_v1_skproject_0550_classify(tbl, 1, 0, 0, 0, NULL, NULL, NULL, NULL) == 0,
+              "0550 null receipt blocked");
+    }
+    /* 0550 null table */
+    {
+        DM2_V1_Skproject0550Receipt r;
+        CHECK(dm2_v1_skproject_0550_classify(NULL, 1, 0, 0, 0, NULL, NULL, NULL, &r) == 0,
+              "0550 null table blocked");
+    }
+    /* 0550 exact match */
+    {
+        DM2_V1_Skproject0550Receipt r;
+        int8_t tbl[7]; memset(tbl, 0, sizeof(tbl));
+        tbl[0] = 5;
+        CHECK(dm2_v1_skproject_0550_classify(tbl, 5, 0, 0, 0, NULL, NULL, NULL, &r) == 1 &&
+              r.exact_match == 1 && r.entries_visited == 1,
+              "0550 exact match first entry");
+    }
+
+    /* 0276 null receipt */
+    {
+        int8_t inp[0x16]; memset(inp, 0, sizeof(inp));
+        CHECK(dm2_v1_skproject_0276_classify(inp, 0, NULL, NULL) == 0,
+              "0276 null receipt blocked");
+    }
+    /* 0276 null input */
+    {
+        DM2_V1_Skproject0276Receipt r;
+        CHECK(dm2_v1_skproject_0276_classify(NULL, 0, NULL, &r) == 0,
+              "0276 null input blocked");
+    }
+
+    /* 0684 null receipt */
+    {
+        int8_t cr[32] = {0}; int8_t tbl[8] = {0};
+        CHECK(dm2_v1_skproject_0684_classify(cr, 0, tbl, NULL, NULL, NULL, NULL) == 0,
+              "0684 null receipt blocked");
+    }
+
+    /* 08f5 null receipt */
+    {
+        int8_t cr[32] = {0}; int8_t tbl[64] = {0};
+        CHECK(dm2_v1_skproject_08f5_classify(0, cr, tbl, NULL) == 0,
+              "08f5 null receipt blocked");
+    }
+    /* 08f5 null creatures */
+    {
+        DM2_V1_Skproject08f5Receipt r;
+        int8_t tbl[64] = {0};
+        CHECK(dm2_v1_skproject_08f5_classify(0, NULL, tbl, &r) == 0,
+              "08f5 null creatures blocked");
+    }
+    /* 08f5 basic lookup */
+    {
+        DM2_V1_Skproject08f5Receipt r;
+        int8_t cr[32]; memset(cr, 0, sizeof(cr));
+        cr[0x12] = 0; cr[0x13] = 0;
+        int8_t tbl[64]; memset(tbl, 0, sizeof(tbl));
+        tbl[2] = 5;
+        CHECK(dm2_v1_skproject_08f5_classify(0, cr, tbl, &r) == 1 &&
+              r.looked_up_byte == 5 && r.reset_to_ff == 0,
+              "08f5 basic lookup col2");
+    }
+    /* 08f5 0xFE reset */
+    {
+        DM2_V1_Skproject08f5Receipt r;
+        int8_t cr[32]; memset(cr, 0, sizeof(cr));
+        int8_t tbl[64]; memset(tbl, 0, sizeof(tbl));
+        tbl[2] = (int8_t)0xFE;
+        CHECK(dm2_v1_skproject_08f5_classify(0, cr, tbl, &r) == 1 &&
+              r.reset_to_ff == 1 && r.advance_result == 1,
+              "08f5 reset on 0xFE");
+    }
+
+    /* decide_next_xact null receipt */
+    {
+        int8_t cr[32] = {0}; int8_t tbl[64] = {0};
+        CHECK(dm2_v1_skproject_decide_next_xact_classify(0, cr, tbl, NULL) == 0,
+              "decide_next_xact null receipt blocked");
+    }
+    /* decide_next_xact basic */
+    {
+        DM2_V1_SkprojectDecideNextXactReceipt r;
+        int8_t cr[32]; memset(cr, 0, sizeof(cr));
+        cr[0x12] = 1; cr[0x13] = 2;
+        int8_t tbl[64]; memset(tbl, 0, sizeof(tbl));
+        CHECK(dm2_v1_skproject_decide_next_xact_classify(0, cr, tbl, &r) == 1 &&
+              r.table_index == 1 && r.initial_entry == 2,
+              "decide_next_xact basic classification");
+    }
+
+    /* 0067 null receipt */
+    {
+        int8_t bt[6] = {0}; int8_t cr[32] = {0}; int8_t spx[16] = {0};
+        CHECK(dm2_v1_skproject_0067_classify(bt, cr, spx, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL) == 0,
+              "0067 null receipt blocked");
+    }
+
+    /* select_creature_37fc null receipt */
+    {
+        int8_t spx[16] = {0};
+        CHECK(dm2_v1_skproject_select_creature_37fc_classify(0, spx, NULL, NULL, NULL) == 0,
+              "select_creature_37fc null receipt blocked");
+    }
+    /* select_creature_37fc null spx */
+    {
+        DM2_V1_SkprojectSelectCreature37FCReceipt r;
+        CHECK(dm2_v1_skproject_select_creature_37fc_classify(0, NULL, NULL, NULL, &r) == 0,
+              "select_creature_37fc null spx blocked");
+    }
+
+    /* source evidence batch 23b */
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_0457") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_0550") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_0276") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_0684") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_08f5") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_DECIDE_NEXT_XACT") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_0067") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_SELECT_CREATURE_37FC") != 0,
+          "source evidence names cycle-23 batch-23b");
+
     if (failed) {
         printf("%d failure(s)\n", failed);
         return 1;
