@@ -22819,6 +22819,23 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                     return m11_toggle_champion_inventory(state, slot);
                 }
             }
+        } else {
+            /* F0287 paints the three visible HP/stamina/mana bars across
+             * x+4..x+62.  The narrow C187..C190 source zones cover their
+             * right edge, but accepting the entire painted bar keeps the
+             * host hit surface honest: clicking a visible bar must never
+             * silently select a leader instead of opening that champion's
+             * inventory. Name and hand-slot rectangles remain on their
+             * source-owned routes below. */
+            for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+                DM1_V1_ChampionStatusRectPc34 statusRect;
+                if (dm1_v1_champion_status_box_rect_pc34(slot, &statusRect) &&
+                    m11_point_in_rect(x, y,
+                                      statusRect.x + 4, statusRect.y + 20,
+                                      59, 7)) {
+                    return m11_toggle_champion_inventory(state, slot);
+                }
+            }
         }
 
         command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(

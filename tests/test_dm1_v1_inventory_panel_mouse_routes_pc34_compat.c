@@ -449,14 +449,17 @@ static void test_champion_hud_left_click_opens_target_inventory(void) {
     state.world.party.champions[1].hp.current = 100;
     state.world.party.champions[1].hp.maximum = 100;
 
-    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 44, 14,
+    /* The full visible F0287 bar is a live inventory target, not merely the
+     * narrow C187 right edge. This point is deliberately on the left side
+     * of the painted HP/stamina/mana bars. */
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 8, 21,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
-              "C187 left-click opens champion 0 inventory");
+              "visible champion 0 bar opens inventory");
     ASSERT_EQ(state.inventoryPanelActive, 1,
-              "C187 opens the inventory panel");
+              "visible champion 0 bar opens the inventory panel");
     ASSERT_EQ(state.world.party.activeChampionIndex, 0,
-              "C187 keeps champion 0 active");
+              "visible champion 0 bar keeps champion 0 active");
 
     ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 113, 14,
                                                 M11_DM1_MOUSE_MASK_LEFT),

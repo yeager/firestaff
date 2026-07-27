@@ -41193,6 +41193,14 @@ passes all 27 checks from title through entrance and HUD.
   layouts, FNV1a, receipt null.
 # 2026-07-27 Theron hash-selected Track 02 media root
 
+- ✅ 2026-07-27 DM1 champion HUD click repair. The full painted V1
+  health/stamina/mana bar surface now opens the matching champion inventory,
+  rather than accepting input only on the narrow right-edge source zone while
+  the rest of the visible bar silently selected the leader. Name and hand
+  routes remain unchanged; V2 portrait-card routing remains covered.
+  Verification: DM1 inventory mouse-route runtime, V2 HUD interaction, and
+  HiDPI champion pointer tests.
+
 - ✅ 2026-07-27 DM1 V2.2 reviewed-art admission repair. Formatted Art Studio
   manifests are now parsed as JSON objects instead of line fragments, all
   V2.2 manifest/receipt roots are configured together, and alias-safe path
