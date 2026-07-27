@@ -10201,6 +10201,342 @@ int main(void)
                      "DM2_14cd_18f2") != 0,
           "source evidence names cycle-21 batch-21b");
 
+    /* ---- cycle-22 batch-22a: 14cd_19a4 through 14cd_1bac ---- */
+
+    /* 14cd_19a4: sign-extend wrapper to 18f2 */
+    {
+        DM2_V1_Skproject14cd19a4Receipt r19a4;
+        uint8_t tbl[14];
+        memset(tbl, 0, sizeof(tbl));
+
+        CHECK(dm2_v1_skproject_14cd_19a4_classify(3, -2, tbl, &r19a4) == 1,
+              "19a4 valid with table");
+        CHECK(r19a4.valid == 1, "19a4 receipt valid");
+        CHECK(r19a4.eaxb_extended == 3, "19a4 eaxb preserved");
+        CHECK(r19a4.edxb_extended == -2, "19a4 edxb preserved");
+        CHECK(dm2_v1_skproject_14cd_19a4_classify(0, 0, NULL, &r19a4) == 0,
+              "19a4 blocked on NULL");
+    }
+
+    /* 14cd_19c2: guarded delegate */
+    {
+        DM2_V1_Skproject14cd19c2Receipt r19c2;
+        uint8_t tbl[14];
+        uint8_t lkup[8];
+        memset(tbl, 0, sizeof(tbl));
+        memset(lkup, 0, sizeof(lkup));
+        lkup[5] = 0;
+
+        CHECK(dm2_v1_skproject_14cd_19c2_classify(0, NULL, 0, 2, 1, 1, 1, lkup, &r19c2) == 0,
+              "19c2 blocked on NULL ptr");
+        CHECK(r19c2.blocked_null_ptr == 1, "19c2 null_ptr flag");
+
+        CHECK(dm2_v1_skproject_14cd_19c2_classify(0, tbl, 0, 2, 1, 0, 1, lkup, &r19c2) == 0,
+              "19c2 blocked on v1e058d=0");
+        CHECK(r19c2.blocked_no_readiness == 1, "19c2 readiness flag");
+
+        CHECK(dm2_v1_skproject_14cd_19c2_classify(0, tbl, 0, 2, 1, 1, 0, lkup, &r19c2) == 0,
+              "19c2 blocked on v1e0578=0");
+        CHECK(r19c2.blocked_no_v1e0578 == 1, "19c2 v1e0578 flag");
+        CHECK(r19c2.byte5_lte_zero == 1, "19c2 byte5<=0 detected");
+
+        CHECK(dm2_v1_skproject_14cd_19c2_classify(1, tbl, 5, 3, 1, 1, 4, lkup, &r19c2) == 1,
+              "19c2 valid with negation");
+        CHECK(r19c2.negation_flag == 1, "19c2 negation on");
+        CHECK(r19c2.ecxb_delegated == -3, "19c2 ecxb negated");
+        CHECK(r19c2.edxb_delegated == 5, "19c2 edxb passed through");
+
+        CHECK(dm2_v1_skproject_14cd_19c2_classify(0, tbl, 5, 3, 1, 1, 4, lkup, &r19c2) == 1,
+              "19c2 valid without negation");
+        CHECK(r19c2.negation_flag == 0, "19c2 negation off");
+        CHECK(r19c2.ecxb_delegated == 3, "19c2 ecxb unchanged");
+    }
+
+    /* 14cd_1a3c: wrapper to 19c2(ecxl=2, argb0=1) */
+    {
+        DM2_V1_Skproject14cd1a3cReceipt r1a3c;
+        uint8_t tbl[14];
+        memset(tbl, 0, sizeof(tbl));
+
+        CHECK(dm2_v1_skproject_14cd_1a3c_classify(7, -1, tbl, &r1a3c) == 1,
+              "1a3c valid");
+        CHECK(r1a3c.eaxb_extended == 7, "1a3c eaxb");
+        CHECK(r1a3c.edxb_extended == -1, "1a3c edxb");
+        CHECK(dm2_v1_skproject_14cd_1a3c_classify(0, 0, NULL, &r1a3c) == 0,
+              "1a3c blocked on NULL");
+    }
+
+    /* 14cd_1a5a: wrapper to 19c2(ecxl=4, argb0=3) */
+    {
+        DM2_V1_Skproject14cd1a5aReceipt r1a5a;
+        uint8_t tbl[14];
+        memset(tbl, 0, sizeof(tbl));
+
+        CHECK(dm2_v1_skproject_14cd_1a5a_classify(2, 3, tbl, &r1a5a) == 1,
+              "1a5a valid");
+        CHECK(r1a5a.eaxb_extended == 2, "1a5a eaxb");
+        CHECK(dm2_v1_skproject_14cd_1a5a_classify(0, 0, NULL, &r1a5a) == 0,
+              "1a5a blocked on NULL");
+    }
+
+    /* 14cd_1a78: table walker */
+    {
+        DM2_V1_Skproject14cd1a78Receipt r1a78;
+        uint8_t tbl[28]; /* 2 entries */
+        uint8_t lkup[16];
+        memset(tbl, 0, sizeof(tbl));
+        memset(lkup, 0, sizeof(lkup));
+
+        CHECK(dm2_v1_skproject_14cd_1a78_classify(0, 0, NULL, 1, lkup, &r1a78) == 0,
+              "1a78 blocked on NULL ptr");
+        CHECK(r1a78.blocked_null_ptr == 1, "1a78 null_ptr flag");
+
+        lkup[7] = 0;
+        CHECK(dm2_v1_skproject_14cd_1a78_classify(0, 0, tbl, 1, lkup, &r1a78) == 0,
+              "1a78 blocked on byte7=0");
+        CHECK(r1a78.blocked_byte7_zero == 1, "1a78 byte7 flag");
+
+        lkup[7] = 2;
+        /* Set up entry 0: byte@0xc=1, word@4=0x0001, byte@0xd=1 (continue) */
+        tbl[0xc] = 1;
+        tbl[4] = 0x01; tbl[5] = 0x00;
+        tbl[0xd] = 1;
+        /* Entry 1: byte@0xc=1, word@4=0xffff, byte@0xd=0 (stop) */
+        tbl[14 + 0xc] = 1;
+        tbl[14 + 4] = 0xff; tbl[14 + 5] = 0xff;
+        tbl[14 + 0xd] = 0;
+
+        CHECK(dm2_v1_skproject_14cd_1a78_classify(0, 0, tbl, 1, lkup, &r1a78) == 1,
+              "1a78 valid walk");
+        CHECK(r1a78.entries_visited == 2, "1a78 visited 2");
+        CHECK(r1a78.entries_matched == 1, "1a78 matched 1 (w4!=ffff)");
+        CHECK(r1a78.entries_delegated == 1, "1a78 delegated 1");
+    }
+
+    /* 14cd_1b74: wrapper to 1a78(ecxl=1) */
+    {
+        DM2_V1_Skproject14cd1b74Receipt r1b74;
+        uint8_t tbl[14];
+        memset(tbl, 0, sizeof(tbl));
+
+        CHECK(dm2_v1_skproject_14cd_1b74_classify(5, -3, tbl, NULL, &r1b74) == 1,
+              "1b74 valid");
+        CHECK(r1b74.eaxb_extended == 5, "1b74 eaxb");
+        CHECK(dm2_v1_skproject_14cd_1b74_classify(0, 0, NULL, NULL, &r1b74) == 0,
+              "1b74 blocked on NULL");
+    }
+
+    /* 14cd_1b90: wrapper to 1a78(ecxl=3) */
+    {
+        DM2_V1_Skproject14cd1b90Receipt r1b90;
+        uint8_t tbl[14];
+        memset(tbl, 0, sizeof(tbl));
+
+        CHECK(dm2_v1_skproject_14cd_1b90_classify(4, 2, tbl, NULL, &r1b90) == 1,
+              "1b90 valid");
+        CHECK(r1b90.eaxb_extended == 4, "1b90 eaxb");
+        CHECK(dm2_v1_skproject_14cd_1b90_classify(0, 0, NULL, NULL, &r1b90) == 0,
+              "1b90 blocked on NULL");
+    }
+
+    /* 14cd_1bac: like 19c2 but checks v1e0578&8 */
+    {
+        DM2_V1_Skproject14cd1bacReceipt r1bac;
+        uint8_t tbl[14];
+        uint8_t lkup[8];
+        memset(tbl, 0, sizeof(tbl));
+        memset(lkup, 0, sizeof(lkup));
+        lkup[5] = 0;
+
+        CHECK(dm2_v1_skproject_14cd_1bac_classify(0, 0, NULL, 2, 1, 1, 1, lkup, &r1bac) == 0,
+              "1bac blocked on NULL");
+        CHECK(r1bac.blocked_null_ptr == 1, "1bac null_ptr flag");
+
+        CHECK(dm2_v1_skproject_14cd_1bac_classify(0, 0, tbl, 2, 1, 0, 1, lkup, &r1bac) == 0,
+              "1bac blocked on readiness");
+
+        /* v1e0578=8 => bit3 set, byte5<=0 detected */
+        CHECK(dm2_v1_skproject_14cd_1bac_classify(1, 5, tbl, 3, 1, 1, 0x8, lkup, &r1bac) == 1,
+              "1bac valid with bit3");
+        CHECK(r1bac.v1e0578_bit3_set == 1, "1bac bit3 set");
+        CHECK(r1bac.byte5_lte_zero == 1, "1bac byte5<=0");
+        CHECK(r1bac.negation_flag == 1, "1bac negation on");
+        CHECK(r1bac.ecxb_delegated == -3, "1bac ecxb negated");
+
+        /* v1e0578=4 => bit3 not set, byte5 not checked */
+        CHECK(dm2_v1_skproject_14cd_1bac_classify(0, 5, tbl, 3, 1, 1, 0x4, lkup, &r1bac) == 1,
+              "1bac valid without bit3");
+        CHECK(r1bac.v1e0578_bit3_set == 0, "1bac bit3 clear");
+        CHECK(r1bac.byte5_lte_zero == 0, "1bac byte5 not checked");
+        CHECK(r1bac.negation_flag == 0, "1bac negation off");
+        CHECK(r1bac.ecxb_delegated == 3, "1bac ecxb unchanged");
+    }
+
+    /* source evidence: cycle-22 batch-22a */
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_14cd_19a4") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_14cd_19c2") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_14cd_1a3c") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_14cd_1a5a") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_14cd_1a78") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_14cd_1b74") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_14cd_1b90") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_14cd_1bac") != 0,
+          "source evidence names cycle-22 batch-22a");
+
+    /* ---- batch 22b: DM2_14cd_1c27 ---- */
+    {
+        DM2_V1_Skproject14cd1c27Receipt r;
+        int rv = dm2_v1_skproject_14cd_1c27_classify(0x83, 0x7f, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1c27 valid");
+        CHECK(r.sign_ext_eax == -125, "14cd_1c27 sign-ext eax 0x83 => -125");
+        CHECK(r.sign_ext_edx == 127, "14cd_1c27 sign-ext edx 0x7f => 127");
+        CHECK(r.ecxl == 2, "14cd_1c27 ecxl == 2");
+        CHECK(r.argb0 == 1, "14cd_1c27 argb0 == 1");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1c45 ---- */
+    {
+        DM2_V1_Skproject14cd1c45Receipt r;
+        int rv = dm2_v1_skproject_14cd_1c45_classify(0xfe, 0x02, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1c45 valid");
+        CHECK(r.sign_ext_eax == -2, "14cd_1c45 sign-ext eax 0xfe => -2");
+        CHECK(r.sign_ext_edx == 2, "14cd_1c45 sign-ext edx 0x02 => 2");
+        CHECK(r.ecxl == 4, "14cd_1c45 ecxl == 4");
+        CHECK(r.argb0 == 3, "14cd_1c45 argb0 == 3");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1c63 (b_03 == 0xd) ---- */
+    {
+        DM2_V1_Skproject14cd1c63Receipt r;
+        int rv = dm2_v1_skproject_14cd_1c63_classify(0x05, 0x0d, 0x1234, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1c63 valid b03=0xd");
+        CHECK(r.b03_is_0d == 1, "14cd_1c63 b03 matches 0xd");
+        CHECK(r.argw0 == 0x1234, "14cd_1c63 argw0 from w_08");
+        CHECK(r.eaxb == 5, "14cd_1c63 eaxb == 5");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1c63 (b_03 != 0xd) ---- */
+    {
+        DM2_V1_Skproject14cd1c63Receipt r;
+        int rv = dm2_v1_skproject_14cd_1c63_classify(0x80, 0x0a, 0x1234, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1c63 valid b03!=0xd");
+        CHECK(r.b03_is_0d == 0, "14cd_1c63 b03 does not match");
+        CHECK(r.argw0 == 0xffff, "14cd_1c63 argw0 fallback 0xffff");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1c8d (all match => skipped) ---- */
+    {
+        DM2_V1_Skproject14cd1c8dReceipt r;
+        int rv = dm2_v1_skproject_14cd_1c8d_classify(
+            0x01, 0x05, 0x08e3, 3, 7, 2, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1c8d valid all-match");
+        CHECK(r.x_match == 1, "14cd_1c8d x match");
+        CHECK(r.y_match == 1, "14cd_1c8d y match");
+        CHECK(r.map_match == 1, "14cd_1c8d map match");
+        CHECK(r.skipped == 1, "14cd_1c8d skipped (all match)");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1c8d (x mismatch => delegates) ---- */
+    {
+        DM2_V1_Skproject14cd1c8dReceipt r;
+        int rv = dm2_v1_skproject_14cd_1c8d_classify(
+            0x01, 0x05, 0x08e3, 4, 7, 2, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1c8d valid x-mismatch");
+        CHECK(r.x_match == 0, "14cd_1c8d x mismatch");
+        CHECK(r.skipped == 0, "14cd_1c8d not skipped");
+        CHECK(r.eaxb == 6, "14cd_1c8d eaxb == 6");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1c8d (eax zero => delegates) ---- */
+    {
+        DM2_V1_Skproject14cd1c8dReceipt r;
+        int rv = dm2_v1_skproject_14cd_1c8d_classify(
+            0x00, 0x05, 0x08e3, 3, 7, 2, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1c8d valid eax-zero");
+        CHECK(r.blocked_eax_zero == 1, "14cd_1c8d eax zero");
+        CHECK(r.skipped == 0, "14cd_1c8d not skipped when eax zero");
+        CHECK(r.eaxb == 6, "14cd_1c8d eaxb == 6 on eax-zero path");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1cec (no callbacks) ---- */
+    {
+        DM2_V1_Skproject14cd1cecReceipt r;
+        int rv = dm2_v1_skproject_14cd_1cec_classify(
+            0x05, 0x1234, NULL, NULL, NULL, &r);
+        CHECK(rv == 0, "14cd_1cec blocked no callbacks");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1d42 (b_03 == 5) ---- */
+    {
+        DM2_V1_Skproject14cd1d42Receipt r;
+        int rv = dm2_v1_skproject_14cd_1d42_classify(0x03, 0x05, 0xabcd, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1d42 valid b03=5");
+        CHECK(r.b03_is_05 == 1, "14cd_1d42 b03 matches 5");
+        CHECK(r.argw0 == 0xabcd, "14cd_1d42 argw0 from w_08");
+        CHECK(r.eaxb == 0x12, "14cd_1d42 eaxb == 0x12");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1d42 (b_03 != 5) ---- */
+    {
+        DM2_V1_Skproject14cd1d42Receipt r;
+        int rv = dm2_v1_skproject_14cd_1d42_classify(0x03, 0x07, 0xabcd, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1d42 valid b03!=5");
+        CHECK(r.b03_is_05 == 0, "14cd_1d42 b03 does not match");
+        CHECK(r.argw0 == 0xffff, "14cd_1d42 argw0 fallback");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1d6c (null ptr) ---- */
+    {
+        DM2_V1_Skproject14cd1d6cReceipt r;
+        int rv = dm2_v1_skproject_14cd_1d6c_classify(
+            0, 0, NULL, 0, 0, NULL, NULL, NULL, NULL, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1d6c null ptr");
+        CHECK(r.blocked_null_ptr == 1, "14cd_1d6c blocked null");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1d6c (single entry, no match) ---- */
+    {
+        uint8_t entry[14] = {0};
+        entry[0x0c] = 0x03;
+        entry[0x0d] = 0x00;
+
+        DM2_V1_Skproject14cd1d6cReceipt r;
+        int rv = dm2_v1_skproject_14cd_1d6c_classify(
+            0, 0, entry, 0x0f, 0, NULL, NULL, NULL, NULL, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1d6c single no match");
+        CHECK(r.entries_visited == 1, "14cd_1d6c visited 1");
+        CHECK(r.entries_matched == 0, "14cd_1d6c matched 0");
+    }
+
+    /* ---- batch 22b: DM2_14cd_1e36 ---- */
+    {
+        DM2_V1_Skproject14cd1e36Receipt r;
+        int rv = dm2_v1_skproject_14cd_1e36_classify(0x01, 0xff, &r);
+        CHECK(rv == 1 && r.valid == 1, "14cd_1e36 valid");
+        CHECK(r.sign_ext_eax == 1, "14cd_1e36 sign-ext eax");
+        CHECK(r.sign_ext_edx == -1, "14cd_1e36 sign-ext edx 0xff");
+        CHECK(r.ecxl == 0x0f, "14cd_1e36 ecxl == 0x0f");
+    }
+
+    /* ---- batch 22b: source evidence ---- */
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1c27") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1c45") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1c63") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1c8d") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1cec") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1d42") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1d6c") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_1e36") != 0,
+          "source evidence names cycle-22 batch-22b");
+
     if (failed) {
         printf("%d failure(s)\n", failed);
         return 1;

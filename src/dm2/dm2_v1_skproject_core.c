@@ -10471,7 +10471,13 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_PROCEED_XACT_89/DM2_PROCEED_XACT_90 cycle-21 batch-21a; "
            "DM2_PROCEED_XACT_91/DM2_PROCEED_XACT/DM2_13e4_01a3/"
            "DM2_14cd_062e/DM2_14cd_18cc/DM2_2c1d_09d9/"
-           "DM2_14cd_1316/DM2_14cd_18f2 cycle-21 batch-21b";
+           "DM2_14cd_1316/DM2_14cd_18f2 cycle-21 batch-21b; "
+           "SKULLWIN/c_ai.cpp DM2_14cd_19a4/DM2_14cd_19c2/"
+           "DM2_14cd_1a3c/DM2_14cd_1a5a/DM2_14cd_1a78/"
+           "DM2_14cd_1b74/DM2_14cd_1b90/DM2_14cd_1bac cycle-22 batch-22a; "
+           "SKULLWIN/c_ai.cpp DM2_14cd_1c27/DM2_14cd_1c45/"
+           "DM2_14cd_1c63/DM2_14cd_1c8d/DM2_14cd_1cec/"
+           "DM2_14cd_1d42/DM2_14cd_1d6c/DM2_14cd_1e36 cycle-22 batch-22b";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -21755,6 +21761,623 @@ int dm2_v1_skproject_14cd_18f2_classify(
             p += 14;
         }
     }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3210 DM2_14cd_19a4
+   Sign-extends eaxl/edxl low bytes, delegates to 18f2 with ecxb=0, argw0=0xffff. */
+int dm2_v1_skproject_14cd_19a4_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    DM2_V1_Skproject14cd19a4Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd19a4Receipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (table_ptr == NULL) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Sign-extend low bytes (identity for int8_t params, mirrors skproject pattern) */
+    receipt.eaxb_extended = eaxb;
+    receipt.edxb_extended = edxb;
+    /* Runtime would call: DM2_14cd_18f2(eaxb, edxb, table_ptr, 0, 0xffff) */
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3222 DM2_14cd_19c2
+   Guarded delegation to 18f2 with conditional negation. */
+int dm2_v1_skproject_14cd_19c2_classify(
+    int8_t eaxb,
+    const uint8_t *table_ptr,
+    int8_t edxb,
+    int8_t ecxb,
+    int8_t argb0,
+    uint8_t v1e058d,
+    uint16_t v1e0578,
+    const uint8_t *lookup_result,
+    DM2_V1_Skproject14cd19c2Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd19c2Receipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+
+    /* vb_04 = eaxb low byte, vb_00 = edxb low byte */
+    if (table_ptr == NULL) {
+        receipt.blocked_null_ptr = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (v1e058d == 0) {
+        receipt.blocked_no_readiness = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* 10d2 lookup: byte@5 <= 0 clears bit3 of v1e0580 */
+    if (lookup_result != NULL) {
+        receipt.byte5_lte_zero = ((int8_t)lookup_result[5] <= 0) ? 1 : 0;
+    }
+
+    if (v1e0578 == 0) {
+        receipt.blocked_no_v1e0578 = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* If vb_04 (eaxb) != 0, negate ecxb */
+    receipt.negation_flag = (eaxb != 0) ? 1 : 0;
+    if (receipt.negation_flag) {
+        receipt.ecxb_delegated = (int8_t)(-ecxb);
+    } else {
+        receipt.ecxb_delegated = ecxb;
+    }
+    receipt.edxb_delegated = edxb;
+
+    /* Runtime would call: DM2_14cd_18f2(ecxb_delegated, edxb, table_ptr, 0, 0xffff) */
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3250 DM2_14cd_1a3c
+   Sign-extends, delegates to 19c2 with ecxl=2, argb0=1. */
+int dm2_v1_skproject_14cd_1a3c_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    DM2_V1_Skproject14cd1a3cReceipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1a3cReceipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (table_ptr == NULL) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.eaxb_extended = eaxb;
+    receipt.edxb_extended = edxb;
+    /* Runtime would call: DM2_14cd_19c2(eaxb, table_ptr, edxb, 2, 1) */
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3262 DM2_14cd_1a5a
+   Sign-extends, delegates to 19c2 with ecxl=4, argb0=3. */
+int dm2_v1_skproject_14cd_1a5a_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    DM2_V1_Skproject14cd1a5aReceipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1a5aReceipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (table_ptr == NULL) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.eaxb_extended = eaxb;
+    receipt.edxb_extended = edxb;
+    /* Runtime would call: DM2_14cd_19c2(eaxb, table_ptr, edxb, 4, 3) */
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3273 DM2_14cd_1a78
+   Table walker with 10d2 lookup, 1316 condition check, 0f3c delegation. */
+int dm2_v1_skproject_14cd_1a78_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    int8_t ecxb,
+    const uint8_t *lookup_result,
+    DM2_V1_Skproject14cd1a78Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1a78Receipt receipt;
+    const uint8_t *p;
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (table_ptr == NULL) {
+        receipt.blocked_null_ptr = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* 10d2 lookup with ecxb index; check byte@7 == 0 => blocked */
+    if (lookup_result == NULL || lookup_result[7] == 0) {
+        receipt.blocked_byte7_zero = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Walk the table: entries are 14 bytes each.
+       Match byte@0xc against ecxb.  Stop when byte@0xd == 0.
+       For matching entries with word@4 != 0xffff, check 1316 condition. */
+    p = table_ptr;
+    for (;;) {
+        receipt.entries_visited++;
+        if ((int8_t)p[0xc] == ecxb) {
+            uint16_t w4 = (uint16_t)((uint16_t)p[4] | ((uint16_t)p[5] << 8));
+            if (w4 != 0xffff) {
+                /* In runtime: call 14cd_1316(p[1], word@2, edxb)
+                   if nonzero, copy hexe, delegate to 0f3c */
+                receipt.entries_matched++;
+                receipt.entries_delegated++;
+            }
+        }
+        if (p[0xd] == 0)
+            break;
+        p += 14;
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3356 DM2_14cd_1b74
+   Sign-extends, delegates to 1a78 with ecxl=1. */
+int dm2_v1_skproject_14cd_1b74_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    const uint8_t *lookup_result,
+    DM2_V1_Skproject14cd1b74Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1b74Receipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (table_ptr == NULL) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.eaxb_extended = eaxb;
+    receipt.edxb_extended = edxb;
+    /* Runtime would call: DM2_14cd_1a78(eaxb, edxb, table_ptr, 1) */
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3368 DM2_14cd_1b90
+   Sign-extends, delegates to 1a78 with ecxl=3. */
+int dm2_v1_skproject_14cd_1b90_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    const uint8_t *lookup_result,
+    DM2_V1_Skproject14cd1b90Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1b90Receipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (table_ptr == NULL) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.eaxb_extended = eaxb;
+    receipt.edxb_extended = edxb;
+    /* Runtime would call: DM2_14cd_1a78(eaxb, edxb, table_ptr, 3) */
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3380 DM2_14cd_1bac
+   Like 19c2 but checks v1e0578&8 before byte5 clear. */
+int dm2_v1_skproject_14cd_1bac_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    int8_t ecxb,
+    int8_t argb0,
+    uint8_t v1e058d,
+    uint16_t v1e0578,
+    const uint8_t *lookup_result,
+    DM2_V1_Skproject14cd1bacReceipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1bacReceipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+
+    /* vb_00 = eaxb, vb_04 = edxb (note: swapped vs 19c2) */
+    if (table_ptr == NULL) {
+        receipt.blocked_null_ptr = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (v1e058d == 0) {
+        receipt.blocked_no_readiness = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Check v1e0578 & 0x8 -- only then inspect byte@5 */
+    receipt.v1e0578_bit3_set = ((v1e0578 & 0x8) != 0) ? 1 : 0;
+    if (receipt.v1e0578_bit3_set && lookup_result != NULL) {
+        receipt.byte5_lte_zero = ((int8_t)lookup_result[5] <= 0) ? 1 : 0;
+    }
+
+    if (v1e0578 == 0) {
+        receipt.blocked_no_v1e0578 = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* If vb_00 (eaxb) != 0, negate ecxb */
+    receipt.negation_flag = (eaxb != 0) ? 1 : 0;
+    if (receipt.negation_flag) {
+        receipt.ecxb_delegated = (int8_t)(-ecxb);
+    } else {
+        receipt.ecxb_delegated = ecxb;
+    }
+    receipt.edxb_delegated = edxb;
+
+    /* Runtime would call: DM2_14cd_18f2(ecxb_delegated, edxb, table_ptr, 0, 0xffff) */
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3414 DM2_14cd_1c27 — sign-extends low bytes,
+   delegates to 1bac with ecxl=2, argb0=1. */
+int dm2_v1_skproject_14cd_1c27_classify(
+    int32_t eaxl, int32_t edxl,
+    DM2_V1_Skproject14cd1c27Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1c27Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    receipt.sign_ext_eax = (int32_t)(int8_t)(eaxl & 0xff);
+    receipt.sign_ext_edx = (int32_t)(int8_t)(edxl & 0xff);
+    receipt.ecxl = 2;
+    receipt.argb0 = 1;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3426 DM2_14cd_1c45 — sign-extends low bytes,
+   delegates to 1bac with ecxl=4, argb0=3. */
+int dm2_v1_skproject_14cd_1c45_classify(
+    int32_t eaxl, int32_t edxl,
+    DM2_V1_Skproject14cd1c45Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1c45Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    receipt.sign_ext_eax = (int32_t)(int8_t)(eaxl & 0xff);
+    receipt.sign_ext_edx = (int32_t)(int8_t)(edxl & 0xff);
+    receipt.ecxl = 4;
+    receipt.argb0 = 3;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3438 DM2_14cd_1c63 — checks b_03 == 0xd,
+   computes argw0, delegates to 18f2 with eaxb=5. */
+int dm2_v1_skproject_14cd_1c63_classify(
+    int32_t edxl,
+    uint8_t v1e07d8_b03, uint16_t v1e07d8_w08,
+    DM2_V1_Skproject14cd1c63Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1c63Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    receipt.b03_is_0d = (v1e07d8_b03 == 0x0d) ? 1 : 0;
+
+    if (receipt.b03_is_0d) {
+        receipt.argw0 = v1e07d8_w08;
+    } else {
+        receipt.argw0 = 0xffff;
+    }
+
+    receipt.sign_ext_edx = (int32_t)(int8_t)(edxl & 0xff);
+    receipt.eaxb = 5;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3459 DM2_14cd_1c8d — creature position match check.
+   If eaxl low byte is 0, skips to delegation.  Otherwise extracts
+   x/y/map from creature word@0xc and compares against v1e0562 x/y
+   and v1e0571.  If all match, returns (skipped=1, no delegation).
+   Otherwise delegates to 18f2 with eaxb=6. */
+int dm2_v1_skproject_14cd_1c8d_classify(
+    int32_t eaxl, int32_t edxl,
+    uint16_t creature_word_0c,
+    uint16_t v1e0562_xa, uint16_t v1e0562_ya,
+    uint8_t v1e0571,
+    DM2_V1_Skproject14cd1c8dReceipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1c8dReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    receipt.blocked_eax_zero = ((eaxl & 0xff) == 0) ? 1 : 0;
+
+    if (!receipt.blocked_eax_zero) {
+        /* Extract x = word & 0x1f */
+        uint16_t creature_x = creature_word_0c & 0x1f;
+        /* Extract y = (word << 6) >> 11 = (word >> 5) & 0x1f */
+        uint16_t creature_y = (creature_word_0c >> 5) & 0x1f;
+        /* Extract map = word >> 10 */
+        uint16_t creature_map = creature_word_0c >> 10;
+
+        receipt.x_match = (v1e0562_xa == creature_x) ? 1 : 0;
+        receipt.y_match = (v1e0562_ya == creature_y) ? 1 : 0;
+        receipt.map_match = ((uint8_t)v1e0571 == (uint8_t)creature_map) ? 1 : 0;
+
+        if (receipt.x_match && receipt.y_match && receipt.map_match) {
+            receipt.skipped = 1;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+    }
+
+    /* Delegation path */
+    receipt.sign_ext_edx = (int32_t)(int8_t)(edxl & 0xff);
+    receipt.eaxb = 6;
+    receipt.skipped = 0;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3495 DM2_14cd_1cec — missile ref lookup via callback.
+   Gets missile, checks type==9, extracts record word@6. */
+int dm2_v1_skproject_14cd_1cec_classify(
+    int32_t edxl,
+    uint16_t v1e054c,
+    DM2_V1_GetMissileRefFn get_missile_fn,
+    DM2_V1_GetRecordAddressFn get_record_fn,
+    void *user,
+    DM2_V1_Skproject14cd1cecReceipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1cecReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!get_missile_fn || !get_record_fn) {
+        receipt.blocked_no_missile = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    const uint8_t *missile_ptr = get_missile_fn(v1e054c, 0xffff, user);
+    if (missile_ptr == NULL) {
+        receipt.blocked_no_missile = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    /* Extract type: (word@2 & 0x3c00) >> 10 */
+    uint16_t w2 = (uint16_t)(missile_ptr[2] | (missile_ptr[3] << 8));
+    receipt.missile_type = (uint8_t)((w2 & 0x3c00) >> 10);
+
+    if (receipt.missile_type != 9) {
+        receipt.blocked_wrong_type = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    /* Get record address using word@2 of missile as record ref */
+    const uint8_t *record_ptr = get_record_fn(w2, user);
+    if (record_ptr != NULL) {
+        receipt.argw0 = (uint16_t)(record_ptr[6] | (record_ptr[7] << 8));
+    } else {
+        receipt.argw0 = 0xffff;
+    }
+
+    receipt.sign_ext_edx = (int32_t)(int8_t)(edxl & 0xff);
+    receipt.eaxb = 7;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3522 DM2_14cd_1d42 — checks b_03 == 5,
+   computes argw0, delegates to 18f2 with eaxb=0x12. */
+int dm2_v1_skproject_14cd_1d42_classify(
+    int32_t edxl,
+    uint8_t v1e07d8_b03, uint16_t v1e07d8_w08,
+    DM2_V1_Skproject14cd1d42Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1d42Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    receipt.b03_is_05 = (v1e07d8_b03 == 0x05) ? 1 : 0;
+
+    if (receipt.b03_is_05) {
+        receipt.argw0 = v1e07d8_w08;
+    } else {
+        receipt.argw0 = 0xffff;
+    }
+
+    receipt.sign_ext_edx = (int32_t)(int8_t)(edxl & 0xff);
+    receipt.eaxb = 0x12;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3541 DM2_14cd_1d6c — table walker.
+   Iterates 0xe-byte entries until sentinel (byte@0xd == 0).
+   For each entry where byte@0xc == vb_14 (ecxl low byte):
+   - If word@4 != 0xffff and word@6 is 0 or 1, checks can_handle_item
+   - If can_handle returns -2 (can handle) or above conditions skipped,
+     checks 14cd_1316 condition
+   - If 1316 returns nonzero, copies hexe, possibly clears b_08/b_09
+     if vb_18 != 0, then delegates to 0f3c */
+int dm2_v1_skproject_14cd_1d6c_classify(
+    int32_t eaxl, int32_t edxl, const uint8_t *xebxp, int32_t ecxl,
+    uint16_t creature_w2,
+    DM2_V1_CanHandleItemFn can_handle_fn,
+    DM2_V1_1316CheckFn check_1316_fn,
+    DM2_V1_0f3cDelegateFn delegate_fn,
+    void *user,
+    DM2_V1_Skproject14cd1d6cReceipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1d6cReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    int8_t vb_18 = (int8_t)(eaxl & 0xff);
+    int8_t vb_10 = (int8_t)(edxl & 0xff);
+    int8_t vb_14 = (int8_t)(ecxl & 0xff);
+
+    if (xebxp == NULL) {
+        receipt.blocked_null_ptr = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    const uint8_t *ptr = xebxp;
+
+    for (;;) {
+        receipt.entries_visited++;
+
+        uint16_t w4 = (uint16_t)(ptr[4] | (ptr[5] << 8));
+        uint16_t w6 = (uint16_t)(ptr[6] | (ptr[7] << 8));
+        uint8_t b0c = ptr[0x0c];
+
+        if (b0c == (uint8_t)vb_14) {
+            receipt.entries_matched++;
+
+            int skip_to_1316 = 0;
+
+            if (w4 == 0xffff) {
+                skip_to_1316 = 1;
+            } else if (w6 != 0 && w6 != 1) {
+                skip_to_1316 = 1;
+            } else {
+                /* Check can_handle_item */
+                if (can_handle_fn) {
+                    int16_t r = can_handle_fn(
+                        (int16_t)w4, (uint32_t)creature_w2, 0xff, user);
+                    if (r != (int16_t)0xfffe) { /* -2 signed */
+                        skip_to_1316 = 1;
+                    }
+                    /* If r == -2, creature CAN handle => skip this entry
+                       (the skip00315 logic inverts: if NOT -2 => go to 1316) */
+                } else {
+                    skip_to_1316 = 1;
+                }
+            }
+
+            if (skip_to_1316) {
+                /* Check 14cd_1316 condition */
+                int32_t cond = 0;
+                if (check_1316_fn) {
+                    uint16_t byte1_ext = (uint16_t)ptr[1];
+                    int32_t word2_ext = (int32_t)(int16_t)(ptr[2] | (ptr[3] << 8));
+                    int32_t vb10_ext = (int32_t)vb_10;
+                    cond = check_1316_fn(byte1_ext, word2_ext, vb10_ext, user);
+                }
+
+                if (cond != 0) {
+                    receipt.entries_delegated++;
+
+                    /* Would copy hexe (14 bytes) and delegate to 0f3c.
+                       If vb_18 != 0, clears hexe b_08 and b_09. */
+                    if (delegate_fn) {
+                        /* Build hexe copy */
+                        uint8_t hexe[14];
+                        memcpy(hexe, ptr, 14);
+                        if (vb_18 != 0) {
+                            /* s18_00.b_08 = RG2Bhi; s18_00.b_09 = RG2Bhi;
+                               RG2W = unsignedword(RG2Blo) => RG2Bhi = 0 */
+                            hexe[8] = 0;
+                            hexe[9] = 0;
+                        }
+                        delegate_fn(
+                            (int32_t)(int8_t)ptr[0], ptr, hexe,
+                            (int32_t)vb_14, 0, 0xffff, vb_10, vb_18, user);
+                    }
+                }
+            }
+        }
+
+        /* Advance to next entry; check sentinel */
+        if (ptr[0x0d] == 0)
+            break;
+        ptr += 0x0e;
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3632 DM2_14cd_1e36 — sign-extends, delegates
+   to 1d6c with ecxl=0xf. */
+int dm2_v1_skproject_14cd_1e36_classify(
+    int32_t eaxl, int32_t edxl,
+    DM2_V1_Skproject14cd1e36Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1e36Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    receipt.sign_ext_eax = (int32_t)(int8_t)(eaxl & 0xff);
+    receipt.sign_ext_edx = (int32_t)(int8_t)(edxl & 0xff);
+    receipt.ecxl = 0x0f;
 
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;

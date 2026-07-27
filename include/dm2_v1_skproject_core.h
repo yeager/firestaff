@@ -8501,4 +8501,287 @@ int dm2_v1_skproject_14cd_18f2_classify(
     DM2_V1_Skproject14cd18f2Receipt *out_receipt);
 
 
+/* SKULLWIN/c_ai.cpp:3210 DM2_14cd_19a4 — sign-extend, delegate to 18f2 */
+typedef struct {
+    int valid;
+    int8_t eaxb_extended;
+    int8_t edxb_extended;
+    /* delegates with ecxb=0, argw0=0xffff */
+} DM2_V1_Skproject14cd19a4Receipt;
+
+int dm2_v1_skproject_14cd_19a4_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    DM2_V1_Skproject14cd19a4Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3222 DM2_14cd_19c2 — guarded delegate to 18f2 */
+typedef struct {
+    int valid;
+    int blocked_null_ptr;
+    int blocked_no_readiness;   /* v1e058d == 0 */
+    int blocked_no_v1e0578;
+    int byte5_lte_zero;         /* byte@5 of 10d2 result <= 0 */
+    int negation_flag;          /* vb_04 != 0 => negate ecxb */
+    int8_t ecxb_delegated;
+    int8_t edxb_delegated;
+} DM2_V1_Skproject14cd19c2Receipt;
+
+int dm2_v1_skproject_14cd_19c2_classify(
+    int8_t eaxb,
+    const uint8_t *table_ptr,
+    int8_t edxb,
+    int8_t ecxb,
+    int8_t argb0,
+    uint8_t v1e058d,
+    uint16_t v1e0578,
+    const uint8_t *lookup_result,
+    DM2_V1_Skproject14cd19c2Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3250 DM2_14cd_1a3c — sign-extend, delegate to 19c2(ecxl=2, argb0=1) */
+typedef struct {
+    int valid;
+    int8_t eaxb_extended;
+    int8_t edxb_extended;
+} DM2_V1_Skproject14cd1a3cReceipt;
+
+int dm2_v1_skproject_14cd_1a3c_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    DM2_V1_Skproject14cd1a3cReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3262 DM2_14cd_1a5a — sign-extend, delegate to 19c2(ecxl=4, argb0=3) */
+typedef struct {
+    int valid;
+    int8_t eaxb_extended;
+    int8_t edxb_extended;
+} DM2_V1_Skproject14cd1a5aReceipt;
+
+int dm2_v1_skproject_14cd_1a5a_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    DM2_V1_Skproject14cd1a5aReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3273 DM2_14cd_1a78 — table walker with 10d2/1316/0f3c */
+typedef struct {
+    int valid;
+    int blocked_null_ptr;
+    int blocked_byte7_zero;     /* byte@7 of 10d2 result == 0 */
+    int entries_visited;
+    int entries_matched;        /* 14cd_1316 passed */
+    int entries_delegated;      /* via 14cd_0f3c */
+} DM2_V1_Skproject14cd1a78Receipt;
+
+int dm2_v1_skproject_14cd_1a78_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    int8_t ecxb,
+    const uint8_t *lookup_result,
+    DM2_V1_Skproject14cd1a78Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3356 DM2_14cd_1b74 — sign-extend, delegate to 1a78(ecxl=1) */
+typedef struct {
+    int valid;
+    int8_t eaxb_extended;
+    int8_t edxb_extended;
+} DM2_V1_Skproject14cd1b74Receipt;
+
+int dm2_v1_skproject_14cd_1b74_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    const uint8_t *lookup_result,
+    DM2_V1_Skproject14cd1b74Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3368 DM2_14cd_1b90 — sign-extend, delegate to 1a78(ecxl=3) */
+typedef struct {
+    int valid;
+    int8_t eaxb_extended;
+    int8_t edxb_extended;
+} DM2_V1_Skproject14cd1b90Receipt;
+
+int dm2_v1_skproject_14cd_1b90_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    const uint8_t *lookup_result,
+    DM2_V1_Skproject14cd1b90Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3380 DM2_14cd_1bac — like 19c2 but checks v1e0578&8 */
+typedef struct {
+    int valid;
+    int blocked_null_ptr;
+    int blocked_no_readiness;
+    int blocked_no_v1e0578;
+    int v1e0578_bit3_set;       /* v1e0578 & 0x8 != 0 */
+    int byte5_lte_zero;
+    int negation_flag;
+    int8_t ecxb_delegated;
+    int8_t edxb_delegated;
+} DM2_V1_Skproject14cd1bacReceipt;
+
+int dm2_v1_skproject_14cd_1bac_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    int8_t ecxb,
+    int8_t argb0,
+    uint8_t v1e058d,
+    uint16_t v1e0578,
+    const uint8_t *lookup_result,
+    DM2_V1_Skproject14cd1bacReceipt *out_receipt);
+
+/* ---- batch 22b: SKULLWIN/c_ai.cpp DM2_14cd_1c27,
+   DM2_14cd_1c45, DM2_14cd_1c63, DM2_14cd_1c8d, DM2_14cd_1cec,
+   DM2_14cd_1d42, DM2_14cd_1d6c, DM2_14cd_1e36 ---- */
+
+/* SKULLWIN/c_ai.cpp:3414 DM2_14cd_1c27 — sign-extends eaxl/edxl
+   low bytes, delegates to 1bac with ecxl=2, argb0=1. */
+typedef struct {
+    int valid;
+    int32_t sign_ext_eax;
+    int32_t sign_ext_edx;
+    int ecxl;   /* always 2 */
+    int argb0;  /* always 1 */
+} DM2_V1_Skproject14cd1c27Receipt;
+
+int dm2_v1_skproject_14cd_1c27_classify(
+    int32_t eaxl, int32_t edxl,
+    DM2_V1_Skproject14cd1c27Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3426 DM2_14cd_1c45 — sign-extends eaxl/edxl
+   low bytes, delegates to 1bac with ecxl=4, argb0=3. */
+typedef struct {
+    int valid;
+    int32_t sign_ext_eax;
+    int32_t sign_ext_edx;
+    int ecxl;   /* always 4 */
+    int argb0;  /* always 3 */
+} DM2_V1_Skproject14cd1c45Receipt;
+
+int dm2_v1_skproject_14cd_1c45_classify(
+    int32_t eaxl, int32_t edxl,
+    DM2_V1_Skproject14cd1c45Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3438 DM2_14cd_1c63 — checks v1e07d8.b_03 == 0xd;
+   if so, argw0 = v1e07d8.w_08, else 0xffff.  Delegates to 14cd_18f2
+   with eaxb=5, ecxb=0. */
+typedef struct {
+    int valid;
+    int b03_is_0d;
+    uint16_t argw0;
+    int32_t sign_ext_edx;
+    int eaxb;            /* always 5 */
+} DM2_V1_Skproject14cd1c63Receipt;
+
+int dm2_v1_skproject_14cd_1c63_classify(
+    int32_t edxl,
+    uint8_t v1e07d8_b03, uint16_t v1e07d8_w08,
+    DM2_V1_Skproject14cd1c63Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3459 DM2_14cd_1c8d — creature position match check. */
+typedef struct {
+    int valid;
+    int blocked_eax_zero;
+    int x_match;
+    int y_match;
+    int map_match;
+    int skipped;
+    int32_t sign_ext_edx;
+    int eaxb;               /* always 6 when delegating */
+} DM2_V1_Skproject14cd1c8dReceipt;
+
+int dm2_v1_skproject_14cd_1c8d_classify(
+    int32_t eaxl, int32_t edxl,
+    uint16_t creature_word_0c,
+    uint16_t v1e0562_xa, uint16_t v1e0562_ya,
+    uint8_t v1e0571,
+    DM2_V1_Skproject14cd1c8dReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3495 DM2_14cd_1cec — missile ref lookup. */
+typedef struct {
+    int valid;
+    int blocked_no_missile;
+    int blocked_wrong_type;
+    uint8_t missile_type;
+    uint16_t argw0;
+    int32_t sign_ext_edx;
+    int eaxb;                   /* always 7 when delegating */
+} DM2_V1_Skproject14cd1cecReceipt;
+
+typedef const uint8_t *(*DM2_V1_GetMissileRefFn)(
+    uint16_t v1e054c, uint16_t arg1, void *user);
+
+typedef const uint8_t *(*DM2_V1_GetRecordAddressFn)(
+    uint16_t record_ref, void *user);
+
+int dm2_v1_skproject_14cd_1cec_classify(
+    int32_t edxl,
+    uint16_t v1e054c,
+    DM2_V1_GetMissileRefFn get_missile_fn,
+    DM2_V1_GetRecordAddressFn get_record_fn,
+    void *user,
+    DM2_V1_Skproject14cd1cecReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3522 DM2_14cd_1d42 — checks v1e07d8.b_03 == 5. */
+typedef struct {
+    int valid;
+    int b03_is_05;
+    uint16_t argw0;
+    int32_t sign_ext_edx;
+    int eaxb;            /* always 0x12 */
+} DM2_V1_Skproject14cd1d42Receipt;
+
+int dm2_v1_skproject_14cd_1d42_classify(
+    int32_t edxl,
+    uint8_t v1e07d8_b03, uint16_t v1e07d8_w08,
+    DM2_V1_Skproject14cd1d42Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3541 DM2_14cd_1d6c — table walker. */
+typedef struct {
+    int valid;
+    int blocked_null_ptr;
+    int entries_visited;
+    int entries_matched;
+    int entries_delegated;
+} DM2_V1_Skproject14cd1d6cReceipt;
+
+typedef int16_t (*DM2_V1_CanHandleItemFn)(
+    int16_t item, uint32_t creature_w2, uint16_t arg2, void *user);
+
+typedef int32_t (*DM2_V1_1316CheckFn)(
+    uint16_t byte1_ext, int32_t word2_ext, int32_t vb10_ext, void *user);
+
+typedef void (*DM2_V1_0f3cDelegateFn)(
+    int32_t byte0_ext, const uint8_t *entry_ptr,
+    const uint8_t *hexe_ptr, int32_t vb14_ext,
+    int zero, uint16_t ffff, int8_t vb10, int8_t vb18,
+    void *user);
+
+int dm2_v1_skproject_14cd_1d6c_classify(
+    int32_t eaxl, int32_t edxl, const uint8_t *xebxp, int32_t ecxl,
+    uint16_t creature_w2,
+    DM2_V1_CanHandleItemFn can_handle_fn,
+    DM2_V1_1316CheckFn check_1316_fn,
+    DM2_V1_0f3cDelegateFn delegate_fn,
+    void *user,
+    DM2_V1_Skproject14cd1d6cReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3632 DM2_14cd_1e36 — sign-extends, delegates
+   to 1d6c with ecxl=0xf. */
+typedef struct {
+    int valid;
+    int32_t sign_ext_eax;
+    int32_t sign_ext_edx;
+    int ecxl;   /* always 0xf */
+} DM2_V1_Skproject14cd1e36Receipt;
+
+int dm2_v1_skproject_14cd_1e36_classify(
+    int32_t eaxl, int32_t edxl,
+    DM2_V1_Skproject14cd1e36Receipt *out_receipt);
+
+
 #endif
