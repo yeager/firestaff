@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 Theron isolated Mednafen capture home. The configured home is
+  now copied as an input-map template into a private temporary home for every
+  capture, avoiding stale/concurrent base-directory locks. A fresh authentic
+  US-CUE Return run records 20,001 PCE input transactions, 5,786 after SDL
+  delivery, and exits cleanly at the expected blocked state with zero
+  game-main-RAM E009 rows. No Track 02 semantic claim is made.
 - ✅ 2026-07-27 Theron capture process-group cleanup. Any capture exit now
   terminates its `gtimeout` process group before temporary-home cleanup, so an
   interrupted run cannot leave Mednafen holding a configuration lock. A

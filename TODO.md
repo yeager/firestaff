@@ -4246,6 +4246,14 @@ lane is carried forward in the sections below.
     exit before removing a temporary Mednafen home. A one-second authentic
     media smoke exits with the expected blocked result and leaves no Mednafen
     process or home-lock holder behind. This is host-process hygiene only.
+    `THERON_MEDNAFEN_HOME` is now copied into a private temporary capture home
+    instead of being passed to Mednafen directly. The original configured
+    mapping remains an input template while concurrent/stale base-directory
+    locks cannot block a new capture. A fresh US-CUE Return run records 20,001
+    PCE input transactions, 5,786 after the SDL key, and a complete transition
+    receipt with `host_input_schedule_origin=trace_ready`; it ends at the
+    expected no-dynamic-receipt blocker with zero game-main-RAM E009 rows.
+    This proves input/capture isolation only, not Track 02 semantics.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a

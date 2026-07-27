@@ -371,12 +371,17 @@ stderr_file="$trace_dir/$(basename -- "$trace").stderr"
 
 mkdir -p "$trace_dir"
 rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$transition_receipt" "$stage2_system_card_receipt"
+home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
+cleanup_home=1
 if [[ -n "$configured_home" ]]; then
-    home_dir=$configured_home
-    cleanup_home=0
-else
-    home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
-    cleanup_home=1
+    # The configured home is an input-map template, never the live capture
+    # home. A private copy prevents an interrupted or concurrent capture from
+    # retaining Mednafen's base-directory lock over the user's configuration.
+    if ! cp -R "$configured_home/." "$home_dir"; then
+        rm -rf "$home_dir"
+        printf '%s\n' 'FAIL: could not prepare an isolated Mednafen capture home' >&2
+        exit 1
+    fi
 fi
 cleanup_capture() {
     local exit_status=$?
