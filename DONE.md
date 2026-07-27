@@ -1,3 +1,10 @@
+- ✅ 2026-07-27 Theron bounded main-RAM `$e009` window trace. The reproducible
+  active Mednafen 1.32.1 build now emits an enter row for each observed
+  main-RAM `JSR $e009`, PCE-CD data reads while that call is active, and an
+  exact next-main-RAM return row. Transition receipts count all three; the
+  patch dry-run, shell regression tests, and authentic US-CUE smoke pass,
+  with zero observed calls in that smoke. This is control/byte provenance
+  only and does not claim Track-02 semantics.
 - ✅ 2026-07-27 Theron instrumented-Mednafen preflight repair. The authentic
   Track 02 capture launcher now refuses a stock Mednafen binary before it
   launches a timed original-media run, requiring the compiled

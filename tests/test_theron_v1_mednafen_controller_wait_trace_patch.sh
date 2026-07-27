@@ -9,6 +9,7 @@ state_patch_file=$repo/scripts/mednafen_1.32.1_theron_pcecd_state_trace.patch
 input_state_patch_file=$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch
 host_input_patch_file=$repo/scripts/mednafen_1.32.1_theron_host_input_trace.patch
 transfer_patch_file=$repo/scripts/mednafen_1.32.1_theron_cd_transfer_trace.patch
+transfer_owner_patch_file=$repo/scripts/mednafen_1.32.1_theron_cd_transfer_owner_trace.patch
 caller_patch_file=$repo/scripts/mednafen_1.32.1_theron_cd_caller_trace.patch
 execution_patch_file=$repo/scripts/mednafen_1.32.1_theron_post_stage2_execution_trace.patch
 e009_patch_file=$repo/scripts/mednafen_1.32.1_theron_post_stage2_e009_trace.patch
@@ -17,6 +18,7 @@ later_raw_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_raw_sector_trace
 later_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_fifo_generation_trace.patch
 generation7_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_generation7_fifo_ram_receipt.patch
 main_ram_loader_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_trace.patch
+main_ram_e009_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_window_trace.patch
 main_ram_e009_dispatch_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_dispatch_trace.patch
 main_ram_e009_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_fifo_trace.patch
 g4_main_ram_read_patch_file=$repo/scripts/mednafen_1.32.1_theron_g4_main_ram_read_trace.patch
@@ -167,6 +169,18 @@ if grep -Fq 'source=mednafen-pce-instrumented-main-ram-loader\\n' "$main_ram_loa
     printf 'FAIL: main-RAM loader trace patch contains literal backslash-n output\n' >&2
     exit 1
 fi
+if ! grep -Fq 'main_ram_e009_enter sequence=%u logical_pc=%04x physical_pc=%06x return_pc=%04x a=%02x x=%02x y=%02x' "$main_ram_e009_window_patch_file" ||
+   ! grep -Fq 'main_ram_e009_data_read sequence=%u cpu_pc=%04x physical_pc=%06x data=%02x' "$main_ram_e009_window_patch_file" ||
+   ! grep -Fq 'main_ram_e009_return sequence=%u expected_return_pc=%04x logical_pc=%04x physical_pc=%06x matched=%u' "$main_ram_e009_window_patch_file" ||
+   ! grep -Fq 'if(lastop == 0x20 && first == 0xe009)' "$main_ram_e009_window_patch_file" ||
+   ! grep -Fq 'TheronPCECDTraceMainRAME009MainRAMStep(PC, physical_pc)' "$main_ram_e009_window_patch_file"; then
+    printf 'FAIL: main-RAM e009 window patch no longer retains bounded PCECD read and return evidence\n' >&2
+    exit 1
+fi
+if grep -Fq '\\n' "$main_ram_e009_window_patch_file"; then
+    printf 'FAIL: main-RAM e009 window patch contains literal backslash-n output\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'main_ram_loader_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x a=%02x x=%02x y=%02x' "$main_ram_e009_dispatch_patch_file" ||
    ! grep -Fq 'if(lastop == 0x20 && first == 0xe009)' "$main_ram_e009_dispatch_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMLoaderE009Call' "$main_ram_e009_dispatch_patch_file"; then
@@ -272,5 +286,8 @@ patch -d "$scratch/source" -p1 --batch --forward <"$input_state_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"
 patch -d "$scratch/source" -p1 --batch --forward <"$host_input_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$transfer_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$transfer_owner_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$caller_patch_file"
-printf 'PASS: active Mednafen capture patches dry-run with controller, host/raw input, PCECD, and bounded transfer evidence\n'
+patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_window_patch_file"
+printf 'PASS: active Mednafen capture patches dry-run with controller, host/raw input, PCECD, main-RAM loader, and bounded e009 evidence\n'

@@ -1,0 +1,78 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -7,6 +7,11 @@
+ 
+ namespace MDFN_IEN_PCE
+ {
++void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
++                                      uint8 accumulator, uint8 x, uint8 y);
++void TheronPCECDTraceMainRAME009MainRAMStep(uint16 logical_pc,
++                                            uint32 physical_pc);
++
+ class alignas(128) HuC6280
+ {
+ 	public:
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -102,7 +102,33 @@
+ static uint16 TheronPCECDDataReadPC;
+ static uint32 TheronPCECDDataReadPhysicalPC;
+ static uint8 TheronPCECDDataReadValue;
++static bool TheronPCECDMainRAME009Active;
++static uint16 TheronPCECDMainRAME009ReturnPC;
++static unsigned TheronPCECDMainRAME009Sequence;
++static void TheronTracePCECDState(const char *format, ...);
+ 
++void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
++                                      uint8 accumulator, uint8 x, uint8 y)
++{
++ TheronPCECDMainRAME009Active = true;
++ TheronPCECDMainRAME009ReturnPC = (uint16)(logical_pc + 3);
++ TheronTracePCECDState("main_ram_e009_enter sequence=%u logical_pc=%04x physical_pc=%06x return_pc=%04x a=%02x x=%02x y=%02x\n",
++                       TheronPCECDMainRAME009Sequence, logical_pc, physical_pc,
++                       TheronPCECDMainRAME009ReturnPC, accumulator, x, y);
++}
++
++void TheronPCECDTraceMainRAME009MainRAMStep(uint16 logical_pc,
++                                            uint32 physical_pc)
++{
++ if(!TheronPCECDMainRAME009Active)
++  return;
++ TheronTracePCECDState("main_ram_e009_return sequence=%u expected_return_pc=%04x logical_pc=%04x physical_pc=%06x matched=%u\n",
++                       TheronPCECDMainRAME009Sequence++,
++                       TheronPCECDMainRAME009ReturnPC, logical_pc, physical_pc,
++                       logical_pc == TheronPCECDMainRAME009ReturnPC ? 1 : 0);
++ TheronPCECDMainRAME009Active = false;
++}
++
+ static void TheronTracePCECDState(const char *format, ...)
+ {
+  va_list args;
+@@ -611,6 +637,11 @@
+      TheronPCECDDataReadValue = ret;
+      TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x physical_pc=%06x data=%02x\n",
+                            TheronPCECDDataReadPC, TheronPCECDDataReadPhysicalPC, ret);
++     if(TheronPCECDMainRAME009Active)
++      TheronTracePCECDState("main_ram_e009_data_read sequence=%u cpu_pc=%04x physical_pc=%06x data=%02x\n",
++                            TheronPCECDMainRAME009Sequence,
++                            TheronPCECDDataReadPC,
++                            TheronPCECDDataReadPhysicalPC, ret);
+     }
+ 	    break;
+ 
+--- a/src/pce/huc6280.cpp
++++ b/src/pce/huc6280.cpp
+@@ -873,10 +873,13 @@
+ 	 physical_pc = (MPR[PC >> 13] << 13) | (PC & 0x1fff);
+ 	 if(physical_pc >= 0x1f0000 && physical_pc < 0x1f8000)
+ 	 {
++	  TheronPCECDTraceMainRAME009MainRAMStep(PC, physical_pc);
+ 	  first = RdOp(PC + 1) | (RdOp(PC + 2) << 8);
+ 	  second = RdOp(PC + 3) | (RdOp(PC + 4) << 8);
+ 	  third = RdOp(PC + 5) | (RdOp(PC + 6) << 8);
+ 	  TheronTraceMainRAMLoaderOperation(PC, physical_pc, lastop, first, second, third, A, X, Y);
++	  if(lastop == 0x20 && first == 0xe009)
++   TheronPCECDTraceMainRAME009Enter(PC, physical_pc, A, X, Y);
+ 	 }
+ 	 PC++;
+          switch(lastop)

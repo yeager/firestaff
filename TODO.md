@@ -3217,6 +3217,16 @@ lane is carried forward in the sections below.
     permissions must all remain false. This is capture-required/no-draw
     lifecycle metadata, not a G8 consumer, payload, route, or bitmap claim.
 
+- 2026-07-27 Theron live main-RAM `$e009` window capture follow-up: the
+  reproducible active Mednafen build now opens a bounded trace window only
+  after an observed main-RAM `JSR $e009`, emits any PCE-CD data-register reads
+  while that call is active, and records the next main-RAM step against the
+  exact expected return PC. Transition receipts expose enter/read/return
+  counts. A fresh authentic US-CUE smoke reports all three counts as zero,
+  so this is an instrumentation improvement only: it proves neither a
+  Track-02 loader invocation nor record, object, bitmap, palette, route, or
+  dungeon semantics. Positive original capture remains required.
+
 - 2026-07-17 Theron Track 02 `0x0b52` multi-capture level-index/seed
   correlation blocker: the workspace contains one source-locked Stage-3
   `0x0b52` envelope/loader chain, but no second independent original capture
