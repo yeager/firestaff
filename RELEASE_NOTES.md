@@ -1,7 +1,7 @@
 
 # Unreleased
 
-# Firestaff v3.0.177
+# Firestaff v3.0.178
 
 - Consolidated current DM1, CSB, DM2, Theron and Nexus runtime fixes from main.
 - Improved cross-platform build compatibility and release validation.

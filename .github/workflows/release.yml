@@ -136,10 +136,7 @@ jobs:
       - name: Run unit tests (ctest)
         run: |
           cd build
-          # Some source-lock and corpus tests are advisory on clean Windows
-          # runners because their original reference trees are intentionally
-          # absent. Keep their report, then let the mandatory smoke gates run.
-          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log || true
+          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log
           FAILED=$(grep -oP '\K[0-9]+(?= tests failed)' ctest.log || echo 0)
           if [ "$FAILED" != "0" ]; then
             echo "::warning::$FAILED ctest(s) failed"
@@ -245,7 +242,10 @@ jobs:
       - name: Run unit tests (ctest)
         run: |
           cd build
-          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log
+          # Some source-lock and corpus tests are advisory on clean Windows
+          # runners because their original reference trees are intentionally
+          # absent. Keep their report, then let the mandatory smoke gates run.
+          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log || true
           FAILED=$(grep -oP '\K[0-9]+(?= tests failed)' ctest.log || echo 0)
           if [ "$FAILED" != "0" ]; then
             echo "::warning::$FAILED ctest(s) failed"
