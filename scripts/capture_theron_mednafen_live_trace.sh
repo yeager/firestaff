@@ -112,6 +112,10 @@ track02_md5=$(md5_file "$track02_path") || {
     printf '%s\n' 'FAIL: could not hash CUE TRACK 02 payload' >&2
     exit 1
 }
+mednafen_binary_md5=$(md5_file "$mednafen_bin") || {
+    printf '%s\n' 'FAIL: could not hash the instrumented Mednafen binary' >&2
+    exit 1
+}
 if [[ "$system_card_md5" != ff1a674273fe3540ccef576376407d1d ]]; then
     printf '%s\n' 'FAIL: System Card 3.0 MD5 mismatch' >&2
     exit 1
@@ -652,6 +656,7 @@ transition_main_ram_loader_bra_target_count=$(trace_count '^main_ram_loader_bra_
 transition_main_ram_loader_bra_target_jsr_count=$(trace_count '^main_ram_loader_bra_target_jsr ' "$main_ram_loader_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
+    printf 'mednafen_binary_md5=%s\n' "$mednafen_binary_md5"
     printf 'track02_md5=%s\n' "$track02_md5"
     printf 'system_card_md5=%s\n' "$system_card_md5"
     printf 'input_transactions=%s\n' "$transition_input_count"

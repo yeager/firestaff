@@ -5,6 +5,10 @@
   The shell regression test passes, and an authentic six-second US-CUE boot
   run emits its provenance-marked trace. This prevents false empty captures
   and does not promote any media semantics.
+- ✅ 2026-07-27 Theron capture-producer identity. Transition receipts now bind
+  the exact instrumented Mednafen executable MD5 alongside the original media
+  hashes. Regression coverage and a real US-CUE capture pass; this is
+  provenance only, not a Track 02 decoder or semantic claim.
 - ✅ 2026-07-27 Theron verified-media fallback closure. A verified Track 02
   now blocks preinitialized default palette/tile state unless an original bank
   and a proven palette route are both present. The runtime screenshot gate

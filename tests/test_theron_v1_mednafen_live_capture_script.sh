@@ -102,6 +102,12 @@ if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' 
     printf 'FAIL: capture script must retain the post-$3800 TII producer receipt\n' >&2
     exit 1
 fi
+if ! grep -Fq 'mednafen_binary_md5=$(md5_file "$mednafen_bin")' "$script" ||
+   ! grep -Fq 'could not hash the instrumented Mednafen binary' "$script" ||
+   ! grep -Fq 'mednafen_binary_md5=%s' "$script"; then
+    printf 'FAIL: capture receipt must bind the exact instrumented Mednafen binary\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'THERON_MEDNAFEN_HOME must name an existing Mednafen configuration directory' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_SDL_VIDEODRIVER' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_STARTUP_GRACE must be a positive integer' "$script" ||

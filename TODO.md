@@ -3434,6 +3434,10 @@ lane is carried forward in the sections below.
     no-input run observed only System Card boot (`transition=missing`, zero
     game-main-RAM E009 rows), so it contributes no Track 02 layout or consumer
     semantics. The next capture must use the configured real input route.
+  - 2026-07-27 update: every authentic transition receipt now carries the MD5
+    of the exact instrumented Mednafen executable. This captures producer
+    identity beside the existing media hashes; it neither changes trace
+    acceptance nor promotes any Track 02 semantics.
 
 - 2026-07-16 CSB runtime viewport follow-up: first-frame D0/D1/D2
   F0111/F0115 receipts now promote to a real-data M11 draw plan with shared
