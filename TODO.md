@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-C071-EYE-STATS-CHEST-CLOSE-RUNTIME:** Closed 2026-07-27. The
+  previously unregistered C071 runtime regression is now part of CTest. Its
+  PC34 fixture carries synchronized raw container and weapon records, proving
+  PANEL.C F0351 closes an open F0333 chest before the statistics panel and
+  F0334 drops the hidden ninth slot.
+
 - **DM1-HOC-F0115-REAL-OBJECT-CAPTURE:** Closed 2026-07-27. The F0115
   completed-bitmap capture now covers map 0 as well as later levels. The
   real PC34 HoC probe must find an ordinary compact object chain, render it

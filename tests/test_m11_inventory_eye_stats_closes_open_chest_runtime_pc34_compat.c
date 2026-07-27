@@ -68,11 +68,15 @@ static void seed_open_chest_world(M11_GameViewState* state,
                                   unsigned short chestThing,
                                   unsigned short weaponThings[SEEDED_CHEST_CHAIN_COUNT])
 {
+    static unsigned char weaponRaw[SEEDED_CHEST_CHAIN_COUNT * 4];
+    static unsigned char containerRaw[8];
     int i;
 
     memset(things, 0, sizeof(*things));
     memset(weapons, 0, sizeof(struct DungeonWeapon_Compat) * SEEDED_CHEST_CHAIN_COUNT);
     memset(containers, 0, sizeof(struct DungeonContainer_Compat));
+    memset(weaponRaw, 0, sizeof(weaponRaw));
+    memset(containerRaw, 0, sizeof(containerRaw));
 
     M11_GameView_Init(state);
     state->active = 1;
@@ -88,6 +92,10 @@ static void seed_open_chest_world(M11_GameViewState* state,
     things->weaponCount = SEEDED_CHEST_CHAIN_COUNT;
     things->containers = containers;
     things->containerCount = 1;
+    things->rawThingData[THING_TYPE_WEAPON] = weaponRaw;
+    things->thingCounts[THING_TYPE_WEAPON] = SEEDED_CHEST_CHAIN_COUNT;
+    things->rawThingData[THING_TYPE_CONTAINER] = containerRaw;
+    things->thingCounts[THING_TYPE_CONTAINER] = 1;
 
     for (i = 0; i < SEEDED_CHEST_CHAIN_COUNT; ++i) {
         weaponThings[i] = (unsigned short)((THING_TYPE_WEAPON << 10) | i);
@@ -95,8 +103,15 @@ static void seed_open_chest_world(M11_GameViewState* state,
         weapons[i].next = (i + 1 < SEEDED_CHEST_CHAIN_COUNT)
             ? weaponThings[i + 1]
             : THING_ENDOFLIST;
+        weaponRaw[i * 4] = (unsigned char)(weapons[i].next & 0xffu);
+        weaponRaw[i * 4 + 1] = (unsigned char)(weapons[i].next >> 8);
+        weaponRaw[i * 4 + 2] = weapons[i].type;
     }
     containers[0].slot = weaponThings[0];
+    containerRaw[0] = (unsigned char)(containers[0].next & 0xffu);
+    containerRaw[1] = (unsigned char)(containers[0].next >> 8);
+    containerRaw[2] = (unsigned char)(containers[0].slot & 0xffu);
+    containerRaw[3] = (unsigned char)(containers[0].slot >> 8);
     state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         chestThing;
 }

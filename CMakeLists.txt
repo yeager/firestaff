@@ -20275,6 +20275,21 @@ if(BUILD_TESTING)
         COMMAND test_m11_quick_resume_roundtrip
     )
 
+    add_executable(test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat
+        tests/test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat.c
+    )
+    target_link_libraries(test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat
+        COMMAND test_m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat
+    )
+    set_tests_properties(m11_inventory_eye_stats_closes_open_chest_runtime_pc34_compat PROPERTIES
+        LABELS "dm1;inventory;stats;runtime"
+    )
+
     # Fixture-free external PC34 F0435 -> M11 runtime route. The test only
     # accepts an operator-staged original corpus and original DM1 media.
     add_executable(test_dm1_v1_original_save_pc34_external_hoc_runtime

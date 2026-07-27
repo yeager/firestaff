@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 DM1 C071 eye-to-stats chest-close runtime coverage. The
+  unregistered runtime regression is now a CTest target and uses synchronized
+  raw PC34 container/weapon records. It proves PANEL.C F0351 closes the open
+  F0333 chest before statistics selection and CHEST.C F0334 removes the
+  hidden ninth chest item.
+
 - ✅ 2026-07-27 DM1 HoC real F0115 object capture. The frame-local F0115
   capture is no longer artificially disabled on map 0. The real-data HoC
   probe now walks compact source chains, finds an ordinary visible object,
