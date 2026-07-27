@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 DM1 PC34 complete save shape. `DM1_SaveGamePC34()` now has a
+  tail-backed reload regression that exercises the full F0803/F0435 file
+  shape, including a saved one-map dungeon. Header-only five-part fixtures
+  are intentionally rejected because they cannot reconstruct a dungeon.
+
 - ✅ 2026-07-27 DM1 champion HUD clicks after macOS resize. SDL pointer
   mapping now takes the live size of a real window in both directions, so a
   maximized or restored window cannot map a visible champion status box

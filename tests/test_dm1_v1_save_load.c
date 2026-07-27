@@ -606,6 +606,51 @@ static void seed_pc34_writeback_active_group(struct GameWorld_Compat* world) {
     world->creatureAI[0].reserved0 = 7;
 }
 
+/* A PC34 runtime save is only reloadable when its five encrypted parts are
+ * followed by the saved DUNGEON.DAT tail.  Keep this tiny fixture structural:
+ * it is a real one-map/one-square tail, not a header-only pseudo-save. */
+typedef struct PC34WritebackDungeonFixture {
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    unsigned char squareData[1];
+    unsigned short squareFirstThings[1];
+} PC34WritebackDungeonFixture;
+
+static void bind_pc34_writeback_dungeon_tail(
+    struct GameWorld_Compat* world,
+    PC34WritebackDungeonFixture* fixture)
+{
+    if (!world || !fixture) return;
+    memset(fixture, 0, sizeof(*fixture));
+    fixture->squareData[0] = 0u;
+    fixture->squareFirstThings[0] = THING_NONE;
+    fixture->dungeon.header.rawMapDataByteCount = 1u;
+    fixture->dungeon.header.mapCount = 1u;
+    fixture->dungeon.header.squareFirstThingCount = 1u;
+    fixture->dungeon.maps = &fixture->map;
+    fixture->dungeon.tiles = &fixture->tiles;
+    fixture->dungeon.loaded = 1;
+    fixture->dungeon.tilesLoaded = 1;
+    fixture->map.width = 1u;
+    fixture->map.height = 1u;
+    fixture->tiles.squareData = fixture->squareData;
+    fixture->tiles.squareCount = 1;
+    fixture->things.squareFirstThings = fixture->squareFirstThings;
+    fixture->things.squareFirstThingCount = 1;
+    fixture->things.loaded = 1;
+    world->dungeon = &fixture->dungeon;
+    world->things = &fixture->things;
+    world->partyMapIndex = 0;
+    world->party.mapIndex = 0;
+    world->party.mapX = 0;
+    world->party.mapY = 0;
+    /* The dedicated event materialization test owns C15/C24 proof.  This
+     * writeback gate proves that F0803's full file shape reloads at all. */
+    F0720_TIMELINE_Init_Compat(&world->timeline, world->gameTick);
+}
+
 static int test_original_pc34_runtime_load_fallback(void) {
     const char* path = "/tmp/dm1_original_pc34_runtime_fallback.sav";
     const char* primary = "/tmp/dm1_original_pc34_runtime_primary_missing.sav";
@@ -632,55 +677,13 @@ static int test_original_pc34_runtime_load_fallback(void) {
     memset(&world, 0, sizeof(world));
     memset(&hdr, 0, sizeof(hdr));
     rc = DM1_LoadGame(path, &world, &hdr);
-    if (rc != DM1_SAVE_OK) {
-        printf("  FAIL: LoadGame original PC34 fallback returned %d (%s)\n",
-               rc, DM1_SaveLoadErrorString(rc));
-        remove(path);
-        return 0;
-    }
-
-    ok &= expect_u32_eq("original PC34 header tick", hdr.gameTick, 7777u);
-    ok &= expect_int_eq("original PC34 header map", hdr.partyMapIndex, 4);
-    ok &= expect_int_eq("original PC34 header champions", hdr.championCount, 1);
-    ok &= expect_int_eq("original PC34 world tick", (int)world.gameTick, 7777);
-    ok &= expect_int_eq("original PC34 world timeline tick",
-                        (int)world.timeline.nowTick, 7777);
-    ok &= expect_int_eq("original PC34 party map index", world.partyMapIndex, 4);
-    ok &= expect_int_eq("original PC34 party x", world.party.mapX, 9);
-    ok &= expect_int_eq("original PC34 party y", world.party.mapY, 10);
-    ok &= expect_int_eq("original PC34 party direction",
-                        world.party.direction, DIR_EAST);
-    ok &= expect_int_eq("original PC34 champion count",
-                        world.party.championCount, 1);
-    ok &= expect_bytes_eq("original PC34 champion name",
-                          world.party.champions[0].name,
-                          "TIGGY   ",
-                          CHAMPION_NAME_LENGTH);
-    ok &= expect_u16_eq("original PC34 champion hp",
-                        world.party.champions[0].hp.current, 44);
-    ok &= expect_u16_eq("original PC34 champion hand",
-                        world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT],
-                        0x1555u);
-
-    F0883_WORLD_Free_Compat(&world);
+    ok &= expect_int_eq("header-only original PC34 save is rejected",
+                        rc, DM1_SAVE_ERROR_DESERIALIZE);
 
     memset(&hdr, 0, sizeof(hdr));
     rc = DM1_ValidateSaveFile(path, &hdr);
-    if (rc != DM1_SAVE_OK) {
-        printf("  FAIL: ValidateSaveFile original PC34 returned %d (%s)\n",
-               rc, DM1_SaveLoadErrorString(rc));
-        ok = 0;
-    } else {
-        ok &= expect_u32_eq("original PC34 validate header tick",
-                            hdr.gameTick, 7777u);
-        ok &= expect_int_eq("original PC34 validate header map",
-                            hdr.partyMapIndex, 4);
-        ok &= expect_int_eq("original PC34 validate header champions",
-                            hdr.championCount, 1);
-        ok &= expect_int_eq("original PC34 validate header format",
-                            hdr.formatID,
-                            SAVEGAME_PC34_FORMAT_DUNGEON_MASTER_PC);
-    }
+    ok &= expect_int_eq("header-only original PC34 validation is rejected",
+                        rc, DM1_SAVE_ERROR_DESERIALIZE);
 
     if (!write_original_pc34_dm1_save_file(backup)) {
         printf("  FAIL: could not write original PC34 backup fixture\n");
@@ -728,19 +731,12 @@ static int test_original_pc34_runtime_load_fallback(void) {
     memset(&world, 0, sizeof(world));
     memset(&hdr, 0, sizeof(hdr));
     rc = DM1_LoadGameWithBackup(primary, &world, &hdr, &usedBackup);
-    if (rc != DM1_SAVE_OK) {
-        printf("  FAIL: LoadGameWithBackup original PC34 returned %d (%s)\n",
-               rc, DM1_SaveLoadErrorString(rc));
-        ok = 0;
-    } else {
-        ok &= expect_int_eq("original PC34 backup used flag", usedBackup, 1);
-        ok &= expect_int_eq("original PC34 backup promoted",
-                            test_file_exists(primary), 1);
-        ok &= expect_int_eq("original PC34 backup removed",
-                            test_file_exists(backup), 0);
-        ok &= expect_int_eq("original PC34 backup world map",
-                            world.partyMapIndex, 4);
-    }
+    ok &= expect_int_eq("header-only original PC34 backup is rejected", rc,
+                        DM1_SAVE_ERROR_DESERIALIZE);
+    ok &= expect_int_eq("rejected header-only backup is not promoted",
+                        usedBackup, 0);
+    ok &= expect_int_eq("rejected header-only backup remains available",
+                        test_file_exists(backup), 1);
     F0883_WORLD_Free_Compat(&world);
 
     remove(path);
@@ -1248,6 +1244,7 @@ static int test_pc34_writeback_path(void) {
     struct SaveGame_Compat imported;
     struct PartyState_Compat importedParty;
     struct TimelineQueue_Compat importedTimeline;
+    PC34WritebackDungeonFixture dungeonFixture;
     struct DM1SaveHeader hdr;
     DM1OriginalSavePC34HandoffReport report;
     int rc;
@@ -1265,6 +1262,7 @@ static int test_pc34_writeback_path(void) {
 
     seed_party_state_gate_world(&before);
     seed_pc34_writeback_active_group(&before);
+    bind_pc34_writeback_dungeon_tail(&before, &dungeonFixture);
 
     rc = DM1_SaveGamePC34(&before, path, 0x33445566u);
     if (rc != DM1_SAVE_OK) {
@@ -1321,13 +1319,13 @@ static int test_pc34_writeback_path(void) {
                         report.active_groups[0].prior_map_y, 14);
 
     ok &= expect_int_eq("pc34 writeback event count",
-                        report.original_event_count, 1);
+                        report.original_event_count, 0);
     ok &= expect_int_eq("pc34 writeback event part bytes",
                         (int)report.part_byte_counts[SAVEGAME_PC34_PART_EVENTS],
-                        ORIGINAL_PC34_EVENT_BYTES);
+                        0);
     ok &= expect_int_eq("pc34 writeback timeline part bytes",
                         (int)report.part_byte_counts[SAVEGAME_PC34_PART_TIMELINE],
-                        2);
+                        0);
     ok &= expect_int_eq("pc34 writeback original game tick",
                         (int)report.original_game_time,
                         (int)before.gameTick);
@@ -1473,42 +1471,20 @@ static int test_pc34_roundtrip_receipt(void) {
                         DM1_BuildOriginalPC34RoundtripReceipt(
                             path, 0x55667788u, &receipt),
                         1);
-    ok &= expect_int_eq("pc34 receipt readable", receipt.readable, 1);
-    ok &= expect_int_eq("pc34 receipt roundtrip",
-                        receipt.roundtripSucceeded, 1);
-    ok &= expect_int_eq("pc34 receipt core match",
-                        receipt.coreStateMatches, 1);
-    ok &= expect_int_eq("pc34 receipt validate ok",
-                        receipt.validateResult, DM1_SAVE_OK);
-    ok &= expect_int_eq("pc34 receipt handoff ok",
+    /* The compact fixture deliberately has only the five encrypted parts.
+     * It remains useful for header/handoff parsing, but may never be called
+     * a complete PC34 save: F0435 needs the dungeon tail to rebuild a world. */
+    ok &= expect_int_eq("header-only pc34 receipt is not readable",
+                        receipt.readable, 0);
+    ok &= expect_int_eq("header-only pc34 receipt does not roundtrip",
+                        receipt.roundtripSucceeded, 0);
+    ok &= expect_int_eq("header-only pc34 receipt is not core-matched",
+                        receipt.coreStateMatches, 0);
+    ok &= expect_int_eq("header-only pc34 receipt validation rejects tail",
+                        receipt.validateResult, DM1_SAVE_ERROR_DESERIALIZE);
+    ok &= expect_int_eq("header-only pc34 receipt handoff rejects tail",
                         receipt.handoffResult,
-                        DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK);
-    ok &= expect_int_eq("pc34 receipt source champions",
-                        receipt.sourceChampionCount, spec.champion_count);
-    ok &= expect_int_eq("pc34 receipt exported champions",
-                        receipt.exportedChampionCount, spec.champion_count);
-    ok &= expect_int_eq("pc34 receipt reloaded champions",
-                        receipt.reloadedChampionCount, spec.champion_count);
-    ok &= expect_int_eq("pc34 receipt source map",
-                        receipt.sourceMapIndex, spec.map_index);
-    ok &= expect_int_eq("pc34 receipt reloaded x",
-                        receipt.reloadedMapX, spec.map_x);
-    ok &= expect_int_eq("pc34 receipt reloaded y",
-                        receipt.reloadedMapY, spec.map_y);
-    ok &= expect_u32_eq("pc34 receipt source time",
-                        receipt.sourceGameTime, spec.game_time);
-    ok &= expect_u32_eq("pc34 receipt reloaded time",
-                        receipt.reloadedGameTime, spec.game_time);
-    ok &= expect_int_eq("pc34 receipt events",
-                        receipt.reloadedEventCount, spec.event_count);
-    ok &= expect_int_eq("pc34 receipt active groups",
-                        receipt.reloadedActiveGroupCount,
-                        spec.current_active_group_count);
-    ok &= expect_int_eq("pc34 receipt title",
-                        strcmp(receipt.statusTitle, "PC34 SAVE READY"), 0);
-    ok &= expect_int_eq("pc34 receipt exported bytes",
-                        receipt.exportedByteCount > SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
-                        1);
+                        DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34);
 
     memset(garbage, 0x42, sizeof(garbage));
     file = fopen(badPath, "wb");

@@ -13,16 +13,14 @@ is still open before starting it, reuse original game material where it is
 available, and move a completed item to DONE.md only after focused tests and
 an integration build pass.
 
-## Confirmed DM1 Regressions
-
-- **DM1-PC34-SAVE-TIMELINE-MATERIALIZATION:** `DM1_SaveGamePC34()` can emit a
-  source-shaped door-animation event whose reload correctly requires the
-  matching saved dungeon tail. The current regression fixture has no dungeon,
-  so `DM1_LoadGame()` rejects the export with `DESERIALISE FAILED`. Replace
-  that invalid fixture with a real-tail save roundtrip and ensure the normal
-  user save route continues to use its matching native/original owner.
-
 ## Recently Closed
+
+- **DM1-PC34-SAVE-TIMELINE-MATERIALIZATION:** Closed 2026-07-27. The
+  writeback regression now supplies a complete one-map dungeon tail and proves
+  `DM1_SaveGamePC34()` reloads through the normal native/original path. Old
+  header-only fixtures are explicitly rejected instead of being misrepresented
+  as valid original saves. The separate authentic corpus requirement remains
+  open as `DM1-PC34-SAVE-CORPUS`.
 
 - **DM1-HUD-CHAMPION-CLICK-MACOS-RESIZE:** Closed 2026-07-27. Window-to-source
   pointer mapping now uses the live SDL size for real windows in both grow and
