@@ -6,6 +6,7 @@ script=$repo/scripts/capture_theron_mednafen_live_trace.sh
 quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
+irq2_patch=$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch
 later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
 
 if [[ ! -x "$script" ]]; then
@@ -29,6 +30,12 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
    ! grep -Fq 'mednafen_1.32.1_theron_input_result_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_cd_transfer_owner_trace.patch' "$build_script"; then
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
+    exit 1
+fi
+if [[ ! -f "$irq2_patch" ]] ||
+   ! grep -Fq 'fputs("source=mednafen-pce-instrumented-cd\n", trace);' "$irq2_patch" ||
+   grep -Fq 'fputs("source=mednafen-pce-instrumented-cd\\n", trace);' "$irq2_patch"; then
+    printf 'FAIL: raw-sector provenance marker must be newline-delimited\n' >&2
     exit 1
 fi
 if [[ ! -f "$quartz_helper" ]] ||

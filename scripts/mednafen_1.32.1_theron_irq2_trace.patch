@@ -984,7 +984,7 @@ diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
 +    trace = fopen(path, "a");
 +    if(trace)
 +    {
-+     fputs("source=mednafen-pce-instrumented-cd\\n", trace);
++     fputs("source=mednafen-pce-instrumented-cd\n", trace);
 +     fflush(trace);
 +    }
 +   }

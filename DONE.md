@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 Theron raw-sector provenance repair. Fixed the active
+  Mednafen trace patch to emit a newline-delimited CD provenance marker rather
+  than literal backslash-n. Rebuilt with real SDL2; a new authentic capture is
+  parsed correctly, and a regression test prevents the malformed marker.
 - ✅ 2026-07-27 Theron original dungeon runtime capture. A verified US-cue
   controller sequence reaches the original Theron dungeon HUD and 3D viewport;
   the 64-command session includes a later SCSI burst ending at LBA 3396.

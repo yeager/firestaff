@@ -4183,6 +4183,12 @@ lane is carried forward in the sections below.
     ownership is still System Card code and the transition receipt remains
     missing. The runtime route is therefore proven visually; the LBA range has
     no asserted level, object, bitmap, palette, or loader semantics yet.
+    The active Mednafen patch's raw-sector provenance marker was repaired to
+    use a real newline rather than literal backslash-n, allowing the existing
+    parser to see source=mednafen-pce-instrumented-cd. A rebuilt live capture
+    proves that boundary; it has only 32 of the verifier's required 39 raw
+    sectors, so the extended later-sector proof remains pending rather than
+    weakened.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a
