@@ -15,6 +15,10 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-JP-CUE-RUNTIME-REGRESSION:** Closed 2026-07-27. A skip-safe
+  real-media CTest now requires direct `TQJP.cue` launch to retain the
+  canonical JP Track 02 hash and reach title startup.
+
 - **THERON-JP-CUE-COMPLETE-ISO-ALIAS:** Closed 2026-07-27. The JP CUE's
   legacy `TQJP02.iso` member now resolves only to a sibling
   `TQJP02End.iso` whose complete original ISO hash is verified. This is kept

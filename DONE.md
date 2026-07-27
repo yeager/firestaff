@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 Theron JP CUE runtime regression. The new real-media CTest
+  verifies direct JP CUE boot, canonical asset identity, selected source, and
+  title startup; it skips cleanly where the original media is unavailable.
+
 - ✅ 2026-07-27 Theron JP CUE complete-ISO alias. The JP CUE now accepts its
   legacy Track 02 filename only when the sibling `TQJP02End.iso` matches the
   known complete original image; a real JP CUE boot probe reaches title.
