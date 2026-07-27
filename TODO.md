@@ -15,6 +15,10 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-MOVEMENT-TURN-BUTTON-VISUAL-CUE:** Closed 2026-07-27. Keyboard and
+  controller feedback now outlines the full visible C013 turn-button tile,
+  while retaining the narrower original C068/C069 mouse-zone outline.
+
 - **DM1-V2-HUD-CHAMPION-CLICK-ROUTES:** Closed 2026-07-27. DM1's original
   C007..C015 champion input surface is no longer disabled merely because a
   V2.x presentation turns off the V1 chrome compositor. Champion inventory

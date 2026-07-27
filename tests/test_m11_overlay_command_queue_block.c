@@ -1045,6 +1045,14 @@ static void test_keyboard_navigation_visually_marks_screen_arrows(void)
               "keyboard Q/Home turn redraws feedback");
     draw_and_expect_arrow_feedback(&state, 0, DM_PC_COLOR_YELLOW,
                                    "keyboard turn-left marks C068 turn arrow");
+    /* C068's source hit strip is narrower than the visible C013 turn tile.
+     * Keyboard/controller feedback must cover that complete tile while
+     * retaining the inner source-zone outline. */
+    memset(framebuffer, 0x7f, sizeof(framebuffer));
+    M11_GameView_Draw(&state, framebuffer, 320, 200);
+    ASSERT_EQ(framebuffer_pixel(framebuffer, 234 + 27, 125),
+              DM_PC_COLOR_YELLOW,
+              "keyboard turn-left marks the full visible C013 button width");
 
     while (state.v1MovementArrowVisualTicks > 0) {
         M11_GameView_TickAnimation(&state);

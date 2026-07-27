@@ -38893,6 +38893,14 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
         y = receipt.rect.y;
         w = receipt.rect.w;
         h = receipt.rect.h;
+        /* C068/C069 are deliberately narrower mouse hit zones than their
+         * cells in C013_GRAPHIC_MOVEMENT_ARROWS.  The keyboard/controller
+         * cue should surround the visible turn button, not just the narrow
+         * source click strip inside it.  Keep the source rectangle outlined
+         * below as well, so pointer geometry remains evident. */
+        if (receipt.cueColorKind == 1) {
+            w = 28;
+        }
         /* This visual echo is a Firestaff keyboard/controller affordance
          * over ReDMCSB's MENUDRAW.C F0395 native movement panel.  Draw the
          * complete source hit-zone boundary so its visible extent matches
@@ -38911,6 +38919,23 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
                            x, y, y + h - 1, cueColor);
             m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
                            x + w - 1, y, y + h - 1, cueColor);
+        }
+        if (receipt.cueColorKind == 1 && receipt.rect.w > 8 &&
+            receipt.rect.h > 8) {
+            /* Preserve the actual C068/C069 rectangle inside the complete
+             * visible button cue. */
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           receipt.rect.x, receipt.rect.x + receipt.rect.w - 1,
+                           receipt.rect.y, cueColor);
+            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                           receipt.rect.x, receipt.rect.x + receipt.rect.w - 1,
+                           receipt.rect.y + receipt.rect.h - 1, cueColor);
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                           receipt.rect.x, receipt.rect.y,
+                           receipt.rect.y + receipt.rect.h - 1, cueColor);
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                           receipt.rect.x + receipt.rect.w - 1, receipt.rect.y,
+                           receipt.rect.y + receipt.rect.h - 1, cueColor);
         }
     }
 }

@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 DM1 movement turn-button visual cue. Keyboard/controller
+  feedback now covers the whole visible C013 turn tile rather than only the
+  narrow C068/C069 click strip; the source click outline remains visible.
+  `test_m11_overlay_command_queue_block` passes 183/183.
+
 - ✅ 2026-07-27 DM1 V2 HUD champion click routes. DM1's source C007..C015
   status/inventory routes now remain active when V2.x disables the V1 chrome
   compositor. The isolated V2 regression passes 10/10; the full original
