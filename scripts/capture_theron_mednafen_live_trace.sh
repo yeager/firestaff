@@ -259,6 +259,26 @@ resolve_mednafen_ui_pid_with_retry() {
     return 1
 }
 
+activate_mednafen_ui_pid_with_retry() {
+    local target_pid=$1
+    local attempts=${2:-20}
+    local attempt
+
+    for ((attempt = 0; attempt < attempts; ++attempt)); do
+        if osascript <<APPLESCRIPT
+tell application "System Events"
+    set targetProcess to first application process whose unix id is $target_pid
+    set frontmost of targetProcess to true
+end tell
+APPLESCRIPT
+        then
+            return 0
+        fi
+        sleep 0.25
+    done
+    return 1
+}
+
 trace_dir=$(dirname -- "$trace")
 memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
@@ -330,13 +350,7 @@ if [[ -n "$host_key" ]]; then
         printf '%s\n' 'FAIL: macOS could not focus the Mednafen SDL surface' >&2
         exit 1
     fi
-    if ! osascript <<APPLESCRIPT
-tell application "System Events"
-    set targetProcess to first application process whose unix id is $mednafen_ui_pid
-    set frontmost of targetProcess to true
-end tell
-APPLESCRIPT
-    then
+    if ! activate_mednafen_ui_pid_with_retry "$mednafen_ui_pid"; then
         kill "$mednafen_pid" 2>/dev/null || true
         wait "$mednafen_pid" 2>/dev/null || true
         printf '%s\n' 'FAIL: macOS could not focus Mednafen and send Return; grant accessibility permission to the invoking terminal' >&2
@@ -386,11 +400,17 @@ APPLESCRIPT
         if [[ "$quartz_receipt" != *$'quartz_event_access=granted'* ||
               "$quartz_receipt" != *"$expected_quartz_route"* ||
               "$quartz_receipt" != *"quartz_target_pid=$mednafen_ui_pid"* ||
-              "$quartz_receipt" != *"quartz_activation=accepted"* ||
-              "$quartz_receipt" != *"quartz_frontmost_pid=$mednafen_ui_pid"* ]]; then
+              "$quartz_receipt" != *"quartz_activation=accepted"* ]]; then
             kill "$mednafen_pid" 2>/dev/null || true
             wait "$mednafen_pid" 2>/dev/null || true
             printf '%s\n' 'FAIL: Quartz helper did not attest requested key delivery' >&2
+            exit 1
+        fi
+        if [[ "$input_route" == global_hid &&
+              "$quartz_receipt" != *"quartz_frontmost_pid=$mednafen_ui_pid"* ]]; then
+            kill "$mednafen_pid" 2>/dev/null || true
+            wait "$mednafen_pid" 2>/dev/null || true
+            printf '%s\n' 'FAIL: Quartz global HID delivery requires Mednafen to own the foreground' >&2
             exit 1
         fi
         sleep 0.2

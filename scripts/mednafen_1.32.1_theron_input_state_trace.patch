@@ -3,7 +3,7 @@
 @@ -268,0 +269,28 @@
 + static FILE *theron_input_read_trace = NULL;
 + static unsigned theron_input_read_count = 0;
-+ static unsigned theron_input_read_trace_limit = 4096;
++ static unsigned theron_input_read_trace_limit = 65536;
 + static bool theron_input_read_trace_limit_initialized = false;
 + if(!theron_input_read_trace)
 + {
@@ -32,7 +32,7 @@
 @@ -294,0 +323,27 @@
 + static FILE *theron_input_write_trace = NULL;
 + static unsigned theron_input_write_count = 0;
-+ static unsigned theron_input_write_trace_limit = 4096;
++ static unsigned theron_input_write_trace_limit = 65536;
 + static bool theron_input_write_trace_limit_initialized = false;
 + if(!theron_input_write_trace)
 + {

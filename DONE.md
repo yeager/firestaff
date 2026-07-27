@@ -40900,3 +40900,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   SDL events, PCE port `0000 -> 0008 -> 0000`, 31 raw-sector spans, and 56
   SCSI reads. It remains non-promotable because the initial input trace cap
   is reached before the host event.
+- ✅ 2026-07-27 Theron post-key input-chain capture. Raised the default
+  direct-input trace limit to 65,536 per direction and made PID Quartz
+  delivery tolerate a background target while retaining a strict foreground
+  requirement for global HID. Authentic US capture records 47,575 direct PCE
+  transactions, 26,782 after the first host key, and direct `e4b7`/`e4c8`
+  reads of port `0008`. Verification: Swift typecheck, shell/test gate,
+  rebuilt SDL2-linked Mednafen, and 55-second authentic CUE/System Card run.
+  No dynamic CD destination or game-owned PCECD reader appeared, so Track 02
+  dungeon promotion remains blocked.

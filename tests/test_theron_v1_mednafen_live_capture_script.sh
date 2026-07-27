@@ -44,9 +44,11 @@ if [[ ! -f "$quartz_helper" ]] ||
 fi
 if ! grep -Fq 'quartz_activation=accepted' "$script" ||
    ! grep -Fq 'quartz_frontmost_pid=$mednafen_ui_pid' "$script" ||
+   ! grep -Fq 'Quartz global HID delivery requires Mednafen to own the foreground' "$script" ||
    ! grep -Fq 'quartz_target_not_frontmost activation=' "$quartz_helper" ||
    ! grep -Fq 'quartz_activation=\(activationAccepted ? "accepted" : "rejected")' "$quartz_helper" ||
-   ! grep -Fq 'quartz_frontmost_pid=\(observedPid)' "$quartz_helper"; then
+   ! grep -Fq 'quartz_frontmost_pid=\(observedPid)' "$quartz_helper" ||
+   ! grep -Fq 'quartz_target_focus=background_pid_delivery' "$quartz_helper"; then
     printf 'FAIL: capture must attest that the target owns the foreground\n' >&2
     exit 1
 fi
@@ -84,11 +86,13 @@ fi
 if ! grep -Fq 'THERON_CAPTURE_HOST_KEY currently supports only return, i, or select' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY requires a non-dummy SDL video driver' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY requires THERON_MEDNAFEN_HOME with an explicit PCE input mapping' "$script" ||
-   ! grep -Fq 'set targetProcess to first application process whose unix id is $mednafen_ui_pid' "$script" ||
+   ! grep -Fq 'set targetProcess to first application process whose unix id is $target_pid' "$script" ||
    ! grep -Fq 'cliclick "c:${host_focus_x},${host_focus_y}"' "$script" ||
    ! grep -Fq 'resolve_mednafen_ui_pid()' "$script" ||
    ! grep -Fq 'resolve_mednafen_ui_pid_with_retry()' "$script" ||
+   ! grep -Fq 'activate_mednafen_ui_pid_with_retry()' "$script" ||
    ! grep -Fq 'mednafen_ui_pid=$(resolve_mednafen_ui_pid_with_retry "$mednafen_pid" || true)' "$script" ||
+   ! grep -Fq 'activate_mednafen_ui_pid_with_retry "$mednafen_ui_pid"' "$script" ||
    grep -Fq 'pgrep -f "$mednafen_bin"' "$script" ||
    ! grep -Fq 'return) host_key_code=36' "$script" ||
    ! grep -Fq 'select) host_key_code=48' "$script" ||

@@ -4145,10 +4145,12 @@ lane is carried forward in the sections below.
     `live-input-pc-passive-20260727.trace.input` records 8,192 real
     transactions at System Card PCs `e4b7`/`e4c8` after the cap was raised,
     with CPU-PC provenance on every input read/write. The bounded PID resolver
-    now also proves Quartz-delivered Return reaches SDL and PCE port `0008`,
-    but the 4,096-per-direction trace cap fills before that event. A larger
-    focused capture must retain post-key PCE polling before input ordering can
-    be used; no row is synthesized or promoted to runtime.
+    now proves Quartz-delivered Return reaches SDL and PCE port `0008`; the
+    65,536-per-direction capture records 47,575 input transactions, including
+    26,782 after its first host key and real `e4b7`/`e4c8` reads of `0008`.
+    That establishes the host-to-PCE input chain, but this same capture still
+    has no non-System-Card PCECD reader or dynamic destination receipt, so no
+    row is synthesized or promoted to runtime.
   - 2026-07-16 Theron draw-route gate update: M11 now has a guarded
     dungeon draw-route receipt that can consume the proven level-1 media,
     multilevel handoff, live level geometry, party pose, object placement,
