@@ -25550,8 +25550,8 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   canonical real-data probe passed 56/56, and DM2 runtime handoff smoke passed
   158/158.
 
-- 2026-07-11 Theron Track 01 CDDA startup/title lifecycle: M11 now carries
-  the verified CUE handoff into the Theron runtime, starts and pumps original
+- 2026-07-11 Theron Track 01 CDDA startup/title lifecycle: M11 owns the
+  title-phase lifecycle plumbing for a verified CUE handoff: it starts and pumps original
   Track 01 only during the title phase, stops it on every startup phase change
   and shutdown, and loops only by seeking back to the CUE-derived Track 01
   sector start after its exact declared sector span. Unavailable, unverified,
@@ -25560,6 +25560,14 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   start/pump, phase-exit stop, unverified gating, and bounded short-track
   wrapping; `test_theron_v1_track01_cdda_handoff` and its CTest passed with
   `SDL_AUDIODRIVER=dummy`. `firestaff` also built successfully.
+
+- 2026-07-27 Theron real-CUE CDDA runtime binding: corrected the missing
+  handoff initialization behind that lifecycle. After the normal hash-verified
+  Theron runtime receipt is accepted, M11 now binds Track 01 only from the
+  same consumed CUE provenance and verified Track 02 MD5. Loose BIN/ISO
+  launches remain no-playback. The real-media probe and handoff test accept
+  the staged USA 19-track CUE through `FIRESTAFF_THERON_CUE`; focused Ninja
+  build and CTest pass.
 
 - 2026-07-11 Nexus canonical SLEV/SAL runtime handoff: level loading now
   emits one source receipt for `SLEVxx.BIN`, `SNDLEVxx.SAL`, and

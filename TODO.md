@@ -18350,6 +18350,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   user-staged JP/US title playback/capture evidence; do not widen this into
   filename-based pairing, audio transcoding, or non-CDDA fallback.
 
+- ✅ 2026-07-27 Theron CDDA host-consumer correction: M11 had the title-phase
+  CDDA lifecycle but reset the handoff without rebuilding it. It now consumes
+  only the scanner-admitted CUE path together with the verified Track 02 MD5;
+  raw BIN/ISO paths remain silent. The local authentic USA CUE passes both
+  the availability and handoff tests through `FIRESTAFF_THERON_CUE`.
+
 - 🔧 Track 02 graphics-format follow-up: the real hash-verified JP/US raw-BIN
   catalog found 1,522 strict HuC6260-shaped windows and 78 strict LE16
   stride-shaped windows across 2,022 exact matching nonzero MODE1 sectors.

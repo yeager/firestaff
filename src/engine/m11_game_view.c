@@ -16199,6 +16199,28 @@ static void m11_theron_update_track01_cdda_lifecycle(M11_GameViewState *state)
         &state->theronTrack01CddaStream);
 }
 
+/* Title music is admitted only from the same hash-verified CUE provenance
+ * that admitted Track 02.  In particular, never infer a CDDA companion for
+ * a loose BIN/ISO launch. */
+static void m11_theron_bind_track01_cdda_handoff(
+    M11_GameViewState *state,
+    const char *cue_path,
+    const char *verified_track02_md5)
+{
+    if (!state) {
+        return;
+    }
+    theron_v1_track01_cdda_stream_stop(&state->theronTrack01CddaStream);
+    memset(&state->theronTrack01CddaHandoff, 0,
+           sizeof(state->theronTrack01CddaHandoff));
+    if (!cue_path || !m11_path_has_extension(cue_path, ".cue") ||
+        !verified_track02_md5 || !verified_track02_md5[0]) {
+        return;
+    }
+    (void)theron_v1_track01_cdda_handoff_from_verified_media(
+        cue_path, verified_track02_md5, &state->theronTrack01CddaHandoff);
+}
+
 static int m11_theron_apply_boot_runtime_receipt(
     M11_GameViewState *state,
     const Theron_V1_BootStartupRuntimeReceipt *receipt)
@@ -17737,6 +17759,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* savePath) {
     Theron_V1_BootStartupLaunch launch;
     Theron_V1_BootStartupRuntimeReceipt runtime_receipt;
+    const char *cdda_cue_path = NULL;
     int savedDebugHUD;
     int raw_track02_bypass = 0;
 
@@ -17883,6 +17906,14 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     if (!m11_theron_apply_boot_runtime_receipt(state, &runtime_receipt)) {
         goto fail;
     }
+    if (campaignMedia && campaignMedia->direct_media.cue_consumed &&
+        m11_path_has_extension(campaignMedia->direct_media.media_path, ".cue")) {
+        cdda_cue_path = campaignMedia->direct_media.media_path;
+    } else if (m11_path_has_extension(verifiedPath, ".cue")) {
+        cdda_cue_path = verifiedPath;
+    }
+    m11_theron_bind_track01_cdda_handoff(state, cdda_cue_path, verifiedMd5);
+    m11_theron_update_track01_cdda_lifecycle(state);
     if (raw_track02_bypass) {
         /* Auto-load the initial Hall of Records level for raw MODE1/2352
          * media that bypasses the capture-required gate. This produces the

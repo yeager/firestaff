@@ -99,6 +99,17 @@ int main(void) {
                     stream.output_started || stream.audio_file || stream.sdl_stream)) {
         failed = 1;
     }
+    {
+        const char *real_cue = getenv("FIRESTAFF_THERON_CUE");
+        if (real_cue && real_cue[0] &&
+            theron_v1_track01_cdda_handoff_from_verified_media(
+                real_cue, THERON_TRACK02_MD5_US_BIN, &handoff) !=
+                THERON_TRACK01_CDDA_AVAILABLE) {
+            fprintf(stderr, "real Track 01 CDDA handoff rejected: %s\n",
+                    handoff.unavailable_reason);
+            failed = 1;
+        }
+    }
     remove(cue);
     remove(audio);
     remove(data);

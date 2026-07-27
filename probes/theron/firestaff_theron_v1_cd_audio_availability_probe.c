@@ -256,11 +256,17 @@ static int run_synthetic_tests(void) {
 
 static int run_real_data_test(void) {
     const char *home = getenv("HOME");
+    const char *configured_cue = getenv("FIRESTAFF_THERON_CUE");
     char cue_path[1024];
     Theron_V1CdAudioReceipt receipt;
-    if (!home) return 0; /* Skip if no HOME. */
-    snprintf(cue_path, sizeof(cue_path),
-             "%s/.firestaff/data/theron/TQUS.cue", home);
+    if (configured_cue && configured_cue[0]) {
+        snprintf(cue_path, sizeof(cue_path), "%s", configured_cue);
+    } else if (home) {
+        snprintf(cue_path, sizeof(cue_path),
+                 "%s/.firestaff/data/theron/TQUS.cue", home);
+    } else {
+        return 0; /* Skip if no HOME and no explicit real CUE. */
+    }
     if (!file_exists(cue_path)) {
         printf("theron_v1_cd_audio_availability: SKIP real-data test "
                "(%s not found)\n", cue_path);
