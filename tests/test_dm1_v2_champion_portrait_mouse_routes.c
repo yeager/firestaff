@@ -26,6 +26,7 @@ static void seed_party(M11_GameViewState *state) {
     M11_GameView_Init(state);
     state->active = 1;
     state->showDebugHUD = 0;
+    state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
     state->world.party.championCount = CHAMPION_MAX_PARTY;
     state->world.party.activeChampionIndex = 0;
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {

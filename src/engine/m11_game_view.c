@@ -7925,7 +7925,7 @@ static int m11_runtime_fluxcage_visible_in_viewport(
 
 /* Forward declarations for helpers defined later in this
  * translation unit that the Pass 42 chrome reroute needs. */
-static int m11_v1_chrome_mode_enabled(void);
+static int m11_v1_chrome_mode_enabled(const M11_GameViewState* state);
 static const M11_LogEntry* m11_log_entry_at(const M11_MessageLog* log, int reverseIndex);
 
 static int m11_chrome_reroute_is_player_facing_pass42(const char* text) {
@@ -8021,7 +8021,7 @@ static void m11_set_status(M11_GameViewState* state,
     snprintf(state->lastOutcome, sizeof(state->lastOutcome), "%s", outcome ? outcome : "");
 
     /* Pass 42: reroute into message log when V1 chrome mode is on. */
-    if (m11_v1_chrome_mode_enabled()) {
+    if (m11_v1_chrome_mode_enabled(state)) {
         char payload[96];
         const char* a = action ? action : "";
         const char* o = outcome ? outcome : "";
@@ -8053,7 +8053,7 @@ static void m11_set_inspect_readout(M11_GameViewState* state,
      * message log when V1 chrome mode is on.  The invented
      * two-line surface is already debug-only; this gives the
      * strings a DM1-style surface in V1 mode. */
-    if (m11_v1_chrome_mode_enabled()) {
+    if (m11_v1_chrome_mode_enabled(state)) {
         char payload[96];
         const char* t = title ? title : "";
         const char* d = detail ? detail : "";
@@ -8640,15 +8640,19 @@ static int m11_point_in_utility_button(int x,
                              M11_UTILITY_BUTTON_H);
 }
 
-static int m11_v2_vertical_slice_enabled(void) {
-    static int cached = -1;
+static int m11_v2_vertical_slice_test_override(void) {
     const char* env;
-    if (cached >= 0) {
-        return cached;
-    }
     env = getenv("FIRESTAFF_V2_VERTICAL_SLICE");
-    cached = (env && env[0] != '\0' && strcmp(env, "0") != 0) ? 1 : 0;
-    return cached;
+    return env && env[0] != '\0' && strcmp(env, "0") != 0;
+}
+
+/* Presentation mode is live state: F10 can switch it while a game is
+ * running.  The environment variable remains a test/developer override for
+ * isolated layout probes, but must not be the production mode selector. */
+static int m11_v2_vertical_slice_enabled(const M11_GameViewState* state) {
+    return (state &&
+            state->presentationMode != M12_PRESENTATION_V1_ORIGINAL) ||
+           m11_v2_vertical_slice_test_override();
 }
 
 /* Pass 42: V1 chrome-mode switch.
@@ -8701,26 +8705,16 @@ static int m11_v2_vertical_slice_enabled(void) {
  * Pass 35 §2.2, §2.4, §2.5, §2.6; PARITY_MATRIX_DM1_V1.md §4;
  * parity-evidence/pass42_chrome_reduction.md.
  */
-static int m11_v1_chrome_mode_enabled(void) {
-    static int cached = -1;
+static int m11_v1_chrome_mode_enabled(const M11_GameViewState* state) {
     const char* env;
-    if (cached >= 0) {
-        return cached;
-    }
     /* V2 vertical-slice mode is not on the V1 parity path.  Force
      * V1 chrome mode OFF when V2 is enabled so the pre-baked HUD
      * sprite composition remains intact. */
-    if (m11_v2_vertical_slice_enabled()) {
-        cached = 0;
-        return cached;
+    if (m11_v2_vertical_slice_enabled(state)) {
+        return 0;
     }
     env = getenv("FIRESTAFF_V1_CHROME");
-    if (env && env[0] != '\0' && strcmp(env, "0") == 0) {
-        cached = 0;
-    } else {
-        cached = 1;
-    }
-    return cached;
+    return !(env && env[0] != '\0' && strcmp(env, "0") == 0);
 }
 
 
@@ -8742,20 +8736,20 @@ static int m11_v1_chrome_mode_enabled(void) {
  *
  * Ref: V1_BLOCKERS.md §5; DEFS.H:2157; Pass 41 evidence file
  * parity-evidence/pass41_status_box_stride.md. */
-static int m11_party_slot_step(void) {
-    return m11_v2_vertical_slice_enabled()
+static int m11_party_slot_step(const M11_GameViewState* state) {
+    return m11_v2_vertical_slice_enabled(state)
         ? (int)M11_PARTY_SLOT_STEP
         : (int)CHAMPION_STATUS_COMPAT_SLOT_STEP;
 }
 
-static int m11_party_panel_x(void) {
-    return m11_v2_vertical_slice_enabled()
+static int m11_party_panel_x(const M11_GameViewState* state) {
+    return m11_v2_vertical_slice_enabled(state)
         ? (int)M11_PARTY_PANEL_X
         : (int)CHAMPION_STATUS_COMPAT_SLOT_X_BASE;
 }
 
-static int m11_party_slot_w(void) {
-    return m11_v2_vertical_slice_enabled()
+static int m11_party_slot_w(const M11_GameViewState* state) {
+    return m11_v2_vertical_slice_enabled(state)
         ? (int)M11_PARTY_SLOT_W
         : (int)CHAMPION_STATUS_COMPAT_SLOT_W;
 }
@@ -8782,23 +8776,13 @@ static int m11_party_slot_w(void) {
  * equivalent lives in src/dm1/dm1_v1_champion_stats_pc34_compat.c
  * and the modern m11_v1_bar_graphs_enabled() helper above.
  * See docs/audits/REDMSB_FIRESTAFF_AUDIT_2026-06-16.md Bug 2. */
-static int m11_v1_bar_graphs_enabled(void) {
-    static int cached = -1;
+static int m11_v1_bar_graphs_enabled(const M11_GameViewState* state) {
     const char* env;
-    if (cached >= 0) {
-        return cached;
-    }
-    if (m11_v2_vertical_slice_enabled()) {
-        cached = 0;
-        return cached;
+    if (m11_v2_vertical_slice_enabled(state)) {
+        return 0;
     }
     env = getenv("FIRESTAFF_V1_BAR_GRAPHS");
-    if (env && env[0] != '\0' && strcmp(env, "0") == 0) {
-        cached = 0;
-    } else {
-        cached = 1;
-    }
-    return cached;
+    return !(env && env[0] != '\0' && strcmp(env, "0") == 0);
 }
 
 static void m11_blit_v2_slice_asset(const M11_V2SliceAsset* asset,
@@ -10879,7 +10863,7 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
 
     if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
         state->showDebugHUD || state->inventoryPanelActive ||
-        !m11_v1_chrome_mode_enabled()) {
+        !m11_v1_chrome_mode_enabled(state)) {
         return M11_GAME_INPUT_IGNORED;
     }
     parent = dm1_v1_spell_area_click_rect_pc34();
@@ -21942,7 +21926,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
      * HUD sessions, but ignore the M-key in default V1 chrome mode so
      * normal parity play cannot enter an invented screen. */
     if (input == M12_MENU_INPUT_MAP_TOGGLE) {
-        if (m11_v1_chrome_mode_enabled() && !state->showDebugHUD) {
+        if (m11_v1_chrome_mode_enabled(state) && !state->showDebugHUD) {
             return M11_GAME_INPUT_IGNORED;
         }
         state->inventoryPanelActive = 0;
@@ -22824,9 +22808,10 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
          * portrait area (most noticeably champion four) miss the input
          * route.  Bind the rendered portrait/name region to C007..C010;
          * hand cells on the right remain available to their own routes. */
-        if (m11_v2_vertical_slice_enabled()) {
+        if (m11_v2_vertical_slice_enabled(state)) {
             for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-                int slotX = m11_party_panel_x() + slot * m11_party_slot_step();
+                int slotX = m11_party_panel_x(state) +
+                            slot * m11_party_slot_step(state);
                 if (m11_point_in_rect(x, y, slotX, M11_PARTY_PANEL_Y,
                                       47, M11_PARTY_SLOT_H)) {
                     return m11_toggle_champion_inventory(state, slot);
@@ -23114,7 +23099,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * movement-arrow rectangles (C068..C073) below; the old focus-card box
      * at x=218..303/y=106..139 overlaps the top arrow row and must not
      * preempt C001/C002/C003. */
-    if ((state->showDebugHUD || !m11_v1_chrome_mode_enabled()) &&
+    if ((state->showDebugHUD || !m11_v1_chrome_mode_enabled(state)) &&
         (m11_point_in_rect(x, y,
                            M11_PROMPT_STRIP_X,
                            M11_PROMPT_STRIP_Y,
@@ -23127,7 +23112,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     /* ReDMCSB COMMAND.C G0448 maps the source movement-arrow zones
      * (C068/C070/C069/C073/C072/C071) to commands 1/3/2/6/5/4;
      * CLIKMENU.C F0366 then treats C004 as relative right movement. */
-    if (m11_v1_chrome_mode_enabled() && !state->showDebugHUD) {
+    if (m11_v1_chrome_mode_enabled(state) && !state->showDebugHUD) {
         int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
         int zoneId = 0;
         int command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
@@ -23166,7 +23151,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                           M11_VIEWPORT_Y,
                           M11_VIEWPORT_W,
                           M11_VIEWPORT_H)) {
-        if (m11_v1_chrome_mode_enabled() && !state->showDebugHUD) {
+        if (m11_v1_chrome_mode_enabled(state) && !state->showDebugHUD) {
             int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
             int zoneId = 0;
             int command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
@@ -23217,10 +23202,10 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     }
 
     {
-        int slotStep = m11_party_slot_step();
-        int slotW    = m11_party_slot_w();
+        int slotStep = m11_party_slot_step(state);
+        int slotW    = m11_party_slot_w(state);
         for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-            int slotX = m11_party_panel_x() + slot * slotStep;
+            int slotX = m11_party_panel_x(state) + slot * slotStep;
             if (m11_point_in_rect(x, y,
                                   slotX,
                                   M11_PARTY_PANEL_Y + 20,
@@ -31346,7 +31331,7 @@ static int m11_draw_ui_frame_assets(const M11_GameViewState* state,
                                     int fbH) {
     const M11_AssetSlot* ceilSlot;
     const M11_AssetSlot* floorSlot;
-    if (m11_v2_vertical_slice_enabled()) {
+    if (m11_v2_vertical_slice_enabled(state)) {
         m11_blit_v2_slice_asset(&m11_v2_viewport_frame_base,
                                 framebuffer, fbW, fbH,
                                 0, 16, 1);
@@ -40864,7 +40849,7 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
     char objectName[16];
     DM1_V1_LayoutZoneRectPc34 nameRect;
     if (!state || !framebuffer || state->showDebugHUD ||
-        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
+        !m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state)) {
         return;
     }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
@@ -41877,8 +41862,8 @@ static void m11_draw_v1_action_area_overlay(const M11_GameViewState* state,
                                             unsigned char* framebuffer,
                                             int framebufferWidth,
                                             int framebufferHeight) {
-    if (!state || state->showDebugHUD || m11_v2_vertical_slice_enabled() ||
-        !m11_v1_chrome_mode_enabled()) {
+    if (!state || state->showDebugHUD || m11_v2_vertical_slice_enabled(state) ||
+        !m11_v1_chrome_mode_enabled(state)) {
         return;
     }
 
@@ -41914,7 +41899,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         return;
     }
 
-    if (m11_v2_vertical_slice_enabled()) {
+    if (m11_v2_vertical_slice_enabled(state)) {
         DM1_V1_SpellAreaRectPc34 spell = dm1_v1_spell_area_graphic_rect_pc34();
         int spellX = spell.x;
         int spellY = spell.y;
@@ -41952,7 +41937,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
      * the previously empty space above the party HUD (y=70..146).
      * Reference: ReDMCSB ACTIDRAW.C / CASTER.C and C011_ZONE_ACTION_AREA /
      * C013_ZONE_SPELL_AREA in ZONES.H. */
-    if (!state->showDebugHUD && !m11_v2_vertical_slice_enabled()) {
+    if (!state->showDebugHUD && !m11_v2_vertical_slice_enabled(state)) {
         DM1_V1_ActionAreaRectPc34 action = dm1_v1_action_area_rect_pc34();
         DM1_V1_SpellAreaRectPc34 spell = dm1_v1_spell_area_graphic_rect_pc34();
         const M11_AssetSlot* actionAsset = NULL;
@@ -41989,7 +41974,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     /* C010/C011 are source-owned V1 surfaces. A failed GRAPHICS.DAT
      * validation has already cleared their strip; never replace that result
      * with Firestaff's procedural utility frame in V1 chrome. */
-    if (!drewAuthenticFrames && !m11_v1_chrome_mode_enabled()) {
+    if (!drewAuthenticFrames && !m11_v1_chrome_mode_enabled(state)) {
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
                       M11_UTILITY_PANEL_W, M11_UTILITY_PANEL_H, M11_COLOR_BLACK);
@@ -42008,7 +41993,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       250, 34, line, &g_text_small);
     } else if (activeChampion && !drewAuthenticFrames &&
-               !m11_v1_chrome_mode_enabled()) {
+               !m11_v1_chrome_mode_enabled(state)) {
         /* Legacy/procedural fallback only.  In normal V1 chrome mode,
          * C017 is reserved for the source leader-hand object name and
          * must not be repurposed as a champion-name/status label.  When
@@ -42025,7 +42010,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     if (activeChampion &&
         (state->showDebugHUD ||
          (!(drewAuthenticFrames && !state->showDebugHUD) &&
-          !m11_v1_chrome_mode_enabled()))) {
+          !m11_v1_chrome_mode_enabled(state)))) {
         if (state->showDebugHUD) {
             snprintf(line, sizeof(line), "L%d HP%u ST%u",
                      mapDesc ? (int)mapDesc->level : 0,
@@ -42123,7 +42108,7 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
     DM1_V1_MovementArrowRectPc34 outerRect;
     DM1_V1_MovementArrowRectPc34 arrowRect;
     if (!state || !framebuffer || state->showDebugHUD ||
-        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
+        !m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state)) {
         return;
     }
     if (!dm1_v1_movement_arrows_outer_rect_pc34(&outerRect) ||
@@ -42250,8 +42235,8 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 facts;
     DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 receipt;
     DM1_V1_ActionSpellM11BlitPlanPc34 blitPlan;
-    if (!state || state->showDebugHUD || !m11_v1_chrome_mode_enabled() ||
-        m11_v2_vertical_slice_enabled()) {
+    if (!state || state->showDebugHUD || !m11_v1_chrome_mode_enabled(state) ||
+        m11_v2_vertical_slice_enabled(state)) {
         return;
     }
     {
@@ -42698,8 +42683,8 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
     int index;
 
     if (!state || !framebuffer || !m11_is_dm1_source_kind(state->sourceKind) ||
-        state->showDebugHUD || !m11_v1_chrome_mode_enabled() ||
-        m11_v2_vertical_slice_enabled()) return 0;
+        state->showDebugHUD || !m11_v1_chrome_mode_enabled(state) ||
+        m11_v2_vertical_slice_enabled(state)) return 0;
     memset(&presentation, 0, sizeof(presentation));
     for (index = 0; index < state->dm1LiveActionEffects.count; ++index) {
         const DM1_V1_LiveActionEffectPc34* candidate =
@@ -44147,7 +44132,7 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
     int slot;
     const M11_AssetSlot* iconStrip = NULL;
     if (!state || !framebuffer || state->showDebugHUD ||
-        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
+        !m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state)) {
         return;
     }
     if (state->assetsAvailable) {
@@ -44254,8 +44239,8 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
 static int m11_dm1_v1_top_row_receipt_required(const M11_GameViewState* state)
 {
     return state && m11_is_dm1_source_kind(state->sourceKind) &&
-           !state->showDebugHUD && m11_v1_chrome_mode_enabled() &&
-           !m11_v2_vertical_slice_enabled();
+           !state->showDebugHUD && m11_v1_chrome_mode_enabled(state) &&
+           !m11_v2_vertical_slice_enabled(state);
 }
 
 static unsigned int m11_dm1_v1_top_row_material_fnv1a(
@@ -45263,7 +45248,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
     int slotW;
     if (state) {
         activeIndex = state->world.party.activeChampionIndex;
-        useV2PartyHud = m11_v2_vertical_slice_enabled();
+        useV2PartyHud = m11_v2_vertical_slice_enabled(state);
     }
     if (m11_dm1_v1_top_row_receipt_required(state)) {
         if (!m11_draw_dm1_v1_top_row_receipt(
@@ -45274,15 +45259,15 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
         }
         return;
     }
-    slotStep = m11_party_slot_step();
-    slotW    = m11_party_slot_w();
+    slotStep = m11_party_slot_step(state);
+    slotW    = m11_party_slot_w(state);
     if (useV2PartyHud) {
         m11_blit_v2_slice_asset(&m11_v2_party_hud_four_slot_base,
                                 framebuffer, framebufferWidth, framebufferHeight,
                                 M11_PARTY_PANEL_X, M11_PARTY_PANEL_Y, 1);
     }
     for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
-        int x = m11_party_panel_x() + slot * slotStep;
+        int x = m11_party_panel_x(state) + slot * slotStep;
         int y = M11_PARTY_PANEL_Y;
         int slotH = M11_PARTY_SLOT_H;
         char line[48];
@@ -45365,7 +45350,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     drewStatusBox = 1;
                 }
             }
-            if (!drewStatusBox && !m11_v1_chrome_mode_enabled() &&
+            if (!drewStatusBox && !m11_v1_chrome_mode_enabled(state) &&
                 !m11_is_dm1_source_kind(state->sourceKind) &&
                 !s_m11_dm1_hoc_presented_frame_consumer_receipt.suppressFallbackVisuals) {
                 /* Procedural fallback.  V1 uses the same source status-box
@@ -45510,7 +45495,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * (2026-06-16) The amalgam reference is historical;
              * the file is unbuilt legacy code.  F0287 lives in
              * src/dm1/dm1_v1_champion_stats_pc34_compat.c. */
-            if (!isDead && m11_v1_bar_graphs_enabled()) {
+            if (!isDead && m11_v1_bar_graphs_enabled(state)) {
                 int statIdx;
                 int curs[3];
                 int maxs[3];
@@ -45556,7 +45541,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                           DM1_COLOR_DARKEST_GRAY);
                     }
                 }
-            } else if (!m11_v1_bar_graphs_enabled()) {
+            } else if (!m11_v1_bar_graphs_enabled(state)) {
                 int hpWidth = champ->hp.maximum > 0 ? (int)(champ->hp.current * 59) / (int)champ->hp.maximum : 0;
                 int staminaWidth = champ->stamina.maximum > 0 ? (int)(champ->stamina.current * 59) / (int)champ->stamina.maximum : 0;
                 int manaWidth = champ->mana.maximum > 0 ? (int)(champ->mana.current * 59) / (int)champ->mana.maximum : 0;
@@ -47606,7 +47591,7 @@ static void m11_clear_csb_v1_message_area_source_owned(
 
     if (!state || !framebuffer || state->showDebugHUD ||
         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled() ||
+        !m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state) ||
         !dm1_v1_message_area_zone_id_pc34()) {
         return;
     }
@@ -47652,7 +47637,7 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
     int savedFontScaleOverride;
 
     if (!state || !framebuffer || state->showDebugHUD ||
-        !m11_v1_chrome_mode_enabled() || m11_v2_vertical_slice_enabled()) {
+        !m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state)) {
         return;
     }
     if (!dm1_v1_message_area_zone_id_pc34()) {
@@ -48851,7 +48836,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * broad inset fill was a prompt-strip/debug band at y=169..191; it
      * visibly disagreed with TEXT.C's full-width message surface at
      * (0,173,320,27). */
-    if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
+    if (state->showDebugHUD || !m11_v1_chrome_mode_enabled(state)) {
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       12, state->showDebugHUD ? 146 : 169,
                       296, state->showDebugHUD ? 46 : 23,
@@ -48899,7 +48884,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * projectiles, tick status, etc.), so drawing it here makes the game
      * look like a debug build.  Keep all of that behind showDebugHUD until
      * each real DM1 message surface is source-bound. */
-    if (state->showDebugHUD && !m11_v1_chrome_mode_enabled()) {
+    if (state->showDebugHUD && !m11_v1_chrome_mode_enabled(state)) {
         m11_draw_control_strip(framebuffer, framebufferWidth,
                                framebufferHeight, &aheadCell, state);
     }
@@ -48915,7 +48900,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     /* DM1 owns spell presentation through CASTER.C/MENUDRAW.C's late
      * C009/C011 route. The older workbench below is a host UI for other
      * sessions and is never a DM1 missing-asset fallback. */
-    if (state->spellPanelOpen && !m11_v1_chrome_mode_enabled() &&
+    if (state->spellPanelOpen && !m11_v1_chrome_mode_enabled(state) &&
         !m11_is_dm1_source_kind(state->sourceKind)) {
         /* ── P4+P6 V1 Presentation: DM1-style rune-dominant spell panel
          * with GRAPHICS.DAT-backed spell area grid ── */
@@ -49093,7 +49078,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * before calling F0444_STARTEND_Endgame(C1_TRUE), so the final
      * presentation waits for the non-blocking F0446 handoff gate. */
     if (M11_GameView_GetEndgameFinalPresentationReady(state)) {
-        if (m11_v1_chrome_mode_enabled() && state->assetsAvailable) {
+        if (m11_v1_chrome_mode_enabled(state) && state->assetsAvailable) {
             const M11_AssetSlot* theEnd = NULL;
             const M11_AssetSlot* mirror = NULL;
             const M11_AssetSlot* portraits = NULL;
@@ -49242,7 +49227,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 }
             }
             drewReturnConfirmModal = 1;
-        } else if (m11_v1_chrome_mode_enabled()) {
+        } else if (m11_v1_chrome_mode_enabled(state)) {
             drewSourceBackdrop = m11_draw_dm_dialog_backdrop(
                 state, framebuffer, framebufferWidth, framebufferHeight);
         }
@@ -49254,7 +49239,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX + 2, dlgY + 2, dlgW - 4, dlgH - 4, M11_COLOR_BROWN);
         }
-        if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
+        if (state->showDebugHUD || !m11_v1_chrome_mode_enabled(state)) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX + 8, dlgY + 8, "TEXT PLAQUE", &g_text_title);
         }
@@ -49321,7 +49306,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                &g_text_shadow);
             }
         } else {
-            textY = dlgY + ((state->showDebugHUD || !m11_v1_chrome_mode_enabled()) ? 28 : 18);
+            textY = dlgY + ((state->showDebugHUD || !m11_v1_chrome_mode_enabled(state)) ? 28 : 18);
             if (strlen(state->dialogOverlayText) <= 40) {
                 m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                               dlgX + 12, textY, state->dialogOverlayText,
@@ -49345,7 +49330,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             }
         }
         if (!drewReturnConfirmModal &&
-            (state->showDebugHUD || !m11_v1_chrome_mode_enabled())) {
+            (state->showDebugHUD || !m11_v1_chrome_mode_enabled(state))) {
             if (state->dialogChoiceCount > 0) {
                 int i;
                 int choiceY = dlgY + dlgH - 18;

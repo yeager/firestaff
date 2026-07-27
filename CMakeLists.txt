@@ -43665,8 +43665,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_inventory_panel_mouse_r
 endif()
 
 # DM1 V2's composed four-slot champion HUD has different visible geometry
-# from the original V1 C007..C010 table. Keep its portrait click surface
-# covered in a separate process with the V2 vertical-slice layout enabled.
+# from the original V1 C007..C010 table. Its active presentation mode, not an
+# environment variable, owns the visible layout and portrait click surface.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v2_champion_portrait_mouse_routes.c")
     add_executable(test_dm1_v2_champion_portrait_mouse_routes
         tests/test_dm1_v2_champion_portrait_mouse_routes.c
@@ -43681,8 +43681,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v2_champion_portrait_mouse
         NAME dm1_v2_champion_portrait_mouse_routes
         COMMAND test_dm1_v2_champion_portrait_mouse_routes
     )
-    set_tests_properties(dm1_v2_champion_portrait_mouse_routes PROPERTIES
-        ENVIRONMENT "FIRESTAFF_V2_VERTICAL_SLICE=1")
 endif()
 
 # Direct CLI slot saves: --saves DIR must drive list/save/load paths instead

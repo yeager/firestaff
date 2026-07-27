@@ -116,6 +116,11 @@ an integration build pass.
   V2.x presentation turns off the V1 chrome compositor. Champion inventory
   and status selection remain runtime-owned across all DM1 presentations.
 
+- **DM1-V2-LIVE-PRESENTATION-HUD-OWNER:** Closed 2026-07-27. The active
+  `presentationMode` now owns V2 HUD layout, chrome, bar graph, and champion
+  hitbox selection. `FIRESTAFF_V2_VERTICAL_SLICE` remains test-only; F10
+  mode switches no longer depend on a process-start environment setting.
+
 - **DM1-VIEWPORT-COMPACT-DOOR-CHAIN:** Closed 2026-07-27. Door type and
   opening state now consume the same F0160/F0161 compact square thing-chain
   as the object, sensor and ornament passes. This prevents real PC34 maps
