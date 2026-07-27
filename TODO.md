@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-US-SPLIT-TRACK02-CATALOG-CONSISTENCY:** Closed 2026-07-27. The
+  direct-launch and availability suites now use the verified materialized US
+  ISO identity, keeping M12's supported-version catalog and runtime tests in
+  agreement.
+
 - **THERON-US-SPLIT-TRACK02-REGRESSION:** Closed 2026-07-27. The direct-ISO
   runtime regression now requires the materialized original Track 02 hash
   `ceb02343868f80cec899e9b239aff2da`, preventing a return to the truncated

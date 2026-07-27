@@ -234,7 +234,7 @@ static void check_real_theron_launch_marker_presence(const char *real_data) {
                               "pce-jp-rev1-iso",
                               "real JP Rev 1 ISO selects ISO version id");
             } else if (strcmp(matched_version->matchedMd5,
-                              "3d8b78571dcd0e6eb8eb4b01eeb7fbba") == 0) {
+                              "ceb02343868f80cec899e9b239aff2da") == 0) {
                 expect_str_eq(matched_version->versionId,
                               "pce-en-iso",
                               "real US ISO selects ISO version id");

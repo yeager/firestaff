@@ -281,7 +281,7 @@ int main(void) {
                         "PC Engine HuCard (JP)");
     check_one_known_md5("US ISO MD5 accepted",
                         us_iso_path,
-                        "3d8b78571dcd0e6eb8eb4b01eeb7fbba",
+                        "ceb02343868f80cec899e9b239aff2da",
                         THERON_PLATFORM_PCE_US,
                         "pce-en-iso",
                         "TurboGrafx-16 HuCard (US)");

@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 Theron split Track 02 catalog consistency. Direct-launch and
+  availability coverage now recognizes the verified materialized US ISO
+  identity; both focused suites pass.
+
 - ✅ 2026-07-27 Theron split Track 02 regression. The direct-ISO runtime
   regression now expects the fully materialized original US Track 02 MD5,
   guarding against treating `TQUS02End.iso` as complete media again.
