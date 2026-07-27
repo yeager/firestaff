@@ -17,10 +17,10 @@
   its explicit resize semantics; focused HiDPI and HUD mouse-route tests pass.
 
 - ✅ 2026-07-27 DM1 HoC ordinary wall ornaments. The real-data HoC walk
-  now proves a non-C127/non-inscription wall ornament reaches M11's F0107
-  host-material pass with a valid original graphic. This keeps ordinary
-  decoration, including the wall-furniture route, distinct from mirrors and
-  text plaques.
+  now proves every visible non-C127/non-inscription wall-ornament ordinal
+  reaches M11's F0107 host-material pass with its expected original graphic.
+  This includes the wall-furniture/torch route and keeps it distinct from
+  mirrors and text plaques.
 
 - ✅ 2026-07-27 DM1 V1 champion HUD click surface. The entire visible
   F0287/F0292 status-box surface now opens that champion's inventory; only

@@ -4,6 +4,7 @@
 
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_ornament_cache_owner_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "m11_game_view.h"
@@ -153,17 +154,24 @@ static int verify_front_mirror_backing_pixel(
     return 1;
 }
 
-static int find_ordinary_hoc_wall_ornament(
+static int verify_all_ordinary_hoc_wall_ornaments(
     M11_GameViewState *state,
     unsigned char *framebuffer)
 {
     const struct DungeonMapDesc_Compat *map;
+    int expectedGlobalByOrdinal[DM1_WALL_ORN_MAX + 1];
+    int ordinal;
     int partyY;
 
     if (!state || !state->world.dungeon || !framebuffer) {
         return 0;
     }
+    memset(expectedGlobalByOrdinal, -1, sizeof(expectedGlobalByOrdinal));
     map = &state->world.dungeon->maps[0];
+
+    /* Find every real non-mirror/non-inscription F0107 selector first.  The
+     * old regression returned after one arbitrary ornament, which could miss
+     * a different Hall ornament such as the wall torch. */
     for (partyY = 0; partyY < (int)map->height; ++partyY) {
         int partyX;
         for (partyX = 0; partyX < (int)map->width; ++partyX) {
@@ -181,8 +189,6 @@ static int find_ordinary_hoc_wall_ornament(
                         int ornament = -1;
                         int portrait = -1;
                         int inscription = -1;
-                        M11_Dm1WallOrnamentHostPresentationReceipt receipt;
-
                         if (!M11_GameView_ProbeViewportRenderMetadata(
                                 state, forward, side, NULL, NULL, &element,
                                 &ornament, &portrait, &inscription, NULL) ||
@@ -190,21 +196,86 @@ static int find_ordinary_hoc_wall_ornament(
                             ornament <= 0 || portrait >= 0 || inscription >= 0) {
                             continue;
                         }
-                        memset(framebuffer, 0,
-                               kFramebufferWidth * kFramebufferHeight);
-                        M11_GameView_Draw(state, framebuffer,
-                                          kFramebufferWidth, kFramebufferHeight);
-                        memset(&receipt, 0, sizeof(receipt));
-                        M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
-                            &receipt);
-                        if (receipt.valid && receipt.globalOrnamentIndex > 0 &&
-                            receipt.graphicIndex >= 0 && receipt.width > 0 &&
-                            receipt.height > 0) {
-                            return 1;
+                        if (ornament > DM1_WALL_ORN_MAX ||
+                            !dm1_v1_ornament_cache_global_index_pc34(
+                                state->ornamentCacheLoaded[0] ? 1 : 0,
+                                state->wallOrnamentIndices[0],
+                                DM1_WALL_ORN_MAX, ornament,
+                                &expectedGlobalByOrdinal[ornament]) ||
+                            expectedGlobalByOrdinal[ornament] <= 0) {
+                            return 0;
                         }
                     }
                 }
             }
+        }
+    }
+
+    for (ordinal = 1; ordinal <= DM1_WALL_ORN_MAX; ++ordinal) {
+        int presented = 0;
+        if (expectedGlobalByOrdinal[ordinal] < 0) {
+            continue;
+        }
+        for (partyY = 0; partyY < (int)map->height && !presented; ++partyY) {
+            int partyX;
+            for (partyX = 0; partyX < (int)map->width && !presented; ++partyX) {
+                int direction;
+                for (direction = 0; direction < 4 && !presented; ++direction) {
+                    int forward;
+                    state->world.party.mapIndex = 0;
+                    state->world.party.mapX = partyX;
+                    state->world.party.mapY = partyY;
+                    state->world.party.direction = direction;
+                    for (forward = 1; forward <= 3 && !presented; ++forward) {
+                        int side;
+                        for (side = -1; side <= 1; ++side) {
+                            int element = -1;
+                            int ornament = -1;
+                            int portrait = -1;
+                            int inscription = -1;
+                            M11_Dm1WallOrnamentHostPresentationReceipt receipt;
+
+                            if (!M11_GameView_ProbeViewportRenderMetadata(
+                                    state, forward, side, NULL, NULL, &element,
+                                    &ornament, &portrait, &inscription, NULL) ||
+                                element != DUNGEON_ELEMENT_WALL ||
+                                ornament != ordinal || portrait >= 0 ||
+                                inscription >= 0) {
+                                continue;
+                            }
+                            memset(framebuffer, 0,
+                                   kFramebufferWidth * kFramebufferHeight);
+                            M11_GameView_Draw(state, framebuffer,
+                                              kFramebufferWidth, kFramebufferHeight);
+                            memset(&receipt, 0, sizeof(receipt));
+                            M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
+                                &receipt);
+                            if (receipt.valid &&
+                                receipt.globalOrnamentIndex ==
+                                    expectedGlobalByOrdinal[ordinal] &&
+                                receipt.graphicIndex >= 0 && receipt.width > 0 &&
+                                receipt.height > 0) {
+                                presented = 1;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (!presented) {
+            fprintf(stderr,
+                    "real PC34 HoC wall ornament ordinal %d (global %d) was not presented by M11\n",
+                    ordinal, expectedGlobalByOrdinal[ordinal]);
+            return 0;
+        }
+    }
+
+    /* A reference HoC normally has at least one ordinary ornament. Keep the
+     * previous regression's positive-data invariant as well. */
+    for (ordinal = 1; ordinal <= DM1_WALL_ORN_MAX; ++ordinal) {
+        if (expectedGlobalByOrdinal[ordinal] >= 0) {
+            return 1;
         }
     }
     return 0;
@@ -307,8 +378,8 @@ int main(void)
         fprintf(stderr, "real PC34 C127 presented without exact C346/C026 pixels\n");
         goto fail;
     }
-    if (!find_ordinary_hoc_wall_ornament(&state, framebuffer)) {
-        fprintf(stderr, "real PC34 HoC ordinary wall ornament was not presented by M11\n");
+    if (!verify_all_ordinary_hoc_wall_ornaments(&state, framebuffer)) {
+        fprintf(stderr, "real PC34 HoC wall ornaments were not all presented by M11\n");
         goto fail;
     }
     printf("ok: real PC34 HoC F0096 wall receipts and exact C346/C026 host route\n");
