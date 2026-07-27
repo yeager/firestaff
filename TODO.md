@@ -50,6 +50,10 @@ an integration build pass.
   real `DUNGEON.DAT`; this is separate from, and does not mask, the remaining
   original-PC34 corpus/timeline work.
 
+- **DM1-C145-REST-RUNTIME-MIRRORS:** Closed 2026-07-27. The visible `Zz`
+  control now sets the M11, world, and lifecycle resting flags together, so
+  later save/resume and creature-wake routes observe the same rest state.
+
 - **DM1-V2-VISIBLE-CHAMPION-PORTRAIT-HITBOX:** Closed 2026-07-27. V2's
   composed HUD shifts champion portrait/name regions to x=12 with a 77px
   stride, so each visible portrait now reaches the original C007..C010

@@ -421,6 +421,10 @@ static void test_inventory_control_icons_dispatch_runtime(void) {
               "C145 rest icon is consumed by the runtime");
     ASSERT_EQ(state.resting, 1,
               "C145 rest icon starts party resting");
+    ASSERT_EQ(state.world.partyIsResting, 1,
+              "C145 rest icon sets the world resting mirror");
+    ASSERT_EQ(state.world.lifecycle.rest.isResting, 1,
+              "C145 rest icon sets the lifecycle resting mirror");
 
     state.resting = 0;
     state.inventoryPanelActive = 1;

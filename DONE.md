@@ -5,6 +5,11 @@
   the chest fixture now keeps its raw PC34 records synchronized with decoded
   mutations.
 
+- ✅ 2026-07-27 DM1 C145 `Zz` rest-state handoff. Starting rest from the
+  visible inventory control now writes `state->resting`,
+  `world.partyIsResting`, and `world.lifecycle.rest.isResting` atomically.
+  The normal wake and creature-hit paths already clear the same three fields.
+
 - ✅ 2026-07-27 DM1 PC34 complete save shape. `DM1_SaveGamePC34()` now has a
   tail-backed reload regression that exercises the full F0803/F0435 file
   shape, including a saved one-map dungeon. Header-only five-part fixtures
