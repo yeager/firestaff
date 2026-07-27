@@ -335,14 +335,14 @@ static int m11_map_window_pointer_to_game_source(
                                            &framebufferX, &framebufferY)) {
         return 0;
     }
-    if (!M11_MapPresentedGamePointToSourceForPresentation(
+    /* V1_ORIGINAL returns 0 (pass-through): framebuffer coords ARE
+     * source coords (320x200).  Only fail on NULL pointers. */
+    (void)M11_MapPresentedGamePointToSourceForPresentation(
             gameView->presentationMode,
             gameView->presentationWidth,
             gameView->presentationHeight,
             &framebufferX,
-            &framebufferY)) {
-        return 0;
-    }
+            &framebufferY);
     *outX = framebufferX;
     *outY = framebufferY;
     return 1;

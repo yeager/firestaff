@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.182
+
+- Fix: DM1/CSB mouse clicks completely broken in V1_ORIGINAL presentation mode.
+  m11_map_window_pointer_to_game_source treated the V1_ORIGINAL pass-through
+  return (0) from M11_MapPresentedGamePointToSourceForPresentation as a failure,
+  rejecting every mouse click. Affected: all in-game clicks (DM1 and CSB) and
+  CSB entrance/startup button clicks. DM1 entrance (separate event loop) was not
+  affected. Now ignores the return value like the motion handler already did.
+
 # Firestaff v3.0.181
 
 - Lane C real-data gate repair: fixed 5 of 7 DM2 real-data gate tests.
