@@ -144,6 +144,8 @@ if ! grep -Fq 'pce_cd_fifo_read generation=%u fifo_sequence=%llu reader_pc=%04x 
     exit 1
 fi
 if ! grep -Fq 'main_ram_loader_jsr logical_pc=%04x physical_pc=%06x target=%04x a=%02x x=%02x y=%02x' "$main_ram_loader_patch_file" ||
+   ! grep -Fq 'main_ram_loader_e009_dispatch logical_pc=%04x physical_pc=%06x a=%02x x=%02x y=%02x' "$main_ram_loader_patch_file" ||
+   ! grep -Fq 'if(first == 0xe009)' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_call_entry caller_logical_pc=%04x caller_physical_pc=%06x target=%04x logical_pc=%04x physical_pc=%06x opcode=%02x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_entry_next entry_logical_pc=%04x entry_physical_pc=%06x logical_pc=%04x physical_pc=%06x opcode=%02x' "$main_ram_loader_patch_file" ||
    ! grep -Fq 'main_ram_loader_entry_successor_next successor_logical_pc=%04x successor_physical_pc=%06x logical_pc=%04x physical_pc=%06x opcode=%02x' "$main_ram_loader_patch_file" ||

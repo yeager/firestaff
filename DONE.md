@@ -14,6 +14,10 @@
   preflight requires its producer marker alongside the CPU/CD marker. Repaired
   three literal-`\\n` emissions in that hook; the rebuilt US-CUE smoke emits
   line-delimited System Card control flow. This records provenance only.
+- ✅ 2026-07-27 Theron main-RAM `JSR $e009` observation. The active bounded
+  producer now emits exact main-RAM call edges and transition receipts count
+  them. The rebuilt authentic US-CUE smoke correctly reports zero observed
+  edges; this is control-flow evidence only and opens no FIFO or decoder path.
 - ✅ 2026-07-27 Theron verified-media fallback closure. A verified Track 02
   now blocks preinitialized default palette/tile state unless an original bank
   and a proven palette route are both present. The runtime screenshot gate

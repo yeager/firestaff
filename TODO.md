@@ -3447,6 +3447,11 @@ lane is carried forward in the sections below.
     line-delimited main-RAM control trace from the rebuilt producer. The
     observed `1f0286` TIA/RTS rows are System Card control flow only; they
     establish neither a game-owned consumer nor any Track 02 semantics.
+  - 2026-07-27 update: the active main-RAM producer now separately reports
+    exact `JSR $e009` control edges and the transition receipt counts them.
+    A rebuilt authentic US-CUE smoke reports zero such edges, which is an
+    observed absence for that boot window only. It does not claim FIFO,
+    destination, record, or loader semantics.
 
 - 2026-07-16 CSB runtime viewport follow-up: first-frame D0/D1/D2
   F0111/F0115 receipts now promote to a real-data M11 draw plan with shared

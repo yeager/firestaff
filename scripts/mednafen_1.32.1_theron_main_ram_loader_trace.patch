@@ -11,7 +11,7 @@
 -
 +
  #ifdef WANT_DEBUGGER
-@@ -39,6 +41,188 @@
+@@ -39,6 +41,191 @@
  namespace MDFN_IEN_PCE
  {
 -
@@ -161,6 +161,9 @@
 + {
 +  fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_jsr logical_pc=%04x physical_pc=%06x target=%04x a=%02x x=%02x y=%02x\n",
 +          logical_pc, physical_pc, first, accumulator, x, y);
++  if(first == 0xe009)
++   fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_e009_dispatch logical_pc=%04x physical_pc=%06x a=%02x x=%02x y=%02x\n",
++           logical_pc, physical_pc, accumulator, x, y);
 +  TheronMainRAMLoaderCallInstructionPC = logical_pc;
 +  TheronMainRAMLoaderCallInstructionPhysicalPC = physical_pc;
 +  TheronMainRAMLoaderCallTarget = first;

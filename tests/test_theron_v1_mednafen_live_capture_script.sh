@@ -101,7 +101,8 @@ if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' 
    ! grep -Fq 'main_ram_loader_entry_successor_next=%s' "$script" ||
    ! grep -Fq 'main_ram_loader_bra=%s' "$script" ||
    ! grep -Fq 'main_ram_loader_bra_targets=%s' "$script" ||
-   ! grep -Fq 'main_ram_loader_bra_target_jsrs=%s' "$script"; then
+   ! grep -Fq 'main_ram_loader_bra_target_jsrs=%s' "$script" ||
+   ! grep -Fq 'main_ram_loader_e009_dispatches=%s' "$script"; then
     printf 'FAIL: capture script must retain the post-$3800 TII producer receipt\n' >&2
     exit 1
 fi
