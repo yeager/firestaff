@@ -449,17 +449,16 @@ static void test_champion_hud_left_click_opens_target_inventory(void) {
     state.world.party.champions[1].hp.current = 100;
     state.world.party.champions[1].hp.maximum = 100;
 
-    /* The full visible F0287 bar is a live inventory target, not merely the
-     * narrow C187 right edge. This point is deliberately on the left side
-     * of the painted HP/stamina/mana bars. */
-    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 8, 21,
+    /* The visible F0292 name plaque is a live inventory target, alongside
+     * the source C187..C190 F0287 vertical bar graph. */
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 8, 2,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
-              "visible champion 0 bar opens inventory");
+              "visible champion 0 name opens inventory");
     ASSERT_EQ(state.inventoryPanelActive, 1,
-              "visible champion 0 bar opens the inventory panel");
+              "visible champion 0 name opens the inventory panel");
     ASSERT_EQ(state.world.party.activeChampionIndex, 0,
-              "visible champion 0 bar keeps champion 0 active");
+              "visible champion 0 name keeps champion 0 active");
 
     ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 113, 14,
                                                 M11_DM1_MOUSE_MASK_LEFT),
@@ -477,7 +476,7 @@ static void test_champion_hud_left_click_opens_target_inventory(void) {
     ASSERT_EQ(state.inventoryPanelActive, 0,
               "same champion C188 click closes the panel");
 
-    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 1, 1,
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 1, 8,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
               "C012 status-box click reaches champion selection");

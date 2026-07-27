@@ -59,8 +59,9 @@ an integration build pass.
   from borrowing a door record from an unrelated square.
 
 - **DM1-HUD-CHAMPION-CLICK-ROUTES:** Closed 2026-07-27. The source-owned
-  C007..C010/C187..C190 left-click routes now open the selected champion's
-  inventory, while C012..C015 status-box clicks select the correct champion.
+  C007..C010/C187..C190 left-click routes, their visible F0292 name plaques,
+  and their F0287 bar graphs now open the selected champion's inventory,
+  while the remaining C012..C015 status-box surface selects the champion.
   Switching champion no longer closes an already open inventory panel.
 
 - **DM1-F0115-HOC-PAYLOAD-OWNERSHIP:** Closed 2026-07-27. F0115 now filters

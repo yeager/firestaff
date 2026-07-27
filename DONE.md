@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 DM1 V1 champion HUD click surface. The painted F0292 name
+  plaque and F0287 vertical status-bar graph now open that champion's
+  inventory; hand slots and the remaining C012..C015 status surface retain
+  their separate source-owned actions. The full inventory mouse-route probe
+  passes 332/332.
+
 - ✅ 2026-07-27 DM1 HoC compact floor and alcove objects. Corrected the
   F0115/REVIVE ownership boundary so only recognised mirror-control chains
   are consumed by champion materialization. The original PC34 corpus proves

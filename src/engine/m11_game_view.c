@@ -22820,19 +22820,21 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 }
             }
         } else {
-            /* F0287 paints the three visible HP/stamina/mana bars across
-             * x+4..x+62.  The narrow C187..C190 source zones cover their
-             * right edge, but accepting the entire painted bar keeps the
-             * host hit surface honest: clicking a visible bar must never
-             * silently select a leader instead of opening that champion's
-             * inventory. Name and hand-slot rectangles remain on their
-             * source-owned routes below. */
+            /* The V1 top row visibly identifies a champion through its
+             * F0292 name plaque and F0287 vertical bar graph.  Make both
+             * painted surfaces live inventory targets; the two hand-slot
+             * rectangles remain on their separate COMMAND.C routes. */
             for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
                 DM1_V1_ChampionStatusRectPc34 statusRect;
+                DM1_V1_ChampionStatusRectPc34 nameRect;
                 if (dm1_v1_champion_status_box_rect_pc34(slot, &statusRect) &&
-                    m11_point_in_rect(x, y,
-                                      statusRect.x + 4, statusRect.y + 20,
-                                      59, 7)) {
+                    dm1_v1_champion_status_name_rect_pc34(slot, &nameRect) &&
+                    (m11_point_in_rect(x, y,
+                                       nameRect.x, nameRect.y,
+                                       nameRect.w, nameRect.h) ||
+                     m11_point_in_rect(x, y,
+                                       statusRect.x + 43, statusRect.y + 2,
+                                       24, 25))) {
                     return m11_toggle_champion_inventory(state, slot);
                 }
             }
