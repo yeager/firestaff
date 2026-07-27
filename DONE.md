@@ -41157,3 +41157,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   is blocked on missing PRS3/Saturn decoder evidence, rather than entering a
   permanent black no-draw dungeon state. Updated runtime handoff coverage
   verifies keyboard and pointer champion starts.
+# 2026-07-27 - Theron Mednafen loader-capture diagnostics
+
+- Improved the authentic capture failure receipt with main-RAM `e009` dispatch,
+  enter, data-read, and control-write counts. A raw-sector-only trace now
+  states precisely that the missing proof is a game-owned PCE-CD data read.

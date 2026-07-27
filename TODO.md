@@ -20,6 +20,12 @@ an integration build pass.
   evidence now returns to the launcher with the source-backed blocker instead
   of leaving a black no-draw runtime. The decoder itself remains fail-closed.
 
+- **THERON-MEDNAFEN-LOADER-CAPTURE-DIAGNOSTICS:** Closed 2026-07-27. The
+  authenticated live-capture diagnostic now distinguishes raw-sector reach
+  from an observed game-owned PCE-CD data read and prints the bounded main-RAM
+  `e009` dispatch, enter, data-read, and register-write counts. This makes an
+  incomplete original trace actionable without promoting any opaque data.
+
 - **THERON-DIRECT-CUE-RUNTIME-REGRESSION:** Closed 2026-07-27. The real-media
   raw-CUE runtime test now exercises both the CUE/BIN directory and the CUE
   file itself through the full launcher path, requiring the same verified

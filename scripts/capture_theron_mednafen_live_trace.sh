@@ -759,7 +759,7 @@ if ! grep -Fq 'dynamic_cd_read_transaction ' "$trace" ||
    ! grep -Fq 'dynamic_cd_read_destination_span pc=4093 destination=3800 bytes=32 fnv1a=' "$trace" ||
    ! grep -Fq 'dynamic_huc6260_palette_store ' "$trace"; then
     if [[ "$transition_sector_count" -gt 0 ]]; then
-        printf 'BLOCKED: loader reached authentic raw sectors but dynamic CPU receipts are absent; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s raw_sectors=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$transition_sector_count" "$status"
+        printf 'BLOCKED: loader reached authentic raw sectors but no game-owned PCE-CD data read was observed; host_keys=%s input=%s irq=%s non_system_card_pcecd=%s raw_sectors=%s main_ram_e009_dispatches=%s main_ram_e009_enters=%s main_ram_e009_data_reads=%s main_ram_e009_register_writes=%s (exit=%s)\n' "$transition_host_key_count" "$transition_input_count" "$transition_irq_count" "$transition_non_system_card_count" "$transition_sector_count" "$transition_main_ram_loader_e009_dispatch_count" "$transition_main_ram_e009_enter_count" "$transition_main_ram_e009_data_read_count" "$transition_main_ram_e009_register_write_count" "$status"
         exit 1
     fi
     if grep -Fqx 'post_latch_cd_baseline_pc=c897 cd_1800=d0 cd_1801=00 cd_1802=00 cd_1803=02 cd_1804=00' "$trace" &&
