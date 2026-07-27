@@ -93,7 +93,12 @@
 #include <stdint.h>
 #include <errno.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(path, mode) _mkdir(path)
+#else
 #include <unistd.h>
+#endif
 
 #include "nexus_v1_engine.h"
 #include "nexus_v1_dungeon.h"
