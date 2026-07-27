@@ -13,6 +13,7 @@
 
 #include "dm1_v2_particle_system_pc34.h"
 #include "dm1_v2_lighting_dynamic_pc34.h"
+#include "fs_portable_compat.h"
 #include "m11_game_view.h"
 
 #include <stdio.h>
@@ -190,6 +191,13 @@ int main(void)
     unsigned char baseline[320 * 200];
 
     printf("=== M11 DM1 V2 enhanced-effects framepath probe ===\n");
+
+    /* The runtime intentionally honours the user's F10 lighting setting.
+     * Keep this V2-default framepath proof independent of that persisted
+     * machine-local choice: a disabled local setting must not turn the
+     * default-enabled V2 light assertion into a false regression. */
+    CHECK(FSP_SetEnv("HOME", "/tmp/firestaff-v2-effects-framepath", 1) == 0,
+          "isolated HOME for default-enabled V2 lighting proof");
 
     seed_short_lived_particle();
     init_dm1_state(&state, M12_PRESENTATION_V1_ORIGINAL);
