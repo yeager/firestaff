@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron legacy marker-route closure. Raw Track 02 no longer
+  interprets Firestaff-only `THG3`/`THS4` marker guesses as graphics or audio
+  resources. A marker-like raw-media regression proves the bytes remain
+  source-only and no-draw/no-playback until an original loader/CD route exists.
+
 - ✅ 2026-07-27 DM2 startup final menu frame. M11 now holds the verified
   TITLE/0 GDAT menu frame at tick 47 instead of producing an invalid tick-48
   receipt and a black screen. The local real-data boot probe reaches frame 7

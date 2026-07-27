@@ -263,33 +263,17 @@ TrAssetResult tr_asset_parse_track04(TrAssetBundle *bundle,
  * Format detection and data extraction
  * ══════════════════════════════════════════════════════════════════════ */
 
-/* Scan a buffer for Track 03/04 magic signatures.
- * Returns TR_ASSET_OK and sets bundle->track03_data / track04_data.
- * Source: THQUEST.ASM T400 (asset scanning). */
+/* The former THG3/THS4 marker scan was a Firestaff-only guess. Retail CUE
+ * sheets declare tracks 03--18 as audio and no original loader trace has
+ * identified such a byte grammar inside Track 02. Never let coincidental
+ * bytes in authenticated media create a graphics or audio route. */
 static TrAssetResult find_tracks_in_buffer(TrAssetBundle *bundle,
                                             const uint8_t *data,
                                             size_t data_size) {
-    size_t pos = 0;
-    while (pos + 16 < data_size) {
-        uint32_t magic = data[pos] | ((uint32_t)data[pos+1] << 8) |
-                         ((uint32_t)data[pos+2] << 16) | ((uint32_t)data[pos+3] << 24);
-
-        if (magic == TR_MAGIC_THG3) {
-            bundle->track03_data = data + pos;
-            bundle->track03_size = data_size - pos;
-            printf("[TQR] Track 03 found at offset %zu\n", pos);
-        } else if (magic == TR_MAGIC_THS4) {
-            bundle->track04_data = data + pos;
-            bundle->track04_size = data_size - pos;
-            printf("[TQR] Track 04 found at offset %zu\n", pos);
-        }
-        pos += 4;
-    }
-
-    if (!bundle->track03_data && !bundle->track04_data) {
-        return TR_ASSET_ERR_NO_DATA;
-    }
-    return TR_ASSET_OK;
+    (void)bundle;
+    (void)data;
+    (void)data_size;
+    return TR_ASSET_ERR_NO_DATA;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -387,11 +371,10 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
     /* Scan for Track 03/04 magic signatures */
     TrAssetResult r = find_tracks_in_buffer(bundle, data, (size_t)file_size);
     if (r < 0) {
-        /* Real Track 02 images are still valid Theron runtime containers even
-         * when supplemental THG3/THS4 markers are not present in the raw data.
-         * Keep the verified HuCard/data-track bytes and let the renderer use
-         * deterministic fallback tiles until the exact embedded bank offsets
-         * are source-locked. Source: THQUEST.ASM T400/T410 boundary. */
+        /* Raw Track 02 remains a valid runtime container. Keep its bytes for
+         * source-backed consumers, but do not infer graphics or audio banks
+         * from marker-like data. Rendering remains fail-closed until an
+         * original loader/CD route identifies an actual bank. */
         bundle->hucard_rom = data;
         bundle->hucard_rom_size = (size_t)file_size;
         bundle->region = 1;

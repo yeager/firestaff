@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-LEGACY-MARKER-ROUTE-CLOSURE:** Closed 2026-07-27. Raw Track 02 no
+  longer scans for the old Firestaff-only `THG3`/`THS4` marker guesses. Marker
+  bytes in authentic media cannot create a graphics or audio route; raw bytes
+  remain available only to a future source-backed loader/CD consumer.
+
 - **DM2-STARTUP-FINAL-MENU-FRAME:** Closed 2026-07-27. M11 now holds DM2's
   verified final TITLE/0 menu frame at tick 47 instead of advancing to the
   invalid tick 48 receipt. The real GDAT menu remains drawable after the

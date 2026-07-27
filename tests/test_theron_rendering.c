@@ -610,6 +610,33 @@ static int test_asset_load_raw_track02_fallback(void) {
     tr_asset_free(&bundle);
 
     {
+        const char *marker_path = "/tmp/firestaff_theron_legacy_marker_test.bin";
+        static const uint8_t marker_like_track02[32] = {
+            'T', 'H', 'G', '3', 1, 0, 16, 0,
+            0, 0, 1, 0, 1, 0, 1, 0,
+            1, 0, 20, 0, 0xaa, 0x55, 0x33, 0xcc,
+            'T', 'H', 'S', '4', 0, 0, 0, 0
+        };
+        TrAssetBundle marker_bundle;
+
+        fp = fopen(marker_path, "wb");
+        ASSERT(fp != NULL, "could not create legacy-marker raw Track 02 fixture");
+        ASSERT(fwrite(marker_like_track02, 1, sizeof(marker_like_track02), fp) ==
+                   sizeof(marker_like_track02),
+               "could not write legacy-marker raw Track 02 fixture");
+        ASSERT(fclose(fp) == 0,
+               "could not close legacy-marker raw Track 02 fixture");
+        ASSERT(tr_asset_load(marker_path, &marker_bundle) == TR_ASSET_OK,
+               "marker-like raw Track 02 remains loadable");
+        remove(marker_path);
+        ASSERT(marker_bundle.track03_data == NULL &&
+                   marker_bundle.track04_data == NULL &&
+                   marker_bundle.palette.tile_count == 0,
+               "legacy THG3/THS4 bytes cannot create a graphics or audio route");
+        tr_asset_free(&marker_bundle);
+    }
+
+    {
         static const uint8_t guessed_track03[24] = {
             'T', 'H', 'G', '3', 1, 0, 16, 0,
             0, 0, 1, 0, 1, 0, 1, 0,
