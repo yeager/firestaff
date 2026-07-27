@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 DM1 V2 visible champion portrait hitboxes. The V2 HUD's
+  x=12/77 visual layout now maps all four portrait/name regions to their
+  corresponding C007..C010 inventory route. The V2 regression passes 24/24;
+  the complete inventory mouse-route suite passes 332/332.
+
 - ✅ 2026-07-27 DM1 PC34 wall-ornament metadata offset. M11's ornament cache
   now includes the TextData section before typed Thing records, matching the
   DUNGEON.DAT loader and restoring real map-local ornament indices. The real

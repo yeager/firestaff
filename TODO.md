@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-V2-VISIBLE-CHAMPION-PORTRAIT-HITBOX:** Closed 2026-07-27. V2's
+  composed HUD shifts champion portrait/name regions to x=12 with a 77px
+  stride, so each visible portrait now reaches the original C007..C010
+  inventory toggle rather than relying on the V1 x=0/69 hit table.
+
 - **DM1-PC34-WALL-ORNAMENT-METADATA-OFFSET:** Closed 2026-07-27. The M11
   ornament cache now includes the preceding TextData words when locating each
   map's metadata in DUNGEON.DAT. Wall ornament indices therefore match the

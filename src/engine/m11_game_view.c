@@ -22803,7 +22803,25 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     if (m11_is_dm1_source_kind(state->sourceKind) && !state->showDebugHUD) {
         int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
         int zoneId = 0;
-        int command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+        int command;
+
+        /* V2 keeps the original champion-input behaviour, but its composed
+         * four-slot HUD starts at x=12 with a 77px stride.  The source C187
+         * table is anchored at x=0/69, so using it alone makes the visible
+         * portrait area (most noticeably champion four) miss the input
+         * route.  Bind the rendered portrait/name region to C007..C010;
+         * hand cells on the right remain available to their own routes. */
+        if (m11_v2_vertical_slice_enabled()) {
+            for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+                int slotX = m11_party_panel_x() + slot * m11_party_slot_step();
+                if (m11_point_in_rect(x, y, slotX, M11_PARTY_PANEL_Y,
+                                      47, M11_PARTY_SLOT_H)) {
+                    return m11_toggle_champion_inventory(state, slot);
+                }
+            }
+        }
+
+        command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
             DM1_V1_MOUSE_LIST_INTERFACE_PC34,
             x, y,
             DM1_V1_MOUSE_MASK_LEFT_PC34,

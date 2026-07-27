@@ -480,6 +480,38 @@ static void test_champion_hud_left_click_opens_target_inventory(void) {
               "C012 status-box click reaches champion selection");
     ASSERT_EQ(state.world.party.activeChampionIndex, 0,
               "C012 selects champion 0 through the source status box");
+
+    /* The V2 composed HUD has its own visual x=12/77 geometry.  Each
+     * rendered portrait/name area must remain a live champion target, not
+     * merely the old x=0/69 source hit-table position. */
+    if (getenv("FIRESTAFF_TEST_CHAMPION_HUD_V2")) {
+        static const int kV2PortraitX[4] = { 32, 109, 186, 263 };
+        int champion;
+
+        state.inventoryPanelActive = 0;
+        state.world.party.championCount = 4;
+        for (champion = 0; champion < 4; ++champion) {
+            state.world.party.champions[champion].present = 1;
+            state.world.party.champions[champion].hp.current = 100;
+            state.world.party.champions[champion].hp.maximum = 100;
+            ASSERT_EQ(M11_GameView_HandlePointerButton(
+                          &state, kV2PortraitX[champion], 14,
+                          M11_DM1_MOUSE_MASK_LEFT),
+                      M11_GAME_INPUT_REDRAW,
+                      "visible V2 champion portrait opens inventory");
+            ASSERT_EQ(state.inventoryPanelActive, 1,
+                      "V2 portrait keeps inventory open");
+            ASSERT_EQ(state.world.party.activeChampionIndex, champion,
+                      "V2 portrait selects its champion");
+        }
+        ASSERT_EQ(M11_GameView_HandlePointerButton(
+                      &state, kV2PortraitX[3], 14,
+                      M11_DM1_MOUSE_MASK_LEFT),
+                  M11_GAME_INPUT_REDRAW,
+                  "second V2 fourth portrait click closes inventory");
+        ASSERT_EQ(state.inventoryPanelActive, 0,
+                  "same V2 portrait toggles inventory closed");
+    }
 }
 
 /* Detail 2: all eight chest slot routes C058..C065.  ReDMCSB
