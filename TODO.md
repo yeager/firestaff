@@ -4189,6 +4189,10 @@ lane is carried forward in the sections below.
     proves that boundary; it has only 32 of the verifier's required 39 raw
     sectors, so the extended later-sector proof remains pending rather than
     weakened.
+    The cause is now identified: the active raw-sector patch capped output at
+    32 rows while the independent witness verifier requires 39. The cap is
+    raised to 256 before the next authenticated dungeon capture; it changes
+    receipt breadth only and assigns no additional payload semantics.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a

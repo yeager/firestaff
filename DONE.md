@@ -1,3 +1,6 @@
+- ✅ 2026-07-27 Theron raw-sector witness-cap repair. Raised the active
+  trace cap from 32 to 256 rows so the independent 39-sector witness can be
+  produced, with a regression guard. This widens capture coverage only.
 - ✅ 2026-07-27 Theron raw-sector provenance repair. Fixed the active
   Mednafen trace patch to emit a newline-delimited CD provenance marker rather
   than literal backslash-n. Rebuilt with real SDL2; a new authentic capture is

@@ -974,7 +974,7 @@ diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
 + uint32 sector_fnv1a = 2166136261U;
 + const bool ok = Cur_CDIF->ReadRawSector(buffer, lba);
 +
-+ if(ok && trace_count < 32)
++ if(ok && trace_count < 256)
 + {
 +  if(!trace)
 +  {

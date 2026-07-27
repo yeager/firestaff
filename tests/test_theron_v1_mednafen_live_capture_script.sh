@@ -34,8 +34,9 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
 fi
 if [[ ! -f "$irq2_patch" ]] ||
    ! grep -Fq 'fputs("source=mednafen-pce-instrumented-cd\n", trace);' "$irq2_patch" ||
-   grep -Fq 'fputs("source=mednafen-pce-instrumented-cd\\n", trace);' "$irq2_patch"; then
-    printf 'FAIL: raw-sector provenance marker must be newline-delimited\n' >&2
+   grep -Fq 'fputs("source=mednafen-pce-instrumented-cd\\n", trace);' "$irq2_patch" ||
+   ! grep -Fq 'if(ok && trace_count < 256)' "$irq2_patch"; then
+    printf 'FAIL: raw-sector provenance trace must be parseable and retain its full witness window\n' >&2
     exit 1
 fi
 if [[ ! -f "$quartz_helper" ]] ||
