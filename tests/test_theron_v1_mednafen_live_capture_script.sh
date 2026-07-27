@@ -81,6 +81,14 @@ if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
     printf 'FAIL: capture script must retain a raw controller input receipt\n' >&2
     exit 1
 fi
+if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
+   ! grep -Fq "strings \"\$binary\"" "$script" ||
+   ! grep -Fq "grep -Fqx 'FIRESTAFF_THERON_IRQ2_TRACE'" "$script" ||
+   ! grep -Fq 'MEDNAFEN_BIN lacks the Firestaff Theron instrumentation' "$script" ||
+   ! grep -Fq 'build_mednafen_theron_irq2_trace.sh' "$script"; then
+    printf 'FAIL: capture script must reject an uninstrumented Mednafen binary before launch\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' "$script" ||
    ! grep -Fq 'main_ram_loader_tii_transfers=%s' "$script" ||
    ! grep -Fq 'continuation_tii_source_3c80=%s' "$script" ||

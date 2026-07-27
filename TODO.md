@@ -3423,6 +3423,12 @@ lane is carried forward in the sections below.
     media and any launch with actual capture artifacts still follows the
     capture-required path. `theron_v1_runtime_screenshot_readiness` passes
     (cases=3) and `theron_v1_m11_direct_launch` remains green.
+  - 2026-07-27 update: the authentic-capture launcher now rejects a stock
+    Mednafen binary before it starts an original-media timeout. It requires
+    the compiled `FIRESTAFF_THERON_IRQ2_TRACE` marker, so a binary that would
+    silently ignore trace variables cannot yield a misleading empty capture.
+    This is capture hygiene only; the outstanding positive Track 02 consumer
+    trace and its semantics remain unproved.
 
 - 2026-07-16 CSB runtime viewport follow-up: first-frame D0/D1/D2
   F0111/F0115 receipts now promote to a real-data M11 draw plan with shared

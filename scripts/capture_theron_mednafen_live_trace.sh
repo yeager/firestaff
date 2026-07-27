@@ -337,6 +337,21 @@ wait_for_trace_producer() {
     return 1
 }
 
+require_instrumented_mednafen_binary() {
+    local binary=$1
+
+    # The stock Mednafen binary accepts the environment variables below but
+    # silently ignores them. Refuse it before starting a timed original-media
+    # run: an empty trace is not capture evidence.
+    if ! command -v strings >/dev/null 2>&1 ||
+       ! strings "$binary" 2>/dev/null |
+           grep -Fqx 'FIRESTAFF_THERON_IRQ2_TRACE'; then
+        printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the Firestaff Theron instrumentation; build it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
+        return 1
+    fi
+    return 0
+}
+
 resolve_mednafen_ui_pid() {
     local parent_pid=$1
     local child_pid
@@ -404,6 +419,8 @@ transition_receipt="${trace}.transition"
 stage2_system_card_receipt="${trace}.stage2-system-card"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
 stderr_file="$trace_dir/$(basename -- "$trace").stderr"
+
+require_instrumented_mednafen_binary "$mednafen_bin" || exit 1
 
 mkdir -p "$trace_dir"
 rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$transition_receipt" "$stage2_system_card_receipt"
