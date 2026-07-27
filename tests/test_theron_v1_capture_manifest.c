@@ -5,7 +5,20 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef _WIN32
+#include <io.h>
+#include <process.h>
+static int win32_mkstemp(char *tmpl) {
+    if (_mktemp(tmpl) == NULL) return -1;
+    return _open(tmpl, _O_CREAT | _O_RDWR | _O_EXCL, 0600);
+}
+#define mkstemp win32_mkstemp
+#define write _write
+#define close _close
+#define unlink _unlink
+#else
 #include <unistd.h>
+#endif
 
 static int failures;
 
