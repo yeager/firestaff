@@ -86,6 +86,31 @@ static int v1_title_intro_find_known_hash(const char* dir,
     return 1;
 }
 
+/* The PC 3.4 install normally keeps TITLE next to GRAPHICS.DAT.  Validate
+ * that small, conventional loose file before asking the general hash finder
+ * to enumerate archives: a mixed game-data directory can contain multi-GB
+ * 7z/ISO images and title presentation runs on the launch thread. */
+static int v1_title_intro_find_direct_file(const char* dir,
+                                           char* outPath,
+                                           size_t outPathBytes) {
+    static const char* const names[] = { "TITLE", "TITLE.DAT" };
+    char candidate[FSP_PATH_MAX];
+    size_t i;
+
+    if (!dir || dir[0] == '\0' || !outPath || outPathBytes == 0U) {
+        return 0;
+    }
+    for (i = 0U; i < sizeof(names) / sizeof(names[0]); ++i) {
+        if (FSP_JoinPath(candidate, sizeof(candidate), dir, names[i]) &&
+            FSP_FileExists(candidate) &&
+            v1_title_intro_candidate_is_valid(candidate)) {
+            snprintf(outPath, outPathBytes, "%s", candidate);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int V1_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
                                     const char* dataDir,
                                     char* outPath,
@@ -124,7 +149,8 @@ int V1_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
         effectiveDataDir = ".";
     }
 
-    if (v1_title_intro_find_known_hash(effectiveDataDir, outPath, outPathBytes)) {
+    if (v1_title_intro_find_direct_file(effectiveDataDir, outPath, outPathBytes) ||
+        v1_title_intro_find_known_hash(effectiveDataDir, outPath, outPathBytes)) {
         return 1;
     }
 
@@ -137,11 +163,15 @@ int V1_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
             if (!FSP_ParentDir(parent, sizeof(parent), dm1v->matchedPath)) {
                 continue;
             }
-            if (v1_title_intro_find_known_hash(parent, outPath, outPathBytes)) {
+            if (v1_title_intro_find_direct_file(parent, outPath, outPathBytes) ||
+                v1_title_intro_find_known_hash(parent, outPath, outPathBytes)) {
                 return 1;
             }
             if (FSP_ParentDir(grandparent, sizeof(grandparent), parent)) {
-                if (v1_title_intro_find_known_hash(grandparent,
+                if (v1_title_intro_find_direct_file(grandparent,
+                                                    outPath,
+                                                    outPathBytes) ||
+                    v1_title_intro_find_known_hash(grandparent,
                                                     outPath,
                                                     outPathBytes)) {
                     return 1;
@@ -154,7 +184,8 @@ int V1_TitleIntro_FindTitleDatPath(const M12_StartupMenuState* menuState,
     if (home && home[0] != '\0') {
         for (i = 0U; i < sizeof(homeRoots) / sizeof(homeRoots[0]); ++i) {
             if (FSP_JoinPath(homeRoot, sizeof(homeRoot), home, homeRoots[i]) &&
-                v1_title_intro_find_known_hash(homeRoot, outPath, outPathBytes)) {
+                (v1_title_intro_find_direct_file(homeRoot, outPath, outPathBytes) ||
+                 v1_title_intro_find_known_hash(homeRoot, outPath, outPathBytes))) {
                 return 1;
             }
         }

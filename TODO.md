@@ -13,6 +13,13 @@ is still open before starting it, reuse original game material where it is
 available, and move a completed item to DONE.md only after focused tests and
 an integration build pass.
 
+## Recently Closed
+
+- **DM1-TITLE-DIRECT-STARTUP:** Closed 2026-07-27. A verified loose PC34
+  `TITLE`/`TITLE.DAT` is now selected before recursive archive hashing, so a
+  mixed DM1 data directory reaches title/runtime without a launch-thread
+  archive scan. The hash fallback remains for renamed and archived originals.
+
 ## Top 30 Implementation Queue
 
 These are the next thirty substantial coding jobs. They refine, rather than

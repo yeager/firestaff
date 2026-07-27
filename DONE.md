@@ -1,3 +1,11 @@
+- ✅ 2026-07-27 DM1 direct TITLE launch path. `V1_TitleIntro_FindTitleDatPath()`
+  now validates the canonical loose `TITLE`/`TITLE.DAT` before the recursive
+  hash/archive fallback. This preserves hash-verified filename-independent
+  discovery while preventing a normal DM1 launch from synchronously hashing
+  unrelated multi-GB archives when the original 12 KiB PC34 TITLE is already
+  installed beside `GRAPHICS.DAT`. The focused pathfinder regression and a
+  real local DM1 M11 boot probe both pass to `dm1-runtime`.
+
 - ✅ 2026-07-27 Theron authentic raw-CUE runtime boot regression. Added the
   `theron_v1_raw_cue_runtime_boot` CTest, which is skip-safe without staged
   media and otherwise launches Firestaff through the production M11 path

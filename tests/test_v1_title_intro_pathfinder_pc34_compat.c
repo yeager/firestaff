@@ -221,6 +221,7 @@ int main(void)
     char root[512];
     char nested[512];
     char archive_root[512];
+    char direct_title[512];
     char renamed_title[512];
     char archive_path[512];
     char found[512];
@@ -243,6 +244,7 @@ int main(void)
              "%s%sintro.payload",
              nested,
              TEST_SEP);
+    snprintf(direct_title, sizeof(direct_title), "%s%sTITLE", root, TEST_SEP);
     snprintf(archive_path,
              sizeof(archive_path),
              "%s%srenamed-title-pack.zip",
@@ -253,6 +255,7 @@ int main(void)
     expect_true(TEST_MKDIR(nested) == 0, "nested dir created");
     expect_true(TEST_MKDIR(archive_root) == 0, "archive root created");
     expect_true(copy_file(source_title, renamed_title), "canonical TITLE copied to arbitrary filename");
+    expect_true(copy_file(source_title, direct_title), "canonical TITLE copied under its install name");
     expect_true(write_stored_zip_from_file(archive_path,
                                            "nested/not-title.bin",
                                            source_title),
@@ -263,9 +266,19 @@ int main(void)
                                                 root,
                                                 found,
                                                 sizeof(found)) == 1,
-                "TITLE scan finds canonical payload without filename dependency");
+                "TITLE finder accepts the conventional loose install file");
+    expect_true(strcmp(found, direct_title) == 0,
+                "TITLE finder prefers a verified loose install file before archive scanning");
+
+    remove(direct_title);
+    memset(found, 0, sizeof(found));
+    expect_true(V1_TitleIntro_FindTitleDatPath(NULL,
+                                                root,
+                                                found,
+                                                sizeof(found)) == 1,
+                "TITLE scan retains filename-independent hash fallback");
     expect_true(strcmp(found, renamed_title) == 0,
-                "TITLE scan resolves arbitrary named payload by hash");
+                "TITLE hash fallback resolves arbitrary named payload");
 
     remove(renamed_title);
     memset(found, 0, sizeof(found));
