@@ -988,21 +988,13 @@ file and DONE.md after every completed job.
 - **Lane A — DM2 SkWinCore symbol audit batch 17 (cycle 16):** Done — see
   "Recently Completed" below.
 
-- **Lane A (next) — DM2 SkWinCore symbol audit batch 18:** Close the next 16
-  `MISSING` symbols in `SKULLWIN/c_1c9a.cpp`: `DM2_1c9a_0694` (5198),
-  `DM2_1c9a_06bd` (5217), `DM2_1c9a_078b` (5248), `DM2_1c9a_0958` (5376),
-  `DM2_1c9a_09b9` (5403), `DM2_1c9a_09db` (5415),
-  `DM2_CREATURE_SOMETHING_1c9a_0a48` (5433), `DM2_1c9a_0cf7` (5694),
-  `DM2_1c9a_0db0` (5733), `DM2_14cd_0802` (5765),
-  `DM2_ALLOC_CAII_TO_CREATURE` (5771), `DM2_1c9a_0fcb` (5895),
-  `DM2_CREATE_MINION` (5960), `DM2_RELEASE_MINION` (6148),
-  `DM2_1c9a_17c7` (6181), `DM2_1c9a_19d4` (6240). Source-locked helpers in
-  `src/dm2/dm2_v1_skproject_core.c`, declarations in
+- **Lane A — DM2 SkWinCore symbol audit batch 18:** Done (v3.0.182). Ported
+  16 symbols from `SKULLWIN/c_1c9a.cpp`: 14 fully ported, 2 fail-closed stubs.
+  Source-locked helpers in `src/dm2/dm2_v1_skproject_core.c`, declarations in
   `include/dm2_v1_skproject_core.h`, focused regression tests in
   `tests/test_dm2_v1_skproject_core.c`, and audit updates in
   `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` plus
-  `SYMBOL_DISPOSITIONS.tsv`. Target: backlog 851 → 835 `MISSING`. Verify with
-  `./build/test_dm2_v1_skproject_core`.
+  `SYMBOL_DISPOSITIONS.tsv`.
 
 - **Lane C — DM2 real-data startup/dungeon gate repair (cycle 16):** Done
   (v3.0.181). Fixed 5 of 7 target tests: boot_profile_smoke,

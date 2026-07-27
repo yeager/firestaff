@@ -7212,6 +7212,405 @@ int dm2_v1_skproject_1c9a_0648(
     void *user,
     DM2_V1_Skproject1c9a0648Receipt *out_receipt);
 
+/* SKULLWIN/c_1c9a.cpp cycle-18 batch — additional caller-supplied callback
+   types for the DM2_OVERSEE_RECORD plugin family, record-chain container
+   redistribution, and the creature/minion allocation helpers.  All of
+   these stay caller-owned; the helpers below fail closed when a required
+   callback is unavailable. */
+typedef int32_t (*DM2_V1_SkprojectOverseeSearchFn)(
+    uint16_t start_record,
+    uint16_t creature,
+    int32_t filter,
+    void *user); /* 0xfffffffe sentinel on no match */
+
+typedef int32_t (*DM2_V1_SkprojectIsMoneyboxFn)(
+    uint16_t record,
+    void *user);
+
+typedef void (*DM2_V1_SkprojectCutRecordFromFn)(
+    uint16_t record,
+    uint16_t container,
+    int16_t x,
+    int16_t y,
+    void *user);
+
+typedef void (*DM2_V1_SkprojectAppendRecordToFn)(
+    uint16_t record,
+    uint16_t container,
+    int16_t x,
+    int16_t y,
+    void *user);
+
+typedef void (*DM2_V1_SkprojectDeallocRecordFn)(
+    uint16_t record,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectContentsHeadFn)(
+    uint16_t container_record,
+    void *user); /* 0xfffe sentinel for an empty container */
+
+typedef int32_t (*DM2_V1_SkprojectBlend4deaFn)(
+    uint8_t creature_type,
+    uint16_t base,
+    const int16_t *table,
+    void *user);
+
+typedef void (*DM2_V1_SkprojectAnimationFrameFn)(
+    uint8_t creature_type,
+    uint16_t mode,
+    uint16_t ai_pointer,
+    uint16_t ai_addend,
+    uint16_t v1e055e_word0,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectCreatureAtSlotFn)(
+    uint16_t x,
+    uint16_t y,
+    void *user); /* -1 when no creature occupies the cell */
+
+typedef void (*DM2_V1_SkprojectQueueTimerFn)(
+    uint16_t creature_slot,
+    uint8_t type,
+    uint8_t actor,
+    uint8_t x,
+    uint8_t y,
+    uint16_t tick,
+    int32_t *out_timer,
+    void *user);
+
+typedef void (*DM2_V1_SkprojectDeleteTimerFn)(
+    uint16_t timer,
+    void *user);
+
+typedef int (*DM2_V1_SkprojectSlotOccupiedFn)(
+    uint16_t slot,
+    void *user); /* nonzero when creatures[slot] word0 >= 0 (occupied) */
+
+typedef int32_t (*DM2_V1_SkprojectRecycleRecordFn)(
+    uint8_t cls,
+    uint8_t priority,
+    void *user); /* -1 on failure */
+
+typedef void (*DM2_V1_SkprojectDeleteCreatureRecordFn)(
+    uint16_t x,
+    uint16_t y,
+    uint16_t arg2,
+    uint16_t arg3,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectMissileRefOfMinionFn)(
+    uint16_t creature,
+    uint16_t default_map,
+    void *user); /* 0 when the source would return NULL */
+
+typedef void (*DM2_V1_SkprojectAi13e40360Fn)(
+    uint16_t creature,
+    int16_t x,
+    int16_t y,
+    uint16_t reason,
+    uint16_t arg4,
+    void *user);
+
+typedef void (*DM2_V1_SkprojectAttackCreatureFn)(
+    uint16_t creature,
+    int16_t x,
+    int16_t y,
+    uint16_t dir,
+    uint16_t power,
+    uint16_t arg5,
+    void *user);
+
+/* SKULLWIN/c_1c9a.cpp:5198 DM2_1c9a_0694 — DM2_OVERSEE_RECORD plugin
+   predicate.  When the filter word is not the 0xfffffffe wildcard the
+   item's distinctive type (DM2_GET_DISTINCTIVE_ITEMTYPE) must equal the
+   filter for a match. */
+int dm2_v1_skproject_1c9a_0694(
+    uint16_t record,
+    int32_t filter,
+    DM2_V1_SkprojectDistinctiveTypeFn distinctive_type_fn,
+    void *user);
+
+/* SKULLWIN/c_1c9a.cpp:5217 DM2_1c9a_06bd — thin DM2_OVERSEE_RECORD search
+   wrapper using the DM2_1c9a_0694 predicate above.  Returns 0 (NULL) when
+   start_record is the -1 sentinel or the search reports no match
+   (0xfffffffe). */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int no_match;
+} DM2_V1_Skproject06bdReceipt;
+
+int32_t dm2_v1_skproject_1c9a_06bd(
+    int32_t start_record,
+    uint16_t creature,
+    int16_t filter,
+    DM2_V1_SkprojectOverseeSearchFn oversee_fn,
+    void *user,
+    DM2_V1_Skproject06bdReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5248 DM2_1c9a_078b — recursive record-chain walk
+   belonging to DM2_PROCEED_XACT_71.  Visits container-chain nodes whose
+   type nibble (bits 10-13 of the raw record value) is 5..13 or 9,
+   optionally filtered by a direction nibble (bits 14-15); for a moneybox
+   (type 9) that the creature cannot directly handle, its contents are
+   redistributed into the outer container and the moneybox itself is cut
+   and deallocated. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint32_t visited;
+    uint32_t redistributed;
+} DM2_V1_Skproject078bReceipt;
+
+int32_t dm2_v1_skproject_1c9a_078b(
+    uint16_t container,
+    int16_t creature_type,
+    uint8_t direction_filter,
+    uint16_t start_record,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn,
+    DM2_V1_SkprojectIsMoneyboxFn moneybox_fn,
+    DM2_V1_SkprojectCutRecordFromFn cut_fn,
+    DM2_V1_SkprojectAppendRecordToFn append_fn,
+    DM2_V1_SkprojectDeallocRecordFn dealloc_fn,
+    DM2_V1_SkprojectContentsHeadFn contents_head_fn,
+    void *user,
+    DM2_V1_Skproject078bReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5376 DM2_1c9a_0958 — creature AI-spec blend via
+   DM2_4DEA; result is masked to a multiple of 0x80 and shifted right by 7
+   (i.e. the blended byte divided by 128). */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int32_t blended;
+} DM2_V1_Skproject0958Receipt;
+
+int32_t dm2_v1_skproject_1c9a_0958(
+    uint8_t creature_type,
+    uint16_t ai_pointer,
+    const int16_t *table,
+    DM2_V1_SkprojectBlend4deaFn blend_fn,
+    void *user,
+    DM2_V1_Skproject0958Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5403 DM2_1c9a_09b9 — belongs to
+   DM2_ACTIVATE_CREATURE_KILLER; compares the creature record's word at
+   offset 0x8 against the supplied creature index. */
+int dm2_v1_skproject_1c9a_09b9(
+    uint16_t creature_record,
+    uint16_t creature_index,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    void *user);
+
+/* SKULLWIN/c_1c9a.cpp:5415 DM2_1c9a_09db — belongs to
+   DM2_FILL_CAII_CUR_MAP; resolves the creature's AI pointer and forwards
+   it to DM2_GET_CREATURE_ANIMATION_FRAME. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+} DM2_V1_Skproject09dbReceipt;
+
+int dm2_v1_skproject_1c9a_09db(
+    uint8_t creature_type,
+    uint16_t ai_pointer,
+    uint16_t v1e055e_word0,
+    DM2_V1_SkprojectAnimationFrameFn animation_fn,
+    void *user,
+    DM2_V1_Skproject09dbReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5433 DM2_CREATURE_SOMETHING_1c9a_0a48 (was
+   SKW_1c9a_0a48) — creature retaliation/idle-delay scheduler over the
+   `s350` sequencer scratch state (v1e0552/v1e054e/v1e055a/v1e055e caches,
+   the active creature record, ddat sound-zone tables).  Firestaff does
+   not yet model that scratch state, so this helper stays fail-closed: it
+   documents the required inputs and reports blocked_missing_state until a
+   caller supplies a full state bridge. */
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+} DM2_V1_Skproject0a48Receipt;
+
+int32_t dm2_v1_skproject_creature_something_1c9a_0a48(
+    void *state,
+    DM2_V1_Skproject0a48Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5694 DM2_1c9a_0cf7 — queues a "creature moved away"
+   timer for the creature at (x,y) on the given map and stores the timer
+   handle back into the creature array slot; cancels any prior pending
+   timer for that slot first via DM2_1c9a_0db0. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int32_t creature_slot;
+    int32_t timer;
+} DM2_V1_Skproject0cf7Receipt;
+
+int dm2_v1_skproject_1c9a_0cf7(
+    uint16_t map,
+    uint8_t x,
+    uint8_t y,
+    uint16_t gametick,
+    DM2_V1_SkprojectCreatureAtSlotFn creature_at_fn,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectQueueTimerFn queue_timer_fn,
+    DM2_V1_SkprojectDeleteTimerFn delete_timer_fn,
+    void *user,
+    DM2_V1_Skproject0cf7Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5733 DM2_1c9a_0db0 — cancels the pending
+   "creature moved away" timer for a creature record when its type nibble
+   (bits 10-13 of record^byte0, masked and shifted) equals 4. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int cancelled;
+} DM2_V1_Skproject0db0Receipt;
+
+int dm2_v1_skproject_1c9a_0db0(
+    uint16_t record,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectDeleteTimerFn delete_timer_fn,
+    void *user,
+    DM2_V1_Skproject0db0Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5765 DM2_14cd_0802 — belongs to
+   DM2_ALLOC_CAII_TO_CREATURE; resets the newly allocated creature's
+   caii-index (offset 0x12 = -1) and caii-flags (offset 0x13 = 0). */
+typedef struct {
+    uint8_t caii_index;
+    uint8_t caii_flags;
+} DM2_V1_Skproject14cd0802Slot;
+
+void dm2_v1_skproject_14cd_0802(DM2_V1_Skproject14cd0802Slot *slot);
+
+/* SKULLWIN/c_1c9a.cpp:5771 DM2_ALLOC_CAII_TO_CREATURE — allocates a free
+   creature array slot for a record not yet materialized (byte 0x5 ==
+   0xff), recycling a world record when the array is full, and finishes
+   by calling DM2_14cd_0802 and DM2_1c9a_0cf7 for the new slot.  Firestaff
+   models the creature array occupancy check and slot count through
+   caller callbacks and fails closed without them. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int already_allocated;
+    int32_t slot;
+    int recycled;
+} DM2_V1_SkprojectAllocCaiiReceipt;
+
+int dm2_v1_skproject_alloc_caii_to_creature(
+    uint16_t record,
+    uint8_t record_byte5,
+    uint16_t slot_count,
+    DM2_V1_SkprojectSlotOccupiedFn slot_occupied_fn,
+    DM2_V1_SkprojectRecycleRecordFn recycle_fn,
+    void *user,
+    DM2_V1_SkprojectAllocCaiiReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5895 DM2_1c9a_0fcb — releases a creature array slot:
+   clears its type field, cancels its pending timer via DM2_1c9a_0db0,
+   decrements the world record counter, marks the backing record's byte
+   0x5 as unallocated, and (when the slot lacked the AI-spec flag 0x1 and
+   was of creature type 0x13) deletes the creature record at its last
+   known timer position. */
+typedef struct {
+    int valid;
+    int blocked_out_of_range;
+    int blocked_missing_callback;
+    int deleted_creature_record;
+} DM2_V1_Skproject0fcbReceipt;
+
+int dm2_v1_skproject_1c9a_0fcb(
+    uint16_t slot,
+    uint16_t max_slot,
+    uint16_t record_word0,
+    uint8_t creature_type,
+    uint16_t ai_spec_flags,
+    int32_t timer_index,
+    uint16_t timer_x,
+    uint16_t timer_y,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectDeleteTimerFn delete_timer_fn,
+    DM2_V1_SkprojectDeleteCreatureRecordFn delete_creature_fn,
+    void *user,
+    DM2_V1_Skproject0fcbReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5960 DM2_CREATE_MINION — searches around a source
+   position (via table1d27fc/table1d2804 direction offset tables) for a
+   free tile to spawn a minion creature, allocating it through
+   dm2_dballochandler.DM2_ALLOC_NEW_CREATURE.  The tile/placement search
+   and creature allocator are caller-owned runtime state that Firestaff
+   does not yet bridge, so this helper stays fail-closed. */
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+} DM2_V1_SkprojectCreateMinionReceipt;
+
+int16_t dm2_v1_skproject_create_minion(
+    void *state,
+    DM2_V1_SkprojectCreateMinionReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:6148 DM2_RELEASE_MINION — belongs to
+   DM2_ENGAGE_COMMAND; when the creature has a live missile reference,
+   switches to the missile's map, computes its direction/distance words,
+   dispatches DM2_ai_13e4_0360 with reason 0x13, then restores the
+   previous current map. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int had_missile_ref;
+} DM2_V1_SkprojectReleaseMinionReceipt;
+
+void dm2_v1_skproject_release_minion(
+    uint16_t creature,
+    uint16_t current_map,
+    DM2_V1_SkprojectMissileRefOfMinionFn missile_ref_fn,
+    DM2_V1_SkprojectChangeMapFn change_map_fn,
+    DM2_V1_SkprojectAi13e40360Fn ai_13e4_0360_fn,
+    void *user,
+    DM2_V1_SkprojectReleaseMinionReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:6181 DM2_1c9a_17c7 — belongs to DM2_WOUND_CREATURE;
+   true only on the current map (ddat.v1e08d6), outside cutscene/network
+   gating (v1e0238==0, v1e0976==0), when the target's coarse direction
+   from the reference position matches ddat.v1e08da and both axis deltas
+   from (x,y) are within 2 tiles. */
+typedef struct {
+    uint16_t v1e08d6;
+    uint16_t v1e0238;
+    uint16_t v1e0976;
+    uint16_t v1e08d8;
+    uint16_t v1e08d4;
+    uint16_t v1e08da;
+    uint16_t map;
+} DM2_V1_Skproject17c7State;
+
+int dm2_v1_skproject_1c9a_17c7(
+    int16_t x,
+    int16_t y,
+    const DM2_V1_Skproject17c7State *state,
+    int32_t (*calc_vector_dir_fn)(uint16_t ref_y, int16_t dy, int16_t ref_x,
+                                   int16_t dx, void *user),
+    void *user);
+
+/* SKULLWIN/c_1c9a.cpp:6240 DM2_1c9a_19d4 — dispatch gate that only calls
+   DM2_ATTACK_CREATURE when the command word is in [6,0x15]; bit 0x8000 of
+   the command word sign-extends into the high byte of the direction
+   argument before dispatch. */
+typedef struct {
+    int valid;
+    int out_of_range;
+} DM2_V1_Skproject19d4Receipt;
+
+void dm2_v1_skproject_1c9a_19d4(
+    uint16_t creature,
+    int16_t x,
+    uint16_t cmd,
+    int16_t y,
+    DM2_V1_SkprojectAttackCreatureFn attack_fn,
+    void *user,
+    DM2_V1_Skproject19d4Receipt *out_receipt);
+
 const char *dm2_v1_skproject_core_source_evidence(void);
 
 

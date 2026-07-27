@@ -10444,7 +10444,13 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_19f0_1511/DM2_D283/DM2_CREATURE_GO_THERE/"
            "DM2_19f0_2024/DM2_19f0_2165/DM2_19f0_266c/"
            "DM2_19f0_2723/DM2_19f0_2813/DM2_4DEA/DM2_1BA1B/"
-           "DM2_1c9a_0247/DM2_1c9a_0648 cycle-16 batch-17";
+           "DM2_1c9a_0247/DM2_1c9a_0648 cycle-16 batch-17; "
+           "SKULLWIN/c_1c9a.cpp DM2_1c9a_0694/DM2_1c9a_06bd/"
+           "DM2_1c9a_078b/DM2_1c9a_0958/DM2_1c9a_09b9/DM2_1c9a_09db/"
+           "DM2_CREATURE_SOMETHING_1c9a_0a48/DM2_1c9a_0cf7/"
+           "DM2_1c9a_0db0/DM2_14cd_0802/DM2_ALLOC_CAII_TO_CREATURE/"
+           "DM2_1c9a_0fcb/DM2_CREATE_MINION/DM2_RELEASE_MINION/"
+           "DM2_1c9a_17c7/DM2_1c9a_19d4 cycle-18 batch-18";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -18503,4 +18509,627 @@ int dm2_v1_skproject_1c9a_0648(
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
     return map;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5198 DM2_1c9a_0694 — DM2_OVERSEE_RECORD plugin
+   predicate: filter value 0xfffffffe (-2) matches unconditionally,
+   otherwise the item's distinctive type must equal filter. */
+int dm2_v1_skproject_1c9a_0694(
+    uint16_t record,
+    int32_t filter,
+    DM2_V1_SkprojectDistinctiveTypeFn distinctive_type_fn,
+    void *user)
+{
+    if (filter != -2) {
+        uint16_t distinctive;
+        if (!distinctive_type_fn) return 0;
+        distinctive = distinctive_type_fn(record, user);
+        if ((int32_t)distinctive != filter) return 0;
+    }
+    return 1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5217 DM2_1c9a_06bd — DM2_OVERSEE_RECORD search
+   wrapper using the DM2_1c9a_0694 predicate. */
+int32_t dm2_v1_skproject_1c9a_06bd(
+    int32_t start_record,
+    uint16_t creature,
+    int16_t filter,
+    DM2_V1_SkprojectOverseeSearchFn oversee_fn,
+    void *user,
+    DM2_V1_Skproject06bdReceipt *out_receipt)
+{
+    DM2_V1_Skproject06bdReceipt receipt;
+    int32_t result;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (start_record == -1) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!oversee_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    result = oversee_fn((uint16_t)start_record, creature, (int32_t)filter, user);
+    if (result == (int32_t)0xfffffffe) {
+        receipt.no_match = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return result;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5248 DM2_1c9a_078b — recursive container
+   redistribution walk belonging to DM2_PROCEED_XACT_71. */
+int32_t dm2_v1_skproject_1c9a_078b(
+    uint16_t container,
+    int16_t creature_type,
+    uint8_t direction_filter,
+    uint16_t start_record,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn,
+    DM2_V1_SkprojectIsMoneyboxFn moneybox_fn,
+    DM2_V1_SkprojectCutRecordFromFn cut_fn,
+    DM2_V1_SkprojectAppendRecordToFn append_fn,
+    DM2_V1_SkprojectDeallocRecordFn dealloc_fn,
+    DM2_V1_SkprojectContentsHeadFn contents_head_fn,
+    void *user,
+    DM2_V1_Skproject078bReceipt *out_receipt)
+{
+    DM2_V1_Skproject078bReceipt receipt;
+    uint16_t cur;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!next_fn || !can_handle_fn || !moneybox_fn || !cut_fn ||
+        !append_fn || !dealloc_fn || !contents_head_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return (int32_t)start_record;
+    }
+
+    cur = start_record;
+    for (;;) {
+        uint16_t type_nibble;
+        uint16_t dir_nibble;
+        int32_t can_handle;
+
+        if (cur == 0xfffeu) break;
+
+        type_nibble = (uint16_t)((cur & 0x3c00u) >> 10);
+        if (!((type_nibble > 4u && type_nibble < 14u) || type_nibble == 9u)) {
+            cur = (uint16_t)next_fn(cur, user);
+            continue;
+        }
+        if (direction_filter != 0xffu) {
+            dir_nibble = (uint16_t)((cur >> 14) & 0x3u);
+            if (dir_nibble != direction_filter) {
+                cur = (uint16_t)next_fn(cur, user);
+                continue;
+            }
+        }
+
+        receipt.visited++;
+        can_handle = can_handle_fn(cur, creature_type, user);
+        if (type_nibble == 9u) {
+            int32_t is_moneybox = moneybox_fn(cur, user);
+            int allowed = !(is_moneybox != 0 && can_handle == 0);
+            if (allowed) {
+                int32_t contents_head = contents_head_fn(cur, user);
+                DM2_V1_Skproject078bReceipt inner;
+                dm2_v1_skproject_1c9a_078b(
+                    cur, creature_type, 0xffu, (uint16_t)contents_head,
+                    next_fn, can_handle_fn, moneybox_fn, cut_fn, append_fn,
+                    dealloc_fn, contents_head_fn, user, &inner);
+                receipt.redistributed += inner.redistributed;
+                if (can_handle != 0) {
+                    /* Contents the creature can carry get pulled out of the
+                       moneybox and appended to the outer container. */
+                    receipt.redistributed++;
+                    cut_fn(cur, cur, -1, 0, user);
+                    append_fn(cur, container, -1, direction_filter, user);
+                }
+            }
+        }
+        if (can_handle != 0) {
+            cut_fn(cur, container, -1, 0, user);
+            dealloc_fn(cur, user);
+        }
+
+        cur = (uint16_t)next_fn(cur, user);
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int32_t)cur;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5376 DM2_1c9a_0958 — creature AI-spec blend via
+   DM2_4DEA; result masked to a multiple of 0x80 and shifted right 7. */
+int32_t dm2_v1_skproject_1c9a_0958(
+    uint8_t creature_type,
+    uint16_t ai_pointer,
+    const int16_t *table,
+    DM2_V1_SkprojectBlend4deaFn blend_fn,
+    void *user,
+    DM2_V1_Skproject0958Receipt *out_receipt)
+{
+    DM2_V1_Skproject0958Receipt receipt;
+    int32_t blended;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!blend_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    blended = blend_fn(creature_type, ai_pointer, table, user);
+    receipt.blended = blended;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int32_t)((uint32_t)(blended & 0xffffff80) >> 7);
+}
+
+/* SKULLWIN/c_1c9a.cpp:5403 DM2_1c9a_09b9 — belongs to
+   DM2_ACTIVATE_CREATURE_KILLER. */
+int dm2_v1_skproject_1c9a_09b9(
+    uint16_t creature_record,
+    uint16_t creature_index,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    void *user)
+{
+    const uint8_t *rec;
+    uint16_t size = 0;
+    uint16_t word8;
+
+    if (!record_fn) return 0;
+    rec = record_fn(creature_record, &size, user);
+    if (!rec || size < 10u) return 0;
+    word8 = (uint16_t)(rec[8] | (rec[9] << 8));
+    return (word8 == creature_index) ? 1 : 0;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5415 DM2_1c9a_09db — belongs to
+   DM2_FILL_CAII_CUR_MAP. */
+int dm2_v1_skproject_1c9a_09db(
+    uint8_t creature_type,
+    uint16_t ai_pointer,
+    uint16_t v1e055e_word0,
+    DM2_V1_SkprojectAnimationFrameFn animation_fn,
+    void *user,
+    DM2_V1_Skproject09dbReceipt *out_receipt)
+{
+    DM2_V1_Skproject09dbReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!animation_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    animation_fn(creature_type, 0x11u, ai_pointer, 0u, v1e055e_word0, user);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5433 DM2_CREATURE_SOMETHING_1c9a_0a48 (was
+   SKW_1c9a_0a48) — fail-closed until the `s350` sequencer scratch state
+   is bridged from a caller. */
+int32_t dm2_v1_skproject_creature_something_1c9a_0a48(
+    void *state,
+    DM2_V1_Skproject0a48Receipt *out_receipt)
+{
+    DM2_V1_Skproject0a48Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    (void)state;
+    receipt.blocked_missing_state = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5694 DM2_1c9a_0cf7 — queues a "creature moved away"
+   timer and cancels any prior pending timer for the slot. */
+int dm2_v1_skproject_1c9a_0cf7(
+    uint16_t map,
+    uint8_t x,
+    uint8_t y,
+    uint16_t gametick,
+    DM2_V1_SkprojectCreatureAtSlotFn creature_at_fn,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectQueueTimerFn queue_timer_fn,
+    DM2_V1_SkprojectDeleteTimerFn delete_timer_fn,
+    void *user,
+    DM2_V1_Skproject0cf7Receipt *out_receipt)
+{
+    DM2_V1_Skproject0cf7Receipt receipt;
+    int32_t creature;
+    const uint8_t *rec;
+    uint16_t size = 0;
+    uint8_t actor;
+    uint8_t type;
+    int32_t timer = -1;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!creature_at_fn || !record_fn || !queue_timer_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    creature = creature_at_fn(x, y, user);
+    receipt.creature_slot = creature;
+    if (creature < 0) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    rec = record_fn((uint16_t)creature, &size, user);
+    if (!rec || size < 9u) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    {
+        DM2_V1_Skproject0db0Receipt cancel;
+        dm2_v1_skproject_1c9a_0db0((uint16_t)creature, record_fn,
+                                    delete_timer_fn, user, &cancel);
+    }
+
+    type = (uint16_t)(rec[8] | (rec[9] << 8)) != 0xffffu ? 1u : 0u;
+    type = (uint8_t)(0x21u + type);
+    actor = rec[4];
+
+    queue_timer_fn((uint16_t)creature, type, actor, x, y,
+                    (uint16_t)(gametick + 1), &timer, user);
+    receipt.timer = timer;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    (void)map;
+    return 1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5733 DM2_1c9a_0db0 — cancels the pending
+   "creature moved away" timer when the record's type nibble equals 4. */
+int dm2_v1_skproject_1c9a_0db0(
+    uint16_t record,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectDeleteTimerFn delete_timer_fn,
+    void *user,
+    DM2_V1_Skproject0db0Receipt *out_receipt)
+{
+    DM2_V1_Skproject0db0Receipt receipt;
+    uint16_t masked;
+    uint16_t type_nibble;
+    const uint8_t *rec;
+    uint16_t size = 0;
+    uint16_t timer_slot;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    masked = (uint16_t)(record & 0x3c00u);
+    type_nibble = (uint16_t)(masked >> 10);
+    if (type_nibble != 4u) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (!record_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    rec = record_fn(record, &size, user);
+    if (!rec || size < 6u) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (rec[5] == 0xffu) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    timer_slot = (uint16_t)(rec[4 + 2] | (rec[4 + 3] << 8));
+    if ((int16_t)timer_slot >= 0) {
+        if (!delete_timer_fn) {
+            receipt.blocked_missing_callback = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        delete_timer_fn(timer_slot, user);
+        receipt.cancelled = 1;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.cancelled;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5765 DM2_14cd_0802 — belongs to
+   DM2_ALLOC_CAII_TO_CREATURE. */
+void dm2_v1_skproject_14cd_0802(DM2_V1_Skproject14cd0802Slot *slot)
+{
+    if (!slot) return;
+    slot->caii_index = 0xffu;
+    slot->caii_flags = 0u;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5771 DM2_ALLOC_CAII_TO_CREATURE — allocates a free
+   creature array slot, recycling a world record when full. */
+int dm2_v1_skproject_alloc_caii_to_creature(
+    uint16_t record,
+    uint8_t record_byte5,
+    uint16_t slot_count,
+    DM2_V1_SkprojectSlotOccupiedFn slot_occupied_fn,
+    DM2_V1_SkprojectRecycleRecordFn recycle_fn,
+    void *user,
+    DM2_V1_SkprojectAllocCaiiReceipt *out_receipt)
+{
+    DM2_V1_SkprojectAllocCaiiReceipt receipt;
+    uint16_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (record_byte5 != 0xffu) {
+        receipt.already_allocated = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!slot_occupied_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (;;) {
+        for (i = 0; i < slot_count; i++) {
+            if (!slot_occupied_fn(i, user)) {
+                receipt.slot = (int32_t)i;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+        }
+        if (!recycle_fn) {
+            receipt.blocked_missing_callback = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        if (recycle_fn(4u, 0xffu, user) == -1) {
+            receipt.blocked_missing_callback = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.recycled = 1;
+    }
+    (void)record;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5895 DM2_1c9a_0fcb — releases a creature array
+   slot. */
+int dm2_v1_skproject_1c9a_0fcb(
+    uint16_t slot,
+    uint16_t max_slot,
+    uint16_t record_word0,
+    uint8_t creature_type,
+    uint16_t ai_spec_flags,
+    int32_t timer_index,
+    uint16_t timer_x,
+    uint16_t timer_y,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectDeleteTimerFn delete_timer_fn,
+    DM2_V1_SkprojectDeleteCreatureRecordFn delete_creature_fn,
+    void *user,
+    DM2_V1_Skproject0fcbReceipt *out_receipt)
+{
+    DM2_V1_Skproject0fcbReceipt receipt;
+    uint16_t masked;
+    int has_ai_flag;
+    int should_delete = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (slot > max_slot) {
+        receipt.blocked_out_of_range = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if ((int16_t)record_word0 < 0) {
+        receipt.blocked_out_of_range = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    masked = (uint16_t)(record_word0 | 0x1000u);
+    has_ai_flag = (ai_spec_flags & 0x1u) != 0;
+    if (!has_ai_flag && creature_type == 0x13u) should_delete = 1;
+
+    (void)record_fn;
+    dm2_v1_skproject_1c9a_0db0(masked, record_fn, delete_timer_fn, user, NULL);
+
+    if (should_delete) {
+        if (!delete_creature_fn) {
+            receipt.blocked_missing_callback = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        delete_creature_fn(timer_x, timer_y, 0u, 1u, user);
+        receipt.deleted_creature_record = 1;
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    (void)timer_index;
+    return 1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5960 DM2_CREATE_MINION — fail-closed until the tile
+   search / creature allocator runtime state is bridged. */
+int16_t dm2_v1_skproject_create_minion(
+    void *state,
+    DM2_V1_SkprojectCreateMinionReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCreateMinionReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    (void)state;
+    receipt.blocked_missing_state = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return -1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:6148 DM2_RELEASE_MINION — belongs to
+   DM2_ENGAGE_COMMAND. */
+void dm2_v1_skproject_release_minion(
+    uint16_t creature,
+    uint16_t current_map,
+    DM2_V1_SkprojectMissileRefOfMinionFn missile_ref_fn,
+    DM2_V1_SkprojectChangeMapFn change_map_fn,
+    DM2_V1_SkprojectAi13e40360Fn ai_13e4_0360_fn,
+    void *user,
+    DM2_V1_SkprojectReleaseMinionReceipt *out_receipt)
+{
+    DM2_V1_SkprojectReleaseMinionReceipt receipt;
+    int32_t missile_word;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!missile_ref_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return;
+    }
+
+    missile_word = missile_ref_fn(creature, 0xffffu, user);
+    if (missile_word == 0) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return;
+    }
+    receipt.had_missile_ref = 1;
+
+    if (!change_map_fn || !ai_13e4_0360_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return;
+    }
+
+    {
+        uint16_t word4 = (uint16_t)missile_word;
+        int16_t map = (int16_t)(word4 >> 10);
+        int16_t y = (int16_t)(word4 >> 5);
+        int16_t x = (int16_t)(word4 & 0x1fu);
+
+        change_map_fn(map, user);
+        ai_13e4_0360_fn(creature, x, y, 0x13u, 1u, user);
+        change_map_fn((int16_t)current_map, user);
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+}
+
+/* SKULLWIN/c_1c9a.cpp:6181 DM2_1c9a_17c7 — belongs to
+   DM2_WOUND_CREATURE. */
+int dm2_v1_skproject_1c9a_17c7(
+    int16_t x,
+    int16_t y,
+    const DM2_V1_Skproject17c7State *state,
+    int32_t (*calc_vector_dir_fn)(uint16_t ref_y, int16_t dy, int16_t ref_x,
+                                   int16_t dx, void *user),
+    void *user)
+{
+    int32_t dx, dy;
+
+    if (!state) return 0;
+    if (state->map != state->v1e08d6) return 0;
+    if (state->v1e0238 != 0) return 0;
+    if (state->v1e0976 != 0) return 0;
+
+    dx = state->v1e08d8 - x;
+    if (dx < 0) dx = -dx;
+    dy = state->v1e08d4 - y;
+    if (dy < 0) dy = -dy;
+    if (dx == dy) return 0;
+
+    if (!calc_vector_dir_fn) return 0;
+    if (calc_vector_dir_fn(state->v1e08d8, y, state->v1e08d4, x, user) !=
+        (int32_t)state->v1e08da)
+        return 0;
+
+    dx = state->v1e08d8 - x;
+    if (dx < 0) dx = -dx;
+    if (dx > 2) return 0;
+    dy = state->v1e08d4 - y;
+    if (dy < 0) dy = -dy;
+    if (dy > 2) return 0;
+
+    return 1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:6240 DM2_1c9a_19d4 — dispatch gate for
+   DM2_ATTACK_CREATURE. */
+void dm2_v1_skproject_1c9a_19d4(
+    uint16_t creature,
+    int16_t x,
+    uint16_t cmd,
+    int16_t y,
+    DM2_V1_SkprojectAttackCreatureFn attack_fn,
+    void *user,
+    DM2_V1_Skproject19d4Receipt *out_receipt)
+{
+    DM2_V1_Skproject19d4Receipt receipt;
+    uint16_t sign;
+    int16_t dir;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    sign = (uint16_t)(cmd & 0x8000u);
+    if (cmd < 6u || cmd > 0x15u) {
+        receipt.out_of_range = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return;
+    }
+
+    dir = (int16_t)(cmd - 6u);
+    if (sign != 0) dir = (int16_t)(dir | (int16_t)0xff80);
+
+    if (attack_fn) {
+        attack_fn(creature, x, y, (uint16_t)dir, 0x64u, 0u, user);
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
 }

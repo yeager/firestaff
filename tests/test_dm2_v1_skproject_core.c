@@ -8516,6 +8516,440 @@ static void test_skwin_core_symbol_batch_cycle16b(void)
           "DM2_1c9a_0648 uses the party direction at the transition map");
 }
 
+/* ---- cycle-18 batch-18 (c_1c9a.cpp) test fixtures ---- */
+
+static uint8_t g_c18_records[4][24];
+
+static uint16_t cycle18_distinctive_type_fn(uint16_t record, void *user)
+{
+    (void)user;
+    return record;
+}
+
+static int32_t cycle18_oversee_search_fn(uint16_t start, uint16_t creature,
+                                          int32_t filter, void *user)
+{
+    (void)creature; (void)user;
+    if (filter == (int32_t)0xfffffffe) return (int32_t)start;
+    if ((int32_t)start == filter) return (int32_t)start;
+    return (int32_t)0xfffffffe;
+}
+
+#define CYCLE18_NODE_MONEYBOX 0x2401u /* type nibble 9 */
+#define CYCLE18_NODE_ITEM 0x1802u     /* type nibble 6 */
+
+static int32_t cycle18_next_record_fn(uint16_t handle, void *user)
+{
+    (void)user;
+    if (handle == CYCLE18_NODE_MONEYBOX) return CYCLE18_NODE_ITEM;
+    if (handle == CYCLE18_NODE_ITEM) return 0xfffeu;
+    return 0xfffeu;
+}
+
+static int32_t cycle18_can_handle_fn(uint16_t item, int16_t creature, void *user)
+{
+    (void)item; (void)user;
+    return creature != 0;
+}
+
+static int32_t cycle18_moneybox_fn(uint16_t record, void *user)
+{
+    (void)user;
+    return ((record >> 10) & 0xfu) == 9u;
+}
+
+static int g_c18_cut_calls;
+static int g_c18_append_calls;
+static int g_c18_dealloc_calls;
+
+static void cycle18_cut_fn(uint16_t record, uint16_t container, int16_t x,
+                            int16_t y, void *user)
+{
+    (void)record; (void)container; (void)x; (void)y; (void)user;
+    g_c18_cut_calls++;
+}
+
+static void cycle18_append_fn(uint16_t record, uint16_t container, int16_t x,
+                               int16_t y, void *user)
+{
+    (void)record; (void)container; (void)x; (void)y; (void)user;
+    g_c18_append_calls++;
+}
+
+static void cycle18_dealloc_fn(uint16_t record, void *user)
+{
+    (void)record; (void)user;
+    g_c18_dealloc_calls++;
+}
+
+static int32_t cycle18_contents_head_fn(uint16_t container_record, void *user)
+{
+    (void)container_record; (void)user;
+    return (int32_t)0xfffeu;
+}
+
+static int32_t cycle18_blend_fn(uint8_t creature_type, uint16_t base,
+                                 const int16_t *table, void *user)
+{
+    (void)creature_type; (void)table; (void)user;
+    return (int32_t)base;
+}
+
+static int g_c18_anim_calls;
+static void cycle18_animation_fn(uint8_t creature_type, uint16_t mode,
+                                  uint16_t ai_pointer, uint16_t ai_addend,
+                                  uint16_t v1e055e_word0, void *user)
+{
+    (void)creature_type; (void)mode; (void)ai_pointer; (void)ai_addend;
+    (void)v1e055e_word0; (void)user;
+    g_c18_anim_calls++;
+}
+
+static const uint8_t *cycle18_record_fn(uint16_t handle, uint16_t *out_size,
+                                         void *user)
+{
+    uint16_t index = (uint16_t)(handle & 0x3u); /* low bits address the slot;
+                                                    the high nibble carries
+                                                    the record's type. */
+    (void)user;
+    if (out_size) *out_size = sizeof(g_c18_records[index]);
+    return (const uint8_t *)g_c18_records[index];
+}
+
+static int32_t cycle18_creature_at_fn(uint16_t x, uint16_t y, void *user)
+{
+    (void)user;
+    if (x == 1 && y == 2) return 0;
+    return -1;
+}
+
+static int g_c18_queue_calls;
+static void cycle18_queue_timer_fn(uint16_t creature_slot, uint8_t type,
+                                    uint8_t actor, uint8_t x, uint8_t y,
+                                    uint16_t tick, int32_t *out_timer,
+                                    void *user)
+{
+    (void)creature_slot; (void)type; (void)actor; (void)x; (void)y;
+    (void)tick; (void)user;
+    g_c18_queue_calls++;
+    if (out_timer) *out_timer = 42;
+}
+
+static int g_c18_delete_timer_calls;
+static void cycle18_delete_timer_fn(uint16_t timer, void *user)
+{
+    (void)timer; (void)user;
+    g_c18_delete_timer_calls++;
+}
+
+static int g_c18_slot_occupied[8];
+static int cycle18_slot_occupied_fn(uint16_t slot, void *user)
+{
+    (void)user;
+    return g_c18_slot_occupied[slot];
+}
+
+static int cycle18_recycle_calls;
+static int32_t cycle18_recycle_fn(uint8_t cls, uint8_t priority, void *user)
+{
+    (void)cls; (void)priority; (void)user;
+    cycle18_recycle_calls++;
+    return -1;
+}
+
+static int g_c18_deleted_creature_record;
+static void cycle18_delete_creature_fn(uint16_t x, uint16_t y, uint16_t arg2,
+                                        uint16_t arg3, void *user)
+{
+    (void)x; (void)y; (void)arg2; (void)arg3; (void)user;
+    g_c18_deleted_creature_record = 1;
+}
+
+static int32_t cycle18_missile_ref_fn(uint16_t creature, uint16_t default_map,
+                                      void *user)
+{
+    (void)creature; (void)default_map; (void)user;
+    return (int32_t)((2u << 10) | (3u << 5) | 4u);
+}
+
+static uint16_t g_c18_current_map;
+static int32_t cycle18_change_map_fn(int16_t map, void *user)
+{
+    (void)user;
+    g_c18_current_map = (uint16_t)map;
+    return 0;
+}
+
+static int g_c18_ai_13e4_calls;
+static void cycle18_ai_13e4_0360_fn(uint16_t creature, int16_t x, int16_t y,
+                                     uint16_t reason, uint16_t arg4,
+                                     void *user)
+{
+    (void)creature; (void)x; (void)y; (void)reason; (void)arg4; (void)user;
+    g_c18_ai_13e4_calls++;
+}
+
+static int32_t cycle18_calc_vector_dir_fn(uint16_t ref_y, int16_t dy,
+                                           int16_t ref_x, int16_t dx,
+                                           void *user)
+{
+    (void)ref_y; (void)dy; (void)ref_x; (void)dx; (void)user;
+    return 1;
+}
+
+static int g_c18_attack_calls;
+static void cycle18_attack_fn(uint16_t creature, int16_t x, int16_t y,
+                               uint16_t dir, uint16_t power, uint16_t arg5,
+                               void *user)
+{
+    (void)creature; (void)x; (void)y; (void)dir; (void)power; (void)arg5;
+    (void)user;
+    g_c18_attack_calls++;
+}
+
+static void test_skwin_core_symbol_batch_cycle18(void)
+{
+    DM2_V1_Skproject06bdReceipt q06bd;
+    DM2_V1_Skproject078bReceipt q078b;
+    DM2_V1_Skproject0958Receipt q0958;
+    DM2_V1_Skproject09dbReceipt q09db;
+    DM2_V1_Skproject0a48Receipt q0a48;
+    DM2_V1_Skproject0cf7Receipt q0cf7;
+    DM2_V1_Skproject0db0Receipt q0db0;
+    DM2_V1_Skproject14cd0802Slot slot0802;
+    DM2_V1_SkprojectAllocCaiiReceipt qalloc;
+    DM2_V1_Skproject0fcbReceipt q0fcb;
+    DM2_V1_SkprojectCreateMinionReceipt qminion;
+    DM2_V1_SkprojectReleaseMinionReceipt qrelease;
+    DM2_V1_Skproject17c7State st17c7;
+    DM2_V1_Skproject19d4Receipt q19d4;
+
+    /* DM2_1c9a_0694 */
+    CHECK(dm2_v1_skproject_1c9a_0694(5u, -2, cycle18_distinctive_type_fn,
+                                     NULL) == 1,
+          "DM2_1c9a_0694 wildcard filter always matches");
+    CHECK(dm2_v1_skproject_1c9a_0694(5u, 5, cycle18_distinctive_type_fn,
+                                     NULL) == 1,
+          "DM2_1c9a_0694 matches equal distinctive type");
+    CHECK(dm2_v1_skproject_1c9a_0694(5u, 6, cycle18_distinctive_type_fn,
+                                     NULL) == 0,
+          "DM2_1c9a_0694 rejects mismatched distinctive type");
+
+    /* DM2_1c9a_06bd */
+    CHECK(dm2_v1_skproject_1c9a_06bd(-1, 0u, 0, cycle18_oversee_search_fn,
+                                     NULL, &q06bd) == 0 && q06bd.valid,
+          "DM2_1c9a_06bd short-circuits the -1 sentinel");
+    CHECK(dm2_v1_skproject_1c9a_06bd(7, 0u, 7, cycle18_oversee_search_fn,
+                                     NULL, &q06bd) == 7 && !q06bd.no_match,
+          "DM2_1c9a_06bd returns the matched record");
+    CHECK(dm2_v1_skproject_1c9a_06bd(7, 0u, 9, cycle18_oversee_search_fn,
+                                     NULL, &q06bd) == 0 && q06bd.no_match,
+          "DM2_1c9a_06bd reports no_match on the 0xfffffffe sentinel");
+    CHECK(dm2_v1_skproject_1c9a_06bd(7, 0u, 9, NULL, NULL, &q06bd) == 0 &&
+              q06bd.blocked_missing_callback,
+          "DM2_1c9a_06bd fails closed without the oversee callback");
+
+    /* DM2_1c9a_078b */
+    g_c18_cut_calls = g_c18_append_calls = g_c18_dealloc_calls = 0;
+    CHECK(dm2_v1_skproject_1c9a_078b(
+              0x0001u, 1, 0xffu, CYCLE18_NODE_MONEYBOX,
+              cycle18_next_record_fn, cycle18_can_handle_fn,
+              cycle18_moneybox_fn, cycle18_cut_fn, cycle18_append_fn,
+              cycle18_dealloc_fn, cycle18_contents_head_fn, NULL,
+              &q078b) == (int32_t)0xfffeu &&
+              q078b.valid && q078b.visited == 2u &&
+              g_c18_cut_calls > 0 && g_c18_dealloc_calls > 0,
+          "DM2_1c9a_078b walks the chain and redistributes handled items");
+    CHECK(dm2_v1_skproject_1c9a_078b(0x0001u, 1, 0xffu,
+                                     CYCLE18_NODE_MONEYBOX, NULL, NULL, NULL,
+                                     NULL, NULL, NULL, NULL, NULL,
+                                     &q078b) ==
+              (int32_t)CYCLE18_NODE_MONEYBOX &&
+              q078b.blocked_missing_callback,
+          "DM2_1c9a_078b fails closed without callbacks");
+
+    /* DM2_1c9a_0958 */
+    CHECK(dm2_v1_skproject_1c9a_0958(3u, 0x1234u, NULL, cycle18_blend_fn,
+                                     NULL, &q0958) ==
+              (int32_t)((0x1234u & 0xffffff80u) >> 7) &&
+              q0958.valid,
+          "DM2_1c9a_0958 blends and shifts by 7");
+    CHECK(dm2_v1_skproject_1c9a_0958(3u, 0x1234u, NULL, NULL, NULL,
+                                     &q0958) == 0 &&
+              q0958.blocked_missing_callback,
+          "DM2_1c9a_0958 fails closed without the blend callback");
+
+    /* DM2_1c9a_09b9 */
+    memset(g_c18_records, 0, sizeof(g_c18_records));
+    g_c18_records[0][8] = 0x0007u;
+    CHECK(dm2_v1_skproject_1c9a_09b9(0u, 7u, cycle18_record_fn, NULL) == 1,
+          "DM2_1c9a_09b9 matches the creature index");
+    CHECK(dm2_v1_skproject_1c9a_09b9(0u, 8u, cycle18_record_fn, NULL) == 0,
+          "DM2_1c9a_09b9 rejects a mismatched creature index");
+
+    /* DM2_1c9a_09db */
+    g_c18_anim_calls = 0;
+    CHECK(dm2_v1_skproject_1c9a_09db(2u, 0x10u, 0u, cycle18_animation_fn,
+                                     NULL, &q09db) == 1 &&
+              g_c18_anim_calls == 1 && q09db.valid,
+          "DM2_1c9a_09db forwards to the animation-frame callback");
+    CHECK(dm2_v1_skproject_1c9a_09db(2u, 0x10u, 0u, NULL, NULL, &q09db) ==
+              0 &&
+              q09db.blocked_missing_callback,
+          "DM2_1c9a_09db fails closed without the animation callback");
+
+    /* DM2_CREATURE_SOMETHING_1c9a_0a48 */
+    CHECK(dm2_v1_skproject_creature_something_1c9a_0a48(NULL, &q0a48) == 0 &&
+              q0a48.blocked_missing_state,
+          "DM2_CREATURE_SOMETHING_1c9a_0a48 stays fail-closed");
+
+    /* DM2_1c9a_0cf7 / DM2_1c9a_0db0 */
+    memset(g_c18_records, 0, sizeof(g_c18_records));
+    g_c18_records[0][4] = 0x02u; /* rec[4]=actor */
+    g_c18_records[0][5] = 0xffu; /* rec[5] unallocated -> 0db0 no-op */
+    g_c18_records[0][8] = 0xffu;
+    g_c18_records[0][9] = 0xffu;
+    g_c18_queue_calls = g_c18_delete_timer_calls = 0;
+    CHECK(dm2_v1_skproject_1c9a_0cf7(3u, 1u, 2u, 100u, cycle18_creature_at_fn,
+                                     cycle18_record_fn,
+                                     cycle18_queue_timer_fn,
+                                     cycle18_delete_timer_fn, NULL,
+                                     &q0cf7) == 1 &&
+              q0cf7.creature_slot == 0 && q0cf7.timer == 42 &&
+              g_c18_queue_calls == 1,
+          "DM2_1c9a_0cf7 queues a move-away timer for the found creature");
+    CHECK(dm2_v1_skproject_1c9a_0cf7(3u, 9u, 9u, 100u, cycle18_creature_at_fn,
+                                     cycle18_record_fn,
+                                     cycle18_queue_timer_fn,
+                                     cycle18_delete_timer_fn, NULL,
+                                     &q0cf7) == 0 && q0cf7.creature_slot < 0,
+          "DM2_1c9a_0cf7 is a no-op when no creature occupies the cell");
+
+    CHECK(dm2_v1_skproject_1c9a_0db0(0u, cycle18_record_fn,
+                                     cycle18_delete_timer_fn, NULL,
+                                     &q0db0) == 0 && q0db0.valid &&
+              !q0db0.cancelled,
+          "DM2_1c9a_0db0 is a no-op outside type nibble 4");
+    {
+        uint16_t masked = (uint16_t)(0u | (4u << 10));
+        memset(g_c18_records, 0, sizeof(g_c18_records));
+        g_c18_records[0][5] = 0u; /* allocated */
+        g_c18_records[0][4 + 2] = 0x07u; /* timer slot word */
+        g_c18_delete_timer_calls = 0;
+        CHECK(dm2_v1_skproject_1c9a_0db0(masked, cycle18_record_fn,
+                                         cycle18_delete_timer_fn, NULL,
+                                         &q0db0) == 1 && q0db0.cancelled &&
+                  g_c18_delete_timer_calls == 1,
+              "DM2_1c9a_0db0 cancels the pending timer for type nibble 4");
+    }
+
+    /* DM2_14cd_0802 */
+    slot0802.caii_index = 3u;
+    slot0802.caii_flags = 7u;
+    dm2_v1_skproject_14cd_0802(&slot0802);
+    CHECK(slot0802.caii_index == 0xffu && slot0802.caii_flags == 0u,
+          "DM2_14cd_0802 resets the caii index and flags");
+
+    /* DM2_ALLOC_CAII_TO_CREATURE */
+    memset(g_c18_slot_occupied, 0, sizeof(g_c18_slot_occupied));
+    g_c18_slot_occupied[0] = g_c18_slot_occupied[1] = 1;
+    CHECK(dm2_v1_skproject_alloc_caii_to_creature(
+              0u, 0xffu, 8u, cycle18_slot_occupied_fn, cycle18_recycle_fn,
+              NULL, &qalloc) == 1 &&
+              qalloc.slot == 2 && qalloc.valid,
+          "DM2_ALLOC_CAII_TO_CREATURE finds the first free slot");
+    CHECK(dm2_v1_skproject_alloc_caii_to_creature(
+              0u, 0u, 8u, cycle18_slot_occupied_fn, cycle18_recycle_fn, NULL,
+              &qalloc) == 0 &&
+              qalloc.already_allocated,
+          "DM2_ALLOC_CAII_TO_CREATURE skips an already-allocated record");
+    {
+        int all_occupied[8];
+        int i;
+        for (i = 0; i < 8; i++) all_occupied[i] = 1;
+        memcpy(g_c18_slot_occupied, all_occupied, sizeof(all_occupied));
+        cycle18_recycle_calls = 0;
+        CHECK(dm2_v1_skproject_alloc_caii_to_creature(
+                  0u, 0xffu, 8u, cycle18_slot_occupied_fn, cycle18_recycle_fn,
+                  NULL, &qalloc) == 0 &&
+                  qalloc.blocked_missing_callback &&
+                  cycle18_recycle_calls == 1,
+              "DM2_ALLOC_CAII_TO_CREATURE fails closed when recycle fails");
+    }
+
+    /* DM2_1c9a_0fcb */
+    g_c18_deleted_creature_record = 0;
+    CHECK(dm2_v1_skproject_1c9a_0fcb(2u, 8u, 0u, 0x13u, 0u, 42, 1u, 2u,
+                                     cycle18_record_fn,
+                                     cycle18_delete_timer_fn,
+                                     cycle18_delete_creature_fn, NULL,
+                                     &q0fcb) == 1 &&
+              q0fcb.deleted_creature_record &&
+              g_c18_deleted_creature_record,
+          "DM2_1c9a_0fcb deletes the creature record for type 0x13 "
+          "without the AI-spec flag");
+    CHECK(dm2_v1_skproject_1c9a_0fcb(2u, 8u, 0u, 0x13u, 0x1u, 42, 1u, 2u,
+                                     cycle18_record_fn,
+                                     cycle18_delete_timer_fn,
+                                     cycle18_delete_creature_fn, NULL,
+                                     &q0fcb) == 1 &&
+              !q0fcb.deleted_creature_record,
+          "DM2_1c9a_0fcb keeps the record when the AI-spec flag is set");
+    CHECK(dm2_v1_skproject_1c9a_0fcb(9u, 8u, 0u, 0x13u, 0u, 42, 1u, 2u,
+                                     cycle18_record_fn,
+                                     cycle18_delete_timer_fn,
+                                     cycle18_delete_creature_fn, NULL,
+                                     &q0fcb) == 0 &&
+              q0fcb.blocked_out_of_range,
+          "DM2_1c9a_0fcb fails closed for an out-of-range slot");
+
+    /* DM2_CREATE_MINION */
+    CHECK(dm2_v1_skproject_create_minion(NULL, &qminion) == -1 &&
+              qminion.blocked_missing_state,
+          "DM2_CREATE_MINION stays fail-closed");
+
+    /* DM2_RELEASE_MINION */
+    g_c18_current_map = 0u;
+    g_c18_ai_13e4_calls = 0;
+    dm2_v1_skproject_release_minion(0u, 5u, cycle18_missile_ref_fn,
+                                    cycle18_change_map_fn,
+                                    cycle18_ai_13e4_0360_fn, NULL,
+                                    &qrelease);
+    CHECK(qrelease.had_missile_ref && qrelease.valid &&
+              g_c18_ai_13e4_calls == 1 && g_c18_current_map == 5u,
+          "DM2_RELEASE_MINION dispatches ai_13e4_0360 and restores the map");
+
+    /* DM2_1c9a_17c7 */
+    memset(&st17c7, 0, sizeof(st17c7));
+    st17c7.map = 4u;
+    st17c7.v1e08d6 = 4u;
+    st17c7.v1e08d8 = 10u;
+    st17c7.v1e08d4 = 10u;
+    st17c7.v1e08da = 1u;
+    CHECK(dm2_v1_skproject_1c9a_17c7(8, 9, &st17c7,
+                                     cycle18_calc_vector_dir_fn, NULL) == 1,
+          "DM2_1c9a_17c7 matches when close and direction agrees");
+    CHECK(dm2_v1_skproject_1c9a_17c7(1, 1, &st17c7,
+                                     cycle18_calc_vector_dir_fn, NULL) == 0,
+          "DM2_1c9a_17c7 rejects targets too far away");
+    st17c7.map = 3u;
+    CHECK(dm2_v1_skproject_1c9a_17c7(8, 9, &st17c7,
+                                     cycle18_calc_vector_dir_fn, NULL) == 0,
+          "DM2_1c9a_17c7 rejects when off the current map");
+
+    /* DM2_1c9a_19d4 */
+    g_c18_attack_calls = 0;
+    dm2_v1_skproject_1c9a_19d4(0u, 1, 8u, 2, cycle18_attack_fn, NULL,
+                               &q19d4);
+    CHECK(!q19d4.out_of_range && g_c18_attack_calls == 1,
+          "DM2_1c9a_19d4 dispatches DM2_ATTACK_CREATURE inside [6,0x15]");
+    g_c18_attack_calls = 0;
+    dm2_v1_skproject_1c9a_19d4(0u, 1, 3u, 2, cycle18_attack_fn, NULL,
+                               &q19d4);
+    CHECK(q19d4.out_of_range && g_c18_attack_calls == 0,
+          "DM2_1c9a_19d4 rejects command words below 6");
+}
+
 int main(void)
 {
     test_between_value();
@@ -8558,6 +8992,10 @@ int main(void)
     test_skwin_core_symbol_batch_cycle15();
     test_skwin_core_symbol_batch_cycle16();
     test_skwin_core_symbol_batch_cycle16b();
+    test_skwin_core_symbol_batch_cycle18();
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_CREATURE_SOMETHING_1c9a_0a48") != 0,
+          "source evidence names the cycle-18 batch-18 symbols");
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
