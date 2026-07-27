@@ -1,7 +1,7 @@
 - ✅ 2026-07-27 Theron capture input-observation gate. The harness now waits
-  for Mednafen's own down/up event after each Quartz key delivery and aborts
-  immediately on a stale or non-observed PID, preventing invalid long captures.
-  Regression coverage pins the gate.
+  for Mednafen's own key-down event after each Quartz delivery and aborts
+  immediately on a stale or non-observed PID; delayed key-up events during
+  original loader work remain valid. Regression coverage pins the gate.
 - ✅ 2026-07-27 Theron raw-sector witness-cap repair. Raised the active
   trace cap from 32 to 256 rows so the independent 39-sector witness can be
   produced, with a regression guard. A fresh authentic run records 161 rows;

@@ -154,8 +154,8 @@ if ! grep -Fq 'host_key_events=%s' "$script" ||
    ! grep -Fq 'host_input_delivery=quartz_%s_key_down_up' "$script" ||
    ! grep -Fq 'host_input_delivery_attempts=%s' "$script" ||
    ! grep -Fq 'wait_for_host_key_events()' "$script" ||
-   ! grep -Fq 'Mednafen did not observe host key attempt %s after Quartz delivery' "$script" ||
-   ! grep -Fq 'wait_for_host_key_events "$input_trace" "$((host_key_attempt * 2))" 40' "$script" ||
+   ! grep -Fq 'Mednafen did not observe host key-down attempt %s after Quartz delivery' "$script" ||
+   ! grep -Fq 'wait_for_host_key_events "$input_trace" "$((host_key_attempt * 2 - 1))" 40' "$script" ||
    ! grep -Fq 'trace_input_order_receipt()' "$script" ||
    ! grep -Fq 'pce_input_transactions_after_first_host' "$script" ||
    ! grep -Fq 'host_input_order=after_last_observed_pce_input_poll' "$script" ||

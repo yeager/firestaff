@@ -4199,9 +4199,10 @@ lane is carried forward in the sections below.
     range; a longer route-specific capture is still required for that proof.
     A transient stale-PID capture exposed a host-side sequencing gap: Quartz
     delivery attestation alone was insufficient when Mednafen did not emit the
-    corresponding SDL event. The harness now requires each attempted key's
-    down/up event before continuing, failing immediately instead of producing
-    an invalid long capture.
+    corresponding SDL event. The harness now requires each attempted key-down
+    before continuing; key-up may be delayed by original loader work. Missing
+    delivery still fails immediately instead of producing an invalid long
+    capture.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a
