@@ -13,6 +13,10 @@ enum {
     M12_STARTUP_INTRO_DURATION_MS = 6000
 };
 
+/* Load a packaged P6 PPM background. Failure leaves the procedural fallback
+ * active, so a development build remains self-contained. */
+int M12_StartupIntro_LoadBackground(const char* path);
+
 /* Draw the standalone Firestaff product intro into a caller-owned RGBA frame. */
 void M12_StartupIntro_Render(unsigned char* rgba,
                              int width,

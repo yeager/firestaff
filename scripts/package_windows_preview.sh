@@ -24,6 +24,7 @@ rm -rf "$STAGE_DIR"
 mkdir -p "$STAGE_DIR" "$ROOT/release"
 cp "$BIN_SRC" "$STAGE_DIR/firestaff.exe"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$STAGE_DIR/firestaff_artpack_studio.exe"
+cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$STAGE_DIR/firestaff-startup-intro.ppm"
 cp "$README_SRC" "$STAGE_DIR/README.md"
 cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"
 

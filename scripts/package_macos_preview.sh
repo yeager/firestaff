@@ -52,6 +52,7 @@ fi
 if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
   cp "$ROOT/assets/branding/firestaff-logo.png" "$RESOURCES_DIR/firestaff-logo.png"
 fi
+cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$RESOURCES_DIR/firestaff-startup-intro.ppm"
 
 cat > "$CONTENTS_DIR/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>

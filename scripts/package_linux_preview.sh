@@ -32,6 +32,7 @@ rm -rf "$DEB_ROOT"
 mkdir -p "$DEB_ROOT/DEBIAN" "$DEB_ROOT/usr/bin" "$DEB_ROOT/usr/share/doc/$PKG_NAME" "$DEB_ROOT/usr/share/pixmaps" "$DEB_ROOT/usr/share/applications" "$DEB_ROOT/usr/share/firestaff/scripts"
 cp "$BIN_SRC" "$DEB_ROOT/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
+cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$DEB_ROOT/usr/share/firestaff/firestaff-startup-intro.ppm"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$README_SRC" "$DEB_ROOT/usr/share/doc/$PKG_NAME/README.md"
@@ -82,6 +83,7 @@ mkdir -p "$RPM_TOP/BUILD" "$RPM_TOP/RPMS" "$RPM_TOP/SOURCES" "$RPM_TOP/SPECS" "$
 mkdir -p "$RPM_ROOT/usr/bin" "$RPM_ROOT/usr/share/doc/$PKG_NAME" "$RPM_ROOT/usr/share/pixmaps" "$RPM_ROOT/usr/share/applications" "$RPM_ROOT/usr/share/firestaff/scripts"
 cp "$BIN_SRC" "$RPM_ROOT/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
+cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$RPM_ROOT/usr/share/firestaff/firestaff-startup-intro.ppm"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$README_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/README.md"
@@ -112,6 +114,7 @@ $DESCRIPTION
 /usr/share/doc/$PKG_NAME/RELEASE_NOTES.md
 /usr/share/applications/firestaff.desktop
 /usr/share/applications/firestaff-artpack-studio.desktop
+/usr/share/firestaff/firestaff-startup-intro.ppm
 $RPM_ICON_ENTRY
 SPEC
 rpmbuild --define "_topdir $RPM_TOP" --define "buildroot $RPM_ROOT" --target "$ARCH_RPM" -bb "$RPM_TOP/SPECS/firestaff.spec"

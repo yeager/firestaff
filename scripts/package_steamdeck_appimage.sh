@@ -46,6 +46,7 @@ mkdir -p \
 
 cp "$BIN_SRC" "$APPDIR/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$APPDIR/usr/bin/firestaff_artpack_studio"
+cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$APPDIR/usr/share/firestaff/firestaff-startup-intro.ppm"
 chmod 0755 "$APPDIR/usr/bin/firestaff"
 chmod 0755 "$APPDIR/usr/bin/firestaff_artpack_studio"
 cp -L "$SDL3_LIB" "$APPDIR/usr/lib/firestaff/libSDL3.so.0"

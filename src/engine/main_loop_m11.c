@@ -225,10 +225,24 @@ static int m11_present_launcher(unsigned char* launcherFramebuffer,
 
 static int m11_play_firestaff_startup_intro(void) {
     unsigned char* rgba;
+    char resourcePath[1024];
+    const char* basePath;
     Uint64 started;
     rgba = (unsigned char*)malloc((size_t)M12_STARTUP_INTRO_WIDTH *
                                   (size_t)M12_STARTUP_INTRO_HEIGHT * 4U);
     if (!rgba) return 0;
+    (void)M12_StartupIntro_LoadBackground("assets/branding/firestaff-startup-intro.ppm");
+    basePath = SDL_GetBasePath();
+    if (basePath) {
+        snprintf(resourcePath, sizeof(resourcePath), "%sfirestaff-startup-intro.ppm", basePath);
+        (void)M12_StartupIntro_LoadBackground(resourcePath);
+        snprintf(resourcePath, sizeof(resourcePath), "%s../Resources/firestaff-startup-intro.ppm", basePath);
+        (void)M12_StartupIntro_LoadBackground(resourcePath);
+        snprintf(resourcePath, sizeof(resourcePath), "%s../share/firestaff/firestaff-startup-intro.ppm", basePath);
+        (void)M12_StartupIntro_LoadBackground(resourcePath);
+        SDL_free((void*)basePath);
+    }
+    (void)M12_StartupIntro_LoadBackground("/usr/share/firestaff/firestaff-startup-intro.ppm");
     started = SDL_GetTicks();
     while ((SDL_GetTicks() - started) < M12_STARTUP_INTRO_DURATION_MS) {
         Uint64 elapsed = SDL_GetTicks() - started;

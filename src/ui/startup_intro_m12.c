@@ -1,8 +1,10 @@
 #include "startup_intro_m12.h"
 
-#include "branding_logo_m12.h"
-
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+static unsigned char* g_m12_intro_background_rgb;
 
 typedef struct {
     unsigned char r;
@@ -44,16 +46,59 @@ static void m12_intro_blend(unsigned char* rgba, int w, int h, int x, int y,
     p[3] = 255U;
 }
 
+int M12_StartupIntro_LoadBackground(const char* path) {
+    FILE* file;
+    char magic[3] = {0, 0, 0};
+    int width = 0;
+    int height = 0;
+    int maxValue = 0;
+    unsigned char* bytes;
+    size_t byteCount;
+    if (!path || !*path || g_m12_intro_background_rgb) return g_m12_intro_background_rgb != NULL;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (fscanf(file, "%2s %d %d %d", magic, &width, &height, &maxValue) != 4 ||
+        strcmp(magic, "P6") != 0 || width != M12_STARTUP_INTRO_WIDTH ||
+        height != M12_STARTUP_INTRO_HEIGHT || maxValue != 255) {
+        fclose(file);
+        return 0;
+    }
+    if (fgetc(file) == EOF) {
+        fclose(file);
+        return 0;
+    }
+    byteCount = (size_t)width * (size_t)height * 3U;
+    bytes = (unsigned char*)malloc(byteCount);
+    if (!bytes || fread(bytes, 1, byteCount, file) != byteCount) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    g_m12_intro_background_rgb = bytes;
+    return 1;
+}
+
 static void m12_intro_background(unsigned char* rgba, int w, int h, uint32_t tick) {
     int x;
     int y;
     for (y = 0; y < h; ++y) {
         for (x = 0; x < w; ++x) {
-            int ember = (int)((x * 13 + y * 7 + (int)(tick / 31U)) % 43U);
             M12_IntroColor color;
-            color.r = (unsigned char)(5 + ember / 10);
-            color.g = (unsigned char)(7 + ember / 18);
-            color.b = (unsigned char)(13 + ember / 12);
+            if (g_m12_intro_background_rgb &&
+                w == M12_STARTUP_INTRO_WIDTH && h == M12_STARTUP_INTRO_HEIGHT) {
+                const unsigned char* source = g_m12_intro_background_rgb +
+                    (((size_t)y * (size_t)w + (size_t)x) * 3U);
+                int shade = x < (w * 3) / 5 ? 72 : 100;
+                color.r = (unsigned char)(source[0] * shade / 100);
+                color.g = (unsigned char)(source[1] * shade / 100);
+                color.b = (unsigned char)(source[2] * shade / 100);
+            } else {
+                int ember = (int)((x * 13 + y * 7 + (int)(tick / 31U)) % 43U);
+                color.r = (unsigned char)(5 + ember / 10);
+                color.g = (unsigned char)(7 + ember / 18);
+                color.b = (unsigned char)(13 + ember / 12);
+            }
             m12_intro_pixel(rgba, w, h, x, y, color);
         }
     }
@@ -133,37 +178,11 @@ static void m12_intro_text(unsigned char* rgba, int w, int h, int x, int y,
     }
 }
 
-static void m12_intro_logo(unsigned char* rgba, int w, int h, int x, int y,
-                           int alpha) {
-    int yy;
-    int xx;
-    for (yy = 0; yy < M12_BRANDING_LOGO_HEIGHT; ++yy) {
-        for (xx = 0; xx < M12_BRANDING_LOGO_WIDTH; ++xx) {
-            size_t index = (size_t)yy * M12_BRANDING_LOGO_WIDTH + (size_t)xx;
-            unsigned char tone;
-            M12_IntroColor color;
-            if (!g_m12BrandingLogoMask[index]) continue;
-            tone = g_m12BrandingLogoPixels[index];
-            color.r = (unsigned char)m12_intro_clamp(134 + tone * 8);
-            color.g = (unsigned char)m12_intro_clamp(40 + tone * 10);
-            color.b = (unsigned char)m12_intro_clamp(8 + tone * 3);
-            m12_intro_blend(rgba, w, h, x + xx, y + yy, color, alpha);
-        }
-    }
-}
-
-static void m12_intro_staff_and_fire(unsigned char* rgba, int w, int h,
-                                     uint32_t elapsedMs, int alpha) {
-    int y;
+static void m12_intro_live_embers(unsigned char* rgba, int w, int h,
+                                  uint32_t elapsedMs, int alpha) {
     int i;
     int staffX = w / 2 + 78;
-    M12_IntroColor staff = {100, 58, 25};
-    M12_IntroColor gold = {244, 169, 52};
-    for (y = 74; y < 212; ++y) {
-        m12_intro_blend(rgba, w, h, staffX, y, staff, alpha);
-        m12_intro_blend(rgba, w, h, staffX + 1, y, gold, alpha / 2);
-    }
-    for (i = 0; i < 190; ++i) {
+    for (i = 0; i < 130; ++i) {
         int phase = (int)(elapsedMs / 42U) + i * 17;
         int rise = (phase * 7 + i * 11) % 142;
         int spread = (i * 13 + phase * 3) % 31 - 15;
@@ -185,8 +204,6 @@ static void m12_intro_staff_and_fire(unsigned char* rgba, int w, int h,
 void M12_StartupIntro_Render(unsigned char* rgba, int width, int height,
                              uint32_t elapsedMs, uint32_t durationMs,
                              const char* version) {
-    int logoX;
-    int logoY;
     int alpha = 255;
     M12_IntroColor footer = {231, 179, 100};
     char versionLine[48] = "VERSION ";
@@ -198,10 +215,7 @@ void M12_StartupIntro_Render(unsigned char* rgba, int width, int height,
         if (alpha > 255) alpha = 255;
     }
     m12_intro_background(rgba, width, height, elapsedMs);
-    logoX = (width - M12_BRANDING_LOGO_WIDTH) / 2 - 22;
-    logoY = (height - M12_BRANDING_LOGO_HEIGHT) / 2 - 12;
-    m12_intro_logo(rgba, width, height, logoX, logoY, alpha);
-    m12_intro_staff_and_fire(rgba, width, height, elapsedMs, alpha);
+    m12_intro_live_embers(rgba, width, height, elapsedMs, alpha);
     if (version) {
         size_t room = sizeof(versionLine) - strlen(versionLine) - 1U;
         strncat(versionLine, version, room);
