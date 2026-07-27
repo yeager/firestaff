@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 Theron US split Track 02 materialization. The documented
+  `TQUS19.iso + TQUS02End.iso` pair now materializes in exact Decode.bat
+  order to Firestaff's cache. Both source MD5s and the final original Track
+  02 MD5 `ceb02343868f80cec899e9b239aff2da` are required; the tail alone is
+  rejected rather than being treated as a complete game image.
+
 - ✅ 2026-07-27 Theron converted-ISO launcher identity. The verified
   `TQUS02End.iso` startup path now preserves `sourceId=theron` while its
   `sourceKind` remains Track 02. A real-media boot-probe regression prevents

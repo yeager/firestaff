@@ -23,7 +23,6 @@ int main(void) {
     const char *unknown_iso = "/tmp/firestaff-theron-track02-unknown.iso";
     const char *unknown_bin = "/tmp/firestaff-theron-track02-unknown.bin";
     const char *declared_iso_alias = "/tmp/TQUS02.iso";
-    const char *materialized_iso_alias = "/tmp/TQUS02End.iso";
     FILE *file;
 
     CHECK(theron_v1_track02_raw_media_intake_discover(NULL, &receipt));
@@ -109,7 +108,7 @@ int main(void) {
         remove(unknown_bin);
     }
     remove(declared_iso_alias);
-    file = fopen(materialized_iso_alias, "wb");
+    file = fopen("/tmp/TQUS02End.iso", "wb");
     CHECK(file != NULL);
     if (file) {
         fputs("0", file);
@@ -118,10 +117,10 @@ int main(void) {
         fclose(file);
         CHECK(theron_v1_track02_raw_media_intake_discover(declared_iso_alias,
                                                            &receipt));
-        CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED);
-        CHECK(receipt.failure_reason == THERON_V1_TRACK02_MEDIA_REASON_TRACK02_HASH_UNKNOWN);
-        CHECK(!strcmp(receipt.payload_path, materialized_iso_alias));
-        remove(materialized_iso_alias);
+        CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE);
+        CHECK(receipt.failure_reason == THERON_V1_TRACK02_MEDIA_REASON_PAYLOAD_UNAVAILABLE);
+        CHECK(!strcmp(receipt.payload_path, declared_iso_alias));
+        remove("/tmp/TQUS02End.iso");
     }
     CHECK(!receipt.raw_trace_preparation_allowed);
     CHECK(theron_v1_track02_raw_media_intake_discover(

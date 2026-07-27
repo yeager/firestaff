@@ -298,7 +298,7 @@ int theron_v1_boot_track02_capture_admission_allows_initial_level(
  * JP Track 02 MD5: b7afb338ad31be1025b53f9aff12d73a
  * US Track 02 MD5: f23601102138f87c33025877767ebf76
  * JP Rev 1 Track 02 ISO MD5: 397039af02d50d15c70b74088eb8a1cb
- * US Track 02 ISO MD5:       3d8b78571dcd0e6eb8eb4b01eeb7fbba
+ * US Track 02 ISO MD5:       ceb02343868f80cec899e9b239aff2da
  * Source: cdromance.org (2026-05-27)
  * Additional ISO names: MyAbandonware TG-CD English/Japanese Rev 1 page
  * checked 2026-06-03.
@@ -348,7 +348,7 @@ static const char *const g_theron_known_md5s[] = {
     "b7afb338ad31be1025b53f9aff12d73a", /* JP Track 02 BIN */
     "f23601102138f87c33025877767ebf76", /* US Track 02 BIN */
     "397039af02d50d15c70b74088eb8a1cb", /* JP Rev 1 ISO */
-    "3d8b78571dcd0e6eb8eb4b01eeb7fbba", /* US ISO */
+    "ceb02343868f80cec899e9b239aff2da", /* US ISO */
     NULL
 };
 
@@ -439,7 +439,7 @@ static void theron_v1_boot_apply_known_md5_identity(
     if (strcmp(md5, "397039af02d50d15c70b74088eb8a1cb") == 0) {
         strncpy(profile->version_id, "pce-jp-rev1-iso",
                 sizeof(profile->version_id) - 1);
-    } else if (strcmp(md5, "3d8b78571dcd0e6eb8eb4b01eeb7fbba") == 0) {
+    } else if (strcmp(md5, "ceb02343868f80cec899e9b239aff2da") == 0) {
         strncpy(profile->version_id, "pce-en-iso",
                 sizeof(profile->version_id) - 1);
     }
@@ -670,14 +670,14 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
      * JP: b7afb338ad31be1025b53f9aff12d73a
      * US: f23601102138f87c33025877767ebf76
      * JP Rev 1 ISO: 397039af02d50d15c70b74088eb8a1cb
-     * US ISO:       3d8b78571dcd0e6eb8eb4b01eeb7fbba */
+     * US ISO:       ceb02343868f80cec899e9b239aff2da */
     if (profile->graphics_path[0]) {
         char md5hex[33] = {0};
         if (m12_file_md5_hex(profile->graphics_path, md5hex)) {
             if (strcmp(md5hex, "b7afb338ad31be1025b53f9aff12d73a") == 0 ||
                 strcmp(md5hex, "f23601102138f87c33025877767ebf76") == 0 ||
                 strcmp(md5hex, "397039af02d50d15c70b74088eb8a1cb") == 0 ||
-                strcmp(md5hex, "3d8b78571dcd0e6eb8eb4b01eeb7fbba") == 0) {
+                strcmp(md5hex, "ceb02343868f80cec899e9b239aff2da") == 0) {
                 profile->assets_verified = 1;
                 strncpy(profile->graphics_md5, md5hex, 32);
                 profile->graphics_md5[32] = '\0';

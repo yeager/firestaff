@@ -1,11 +1,43 @@
+#include <errno.h>
 #include <ctype.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "asset_status_m12.h"
 #include "theron_v1_track02_raw_media_intake.h"
 
 #define THERON_V1_TRACK02_CUE_MAX_BYTES (1024u * 1024u)
+#define THERON_V1_TRACK02_US_SPLIT_HEAD_MD5 "51b40a17b92a30339957ba564aa0015c"
+#define THERON_V1_TRACK02_US_SPLIT_TAIL_MD5 "3d8b78571dcd0e6eb8eb4b01eeb7fbba"
+
+static int theron_v1_track02_media_mkdir(const char *path) {
+    if (!path || !path[0]) return 0;
+    if (mkdir(path, 0700) == 0 || errno == EEXIST) return 1;
+    return 0;
+}
+
+static int theron_v1_track02_media_copy_file(FILE *out, const char *path) {
+    unsigned char buffer[64u * 1024u];
+    FILE *in;
+    size_t read_count;
+    if (!out || !path || !(in = fopen(path, "rb"))) return 0;
+    while ((read_count = fread(buffer, 1u, sizeof(buffer), in)) != 0u) {
+        if (fwrite(buffer, 1u, read_count, out) != read_count) {
+            fclose(in);
+            return 0;
+        }
+    }
+    if (ferror(in)) {
+        fclose(in);
+        return 0;
+    }
+    fclose(in);
+    return 1;
+}
 
 static int theron_v1_track02_media_ieq(const char *left, const char *right) {
     while (left && right && *left && *right) {
@@ -233,37 +265,72 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
     return 1;
 }
 
-static int theron_v1_track02_media_resolve_track02_alias(
-    char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY])
-{
-    static const struct { const char *declared; const char *materialized; } aliases[] = {
-        { "TQJP02.iso", "TQJP02End.iso" },
-        { "TQUS02.iso", "TQUS02End.iso" }
-    };
+/* Materialize only the documented US split image. Decode.bat specifies the
+ * byte order (19 followed by 02End); accepting 02End as an alias produced a
+ * valid-looking but truncated ISO and a later startup hang. */
+static int theron_v1_track02_media_materialize_us_split(
+    char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY]) {
     char *leaf;
-    size_t i;
-    FILE *file;
+    char parent[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
+    char head[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
+    char tail[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
+    char cache_root[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
+    char cache_dir[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
+    char cache_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
+    char temp_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
+    char head_md5[33];
+    char tail_md5[33];
+    char image_md5[33];
+    const char *home;
+    FILE *out;
+    size_t prefix;
 
     if (!payload_path || !payload_path[0]) return 0;
-    if ((file = fopen(payload_path, "rb")) != NULL) {
-        fclose(file);
-        return 1;
-    }
     leaf = strrchr(payload_path, '/');
     if (!leaf) leaf = strrchr(payload_path, '\\');
     leaf = leaf ? leaf + 1 : payload_path;
-    for (i = 0u; i < sizeof(aliases) / sizeof(aliases[0]); ++i) {
-        size_t remaining = THERON_V1_TRACK02_MEDIA_PATH_CAPACITY -
-            (size_t)(leaf - payload_path);
-        if (!theron_v1_track02_media_ieq(leaf, aliases[i].declared) ||
-            snprintf(leaf, remaining, "%s", aliases[i].materialized) >=
-                (int)remaining) continue;
-        if ((file = fopen(payload_path, "rb")) != NULL) {
-            fclose(file);
-            return 1;
-        }
+    if (!theron_v1_track02_media_ieq(leaf, "TQUS02.iso")) return 0;
+    prefix = (size_t)(leaf - payload_path);
+    if (prefix == 0u || prefix >= sizeof(parent) ||
+        snprintf(parent, sizeof(parent), "%.*s", (int)prefix, payload_path) >=
+            (int)sizeof(parent) ||
+        snprintf(head, sizeof(head), "%sTQUS19.iso", parent) >= (int)sizeof(head) ||
+        snprintf(tail, sizeof(tail), "%sTQUS02End.iso", parent) >= (int)sizeof(tail) ||
+        !m12_file_md5_hex(head, head_md5) || !m12_file_md5_hex(tail, tail_md5) ||
+        strcmp(head_md5, THERON_V1_TRACK02_US_SPLIT_HEAD_MD5) != 0 ||
+        strcmp(tail_md5, THERON_V1_TRACK02_US_SPLIT_TAIL_MD5) != 0) return 0;
+
+    home = getenv("HOME");
+    if (!home || !home[0] ||
+        snprintf(cache_root, sizeof(cache_root), "%s/.firestaff", home) >=
+            (int)sizeof(cache_root) ||
+        !theron_v1_track02_media_mkdir(cache_root) ||
+        snprintf(cache_dir, sizeof(cache_dir), "%s/cache", cache_root) >=
+            (int)sizeof(cache_dir) ||
+        !theron_v1_track02_media_mkdir(cache_dir) ||
+        snprintf(cache_dir, sizeof(cache_dir), "%s/cache/theron", cache_root) >=
+            (int)sizeof(cache_dir) ||
+        !theron_v1_track02_media_mkdir(cache_dir) ||
+        snprintf(cache_path, sizeof(cache_path), "%s/TQUS02-%s.iso", cache_dir,
+                 THERON_TRACK02_MD5_US_ISO) >= (int)sizeof(cache_path)) return 0;
+    if (m12_file_md5_hex(cache_path, image_md5) &&
+        strcmp(image_md5, THERON_TRACK02_MD5_US_ISO) == 0) {
+        snprintf(payload_path, THERON_V1_TRACK02_MEDIA_PATH_CAPACITY, "%s", cache_path);
+        return 1;
     }
-    return 0;
+    if (snprintf(temp_path, sizeof(temp_path), "%s.tmp-%ld", cache_path,
+                 (long)getpid()) >= (int)sizeof(temp_path) ||
+        !(out = fopen(temp_path, "wb"))) return 0;
+    if (!theron_v1_track02_media_copy_file(out, head) ||
+        !theron_v1_track02_media_copy_file(out, tail) || fclose(out) != 0 ||
+        !m12_file_md5_hex(temp_path, image_md5) ||
+        strcmp(image_md5, THERON_TRACK02_MD5_US_ISO) != 0 ||
+        rename(temp_path, cache_path) != 0) {
+        remove(temp_path);
+        return 0;
+    }
+    snprintf(payload_path, THERON_V1_TRACK02_MEDIA_PATH_CAPACITY, "%s", cache_path);
+    return 1;
 }
 
 static uint32_t theron_v1_track02_expected_raw_index01(
@@ -376,7 +443,7 @@ int theron_v1_track02_raw_media_intake_discover(
         *out = receipt;
         return 1;
     }
-    (void)theron_v1_track02_media_resolve_track02_alias(receipt.payload_path);
+    (void)theron_v1_track02_media_materialize_us_split(receipt.payload_path);
     if (!theron_v1_track02_media_file_size(receipt.payload_path,
                                             &payload_bytes)) {
         receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE;

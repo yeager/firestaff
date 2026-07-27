@@ -592,7 +592,7 @@ typedef enum {
  *     JP Track 02 BIN: b7afb338ad31be1025b53f9aff12d73a
  *     US Track 02 BIN: f23601102138f87c33025877767ebf76
  *     JP Rev 1 ISO:    397039af02d50d15c70b74088eb8a1cb
- *     US ISO:          3d8b78571dcd0e6eb8eb4b01eeb7fbba
+ *     US ISO:          ceb02343868f80cec899e9b239aff2da
  *
  * On success (THERON_RUNTIME_READINESS_OK) scan_out is filled with
  * the resolved path and matching MD5.  When the data root is empty

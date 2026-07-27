@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-US-SPLIT-TRACK02-MATERIALIZATION:** Closed 2026-07-27. The
+  documented US `TQUS19.iso + TQUS02End.iso` layout is now concatenated in
+  Decode.bat byte order into Firestaff's cache, with both source hashes and
+  the final `ceb02343868f80cec899e9b239aff2da` Track 02 hash verified before
+  launch. A lone `TQUS02End.iso` is no longer accepted as a complete image.
+
 - **THERON-CONVERTED-ISO-LAUNCHER-IDENTITY:** Closed 2026-07-27. The verified
   converted `TQUS02End.iso` path now preserves the selected `theron` launcher
   identity while retaining the Track 02 source kind. The ISO boot-probe

@@ -3,6 +3,7 @@
 #include "fs_portable_compat.h"
 #include "nexus_v1_bpk_archive.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_raw_media_intake.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -298,7 +299,7 @@ static const M12_VersionSpec g_nexusVersions[] = {
  * US: MD5 f23601102138f87c33025877767ebf76 (Track 02 .bin)
  * MyAbandonware TG-CD English/Japanese Rev 1 downloads (page checked 2026-06-03):
  * JP Rev 1 Track 02 ISO: 397039af02d50d15c70b74088eb8a1cb
- * US Track 02 ISO:       3d8b78571dcd0e6eb8eb4b01eeb7fbba
+ * US Track 02 ISO:       ceb02343868f80cec899e9b239aff2da
  * OneDrive: 1drv.ms/f/s!AsBu7boYHQokbYK3rjKY0b5_ra8 (DMFiles/Games folder)
  * Subdir candidates: theron/jp/, theron/us/, theron/ */
 static const char* const g_theronTrack02Names[] = {
@@ -328,7 +329,7 @@ static const M12_VersionSpec g_theronVersions[] = {
     {"theron", "pce-jp-rev1-iso", "PC Engine JP Rev 1 (Track 02 ISO)", "PCE JP Rev1",
      g_theronTrack02Names, "397039af02d50d15c70b74088eb8a1cb", M12_ARCH_PCE},
     {"theron", "pce-en-iso", "TurboGrafx-16 US (Track 02 ISO)", "TG16 US ISO",
-     g_theronTrack02Names, "3d8b78571dcd0e6eb8eb4b01eeb7fbba", M12_ARCH_PCE}
+     g_theronTrack02Names, "ceb02343868f80cec899e9b239aff2da", M12_ARCH_PCE}
 };
 
 static const M12_GameVersionSpec g_games[] = {
@@ -1792,14 +1793,25 @@ static int m12_try_match_direct_theron_request(
     if (FSP_FileExists(requestedDataDir)) {
         const char* payloadPath = requestedDataDir;
         FirestaffTheronMediaStatus cueMedia;
-        if (FirestaffTheronMedia_ClassifyPath(requestedDataDir, &cueMedia) == 0 &&
-            cueMedia.has_valid_track02_mode1 &&
-            cueMedia.track02_path[0] != '\0' &&
-            FSP_FileExists(cueMedia.track02_path)) {
-            payloadPath = cueMedia.track02_path;
-        }
-        if (!m12_file_md5_hex(payloadPath, md5)) {
-            return 0;
+        Theron_V1Track02RawMediaIntakeReceipt intake;
+        /* Raw intake owns CUE layout validation and the documented US split
+         * ISO materialization.  Do this before the generic classifier, which
+         * must never treat an End extent as a complete Track 02. */
+        if (theron_v1_track02_raw_media_intake_discover(requestedDataDir,
+                                                         &intake) &&
+            intake.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY) {
+            payloadPath = intake.payload_path;
+            m12_copy_string(md5, sizeof(md5), intake.track02_md5);
+        } else {
+            if (FirestaffTheronMedia_ClassifyPath(requestedDataDir, &cueMedia) == 0 &&
+                cueMedia.has_valid_track02_mode1 &&
+                cueMedia.track02_path[0] != '\0' &&
+                FSP_FileExists(cueMedia.track02_path)) {
+                payloadPath = cueMedia.track02_path;
+            }
+            if (!m12_file_md5_hex(payloadPath, md5)) {
+                return 0;
+            }
         }
         versionIndex = m12_theron_version_index_for_md5(md5);
         if (versionIndex < 0) {

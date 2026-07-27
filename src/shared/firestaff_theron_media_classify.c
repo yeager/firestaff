@@ -437,40 +437,12 @@ static int th_resolve_cue_member_path(
     return 1;
 }
 
-/* MyAbandonware's original TQ cue sheets retain `TQ??02.iso` while the
- * distributed data extent is named `TQ??02End.iso`. This is an exact member
- * alias, not a directory search or a reconstructed image. */
 static int th_resolve_track02_member_path(
     const char* cue_path,
     char path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY]) {
-    static const struct {
-        const char* declared_name;
-        const char* materialized_name;
-    } aliases[] = {
-        { "TQJP02.iso", "TQJP02End.iso" },
-        { "TQUS02.iso", "TQUS02End.iso" }
-    };
-    char declared[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-    char parent[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-    size_t i;
-
     if (!cue_path || !path || path[0] == '\0') return 0;
-    th_copy(declared, sizeof(declared), path);
     if (!th_resolve_cue_member_path(cue_path, path)) return 0;
-    if (th_path_is_readable(path)) return 1;
-    for (i = 0U; i < sizeof(aliases) / sizeof(aliases[0]); ++i) {
-        char resolved[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
-        if (!th_ieq(declared, aliases[i].declared_name) ||
-            !FSP_ParentDir(parent, sizeof(parent), cue_path) ||
-            !FSP_JoinPath(resolved, sizeof(resolved), parent,
-                          aliases[i].materialized_name) ||
-            !th_path_is_readable(resolved)) {
-            continue;
-        }
-        th_copy(path, FIRESTAFF_THERON_MEDIA_PATH_CAPACITY, resolved);
-        return 1;
-    }
-    return 0;
+    return th_path_is_readable(path);
 }
 
 static int th_resolve_cue_candidate_path(const char* cue_path,

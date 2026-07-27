@@ -295,34 +295,13 @@ static int tqr_cue_is_track02_mode1(const char *line) {
 static int tqr_cue_path_for_file(const char *cue_path, const char *file_name,
                                  char out_path[THERON_TRACK02_MOUNT_PATH_CAPACITY]);
 
-/* Some documented MyAbandonware dumps split the final data extent into
- * TQJP02End.iso/TQUS02End.iso, while their supplied CUE still names the
- * pre-split TQJP02.iso/TQUS02.iso member.  This is an explicit media-layout
- * alias, not a fallback search: only these two exact CUE member names may
- * resolve to their matching sibling, and boot still re-hashes the resulting
- * payload against the known original Track 02 MD5 before decoding it. */
 static int tqr_cue_known_split_track02_path(
     const char *cue_path,
     const char *selected_file,
     char out_path[THERON_TRACK02_MOUNT_PATH_CAPACITY]) {
-    static const struct {
-        const char *declared_name;
-        const char *materialized_name;
-    } aliases[] = {
-        { "TQJP02.iso", "TQJP02End.iso" },
-        { "TQUS02.iso", "TQUS02End.iso" }
-    };
-    size_t i;
-
     if (!cue_path || !selected_file || !out_path ||
         strchr(selected_file, '/') || strchr(selected_file, '\\')) return 0;
-    for (i = 0u; i < sizeof(aliases) / sizeof(aliases[0]); ++i) {
-        if (tqr_ascii_equal_ci(selected_file, aliases[i].declared_name)) {
-            return tqr_cue_path_for_file(cue_path, aliases[i].materialized_name,
-                                         out_path);
-        }
-    }
-    return 0;
+    return tqr_cue_path_for_file(cue_path, selected_file, out_path);
 }
 
 static int tqr_cue_track_number_and_mode(const char *line,
