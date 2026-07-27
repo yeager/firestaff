@@ -1,8 +1,20 @@
 #include "dm1_v1_runtime_sidecar_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <process.h>
+static char *win32_mkdtemp(char *tmpl) {
+    if (_mktemp(tmpl) == NULL) return NULL;
+    if (_mkdir(tmpl) != 0) return NULL;
+    return tmpl;
+}
+#define mkdtemp win32_mkdtemp
+#else
 #include <unistd.h>
+#endif
 
 static int expect(int ok, const char* message)
 {
@@ -15,7 +27,11 @@ static int expect(int ok, const char* message)
 
 int main(void)
 {
+#ifdef _WIN32
+    char dir[] = "firestaff-dm1-v1-sidecar-XXXXXX";
+#else
     char dir[] = "/tmp/firestaff-dm1-v1-sidecar-XXXXXX";
+#endif
     char savePath[256];
     char sidecarPath[288];
     FILE* file;
