@@ -15,6 +15,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-CUE-BOOT-PROVENANCE:** Closed 2026-07-27. Theron boot now
+  prefers a strict readable CUE package whose Track 02 payload matches a
+  canonical hash over a loose discovered Track 02. The boot profile retains
+  the selected CUE path and consumption flag; malformed or unknown CUE files
+  fall through to the existing hash-first scan. The real USA 19-track CUE
+  regression, raw-CUE runtime boot, and direct boot probe pass.
+
 - **THERON-CUE-UTF8-BOM:** Closed 2026-07-27. The strict Track 02 CUE
   resolvers now ignore only an initial UTF-8 BOM before parsing the original
   `FILE` directive. Hash, `MODE1/2048|2352`, payload, and `INDEX 01`

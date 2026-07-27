@@ -1,3 +1,11 @@
+- ✅ 2026-07-27 Theron CUE boot provenance. `theron_v1_boot_scan_assets()`
+  now prioritizes a strict CUE-declared Track 02 only after it passes the
+  canonical MD5 gate, retaining the selected CUE path/consumption receipt in
+  the boot profile. Unknown or malformed CUE sheets still fall through to
+  filename-independent hash discovery. The availability regression verifies
+  the authentic USA 19-track CUE, and raw-CUE runtime boot plus direct M11
+  boot probe pass.
+
 - ✅ 2026-07-27 Theron UTF-8-BOM CUE compatibility. Both production Track 02
   CUE parsers now ignore only a leading UTF-8 BOM before the first directive,
   preventing editor-added text metadata from being misreported as invalid

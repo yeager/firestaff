@@ -245,6 +245,34 @@ static void check_real_theron_launch_marker_presence(const char *real_data) {
     }
 }
 
+static void check_real_theron_cue_boot_provenance(const char *cue_path) {
+    char root[512];
+    char *slash;
+    Theron_V1_BootProfile profile;
+
+    if (!cue_path || !cue_path[0] || strlen(cue_path) >= sizeof(root)) {
+        return;
+    }
+    snprintf(root, sizeof(root), "%s", cue_path);
+    slash = strrchr(root, '/');
+#if defined(_WIN32)
+    if (!slash) slash = strrchr(root, '\\');
+#endif
+    if (!slash || slash == root) {
+        return;
+    }
+    *slash = '\0';
+    theron_v1_boot_profile_init(&profile);
+    expect_true(theron_v1_boot_scan_assets(&profile, root) == 0,
+                "real Theron CUE root scans successfully");
+    expect_true(profile.assets_verified == 1,
+                "real Theron CUE root remains hash-verified");
+    expect_true(profile.track02_cue_consumed == 1,
+                "Theron boot consumes the strict CUE package when available");
+    expect_str_eq(profile.track02_cue_path, cue_path,
+                  "Theron boot retains the selected CUE provenance path");
+}
+
 static void check_fake_iso_fallback(const char *region_dir,
                                     const char *iso_name,
                                     Theron_Platform expected_platform,
@@ -497,6 +525,8 @@ int main(void) {
 
     real_data = getenv("FIRESTAFF_THERON_TEST_DATA");
     check_real_theron_launch_marker_presence(real_data);
+    check_real_theron_cue_boot_provenance(
+        getenv("FIRESTAFF_THERON_TRACK02_CUE"));
 
     if (g_failures) {
         return 1;

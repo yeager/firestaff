@@ -146,6 +146,11 @@ typedef struct {
     char    asset_root[512];    /* ~/.firestaff/data/theron/ */
     char    graphics_path[512]; /* resolved: THQUEST.GFX or GRAPHICS.DAT */
     char    dungeon_path[512];  /* resolved: THQUEST.DUN or DUNGEON.DAT */
+    /* Set only when the hash-verified Track 02 payload came from a strict
+     * CUE declaration. It retains source layout provenance for launch and
+     * capture without making a filename-based media decision. */
+    char    track02_cue_path[512];
+    int     track02_cue_consumed;
     int     assets_verified;   /* 1 when Track 02 matches a known JP/US MD5 */
 
     /* ── Save namespace (between-dungeon only) ─────────── */
