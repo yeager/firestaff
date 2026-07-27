@@ -17,7 +17,9 @@
   presentation mode now drives the V2 HUD and portrait-hit geometry directly;
   the old vertical-slice environment variable is retained only for isolated
   developer tests. A live F10 mode switch therefore updates both rendering
-  and input ownership together. The complete DM1 V2.x suite passes 91/91.
+  and input ownership together. The F10 regression switches from V1 to V2.0
+  and opens champion four through its visible V2 portrait. The complete DM1
+  V2.x suite passes 91/91.
 
 - ✅ 2026-07-27 DM1 C071 eye-to-stats chest-close runtime coverage. The
   unregistered runtime regression is now a CTest target and uses synchronized

@@ -119,7 +119,8 @@ an integration build pass.
 - **DM1-V2-LIVE-PRESENTATION-HUD-OWNER:** Closed 2026-07-27. The active
   `presentationMode` now owns V2 HUD layout, chrome, bar graph, and champion
   hitbox selection. `FIRESTAFF_V2_VERTICAL_SLICE` remains test-only; F10
-  mode switches no longer depend on a process-start environment setting.
+  mode switches no longer depend on a process-start environment setting. The
+  F10 regression opens champion four through its post-switch V2 portrait.
 
 - **DM1-VIEWPORT-COMPACT-DOOR-CHAIN:** Closed 2026-07-27. Door type and
   opening state now consume the same F0160/F0161 compact square thing-chain

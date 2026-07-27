@@ -48,6 +48,12 @@ int main(void) {
     state.active = 1;
     state.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+    state.world.party.championCount = CHAMPION_MAX_PARTY;
+    for (int slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        state.world.party.champions[slot].present = 1;
+        state.world.party.champions[slot].hp.current = 100;
+        state.world.party.champions[slot].hp.maximum = 100;
+    }
 
     result = M11_GameView_HandleInput(&state,
                                       M12_MENU_INPUT_GRAPHICS_POPUP);
@@ -70,6 +76,24 @@ int main(void) {
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.presentationMode == M12_PRESENTATION_V20_FILTERED);
+
+    /* Close the F10 modal and exercise the V2 HUD that is actually drawn
+     * after the live mode change. Champion four's portrait is deliberately
+     * outside the old V1 C007..C010 geometry. */
+    result = M11_GameView_HandleInput(&state,
+                                      M12_MENU_INPUT_GRAPHICS_POPUP);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupActive == 0);
+    result = M11_GameView_HandlePointerButton(
+        &state, 12 + 3 * 77 + 24, 14, DM1_V1_MOUSE_MASK_LEFT_PC34);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.inventoryPanelActive == 1);
+    assert(state.world.party.activeChampionIndex == 3);
+    state.inventoryPanelActive = 0;
+    result = M11_GameView_HandleInput(&state,
+                                      M12_MENU_INPUT_GRAPHICS_POPUP);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupActive == 1);
 
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
     assert(result == M11_GAME_INPUT_REDRAW);
