@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 DM1 HoC ordinary wall ornaments. The real-data HoC walk
+  now proves a non-C127/non-inscription wall ornament reaches M11's F0107
+  host-material pass with a valid original graphic. This keeps ordinary
+  decoration, including the wall-furniture route, distinct from mirrors and
+  text plaques.
+
 - ✅ 2026-07-27 DM1 V1 champion HUD click surface. The painted F0292 name
   plaque and F0287 vertical status-bar graph now open that champion's
   inventory; hand slots and the remaining C012..C015 status surface retain

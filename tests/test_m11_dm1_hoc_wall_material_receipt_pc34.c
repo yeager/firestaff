@@ -153,6 +153,63 @@ static int verify_front_mirror_backing_pixel(
     return 1;
 }
 
+static int find_ordinary_hoc_wall_ornament(
+    M11_GameViewState *state,
+    unsigned char *framebuffer)
+{
+    const struct DungeonMapDesc_Compat *map;
+    int partyY;
+
+    if (!state || !state->world.dungeon || !framebuffer) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[0];
+    for (partyY = 0; partyY < (int)map->height; ++partyY) {
+        int partyX;
+        for (partyX = 0; partyX < (int)map->width; ++partyX) {
+            int direction;
+            for (direction = 0; direction < 4; ++direction) {
+                int forward;
+                state->world.party.mapIndex = 0;
+                state->world.party.mapX = partyX;
+                state->world.party.mapY = partyY;
+                state->world.party.direction = direction;
+                for (forward = 1; forward <= 3; ++forward) {
+                    int side;
+                    for (side = -1; side <= 1; ++side) {
+                        int element = -1;
+                        int ornament = -1;
+                        int portrait = -1;
+                        int inscription = -1;
+                        M11_Dm1WallOrnamentHostPresentationReceipt receipt;
+
+                        if (!M11_GameView_ProbeViewportRenderMetadata(
+                                state, forward, side, NULL, NULL, &element,
+                                &ornament, &portrait, &inscription, NULL) ||
+                            element != DUNGEON_ELEMENT_WALL ||
+                            ornament <= 0 || portrait >= 0 || inscription >= 0) {
+                            continue;
+                        }
+                        memset(framebuffer, 0,
+                               kFramebufferWidth * kFramebufferHeight);
+                        M11_GameView_Draw(state, framebuffer,
+                                          kFramebufferWidth, kFramebufferHeight);
+                        memset(&receipt, 0, sizeof(receipt));
+                        M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
+                            &receipt);
+                        if (receipt.valid && receipt.globalOrnamentIndex > 0 &&
+                            receipt.graphicIndex >= 0 && receipt.width > 0 &&
+                            receipt.height > 0) {
+                            return 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 int main(void)
 {
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -248,6 +305,10 @@ int main(void)
     }
     if (!verify_front_mirror_backing_pixel(&state, framebuffer, mirrorRenderIndex)) {
         fprintf(stderr, "real PC34 C127 presented without exact C346/C026 pixels\n");
+        goto fail;
+    }
+    if (!find_ordinary_hoc_wall_ornament(&state, framebuffer)) {
+        fprintf(stderr, "real PC34 HoC ordinary wall ornament was not presented by M11\n");
         goto fail;
     }
     printf("ok: real PC34 HoC F0096 wall receipts and exact C346/C026 host route\n");

@@ -42,7 +42,9 @@ an integration build pass.
 - **DM1-PC34-WALL-ORNAMENT-METADATA-OFFSET:** Closed 2026-07-27. The M11
   ornament cache now includes the preceding TextData words when locating each
   map's metadata in DUNGEON.DAT. Wall ornament indices therefore match the
-  real PC34 map data instead of reading a shifted table.
+  real PC34 map data instead of reading a shifted table. The real HoC probe
+  now also walks ordinary non-C127/non-inscription wall ornaments and proves
+  their original GRAPHICS.DAT material reaches the M11 F0107 host pass.
 
 - **DM1-MOVEMENT-TURN-BUTTON-VISUAL-CUE:** Closed 2026-07-27. Keyboard and
   controller feedback now outlines the full visible C013 turn-button tile,
