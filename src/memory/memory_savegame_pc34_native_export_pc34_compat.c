@@ -1850,6 +1850,9 @@ static void unpack_events_and_timeline(const struct PC34GlobalData* gd,
             dst->mapX = 0;
             dst->mapY = 0;
             dst->aux1 = (int)read_u16_le(src + 6u);
+            dst->cell = src[8u];
+            dst->aux0 = src[4u];
+            dst->aux4 = src[5u];
         } else if (src[4u] == DM1_EVENT_REMOVE_FLUXCAGE) {
             uint16_t thing = read_u16_le(src + 8u);
             dst->mapX = src[6u];
@@ -1860,14 +1863,25 @@ static void unpack_events_and_timeline(const struct PC34GlobalData* gd,
             dst->aux1 = C050_EXPLOSION_FLUXCAGE;
             dst->aux4 = src[5u];
             continue;
+        } else if (src[4u] == DM1_EVENT_LIGHT) {
+            /* TIMELINE.C F0257 stores C70's signed LightPower in
+             * EVENT.B.  Reconstruct the same runtime tuple required by
+             * F0433 instead of treating B/C as generic cell/effect bytes. */
+            dst->mapX = src[6u];
+            dst->mapY = src[7u];
+            dst->cell = 0;
+            dst->aux0 = (int)(int16_t)read_u16_le(src + 6u);
+            dst->aux1 = DM1_EVENT_LIGHT;
+            dst->aux2 = DM1_EVENT_LIGHT;
+            dst->aux4 = 0;
         } else {
             dst->mapX = src[6u];
             dst->mapY = src[7u];
             dst->aux1 = src[9u];
+            dst->cell = src[8u];
+            dst->aux0 = src[4u];
+            dst->aux4 = src[5u];
         }
-        dst->cell = src[8u];
-        dst->aux0 = src[4u];
-        dst->aux4 = src[5u];
     }
 }
 

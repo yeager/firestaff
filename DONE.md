@@ -41309,3 +41309,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   coordinate sets and D2/D3 palette maps moved out of M11. It continues to
   verify the real ReDMCSB F0107/F0111 ordering, clipping and occlusion
   contract; `dm1_v1_viewport_door_wall_ornament_source_lock` passes.
+- ✅ 2026-07-27 DM1 PC34 C70 save-event roundtrip. F0435 now reconstructs
+  the signed `EVENT.B.LightPower` union for C70 rather than demoting it to
+  generic cell/effect bytes, so a saved light-decay event can be written
+  again by F0433. The PC34 export suite also verifies a materialized dungeon
+  tail roundtrip and rejects an unproven C24 Fluxcage slot on the state-only
+  path.

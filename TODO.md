@@ -24,6 +24,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-PC34-C70-LIGHT-ROUNDTRIP:** Closed 2026-07-27. F0435 restores C70
+  `EVENT.B.LightPower` as its signed runtime light value, with the separate
+  C70 identity retained for F0433. The PC34 export suite now covers a
+  tail-backed roundtrip and keeps unproven C24 Fluxcage events fail-closed.
+
 - **DM1-HOC-SYNTHETIC-HELP-STRIP:** Closed 2026-07-27. The direct-start
   receipt no longer seeds the Firestaff-only `READY: CLICK CENTER ...` text
   into the Hall of Champions message strip. C015 stays empty until a real

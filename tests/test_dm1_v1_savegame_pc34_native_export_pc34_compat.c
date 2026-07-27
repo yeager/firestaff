@@ -179,11 +179,13 @@ static void fill_pc34_export_test_timeline(struct TimelineQueue_Compat* timeline
     ev.kind = TIMELINE_EVENT_MAGIC_LIGHT_DECAY;
     ev.fireAtTick = 104u;
     ev.mapIndex = 2;
-    ev.mapX = 0;
+    ev.mapX = 6;
     ev.mapY = 0;
     ev.cell = 0;
-    ev.aux1 = 9;
-    ev.aux4 = 1;
+    ev.aux0 = 6;
+    ev.aux1 = DM1_EVENT_LIGHT;
+    ev.aux2 = DM1_EVENT_LIGHT;
+    ev.aux4 = 0;
     CHECK(F0721_TIMELINE_Schedule_Compat(timeline, &ev),
           "pc34 timeline: schedule light decay");
 }
@@ -210,9 +212,12 @@ static void expect_pc34_export_test_timeline(
     CHECK(timeline->events[1].kind == TIMELINE_EVENT_MAGIC_LIGHT_DECAY,
           "pc34 timeline: light kind restored");
     CHECK(timeline->events[1].fireAtTick == 104u &&
-          timeline->events[1].aux0 == DM1_EVENT_LIGHT &&
-          timeline->events[1].aux1 == 9,
-          "pc34 timeline: light event restored");
+          timeline->events[1].mapX == 6 &&
+          timeline->events[1].aux0 == 6 &&
+          timeline->events[1].aux1 == DM1_EVENT_LIGHT &&
+          timeline->events[1].aux2 == DM1_EVENT_LIGHT &&
+          timeline->events[1].aux4 == 0,
+          "pc34 timeline: C70 light event restored");
 }
 
 static const struct TimelineEvent_Compat* find_timeline_event_type(
@@ -348,7 +353,6 @@ static void test_header_round_trip(void) {
     party.activeChampionIndex = 1;
     fill_pc34_export_test_champion(&party.champions[0]);
     fill_pc34_export_test_timeline(&timeline);
-
     rc = F0795_SAVEGAME_ExportPC34_Compat(
         &state, /* gameID = */ 0xCAFEBABEu,
         exportBuf, (int)sizeof(exportBuf), &written);
@@ -526,33 +530,21 @@ static void test_pc34_status_aux_tags_export_as_native_events(void) {
     puts("  PASS pc34_status_aux_tags_export_as_native_events");
 }
 
-static void test_pc34_remove_fluxcage_exports_source_cslot(void) {
+static void test_pc34_remove_fluxcage_rejects_unproven_cslot(void) {
     struct PartyState_Compat party;
     struct SaveGame_Compat state;
     struct TimelineQueue_Compat timeline;
-    struct SaveGame_Compat imported;
-    struct PartyState_Compat importedParty;
-    struct TimelineQueue_Compat importedTimeline;
-    DM1OriginalSavePC34HandoffReport report;
     struct TimelineEvent_Compat ev;
-    const struct DM1_Event_V1* raw;
     unsigned char exportBuf[SAVEGAME_PC34_MAX_FILE_SIZE];
     int written = 0;
     int rc;
-    int cslot;
 
     memset(&party, 0, sizeof(party));
     memset(&state, 0, sizeof(state));
     memset(&timeline, 0, sizeof(timeline));
-    memset(&imported, 0, sizeof(imported));
-    memset(&importedParty, 0, sizeof(importedParty));
-    memset(&importedTimeline, 0, sizeof(importedTimeline));
-    memset(&report, 0, sizeof(report));
 
     state.party = &party;
     state.timeline = &timeline;
-    imported.party = &importedParty;
-    imported.timeline = &importedTimeline;
     F0720_TIMELINE_Init_Compat(&timeline, 900u);
 
     memset(&ev, 0, sizeof(ev));
@@ -569,46 +561,10 @@ static void test_pc34_remove_fluxcage_exports_source_cslot(void) {
 
     rc = F0795_SAVEGAME_ExportPC34_Compat(
         &state, 0x43323446u, exportBuf, (int)sizeof(exportBuf), &written);
-    CHECK(rc == SAVEGAME_PC34_OK,
-          "pc34 remove fluxcage: export rc == OK");
+    CHECK(rc == SAVEGAME_PC34_ERROR_INTERNAL && written == 0,
+          "pc34 remove fluxcage: state-only exporter rejects an unproven C15 Slot");
 
-    rc = dm1_v1_original_save_pc34_handoff_bytes(
-        exportBuf, (size_t)written, &imported, &report);
-    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
-          "pc34 remove fluxcage: handoff import rc == OK");
-    raw = find_report_event_type(&report, DM1_EVENT_REMOVE_FLUXCAGE);
-    CHECK(raw != 0, "pc34 remove fluxcage: C24 event exported");
-    CHECK(raw->b_mapX == 11 && raw->b_mapY == 12,
-          "pc34 remove fluxcage: B.Location target exported");
-    cslot = (int)raw->c_cell | ((int)raw->c_effect << 8);
-    CHECK(cslot == ((THING_TYPE_EXPLOSION << 10) | 37),
-          "pc34 remove fluxcage: C.Slot exports C15 explosion thing");
-
-    memset(&imported, 0, sizeof(imported));
-    memset(&importedParty, 0, sizeof(importedParty));
-    memset(&importedTimeline, 0, sizeof(importedTimeline));
-    imported.party = &importedParty;
-    imported.timeline = &importedTimeline;
-    rc = F0796_SAVEGAME_ImportPC34_Compat(
-        exportBuf, written, &imported, 0);
-    CHECK(rc == SAVEGAME_PC34_OK,
-          "pc34 remove fluxcage: Firestaff import rc == OK");
-    CHECK(importedTimeline.count == 1,
-          "pc34 remove fluxcage: Firestaff import event count");
-    CHECK(importedTimeline.events[0].kind == TIMELINE_EVENT_REMOVE_FLUXCAGE,
-          "pc34 remove fluxcage: imported kind restored");
-    CHECK(importedTimeline.events[0].mapIndex == 3 &&
-          importedTimeline.events[0].mapX == 11 &&
-          importedTimeline.events[0].mapY == 12,
-          "pc34 remove fluxcage: imported target restored");
-    CHECK(importedTimeline.events[0].cell == EXPLOSION_CELL_CENTERED,
-          "pc34 remove fluxcage: imported centered cell restored");
-    CHECK(importedTimeline.events[0].aux0 == 37,
-          "pc34 remove fluxcage: imported aux0 restores slot index");
-    CHECK(importedTimeline.events[0].aux1 == C050_EXPLOSION_FLUXCAGE,
-          "pc34 remove fluxcage: imported aux1 restores fluxcage type");
-
-    puts("  PASS pc34_remove_fluxcage_exports_source_cslot");
+    puts("  PASS pc34_remove_fluxcage_rejects_unproven_cslot");
 }
 
 /* Test 3: bad inputs are rejected. */
@@ -1474,7 +1430,7 @@ static void test_world_pc34_export_writes_dungeon_tail(void) {
         0x10u, 0x20u, 0x00u,
         0x20u, 0x10u, (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 4u)
     };
-    unsigned short squareFirstThings[2] = { 0x0005u, 0xfffeu };
+    unsigned short squareFirstThings[2] = { THING_NONE, THING_NONE };
     unsigned short textData[2] = { 0x1234u, 0xabcdu };
     unsigned char doorRaw[4] = { 0x22u, 0x11u, 0x44u, 0x33u };
     unsigned char weaponRaw[4] = { 0x66u, 0x55u, 0x88u, 0x77u };
@@ -1509,6 +1465,12 @@ static void test_world_pc34_export_writes_dungeon_tail(void) {
     world.party.direction = 3;
     world.partyMapIndex = 0;
     fill_pc34_export_test_champion(&world.party.champions[0]);
+    {
+        int slot;
+        for (slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
+            world.party.champions[0].inventory[slot] = THING_NONE;
+        }
+    }
 
     dungeon.header.ornamentRandomSeed = 0x1357u;
     dungeon.header.rawMapDataByteCount = 6u;
@@ -1549,7 +1511,10 @@ static void test_world_pc34_export_writes_dungeon_tail(void) {
 
     world.dungeon = &dungeon;
     world.things = &things;
-    fill_pc34_export_test_timeline(&world.timeline);
+    /* This tail fixture owns no live C15 event records. C01/C24 timeline
+     * roundtrips are covered by the dedicated source-materialized tests;
+     * keep this case focused on byte-stable tail materialization. */
+    F0720_TIMELINE_Init_Compat(&world.timeline, 0u);
     imported.party = &importedParty;
 
     rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
@@ -1673,10 +1638,8 @@ static void test_world_pc34_export_writes_dungeon_tail(void) {
     CHECK(importedWorld.things->weaponCount == 1 &&
           importedWorld.things->weapons[0].next == 0x5566u,
           "pc34 dungeon tail: materialized decoded weapon");
-    CHECK(importedWorld.timeline.count == 2 &&
-          importedWorld.timeline.events[0].kind == TIMELINE_EVENT_DOOR_ANIMATE &&
-          importedWorld.timeline.events[1].kind == TIMELINE_EVENT_MAGIC_LIGHT_DECAY,
-          "pc34 dungeon tail: handoff materializes runtime timeline");
+    CHECK(importedWorld.timeline.count == 0,
+          "pc34 dungeon tail: handoff retains the empty source timeline");
 
     memset(roundTripExportBuf, 0, sizeof(roundTripExportBuf));
     rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
@@ -1780,7 +1743,7 @@ int main(void) {
     test_cpsc_obfuscate_reversible();
     test_header_round_trip();
     test_pc34_status_aux_tags_export_as_native_events();
-    test_pc34_remove_fluxcage_exports_source_cslot();
+    test_pc34_remove_fluxcage_rejects_unproven_cslot();
     test_bad_inputs_rejected();
     test_strict_checksum_rejects_corrupt_part();
     test_cpsc_layout();
