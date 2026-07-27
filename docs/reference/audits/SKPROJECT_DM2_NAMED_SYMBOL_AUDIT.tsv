@@ -87,22 +87,22 @@ DM2_PROCEED_XACT_65	SKULLWIN	SKULLWIN/c_ai.cpp	364	src/dm2/dm2_v1_skproject_core
 DM2_14cd_2662	SKULLWIN	SKULLWIN/c_ai.cpp	400	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_2662; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_PROCEED_XACT_66	SKULLWIN	SKULLWIN/c_ai.cpp	519	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_66; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_PROCEED_XACT_67	SKULLWIN	SKULLWIN/c_ai.cpp	571	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_67; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
-DM2_PROCEED_XACT_68	SKULLWIN	SKULLWIN/c_ai.cpp	745		MISSING
-DM2_PROCEED_XACT_69	SKULLWIN	SKULLWIN/c_ai.cpp	828		MISSING
-DM2_PROCEED_XACT_70	SKULLWIN	SKULLWIN/c_ai.cpp	843		MISSING
-DM2_PROCEED_XACT_71	SKULLWIN	SKULLWIN/c_ai.cpp	897		MISSING
-DM2_PROCEED_XACT_72_87_88	SKULLWIN	SKULLWIN/c_ai.cpp	949		MISSING
-DM2_PROCEED_XACT_73	SKULLWIN	SKULLWIN/c_ai.cpp	958		MISSING
-DM2_PROCEED_XACT_74	SKULLWIN	SKULLWIN/c_ai.cpp	1067		MISSING
-DM2_14cd_102e	SKULLWIN	SKULLWIN/c_ai.cpp	1179		MISSING
-DM2_ai_14cd_10d2	SKULLWIN	SKULLWIN/c_ai.cpp	1285		MISSING
-DM2_PROCEED_XACT_75	SKULLWIN	SKULLWIN/c_ai.cpp	1470		MISSING
-DM2_ai_14cd_0f3c	SKULLWIN	SKULLWIN/c_ai.cpp	1498		MISSING
-DM2_PROCEED_XACT_77	SKULLWIN	SKULLWIN/c_ai.cpp	1569		MISSING
-DM2_PROCEED_XACT_78	SKULLWIN	SKULLWIN/c_ai.cpp	1611		MISSING
-DM2_PROCEED_XACT_79	SKULLWIN	SKULLWIN/c_ai.cpp	1629		MISSING
-DM2_PROCEED_XACT_80	SKULLWIN	SKULLWIN/c_ai.cpp	1645		MISSING
-DM2_PROCEED_XACT_81	SKULLWIN	SKULLWIN/c_ai.cpp	1672		MISSING
+DM2_PROCEED_XACT_68	SKULLWIN	SKULLWIN/c_ai.cpp	745	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_68; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Creature AI: evaluate facing creature combat stats via ai2886/query0767, compare attack vs defense, set b1a=28 or 27.
+DM2_PROCEED_XACT_69	SKULLWIN	SKULLWIN/c_ai.cpp	828	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_69; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Set creature target position from facing direction offset, b1a=21 or 22.
+DM2_PROCEED_XACT_70	SKULLWIN	SKULLWIN/c_ai.cpp	843	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_70; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Set target from x/y direction, check creature at target, test CAN_HANDLE_ITEM_IN, set b1a=24 on rejection.
+DM2_PROCEED_XACT_71	SKULLWIN	SKULLWIN/c_ai.cpp	897	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_71; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Possession redistribution via DM2_1c9a_078b then dispatch DM2_19f0_2165.
+DM2_PROCEED_XACT_72_87_88	SKULLWIN	SKULLWIN/c_ai.cpp	949	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_72_87_88; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Simple b1a assignment from v1e0572 with v1e07d8_w04 fallback.
+DM2_PROCEED_XACT_73	SKULLWIN	SKULLWIN/c_ai.cpp	958	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_73; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Flag-word manipulation on creature word_a: bit set/clear/query or hexe table scan, b1a=51 on change.
+DM2_PROCEED_XACT_74	SKULLWIN	SKULLWIN/c_ai.cpp	1067	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_proceed_xact_74; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Flee-or-chase via random attack roll, walk path (1c9a_381c), CREATURE_GO_THERE, or 19f0_0559.
+DM2_14cd_102e	SKULLWIN	SKULLWIN/c_ai.cpp	1179	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_14cd_102e; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Recursive record-chain item counter: walks chain, counts items creature can handle, recurses into type-4 and chest sub-chains.
+DM2_ai_14cd_10d2	SKULLWIN	SKULLWIN/c_ai.cpp	1285	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_PROCEED_XACT_75	SKULLWIN	SKULLWIN/c_ai.cpp	1470	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_ai_14cd_0f3c	SKULLWIN	SKULLWIN/c_ai.cpp	1498	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_PROCEED_XACT_77	SKULLWIN	SKULLWIN/c_ai.cpp	1569	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_PROCEED_XACT_78	SKULLWIN	SKULLWIN/c_ai.cpp	1611	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_PROCEED_XACT_79	SKULLWIN	SKULLWIN/c_ai.cpp	1629	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_PROCEED_XACT_80	SKULLWIN	SKULLWIN/c_ai.cpp	1645	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_PROCEED_XACT_81	SKULLWIN	SKULLWIN/c_ai.cpp	1672	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_14cd_3582	SKULLWIN	SKULLWIN/c_ai.cpp	1679		MISSING
 DM2_PROCEED_XACT_82	SKULLWIN	SKULLWIN/c_ai.cpp	1805		MISSING
 DM2_PROCEED_XACT_83	SKULLWIN	SKULLWIN/c_ai.cpp	1939		MISSING

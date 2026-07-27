@@ -6491,6 +6491,8 @@ typedef struct {
     int16_t v1e0572;
     uint16_t v1e0574;
     uint16_t v1e057c;
+    uint16_t v1e0576;        /* movement flags (XACT_80) */
+    uint16_t v1e0578;        /* movement/AI flags */
     uint16_t v1e07d8_w04;
     int16_t v1e056f;         /* result word the source returns */
     uint16_t creature_w0e;   /* in/out shadow (XACT_62) */
@@ -7922,6 +7924,333 @@ int dm2_v1_skproject_proceed_xact_67(
     DM2_V1_SkprojectRand16Fn rand16_fn,
     DM2_V1_SkprojectRandDirFn randdir_fn,
     DM2_V1_SkprojectXact67Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:745 DM2_PROCEED_XACT_68 — creature AI: evaluate facing
+   creature's combat stats via DM2_14cd_2886 and DM2_query_48ae_0767, compare
+   attack vs defense totals, set b1a=28 on match or b1a=27 otherwise. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int creature_found;
+    int16_t facing_dir;
+    int32_t damage_total;
+    int32_t defense_total;
+    int8_t result;
+    uint16_t out_w0c;
+    uint16_t out_w10;
+    uint8_t out_b1a;
+} DM2_V1_SkprojectXact68Receipt;
+
+int dm2_v1_skproject_proceed_xact_68(
+    DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectAi14cd2886Fn ai2886_fn,
+    DM2_V1_SkprojectQuery48ae0767Fn query0767_fn,
+    DM2_V1_SkprojectXact68Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:828 DM2_PROCEED_XACT_69 — creature AI: set creature
+   target position from facing direction offset and set b1a to 21 or 22
+   based on v1e0572. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint16_t out_w18;
+    uint8_t out_b1a;
+    uint8_t out_b1d;
+} DM2_V1_SkprojectXact69Receipt;
+
+int dm2_v1_skproject_proceed_xact_69(
+    DM2_V1_SkprojectXactContext *ctx,
+    const int16_t *table1d27fc,
+    const int16_t *table1d2804,
+    DM2_V1_SkprojectXact69Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:843 DM2_PROCEED_XACT_70 — creature AI: set creature
+   target from raw x/y/direction, check for creature at the target, and
+   test DM2_CREATURE_CAN_HANDLE_ITEM_IN.  Sets b1a=24 on rejection. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int creature_found;
+    int can_handle;
+    int8_t result;
+    uint16_t out_w18;
+    uint8_t out_b1a;
+    uint8_t out_b1c;
+    uint8_t out_b1e;
+} DM2_V1_SkprojectXact70Receipt;
+
+int dm2_v1_skproject_proceed_xact_70(
+    DM2_V1_SkprojectXactContext *ctx,
+    const int16_t *table1d27fc,
+    const int16_t *table1d2804,
+    DM2_V1_SkprojectXact70Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:897 DM2_PROCEED_XACT_71 — creature AI: possession
+   redistribution via DM2_1c9a_078b, then test CREATURE_CAN_HANDLE_ITEM_IN
+   and dispatch DM2_19f0_2165 on success. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int redistributed;
+    int dispatched;
+    int8_t result;
+} DM2_V1_SkprojectXact71Receipt;
+
+int dm2_v1_skproject_proceed_xact_71(
+    DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact71Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:949 DM2_PROCEED_XACT_72_87_88 — creature AI: simple
+   b1a assignment from v1e0572, falling back to v1e07d8_w04. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint8_t out_b1a;
+} DM2_V1_SkprojectXact72Receipt;
+
+int dm2_v1_skproject_proceed_xact_72_87_88(
+    DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact72Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:958 DM2_PROCEED_XACT_73 — creature AI: flag-word
+   manipulation on v1e054e->w_0a based on v1e0574 selector (0-2=bit ops,
+   3-4=hexe table scan, 16-18=bit ops).  Sets b1a=51 on change. */
+typedef struct {
+    uint16_t creature_word_a;  /* s350.v1e054e->w_0a */
+    const uint8_t *hexe_table; /* s350.v1e07d8.xp_0a entries, each 14 bytes */
+    uint16_t hexe_count;       /* number of entries */
+} DM2_V1_SkprojectXact73State;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int flag_changed;
+    int8_t result;
+    uint16_t out_word_a;
+    uint8_t out_b1a;
+} DM2_V1_SkprojectXact73Receipt;
+
+int dm2_v1_skproject_proceed_xact_73(
+    DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact73State *state73,
+    DM2_V1_SkprojectXact73Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1067 DM2_PROCEED_XACT_74 — creature AI: flee-or-chase
+   based on random attack chance vs DM2_1c9a_381c walk path evaluation,
+   dispatches DM2_CREATURE_GO_THERE or DM2_19f0_0559. */
+typedef int32_t (*DM2_V1_Skproject381cSimpleFn)(void *user);
+typedef int32_t (*DM2_V1_SkprojectRandBitFn)(void *user);
+
+typedef struct {
+    uint16_t v1e0552_w16;     /* word@0x16 of v1e0552 */
+    uint16_t creature_word_a; /* s350.v1e054e->w_0a */
+    uint16_t ddat_v1d3248;    /* current map */
+} DM2_V1_SkprojectXact74State;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int attack_roll;
+    int walk_path_available;
+    int8_t result;
+    uint8_t out_b1a;
+} DM2_V1_SkprojectXact74Receipt;
+
+int dm2_v1_skproject_proceed_xact_74(
+    DM2_V1_SkprojectXactContext *ctx,
+    const DM2_V1_SkprojectXact74State *state74,
+    DM2_V1_Skproject381cSimpleFn walk381c_fn,
+    DM2_V1_SkprojectRandBitFn randbit_fn,
+    const int16_t *table1d27fc,
+    const int16_t *table1d2804,
+    DM2_V1_SkprojectXact74Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1179 DM2_14cd_102e — recursive record-chain item
+   counter belonging to DM2_ai_14cd_10d2.  Walks a record chain, counts
+   items the creature can handle (via DM2_CREATURE_CAN_HANDLE_IT), and
+   recurses into container/chest sub-chains. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint32_t visited;
+    int32_t count;
+} DM2_V1_Skproject102eReceipt;
+
+int32_t dm2_v1_skproject_14cd_102e(
+    int16_t creature_type,
+    uint16_t start_record,
+    uint8_t direction_filter,
+    int recurse_type4,
+    int recurse_chests,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn,
+    DM2_V1_SkprojectIsChestFn is_chest_fn,
+    void *user,
+    DM2_V1_Skproject102eReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1285 DM2_ai_14cd_10d2 — 4-slot cache search/claim. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int found_existing;
+    int claimed_new;
+    int cache_full;
+    int slot_index;
+    uint8_t header[8];
+} DM2_V1_Skproject14cd10d2Receipt;
+
+int dm2_v1_skproject_14cd_10d2(
+    const uint8_t *record_ptr,
+    int32_t record_type,
+    uint8_t cache[4][0x20],
+    int *cache_dirty,
+    DM2_V1_Skproject14cd10d2Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1470 DM2_PROCEED_XACT_75 */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint8_t mode_code;
+    uint8_t out_creature_b1e;
+    uint16_t saved_v1e0578;
+    uint16_t masked_v1e0578;
+    int flag8_cleared;
+    int8_t result;
+} DM2_V1_SkprojectXact75Receipt;
+
+typedef struct {
+    const uint8_t *hexe_xp_0a;
+    uint8_t b_02;
+    uint8_t b_03;
+    uint16_t w_04;
+    uint16_t w_06;
+} DM2_V1_SkprojectXact75Input;
+
+int dm2_v1_skproject_proceed_xact_75(
+    const DM2_V1_SkprojectXactContext *ctx,
+    const DM2_V1_SkprojectXact75Input *input,
+    uint8_t cache[4][0x20],
+    int *cache_dirty,
+    DM2_V1_SkprojectXact75Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1498 DM2_ai_14cd_0f3c — attack plan entry builder. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int skipped_null;
+    int skipped_full;
+    int skipped_negative;
+    int entry_added;
+    int16_t adjusted_strength;
+    uint8_t entry[22];
+    int entry_index;
+} DM2_V1_Skproject14cd0f3cReceipt;
+
+typedef struct {
+    int32_t eaxl;
+    const uint8_t *record_ptr;
+    const uint8_t *hexe_ptr;
+    int32_t ecxl;
+    int8_t argb0;
+    int32_t argl1;
+    int8_t argb2;
+    int8_t argb3;
+} DM2_V1_Skproject14cd0f3cInput;
+
+typedef struct {
+    uint16_t v1e0571;
+    uint16_t v1e08d6;
+    uint8_t v1e0552_byte1;
+    uint16_t v1e0580;
+} DM2_V1_Skproject14cd0f3cState;
+
+int dm2_v1_skproject_14cd_0f3c(
+    const DM2_V1_Skproject14cd0f3cInput *input,
+    const DM2_V1_Skproject14cd0f3cState *state,
+    uint8_t plan_entries[][22],
+    int *plan_count,
+    int max_plan_entries,
+    DM2_V1_Skproject14cd0f3cReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1569 DM2_PROCEED_XACT_77 */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int hexe_entries_scanned;
+    int plan_entries_added;
+    int walk_path_found;
+    int8_t walk_path_result;
+    int8_t result;
+} DM2_V1_SkprojectXact77Receipt;
+
+int dm2_v1_skproject_proceed_xact_77(
+    const DM2_V1_SkprojectXactContext *ctx,
+    const DM2_V1_Skproject14cd0f3cState *plan_state,
+    int8_t max_strength,
+    DM2_V1_SkprojectXact77Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1611 DM2_PROCEED_XACT_78 */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int map_matches;
+    int tile_passable;
+    int16_t computed_dir;
+    int8_t result;
+} DM2_V1_SkprojectXact78Receipt;
+
+int dm2_v1_skproject_proceed_xact_78(
+    const DM2_V1_SkprojectXactContext *ctx,
+    const DM2_V1_SkprojectXact65State *state,
+    DM2_V1_SkprojectXact78Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1629 DM2_PROCEED_XACT_79 */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint8_t out_b1e;
+    uint8_t out_b1a;
+    uint8_t out_b1b;
+    uint8_t out_b1c;
+    uint8_t out_b20;
+} DM2_V1_SkprojectXact79Receipt;
+
+int dm2_v1_skproject_proceed_xact_79(
+    DM2_V1_SkprojectRandDirFn randdir_fn,
+    DM2_V1_SkprojectRand16Fn rand16_fn,
+    void *user,
+    DM2_V1_SkprojectXact79Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1645 DM2_PROCEED_XACT_80 */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint8_t go_mode;
+    uint16_t adjusted_dir;
+    uint16_t saved_v1e0576;
+    uint16_t modified_v1e0576;
+    int8_t result;
+} DM2_V1_SkprojectXact80Receipt;
+
+int dm2_v1_skproject_proceed_xact_80(
+    DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact80Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1672 DM2_PROCEED_XACT_81 */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint8_t command_byte;
+    uint16_t v1e07d8_w04;
+    int8_t result;
+} DM2_V1_SkprojectXact81Receipt;
+
+int dm2_v1_skproject_proceed_xact_81(
+    const DM2_V1_SkprojectXactContext *ctx,
+    uint8_t w06_low,
+    uint16_t w04,
+    DM2_V1_SkprojectXact81Receipt *out_receipt);
 
 
 #endif

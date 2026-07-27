@@ -9630,6 +9630,250 @@ int main(void)
               "xact_67 blocks without context");
     }
 
+    /* ---- DM2_PROCEED_XACT_68 ---- */
+    {
+        DM2_V1_SkprojectXact68Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_68(NULL, NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_68 blocks without context");
+    }
+
+    /* ---- DM2_PROCEED_XACT_69 ---- */
+    {
+        DM2_V1_SkprojectXact69Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_69(NULL, NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_69 blocks without context");
+    }
+
+    /* ---- DM2_PROCEED_XACT_70 ---- */
+    {
+        DM2_V1_SkprojectXact70Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_70(NULL, NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_70 blocks without context");
+    }
+
+    /* ---- DM2_PROCEED_XACT_71 ---- */
+    {
+        DM2_V1_SkprojectXact71Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_71(NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_71 blocks without context");
+    }
+
+    /* ---- DM2_PROCEED_XACT_72_87_88 ---- */
+    {
+        DM2_V1_SkprojectXact72Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_72_87_88(NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_72_87_88 blocks without context");
+    }
+
+    /* ---- DM2_PROCEED_XACT_72_87_88 value test ---- */
+    {
+        DM2_V1_SkprojectXactContext ctx;
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.v1e0572 = 5;
+        DM2_V1_SkprojectXact72Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_72_87_88(&ctx, &r);
+        CHECK(r.valid == 1 && rv == 1 && r.out_b1a == 5,
+              "xact_72_87_88 assigns v1e0572 to b1a");
+    }
+
+    /* ---- DM2_PROCEED_XACT_72_87_88 fallback test ---- */
+    {
+        DM2_V1_SkprojectXactContext ctx;
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.v1e0572 = -1;
+        ctx.v1e07d8_w04 = 12;
+        DM2_V1_SkprojectXact72Receipt r;
+        dm2_v1_skproject_proceed_xact_72_87_88(&ctx, &r);
+        CHECK(r.valid == 1 && r.out_b1a == 12,
+              "xact_72_87_88 falls back to v1e07d8_w04");
+    }
+
+    /* ---- DM2_PROCEED_XACT_73 ---- */
+    {
+        DM2_V1_SkprojectXact73Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_73(NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_73 blocks without context");
+    }
+
+    /* ---- DM2_PROCEED_XACT_73 bit set ---- */
+    {
+        DM2_V1_SkprojectXactContext ctx;
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.v1e0574 = 1;     /* op=set */
+        ctx.v1e0572 = 3;     /* bit 3 */
+        DM2_V1_SkprojectXact73State st;
+        memset(&st, 0, sizeof(st));
+        st.creature_word_a = 0;
+        DM2_V1_SkprojectXact73Receipt r;
+        dm2_v1_skproject_proceed_xact_73(&ctx, &st, &r);
+        CHECK(r.valid == 1 && r.out_word_a == 0x8 && r.flag_changed == 1,
+              "xact_73 bit set works");
+    }
+
+    /* ---- DM2_PROCEED_XACT_74 ---- */
+    {
+        DM2_V1_SkprojectXact74Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_74(
+            NULL, NULL, NULL, NULL, NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_74 blocks without context");
+    }
+
+    /* ---- DM2_14cd_102e ---- */
+    {
+        DM2_V1_Skproject102eReceipt r;
+        int32_t rv = dm2_v1_skproject_14cd_102e(
+            0, 0xfffe, 0xff, 0, 0,
+            NULL, NULL, NULL, NULL, NULL, &r);
+        CHECK(r.blocked_missing_callback == 1 && rv == 0,
+              "14cd_102e blocks without callbacks");
+    }
+
+    /* ---- source evidence batch 20a ---- */
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_PROCEED_XACT_68") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_69") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_70") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_71") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_72_87_88") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_73") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_74") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_14cd_102e") != 0,
+          "source evidence names cycle-20 batch-20a");
+
+    /* ---- batch 20b: DM2_ai_14cd_10d2 ---- */
+    {
+        DM2_V1_Skproject14cd10d2Receipt r;
+        int rv = dm2_v1_skproject_14cd_10d2(NULL, 0, NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "14cd_10d2 blocks without context");
+    }
+    {
+        DM2_V1_Skproject14cd10d2Receipt r;
+        uint8_t cache[4][0x20];
+        int dirty = 1;
+        uint8_t rec[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+        int rv = dm2_v1_skproject_14cd_10d2(rec, 42, cache, &dirty, &r);
+        CHECK(rv == 1 && r.claimed_new == 1 && r.slot_index == 0 &&
+              dirty == 0, "14cd_10d2 claims first slot after clearing cache");
+    }
+
+    /* ---- batch 20b: DM2_PROCEED_XACT_75 ---- */
+    {
+        DM2_V1_SkprojectXact75Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_75(NULL, NULL, NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_75 blocks without context");
+    }
+
+    /* ---- batch 20b: DM2_ai_14cd_0f3c ---- */
+    {
+        DM2_V1_Skproject14cd0f3cReceipt r;
+        int rv = dm2_v1_skproject_14cd_0f3c(NULL, NULL, NULL, NULL, 0, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "14cd_0f3c blocks without context");
+    }
+    {
+        DM2_V1_Skproject14cd0f3cInput input;
+        DM2_V1_Skproject14cd0f3cState state;
+        uint8_t plan[16][22];
+        int plan_count = 0;
+        DM2_V1_Skproject14cd0f3cReceipt r;
+        uint8_t hexe[16] = {0,0,0,0, 0x10,0x20, 0x30,0x40, 50, 7};
+        uint8_t rec[4] = {1,2,3,4};
+
+        memset(&input, 0, sizeof(input));
+        memset(&state, 0, sizeof(state));
+        input.hexe_ptr = hexe;
+        input.record_ptr = rec;
+        input.eaxl = 0x14;
+        input.ecxl = 17;
+        input.argb0 = 10;
+        input.argl1 = 0xffff;
+        input.argb2 = 0;
+        input.argb3 = 0;
+        state.v1e0571 = 5;
+        state.v1e08d6 = 5;
+        state.v1e0580 = 0xffff;
+
+        int rv = dm2_v1_skproject_14cd_0f3c(&input, &state, plan,
+                                             &plan_count, 16, &r);
+        CHECK(rv == 1 && r.entry_added == 1 && r.entry_index == 0 &&
+              plan_count == 1, "14cd_0f3c adds plan entry");
+    }
+
+    /* ---- batch 20b: DM2_PROCEED_XACT_77 ---- */
+    {
+        DM2_V1_SkprojectXact77Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_77(NULL, NULL, 0, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_77 blocks without context");
+    }
+
+    /* ---- batch 20b: DM2_PROCEED_XACT_78 ---- */
+    {
+        DM2_V1_SkprojectXact78Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_78(NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_78 blocks without context");
+    }
+
+    /* ---- batch 20b: DM2_PROCEED_XACT_79 ---- */
+    {
+        DM2_V1_SkprojectXact79Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_79(NULL, NULL, NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_79 blocks without context");
+    }
+
+    /* ---- batch 20b: DM2_PROCEED_XACT_80 ---- */
+    {
+        DM2_V1_SkprojectXact80Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_80(NULL, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_80 blocks without context");
+    }
+
+    /* ---- batch 20b: DM2_PROCEED_XACT_81 ---- */
+    {
+        DM2_V1_SkprojectXact81Receipt r;
+        int rv = dm2_v1_skproject_proceed_xact_81(NULL, 0, 0, &r);
+        CHECK(r.blocked_missing_context == 1 && rv == 0,
+              "xact_81 blocks without context");
+    }
+
+    /* ---- source evidence batch 20b ---- */
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_ai_14cd_10d2") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_75") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_ai_14cd_0f3c") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_77") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_78") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_79") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_80") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_81") != 0,
+          "source evidence names cycle-20 batch-20b");
+
     /* ---- source evidence batch 19b ---- */
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "DM2_FILL_ORPHAN_CAII") != 0 &&
