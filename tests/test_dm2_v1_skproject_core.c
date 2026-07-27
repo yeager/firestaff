@@ -10872,6 +10872,187 @@ int main(void)
           strstr(dm2_v1_skproject_core_source_evidence(), "DM2_SELECT_CREATURE_37FC") != 0,
           "source evidence names cycle-23 batch-23b");
 
+    /* ---- batch 24a: 14cd_09e2, 50CB, 13e4_0982, 4EA8, PREPARE/UNPREPARE, 13e4_0360, 13e4_071b ---- */
+
+    /* 14cd_09e2 NULL receipt */
+    {
+        int32_t rc = dm2_v1_skproject_14cd_09e2_classify(0x00, 0, 0, 0, 0, NULL);
+        CHECK(rc == 0, "14cd_09e2: NULL receipt returns 0");
+    }
+    /* 14cd_09e2 0x40 flag early finalize */
+    {
+        DM2_V1_Skproject14cd09e2Receipt r;
+        int32_t rc = dm2_v1_skproject_14cd_09e2_classify(0x40, 3, 0, 0, 0, &r);
+        CHECK(rc == 1 && r.has_0x40_flag == 1 && r.finalized == 1,
+              "14cd_09e2: 0x40 flag early finalize");
+    }
+    /* 14cd_09e2 no 0x40 no 0x20 => direction 5 */
+    {
+        DM2_V1_Skproject14cd09e2Receipt r;
+        dm2_v1_skproject_14cd_09e2_classify(0x00, 0, 0, 0, 0, &r);
+        CHECK(r.direction == 5, "14cd_09e2: direction 5 when no 0x20");
+    }
+
+    /* 50CB NULL receipt */
+    {
+        CHECK(dm2_v1_skproject_50cb_classify(0, 0, 0, NULL, 0, NULL) == 0,
+              "50cb: NULL receipt returns 0");
+    }
+    /* 50CB 0xFFFF offset */
+    {
+        uint8_t data[16]; memset(data, 0, sizeof(data));
+        DM2_V1_Skproject50CBReceipt r;
+        dm2_v1_skproject_50cb_classify(0x0F, (int16_t)0xFFFF, 0, data, 16, &r);
+        CHECK(r.offset_was_ffff == 1 && r.offset_result == 0,
+              "50cb: 0xFFFF offset resets to 0");
+    }
+
+    /* 13e4_0982 NULL receipt */
+    CHECK(dm2_v1_skproject_13e4_0982_classify(0, 0, 0, 0, 0, NULL) == 0,
+          "13e4_0982: NULL receipt returns 0");
+    /* 13e4_0982 savegame b03 zero skip */
+    {
+        DM2_V1_Skproject13e40982Receipt r;
+        dm2_v1_skproject_13e4_0982_classify(0, 0, 0, 0, 0x22, &r);
+        CHECK(r.savegame_b03_zero == 1 && r.skip_to_dispatch == 1,
+              "13e4_0982: b03 zero skip to dispatch");
+    }
+
+    /* 4EA8 NULL receipt */
+    CHECK(dm2_v1_skproject_4ea8_classify(0, 0, NULL, 0, NULL) == 0,
+          "4ea8: NULL receipt returns 0");
+    /* 4EA8 tick counting */
+    {
+        uint8_t data[20]; memset(data, 0, sizeof(data));
+        data[1] = 0x10; data[5] = 0x20; data[9] = 0x00;
+        DM2_V1_Skproject4EA8Receipt r;
+        dm2_v1_skproject_4ea8_classify(0x0F, 0, data, 20, &r);
+        CHECK(r.tick_count == 3, "4ea8: counted 3 ticks");
+    }
+
+    /* PREPARE NULL receipt */
+    CHECK(dm2_v1_skproject_prepare_local_creature_var_classify(
+        0, 0, 0, 0, 0, 0, 0, 0, NULL) == 0,
+          "prepare: NULL receipt returns 0");
+    /* PREPARE prior context */
+    {
+        DM2_V1_SkprojectPrepareLocalCreatureVarReceipt r;
+        dm2_v1_skproject_prepare_local_creature_var_classify(
+            0x1234, 5, 3, 0x22, 100, 1, 7, (int8_t)0xFF, &r);
+        CHECK(r.had_prior_context == 1 && r.timer_type_is_0x22 == 1,
+              "prepare: prior context saved, type 0x22");
+    }
+
+    /* UNPREPARE NULL receipt */
+    CHECK(dm2_v1_skproject_unprepare_local_creature_var_classify(NULL, NULL) == 0,
+          "unprepare: NULL receipt returns 0");
+    /* UNPREPARE with context */
+    {
+        int dummy = 1;
+        DM2_V1_SkprojectUnprepareLocalCreatureVarReceipt r;
+        dm2_v1_skproject_unprepare_local_creature_var_classify(&dummy, &r);
+        CHECK(r.had_saved_context == 1 && r.restored == 1,
+              "unprepare: with context restores");
+    }
+    /* UNPREPARE without context */
+    {
+        DM2_V1_SkprojectUnprepareLocalCreatureVarReceipt r;
+        dm2_v1_skproject_unprepare_local_creature_var_classify(NULL, &r);
+        CHECK(r.cleared_v1e07ea == 1, "unprepare: clears v1e07ea");
+    }
+
+    /* ai_13e4_0360 NULL receipt */
+    CHECK(dm2_v1_skproject_ai_13e4_0360_classify(0, 0, 0, 0, 0, 0, 0, 0, 0, NULL) == 0,
+          "ai_13e4_0360: NULL receipt returns 0");
+    /* ai_13e4_0360 byte5 0xFF early exit */
+    {
+        DM2_V1_Skproject13e40360Receipt r;
+        dm2_v1_skproject_ai_13e4_0360_classify(
+            0x1000, 5, 3, 0x0A, 1, (int8_t)0xFF, 0, 0, 0, &r);
+        CHECK(r.creature_byte5_ff == 1 && r.wrote_behavior == 0,
+              "ai_13e4_0360: byte5 0xFF early exit");
+    }
+
+    /* ai_13e4_071b NULL receipt */
+    CHECK(dm2_v1_skproject_ai_13e4_071b_classify(0, 0, 0, 0, 0, NULL) == 0,
+          "ai_13e4_071b: NULL receipt returns 0");
+    /* ai_13e4_071b early exit 0x8001 */
+    {
+        DM2_V1_Skproject13e4071bReceipt r;
+        dm2_v1_skproject_ai_13e4_071b_classify(0, (int16_t)0x8001, 0x0F, 1000, 4, &r);
+        CHECK(r.early_exit_8001 == 1, "ai_13e4_071b: early exit 0x8001");
+    }
+    /* ai_13e4_071b modulo zero */
+    {
+        DM2_V1_Skproject13e4071bReceipt r;
+        dm2_v1_skproject_ai_13e4_071b_classify(100, (int16_t)0x4000, 0x0F, 8, 4, &r);
+        CHECK(r.modulo_zero == 1 && r.queued_timer == 0,
+              "ai_13e4_071b: modulo zero no timer");
+    }
+
+    /* ---- batch 24b: dtor, set_mouse, vsync, stretchblit, start_timer,
+       stop_timer, hide_mouse, ai_13e4_0806 ---- */
+
+    /* dtor NULL receipt */
+    CHECK(dm2_v1_skproject_dtor_classify(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL) == 0,
+          "dtor: NULL receipt returns 0");
+
+    /* set_mouse NULL receipt */
+    CHECK(dm2_v1_skproject_set_mouse_classify(10, 20, NULL, NULL, NULL) == 0,
+          "set_mouse: NULL receipt returns 0");
+    /* set_mouse scaling */
+    {
+        DM2_V1_SkprojectSetMouseReceipt r;
+        dm2_v1_skproject_set_mouse_classify(50, 100, NULL, NULL, &r);
+        CHECK(r.scaled_x == 100 && r.scaled_y == 200,
+              "set_mouse: x/y doubled");
+    }
+
+    /* vsync NULL receipt */
+    CHECK(dm2_v1_skproject_vsync_classify(NULL) == 0,
+          "vsync: NULL receipt returns 0");
+    /* vsync no-op */
+    {
+        DM2_V1_SkprojectVsyncReceipt r;
+        dm2_v1_skproject_vsync_classify(&r);
+        CHECK(r.called == 1, "vsync: called flag set");
+    }
+
+    /* stretchblit NULL receipt */
+    CHECK(dm2_v1_skproject_stretchblit_classify(NULL, 320, 200, NULL, NULL, NULL, NULL, NULL) == 0,
+          "stretchblit: NULL receipt returns 0");
+
+    /* start_timer NULL receipt */
+    CHECK(dm2_v1_skproject_start_timer_classify(NULL, NULL, NULL) == 0,
+          "start_timer: NULL receipt returns 0");
+
+    /* stop_timer NULL receipt */
+    CHECK(dm2_v1_skproject_stop_timer_classify(NULL, NULL, NULL) == 0,
+          "stop_timer: NULL receipt returns 0");
+
+    /* hide_mouse NULL receipt */
+    CHECK(dm2_v1_skproject_hide_mouse_classify(NULL, NULL, NULL) == 0,
+          "hide_mouse: NULL receipt returns 0");
+
+    /* ai_13e4_0806 NULL receipt */
+    CHECK(dm2_v1_skproject_ai_13e4_0806_classify(0, 0, 0, 0, NULL, NULL, NULL) == 0,
+          "ai_13e4_0806: NULL receipt returns 0");
+    /* ai_13e4_0806 early return */
+    {
+        DM2_V1_SkprojectAi13e40806Receipt r;
+        dm2_v1_skproject_ai_13e4_0806_classify(0x100, (int16_t)0x8002, 4, 1000, NULL, NULL, &r);
+        CHECK(r.early_return == 1, "ai_13e4_0806: early return on masked 0x8000 low>1");
+    }
+
+    /* source evidence batch 24 */
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(), "DM2_14cd_09e2") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_50CB") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_4EA8") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_ai_13e4_0806") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "dtor") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "set_mouse") != 0,
+          "source evidence names cycle-24 batch-24a+24b");
+
     if (failed) {
         printf("%d failure(s)\n", failed);
         return 1;

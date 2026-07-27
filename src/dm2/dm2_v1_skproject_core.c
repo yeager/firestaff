@@ -10483,7 +10483,13 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_14cd_1fa7/DM2_14cd_0f0a/DM2_14cd_0389 cycle-23 batch-23a; "
            "SKULLWIN/c_ai.cpp DM2_14cd_0457/DM2_14cd_0550/"
            "DM2_14cd_0276/DM2_14cd_0684/DM2_14cd_08f5/"
-           "DM2_DECIDE_NEXT_XACT/DM2_14cd_0067/DM2_SELECT_CREATURE_37FC cycle-23 batch-23b";
+           "DM2_DECIDE_NEXT_XACT/DM2_14cd_0067/DM2_SELECT_CREATURE_37FC cycle-23 batch-23b; "
+           "SKULLWIN/c_ai.cpp DM2_14cd_09e2/DM2_50CB/"
+           "DM2_13e4_0982/DM2_4EA8/DM2_PREPARE_LOCAL_CREATURE_VAR/"
+           "DM2_UNPREPARE_LOCAL_CREATURE_VAR/DM2_ai_13e4_0360/DM2_ai_13e4_071b cycle-24 batch-24a; "
+           "SKULLWIN/c_allegro.cpp dtor/set_mouse/vsync/stretchblit/"
+           "start_timer/stop_timer/hide_mouse; "
+           "SKULLWIN/c_ai.cpp DM2_ai_13e4_0806 cycle-24 batch-24b";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -23604,6 +23610,528 @@ int dm2_v1_skproject_select_creature_37fc_classify(
             /* v1e0588 = behavior_base + 6 * v1e0586 */
             out_receipt->v1e0586_result = 0; /* would come from 0067 */
             out_receipt->v1e0588_offset = 0; /* 6 * v1e0586 */
+        }
+    }
+
+    return 1;
+}
+int32_t dm2_v1_skproject_14cd_09e2_classify(
+    int8_t table_byte0,
+    int8_t v1e07ed_initial,
+    int8_t rand_dir_result,
+    int8_t creature_go_result,
+    int8_t v1e058d,
+    DM2_V1_Skproject14cd09e2Receipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    /* Determine direction from table byte 0x40 bit */
+    out_receipt->has_0x40_flag = (table_byte0 & 0x40) != 0;
+    if (!(table_byte0 & 0x40)) {
+        /* direction = ((byte0 & 0x20) == 0 ? 1 : 0) + 4 */
+        out_receipt->direction = ((table_byte0 & 0x20) == 0 ? 1 : 0) + 4;
+    } else {
+        out_receipt->direction = v1e07ed_initial;
+    }
+
+    out_receipt->alloc_pool = 1;
+    out_receipt->rand_dir_zero = (rand_dir_result == 0) ? 1 : 0;
+
+    /* If 0x40 set, jump to fin immediately */
+    if (table_byte0 & 0x40) {
+        out_receipt->finalized = 1;
+        return 1;
+    }
+
+    /* CREATURE_GO_THERE check */
+    out_receipt->creature_go_result = creature_go_result;
+    if (creature_go_result != 0) {
+        out_receipt->finalized = 1;
+        return 1;
+    }
+
+    out_receipt->direction_is_5 = (out_receipt->direction == 5) ? 1 : 0;
+    out_receipt->v1e058d_nonzero = (v1e058d != 0) ? 1 : 0;
+    out_receipt->finalized = 1;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_50cb_classify(
+    int8_t creature_type,
+    int16_t initial_offset,
+    int16_t edx_index,
+    const uint8_t *gdat_data,
+    int32_t gdat_data_len,
+    DM2_V1_Skproject50CBReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    int16_t offset = initial_offset;
+    out_receipt->offset_was_ffff = ((uint16_t)initial_offset == 0xFFFF) ? 1 : 0;
+
+    if ((uint16_t)initial_offset == 0xFFFF) {
+        offset = 0;
+    } else {
+        /* offset += edx_index; read byte at 4*offset+2 & 0x3f */
+        int32_t idx = (int32_t)(uint16_t)offset + (int32_t)(uint16_t)edx_index;
+        int32_t byte_off = 4 * idx + 2;
+        if (byte_off >= 0 && byte_off < gdat_data_len) {
+            out_receipt->entry_mask_3f = gdat_data[byte_off] & 0x3F;
+            if (out_receipt->entry_mask_3f != 0) {
+                offset += out_receipt->entry_mask_3f;
+            } else {
+                out_receipt->return_code = 2;
+                out_receipt->offset_result = offset;
+                return 1;
+            }
+        }
+    }
+
+    /* Read high nibble at 4*(offset+edx_index)+1 */
+    {
+        int32_t idx2 = (int32_t)(uint16_t)offset + (int32_t)(uint16_t)edx_index;
+        int32_t byte_off2 = 4 * idx2 + 1;
+        if (byte_off2 >= 0 && byte_off2 < gdat_data_len) {
+            out_receipt->high_nibble = (gdat_data[byte_off2] & 0xF0) >> 4;
+            out_receipt->return_code = (out_receipt->high_nibble != 0) ? 1 : 0;
+        }
+    }
+
+    out_receipt->offset_result = offset;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_13e4_0982_classify(
+    int8_t savegame_b03,
+    int8_t ai_spec_byte1,
+    int8_t creature_byte_0x1a,
+    int8_t creature_byte_0x17,
+    int8_t timer_type,
+    DM2_V1_Skproject13e40982Receipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->savegame_b03_zero = (savegame_b03 == 0) ? 1 : 0;
+    out_receipt->has_0x10_flag = (ai_spec_byte1 & 0x10) ? 1 : 0;
+    out_receipt->behavior_0x1a = creature_byte_0x1a;
+    out_receipt->behavior_0x17 = creature_byte_0x17;
+    out_receipt->is_type_0x22 = (timer_type == 0x22) ? 1 : 0;
+
+    /* skip00261 logic: skip if b03==0, or 0x10 flag set, or neither byte is 0x13 */
+    int8_t skip261 = 0;
+    if (savegame_b03 == 0) {
+        skip261 = 1;
+    } else if (ai_spec_byte1 & 0x10) {
+        skip261 = 1;
+    } else {
+        /* Check if creature can act: byte 0x1a != 0x13 AND byte 0x17 != 0x13 => can act */
+        if (creature_byte_0x1a != 0x13 && creature_byte_0x17 != 0x13) {
+            /* RG1L = 1, not skip */
+        } else {
+            skip261 = 1;
+        }
+    }
+
+    if (skip261) {
+        out_receipt->skip_to_dispatch = 1;
+        if (timer_type == 0x22) {
+            /* Type 0x22 path: copy behavior, possibly call 14cd_09e2 */
+            out_receipt->action_is_0xff = (creature_byte_0x17 == (int8_t)0xFF) ? 1 : 0;
+        } else {
+            /* Non-0x22: call DM2_4FCC dispatch */
+            out_receipt->skip_to_dispatch = 1;
+        }
+    }
+
+    out_receipt->queue_timer = 1;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_4ea8_classify(
+    int8_t creature_type,
+    int16_t start_index,
+    const uint8_t *gdat_data,
+    int32_t gdat_data_len,
+    DM2_V1_Skproject4EA8Receipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->creature_type = creature_type;
+    out_receipt->start_index = start_index;
+
+    /* Count entries: start at 4*start_index, step by 4, check byte+1 high nibble */
+    int32_t count = 1;
+    int32_t pos = (int32_t)(uint16_t)start_index * 4;
+    for (;;) {
+        int32_t byte_off = pos + 1;
+        if (byte_off < 0 || byte_off >= gdat_data_len) break;
+        uint8_t high = (gdat_data[byte_off] & 0xF0) >> 4;
+        if (high == 0) break;
+        count++;
+        pos += 4;
+    }
+    out_receipt->tick_count = count;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_prepare_local_creature_var_classify(
+    int16_t record_word,
+    int8_t edx_byte,
+    int8_t ebx_byte,
+    int16_t ecx_word,
+    int16_t prior_map_index,
+    int8_t v1e07ea,
+    int8_t creature_record_byte5,
+    int8_t creature_byte_0x1a,
+    DM2_V1_SkprojectPrepareLocalCreatureVarReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->record_word = record_word;
+    out_receipt->saved_map_index = prior_map_index;
+    out_receipt->had_prior_context = (v1e07ea != 0) ? 1 : 0;
+    out_receipt->creature_index_ff = (creature_record_byte5 == (int8_t)0xFF) ? 1 : 0;
+    out_receipt->timer_type_is_0x22 = (ecx_word == 0x22) ? 1 : 0;
+
+    if (ecx_word == 0x22) {
+        out_receipt->behavior_0x1a_was_ff = (creature_byte_0x1a == (int8_t)0xFF) ? 1 : 0;
+    }
+
+    return 1;
+}
+
+int32_t dm2_v1_skproject_unprepare_local_creature_var_classify(
+    void *saved_context,
+    DM2_V1_SkprojectUnprepareLocalCreatureVarReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (saved_context != NULL) {
+        out_receipt->had_saved_context = 1;
+        out_receipt->restored = 1;
+        /* Would call DM2_COPY_C350 and DEALLOC_LOBIGPOOL(0x350) */
+    } else {
+        out_receipt->had_saved_context = 0;
+        out_receipt->cleared_v1e07ea = 1;
+        /* v1e07ea = 0 */
+    }
+
+    return 1;
+}
+
+int32_t dm2_v1_skproject_ai_13e4_0360_classify(
+    int16_t record_word,
+    int16_t edx_pos,
+    int16_t ebx_pos,
+    int8_t ecx_behavior,
+    int32_t argl0,
+    int8_t creature_byte5,
+    int8_t creature_byte_0x17,
+    int8_t creature_byte_0x1a,
+    int8_t table_entry,
+    DM2_V1_Skproject13e40360Receipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->record_was_ffff = ((uint16_t)record_word == 0xFFFF) ? 1 : 0;
+    out_receipt->argl0_nonzero = (argl0 != 0) ? 1 : 0;
+
+    /* If record == -1, need to look up creature at position */
+    if ((uint16_t)record_word == 0xFFFF) {
+        /* Would call DM2_GET_CREATURE_AT; assume found for classification */
+        out_receipt->creature_found = 1;
+    } else {
+        out_receipt->creature_found = 1;
+    }
+
+    out_receipt->creature_byte5_ff = (creature_byte5 == (int8_t)0xFF) ? 1 : 0;
+    if (creature_byte5 == (int8_t)0xFF) return 1; /* early exit */
+
+    out_receipt->behavior_0x17_is_0x13 = (creature_byte_0x17 == 0x13) ? 1 : 0;
+    out_receipt->behavior_0x1a_is_0x13 = (creature_byte_0x1a == 0x13) ? 1 : 0;
+
+    if (creature_byte_0x17 == 0x13) return 1; /* early exit */
+    if (creature_byte_0x1a == 0x13) return 1; /* early exit */
+
+    out_receipt->wrote_behavior = 1;
+    /* mov8(creature + 0x17, ecx_behavior) */
+
+    if (argl0 != 0) {
+        out_receipt->table_0x10_set = (table_entry & 0x10) ? 1 : 0;
+        /* If table & 0x10: set creature+0x21 = 1 */
+        /* Else: call DM2_1c9a_0db0 and DM2_1c9a_0cf7 */
+    }
+
+    return 1;
+}
+
+int32_t dm2_v1_skproject_ai_13e4_071b_classify(
+    int16_t v1e055e_word0,
+    int16_t v1e055e_word2,
+    int8_t creature_type,
+    int32_t gametick,
+    int32_t tick_count_from_4ea8,
+    DM2_V1_Skproject13e4071bReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    /* Check early exit: (word2 & 0xe03f) == 0x8001 */
+    uint16_t masked = (uint16_t)v1e055e_word2 & 0xE03F;
+    out_receipt->early_exit_8001 = (masked == 0x8001) ? 1 : 0;
+    if (masked == 0x8001) return 1;
+
+    out_receipt->tick_count = tick_count_from_4ea8;
+    out_receipt->fc0_field = (int16_t)((uint16_t)v1e055e_word2 & 0xFC0);
+
+    /* (fc0 + gametick) % tick_count */
+    if (tick_count_from_4ea8 > 0) {
+        int32_t sum = (int32_t)((uint16_t)v1e055e_word2 & 0xFC0) + gametick;
+        int32_t remainder = sum % tick_count_from_4ea8;
+        out_receipt->modulo_zero = (remainder == 0) ? 1 : 0;
+
+        if (remainder != 0) {
+            out_receipt->queued_timer = 1;
+            /* word2 = fc0 | tick_count | 0xc000; queue timer */
+        }
+        /* If remainder == 0: word2 = fc0 | 0x8001 (done marker) */
+    }
+
+    return 1;
+}
+/* --- 1. dtor --- */
+int32_t dm2_v1_skproject_dtor_classify(
+    void *thread, void *timer, void *event_queue, void *display,
+    DM2V1_JoinThreadCallback join_thread_cb,
+    DM2V1_DestroyThreadCallback destroy_thread_cb,
+    DM2V1_DestroyTimerCallback destroy_timer_cb,
+    DM2V1_DestroyEventQueueCallback destroy_eq_cb,
+    DM2V1_DestroyDisplayCallback destroy_display_cb,
+    DM2_V1_SkprojectDtorReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (join_thread_cb != NULL && thread != NULL) {
+        join_thread_cb(thread);
+        out_receipt->thread_joined = 1;
+    }
+    if (destroy_thread_cb != NULL && thread != NULL) {
+        destroy_thread_cb(thread);
+        out_receipt->thread_destroyed = 1;
+    }
+
+    out_receipt->timer_was_present = (timer != NULL) ? 1 : 0;
+    if (timer != NULL && destroy_timer_cb != NULL) {
+        destroy_timer_cb(timer);
+        out_receipt->timer_destroyed = 1;
+    }
+
+    out_receipt->event_queue_was_present = (event_queue != NULL) ? 1 : 0;
+    if (event_queue != NULL && destroy_eq_cb != NULL) {
+        destroy_eq_cb(event_queue);
+        out_receipt->event_queue_destroyed = 1;
+    }
+
+    out_receipt->display_was_present = (display != NULL) ? 1 : 0;
+    if (display != NULL && destroy_display_cb != NULL) {
+        destroy_display_cb(display);
+        out_receipt->display_destroyed = 1;
+    }
+
+    return 1;
+}
+
+/* --- 2. set_mouse --- */
+int32_t dm2_v1_skproject_set_mouse_classify(
+    int16_t x, int16_t y,
+    void *display,
+    DM2V1_SetMouseXYCallback set_mouse_cb,
+    DM2_V1_SkprojectSetMouseReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->input_x = x;
+    out_receipt->input_y = y;
+    out_receipt->scaled_x = (int32_t)x << 1;
+    out_receipt->scaled_y = (int32_t)y << 1;
+
+    if (set_mouse_cb != NULL && display != NULL) {
+        set_mouse_cb(display, out_receipt->scaled_x, out_receipt->scaled_y);
+    }
+
+    return 1;
+}
+
+/* --- 3. vsync --- */
+int32_t dm2_v1_skproject_vsync_classify(
+    DM2_V1_SkprojectVsyncReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    /* skproject: vsync body is commented out (no-op) */
+    out_receipt->called = 1;
+
+    return 1;
+}
+
+/* --- 4. stretchblit --- */
+int32_t dm2_v1_skproject_stretchblit_classify(
+    int8_t *bptr, int16_t width, int16_t height,
+    void *display,
+    DM2V1_StretchblitLockCallback lock_cb,
+    DM2V1_StretchblitUnlockCallback unlock_cb,
+    DM2V1_FlipDisplayCallback flip_cb,
+    DM2_V1_SkprojectStretchblitReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->width = width;
+    out_receipt->height = height;
+
+    if (bptr == NULL || lock_cb == NULL) return 1;
+
+    int32_t pitch = 0;
+    int32_t lock_ok = lock_cb(display, &pitch);
+    if (!lock_ok) {
+        out_receipt->lock_succeeded = 0;
+        return 1;
+    }
+    out_receipt->lock_succeeded = 1;
+
+    /* Pixel doubling loop is platform-specific; receipt records completion */
+    out_receipt->blit_completed = 1;
+
+    if (unlock_cb != NULL) {
+        unlock_cb(display);
+        out_receipt->unlock_called = 1;
+    }
+    if (flip_cb != NULL) {
+        flip_cb();
+        out_receipt->flip_called = 1;
+    }
+
+    return 1;
+}
+
+/* --- 5. start_timer --- */
+int32_t dm2_v1_skproject_start_timer_classify(
+    void *timer,
+    DM2V1_StartTimerCallback start_cb,
+    DM2_V1_SkprojectStartTimerReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (start_cb != NULL && timer != NULL) {
+        start_cb(timer);
+        out_receipt->timer_started = 1;
+    }
+
+    return 1;
+}
+
+/* --- 6. stop_timer --- */
+int32_t dm2_v1_skproject_stop_timer_classify(
+    void *timer,
+    DM2V1_StopTimerCallback stop_cb,
+    DM2_V1_SkprojectStopTimerReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (stop_cb != NULL && timer != NULL) {
+        stop_cb(timer);
+        out_receipt->timer_stopped = 1;
+    }
+
+    return 1;
+}
+
+/* --- 7. hide_mouse --- */
+int32_t dm2_v1_skproject_hide_mouse_classify(
+    void *display,
+    DM2V1_HideMouseCursorCallback hide_cb,
+    DM2_V1_SkprojectHideMouseReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (hide_cb != NULL && display != NULL) {
+        hide_cb(display);
+        out_receipt->cursor_hidden = 1;
+    }
+
+    return 1;
+}
+
+/* --- 8. DM2_ai_13e4_0806 --- */
+int32_t dm2_v1_skproject_ai_13e4_0806_classify(
+    int16_t word0, int16_t word2,
+    int8_t creature_byte4, int32_t gametick,
+    DM2V1_Ai4EA8Callback ai_4ea8_cb,
+    DM2V1_Ai1c9a0db0Callback ai_1c9a_0db0_cb,
+    DM2_V1_SkprojectAi13e40806Receipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->word0 = word0;
+    out_receipt->word2 = word2;
+
+    /* mask upper 3 bits of word2 */
+    int16_t masked_e000 = word2 & (int16_t)0xe000;
+    out_receipt->masked_e000 = masked_e000;
+
+    if ((uint16_t)masked_e000 == 0x8000u) {
+        int16_t masked_3f = word2 & 0x3f;
+        if ((uint16_t)masked_3f > 0x01u) {
+            out_receipt->early_return = 1;
+            return 1;
+        }
+    }
+
+    /* DM2_4EA8(creature_byte4, word0) */
+    int32_t val_4ea8 = 0;
+    if (ai_4ea8_cb != NULL) {
+        val_4ea8 = ai_4ea8_cb((int32_t)(uint8_t)creature_byte4, (int32_t)(uint16_t)word0);
+    }
+    out_receipt->computed_4ea8 = val_4ea8;
+
+    int16_t rg3w = (int16_t)(val_4ea8 & 0xffff);
+    int16_t rg5w = word2;
+    int16_t fc0_part = rg5w & (int16_t)0x0fc0;
+
+    int32_t sum = (int32_t)(uint16_t)fc0_part + gametick;
+    int16_t rg4w = (int16_t)(sum % (int32_t)rg3w);
+
+    int16_t rg1w = (int16_t)((val_4ea8 & 0xffff) | fc0_part);
+
+    if (rg4w == 0) {
+        /* tick_mod_zero path: set high byte bit 7 */
+        rg1w = (int16_t)((uint16_t)rg1w | 0x8000u);
+        out_receipt->tick_mod_zero = 1;
+        out_receipt->final_word2 = rg1w;
+        out_receipt->timer_queued = 0;
+    } else {
+        /* non-zero path: set high byte bits 7+5, queue timer */
+        rg1w = (int16_t)((uint16_t)rg1w | 0xa000u);
+        out_receipt->tick_mod_zero = 0;
+        out_receipt->final_word2 = rg1w;
+        out_receipt->timer_queued = 1;
+
+        if (ai_1c9a_0db0_cb != NULL) {
+            ai_1c9a_0db0_cb((int32_t)(uint16_t)word0);
         }
     }
 

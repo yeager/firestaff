@@ -9096,5 +9096,242 @@ int dm2_v1_skproject_select_creature_37fc_classify(
     DM2V1_QueryGdatCreatureCallback query_gdat_cb,
     DM2_V1_SkprojectSelectCreature37FCReceipt *out_receipt);
 
+/* ---- batch 24a: SKULLWIN/c_ai.cpp DM2_14cd_09e2, DM2_50CB,
+   DM2_13e4_0982, DM2_4EA8, DM2_PREPARE_LOCAL_CREATURE_VAR,
+   DM2_UNPREPARE_LOCAL_CREATURE_VAR, DM2_ai_13e4_0360, DM2_ai_13e4_071b ---- */
+
+typedef struct {
+    int8_t direction;
+    int8_t alloc_pool;
+    int8_t rand_dir_zero;
+    int8_t has_0x40_flag;
+    int8_t creature_go_result;
+    int8_t direction_is_5;
+    int8_t v1e058d_nonzero;
+    int8_t finalized;
+} DM2_V1_Skproject14cd09e2Receipt;
+
+int32_t dm2_v1_skproject_14cd_09e2_classify(
+    int8_t table_byte0, int8_t v1e07ed_initial,
+    int8_t rand_dir_result, int8_t creature_go_result,
+    int8_t v1e058d,
+    DM2_V1_Skproject14cd09e2Receipt *out_receipt);
+
+typedef struct {
+    int16_t offset_result;
+    int8_t entry_mask_3f;
+    int8_t high_nibble;
+    int8_t return_code;
+    int8_t offset_was_ffff;
+} DM2_V1_Skproject50CBReceipt;
+
+int32_t dm2_v1_skproject_50cb_classify(
+    int8_t creature_type, int16_t initial_offset,
+    int16_t edx_index, const uint8_t *gdat_data,
+    int32_t gdat_data_len,
+    DM2_V1_Skproject50CBReceipt *out_receipt);
+
+typedef struct {
+    int8_t savegame_b03_zero;
+    int8_t has_0x10_flag;
+    int8_t behavior_0x1a;
+    int8_t behavior_0x17;
+    int8_t is_type_0x22;
+    int8_t action_is_0xff;
+    int8_t queue_timer;
+    int8_t skip_to_dispatch;
+} DM2_V1_Skproject13e40982Receipt;
+
+int32_t dm2_v1_skproject_13e4_0982_classify(
+    int8_t savegame_b03, int8_t ai_spec_byte1,
+    int8_t creature_byte_0x1a, int8_t creature_byte_0x17,
+    int8_t timer_type,
+    DM2_V1_Skproject13e40982Receipt *out_receipt);
+
+typedef struct {
+    int32_t tick_count;
+    int8_t creature_type;
+    int16_t start_index;
+} DM2_V1_Skproject4EA8Receipt;
+
+int32_t dm2_v1_skproject_4ea8_classify(
+    int8_t creature_type, int16_t start_index,
+    const uint8_t *gdat_data, int32_t gdat_data_len,
+    DM2_V1_Skproject4EA8Receipt *out_receipt);
+
+typedef struct {
+    int8_t had_prior_context;
+    int8_t creature_index_ff;
+    int8_t timer_type_is_0x22;
+    int8_t behavior_0x1a_was_ff;
+    int16_t record_word;
+    int16_t saved_map_index;
+} DM2_V1_SkprojectPrepareLocalCreatureVarReceipt;
+
+int32_t dm2_v1_skproject_prepare_local_creature_var_classify(
+    int16_t record_word, int8_t edx_byte, int8_t ebx_byte,
+    int16_t ecx_word, int16_t prior_map_index,
+    int8_t v1e07ea, int8_t creature_record_byte5,
+    int8_t creature_byte_0x1a,
+    DM2_V1_SkprojectPrepareLocalCreatureVarReceipt *out_receipt);
+
+typedef struct {
+    int8_t had_saved_context;
+    int8_t restored;
+    int8_t cleared_v1e07ea;
+} DM2_V1_SkprojectUnprepareLocalCreatureVarReceipt;
+
+int32_t dm2_v1_skproject_unprepare_local_creature_var_classify(
+    void *saved_context,
+    DM2_V1_SkprojectUnprepareLocalCreatureVarReceipt *out_receipt);
+
+typedef struct {
+    int8_t record_was_ffff;
+    int8_t creature_found;
+    int8_t creature_byte5_ff;
+    int8_t behavior_0x17_is_0x13;
+    int8_t behavior_0x1a_is_0x13;
+    int8_t wrote_behavior;
+    int8_t table_0x10_set;
+    int8_t argl0_nonzero;
+} DM2_V1_Skproject13e40360Receipt;
+
+int32_t dm2_v1_skproject_ai_13e4_0360_classify(
+    int16_t record_word, int16_t edx_pos, int16_t ebx_pos,
+    int8_t ecx_behavior, int32_t argl0,
+    int8_t creature_byte5, int8_t creature_byte_0x17,
+    int8_t creature_byte_0x1a, int8_t table_entry,
+    DM2_V1_Skproject13e40360Receipt *out_receipt);
+
+typedef struct {
+    int8_t early_exit_8001;
+    int32_t tick_count;
+    int16_t fc0_field;
+    int8_t modulo_zero;
+    int8_t queued_timer;
+} DM2_V1_Skproject13e4071bReceipt;
+
+int32_t dm2_v1_skproject_ai_13e4_071b_classify(
+    int16_t v1e055e_word0, int16_t v1e055e_word2,
+    int8_t creature_type, int32_t gametick,
+    int32_t tick_count_from_4ea8,
+    DM2_V1_Skproject13e4071bReceipt *out_receipt);
+
+/* ---- batch 24b: SKULLWIN/c_allegro.cpp dtor, set_mouse, vsync,
+   stretchblit, start_timer, stop_timer, hide_mouse;
+   SKULLWIN/c_ai.cpp DM2_ai_13e4_0806 ---- */
+
+typedef void (*DM2V1_JoinThreadCallback)(void *thread);
+typedef void (*DM2V1_DestroyThreadCallback)(void *thread);
+typedef void (*DM2V1_DestroyTimerCallback)(void *timer);
+typedef void (*DM2V1_DestroyEventQueueCallback)(void *queue);
+typedef void (*DM2V1_DestroyDisplayCallback)(void *display);
+typedef void (*DM2V1_SetMouseXYCallback)(void *display, int32_t x, int32_t y);
+typedef void (*DM2V1_StartTimerCallback)(void *timer);
+typedef void (*DM2V1_StopTimerCallback)(void *timer);
+typedef void (*DM2V1_HideMouseCursorCallback)(void *display);
+typedef int32_t (*DM2V1_StretchblitLockCallback)(void *display, int32_t *pitch);
+typedef void (*DM2V1_StretchblitUnlockCallback)(void *display);
+typedef void (*DM2V1_FlipDisplayCallback)(void);
+typedef int32_t (*DM2V1_Ai4EA8Callback)(int32_t byte4, int32_t word0);
+typedef void (*DM2V1_Ai1c9a0db0Callback)(int32_t val);
+
+typedef struct {
+    int8_t thread_joined;
+    int8_t thread_destroyed;
+    int8_t timer_destroyed;
+    int8_t event_queue_destroyed;
+    int8_t display_destroyed;
+    int8_t timer_was_present;
+    int8_t event_queue_was_present;
+    int8_t display_was_present;
+} DM2_V1_SkprojectDtorReceipt;
+
+int32_t dm2_v1_skproject_dtor_classify(
+    void *thread, void *timer, void *event_queue, void *display,
+    DM2V1_JoinThreadCallback join_thread_cb,
+    DM2V1_DestroyThreadCallback destroy_thread_cb,
+    DM2V1_DestroyTimerCallback destroy_timer_cb,
+    DM2V1_DestroyEventQueueCallback destroy_eq_cb,
+    DM2V1_DestroyDisplayCallback destroy_display_cb,
+    DM2_V1_SkprojectDtorReceipt *out_receipt);
+
+typedef struct {
+    int16_t input_x;
+    int16_t input_y;
+    int32_t scaled_x;
+    int32_t scaled_y;
+} DM2_V1_SkprojectSetMouseReceipt;
+
+int32_t dm2_v1_skproject_set_mouse_classify(
+    int16_t x, int16_t y, void *display,
+    DM2V1_SetMouseXYCallback set_mouse_cb,
+    DM2_V1_SkprojectSetMouseReceipt *out_receipt);
+
+typedef struct {
+    int8_t called;
+} DM2_V1_SkprojectVsyncReceipt;
+
+int32_t dm2_v1_skproject_vsync_classify(
+    DM2_V1_SkprojectVsyncReceipt *out_receipt);
+
+typedef struct {
+    int8_t lock_succeeded;
+    int8_t blit_completed;
+    int8_t unlock_called;
+    int8_t flip_called;
+    int16_t height;
+    int16_t width;
+} DM2_V1_SkprojectStretchblitReceipt;
+
+int32_t dm2_v1_skproject_stretchblit_classify(
+    int8_t *bptr, int16_t width, int16_t height, void *display,
+    DM2V1_StretchblitLockCallback lock_cb,
+    DM2V1_StretchblitUnlockCallback unlock_cb,
+    DM2V1_FlipDisplayCallback flip_cb,
+    DM2_V1_SkprojectStretchblitReceipt *out_receipt);
+
+typedef struct {
+    int8_t timer_started;
+} DM2_V1_SkprojectStartTimerReceipt;
+
+int32_t dm2_v1_skproject_start_timer_classify(
+    void *timer, DM2V1_StartTimerCallback start_cb,
+    DM2_V1_SkprojectStartTimerReceipt *out_receipt);
+
+typedef struct {
+    int8_t timer_stopped;
+} DM2_V1_SkprojectStopTimerReceipt;
+
+int32_t dm2_v1_skproject_stop_timer_classify(
+    void *timer, DM2V1_StopTimerCallback stop_cb,
+    DM2_V1_SkprojectStopTimerReceipt *out_receipt);
+
+typedef struct {
+    int8_t cursor_hidden;
+} DM2_V1_SkprojectHideMouseReceipt;
+
+int32_t dm2_v1_skproject_hide_mouse_classify(
+    void *display, DM2V1_HideMouseCursorCallback hide_cb,
+    DM2_V1_SkprojectHideMouseReceipt *out_receipt);
+
+typedef struct {
+    int16_t word0;
+    int16_t word2;
+    int16_t masked_e000;
+    int8_t early_return;
+    int8_t tick_mod_zero;
+    int32_t computed_4ea8;
+    int16_t final_word2;
+    int8_t timer_queued;
+} DM2_V1_SkprojectAi13e40806Receipt;
+
+int32_t dm2_v1_skproject_ai_13e4_0806_classify(
+    int16_t word0, int16_t word2,
+    int8_t creature_byte4, int32_t gametick,
+    DM2V1_Ai4EA8Callback ai_4ea8_cb,
+    DM2V1_Ai1c9a0db0Callback ai_1c9a_0db0_cb,
+    DM2_V1_SkprojectAi13e40806Receipt *out_receipt);
+
 
 #endif
