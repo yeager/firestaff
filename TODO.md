@@ -15,6 +15,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-CDDA-CUE-RUNTIME-BINDING:** Closed 2026-07-27. M11 now recovers
+  only the strict CUE pair that declares the already hash-verified Track 02
+  payload, so a normal BIN launch can bind original Track 01 CDDA without a
+  sibling-name heuristic. The real USA CUE regression proves the same CUE is
+  retained through boot and runtime lookup; Track 01 handoff and raw-CUE boot
+  tests pass.
+
 - **THERON-CUE-BOOT-PROVENANCE:** Closed 2026-07-27. Theron boot now
   prefers a strict readable CUE package whose Track 02 payload matches a
   canonical hash over a loose discovered Track 02. The boot profile retains

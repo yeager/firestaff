@@ -1,6 +1,7 @@
 #include "asset_status_m12.h"
 #include "firestaff_data_validator.h"
 #include "firestaff_startup.h"
+#include "firestaff_theron_media_classify.h"
 #include "theron_v1_boot.h"
 
 #include <stdio.h>
@@ -249,6 +250,7 @@ static void check_real_theron_cue_boot_provenance(const char *cue_path) {
     char root[512];
     char *slash;
     Theron_V1_BootProfile profile;
+    FirestaffTheronMediaStatus media;
 
     if (!cue_path || !cue_path[0] || strlen(cue_path) >= sizeof(root)) {
         return;
@@ -271,6 +273,13 @@ static void check_real_theron_cue_boot_provenance(const char *cue_path) {
                 "Theron boot consumes the strict CUE package when available");
     expect_str_eq(profile.track02_cue_path, cue_path,
                   "Theron boot retains the selected CUE provenance path");
+    expect_true(FirestaffTheronMedia_FindCuePairForTrack02(
+                    root, profile.graphics_path, &media) == 0,
+                "selected Track 02 has an exact CUE Track 01 pair");
+    expect_true(media.paired_track01_track02 == 1,
+                "selected CUE keeps Track 01 and Track 02 paired");
+    expect_str_eq(media.cue_path, cue_path,
+                  "runtime CDDA lookup recovers the same selected CUE path");
 }
 
 static void check_fake_iso_fallback(const char *region_dir,

@@ -1,3 +1,10 @@
+- ✅ 2026-07-27 Theron runtime CDDA CUE binding. Normal M11 Track 02 launches
+  now recover only a strict CUE declaration whose Track 02 path exactly
+  matches the hash-verified payload, then bind Track 01 audio from that same
+  source provenance. It does not infer an audio sibling for loose media.
+  Authentic USA CUE availability, Track 01 handoff, raw-CUE runtime boot and
+  direct boot probe pass.
+
 - ✅ 2026-07-27 Theron CUE boot provenance. `theron_v1_boot_scan_assets()`
   now prioritizes a strict CUE-declared Track 02 only after it passes the
   canonical MD5 gate, retaining the selected CUE path/consumption receipt in

@@ -56,6 +56,7 @@
 
 #include "asset_status_m12.h"
 #include "asset_find_by_hash.h"
+#include "firestaff_theron_media_classify.h"
 #include "config_m12.h"
 #include "firestaff_accessibility.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
@@ -17760,6 +17761,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     Theron_V1_BootStartupLaunch launch;
     Theron_V1_BootStartupRuntimeReceipt runtime_receipt;
     const char *cdda_cue_path = NULL;
+    char discovered_cdda_cue_path[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY] = {0};
     int savedDebugHUD;
     int raw_track02_bypass = 0;
 
@@ -17911,6 +17913,23 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         cdda_cue_path = campaignMedia->direct_media.media_path;
     } else if (m11_path_has_extension(verifiedPath, ".cue")) {
         cdda_cue_path = verifiedPath;
+    } else {
+        /* A normal launch receives the verified Track 02 payload, not the
+         * CUE filename. Recover only a strict CUE pair that declares this
+         * exact payload, so Track 01 audio keeps the same source provenance
+         * instead of being inferred from a sibling filename. */
+        FirestaffTheronMediaStatus cdda_media;
+        if (dataDir && FirestaffTheronMedia_FindCuePairForTrack02(
+                dataDir, verifiedPath, &cdda_media) == 0 &&
+            cdda_media.has_cue && cdda_media.paired_track01_track02 &&
+            cdda_media.cue_path[0] &&
+            strcmp(cdda_media.track02_path, verifiedPath) == 0) {
+            snprintf(discovered_cdda_cue_path,
+                     sizeof(discovered_cdda_cue_path),
+                     "%s",
+                     cdda_media.cue_path);
+            cdda_cue_path = discovered_cdda_cue_path;
+        }
     }
     m11_theron_bind_track01_cdda_handoff(state, cdda_cue_path, verifiedMd5);
     m11_theron_update_track01_cdda_lifecycle(state);
