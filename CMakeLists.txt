@@ -36851,6 +36851,16 @@ if(BUILD_TESTING AND THERON_SOURCES)
         NAME theron_v1_m11_direct_launch
         COMMAND test_theron_v1_m11_direct_launch
     )
+
+    add_test(
+        NAME theron_v1_raw_cue_runtime_boot
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_raw_cue_runtime_boot.sh
+                $<TARGET_FILE:firestaff>
+    )
+    set_tests_properties(theron_v1_raw_cue_runtime_boot PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;real-media;startup"
+    )
 endif()
 
 # ── Theron V1 Phase 5 — Launcher Scan Reuse Test ──────────────────

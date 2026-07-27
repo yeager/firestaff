@@ -18423,6 +18423,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   raw BIN/ISO paths remain silent. The local authentic USA CUE passes both
   the availability and handoff tests through `FIRESTAFF_THERON_CUE`.
 
+- 2026-07-27 Theron raw-CUE runtime launch regression: the current M11 path
+  reaches the real startup route from the authentic USA MODE1/2352 CUE/BIN
+  set (`f23601102138f87c33025877767ebf76`) and no longer relies on a direct
+  Track-02-only probe. The focused runtime CTest advances title, stage, and
+  Soul Room inputs under the dummy SDL driver, then requires
+  `phase=theron-startup-2` and the original US asset identity. This proves
+  startup admission and flow only; it does not promote unbound Track 02
+  graphics, later dungeon records, or save semantics.
+
 - 🔧 Track 02 graphics-format follow-up: the real hash-verified JP/US raw-BIN
   catalog found 1,522 strict HuC6260-shaped windows and 78 strict LE16
   stride-shaped windows across 2,022 exact matching nonzero MODE1 sectors.

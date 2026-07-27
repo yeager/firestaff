@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 Theron authentic raw-CUE runtime boot regression. Added the
+  `theron_v1_raw_cue_runtime_boot` CTest, which is skip-safe without staged
+  media and otherwise launches Firestaff through the production M11 path
+  using the authentic USA MODE1/2352 CUE/BIN set. It requires the verified
+  Track 02 MD5, then advances title, stage, and Soul Room into
+  `theron-startup-2`. The five focused direct-launch/raw-media tests pass.
 - ✅ 2026-07-27 Theron `$e009` CD-control correlation. The active Mednafen
   producer now records PCE-CD ports 0--4 only inside a bounded main-RAM
   `$e009` call window, retaining the exact System Card writer PC, port, and
