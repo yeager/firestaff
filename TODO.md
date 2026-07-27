@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-DIRECT-CUE-LAUNCHER-PAYLOAD:** Closed 2026-07-27. M12 now publishes
+  the CUE-declared, hash-verified Track 02 member as the direct-launch payload
+  rather than mistakenly treating the CUE manifest as that payload. The full
+  `--game theron --data-dir <cue>` headless launch now reaches the real title
+  and initial level route.
+
 - **THERON-DIRECT-TRACK02-BOOT:** Closed 2026-07-27. A directly selected
   Track 02 `.bin` or `.iso` now uses the canonical-MD5 boot path without a
   parent-directory rescan. It retains the exact selected payload and never

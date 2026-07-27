@@ -1808,7 +1808,11 @@ static int m12_try_match_direct_theron_request(
         if (!m12_derive_theron_runtime_root_for_file(requestedDataDir, runtimeRoot)) {
             return 0;
         }
-        m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, requestedDataDir);
+        /* A direct CUE is a package manifest, not the runtime payload.  The
+         * MD5 above is deliberately over its declared Track 02 member, so the
+         * matched path must name that same member for cache materialization,
+         * boot and later CUE/CDDA provenance recovery. */
+        m12_copy_string(matchedPath, M12_ASSET_DATA_DIR_CAPACITY, payloadPath);
         m12_copy_string(matchedMd5, M12_ASSET_MD5_CAPACITY, md5);
         if (outVersionIndex) {
             *outVersionIndex = versionIndex;

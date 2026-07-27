@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron direct CUE launcher payload. M12 now carries the
+  CUE-declared, hash-verified Track 02 member through cache materialization
+  and M11, instead of publishing the CUE manifest as a payload. A real
+  `--game theron --data-dir <cue>` boot probe reaches title and level load.
+
 - ✅ 2026-07-27 Theron direct Track 02 boot. A selected Track 02 `.bin` or
   `.iso` now enters canonical-MD5 boot directly, without a parent-directory
   scan or invented CUE/CDDA provenance. The authentic USA direct-file path
