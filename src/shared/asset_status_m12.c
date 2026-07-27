@@ -2489,6 +2489,10 @@ static void m12_publish_theron_campaign_media(
     status->originalFileCandidateFound = 1;
     m12_apply_required_game_availability(status, theronIndex, 1);
     m12_classify_theron_media_path(status, media->candidate_path);
+    /* Publishing the selected CUE/BIN campaign replaces the broad menu
+     * inventory. Rebuild the raw IPL provenance from that same verified
+     * Track 02 payload so M11 keeps its CUE pregap contract. */
+    m12_refresh_theron_track02_loader_receipt(status);
 }
 
 static int m12_scan_direct_theron_request(M12_AssetStatus* status,

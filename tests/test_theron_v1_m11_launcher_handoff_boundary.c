@@ -158,8 +158,12 @@ static void run_empty_launcher_boundary(void) {
 
     menu.selectedIndex = 4;
     menu.activatedIndex = 4;
-    menu.launchRequested = 1;
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu.view = M12_MENU_VIEW_GAME_OPTIONS;
+    menu.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    expect_true(menu.launchRequested == 0,
+                "Theron Launch action rejects absent campaign media");
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     expect_true(intent.gameId && strcmp(intent.gameId, "theron") == 0,
                 "Theron launch intent carries gameId=\"theron\"");
@@ -258,8 +262,12 @@ static void run_real_launcher_handoff_if_available(void) {
 
     menu.selectedIndex = 4;
     menu.activatedIndex = 4;
-    menu.launchRequested = 1;
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu.view = M12_MENU_VIEW_GAME_OPTIONS;
+    menu.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT;
+    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    expect_true(menu.launchRequested == 1,
+                "Theron Launch action admits the selected real campaign media");
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     if (!M12_AssetStatus_TheronCampaignMediaLaunchReady(&menu.assetStatus)) {
         expect_true(intent.valid == 0,
@@ -394,11 +402,31 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Shutdown(&view);
 }
 
+static void run_explicit_real_cue_campaign_if_available(void) {
+    const char *cue_path = getenv("FIRESTAFF_THERON_CUE");
+    M12_AssetStatus status;
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt *media;
+
+    if (!cue_path || !cue_path[0]) {
+        expect_skip("FIRESTAFF_THERON_CUE is unset");
+        return;
+    }
+    expect_true(M12_AssetStatus_ScanTheronCampaignMedia(
+                    &status, cue_path, THERON_TRACK02_MD5_US_BIN, NULL) == 1,
+                "explicit authentic Theron CUE enters campaign media admission");
+    media = M12_AssetStatus_GetTheronCampaignMedia(&status);
+    expect_true(media && media->source == THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_CUE &&
+                    media->launchable_direct_media && media->direct_media.cue_consumed &&
+                    strcmp(media->direct_media.media_path, cue_path) == 0,
+                "explicit authentic Theron CUE retains CUE-backed raw Track 02 provenance");
+}
+
 int main(void) {
     printf("=== Theron V1 M12/M11 launcher handoff boundary ===\n");
 
     run_empty_launcher_boundary();
     run_track02_startup_overlay_regression();
+    run_explicit_real_cue_campaign_if_available();
     run_real_launcher_handoff_if_available();
 
     printf("\nTheron V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",

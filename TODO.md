@@ -3281,8 +3281,14 @@ lane is carried forward in the sections below.
 - 2026-07-17 Theron Track 02 M12 campaign-media follow-up: the selected-game
   launcher now has a separate M12 scan entry that retains only an exact,
   plan-bound direct CUE/BIN/ISO receipt. Missing, malformed, ambiguous, or
-  virtual/container-only evidence remains diagnostic and cannot mark Theron
-  available or launch-ready; this path never materializes a cache member.
+    virtual/container-only evidence remains diagnostic and cannot mark Theron
+    available or launch-ready; this path never materializes a cache member.
+  - 2026-07-27 update: the actual Launch action now selects a compatible
+    hash-matched Track 02 version before this direct-media admission and then
+    rebuilds the raw CUE IPL receipt from that selected payload. A real US
+    19-track CUE passes admission, preserves its INDEX 01 pregap, and reaches
+    the existing M11 handoff boundary. Remaining work is positive live
+    Track-02 dungeon semantics/capture, not launcher admission.
   Remaining work is a user-supplied original direct Track 02 plus the three
   independently attested capture bundles. Do not promote virtual archive
   evidence, infer media layouts, decode level/object data, or create media

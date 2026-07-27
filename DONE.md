@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron Launch CUE admission. The real Launch action now
+  chooses the compatible hash-matched Track 02 before direct CUE/BIN/ISO
+  campaign admission, then reconstructs the raw IPL receipt from the selected
+  payload. The local authentic US 19-track CUE preserves its INDEX 01 pregap;
+  launch reaches M11 and the CUE, CDDA, and launcher-boundary tests pass.
 - ✅ 2026-07-27 Theron isolated Mednafen capture home. The configured home is
   now copied as an input-map template into a private temporary home for every
   capture, avoiding stale/concurrent base-directory locks. A fresh authentic

@@ -5285,10 +5285,56 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                 if (state->gameOptSelectedRow >= M12_GAME_OPT_ROW_COUNT) {
                     const M12_MenuEntry* launchEntry = M12_StartupMenu_GetEntry(state, state->activatedIndex);
                     M12_StartupLaunchGate launchGate;
+                    const M12_AssetVersionStatus* theronVersion = NULL;
                     int hasLaunchGate = M12_StartupMenu_GetLaunchGate(
                         state,
                         state->activatedIndex,
                         &launchGate);
+                    /* Theron's launch contract needs a second, direct-media
+                     * admission step after the ordinary hash scan.  Keep it
+                     * on the explicit Launch action: this preserves the
+                     * normal multi-game menu inventory while binding only the
+                     * selected CUE/BIN/ISO to its verified Track 02 hash. */
+                    if (launchEntry && launchEntry->gameId &&
+                        strcmp(launchEntry->gameId, "theron") == 0) {
+                        const char* mediaPath =
+                            M12_AssetStatus_GetTheronLaunchMediaPath(
+                                &state->assetStatus);
+                        theronVersion = m12_selected_version_status(state, gi);
+                        if (!theronVersion || !theronVersion->matched) {
+                            int matchedVersion =
+                                M12_AssetStatus_FindFirstMatchedVersionForArchitecture(
+                                    &state->assetStatus,
+                                    launchEntry->gameId,
+                                    state->gameOptions[gi].architectureIndex);
+                            if (matchedVersion < 0 && hasLaunchGate) {
+                                matchedVersion = launchGate.autoSelectedVersionIndex;
+                            }
+                            if (matchedVersion >= 0) {
+                                const M12_AssetVersionStatus* candidate =
+                                    M12_AssetStatus_GetVersion(
+                                        &state->assetStatus,
+                                        launchEntry->gameId,
+                                        (size_t)matchedVersion);
+                                if (candidate && candidate->matched) {
+                                    state->gameOptions[gi].versionIndex = matchedVersion;
+                                    theronVersion = candidate;
+                                }
+                            }
+                        }
+                        if (theronVersion && theronVersion->matched &&
+                            mediaPath && mediaPath[0]) {
+                            (void)M12_StartupMenu_ScanTheronCampaignMedia(
+                                state,
+                                mediaPath,
+                                theronVersion->matchedMd5,
+                                NULL);
+                            hasLaunchGate = M12_StartupMenu_GetLaunchGate(
+                                state,
+                                state->activatedIndex,
+                                &launchGate);
+                        }
+                    }
                     /* Launch row — when V2.2 mode is selected but modern assets
                      * are not installed, the fallback chain kicks in at runtime
                      * (V2.2 → V2.1 → V2.0 → V1). No block here; launch proceeds
