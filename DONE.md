@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 DM1 champion HUD hand-cell clicks. A champion's visible hand
+  cell is no longer inert while the inventory panel is closed: it opens that
+  champion's inventory. With the panel open, the original C020..C027 item
+  routes still own the same cells. V1 and V2 HUD click tests pass.
+
 - ✅ 2026-07-27 DM1 C071 eye-to-stats chest-close runtime coverage. The
   unregistered runtime regression is now a CTest target and uses synchronized
   raw PC34 container/weapon records. It proves PANEL.C F0351 closes the open

@@ -467,6 +467,23 @@ static void test_champion_hud_left_click_opens_target_inventory(void) {
     ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 1, 20,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
+              "status background closes the same champion inventory");
+    ASSERT_EQ(state.inventoryPanelActive, 0,
+              "status background closes the same champion inventory");
+
+    /* The two visible hand cells are part of the champion HUD while the
+     * inventory is closed.  They must not be inert: only an already-open
+     * panel gives C020..C027 ownership of those coordinates. */
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 5, 14,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "closed champion 0 hand cell opens inventory");
+    ASSERT_EQ(state.inventoryPanelActive, 1,
+              "closed champion 0 hand cell opens inventory");
+
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 1, 20,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
               "visible champion 0 status background toggles inventory");
     ASSERT_EQ(state.inventoryPanelActive, 0,
               "status background closes the same champion inventory");

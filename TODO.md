@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-HUD-CHAMPION-HAND-CLICK:** Closed 2026-07-27. A closed inventory
+  panel now treats each visible champion hand cell as part of that champion's
+  HUD tile and opens the correct inventory. Once open, C020..C027 retain
+  their original item-slot ownership. The focused V1 route test and V2
+  portrait route test pass.
+
 - **DM1-C071-EYE-STATS-CHEST-CLOSE-RUNTIME:** Closed 2026-07-27. The
   previously unregistered C071 runtime regression is now part of CTest. Its
   PC34 fixture carries synchronized raw container and weapon records, proving

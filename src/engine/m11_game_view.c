@@ -22856,9 +22856,12 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                         }
                     }
                     /* The full F0287/F0292 status-box surface represents
-                     * its champion.  Only the two C020..C027 hand cells
-                     * retain their independent inventory object routes. */
-                    if (!overHand &&
+                     * its champion.  A hand cell has an independent item
+                     * route only while the inventory is already open.  With
+                     * the panel closed it is still a visible part of that
+                     * champion's HUD tile, so it must open the champion
+                     * rather than silently swallowing the click. */
+                    if ((!overHand || !state->inventoryPanelActive) &&
                         (m11_point_in_rect(x, y,
                                            statusRect.x, statusRect.y,
                                            statusRect.w, statusRect.h) ||
