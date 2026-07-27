@@ -105,12 +105,12 @@ if [[ "$host_input_requested" == 1 ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_SEQUENCE cannot be combined with HOST_KEY or HOST_KEY_DELAYS' >&2
         exit 1
     fi
-    if [[ -n "$host_key_sequence" && ! "$host_key_sequence" =~ ^(return|i|select)@[0-9]+(,(return|i|select)@[0-9]+)*$ ]]; then
-        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_SEQUENCE must be comma-separated return|i|select@seconds entries' >&2
+    if [[ -n "$host_key_sequence" && ! "$host_key_sequence" =~ ^(return|ii|i|select|up|down|left|right)@[0-9]+(,(return|ii|i|select|up|down|left|right)@[0-9]+)*$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_SEQUENCE must be comma-separated PCE key@seconds entries' >&2
         exit 1
     fi
-    if [[ -z "$host_key_sequence" && "$host_key" != return && "$host_key" != i && "$host_key" != select ]]; then
-        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY currently supports only return, i, or select' >&2
+    if [[ -z "$host_key_sequence" && "$host_key" != return && "$host_key" != i && "$host_key" != ii && "$host_key" != select && "$host_key" != up && "$host_key" != down && "$host_key" != left && "$host_key" != right ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY must name a supported PCE key' >&2
         exit 1
     fi
     if [[ "$input_route" != pid && "$input_route" != global_hid ]]; then
@@ -124,6 +124,11 @@ if [[ "$host_input_requested" == 1 ]]; then
             # The configured PCE I button is SDL keypad 3, not the physical
             # I key. kVK_ANSI_Keypad3 is 83 on macOS.
             i) host_key_code=83 ;;
+            ii) host_key_code=84 ;;
+            up) host_key_code=13 ;;
+            down) host_key_code=1 ;;
+            left) host_key_code=0 ;;
+            right) host_key_code=2 ;;
         esac
     fi
     if [[ "$capture_sdl_video_driver" == dummy ]]; then
@@ -357,6 +362,11 @@ if [[ "$host_input_requested" == 1 ]]; then
                 return) host_key_sequence_codes+=(36) ;;
                 select) host_key_sequence_codes+=(48) ;;
                 i) host_key_sequence_codes+=(83) ;;
+                ii) host_key_sequence_codes+=(84) ;;
+                up) host_key_sequence_codes+=(13) ;;
+                down) host_key_sequence_codes+=(1) ;;
+                left) host_key_sequence_codes+=(0) ;;
+                right) host_key_sequence_codes+=(2) ;;
             esac
         done
     elif [[ -n "$host_key_delays" ]]; then

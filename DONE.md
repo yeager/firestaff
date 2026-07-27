@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron full controller capture mapping. Added II and D-pad
+  controls to the Quartz capture sequence, with macOS mappings verified
+  against the live PCE port: II=`0002`, up=`0010`, down=`0040`, left=`0080`,
+  right=`0020`. Existing I, Run, and Select support remains intact; script
+  regression coverage passes.
 - ✅ 2026-07-27 Theron PCE I-button capture mapping. Fixed the macOS Quartz
   key used by the authentic capture harness: Theron's configured PCE I button
   is keypad 3 (`kVK_ANSI_Keypad3=83`), rather than physical letter I. A fresh

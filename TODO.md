@@ -4176,6 +4176,11 @@ lane is carried forward in the sections below.
     non-System-Card PCECD reads, zero main-RAM loader transfers, and
     `transition=missing`; repeated menu input alone does not establish a
     Track 02 dungeon handoff.
+    The capture harness now also has verified II and direction controls. One
+    authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
+    left=`0080`, and right=`0020` at PCE port 0. These inputs enable a
+    source-observed save-slot/stage/Soul Room route; they do not themselves
+    establish a dungeon loader or any Track 02 record semantics.
     The follow-up 175-second sequence
     `return@10,i@75,i@90,i@125` advances further through the original animated
     `NEW GAME` presentation and records 51 real SCSI reads plus 25 CD IRQ
