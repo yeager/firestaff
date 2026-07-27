@@ -101,7 +101,10 @@ if ! grep -Fq 'THERON_MEDNAFEN_HOME must name an existing Mednafen configuration
    ! grep -Fq 'wait_for_trace_producer()' "$script" ||
    ! grep -Fq 'Mednafen did not produce an instrumented trace before host-input scheduling' "$script" ||
    ! grep -Fq 'host_key_schedule_seconds=$SECONDS' "$script" ||
-   ! grep -Fq 'host_input_schedule_origin=trace_ready' "$script"; then
+   ! grep -Fq 'host_input_schedule_origin=trace_ready' "$script" ||
+   ! grep -Fq 'cleanup_capture()' "$script" ||
+   ! grep -Fq 'kill -TERM -- "-$mednafen_pid"' "$script" ||
+   ! grep -Fq 'interrupted capture cannot leave Mednafen holding its home lock' "$script"; then
     printf 'FAIL: capture script must gate an explicit GUI input configuration\n' >&2
     exit 1
 fi

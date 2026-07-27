@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron capture process-group cleanup. Any capture exit now
+  terminates its `gtimeout` process group before temporary-home cleanup, so an
+  interrupted run cannot leave Mednafen holding a configuration lock. A
+  one-second authentic-media smoke leaves no Mednafen process behind. This is
+  host-process hygiene only.
 - ✅ 2026-07-27 Theron trace-ready input scheduler. Authentic host-input
   capture now waits for the provenance-marked instrumented producer before
   starting its key schedule, grants a bounded startup grace interval, and

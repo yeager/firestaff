@@ -378,9 +378,24 @@ else
     home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
     cleanup_home=1
 fi
-if [[ "$cleanup_home" == 1 ]]; then
-    trap 'rm -rf "$home_dir"' EXIT
-fi
+cleanup_capture() {
+    local exit_status=$?
+
+    trap - EXIT INT TERM
+    if [[ "${mednafen_pid:-}" =~ ^[1-9][0-9]*$ ]] &&
+       kill -0 "$mednafen_pid" 2>/dev/null; then
+        # gtimeout owns a separate process group; terminate it as a group so
+        # an interrupted capture cannot leave Mednafen holding its home lock.
+        kill -TERM -- "-$mednafen_pid" 2>/dev/null ||
+            kill -TERM "$mednafen_pid" 2>/dev/null || true
+        wait "$mednafen_pid" 2>/dev/null || true
+    fi
+    if [[ "$cleanup_home" == 1 ]]; then
+        rm -rf "$home_dir"
+    fi
+    return "$exit_status"
+}
+trap cleanup_capture EXIT INT TERM
 
 launch=(
     "${timeout_command[@]}" env

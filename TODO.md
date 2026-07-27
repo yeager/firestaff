@@ -4242,6 +4242,10 @@ lane is carried forward in the sections below.
     letting an early key be mistaken for original-game behavior. This makes
     capture startup deterministic; it does not create a media or semantic
     receipt.
+    The capture cleanup now terminates the `gtimeout` process group on any
+    exit before removing a temporary Mednafen home. A one-second authentic
+    media smoke exits with the expected blocked result and leaves no Mednafen
+    process or home-lock holder behind. This is host-process hygiene only.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a
