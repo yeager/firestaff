@@ -163,11 +163,11 @@ static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
         menuState->messageLine2 = "CHECK ISO/BIN OR EXTRACTED FILES";
     } else if (gameId && strcmp(gameId, "theron") == 0) {
         /* This generic launcher path covers both invalid media and a valid
-         * Track 02 whose original graphics route is not yet admitted. Do not
-         * tell an owner that verified CUE/BIN media is invalid in the latter
-         * case. */
+         * Track 02 whose later original graphics route is still unavailable.
+         * The message must not imply that a hash-verified CUE/BIN is corrupt.
+         */
         menuState->messageLine1 = "THERON STARTUP FAILED";
-        menuState->messageLine2 = "CHECK TRACK 02 AND GRAPHICS DATA";
+        menuState->messageLine2 = "VERIFY CUE/BIN AND STARTUP DETAILS";
     } else if (gameId && strcmp(gameId, "dm2") == 0) {
         menuState->messageLine1 = "DM2 LOAD FAILED";
         menuState->messageLine2 = "CHECK GRAPHICS/DUNGEON DATA";

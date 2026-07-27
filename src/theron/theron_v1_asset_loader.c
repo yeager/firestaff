@@ -395,8 +395,9 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
         bundle->hucard_rom = data;
         bundle->hucard_rom_size = (size_t)file_size;
         bundle->region = 1;
-        printf("[TQR] No Track 03/04 markers in %s; retaining raw Track 02 "
-               "without a supplemental graphics bank\n", file_path);
+        printf("[TQR] Verified Track 02 accepted: %s; later original graphics "
+               "bank is not captured yet, so fallback visuals stay disabled\n",
+               file_path);
         return TR_ASSET_OK;
     }
 

@@ -61,10 +61,11 @@ an integration build pass.
   pairing. The real USA 19-track CUE regression proves direct-file boot,
   CDDA handoff, and raw-CUE runtime boot.
 
-- **THERON-STARTUP-ERROR-DIAGNOSIS:** Closed 2026-07-27. The launcher no
-  longer labels every Theron launch failure as invalid Track 02 media. A
-  valid CUE/BIN can still be blocked by the separate original graphics-route
-  gate, so the message now accurately names both data classes.
+- **THERON-STARTUP-ERROR-DIAGNOSIS:** Closed 2026-07-27. The launcher now
+  tells the user to verify the CUE/BIN and startup details, rather than
+  implying that a hash-verified 19-track CUE/BIN has bad graphics data. The
+  raw Track 02 diagnostic likewise states that later original graphics remain
+  uncaptured and that fallback visuals stay disabled.
 
 - **THERON-CDDA-LOCAL-CUE-DISCOVERY:** Closed 2026-07-27. M11 now limits
   strict CUE-pair discovery for a verified Track 02 payload to that payload's

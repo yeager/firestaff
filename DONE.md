@@ -28,9 +28,10 @@
   preserving the exact original CUE and Track 01/02 pairing. Authentic USA
   direct-CUE availability, CDDA handoff, and raw-CUE boot pass.
 
-- ✅ 2026-07-27 Theron startup error diagnosis. The launcher now distinguishes
-  its broad startup failure from a claim that Track 02 is invalid: verified
-  CUE/BIN media may instead be blocked by the separate graphics-route gate.
+- ✅ 2026-07-27 Theron startup error diagnosis. The launcher asks the user to
+  verify the CUE/BIN and startup details instead of blaming graphics data on
+  a hash-verified 19-track CUE/BIN. The raw Track 02 log also records that
+  original later graphics remain uncaptured and fallback visuals are disabled.
 
 - ✅ 2026-07-27 Theron local CUE discovery. M11 now discovers the strict
   Track 01/02 CUE pair only in the verified Track 02 payload's own directory.
