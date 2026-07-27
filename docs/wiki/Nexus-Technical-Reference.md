@@ -33,11 +33,37 @@ or retail PRS3 surfaces until an original decoder is proved from executable or
 media evidence. Archive metadata may support launcher diagnostics but is not a
 graphics decoder.
 
+## Gameplay Mechanics (Real-Data)
+
+`nexus_v1_mechanics_load_level()` binds the active creature pool, pits,
+altars, and doors from authenticated `LEVxx.DGN` records for the loaded map.
+Creatures spawn from Structure1A actor records (type, position, and the
+Z-rotation byte); unbound or hidden actors cannot move, attack, or take
+damage until `nexus_v1_creature_bind_actor_model()` resolves them against MNS
+roster metadata. Door open/close animation steps
+(`nexus_doors_tick_animation()`) gate passability, and a candidate altar
+registry (`nexus_altars_register_tagged()`) supports a fail-closed ritual
+action. `NEXUS_CMD_USE_ITEM` consumes leader inventory slots (potions restore
+stats; weapons/armor move to the matching equipment slot), and stepping on a
+pit/chute square sets `pending_level_change` per ReDMCSB MOVESENS.C
+semantics. Champion death auto-promotes the next living party member to
+leader (ReDMCSB CHAMPION.C `F0319_CHAMPION_Kill`), matching total-party-death
+handling when no successor remains.
+
+Verification: `firestaff_nexus_v1_mechanics_playability_probe` (real LEV
+files) and `firestaff_nexus_v1_mechanics_parity_probe` exercise this pipeline
+end to end; `firestaff_nexus_v1_creature_state_determinism_probe` checks
+creature-state determinism across runs.
+
 ## Startup and Verification
 
 Launcher startup carries title, save, champion, and package/host receipts into
 M11. Title readiness alone does not prove DGN rendering, SLEV/SAL sound, or
-Saturn timing.
+Saturn timing. The real `TITLE.CG` reveal is drawable while `MENU.BPK` stays
+fail-closed awaiting PRS3 capture evidence; ACCEPT exits a completed title
+instead of trapping on the blocked menu route, and M11 presentation copies
+only the source-bound material framebuffer rather than substituting neutral
+placeholder colours.
 
 ```bash
 cmake --build build --target test_nexus_v1_dgn_geometry_readiness \

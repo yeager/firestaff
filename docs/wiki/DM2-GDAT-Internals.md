@@ -65,6 +65,44 @@ local palette. Generic terrain resolution is not consulted for this root
 class; an absent or rejected F9 image yields a blocked handoff rather than a
 substitute creature.
 
+## G1 Byte-Square Format and Record Graph
+
+The G1 map format was long ambiguous about its `w0` field. DM2-001 proved by
+corpus analysis that on real PC G1 `DUNGEON.DAT`, `GenericRecord::w0` is
+**game data** (e.g. a creature's stored state byte), not a next-record link.
+The `record_graph_complete` flag (in `dm2_v1_dungeon_loader.h` and
+`dm2_v1_record_pool_pc34_compat.h`) reflects whether the loader proved a
+complete, resolvable record graph for the loaded dungeon:
+
+- `record_graph_complete = 1` on the real 39,437-byte PC `DUNGEON.DAT` (28
+  maps, 2,859 records, 2,360 ground-stack entries): every ground-stack entry
+  resolves to a record, including entries in the G1 extension pools.
+- The companion `g1_w0_chains_disabled` flag (`dm2_v1_dungeon_loader.h:1216`)
+  disables `w0`-as-next-link traversal specifically when the loaded data is
+  real PC G1 data (`dm2_v1_dungeon_loader.c:487`) — because on real data
+  `w0` is not a chain link. Synthetic skproject test fixtures do not set this
+  flag, so their `w0` chains keep resolving as before, and existing
+  fixture-based tests are unaffected.
+- `get_thing_record` resolves DB3/DB4 extension records; `get_next_thing`
+  returns `END_MARKER` for the G1 format (there is no next-thing chain to
+  walk on real data).
+
+### Extension records
+
+The ground-stack table's declared capacity exceeds the number of directly
+typed roots. Corpus proof (`parity-evidence`, DM2-001 analysis) established
+the extension-pool layout in the real PC G1 `DUNGEON.DAT`:
+
+- **DB3 extension**: byte range `[23826, 29626)`, 8 bytes each, extending the
+  DB3 index space from 299 to 1024 (indices `299..1023`).
+- **DB4 extension**: byte range `[29626, 31658)`, 16 bytes each, extending
+  the DB4 index space from 173 to 300 (indices `173..299`).
+- A final 9-byte tail remains untyped/unused.
+
+Do not derive further record-type transforms or widen these ranges without
+new corpus-plus-source evidence; only DB3 and DB4 have proven extension
+layouts.
+
 ## Interface Tables
 
 `dt07/2` interface data is materialized as bounded primary, secondary, and
@@ -74,6 +112,74 @@ available to the HUD consumer without re-parsing raw GDAT in M11.
 
 The host receipt is fail-closed: missing, truncated, or inconsistent Rect14
 data cannot be presented as a source-backed HUD layout.
+
+## Creature V5 Animation and Occupancy
+
+The direct G1 creature scene path is corpus-gated (see Graphics Sets above
+for the DB4/F9 handoff). Beyond the base F9 image handoff, the runtime now
+carries occupancy and animation evidence:
+
+- `DM2_V1_G1CreatureV5RuntimeReceipt` carries the creature's V5 animation
+  chain evidence for the render plan. All 33 direct DB4 roots in the proven
+  corpus stay fail-closed for their V5 images — those images are 8bpp and
+  require a separate decode path that is not yet source-locked; the receipt
+  records this rather than substituting a placeholder frame.
+- `DM2_V1_G1DirectCreatureRoot` carries the record-owned cursor used to walk
+  creature state without touching `w0` chain semantics.
+
+Occupancy grid (`dm2_v1_viewport_creature_occupancy_5x5` and
+`dm2_v1_viewport_occupancy_grid_coords`, source-locked against
+`SkWinCore.cpp`'s `QUERY_CREATURE_5x5_POS` and `DRAW_STATIC_OBJECT`'s
+occupancy walk):
+
+- Encodes a 5x5 position grid relative to the party, plus a display-order
+  index used to decide draw order among creatures sharing a cell region.
+- Direction resolution follows `(party_dir - creature_dir) & 3` exactly, per
+  `SkGlobal.cpp`'s direction tables.
+- `DRAW_FLYING_ITEM` selection consumes this occupancy evidence to pick the
+  correct scale and image fields for a flying (thrown/dropped-in-air) item,
+  rather than a fixed default scale.
+
+Tests: `tests/test_dm2_v1_creature_occupancy_flying_item.c` (34/34),
+`tests/test_dm2_v1_g1_creature_v5_animation.c` (38/38, name approximate — see
+`test_dm2_v1_creature_occupancy_flying_item` binary), and probe
+`probes/dm2/firestaff_dm2_v1_creature_occupancy_probe.c`.
+
+## Combat Drops
+
+`dm2_v1_drops_resolve_gdat_creature_drops()` reads the eleven-entry
+per-creature drop table directly from real GDAT data (not a hardcoded
+table) and resolves it to concrete drop words using RNG-gated selection
+that mirrors `SkWinCore.cpp`'s creature-death drop route. This is part of
+the combat/defense route: a creature's death drop is only materialized when
+the GDAT-sourced table and RNG gate both resolve; there is no synthetic
+fallback drop. Verified by `test_dm2_v1_drops_gdat_real_data` (skip-safe
+without real data present).
+
+## Sound: PCM Decode and Voice Allocation
+
+`dm2_v1_sound_decode_gdat_pcm()` decodes the unsigned 8-bit mono PCM payload
+of a GDAT sound entry:
+
+- Format: unsigned 8-bit mono, 6000 Hz sample rate, per a two-byte format
+  header preceding the raw sample data.
+- Conversion: each raw byte is converted `byte ^ 0x80`, matching SKWin's
+  `0x80 + raw_byte` alloc-time conversion exactly (XOR and addition are
+  equivalent for the top bit flip used here).
+
+Voice allocation owns `MAX_SB = 16` voice slots (SKWin's `MAX_SB` constant).
+Playback binds through an SDL3 backend: a 6000 Hz U8 mono stream with
+additive `sdlAudMix`-shaped mixing across active voices, matching the
+original's software-mixing behavior rather than resampling to a modern
+rate.
+
+`dm2_v1_sound_bind_gdat_loader()` wires the `DM2_PLAY_MUSIC`,
+`DM2_PLAY_SOUND`, and `DM2_QUERY_SND_ENTRY_INDEX` entry points to this real
+GDAT-backed decode and mixing path. `DM2_QUERY_SND_ENTRY_INDEX` keeps the
+original 1-based linear scan semantics.
+
+Tested by `test_dm2_v1_sound_gdat_real_data` (PCM-decode and
+voice-allocation coverage).
 
 ## Scene and Weather State
 
@@ -108,4 +214,7 @@ FIRESTAFF_DM2_DATA_DIR="$HOME/.firestaff/data/dm2/data" \\
   ./build/test_dm2_v1_gdat_scene_plan_viewport_real_data
 FIRESTAFF_DM2_DATA_DIR="$HOME/.firestaff/data/dm2/data" \\
   ./build/test_dm2_v1_g1_scene_creature_gdat_real_data
+./build/test_dm2_v1_creature_occupancy_flying_item
+./build/test_dm2_v1_drops_gdat_real_data
+./build/test_dm2_v1_sound_gdat_real_data
 ```

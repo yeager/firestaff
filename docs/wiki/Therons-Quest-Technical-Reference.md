@@ -41,6 +41,22 @@ evidence. Firestaff-native export is no-replace atomic, protecting original
 Save Disk artifacts. Continue itself is transactional and carries the consumed
 media route mask, checksum, and selected level bank.
 
+## Multi-Level Object Table and Progression
+
+Track 02 object-table decode has been extended from level-0/32x27-only to
+every level of a dungeon: `theron_v1_track02_read_object_table()` bounds
+records against the real per-dungeon level count
+(`0..THERON_MAX_LEVELS_PER_DUNGEON-1`), and
+`theron_v1_track02_decode_dungeon_level_object_table()` extracts one level's
+records from a full-dungeon buffer.
+`theron_v1_world_apply_track02_object_table_for_dungeon()` routes decoded
+records to every loaded level of a dungeon. Two object kinds were added to
+carry decoded fields: `THERON_OBJTYPE_SOUND` (ambient sound ID) and
+`THERON_OBJTYPE_PIT` (pit records own their grid position).
+`theron_v1_transition_execute()` implements stairs (validated target level),
+progression advance, `theron_v1_world_reset_for_dungeon()`, and quest-complete
+handling at the end of `move_party_internal()`.
+
 ## Verification
 
 ```bash

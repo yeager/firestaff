@@ -14,6 +14,16 @@ This is a container route, not an audio route: the selector and attribute have
 no asserted Saturn event meaning, returned SAL bytes are never decoded, and
 no playback is requested from this result.
 
+## Host-Side Event Dispatch (Still Unmapped)
+
+`nexus_sound_set_event_selector()` lets the host engine bind a
+`Nexus_SoundEvent` to a raw MAP selector, and a per-event dispatch table
+(`g_event_selector`, default `-1`/unmapped) looks up the bound selector at
+playback time. This is purely a host-owned binding mechanism — it does not
+assign Saturn event meaning to any selector value. Until original Saturn
+event→selector evidence is available, every entry stays unmapped and the
+dispatch table is fail-closed.
+
 ## TODO
 
 Establish the Saturn sound-driver call ABI and the SAL codec from executable

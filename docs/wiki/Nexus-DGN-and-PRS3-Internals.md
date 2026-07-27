@@ -113,6 +113,24 @@ bit order, opcode grammar, literal/back-reference layout, output size handling,
 or palette semantics. No synthetic or retail PRS3 surface is materialized from
 them.
 
+## Title/Menu Route Status
+
+The M11 presentation gate now keeps the real `TITLE.CG` reveal drawable while
+`MENU.BPK` remains fail-closed pending PRS3 capture evidence, and ACCEPT exits
+a completed title rather than trapping the player on a blocked menu route.
+Three PRS3/UI decode gates stay intentionally blocked pending original
+Saturn evidence:
+
+* `nexus_ui_load_stabg` (STABG.BIN cell decode) — inert until original Saturn
+  evidence proves pixel order.
+* `nexus_ui_expand_face_record_48x48` (FACE.BIN PRS3 portrait decode) —
+  blocked until PRS3 opcode grammar is proven (FACE PRS3 capture campaign,
+  ledgered under commits `acc5abbc6`/`11c856653`/`bc102aa4b`).
+* Title capture-surface plus Saturn timing/frame capture evidence.
+
+These are class-(c) blocks, not fixture gaps: do not relax probe assertions
+against them.
+
 ## Saturn VDP1 Capture Gate
 
 DONE: the VDP1 capture schema now requires first and last SH-2 input-read and

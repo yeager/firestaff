@@ -97,6 +97,65 @@ does not generate a save, DSA record, selector, actuator, timer, or fallback
 action. Without both explicit paths (or `FIRESTAFF_CSBWIN_DUNGEON` and
 `FIRESTAFF_CSBWIN_SAVE`), it skips.
 
+## Admitted/Restored Timer Bridge
+
+`csb_v1_dsa_admitted_restored_timer_bridge` covers the handoff between an
+admitted (freshly executing) DSA timer and a restored (loaded-from-save)
+timer: both paths must resolve to the same source timer identity and queue
+slot before the bridge publishes state. This is tested alongside
+`csb_v1_dsa_parameter_message_save_handoff`, which restores
+`TT_ParameterMessage` handoff for function 101 across a save/resume boundary.
+
+## Combat Helper Opcodes
+
+Two DSA opcodes are tested as combat integration points rather than pure
+stack primitives:
+
+* **CausePoison** — poison application through the DSA action pipeline.
+* **CountInjury** — injury/wound tally fetch used by combat and HUD damage
+  paths.
+
+Both are covered by the 12 DSA test files (9255 lines, 117 unique operations)
+that make up Q-CSB-01, and both participate in the damage-character filter
+used by Q-CSB-08 combat tests (Grey Lord combat, projectile speed, F0247
+teleporter impact/retention, F0266 group move projectile receipt).
+
+## Save Test Coverage (32 files)
+
+Q-CSB-09 save/Utility Disk interop is covered by 32 test files spanning:
+
+* save header build and read;
+* native F0435 provenance (recorded only after a committed import, never on
+  a rejected candidate);
+* export/import round trips;
+* the CSBWin save loader boundary (GAMEBLOCK1/body import rejects malformed
+  non-empty DB11/EXPOOL tails before atomic runtime staging);
+* the utility save transaction path (Utility Disk import, edit, inventory,
+  dialogs, confirmations).
+
+15 of the 32 files are executable test binaries; the remainder are shared
+fixture/header support. All pass.
+
+## Viewport Test Coverage (47 files)
+
+Q-CSB-06 dungeon viewport geometry is covered by 47 viewport tests:
+
+* walls D0-D3, all four sides;
+* doors, including partly-open doors;
+* floor and ceiling ornaments;
+* pits, stairs, and teleporters;
+* center fields, custom backgrounds (11 variants), footprints, door frames;
+* projectile routing and metadata, item explosions.
+
+F0115 first-object native graphics use the G0209 weapon[46]/armour[58]/
+junk[52]/potion[21] tables with C10 blit (conditional horizontal flip).
+Creature groups use per-creature transparency (G0219
+`coordinateSet_transparentColor`) and D2/D3 palette remap tables
+(G0221/G0222). Item/explosion composition accepts only a hash-verified
+decoded `CSBGRAPHICS.DAT` surface and its source palette (C10 transparency);
+source-bound object drawers suppress the older icon/marker fallback when
+their real surface is unavailable.
+
 ## Timer Queue Restart Boundary
 
 For a resumed CSBWin save, `TIMER` and `TimerQueue` remain source-owned data.

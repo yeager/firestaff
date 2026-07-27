@@ -54,6 +54,25 @@ still byte-faithful and unclassified: no tile meanings, objects, or visuals
 are inferred. Its receipt explicitly blocks fallback visuals and keeps both
 the extension and tail unpromoted.
 
+## Multi-Level Object Table
+
+`theron_v1_track02_read_object_table()` now bounds decoded records against the
+real per-dungeon level count (`0..THERON_MAX_LEVELS_PER_DUNGEON-1`), replacing
+the earlier level-0/32x27-only assumption.
+`theron_v1_track02_decode_initial_level_object_table()` accepts records for
+any bounded level, and the new
+`theron_v1_track02_decode_dungeon_level_object_table()` extracts a single
+level's object records from a full-dungeon buffer. Two additional object
+kinds carry decoded state: `THERON_OBJTYPE_SOUND` (default
+`THERON_SOUND_AMBIENT_1` for the movement code) and `THERON_OBJTYPE_PIT`
+(pit records own their grid position).
+`theron_v1_world_apply_track02_object_table_for_dungeon()` routes decoded
+records to every loaded level of a dungeon, and
+`theron_v1_transition_execute()` implements stairs (validated target level),
+progression advance, `theron_v1_world_reset_for_dungeon()`, and quest-complete
+handling at the end of `move_party_internal()`. This remains real Track 02
+data decode, not synthesized object placement.
+
 ## SRM Boundary
 
 Save Disk candidates require one valid gzip member with bounded header parsing,
