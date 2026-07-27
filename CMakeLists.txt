@@ -3502,7 +3502,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.173 LANGUAGES C)
+project(Firestaff VERSION 3.0.174 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -35261,7 +35261,8 @@ if(NOT MSVC)
 endif()
 
 # Starts an external, instrumented Saturn capture producer from one canonical
-# Structure3 target. It cannot generate lanes, attest them, import them, or draw.
+# Structure3 target uses fork/waitpid — POSIX only.
+if(NOT WIN32)
 add_executable(firestaff_nexus_v1_structure3_capture_session
     probes/nexus/firestaff_nexus_v1_structure3_capture_session.c
 )
@@ -35275,6 +35276,7 @@ if(NOT MSVC)
     target_compile_options(firestaff_nexus_v1_structure3_capture_session PRIVATE
         -Wall -Wextra -O2
     )
+endif()
 endif()
 
 # Nexus PRS3 selected version-1 branch-flow receipt. This separate original
