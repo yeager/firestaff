@@ -15,6 +15,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-HUD-SOURCE-HAND-OBJECT-REDRAW:** Closed 2026-07-27. The F0291
+  top-row receipt consumer now follows F0038 with the authenticated 16x16
+  object-icon blit after C033/C034/C035 paints the hand frame. The focused
+  real-data runtime probe verifies the non-owner action hand remains visible
+  and changes after its source click-driven swap; the chest probe now keeps
+  raw PC34 thing bytes synchronized with its decoded fixture mutation.
+
 - **DM1-PC34-SAVE-TIMELINE-MATERIALIZATION:** Closed 2026-07-27. The
   writeback regression now supplies a complete one-map dungeon tail and proves
   `DM1_SaveGamePC34()` reloads through the normal native/original path. Old
