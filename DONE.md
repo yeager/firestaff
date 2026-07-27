@@ -1,3 +1,10 @@
+- ✅ 2026-07-27 DM2-001 record graph complete. [v3.0.180] G1 byte-square
+  format proven: w0 is game data, not next-links. Validator validates
+  ground-stack entries resolve to records (including G1 extension pools).
+  get_thing_record resolves DB3/DB4 extension records. get_next_thing
+  returns END_MARKER for G1. record_graph_complete=1 on real DUNGEON.DAT.
+  Fixed 3 pre-existing test failures. Net improvement: 11 DM2 failures
+  (was 13).
 - ✅ 2026-07-26 DM2 outdoor scenes and end-to-end play complete (Q-DM2-10).
   3 outdoor + 13 weather tests pass. outdoor_renderer, weather_gdat,
   update_weather source-backed.

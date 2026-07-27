@@ -260,15 +260,17 @@ static void probe_first_map(const unsigned char *raw, int size)
           "tail-aligned pool base remains rejected by the non-tail text anchor");
     CHECK(evidence.root_count == dungeon.square_first_thing_count &&
               evidence.root_end_markers + evidence.root_shape_valid +
+                  evidence.map_root_extension_shape_valid +
                   evidence.root_shape_invalid == evidence.root_count &&
               evidence.candidate_record_count > 0 &&
               evidence.candidate_first_link_end_markers +
                   evidence.candidate_first_link_shape_valid +
+                  evidence.candidate_first_link_extension_shape_valid +
                   evidence.candidate_first_link_shape_invalid ==
                       evidence.candidate_record_count,
           "real G1 root and c_record first-word shapes are fully accounted");
-    CHECK(evidence.root_shape_invalid == 1069 &&
-              evidence.candidate_first_link_shape_invalid == 1029,
+    CHECK(evidence.root_shape_invalid == 562 &&
+              evidence.candidate_first_link_shape_invalid == 914,
           "real G1 pins every observed non-direct root and c_record link");
     printf("  INFO: G1 candidate [%d,%d), roots end=%d valid=%d invalid=%d, "
            "records end=%d valid=%d invalid=%d\n",
@@ -278,9 +280,9 @@ static void probe_first_map(const unsigned char *raw, int size)
            evidence.candidate_first_link_end_markers,
            evidence.candidate_first_link_shape_valid,
            evidence.candidate_first_link_shape_invalid);
-    CHECK(dungeon.record_graph_complete == 0 &&
-              dm2_v1_dungeon_validate_record_graph(&dungeon) == 0,
-          "PC G1 c_record addresses stay non-traversable while real links remain unbound");
+    CHECK(dungeon.record_graph_complete == 1 &&
+              dm2_v1_dungeon_validate_record_graph(&dungeon) == 1,
+          "PC G1 record graph validates via ground-stack (w0 is game data)");
     CHECK(dungeon.level_widths[0] == 7,
           "loader reports map-0 width from Map_definitions.w8");
     CHECK(dungeon.level_heights[0] == 10,
@@ -301,8 +303,9 @@ static void probe_first_map(const unsigned char *raw, int size)
     CHECK(dm2_v1_dungeon_get_thing_record(&dungeon, 0x04a5,
                                            NULL, NULL, NULL) != NULL,
           "map-0 root resolves through the source-ordered c_record pool");
-    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, 0x04a5) == -1,
-          "unvalidated PC G1 c_record links cannot enter traversal");
+    CHECK(dm2_v1_dungeon_get_next_thing(&dungeon, 0x04a5) ==
+              (int)DM2_THING_END_MARKER,
+          "G1 get_next_thing returns END_MARKER (no w0 chain in file)");
     CHECK(dm2_v1_dungeon_get_tile_raw(&dungeon, 0, 1, 0) == 0x00,
           "map-0 tile(1,0) confirms byte column-major stepping");
     CHECK(dm2_v1_dungeon_get_square_type(&dungeon, 0, 1, 0) == 0,

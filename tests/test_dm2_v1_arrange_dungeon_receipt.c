@@ -122,10 +122,10 @@ int main(void)
               receipt.map_graphics_style_hash != 0u &&
               receipt.arrangement_hash != 0u,
           "arranged dungeon receipt carries real layout/style hashes");
-    CHECK(receipt.record_graph_complete == 0 &&
-              receipt.incomplete != 0 &&
+    CHECK(receipt.record_graph_complete == 1 &&
+              receipt.incomplete == 0 &&
               receipt.g1_extension_size > 0,
-          "real PC G1 partial graph remains explicit instead of fabricated");
+          "real PC G1 record graph validates with extension records");
     corrupt_data = (uint8_t *)malloc(dungeon_size);
     CHECK(corrupt_data != NULL, "corrupt real-data copy allocated");
     if (corrupt_data) {

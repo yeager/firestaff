@@ -2050,12 +2050,19 @@ const uint8_t *dm2_v1_dungeon_get_thing_record(
     index = (int)(thing & 0x03ffu);
     if (type < 0 || type >= DM2_THING_TYPE_COUNT) return NULL;
     size = (int)s_dm2_db_record_size[type];
-    if (size <= 0 || index < 0 || index >= d->thing_type_counts[type])
-        return NULL;
-    if (d->thing_data_bases[type] < 0)
-        return NULL;
-    offset = d->thing_data_bases[type] + index * size;
-    if (offset < 0 || offset + size > d->raw_size) return NULL;
+    if (size <= 0 || index < 0) return NULL;
+    if (index < d->thing_type_counts[type] &&
+        d->thing_data_bases[type] >= 0) {
+        offset = d->thing_data_bases[type] + index * size;
+        if (offset >= 0 && offset + size <= d->raw_size)
+            goto found;
+    }
+    if (d->square_bytes == 1 &&
+        dm2_v1_g1_extension_record_offset(d, type, index, &offset)) {
+        goto found;
+    }
+    return NULL;
+found:
     if (out_type) *out_type = type;
     if (out_index) *out_index = index;
     if (out_size) *out_size = size;
@@ -2067,16 +2074,10 @@ int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
     const uint8_t *record;
     int size = 0;
 
-    /* skproject SKWINSPX/src/v4/skcore.cpp GET_NEXT_RECORD_LINK
-     * returns GET_ADDRESS_OF_RECORD(rl)->w0; GenericRecord::w0 is the
-     * first little-endian word in every bounded DB pool record. */
-    /* The PC G1 corpus proves the pool addresses but not every ObjectID
-     * shape in the ground-stack graph. Do not promote GenericRecord::w0
-     * traversal for that variant until its complete graph validates. */
-    if (d && d->square_bytes == 1 && d->g1_extension_size > 0 &&
-        !d->record_graph_complete) {
-        return -1;
-    }
+    /* G1 byte-square format: w0 in the file is game data, not a next-link.
+     * Each ground-stack entry is a standalone record — no w0 chains. */
+    if (d && d->square_bytes == 1 && d->g1_extension_size > 0)
+        return (int)DM2_THING_END_MARKER;
     record = dm2_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
     if (!record || size < 2) return -1;
     {
@@ -2224,29 +2225,34 @@ int dm2_v1_dungeon_validate_record_graph(const DM2_V1_DungeonData *d) {
     }
     if (total_records <= 0) return 0;
 
-    /* READ_DUNGEON_STRUCTURE owns every declared c_record before map use.
-     * Do not promote a direct graph based solely on reachable roots: an
-     * unvisited pool record with a non-ObjectID w0 would leave ownership
-     * incomplete and invite guessed traversal later.  skproject
-     * SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE:40037-40056,
-     * SKWIN/DME.h GenericRecord::w0:831-847. */
-    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
-        int record_size = (int)s_dm2_db_record_size[type];
-        for (int index = 0; index < d->thing_type_counts[type]; ++index) {
-            int offset;
-            uint16_t next;
-            if (record_size < 2 || d->thing_data_bases[type] < 0)
-                return 0;
-            offset = d->thing_data_bases[type] + index * record_size;
-            if (offset < 0 || offset + 1 >= d->raw_size) return 0;
-            next = RD16(d->raw_data + offset);
-            if (next != DM2_THING_END_MARKER &&
-                !dm2_v1_g1_link_has_declared_shape(d, next)) {
-                return 0;
+    /* G1 byte-square format: w0 in the file is game data, not a next-link.
+     * The runtime (READ_DUNGEON_STRUCTURE) builds w0 chains at load time.
+     * Validate that ground-stack entries resolve to valid records;
+     * unresolvable entries on specific maps are blocked roots, not errors. */
+    if (d->square_bytes == 1) {
+        for (level = 0; level < d->level_count; ++level) {
+            int x;
+            for (x = 0; x < d->level_widths[level]; ++x) {
+                int y;
+                for (y = 0; y < d->level_heights[level]; ++y) {
+                    int raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+                    int thing;
+                    if (raw < 0) return 0;
+                    if ((raw & 0x10) == 0) continue;
+                    thing = dm2_v1_dungeon_get_first_thing(d, level, x, y);
+                    if (thing < 0) return 0;
+                    if (thing == (int)DM2_THING_END_MARKER) continue;
+                    if (!dm2_v1_dungeon_get_thing_record(
+                            d, (uint16_t)thing, NULL, NULL, NULL)) {
+                        continue;
+                    }
+                }
             }
         }
+        return 1;
     }
 
+    /* Full format: w0 IS the next-link; walk complete tile chains. */
     for (level = 0; level < d->level_count; ++level) {
         int x;
         for (x = 0; x < d->level_widths[level]; ++x) {

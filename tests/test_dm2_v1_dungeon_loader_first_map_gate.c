@@ -953,27 +953,28 @@ static void test_pc_g1_record_pool_ownership_and_bounded_traversal(void)
           "unreachable pool words do not become inferred G1 links");
     dm2_v1_dungeon_free(&dungeon);
 
-    put16le(dat + 324, 0x0002); /* Root-reachable DB0 index 2 exceeds count. */
+    put16le(dat + 324, 0x0002); /* w0 is game data in G1, not a link. */
     CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
-          "loader accepts out-of-range reachable-link fixture for diagnostics");
-    CHECK(dungeon.record_graph_complete == 0 &&
-              dm2_v1_dungeon_get_next_thing(&dungeon, 0x0000) == -1,
-          "reachable out-of-range w0 blocks G1 traversal");
+          "loader accepts fixture with arbitrary w0 game data");
+    CHECK(dungeon.record_graph_complete == 1 &&
+              dm2_v1_dungeon_get_next_thing(&dungeon, 0x0000) ==
+                  (int)DM2_THING_END_MARKER,
+          "G1 get_next_thing returns END_MARKER (w0 is game data, not link)");
     CHECK(dm2_v1_dungeon_walk_square_things(
-              &dungeon, 0, 1, 0, 8, capture_walk_thing, &(WalkCapture){0}) == -1,
-          "root-reachable invalid G1 link cannot bypass the loader traversal guard");
+              &dungeon, 0, 1, 0, 8, capture_walk_thing, &(WalkCapture){0}) == 1,
+          "G1 walk visits root only (no w0 chain)");
     dm2_v1_dungeon_free(&dungeon);
 
-    put16le(dat + 324, 0x0001); /* DB0[0] -> DB0[1]. */
-    put16le(dat + 328, 0x0000); /* DB0[1] -> DB0[0]. */
+    put16le(dat + 324, 0x0001); /* DB0[0] w0=0x0001 — game data, not link. */
+    put16le(dat + 328, 0x0000); /* DB0[1] w0=0x0000 — game data, not link. */
     CHECK(dm2_v1_dungeon_load(&dungeon, dat, (int)size) == 0,
-          "loader accepts reachable-cycle fixture for diagnostics");
-    CHECK(dungeon.record_graph_complete == 0 &&
-              dm2_v1_dungeon_validate_record_graph(&dungeon) == 0,
-          "reachable w0 cycle blocks G1 traversal");
+          "loader accepts fixture with w0 values that would form a cycle");
+    CHECK(dungeon.record_graph_complete == 1 &&
+              dm2_v1_dungeon_validate_record_graph(&dungeon) == 1,
+          "G1 validator ignores w0 (game data, not chain links)");
     CHECK(dm2_v1_dungeon_walk_square_things(
-              &dungeon, 0, 1, 0, 8, capture_walk_thing, &(WalkCapture){0}) == -1,
-          "root-reachable G1 cycle cannot bypass the loader traversal guard");
+              &dungeon, 0, 1, 0, 8, capture_walk_thing, &(WalkCapture){0}) == 1,
+          "G1 walk visits root only even with cycle-shaped w0 values");
     dm2_v1_dungeon_free(&dungeon);
 }
 

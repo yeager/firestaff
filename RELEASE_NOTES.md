@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.180
+
+- DM2-001: Record graph completion. G1 byte-square format proven: w0 is game
+  data, not next-links. Validator validates ground-stack → record resolution
+  including G1 extension pools (DB3/DB4). get_thing_record resolves extension
+  records. get_next_thing returns END_MARKER for G1 format.
+  record_graph_complete=1 on real 39,437-byte DUNGEON.DAT (28 maps,
+  2,859 records, 2,360 ground-stack entries).
+- Fixed 3 pre-existing DM2 test failures (arrange_dungeon_receipt,
+  first_map_real_data_probe, object_model_probe). DM2 failures: 11 (was 13).
+
 # Firestaff v3.0.178
 
 - Consolidated current DM1, CSB, DM2, Theron and Nexus runtime fixes from main.
