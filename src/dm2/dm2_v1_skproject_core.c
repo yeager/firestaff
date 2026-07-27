@@ -10489,7 +10489,17 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_UNPREPARE_LOCAL_CREATURE_VAR/DM2_ai_13e4_0360/DM2_ai_13e4_071b cycle-24 batch-24a; "
            "SKULLWIN/c_allegro.cpp dtor/set_mouse/vsync/stretchblit/"
            "start_timer/stop_timer/hide_mouse; "
-           "SKULLWIN/c_ai.cpp DM2_ai_13e4_0806 cycle-24 batch-24b";
+           "SKULLWIN/c_ai.cpp DM2_ai_13e4_0806 cycle-24 batch-24b; "
+           "SKULLWIN/c_alloc.cpp DM2_GET_FROM_FREEPOOL/"
+           "DM2_FIND_FREE_POOL/DM2_ALLOC_MEMORY_RAM/"
+           "DM2_DEALLOC_LOBIGPOOL/DM2_DEALLOC_HIBIGPOOL/"
+           "DM2_ALLOC_FREEPOOL_MEMORY/DM2_ALLOC_LOBIGPOOL_MEMORY/"
+           "DM2_ALLOC_HIBIGPOOL_MEMORY cycle-25 batch-25a; "
+           "SKULLWIN/c_alloc.cpp DM2_TAG_LARGEST_FREE_POOL/"
+           "DM2_APPEND_FREE_POOL/DM2_ADD_MEM_TO_FREE_POOL/"
+           "DM2_BUP_FREEPOOL/DM2_RESTORE_FREEPOOL/"
+           "DM2_COMPLETE_ALLOCATION/DM2_SETUP_MEMORYALLOCATION/"
+           "DM2_DTOR_MEMORYALLOCATION cycle-25 batch-25b";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -24133,6 +24143,453 @@ int32_t dm2_v1_skproject_ai_13e4_0806_classify(
         if (ai_1c9a_0db0_cb != NULL) {
             ai_1c9a_0db0_cb((int32_t)(uint16_t)word0);
         }
+    }
+
+    return 1;
+}
+
+/* --- Batch 25a: c_alloc.cpp memory allocation classifiers --- */
+
+#define DM2_V1_FREEPOOL   0
+#define DM2_V1_BIGPOOL_LO 1
+#define DM2_V1_BIGPOOL_HI 2
+#define DM2_V1_CLEAN_BIT  ((int16_t)0x8000)
+
+int32_t dm2_v1_skproject_get_from_freepool_classify(
+    int32_t pool_available,
+    int32_t amount,
+    DM2_V1_SkprojectGetFromFreepoolReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->amount = amount;
+    out_receipt->available_before = pool_available;
+    out_receipt->available_after = pool_available - amount;
+    out_receipt->did_subtract = 1;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_find_free_pool_classify(
+    const DM2_V1_FreepoolEntry *pools,
+    int32_t pool_count,
+    int32_t amount,
+    int16_t wmask,
+    int32_t *out_best_index,
+    DM2_V1_SkprojectFindFreePoolReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->amount = amount;
+    out_receipt->wmask = wmask;
+    out_receipt->smallest_slack = 0x7fffffff;
+    out_receipt->found = 0;
+
+    if (out_best_index != NULL) *out_best_index = -1;
+
+    for (int32_t i = pool_count - 1; i >= 0; i--) {
+        out_receipt->pools_checked++;
+        if (pools[i].tag == 0) {
+            if ((pools[i].mode & wmask) == wmask) {
+                int32_t slack = pools[i].available - amount;
+                if (slack >= 0 && slack < out_receipt->smallest_slack) {
+                    out_receipt->smallest_slack = slack;
+                    out_receipt->found = 1;
+                    if (out_best_index != NULL) *out_best_index = i;
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+int32_t dm2_v1_skproject_alloc_memory_ram_classify(
+    int32_t amount,
+    int16_t wmask,
+    int16_t wtype,
+    const DM2_V1_AllocMemoryRamState *state,
+    const DM2_V1_FreepoolEntry *pools,
+    int32_t pool_count,
+    DM2_V1_SkprojectAllocMemoryRamReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->wtype_raw = wtype;
+    out_receipt->wmask = wmask;
+    out_receipt->clean_flag = (wtype & (int16_t)0x8000) != 0 ? 1 : 0;
+
+    int16_t effective_wtype = wtype & 0x7fff;
+
+    if (amount & 1) {
+        out_receipt->amount_was_odd = 1;
+        amount++;
+    }
+    out_receipt->amount = amount;
+
+    if (effective_wtype == DM2_V1_FREEPOOL) {
+        DM2_V1_SkprojectFindFreePoolReceipt find_receipt;
+        int32_t best_index = -1;
+        dm2_v1_skproject_find_free_pool_classify(
+            pools, pool_count, amount, wmask, &best_index, &find_receipt);
+
+        if (find_receipt.found) {
+            out_receipt->route_freepool = 1;
+            return 1;
+        }
+
+        if ((state->secondpool_mode & wmask) == wmask &&
+            amount <= state->secondpool_available) {
+            out_receipt->route_secondpool = 1;
+            return 1;
+        }
+    }
+
+    if (amount > state->bigpool) {
+        out_receipt->route_syserr = 1;
+        return 1;
+    }
+
+    if (effective_wtype == DM2_V1_BIGPOOL_HI) {
+        out_receipt->route_bigpool_hi = 1;
+    } else {
+        out_receipt->route_bigpool_lo = 1;
+    }
+    return 1;
+}
+
+int32_t dm2_v1_skproject_dealloc_lobigpool_classify(
+    int32_t amount,
+    DM2_V1_SkprojectDeallocLobigpoolReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->amount = amount;
+    if (amount & 1) {
+        out_receipt->amount_was_odd = 1;
+        amount++;
+    }
+    out_receipt->adjusted_amount = amount;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_dealloc_hibigpool_classify(
+    int32_t amount,
+    DM2_V1_SkprojectDeallocHibigpoolReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->amount = amount;
+    if (amount & 1) {
+        out_receipt->amount_was_odd = 1;
+        amount++;
+    }
+    out_receipt->adjusted_amount = amount;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_alloc_freepool_memory_classify(
+    int32_t amount,
+    int8_t clean,
+    DM2_V1_SkprojectAllocFreepoolMemoryReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->amount = amount;
+    out_receipt->clean = clean;
+    out_receipt->composed_wtype = DM2_V1_FREEPOOL | (clean ? DM2_V1_CLEAN_BIT : 0);
+    return 1;
+}
+
+int32_t dm2_v1_skproject_alloc_lobigpool_memory_classify(
+    int32_t amount,
+    int8_t clean,
+    DM2_V1_SkprojectAllocLobigpoolMemoryReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->amount = amount;
+    out_receipt->clean = clean;
+    out_receipt->composed_wtype = DM2_V1_BIGPOOL_LO | (clean ? DM2_V1_CLEAN_BIT : 0);
+    return 1;
+}
+
+int32_t dm2_v1_skproject_alloc_hibigpool_memory_classify(
+    int32_t amount,
+    int8_t clean,
+    DM2_V1_SkprojectAllocHibigpoolMemoryReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->amount = amount;
+    out_receipt->clean = clean;
+    out_receipt->composed_wtype = DM2_V1_BIGPOOL_HI | (clean ? DM2_V1_CLEAN_BIT : 0);
+    return 1;
+}
+
+/* --- Batch 25b: c_alloc.cpp memory pool management --- */
+
+int32_t dm2_v1_skproject_tag_largest_free_pool_classify(
+    DM2V1_FreepoolNode *freepoollist_end,
+    int32_t lmask,
+    DM2V1_FreepoolNode **out_result,
+    DM2_V1_SkprojectTagLargestFreePoolReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (freepoollist_end == NULL) {
+        out_receipt->list_empty = 1;
+        if (out_result) *out_result = NULL;
+        return 1;
+    }
+
+    DM2V1_FreepoolNode *fpp = freepoollist_end;
+    DM2V1_FreepoolNode *fpp_ret = NULL;
+    int32_t maximum = 0;
+
+    do {
+        if (fpp->tag == 0) {
+            if (((uint32_t)fpp->mode & (uint32_t)lmask) == (uint32_t)lmask) {
+                if (maximum < fpp->amount) {
+                    fpp_ret = fpp;
+                    maximum = fpp->amount;
+                }
+            }
+        }
+        fpp = fpp->fp_prev;
+    } while (fpp != NULL);
+
+    if (fpp_ret != NULL) {
+        fpp_ret->tag = 1;
+        out_receipt->found_match = 1;
+        out_receipt->largest_amount = maximum;
+        out_receipt->tagged_result = 1;
+    }
+
+    if (out_result) *out_result = fpp_ret;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_append_free_pool_classify(
+    DM2V1_FreepoolNode *fpp,
+    int16_t mode,
+    int32_t amount,
+    DM2V1_FreepoolNode *freepoollist_end,
+    DM2V1_SetFreepoolListEndCallback set_end_cb,
+    void *ctx,
+    DM2_V1_SkprojectAppendFreePoolReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (fpp == NULL) return 1;
+
+    fpp->fp_prev = freepoollist_end;
+    int32_t computed = amount - (int32_t)sizeof(DM2V1_FreepoolNode);
+    fpp->amount = computed;
+    fpp->endoffree = (void *)((uint8_t *)fpp + amount);
+    fpp->available = computed;
+    fpp->mode = mode;
+    fpp->tag = 0;
+
+    if (set_end_cb) set_end_cb(ctx, fpp);
+
+    out_receipt->applied = 1;
+    out_receipt->computed_amount = computed;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_add_mem_to_free_pool_classify(
+    DM2V1_FreepoolNode *fpp,
+    int32_t lmask,
+    int32_t amount,
+    DM2V1_FreepoolNode *freepoollist_end,
+    DM2V1_SetFreepoolListEndCallback set_end_cb,
+    void *ctx,
+    DM2_V1_SkprojectAddMemToFreePoolReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    amount &= 0xfffffffe;
+    out_receipt->aligned_amount = 1;
+    out_receipt->final_amount = amount;
+
+    if (amount < 52) {
+        out_receipt->too_small = 1;
+        return 1;
+    }
+
+    dm2_v1_skproject_append_free_pool_classify(
+        fpp, (int16_t)lmask, amount, freepoollist_end, set_end_cb, ctx, NULL);
+
+    out_receipt->appended = 1;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_bup_freepool_classify(
+    DM2V1_FreepoolNode *freepoollist_end,
+    DM2_V1_SkprojectBupFreepoolReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    DM2V1_FreepoolNode *fpp = freepoollist_end;
+    while (fpp != NULL) {
+        out_receipt->nodes_visited++;
+        if (fpp->tag == 0) {
+            fpp->eof_bup = fpp->endoffree;
+            fpp->ava_bup = fpp->available;
+            out_receipt->nodes_backed_up++;
+        }
+        fpp = fpp->fp_prev;
+    }
+    return 1;
+}
+
+int32_t dm2_v1_skproject_restore_freepool_classify(
+    DM2V1_FreepoolNode *freepoollist_end,
+    DM2_V1_SkprojectRestoreFreepoolReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    DM2V1_FreepoolNode *fpp = freepoollist_end;
+    while (fpp != NULL) {
+        out_receipt->nodes_visited++;
+        if (fpp->tag == 0) {
+            fpp->endoffree = fpp->eof_bup;
+            fpp->available = fpp->ava_bup;
+            out_receipt->nodes_restored++;
+        }
+        fpp = fpp->fp_prev;
+    }
+    return 1;
+}
+
+int32_t dm2_v1_skproject_complete_allocation_classify(
+    DM2V1_FreepoolNode *freepoollist_end,
+    DM2V1_RaiseSysErrCallback raise_err_cb,
+    DM2_V1_SkprojectCompleteAllocationOut *out_alloc,
+    DM2_V1_SkprojectCompleteAllocationReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    out_receipt->is_allocated_set = 1;
+
+    DM2V1_FreepoolNode *fpd = NULL;
+    DM2_V1_SkprojectTagLargestFreePoolReceipt tag_r1;
+    int32_t default_mask = 0x0001;
+    dm2_v1_skproject_tag_largest_free_pool_classify(
+        freepoollist_end, default_mask, &fpd, &tag_r1);
+
+    if (fpd == NULL) {
+        out_receipt->first_pool_null_error = 1;
+        if (raise_err_cb) raise_err_cb(0x31);
+        return 1;
+    }
+
+    out_receipt->first_pool_found = 1;
+
+    void *vptr = (void *)((uint8_t *)fpd + sizeof(DM2V1_FreepoolNode));
+    if (out_alloc) {
+        out_alloc->bigpool_start = vptr;
+        out_alloc->bigpool_endoffree = fpd->endoffree;
+        out_alloc->bigpool = fpd->amount;
+        out_alloc->bigpool_mode = fpd->mode;
+    }
+    out_receipt->bigpool_amount = fpd->amount;
+    out_receipt->bigpool_mode = fpd->mode;
+
+    DM2V1_FreepoolNode *fpa = NULL;
+    DM2_V1_SkprojectTagLargestFreePoolReceipt tag_r2;
+    dm2_v1_skproject_tag_largest_free_pool_classify(
+        freepoollist_end, default_mask, &fpa, &tag_r2);
+
+    if (fpa != NULL) {
+        out_receipt->second_pool_found = 1;
+        out_receipt->secondpool_mode = fpa->mode;
+        out_receipt->secondpool_available = fpa->amount;
+        if (out_alloc) {
+            out_alloc->secondpool_endoffree = (void *)((uint8_t *)fpa + sizeof(DM2V1_FreepoolNode) + fpa->amount);
+            out_alloc->secondpool_available = fpa->amount;
+            out_alloc->secondpool_mode = fpa->mode;
+        }
+    }
+
+    return 1;
+}
+
+int32_t dm2_v1_skproject_setup_memory_allocation_classify(
+    void **allocated_memory,
+    int32_t num_freepools,
+    int32_t sizeof_freepool,
+    int16_t default_mask,
+    DM2V1_AllocRawMemoryCallback alloc_cb,
+    DM2V1_FreepoolNode **freepoollist_end,
+    DM2V1_SetFreepoolListEndCallback set_end_cb,
+    void *ctx,
+    DM2_V1_SkprojectSetupMemoryAllocationReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (freepoollist_end) *freepoollist_end = NULL;
+
+    out_receipt->num_pools = num_freepools;
+    out_receipt->pool_size = sizeof_freepool;
+
+    if (*allocated_memory == NULL) {
+        if (alloc_cb) {
+            *allocated_memory = alloc_cb(num_freepools * sizeof_freepool);
+        }
+    } else {
+        out_receipt->already_allocated = 1;
+    }
+
+    if (*allocated_memory == NULL) {
+        out_receipt->allocation_failed = 1;
+        return 1;
+    }
+
+    DM2V1_FreepoolNode *current_end = NULL;
+    for (int32_t i = 0; i < num_freepools; i++) {
+        DM2V1_FreepoolNode *fpp = (DM2V1_FreepoolNode *)((uint8_t *)*allocated_memory + i * sizeof_freepool);
+        DM2_V1_SkprojectAddMemToFreePoolReceipt add_r;
+        dm2_v1_skproject_add_mem_to_free_pool_classify(
+            fpp, (int32_t)default_mask, sizeof_freepool,
+            current_end, set_end_cb, ctx, &add_r);
+        if (add_r.appended && freepoollist_end) {
+            current_end = fpp;
+            *freepoollist_end = fpp;
+        }
+    }
+
+    out_receipt->complete_called = 1;
+    return 1;
+}
+
+int32_t dm2_v1_skproject_dtor_memory_allocation_classify(
+    void **allocated_memory,
+    DM2V1_FreeRawMemoryCallback free_cb,
+    DM2_V1_SkprojectDtorMemoryAllocationReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (*allocated_memory != NULL) {
+        out_receipt->was_allocated = 1;
+        if (free_cb) free_cb(*allocated_memory);
+        *allocated_memory = NULL;
+        out_receipt->freed = 1;
     }
 
     return 1;

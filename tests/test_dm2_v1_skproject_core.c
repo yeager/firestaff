@@ -11053,6 +11053,336 @@ int main(void)
           strstr(dm2_v1_skproject_core_source_evidence(), "set_mouse") != 0,
           "source evidence names cycle-24 batch-24a+24b");
 
+    /* --- Batch 25a: c_alloc.cpp memory allocation tests --- */
+
+    CHECK(dm2_v1_skproject_get_from_freepool_classify(100, 20, NULL) == 0,
+          "get_from_freepool: NULL receipt returns 0");
+    {
+        DM2_V1_SkprojectGetFromFreepoolReceipt r;
+        CHECK(dm2_v1_skproject_get_from_freepool_classify(100, 20, &r) == 1,
+              "get_from_freepool: normal returns 1");
+        CHECK(r.amount == 20, "get_from_freepool: amount");
+        CHECK(r.available_before == 100, "get_from_freepool: available_before");
+        CHECK(r.available_after == 80, "get_from_freepool: available_after");
+        CHECK(r.did_subtract == 1, "get_from_freepool: did_subtract");
+    }
+
+    CHECK(dm2_v1_skproject_find_free_pool_classify(NULL, 0, 10, 1, NULL, NULL) == 0,
+          "find_free_pool: NULL receipt returns 0");
+    {
+        DM2_V1_FreepoolEntry pools[3] = {
+            { .tag = 0, .mode = 1, .available = 50 },
+            { .tag = 0, .mode = 1, .available = 30 },
+            { .tag = 1, .mode = 1, .available = 25 },
+        };
+        DM2_V1_SkprojectFindFreePoolReceipt r;
+        int32_t best = -1;
+        CHECK(dm2_v1_skproject_find_free_pool_classify(pools, 3, 20, 1, &best, &r) == 1,
+              "find_free_pool: best-fit returns 1");
+        CHECK(r.found == 1, "find_free_pool: found");
+        CHECK(best == 1, "find_free_pool: best index");
+        CHECK(r.smallest_slack == 10, "find_free_pool: smallest slack");
+    }
+    {
+        DM2_V1_FreepoolEntry pools[1] = {
+            { .tag = 0, .mode = 2, .available = 100 },
+        };
+        DM2_V1_SkprojectFindFreePoolReceipt r;
+        int32_t best = -1;
+        CHECK(dm2_v1_skproject_find_free_pool_classify(pools, 1, 10, 1, &best, &r) == 1,
+              "find_free_pool: no match returns 1");
+        CHECK(r.found == 0, "find_free_pool: not found");
+        CHECK(best == -1, "find_free_pool: best stays -1");
+    }
+
+    CHECK(dm2_v1_skproject_alloc_memory_ram_classify(10, 1, 0, NULL, NULL, 0, NULL) == 0,
+          "alloc_memory_ram: NULL receipt returns 0");
+    {
+        DM2_V1_FreepoolEntry pools[1] = {
+            { .tag = 0, .mode = 1, .available = 100 },
+        };
+        DM2_V1_AllocMemoryRamState state = { .bigpool = 500, .secondpool_mode = 0, .secondpool_available = 0 };
+        DM2_V1_SkprojectAllocMemoryRamReceipt r;
+        CHECK(dm2_v1_skproject_alloc_memory_ram_classify(20, 1, 0, &state, pools, 1, &r) == 1,
+              "alloc_memory_ram: freepool route");
+        CHECK(r.route_freepool == 1, "alloc_memory_ram: route_freepool");
+    }
+    {
+        DM2_V1_AllocMemoryRamState state = { .bigpool = 500, .secondpool_mode = 1, .secondpool_available = 50 };
+        DM2_V1_SkprojectAllocMemoryRamReceipt r;
+        CHECK(dm2_v1_skproject_alloc_memory_ram_classify(20, 1, 0, &state, NULL, 0, &r) == 1,
+              "alloc_memory_ram: secondpool route");
+        CHECK(r.route_secondpool == 1, "alloc_memory_ram: route_secondpool");
+    }
+    {
+        DM2_V1_AllocMemoryRamState state = { .bigpool = 500, .secondpool_mode = 0, .secondpool_available = 0 };
+        DM2_V1_SkprojectAllocMemoryRamReceipt r;
+        CHECK(dm2_v1_skproject_alloc_memory_ram_classify(20, 1, 1, &state, NULL, 0, &r) == 1,
+              "alloc_memory_ram: bigpool lo route");
+        CHECK(r.route_bigpool_lo == 1, "alloc_memory_ram: route_bigpool_lo");
+    }
+    {
+        DM2_V1_AllocMemoryRamState state = { .bigpool = 500, .secondpool_mode = 0, .secondpool_available = 0 };
+        DM2_V1_SkprojectAllocMemoryRamReceipt r;
+        CHECK(dm2_v1_skproject_alloc_memory_ram_classify(20, 1, 2, &state, NULL, 0, &r) == 1,
+              "alloc_memory_ram: bigpool hi route");
+        CHECK(r.route_bigpool_hi == 1, "alloc_memory_ram: route_bigpool_hi");
+    }
+    {
+        DM2_V1_AllocMemoryRamState state = { .bigpool = 10, .secondpool_mode = 0, .secondpool_available = 0 };
+        DM2_V1_SkprojectAllocMemoryRamReceipt r;
+        CHECK(dm2_v1_skproject_alloc_memory_ram_classify(20, 1, 1, &state, NULL, 0, &r) == 1,
+              "alloc_memory_ram: syserr route");
+        CHECK(r.route_syserr == 1, "alloc_memory_ram: route_syserr");
+    }
+    {
+        DM2_V1_AllocMemoryRamState state = { .bigpool = 500, .secondpool_mode = 0, .secondpool_available = 0 };
+        DM2_V1_SkprojectAllocMemoryRamReceipt r;
+        int16_t wtype = 1 | (int16_t)0x8000;
+        CHECK(dm2_v1_skproject_alloc_memory_ram_classify(21, 1, wtype, &state, NULL, 0, &r) == 1,
+              "alloc_memory_ram: clean+odd");
+        CHECK(r.clean_flag == 1, "alloc_memory_ram: clean_flag");
+        CHECK(r.amount_was_odd == 1, "alloc_memory_ram: amount_was_odd");
+        CHECK(r.amount == 22, "alloc_memory_ram: adjusted amount");
+    }
+
+    CHECK(dm2_v1_skproject_dealloc_lobigpool_classify(10, NULL) == 0,
+          "dealloc_lobigpool: NULL receipt returns 0");
+    {
+        DM2_V1_SkprojectDeallocLobigpoolReceipt r;
+        CHECK(dm2_v1_skproject_dealloc_lobigpool_classify(20, &r) == 1,
+              "dealloc_lobigpool: even");
+        CHECK(r.adjusted_amount == 20, "dealloc_lobigpool: even adjusted");
+    }
+    {
+        DM2_V1_SkprojectDeallocLobigpoolReceipt r;
+        CHECK(dm2_v1_skproject_dealloc_lobigpool_classify(21, &r) == 1,
+              "dealloc_lobigpool: odd");
+        CHECK(r.amount_was_odd == 1, "dealloc_lobigpool: odd flag");
+        CHECK(r.adjusted_amount == 22, "dealloc_lobigpool: odd adjusted");
+    }
+
+    CHECK(dm2_v1_skproject_dealloc_hibigpool_classify(10, NULL) == 0,
+          "dealloc_hibigpool: NULL receipt returns 0");
+    {
+        DM2_V1_SkprojectDeallocHibigpoolReceipt r;
+        CHECK(dm2_v1_skproject_dealloc_hibigpool_classify(20, &r) == 1,
+              "dealloc_hibigpool: even");
+        CHECK(r.adjusted_amount == 20, "dealloc_hibigpool: even adjusted");
+    }
+    {
+        DM2_V1_SkprojectDeallocHibigpoolReceipt r;
+        CHECK(dm2_v1_skproject_dealloc_hibigpool_classify(21, &r) == 1,
+              "dealloc_hibigpool: odd");
+        CHECK(r.amount_was_odd == 1, "dealloc_hibigpool: odd flag");
+        CHECK(r.adjusted_amount == 22, "dealloc_hibigpool: odd adjusted");
+    }
+
+    CHECK(dm2_v1_skproject_alloc_freepool_memory_classify(10, 0, NULL) == 0,
+          "alloc_freepool_memory: NULL receipt returns 0");
+    {
+        DM2_V1_SkprojectAllocFreepoolMemoryReceipt r;
+        CHECK(dm2_v1_skproject_alloc_freepool_memory_classify(100, 0, &r) == 1,
+              "alloc_freepool_memory: no clean");
+        CHECK(r.composed_wtype == 0, "alloc_freepool_memory: wtype 0");
+    }
+    {
+        DM2_V1_SkprojectAllocFreepoolMemoryReceipt r;
+        CHECK(dm2_v1_skproject_alloc_freepool_memory_classify(100, 1, &r) == 1,
+              "alloc_freepool_memory: clean");
+        CHECK(r.composed_wtype == (int16_t)0x8000, "alloc_freepool_memory: wtype clean");
+    }
+
+    CHECK(dm2_v1_skproject_alloc_lobigpool_memory_classify(10, 0, NULL) == 0,
+          "alloc_lobigpool_memory: NULL receipt returns 0");
+    {
+        DM2_V1_SkprojectAllocLobigpoolMemoryReceipt r;
+        CHECK(dm2_v1_skproject_alloc_lobigpool_memory_classify(100, 0, &r) == 1,
+              "alloc_lobigpool_memory: no clean");
+        CHECK(r.composed_wtype == 1, "alloc_lobigpool_memory: wtype 1");
+    }
+    {
+        DM2_V1_SkprojectAllocLobigpoolMemoryReceipt r;
+        CHECK(dm2_v1_skproject_alloc_lobigpool_memory_classify(100, 1, &r) == 1,
+              "alloc_lobigpool_memory: clean");
+        CHECK(r.composed_wtype == (1 | (int16_t)0x8000), "alloc_lobigpool_memory: wtype clean");
+    }
+
+    CHECK(dm2_v1_skproject_alloc_hibigpool_memory_classify(10, 0, NULL) == 0,
+          "alloc_hibigpool_memory: NULL receipt returns 0");
+    {
+        DM2_V1_SkprojectAllocHibigpoolMemoryReceipt r;
+        CHECK(dm2_v1_skproject_alloc_hibigpool_memory_classify(100, 0, &r) == 1,
+              "alloc_hibigpool_memory: no clean");
+        CHECK(r.composed_wtype == 2, "alloc_hibigpool_memory: wtype 2");
+    }
+    {
+        DM2_V1_SkprojectAllocHibigpoolMemoryReceipt r;
+        CHECK(dm2_v1_skproject_alloc_hibigpool_memory_classify(100, 1, &r) == 1,
+              "alloc_hibigpool_memory: clean");
+        CHECK(r.composed_wtype == (2 | (int16_t)0x8000), "alloc_hibigpool_memory: wtype clean");
+    }
+
+    /* --- Batch 25b: c_alloc.cpp memory pool management tests --- */
+
+    {
+        int32_t r = dm2_v1_skproject_tag_largest_free_pool_classify(NULL, 0, NULL, NULL);
+        CHECK(r == 0, "tag_largest_free_pool: NULL receipt returns 0");
+    }
+    {
+        DM2_V1_SkprojectTagLargestFreePoolReceipt receipt;
+        DM2V1_FreepoolNode *result = NULL;
+        int32_t r = dm2_v1_skproject_tag_largest_free_pool_classify(NULL, 1, &result, &receipt);
+        CHECK(r == 1, "tag_largest_free_pool: empty list");
+        CHECK(receipt.list_empty == 1, "tag_largest_free_pool: list_empty");
+        CHECK(result == NULL, "tag_largest_free_pool: result NULL");
+    }
+    {
+        DM2V1_FreepoolNode n1, n2;
+        memset(&n1, 0, sizeof(n1));
+        memset(&n2, 0, sizeof(n2));
+        n1.tag = 0; n1.mode = 1; n1.amount = 100; n1.fp_prev = NULL;
+        n2.tag = 0; n2.mode = 1; n2.amount = 200; n2.fp_prev = &n1;
+        DM2_V1_SkprojectTagLargestFreePoolReceipt receipt;
+        DM2V1_FreepoolNode *result = NULL;
+        int32_t r = dm2_v1_skproject_tag_largest_free_pool_classify(&n2, 1, &result, &receipt);
+        CHECK(r == 1, "tag_largest_free_pool: finds largest");
+        CHECK(receipt.found_match == 1, "tag_largest_free_pool: found_match");
+        CHECK(receipt.largest_amount == 200, "tag_largest_free_pool: largest_amount");
+        CHECK(result == &n2, "tag_largest_free_pool: result ptr");
+        CHECK(n2.tag == 1, "tag_largest_free_pool: tagged");
+    }
+
+    {
+        int32_t r = dm2_v1_skproject_append_free_pool_classify(NULL, 0, 0, NULL, NULL, NULL, NULL);
+        CHECK(r == 0, "append_free_pool: NULL receipt returns 0");
+    }
+    {
+        DM2V1_FreepoolNode node;
+        memset(&node, 0, sizeof(node));
+        DM2_V1_SkprojectAppendFreePoolReceipt receipt;
+        int32_t r = dm2_v1_skproject_append_free_pool_classify(
+            &node, 3, 256, NULL, NULL, NULL, &receipt);
+        CHECK(r == 1, "append_free_pool: sets fields");
+        CHECK(receipt.applied == 1, "append_free_pool: applied");
+        CHECK(node.mode == 3, "append_free_pool: mode");
+        CHECK(node.tag == 0, "append_free_pool: tag");
+        CHECK(node.amount == 256 - (int32_t)sizeof(DM2V1_FreepoolNode),
+              "append_free_pool: amount");
+    }
+
+    {
+        int32_t r = dm2_v1_skproject_add_mem_to_free_pool_classify(NULL, 0, 0, NULL, NULL, NULL, NULL);
+        CHECK(r == 0, "add_mem_to_free_pool: NULL receipt returns 0");
+    }
+    {
+        DM2V1_FreepoolNode node;
+        memset(&node, 0, sizeof(node));
+        DM2_V1_SkprojectAddMemToFreePoolReceipt receipt;
+        int32_t r = dm2_v1_skproject_add_mem_to_free_pool_classify(
+            &node, 1, 50, NULL, NULL, NULL, &receipt);
+        CHECK(r == 1, "add_mem_to_free_pool: too small");
+        CHECK(receipt.too_small == 1, "add_mem_to_free_pool: too_small flag");
+    }
+    {
+        DM2V1_FreepoolNode node;
+        memset(&node, 0, sizeof(node));
+        DM2_V1_SkprojectAddMemToFreePoolReceipt receipt;
+        int32_t r = dm2_v1_skproject_add_mem_to_free_pool_classify(
+            &node, 1, 101, NULL, NULL, NULL, &receipt);
+        CHECK(r == 1, "add_mem_to_free_pool: aligns and appends");
+        CHECK(receipt.final_amount == 100, "add_mem_to_free_pool: aligned to 100");
+        CHECK(receipt.appended == 1, "add_mem_to_free_pool: appended");
+    }
+
+    {
+        int32_t r = dm2_v1_skproject_bup_freepool_classify(NULL, NULL);
+        CHECK(r == 0, "bup_freepool: NULL receipt returns 0");
+    }
+    {
+        DM2V1_FreepoolNode n1;
+        memset(&n1, 0, sizeof(n1));
+        n1.tag = 0; n1.endoffree = (void *)0x1000; n1.available = 500; n1.fp_prev = NULL;
+        DM2_V1_SkprojectBupFreepoolReceipt receipt;
+        int32_t r = dm2_v1_skproject_bup_freepool_classify(&n1, &receipt);
+        CHECK(r == 1, "bup_freepool: backs up");
+        CHECK(receipt.nodes_backed_up == 1, "bup_freepool: nodes_backed_up");
+        CHECK(n1.eof_bup == (void *)0x1000, "bup_freepool: eof_bup");
+        CHECK(n1.ava_bup == 500, "bup_freepool: ava_bup");
+    }
+    {
+        DM2V1_FreepoolNode n1;
+        memset(&n1, 0, sizeof(n1));
+        n1.tag = 1; n1.fp_prev = NULL;
+        DM2_V1_SkprojectBupFreepoolReceipt receipt;
+        int32_t r = dm2_v1_skproject_bup_freepool_classify(&n1, &receipt);
+        CHECK(r == 1, "bup_freepool: skips tagged");
+        CHECK(receipt.nodes_backed_up == 0, "bup_freepool: none backed up");
+    }
+
+    {
+        int32_t r = dm2_v1_skproject_restore_freepool_classify(NULL, NULL);
+        CHECK(r == 0, "restore_freepool: NULL receipt returns 0");
+    }
+    {
+        DM2V1_FreepoolNode n1;
+        memset(&n1, 0, sizeof(n1));
+        n1.tag = 0;
+        n1.endoffree = (void *)0x2000;
+        n1.available = 300;
+        n1.eof_bup = (void *)0x1000;
+        n1.ava_bup = 500;
+        n1.fp_prev = NULL;
+        DM2_V1_SkprojectRestoreFreepoolReceipt receipt;
+        int32_t r = dm2_v1_skproject_restore_freepool_classify(&n1, &receipt);
+        CHECK(r == 1, "restore_freepool: restores from backup");
+        CHECK(receipt.nodes_restored == 1, "restore_freepool: nodes_restored");
+        CHECK(n1.endoffree == (void *)0x1000, "restore_freepool: endoffree restored");
+        CHECK(n1.available == 500, "restore_freepool: available restored");
+    }
+
+    {
+        int32_t r = dm2_v1_skproject_complete_allocation_classify(NULL, NULL, NULL, NULL);
+        CHECK(r == 0, "complete_allocation: NULL receipt returns 0");
+    }
+    {
+        DM2_V1_SkprojectCompleteAllocationReceipt receipt;
+        int32_t r = dm2_v1_skproject_complete_allocation_classify(NULL, NULL, NULL, &receipt);
+        CHECK(r == 1, "complete_allocation: NULL first pool");
+        CHECK(receipt.first_pool_null_error == 1, "complete_allocation: first_pool_null_error");
+    }
+
+    {
+        int32_t r = dm2_v1_skproject_dtor_memory_allocation_classify(NULL, NULL, NULL);
+        CHECK(r == 0, "dtor_memory_allocation: NULL receipt returns 0");
+    }
+    {
+        void *mem = (void *)0x1234;
+        DM2_V1_SkprojectDtorMemoryAllocationReceipt receipt;
+        int32_t r = dm2_v1_skproject_dtor_memory_allocation_classify(&mem, NULL, &receipt);
+        CHECK(r == 1, "dtor_memory_allocation: frees and NULLs");
+        CHECK(receipt.was_allocated == 1, "dtor_memory_allocation: was_allocated");
+        CHECK(receipt.freed == 1, "dtor_memory_allocation: freed");
+        CHECK(mem == NULL, "dtor_memory_allocation: mem nulled");
+    }
+    {
+        void *mem = NULL;
+        DM2_V1_SkprojectDtorMemoryAllocationReceipt receipt;
+        int32_t r = dm2_v1_skproject_dtor_memory_allocation_classify(&mem, NULL, &receipt);
+        CHECK(r == 1, "dtor_memory_allocation: NULL is no-op");
+        CHECK(receipt.was_allocated == 0, "dtor_memory_allocation: not allocated");
+    }
+
+    {
+        int32_t r = dm2_v1_skproject_setup_memory_allocation_classify(
+            NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL);
+        CHECK(r == 0, "setup_memory_allocation: NULL receipt returns 0");
+    }
+
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(), "DM2_GET_FROM_FREEPOOL") != 0 &&
+          strstr(dm2_v1_skproject_core_source_evidence(), "DM2_DTOR_MEMORYALLOCATION") != 0,
+          "source evidence names cycle-25 batch-25a+25b");
+
     if (failed) {
         printf("%d failure(s)\n", failed);
         return 1;

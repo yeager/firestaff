@@ -9333,5 +9333,267 @@ int32_t dm2_v1_skproject_ai_13e4_0806_classify(
     DM2V1_Ai1c9a0db0Callback ai_1c9a_0db0_cb,
     DM2_V1_SkprojectAi13e40806Receipt *out_receipt);
 
+/* --- Batch 25a: c_alloc.cpp memory allocation classifiers --- */
+
+typedef void (*DM2V1_RaiseSyserrCallback)(int32_t errorCode);
+typedef void (*DM2V1_ZeroMemoryCallback)(void *ptr, int32_t size);
+
+typedef enum {
+    DM2_V1_ALLOC_TYPE_FREEPOOL  = 0,
+    DM2_V1_ALLOC_TYPE_BIGPOOL_LO = 1,
+    DM2_V1_ALLOC_TYPE_BIGPOOL_HI = 2
+} DM2_V1_AllocType;
+
+typedef struct {
+    int32_t amount;
+    int32_t available_before;
+    int32_t available_after;
+    int8_t  did_subtract;
+} DM2_V1_SkprojectGetFromFreepoolReceipt;
+
+int32_t dm2_v1_skproject_get_from_freepool_classify(
+    int32_t pool_available,
+    int32_t amount,
+    DM2_V1_SkprojectGetFromFreepoolReceipt *out_receipt);
+
+typedef struct {
+    int32_t amount;
+    int16_t wmask;
+    int32_t pools_checked;
+    int32_t smallest_slack;
+    int8_t  found;
+} DM2_V1_SkprojectFindFreePoolReceipt;
+
+typedef struct {
+    int16_t tag;
+    int16_t mode;
+    int32_t available;
+} DM2_V1_FreepoolEntry;
+
+int32_t dm2_v1_skproject_find_free_pool_classify(
+    const DM2_V1_FreepoolEntry *pools,
+    int32_t pool_count,
+    int32_t amount,
+    int16_t wmask,
+    int32_t *out_best_index,
+    DM2_V1_SkprojectFindFreePoolReceipt *out_receipt);
+
+typedef struct {
+    int32_t amount;
+    int16_t wmask;
+    int16_t wtype_raw;
+    int8_t  clean_flag;
+    int8_t  amount_was_odd;
+    int8_t  route_freepool;
+    int8_t  route_secondpool;
+    int8_t  route_bigpool_hi;
+    int8_t  route_bigpool_lo;
+    int8_t  route_syserr;
+} DM2_V1_SkprojectAllocMemoryRamReceipt;
+
+typedef struct {
+    int32_t bigpool;
+    int16_t secondpool_mode;
+    int32_t secondpool_available;
+} DM2_V1_AllocMemoryRamState;
+
+int32_t dm2_v1_skproject_alloc_memory_ram_classify(
+    int32_t amount,
+    int16_t wmask,
+    int16_t wtype,
+    const DM2_V1_AllocMemoryRamState *state,
+    const DM2_V1_FreepoolEntry *pools,
+    int32_t pool_count,
+    DM2_V1_SkprojectAllocMemoryRamReceipt *out_receipt);
+
+typedef struct {
+    int32_t amount;
+    int8_t  amount_was_odd;
+    int32_t adjusted_amount;
+} DM2_V1_SkprojectDeallocLobigpoolReceipt;
+
+int32_t dm2_v1_skproject_dealloc_lobigpool_classify(
+    int32_t amount,
+    DM2_V1_SkprojectDeallocLobigpoolReceipt *out_receipt);
+
+typedef struct {
+    int32_t amount;
+    int8_t  amount_was_odd;
+    int32_t adjusted_amount;
+} DM2_V1_SkprojectDeallocHibigpoolReceipt;
+
+int32_t dm2_v1_skproject_dealloc_hibigpool_classify(
+    int32_t amount,
+    DM2_V1_SkprojectDeallocHibigpoolReceipt *out_receipt);
+
+typedef struct {
+    int32_t amount;
+    int8_t  clean;
+    int16_t composed_wtype;
+} DM2_V1_SkprojectAllocFreepoolMemoryReceipt;
+
+int32_t dm2_v1_skproject_alloc_freepool_memory_classify(
+    int32_t amount,
+    int8_t clean,
+    DM2_V1_SkprojectAllocFreepoolMemoryReceipt *out_receipt);
+
+typedef struct {
+    int32_t amount;
+    int8_t  clean;
+    int16_t composed_wtype;
+} DM2_V1_SkprojectAllocLobigpoolMemoryReceipt;
+
+int32_t dm2_v1_skproject_alloc_lobigpool_memory_classify(
+    int32_t amount,
+    int8_t clean,
+    DM2_V1_SkprojectAllocLobigpoolMemoryReceipt *out_receipt);
+
+typedef struct {
+    int32_t amount;
+    int8_t  clean;
+    int16_t composed_wtype;
+} DM2_V1_SkprojectAllocHibigpoolMemoryReceipt;
+
+int32_t dm2_v1_skproject_alloc_hibigpool_memory_classify(
+    int32_t amount,
+    int8_t clean,
+    DM2_V1_SkprojectAllocHibigpoolMemoryReceipt *out_receipt);
+
+/* --- Batch 25b: c_alloc.cpp memory pool management --- */
+
+typedef struct DM2V1_FreepoolNode {
+    int32_t tag;
+    int16_t mode;
+    int32_t amount;
+    int32_t available;
+    void *endoffree;
+    void *eof_bup;
+    int32_t ava_bup;
+    struct DM2V1_FreepoolNode *fp_prev;
+} DM2V1_FreepoolNode;
+
+typedef void (*DM2V1_RaiseSysErrCallback)(int32_t code);
+typedef DM2V1_FreepoolNode *(*DM2V1_GetFreepoolListEndCallback)(void *ctx);
+typedef void (*DM2V1_SetFreepoolListEndCallback)(void *ctx, DM2V1_FreepoolNode *node);
+typedef void *(*DM2V1_AllocRawMemoryCallback)(int32_t size);
+typedef void (*DM2V1_FreeRawMemoryCallback)(void *ptr);
+
+typedef struct DM2_V1_SkprojectTagLargestFreePoolReceipt {
+    int8_t list_empty;
+    int8_t found_match;
+    int32_t largest_amount;
+    int8_t tagged_result;
+} DM2_V1_SkprojectTagLargestFreePoolReceipt;
+
+int32_t dm2_v1_skproject_tag_largest_free_pool_classify(
+    DM2V1_FreepoolNode *freepoollist_end,
+    int32_t lmask,
+    DM2V1_FreepoolNode **out_result,
+    DM2_V1_SkprojectTagLargestFreePoolReceipt *out_receipt);
+
+typedef struct DM2_V1_SkprojectAppendFreePoolReceipt {
+    int8_t applied;
+    int32_t computed_amount;
+} DM2_V1_SkprojectAppendFreePoolReceipt;
+
+int32_t dm2_v1_skproject_append_free_pool_classify(
+    DM2V1_FreepoolNode *fpp,
+    int16_t mode,
+    int32_t amount,
+    DM2V1_FreepoolNode *freepoollist_end,
+    DM2V1_SetFreepoolListEndCallback set_end_cb,
+    void *ctx,
+    DM2_V1_SkprojectAppendFreePoolReceipt *out_receipt);
+
+typedef struct DM2_V1_SkprojectAddMemToFreePoolReceipt {
+    int8_t too_small;
+    int8_t aligned_amount;
+    int32_t final_amount;
+    int8_t appended;
+} DM2_V1_SkprojectAddMemToFreePoolReceipt;
+
+int32_t dm2_v1_skproject_add_mem_to_free_pool_classify(
+    DM2V1_FreepoolNode *fpp,
+    int32_t lmask,
+    int32_t amount,
+    DM2V1_FreepoolNode *freepoollist_end,
+    DM2V1_SetFreepoolListEndCallback set_end_cb,
+    void *ctx,
+    DM2_V1_SkprojectAddMemToFreePoolReceipt *out_receipt);
+
+typedef struct DM2_V1_SkprojectBupFreepoolReceipt {
+    int32_t nodes_visited;
+    int32_t nodes_backed_up;
+} DM2_V1_SkprojectBupFreepoolReceipt;
+
+int32_t dm2_v1_skproject_bup_freepool_classify(
+    DM2V1_FreepoolNode *freepoollist_end,
+    DM2_V1_SkprojectBupFreepoolReceipt *out_receipt);
+
+typedef struct DM2_V1_SkprojectRestoreFreepoolReceipt {
+    int32_t nodes_visited;
+    int32_t nodes_restored;
+} DM2_V1_SkprojectRestoreFreepoolReceipt;
+
+int32_t dm2_v1_skproject_restore_freepool_classify(
+    DM2V1_FreepoolNode *freepoollist_end,
+    DM2_V1_SkprojectRestoreFreepoolReceipt *out_receipt);
+
+typedef struct DM2_V1_SkprojectCompleteAllocationReceipt {
+    int8_t is_allocated_set;
+    int8_t first_pool_found;
+    int8_t first_pool_null_error;
+    int8_t second_pool_found;
+    int32_t bigpool_amount;
+    int16_t bigpool_mode;
+    int16_t secondpool_mode;
+    int32_t secondpool_available;
+} DM2_V1_SkprojectCompleteAllocationReceipt;
+
+typedef struct DM2_V1_SkprojectCompleteAllocationOut {
+    void *bigpool_start;
+    void *bigpool_endoffree;
+    int32_t bigpool;
+    int16_t bigpool_mode;
+    void *secondpool_endoffree;
+    int32_t secondpool_available;
+    int16_t secondpool_mode;
+} DM2_V1_SkprojectCompleteAllocationOut;
+
+int32_t dm2_v1_skproject_complete_allocation_classify(
+    DM2V1_FreepoolNode *freepoollist_end,
+    DM2V1_RaiseSysErrCallback raise_err_cb,
+    DM2_V1_SkprojectCompleteAllocationOut *out_alloc,
+    DM2_V1_SkprojectCompleteAllocationReceipt *out_receipt);
+
+typedef struct DM2_V1_SkprojectSetupMemoryAllocationReceipt {
+    int8_t already_allocated;
+    int8_t allocation_failed;
+    int32_t num_pools;
+    int32_t pool_size;
+    int8_t complete_called;
+} DM2_V1_SkprojectSetupMemoryAllocationReceipt;
+
+int32_t dm2_v1_skproject_setup_memory_allocation_classify(
+    void **allocated_memory,
+    int32_t num_freepools,
+    int32_t sizeof_freepool,
+    int16_t default_mask,
+    DM2V1_AllocRawMemoryCallback alloc_cb,
+    DM2V1_FreepoolNode **freepoollist_end,
+    DM2V1_SetFreepoolListEndCallback set_end_cb,
+    void *ctx,
+    DM2_V1_SkprojectSetupMemoryAllocationReceipt *out_receipt);
+
+typedef struct DM2_V1_SkprojectDtorMemoryAllocationReceipt {
+    int8_t was_allocated;
+    int8_t freed;
+} DM2_V1_SkprojectDtorMemoryAllocationReceipt;
+
+int32_t dm2_v1_skproject_dtor_memory_allocation_classify(
+    void **allocated_memory,
+    DM2V1_FreeRawMemoryCallback free_cb,
+    DM2_V1_SkprojectDtorMemoryAllocationReceipt *out_receipt);
+
 
 #endif
