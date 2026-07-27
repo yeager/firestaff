@@ -4171,6 +4171,9 @@ lane is carried forward in the sections below.
     run with code 34 records SDL scancode 12 and PCE `raw=0001`. Controller
     delivery is therefore proven for this profile; a dungeon transition still
     separately requires game-owned CD-consumer evidence.
+    The capture script now preflights every supported PCE control against the
+    configured physical SDL scancode contract before it starts Mednafen. Any
+    profile drift fails rather than silently retaining a host-only key receipt.
     A manual-aligned sequence with two RUN presses (`return@10,return@20`)
     reaches the animated title menu, and the verified I press at `i@75`
     advances into the original framed `DUNGEON MASTER` story panel. This

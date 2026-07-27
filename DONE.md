@@ -71,6 +71,10 @@
   leave PCE at `raw=0000`, so capture no longer uses either. Script regression
   coverage pins both single-key and ordered-sequence mapping. This fixes host
   delivery only; no Track 02 semantic claim is made.
+- ✅ 2026-07-27 Theron capture-profile mapping preflight. The live capture
+  now verifies every supported PCE control (RUN, SELECT, I/II, and D-pad)
+  against the configured Mednafen SDL-scancode profile before it launches.
+  Profile drift fails explicitly instead of creating host-only input receipts.
 - ✅ 2026-07-27 Theron II and D-pad capture mapping. Added II and D-pad
   controls to the Quartz capture sequence, with macOS mappings verified
   against the live PCE port: II=`0002`, up=`0010`, down=`0040`, left=`0080`,

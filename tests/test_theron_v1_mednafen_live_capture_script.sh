@@ -113,6 +113,10 @@ fi
 if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY requires a non-dummy SDL video driver' "$script" ||
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY requires THERON_MEDNAFEN_HOME with an explicit PCE input mapping' "$script" ||
+   ! grep -Fq 'require_capture_profile_mappings()' "$script" ||
+   ! grep -Fq 'does not retain the required %s mapping' "$script" ||
+   ! grep -Fq 'pce.input.port1.gamepad.i 12 I' "$script" ||
+   ! grep -Fq 'pce.input.port1.gamepad.run 40 RUN' "$script" ||
    ! grep -Fq 'set targetProcess to first application process whose unix id is $target_pid' "$script" ||
    ! grep -Fq 'cliclick "c:${host_focus_x},${host_focus_y}"' "$script" ||
    ! grep -Fq 'resolve_mednafen_ui_pid()' "$script" ||

@@ -48,6 +48,40 @@ md5_file() {
     fi
 }
 
+require_capture_profile_mapping() {
+    local key=$1
+    local expected_scancode=$2
+    local label=$3
+    local actual_scancode
+
+    actual_scancode=$(awk -v key="$key" '
+        $1 == key && $2 == "keyboard" && $3 == "0x0" { print $4; exit }
+    ' "$configured_home/mednafen.cfg")
+    if [[ "$actual_scancode" != "$expected_scancode" ]]; then
+        printf 'FAIL: THERON_MEDNAFEN_HOME does not retain the required %s mapping (expected SDL scancode %s, got %s)\n' \
+            "$label" "$expected_scancode" "${actual_scancode:-missing}" >&2
+        exit 1
+    fi
+}
+
+require_capture_profile_mappings() {
+    if [[ ! -f "$configured_home/mednafen.cfg" ]]; then
+        printf '%s\n' 'FAIL: THERON_MEDNAFEN_HOME has no Mednafen configuration file' >&2
+        exit 1
+    fi
+
+    # The Quartz codes below are only valid for this explicit physical-key
+    # profile. Refuse profile drift instead of silently sending a non-PCE key.
+    require_capture_profile_mapping pce.input.port1.gamepad.run 40 RUN
+    require_capture_profile_mapping pce.input.port1.gamepad.select 43 SELECT
+    require_capture_profile_mapping pce.input.port1.gamepad.i 12 I
+    require_capture_profile_mapping pce.input.port1.gamepad.ii 90 II
+    require_capture_profile_mapping pce.input.port1.gamepad.up 26 UP
+    require_capture_profile_mapping pce.input.port1.gamepad.down 22 DOWN
+    require_capture_profile_mapping pce.input.port1.gamepad.left 4 LEFT
+    require_capture_profile_mapping pce.input.port1.gamepad.right 7 RIGHT
+}
+
 track02_member=$(awk '
     /^FILE "/ {
         line = $0
@@ -106,6 +140,7 @@ if [[ "$host_input_requested" == 1 ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY requires THERON_MEDNAFEN_HOME with an explicit PCE input mapping' >&2
         exit 1
     fi
+    require_capture_profile_mappings
     if [[ -n "$host_key_sequence" && ( -n "$host_key" || -n "$host_key_delays" ) ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_SEQUENCE cannot be combined with HOST_KEY or HOST_KEY_DELAYS' >&2
         exit 1
