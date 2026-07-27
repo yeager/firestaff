@@ -301,6 +301,25 @@ int main(void) {
     if (!expect(M11_GameView_Start(&view, &spec), "initial DM1 start should succeed")) return 1;
     if (!expect(M11_GameView_Dm1StartupIntroBypassed(&view) == 1,
                 "direct generic DM1 start should report game-view intro bypass")) return 1;
+    if (!expect(view.inspectTitle[0] == '\0' && view.inspectDetail[0] == '\0',
+                "DM1 start must not render Firestaff-only HoC help text")) return 1;
+
+    /* COMMAND.C C140 reaches the native DM1 F0433 save route, whereas F9
+     * below owns Firestaff's quicksave envelope. Keep both paths covered:
+     * the visible inventory SAVE control must produce a file that M11 can
+     * immediately re-admit through its normal DM1 save loader. */
+    snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-command-save.sav",
+             saveTemplate);
+    m12_test_setenv("FIRESTAFF_QUICKSAVE_PATH", savePath);
+    if (!expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_SAVE_GAME) ==
+                    M11_GAME_INPUT_REDRAW,
+                "C140 save command should be consumed by the live DM1 runtime")) return 1;
+    if (!expect(M11_GameView_LoadDm1SavePath(&view, savePath, NULL),
+                "C140 save command should write a loadable DM1 save")) return 1;
+
+    snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-quicksave.sav",
+             saveTemplate);
+    m12_test_setenv("FIRESTAFF_QUICKSAVE_PATH", savePath);
 
     view.world.party.mapIndex = 2;
     view.world.party.mapX = 11;

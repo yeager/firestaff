@@ -3,6 +3,13 @@
   corresponding C007..C010 inventory route. The V2 regression passes 24/24;
   the complete inventory mouse-route suite passes 332/332.
 
+- ✅ 2026-07-27 DM1 HoC synthetic help-strip removal and C140 save route.
+  Removed the non-ReDMCSB `READY: CLICK CENTER ...` producer from the direct
+  DM1 startup receipt, leaving the C015 message strip empty until real
+  TEXT.C wall/scroll material is presented. The real-data M11 regression now
+  confirms the visible C140 SAVE route writes a native save that reloads
+  immediately; original-PC34 corpus/timeline interop remains explicitly open.
+
 - ✅ 2026-07-27 DM1 PC34 wall-ornament metadata offset. M11's ornament cache
   now includes the TextData section before typed Thing records, matching the
   DUNGEON.DAT loader and restoring real map-local ornament indices. The real

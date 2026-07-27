@@ -24,6 +24,16 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-HOC-SYNTHETIC-HELP-STRIP:** Closed 2026-07-27. The direct-start
+  receipt no longer seeds the Firestaff-only `READY: CLICK CENTER ...` text
+  into the Hall of Champions message strip. C015 stays empty until a real
+  ReDMCSB TEXT.C wall or scroll message owns it.
+
+- **DM1-C140-SAVE-ROUTE:** Closed 2026-07-27. The visible inventory SAVE
+  control writes a native DM1 save that M11 immediately reloads against the
+  real `DUNGEON.DAT`; this is separate from, and does not mask, the remaining
+  original-PC34 corpus/timeline work.
+
 - **DM1-V2-VISIBLE-CHAMPION-PORTRAIT-HITBOX:** Closed 2026-07-27. V2's
   composed HUD shifts champion portrait/name regions to x=12 with a 77px
   stride, so each visible portrait now reaches the original C007..C010

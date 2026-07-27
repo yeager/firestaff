@@ -1151,7 +1151,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
              strcmp(runtime_receipt.status_title, "BOOT") == 0 &&
                  strcmp(runtime_receipt.status_detail,
                         "GAME DATA LOADED") == 0 &&
-                 strcmp(runtime_receipt.inspect_title, "READY") == 0,
+                 runtime_receipt.inspect_title[0] == '\0' &&
+                 runtime_receipt.inspect_detail[0] == '\0',
              1);
     runtime_facts.font_scale = 2;
     runtime_facts.source_id = "dm1";

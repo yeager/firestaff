@@ -656,14 +656,13 @@ int dm1_v1_startup_runtime_start_receipt_pc34(
              sizeof(receipt.status_detail),
              "%s",
              "GAME DATA LOADED");
-    snprintf(receipt.inspect_title,
-             sizeof(receipt.inspect_title),
-             "%s",
-             "READY");
-    snprintf(receipt.inspect_detail,
-             sizeof(receipt.inspect_detail),
-             "%s",
-             "CLICK CENTER TO ADVANCE OR READ, CLICK SIDES TO TURN, TAB PICKS THE FRONT CHAMPION");
+    /* This Firestaff-only help string was rendered directly by M11, so the
+     * later TEXT.C admission filter could not prevent it from appearing in
+     * the Hall of Champions message strip.  ReDMCSB has no TEXT.C producer
+     * for it: leave the C015 surface empty until an actual wall/scroll
+     * message owns it. */
+    receipt.inspect_title[0] = '\0';
+    receipt.inspect_detail[0] = '\0';
     *out_receipt = receipt;
     return 1;
 }
