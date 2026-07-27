@@ -242,6 +242,7 @@ static int m11_csb_original_save_runtime_receipt_current(
 int M11_GameView_StartNexus(M11_GameViewState* state, const char* dataDir);
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
+                                    const char* launcherSourceId,
                                     const char* verifiedPath,
                                     const char* verifiedMd5,
                                     const Theron_Track02StartupLoaderReceipt* loaderReceipt,
@@ -14506,6 +14507,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         }
         ok = M11_GameView_StartTheron(state,
                                       dd,
+                                      spec->sourceId,
                                       spec->verifiedAssetPath,
                                       spec->verifiedAssetMd5,
                                       spec->theronTrack02LoaderReceipt,
@@ -17745,6 +17747,7 @@ static int m11_theron_startup_has_verified_runtime_surfaces(
 
 static int M11_GameView_StartTheron(M11_GameViewState* state,
                                     const char* dataDir,
+                                    const char* launcherSourceId,
                                     const char* verifiedPath,
                                     const char* verifiedMd5,
                                     const Theron_Track02StartupLoaderReceipt* loaderReceipt,
@@ -17830,7 +17833,12 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
             }
             snprintf(state->bootAssetMd5, sizeof(state->bootAssetMd5), "%s", verifiedMd5);
             snprintf(state->title, sizeof(state->title), "%s", "THERON'S QUEST");
-            snprintf(state->sourceId, sizeof(state->sourceId), "%s", "theron-track02");
+            snprintf(state->sourceId,
+                     sizeof(state->sourceId),
+                     "%s",
+                     launcherSourceId && launcherSourceId[0]
+                         ? launcherSourceId
+                         : "theron");
             snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", verifiedPath);
             return 1;
         }
@@ -17909,6 +17917,15 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     if (!m11_theron_apply_boot_runtime_receipt(state, &runtime_receipt)) {
         goto fail;
     }
+    /* Source kind records Track 02 media. Keep the launcher game identity
+     * stable across raw BIN/CUE and converted ISO paths so startup receipts,
+     * saves, and direct boot probes all refer to the selected game. */
+    snprintf(state->sourceId,
+             sizeof(state->sourceId),
+             "%s",
+             launcherSourceId && launcherSourceId[0]
+                 ? launcherSourceId
+                 : "theron");
     if (campaignMedia && campaignMedia->direct_media.cue_consumed &&
         m11_path_has_extension(campaignMedia->direct_media.media_path, ".cue")) {
         cdda_cue_path = campaignMedia->direct_media.media_path;

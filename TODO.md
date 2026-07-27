@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-CONVERTED-ISO-LAUNCHER-IDENTITY:** Closed 2026-07-27. The verified
+  converted `TQUS02End.iso` path now preserves the selected `theron` launcher
+  identity while retaining the Track 02 source kind. The ISO boot-probe
+  regression prevents the former false selected-entry failure.
+
 - **THERON-LEGACY-MARKER-ROUTE-CLOSURE:** Closed 2026-07-27. Raw Track 02 no
   longer scans for the old Firestaff-only `THG3`/`THS4` marker guesses. Marker
   bytes in authentic media cannot create a graphics or audio route; raw bytes

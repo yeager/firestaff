@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron converted-ISO launcher identity. The verified
+  `TQUS02End.iso` startup path now preserves `sourceId=theron` while its
+  `sourceKind` remains Track 02. A real-media boot-probe regression prevents
+  the former false selected-entry source failure.
+
 - ✅ 2026-07-27 Theron legacy marker-route closure. Raw Track 02 no longer
   interprets Firestaff-only `THG3`/`THS4` marker guesses as graphics or audio
   resources. A marker-like raw-media regression proves the bytes remain
