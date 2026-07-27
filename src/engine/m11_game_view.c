@@ -45074,6 +45074,39 @@ static int m11_draw_dm1_v1_top_row_receipt(
                     operation->width, operation->height,
                     framebuffer, framebufferWidth, framebufferHeight,
                     operation->x, operation->y, operation->color);
+                if (operation->kind ==
+                    DM1_V1_CHAMPION_TOP_ROW_OP_BLIT_HAND_PC34) {
+                    const int handIndex = operation->zoneId -
+                        (211 + operation->championSlot * 2);
+                    const struct ChampionState_Compat* champion = NULL;
+                    int iconIndex;
+
+                    /* F0291 owns the C033/C034/C035 hand frame, then
+                     * F0038 overlays the real 16x16 object (or empty-hand)
+                     * icon. The receipt path already consumed the frame but
+                     * used to stop before that second source-owned blit. */
+                    if (handIndex >= 0 && handIndex < 2 &&
+                        operation->championSlot >= 0 &&
+                        operation->championSlot <
+                            state->world.party.championCount) {
+                        champion = &state->world.party.champions[
+                            operation->championSlot];
+                        iconIndex = m11_v1_status_hand_icon_index(
+                            state, operation->championSlot, handIndex);
+                        if (champion->present && champion->hp.current > 0 &&
+                            iconIndex >= 0) {
+                            DM1_V1_ChampionStatusRectPc34 iconRect;
+                            if (dm1_v1_champion_status_hand_icon_rect_pc34(
+                                    operation->championSlot, handIndex,
+                                    &iconRect)) {
+                                (void)m11_draw_dm_object_icon_index(
+                                    state, framebuffer, framebufferWidth,
+                                    framebufferHeight, iconIndex,
+                                    iconRect.x, iconRect.y, 0);
+                            }
+                        }
+                    }
+                }
                 break;
             }
 

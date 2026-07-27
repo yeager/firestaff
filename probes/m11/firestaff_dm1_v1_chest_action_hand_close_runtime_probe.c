@@ -95,7 +95,11 @@ static int seed_records(M11_GameViewState* game,
     things = game->world.things;
     if (!things->loaded ||
         !things->containers || things->containerCount < 1 ||
-        !things->junks || things->junkCount < 1) {
+        !things->junks || things->junkCount < 1 ||
+        !things->rawThingData[THING_TYPE_CONTAINER] ||
+        !things->rawThingData[THING_TYPE_JUNK] ||
+        things->thingCounts[THING_TYPE_CONTAINER] < 1 ||
+        things->thingCounts[THING_TYPE_JUNK] < 1) {
         return 0;
     }
 
@@ -103,10 +107,20 @@ static int seed_records(M11_GameViewState* game,
     things->containers[0].next = THING_ENDOFLIST;
     things->containers[0].slot = itemThing;
     things->containers[0].type = 0;
+    things->rawThingData[THING_TYPE_CONTAINER][0] = 0xfeu;
+    things->rawThingData[THING_TYPE_CONTAINER][1] = 0xffu;
+    things->rawThingData[THING_TYPE_CONTAINER][2] =
+        (unsigned char)(itemThing & 0xffu);
+    things->rawThingData[THING_TYPE_CONTAINER][3] =
+        (unsigned char)(itemThing >> 8);
 
     memset(&things->junks[0], 0, sizeof(things->junks[0]));
     things->junks[0].type = 1;
     things->junks[0].next = THING_ENDOFLIST;
+    things->rawThingData[THING_TYPE_JUNK][0] = 0xfeu;
+    things->rawThingData[THING_TYPE_JUNK][1] = 0xffu;
+    things->rawThingData[THING_TYPE_JUNK][2] = 1u;
+    things->rawThingData[THING_TYPE_JUNK][3] = 0u;
 
     seed_champion(&game->world.party.champions[0], chestThing);
     game->world.party.championCount = 1;

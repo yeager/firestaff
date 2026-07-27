@@ -23,6 +23,8 @@
  */
 
 #include "m11_game_view.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "asset_loader_m11.h"
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
@@ -149,6 +151,41 @@ static void seed_champion(struct ChampionState_Compat* champ,
     champ->inventory[CHAMPION_SLOT_ACTION_HAND] = actionThing;
 }
 
+static int seed_original_portrait_materials(M11_GameViewState* game)
+{
+    const M11_AssetSlot* portraits;
+    int championIndex;
+
+    if (!game) return 0;
+    portraits = M11_AssetLoader_Load(
+        &game->assetLoader,
+        (unsigned int)dm1_v1_graphic_champion_portraits_pc34());
+    if (!portraits || !portraits->loaded || !portraits->pixels ||
+        portraits->width < CHAMPION_PORTRAIT_BITMAP_WIDTH * 8 ||
+        portraits->height < CHAMPION_PORTRAIT_BITMAP_HEIGHT) return 0;
+    for (championIndex = 0; championIndex < PROBE_PARTY_COUNT;
+         ++championIndex) {
+        struct ChampionState_Compat* champion =
+            &game->world.party.champions[championIndex];
+        const int sourceX = championIndex * CHAMPION_PORTRAIT_BITMAP_WIDTH;
+        int y;
+
+        for (y = 0; y < CHAMPION_PORTRAIT_BITMAP_HEIGHT; ++y) {
+            const unsigned char* source = portraits->pixels +
+                y * (int)portraits->width + sourceX;
+            unsigned char* destination = champion->portraitBitmap +
+                y * (CHAMPION_PORTRAIT_BITMAP_WIDTH / 2);
+            int x;
+            for (x = 0; x < CHAMPION_PORTRAIT_BITMAP_WIDTH; x += 2) {
+                destination[x / 2] = (unsigned char)(
+                    ((source[x] & 0x0fu) << 4) | (source[x + 1] & 0x0fu));
+            }
+        }
+        champion->portraitBitmapValid = 1;
+    }
+    return 1;
+}
+
 static int seed_runtime(M11_GameViewState* game,
                         unsigned short leaderThing,
                         unsigned short ownerActionThing,
@@ -165,9 +202,20 @@ static int seed_runtime(M11_GameViewState* game,
     }
 
     for (i = 0; i < 3; ++i) {
+        unsigned char* raw = things->rawThingData[THING_TYPE_JUNK];
+        if (!raw || things->thingCounts[THING_TYPE_JUNK] < 3) {
+            printf("SKIP loaded DM1 runtime has no writable raw junk records\n");
+            return 0;
+        }
         memset(&things->junks[i], 0, sizeof(things->junks[i]));
         things->junks[i].type = (unsigned char)i;
         things->junks[i].next = THING_ENDOFLIST;
+        /* F0038 extracts the icon through F0156 raw records. Keep the
+         * decoded test mutation and its original-byte owner in sync. */
+        raw[i * 4 + 0] = 0xfeu;
+        raw[i * 4 + 1] = 0xffu;
+        raw[i * 4 + 2] = (unsigned char)i;
+        raw[i * 4 + 3] = 0u;
     }
 
     memset(game->world.party.champions, 0, sizeof(game->world.party.champions));
@@ -190,6 +238,8 @@ static int seed_runtime(M11_GameViewState* game,
                   "WUUF", 2, THING_NONE, THING_NONE);
     seed_champion(&game->world.party.champions[3],
                   "ALEX", 3, THING_NONE, THING_NONE);
+
+    if (!seed_original_portrait_materials(game)) return 0;
 
     M11_GameView_ClearV1LeaderHandObject(game);
     return M11_GameView_SetV1LeaderHandObject(game, leaderThing);
@@ -249,7 +299,6 @@ int main(int argc, char** argv)
                                                            &zoneX, &zoneY,
                                                            &zoneW, &zoneH) &&
                       zoneW == 16 && zoneH == 16);
-
     M11_GameView_Draw(&game, fbBefore, PROBE_FB_W, PROBE_FB_H);
     otherBefore = rect_stats(fbBefore, PROBE_FB_W, zoneX, zoneY, zoneW, zoneH);
     ok &= expect_true("seeded other-owner icon zone is visible",

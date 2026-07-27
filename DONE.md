@@ -1,3 +1,10 @@
+- ✅ 2026-07-27 DM1 source HUD hand-object redraw. The F0291 receipt
+  consumer now performs F0038's original 16x16 object-icon overlay after it
+  presents C033/C034/C035 hand frames. Focused live runtime probes verify a
+  visible non-owner action-hand icon before and after a click-driven swap;
+  the chest fixture now keeps its raw PC34 records synchronized with decoded
+  mutations.
+
 - ✅ 2026-07-27 DM1 PC34 complete save shape. `DM1_SaveGamePC34()` now has a
   tail-backed reload regression that exercises the full F0803/F0435 file
   shape, including a saved one-map dungeon. Header-only five-part fixtures
