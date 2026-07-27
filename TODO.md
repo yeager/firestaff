@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-SPLIT-TRACK02-PORTABLE-CACHE:** Closed 2026-07-27. The verified
+  split-image cache now uses platform-specific directory and process APIs and
+  falls back to `USERPROFILE` on Windows, keeping the same hash contract on
+  packaged Windows builds.
+
 - **THERON-TRACK02-SINGLE-MATERIALIZATION-OWNER:** Closed 2026-07-27.
   Asset loading no longer performs an independent path-only Track 02 rebuild;
   raw-media intake is the sole hash-gated owner, preventing truncated US

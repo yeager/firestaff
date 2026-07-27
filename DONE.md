@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 Theron split Track 02 portable cache. Materialization now
+  uses Windows-safe mkdir/PID APIs and `USERPROFILE` fallback while retaining
+  the verified JP and US CUE startup paths.
+
 - ✅ 2026-07-27 Theron Track 02 single materialization owner. Removed the
   legacy asset-loader reconstruction path. Raw-media intake exclusively owns
   verified split handling; rendering and real JP/US startup regressions pass.

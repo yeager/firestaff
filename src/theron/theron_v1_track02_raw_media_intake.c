@@ -5,7 +5,16 @@
 #include <string.h>
 
 #include <sys/stat.h>
+#if defined(_WIN32)
+#include <direct.h>
+#include <process.h>
+#define THERON_V1_TRACK02_MKDIR(path) _mkdir(path)
+#define THERON_V1_TRACK02_GETPID() _getpid()
+#else
 #include <unistd.h>
+#define THERON_V1_TRACK02_MKDIR(path) mkdir((path), 0700)
+#define THERON_V1_TRACK02_GETPID() getpid()
+#endif
 
 #include "asset_status_m12.h"
 #include "theron_v1_track02_raw_media_intake.h"
@@ -16,7 +25,7 @@
 
 static int theron_v1_track02_media_mkdir(const char *path) {
     if (!path || !path[0]) return 0;
-    if (mkdir(path, 0700) == 0 || errno == EEXIST) return 1;
+    if (THERON_V1_TRACK02_MKDIR(path) == 0 || errno == EEXIST) return 1;
     return 0;
 }
 
@@ -305,6 +314,9 @@ static int theron_v1_track02_media_materialize_us_split(
         strcmp(tail_md5, THERON_V1_TRACK02_US_SPLIT_TAIL_MD5) != 0) return 0;
 
     home = getenv("HOME");
+#if defined(_WIN32)
+    if (!home || !home[0]) home = getenv("USERPROFILE");
+#endif
     if (!home || !home[0] ||
         snprintf(cache_root, sizeof(cache_root), "%s/.firestaff", home) >=
             (int)sizeof(cache_root) ||
@@ -323,7 +335,7 @@ static int theron_v1_track02_media_materialize_us_split(
         return 1;
     }
     if (snprintf(temp_path, sizeof(temp_path), "%s.tmp-%ld", cache_path,
-                 (long)getpid()) >= (int)sizeof(temp_path) ||
+                 (long)THERON_V1_TRACK02_GETPID()) >= (int)sizeof(temp_path) ||
         !(out = fopen(temp_path, "wb"))) return 0;
     if (!theron_v1_track02_media_copy_file(out, head) ||
         !theron_v1_track02_media_copy_file(out, tail) || fclose(out) != 0 ||
