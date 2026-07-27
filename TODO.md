@@ -4174,6 +4174,11 @@ lane is carried forward in the sections below.
     The capture script now preflights every supported PCE control against the
     configured physical SDL scancode contract before it starts Mednafen. Any
     profile drift fails rather than silently retaining a host-only key receipt.
+    A complete profile-bound US-CUE run (`physical-i-full-route-20260727`)
+    records 25 SDL key events, PCE I `raw=0001`, 68 SCSI commands, and the
+    full 256 raw-sector witness, yet still has zero non-System-Card PCECD
+    reads and zero main-RAM E009 dispatches. It is retained as negative route
+    evidence only; no record, level, object, or graphics semantic is promoted.
     A manual-aligned sequence with two RUN presses (`return@10,return@20`)
     reaches the animated title menu, and the verified I press at `i@75`
     advances into the original framed `DUNGEON MASTER` story panel. This

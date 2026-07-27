@@ -75,6 +75,11 @@
   now verifies every supported PCE control (RUN, SELECT, I/II, and D-pad)
   against the configured Mednafen SDL-scancode profile before it launches.
   Profile drift fails explicitly instead of creating host-only input receipts.
+- ✅ 2026-07-27 Theron full profile-bound controller capture. The authentic
+  US-CUE `physical-i-full-route-20260727` run records PCE I `raw=0001`, 68
+  SCSI commands, and the 256-sector raw witness. It still has zero game-owned
+  PCECD/main-RAM E009 rows, so it remains negative route evidence only and
+  promotes no Track 02 format or renderer semantics.
 - ✅ 2026-07-27 Theron II and D-pad capture mapping. Added II and D-pad
   controls to the Quartz capture sequence, with macOS mappings verified
   against the live PCE port: II=`0002`, up=`0010`, down=`0040`, left=`0080`,
