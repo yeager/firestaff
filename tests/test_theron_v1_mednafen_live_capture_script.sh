@@ -25,7 +25,8 @@ if [[ ! -x "$runtime_verifier" ]] ||
     printf 'FAIL: live capture build must reject the SDL2-compat event bridge\n' >&2
     exit 1
 fi
-if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script"; then
+if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_input_result_trace.patch' "$build_script"; then
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
     exit 1
 fi

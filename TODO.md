@@ -4148,9 +4148,11 @@ lane is carried forward in the sections below.
     now proves Quartz-delivered Return reaches SDL and PCE port `0008`; the
     65,536-per-direction capture records 47,575 input transactions, including
     26,782 after its first host key and real `e4b7`/`e4c8` reads of `0008`.
-    That establishes the host-to-PCE input chain, but this same capture still
-    has no non-System-Card PCECD reader or dynamic destination receipt, so no
-    row is synthesized or promoted to runtime.
+    A later result capture also records the exact emulated values `3f` and
+    `37` for those two reads while Return is held. That establishes the
+    host-to-PCE input chain and observed register result, but captures still
+    have no non-System-Card PCECD reader or dynamic destination receipt, so
+    no row is synthesized or promoted to runtime.
   - 2026-07-16 Theron draw-route gate update: M11 now has a guarded
     dungeon draw-route receipt that can consume the proven level-1 media,
     multilevel handoff, live level geometry, party pose, object placement,

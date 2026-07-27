@@ -40909,3 +40909,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   rebuilt SDL2-linked Mednafen, and 55-second authentic CUE/System Card run.
   No dynamic CD destination or game-owned PCECD reader appeared, so Track 02
   dungeon promotion remains blocked.
+- ✅ 2026-07-27 Theron PCE input-result trace. Added a post-read trace hook
+  after Mednafen applies PCE port semantics, rather than inferring result bits
+  from host state. A real 28-second US capture with Return held records
+  `raw=0008 -> value=3f` at `e4b7` and `raw=0008 -> value=37` at `e4c8`, plus
+  4,796 subsequent PCE input transactions. This proves the observed input
+  register result only; it does not assign a game command or promote Track 02
+  data.
