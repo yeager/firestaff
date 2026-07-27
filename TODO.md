@@ -19739,6 +19739,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     as MODE1 data, so the remaining real-data job is a captured HuC6280
     loader/CD byte-span binding for a bitmap, object, world, UI, or audio
     consumer; marker syntax alone cannot create an atlas or playback route.
+  - 2026-07-27 update: verified JP/US Track 02 now blocks rendering from any
+    preinitialized default tile/palette state unless an original graphics bank
+    and verified palette route are both present. Runtime capture rejects a
+    deterministic-fallback marker, and current JP/US/canonical captures report
+    no fallback assets. The remaining work is still positive original graphics
+    bank/loader evidence, not a generated substitute.
 
 - 🔧 2026-07-15 CSB M11 terminal host-surface consumer: M11 now consumes the
   session-owned, hash-bound host-surface receipt for C001-C005/C017/C040 and

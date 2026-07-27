@@ -204,6 +204,7 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
         and probe.get("launchedEver") == 1
         and probe.get("active") == 1
         and probe.get("sourceId") == "theron"
+        and not row["fallback_assets_used"]
         and source_ok
         and presented_ok
     )
@@ -244,7 +245,7 @@ def write_outputs(result: dict[str, Any]) -> None:
         "## Public Screenshot Boundary",
         "",
         "- These receipts prove Firestaff can emit Theron runtime screenshot artifacts when the Track 02 launch reaches M11.",
-        "- Rows that use deterministic fallback assets are runtime/capture-path proof, not final art or source-bank proof.",
+        "- Any deterministic fallback asset rejects this gate; only source-backed startup graphics may pass.",
         "- No generated, mock, or synthetic image is promoted by this gate.",
         "- README-eligible Theron screenshots still need reviewed real runtime frames and stronger semantic Track 02 loader parity.",
         "",

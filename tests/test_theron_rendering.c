@@ -691,6 +691,15 @@ static int test_asset_verified_track02_blocks_synthetic_rendering(void) {
         ASSERT(!tr_asset_generated_v1_rendering_allowed(&bundle),
                "synthetic-blocked bundle disallows generated V1 rendering");
 
+        /* The loader may initialize a default palette before real Track 02
+         * graphics are bound. Its tile count is not source evidence. */
+        bundle.synthetic_rendering_blocked = 0;
+        bundle.palette.tile_count = 1;
+        tr_asset_block_synthetic_rendering_for_verified_media(&bundle, md5);
+        ASSERT(bundle.synthetic_rendering_blocked == 1,
+               "default palette tiles cannot reopen verified Track 02 rendering");
+        bundle.palette.tile_count = 0;
+
         /* A mismatched MD5 must not alter the block flag. */
         bundle.synthetic_rendering_blocked = 0;
         tr_asset_block_synthetic_rendering_for_verified_media(&bundle, bad_md5);

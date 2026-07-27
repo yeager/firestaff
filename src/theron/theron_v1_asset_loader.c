@@ -395,8 +395,8 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
         bundle->hucard_rom = data;
         bundle->hucard_rom_size = (size_t)file_size;
         bundle->region = 1;
-        printf("[TQR] No Track 03/04 markers in %s; keeping raw Track 02 data "
-               "with deterministic fallback assets\n", file_path);
+        printf("[TQR] No Track 03/04 markers in %s; retaining raw Track 02 "
+               "without a supplemental graphics bank\n", file_path);
         return TR_ASSET_OK;
     }
 
@@ -453,14 +453,12 @@ void tr_asset_block_synthetic_rendering_for_verified_media(
         variant != THERON_TRACK02_VARIANT_US_BIN) {
         return;
     }
-    /* Verified JP/US Track 02 bytes are authoritative. Block generated
-     * palette/tile/UI substitutes unless a source-locked graphics bank has
-     * produced real tile bytes and a hash/offset-proved palette route is
-     * bound. The render gate below enforces the palette-route check even if
-     * a synthetic tile bank is present. */
-    if (bundle->palette.tile_count == 0 && !bundle->track03_data) {
-        bundle->synthetic_rendering_blocked = 1;
-    }
+    /* Verified JP/US Track 02 bytes are authoritative. The legacy loader may
+     * already have initialized a default palette or tile store, but neither is
+     * source evidence. Only a decoded original bank plus a proven HuC6260
+     * palette route can clear this admission boundary. */
+    bundle->synthetic_rendering_blocked =
+        !tr_asset_generated_v1_rendering_allowed(bundle);
 }
 
 int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle) {

@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron verified-media fallback closure. A verified Track 02
+  now blocks preinitialized default palette/tile state unless an original bank
+  and a proven palette route are both present. The runtime screenshot gate
+  rejects fallback output; canonical, JP, and US Track 02 captures pass with
+  zero fallback-assets reported. `test_theron_rendering` passes 25/25.
 - ✅ 2026-07-27 Theron Launch CUE admission. The real Launch action now
   chooses the compatible hash-matched Track 02 before direct CUE/BIN/ISO
   campaign admission, then reconstructs the raw IPL receipt from the selected
