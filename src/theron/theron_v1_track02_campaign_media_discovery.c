@@ -64,14 +64,6 @@ int theron_v1_track02_campaign_media_discover(
     struct stat info;
     char found[ASSET_PATH_MAX] = {0};
     Theron_Track02Variant variant;
-    static const char *const known_track02_md5s[] = {
-        THERON_TRACK02_MD5_JP_BIN,
-        THERON_TRACK02_MD5_US_BIN,
-        THERON_TRACK02_MD5_JP_REV1_ISO,
-        THERON_TRACK02_MD5_US_ISO,
-        NULL
-    };
-
     if (!out) return 0;
     *out = receipt;
     if (!search_path || !search_path[0] || !expected_track02_md5 ||
@@ -148,23 +140,11 @@ int theron_v1_track02_campaign_media_discover(
         *out = receipt;
         return 1;
     }
+    /* The caller has already selected one exact, hash-verified Track 02
+     * variant. A data root may legitimately contain both regional releases;
+     * their presence must not invalidate this explicit selection. */
     receipt.candidate_count = 1;
     snprintf(receipt.candidate_path, sizeof(receipt.candidate_path), "%s", found);
-    for (size_t i = 0u; known_track02_md5s[i]; ++i) {
-        char other[ASSET_PATH_MAX];
-        if (strcmp(known_track02_md5s[i], expected_track02_md5) &&
-            asset_find_by_md5(search_path, known_track02_md5s[i], other,
-                              (int)sizeof(other), max_depth)) {
-            ++receipt.candidate_count;
-            receipt.ambiguous = 1;
-        }
-    }
-    if (receipt.ambiguous) {
-        receipt.status = THERON_V1_TRACK02_CAMPAIGN_MEDIA_AMBIGUOUS;
-        receipt.failure_reason = THERON_V1_TRACK02_MEDIA_REASON_EXPECTED_HASH_MISMATCH;
-        *out = receipt;
-        return 1;
-    }
     receipt.virtual_container = is_virtual_path(found);
     receipt.no_media_extracted = receipt.virtual_container;
     receipt.source = receipt.virtual_container

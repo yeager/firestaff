@@ -1,6 +1,7 @@
 #include "theron_v1_track02_campaign_media_discovery.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static void fixture(Theron_V1Track02CampaignMediaDiscoveryReceipt *media,
@@ -77,6 +78,19 @@ int main(void)
     refreshed.cue_index01_sector++;
     if (theron_v1_track02_campaign_media_direct_layout_current(
             &media, &refreshed, &plan)) return 7;
+
+    {
+        const char *media_root = getenv("FIRESTAFF_THERON_TRACK02_MEDIA_ROOT");
+        const char *expected_md5 = getenv("FIRESTAFF_THERON_TRACK02_EXPECTED_MD5");
+        if (media_root && media_root[0] && expected_md5 && expected_md5[0]) {
+            if (!theron_v1_track02_campaign_media_discover(
+                    media_root, expected_md5, 4, &media) ||
+                media.status != THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY ||
+                media.ambiguous || media.candidate_count != 1u ||
+                !media.launchable_direct_media ||
+                strcmp(media.track02_md5, expected_md5)) return 8;
+        }
+    }
 
     puts("test_theron_v1_track02_campaign_media_discovery: PASS");
     return 0;

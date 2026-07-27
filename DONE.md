@@ -40862,3 +40862,10 @@ passes all 27 checks from title through entrance and HUD.
   f0731_f0734_inventory_zone_material (5 tests, Q-DM1-06): zone constants,
   receipt struct, FNV1a. f0675_scaled_material (5 tests, Q-DM1-03): struct
   layouts, FNV1a, receipt null.
+# 2026-07-27 Theron hash-selected Track 02 media root
+
+Theron launcher campaign-media discovery now honours the caller's selected
+known Track 02 MD5 when scanning a directory. A data root containing both US
+and JP original releases is valid; the selected release remains launchable
+instead of being misreported as ambiguous. The optional real-media test uses
+the supplied root and selected MD5 to prove this without shipping game data.
