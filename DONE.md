@@ -40877,3 +40877,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Quartz-delivered Run input, two observed System Card calls, 25 CDIRQ events,
   and 31 raw-sector receipts. Dynamic dungeon-handoff rows remain deliberately
   unclaimed until an original run reaches them.
+- ✅ 2026-07-27 Theron timed original-menu input capture. The authenticated
+  Mednafen capture helper now supports ordered absolute input timings through
+  `THERON_CAPTURE_HOST_KEY_DELAYS`. Verified a three-press Quartz Run sequence
+  against authentic US Track 02 and System Card 3.0; the trace records every
+  host SDL/key event and emulated port state. The current original route stops
+  polling the PCE port before the scheduled presses, which remains explicit
+  evidence rather than being misreported as a successful dungeon handoff.

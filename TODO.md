@@ -4140,7 +4140,10 @@ lane is carried forward in the sections below.
     has produced an authentic US Track 02 capture with Quartz-delivered Run
     input, System Card calls, and raw-sector receipts. The remaining blocker
     is narrower: the capture has not yet reached the required later dynamic
-    loader/consumer rows, so no row is synthesized or promoted to runtime.
+    loader/consumer rows. Timed multi-key captures now prove that Quartz
+    events reach Mednafen after the authentic title sequence, but the PCE
+    input port has stopped polling before those events; no row is synthesized
+    or promoted to runtime.
   - 2026-07-16 Theron draw-route gate update: M11 now has a guarded
     dungeon draw-route receipt that can consume the proven level-1 media,
     multilevel handoff, live level geometry, party pose, object placement,

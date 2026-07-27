@@ -16,6 +16,7 @@ host_key=${THERON_CAPTURE_HOST_KEY:-}
 host_key_delay=${THERON_CAPTURE_HOST_KEY_DELAY:-8}
 host_key_hold=${THERON_CAPTURE_HOST_KEY_HOLD:-1}
 host_key_repeats=${THERON_CAPTURE_HOST_KEY_REPEATS:-3}
+host_key_delays=${THERON_CAPTURE_HOST_KEY_DELAYS:-}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
@@ -122,6 +123,10 @@ if [[ -n "$host_key" ]]; then
     fi
     if [[ ! "$host_key_delay" =~ ^[0-9]+$ ]]; then
         printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_DELAY must be a non-negative integer' >&2
+        exit 1
+    fi
+    if [[ -n "$host_key_delays" && ! "$host_key_delays" =~ ^[0-9]+(,[0-9]+)*$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_DELAYS must be comma-separated non-negative seconds' >&2
         exit 1
     fi
     if [[ ! "$host_key_hold" =~ ^[1-9][0-9]*$ ]]; then
@@ -284,7 +289,13 @@ set +e
 mednafen_pid=$!
 mednafen_ui_pid=0
 if [[ -n "$host_key" ]]; then
-    sleep "$host_key_delay"
+    if [[ -n "$host_key_delays" ]]; then
+        IFS=',' read -r -a host_key_delay_entries <<<"$host_key_delays"
+        host_key_repeats=${#host_key_delay_entries[@]}
+        host_key_previous_delay=0
+    else
+        sleep "$host_key_delay"
+    fi
     # Resolve only descendants of this capture's timeout/env launcher. A
     # global pgrep can select a stale Mednafen process from another capture.
     mednafen_ui_pid=$(resolve_mednafen_ui_pid "$mednafen_pid" || true)
@@ -323,6 +334,17 @@ APPLESCRIPT
     # requested duration and repeat count observable at the host boundary;
     # only Mednafen's own input trace can establish emulated delivery.
     for ((host_key_attempt = 1; host_key_attempt <= host_key_repeats; ++host_key_attempt)); do
+        if [[ -n "$host_key_delays" ]]; then
+            host_key_current_delay=${host_key_delay_entries[$((host_key_attempt - 1))]}
+            if (( host_key_current_delay < host_key_previous_delay )); then
+                kill "$mednafen_pid" 2>/dev/null || true
+                wait "$mednafen_pid" 2>/dev/null || true
+                printf '%s\n' 'FAIL: THERON_CAPTURE_HOST_KEY_DELAYS must be ordered' >&2
+                exit 1
+            fi
+            sleep "$((host_key_current_delay - host_key_previous_delay))"
+            host_key_previous_delay=$host_key_current_delay
+        fi
         quartz_arguments=("$host_key_code" "$host_key_hold" "$mednafen_ui_pid")
         if [[ "$input_route" == global_hid ]]; then
             quartz_arguments+=(--global-hid)
@@ -421,6 +443,9 @@ transition_main_ram_loader_bra_target_jsr_count=$(trace_count '^main_ram_loader_
         printf 'host_input_delivery_attempts=%s\n' "$host_key_repeats"
         printf 'requested_host_key_hold_seconds=%s\n' "$host_key_hold"
         printf 'requested_host_key_repeats=%s\n' "$host_key_repeats"
+        if [[ -n "$host_key_delays" ]]; then
+            printf 'requested_host_key_delays=%s\n' "$host_key_delays"
+        fi
     fi
     if [[ "$transition_input_count" -gt 0 && "$transition_irq_count" -gt 0 &&
           "$transition_non_system_card_count" -gt 0 && "$transition_sector_count" -gt 0 ]]; then
