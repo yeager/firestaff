@@ -53,24 +53,38 @@ static int find_real_non_hoc_floor_item_pose(M11_GameViewState* state)
         const struct DungeonMapDesc_Compat* map = &dungeon->maps[mapIndex];
         int x;
         for (x = 0; x < (int)map->width; ++x) {
-            int y;
-            for (y = 0; y < (int)map->height; ++y) {
-                int direction;
-                for (direction = 0; direction < 4; ++direction) {
-                    int floorItems = 0;
-                    state->world.partyMapIndex = mapIndex;
-                    state->world.newPartyMapIndex = mapIndex;
-                    state->world.party.mapIndex = mapIndex;
-                    state->world.party.mapX = x;
-                    state->world.party.mapY = y;
-                    state->world.party.direction = direction;
-                    if (M11_GameView_ProbeViewportFloorItemCounts(
-                            state, 1, 0, NULL, NULL, NULL,
-                            &floorItems, NULL) && floorItems > 0) {
-                        return 1;
+                int y;
+                for (y = 0; y < (int)map->height; ++y) {
+                    int direction;
+                    for (direction = 0; direction < 4; ++direction) {
+                        static const int kForwardX[4] = { 0, 1, 0, -1 };
+                        static const int kForwardY[4] = { -1, 0, 1, 0 };
+                        int partyX = x - kForwardX[direction];
+                        int partyY = y - kForwardY[direction];
+                        int sampledMapX;
+                        int sampledMapY;
+                        int elementType;
+                        int floorItems = 0;
+                        int summaryItems;
+                        if (partyX < 0 || partyY < 0 ||
+                            partyX >= (int)map->width ||
+                            partyY >= (int)map->height) {
+                            continue;
+                        }
+                        state->world.partyMapIndex = mapIndex;
+                        state->world.newPartyMapIndex = mapIndex;
+                        state->world.party.mapIndex = mapIndex;
+                        state->world.party.mapX = partyX;
+                        state->world.party.mapY = partyY;
+                        state->world.party.direction = direction;
+                        if (M11_GameView_ProbeViewportFloorItemCounts(
+                                state, 1, 0, &sampledMapX, &sampledMapY,
+                                &elementType, &floorItems, &summaryItems) &&
+                            floorItems > 0) {
+                            return 1;
+                        }
                     }
                 }
-            }
         }
     }
     return 0;

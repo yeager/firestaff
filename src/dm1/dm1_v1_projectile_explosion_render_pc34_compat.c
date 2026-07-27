@@ -921,12 +921,12 @@ int dm1_v1_f0115_world_candidates_pc34(
 
     if (!dm1_v1_f0115_thing_route_receipt_pc34(
             routeThings, routeThingCount, -1, 0, mapIndex,
-            /* Map 0 is the Hall of Champions, not a blanket no-item zone.
-             * REVIVE.C candidate payload is identified by its C127 mirror
-             * control and filtered below by the receipt itself.  Suppressing
-             * every open Hall square here made real floor/alcove objects
-             * disappear before F0115 could select their source graphics. */
-            0,
+            /* ReDMCSB REVIVE.C owns map-0 records as Hall candidate
+             * payload, not loose F0115 dungeon loot. The real PC34 Hall
+             * corpus confirms every compact object chain here is consumed by
+             * the mirror/revive route; ordinary maps keep the floor-object
+             * path open. */
+            mapIndex == 0,
             &outCandidates->staticReceipt) ||
         !outCandidates->staticReceipt.valid) {
         return 0;
@@ -997,6 +997,25 @@ int dm1_v1_f0115_thing_route_receipt_pc34(
 
     if (!things || thingCount < 0) {
         return 0;
+    }
+
+    /* Hall mirror records form one source-owned square payload. Its C127
+     * control can follow the champion/object records in the compact chain,
+     * so a single forward pass would first admit them as loose floor items.
+     * Identify that complete payload before F0115 classifies any member. */
+    if (mapIndex == 0) {
+        for (i = 0; i < thingCount; ++i) {
+            unsigned short thing = things[i].thing;
+            if (thing == THING_NONE || thing == THING_ENDOFLIST) {
+                break;
+            }
+            if (dm1_v1_hall_candidate_payload_control_thing_pc34(
+                    mapIndex, (int)THING_GET_TYPE(thing),
+                    things[i].mirrorTextStringOrdinal)) {
+                seenHallPayloadControl = 1;
+                break;
+            }
+        }
     }
 
     outReceipt->valid = 1;

@@ -32,9 +32,11 @@
   Verified by `dm1_v1_inventory_panel_mouse_routes_pc34_compat` (332/332)
   plus the focused CTest route suite (3/3).
 
-- ✅ 2026-07-27 DM1 HoC F0115 real floor items. Removed the map-wide Hall
-  item suppression while retaining the C127 mirror-payload filter; real floor
-  and alcove item candidates now reach the source asset renderer.
+- ✅ 2026-07-27 DM1 F0115 HoC payload ownership. Real PC34 probing confirms
+  all 83 sampled Hall object payload chains belong to the REVIVE.C mirror
+  route and render as neither floor nor alcove loot. Normal dungeon maps stay
+  enabled; a real `DUNGEON.DAT`/`GRAPHICS.DAT` capture confirms item material
+  reaches the final M11 F0115 presentation and clears when assets disappear.
 
 - ✅ 2026-07-27 Theron split Track 02 portable cache. Materialization now
   uses Windows-safe mkdir/PID APIs and `USERPROFILE` fallback while retaining
