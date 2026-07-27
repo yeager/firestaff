@@ -39,7 +39,7 @@
     "source BMP sha256 unique across all rows",
     "presented BMP is valid 320x200 24-bit BMP with >200 non-black pixels"
   ],
-  "generated_at": "2026-07-26T18:35:36.298804+00:00",
+  "generated_at": "2026-07-27T08:03:33.270228+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this gate.",
     "No generated, illustrated, or mock Theron image is created or copied.",

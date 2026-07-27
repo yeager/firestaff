@@ -334,6 +334,9 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
     if (!out->raw_data) return -1;
     memcpy(out->raw_data, dat, (size_t)size);
     out->raw_size = size;
+    out->record_graph_complete = 1;
+    if (!dm2_v1_dungeon_validate_record_graph(out))
+        out->record_graph_complete = 0;
     return 1;
 }
 
@@ -481,6 +484,9 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
      * this candidate only for its complete bounded walk, then clear it again
      * on the first invalid root/link/cycle. */
     out->record_graph_complete = 1;
+    out->g1_w0_chains_disabled =
+        (out->g1_extension_record_counts[3] > 0 ||
+         out->g1_extension_record_counts[4] > 0) ? 1 : 0;
     if (!dm2_v1_dungeon_validate_record_graph(out))
         out->record_graph_complete = 0;
     out->partial_map_boot.valid = 1;
@@ -2075,8 +2081,8 @@ int dm2_v1_dungeon_get_next_thing(const DM2_V1_DungeonData *d,
     int size = 0;
 
     /* G1 byte-square format: w0 in the file is game data, not a next-link.
-     * Each ground-stack entry is a standalone record — no w0 chains. */
-    if (d && d->square_bytes == 1 && d->g1_extension_size > 0)
+     * Each ground-stack entry is a standalone record -- no w0 chains. */
+    if (d && d->g1_w0_chains_disabled)
         return (int)DM2_THING_END_MARKER;
     record = dm2_v1_dungeon_get_thing_record(d, thing, NULL, NULL, &size);
     if (!record || size < 2) return -1;

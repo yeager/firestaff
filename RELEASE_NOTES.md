@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.181
+
+- Lane C real-data gate repair: fixed 5 of 7 DM2 real-data gate tests.
+  Refined g1_w0_chains_disabled flag so synthetic skproject fixtures preserve
+  w0 chain traversal while real PC G1 data blocks it. Enabled
+  record_graph_complete for skproject-loaded fixtures, unblocking wall-gfx,
+  actuator, and 3D93B chain traversal. Updated startup handoff receipt
+  expectations and boot profile assertions.
+- DM2 failures: 2 (was 13). Remaining: m11_startup_profile_gate (pre-existing
+  deep runtime) and utility_import (timeout).
+
 # Firestaff v3.0.180
 
 - DM2-001: Record graph completion. G1 byte-square format proven: w0 is game

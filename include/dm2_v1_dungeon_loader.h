@@ -1213,6 +1213,7 @@ typedef struct DM2_V1_DungeonData {
     /* Set only when the source layout has materialized every map-to-record
      * ownership table.  A byte-square map alone is not a playable graph. */
     int record_graph_complete;
+    int g1_w0_chains_disabled;
     DM2_V1_G1PartialMapBootReceipt partial_map_boot;
     uint8_t *raw_data;
     int raw_size;

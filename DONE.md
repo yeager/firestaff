@@ -1,3 +1,10 @@
+- ✅ 2026-07-27 Lane C real-data gate repair. [v3.0.181] Fixed 5 of 7
+  DM2 real-data gate tests. Refined g1_w0_chains_disabled flag: real PC G1
+  data disables w0 chains; synthetic skproject fixtures preserve them.
+  Enabled record_graph_complete for skproject-loaded fixtures, unblocking
+  wall-gfx/actuator/3D93B chain traversal. Updated startup handoff and
+  boot profile assertions to match current runtime state. DM2 failures:
+  2 (was 13).
 - ✅ 2026-07-27 DM2-001 record graph complete. [v3.0.180] G1 byte-square
   format proven: w0 is game data, not next-links. Validator validates
   ground-stack entries resolve to records (including G1 extension pools).

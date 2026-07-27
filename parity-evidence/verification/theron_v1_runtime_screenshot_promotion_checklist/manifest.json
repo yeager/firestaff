@@ -62,7 +62,7 @@
     "presented BMP is a valid 320x200 24-bit BMP with >200 non-black pixels",
     "operator-local reviewer sign-off reports reviewed=true with non-empty reviewer and review_date"
   ],
-  "generated_at": "2026-07-26T18:35:38.934662+00:00",
+  "generated_at": "2026-07-27T08:03:46.052667+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this checklist.",
     "No generated, illustrated, or mock Theron image is created or copied.",

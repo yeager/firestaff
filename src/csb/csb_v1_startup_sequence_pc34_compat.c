@@ -202,10 +202,7 @@ int csb_v1_startup_title_stage_for_frame_pc34(int frame)
     if (frame >= CSB_V1_TITLE_TOTAL_TICKS_PC34 - 1) {
         return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
     }
-    if (frame < CSB_V1_TITLE_TOTAL_TICKS_PC34 - 1) {
-        return CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
-    }
-    return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
+    return CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
 }
 
 unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)

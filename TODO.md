@@ -1004,17 +1004,14 @@ file and DONE.md after every completed job.
   `SYMBOL_DISPOSITIONS.tsv`. Target: backlog 851 → 835 `MISSING`. Verify with
   `./build/test_dm2_v1_skproject_core`.
 
-- **Lane C — DM2 real-data startup/dungeon gate repair (cycle 16):** Fix the
-  ten pre-existing real-data gate failures using the locally available
-  verified DM2 game data (GRAPHICS.DAT + DUNGEON.DAT present):
-  `dm2_v1_boot_profile_smoke`, `dm2_v1_startup_audio_menu`,
-  `dm2_v1_m11_startup_profile_gate`, `dm2_v1_dungeon_loader_first_map_gate`,
-  `dm2_v1_c_map_tile_access`, `dm2_v1_g1_null_record_address_gate`,
-  `dm2_v1_asset`, plus the real-data probes in that set. Diagnose each:
-  data-path/config issues get fixed so the gate runs against real data;
-  genuinely synthetic paths get replaced with real-data routes where the data
-  exists (per directive); gates that still lack proven data stay fail-closed
-  with the reason recorded. Verify with `ctest --test-dir build -R dm2_v1_`.
+- **Lane C — DM2 real-data startup/dungeon gate repair (cycle 16):** Done
+  (v3.0.181). Fixed 5 of 7 target tests: boot_profile_smoke,
+  startup_audio_menu, dungeon_loader_first_map_gate, c_map_tile_access,
+  asset. Refined DM2-001 g1_w0_chains_disabled flag so synthetic skproject
+  fixtures preserve w0 chain traversal. Enabled record_graph_complete for
+  skproject-loaded fixtures. DM2 failures: 2 (was 13). Remaining:
+  m11_startup_profile_gate (30 deep runtime failures, pre-existing) and
+  utility_import (timeout, pre-existing).
 
 - **Lane D — DM2-010 creature/cloud passes (cycle 16):** Done (see
   "Cycle 16 Completed Lanes" below).

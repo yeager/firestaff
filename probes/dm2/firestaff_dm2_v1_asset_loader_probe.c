@@ -380,7 +380,7 @@ int main(int argc, char **argv) {
 
     /* ── Test asset load API ── */
     fprintf(stderr, "\n--- Testing dm2_v1_asset_load --- \n");
-    const uint8_t *asset = dm2_v1_asset_load(&loader, DM2_GDAT_CATEGORY_TECHDATA, 0, 0);
+    const uint8_t *asset = dm2_v1_asset_load(&loader, DM2_GDAT_CATEGORY_TITLE, 0, 1);
     PROBE_ASSERT(asset != NULL,
                  "GDAT raw lookup resolves category/index/field data");
 

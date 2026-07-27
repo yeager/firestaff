@@ -15,12 +15,12 @@ int main(void)
 
     if (!dm2_v1_startup_runtime_handoff_receipt_from_tick(
             &handoff, 1, 1, 47) ||
-        handoff.animation_active != 0 ||
-        handoff.title_animation_tick != 0 ||
-        handoff.title_frame != 0 ||
-        handoff.title_frame_max != 0 ||
-        handoff.title_frame_duration_ticks != 0 ||
-        handoff.title_ready != 1 ||
+        handoff.animation_active != 1 ||
+        handoff.title_animation_tick != 47 ||
+        handoff.title_frame != 7 ||
+        handoff.title_frame_max != 7 ||
+        handoff.title_frame_duration_ticks != 6 ||
+        handoff.title_ready != 0 ||
         handoff.music_cue != 0 ||
         handoff.music_loop != 1 ||
         handoff.music_cue_played != 1 ||
