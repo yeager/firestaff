@@ -3226,6 +3226,18 @@ lane is carried forward in the sections below.
   so this is an instrumentation improvement only: it proves neither a
   Track-02 loader invocation nor record, object, bitmap, palette, route, or
   dungeon semantics. Positive original capture remains required.
+  - 2026-07-27 update: capture replay can now supply an explicitly recorded,
+    frame-indexed PCE input plan when macOS cannot deliver physical keyboard
+    events to the unbundled SDL process. The active Mednafen producer retains
+    every replay pulse separately from host input and restores the physical
+    input buffer after each emulated frame. The generic CD-state trace remains
+    capped, but `$e009` enter/data-read/return rows now have their own bounded
+    critical lane. An authentic US-CUE run with `run@480,run@720,i@1200`
+    observed 37 main-RAM `$e009` windows and no active-window CD data reads.
+    Replay is input automation only; it does not make the input, the media,
+    or any level/object/bitmap/palette semantics synthetic, and it cannot
+    promote a decoder, route, or drawing path. The next required evidence is
+    still an original data-read/consumer chain from a relevant window.
 
 - 2026-07-17 Theron Track 02 `0x0b52` multi-capture level-index/seed
   correlation blocker: the workspace contains one source-locked Stage-3

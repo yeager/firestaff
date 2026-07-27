@@ -28,8 +28,10 @@ if [[ ! -x "$runtime_verifier" ]] ||
 fi
 if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_input_result_trace.patch' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_input.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_cd_transfer_owner_trace.patch' "$build_script" ||
-   ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_trace.patch' "$build_script"; then
+   ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_trace.patch' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch' "$build_script"; then
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
     exit 1
 fi
@@ -165,6 +167,17 @@ if ! grep -Fq 'THERON_CAPTURE_HOST_KEY must name a supported PCE key' "$script" 
    ! grep -Fq 'THERON_CAPTURE_HOST_KEY_HOLD must be a positive integer' "$script" ||
    ! grep -Fq 'requested host key was not observed by Mednafen SDL dispatch' "$script"; then
     printf 'FAIL: capture script must keep the opt-in macOS Return focus/input gate\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'THERON_CAPTURE_REPLAY_INPUT_SCRIPT cannot be combined with host-key input' "$script" ||
+   ! grep -Fq 'THERON_CAPTURE_REPLAY_INPUT_SCRIPT must be comma-separated PCE key@frame entries' "$script" ||
+   ! grep -Fq 'MEDNAFEN_BIN lacks the required Firestaff Theron scripted-PCE-input producer' "$script" ||
+   ! grep -Fq "grep -aFq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' \"\$mednafen_bin\"" "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script"' "$script" ||
+   ! grep -Fq 'scripted_pce_input_events=%s' "$script" ||
+   ! grep -Fq 'input_delivery=scripted_pce_replay' "$script" ||
+   ! grep -Fq 'scripted_pce_input_plan=%s' "$script"; then
+    printf 'FAIL: capture script must retain explicit scripted-PCE-input provenance\n' >&2
     exit 1
 fi
 if ! grep -Fq 'dynamic CPU receipts lack a complete authentic raw-sector receipt' "$script" ||

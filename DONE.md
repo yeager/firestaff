@@ -1,3 +1,12 @@
+- ✅ 2026-07-27 Theron replayable original-media capture and priority `$e009`
+  trace. The instrumented Mednafen capture producer now accepts an opt-in,
+  frame-indexed PCE replay sequence, labels every replay pulse and restores
+  the physical input buffer after each frame. `$e009` enter/data-read/return
+  rows have a separate 128-row critical cap so late real calls are not hidden
+  by generic CD-state logging. The patch-chain dry-run and shell tests pass;
+  an authentic US-CUE replay (`run@480,run@720,i@1200`) records 37 actual
+  main-RAM `$e009` windows, with zero data reads. This is original-media
+  control-flow provenance only and does not promote any decoder or graphics.
 - ✅ 2026-07-27 Theron bounded main-RAM `$e009` window trace. The reproducible
   active Mednafen 1.32.1 build now emits an enter row for each observed
   main-RAM `JSR $e009`, PCE-CD data reads while that call is active, and an

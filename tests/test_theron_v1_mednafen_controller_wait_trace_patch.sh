@@ -5,6 +5,7 @@ repo=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 patch_file=$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch
 cd_register_patch_file=$repo/scripts/mednafen_1.32.1_theron_pcecd_trace.patch
 input_patch_file=$repo/scripts/mednafen_1.32.1_theron_input_trace.patch
+scripted_input_patch_file=$repo/scripts/mednafen_1.32.1_theron_scripted_pce_input.patch
 state_patch_file=$repo/scripts/mednafen_1.32.1_theron_pcecd_state_trace.patch
 input_state_patch_file=$repo/scripts/mednafen_1.32.1_theron_input_state_trace.patch
 host_input_patch_file=$repo/scripts/mednafen_1.32.1_theron_host_input_trace.patch
@@ -19,6 +20,7 @@ later_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_later_fifo_generation
 generation7_receipt_patch_file=$repo/scripts/mednafen_1.32.1_theron_generation7_fifo_ram_receipt.patch
 main_ram_loader_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_trace.patch
 main_ram_e009_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_window_trace.patch
+main_ram_e009_critical_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch
 main_ram_e009_dispatch_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_dispatch_trace.patch
 main_ram_e009_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_fifo_trace.patch
 g4_main_ram_read_patch_file=$repo/scripts/mednafen_1.32.1_theron_g4_main_ram_read_trace.patch
@@ -76,6 +78,15 @@ if ! grep -Fq 'source=mednafen-pce-instrumented-input' "$input_patch_file" ||
    ! grep -Fq 'pce_input_port0 raw=%04x' "$input_patch_file" ||
    ! grep -Fq 'MDFN_de16lsb(data_ptr[0])' "$input_patch_file"; then
     printf 'FAIL: Mednafen input patch no longer retains raw port-0 evidence\n' >&2
+    exit 1
+fi
+if ! grep -Fq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$scripted_input_patch_file" ||
+   ! grep -Fq 'source=mednafen-pce-scripted-input' "$scripted_input_patch_file" ||
+   ! grep -Fq 'scripted_pce_input_plan valid=%u events=%u' "$scripted_input_patch_file" ||
+   ! grep -Fq 'scripted_pce_input_event frame=%u key=%s mask=%04x' "$scripted_input_patch_file" ||
+   ! grep -Fq 'scripted_pce_input_apply frame=%u physical=%04x scripted=%04x combined=%04x' "$scripted_input_patch_file" ||
+   ! grep -Fq 'MDFN_en16lsb(data_ptr[0], theron_script_original_port0);' "$scripted_input_patch_file"; then
+    printf 'FAIL: scripted PCE input patch no longer retains explicit replay provenance\n' >&2
     exit 1
 fi
 if ! grep -Fq 'pce_input_read cpu_pc=%04x register=%04x raw=%04x sel=%u clr=%u index=%u' "$input_state_patch_file" ||
@@ -181,6 +192,13 @@ if grep -Fq '\\n' "$main_ram_e009_window_patch_file"; then
     printf 'FAIL: main-RAM e009 window patch contains literal backslash-n output\n' >&2
     exit 1
 fi
+if ! grep -Fq 'TheronPCECDCriticalTraceCount >= 128' "$main_ram_e009_critical_patch_file" ||
+   ! grep -Fq 'TheronTracePCECDCriticalState("main_ram_e009_enter' "$main_ram_e009_critical_patch_file" ||
+   ! grep -Fq 'TheronTracePCECDCriticalState("main_ram_e009_data_read' "$main_ram_e009_critical_patch_file" ||
+   ! grep -Fq 'TheronTracePCECDCriticalState("main_ram_e009_return' "$main_ram_e009_critical_patch_file"; then
+    printf 'FAIL: main-RAM e009 priority trace no longer bypasses the generic CD-state cap\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'main_ram_loader_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x a=%02x x=%02x y=%02x' "$main_ram_e009_dispatch_patch_file" ||
    ! grep -Fq 'if(lastop == 0x20 && first == 0xe009)' "$main_ram_e009_dispatch_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMLoaderE009Call' "$main_ram_e009_dispatch_patch_file"; then
@@ -284,10 +302,12 @@ patch -d "$scratch/source" -p1 --batch --forward <"$cd_register_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$state_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$input_state_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$repo/scripts/mednafen_1.32.1_theron_input_result_trace.patch"
+patch -d "$scratch/source" -p1 --batch --forward <"$scripted_input_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$host_input_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$transfer_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$transfer_owner_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$caller_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_window_patch_file"
-printf 'PASS: active Mednafen capture patches dry-run with controller, host/raw input, PCECD, main-RAM loader, and bounded e009 evidence\n'
+patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_critical_patch_file"
+printf 'PASS: active Mednafen capture patches dry-run with controller, replay/host input, PCECD, main-RAM loader, and bounded e009 evidence\n'

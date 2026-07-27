@@ -1,0 +1,68 @@
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -105,14 +105,16 @@
+ static bool TheronPCECDMainRAME009Active;
+ static uint16 TheronPCECDMainRAME009ReturnPC;
+ static unsigned TheronPCECDMainRAME009Sequence;
++static unsigned TheronPCECDCriticalTraceCount;
+ static void TheronTracePCECDState(const char *format, ...);
++static void TheronTracePCECDCriticalState(const char *format, ...);
+ 
+ void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
+                                       uint8 accumulator, uint8 x, uint8 y)
+ {
+  TheronPCECDMainRAME009Active = true;
+  TheronPCECDMainRAME009ReturnPC = (uint16)(logical_pc + 3);
+- TheronTracePCECDState("main_ram_e009_enter sequence=%u logical_pc=%04x physical_pc=%06x return_pc=%04x a=%02x x=%02x y=%02x\n",
++ TheronTracePCECDCriticalState("main_ram_e009_enter sequence=%u logical_pc=%04x physical_pc=%06x return_pc=%04x a=%02x x=%02x y=%02x\n",
+                        TheronPCECDMainRAME009Sequence, logical_pc, physical_pc,
+                        TheronPCECDMainRAME009ReturnPC, accumulator, x, y);
+ }
+@@ -122,7 +124,7 @@
+ {
+  if(!TheronPCECDMainRAME009Active)
+   return;
+- TheronTracePCECDState("main_ram_e009_return sequence=%u expected_return_pc=%04x logical_pc=%04x physical_pc=%06x matched=%u\n",
++ TheronTracePCECDCriticalState("main_ram_e009_return sequence=%u expected_return_pc=%04x logical_pc=%04x physical_pc=%06x matched=%u\n",
+                        TheronPCECDMainRAME009Sequence++,
+                        TheronPCECDMainRAME009ReturnPC, logical_pc, physical_pc,
+                        logical_pc == TheronPCECDMainRAME009ReturnPC ? 1 : 0);
+@@ -152,6 +154,29 @@
+  TheronPCECDStateTraceCount++;
+ }
+ 
++static void TheronTracePCECDCriticalState(const char *format, ...)
++{
++ va_list args;
++
++ if(TheronPCECDCriticalTraceCount >= 128)
++  return;
++ if(!TheronPCECDStateTrace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_IRQ2_CD_TRACE");
++  if(!path || !*path)
++   return;
++  TheronPCECDStateTrace = fopen(path, "a");
++  if(!TheronPCECDStateTrace)
++   return;
++  fputs("source=mednafen-pce-instrumented-cd-state\n", TheronPCECDStateTrace);
++ }
++ va_start(args, format);
++ vfprintf(TheronPCECDStateTrace, format, args);
++ va_end(args);
++ fflush(TheronPCECDStateTrace);
++ TheronPCECDCriticalTraceCount++;
++}
++
+ bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc, uint8 *value)
+ {
+  if(!TheronPCECDDataReadPending)
+@@ -638,7 +663,7 @@
+      TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x physical_pc=%06x data=%02x\n",
+                            TheronPCECDDataReadPC, TheronPCECDDataReadPhysicalPC, ret);
+      if(TheronPCECDMainRAME009Active)
+-      TheronTracePCECDState("main_ram_e009_data_read sequence=%u cpu_pc=%04x physical_pc=%06x data=%02x\n",
++      TheronTracePCECDCriticalState("main_ram_e009_data_read sequence=%u cpu_pc=%04x physical_pc=%06x data=%02x\n",
+                             TheronPCECDMainRAME009Sequence,
+                             TheronPCECDDataReadPC,
+                             TheronPCECDDataReadPhysicalPC, ret);

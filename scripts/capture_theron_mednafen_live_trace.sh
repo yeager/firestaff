@@ -19,6 +19,7 @@ host_key_hold=${THERON_CAPTURE_HOST_KEY_HOLD:-1}
 host_key_repeats=${THERON_CAPTURE_HOST_KEY_REPEATS:-3}
 host_key_delays=${THERON_CAPTURE_HOST_KEY_DELAYS:-}
 host_key_sequence=${THERON_CAPTURE_HOST_KEY_SEQUENCE:-}
+replay_input_script=${THERON_CAPTURE_REPLAY_INPUT_SCRIPT:-}
 input_route=${THERON_CAPTURE_INPUT_ROUTE:-pid}
 host_focus_x=${THERON_CAPTURE_FOCUS_X:-960}
 host_focus_y=${THERON_CAPTURE_FOCUS_Y:-540}
@@ -211,6 +212,16 @@ if [[ "$host_input_requested" == 1 ]]; then
             printf '%s\n' 'FAIL: host input requires cliclick and positive THERON_CAPTURE_FOCUS_X/Y coordinates' >&2
             exit 1
         fi
+    fi
+fi
+if [[ -n "$replay_input_script" ]]; then
+    if [[ "$host_input_requested" == 1 ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_REPLAY_INPUT_SCRIPT cannot be combined with host-key input' >&2
+        exit 1
+    fi
+    if [[ ! "$replay_input_script" =~ ^(run|ii|i|select|up|down|left|right)@[1-9][0-9]*(,(run|ii|i|select|up|down|left|right)@[1-9][0-9]*)*$ ]]; then
+        printf '%s\n' 'FAIL: THERON_CAPTURE_REPLAY_INPUT_SCRIPT must be comma-separated PCE key@frame entries' >&2
+        exit 1
     fi
 fi
 
@@ -427,6 +438,11 @@ stdout_file="$trace_dir/$(basename -- "$trace").stdout"
 stderr_file="$trace_dir/$(basename -- "$trace").stderr"
 
 require_instrumented_mednafen_binary "$mednafen_bin" || exit 1
+if [[ -n "$replay_input_script" ]] &&
+   ! grep -aFq 'FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT' "$mednafen_bin" 2>/dev/null; then
+    printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the required Firestaff Theron scripted-PCE-input producer' >&2
+    exit 1
+fi
 
 mkdir -p "$trace_dir"
 rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$transition_receipt" "$stage2_system_card_receipt"
@@ -468,6 +484,7 @@ launch=(
     FIRESTAFF_THERON_IRQ2_MEMORY_TRACE="$memory_trace" \
     FIRESTAFF_THERON_IRQ2_CD_TRACE="$cd_trace" \
     FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
+    FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
     SDL_AUDIODRIVER=dummy \
@@ -662,6 +679,7 @@ transition_main_ram_loader_e009_dispatch_count=$(trace_count '^main_ram_loader_e
 transition_main_ram_e009_enter_count=$(trace_count '^main_ram_e009_enter ' "$cd_trace")
 transition_main_ram_e009_data_read_count=$(trace_count '^main_ram_e009_data_read ' "$cd_trace")
 transition_main_ram_e009_return_count=$(trace_count '^main_ram_e009_return ' "$cd_trace")
+transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
     printf 'mednafen_binary_md5=%s\n' "$mednafen_binary_md5"
@@ -694,6 +712,7 @@ transition_main_ram_e009_return_count=$(trace_count '^main_ram_e009_return ' "$c
     printf 'main_ram_e009_enters=%s\n' "$transition_main_ram_e009_enter_count"
     printf 'main_ram_e009_data_reads=%s\n' "$transition_main_ram_e009_data_read_count"
     printf 'main_ram_e009_returns=%s\n' "$transition_main_ram_e009_return_count"
+    printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     trace_input_order_receipt "$input_trace"
     if [[ "$host_input_requested" == 1 ]]; then
         if [[ -n "$host_key_sequence" ]]; then
@@ -717,6 +736,10 @@ transition_main_ram_e009_return_count=$(trace_count '^main_ram_e009_return ' "$c
         if [[ -n "$host_key_delays" ]]; then
             printf 'requested_host_key_delays=%s\n' "$host_key_delays"
         fi
+    fi
+    if [[ -n "$replay_input_script" ]]; then
+        printf 'input_delivery=scripted_pce_replay\n'
+        printf 'scripted_pce_input_plan=%s\n' "$replay_input_script"
     fi
     if [[ "$transition_input_count" -gt 0 && "$transition_irq_count" -gt 0 &&
           "$transition_non_system_card_count" -gt 0 && "$transition_sector_count" -gt 0 ]]; then
