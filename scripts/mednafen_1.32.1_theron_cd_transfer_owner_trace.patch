@@ -1,0 +1,41 @@
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -102,0 +103 @@
++static uint32 TheronPCECDDataReadPhysicalPC;
+@@ -128 +129 @@
+-bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint8 *value)
++bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc, uint8 *value)
+@@ -133,0 +135 @@
++ *reader_physical_pc = TheronPCECDDataReadPhysicalPC;
+@@ -605,0 +608,3 @@
++     TheronPCECDDataReadPhysicalPC =
++         (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (TheronPCECDDataReadPC >> 13)) << 13) |
++         (TheronPCECDDataReadPC & 0x1fff);
+@@ -607,2 +612,2 @@
+-     TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x data=%02x\n",
+-                           TheronPCECDDataReadPC, ret);
++     TheronTracePCECDState("pce_cd_data_read cpu_pc=%04x physical_pc=%06x data=%02x\n",
++                           TheronPCECDDataReadPC, TheronPCECDDataReadPhysicalPC, ret);
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -114 +114 @@
+-extern bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint8 *value);
++extern bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc, uint8 *value);
+@@ -120,0 +121 @@
++ uint32 reader_physical_pc;
+@@ -121,0 +123 @@
++ uint32 writer_physical_pc;
+@@ -124 +126 @@
+- if(!TheronPCECDTraceTakeDataRead(&reader_pc, &read_value) || trace_count >= 256)
++ if(!TheronPCECDTraceTakeDataRead(&reader_pc, &reader_physical_pc, &read_value) || trace_count >= 256)
+@@ -128,0 +131,3 @@
++ writer_physical_pc =
++     (HuCPU.GetRegister(HuC6280::GSREG_MPR0 + (writer_pc >> 13)) << 13) |
++     (writer_pc & 0x1fff);
+@@ -140,3 +145,3 @@
+-         "pce_cd_data_destination_candidate reader_pc=%04x writer_pc=%04x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
+-         reader_pc, writer_pc, HuCPU.GetLastLogicalWriteAddr(), physical, read_value,
+-         stored_value);
++         "pce_cd_data_destination_candidate reader_pc=%04x reader_physical_pc=%06x writer_pc=%04x writer_physical_pc=%06x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
++         reader_pc, reader_physical_pc, writer_pc, writer_physical_pc,
++         HuCPU.GetLastLogicalWriteAddr(), physical, read_value, stored_value);

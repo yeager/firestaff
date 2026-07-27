@@ -50,6 +50,8 @@ patch -d "$build_root/source" -p1 --batch --forward \
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_cd_transfer_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_cd_transfer_owner_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_cd_caller_trace.patch"
 
 # The remaining legacy extensions target an older version of the debugger

@@ -26,7 +26,8 @@ if [[ ! -x "$runtime_verifier" ]] ||
     exit 1
 fi
 if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script" ||
-   ! grep -Fq 'mednafen_1.32.1_theron_input_result_trace.patch' "$build_script"; then
+   ! grep -Fq 'mednafen_1.32.1_theron_input_result_trace.patch' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_cd_transfer_owner_trace.patch' "$build_script"; then
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
     exit 1
 fi

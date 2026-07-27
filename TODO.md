@@ -4153,6 +4153,11 @@ lane is carried forward in the sections below.
     host-to-PCE input chain and observed register result, but captures still
     have no non-System-Card PCECD reader or dynamic destination receipt, so
     no row is synthesized or promoted to runtime.
+    Physical-PC ownership capture now proves the observed CD-to-main-RAM
+    candidates are written by System Card code `000a50/000a52` or
+    `000b33/000b37`, even when their destinations are `001fxxxx`. Those rows
+    are therefore not a game-loader handoff; the required game-owned consumer
+    remains unobserved.
   - 2026-07-16 Theron draw-route gate update: M11 now has a guarded
     dungeon draw-route receipt that can consume the proven level-1 media,
     multilevel handoff, live level geometry, party pose, object placement,

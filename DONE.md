@@ -40916,3 +40916,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   4,796 subsequent PCE input transactions. This proves the observed input
   register result only; it does not assign a game command or promote Track 02
   data.
+- ✅ 2026-07-27 Theron CD-to-RAM physical ownership trace. Added physical
+  HuC6280 PC provenance to both CD-data reads and the matching RAM writes.
+  Authentic input capture proves all currently observed candidates are System
+  Card code `000a50/000a52` or `000b33/000b37`, including writes into
+  `001fxxxx` main RAM. This closes the false inference that destination RAM
+  alone proves a game loader; no game-owned CD consumer is promoted.
