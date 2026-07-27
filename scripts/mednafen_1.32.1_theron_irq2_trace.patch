@@ -134,6 +134,10 @@ index 347482c4..61d4758e 100644
 +static uint32 TheronIrq2TraceLaterE009Destination;
 +static uint32 TheronIrq2TraceLaterE009DestinationMode;
 +static bool TheronIrq2TraceLaterE009PostReturnStepPending;
++/* A copied game loader can execute from physical PCE main RAM. Retain only
++ * bounded raw JSR $e009 observations from that address range; this does not
++ * assign a media, level, object, or transition interpretation. */
++static unsigned TheronIrq2TraceGameMainRamE009DispatchCount;
 +
 +static void FlushTheronIrq2Trace(void)
 +{
@@ -740,6 +744,26 @@ index 347482c4..61d4758e 100644
 +                                TheronIrq2TraceLaterE009Record);
 +  TheronIrq2TraceLaterE009ReturnSeen = true;
 +  TheronIrq2TraceLaterE009PostReturnStepPending = true;
++  FlushTheronIrq2Trace();
++ }
++
++ /* Preserve game-owned copied-loader control edges separately from the
++  * System Card envelope. PC is a physical PCE address here; only the
++  * 32 KiB main-RAM window is admitted and the output is intentionally raw. */
++ if(PC >= 0x1f0000 && PC < 0x1f8000 &&
++    TheronIrq2TraceGameMainRamE009DispatchCount < 32 &&
++    (CurGame->Debugger->MemPeek(logical_pc, 1, true, true) & 0xff) == 0x20 &&
++    (CurGame->Debugger->MemPeek(logical_pc + 1, 1, true, true) & 0xff) == 0x09 &&
++    (CurGame->Debugger->MemPeek(logical_pc + 2, 1, true, true) & 0xff) == 0xe0)
++ {
++  const uint32 reg_a = trace_regs->GetRegister(trace_regs->Regs[1].id, NULL, 0) & 0xff;
++  const uint32 reg_x = trace_regs->GetRegister(trace_regs->Regs[2].id, NULL, 0) & 0xff;
++  const uint32 reg_y = trace_regs->GetRegister(trace_regs->Regs[3].id, NULL, 0) & 0xff;
++
++  TheronIrq2TraceGameMainRamE009DispatchCount++;
++  TheronIrq2Trace->print_format("game_main_ram_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x target=e009 a=%02x x=%02x y=%02x\n",
++                                TheronIrq2TraceGameMainRamE009DispatchCount,
++                                logical_pc, PC, reg_a, reg_x, reg_y);
 +  FlushTheronIrq2Trace();
 + }
 + if(logical_pc == 0xe736 && TheronIrq2TraceDynamicReadReturnSeen &&

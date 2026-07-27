@@ -54,6 +54,14 @@ if grep -Fq '\\n' "$patch_file"; then
     exit 1
 fi
 
+if ! grep -Fq 'game_main_ram_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x target=e009 a=%02x x=%02x y=%02x' "$patch_file" ||
+   ! grep -Fq 'PC >= 0x1f0000 && PC < 0x1f8000' "$patch_file" ||
+   ! grep -Fq 'TheronIrq2TraceGameMainRamE009DispatchCount < 32' "$patch_file" ||
+   ! grep -Fq 'MemPeek(logical_pc + 2, 1, true, true) & 0xff) == 0xe0' "$patch_file"; then
+    printf 'FAIL: Mednafen patch no longer retains bounded game-main-RAM E009 control-edge evidence\n' >&2
+    exit 1
+fi
+
 if ! grep -Fq 'pce_cd_register_read cpu_pc=%04x physical=%08x data=%02x peek=%u' "$state_patch_file" ||
    ! grep -Fq 'pce_cd_irq cpu_pc=%04x type=%04x port2=%02x port3=%02x' "$state_patch_file" ||
    ! grep -Fq '!PeekMode && (A & 0xf) <= 4' "$state_patch_file" ||

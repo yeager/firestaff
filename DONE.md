@@ -1,3 +1,11 @@
+- ✅ 2026-07-27 Theron game-main-RAM E009 observation gate. The active
+  coherent Mednafen IRQ2 patch now emits a bounded raw receipt only for an
+  actual `JSR $e009` executing at physical PCE main RAM `1f0000..1f7fff`,
+  retaining PCs and A/X/Y without assigning any data semantics. The live
+  capture receipt exposes its count and regression tests pin the opcode,
+  physical-range, and 32-row bound. Build and SDL2 runtime verification pass;
+  no authentic route has yet observed such a row, so Track 02 semantics remain
+  fail-closed.
 - ✅ 2026-07-27 Theron line-delimited trace repair. Fixed all active IRQ2
   `print_format`/`fputs` rows that emitted literal `\\n` and merged independent
   evidence. The harness now rejects that malformed output across every trace

@@ -540,6 +540,7 @@ transition_sector_count=$(trace_count '^cd_interface_raw_sector_read ' "$cd_trac
 transition_scsi_read_command_count=$(trace_count '^scsi_read_command ' "$cd_trace")
 transition_scsi_sector_binding_count=$(trace_count '^scsi_read_sector_binding ' "$cd_trace")
 transition_data_destination_count=$(trace_count '^pce_cd_data_destination_candidate ' "$cd_trace")
+transition_game_main_ram_e009_count=$(trace_count '^game_main_ram_e009_dispatch ' "$trace")
 transition_main_ram_loader_tii_count=$(trace_count '^main_ram_loader_block_transfer .*operation=tii ' "$main_ram_loader_trace")
 transition_continuation_tii_count=$(trace_count '^main_ram_loader_block_transfer .*operation=tii source=3c80 ' "$main_ram_loader_trace")
 transition_main_ram_loader_rts_count=$(trace_count '^main_ram_loader_rts ' "$main_ram_loader_trace")
@@ -566,6 +567,7 @@ transition_main_ram_loader_bra_target_jsr_count=$(trace_count '^main_ram_loader_
     printf 'scsi_read_commands=%s\n' "$transition_scsi_read_command_count"
     printf 'scsi_read_sector_bindings=%s\n' "$transition_scsi_sector_binding_count"
     printf 'byte_exact_fifo_ram_destinations=%s\n' "$transition_data_destination_count"
+    printf 'game_main_ram_e009_dispatches=%s\n' "$transition_game_main_ram_e009_count"
     printf 'main_ram_loader_tii_transfers=%s\n' "$transition_main_ram_loader_tii_count"
     printf 'continuation_tii_source_3c80=%s\n' "$transition_continuation_tii_count"
     printf 'main_ram_loader_rts=%s\n' "$transition_main_ram_loader_rts_count"

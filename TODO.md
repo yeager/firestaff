@@ -4218,6 +4218,14 @@ lane is carried forward in the sections below.
     repairs trace integrity only: the earlier capture remains historical and
     no later record gains loader, level, object, bitmap, palette, or payload
     semantics from the repair.
+    The active coherent IRQ2 patch now separately records up to 32 raw
+    `game_main_ram_e009_dispatch` rows only when the callback physical PC is
+    in PCE main RAM (`1f0000..1f7fff`) and the logical instruction bytes are
+    an actual `JSR $e009`. Each row retains only logical/physical PC and
+    A/X/Y registers. The capture receipt counts those rows. This replaces no
+    semantic gate: a future authentic dungeon route must still observe one
+    before any copied-loader control edge can be investigated, and a row
+    remains neither a media binding nor a level/object/palette/bitmap claim.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a
