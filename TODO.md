@@ -73,6 +73,11 @@ an integration build pass.
   control now sets the M11, world, and lifecycle resting flags together, so
   later save/resume and creature-wake routes observe the same rest state.
 
+- **DM1-INVENTORY-CONTROL-CLICK-RUNTIME:** Closed 2026-07-27. A real DM1
+  session now verifies all four visible panel controls: C141 music, C140
+  save and reload, C145 rest-state handoff, and C011 close. They are no
+  longer protected only by a route-table fixture.
+
 - **DM1-V2-VISIBLE-CHAMPION-PORTRAIT-HITBOX:** Closed 2026-07-27. V2's
   composed HUD shifts champion portrait/name regions to x=12 with a 77px
   stride, so each visible portrait now reaches the original C007..C010

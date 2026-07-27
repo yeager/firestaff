@@ -29,6 +29,11 @@
   `world.partyIsResting`, and `world.lifecycle.rest.isResting` atomically.
   The normal wake and creature-hit paths already clear the same three fields.
 
+- ✅ 2026-07-27 DM1 inventory control click runtime. One live PC34 DM1
+  session now clicks all four visible controls: C141 toggles music, C140
+  saves and reloads, C145 writes all rest mirrors, and C011 closes the
+  inventory panel.
+
 - ✅ 2026-07-27 DM1 PC34 complete save shape. `DM1_SaveGamePC34()` now has a
   tail-backed reload regression that exercises the full F0803/F0435 file
   shape, including a saved one-map dungeon. Header-only five-part fixtures

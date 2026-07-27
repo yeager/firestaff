@@ -312,6 +312,11 @@ int main(void) {
              saveTemplate);
     m12_test_setenv("FIRESTAFF_QUICKSAVE_PATH", savePath);
     view.inventoryPanelActive = 1;
+    view.dm1MusicOn = 1;
+    if (!expect(M11_GameView_HandlePointerButton(
+                    &view, 168, 36, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_REDRAW && view.dm1MusicOn == 0,
+                "C141 visible music control should toggle live DM1 music")) return 1;
     if (!expect(M11_GameView_HandlePointerButton(
                     &view, 179, 35, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                     M11_GAME_INPUT_REDRAW,
@@ -320,6 +325,18 @@ int main(void) {
                 "C140 visible save control should leave inventory input route")) return 1;
     if (!expect(M11_GameView_LoadDm1SavePath(&view, savePath, NULL),
                 "C140 visible save control should write a loadable DM1 save")) return 1;
+
+    view.inventoryPanelActive = 1;
+    if (!expect(M11_GameView_HandlePointerButton(
+                    &view, 190, 35, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_REDRAW && view.resting &&
+                    view.world.partyIsResting && view.world.lifecycle.rest.isResting,
+                "C145 visible Zz control should start the complete rest state")) return 1;
+    view.inventoryPanelActive = 1;
+    if (!expect(M11_GameView_HandlePointerButton(
+                    &view, 209, 35, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
+                "C011 visible close control should dismiss inventory")) return 1;
 
     snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-quicksave.sav",
              saveTemplate);
