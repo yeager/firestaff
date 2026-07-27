@@ -4164,18 +4164,13 @@ lane is carried forward in the sections below.
     dungeon semantics: the same transcript still has no game-owned PCECD
     reader or dynamic destination receipt.
     Capture input was corrected on 2026-07-27: the configured PCE I button is
-    SDL keypad 3, so the macOS Quartz sender must use `kVK_ANSI_Keypad3` (83),
-    not physical letter I (34). A fresh authentic input trace proves the
-    corrected key reaches PCE port 0 as `raw=0100`; earlier letter-I sequence
-    runs remain boot/menu observation only and cannot prove a menu choice or
-    dungeon transition.
-    A corrected 300-second US-cue sequence
-    `return@10,i@75,i@105,i@135,i@165,i@195,i@225,i@255` records seven live
-    keypad-I/PCE-port `raw=0100` observations and visibly advances through
-    original story-animation frames. Its authentic receipt still has zero
-    non-System-Card PCECD reads, zero main-RAM loader transfers, and
-    `transition=missing`; repeated menu input alone does not establish a
-    Track 02 dungeon handoff.
+    SDL keypad 3, so the macOS Quartz sender must use `kVK_ANSI_Keypad3` (85),
+    not physical letter I (34). The earlier code 83 was keypad 1 and produced
+    PCE III (`raw=0100`), so its sequence runs are invalid as menu-choice
+    evidence. The corrected code 85 is now verified in a fresh original run:
+    it yields SDL scancode 91 and PCE I `raw=0001`. Menu navigation is now
+    source-observed at the controller boundary, but a dungeon transition still
+    requires the separate game-owned CD consumer evidence.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a

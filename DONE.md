@@ -1,13 +1,12 @@
-- ✅ 2026-07-27 Theron full controller capture mapping. Added II and D-pad
+- ✅ 2026-07-27 Theron PCE I-button capture repair. Corrected the macOS
+  keypad mapping from keypad 1 to keypad 3 (`kVK_ANSI_Keypad3=85`). A fresh
+  authentic US-cue run records SDL scancode 91 and PCE I `raw=0001`; the
+  earlier `raw=0100` observation is correctly reclassified as PCE III.
+  Script regression coverage passes.
+- ✅ 2026-07-27 Theron II and D-pad capture mapping. Added II and D-pad
   controls to the Quartz capture sequence, with macOS mappings verified
   against the live PCE port: II=`0002`, up=`0010`, down=`0040`, left=`0080`,
-  right=`0020`. Existing I, Run, and Select support remains intact; script
-  regression coverage passes.
-- ✅ 2026-07-27 Theron PCE I-button capture mapping. Fixed the macOS Quartz
-  key used by the authentic capture harness: Theron's configured PCE I button
-  is keypad 3 (`kVK_ANSI_Keypad3=83`), rather than physical letter I. A fresh
-  US Track 02 run proves the SDL event is scancode 89 and the live PCE port
-  becomes `raw=0100` while held. Script regression coverage passes.
+  right=`0020`. Script regression coverage passes.
 - ✅ 2026-07-27 Theron authentic multi-key startup capture. Added ordered
   `THERON_CAPTURE_HOST_KEY_SEQUENCE` support for Return/I/Select in the
   SDL2-backed Mednafen capture harness, with strict validation, ordered Quartz
