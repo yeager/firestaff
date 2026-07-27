@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-DIRECT-CUE-BOOT:** Closed 2026-07-27. A directly selected `.cue`
+  now follows the same strict Track 02 MODE1 and canonical-MD5 intake as a
+  selected directory, retaining the exact CUE provenance and Track 01/02
+  pairing. The real USA 19-track CUE regression proves direct-file boot,
+  CDDA handoff, and raw-CUE runtime boot.
+
 - **THERON-STARTUP-ERROR-DIAGNOSIS:** Closed 2026-07-27. The launcher no
   longer labels every Theron launch failure as invalid Track 02 media. A
   valid CUE/BIN can still be blocked by the separate original graphics-route

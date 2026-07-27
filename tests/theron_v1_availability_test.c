@@ -280,6 +280,14 @@ static void check_real_theron_cue_boot_provenance(const char *cue_path) {
                 "selected CUE keeps Track 01 and Track 02 paired");
     expect_str_eq(media.cue_path, cue_path,
                   "runtime CDDA lookup recovers the same selected CUE path");
+
+    theron_v1_boot_profile_init(&profile);
+    expect_true(theron_v1_boot_scan_assets(&profile, cue_path) == 0,
+                "direct Theron CUE path scans successfully");
+    expect_true(profile.assets_verified == 1 && profile.track02_cue_consumed,
+                "direct Theron CUE path remains hash-verified and consumed");
+    expect_str_eq(profile.track02_cue_path, cue_path,
+                  "direct Theron CUE path retains exact CUE provenance");
 }
 
 static void check_fake_iso_fallback(const char *region_dir,

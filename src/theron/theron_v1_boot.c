@@ -449,19 +449,17 @@ static void theron_v1_boot_apply_known_md5_identity(
  * Use it first when it declares one readable MODE1 data track whose bytes are
  * still pinned to the canonical hash catalog. Unknown or malformed CUE files
  * do not block the existing hash-first loose/container scan. */
-static int theron_v1_boot_scan_verified_cue_package(
+static int theron_v1_boot_apply_verified_cue_package(
     Theron_V1_BootProfile *profile,
-    const char *base)
+    const FirestaffTheronMediaStatus *media)
 {
-    FirestaffTheronMediaStatus media;
     char md5[33] = {0};
     size_t i;
 
-    if (!profile || !base ||
-        FirestaffTheronMedia_ClassifyDirectory(base, &media) != 0 ||
-        !media.has_cue || !media.has_valid_track02_mode1 ||
-        !media.cue_path[0] || !media.track02_path[0] ||
-        !m12_file_md5_hex(media.track02_path, md5)) {
+    if (!profile || !media || !media->has_cue ||
+        !media->has_valid_track02_mode1 || !media->cue_path[0] ||
+        !media->track02_path[0] ||
+        !m12_file_md5_hex(media->track02_path, md5)) {
         return 0;
     }
     for (i = 0u; g_theron_known_md5s[i]; ++i) {
@@ -473,11 +471,11 @@ static int theron_v1_boot_scan_verified_cue_package(
         return 0;
     }
     snprintf(profile->graphics_path, sizeof(profile->graphics_path), "%s",
-             media.track02_path);
+             media->track02_path);
     snprintf(profile->dungeon_path, sizeof(profile->dungeon_path), "%s",
-             media.track02_path);
+             media->track02_path);
     snprintf(profile->track02_cue_path, sizeof(profile->track02_cue_path), "%s",
-             media.cue_path);
+             media->cue_path);
     profile->track02_cue_consumed = 1;
     profile->graphics_size = file_size_of(profile->graphics_path);
     profile->dungeon_size = profile->graphics_size;
@@ -486,6 +484,30 @@ static int theron_v1_boot_scan_verified_cue_package(
     profile->assets_verified = 1;
     theron_v1_boot_apply_known_md5_identity(profile, md5);
     return 1;
+}
+
+static int theron_v1_boot_scan_verified_cue_package(
+    Theron_V1_BootProfile *profile,
+    const char *base)
+{
+    FirestaffTheronMediaStatus media;
+
+    if (!profile || !base) {
+        return 0;
+    }
+    /* A file-picker can hand boot the CUE itself.  Classify that exact sheet
+     * before considering a directory scan so the selected Track 01/02 pair
+     * remains the only package consulted.  Both routes retain the same strict
+     * MODE1, payload and canonical-MD5 gates. */
+    if (FirestaffTheronMedia_ClassifyPath(base, &media) == 0 &&
+        theron_v1_boot_apply_verified_cue_package(profile, &media)) {
+        return 1;
+    }
+    if (FirestaffTheronMedia_ClassifyDirectory(base, &media) == 0 &&
+        theron_v1_boot_apply_verified_cue_package(profile, &media)) {
+        return 1;
+    }
+    return 0;
 }
 
 /* ── Init defaults ────────────────────────────────────────────────── */

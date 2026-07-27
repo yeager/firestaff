@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron direct CUE boot. A file-picker-selected `.cue` now
+  enters the same strict Track 02 MODE1/canonical-MD5 path as a directory,
+  preserving the exact original CUE and Track 01/02 pairing. Authentic USA
+  direct-CUE availability, CDDA handoff, and raw-CUE boot pass.
+
 - ✅ 2026-07-27 Theron startup error diagnosis. The launcher now distinguishes
   its broad startup failure from a claim that Track 02 is invalid: verified
   CUE/BIN media may instead be blocked by the separate graphics-route gate.
