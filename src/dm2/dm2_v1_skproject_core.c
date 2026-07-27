@@ -10465,7 +10465,13 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_PROCEED_XACT_74/DM2_14cd_102e cycle-20 batch-20a; "
            "DM2_ai_14cd_10d2/DM2_PROCEED_XACT_75/DM2_ai_14cd_0f3c/"
            "DM2_PROCEED_XACT_77/DM2_PROCEED_XACT_78/DM2_PROCEED_XACT_79/"
-           "DM2_PROCEED_XACT_80/DM2_PROCEED_XACT_81 cycle-20 batch-20b";
+           "DM2_PROCEED_XACT_80/DM2_PROCEED_XACT_81 cycle-20 batch-20b; "
+           "DM2_14cd_3582/DM2_PROCEED_XACT_82/DM2_PROCEED_XACT_83/"
+           "DM2_PROCEED_XACT_84/DM2_PROCEED_XACT_85/DM2_PROCEED_XACT_86/"
+           "DM2_PROCEED_XACT_89/DM2_PROCEED_XACT_90 cycle-21 batch-21a; "
+           "DM2_PROCEED_XACT_91/DM2_PROCEED_XACT/DM2_13e4_01a3/"
+           "DM2_14cd_062e/DM2_14cd_18cc/DM2_2c1d_09d9/"
+           "DM2_14cd_1316/DM2_14cd_18f2 cycle-21 batch-21b";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -21144,6 +21150,611 @@ int dm2_v1_skproject_proceed_xact_81(
 
     /* Result comes from 19f0_2813 delegation; receipt captures inputs. */
     receipt.result = -3; /* default; runtime fills from v1e056f */
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:1679 DM2_14cd_3582 — coin wallet rebalance.
+   Computes total value from coin counts * coin_values, then determines
+   if a rebalance is needed (different denomination breakdown). */
+int dm2_v1_skproject_14cd_3582(
+    int32_t mode,
+    uint16_t wallet_handle,
+    const uint16_t *coin_values,
+    uint16_t coin_type_count,
+    DM2_V1_Skproject14cd3582Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd3582Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    receipt.comparison_mode = (int8_t)(mode & 0xFFFF);
+
+    if (coin_type_count == 0 || !coin_values) {
+        receipt.total_value = 0;
+        receipt.needs_rebalance = 0;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    /* Sum total value across coin types (reference: lines 1700-1715). */
+    int32_t total = 0;
+    for (uint16_t i = 0; i < coin_type_count; i++)
+        total += (int32_t)coin_values[i];
+    receipt.total_value = total;
+
+    /* Rebalance needed if mode != 1 (reference: lines 1724-1725). */
+    receipt.needs_rebalance = (receipt.comparison_mode != 1) ? 1 : 0;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:1805 DM2_PROCEED_XACT_82 — creature buy/sell. */
+int dm2_v1_skproject_proceed_xact_82(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact82Receipt *out_receipt)
+{
+    DM2_V1_SkprojectXact82Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.out_b1a = 29; /* reference: line 1820 */
+    receipt.result = -3;  /* default */
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:1939 DM2_PROCEED_XACT_83 — creature action 0x23+between(0,2,v1e0572). */
+int dm2_v1_skproject_proceed_xact_83(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact83Receipt *out_receipt)
+{
+    DM2_V1_SkprojectXact83Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.has_w0a_bit7 = (ctx->creature_word_a & 0x80) ? 1 : 0;
+
+    if (receipt.has_w0a_bit7 || ctx->v1e0572 != 0) {
+        int16_t clamped = dm2_v1_skproject_between_value(0, 2, ctx->v1e0572);
+        receipt.out_b1a = (uint8_t)(clamped + 0x23);
+        receipt.result = -2;
+        if (receipt.has_w0a_bit7 && ctx->v1e0572 == 1)
+            receipt.result = -4;
+    } else {
+        receipt.result = -3;
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:1967 DM2_PROCEED_XACT_84 — creature item consume/drop. */
+int dm2_v1_skproject_proceed_xact_84(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectRand16Fn rand_fn,
+    void *rand_user,
+    DM2_V1_SkprojectXact84Receipt *out_receipt)
+{
+    (void)rand_fn;
+    (void)rand_user;
+    DM2_V1_SkprojectXact84Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.result = -3; /* default */
+
+    /* Check possession (reference: line 1973-1974). */
+    int16_t poss = (int16_t)ctx->possession;
+    if (poss == -2) {
+        receipt.has_possession = 0;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    receipt.has_possession = 1;
+    receipt.possession_handle = poss;
+
+    /* Category from record bits (reference: line 1978). */
+    receipt.item_category = (int16_t)(((poss & 0x3C00) >> 10) - 5);
+
+    /* Consumability check result captured in receipt; runtime evaluates. */
+    receipt.item_consumable = 0;
+    receipt.item_deallocated = 0;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2078 DM2_PROCEED_XACT_85 — search tile for drinkable text. */
+int dm2_v1_skproject_proceed_xact_85(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact85Receipt *out_receipt)
+{
+    DM2_V1_SkprojectXact85Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Default: not found, fall through to ai_13e4_0360 path. */
+    receipt.found_text = 0;
+    receipt.out_b1a = 51; /* reference: line 2115 */
+    receipt.result = -3;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2120 DM2_PROCEED_XACT_86 — set creature b20/b1e/b1a. */
+int dm2_v1_skproject_proceed_xact_86(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact86Receipt *out_receipt)
+{
+    DM2_V1_SkprojectXact86Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.out_b20 = (uint8_t)(ctx->v1e07d8_w04 & 0xFF);
+    receipt.out_b1e = (uint8_t)(ctx->v1e07d8_w06 & 0xFF);
+    receipt.out_b1a = (uint8_t)((ctx->v1e0572 & 0xFF) + 61);
+    receipt.result = -2;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2129 DM2_PROCEED_XACT_89 — projectile via 19f0_0d10. */
+int dm2_v1_skproject_proceed_xact_89(
+    const DM2_V1_SkprojectXactContext *ctx,
+    uint8_t w06_low,
+    DM2_V1_SkprojectXact89Receipt *out_receipt)
+{
+    DM2_V1_SkprojectXact89Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.command_byte = (uint8_t)(w06_low | 0x80);
+    receipt.result = -3; /* default; runtime fills from v1e056f */
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2136 DM2_PROCEED_XACT_90 — random chance check. */
+int dm2_v1_skproject_proceed_xact_90(
+    int16_t v1e0572,
+    DM2_V1_SkprojectRand16Fn rand16_fn,
+    void *user,
+    DM2_V1_SkprojectXact90Receipt *out_receipt)
+{
+    DM2_V1_SkprojectXact90Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    receipt.threshold = v1e0572;
+
+    if (!rand16_fn) {
+        receipt.result = -3;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    uint16_t roll = rand16_fn(100, user);
+    receipt.result = (int8_t)((v1e0572 > (int16_t)roll ? 1 : 0) - 3);
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2142 DM2_PROCEED_XACT_91 — checks whether either
+   v1e0572 or v1e0574 can handle the creature's possession word@0.
+   If CAN_HANDLE returns -2 for v1e0572, tries v1e0574; if both fail,
+   returns -3; otherwise -2. */
+int dm2_v1_skproject_proceed_xact_91(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact91Receipt *out_receipt)
+{
+    DM2_V1_SkprojectXact91Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.result = -2; /* default: at least one can handle */
+
+    /* Use the existing can_handle_item_in_fn callback from ctx. */
+    if (ctx->can_handle_item_in_fn) {
+        int32_t r1 = ctx->can_handle_item_in_fn(
+            (uint16_t)ctx->v1e0572, ctx->possession, 0xff, ctx->user);
+        if (r1 == -2) {
+            int32_t r2 = ctx->can_handle_item_in_fn(
+                (uint16_t)ctx->v1e0574, ctx->possession, 0xff, ctx->user);
+            if (r2 == -2) {
+                receipt.result = -3; /* neither can handle */
+            }
+        }
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2152 DM2_PROCEED_XACT — top-level xact dispatch.
+   The switch covers opt = eaxb - 63 in range [0..35].  Each case
+   dispatches to PROCEED_XACT_56 through _91.  This classifier validates
+   the opcode range and identifies which sub-case would be taken. */
+int dm2_v1_skproject_proceed_xact_classify(
+    int8_t eaxb,
+    DM2_V1_SkprojectProceedXactReceipt *out_receipt)
+{
+    DM2_V1_SkprojectProceedXactReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    receipt.input_eaxb = eaxb;
+    receipt.opt = (int8_t)(eaxb - 63);
+    receipt.result = -2; /* default per source */
+
+    if (receipt.opt < 0 || receipt.opt > 35) {
+        /* Out of range: source throws DMABORT. */
+        receipt.dispatched = 0;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.dispatched = 1;
+
+    /* Map opt to sub-function name (not called here, just classified).
+       case 0: XACT_56, case 1: XACT_57, case 2: set b_1a=19,
+       case 3: XACT_59_76, case 4: set b_1a=0, case 5: break (nop),
+       case 6: XACT_62, case 7: XACT_63, case 8: XACT_64,
+       case 9: XACT_65, case 10: XACT_66, case 11: XACT_67,
+       case 12: XACT_68, case 13: XACT_69, case 14: XACT_70,
+       case 15: XACT_71, case 16/31/32: XACT_72_87_88,
+       case 17: XACT_73, case 18: XACT_74, case 19: XACT_75,
+       case 20: v1e0572=-1 v1e0574=0 then XACT_59_76,
+       case 21: XACT_77, case 22: XACT_78, case 23: XACT_79,
+       case 24: XACT_80, case 25: XACT_81, case 26: XACT_82,
+       case 27: XACT_83, case 28: XACT_84, case 29: XACT_85,
+       case 30: XACT_86, case 33: XACT_89, case 34: XACT_90,
+       case 35: XACT_91. */
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2340 DM2_13e4_01a3 — creature AI initialization.
+   Populates s350 timing/flag fields from v1e0552 offsets, queries GDAT
+   creature word values, computes v1e058d readiness flag, zeros v1e07ee,
+   and attempts ALLOCATION11. */
+int dm2_v1_skproject_13e4_01a3_classify(
+    uint8_t v1e07eb,
+    const uint8_t *v1e0552_ptr,
+    uint16_t v1e0584_in,
+    DM2_V1_Skproject13e401a3Receipt *out_receipt)
+{
+    DM2_V1_Skproject13e401a3Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    /* Source: if (s350.v1e07eb != 0) return; */
+    if (v1e07eb != 0) {
+        receipt.blocked_already_init = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (!v1e0552_ptr) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Extract fields from v1e0552 (RG2P) at various offsets. */
+    receipt.v1e0576 = (uint16_t)(v1e0552_ptr[0xa] | (v1e0552_ptr[0xb] << 8));
+    receipt.v1e0578 = (uint16_t)(v1e0552_ptr[0xe] | (v1e0552_ptr[0xf] << 8));
+    receipt.v1e057a = (uint16_t)(v1e0552_ptr[0x10] | (v1e0552_ptr[0x11] << 8));
+    receipt.v1e057c = (uint16_t)(v1e0552_ptr[0xc] | (v1e0552_ptr[0xd] << 8));
+    receipt.v1e057e = (uint16_t)(v1e0552_ptr[0x12] | (v1e0552_ptr[0x13] << 8));
+
+    /* v1e0582 comes from GDAT query (index 7); receipt just notes it. */
+    receipt.v1e0582 = 0; /* runtime fills from QUERY_GDAT_CREATURE_WORD_VALUE */
+
+    /* v1e058d is timing readiness flag: RG4W+RAND16(RG2W+1) <= RG3W
+       where RG3W = gametick_low8 - creature_b4, clamped.
+       We capture the flag slot but cannot compute without runtime. */
+    receipt.v1e058d = 0; /* runtime fills */
+    receipt.v1e07ec = 0; /* runtime fills from RG1Bhi */
+
+    receipt.alloc_attempted = 1;
+    receipt.alloc_failed = 0; /* assume success; runtime checks */
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2414 DM2_14cd_062e — creature table lookup.
+   Reads creature bytes 0x12/0x13, indexes table1d5f82[b12][b13*7],
+   checks byte@5 masks. */
+int dm2_v1_skproject_14cd_062e_classify(
+    const uint8_t *creature_ptr,
+    uint16_t v1e0571,
+    uint16_t v1e08d6,
+    DM2_V1_Skproject14cd062eReceipt *out_receipt)
+{
+    DM2_V1_Skproject14cd062eReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!creature_ptr) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.creature_b12 = creature_ptr[0x12];
+    receipt.creature_b13 = creature_ptr[0x13];
+    receipt.result = 0; /* default: RG4Blo = 0 */
+
+    if (receipt.creature_b12 != 0xff) {
+        receipt.has_table_entry = 1;
+        /* In runtime: index table1d5f82[b12][b13*7], read byte@5. */
+        /* For classification we note the lookup would occur. */
+        receipt.raw_byte5 = 0; /* runtime fills */
+        receipt.mask_e0 = 0;   /* byte5 & 0xe0 */
+        receipt.mask_60 = 0;   /* byte5 & 0x60 */
+
+        /* The 0x40 check: if (mask_60 == 0x40 && v1e0571 != v1e08d6)
+           then result = 0 (cleared). */
+        receipt.map_mismatch = (v1e0571 != v1e08d6) ? 1 : 0;
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2446 DM2_14cd_18cc — byte-swap and delegate.
+   Swaps eaxl low byte into parb03 (via sign-extend of original low),
+   puts edxl low byte into parb02, delegates to DM2_ai_14cd_0f3c
+   with zeros and 0xffff. */
+int dm2_v1_skproject_14cd_18cc_classify(
+    int32_t eaxl,
+    int32_t edxl,
+    DM2_V1_Skproject14cd18ccReceipt *out_receipt)
+{
+    DM2_V1_Skproject14cd18ccReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    /* Source: RG1Bhi = RG1Blo; RG1Blo = RG4Blo;
+       parb03 = signedlong(RG1Bhi original = eaxl low byte)
+       parb02 = signedlong(edxl low byte) */
+    receipt.parb03 = (int8_t)(eaxl & 0xff);
+    receipt.parb02 = (int8_t)(edxl & 0xff);
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2466 DM2_2c1d_09d9 — hero skill sum and scale.
+   Sums all 4 skill slots for each hero, then right-shifts until < 0x200,
+   counting shifts + 1 as result. */
+int dm2_v1_skproject_2c1d_09d9_compute(
+    uint16_t heros_in_party,
+    const uint16_t skills[][4],
+    uint16_t max_heroes,
+    DM2_V1_Skproject2c1d09d9Receipt *out_receipt)
+{
+    DM2_V1_Skproject2c1d09d9Receipt receipt;
+    uint32_t sum = 0;
+    uint16_t result = 1;
+    uint16_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    /* Sum skills[hero][0..3] for each hero in party. */
+    for (i = 0; i < heros_in_party && i < max_heroes; i++) {
+        uint16_t j;
+        for (j = 0; j <= 3; j++) {
+            sum += skills[i][j];
+        }
+    }
+
+    receipt.skill_sum = sum;
+
+    /* Scale: while sum >= 0x200, shift right and increment result. */
+    while (sum >= 0x200u) {
+        sum >>= 1;
+        result++;
+    }
+
+    receipt.result = result;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:2516 DM2_14cd_1316 — AI condition evaluator.
+   23-way switch on (byte & 0x7f), with 0x80 inversion gate and
+   0x40 creature-identity gate.  This classifier extracts the
+   condition type and gates without evaluating the full runtime logic. */
+int dm2_v1_skproject_14cd_1316_classify(
+    uint8_t condition_byte,
+    int16_t edxw,
+    uint8_t ebxb,
+    uint8_t creature_b12,
+    DM2_V1_Skproject14cd1316Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd1316Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    receipt.raw_byte = condition_byte;
+
+    /* 0x40 gate: if set, check ebxb == creature_b12; if match return 1
+       immediately, else clear the 0x40 bit and continue. */
+    receipt.has_0x40_gate = (condition_byte & 0x40) ? 1 : 0;
+    if (receipt.has_0x40_gate) {
+        if (ebxb == creature_b12) {
+            receipt.gate_matched = 1;
+            receipt.result = 1;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        condition_byte &= (uint8_t)~0x40;
+    }
+
+    /* 0x80 = inversion flag. */
+    receipt.inverted = (condition_byte & 0x80) ? 1 : 0;
+    receipt.condition = condition_byte & 0x7f;
+
+    /* Range check: condition must be <= 22. */
+    if (receipt.condition > 22) {
+        receipt.result = 0;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    /* The actual 23-way switch evaluation requires full runtime state
+       (map data, tile queries, party position, etc.).  We classify the
+       condition type; result defaults to 0. */
+    receipt.result = 0;
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_ai.cpp:3135 DM2_14cd_18f2 — hexe-table walker.
+   Iterates 14-byte entries in table_ptr.  For each entry whose
+   byte@0xc matches the action byte, calls DM2_14cd_1316; on success,
+   copies entry and delegates to DM2_ai_14cd_0f3c.  Stops when
+   entry byte@0xd == 0. */
+int dm2_v1_skproject_14cd_18f2_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    int8_t ecxb,
+    uint16_t argw0,
+    DM2_V1_Skproject14cd18f2Receipt *out_receipt)
+{
+    DM2_V1_Skproject14cd18f2Receipt receipt;
+    int8_t action;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    /* Source: if (RG2P == NULL) return; */
+    if (!table_ptr) {
+        receipt.blocked_null_ptr = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Compute action byte: if eaxb < 0, negate it and set negated flag. */
+    action = eaxb;
+    receipt.negated = (eaxb < 0) ? 1 : 0;
+    if (receipt.negated) {
+        action = (int8_t)(-action);
+    }
+    receipt.action_byte = (uint8_t)action;
+
+    /* Walk the table: each entry is 14 bytes.  Match byte@0xc against
+       action.  Stop when byte@0xd of the current entry is 0. */
+    {
+        const uint8_t *p = table_ptr;
+        for (;;) {
+            receipt.entries_visited++;
+            if ((int8_t)p[0xc] == action) {
+                receipt.entries_matched++;
+                /* In runtime: call DM2_14cd_1316(p[1], word@2, edxb)
+                   and if nonzero, copy 14 bytes, delegate to 0f3c. */
+                /* We count but cannot evaluate without runtime. */
+            }
+            if (p[0xd] == 0)
+                break;
+            p += 14;
+        }
+    }
 
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;

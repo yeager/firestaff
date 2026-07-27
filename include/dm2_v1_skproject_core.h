@@ -6494,6 +6494,9 @@ typedef struct {
     uint16_t v1e0576;        /* movement flags (XACT_80) */
     uint16_t v1e0578;        /* movement/AI flags */
     uint16_t v1e07d8_w04;
+    uint16_t v1e07d8_w06;
+    uint16_t creature_word_a; /* s350.v1e054e->w_0a */
+    uint16_t v1e054c;         /* creature record link */
     int16_t v1e056f;         /* result word the source returns */
     uint16_t creature_w0e;   /* in/out shadow (XACT_62) */
     uint8_t creature_b1a;    /* in/out shadow (XACT_62) */
@@ -8251,6 +8254,251 @@ int dm2_v1_skproject_proceed_xact_81(
     uint8_t w06_low,
     uint16_t w04,
     DM2_V1_SkprojectXact81Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1679 DM2_14cd_3582 — coin wallet rebalance helper for xact_82. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int32_t total_value;
+    int needs_rebalance;
+    int8_t comparison_mode; /* peek16 of first arg */
+} DM2_V1_Skproject14cd3582Receipt;
+
+int dm2_v1_skproject_14cd_3582(
+    int32_t mode,
+    uint16_t wallet_handle,
+    const uint16_t *coin_values,
+    uint16_t coin_type_count,
+    DM2_V1_Skproject14cd3582Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1805 DM2_PROCEED_XACT_82 — creature buy/sell interaction. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint8_t out_b1a;
+    int has_creature;
+    int16_t creature_handle;
+    int16_t wallet_handle;
+    int used_sell_path;
+    int8_t result;
+} DM2_V1_SkprojectXact82Receipt;
+
+int dm2_v1_skproject_proceed_xact_82(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact82Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1939 DM2_PROCEED_XACT_83 — creature action 0x23-0x25. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint8_t out_b1a;
+    int has_w0a_bit7;
+    int8_t result;
+} DM2_V1_SkprojectXact83Receipt;
+
+int dm2_v1_skproject_proceed_xact_83(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact83Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:1967 DM2_PROCEED_XACT_84 — creature item consume/drop. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int has_possession;
+    int16_t possession_handle;
+    int16_t item_category;
+    int item_consumable;
+    int item_deallocated;
+    int8_t result;
+} DM2_V1_SkprojectXact84Receipt;
+
+int dm2_v1_skproject_proceed_xact_84(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectRand16Fn rand_fn,
+    void *user,
+    DM2_V1_SkprojectXact84Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2078 DM2_PROCEED_XACT_85 — search tile for drinkable text. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int found_text;
+    uint8_t out_b1e;
+    uint8_t out_b1a;
+    int8_t result;
+} DM2_V1_SkprojectXact85Receipt;
+
+int dm2_v1_skproject_proceed_xact_85(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact85Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2120 DM2_PROCEED_XACT_86 — set creature b20/b1e/b1a. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint8_t out_b20;
+    uint8_t out_b1e;
+    uint8_t out_b1a;
+    int8_t result;
+} DM2_V1_SkprojectXact86Receipt;
+
+int dm2_v1_skproject_proceed_xact_86(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact86Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2129 DM2_PROCEED_XACT_89 — projectile via 19f0_0d10. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint8_t command_byte;
+    int8_t result;
+} DM2_V1_SkprojectXact89Receipt;
+
+int dm2_v1_skproject_proceed_xact_89(
+    const DM2_V1_SkprojectXactContext *ctx,
+    uint8_t w06_low,
+    DM2_V1_SkprojectXact89Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2136 DM2_PROCEED_XACT_90 — random chance check. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int16_t threshold;
+    int8_t result;
+} DM2_V1_SkprojectXact90Receipt;
+
+int dm2_v1_skproject_proceed_xact_90(
+    int16_t v1e0572,
+    DM2_V1_SkprojectRand16Fn rand16_fn,
+    void *user,
+    DM2_V1_SkprojectXact90Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2142 DM2_PROCEED_XACT_91 */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int8_t result;
+} DM2_V1_SkprojectXact91Receipt;
+
+int dm2_v1_skproject_proceed_xact_91(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact91Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2152 DM2_PROCEED_XACT — dispatch classifier */
+typedef struct {
+    int valid;
+    int dispatched;
+    int8_t input_eaxb;
+    int8_t opt;
+    int8_t result;
+} DM2_V1_SkprojectProceedXactReceipt;
+
+int dm2_v1_skproject_proceed_xact_classify(
+    int8_t eaxb,
+    DM2_V1_SkprojectProceedXactReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2340 DM2_13e4_01a3 */
+typedef struct {
+    int valid;
+    int blocked_already_init;
+    uint16_t v1e0576;
+    uint16_t v1e0578;
+    uint16_t v1e057a;
+    uint16_t v1e057c;
+    uint16_t v1e057e;
+    uint16_t v1e0582;
+    uint8_t v1e07ec;
+    uint8_t v1e058d;
+    int alloc_attempted;
+    int alloc_failed;
+} DM2_V1_Skproject13e401a3Receipt;
+
+int dm2_v1_skproject_13e4_01a3_classify(
+    uint8_t v1e07eb,
+    const uint8_t *v1e0552_ptr,
+    uint16_t v1e0584_in,
+    DM2_V1_Skproject13e401a3Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2414 DM2_14cd_062e */
+typedef struct {
+    int valid;
+    uint8_t creature_b12;
+    uint8_t creature_b13;
+    int has_table_entry;
+    uint8_t raw_byte5;
+    uint8_t mask_e0;
+    uint8_t mask_60;
+    int map_mismatch;
+    uint8_t result;
+} DM2_V1_Skproject14cd062eReceipt;
+
+int dm2_v1_skproject_14cd_062e_classify(
+    const uint8_t *creature_ptr,
+    uint16_t v1e0571,
+    uint16_t v1e08d6,
+    DM2_V1_Skproject14cd062eReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2446 DM2_14cd_18cc */
+typedef struct {
+    int valid;
+    int8_t parb02;
+    int8_t parb03;
+} DM2_V1_Skproject14cd18ccReceipt;
+
+int dm2_v1_skproject_14cd_18cc_classify(
+    int32_t eaxl,
+    int32_t edxl,
+    DM2_V1_Skproject14cd18ccReceipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2466 DM2_2c1d_09d9 */
+typedef struct {
+    int valid;
+    uint32_t skill_sum;
+    uint16_t result;
+} DM2_V1_Skproject2c1d09d9Receipt;
+
+int dm2_v1_skproject_2c1d_09d9_compute(
+    uint16_t heros_in_party,
+    const uint16_t skills[][4],
+    uint16_t max_heroes,
+    DM2_V1_Skproject2c1d09d9Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:2516 DM2_14cd_1316 */
+typedef struct {
+    int valid;
+    uint8_t raw_byte;
+    uint8_t condition;
+    int inverted;
+    int has_0x40_gate;
+    int gate_matched;
+    int32_t result;
+} DM2_V1_Skproject14cd1316Receipt;
+
+int dm2_v1_skproject_14cd_1316_classify(
+    uint8_t condition_byte,
+    int16_t edxw,
+    uint8_t ebxb,
+    uint8_t creature_b12,
+    DM2_V1_Skproject14cd1316Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:3135 DM2_14cd_18f2 */
+typedef struct {
+    int valid;
+    int blocked_null_ptr;
+    uint8_t action_byte;
+    int negated;
+    int entries_visited;
+    int entries_matched;
+    int entries_delegated;
+} DM2_V1_Skproject14cd18f2Receipt;
+
+int dm2_v1_skproject_14cd_18f2_classify(
+    int8_t eaxb,
+    int8_t edxb,
+    const uint8_t *table_ptr,
+    int8_t ecxb,
+    uint16_t argw0,
+    DM2_V1_Skproject14cd18f2Receipt *out_receipt);
 
 
 #endif
