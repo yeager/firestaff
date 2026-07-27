@@ -4163,6 +4163,14 @@ lane is carried forward in the sections below.
     host-input receipts retained. That proves the boot/menu input route, not
     dungeon semantics: the same transcript still has no game-owned PCECD
     reader or dynamic destination receipt.
+    The follow-up 175-second sequence
+    `return@10,i@75,i@90,i@125` advances further through the original animated
+    `NEW GAME` presentation and records 51 real SCSI reads plus 25 CD IRQ
+    callbacks. Its receipt remains `transition=missing`: all observed
+    CD-to-RAM candidates are still owned by System Card physical PCs
+    `000a50/000a52` or `000b33/000b37`, with zero non-System-Card PCECD reads
+    and zero main-RAM loader TII transfers. This is stronger original-menu
+    coverage only; it must not be interpreted as a Track 02 dungeon handoff.
   - 2026-07-16 Theron draw-route gate update: M11 now has a guarded
     dungeon draw-route receipt that can consume the proven level-1 media,
     multilevel handoff, live level geometry, party pose, object placement,

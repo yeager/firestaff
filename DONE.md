@@ -1,3 +1,11 @@
+- ✅ 2026-07-27 Theron authentic multi-key startup capture. Added ordered
+  `THERON_CAPTURE_HOST_KEY_SEQUENCE` support for Return/I/Select in the
+  SDL2-backed Mednafen capture harness, with strict validation, ordered Quartz
+  PID delivery, and receipt provenance. Verified a 175-second
+  `return@10,i@75,i@90,i@125` original US-cue run reaches later authentic
+  `NEW GAME` animation frames and records 51 SCSI commands. It deliberately
+  remains non-promoted: the receipt reports no game-owned PCECD consumer or
+  dynamic dungeon destination. Script regression tests and shell syntax pass.
 - ✅ 2026-07-27 Lane C real-data gate repair. [v3.0.181] Fixed 5 of 7
   DM2 real-data gate tests. Refined g1_w0_chains_disabled flag: real PC G1
   data disables w0 chains; synthetic skproject fixtures preserve them.
