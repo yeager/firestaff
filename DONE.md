@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 Theron US split CUE path gate. The generic CUE path resolver
+  now remains fail-closed for the missing US member; the tested materializer
+  is the sole route that can assemble and admit that split image.
+
 - ✅ 2026-07-27 Theron JP CUE runtime regression. The new real-media CTest
   verifies direct JP CUE boot, canonical asset identity, selected source, and
   title startup; it skips cleanly where the original media is unavailable.

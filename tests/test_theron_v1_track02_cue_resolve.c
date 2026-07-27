@@ -45,19 +45,15 @@ int main(void) {
     char directory[] = "/tmp/firestaff_theron_track02_cue_XXXXXX";
     char cue[512];
     char data[512];
-    char split[512];
     char resolved[THERON_TRACK02_MOUNT_PATH_CAPACITY];
     int failed = 0;
 
     if (!mkdtemp(directory)) return 1;
     snprintf(cue, sizeof(cue), "%s/original.cue", directory);
     snprintf(data, sizeof(data), "%s/track02.bin", directory);
-    snprintf(split, sizeof(split), "%s/TQUS02End.iso", directory);
 
     failed |= !write_file(data, "track02 raw sector fixture",
                           strlen("track02 raw sector fixture"));
-    failed |= !write_file(split, "split track02 fixture",
-                          strlen("split track02 fixture"));
 
     failed |= !write_file(cue,
         "FILE \"track02.bin\" BINARY\n"
@@ -114,11 +110,10 @@ int main(void) {
         strlen("FILE \"TQUS02.iso\" BINARY\n"
                "  TRACK 02 MODE1/2352\n"
                "    INDEX 01 00:00:00\n"));
+    /* The US End extent is not a complete ISO. Split-image resolution is
+     * hash-gated in raw-media intake, not a path-only CUE resolver. */
     if (!failed && theron_v1_track02_resolve_media_path(cue, resolved) !=
-            THERON_TRACK02_SIGNAL_OK) {
-        failed = 1;
-    }
-    if (!failed && strcmp(resolved, split) != 0) {
+            THERON_TRACK02_SIGNAL_NOT_FOUND) {
         failed = 1;
     }
 
@@ -130,10 +125,7 @@ int main(void) {
                "  TRACK 02 MODE1/2048\n"
                "    INDEX 01 00:00:00\n"));
     if (!failed && theron_v1_track02_resolve_media_path(cue, resolved) !=
-            THERON_TRACK02_SIGNAL_OK) {
-        failed = 1;
-    }
-    if (!failed && strcmp(resolved, split) != 0) {
+            THERON_TRACK02_SIGNAL_NOT_FOUND) {
         failed = 1;
     }
 
@@ -165,7 +157,6 @@ int main(void) {
 
     remove(cue);
     remove(data);
-    remove(split);
     rmdir(directory);
     printf("test_theron_v1_track02_cue_resolve: %s\n",
            failed ? "FAIL" : "PASS");

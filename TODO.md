@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-US-SPLIT-CUE-PATH-FAIL-CLOSED:** Closed 2026-07-27. The
+  path-only CUE resolver regression now requires the missing US `TQUS02.iso`
+  member to remain unresolved; only raw-media intake may materialize it after
+  verifying both split components.
+
 - **THERON-JP-CUE-RUNTIME-REGRESSION:** Closed 2026-07-27. A skip-safe
   real-media CTest now requires direct `TQJP.cue` launch to retain the
   canonical JP Track 02 hash and reach title startup.
