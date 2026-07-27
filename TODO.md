@@ -53,7 +53,9 @@ an integration build pass.
 - **DM1-V2-VISIBLE-CHAMPION-PORTRAIT-HITBOX:** Closed 2026-07-27. V2's
   composed HUD shifts champion portrait/name regions to x=12 with a 77px
   stride, so each visible portrait now reaches the original C007..C010
-  inventory toggle rather than relying on the V1 x=0/69 hit table.
+  inventory toggle rather than relying on the V1 x=0/69 hit table. The
+  dedicated `dm1_v2_champion_portrait_mouse_routes` test runs in a separate
+  V2 vertical-slice process and covers all four visible portraits.
 
 - **DM1-PC34-WALL-ORNAMENT-METADATA-OFFSET:** Closed 2026-07-27. The M11
   ornament cache now includes the preceding TextData words when locating each

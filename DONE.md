@@ -36,8 +36,10 @@
 
 - ✅ 2026-07-27 DM1 V2 visible champion portrait hitboxes. The V2 HUD's
   x=12/77 visual layout now maps all four portrait/name regions to their
-  corresponding C007..C010 inventory route. The V2 regression passes 24/24;
-  the complete inventory mouse-route suite passes 332/332.
+  corresponding C007..C010 inventory route. The dedicated
+  `dm1_v2_champion_portrait_mouse_routes` CTest runs with
+  `FIRESTAFF_V2_VERTICAL_SLICE=1` and verifies open/select/toggle behaviour
+  for every portrait; the V1 inventory mouse-route suite remains separate.
 
 - ✅ 2026-07-27 DM1 HoC synthetic help-strip removal and C140 save route.
   Removed the non-ReDMCSB `READY: CLICK CENTER ...` producer from the direct
