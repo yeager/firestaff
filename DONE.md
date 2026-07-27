@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 Theron split Track 02 direct picker. Selecting the physical
+  `TQUS02End.iso` extent now reaches the same hash-verified cached image as
+  selecting `TQUS.cue`; it cannot be booted as a truncated standalone ISO.
+
 - ✅ 2026-07-27 Theron US split Track 02 materialization. The documented
   `TQUS19.iso + TQUS02End.iso` pair now materializes in exact Decode.bat
   order to Firestaff's cache. Both source MD5s and the final original Track

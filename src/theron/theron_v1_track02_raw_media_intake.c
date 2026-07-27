@@ -289,7 +289,11 @@ static int theron_v1_track02_media_materialize_us_split(
     leaf = strrchr(payload_path, '/');
     if (!leaf) leaf = strrchr(payload_path, '\\');
     leaf = leaf ? leaf + 1 : payload_path;
-    if (!theron_v1_track02_media_ieq(leaf, "TQUS02.iso")) return 0;
+    /* A file picker may select either the CUE-declared name (which is
+     * missing in this split distribution) or its physical End extent. Both
+     * spellings identify the same pair, but neither accepts the tail alone. */
+    if (!theron_v1_track02_media_ieq(leaf, "TQUS02.iso") &&
+        !theron_v1_track02_media_ieq(leaf, "TQUS02End.iso")) return 0;
     prefix = (size_t)(leaf - payload_path);
     if (prefix == 0u || prefix >= sizeof(parent) ||
         snprintf(parent, sizeof(parent), "%.*s", (int)prefix, payload_path) >=

@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-US-SPLIT-TRACK02-DIRECT-PICKER:** Closed 2026-07-27. Selecting
+  either `TQUS02End.iso` or the CUE-declared `TQUS02.iso` name now resolves
+  only through the documented, hash-verified US split-image materializer;
+  the tail is never treated as standalone game media.
+
 - **THERON-US-SPLIT-TRACK02-MATERIALIZATION:** Closed 2026-07-27. The
   documented US `TQUS19.iso + TQUS02End.iso` layout is now concatenated in
   Decode.bat byte order into Firestaff's cache, with both source hashes and
