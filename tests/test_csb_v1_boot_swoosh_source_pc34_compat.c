@@ -2,8 +2,15 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <process.h>
+#define mkdir(path, mode) _mkdir(path)
+#define getpid() _getpid()
+#else
 #include <sys/stat.h>
 #include <unistd.h>
+#endif
 
 static int expect(int condition, const char* message) {
     if (condition) return 1;
@@ -20,7 +27,11 @@ int main(void) {
     int index;
     int ok = 1;
 
+#ifdef _WIN32
+    snprintf(root, sizeof(root), "firestaff-csb-swsh-%ld", (long)getpid());
+#else
     snprintf(root, sizeof(root), "/tmp/firestaff-csb-swsh-%ld", (long)getpid());
+#endif
     snprintf(path, sizeof(path), "%s/SWSHSND.DAT", root);
     (void)mkdir(root, 0700);
     for (index = 0; index < (int)sizeof(source); ++index) {

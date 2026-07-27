@@ -1,8 +1,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(path, mode) _mkdir(path)
+#else
 #include <sys/stat.h>
 #include <unistd.h>
+#endif
 
 #include "asset_status_m12.h"
 #include "theron_v1_srm_corpus_manifest.h"

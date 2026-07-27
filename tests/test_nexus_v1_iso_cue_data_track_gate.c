@@ -4,8 +4,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef _WIN32
+#include <direct.h>
+#include <process.h>
+#define mkdir(path, mode) _mkdir(path)
+#define getpid() _getpid()
+#else
 #include <sys/stat.h>
 #include <unistd.h>
+#endif
 
 static int failures;
 
