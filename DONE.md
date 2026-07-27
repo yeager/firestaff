@@ -2,6 +2,12 @@
   now rejects invalid JSON and missing identity fields before it assesses
   category completeness. The full DM1 V2.x test sweep passes 91/91.
 
+- ✅ 2026-07-27 DM1 V2.x full regression verification. All 91 registered
+  V2.0/V2.1/V2.2 presentation, HUD, input, viewport, material, and runtime
+  smoke tests pass against the configured local DM1 data root. This verifies
+  implementation paths only; it does not promote unreviewed V2.2 art or
+  replace the separately open authentic-PC34-save corpus requirement.
+
 - ✅ 2026-07-27 DM1 champion HUD hand-cell clicks. A champion's visible hand
   cell is no longer inert while the inventory panel is closed: it opens that
   champion's inventory. With the panel open, the original C020..C027 item

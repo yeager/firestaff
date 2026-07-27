@@ -18,7 +18,9 @@ an integration build pass.
 - **DM1-V22-MANIFEST-SYNTAX-GATE:** Closed 2026-07-27. V2.2 now rejects
   malformed JSON and manifests without `manifestVersion` or `packId` instead
   of treating them as partial artpacks. The valid-artpack test fixture is
-  proper JSON; the complete DM1 V2.x CTest sweep passes 91/91.
+  proper JSON; the complete DM1 V2.x CTest sweep passes 91/91 against the
+  configured local DM1 data root. This does not close the separate authentic
+  PC34 save-corpus requirement.
 
 - **DM1-HUD-CHAMPION-HAND-CLICK:** Closed 2026-07-27. A closed inventory
   panel now treats each visible champion hand cell as part of that champion's
