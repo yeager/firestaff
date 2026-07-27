@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 DM2 startup final menu frame. M11 now holds the verified
+  TITLE/0 GDAT menu frame at tick 47 instead of producing an invalid tick-48
+  receipt and a black screen. The local real-data boot probe reaches frame 7
+  after 64 idle frames.
+
 - ✅ 2026-07-27 Theron Mednafen replay hold durations. The authentic
   scripted-PCE capture route accepts `key@frame:hold` alongside one-frame
   events, applies held controller masks per emulated frame, and records each

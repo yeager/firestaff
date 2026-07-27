@@ -18618,7 +18618,12 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
              * before the TITLE/0/dt07/4 menu surface. Keep this as a host
              * presentation tick; the DM2 runtime tick remains frozen until a
              * real menu action leaves startup. */
-            if (state->dm2State.startup_title_animation_tick < 48) {
+            /* TITLE/0 dt07/1 owns frames 0..6; frame 7 is the real
+             * SHOW_MENU_SCREEN surface. Keep that final menu frame alive.
+             * Advancing to tick 48 wraps the derived cycle but leaves the
+             * source receipt at 48, which invalidates its own frame bounds
+             * and previously produced a black screen after the credits. */
+            if (state->dm2State.startup_title_animation_tick < 47) {
                 ++state->dm2State.startup_title_animation_tick;
             }
             /* M11's idle scheduler advances only the independent MIDI

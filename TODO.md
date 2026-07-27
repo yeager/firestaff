@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM2-STARTUP-FINAL-MENU-FRAME:** Closed 2026-07-27. M11 now holds DM2's
+  verified final TITLE/0 menu frame at tick 47 instead of advancing to the
+  invalid tick 48 receipt. The real GDAT menu remains drawable after the
+  title/credits phase rather than failing closed to a black screen.
+
 - **THERON-MEDNAFEN-REPLAY-HOLD-DURATIONS:** Closed 2026-07-27. The
   authenticated scripted-PCE input route now accepts `key@frame:hold` in
   addition to one-frame `key@frame` events. The instrumented Mednafen patch

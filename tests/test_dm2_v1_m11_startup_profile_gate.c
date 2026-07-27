@@ -1218,6 +1218,16 @@ int main(void) {
                     boot_receipt.startupTitleFrame == 1 &&
                     boot_receipt.startupTitleFrameMax == 7,
                 "M11 DM2 startup title animation advances to frame 1 at the source duration boundary");
+    while (view.dm2State.startup_title_animation_tick < 47) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
+                    boot_receipt.startupTitleFrame == 7 &&
+                    boot_receipt.startupTitleReady == 0,
+                "M11 DM2 startup settles on the original GDAT menu frame");
+    (void)M11_GameView_AdvanceIdleTick(&view);
+    expect_true(view.dm2State.startup_title_animation_tick == 47,
+                "M11 DM2 startup keeps the menu frame instead of invalid tick 48");
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     if (profile && profile->graphics_dat) {
         DM2_V1_BootRuntimeStartupSnapshot startup_snapshot;
