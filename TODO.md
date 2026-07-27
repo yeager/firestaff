@@ -4177,6 +4177,12 @@ lane is carried forward in the sections below.
     establishes the real `NEW GAME` input edge; the following story pages and
     save-slot/stage choices still need to reach a game-owned CD consumer before
     a Track 02 dungeon handoff can be admitted.
+    A longer real-controller sequence now visibly reaches the original dungeon
+    HUD and 3D viewport. The same authenticated capture observes a later SCSI
+    burst at LBA 3236--3396 after that runtime view, but its register/FIFO
+    ownership is still System Card code and the transition receipt remains
+    missing. The runtime route is therefore proven visually; the LBA range has
+    no asserted level, object, bitmap, palette, or loader semantics yet.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a

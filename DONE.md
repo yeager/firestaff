@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 Theron original dungeon runtime capture. A verified US-cue
+  controller sequence reaches the original Theron dungeon HUD and 3D viewport;
+  the 64-command session includes a later SCSI burst ending at LBA 3396.
+  The capture remains fail-closed because register/FIFO ownership is System
+  Card code, so no Track 02 data semantics or decoder promotion is claimed.
 - ✅ 2026-07-27 Theron real NEW GAME input edge. Using two RUN presses to
   start/cancel the opening animation and the corrected PCE I key, an authentic
   capture reaches the original title menu and then its framed `DUNGEON MASTER`
