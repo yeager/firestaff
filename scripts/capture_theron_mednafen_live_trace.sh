@@ -243,6 +243,24 @@ trace_input_order_receipt() {
     ' "$file"
 }
 
+wait_for_host_key_events() {
+    local file=$1
+    local expected_count=$2
+    local attempts=$3
+    local attempt
+    local observed_count
+
+    [[ -n "$attempts" ]] || attempts=40
+    for ((attempt = 0; attempt < attempts; ++attempt)); do
+        observed_count=$(trace_count '^host_key_event ' "$file")
+        if (( observed_count >= expected_count )); then
+            return 0
+        fi
+        sleep 0.25
+    done
+    return 1
+}
+
 resolve_mednafen_ui_pid() {
     local parent_pid=$1
     local child_pid
@@ -463,6 +481,12 @@ if [[ "$host_input_requested" == 1 ]]; then
             kill "$mednafen_pid" 2>/dev/null || true
             wait "$mednafen_pid" 2>/dev/null || true
             printf '%s\n' 'FAIL: Quartz global HID delivery requires Mednafen to own the foreground' >&2
+            exit 1
+        fi
+        if ! wait_for_host_key_events "$input_trace" "$((host_key_attempt * 2))" 40; then
+            kill "$mednafen_pid" 2>/dev/null || true
+            wait "$mednafen_pid" 2>/dev/null || true
+            printf 'FAIL: Mednafen did not observe host key attempt %s after Quartz delivery\n' "$host_key_attempt" >&2
             exit 1
         fi
         sleep 0.2

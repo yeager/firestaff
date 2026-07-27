@@ -4193,6 +4193,15 @@ lane is carried forward in the sections below.
     32 rows while the independent witness verifier requires 39. The cap is
     raised to 256 before the next authenticated dungeon capture; it changes
     receipt breadth only and assigns no additional payload semantics.
+    A rebuilt short authentic run now records 161 raw sectors, proving the
+    former cap is gone. The verifier proceeds past its row-count gate and
+    rejects only because that short run lacks the required later Track 02
+    range; a longer route-specific capture is still required for that proof.
+    A transient stale-PID capture exposed a host-side sequencing gap: Quartz
+    delivery attestation alone was insufficient when Mednafen did not emit the
+    corresponding SDL event. The harness now requires each attempted key's
+    down/up event before continuing, failing immediately instead of producing
+    an invalid long capture.
     The capture harness now also has verified II and direction controls. One
     authentic controller-map run records II=`0002`, up=`0010`, down=`0040`,
     left=`0080`, and right=`0020` at PCE port 0. These inputs enable a
