@@ -13,6 +13,7 @@
  */
 
 #include "m11_game_view.h"
+#include "dm1_v1_dialog_layout_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -148,6 +149,29 @@ int main(void) {
     expect(result == M11_GAME_INPUT_REDRAW, "case G: cancel redraws");
     expect(view.quitGuardActive == 0, "case G: cancel clears guard");
     expect(view.dialogOverlayActive == 0, "case G: dialog dismissed");
+    M11_GameView_Shutdown(&view);
+
+    /* Case H: the on-screen CANCEL button must take the same path as the
+     * keyboard cancel.  This uses the source-owned PC 3.4 hit rectangle,
+     * rather than a presentation-scale coordinate. */
+    seed_active_view(&view, 500, 0, 0);
+    result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK);
+    expect(result == M11_GAME_INPUT_REDRAW, "case H: enter redraws");
+    expect_unsaved_confirm(&view, "case H enter");
+    {
+        DM1_V1_DialogRectPc34 cancelRect;
+        expect(dm1_v1_dialog_choice_hit_rect_pc34(2, 1, &cancelRect) == 1,
+               "case H: cancel hit rectangle available");
+        result = M11_GameView_HandlePointerButton(
+            &view,
+            cancelRect.x + cancelRect.w / 2,
+            33 + cancelRect.y + cancelRect.h / 2,
+            1);
+    }
+    expect(result == M11_GAME_INPUT_REDRAW, "case H: pointer cancel redraws");
+    expect(view.quitGuardActive == 0, "case H: pointer cancel clears guard");
+    expect(view.dialogOverlayActive == 0, "case H: pointer cancel dismisses dialog");
+    expect(view.dialogSelectedChoice == 2, "case H: pointer cancel selects CANCEL");
     M11_GameView_Shutdown(&view);
 
     if (fails == 0) {
