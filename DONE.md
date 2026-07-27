@@ -4,11 +4,10 @@
   decoration, including the wall-furniture route, distinct from mirrors and
   text plaques.
 
-- ✅ 2026-07-27 DM1 V1 champion HUD click surface. The painted F0292 name
-  plaque and F0287 vertical status-bar graph now open that champion's
-  inventory; hand slots and the remaining C012..C015 status surface retain
-  their separate source-owned actions. The full inventory mouse-route probe
-  passes 332/332.
+- ✅ 2026-07-27 DM1 V1 champion HUD click surface. The entire visible
+  F0287/F0292 status-box surface now opens that champion's inventory; only
+  the two C020..C027 hand cells retain their independent inventory-object
+  routes. The full inventory mouse-route probe passes 334/334.
 
 - ✅ 2026-07-27 DM1 HoC compact floor and alcove objects. Corrected the
   F0115/REVIVE ownership boundary so only recognised mirror-control chains
@@ -52,11 +51,12 @@
   pre-existing F0444 assertion failures.
 
 - ✅ 2026-07-27 DM1 HUD champion click routes. Wired the original
-  `COMMAND.C` G0447 C007..C010 bar zones C187..C190 to selected-champion
-  inventory toggling, restored C012..C015 status-box selection, and fixed
-  cross-champion switching so it does not close the already open panel.
-  Verified by `dm1_v1_inventory_panel_mouse_routes_pc34_compat` (332/332)
-  plus the focused CTest route suite (3/3).
+  `COMMAND.C` G0447 C007..C010 bar zones C187..C190 and the complete visible
+  champion surface to selected-champion inventory toggling, while preserving
+  the C020..C027 hand-object routes. Switching champion no longer closes an
+  already open panel. Verified by
+  `dm1_v1_inventory_panel_mouse_routes_pc34_compat` (334/334) plus the
+  focused CTest route suite (3/3).
 
 - ✅ 2026-07-27 DM1 F0115 HoC payload ownership. Real PC34 probing confirms
   all 83 sampled Hall object payload chains belong to the REVIVE.C mirror

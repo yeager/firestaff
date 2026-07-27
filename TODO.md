@@ -60,10 +60,9 @@ an integration build pass.
   as the object, sensor and ornament passes. This prevents real PC34 maps
   from borrowing a door record from an unrelated square.
 
-- **DM1-HUD-CHAMPION-CLICK-ROUTES:** Closed 2026-07-27. The source-owned
-  C007..C010/C187..C190 left-click routes, their visible F0292 name plaques,
-  and their F0287 bar graphs now open the selected champion's inventory,
-  while the remaining C012..C015 status-box surface selects the champion.
+- **DM1-HUD-CHAMPION-CLICK-ROUTES:** Closed 2026-07-27. Every visible
+  F0287/F0292 champion status-box pixel now opens the selected champion's
+  inventory, except the two independent C020..C027 hand-object cells.
   Switching champion no longer closes an already open inventory panel.
 
 - **DM1-F0115-HOC-PAYLOAD-OWNERSHIP:** Closed 2026-07-27. F0115 now filters

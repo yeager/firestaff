@@ -22827,15 +22827,33 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
                 DM1_V1_ChampionStatusRectPc34 statusRect;
                 DM1_V1_ChampionStatusRectPc34 nameRect;
+                DM1_V1_ChampionStatusRectPc34 handRect;
+                int overHand = 0;
+                int hand;
                 if (dm1_v1_champion_status_box_rect_pc34(slot, &statusRect) &&
-                    dm1_v1_champion_status_name_rect_pc34(slot, &nameRect) &&
-                    (m11_point_in_rect(x, y,
-                                       nameRect.x, nameRect.y,
-                                       nameRect.w, nameRect.h) ||
-                     m11_point_in_rect(x, y,
-                                       statusRect.x + 43, statusRect.y + 2,
-                                       24, 25))) {
-                    return m11_toggle_champion_inventory(state, slot);
+                    dm1_v1_champion_status_name_rect_pc34(slot, &nameRect)) {
+                    for (hand = 0; hand < 2; ++hand) {
+                        if (dm1_v1_champion_status_hand_rect_pc34(
+                                slot, hand, &handRect) &&
+                            m11_point_in_rect(x, y,
+                                              handRect.x, handRect.y,
+                                              handRect.w, handRect.h)) {
+                            overHand = 1;
+                            break;
+                        }
+                    }
+                    /* The full F0287/F0292 status-box surface represents
+                     * its champion.  Only the two C020..C027 hand cells
+                     * retain their independent inventory object routes. */
+                    if (!overHand &&
+                        (m11_point_in_rect(x, y,
+                                           statusRect.x, statusRect.y,
+                                           statusRect.w, statusRect.h) ||
+                         m11_point_in_rect(x, y,
+                                           nameRect.x, nameRect.y,
+                                           nameRect.w, nameRect.h))) {
+                        return m11_toggle_champion_inventory(state, slot);
+                    }
                 }
             }
         }

@@ -460,6 +460,13 @@ static void test_champion_hud_left_click_opens_target_inventory(void) {
     ASSERT_EQ(state.world.party.activeChampionIndex, 0,
               "visible champion 0 name keeps champion 0 active");
 
+    ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 1, 20,
+                                                M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "visible champion 0 status background toggles inventory");
+    ASSERT_EQ(state.inventoryPanelActive, 0,
+              "status background closes the same champion inventory");
+
     ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 113, 14,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
