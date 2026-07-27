@@ -1,3 +1,7 @@
+- ✅ 2026-07-27 Theron JP CUE complete-ISO alias. The JP CUE now accepts its
+  legacy Track 02 filename only when the sibling `TQJP02End.iso` matches the
+  known complete original image; a real JP CUE boot probe reaches title.
+
 - ✅ 2026-07-27 Theron split Track 02 catalog consistency. Direct-launch and
   availability coverage now recognizes the verified materialized US ISO
   identity; both focused suites pass.

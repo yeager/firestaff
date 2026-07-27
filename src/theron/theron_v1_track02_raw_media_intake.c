@@ -337,6 +337,31 @@ static int theron_v1_track02_media_materialize_us_split(
     return 1;
 }
 
+/* The JP distribution is different: TQJP02End.iso is already the complete
+ * canonical ISO.  Its CUE retains the older TQJP02.iso leaf, so admit that
+ * one alias only after proving the sibling's complete original hash. */
+static int theron_v1_track02_media_resolve_jp_complete_alias(
+    char payload_path[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY]) {
+    char *leaf;
+    char sibling[THERON_V1_TRACK02_MEDIA_PATH_CAPACITY];
+    char md5[33];
+    size_t prefix;
+
+    if (!payload_path || !payload_path[0]) return 0;
+    leaf = strrchr(payload_path, '/');
+    if (!leaf) leaf = strrchr(payload_path, '\\');
+    leaf = leaf ? leaf + 1 : payload_path;
+    if (!theron_v1_track02_media_ieq(leaf, "TQJP02.iso")) return 0;
+    prefix = (size_t)(leaf - payload_path);
+    if (prefix == 0u || prefix >= sizeof(sibling) ||
+        snprintf(sibling, sizeof(sibling), "%.*sTQJP02End.iso", (int)prefix,
+                 payload_path) >= (int)sizeof(sibling) ||
+        !m12_file_md5_hex(sibling, md5) ||
+        strcmp(md5, THERON_TRACK02_MD5_JP_REV1_ISO) != 0) return 0;
+    snprintf(payload_path, THERON_V1_TRACK02_MEDIA_PATH_CAPACITY, "%s", sibling);
+    return 1;
+}
+
 static uint32_t theron_v1_track02_expected_raw_index01(
     Theron_Track02Variant variant) {
     if (variant == THERON_TRACK02_VARIANT_JP_BIN) return 224u;
@@ -448,6 +473,7 @@ int theron_v1_track02_raw_media_intake_discover(
         return 1;
     }
     (void)theron_v1_track02_media_materialize_us_split(receipt.payload_path);
+    (void)theron_v1_track02_media_resolve_jp_complete_alias(receipt.payload_path);
     if (!theron_v1_track02_media_file_size(receipt.payload_path,
                                             &payload_bytes)) {
         receipt.status = THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE;

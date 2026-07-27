@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **THERON-JP-CUE-COMPLETE-ISO-ALIAS:** Closed 2026-07-27. The JP CUE's
+  legacy `TQJP02.iso` member now resolves only to a sibling
+  `TQJP02End.iso` whose complete original ISO hash is verified. This is kept
+  distinct from the US split-image path.
+
 - **THERON-US-SPLIT-TRACK02-CATALOG-CONSISTENCY:** Closed 2026-07-27. The
   direct-launch and availability suites now use the verified materialized US
   ISO identity, keeping M12's supported-version catalog and runtime tests in
