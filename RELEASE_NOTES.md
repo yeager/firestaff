@@ -1,11 +1,13 @@
 
 # Unreleased
 
-# Firestaff v3.0.176
+# Firestaff v3.0.177
 
 - Consolidated current DM1, CSB, DM2, Theron and Nexus runtime fixes from main.
 - Improved cross-platform build compatibility and release validation.
 - Includes the Artpack Studio macOS Tk runtime and headless Linux validation fixes.
+- Windows release validation now reports unavailable optional reference-corpus
+  tests without skipping the mandatory smoke gates.
 
 # Firestaff v3.0.161
 
