@@ -280,7 +280,7 @@ jobs:
           # its optional external WAV-fixture check is therefore advisory.
           # Keep the complete report while retaining Phase A and packaging as
           # release-blocking gates.
-          ./build/firestaff_m11_audio_probe.exe 2>&1 | tee audio.log
+          ./build/firestaff_m11_audio_probe.exe 2>&1 | tee audio.log || true
           grep '^# summary: ' audio.log
           AUDIO_COUNTS="$(awk '/^# summary: / {print $3}' audio.log | tail -1)"
           if [[ -z "$AUDIO_COUNTS" ]]; then
