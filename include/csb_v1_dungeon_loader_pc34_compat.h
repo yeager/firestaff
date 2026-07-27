@@ -53,7 +53,7 @@ typedef struct {
     uint16_t actuator_thing;
 } CSB_V1_DSAFilterLocation;
 
-typedef struct {
+typedef struct CSB_V1_DungeonData {
     int level_count;
     int level_offsets[CSB_V1_MAX_LEVELS];
     int level_widths[CSB_V1_MAX_LEVELS];
