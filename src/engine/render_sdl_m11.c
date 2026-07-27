@@ -2380,12 +2380,13 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
      * bounds check returned 0, and the entrance wait loop silently
      * kept polling.
      *
-     * Prefer the live SDL window size only when it shows the window
-     * has grown beyond the resize-tracked value.  That covers the
-     * macOS maximize/button-click failure without breaking headless
-     * probes that intentionally exercise M11_Render_HandleResize()
-     * while the SDL dummy window remains at its initial size.  Do
-     * NOT overwrite g_state.windowW/H here; callers of the public
+     * A real SDL window is authoritative in both directions.  The prior
+     * grow-only correction still left stale coordinates after macOS changed
+     * a maximized window back to a smaller logical size, so clicks on the
+     * champion HUD could miss their source rectangles.  Keep the cached
+     * dimensions only for the dummy driver: its test window deliberately
+     * remains at its initial size while probes exercise resize handling.
+     * Do not overwrite g_state.windowW/H here; callers of the public
      * window-size API expect the resize-event-tracked value. */
     mapWindowW = g_state.windowW;
     mapWindowH = g_state.windowH;
@@ -2398,7 +2399,13 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
             SDL_GL_GetDrawableSize(g_state.window, &ww, &wh);
         }
 #endif
-        if (ww >= mapWindowW && wh >= mapWindowH && (ww > mapWindowW || wh > mapWindowH)) {
+        const char* videoDriver = SDL_GetCurrentVideoDriver();
+        if (ww > 0 && wh > 0 && videoDriver &&
+            strcmp(videoDriver, "dummy") != 0) {
+            mapWindowW = ww;
+            mapWindowH = wh;
+        } else if (ww >= mapWindowW && wh >= mapWindowH &&
+                   (ww > mapWindowW || wh > mapWindowH)) {
             mapWindowW = ww;
             mapWindowH = wh;
         }

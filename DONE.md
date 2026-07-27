@@ -1,3 +1,9 @@
+- ✅ 2026-07-27 DM1 champion HUD clicks after macOS resize. SDL pointer
+  mapping now takes the live size of a real window in both directions, so a
+  maximized or restored window cannot map a visible champion status box
+  outside its original C007..C015 hit zone. The dummy-video test path keeps
+  its explicit resize semantics; focused HiDPI and HUD mouse-route tests pass.
+
 - ✅ 2026-07-27 DM1 HoC ordinary wall ornaments. The real-data HoC walk
   now proves a non-C127/non-inscription wall ornament reaches M11's F0107
   host-material pass with a valid original graphic. This keeps ordinary

@@ -24,6 +24,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-HUD-CHAMPION-CLICK-MACOS-RESIZE:** Closed 2026-07-27. Window-to-source
+  pointer mapping now uses the live SDL size for real windows in both grow and
+  shrink cases, while retaining cached resize behavior for SDL's dummy driver.
+  Champion C007..C015 HUD targets therefore remain clickable after macOS
+  maximize or restore.
+
 - **DM1-PC34-C70-LIGHT-ROUNDTRIP:** Closed 2026-07-27. F0435 restores C70
   `EVENT.B.LightPower` as its signed runtime light value, with the separate
   C70 identity retained for F0433. The PC34 export suite now covers a
