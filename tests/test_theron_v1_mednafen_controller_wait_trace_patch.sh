@@ -159,6 +159,12 @@ if ! grep -Fq 'main_ram_loader_jsr logical_pc=%04x physical_pc=%06x target=%04x 
     printf 'FAIL: main-RAM loader patch no longer retains bounded executed control evidence\n' >&2
     exit 1
 fi
+if grep -Fq 'source=mednafen-pce-instrumented-main-ram-loader\\n' "$main_ram_loader_patch_file" ||
+   grep -Fq 'main_ram_loader_bra_target source_logical_pc=%04x source_physical_pc=%06x target=%04x logical_pc=%04x physical_pc=%06x opcode=%02x\\n' "$main_ram_loader_patch_file" ||
+   grep -Fq 'main_ram_loader_bra_target_jsr branch_target=%04x branch_target_physical_pc=%06x logical_pc=%04x physical_pc=%06x target=%04x\\n' "$main_ram_loader_patch_file"; then
+    printf 'FAIL: main-RAM loader trace patch contains literal backslash-n output\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'main_ram_loader_e009_dispatch sequence=%u logical_pc=%04x physical_pc=%06x a=%02x x=%02x y=%02x' "$main_ram_e009_dispatch_patch_file" ||
    ! grep -Fq 'if(lastop == 0x20 && first == 0xe009)' "$main_ram_e009_dispatch_patch_file" ||
    ! grep -Fq 'TheronPCECDTraceMainRAMLoaderE009Call' "$main_ram_e009_dispatch_patch_file"; then

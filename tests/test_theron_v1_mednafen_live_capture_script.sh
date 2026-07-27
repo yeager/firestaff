@@ -28,7 +28,8 @@ if [[ ! -x "$runtime_verifier" ]] ||
 fi
 if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_input_result_trace.patch' "$build_script" ||
-   ! grep -Fq 'mednafen_1.32.1_theron_cd_transfer_owner_trace.patch' "$build_script"; then
+   ! grep -Fq 'mednafen_1.32.1_theron_cd_transfer_owner_trace.patch' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_trace.patch' "$build_script"; then
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
     exit 1
 fi
@@ -82,8 +83,10 @@ if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
     exit 1
 fi
 if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
-   ! grep -Fq "grep -aFq 'FIRESTAFF_THERON_IRQ2_TRACE' \"\$binary\"" "$script" ||
-   ! grep -Fq 'MEDNAFEN_BIN lacks the Firestaff Theron instrumentation' "$script" ||
+   ! grep -Fq 'for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE' "$script" ||
+   ! grep -Fq 'grep -aFq "$marker" "$binary"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE' "$script" ||
+   ! grep -Fq 'MEDNAFEN_BIN lacks the required Firestaff Theron instrumentation' "$script" ||
    ! grep -Fq 'build_mednafen_theron_irq2_trace.sh' "$script"; then
     printf 'FAIL: capture script must reject an uninstrumented Mednafen binary before launch\n' >&2
     exit 1

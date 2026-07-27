@@ -52,7 +52,7 @@
 +   TheronMainRAMLoaderTrace = fopen(path, "w");
 +   if(TheronMainRAMLoaderTrace)
 +   {
-+    fprintf(TheronMainRAMLoaderTrace, "source=mednafen-pce-instrumented-main-ram-loader\\n");
++    fprintf(TheronMainRAMLoaderTrace, "source=mednafen-pce-instrumented-main-ram-loader\n");
 +    fflush(TheronMainRAMLoaderTrace);
 +   }
 +  }
@@ -65,7 +65,7 @@
 +  {
 +   TheronMainRAMLoaderBraTargetPhysicalPC = physical_pc;
 +   TheronMainRAMLoaderBraTargetJsrPending = true;
-+   fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_bra_target source_logical_pc=%04x source_physical_pc=%06x target=%04x logical_pc=%04x physical_pc=%06x opcode=%02x\\n",
++   fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_bra_target source_logical_pc=%04x source_physical_pc=%06x target=%04x logical_pc=%04x physical_pc=%06x opcode=%02x\n",
 +           TheronMainRAMLoaderBraSourcePC,
 +           TheronMainRAMLoaderBraSourcePhysicalPC,
 +           TheronMainRAMLoaderBraTarget, logical_pc, physical_pc, opcode);
@@ -146,7 +146,7 @@
 +
 + if(TheronMainRAMLoaderBraTargetJsrPending && opcode == 0x20)
 + {
-+  fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_bra_target_jsr branch_target=%04x branch_target_physical_pc=%06x logical_pc=%04x physical_pc=%06x target=%04x\\n",
++  fprintf(TheronMainRAMLoaderTrace, "main_ram_loader_bra_target_jsr branch_target=%04x branch_target_physical_pc=%06x logical_pc=%04x physical_pc=%06x target=%04x\n",
 +          TheronMainRAMLoaderBraTarget, TheronMainRAMLoaderBraTargetPhysicalPC,
 +          logical_pc, physical_pc, first);
 +  TheronMainRAMLoaderBraTargetJsrPending = false;

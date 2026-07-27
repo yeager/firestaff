@@ -53,12 +53,13 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_cd_transfer_owner_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_cd_caller_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_trace.patch"
 
-# The remaining legacy extensions target an older version of the debugger
-# hook. They are kept as research patches, but the authenticated live-capture
-# path uses the coherent core above: CPU, PCE CD, input, caller and raw-sector
-# receipts. Applying a stale extension would either fail the build or corrupt
-# the capture function before it reaches real media.
+# The remaining extensions target an older debugger hook and are research-only.
+# The main-RAM loader trace above applies cleanly to this coherent 1.32.1
+# capture path; it records bounded executed control flow without assigning any
+# game-data semantics.
 
 # The released Mednafen tree carries generated Makefile.in files. Copying it
 # into a fresh trace root can make make try to regenerate them, which would

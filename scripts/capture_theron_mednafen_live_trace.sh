@@ -343,14 +343,18 @@ wait_for_trace_producer() {
 
 require_instrumented_mednafen_binary() {
     local binary=$1
+    local marker
 
     # The stock Mednafen binary accepts the environment variables below but
     # silently ignores them. Refuse it before starting a timed original-media
-    # run: an empty trace is not capture evidence.
-    if ! grep -aFq 'FIRESTAFF_THERON_IRQ2_TRACE' "$binary" 2>/dev/null; then
-        printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the Firestaff Theron instrumentation; build it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
-        return 1
-    fi
+    # run: an empty trace is not capture evidence. The runtime needs both the
+    # general CPU/CD producer and the main-RAM control-flow producer.
+    for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE; do
+        if ! grep -aFq "$marker" "$binary" 2>/dev/null; then
+            printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the required Firestaff Theron instrumentation; build it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
+            return 1
+        fi
+    done
     return 0
 }
 

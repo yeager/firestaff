@@ -9,6 +9,11 @@
   the exact instrumented Mednafen executable MD5 alongside the original media
   hashes. Regression coverage and a real US-CUE capture pass; this is
   provenance only, not a Track 02 decoder or semantic claim.
+- ✅ 2026-07-27 Theron main-RAM trace build. The reproducible Mednafen 1.32.1
+  build now applies the clean bounded main-RAM loader hook, and capture
+  preflight requires its producer marker alongside the CPU/CD marker. Repaired
+  three literal-`\\n` emissions in that hook; the rebuilt US-CUE smoke emits
+  line-delimited System Card control flow. This records provenance only.
 - ✅ 2026-07-27 Theron verified-media fallback closure. A verified Track 02
   now blocks preinitialized default palette/tile state unless an original bank
   and a proven palette route are both present. The runtime screenshot gate

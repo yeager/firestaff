@@ -3438,6 +3438,15 @@ lane is carried forward in the sections below.
     of the exact instrumented Mednafen executable. This captures producer
     identity beside the existing media hashes; it neither changes trace
     acceptance nor promotes any Track 02 semantics.
+  - 2026-07-27 update: the reproducible Mednafen 1.32.1 build now includes
+    the bounded main-RAM loader control-flow producer. Capture preflight
+    requires both CPU/CD and main-RAM producer markers, preventing the older
+    partial trace build from supplying weak evidence. The next input-driven
+    run must still produce a positive game-owned consumer observation.
+  - 2026-07-27 verification: an authentic US-CUE smoke now emits a
+    line-delimited main-RAM control trace from the rebuilt producer. The
+    observed `1f0286` TIA/RTS rows are System Card control flow only; they
+    establish neither a game-owned consumer nor any Track 02 semantics.
 
 - 2026-07-16 CSB runtime viewport follow-up: first-frame D0/D1/D2
   F0111/F0115 receipts now promote to a real-data M11 draw plan with shared
