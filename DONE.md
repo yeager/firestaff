@@ -1,3 +1,8 @@
+- ✅ 2026-07-27 DM1 V2 HUD champion click routes. DM1's source C007..C015
+  status/inventory routes now remain active when V2.x disables the V1 chrome
+  compositor. The isolated V2 regression passes 10/10; the full original
+  inventory mouse-route suite remains 332/332.
+
 - ✅ 2026-07-27 DM1 viewport compact door chain. Door state and type now use
   the F0160/F0161 compact square table already used by the viewport's
   object/sensor/ornament routes, eliminating dense-index cross-square door

@@ -75,6 +75,7 @@
 #include "dm1_v1_skill_experience_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 unsigned short G2157_;
@@ -1325,6 +1326,15 @@ int main(void) {
            "CHEST.C:30-32 same-open return before pressing-eye branch and C09 draw, "
            "CHAMPION.C:698-699 and 662-710 slotbox swap with open-action-hand chest, "
            "CHEST.C:112-133 close-time compact\n");
+
+    /* Keep the V2 presentation regression isolated: this executable's
+     * remaining fixtures intentionally exercise V1 viewport hit paths. */
+    if (getenv("FIRESTAFF_TEST_CHAMPION_HUD_ONLY")) {
+        test_champion_hud_left_click_opens_target_inventory();
+        printf("inventoryPanelMouseRoutesRuntimePass=%d\n", g_pass);
+        printf("inventoryPanelMouseRoutesRuntimeFail=%d\n", g_fail);
+        return g_fail == 0 ? 0 : 1;
+    }
 
     test_inventory_close_panel_right_button_route();
     test_inventory_control_icons_dispatch_runtime();

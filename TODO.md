@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-V2-HUD-CHAMPION-CLICK-ROUTES:** Closed 2026-07-27. DM1's original
+  C007..C015 champion input surface is no longer disabled merely because a
+  V2.x presentation turns off the V1 chrome compositor. Champion inventory
+  and status selection remain runtime-owned across all DM1 presentations.
+
 - **DM1-VIEWPORT-COMPACT-DOOR-CHAIN:** Closed 2026-07-27. Door type and
   opening state now consume the same F0160/F0161 compact square thing-chain
   as the object, sensor and ornament passes. This prevents real PC34 maps

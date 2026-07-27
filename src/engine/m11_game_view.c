@@ -22756,7 +22756,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
-    if (m11_v1_chrome_mode_enabled() && !state->showDebugHUD &&
+    if (m11_is_dm1_source_kind(state->sourceKind) && !state->showDebugHUD &&
         (buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34)) {
         int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
         int zoneId = 0;
@@ -22796,7 +22796,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * regions.  They are the normal DM1 mouse path for opening a specific
      * champion's inventory.  C012..C015 covers the remaining status-box
      * surface and selects that champion through F0367/F0368. */
-    if (m11_v1_chrome_mode_enabled() && !state->showDebugHUD) {
+    /* Input geometry belongs to the DM1 runtime, not to the optional V1
+     * chrome compositor.  V2.x retains the original status-bar ownership,
+     * so C007..C015 must remain clickable when its presentation mode turns
+     * the V1 chrome switch off. */
+    if (m11_is_dm1_source_kind(state->sourceKind) && !state->showDebugHUD) {
         int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
         int zoneId = 0;
         int command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
