@@ -41718,3 +41718,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   runtime profile. The new runtime regression builds a real-shape `0x05070000`
   EXPOOL record and proves all eight tracing words plus the enabled-bit count
   become available through `csb_v1_runtime_get_csbwin_dsa_tracing()`.
+- ✅ 2026-07-28 CSB V2.x current-tree verification. Built every registered
+  CSB V2.0/V2.1/V2.2 target and ran the exact CTest selection: 41/41 pass.
+  The verified code paths cover V1 compatibility, presentation selection,
+  resolution/settings, filters including final-RGBA CRT, HUD and smooth
+  runtime binding, touch/controller, lighting, V2.2 shape/per-cell/in-place
+  rendering, and the reviewed-material admission gate. This does not promote
+  unreviewed art or replace the separately tracked packaged-app capture.
