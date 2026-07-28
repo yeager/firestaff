@@ -33749,6 +33749,22 @@ if(BUILD_TESTING)
         NAME nexus_v2_hud_overlay
         COMMAND test_nexus_v2_hud_overlay
     )
+    add_executable(test_nexus_v2_hud_runtime_integration
+        tests/test_nexus_v2_hud_runtime_integration.c
+        src/nexus/nexus_v2_hud_runtime.c
+        src/nexus/nexus_v2_hud_overlay.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_include_directories(test_nexus_v2_hud_runtime_integration PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_hud_runtime_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME nexus_v2_hud_runtime_integration
+        COMMAND test_nexus_v2_hud_runtime_integration
+    )
     add_executable(test_nexus_v22_modern_assets_pc34
         tests/test_nexus_v22_modern_assets_pc34.c
         src/nexus/nexus_v22_modern_assets_pc34.c

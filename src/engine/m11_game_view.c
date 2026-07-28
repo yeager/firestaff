@@ -13703,6 +13703,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         nexus_v1_light_runtime_shutdown(&state->nexusLightRuntime);
         state->nexusLightRuntimeReady = 0;
     }
+    nexus_v2_hud_runtime_shutdown();
     if (state->assetsAvailable) {
         M11_AssetLoader_Shutdown(&state->assetLoader);
         state->assetsAvailable = 0;
@@ -14585,6 +14586,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 if (spec->savePath && spec->savePath[0] != '\0' &&
                     !m11_nexus_resume_from_save_path(state, spec->savePath)) {
                     nexus_v1_launcher_shutdown();
+                    nexus_v2_hud_runtime_shutdown();
                     state->nexusEngine = NULL;
                     state->active = 0;
                     state->startedFromLauncher = 0;
