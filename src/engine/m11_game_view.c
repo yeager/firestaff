@@ -21521,9 +21521,13 @@ static int m11_graphics_popup_mode_count(const M11_GameViewState* state) {
     /* M12's installed bit is cross-game launcher state. CSB V2.2 has a
      * stricter per-game provenance gate, so a finished DM1 pack must not
      * expose CSB V2.2 in the live graphics menu. */
-    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        !csb_v22_famg_is_finished_real()) {
-        return M12_PRESENTATION_V22_MODERN;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        /* CSB owns both its pack admission and material provenance.  Do not
+         * consult M12's DM1-oriented launcher bit after this: a real,
+         * complete CSB pack may be installed without any DM1 V2.2 pack. */
+        return csb_v22_famg_is_finished_real()
+            ? M12_PRESENTATION_MODE_COUNT
+            : M12_PRESENTATION_V22_MODERN;
     }
     M12_Config_Load(&config, NULL);
     /* A selected archive is not installed material. In particular it may

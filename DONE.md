@@ -42000,3 +42000,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   existing source loader still enforces the exact 9,078-byte raw sample
   contract; no generated sound is introduced. The CSB ZIP/ISO cache test
   verifies the `SWSHSND.DAT` copy path.
+- ✅ 2026-07-29 CSB V2.2 per-game F10 admission. The live graphics popup no
+  longer requires M12's cross-game artpack-installed flag after the complete
+  CSB provenance gate succeeds. A CSB-only complete category manifest now
+  reaches V2.2 from V2.1 with that global flag explicitly clear; the focused
+  runtime-popup CTest locks the route. Incomplete or synthetic CSB packs
+  remain hidden/fail-closed.

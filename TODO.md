@@ -741,6 +741,11 @@ that its exact runtime path is not already source-locked and tested.
    manifest with only real declared entries remains partial.
    The in-game selector likewise consults that CSB-specific gate rather than
    the cross-game launcher installed flag.
+   2026-07-29: after that gate passes, the F10 selector also no longer falls
+   through to the cross-game M12 installed bit. A fully admitted CSB pack is
+   therefore selectable even when no unrelated DM1 V2.2 pack is installed.
+   The focused modal regression constructs a complete CSB category manifest,
+   keeps the global bit clear, and proves V2.1 -> V2.2 selection.
    CSB presentation-mode resolution uses the CSB manifest availability API,
    not DM1's global modern-asset state.
    2026-07-28: the canonical PC 3.4 real-data gate now proves the full

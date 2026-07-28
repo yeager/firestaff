@@ -1,6 +1,9 @@
 #include "m11_game_view.h"
 #include "config_m12.h"
 #include "render_sdl_m11.h"
+#include "csb_v22_finished_art_material_gate_pc34.h"
+#include "csb_v22_modern_assets_pc34.h"
+#include "fs_portable_compat.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -23,6 +26,80 @@ static void set_test_home(void) {
     unsetenv("XDG_CONFIG_HOME");
     unsetenv("XDG_DATA_HOME");
 #endif
+}
+
+static void write_csb_v22_finished_fixture(const char* dataDir) {
+    static const struct {
+        const char* id;
+        const char* category;
+        int width;
+        int height;
+    } slots[] = {
+        { "wall_dungeon_01", "wall_shapes", 96, 96 },
+        { "floor_plain_01", "floor_shapes", 96, 96 },
+        { "floor_cracked_01", "floor_shapes", 96, 96 },
+        { "creature_chaos_fiend_01", "creature_shapes", 64, 64 },
+        { "panel_lord_order_01", "ui_chrome", 128, 32 },
+        { "champion_warrior_csb_01", "champion_portraits", 64, 64 },
+        { "door_prison_01", "door_shapes", 64, 96 },
+        { "chaos_rune_01", "chaos_runes", 32, 32 }
+    };
+    char root[FSP_PATH_MAX];
+    char parent[FSP_PATH_MAX];
+    char modern[FSP_PATH_MAX];
+    char manifest[FSP_PATH_MAX];
+    const char* slash;
+    FILE* fp;
+
+    snprintf(root, sizeof(root), "%s", dataDir);
+    slash = strrchr(root, '/');
+    assert(slash != NULL);
+    root[slash - root] = '\0';             /* .../data */
+    snprintf(parent, sizeof(parent), "%s", root);
+    slash = strrchr(parent, '/');
+    assert(slash != NULL);
+    parent[slash - parent] = '\0';         /* fixture root */
+    snprintf(modern, sizeof(modern), "%s/assets/csb/modern", parent);
+    assert(FSP_CreateDirectoryRecursive(modern) == 1);
+    snprintf(manifest, sizeof(manifest), "%s/modern_asset_manifest.json", modern);
+    fp = fopen(manifest, "wb");
+    assert(fp != NULL);
+    static const char* const categories[] = {
+        "wall_shapes", "floor_shapes", "creature_shapes", "ui_chrome",
+        "champion_portraits", "door_shapes", "chaos_runes"
+    };
+    fputs("{\"manifestVersion\":\"1.0.0\"", fp);
+    for (size_t categoryIndex = 0;
+         categoryIndex < sizeof(categories) / sizeof(categories[0]);
+         ++categoryIndex) {
+        int first = 1;
+        fprintf(fp, ",\"%s\":[", categories[categoryIndex]);
+        for (size_t i = 0; i < sizeof(slots) / sizeof(slots[0]); ++i) {
+            if (strcmp(slots[i].category, categories[categoryIndex]) != 0) continue;
+            {
+                char category[FSP_PATH_MAX];
+                char asset[FSP_PATH_MAX];
+                FILE* assetFile;
+                snprintf(category, sizeof(category), "%s/%s", modern,
+                         slots[i].category);
+                assert(FSP_CreateDirectoryRecursive(category) == 1);
+                snprintf(asset, sizeof(asset), "%s/%s.png", category,
+                         slots[i].id);
+                assetFile = fopen(asset, "wb");
+                assert(assetFile != NULL);
+                fputs("source-derived-fixture", assetFile);
+                fclose(assetFile);
+                fprintf(fp, "%s{\"id\":\"%s\",\"generator\":\"source_export\","
+                            "\"source_file\":\"%s.png\",\"width\":%d,\"height\":%d}",
+                        first ? "" : ",", slots[i].id, slots[i].id,
+                        slots[i].width, slots[i].height);
+                first = 0;
+            }
+        }
+        fputs("]", fp);
+    }
+    fputs("}", fp);
+    fclose(fp);
 }
 
 int main(void) {
@@ -225,6 +302,30 @@ int main(void) {
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupActive == 0);
+
+    /* A complete CSB-specific material manifest must expose V2.2 even when
+     * M12 has no global (DM1) artpack-installed bit. */
+    {
+        const char* dataDir = "/tmp/firestaff-csb-v22-popup/data/csb";
+        assert(FSP_CreateDirectoryRecursive(dataDir) == 1);
+        write_csb_v22_finished_fixture(dataDir);
+        csb_v22_famg_set_manifest_path(dataDir);
+        csb_v22_set_manifest_path(dataDir);
+        assert(csb_v22_famg_is_finished_real() == 1);
+        config.v22_modern_assets_installed = 0;
+        config.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
+        assert(M12_Config_Save(&config) == 1);
+        state.presentationMode = M12_PRESENTATION_V21_UPSCALED;
+        result = M11_GameView_HandleInput(&state,
+                                          M12_MENU_INPUT_GRAPHICS_POPUP);
+        assert(result == M11_GAME_INPUT_REDRAW);
+        result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+        assert(result == M11_GAME_INPUT_REDRAW);
+        assert(state.presentationMode == M12_PRESENTATION_V22_MODERN);
+        result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
+        assert(result == M11_GAME_INPUT_REDRAW);
+        assert(state.graphicsPopupActive == 0);
+    }
 
     puts("m11 runtime graphics popup: ok");
     return 0;
