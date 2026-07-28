@@ -43502,6 +43502,74 @@ static void m11_apply_viewport_turn_pan(unsigned char* framebuffer,
     }
 }
 
+static void m11_apply_viewport_motion_pan(unsigned char *framebuffer,
+                                          int framebufferWidth,
+                                          int framebufferHeight,
+                                          int x, int y, int w, int h,
+                                          int offset_x, int offset_y)
+{
+    int max_x;
+    int max_y;
+    int pan_x;
+    int pan_y;
+    int row;
+
+    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 ||
+        x < 0 || y < 0 || w <= 0 || h <= 0 || x + w > framebufferWidth ||
+        y + h > framebufferHeight || (offset_x == 0 && offset_y == 0)) {
+        return;
+    }
+    max_x = w / 4;
+    max_y = h / 4;
+    pan_x = (int)(((int64_t)offset_x * (int64_t)max_x) / 256);
+    pan_y = (int)(((int64_t)offset_y * (int64_t)max_y) / 256);
+    if (offset_x != 0 && pan_x == 0) pan_x = offset_x > 0 ? 1 : -1;
+    if (offset_y != 0 && pan_y == 0) pan_y = offset_y > 0 ? 1 : -1;
+    if (pan_x > max_x) pan_x = max_x;
+    if (pan_x < -max_x) pan_x = -max_x;
+    if (pan_y > max_y) pan_y = max_y;
+    if (pan_y < -max_y) pan_y = -max_y;
+
+    /* Present-only translation after the source viewport has completed. The
+     * revealed band remains black rather than borrowing a synthetic dungeon
+     * cell; the next source frame fills it as the V1 tick completes. */
+    if (pan_y > 0) {
+        for (row = h - 1; row >= pan_y; --row) {
+            memmove(&framebuffer[(y + row) * framebufferWidth + x],
+                    &framebuffer[(y + row - pan_y) * framebufferWidth + x],
+                    (size_t)w);
+        }
+        for (row = 0; row < pan_y; ++row) {
+            memset(&framebuffer[(y + row) * framebufferWidth + x],
+                   M11_COLOR_BLACK, (size_t)w);
+        }
+    } else if (pan_y < 0) {
+        int shift = -pan_y;
+        for (row = 0; row < h - shift; ++row) {
+            memmove(&framebuffer[(y + row) * framebufferWidth + x],
+                    &framebuffer[(y + row + shift) * framebufferWidth + x],
+                    (size_t)w);
+        }
+        for (row = h - shift; row < h; ++row) {
+            memset(&framebuffer[(y + row) * framebufferWidth + x],
+                   M11_COLOR_BLACK, (size_t)w);
+        }
+    }
+    if (pan_x != 0) {
+        for (row = 0; row < h; ++row) {
+            unsigned char *pixels = &framebuffer[(y + row) * framebufferWidth + x];
+            if (pan_x > 0) {
+                memmove(pixels + pan_x, pixels, (size_t)(w - pan_x));
+                memset(pixels, M11_COLOR_BLACK, (size_t)pan_x);
+            } else {
+                int shift = -pan_x;
+                memmove(pixels, pixels + shift, (size_t)(w - shift));
+                memset(pixels + w - shift, M11_COLOR_BLACK, (size_t)shift);
+            }
+        }
+    }
+}
+
 static void m11_repaint_dm1_f0128_front_wall_inscription(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
@@ -43803,6 +43871,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     int camY = state->camera_offset_y;
     int camDir = state->camera_interpolated_facing;
     int turnPanX = dm1_v2_camera_turn_pan_offset_x(&state->p5_camera);
+    int csbMotionPanX = 0;
+    int csbMotionPanY = 0;
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
         csb_v2_runtime_is_bound()) {
@@ -43810,6 +43880,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
          * turn-pan here after the source viewport has rendered, exactly as
          * the DM1 V2 camera path does. This remains presentation-only. */
         turnPanX = csb_v2_smooth_turn_pan_offset_x();
+        csb_v2_runtime_get_presentation_offset(&csbMotionPanX,
+                                                &csbMotionPanY);
     }
     (void)camDir; /* facing interpolation used by creature sprite pass */
     static const M11_ViewRect viewport = {M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H};
@@ -44239,6 +44311,11 @@ skip_debug_legacy_texture_tiling:
                                 M11_VIEWPORT_X, M11_VIEWPORT_Y,
                                 M11_VIEWPORT_W, M11_VIEWPORT_H,
                                 turnPanX);
+    m11_apply_viewport_motion_pan(framebuffer, framebufferWidth,
+                                  framebufferHeight, M11_VIEWPORT_X,
+                                  M11_VIEWPORT_Y, M11_VIEWPORT_W,
+                                  M11_VIEWPORT_H, csbMotionPanX,
+                                  csbMotionPanY);
     {
         uint8_t presented_viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
         DM1_ViewportPresentReceiptPc34 present_receipt;

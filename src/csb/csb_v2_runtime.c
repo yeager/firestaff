@@ -233,6 +233,33 @@ int csb_v2_runtime_is_bound(void) {
     return s_last_bound_state && s_v1_profile != NULL;
 }
 
+void csb_v2_runtime_get_presentation_offset(int32_t *out_x,
+                                            int32_t *out_y)
+{
+    float visual_x;
+    float visual_y;
+    float dx;
+    float dy;
+
+    if (out_x) *out_x = 0;
+    if (out_y) *out_y = 0;
+    if (!s_vp_inited || !s_v1_profile || !s_last_bound_state ||
+        !csb_v2_smooth_is_moving()) {
+        return;
+    }
+
+    /* CSB V2 smooth coordinates are the visual position while the bound V1
+     * profile already holds the source-accepted destination.  The signed
+     * delta therefore lets M11 translate only its finished viewport pixels
+     * back toward the prior source cell during the one-tick presentation. */
+    visual_x = csb_v2_smooth_get_x();
+    visual_y = csb_v2_smooth_get_y();
+    dx = visual_x - (float)s_v1_profile->party_x;
+    dy = visual_y - (float)s_v1_profile->party_y;
+    if (out_x) *out_x = (int32_t)(dx * 256.0f);
+    if (out_y) *out_y = (int32_t)(dy * 256.0f);
+}
+
 void csb_v2_runtime_force_sync(void) {
     if (!s_v1_profile) return;
     s_last_party_x = s_v1_profile->party_x;

@@ -1,3 +1,10 @@
+- ✅ 2026-07-29 CSB V2 walk/stairs presentation consumption. CSB's V2
+  runtime now exports its visual-minus-logical party displacement and M11
+  applies it to the completed V2 viewport. This makes the existing one-tick
+  walk and stair interpolation visible while retaining source-owned V1
+  coordinates, collision, sensors, saves and tick cadence. Verified by
+  `csb_v2_smooth_runtime_binding` and the full 96/96 CSB lane.
+
 - ✅ 2026-07-29 CSBWin DSA `STKOP_Message` interpreter contract. The
   authenticated stack interpreter now preserves CSBWin's target/type/count/
   delay order, source `Override_P` consumption, and the first 0..29 DSA

@@ -133,6 +133,13 @@ void csb_v2_runtime_bind_to_v1(CSB_V1_RuntimeProfile *profile);
  * 0 otherwise. */
 int csb_v2_runtime_is_bound(void);
 
+/* Return the current visual-minus-logical party displacement in the shared
+ * 8.8 viewport subpixel unit.  This is a presentation-only bridge for M11:
+ * V1 continues to own the snapped party coordinates, collision and timers.
+ * A missing/inactive binding reports zero displacement. */
+void csb_v2_runtime_get_presentation_offset(int32_t *out_x,
+                                            int32_t *out_y);
+
 /* csb_v2_runtime_force_sync — re-anchor the binding's "from" state to
  * the profile's current party state without triggering any animation.
  * Useful after loading a saved game (party state jumped; we don't want

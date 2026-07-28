@@ -15,6 +15,15 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V2-RUNTIME-MOTION-CONSUMPTION:** Closed 2026-07-29. CSB V2 now
+  consumes its live walk and stairs interpolation in M11's final viewport
+  presentation, rather than calculating it only in the V2 runtime. The
+  bridge exposes visual-minus-logical party displacement in 8.8 subpixels;
+  M11 translates only the already composed V2 viewport and never changes V1
+  coordinates, collision, sensors, saves, or timing. The focused binding
+  regression proves both the one-cell source displacement and force-sync
+  reset; the full CSB lane passes.
+
 - **CSB-DSA-PARAMETER-MESSAGE-OWNER:** Closed 2026-07-29. Authenticated
   CSBWin `STKOP_Message` now preserves the source stack order
   `(target,type,count,delay)`, rejects unowned or oversized parameter bodies,

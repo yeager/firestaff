@@ -109,6 +109,8 @@ static void test_lifecycle_and_bound_flag(void) {
 static void test_walk_trigger_on_xy_delta(void) {
     printf("\n--- test_walk_trigger_on_xy_delta ---\n");
     CSB_V1_RuntimeProfile *p = fresh_bind(10, 10, 0, 0);
+    int32_t offset_x = 0;
+    int32_t offset_y = 0;
     check("walk: bound", csb_v2_runtime_is_bound());
     check("walk: not moving at start", !csb_v2_smooth_is_moving());
 
@@ -126,6 +128,9 @@ static void test_walk_trigger_on_xy_delta(void) {
      * here is the cached pre-render value. */
     checkf("walk: x stays at from (10.0)",
            csb_v2_smooth_get_x(), 10.0f, 0.01f);
+    csb_v2_runtime_get_presentation_offset(&offset_x, &offset_y);
+    check("walk: presentation offset retains prior source cell",
+          offset_x == 0 && offset_y == 256);
 }
 
 static void test_turn_trigger_on_dir_delta(void) {
@@ -205,6 +210,13 @@ static void test_force_sync_resets_anchor(void) {
     drive_tick(55);
     check("force_sync: no phantom walk on next tick",
           !csb_v2_smooth_is_moving());
+    {
+        int32_t offset_x = 99;
+        int32_t offset_y = 99;
+        csb_v2_runtime_get_presentation_offset(&offset_x, &offset_y);
+        check("force_sync: clears presentation displacement",
+              offset_x == 0 && offset_y == 0);
+    }
 
     /* But a fresh move should still trigger normally.  Use a
      * 1-ms render frame delta so the animation is still active when
