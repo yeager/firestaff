@@ -828,6 +828,10 @@ that its exact runtime path is not already source-locked and tested.
     SDL/CoreAudio playback is now enabled by default for decoded original
     media; complete authenticated CSB SWSH/entrance-music admission and live
     M11 playback without generated replacements.
+    2026-07-29: archive-backed PC3.4 packages now materialize every accepted
+    `SWSHSND.C` source filename beside `GRAPHICS.DAT`, so the existing strict
+    9,078-byte source loader can bind genuine swoosh media after hash-first
+    discovery. Entrance music remains a separate original-media decoder.
 26. **CSB-ENTRANCE-DOOR-CREDITS:** Complete C002-C005 closed/opening entrance,
     credits, prompts, input timing, palette, sound, and runtime handoff from
     real CSBgraphics/package data.

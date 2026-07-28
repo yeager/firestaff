@@ -41,6 +41,8 @@ static const char kCsbBonusDungeonPayload[] =
     "Firestaff synthetic CSB bonus dungeon startup fixture v1\n";
 static const char kCsbSwooshPayload[] =
     "Firestaff synthetic CSB shared FTL swoosh startup fixture v1\n";
+static const char kCsbSwshSoundPayload[] =
+    "Firestaff synthetic CSB PC34 SWSHSND startup fixture v1\n";
 static const char kCsbHintPayload[] =
     "Firestaff synthetic CSB utility HCSB hint fixture v1\n";
 static const char kCsbSavePayload[] =
@@ -328,18 +330,20 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char csbCacheDir[512];
     char cachedBonusDungeon[512];
     char cachedSwoosh[512];
+    char cachedSwshSound[512];
     char cachedHint[512];
     char cachedSave[512];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     const char* runtimeDir;
-    TestZipEntry zipEntries[5];
+    TestZipEntry zipEntries[6];
     M12_AssetStatus status;
 
     memset(csbCacheDir, 0, sizeof(csbCacheDir));
     memset(cachedBonusDungeon, 0, sizeof(cachedBonusDungeon));
     memset(cachedSwoosh, 0, sizeof(cachedSwoosh));
+    memset(cachedSwshSound, 0, sizeof(cachedSwshSound));
     memset(cachedHint, 0, sizeof(cachedHint));
     memset(cachedSave, 0, sizeof(cachedSave));
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
@@ -353,10 +357,12 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     zipEntries[1].payload = kCsbBonusDungeonPayload;
     zipEntries[2].name = "archive/SWOOSH";
     zipEntries[2].payload = kCsbSwooshPayload;
-    zipEntries[3].name = "archive/HCSB.HTC";
-    zipEntries[3].payload = kCsbHintPayload;
-    zipEntries[4].name = "archive/CSBGAME.DAT";
-    zipEntries[4].payload = kCsbSavePayload;
+    zipEntries[3].name = "archive/SWSHSND.DAT";
+    zipEntries[3].payload = kCsbSwshSoundPayload;
+    zipEntries[4].name = "archive/HCSB.HTC";
+    zipEntries[4].payload = kCsbHintPayload;
+    zipEntries[5].name = "archive/CSBGAME.DAT";
+    zipEntries[5].payload = kCsbSavePayload;
     check_int(write_stored_zip_entries(zipPath,
                                        zipEntries,
                                        sizeof(zipEntries) / sizeof(zipEntries[0])),
@@ -425,6 +431,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                                csbCacheDir, "DUNGEONB.DAT") &&
                   FSP_JoinPath(cachedSwoosh, sizeof(cachedSwoosh),
                                csbCacheDir, "SWOOSH") &&
+                  FSP_JoinPath(cachedSwshSound, sizeof(cachedSwshSound),
+                               csbCacheDir, "SWSHSND.DAT") &&
                   FSP_JoinPath(cachedHint, sizeof(cachedHint),
                                csbCacheDir, "HCSB.HTC") &&
                   FSP_JoinPath(cachedSave, sizeof(cachedSave),
@@ -434,6 +442,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
               "archive-backed CSB bonus dungeon should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedSwoosh, kCsbSwooshPayload),
               "archive-backed CSB SWSH/SWOOSH startup data should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedSwshSound, kCsbSwshSoundPayload),
+              "archive-backed CSB SWSHSND startup data should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedHint, kCsbHintPayload),
               "archive-backed CSB HCSB.HTC utility data should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedSave, kCsbSavePayload),

@@ -41993,3 +41993,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   checks `csb_v22_modern_assets_available()` together with its finished-art
   gate rather than the DM1/M11 global asset API, preventing one game's art
   installation from affecting another game's renderer.
+
+- ✅ 2026-07-29 CSB archive swoosh-media materialization. Archive-backed CSB
+  launches now copy all PC3.4 `SWSHSND.C`-accepted filenames, including
+  `SWSHSND.DAT`, into the ordinary runtime cache beside `GRAPHICS.DAT`. The
+  existing source loader still enforces the exact 9,078-byte raw sample
+  contract; no generated sound is introduced. The CSB ZIP/ISO cache test
+  verifies the `SWSHSND.DAT` copy path.
