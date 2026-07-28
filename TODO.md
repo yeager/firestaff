@@ -539,7 +539,7 @@ that its exact runtime path is not already source-locked and tested.
     using C10 transparency. Source-bound object drawers now also suppress
     the older icon/marker fallback when their real surface is unavailable.
     2026-07-25: F0115 first-object native graphic mapper with G0209
-    weapon[46]/armour[58]/junk[52]/potion[21] tables, C10 blit with
+    weapon[46]/armour[58]/junk[53]/potion[21] tables, C10 blit with
     conditional horizontal flip, and m11_game_view.c stubs replaced.
     44 CSB viewport tests (walls D0-D3, doors, ornaments, backgrounds,
     center fields, footprints, projectile routing) wired into CMake and

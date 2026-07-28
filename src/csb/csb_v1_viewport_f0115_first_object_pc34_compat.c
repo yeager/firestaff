@@ -23,12 +23,14 @@ static const int armour_graphics[58] = {
     551, 519, 521, 555, 509, 551, 518, 521, 580, 583
 };
 
-static const int junk_graphics[52] = {
+/* ReDMCSB DUNGEON.C G0237 row 179 maps the final JUNK subtype (Bones)
+ * through ObjectAspectIndex 41; DUNVIEW.C G0209 row 41 selects M612 + 41. */
+static const int junk_graphics[53] = {
     533, 505, 514, 514, 539, 540, 503, 582, 503, 517, 517, 517,
     517, 517, 517, 517, 517, 561, 561, 561, 561, 561, 561, 561,
     561, 502, 559, 560, 526, 527, 524, 525, 570, 569, 504, 565,
     514, 514, 557, 558, 558, 578, 562, 563, 571, 572, 573, 574,
-    576, 577, 573, 540
+    576, 577, 573, 540, 539
 };
 
 static const int potion_graphics[21] = {
@@ -59,7 +61,7 @@ int csb_v1_viewport_f0115_object_native_graphic_pc34(
             if (subtype >= 58) return -1;
             return armour_graphics[subtype];
         case THING_TYPE_JUNK:
-            if (subtype >= 52) return -1;
+            if (subtype >= 53) return -1;
             return junk_graphics[subtype];
         default:
             return -1;

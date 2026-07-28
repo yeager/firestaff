@@ -26096,6 +26096,12 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   remain blocked. Source: ReDMCSB `DUNGEON.C F0141:1136-1165`,
   `G0237:79-258`, and `DUNVIEW.C G0209:1423-1515/F0115:4923-5110`.
 
+- 2026-07-28 CSB F0115 final JUNK mapping: corrected the omitted subtype 52
+  (the second Bones object). ReDMCSB `DUNGEON.C G0237` row 179 selects object
+  aspect 41 and `DUNVIEW.C G0209` row 41, hence native `GRAPHICS.DAT` 539.
+  The renderer now admits all 53 JUNK subtypes and the real-asset regression
+  verifies the full 498..583 object band.
+
 - 2026-07-11 Nexus canonical full-start package consumption: M12 now treats
   hash-verified Nexus availability strictly as a pre-launch gate, allowing
   M11 to construct the runtime receipt without promoting title/menu/capture
