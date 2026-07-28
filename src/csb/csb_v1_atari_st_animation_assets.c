@@ -329,7 +329,11 @@ int csb_v1_atari_st_animation_trace_script(
                 if (!csb_v1_atari_st_animation_slot_has_type(slots, p[0], 0u) ||
                     !csb_v1_atari_st_animation_slot_has_type(slots, p[1], 0u))
                     valid = 0;
-                else if (out_receipt) out_receipt->blit_count++;
+                else if (out_receipt) {
+                    /* ANIM.C F0466 waits for VBlank before every blit. */
+                    out_receipt->blit_count++;
+                    out_receipt->waited_vbl_count++;
+                }
                 break;
             case 7u: /* Set palette at the next VBlank */
             case 8u: /* Atari ANIM.C waits delay + 1 VBlanks, then sets it */
@@ -537,6 +541,8 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
                 !csb_v1_atari_st_animation_blit_transparent(&slots[p[0]],
                     &slots[p[1]], slots[p[3]].display_x,
                     slots[p[3]].display_y)) goto done;
+            /* ReDMCSB ANIM.C F0466 synchronizes each bitmap copy to VBlank. */
+            vbl_count++;
             break;
         case 7u:
             if (!csb_v1_atari_st_animation_palette_reference_is_loaded(slots,

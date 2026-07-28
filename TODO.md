@@ -21705,8 +21705,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   changed image between the two `Set-screen` pages. ReDMCSB `ANIM.C` and
   `PALETTE.C` now also drive Atari `FadeToPalette` timing: each source delay
   waits `delay + 1` VBlanks before the target P4B1 palette is committed.
-  Remaining Atari work is real app capture; do not substitute the PC34
-  title/Entrance renderer for this route.
+  The direct Atari hard-disk launch now bypasses the incompatible PC34
+  TITLE.C session and holds the original animation active in M11. Remaining
+  Atari work is a source-owned post-animation game handoff and real app
+  capture; do not substitute the PC34 title/Entrance renderer for this route.
 
 - [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
   handoff. Enhanced modes now initialize and bind to the live V1 profile,

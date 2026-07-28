@@ -41821,3 +41821,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `F0436_STARTEND_FadeToPalette` before committing the target P4B1 palette.
   The trace and framebuffer replay now follow that order instead of switching
   palettes immediately.
+- ✅ 2026-07-28 CSB Atari ST direct startup. The verified Atari ST 2.x
+  hard-disk package no longer attempts to open the incompatible PC34 TITLE.C
+  session. M11 now reports and presents the real `ANIMATE.SCR`/`ANIMATE.DAT`
+  startup at 50 Hz, and the boot probe confirms the active `animate-scr`
+  route from the original `GRAPHICS.DAT` hash. `ANIM.C`'s VBlank before each
+  bitmap blit is also reflected in trace and framebuffer timing.

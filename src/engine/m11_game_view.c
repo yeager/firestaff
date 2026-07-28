@@ -2230,10 +2230,22 @@ static int m11_csb_startup_package_identity_current(
     const M11_GameViewState *state)
 {
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    const CSB_V1_BootProfile *profile;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        !state->csbStartupRuntimeAssetSession ||
         state->csbStartupExpectedPackageIdentity == 0u) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    /* Atari ST owns its ANIMATE.SCR/DAT startup page directly.  It has no
+     * PC34 TITLE.C runtime session to authenticate, so retain the immutable
+     * launch identity while that original animation is being presented. */
+    if (profile && (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                    profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+        !state->csbStartupRuntimeAssetSession) {
+        return 1;
+    }
+    if (!state->csbStartupRuntimeAssetSession) {
         return 0;
     }
     session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
@@ -5877,6 +5889,26 @@ static int m11_csb_apply_boot_runtime_receipt(
         /* A new package without authenticated audio must not inherit an
          * earlier package's intro buffer. */
         (void)M11_GameView_SetCsbStartupSwooshSource(state, NULL, 0, 0u);
+    }
+    if (receipt->profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+        receipt->profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
+        /* The Atari package has an original ANIMATE.SCR/DAT startup program,
+         * not PC34 TITLE.C assets.  Do not attempt to open the PC34 surface
+         * session: it rejects the verified ST GRAPHICS.DAT before M11 gets a
+         * chance to show the real animation.  Runtime handoff remains
+         * deliberately separate until its Atari owner is implemented. */
+        state->csbStartupExpectedPackageIdentity =
+            package_identity ? package_identity : 1u;
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        m11_csb_startup_init_state_receipt_to_m11(
+            state, &receipt->receipts.init_state);
+        state->csbState.startup_title_active = 1;
+        state->csbState.startup_entrance_active = 0;
+        state->csbAtariStAnimationVbl = 0u;
+        state->csbAtariStAnimationVblRemainder = 0u;
+        state->csbAtariStAnimationClockStarted = 0;
+        state->csbAtariStAnimationFrameBound = 0;
+        return 1;
     }
     state->csbStartupRuntimeAssetSession = calloc(
         1, sizeof(CSB_V1_StartupRuntimeAssetSession_PC34));
@@ -15552,6 +15584,8 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         CSB_V1_BootStartupHostViewReceipt_PC34 view_receipt;
         CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 visual_sequence;
+        const CSB_V1_BootProfile *csb_profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
         out->levelLoaded = state->csbState.level_loaded;
         out->mapIndex = state->csbState.current_level;
         out->partyX = state->csbState.party_x;
@@ -15568,6 +15602,33 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
         out->csbPresentedFrameWidth = state->csbState.presented_frame_width;
         out->csbPresentedFrameHeight = state->csbState.presented_frame_height;
         out->csbPresentedFrameHash = state->csbState.presented_frame_hash;
+        /* Atari ST startup is ANIMATE.SCR/DAT, not the PC34 host-view
+         * protocol below.  Report its live VBlank playback directly rather
+         * than letting a deliberately absent TITLE.C session masquerade as
+         * a completed runtime handoff. */
+        if (csb_profile &&
+            (csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+             csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+            !state->csbStartupRuntimeAssetSession &&
+            state->csbState.startup_title_active) {
+            snprintf(out->startupPhase, sizeof(out->startupPhase), "%s",
+                     "csb-atari-st-animation");
+            snprintf(out->startupAnimation, sizeof(out->startupAnimation),
+                     "%s", "animate-scr");
+            out->startupActive = 1;
+            out->startupFrame = (int)state->csbAtariStAnimationVbl;
+            out->startupAnimationActive = 1;
+            out->startupTitleFrame = (int)state->csbAtariStAnimationVbl;
+            out->startupTitleReady = 1;
+            out->levelLoaded = 0;
+            out->mapIndex = -1;
+            out->partyX = -1;
+            out->partyY = -1;
+            out->partyDir = -1;
+            out->championCount = -1;
+            out->runtimeTick = 0;
+            return 1;
+        }
         if (m11_csb_boot_runtime_full_visual_sequence_receipt(
                 state,
                 &visual_sequence)) {
@@ -18797,8 +18858,21 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         return M11_GAME_INPUT_REDRAW;
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        const CSB_V1_BootProfile *csb_profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
         if (!state->csbBootProfile) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        if ((csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+             csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+            state->csbState.startup_title_active) {
+            uint32_t units = (uint32_t)state->csbAtariStAnimationVblRemainder +
+                csb_profile->tick_ms * 50u;
+            state->csbAtariStAnimationClockStarted = 1;
+            state->csbAtariStAnimationVbl += units / 1000u;
+            state->csbAtariStAnimationVblRemainder =
+                (uint16_t)(units % 1000u);
+            return M11_GAME_INPUT_REDRAW;
         }
         if (!m11_csb_original_save_runtime_receipt_current(state)) {
             return M11_GAME_INPUT_IGNORED;
