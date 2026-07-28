@@ -205,6 +205,12 @@ an integration build pass.
   emulated frames and records the hold in its receipt. This improves capture
   reliability without asserting an unproven original menu sequence.
 
+- **NEXUS-V2-DIAGNOSTIC-OVERLAY-REGRESSION:** Closed 2026-07-28. The viewport-
+  blocked diagnostic overlay now respects `startup_suppress_fallback_visuals`,
+  fixing the `m11_nexus_startup_runtime_handoff` test regression introduced by
+  the V2 HUD wiring. Diagnostic text only renders when fallback visuals are
+  permitted.
+
 - **NEXUS-BLOCKED-PRS3-LAUNCH-RETURN:** Closed 2026-07-27. A Nexus champion
   start whose real MENU.BPK route is blocked pending authentic PRS3/Saturn
   evidence now returns to the launcher with the source-backed blocker instead
@@ -2445,7 +2451,7 @@ will feed into cycle 15.
   alongside the HUD. Base V2 modules (lighting, particles, atmosphere,
   smooth movement) are linked into the main library. All 21 Nexus V2
   tests pass.
-  2026-07-28: the gameplay render path now shows a diagnostic overlay
+  2026-07-28: the gameplay render path shows a diagnostic overlay
   ("DGN VIEWPORT MATERIAL ROUTE BLOCKED") with level, position, direction,
   MNS route validity, and selector binding status when the viewport cannot
   render. Previously the blocked case showed a black screen with no feedback.
