@@ -737,6 +737,8 @@ that its exact runtime path is not already source-locked and tested.
    The V2.2 selector is now hidden unless the CSB-specific completed
    manifest/cache installation gate succeeds; merely selecting an unrelated
    `.fsart` archive no longer exposes a false modern mode.
+   The finished-art gate also requires all eight CSB material slots; a short
+   manifest with only real declared entries remains partial.
    2026-07-28: the canonical PC 3.4 real-data gate now proves the full
    source-owned startup chain: Swoosh, C001 PRESENTS/CHAOS/STRIKES, all 31
    C004/C002/C003 opening pages, C017/C040 HUD handoff and the DUNGEON.DAT

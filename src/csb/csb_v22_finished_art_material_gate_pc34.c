@@ -577,7 +577,11 @@ CSB_V22_FamgGate csb_v22_famg_gate(void) {
         return g_last_gate;
     }
 
-    if (real == total) {
+    /* Missing slots are not optional. A short manifest with only one real
+     * entry must remain partial rather than being promoted to a finished
+     * pack simply because all of its declared entries happen to be real. */
+    if (total == (int)CSB_V22_FAMG_MATERIAL_COUNT &&
+        real == (int)CSB_V22_FAMG_MATERIAL_COUNT) {
         g_last_gate = CSB_V22_FAMG_GATE_FINISHED_REAL;
         g_installed = 1;
     } else if (real > 0) {

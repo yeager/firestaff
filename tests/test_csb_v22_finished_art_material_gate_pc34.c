@@ -338,6 +338,27 @@ static void test_partial_manifest(void) {
           "partial -> installed=1");
 }
 
+static void test_incomplete_real_manifest_stays_partial(void) {
+    const char* dataDir = "/tmp/scratch/csb-v22-famg-test/data/csb";
+    char manifestPath[FSP_PATH_MAX];
+    char modernDir[FSP_PATH_MAX];
+    clean_scratch();
+    setup_manifest_dirs(dataDir,
+                        manifestPath, sizeof(manifestPath),
+                        modernDir, sizeof(modernDir));
+    csb_v22_famg_set_manifest_path(dataDir);
+    create_real_file(modernDir, &k_slots[0]);
+    CHECK(write_manifest(manifestPath, 1, 1, 0, 0),
+          "wrote one-slot real manifest");
+    CHECK(csb_v22_famg_classify_slot(CSB_V22_FAMG_WALL_DUNGEON) ==
+          CSB_V22_FAMG_CLASS_REAL,
+          "one-slot real manifest has a real declared asset");
+    CHECK(csb_v22_famg_gate() == CSB_V22_FAMG_GATE_PARTIAL,
+          "one-slot real manifest cannot satisfy all CSB material slots");
+    CHECK(csb_v22_famg_is_finished_real() == 0,
+          "one-slot real manifest is not finished CSB art");
+}
+
 static void test_missing_file_partial(void) {
     const char* dataDir = "/tmp/scratch/csb-v22-famg-test/data/csb";
     char manifestPath[FSP_PATH_MAX];
@@ -670,6 +691,7 @@ int main(void) {
     test_empty_manifest();
     test_placeholder_manifest();
     test_partial_manifest();
+    test_incomplete_real_manifest_stays_partial();
     test_missing_file_partial();
     test_incomplete_metadata();
     test_finished_real_manifest();

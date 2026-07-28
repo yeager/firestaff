@@ -41977,3 +41977,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   gate succeeds, preventing a DM1 or arbitrary archive from selecting a
   false CSB modern presentation. The runtime graphics-popup regression covers
   the cross-game archive case.
+
+- ✅ 2026-07-29 CSB V2.2 complete-material gate. A short manifest containing
+  only real declared assets no longer satisfies `FINISHED_REAL`; all eight
+  required CSB viewport, UI, entrance, and chaos-rune slots must be real and
+  present. The finished-art gate regression covers the one-real-slot case.
