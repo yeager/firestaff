@@ -1486,9 +1486,11 @@ typedef struct {
      * fractional conversion and last source framebuffer here, not in a
      * PC34 title wrapper or generic host animation. */
     uint32_t csbAtariStAnimationVbl;
+    uint32_t csbAtariStAnimationEndVbl;
     uint16_t csbAtariStAnimationVblRemainder;
     int csbAtariStAnimationClockStarted;
     int csbAtariStAnimationFrameBound;
+    int csbAtariStRuntimeHandoffComplete;
     uint32_t csbAtariStAnimationFrameVbl;
     uint8_t csbAtariStAnimationPixels[320 * 200];
     uint8_t csbAtariStAnimationPalette[16][3];

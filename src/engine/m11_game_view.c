@@ -2468,6 +2468,60 @@ static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
     }
 }
 
+static int m11_csb_prepare_atari_st_animation_handoff(
+    M11_GameViewState *state)
+{
+    const CSB_V1_BootProfile *profile;
+    CSB_V1_AtariStAnimationTraceReceipt trace;
+    char user_data[FSP_PATH_MAX];
+    char cache_root[FSP_PATH_MAX];
+
+    if (!state || !state->csbBootProfile) return 0;
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if ((profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !profile->asset_root[0] || !FSP_GetUserDataDir(user_data,
+            sizeof(user_data)) || !FSP_JoinPath(cache_root,
+            sizeof(cache_root), user_data, "cache")) return 0;
+    memset(&trace, 0, sizeof(trace));
+    if (!csb_v1_atari_st_animation_trace_from_root(profile->asset_root,
+            cache_root, &trace) || !trace.valid ||
+        trace.waited_vbl_count == 0u) return 0;
+    state->csbAtariStAnimationEndVbl = trace.waited_vbl_count;
+    state->csbAtariStRuntimeHandoffComplete = 0;
+    return 1;
+}
+
+/* ANIM.C invokes FTLCODE after its own script ends. Firestaff already owns a
+ * verified CSB runtime profile from that exact package, so cross the same
+ * program boundary only after the final source VBlank; do not route ST media
+ * through the incompatible PC TITLE.C/ENTRANCE.C session. */
+static int m11_csb_complete_atari_st_runtime_handoff(M11_GameViewState *state)
+{
+    CSB_V1_BootProfile *profile;
+
+    if (!state || !state->csbBootProfile ||
+        state->csbAtariStRuntimeHandoffComplete ||
+        state->csbAtariStAnimationEndVbl == 0u ||
+        state->csbAtariStAnimationVbl < state->csbAtariStAnimationEndVbl) {
+        return 0;
+    }
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    if ((profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !profile->runtime.dungeon_handle) {
+        return 0;
+    }
+    profile->runtime.state = CSB_STATE_GAME;
+    state->csbState.startup_title_active = 0;
+    state->csbState.startup_entrance_active = 0;
+    state->csbState.startup_entrance_dismissed = 1;
+    state->csbAtariStRuntimeHandoffComplete = 1;
+    m11_sync_csb_state_from_boot_profile(state, profile);
+    m11_set_status(state, "CSB", "ATARI RUNTIME READY");
+    return 1;
+}
+
 static void m11_theron_boot_runtime_startup_snapshot(
     const M11_GameViewState *state,
     Theron_V1_BootRuntimeStartupSnapshot *out_snapshot);
@@ -5908,6 +5962,11 @@ static int m11_csb_apply_boot_runtime_receipt(
         state->csbAtariStAnimationVblRemainder = 0u;
         state->csbAtariStAnimationClockStarted = 0;
         state->csbAtariStAnimationFrameBound = 0;
+        state->csbAtariStAnimationEndVbl = 0u;
+        state->csbAtariStRuntimeHandoffComplete = 0;
+        if (!m11_csb_prepare_atari_st_animation_handoff(state)) {
+            return 0;
+        }
         return 1;
     }
     state->csbStartupRuntimeAssetSession = calloc(
@@ -5977,6 +6036,7 @@ static void m11_csb_startup_tick_receipt_to_m11(
             state->csbAtariStAnimationVbl += units / 1000u;
             state->csbAtariStAnimationVblRemainder =
                 (uint16_t)(units % 1000u);
+            (void)m11_csb_complete_atari_st_runtime_handoff(state);
         }
     }
 }
@@ -18872,6 +18932,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             state->csbAtariStAnimationVbl += units / 1000u;
             state->csbAtariStAnimationVblRemainder =
                 (uint16_t)(units % 1000u);
+            (void)m11_csb_complete_atari_st_runtime_handoff(state);
             return M11_GAME_INPUT_REDRAW;
         }
         if (!m11_csb_original_save_runtime_receipt_current(state)) {

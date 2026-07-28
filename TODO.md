@@ -21709,8 +21709,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   waits `delay + 1` VBlanks before the target P4B1 palette is committed.
   The direct Atari hard-disk launch now bypasses the incompatible PC34
   TITLE.C session and holds the original animation active in M11. Remaining
-  Atari work is a source-owned post-animation game handoff and real app
-  capture; do not substitute the PC34 title/Entrance renderer for this route.
+  Atari completion now uses ANIM.C's final VBlank as the FTLCODE program
+  boundary and enters the already hash-verified CSB runtime from the same
+  package; do not substitute the PC34 title/Entrance renderer for this route.
+  Remaining Atari work is real app capture.
   A direct selected `.7z`/`.zip`/`.iso` is now an authoritative hash-search
   root, so a launch may not fall back to a sibling PC installation merely
   because the selected release is archived.

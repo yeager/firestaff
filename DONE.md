@@ -41840,3 +41840,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   implements opcodes 19-28 rather than treating them as synthetic loop state.
   The staged original animation and all CSB V2.x checks pass; an Atari boot
   probe reaches the active `animate-scr` route at source VBlank 495.
+- ✅ 2026-07-28 CSB Atari ST FTLCODE handoff. M11 now records the final
+  VBlank from the verified `ANIMATE.SCR` trace and crosses to the existing
+  hash-verified CSB runtime only at that source boundary, matching `ANIM.C`'s
+  `Pexec("A:\\FTLCODE")` ownership without entering the incompatible PC34
+  TITLE.C/ENTRANCE.C route. A real original-package 1,000-frame boot probe
+  reaches runtime with `DUNGEON.DAT` loaded at map 0, `(9,0)`, direction 2.

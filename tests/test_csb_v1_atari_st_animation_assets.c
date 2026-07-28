@@ -166,6 +166,10 @@ int main(void)
                   root, cache_root, trace.presented_vbls[0], indexed,
                   indexed_palette, &trace) && trace.present_count == 2u,
               "launcher route replays the Atari framebuffer through a source VBlank");
+        CHECK(csb_v1_atari_st_animation_trace_from_root(root, cache_root,
+                  &trace) && trace.valid && trace.waited_vbl_count >
+                  trace.presented_vbls[1],
+              "launcher route exposes ANIM.C's final VBlank for FTLCODE handoff");
         free(rgba);
     }
     return failures == 0 ? 0 : 1;

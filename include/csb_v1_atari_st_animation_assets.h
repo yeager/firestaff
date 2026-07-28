@@ -123,6 +123,13 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_from_root_indexed(
     uint8_t out_palette[16][3],
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
 
+/* Read the original script's complete timing/ownership trace from one data
+ * root.  The final waited VBlank is the source-owned handoff point where
+ * ANIM.C launches FTLCODE; no PC34 title sequence is implied. */
+int csb_v1_atari_st_animation_trace_from_root(
+    const char *search_root, const char *cache_root,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
 /* Render a full-screen original IMG1 item with an original P4B1 palette into
  * a 320x200 RGBA frame. image_item must be a documented full-screen image
  * and palette_item must be a documented 32-byte palette item. */
