@@ -41552,3 +41552,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `C28_ENTRANCE_CSB/G8174` VGA row specified by ReDMCSB `ENTRANCE.C` and
   `VIDEODRV.C`. This removes green edge artifacts from the real C004/C002/C003
   page. The real-data startup, pointer, and terminal-handoff tests pass.
+
+## 2026-07-28 CSB native quicksave package binding
+
+- The M11 CSB quicksave/resume regression now recreates the same
+  hash-verified package identity before it asks the standalone runtime loader
+  to validate a native v12 save. This preserves the deliberate package fence
+  and proves party pose, clock and thrown-projectile state round-trip.

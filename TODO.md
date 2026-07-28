@@ -21623,3 +21623,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   GROUP Thing and unique SquareFirstThing chain at the saved current-map
   position, with cells/directions/aspects and C03/C04 timeline identity held
   across F0435 stage/adoption. Generated saves are not positive evidence.
+
+## CSB completed save-contract verification
+
+- [x] 2026-07-28 Align the M11 quicksave/resume regression with native v12
+  CSB package ownership. A standalone loader receives the original
+  hash-verified package identity before validating the quicksave, so the test
+  proves the package fence and the party/tick/projectile round-trip without
+  weakening the production save boundary.

@@ -2267,6 +2267,17 @@ int main(void) {
                 "M11 CSB quicksave writes a CSB runtime save");
     memset(&quick_loaded, 0, sizeof(quick_loaded));
     csb_v1_runtime_init(&quick_loaded, NULL);
+    if (profile) {
+        /* Native v12 saves are bound to the hash-verified CSB package.
+         * Recreate the same boot-owned package identity before asking the
+         * standalone runtime loader to validate this quicksave. */
+        memcpy(quick_loaded.dungeon_package_md5,
+               profile->runtime.dungeon_package_md5,
+               sizeof(quick_loaded.dungeon_package_md5));
+        memcpy(quick_loaded.dungeon_save_namespace,
+               profile->runtime.dungeon_save_namespace,
+               sizeof(quick_loaded.dungeon_save_namespace));
+    }
     expect_true(csb_v1_runtime_load_game_from_path(&quick_loaded,
                                                    quick_save_path) ==
                     CSB_V1_LOAD_OK,
