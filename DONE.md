@@ -1,3 +1,9 @@
+- ✅ 2026-07-28 CSB Prison-to-dungeon F0128 black-frame fix. The live CSB
+  viewport now uses the original CSB IMG3/LZW decoder for GRAPHICS.DAT floor
+  and ceiling material and renders it at the source `(48,33)` aperture.
+  The M11 launcher handoff regression covers the first frame plus four live
+  runtime ticks; a real macOS Prison click now presents source pixels.
+
 - ✅ 2026-07-28 Nexus V2 HUD phase gate enablement. Set NEXUS_V2_PhaseGateConfig
   with v2PresentationEnabled and v2ConfigPersistenceEnabled in the DGN host plan
   so nexus_v2_hud_runtime_render() no longer returns early due to missing gate

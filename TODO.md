@@ -658,6 +658,11 @@ that its exact runtime path is not already source-locked and tested.
    palette now have real-data M11 routes and a macOS smoke. Finish C017/C040
    HUD/viewport consumption and original audio media admission; remove
    remaining production wrappers rather than adding substitutes.
+   2026-07-28: fixed the live Prison-to-F0128 black frame. The CSB viewport
+   now decodes original GRAPHICS.DAT floor/ceiling entries through the CSB
+   IMG3/LZW path and draws them at the source aperture `(48,33)`. The real
+   macOS click path and a multi-tick M11 regression are non-black. Full
+   wall/HUD/palette consumption remains open.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

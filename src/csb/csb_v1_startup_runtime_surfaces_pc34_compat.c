@@ -191,7 +191,7 @@ static int csb_v1_startup_package_geometry_matches_pc34(
             CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34);
 }
 
-static int csb_v1_startup_surface_load_graphic_pc34(
+int csb_v1_boot_decode_graphics_dat_asset_pc34(
     const char *path, unsigned int graphic_index,
     unsigned char **out_pixels, int *out_width, int *out_height,
     CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_decode_receipt)
@@ -398,7 +398,7 @@ static int csb_v1_startup_session_load_surface_pc34(
             profile, binding, surface);
     }
     if (binding->source != CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
-        !csb_v1_startup_surface_load_graphic_pc34(
+        !csb_v1_boot_decode_graphics_dat_asset_pc34(
             binding->path, binding->graphic_index, &pixels, &width, &height,
             &surface->decode_receipt)) {
         return 0;

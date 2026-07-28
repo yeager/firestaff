@@ -1426,6 +1426,15 @@ typedef struct {
      * not replay title/entrance media. */
     void *csbStartupRuntimeSession; /* CSB_V1_StartupRuntimeAssetSession_PC34* */
     void *csbStartupRuntimeAssetSession; /* legacy M11 spelling */
+    /* CSB's GRAPHICS.DAT IMG3 floor/ceiling records use a different decoder
+     * from the generic DM1 asset cache. These two decoded source rasters are
+     * owned by the live M11 session and released on shutdown. */
+    unsigned char *csbViewportFloorPixels;
+    unsigned char *csbViewportCeilingPixels;
+    int csbViewportFloorWidth;
+    int csbViewportFloorHeight;
+    int csbViewportCeilingWidth;
+    int csbViewportCeilingHeight;
     uint32_t csbStartupExpectedPackageIdentity;
     int csbStartupF0128EntranceBound;
     uint32_t csbStartupF0128EntranceSourceTick;

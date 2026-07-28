@@ -1550,7 +1550,11 @@ int csb_v1_boot_render_viewport_frame_pc34(
     (void)csb_v1_boot_sync_post_teleport_projectile_runtime_pc34(profile);
 
     csb_v1_viewport_init(&cfg);
-    cfg.viewport_pixels = framebuffer;
+    /* DUNVIEW.C F0128 owns the 224x136 aperture at (48,33) in the
+     * 320x200 C017/C040 page. The viewport core addresses its supplied
+     * pixel pointer relative to that aperture, so passing the full page
+     * incorrectly overwrote the top-left of the HUD page. */
+    cfg.viewport_pixels = framebuffer + (size_t)33 * (size_t)framebuffer_width + 48u;
     cfg.viewport_stride = framebuffer_width;
     if (!csb_v1_viewport_bind_live_dungeon_grid(
             &cfg, profile->runtime.dungeon_handle,

@@ -1794,13 +1794,18 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
                                              int *out_height)
 {
     enum {
-        /* ReDMCSB DEFS.H M650/M651: set-zero C078/C079. */
+        /* ReDMCSB DEFS.H M650/M651: PC3.4 set-zero C078/C079. */
         M11_CSB_PC34_GRAPHIC_FLOOR_SET0 = 78,
         M11_CSB_PC34_GRAPHIC_CEILING_SET0 = 79
     };
-    const M11_GameViewState *state = (const M11_GameViewState *)user_data;
-    const M11_AssetSlot *slot;
+    M11_GameViewState *state = (M11_GameViewState *)user_data;
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+    unsigned char **cached_pixels;
+    int *cached_width;
+    int *cached_height;
     unsigned int source_graphic;
+    int expected_width;
+    int expected_height;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->assetsAvailable || !out_pixels || !out_width ||
@@ -1809,19 +1814,45 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
     }
     if (graphic_index == -1) {
         source_graphic = M11_CSB_PC34_GRAPHIC_FLOOR_SET0;
+        expected_width = 224;
+        expected_height = 97;
+        cached_pixels = &state->csbViewportFloorPixels;
+        cached_width = &state->csbViewportFloorWidth;
+        cached_height = &state->csbViewportFloorHeight;
     } else if (graphic_index == -2) {
         source_graphic = M11_CSB_PC34_GRAPHIC_CEILING_SET0;
+        expected_width = 224;
+        expected_height = 39;
+        cached_pixels = &state->csbViewportCeilingPixels;
+        cached_width = &state->csbViewportCeilingWidth;
+        cached_height = &state->csbViewportCeilingHeight;
     } else {
         return 0;
     }
-    slot = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader,
-                                source_graphic);
-    if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
+    if (!*cached_pixels) {
+        memset(&receipt, 0, sizeof(receipt));
+        if (!state->csbBootProfile ||
+            !csb_v1_boot_decode_graphics_dat_asset_pc34(
+                ((const CSB_V1_BootProfile *)state->csbBootProfile)
+                    ->graphics_path,
+                source_graphic, cached_pixels, cached_width, cached_height,
+                &receipt) || !receipt.valid ||
+            *cached_width != expected_width ||
+            *cached_height != expected_height) {
+            free(*cached_pixels);
+            *cached_pixels = NULL;
+            *cached_width = 0;
+            *cached_height = 0;
+            return 0;
+        }
+    }
+    if (!*cached_pixels || *cached_width != expected_width ||
+        *cached_height != expected_height) {
         return 0;
     }
-    *out_pixels = slot->pixels;
-    *out_width = (int)slot->width;
-    *out_height = (int)slot->height;
+    *out_pixels = *cached_pixels;
+    *out_width = *cached_width;
+    *out_height = *cached_height;
     return 1;
 }
 
@@ -13666,6 +13697,10 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         free(state->csbStartupRuntimeAssetSession);
         state->csbStartupRuntimeAssetSession = NULL;
     }
+    free(state->csbViewportFloorPixels);
+    free(state->csbViewportCeilingPixels);
+    state->csbViewportFloorPixels = NULL;
+    state->csbViewportCeilingPixels = NULL;
     if (state->csbBootProfile) {
         csb_v1_boot_cleanup((CSB_V1_BootProfile*)state->csbBootProfile);
         free(state->csbBootProfile);

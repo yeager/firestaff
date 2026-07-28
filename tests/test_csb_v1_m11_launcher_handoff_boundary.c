@@ -917,6 +917,28 @@ static void run_real_launcher_handoff_if_available(void) {
                     view.csbState.runtime_viewport_pixel_hash != 0u &&
                     view.csbState.runtime_viewport_draw_counts_hash != 0u,
                 "M11 CSB first F0128 dungeon frame consumes the terminal PC3.4 session receipt");
+    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
+                "M11 CSB first F0128 dungeon frame has visible source pixels");
+    {
+        int runtime_tick;
+
+        /* The SDL loop continues to advance the CSB runtime after F0806
+         * releases the Prison doors.  Keep this integration route alive for
+         * several source ticks: a first-frame-only receipt is not enough for
+         * the real app, where the next present must still have an F0128 page. */
+        for (runtime_tick = 0; runtime_tick < 4; ++runtime_tick) {
+            expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 CSB runtime tick redraws after Prison handoff");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true(view.csbState.runtime_viewport_source_session_ready == 1,
+                        "M11 CSB keeps a source-backed viewport after Prison handoff ticks");
+            expect_true(count_nonzero_pixels(framebuffer,
+                                             sizeof(framebuffer)) > 0,
+                        "M11 CSB keeps visible pixels after Prison handoff ticks");
+        }
+    }
     {
         const uint32_t saved_expected = view.csbStartupExpectedPackageIdentity;
 
@@ -1026,6 +1048,11 @@ static void run_real_launcher_handoff_if_available(void) {
     /* F0806 releases C004/C002/C003 before F0128 begins the first live
      * dungeon pass. A caller-provided stale page must not survive above the
      * viewport after this source-owned transition. */
+    /* The preceding DSA rejection coverage intentionally cleared the page.
+     * Rebuild one current source frame before taking the baseline below; a
+     * black rejection page is not the live F0128 presentation contract. */
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
     memcpy(first_live_dungeon_frame, framebuffer, sizeof(first_live_dungeon_frame));
     memset(framebuffer, 0xff, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
