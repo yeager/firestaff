@@ -1,3 +1,9 @@
+- ✅ 2026-07-28 Nexus V2 HUD phase gate enablement. Set NEXUS_V2_PhaseGateConfig
+  with v2PresentationEnabled and v2ConfigPersistenceEnabled in the DGN host plan
+  so nexus_v2_hud_runtime_render() no longer returns early due to missing gate
+  config. Champion HP/stamina/mana stats are now wired from the Nexus engine's
+  champion pool into the V2 HUD overlay. All 203 Nexus tests pass.
+
 - ✅ 2026-07-28 Nexus M11 mesh presentation integration. Relaxed the DGN host
   plan gate to accept READY_RENDERED_MESH frames without material_surface_count.
   Added palette sync: copies the Nexus viewport palette into the M11 indexed
