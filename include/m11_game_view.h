@@ -741,6 +741,10 @@ typedef struct {
     int graphicsPopupActive;
     int graphicsPopupPage;
     int graphicsPopupSelectedRow;
+    int fpsOverlayEnabled;
+    unsigned int fpsOverlayValue;
+    unsigned int fpsOverlayFrameCount;
+    uint64_t fpsOverlaySampleStartedMs;
     int hudLaunchMode;    /* Theron V2 HUD launch-mode selector (M11-side,
                            * 0=OFF / 1=OVERLAY / 2=TOUCH / 3=CONTROLLER).
                            * Stored from spec->hudLaunchMode on launch;
@@ -1749,6 +1753,14 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight);
+/* FPS is sampled at actual SDL presentation time, independently of source
+ * ticks, so the overlay never alters V1 game cadence. */
+void M11_GameView_RecordPresentedFrame(M11_GameViewState* state,
+                                       uint64_t nowMs);
+void M11_GameView_DrawFpsOverlay(const M11_GameViewState* state,
+                                 unsigned char* framebuffer,
+                                 int framebufferWidth,
+                                 int framebufferHeight);
 int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state);
 int M11_GameView_PickupItem(M11_GameViewState* state);
 int M11_GameView_DropItem(M11_GameViewState* state);

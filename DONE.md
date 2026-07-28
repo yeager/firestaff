@@ -1,3 +1,9 @@
+- ✅ 2026-07-28 DM1 F10 FPS overlay. The compact runtime graphics popup has
+  a persistent `FPS` toggle and `--fps` uses the identical path. It samples
+  actual SDL presents, not DM1 source ticks, so the counter cannot change the
+  original 50 Hz game cadence. The F10 regression covers persistence, a
+  measured sample, and the rendered overlay.
+
 - ✅ 2026-07-27 DM1 V2.2 manifest syntax gate. The artpack manifest reader
   now rejects invalid JSON and missing identity fields before it assesses
   category completeness. The full DM1 V2.x test sweep passes 90/90.

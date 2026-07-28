@@ -334,6 +334,7 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->layoutMigrationVersion = M12_LAYOUT_MIGRATION_VERSION_CURRENT;
     config->scalingFilterIndex = 0;
     config->vsyncIndex = 1;
+    config->showFpsOverlay = 0;
     config->wasdMovementEnabled = 1;
     config->inputModeIndex = 0;
     config->touchControlsIndex = 0;
@@ -500,6 +501,10 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "vsync_index")) {
         config->vsyncIndex = m12_parse_int(value, config->vsyncIndex);
+        return;
+    }
+    if (m12_string_equals(key, "show_fps_overlay")) {
+        config->showFpsOverlay = m12_parse_int(value, config->showFpsOverlay) ? 1 : 0;
         return;
     }
     if (m12_string_equals(key, "wasd_movement_enabled")) {
@@ -1018,6 +1023,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "layout_migration_version = %d\n", config->layoutMigrationVersion);
     fprintf(fp, "scaling_filter_index = %d\n", config->scalingFilterIndex);
     fprintf(fp, "vsync_index = %d\n", config->vsyncIndex);
+    fprintf(fp, "show_fps_overlay = %d\n", config->showFpsOverlay ? 1 : 0);
     fprintf(fp, "wasd_movement_enabled = %d\n", config->wasdMovementEnabled ? 1 : 0);
     fprintf(fp, "input_mode_index = %d\n", config->inputModeIndex);
     fprintf(fp, "touch_controls_index = %d\n", config->touchControlsIndex);

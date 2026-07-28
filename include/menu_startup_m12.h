@@ -101,6 +101,7 @@ typedef struct {
     int integerScaling;
     int scalingFilterIndex;
     int vsyncIndex;
+    int showFpsOverlay;
     int wasdMovementEnabled;
     int inputModeIndex;
     int touchControlsIndex;

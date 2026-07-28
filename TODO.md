@@ -15,6 +15,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-F10-FPS-OVERLAY:** Closed 2026-07-28. The compact F10 presentation
+  page now has a persisted `FPS` switch. Its overlay measures completed SDL
+  presentation frames rather than DM1 source ticks, so it is diagnostic only
+  and leaves original 50 Hz game cadence unchanged. `--fps` enables the same
+  overlay for scripted launches; the focused popup test covers persistence,
+  sampling and framebuffer output.
+
 - **DM1-V22-MANIFEST-SYNTAX-GATE:** Closed 2026-07-27. V2.2 now rejects
   malformed JSON and manifests without `manifestVersion` or `packId` instead
   of treating them as partial artpacks. The valid-artpack test fixture is

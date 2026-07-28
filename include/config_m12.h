@@ -27,6 +27,7 @@ typedef struct {
     int layoutMigrationVersion;
     int scalingFilterIndex;
     int vsyncIndex;
+    int showFpsOverlay;     /* 0 = off, 1 = show measured presented FPS */
     int wasdMovementEnabled;
     int inputModeIndex;       /* 0 = auto, 1 = keyboard/mouse, 2 = touch, 3 = gamepad */
     int touchControlsIndex;   /* 0 = off, 1 = minimal, 2 = full, 3 = large */

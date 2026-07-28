@@ -21101,7 +21101,7 @@ enum {
 };
 
 static int m11_graphics_popup_row_count(int page) {
-    return page == M11_GRAPHICS_POPUP_PAGE_PRESENTATION ? 8 :
+    return page == M11_GRAPHICS_POPUP_PAGE_PRESENTATION ? 9 :
            page == M11_GRAPHICS_POPUP_PAGE_FILTERS ? 11 : 8;
 }
 
@@ -21243,12 +21243,16 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
             case 4: config.integerScaling = !config.integerScaling; (void)M11_Render_SetIntegerScaling(config.integerScaling); break;
             case 5: config.vsyncIndex = !config.vsyncIndex; (void)M11_Render_SetVSync(config.vsyncIndex); break;
             case 6:
+                config.showFpsOverlay = !config.showFpsOverlay;
+                state->fpsOverlayEnabled = config.showFpsOverlay;
+                break;
+            case 7:
                 if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) return 1;
                 config.gameResolution[slot] = m11_graphics_popup_cycle(config.gameResolution[slot], delta, M12_RES_COUNT);
                 if (config.gameResolution[slot] < M12_RES_640x400) config.gameResolution[slot] = M12_RES_640x400;
                 M12_Resolution_Dimensions(config.gameResolution[slot], &state->presentationWidth, &state->presentationHeight);
                 break;
-            case 7: config.windowModeIndex = m11_graphics_popup_cycle(config.windowModeIndex, delta, 3); (void)M11_Render_SetWindowMode(config.windowModeIndex); break;
+            case 8: config.windowModeIndex = m11_graphics_popup_cycle(config.windowModeIndex, delta, 3); (void)M11_Render_SetWindowMode(config.windowModeIndex); break;
         }
     } else {
         /* Filters are deliberately locked in V1: the source-original route
@@ -48114,7 +48118,7 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight) {
-    static const char* const presentation[] = { "MODE", "SCALE", "FILTER", "ASPECT", "INTEGER", "VSYNC", "RES", "WINDOW" };
+    static const char* const presentation[] = { "MODE", "SCALE", "FILTER", "ASPECT", "INTEGER", "VSYNC", "FPS", "RES", "WINDOW" };
     static const char* const filters[] = { "SCANLINE", "SCAN %", "PALETTE", "GAMMA", "BRIGHT", "CONTRAST", "DITHER", "SHARPEN", "SHARP %", "PRESET", "SMOOTH" };
     static const char* const effects[] = { "PHOSPHOR", "DECAY", "GRID", "GRID %", "MOTION", "BLUR %", "LIGHT", "TURN PAN" };
     static const char* const scaleNames[] = { "1X", "2X", "3X", "4X", "FIT", "STRETCH" };
@@ -48174,7 +48178,8 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                 case 3: snprintf(value, sizeof(value), "%s", config.displayAspectMode == 0 ? "4:3" : config.displayAspectMode == 1 ? "16:9" : "CONTENT"); break;
                 case 4: snprintf(value, sizeof(value), "%s", config.integerScaling ? "ON" : "OFF"); break;
                 case 5: snprintf(value, sizeof(value), "%s", config.vsyncIndex ? "ON" : "OFF"); break;
-                case 6: if (!v2) snprintf(value, sizeof(value), "320X200 LOCKED"); else { int w, h; M12_Resolution_Dimensions(config.gameResolution[slot], &w, &h); snprintf(value, sizeof(value), "%dX%d", w, h); } break;
+                case 6: snprintf(value, sizeof(value), "%s", config.showFpsOverlay ? "ON" : "OFF"); break;
+                case 7: if (!v2) snprintf(value, sizeof(value), "320X200 LOCKED"); else { int w, h; M12_Resolution_Dimensions(config.gameResolution[slot], &w, &h); snprintf(value, sizeof(value), "%dX%d", w, h); } break;
                 default: snprintf(value, sizeof(value), "%s", config.windowModeIndex == 0 ? "WINDOW" : config.windowModeIndex == 1 ? "MAXIMIZED" : "FULLSCREEN"); break;
             }
         } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS) {
@@ -48208,6 +48213,48 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       M11_GRAPHICS_POPUP_X + 82, y, value, &line);
     }
+}
+
+void M11_GameView_RecordPresentedFrame(M11_GameViewState* state,
+                                       uint64_t nowMs)
+{
+    uint64_t elapsed;
+    if (!state || !state->fpsOverlayEnabled) {
+        return;
+    }
+    if (state->fpsOverlaySampleStartedMs == 0U) {
+        state->fpsOverlaySampleStartedMs = nowMs;
+        state->fpsOverlayFrameCount = 0U;
+        return;
+    }
+    ++state->fpsOverlayFrameCount;
+    elapsed = nowMs - state->fpsOverlaySampleStartedMs;
+    if (elapsed >= 500U) {
+        state->fpsOverlayValue = (unsigned int)((state->fpsOverlayFrameCount * 1000U + elapsed / 2U) / elapsed);
+        state->fpsOverlayFrameCount = 0U;
+        state->fpsOverlaySampleStartedMs = nowMs;
+    }
+}
+
+void M11_GameView_DrawFpsOverlay(const M11_GameViewState* state,
+                                 unsigned char* framebuffer,
+                                 int framebufferWidth,
+                                 int framebufferHeight)
+{
+    char text[20];
+    M11_TextStyle style = g_text_small;
+    if (!state || !state->fpsOverlayEnabled || !framebuffer ||
+        framebufferWidth <= 0 || framebufferHeight <= 0) {
+        return;
+    }
+    style.color = M11_COLOR_YELLOW;
+    snprintf(text, sizeof(text), "FPS %u", state->fpsOverlayValue);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  4, 4, 48, 11, M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  4, 4, 48, 11, M11_COLOR_LIGHT_BLUE);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  7, 6, text, &style);
 }
 
 void M11_GameView_Draw(const M11_GameViewState* state,

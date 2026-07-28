@@ -106,6 +106,25 @@ int main(void) {
     assert(config.graphicsIndex == M12_PRESENTATION_V20_FILTERED);
     assert(config.scaleModeIndex == M11_SCALE_STRETCH);
 
+    /* FPS is a presentation diagnostic: it is persisted and sampled from
+     * actual host presents without touching game/source tick ownership. */
+    for (int i = 0; i < 5; ++i) {
+        result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
+        assert(result == M11_GAME_INPUT_REDRAW);
+    }
+    assert(state.graphicsPopupSelectedRow == 6);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.fpsOverlayEnabled == 1);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.showFpsOverlay == 1);
+    M11_GameView_RecordPresentedFrame(&state, 1000U);
+    M11_GameView_RecordPresentedFrame(&state, 1500U);
+    assert(state.fpsOverlayValue == 2U);
+    memset(framebuffer, 0x5a, sizeof(framebuffer));
+    M11_GameView_DrawFpsOverlay(&state, framebuffer, 320, 200);
+    assert(framebuffer[4 * 320 + 4] != 0x5a);
+
     /* Tab is already the shared runtime CYCLE_CHAMPION token; while the
      * graphics panel owns input it advances to the advanced filter page
      * instead of reaching the game. */

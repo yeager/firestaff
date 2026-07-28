@@ -68,6 +68,7 @@ typedef struct {
     int bootProbeExpectDm1HoCFullGraphics; /* Require complete DM1 HoC receipt. */
     int bootProbeExpectDm1HoCReleaseAppCapture; /* Require launcher/release HoC route. */
     int retroAchievementsEnabled;
+    int showFpsOverlay;
     int retroAchievementsHardcore;
     const char* retroAchievementsUser;
     const char* retroAchievementsToken;

@@ -3101,6 +3101,7 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     config.integerScaling = state->settings.integerScaling;
     config.scalingFilterIndex = state->settings.scalingFilterIndex;
     config.vsyncIndex = state->settings.vsyncIndex;
+    config.showFpsOverlay = state->settings.showFpsOverlay ? 1 : 0;
     config.wasdMovementEnabled = state->settings.wasdMovementEnabled;
     config.inputModeIndex = state->settings.inputModeIndex;
     config.touchControlsIndex = state->settings.touchControlsIndex;
@@ -3371,6 +3372,7 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                                          (int)(sizeof(g_scalingFilters) / sizeof(g_scalingFilters[0])));
     state->settings.vsyncIndex = m12_clamp_index(config.vsyncIndex,
                                                  (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+    state->settings.showFpsOverlay = config.showFpsOverlay ? 1 : 0;
     state->settings.wasdMovementEnabled = config.wasdMovementEnabled ? 1 : 0;
     state->settings.inputModeIndex = m12_clamp_index(config.inputModeIndex,
                                                      (int)(sizeof(g_inputModeLabels) / sizeof(g_inputModeLabels[0])));

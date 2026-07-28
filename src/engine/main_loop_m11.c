@@ -744,6 +744,7 @@ static void m11_sync_runtime_graphics_popup_to_menu(
     menuState->settings.integerScaling = config.integerScaling;
     menuState->settings.scalingFilterIndex = config.scalingFilterIndex;
     menuState->settings.vsyncIndex = config.vsyncIndex;
+    menuState->settings.showFpsOverlay = config.showFpsOverlay ? 1 : 0;
     /* M12_SaveConfig serializes these fields from menuState.  Keep that
      * shadow copy current after a live M11 edit so returning to the launcher
      * cannot write pre-popup V2 values back over the saved config. */
@@ -2615,6 +2616,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->bootProbeExpectDm1HoCFullGraphics = 0;
     opts->bootProbeExpectDm1HoCReleaseAppCapture = 0;
     opts->retroAchievementsEnabled = 0;
+    opts->showFpsOverlay = 0;
     opts->retroAchievementsHardcore = 1;
     opts->retroAchievementsUser = NULL;
     opts->retroAchievementsToken = NULL;
@@ -4856,6 +4858,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         }
     }
     M11_GameView_Init(&gameView);
+    gameView.fpsOverlayEnabled = menuState.settings.showFpsOverlay ? 1 : 0;
+    if (o->showFpsOverlay) {
+        gameView.fpsOverlayEnabled = 1;
+    }
     DM1_V1_PendingMotionQueue_InitPc34Compat(&pendingDm1V1MotionQueue);
     M12_GamepadMap_SetDefaults(&gamepadMap);
     (void)M12_GamepadMap_Load(&gamepadMap);
@@ -5564,6 +5570,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 M11_GameView_DrawGraphicsPopup(&gameView,
                                                 M11_Render_GetFramebuffer(),
                                                 M11_FB_WIDTH, M11_FB_HEIGHT);
+                M11_GameView_RecordPresentedFrame(&gameView, SDL_GetTicks());
+                M11_GameView_DrawFpsOverlay(&gameView,
+                                             M11_Render_GetFramebuffer(),
+                                             M11_FB_WIDTH, M11_FB_HEIGHT);
                 (void)m11_present_game_frame_and_publish_startup_capture(
                     &gameView, &menuState);
                 gameFrameNeedsPresent = 0;

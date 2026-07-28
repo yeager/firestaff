@@ -381,7 +381,7 @@ int main(int argc, char** argv) {
             continue;
         }
         if (strcmp(a, "--fps") == 0) {
-            /* not yet wired */
+            opts.showFpsOverlay = 1;
             continue;
         }
         if (is_game_id(a)) {
