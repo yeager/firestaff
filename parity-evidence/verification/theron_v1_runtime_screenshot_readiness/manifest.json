@@ -13,8 +13,8 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260727-171819.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260727-171819.bmp",
-        "stdout": "[TQR] No Track 03/04 markers in <canonical_pcengine_root-data-dir>/TQJP02.bin; retaining raw Track 02 without a supplemental graphics bank\n[TQR] viewport initialized: 256x224 planar fb, palette ready\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260728-142423.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260728-142423.bmp",
+        "stdout": "[TQR] Verified Track 02 accepted: <canonical_pcengine_root-data-dir>/TQJP02.bin; later original graphics bank is not captured yet, so fallback visuals stay disabled\n[TQR] viewport initialized: 256x224 planar fb, palette ready\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
       },
       "fallback_assets_used": false,
       "id": "canonical_pcengine_root",
@@ -26,7 +26,7 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260727-171819.bmp",
+          "name": "firestaff-presented-20260728-142423.bmp",
           "non_black_pixels": 18168,
           "sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
           "size": 1555254,
@@ -75,7 +75,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260727-171819.bmp",
+          "name": "firestaff-20260728-142423.bmp",
           "non_black_pixels": 2294,
           "sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131",
           "size": 192054,
@@ -98,8 +98,8 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260727-171821.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260727-171821.bmp",
-        "stdout": "[TQR] No Track 03/04 markers in <jp_extras_track02_bin-data-dir>/Dungeon Master - Theron's Quest (Japan) (Track 02).bin; retaining raw Track 02 without a supplemental graphics bank\n[TQR] viewport initialized: 256x224 planar fb, palette ready\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260728-142425.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260728-142425.bmp",
+        "stdout": "[TQR] Verified Track 02 accepted: <jp_extras_track02_bin-data-dir>/Dungeon Master - Theron's Quest (Japan) (Track 02).bin; later original graphics bank is not captured yet, so fallback visuals stay disabled\n[TQR] viewport initialized: 256x224 planar fb, palette ready\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
       },
       "fallback_assets_used": false,
       "id": "jp_extras_track02_bin",
@@ -111,7 +111,7 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260727-171821.bmp",
+          "name": "firestaff-presented-20260728-142425.bmp",
           "non_black_pixels": 18168,
           "sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
           "size": 1555254,
@@ -160,7 +160,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260727-171821.bmp",
+          "name": "firestaff-20260728-142425.bmp",
           "non_black_pixels": 2294,
           "sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131",
           "size": 192054,
@@ -183,8 +183,8 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260727-171823.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260727-171823.bmp",
-        "stdout": "[TQR] No Track 03/04 markers in <us_extras_track02_bin-data-dir>/Dungeon Master - Theron's Quest (USA) (Track 02).bin; retaining raw Track 02 without a supplemental graphics bank\n[TQR] viewport initialized: 256x224 planar fb, palette ready\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260728-142426.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260728-142426.bmp",
+        "stdout": "[TQR] Verified Track 02 accepted: <us_extras_track02_bin-data-dir>/Dungeon Master - Theron's Quest (USA) (Track 02).bin; later original graphics bank is not captured yet, so fallback visuals stay disabled\n[TQR] viewport initialized: 256x224 planar fb, palette ready\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
       },
       "fallback_assets_used": false,
       "id": "us_extras_track02_bin",
@@ -196,7 +196,7 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260727-171823.bmp",
+          "name": "firestaff-presented-20260728-142426.bmp",
           "non_black_pixels": 18168,
           "sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
           "size": 1555254,
@@ -245,7 +245,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260727-171823.bmp",
+          "name": "firestaff-20260728-142426.bmp",
           "non_black_pixels": 2294,
           "sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131",
           "size": 192054,
@@ -256,8 +256,8 @@
       "status": "PASS"
     }
   ],
-  "firestaff": "/Volumes/Extern-disk/Firestaff-builds/release-fix-theron-cdda/firestaff",
-  "generated_at": "2026-07-27T15:18:18.369668+00:00",
+  "firestaff": "build/firestaff",
+  "generated_at": "2026-07-28T12:24:21.811354+00:00",
   "non_claims": [
     "No public Theron screenshot image is promoted.",
     "No generated or mock image is used.",

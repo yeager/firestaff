@@ -124,6 +124,7 @@
       "id": "m11_records_movement_pipeline_capture_state",
       "lines": "18683-18892",
       "missing": [
+        "state->lastDm1V1MovementPipelineResult.core.turnApplied",
         "state->lastDm1V1MovementPipelineResult.core.movementBlocked",
         "return state->lastDm1V1MovementPipelineResult.viewportDirty ||",
         "state->lastDm1V1MovementPipelineResult.core.queue.dequeued;"
@@ -260,5 +261,5 @@
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
-  "timestampUtc": "2026-07-27T08:03:53.369128+00:00"
+  "timestampUtc": "2026-07-28T12:28:29.595494+00:00"
 }

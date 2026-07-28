@@ -39,7 +39,7 @@
     "source BMP sha256 unique across all rows",
     "presented BMP is valid 320x200 24-bit BMP with >200 non-black pixels"
   ],
-  "generated_at": "2026-07-27T08:03:33.270228+00:00",
+  "generated_at": "2026-07-28T12:28:28.489016+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this gate.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -55,7 +55,6 @@
       "eligible": false,
       "label": "Theron canonical PC Engine root",
       "notes": [
-        "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
         "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
         "sha256 27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
       ],
@@ -75,7 +74,6 @@
       "eligible": false,
       "label": "Theron JP extras Track 02",
       "notes": [
-        "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
         "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
         "sha256 27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
       ],
@@ -95,7 +93,6 @@
       "eligible": false,
       "label": "Theron US extras Track 02",
       "notes": [
-        "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
         "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
         "sha256 27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
       ],

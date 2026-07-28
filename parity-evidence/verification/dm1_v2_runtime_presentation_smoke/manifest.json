@@ -1,12 +1,12 @@
 {
   "data_dir": "/Users/bosse/.firestaff/data/dm1",
-  "firestaff": "/Volumes/Extern-disk/firestaff-work/build/firestaff",
-  "generated_at": "2026-07-18T22:23:16.583014+00:00",
+  "firestaff": "/Volumes/Extern-disk/firestaff-claude/build/firestaff",
+  "generated_at": "2026-07-28T12:24:07.137736+00:00",
   "modes": [
     {
       "command": {
         "cmd": [
-          "/Volumes/Extern-disk/firestaff-work/build/firestaff",
+          "/Volumes/Extern-disk/firestaff-claude/build/firestaff",
           "--game",
           "dm1",
           "--data-dir",
@@ -16,7 +16,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260719-002324.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v20_filtered_presented/firestaff-presented-20260719-002324.bmp",
+        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260728-142412.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v20_filtered_presented/firestaff-presented-20260728-142412.bmp",
         "stdout": ""
       },
       "mode": {
@@ -28,15 +28,15 @@
       "presented_screenshots": [
         {
           "height": 540,
-          "name": "firestaff-presented-20260719-002324.bmp",
-          "sha256": "f02f4b7099112b5097a9e983b387de5fc5c4e2682766c354f0f75a109f47157e",
+          "name": "firestaff-presented-20260728-142412.bmp",
+          "sha256": "90b6913fa6d9db1182a0032148cfb7d7950e96b151bfa0b0e9270e474035e080",
           "size": 1555254,
           "width": 960
         }
       ],
       "probe": {
         "active": 1,
-        "gameTick": 27,
+        "gameTick": 25,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -74,8 +74,8 @@
       "screenshots": [
         {
           "height": 200,
-          "name": "firestaff-20260719-002324.bmp",
-          "sha256": "ec91631afd66ea0ed4c87a5e36976c2caf393c095b5f68fc9bda6945cb014721",
+          "name": "firestaff-20260728-142412.bmp",
+          "sha256": "ae91d17be47ba204a17a8a2cb8b0caf59a8cadbdccde5603f0757b800f7e68bb",
           "size": 192054,
           "width": 320
         }
@@ -84,7 +84,7 @@
     {
       "command": {
         "cmd": [
-          "/Volumes/Extern-disk/firestaff-work/build/firestaff",
+          "/Volumes/Extern-disk/firestaff-claude/build/firestaff",
           "--game",
           "dm1",
           "--data-dir",
@@ -94,7 +94,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260719-002330.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v21_upscaled_presented/firestaff-presented-20260719-002330.bmp",
+        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260728-142417.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v21_upscaled_presented/firestaff-presented-20260728-142417.bmp",
         "stdout": ""
       },
       "mode": {
@@ -106,15 +106,15 @@
       "presented_screenshots": [
         {
           "height": 540,
-          "name": "firestaff-presented-20260719-002330.bmp",
-          "sha256": "2771715d21c81b43b92c6f29ec45805bacdc0a340888255a3cef6899b56729d3",
+          "name": "firestaff-presented-20260728-142417.bmp",
+          "sha256": "76ad5b308143a138ee0b5162ac7070f840f16a9dda3c0dd0e7f616e1066461b3",
           "size": 1555254,
           "width": 960
         }
       ],
       "probe": {
         "active": 1,
-        "gameTick": 27,
+        "gameTick": 26,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -152,8 +152,8 @@
       "screenshots": [
         {
           "height": 200,
-          "name": "firestaff-20260719-002330.bmp",
-          "sha256": "ec91631afd66ea0ed4c87a5e36976c2caf393c095b5f68fc9bda6945cb014721",
+          "name": "firestaff-20260728-142417.bmp",
+          "sha256": "ae91d17be47ba204a17a8a2cb8b0caf59a8cadbdccde5603f0757b800f7e68bb",
           "size": 192054,
           "width": 320
         }
