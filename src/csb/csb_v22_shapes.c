@@ -5,10 +5,10 @@
  * references, and the CSB-vs-DM1 difference list.
  *
  * This module is the *shape selector* + *parameter book* for CSB V2.2.
- * The actual texture / material loading and GPU rendering is deferred
- * to the CSB V2.2 modern asset pipeline (not yet authored — the
- * selection API and this book are the V2.2 Phase 8 deliverable for
- * CSB; the renderer is a follow-up).
+ * The CSB V2.2 material pipeline, cache and nine-cell in-place renderer now
+ * consume this book. V2.2 remains deliberately unavailable until a reviewed
+ * full-route CSB artpack is installed; this selector must never substitute
+ * procedural material for missing source-derived art.
  */
 
 #include "csb_v22_shapes.h"
