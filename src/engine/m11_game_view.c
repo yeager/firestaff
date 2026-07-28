@@ -21092,10 +21092,12 @@ enum {
     M11_GRAPHICS_POPUP_PAGE_FILTERS,
     M11_GRAPHICS_POPUP_PAGE_EFFECTS,
     M11_GRAPHICS_POPUP_PAGE_COUNT,
-    M11_GRAPHICS_POPUP_X = 16,
+    /* Keep the live dungeon visible while graphics settings are adjusted.
+     * The prior 288x184 modal almost completely hid the 224x136 viewport. */
+    M11_GRAPHICS_POPUP_X = 166,
     M11_GRAPHICS_POPUP_Y = 8,
-    M11_GRAPHICS_POPUP_W = 288,
-    M11_GRAPHICS_POPUP_H = 184
+    M11_GRAPHICS_POPUP_W = 148,
+    M11_GRAPHICS_POPUP_H = 150
 };
 
 static int m11_graphics_popup_row_count(int page) {
@@ -22556,22 +22558,22 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
             return M11_GAME_INPUT_REDRAW;
         }
-        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 198,
+        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 130,
                               M11_GRAPHICS_POPUP_Y + 6, 18, 12)) {
             state->graphicsPopupActive = 0;
             return M11_GAME_INPUT_REDRAW;
         }
-        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 10,
-                              M11_GRAPHICS_POPUP_Y + 23, 260, 12)) {
-            state->graphicsPopupPage = (x < M11_GRAPHICS_POPUP_X + 95) ?
+        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 6,
+                              M11_GRAPHICS_POPUP_Y + 23, 136, 12)) {
+            state->graphicsPopupPage = (x < M11_GRAPHICS_POPUP_X + 50) ?
                 M11_GRAPHICS_POPUP_PAGE_PRESENTATION :
-                (x < M11_GRAPHICS_POPUP_X + 180 ? M11_GRAPHICS_POPUP_PAGE_FILTERS :
+                (x < M11_GRAPHICS_POPUP_X + 98 ? M11_GRAPHICS_POPUP_PAGE_FILTERS :
                                                   M11_GRAPHICS_POPUP_PAGE_EFFECTS);
             state->graphicsPopupSelectedRow = 0;
             return M11_GAME_INPUT_REDRAW;
         }
-        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 10,
-                              M11_GRAPHICS_POPUP_Y + 40, 268, 116)) {
+        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 6,
+                              M11_GRAPHICS_POPUP_Y + 40, 136, 110)) {
             int row = (y - (M11_GRAPHICS_POPUP_Y + 40)) / 10;
             if (row >= 0 && row < m11_graphics_popup_row_count(state->graphicsPopupPage)) {
                 if (row == state->graphicsPopupSelectedRow) {
@@ -48112,9 +48114,9 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight) {
-    static const char* const presentation[] = { "PRESENTATION", "SCALE MODE", "SCALE FILTER", "ASPECT", "INTEGER SCALE", "VSYNC", "RESOLUTION", "WINDOW MODE" };
-    static const char* const filters[] = { "CRT SCANLINES", "CRT STRENGTH", "PALETTE CORRECT/INTERP", "PALETTE GAMMA", "PALETTE BRIGHT", "PALETTE CONTRAST", "DITHER CLEAN", "SHARPEN", "SHARPEN LEVEL", "COLOR PRESET", "SMOOTH SCALE" };
-    static const char* const effects[] = { "PHOSPHOR", "PHOSPHOR DECAY", "PIXEL GRID", "GRID INTENSITY", "MOTION BLUR", "BLUR STRENGTH", "DYNAMIC LIGHT", "TURN PAN" };
+    static const char* const presentation[] = { "MODE", "SCALE", "FILTER", "ASPECT", "INTEGER", "VSYNC", "RES", "WINDOW" };
+    static const char* const filters[] = { "SCANLINE", "SCAN %", "PALETTE", "GAMMA", "BRIGHT", "CONTRAST", "DITHER", "SHARPEN", "SHARP %", "PRESET", "SMOOTH" };
+    static const char* const effects[] = { "PHOSPHOR", "DECAY", "GRID", "GRID %", "MOTION", "BLUR %", "LIGHT", "TURN PAN" };
     static const char* const scaleNames[] = { "1X", "2X", "3X", "4X", "FIT", "STRETCH" };
     const char* const* rows;
     M12_Config config;
@@ -48137,8 +48139,6 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
     title.color = M11_COLOR_YELLOW;
     normal.color = M11_COLOR_WHITE;
     selected.color = M11_COLOR_LIGHT_GREEN;
-    m11_dim_rect(framebuffer, framebufferWidth, framebufferHeight,
-                 0, 0, framebufferWidth, framebufferHeight, 8);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   M11_GRAPHICS_POPUP_X, M11_GRAPHICS_POPUP_Y,
                   M11_GRAPHICS_POPUP_W, M11_GRAPHICS_POPUP_H,
@@ -48148,19 +48148,19 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                   M11_GRAPHICS_POPUP_W, M11_GRAPHICS_POPUP_H,
                   M11_COLOR_LIGHT_BLUE);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 10, M11_GRAPHICS_POPUP_Y + 8,
-                  "GRAPHICS  F10/ESC CLOSE  TAB PAGE", &title);
+                  M11_GRAPHICS_POPUP_X + 6, M11_GRAPHICS_POPUP_Y + 8,
+                  "GRAPHICS F10 ESC TAB", &title);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 262, M11_GRAPHICS_POPUP_Y + 8, "X", &title);
+                  M11_GRAPHICS_POPUP_X + 134, M11_GRAPHICS_POPUP_Y + 8, "X", &title);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 10, M11_GRAPHICS_POPUP_Y + 23,
-                  state->graphicsPopupPage == 0 ? "[PRESENT] FILTERS EFFECTS" :
-                  state->graphicsPopupPage == 1 ? "PRESENT [FILTERS] EFFECTS" :
-                                                   "PRESENT FILTERS [EFFECTS]", &selected);
+                  M11_GRAPHICS_POPUP_X + 6, M11_GRAPHICS_POPUP_Y + 23,
+                  state->graphicsPopupPage == 0 ? "[PRES] FILT FX" :
+                  state->graphicsPopupPage == 1 ? "PRES [FILT] FX" :
+                                                   "PRES FILT [FX]", &selected);
     if (!v2 && state->graphicsPopupPage != M11_GRAPHICS_POPUP_PAGE_PRESENTATION)
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_GRAPHICS_POPUP_X + 10, M11_GRAPHICS_POPUP_Y + 34,
-                      "V1 ORIGINAL: ADVANCED EFFECTS LOCKED", &normal);
+                      M11_GRAPHICS_POPUP_X + 6, M11_GRAPHICS_POPUP_Y + 34,
+                      "V1: EFFECTS LOCKED", &normal);
     for (i = 0; i < rowCount; ++i) {
         M11_TextStyle line = i == state->graphicsPopupSelectedRow ? selected :
                              ((!v2 && state->graphicsPopupPage != 0) ? title : normal);
@@ -48204,9 +48204,9 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
             }
         }
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_GRAPHICS_POPUP_X + 12, y, rows[i], &line);
+                      M11_GRAPHICS_POPUP_X + 7, y, rows[i], &line);
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_GRAPHICS_POPUP_X + 170, y, value, &line);
+                      M11_GRAPHICS_POPUP_X + 82, y, value, &line);
     }
 }
 

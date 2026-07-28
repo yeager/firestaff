@@ -41403,3 +41403,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   now has a regression that clears its test-only path override, creates the
   normal per-user `saves/dm1` directory, writes the save, and reloads it.
   This covers a fresh profile's former file-not-found failure mode.
+- ✅ 2026-07-28 Compact runtime graphics popup. F10 now uses a narrow
+  right-side panel and leaves the live viewport undimmed, so V1/V2.x mode,
+  filter, palette, and scale changes can be judged immediately. Its input
+  remains modal; the regression verifies the exposed viewport, compact close
+  hitbox, and live setting changes.

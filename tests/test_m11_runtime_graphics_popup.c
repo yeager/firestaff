@@ -156,8 +156,12 @@ int main(void) {
     assert(M12_Config_Load(&config, NULL) == 1);
     assert(config.dm1V2CrtScanlinesEnabled == savedScanlineStrength);
 
-    memset(framebuffer, 0, sizeof(framebuffer));
+    /* The compact panel lives at the right edge and must not dim or obscure
+     * the live dungeon viewport while the user adjusts a setting. */
+    memset(framebuffer, 0x5a, sizeof(framebuffer));
     M11_GameView_DrawGraphicsPopup(&state, framebuffer, 320, 200);
+    assert(framebuffer[90 * 320 + 20] == 0x5a);
+    assert(framebuffer[20 * 320 + 180] != 0x5a);
     for (i = 0; i < sizeof(framebuffer); ++i) {
         if (framebuffer[i] != 0) {
             nonzero = 1;
@@ -165,6 +169,16 @@ int main(void) {
         }
     }
     assert(nonzero == 1);
+
+    result = M11_GameView_HandlePointerButton(&state, 300, 20,
+                                               DM1_V1_MOUSE_MASK_LEFT_PC34);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupActive == 0);
+
+    result = M11_GameView_HandleInput(&state,
+                                      M12_MENU_INPUT_GRAPHICS_POPUP);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupActive == 1);
 
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
     assert(result == M11_GAME_INPUT_REDRAW);
