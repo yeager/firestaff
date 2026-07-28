@@ -11004,10 +11004,13 @@ CSB V2.1 consumes the shared live M11 EPX route, including special palettes.
 Its current runtime regression passes. Remaining work is real CSB
 runtime/Mac capture, not scaler code.
 
-CSB V2.2 now resolves only against its own completed real-art pack and falls
-back to V2.1 otherwise. Shape, material admission, in-place draw, and
-per-cell routing regressions pass. Remaining work is reviewed real CSB art
-and runtime capture.
+CSB V2.2 shape, material-admission, in-place-draw, and per-cell-routing
+regressions pass, but the installed pack is not a finished real-art pack:
+its manifest has no per-slot generator provenance and several runtime routes
+still name explicit placeholders. Keep those lanes on their source-owned
+V1/V2.1 fallback until every material is operator-reviewed and declared with
+resolvable non-placeholder provenance. Remaining work is reviewed CSB art,
+the corresponding runtime material consumption, and real runtime/Mac capture.
 
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
