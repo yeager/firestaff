@@ -201,44 +201,103 @@ static int classify_pc34_loader_part_envelope(
     size_t cursor = DM1_ORIGINAL_SAVE_HEADER_BYTES;
     uint32_t payload_bytes = 0u;
     uint16_t ok_count = 0u;
+    uint8_t global_data[128u];
+    size_t part_byte_counts[DM1OS_SAVE_PART_COUNT];
+    uint16_t maximum_active_group_count;
+    uint16_t event_maximum_count;
 
     if (!bytes || !header || !out) return 0;
 
+    /* Compatibility for Firestaff's older test/export envelope. Authentic
+     * PC34 data takes the F0435-sized branch below. */
+    if (cursor + 2u <= size && rd16(bytes + cursor, endian) == 128u) {
+        for (size_t part = 0u; part < DM1OS_SAVE_PART_COUNT; ++part) {
+            uint16_t byte_count;
+            uint16_t actual;
+            uint8_t *part_data;
+            if (cursor + 2u > size) break;
+            byte_count = rd16(bytes + cursor, endian);
+            cursor += 2u;
+            if ((byte_count & 1u) != 0u || cursor + byte_count > size) break;
+            part_data = (uint8_t *)malloc(byte_count);
+            if (!part_data) break;
+            memcpy(part_data, bytes + cursor, byte_count);
+            actual = obfuscate_and_checksum_words(
+                part_data, rd16(header + 310u + part * 2u, endian),
+                byte_count / 2u, endian);
+            free(part_data);
+            if (actual != rd16(header + 342u + part * 2u, endian)) break;
+            ++ok_count;
+            payload_bytes += byte_count;
+            cursor += byte_count;
+        }
+        out->save_part_loader_envelope_ok_count = ok_count;
+        out->save_part_loader_envelope_payload_bytes = payload_bytes;
+        out->pc34_loader_part_envelope_candidate =
+            ok_count == (uint16_t)DM1OS_SAVE_PART_COUNT;
+        if (out->pc34_loader_part_envelope_candidate) {
+            out->save_part_loader_envelope_end_offset = (uint32_t)cursor;
+            out->save_part_loader_trailing_byte_count =
+                (uint32_t)(size - cursor);
+        }
+        return out->pc34_loader_part_envelope_candidate;
+    }
+
+    /* ReDMCSB LOADSAVE.C F0435 does not store part lengths in the file.
+     * It reads GLOBAL_DATA first, then derives the remaining four byte
+     * counts from MaximumActiveGroupCount and EventMaximumCount. */
+    if (cursor + sizeof(global_data) > size) return 0;
+    memcpy(global_data, bytes + cursor, sizeof(global_data));
+    if (obfuscate_and_checksum_words(global_data,
+                                     rd16(header + 310u, endian),
+                                     sizeof(global_data) / 2u, endian) !=
+        rd16(header + 342u, endian)) {
+        return 0;
+    }
+    maximum_active_group_count = rd16(global_data + 46u, endian);
+    event_maximum_count = rd16(global_data + 28u, endian);
+    /* Original PC34 saves can retain up to 1023 active groups and 2916
+     * timeline records.  Runtime admission applies its own capacity gate;
+     * discovery must faithfully prove the F7057 envelope first. */
+    if (maximum_active_group_count > 1023u || event_maximum_count > 2916u) {
+        return 0;
+    }
+    part_byte_counts[0] = sizeof(global_data);
+    part_byte_counts[1] = (size_t)maximum_active_group_count * 16u;
+    part_byte_counts[2] = 1404u; /* PC34: four 319-byte champions + PARTY_INFO. */
+    part_byte_counts[3] = (size_t)event_maximum_count * 10u;
+    part_byte_counts[4] = (size_t)event_maximum_count * 2u;
+
     for (size_t part = 0u; part < DM1OS_SAVE_PART_COUNT; ++part) {
-        uint16_t byte_count;
         uint16_t key;
         uint16_t expected;
         uint16_t actual;
-        uint8_t *part_bytes;
+        uint8_t *part_data;
 
-        if (cursor + 2u > size) break;
-        byte_count = rd16(bytes + cursor, endian);
-        cursor += 2u;
-        if ((byte_count & 1u) != 0u ||
-            byte_count > 0xfffeu ||
-            cursor + (size_t)byte_count > size) {
+        if ((part_byte_counts[part] & 1u) != 0u ||
+            cursor + part_byte_counts[part] > size) {
             break;
         }
-        part_bytes = NULL;
-        if (byte_count > 0u) {
-            part_bytes = (uint8_t *)malloc((size_t)byte_count);
-            if (!part_bytes) break;
-            memcpy(part_bytes, bytes + cursor, (size_t)byte_count);
+        part_data = NULL;
+        if (part_byte_counts[part] > 0u) {
+            part_data = (uint8_t *)malloc(part_byte_counts[part]);
+            if (!part_data) break;
+            memcpy(part_data, bytes + cursor, part_byte_counts[part]);
         }
         key = rd16(header + 310u + (part * 2u), endian);
         expected = rd16(header + 342u + (part * 2u), endian);
         actual = obfuscate_and_checksum_words(
-            part_bytes ? part_bytes : (uint8_t *)"",
+            part_data ? part_data : (uint8_t *)"",
             key,
-            (size_t)byte_count / 2u,
+            part_byte_counts[part] / 2u,
             endian);
-        free(part_bytes);
+        free(part_data);
         if (actual != expected) {
             break;
         }
         ok_count++;
-        payload_bytes += byte_count;
-        cursor += (size_t)byte_count;
+        payload_bytes += (uint32_t)part_byte_counts[part];
+        cursor += part_byte_counts[part];
     }
 
     out->save_part_loader_envelope_ok_count = ok_count;

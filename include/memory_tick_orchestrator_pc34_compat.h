@@ -3,7 +3,11 @@
 
 /* ReDMCSB F0433 C3 EVENT and C4 TIMELINE source receipts retained by a
  * successfully loaded world. This aggregate also serves generic M10 code. */
-#define GAMEWORLD_PC34_ORIGINAL_EVENT_RECEIPT_CAPACITY 256u
+/* ReDMCSB GLOBAL_DATA stores EventMaximumCount.  Real PC34 saves can retain
+ * more than the former host-only 256-event receipt, even with no live event
+ * in the C4 heap.  Keep the authenticated C3/C4 source copy sized for the
+ * supported F0435 maximum. */
+#define GAMEWORLD_PC34_ORIGINAL_EVENT_RECEIPT_CAPACITY 512u
 #define GAMEWORLD_PC34_ORIGINAL_C3_EVENT_BYTE_COUNT 10u
 #define GAMEWORLD_PC34_ORIGINAL_C4_HEAP_ENTRY_BYTE_COUNT 2u
 #define GAMEWORLD_PC34_ORIGINAL_C3_RECEIPT_BYTE_CAP \
@@ -188,11 +192,12 @@ struct DM1GroupSmellDirectionPlan_Compat;
  * ================================================================ */
 
 #define TICK_EMISSION_CAPACITY          64
-#define GAMEWORLD_CREATURE_AI_CAPACITY  64
+#define GAMEWORLD_CREATURE_AI_CAPACITY  128
 /* ReDMCSB PC3.4 GROUP.C F0196 initializes exactly 60 ACTIVE_GROUP slots.
  * The larger host array remains an implementation container; F0195 must not
  * admit a sixty-first original-map group into its PC3.4 active prefix. */
-#define DM1_PC34_ACTIVE_GROUP_CAPACITY  60
+/* Real PC 3.4 GLOBAL_DATA.MaximumActiveGroupCount can be 110. */
+#define DM1_PC34_ACTIVE_GROUP_CAPACITY  110
 #define TICK_INPUT_SERIALIZED_SIZE      16
 #define TICK_EMISSION_SERIALIZED_SIZE   20
 #define TICK_STREAM_RECORD_SERIALIZED_SIZE 24

@@ -613,6 +613,12 @@ that its exact runtime path is not already source-locked and tested.
 1. **DM1-PC34-SAVE-CORPUS:** Admit a real original PC 3.4 `DMSAVE.DAT`,
    complete F0417/F0418/F0435 byte round-trip validation, and use it through
    M11/M12 save and resume paths. No generated corpus may satisfy this.
+   2026-07-28: the operator-created DOSBox PC34 save is now provenance-bound
+   and validates its real F7057 envelope (five raw parts through byte 9408),
+   including 110 allocated C04 group records and 467 C03/C04 rows. F0435
+   import, C3/C4 receipt, and source dungeon-tail staging now succeed without
+   truncating the empty live timeline. The corpus remains open for the final
+   F0417/F0418 byte round-trip and M11/M12 resume-route verification.
 2. **DM1-HOC-RUNTIME-RENDER:** Finish the M11 HoC render consumer for mirrors,
    wall inscriptions, objects, actions, spells, and viewport materialization
    from real PC34 GRAPHICS.DAT/DUNGEON.DAT records; remove production fallback

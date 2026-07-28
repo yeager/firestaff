@@ -139,9 +139,29 @@ typedef struct {
     int aspect[4];
 } DM1OriginalSavePC34ActiveGroupRecord;
 
+/* The F0435 candidate loader is intentionally transactional.  Preserve the
+ * last completed phase when a real save is rejected, so diagnostics identify
+ * the original-data contract that still needs implementation. */
+typedef enum {
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_NONE = 0,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_PARSE,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_PARTY_INFO,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_LIFECYCLE,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_ACTIVE_GROUPS_PRE_TAIL,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_DUNGEON_TAIL,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_PARTY_POSE,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_PARTY_INVENTORY,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_ACTIVE_GROUPS_POST_TAIL,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_TIMELINE,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_PARTY_STATUS,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_EVENT_QUEUE,
+    DM1_ORIGINAL_SAVE_PC34_RUNTIME_STAGE_C3_C4_RECEIPT
+} DM1OriginalSavePC34RuntimeStage;
+
 typedef struct {
     DM1OriginalSaveClassifyResult classify;
     int importer_result;
+    DM1OriginalSavePC34RuntimeStage runtime_stage;
     int resumed_from_backup;
     int backup_promoted_to_primary;
     uint16_t part_expected_checksums[5];
@@ -652,7 +672,7 @@ typedef struct {
     int external_original;
     /* A corpus row only becomes original-save evidence after its adjacent
      * provenance sidecar binds the exact source length/hash to a public
-     * source URL. Header shape alone is not provenance. */
+     * source locator. Header shape alone is not provenance. */
     int provenance_sidecar_present;
     int provenance_sidecar_valid;
     char provenance_source_url[DM1_ORIGINAL_SAVE_PATH_MAX];
@@ -1470,7 +1490,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
  *
  *   format=firestaff-dm1-pc34-provenance-v1
  *   origin=original-pc34
- *   source_url=http://... or https://...
+ *   source_url=http://..., https://..., or dosbox://<local-session>
  *   byte_count=<decimal source length>
  *   fnv1a32=<eight hexadecimal digits>
  *

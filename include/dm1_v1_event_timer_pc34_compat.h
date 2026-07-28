@@ -96,7 +96,9 @@
  *  Capacities
  * ================================================================ */
 
-#define DM1_EVENT_MAX_COUNT   256
+/* PC 3.4 saves retain the allocated event table, not merely the live
+ * entries.  Real original saves can exceed the earlier 256-row host cap. */
+#define DM1_EVENT_MAX_COUNT   512
 #define DM1_EVENT_SERIALIZED_SIZE  16
 
 /* ================================================================
