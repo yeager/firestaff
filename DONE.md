@@ -41389,3 +41389,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   again by F0433. The PC34 export suite also verifies a materialized dungeon
   tail roundtrip and rejects an unproven C24 Fluxcage slot on the state-only
   path.
+- ✅ 2026-07-28 DM1 real HoC orientation and champion-pointer regression.
+  The registered `m11_dm1_hoc_orientation_runtime_pc34` CTest starts from
+  the local original PC34 data, validates F0128 viewport material in all
+  four directions and through live turn inputs, selects a real C127 mirror,
+  resurrects the champion, and opens that champion's HUD inventory through
+  the production pointer path. The focused real-data HoC/object/alcove/save
+  suite passes 4/4.

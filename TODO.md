@@ -318,6 +318,12 @@ that its exact runtime path is not already source-locked and tested.
    M11_Dm1HoCMirrorViewportMaterialFrameReceipt (D1L/D1R/D2C/D2L/D2R/D3C
    etc.) into coverageHash, mirrorSquareCount, materializedCount. Consumer
    validates and hashes all 6 lanes together. Q-DM1-02 complete.
+   2026-07-28: Real-PC34 HoC orientation regression added. It enters the
+   actual Hall data, verifies a non-black F0128 viewport in every cardinal
+   orientation and through two live turn inputs, then selects a real C127
+   mirror and opens the resurrected champion's HUD inventory by pointer.
+   Remaining work stays limited to unverified side/depth presentation and
+   packaged Mac/release capture, not this turn or champion-click route.
 3. **Q-DM1-03 Dungeon viewport material matrix:** complete F0107-F0115 wall,
    floor, ceiling, door, ornament, mirror, item, creature, projectile and
    explosion routing without fallback drawing.
