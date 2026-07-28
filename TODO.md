@@ -11018,7 +11018,10 @@ still name explicit placeholders. Runtime now keeps those lanes on the
 source-owned V2.1 fallback until every material is operator-reviewed and
 declared with resolvable non-placeholder provenance. Remaining work is
 reviewed CSB art, the corresponding runtime material consumption, and real
-runtime/Mac capture.
+runtime/Mac capture. 2026-07-28: all 41 registered CSB V2.0/V2.1/V2.2 tests
+pass after explicitly building the two V2.2 finished-art gate tools omitted
+by a partial Ninja build; this is implementation verification, not artpack
+promotion.
 
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 

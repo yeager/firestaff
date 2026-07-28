@@ -4,6 +4,12 @@
   The M11 launcher handoff regression covers the first frame plus four live
   runtime ticks; a real macOS Prison click now presents source pixels.
 
+- ✅ 2026-07-28 CSB V2.x full-suite verification. Built the two optional
+  V2.2 finished-art gate tools omitted by the partial Ninja build, then ran
+  all 41 registered CSB V2.0/V2.1/V2.2 tests: 41/41 pass. This verifies the
+  presentation, HUD, filter, material-admission, and input paths; it does
+  not promote the unfinished V2.2 artpack over the real V2.1 fallback.
+
 - ✅ 2026-07-28 Nexus V2 HUD phase gate enablement. Set NEXUS_V2_PhaseGateConfig
   with v2PresentationEnabled and v2ConfigPersistenceEnabled in the DGN host plan
   so nexus_v2_hud_runtime_render() no longer returns early due to missing gate
