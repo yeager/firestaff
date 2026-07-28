@@ -41890,3 +41890,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   normal CTest execution. Explicit CSB data paths still exercise the original
   archive and PC material routes, while the ordinary regression gate no
   longer stalls on a user's installed game corpus.
+
+- ✅ 2026-07-28 CSB C001 title-palette correction. The shared CSB
+  PRESENTS/CHAOS/STRIKES special palette now uses the source-required
+  dark-blue base `(0,0,109)` rather than the stale dim-blue `(0,0,73)`;
+  the canonical PC3.4 real-data launch gate now accepts the C001 PRESENTS
+  palette phase. Pixel decode and title/Entrance composition remain open.
