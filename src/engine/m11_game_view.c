@@ -21519,7 +21519,10 @@ static int m11_graphics_popup_mode_count(const M11_GameViewState* state) {
         return M12_PRESENTATION_V22_MODERN;
     }
     M12_Config_Load(&config, NULL);
-    if (!config.v22_modern_assets_installed && config.artpackPath[0] == '\0') {
+    /* A selected archive is not installed material. In particular it may
+     * belong to another game, so exposing V2.2 from its path would let CSB
+     * enter a presentation mode without a complete CSB manifest/cache. */
+    if (!config.v22_modern_assets_installed) {
         return M12_PRESENTATION_V22_MODERN;
     }
     return M12_PRESENTATION_MODE_COUNT;

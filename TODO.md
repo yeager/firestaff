@@ -734,6 +734,9 @@ that its exact runtime path is not already source-locked and tested.
    packaged real-data regression proves both source geometries and C040-over-
    C017 transparency after the Prison handoff. Broader viewport consumption
    and app-window visual capture remain open.
+   The V2.2 selector is now hidden unless the CSB-specific completed
+   manifest/cache installation gate succeeds; merely selecting an unrelated
+   `.fsart` archive no longer exposes a false modern mode.
    2026-07-28: the canonical PC 3.4 real-data gate now proves the full
    source-owned startup chain: Swoosh, C001 PRESENTS/CHAOS/STRIKES, all 31
    C004/C002/C003 opening pages, C017/C040 HUD handoff and the DUNGEON.DAT

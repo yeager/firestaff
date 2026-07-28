@@ -41970,3 +41970,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   C017 at its original `(0,33)` geometry, and proves C040 composes at `(80,85)`
   with source index-6 transparency in V1, V2.0, and V2.1. V2.2 remains
   fail-closed until a reviewed material pack owns its replacement chrome.
+
+- ✅ 2026-07-29 CSB V2.2 installation gate. The live F10 graphics selector
+  no longer treats a nonempty `.fsart` configuration path as installed CSB
+  art. It exposes V2.2 only after the CSB-specific complete manifest/cache
+  gate succeeds, preventing a DM1 or arbitrary archive from selecting a
+  false CSB modern presentation. The runtime graphics-popup regression covers
+  the cross-game archive case.

@@ -202,6 +202,28 @@ int main(void) {
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupActive == 0);
+
+    /* An admitted path alone is not CSB V2.2 material: a DM1 (or otherwise
+     * unrelated) .fsart must not expose CSB's modern mode before the CSB
+     * manifest/cache gate reports a complete installation. */
+    config.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
+    config.v22_modern_assets_installed = 0;
+    snprintf(config.artpackPath, sizeof(config.artpackPath),
+             "%s", "/tmp/other-game.fsart");
+    assert(M12_Config_Save(&config) == 1);
+    state.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
+    state.presentationMode = M12_PRESENTATION_V21_UPSCALED;
+    result = M11_GameView_HandleInput(&state,
+                                      M12_MENU_INPUT_GRAPHICS_POPUP);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupActive == 1);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.presentationMode == M12_PRESENTATION_V1_ORIGINAL);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupActive == 0);
+
     puts("m11 runtime graphics popup: ok");
     return 0;
 }
