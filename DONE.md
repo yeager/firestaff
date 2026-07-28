@@ -41648,6 +41648,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   by default, so shipped games no longer require
   `FIRESTAFF_AUDIO_ENABLE_SDL=1` just to emit decoded source audio. Setting it
   to `0` remains the explicit headless opt-out. The default policy was
-  verified with SDL's dummy device and the source-locked DM1 PSG and CSB
-  SWSH transports; failed source validation still stays silent rather than
-  substituting generated audio.
+  verified by the new `m11_audio_default_sdl_dummy` regression plus the
+  source-locked DM1 PSG and CSB SWSH transports; failed source validation
+  still stays silent rather than substituting generated audio.

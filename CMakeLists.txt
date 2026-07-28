@@ -27229,6 +27229,17 @@ endif()
         ENVIRONMENT "FIRESTAFF_AUDIO_ENABLE_SDL=1;SDL_AUDIODRIVER=dummy"
     )
 
+    # Real device playback is enabled by default.  Keep this separate from
+    # the explicit-enable compatibility test above so a future opt-in default
+    # cannot silently ship every game muted again.
+    add_test(
+        NAME m11_audio_default_sdl_dummy
+        COMMAND firestaff_m11_audio_probe --expect-sdl-source-index-queue
+    )
+    set_tests_properties(m11_audio_default_sdl_dummy PROPERTIES
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy"
+    )
+
     add_test(
         NAME firestaff_m11_creature_runtime_audio_probe
         COMMAND firestaff_m11_creature_runtime_audio_probe
