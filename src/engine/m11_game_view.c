@@ -41948,7 +41948,9 @@ static int m11_draw_nexus_dgn_host_plan(
                                               state->nexusEngine,
                                               &receipt) != 0 ||
         !receipt.can_present_runtime_dgn || receipt.blocks_runtime_dgn ||
-        !receipt.material_surface_count || !receipt.written_pixels) {
+        !receipt.written_pixels ||
+        (!receipt.material_surface_count &&
+         receipt.status != NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH)) {
         return 0;
     }
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
@@ -41960,6 +41962,17 @@ static int m11_draw_nexus_dgn_host_plan(
         memcpy(&framebuffer[y * framebufferWidth],
                &viewport.fb.color_buffer[y * NEXUS_FB_W],
                (size_t)copy_width);
+    }
+    if (receipt.status == NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH) {
+        uint8_t rgb6[256][3];
+        int c;
+        for (c = 0; c < 256; ++c) {
+            uint32_t rgba = viewport.fb.palette[c];
+            rgb6[c][0] = (uint8_t)((rgba >> 18) & 0x3FU);
+            rgb6[c][1] = (uint8_t)((rgba >> 10) & 0x3FU);
+            rgb6[c][2] = (uint8_t)((rgba >> 2) & 0x3FU);
+        }
+        M11_Render_SetIndexedPaletteRgb6(rgb6);
     }
     nexus_v2_hud_runtime_set_direction(state->nexusEngine->game.party_dir);
     nexus_v2_hud_runtime_set_level(
