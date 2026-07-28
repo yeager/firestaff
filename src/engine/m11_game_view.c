@@ -42065,6 +42065,17 @@ static int m11_draw_nexus_dgn_host_plan(
             }
         }
     }
+    {
+        static NEXUS_V2_PhaseGateConfig nexus_dgn_hud_gate;
+        static int nexus_dgn_hud_gate_set = 0;
+        if (!nexus_dgn_hud_gate_set) {
+            memset(&nexus_dgn_hud_gate, 0, sizeof(nexus_dgn_hud_gate));
+            nexus_dgn_hud_gate.v2PresentationEnabled = 1;
+            nexus_dgn_hud_gate.v2ConfigPersistenceEnabled = 1;
+            nexus_v2_hud_runtime_set_gate_config(&nexus_dgn_hud_gate);
+            nexus_dgn_hud_gate_set = 1;
+        }
+    }
     nexus_v2_hud_runtime_render(framebuffer, framebufferWidth,
                                 framebufferHeight);
     return 1;
