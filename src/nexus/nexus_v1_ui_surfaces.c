@@ -21,6 +21,7 @@
  * Failed real-media decodes leave the surface unavailable. */
 
 #include "nexus_v1_ui_surfaces.h"
+#include "nexus_v1_prs3_decode.h"
 #include <limits.h>
 #include <string.h>
 #include <stdio.h>
@@ -864,13 +865,12 @@ int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     Nexus_UI_FaceRecordDecodeInfo *out_info)
 {
     Nexus_UI_FaceRecordDecodeInfo info;
-    const int entry_size = 48 * 48;
     memset(&info, 0, sizeof(info));
     info.kind = NEXUS_UI_FACE_RECORD_NONE;
     info.source_size = record_size;
     info.portrait_w = 48;
     info.portrait_h = 48;
-    if (!out_pixels || out_size < entry_size) {
+    if (!out_pixels || out_size <= 0) {
         if (out_info) *out_info = info;
         return -1;
     }
@@ -880,14 +880,22 @@ int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     }
     if (record_size >= NEXUS_UI_FACE_PRS3_HEADER_BYTES &&
         memcmp(record_data, "PRS3", 4) == 0) {
-        /* The descriptor has proven a bounded PRS3 frame, not its opcode
-         * grammar. Keeping this blocked protects the real portrait route. */
+        Nexus_V1_Prs3Header hdr;
+        if (nexus_v1_prs3_parse_header(record_data, record_size, &hdr) &&
+            (int)hdr.uncompressed_size <= out_size) {
+            Nexus_V1_Prs3DecodeResult dr = nexus_v1_prs3_decompress(
+                hdr.stream, (int)hdr.compressed_size,
+                out_pixels, out_size, (int)hdr.uncompressed_size);
+            if (dr.success) {
+                info.kind = NEXUS_UI_FACE_RECORD_PRS3_DECODED;
+                if (out_info) *out_info = info;
+                return 1;
+            }
+        }
         info.kind = NEXUS_UI_FACE_RECORD_PRS3_UNPROVEN;
         if (out_info) *out_info = info;
         return 0;
     }
-    /* No raw 48x48 record grammar is source-owned. */
-    (void)entry_size;
     if (out_info) *out_info = info;
     return 0;
 }

@@ -2867,6 +2867,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_intak
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_decode.c")
+    add_executable(test_nexus_v1_prs3_decode
+        tests/test_nexus_v1_prs3_decode.c
+        src/nexus/nexus_v1_prs3_decode.c
+    )
+    target_include_directories(test_nexus_v1_prs3_decode PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_prs3_decode PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_prs3_decode
+        COMMAND test_nexus_v1_prs3_decode
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_decoder_admission.c")
     add_executable(test_nexus_v1_prs3_decoder_admission
         tests/test_nexus_v1_prs3_decoder_admission.c
@@ -3820,13 +3839,16 @@ file(GLOB NEXUS_SOURCES CONFIGURE_DEPENDS "src/nexus/nexus_v1_*.c")
 # Explicit V2 runtime wire-up modules (must be in lib for M11 wire-up).
 set(NEXUS_V2_RUNTIME_SOURCES
     src/nexus/nexus_v2_atmosphere.c
+    src/nexus/nexus_v2_config.c
     src/nexus/nexus_v2_hud_overlay.c
     src/nexus/nexus_v2_hud_runtime.c
     src/nexus/nexus_v2_lighting.c
     src/nexus/nexus_v2_lighting_runtime.c
     src/nexus/nexus_v2_particles.c
+    src/nexus/nexus_v2_render_pipeline.c
     src/nexus/nexus_v2_smooth_movement.c
     src/nexus/nexus_v2_smooth_movement_runtime.c
+    src/nexus/nexus_v2_touch_controller_affordance.c
     src/nexus/nexus_v2_touch_runtime.c
     src/nexus/nexus_v22_modern_assets_pc34.c
 )

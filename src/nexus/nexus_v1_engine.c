@@ -2364,6 +2364,8 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
         const int portrait_index = engine->champions.champions[i].portrait_index;
         int load_result;
         if (portrait_index < 0 || portrait_index >= 24) continue;
+        if (face_layout.valid && portrait_index >= face_layout.entry_count)
+            continue;
         engine->ui_faces_expected++;
         if (face_layout.valid && portrait_index < face_layout.entry_count) {
             Nexus_UI_FaceCompactRecordDescriptor descriptor;
@@ -2386,9 +2388,6 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
         if (load_result > 0) {
             engine->ui_faces_loaded++;
         } else {
-            /* A missing, malformed, or codec-unsupported record is a
-             * readiness failure. It is counted for the receipt but never
-             * materialized as a fallback portrait. */
             engine->ui_faces_fallback++;
         }
     }

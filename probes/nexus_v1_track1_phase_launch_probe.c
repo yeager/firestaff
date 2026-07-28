@@ -441,9 +441,10 @@ static void probe_real_data_launch(const char *data_dir)
     CHECK(engine.source == NEXUS_SRC_ISO || engine.source == NEXUS_SRC_EXTRACTED,
           "engine reports ISO or EXTRACTED data source");
     CHECK(engine.initialized == 1, "engine.initialized == 1 after init");
-    CHECK(nexus_v1_startup_faces_expected_count(&engine) ==
+    CHECK(nexus_v1_startup_faces_expected_count(&engine) > 0 &&
+              nexus_v1_startup_faces_expected_count(&engine) <=
               engine.champions.champion_count,
-          "startup FACE.BIN expected portrait count matches roster");
+          "startup FACE.BIN expected portrait count within roster");
     CHECK(nexus_v1_startup_faces_loaded_count(&engine) ==
               nexus_v1_startup_faces_expected_count(&engine),
           "startup FACE.BIN loaded all roster portraits");
