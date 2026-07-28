@@ -41755,3 +41755,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   script state and rasterizes the resulting IMG1/P4B1 pair. The staged script
   selects item 75 with palette 21; no caller-provided or PC34 substitute asset
   is permitted on this route.
+- ✅ 2026-07-28 CSB V2.x fresh build verification. Rebuilt the CSB V2
+  library and every registered CSB V2 test executable, then ran the complete
+  `^(csb_v2_|csb_v22_)` CTest selection: 41/41 pass. This covers V2.0
+  presentation/filter/settings/smooth-runtime routes, V2.1 texture upscale,
+  and V2.2 shapes, in-place drawing, per-cell material routing and the
+  reviewed-art gate.
