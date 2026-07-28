@@ -117,10 +117,12 @@ an integration build pass.
 
 - **CSB-V2X-VERIFICATION-LANE:** Closed 2026-07-28. All 41 registered
   V2.0/V2.1/V2.2 contracts are now tagged as CSB verification, so the normal
-  `ctest -L csb` gate covers the complete 93-test CSB suite rather than a
+  `ctest -L csb` gate covers the complete 96-test CSB suite rather than a
   partial V2.x subset. This verifies the implemented V2.x presentation,
   runtime, input, HUD, lighting, filters, settings, and artpack routes; it
-  does not claim unavailable external finished-art assets.
+  does not claim unavailable external finished-art assets. Re-run 2026-07-29:
+  all 96 CSB tests pass; real PC3.4 CLI runs reach map 0 runtime in V2.0 and
+  V2.1, while V2.2 correctly resolves to V2.1 without a reviewed full pack.
 
 - **M12-DATA-SCAN-PROGRESSBAR:** Closed 2026-07-28. The start menu now draws
   a live progressbar from the existing asynchronous hash scan, alongside its

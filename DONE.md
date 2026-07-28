@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 CSB V2.x real-data verification refresh. The complete CSB
+  CTest lane passes 96/96. Fresh canonical-PC3.4 CLI runs reach map 0 runtime
+  in V2.0 and V2.1; a V2.2 request correctly resolves to V2.1 while no
+  reviewed complete CSB artpack is installed. This verifies runtime behavior
+  and the fail-closed art gate, not uninstalled custom art.
+
 - ✅ 2026-07-29 CSB PC3.4 C001-C005 IMG2 decoder order. Canonical CSB PC
   graphics are byte-stride IMG2 records, so the native decoder now runs before
   the planar fallback. The previous order accepted the records as planar data
