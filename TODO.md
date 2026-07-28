@@ -686,6 +686,12 @@ that its exact runtime path is not already source-locked and tested.
    use correct source rasters. M653/C695 font binding uses the same source
    decoder. Full C017/C040 normal-runtime composition and app-window visual
    capture remain open.
+   2026-07-28: the canonical PC 3.4 real-data gate is now the authoritative
+   remaining startup-render blocker: C001 PRESENTS/CHAOS/STRIKES, C004/C002/
+   C003, and C017/C040 decoded-pixel hashes still disagree with the verified
+   capture set. Do not relax those hashes or replace the missing pixels with
+   generated artwork; repair the archive/LZW/image/palette pipeline and then
+   rerun `csb_v1_pc_real_asset_launch` against the original data.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

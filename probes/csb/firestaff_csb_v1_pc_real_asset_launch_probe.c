@@ -97,6 +97,32 @@ static uint32_t real_surface_hash(const unsigned char *pixels, size_t count)
     return hash ? hash : 2166136261u;
 }
 
+static void print_decode_diagnostics_if_requested(const CSB_V1_BootProfile *profile)
+{
+    static const unsigned int assets[] = { 1u, 2u, 3u, 4u, 5u, 17u, 40u };
+    size_t index;
+
+    if (!profile || !getenv("FIRESTAFF_CSB_REAL_DIAGNOSTICS")) return;
+    for (index = 0u; index < sizeof(assets) / sizeof(assets[0]); ++index) {
+        CSB_V1_StartupGraphicDecodeReceipt_PC34 decode;
+        unsigned char *pixels = NULL;
+        int width = 0;
+        int height = 0;
+        int ok;
+
+        memset(&decode, 0, sizeof(decode));
+        ok = csb_v1_boot_decode_graphics_dat_asset_pc34(
+            profile->graphics_path, assets[index], &pixels, &width, &height,
+            &decode);
+        printf("  DIAG: C%03u decode=%d %dx%d stream=%zu/%zu pixels=%zu/%zu hash=%08x boundary=%d\n",
+               assets[index], ok, width, height,
+               decode.stream_bytes_consumed, decode.stream_byte_count,
+               decode.emitted_planar_pixels, decode.physical_planar_pixels,
+               decode.indexed_pixel_fnv1a, decode.ended_at_record_boundary);
+        free(pixels);
+    }
+}
+
 static uint32_t real_hash_u32(uint32_t hash, uint32_t value)
 {
     unsigned int byte_index;
@@ -520,6 +546,7 @@ static void verify_real_indexed_startup(
     CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34 hud_door_input_receipt;
 
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
+    print_decode_diagnostics_if_requested(profile);
     CHECK(csb_v1_boot_startup_runtime_asset_session_open_pc34(profile, &session) == 1 &&
               session.valid && session.full_startup_ready &&
               session.rejects_legacy_wrappers,

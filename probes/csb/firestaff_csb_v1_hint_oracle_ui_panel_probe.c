@@ -65,14 +65,13 @@ static const char *data_dir_arg(int argc, char **argv,
     (void)buf;
     (void)buf_size;
 
+    (void)buf;
+    (void)buf_size;
+
     if (argc > 1 && argv[1] && argv[1][0] != '\0') {
         return argv[1];
     }
     env = getenv("FIRESTAFF_CSB_HTC_DATA");
-    if (env && env[0] != '\0') {
-        return env;
-    }
-    env = getenv("FIRESTAFF_DATA_DIR");
     if (env && env[0] != '\0') {
         return env;
     }

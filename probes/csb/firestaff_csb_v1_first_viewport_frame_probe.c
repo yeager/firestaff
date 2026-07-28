@@ -311,17 +311,18 @@ static const char *probe_data_dir(int argc, char **argv,
                                    char *default_buf, size_t default_buf_size)
 {
     const char *env;
-    const char *home;
+
+    (void)default_buf;
+    (void)default_buf_size;
 
     if (argc > 1 && argv[1] && argv[1][0] != '\0') return argv[1];
 
     env = getenv("FIRESTAFF_CSB_PC_DATA");
     if (env && env[0] != '\0') return env;
 
-    home = getenv("HOME");
-    if (!home || home[0] == '\0') return NULL;
-    snprintf(default_buf, default_buf_size, "%s/.firestaff/data/csb", home);
-    return default_buf;
+    /* CI owns the deterministic synthetic fixture below. Real asset capture
+     * is deliberate through FIRESTAFF_CSB_PC_DATA or an argument. */
+    return NULL;
 }
 
 static int probe_real_assets_present(const char *dir)

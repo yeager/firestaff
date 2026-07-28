@@ -4,114 +4,88 @@
 
 int main(void)
 {
-    uint8_t pixels[64] = {0};
-    uint8_t rejected[32];
+    uint8_t pixels[16] = {0};
     uint8_t title[320 * 153];
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
 
-    /* IMG1 test 1: short repeat.
-     * 16x1 image. Command: n1=7 n2=A → 8 pixels of color A,
-     * then n1=7 n2=A → 8 more. Total 16 pixels of color 10. */
-    {
-        const uint8_t img[] = {
-            0x00, 0x10, 0x00, 0x01,
-            0x7A, 0x7A
-        };
-        memset(pixels, 0, sizeof(pixels));
-        if (!csb_v1_startup_img3_decode_to_indexed_pc34_compat(
-                img, sizeof(img), 16, 1, pixels, sizeof(pixels)) ||
-            pixels[0] != 10 || pixels[7] != 10 || pixels[8] != 10 ||
-            pixels[15] != 10) return 1;
-    }
-
-    /* IMG1 test 2: byte-length repeat.
-     * 8x2 image. Command: n1=8 n2=5, byte=0x0F → 16 pixels of color 5. */
-    {
-        const uint8_t img[] = {
-            0x00, 0x08, 0x00, 0x02,
-            0x85, 0x0F
-        };
-        memset(pixels, 0, sizeof(pixels));
-        if (!csb_v1_startup_img3_decode_to_indexed_pc34_compat(
-                img, sizeof(img), 8, 2, pixels, sizeof(pixels)) ||
-            pixels[0] != 5 || pixels[15] != 5) return 2;
-    }
-
-    /* IMG1 test 3: literal (odd count).
-     * 4x1 image. Command: n1=9 n2=0, byte=0x03 (odd) → read 4 nibbles.
-     * Nibbles: 1, 2, 3, 4. */
+    /* Canonical PC3.4 CSB startup entries are big-endian IMG1 after the
+     * archive/LZW boundary.  Command 3/A emits four pixels of index A. */
     {
         const uint8_t img[] = {
             0x00, 0x04, 0x00, 0x01,
-            0x90, 0x03, 0x12, 0x34
+            0x3a
         };
         memset(pixels, 0, sizeof(pixels));
         if (!csb_v1_startup_img3_decode_to_indexed_pc34_compat(
-                img, sizeof(img), 4, 1, pixels, sizeof(pixels)) ||
-            pixels[0] != 1 || pixels[1] != 2 || pixels[2] != 3 ||
-            pixels[3] != 4) return 3;
+                img, sizeof(img), 4u, 1u, pixels, sizeof(pixels)) ||
+            pixels[0] != 10u || pixels[3] != 10u) return 1;
     }
 
-    /* IMG1 test 4: literal (even count).
-     * 5x1 image. Command: n1=9 n2=7, byte=0x04 (even) → 1 pixel of color 7,
-     * then read 4 nibbles: A, B, C, D. Total 5 pixels. */
+    /* ReDMCSB IMAGE3.C format: little-endian width/height, six local
+     * palette nibbles, then command nibbles.  0x8 is palette slot 0 with
+     * a count; the following 2 means four indexed pixels. */
     {
         const uint8_t img[] = {
-            0x00, 0x05, 0x00, 0x01,
-            0x97, 0x04, 0xAB, 0xCD
+            0x04, 0x00, 0x01, 0x00,
+            0x12, 0x34, 0x56,
+            0x82
+        };
+        memset(&receipt, 0, sizeof(receipt));
+        if (!csb_v1_startup_img3_decode_to_indexed_with_receipt_pc34_compat(
+                img, sizeof(img), 4u, 1u, pixels, sizeof(pixels), &receipt) ||
+            pixels[0] != 1u || pixels[3] != 1u || !receipt.valid ||
+            receipt.stream_bytes_consumed != sizeof(img) ||
+            receipt.emitted_planar_pixels != 4u ||
+            !receipt.ended_at_record_boundary) return 2;
+    }
+
+    /* Literal colour uses kind 7 and the immediate following nibble. */
+    {
+        const uint8_t img[] = {
+            0x03, 0x00, 0x01, 0x00,
+            0x12, 0x34, 0x56,
+            0xF9, 0x10
         };
         memset(pixels, 0, sizeof(pixels));
         if (!csb_v1_startup_img3_decode_to_indexed_pc34_compat(
-                img, sizeof(img), 5, 1, pixels, sizeof(pixels)) ||
-            pixels[0] != 7 || pixels[1] != 0xA || pixels[2] != 0xB ||
-            pixels[3] != 0xC || pixels[4] != 0xD) return 4;
+                img, sizeof(img), 3u, 1u, pixels, sizeof(pixels)) ||
+            pixels[0] != 9u || pixels[2] != 9u) return 3;
     }
 
-    /* IMG1 test 5: copy previous line.
-     * 4x2 image. Row 0: 4 pixels of color 3 (short repeat 3,3).
-     * Row 1: copy 3 from prev + 1 pixel of color 9 (n1=B n2=9 byte=0x02). */
+    /* Kind 6 copies output from one preceding scanline. */
     {
         const uint8_t img[] = {
-            0x00, 0x04, 0x00, 0x02,
-            0x33,
-            0xB9, 0x02
+            0x02, 0x00, 0x02, 0x00,
+            0x12, 0x34, 0x56,
+            0x80, 0x66
         };
         memset(pixels, 0, sizeof(pixels));
         if (!csb_v1_startup_img3_decode_to_indexed_pc34_compat(
-                img, sizeof(img), 4, 2, pixels, sizeof(pixels)) ||
-            pixels[0] != 3 || pixels[3] != 3 ||
-            pixels[4] != 3 || pixels[5] != 3 || pixels[6] != 3 ||
-            pixels[7] != 9) return 5;
+                img, sizeof(img), 2u, 2u, pixels, sizeof(pixels)) ||
+            pixels[0] != 1u || pixels[1] != 1u ||
+            pixels[2] != 1u || pixels[3] != 1u) return 4;
     }
 
-    /* IMG1 test 6: truncated stream must be rejected. */
+    /* Big-endian / pre-local-palette streams are not PC IMG3. */
     {
-        const uint8_t img[] = {
-            0x00, 0x10, 0x00, 0x02,
-            0x7A
-        };
-        memset(rejected, 0xaa, sizeof(rejected));
+        const uint8_t img[] = { 0x00, 0x04, 0x00, 0x01, 0x71 };
         if (csb_v1_startup_img3_decode_to_indexed_pc34_compat(
-                img, sizeof(img) - 1U, 16, 2, rejected, sizeof(rejected)) ||
-            rejected[0] != 0xaa) {
-            /* truncated data should still decode partially — the decoder
-             * is lenient. This test just verifies no crash. */
-        }
+                img, sizeof(img), 4u, 1u, pixels, sizeof(pixels))) return 5;
     }
 
-    /* _DisplayChaosStrikesBack region admission test (unchanged). */
     memset(title, 0, sizeof(title));
     if (csb_v1_startup_title_c001_regions_admit_pc34_compat(
-            title, 320U, 153U)) return 7;
-    title[0] = 1U;
-    title[80 * 320] = 2U;
+            title, 320u, 153u)) return 6;
+    title[0] = 1u;
+    title[80u * 320u] = 2u;
     if (csb_v1_startup_title_c001_regions_admit_pc34_compat(
-            title, 320U, 153U)) return 8;
-    title[137 * 320] = 15U;
+            title, 320u, 153u)) return 7;
+    title[137u * 320u] = 15u;
     if (!csb_v1_startup_title_c001_regions_admit_pc34_compat(
-            title, 320U, 153U) ||
+            title, 320u, 153u) ||
         csb_v1_startup_title_c001_regions_admit_pc34_compat(
-            title, 320U, 152U) ||
+            title, 320u, 152u) ||
         csb_v1_startup_title_c001_regions_admit_pc34_compat(
-            title, 319U, 153U)) return 9;
+            title, 319u, 153u)) return 8;
     return 0;
 }

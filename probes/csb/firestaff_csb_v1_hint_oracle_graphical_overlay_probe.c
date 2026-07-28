@@ -16,6 +16,7 @@
 #include "csb_hint_oracle_htc_real_scan.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int s_pass = 0;
@@ -59,6 +60,7 @@ static size_t count_color(const uint8_t *fb, size_t len, uint8_t color)
 int main(int argc, char **argv)
 {
     const char *dir = NULL;
+    const char *real_data_dir;
     uint8_t fb[CSB_HINT_ORACLE_OVERLAY_DEFAULT_FB_W *
                CSB_HINT_ORACLE_OVERLAY_DEFAULT_FB_H];
     CSB_HintOracleOverlay_Stats stats;
@@ -70,6 +72,12 @@ int main(int argc, char **argv)
 
     if (argc > 1) {
         dir = argv[1];
+    }
+    if (!dir || dir[0] == '\0') {
+        real_data_dir = getenv("FIRESTAFF_CSB_HTC_DATA");
+        if (real_data_dir && real_data_dir[0] != '\0') {
+            dir = real_data_dir;
+        }
     }
 
     printf("=== CSB V1 Hint Oracle graphical overlay probe ===\n\n");
@@ -100,6 +108,12 @@ int main(int argc, char **argv)
     known = csb_hint_oracle_htc_real_known_hashes(&known_count);
     check("known HCSB.HTC hash table is non-empty",
           known != NULL && known_count > 0u);
+
+    if (!dir || dir[0] == '\0') {
+        printf("  SKIP: set FIRESTAFF_CSB_HTC_DATA or pass a verified "
+               "Utility Disk path to enable this real-data gate.\n");
+        return s_fail == 0 ? 0 : 1;
+    }
 
     csb_hint_oracle_htc_real_cache_init(&cache);
     rc = csb_hint_oracle_htc_real_scan_and_load(dir, NULL, 6, &cache);

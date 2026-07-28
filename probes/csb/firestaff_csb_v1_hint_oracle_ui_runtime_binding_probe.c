@@ -66,7 +66,9 @@ static const char *data_dir_arg(int argc, char **argv,
                                 char *buf, size_t buf_size)
 {
     const char *env;
-    const char *home;
+
+    (void)buf;
+    (void)buf_size;
 
     if (argc > 1 && argv[1] && argv[1][0] != '\0') {
         return argv[1];
@@ -75,16 +77,7 @@ static const char *data_dir_arg(int argc, char **argv,
     if (env && env[0] != '\0') {
         return env;
     }
-    env = getenv("FIRESTAFF_DATA_DIR");
-    if (env && env[0] != '\0') {
-        return env;
-    }
-    home = getenv("HOME");
-    if (!home || home[0] == '\0') {
-        return NULL;
-    }
-    snprintf(buf, buf_size, "%s/.firestaff/data", home);
-    return buf;
+    return NULL;
 }
 
 static int is_printable_ascii(const uint8_t *buf, size_t len)
@@ -152,6 +145,11 @@ int main(int argc, char **argv)
 
     dir = data_dir_arg(argc, argv, default_dir, sizeof(default_dir));
     printf("data_dir=%s\n", dir ? dir : "(none)");
+    if (!dir) {
+        printf("SKIP: set FIRESTAFF_CSB_HTC_DATA or pass a verified "
+               "Utility Disk path to enable this real-data gate.\n");
+        return 0;
+    }
 
     csb_hint_oracle_htc_real_cache_init(&cache);
 

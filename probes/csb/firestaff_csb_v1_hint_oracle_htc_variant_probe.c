@@ -60,7 +60,9 @@ static const char *data_dir_arg(int argc, char **argv,
                                 char *buf, size_t buf_size)
 {
     const char *env;
-    const char *home;
+
+    (void)buf;
+    (void)buf_size;
 
     if (argc > 1 && argv[1] && argv[1][0] != '\0') {
         return argv[1];
@@ -69,16 +71,10 @@ static const char *data_dir_arg(int argc, char **argv,
     if (env && env[0] != '\0') {
         return env;
     }
-    env = getenv("FIRESTAFF_DATA_DIR");
-    if (env && env[0] != '\0') {
-        return env;
-    }
-    home = getenv("HOME");
-    if (!home || home[0] == '\0') {
-        return NULL;
-    }
-    snprintf(buf, buf_size, "%s/.firestaff/data", home);
-    return buf;
+    /* A regular CTest must never recursively unpack a user's game archive
+     * library. Real material is intentionally opt-in through the dedicated
+     * variable above or an explicit path argument. */
+    return NULL;
 }
 
 /* ── Catalog identity (always run, even on hosts without assets) ── */

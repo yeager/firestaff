@@ -16,8 +16,8 @@
  *     hash explicitly so the scan path is self-checking.
  *
  * What this proves:
- *   - Hash-based discovery of a real HCSB.HTC in the user's
- *     ~/.firestaff/data tree (or the explicit data-dir override).
+ *   - Hash-based discovery of a real HCSB.HTC from an explicit data-dir
+ *     override, without recursively walking a user's entire game library.
  *   - Cache handoff: parser view, owned file buffer, resolved path,
  *     and matched MD5/label are all populated after a single scan.
  *   - Real-asset location lookup: at least one (level, x, y) tuple
@@ -58,7 +58,9 @@ static const char *data_dir_arg(int argc, char **argv,
                                 char *buf, size_t buf_size)
 {
     const char *env;
-    const char *home;
+
+    (void)buf;
+    (void)buf_size;
 
     if (argc > 1 && argv[1] && argv[1][0] != '\0') {
         return argv[1];
@@ -67,16 +69,7 @@ static const char *data_dir_arg(int argc, char **argv,
     if (env && env[0] != '\0') {
         return env;
     }
-    env = getenv("FIRESTAFF_DATA_DIR");
-    if (env && env[0] != '\0') {
-        return env;
-    }
-    home = getenv("HOME");
-    if (!home || home[0] == '\0') {
-        return NULL;
-    }
-    snprintf(buf, buf_size, "%s/.firestaff/data", home);
-    return buf;
+    return NULL;
 }
 
 /* Sanity-print `buf` of `len` as ASCII with non-printables masked.
@@ -145,6 +138,11 @@ int main(int argc, char **argv)
 
     dir = data_dir_arg(argc, argv, default_dir, sizeof(default_dir));
     printf("data_dir=%s\n", dir ? dir : "(none)");
+    if (!dir) {
+        printf("SKIP: set FIRESTAFF_CSB_HTC_DATA or pass a verified "
+               "Utility Disk path to enable this real-data gate.\n");
+        return 0;
+    }
 
     csb_hint_oracle_htc_real_cache_init(&cache);
 

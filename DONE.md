@@ -41878,3 +41878,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   using the shared 8.8 subpixel pan sweep. The V1 turn command remains
   source-owned and discrete. Targeted V2 runtime, source-lock and turn-pan
   tests pass for right, left, completion and non-cardinal no-op paths.
+
+- ✅ 2026-07-28 CSB Hint Oracle test-root isolation. The real-data variant
+  probe no longer recursively walks a user's game library during normal
+  CTest execution. Real HCSB.HTC coverage is explicit through
+  `FIRESTAFF_CSB_HTC_DATA` or a path argument; catalog verification remains
+  automatic and fast.
+
+- ✅ 2026-07-28 CSB probe fixture isolation. Hint Oracle real-data probes and
+  the first-viewport probe now use their deterministic no-data paths during
+  normal CTest execution. Explicit CSB data paths still exercise the original
+  archive and PC material routes, while the ordinary regression gate no
+  longer stalls on a user's installed game corpus.
