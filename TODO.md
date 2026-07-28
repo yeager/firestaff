@@ -666,7 +666,9 @@ that its exact runtime path is not already source-locked and tested.
    decoder rather than the unpopulated DM1 test atlas; a live macOS Prison
    route shows source wall panels. Runtime palette and C017/C040 HUD remain
    open and must stay source-owned; broader wall/HUD/palette consumption
-   remains open.
+   remains open. The normal M11 frame setup now preserves a source PC3.4
+   dungeon-palette mapping for F0128's four-bit CSB pixels (2026-07-28), but
+   packaged app-window capture of that exact runtime palette is still needed.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

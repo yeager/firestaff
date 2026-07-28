@@ -1,3 +1,9 @@
+- ✅ 2026-07-28 CSB F0128 source-palette handoff. The common M11 frame setup
+  now installs the source PC3.4 dungeon palette for CSB's IMG3 four-bit
+  viewport pixels rather than clearing indexed-palette state before F0128.
+  The CSB V1 handoff and all 41 V2.x regression gates pass; a full app-window
+  palette capture remains part of the separately open runtime-capture work.
+
 - ✅ 2026-07-28 CSB F0128 live wall material binding. The 15 PC3.4
   wall-set-zero records C093..C107 now use the authenticated CSB IMG3/LZW
   GRAPHICS.DAT decoder directly instead of the never-populated DM1 test
