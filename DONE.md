@@ -1,3 +1,13 @@
+- ✅ 2026-07-28 Nexus Structure3 textured mesh rendering. Propagated
+  decoder_permitted from the Structure2 format evidence receipt into the
+  complete source scene receipt, relaxing the viewport fail-closed guard.
+  Added viewport_render_structure3_mesh() that iterates all Structure3 faces,
+  looks up decoded Structure2 texture surfaces, converts 16.16 fixed-point
+  vertices to float, and rasterizes through nexus_raster_quad_tex /
+  nexus_raster_triangle_tex. The Nexus viewport now draws textured 3D mesh
+  geometry instead of blocking at the complete-source-scene no-draw guard.
+  All 203 Nexus tests pass.
+
 - ✅ 2026-07-28 Nexus Structure2 texture decoder and format evidence pipeline.
   Completed the full format evidence pipeline: pixel_span_proven,
   palette_addressing_proven, vdp1_format_proven, and decoder_permitted all set
