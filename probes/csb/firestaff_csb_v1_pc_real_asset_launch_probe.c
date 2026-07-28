@@ -172,7 +172,6 @@ static void verify_real_c017_c040_hud_handoff(
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
     CSB_V1_StartupRuntimeRaster_PC34 raster;
     CSB_V1_StartupRuntimeHudPanelReceipt_PC34 panel_receipt;
-    CSB_V1_StartupAudioAction_PC34 audio_action;
     const CSB_V1_StartupRuntimeSurface_PC34 *inventory;
     const CSB_V1_StartupRuntimeSurface_PC34 *resurrect;
     unsigned char panel_page[320 * 200];
@@ -197,29 +196,14 @@ static void verify_real_c017_c040_hud_handoff(
           "C017/C040 captures match verified PC CSB GRAPHICS.DAT pixels");
 
     memset(&plan, 0, sizeof(plan));
-    CHECK(csb_v1_boot_startup_playback_begin_pc34(session, &audio_action) == 1 &&
-              audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_FTL_SWOOSH_PC34 &&
-              csb_v1_boot_startup_playback_complete_swoosh_pc34(
-                  session, &audio_action) == 1 &&
-              csb_v1_boot_startup_playback_title_frame_pc34(
-                  session, 0, &plan, &audio_action) == 1 &&
-              csb_v1_boot_startup_playback_title_frame_pc34(
-                  session, 60, &plan, &audio_action) == 1 &&
-              csb_v1_boot_startup_playback_title_frame_pc34(
-                  session, 80, &plan, &audio_action) == 1 &&
-              csb_v1_boot_startup_playback_title_frame_pc34(
-                  session, 100, &plan, &audio_action) == 1 &&
-              csb_v1_boot_startup_playback_title_frame_pc34(
-                  session, csb_v1_startup_title_total_ticks_pc34(),
-                  &plan, &audio_action) == 1 &&
-              audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34 &&
-              csb_v1_boot_startup_playback_complete_entrance_pc34(session) == 1 &&
-              csb_v1_boot_startup_playback_enter_hud_pc34(session) == 1 &&
-              session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34,
+    CHECK(session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34 &&
+              session->playback.entrance_complete,
           "C001-C005 playback reaches the C017/C040 runtime HUD owner");
 
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
     plan.title_stage = CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34;
+    plan.special_palette = -1;
+    plan.title_special_palette = -1;
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               session, &plan, 102u, &frame) == 1 && frame.valid &&
               frame.uses_verified_hud_bindings &&
@@ -290,11 +274,11 @@ static int real_c001_title_plan(int title_frame,
     facts.title_active = 1;
     facts.entrance_active = 1;
     facts.title_frame = title_frame;
-    /* Runtime host facts retain the C001 source step just drawn; the
-     * presentation adapter derives the current frame's rectangle itself. */
+    /* Presentation receipts require the source step for the frame being
+     * presented.  Passing the previous step rejects the first CHAOS frame
+     * before its original C001 pixels reach the rasterizer. */
     facts.title_source_step = (int)
-        csb_v1_startup_title_source_step_for_frame_pc34(
-            title_frame > 0 ? title_frame - 1 : 0);
+        csb_v1_startup_title_source_step_for_frame_pc34(title_frame);
     if (!csb_v1_startup_presentation_receipt_from_host_facts_pc34(
             &facts, &receipt) || !receipt.valid) {
         return 0;
@@ -544,6 +528,10 @@ static void verify_real_indexed_startup(
     CSB_V1_StartupSessionDoorHudTickReceipt_PC34 first_door_receipt;
     CSB_V1_StartupSessionInputReceipt_PC34 first_input_receipt;
     CSB_V1_StartupSessionHudDoorInputPackageReceipt_PC34 hud_door_input_receipt;
+    CSB_V1_StartupRenderState_PC34 opening_state;
+    CSB_V1_StartupAudioAction_PC34 audio_action;
+    int opening_step;
+    int opening_pages_presented;
 
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
     print_decode_diagnostics_if_requested(profile);
@@ -555,7 +543,24 @@ static void verify_real_indexed_startup(
 
     verify_real_c001_title_sequence(&session);
     verify_real_c001_c004_full_frame_sequence(&session);
-    verify_real_c017_c040_hud_handoff(&session);
+    memset(&plan, 0, sizeof(plan));
+    CHECK(csb_v1_boot_startup_playback_begin_pc34(&session, &audio_action) == 1 &&
+              audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_FTL_SWOOSH_PC34 &&
+              csb_v1_boot_startup_playback_complete_swoosh_pc34(
+                  &session, &audio_action) == 1 &&
+              csb_v1_boot_startup_playback_title_frame_pc34(
+                  &session, 0, &plan, &audio_action) == 1 &&
+              csb_v1_boot_startup_playback_title_frame_pc34(
+                  &session, 60, &plan, &audio_action) == 1 &&
+              csb_v1_boot_startup_playback_title_frame_pc34(
+                  &session, 80, &plan, &audio_action) == 1 &&
+              csb_v1_boot_startup_playback_title_frame_pc34(
+                  &session, 100, &plan, &audio_action) == 1 &&
+              csb_v1_boot_startup_playback_title_frame_pc34(
+                  &session, csb_v1_startup_title_total_ticks_pc34(),
+                  &plan, &audio_action) == 1 &&
+              audio_action == CSB_V1_STARTUP_AUDIO_ACTION_PLAY_ENTRANCE_MUSIC_PC34,
+          "source Swoosh and C001 title sequence enter the owned Entrance session");
     CHECK(csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
               real_asset_receipt, &session, &package_receipt) == 1 &&
               package_receipt.valid && package_receipt.real_package_matched &&
@@ -661,23 +666,27 @@ static void verify_real_indexed_startup(
           "C004 plus closed C002/C003 reaches one indexed entrance raster");
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
 
-    memset(&plan, 0, sizeof(plan));
-    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
-    plan.surface_w = 320;
-    plan.surface_h = 200;
-    plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
-    plan.title_special_palette = -1;
-    plan.opening_composite_valid = 1;
-    plan.opening_left_source_x = 0;
-    plan.opening_left_w = 97;
-    plan.opening_left_h = 161;
-    plan.opening_left_dest_y = 28;
-    plan.opening_right_source_x = 8;
-    plan.opening_right_w = 119;
-    plan.opening_right_h = 161;
-    plan.opening_right_dest_x = 113;
-    plan.opening_right_dest_y = 28;
-    CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+    memset(&opening_state, 0, sizeof(opening_state));
+    opening_state.entrance_active = 1;
+    opening_state.entrance_frame = 2;
+    opening_state.entrance_source_step = 4;
+    opening_state.opening_active = 1;
+    opening_state.opening_step = 1;
+    CHECK(csb_v1_startup_source_render_plan_from_state_pc34(
+              &opening_state, &plan) == 1 &&
+              plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+              plan.opening_door_step == 1 &&
+              csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+                  &session, &plan, 4u, &host_surface) == 1 &&
+              host_surface.valid && host_surface.door_opening_decision,
+          "first C004/C002/C003 opening page reaches the owned Entrance session");
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&host_surface);
+    opening_state.opening_step = 2;
+    CHECK(csb_v1_startup_source_render_plan_from_state_pc34(
+              &opening_state, &plan) == 1 &&
+              plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+              plan.opening_door_step == 2 &&
+              csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 5u, &frame) == 1 &&
               csb_v1_boot_startup_runtime_frame_rasterize_pc34(
                   &frame, &plan, &raster) == 1 && raster.valid &&
@@ -698,17 +707,24 @@ static void verify_real_indexed_startup(
               host_surface.raster.source_surface_count == 3 &&
               host_surface.raster.pixel_hash == 0x1fdee932u &&
               host_surface.special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE &&
               host_surface.title_special_palette == -1 &&
               host_surface.no_synthetic_surface,
           "runtime host opening handoff consumes C004/C002/C003 with entrance palette");
     CHECK(csb_v1_boot_startup_runtime_host_surface_matches_indexed_frame_pc34(
               &session, &plan, 5u, host_surface.raster.pixels, 320, 200,
-              VGA_PALETTE_PC34_SPECIAL_ENTRANCE) == 1 &&
+              VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE) == 1 &&
               csb_v1_boot_startup_runtime_host_surface_matches_indexed_frame_pc34(
                   &session, &plan, 5u, host_surface.raster.pixels, 320, 200,
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES) == 0,
           "presented C004/C002/C003 raster rejects a title palette phase");
+    /* A package receipt is a source-tick snapshot.  The host has just
+     * published the opening frame, so renew it before binding that frame to
+     * the resident C001/C004/C002/C003 package. */
+    CHECK(csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
+              real_asset_receipt, &session, &package_receipt) == 1 &&
+              package_receipt.source_tick == session.source_tick,
+          "opening frame refreshes the verified PC34 package tick");
     CHECK(csb_v1_startup_session_opening_door_receipt_pc34(
               &session, &package_receipt, &host_surface,
               &opening_door_receipt) == 1 && opening_door_receipt.valid &&
@@ -729,14 +745,49 @@ static void verify_real_indexed_startup(
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&chaos_host);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&strikes_host);
 
+    opening_pages_presented = 1;
+    for (opening_step = 3; opening_step <= 31; ++opening_step) {
+        opening_state.opening_step = opening_step;
+        if (!csb_v1_startup_source_render_plan_from_state_pc34(
+                &opening_state, &plan) ||
+            !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+                &session, &plan, (uint32_t)(3 + opening_step),
+                &host_surface) || !host_surface.valid ||
+            !host_surface.door_opening_decision ||
+            host_surface.frame.opening_step != opening_step) {
+            opening_pages_presented = 0;
+        }
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &host_surface);
+        if (!opening_pages_presented) break;
+    }
+    CHECK(opening_pages_presented &&
+              session.playback.last_door_opening_step == 31u &&
+              session.playback.next_door_opening_step == 32u,
+          "all 31 original C004/C002/C003 door pages reach the Entrance session");
+
+    CHECK(csb_v1_boot_startup_playback_complete_entrance_pc34(&session) == 1 &&
+              csb_v1_boot_startup_playback_enter_hud_pc34(&session) == 1,
+          "verified Entrance door frame hands off to the C017/C040 HUD owner");
+    verify_real_c017_c040_hud_handoff(&session);
+
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
     plan.title_stage = CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34;
+    plan.special_palette = -1;
+    plan.title_special_palette = -1;
     CHECK(csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
               &session, &plan, 102u, &host_surface) == 1 && host_surface.valid &&
               host_surface.host_surface ==
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34,
           "terminal session exposes the original C017/C040 runtime host surface");
+    /* F0807's terminal HUD host is another published source frame; retain a
+     * fresh package snapshot so the terminal contract cannot accept a stale
+     * title or opening tick. */
+    CHECK(csb_v1_startup_real_package_consumption_receipt_from_session_pc34(
+              real_asset_receipt, &session, &package_receipt) == 1 &&
+              package_receipt.source_tick == session.source_tick,
+          "terminal HUD refreshes the verified PC34 package tick");
     CHECK(csb_v1_startup_session_package_title_receipt_pc34(
               &session, &package_receipt, &title_package_receipt) == 1 &&
               title_package_receipt.valid &&
@@ -810,6 +861,10 @@ int main(int argc, char **argv)
     CSB_V1_StartupRealReceipt real_asset_receipt;
     const CSB_V1_DungeonData *current;
     uint64_t before_play_ms;
+    int start_level;
+    int start_x;
+    int start_y;
+    int start_dir;
 
     printf("=== CSB V1 PC real-asset launch probe ===\n\n");
     printf("data_dir=%s\n", dir ? dir : "(none)");
@@ -858,10 +913,17 @@ int main(int argc, char **argv)
           "loaded PC dungeon exposes at least one level");
     CHECK(csb_v1_dungeon_get_current_level() == 0,
           "new-game dungeon level is map 0");
-    CHECK(profile.runtime.party_x == CSB_V1_START_PARTY_X &&
-          profile.runtime.party_y == CSB_V1_START_PARTY_Y &&
-          profile.runtime.party_dir == CSB_V1_START_PARTY_DIR,
-          "runtime keeps the source-locked CSB start pose");
+    start_level = start_x = start_y = start_dir = -1;
+    CHECK(csb_v1_dungeon_initial_party_pose_pc34(
+              current, &start_level, &start_x, &start_y, &start_dir) == 1 &&
+          profile.runtime.current_level == start_level &&
+          profile.runtime.party_x == start_x &&
+          profile.runtime.party_y == start_y &&
+          profile.runtime.party_dir == start_dir &&
+          profile.runtime.party_state.PartyMapX == start_x &&
+          profile.runtime.party_state.PartyMapY == start_y &&
+          profile.runtime.party_state.PartyDirection == start_dir,
+          "runtime and HUD retain DUNGEON.DAT's source-locked CSB start pose");
     CHECK(profile.runtime.chaos_magic.magic_initialized == 1,
           "CSB chaos magic is initialized at handoff");
 

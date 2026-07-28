@@ -686,12 +686,12 @@ that its exact runtime path is not already source-locked and tested.
    use correct source rasters. M653/C695 font binding uses the same source
    decoder. Full C017/C040 normal-runtime composition and app-window visual
    capture remain open.
-   2026-07-28: the canonical PC 3.4 real-data gate is now the authoritative
-   remaining startup-render blocker: C001 PRESENTS/CHAOS/STRIKES, C004/C002/
-   C003, and C017/C040 decoded-pixel hashes still disagree with the verified
-   capture set. Do not relax those hashes or replace the missing pixels with
-   generated artwork; repair the archive/LZW/image/palette pipeline and then
-   rerun `csb_v1_pc_real_asset_launch` against the original data.
+   2026-07-28: the canonical PC 3.4 real-data gate now proves the full
+   source-owned startup chain: Swoosh, C001 PRESENTS/CHAOS/STRIKES, all 31
+   C004/C002/C003 opening pages, C017/C040 HUD handoff and the DUNGEON.DAT
+   initial party pose. The remaining work here is broader normal-runtime
+   viewport/HUD consumption and packaged macOS app-window capture; do not
+   replace any missing source raster with generated artwork.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

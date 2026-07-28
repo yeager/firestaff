@@ -8,8 +8,8 @@ int main(void)
     uint8_t title[320 * 153];
     CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
 
-    /* Canonical PC3.4 CSB startup entries are big-endian IMG1 after the
-     * archive/LZW boundary.  Command 3/A emits four pixels of index A. */
+    /* Canonical PC3.4 CSB startup entries are big-endian IMG2 after the
+     * archive/LZW boundary.  Command 0x3A emits four pixels of index A. */
     {
         const uint8_t img[] = {
             0x00, 0x04, 0x00, 0x01,
@@ -66,11 +66,13 @@ int main(void)
             pixels[2] != 1u || pixels[3] != 1u) return 4;
     }
 
-    /* Big-endian / pre-local-palette streams are not PC IMG3. */
+    /* PC IMG2 uses its declared width as the row stride.  This covers
+     * C002-like odd-width assets without Atari planar padding. */
     {
-        const uint8_t img[] = { 0x00, 0x04, 0x00, 0x01, 0x71 };
-        if (csb_v1_startup_img3_decode_to_indexed_pc34_compat(
-                img, sizeof(img), 4u, 1u, pixels, sizeof(pixels))) return 5;
+        const uint8_t img[] = { 0x00, 0x03, 0x00, 0x01, 0x2A };
+        if (!csb_v1_startup_img3_decode_to_indexed_pc34_compat(
+                img, sizeof(img), 3u, 1u, pixels, sizeof(pixels)) ||
+            pixels[0] != 10u || pixels[2] != 10u) return 5;
     }
 
     memset(title, 0, sizeof(title));

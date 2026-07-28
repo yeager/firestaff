@@ -192,7 +192,7 @@ const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_
          * 9419-9427): retain the 0x0002 base and apply the eight explicitly
          * written title colors before the CHAOS zoom. */
         {
-                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {182, 146,  36},
+                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {188, 156,  60},
                 {146,  73,  36}, {219, 182,  36}, {182, 109,  36}, {  0,   0, 109},
                 {255, 255,  73}, {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109},
                 {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {255,   0,   0}
@@ -201,7 +201,7 @@ const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_
          * F0437:1305-1308 reveals STRIKES BACK after changing 10 to black
          * and 12 to red; it is not the CHAOS palette reused unchanged. */
         {
-                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {182, 146,  36},
+                {  0,   0, 109}, {  0,   0, 109}, {  0,   0, 109}, {188, 156,  60},
                 {146,  73,  36}, {219, 182,  36}, {182, 109,  36}, {  0,   0, 109},
                 {255, 255,  73}, {  0,   0, 109}, {  0,   0,   0}, {  0,   0, 109},
                 {255,   0,   0}, {  0,   0, 109}, {  0,   0, 109}, {255,   0,   0}

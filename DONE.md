@@ -41896,3 +41896,24 @@ the supplied root and selected MD5 to prove this without shipping game data.
   dark-blue base `(0,0,109)` rather than the stale dim-blue `(0,0,73)`;
   the canonical PC3.4 real-data launch gate now accepts the C001 PRESENTS
   palette phase. Pixel decode and title/Entrance composition remain open.
+
+- ✅ 2026-07-28 CSB V2.x verification sweep. All 41 registered CSB
+  V2.0/V2.1/V2.2 CTest contracts pass, covering presentation modes, HUD,
+  input, lighting, filters, settings, resolution selection and V2.2 artpack
+  routing. This verifies implemented V2.x behavior; it does not close the
+  remaining original-data V1 startup-composition work.
+
+- ✅ 2026-07-28 CSB PC34 complete startup-chain gate. The canonical original
+  GRAPHICS.DAT/DUNGEON.DAT now passes one chronological real-data proof:
+  source Swoosh, C001 PRESENTS/CHAOS/STRIKES palettes, all 31 C004/C002/C003
+  door pages, C017/C040 panel handoff, terminal F0807 package ownership and
+  the decoded DUNGEON.DAT initial pose `(9,0)` facing `2`. The runtime and
+  its HUD party state now receive that same source pose. Verification:
+  `csb_v1_pc_real_asset_launch`, the full 93-test `ctest -L csb` regression,
+  and the 41-test V2.0/V2.1/V2.2 subset.
+
+- ✅ 2026-07-28 CSB app boot across presentation modes. The built `firestaff`
+  executable reaches the original PC34 runtime through its M11 path in V1,
+  V2.1 and V2.2: 260 source frames plus the Prison input reach map `0`,
+  DUNGEON.DAT pose `(9,0,2)`, and a live runtime tick in each mode. This is
+  a direct app-level boot check; visual packaged-window capture remains open.

@@ -8303,6 +8303,17 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
                         &profile->runtime.party_x,
                         &profile->runtime.party_y,
                         &profile->runtime.party_dir)) {
+                    /* LOADSAVE.C F0435 promotes the decoded dungeon-header
+                     * pose into both runtime views before M11 can draw the
+                     * first dungeon frame.  Leaving PartyMap* at the empty
+                     * roster sentinel made the HUD and viewport disagree
+                     * about the real CSB start square. */
+                    profile->runtime.party_state.PartyMapX =
+                        profile->runtime.party_x;
+                    profile->runtime.party_state.PartyMapY =
+                        profile->runtime.party_y;
+                    profile->runtime.party_state.PartyDirection =
+                        (uint8_t)(profile->runtime.party_dir & 3);
                     profile->default_party_x = (uint32_t)profile->runtime.party_x;
                     profile->default_party_y = (uint32_t)profile->runtime.party_y;
                     profile->default_party_dir = (uint32_t)profile->runtime.party_dir;

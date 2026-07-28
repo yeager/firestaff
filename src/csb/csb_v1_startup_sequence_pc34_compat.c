@@ -1023,8 +1023,8 @@ static void csb_v1_startup_set_title_rect_pc34(
          * blit those bitmaps centered on the screen.  Do not crop the
          * source: the animation grows the full CHAOS image from 16x4 to
          * 320x80. */
-        zoom_index = plan->title_source_step <= 19
-            ? 19 - plan->title_source_step
+        zoom_index = plan->title_source_step < 21
+            ? 21 - plan->title_source_step
             : 0;
         zoom_w = 320 - 16 * zoom_index;
         zoom_h = 80 - 4 * zoom_index;
