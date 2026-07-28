@@ -1,3 +1,13 @@
+- ✅ 2026-07-28 Nexus M11 mesh presentation integration. Relaxed the DGN host
+  plan gate to accept READY_RENDERED_MESH frames without material_surface_count.
+  Added palette sync: copies the Nexus viewport palette into the M11 indexed
+  palette system (RGB6) so the SDL renderer applies correct colors for both
+  textured and flat-color faces. Texture surface palettes are now merged into the
+  framebuffer palette before each face is rasterized. Added animated texture
+  static fallback rendering (0x08xx fill_selector faces): looks up the animated
+  material packet's first_structure2_image_id and uses that Structure2 surface
+  as a static-frame texture. All 203 Nexus tests pass.
+
 - ✅ 2026-07-28 Nexus Structure3 textured mesh rendering. Propagated
   decoder_permitted from the Structure2 format evidence receipt into the
   complete source scene receipt, relaxing the viewport fail-closed guard.
