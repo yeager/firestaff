@@ -32,6 +32,8 @@ typedef struct {
     uint16_t played_sound_count;
     uint16_t last_presented_image_item;
     uint16_t last_presented_palette_item;
+    uint16_t final_active_image_item;
+    uint16_t final_palette_item;
     uint16_t failed_opcode;
     uint16_t failed_instruction_index;
 } CSB_V1_AtariStAnimationTraceReceipt;
@@ -53,6 +55,14 @@ int csb_v1_atari_st_animation_validate_assets(
  * sound calls without inventing a PC34 presentation sequence. */
 int csb_v1_atari_st_animation_trace_script(
     const char *animate_dat_path, const uint8_t *script, size_t script_size,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
+/* Resolve and rasterize the final Atari ST animation screen through the
+ * original script state. The selected IMG1/P4B1 pair must come from the
+ * ANIMATE.SCR sequence; callers do not supply substitute item numbers. */
+int csb_v1_atari_st_animation_render_final_rgba(
+    const char *animate_dat_path, const uint8_t *script, size_t script_size,
+    uint8_t *out_rgba, size_t out_rgba_size,
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
 
 /* Render a full-screen original IMG1 item with an original P4B1 palette into

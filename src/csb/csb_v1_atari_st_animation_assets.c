@@ -72,6 +72,19 @@ static int csb_v1_atari_st_animation_palette_reference_is_loaded(
         reference <= 29u;
 }
 
+static uint16_t csb_v1_atari_st_animation_palette_item_for_reference(
+    const csb_v1_atari_st_animation_slot *slots, uint16_t reference)
+{
+    uint16_t slot;
+    if (csb_v1_atari_st_animation_slot_has_type(slots, reference, 1u))
+        return slots[reference].item_index;
+    for (slot = 0u; slot < 256u; ++slot) {
+        if (slots[slot].loaded && slots[slot].type == 1u &&
+            slots[slot].item_index == reference) return reference;
+    }
+    return reference <= 29u ? reference : 0xffffu;
+}
+
 int csb_v1_atari_st_animation_decode_p4b1_palette(
     const uint8_t *bytes, size_t byte_count, uint8_t out_rgb[16][3])
 {
@@ -147,6 +160,8 @@ int csb_v1_atari_st_animation_trace_script(
     size_t instruction_count = 0u;
     size_t pc = 0u;
     uint32_t steps = 0u;
+    uint16_t active_screen_slot = 0xffffu;
+    uint16_t active_palette_item = 0xffffu;
     int stopped = 0;
     int valid = 1;
 
@@ -207,8 +222,13 @@ int csb_v1_atari_st_animation_trace_script(
                 if (!csb_v1_atari_st_animation_palette_reference_is_loaded(slots,
                         p[0]))
                     valid = 0;
-                else if (instruction->opcode == 8u && out_receipt)
-                    out_receipt->fade_count++;
+                else {
+                    active_palette_item =
+                        csb_v1_atari_st_animation_palette_item_for_reference(
+                            slots, p[0]);
+                    if (instruction->opcode == 8u && out_receipt)
+                        out_receipt->fade_count++;
+                }
                 break;
             case 10u: /* Wait VBLs */
                 if (out_receipt) out_receipt->waited_vbl_count += p[0];
@@ -234,6 +254,11 @@ int csb_v1_atari_st_animation_trace_script(
                     out_receipt->last_presented_palette_item =
                         p[1];
                 }
+                active_screen_slot = p[0];
+                if (p[1] != 0xffffu)
+                    active_palette_item =
+                        csb_v1_atari_st_animation_palette_item_for_reference(
+                            slots, p[1]);
                 break;
             case 15u: /* Wait one VBL */
                 if (out_receipt) out_receipt->waited_vbl_count++;
@@ -280,10 +305,39 @@ int csb_v1_atari_st_animation_trace_script(
     }
     if (out_receipt) {
         out_receipt->executed_instruction_count = steps;
+        if (active_screen_slot < 256u && slots[active_screen_slot].loaded &&
+            slots[active_screen_slot].type == 0u) {
+            out_receipt->final_active_image_item =
+                slots[active_screen_slot].item_index;
+        } else {
+            out_receipt->final_active_image_item = 0xffffu;
+        }
+        out_receipt->final_palette_item = active_palette_item;
         out_receipt->valid = valid && stopped;
     }
     csb_atari_st_graphics_loader_close(&loader);
     return valid && stopped;
+}
+
+int csb_v1_atari_st_animation_render_final_rgba(
+    const char *animate_dat_path, const uint8_t *script, size_t script_size,
+    uint8_t *out_rgba, size_t out_rgba_size,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt)
+{
+    CSB_V1_AtariStAnimationTraceReceipt trace;
+
+    memset(&trace, 0, sizeof(trace));
+    if (!csb_v1_atari_st_animation_trace_script(animate_dat_path, script,
+            script_size, &trace) || !trace.valid ||
+        !csb_v1_atari_st_animation_item_type_matches(
+            trace.final_active_image_item, 0u) ||
+        !csb_v1_atari_st_animation_item_type_matches(
+            trace.final_palette_item, 1u) ||
+        !csb_v1_atari_st_animation_render_rgba(animate_dat_path,
+            trace.final_active_image_item, trace.final_palette_item, out_rgba,
+            out_rgba_size)) return 0;
+    if (out_receipt) *out_receipt = trace;
+    return 1;
 }
 
 int csb_v1_atari_st_animation_render_rgba(

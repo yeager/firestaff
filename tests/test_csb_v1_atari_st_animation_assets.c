@@ -66,13 +66,21 @@ int main(void)
                       trace.blit_count > 0u && trace.present_count == 2u &&
                       trace.played_sound_count == 2u &&
                       trace.last_presented_image_item == 35u &&
-                      trace.last_presented_palette_item == 0xffffu,
+                      trace.last_presented_palette_item == 0xffffu &&
+                      trace.final_active_image_item == 75u &&
+                      trace.final_palette_item == 21u,
                   "real Atari script executes documented fades, loops, blits and presentation");
         }
         CHECK(rgba != NULL && csb_v1_atari_st_animation_render_rgba(dat_path,
                   30u, 0u, rgba, CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES) &&
                   rgba[3] == 255u,
               "real Atari IMG1 title frame renders with its P4B1 palette");
+        CHECK(rgba != NULL && csb_v1_atari_st_animation_render_final_rgba(
+                  dat_path, script, script_size, rgba,
+                  CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES, &trace) &&
+                  trace.valid && trace.final_active_image_item == 75u &&
+                  trace.final_palette_item == 21u && rgba[3] == 255u,
+              "final Atari animation frame is selected by the original script state");
         free(script);
         free(rgba);
     }

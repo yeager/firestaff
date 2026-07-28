@@ -41750,3 +41750,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   semantic trace is driven solely by the staged Atari utility-disk files; the
   remaining task is to connect its framebuffer operations to the CSB host
   presenter.
+- ✅ 2026-07-28 CSB Atari ST script-owned final frame. The animation consumer
+  now resolves the final active screen and palette from the executed original
+  script state and rasterizes the resulting IMG1/P4B1 pair. The staged script
+  selects item 75 with palette 21; no caller-provided or PC34 substitute asset
+  is permitted on this route.

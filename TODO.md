@@ -21684,8 +21684,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   title frames are now consumed into RGBA after an exact script-to-item-family
   validation (80 loads, no foreign item family). The original command stream
   now has a source-validated semantic trace for loops, fades, waits, expands,
-  blits, presents and sounds. Remaining Atari animation work is an Atari
-  framebuffer/presentation owner that consumes those traced operations;
+  blits, presents and sounds. Its final live screen now resolves to original
+  IMG1 item 75 with original P4B1 item 21 solely through script state.
+  Remaining Atari animation work is an Atari framebuffer/presentation owner
+  that consumes all intermediate traced operations;
   do not substitute the PC34 title/Entrance renderer for this route.
 
 - [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
