@@ -6,6 +6,8 @@
 
 static int failures;
 
+#define CSB_TEST_THING_TYPE_TEXTSTRING 2u
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -24,6 +26,81 @@ static void configure_action(CSB_V1_DSAImportedAction *action,
     action->column = 0u;
     action->program_words = words;
     action->program_word_count = word_count;
+}
+
+static void put_le16(uint8_t *bytes, size_t offset, uint16_t value)
+{
+    bytes[offset] = (uint8_t)value;
+    bytes[offset + 1u] = (uint8_t)(value >> 8);
+}
+
+static void test_textfetch_textsay_runtime_binding(void)
+{
+    /* One source-shaped DB2 and its F0507 text words.  TEXT@ is deliberately
+     * independent of DB2 visibility in CSBWin DSA.cpp. */
+    uint8_t raw[128] = { 0 };
+    uint16_t text_words[] = {
+        0x0686u, (uint16_t)(CSB_TEST_THING_TYPE_TEXTSTRING << 10),
+        0x0686u, 0u, 0x19cbu,
+        0x0686u, 0u, 0x0686u, 4u, 0x1a0bu
+    };
+    uint16_t text_then_unknown_words[] = {
+        0x0686u, (uint16_t)(CSB_TEST_THING_TYPE_TEXTSTRING << 10),
+        0x0686u, 0u, 0x19cbu,
+        0x0686u, 0u, 0x0686u, 4u, 0x1a0bu, 0x0000u
+    };
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.text_data_base = 104;
+    dungeon.text_word_count = 2;
+    dungeon.thing_data_bases[CSB_TEST_THING_TYPE_TEXTSTRING] = 100;
+    dungeon.thing_type_counts[CSB_TEST_THING_TYPE_TEXTSTRING] = 1;
+    put_le16(raw, 100u, 0xfffeu);
+    put_le16(raw, 102u, 0u);
+    /* H,E,L and the ReDMCSB F0507 end marker. */
+    put_le16(raw, 104u, (uint16_t)((7u << 10) | (4u << 5) | 11u));
+    put_le16(raw, 106u, (uint16_t)(31u << 10));
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.csbwin_extended_features_valid = 1;
+    configure_action(&action, text_words,
+                     (int)(sizeof(text_words) / sizeof(text_words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner));
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id;
+    runner.state_index = action.state_index;
+
+    memset(&receipt, 0, sizeof(receipt));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 1 &&
+              profile.csbwin_text_message_receipt.valid &&
+              strcmp(profile.csbwin_text_message_receipt.text, "HEL") == 0 &&
+              csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+                  &profile, &receipt) == 1 && receipt.text_message_changed &&
+              receipt.text_message_after.valid &&
+              strcmp(receipt.text_message_after.text, "HEL") == 0,
+          "TEXT@ and TEXTSAY publish a real DB2/F0507 text receipt");
+
+    memset(&profile.csbwin_text_message_receipt, 0,
+           sizeof(profile.csbwin_text_message_receipt));
+    configure_action(&action, text_then_unknown_words,
+                     (int)(sizeof(text_then_unknown_words) /
+                           sizeof(text_then_unknown_words[0])));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 0 &&
+              !profile.csbwin_text_message_receipt.valid &&
+              profile.csbwin_text_message_receipt.text[0] == '\0',
+          "failed later DSA text opcode cannot publish a DB2 text receipt");
 }
 
 static void test_copyteleporter_runtime_receipt(void)
@@ -118,6 +195,7 @@ int main(void)
     CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
 
     test_copyteleporter_runtime_receipt();
+    test_textfetch_textsay_runtime_binding();
 
     memset(&dungeon, 0, sizeof(dungeon));
     dungeon.raw_data = raw;

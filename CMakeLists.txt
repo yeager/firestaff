@@ -18733,6 +18733,8 @@ if(BUILD_TESTING)
         NAME csb_v1_dsa_copy_runtime_handoff
         COMMAND test_csb_v1_dsa_copy_runtime_handoff
     )
+    set_property(TEST csb_v1_dsa_copy_runtime_handoff APPEND PROPERTY
+        LABELS "csb;verification")
 
     add_executable(test_csb_v1_dsa_text_bank_transaction
         tests/test_csb_v1_dsa_text_bank_transaction.c
@@ -18748,6 +18750,8 @@ if(BUILD_TESTING)
         NAME csb_v1_dsa_text_bank_transaction
         COMMAND test_csb_v1_dsa_text_bank_transaction
     )
+    set_property(TEST csb_v1_dsa_text_bank_transaction APPEND PROPERTY
+        LABELS "csb;verification")
 
     # CSBWin DSA.cpp pure-control NOOP/EQUAL commands execute only against
     # checksum-authenticated actions; neither command opens a world route.

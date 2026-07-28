@@ -12,6 +12,13 @@
   word rolls back both pending text requests. Verified by
   `csb_v1_dsa_text_bank_transaction`.
 
+- ✅ 2026-07-29 CSBWin DSA production `TEXT@` -> `TEXTSAY` DB2 binding.
+  The runtime candidate decodes its loaded DB2 text through F0507 and
+  publishes it only as its authenticated scrolling-text receipt. The focused
+  `csb_v1_dsa_copy_runtime_handoff` regression proves the real-format
+  DB2/F0507 `HEL` route and rollback after a later invalid opcode. `MESSAGE`
+  timer/EXPOOL materialization remains intentionally open in TODO.
+
 - ✅ 2026-07-29 CSB V2.2 route-complete artpack admission. The finished-art
   gate and Artpack Studio required list now cover all 29 `(category,id)`
   pairs emitted by the actual per-cell CSB V2.2 router, not the legacy

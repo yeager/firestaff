@@ -858,11 +858,14 @@ that its exact runtime path is not already source-locked and tested.
     `SAY`, `TEXTSAY`, and `MESSAGE` interpreter contracts to real loaded DB2,
     scrolling-text, timer and EXPOOL owners in `CSB_V1_RuntimeProfile`.
     2026-07-29: `TEXT@`, `SAY`, and `TEXTSAY` now bind to the loaded DB2/text
-    bank and candidate profile receipt; no host text cache is used. `MESSAGE`
-    remains deliberately unbound in production: it must not create timers or
-    EXPOOL records from incomplete save state. Add only a transactional owner
-    that can update the candidate profile and publish it after the existing
-    DSA receipt audit.
+    bank and candidate profile receipt; no host text cache is used. The
+    `csb_v1_dsa_copy_runtime_handoff` regression drives a source-shaped
+    DB2/F0507 `TEXT@` -> `TEXTSAY` action through the production candidate,
+    proves its `HEL` receipt, and proves a later rejected opcode rolls it
+    back. `MESSAGE` remains deliberately unbound in production: it must not
+    create timers or EXPOOL records from incomplete save state. Add only a
+    transactional owner that can update the candidate profile and publish it
+    after the existing DSA receipt audit.
 23. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.
