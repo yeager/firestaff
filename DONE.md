@@ -41706,3 +41706,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   RGBA surface after indexed/palette presentation, leaving the source indexed
   frame and palette receipt untouched. Verification: M11 launcher handoff
   533/533, filter-chain 16/16, and filter-config 26/26 pass.
+- ✅ 2026-07-28 CSB F0115 armour and junk composition audit. Removed the
+  stale TODO claim that armour and non-food junk were blocked: the active
+  M11 CSB item path already resolves every armour subtype (58) and junk
+  subtype (53) through the source-locked native `G0237 -> G0209` mapping,
+  loads only the matching `GRAPHICS.DAT` entry, and fails closed otherwise.
+  The local real-asset composition test passes.
