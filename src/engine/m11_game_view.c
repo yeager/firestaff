@@ -8,6 +8,7 @@
 #include "nexus_v2_hud_runtime.h"
 #include "nexus_v2_lighting_runtime.h"
 #include "nexus_v2_smooth_movement_runtime.h"
+#include "nexus_v2_touch_runtime.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_movement.h"
@@ -13708,6 +13709,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     nexus_v2_hud_runtime_shutdown();
     nexus_v2_lighting_runtime_shutdown();
     nexus_v2_smooth_movement_runtime_shutdown();
+    nexus_v2_touch_runtime_shutdown();
     if (state->assetsAvailable) {
         M11_AssetLoader_Shutdown(&state->assetLoader);
         state->assetsAvailable = 0;
@@ -14334,6 +14336,8 @@ static int m11_nexus_apply_launcher_runtime_receipt(
     nexus_v2_lighting_runtime_force_active_for_test(1);
     nexus_v2_smooth_movement_runtime_init();
     nexus_v2_smooth_movement_runtime_force_active_for_test(1);
+    nexus_v2_touch_runtime_init();
+    nexus_v2_touch_runtime_force_active_for_test(1);
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
@@ -14597,6 +14601,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                     nexus_v2_hud_runtime_shutdown();
     nexus_v2_lighting_runtime_shutdown();
     nexus_v2_smooth_movement_runtime_shutdown();
+    nexus_v2_touch_runtime_shutdown();
                     state->nexusEngine = NULL;
                     state->active = 0;
                     state->startedFromLauncher = 0;
@@ -15802,6 +15807,8 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
     nexus_v2_lighting_runtime_force_active_for_test(1);
     nexus_v2_smooth_movement_runtime_init();
     nexus_v2_smooth_movement_runtime_force_active_for_test(1);
+    nexus_v2_touch_runtime_init();
+    nexus_v2_touch_runtime_force_active_for_test(1);
     m11_nexus_release_title(state);
     state->nexusState.level_loaded = receipt.level_loaded;
     state->nexusState.party_x = receipt.party_x;
@@ -48553,7 +48560,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             if (!m11_draw_nexus_dgn_host_plan(state,
                                                framebuffer,
                                                framebufferWidth,
-                                               framebufferHeight)) {
+                                               framebufferHeight) &&
+                !state->nexusState.startup_suppress_fallback_visuals) {
                 char nexus_diag[128];
                 snprintf(nexus_diag, sizeof(nexus_diag),
                          "LEV%02d (%d,%d) DIR=%d  MNS=%d/%d SEL=%d",
