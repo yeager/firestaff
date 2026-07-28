@@ -15,6 +15,14 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-DSA-PARAMETER-MESSAGE-OWNER:** Closed 2026-07-29. Authenticated
+  CSBWin `STKOP_Message` now preserves the source stack order
+  `(target,type,count,delay)`, rejects unowned or oversized parameter bodies,
+  consumes `Override_P`, and stages the exact first 0..29 DSA parameters for
+  a runtime-owned TT_ParameterMessage/EXPOOL callback. A later malformed word
+  rolls back the whole pending message. Broader DSA world operations and real
+  DSA save corpus remain open.
+
 - **CSB-DSA-SAY-TEXT-OWNER:** Closed 2026-07-29. Authenticated CSBWin
   `STKOP_Say` and `STKOP_TextSay` now consume their original operands and
   stage text output until every source word has been accepted. `SAY` reaches
@@ -835,7 +843,7 @@ that its exact runtime path is not already source-locked and tested.
     filters, state transitions, and runtime mutation with hard fail-closed
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
-    remaining 29 stack words: `DEL`, `ADD`, `MESSAGE`, `CAST`,
+    remaining 28 stack words: `DEL`, `ADD`, `CAST`,
     `FILTEREDCAST`, `THROW`, `TELEPORTPARTY`, `CREATECLOUD`, `MOVE`,
     the `I_*` indirect family (`DEL/ADD/CREATECLOUD/CAST/TELEPORTPARTY/MONSTER!/
     CHAR!/MOVE/COPY/CELL!/THROW/INDIRECT/DELAY/DELMON/INSMON/CAUSEPOISON/

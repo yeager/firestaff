@@ -418,6 +418,13 @@ typedef int (*CSB_V1_CSBWinDSADescribeFn)(
 typedef int (*CSB_V1_CSBWinDSAQueueSwitchActionFn)(
     void *user, uint32_t delay, uint32_t action, uint32_t target_location,
     int message_route, uint8_t *out_event_type);
+/* STKOP_Message creates TT_ParameterMessage plus its EXPOOL parameter body.
+ * The timer/EXPOOL owner receives the complete source block atomically; the
+ * DSA core never manufactures parameter words or timer ids. */
+typedef int (*CSB_V1_CSBWinDSAQueueParameterMessageFn)(
+    void *user, uint32_t delay, uint32_t message_type,
+    uint32_t target_location, const uint32_t *parameters,
+    uint32_t parameter_count, uint8_t *out_event_type);
 /* DSA.cpp TEXT@ and CHARNAME@@ populate the transient ten-slot DSA text
  * bank.  The owner must decode a real DB2 record or locate a real CHARDESC;
  * zero means that the source lookup found no matching record, while negative
@@ -512,6 +519,7 @@ typedef struct {
     CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
     CSB_V1_CSBWinDSADescribeFn describe;
     CSB_V1_CSBWinDSAQueueSwitchActionFn queue_switch_action;
+    CSB_V1_CSBWinDSAQueueParameterMessageFn queue_parameter_message;
     CSB_V1_CSBWinDSAReadTextFn read_text;
     CSB_V1_CSBWinDSAReadCharacterNameFn read_character_name;
     CSB_V1_CSBWinDSASetGlobalTextFn set_global_text;
@@ -738,6 +746,9 @@ typedef struct {
     uint32_t last_scheduled_action;
     uint16_t message_scheduled_count;
     uint8_t last_message_route;
+    uint16_t parameter_message_count;
+    uint32_t last_parameter_message_type;
+    uint32_t last_parameter_message_count;
     uint16_t text_discard_count;
     uint16_t global_text_store_count;
     uint32_t last_global_text_store_index;
@@ -939,6 +950,7 @@ typedef struct {
     CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
     CSB_V1_CSBWinDSADescribeFn describe;
     CSB_V1_CSBWinDSAQueueSwitchActionFn queue_switch_action;
+    CSB_V1_CSBWinDSAQueueParameterMessageFn queue_parameter_message;
     CSB_V1_CSBWinDSAReadTextFn read_text;
     CSB_V1_CSBWinDSAReadCharacterNameFn read_character_name;
     CSB_V1_CSBWinDSASetGlobalTextFn set_global_text;

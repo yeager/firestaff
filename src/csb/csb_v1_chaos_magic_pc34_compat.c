@@ -578,7 +578,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 59u: case 67u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
     case 133u: case 136u: case 139u:
         return 1;
-    case 8u: case 33u: case 34u: case 35u: case 36u: case 44u: case 45u:
+    case 8u: case 33u: case 34u: case 35u: case 36u: case 42u: case 44u: case 45u:
     case 46u: case 49u: case 51u: case 52u: case 53u: case 54u: case 55u:
     case 56u: case 57u: case 58u: case 60u: case 63u: case 64u: case 65u:
     case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
@@ -1072,6 +1072,7 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
             if (csb_v1_csbwin_dsa_subcode_is_timer_family(subcode)) {
                 receipt.timer_core = 1;
             }
+            if (subcode == 42u) receipt.message_core = 1;
             if (subcode == 47u || subcode == 103u || subcode == 104u || subcode == 115u || subcode == 121u ||
                 subcode == 122u) receipt.text_display_core = 1;
             if (subcode == 69u) receipt.sound_core = 1;
@@ -1427,6 +1428,13 @@ typedef struct {
     int message_route;
 } CSB_V1_CSBWinDSAPendingSwitchAction;
 typedef struct {
+    uint32_t delay;
+    uint32_t message_type;
+    uint32_t target_location;
+    uint32_t parameter_count;
+    uint32_t parameters[29];
+} CSB_V1_CSBWinDSAPendingParameterMessage;
+typedef struct {
     uint32_t source_location;
     uint32_t destination_location;
 } CSB_V1_CSBWinDSAPendingTeleporterCopy;
@@ -1565,7 +1573,9 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     CSB_V1_CSBWinDSAPendingOverlayWrite *pending_overlay_writes,
     int *pending_overlay_write_count,
     CSB_V1_CSBWinDSAPendingOverlayPaletteWrite *pending_overlay_palette_writes,
-    int *pending_overlay_palette_write_count)
+    int *pending_overlay_palette_write_count,
+    CSB_V1_CSBWinDSAPendingParameterMessage *pending_parameter_messages,
+    int *pending_parameter_message_count)
 {
     uint32_t v;
     uint32_t w;
@@ -1607,6 +1617,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_global_text_store_count ||
         !pending_overlay_writes || !pending_overlay_write_count ||
         !pending_overlay_palette_writes || !pending_overlay_palette_write_count ||
+        !pending_parameter_messages || !pending_parameter_message_count ||
         !discard_text_requested ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
@@ -1625,6 +1636,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_global_text_store_count < 0 ||
         *pending_overlay_write_count < 0 ||
         *pending_overlay_palette_write_count < 0 ||
+        *pending_parameter_message_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -1886,6 +1898,36 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         pending_say_text_requests[*pending_say_text_request_count].color =
             (int32_t)v;
         ++*pending_say_text_request_count;
+        break;
+    case 42u: /* STKOP_Message, DSA.cpp:3046-3090. */
+        /* Stack order is target, message type, parameter count, delay.  The
+         * source queues a TT_ParameterMessage plus exactly the first N DSA
+         * parameters in EXPOOL.  Reject an unowned/excessive body rather than
+         * padding a fake parameter array. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &aux)) goto underflow;
+        if (w > 29u) break;
+        if (!context->queue_parameter_message ||
+            w > (uint32_t)parameter_count ||
+            *pending_parameter_message_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (context->override_state_valid && context->override_p) {
+            aux = context->override_position;
+            context->override_p = 0;
+        }
+        pending_parameter_messages[*pending_parameter_message_count].delay = v;
+        pending_parameter_messages[*pending_parameter_message_count].parameter_count = w;
+        pending_parameter_messages[*pending_parameter_message_count].message_type = count;
+        pending_parameter_messages[*pending_parameter_message_count].target_location = aux;
+        if (w > 0u) {
+            memcpy(pending_parameter_messages[*pending_parameter_message_count]
+                       .parameters, parameters, w * sizeof(parameters[0]));
+        }
+        ++*pending_parameter_message_count;
         break;
     case 104u: /* STKOP_TextSay, DSA.cpp:3240-3254. */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
@@ -3524,6 +3566,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS];
     CSB_V1_CSBWinDSAPendingTeleporterCopy pending_teleporter_copies[
         CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS];
+    CSB_V1_CSBWinDSAPendingParameterMessage pending_parameter_messages[
+        CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS];
     CSB_V1_CSBWinDSAStackContext context_candidate;
     CSB_V1_CSBWinDSAStackExecution candidate;
     int cursor = 0;
@@ -3551,6 +3595,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_overlay_palette_write_count = 0;
     int pending_switch_action_count = 0;
     int pending_teleporter_copy_count = 0;
+    int pending_parameter_message_count = 0;
     int override_requested = 0;
     int dynamic_jump_requested = 0;
     uint32_t pending_adjust_skills_parameters[5] = { 0u, 0u, 0u, 0u, 0u };
@@ -4145,7 +4190,9 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     &pending_global_text_store_count,
                     pending_overlay_writes, &pending_overlay_write_count,
                     pending_overlay_palette_writes,
-                    &pending_overlay_palette_write_count);
+                    &pending_overlay_palette_write_count,
+                    pending_parameter_messages,
+                    &pending_parameter_message_count);
                 if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
             }
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
@@ -4493,6 +4540,29 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 (uint8_t)pending_switch_actions[i].message_route;
         }
     }
+    for (i = 0; i < pending_parameter_message_count; ++i) {
+        uint8_t event_type = 0u;
+        if (!context->queue_parameter_message ||
+            !context->queue_parameter_message(
+                context->dungeon_user,
+                pending_parameter_messages[i].delay,
+                pending_parameter_messages[i].message_type,
+                pending_parameter_messages[i].target_location,
+                pending_parameter_messages[i].parameters,
+                pending_parameter_messages[i].parameter_count, &event_type)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        ++candidate.timer_scheduled_count;
+        ++candidate.parameter_message_count;
+        candidate.last_scheduled_event_type = event_type;
+        candidate.last_scheduled_delay = pending_parameter_messages[i].delay;
+        candidate.last_scheduled_target_location =
+            pending_parameter_messages[i].target_location;
+        candidate.last_parameter_message_type =
+            pending_parameter_messages[i].message_type;
+        candidate.last_parameter_message_count =
+            pending_parameter_messages[i].parameter_count;
+    }
     for (i = 0; i < pending_teleporter_copy_count; ++i) {
         int copied;
         uint32_t source_before[5];
@@ -4759,6 +4829,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;
     context.describe = runner->describe;
     context.queue_switch_action = runner->queue_switch_action;
+    context.queue_parameter_message = runner->queue_parameter_message;
     context.read_text = runner->read_text;
     context.read_character_name = runner->read_character_name;
     context.set_global_text = runner->set_global_text;
