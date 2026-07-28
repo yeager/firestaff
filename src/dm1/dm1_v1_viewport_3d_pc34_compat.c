@@ -1193,7 +1193,23 @@ static const uint8_t *dm1_viewport_3d_selected_wall_bitmap(const DM1_Viewport3DS
                                                            const uint8_t *bm_base,
                                                            DM1_WallSetIndex selected_wall)
 {
-    if (!state || !bm_base || selected_wall < 0 || selected_wall >= DM1_WALL_SET_COUNT) return NULL;
+    const uint8_t *pixels = NULL;
+    int width = 0;
+    int height = 0;
+
+    if (!state || selected_wall < 0 || selected_wall >= DM1_WALL_SET_COUNT) return NULL;
+
+    /* CSB stores G2107's 15 cells as individual C093..C107 IMG3 records.
+     * The DM1 atlas is only a legacy fallback and is never live-CSB input. */
+    if (state->graphic_provider_callback &&
+        state->graphic_provider_callback(
+            state->graphic_provider_user_data,
+            dm1_v1_graphic_wallset0_index_pc34((int)selected_wall),
+            &pixels, &width, &height) &&
+        pixels && width > 0 && height > 0) {
+        return pixels;
+    }
+    if (!bm_base) return NULL;
 
     /* ReDMCSB PC34/I34E selects the G2107_WallSet[] entry first, then
      * F0105 flips that selected native bitmap horizontally when parity is
@@ -3538,7 +3554,7 @@ static void dm1_viewport_3d_draw_d3_side_square(
     int right;
     size_t map_cell;
 
-    if (!state || !wall_base ||
+    if (!state ||
         (square != DM1_VIEW_SQUARE_D3L && square != DM1_VIEW_SQUARE_D3R)) {
         return;
     }
@@ -3633,7 +3649,7 @@ static int dm1_viewport_3d_draw_center_wall_element(
     const DM1_WallFrame *fr;
     int vwi;
 
-    if (!state || !bm_base) return 0;
+    if (!state) return 0;
     if (square != DM1_VIEW_SQUARE_D3C &&
         square != DM1_VIEW_SQUARE_D2C &&
         square != DM1_VIEW_SQUARE_D1C) {
@@ -3704,7 +3720,7 @@ static int dm1_viewport_3d_draw_side_wall_element(
     const DM1_WallFrame *fr;
     int vwi;
 
-    if (!state || !bm_base) return 0;
+    if (!state) return 0;
 
     cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
     element = state->dungeon_aspect_grid ? cell
@@ -3864,7 +3880,6 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
         dm1_viewport_3d_build_d3_back_wall_runtime_asset_receipt(state, square, element);
 
     const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
-    if (!bm_base) return;
 
     /* D3L2 uses D3L2 frame; D3R2 uses D3R2 frame */
     const DM1_WallFrame *fr = NULL;
@@ -4079,7 +4094,6 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
                                              : dm1_viewport_3d_classify_grid_cell(cell);
 
     const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;
-    if (!bm_base) return;
 
     /* D2L2 uses D2L2 frame; D2R2 uses D2R2 frame */
     const DM1_WallFrame *fr = NULL;

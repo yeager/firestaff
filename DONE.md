@@ -1,3 +1,9 @@
+- ✅ 2026-07-28 CSB F0128 live wall material binding. The 15 PC3.4
+  wall-set-zero records C093..C107 now use the authenticated CSB IMG3/LZW
+  GRAPHICS.DAT decoder directly instead of the never-populated DM1 test
+  atlas. A real macOS Prison handoff now presents original wall panels.
+  Palette and normal runtime HUD ownership remain separately open.
+
 - ✅ 2026-07-28 CSB Prison-to-dungeon F0128 black-frame fix. The live CSB
   viewport now uses the original CSB IMG3/LZW decoder for GRAPHICS.DAT floor
   and ceiling material and renders it at the source `(48,33)` aperture.

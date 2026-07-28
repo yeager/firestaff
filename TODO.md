@@ -661,8 +661,12 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-28: fixed the live Prison-to-F0128 black frame. The CSB viewport
    now decodes original GRAPHICS.DAT floor/ceiling entries through the CSB
    IMG3/LZW path and draws them at the source aperture `(48,33)`. The real
-   macOS click path and a multi-tick M11 regression are non-black. Full
-   wall/HUD/palette consumption remains open.
+   macOS click path and a multi-tick M11 regression are non-black.
+   2026-07-28: C093..C107 wall-set-zero cells now use that same real CSB
+   decoder rather than the unpopulated DM1 test atlas; a live macOS Prison
+   route shows source wall panels. Runtime palette and C017/C040 HUD remain
+   open and must stay source-owned; broader wall/HUD/palette consumption
+   remains open.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

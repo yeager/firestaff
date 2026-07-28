@@ -1826,6 +1826,14 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         cached_pixels = &state->csbViewportCeilingPixels;
         cached_width = &state->csbViewportCeilingWidth;
         cached_height = &state->csbViewportCeilingHeight;
+    } else if (graphic_index >= 93 && graphic_index <= 107) {
+        const int wall_slot = graphic_index - 93;
+        source_graphic = (unsigned int)graphic_index;
+        expected_width = 1;
+        expected_height = 1;
+        cached_pixels = &state->csbViewportWallPixels[wall_slot];
+        cached_width = &state->csbViewportWallWidths[wall_slot];
+        cached_height = &state->csbViewportWallHeights[wall_slot];
     } else {
         return 0;
     }
@@ -1837,8 +1845,8 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
                     ->graphics_path,
                 source_graphic, cached_pixels, cached_width, cached_height,
                 &receipt) || !receipt.valid ||
-            *cached_width != expected_width ||
-            *cached_height != expected_height) {
+            (graphic_index < 0 && (*cached_width != expected_width ||
+                                   *cached_height != expected_height))) {
             free(*cached_pixels);
             *cached_pixels = NULL;
             *cached_width = 0;
@@ -1846,8 +1854,8 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
             return 0;
         }
     }
-    if (!*cached_pixels || *cached_width != expected_width ||
-        *cached_height != expected_height) {
+    if (!*cached_pixels || *cached_width < expected_width ||
+        *cached_height < expected_height) {
         return 0;
     }
     *out_pixels = *cached_pixels;
@@ -13701,6 +13709,12 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     free(state->csbViewportCeilingPixels);
     state->csbViewportFloorPixels = NULL;
     state->csbViewportCeilingPixels = NULL;
+    for (size_t i = 0; i < 15u; ++i) {
+        free(state->csbViewportWallPixels[i]);
+        state->csbViewportWallPixels[i] = NULL;
+        state->csbViewportWallWidths[i] = 0;
+        state->csbViewportWallHeights[i] = 0;
+    }
     if (state->csbBootProfile) {
         csb_v1_boot_cleanup((CSB_V1_BootProfile*)state->csbBootProfile);
         free(state->csbBootProfile);

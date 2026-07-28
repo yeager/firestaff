@@ -1435,6 +1435,11 @@ typedef struct {
     int csbViewportFloorHeight;
     int csbViewportCeilingWidth;
     int csbViewportCeilingHeight;
+    /* PC3.4 GRAPHICS.DAT C093..C107: F0128 wall-set-zero cells. Their
+     * dimensions vary by view square, so they cannot use the DM1 test atlas. */
+    unsigned char *csbViewportWallPixels[15];
+    int csbViewportWallWidths[15];
+    int csbViewportWallHeights[15];
     uint32_t csbStartupExpectedPackageIdentity;
     int csbStartupF0128EntranceBound;
     uint32_t csbStartupF0128EntranceSourceTick;
