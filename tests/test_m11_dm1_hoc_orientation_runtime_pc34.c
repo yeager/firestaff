@@ -89,6 +89,9 @@ static int select_first_real_hoc_mirror(M11_GameViewState *state,
                                           FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
                         if (M11_GameView_GetFrontMirrorOrdinal(state) ==
                             (int)state->world.things->sensors[sensor_index].sensorData) {
+                            printf("real_hoc_mirror: wall=%d,%d party=%d,%d dir=%d ordinal=%u\n",
+                                   x, y, party_x, party_y, direction,
+                                   (unsigned int)state->world.things->sensors[sensor_index].sensorData);
                             return 1;
                         }
                     }
@@ -197,11 +200,13 @@ static int draw_real_hoc_f0115_items(M11_GameViewState *state,
                 M11_GameView_GetDm1FloorItemHostPresentationReceipt(&floor);
                 M11_GameView_GetDm1AlcoveItemHostPresentationReceipt(&alcove);
                 if (floor.valid && floor.usesF0791Blit &&
+                    floor.destinationPixelsChanged &&
                     floor.graphicsId >= 0 && floor.graphicsId < 512 &&
                     expected[floor.graphicsId]) {
                     seen[floor.graphicsId] = 1;
                 }
                 if (alcove.valid && alcove.usesF0791Blit &&
+                    alcove.destinationPixelsChanged &&
                     alcove.graphicsId >= 0 && alcove.graphicsId < 512 &&
                     expected[alcove.graphicsId]) {
                     seen[alcove.graphicsId] = 1;
@@ -221,8 +226,14 @@ int main(void)
     M11_GameViewState state;
     unsigned char framebuffer[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT];
     unsigned char expected_hoc_graphics[512];
+    static const M12_PresentationMode kV2Modes[] = {
+        M12_PRESENTATION_V20_FILTERED,
+        M12_PRESENTATION_V21_UPSCALED,
+        M12_PRESENTATION_V22_MODERN
+    };
     int direction;
     int hoc_item_count;
+    size_t modeIndex;
 
     if (!data_dir || !data_dir[0]) {
         puts("skip: FIRESTAFF_DM1_DATA_DIR is not set");
@@ -256,6 +267,26 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+
+    /* V2 modes replace presentation, never the source-owned F0115 and C127
+     * runtime lanes. Exercise every supported V2 mode against the same real
+     * HoC objects and mirror data before the V1-only source geometry checks
+     * below. A missing or incomplete V2.2 pack must not make live original
+     * objects disappear. */
+    for (modeIndex = 0; modeIndex < sizeof(kV2Modes) / sizeof(kV2Modes[0]);
+         ++modeIndex) {
+        state.presentationMode = kV2Modes[modeIndex];
+        if (!draw_real_hoc_f0115_items(&state, framebuffer,
+                                       expected_hoc_graphics) ||
+            !select_first_real_hoc_mirror(&state, framebuffer)) {
+            fprintf(stderr,
+                    "real PC34 HoC material or C127 mirror failed in V2 mode %d\n",
+                    (int)kV2Modes[modeIndex]);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
+    state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     state.world.party.mapX = 1;
     state.world.party.mapY = 3;
 

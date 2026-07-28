@@ -112,8 +112,10 @@ struct DM1SaveHeader {
 
 /*
  * ReDMCSB source ref: LOADSAVE.C F0433
- * Original menu: SAVE AND PLAY / SAVE AND QUIT / FORMAT FLOPPY / CANCEL
- * Firestaff: SAVE / CANCEL (no floppy concepts)
+ * Original menu: SAVE GAME / QUIT GAME / FORMAT FLOPPY / CANCEL.
+ * Firestaff exposes the same four source choices. Its per-profile save
+ * namespace stands in for the physical game-save disk, so FORMAT FLOPPY
+ * clears only that local save and never touches installed game data.
  */
 enum DM1SaveMenuState {
     DM1_SAVE_MENU_CLOSED   = 0,
@@ -125,7 +127,7 @@ enum DM1SaveMenuState {
 
 struct DM1SaveMenuContext {
     int state;
-    int selectedChoice;  /* 0=SAVE, 1=CANCEL */
+    int selectedChoice;  /* source menu choice, 0 while no choice is made */
     int resultCode;
     char statusMessage[128];
 };

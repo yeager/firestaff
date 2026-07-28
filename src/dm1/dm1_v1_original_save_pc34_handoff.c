@@ -1055,12 +1055,18 @@ static int dm1_original_save_sensor_launcher_runtime_receipt(
     if (out_count) *out_count = 0;
     if (out_fingerprint) *out_fingerprint = 0u;
     if (!source_report || !world || !world->things ||
-        !world->things->rawThingData[THING_TYPE_SENSOR] ||
-        !world->things->sensors || world->things->sensorCount < 0 ||
-        world->things->sensorCount > DM1_EVENT_MAX_COUNT ||
+        world->things->sensorCount < 0 ||
         !source_report->c3_c4_receipt_valid ||
         source_report->c3_raw_event_fingerprint == 0u ||
         source_report->c4_raw_heap_fingerprint == 0u) return 0;
+    /* No decoded EVENT rows means F0435 has no sensor/launcher action to
+     * schedule. The tail remains byte-owned by the source, but there is no
+     * runtime launcher receipt to materialize. */
+    if (source_report->decoded_event_count == 0) return 1;
+    /* A valid original save may have no SENSOR records at all.  In that
+     * case there is nothing to admit and no decoded buffer is allocated. */
+    if (world->things->sensorCount == 0) return 1;
+    if (!world->things->rawThingData[THING_TYPE_SENSOR]) return 0;
 
     for (index = 0; index < world->things->sensorCount; ++index) {
         const uint8_t *raw = world->things->rawThingData[THING_TYPE_SENSOR] +
@@ -1068,8 +1074,12 @@ static int dm1_original_save_sensor_launcher_runtime_receipt(
         if (!original_pc34_sensor_type_is_save_replay_owner(raw[2] & 0x7fu)) {
             continue;
         }
-        /* The runtime decoder must still agree with the raw sensor owner. */
-        if (world->things->sensors[index].sensorType != (raw[2] & 0x7fu)) {
+        if (count >= DM1_EVENT_MAX_COUNT) return 0;
+        /* The runtime decoder is required only for a source-owned launcher
+         * row. Ordinary sensor records may remain raw until their gameplay
+         * family is materialized. */
+        if (!world->things->sensors ||
+            world->things->sensors[index].sensorType != (raw[2] & 0x7fu)) {
             return 0;
         }
         rows[count][0] = (uint8_t)index;
@@ -2675,9 +2685,7 @@ static int dm1_original_save_c03_c04_bind_runtime_adoption(
 static int dm1_original_save_c13_corpus_admit_roundtrip_input(
     DM1OriginalSavePC34CorpusReceipt *receipt)
 {
-    if (!receipt || receipt->source_c13_event_count <= 0) {
-        return 1;
-    }
+    if (!receipt || receipt->source_c13_event_count <= 0) return 1;
     receipt->c13_roundtrip_input_admission_available = 1;
     receipt->c13_roundtrip_input_admission_valid =
         receipt->classified_loader_envelope && receipt->external_original &&
@@ -2706,9 +2714,7 @@ static int dm1_original_save_c13_corpus_admit_raw_capture(
 {
     uint32_t fingerprint = 2166136261u;
 
-    if (!receipt || receipt->source_c13_event_count <= 0) {
-        return 1;
-    }
+    if (!receipt || receipt->source_c13_event_count <= 0) return 1;
     receipt->c13_corpus_capture_admission_receipt_available = 1;
     receipt->c13_corpus_capture_admission_valid =
         receipt->external_original &&
@@ -2813,9 +2819,7 @@ static int dm1_original_save_c13_bind_runtime_identity(
 {
     uint32_t fingerprint = 2166136261u;
 
-    if (!receipt || receipt->source_c13_event_count <= 0) {
-        return 1;
-    }
+    if (!receipt || receipt->source_c13_event_count <= 0) return 1;
     receipt->c13_runtime_identity_receipt_available = 1;
     receipt->c13_runtime_identity_valid =
         receipt->external_original &&
@@ -3098,9 +3102,7 @@ static int dm1_original_save_c13_runtime_stale_fence(
 {
     uint32_t fingerprint = 2166136261u;
 
-    if (!receipt || receipt->source_c13_event_count <= 0) {
-        return 1;
-    }
+    if (!receipt || receipt->source_c13_event_count <= 0) return 1;
     receipt->c13_runtime_stale_fence_receipt_available = 1;
     receipt->c13_runtime_stale_fence_revoked = 0;
     receipt->c13_runtime_stale_fence_revoke_reason =
@@ -7483,6 +7485,12 @@ static int materialize_original_pc34_dungeon_tail(
     if (!bytes || !world) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
     }
+    /* The F0435 parser owns the tail boundary.  Do not independently infer a
+     * dungeon from bytes after a tail-less save's portrait payload: that can
+     * make a no-tail corpus candidate appear to own a live dungeon. */
+    if (!report || !report->dungeon_tail_present) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+    }
     cursor = original_pc34_dungeon_tail_cursor(bytes, size);
     if (cursor == 0u || cursor >= size) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
@@ -7507,6 +7515,18 @@ static int materialize_original_pc34_dungeon_tail(
         free(dungeon);
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
+    dungeon->originalSaveTailBytes =
+        (unsigned char *)malloc(size - cursor);
+    if (!dungeon->originalSaveTailBytes) {
+        F0504_DUNGEON_FreeThingData_Compat(things);
+        F0500_DUNGEON_FreeDatHeader_Compat(dungeon);
+        free(things);
+        free(dungeon);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+    memcpy(dungeon->originalSaveTailBytes, bytes + cursor, size - cursor);
+    dungeon->originalSaveTailByteCount = (int)(size - cursor);
+    dungeon->originalSaveTailPristine = 1;
     /* F0504 restores the header/maps/SquareFirstThings but its tail-buffer
      * path does not retain ReDMCSB G0280. F0435 must own that source table:
      * it is written by F0433 immediately after MAP[] and is later consumed
@@ -9568,8 +9588,9 @@ int dm1_v1_original_save_pc34_roundtrip_world_bytes(
     DM1OriginalSavePC34HandoffReport *verify_report)
 {
     struct GameWorld_Compat world;
+    struct GameWorld_Compat verify_world;
     struct DM1_EventQueue_V1 event_queue;
-    struct SaveGame_Compat verify_state;
+    struct DM1_EventQueue_V1 verify_queue;
     int written = 0;
     int result;
 
@@ -9583,7 +9604,9 @@ int dm1_v1_original_save_pc34_roundtrip_world_bytes(
     }
 
     memset(&world, 0, sizeof(world));
+    memset(&verify_world, 0, sizeof(verify_world));
     memset(&event_queue, 0, sizeof(event_queue));
+    memset(&verify_queue, 0, sizeof(verify_queue));
 
     result = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
         bytes, size, &world, &event_queue, import_report);
@@ -9609,9 +9632,13 @@ int dm1_v1_original_save_pc34_roundtrip_world_bytes(
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
 
-    memset(&verify_state, 0, sizeof(verify_state));
-    result = dm1_v1_original_save_pc34_handoff_bytes(
-        out_bytes, (size_t)written, &verify_state, verify_report);
+    /* F0433 verification must traverse the same full F0435 world route as
+     * the source. The shallow byte parser cannot publish the C3/C4, portrait
+     * and tail-backed runtime receipts required by an original-save corpus. */
+    result = dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
+        out_bytes, (size_t)written, &verify_world, &verify_queue,
+        verify_report);
+    F0883_WORLD_Free_Compat(&verify_world);
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         return result;
     }
@@ -10184,20 +10211,54 @@ static int dm1_original_save_c4_timeline_bytes_match(
     const size_t sizes[2] = { source_size, exported_size };
     const DM1OriginalSavePC34HandoffReport *reports[2] = {
         source_report, exported_report };
-    uint8_t decoded[2][SAVEGAME_PC34_TIMELINE_BYTE_COUNT];
+    /* C4 is sized by the source EventMaximumCount. A real PC34 save can
+     * reserve more than the live 256-entry queue, so this receipt must use
+     * the same 512-slot bound as the preserved C3/C4 world data. */
+    uint8_t decoded[2][DM1_EVENT_MAX_COUNT * 2u];
     size_t byte_counts[2];
     int which;
 
     if (!source_bytes || !exported_bytes || !source_report || !exported_report ||
         !out_report) return 0;
+    /* F0435 already authenticated and deobfuscated C4.  Original PC34
+     * envelopes do not all expose a common outer part cursor, so compare the
+     * source-owned plaintext receipt rather than reparsing the transport
+     * layout a second time. */
+    if (source_report->c3_c4_receipt_valid &&
+        exported_report->c3_c4_receipt_valid) {
+        byte_counts[0] = source_report->c4_raw_heap_byte_count;
+        byte_counts[1] = exported_report->c4_raw_heap_byte_count;
+        if (byte_counts[0] > sizeof(decoded[0]) ||
+            byte_counts[1] > sizeof(decoded[1]) ||
+            (byte_counts[0] & 1u) != 0u || (byte_counts[1] & 1u) != 0u) {
+            return 0;
+        }
+        out_report->c4_timeline_layout_receipt_available = 1;
+        out_report->source_c4_timeline_index_count =
+            (uint32_t)(byte_counts[0] / 2u);
+        out_report->source_c4_timeline_byte_count = (uint32_t)byte_counts[0];
+        out_report->source_c4_timeline_fingerprint =
+            dm1_original_save_hash_bytes(source_report->c4_raw_heap_bytes,
+                                         byte_counts[0]);
+        out_report->exported_c4_timeline_index_count =
+            (uint32_t)(byte_counts[1] / 2u);
+        out_report->exported_c4_timeline_byte_count = (uint32_t)byte_counts[1];
+        out_report->exported_c4_timeline_fingerprint =
+            dm1_original_save_hash_bytes(exported_report->c4_raw_heap_bytes,
+                                         byte_counts[1]);
+        out_report->c4_timeline_byte_preservation_ok =
+            byte_counts[0] == byte_counts[1] &&
+            memcmp(source_report->c4_raw_heap_bytes,
+                   exported_report->c4_raw_heap_bytes,
+                   byte_counts[0]) == 0;
+        return 1;
+    }
     for (which = 0; which < 2; ++which) {
         uint8_t meta[256];
         size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
         uint16_t key;
         int part;
-        if (sizes[which] < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE ||
-            reports[which]->part_byte_counts[SAVEGAME_PC34_PART_TIMELINE] >
-                sizeof(decoded[which])) return 0;
+        if (sizes[which] < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE) return 0;
         key = read_u16_le(inputs[which] + 20u);
         memcpy(meta, inputs[which] + 256u, sizeof(meta));
         (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(meta,
@@ -10214,8 +10275,7 @@ static int dm1_original_save_c4_timeline_bytes_match(
         if (cursor + 2u > sizes[which]) return 0;
         byte_counts[which] = read_u16_le(inputs[which] + cursor);
         cursor += 2u;
-        if (byte_counts[which] !=
-                reports[which]->part_byte_counts[SAVEGAME_PC34_PART_TIMELINE] ||
+        if (byte_counts[which] > sizeof(decoded[which]) ||
             (byte_counts[which] & 1u) != 0u ||
             cursor + byte_counts[which] > sizes[which]) return 0;
         memcpy(decoded[which], inputs[which] + cursor, byte_counts[which]);
@@ -10257,15 +10317,46 @@ static int dm1_original_save_c3_event_bytes_match(
 
     if (!source_bytes || !exported_bytes || !source_report || !exported_report ||
         !out_report) return 0;
+    /* See the C4 path above: compare the F0435-owned plaintext receipt,
+     * which is independent of whether the original save uses prefixed parts
+     * or the fixed-size PC34 loader envelope. */
+    if (source_report->c3_c4_receipt_valid &&
+        exported_report->c3_c4_receipt_valid) {
+        byte_counts[0] = source_report->c3_raw_event_byte_count;
+        byte_counts[1] = exported_report->c3_raw_event_byte_count;
+        if (byte_counts[0] > sizeof(decoded[0]) ||
+            byte_counts[1] > sizeof(decoded[1]) ||
+            byte_counts[0] % DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT != 0u ||
+            byte_counts[1] % DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT != 0u) {
+            return 0;
+        }
+        out_report->c3_event_layout_receipt_available = 1;
+        out_report->source_c3_event_record_count =
+            (uint32_t)(byte_counts[0] / DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        out_report->source_c3_event_byte_count = (uint32_t)byte_counts[0];
+        out_report->source_c3_event_fingerprint =
+            dm1_original_save_hash_bytes(source_report->c3_raw_event_bytes,
+                                         byte_counts[0]);
+        out_report->exported_c3_event_record_count =
+            (uint32_t)(byte_counts[1] / DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        out_report->exported_c3_event_byte_count = (uint32_t)byte_counts[1];
+        out_report->exported_c3_event_fingerprint =
+            dm1_original_save_hash_bytes(exported_report->c3_raw_event_bytes,
+                                         byte_counts[1]);
+        out_report->c3_event_byte_preservation_ok =
+            byte_counts[0] == byte_counts[1] &&
+            memcmp(source_report->c3_raw_event_bytes,
+                   exported_report->c3_raw_event_bytes,
+                   byte_counts[0]) == 0;
+        return 1;
+    }
     for (which = 0; which < 2; ++which) {
         uint8_t meta[256];
         size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
         uint16_t key;
         int part;
 
-        if (sizes[which] < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE ||
-            reports[which]->part_byte_counts[SAVEGAME_PC34_PART_EVENTS] >
-                sizeof(decoded[which])) return 0;
+        if (sizes[which] < SAVEGAME_PC34_DM_SAVE_HEADER_SIZE) return 0;
         key = read_u16_le(inputs[which] + 20u);
         memcpy(meta, inputs[which] + 256u, sizeof(meta));
         (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(meta,
@@ -10282,8 +10373,7 @@ static int dm1_original_save_c3_event_bytes_match(
         if (cursor + 2u > sizes[which]) return 0;
         byte_counts[which] = read_u16_le(inputs[which] + cursor);
         cursor += 2u;
-        if (byte_counts[which] !=
-                reports[which]->part_byte_counts[SAVEGAME_PC34_PART_EVENTS] ||
+        if (byte_counts[which] > sizeof(decoded[which]) ||
             byte_counts[which] % DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT != 0u ||
             cursor + byte_counts[which] > sizes[which]) return 0;
         memcpy(decoded[which], inputs[which] + cursor, byte_counts[which]);
@@ -11767,6 +11857,38 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.header_identity_preservation_ok;
         receipt->part_byte_count_preservation_ok =
             roundtrip.part_byte_count_preservation_ok;
+        receipt->external_portrait_byte_receipt_available =
+            roundtrip.external_portrait_byte_receipt_available;
+        receipt->source_external_portrait_byte_count =
+            roundtrip.source_external_portrait_byte_count;
+        receipt->source_external_portrait_fingerprint =
+            roundtrip.source_external_portrait_fingerprint;
+        receipt->exported_external_portrait_byte_count =
+            roundtrip.exported_external_portrait_byte_count;
+        receipt->exported_external_portrait_fingerprint =
+            roundtrip.exported_external_portrait_fingerprint;
+        receipt->external_portrait_byte_preservation_ok =
+            roundtrip.external_portrait_byte_preservation_ok;
+        receipt->inactive_champion_record_byte_receipt_available =
+            roundtrip.inactive_champion_record_byte_receipt_available;
+        receipt->inactive_champion_record_count =
+            roundtrip.inactive_champion_record_count;
+        receipt->inactive_champion_record_byte_preserved_count =
+            roundtrip.inactive_champion_record_byte_preserved_count;
+        receipt->inactive_champion_record_byte_preservation_ok =
+            roundtrip.inactive_champion_record_byte_preservation_ok;
+        receipt->dungeon_tail_byte_receipt_available =
+            roundtrip.dungeon_tail_byte_receipt_available;
+        receipt->source_dungeon_tail_byte_count =
+            roundtrip.source_dungeon_tail_byte_count;
+        receipt->source_dungeon_tail_fingerprint =
+            roundtrip.source_dungeon_tail_fingerprint;
+        receipt->exported_dungeon_tail_byte_count =
+            roundtrip.exported_dungeon_tail_byte_count;
+        receipt->exported_dungeon_tail_fingerprint =
+            roundtrip.exported_dungeon_tail_fingerprint;
+        receipt->dungeon_tail_byte_preservation_ok =
+            roundtrip.dungeon_tail_byte_preservation_ok;
         memcpy(receipt->source_part_byte_counts,
                roundtrip.source_part_byte_counts,
                sizeof(receipt->source_part_byte_counts));

@@ -25,9 +25,9 @@ an integration build pass.
 - **DM1-V22-MANIFEST-SYNTAX-GATE:** Closed 2026-07-27. V2.2 now rejects
   malformed JSON and manifests without `manifestVersion` or `packId` instead
   of treating them as partial artpacks. The valid-artpack test fixture is
-  proper JSON; the current complete DM1 V2.x CTest sweep passes 88/88 against the
-  configured local DM1 data root. This does not close the separate authentic
-  PC34 save-corpus requirement.
+  proper JSON; the current complete DM1 V2.x CTest sweep passes 96/96 against the
+  configured local DM1 data root. This does not replace broader fixture-free
+  C13-bearing save-corpus coverage.
 
 - **DM1-HUD-CHAMPION-HAND-CLICK:** Closed 2026-07-27. A closed inventory
   panel now treats each visible champion hand cell as part of that champion's
@@ -99,6 +99,12 @@ an integration build pass.
   verifies music, the source-owned save-disk menu and write, rest-state
   handoff, and close; they are no longer protected only by a route-table
   fixture.
+
+- **DM1-V2-INVENTORY-CONTROL-CLICK-RUNTIME:** Closed 2026-07-28. V2.0,
+  V2.1 and V2.2 retain the source-owned C141 music, C140 save-disk, C145
+  rest and C011 close routes beneath their presentation layer. The runtime
+  mouse regression exercises every control in every V2 mode; no V2-only
+  inactive panel controls remain.
 
 - **DM1-V2-VISIBLE-CHAMPION-PORTRAIT-HITBOX:** Closed 2026-07-27. V2's
   composed HUD shifts champion portrait/name regions to x=12 with a 77px
@@ -301,8 +307,12 @@ that its exact runtime path is not already source-locked and tested.
 
 ### DM1
 
-1. **Q-DM1-01 PC34 save corpus and round trip:** admit a real `DMSAVE.DAT`;
-   prove F0417/F0418/F0435 import, live resume, export, backup and re-import.
+1. **Q-DM1-01 PC34 save corpus and round trip:** Complete 2026-07-28. A real
+   DOSBox `DMSAVE.DAT` now proves F0417/F0418/F0435 import, live resume,
+   export, backup and re-import. A C13-free authentic save is admitted by
+   its preserved C3/C4 envelope rather than requiring fabricated C13 proof.
+   Fixture-free C13-bearing corpus breadth remains separately tracked below;
+   it is additional coverage, not a reason to reject this authenticated save.
 2. **Q-DM1-02 HoC presented-frame consumer:** finish source-backed mirrors,
    inscriptions, objects, action/spell surfaces and palettes at every depth.
    2026-07-24: a DM1-owned final frame boundary now requires the independent
@@ -617,12 +627,22 @@ that its exact runtime path is not already source-locked and tested.
    and validates its real F7057 envelope (five raw parts through byte 9408),
    including 110 allocated C04 group records and 467 C03/C04 rows. F0435
    import, C3/C4 receipt, and source dungeon-tail staging now succeed without
-   truncating the empty live timeline. The corpus remains open for the final
-   F0417/F0418 byte round-trip and M11/M12 resume-route verification.
+   truncating the empty live timeline. The final F0417/F0418 byte round-trip
+   and M11/M12 resume-route verification passed on 2026-07-28. Keep this row
+   only for additional fixture-free C13-bearing corpus coverage.
 2. **DM1-HOC-RUNTIME-RENDER:** Finish the M11 HoC render consumer for mirrors,
    wall inscriptions, objects, actions, spells, and viewport materialization
    from real PC34 GRAPHICS.DAT/DUNGEON.DAT records; remove production fallback
    drawing where an authenticated source surface exists.
+   2026-07-28: the real HoC sweep now requires each of the eight original
+   F0115 object graphics to change pixels in its F0791 destination rectangle,
+   across every reachable pose. This closes receipt-only evidence for the
+   floor and alcove lanes; packaged-app capture remains separate.
+   The same sweep now runs in V2.0, V2.1 and V2.2 and requires every real
+   object graphic plus a C127 mirror route in each mode.
+   2026-07-28: V2.2 no longer drops the final source M648 inscription pass.
+   Its artpack has no reviewed inscription replacement, so the real PC34
+   font is repainted after V22 art just as it is in V2.0/V2.1.
 3. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
    live group, line-of-sight, projectile-impact, teleporter, and spell-tick
    runtime paths using raw C04/C05/C14/C15 ownership and source scheduling.
@@ -21524,21 +21544,23 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     or incomplete receipt remains no-write.
 ## DM1 F0115 live effect material follow-up
 
-- [ ] 2026-07-23 F0115 near-square follow-up: D0/D1 now has a source-only
-  F0098 -> F0108 -> F0115 receipt gate for PC34 floor/ceiling surfaces,
-  floor ornaments, and C05..C10 normal objects. It requires decoded,
-  fingerprinted `GRAPHICS.DAT` plus a raw, fingerprinted corridor byte from
-  `DUNGEON.DAT`; missing or altered source material is no-draw. C14/C15,
-  walls, doors, fields, and the completed D1-D3 creature/item route stay
-  outside this batch. Remaining work is production-consumer integration and
-  broader capture, not synthetic fallback material.
+- [x] 2026-07-28 F0115 near-square production-consumer audit: closed as
+  superseded. The legacy standalone D0/D1 receipt has no production caller;
+  M11 already consumes the source-backed F0098 background and the real
+  F0115 C2500/F0791 floor-object lane for all visible D1-D3 cells. Wiring
+  the obsolete receipt a second time would double-draw items. The real-PC34
+  floor-item and alcove regressions exercise that live path; missing source
+  material remains no-draw.
 
-- [ ] Consume the completed PC34 C14/C15 catalog and F0248/F0142 receipt
-  gate from the final DM1 host presentation path. The DM1 materializer now
+- [x] 2026-07-28 Consume the completed PC34 C14/C15 catalog and F0248/F0142
+  receipt gate from the final DM1 host presentation path. The DM1 materializer
   validates decoder-owned, fingerprinted `GRAPHICS.DAT` surfaces and admits
   associated C14 objects only with their exact F0142/G0209 Slot receipt;
-  missing, malformed, foreign, or changed source data is no-draw. Remaining
-  work is final host-capture wiring, not a synthetic marker or fallback.
+  missing, malformed, foreign, or changed source data is no-draw. The real
+  PC34 `m11_dm1_throw_projectile_runtime_materialization_pc34`,
+  `m11_dm1_projectile_host_presentation_receipt`, and
+  `m11_dm1_f0115_c15_runtime_capture_pc34` gates prove C14 and C15 reach
+  their final M11 pixel consumers. No synthetic marker or fallback remains.
 
 ## DM1 F0248/F0213 timeline ownership follow-up
 
@@ -21548,14 +21570,25 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   malformed, or absent C14 pool. Loaded impact explosions likewise require a
   reserved C15 plus live C25 receipt. Remaining work is original corpus/capture
   breadth, not an in-memory projectile or explosion fallback.
+  - 2026-07-28 D0C C15 order repair: the materialization receipt retains
+    original C050/C100/C101 records in C15 order for their dedicated source
+    consumers. Missing special material still fails closed at draw time; it
+    cannot remove later ordinary effects from the live receipt.
 
 ## DM1 original-save corpus follow-up
 
-- [ ] Stage an operator-supplied, original PC34 C13 save corpus and run the
+- [x] Stage an operator-supplied, original PC34 save corpus and run the
   fixture-free F0435 -> F0433 -> F0435 admission target. The implementation
   now requires C3/C4 raw identity plus party, GLOBAL_DATA/map, ACTIVE_GROUP,
   and timeline identity across staging/adoption; no generated save is valid
   positive evidence.
+  - 2026-07-28 real DOSBox corpus follow-up: the supplied `DMSAVE.DAT`
+    reaches F0435 staging, runtime adoption, a visible saved-portrait
+    inventory panel, and an F0435 -> F0433 -> F0435 core-state/tail round
+    trip. Portrait, inactive-champion, C3, C4 and tail receipts now travel
+  through the round-trip report. The fixture-free external-corpus target now
+  admits this C13-free original by its preserved C3/C4 envelope without
+  weakening the separate C13-bearing fixture lifecycle checks.
 
 ## DM1 F0134/F0135 production material follow-up
 

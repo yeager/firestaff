@@ -186,13 +186,14 @@ static int receipt_is_runtime_admitted(
            receipt->world_layout_runtime_stale_fence_valid &&
            !receipt->world_layout_runtime_stale_fence_revoked &&
            receipt->world_layout_runtime_stale_fence_fingerprint != 0u &&
-           receipt->c13_c24_c25_runtime_adoption_receipt_available &&
-           receipt->c13_c24_c25_runtime_adoption_valid &&
-           receipt->c13_c24_c25_runtime_adoption_fingerprint != 0u &&
-           receipt->c13_c24_c25_runtime_stale_fence_receipt_available &&
-           receipt->c13_c24_c25_runtime_stale_fence_valid &&
-           !receipt->c13_c24_c25_runtime_stale_fence_revoked &&
-           receipt->c13_c24_c25_runtime_stale_fence_fingerprint != 0u &&
+           (receipt->source_c13_event_count == 0 ||
+            (receipt->c13_c24_c25_runtime_adoption_receipt_available &&
+             receipt->c13_c24_c25_runtime_adoption_valid &&
+             receipt->c13_c24_c25_runtime_adoption_fingerprint != 0u &&
+             receipt->c13_c24_c25_runtime_stale_fence_receipt_available &&
+             receipt->c13_c24_c25_runtime_stale_fence_valid &&
+             !receipt->c13_c24_c25_runtime_stale_fence_revoked &&
+             receipt->c13_c24_c25_runtime_stale_fence_fingerprint != 0u)) &&
            receipt->c03_c04_runtime_adoption_receipt_available &&
            receipt->c03_c04_runtime_adoption_valid &&
            receipt->c03_c04_runtime_adoption_fingerprint != 0u &&
@@ -202,15 +203,20 @@ static int receipt_is_runtime_admitted(
                receipt->source_runtime_adopt_c03_fingerprint &&
            receipt->source_runtime_stage_c04_fingerprint ==
                receipt->source_runtime_adopt_c04_fingerprint &&
-           receipt->c13_runtime_identity_receipt_available &&
-           receipt->c13_runtime_identity_valid &&
-           receipt->c13_runtime_identity_fingerprint != 0u &&
-           receipt->c13_runtime_stale_fence_receipt_available &&
-           receipt->c13_runtime_stale_fence_valid &&
-           !receipt->c13_runtime_stale_fence_revoked &&
-           receipt->c13_runtime_stale_fence_revoke_reason ==
-               DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_NONE &&
-           receipt->c13_runtime_stale_fence_fingerprint != 0u;
+           /* C13 is a subtype of the original C3 event stream. A save with
+            * no C13 rows must still be admitted through its preserved C3/C4
+            * bytes and F0435 runtime handoff; requiring a fabricated C13
+            * receipt would make a genuine save fail corpus admission. */
+           (receipt->source_c13_event_count == 0 ||
+            (receipt->c13_runtime_identity_receipt_available &&
+             receipt->c13_runtime_identity_valid &&
+             receipt->c13_runtime_identity_fingerprint != 0u &&
+             receipt->c13_runtime_stale_fence_receipt_available &&
+             receipt->c13_runtime_stale_fence_valid &&
+             !receipt->c13_runtime_stale_fence_revoked &&
+             receipt->c13_runtime_stale_fence_revoke_reason ==
+                 DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_NONE &&
+             receipt->c13_runtime_stale_fence_fingerprint != 0u));
 }
 
 int main(void)

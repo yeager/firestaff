@@ -322,10 +322,16 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 continue;
             }
             ++decision.liveExplosionCount;
-            /* ReDMCSB F0115:6006-6219 defers C050 from the ordinary C15
-             * bitmap branch and presents it as the source-bound fluxcage
-             * field. It has no explosion-pattern GRAPHICS.DAT index. */
+            /* ReDMCSB F0115:6006-6219 keeps C050/C100/C101 in the C15
+             * list but dispatches them through their own source paths. They
+             * must therefore survive this materialization receipt in raw
+             * source order. The final renderer still fails closed when the
+             * matching fluxcage/rebirth surface is unavailable; filtering
+             * them here loses later ordinary C15 ordering and makes a live
+             * effect list differ from the original C15 chain. */
             if (explosion->explosionType != C050_EXPLOSION_FLUXCAGE &&
+                explosion->explosionType != C100_EXPLOSION_REBIRTH_STEP1 &&
+                explosion->explosionType != C101_EXPLOSION_REBIRTH_STEP2 &&
                 !dm1_v1_viewport_runtime_admit_effect_pc34(
                     input, DM1_V1_F0248_LIVE_EFFECT_EXPLOSION_C15_PC34,
                     (unsigned short)((THING_TYPE_EXPLOSION << 10) |
@@ -333,10 +339,6 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                     THING_NONE,
                     dm1_v1_explosion_pattern_graphic_index(
                         explosion->explosionType, explosion->attack))) {
-                continue;
-            }
-            if (explosion->explosionType == C050_EXPLOSION_FLUXCAGE &&
-                !input->sourceBoundFluxcage) {
                 continue;
             }
             ++decision.admittedLiveExplosionCount;

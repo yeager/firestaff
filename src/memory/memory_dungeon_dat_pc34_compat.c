@@ -309,6 +309,10 @@ void F0500_DUNGEON_FreeDatHeader_Compat(
         struct DungeonDatState_Compat* state)
 {
         F0502_DUNGEON_FreeTileData_Compat(state);
+        free(state->originalSaveTailBytes);
+        state->originalSaveTailBytes = NULL;
+        state->originalSaveTailByteCount = 0;
+        state->originalSaveTailPristine = 0;
         if (state->maps) {
                 free(state->maps);
                 state->maps = NULL;

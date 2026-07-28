@@ -139,10 +139,17 @@ _Static_assert(sizeof(struct PC34GlobalData) == 128,
 #define PC34_EXPORT_ACTIVE_GROUP_PART_CAP \
     (GAMEWORLD_CREATURE_AI_CAPACITY * PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT)
 #define PC34_EVENT_BYTE_COUNT 10
+/* The original PC34 C3/C4 parts are sized by GLOBAL_DATA.EventMaximumCount,
+ * not by Firestaff's live timeline occupancy.  Authentic saves may reserve
+ * far more than TIMELINE_QUEUE_CAPACITY entries (the operator corpus uses
+ * 467).  Keep the export/import scratch storage aligned with the DM1-owned
+ * 512-entry C3/C4 receipt contract so F0417/F0418 never truncate or overflow
+ * a source-sized part. */
 #define PC34_EXPORT_EVENTS_PART_CAP \
-    (TIMELINE_QUEUE_CAPACITY * PC34_EVENT_BYTE_COUNT)
+    (DM1_EVENT_MAX_COUNT * PC34_EVENT_BYTE_COUNT)
 #define PC34_EXPORT_TIMELINE_PART_CAP \
-    (TIMELINE_QUEUE_CAPACITY * 2)
+    (DM1_EVENT_MAX_COUNT * 2)
+#define PC34_EXPORT_PART_SCRATCH_CAP PC34_EXPORT_EVENTS_PART_CAP
 
 #define PC34_DM_OFFSET_USELESS 298
 #define PC34_DM_OFFSET_FORMAT_ID 299
@@ -1924,6 +1931,11 @@ static int pc34_dungeon_tail_size(
 {
     int total;
     int type;
+    if (dungeon != 0 && dungeon->originalSaveTailPristine &&
+        dungeon->originalSaveTailBytes != 0 &&
+        dungeon->originalSaveTailByteCount > 2) {
+        return dungeon->originalSaveTailByteCount;
+    }
     if (dungeon == 0 || things == 0 ||
         !dungeon->loaded || !dungeon->tilesLoaded || !things->loaded ||
         dungeon->maps == 0 || dungeon->tiles == 0 ||
@@ -2314,6 +2326,12 @@ static int pc34_write_dungeon_tail(
     if (dstAvail < tailSize) {
         return -1;
     }
+    if (dungeon->originalSaveTailPristine &&
+        dungeon->originalSaveTailBytes != 0 &&
+        dungeon->originalSaveTailByteCount == tailSize) {
+        memcpy(dst, dungeon->originalSaveTailBytes, (size_t)tailSize);
+        return tailSize;
+    }
 
     /* ReDMCSB LOADSAVE.C F0433 lines ~1661-1682 writes these
      * sections with F0422 byte-sum checksum in this exact order. */
@@ -2450,7 +2468,7 @@ static int export_pc34_core(
     uint32_t prngSeed;
     uint16_t keys[SAVEGAME_PC34_DM_KEYS_COUNT];
     uint16_t checksums[SAVEGAME_PC34_DM_CHECKSUMS_COUNT];
-    unsigned char partBuf[SAVEGAME_PC34_TIMELINE_BYTE_COUNT];
+    unsigned char partBuf[PC34_EXPORT_PART_SCRATCH_CAP];
     static const unsigned char emptyPart[2] = { 0u, 0u };
     unsigned char eventsPart[PC34_EXPORT_EVENTS_PART_CAP];
     unsigned char timelinePart[PC34_EXPORT_TIMELINE_PART_CAP];
@@ -2467,6 +2485,11 @@ static int export_pc34_core(
     if (outBytesWritten != 0) *outBytesWritten = 0;
     if (state == 0 || outBuf == 0) return SAVEGAME_PC34_ERROR_NULL_ARG;
     if (state->party == 0) return SAVEGAME_PC34_ERROR_NULL_ARG;
+    if (activeGroupsLen < 0 ||
+        activeGroupsLen > PC34_EXPORT_ACTIVE_GROUP_PART_CAP ||
+        (activeGroupsLen & 1) != 0) {
+        return SAVEGAME_PC34_ERROR_INTERNAL;
+    }
 
     /* Per-export pseudo-random seed: derive from gameID so
      * re-exports of the same game yield identical byte streams
@@ -2483,6 +2506,12 @@ static int export_pc34_core(
                                   &eventsLen, &timelineLen,
                                   &eventCount, &firstUnusedEventIndex,
                                   &eventMaximumCount)) {
+        return SAVEGAME_PC34_ERROR_INTERNAL;
+    }
+    if (eventsLen < 0 || eventsLen > PC34_EXPORT_EVENTS_PART_CAP ||
+        timelineLen < 0 || timelineLen > PC34_EXPORT_TIMELINE_PART_CAP ||
+        (eventsLen % PC34_EVENT_BYTE_COUNT) != 0 ||
+        (timelineLen & 1) != 0) {
         return SAVEGAME_PC34_ERROR_INTERNAL;
     }
 
@@ -2819,7 +2848,7 @@ int F0796_SAVEGAME_ImportPC34_Compat(
     unsigned char portraitIndexes[PC34_DM_FIRESTAFF_PORTRAIT_INDEX_COUNT];
     int portraitIndexesPresent = 0;
     int cursor;
-    unsigned char partBuf[SAVEGAME_PC34_TIMELINE_BYTE_COUNT];
+    unsigned char partBuf[PC34_EXPORT_PART_SCRATCH_CAP];
     unsigned char eventsPart[PC34_EXPORT_EVENTS_PART_CAP];
     unsigned char timelinePart[PC34_EXPORT_TIMELINE_PART_CAP];
     struct PC34GlobalData globalData;

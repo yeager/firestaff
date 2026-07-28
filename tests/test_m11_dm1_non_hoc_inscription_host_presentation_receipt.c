@@ -255,6 +255,12 @@ int main(void)
     NonHocInscriptionPose pose;
     unsigned char withoutText[kFramebufferWidth * kFramebufferHeight];
     unsigned char withText[kFramebufferWidth * kFramebufferHeight];
+    static const M12_PresentationMode v2Modes[] = {
+        M12_PRESENTATION_V20_FILTERED,
+        M12_PRESENTATION_V21_UPSCALED,
+        M12_PRESENTATION_V22_MODERN
+    };
+    size_t modeIndex;
 
     if (!dataDir || !dataDir[0]) {
         home = getenv("HOME");
@@ -291,6 +297,24 @@ int main(void)
     if (!verify_receipt_and_pixels(&state, pose.textStringIndex, withText, withoutText)) {
         M11_GameView_Shutdown(&state);
         return 1;
+    }
+    for (modeIndex = 0; modeIndex < sizeof(v2Modes) / sizeof(v2Modes[0]);
+         ++modeIndex) {
+        state.presentationMode = v2Modes[modeIndex];
+        state.world.things->textStrings[pose.textStringIndex].visible = 0;
+        memset(withoutText, 0, sizeof(withoutText));
+        M11_GameView_Draw(&state, withoutText,
+                          kFramebufferWidth, kFramebufferHeight);
+        state.world.things->textStrings[pose.textStringIndex].visible = 1;
+        memset(withText, 0, sizeof(withText));
+        M11_GameView_Draw(&state, withText, kFramebufferWidth, kFramebufferHeight);
+        if (!verify_receipt_and_pixels(&state, pose.textStringIndex,
+                                       withText, withoutText)) {
+            fprintf(stderr, "V2 mode %d did not preserve original M648 pixels\n",
+                    (int)v2Modes[modeIndex]);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
     }
     printf("ok: real PC34 non-HoC D1C inscription map=%d wall=(%d,%d) dir=%d\n",
            pose.mapIndex, pose.wallX, pose.wallY, pose.direction);

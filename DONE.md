@@ -73,10 +73,10 @@
   and opens champion four through its visible V2 portrait. The complete DM1
   V2.x suite passes 90/90.
 
-- ✅ 2026-07-28 DM1 V2.x current full-suite verification. Built the two
-  optional V2 test tools absent from a partial Ninja build, then ran all 90
-  registered V2.0/V2.1/V2.2 tests against the local original DM1 data root:
-  90/90 pass. Coverage includes runtime viewport material, HUD/pointer input,
+- ✅ 2026-07-28 DM1 V2.x current full-suite verification. Built the optional
+  V2 test tools absent from a partial Ninja build, then ran all 96 registered
+  V2.0/V2.1/V2.2 tests against the local original DM1 data root: 96/96 pass.
+  Coverage includes runtime viewport material, HUD/pointer input,
   resolution mapping, item/creature/spell effects, source-owned screenshots,
   and V2.2 artpack gates.
 
@@ -41488,3 +41488,54 @@ the supplied root and selected MD5 to prove this without shipping game data.
   passed. Coverage includes mode handoff, HUD/pointer routes, viewport,
   item/creature/spell/effect paths, resolution mapping, assetpack gates and
   real runtime presentation smoke.
+- ✅ 2026-07-28 DM1 original PC34 save round trip. A real DOSBox
+  `DMSAVE.DAT` now passes fixture-free F0435 -> F0433 -> F0435 admission:
+  source bytes stage into a live world, a saved portrait reaches the active
+  inventory panel, the complete tail is preserved, and exported bytes reload
+  through the same handoff. C13 remains optional evidence, as it is in the
+  C3 event stream; a valid C13-free save is no longer rejected for lacking a
+  fabricated C13 lifecycle receipt. The external-corpus, handoff, and
+  external-HoC runtime regressions pass against the supplied data.
+- ✅ 2026-07-28 DM1 F0115 near-square consumer audit. Retired the stale
+  TODO claim that D0/D1 object presentation needed a second M11 bridge.
+  The active renderer already uses F0098 for source floor/ceiling material
+  and F0115 C2500/F0791 for visible floor objects; the old isolated receipt
+  has no production caller and must not be wired as a duplicate item blit.
+  Real-PC34 floor-item and alcove runtime regressions pass.
+- ✅ 2026-07-28 DM1 D0C C15 effect-order repair. The live F0115 receipt no
+  longer filters fluxcage or rebirth C15 records before their source-specific
+  consumers run. It preserves original C15 order while the renderer remains
+  no-draw without an authenticated special bitmap. C14/C15 layout, projectile
+  impact, D0C receipt, C15 runtime-capture, and projectile presentation tests
+  pass.
+- ✅ 2026-07-28 DM1 HoC F0115 presented-pixel gate. The real PC34 Hall sweep
+  finds all eight original floor/alcove object graphics and now requires each
+  F0791 destination rectangle to change after its exact source blit. This
+  proves final framebuffer consumption rather than only a material receipt.
+  The identical real-data sweep now passes in V1, V2.0, V2.1, and V2.2, with
+  a real C127 mirror route in every presentation mode.
+
+- ✅ 2026-07-28 DM1 V2 inscription preservation. V2.2 no longer suppresses
+  the final ReDMCSB F0107/M648 repaint after V22 art. V2.0, V2.1, and V2.2
+  now all prove exact original M648 glyph pixels, C10 transparency, and stale
+  text invalidation with real PC34 wall text.
+## 2026-07-28 DM1 C14/C15 final viewport consumers
+
+- Closed the stale DM1 F0115 C14/C15 host-consumer follow-up. Real PC34
+  runtime tests now prove a thrown object reaches the final C2900 material
+  blit and an ordinary C15 explosion reaches the deferred final-pixel pass.
+  Source identity, catalogue admission, material fingerprint, and fail-closed
+  rejection remain enforced before either draw.
+
+## 2026-07-28 DM1 V2 inventory controls
+
+- Added runtime coverage for C141 music, C140 save-disk, C145 rest and C011
+  close in V2.0, V2.1 and V2.2. Presentation selection does not make the
+  visible DM1 inventory controls inert.
+
+## 2026-07-28 DM1 HoC capture route
+
+- The real-PC34 HoC regression now reports its selected source mirror route:
+  wall `(14,2)`, party `(14,3)`, north, ordinal `5` for the installed corpus.
+  This makes repeatable macOS/window capture possible without guessing a
+  champion-mirror location.

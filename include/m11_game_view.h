@@ -2686,6 +2686,10 @@ typedef struct M11_Dm1FloorItemHostPresentationReceipt {
     int destinationH;
     int assetWidth;
     int assetHeight;
+    /* The final F0791 blit must visibly alter its destination region. */
+    unsigned int destinationBeforeFNV1a;
+    unsigned int destinationAfterFNV1a;
+    int destinationPixelsChanged;
 } M11_Dm1FloorItemHostPresentationReceipt;
 
 void M11_GameView_GetDm1FloorItemHostPresentationReceipt(

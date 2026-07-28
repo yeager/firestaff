@@ -131,6 +131,12 @@ int main(void)
     unsigned char front[kFramebufferWidth * kFramebufferHeight];
     unsigned char turned[kFramebufferWidth * kFramebufferHeight];
     unsigned char returned[kFramebufferWidth * kFramebufferHeight];
+    static const M12_PresentationMode v2Modes[] = {
+        M12_PRESENTATION_V20_FILTERED,
+        M12_PRESENTATION_V21_UPSCALED,
+        M12_PRESENTATION_V22_MODERN
+    };
+    size_t modeIndex;
 
     if (!dataDir || !dataDir[0]) {
         home = getenv("HOME");
@@ -197,6 +203,44 @@ int main(void)
         fprintf(stderr, "F0128 return tuple did not deterministically repaint M648\n");
         M11_GameView_Shutdown(&state);
         return 1;
+    }
+    for (modeIndex = 0; modeIndex < sizeof(v2Modes) / sizeof(v2Modes[0]);
+         ++modeIndex) {
+        state.presentationMode = v2Modes[modeIndex];
+        state.world.party.direction = pose.direction;
+        memset(front, 0, sizeof(front));
+        M11_GameView_Draw(&state, front, kFramebufferWidth, kFramebufferHeight);
+        M11_GameView_GetDm1InscriptionHostPresentationReceipt(&frontReceipt);
+        if (!valid_original_m648_receipt(&frontReceipt, pose.textStringIndex) ||
+            frontReceipt.fontPixelsFNV1a != fontHash) {
+            fprintf(stderr, "V2 mode %d lost original M648 text\n",
+                    (int)v2Modes[modeIndex]);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        state.world.party.direction = (pose.direction + 1) & 3;
+        memset(turned, 0, sizeof(turned));
+        M11_GameView_Draw(&state, turned, kFramebufferWidth, kFramebufferHeight);
+        M11_GameView_GetDm1InscriptionHostPresentationReceipt(&turnedReceipt);
+        if (turnedReceipt.valid) {
+            fprintf(stderr, "V2 mode %d retained stale M648 text\n",
+                    (int)v2Modes[modeIndex]);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+        state.world.party.direction = pose.direction;
+        memset(returned, 0, sizeof(returned));
+        M11_GameView_Draw(&state, returned, kFramebufferWidth, kFramebufferHeight);
+        M11_GameView_GetDm1InscriptionHostPresentationReceipt(&returnedReceipt);
+        if (!valid_original_m648_receipt(&returnedReceipt, pose.textStringIndex) ||
+            frontReceipt.glyphByteCount != returnedReceipt.glyphByteCount ||
+            memcmp(frontReceipt.glyphBytes, returnedReceipt.glyphBytes,
+                   (size_t)frontReceipt.glyphByteCount) != 0) {
+            fprintf(stderr, "V2 mode %d did not deterministically repaint M648\n",
+                    (int)v2Modes[modeIndex]);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
     }
     printf("ok: real PC34 F0128 inscription repaint map=%d party=(%d,%d) dir=%d\n",
            pose.mapIndex, pose.partyX, pose.partyY, pose.direction);

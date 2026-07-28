@@ -3289,6 +3289,47 @@ static unsigned int m11_dm1_runtime_capture_fnv1a(
     return hash;
 }
 
+static unsigned int m11_framebuffer_rect_fnv1a(const unsigned char* framebuffer,
+                                                int framebufferWidth,
+                                                int framebufferHeight,
+                                                int x,
+                                                int y,
+                                                int width,
+                                                int height)
+{
+    unsigned int hash = 2166136261u;
+    int row;
+
+    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 ||
+        width <= 0 || height <= 0) {
+        return 0u;
+    }
+    if (x < 0) {
+        width += x;
+        x = 0;
+    }
+    if (y < 0) {
+        height += y;
+        y = 0;
+    }
+    if (x >= framebufferWidth || y >= framebufferHeight) {
+        return 0u;
+    }
+    if (x + width > framebufferWidth) width = framebufferWidth - x;
+    if (y + height > framebufferHeight) height = framebufferHeight - y;
+    if (width <= 0 || height <= 0) return 0u;
+
+    for (row = 0; row < height; ++row) {
+        const unsigned char* pixels = framebuffer + (y + row) * framebufferWidth + x;
+        int column;
+        for (column = 0; column < width; ++column) {
+            hash ^= (unsigned int)pixels[column];
+            hash *= 16777619u;
+        }
+    }
+    return hash;
+}
+
 static int m11_dm1_f0444_endgame_graphic_pc34(
     const M11_AssetSlot* slot,
     int graphic_index,
@@ -6968,8 +7009,11 @@ static void m11_dm1_c13_visible_runtime_handoff_bind(
         return;
     }
 
-    s_m11_dm1_c13_visible_runtime_handoff.owner = state;
-    s_m11_dm1_c13_visible_runtime_handoff.blocked = 1;
+    /* F0435 has already adopted the authenticated original world before
+     * this optional C13 presentation receipt is requested.  A missing
+     * corpus proof must not turn that valid restored game into a black
+     * screen: bind an owner only once the source-specific transition itself
+     * is available. */
     if (!source_path || !source_path[0] ||
         !FSP_ParentDir(root, sizeof(root), source_path)) {
         return;
@@ -6998,6 +7042,7 @@ static void m11_dm1_c13_visible_runtime_handoff_bind(
             continue;
         }
         s_m11_dm1_c13_visible_runtime_handoff.pending = 1;
+        s_m11_dm1_c13_visible_runtime_handoff.owner = state;
         s_m11_dm1_c13_visible_runtime_handoff.blocked = 0;
         s_m11_dm1_c13_visible_runtime_handoff.gameTick =
             receipt->c13_visible_runtime_m11_handoff_game_tick;
@@ -22280,6 +22325,13 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_REDRAW;
         case M12_MENU_INPUT_NONE:
+            /* A restored F0435 world may be driven directly through this
+             * public M11 input boundary by callers that do not own the main
+             * loop's idle scheduler.  CMD_NONE is the source wait command;
+             * do not discard it before F0884 can advance the restored queue. */
+            command = CMD_NONE;
+            label = "WAIT";
+            break;
         default:
             return M11_GAME_INPUT_IGNORED;
     }
@@ -30679,6 +30731,8 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
     const M11_AssetSlot* slot;
     DM1_ItemSpriteBlitPlan plan;
     DM1_F0115FloorObjectMaterialReceiptPc34 materialReceipt;
+    M11_Dm1FloorItemHostPresentationReceipt* presentation = NULL;
+    unsigned int destinationBeforeFNV1a = 0u;
     int effectiveSourceZoneRow;
     int effectiveTransparentColor;
     int csb_native_graphic = -1;
@@ -30735,7 +30789,7 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
             depthIndex + 1, plan.use_mirror ? 1 : 0) > 0;
     }
     if (publishFloorItemHostReceipt) {
-        M11_Dm1FloorItemHostPresentationReceipt *presentation =
+        presentation =
             publishFloorItemHostReceipt == M11_F0115_PRESENTATION_ALCOVE
                 ? &s_m11_dm1_alcove_item_host_presentation_receipt
                 : &s_m11_dm1_floor_item_host_presentation_receipt;
@@ -30768,6 +30822,10 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
         presentation->destinationH = plan.draw_h;
         presentation->assetWidth = (int)slot->width;
         presentation->assetHeight = (int)slot->height;
+        destinationBeforeFNV1a = m11_framebuffer_rect_fnv1a(
+            framebuffer, fbW, fbH, plan.draw_x, plan.draw_y,
+            plan.draw_w, plan.draw_h);
+        presentation->destinationBeforeFNV1a = destinationBeforeFNV1a;
     }
     if (plan.use_mirror) {
         M11_AssetLoader_BlitScaledMirror(slot, framebuffer, fbW, fbH,
@@ -30779,6 +30837,16 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
                                    plan.draw_x, plan.draw_y,
                                    plan.draw_w, plan.draw_h,
                                    effectiveTransparentColor);
+    }
+    if (presentation) {
+        presentation->destinationAfterFNV1a = m11_framebuffer_rect_fnv1a(
+            framebuffer, fbW, fbH, plan.draw_x, plan.draw_y,
+            plan.draw_w, plan.draw_h);
+        presentation->destinationPixelsChanged =
+            presentation->destinationBeforeFNV1a != 0u &&
+            presentation->destinationAfterFNV1a != 0u &&
+            presentation->destinationBeforeFNV1a !=
+                presentation->destinationAfterFNV1a;
     }
     return 1;
 }
@@ -43112,7 +43180,6 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
     }
     m11_dm1_invalidate_wall_inscription_material();
     if (!state || !framebuffer ||
-        state->presentationMode == M12_PRESENTATION_V22_MODERN ||
         !m11_sample_viewport_cell(state, 1, 0, &frontCell) ||
         !frontCell.valid || !m11_viewport_cell_is_wall_like(&frontCell)) {
         return;
@@ -47436,7 +47503,10 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             state, framebuffer, framebufferWidth, framebufferHeight);
         (void)m11_draw_v1_mouth_visual_frame(
             state, framebuffer, framebufferWidth, framebufferHeight);
-        return;
+        /* F0355's C017 slot/object pass is only the first panel layer.
+         * F0354 immediately follows with the active champion portrait and
+         * status data.  Returning here made ordinary V1 inventory omit that
+         * live layer entirely, including portraits restored by F0435. */
     }
 
     /* ── Champion identity ── portrait + name + stat bars */

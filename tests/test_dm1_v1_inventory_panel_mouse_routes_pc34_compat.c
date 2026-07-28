@@ -462,6 +462,65 @@ static void test_inventory_control_icons_dispatch_runtime(void) {
               "C011 close icon closes the inventory panel");
 }
 
+/* V2.x changes presentation, not COMMAND.C's C141/C140/C145/C011 ownership.
+ * Keep the rendered V2 panel controls live in every supported presentation
+ * mode, rather than only testing their V1 chrome coordinates. */
+static void test_inventory_control_icons_dispatch_all_v2_modes(void) {
+    static const M12_PresentationMode modes[] = {
+        M12_PRESENTATION_V20_FILTERED,
+        M12_PRESENTATION_V21_UPSCALED,
+        M12_PRESENTATION_V22_MODERN
+    };
+    size_t modeIndex;
+
+    for (modeIndex = 0; modeIndex < sizeof(modes) / sizeof(modes[0]);
+         ++modeIndex) {
+        M11_GameViewState state;
+        struct DungeonThings_Compat things;
+        struct DungeonWeapon_Compat weapons[2];
+        struct DungeonContainer_Compat containers[1];
+
+        seed_panel_view(&state, &things, weapons, containers);
+        state.presentationMode = modes[modeIndex];
+        state.dm1MusicOn = 1;
+
+        ASSERT_EQ(M11_GameView_HandlePointerButton(
+                      &state, 168, 36, M11_DM1_MOUSE_MASK_LEFT),
+                  M11_GAME_INPUT_REDRAW,
+                  "V2 C141 music control is consumed");
+        ASSERT_EQ(state.dm1MusicOn, 0,
+                  "V2 C141 music control toggles live music state");
+
+        state.inventoryPanelActive = 1;
+        ASSERT_EQ(M11_GameView_HandlePointerButton(
+                      &state, 179, 35, M11_DM1_MOUSE_MASK_LEFT),
+                  M11_GAME_INPUT_REDRAW,
+                  "V2 C140 save control opens save-disk menu");
+        ASSERT_EQ(state.dialogOverlayActive, 1,
+                  "V2 C140 has source-owned save-disk dialog");
+        ASSERT_EQ(M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK),
+                  M11_GAME_INPUT_REDRAW,
+                  "V2 save-disk dialog cancels through source menu");
+
+        state.inventoryPanelActive = 1;
+        ASSERT_EQ(M11_GameView_HandlePointerButton(
+                      &state, 190, 35, M11_DM1_MOUSE_MASK_LEFT),
+                  M11_GAME_INPUT_REDRAW,
+                  "V2 C145 Zz control is consumed");
+        ASSERT_EQ(state.resting, 1,
+                  "V2 C145 Zz control starts rest state");
+
+        state.inventoryPanelActive = 1;
+        ASSERT_EQ(M11_GameView_HandlePointerButton(
+                      &state, 209, 35, M11_DM1_MOUSE_MASK_LEFT),
+                  M11_GAME_INPUT_REDRAW,
+                  "V2 C011 close control is consumed");
+        ASSERT_EQ(state.inventoryPanelActive, 0,
+                  "V2 C011 close control dismisses inventory");
+        M11_GameView_Shutdown(&state);
+    }
+}
+
 /* COMMAND.C G0447 maps the visible C187..C190 champion bars to C007..C010.
  * This is the normal left-click route for opening each champion inventory;
  * selecting another champion must keep the panel open instead of toggling it
@@ -1426,6 +1485,7 @@ int main(void) {
 
     test_inventory_close_panel_right_button_route();
     test_inventory_control_icons_dispatch_runtime();
+    test_inventory_control_icons_dispatch_all_v2_modes();
     test_champion_hud_left_click_opens_target_inventory();
     test_inventory_chest_slot_routes_all_eight();
     test_inventory_open_chest_panel_click_route_priority();

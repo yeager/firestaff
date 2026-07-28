@@ -105,6 +105,13 @@ struct DungeonDatState_Compat {
     long                          fileSize;
     int                           loaded;
     int                           tilesLoaded;
+    /* A PC34 save tail is already checksum-validated by F0435. Retain the
+     * exact source bytes until a live world serializer explicitly replaces
+     * them, so F0433 can round-trip an original save without lossy decode /
+     * re-encode of reserved dungeon fields. */
+    unsigned char*                originalSaveTailBytes;
+    int                           originalSaveTailByteCount;
+    int                           originalSaveTailPristine;
     char                          decompressedPath[512]; /* temp path if decompressed */
 };
 
