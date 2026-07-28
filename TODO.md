@@ -21662,6 +21662,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## CSB completed save-contract verification
 
+- [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
+  handoff. Enhanced modes now initialize and bind to the live V1 profile,
+  consume V1 runtime ticks, advance at display cadence, and cleanly unbind on
+  shutdown. The launch handoff also retains the V2.2 material gate's resolved
+  mode instead of restoring an unadmitted V2.2 request.
+
 - [x] 2026-07-28 Replace the fixed CSB new-game pose with the verified
   `DUNGEON_HEADER.InitialPartyLocation` route. ReDMCSB `LOADSAVE.C` F0435
   reads x, y and direction from the loaded header; Firestaff now retains and

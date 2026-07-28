@@ -41692,3 +41692,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `DUNGEON_HEADER.InitialPartyLocation` and both CSB boot paths decode it as
   ReDMCSB `LOADSAVE.C` F0435 does. The local original package boot-probes at
   map 0, `(9,0)`, direction 2; loader and boot/viewport regressions pass.
+- ✅ 2026-07-28 CSB V2 production runtime binding. M11 now initializes,
+  binds, ticks, renders, and shuts down the CSB V2 smooth runtime only for
+  admitted enhanced CSB modes. The handoff preserves a V2.2-to-V2.1
+  material-gate fallback. Verified with the 43-check smooth-runtime suite,
+  518-check M12/M11 CSB handoff suite, and a direct original-data V2 boot.

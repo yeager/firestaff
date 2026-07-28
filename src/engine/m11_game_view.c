@@ -37,6 +37,7 @@
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v2_hud_runtime.h"
+#include "csb_v2_runtime.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_game.h"
@@ -5708,6 +5709,7 @@ static int m11_csb_apply_boot_runtime_receipt(
 {
     uint32_t package_identity = 2166136261u;
     const char *identity_text;
+    int resolved_presentation_mode;
     if (!state || !spec || !receipt || !receipt->profile) {
         return 0;
     }
@@ -5719,6 +5721,33 @@ static int m11_csb_apply_boot_runtime_receipt(
          identity_text && *identity_text; ++identity_text) {
         package_identity = (package_identity ^ (unsigned char)*identity_text) * 16777619u;
     }
+    /* Keep this in sync with the CSB V2.2 material admission decision. A
+     * requested V2.2 mode may resolve to V2.1 when no reviewed real pack is
+     * installed; M11 must not restore the raw request at this handoff. */
+    csb_v2_presentation_mode_set_m12(spec->presentationMode);
+    switch (csb_v2_presentation_mode_get()) {
+        case CSB_V2_PM_V20_FILTERED:
+            resolved_presentation_mode = M12_PRESENTATION_V20_FILTERED;
+            break;
+        case CSB_V2_PM_V21_UPSCALED:
+            resolved_presentation_mode = M12_PRESENTATION_V21_UPSCALED;
+            break;
+        case CSB_V2_PM_V22_MODERN:
+            resolved_presentation_mode = M12_PRESENTATION_V22_MODERN;
+            break;
+        default:
+            resolved_presentation_mode = M12_PRESENTATION_V1_ORIGINAL;
+            break;
+    }
+    /* The V2 runtime is presentation-only, but it must observe the same
+     * live CSB profile M11 uses for V1 ticks.  Keep it absent in original
+     * mode so its global smooth/clock state cannot leak into a V1 launch. */
+    csb_v2_runtime_cleanup();
+    if (resolved_presentation_mode != M12_PRESENTATION_V1_ORIGINAL) {
+        csb_v2_runtime_init(
+            resolved_presentation_mode == M12_PRESENTATION_V22_MODERN ? 4 : 2);
+        csb_v2_runtime_bind_to_v1(&receipt->profile->runtime);
+    }
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = M11_GAME_SOURCE_CSB_BOOT;
@@ -5726,7 +5755,7 @@ static int m11_csb_apply_boot_runtime_receipt(
              sizeof(state->bootAssetMd5),
              "%s",
              receipt->boot_asset_md5);
-    state->presentationMode = spec->presentationMode;
+    state->presentationMode = resolved_presentation_mode;
     state->presentationWidth = spec->presentationWidth;
     state->presentationHeight = spec->presentationHeight;
     snprintf(state->title,
@@ -13740,6 +13769,9 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        csb_v2_runtime_cleanup();
+    }
     theron_v1_track01_cdda_stream_stop(&state->theronTrack01CddaStream);
     m11_nexus_release_title(state);
     {
@@ -18724,6 +18756,11 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        if (state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
+            csb_v2_runtime_is_bound()) {
+            csb_v2_runtime_v1_tick(
+                (uint32_t)state->csbState.tick_count * CSB_V1_TICK_MS_NOMINAL);
+        }
         return M11_GAME_INPUT_REDRAW;
     }
     /* DM2 V1: use the DM2 tick function instead of DM1's m11_apply_tick.
@@ -50041,6 +50078,13 @@ void M11_GameView_TickAnimation(M11_GameViewState* state) {
         if (state->v1MovementArrowVisualTicks <= 0) {
             state->v1MovementArrowVisualMask = 0;
         }
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
+        csb_v2_runtime_is_bound()) {
+        /* M11 animation ticks run once per presented frame. Feed the V2
+         * renderer its display cadence independently of the 55ms V1 tick. */
+        csb_v2_runtime_render_frame(state->animTick * 16u);
     }
     { int ci; for (ci = 0; ci < 4; ++ci) {
         if (state->championDamageTimer[ci] > 0) state->championDamageTimer[ci]--;
