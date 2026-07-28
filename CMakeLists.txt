@@ -32855,6 +32855,29 @@ add_executable(test_nexus_v1_dgn_material_raster
         LABELS "tier2;csb;atari;animation;data_free"
     )
 
+    add_executable(test_csb_v1_atari_st_animation_assets
+        tests/test_csb_v1_atari_st_animation_assets.c
+        src/csb/csb_v1_atari_st_animation_assets.c
+        src/csb/csb_v1_animation_script.c
+        src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
+        src/csb/csb_v1_startup_img3_decode_pc34_compat.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_atari_st_animation_assets PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_st_animation_assets PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_atari_st_animation_assets_unit
+        COMMAND test_csb_v1_atari_st_animation_assets
+    )
+    set_tests_properties(csb_v1_atari_st_animation_assets_unit PROPERTIES
+        LABELS "tier2;csb;atari;animation;data_free"
+    )
+
     # CSB V1 CSBgraphics.dat runtime binding contract. This is
     # data-free and consumes only a trusted decoded-bitmap shape plus
     # the existing payload-span handoff. It proves the future decoder

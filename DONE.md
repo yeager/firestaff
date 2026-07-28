@@ -41736,3 +41736,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   offsets, and copies raw items without sending them through LZW. A new
   unit target covers both compressed and raw items and accepts the real
   87-item `ANIMATE.DAT` layout from the original utility disk.
+- ✅ 2026-07-28 CSB Atari ST title-asset consumer. `ANIMATE.SCR` now proves
+  every original load command maps to its documented P4B1/IMG1/SND1 item
+  family, and Firestaff converts the original P4B1 palette plus a full-screen
+  IMG1 title item into a 320x200 RGBA frame. The test uses the staged Atari
+  utility-disk files and rejects unknown item families rather than substituting
+  a PC34 title asset.

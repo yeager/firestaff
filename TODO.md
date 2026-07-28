@@ -21680,8 +21680,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   big-endian instruction stream. Firestaff now bounds-checks all 30 known
   opcodes, their fixed word parameters, and the required Stop terminator.
   The local original 1,802-byte script from the Atari ST hard-disk package
-  parses successfully. Remaining Atari animation work is authenticated IMG1,
-  P4B1, and SND1 item decoding plus an Atari presentation owner;
+  parses successfully. Original `ANIMATE.DAT` P4B1 palettes and 320x200 IMG1
+  title frames are now consumed into RGBA after an exact script-to-item-family
+  validation (80 loads, no foreign item family). Remaining Atari animation
+  work is script-command execution (fade/expand/blit/wait/sound) and an Atari
+  presentation owner;
   do not substitute the PC34 title/Entrance renderer for this route.
 
 - [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
