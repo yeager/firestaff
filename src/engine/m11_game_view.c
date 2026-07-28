@@ -48517,6 +48517,29 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         } else {
             M11_Render_ClearIndexedPaletteRgb6();
         }
+    } else if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+               state->csbBootProfile) {
+        uint8_t rgb6[256][3];
+        int color;
+        /* CSB's PC3.4 IMG3 decoder emits original four-bit VGA indices.
+         * F0128 runs after this common renderer setup, which previously
+         * cleared any indexed palette and made its source pixels appear as
+         * grayscale/default colours.  ReDMCSB DATA.C/VIDEODRV.C owns the
+         * six brightness rows; select the current dungeon level once and
+         * expand every possible raw byte by its low source colour nibble. */
+        int palette_level = m11_compute_dungeon_palette_index(state);
+        if (palette_level < 0) palette_level = 0;
+        if (palette_level >= M11_PALETTE_LEVELS) {
+            palette_level = M11_PALETTE_LEVELS - 1;
+        }
+        for (color = 0; color < 256; ++color) {
+            const unsigned char *rgb =
+                G9010_auc_VgaPaletteAll_Compat[palette_level][color & 0x0f];
+            rgb6[color][0] = (uint8_t)(rgb[0] >> 2);
+            rgb6[color][1] = (uint8_t)(rgb[1] >> 2);
+            rgb6[color][2] = (uint8_t)(rgb[2] >> 2);
+        }
+        (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
     } else {
         M11_Render_ClearIndexedPaletteRgb6();
     }
