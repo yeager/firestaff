@@ -2521,15 +2521,19 @@ static void SDLCALL m12_artpack_dialog_callback(void* userdata,
     }
     state->dataDirPickerActive = 0;
     if (filelist && filelist[0] && filelist[0][0] != '\0') {
-        snprintf(state->settings.artpackPath,
-                 sizeof(state->settings.artpackPath),
-                 "%s",
-                 filelist[0]);
-        m12_save_config(state);
-        m12_set_buffered_message(state,
-                                 m12_tr(state, "V2.2 ARTPACK SELECTED"),
-                                 filelist[0],
-                                 m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        M12_ArtpackAdmissionReceipt receipt;
+        if (M12_StartupMenu_SelectArtpackPath(state, filelist[0], &receipt)) {
+            m12_save_config(state);
+            m12_set_buffered_message(state,
+                                     m12_tr(state, "V2.2 ARTPACK SELECTED"),
+                                     filelist[0],
+                                     m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        } else {
+            m12_set_buffered_message(state,
+                                     m12_tr(state, "V2.2 ARTPACK REJECTED"),
+                                     M12_ArtpackAdmission_StatusName(receipt.status),
+                                     m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU));
+        }
         return;
     }
     m12_set_buffered_message(state,

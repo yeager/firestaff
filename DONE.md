@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 M12 artpack picker admission. The native `.fsart` file-dialog
+  callback now uses `M12_StartupMenu_SelectArtpackPath` instead of writing a
+  selected path directly into configuration. Invalid selections retain the
+  prior path and report the same admission status as API-driven selection.
+  Verified by the startup-artpack and admission CTest pair.
+
 - ✅ 2026-07-29 CSB V2.2 Artpack Studio/runtime cache handoff. Artpack Studio
   now creates the `FSV22C` cache consumed by the native in-place renderer,
   preserves it in `.fsart` archives, and offers the build through both GUI

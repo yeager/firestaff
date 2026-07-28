@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **M12-ARTPACK-DIALOG-ADMISSION:** Closed 2026-07-29. The native `.fsart`
+  picker now routes selected paths through the same admission check as the
+  public M12 API before saving configuration. Invalid extensions, missing
+  files, short files, and unsupported signatures keep the previous selection
+  and surface the rejection reason instead of leaving a dead V2.2 path.
+
 - **CSB-V22-ARTPACK-RUNTIME-CACHE:** Closed 2026-07-29. Artpack Studio now
   serializes manifest-owned PNGs into the bounded `FSV22C` native cache,
   includes an existing cache in `.fsart` exports, and exposes the same step
