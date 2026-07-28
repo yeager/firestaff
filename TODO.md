@@ -728,8 +728,12 @@ that its exact runtime path is not already source-locked and tested.
    C028/C009-C013 now likewise enter M11 through CSB IMG3/LZW rather than the
    DM1 decoder, allowing the existing source-owned runtime HUD consumers to
    use correct source rasters. M653/C695 font binding uses the same source
-   decoder. Full C017/C040 normal-runtime composition and app-window visual
-   capture remain open.
+   decoder. 2026-07-29: V2.0/V2.1 now consume the identical terminal C017
+   inventory and C040 transparent candidate surfaces as V1; the removed
+   procedural V2 HUD could overwrite authentic indexed source pixels. The
+   packaged real-data regression proves both source geometries and C040-over-
+   C017 transparency after the Prison handoff. Broader viewport consumption
+   and app-window visual capture remain open.
    2026-07-28: the canonical PC 3.4 real-data gate now proves the full
    source-owned startup chain: Swoosh, C001 PRESENTS/CHAOS/STRIKES, all 31
    C004/C002/C003 opening pages, C017/C040 HUD handoff and the DUNGEON.DAT

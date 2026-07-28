@@ -1541,6 +1541,72 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
                         count_nonzero_pixels(framebuffer,
                                              sizeof(framebuffer)) > 0,
                     "CSB V2 reaches a visible source-backed F0128 runtime frame");
+        {
+            CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+                (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                    view.csbStartupRuntimeAssetSession;
+            const CSB_V1_StartupRuntimeSurface_PC34 *c017;
+            const CSB_V1_StartupRuntimeSurface_PC34 *c040;
+            int row;
+            int c017_matches = 1;
+            int c040_composed = 1;
+
+            expect_true(session != NULL,
+                        "CSB V2 runtime retains the terminal source HUD session");
+            if (session == NULL) {
+                M11_GameView_Shutdown(&view);
+                M12_StartupMenu_Destroy(&menu);
+                continue;
+            }
+            c017 = &session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
+            c040 = &session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
+            expect_true(c017->pixels != NULL && c017->width > 0 &&
+                            c017->height > 0 && c040->pixels != NULL &&
+                            c040->width > 0 && c040->height > 0,
+                        "CSB V2 runtime retains C017 and C040 source surfaces");
+            expect_true(M11_GameView_ToggleInventoryPanel(&view) == 1,
+                        "CSB V2 opens source-owned terminal C017 inventory");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            for (row = 0; row < (int)c017->height; ++row) {
+                if (memcmp(framebuffer + (size_t)(33 + row) * 320u,
+                           c017->pixels + (size_t)row * c017->width,
+                           c017->width) != 0) {
+                    c017_matches = 0;
+                    break;
+                }
+            }
+            expect_true(c017_matches,
+                        "CSB V2 preserves terminal C017 pixels at source geometry");
+            view.candidateMirrorPanelActive = 1;
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            for (row = 0; row < (int)c040->height && c040_composed; ++row) {
+                int column;
+                for (column = 0; column < (int)c040->width; ++column) {
+                    unsigned char expected = c040->pixels[
+                        (size_t)row * c040->width + (size_t)column];
+                    unsigned char actual = framebuffer[
+                        (size_t)(85 + row) * 320u + (size_t)(80 + column)];
+                    if (expected == 6u) {
+                        expected = c017->pixels[
+                            (size_t)(52 + row) * c017->width +
+                            (size_t)(80 + column)];
+                    }
+                    if (actual != expected) {
+                        c040_composed = 0;
+                        break;
+                    }
+                }
+            }
+            expect_true(c040_composed,
+                        "CSB V2 preserves C040-over-C017 transparency composition");
+            view.candidateMirrorPanelActive = 0;
+            expect_true(M11_GameView_ToggleInventoryPanel(&view) == 0,
+                        "CSB V2 closes source-owned terminal C017 inventory");
+        }
         M11_GameView_Shutdown(&view);
         expect_true(csb_v2_runtime_is_bound() == 0,
                     "CSB V2 binding is released with its M11 game view");

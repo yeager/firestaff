@@ -37,7 +37,6 @@
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
-#include "csb_v2_hud_runtime.h"
 #include "csb_v2_runtime.h"
 #include "csb_v2_smooth_movement.h"
 #include "dm2_v1_boot.h"
@@ -1977,49 +1976,6 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     m11_csb_runtime_overlay_stats_reset(state);
     m11_csb_runtime_overlay_stats_apply(state, &draw_counts);
     return 1;
-}
-
-static int m11_csb_percent(unsigned short current, unsigned short maximum)
-{
-    if (maximum == 0u) return current > 0u ? 100 : 0;
-    return (int)(((unsigned int)current * 100u) / (unsigned int)maximum);
-}
-
-static void m11_draw_csb_runtime_hud(const M11_GameViewState *state,
-                                     unsigned char *framebuffer,
-                                     int framebufferWidth,
-                                     int framebufferHeight)
-{
-    CSB_V2_PhaseGateConfig gate;
-    CSB_V2_HudRuntimeFrame frame;
-    int i;
-
-    if (!state || !framebuffer || framebufferWidth < 320 ||
-        framebufferHeight < 200 ||
-        state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) return;
-    memset(&gate, 0, sizeof(gate));
-    gate.v2PresentationEnabled = 1;
-    memset(&frame, 0, sizeof(frame));
-    frame.direction = state->csbState.party_dir;
-    frame.current_level = state->csbState.current_level + 1;
-    frame.max_level = frame.current_level > 1 ? frame.current_level : 1;
-    frame.champion_count = state->world.party.championCount;
-    frame.leader_index = state->world.party.activeChampionIndex;
-    for (i = 0; i < 4; ++i) {
-        const struct ChampionState_Compat *champion =
-            &state->world.party.champions[i];
-        frame.hp_pct[i] = m11_csb_percent(champion->hp.current,
-                                           champion->hp.maximum);
-        frame.stamina_pct[i] = m11_csb_percent(champion->stamina.current,
-                                                champion->stamina.maximum);
-        frame.mana_pct[i] = m11_csb_percent(champion->mana.current,
-                                             champion->mana.maximum);
-    }
-    /* ReDMCSB PANEL.C F0354 owns the status snapshot; this V2 pass only
-     * projects it after the source-locked viewport has completed. */
-    csb_v2_hud_runtime_set_gate_config(&gate);
-    csb_v2_hud_runtime_apply_frame(&frame);
-    csb_v2_hud_runtime_render(framebuffer, framebufferWidth, framebufferHeight);
 }
 
 static void m11_clear_csb_v1_party_hud_source_surfaces(
@@ -49083,8 +49039,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * terminal generation must not reveal a newly drawn viewport before
          * the session transaction rejects it. */
         if (!m11_csb_live_hud_session_ready(state) ||
-            (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL &&
-             !m11_csb_consume_c040_clear_session(csb_state)) ||
+            !m11_csb_consume_c040_clear_session(csb_state) ||
             !m11_render_csb_boot_viewport(csb_state, framebuffer,
                                           framebufferWidth,
                                           framebufferHeight)) {
@@ -49093,25 +49048,24 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             memset(framebuffer, 0,
                    (size_t)framebufferWidth * (size_t)framebufferHeight);
         } else {
-            if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
-                if (state->inventoryPanelActive &&
-                    !m11_draw_csb_v1_inventory_surface(
-                        csb_state, framebuffer, framebufferWidth,
-                        framebufferHeight)) {
-                    /* The C017/C040 pair did not form one complete terminal
-                     * session surface. Do not retain the preceding viewport
-                     * as a substitute presentation. */
-                    memset(framebuffer, 0,
-                           (size_t)framebufferWidth *
-                               (size_t)framebufferHeight);
-                } else if (!state->inventoryPanelActive) {
-                    m11_draw_csb_v1_runtime_hud(state, framebuffer,
-                                                framebufferWidth,
-                                                framebufferHeight);
-                }
-            } else {
-                m11_draw_csb_runtime_hud(state, framebuffer,
-                                         framebufferWidth, framebufferHeight);
+            /* V2.0/V2.1 alter presentation only. ReDMCSB PANEL.C C017/C040
+             * remains the authoritative CSB HUD; a procedural overlay would
+             * replace genuine palette-indexed data. V2.2 stays unavailable
+             * until a reviewed material gate can own replacement chrome. */
+            if (state->inventoryPanelActive &&
+                !m11_draw_csb_v1_inventory_surface(
+                    csb_state, framebuffer, framebufferWidth,
+                    framebufferHeight)) {
+                /* The C017/C040 pair did not form one complete terminal
+                 * session surface. Do not retain the preceding viewport
+                 * as a substitute presentation. */
+                memset(framebuffer, 0,
+                       (size_t)framebufferWidth *
+                           (size_t)framebufferHeight);
+            } else if (!state->inventoryPanelActive) {
+                m11_draw_csb_v1_runtime_hud(state, framebuffer,
+                                            framebufferWidth,
+                                            framebufferHeight);
             }
         }
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,

@@ -41963,3 +41963,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   V2.1 and V2.2: 260 source frames plus the Prison input reach map `0`,
   DUNGEON.DAT pose `(9,0,2)`, and a live runtime tick in each mode. This is
   a direct app-level boot check; visual packaged-window capture remains open.
+- ✅ 2026-07-29 CSB V2.0/V2.1 source-HUD consumption. V2.0 and V2.1 now keep
+  ReDMCSB PANEL.C's terminal PC3.4 C017 inventory and C040 transparent
+  candidate surfaces instead of painting the former procedural V2 HUD over
+  them. The real-package Prison-to-F0128 regression opens inventory, compares
+  C017 at its original `(0,33)` geometry, and proves C040 composes at `(80,85)`
+  with source index-6 transparency in V1, V2.0, and V2.1. V2.2 remains
+  fail-closed until a reviewed material pack owns its replacement chrome.
