@@ -576,13 +576,13 @@ static void check_title_to_menu_boundary(void) {
                  closedStep.kind ==
                      ENTRANCE_COMPAT_SOURCE_EVENT_DRAW_ENTRANCE_SCREEN,
              1);
-    expect_u("DM1 entrance receipt delay helper uses vblank timing",
+    expect_u("DM1 entrance receipt delay helper paces documented fast door loop",
              dm1_v1_startup_entrance_step_delay_ms_pc34(
                  &media,
                  (int)doorStep.kind,
                  doorStep.delayTicks,
                  doorStep.vblankLoopCount),
-             media.entrance_vblank_ms);
+             ENTRANCE_Compat_GetDoorFrameDelayMs());
     expect_u("DM1 entrance receipt delay helper uses pre-open timing",
              dm1_v1_startup_entrance_step_delay_ms_pc34(
                  &media,
@@ -655,7 +655,7 @@ static void check_title_to_menu_boundary(void) {
                  entranceCommand.audio_request_ready &&
                  entranceCommand.audio_sound_index == 2 &&
                  entranceCommand.audio_volume == 145u &&
-                 entranceCommand.delay_ms == media.entrance_vblank_ms,
+                 entranceCommand.delay_ms == ENTRANCE_Compat_GetDoorFrameDelayMs(),
              1);
     expect_i("DM1 entrance command keeps non-rattle door step silent",
              dm1_v1_startup_entrance_render_audio_command_pc34(

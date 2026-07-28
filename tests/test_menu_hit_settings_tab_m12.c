@@ -213,6 +213,10 @@ int main(void) {
           "RA Token requests host text input for keyboard and screen keyboard");
     CHECK(M12_StartupMenu_ConsumeTextInput(&state, "secret-API_123") == 1,
           "RA Token accepts keyboard token characters");
+    CHECK(strcmp(M12_StartupMenu_GetSettingsValue(&state,
+                                                  M12_STARTUP_SETTINGS_ROW_RA_TOKEN),
+                 "EDITING (14)") == 0,
+          "RA Token edit gives masked live input feedback");
     CHECK(M12_StartupMenu_TextEditBackspace(&state) == 1,
           "RA Token supports backspace");
     CHECK(M12_StartupMenu_TextEditCommit(&state) == 1,

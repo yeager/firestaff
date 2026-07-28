@@ -21327,6 +21327,105 @@ static int m11_graphics_popup_handle_input(M11_GameViewState* state,
         (input == M12_MENU_INPUT_LEFT || input == M12_MENU_INPUT_VALUE_LEFT) ? -1 : 1);
 }
 
+enum {
+    M11_DM1_SAVE_DISK_MENU_NONE = 0,
+    M11_DM1_SAVE_DISK_MENU_MAIN = 1,
+    M11_DM1_SAVE_DISK_MENU_FORMAT_CONFIRM = 2
+};
+
+static void m11_dm1_show_save_disk_menu(M11_GameViewState* state) {
+    if (!state) return;
+    /* ReDMCSB LOADSAVE.C F0433:773-785.  The original physical save disk
+     * is represented by Firestaff's per-DM1 local save namespace; the
+     * choices and their order remain the original PC34 dialog contract. */
+    M11_GameView_ShowDialogOverlayChoices(
+        state,
+        _("PUT THE GAME SAVE DISK IN ~"),
+        _("SAVE GAME"),
+        _("QUIT GAME"),
+        _("FORMAT FLOPPY"),
+        _("CANCEL"));
+    state->dm1SaveDiskMenuStage = M11_DM1_SAVE_DISK_MENU_MAIN;
+    m11_set_status(state, "SAVE DISK", "READY");
+}
+
+static M11_GameInputResult m11_dm1_write_save_disk(M11_GameViewState* state,
+                                                    int quitAfterSave) {
+    char savePath[M11_GAME_VIEW_PATH_CAPACITY];
+    int saveResult;
+
+    if (!state || !M11_GameView_GetQuickSavePath(state, savePath,
+                                                  sizeof(savePath)) ||
+        !dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
+        m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    saveResult = DM1_SaveGame(&state->world, savePath, state->dm1GameID,
+                              quitAfterSave ? 0 : 1, state->dm1MusicOn);
+    if (saveResult != DM1_SAVE_OK) {
+        m11_set_status(state, "SAVE", DM1_SaveLoadErrorString(saveResult));
+        return M11_GAME_INPUT_REDRAW;
+    }
+    state->lastSaveTick = (uint32_t)state->world.gameTick;
+    M12_Config_SetLastSavePath(savePath);
+    M11_GameView_DismissDialogOverlay(state);
+    m11_set_status(state, "SAVE", "GAME SAVED");
+    return quitAfterSave ? M11_GAME_INPUT_RETURN_TO_MENU : M11_GAME_INPUT_REDRAW;
+}
+
+static M11_GameInputResult m11_dm1_handle_save_disk_choice(
+    M11_GameViewState* state,
+    int choice) {
+    int stage;
+
+    if (!state || choice <= 0) return M11_GAME_INPUT_IGNORED;
+    stage = state->dm1SaveDiskMenuStage;
+    if (stage == M11_DM1_SAVE_DISK_MENU_MAIN) {
+        switch (choice) {
+        case 1:
+            return m11_dm1_write_save_disk(state, 0);
+        case 2:
+            return m11_dm1_write_save_disk(state, 1);
+        case 3:
+            /* ReDMCSB F0432:423-440: a writable game-save disk first
+             * requires an explicit format confirmation. */
+            M11_GameView_ShowDialogOverlayChoices(
+                state,
+                _("THAT'S A GAME SAVE DISK!\nFORMAT DISK ANYWAY?"),
+                _("OK"), _("CANCEL"), NULL, NULL);
+            state->dm1SaveDiskMenuStage = M11_DM1_SAVE_DISK_MENU_FORMAT_CONFIRM;
+            return M11_GAME_INPUT_REDRAW;
+        case 4:
+        default:
+            M11_GameView_DismissDialogOverlay(state);
+            m11_set_status(state, "SAVE DISK", "CANCELLED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+    }
+    if (stage == M11_DM1_SAVE_DISK_MENU_FORMAT_CONFIRM) {
+        if (choice == 1) {
+            char savePath[M11_GAME_VIEW_PATH_CAPACITY];
+            if (!M11_GameView_GetQuickSavePath(state, savePath,
+                                               sizeof(savePath)) ||
+                !dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
+                m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            /* The local namespace is the virtual save disk. Formatting it
+             * clears the active save exactly like the source's F0432 path;
+             * game data is never touched. */
+            (void)remove(savePath);
+            M11_GameView_DismissDialogOverlay(state);
+            m11_set_status(state, "SAVE DISK", "FORMATTED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        M11_GameView_DismissDialogOverlay(state);
+        m11_set_status(state, "SAVE DISK", "CANCELLED");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input) {
     uint8_t command = CMD_NONE;
@@ -21368,6 +21467,18 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
     /* Dialog overlay: text plaques dismiss; return-to-menu confirm requires an explicit choice. */
     if (state->dialogOverlayActive) {
+        if (state->dm1SaveDiskMenuStage != M11_DM1_SAVE_DISK_MENU_NONE) {
+            if (input == M12_MENU_INPUT_BACK) {
+                return m11_dm1_handle_save_disk_choice(
+                    state,
+                    state->dm1SaveDiskMenuStage ==
+                        M11_DM1_SAVE_DISK_MENU_FORMAT_CONFIRM ? 2 : 4);
+            }
+            if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+                return m11_dm1_handle_save_disk_choice(state, 1);
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (state->returnToMenuConfirmActive) {
             if (input == M12_MENU_INPUT_BACK) {
                 int wasGuard = state->quitGuardActive;
@@ -22122,28 +22233,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_REDRAW;
         case M12_MENU_INPUT_SAVE_GAME: {
-            /* DM1 V1 save game — Ctrl-S trigger.
-             * ReDMCSB: C140_COMMAND dispatches to
-             * F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF
-             * (LOADSAVE.C, COMMAND.C line ~7617). */
-            char savePath[M11_GAME_VIEW_PATH_CAPACITY];
-            if (M11_GameView_GetQuickSavePath(state, savePath, sizeof(savePath)) &&
-                dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
-                int saveResult = DM1_SaveGame(&state->world, savePath,
-                                               state->dm1GameID, 1,
-                                               state->dm1MusicOn);
-                if (saveResult == DM1_SAVE_OK) {
-                    m11_set_status(state, "SAVE", "GAME SAVED");
-                    /* G2018_ul_LastSaveTime mirror (ReDMCSB LOADSAVE.C:1714). */
-                    state->lastSaveTick = (uint32_t)state->world.gameTick;
-                    M12_Config_SetLastSavePath(savePath);
-                } else {
-                    m11_set_status(state, "SAVE",
-                                   DM1_SaveLoadErrorString(saveResult));
-                }
-            } else {
-                m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
-            }
+            /* ReDMCSB LOADSAVE.C F0433 opens the save-disk dialog before
+             * writing.  Do not collapse C140 to an invisible host quicksave. */
+            m11_dm1_show_save_disk_menu(state);
             return M11_GAME_INPUT_REDRAW;
         }
         case M12_MENU_INPUT_BACK:
@@ -22596,6 +22688,12 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     /* Click dismisses normal dialogs; return-to-menu confirm acts on YES/NO. */
     if (state->dialogOverlayActive) {
         int choice = m11_dialog_choice_at_point(state, x, y);
+        if (state->dm1SaveDiskMenuStage != M11_DM1_SAVE_DISK_MENU_NONE) {
+            if (choice > 0) {
+                return m11_dm1_handle_save_disk_choice(state, choice);
+            }
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (state->returnToMenuConfirmActive) {
             if (choice == 1) {
                 /* G2018 quit-guard: SAVE-AND-QUIT path also saves on click. */
@@ -50032,6 +50130,7 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     state->dialogOverlayActive = 0;
     state->returnToMenuConfirmActive = 0;
     state->quitGuardActive = 0;
+    state->dm1SaveDiskMenuStage = 0;
     state->dialogOverlayText[0] = '\0';
     state->dialogChoiceCount = 0;
     memset(state->dialogChoices, 0, sizeof(state->dialogChoices));

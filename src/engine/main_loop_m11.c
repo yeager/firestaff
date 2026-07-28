@@ -1155,36 +1155,10 @@ static int m11_play_redmcsb_entrance_transition(
     M11_GameView_Draw(gameView, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     memcpy(dungeonFrame, framebuffer, (size_t)M11_FB_BYTES);
 
-    /* Pre-fill framebuffer with the entrance screen (C004 + closed doors)
-     * before the loop begins.  Source-lock: ENTRANCE.C draws the entrance
-     * screen and doors *before* entering the VBlank wait loop (lines 446-
-     * 579).  Without this pre-fill the first PresentIndexed call (inside
-     * the loop, sourceStep==1, DRAW_MICRO_DUNGEON → else branch) would
-     * present the uninitialized dungeon viewport as the first visible
-     * frame — an ugly flash between the TITLE intro and the entrance.
-     * The loop's first event (DRAW_MICRO_DUNGEON) falls through to the
-     * else branch and memcpy's the dungeon frame, but the pre-draw above
-     * ensures that if the first Present is called before any loop body
-     * executes, the screen shows the entrance screen, never the dungeon.
-     * This also mirrors the ReDMCSB source order: draw C004+doors first,
-     * then micro-dungeon, then fade/curtain, then wait-for-input loop.
-     */
-    if (!m11_draw_entrance_screen_asset(gameView, framebuffer) ||
-        !m11_draw_entrance_closed_doors_asset(gameView, framebuffer)) {
-        free(dungeonFrame);
-        return 0;
-    }
-
-    /* ReDMCSB ENTRANCE.C presents C004/C002/C003 before it starts waiting
-     * for C200.  The source-step route may reach WAIT_FOR_INPUT before a
-     * later command requests another present, so publish this initial frame
-     * here.  This makes the entrance an actual interactive screen instead
-     * of a visually indistinguishable black wait on fast modern hosts. */
-    (void)M11_Render_PresentIndexedWithSpecialPalette(
-        framebuffer,
-        M11_FB_WIDTH,
-        M11_FB_HEIGHT,
-        entrancePalette);
+    /* ENTRANCE.C F0439 first composites the micro-dungeon, curtains it to
+     * black, then draws C004/C002/C003.  Do not pre-present closed doors:
+     * doing so inserted an extra frame before that source sequence and made
+     * the title-to-Entrance transition flash abruptly. */
 
     /* ReDMCSB ENTRANCE.C source-lock:
      * - F0441_STARTEND_ProcessEntrance() waits in entrance mode until C200.
@@ -3199,7 +3173,10 @@ static int m11_dm1_sdl_key_to_menu_input(int key, int ctrlDown, int shiftDown,
         return 0;
     }
     if (key == SDLK_ESCAPE) {
-        *outInput = M12_MENU_INPUT_FREEZE_TOGGLE;
+        /* DM1 uses Escape for the LOADSAVE.C return/quit route.  C147/C148
+         * freeze is CSB-only, so routing DM1 through FREEZE_TOGGLE left the
+         * game on a misleading frozen status instead of its source dialog. */
+        *outInput = M12_MENU_INPUT_BACK;
         return 1;
     }
 #if SDL_VERSION_ATLEAST(3, 0, 0)
@@ -4068,6 +4045,18 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             continue;
         }
+        /* SDL3 is the macOS/Steam Deck path.  Keep launcher text editing
+         * ahead of the game rename route so RetroAchievements credentials
+         * receive both hardware-keyboard and virtual-keyboard text events. */
+        if (ev.type == SDL_EVENT_TEXT_INPUT &&
+            menuState && useModernLauncher &&
+            (!gameView || !gameView->active) &&
+            M12_StartupMenu_ConsumeTextInput(menuState, ev.text.text)) {
+            if (menuPointerChanged) {
+                *menuPointerChanged = 1;
+            }
+            return M12_MENU_INPUT_NONE;
+        }
         if (ev.type == SDL_EVENT_TEXT_INPUT &&
             m11_dm1_rename_consume_text_input(gameView,
                                               ev.text.text,
@@ -4075,6 +4064,41 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             return M12_MENU_INPUT_NONE;
         }
         if (ev.type == SDL_EVENT_KEY_DOWN) {
+            if (menuState && useModernLauncher &&
+                (!gameView || !gameView->active) &&
+                M12_StartupMenu_TextEditActive(menuState)) {
+                if ((ev.key.mod & (SDL_KMOD_CTRL | SDL_KMOD_GUI)) &&
+                    ev.key.key == SDLK_V) {
+                    char* clipboard = SDL_GetClipboardText();
+                    if (clipboard) {
+                        (void)M12_StartupMenu_ConsumeTextInput(menuState,
+                                                                clipboard);
+                        SDL_free(clipboard);
+                    }
+                    if (menuPointerChanged) {
+                        *menuPointerChanged = 1;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                }
+                switch (ev.key.key) {
+                    case SDLK_BACKSPACE:
+                        (void)M12_StartupMenu_TextEditBackspace(menuState);
+                        break;
+                    case SDLK_RETURN:
+                    case SDLK_KP_ENTER:
+                        (void)M12_StartupMenu_TextEditCommit(menuState);
+                        break;
+                    case SDLK_ESCAPE:
+                        (void)M12_StartupMenu_TextEditCancel(menuState);
+                        break;
+                    default:
+                        return M12_MENU_INPUT_NONE;
+                }
+                if (menuPointerChanged) {
+                    *menuPointerChanged = 1;
+                }
+                return M12_MENU_INPUT_NONE;
+            }
             if (m11_dm1_rename_text_input_active(gameView)) {
                 M11_GameInputResult renameResult =
                     m11_dm1_rename_handle_keydown(gameView,
@@ -4491,6 +4515,19 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             if (menuState && useModernLauncher &&
                 (!gameView || !gameView->active) &&
                 M12_StartupMenu_TextEditActive(menuState)) {
+                if ((ev.key.keysym.mod & (KMOD_CTRL | KMOD_GUI)) &&
+                    ev.key.keysym.sym == SDLK_V) {
+                    char* clipboard = SDL_GetClipboardText();
+                    if (clipboard) {
+                        (void)M12_StartupMenu_ConsumeTextInput(menuState,
+                                                                clipboard);
+                        SDL_free(clipboard);
+                    }
+                    if (menuPointerChanged) {
+                        *menuPointerChanged = 1;
+                    }
+                    return M12_MENU_INPUT_NONE;
+                }
                 switch (ev.key.keysym.sym) {
                     case SDLK_BACKSPACE:
                         (void)M12_StartupMenu_TextEditBackspace(menuState);

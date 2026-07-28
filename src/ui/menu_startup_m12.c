@@ -4076,7 +4076,11 @@ static const char* m12_settings_value_ra_token(const M12_StartupMenuState* state
 
     if (state && state->textEditActive &&
         state->textEditRow == M12_SETTINGS_ROW_RA_TOKEN) {
-        return m12_tr(state, "EDITING");
+        /* Do not expose an API token in the launcher, but acknowledge every
+         * keyboard, paste, or virtual-keyboard character as it arrives. */
+        snprintf(redacted, sizeof(redacted), "EDITING (%u)",
+                 (unsigned int)strlen(state->textEditBuffer));
+        return redacted;
     }
     if (!state || state->settings.retroAchievementsToken[0] == '\0') {
         return m12_tr(state, "NOT SET");

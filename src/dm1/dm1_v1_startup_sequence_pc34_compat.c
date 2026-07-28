@@ -15,7 +15,6 @@
 
 #define DM1_V1_STARTUP_TITLE_ZOOM_STEPS_PC34 18u
 #define DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34 23u
-#define DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 53u
 #define DM1_V1_STARTUP_TITLE_POST_ZOOM_VBLANKS_PC34 2u
 #define DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34 1u
 /* C001's 53-frame production bank shares the game's V1 55 ms cadence. */
@@ -5254,6 +5253,12 @@ unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
         return delay_ticks * media_receipt->entrance_vblank_ms;
     }
     if (vblank_loop_count > 0U) {
+        if (entrance_event_kind == ENTRANCE_COMPAT_SOURCE_EVENT_OPEN_DOOR_STEP) {
+            /* ReDMCSB documents F0438's raw one-VBlank animation as too
+             * fast on modern hosts.  Preserve every original 4px frame but
+             * bind its presentation to the V1 clock. */
+            return ENTRANCE_Compat_GetDoorFrameDelayMs();
+        }
         if (vblank_loop_count >
             0xffffffffU / media_receipt->entrance_vblank_ms) {
             return 0U;

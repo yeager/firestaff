@@ -66,6 +66,7 @@ int main(void) {
         if (i == 6u && ENTRANCE_Compat_GetRuntimeDelayMs(&step) != 400u) ok = 0;
         if (i == 7u && ENTRANCE_Compat_GetRuntimeDelayMs(&step) != 20u) ok = 0;
     }
+    if (ENTRANCE_Compat_GetDoorFrameDelayMs() != 55u) ok = 0;
     printf("preOpenRuntimeDelayMs=400\n");
     printf("doorStepRuntimeDelayMs=20\n");
     printf("entranceSourceAnimationScheduleInvariantOk=%d\n", ok);

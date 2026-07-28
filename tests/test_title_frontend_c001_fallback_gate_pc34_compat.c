@@ -487,21 +487,21 @@ static void check_startup_source_timing_contract(void) {
                  &media, doorStep.sourceStepOrdinal, (int)doorStep.kind,
                  doorStep.delayTicks, doorStep.vblankLoopCount, &command),
              1);
-    expect_u("startup entrance door command keeps source VBlank delay",
+    expect_u("startup entrance door command paces documented fast-host loop",
              command.delay_ms,
-             media.entrance_vblank_ms);
+             ENTRANCE_Compat_GetDoorFrameDelayMs());
     expect_i("startup entrance executes final source door step",
              dm1_v1_startup_entrance_render_audio_command_pc34(
                  &media, finalDoorStep.sourceStepOrdinal,
                  (int)finalDoorStep.kind, finalDoorStep.delayTicks,
                  finalDoorStep.vblankLoopCount, &command),
              1);
-    expect_truth("startup entrance final door step is source step 31 with rattle",
+    expect_truth("startup entrance final door step is source step 31 with paced rattle",
                  command.door_animation_step ==
                      ENTRANCE_Compat_GetDoorAnimationStepCount() &&
                      command.play_door_rattle_sound &&
                      command.audio_request_ready && command.audio_sound_index == 2 &&
-                     command.delay_ms == media.entrance_vblank_ms);
+                     command.delay_ms == ENTRANCE_Compat_GetDoorFrameDelayMs());
     for (sourceStep = 7u;
          sourceStep < 7u + ENTRANCE_Compat_GetDoorAnimationStepCount();
          ++sourceStep) {
@@ -523,7 +523,7 @@ static void check_startup_source_timing_contract(void) {
                      command.render_kind ==
                              DM1_V1_STARTUP_ENTRANCE_RENDER_OPENING_DOOR_PC34 &&
                          command.door_animation_step == expectedDoorStep &&
-                         command.delay_ms == media.entrance_vblank_ms);
+                         command.delay_ms == ENTRANCE_Compat_GetDoorFrameDelayMs());
         if (expectedDoorStep <= 26u) {
             expect_truth("startup entrance left strip follows F0438 signed bound",
                          command.door_left_box_x == 0u &&

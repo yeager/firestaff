@@ -105,6 +105,10 @@ unsigned int ENTRANCE_Compat_GetSourceAnimationStepCount(void);
 int ENTRANCE_Compat_GetSourceAnimationStep(unsigned int sourceStepOrdinal,
                                            EntranceCompatSourceAnimationStep* outStep);
 unsigned int ENTRANCE_Compat_GetRuntimeDelayMs(const EntranceCompatSourceAnimationStep* step);
+/* F0438 has a documented fast-host timing defect: its one-VBlank door loop
+ * can finish too quickly.  Keep the source's one-step geometry while pacing
+ * only those visible door frames on Firestaff's V1 presentation clock. */
+unsigned int ENTRANCE_Compat_GetDoorFrameDelayMs(void);
 unsigned int ENTRANCE_Compat_GetVblankDelayMs(void);
 unsigned int ENTRANCE_Compat_GetCreditsWaitTicks(void);
 int ENTRANCE_Compat_DispatchKeyCommand(EntranceCompatKey key);

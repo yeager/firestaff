@@ -561,7 +561,7 @@ unsigned int SWSH_Compat_GetRuntimeInitialLogoHoldMs(void) {
 }
 
 unsigned int SWSH_Compat_GetRuntimeFinalHoldMs(void) {
-        /* ReDMCSB SWSH.C:3036-3037 I34E F0022_MAIN_SwooshDelay(120). */
+        /* ReDMCSB NECIO.C F2255:3613 F0022_MAIN_SwooshDelay(20). */
         return SWSH_Compat_GetRuntimeDelayMsForVblankCount(
                 SWSH_COMPAT_SOURCE_FINAL_HOLD_VBLANKS);
 }

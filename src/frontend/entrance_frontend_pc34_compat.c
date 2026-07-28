@@ -13,6 +13,7 @@
 #define ENTRANCE_COMPAT_DUNGEON_VIEW_WIDTH 224u
 #define ENTRANCE_COMPAT_DUNGEON_VIEW_HEIGHT 136u
 #define ENTRANCE_COMPAT_VBLANK_DELAY_MS 20u
+#define ENTRANCE_COMPAT_DOOR_FRAME_DELAY_MS 55u
 #define ENTRANCE_COMPAT_CREDITS_WAIT_TICKS 1800u
 #define ENTRANCE_COMPAT_FALLBACK_DOOR_FILL 5u
 #define ENTRANCE_COMPAT_FALLBACK_DOOR_HILITE 13u
@@ -243,6 +244,13 @@ unsigned int ENTRANCE_Compat_GetRuntimeDelayMs(const EntranceCompatSourceAnimati
         return step->vblankLoopCount * ENTRANCE_COMPAT_VBLANK_DELAY_MS;
     }
     return 0u;
+}
+
+unsigned int ENTRANCE_Compat_GetDoorFrameDelayMs(void) {
+    /* ENTRANCE.C F0438:239 explicitly notes that its raw VBlank-only loop
+     * opens doors too quickly on fast computers.  This affects only visible
+     * door frames, not the 1800-tick credits wait or entrance input loop. */
+    return ENTRANCE_COMPAT_DOOR_FRAME_DELAY_MS;
 }
 
 unsigned int ENTRANCE_Compat_GetVblankDelayMs(void) {

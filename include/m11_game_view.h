@@ -957,6 +957,10 @@ typedef struct {
      * the user picks SAVE&QUIT the dialog handler honors this flag and runs
      * a save before returning to the launcher. */
     int quitGuardActive;
+    /* ReDMCSB LOADSAVE.C F0433 owns a four-choice save-disk dialog before
+     * writing.  Firestaff maps the selected original save disk to its local
+     * save namespace; zero means no such dialog is active. */
+    int dm1SaveDiskMenuStage;
     char dialogOverlayText[128];
     int dialogChoiceCount;
     int dialogSelectedChoice;
