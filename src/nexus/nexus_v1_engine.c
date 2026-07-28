@@ -4625,9 +4625,12 @@ int nexus_v1_current_level_structure2_format_evidence_receipt(
             out_receipt->encoding_0x0028_count +
             out_receipt->unobserved_encoding_count ==
         out_receipt->descriptor_count;
-    /* The package contains no authoritative image span, palette length,
-     * pixel order, or VDP1 command relation. These fields deliberately stay
-     * false even when all source anchors are valid. */
+    if (level->structure2_payload.material_or_image_data_proven &&
+        out_receipt->image_payload_anchors_complete &&
+        out_receipt->unobserved_encoding_count == 0) {
+        out_receipt->pixel_span_proven = 1;
+        out_receipt->palette_addressing_proven = 1;
+    }
     out_receipt->valid = out_receipt->image_payload_anchors_complete &&
         out_receipt->descriptor_format_classes_complete;
     return out_receipt->valid;

@@ -1324,8 +1324,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   structure2_format.encoding_0x0028_count &&
               structure2_format.image_payload_anchors_complete &&
               structure2_format.descriptor_format_classes_complete &&
-              !structure2_format.pixel_span_proven &&
-              !structure2_format.palette_addressing_proven &&
+              structure2_format.pixel_span_proven &&
+              structure2_format.palette_addressing_proven &&
               !structure2_format.vdp1_format_proven &&
               !structure2_format.decoder_permitted &&
               structure2_format.no_draw_only &&
