@@ -87,6 +87,17 @@ int csb_v1_atari_st_animation_decode_presented_indexed(
     uint8_t out_palette[16][3],
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
 
+/* Replay the documented image-memory portion of ANIMATE.SCR through a source
+ * VBlank. This owns IMG1 expansion, empty image copies, display coordinates,
+ * and transparent blits into the active Atari screen; it never synthesizes a
+ * substitute PC34 surface. */
+int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
+    const char *animate_dat_path, const uint8_t *script, size_t script_size,
+    uint32_t target_vbl,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3],
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
 /* Discover, materialize and render the final original Atari ST animation
  * frame from one data root. This is the launcher-facing route and accepts
  * loose files or supported archive entries without caller-supplied assets. */
@@ -102,6 +113,12 @@ int csb_v1_atari_st_animation_render_presented_from_root_rgba(
 int csb_v1_atari_st_animation_decode_presented_from_root_indexed(
     const char *search_root, const char *cache_root,
     uint16_t presentation_index,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3],
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
+int csb_v1_atari_st_animation_decode_frame_at_vbl_from_root_indexed(
+    const char *search_root, const char *cache_root, uint32_t target_vbl,
     uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
     uint8_t out_palette[16][3],
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt);

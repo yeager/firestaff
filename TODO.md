@@ -21698,11 +21698,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   integration must preserve those 16 indices through M11 presentation. The
   same data-root route now exposes that indexed presentation in one call.
   Atari ST 2.0/2.1 M11 startup now consumes that first original `Set-screen`
-  page directly and follows each original `Set-screen` VBlank; remaining work
-  is the script's intermediate framebuffer compositor.
-  Remaining Atari animation work is an Atari framebuffer/presentation owner
-  that consumes all intermediate traced operations; do not substitute the
-  PC34 title/Entrance renderer for this route.
+  page directly and follows each original `Set-screen` VBlank. A bounded
+  Atari framebuffer player now executes the local script's IMG1 expand/copy,
+  display-coordinate and transparent blit operations through any source VBlank.
+  Remaining Atari work is M11 timing ownership for this complete framebuffer
+  route plus real app capture; do not substitute the PC34 title/Entrance
+  renderer for this route.
 
 - [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
   handoff. Enhanced modes now initialize and bind to the live V1 profile,

@@ -103,6 +103,16 @@ int main(void)
                   (indexed_palette[1][0] != 0u || indexed_palette[1][1] != 0u ||
                    indexed_palette[1][2] != 0u),
               "first Atari presentation preserves original indexed pixels and palette");
+        CHECK(csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(dat_path,
+                  script, script_size, trace.presented_vbls[0], indexed,
+                  indexed_palette, &trace) && trace.present_count == 2u &&
+                  indexed_palette[1][0] != 0u,
+              "Atari player reproduces the first source Set-screen page at its VBlank");
+        CHECK(csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(dat_path,
+                  script, script_size, trace.presented_vbls[1], indexed,
+                  indexed_palette, &trace) && trace.present_count == 2u &&
+                  indexed_palette[1][0] != 0u,
+              "Atari player advances through the second source Set-screen page");
         free(script);
         free(rgba);
     }
@@ -130,6 +140,10 @@ int main(void)
                   trace.presented_image_items[0] == 36u &&
                   trace.presented_palette_items[0] == 7u,
               "launcher route exposes indexed Atari presentation to host");
+        CHECK(csb_v1_atari_st_animation_decode_frame_at_vbl_from_root_indexed(
+                  root, cache_root, trace.presented_vbls[0], indexed,
+                  indexed_palette, &trace) && trace.present_count == 2u,
+              "launcher route replays the Atari framebuffer through a source VBlank");
         free(rgba);
     }
     return failures == 0 ? 0 : 1;

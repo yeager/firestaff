@@ -41802,3 +41802,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-28 CSB Atari ST presentation timing. The script trace now records
   the source VBlank of every real `Set-screen`; M11 advances only between
   those original presentation pages according to the live startup tick.
+- ✅ 2026-07-28 CSB Atari ST framebuffer player. The verified original script
+  now replays IMG1 expansion, empty image allocation, display coordinates and
+  transparent 48x34 blits into its active 320x200 indexed screen through a
+  requested source VBlank. The public data-root route preserves that indexed
+  framebuffer and P4B1 palette without a PC34 substitute.
