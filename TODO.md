@@ -21692,8 +21692,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   The launcher-facing Atari route now discovers, materializes and renders the
   final source-selected frame from one data root.
   The two source `Set-screen` presentations are now individually available
-  with the palette active at each original VBlank; remaining work is the
-  per-operation framebuffer compositor and live M11 consumption.
+  with the palette active at each original VBlank. The framebuffer player
+  follows `ANIM.C`'s source-box clip, destination box, transparent colour,
+  loop and item-attribute operations before M11 consumes the indexed frame.
   The host handoff now has the original indexed pixels and P4B1 palette;
   integration must preserve those 16 indices through M11 presentation. The
   same data-root route now exposes that indexed presentation in one call.
@@ -21701,8 +21702,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   page directly. M11 now owns the Atari 50 Hz VBlank clock from the source
   55 ms startup cadence and caches the real replayed framebuffer per VBlank.
   The bounded player executes the local script's IMG1 expand/copy,
-  display-coordinate and transparent blit operations, including the verified
-  changed image between the two `Set-screen` pages. ReDMCSB `ANIM.C` and
+  source-rectangle clipping, display-coordinate and transparent blit
+  operations, including the verified changed image between the two
+  `Set-screen` pages. ReDMCSB `ANIM.C` and
   `PALETTE.C` now also drive Atari `FadeToPalette` timing: each source delay
   waits `delay + 1` VBlanks before the target P4B1 palette is committed.
   The direct Atari hard-disk launch now bypasses the incompatible PC34

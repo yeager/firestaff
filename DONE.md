@@ -41834,3 +41834,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   CSB Atari `Software.7z` now materializes verified `GRAPHICS.DAT` and
   `DUNGEON.DAT` into the runtime cache and boot-probes the original
   `animate-scr` route; it no longer launches an unrelated PC34 installation.
+- ✅ 2026-07-28 CSB Atari ST `ANIM.C` compositor correction. The live player
+  now uses ReDMCSB's item boxes as real source clips and destination origins,
+  preserves the original transparent-colour and item-attribute fields, and
+  implements opcodes 19-28 rather than treating them as synthetic loop state.
+  The staged original animation and all CSB V2.x checks pass; an Atari boot
+  probe reaches the active `animate-scr` route at source VBlank 495.

@@ -71,8 +71,16 @@ typedef struct {
     uint8_t *pixels;
     uint16_t width;
     uint16_t height;
-    uint16_t display_x;
-    uint16_t display_y;
+    int32_t box_left;
+    int32_t box_top;
+    int32_t box_right;
+    int32_t box_bottom;
+    int16_t transparent_color;
+    int16_t bitmap_width;
+    int16_t bitmap_height;
+    int16_t attribute_1a;
+    int16_t attribute_1c;
+    int16_t attribute_1e;
 } csb_v1_atari_st_animation_slot;
 
 static void csb_v1_atari_st_animation_slot_release(
@@ -111,6 +119,13 @@ static int csb_v1_atari_st_animation_slot_decode_img1(
     }
     slot->width = width;
     slot->height = height;
+    slot->box_left = 0;
+    slot->box_top = 0;
+    slot->box_right = (int32_t)width - 1;
+    slot->box_bottom = (int32_t)height - 1;
+    slot->transparent_color = -1;
+    slot->bitmap_width = (int16_t)width;
+    slot->bitmap_height = (int16_t)height;
     result = 1;
 done:
     free(item_bytes);
@@ -135,27 +150,55 @@ static int csb_v1_atari_st_animation_slot_copy_image(
     destination->loaded = 1;
     destination->width = source->width;
     destination->height = source->height;
+    destination->box_left = 0;
+    destination->box_top = 0;
+    destination->box_right = (int32_t)source->box_right - source->box_left;
+    destination->box_bottom = (int32_t)source->box_bottom - source->box_top;
+    destination->transparent_color = source->transparent_color;
+    destination->bitmap_width = source->bitmap_width;
+    destination->bitmap_height = source->bitmap_height;
+    destination->attribute_1a = source->attribute_1a;
+    destination->attribute_1c = source->attribute_1c;
+    destination->attribute_1e = source->attribute_1e;
     return 1;
 }
 
 static int csb_v1_atari_st_animation_blit_transparent(
     const csb_v1_atari_st_animation_slot *source,
-    csb_v1_atari_st_animation_slot *destination, uint16_t x, uint16_t y)
+    csb_v1_atari_st_animation_slot *destination,
+    const csb_v1_atari_st_animation_slot *source_box, int32_t x, int32_t y)
 {
-    uint16_t row;
+    int32_t source_top;
+    int32_t source_bottom;
+    int32_t source_left;
+    int32_t source_right;
+    int32_t row;
 
-    if (!source || !destination || !source->pixels || !destination->pixels ||
+    if (!source || !destination || !source_box || !source->pixels ||
+        !destination->pixels ||
         source->width == 0u || source->height == 0u || destination->width == 0u ||
         destination->height == 0u) return 0;
-    for (row = 0u; row < source->height; ++row) {
-        uint16_t column;
-        const uint32_t dst_y = (uint32_t)y + row;
+    source_left = source_box->box_left;
+    source_right = source_box->box_right;
+    source_top = source_box->box_top;
+    source_bottom = source_box->box_bottom;
+    if (source_left < 0) source_left = 0;
+    if (source_top < 0) source_top = 0;
+    if (source_right >= source->width) source_right = source->width - 1;
+    if (source_bottom >= source->height) source_bottom = source->height - 1;
+    if (source_left > source_right || source_top > source_bottom) return 1;
+    for (row = source_top; row <= source_bottom; ++row) {
+        int32_t column;
+        const int32_t dst_y = y + (row - source_top);
+        if (dst_y < 0) continue;
         if (dst_y >= destination->height) break;
-        for (column = 0u; column < source->width; ++column) {
-            const uint32_t dst_x = (uint32_t)x + column;
+        for (column = source_left; column <= source_right; ++column) {
+            const int32_t dst_x = x + (column - source_left);
             const uint8_t pixel = source->pixels[(size_t)row * source->width +
                                                  column];
-            if (dst_x < destination->width && pixel != 0u) {
+            if (dst_x >= 0 && dst_x < destination->width &&
+                (destination->transparent_color < 0 ||
+                 pixel != (uint8_t)destination->transparent_color)) {
                 destination->pixels[(size_t)dst_y * destination->width +
                                     dst_x] = pixel;
             }
@@ -272,7 +315,6 @@ int csb_v1_atari_st_animation_trace_script(
     CSB_V1_AnimationScriptInstruction instructions[
         CSB_V1_ANIMATION_SCRIPT_MAX_INSTRUCTIONS];
     csb_v1_atari_st_animation_slot slots[256];
-    uint16_t values[256];
     uint16_t loop_pc[256];
     size_t instruction_count = 0u;
     size_t pc = 0u;
@@ -290,7 +332,6 @@ int csb_v1_atari_st_animation_trace_script(
     csb_atari_st_graphics_loader_init(&loader);
     if (!csb_atari_st_graphics_loader_open(&loader, animate_dat_path)) return 0;
     memset(slots, 0, sizeof(slots));
-    memset(values, 0, sizeof(values));
     memset(loop_pc, 0, sizeof(loop_pc));
 
     while (pc < instruction_count && ++steps <= 65536u) {
@@ -407,19 +448,73 @@ int csb_v1_atari_st_animation_trace_script(
                 else loop_pc[p[0]] = (uint16_t)pc;
                 break;
             case 17u: /* decrement loop counter */
-                if (p[0] >= 256u || values[p[0]] == 0u) valid = 0;
-                else values[p[0]]--;
+                if (p[0] >= 256u) valid = 0;
+                else slots[p[0]].box_left--;
                 break;
             case 18u: /* NEXT */
                 if (p[0] >= 256u || p[1] >= 256u) valid = 0;
-                else if (values[p[0]] != 0u) {
+                else if (slots[p[0]].box_left > 0) {
                     if (loop_pc[p[1]] >= instruction_count) valid = 0;
                     else pc = loop_pc[p[1]];
                 }
                 break;
-            case 19u: /* set loop counter */
+            case 19u: /* Set box left */
                 if (p[0] >= 256u) valid = 0;
-                else values[p[0]] = p[1];
+                else slots[p[0]].box_left = p[1];
+                break;
+            case 20u:
+                if (p[0] >= 256u) valid = 0;
+                else {
+                    slots[p[0]].box_left = p[1];
+                    slots[p[0]].box_right = p[2];
+                }
+                break;
+            case 21u:
+                if (p[0] >= 256u) valid = 0;
+                else {
+                    slots[p[0]].box_left = p[1];
+                    slots[p[0]].box_right = p[2];
+                    slots[p[0]].box_top = p[3];
+                }
+                break;
+            case 22u:
+                if (p[0] >= 256u) valid = 0;
+                else {
+                    slots[p[0]].box_left = p[1];
+                    slots[p[0]].box_right = p[2];
+                    slots[p[0]].box_top = p[3];
+                    slots[p[0]].box_bottom = p[4];
+                }
+                break;
+            case 23u:
+                if (p[0] >= 256u) valid = 0;
+                else {
+                    slots[p[0]].box_left = p[1];
+                    slots[p[0]].box_right = p[2];
+                    slots[p[0]].box_top = p[3];
+                    slots[p[0]].box_bottom = p[4];
+                    slots[p[0]].transparent_color = (int16_t)p[5];
+                }
+                break;
+            case 24u:
+                if (p[0] >= 256u) valid = 0;
+                else slots[p[0]].bitmap_width = (int16_t)p[1];
+                break;
+            case 25u:
+                if (p[0] >= 256u) valid = 0;
+                else slots[p[0]].bitmap_height = (int16_t)p[1];
+                break;
+            case 26u:
+                if (p[0] >= 256u) valid = 0;
+                else slots[p[0]].attribute_1a = (int16_t)p[1];
+                break;
+            case 27u:
+                if (p[0] >= 256u) valid = 0;
+                else slots[p[0]].attribute_1c = (int16_t)p[1];
+                break;
+            case 28u:
+                if (p[0] >= 256u) valid = 0;
+                else slots[p[0]].attribute_1e = (int16_t)p[1];
                 break;
             case 29u: /* allocate copy of image dimensions */
                 if (!csb_v1_atari_st_animation_slot_has_type(slots, p[0], 0u) ||
@@ -470,7 +565,6 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
         CSB_V1_ANIMATION_SCRIPT_MAX_INSTRUCTIONS];
     CSB_V1_AtariStAnimationTraceReceipt trace;
     csb_v1_atari_st_animation_slot slots[256];
-    uint16_t values[256];
     uint16_t loop_pc[256];
     size_t instruction_count = 0u;
     size_t pc = 0u;
@@ -490,7 +584,6 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
     csb_atari_st_graphics_loader_init(&loader);
     if (!csb_atari_st_graphics_loader_open(&loader, animate_dat_path)) return 0;
     memset(slots, 0, sizeof(slots));
-    memset(values, 0, sizeof(values));
     memset(loop_pc, 0, sizeof(loop_pc));
 
     while (pc < instruction_count) {
@@ -522,8 +615,6 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
                     &slots[p[0]]) ||
                 !csb_v1_atari_st_animation_slot_copy_image(&slots[p[1]],
                     &slots[p[0]], 1)) goto done;
-            slots[p[1]].display_x = slots[p[2]].display_x;
-            slots[p[1]].display_y = slots[p[2]].display_y;
             /* ANIMATE.FTL's first full-screen expansion targets slot zero,
              * the initial Atari display page. Later opcode 14 switches to
              * slot one explicitly. */
@@ -531,16 +622,17 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
                 active_screen_slot = 0u;
             break;
         case 6u:
-            /* The original CSB script supplies the destination image in p1
-             * and writes x/y into p3 immediately before every blit. p2 is
-             * the source box slot; its full source-sized box is the only
-             * form used by the verified Atari script. */
+            /* F0132_VIDEO_Blit takes the source rectangle from p2 and the
+             * destination origin from p3.  The original script sometimes
+             * supplies a full-screen box for a smaller source; clipping is
+             * therefore part of the source operation, not a replacement
+             * heuristic. */
             if (p[0] >= 256u || p[1] >= 256u || p[2] >= 256u || p[3] >= 256u ||
                 !csb_v1_atari_st_animation_slot_decode_img1(&loader,
                     &slots[p[0]]) || !slots[p[1]].pixels ||
                 !csb_v1_atari_st_animation_blit_transparent(&slots[p[0]],
-                    &slots[p[1]], slots[p[3]].display_x,
-                    slots[p[3]].display_y)) goto done;
+                    &slots[p[1]], &slots[p[2]], slots[p[3]].box_left,
+                    slots[p[3]].box_top)) goto done;
             /* ReDMCSB ANIM.C F0466 synchronizes each bitmap copy to VBlank. */
             vbl_count++;
             break;
@@ -588,20 +680,66 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
             if (p[0] >= 256u || pc > 0xffffu) goto done;
             loop_pc[p[0]] = (uint16_t)pc;
             break;
-        case 17u:
-            if (p[0] >= 256u || values[p[0]] == 0u) goto done;
-            values[p[0]]--;
+            case 17u:
+            if (p[0] >= 256u) goto done;
+            slots[p[0]].box_left--;
             break;
-        case 18u:
+            case 18u:
             if (p[0] >= 256u || p[1] >= 256u) goto done;
-            if (values[p[0]] != 0u) {
+            if (slots[p[0]].box_left > 0) {
                 if (loop_pc[p[1]] >= instruction_count) goto done;
                 pc = loop_pc[p[1]];
             }
             break;
-        case 19u:
+            case 19u:
             if (p[0] >= 256u) goto done;
-            values[p[0]] = p[1];
+            slots[p[0]].box_left = p[1];
+            break;
+            case 20u:
+            if (p[0] >= 256u) goto done;
+            slots[p[0]].box_left = p[1];
+            slots[p[0]].box_right = p[2];
+            break;
+            case 21u:
+            if (p[0] >= 256u) goto done;
+            slots[p[0]].box_left = p[1];
+            slots[p[0]].box_right = p[2];
+            slots[p[0]].box_top = p[3];
+            break;
+            case 22u:
+            if (p[0] >= 256u) goto done;
+            slots[p[0]].box_left = p[1];
+            slots[p[0]].box_right = p[2];
+            slots[p[0]].box_top = p[3];
+            slots[p[0]].box_bottom = p[4];
+            break;
+            case 23u:
+            if (p[0] >= 256u) goto done;
+            slots[p[0]].box_left = p[1];
+            slots[p[0]].box_right = p[2];
+            slots[p[0]].box_top = p[3];
+            slots[p[0]].box_bottom = p[4];
+            slots[p[0]].transparent_color = (int16_t)p[5];
+            break;
+        case 24u:
+            if (p[0] >= 256u) goto done;
+            slots[p[0]].bitmap_width = (int16_t)p[1];
+            break;
+        case 25u:
+            if (p[0] >= 256u) goto done;
+            slots[p[0]].bitmap_height = (int16_t)p[1];
+            break;
+        case 26u:
+            if (p[0] >= 256u) goto done;
+            slots[p[0]].attribute_1a = (int16_t)p[1];
+            break;
+        case 27u:
+            if (p[0] >= 256u) goto done;
+            slots[p[0]].attribute_1c = (int16_t)p[1];
+            break;
+        case 28u:
+            if (p[0] >= 256u) goto done;
+            slots[p[0]].attribute_1e = (int16_t)p[1];
             break;
         case 29u:
             if (p[0] >= 256u || p[1] >= 256u ||
@@ -612,8 +750,12 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
             break;
         case 30u:
             if (p[0] >= 256u || !slots[p[0]].loaded) goto done;
-            slots[p[0]].display_x = p[1];
-            slots[p[0]].display_y = p[2];
+            slots[p[0]].box_right -= slots[p[0]].box_left;
+            slots[p[0]].box_bottom -= slots[p[0]].box_top;
+            slots[p[0]].box_left = p[1];
+            slots[p[0]].box_top = p[2];
+            slots[p[0]].box_right += slots[p[0]].box_left;
+            slots[p[0]].box_bottom += slots[p[0]].box_top;
             break;
         default:
             break;
