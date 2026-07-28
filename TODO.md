@@ -21739,6 +21739,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   staged original proves item 86 then item 85, both at period 112. Remaining
   Atari work is real app capture with audible-device verification.
 
+- [x] 2026-07-28 Verify the Atari ST end-to-end boot handoff with the local
+  original hard-disk package. The direct `--game csb --data-dir` boot probe
+  reached the original `animate-scr` phase at frame zero and, after 1,000
+  frames, reported `startupActive=0`, `levelLoaded=1`, map 0, party 9,0,2,
+  and runtime tick 259. This proves the ANIM.C final-VBlank handoff enters
+  the package-owned CSB runtime without the PC34 TITLE/ENTRANCE route. Real
+  interactive app-window and audible-device capture remain open.
+
 - [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
   handoff. Enhanced modes now initialize and bind to the live V1 profile,
   consume V1 runtime ticks, advance at display cadence, and cleanly unbind on
