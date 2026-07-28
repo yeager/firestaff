@@ -1,11 +1,11 @@
-- ✅ 2026-07-29 CSBWin DSA `STKOP_Message` parameter-message owner. The
+- ✅ 2026-07-29 CSBWin DSA `STKOP_Message` interpreter contract. The
   authenticated stack interpreter now preserves CSBWin's target/type/count/
   delay order, source `Override_P` consumption, and the first 0..29 DSA
-  parameter words until one runtime-owned TT_ParameterMessage/EXPOOL callback
+  parameter words until one explicitly supplied TT_ParameterMessage/EXPOOL callback
   accepts them. Malformed later bytecode leaves no queued message. Verified by
   `csb_v1_dsa_text_bank_transaction`.
 
-- ✅ 2026-07-29 CSBWin DSA `STKOP_Say` / `STKOP_TextSay` text-owner binding.
+- ✅ 2026-07-29 CSBWin DSA `STKOP_Say` / `STKOP_TextSay` interpreter contract.
   Authenticated `SAY` and `TEXTSAY` now stage their source operands and call
   only runtime-owned DB2/location or decoded-text scrolling callbacks after
   full bytecode acceptance. Missing owners fail closed and a later rejected

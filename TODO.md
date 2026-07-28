@@ -19,18 +19,20 @@ an integration build pass.
   CSBWin `STKOP_Message` now preserves the source stack order
   `(target,type,count,delay)`, rejects unowned or oversized parameter bodies,
   consumes `Override_P`, and stages the exact first 0..29 DSA parameters for
-  a runtime-owned TT_ParameterMessage/EXPOOL callback. A later malformed word
-  rolls back the whole pending message. Broader DSA world operations and real
-  DSA save corpus remain open.
+  an explicitly supplied TT_ParameterMessage/EXPOOL callback. A later
+  malformed word rolls back the whole pending message. This is the bounded
+  interpreter contract; production queue/EXPOOL allocation remains in the
+  binding item below. Broader DSA world operations and real DSA save corpus
+  remain open.
 
 - **CSB-DSA-SAY-TEXT-OWNER:** Closed 2026-07-29. Authenticated CSBWin
   `STKOP_Say` and `STKOP_TextSay` now consume their original operands and
   stage text output until every source word has been accepted. `SAY` reaches
   a runtime-owned DB2/location/text callback; `TEXTSAY` reaches a separate
   owner with the decoded transient DSA text-bank value. Neither can invent a
-  message when the loaded dungeon/text owner is absent. The regression proves
-  exact callback operands and rollback when a later bytecode word rejects.
-  Broader DSA world operations and real DSA save corpus remain open.
+  message when the supplied dungeon/text owner is absent. The regression
+  proves exact callback operands and rollback when a later bytecode word
+  rejects. Production DB2/UI binding remains in the item below.
 
 - **CSB-V22-ROUTE-COMPLETE-ARTPACK-GATE:** Closed 2026-07-29. CSB V2.2
   admission and Artpack Studio now require all 29 concrete `(category,id)`
@@ -852,10 +854,17 @@ that its exact runtime path is not already source-locked and tested.
     transactional world-
     mutation batch with source-owned callbacks; do not add a synthetic VM
     fallback for missing dungeon ownership.
-22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
+22. **CSB-DSA-PRODUCTION-TEXT-MESSAGE-BINDING:** Bind the completed bounded
+    `SAY`, `TEXTSAY`, and `MESSAGE` interpreter contracts to real loaded DB2,
+    scrolling-text, timer and EXPOOL owners in `CSB_V1_RuntimeProfile`.
+    The current production runner deliberately leaves these callbacks unset:
+    it must not create timers, EXPOOL records or UI text from incomplete save
+    state. Add only a transactional owner that can update the candidate
+    profile and publish it after the existing DSA receipt audit.
+23. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.
-23. **CSB-ORIGINAL-SAVE-CORPUS:** Admit real CSB/CSBWin save corpus, complete
+24. **CSB-ORIGINAL-SAVE-CORPUS:** Admit real CSB/CSBWin save corpus, complete
     native import/export/backup/resume compatibility, EXPOOL/DB11 ownership,
     and byte-level failure handling.
     2026-07-28: local CSB material includes the original Atari ST Save Disk
