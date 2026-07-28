@@ -41639,3 +41639,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `csb-title-1`, `csb-title-2`, `csb-title-21`, and `csb-title-22`, with an
   active startup route and no runtime ticks before entrance handoff. This is
   live original-data route evidence; visual pixel comparison remains open.
+- ✅ 2026-07-28 CSB V1 real-data startup handoff verification. The local
+  original-data suite passes 4/4: terminal handoff, full startup sequence,
+  presentation receipt, and F0128 Entrance-to-M11 binding. This exercises the
+  actual CSB asset session and entrance consumer rather than only synthetic
+  startup fixtures. Pixel-for-pixel visual capture remains separately open.
