@@ -21672,6 +21672,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## CSB completed save-contract verification
 
+- [x] 2026-07-28 Parse Atari ST CSB `ANIMATE.SCR` as the documented
+  big-endian instruction stream. Firestaff now bounds-checks all 30 known
+  opcodes, their fixed word parameters, and the required Stop terminator.
+  The local original 1,802-byte script from the Atari ST hard-disk package
+  parses successfully. Remaining Atari animation work is authenticated
+  `ANIMATE.DAT`/`ANIMATE.FTL` item decoding and an Atari presentation owner;
+  do not substitute the PC34 title/Entrance renderer for this route.
+
 - [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
   handoff. Enhanced modes now initialize and bind to the live V1 profile,
   consume V1 runtime ticks, advance at display cadence, and cleanly unbind on

@@ -32813,6 +32813,28 @@ add_executable(test_nexus_v1_dgn_material_raster
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
     )
 
+    # Atari ST CSB ANIMATE.SCR is a big-endian instruction stream that drives
+    # the original animation player. Keep its parser separate from the PC34
+    # startup renderer until authentic Atari animation assets are consumed.
+    add_executable(test_csb_v1_animation_script
+        tests/test_csb_v1_animation_script.c
+        src/csb/csb_v1_animation_script.c
+    )
+    target_include_directories(test_csb_v1_animation_script PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_animation_script PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_animation_script_unit
+        COMMAND test_csb_v1_animation_script
+    )
+    set_tests_properties(csb_v1_animation_script_unit PROPERTIES
+        LABELS "tier2;csb;atari;animation;data_free"
+    )
+
     # CSB V1 CSBgraphics.dat runtime binding contract. This is
     # data-free and consumes only a trusted decoded-bitmap shape plus
     # the existing payload-span handoff. It proves the future decoder

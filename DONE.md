@@ -41725,3 +41725,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   runtime binding, touch/controller, lighting, V2.2 shape/per-cell/in-place
   rendering, and the reviewed-material admission gate. This does not promote
   unreviewed art or replace the separately tracked packaged-app capture.
+- ✅ 2026-07-28 CSB Atari ST `ANIMATE.SCR` parser. Added a strict read-only
+  parser for the documented big-endian instruction stream: all 30 commands,
+  fixed parameter widths, bounded output, unknown-opcode/truncation rejection,
+  and required Stop termination. The unit test also parses the local original
+  1,802-byte `ANIMATE.SCR` from the staged Atari hard-disk archive.
