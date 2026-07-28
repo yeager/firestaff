@@ -41787,3 +41787,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   explosion-runtime executable missing from the local build tree, the complete
   CTest `csb` label selection passed 63/63. This includes V1 startup, save,
   DSA, viewport, HUD and Atari tests together with the V2.x suite.
+- ✅ 2026-07-28 CSB Atari ST indexed host handoff. The source presentation
+  route now emits the original 320x200 four-bit image indices plus its decoded
+  P4B1 palette, rather than requiring a lossy RGBA-to-index conversion before
+  M11 can present it.

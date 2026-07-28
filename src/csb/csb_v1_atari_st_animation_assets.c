@@ -395,6 +395,53 @@ int csb_v1_atari_st_animation_render_presented_rgba(
     return 1;
 }
 
+int csb_v1_atari_st_animation_decode_presented_indexed(
+    const char *animate_dat_path, const uint8_t *script, size_t script_size,
+    uint16_t presentation_index,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3],
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt)
+{
+    CSB_V1_AtariStAnimationTraceReceipt trace;
+    CSB_AtariStLoader loader;
+    uint8_t *image_bytes = NULL;
+    uint8_t *palette_bytes = NULL;
+    size_t image_size = 0u;
+    size_t palette_size = 0u;
+    int result = 0;
+
+    if (!out_indexed || !out_palette ||
+        !csb_v1_atari_st_animation_trace_script(animate_dat_path, script,
+            script_size, &trace) || !trace.valid ||
+        presentation_index >= trace.present_count ||
+        presentation_index >= CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES ||
+        !csb_v1_atari_st_animation_item_type_matches(
+            trace.presented_image_items[presentation_index], 0u) ||
+        !csb_v1_atari_st_animation_item_type_matches(
+            trace.presented_palette_items[presentation_index], 1u)) return 0;
+    csb_atari_st_graphics_loader_init(&loader);
+    if (!csb_atari_st_graphics_loader_open(&loader, animate_dat_path) ||
+        !csb_v1_atari_st_animation_read_item(&loader,
+            trace.presented_image_items[presentation_index], &image_bytes,
+            &image_size) ||
+        !csb_v1_atari_st_animation_read_item(&loader,
+            trace.presented_palette_items[presentation_index], &palette_bytes,
+            &palette_size) ||
+        !csb_v1_atari_st_animation_decode_p4b1_palette(palette_bytes,
+            palette_size, out_palette) ||
+        !csb_v1_startup_img3_decode_to_indexed_pc34_compat(image_bytes,
+            image_size, CSB_V1_ATARI_ST_ANIMATION_WIDTH,
+            CSB_V1_ATARI_ST_ANIMATION_HEIGHT, out_indexed,
+            CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES)) goto done;
+    result = 1;
+done:
+    free(image_bytes);
+    free(palette_bytes);
+    csb_atari_st_graphics_loader_close(&loader);
+    if (result && out_receipt) *out_receipt = trace;
+    return result;
+}
+
 int csb_v1_atari_st_animation_render_final_from_root_rgba(
     const char *search_root, const char *cache_root, uint8_t *out_rgba,
     size_t out_rgba_size, CSB_V1_AtariStAnimationTraceReceipt *out_receipt)

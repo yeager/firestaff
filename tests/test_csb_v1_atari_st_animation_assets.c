@@ -49,6 +49,8 @@ int main(void)
         size_t script_size = 0u;
         uint8_t *script = read_file(script_path, &script_size);
         uint8_t *rgba = (uint8_t *)malloc(CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES);
+        uint8_t indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES];
+        uint8_t indexed_palette[16][3];
         CSB_V1_AtariStAnimationAssetReceipt receipt;
         CSB_V1_AtariStAnimationTraceReceipt trace;
         CHECK(script != NULL, "real Atari ANIMATE.SCR is readable");
@@ -93,6 +95,13 @@ int main(void)
                   trace.presented_image_items[0] == 36u &&
                   trace.presented_palette_items[0] == 7u && rgba[3] == 255u,
               "first Atari Set-screen frame is selected by original script state");
+        CHECK(csb_v1_atari_st_animation_decode_presented_indexed(dat_path,
+                  script, script_size, 0u, indexed, indexed_palette, &trace) &&
+                  trace.presented_image_items[0] == 36u &&
+                  trace.presented_palette_items[0] == 7u &&
+                  (indexed_palette[1][0] != 0u || indexed_palette[1][1] != 0u ||
+                   indexed_palette[1][2] != 0u),
+              "first Atari presentation preserves original indexed pixels and palette");
         free(script);
         free(rgba);
     }

@@ -9,6 +9,8 @@ enum {
     CSB_V1_ATARI_ST_ANIMATION_HEIGHT = 200,
     CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES =
         CSB_V1_ATARI_ST_ANIMATION_WIDTH * CSB_V1_ATARI_ST_ANIMATION_HEIGHT * 4,
+    CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES =
+        CSB_V1_ATARI_ST_ANIMATION_WIDTH * CSB_V1_ATARI_ST_ANIMATION_HEIGHT,
     CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES = 4
 };
 
@@ -73,6 +75,15 @@ int csb_v1_atari_st_animation_render_final_rgba(
 int csb_v1_atari_st_animation_render_presented_rgba(
     const char *animate_dat_path, const uint8_t *script, size_t script_size,
     uint16_t presentation_index, uint8_t *out_rgba, size_t out_rgba_size,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
+/* Decode a source-selected presentation directly to its original 4-bit pixel
+ * indices and P4B1 RGB palette. This is the M11 host-palette handoff. */
+int csb_v1_atari_st_animation_decode_presented_indexed(
+    const char *animate_dat_path, const uint8_t *script, size_t script_size,
+    uint16_t presentation_index,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3],
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
 
 /* Discover, materialize and render the final original Atari ST animation
