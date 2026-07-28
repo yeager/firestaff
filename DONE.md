@@ -41687,3 +41687,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   verified by the new `m11_audio_default_sdl_dummy` regression plus the
   source-locked DM1 PSG and CSB SWSH transports; failed source validation
   still stays silent rather than substituting generated audio.
+- ✅ 2026-07-28 CSB new-game dungeon-header position. Removed the fixed
+  `(5,5)` CSB start pose. The PC34 loader retains
+  `DUNGEON_HEADER.InitialPartyLocation` and both CSB boot paths decode it as
+  ReDMCSB `LOADSAVE.C` F0435 does. The local original package boot-probes at
+  map 0, `(9,0)`, direction 2; loader and boot/viewport regressions pass.

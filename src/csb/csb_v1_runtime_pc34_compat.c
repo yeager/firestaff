@@ -28260,6 +28260,11 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
             profile->dungeon_handle = dungeon;
             csb_v1_dungeon_set_current(dungeon); /* singleton now points to heap */
             csb_v1_dungeon_set_current_level(0);   /* start at level 0 */
+            /* ReDMCSB LOADSAVE.C F0435 derives a new game's pose from the
+             * loaded DUNGEON_HEADER, never from a fixed host coordinate. */
+            (void)csb_v1_dungeon_initial_party_pose_pc34(
+                dungeon, &profile->current_level, &profile->party_x,
+                &profile->party_y, &profile->party_dir);
             if (profile->party_state_valid) {
                 (void)csb_v1_runtime_recompute_party_loads_pc34_compat(profile);
             }

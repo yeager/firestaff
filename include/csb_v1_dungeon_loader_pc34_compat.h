@@ -55,6 +55,10 @@ typedef struct {
 
 typedef struct CSB_V1_DungeonData {
     int level_count;
+    /* ReDMCSB LOADSAVE.C F0435 consumes DUNGEON_HEADER.InitialPartyLocation
+     * for a new game. Retain the raw packed value rather than substituting
+     * a CSB-specific host default. */
+    uint16_t initial_party_location;
     int level_offsets[CSB_V1_MAX_LEVELS];
     int level_widths[CSB_V1_MAX_LEVELS];
     int level_heights[CSB_V1_MAX_LEVELS];
@@ -99,6 +103,14 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
  *
  * Source: CSBWin/CSBCode.cpp LoadDungeon lines 6800-6950 */
 int csb_v1_dungeon_load_from_file(CSB_V1_DungeonData *out, const char *path);
+
+/* Decode DUNGEON_HEADER.InitialPartyLocation exactly as LOADSAVE.C F0435:
+ * x = bits 0..4, y = bits 5..9, direction = bits 10..11, map = 0. */
+int csb_v1_dungeon_initial_party_pose_pc34(const CSB_V1_DungeonData *d,
+                                           int *out_map_index,
+                                           int *out_x,
+                                           int *out_y,
+                                           int *out_direction);
 
 /* ── Raw square accessors ──────────────────────────────────────────── */
 

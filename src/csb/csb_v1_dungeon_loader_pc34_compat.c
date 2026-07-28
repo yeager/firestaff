@@ -182,12 +182,14 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
         int total_columns = 0;
         long thing_data_total = 0;
         uint16_t text_word_count = rd16(decoded + 6);
+        uint16_t initial_party_location = rd16(decoded + 8);
         uint16_t square_first_thing_count = rd16(decoded + 10);
         int thing_data_base;
         long raw_map_data_base;
 
         levels = decoded[4];
         out->level_count = levels;
+        out->initial_party_location = initial_party_location;
         out->square_bytes = 1;
         out->square_first_thing_count = (int)square_first_thing_count;
 
@@ -351,6 +353,30 @@ done:
     fclose(f);
     if (ret != 0) memset(out, 0, sizeof(*out));
     return ret;
+}
+
+int csb_v1_dungeon_initial_party_pose_pc34(const CSB_V1_DungeonData *d,
+                                           int *out_map_index,
+                                           int *out_x,
+                                           int *out_y,
+                                           int *out_direction)
+{
+    uint16_t location;
+
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        d->level_count <= 0 || !out_map_index || !out_x || !out_y ||
+        !out_direction) {
+        return 0;
+    }
+    location = d->initial_party_location;
+    *out_map_index = 0;
+    *out_x = (int)(location & 0x001fu);
+    *out_y = (int)((location >> 5) & 0x001fu);
+    *out_direction = (int)((location >> 10) & 0x0003u);
+    if (*out_x >= d->level_widths[0] || *out_y >= d->level_heights[0]) {
+        return 0;
+    }
+    return 1;
 }
 
 /* ── Raw square accessors ────────────────────────────────────────────── */

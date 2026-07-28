@@ -8295,6 +8295,18 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
                 profile->runtime.dungeon_handle = dungeon;
                 csb_v1_dungeon_set_current(dungeon);
                 csb_v1_dungeon_set_current_level(0);
+                /* LOADSAVE.C F0435 reads InitialPartyLocation after the
+                 * header is loaded. Do the same before M11 mirrors the
+                 * runtime pose; a fixed (5,5) is not source-authoritative. */
+                if (csb_v1_dungeon_initial_party_pose_pc34(
+                        dungeon, &profile->runtime.current_level,
+                        &profile->runtime.party_x,
+                        &profile->runtime.party_y,
+                        &profile->runtime.party_dir)) {
+                    profile->default_party_x = (uint32_t)profile->runtime.party_x;
+                    profile->default_party_y = (uint32_t)profile->runtime.party_y;
+                    profile->default_party_dir = (uint32_t)profile->runtime.party_dir;
+                }
             } else {
                 free(dungeon);
                 profile->runtime.dungeon_handle = NULL;

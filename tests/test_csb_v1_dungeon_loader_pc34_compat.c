@@ -131,6 +131,31 @@ static void test_source_evidence(void)
     assert(strlen(ev) > 0);
 }
 
+static void test_real_header_initial_party_pose(void)
+{
+    uint8_t bytes[90] = {0};
+    CSB_V1_DungeonData dungeon;
+    int map_index = -1;
+    int x = -1;
+    int y = -1;
+    int direction = -1;
+
+    /* One real-format 10x1 map. InitialPartyLocation = 0x0809 encodes
+     * x=9, y=0, direction=2 exactly as ReDMCSB LOADSAVE.C F0435. */
+    bytes[4] = 1;
+    bytes[8] = 0x09;
+    bytes[9] = 0x08;
+    bytes[44 + 8] = 0x40; /* width - 1 in MAP.A bits 6..10 */
+    bytes[44 + 9] = 0x02;
+    bytes[80] = 0x20;
+    memset(&dungeon, 0, sizeof(dungeon));
+    assert(csb_v1_dungeon_load(&dungeon, bytes, (int)sizeof(bytes)) == 0);
+    assert(csb_v1_dungeon_initial_party_pose_pc34(
+               &dungeon, &map_index, &x, &y, &direction) == 1);
+    assert(map_index == 0 && x == 9 && y == 0 && direction == 2);
+    csb_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     test_load_null_path();
@@ -149,6 +174,7 @@ int main(void)
     test_free_null();
     test_get_thing_record_null();
     test_source_evidence();
+    test_real_header_initial_party_pose();
 
     puts("ok: CSB dungeon loader (Q-CSB-04) 16 tests passed");
     return 0;

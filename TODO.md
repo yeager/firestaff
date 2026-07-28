@@ -21662,6 +21662,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## CSB completed save-contract verification
 
+- [x] 2026-07-28 Replace the fixed CSB new-game pose with the verified
+  `DUNGEON_HEADER.InitialPartyLocation` route. ReDMCSB `LOADSAVE.C` F0435
+  reads x, y and direction from the loaded header; Firestaff now retains and
+  consumes that packed field in both boot paths. The local original PC
+  `DUNGEON.DAT` resolves to map 0, `(9,0)`, direction 2. Native saves remain
+  authoritative for resume positions.
+
 - [x] 2026-07-28 Align the M11 quicksave/resume regression with native v12
   CSB package ownership. A standalone loader receives the original
   hash-verified package identity before validating the quicksave, so the test
