@@ -41445,3 +41445,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   full CHAOS page, then `Delay(2)` on STRIKES BACK. The old 101-tick model
   held the final title frame for one VBlank. CSB now uses the correct
   102-tick timeline, and focused real-data title/Entrance regressions pass.
+- ✅ 2026-07-28 DM1 V2.x current verification. Built the only previously
+  absent registered V2 cursor-mask test binary, then ran the complete
+  V2.0/V2.1/V2.2 CTest selection against local original DM1 data: 88/88
+  passed. Coverage includes mode handoff, HUD/pointer routes, viewport,
+  item/creature/spell/effect paths, resolution mapping, assetpack gates and
+  real runtime presentation smoke.
