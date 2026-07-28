@@ -2440,9 +2440,14 @@ will feed into cycle 15.
   and current level from the engine state and renders the HUD overlay after
   the viewport framebuffer copy.  HUD init runs on both launcher and resume
   engine-assignment paths.  All 201 Nexus tests pass (3 pre-existing known
-  failures unchanged).  Remaining: wire gold/champion bars from real game
-  state once combat/inventory are source-owned; connect V2 phase gate config
-  instead of force_active.
+  failures unchanged).  2026-07-28: the gameplay render path now shows a diagnostic overlay
+  ("DGN VIEWPORT MATERIAL ROUTE BLOCKED") with level, position, direction,
+  MNS route validity, and selector binding status when the viewport cannot
+  render. Previously the blocked case showed a black screen with no feedback.
+  Remaining: wire gold/champion bars from real game state once
+  combat/inventory are source-owned; connect V2 phase gate config instead
+  of force_active; unblock viewport material gates (requires Structure1B
+  selector binding research).
 
 - **Lane D — Nexus V1 real-data creature spawn and combat (cycle 14):** Done.
   Nexus creatures now spawn from authenticated `LEV*.DGN` Structure1A actor

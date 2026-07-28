@@ -48534,10 +48534,35 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             }
         } else if (state->nexusEngine) {
             directDraw = 1;
-            (void)m11_draw_nexus_dgn_host_plan(state,
-                                                framebuffer,
-                                                framebufferWidth,
-                                                framebufferHeight);
+            if (!m11_draw_nexus_dgn_host_plan(state,
+                                               framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight)) {
+                char nexus_diag[128];
+                snprintf(nexus_diag, sizeof(nexus_diag),
+                         "LEV%02d (%d,%d) DIR=%d  MNS=%d/%d SEL=%d",
+                         state->nexusEngine->game.current_level,
+                         state->nexusEngine->game.party_x,
+                         state->nexusEngine->game.party_y,
+                         state->nexusEngine->game.party_dir,
+                         state->nexusEngine->floor_mns_material_route_valid,
+                         state->nexusEngine->wall_mns_material_route_valid,
+                         state->nexusEngine->dgn_static_material_sources
+                             .structure1b_selector_binding_proven);
+                m11_draw_text(framebuffer, framebufferWidth,
+                              framebufferHeight,
+                              18, 18, "DUNGEON MASTER NEXUS",
+                              &g_text_title);
+                m11_draw_text(framebuffer, framebufferWidth,
+                              framebufferHeight,
+                              18, 36,
+                              "DGN VIEWPORT MATERIAL ROUTE BLOCKED",
+                              &g_text_shadow);
+                m11_draw_text(framebuffer, framebufferWidth,
+                              framebufferHeight,
+                              18, 54, nexus_diag,
+                              &g_text_shadow);
+            }
         }
         if (!directDraw) {
             for (y = 0; y < copyH; ++y) {
