@@ -2440,7 +2440,12 @@ will feed into cycle 15.
   and current level from the engine state and renders the HUD overlay after
   the viewport framebuffer copy.  HUD init runs on both launcher and resume
   engine-assignment paths.  All 201 Nexus tests pass (3 pre-existing known
-  failures unchanged).  2026-07-28: the gameplay render path now shows a diagnostic overlay
+  failures unchanged).  2026-07-28: V2 lighting runtime and smooth movement runtime are now
+  wired into the Nexus engine lifecycle (init, tick at 60 Hz, shutdown)
+  alongside the HUD. Base V2 modules (lighting, particles, atmosphere,
+  smooth movement) are linked into the main library. All 21 Nexus V2
+  tests pass.
+  2026-07-28: the gameplay render path now shows a diagnostic overlay
   ("DGN VIEWPORT MATERIAL ROUTE BLOCKED") with level, position, direction,
   MNS route validity, and selector binding status when the viewport cannot
   render. Previously the blocked case showed a black screen with no feedback.

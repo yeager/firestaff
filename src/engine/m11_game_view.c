@@ -6,6 +6,8 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "nexus_v1_engine.h"
 #include "nexus_v2_hud_runtime.h"
+#include "nexus_v2_lighting_runtime.h"
+#include "nexus_v2_smooth_movement_runtime.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_movement.h"
@@ -13704,6 +13706,8 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         state->nexusLightRuntimeReady = 0;
     }
     nexus_v2_hud_runtime_shutdown();
+    nexus_v2_lighting_runtime_shutdown();
+    nexus_v2_smooth_movement_runtime_shutdown();
     if (state->assetsAvailable) {
         M11_AssetLoader_Shutdown(&state->assetLoader);
         state->assetsAvailable = 0;
@@ -14326,6 +14330,10 @@ static int m11_nexus_apply_launcher_runtime_receipt(
     state->nexusEngine = receipt->engine;
     nexus_v2_hud_runtime_init();
     nexus_v2_hud_runtime_force_active_for_test(1);
+    nexus_v2_lighting_runtime_init();
+    nexus_v2_lighting_runtime_force_active_for_test(1);
+    nexus_v2_smooth_movement_runtime_init();
+    nexus_v2_smooth_movement_runtime_force_active_for_test(1);
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
@@ -14587,6 +14595,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                     !m11_nexus_resume_from_save_path(state, spec->savePath)) {
                     nexus_v1_launcher_shutdown();
                     nexus_v2_hud_runtime_shutdown();
+    nexus_v2_lighting_runtime_shutdown();
+    nexus_v2_smooth_movement_runtime_shutdown();
                     state->nexusEngine = NULL;
                     state->active = 0;
                     state->startedFromLauncher = 0;
@@ -15788,6 +15798,10 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
     state->nexusEngine = receipt.engine;
     nexus_v2_hud_runtime_init();
     nexus_v2_hud_runtime_force_active_for_test(1);
+    nexus_v2_lighting_runtime_init();
+    nexus_v2_lighting_runtime_force_active_for_test(1);
+    nexus_v2_smooth_movement_runtime_init();
+    nexus_v2_smooth_movement_runtime_force_active_for_test(1);
     m11_nexus_release_title(state);
     state->nexusState.level_loaded = receipt.level_loaded;
     state->nexusState.party_x = receipt.party_x;
@@ -18727,6 +18741,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                 state->nexusEngine->mechanics->party_dir;
         }
         (void)nexus_v1_light_runtime_tick(&state->nexusLightRuntime, 1);
+        nexus_v2_lighting_runtime_tick(1.0f / 60.0f);
+        nexus_v2_smooth_movement_runtime_tick(1.0f / 60.0f);
         /* Sync nexusState mirror so external callers (render loop,
          * UI overlays, save/load) always read consistent data. */
         state->nexusState.tick_count   = state->nexusEngine->game.tick_count;

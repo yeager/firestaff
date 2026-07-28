@@ -3819,9 +3819,13 @@ endif()
 file(GLOB NEXUS_SOURCES CONFIGURE_DEPENDS "src/nexus/nexus_v1_*.c")
 # Explicit V2 runtime wire-up modules (must be in lib for M11 wire-up).
 set(NEXUS_V2_RUNTIME_SOURCES
+    src/nexus/nexus_v2_atmosphere.c
     src/nexus/nexus_v2_hud_overlay.c
     src/nexus/nexus_v2_hud_runtime.c
+    src/nexus/nexus_v2_lighting.c
     src/nexus/nexus_v2_lighting_runtime.c
+    src/nexus/nexus_v2_particles.c
+    src/nexus/nexus_v2_smooth_movement.c
     src/nexus/nexus_v2_smooth_movement_runtime.c
     src/nexus/nexus_v2_touch_runtime.c
     src/nexus/nexus_v22_modern_assets_pc34.c
