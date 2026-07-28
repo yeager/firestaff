@@ -48,6 +48,7 @@ int main(void)
         uint8_t *script = read_file(script_path, &script_size);
         uint8_t *rgba = (uint8_t *)malloc(CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES);
         CSB_V1_AtariStAnimationAssetReceipt receipt;
+        CSB_V1_AtariStAnimationTraceReceipt trace;
         CHECK(script != NULL, "real Atari ANIMATE.SCR is readable");
         if (script) {
             CHECK(csb_v1_atari_st_animation_validate_assets(dat_path, script,
@@ -58,6 +59,15 @@ int main(void)
                       receipt.image_load_count > 0u &&
                       receipt.sound_load_count == 4u,
                   "real script references only documented ANIMATE.DAT item families");
+            CHECK(csb_v1_atari_st_animation_trace_script(dat_path, script,
+                      script_size, &trace) && trace.valid &&
+                      trace.executed_instruction_count > 288u &&
+                      trace.fade_count > 0u && trace.expand_count > 0u &&
+                      trace.blit_count > 0u && trace.present_count == 2u &&
+                      trace.played_sound_count == 2u &&
+                      trace.last_presented_image_item == 35u &&
+                      trace.last_presented_palette_item == 0xffffu,
+                  "real Atari script executes documented fades, loops, blits and presentation");
         }
         CHECK(rgba != NULL && csb_v1_atari_st_animation_render_rgba(dat_path,
                   30u, 0u, rgba, CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES) &&

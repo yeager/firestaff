@@ -41742,3 +41742,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   IMG1 title item into a 320x200 RGBA frame. The test uses the staged Atari
   utility-disk files and rejects unknown item families rather than substituting
   a PC34 title asset.
+
+- ✅ 2026-07-28 CSB Atari ST animation-script execution trace. Firestaff now
+  executes the original 288-instruction `ANIMATE.SCR` control flow against the
+  original `ANIMATE.DAT` slots, including its real loops, 101 palette fades,
+  waits, 17 expands, 18 blits, two presentation calls and two sounds. The
+  semantic trace is driven solely by the staged Atari utility-disk files; the
+  remaining task is to connect its framebuffer operations to the CSB host
+  presenter.

@@ -41,6 +41,37 @@ static int csb_v1_atari_st_animation_read_item(
     return 1;
 }
 
+typedef struct {
+    uint16_t item_index;
+    uint16_t type;
+    int loaded;
+} csb_v1_atari_st_animation_slot;
+
+static int csb_v1_atari_st_animation_slot_has_type(
+    const csb_v1_atari_st_animation_slot *slots, uint16_t slot, uint16_t type)
+{
+    return slots && slot < 256u && slots[slot].loaded && slots[slot].type == type;
+}
+
+static int csb_v1_atari_st_animation_palette_item_is_loaded(
+    const csb_v1_atari_st_animation_slot *slots, uint16_t item_index)
+{
+    uint16_t slot;
+    for (slot = 0u; slot < 256u; ++slot) {
+        if (slots[slot].loaded && slots[slot].type == 1u &&
+            slots[slot].item_index == item_index) return 1;
+    }
+    return 0;
+}
+
+static int csb_v1_atari_st_animation_palette_reference_is_loaded(
+    const csb_v1_atari_st_animation_slot *slots, uint16_t reference)
+{
+    return csb_v1_atari_st_animation_slot_has_type(slots, reference, 1u) ||
+        csb_v1_atari_st_animation_palette_item_is_loaded(slots, reference) ||
+        reference <= 29u;
+}
+
 int csb_v1_atari_st_animation_decode_p4b1_palette(
     const uint8_t *bytes, size_t byte_count, uint8_t out_rgb[16][3])
 {
@@ -101,6 +132,158 @@ int csb_v1_atari_st_animation_validate_assets(
     }
     csb_atari_st_graphics_loader_close(&loader);
     return valid;
+}
+
+int csb_v1_atari_st_animation_trace_script(
+    const char *animate_dat_path, const uint8_t *script, size_t script_size,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt)
+{
+    CSB_AtariStLoader loader;
+    CSB_V1_AnimationScriptInstruction instructions[
+        CSB_V1_ANIMATION_SCRIPT_MAX_INSTRUCTIONS];
+    csb_v1_atari_st_animation_slot slots[256];
+    uint16_t values[256];
+    uint16_t loop_pc[256];
+    size_t instruction_count = 0u;
+    size_t pc = 0u;
+    uint32_t steps = 0u;
+    int stopped = 0;
+    int valid = 1;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!animate_dat_path || !script ||
+        csb_v1_animation_script_parse(script, script_size, instructions,
+            CSB_V1_ANIMATION_SCRIPT_MAX_INSTRUCTIONS, &instruction_count) !=
+            CSB_V1_ANIMATION_SCRIPT_OK) return 0;
+    csb_atari_st_graphics_loader_init(&loader);
+    if (!csb_atari_st_graphics_loader_open(&loader, animate_dat_path)) return 0;
+    memset(slots, 0, sizeof(slots));
+    memset(values, 0, sizeof(values));
+    memset(loop_pc, 0, sizeof(loop_pc));
+
+    while (pc < instruction_count && ++steps <= 65536u) {
+        const CSB_V1_AnimationScriptInstruction *instruction =
+            &instructions[pc++];
+        const uint16_t *p = instruction->parameters;
+
+        switch (instruction->opcode) {
+            case 1u:
+            case 2u:
+                stopped = 1;
+                break;
+            case 3u: /* Load item */
+                if (p[0] >= loader.item_count || p[1] >= 256u ||
+                    !csb_v1_atari_st_animation_item_type_matches(p[0], p[2])) {
+                    valid = 0;
+                    break;
+                }
+                slots[p[1]].item_index = p[0];
+                slots[p[1]].type = p[2];
+                slots[p[1]].loaded = 1;
+                break;
+            case 4u: /* Unload */
+                if (p[0] >= 256u || !slots[p[0]].loaded) valid = 0;
+                else memset(&slots[p[0]], 0, sizeof(slots[p[0]]));
+                break;
+            case 5u: /* Expand IMG1 into a destination screen slot */
+                if (!csb_v1_atari_st_animation_slot_has_type(slots, p[0], 0u) ||
+                    p[1] >= 256u) valid = 0;
+                else {
+                    slots[p[1]] = slots[p[0]];
+                    if (out_receipt) out_receipt->expand_count++;
+                }
+                break;
+            case 6u: /* Blit bitmap */
+                if (!csb_v1_atari_st_animation_slot_has_type(slots, p[0], 0u) ||
+                    !csb_v1_atari_st_animation_slot_has_type(slots, p[1], 0u))
+                    valid = 0;
+                else if (out_receipt) out_receipt->blit_count++;
+                break;
+            case 7u: /* Set palette */
+            case 8u: /* Fade palette */
+                /* The original script refers to P4B1 item IDs here. Its
+                 * preceding Load commands decide which memory slot owns that
+                 * item; e.g. item 2 is loaded in slot 7 then faded as 2. */
+                if (!csb_v1_atari_st_animation_palette_reference_is_loaded(slots,
+                        p[0]))
+                    valid = 0;
+                else if (instruction->opcode == 8u && out_receipt)
+                    out_receipt->fade_count++;
+                break;
+            case 10u: /* Wait VBLs */
+                if (out_receipt) out_receipt->waited_vbl_count += p[0];
+                break;
+            case 11u: /* Wait until VBL */
+                if (out_receipt && out_receipt->waited_vbl_count < p[0])
+                    out_receipt->waited_vbl_count = p[0];
+                break;
+            case 12u: /* Play sound */
+                if (!csb_v1_atari_st_animation_slot_has_type(slots, p[0], 2u))
+                    valid = 0;
+                else if (out_receipt) out_receipt->played_sound_count++;
+                break;
+            case 14u: /* Set screen and palette at VBL */
+                if (!csb_v1_atari_st_animation_slot_has_type(slots, p[0], 0u) ||
+                    (p[1] != 0xffffu &&
+                     !csb_v1_atari_st_animation_palette_reference_is_loaded(slots,
+                         p[1]))) {
+                    valid = 0;
+                } else if (out_receipt) {
+                    out_receipt->present_count++;
+                    out_receipt->last_presented_image_item = slots[p[0]].item_index;
+                    out_receipt->last_presented_palette_item =
+                        p[1];
+                }
+                break;
+            case 15u: /* Wait one VBL */
+                if (out_receipt) out_receipt->waited_vbl_count++;
+                break;
+            case 16u: /* FOR: store next instruction address */
+                if (p[0] >= 256u || pc > 0xffffu) valid = 0;
+                else loop_pc[p[0]] = (uint16_t)pc;
+                break;
+            case 17u: /* decrement loop counter */
+                if (p[0] >= 256u || values[p[0]] == 0u) valid = 0;
+                else values[p[0]]--;
+                break;
+            case 18u: /* NEXT */
+                if (p[0] >= 256u || p[1] >= 256u) valid = 0;
+                else if (values[p[0]] != 0u) {
+                    if (loop_pc[p[1]] >= instruction_count) valid = 0;
+                    else pc = loop_pc[p[1]];
+                }
+                break;
+            case 19u: /* set loop counter */
+                if (p[0] >= 256u) valid = 0;
+                else values[p[0]] = p[1];
+                break;
+            case 29u: /* allocate copy of image dimensions */
+                if (!csb_v1_atari_st_animation_slot_has_type(slots, p[0], 0u) ||
+                    p[1] >= 256u) valid = 0;
+                else slots[p[1]] = slots[p[0]];
+                break;
+            case 30u: /* display coordinates */
+                if (!csb_v1_atari_st_animation_slot_has_type(slots, p[0], 0u))
+                    valid = 0;
+                break;
+            default:
+                /* Opcodes 9, 13 and 20..28 are documented no-op/set forms. */
+                break;
+        }
+        if (!valid || stopped) {
+            if (!valid && out_receipt) {
+                out_receipt->failed_opcode = instruction->opcode;
+                out_receipt->failed_instruction_index = (uint16_t)(pc - 1u);
+            }
+            break;
+        }
+    }
+    if (out_receipt) {
+        out_receipt->executed_instruction_count = steps;
+        out_receipt->valid = valid && stopped;
+    }
+    csb_atari_st_graphics_loader_close(&loader);
+    return valid && stopped;
 }
 
 int csb_v1_atari_st_animation_render_rgba(

@@ -21682,9 +21682,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   The local original 1,802-byte script from the Atari ST hard-disk package
   parses successfully. Original `ANIMATE.DAT` P4B1 palettes and 320x200 IMG1
   title frames are now consumed into RGBA after an exact script-to-item-family
-  validation (80 loads, no foreign item family). Remaining Atari animation
-  work is script-command execution (fade/expand/blit/wait/sound) and an Atari
-  presentation owner;
+  validation (80 loads, no foreign item family). The original command stream
+  now has a source-validated semantic trace for loops, fades, waits, expands,
+  blits, presents and sounds. Remaining Atari animation work is an Atari
+  framebuffer/presentation owner that consumes those traced operations;
   do not substitute the PC34 title/Entrance renderer for this route.
 
 - [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
