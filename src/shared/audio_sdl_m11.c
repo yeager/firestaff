@@ -468,7 +468,11 @@ static int m11_load_wav_to_stream(M11_SoundBuffer* dst, const char* path) {
 static int m11_sdl_audio_backend_enabled(void) {
     const char* value = getenv("FIRESTAFF_AUDIO_ENABLE_SDL");
     if (!value || value[0] == '\0') {
-        return 0;
+        /* Sound is a normal game feature.  The original-data decoders already
+         * fail closed at their source boundaries, so the absence of this
+         * optional switch must not silently make every shipped game mute.
+         * Keep an explicit opt-out for headless runs and diagnostics. */
+        return 1;
     }
     if (value[0] == '0' && value[1] == '\0') {
         return 0;
@@ -763,12 +767,10 @@ int M11_Audio_Init(M11_AudioState* state) {
         SDL_AudioSpec spec;
         SDL_AudioStream* stream;
 
-        /* Preview safety: real SDL3/CoreAudio playback is opt-in for now.
-         * The runtime still decodes original SONG.DAT/SND3 and records audio
-         * markers, but opening the live macOS audio device has produced
-         * delayed heap corruption in the interactive preview path.  Keep the
-         * game stable by default; use FIRESTAFF_AUDIO_ENABLE_SDL=1 when
-         * specifically testing the audio backend. */
+        /* Real playback is on by default. Source decoders still fail closed,
+         * and a failed device initialization leaves the game running without
+         * audio rather than replacing original data with generated audio.
+         * Set FIRESTAFF_AUDIO_ENABLE_SDL=0 for headless diagnostics. */
         if (!m11_sdl_audio_backend_enabled()) {
             state->backend = M11_AUDIO_BACKEND_NONE;
             return 1;

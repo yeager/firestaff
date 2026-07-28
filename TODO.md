@@ -721,8 +721,9 @@ that its exact runtime path is not already source-locked and tested.
     HCSBF.HTC Hint Oracle package; runtime menu consumption remains open.
 25. **CSB-TITLE-AUDIO-CADENCE:** C001 timing and FTL/PRESENTS/CHAOS/STRIKES
     composition are source-locked (60 + 20 + 20 + 2 VBlanks after swoosh).
-    Complete original SWSH/entrance audio-media admission and live M11
-    playback without generated replacements.
+    SDL/CoreAudio playback is now enabled by default for decoded original
+    media; complete authenticated CSB SWSH/entrance-music admission and live
+    M11 playback without generated replacements.
 26. **CSB-ENTRANCE-DOOR-CREDITS:** Complete C002-C005 closed/opening entrance,
     credits, prompts, input timing, palette, sound, and runtime handoff from
     real CSBgraphics/package data.
@@ -740,7 +741,8 @@ that its exact runtime path is not already source-locked and tested.
     timer scheduling using ReDMCSB and CSBWin semantics.
 31. **CSB-SOUND-MUSIC-MEDIA:** Complete source audio/music media admission,
     startup/running sound events, palette/VBlank cadence, and platform-safe
-    media playback without generated replacements.
+    media playback without generated replacements. The host backend is no
+    longer opt-in; remaining work is CSB source-media coverage and timing.
 32. **CSB-MAC-RELEASE-CAPTURE:** Complete real packaged app/window captures for
     title, entrance, doors, HUD, viewport, Utility Disk, and first runtime
     frame against local original CSB data.
