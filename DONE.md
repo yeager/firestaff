@@ -1,8 +1,8 @@
-- ✅ 2026-07-29 CSBWin DSA `STKOP_Say` text-owner binding. Authenticated
-  `SAY` now stages its original packed location and color operands and calls
-  only a runtime-owned DB2/location scrolling-text callback after full
-  bytecode acceptance. Missing owners fail closed and a later rejected word
-  rolls back the pending text request. Verified by
+- ✅ 2026-07-29 CSBWin DSA `STKOP_Say` / `STKOP_TextSay` text-owner binding.
+  Authenticated `SAY` and `TEXTSAY` now stage their source operands and call
+  only runtime-owned DB2/location or decoded-text scrolling callbacks after
+  full bytecode acceptance. Missing owners fail closed and a later rejected
+  word rolls back both pending text requests. Verified by
   `csb_v1_dsa_text_bank_transaction`.
 
 - ✅ 2026-07-29 CSB V2.2 route-complete artpack admission. The finished-art

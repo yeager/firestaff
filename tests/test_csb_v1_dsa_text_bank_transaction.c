@@ -14,6 +14,9 @@ typedef struct {
     int say_count;
     uint32_t say_location;
     int32_t say_color;
+    int display_count;
+    int32_t display_color;
+    char displayed_text[1001];
 } TextOwner;
 
 static void check(int condition, const char *message)
@@ -70,6 +73,17 @@ static int say_text(void *user, uint32_t location, int32_t color)
     return 1;
 }
 
+static int display_text(void *user, const char *text, int32_t color)
+{
+    TextOwner *owner = user;
+
+    if (!owner || !owner->source_available || !text) return 0;
+    ++owner->display_count;
+    owner->display_color = color;
+    snprintf(owner->displayed_text, sizeof(owner->displayed_text), "%s", text);
+    return 1;
+}
+
 static void configure_action(CSB_V1_DSAImportedAction *action,
                              uint16_t *words, int word_count)
 {
@@ -89,12 +103,14 @@ int main(void)
         0x0686u, 0x002au, 0x0686u, 1u, 0x19cbu,
         0x0686u, 0x0033u, 0x0686u, 1u, 0x1e8bu,
         0x0686u, 1u, 0x0686u, 7u, 0x1e4bu,
-        0x0686u, 0x002au, 0x0686u, 3u, 0x0bcbu
+        0x0686u, 0x002au, 0x0686u, 3u, 0x0bcbu,
+        0x0686u, 1u, 0x0686u, 4u, 0x1a0bu
     };
     uint16_t rejected_words[] = {
         0x0686u, 0x002au, 0x0686u, 1u, 0x19cbu,
         0x0686u, 1u, 0x0686u, 7u, 0x1e4bu,
-        0x0686u, 0x002au, 0x0686u, 3u, 0x0bcbu, 0x0000u
+        0x0686u, 0x002au, 0x0686u, 3u, 0x0bcbu,
+        0x0686u, 1u, 0x0686u, 4u, 0x1a0bu, 0x0000u
     };
     CSB_V1_ChaosMagicState state;
     CSB_V1_DSAImportedAction action;
@@ -116,6 +132,7 @@ int main(void)
     runner.read_character_name = read_character_name;
     runner.set_global_text = set_global_text;
     runner.say_text = say_text;
+    runner.display_text = display_text;
     runner.text_user = &owner;
 
     check(csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
@@ -124,20 +141,25 @@ int main(void)
               strcmp(owner.global_text, "HALK") == 0 &&
               owner.say_count == 1 && owner.say_location == 0x2au &&
               owner.say_color == 3 &&
+              owner.display_count == 1 && owner.display_color == 4 &&
+              strcmp(owner.displayed_text, "HALK") == 0 &&
               runner.last_execution.global_text_store_count == 1u &&
               runner.last_execution.last_global_text_store_index == 7u &&
-              runner.last_execution.say_text_count == 1u,
-          "TEXT@, CHARNAME@@, GLOBALTEXT! and SAY commit source-owned text output");
+              runner.last_execution.say_text_count == 1u &&
+              runner.last_execution.display_text_count == 1u,
+          "TEXT@, CHARNAME@@, GLOBALTEXT!, SAY and TEXTSAY commit source-owned text output");
 
     owner.global_write_count = 0;
     owner.global_index = 0u;
     owner.global_text[0] = '\0';
     owner.say_count = 0;
+    owner.display_count = 0;
     configure_action(&action, rejected_words,
                      (int)(sizeof(rejected_words) / sizeof(rejected_words[0])));
     check(csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
               &action, NULL, 0, NULL, &runner) == 0 &&
-              owner.global_write_count == 0 && owner.say_count == 0,
+              owner.global_write_count == 0 && owner.say_count == 0 &&
+              owner.display_count == 0,
           "later rejected bytecode rolls back staged text publication");
 
     owner.source_available = 0;

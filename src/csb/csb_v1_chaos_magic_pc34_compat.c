@@ -583,7 +583,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 56u: case 57u: case 58u: case 60u: case 63u: case 64u: case 65u:
     case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
     case 77u: case 78u: case 92u: case 100u: case 101u: case 102u: case 106u:
-    case 47u: case 103u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
+    case 47u: case 103u: case 104u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
     case 115u: case 116u: case 117u: case 118u: case 123u: case 124u: case 125u:
     case 121u: case 122u: case 130u: case 131u: case 132u: case 134u: case 135u: case 137u:
     case 138u:
@@ -1072,7 +1072,7 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
             if (csb_v1_csbwin_dsa_subcode_is_timer_family(subcode)) {
                 receipt.timer_core = 1;
             }
-            if (subcode == 47u || subcode == 103u || subcode == 115u || subcode == 121u ||
+            if (subcode == 47u || subcode == 103u || subcode == 104u || subcode == 115u || subcode == 121u ||
                 subcode == 122u) receipt.text_display_core = 1;
             if (subcode == 69u) receipt.sound_core = 1;
             if (subcode == 134u || subcode == 135u || subcode == 118u ||
@@ -1405,6 +1405,10 @@ typedef struct {
     int32_t color;
 } CSB_V1_CSBWinDSAPendingSayTextRequest;
 typedef struct {
+    char text[CSB_V1_CSBWIN_DSA_TEXT_BYTES];
+    int32_t color;
+} CSB_V1_CSBWinDSAPendingDisplayTextRequest;
+typedef struct {
     uint32_t global_index;
     char text[CSB_V1_CSBWIN_DSA_TEXT_BYTES];
 } CSB_V1_CSBWinDSAPendingGlobalTextStore;
@@ -1552,6 +1556,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *pending_description_count,
     CSB_V1_CSBWinDSAPendingSayTextRequest *pending_say_text_requests,
     int *pending_say_text_request_count,
+    CSB_V1_CSBWinDSAPendingDisplayTextRequest *pending_display_text_requests,
+    int *pending_display_text_request_count,
     char local_text[CSB_V1_CSBWIN_DSA_TEXT_SLOT_COUNT]
                    [CSB_V1_CSBWIN_DSA_TEXT_BYTES],
     CSB_V1_CSBWinDSAPendingGlobalTextStore *pending_global_text_stores,
@@ -1596,6 +1602,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !adjust_skills_parameters_requested || !pending_adjust_skills_parameters ||
         !pending_descriptions || !pending_description_count ||
         !pending_say_text_requests || !pending_say_text_request_count ||
+        !pending_display_text_requests || !pending_display_text_request_count ||
         !local_text || !pending_global_text_stores ||
         !pending_global_text_store_count ||
         !pending_overlay_writes || !pending_overlay_write_count ||
@@ -1613,6 +1620,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_poison_write_count < 0 ||
         *pending_actuator_copy_count < 0 ||
         *pending_say_text_request_count < 0 ||
+        *pending_display_text_request_count < 0 ||
         *pending_sound_request_count < 0 ||
         *pending_global_text_store_count < 0 ||
         *pending_overlay_write_count < 0 ||
@@ -1878,6 +1886,25 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         pending_say_text_requests[*pending_say_text_request_count].color =
             (int32_t)v;
         ++*pending_say_text_request_count;
+        break;
+    case 104u: /* STKOP_TextSay, DSA.cpp:3240-3254. */
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) goto underflow;
+        /* DSADBANK::GetText returns an empty string for invalid slots. Keep
+         * that source no-op semantics, but never emit it via a fabricated UI. */
+        if (w >= CSB_V1_CSBWIN_DSA_TEXT_SLOT_COUNT) break;
+        if (!context->display_text ||
+            *pending_display_text_request_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        memcpy(pending_display_text_requests[*pending_display_text_request_count]
+                   .text, local_text[w], CSB_V1_CSBWIN_DSA_TEXT_BYTES);
+        pending_display_text_requests[*pending_display_text_request_count]
+            .text[CSB_V1_CSBWIN_DSA_TEXT_BYTES - 1u] = '\0';
+        pending_display_text_requests[*pending_display_text_request_count]
+            .color = (int32_t)v;
+        ++*pending_display_text_request_count;
         break;
     case 20u: /* STKOP_Shift */
     case 31u: /* STKOP_RShift */
@@ -3485,6 +3512,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS];
     CSB_V1_CSBWinDSAPendingSayTextRequest pending_say_text_requests[
         CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS];
+    CSB_V1_CSBWinDSAPendingDisplayTextRequest pending_display_text_requests[
+        CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS];
     CSB_V1_CSBWinDSAPendingGlobalTextStore pending_global_text_stores[
         CSB_V1_CSBWIN_DSA_PENDING_GLOBAL_TEXT_STORES];
     CSB_V1_CSBWinDSAPendingOverlayWrite pending_overlay_writes[
@@ -3516,6 +3545,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int adjust_skills_parameters_requested = 0;
     int pending_description_count = 0;
     int pending_say_text_request_count = 0;
+    int pending_display_text_request_count = 0;
     int pending_global_text_store_count = 0;
     int pending_overlay_write_count = 0;
     int pending_overlay_palette_write_count = 0;
@@ -4109,7 +4139,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     &adjust_skills_parameters_requested,
                     pending_adjust_skills_parameters, pending_descriptions,
                     &pending_description_count, pending_say_text_requests,
-                    &pending_say_text_request_count, local_text,
+                    &pending_say_text_request_count, pending_display_text_requests,
+                    &pending_display_text_request_count, local_text,
                     pending_global_text_stores,
                     &pending_global_text_store_count,
                     pending_overlay_writes, &pending_overlay_write_count,
@@ -4385,6 +4416,17 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         candidate.last_say_text_location =
             pending_say_text_requests[i].location;
         candidate.last_say_text_color = pending_say_text_requests[i].color;
+    }
+    for (i = 0; i < pending_display_text_request_count; ++i) {
+        if (!context->display_text || !context->display_text(
+                context->text_user,
+                pending_display_text_requests[i].text,
+                pending_display_text_requests[i].color)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        ++candidate.display_text_count;
+        candidate.last_display_text_color =
+            pending_display_text_requests[i].color;
     }
     for (i = 0; i < pending_global_text_store_count; ++i) {
         if (!context->set_global_text || !context->set_global_text(
@@ -4721,6 +4763,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.read_character_name = runner->read_character_name;
     context.set_global_text = runner->set_global_text;
     context.say_text = runner->say_text;
+    context.display_text = runner->display_text;
     context.text_user = runner->text_user;
     context.set_overlay = runner->set_overlay;
     context.set_overlay_palette = runner->set_overlay_palette;
