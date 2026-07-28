@@ -41632,3 +41632,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   HUD, presentation selection, V2.2 material routing, and source locks.
   This verifies the implemented V2.x code paths; the separate reviewed-art
   requirement for live V2.2 remains explicitly open in TODO.md.
+- ✅ 2026-07-28 CSB V1 real-data title runtime smoke. Direct M11 boot probes
+  against the locally hash-matched PC CSB `GRAPHICS.DAT` (MD5
+  `61fbfd56887c94adc26888a9491c6611`) reached the source-owned title phases
+  at frames 0, 60, 79, and 101 of the 102-frame sequence. The receipts report
+  `csb-title-1`, `csb-title-2`, `csb-title-21`, and `csb-title-22`, with an
+  active startup route and no runtime ticks before entrance handoff. This is
+  live original-data route evidence; visual pixel comparison remains open.
