@@ -53,6 +53,13 @@ int M11_Font_LoadFromGraphicsDat(
     M11_FontState* font,
     void* fileState,
     void* runtimeState);
+/* Bind an already decoded original 4-bit font raster. The pixels remain
+ * source-owned by the caller; M11 stores only its derived 1-bit glyph map. */
+int M11_Font_LoadFromIndexedPixels(M11_FontState* font,
+                                   int graphicIndex,
+                                   const unsigned char* pixels,
+                                   int width,
+                                   int height);
 int M11_Font_IsLoaded(const M11_FontState* font);
 int M11_Font_FindGraphicIndex(void* runtimeState);
 int M11_Font_ResolvedGraphicIndex(const M11_FontState* font);

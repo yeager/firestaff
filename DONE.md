@@ -1,3 +1,8 @@
+- ✅ 2026-07-28 CSB PC3.4 original font binding. The CSB runtime now decodes
+  ReDMCSB M653/C695 through its own IMG3/LZW path before M11 text consumers
+  run, instead of accepting a generic DM1 decoder result. CSB startup and
+  handoff regressions pass.
+
 - ✅ 2026-07-28 CSB V1 HUD source-material cache bridge. C028 and C009-C013
   are now decoded with CSB's original PC3.4 IMG3/LZW route and installed in
   the normal M11 asset cache for the existing source-owned HUD consumers.

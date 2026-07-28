@@ -671,8 +671,9 @@ that its exact runtime path is not already source-locked and tested.
    packaged app-window capture of that exact runtime palette is still needed.
    C028/C009-C013 now likewise enter M11 through CSB IMG3/LZW rather than the
    DM1 decoder, allowing the existing source-owned runtime HUD consumers to
-   use correct source rasters. Full C017/C040 normal-runtime composition and
-   app-window visual capture remain open.
+   use correct source rasters. M653/C695 font binding uses the same source
+   decoder. Full C017/C040 normal-runtime composition and app-window visual
+   capture remain open.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

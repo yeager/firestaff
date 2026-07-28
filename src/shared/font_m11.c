@@ -223,6 +223,33 @@ int M11_Font_LoadFromGraphicsDat(
     return 0;
 }
 
+int M11_Font_LoadFromIndexedPixels(M11_FontState* font,
+                                   int graphicIndex,
+                                   const unsigned char* pixels,
+                                   int width,
+                                   int height)
+{
+    int x;
+    int y;
+
+    if (!font || !pixels || width != M11_FONT_BITMAP_WIDTH ||
+        height != M11_FONT_BITMAP_HEIGHT) {
+        return 0;
+    }
+    M11_Font_Init(font);
+    for (y = 0; y < M11_FONT_BITMAP_HEIGHT; ++y) {
+        for (x = 0; x < M11_FONT_BITMAP_WIDTH; ++x) {
+            if (pixels[y * width + x] != 0u) {
+                font->bitmap[y * 128 + x / 8] |=
+                    (unsigned char)(1u << (7 - (x & 7)));
+            }
+        }
+    }
+    font->loaded = 1;
+    font->graphicIndex = graphicIndex;
+    return 1;
+}
+
 int M11_Font_IsLoaded(const M11_FontState* font) {
     return font && font->loaded;
 }

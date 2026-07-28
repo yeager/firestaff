@@ -5764,6 +5764,26 @@ static int m11_csb_apply_boot_runtime_receipt(
         }
     }
     state->csbBootProfile = receipt->profile;
+    if (receipt->load_original_font_from_graphics) {
+        unsigned char *font_pixels = NULL;
+        int font_width = 0;
+        int font_height = 0;
+        CSB_V1_StartupGraphicDecodeReceipt_PC34 font_receipt;
+
+        memset(&font_receipt, 0, sizeof(font_receipt));
+        /* ReDMCSB DEFS.H M653 resolves to C695 for the PC3.4 CSB media.
+         * Do not let the DM1-oriented generic loader define CSB glyphs. */
+        if (csb_v1_boot_decode_graphics_dat_asset_pc34(
+                receipt->profile->graphics_path, 695u, &font_pixels,
+                &font_width, &font_height, &font_receipt) &&
+            font_receipt.valid &&
+            M11_Font_LoadFromIndexedPixels(&state->originalFont, 695,
+                                            font_pixels, font_width,
+                                            font_height)) {
+            state->originalFontAvailable = 1;
+        }
+        free(font_pixels);
+    }
     if (receipt->profile->swoosh_source_bound) {
         (void)M11_GameView_SetCsbStartupSwooshSource(
             state, receipt->profile->swoosh_source_bytes,
