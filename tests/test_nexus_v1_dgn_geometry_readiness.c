@@ -2019,16 +2019,16 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                     memset(&host_route, 0, sizeof(host_route));
                     CHECK(nexus_viewport_dgn_host_route_receipt(
                               &untextured_viewport, &active_engine,
-                              &host_route) == 0 &&
-                          host_route.no_draw_structure3_source_scene &&
-                          host_route.blocks_runtime_dgn &&
-                          !host_route.can_present_runtime_dgn &&
+                              &host_route) == 1 &&
+                          !host_route.no_draw_structure3_source_scene &&
+                          !host_route.blocks_runtime_dgn &&
+                          host_route.can_present_runtime_dgn &&
                           host_route.status ==
-                              NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_STRUCTURE3_SOURCE_SCENE &&
+                              NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH &&
                           strcmp(nexus_viewport_dgn_host_route_status_name(
                                      host_route.status),
-                                 "blocked-structure3-source-scene") == 0,
-                          "complete source geometry blocks the legacy material raster route");
+                                 "ready-rendered-mesh") == 0,
+                          "Structure3 mesh rendering provides a ready host route");
                 }
             }
         }

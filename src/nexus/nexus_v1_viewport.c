@@ -912,6 +912,13 @@ int nexus_viewport_dgn_host_route_receipt(
     out_receipt->max_post_grid_0x30_ref =
         handoff.max_post_grid_0x30_ref;
 
+    if (render->structure3_mesh_rendered) {
+        out_receipt->status = NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH;
+        out_receipt->host_route_consumed = 1;
+        out_receipt->can_present_runtime_dgn = 1;
+        out_receipt->blocks_runtime_dgn = 0;
+        return 1;
+    }
     /* A complete source scene is an explicit runtime barrier, independent of
      * whether the older Structure1B handoff happens to be renderable. */
     if (render->no_draw_structure3_source_scene) {
