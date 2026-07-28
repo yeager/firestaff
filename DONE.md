@@ -41982,3 +41982,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   only real declared assets no longer satisfies `FINISHED_REAL`; all eight
   required CSB viewport, UI, entrance, and chaos-rune slots must be real and
   present. The finished-art gate regression covers the one-real-slot case.
+
+- ✅ 2026-07-29 CSB V2.2 per-game selector gate. The runtime F10 selector now
+  asks the CSB finished-material gate directly instead of trusting M12's
+  cross-game `v22_modern_assets_installed` bit. A completed pack for another
+  game therefore cannot show a CSB V2.2 option that would resolve back to
+  V2.1 at runtime.

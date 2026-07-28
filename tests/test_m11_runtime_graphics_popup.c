@@ -207,7 +207,9 @@ int main(void) {
      * unrelated) .fsart must not expose CSB's modern mode before the CSB
      * manifest/cache gate reports a complete installation. */
     config.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
-    config.v22_modern_assets_installed = 0;
+    /* Simulate a completed modern pack for another game. CSB's own
+     * finished-material gate is still absent and must hide V2.2. */
+    config.v22_modern_assets_installed = 1;
     snprintf(config.artpackPath, sizeof(config.artpackPath),
              "%s", "/tmp/other-game.fsart");
     assert(M12_Config_Save(&config) == 1);
