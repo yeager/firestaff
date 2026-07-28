@@ -3448,6 +3448,16 @@ int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
     if (!searchDir || !expectedMd5 || !outPath || outPathLen <= 0) return 0;
     if (!normalize_md5(expectedMd5, normalizedMd5)) return 0;
     if (maxDepth < 0) maxDepth = 3;
+    /* A launcher may pass a selected archive directly rather than its parent
+     * directory. Test the path as a container first; scan_dir() intentionally
+     * only accepts directories. */
+    if (scan_container_by_md5(searchDir, normalizedMd5, outPath, outPathLen)) {
+        return 1;
+    }
+    if (file_md5(searchDir, normalizedMd5) &&
+        copy_match_path(searchDir, outPath, outPathLen)) {
+        return 1;
+    }
     return scan_dir(searchDir, normalizedMd5, outPath, outPathLen, 0, maxDepth);
 }
 
@@ -3489,6 +3499,23 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
         }
     }
     if (normalizedCount > 0) {
+        /* Keep direct archive selection equivalent to selecting its parent
+         * directory. This is needed for launcher-selected .7z/.zip images. */
+        (void)scan_container_by_md5_list(searchDir, normalizedPtrs,
+                                         normalizedCount, foundPaths, matched);
+        if (!matched[0]) {
+            char directHex[33];
+            int directIndex;
+            if (file_md5(searchDir, directHex)) {
+                directIndex = md5_list_match_index(directHex, normalizedPtrs,
+                                                   matched, normalizedCount);
+                if (directIndex >= 0 &&
+                    copy_match_path(searchDir, foundPaths[directIndex],
+                                    ASSET_PATH_MAX)) {
+                    matched[directIndex] = 1;
+                }
+            }
+        }
         (void)scan_dir_by_md5_list(searchDir, normalizedPtrs, normalizedCount,
                                    foundPaths, matched, 0, maxDepth, 1);
         for (i = 0; i < normalizedCount; ++i) {

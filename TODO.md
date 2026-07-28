@@ -716,7 +716,9 @@ that its exact runtime path is not already source-locked and tested.
     and byte-level failure handling.
 24. **CSB-UTILITY-DISK-COMPLETE:** Complete Utility Disk import, preview,
     save/load/new-game, champion editing, inventory, chest, dialogs, and
-    confirmation flows using original package and save material.
+    confirmation flows using original package and save material. Direct
+    launcher selection of a supported archive now reaches the verified
+    HCSBF.HTC Hint Oracle package; runtime menu consumption remains open.
 25. **CSB-TITLE-AUDIO-CADENCE:** C001 timing and FTL/PRESENTS/CHAOS/STRIKES
     composition are source-locked (60 + 20 + 20 + 2 VBlanks after swoosh).
     Complete original SWSH/entrance audio-media admission and live M11
@@ -10995,14 +10997,17 @@ DM1 V2.2 material slots, and writes a matching local `finish_receipt.json`.
 Remaining work is packaged Mac/app capture of the installed complete pack.
 
 CSB V2.0 now applies its real indexed filter chain to an M11 presentation
-copy. Remaining CSB V2.0 work is the RGBA CRT post-filter handoff and real
-Mac/app capture.
+copy. The current V2.0 HUD-overlay/runtime regressions pass. Remaining CSB
+V2.0 work is the RGBA CRT post-filter handoff and real Mac/app capture.
 
 CSB V2.1 consumes the shared live M11 EPX route, including special palettes.
-Its remaining work is real CSB runtime/Mac capture, not scaler code.
+Its current runtime regression passes. Remaining work is real CSB
+runtime/Mac capture, not scaler code.
 
 CSB V2.2 now resolves only against its own completed real-art pack and falls
-back to V2.1 otherwise. Remaining work is real CSB art and runtime capture.
+back to V2.1 otherwise. Shape, material admission, in-place draw, and
+per-cell routing regressions pass. Remaining work is reviewed real CSB art
+and runtime capture.
 
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 

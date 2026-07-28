@@ -61,7 +61,9 @@ static const char *data_dir_arg(int argc, char **argv,
                                 char *buf, size_t buf_size)
 {
     const char *env;
-    const char *home;
+
+    (void)buf;
+    (void)buf_size;
 
     if (argc > 1 && argv[1] && argv[1][0] != '\0') {
         return argv[1];
@@ -74,12 +76,9 @@ static const char *data_dir_arg(int argc, char **argv,
     if (env && env[0] != '\0') {
         return env;
     }
-    home = getenv("HOME");
-    if (!home || home[0] == '\0') {
-        return NULL;
-    }
-    snprintf(buf, buf_size, "%s/.firestaff/data", home);
-    return buf;
+    /* Do not recursively probe an entire user data root in CTest. A real
+     * Utility Disk scan must be explicit, either by argument or environment. */
+    return NULL;
 }
 
 static int is_printable_ascii(const uint8_t *buf, size_t len)
@@ -156,6 +155,13 @@ int main(int argc, char **argv)
 
     csb_hint_oracle_ui_panel_init(&panel);
 
+    if (!dir) {
+        printf("SKIP: no Utility Disk archive was supplied; set "
+               "FIRESTAFF_CSB_HTC_DATA or pass a verified archive.\n");
+        csb_hint_oracle_ui_panel_free(&panel);
+        return 0;
+    }
+
     rc = csb_hint_oracle_ui_panel_load(&panel, dir, NULL, 6);
     printf("panel_load rc=%d (%s)\n", rc,
            csb_hint_oracle_ui_panel_result_name(rc));
@@ -166,9 +172,9 @@ int main(int argc, char **argv)
     if (rc == CSB_HINT_ORACLE_UI_PANEL_ERR_NOT_LOADED &&
         csb_hint_oracle_ui_panel_status(&panel) ==
             CSB_HINT_ORACLE_UI_PANEL_STATUS_NOT_FOUND) {
-        printf("SKIP: no known HCSB.HTC found under data_dir; "
-               "set FIRESTAFF_CSB_HTC_DATA to a directory containing "
-               "a verified HCSB.HTC to enable this gate.\n");
+        printf("SKIP: no known HCSB.HTC archive was supplied; set "
+               "FIRESTAFF_CSB_HTC_DATA or pass a verified Utility Disk "
+               "archive to enable this gate.\n");
         csb_hint_oracle_ui_panel_free(&panel);
         return 0;
     }

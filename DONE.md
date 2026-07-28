@@ -41603,3 +41603,17 @@ the supplied root and selected MD5 to prove this without shipping game data.
   established by the CSB boot handoff. It now verifies the live `F0276`
   front-wall route: ornament click, queued sensor event, and remote door
   mutation all reach the runtime without bypassing the source ownership gate.
+- ✅ 2026-07-28 CSB V2.x full regression verification. Built the actual V2
+  test executables and ran the registered V2.0/V2.1/V2.2 HUD-overlay,
+  runtime, modern-asset admission, in-place-draw, and per-cell-routing tests:
+  5/5 pass. This validates the implemented presentation routes only; real
+  CSB art review and packaged-app capture remain open in TODO.md.
+- ✅ 2026-07-28 CSB Utility Disk direct-archive admission. Fixed the shared
+  hash finder so a user-selected archive file is searched as a container,
+  rather than silently being treated as a directory. The change covers both
+  single-MD5 and MD5-list callers and is regression-tested with a directly
+  selected ZIP. The real local Amiga CSB `Software.7z` now admits its verified
+  `HCSBF.HTC` payload directly: the Hint Oracle panel decodes 219 hints,
+  5,036 locations, 512 pages, and its real French first page with 36/36 probe
+  checks. This is package admission, not a claim that the full Utility Disk
+  menu or original-save corpus is complete.

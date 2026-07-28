@@ -607,6 +607,28 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/extracted.dat");
 
+    /* Launcher file pickers may select an archive itself, not its directory. */
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp/archive.zip", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_name(outPath, "archive.zip", "dm2/RENAMED.BIN")) {
+        cleanup_fixture();
+        fprintf(stderr, "direct ZIP entry lookup failed: %s\n", outPath);
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    matchIndex = -1;
+    if (!asset_find_by_md5_list("asset_find_by_hash_test_tmp/archive.zip", md5List,
+                                outPath, (int)sizeof(outPath),
+                                &matchIndex, 2) ||
+        matchIndex != 1 ||
+        !path_has_virtual_name(outPath, "archive.zip", "dm2/RENAMED.BIN")) {
+        cleanup_fixture();
+        fprintf(stderr, "direct ZIP MD5-list lookup failed: index=%d path=%s\n",
+                matchIndex, outPath);
+        return 1;
+    }
+
     remove("asset_find_by_hash_test_tmp/archive.zip");
     if (!write_stored_zip_fixture("asset_find_by_hash_test_tmp/archive.apk")) {
         cleanup_fixture();
