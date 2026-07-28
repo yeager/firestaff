@@ -1,3 +1,10 @@
+- ✅ 2026-07-28 CSB packaged V2.x app-path verification. The actual
+  `firestaff` boot probe against the hash-admitted local PC 3.4 package
+  reaches the same source-backed runtime pose `(map 0, party 9,0,2)` in V1,
+  V2.0, V2.1 and V2.2. Each mode completed 240 app idle frames after the
+  launcher handoff; this supplements the V2 unit suite with an executable
+  launch-path check.
+
 - ✅ 2026-07-28 CSB Atari ST original startup renderer and handoff. M11 now
   treats `M11_RENDER_OK` (zero) as success while binding ANIMATE.SCR's P4B1
   palette, so authentic `ANIMATE.SCR`/`ANIMATE.DAT` frames no longer collapse
