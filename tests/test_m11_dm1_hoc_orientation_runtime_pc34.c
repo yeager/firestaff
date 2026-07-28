@@ -8,6 +8,7 @@
 
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -99,12 +100,75 @@ static int select_first_real_hoc_mirror(M11_GameViewState *state,
     return 0;
 }
 
+static int count_real_hoc_f0115_items(const M11_GameViewState *state)
+{
+    const struct DungeonMapDesc_Compat *map;
+    int item_count = 0;
+    int y;
+
+    if (!state || !state->world.dungeon || !state->world.things) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[0];
+    for (y = 0; y < (int)map->height; ++y) {
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            DM1_F0115WorldCandidatesPc34 candidates;
+            if (dm1_v1_f0115_world_candidates_pc34(
+                    &state->world, 0, x, y, NULL, NULL, &candidates) &&
+                candidates.valid) {
+                item_count += candidates.itemCount;
+            }
+        }
+    }
+    return item_count;
+}
+
+static int draw_real_hoc_f0115_item(M11_GameViewState *state,
+                                    unsigned char *framebuffer)
+{
+    const struct DungeonMapDesc_Compat *map;
+    int y;
+
+    if (!state || !state->world.dungeon) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[0];
+    for (y = 0; y < (int)map->height; ++y) {
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            int direction;
+            for (direction = 0; direction < 4; ++direction) {
+                M11_Dm1FloorItemHostPresentationReceipt floor;
+                M11_Dm1FloorItemHostPresentationReceipt alcove;
+                state->world.party.mapX = x;
+                state->world.party.mapY = y;
+                state->world.party.direction = direction;
+                memset(framebuffer, 0,
+                       FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT);
+                M11_GameView_Draw(state, framebuffer,
+                                  FRAMEBUFFER_WIDTH, FRAMEBUFFER_HEIGHT);
+                memset(&floor, 0, sizeof(floor));
+                memset(&alcove, 0, sizeof(alcove));
+                M11_GameView_GetDm1FloorItemHostPresentationReceipt(&floor);
+                M11_GameView_GetDm1AlcoveItemHostPresentationReceipt(&alcove);
+                if ((floor.valid && floor.usesF0791Blit) ||
+                    (alcove.valid && alcove.usesF0791Blit)) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
 int main(void)
 {
     const char *data_dir = getenv("FIRESTAFF_DM1_DATA_DIR");
     M11_GameViewState state;
     unsigned char framebuffer[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT];
     int direction;
+    int hoc_item_count;
 
     if (!data_dir || !data_dir[0]) {
         puts("skip: FIRESTAFF_DM1_DATA_DIR is not set");
@@ -121,6 +185,22 @@ int main(void)
     state.world.party.mapX = 1;
     state.world.party.mapY = 3;
     state.world.party.championCount = 0;
+
+    hoc_item_count = count_real_hoc_f0115_items(&state);
+    if (hoc_item_count <= 0) {
+        fprintf(stderr,
+                "real PC34 HoC has no F0115 floor/alcove item candidate\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    if (!draw_real_hoc_f0115_item(&state, framebuffer)) {
+        fprintf(stderr,
+                "real PC34 HoC F0115 item never reached an F0791 draw\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    state.world.party.mapX = 1;
+    state.world.party.mapY = 3;
 
     /* Exercise the production turn input path, not only direct direction
      * assignment. This is the route used by Q/E, Home/End and the on-screen
@@ -205,6 +285,7 @@ int main(void)
         }
     }
     M11_GameView_Shutdown(&state);
-    puts("ok: real PC34 HoC turns, mirror selection and champion HUD click work");
+    printf("ok: real PC34 HoC has %d F0115 items; turns, item material, "
+           "mirror selection and champion HUD click work\n", hoc_item_count);
     return 0;
 }

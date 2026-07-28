@@ -41394,8 +41394,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   the local original PC34 data, validates F0128 viewport material in all
   four directions and through live turn inputs, selects a real C127 mirror,
   resurrects the champion, and opens that champion's HUD inventory through
-  the production pointer path. The focused real-data HoC/object/alcove/save
-  suite passes 4/4.
+  the production pointer path. It also proves the shipped Hall's eight
+  F0115 object candidates reach a real F0791 material draw, rather than
+  needing synthetic floor or alcove art. The focused real-data
+  HoC/object/alcove/save suite passes 4/4.
 
 - ✅ 2026-07-28 DM1 default C140 save path. The live inventory SAVE control
   now has a regression that clears its test-only path override, creates the
