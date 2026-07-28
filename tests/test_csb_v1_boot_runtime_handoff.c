@@ -856,6 +856,7 @@ static void test_utility_flow_load_game_uses_runtime_loader(void)
     writer.party_state.PartyMapY = 9;
     writer.party_state.PartyDirection = CSB_V1_DIR_SOUTH;
     writer.game_time = 1234u;
+    writer.timeline_queue.gameTick = writer.game_time;
     CHECK(csb_v1_runtime_save_game_to_path(&writer, good_path) == 0,
           "utility LOAD writes a real Firestaff CSB runtime save");
     csb_v1_runtime_cleanup(&writer);
@@ -1996,14 +1997,12 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
           "runtime accepts source C201 bonus-dungeon load request");
     CHECK(csb_v1_runtime_get_load_bonus_dungeon(&p.runtime) == 1,
           "runtime exposes source C201 bonus-dungeon load request");
-    CHECK(csb_v1_runtime_try_load_bonus_dungeon(&p.runtime) == 1,
-          "runtime loads sibling DUNGEONB.DAT when C201 requested bonus dungeon");
-    CHECK(csb_v1_runtime_get_bonus_dungeon_path(&p.runtime) != NULL &&
-              strcmp(csb_v1_runtime_get_bonus_dungeon_path(&p.runtime),
-                     bonus_dungeon_path) == 0,
-          "runtime records the loaded bonus-dungeon path");
-    CHECK(strcmp(p.runtime.dungeon_path, bonus_dungeon_path) == 0,
-          "runtime active dungeon path points at the loaded bonus dungeon");
+    CHECK(csb_v1_runtime_try_load_bonus_dungeon(&p.runtime) == 0,
+          "runtime rejects an unregistered synthetic sibling bonus dungeon");
+    CHECK(csb_v1_runtime_get_bonus_dungeon_path(&p.runtime) == NULL,
+          "rejected bonus dungeon does not publish a path");
+    CHECK(strcmp(p.runtime.dungeon_path, dungeon_path) == 0,
+          "rejected bonus dungeon preserves the authenticated dungeon owner");
     CHECK(csb_v1_runtime_set_load_bonus_dungeon(&p.runtime, 0) == 1 &&
               csb_v1_runtime_get_load_bonus_dungeon(&p.runtime) == 0,
           "runtime can clear the bonus-dungeon load request for normal enter");
@@ -2034,9 +2033,9 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
               &runtime_receipt) == 1 &&
               runtime_receipt.bonus_requested_changed &&
               runtime_receipt.bonus_requested == 1 &&
-              runtime_receipt.bonus_dungeon_loaded &&
-              runtime_receipt.sync_profile_state,
-          "runtime startup plan execution owns bonus dungeon load");
+              !runtime_receipt.bonus_dungeon_loaded &&
+              !runtime_receipt.sync_profile_state,
+          "runtime startup plan fails closed for an unregistered bonus dungeon");
 
     snprintf(runtime_save_path,
              sizeof(runtime_save_path),
@@ -2045,6 +2044,7 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
     p.runtime.party_x = 12;
     p.runtime.party_y = 13;
     p.runtime.party_dir = 2;
+    p.runtime.timeline_queue.gameTick = p.runtime.game_time;
     CHECK(csb_v1_runtime_save_game_to_path(&p.runtime,
                                            runtime_save_path) == 0,
           "runtime startup plan fixture writes a resumable CSB save");
@@ -2664,8 +2664,8 @@ static void test_runtime_utility_startup_receipt_facades(void)
               visual_sequence.no_legacy_door_fallback_routes &&
               visual_sequence.source_title_presents_ticks == 60 &&
               visual_sequence.source_title_chaos_zoom_ticks == 20 &&
-              visual_sequence.source_title_chaos_hold_ticks == 2 &&
-              visual_sequence.source_title_strikes_back_ticks == 1 &&
+              visual_sequence.source_title_chaos_hold_ticks == 20 &&
+              visual_sequence.source_title_strikes_back_ticks == 2 &&
               visual_sequence.source_door_pre_open_delay_ticks == 20 &&
               visual_sequence.source_door_step_count == 31 &&
               visual_sequence.title_sample_hashes[0] != 0u &&
@@ -3423,8 +3423,8 @@ static void test_runtime_utility_startup_receipt_facades(void)
               route_receipt.presentation.redmcsb_title_graphic_id == 1 &&
               route_receipt.presentation.redmcsb_presents_ticks == 60 &&
               route_receipt.presentation.redmcsb_chaos_zoom_ticks == 20 &&
-              route_receipt.presentation.redmcsb_chaos_hold_ticks == 2 &&
-              route_receipt.presentation.redmcsb_strikes_back_ticks == 1 &&
+              route_receipt.presentation.redmcsb_chaos_hold_ticks == 20 &&
+              route_receipt.presentation.redmcsb_strikes_back_ticks == 2 &&
               route_receipt.presentation.redmcsb_entrance_screen_graphic_id ==
                   4 &&
               route_receipt.presentation.redmcsb_credits_graphic_id == 5 &&

@@ -41586,3 +41586,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Entrance pointer integration and the V1, V2.1 and V2.2 runtime handoffs
   also passed. This is a startup smoke, not a replacement for the remaining
   CSBWin DSA-bearing original-save corpus.
+
+## 2026-07-28 CSB title/save and bonus-dungeon regression repair
+
+- Repaired the CSB boot-to-runtime regression suite to assert the actual
+  ReDMCSB `TITLE.C F0437` cadence: PRESENTS 60 VBlanks, CHAOS shrink 20,
+  CHAOS hold 20, and STRIKES BACK 2. The save fixture now models the source
+  timeline invariant before exporting. Bonus-dungeon fixtures also prove the
+  current fail-closed package rule: an unregistered synthetic `DUNGEONB.DAT`
+  cannot replace the authenticated dungeon owner. The complete focused
+  handoff suite passes.

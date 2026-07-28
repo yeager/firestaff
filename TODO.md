@@ -654,9 +654,10 @@ that its exact runtime path is not already source-locked and tested.
    saved actions, including supported control flow and live monster/filter
    effects, with transactional save/runtime handoff and fail-closed unsupported
    opcodes.
-5. **CSB-REAL-STARTUP-HUD:** Finish source-data C001-C005/C017/C040 title,
-   entrance, door-opening, HUD, viewport, palette, and audio consumption in
-   M11; remove remaining production wrappers rather than adding substitutes.
+5. **CSB-REAL-STARTUP-HUD:** C001-C005 title, Entrance, door-opening and
+   palette now have real-data M11 routes and a macOS smoke. Finish C017/C040
+   HUD/viewport consumption and original audio media admission; remove
+   remaining production wrappers rather than adding substitutes.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
@@ -716,9 +717,10 @@ that its exact runtime path is not already source-locked and tested.
 24. **CSB-UTILITY-DISK-COMPLETE:** Complete Utility Disk import, preview,
     save/load/new-game, champion editing, inventory, chest, dialogs, and
     confirmation flows using original package and save material.
-25. **CSB-TITLE-AUDIO-CADENCE:** Complete original C001 title timing, palette,
-    FTL/PRESENTS/CHAOS/STRIKES composition and source audio playback through
-    live M11 presentation.
+25. **CSB-TITLE-AUDIO-CADENCE:** C001 timing and FTL/PRESENTS/CHAOS/STRIKES
+    composition are source-locked (60 + 20 + 20 + 2 VBlanks after swoosh).
+    Complete original SWSH/entrance audio-media admission and live M11
+    playback without generated replacements.
 26. **CSB-ENTRANCE-DOOR-CREDITS:** Complete C002-C005 closed/opening entrance,
     credits, prompts, input timing, palette, sound, and runtime handoff from
     real CSBgraphics/package data.
