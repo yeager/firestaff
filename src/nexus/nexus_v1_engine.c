@@ -5418,6 +5418,16 @@ int nexus_v1_current_level_structure3_package_geometry_packet(
         out_packet->vertices[3] = vertices[face->vertex_indexes[3]];
     out_packet->normal = normals[face_ordinal];
     out_packet->material_target = material_target;
+    {
+        uint16_t fill = face->fill_selector;
+        int desc_idx = fill & 0x00FFU;
+        if ((fill & 0xFF00U) == 0x0000U &&
+            desc_idx >= 0 && desc_idx < engine->structure2_surface_count &&
+            engine->structure2_surfaces[desc_idx].valid) {
+            out_packet->texture_surface_index = desc_idx;
+            out_packet->texture_surface_valid = 1;
+        }
+    }
     result = 1;
 
 cleanup:

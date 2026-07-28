@@ -816,6 +816,8 @@ typedef struct {
     int vertex_slot_count;
     Nexus_V1_DgnStructure3Vector normal;
     Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
+    int texture_surface_index;
+    int texture_surface_valid;
     int transform_semantics_proven;
     int pixel_palette_vdp1_semantics_proven;
     int decoder_permitted;
