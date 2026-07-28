@@ -65,6 +65,13 @@ int csb_v1_atari_st_animation_render_final_rgba(
     uint8_t *out_rgba, size_t out_rgba_size,
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
 
+/* Discover, materialize and render the final original Atari ST animation
+ * frame from one data root. This is the launcher-facing route and accepts
+ * loose files or supported archive entries without caller-supplied assets. */
+int csb_v1_atari_st_animation_render_final_from_root_rgba(
+    const char *search_root, const char *cache_root, uint8_t *out_rgba,
+    size_t out_rgba_size, CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
 /* Render a full-screen original IMG1 item with an original P4B1 palette into
  * a 320x200 RGBA frame. image_item must be a documented full-screen image
  * and palette_item must be a documented 32-byte palette item. */

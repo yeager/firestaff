@@ -41771,3 +41771,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   are revalidated against their original hashes before use. Loose files take
   the same hash gate without copying. The direct and stored-ZIP routes pass
   against the staged original files.
+- ✅ 2026-07-28 CSB Atari ST launcher render route. One public entry point
+  now discovers the verified pair under a data root, materializes archive
+  entries if needed, and renders the script-selected final frame. It passes
+  against both the loose staged package and a stored-ZIP package.

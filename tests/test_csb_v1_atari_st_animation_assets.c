@@ -36,6 +36,8 @@ int main(void)
     uint8_t palette[16][3];
     const char *dat_path = getenv("FIRESTAFF_CSB_ANIMATE_DAT");
     const char *script_path = getenv("FIRESTAFF_CSB_ANIMATE_SCR");
+    const char *root = getenv("FIRESTAFF_CSB_ANIMATE_ROOT");
+    const char *cache_root = getenv("FIRESTAFF_CSB_ANIMATE_CACHE");
 
     CHECK(csb_v1_atari_st_animation_decode_p4b1_palette(palette_bytes,
               sizeof(palette_bytes), palette) && palette[0][0] == 0u &&
@@ -82,6 +84,18 @@ int main(void)
                   trace.final_palette_item == 21u && rgba[3] == 255u,
               "final Atari animation frame is selected by the original script state");
         free(script);
+        free(rgba);
+    }
+    if (root && root[0] && cache_root && cache_root[0]) {
+        uint8_t *rgba = (uint8_t *)malloc(CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES);
+        CSB_V1_AtariStAnimationTraceReceipt trace;
+        CHECK(rgba != NULL &&
+                  csb_v1_atari_st_animation_render_final_from_root_rgba(root,
+                      cache_root, rgba, CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES,
+                      &trace) && trace.valid &&
+                  trace.final_active_image_item == 75u &&
+                  trace.final_palette_item == 21u,
+              "launcher route renders final Atari animation from one data root");
         free(rgba);
     }
     return failures == 0 ? 0 : 1;

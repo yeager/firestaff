@@ -1,9 +1,11 @@
 #include "csb_v1_atari_st_animation_assets.h"
 
+#include "csb_v1_atari_st_animation_discovery.h"
 #include "csb_v1_animation_script.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_startup_img3_decode_pc34_compat.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -16,6 +18,27 @@ static int csb_v1_atari_st_animation_item_type_matches(
             (item_index >= 75u && item_index <= 84u);
     if (item_type == 2u) return item_index == 85u || item_index == 86u;
     return 0;
+}
+
+static uint8_t *csb_v1_atari_st_animation_read_file(
+    const char *path, size_t *out_size)
+{
+    FILE *fp;
+    long length;
+    uint8_t *bytes = NULL;
+
+    if (!path || !out_size || !(fp = fopen(path, "rb"))) return NULL;
+    if (fseek(fp, 0L, SEEK_END) != 0 || (length = ftell(fp)) <= 0 ||
+        fseek(fp, 0L, SEEK_SET) != 0 ||
+        !(bytes = (uint8_t *)malloc((size_t)length)) ||
+        fread(bytes, 1u, (size_t)length, fp) != (size_t)length) {
+        fclose(fp);
+        free(bytes);
+        return NULL;
+    }
+    fclose(fp);
+    *out_size = (size_t)length;
+    return bytes;
 }
 
 static int csb_v1_atari_st_animation_read_item(
@@ -338,6 +361,28 @@ int csb_v1_atari_st_animation_render_final_rgba(
             out_rgba_size)) return 0;
     if (out_receipt) *out_receipt = trace;
     return 1;
+}
+
+int csb_v1_atari_st_animation_render_final_from_root_rgba(
+    const char *search_root, const char *cache_root, uint8_t *out_rgba,
+    size_t out_rgba_size, CSB_V1_AtariStAnimationTraceReceipt *out_receipt)
+{
+    CSB_V1_AtariStAnimationDiscoveryReceipt discovery;
+    char script_path[ASSET_PATH_MAX];
+    char data_path[ASSET_PATH_MAX];
+    uint8_t *script;
+    size_t script_size = 0u;
+    int result;
+
+    if (!csb_v1_atari_st_animation_discover(search_root, &discovery) ||
+        !csb_v1_atari_st_animation_materialize(&discovery, cache_root,
+            script_path, data_path) ||
+        !(script = csb_v1_atari_st_animation_read_file(script_path,
+            &script_size))) return 0;
+    result = csb_v1_atari_st_animation_render_final_rgba(data_path, script,
+        script_size, out_rgba, out_rgba_size, out_receipt);
+    free(script);
+    return result;
 }
 
 int csb_v1_atari_st_animation_render_rgba(

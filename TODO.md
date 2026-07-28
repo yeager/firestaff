@@ -21689,6 +21689,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   Verified loose and stored-ZIP discovery identifies the exact original
   `ANIMATE.SCR`/`ANIMATE.DAT` pair by hash and refuses cross-package pairs;
   archive entries materialize into a hash-revalidated cache before rendering.
+  The launcher-facing Atari route now discovers, materializes and renders the
+  final source-selected frame from one data root.
   Remaining Atari animation work is an Atari framebuffer/presentation owner
   that consumes all intermediate traced operations; do not substitute the
   PC34 title/Entrance renderer for this route.
