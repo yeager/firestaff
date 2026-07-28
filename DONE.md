@@ -41761,3 +41761,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   presentation/filter/settings/smooth-runtime routes, V2.1 texture upscale,
   and V2.2 shapes, in-place drawing, per-cell material routing and the
   reviewed-art gate.
+- ✅ 2026-07-28 CSB Atari ST animation-pair discovery. `ANIMATE.SCR` and
+  `ANIMATE.DAT` are now found by their verified original hashes in a loose
+  package or supported archive. The resolver requires both files to come from
+  the same directory or container and returns virtual archive paths for the
+  shared extractor rather than guessing by filename or mixing releases.
