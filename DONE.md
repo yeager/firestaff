@@ -41396,3 +41396,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   resurrects the champion, and opens that champion's HUD inventory through
   the production pointer path. The focused real-data HoC/object/alcove/save
   suite passes 4/4.
+
+- ✅ 2026-07-28 DM1 default C140 save path. The live inventory SAVE control
+  now has a regression that clears its test-only path override, creates the
+  normal per-user `saves/dm1` directory, writes the save, and reloads it.
+  This covers a fresh profile's former file-not-found failure mode.

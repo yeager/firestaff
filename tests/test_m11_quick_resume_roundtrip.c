@@ -243,6 +243,14 @@ static int m12_test_setenv(const char* name, const char* value) {
 #endif
 }
 
+static int m12_test_unsetenv(const char* name) {
+#ifdef _WIN32
+    return _putenv_s(name, "");
+#else
+    return unsetenv(name);
+#endif
+}
+
 static int expect(int cond, const char* msg) {
     if (!cond) {
         fprintf(stderr, "FAIL: %s\n", msg);
@@ -337,6 +345,28 @@ int main(void) {
                     &view, 209, 35, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                     M11_GAME_INPUT_REDRAW && !view.inventoryPanelActive,
                 "C011 visible close control should dismiss inventory")) return 1;
+
+    /* The visible C140 route must make its normal user-data directory before
+     * opening the file.  A test-only explicit path above cannot cover the
+     * macOS/Linux default path that had previously surfaced as FILE NOT FOUND
+     * for a fresh profile. */
+    if (!expect(m12_test_unsetenv("FIRESTAFF_QUICKSAVE_PATH") == 0,
+                "clear test-only save path override")) return 1;
+    if (!expect(M11_GameView_GetQuickSavePath(&view, savePath,
+                                               sizeof(savePath)),
+                "resolve default DM1 user save path")) return 1;
+    view.resting = 0;
+    view.world.partyIsResting = 0;
+    view.world.lifecycle.rest.isResting = 0;
+    view.inventoryPanelActive = 1;
+    if (!expect(M11_GameView_HandlePointerButton(
+                    &view, 179, 35, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+                    M11_GAME_INPUT_REDRAW,
+                "C140 creates the default DM1 save directory")) return 1;
+    if (!expect(access(savePath, R_OK) == 0,
+                "default C140 save path exists after click")) return 1;
+    if (!expect(M11_GameView_LoadDm1SavePath(&view, savePath, NULL),
+                "default C140 save reloads")) return 1;
 
     snprintf(savePath, sizeof(savePath), "%s/firestaff-dm1-quicksave.sav",
              saveTemplate);
