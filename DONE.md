@@ -41778,4 +41778,4 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-28 CSB Atari ST presented-frame route. The animation trace now
   records the original screen and active palette at every `Set-screen` VBlank
   and can rasterize each such source-selected frame. The local script proves
-  two presentation calls; the first frame resolves to original IMG1 item 36.
+  two presentation calls: IMG1 36/P4B1 7, then IMG1 35/P4B1 2.

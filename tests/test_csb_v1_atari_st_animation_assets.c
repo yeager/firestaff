@@ -72,7 +72,9 @@ int main(void)
                       trace.final_active_image_item == 75u &&
                       trace.final_palette_item == 21u &&
                       trace.presented_image_items[0] == 36u &&
-                      trace.presented_image_items[1] == 35u,
+                      trace.presented_palette_items[0] == 7u &&
+                      trace.presented_image_items[1] == 35u &&
+                      trace.presented_palette_items[1] == 2u,
                   "real Atari script executes documented fades, loops, blits and presentation");
         }
         CHECK(rgba != NULL && csb_v1_atari_st_animation_render_rgba(dat_path,
@@ -88,7 +90,8 @@ int main(void)
         CHECK(rgba != NULL && csb_v1_atari_st_animation_render_presented_rgba(
                   dat_path, script, script_size, 0u, rgba,
                   CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES, &trace) &&
-                  trace.presented_image_items[0] == 36u && rgba[3] == 255u,
+                  trace.presented_image_items[0] == 36u &&
+                  trace.presented_palette_items[0] == 7u && rgba[3] == 255u,
               "first Atari Set-screen frame is selected by original script state");
         free(script);
         free(rgba);
