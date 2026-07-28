@@ -56,8 +56,16 @@ an integration build pass.
 - **CSB-V1-V21-CLI-STARTUP-SWEEP:** Closed 2026-07-29. Direct local launch
   probes against the installed PC3.4 package now cover V1, V2.0 and V2.1:
   after the source-owned Prison `Enter` command, every mode reaches inactive
-  startup, map 0 at `(9,0,2)`, and a live runtime tick. V2.2 remains
-  deliberately unavailable until its reviewed material gate is complete.
+  startup, map 0 at `(9,0,2)`, and a live runtime tick. A requested V2.2
+  direct launch resolves to V2.1 when its reviewed material gate is
+  incomplete; it never enables synthetic V2.2 graphics.
+
+- **CSB-V22-DIRECT-LAUNCH-FALLBACK:** Closed 2026-07-29. `--game csb
+  --presentation-mode v22` now consumes the same finished-art gate as the
+  CSB runtime before M12 constructs its launch intent. Missing, partial, or
+  synthetic material resolves the direct launch to V2.1, so verified CSB
+  data starts rather than being reported unavailable. Native V2.2 remains
+  unavailable until all reviewed real material is present.
 
 - **M12-FSART-ZIP-MATERIALIZATION:** Closed 2026-07-29. `.fsart` is now an
   explicitly recognized ZIP container for scanner virtual paths and

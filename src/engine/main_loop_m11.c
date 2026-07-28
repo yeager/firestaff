@@ -44,6 +44,9 @@
 #include "v1_title_intro_pathfinder_pc34_compat.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 #include "dm1_v20_startup_presentation_timing_pc34.h"
+#include "csb_v2_presentation_mode_pc34.h"
+#include "csb_v22_finished_art_material_gate_pc34.h"
+#include "csb_v22_modern_assets_pc34.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -2564,6 +2567,39 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
             menuState->activatedIndex = i;
             menuState->launchRequested = 1;
             menuState->quickResumeLaunchRequested = 0;
+            /* A direct CLI launch still goes through the M12 launch intent,
+             * whose generic V2.2 gate quite rightly refuses CSB unless every
+             * reviewed CSB material is installed.  The CSB presentation
+             * runtime already has the supported V2.2 -> V2.1 resolution for
+             * this exact case.  Consume it before asking M12 for the intent,
+             * so --game csb --presentation-mode v22 starts in V2.1 rather
+             * than reporting the verified game data as unavailable. */
+            if (menuState->gameOptions[i].presentationModeIndex ==
+                M12_PRESENTATION_V22_MODERN) {
+                int resolveToV21 = 0;
+                if (strcmp(gameId, "csb") == 0) {
+                    const char* dataDir = M12_AssetStatus_GetRuntimeDataDir(
+                        &menuState->assetStatus, gameId);
+                    csb_v22_set_manifest_path(dataDir);
+                    csb_v22_famg_set_manifest_path(dataDir);
+                    csb_v2_presentation_mode_set_m12(
+                        M12_PRESENTATION_V22_MODERN);
+                    resolveToV21 = csb_v2_presentation_mode_get() ==
+                        CSB_V2_PM_V21_UPSCALED;
+                } else if (strcmp(gameId, "dm1") != 0 &&
+                           strcmp(gameId, "nexus") != 0) {
+                    /* M12 only admits a native V2.2 pack for DM1/Nexus.
+                     * A persisted global V2.2 choice must not make an
+                     * otherwise verified direct launch of another game fail. */
+                    resolveToV21 = 1;
+                }
+                if (resolveToV21) {
+                    menuState->settings.graphicsIndex =
+                        M12_PRESENTATION_V21_UPSCALED;
+                    menuState->gameOptions[i].presentationModeIndex =
+                        M12_PRESENTATION_V21_UPSCALED;
+                }
+            }
             if (gameId && strcmp(gameId, "theron") == 0) {
                 const M12_AssetVersionStatus* version =
                     M12_AssetStatus_GetFirstMatchedVersion(&menuState->assetStatus, gameId);

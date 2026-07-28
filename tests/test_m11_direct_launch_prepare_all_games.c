@@ -347,6 +347,21 @@ static void run_real_data_handoff_if_available(void) {
                      firstMatchedVersion->matchedMd5);
         }
 
+        if (strcmp(kCases[i].gameId, "csb") == 0) {
+            /* A requested CSB V2.2 is a request for reviewed material, not
+             * permission to invent it.  With no finished local CSB pack the
+             * CLI/direct-launch boundary must resolve to V2.1 before M12's
+             * V2.2 admission gate builds its launch intent. */
+            menu.settings.graphicsIndex = M12_PRESENTATION_V22_MODERN;
+            menu.gameOptions[kCases[i].slot].presentationModeIndex =
+                M12_PRESENTATION_V22_MODERN;
+            expect_true(M11_PrepareDirectLaunchForGame(&menu, "csb") == 1,
+                        "direct CSB V2.2 request resolves before M12 admission");
+            expect_true(menu.gameOptions[kCases[i].slot].presentationModeIndex ==
+                            M12_PRESENTATION_V21_UPSCALED,
+                        "direct CSB V2.2 request falls back to V2.1 without art");
+        }
+
         expect_true(M11_PrepareDirectLaunchForGame(&menu, kCases[i].gameId) == 1,
                     "direct launch prepares available game data");
         expect_true(menu.selectedIndex == kCases[i].slot &&

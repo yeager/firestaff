@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 CSB V2.2 direct-launch fallback. A CLI request for CSB
+  V2.2 now checks the same finished-art gate before M12 creates a launch
+  intent. Incomplete, placeholder, or absent CSB V2.2 material resolves to
+  the existing V2.1 renderer rather than making verified CSB data appear
+  unavailable. `m11_direct_launch_prepare_all_games` explicitly covers the
+  fallback; a real PC3.4 boot probe reaches runtime at `(map 0, party 9,0,2)`
+  with `presentationMode=2`. This does not admit synthetic V2.2 artwork.
+
 - ✅ 2026-07-29 CSB V2 walk/stairs presentation consumption. CSB's V2
   runtime now exports its visual-minus-logical party displacement and M11
   applies it to the completed V2 viewport. This makes the existing one-tick
