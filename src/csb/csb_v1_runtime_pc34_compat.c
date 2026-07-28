@@ -3360,6 +3360,99 @@ static int csb_v1_runtime_stage_openroom_text_message(
     return 1;
 }
 
+/* DSA.cpp TEXT@ decodes a DB2 thing directly, irrespective of its show bit.
+ * Keep that distinct from the OpenRoom visibility receipt above. */
+static int csb_v1_runtime_dsa_read_text(void *user, uint32_t object_index,
+                                        char *out_text, size_t out_capacity)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    const uint8_t *record;
+    uint16_t text_word;
+    int type;
+    int size;
+    int offset;
+    int decoded;
+
+    if (!profile || !profile->dungeon_handle || !out_text ||
+        out_capacity == 0u || object_index > UINT16_MAX) return -1;
+    out_text[0] = '\0';
+    record = csb_v1_dungeon_get_thing_record(profile->dungeon_handle,
+        (uint16_t)object_index, &type, NULL, &size);
+    if (!record || type != CSB_THING_TYPE_TEXTSTRING || size < 4) return 0;
+    text_word = csb_v1_runtime_read_u16(record + 2);
+    offset = (int)((text_word >> 3) & 0x1fffu);
+    if (profile->dungeon_handle->text_data_base < 0 ||
+        profile->dungeon_handle->text_word_count <= 0 ||
+        offset >= profile->dungeon_handle->text_word_count ||
+        (long)profile->dungeon_handle->text_data_base +
+            (long)profile->dungeon_handle->text_word_count * 2L >
+                profile->dungeon_handle->raw_size) return -1;
+    decoded = F0507_DUNGEON_DecodeTextAtOffset_Compat(
+        (const unsigned short *)(const void *)(
+            profile->dungeon_handle->raw_data +
+            profile->dungeon_handle->text_data_base),
+        profile->dungeon_handle->text_word_count, offset, out_text,
+        (int)out_capacity);
+    if (decoded < 0) {
+        out_text[0] = '\0';
+        return -1;
+    }
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_display_text(void *user, const char *text,
+                                           int32_t color)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    size_t length;
+
+    (void)color; /* Color is retained by the DSA receipt, not remapped here. */
+    if (!profile || !text) return 0;
+    length = strlen(text);
+    if (length == 0u || length >= CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS ||
+        strchr(text, '\n') != NULL) return 0;
+    memset(&profile->csbwin_text_message_receipt, 0,
+           sizeof(profile->csbwin_text_message_receipt));
+    profile->csbwin_text_message_receipt.valid = 1;
+    profile->csbwin_text_message_receipt.text_thing = THING_NONE;
+    profile->csbwin_text_message_receipt.source_game_time = profile->game_time;
+    memcpy(profile->csbwin_text_message_receipt.text, text, length + 1u);
+    return 1;
+}
+
+static int csb_v1_runtime_dsa_say_text(void *user, uint32_t location,
+                                       int32_t color)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    uint16_t thing;
+    int level = (int)((location >> 10) & 0x3fu);
+    int x = (int)((location >> 5) & 0x1fu);
+    int y = (int)(location & 0x1fu);
+    int guard;
+    char text[1001]; /* CSBWin DSA.cpp ExpandedText[1001]. */
+
+    if (!profile || !profile->dungeon_handle ||
+        csb_v1_dungeon_get_raw_square(profile->dungeon_handle, level, x, y) < 0)
+        return 0;
+    thing = csb_v1_dungeon_f0162_get_square_first_object_pc34(
+        profile->dungeon_handle, level, x, y);
+    for (guard = 0; thing != THING_ENDOFLIST && thing != THING_NONE &&
+         guard < 128; ++guard) {
+        int type;
+        int size;
+        const uint8_t *record = csb_v1_dungeon_get_thing_record(
+            profile->dungeon_handle, thing, &type, NULL, &size);
+        if (!record || size < 2) return 0;
+        if (type == CSB_THING_TYPE_TEXTSTRING) {
+            if (csb_v1_runtime_dsa_read_text(profile, thing, text,
+                                              sizeof(text)) <= 0) return 0;
+            return csb_v1_runtime_dsa_display_text(profile, text, color);
+        }
+        thing = csb_v1_runtime_read_u16(record);
+    }
+    return 0;
+}
+
 static int csb_v1_runtime_dsa_discard_text(void *user)
 {
     CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
@@ -26657,6 +26750,10 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;
+    candidate.read_text = csb_v1_runtime_dsa_read_text;
+    candidate.say_text = csb_v1_runtime_dsa_say_text;
+    candidate.display_text = csb_v1_runtime_dsa_display_text;
+    candidate.text_user = &profile_candidate;
     candidate.play_sound = csb_v1_runtime_dsa_play_sound;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
     candidate.dungeon_user = &profile_candidate;
