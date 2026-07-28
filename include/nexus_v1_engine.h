@@ -720,6 +720,16 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_DgnStructure2FormatEvidenceReceipt;
 
+typedef struct {
+    int valid;
+    int level_index;
+    int descriptor_count;
+    int decoded_count;
+    int encoding_0x0008_decoded;
+    int encoding_0x0028_decoded;
+    int palette_overflow_count;
+} Nexus_V1_DgnStructure2TextureDecodeReceipt;
+
 /* One exact static-textured Structure3 face joined to its bounded Structure2
  * descriptor in the same canonical LEV. This is capture-producer input only:
  * the descriptor's post-FFFF bytes remain opaque and no pixel, palette, UV,
@@ -2679,6 +2689,10 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
 int nexus_v1_current_level_structure2_format_evidence_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure2FormatEvidenceReceipt *out_receipt);
+int nexus_v1_current_level_decode_structure2_textures(
+    const Nexus_V1_Engine *engine,
+    Nexus_DMDFTextureSurface *out_surfaces, int max_surfaces,
+    Nexus_V1_DgnStructure2TextureDecodeReceipt *out_receipt);
 int nexus_v1_engine_build_structure3_static_material_capture_target(
     const Nexus_V1_Engine *engine, uint32_t structure3_entry_index,
     uint32_t face_ordinal,

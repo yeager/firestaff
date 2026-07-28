@@ -6282,6 +6282,25 @@ static void test_sal_capture_target_binds_loaded_bytes(void) {
           "missing active MAP byte identity blocks SAL capture acquisition");
 }
 
+static void test_structure2_texture_decode_synthetic(void) {
+    Nexus_V1_Engine engine;
+    Nexus_V1_Level *level;
+    Nexus_DMDFTextureSurface surfaces[4];
+    Nexus_V1_DgnStructure2TextureDecodeReceipt receipt;
+
+    memset(&engine, 0, sizeof(engine));
+    memset(surfaces, 0, sizeof(surfaces));
+
+    CHECK(nexus_v1_current_level_decode_structure2_textures(
+              NULL, surfaces, 4, &receipt) == 0,
+          "null engine blocks texture decode");
+    CHECK(nexus_v1_current_level_decode_structure2_textures(
+              &engine, surfaces, 4, &receipt) == 0,
+          "unloaded engine blocks texture decode");
+    level = &engine.current_level;
+    (void)level;
+}
+
 int main(void) {
     test_variable_grid_and_mesh_ready();
     test_dgn_view_render_plan_from_structure1b();
@@ -6311,6 +6330,7 @@ int main(void) {
     test_menu_bpk_handoff_requires_canonical_source();
     test_slev_capture_target_binds_loaded_bytes();
     test_sal_capture_target_binds_loaded_bytes();
+    test_structure2_texture_decode_synthetic();
 
     if (g_fail != 0) {
         printf("Nexus V1 DGN geometry readiness gate: %d failure(s)\n", g_fail);

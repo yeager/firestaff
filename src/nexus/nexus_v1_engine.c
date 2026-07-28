@@ -4638,6 +4638,142 @@ int nexus_v1_current_level_structure2_format_evidence_receipt(
     return out_receipt->valid;
 }
 
+static uint32_t nexus_v1_saturn_15bit_to_rgba(uint16_t color)
+{
+    uint32_t r = (color & 0x001FU) << 3;
+    uint32_t g = ((color >> 5) & 0x001FU) << 3;
+    uint32_t b = ((color >> 10) & 0x001FU) << 3;
+    r |= r >> 5;
+    g |= g >> 5;
+    b |= b >> 5;
+    return (0xFFU << 24) | (r << 16) | (g << 8) | b;
+}
+
+int nexus_v1_current_level_decode_structure2_textures(
+    const Nexus_V1_Engine *engine,
+    Nexus_DMDFTextureSurface *out_surfaces, int max_surfaces,
+    Nexus_V1_DgnStructure2TextureDecodeReceipt *out_receipt)
+{
+    Nexus_V1_DgnStructure2FormatEvidenceReceipt evidence;
+    Nexus_V1_DgnStructure2TextureDecodeReceipt receipt;
+    const Nexus_V1_Level *level;
+    const uint8_t *payload;
+    uint32_t structure2_offset;
+    int descriptor_index;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.level_index = -1;
+    if (out_receipt) *out_receipt = receipt;
+    if (!engine || !out_surfaces || max_surfaces <= 0) return 0;
+    if (nexus_v1_current_level_structure2_format_evidence_receipt(
+            engine, &evidence) != 1 || !evidence.valid ||
+        !evidence.decoder_permitted) return 0;
+
+    level = &engine->current_level;
+    if (level->structure2_texture_count <= 0 ||
+        level->structure2_texture_count > max_surfaces ||
+        !engine->current_level_dgn_data ||
+        engine->current_level_dgn_size <= 0) return 0;
+
+    structure2_offset = ((uint32_t)engine->current_level_dgn_data[0x14] << 8 |
+        engine->current_level_dgn_data[0x15]) * NEXUS_DGN_BLOCK_SIZE;
+    payload = engine->current_level_dgn_data;
+    receipt.level_index = engine->game.current_level;
+    receipt.descriptor_count = level->structure2_texture_count;
+
+    for (descriptor_index = 0;
+         descriptor_index < level->structure2_texture_count;
+         ++descriptor_index) {
+        const Nexus_V1_DgnStructure2Texture *tex =
+            &level->structure2_textures[descriptor_index];
+        Nexus_DMDFTextureSurface *surface = &out_surfaces[descriptor_index];
+        uint32_t pixel_count = (uint32_t)tex->width * tex->height;
+        uint32_t image_abs = structure2_offset + tex->image_relative_offset;
+        uint8_t *indices;
+        uint32_t i;
+
+        memset(surface, 0, sizeof(*surface));
+        if (pixel_count == 0U || pixel_count > 1024U * 1024U) continue;
+        indices = (uint8_t *)malloc(pixel_count);
+        if (!indices) continue;
+
+        if (tex->encoding == 0x0008U) {
+            uint32_t palette_abs = structure2_offset +
+                tex->palette_relative_offset;
+            uint32_t image_bytes = pixel_count / 2U;
+            const uint8_t *src = payload + image_abs;
+            const uint8_t *pal_src = payload + palette_abs;
+            int c;
+
+            for (c = 0; c < 16; ++c) {
+                uint16_t raw = (uint16_t)(pal_src[c * 2] << 8 |
+                    pal_src[c * 2 + 1]);
+                surface->palette[c] = nexus_v1_saturn_15bit_to_rgba(raw);
+            }
+            for (i = 0; i < image_bytes; ++i) {
+                indices[i * 2] = (src[i] >> 4) & 0x0FU;
+                indices[i * 2 + 1] = src[i] & 0x0FU;
+            }
+            surface->pixels = indices;
+            surface->width = tex->width;
+            surface->height = tex->height;
+            surface->valid = 1;
+            ++receipt.encoding_0x0008_decoded;
+            ++receipt.decoded_count;
+        } else if (tex->encoding == 0x0028U) {
+            uint32_t palette_count = 1U;
+            const uint8_t *src = payload + image_abs;
+            int overflow = 0;
+
+            memset(surface->palette, 0, sizeof(surface->palette));
+            for (i = 0; i < pixel_count; ++i) {
+                uint16_t raw = (uint16_t)(src[i * 2] << 8 | src[i * 2 + 1]);
+                uint32_t rgba = nexus_v1_saturn_15bit_to_rgba(raw);
+                uint32_t slot;
+                int found = 0;
+
+                if ((raw & 0x8000U) == 0U) {
+                    indices[i] = 0U;
+                    continue;
+                }
+                for (slot = 1U; slot < palette_count; ++slot) {
+                    if (surface->palette[slot] == rgba) {
+                        indices[i] = (uint8_t)slot;
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found) {
+                    if (palette_count >= 256U) {
+                        overflow = 1;
+                        break;
+                    }
+                    surface->palette[palette_count] = rgba;
+                    indices[i] = (uint8_t)palette_count;
+                    ++palette_count;
+                }
+            }
+            if (overflow) {
+                free(indices);
+                ++receipt.palette_overflow_count;
+                continue;
+            }
+            surface->pixels = indices;
+            surface->width = tex->width;
+            surface->height = tex->height;
+            surface->valid = 1;
+            ++receipt.encoding_0x0028_decoded;
+            ++receipt.decoded_count;
+        } else {
+            free(indices);
+        }
+    }
+
+    receipt.valid = receipt.decoded_count == receipt.descriptor_count;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.valid ? 1 : 0;
+}
+
 int nexus_v1_current_level_visit_structure2_payload_anchors(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure2PayloadAnchorConsumer consumer, void *context,
