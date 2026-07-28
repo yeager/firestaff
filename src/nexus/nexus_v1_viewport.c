@@ -557,6 +557,15 @@ static int viewport_render_structure3_mesh(
             flat_color_count;
         vp->last_dgn_render_receipt.written_pixels =
             viewport_count_written_pixels(&vp->fb);
+        vp->last_dgn_render_receipt.frame_hash =
+            viewport_dgn_frame_hash(&vp->fb);
+        vp->last_dgn_render_receipt.captured_frame_ready =
+            vp->last_dgn_render_receipt.written_pixels > 0 &&
+            vp->last_dgn_render_receipt.frame_hash != 0u;
+        vp->last_dgn_render_receipt.ready =
+            vp->last_dgn_render_receipt.captured_frame_ready;
+        vp->last_dgn_render_receipt.attempted = 1;
+        vp->last_dgn_render_receipt.used_real_dgn_route = 1;
         return 1;
     }
     return 0;
