@@ -748,6 +748,12 @@ that its exact runtime path is not already source-locked and tested.
 23. **CSB-ORIGINAL-SAVE-CORPUS:** Admit real CSB/CSBWin save corpus, complete
     native import/export/backup/resume compatibility, EXPOOL/DB11 ownership,
     and byte-level failure handling.
+    2026-07-28: local CSB material includes the original Atari ST Save Disk
+    (`Chaos Strikes Back for Atari ST Save Disk.msa`) and it has been decoded
+    and inspected as a valid 720 KiB FAT disk. It is blank: there is no
+    `CSBGAME.DAT` or other saved position on it. Treat it as Utility Disk
+    media only; it must not satisfy this corpus gate. The local CSBWin binary
+    and installed archives likewise contain no user-created save.
 24. **CSB-UTILITY-DISK-COMPLETE:** Complete Utility Disk import, preview,
     save/load/new-game, champion editing, inventory, chest, dialogs, and
     confirmation flows using original package and save material. Direct
