@@ -21702,9 +21702,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   55 ms startup cadence and caches the real replayed framebuffer per VBlank.
   The bounded player executes the local script's IMG1 expand/copy,
   display-coordinate and transparent blit operations, including the verified
-  changed image between the two `Set-screen` pages. Remaining Atari work is
-  per-colour P4B1 fade interpolation and real app capture; do not substitute
-  the PC34 title/Entrance renderer for this route.
+  changed image between the two `Set-screen` pages. ReDMCSB `ANIM.C` and
+  `PALETTE.C` now also drive Atari `FadeToPalette` timing: each source delay
+  waits `delay + 1` VBlanks before the target P4B1 palette is committed.
+  Remaining Atari work is real app capture; do not substitute the PC34
+  title/Entrance renderer for this route.
 
 - [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
   handoff. Enhanced modes now initialize and bind to the live V1 profile,

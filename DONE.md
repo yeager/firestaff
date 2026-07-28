@@ -41816,3 +41816,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   source framebuffer, and consumes the real replay route only for ST 2.0/2.1
   title startup. The original-data test proves a visible compositor change
   between the two source `Set-screen` pages.
+- ✅ 2026-07-28 CSB Atari ST palette fade timing. ReDMCSB `ANIM.C` and
+  `PALETTE.C` show that the Atari animation waits `delay + 1` VBlanks in
+  `F0436_STARTEND_FadeToPalette` before committing the target P4B1 palette.
+  The trace and framebuffer replay now follow that order instead of switching
+  palettes immediately.

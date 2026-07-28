@@ -331,8 +331,8 @@ int csb_v1_atari_st_animation_trace_script(
                     valid = 0;
                 else if (out_receipt) out_receipt->blit_count++;
                 break;
-            case 7u: /* Set palette */
-            case 8u: /* Fade palette */
+            case 7u: /* Set palette at the next VBlank */
+            case 8u: /* Atari ANIM.C waits delay + 1 VBlanks, then sets it */
                 /* The original script refers to P4B1 item IDs here. Its
                  * preceding Load commands decide which memory slot owns that
                  * item; e.g. item 2 is loaded in slot 7 then faded as 2. */
@@ -343,8 +343,15 @@ int csb_v1_atari_st_animation_trace_script(
                     active_palette_item =
                         csb_v1_atari_st_animation_palette_item_for_reference(
                             slots, p[0]);
-                    if (instruction->opcode == 8u && out_receipt)
-                        out_receipt->fade_count++;
+                    if (out_receipt) {
+                        if (instruction->opcode == 8u) {
+                            out_receipt->fade_count++;
+                            out_receipt->waited_vbl_count +=
+                                (uint32_t)p[1] + 1u;
+                        } else {
+                            out_receipt->waited_vbl_count++;
+                        }
+                    }
                 }
                 break;
             case 10u: /* Wait VBLs */
@@ -532,9 +539,20 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
                     slots[p[3]].display_y)) goto done;
             break;
         case 7u:
+            if (!csb_v1_atari_st_animation_palette_reference_is_loaded(slots,
+                    p[0])) goto done;
+            active_palette_item =
+                csb_v1_atari_st_animation_palette_item_for_reference(slots,
+                    p[0]);
+            vbl_count++;
+            break;
         case 8u:
             if (!csb_v1_atari_st_animation_palette_reference_is_loaded(slots,
                     p[0])) goto done;
+            /* ReDMCSB ANIM.C calls F0436 with the script delay. MEDIA772
+             * (Atari ST animation) waits inclusively then commits the target
+             * palette, rather than using a host interpolation. */
+            vbl_count += (uint32_t)p[1] + 1u;
             active_palette_item =
                 csb_v1_atari_st_animation_palette_item_for_reference(slots,
                     p[0]);
