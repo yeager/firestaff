@@ -465,7 +465,7 @@ static int viewport_render_structure3_mesh(
 {
     Nexus_V1_DgnStructure3CompleteSourceSceneReceipt scene;
     int entry_index, face_count_total = 0, textured_count = 0;
-    int flat_color_count = 0;
+    int flat_color_count = 0, animated_static_fallback_count = 0;
     uint16_t flat_colors[254];
     int flat_color_palette_count = 0;
 
@@ -515,6 +515,38 @@ static int viewport_render_structure3_mesh(
                         surface->height, surface->palette);
                 }
                 ++textured_count;
+            } else if ((packet.face.fill_selector & 0xFF00U) == 0x0800U) {
+                Nexus_V1_DgnStructure3AnimatedMaterialPacket anim;
+                memset(&anim, 0, sizeof(anim));
+                if (nexus_v1_current_level_structure3_animated_material_packet(
+                        engine, (uint32_t)entry_index,
+                        (uint32_t)face_ordinal, &anim) == 1 &&
+                    anim.valid && anim.first_descriptor_bound &&
+                    anim.first_structure2_image_id >= 0 &&
+                    anim.first_structure2_image_id <
+                        engine->structure2_surface_count) {
+                    const Nexus_DMDFTextureSurface *surface =
+                        &engine->structure2_surfaces[
+                            anim.first_structure2_image_id];
+                    if (surface->valid && surface->pixels) {
+                        rv[0].uv.x = 0.0f; rv[0].uv.y = 0.0f;
+                        rv[1].uv.x = 1.0f; rv[1].uv.y = 0.0f;
+                        rv[2].uv.x = 1.0f; rv[2].uv.y = 1.0f;
+                        if (slot_count == 4) {
+                            rv[3].uv.x = 0.0f; rv[3].uv.y = 1.0f;
+                            nexus_raster_quad_tex(&vp->fb, rv[0], rv[1],
+                                rv[2], rv[3], &vp->cam, surface->pixels,
+                                surface->width, surface->height,
+                                surface->palette);
+                        } else {
+                            nexus_raster_triangle_tex(&vp->fb, rv[0], rv[1],
+                                rv[2], &vp->cam, surface->pixels,
+                                surface->width, surface->height,
+                                surface->palette);
+                        }
+                        ++animated_static_fallback_count;
+                    }
+                }
             } else if (packet.face.fill_selector & 0x8000U) {
                 uint16_t color15 = packet.face.fill_selector & 0x7FFFU;
                 int ci = -1, k;
@@ -547,7 +579,8 @@ static int viewport_render_structure3_mesh(
             }
         }
     }
-    if (textured_count > 0 || flat_color_count > 0) {
+    if (textured_count > 0 || flat_color_count > 0 ||
+        animated_static_fallback_count > 0) {
         vp->last_dgn_render_receipt.structure3_mesh_rendered = 1;
         vp->last_dgn_render_receipt.structure3_mesh_face_count =
             face_count_total;
@@ -555,6 +588,9 @@ static int viewport_render_structure3_mesh(
             textured_count;
         vp->last_dgn_render_receipt.structure3_mesh_flat_color_face_count =
             flat_color_count;
+        vp->last_dgn_render_receipt
+            .structure3_mesh_animated_static_fallback_face_count =
+            animated_static_fallback_count;
         vp->last_dgn_render_receipt.written_pixels =
             viewport_count_written_pixels(&vp->fb);
         vp->last_dgn_render_receipt.frame_hash =

@@ -28,6 +28,7 @@ typedef struct {
     int structure3_mesh_face_count;
     int structure3_mesh_textured_face_count;
     int structure3_mesh_flat_color_face_count;
+    int structure3_mesh_animated_static_fallback_face_count;
     int active_level_source_consumed;
     Nexus_V1_DgnActiveLevelRendererSourceReceipt active_level_source;
     int structure3_source_packet_consumed;
