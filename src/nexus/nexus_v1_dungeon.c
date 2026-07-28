@@ -1482,8 +1482,31 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
                     .nonzero_descriptor_offsets_word_bounded_count ==
                     level->structure2_payload.nonzero_descriptor_offset_count;
             level->structure2_payload.valid = 1;
-            /* No decoder may promote this opaque span into a material. */
-            level->structure2_payload.material_or_image_data_proven = 0;
+            {
+                int proven = level->structure2_payload
+                    .descriptor_offset_envelope_valid;
+                for (descriptor_index = 0;
+                     proven && descriptor_index < level->structure2_texture_count;
+                     ++descriptor_index) {
+                    const Nexus_V1_DgnStructure2Texture *tex =
+                        &level->structure2_textures[descriptor_index];
+                    uint32_t image_bytes;
+                    if (tex->encoding == 0x0008U)
+                        image_bytes = (uint32_t)tex->width * tex->height / 2U;
+                    else if (tex->encoding == 0x0028U)
+                        image_bytes = (uint32_t)tex->width * tex->height * 2U;
+                    else { proven = 0; break; }
+                    if (image_bytes == 0U ||
+                        tex->image_relative_offset < (uint32_t)opaque_offset ||
+                        tex->image_relative_offset + image_bytes > structure2_useful)
+                    { proven = 0; break; }
+                    if (tex->palette_relative_offset != 0U &&
+                        (tex->palette_relative_offset < (uint32_t)opaque_offset ||
+                         tex->palette_relative_offset + 32U > structure2_useful))
+                    { proven = 0; break; }
+                }
+                level->structure2_payload.material_or_image_data_proven = proven;
+            }
             return 0;
         }
         if (cursor > (int)structure2_useful -

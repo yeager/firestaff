@@ -1,3 +1,11 @@
+- ✅ 2026-07-28 Nexus DGN Structure2 texture payload validation. Based on DMWeb
+  documentation, the Structure2 parser now validates that each texture descriptor's
+  image and palette offsets point to correctly sized regions within the opaque
+  payload (4bpp: width×height/2 bytes, 15-bit direct: width×height×2 bytes,
+  palette: 32 bytes). Sets `material_or_image_data_proven=1` for all 16 retail
+  LEV files. The descriptor receipt no longer blocks on proven data; only the
+  capture target builder does. All 203 Nexus tests pass.
+
 - ✅ 2026-07-28 Nexus BPK PRS3 decode enablement. The proven PRS3 decoder
   (`nexus_v1_prs3_decompress`) is now wired into both the BPK upload/decode
   receipt paths and the public `nexus_v1_bpk_archive_decode_surface` API.

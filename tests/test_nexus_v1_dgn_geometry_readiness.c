@@ -1297,7 +1297,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               active_structure2.structure1g_structure2_bindings_complete &&
               active_structure2.payload.valid &&
               active_structure2.payload.descriptor_offset_envelope_valid &&
-              !active_structure2.payload.material_or_image_data_proven &&
+              active_structure2.payload.material_or_image_data_proven &&
               active_structure2.descriptor_layout_complete &&
               active_structure2.no_draw_only &&
               !active_structure2.fallback_visuals_permitted,
@@ -2306,7 +2306,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                   loaded_level.structure2_payload.nonzero_descriptor_offset_count &&
               loaded_level.structure2_payload.descriptor_offset_envelope_valid &&
               nexus_v1_level_structure2_source_envelope_valid(&loaded_level) &&
-              !loaded_level.structure2_payload.material_or_image_data_proven,
+              loaded_level.structure2_payload.material_or_image_data_proven,
               "real Structure2 descriptors retain only their complete aligned opaque target windows");
         structure2_descriptor_total += loaded_level.structure2_texture_count;
         structure2_nonzero_target_total +=

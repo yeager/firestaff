@@ -4317,7 +4317,6 @@ int nexus_v1_current_level_structure2_descriptor_receipt(
         !level->structure2_texture_table_valid ||
         level->structure2_texture_count <= 0 ||
         !nexus_v1_level_structure2_source_envelope_valid(level) ||
-        level->structure2_payload.material_or_image_data_proven ||
         !level->structure1g_structure2_bindings_complete) {
         return 0;
     }
@@ -4395,6 +4394,8 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
         return 0;
     }
     level = &engine->current_level;
+    if (level->structure2_payload.material_or_image_data_proven)
+        return 0;
     data = engine->current_level_dgn_data;
     size = engine->current_level_dgn_size;
     if (!data || size < 0x18 ||
