@@ -1,3 +1,12 @@
+- ✅ 2026-07-28 Nexus Structure2 texture decoder and format evidence pipeline.
+  Completed the full format evidence pipeline: pixel_span_proven,
+  palette_addressing_proven, vdp1_format_proven, and decoder_permitted all set
+  for retail LEV files with proven material data. Implemented a Structure2
+  texture decoder that converts 4bpp indexed (encoding 0x0008) and 15-bit
+  direct color (encoding 0x0028) pixels into Nexus_DMDFTextureSurface entries.
+  Decoder is wired into the level load path and surfaces are stored in
+  engine->structure2_surfaces[]. All 203 Nexus tests pass.
+
 - ✅ 2026-07-28 Nexus DGN Structure2 texture payload validation. Based on DMWeb
   documentation, the Structure2 parser now validates that each texture descriptor's
   image and palette offsets point to correctly sized regions within the opaque
