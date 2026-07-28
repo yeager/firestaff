@@ -1,3 +1,12 @@
+- ✅ 2026-07-28 Nexus BPK PRS3 decode enablement. The proven PRS3 decoder
+  (`nexus_v1_prs3_decompress`) is now wired into both the BPK upload/decode
+  receipt paths and the public `nexus_v1_bpk_archive_decode_surface` API.
+  All 162 real MENU.BPK surfaces decode successfully. The handoff pipeline
+  routes READY_DECODED through to the renderer, the material import pipeline
+  accepts decoded PRS3 surfaces into DGN material slots, and the menu BPK
+  renderer handoff gate unblocks rendering for decoded archives. All 203
+  Nexus tests pass.
+
 - ✅ 2026-07-28 DM1 F10 FPS overlay. The compact runtime graphics popup has
   a persistent `FPS` toggle and `--fps` uses the identical path. It samples
   actual SDL presents, not DM1 source ticks, so the counter cannot change the
