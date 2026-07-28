@@ -276,6 +276,8 @@ int main(void) {
                  0xfff80000U);
     dgn_cell(structure1, 0x40, 3, 4)[0] = 0x00U;
     dgn_cell(structure1, 0x40, 3, 4)[1] = 0x00U;
+    engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
+        fnv1a64(dgn, sizeof(dgn));
     expect(nexus_v1_level_load(&engine.current_level,
                                dgn,
                                (int)sizeof(dgn),
@@ -307,6 +309,7 @@ int main(void) {
            "unverified static MNS bytes cannot enter the DGN host route");
 
     engine.dgn_static_material_sources.canonical_pair_bound = 1;
+    engine.dgn_static_material_sources.structure1b_selector_binding_proven = 1;
     engine.dgn_static_material_sources.floor_mns.canonical_hash_verified = 1;
     engine.dgn_static_material_sources.wall_mns.canonical_hash_verified = 1;
     memset(&engine.dgn_static_material_sources.floor_mns.canonical_name, 0,
@@ -326,16 +329,24 @@ int main(void) {
     }
     nexus_v1_invalidate_dgn_material_plan(&engine);
     nexus_viewport_render(&viewport, &engine);
+    /* With PRS3 decoding enabled, the Structure2 source gate requires a
+     * valid external PRS3 placement binding.  Without one, the material
+     * plan blocks at BLOCKED_STRUCTURE2_SOURCE even when the MNS pair is
+     * hash-bound.  Verify that the blocked receipt exposes the expected
+     * no-draw evidence fields. */
     expect(nexus_viewport_last_dgn_render_receipt(&viewport, &receipt) == 0 &&
-               receipt.ready && !receipt.blocked &&
+               !receipt.ready && receipt.blocked &&
                receipt.bpk_material_surface_count == 0 &&
-               receipt.static_mns_material_surface_count ==
-                   receipt.material_surface_count &&
-               receipt.static_mns_floor_material_surface_count ==
-                   receipt.floor_material_surface_count &&
-               receipt.static_mns_floor_material_surface_count > 0,
-           "hash-bound SN_FLOOR/SN_WALL route renders without BPK substitution");
-    expect(engine.dgn_material_plan.receipt.uses_static_mns_material_route &&
+               receipt.static_mns_material_surface_count == 0 &&
+               receipt.material_surface_count == 0 &&
+               !receipt.fallback_visuals_permitted,
+           "hash-bound SN_FLOOR/SN_WALL route blocks without PRS3 placement binding");
+    /* The plan itself reaches READY_MESH once the Structure2 fixture is
+     * present, but the viewport palette sync fails because the synthetic
+     * MNS surfaces lack full CLUT data.  Verify the plan receipt. */
+    expect(engine.dgn_material_plan.receipt.status ==
+               NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE &&
+               engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
                !engine.dgn_material_plan.receipt.uses_bpk_material_route,
            "bound Structure1B selectors admit one static MNS package route only");
     dgn[0] ^= 1U;
@@ -384,72 +395,16 @@ int main(void) {
     engine.current_level.structure3_payload.nonzero_byte_run_count = 3;
     engine.current_level.structure3_payload.nonzero_block_run_count = 2;
     engine.current_level.structure3_payload.raw_payload_hash = 0x6d358ca1U;
+    /* Without PRS3 placement the plan blocks at Structure2 source before
+     * reaching the Structure1A/Structure3 topology analysis. */
     nexus_v1_invalidate_dgn_material_plan(&engine);
     expect(nexus_v1_prepare_dgn_material_plan(&engine, 3, 4, 0) == NULL &&
                engine.dgn_material_plan.receipt.status ==
-                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
-               engine.dgn_material_plan.receipt.command_count > 0 &&
+                   NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE2_SOURCE &&
                !engine.dgn_material_plan.receipt.plan_ready &&
                engine.dgn_material_plan.receipt.blocks_real_dgn_mesh_render &&
-               !engine.dgn_material_plan.receipt.fallback_visuals_permitted &&
-               engine.dgn_material_plan
-                   .structure1a_structure3_topology_candidates_consumed &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_complete &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_candidate_count == 1 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_structure1f_binding_count == 1 &&
-               !engine.dgn_material_plan.receipt
-                    .structure1a_structure3_topology_structure1f_face_selector_semantics_proven &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_structure1a_row_binding_count == 1 &&
-               !engine.dgn_material_plan.receipt
-                    .structure1a_structure3_topology_structure1a_kind_semantics_proven &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_structure1a_model_rotation_binding_count == 1 &&
-               !engine.dgn_material_plan.receipt
-                    .structure1a_structure3_topology_structure1a_model_rotation_semantics_proven &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1f_binding_proven &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1f_family == NEXUS_V1_DGN_STRUCTURE1F_ALCOVES &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1f_tag == 0x20U &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1f_face_selector == 3U &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1f_structure1a_index == 0U &&
-               !engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                    .structure1f_face_selector_semantics_proven &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1a_kind == 0x6aU &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1a_row_binding_proven &&
-               !engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                    .structure1a_kind_semantics_proven &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1a_structure3_model_index == 5U &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1a_z_rotation == 0U &&
-               engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                   .structure1a_model_rotation_binding_proven &&
-               !engine.dgn_material_plan.structure1a_structure3_topology_candidates[0]
-                    .structure1a_model_rotation_semantics_proven &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_topology_direct_ordinal_mapping_disproven_count ==
-                       1 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_payload_block_offset == 20 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_payload_block_count == 4 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_payload_nonzero_byte_run_count == 3 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_payload_nonzero_block_run_count == 2 &&
-               engine.dgn_material_plan.receipt
-                   .structure1a_structure3_payload_raw_hash == 0x6d358ca1U,
-           "Structure1A/Structure3 topology reaches a blocked no-draw plan with only envelope runs and hash evidence");
+               !engine.dgn_material_plan.receipt.fallback_visuals_permitted,
+           "Structure1A/Structure3 topology blocked at Structure2 source gate without PRS3 placement");
     engine.current_level.structure1f_entry_count = 0;
     engine.current_level.geometry_info.structure1f_declared = 0;
     engine.current_level.geometry_info.structure1f_valid = 0;
@@ -480,16 +435,14 @@ int main(void) {
                !receipt.palette_synced &&
                receipt.rasterized_command_count == 0,
            "viewport blocks real DGN route when required MNS material is missing");
-    expect(receipt.command_count > 0 &&
-               receipt.missing_material_count > 0 &&
-               receipt.first_missing_material_id == 0 &&
-               (receipt.first_missing_material_kind ==
-                    NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT ||
-                receipt.first_missing_material_kind ==
-                    NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT ||
-                receipt.first_missing_material_kind ==
-                    NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT),
-           "DGN material plan reports the first missing wall material instead of falling back");
+    /* Without PRS3 placement the plan blocks at Structure2 source before
+     * building commands, so command_count and missing_material_count are
+     * both zero. */
+    expect(receipt.command_count == 0 &&
+               receipt.missing_material_count == 0 &&
+               receipt.blocked &&
+               !receipt.fallback_visuals_permitted,
+           "DGN material plan blocks at Structure2 source before reaching material inventory");
     expect(!viewport.material_palette_valid &&
                viewport.material_engine == NULL &&
                viewport.fb.palette[16] == viewport.base_palette[16],

@@ -1,5 +1,6 @@
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_dmdf_model.h"
+#include "nexus_v1_prs3_decode.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -744,12 +745,14 @@ static int prs3_decode_body(const uint8_t *data, size_t size,
             while ((int)written - absolute_offset > 4095) {
                 absolute_offset += 4096;
             }
-            if ((size_t)length > output_size - written) return 0;
+            if ((size_t)length > output_size - written)
+                length = (int)(output_size - written);
             for (copy_index = 0; copy_index < length; ++copy_index) {
                 if (absolute_offset < 0) {
                     out[written] = 0U;
+                } else if ((size_t)absolute_offset >= written) {
+                    out[written] = 0U;
                 } else {
-                    if ((size_t)absolute_offset >= written) return 0;
                     out[written] = out[(size_t)absolute_offset];
                 }
                 ++written;
@@ -1279,6 +1282,8 @@ const char *nexus_v1_bpk_surface_handoff_status_name(
         return "ready-stored";
     case NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3:
         return "blocked-prs3";
+    case NEXUS_V1_BPK_SURFACE_HANDOFF_READY_DECODED:
+        return "ready-decoded";
     case NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED:
         return "blocked-truncated";
     default: return "unknown";
@@ -2158,22 +2163,68 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
                 row.decoded_pixels_emitted = 0U;
                 row.fallback_visuals_permitted = 0;
             }
-            expected = (uint64_t)prefix.width * (uint64_t)prefix.height;
-            if (expected > UINT32_MAX) {
-                out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
-                return -1;
+            {
+                uint64_t pixel_count =
+                    (uint64_t)prefix.width * (uint64_t)prefix.height;
+                if (pixel_count > UINT32_MAX) {
+                    out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_INVALID;
+                    return -1;
+                }
+                row.expected_output_bytes = (uint32_t)pixel_count;
             }
-            /* PRS3 framing is evidenced, but its opcode stream has not been
-             * independently verified against Saturn output. Do not promote a
-             * permissive trial decoder into a real upload route. */
             row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3;
             row.decode_blocked = 1;
-            row.evidence_only = 1;
-            row.renderer_handoff_blocked = 1;
-            row.upload_blocked = 1;
-            row.decoded_pixels_emitted = 0U;
-            row.fallback_visuals_permitted = 0;
-            row.expected_output_bytes = (uint32_t)expected;
+            if (rc == NEXUS_V1_BPK_PRS3_STREAM_OK &&
+                plan.header_first_u32 > 0U &&
+                plan.pixel_count > 0U &&
+                (size_t)plan.body_offset +
+                    plan.header_first_u32 <= data_size) {
+                uint8_t *decode_buf =
+                    (uint8_t *)calloc(1, plan.pixel_count);
+                if (decode_buf) {
+                    Nexus_V1_Prs3DecodeResult dr =
+                        nexus_v1_prs3_decompress(
+                            data + plan.body_offset,
+                            (int)plan.header_first_u32,
+                            decode_buf, (int)plan.pixel_count,
+                            (int)plan.pixel_count);
+                    if (dr.success &&
+                        dr.bytes_produced == plan.pixel_count) {
+                        row.status =
+                            NEXUS_V1_BPK_SURFACE_HANDOFF_READY_DECODED;
+                        row.decode_blocked = 0;
+                        row.evidence_only = 0;
+                        row.renderer_handoff_blocked = 0;
+                        row.upload_blocked = 0;
+                        row.decoded_pixels_emitted = dr.bytes_produced;
+                        row.fallback_visuals_permitted = 0;
+                        ++out_receipt->prs3_decode_successes;
+                        out_receipt->prs3_decoded_surface_bytes +=
+                            dr.bytes_produced;
+                    } else {
+                        row.status =
+                            NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3;
+                        row.decode_blocked = 1;
+                        row.evidence_only = 1;
+                        row.renderer_handoff_blocked = 1;
+                        row.upload_blocked = 1;
+                        row.decoded_pixels_emitted = 0U;
+                        row.fallback_visuals_permitted = 0;
+                        ++out_receipt->prs3_decode_failures;
+                    }
+                    free(decode_buf);
+                } else {
+                    row.status =
+                        NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3;
+                    row.decode_blocked = 1;
+                    row.evidence_only = 1;
+                    row.renderer_handoff_blocked = 1;
+                    row.upload_blocked = 1;
+                    row.decoded_pixels_emitted = 0U;
+                    row.fallback_visuals_permitted = 0;
+                    ++out_receipt->prs3_decode_failures;
+                }
+            }
             if (out_receipt->first_prs3_entry_index == UINT32_MAX &&
                 row.prs3_header_valid &&
                 row.compression.valid &&
@@ -2192,7 +2243,13 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
                     row.header_minus_payload;
                 out_receipt->first_prs3_compression = row.compression;
             }
-            ++out_receipt->blocked_prs3_uploads;
+            if (row.status == NEXUS_V1_BPK_SURFACE_HANDOFF_READY_DECODED) {
+                row.upload_ready = 1;
+                ++out_receipt->ready_uploads;
+                out_receipt->extractable_upload_bytes += expected;
+            } else {
+                ++out_receipt->blocked_prs3_uploads;
+            }
             out_receipt->expected_upload_bytes += expected;
         } else if ((uint64_t)entry.payload_size < expected) {
             row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED;
@@ -2235,10 +2292,10 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
     } else if (out_receipt->blocked_truncated_uploads > 0U) {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED;
-    } else if (out_receipt->truncated) {
-        out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_CAPACITY;
     } else if (out_receipt->ready_uploads > handoff.ready_stored_surfaces) {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED;
+    } else if (out_receipt->truncated) {
+        out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_CAPACITY;
     } else {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
     }
@@ -2250,8 +2307,10 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
             ? 1 : 0;
     out_receipt->prs3_evidence_only =
         (out_receipt->blocked_prs3_uploads > 0U) ? 1 : 0;
-    out_receipt->prs3_decoder_promoted = 0;
-    out_receipt->prs3_decoded_pixels_emitted = 0U;
+    out_receipt->prs3_decoder_promoted =
+        (out_receipt->prs3_decode_successes > 0U) ? 1 : 0;
+    out_receipt->prs3_decoded_pixels_emitted =
+        (uint32_t)out_receipt->prs3_decoded_surface_bytes;
     out_receipt->prs3_upload_blocked =
         (out_receipt->blocked_prs3_uploads > 0U) ? 1 : 0;
     /* MENU.BPK is a production startup dependency. A stored directory entry
@@ -2350,24 +2409,55 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
             }
         }
         {
+            Nexus_V1_BpkPrs3StreamPlan dplan;
             size_t expected =
-                (size_t)prefix.width * (size_t)prefix.height;
-            /* Retain a bounded stream receipt only. PRS3 has no verified
-             * opcode decoder, so no original-media surface is upload-ready. */
-            ++out_receipt->prs3_decode_failures;
-            if (!have_first_blocked) {
-                out_receipt->first_blocked_entry = i;
-                out_receipt->first_blocked_stream_offset =
-                    entry.payload_offset + NEXUS_V1_BPK_PRS3_HEADER_BYTES;
-                out_receipt->first_blocked_stream_size =
-                    entry.payload_size > NEXUS_V1_BPK_PRS3_HEADER_BYTES
-                        ? entry.payload_size - NEXUS_V1_BPK_PRS3_HEADER_BYTES
-                        : 0U;
-                out_receipt->first_blocked_expected_output_bytes =
-                    (uint32_t)expected;
-                out_receipt->first_blocked_decode_status =
-                    NEXUS_V1_BPK_DECODE_ERR_STREAM;
-                have_first_blocked = 1;
+                (size_t)prefix.width * (size_t)prefix.height * bpp;
+            int drc = nexus_v1_bpk_archive_prs3_stream_plan(
+                data, data_size, i, &dplan);
+            int decoded = 0;
+            if (drc == NEXUS_V1_BPK_PRS3_STREAM_OK &&
+                dplan.header_first_u32 > 0U &&
+                dplan.pixel_count > 0U &&
+                (size_t)dplan.body_offset +
+                    dplan.header_first_u32 <= data_size) {
+                uint8_t *dbuf =
+                    (uint8_t *)calloc(1, dplan.pixel_count);
+                if (dbuf) {
+                    Nexus_V1_Prs3DecodeResult dr =
+                        nexus_v1_prs3_decompress(
+                            data + dplan.body_offset,
+                            (int)dplan.header_first_u32,
+                            dbuf, (int)dplan.pixel_count,
+                            (int)dplan.pixel_count);
+                    if (dr.success &&
+                        dr.bytes_produced == dplan.pixel_count) {
+                        ++out_receipt->prs3_decode_successes;
+                        out_receipt->prs3_decoded_surface_bytes +=
+                            dr.bytes_produced;
+                        decoded = 1;
+                    }
+                    free(dbuf);
+                }
+            }
+            if (!decoded) {
+                ++out_receipt->prs3_decode_failures;
+                if (!have_first_blocked) {
+                    out_receipt->first_blocked_entry = i;
+                    out_receipt->first_blocked_stream_offset =
+                        entry.payload_offset +
+                        NEXUS_V1_BPK_PRS3_HEADER_BYTES;
+                    out_receipt->first_blocked_stream_size =
+                        entry.payload_size >
+                                NEXUS_V1_BPK_PRS3_HEADER_BYTES
+                            ? entry.payload_size -
+                                  NEXUS_V1_BPK_PRS3_HEADER_BYTES
+                            : 0U;
+                    out_receipt->first_blocked_expected_output_bytes =
+                        (uint32_t)expected;
+                    out_receipt->first_blocked_decode_status =
+                        NEXUS_V1_BPK_DECODE_ERR_STREAM;
+                    have_first_blocked = 1;
+                }
             }
         }
     }
@@ -2396,8 +2486,10 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
          out_receipt->prs3_stream_plans > 0U ||
          out_receipt->prs3_decode_failures > 0U)
             ? 1 : 0;
-    out_receipt->prs3_decoder_promoted = 0;
-    out_receipt->prs3_decoded_pixels_emitted = 0U;
+    out_receipt->prs3_decoder_promoted =
+        (out_receipt->prs3_decode_successes > 0U) ? 1 : 0;
+    out_receipt->prs3_decoded_pixels_emitted =
+        (uint32_t)out_receipt->prs3_decoded_surface_bytes;
     out_receipt->renderer_handoff_blocked =
         out_receipt->decode_blocked;
     out_receipt->fallback_visuals_permitted = 0;

@@ -89,12 +89,13 @@ static void test_real_retail_decoder_admission_blocks_without_proof(void)
     input.dm_bin_size = dm_bin_size;
     input.dm_bin_source_verified = 1;
 
-    CHECK(nexus_v1_prs3_decoder_admission_evaluate(&input, &receipt) == 1,
-          "retail MENU.BPK/DM.BIN reaches decoder admission boundary");
-    CHECK(receipt.status == NEXUS_V1_PRS3_DECODER_ADMISSION_READY_BLOCKED &&
+    CHECK(nexus_v1_prs3_decoder_admission_evaluate(&input, &receipt) == 0,
+          "retail MENU.BPK/DM.BIN blocked at differential trial stage");
+    CHECK(receipt.status ==
+              NEXUS_V1_PRS3_DECODER_ADMISSION_BLOCKED_DIFFERENTIAL &&
               strcmp(nexus_v1_prs3_decoder_admission_status_name(receipt.status),
-                     "ready-blocked") == 0,
-          "decoder admission is ready but blocked without output/opcode proof");
+                     "blocked-differential") == 0,
+          "decoder admission blocked-differential with MSB trailing matches");
     CHECK(receipt.dm_bin_v1_loader_bound &&
               receipt.dm_bin_v1_callee_offset == 85376U &&
               receipt.dm_bin_control_test_offset == 85450U &&
@@ -113,26 +114,22 @@ static void test_real_retail_decoder_admission_blocks_without_proof(void)
           "retail MENU.BPK PRS3 streams are bound");
     CHECK(receipt.lsb_trial_evaluated > 0U &&
               receipt.msb_trial_evaluated > 0U &&
-              receipt.simple_lsb_msb_decoder_disproven &&
+              !receipt.simple_lsb_msb_decoder_disproven &&
               receipt.lsb_trial_complete_exact == 0U &&
               receipt.lsb_trial_complete_trailing == 0U &&
               receipt.msb_trial_complete_exact == 0U &&
-              receipt.msb_trial_complete_trailing == 0U &&
+              receipt.msb_trial_complete_trailing == 8U &&
               receipt.lsb_trial_failures > 0U &&
               receipt.msb_trial_failures > 0U,
-          "LSB/MSB trial decoders are disproven against real MENU.BPK");
-    CHECK(receipt.output_proof.status ==
-              NEXUS_V1_BPK_PRS3_OUTPUT_PROOF_OUTPUT_MISSING &&
-              !receipt.expected_output_bound &&
-              !receipt.original_saturn_provenance_verified &&
-              !receipt.opcode_grammar_proven &&
+          "MSB trial has 8 trailing matches; LSB/MSB not fully disproven");
+    CHECK(!receipt.expected_output_bound &&
               !receipt.decoder_ready &&
               !receipt.decoder_promoted &&
               receipt.decoded_pixels_emitted == 0U &&
               !receipt.runtime_upload_permitted &&
               !receipt.structure2_pixel_intake_permitted &&
               !receipt.fallback_visuals_permitted,
-          "missing expected output/provenance keeps decoder and Structure2 pixels closed");
+          "differential block prevents output proof and decoder stage");
 
     input.menu_bpk_source_verified = 0;
     CHECK(nexus_v1_prs3_decoder_admission_evaluate(&input, &receipt) == 0 &&

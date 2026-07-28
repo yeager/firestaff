@@ -56,7 +56,8 @@ typedef enum {
     NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID = 5,
     /* A parseable archive is not a retail menu route until it is bound to
      * the exact Track 1 MENU.BPK identity. */
-    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE = 6
+    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_SOURCE = 6,
+    NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_DECODED = 7
 } Nexus_V1_MenuBpkRendererHandoffStatus;
 
 /* This is intentionally a startup diagnostic, not a decoder capability.

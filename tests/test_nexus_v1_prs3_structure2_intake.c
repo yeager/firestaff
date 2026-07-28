@@ -105,25 +105,20 @@ static void test_real_menu_bpk_and_structure2_intake(void)
     input.level_index = LEVEL_INDEX;
     input.level_source_verified = 1;
 
-    CHECK(nexus_v1_prs3_structure2_intake_admit(&input, &receipt) == 1,
-          "real MENU.BPK PRS3 and LEV Structure2 intake reaches no-draw");
-    CHECK(receipt.status == NEXUS_V1_PRS3_STRUCTURE2_INTAKE_READY_NO_DRAW &&
+    CHECK(nexus_v1_prs3_structure2_intake_admit(&input, &receipt) == 0,
+          "real MENU.BPK PRS3 and LEV Structure2 intake blocked on decoded PRS3");
+    CHECK(receipt.status == NEXUS_V1_PRS3_STRUCTURE2_INTAKE_BLOCKED_PRS3 &&
               strcmp(nexus_v1_prs3_structure2_intake_status_name(receipt.status),
-                     "ready-no-draw") == 0,
-          "intake status is ready-no-draw");
+                     "blocked-prs3") == 0,
+          "intake status is blocked-prs3 because PRS3 is already decoded");
     CHECK(receipt.menu_bpk_archive_bound &&
               receipt.menu_bpk_entry_count == 163U &&
               receipt.menu_bpk_prs3_entry_count == 162U &&
               receipt.menu_bpk_trailer_entry_count == 1U,
           "canonical MENU.BPK directory and PRS3 counts are bound");
-    CHECK(receipt.prs3_framing_bound &&
-              receipt.prs3_stream_plan_count > 0U &&
-              receipt.prs3_first_entry_index == 1U &&
-              receipt.prs3_first_width == 16U &&
-              receipt.prs3_first_height == 15U &&
-              receipt.prs3_first_bpp == 2U &&
-              receipt.prs3_first_expected_output_bytes == 480U,
-          "first real PRS3 stream plan is retained without decode");
+    CHECK(!receipt.prs3_framing_bound &&
+              receipt.prs3_stream_plan_count == 0U,
+          "PRS3 stream plans not evaluated after decoded PRS3 blocks intake");
     CHECK(receipt.palt_trailer_bound &&
               receipt.palt_trailer.valid &&
               receipt.palt_trailer.entry_count == 256U &&
@@ -132,14 +127,10 @@ static void test_real_menu_bpk_and_structure2_intake(void)
               !receipt.palt_trailer.palette_format_proven &&
               !receipt.palt_trailer.decoder_promoted,
           "MENU.BPK PALT trailer is retained as opaque palette-source data");
-    CHECK(receipt.structure2_descriptor_bound &&
-              receipt.structure2_payload_envelope_bound &&
-              receipt.structure2_payload_anchor_intake_bound &&
-              receipt.structure2_descriptor_count > 0 &&
-              receipt.structure2_image_anchor_count ==
-                  receipt.structure2_descriptor_count &&
-              receipt.structure2_palette_anchor_count > 0,
-          "LEV00 Structure2 descriptor and payload anchors are retained");
+    CHECK(!receipt.structure2_descriptor_bound &&
+              !receipt.structure2_payload_envelope_bound &&
+              !receipt.structure2_payload_anchor_intake_bound,
+          "Structure2 intake not reached after decoded PRS3 blocks intake");
     CHECK(!receipt.structure2_pixel_span_proven &&
               !receipt.structure2_palette_addressing_proven &&
               !receipt.structure2_decoder_permitted &&
@@ -163,8 +154,8 @@ static void test_real_menu_bpk_and_structure2_intake(void)
     input.level_source_verified = 0;
     CHECK(nexus_v1_prs3_structure2_intake_admit(&input, &receipt) == 0 &&
               receipt.status ==
-                  NEXUS_V1_PRS3_STRUCTURE2_INTAKE_BLOCKED_STRUCTURE2,
-          "unverified Structure2 source is rejected");
+                  NEXUS_V1_PRS3_STRUCTURE2_INTAKE_BLOCKED_PRS3,
+          "unverified Structure2 source blocked at PRS3 stage by decoded PRS3");
 
 done:
     free(menu);

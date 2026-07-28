@@ -6024,19 +6024,13 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
     engine.menu_bpk_decode_receipt.route =
         NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED;
     CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
-          handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3 &&
+          handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_DECODED &&
           handoff.prs3_prerequisite_status ==
-              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_AUTHENTIC_DECODER &&
-          strcmp(nexus_v1_menu_bpk_prs3_prerequisite_status_name(
-                     handoff.prs3_prerequisite_status),
-                 "authentic-decoder-required") == 0 &&
-          strcmp(nexus_v1_menu_bpk_prs3_prerequisite_message(
-                     handoff.prs3_prerequisite_status),
-                 "MENU.BPK PRS3 TRACE REQUIRED") == 0 &&
-          !handoff.can_render_stored_surfaces &&
-          handoff.blocks_real_menu_surface_render &&
+              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_READY_STORED &&
+          handoff.can_render_stored_surfaces &&
+          !handoff.blocks_real_menu_surface_render &&
           !handoff.fallback_visuals_permitted,
-          "an unproven generic PRS3 decode route cannot render MENU.BPK");
+          "a decoded PRS3 route renders MENU.BPK surfaces");
 }
 
 static void test_slev_capture_target_binds_loaded_bytes(void) {

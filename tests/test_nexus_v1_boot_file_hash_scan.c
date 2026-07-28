@@ -370,13 +370,15 @@ int main(void) {
                       "Nexus boot binds real MENU.BPK framing to the verified DM.BIN loader without decoding");
             check_int(nexus_v1_menu_bpk_decode_receipt(&engine, &receipt) == 0,
                       "Nexus engine exposes MENU.BPK decode receipt");
-            check_int(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
+            check_int(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
                       "Nexus MENU.BPK runtime route blocks unsupported PRS3 surfaces");
             check_int(receipt.blocked_prs3_surfaces == 162U,
                       "Nexus MENU.BPK receipt preserves PRS3 source surface count");
-            check_int(receipt.prs3_decode_successes == 0U &&
-                          receipt.prs3_decode_failures == 162U &&
-                          receipt.decode_blocked == 1,
+            check_int(receipt.prs3_decode_successes == 162U &&
+                          receipt.prs3_decode_failures == 0U &&
+                          receipt.decode_blocked == 0 &&
+                          receipt.prs3_decoder_promoted == 1 &&
+                          receipt.prs3_decoded_pixels_emitted > 0U,
                       "Nexus MENU.BPK receipt records the PRS3 decoder blocker");
             memset(&upload_receipt, 0, sizeof(upload_receipt));
             memset(upload_rows, 0, sizeof(upload_rows));
@@ -385,10 +387,10 @@ int main(void) {
                           &upload_receipt) == 0,
                       "Nexus engine exposes MENU.BPK upload plan receipt");
             check_int(upload_receipt.route ==
-                          NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3,
+                          NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED,
                       "Nexus MENU.BPK upload plan blocks unsupported PRS3 surfaces");
-            check_int(upload_receipt.ready_uploads == 0U &&
-                          upload_receipt.blocked_prs3_uploads == 162U &&
+            check_int(upload_receipt.ready_uploads == 162U &&
+                          upload_receipt.blocked_prs3_uploads == 0U &&
                           upload_receipt.planned_rows == 162U,
                       "Nexus MENU.BPK upload plan records every blocked surface");
             check_int(upload_receipt.fallback_visuals_permitted == 0,
@@ -400,8 +402,8 @@ int main(void) {
                                 sizeof(upload_rows[0]))) > 0,
                       "Nexus engine exposes bounded MENU.BPK upload rows");
             check_int(upload_rows[0].entry_index == 1U &&
-                          upload_rows[0].upload_ready == 0 &&
-                          upload_rows[0].decode_blocked == 1 &&
+                          upload_rows[0].upload_ready == 1 &&
+                          upload_rows[0].decode_blocked == 0 &&
                           upload_rows[0].stream_offset > 0U,
                       "Nexus MENU.BPK upload row carries blocked PRS3 stream data");
             memset(&handoff, 0, sizeof(handoff));
@@ -410,10 +412,10 @@ int main(void) {
                           &handoff) == 0,
                       "Nexus engine emits MENU.BPK renderer handoff receipt");
             check_int(handoff.status ==
-                          NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3,
+                          NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_DECODED,
                       "Nexus MENU.BPK renderer handoff blocks unsupported PRS3 surfaces");
-            check_int(handoff.can_render_stored_surfaces == 0 &&
-                          handoff.blocks_real_menu_surface_render == 1 &&
+            check_int(handoff.can_render_stored_surfaces == 1 &&
+                          handoff.blocks_real_menu_surface_render == 0 &&
                           handoff.fallback_visuals_permitted == 0,
                       "Nexus MENU.BPK handoff exposes no unsupported surfaces");
             check_int(handoff.surface_entries == 162U &&
@@ -421,7 +423,7 @@ int main(void) {
                       "Nexus MENU.BPK handoff retains PRS3 source provenance");
             check_int(strcmp(nexus_v1_menu_bpk_renderer_handoff_status_name(
                                  handoff.status),
-                             "blocked-prs3") == 0,
+                             "ready-decoded") == 0,
                       "Nexus MENU.BPK handoff status has stable route name");
         } else {
             puts("SKIP: local Nexus MENU.BPK not present for engine decode receipt");

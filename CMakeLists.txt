@@ -2849,6 +2849,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_intak
         tests/test_nexus_v1_prs3_structure2_intake.c
         src/nexus/nexus_v1_prs3_structure2_intake.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/nexus/nexus_v1_dungeon.c
     src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
@@ -2892,6 +2893,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_decoder_admissio
         src/nexus/nexus_v1_prs3_decoder_admission.c
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/nexus/nexus_v1_dungeon.c
     src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
@@ -2916,6 +2918,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_loader_control_f
         src/nexus/nexus_v1_prs3_loader_control_flow.c
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/nexus/nexus_v1_dungeon.c
     src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
@@ -2941,6 +2944,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_sh2_subset_trace
         src/nexus/nexus_v1_prs3_loader_control_flow.c
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/nexus/nexus_v1_dungeon.c
     src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
@@ -2968,6 +2972,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_abi.c
         src/nexus/nexus_v1_prs3_loader_control_flow.c
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/nexus/nexus_v1_dungeon.c
     src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
@@ -3018,6 +3023,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_vdp1_consumer_ev
         src/nexus/nexus_v1_prs3_loader_control_flow.c
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/nexus/nexus_v1_dungeon.c
     src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
@@ -5475,6 +5481,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
@@ -19613,6 +19620,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
@@ -19649,6 +19657,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
@@ -19681,6 +19690,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
@@ -19717,6 +19727,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
@@ -19755,6 +19766,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
@@ -19790,6 +19802,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
@@ -19822,6 +19835,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
@@ -19845,6 +19859,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
@@ -19875,6 +19890,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/nexus/nexus_v1_boot_profile.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
@@ -32210,6 +32226,7 @@ if(BUILD_TESTING)
     add_executable(test_nexus_v1_bpk_archive
         tests/test_nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
     )
     target_include_directories(test_nexus_v1_bpk_archive PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -32250,6 +32267,7 @@ if(BUILD_TESTING)
     add_executable(test_nexus_v1_bpk_surface_class
         tests/test_nexus_v1_bpk_surface_class.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/nexus/nexus_v1_bpx_bpk.c
     )
     target_include_directories(test_nexus_v1_bpk_surface_class PRIVATE
@@ -32296,6 +32314,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_nexus_v1_bpk_prs3_payload_evidence
         tests/test_nexus_v1_bpk_prs3_payload_evidence.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
     )
     target_include_directories(test_nexus_v1_bpk_prs3_payload_evidence PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -32312,6 +32331,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/test_nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/nexus/nexus_v1_dungeon.c
     src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
@@ -34407,6 +34427,7 @@ if(BUILD_TESTING)
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/shared/firestaff_theron_media_classify.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
@@ -34439,6 +34460,7 @@ if(BUILD_TESTING)
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/shared/firestaff_theron_media_classify.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
@@ -34471,6 +34493,7 @@ if(BUILD_TESTING)
         src/shared/asset_status_m12.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/shared/firestaff_theron_media_classify.c
         src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_boot.c
@@ -36980,6 +37003,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
     )
     target_link_libraries(test_theron_v1_launcher_scan_reuse PRIVATE
         firestaff_theron
@@ -37064,6 +37088,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
     )
     target_link_libraries(test_asset_status_scan_metrics PRIVATE
         firestaff_v2
@@ -37104,6 +37129,7 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c

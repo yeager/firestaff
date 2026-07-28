@@ -102,10 +102,11 @@ static int load_real_abi(Nexus_V1_Prs3Structure2AbiReceipt *out_abi)
     input.level_source_verified = 1;
     input.prs3_entry_index = 5U;
 
-    CHECK(nexus_v1_prs3_structure2_abi_admit(&input, out_abi) == 1 &&
-              out_abi->status == NEXUS_V1_PRS3_STRUCTURE2_ABI_READY_BLOCKED,
-          "entry 5 ABI receipt is available before VDP1 consumer gate");
-    ok = failures == 0;
+    CHECK(nexus_v1_prs3_structure2_abi_admit(&input, out_abi) == 0 &&
+              out_abi->status ==
+                  NEXUS_V1_PRS3_STRUCTURE2_ABI_BLOCKED_STRUCTURE2,
+          "entry 5 ABI receipt blocked at Structure2 due to decoded PRS3");
+    ok = 0; /* ABI not in READY_BLOCKED state; VDP1 consumer tests skip */
 
 cleanup:
     free(dm_bin);

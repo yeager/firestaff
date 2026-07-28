@@ -226,7 +226,8 @@ typedef enum {
     NEXUS_V1_BPK_SURFACE_HANDOFF_INVALID = 0,
     NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED = 1,
     NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3 = 2,
-    NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED = 3
+    NEXUS_V1_BPK_SURFACE_HANDOFF_READY_DECODED = 3,
+    NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED = 4
 } Nexus_V1_BpkSurfaceHandoffStatus;
 
 typedef struct {
@@ -883,6 +884,9 @@ typedef struct {
     uint32_t first_prs3_header_minus_payload;
     Nexus_V1_BpkPrs3CompressionDescriptorReceipt first_prs3_compression;
     uint32_t unknown_prs3_mode_entries;
+    uint32_t prs3_decode_successes;
+    uint32_t prs3_decode_failures;
+    uint64_t prs3_decoded_surface_bytes;
     uint32_t blocked_truncated_uploads;
     uint32_t planned_rows;
     uint32_t capacity;

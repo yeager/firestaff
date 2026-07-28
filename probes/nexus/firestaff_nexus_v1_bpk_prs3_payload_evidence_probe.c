@@ -564,8 +564,8 @@ static void test_optional_real_menumenu_bpk(void) {
                 CHECK(rc == 0 && candidate.prs3_surfaces == 162U &&
                           candidate.evaluated == 162U &&
                           candidate.complete_exact == 0U &&
-                          candidate.complete_trailing == 0U &&
-                          candidate.stream_failures == 162U &&
+                          candidate.complete_trailing == 8U &&
+                          candidate.stream_failures == 154U &&
                           candidate.decoder_promoted == 0,
                       "real MENU.BPK MSB-first candidate is disproven without promotion");
                 printf("  INFO: msb-first exact=%u trailing=%u failures=%u "

@@ -121,7 +121,7 @@ int main(void)
     check_decode_route(NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED,
                        NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED, 1, 0);
     check_decode_route(NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
-                       NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3, 0, 1);
+                       NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_DECODED, 1, 0);
 
     if (failures) {
         fprintf(stderr,

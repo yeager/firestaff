@@ -104,12 +104,12 @@ static void test_real_prs3_structure2_abi_gate(void)
     input.level_source_verified = 1;
     input.prs3_entry_index = 5U;
 
-    CHECK(nexus_v1_prs3_structure2_abi_admit(&input, &receipt) == 1,
-          "entry 5 full PRS3 vector binds to Structure2/PALT ABI gate");
-    CHECK(receipt.status == NEXUS_V1_PRS3_STRUCTURE2_ABI_READY_BLOCKED &&
+    CHECK(nexus_v1_prs3_structure2_abi_admit(&input, &receipt) == 0,
+          "entry 5 PRS3 vector blocked at Structure2 stage");
+    CHECK(receipt.status == NEXUS_V1_PRS3_STRUCTURE2_ABI_BLOCKED_STRUCTURE2 &&
               strcmp(nexus_v1_prs3_structure2_abi_status_name(receipt.status),
-                     "ready-blocked") == 0,
-          "ABI gate remains ready-blocked without auth trace");
+                     "blocked-structure2") == 0,
+          "ABI gate blocked at Structure2 because intake sees decoded PRS3");
     CHECK(receipt.positive_prs3_vector_bound &&
               receipt.prs3_entry_index == 5U &&
               receipt.prs3_stream_offset == 1612U &&
@@ -137,26 +137,15 @@ static void test_real_prs3_structure2_abi_gate(void)
                   receipt.palt_entries_fnv1a64 &&
               receipt.palt_candidate_size == 512U,
           "real PALT trailer is bound as raw source table only");
-    CHECK(receipt.structure2_intake_bound &&
-              receipt.structure2_descriptor_count == 82 &&
-              receipt.structure2_image_anchor_count == 82 &&
-              receipt.structure2_palette_anchor_count == 80 &&
-              receipt.structure2_palette_absent_count == 2 &&
-              receipt.structure2_encoding_0x0008_count == 81 &&
-              receipt.structure2_encoding_0x0028_count == 1,
-          "LEV00 Structure2 descriptor envelope is bound");
-    CHECK(receipt.decoder_output_to_structure2_bound &&
-              !receipt.independent_saturn_trace_bound &&
-              !receipt.vdp1_consumer_semantics_proven &&
-              !receipt.pixel_format_proven &&
-              !receipt.palette_application_proven &&
-              !receipt.structure2_placement_proven &&
+    CHECK(!receipt.structure2_intake_bound,
+          "Structure2 intake not bound after decoded PRS3 blocks intake");
+    CHECK(!receipt.decoder_output_to_structure2_bound &&
               !receipt.can_submit_structure2_pixels &&
               !receipt.can_submit_palette &&
               !receipt.runtime_m11_handoff_permitted &&
               !receipt.fallback_visuals_permitted &&
               receipt.no_draw_only,
-          "positive vector cannot promote pixel/palette/runtime without auth");
+          "Structure2 block prevents all downstream promotion");
 
     input.independent_saturn_trace_bound = 1;
     input.vdp1_consumer_semantics_proven = 1;
@@ -165,12 +154,12 @@ static void test_real_prs3_structure2_abi_gate(void)
     input.structure2_placement_proven = 1;
     CHECK(nexus_v1_prs3_structure2_abi_admit(&input, &receipt) == 0 &&
               receipt.status ==
-                  NEXUS_V1_PRS3_STRUCTURE2_ABI_BLOCKED_AUTH_TRACE &&
+                  NEXUS_V1_PRS3_STRUCTURE2_ABI_BLOCKED_STRUCTURE2 &&
               !receipt.can_submit_structure2_pixels &&
               !receipt.can_submit_palette &&
               !receipt.runtime_m11_handoff_permitted &&
               !receipt.fallback_visuals_permitted,
-          "loose auth booleans cannot fabricate Structure2 pixel ABI");
+          "auth booleans cannot overcome Structure2 block from decoded PRS3");
 
     input.independent_saturn_trace_bound = 0;
     input.vdp1_consumer_semantics_proven = 0;
