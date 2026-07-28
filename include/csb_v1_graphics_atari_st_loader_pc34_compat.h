@@ -8,8 +8,8 @@
  *   - Big-endian (Atari ST is big-endian)
  *   - 563 items
  *   - 1 word (u16 BE): number of items
- *   - 1 word per item (u16 BE): compressed byte count
- *   - 1 word per item (u16 BE): decompressed byte count
+ *   - 1 word per item (u16 BE): compressed byte count (one complete table)
+ *   - 1 word per item (u16 BE): decompressed byte count (a second table)
  *   - Data section: items concatenated, each compressed_size bytes
  *   - Items 558-562 are LZW-compressed (the Atari ST HIDDEN CODE
  *     range that gets excluded from integrity checksums); the
@@ -18,8 +18,10 @@
  * This loader does NOT decode the IMG1/IMG2/IMG3 image formats
  * -- that is a Tier 3 follow-up. The loader does:
  *
- *   1. Parse the DMCSB1 header (count + comp/decomp pairs)
- *   2. LZW-decompress each item's data via the existing
+ *   1. Parse the DMCSB1 header (count + separate compressed/decompressed
+ *      size tables)
+ *   2. Copy raw items where the two sizes match; otherwise LZW-decompress
+ *      the compressed items via the existing
  *      DM1_V1_GFX_LzwDecompressPc34Compat() from the DM1 V1 graphics loader
  *   3. Return the decompressed byte buffer for each item
  *

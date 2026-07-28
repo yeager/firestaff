@@ -41730,3 +41730,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   fixed parameter widths, bounded output, unknown-opcode/truncation rejection,
   and required Stop termination. The unit test also parses the local original
   1,802-byte `ANIMATE.SCR` from the staged Atari hard-disk archive.
+- ✅ 2026-07-28 CSB Atari ST DMCSB1 container correction. The Atari loader
+  now reads the format's two complete size tables rather than incorrectly
+  treating them as compressed/decompressed pairs, caches authoritative item
+  offsets, and copies raw items without sending them through LZW. A new
+  unit target covers both compressed and raw items and accepts the real
+  87-item `ANIMATE.DAT` layout from the original utility disk.

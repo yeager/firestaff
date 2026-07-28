@@ -43,23 +43,46 @@ bool csb_atari_st_graphics_loader_open(CSB_AtariStLoader* state, const char* pat
     }
     state->item_count = count;
 
-    /* Read (comp, decomp) word pairs. */
+    /*
+     * DMCSB1 stores two complete tables, not comp/decomp pairs.  This is
+     * significant for ANIMATE.DAT as well as GRAPHICS.DAT: interpreting
+     * them as pairs makes item offsets point into the wrong assets.
+     */
     for (uint16_t i = 0; i < count; ++i) {
-        uint16_t comp_be, decomp_be;
-        if (fread(&comp_be, 2, 1, state->dat_file) != 1 ||
-            fread(&decomp_be, 2, 1, state->dat_file) != 1) {
+        uint16_t comp_be;
+        if (fread(&comp_be, 2, 1, state->dat_file) != 1) {
             fclose(state->dat_file);
             state->dat_file = NULL;
             return false;
         }
         uint16_t comp   = (uint16_t)((comp_be << 8)   | (comp_be >> 8));
-        uint16_t decomp = (uint16_t)((decomp_be << 8) | (decomp_be >> 8));
-        state->items[i].compressed_size   = comp;
-        state->items[i].decompressed_size = decomp;
+        state->items[i].compressed_size = comp;
+    }
+    for (uint16_t i = 0; i < count; ++i) {
+        uint16_t decomp_be;
+        if (fread(&decomp_be, 2, 1, state->dat_file) != 1) {
+            fclose(state->dat_file);
+            state->dat_file = NULL;
+            return false;
+        }
+        state->items[i].decompressed_size =
+            (uint16_t)((decomp_be << 8) | (decomp_be >> 8));
     }
 
     /* The data section starts at the current file offset. */
     state->data_section_offset = (uint32_t)ftell(state->dat_file);
+    {
+        uint32_t item_offset = state->data_section_offset;
+        for (uint16_t i = 0; i < count; ++i) {
+            state->items[i].data_offset = item_offset;
+            if (UINT32_MAX - item_offset < state->items[i].compressed_size) {
+                fclose(state->dat_file);
+                state->dat_file = NULL;
+                return false;
+            }
+            item_offset += state->items[i].compressed_size;
+        }
+    }
     state->loaded = true;
     return true;
 }
@@ -80,17 +103,10 @@ int csb_atari_st_graphics_loader_read_item(const CSB_AtariStLoader* state,
     }
     if (out_buf_size < item->decompressed_size) return -1;
 
-    /* Compute the byte offset of this item in the file:
-     * data_section_offset + sum(comp[0..index-1]). */
-    uint32_t offset = state->data_section_offset;
-    for (uint16_t i = 0; i < index; ++i) {
-        offset += state->items[i].compressed_size;
-    }
-
     /* Read compressed bytes. */
     uint8_t* comp_buf = (uint8_t*)malloc(item->compressed_size);
     if (!comp_buf) return -1;
-    if (fseek(state->dat_file, (long)offset, SEEK_SET) != 0) {
+    if (fseek(state->dat_file, (long)item->data_offset, SEEK_SET) != 0) {
         free(comp_buf);
         return -1;
     }
@@ -98,6 +114,13 @@ int csb_atari_st_graphics_loader_read_item(const CSB_AtariStLoader* state,
         item->compressed_size) {
         free(comp_buf);
         return -1;
+    }
+
+    /* Uncompressed DMCSB1 items are stored verbatim. */
+    if (item->compressed_size == item->decompressed_size) {
+        memcpy(out_buf, comp_buf, item->compressed_size);
+        free(comp_buf);
+        return (int)item->decompressed_size;
     }
 
     /* LZW-decompress using the existing DM1 V1 decoder. */
@@ -131,53 +154,23 @@ static int build_synth_atari_dat(const char* path)
     FILE* f = fopen(path, "wb");
     if (!f) return -1;
 
-    /* Build an LZW-encoded "ABCABCABC" payload (9 bytes).
-     * We rely on the DM1_V1_GFX_LzwDecompressPc34Compat round-trip semantics:
-     * we encode the bytes ourselves into LZW codes that the
-     * decoder can recover. Simplest: encode a single byte stream
-     * that the LZW will turn into literal codes 65/66/67/256/...
-     * To avoid re-implementing an LZW encoder here, just use the
-     * existing decoder's "literal only" path: write three 9-bit
-     * codes (65, 66, 67) and an END_CODE (257).
-     *
-     * 9-bit code 65 = 0x00041 (bits 0..8 of byte 0..1)
-     * 9-bit code 66 = 0x00042
-     * 9-bit code 67 = 0x00043
-     * 9-bit END_CODE = 0x00101 (257)
-     *
-     * Packed little-endian bit stream (LSB first per the LZW
-     * decoder's read_code logic):
-     *  byte 0 bits 0..7: code 65 low 8 bits = 0x41
-     *  byte 1 bits 0..0: code 65 bit 8 = 0, code 66 bits 0..7 = 0x42
-     *  byte 2 bits 0..0: code 66 bit 8 = 0, code 67 bits 0..7 = 0x43
-     *  byte 3 bits 0..0: code 67 bit 8 = 0, code 257 low 8 bits = 0x01
-     *  byte 4 bits 0..0: code 257 bit 8 = 1
-     *
-     * The LZW read_code reads `code_bits` bytes at a time into a
-     * chunk and extracts codes from that chunk. With code_bits=9,
-     * chunk_bytes=9, chunk_bit_count=72 bits = 8 codes. So we
-     * need at least 9 bytes in the input even though we only
-     * need 5 bytes of data. Pad with zeros.
-     */
-    uint8_t lzw_payload[16] = {0};
-    lzw_payload[0] = 0x41;  /* code 65 low 8 */
-    lzw_payload[1] = 0x42;  /* code 65 bit 8 + code 66 low 7 */
-    lzw_payload[2] = 0x43;  /* code 66 bit 8 + code 67 low 7 */
-    lzw_payload[3] = 0x01;  /* code 67 bit 8 + END_CODE low 7 */
-    lzw_payload[4] = 0x01;  /* END_CODE bit 8 */
-    /* Padding to 16 bytes (the chunk reads up to 9 bytes per fill). */
-
-    /* DMCSB1 header: count(u16 BE) + items[count] of { comp(u16 BE), decomp(u16 BE) }. */
-    uint16_t count = 1;
+    /* DMCSB1 header: count, complete compressed-size table, then complete
+     * decompressed-size table (all u16 BE). */
+    uint16_t count = 2;
     uint8_t count_be[2] = { (uint8_t)(count >> 8), (uint8_t)(count & 0xFF) };
     fwrite(count_be, 2, 1, f);
-    uint16_t comp = 16, decomp = 3;
-    uint8_t comp_be[2]   = { (uint8_t)(comp   >> 8), (uint8_t)(comp   & 0xFF) };
-    uint8_t decomp_be[2] = { (uint8_t)(decomp >> 8), (uint8_t)(decomp & 0xFF) };
-    fwrite(comp_be, 2, 1, f);
-    fwrite(decomp_be, 2, 1, f);
-    /* Data: one item. */
-    fwrite(lzw_payload, 1, 16, f);
+    uint16_t comp0 = 3, comp1 = 3, decomp0 = 3, decomp1 = 3;
+    uint8_t comp0_be[2] = { (uint8_t)(comp0 >> 8), (uint8_t)(comp0 & 0xFF) };
+    uint8_t comp1_be[2] = { (uint8_t)(comp1 >> 8), (uint8_t)(comp1 & 0xFF) };
+    uint8_t decomp0_be[2] = { (uint8_t)(decomp0 >> 8), (uint8_t)(decomp0 & 0xFF) };
+    uint8_t decomp1_be[2] = { (uint8_t)(decomp1 >> 8), (uint8_t)(decomp1 & 0xFF) };
+    fwrite(comp0_be, 2, 1, f);
+    fwrite(comp1_be, 2, 1, f);
+    fwrite(decomp0_be, 2, 1, f);
+    fwrite(decomp1_be, 2, 1, f);
+    /* Data: two raw items. */
+    fwrite("ABC", 1, 3, f);
+    fwrite("RAW", 1, 3, f);
 
     fclose(f);
     return 0;
@@ -194,12 +187,15 @@ int csb_atari_st_graphics_loader_self_test(void)
         csb_atari_st_graphics_loader_close(&state);
         return -1;
     }
-    if (state.item_count != 1) {
+    if (state.item_count != 2) {
         csb_atari_st_graphics_loader_close(&state);
         return -1;
     }
-    if (state.items[0].compressed_size != 16 ||
-        state.items[0].decompressed_size != 3) {
+    if (state.items[0].compressed_size != 3 ||
+        state.items[0].decompressed_size != 3 ||
+        state.items[1].compressed_size != 3 ||
+        state.items[1].decompressed_size != 3 ||
+        state.items[1].data_offset != state.data_section_offset + 3U) {
         csb_atari_st_graphics_loader_close(&state);
         return -1;
     }
@@ -210,6 +206,12 @@ int csb_atari_st_graphics_loader_self_test(void)
         return -1;
     }
     if (out[0] != 'A' || out[1] != 'B' || out[2] != 'C') {
+        csb_atari_st_graphics_loader_close(&state);
+        return -1;
+    }
+    memset(out, 0, sizeof(out));
+    rc = csb_atari_st_graphics_loader_read_item(&state, 1, out, sizeof(out));
+    if (rc != 3 || memcmp(out, "RAW", 3) != 0) {
         csb_atari_st_graphics_loader_close(&state);
         return -1;
     }
