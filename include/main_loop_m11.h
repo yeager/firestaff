@@ -24,6 +24,7 @@ typedef struct {
     int windowWidth;       /* Default: 640 */
     int windowHeight;      /* Default: 400 */
     int scaleMode;         /* M11_SCALE_* */
+    int presentationModeOverride; /* M12_PRESENTATION_V*, -1 keeps config. */
     int durationMs;        /* <0 = run until exit, 0 = close
                               immediately after one present. */
     int presentEveryMs;    /* How often to present during the loop.

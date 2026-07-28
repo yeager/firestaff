@@ -15700,6 +15700,9 @@ int M11_GameView_GetBootProbeReceipt(const M11_GameViewState* state,
 
     out->active = state->active ? 1 : 0;
     out->sourceKind = state->sourceKind;
+    out->presentationMode = state->presentationMode;
+    out->presentationWidth = state->presentationWidth;
+    out->presentationHeight = state->presentationHeight;
     snprintf(out->sourceId, sizeof(out->sourceId), "%s", state->sourceId);
     snprintf(out->bootAssetMd5,
              sizeof(out->bootAssetMd5),

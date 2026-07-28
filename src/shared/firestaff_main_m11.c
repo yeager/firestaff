@@ -31,7 +31,8 @@ static void usage(const char* prog) {
             "  --duration <ms>    Run for specified milliseconds (-1 = run until exit, 0 = single frame)\n"
             "  --width <px>        Window width (default: 640)\n"
             "  --height <px>       Window height (default: 400)\n"
-            "  --scale-mode <n>    Graphics mode: 1=V1, 2=V2.1, 3=V2.2\n"
+            "  --scale-mode <n>    Window scaling: 0=1x, 1=2x, 2=3x, 3=4x, 4=fit, 5=stretch\n"
+            "  --presentation-mode <v1|v20|v21|v22> Select game presentation without changing saved settings\n"
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,action,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
             "  --scan-data         Recursively scan asset directory by hash and exit\n"
@@ -189,6 +190,22 @@ static int is_game_id(const char* value) {
             strcmp(value, "dm2") == 0 ||
             strcmp(value, "nexus") == 0 ||
             strcmp(value, "theron") == 0);
+}
+
+static int parse_presentation_mode(const char* value, int* out_mode) {
+    if (!value || !out_mode) return 0;
+    if (strcmp(value, "v1") == 0 || strcmp(value, "0") == 0) {
+        *out_mode = M12_PRESENTATION_V1_ORIGINAL;
+    } else if (strcmp(value, "v20") == 0 || strcmp(value, "1") == 0) {
+        *out_mode = M12_PRESENTATION_V20_FILTERED;
+    } else if (strcmp(value, "v21") == 0 || strcmp(value, "2") == 0) {
+        *out_mode = M12_PRESENTATION_V21_UPSCALED;
+    } else if (strcmp(value, "v22") == 0 || strcmp(value, "3") == 0) {
+        *out_mode = M12_PRESENTATION_V22_MODERN;
+    } else {
+        return 0;
+    }
+    return 1;
 }
 
 int main(int argc, char** argv) {
@@ -370,6 +387,15 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--scale-mode") == 0 && i + 1 < argc) {
             opts.scaleMode = atoi(argv[++i]);
+            continue;
+        }
+        if (strcmp(a, "--presentation-mode") == 0 && i + 1 < argc) {
+            if (!parse_presentation_mode(argv[++i],
+                                         &opts.presentationModeOverride)) {
+                fprintf(stderr,
+                        "firestaff: --presentation-mode must be v1, v20, v21, or v22\n");
+                return 2;
+            }
             continue;
         }
         if (strcmp(a, "--fullscreen") == 0) {

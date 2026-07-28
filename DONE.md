@@ -4,12 +4,12 @@
   dungeon frame with the terminal source session intact. V2.2 remains
   deliberately fail-closed without an admitted finished artpack.
 
-- ✅ 2026-07-28 CSB packaged V2.x app-path verification. The actual
-  `firestaff` boot probe against the hash-admitted local PC 3.4 package
-  reaches the same source-backed runtime pose `(map 0, party 9,0,2)` in V1,
-  V2.0, V2.1 and V2.2. Each mode completed 240 app idle frames after the
-  launcher handoff; this supplements the V2 unit suite with an executable
-  launch-path check.
+- ✅ 2026-07-29 CSB packaged presentation CLI verification. `firestaff`
+  now accepts `--presentation-mode v1|v20|v21|v22` without changing saved
+  settings, and its boot receipt reports the resolved mode and geometry.
+  The real PC3.4 package reaches `(map 0, party 9,0,2)` after 240 frames in
+  V1, V2.0 and V2.1. V2.2 is correctly rejected until its finished-art gate
+  is complete, rather than being mislabeled as an active modern presentation.
 
 - ✅ 2026-07-28 CSB Atari ST original startup renderer and handoff. M11 now
   treats `M11_RENDER_OK` (zero) as success while binding ANIMATE.SCR's P4B1

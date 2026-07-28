@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-PRESENTATION-CLI-RECEIPT:** Closed 2026-07-29. `--presentation-mode`
+  now selects V1/V2.0/V2.1/V2.2 only for that launch and boot receipts expose
+  the resolved mode and geometry. The real PC3.4 CSB probe confirms V1, V2.0
+  and V2.1; V2.2 remains correctly unavailable without a complete artpack.
+
 - **CSB-V2X-FULL-RUNTIME-HANDOFF:** Closed 2026-07-29. The real PC3.4
   M12-to-M11 test now presents every C001 title and C002/C003 door frame
   while advancing, then proves V2.0 and V2.1 reach a visible, source-backed

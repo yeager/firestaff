@@ -2619,6 +2619,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->windowWidth    = 960;
     opts->windowHeight   = 540;
     opts->scaleMode      = M11_SCALE_FIT;
+    opts->presentationModeOverride = -1;
     opts->durationMs     = -1;
     opts->presentEveryMs = 16;
     opts->script         = NULL;
@@ -2851,7 +2852,7 @@ static void m11_phase_a_print_boot_probe_receipt(
             &receipt.dm1HoCBootSummary,
             &dm1Log);
     fprintf(stderr,
-            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d %s\n",
+            "FIRESTAFF BOOT PROBE READY: gameId=%s sourceKind=%d sourceId=%s assetMd5=%s dataDir=%s frames=%d inputs=%d scriptFrames=%d presentationMode=%d presentation=%dx%d phase=%s startupActive=%d startupFrame=%d startupAnimation=%s startupAnimationActive=%d titleFrame=%d titleFrameMax=%d titleReady=%d levelLoaded=%d map=%d party=%d,%d,%d champions=%d runtimeTick=%d dm1WorldTick=%u startedFromLauncher=%d introBypassed=%d %s\n",
             gameId ? gameId : "",
             (int)receipt.sourceKind,
             receipt.sourceId,
@@ -2860,6 +2861,9 @@ static void m11_phase_a_print_boot_probe_receipt(
             advancedFrames,
             scriptInputs,
             scriptFrames,
+            receipt.presentationMode,
+            receipt.presentationWidth,
+            receipt.presentationHeight,
             receipt.startupPhase,
             receipt.startupActive,
             receipt.startupFrame,
@@ -4931,6 +4935,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     menuState.settings.windowWidth = M11_Render_GetWindowWidth();
     menuState.settings.windowHeight = M11_Render_GetWindowHeight();
+    if (o->presentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
+        o->presentationModeOverride < M12_PRESENTATION_MODE_COUNT) {
+        int game_slot = 0;
+        if (o->gameId && strcmp(o->gameId, "csb") == 0) game_slot = 1;
+        else if (o->gameId && strcmp(o->gameId, "dm2") == 0) game_slot = 2;
+        else if (o->gameId && strcmp(o->gameId, "nexus") == 0) game_slot = 3;
+        else if (o->gameId && strcmp(o->gameId, "theron") == 0) game_slot = 4;
+        menuState.settings.graphicsIndex = o->presentationModeOverride;
+        menuState.gameOptions[game_slot].presentationModeIndex =
+            o->presentationModeOverride;
+    }
     useModern = m11_should_use_modern_launcher(&menuState);
     if (useModern) {
         modernRgba = (unsigned char*)calloc((size_t)M11_LAUNCHER_MODERN_WIDTH *

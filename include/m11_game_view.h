@@ -627,6 +627,9 @@ typedef struct {
     M11_GameSourceKind sourceKind;
     char sourceId[M11_BOOT_RECEIPT_SOURCE_ID_CAPACITY];
     char bootAssetMd5[M11_BOOT_RECEIPT_MD5_CAPACITY];
+    int presentationMode;
+    int presentationWidth;
+    int presentationHeight;
     int startedFromLauncher;
     int dm1StartupIntroBypassed;
     int dm1StartupHandoffExecuted;

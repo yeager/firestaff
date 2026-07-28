@@ -530,6 +530,7 @@ static void run_real_launcher_handoff_if_available(void) {
     }
     M12_StartupMenu_BindCSBSaveCandidateIdentity(&menu, 0x9ac34e71u);
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu.gameOptions[1].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     expect_true(intent.valid == 1,
                 "M12 CSB launch intent is valid with real staged data");
@@ -1485,6 +1486,14 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
         expect_true(view.sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
                     view.presentationMode == expected,
                     "M11 resolves CSB V2 mode only through the material gate");
+        {
+            M11_BootProbeReceipt probe;
+            expect_true(M11_GameView_GetBootProbeReceipt(&view, &probe) == 1 &&
+                            probe.presentationMode == expected &&
+                            probe.presentationWidth > 0 &&
+                            probe.presentationHeight > 0,
+                        "CSB V2 boot receipt exposes the resolved presentation mode");
+        }
         expect_true(csb_v2_runtime_is_bound() == 1,
                     "CSB V2 runtime observes the real V1 runtime profile");
         memset(framebuffer, 0, sizeof(framebuffer));
