@@ -23720,6 +23720,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v22_inplace_draw_pc34
         tests/test_csb_v22_inplace_draw_pc34.c
         src/csb/csb_v22_inplace_draw_pc34.c
+        src/csb/csb_v22_modern_assets_pc34.c
         src/csb/csb_v22_shape_cache_pc34.c
         src/csb/csb_v22_shapes.c
         src/csb/csb_v2_presentation_mode_pc34.c

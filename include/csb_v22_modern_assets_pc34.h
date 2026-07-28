@@ -59,6 +59,10 @@ typedef enum {
  * Walks up two levels to ~/.firestaff then appends assets/csb/modern/. */
 void csb_v22_set_manifest_path(const char* dataDir);
 
+/* Returns the resolved modern asset manifest path, or an empty string before
+ * csb_v22_set_manifest_path(). The pointer remains valid until the next set. */
+const char* csb_v22_get_manifest_path(void);
+
 /* csb_v22_validate_manifest — validates the JSON manifest.
  * Returns: 1=complete, 0=partial, -1=invalid/missing */
 int csb_v22_validate_manifest(const char* manifest_path);

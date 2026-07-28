@@ -38,6 +38,7 @@
 #include "csb_v22_inplace_draw_pc34.h"
 #include "csb_v22_inplace_route_pc34.h"
 #include "csb_v22_shape_cache_pc34.h"
+#include "csb_v22_modern_assets_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "dm1_v2_asset_pipeline_pc34.h"
 #include "fs_portable_compat.h"
@@ -212,16 +213,12 @@ int csb_v22_inplace_draw_init(void) {
     /* Resolve cache path from manifest path */
     char cache_path[FSP_PATH_MAX];
     {
-        /* Re-use csb_v22_get_shape_path to find the modern dir.
-         * The cache file lives next to modern_asset_manifest.json. */
+        /* The cache is part of the chosen pack. Do not reconstruct a HOME
+         * path here: launcher-selected artpack roots can be elsewhere. */
         char manifest_path[FSP_PATH_MAX];
-        /* csb_v22 doesn't expose its manifest path; reconstruct from data dir
-         * using the same logic as csb_v22_set_manifest_path. For first cut,
-         * hardcode the conventional path ~/.firestaff/assets/csb/modern/. */
-        const char* home = getenv("HOME");
-        if (!home) home = ".";
-        snprintf(manifest_path, sizeof(manifest_path),
-                 "%s/.firestaff/assets/csb/modern/modern_asset_manifest.json", home);
+        const char* configured_manifest = csb_v22_get_manifest_path();
+        if (!configured_manifest || configured_manifest[0] == '\0') return 0;
+        snprintf(manifest_path, sizeof(manifest_path), "%s", configured_manifest);
         char* last_slash = strrchr(manifest_path, '/');
         if (last_slash) *last_slash = '\0';
         snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", manifest_path);

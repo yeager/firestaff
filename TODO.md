@@ -15,6 +15,15 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V22-ARTPACK-RUNTIME-CACHE:** Closed 2026-07-29. Artpack Studio now
+  serializes manifest-owned PNGs into the bounded `FSV22C` native cache,
+  includes an existing cache in `.fsart` exports, and exposes the same step
+  in the GUI and CLI. CSB V2.2 resolves that cache next to the configured
+  manifest rather than a hard-coded home-directory path. The native test
+  verifies a launcher-configured pack root and exact AARRGGBB pixel order.
+  This closes cache plumbing only; V2.2 remains unavailable until reviewed
+  real CSB art fills the finished-art gate and route coverage is complete.
+
 - **CSB-PRESENTATION-CLI-RECEIPT:** Closed 2026-07-29. `--presentation-mode`
   now selects V1/V2.0/V2.1/V2.2 only for that launch and boot receipts expose
   the resolved mode and geometry. The real PC3.4 CSB probe confirms V1, V2.0

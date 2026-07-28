@@ -44,6 +44,7 @@ python3 -m pip install Pillow
 - Import the edited target into the selected manifest category and asset id.
 - Import and export shareable `.fsart` artpack archives.
 - Validate required slots for the selected game.
+- Build the native `v22_inplace_cache.bin` runtime cache from manifest PNGs.
 - Write `finish_receipt.json` for completed packs.
 - Generate an AI prompt, run an external AI generation command for one asset,
   or batch-generate missing/all assets with an operator custom prompt.
@@ -64,6 +65,11 @@ title_frames/title_0001.png
 
 The studio rejects unsafe archive paths and verifies that the archive game
 matches the selected game before saving the imported manifest.
+
+The archive may also contain `v22_inplace_cache.bin`. Use **Build Runtime
+Cache** after changing art (or `--build-runtime-cache` in the CLI) before
+selecting V2.2 in Firestaff. The cache is a bounded native RGBA representation
+of the manifest PNGs; it does not add or synthesize any image content.
 
 The Firestaff startup menu can store a selected `.fsart` file under Settings /
 Controls / V2.2 Artpack. The launcher persists that path in

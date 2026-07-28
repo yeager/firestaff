@@ -26,6 +26,7 @@ import hashlib
 import json
 import os
 import shutil
+import struct
 import subprocess
 import sys
 import tempfile
@@ -88,6 +89,13 @@ else:
 
 GAMES = ("dm1", "csb", "dm2", "theron", "nexus")
 FSART_SUFFIX = ".fsart"
+V22_CACHE_NAME = "v22_inplace_cache.bin"
+V22_CACHE_MAGIC = b"FSV22C\0\0"
+V22_CACHE_VERSION = 1
+V22_CACHE_HEADER_SIZE = 32
+V22_CACHE_ENTRY_SIZE = 32
+V22_CACHE_MAX_ENTRIES = 256
+V22_CACHE_MAX_DIMENSION = 256
 IMAGE_EXTENSIONS = {".png", ".bmp", ".gif", ".jpg", ".jpeg", ".tga", ".webp"}
 REPO_ROOT = Path(__file__).resolve().parents[1]
 FIRESTAFF_LOGO = REPO_ROOT / "assets" / "branding" / "firestaff-logo.png"
@@ -129,9 +137,14 @@ DM1_REQUIRED_SLOTS = [
 DEFAULT_REQUIRED = {
     "dm1": DM1_REQUIRED_SLOTS,
     "csb": [
-        ("wall_shapes", "csb_wall_d3_carved_hero_01", "csb_wall_d3_carved_hero_01.png"),
-        ("floor_shapes", "csb_floor_plain_hero_01", "csb_floor_plain_hero_01.png"),
-        ("creature_shapes", "csb_creature_demon_hero_01", "csb_creature_demon_hero_01.png"),
+        ("wall_shapes", "wall_dungeon_01", "wall_dungeon_01.png"),
+        ("floor_shapes", "floor_plain_01", "floor_plain_01.png"),
+        ("floor_shapes", "floor_cracked_01", "floor_cracked_01.png"),
+        ("creature_shapes", "creature_chaos_fiend_01", "creature_chaos_fiend_01.png"),
+        ("ui_chrome", "panel_lord_order_01", "panel_lord_order_01.png"),
+        ("champion_portraits", "champion_warrior_csb_01", "champion_warrior_csb_01.png"),
+        ("door_shapes", "door_prison_01", "door_prison_01.png"),
+        ("chaos_runes", "chaos_rune_01", "chaos_rune_01.png"),
     ],
     "dm2": [
         ("wall_shapes", "dm2_wall_cave_hero_01", "dm2_wall_cave_hero_01.png"),
@@ -1099,6 +1112,69 @@ class Artpack:
         tmp.replace(out)
         return out
 
+    def build_v22_runtime_cache(self, max_dimension: int = V22_CACHE_MAX_DIMENSION) -> Path:
+        """Pack reviewed PNG entries into the runtime's FSV22C cache.
+
+        The cache deliberately contains only files named by the manifest.  This
+        keeps `.fsart` authoring portable while letting native runtimes avoid a
+        Python/Pillow dependency during game startup.
+        """
+        if max_dimension < 1 or max_dimension > 1024:
+            raise ValueError("cache max dimension must be between 1 and 1024")
+        self.save()
+        packed: list[tuple[int, int, int, int, bytes]] = []
+        seen: set[tuple[str, str]] = set()
+        for entry in self.entries():
+            key = (entry.category, entry.asset_id)
+            if key in seen:
+                raise ValueError(f"duplicate manifest asset: {entry.category}/{entry.asset_id}")
+            seen.add(key)
+            image_path = self.asset_path(entry)
+            if not image_path.is_file():
+                raise ValueError(f"missing manifest image: {image_path}")
+            with Image.open(image_path) as source:
+                image = ensure_rgba(source).copy()
+            if image.width <= 0 or image.height <= 0:
+                raise ValueError(f"invalid image dimensions: {image_path}")
+            scale = min(1.0, max_dimension / image.width, max_dimension / image.height)
+            if scale < 1.0:
+                size = (max(1, round(image.width * scale)), max(1, round(image.height * scale)))
+                image = image.resize(size, Image.Resampling.LANCZOS)
+            # Native cache pixels are uint32 AARRGGBB. On little-endian hosts
+            # that means B,G,R,A byte order in the file.
+            rgba = image.tobytes("raw", "RGBA")
+            bgra = bytearray(len(rgba))
+            for offset in range(0, len(rgba), 4):
+                r, g, b, a = rgba[offset:offset + 4]
+                bgra[offset:offset + 4] = bytes((b, g, r, a))
+            packed.append((fnv1a32(entry.category.encode("utf-8")),
+                           fnv1a32(entry.asset_id.encode("utf-8")),
+                           image.width, image.height, bytes(bgra)))
+        if not packed:
+            raise ValueError("cannot build a runtime cache without manifest assets")
+        if len(packed) > V22_CACHE_MAX_ENTRIES:
+            raise ValueError(f"runtime cache supports at most {V22_CACHE_MAX_ENTRIES} assets")
+
+        data_offset = V22_CACHE_HEADER_SIZE + len(packed) * V22_CACHE_ENTRY_SIZE
+        entries = bytearray()
+        pixels = bytearray()
+        for category_hash, asset_hash, width, height, rgba in packed:
+            entries.extend(struct.pack("<6I8x", category_hash, asset_hash, width, height,
+                                       len(rgba), data_offset + len(pixels)))
+            pixels.extend(rgba)
+        cache = bytearray(V22_CACHE_HEADER_SIZE)
+        cache[:8] = V22_CACHE_MAGIC
+        struct.pack_into("<2I", cache, 8, V22_CACHE_VERSION, len(packed))
+        cache.extend(entries)
+        cache.extend(pixels)
+        if len(cache) > 64 * 1024 * 1024:
+            raise ValueError("runtime cache exceeds the 64 MiB native safety limit")
+        output = self.root / V22_CACHE_NAME
+        temporary = output.with_suffix(".bin.tmp")
+        temporary.write_bytes(cache)
+        temporary.replace(output)
+        return output
+
     def export_fsart(self, archive_path: Path) -> Path:
         self.save()
         archive_path = archive_path.expanduser()
@@ -1110,6 +1186,9 @@ class Artpack:
             receipt = self.root / "finish_receipt.json"
             if receipt.exists():
                 zf.write(receipt, "finish_receipt.json")
+            runtime_cache = self.root / V22_CACHE_NAME
+            if runtime_cache.exists():
+                zf.write(runtime_cache, V22_CACHE_NAME)
             for entry in self.entries():
                 path = self.asset_path(entry)
                 if path.exists():
@@ -1303,6 +1382,7 @@ class ArtpackStudio(tk.Tk):
         ttk.Button(top, text="Browse", command=self.browse_pack).pack(side="left", padx=4)
         ttk.Button(top, text="Open/Create", command=self.open_pack).pack(side="left")
         ttk.Button(top, text="Validate", command=self.validate_pack).pack(side="left", padx=4)
+        ttk.Button(top, text="Build Runtime Cache", command=self.build_runtime_cache).pack(side="left")
         ttk.Button(top, text="Write Receipt", command=self.write_receipt).pack(side="left")
         ttk.Button(top, text="Import .fsart", command=self.import_fsart_dialog).pack(side="left", padx=(10, 4))
         ttk.Button(top, text="Export .fsart", command=self.export_fsart_dialog).pack(side="left")
@@ -1840,6 +1920,16 @@ class ArtpackStudio(tk.Tk):
             self.log_line("Validation passed for required slots")
             messagebox.showinfo("Validation passed", "Required slots are complete.", parent=self)
 
+    def build_runtime_cache(self) -> None:
+        if not self.pack:
+            return
+        try:
+            cache = self.pack.build_v22_runtime_cache()
+            self.log_line(f"Built V2.2 runtime cache: {cache} ({cache.stat().st_size:,} bytes)")
+            messagebox.showinfo("Runtime cache", f"Built {cache.name}\n{cache.stat().st_size:,} bytes", parent=self)
+        except Exception as exc:
+            messagebox.showerror("Runtime cache failed", str(exc), parent=self)
+
     def write_receipt(self) -> None:
         if not self.pack:
             return
@@ -1905,6 +1995,11 @@ def self_test() -> int:
         data = json.loads(receipt.read_text(encoding="utf-8"))
         assert data["gateTarget"] == "FINISHED_REAL"
         assert len(data["reviewedSlots"]) == len(DM1_REQUIRED_SLOTS)
+        cache = pack.build_v22_runtime_cache()
+        raw_cache = cache.read_bytes()
+        assert raw_cache[:8] == V22_CACHE_MAGIC
+        assert struct.unpack_from("<I", raw_cache, 8)[0] == V22_CACHE_VERSION
+        assert struct.unpack_from("<I", raw_cache, 12)[0] == len(DM1_REQUIRED_SLOTS)
         archive = Path(td) / "dm1-modern.fsart"
         pack.export_fsart(archive)
         assert archive.exists()
@@ -2010,6 +2105,8 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     ap.add_argument("--pack-dir", type=Path)
     ap.add_argument("--self-test", action="store_true")
     ap.add_argument("--screenshot", type=Path, help="Render a static UI screenshot preview and exit")
+    ap.add_argument("--build-runtime-cache", action="store_true",
+                    help="Build v22_inplace_cache.bin for --game/--pack-dir and exit")
     ap.add_argument("--smoke-ui", action="store_true", help="Create and validate the GUI widget tree, then exit")
     return ap.parse_args(argv)
 
@@ -2021,6 +2118,11 @@ def main(argv: list[str]) -> int:
     if args.screenshot:
         out = render_demo_screenshot(args.screenshot, args.game)
         print(out)
+        return 0
+    if args.build_runtime_cache:
+        pack = Artpack(args.game, args.pack_dir or default_modern_dir(args.game))
+        pack.load_or_create()
+        print(pack.build_v22_runtime_cache())
         return 0
     app = ArtpackStudio(args.game, args.pack_dir)
     if args.smoke_ui:

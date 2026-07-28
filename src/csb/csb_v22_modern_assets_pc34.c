@@ -246,6 +246,10 @@ void csb_v22_set_manifest_path(const char* dataDir) {
                  modernDir, "modern_asset_manifest.json");
 }
 
+const char* csb_v22_get_manifest_path(void) {
+    return g_v22_manifest_path;
+}
+
 /* csb_v22_validate_manifest — validates the JSON manifest.
  *
  * Checks:

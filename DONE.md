@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 CSB V2.2 Artpack Studio/runtime cache handoff. Artpack Studio
+  now creates the `FSV22C` cache consumed by the native in-place renderer,
+  preserves it in `.fsart` archives, and offers the build through both GUI
+  and CLI. The renderer locates the cache beside the manifest selected by
+  launch configuration instead of reconstructing a `$HOME` path. Verified by
+  the Artpack Studio self-test plus CSB native cache and manifest tests. This
+  is cache plumbing, not promotion of the incomplete local CSB art pack.
+
 - ✅ 2026-07-29 CSB V2.0/V2.1 full runtime handoff. The real PC3.4 M12/M11
   regression now presents each source-owned C001/C002/C003 phase while it
   advances, then proves the selected V2.0/V2.1 routes reach a visible F0128
