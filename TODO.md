@@ -21694,3 +21694,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - [x] 2026-07-28 Reauthenticate the CSBWin `EDT_Skins` save-tail fixture with
   its FNV receipt. The phase-7 renderer now proves verified saved skin columns
   override dungeon defaults while a stale tail remains rejected.
+
+- [x] 2026-07-28 Restore CSBWin `DSAINDEX::ReadTracing` state during both
+  report-backed and file-backed CSBWin resume. A verified EXPOOL tracing
+  record (`0x05070000`) now becomes runtime-owned DSA bitmap state, while an
+  absent record remains valid and malformed/truncated EXPOOL data fails
+  closed. The remaining CSBWin save task is a positive operator-owned corpus,
+  not this previously disconnected authenticated field.

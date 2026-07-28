@@ -41712,3 +41712,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   subtype (53) through the source-locked native `G0237 -> G0209` mapping,
   loads only the matching `GRAPHICS.DAT` entry, and fails closed otherwise.
   The local real-asset composition test passes.
+- ✅ 2026-07-28 CSBWin DSA tracing resume handoff. Both verified CSBWin
+  resume entry points now invoke the existing EXPOOL `DSAINDEX::ReadTracing`
+  parser after staging the authenticated body and before publishing the
+  runtime profile. The new runtime regression builds a real-shape `0x05070000`
+  EXPOOL record and proves all eight tracing words plus the enabled-bit count
+  become available through `csb_v1_runtime_get_csbwin_dsa_tracing()`.

@@ -19397,6 +19397,12 @@ int csb_v1_runtime_apply_csbwin_resume_report(
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         return -1;
     }
+    /* CSBWin DSA.cpp DSAINDEX::ReadTracing restores the optional EXPOOL
+     * tracing bitmap together with an accepted save body. */
+    if (csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
+        csb_v1_dungeon_set_current_level(previous_dungeon_level);
+        return -1;
+    }
     /* A core-only report has no Extended Features preamble. CSBWin clears its
      * DSA/game-info/index owners before loading the save body. */
     csb_v1_chaos_init(&candidate.csbwin_extended_dsa_state);
@@ -19495,6 +19501,11 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     candidate = *profile;
     previous_dungeon_level = csb_v1_dungeon_get_current_level();
     if (csb_v1_runtime_stage_csbwin_resume_report(&candidate, &report) != 0) {
+        csb_v1_dungeon_set_current_level(previous_dungeon_level);
+        free(bytes);
+        return -1;
+    }
+    if (csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         free(bytes);
         return -1;

@@ -83,6 +83,21 @@ static void test_write_appended_expool_tail(uint8_t *tail,
     tail[4u * 4u + 3u] = 0x84u;
 }
 
+static void test_write_appended_dsa_tracing_tail(uint8_t *tail)
+{
+    const uint32_t record_id = CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID;
+    const uint32_t hash = record_id * 0xbb40e62du;
+    const uint32_t bucket = 32u + (hash >> 27);
+
+    memset(tail, 0, CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
+    test_write_le16(tail, 2u, 10u);
+    test_write_le32(tail, bucket * 4u, 1u);
+    test_write_le32(tail, 2u * 4u, record_id);
+    test_write_le32(tail, 3u * 4u, 0x80000001u);
+    test_write_le32(tail, 4u * 4u, 0x00000002u);
+    test_write_le32(tail, 10u * 4u, 0x00000080u);
+}
+
 static uint16_t test_scramble_block(uint8_t *buf, uint16_t initial_hash,
                                     uint16_t numword)
 {
@@ -6760,6 +6775,69 @@ static void test_csbwin_core_save_export_roundtrips_runtime(void)
     remove(native_path);
 }
 
+static void test_csbwin_resume_restores_appended_dsa_tracing(void)
+{
+    uint8_t bytes[8192];
+    uint8_t tail[CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES];
+    size_t size;
+    CSB_V1_CSBWin512BodyReport body;
+    CSB_V1_CSBWinDSATracingReport tracing;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_RuntimeProfile file_profile;
+    char path[512];
+    const char *tmp_root;
+    FILE *fp;
+
+    size = test_build_full_csbwin_resume_fixture(bytes, sizeof(bytes), 0);
+    CHECK(size == 4054u,
+          "CSBWin DSA tracing fixture builds a verified core body");
+    test_write_appended_dsa_tracing_tail(tail);
+    memcpy(bytes + size, tail, sizeof(tail));
+    size += sizeof(tail);
+    memset(&body, 0, sizeof(body));
+    CHECK(csb_v1_csbwin_512_verify_save_body(bytes, size, 0u, &body) ==
+              CSB_V1_CSBWIN_512_OK,
+          "CSBWin DSA tracing fixture verifies with its EXPOOL tail");
+    csb_v1_runtime_init(&profile, NULL);
+    CHECK(csb_v1_runtime_apply_csbwin_resume_report(&profile, &body) == 0,
+          "CSBWin resume report accepts a verified DSA tracing tail");
+    memset(&tracing, 0, sizeof(tracing));
+    CHECK(csb_v1_runtime_get_csbwin_dsa_tracing(&profile, &tracing) == 0 &&
+              tracing.valid == 1 && tracing.present == 1 &&
+              tracing.record_id == CSB_V1_CSBWIN_DSA_TRACING_RECORD_ID &&
+              tracing.payload_bytes == 32u && tracing.enabled_dsa_count == 4u &&
+              tracing.words[0] == 0x80000001u &&
+              tracing.words[1] == 0x00000002u &&
+              tracing.words[7] == 0x00000080u,
+          "CSBWin resume report materializes DSA.cpp tracing words from EXPOOL");
+    csb_v1_runtime_cleanup(&profile);
+
+    tmp_root = getenv("TMPDIR");
+    if (!tmp_root || tmp_root[0] == '\0') tmp_root = ".";
+    snprintf(path, sizeof(path), "%s/firestaff_csbwin_dsa_%lu.sav",
+             tmp_root, (unsigned long)size);
+    remove(path);
+    fp = fopen(path, "wb");
+    CHECK(fp != NULL, "CSBWin DSA tracing fixture opens a temporary save");
+    if (fp) {
+        CHECK(fwrite(bytes, 1u, size, fp) == size,
+              "CSBWin DSA tracing fixture writes its complete save");
+        fclose(fp);
+        csb_v1_runtime_init(&file_profile, NULL);
+        CHECK(csb_v1_runtime_apply_csbwin_resume_file(
+                  &file_profile, path, 0u) == 0,
+              "CSBWin file resume accepts a verified DSA tracing tail");
+        memset(&tracing, 0, sizeof(tracing));
+        CHECK(csb_v1_runtime_get_csbwin_dsa_tracing(
+                  &file_profile, &tracing) == 0 &&
+                  tracing.present == 1 && tracing.enabled_dsa_count == 4u &&
+                  tracing.words[7] == 0x00000080u,
+              "CSBWin file resume materializes DSA tracing words from EXPOOL");
+        csb_v1_runtime_cleanup(&file_profile);
+    }
+    remove(path);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Runtime Tick Accumulator Follow-up ===\n\n");
@@ -6799,6 +6877,7 @@ int main(void)
     test_csbwin_resume_file_applies_runtime_handoff();
     test_csbwin_extended_resume_file_handoff();
     test_csbwin_core_save_export_roundtrips_runtime();
+    test_csbwin_resume_restores_appended_dsa_tracing();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {
         puts("ok: CSB V1 runtime tick boundary accumulates sub-55ms frame slices, fires source-locked V1 quanta, and dispatches timeline events before game_time increments");
