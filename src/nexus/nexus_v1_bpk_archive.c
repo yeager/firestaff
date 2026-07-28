@@ -793,11 +793,36 @@ int nexus_v1_bpk_archive_decode_surface(
             (rc == NEXUS_V1_BPK_EXTRACT_ERR_TRUNCATED ?
              NEXUS_V1_BPK_DECODE_ERR_TRUNCATED : NEXUS_V1_BPK_DECODE_ERR_ARCHIVE);
     }
-    /* The former literal/back-reference trial implementation remains in the
-     * bounded evidence walkers below. It has no original caller, opcode, or
-     * termination proof, so public decode must not turn even a synthetic
-     * stream into a surface that a future host could accidentally consume. */
-    return NEXUS_V1_BPK_DECODE_ERR_STREAM;
+    {
+        Nexus_V1_BpkPrs3StreamPlan plan;
+        int prc = nexus_v1_bpk_archive_prs3_stream_plan(
+            data, data_size, index, &plan);
+        if (prc != NEXUS_V1_BPK_PRS3_STREAM_OK ||
+            plan.header_first_u32 == 0U || plan.pixel_count == 0U ||
+            (size_t)plan.body_offset + plan.header_first_u32 > data_size)
+            return NEXUS_V1_BPK_DECODE_ERR_STREAM;
+        expected = (size_t)plan.pixel_count;
+        if (expected > out_size) return NEXUS_V1_BPK_DECODE_ERR_OUTPUT_TOO_SMALL;
+        Nexus_V1_Prs3DecodeResult dr = nexus_v1_prs3_decompress(
+            data + plan.body_offset, (int)plan.header_first_u32,
+            out, (int)plan.pixel_count, (int)plan.pixel_count);
+        if (!dr.success || dr.bytes_produced != plan.pixel_count)
+            return NEXUS_V1_BPK_DECODE_ERR_STREAM;
+        *out_written = (size_t)dr.bytes_produced;
+        if (out_surface) {
+            out_surface->entry_index = index;
+            out_surface->width = prefix.width;
+            out_surface->height = prefix.height;
+            out_surface->mode = prefix.mode;
+            out_surface->pixel_count = plan.pixel_count;
+            out_surface->layout.bpp = bpp;
+            out_surface->layout.rowstride = prefix.width * bpp;
+            out_surface->layout.surface_bytes = (uint32_t)dr.bytes_produced;
+            out_surface->layout.surface_class =
+                nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+        }
+        return NEXUS_V1_BPK_DECODE_OK;
+    }
 }
 
 const char *nexus_v1_bpk_surface_decode_status_name(int status) {
