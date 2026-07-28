@@ -1501,6 +1501,83 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
     }
 }
 
+/* The Atari ST package has its own ANIMATE.SCR/DAT startup owner rather than
+ * the PC34 C001/C004 sequence.  Keep this optional real-data lane separate
+ * from the PC test above: it proves that the source script crosses its final
+ * VBlank into the normal M11 runtime in every supported presentation mode. */
+static void run_real_atari_st_launcher_handoffs_if_available(void) {
+    static const int requested_modes[] = {
+        M12_PRESENTATION_V1_ORIGINAL,
+        M12_PRESENTATION_V20_FILTERED,
+        M12_PRESENTATION_V21_UPSCALED,
+        M12_PRESENTATION_V22_MODERN
+    };
+    const char *data_dir = getenv("FIRESTAFF_CSB_ATARI_ST_ROOT");
+    size_t mode_index;
+
+    if (!data_dir || !data_dir[0]) {
+        expect_skip("FIRESTAFF_CSB_ATARI_ST_ROOT is unset; no Atari ST package");
+        return;
+    }
+    for (mode_index = 0u;
+         mode_index < sizeof(requested_modes) / sizeof(requested_modes[0]);
+         ++mode_index) {
+        M12_StartupMenuState menu;
+        M11_GameViewState view;
+        M12_LaunchIntent intent;
+        unsigned char framebuffer[320 * 200];
+        const int requested = requested_modes[mode_index];
+        int tick;
+        int animation_pixels_visible = 0;
+
+        init_menu_without_gallery(&menu, data_dir, "csb");
+        dismiss_initial_message(&menu);
+        if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "csb")) {
+            expect_true(0, "M12 admits the real Atari ST CSB package");
+            M12_StartupMenu_Destroy(&menu);
+            continue;
+        }
+        menu.selectedIndex = 1;
+        menu.activatedIndex = 1;
+        menu.launchRequested = 1;
+        menu.settings.graphicsIndex = requested;
+        menu.gameOptions[1].presentationModeIndex = requested;
+        csb_v2_presentation_mode_set_m12(requested);
+        intent = M12_StartupMenu_GetLaunchIntent(&menu);
+        if (requested == M12_PRESENTATION_V22_MODERN &&
+            csb_v2_presentation_mode_get() != CSB_V2_PM_V22_MODERN) {
+            expect_true(intent.valid == 0,
+                        "M12 blocks Atari ST V2.2 when its material gate is closed");
+            M12_StartupMenu_Destroy(&menu);
+            continue;
+        }
+        expect_true(intent.valid == 1 && intent.presentationMode == requested,
+                    "M12 retains the requested Atari ST CSB presentation mode");
+        M11_GameView_Init(&view);
+        expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                    "M11 opens the Atari ST CSB package through M12");
+        for (tick = 0; tick < 800 && view.csbState.startup_title_active;
+             ++tick) {
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            if (count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0) {
+                animation_pixels_visible = 1;
+            }
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        }
+        expect_true(animation_pixels_visible,
+                    "Atari ST ANIMATE.SCR presents source-backed animation frames");
+        expect_true(!view.csbState.startup_title_active &&
+                        view.csbState.level_loaded &&
+                        view.csbAtariStRuntimeHandoffComplete,
+                    "Atari ST ANIMATE.SCR reaches its source-owned FTLCODE handoff");
+        expect_true(view.presentationMode == requested,
+                    "Atari ST runtime retains the requested presentation mode");
+        M11_GameView_Shutdown(&view);
+        M12_StartupMenu_Destroy(&menu);
+    }
+}
+
 int main(void) {
     printf("=== CSB V1 M12/M11 launcher handoff boundary ===\n");
     expect_true(csb_v1_startup_sequence_source_order_valid_pc34(),
@@ -1515,6 +1592,7 @@ int main(void) {
     run_empty_launcher_boundary();
     run_real_launcher_handoff_if_available();
     run_real_v2_launcher_handoffs_if_available();
+    run_real_atari_st_launcher_handoffs_if_available();
 
     printf("\nCSB V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",
            g_passed, g_failures, g_skipped);

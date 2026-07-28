@@ -5121,7 +5121,7 @@ static int m11_csb_present_atari_st_startup(M11_GameViewState *state,
         rgb6[color][1] = (uint8_t)(rgb[1] >> 2);
         rgb6[color][2] = (uint8_t)(rgb[2] >> 2);
     }
-    if (!M11_Render_SetIndexedPaletteRgb6(rgb6)) {
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) {
         return 0;
     }
     m11_csb_present_startup_raster(state->csbAtariStAnimationPixels,

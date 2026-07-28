@@ -692,6 +692,13 @@ that its exact runtime path is not already source-locked and tested.
    initial party pose. The remaining work here is broader normal-runtime
    viewport/HUD consumption and packaged macOS app-window capture; do not
    replace any missing source raster with generated artwork.
+   2026-07-28: the separate original Atari ST route now presents
+   `ANIMATE.SCR`/`ANIMATE.DAT` through M11 correctly. The palette setter's
+   success code is zero, so its former boolean check discarded every genuine
+   source frame as a failure. The corrected route is real-data regression
+   tested through the complete 2,036-VBlank script and its FTLCODE handoff
+   in V1, V2.0, V2.1 and V2.2. Atari ST live dungeon/HUD material remains distinct
+   work; it must not be routed through PC34 C017/C040 session ownership.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

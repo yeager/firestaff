@@ -1,9 +1,10 @@
-- ✅ 2026-07-28 CSB Atari ST original runtime handoff verification. The
-  original hard-disk package booted through `ANIMATE.SCR`/`ANIMATE.DAT` at
-  frame zero and reached the package-owned game runtime after 1,000 frames:
-  startup inactive, level loaded, map 0, party 9,0,2, runtime tick 259. This
-  is a real-data boot probe; app-window and audible-device capture remain
-  separate work.
+- ✅ 2026-07-28 CSB Atari ST original startup renderer and handoff. M11 now
+  treats `M11_RENDER_OK` (zero) as success while binding ANIMATE.SCR's P4B1
+  palette, so authentic `ANIMATE.SCR`/`ANIMATE.DAT` frames no longer collapse
+  to black. A real hard-disk package regression runs the full 2,036-VBlank
+  script and verifies source pixels plus the FTLCODE handoff for V1, V2.0,
+  V2.1 and V2.2. Atari ST live dungeon/HUD material remains separately unimplemented;
+  it is deliberately not passed through PC34 C017/C040 ownership.
 
 - ✅ 2026-07-28 CSB V2.x unified verification lane. All 41 registered
   V2.0/V2.1/V2.2 tests are now appended to the shared `csb` CTest label,
