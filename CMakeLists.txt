@@ -3937,6 +3937,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_champion_status_layout_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_atari_st_animation_assets.c
+    src/csb/csb_v1_audio_runtime_pc34_compat.c
     src/csb/csb_v1_atari_st_animation_discovery.c
     src/csb/csb_v1_animation_script.c
     src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
@@ -30078,6 +30079,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_swsh_source_audio_pc34_
     endif()
     add_test(NAME csb_v1_swsh_source_audio_pc34_compat
              COMMAND test_csb_v1_swsh_source_audio_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_st_sound_audio.c")
+    add_executable(test_csb_v1_atari_st_sound_audio
+        tests/test_csb_v1_atari_st_sound_audio.c)
+    target_include_directories(test_csb_v1_atari_st_sound_audio PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_atari_st_sound_audio PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_st_sound_audio PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_atari_st_sound_audio
+             COMMAND test_csb_v1_atari_st_sound_audio)
+    set_tests_properties(csb_v1_atari_st_sound_audio PROPERTIES
+        LABELS "tier2;csb;atari;audio;data_free")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_boot_swoosh_source_pc34_compat.c")

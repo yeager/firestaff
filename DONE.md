@@ -41785,7 +41785,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   and active-palette selection in one call.
 - ✅ 2026-07-28 CSB full labelled regression. After building the one shared
   explosion-runtime executable missing from the local build tree, the complete
-  CTest `csb` label selection passed 63/63. This includes V1 startup, save,
+  CTest `csb` label selection passed 64/64. This includes V1 startup, save,
   DSA, viewport, HUD and Atari tests together with the V2.x suite.
 - ✅ 2026-07-28 CSB Atari ST indexed host handoff. The source presentation
   route now emits the original 320x200 four-bit image indices plus its decoded
@@ -41846,3 +41846,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `Pexec("A:\\FTLCODE")` ownership without entering the incompatible PC34
   TITLE.C/ENTRANCE.C route. A real original-package 1,000-frame boot probe
   reaches runtime with `DUNGEON.DAT` loaded at map 0, `(9,0)`, direction 2.
+- ✅ 2026-07-28 CSB Atari ST animation audio. The verified ANIMATE.SCR route
+  now carries both original opcode-12 SND1 calls through their source VBlank
+  and Timer-A period into M11. `SOUND.C F0060` packed amplitudes and F0061's
+  three PSG loud tables are decoded to the SDL transport with source hashes;
+  malformed, altered, or invalid-period data is rejected without a fallback.
+  The staged original proves SND1 item 86 followed by item 85 at period 112.

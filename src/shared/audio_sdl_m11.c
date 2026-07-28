@@ -3,6 +3,7 @@
 #include "song_dat_loader_v1.h"
 #include "sound_event_snd3_map_v1.h"
 #include "swsh_frontend_pc34_compat.h"
+#include "csb_v1_audio_runtime_pc34_compat.h"
 
 #include <math.h>
 #include <stdint.h>
@@ -1155,6 +1156,73 @@ int M11_Audio_PlayCsbSwshPcm(M11_AudioState* state,
     }
 #endif
     return 1;
+}
+
+int M11_Audio_PlayCsbAtariStPsg(M11_AudioState* state,
+                                const unsigned char* source,
+                                int sourceBytes,
+                                int sourcePeriod,
+                                unsigned int sourceHash) {
+    CsbV1StSoundDecodeResult decoded;
+    uint8_t* levels = NULL;
+    size_t level_count;
+    unsigned int source_rate;
+    unsigned int output_count;
+    unsigned int output_index;
+
+    if (!state || !state->initialized || !source || sourceBytes < 3 ||
+        sourcePeriod <= 10 || sourceHash == 0u ||
+        m11_fnv1a_bytes(source, sourceBytes) != sourceHash) {
+        return 0;
+    }
+    level_count = ((size_t)source[0] << 8) | source[1];
+    if (level_count == 0u || level_count > 65536u ||
+        (source_rate = 2457600u / (4u * (unsigned int)sourcePeriod)) == 0u) {
+        return 0;
+    }
+    levels = (uint8_t*)malloc(level_count);
+    if (!levels || csb_v1_audio_runtime_decode_st_sound(source,
+            (size_t)sourceBytes, 0u, levels, level_count, &decoded) != 0 ||
+        decoded.sampleCount != level_count) goto done;
+    output_count = (unsigned int)((level_count * M11_AUDIO_SAMPLE_RATE +
+        source_rate - 1u) / source_rate);
+    if (output_count == 0u || output_count > 262144u ||
+        !m11_sound_reserve(&state->csbAtariStPsg, (int)output_count)) goto done;
+    for (output_index = 0u; output_index < output_count; ++output_index) {
+        size_t source_index = (size_t)output_index * source_rate /
+            M11_AUDIO_SAMPLE_RATE;
+        CsbV1PsgChannelAmplitudes amplitudes;
+        int summed;
+        if (source_index >= level_count) source_index = level_count - 1u;
+        amplitudes = csb_v1_audio_runtime_channel_amplitudes(
+            (int16_t)levels[source_index]);
+        summed = (int)amplitudes.channelA + (int)amplitudes.channelB +
+            (int)amplitudes.channelC;
+        /* F0061 writes all three original PSG amplitude registers. The host
+         * stream is their centred mono electrical level at Timer-A cadence. */
+        state->csbAtariStPsg.samples[output_index] =
+            ((float)summed / 45.0f) * 2.0f - 1.0f;
+    }
+    state->csbAtariStPsg.sampleCount = (int)output_count;
+    state->csbAtariStSoundAccepted = 1;
+    state->csbAtariStSoundPeriod = sourcePeriod;
+    state->csbAtariStSoundHash = sourceHash;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
+        SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
+                               state->csbAtariStPsg.samples,
+                               state->csbAtariStPsg.sampleCount *
+                                   (int)sizeof(float));
+        state->queuedSampleCount += state->csbAtariStPsg.sampleCount;
+        ++state->csbAtariStSoundQueuedCount;
+    }
+#endif
+    free(levels);
+    return 1;
+done:
+    free(levels);
+    m11_sound_clear(&state->csbAtariStPsg);
+    return 0;
 }
 
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {

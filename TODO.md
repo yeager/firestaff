@@ -21717,6 +21717,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   root, so a launch may not fall back to a sibling PC installation merely
   because the selected release is archived.
 
+- [x] 2026-07-28 Consume the original Atari ST animation sounds. `ANIM.C`
+  opcode 12 now retains the script-selected SND1 item, Timer-A period and
+  source VBlank in the verified trace. M11 copies only those payloads from
+  the same hash-verified `ANIMATE.DAT` root and plays them at their recorded
+  source VBlanks. The SDL transport decodes `SOUND.C F0060`'s packed
+  amplitude stream and applies the original F0061 three-channel loud table;
+  it never substitutes a marker, PC34 SWSH sample or generated cue. The
+  staged original proves item 86 then item 85, both at period 112. Remaining
+  Atari work is real app capture with audible-device verification.
+
 - [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
   handoff. Enhanced modes now initialize and bind to the live V1 profile,
   consume V1 runtime ticks, advance at display cadence, and cleanly unbind on

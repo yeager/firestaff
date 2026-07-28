@@ -51,6 +51,7 @@
 #include "theron_v1_track02_live_loader_route_admission.h"
 #include "theron_v1_track02_g8_fifo_capture_binding.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_f0128_entrance_runtime_consumer_pc34_compat.h"
 #include "csb_v1_startup_entrance_f0128_m11_handoff_pc34_compat.h"
 #include "csb_v1_csbwin_dsa_runtime_admission_pc34_compat.h"
@@ -1492,6 +1493,17 @@ typedef struct {
     int csbAtariStAnimationFrameBound;
     int csbAtariStRuntimeHandoffComplete;
     uint32_t csbAtariStAnimationFrameVbl;
+    uint16_t csbAtariStAnimationSoundCount;
+    int csbAtariStAnimationSoundPlayed[
+        CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS];
+    uint16_t csbAtariStAnimationSoundPeriods[
+        CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS];
+    uint32_t csbAtariStAnimationSoundVbls[
+        CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS];
+    size_t csbAtariStAnimationSoundBytes[
+        CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS];
+    uint8_t csbAtariStAnimationSoundData[
+        CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS][4096];
     uint8_t csbAtariStAnimationPixels[320 * 200];
     uint8_t csbAtariStAnimationPalette[16][3];
     struct {

@@ -2487,9 +2487,76 @@ static int m11_csb_prepare_atari_st_animation_handoff(
     if (!csb_v1_atari_st_animation_trace_from_root(profile->asset_root,
             cache_root, &trace) || !trace.valid ||
         trace.waited_vbl_count == 0u) return 0;
+    if (trace.played_sound_count >
+        CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS) return 0;
     state->csbAtariStAnimationEndVbl = trace.waited_vbl_count;
+    state->csbAtariStAnimationSoundCount = trace.played_sound_count;
+    memset(state->csbAtariStAnimationSoundPlayed, 0,
+           sizeof(state->csbAtariStAnimationSoundPlayed));
+    memset(state->csbAtariStAnimationSoundBytes, 0,
+           sizeof(state->csbAtariStAnimationSoundBytes));
+    {
+        uint16_t sound_index;
+        for (sound_index = 0u;
+             sound_index < state->csbAtariStAnimationSoundCount;
+             ++sound_index) {
+            if (!csb_v1_atari_st_animation_copy_played_sound_from_root(
+                    profile->asset_root, cache_root, sound_index,
+                    state->csbAtariStAnimationSoundData[sound_index],
+                    sizeof(state->csbAtariStAnimationSoundData[sound_index]),
+                    &state->csbAtariStAnimationSoundBytes[sound_index],
+                    &state->csbAtariStAnimationSoundPeriods[sound_index],
+                    &state->csbAtariStAnimationSoundVbls[sound_index], NULL)) {
+                return 0;
+            }
+        }
+    }
     state->csbAtariStRuntimeHandoffComplete = 0;
     return 1;
+}
+
+static unsigned int m11_csb_atari_st_sound_hash(const uint8_t *bytes,
+                                                  size_t byte_count)
+{
+    unsigned int hash = 2166136261u;
+    size_t index;
+
+    if (!bytes || byte_count == 0u) return 0u;
+    for (index = 0u; index < byte_count; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+static void m11_csb_play_due_atari_st_animation_sounds(
+    M11_GameViewState *state)
+{
+    uint16_t sound_index;
+
+    if (!state) return;
+    for (sound_index = 0u;
+         sound_index < state->csbAtariStAnimationSoundCount;
+         ++sound_index) {
+        const size_t byte_count =
+            state->csbAtariStAnimationSoundBytes[sound_index];
+        if (state->csbAtariStAnimationSoundPlayed[sound_index] ||
+            state->csbAtariStAnimationVbl <
+                state->csbAtariStAnimationSoundVbls[sound_index] ||
+            byte_count == 0u || byte_count >
+                sizeof(state->csbAtariStAnimationSoundData[sound_index])) {
+            continue;
+        }
+        if (M11_Audio_PlayCsbAtariStPsg(&state->audioState,
+                state->csbAtariStAnimationSoundData[sound_index],
+                (int)byte_count,
+                state->csbAtariStAnimationSoundPeriods[sound_index],
+                m11_csb_atari_st_sound_hash(
+                    state->csbAtariStAnimationSoundData[sound_index],
+                    byte_count))) {
+            state->csbAtariStAnimationSoundPlayed[sound_index] = 1;
+        }
+    }
 }
 
 /* ANIM.C invokes FTLCODE after its own script ends. Firestaff already owns a
@@ -6036,6 +6103,7 @@ static void m11_csb_startup_tick_receipt_to_m11(
             state->csbAtariStAnimationVbl += units / 1000u;
             state->csbAtariStAnimationVblRemainder =
                 (uint16_t)(units % 1000u);
+            m11_csb_play_due_atari_st_animation_sounds(state);
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
         }
     }
@@ -18932,6 +19000,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             state->csbAtariStAnimationVbl += units / 1000u;
             state->csbAtariStAnimationVblRemainder =
                 (uint16_t)(units % 1000u);
+            m11_csb_play_due_atari_st_animation_sounds(state);
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
             return M11_GAME_INPUT_REDRAW;
         }

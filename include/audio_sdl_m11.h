@@ -65,6 +65,7 @@ typedef struct {
     M11_SoundBuffer titleMusic;
     M11_SoundBuffer dm1SwshProgram;
     M11_SoundBuffer csbSwshPcm;
+    M11_SoundBuffer csbAtariStPsg;
     int dm1SwshProgramAccepted;
     int dm1SwshRegisterWriteCount;
     int dm1SwshWaitVblankCount;
@@ -74,6 +75,10 @@ typedef struct {
     int csbSwshSourcePeriod;
     unsigned int csbSwshSourceHash;
     int csbSwshQueuedCount;
+    int csbAtariStSoundAccepted;
+    int csbAtariStSoundQueuedCount;
+    int csbAtariStSoundPeriod;
+    unsigned int csbAtariStSoundHash;
 } M11_AudioState;
 
 int M11_Audio_Init(M11_AudioState* state);
@@ -109,6 +114,14 @@ int M11_Audio_PlayCsbSwshPcm(M11_AudioState* state,
                              int sourceBytes,
                              int sourcePeriod,
                              unsigned int sourceHash);
+/* ANIM.C opcode 12 calls Atari ST F0060 with a SND1 packed amplitude stream.
+ * The renderer consumes only that source stream and the original Timer-A
+ * period; there is no marker or generated replacement on failure. */
+int M11_Audio_PlayCsbAtariStPsg(M11_AudioState* state,
+                                const unsigned char* source,
+                                int sourceBytes,
+                                int sourcePeriod,
+                                unsigned int sourceHash);
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled);
 int M11_Audio_TitleMusicEnabled(const M11_AudioState* state);

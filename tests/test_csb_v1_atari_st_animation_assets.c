@@ -66,7 +66,7 @@ int main(void)
                       receipt.image_load_count > 0u &&
                       receipt.sound_load_count == 4u,
                   "real script references only documented ANIMATE.DAT item families");
-            CHECK(csb_v1_atari_st_animation_trace_script(dat_path, script,
+        CHECK(csb_v1_atari_st_animation_trace_script(dat_path, script,
                       script_size, &trace) && trace.valid &&
                       trace.executed_instruction_count > 288u &&
                       trace.fade_count > 0u && trace.expand_count > 0u &&
@@ -82,6 +82,12 @@ int main(void)
                       trace.presented_palette_items[1] == 2u &&
                       trace.presented_vbls[1] >= trace.presented_vbls[0],
                   "real Atari script executes documented fades, loops, blits and presentation");
+        CHECK(trace.played_sound_items[0] == 86u &&
+                  trace.played_sound_items[1] == 85u &&
+                  trace.played_sound_periods[0] == 112u &&
+                  trace.played_sound_periods[1] == 112u &&
+                  trace.played_sound_vbls[1] >= trace.played_sound_vbls[0],
+              "real Atari script retains its SND1 items, periods and VBlank order");
         }
         CHECK(rgba != NULL && csb_v1_atari_st_animation_render_rgba(dat_path,
                   30u, 0u, rgba, CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES) &&
@@ -169,7 +175,25 @@ int main(void)
         CHECK(csb_v1_atari_st_animation_trace_from_root(root, cache_root,
                   &trace) && trace.valid && trace.waited_vbl_count >
                   trace.presented_vbls[1],
-              "launcher route exposes ANIM.C's final VBlank for FTLCODE handoff");
+                  "launcher route exposes ANIM.C's final VBlank for FTLCODE handoff");
+        {
+            uint8_t sound[4096];
+            size_t sound_size = 0u;
+            uint16_t period = 0u;
+            uint32_t vbl = 0u;
+            CHECK(csb_v1_atari_st_animation_copy_played_sound_from_root(
+                      root, cache_root, 0u, sound, sizeof(sound), &sound_size,
+                      &period, &vbl, &trace) && sound_size > 2u &&
+                      period == 112u && vbl == trace.played_sound_vbls[0] &&
+                      sound[0] == 0x0cu && sound[1] == 0x1fu,
+                  "launcher route copies the first original SND1 stream");
+            CHECK(csb_v1_atari_st_animation_copy_played_sound_from_root(
+                      root, cache_root, 1u, sound, sizeof(sound), &sound_size,
+                      &period, &vbl, &trace) && sound_size > 2u &&
+                      period == 112u && vbl == trace.played_sound_vbls[1] &&
+                      sound[0] == 0x0fu && sound[1] == 0x7fu,
+                  "launcher route copies the second original SND1 stream");
+        }
         free(rgba);
     }
     return failures == 0 ? 0 : 1;

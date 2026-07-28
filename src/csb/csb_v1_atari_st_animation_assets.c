@@ -409,7 +409,16 @@ int csb_v1_atari_st_animation_trace_script(
             case 12u: /* Play sound */
                 if (!csb_v1_atari_st_animation_slot_has_type(slots, p[0], 2u))
                     valid = 0;
-                else if (out_receipt) out_receipt->played_sound_count++;
+                else if (out_receipt) {
+                    const uint16_t index = out_receipt->played_sound_count++;
+                    if (index < CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS) {
+                        out_receipt->played_sound_items[index] =
+                            slots[p[0]].item_index;
+                        out_receipt->played_sound_periods[index] = p[1];
+                        out_receipt->played_sound_vbls[index] =
+                            out_receipt->waited_vbl_count;
+                    }
+                }
                 break;
             case 14u: /* Set screen and palette at VBL */
                 if (!csb_v1_atari_st_animation_slot_has_type(slots, p[0], 0u) ||
@@ -998,6 +1007,62 @@ int csb_v1_atari_st_animation_trace_from_root(
             &script_size))) return 0;
     result = csb_v1_atari_st_animation_trace_script(data_path, script,
         script_size, out_receipt);
+    free(script);
+    return result;
+}
+
+int csb_v1_atari_st_animation_copy_played_sound_from_root(
+    const char *search_root, const char *cache_root, uint16_t sound_index,
+    uint8_t *out_bytes, size_t out_capacity, size_t *out_size,
+    uint16_t *out_period, uint32_t *out_vbl,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt)
+{
+    CSB_V1_AtariStAnimationDiscoveryReceipt discovery;
+    CSB_V1_AtariStAnimationTraceReceipt trace;
+    CSB_AtariStLoader loader;
+    char script_path[ASSET_PATH_MAX];
+    char data_path[ASSET_PATH_MAX];
+    uint8_t *script = NULL;
+    uint8_t *sound = NULL;
+    size_t script_size = 0u;
+    size_t sound_size = 0u;
+    int result = 0;
+
+    if (out_size) *out_size = 0u;
+    if (out_period) *out_period = 0u;
+    if (out_vbl) *out_vbl = 0u;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_bytes || !out_size || !out_period || !out_vbl ||
+        sound_index >= CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS ||
+        !csb_v1_atari_st_animation_discover(search_root, &discovery) ||
+        !csb_v1_atari_st_animation_materialize(&discovery, cache_root,
+            script_path, data_path) ||
+        !(script = csb_v1_atari_st_animation_read_file(script_path,
+            &script_size)) ||
+        !csb_v1_atari_st_animation_trace_script(data_path, script, script_size,
+            &trace) || !trace.valid ||
+        sound_index >= trace.played_sound_count ||
+        !csb_v1_atari_st_animation_item_type_matches(
+            trace.played_sound_items[sound_index], 2u)) goto done;
+
+    csb_atari_st_graphics_loader_init(&loader);
+    if (!csb_atari_st_graphics_loader_open(&loader, data_path) ||
+        !csb_v1_atari_st_animation_read_item(&loader,
+            trace.played_sound_items[sound_index], &sound, &sound_size) ||
+        sound_size == 0u || sound_size > out_capacity ||
+        trace.played_sound_periods[sound_index] <= 10u) {
+        csb_atari_st_graphics_loader_close(&loader);
+        goto done;
+    }
+    memcpy(out_bytes, sound, sound_size);
+    *out_size = sound_size;
+    *out_period = trace.played_sound_periods[sound_index];
+    *out_vbl = trace.played_sound_vbls[sound_index];
+    if (out_receipt) *out_receipt = trace;
+    csb_atari_st_graphics_loader_close(&loader);
+    result = 1;
+done:
+    free(sound);
     free(script);
     return result;
 }

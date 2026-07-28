@@ -11,7 +11,8 @@ enum {
         CSB_V1_ATARI_ST_ANIMATION_WIDTH * CSB_V1_ATARI_ST_ANIMATION_HEIGHT * 4,
     CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES =
         CSB_V1_ATARI_ST_ANIMATION_WIDTH * CSB_V1_ATARI_ST_ANIMATION_HEIGHT,
-    CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES = 4
+    CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES = 4,
+    CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS = 4
 };
 
 typedef struct {
@@ -40,6 +41,9 @@ typedef struct {
     uint16_t presented_image_items[CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES];
     uint16_t presented_palette_items[CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES];
     uint32_t presented_vbls[CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES];
+    uint16_t played_sound_items[CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS];
+    uint16_t played_sound_periods[CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS];
+    uint32_t played_sound_vbls[CSB_V1_ATARI_ST_ANIMATION_MAX_PLAYED_SOUNDS];
     uint16_t failed_opcode;
     uint16_t failed_instruction_index;
 } CSB_V1_AtariStAnimationTraceReceipt;
@@ -128,6 +132,15 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_from_root_indexed(
  * ANIM.C launches FTLCODE; no PC34 title sequence is implied. */
 int csb_v1_atari_st_animation_trace_from_root(
     const char *search_root, const char *cache_root,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
+/* Copy one SND1 payload selected by a real Play sound instruction. The
+ * caller supplies storage; no filename or item number is accepted here, so
+ * a host cannot replace an animation sound with arbitrary data. */
+int csb_v1_atari_st_animation_copy_played_sound_from_root(
+    const char *search_root, const char *cache_root, uint16_t sound_index,
+    uint8_t *out_bytes, size_t out_capacity, size_t *out_size,
+    uint16_t *out_period, uint32_t *out_vbl,
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
 
 /* Render a full-screen original IMG1 item with an original P4B1 palette into
