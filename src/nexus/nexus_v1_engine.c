@@ -6426,6 +6426,13 @@ int nexus_v1_current_level_structure3_complete_source_scene_receipt(
             material_receipt.materials.non_textured_face_count &&
         material_receipt.materials.unsupported_textured_fill_count == 0 &&
         receipt.traversed_face_count == receipt.face_count;
+    if (receipt.category_coverage_complete) {
+        Nexus_V1_DgnStructure2FormatEvidenceReceipt fmt;
+        if (nexus_v1_current_level_structure2_format_evidence_receipt(
+                engine, &fmt) == 1 && fmt.valid && fmt.decoder_permitted) {
+            receipt.decoder_permitted = 1;
+        }
+    }
     receipt.valid = receipt.category_coverage_complete;
     *out_receipt = receipt;
     return receipt.valid ? 1 : 0;

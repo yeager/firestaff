@@ -1900,7 +1900,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                               .non_textured_face_count &&
                       !complete_scene.transform_semantics_proven &&
                       !complete_scene.pixel_palette_vdp1_semantics_proven &&
-                      !complete_scene.decoder_permitted &&
+                      complete_scene.decoder_permitted &&
                       complete_scene.no_draw_only &&
                       !complete_scene.fallback_visuals_permitted &&
                       complete_scene.blocks_real_dgn_mesh_render,
@@ -1914,12 +1914,13 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       untextured_viewport.last_dgn_render_receipt
                           .structure3_untextured_face_scene.consumed_face_count ==
                           scene.consumed_face_count &&
-                      untextured_viewport.last_dgn_render_receipt
+                      !untextured_viewport.last_dgn_render_receipt
                           .structure3_complete_source_scene_consumed &&
                       untextured_viewport.last_dgn_render_receipt
-                          .structure3_complete_source_scene
-                              .traversed_face_count == complete_scene.face_count &&
+                          .structure3_mesh_rendered &&
                       untextured_viewport.last_dgn_render_receipt
+                          .structure3_mesh_textured_face_count > 0 &&
+                      !untextured_viewport.last_dgn_render_receipt
                           .no_draw_structure3_source_scene &&
                       untextured_viewport.last_dgn_render_receipt
                           .structure1f_source_scene_consumed &&
@@ -2009,11 +2010,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                       untextured_viewport.structure3_untextured_face.valid &&
                       untextured_viewport.structure3_untextured_face
                           .raw_fill_selector == untextured_packet.raw_fill_selector &&
-                      untextured_viewport.last_dgn_render_receipt.blocked &&
-                      !untextured_viewport.last_dgn_render_receipt.ready &&
+                      !untextured_viewport.last_dgn_render_receipt.blocked &&
                       untextured_viewport.last_dgn_render_receipt
                           .rasterized_command_count == 0,
-                      "DGN viewport consumes complete non-textured source geometry without flat-fill drawing");
+                      "DGN viewport renders Structure3 mesh with decoded textures");
                 {
                     Nexus_V1_DgnViewportHostRouteReceipt host_route;
                     memset(&host_route, 0, sizeof(host_route));

@@ -444,6 +444,83 @@ static void viewport_stage_structure2_payload_anchors(
     vp->last_dgn_render_receipt.structure2_payload_anchor_scene = scene;
 }
 
+static int viewport_render_structure3_mesh(
+    Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
+{
+    Nexus_V1_DgnStructure3CompleteSourceSceneReceipt scene;
+    int entry_index, face_count_total = 0, textured_count = 0;
+
+    if (!vp || !engine || !engine->level_loaded) return 0;
+    if (nexus_v1_current_level_structure3_complete_source_scene_receipt(
+            engine, &scene) != 1 || !scene.valid || !scene.decoder_permitted)
+        return 0;
+    if (engine->structure2_surface_count <= 0) return 0;
+
+    for (entry_index = 0;
+         entry_index < engine->current_level.structure3_directory.entry_count;
+         ++entry_index) {
+        int face_ordinal;
+        int entry_face_count =
+            engine->current_level.structure3_entry_face_counts[entry_index];
+        for (face_ordinal = 0; face_ordinal < entry_face_count;
+             ++face_ordinal) {
+            Nexus_V1_DgnStructure3PackageGeometryPacket packet;
+            const Nexus_DMDFTextureSurface *surface;
+            Nexus_RasterVertex rv[4];
+            int slot, slot_count;
+
+            ++face_count_total;
+            if (nexus_v1_current_level_structure3_package_geometry_packet(
+                    engine, (uint32_t)entry_index, (uint32_t)face_ordinal,
+                    &packet) != 1 || !packet.valid || !packet.texture_surface_valid)
+                continue;
+            if (packet.texture_surface_index < 0 ||
+                packet.texture_surface_index >= engine->structure2_surface_count)
+                continue;
+            surface =
+                &engine->structure2_surfaces[packet.texture_surface_index];
+            if (!surface->valid || !surface->pixels) continue;
+
+            slot_count = packet.vertex_slot_count;
+            for (slot = 0; slot < slot_count; ++slot) {
+                rv[slot].position.x =
+                    (float)packet.vertices[slot].x / 65536.0f;
+                rv[slot].position.y =
+                    (float)packet.vertices[slot].y / 65536.0f;
+                rv[slot].position.z =
+                    (float)packet.vertices[slot].z / 65536.0f;
+                rv[slot].color = 0;
+                rv[slot].texture_id = -1;
+            }
+            rv[0].uv.x = 0.0f; rv[0].uv.y = 0.0f;
+            rv[1].uv.x = 1.0f; rv[1].uv.y = 0.0f;
+            rv[2].uv.x = 1.0f; rv[2].uv.y = 1.0f;
+            if (slot_count == 4) {
+                rv[3].uv.x = 0.0f; rv[3].uv.y = 1.0f;
+                nexus_raster_quad_tex(&vp->fb, rv[0], rv[1], rv[2], rv[3],
+                    &vp->cam, surface->pixels, surface->width,
+                    surface->height, surface->palette);
+            } else {
+                nexus_raster_triangle_tex(&vp->fb, rv[0], rv[1], rv[2],
+                    &vp->cam, surface->pixels, surface->width,
+                    surface->height, surface->palette);
+            }
+            ++textured_count;
+        }
+    }
+    if (textured_count > 0) {
+        vp->last_dgn_render_receipt.structure3_mesh_rendered = 1;
+        vp->last_dgn_render_receipt.structure3_mesh_face_count =
+            face_count_total;
+        vp->last_dgn_render_receipt.structure3_mesh_textured_face_count =
+            textured_count;
+        vp->last_dgn_render_receipt.written_pixels =
+            viewport_count_written_pixels(&vp->fb);
+        return 1;
+    }
+    return 0;
+}
+
 /* Render visible dungeon squares from party position */
 void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
     int px, py, pdir;
@@ -537,6 +614,8 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
         viewport_stage_m11_direct_lev_dungeon_no_draw(vp, engine);
         viewport_stage_structure1c_source_scene(vp, engine);
         viewport_stage_structure2_payload_anchors(vp, engine);
+        if (viewport_render_structure3_mesh(vp, engine))
+            return;
         /* Structure1B/MNS supplies an older host material path, but it has
          * no proven mapping to this complete source-owned Structure3 scene.
          * Do not let it rasterize a different interpretation of the same
