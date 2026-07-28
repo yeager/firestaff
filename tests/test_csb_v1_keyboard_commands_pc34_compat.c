@@ -207,6 +207,11 @@ int main(void)
     boot.runtime.party_x = 1;
     boot.runtime.party_y = 1;
     boot.runtime.party_dir = 0;
+    /* The live boot handoff publishes both the dungeon owner and level
+     * before M11 may dispatch F0276. Mirror that established runtime state
+     * instead of bypassing the source gate in this direct-input fixture. */
+    csb_v1_dungeon_set_current(&dungeon);
+    csb_v1_dungeon_set_current_level(boot.runtime.current_level);
     seed_csb_view(&view);
     view.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
     view.csbBootProfile = &boot;

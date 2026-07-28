@@ -41596,3 +41596,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   current fail-closed package rule: an unregistered synthetic `DUNGEONB.DAT`
   cannot replace the authenticated dungeon owner. The complete focused
   handoff suite passes.
+
+## 2026-07-28 CSB front-wall sensor input
+
+- Corrected the direct M11 fixture to use the same current-dungeon ownership
+  established by the CSB boot handoff. It now verifies the live `F0276`
+  front-wall route: ornament click, queued sensor event, and remote door
+  mutation all reach the runtime without bypassing the source ownership gate.
