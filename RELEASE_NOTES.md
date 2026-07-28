@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.183
+
+- CSB: corrected the real Entrance C28/G8174 palette, removing green edge
+  artifacts in the original C004/C002/C003 presentation sequence.
+- CSB: verified native quicksave/resume package binding and authenticated
+  saved EXPOOL skin overrides.
+
 # Firestaff v3.0.182
 
 - Fix: DM1/CSB mouse clicks completely broken in V1_ORIGINAL presentation mode.
