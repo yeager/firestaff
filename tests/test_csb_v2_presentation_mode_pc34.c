@@ -42,6 +42,14 @@ static void t_v22_no_pack(void) {
     csb_v2_presentation_mode_set(CSB_V2_PM_V22_MODERN);
     check(csb_v2_presentation_mode_get() == CSB_V2_PM_V21_UPSCALED, "CSB V22 no pack V21");
 }
+static void t_v22_requires_provenance(void) {
+    /* No test override means the production material gate owns admission.
+     * A manifest that merely names categories must not activate placeholders. */
+    csb_v2_presentation_mode_reset();
+    csb_v2_presentation_mode_set(CSB_V2_PM_V22_MODERN);
+    check(csb_v2_presentation_mode_get() == CSB_V2_PM_V21_UPSCALED,
+          "CSB V22 without reviewed material falls back to V21");
+}
 static void t_m12_enum(void) {
     csb_v2_presentation_mode_reset();
     csb_v2_presentation_mode_set_modern_pack_available(1);
@@ -115,7 +123,7 @@ static void t_dm1_csb_independent(void) {
 int main(void) {
     printf("=== CSB V2 presentation-mode unit test ===\n");
     t_default(); t_set_v20(); t_set_v21();
-    t_v22_with_pack(); t_v22_no_pack();
+    t_v22_with_pack(); t_v22_no_pack(); t_v22_requires_provenance();
     t_m12_enum(); t_names(); t_set_count(); t_reset();
     t_evidence(); t_resolve(); t_pack_change();
     t_dm1_csb_independent();

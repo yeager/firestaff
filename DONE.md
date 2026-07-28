@@ -41617,3 +41617,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   5,036 locations, 512 pages, and its real French first page with 36/36 probe
   checks. This is package admission, not a claim that the full Utility Disk
   menu or original-save corpus is complete.
+- ✅ 2026-07-28 CSB V2.2 real-material admission. The live CSB presentation
+  selector now requires both an installed V2.2 manifest and the existing
+  `FINISHED_REAL` material gate before it activates modern rendering. A
+  partial or provenance-free pack falls back to V2.1 instead of painting
+  placeholder cells over original game data. Explicit test overrides remain
+  available solely for the isolated V2.2 route tests. The presentation-mode
+  regression passes 37/37, including the no-reviewed-material fallback.

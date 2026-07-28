@@ -11007,10 +11007,11 @@ runtime/Mac capture, not scaler code.
 CSB V2.2 shape, material-admission, in-place-draw, and per-cell-routing
 regressions pass, but the installed pack is not a finished real-art pack:
 its manifest has no per-slot generator provenance and several runtime routes
-still name explicit placeholders. Keep those lanes on their source-owned
-V1/V2.1 fallback until every material is operator-reviewed and declared with
-resolvable non-placeholder provenance. Remaining work is reviewed CSB art,
-the corresponding runtime material consumption, and real runtime/Mac capture.
+still name explicit placeholders. Runtime now keeps those lanes on the
+source-owned V2.1 fallback until every material is operator-reviewed and
+declared with resolvable non-placeholder provenance. Remaining work is
+reviewed CSB art, the corresponding runtime material consumption, and real
+runtime/Mac capture.
 
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 

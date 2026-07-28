@@ -5,6 +5,7 @@
  */
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v2_texture_upscale_pc34.h"
+#include "csb_v22_finished_art_material_gate_pc34.h"
 #include "csb_v22_shapes.h"
 #include <string.h>
 
@@ -16,7 +17,12 @@ static int g_csb_pm_pack_override_value = 0;
 
 static int csb_pm_modern_pack_detected(void) {
     if (g_csb_pm_pack_override_valid) return g_csb_pm_pack_override_value;
-    return m11_v22_modern_assets_available();
+    /* A manifest with a few category entries can be enough to exercise the
+     * V2.2 tools, but it is not enough to replace live source-owned pixels.
+     * Real gameplay may enter V2.2 only after every required material passed
+     * the provenance gate; otherwise retain the V2.1 renderer. */
+    return m11_v22_modern_assets_available() &&
+           csb_v22_famg_is_finished_real();
 }
 
 static void csb_pm_recompute(CSB_V2_PresentationModeKind resolved) {
