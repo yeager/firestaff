@@ -1,3 +1,10 @@
+- ✅ 2026-07-28 CSB V2.x unified verification lane. All 41 registered
+  V2.0/V2.1/V2.2 tests are now appended to the shared `csb` CTest label,
+  covering presentation selection, input/touch, smooth runtime binding, HUD,
+  lighting, filters, settings, V2.2 shapes, and artpack gates. The full CSB
+  gate passes 93/93; this preserves existing labels and does not claim that
+  unavailable external finished-art assets are installed.
+
 - ✅ 2026-07-28 Start-menu game-data scan progressbar. The existing async
   hash-first data-directory scan now renders a visible progressbar in the
   modern message popup, driven by its live completed-step receipt. The button

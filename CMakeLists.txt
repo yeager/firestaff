@@ -48406,3 +48406,59 @@ add_executable(test_dm1_v1_minimap_pc34_compat tests/test_dm1_v1_minimap_pc34_co
 target_include_directories(test_dm1_v1_minimap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_minimap_pc34_compat PRIVATE firestaff_m11 firestaff_m10)
 add_test(NAME test_dm1_v1_minimap_pc34_compat COMMAND test_dm1_v1_minimap_pc34_compat)
+
+# Keep the complete CSB V2.x contract in the ordinary CSB verification lane.
+# Several focused V2.0/V2.1/V2.2 tests predate the shared `csb` label and
+# would otherwise be skipped by `ctest -L csb` despite covering production
+# presentation, runtime, input, lighting, HUD, filters, and artpack routes.
+set(_firestaff_csb_v2_verification_tests
+    csb_v2_runtime_wireup_probe
+    csb_v2_hud_overlay_probe
+    csb_v2_phase0_v1_compatibility_lock
+    csb_v2_touch_runtime_probe
+    csb_v2_phase4_enhanced_lighting_probe
+    csb_v2_presentation_mode_probe
+    csb_v2_texture_upscale_probe
+    csb_v22_shapes_probe
+    csb_v22_inplace_render_probe
+    csb_v22_per_cell_route_probe
+    csb_v2_filter_config_probe
+    csb_v2_per_frame_filter_dispatch_probe
+    csb_v2_filter_chain_probe
+    csb_v2_settings_probe
+    csb_v22_finished_art_material_gate_probe
+    csb_v22_finished_art_material_gate_pc34
+    csb_v2_resolution_selector_gate_m12
+    csb_v2_smooth_movement
+    csb_v2_smooth_runtime_binding
+    csb_v2_touch_controller_affordance
+    csb_v2_lighting_dynamic
+    csb_v2_lighting_dynamic_source_lock
+    csb_v2_phase7_verification
+    csb_v2_phase7_verification_source_lock
+    csb_v2_settings_pc34
+    csb_v2_filter_config_pc34
+    csb_v2_filter_chain_pc34
+    csb_v2_filter_crt_scanlines_pc34
+    csb_v2_filter_dither_cleanup_pc34
+    csb_v2_filter_palette_interpolate_pc34
+    csb_v2_filter_palette_build_lut_pc34
+    csb_v2_filter_sharpen_rgba_pc34
+    csb_v2_presentation_mode_pc34
+    csb_v2_texture_upscale_pc34
+    csb_v22_shapes_pc34
+    csb_v22_modern_assets_pc34
+    csb_v22_inplace_draw_pc34
+    csb_v22_inplace_route_pc34
+    csb_v2_phase1_launch_profile_separation
+    csb_v2_hud_overlay_pc34
+    csb_v2_hud_runtime
+)
+foreach(_firestaff_csb_v2_test IN LISTS _firestaff_csb_v2_verification_tests)
+    if(TEST ${_firestaff_csb_v2_test})
+        set_property(TEST ${_firestaff_csb_v2_test} APPEND PROPERTY
+            LABELS "csb;v2;verification")
+    endif()
+endforeach()
+unset(_firestaff_csb_v2_test)
+unset(_firestaff_csb_v2_verification_tests)
