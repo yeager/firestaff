@@ -200,6 +200,43 @@ static void test_assets_available_no_install(void) {
     CHECK(v == 0 || v == -1, "empty manifest not complete");
 }
 
+static void test_artpack_studio_pretty_manifest_admission(void) {
+    const char* data_dir = "/tmp/scratch/csb-v22-pretty/data/csb";
+    const char* modern_dir = "/tmp/scratch/csb-v22-pretty/assets/csb/modern";
+    const char* manifest =
+        "/tmp/scratch/csb-v22-pretty/assets/csb/modern/modern_asset_manifest.json";
+    const char* content =
+        "{\n"
+        "  \"manifestVersion\": \"1.0.0\",\n"
+        "  \"packId\": \"source-derived-csb\",\n"
+        "  \"game\": \"csb\",\n"
+        "  \"wall_shapes\": [\n"
+        "    {\"id\": \"wall_dungeon_d0_01\", \"generator\": \"source_export\", \"source_file\": \"wall.png\", \"width\": 96, \"height\": 96}\n"
+        "  ],\n"
+        "  \"floor_shapes\": [\n"
+        "    {\"id\": \"floor_plain_d0_01\", \"generator\": \"source_export\", \"source_file\": \"floor.png\", \"width\": 96, \"height\": 96}\n"
+        "  ],\n"
+        "  \"creature_shapes\": [\n"
+        "    {\"id\": \"creature_demon_d0_01\", \"generator\": \"source_export\", \"source_file\": \"demon.png\", \"width\": 64, \"height\": 64}\n"
+        "  ],\n"
+        "  \"ui_chrome\": [\n"
+        "    {\"id\": \"panel_source_01\", \"generator\": \"source_export\", \"source_file\": \"panel.png\", \"width\": 64, \"height\": 32}\n"
+        "  ],\n"
+        "  \"champion_portraits\": [\n"
+        "    {\"id\": \"portrait_source_01\", \"generator\": \"source_export\", \"source_file\": \"portrait.png\", \"width\": 32, \"height\": 32}\n"
+        "  ]\n"
+        "}\n";
+
+    CHECK(mkdir_p(data_dir), "created pretty-manifest data dir");
+    CHECK(mkdir_p(modern_dir), "created pretty-manifest asset dir");
+    CHECK(write_file(manifest, content), "wrote Artpack Studio-style manifest");
+    csb_v22_set_manifest_path(data_dir);
+    CHECK(csb_v22_validate_manifest(csb_v22_get_manifest_path()) == 1,
+          "pretty category manifest validates complete");
+    CHECK(csb_v22_modern_assets_available() == 1,
+          "pretty category manifest admits critical CSB categories");
+}
+
 /* ── Main ───────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -217,6 +254,7 @@ int main(void) {
     test_missing_placeholder();
     test_source_evidence();
     test_assets_available_no_install();
+    test_artpack_studio_pretty_manifest_admission();
 
     printf("csb_v22_modern_assets_pc34: checks=%d failures=%d\n", checks, failures);
     if (failures > 0) {

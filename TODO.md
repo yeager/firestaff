@@ -746,6 +746,10 @@ that its exact runtime path is not already source-locked and tested.
    therefore selectable even when no unrelated DM1 V2.2 pack is installed.
    The focused modal regression constructs a complete CSB category manifest,
    keeps the global bit clear, and proves V2.1 -> V2.2 selection.
+   Artpack Studio's pretty-printed category manifest is now also consumed by
+   the native CSB availability parser in a focused regression. Full route
+   coverage and source-derived material remain separate requirements; this
+   only closes the manifest-format handoff.
    CSB presentation-mode resolution uses the CSB manifest availability API,
    not DM1's global modern-asset state.
    2026-07-28: the canonical PC 3.4 real-data gate now proves the full

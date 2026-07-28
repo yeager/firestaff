@@ -42006,3 +42006,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   reaches V2.2 from V2.1 with that global flag explicitly clear; the focused
   runtime-popup CTest locks the route. Incomplete or synthetic CSB packs
   remain hidden/fail-closed.
+- ✅ 2026-07-29 CSB Artpack Studio manifest handoff. The native CSB V2.2
+  manifest parser is now regression-tested with the pretty-printed category
+  JSON emitted by Artpack Studio. Its required wall, floor, creature, UI and
+  portrait entries validate and make the critical CSB categories available.
+  This validates the pack-format boundary only; source-derived full-route
+  material remains required before V2.2 is admitted for gameplay.
