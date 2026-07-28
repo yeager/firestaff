@@ -11,11 +11,15 @@ enum {
      * through source steps 2..21, keeps the full CHAOS image through the
      * post-zoom hold, then blits STRIKES BACK before ENTRANCE.C. */
     CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 20,
-    /* The post-zoom C425 raster stays visible until the C426 frame below.
-     * The source receipt retains its two-VBlank presentation subphase. */
-    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 2,
-    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 1,
-    CSB_V1_TITLE_TOTAL_TICKS_PC34 = 101,
+    /* TITLE.C:460 keeps the full C425 CHAOS raster for Delay(20) after its
+     * 20 shrink frames.  C426 STRIKES BACK is then held by Delay(2). */
+    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 20,
+    /* TITLE.C:461-463 draws CM60 then calls F0022_MAIN_Delay(2).
+     * Keep the STRIKES BACK raster on screen for both source VBlanks before
+     * ENTRANCE.C gets ownership; the old one-tick route cut that final title
+     * image in half on a 50 Hz host. */
+    CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 2,
+    CSB_V1_TITLE_TOTAL_TICKS_PC34 = 102,
     CSB_V1_ENTRANCE_WAIT_SOURCE_STEP_PC34 = 4,
     CSB_V1_ENTRANCE_PRE_OPEN_DELAY_TICKS_PC34 = 20,
     CSB_V1_ENTRANCE_CREDITS_TICKS_PC34 = 1800,
@@ -199,7 +203,9 @@ int csb_v1_startup_title_stage_for_frame_pc34(int frame)
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34;
     }
-    if (frame >= CSB_V1_TITLE_TOTAL_TICKS_PC34 - 1) {
+    if (frame >= CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
+                     CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
+                     CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34) {
         return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
     }
     return CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
@@ -210,8 +216,8 @@ unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
     /* ReDMCSB: TITLE.C F0437 lines 425-463 uses the CSB title path:
      * CM58 PRESENTS is blitted, then TITLE.C waits until
      * G0317_i_WaitForInputVerticalBlankCount + 60. The PC path reaches the
-     * full CHAOS bitmap at source step 19, holds it for two vertical blanks,
-     * then draws STRIKES BACK at source step 20. */
+     * full CHAOS bitmap at source step 21, holds it through Delay(20),
+     * then draws STRIKES BACK at source step 22 for Delay(2). */
     if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34) {
         return 1u;
     }
@@ -219,7 +225,9 @@ unsigned int csb_v1_startup_title_source_step_for_frame_pc34(int frame)
                     CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34) {
         return (unsigned int)(frame - CSB_V1_TITLE_PRESENTS_TICKS_PC34 + 2);
     }
-    if (frame < CSB_V1_TITLE_TOTAL_TICKS_PC34 - 1) return 21u;
+    if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
+                    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 +
+                    CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34) return 21u;
     return 22u;
 }
 

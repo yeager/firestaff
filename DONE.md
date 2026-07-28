@@ -41430,3 +41430,18 @@ the supplied root and selected MD5 to prove this without shipping game data.
   filter, palette, and scale changes can be judged immediately. Its input
   remains modal; the regression verifies the exposed viewport, compact close
   hitbox, and live setting changes.
+- ✅ 2026-07-28 DM1 HoC object coverage and inventory-panel controls. The
+  real PC34 HoC regression now requires every unique original object graphic
+  from all eight ordinary candidates to reach an F0791 blit. C140/C141/C145/
+  C011 are resolved before C081's broad inventory-panel route, so the
+  visible Save, music, Zz and close controls cannot be swallowed. The
+  source-owned save-disk menu is explicitly exercised before its save write.
+
+- ✅ 2026-07-28 DM1 full turn-button feedback. Q/E, Home/End and controller
+  turns now outline the complete 29x23 C013 turn cells; mouse hit geometry
+  remains the original narrower C068/C069 rectangles.
+- ✅ 2026-07-28 CSB title/Entrance source timing. ReDMCSB `TITLE.C:451-463`
+  proves 60 VBlanks of PRESENTS, 20 CHAOS shrink frames, `Delay(20)` on the
+  full CHAOS page, then `Delay(2)` on STRIKES BACK. The old 101-tick model
+  held the final title frame for one VBlank. CSB now uses the correct
+  102-tick timeline, and focused real-data title/Entrance regressions pass.

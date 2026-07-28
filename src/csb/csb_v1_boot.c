@@ -2886,7 +2886,8 @@ static int csb_v1_boot_startup_render_view_receipt_from_route_pc34(
         }
         /* ReDMCSB TITLE.C F0437 lines 424-463 draws CM58 PRESENTS for 60
          * ticks, animates 20 PC-path CM59 CHAOS frames through source steps
-         * 2..21, holds CHAOS for two vblanks, then blits C426 STRIKES BACK.
+         * 2..21, holds CHAOS with F0022_MAIN_Delay(20), then blits C426
+         * STRIKES BACK and holds it with F0022_MAIN_Delay(2).
          * CSBWin/Viewport.cpp keeps the active
          * title/HUD surface as view-owned state. Publish the exact stage and
          * source/destination route here so M11 does not derive

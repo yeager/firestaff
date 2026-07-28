@@ -402,6 +402,27 @@ static void test_inventory_control_icons_dispatch_runtime(void) {
     seed_panel_view(&state, &things, weapons, containers);
     state.dm1MusicOn = 1;
 
+    {
+        int space = M11_DM1_MOUSE_SPACE_NONE;
+        int zoneId = 0;
+        ASSERT_EQ(M11_GameView_GetV1MouseCommandForPoint(
+                      M11_DM1_MOUSE_LIST_INVENTORY,
+                      190, 35, M11_DM1_MOUSE_MASK_LEFT,
+                      &space, &zoneId),
+                  145,
+                  "C145 Zz control wins over the broad C081 panel route");
+        ASSERT_EQ(zoneId, 564,
+                  "C145 Zz control retains its specific source zone");
+        ASSERT_EQ(M11_GameView_GetV1MouseCommandForPoint(
+                      M11_DM1_MOUSE_LIST_INVENTORY,
+                      209, 35, M11_DM1_MOUSE_MASK_LEFT,
+                      &space, &zoneId),
+                  11,
+                  "C011 close control wins over the broad C081 panel route");
+        ASSERT_EQ(zoneId, 566,
+                  "C011 close control retains its specific source zone");
+    }
+
     ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 168, 36,
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
@@ -413,6 +434,11 @@ static void test_inventory_control_icons_dispatch_runtime(void) {
                                                 M11_DM1_MOUSE_MASK_LEFT),
               M11_GAME_INPUT_REDRAW,
               "C140 save icon reaches the save command");
+    ASSERT_EQ(state.dialogOverlayActive, 1,
+              "C140 opens the source-owned save-disk menu");
+    ASSERT_EQ(M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK),
+              M11_GAME_INPUT_REDRAW,
+              "save-disk menu cancels before later panel controls are tested");
 
     state.inventoryPanelActive = 1;
     ASSERT_EQ(M11_GameView_HandlePointerButton(&state, 190, 35,

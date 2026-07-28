@@ -519,18 +519,23 @@ int main(void)
                   CSB_V1_STARTUP_RENDER_COMMAND_TITLE_PC34,
           "startup render plan owns title clear and draw command");
     check(csb_v1_startup_title_presents_ticks_pc34() == 60 &&
-              csb_v1_startup_title_total_ticks_pc34() == 101 &&
+              csb_v1_startup_title_chaos_hold_ticks_pc34() == 20 &&
+              csb_v1_startup_title_strikes_back_ticks_pc34() == 2 &&
+              csb_v1_startup_title_total_ticks_pc34() == 102 &&
               csb_v1_startup_title_source_step_for_frame_pc34(59) == 1 &&
               csb_v1_startup_title_source_step_for_frame_pc34(60) == 2 &&
               csb_v1_startup_title_source_step_for_frame_pc34(79) == 21 &&
               csb_v1_startup_title_source_step_for_frame_pc34(80) == 21 &&
               csb_v1_startup_title_source_step_for_frame_pc34(99) == 21 &&
               csb_v1_startup_title_source_step_for_frame_pc34(100) == 22 &&
+              csb_v1_startup_title_source_step_for_frame_pc34(101) == 22 &&
               csb_v1_startup_title_stage_for_frame_pc34(99) ==
                   CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
               csb_v1_startup_title_stage_for_frame_pc34(100) ==
+                  CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
+              csb_v1_startup_title_stage_for_frame_pc34(101) ==
                   CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
-          "startup title timing preserves CSB PRESENTS/CHAOS/STRIKES timing");
+          "startup title timing preserves CSB PRESENTS/CHAOS/STRIKES timing and two-VBlank STRIKES hold");
 
     render_state.title_frame =
         csb_v1_startup_title_presents_ticks_pc34();

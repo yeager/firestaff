@@ -94,13 +94,15 @@ static const DM1_V1_MouseRoutePc34Compat kInventoryRoutes[] = {
     { 55, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 534, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 56, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 535, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 57, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 536, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 81, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 101, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     /* COMMAND.C:413-417 inventory control icons.  These are viewport
-     * relative even though their source boxes sit above the dungeon view. */
+     * relative even though their source boxes sit above the dungeon view.
+     * Their small, specific rectangles overlap C081's broad panel surface,
+     * so they must be resolved before that generic panel route. */
     { 140, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 562, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 145, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 564, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 11,  DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 566, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 141, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 565, DM1_V1_MOUSE_MASK_LEFT_PC34 }
+    { 141, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 565, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 81, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 101, DM1_V1_MOUSE_MASK_LEFT_PC34 }
 };
 
 static const DM1_V1_MouseRoutePc34Compat kPanelChestRoutes[] = {

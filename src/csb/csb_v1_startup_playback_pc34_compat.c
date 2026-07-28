@@ -24,11 +24,13 @@ static int csb_v1_startup_playback_title_phase_mask_pc34(
             : 0x02;
     }
     if (stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
-        /* The first C426 frame follows the two-VBlank full-size CHAOS hold.
+        /* The first C426 frame follows TITLE.C's Delay(20) full-size CHAOS
+         * hold.
          * Record both source-visible phases even when playback is sampled
          * directly at the transition boundary. */
         return title_frame == csb_v1_startup_title_presents_ticks_pc34() +
-                                  csb_v1_startup_title_chaos_zoom_ticks_pc34()
+                                  csb_v1_startup_title_chaos_zoom_ticks_pc34() +
+                                  csb_v1_startup_title_chaos_hold_ticks_pc34()
             ? 0x0c
             : 0x08;
     }

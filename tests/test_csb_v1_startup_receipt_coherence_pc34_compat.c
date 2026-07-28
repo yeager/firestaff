@@ -101,7 +101,7 @@ int main(void)
     check(csb_v1_startup_presentation_receipt_from_host_facts_pc34(
               &facts, &receipt) && receipt.render_plan.title_dest_w == 320 &&
               receipt.render_plan.title_dest_h == 80,
-          "the two-vblank CHAOS hold preserves the full bitmap");
+          "the source Delay(20) CHAOS hold preserves the full bitmap");
 
     facts.title_frame = csb_v1_startup_title_total_ticks_pc34() - 1;
     facts.title_source_step =

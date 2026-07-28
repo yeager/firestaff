@@ -9,6 +9,7 @@
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -124,14 +125,57 @@ static int count_real_hoc_f0115_items(const M11_GameViewState *state)
     return item_count;
 }
 
-static int draw_real_hoc_f0115_item(M11_GameViewState *state,
-                                    unsigned char *framebuffer)
+static int collect_real_hoc_f0115_graphics(const M11_GameViewState *state,
+                                           unsigned char seen[512])
 {
     const struct DungeonMapDesc_Compat *map;
+    int count = 0;
     int y;
 
-    if (!state || !state->world.dungeon) {
+    if (!state || !state->world.dungeon || !seen) {
         return 0;
+    }
+    map = &state->world.dungeon->maps[0];
+    for (y = 0; y < (int)map->height; ++y) {
+        int x;
+        for (x = 0; x < (int)map->width; ++x) {
+            DM1_F0115WorldCandidatesPc34 candidates;
+            int item;
+            if (!dm1_v1_f0115_world_candidates_pc34(
+                    &state->world, 0, x, y, NULL, NULL, &candidates) ||
+                !candidates.valid) {
+                continue;
+            }
+            for (item = 0; item < candidates.itemCount; ++item) {
+                unsigned int graphic = dm1_item_sprite_index(
+                    candidates.items[item].thingType,
+                    candidates.items[item].subtype);
+                if (graphic < 512u && !seen[graphic]) {
+                    seen[graphic] = 1;
+                    ++count;
+                }
+            }
+        }
+    }
+    return count;
+}
+
+static int draw_real_hoc_f0115_items(M11_GameViewState *state,
+                                     unsigned char *framebuffer,
+                                     const unsigned char expected[512])
+{
+    const struct DungeonMapDesc_Compat *map;
+    unsigned char seen[512];
+    int expectedCount = 0;
+    int seenCount = 0;
+    int y;
+
+    if (!state || !state->world.dungeon || !expected) {
+        return 0;
+    }
+    memset(seen, 0, sizeof(seen));
+    for (y = 0; y < 512; ++y) {
+        expectedCount += expected[y] != 0;
     }
     map = &state->world.dungeon->maps[0];
     for (y = 0; y < (int)map->height; ++y) {
@@ -152,14 +196,23 @@ static int draw_real_hoc_f0115_item(M11_GameViewState *state,
                 memset(&alcove, 0, sizeof(alcove));
                 M11_GameView_GetDm1FloorItemHostPresentationReceipt(&floor);
                 M11_GameView_GetDm1AlcoveItemHostPresentationReceipt(&alcove);
-                if ((floor.valid && floor.usesF0791Blit) ||
-                    (alcove.valid && alcove.usesF0791Blit)) {
-                    return 1;
+                if (floor.valid && floor.usesF0791Blit &&
+                    floor.graphicsId >= 0 && floor.graphicsId < 512 &&
+                    expected[floor.graphicsId]) {
+                    seen[floor.graphicsId] = 1;
+                }
+                if (alcove.valid && alcove.usesF0791Blit &&
+                    alcove.graphicsId >= 0 && alcove.graphicsId < 512 &&
+                    expected[alcove.graphicsId]) {
+                    seen[alcove.graphicsId] = 1;
                 }
             }
         }
     }
-    return 0;
+    for (y = 0; y < 512; ++y) {
+        seenCount += seen[y] != 0;
+    }
+    return seenCount == expectedCount;
 }
 
 int main(void)
@@ -167,6 +220,7 @@ int main(void)
     const char *data_dir = getenv("FIRESTAFF_DM1_DATA_DIR");
     M11_GameViewState state;
     unsigned char framebuffer[FRAMEBUFFER_WIDTH * FRAMEBUFFER_HEIGHT];
+    unsigned char expected_hoc_graphics[512];
     int direction;
     int hoc_item_count;
 
@@ -193,9 +247,12 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
-    if (!draw_real_hoc_f0115_item(&state, framebuffer)) {
+    memset(expected_hoc_graphics, 0, sizeof(expected_hoc_graphics));
+    if (collect_real_hoc_f0115_graphics(&state, expected_hoc_graphics) <= 0 ||
+        !draw_real_hoc_f0115_items(&state, framebuffer,
+                                    expected_hoc_graphics)) {
         fprintf(stderr,
-                "real PC34 HoC F0115 item never reached an F0791 draw\n");
+                "one or more real PC34 HoC F0115 item graphics never reached an F0791 draw\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }

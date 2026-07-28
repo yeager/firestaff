@@ -1160,7 +1160,7 @@ int main(void) {
                     strstr(csb_v1_startup_sequence_source_evidence_pc34(),
                            "ENTRANCE.C F0438") != NULL,
                 "CSB startup evidence names title and entrance sources");
-    expect_true(csb_v1_startup_title_total_ticks_pc34() == 101,
+    expect_true(csb_v1_startup_title_total_ticks_pc34() == 102,
                 "CSB startup title timing keeps the ReDMCSB CSB prelude");
     expect_true(csb_v1_startup_title_presents_ticks_pc34() == 60,
                 "CSB startup title timing keeps the source PRESENTS hold");

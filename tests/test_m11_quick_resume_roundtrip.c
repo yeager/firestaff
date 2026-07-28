@@ -331,6 +331,11 @@ int main(void) {
                 "C140 visible save control should be consumed by live DM1")) return 1;
     if (!expect(view.inventoryPanelActive == 0,
                 "C140 visible save control should leave inventory input route")) return 1;
+    if (!expect(view.dialogOverlayActive,
+                "C140 visible save control should open the DM1 save-disk menu")) return 1;
+    if (!expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "save-disk menu default choice should write the DM1 save")) return 1;
     if (!expect(M11_GameView_LoadDm1SavePath(&view, savePath, NULL),
                 "C140 visible save control should write a loadable DM1 save")) return 1;
 
@@ -363,6 +368,9 @@ int main(void) {
                     &view, 179, 35, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                     M11_GAME_INPUT_REDRAW,
                 "C140 creates the default DM1 save directory")) return 1;
+    if (!expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                    M11_GAME_INPUT_REDRAW,
+                "default C140 save-disk choice writes the local save")) return 1;
     if (!expect(access(savePath, R_OK) == 0,
                 "default C140 save path exists after click")) return 1;
     if (!expect(M11_GameView_LoadDm1SavePath(&view, savePath, NULL),

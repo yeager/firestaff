@@ -41,12 +41,12 @@ an integration build pass.
   PANEL.C F0351 closes an open F0333 chest before the statistics panel and
   F0334 drops the hidden ninth slot.
 
-- **DM1-HOC-F0115-REAL-OBJECT-CAPTURE:** Closed 2026-07-27. The F0115
+- **DM1-HOC-F0115-REAL-OBJECT-CAPTURE:** Closed 2026-07-28. The F0115
   completed-bitmap capture now covers map 0 as well as later levels. The
-  real PC34 HoC probe must find an ordinary compact object chain, render it
-  through the normal source material path, and observe a current-frame
-  `GRAPHICS.DAT` F0791 blit. Mirror-controlled payloads remain excluded by
-  the existing REVIVE.C ownership decision.
+  real PC34 HoC probe walks every unique original object graphic among all
+  eight ordinary compact-chain candidates and requires each to reach a
+  current-frame `GRAPHICS.DAT` F0791 blit. Mirror-controlled payloads remain
+  excluded by the existing REVIVE.C ownership decision.
 
 - **DM1-F0115-REAL-ALCOVE-OBJECT-CAPTURE:** Closed 2026-07-27. F0121/F0124
   wall-alcove objects now publish a dedicated host receipt rather than being
@@ -93,10 +93,12 @@ an integration build pass.
   control now sets the M11, world, and lifecycle resting flags together, so
   later save/resume and creature-wake routes observe the same rest state.
 
-- **DM1-INVENTORY-CONTROL-CLICK-RUNTIME:** Closed 2026-07-27. A real DM1
-  session now verifies all four visible panel controls: C141 music, C140
-  save and reload, C145 rest-state handoff, and C011 close. They are no
-  longer protected only by a route-table fixture.
+- **DM1-INVENTORY-CONTROL-CLICK-RUNTIME:** Closed 2026-07-28. C140/C141/
+  C145/C011 now resolve before the broad C081 inventory-panel zone, which
+  otherwise swallowed the visible Zz and close controls. A real DM1 session
+  verifies music, the source-owned save-disk menu and write, rest-state
+  handoff, and close; they are no longer protected only by a route-table
+  fixture.
 
 - **DM1-V2-VISIBLE-CHAMPION-PORTRAIT-HITBOX:** Closed 2026-07-27. V2's
   composed HUD shifts champion portrait/name regions to x=12 with a 77px
@@ -114,9 +116,9 @@ an integration build pass.
   F0107 host pass and writes an exact palette-mapped, scaled pixel to the
   frame. This includes the real HoC wall-torch material.
 
-- **DM1-MOVEMENT-TURN-BUTTON-VISUAL-CUE:** Closed 2026-07-27. Keyboard and
-  controller feedback now outlines the full visible C013 turn-button tile,
-  while retaining the narrower original C068/C069 mouse-zone outline.
+- **DM1-MOVEMENT-TURN-BUTTON-VISUAL-CUE:** Closed 2026-07-28. Keyboard and
+  controller feedback now outlines C013's full 29x23 visible turn-button
+  tile, while retaining the narrower original C068/C069 mouse-zone outline.
 
 - **DM1-V2-HUD-CHAMPION-CLICK-ROUTES:** Closed 2026-07-27. DM1's original
   C007..C015 champion input surface is no longer disabled merely because a
@@ -4239,6 +4241,10 @@ lane is carried forward in the sections below.
     neutral palette before it may consume real `GRAPHICS.DAT` C017/C040
     surfaces. The check deliberately remains in the single readiness query:
     replaying the startup plan during panel blit breaks C002/C003 ordering.
+  - 2026-07-28 C001 timing audit closed: `TITLE.C:451-463` is now represented
+    as 60 + 20 + 20 + 2 VBlanks in the sequence, playback mask, session
+    contract, and real-data regressions. Remaining CSB startup work is
+    visual Mac/app capture, not title cadence.
   - 2026-07-23 C001 timing audit: ReDMCSB `STARTND2.C F0437` and CSBWin
     `_DisplayChaosStrikesBack` show 18 CHAOS zoom blits, two VBlanks of the
     full-size CHAOS page, then `VBLDelay(20)` after C426 STRIKES BACK. The
@@ -6473,7 +6479,8 @@ lane is carried forward in the sections below.
   - 2026-07-17 TITLE.C capture update: the source-step owner now transitions
     from PRESENTS frame 59/step 1 to CHAOS frame 60/step 2, retains the
     source-owned full-CHAOS sample at frame 77/step 19, holds the CHAOS plan
-    through frame 99/step 21, then presents STRIKES at frame 100/step 22.
+    through frame 99/step 21, then presents STRIKES at frames 100-101/step
+    22.
     The visual/runtime
     capture receipts consume those coherent frame/step pairs; they do not
     infer CHAOS from a stale frame or a wrapper route. Remaining handoff
@@ -6487,9 +6494,12 @@ lane is carried forward in the sections below.
     focused cadence regression and the opt-in real `GRAPHICS.DAT`/
     `DUNGEON.DAT` startup sequence pass; remaining work is a legible real
     app-window capture, not an alternate decoder or generated replacement.
-  - 2026-07-22 title/Entrance handoff correction: M11 samples STRIKES BACK at
-    source frame 100 after the full CHAOS hold and consumes the terminal
-    title tick before it admits ENTRANCE.C. The real local launcher regression
+  - 2026-07-28 title/Entrance timing correction: ReDMCSB `TITLE.C:451-463`
+    proves 60 VBlanks of PRESENTS, 20 shrink frames, `Delay(20)` on the full
+    CHAOS page, then `Delay(2)` on C426 STRIKES BACK. The former 101-tick
+    model mislabeled the CHAOS delay and held STRIKES only once. The current
+    102-tick source model retains frames 100-101 before ENTRANCE.C receives
+    ownership. The real local launcher regression
     now passes 500/500; remaining CSB-010 work is visual app-window capture,
     not a title-state or frame-boundary repair.
   - 2026-07-17 presentation-receipt update: the route receipt forwards the

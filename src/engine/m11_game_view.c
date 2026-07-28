@@ -39096,7 +39096,15 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
          * source click strip inside it.  Keep the source rectangle outlined
          * below as well, so pointer geometry remains evident. */
         if (receipt.cueColorKind == 1) {
-            w = 28;
+            /* The two turn zones C068/C069 begin one pixel inside their
+             * C013 button cells and omit the shared top border.  Preserve
+             * those exact coordinates for pointer routing, but make the
+             * keyboard/controller feedback surround the rendered button.
+             * This is the 29x23 visible tile at x=233/291, y=124. */
+            x -= 1;
+            y -= 1;
+            w = 29;
+            h = 23;
         }
         /* This visual echo is a Firestaff keyboard/controller affordance
          * over ReDMCSB's MENUDRAW.C F0395 native movement panel.  Draw the
