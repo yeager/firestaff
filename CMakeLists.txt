@@ -3936,6 +3936,10 @@ set(M11_SOURCES
     src/dm1/dm1_v1_custom_dungeon_loader.c
     src/dm1/dm1_v1_champion_status_layout_pc34_compat.c
     src/csb/csb_v1_boot.c
+    src/csb/csb_v1_atari_st_animation_assets.c
+    src/csb/csb_v1_atari_st_animation_discovery.c
+    src/csb/csb_v1_animation_script.c
+    src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/csb_v1_startup_sequence_pc34_compat.c

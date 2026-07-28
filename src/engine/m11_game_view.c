@@ -27,6 +27,7 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_f0093_replacement_palette_pc34_compat.h"
@@ -4939,6 +4940,59 @@ static void m11_csb_present_startup_raster(const unsigned char *source,
                        (size_t)source_x];
         }
     }
+}
+
+/* Atari ST CSB owns ANIMATE.SCR/ANIMATE.DAT rather than the PC34 TITLE.C
+ * surface set. Preserve its four-bit page and P4B1 palette through M11; the
+ * ordinary PC34 startup path remains the fallback for every other variant. */
+static int m11_csb_present_atari_st_startup(M11_GameViewState *state,
+                                            unsigned char *framebuffer,
+                                            int framebuffer_width,
+                                            int framebuffer_height)
+{
+    const CSB_V1_BootProfile *profile;
+    CSB_V1_AtariStAnimationTraceReceipt trace;
+    char user_data[FSP_PATH_MAX];
+    char cache_root[FSP_PATH_MAX];
+    uint8_t indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES];
+    uint8_t palette[16][3];
+    uint8_t rgb6[256][3];
+    int color;
+
+    if (!state || !framebuffer || framebuffer_width <= 0 ||
+        framebuffer_height <= 0 || !state->csbBootProfile) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if ((profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !profile->asset_root[0] || !FSP_GetUserDataDir(user_data,
+            sizeof(user_data)) || !FSP_JoinPath(cache_root,
+            sizeof(cache_root), user_data, "cache")) {
+        return 0;
+    }
+    memset(&trace, 0, sizeof(trace));
+    /* The first actual Set-screen is the source-owned title presentation.
+     * ANIMATE.SCR's intermediate expand/blit pages remain a separate
+     * compositor task; they are deliberately not approximated here. */
+    if (!csb_v1_atari_st_animation_decode_presented_from_root_indexed(
+            profile->asset_root, cache_root, 0u, indexed, palette, &trace) ||
+        !trace.valid || trace.presented_image_items[0] != 36u ||
+        trace.presented_palette_items[0] != 7u) {
+        return 0;
+    }
+    for (color = 0; color < 256; ++color) {
+        const uint8_t *rgb = palette[color & 15];
+        rgb6[color][0] = (uint8_t)(rgb[0] >> 2);
+        rgb6[color][1] = (uint8_t)(rgb[1] >> 2);
+        rgb6[color][2] = (uint8_t)(rgb[2] >> 2);
+    }
+    if (!M11_Render_SetIndexedPaletteRgb6(rgb6)) {
+        return 0;
+    }
+    m11_csb_present_startup_raster(indexed, framebuffer, framebuffer_width,
+                                   framebuffer_height);
+    return 1;
 }
 
 /* ENTRANCE.C owns the utility wait-loop state, but M11 may only present its
@@ -48758,6 +48812,18 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * public draw API is const for ordinary renderers; a live game view
          * is nevertheless mutable here and owns this CSB-only transaction. */
         M11_GameViewState *csb_state = (M11_GameViewState *)state;
+        if ((state->csbState.startup_title_active ||
+             state->csbState.startup_entrance_active) &&
+            m11_csb_present_atari_st_startup(csb_state, framebuffer,
+                                              framebufferWidth,
+                                              framebufferHeight)) {
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+            g_drawState = NULL;
+            g_activeOriginalFont = NULL;
+            g_m11_font_scale_override = 0;
+            return;
+        }
         if (m11_csb_boot_startup_active_from_capture(state)) {
             m11_draw_csb_startup_entrance(csb_state,
                                           framebuffer,

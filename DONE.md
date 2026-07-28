@@ -41795,3 +41795,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   data-root path now discovers, materializes and returns an original indexed
   `Set-screen` image and P4B1 palette in one call, leaving M11 no local file
   or RGBA conversion step.
+- ✅ 2026-07-28 CSB Atari ST M11 startup presentation. Atari ST 2.0/2.1
+  startup now selects the verified original `ANIMATE.SCR`/`ANIMATE.DAT` pair,
+  applies its source P4B1 palette to M11, and presents the original indexed
+  first `Set-screen` page. PC34 profiles retain their existing title route.
