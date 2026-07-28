@@ -39,6 +39,7 @@ typedef struct {
     uint16_t final_palette_item;
     uint16_t presented_image_items[CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES];
     uint16_t presented_palette_items[CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES];
+    uint32_t presented_vbls[CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES];
     uint16_t failed_opcode;
     uint16_t failed_instruction_index;
 } CSB_V1_AtariStAnimationTraceReceipt;

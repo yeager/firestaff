@@ -21698,8 +21698,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   integration must preserve those 16 indices through M11 presentation. The
   same data-root route now exposes that indexed presentation in one call.
   Atari ST 2.0/2.1 M11 startup now consumes that first original `Set-screen`
-  page directly; remaining work is the script's intermediate framebuffer
-  compositor and source-timed later presentation transitions.
+  page directly and follows each original `Set-screen` VBlank; remaining work
+  is the script's intermediate framebuffer compositor.
   Remaining Atari animation work is an Atari framebuffer/presentation owner
   that consumes all intermediate traced operations; do not substitute the
   PC34 title/Entrance renderer for this route.

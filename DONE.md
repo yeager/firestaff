@@ -41799,3 +41799,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   startup now selects the verified original `ANIMATE.SCR`/`ANIMATE.DAT` pair,
   applies its source P4B1 palette to M11, and presents the original indexed
   first `Set-screen` page. PC34 profiles retain their existing title route.
+- ✅ 2026-07-28 CSB Atari ST presentation timing. The script trace now records
+  the source VBlank of every real `Set-screen`; M11 advances only between
+  those original presentation pages according to the live startup tick.

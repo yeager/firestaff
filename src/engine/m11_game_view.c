@@ -4957,6 +4957,7 @@ static int m11_csb_present_atari_st_startup(M11_GameViewState *state,
     uint8_t indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES];
     uint8_t palette[16][3];
     uint8_t rgb6[256][3];
+    uint16_t presentation_index = 0u;
     int color;
 
     if (!state || !framebuffer || framebuffer_width <= 0 ||
@@ -4972,13 +4973,26 @@ static int m11_csb_present_atari_st_startup(M11_GameViewState *state,
         return 0;
     }
     memset(&trace, 0, sizeof(trace));
-    /* The first actual Set-screen is the source-owned title presentation.
-     * ANIMATE.SCR's intermediate expand/blit pages remain a separate
-     * compositor task; they are deliberately not approximated here. */
+    /* ANIMATE.SCR's intermediate expand/blit pages remain a separate
+     * compositor task; select only a real Set-screen at or before the live
+     * source VBlank and never approximate those missing intermediate pages. */
     if (!csb_v1_atari_st_animation_decode_presented_from_root_indexed(
             profile->asset_root, cache_root, 0u, indexed, palette, &trace) ||
         !trace.valid || trace.presented_image_items[0] != 36u ||
         trace.presented_palette_items[0] != 7u) {
+        return 0;
+    }
+    while (presentation_index + 1u < trace.present_count &&
+           presentation_index + 1u <
+               CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES &&
+           trace.presented_vbls[presentation_index + 1u] <=
+               m11_csb_startup_source_tick(state)) {
+        ++presentation_index;
+    }
+    if (presentation_index != 0u &&
+        !csb_v1_atari_st_animation_decode_presented_from_root_indexed(
+            profile->asset_root, cache_root, presentation_index, indexed,
+            palette, &trace)) {
         return 0;
     }
     for (color = 0; color < 256; ++color) {

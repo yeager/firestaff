@@ -76,7 +76,8 @@ int main(void)
                       trace.presented_image_items[0] == 36u &&
                       trace.presented_palette_items[0] == 7u &&
                       trace.presented_image_items[1] == 35u &&
-                      trace.presented_palette_items[1] == 2u,
+                      trace.presented_palette_items[1] == 2u &&
+                      trace.presented_vbls[1] >= trace.presented_vbls[0],
                   "real Atari script executes documented fades, loops, blits and presentation");
         }
         CHECK(rgba != NULL && csb_v1_atari_st_animation_render_rgba(dat_path,

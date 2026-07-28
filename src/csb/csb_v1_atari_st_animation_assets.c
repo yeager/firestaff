@@ -287,6 +287,8 @@ int csb_v1_atari_st_animation_trace_script(
                                 slots[p[0]].item_index;
                             out_receipt->presented_palette_items[index] =
                                 active_palette_item;
+                            out_receipt->presented_vbls[index] =
+                                out_receipt->waited_vbl_count;
                         }
                     }
                 }
