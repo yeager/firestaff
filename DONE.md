@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 CSB V2.0/V2.1 full runtime handoff. The real PC3.4 M12/M11
+  regression now presents each source-owned C001/C002/C003 phase while it
+  advances, then proves the selected V2.0/V2.1 routes reach a visible F0128
+  dungeon frame with the terminal source session intact. V2.2 remains
+  deliberately fail-closed without an admitted finished artpack.
+
 - ✅ 2026-07-28 CSB packaged V2.x app-path verification. The actual
   `firestaff` boot probe against the hash-admitted local PC 3.4 package
   reaches the same source-backed runtime pose `(map 0, party 9,0,2)` in V1,

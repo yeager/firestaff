@@ -1494,6 +1494,44 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
         M11_GameView_TickAnimation(&view);
         expect_true(csb_v2_runtime_is_bound() == 1,
                     "CSB V2 binding survives a presented animation frame");
+        {
+            int tick;
+            for (tick = 0; tick < 128 && view.csbState.startup_title_active;
+                 ++tick) {
+                memset(framebuffer, 0, sizeof(framebuffer));
+                M11_GameView_Draw(&view, framebuffer, 320, 200);
+                (void)M11_GameView_AdvanceIdleTick(&view);
+            }
+        }
+        drive_csb_entrance_to_wait(
+            &view,
+            "CSB V2 launcher reaches the source-owned Prison wait loop");
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "CSB V2 launcher accepts the source Enter Dungeon command");
+        {
+            int tick;
+            for (tick = 0; tick < 96 && view.csbState.startup_entrance_active;
+                 ++tick) {
+                memset(framebuffer, 0, sizeof(framebuffer));
+                M11_GameView_Draw(&view, framebuffer, 320, 200);
+                (void)M11_GameView_AdvanceIdleTick(&view);
+            }
+            for (tick = 0; tick < 200; ++tick) {
+                memset(framebuffer, 0, sizeof(framebuffer));
+                M11_GameView_Draw(&view, framebuffer, 320, 200);
+                (void)M11_GameView_AdvanceIdleTick(&view);
+            }
+        }
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(!view.csbState.startup_entrance_active &&
+                        view.csbState.level_loaded &&
+                        view.csbState.runtime_viewport_source_session_ready &&
+                        view.csbState.runtime_viewport_pixel_hash != 0u &&
+                        count_nonzero_pixels(framebuffer,
+                                             sizeof(framebuffer)) > 0,
+                    "CSB V2 reaches a visible source-backed F0128 runtime frame");
         M11_GameView_Shutdown(&view);
         expect_true(csb_v2_runtime_is_bound() == 0,
                     "CSB V2 binding is released with its M11 game view");

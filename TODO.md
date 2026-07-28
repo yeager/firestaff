@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V2X-FULL-RUNTIME-HANDOFF:** Closed 2026-07-29. The real PC3.4
+  M12-to-M11 test now presents every C001 title and C002/C003 door frame
+  while advancing, then proves V2.0 and V2.1 reach a visible, source-backed
+  F0128 runtime frame. V2.2 remains fail-closed when its finished-art gate is
+  not admitted; it is not silently substituted with generated art.
+
 - **CSB-V2X-VERIFICATION-LANE:** Closed 2026-07-28. All 41 registered
   V2.0/V2.1/V2.2 contracts are now tagged as CSB verification, so the normal
   `ctest -L csb` gate covers the complete 93-test CSB suite rather than a
