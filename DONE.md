@@ -41783,3 +41783,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   data-root interface now rasterizes an individual source `Set-screen` frame
   as well as the final screen, including discovery, archive materialization
   and active-palette selection in one call.
+- ✅ 2026-07-28 CSB full labelled regression. After building the one shared
+  explosion-runtime executable missing from the local build tree, the complete
+  CTest `csb` label selection passed 63/63. This includes V1 startup, save,
+  DSA, viewport, HUD and Atari tests together with the V2.x suite.
