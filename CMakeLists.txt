@@ -6640,6 +6640,7 @@ add_executable(firestaff_theron_v2_hud_launch_mode_probe
     src/dm1v2/dm1_v2_presentation_mode_pc34.c
     src/csb/csb_v2_presentation_mode_pc34.c
     src/csb/csb_v22_shapes.c
+    src/csb/csb_v22_finished_art_material_gate_pc34.c
     src/csb/csb_v2_texture_upscale_pc34.c
     src/dm1v2/dm1_v22_shapes.c
     src/dm1v2/dm1_v2_modern_assets_pc34.c
