@@ -2121,6 +2121,47 @@ static int m11_csb_v1_runtime_hud_materials_ready(
     return 1;
 }
 
+static int m11_csb_v1_install_runtime_hud_materials(M11_GameViewState *state)
+{
+    static const struct {
+        unsigned int graphic;
+        int width;
+        int height;
+    } required[] = {
+        { 28u, 76, 14 }, { 10u, 87, 45 }, { 9u, 87, 25 },
+        { 11u, 87, 33 }, { 13u, 87, 45 }
+    };
+    size_t index;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile || !m11_csb_startup_package_identity_current(state)) {
+        return 0;
+    }
+    for (index = 0; index < sizeof(required) / sizeof(required[0]); ++index) {
+        unsigned char *pixels = NULL;
+        int width = 0;
+        int height = 0;
+        CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+
+        memset(&receipt, 0, sizeof(receipt));
+        if (!csb_v1_boot_decode_graphics_dat_asset_pc34(
+                ((const CSB_V1_BootProfile *)state->csbBootProfile)->graphics_path,
+                required[index].graphic, &pixels, &width, &height, &receipt) ||
+            !receipt.valid || width != required[index].width ||
+            height != required[index].height ||
+            !M11_AssetLoader_InstallDecodedPixels(&state->assetLoader,
+                                                   required[index].graphic,
+                                                   pixels,
+                                                   (unsigned short)width,
+                                                   (unsigned short)height)) {
+            free(pixels);
+            return 0;
+        }
+        free(pixels);
+    }
+    return 1;
+}
+
 static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
@@ -2146,7 +2187,9 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
             state, framebuffer, framebufferWidth, framebufferHeight);
         return;
     }
-    if (!m11_csb_v1_runtime_hud_materials_ready(party_state)) {
+    if (!m11_csb_v1_runtime_hud_materials_ready(party_state) &&
+        !m11_csb_v1_install_runtime_hud_materials(
+            (M11_GameViewState *)state)) {
         /* A mixed CSB/host panel is worse than an absent panel: C017/C040
          * stays as the only admitted base surface and all dynamic lanes are
          * cleared instead of borrowing DM1 or procedural artwork. */

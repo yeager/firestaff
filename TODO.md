@@ -669,6 +669,10 @@ that its exact runtime path is not already source-locked and tested.
    remains open. The normal M11 frame setup now preserves a source PC3.4
    dungeon-palette mapping for F0128's four-bit CSB pixels (2026-07-28), but
    packaged app-window capture of that exact runtime palette is still needed.
+   C028/C009-C013 now likewise enter M11 through CSB IMG3/LZW rather than the
+   DM1 decoder, allowing the existing source-owned runtime HUD consumers to
+   use correct source rasters. Full C017/C040 normal-runtime composition and
+   app-window visual capture remain open.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

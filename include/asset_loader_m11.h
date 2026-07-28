@@ -81,6 +81,16 @@ int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
 const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
                                           unsigned int graphicIndex);
 
+/* Install a caller-decoded original graphic into the normal cache. The
+ * loader takes a private copy, replacing a prior slot for the same index.
+ * This is for format-specific source decoders (such as CSB PC3.4 IMG3), not
+ * for generated art or presentation substitutions. */
+int M11_AssetLoader_InstallDecodedPixels(M11_AssetLoader* loader,
+                                         unsigned int graphicIndex,
+                                         const unsigned char* pixels,
+                                         unsigned short width,
+                                         unsigned short height);
+
 /* Blit a loaded asset slot onto the M11 1-byte-per-pixel framebuffer.
    transparentColor: if >= 0, pixels matching this value are skipped.
    Clips to framebuffer bounds. */

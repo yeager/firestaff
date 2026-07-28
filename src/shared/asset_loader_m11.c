@@ -145,6 +145,41 @@ static M11_AssetSlot* m11_alloc_slot(M11_AssetLoader* loader) {
     return NULL;
 }
 
+int M11_AssetLoader_InstallDecodedPixels(M11_AssetLoader* loader,
+                                         unsigned int graphicIndex,
+                                         const unsigned char* pixels,
+                                         unsigned short width,
+                                         unsigned short height) {
+    M11_AssetSlot* slot;
+    unsigned char* copy;
+    size_t pixel_count;
+
+    if (!loader || !loader->initialized || !pixels || width == 0u ||
+        height == 0u || (size_t)height > SIZE_MAX / (size_t)width) {
+        return 0;
+    }
+    pixel_count = (size_t)width * (size_t)height;
+    copy = (unsigned char*)malloc(pixel_count);
+    if (!copy) return 0;
+    memcpy(copy, pixels, pixel_count);
+    slot = m11_find_cached(loader, graphicIndex);
+    if (!slot) {
+        slot = m11_alloc_slot(loader);
+    }
+    if (!slot) {
+        free(copy);
+        return 0;
+    }
+    free(slot->pixels);
+    memset(slot, 0, sizeof(*slot));
+    slot->loaded = 1;
+    slot->graphicIndex = graphicIndex;
+    slot->width = width;
+    slot->height = height;
+    slot->pixels = copy;
+    return 1;
+}
+
 const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
                                           unsigned int graphicIndex) {
     const struct MemoryGraphicsDatRuntimeState_Compat* rt;

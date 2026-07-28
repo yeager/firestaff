@@ -1,3 +1,10 @@
+- ✅ 2026-07-28 CSB V1 HUD source-material cache bridge. C028 and C009-C013
+  are now decoded with CSB's original PC3.4 IMG3/LZW route and installed in
+  the normal M11 asset cache for the existing source-owned HUD consumers.
+  This replaces the incompatible generic DM1 decoder for those CSB records.
+  Direct CSB boot reaches inactive startup/runtime tick 1548; all 43 focused
+  CSB V1/V2.x tests pass.
+
 - ✅ 2026-07-28 CSB F0128 source-palette handoff. The common M11 frame setup
   now installs the source PC3.4 dungeon palette for CSB's IMG3 four-bit
   viewport pixels rather than clearing indexed-palette state before F0128.
