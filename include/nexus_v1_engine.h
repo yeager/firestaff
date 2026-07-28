@@ -2419,6 +2419,9 @@ struct Nexus_V1_Engine {
     Nexus_DMDFMaterialBank floor_materials;
     Nexus_DMDFMaterialBank wall_materials;
     Nexus_DMDFMaterialBank animated_floor_materials;
+    Nexus_DMDFTextureSurface structure2_surfaces[NEXUS_DGN_MAX_STRUCTURE2_TEXTURES];
+    int structure2_surface_count;
+    Nexus_V1_DgnStructure2TextureDecodeReceipt structure2_decode_receipt;
     Nexus_V1_ItemIbsBank item_ibs_bank;
     Nexus_V1_ItemIbsRuntimeSourceReceipt item_ibs_runtime_source;
     Nexus_V1_DgnStructure2SourceReceipt current_level_structure2_source;

@@ -258,18 +258,34 @@ void nexus_v1_dgn_renderer_handoff_require_canonical_source(
 #undef NEXUS_V1_MD5_G
 #undef NEXUS_V1_MD5_F
 
+static void nexus_v1_free_structure2_surfaces(Nexus_V1_Engine *engine) {
+    int i;
+    if (!engine) return;
+    for (i = 0; i < NEXUS_DGN_MAX_STRUCTURE2_TEXTURES; ++i) {
+        free(engine->structure2_surfaces[i].pixels);
+        engine->structure2_surfaces[i].pixels = NULL;
+    }
+    engine->structure2_surface_count = 0;
+    memset(&engine->structure2_decode_receipt, 0,
+           sizeof(engine->structure2_decode_receipt));
+}
+
 static int nexus_v1_decode_structure2_animation_materials(
     Nexus_V1_Engine *engine, const uint8_t *data, int size) {
-    /* Retail LEV Structure2 establishes descriptor[20] ... FFFF + opaque
-     * payload only. No original Saturn decoder proves the descriptor encoding,
-     * offset base, pixel order, or palette format, so materialization must
-     * remain fail-closed. */
     (void)data;
     (void)size;
     if (!engine) return 0;
     nexus_v1_dmdf_free_material_bank(&engine->animated_floor_materials);
     engine->animated_floor_material_route_valid = 0;
-    return 0;
+    nexus_v1_free_structure2_surfaces(engine);
+    if (nexus_v1_current_level_decode_structure2_textures(
+            engine, engine->structure2_surfaces,
+            NEXUS_DGN_MAX_STRUCTURE2_TEXTURES,
+            &engine->structure2_decode_receipt) == 1) {
+        engine->structure2_surface_count =
+            engine->structure2_decode_receipt.decoded_count;
+    }
+    return engine->structure2_surface_count > 0 ? 1 : 0;
 }
 
 static const char *nexus_known_boot_file_md5(const char *name) {
@@ -9690,6 +9706,7 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     nexus_v1_dmdf_free_material_bank(&engine->floor_materials);
     nexus_v1_dmdf_free_material_bank(&engine->wall_materials);
     nexus_v1_dmdf_free_material_bank(&engine->animated_floor_materials);
+    nexus_v1_free_structure2_surfaces(engine);
     if (engine->source == NEXUS_SRC_ISO)
         nexus_iso_close(&engine->iso);
     memset(engine, 0, sizeof(*engine));
