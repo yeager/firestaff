@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 CSB V1/V2.0/V2.1 direct-launch sweep. Local PC3.4 startup
+  probes reached the source-owned Prison wait state, applied the authentic
+  Enter-Dungeon command, and then reached live map-0 runtime in all three
+  admitted presentation modes. V2.2 correctly remains fail-closed while no
+  reviewed CSB artpack is installed.
+
 - ✅ 2026-07-29 `.fsart` ZIP materialization. The shared asset-container
   classifier now recognizes Firestaff artpacks as ZIP archives, so virtual
   archive entries can be discovered and extracted through the same bounded

@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V1-V21-CLI-STARTUP-SWEEP:** Closed 2026-07-29. Direct local launch
+  probes against the installed PC3.4 package now cover V1, V2.0 and V2.1:
+  after the source-owned Prison `Enter` command, every mode reaches inactive
+  startup, map 0 at `(9,0,2)`, and a live runtime tick. V2.2 remains
+  deliberately unavailable until its reviewed material gate is complete.
+
 - **M12-FSART-ZIP-MATERIALIZATION:** Closed 2026-07-29. `.fsart` is now an
   explicitly recognized ZIP container for scanner virtual paths and
   `asset_extract_virtual_path`, including nested deflated members. This makes
