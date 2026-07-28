@@ -741,6 +741,8 @@ that its exact runtime path is not already source-locked and tested.
    manifest with only real declared entries remains partial.
    The in-game selector likewise consults that CSB-specific gate rather than
    the cross-game launcher installed flag.
+   CSB presentation-mode resolution uses the CSB manifest availability API,
+   not DM1's global modern-asset state.
    2026-07-28: the canonical PC 3.4 real-data gate now proves the full
    source-owned startup chain: Swoosh, C001 PRESENTS/CHAOS/STRIKES, all 31
    C004/C002/C003 opening pages, C017/C040 HUD handoff and the DUNGEON.DAT

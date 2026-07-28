@@ -6,10 +6,9 @@
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v2_texture_upscale_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
+#include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_shapes.h"
 #include <string.h>
-
-extern int m11_v22_modern_assets_available(void);
 
 static CSB_V2_PresentationModeState g_csb_pm_state;
 static int g_csb_pm_pack_override_valid = 0;
@@ -21,7 +20,7 @@ static int csb_pm_modern_pack_detected(void) {
      * V2.2 tools, but it is not enough to replace live source-owned pixels.
      * Real gameplay may enter V2.2 only after every required material passed
      * the provenance gate; otherwise retain the V2.1 renderer. */
-    return m11_v22_modern_assets_available() &&
+    return csb_v22_modern_assets_available() &&
            csb_v22_famg_is_finished_real();
 }
 

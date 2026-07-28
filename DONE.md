@@ -41988,3 +41988,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   cross-game `v22_modern_assets_installed` bit. A completed pack for another
   game therefore cannot show a CSB V2.2 option that would resolve back to
   V2.1 at runtime.
+
+- ✅ 2026-07-29 CSB V2.2 presentation isolation. CSB mode resolution now
+  checks `csb_v22_modern_assets_available()` together with its finished-art
+  gate rather than the DM1/M11 global asset API, preventing one game's art
+  installation from affecting another game's renderer.
