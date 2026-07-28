@@ -39,6 +39,7 @@
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v2_hud_runtime.h"
 #include "csb_v2_runtime.h"
+#include "csb_v2_smooth_movement.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_game.h"
@@ -43829,6 +43830,14 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     int camY = state->camera_offset_y;
     int camDir = state->camera_interpolated_facing;
     int turnPanX = dm1_v2_camera_turn_pan_offset_x(&state->p5_camera);
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
+        csb_v2_runtime_is_bound()) {
+        /* CSB owns a separate V2 animation clock. Consume its cardinal
+         * turn-pan here after the source viewport has rendered, exactly as
+         * the DM1 V2 camera path does. This remains presentation-only. */
+        turnPanX = csb_v2_smooth_turn_pan_offset_x();
+    }
     (void)camDir; /* facing interpolation used by creature sprite pass */
     static const M11_ViewRect viewport = {M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H};
     static const M11_ViewRect frames[4] = {

@@ -88,6 +88,58 @@ float csb_v2_smooth_get_vertical(void) {
 
 float csb_v2_smooth_get_angle(void) { return v2_anim_value(&g_csb_turn); }
 
+int32_t csb_v2_smooth_turn_pan_offset_x(void) {
+    int from;
+    int to;
+    int delta;
+    int sign;
+    float half;
+    float local_elapsed;
+    int32_t magnitude;
+
+    if (!g_csb_turn.active || g_csb_turn.duration_ms <= 0.0f ||
+        g_csb_turn.elapsed_ms <= 0.0f ||
+        g_csb_turn.elapsed_ms >= g_csb_turn.duration_ms) {
+        return 0;
+    }
+
+    /* CSB's source turn path is cardinal. Do not invent a visual direction
+     * for any caller that supplies an arbitrary angle. */
+    from = (int)(g_csb_turn.from / 90.0f);
+    to = (int)(g_csb_turn.to / 90.0f);
+    if (g_csb_turn.from != (float)(from * 90) ||
+        g_csb_turn.to != (float)(to * 90)) {
+        return 0;
+    }
+    from &= 3;
+    to &= 3;
+    delta = to - from;
+    if (delta > 2) delta -= 4;
+    if (delta < -2) delta += 4;
+    if (delta == 0) {
+        return 0;
+    }
+
+    sign = delta < 0 ? -1 : 1;
+    half = g_csb_turn.duration_ms * 0.5f;
+    if (half <= 0.0f) {
+        return 0;
+    }
+    local_elapsed = g_csb_turn.elapsed_ms;
+    if (local_elapsed > half) {
+        local_elapsed = g_csb_turn.duration_ms - local_elapsed;
+        sign = -sign;
+    }
+    if (local_elapsed < 0.0f) {
+        local_elapsed = 0.0f;
+    }
+    magnitude = (int32_t)((CSB_V2_TURN_PAN_SUBPIXELS * local_elapsed) / half);
+    if (magnitude > CSB_V2_TURN_PAN_SUBPIXELS) {
+        magnitude = CSB_V2_TURN_PAN_SUBPIXELS;
+    }
+    return sign * magnitude;
+}
+
 int csb_v2_smooth_is_moving(void) {
     return g_csb_walk_x.active || g_csb_walk_y.active ||
            g_csb_stairs_x.active || g_csb_stairs_y.active ||

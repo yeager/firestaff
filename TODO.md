@@ -777,6 +777,10 @@ that its exact runtime path is not already source-locked and tested.
 33. **CSB-INPUT-CONTROLLER-ACCESSIBILITY:** Complete mouse, keyboard,
     controller/touch mapping, modal focus, pointer coordinates, screen scale,
     and original command behavior for all CSB gameplay surfaces.
+    2026-07-28: V2.0/V2.1/V2.2 now consume CSB's own in-flight cardinal
+    turn animation as a post-composition viewport pan in M11. The source V1
+    command, timing, collision and sensors remain unchanged. This closes the
+    smooth-turn presentation subtask; broad controller/modal coverage remains.
 34. **CSB-EXPANSION-AND-CUSTOM-DUNGEONS:** Complete safe original-data handling
     for CSB expansion/custom dungeon package selection, admission, runtime,
     save namespace, and no-cross-game asset leakage.

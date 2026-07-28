@@ -1,6 +1,7 @@
 
 #ifndef FIRESTAFF_CSB_V2_SMOOTH_MOVEMENT_H
 #define FIRESTAFF_CSB_V2_SMOOTH_MOVEMENT_H
+#include <stdint.h>
 #include "dm1_v2_anim_timing.h"
 #include "csb_v2_phase_gate_pc34.h"
 
@@ -18,6 +19,7 @@
 #define CSB_V2_WALK_EASE   V2_EASE_OUT_CUBIC
 #define CSB_V2_TURN_EASE   V2_EASE_OUT_QUAD
 #define CSB_V2_STAIRS_EASE V2_EASE_IN_OUT_CUBIC
+#define CSB_V2_TURN_PAN_SUBPIXELS 256
 
 void csb_v2_smooth_init(void);
 void csb_v2_smooth_start_walk(float fx, float fy, float tx, float ty);
@@ -28,7 +30,10 @@ float csb_v2_smooth_get_x(void);
 float csb_v2_smooth_get_y(void);
 float csb_v2_smooth_get_vertical(void);
 float csb_v2_smooth_get_angle(void);
+/* Horizontal viewport pan for an in-flight cardinal turn. The result uses
+ * the shared 8.8 subpixel scale and is zero for V1, idle, or unsupported
+ * non-cardinal transitions. */
+int32_t csb_v2_smooth_turn_pan_offset_x(void);
 int   csb_v2_smooth_is_moving(void);
 const char *csb_v2_smooth_source_evidence(void);
 #endif
-

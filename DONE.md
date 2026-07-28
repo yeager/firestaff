@@ -41872,3 +41872,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   three PSG loud tables are decoded to the SDL transport with source hashes;
   malformed, altered, or invalid-period data is rejected without a fallback.
   The staged original proves SND1 item 86 followed by item 85 at period 112.
+
+- ✅ 2026-07-28 CSB V2 cardinal turn-pan host consumption. M11 now consumes
+  CSB V2's active cardinal turn animation after source viewport composition,
+  using the shared 8.8 subpixel pan sweep. The V1 turn command remains
+  source-owned and discrete. Targeted V2 runtime, source-lock and turn-pan
+  tests pass for right, left, completion and non-cardinal no-op paths.

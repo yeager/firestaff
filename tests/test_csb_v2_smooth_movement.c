@@ -131,6 +131,33 @@ int main(void) {
         check("turn: not moving after full tick", !csb_v2_smooth_is_moving());
     }
 
+    /* The M11 host consumes this triangular offset after source viewport
+     * composition. It is non-zero only while a cardinal CSB turn is live. */
+    csb_v2_smooth_init();
+    csb_v2_smooth_start_turn(0.0f, 90.0f);
+    check("turn pan: zero at start", csb_v2_smooth_turn_pan_offset_x() == 0);
+    drive_csb(13.75f);
+    check("turn pan: right first quarter", csb_v2_smooth_turn_pan_offset_x() > 0);
+    drive_csb(13.75f);
+    check("turn pan: right midpoint", csb_v2_smooth_turn_pan_offset_x() == 256);
+    drive_csb(13.75f);
+    check("turn pan: right return quarter", csb_v2_smooth_turn_pan_offset_x() < 0);
+    drive_csb(13.75f);
+    check("turn pan: zero after completion", csb_v2_smooth_turn_pan_offset_x() == 0);
+
+    csb_v2_smooth_init();
+    csb_v2_smooth_start_turn(90.0f, 0.0f);
+    drive_csb(13.75f);
+    check("turn pan: left first quarter", csb_v2_smooth_turn_pan_offset_x() < 0);
+    drive_csb(41.25f);
+    check("turn pan: left zero after completion", csb_v2_smooth_turn_pan_offset_x() == 0);
+
+    csb_v2_smooth_init();
+    csb_v2_smooth_start_turn(0.0f, 45.0f);
+    drive_csb(13.75f);
+    check("turn pan: non-cardinal is source-safe no-op",
+          csb_v2_smooth_turn_pan_offset_x() == 0);
+
     /* ── Stairs animation with vertical offset ─────────────────── */
     csb_v2_smooth_init();
     csb_v2_smooth_start_stairs(5.0f, 5.0f, 6.0f, 5.0f, 0.5f);
