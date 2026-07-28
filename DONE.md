@@ -26102,6 +26102,12 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   The renderer now admits all 53 JUNK subtypes and the real-asset regression
   verifies the full 498..583 object band.
 
+- 2026-07-28 CSB F0115 real object-asset verification: replaced the
+  first-object test's no-op `M11_AssetLoader` stub with the production loader
+  linked to `firestaff_m10`. The focused test passes against the installed
+  original CSB `GRAPHICS.DAT`, decoding and compositing every native object
+  graphic from 498 through 583.
+
 - 2026-07-11 Nexus canonical full-start package consumption: M12 now treats
   hash-verified Nexus availability strictly as a pre-launch gate, allowing
   M11 to construct the runtime receipt without promoting title/menu/capture

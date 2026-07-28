@@ -541,6 +541,10 @@ that its exact runtime path is not already source-locked and tested.
     2026-07-25: F0115 first-object native graphic mapper with G0209
     weapon[46]/armour[58]/junk[53]/potion[21] tables, C10 blit with
     conditional horizontal flip, and m11_game_view.c stubs replaced.
+    2026-07-28: the F0115 object regression now links the production
+    `M11_AssetLoader` rather than its former test stub. Against the local
+    original `GRAPHICS.DAT`, it decodes and composites every native object
+    surface in the 498..583 band, including JUNK subtype 52 / Bones.
     44 CSB viewport tests (walls D0-D3, doors, ornaments, backgrounds,
     center fields, footprints, projectile routing) wired into CMake and
     passing.

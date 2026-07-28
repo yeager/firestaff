@@ -17740,10 +17740,13 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_f0115_first_object_real_asset_pc34_compat
         tests/test_csb_v1_f0115_first_object_real_asset_pc34_compat.c
         src/csb/csb_v1_viewport_f0115_first_object_pc34_compat.c
-        tests/stub_asset_loader_m11.c
+        src/shared/asset_loader_m11.c
     )
     target_include_directories(test_csb_v1_f0115_first_object_real_asset_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_f0115_first_object_real_asset_pc34_compat PRIVATE
+        firestaff_m10
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_f0115_first_object_real_asset_pc34_compat
