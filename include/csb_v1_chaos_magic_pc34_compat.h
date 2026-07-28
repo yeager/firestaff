@@ -430,6 +430,12 @@ typedef int (*CSB_V1_CSBWinDSAReadCharacterNameFn)(
  * authenticated action has passed. */
 typedef int (*CSB_V1_CSBWinDSASetGlobalTextFn)(
     void *user, uint32_t global_index, const char *text);
+/* DSA.cpp STKOP_Say resolves the first DB2 text record at a source dungeon
+ * location and submits it to CSBWin's scrolling text owner.  Keep lookup,
+ * decoding and presentation together in that owner: the bounded interpreter
+ * supplies only the original location/color operands after full acceptance. */
+typedef int (*CSB_V1_CSBWinDSASayTextFn)(
+    void *user, uint32_t location, int32_t color);
 /* DSA.cpp STKOP_Overlay/STKOP_Palette alter CSBWin's live overlay catalog.
  * The renderer/package owner validates that the selected overlay and palette
  * belong to loaded CSB media; the interpreter only stages the exact source
@@ -504,6 +510,7 @@ typedef struct {
     CSB_V1_CSBWinDSAReadTextFn read_text;
     CSB_V1_CSBWinDSAReadCharacterNameFn read_character_name;
     CSB_V1_CSBWinDSASetGlobalTextFn set_global_text;
+    CSB_V1_CSBWinDSASayTextFn say_text;
     void *text_user;
     CSB_V1_CSBWinDSASetOverlayFn set_overlay;
     CSB_V1_CSBWinDSASetOverlayPaletteFn set_overlay_palette;
@@ -738,6 +745,9 @@ typedef struct {
     int32_t last_sound_number;
     int32_t last_sound_volume;
     int32_t last_sound_flags;
+    uint16_t say_text_count;
+    uint32_t last_say_text_location;
+    int32_t last_say_text_color;
     uint16_t teleporter_copy_count;
     uint32_t last_teleporter_copy_source_location;
     uint32_t last_teleporter_copy_destination_location;
@@ -924,6 +934,7 @@ typedef struct {
     CSB_V1_CSBWinDSAReadTextFn read_text;
     CSB_V1_CSBWinDSAReadCharacterNameFn read_character_name;
     CSB_V1_CSBWinDSASetGlobalTextFn set_global_text;
+    CSB_V1_CSBWinDSASayTextFn say_text;
     void *text_user;
     CSB_V1_CSBWinDSASetOverlayFn set_overlay;
     CSB_V1_CSBWinDSASetOverlayPaletteFn set_overlay_palette;

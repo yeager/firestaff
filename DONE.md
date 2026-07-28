@@ -1,3 +1,10 @@
+- ✅ 2026-07-29 CSBWin DSA `STKOP_Say` text-owner binding. Authenticated
+  `SAY` now stages its original packed location and color operands and calls
+  only a runtime-owned DB2/location scrolling-text callback after full
+  bytecode acceptance. Missing owners fail closed and a later rejected word
+  rolls back the pending text request. Verified by
+  `csb_v1_dsa_text_bank_transaction`.
+
 - ✅ 2026-07-29 CSB V2.2 route-complete artpack admission. The finished-art
   gate and Artpack Studio required list now cover all 29 `(category,id)`
   pairs emitted by the actual per-cell CSB V2.2 router, not the legacy

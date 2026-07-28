@@ -15,6 +15,15 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-DSA-SAY-TEXT-OWNER:** Closed 2026-07-29. Authenticated CSBWin
+  `STKOP_Say` now consumes its original packed location/color operands and
+  stages the request until every source word has been accepted. The only
+  commit path is a runtime-owned DB2/location/text callback; it therefore
+  cannot invent a message when the loaded dungeon or text owner is absent.
+  The text-bank transaction regression proves the exact callback operands and
+  rollback when a later bytecode word rejects. Broader DSA world operations
+  and real DSA save corpus remain open.
+
 - **CSB-V22-ROUTE-COMPLETE-ARTPACK-GATE:** Closed 2026-07-29. CSB V2.2
   admission and Artpack Studio now require all 29 concrete `(category,id)`
   pairs emitted by the active per-cell router: depth-specific walls, doors,
@@ -826,11 +835,14 @@ that its exact runtime path is not already source-locked and tested.
     filters, state transitions, and runtime mutation with hard fail-closed
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
-    exact missing stack words: `DEL`, `ADD`, `SAY`, `MESSAGE`, `CAST`,
-    `FILTEREDCAST`, `THROW`, `TELEPORTPARTY`, `CREATECLOUD`, `MOVE`, the
+    remaining 30 stack words: `DEL`, `ADD`, `MESSAGE`, `CAST`,
+    `FILTEREDCAST`, `THROW`, `TELEPORTPARTY`, `CREATECLOUD`, `MOVE`,
+    `TEXTSAY`, the
     `I_*` indirect family (`DEL/ADD/CREATECLOUD/CAST/TELEPORTPARTY/MONSTER!/
-    CHAR!/MOVE/COPY/CELL!/THROW/INDIRECT/DELAY/DELMON/INSMON`), plus
-    `DELMON` and `INSMON`. Implement these as one transactional world-
+    CHAR!/MOVE/COPY/CELL!/THROW/INDIRECT/DELAY/DELMON/INSMON/CAUSEPOISON/
+    FILTEREDCAST/SWAPCHARACTER`), plus `DELMON` and `INSMON`. `SAY` is now
+    source-owned and transactional; the listed operations still require one
+    transactional world-
     mutation batch with source-owned callbacks; do not add a synthetic VM
     fallback for missing dungeon ownership.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
