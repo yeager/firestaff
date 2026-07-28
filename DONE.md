@@ -41807,3 +41807,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   transparent 48x34 blits into its active 320x200 indexed screen through a
   requested source VBlank. The public data-root route preserves that indexed
   framebuffer and P4B1 palette without a PC34 substitute.
+- ✅ 2026-07-28 CSB V2.x complete regression. Re-ran the full registered
+  `^(csb_v2_|csb_v22_)` selection after the Atari work: 41/41 tests pass,
+  covering V2.0 filtering/settings, V2.1 upscale, and V2.2 HUD, shapes,
+  in-place drawing, per-cell routing and material gates.
