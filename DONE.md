@@ -41624,3 +41624,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   placeholder cells over original game data. Explicit test overrides remain
   available solely for the isolated V2.2 route tests. The presentation-mode
   regression passes 37/37, including the no-reviewed-material fallback.
+- ✅ 2026-07-28 CSB V2.x complete registered-suite verification. Built the
+  exact probe and unit-test targets instead of invoking the repository-wide
+  all-target build, then ran every registered CSB V2.0/V2.1/V2.2 CTest:
+  37/37 pass. Coverage includes V1 compatibility, filters, upscale,
+  settings, resolution, smooth movement, lighting, VFX, touch/controller,
+  HUD, presentation selection, V2.2 material routing, and source locks.
+  This verifies the implemented V2.x code paths; the separate reviewed-art
+  requirement for live V2.2 remains explicitly open in TODO.md.
