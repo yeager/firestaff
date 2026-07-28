@@ -38,12 +38,12 @@ Normalizes shifted PC-34 arrow scancodes to 0x004B/0x004C/0x004D/0x004F/0x0050/0
 
 ### COMMAND.C:579-610 — Primary Interface Keyboard Rows (I34E/I34M)
 G0458 keyboard rows searched by F0361_COMMAND_ProcessKeyPress:
-  0x0002 Toggle Champion 0 Inventory
-  0x0003 Toggle Champion 1 Inventory
-  0x0004 Toggle Champion 2 Inventory
-  0x0005 Toggle Champion 3 Inventory
-  0x081F Save Game
-  0x0001 Freeze Game
+  `1` (0x0002) Toggle Champion 0 Inventory
+  `2` (0x0003) Toggle Champion 1 Inventory
+  `3` (0x0004) Toggle Champion 2 Inventory
+  `4` (0x0005) Toggle Champion 3 Inventory
+  `Ctrl+S` (0x081F) Save Game
+  `Escape` (0x0001) Freeze Game
 
 ### COMMAND.C:636-685 — Movement Keyboard Rows (I34E/I34M)
 G0459 movement keyboard rows:
@@ -99,11 +99,30 @@ F0365 handles turn boundaries (highlight box, stairs check, direction update):
   survive flush (COMMAND.C:1304-1377)
 
 ## 5. Gaps
-None identified. All documented keyboard routing paths are implemented:
-numpad remap, arrow keys, CapsLock movement, queue limits, reserved release commands.
+Resolved in the live SDL host route:
+
+- DM1 `1` through `4` now reach the four source-owned champion inventory
+  commands before Firestaff shortcuts.
+- DM1 `Escape` reaches the source freeze/unfreeze command rather than the
+  generic menu-back route.
+- DM1 `Ctrl+S` reaches C140 Save Game. The PC-34 table encodes this as
+  `0x081F`; it is not `Ctrl+F5`.
+
+Firestaff-only shortcuts remain deliberately separate from the source table:
+
+- `Shift+1` through `Shift+6`: spell runes.
+- `F5`/`F9`: quick save/load.
+- `F6` through `F8`, `F10` through `F12`, `L`, `R`, `X`, `G`, `P`, `C`,
+  `V`, `U`, `M`, `I`, `Tab`, `WASD`, `Q/E`, and `Home/End`: accessibility,
+  presentation, or quality-of-life controls. `F10` remains the live graphics
+  scale control.
+
+The source-compatible scope here is the PC-34/I34E/I34M keyboard command
+tables. Platform-specific Amiga, Atari ST, Apple IIgs, and console raw-input
+drivers are documented as source evidence but are not host keyboard bindings.
 
 ## 6. Verdict
-SOURCE-LOCKED. All keyboard→command routing paths documented with file:line
-citations from ReDMCSB. Firestaff correctly implements ring-buffer key storage,
-numpad→direction remap, CapsLock shift behavior, command queue with reserved slots,
-and release/stop command preservation through flush.
+SOURCE-LOCKED for the PC-34/I34E/I34M command rows. Firestaff implements the
+ring-buffer key storage, numpad-to-direction remap, CapsLock shift behavior,
+command queue with reserved slots, release/stop command preservation through
+flush, and the live host bindings for all seven primary interface commands.

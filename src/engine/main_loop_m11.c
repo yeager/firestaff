@@ -3189,6 +3189,37 @@ static int m11_csb_sdl_key_to_menu_input(int key, int ctrlDown, M12_MenuInput* o
     return CSB_V1_KeyboardCommandToMenuInputPc34Compat(csbKey, ctrlDown, outInput);
 }
 
+/* ReDMCSB COMMAND.C:579-610, MEDIA707_I34E/I34M.  Keep the original
+ * interface keys ahead of Firestaff-only shortcuts in the live host route. */
+static int m11_dm1_sdl_key_to_menu_input(int key, int ctrlDown, int shiftDown,
+                                         M12_MenuInput* outInput) {
+    if (!outInput) {
+        return 0;
+    }
+    if (key == SDLK_ESCAPE) {
+        *outInput = M12_MENU_INPUT_FREEZE_TOGGLE;
+        return 1;
+    }
+#if SDL_VERSION_ATLEAST(3, 0, 0)
+    if (ctrlDown && key == SDLK_S) {
+#else
+    if (ctrlDown && key == SDLK_s) {
+#endif
+        *outInput = M12_MENU_INPUT_SAVE_GAME;
+        return 1;
+    }
+    if (!shiftDown) {
+        switch (key) {
+            case SDLK_1: *outInput = M12_MENU_INPUT_CHAMPION_1_INVENTORY; return 1;
+            case SDLK_2: *outInput = M12_MENU_INPUT_CHAMPION_2_INVENTORY; return 1;
+            case SDLK_3: *outInput = M12_MENU_INPUT_CHAMPION_3_INVENTORY; return 1;
+            case SDLK_4: *outInput = M12_MENU_INPUT_CHAMPION_4_INVENTORY; return 1;
+            default: break;
+        }
+    }
+    return 0;
+}
+
 static int m11_push_script_event_token(const char* token, size_t len) {
     char buffer[128];
     SDL_Event ev;
@@ -4080,10 +4111,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             if (gameView && gameView->active) {
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
-                if ((ev.key.mod & SDL_KMOD_CTRL) && ev.key.scancode == SDL_SCANCODE_S) {
-                    return M12_MENU_INPUT_SAVE_GAME;
-                }
                 if (m11_game_view_is_dm1(gameView)) {
+                    if (m11_dm1_sdl_key_to_menu_input(
+                            (int)ev.key.key,
+                            (ev.key.mod & SDL_KMOD_CTRL) != 0,
+                            (ev.key.mod & SDL_KMOD_SHIFT) != 0,
+                            &mappedInput)) {
+                        return mappedInput;
+                    }
                     mappedInput =
                         M11_DM1V1_NavigationInputFromScancode((int)ev.key.scancode);
                     if (mappedInput != M12_MENU_INPUT_NONE) {
@@ -4251,27 +4286,27 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_1:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.mod & SDL_KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_1;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_2:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.mod & SDL_KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_2;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_3:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.mod & SDL_KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_3;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_4:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.mod & SDL_KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_4;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_5:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.mod & SDL_KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_5;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_6:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.mod & SDL_KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_6;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_C:
@@ -4513,10 +4548,14 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             if (gameView && gameView->active) {
                 M12_MenuInput mappedInput = M12_MENU_INPUT_NONE;
-                if ((ev.key.keysym.mod & KMOD_CTRL) && ev.key.keysym.scancode == SDL_SCANCODE_S) {
-                    return M12_MENU_INPUT_SAVE_GAME;
-                }
                 if (m11_game_view_is_dm1(gameView)) {
+                    if (m11_dm1_sdl_key_to_menu_input(
+                            (int)ev.key.keysym.sym,
+                            (ev.key.keysym.mod & KMOD_CTRL) != 0,
+                            (ev.key.keysym.mod & KMOD_SHIFT) != 0,
+                            &mappedInput)) {
+                        return mappedInput;
+                    }
                     mappedInput =
                         M11_DM1V1_NavigationInputFromScancode((int)ev.key.keysym.scancode);
                     if (mappedInput != M12_MENU_INPUT_NONE) {
@@ -4663,27 +4702,27 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     }
                     return M12_MENU_INPUT_NONE;
                 case SDLK_1:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.keysym.mod & KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_1;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_2:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.keysym.mod & KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_2;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_3:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.keysym.mod & KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_3;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_4:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.keysym.mod & KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_4;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_5:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.keysym.mod & KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_5;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_6:
-                    if (gameView && gameView->active)
+                    if (gameView && gameView->active && (ev.key.keysym.mod & KMOD_SHIFT))
                         return M12_MENU_INPUT_SPELL_RUNE_6;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_c:
