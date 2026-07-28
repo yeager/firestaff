@@ -505,9 +505,12 @@ static void run_real_data_handoff_if_available(void) {
             } else if (strcmp(kCases[i].gameId, "csb") == 0) {
                 opts.bootProbeFrames = 240;
                 opts.script = "key:enter";
-                opts.bootProbeExpectPartyX = 5;
-                opts.bootProbeExpectPartyY = 5;
-                opts.bootProbeExpectPartyDir = 0;
+                /* ReDMCSB LOADSAVE.C F0435 uses DUNGEON.DAT's
+                 * InitialPartyLocation, not a generic fixed spawn.
+                 * The verified local CSB header encodes (9,0,2). */
+                opts.bootProbeExpectPartyX = 9;
+                opts.bootProbeExpectPartyY = 0;
+                opts.bootProbeExpectPartyDir = 2;
                 opts.bootProbeExpectChampionCount = 0;
             } else if (strcmp(kCases[i].gameId, "nexus") == 0) {
                 int rc = snprintf(appdata_dir, sizeof(appdata_dir),
@@ -554,12 +557,12 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectStartupFrameMin = 1;
                 opts.bootProbeExpectStartupAnimation = "csb-title";
                 opts.bootProbeExpectStartupAnimationActive = 1;
-                /* ReDMCSB TITLE.C F0437 PC-path title sequence totals 101
-                 * ticks (CSB_V1_TITLE_TOTAL_TICKS_PC34, verified in the
-                 * 45917ebc4 real-data startup work; the 81 boundary dated
-                 * from the earlier 82-tick model). */
+                /* ReDMCSB TITLE.C F0437 PC-path title sequence exposes
+                 * frames 0..101 and reaches its terminal boundary at 102.
+                 * Keep this tied to CSB_V1_TITLE_TOTAL_TICKS_PC34 rather
+                 * than the older 81/101-tick models. */
                 opts.bootProbeExpectTitleFrameMin = 1;
-                opts.bootProbeExpectTitleFrameBoundary = 101;
+                opts.bootProbeExpectTitleFrameBoundary = 102;
                 opts.bootProbeExpectTitleReady = 0;
                 opts.bootProbeExpectLevelLoaded = 1;
                 opts.bootProbeExpectRuntimeTickMax = 0;
