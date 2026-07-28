@@ -1,3 +1,9 @@
+- ✅ 2026-07-28 Start-menu game-data scan progressbar. The existing async
+  hash-first data-directory scan now renders a visible progressbar in the
+  modern message popup, driven by its live completed-step receipt. The button
+  reads `CANCEL` while scanning. `m12_data_dir_cancel` verifies the async
+  lifecycle and the rendered filled/unfilled bar pixels.
+
 - ✅ 2026-07-28 CSB PC3.4 original font binding. The CSB runtime now decodes
   ReDMCSB M653/C695 through its own IMG3/LZW path before M11 text consumers
   run, instead of accepting a generic DM1 decoder result. CSB startup and

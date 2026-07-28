@@ -2078,6 +2078,7 @@ static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* s
         int okH = 36;
         int okX = panelX + (panelW - okW) / 2;
         int okY = panelY + panelH - 64;
+        int scanProgress = 0;
         draw_panel(c, panelX, panelY, panelW, panelH,
                    rgb(16, 14, 30), COLOR_ACCENT(), 20);
         draw_text_centered_fit(c, panelX + panelW / 2, panelY + 48,
@@ -2086,10 +2087,34 @@ static void draw_message_view(M12_ModernCanvas* c, const M12_StartupMenuState* s
                                line2, &mid, panelW - 80);
         draw_text_centered_fit(c, panelX + panelW / 2, panelY + 220,
                                line3, &sm, panelW - 80);
+        if (state->dataDirScanActive) {
+            const M12_AssetScanProgress* progress = &state->dataDirScanProgress;
+            int barX = panelX + 100;
+            int barY = panelY + 178;
+            int barW = panelW - 200;
+            int barH = 18;
+            int fillW;
+            if (progress->totalSteps > 0U) {
+                scanProgress = (int)((progress->completedSteps * 100U) /
+                                     progress->totalSteps);
+            }
+            if (scanProgress < 0) scanProgress = 0;
+            if (scanProgress > 100) scanProgress = 100;
+            fillW = (barW * scanProgress) / 100;
+            fill_rounded_rect(c, barX, barY, barW, barH, 7, rgb(37, 35, 54));
+            if (fillW > 0) {
+                fill_rounded_rect(c, barX, barY, fillW, barH, 7,
+                                  state->dataDirScanCancelRequested
+                                      ? COLOR_WARN()
+                                      : COLOR_ACCENT());
+            }
+            stroke_rounded_rect(c, barX, barY, barW, barH, 7, COLOR_PANEL_EDGE());
+        }
         stroke_rounded_rect(c, okX, okY, okW, okH, 6, COLOR_ACCENT());
         {
             ModernTextStyle ok = text_style_make(2, COLOR_ACCENT(), 1);
-            draw_text_centered(c, okX + okW / 2, okY + 10, "OK", &ok);
+            draw_text_centered(c, okX + okW / 2, okY + 10,
+                               state->dataDirScanActive ? "CANCEL" : "OK", &ok);
         }
     }
 }

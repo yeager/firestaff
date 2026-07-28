@@ -15,6 +15,11 @@ an integration build pass.
 
 ## Recently Closed
 
+- **M12-DATA-SCAN-PROGRESSBAR:** Closed 2026-07-28. The start menu now draws
+  a live progressbar from the existing asynchronous hash scan, alongside its
+  current game/task label. The same popup exposes `CANCEL` while the scan is
+  active and does not introduce a second scanner.
+
 - **DM1-F10-FPS-OVERLAY:** Closed 2026-07-28. The compact F10 presentation
   page now has a persisted `FPS` switch. Its overlay measures completed SDL
   presentation frames rather than DM1 source ticks, so it is diagnostic only

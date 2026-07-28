@@ -6,6 +6,7 @@
 #endif
 
 #include "menu_startup_m12.h"
+#include "menu_startup_render_modern_m12.h"
 #include "asset_status_m12.h"
 #include "fs_portable_compat.h"
 
@@ -472,6 +473,38 @@ static void check_start_menu_promotes_saved_game_leaf_to_parent(void) {
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
 }
 
+static void check_active_scan_renders_progress_bar(void) {
+    M12_StartupMenuState state;
+    const int width = M12_ModernMenu_NativeWidth();
+    const int height = M12_ModernMenu_NativeHeight();
+    const size_t bytes = (size_t)width * (size_t)height * 4U;
+    unsigned char* rgba = (unsigned char*)calloc(1U, bytes);
+    size_t filledPixel;
+    size_t emptyPixel;
+
+    CHECK(rgba != NULL);
+    if (!rgba) {
+        return;
+    }
+    M12_StartupMenu_Init(&state);
+    state.view = M12_MENU_VIEW_MESSAGE;
+    state.messageLine1 = "SCANNING GAME DATA";
+    state.messageLine2 = "csb 50%  checking files";
+    state.messageLine3 = "/Games/CSB";
+    state.dataDirScanActive = 1;
+    state.dataDirScanProgress.totalSteps = 100U;
+    state.dataDirScanProgress.completedSteps = 50U;
+    M12_ModernMenu_Render(&state, rgba, width, height);
+
+    /* The bar begins at x=640, y=558 in the native 1920x1080 message panel.
+     * x=700 lies in the 50% fill; x=1200 lies in its unfilled track. */
+    filledPixel = ((size_t)567U * (size_t)width + 700U) * 4U;
+    emptyPixel = ((size_t)567U * (size_t)width + 1200U) * 4U;
+    CHECK(rgba[filledPixel + 0U] > rgba[emptyPixel + 0U]);
+    CHECK(rgba[filledPixel + 1U] > rgba[emptyPixel + 1U]);
+    free(rgba);
+}
+
 int main(void) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
     check_cancel_preserves_no_data_state();
@@ -480,6 +513,7 @@ int main(void) {
     check_selected_folder_scans_asynchronously();
     check_default_data_dir_scans_asynchronously();
     check_start_menu_promotes_saved_game_leaf_to_parent();
+    check_active_scan_renders_progress_bar();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
