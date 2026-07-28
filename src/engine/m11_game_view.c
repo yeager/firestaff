@@ -41978,6 +41978,25 @@ static int m11_draw_nexus_dgn_host_plan(
     nexus_v2_hud_runtime_set_level(
         state->nexusEngine->game.current_level, 15);
     nexus_v2_hud_runtime_set_party_gold(0);
+    {
+        const Nexus_V1_ChampionPool *pool = &state->nexusEngine->champions;
+        int ci;
+        for (ci = 0; ci < pool->party_count && ci < NEXUS_MAX_PARTY; ++ci) {
+            int idx = pool->party[ci];
+            if (idx >= 0 && idx < pool->champion_count &&
+                pool->champions[idx].alive) {
+                const Nexus_V1_Champion *c = &pool->champions[idx];
+                int hp_pct = c->max_health > 0
+                    ? (c->health * 100 / c->max_health) : 0;
+                int sta_pct = c->max_stamina > 0
+                    ? (c->stamina * 100 / c->max_stamina) : 0;
+                int mana_pct = c->max_mana > 0
+                    ? (c->mana * 100 / c->max_mana) : 0;
+                nexus_v2_hud_runtime_set_champion(ci, hp_pct, sta_pct,
+                    mana_pct, idx == pool->leader_index, false);
+            }
+        }
+    }
     nexus_v2_hud_runtime_render(framebuffer, framebufferWidth,
                                 framebufferHeight);
     return 1;
