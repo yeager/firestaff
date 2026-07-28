@@ -4951,13 +4951,9 @@ static int m11_csb_present_atari_st_startup(M11_GameViewState *state,
                                             int framebuffer_height)
 {
     const CSB_V1_BootProfile *profile;
-    CSB_V1_AtariStAnimationTraceReceipt trace;
     char user_data[FSP_PATH_MAX];
     char cache_root[FSP_PATH_MAX];
-    uint8_t indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES];
-    uint8_t palette[16][3];
     uint8_t rgb6[256][3];
-    uint16_t presentation_index = 0u;
     int color;
 
     if (!state || !framebuffer || framebuffer_width <= 0 ||
@@ -4972,31 +4968,21 @@ static int m11_csb_present_atari_st_startup(M11_GameViewState *state,
             sizeof(cache_root), user_data, "cache")) {
         return 0;
     }
-    memset(&trace, 0, sizeof(trace));
-    /* ANIMATE.SCR's intermediate expand/blit pages remain a separate
-     * compositor task; select only a real Set-screen at or before the live
-     * source VBlank and never approximate those missing intermediate pages. */
-    if (!csb_v1_atari_st_animation_decode_presented_from_root_indexed(
-            profile->asset_root, cache_root, 0u, indexed, palette, &trace) ||
-        !trace.valid || trace.presented_image_items[0] != 36u ||
-        trace.presented_palette_items[0] != 7u) {
-        return 0;
-    }
-    while (presentation_index + 1u < trace.present_count &&
-           presentation_index + 1u <
-               CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES &&
-           trace.presented_vbls[presentation_index + 1u] <=
-               m11_csb_startup_source_tick(state)) {
-        ++presentation_index;
-    }
-    if (presentation_index != 0u &&
-        !csb_v1_atari_st_animation_decode_presented_from_root_indexed(
-            profile->asset_root, cache_root, presentation_index, indexed,
-            palette, &trace)) {
-        return 0;
+    if (!state->csbAtariStAnimationFrameBound ||
+        state->csbAtariStAnimationFrameVbl != state->csbAtariStAnimationVbl) {
+        CSB_V1_AtariStAnimationTraceReceipt trace;
+        memset(&trace, 0, sizeof(trace));
+        if (!csb_v1_atari_st_animation_decode_frame_at_vbl_from_root_indexed(
+                profile->asset_root, cache_root, state->csbAtariStAnimationVbl,
+                state->csbAtariStAnimationPixels,
+                state->csbAtariStAnimationPalette, &trace) || !trace.valid) {
+            return 0;
+        }
+        state->csbAtariStAnimationFrameVbl = state->csbAtariStAnimationVbl;
+        state->csbAtariStAnimationFrameBound = 1;
     }
     for (color = 0; color < 256; ++color) {
-        const uint8_t *rgb = palette[color & 15];
+        const uint8_t *rgb = state->csbAtariStAnimationPalette[color & 15];
         rgb6[color][0] = (uint8_t)(rgb[0] >> 2);
         rgb6[color][1] = (uint8_t)(rgb[1] >> 2);
         rgb6[color][2] = (uint8_t)(rgb[2] >> 2);
@@ -5004,7 +4990,8 @@ static int m11_csb_present_atari_st_startup(M11_GameViewState *state,
     if (!M11_Render_SetIndexedPaletteRgb6(rgb6)) {
         return 0;
     }
-    m11_csb_present_startup_raster(indexed, framebuffer, framebuffer_width,
+    m11_csb_present_startup_raster(state->csbAtariStAnimationPixels,
+                                   framebuffer, framebuffer_width,
                                    framebuffer_height);
     return 1;
 }
@@ -5936,11 +5923,30 @@ static void m11_csb_startup_tick_receipt_to_m11(
     M11_GameViewState *state,
     const CSB_V1_StartupTickReceipt_PC34 *receipt)
 {
+    const CSB_V1_BootProfile *profile;
     if (!state || !receipt) {
         return;
     }
     state->csbState.startup_entrance_frame = receipt->entrance_frame;
     m11_csb_startup_command_state_receipt_to_m11(state, &receipt->state);
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (profile && (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                    profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+        state->csbState.startup_title_active) {
+        uint32_t units;
+        if (!state->csbAtariStAnimationClockStarted) {
+            state->csbAtariStAnimationClockStarted = 1;
+            state->csbAtariStAnimationVbl = 0u;
+            state->csbAtariStAnimationVblRemainder = 0u;
+            state->csbAtariStAnimationFrameBound = 0;
+        } else {
+            units = (uint32_t)state->csbAtariStAnimationVblRemainder +
+                profile->tick_ms * 50u;
+            state->csbAtariStAnimationVbl += units / 1000u;
+            state->csbAtariStAnimationVblRemainder =
+                (uint16_t)(units % 1000u);
+        }
+    }
 }
 
 static M11_GameInputResult m11_csb_startup_apply_idle_receipt(
@@ -48826,8 +48832,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * public draw API is const for ordinary renderers; a live game view
          * is nevertheless mutable here and owns this CSB-only transaction. */
         M11_GameViewState *csb_state = (M11_GameViewState *)state;
-        if ((state->csbState.startup_title_active ||
-             state->csbState.startup_entrance_active) &&
+        if (state->csbState.startup_title_active &&
             m11_csb_present_atari_st_startup(csb_state, framebuffer,
                                               framebufferWidth,
                                               framebufferHeight)) {

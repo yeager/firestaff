@@ -41811,3 +41811,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `^(csb_v2_|csb_v22_)` selection after the Atari work: 41/41 tests pass,
   covering V2.0 filtering/settings, V2.1 upscale, and V2.2 HUD, shapes,
   in-place drawing, per-cell routing and material gates.
+- ✅ 2026-07-28 CSB Atari ST M11 framebuffer clock. M11 now converts the
+  source-owned 55 ms startup ticks into 50 Hz Atari VBlanks, caches the last
+  source framebuffer, and consumes the real replay route only for ST 2.0/2.1
+  title startup. The original-data test proves a visible compositor change
+  between the two source `Set-screen` pages.

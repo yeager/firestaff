@@ -513,6 +513,11 @@ int csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
                     &slots[p[0]], 1)) goto done;
             slots[p[1]].display_x = slots[p[2]].display_x;
             slots[p[1]].display_y = slots[p[2]].display_y;
+            /* ANIMATE.FTL's first full-screen expansion targets slot zero,
+             * the initial Atari display page. Later opcode 14 switches to
+             * slot one explicitly. */
+            if (active_screen_slot == 0xffffu && p[1] == 0u)
+                active_screen_slot = 0u;
             break;
         case 6u:
             /* The original CSB script supplies the destination image in p1

@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int failures;
 
@@ -50,6 +51,8 @@ int main(void)
         uint8_t *script = read_file(script_path, &script_size);
         uint8_t *rgba = (uint8_t *)malloc(CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES);
         uint8_t indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES];
+        uint8_t first_presented[
+            CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES];
         uint8_t indexed_palette[16][3];
         CSB_V1_AtariStAnimationAssetReceipt receipt;
         CSB_V1_AtariStAnimationTraceReceipt trace;
@@ -103,11 +106,30 @@ int main(void)
                   (indexed_palette[1][0] != 0u || indexed_palette[1][1] != 0u ||
                    indexed_palette[1][2] != 0u),
               "first Atari presentation preserves original indexed pixels and palette");
+        memcpy(first_presented, indexed, sizeof(first_presented));
         CHECK(csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(dat_path,
                   script, script_size, trace.presented_vbls[0], indexed,
                   indexed_palette, &trace) && trace.present_count == 2u &&
-                  indexed_palette[1][0] != 0u,
+                  indexed_palette[1][0] != 0u &&
+                  memcmp(first_presented, indexed, sizeof(first_presented)) == 0,
               "Atari player reproduces the first source Set-screen page at its VBlank");
+        {
+            uint32_t vbl;
+            int composed_blit_seen = 0;
+            for (vbl = trace.presented_vbls[0] + 1u;
+                 vbl < trace.presented_vbls[1]; ++vbl) {
+                if (csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(
+                        dat_path, script, script_size, vbl, indexed,
+                        indexed_palette, &trace) &&
+                    memcmp(first_presented, indexed,
+                           sizeof(first_presented)) != 0) {
+                    composed_blit_seen = 1;
+                    break;
+                }
+            }
+            CHECK(composed_blit_seen,
+                  "Atari player composites a source blit between the two Set-screen pages");
+        }
         CHECK(csb_v1_atari_st_animation_decode_frame_at_vbl_indexed(dat_path,
                   script, script_size, trace.presented_vbls[1], indexed,
                   indexed_palette, &trace) && trace.present_count == 2u &&
