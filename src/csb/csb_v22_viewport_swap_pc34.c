@@ -78,12 +78,10 @@ static const CSB_V22_SwapShapeMapping kCSBV22SwapMappingTable[] = {
     { CSB_V22_SWAP_SHAPE_CEILING_PLAIN,     "floor_shapes", "ceiling_plain_01" },
     { CSB_V22_SWAP_SHAPE_CEILING_VAULTED,   "floor_shapes", "ceiling_plain_01" }, /* placeholder */
 
-    /* Creatures / items */
+    /* Creatures. Item variants intentionally have no mapping: V1 owns their
+     * pixels until a reviewed CSB item-art family is available. */
     { CSB_V22_SWAP_SHAPE_CREATURE,             "creature_shapes", "creature_chaos_fiend_01" },
     { CSB_V22_SWAP_SHAPE_CREATURE_PROJECTILE,  "creature_shapes", "creature_chaos_fiend_01" },
-    { CSB_V22_SWAP_SHAPE_ITEM,                 "creature_shapes", "creature_chaos_fiend_01" }, /* placeholder */
-    { CSB_V22_SWAP_SHAPE_ITEM_FLOOR,           "creature_shapes", "creature_chaos_fiend_01" }, /* placeholder */
-    { CSB_V22_SWAP_SHAPE_ITEM_PROJECTILE,      "creature_shapes", "creature_chaos_fiend_01" }, /* placeholder */
 
     /* Fields (CSB-only routing) */
     { CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER,     "floor_shapes", "field_teleporter_01" },

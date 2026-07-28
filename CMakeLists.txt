@@ -23733,6 +23733,18 @@ if(BUILD_TESTING)
         src/csb/csb_v22_shapes.c
     )
     target_link_libraries(test_csb_v22_inplace_route_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
+    add_executable(test_csb_v22_viewport_swap_pc34
+        tests/test_csb_v22_viewport_swap_pc34.c
+        src/csb/csb_v22_viewport_swap_pc34.c
+        src/csb/csb_v22_inplace_draw_pc34.c
+        src/csb/csb_v22_inplace_route_pc34.c
+        src/csb/csb_v22_shape_cache_pc34.c
+        src/csb/csb_v22_shapes.c
+        src/csb/csb_v22_modern_assets_pc34.c
+        src/csb/csb_v2_presentation_mode_pc34.c
+        src/dm1v2/dm1_v2_anim_timing_pc34.c
+    )
+    target_link_libraries(test_csb_v22_viewport_swap_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
     add_executable(test_csb_v22_modern_assets_pc34
         tests/test_csb_v22_modern_assets_pc34.c
         src/csb/csb_v22_modern_assets_pc34.c
@@ -24452,8 +24464,15 @@ if(BUILD_TESTING)
         NAME csb_v22_inplace_route_pc34
         COMMAND test_csb_v22_inplace_route_pc34
     )
+    add_test(
+        NAME csb_v22_viewport_swap_pc34
+        COMMAND test_csb_v22_viewport_swap_pc34
+    )
     set_tests_properties(csb_v22_inplace_route_pc34 PROPERTIES
         LABELS "tier2;csb;v2.2;modern-shapes;per-cell-route;presentation-only"
+    )
+    set_tests_properties(csb_v22_viewport_swap_pc34 PROPERTIES
+        LABELS "tier2;csb;v2.2;modern-shapes;viewport;presentation-only"
     )
     add_test(
         NAME theron_v2_texture_upscale_pc34

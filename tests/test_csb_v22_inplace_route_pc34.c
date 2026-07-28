@@ -268,6 +268,29 @@ static void t_creature_per_depth_route_for_shape(void) {
     }
 }
 
+static void t_items_preserve_v1_until_reviewed_art_exists(void) {
+    int shapes[] = {
+        CSB_V22_SHAPE_ITEM,
+        CSB_V22_SHAPE_ITEM_FLOOR,
+        CSB_V22_SHAPE_ITEM_PROJECTILE,
+    };
+    int i;
+    for (i = 0; i < (int)(sizeof(shapes) / sizeof(shapes[0])); ++i) {
+        char aid[CSB_V22_ASSET_ID_MAX];
+        char category[CSB_V22_CATEGORY_MAX];
+        char reason[CSB_V22_REASON_MAX];
+        int rc = csb_v22_inplace_route_for_shape(shapes[i], 1,
+                                                   aid, sizeof(aid),
+                                                   category, sizeof(category),
+                                                   reason, sizeof(reason));
+        CHECK(rc == 0, "item shape stays on V1 without reviewed item art");
+        CHECK(aid[0] == '\0' && category[0] == '\0',
+              "item shape does not borrow creature asset metadata");
+        CHECK(strcmp(reason, "item_no_reviewed_art_v1") == 0,
+              "item shape reports reviewed-art V1 fallback");
+    }
+}
+
 /* ── Field no-asset / wrong-wall fallback ──────────────────────── */
 
 static void t_field_no_asset(void) {
@@ -540,6 +563,7 @@ int main(void) {
     t_ceiling_per_depth();
     t_doors_per_depth();
     t_creature_per_depth_route_for_shape();
+    t_items_preserve_v1_until_reviewed_art_exists();
     t_field_no_asset();
     t_csb_narrative_shapes();
     t_chaos_rune_lateral();

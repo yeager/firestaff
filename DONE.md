@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 CSB V2.2 item route fallback. The V2.2 per-cell route and
+  viewport-swap table no longer mislabel item, floor-item, or projectile-item
+  shapes as creatures. Until reviewed CSB V2.2 item art is installed, their
+  original V1 pixels remain visible. The formerly unregistered viewport-swap
+  contract now runs in the shared CSB CTest suite; 94/94 CSB tests pass.
+
 - ✅ 2026-07-29 M12 artpack picker admission. The native `.fsart` file-dialog
   callback now uses `M12_StartupMenu_SelectArtpackPath` instead of writing a
   selected path directly into configuration. Invalid selections retain the

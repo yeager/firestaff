@@ -30,7 +30,8 @@
  *   CREATURE / CREATURE_PROJECTILE:
  *     creature_demon_d<depth>_01                  ("creature_shapes")
  *   ITEM / ITEM_FLOOR / ITEM_PROJECTILE:
- *     creature_demon_d<depth>_01 (placeholder until item art)
+ *     no asset; preserve the source-owned V1 item rather than substituting a
+ *     creature texture until a reviewed item-art family exists.
  *   FIELD_TELEPORTER / FIELD_FLUXCAGE / FIELD_EXPLOSION / FIELD_CHAOS_RIFT:
  *     no asset (returns use_v22=0 with reason
  *     "field_<type>_no_asset"); the in-place draw pass leaves
@@ -246,13 +247,15 @@ int csb_v22_inplace_route_for_shape(int shape_type,
             copy_str(out_reason,   out_reason_size,   "ceiling_depth_invariant");
             return 1;
 
-        /* ── Creatures / items (per-depth; placeholder) ─────── */
+        /* ── Creatures are depth-dependent; items remain V1 ─── */
         case CSB_V22_SHAPE_CREATURE:
         case CSB_V22_SHAPE_CREATURE_PROJECTILE:
+            copy_str(out_reason, out_reason_size, "creature_needs_depth");
+            return 0;
         case CSB_V22_SHAPE_ITEM:
         case CSB_V22_SHAPE_ITEM_FLOOR:
         case CSB_V22_SHAPE_ITEM_PROJECTILE:
-            copy_str(out_reason, out_reason_size, "creature_needs_depth");
+            copy_str(out_reason, out_reason_size, "item_no_reviewed_art_v1");
             return 0;
 
         /* ── Fields: no asset, V1 fallback ─────────────────── */
@@ -501,15 +504,19 @@ void csb_v22_inplace_route_cell(int depth,
 
         case CSB_V22_SHAPE_CREATURE:
         case CSB_V22_SHAPE_CREATURE_PROJECTILE:
-        case CSB_V22_SHAPE_ITEM:
-        case CSB_V22_SHAPE_ITEM_FLOOR:
-        case CSB_V22_SHAPE_ITEM_PROJECTILE:
             assign_creature_by_depth(depth,
                                      out->asset_id, sizeof(out->asset_id),
                                      out->category, sizeof(out->category),
                                      out->fallback_reason,
                                      sizeof(out->fallback_reason));
             out->use_v22 = 1;
+            return;
+
+        case CSB_V22_SHAPE_ITEM:
+        case CSB_V22_SHAPE_ITEM_FLOOR:
+        case CSB_V22_SHAPE_ITEM_PROJECTILE:
+            copy_str(out->fallback_reason, sizeof(out->fallback_reason),
+                     "item_no_reviewed_art_v1");
             return;
 
         case CSB_V22_SHAPE_FIELD_TELEPORTER:

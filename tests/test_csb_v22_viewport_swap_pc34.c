@@ -128,6 +128,12 @@ static void test_asset_id_mapping_creatures_fields(void) {
     CHECK(strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_CREATURE),
                  "creature_chaos_fiend_01") == 0,
           "CREATURE -> creature_chaos_fiend_01");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_ITEM) == NULL,
+          "ITEM stays source-owned until reviewed item art exists");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_ITEM_FLOOR) == NULL,
+          "ITEM_FLOOR stays source-owned until reviewed item art exists");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_ITEM_PROJECTILE) == NULL,
+          "ITEM_PROJECTILE stays source-owned until reviewed item art exists");
     CHECK(strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER),
                  "field_teleporter_01") == 0,
           "FIELD_TELEPORTER -> field_teleporter_01");

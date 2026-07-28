@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V22-ITEM-ROUTE-FALLBACK:** Closed 2026-07-29. V2.2 route selection
+  and viewport swapping no longer substitute creature art for ordinary items,
+  floor items, or projectile items. Those routes preserve source-owned V1
+  pixels until reviewed CSB item art exists. The viewport-swap contract is now
+  registered in the shared CSB CTest lane.
+
 - **M12-ARTPACK-DIALOG-ADMISSION:** Closed 2026-07-29. The native `.fsart`
   picker now routes selected paths through the same admission check as the
   public M12 API before saving configuration. Invalid extensions, missing
