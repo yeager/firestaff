@@ -41775,3 +41775,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   now discovers the verified pair under a data root, materializes archive
   entries if needed, and renders the script-selected final frame. It passes
   against both the loose staged package and a stored-ZIP package.
+- ✅ 2026-07-28 CSB Atari ST presented-frame route. The animation trace now
+  records the original screen and active palette at every `Set-screen` VBlank
+  and can rasterize each such source-selected frame. The local script proves
+  two presentation calls; the first frame resolves to original IMG1 item 36.

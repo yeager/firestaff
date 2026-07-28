@@ -21691,6 +21691,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   archive entries materialize into a hash-revalidated cache before rendering.
   The launcher-facing Atari route now discovers, materializes and renders the
   final source-selected frame from one data root.
+  The two source `Set-screen` presentations are now individually available
+  with the palette active at each original VBlank; remaining work is the
+  per-operation framebuffer compositor and live M11 consumption.
   Remaining Atari animation work is an Atari framebuffer/presentation owner
   that consumes all intermediate traced operations; do not substitute the
   PC34 title/Entrance renderer for this route.

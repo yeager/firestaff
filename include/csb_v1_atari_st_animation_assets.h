@@ -8,7 +8,8 @@ enum {
     CSB_V1_ATARI_ST_ANIMATION_WIDTH = 320,
     CSB_V1_ATARI_ST_ANIMATION_HEIGHT = 200,
     CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES =
-        CSB_V1_ATARI_ST_ANIMATION_WIDTH * CSB_V1_ATARI_ST_ANIMATION_HEIGHT * 4
+        CSB_V1_ATARI_ST_ANIMATION_WIDTH * CSB_V1_ATARI_ST_ANIMATION_HEIGHT * 4,
+    CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES = 4
 };
 
 typedef struct {
@@ -34,6 +35,8 @@ typedef struct {
     uint16_t last_presented_palette_item;
     uint16_t final_active_image_item;
     uint16_t final_palette_item;
+    uint16_t presented_image_items[CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES];
+    uint16_t presented_palette_items[CSB_V1_ATARI_ST_ANIMATION_MAX_PRESENTED_FRAMES];
     uint16_t failed_opcode;
     uint16_t failed_instruction_index;
 } CSB_V1_AtariStAnimationTraceReceipt;
@@ -63,6 +66,13 @@ int csb_v1_atari_st_animation_trace_script(
 int csb_v1_atari_st_animation_render_final_rgba(
     const char *animate_dat_path, const uint8_t *script, size_t script_size,
     uint8_t *out_rgba, size_t out_rgba_size,
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
+/* Rasterize one actual Set-screen instruction from the original script.
+ * presentation_index is zero-based and bounded by the trace's present_count. */
+int csb_v1_atari_st_animation_render_presented_rgba(
+    const char *animate_dat_path, const uint8_t *script, size_t script_size,
+    uint16_t presentation_index, uint8_t *out_rgba, size_t out_rgba_size,
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
 
 /* Discover, materialize and render the final original Atari ST animation
