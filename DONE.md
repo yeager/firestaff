@@ -1,8 +1,8 @@
 - ✅ 2026-07-27 DM1 V2.2 manifest syntax gate. The artpack manifest reader
   now rejects invalid JSON and missing identity fields before it assesses
-  category completeness. The full DM1 V2.x test sweep passes 91/91.
+  category completeness. The full DM1 V2.x test sweep passes 90/90.
 
-- ✅ 2026-07-27 DM1 V2.x full regression verification. All 91 registered
+- ✅ 2026-07-27 DM1 V2.x full regression verification. All 90 registered
   V2.0/V2.1/V2.2 presentation, HUD, input, viewport, material, and runtime
   smoke tests pass against the configured local DM1 data root. This verifies
   implementation paths only; it does not promote unreviewed V2.2 art or
@@ -19,7 +19,14 @@
   developer tests. A live F10 mode switch therefore updates both rendering
   and input ownership together. The F10 regression switches from V1 to V2.0
   and opens champion four through its visible V2 portrait. The complete DM1
-  V2.x suite passes 91/91.
+  V2.x suite passes 90/90.
+
+- ✅ 2026-07-28 DM1 V2.x current full-suite verification. Built the two
+  optional V2 test tools absent from a partial Ninja build, then ran all 90
+  registered V2.0/V2.1/V2.2 tests against the local original DM1 data root:
+  90/90 pass. Coverage includes runtime viewport material, HUD/pointer input,
+  resolution mapping, item/creature/spell effects, source-owned screenshots,
+  and V2.2 artpack gates.
 
 - ✅ 2026-07-27 DM1 C071 eye-to-stats chest-close runtime coverage. The
   unregistered runtime regression is now a CTest target and uses synchronized
