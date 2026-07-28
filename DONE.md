@@ -41791,3 +41791,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   route now emits the original 320x200 four-bit image indices plus its decoded
   P4B1 palette, rather than requiring a lossy RGBA-to-index conversion before
   M11 can present it.
+- ✅ 2026-07-28 CSB Atari ST root-indexed host route. The launcher-facing
+  data-root path now discovers, materializes and returns an original indexed
+  `Set-screen` image and P4B1 palette in one call, leaving M11 no local file
+  or RGBA conversion step.

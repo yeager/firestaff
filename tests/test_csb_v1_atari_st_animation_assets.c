@@ -107,6 +107,8 @@ int main(void)
     }
     if (root && root[0] && cache_root && cache_root[0]) {
         uint8_t *rgba = (uint8_t *)malloc(CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES);
+        uint8_t indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES];
+        uint8_t indexed_palette[16][3];
         CSB_V1_AtariStAnimationTraceReceipt trace;
         CHECK(rgba != NULL &&
                   csb_v1_atari_st_animation_render_final_from_root_rgba(root,
@@ -122,6 +124,11 @@ int main(void)
                   trace.presented_image_items[0] == 36u &&
                   trace.presented_palette_items[0] == 7u,
               "launcher route renders first Atari presentation from one data root");
+        CHECK(csb_v1_atari_st_animation_decode_presented_from_root_indexed(
+                  root, cache_root, 0u, indexed, indexed_palette, &trace) &&
+                  trace.presented_image_items[0] == 36u &&
+                  trace.presented_palette_items[0] == 7u,
+              "launcher route exposes indexed Atari presentation to host");
         free(rgba);
     }
     return failures == 0 ? 0 : 1;

@@ -98,6 +98,13 @@ int csb_v1_atari_st_animation_render_presented_from_root_rgba(
     uint16_t presentation_index, uint8_t *out_rgba, size_t out_rgba_size,
     CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
 
+int csb_v1_atari_st_animation_decode_presented_from_root_indexed(
+    const char *search_root, const char *cache_root,
+    uint16_t presentation_index,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3],
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt);
+
 /* Render a full-screen original IMG1 item with an original P4B1 palette into
  * a 320x200 RGBA frame. image_item must be a documented full-screen image
  * and palette_item must be a documented 32-byte palette item. */

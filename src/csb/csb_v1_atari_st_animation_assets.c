@@ -487,6 +487,32 @@ int csb_v1_atari_st_animation_render_presented_from_root_rgba(
     return result;
 }
 
+int csb_v1_atari_st_animation_decode_presented_from_root_indexed(
+    const char *search_root, const char *cache_root,
+    uint16_t presentation_index,
+    uint8_t out_indexed[CSB_V1_ATARI_ST_ANIMATION_INDEXED_BYTES],
+    uint8_t out_palette[16][3],
+    CSB_V1_AtariStAnimationTraceReceipt *out_receipt)
+{
+    CSB_V1_AtariStAnimationDiscoveryReceipt discovery;
+    char script_path[ASSET_PATH_MAX];
+    char data_path[ASSET_PATH_MAX];
+    uint8_t *script;
+    size_t script_size = 0u;
+    int result;
+
+    if (!csb_v1_atari_st_animation_discover(search_root, &discovery) ||
+        !csb_v1_atari_st_animation_materialize(&discovery, cache_root,
+            script_path, data_path) ||
+        !(script = csb_v1_atari_st_animation_read_file(script_path,
+            &script_size))) return 0;
+    result = csb_v1_atari_st_animation_decode_presented_indexed(data_path,
+        script, script_size, presentation_index, out_indexed, out_palette,
+        out_receipt);
+    free(script);
+    return result;
+}
+
 int csb_v1_atari_st_animation_render_rgba(
     const char *animate_dat_path, uint16_t image_item, uint16_t palette_item,
     uint8_t *out_rgba, size_t out_rgba_size)
