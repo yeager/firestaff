@@ -5,6 +5,7 @@
 #include "dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "nexus_v1_engine.h"
+#include "nexus_v2_hud_runtime.h"
 #include "nexus_v1_launcher.h"
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_movement.h"
@@ -14322,6 +14323,8 @@ static int m11_nexus_apply_launcher_runtime_receipt(
         return 0;
     }
     state->nexusEngine = receipt->engine;
+    nexus_v2_hud_runtime_init();
+    nexus_v2_hud_runtime_force_active_for_test(1);
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
@@ -15781,6 +15784,8 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
     }
 
     state->nexusEngine = receipt.engine;
+    nexus_v2_hud_runtime_init();
+    nexus_v2_hud_runtime_force_active_for_test(1);
     m11_nexus_release_title(state);
     state->nexusState.level_loaded = receipt.level_loaded;
     state->nexusState.party_x = receipt.party_x;
@@ -41819,6 +41824,12 @@ static int m11_draw_nexus_dgn_host_plan(
                &viewport.fb.color_buffer[y * NEXUS_FB_W],
                (size_t)copy_width);
     }
+    nexus_v2_hud_runtime_set_direction(state->nexusEngine->game.party_dir);
+    nexus_v2_hud_runtime_set_level(
+        state->nexusEngine->game.current_level, 15);
+    nexus_v2_hud_runtime_set_party_gold(0);
+    nexus_v2_hud_runtime_render(framebuffer, framebufferWidth,
+                                framebufferHeight);
     return 1;
 }
 

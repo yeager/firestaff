@@ -2433,6 +2433,17 @@ will feed into cycle 15.
   routes until the _4976_5aa4 occupancy grid and DRAW_FLYING_ITEM material
   are source-owned.
 
+- **Lane D — Nexus V2 HUD gameplay integration (cycle 15):** Done.
+  The V2 HUD overlay (`nexus_v2_hud_overlay.c`) is now linked into the main
+  library and wired into the Nexus DGN gameplay render path in
+  `m11_game_view.c`.  `m11_draw_nexus_dgn_host_plan()` feeds party direction
+  and current level from the engine state and renders the HUD overlay after
+  the viewport framebuffer copy.  HUD init runs on both launcher and resume
+  engine-assignment paths.  All 201 Nexus tests pass (3 pre-existing known
+  failures unchanged).  Remaining: wire gold/champion bars from real game
+  state once combat/inventory are source-owned; connect V2 phase gate config
+  instead of force_active.
+
 - **Lane D — Nexus V1 real-data creature spawn and combat (cycle 14):** Done.
   Nexus creatures now spawn from authenticated `LEV*.DGN` Structure1A actor
   records (kind byte 01h/02h with a unique Structure1B owner cell) instead of
