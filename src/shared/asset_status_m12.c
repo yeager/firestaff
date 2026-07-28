@@ -58,6 +58,18 @@ static void m12_init_version_metadata(M12_AssetStatus* status);
 static void m12_init_required_file_metadata(M12_AssetStatus* status,
                                             int gameIndex);
 
+static int m12_explicit_path_is_archive(const char* path) {
+    const char* extension;
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+    extension = strrchr(path, '.');
+    return extension &&
+        (strcmp(extension, ".7z") == 0 || strcmp(extension, ".7Z") == 0 ||
+         strcmp(extension, ".zip") == 0 || strcmp(extension, ".ZIP") == 0 ||
+         strcmp(extension, ".iso") == 0 || strcmp(extension, ".ISO") == 0);
+}
+
 typedef struct {
     M12_AssetStatus* status;
     const M12_AssetStatusScanOptions* options;
@@ -3016,6 +3028,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     }
     if (FSP_FileExists(requestedDataDir) &&
         !FSP_DirExists(requestedDataDir) &&
+        !m12_explicit_path_is_archive(requestedDataDir) &&
         FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
         /* Hash-first explicit file handling. A direct path may be a
          * ZIP/ISO/BIN container, a correctly hashed Track/image file with an
@@ -3266,6 +3279,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     }
     if (FSP_FileExists(requestedDataDir) &&
         !FSP_DirExists(requestedDataDir) &&
+        !m12_explicit_path_is_archive(requestedDataDir) &&
         FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
         effectiveRequestedDataDir = containerParent;
     }

@@ -4918,7 +4918,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M12_StartupMenuInitOptions menuInitOptions;
         memset(&menuInitOptions, 0, sizeof(menuInitOptions));
         menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
-        menuInitOptions.looseFilesOnlyAssetScan = o->bootProbe ? 1 : 0;
+        /* A caller-supplied game-data path is authoritative, including a
+         * .7z/.zip/.iso container.  Boot probes still avoid the unrelated
+         * screenshot walk, but must not quietly discard archive contents and
+         * fall back to a different installed release. */
+        menuInitOptions.looseFilesOnlyAssetScan =
+            (o->bootProbe && (!o->dataDir || !o->dataDir[0])) ? 1 : 0;
         M12_StartupMenu_InitWithOptions(&menuState,
                                         o->dataDir,
                                         o->gameId,

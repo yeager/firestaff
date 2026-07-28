@@ -21709,6 +21709,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   TITLE.C session and holds the original animation active in M11. Remaining
   Atari work is a source-owned post-animation game handoff and real app
   capture; do not substitute the PC34 title/Entrance renderer for this route.
+  A direct selected `.7z`/`.zip`/`.iso` is now an authoritative hash-search
+  root, so a launch may not fall back to a sibling PC installation merely
+  because the selected release is archived.
 
 - [x] 2026-07-28 Connect CSB V2 smooth-runtime to the production M11 CSB
   handoff. Enhanced modes now initialize and bind to the live V1 profile,

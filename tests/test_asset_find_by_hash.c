@@ -947,6 +947,20 @@ int main(void) {
                     matched[0], matched[1], outPaths[1]);
             return 1;
         }
+        memset(outPaths, 0, sizeof(outPaths));
+        memset(matched, 0, sizeof(matched));
+        if (asset_find_all_by_md5_list(
+                "asset_find_by_hash_test_tmp/archive.7z", md5List,
+                outPaths, matched, 2, 2) != 1 ||
+            matched[0] || !matched[1] ||
+            !path_has_virtual_entry(outPaths[1], "archive.7z",
+                                    "packed_payload.bin")) {
+            cleanup_fixture();
+            fprintf(stderr,
+                    "7z direct-root all-list lookup failed: matched=%d,%d path=%s\n",
+                    matched[0], matched[1], outPaths[1]);
+            return 1;
+        }
         if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
             !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
             cleanup_fixture();

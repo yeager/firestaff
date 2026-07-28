@@ -41827,3 +41827,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   startup at 50 Hz, and the boot probe confirms the active `animate-scr`
   route from the original `GRAPHICS.DAT` hash. `ANIM.C`'s VBlank before each
   bitmap blit is also reflected in trace and framebuffer timing.
+- ✅ 2026-07-28 Direct archive game selection. The batched hash finder now
+  treats a selected archive itself as a search root, matching the established
+  single-hash path. Asset-status scanning retains an explicit `.7z`, `.zip`,
+  or `.iso` root instead of replacing it with its parent directory. The real
+  CSB Atari `Software.7z` now materializes verified `GRAPHICS.DAT` and
+  `DUNGEON.DAT` into the runtime cache and boot-probes the original
+  `animate-scr` route; it no longer launches an unrelated PC34 installation.

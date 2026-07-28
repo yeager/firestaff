@@ -3586,9 +3586,33 @@ static int asset_find_all_by_md5_list_internal(
         }
     }
     if (normalizedCount > 0) {
-        foundCount = scan_dir_by_md5_list(searchDir, normalizedPtrs, normalizedCount,
-                                          normalizedPaths, normalizedMatched,
-                                          0, maxDepth, scanContainers);
+        /* A selected archive is itself a valid hash-search root.  The
+         * single-hash API has always handled this case, but the batched API
+         * previously called opendir() only and silently returned no archive
+         * members.  That made a direct --data-dir <game.7z> fall back to a
+         * sibling installation. */
+        if (scanContainers) {
+            foundCount += scan_container_by_md5_list(
+                searchDir, normalizedPtrs, normalizedCount, normalizedPaths,
+                normalizedMatched);
+        }
+        if (foundCount < normalizedCount) {
+            char direct_hex[33];
+            int direct_index;
+            if (file_md5(searchDir, direct_hex) &&
+                (direct_index = md5_list_match_index(
+                     direct_hex, normalizedPtrs, normalizedMatched,
+                     normalizedCount)) >= 0 &&
+                copy_match_path(searchDir, normalizedPaths[direct_index],
+                                ASSET_PATH_MAX)) {
+                normalizedMatched[direct_index] = 1;
+                ++foundCount;
+            }
+        }
+        foundCount += scan_dir_by_md5_list(searchDir, normalizedPtrs,
+                                            normalizedCount, normalizedPaths,
+                                            normalizedMatched, 0, maxDepth,
+                                            scanContainers);
         for (i = 0; i < normalizedCount; ++i) {
             if (normalizedMatched[i]) {
                 int original = originalIndices[i];
