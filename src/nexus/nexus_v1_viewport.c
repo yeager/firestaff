@@ -501,6 +501,12 @@ static int viewport_render_structure3_mesh(
                 const Nexus_DMDFTextureSurface *surface =
                     &engine->structure2_surfaces[packet.texture_surface_index];
                 if (!surface->valid || !surface->pixels) continue;
+                {
+                    int pc;
+                    for (pc = 0; pc < 256 && pc < (int)(sizeof(surface->palette) /
+                         sizeof(surface->palette[0])); ++pc)
+                        vp->fb.palette[pc] = surface->palette[pc];
+                }
                 rv[0].uv.x = 0.0f; rv[0].uv.y = 0.0f;
                 rv[1].uv.x = 1.0f; rv[1].uv.y = 0.0f;
                 rv[2].uv.x = 1.0f; rv[2].uv.y = 1.0f;
@@ -529,6 +535,9 @@ static int viewport_render_structure3_mesh(
                         &engine->structure2_surfaces[
                             anim.first_structure2_image_id];
                     if (surface->valid && surface->pixels) {
+                        int pc;
+                        for (pc = 0; pc < 256; ++pc)
+                            vp->fb.palette[pc] = surface->palette[pc];
                         rv[0].uv.x = 0.0f; rv[0].uv.y = 0.0f;
                         rv[1].uv.x = 1.0f; rv[1].uv.y = 0.0f;
                         rv[2].uv.x = 1.0f; rv[2].uv.y = 1.0f;
