@@ -41766,3 +41766,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   package or supported archive. The resolver requires both files to come from
   the same directory or container and returns virtual archive paths for the
   shared extractor rather than guessing by filename or mixing releases.
+- ✅ 2026-07-28 CSB Atari ST archive materialization. A discovered archive
+  pair now extracts into a dedicated cache directory and both resulting files
+  are revalidated against their original hashes before use. Loose files take
+  the same hash gate without copying. The direct and stored-ZIP routes pass
+  against the staged original files.

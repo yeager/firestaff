@@ -21687,7 +21687,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   blits, presents and sounds. Its final live screen now resolves to original
   IMG1 item 75 with original P4B1 item 21 solely through script state.
   Verified loose and stored-ZIP discovery identifies the exact original
-  `ANIMATE.SCR`/`ANIMATE.DAT` pair by hash and refuses cross-package pairs.
+  `ANIMATE.SCR`/`ANIMATE.DAT` pair by hash and refuses cross-package pairs;
+  archive entries materialize into a hash-revalidated cache before rendering.
   Remaining Atari animation work is an Atari framebuffer/presentation owner
   that consumes all intermediate traced operations; do not substitute the
   PC34 title/Entrance renderer for this route.
