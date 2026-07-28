@@ -629,7 +629,7 @@ int main(void)
     check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34 &&
               plan.title_special_palette == -1 &&
-              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE &&
               plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
@@ -659,7 +659,7 @@ int main(void)
               plan.surface_transparent_color == -1 &&
               plan.closed_left_asset_id == 2 &&
               plan.closed_right_asset_id == 3 &&
-              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE &&
               plan.waiting_for_input &&
               !plan.blink_prompt_visible &&
               plan.closed_left_source_x == 0 &&
@@ -803,7 +803,7 @@ int main(void)
               plan.closed_right_asset_id == 3 &&
               plan.closed_left_fallback_fill_color == 12 &&
               plan.closed_right_fallback_fill_color == 12 &&
-              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE &&
               plan.opening_step == 0 &&
               plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
@@ -830,7 +830,7 @@ int main(void)
     check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
-              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE &&
               plan.source_asset_id == 4 &&
               plan.surface_dest_x == 0 &&
               plan.surface_dest_y == 0 &&

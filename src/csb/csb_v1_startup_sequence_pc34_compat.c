@@ -1859,7 +1859,7 @@ static int csb_v1_startup_build_render_plan_from_state_pc34(
         /* ReDMCSB ENTRANCE.C F0441 lines 426-443 fades/curtains to black
          * before C004/C002/C003 are redrawn. */
         plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34;
-        plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+        plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE;
         csb_v1_startup_rebuild_asset_commands_pc34(&plan);
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
         csb_v1_startup_rebuild_render_commands_pc34(&plan);
@@ -1883,7 +1883,7 @@ static int csb_v1_startup_build_render_plan_from_state_pc34(
         plan.opening_step = state->opening_step;
         plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34;
         csb_v1_startup_set_full_surface_blit_pc34(&plan);
-        plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+        plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE;
         csb_v1_startup_set_closed_door_rects_pc34(&plan);
         if (plan.surface ==
             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) {
@@ -1899,7 +1899,7 @@ static int csb_v1_startup_build_render_plan_from_state_pc34(
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
     plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_SCREEN_PC34;
     csb_v1_startup_set_full_surface_blit_pc34(&plan);
-    plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+    plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE;
     csb_v1_startup_set_closed_door_rects_pc34(&plan);
     csb_v1_startup_set_entrance_menu_options_pc34(
         &plan,

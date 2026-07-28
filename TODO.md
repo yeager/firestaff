@@ -6575,6 +6575,12 @@ lane is carried forward in the sections below.
     palette rejects without updating session presentation metadata. The local
     PC34 sequence covers positive real indexed rasters and both reject paths;
     no synthetic door, HUD, frame, or palette was introduced.
+  - 2026-07-28 CSB C28 palette correction: the runtime had incorrectly
+    presented CSB's `C28_ENTRANCE_CSB` page through DM's `C07/G8148` row,
+    producing bright-green edge pixels. It now uses the VGA `G8174` row from
+    ReDMCSB `VIDEODRV.C`; direct real-data title/Entrance regressions and a
+    presented SDL capture are green. Remaining CSB startup work is broader
+    app-window capture and the separate save/DSA runtime corpus.
   - 2026-07-17 first-runtime HUD lifecycle update: PANEL.C's C017/C040 blit
     consumer now requires the completed F0807 terminal timeline, so a resident
     HUD image cannot be drawn while TITLE/Entrance still owns the session.

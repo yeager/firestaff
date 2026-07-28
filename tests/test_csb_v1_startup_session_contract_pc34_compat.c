@@ -137,7 +137,7 @@ static void make_opening_host(
     host->no_legacy_wrappers = host->no_synthetic_surface = 1;
     host->host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34;
     host->door_opening_decision = 1;
-    host->special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+    host->special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE;
     host->title_special_palette = -1;
     host->host_surface_hash = 0xd004u;
     host->frame.session_generation = session->generation;

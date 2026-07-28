@@ -36,7 +36,7 @@ int csb_v1_boot_startup_complete_timeline_receipt_from_session_pc34(
         session->playback.last_door_opening_step != 31 ||
         session->playback.next_door_opening_step != 32 ||
         session->playback.entrance_special_palette !=
-            VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
+            VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE ||
         !session->hud_assets_bound || session->generation == 0u) return 0;
     c017 = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];

@@ -197,6 +197,24 @@ static int test_csb_title_palettes(void) {
         return 0;
 }
 
+static int test_csb_entrance_palette(void) {
+        const unsigned char* rgb;
+
+        /* ENTRANCE.C:440 selects C28_ENTRANCE_CSB, which maps to the
+         * VGA G8174 row.  DM's C07/G8148 would incorrectly make index 5
+         * bright green and produces the observed neon entrance seams. */
+        rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+            5, VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE);
+        if (!rgb || rgb[0] != 77 || rgb[1] != 45 || rgb[2] != 45) return 146;
+        rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+            6, VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE);
+        if (!rgb || rgb[0] != 12 || rgb[1] != 142 || rgb[2] != 12) return 147;
+        rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+            15, VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE);
+        if (!rgb || rgb[0] != 255 || rgb[1] != 255 || rgb[2] != 255) return 148;
+        return 0;
+}
+
 int main(void) {
         int rc;
 
@@ -239,6 +257,12 @@ int main(void) {
         rc = test_csb_title_palettes();
         if (rc != 0) {
                 printf("FAIL test_csb_title_palettes rc=%d\n", rc);
+                return rc;
+        }
+
+        rc = test_csb_entrance_palette();
+        if (rc != 0) {
+                printf("FAIL test_csb_entrance_palette rc=%d\n", rc);
                 return rc;
         }
 

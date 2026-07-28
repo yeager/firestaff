@@ -566,7 +566,7 @@ int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
             strikes_host, CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
             VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES) ||
         opening_host->special_palette !=
-            VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
+            VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE ||
         opening_host->title_special_palette != -1 ||
         /* The host rasterizes TITLE.C F0437's rectangles from resident
          * C001.  The phase surfaces above are retained only as package

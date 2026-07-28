@@ -1277,7 +1277,7 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
      * draws the first C017/C040 page. Reject before frame creation so a
      * forged palette cannot mutate session presentation state. */
     if ((plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
-         (plan->special_palette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
+         (plan->special_palette != VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE ||
           plan->title_special_palette != -1)) ||
         (plan->title_stage == CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34 &&
          (plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
@@ -1353,7 +1353,7 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
             if (!plan->opening_composite_valid || !receipt.raster.door_composited ||
                 receipt.raster.source_surface_count != expected_opening_surface_count ||
                 receipt.special_palette !=
-                    VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
+                    VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE ||
                 receipt.title_special_palette != -1) {
                 csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
                     &receipt);
@@ -1453,7 +1453,7 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
                     CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 ||
                 receipt.host_surface ==
                     CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34) &&
-               receipt.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE) {
+               receipt.special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE) {
         /* F0442 returns to F0806/F0438's actual Entrance page before the
          * caller may open doors or enter the dungeon. */
         session->playback.credits_return_presented = 1;

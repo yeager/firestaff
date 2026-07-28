@@ -1494,7 +1494,7 @@ int main(void) {
                         "M11 CSB boot receipt consumes CSB HUD/menu readiness");
         }
         expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
-                        VGA_PALETTE_PC34_SPECIAL_ENTRANCE,
+                        VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE,
                     "M11 CSB entrance wait reports source entrance palette");
         expect_true(M11_GameView_HandlePointerButton(
                         &view,

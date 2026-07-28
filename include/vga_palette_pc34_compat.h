@@ -18,7 +18,7 @@
 
 #define VGA_PALETTE_PC34_COLOR_COUNT 16
 #define VGA_PALETTE_PC34_BRIGHTNESS_LEVELS 6
-#define VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT 7
+#define VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT 8
 
 #define VGA_PALETTE_PC34_SPECIAL_CREDITS         0
 #define VGA_PALETTE_PC34_SPECIAL_ENTRANCE        1
@@ -37,6 +37,9 @@
 #define VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS 4
 #define VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS    5
 #define VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES  6
+/* ReDMCSB ENTRANCE.C selects C28, backed by VIDEODRV.C G8174, for
+ * CSB.  It is deliberately different from DM's C07/G8148 palette. */
+#define VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE       7
 
 /* Brightest palette (index 0) — title/menu/brightest dungeon */
 extern const unsigned char G9010_auc_VgaPaletteBrightest_Compat[16][3];

@@ -41545,3 +41545,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   wall `(14,2)`, party `(14,3)`, north, ordinal `5` for the installed corpus.
   This makes repeatable macOS/window capture possible without guessing a
   champion-mirror location.
+
+## 2026-07-28 CSB Entrance palette
+
+- Corrected CSB's real Entrance palette from DM `C07/G8148` to the distinct
+  `C28_ENTRANCE_CSB/G8174` VGA row specified by ReDMCSB `ENTRANCE.C` and
+  `VIDEODRV.C`. This removes green edge artifacts from the real C004/C002/C003
+  page. The real-data startup, pointer, and terminal-handoff tests pass.

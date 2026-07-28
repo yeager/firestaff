@@ -436,7 +436,7 @@ int main(void)
     check(render_plan_from_state(0, 0, 0, 1, 0, 31, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
-              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+              plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE &&
               plan.title_special_palette == -1 &&
               receipt_for_plan(&session, &plan, 7u, &opening_host) &&
               opening_host.host_surface ==
@@ -533,6 +533,8 @@ int main(void)
               hud_host.uses_c017_inventory && hud_host.uses_c040_resurrect &&
               hud_host.raster.source_surface_count == 2,
           "real first C017/C040 HUD frame reaches terminal runtime host surface with neutral palette");
+    /* A retained C28 palette is invalid after F0807; use the distinct DM
+     * C07 palette as a concrete foreign-palette regression input. */
     plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
     check(!receipt_for_plan(&session, &plan, 8u, &rejected_host),
           "first C017/C040 HUD raster rejects a retained Entrance palette before presentation");

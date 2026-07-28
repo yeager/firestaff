@@ -81,7 +81,7 @@ static int receipt_is_original_door(
         receipt->frame.opening_step >= 1 && receipt->frame.opening_step <= 31 &&
         receipt->raster.door_composited &&
         receipt->raster.source_surface_count == expected_surfaces &&
-        receipt->special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
+        receipt->special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE &&
         receipt->title_special_palette == -1 &&
         surface_matches(receipt->frame.left_door_surface, 2, 105, 161, -1) &&
         surface_matches(receipt->frame.right_door_surface, 3, 128, 161, -1);

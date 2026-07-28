@@ -63,7 +63,7 @@ static void make_terminal_real_data_session(
     session->playback.last_door_opening_step = 31;
     session->playback.next_door_opening_step = 32;
     session->playback.entrance_special_palette =
-        VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
+        VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE;
     session->hud_inventory_binding.verified = 1;
     session->hud_inventory_binding.source =
         CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34;
