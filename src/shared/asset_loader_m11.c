@@ -18,6 +18,7 @@
 #include "graphics_dat_entry_classify_pc34_compat.h"
 
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdio.h>
 
