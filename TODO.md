@@ -15,6 +15,16 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-PC34-IMG2-DECODE-ORDER:** Closed 2026-07-29. The native PC3.4
+  C001-C005 records now attempt the documented byte-stride IMG2 decoder
+  before the legacy planar fallback. The former order could accept the same
+  valid record as planar data and produce a geometrically valid but visibly
+  scrambled PRESENTS/title and Prison door image. The canonical PC3.4 probe
+  now locks the corrected C001-C005/C017/C040 source hashes, all 102 title
+  frames, and all 31 F0807 opening frames through the M11 host boundary.
+  Real local window captures show coherent PRESENTS and Prison source frames.
+  Broader runtime HUD/viewport capture remains open under CSB-REAL-STARTUP-HUD.
+
 - **CSB-V2-RUNTIME-MOTION-CONSUMPTION:** Closed 2026-07-29. CSB V2 now
   consumes its live walk and stairs interpolation in M11's final viewport
   presentation, rather than calculating it only in the V2 runtime. The
@@ -804,6 +814,11 @@ that its exact runtime path is not already source-locked and tested.
    initial party pose. The remaining work here is broader normal-runtime
    viewport/HUD consumption and packaged macOS app-window capture; do not
    replace any missing source raster with generated artwork.
+   2026-07-29: corrected the PC3.4 C001-C005 IMG2 decoder priority. Native
+   byte-stride decoding now precedes planar fallback, and a real local window
+   capture confirms coherent PRESENTS and Prison frames. This closes the
+   startup geometric corruption; the remaining item scope is live HUD/
+   viewport breadth, audio admission, and packaged app capture.
    2026-07-28: the separate original Atari ST route now presents
    `ANIMATE.SCR`/`ANIMATE.DAT` through M11 correctly. The palette setter's
    success code is zero, so its former boolean check discarded every genuine

@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 CSB PC3.4 C001-C005 IMG2 decoder order. Canonical CSB PC
+  graphics are byte-stride IMG2 records, so the native decoder now runs before
+  the planar fallback. The previous order accepted the records as planar data
+  and corrupted otherwise valid PRESENTS/title and Prison door frames. The
+  real-PC3.4 launch probe locks C001-C005/C017/C040 hashes, all 102 title
+  frames and all 31 entrance pages through the M11 host boundary; focused
+  tests and the full CSB lane pass. This uses only original package pixels.
+
 - ✅ 2026-07-29 CSB V2.2 direct-launch fallback. A CLI request for CSB
   V2.2 now checks the same finished-art gate before M12 creates a launch
   intent. Incomplete, placeholder, or absent CSB V2.2 material resolves to

@@ -404,10 +404,15 @@ int csb_v1_startup_img3_decode_to_indexed_with_receipt_pc34_compat(
         expected_height > SIZE_MAX / expected_width) return 0;
     if (csb_v1_img3_read_be16_pc34(graphic) == expected_width &&
         csb_v1_img3_read_be16_pc34(graphic + 2u) == expected_height) {
-        if (csb_v1_img2_planar_decode_to_indexed_pc34(
+        /* The PC3.4 C001--C005 stream is an IMG2 byte stream whose declared
+         * width is its raster stride.  The planar expansion remains a narrow
+         * fallback for records that reject that native PC contract; accepting
+         * it first can consume a valid PC record with the wrong layout and
+         * produce a geometrically valid but visibly scrambled title/door. */
+        if (csb_v1_img2_decode_to_indexed_pc34(
                 graphic, graphic_byte_count, expected_width, expected_height,
                 indexed_pixels, indexed_pixel_byte_count, out_receipt)) return 1;
-        return csb_v1_img2_decode_to_indexed_pc34(
+        return csb_v1_img2_planar_decode_to_indexed_pc34(
             graphic, graphic_byte_count, expected_width, expected_height,
             indexed_pixels, indexed_pixel_byte_count, out_receipt);
     }
