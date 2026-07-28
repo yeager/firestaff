@@ -4654,7 +4654,7 @@ int nexus_v1_current_level_structure2_format_evidence_receipt(
     return out_receipt->valid;
 }
 
-static uint32_t nexus_v1_saturn_15bit_to_rgba(uint16_t color)
+uint32_t nexus_v1_saturn_15bit_to_rgba(uint16_t color)
 {
     uint32_t r = (color & 0x001FU) << 3;
     uint32_t g = ((color >> 5) & 0x001FU) << 3;

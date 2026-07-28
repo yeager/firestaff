@@ -444,17 +444,35 @@ static void viewport_stage_structure2_payload_anchors(
     vp->last_dgn_render_receipt.structure2_payload_anchor_scene = scene;
 }
 
+static void viewport_structure3_face_vertices(
+    Nexus_RasterVertex *rv, const Nexus_V1_DgnStructure3Vector *vertices,
+    int slot_count)
+{
+    int slot;
+    for (slot = 0; slot < slot_count; ++slot) {
+        rv[slot].position.x = (float)vertices[slot].x / 65536.0f;
+        rv[slot].position.y = (float)vertices[slot].y / 65536.0f;
+        rv[slot].position.z = (float)vertices[slot].z / 65536.0f;
+        rv[slot].color = 0;
+        rv[slot].texture_id = -1;
+        rv[slot].uv.x = 0.0f;
+        rv[slot].uv.y = 0.0f;
+    }
+}
+
 static int viewport_render_structure3_mesh(
     Nexus_Viewport *vp, const Nexus_V1_Engine *engine)
 {
     Nexus_V1_DgnStructure3CompleteSourceSceneReceipt scene;
     int entry_index, face_count_total = 0, textured_count = 0;
+    int flat_color_count = 0;
+    uint16_t flat_colors[254];
+    int flat_color_palette_count = 0;
 
     if (!vp || !engine || !engine->level_loaded) return 0;
     if (nexus_v1_current_level_structure3_complete_source_scene_receipt(
             engine, &scene) != 1 || !scene.valid || !scene.decoder_permitted)
         return 0;
-    if (engine->structure2_surface_count <= 0) return 0;
 
     for (entry_index = 0;
          entry_index < engine->current_level.structure3_directory.entry_count;
@@ -465,55 +483,78 @@ static int viewport_render_structure3_mesh(
         for (face_ordinal = 0; face_ordinal < entry_face_count;
              ++face_ordinal) {
             Nexus_V1_DgnStructure3PackageGeometryPacket packet;
-            const Nexus_DMDFTextureSurface *surface;
             Nexus_RasterVertex rv[4];
-            int slot, slot_count;
+            int slot_count;
 
             ++face_count_total;
             if (nexus_v1_current_level_structure3_package_geometry_packet(
                     engine, (uint32_t)entry_index, (uint32_t)face_ordinal,
-                    &packet) != 1 || !packet.valid || !packet.texture_surface_valid)
+                    &packet) != 1 || !packet.valid)
                 continue;
-            if (packet.texture_surface_index < 0 ||
-                packet.texture_surface_index >= engine->structure2_surface_count)
-                continue;
-            surface =
-                &engine->structure2_surfaces[packet.texture_surface_index];
-            if (!surface->valid || !surface->pixels) continue;
-
             slot_count = packet.vertex_slot_count;
-            for (slot = 0; slot < slot_count; ++slot) {
-                rv[slot].position.x =
-                    (float)packet.vertices[slot].x / 65536.0f;
-                rv[slot].position.y =
-                    (float)packet.vertices[slot].y / 65536.0f;
-                rv[slot].position.z =
-                    (float)packet.vertices[slot].z / 65536.0f;
-                rv[slot].color = 0;
-                rv[slot].texture_id = -1;
+            viewport_structure3_face_vertices(
+                rv, packet.vertices, slot_count);
+
+            if (packet.texture_surface_valid &&
+                packet.texture_surface_index >= 0 &&
+                packet.texture_surface_index < engine->structure2_surface_count) {
+                const Nexus_DMDFTextureSurface *surface =
+                    &engine->structure2_surfaces[packet.texture_surface_index];
+                if (!surface->valid || !surface->pixels) continue;
+                rv[0].uv.x = 0.0f; rv[0].uv.y = 0.0f;
+                rv[1].uv.x = 1.0f; rv[1].uv.y = 0.0f;
+                rv[2].uv.x = 1.0f; rv[2].uv.y = 1.0f;
+                if (slot_count == 4) {
+                    rv[3].uv.x = 0.0f; rv[3].uv.y = 1.0f;
+                    nexus_raster_quad_tex(&vp->fb, rv[0], rv[1], rv[2],
+                        rv[3], &vp->cam, surface->pixels, surface->width,
+                        surface->height, surface->palette);
+                } else {
+                    nexus_raster_triangle_tex(&vp->fb, rv[0], rv[1], rv[2],
+                        &vp->cam, surface->pixels, surface->width,
+                        surface->height, surface->palette);
+                }
+                ++textured_count;
+            } else if (packet.face.fill_selector & 0x8000U) {
+                uint16_t color15 = packet.face.fill_selector & 0x7FFFU;
+                int ci = -1, k;
+                for (k = 0; k < flat_color_palette_count; ++k) {
+                    if (flat_colors[k] == color15) {
+                        ci = k + 1;
+                        break;
+                    }
+                }
+                if (ci < 0 && flat_color_palette_count < 254) {
+                    ci = flat_color_palette_count + 1;
+                    flat_colors[flat_color_palette_count] = color15;
+                    vp->fb.palette[ci] =
+                        nexus_v1_saturn_15bit_to_rgba(color15);
+                    ++flat_color_palette_count;
+                }
+                if (ci < 0) continue;
+                rv[0].color = (uint8_t)ci;
+                rv[1].color = (uint8_t)ci;
+                rv[2].color = (uint8_t)ci;
+                if (slot_count == 4) {
+                    rv[3].color = (uint8_t)ci;
+                    nexus_raster_quad(&vp->fb, rv[0], rv[1], rv[2], rv[3],
+                        &vp->cam);
+                } else {
+                    nexus_raster_triangle(&vp->fb, rv[0], rv[1], rv[2],
+                        &vp->cam);
+                }
+                ++flat_color_count;
             }
-            rv[0].uv.x = 0.0f; rv[0].uv.y = 0.0f;
-            rv[1].uv.x = 1.0f; rv[1].uv.y = 0.0f;
-            rv[2].uv.x = 1.0f; rv[2].uv.y = 1.0f;
-            if (slot_count == 4) {
-                rv[3].uv.x = 0.0f; rv[3].uv.y = 1.0f;
-                nexus_raster_quad_tex(&vp->fb, rv[0], rv[1], rv[2], rv[3],
-                    &vp->cam, surface->pixels, surface->width,
-                    surface->height, surface->palette);
-            } else {
-                nexus_raster_triangle_tex(&vp->fb, rv[0], rv[1], rv[2],
-                    &vp->cam, surface->pixels, surface->width,
-                    surface->height, surface->palette);
-            }
-            ++textured_count;
         }
     }
-    if (textured_count > 0) {
+    if (textured_count > 0 || flat_color_count > 0) {
         vp->last_dgn_render_receipt.structure3_mesh_rendered = 1;
         vp->last_dgn_render_receipt.structure3_mesh_face_count =
             face_count_total;
         vp->last_dgn_render_receipt.structure3_mesh_textured_face_count =
             textured_count;
+        vp->last_dgn_render_receipt.structure3_mesh_flat_color_face_count =
+            flat_color_count;
         vp->last_dgn_render_receipt.written_pixels =
             viewport_count_written_pixels(&vp->fb);
         return 1;

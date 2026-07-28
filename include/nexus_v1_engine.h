@@ -2694,6 +2694,7 @@ int nexus_v1_engine_write_structure2_descriptor_capture_target(
 int nexus_v1_current_level_structure2_format_evidence_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnStructure2FormatEvidenceReceipt *out_receipt);
+uint32_t nexus_v1_saturn_15bit_to_rgba(uint16_t color);
 int nexus_v1_current_level_decode_structure2_textures(
     const Nexus_V1_Engine *engine,
     Nexus_DMDFTextureSurface *out_surfaces, int max_surfaces,
