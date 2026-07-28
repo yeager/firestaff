@@ -41577,3 +41577,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Reauthenticated the CSBWin saved-EXPOOL skin fixture with its FNV receipt.
   The phase-7 runtime test now proves a verified saved `EDT_Skins` column
   overrides dungeon skin bytes without allowing altered tail data.
+
+## 2026-07-28 CSB macOS startup smoke
+
+- Ran the local original `GRAPHICS.DAT`/`DUNGEON.DAT` package in the macOS
+  application window. PRESENTS, CHAOS and the C004 Entrance page presented
+  coherent source graphics with their CSB palette routes; the source-locked
+  Entrance pointer integration and the V1, V2.1 and V2.2 runtime handoffs
+  also passed. This is a startup smoke, not a replacement for the remaining
+  CSBWin DSA-bearing original-save corpus.
