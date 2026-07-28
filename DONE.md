@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 `.fsart` ZIP materialization. The shared asset-container
+  classifier now recognizes Firestaff artpacks as ZIP archives, so virtual
+  archive entries can be discovered and extracted through the same bounded
+  path used by other supported archives. The nested-deflate regression runs
+  with a `.fsart` fixture and verifies byte-identical materialization.
+
 - ✅ 2026-07-29 CSB V2.2 item route fallback. The V2.2 per-cell route and
   viewport-swap table no longer mislabel item, floor-item, or projectile-item
   shapes as creatures. Until reviewed CSB V2.2 item art is installed, their

@@ -421,7 +421,10 @@ int main(void) {
      * Both entries use method=8 (deflate) so the inflate code in
      * asset_find_by_hash / asset_extract_virtual_path / M12 cache
      * materialization is the actual code path under test. */
-    static const char kZipName[] = "dm2-required.zip";
+    /* .fsart is a ZIP container too. Keep this fixture on that suffix so
+     * scanner discovery and virtual extraction cover the archive Firestaff's
+     * V2.2 artpack picker actually accepts. */
+    static const char kZipName[] = "dm2-required.fsart";
     static const char kGraphicsEntry[] =
         "nested/inner/level1/level2/DM2GRAPHICS.DAT";
     static const char kDungeonEntry[] =
@@ -514,7 +517,7 @@ int main(void) {
                                 (int)sizeof(foundPath), 4),
               "scanner should find the nested deflated ZIP entry by MD5");
     check_int(path_has_virtual_entry(foundPath, kZipName, kGraphicsEntry),
-              "scanner should report the match as a ZIP virtual path "
+              "scanner should report the match as an .fsart ZIP virtual path "
               "including the nested entry name");
 
     /* The virtual path must keep every path segment of the entry name,

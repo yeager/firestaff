@@ -15,6 +15,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **M12-FSART-ZIP-MATERIALIZATION:** Closed 2026-07-29. `.fsart` is now an
+  explicitly recognized ZIP container for scanner virtual paths and
+  `asset_extract_virtual_path`, including nested deflated members. This makes
+  selected artpack archives consumable by the shared extraction layer; pack
+  installation and finished-art admission remain separate CSB V2.2 work.
+
 - **CSB-V22-ITEM-ROUTE-FALLBACK:** Closed 2026-07-29. V2.2 route selection
   and viewport swapping no longer substitute creature art for ordinary items,
   floor items, or projectile items. Those routes preserve source-owned V1

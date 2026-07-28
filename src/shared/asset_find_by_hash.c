@@ -318,7 +318,7 @@ typedef enum {
 
 static int is_zip_path(const char *path) {
     return has_case_suffix(path, ".zip") || has_case_suffix(path, ".cbz") ||
-           has_case_suffix(path, ".zipx") ||
+           has_case_suffix(path, ".zipx") || has_case_suffix(path, ".fsart") ||
            has_case_suffix(path, ".pk3") || has_case_suffix(path, ".jar") ||
            has_case_suffix(path, ".apk") || has_case_suffix(path, ".ipa") ||
            has_case_suffix(path, ".xpi") || has_case_suffix(path, ".whl") ||
