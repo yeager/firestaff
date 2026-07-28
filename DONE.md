@@ -41779,3 +41779,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   records the original screen and active palette at every `Set-screen` VBlank
   and can rasterize each such source-selected frame. The local script proves
   two presentation calls: IMG1 36/P4B1 7, then IMG1 35/P4B1 2.
+- ✅ 2026-07-28 CSB Atari ST launcher presentation route. The public
+  data-root interface now rasterizes an individual source `Set-screen` frame
+  as well as the final screen, including discovery, archive materialization
+  and active-palette selection in one call.

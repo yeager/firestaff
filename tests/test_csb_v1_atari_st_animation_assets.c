@@ -106,6 +106,13 @@ int main(void)
                   trace.final_active_image_item == 75u &&
                   trace.final_palette_item == 21u,
               "launcher route renders final Atari animation from one data root");
+        CHECK(rgba != NULL &&
+                  csb_v1_atari_st_animation_render_presented_from_root_rgba(
+                      root, cache_root, 0u, rgba,
+                      CSB_V1_ATARI_ST_ANIMATION_RGBA_BYTES, &trace) &&
+                  trace.presented_image_items[0] == 36u &&
+                  trace.presented_palette_items[0] == 7u,
+              "launcher route renders first Atari presentation from one data root");
         free(rgba);
     }
     return failures == 0 ? 0 : 1;
