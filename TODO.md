@@ -824,7 +824,15 @@ that its exact runtime path is not already source-locked and tested.
 21. **CSB-DSA-FULL-OPCODE-FAMILY:** Extend authenticated CSBWin DSA execution
     across remaining source-supported opcode families, stack/control semantics,
     filters, state transitions, and runtime mutation with hard fail-closed
-    bounds for unknown behavior.
+    bounds for unknown behavior. 2026-07-29 source inventory against
+    CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
+    exact missing stack words: `DEL`, `ADD`, `SAY`, `MESSAGE`, `CAST`,
+    `FILTEREDCAST`, `THROW`, `TELEPORTPARTY`, `CREATECLOUD`, `MOVE`, the
+    `I_*` indirect family (`DEL/ADD/CREATECLOUD/CAST/TELEPORTPARTY/MONSTER!/
+    CHAR!/MOVE/COPY/CELL!/THROW/INDIRECT/DELAY/DELMON/INSMON`), plus
+    `DELMON` and `INSMON`. Implement these as one transactional world-
+    mutation batch with source-owned callbacks; do not add a synthetic VM
+    fallback for missing dungeon ownership.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.
