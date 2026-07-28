@@ -21631,3 +21631,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   hash-verified package identity before validating the quicksave, so the test
   proves the package fence and the party/tick/projectile round-trip without
   weakening the production save boundary.
+
+- [x] 2026-07-28 Reauthenticate the CSBWin `EDT_Skins` save-tail fixture with
+  its FNV receipt. The phase-7 renderer now proves verified saved skin columns
+  override dungeon defaults while a stale tail remains rejected.

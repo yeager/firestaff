@@ -1337,6 +1337,9 @@ static void test_runtime_custom_background_skin_grid_from_csbwin_tail(void)
     profile.csbwin_appended_tail_preserved_size = sizeof(appended_tail);
     profile.csbwin_appended_tail_truncated = 0;
     memcpy(profile.csbwin_appended_tail, appended_tail, sizeof(appended_tail));
+    profile.csbwin_appended_tail_fnv1a = phase7_fnv1a32(
+        profile.csbwin_appended_tail,
+        profile.csbwin_appended_tail_preserved_size);
     memset(skins, 0xff, sizeof(skins));
 
     CHECK(csb_v1_runtime_custom_background_skin_grid(

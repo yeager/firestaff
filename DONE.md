@@ -41559,3 +41559,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   hash-verified package identity before it asks the standalone runtime loader
   to validate a native v12 save. This preserves the deliberate package fence
   and proves party pose, clock and thrown-projectile state round-trip.
+
+## 2026-07-28 CSB saved skin override verification
+
+- Reauthenticated the CSBWin saved-EXPOOL skin fixture with its FNV receipt.
+  The phase-7 runtime test now proves a verified saved `EDT_Skins` column
+  overrides dungeon skin bytes without allowing altered tail data.
