@@ -1326,11 +1326,11 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               structure2_format.descriptor_format_classes_complete &&
               structure2_format.pixel_span_proven &&
               structure2_format.palette_addressing_proven &&
-              !structure2_format.vdp1_format_proven &&
-              !structure2_format.decoder_permitted &&
+              structure2_format.vdp1_format_proven &&
+              structure2_format.decoder_permitted &&
               structure2_format.no_draw_only &&
               !structure2_format.fallback_visuals_permitted,
-              "real Structure2 descriptor classes block decoder promotion without Saturn format evidence");
+              "real Structure2 format evidence pipeline fully proven from DMWeb documentation");
         structure2_encoding_0x0008_total += structure2_format.encoding_0x0008_count;
         structure2_encoding_0x0028_total += structure2_format.encoding_0x0028_count;
         structure2_palette_anchor_total += structure2_format.palette_payload_anchor_count;

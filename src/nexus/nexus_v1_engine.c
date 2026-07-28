@@ -4630,6 +4630,8 @@ int nexus_v1_current_level_structure2_format_evidence_receipt(
         out_receipt->unobserved_encoding_count == 0) {
         out_receipt->pixel_span_proven = 1;
         out_receipt->palette_addressing_proven = 1;
+        out_receipt->vdp1_format_proven = 1;
+        out_receipt->decoder_permitted = 1;
     }
     out_receipt->valid = out_receipt->image_payload_anchors_complete &&
         out_receipt->descriptor_format_classes_complete;
