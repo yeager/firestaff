@@ -617,6 +617,63 @@ static void m11_capture_csb_presented_source_phase(int special_palette)
             special_palette, output_path);
 }
 
+/* CSB V2.0 has two source-preserving presentation passes: indexed cleanup
+ * happens before palette conversion in m11_present_game_frame(), while CRT
+ * scanlines operate on the final RGBA surface. Keep the second pass here,
+ * after the normal M11 present, so it uses the actual target dimensions and
+ * never mutates the source-owned indexed framebuffer or its palette receipt. */
+static int m11_present_csb_v20_rgba_filter_if_enabled(
+    const M11_GameViewState *gameView,
+    const unsigned char **out_rgba,
+    int *out_width,
+    int *out_height)
+{
+    const unsigned char *presented_rgba;
+    unsigned char *filtered_rgba;
+    const CSB_V2_FilterConfig *filter_config;
+    size_t bytes;
+    int width = 0;
+    int height = 0;
+
+    if (!gameView ||
+        gameView->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        gameView->presentationMode != M12_PRESENTATION_V20_FILTERED) {
+        return 1;
+    }
+    filter_config = csb_v2_filter_config_get();
+    if (!filter_config || !filter_config->crtScanlinesEnabled) {
+        return 1;
+    }
+    presented_rgba = M11_Render_GetPresentedRGBA(&width, &height);
+    if (!presented_rgba || width <= 0 || height <= 0 ||
+        (size_t)width > (size_t)-1 / (size_t)height ||
+        (size_t)width * (size_t)height > (size_t)-1 / 4u) {
+        return 0;
+    }
+    bytes = (size_t)width * (size_t)height * 4u;
+    filtered_rgba = (unsigned char *)malloc(bytes);
+    if (!filtered_rgba) {
+        return 0;
+    }
+    memcpy(filtered_rgba, presented_rgba, bytes);
+    if (csb_v2_filter_chain_apply_rgba(filtered_rgba, width, height) > 0 &&
+        M11_Render_PresentRGBA(filtered_rgba, width, height) != M11_RENDER_OK) {
+        free(filtered_rgba);
+        return 0;
+    }
+    free(filtered_rgba);
+    if (out_rgba) {
+        *out_rgba = M11_Render_GetPresentedRGBA(&width, &height);
+    }
+    if (out_width) {
+        *out_width = width;
+    }
+    if (out_height) {
+        *out_height = height;
+    }
+    return 1;
+}
+
 /* ReDMCSB/CSBWin startup hands source-owned pages to the host before input.
  * Capture may observe only a completed SDL presentation, never a pre-upload
  * framebuffer or a merely allocated window. */
@@ -639,6 +696,12 @@ static int m11_present_game_frame_and_publish_startup_capture(
      * that actual host buffer is absent, even if SDL still has a window. */
     presented_rgba = M11_Render_GetPresentedRGBA(&presented_width,
                                                   &presented_height);
+    if (!m11_present_csb_v20_rgba_filter_if_enabled(gameView,
+                                                    &presented_rgba,
+                                                    &presented_width,
+                                                    &presented_height)) {
+        return 0;
+    }
 #ifdef __APPLE__
     mac_window_capture_ready =
         M11_Render_GetWindow() != NULL && presented_rgba != NULL &&

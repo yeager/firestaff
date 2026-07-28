@@ -41697,3 +41697,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   admitted enhanced CSB modes. The handoff preserves a V2.2-to-V2.1
   material-gate fallback. Verified with the 43-check smooth-runtime suite,
   518-check M12/M11 CSB handoff suite, and a direct original-data V2 boot.
+- ✅ 2026-07-28 CSB V2 selected-menu and final-RGBA verification. The
+  production M12-to-M11 test now opens V2.0 and V2.1 with the local
+  hash-verified PC34 package, proves their V2 runtime binding survives a
+  presented frame, and proves the title is still source-owned. V2.2 is
+  explicitly rejected by M12 until its existing `FINISHED_REAL` material gate
+  passes. CSB V2.0's optional CRT scanline pass now runs on the final M11
+  RGBA surface after indexed/palette presentation, leaving the source indexed
+  frame and palette receipt untouched. Verification: M11 launcher handoff
+  533/533, filter-chain 16/16, and filter-config 26/26 pass.

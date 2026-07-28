@@ -31,6 +31,8 @@
 #include "main_loop_m11.h"
 #include "menu_startup_m12.h"
 #include "vga_palette_pc34_compat.h"
+#include "csb_v2_presentation_mode_pc34.h"
+#include "csb_v2_runtime.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1412,6 +1414,93 @@ static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenu_Destroy(&menu);
 }
 
+/* V2 module probes exercise the individual filters, upscaler and material
+ * gate. This is deliberately the production counterpart: it proves that the
+ * selected M12 mode reaches M11 with the hash-verified CSB package, starts
+ * the V2 runtime binding, and still consumes the original title surface.
+ * V2.2 may legitimately resolve to V2.1 until a complete provenance-approved
+ * art pack is installed. */
+static void run_real_v2_launcher_handoffs_if_available(void) {
+    static const int requested_modes[] = {
+        M12_PRESENTATION_V20_FILTERED,
+        M12_PRESENTATION_V21_UPSCALED,
+        M12_PRESENTATION_V22_MODERN
+    };
+    char real_dir[512];
+    const char *data_dir = default_data_root(real_dir);
+    CSB_V1_StartupRealReceipt real_package;
+    size_t i;
+
+    if (!data_dir || !data_dir[0]) {
+        expect_skip("HOME is unset; no CSB V2 launcher data root");
+        return;
+    }
+    csb_v1_startup_real_receipt_init(&real_package);
+    if (csb_v1_startup_real_scan_and_receipt(data_dir, 4, &real_package) !=
+            CSB_V1_STARTUP_REAL_OK ||
+        !real_package.matched || !real_package.assets_verified) {
+        expect_skip("no hash-verified PC34 CSB package for V2 launcher handoff");
+        return;
+    }
+
+    for (i = 0u; i < sizeof(requested_modes) / sizeof(requested_modes[0]); ++i) {
+        M12_StartupMenuState menu;
+        M12_LaunchIntent intent;
+        M11_GameViewState view;
+        unsigned char framebuffer[320 * 200];
+        const int requested = requested_modes[i];
+        int expected = requested;
+
+        init_menu_without_gallery(&menu, data_dir, "csb");
+        dismiss_initial_message(&menu);
+        if (!M12_AssetStatus_GameAvailable(&menu.assetStatus, "csb")) {
+            expect_true(0, "M12 keeps the real CSB package available for V2 launch");
+            M12_StartupMenu_Destroy(&menu);
+            continue;
+        }
+        menu.selectedIndex = 1;
+        menu.activatedIndex = 1;
+        menu.launchRequested = 1;
+        menu.settings.graphicsIndex = requested;
+        menu.gameOptions[1].presentationModeIndex = requested;
+        /* Exercise the same admission decision M11 will consume. */
+        csb_v2_presentation_mode_set_m12(requested);
+        intent = M12_StartupMenu_GetLaunchIntent(&menu);
+        if (requested == M12_PRESENTATION_V22_MODERN &&
+            csb_v2_presentation_mode_get() != CSB_V2_PM_V22_MODERN) {
+            /* A partial/generated pack must never become a gameplay
+             * substitute. M12 refuses the V2.2 launch until the real
+             * material gate is complete; V2.1 remains available as a
+             * separately selected mode. */
+            expect_true(intent.valid == 0,
+                        "M12 rejects CSB V2.2 until its real material gate passes");
+            M12_StartupMenu_Destroy(&menu);
+            continue;
+        }
+        expect_true(intent.valid == 1 && intent.presentationMode == requested,
+                    "M12 preserves the requested CSB V2 presentation mode");
+        M11_GameView_Init(&view);
+        expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                    "M11 opens the selected CSB V2 menu entry");
+        expect_true(view.sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+                    view.presentationMode == expected,
+                    "M11 resolves CSB V2 mode only through the material gate");
+        expect_true(csb_v2_runtime_is_bound() == 1,
+                    "CSB V2 runtime observes the real V1 runtime profile");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
+                    "CSB V2 title consumes a real source-owned title surface");
+        M11_GameView_TickAnimation(&view);
+        expect_true(csb_v2_runtime_is_bound() == 1,
+                    "CSB V2 binding survives a presented animation frame");
+        M11_GameView_Shutdown(&view);
+        expect_true(csb_v2_runtime_is_bound() == 0,
+                    "CSB V2 binding is released with its M11 game view");
+        M12_StartupMenu_Destroy(&menu);
+    }
+}
+
 int main(void) {
     printf("=== CSB V1 M12/M11 launcher handoff boundary ===\n");
     expect_true(csb_v1_startup_sequence_source_order_valid_pc34(),
@@ -1425,6 +1514,7 @@ int main(void) {
 
     run_empty_launcher_boundary();
     run_real_launcher_handoff_if_available();
+    run_real_v2_launcher_handoffs_if_available();
 
     printf("\nCSB V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",
            g_passed, g_failures, g_skipped);

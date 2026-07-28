@@ -11015,12 +11015,14 @@ DM1 V2.2 material slots, and writes a matching local `finish_receipt.json`.
 Remaining work is packaged Mac/app capture of the installed complete pack.
 
 CSB V2.0 now applies its real indexed filter chain to an M11 presentation
-copy. The current V2.0 HUD-overlay/runtime regressions pass. Remaining CSB
-V2.0 work is the RGBA CRT post-filter handoff and real Mac/app capture.
+copy and its optional CRT scanline pass to the final M11 RGBA surface. The
+current V2.0 HUD-overlay/runtime and selected-menu handoff regressions pass.
+Remaining CSB V2.0 work is real Mac/app capture.
 
 CSB V2.1 consumes the shared live M11 EPX route, including special palettes.
-Its current runtime regression passes. Remaining work is real CSB
-runtime/Mac capture, not scaler code.
+The selected-menu path now proves it binds the live V1 runtime and consumes
+the original title surface. Remaining work is real CSB runtime/Mac capture,
+not scaler code.
 
 CSB V2.2 shape, material-admission, in-place-draw, and per-cell-routing
 regressions pass, but the installed pack is not a finished real-art pack:
@@ -11029,10 +11031,12 @@ still name explicit placeholders. Runtime now keeps those lanes on the
 source-owned V2.1 fallback until every material is operator-reviewed and
 declared with resolvable non-placeholder provenance. Remaining work is
 reviewed CSB art, the corresponding runtime material consumption, and real
-runtime/Mac capture. 2026-07-28: all 41 registered CSB V2.0/V2.1/V2.2 tests
-pass after explicitly building the two V2.2 finished-art gate tools omitted
-by a partial Ninja build; this is implementation verification, not artpack
-promotion.
+runtime/Mac capture. The selected-menu regression explicitly verifies that
+V2.2 refuses to launch until that gate passes rather than silently using a
+placeholder or synthetic pack. 2026-07-28: all 41 registered CSB
+V2.0/V2.1/V2.2 tests pass after explicitly building the two V2.2 finished-art
+gate tools omitted by a partial Ninja build; this is implementation
+verification, not artpack promotion.
 
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 
