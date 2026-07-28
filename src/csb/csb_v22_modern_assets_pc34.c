@@ -2,7 +2,7 @@
  * csb_v22_modern_assets_pc34.c — CSB V2.2 Modern Graphics Fallback Pipeline
  *
  * V2.2 "Modern Graphics" is the third mode alongside V2.0 (Filtered) and
- * V2.1 (Upscaled). When V2.2 assets are unavailable or disabled, the
+ * V2.1 (Upscaled). When a complete real V2.2 pack is unavailable, the
  * system gracefully falls back to the next-best available mode.
  *
  * Fallback chain:
@@ -17,8 +17,9 @@
  *   ui_chrome/                   — panel chrome and UI chrome
  *   champion_portraits/           — champion portrait textures
  *
- * Required categories for a complete install:
- *   wall_shapes, floor_shapes, creature_shapes, ui_chrome, champion_portraits
+ * Catalog validation checks wall/floor/creature/UI/portrait categories.
+ * Final runtime admission is delegated to the finished-art gate, which
+ * verifies every pair emitted by the active per-cell router.
  *
  * Asset-not-found guard: if a specific modern asset referenced in the
  * manifest cannot be opened, the shape system returns
@@ -26,6 +27,7 @@
  */
 
 #include "csb_v22_modern_assets_pc34.h"
+#include "csb_v22_finished_art_material_gate_pc34.h"
 #include "fs_portable_compat.h"
 
 #include <ctype.h>
@@ -223,6 +225,7 @@ static void __attribute__((unused)) csb_v22_skip_to_next_object (FILE* fp) {
 void csb_v22_set_manifest_path(const char* dataDir) {
     if (!dataDir || dataDir[0] == '\0') {
         g_v22_manifest_path[0] = '\0';
+        csb_v22_famg_set_manifest_path(NULL);
         return;
     }
     /* Build: ~/.firestaff/assets/csb/modern/modern_asset_manifest.json
@@ -244,6 +247,9 @@ void csb_v22_set_manifest_path(const char* dataDir) {
     FSP_JoinPath(modernDir, sizeof(modernDir), modernDir, "modern");
     FSP_JoinPath(g_v22_manifest_path, sizeof(g_v22_manifest_path),
                  modernDir, "modern_asset_manifest.json");
+    /* Keep the public catalog API and the runtime admission gate on the
+     * same manifest root. A partial catalog must never expose V2.2. */
+    csb_v22_famg_set_manifest_path(dataDir);
 }
 
 const char* csb_v22_get_manifest_path(void) {
@@ -381,6 +387,10 @@ int csb_v22_validate_manifest(const char* manifest_path) {
 int csb_v22_modern_assets_available(void) {
     if (g_v22_manifest_path[0] == '\0') return 0;
     if (!csb_v22_file_exists(g_v22_manifest_path)) return 0;
+    /* The legacy category-only scan below remains useful to validate an
+     * imported catalog. Runtime admission, however, must cover every pair
+     * the active per-cell router can emit and require real source files. */
+    if (!csb_v22_famg_is_finished_real()) return 0;
 
     /* Quick check: open the manifest and look for at least the three
      * critical categories (wall_shapes, floor_shapes, creature_shapes)

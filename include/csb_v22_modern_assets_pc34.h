@@ -2,8 +2,8 @@
  * csb_v22_modern_assets_pc34.h — CSB V2.2 Modern Graphics Asset Pipeline
  *
  * CSB V2.2 "Modern Graphics" mode renders Chaos Strikes Back at 1920x1080
- * using generated/modern 3D-rendered 2D art as a drop-in replacement for
- * the V1 indexed surfaces.
+ * with an operator-installed modern art pack as a drop-in replacement for
+ * the V1 indexed surfaces. It does not promote generated placeholders.
  *
  * Parallel to dm1_v22_modern_assets_pc34.h; same shape source enum
  * semantics but CSB-specific paths:
@@ -24,10 +24,9 @@
  *             champion_portraits, door_shapes (optional),
  *             chaos_runes (CSB-only), dsa_scrolls (CSB-only)
  *
- * Required categories for a complete install:
- *   wall_shapes, floor_shapes, creature_shapes
- * Optional categories (graceful degradation if missing):
- *   ui_chrome, champion_portraits, door_shapes, chaos_runes, dsa_scrolls
+ * Catalog validation checks core categories. Runtime admission is stricter:
+ * csb_v22_finished_art_material_gate_pc34 requires every concrete pair
+ * emitted by csb_v22_inplace_route_pc34 before V2.2 can be selected.
  */
 
 #ifndef FIRESTAFF_CSB_V22_MODERN_ASSETS_PC34_H

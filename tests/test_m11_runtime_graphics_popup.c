@@ -35,14 +35,35 @@ static void write_csb_v22_finished_fixture(const char* dataDir) {
         int width;
         int height;
     } slots[] = {
-        { "wall_dungeon_01", "wall_shapes", 96, 96 },
-        { "floor_plain_01", "floor_shapes", 96, 96 },
-        { "floor_cracked_01", "floor_shapes", 96, 96 },
-        { "creature_chaos_fiend_01", "creature_shapes", 64, 64 },
-        { "panel_lord_order_01", "ui_chrome", 128, 32 },
-        { "champion_warrior_csb_01", "champion_portraits", 64, 64 },
-        { "door_prison_01", "door_shapes", 64, 96 },
-        { "chaos_rune_01", "chaos_runes", 32, 32 }
+        { "wall_dungeon_d0_01", "wall_shapes", 96, 96 },
+        { "wall_dungeon_d1_01", "wall_shapes", 96, 96 },
+        { "wall_dungeon_d2_01", "wall_shapes", 96, 96 },
+        { "door_d0_01", "door_shapes", 64, 96 },
+        { "door_d1_01", "door_shapes", 64, 96 },
+        { "door_d2_01", "door_shapes", 64, 96 },
+        { "floor_plain_d0_01", "floor_shapes", 96, 96 },
+        { "floor_plain_d1_01", "floor_shapes", 96, 96 },
+        { "floor_plain_d2_01", "floor_shapes", 96, 96 },
+        { "floor_cracked_d0_01", "floor_shapes", 96, 96 },
+        { "floor_cracked_d1_01", "floor_shapes", 96, 96 },
+        { "floor_cracked_d2_01", "floor_shapes", 96, 96 },
+        { "floor_mossy_d0_01", "floor_shapes", 96, 96 },
+        { "floor_mossy_d1_01", "floor_shapes", 96, 96 },
+        { "floor_mossy_d2_01", "floor_shapes", 96, 96 },
+        { "floor_pit_01", "floor_shapes", 96, 96 },
+        { "floor_stairs_up_01", "floor_shapes", 96, 96 },
+        { "floor_stairs_down_01", "floor_shapes", 96, 96 },
+        { "ceiling_01", "wall_shapes", 96, 96 },
+        { "creature_demon_d0_01", "creature_shapes", 64, 64 },
+        { "creature_demon_d1_01", "creature_shapes", 64, 64 },
+        { "creature_demon_d2_01", "creature_shapes", 64, 64 },
+        { "prison_door_01", "wall_shapes", 64, 96 },
+        { "lord_order_01", "wall_shapes", 96, 96 },
+        { "chaos_rune_0_01", "chaos_runes", 32, 32 },
+        { "chaos_rune_1_01", "chaos_runes", 32, 32 },
+        { "chaos_rune_2_01", "chaos_runes", 32, 32 },
+        { "chaos_rune_3_01", "chaos_runes", 32, 32 },
+        { "dsa_scroll_01", "dsa_scrolls", 32, 32 }
     };
     char root[FSP_PATH_MAX];
     char parent[FSP_PATH_MAX];
@@ -65,8 +86,8 @@ static void write_csb_v22_finished_fixture(const char* dataDir) {
     fp = fopen(manifest, "wb");
     assert(fp != NULL);
     static const char* const categories[] = {
-        "wall_shapes", "floor_shapes", "creature_shapes", "ui_chrome",
-        "champion_portraits", "door_shapes", "chaos_runes"
+        "wall_shapes", "floor_shapes", "creature_shapes", "door_shapes",
+        "chaos_runes", "dsa_scrolls"
     };
     fputs("{\"manifestVersion\":\"1.0.0\"", fp);
     for (size_t categoryIndex = 0;
@@ -312,6 +333,7 @@ int main(void) {
         csb_v22_famg_set_manifest_path(dataDir);
         csb_v22_set_manifest_path(dataDir);
         assert(csb_v22_famg_is_finished_real() == 1);
+        assert(csb_v22_modern_assets_available() == 1);
         config.v22_modern_assets_installed = 0;
         config.graphicsIndex = M12_PRESENTATION_V21_UPSCALED;
         assert(M12_Config_Save(&config) == 1);

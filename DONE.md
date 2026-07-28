@@ -1,3 +1,13 @@
+- ✅ 2026-07-29 CSB V2.2 route-complete artpack admission. The finished-art
+  gate and Artpack Studio required list now cover all 29 `(category,id)`
+  pairs emitted by the actual per-cell CSB V2.2 router, not the legacy
+  eight-entry catalog. This includes depth-aware walls, doors, floors and
+  creatures, plus pit/stairs, ceiling, prison/Lord Order, chaos-rune and DSA
+  routes. `csb_v22_modern_assets_available()` synchronizes its manifest root
+  with the finished-art gate, so incomplete category manifests cannot expose
+  V2.2. Synthetic cache regressions retain an explicit test-only presentation
+  override. Verified by the full 94/94 CSB CTest lane.
+
 - ✅ 2026-07-29 CSB V1/V2.0/V2.1 direct-launch sweep. Local PC3.4 startup
   probes reached the source-owned Prison wait state, applied the authentic
   Enter-Dungeon command, and then reached live map-0 runtime in all three

@@ -23,6 +23,7 @@
 
 #include "csb_v22_inplace_draw_pc34.h"
 #include "csb_v22_inplace_route_pc34.h"
+#include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_shape_cache_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "fs_portable_compat.h"
@@ -130,6 +131,7 @@ static int write_minimal_csb_v22_cache(const char* cache_path) {
 
 static int setup_probe_home(char* out_cache_path, size_t out_size) {
     char modern_dir[FSP_PATH_MAX];
+    char data_dir[FSP_PATH_MAX];
     int n;
 
     n = snprintf(modern_dir, sizeof(modern_dir),
@@ -137,6 +139,11 @@ static int setup_probe_home(char* out_cache_path, size_t out_size) {
     if (n <= 0 || (size_t)n >= sizeof(modern_dir)) return 0;
     if (!FSP_CreateDirectoryRecursive(modern_dir)) return 0;
     if (FSP_SetEnv("HOME", "firestaff-csb-v22-probe-home", 1) != 0) return 0;
+    n = snprintf(data_dir, sizeof(data_dir),
+                 "firestaff-csb-v22-probe-home/.firestaff/data/csb");
+    if (n <= 0 || (size_t)n >= sizeof(data_dir) ||
+        !FSP_CreateDirectoryRecursive(data_dir)) return 0;
+    csb_v22_set_manifest_path(data_dir);
 
     n = snprintf(out_cache_path, out_size, "%s/v22_inplace_cache.bin", modern_dir);
     return n > 0 && (size_t)n < out_size;

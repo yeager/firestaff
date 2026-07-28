@@ -15,6 +15,16 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V22-ROUTE-COMPLETE-ARTPACK-GATE:** Closed 2026-07-29. CSB V2.2
+  admission and Artpack Studio now require all 29 concrete `(category,id)`
+  pairs emitted by the active per-cell router: depth-specific walls, doors,
+  plain/cracked/mossy floors, pit/stairs, ceiling, creatures, prison/Lord
+  Order, chaos runes, and DSA scroll. The old eight-slot catalog could not
+  enter V2.2. `csb_v22_modern_assets_available()` now shares this gate, while
+  headless synthetic-cache probes use an explicit presentation override only.
+  The full CSB CTest lane passes 94/94. Real reviewed art and package capture
+  remain open work.
+
 - **CSB-V1-V21-CLI-STARTUP-SWEEP:** Closed 2026-07-29. Direct local launch
   probes against the installed PC3.4 package now cover V1, V2.0 and V2.1:
   after the source-owned Prison `Enter` command, every mode reaches inactive
@@ -737,8 +747,8 @@ that its exact runtime path is not already source-locked and tested.
    The V2.2 selector is now hidden unless the CSB-specific completed
    manifest/cache installation gate succeeds; merely selecting an unrelated
    `.fsart` archive no longer exposes a false modern mode.
-   The finished-art gate also requires all eight CSB material slots; a short
-   manifest with only real declared entries remains partial.
+   The finished-art gate now requires all 29 concrete CSB material routes;
+   a short manifest with only real declared entries remains partial.
    The in-game selector likewise consults that CSB-specific gate rather than
    the cross-game launcher installed flag.
    2026-07-29: after that gate passes, the F10 selector also no longer falls
@@ -746,10 +756,10 @@ that its exact runtime path is not already source-locked and tested.
    therefore selectable even when no unrelated DM1 V2.2 pack is installed.
    The focused modal regression constructs a complete CSB category manifest,
    keeps the global bit clear, and proves V2.1 -> V2.2 selection.
-   Artpack Studio's pretty-printed category manifest is now also consumed by
-   the native CSB availability parser in a focused regression. Full route
-   coverage and source-derived material remain separate requirements; this
-   only closes the manifest-format handoff.
+   Artpack Studio's pretty-printed category manifest is consumed by the
+   native CSB catalog parser, but it cannot admit V2.2 until full route
+   coverage and source-derived material exist; the focused regression keeps
+   that distinction explicit.
    CSB presentation-mode resolution uses the CSB manifest availability API,
    not DM1's global modern-asset state.
    2026-07-28: the canonical PC 3.4 real-data gate now proves the full
@@ -11130,17 +11140,15 @@ the original title surface. Remaining work is real CSB runtime/Mac capture,
 not scaler code.
 
 CSB V2.2 shape, material-admission, in-place-draw, and per-cell-routing
-regressions pass, but the installed pack is not a finished real-art pack:
-its manifest has no per-slot generator provenance and several runtime routes
-still name explicit placeholders. Runtime now keeps those lanes on the
-source-owned V2.1 fallback until every material is operator-reviewed and
-declared with resolvable non-placeholder provenance. Remaining work is
-reviewed CSB art, the corresponding runtime material consumption, and real
-runtime/Mac capture. The selected-menu regression explicitly verifies that
-V2.2 refuses to launch until that gate passes rather than silently using a
-placeholder or synthetic pack. 2026-07-28: all 41 registered CSB
-V2.0/V2.1/V2.2 tests pass after explicitly building the two V2.2 finished-art
-gate tools omitted by a partial Ninja build; this is implementation
+regressions pass, but the installed pack is not a finished real-art pack.
+Its manifest lacks per-slot generator provenance and does not satisfy all 29
+concrete pairs emitted by the active router. Runtime stays on the source-owned
+V2.1 fallback until every route material is operator-reviewed and has a
+resolvable non-placeholder source file. Remaining work is reviewed CSB art,
+the corresponding runtime material consumption, and real runtime/Mac capture.
+The selected-menu regression explicitly verifies that V2.2 refuses to launch
+until that gate passes rather than silently using a placeholder or synthetic
+pack. The full CSB CTest lane passes 94/94; this is implementation
 verification, not artpack promotion.
 
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)

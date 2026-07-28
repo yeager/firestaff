@@ -77,54 +77,37 @@ typedef struct {
 } CSB_V22_FamgSlotDesc;
 
 static const CSB_V22_FamgSlotDesc k_slot_table[CSB_V22_FAMG_MATERIAL_COUNT] = {
-    {
-        CSB_V22_FAMG_WALL_DUNGEON,
-        "wall_dungeon_01",
-        "wall_shapes",
-        "wall_dungeon_01"
-    },
-    {
-        CSB_V22_FAMG_FLOOR_PLAIN,
-        "floor_plain_01",
-        "floor_shapes",
-        "floor_plain_01"
-    },
-    {
-        CSB_V22_FAMG_FLOOR_CRACKED,
-        "floor_cracked_01",
-        "floor_shapes",
-        "floor_cracked_01"
-    },
-    {
-        CSB_V22_FAMG_CREATURE_CHAOS_FIEND,
-        "creature_chaos_fiend_01",
-        "creature_shapes",
-        "creature_chaos_fiend_01"
-    },
-    {
-        CSB_V22_FAMG_PANEL_LORD_ORDER,
-        "panel_lord_order_01",
-        "ui_chrome",
-        "panel_lord_order_01"
-    },
-    {
-        CSB_V22_FAMG_CHAMPION_WARRIOR_CSB,
-        "champion_warrior_csb_01",
-        "champion_portraits",
-        "champion_warrior_csb_01"
-    },
-    {
-        CSB_V22_FAMG_DOOR_PRISON,
-        "door_prison_01",
-        "door_shapes",
-        "door_prison_01"
-    },
-    {
-        CSB_V22_FAMG_CHAOS_RUNE,
-        "chaos_rune_01",
-        "chaos_runes",
-        "chaos_rune_01"
-    }
+#define FAMG_SLOT(symbol, id, category) { symbol, id, category, id }
+    FAMG_SLOT(CSB_V22_FAMG_WALL_DUNGEON_D0, "wall_dungeon_d0_01", "wall_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_WALL_DUNGEON_D1, "wall_dungeon_d1_01", "wall_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_WALL_DUNGEON_D2, "wall_dungeon_d2_01", "wall_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_DOOR_D0, "door_d0_01", "door_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_DOOR_D1, "door_d1_01", "door_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_DOOR_D2, "door_d2_01", "door_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_PLAIN_D0, "floor_plain_d0_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_PLAIN_D1, "floor_plain_d1_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_PLAIN_D2, "floor_plain_d2_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_CRACKED_D0, "floor_cracked_d0_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_CRACKED_D1, "floor_cracked_d1_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_CRACKED_D2, "floor_cracked_d2_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_MOSSY_D0, "floor_mossy_d0_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_MOSSY_D1, "floor_mossy_d1_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_MOSSY_D2, "floor_mossy_d2_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_PIT, "floor_pit_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_STAIRS_UP, "floor_stairs_up_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_FLOOR_STAIRS_DOWN, "floor_stairs_down_01", "floor_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_CEILING, "ceiling_01", "wall_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_CREATURE_DEMON_D0, "creature_demon_d0_01", "creature_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_CREATURE_DEMON_D1, "creature_demon_d1_01", "creature_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_CREATURE_DEMON_D2, "creature_demon_d2_01", "creature_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_PRISON_DOOR, "prison_door_01", "wall_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_LORD_ORDER, "lord_order_01", "wall_shapes"),
+    FAMG_SLOT(CSB_V22_FAMG_CHAOS_RUNE_0, "chaos_rune_0_01", "chaos_runes"),
+    FAMG_SLOT(CSB_V22_FAMG_CHAOS_RUNE_1, "chaos_rune_1_01", "chaos_runes"),
+    FAMG_SLOT(CSB_V22_FAMG_CHAOS_RUNE_2, "chaos_rune_2_01", "chaos_runes"),
+    FAMG_SLOT(CSB_V22_FAMG_CHAOS_RUNE_3, "chaos_rune_3_01", "chaos_runes"),
+    FAMG_SLOT(CSB_V22_FAMG_DSA_SCROLL, "dsa_scroll_01", "dsa_scrolls")
+#undef FAMG_SLOT
 };
 
 /* ── Module state ──────────────────────────────────────────────── */
@@ -396,7 +379,7 @@ static int csb_v22_famg_find_slot_in_manifest(const char* manifest_path,
  *
  * For CSB V2.2 materials the source_file is expected to live under
  * <modern-dir>/<category>/<source_file>, e.g.:
- *   ~/.firestaff/assets/csb/modern/wall_shapes/wall_dungeon_01.png
+ *   ~/.firestaff/assets/csb/modern/wall_shapes/wall_dungeon_d0_01.png
  */
 static int csb_v22_famg_resolve_source_file(const char* manifest_path,
                                             const char* category,
@@ -668,12 +651,9 @@ int csb_v22_famg_is_synthetic_or_partial(void) {
 /* ── Per-cell routing ─────────────────────────────────────────────
  *
  * Map (depth, lateral) to the FAMG slot the runtime swap would route
- * the cell's wall fallback to. For the first cut every wall cell in
- * the 9-square viewport routes to WALL_DUNGEON because the runtime
- * variant -> asset_id mapping in csb_v22_inplace_draw_pc34.c maps all
- * wall variants to wall_dungeon_01. Per-cell refinement (e.g. mossy
- * walls for slime zones) is a follow-up that mirrors the variant
- * enum in csb_v22_shapes.h.
+ * the cell's depth-specific wall fallback to. Exact material selection
+ * is owned by csb_v22_inplace_route_pc34.c, which also emits floors,
+ * doors, creatures, runes and special shapes.
  *
  * Floor variants route through FLOOR_PLAIN and FLOOR_CRACKED via the
  * caller; cells that have already been classified by csb_v22_inplace
@@ -682,16 +662,11 @@ int csb_v22_famg_is_synthetic_or_partial(void) {
  * Returns CSB_V22_FAMG_MATERIAL_COUNT (= sentinel "out of range")
  * when depth or lateral is outside the 9-square viewport bounds. */
 CSB_V22_FamgSlot csb_v22_famg_slot_for_cell(int depth, int lateral) {
-    /* First cut: all wall cells in the 3x3 viewport route to the
-     * WALL_DUNGEON slot. Floor cells route through the separate
-     * floor slots; callers needing per-cell floor classification
-     * dispatch via csb_v22_inplace_get_cell_asset_id() + the
-     * slot_for_asset_id() helper below. */
-    (void)depth;
-    (void)lateral;
+    /* This diagnostic helper tracks the same depth convention as the
+     * active route. Shape-specific selection remains in the route module. */
     if (depth < 0 || depth > 2) return CSB_V22_FAMG_MATERIAL_COUNT;
     if (lateral < -1 || lateral > 1) return CSB_V22_FAMG_MATERIAL_COUNT;
-    return CSB_V22_FAMG_WALL_DUNGEON;
+    return (CSB_V22_FamgSlot)(CSB_V22_FAMG_WALL_DUNGEON_D0 + depth);
 }
 
 CSB_V22_FamgClass csb_v22_famg_classify_cell(int depth, int lateral) {

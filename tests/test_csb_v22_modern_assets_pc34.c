@@ -233,8 +233,8 @@ static void test_artpack_studio_pretty_manifest_admission(void) {
     csb_v22_set_manifest_path(data_dir);
     CHECK(csb_v22_validate_manifest(csb_v22_get_manifest_path()) == 1,
           "pretty category manifest validates complete");
-    CHECK(csb_v22_modern_assets_available() == 1,
-          "pretty category manifest admits critical CSB categories");
+    CHECK(csb_v22_modern_assets_available() == 0,
+          "pretty partial category manifest does not admit runtime V2.2");
 }
 
 /* ── Main ───────────────────────────────────────────────────────── */

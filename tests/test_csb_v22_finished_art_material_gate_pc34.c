@@ -81,14 +81,37 @@ typedef struct {
 } SlotFixture;
 
 static const SlotFixture k_slots[] = {
-    { CSB_V22_FAMG_WALL_DUNGEON,         "wall_dungeon_01",         "wall_shapes",        96, 96 },
-    { CSB_V22_FAMG_FLOOR_PLAIN,          "floor_plain_01",          "floor_shapes",       96, 96 },
-    { CSB_V22_FAMG_FLOOR_CRACKED,        "floor_cracked_01",        "floor_shapes",       96, 96 },
-    { CSB_V22_FAMG_CREATURE_CHAOS_FIEND, "creature_chaos_fiend_01", "creature_shapes",    64, 64 },
-    { CSB_V22_FAMG_PANEL_LORD_ORDER,     "panel_lord_order_01",     "ui_chrome",         128, 32 },
-    { CSB_V22_FAMG_CHAMPION_WARRIOR_CSB, "champion_warrior_csb_01", "champion_portraits", 64, 64 },
-    { CSB_V22_FAMG_DOOR_PRISON,          "door_prison_01",          "door_shapes",        64, 96 },
-    { CSB_V22_FAMG_CHAOS_RUNE,           "chaos_rune_01",           "chaos_runes",        32, 32 }
+#define SLOT(symbol, id, category, width, height) { symbol, id, category, width, height }
+    SLOT(CSB_V22_FAMG_WALL_DUNGEON_D0, "wall_dungeon_d0_01", "wall_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_WALL_DUNGEON_D1, "wall_dungeon_d1_01", "wall_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_WALL_DUNGEON_D2, "wall_dungeon_d2_01", "wall_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_DOOR_D0, "door_d0_01", "door_shapes", 64, 96),
+    SLOT(CSB_V22_FAMG_DOOR_D1, "door_d1_01", "door_shapes", 64, 96),
+    SLOT(CSB_V22_FAMG_DOOR_D2, "door_d2_01", "door_shapes", 64, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_PLAIN_D0, "floor_plain_d0_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_PLAIN_D1, "floor_plain_d1_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_PLAIN_D2, "floor_plain_d2_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_CRACKED_D0, "floor_cracked_d0_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_CRACKED_D1, "floor_cracked_d1_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_CRACKED_D2, "floor_cracked_d2_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_MOSSY_D0, "floor_mossy_d0_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_MOSSY_D1, "floor_mossy_d1_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_MOSSY_D2, "floor_mossy_d2_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_PIT, "floor_pit_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_STAIRS_UP, "floor_stairs_up_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_FLOOR_STAIRS_DOWN, "floor_stairs_down_01", "floor_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_CEILING, "ceiling_01", "wall_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_CREATURE_DEMON_D0, "creature_demon_d0_01", "creature_shapes", 64, 64),
+    SLOT(CSB_V22_FAMG_CREATURE_DEMON_D1, "creature_demon_d1_01", "creature_shapes", 64, 64),
+    SLOT(CSB_V22_FAMG_CREATURE_DEMON_D2, "creature_demon_d2_01", "creature_shapes", 64, 64),
+    SLOT(CSB_V22_FAMG_PRISON_DOOR, "prison_door_01", "wall_shapes", 64, 96),
+    SLOT(CSB_V22_FAMG_LORD_ORDER, "lord_order_01", "wall_shapes", 96, 96),
+    SLOT(CSB_V22_FAMG_CHAOS_RUNE_0, "chaos_rune_0_01", "chaos_runes", 32, 32),
+    SLOT(CSB_V22_FAMG_CHAOS_RUNE_1, "chaos_rune_1_01", "chaos_runes", 32, 32),
+    SLOT(CSB_V22_FAMG_CHAOS_RUNE_2, "chaos_rune_2_01", "chaos_runes", 32, 32),
+    SLOT(CSB_V22_FAMG_CHAOS_RUNE_3, "chaos_rune_3_01", "chaos_runes", 32, 32),
+    SLOT(CSB_V22_FAMG_DSA_SCROLL, "dsa_scroll_01", "dsa_scrolls", 32, 32)
+#undef SLOT
 };
 
 /* Helper: build the manifest path that the module resolves for a given
@@ -455,7 +478,7 @@ static void test_get_slot_info(void) {
           "get_slot_info -> 1");
     CHECK(info.slot == CSB_V22_FAMG_WALL_DUNGEON,
           "get_slot_info -> slot set");
-    CHECK(strcmp(info.id, "wall_dungeon_01") == 0,
+    CHECK(strcmp(info.id, "wall_dungeon_d0_01") == 0,
           "get_slot_info -> id populated");
     CHECK(strcmp(info.category, "wall_shapes") == 0,
           "get_slot_info -> category populated");
@@ -485,8 +508,8 @@ static void test_slot_info_unknown_assets(void) {
           "placeholder slot -> get_slot_info=1");
     CHECK(strcmp(info.generator, "placeholder") == 0,
           "placeholder slot -> generator is placeholder");
-    CHECK(strcmp(info.category, "door_shapes") == 0,
-          "placeholder slot -> category is door_shapes (CSB-only)");
+    CHECK(strcmp(info.category, "wall_shapes") == 0,
+          "placeholder slot -> category is wall_shapes (routed prison door)");
     CHECK(info.classification == CSB_V22_FAMG_CLASS_PLACEHOLDER,
           "placeholder slot -> PLACEHOLDER");
 }
@@ -602,10 +625,8 @@ static void test_validate_at_explicit_path(void) {
 }
 
 static void test_csb_specific_categories(void) {
-    /* The CSB-only categories (chaos_runes, door_shapes) must be
-     * tracked separately from DM1's door_shapes-only surface. The
-     * door_prison slot uses category "door_shapes" which is the same
-     * category DM1 uses, but chaos_rune is a CSB-only category. */
+    /* The active route gives CSB its own chaos-rune set and maps the
+     * prison door into wall_shapes, exactly as the runtime cache does. */
     const SlotFixture* chaos = NULL;
     const SlotFixture* door = NULL;
     for (size_t i = 0; i < CSB_V22_FAMG_MATERIAL_COUNT; ++i) {
@@ -614,31 +635,29 @@ static void test_csb_specific_categories(void) {
     }
     CHECK(chaos != NULL && strcmp(chaos->category, "chaos_runes") == 0,
           "chaos_rune uses CSB-only category");
-    CHECK(door != NULL && strcmp(door->category, "door_shapes") == 0,
-          "door_prison uses door_shapes category");
+    CHECK(door != NULL && strcmp(door->category, "wall_shapes") == 0,
+          "prison_door uses wall_shapes category");
     CHECK(strcmp(csb_v22_famg_slot_manifest_id(CSB_V22_FAMG_CHAOS_RUNE),
-                 "chaos_rune_01") == 0,
-          "chaos_rune manifest id is chaos_rune_01");
+                 "chaos_rune_0_01") == 0,
+          "chaos_rune manifest id is chaos_rune_0_01");
     CHECK(strcmp(csb_v22_famg_slot_manifest_id(CSB_V22_FAMG_DOOR_PRISON),
-                 "door_prison_01") == 0,
-          "door_prison manifest id is door_prison_01");
+                 "prison_door_01") == 0,
+          "prison door manifest id is prison_door_01");
 }
 
 static void test_per_cell_routing(void) {
     /* The 9-square CSB viewport (CSBWin/Viewport.cpp:7290) maps to
      * 3 depth x 3 lateral cells. Every cell in this first cut routes
-     * to the WALL_DUNGEON slot because the runtime variant -> asset_id
-     * mapping in csb_v22_inplace_draw_pc34.c maps all wall variants to
-     * wall_dungeon_01. Per-cell refinement (mossy walls for slime
-     * zones) is a follow-up that mirrors the variant enum in
-     * csb_v22_shapes.h. */
+     * to its representative depth-specific wall slot. Exact material
+     * selection additionally depends on the raw cell type and is covered
+     * by test_csb_v22_inplace_route_pc34. */
     int depth, lateral;
     for (depth = 0; depth <= 2; ++depth) {
         for (lateral = -1; lateral <= 1; ++lateral) {
             CSB_V22_FamgSlot slot =
                 csb_v22_famg_slot_for_cell(depth, lateral);
-            CHECK(slot == CSB_V22_FAMG_WALL_DUNGEON,
-                  "in-range cell routes to WALL_DUNGEON");
+            CHECK(slot == (CSB_V22_FamgSlot)(CSB_V22_FAMG_WALL_DUNGEON_D0 + depth),
+                  "in-range cell routes to depth-specific wall slot");
         }
     }
     /* Out-of-range cells return the sentinel value (MATERIAL_COUNT). */

@@ -69,38 +69,59 @@ extern "C" {
  * update CSB_V22_FAMG_MATERIAL_COUNT and k_slot_table in the .c
  * file.
  *
- * Selection rationale (mirrors src/csb/csb_v22_inplace_draw_pc34.c
- * variant -> asset_id mapping plus the CSBWin/Chaos.cpp:60-69
- * CSB-only chaos magic dispatch):
- *   - WALL_DUNGEON        : D1 center cell of the canonical 9-square
- *                            synthetic layout used by the in-place
- *                            render probe
- *   - FLOOR_PLAIN         : D1 mid cell, PLAIN pattern
- *   - FLOOR_CRACKED       : D1 mid cell, CRACKED pattern
- *   - CREATURE_CHAOS_FIEND: the "any creature" fallback in
- *                            csb_v22_inplace_draw_pc34.c
- *   - PANEL_LORD_ORDER    : CSB-specific UI chrome (ReDMCSB PANEL.C
- *                            F0354 champion panel refresh)
- *   - CHAMPION_WARRIOR_CSB: CSB-specific champion portrait slot
- *   - DOOR_PRISON         : CSB-only entrance-sequence shape
- *                            (ReDMCSB ENTRANCE.C prison door)
- *   - CHAOS_RUNE          : CSB-only chaos magic rune (Chaos.cpp:60-69)
+ * Selection rationale: this is the complete set of pairs emitted by
+ * csb_v22_inplace_route_pc34.c. The gate therefore describes the real
+ * in-place runtime contract, including depth-specific wall, door, floor
+ * and creature assets plus CSB-specific narrative shapes. It deliberately
+ * does not admit the old eight-entry first-cut manifest: that manifest
+ * cannot render all assets the active router can request.
  *
  * All slots map 1:1 to a fixture in
  * tests/test_csb_v22_finished_art_material_gate_pc34.c so the
  * synthetic-fallback tests and the real-asset tests cover the same
  * surface area. */
 typedef enum {
-    CSB_V22_FAMG_WALL_DUNGEON       = 0,  /* wall_dungeon_01 */
-    CSB_V22_FAMG_FLOOR_PLAIN        = 1,  /* floor_plain_01 */
-    CSB_V22_FAMG_FLOOR_CRACKED      = 2,  /* floor_cracked_01 */
-    CSB_V22_FAMG_CREATURE_CHAOS_FIEND = 3, /* creature_chaos_fiend_01 */
-    CSB_V22_FAMG_PANEL_LORD_ORDER   = 4,  /* panel_lord_order_01 */
-    CSB_V22_FAMG_CHAMPION_WARRIOR_CSB = 5,/* champion_warrior_csb_01 */
-    CSB_V22_FAMG_DOOR_PRISON        = 6,  /* door_prison_01 (CSB-only) */
-    CSB_V22_FAMG_CHAOS_RUNE         = 7,  /* chaos_rune_01 (CSB-only) */
-    CSB_V22_FAMG_MATERIAL_COUNT     = 8
+    CSB_V22_FAMG_WALL_DUNGEON_D0 = 0,
+    CSB_V22_FAMG_WALL_DUNGEON_D1,
+    CSB_V22_FAMG_WALL_DUNGEON_D2,
+    CSB_V22_FAMG_DOOR_D0,
+    CSB_V22_FAMG_DOOR_D1,
+    CSB_V22_FAMG_DOOR_D2,
+    CSB_V22_FAMG_FLOOR_PLAIN_D0,
+    CSB_V22_FAMG_FLOOR_PLAIN_D1,
+    CSB_V22_FAMG_FLOOR_PLAIN_D2,
+    CSB_V22_FAMG_FLOOR_CRACKED_D0,
+    CSB_V22_FAMG_FLOOR_CRACKED_D1,
+    CSB_V22_FAMG_FLOOR_CRACKED_D2,
+    CSB_V22_FAMG_FLOOR_MOSSY_D0,
+    CSB_V22_FAMG_FLOOR_MOSSY_D1,
+    CSB_V22_FAMG_FLOOR_MOSSY_D2,
+    CSB_V22_FAMG_FLOOR_PIT,
+    CSB_V22_FAMG_FLOOR_STAIRS_UP,
+    CSB_V22_FAMG_FLOOR_STAIRS_DOWN,
+    CSB_V22_FAMG_CEILING,
+    CSB_V22_FAMG_CREATURE_DEMON_D0,
+    CSB_V22_FAMG_CREATURE_DEMON_D1,
+    CSB_V22_FAMG_CREATURE_DEMON_D2,
+    CSB_V22_FAMG_PRISON_DOOR,
+    CSB_V22_FAMG_LORD_ORDER,
+    CSB_V22_FAMG_CHAOS_RUNE_0,
+    CSB_V22_FAMG_CHAOS_RUNE_1,
+    CSB_V22_FAMG_CHAOS_RUNE_2,
+    CSB_V22_FAMG_CHAOS_RUNE_3,
+    CSB_V22_FAMG_DSA_SCROLL,
+    CSB_V22_FAMG_MATERIAL_COUNT
 } CSB_V22_FamgSlot;
+
+/* First-cut aliases retained for callers that only need a representative
+ * material. They now name an actual routed asset rather than a non-routed
+ * generic manifest entry. */
+#define CSB_V22_FAMG_WALL_DUNGEON          CSB_V22_FAMG_WALL_DUNGEON_D0
+#define CSB_V22_FAMG_FLOOR_PLAIN           CSB_V22_FAMG_FLOOR_PLAIN_D0
+#define CSB_V22_FAMG_FLOOR_CRACKED         CSB_V22_FAMG_FLOOR_CRACKED_D0
+#define CSB_V22_FAMG_CREATURE_CHAOS_FIEND  CSB_V22_FAMG_CREATURE_DEMON_D0
+#define CSB_V22_FAMG_DOOR_PRISON           CSB_V22_FAMG_PRISON_DOOR
+#define CSB_V22_FAMG_CHAOS_RUNE            CSB_V22_FAMG_CHAOS_RUNE_0
 
 /* ── Per-slot classification ──────────────────────────────────── */
 typedef enum {
@@ -208,9 +229,9 @@ const char* csb_v22_famg_slot_name(CSB_V22_FamgSlot slot);
 const char* csb_v22_famg_slot_category(CSB_V22_FamgSlot slot);
 
 /* Returns the manifest id used in modern_asset_manifest.json for the
- * given slot (e.g. "wall_dungeon_01", "creature_chaos_fiend_01").
- * These ids match the asset_id_for_shape() outputs in
- * src/csb/csb_v22_inplace_draw_pc34.c so the gate and the in-place
+ * given slot (e.g. "wall_dungeon_d0_01", "creature_demon_d0_01").
+ * These ids match the per-cell route outputs in
+ * src/csb/csb_v22_inplace_route_pc34.c so the gate and the in-place
  * swap cover the same manifest surface. */
 const char* csb_v22_famg_slot_manifest_id(CSB_V22_FamgSlot slot);
 
