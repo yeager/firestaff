@@ -50,7 +50,10 @@ an integration build pass.
   M11 translates only the already composed V2 viewport and never changes V1
   coordinates, collision, sensors, saves, or timing. The focused binding
   regression proves both the one-cell source displacement and force-sync
-  reset; the full CSB lane passes.
+  reset. 2026-07-29: a pure `F0364` level change now also exports its
+  in-flight vertical lane through the viewport y-pan; it was previously
+  calculated but visually discarded when stairs did not change x/y. The full
+  97-test CSB lane passes.
 
 - **CSB-DSA-PARAMETER-MESSAGE-OWNER:** Closed 2026-07-29. Authenticated
   CSBWin `STKOP_Message` now preserves the source stack order

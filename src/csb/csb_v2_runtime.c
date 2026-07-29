@@ -238,6 +238,7 @@ void csb_v2_runtime_get_presentation_offset(int32_t *out_x,
 {
     float visual_x;
     float visual_y;
+    float vertical;
     float dx;
     float dy;
 
@@ -254,8 +255,14 @@ void csb_v2_runtime_get_presentation_offset(int32_t *out_x,
      * back toward the prior source cell during the one-tick presentation. */
     visual_x = csb_v2_smooth_get_x();
     visual_y = csb_v2_smooth_get_y();
+    /* A stairs transition can change only party_z.  Its x/y endpoints then
+     * match the logical destination, so omitting the dedicated vertical
+     * lane makes the accepted F0364 transition visually invisible.  Keep
+     * that lane presentation-only by folding it into the viewport's y-pan;
+     * V1 remains the owner of the level change. */
+    vertical = csb_v2_smooth_get_vertical();
     dx = visual_x - (float)s_v1_profile->party_x;
-    dy = visual_y - (float)s_v1_profile->party_y;
+    dy = visual_y - (float)s_v1_profile->party_y + vertical;
     if (out_x) *out_x = (int32_t)(dx * 256.0f);
     if (out_y) *out_y = (int32_t)(dy * 256.0f);
 }

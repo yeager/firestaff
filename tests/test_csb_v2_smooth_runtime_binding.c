@@ -171,6 +171,19 @@ static void test_stairs_trigger_on_z_delta(void) {
     check("stairs: moving after party_z delta", csb_v2_smooth_is_moving());
     checkf("stairs: vertical at from (0.0)",
            csb_v2_smooth_get_vertical(), 0.0f, 0.01f);
+
+    /* A pure level change has no x/y delta.  Its dedicated vertical lane
+     * must nevertheless reach M11 through the presentation displacement;
+     * otherwise a CSB F0364 stairs move is accepted but completely invisible
+     * in V2.x. */
+    csb_v2_runtime_render_frame(82);
+    {
+        int32_t offset_x = 0;
+        int32_t offset_y = 0;
+        csb_v2_runtime_get_presentation_offset(&offset_x, &offset_y);
+        check("stairs: pure z delta produces vertical presentation pan",
+              offset_x == 0 && offset_y < 0 && offset_y > -256);
+    }
 }
 
 static void test_stairs_priority_over_walk(void) {

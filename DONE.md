@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 CSB V2 stairs presentation consumption. Pure ReDMCSB
+  `F0364` level changes now pass the active V2 vertical interpolation lane to
+  M11's completed viewport y-pan. The change is presentation-only: V1 retains
+  level ownership, collision, sensors, saves and cadence. Verified by
+  `csb_v2_smooth_runtime_binding` plus the 97/97 CSB CTest lane.
+
 - ✅ 2026-07-29 CSB V2.2 source-square material boundary. The V2.2 router
   now accepts ReDMCSB `M034_SQUARE_TYPE` values directly and maps only the
   seven authentic dungeon elements. Creature and item ownership remains with
