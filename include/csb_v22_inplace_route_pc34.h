@@ -120,6 +120,20 @@ void csb_v22_inplace_route_cell(int depth,
                                  int v22_active,
                                  CSB_V22_AssetRouteDecision* out);
 
+/* Route one authentic ReDMCSB M034 square element.  `square_element` is
+ * M034_SQUARE_TYPE(square), therefore only values 0..6 are accepted:
+ * WALL, CORRIDOR, PIT, STAIRS, DOOR, TELEPORTER and FAKEWALL.  Things are
+ * deliberately not inferred from a square byte; their draw order belongs to
+ * the real F0115 Thing chain.  This boundary lets a live M11 caller use
+ * original dungeon data without reusing the legacy presentation-only cell
+ * encoding accepted by csb_v22_inplace_route_cell(). */
+void csb_v22_inplace_route_square_element_pc34(
+    int depth,
+    int lateral,
+    int square_element,
+    int v22_active,
+    CSB_V22_AssetRouteDecision* out);
+
 /* Variant helpers — return the static asset_id / category / reason
  * a routed cell WOULD pick for the given shape type. These are the
  * single source of truth that csb_v22_inplace_draw_pc34.c and the

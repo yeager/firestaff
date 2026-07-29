@@ -604,6 +604,59 @@ void csb_v22_inplace_route_cell(int depth,
     }
 }
 
+void csb_v22_inplace_route_square_element_pc34(
+    int depth,
+    int lateral,
+    int square_element,
+    int v22_active,
+    CSB_V22_AssetRouteDecision* out)
+{
+    int presentation_cell;
+
+    if (!out) return;
+    /* ReDMCSB DEFS.H M034_SQUARE_TYPE yields only the base square element.
+     * Do not promote its Thing-chain bits into creature or item art here. */
+    switch (square_element) {
+    case 0: /* C00_ELEMENT_WALL */
+    case 6: /* C06_ELEMENT_FAKEWALL */
+        presentation_cell = 0x00;
+        break;
+    case 1: /* C01_ELEMENT_CORRIDOR */
+        presentation_cell = 0x04;
+        break;
+    case 2: /* C02_ELEMENT_PIT */
+        presentation_cell = 0x40;
+        break;
+    case 3: /* C03_ELEMENT_STAIRS */
+        /* The facing lives in the source square aspect.  The base-element
+         * contract intentionally chooses the non-directional up route; M11
+         * must supply the aspect before a directional art override exists. */
+        presentation_cell = 0x10;
+        break;
+    case 4: /* C04_ELEMENT_DOOR */
+        presentation_cell = 0x20;
+        break;
+    case 5: /* C05_ELEMENT_TELEPORTER */
+        out->use_v22 = 0;
+        out->asset_id[0] = '\0';
+        out->category[0] = '\0';
+        copy_str(out->fallback_reason, sizeof(out->fallback_reason),
+                 "field_teleporter_no_asset");
+        out->shape_type = CSB_V22_SHAPE_FIELD_TELEPORTER;
+        return;
+    default:
+        out->use_v22 = 0;
+        out->asset_id[0] = '\0';
+        out->category[0] = '\0';
+        copy_str(out->fallback_reason, sizeof(out->fallback_reason),
+                 "unknown_source_square_element");
+        out->shape_type = -1;
+        return;
+    }
+    csb_v22_inplace_route_cell(depth, lateral, presentation_cell,
+                               v22_active, out);
+}
+
 int csb_v22_inplace_route_pair_recognized(const char* category,
                                             const char* asset_id) {
     int i;

@@ -15,6 +15,15 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V22-SOURCE-SQUARE-BOUNDARY:** Closed 2026-07-29. The V2.2 per-cell
+  material gate now has an explicit ReDMCSB `M034_SQUARE_TYPE` entry point for
+  the seven genuine dungeon elements: wall, corridor, pit, stairs, door,
+  teleporter and fakewall. It never infers creatures or items from a square;
+  those remain owned by the F0115 Thing chain. Teleporters stay on V1 until
+  reviewed CSB field art exists, and unknown elements fail closed. The focused
+  route regression verifies each source element. Live M11 geometry handoff is
+  still open under CSB-REAL-STARTUP-HUD.
+
 - **CSB-V22-VIEWPORT-MATERIAL-CONSUMPTION:** Closed 2026-07-29. The active
   CSB V2.2 viewport swap now consumes the same depth-specific material ids as
   the completed-art gate and per-cell router (`wall_dungeon_d0/d1/d2_01`,

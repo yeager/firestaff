@@ -533,6 +533,37 @@ static void t_9square_walk(void) {
     }
 }
 
+static void t_source_square_element_boundary(void) {
+    CSB_V22_AssetRouteDecision wall, fakewall, corridor, pit, door, teleporter;
+    CSB_V22_AssetRouteDecision unknown;
+
+    csb_v22_inplace_route_square_element_pc34(1, 0, 0, 1, &wall);
+    csb_v22_inplace_route_square_element_pc34(1, 0, 6, 1, &fakewall);
+    csb_v22_inplace_route_square_element_pc34(1, 0, 1, 1, &corridor);
+    csb_v22_inplace_route_square_element_pc34(1, 0, 2, 1, &pit);
+    csb_v22_inplace_route_square_element_pc34(1, 0, 4, 1, &door);
+    csb_v22_inplace_route_square_element_pc34(1, 0, 5, 1, &teleporter);
+    csb_v22_inplace_route_square_element_pc34(1, 0, 7, 1, &unknown);
+
+    CHECK(wall.use_v22 == 1 && strcmp(wall.asset_id, "wall_dungeon_d1_01") == 0,
+          "source WALL routes to depth-owned wall material");
+    CHECK(fakewall.use_v22 == 1 && strcmp(fakewall.asset_id, wall.asset_id) == 0,
+          "source FAKEWALL shares wall material without a Thing inference");
+    CHECK(corridor.use_v22 == 1 &&
+              strcmp(corridor.asset_id, "floor_plain_d1_01") == 0,
+          "source CORRIDOR routes to plain floor material");
+    CHECK(pit.use_v22 == 1 && strcmp(pit.asset_id, "floor_pit_01") == 0,
+          "source PIT routes to pit material");
+    CHECK(door.use_v22 == 1 && strcmp(door.asset_id, "door_d1_01") == 0,
+          "source DOOR routes to depth-owned door material");
+    CHECK(teleporter.use_v22 == 0 &&
+              strcmp(teleporter.fallback_reason, "field_teleporter_no_asset") == 0,
+          "source TELEPORTER preserves V1 until reviewed art exists");
+    CHECK(unknown.use_v22 == 0 &&
+              strcmp(unknown.fallback_reason, "unknown_source_square_element") == 0,
+          "unknown source square is fail-closed");
+}
+
 /* ── Source evidence ──────────────────────────────────────────── */
 
 static void t_source_evidence(void) {
@@ -570,6 +601,7 @@ int main(void) {
     t_ui_chrome_no_inplace();
     t_pair_recognized_table();
     t_9square_walk();
+    t_source_square_element_boundary();
     t_source_evidence();
 
     printf("--- %d / %d passed ---\n", g_total - g_failed, g_total);

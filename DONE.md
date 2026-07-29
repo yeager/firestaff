@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 CSB V2.2 source-square material boundary. The V2.2 router
+  now accepts ReDMCSB `M034_SQUARE_TYPE` values directly and maps only the
+  seven authentic dungeon elements. Creature and item ownership remains with
+  F0115 Thing chains; teleporters and unknown elements fail closed to V1.
+  Verified by `csb_v22_inplace_route_pc34`.
+
 - ✅ 2026-07-29 CSB V2.x real-data verification refresh. The complete CSB
   CTest lane passes 96/96. Fresh canonical-PC3.4 CLI runs reach map 0 runtime
   in V2.0 and V2.1; a V2.2 request correctly resolves to V2.1 while no
