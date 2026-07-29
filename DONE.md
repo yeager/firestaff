@@ -42836,6 +42836,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   remaining live F0128 perspective-cell renderer is complete.
 # Completed work
 
+- 2026-07-29: Made CSB V2.2 F0128 door replacement visibility-aware. Modern
+  art is now admitted only for a sampled, closed `M034_SQUARE_TYPE` door at
+  the source command's actual depth/lane; corridors, missing cells and open
+  doors preserve the completed V1 frame. Verified by focused CSB startup,
+  materialization and V2.2 route/cache CTests.
+
 - 2026-07-29: Extended the CSB V2.2 F0128 art-command bridge to all real
   PC3.4 map DoorSets. The live dungeon header now selects `G0693/G0694/G0695`
   with ReDMCSB's `M633 + DoorSet * C003 + depth` formula, so V2.2 cannot paint

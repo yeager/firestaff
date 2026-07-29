@@ -353,6 +353,9 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 
 static void m11_csb_collect_v22_raw_cells(const M11_GameViewState* state,
                                            unsigned char out_cells[3][3]);
+static int m11_csb_v22_f0128_command_visible_door(
+    const M11_GameViewState *state,
+    const CSB_V1_ViewportRuntimeDrawCommandPc34 *command);
 
 #ifndef DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL
 #define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL \
@@ -2099,10 +2102,13 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
                 (const CSB_V1_BootProfile *)state->csbBootProfile,
                 &v22_plan)) {
             for (command = 0; command < v22_plan.command_count; ++command) {
-                state->csbState.runtime_v22_cells_painted +=
-                    csb_v22_inplace_render_f0128_command(
-                        &v22_plan.commands[command], candidate_page,
-                        framebufferWidth, framebufferHeight);
+                if (m11_csb_v22_f0128_command_visible_door(
+                        state, &v22_plan.commands[command])) {
+                    state->csbState.runtime_v22_cells_painted +=
+                        csb_v22_inplace_render_f0128_command(
+                            &v22_plan.commands[command], candidate_page,
+                            framebufferWidth, framebufferHeight);
+                }
             }
         }
     } else {
@@ -26326,6 +26332,36 @@ static void m11_csb_collect_v22_raw_cells(const M11_GameViewState* state,
             }
         }
     }
+}
+
+static int m11_csb_v22_f0128_command_visible_door(
+    const M11_GameViewState *state,
+    const CSB_V1_ViewportRuntimeDrawCommandPc34 *command)
+{
+    M11_ViewportCell cell;
+    int side;
+
+    if (!state || !command) return 0;
+    switch (command->route) {
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34:
+        side = 0;
+        break;
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34:
+        side = 0;
+        break;
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34:
+        side = -1;
+        break;
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34:
+        side = 1;
+        break;
+    default:
+        return 0;
+    }
+    memset(&cell, 0, sizeof(cell));
+    return m11_sample_viewport_cell(state, command->input_forward, side, &cell) &&
+           cell.valid && cell.elementType == DUNGEON_ELEMENT_DOOR &&
+           !DM1_V1_Viewport_SquareIsOpenPc34Compat(cell.square);
 }
 
 int M11_GameView_ProbeViewportFloorItemCounts(

@@ -89,7 +89,8 @@ an integration build pass.
   applies V2.2 art.  The plan carries the original D1/D2/D3 DoorSet-0 record
   identities, C3700/C3710 clipping and draw order; it resolves the active
   map's DoorSet 0–3 through `M633 + DoorSet * C003 + depth`. Missing or
-  non-PC34 sources leave the verified V1 frame intact. Remaining: a fully
+  non-PC34 sources, non-door cells, and open doors leave the verified V1
+  frame intact. Remaining: a fully
   checked native V1 raster-byte handoff for all F0128 material families.
   The source-artpack manifest now makes this distinction machine-readable:
   `door_d2_01` is explicitly `admitted_d3_f0791_native`, carrying the real
