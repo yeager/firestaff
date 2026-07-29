@@ -42755,3 +42755,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   admitted D1 and D2 records and requires an opaque pixel to alter only each
   original F0128 clip while alpha-zero pixels preserve the source framebuffer;
   a changed transparency contract is rejected.
+
+## 2026-07-29 - CSB V2.0 full-surface startup capture
+
+- ✅ Strengthened `csb_v20_filtered_startup_capture` to validate the actual
+  top-down BMP geometry and storage size and to require non-black pixels over
+  at least half of each captured axis. Four files alone can no longer hide a
+  host-scaling regression that collapses PRESENTS, CHAOS, STRIKES BACK, or
+  Entrance into a partial strip. Verified against the local original PC3.4
+  `GRAPHICS.DAT`/`DUNGEON.DAT` package.

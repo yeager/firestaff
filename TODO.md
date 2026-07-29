@@ -919,7 +919,10 @@ that its exact runtime path is not already source-locked and tested.
    apply to normal CSB game frames, while PRESENTS, CHAOS/STRIKES and Entrance
    retain exact original palette indices and authenticated source capture.
    The isolated real-PC3.4 V2.0 regression enables both controls and records
-   all four startup phases; V2.1 EPX capture remains separately covered.
+   all four startup phases. It now also validates each emitted top-down BMP's
+   true geometry, byte size and non-black full-surface bounds, preventing a
+   host-scaled 640x400-style capture from passing when its source page has
+   collapsed to a strip. V2.1 EPX capture remains separately covered.
    2026-07-29: the complete source-derived 29-route CSB V2.2 artpack now has
    a positive real-data runtime check: it must remain V2.2 (`presentationMode=3`)
    through the original Prison command and reach map 0 at `(9,0,2)`. Hosts
