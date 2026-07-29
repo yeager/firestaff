@@ -1126,7 +1126,11 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
         "SWSHSND.C", "SWSHSND.DAT", "SWSH.SND", "SWSHSDAT.BIN",
         "SWSHSDAT.DAT",
         "DUNGEONB.DAT", "HCSB.HTC", "HCSBF.HTC", "HCSBG.HTC",
-        "CSBGAME.DAT", "CSB.DAT", "CSBGRAPH.DAT"
+        /* MINI.DAT is the original Atari ST/Amiga CSB campaign save.  Keep
+         * it with an archive-backed installation so Resume can hand its
+         * authenticated GAMEBLOCK payload to the native CSB runtime. */
+        "MINI.DAT", "CSBGAME.DAT", "CSBGAME1.DAT", "CSBGAME2.DAT",
+        "CSBGAME3.DAT", "CSBGAME4.DAT", "CSB.DAT", "CSBGRAPH.DAT"
     };
     size_t i;
     if (!seedPath || !gameCacheDir || seedPath[0] == '\0' ||

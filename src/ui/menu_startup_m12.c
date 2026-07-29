@@ -2943,7 +2943,8 @@ static int m12_ascii_equal_ci(const char* a, const char* b) {
 }
 
 static int m12_is_csb_original_save_basename(const char* name) {
-    return m12_ascii_equal_ci(name, "CSBGAME.DAT") ||
+    return m12_ascii_equal_ci(name, "MINI.DAT") ||
+           m12_ascii_equal_ci(name, "CSBGAME.DAT") ||
            m12_ascii_equal_ci(name, "CSBGAME.BAK") ||
            m12_ascii_equal_ci(name, "DMSAVE.DAT") ||
            m12_ascii_equal_ci(name, "DMSAVE.BAK");

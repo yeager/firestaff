@@ -834,6 +834,7 @@ int main(void) {
     char theronSaveRoot[512];
     char theronSlotSavePath[512];
     char theronSrmSavePath[512];
+    const char* atariMiniPath;
     (void)theronSrmSavePath;
     char nativeSavePath[512];
     M12_StartupMenuState state;
@@ -1053,6 +1054,30 @@ int main(void) {
                 intent.savePath &&
                 strcmp(intent.savePath, originalCsbGameBrowserSavePath) == 0,
                 "CSBGAME.DAT quick Resume launch intent should carry exact CSB path")) return 1;
+
+    /* This is intentionally an opt-in real-corpus lane. MINI.DAT has a
+     * distinct Atari/Amiga GAMEBLOCK layout and must classify as CSB before
+     * the runtime accepts its authenticated bytes. */
+    atariMiniPath = getenv("FIRESTAFF_CSB_ATARI_MINI");
+    if (atariMiniPath && atariMiniPath[0] != '\0') {
+        if (!expect(csb_v1_runtime_can_load_resume_path(atariMiniPath) == 1,
+                    "original Atari MINI.DAT must pass the CSB resume verifier")) return 1;
+        M12_Config_SetLastSavePath(atariMiniPath);
+        M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+        force_csb_available(&state);
+        if (!expect(state.quickResumeAvailable == 1,
+                    "original MINI.DAT must enable CSB quick Resume by content")) return 1;
+        if (!expect(strcmp(state.quickResumeGameId, "csb") == 0 &&
+                    strcmp(state.quickResumeSavePath, atariMiniPath) == 0,
+                    "MINI.DAT quick Resume must preserve the original CSB path")) return 1;
+        state.selectedIndex = -1;
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+        intent = M12_StartupMenu_GetLaunchIntent(&state);
+        if (!expect(intent.valid == 1 && intent.gameId &&
+                    strcmp(intent.gameId, "csb") == 0 && intent.savePath &&
+                    strcmp(intent.savePath, atariMiniPath) == 0,
+                    "MINI.DAT Resume launch intent must carry its exact path")) return 1;
+    }
 
     if (!expect(firestaff_test_write_csbwin_resume_fixture(csbSavePath, 0),
                 "should write CSBWin verified-body quicksave")) return 1;

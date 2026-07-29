@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 CSB Atari/Amiga `MINI.DAT` launcher Resume: M12 now
+  classifies the original campaign-save basename as CSB and preserves the
+  chosen path into the CSB launch intent. Archive-backed CSB scans
+  materialize `MINI.DAT` plus `CSBGAME1.DAT` through `CSBGAME4.DAT` with the
+  verified package files. Verification used the real 42,815-byte Atari
+  `MINI.DAT` from the local original archive: decoder, runtime handoff and
+  `m12_quick_resume_gate` all passed.
+
 - ✅ 2026-07-29 Launcher audio handoff: M12's persisted master, music, SFX
   and mute values now reach M11's SDL3 audio state after every game branch's
   reinitialization. Master is applied at the SDL device boundary; music and
