@@ -942,7 +942,11 @@ that its exact runtime path is not already source-locked and tested.
     2026-07-29: archive-backed PC3.4 packages now materialize every accepted
     `SWSHSND.C` source filename beside `GRAPHICS.DAT`, so the existing strict
     9,078-byte source loader can bind genuine swoosh media after hash-first
-    discovery. Entrance music remains a separate original-media decoder.
+    discovery. M11 now hands that verified PCM directly to the SDL audio
+    backend during the CSB FTL prelude; it remains silent when the source
+    sample is absent and never borrows DM1 audio. Local CSB data presently
+    lacks this optional source file, so a real-media playback capture and
+    entrance music decoder remain open.
 26. **CSB-ENTRANCE-DOOR-CREDITS:** Complete C002-C005 closed/opening entrance,
     credits, prompts, input timing, palette, sound, and runtime handoff from
     real CSBgraphics/package data.
