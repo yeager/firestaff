@@ -1603,14 +1603,14 @@ int csb_v1_boot_build_v22_f0128_draw_plan_pc34(
         profile->runtime.current_level >= profile->runtime.dungeon_handle->level_count) return 0;
     door_set = profile->runtime.dungeon_handle->map_door_set0[
         profile->runtime.current_level] & 3;
-    /* G0693 is the ReDMCSB D3-door symbol, not a GRAPHICS.DAT index.
-     * Resolve the active map's DoorSet record (246/249/252/255), just as
-     * the D3 command below does; 247/248 are the D2/D1 siblings. */
-    items[0] = (unsigned)csb_v1_viewport_door_graphic_index_pc34(door_set, 0);
     items[1] = 498u;
     items[2] = (unsigned)csb_v1_viewport_door_graphic_index_pc34(door_set, 2);
     items[3] = (unsigned)csb_v1_viewport_door_graphic_index_pc34(door_set, 1);
     items[4] = (unsigned)csb_v1_viewport_door_graphic_index_pc34(door_set, 0);
+    /* G0693 is the ReDMCSB D3-door symbol, not a GRAPHICS.DAT index. Both
+     * D0's first-frame proof and D3's command must name the same active
+     * DoorSet record (246/249/252/255), so keep one canonical value. */
+    items[0] = items[4];
     items[5] = items[4];
     if ((int)items[2] < 0 || (int)items[3] < 0 || (int)items[4] < 0) return 0;
     for (i = 0u; i < 6u; ++i) {

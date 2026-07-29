@@ -3,7 +3,9 @@
   source symbol `G0693` to its active PC3.4 `GRAPHICS.DAT` DoorSet record
   (246/249/252/255). They no longer hash record 693, which is unrelated
   catalog data. The symbol remains the semantic source owner; its selected
-  record is the authenticated 44x38 payload.
+  record is the authenticated 44x38 payload. The first-frame D0 proof and
+  D3 command now share one canonical selected record, preventing future
+  DoorSet drift between receipt and compositor.
   Verification: first-frame materialization, boot handoff, V2.2 source-pack,
   draw and route regressions PASS.
 
