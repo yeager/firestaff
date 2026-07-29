@@ -30,6 +30,7 @@
 #include "asset_find_by_hash.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_atari_save_runtime_handoff_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
@@ -93,6 +94,75 @@ static uint32_t csb_v1_runtime_read_le32(const uint8_t *bytes);
 static int csb_v1_runtime_dsa_get_wing_talents(void *user,
                                                uint16_t fingerprint,
                                                uint32_t *out_talents);
+
+enum { CSB_V1_RUNTIME_MAX_ORIGINAL_ATARI_SAVE_BYTES = 4 * 1024 * 1024 };
+
+/* The Atari Utility Disk's MINI.DAT has no PC/CSBWin header.  Read it as a
+ * bounded byte candidate, then let the DMWeb-shaped decoder authenticate all
+ * of its native blocks before it can reach the runtime handoff. */
+static int csb_v1_runtime_read_original_atari_save_file(
+    const char *path, uint8_t **out_bytes, size_t *out_size)
+{
+    FILE *fp;
+    long length;
+    uint8_t *bytes;
+
+    if (!path || !out_bytes || !out_size) return 0;
+    *out_bytes = NULL;
+    *out_size = 0u;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fseek(fp, 0L, SEEK_END) != 0 || (length = ftell(fp)) <= 0 ||
+        (size_t)length > CSB_V1_RUNTIME_MAX_ORIGINAL_ATARI_SAVE_BYTES ||
+        fseek(fp, 0L, SEEK_SET) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (!bytes || fread(bytes, 1u, (size_t)length, fp) != (size_t)length) {
+        fclose(fp);
+        free(bytes);
+        return 0;
+    }
+    if (fclose(fp) != 0) {
+        free(bytes);
+        return 0;
+    }
+    *out_bytes = bytes;
+    *out_size = (size_t)length;
+    return 1;
+}
+
+static int csb_v1_runtime_try_load_original_atari_save_file(
+    CSB_V1_RuntimeProfile *profile, const char *path)
+{
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
+    int result = CSB_V1_LOAD_ERR_UNREADABLE;
+
+    if (csb_v1_runtime_read_original_atari_save_file(path, &bytes, &size)) {
+        result = csb_v1_atari_save_handoff_runtime_pc34_compat(
+                     profile, bytes, size, NULL) == CSB_V1_ATARI_RUNTIME_OK
+            ? CSB_V1_LOAD_OK : CSB_V1_LOAD_ERR_UNREADABLE;
+    }
+    free(bytes);
+    return result;
+}
+
+static int csb_v1_runtime_is_original_atari_save_file(const char *path)
+{
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
+    CSB_V1_AtariSaveInfo info;
+    int valid = 0;
+
+    if (csb_v1_runtime_read_original_atari_save_file(path, &bytes, &size)) {
+        valid = csb_v1_atari_save_decode_pc34_compat(bytes, size, &info) ==
+            CSB_V1_ATARI_SAVE_OK;
+    }
+    free(bytes);
+    return valid;
+}
 static int csb_v1_runtime_dsa_has_wing_character(void *user,
                                                   uint16_t fingerprint);
 static int csb_v1_runtime_dsa_set_wing_talents(void *user,
@@ -1704,6 +1774,14 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
         return CSB_V1_LOAD_OK;
     }
 
+    /* Atari ST/Amiga Utility Disk MINI.DAT is an original CSB campaign save,
+     * not a DUNGEON.DAT.  Its big-endian GAMEBLOCK sections are authenticated
+     * here before the F0435-style runtime handoff. */
+    if (csb_v1_runtime_try_load_original_atari_save_file(profile, path) ==
+        CSB_V1_LOAD_OK) {
+        return CSB_V1_LOAD_OK;
+    }
+
     result = csb_v1_load_game(path, &image, (int)sizeof(image), &header);
     if (result != CSB_V1_LOAD_OK) {
         int import_result;
@@ -1773,6 +1851,9 @@ int csb_v1_runtime_can_load_resume_path(const char *path)
     }
 
     memset(&party, 0, sizeof(party));
+    if (csb_v1_runtime_is_original_atari_save_file(path)) {
+        return 1;
+    }
     return csb_v1_import_csb_save_file(&party, path) > 0;
 }
 

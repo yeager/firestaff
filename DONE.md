@@ -836,6 +836,15 @@
   GAMEBLOCK2 champion identity, vitals, attributes, skills and possessions.
   M11/menu consumption and timer/extended-object ownership remain tracked
   under `CSB-SAVE-UTILITY`.
+- ✅ 2026-07-29 CSB Atari `MINI.DAT` runtime/Resume consumption: the shared
+  `csb_v1_runtime_load_game_from_path()` and resume gate now admit a bounded,
+  checksum-authenticated original Atari save before falling back to native or
+  CSBWin formats. This makes Utility Disk `MINI.DAT` a real F0435 runtime
+  candidate without filename trust, synthetic party state, or temporary
+  `DUNGEON.DAT`. The real 42,815-byte local artifact proves Resume validation,
+  runtime loading, native dungeon/pose/champion restoration, and the direct
+  handoff; `ctest -L csb` passed 103/103 with PC3.4 and Atari data. Sources:
+  DMWeb Saved Game Files; ReDMCSB `LOADSAVE.C` F0435 and `CEDTINC8.C`.
 - ✅ 2026-07-26 Original saves and Utility Disk complete (Q-CSB-09). 32
   save/utility test files covering header build/read, F0435 provenance,
   export/import, CSBWin save loader boundary, utility save transaction.

@@ -977,9 +977,8 @@ that its exact runtime path is not already source-locked and tested.
    `MINI.DAT`, the main CSB dungeon selected after Prison/Utility handoff.
    DMWeb documents `MINI.DAT` as the main CSB dungeon stored in the same
    general saved-game format as `CSBGAME.DAT`, rather than a standalone
-   `DUNGEON.DAT`. The current runtime does not yet admit it through the real
-   save decoder. Add a source-verified MINI/CSBGAME decode and handoff route
-   before claiming original Atari/CSBWin campaign-resume support.
+   `DUNGEON.DAT`. A source-verified MINI/CSBGAME decode and handoff route is
+   required before claiming original Atari/CSBWin campaign-resume support.
    2026-07-29: the Atari-native decode boundary now validates the real
    `MINI.DAT` Block1/2/3, ITEM16, champion, timer and timer-queue checksums
    and locates its unencrypted CSB dungeon payload at byte 10,160. It now
@@ -988,7 +987,10 @@ that its exact runtime path is not already source-locked and tested.
    now replaces the live runtime dungeon and restores the source game time,
    party pose and native GAMEBLOCK2 champion records (identity, vital signs,
    attributes, skill state and possessions). It creates no champion or
-   `DUNGEON.DAT` substitute. M11/menu consumption and user-created
+   `DUNGEON.DAT` substitute. The shared runtime and Resume validator now
+   consume an authenticated `MINI.DAT` directly, so the original Atari
+   campaign can enter the same F0435-owned runtime route as native and
+   CSBWin saves. Full Utility/M11 file selection plus user-created
    `CSBGAME.DAT` timer/extended-object restoration remain open.
 7. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
    source-backed indoor HUD, wall, door, floor/ceiling, item, projectile,
