@@ -49,6 +49,7 @@ int main(void)
     int x;
     int y;
     int c013_nonblack = 0;
+    int c009_nonblack = 0;
     const M11_AssetSlot *c013;
     unsigned char *decoded = NULL;
     int decoded_w = 0;
@@ -106,6 +107,26 @@ int main(void)
               "real MINI.DAT Resume enters live CSB with source-owned HUD material");
         CHECK(c013->width == 87u && c013->height == 45u,
               "real MINI.DAT Resume retains the native source C013 HUD dimensions");
+        /* The CSB HUD always rebuilds its party surface from GAMEBLOCK data.
+         * Make the retained M11 mirror deliberately stale, then require the
+         * C009/C011 spell panel to remain drawable through the source-owned
+         * party copy.  The old call passed `view` here and cleared the panel
+         * because its stale party count was zero. */
+        view.world.party.championCount = 0;
+        view.spellPanelOpen = 1;
+        view.dm1SpellCasting.magicCasterIndex = 0;
+        view.dm1SpellCasting.input[0].symbolStep = 0;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        for (y = 42; y < 67; ++y) {
+            for (x = 233; x < 320; ++x) {
+                if (framebuffer[y * 320 + x] != 0u) {
+                    ++c009_nonblack;
+                }
+            }
+        }
+        CHECK(c009_nonblack > 0,
+              "CSB spell panel uses fresh GAMEBLOCK party mirror, not stale M11 party");
         M11_GameView_Shutdown(&view);
         if (failures) return 1;
         puts("PASS: real Atari MINI.DAT reaches live M11 CSB HUD");

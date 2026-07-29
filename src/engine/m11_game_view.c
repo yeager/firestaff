@@ -2332,7 +2332,7 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
      * draws the three bottom-anchored stat bars. */
     m11_draw_party_panel(party_state, framebuffer, framebufferWidth,
                          framebufferHeight);
-    m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,
+    m11_draw_v1_spell_area_overlay(party_state, framebuffer, framebufferWidth,
                                    framebufferHeight);
     m11_draw_v1_action_area_overlay(party_state, framebuffer,
                                     framebufferWidth, framebufferHeight);

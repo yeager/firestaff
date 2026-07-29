@@ -43147,3 +43147,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   filters, V2.1 presented startup/upscale, V2.2 reviewed-art gates and
   runtime HUD/input/settings/lighting paths. This does not admit unreviewed
   V2.2 viewport materials; those remain fail-closed by design.
+
+- ✅ 2026-07-30 CSB GAMEBLOCK spell-panel consumption: the C009/C011 spell
+  panel now uses the fresh CSB runtime party mirror, just as the C028 and
+  action surfaces do. The real-save M11 Prison regression forces the retained
+  M11 party empty and proves the source spell panel still draws from the
+  actual CSB GAMEBLOCK champion state.
