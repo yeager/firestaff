@@ -1,3 +1,14 @@
+- ✅ 2026-07-29 DM2 HUD bridges: champion stat bridge (V1 hero stats → V2
+  HUD runtime percentages, per-hero bar colors via table1d69d0, redraw-dirty
+  tracking) and food/water/poison panel bridge (bar percentages from raw
+  food/water range -1024..2048, GDAT color overrides, poison display gating).
+  13 tests across both modules. Source: skproject c_gui_draw.cpp:167-1229.
+- ✅ 2026-07-29 DM2 champion HUD bar color queries: QUERY_FOOD_WATER_BAR_COLOR
+  (GDAT → 256+value override with default fallback) and QUERY_3STAT_BAR_COLOR
+  (GDAT → raw value override with default fallback). Hero bar color table
+  {7,11,8,14} exported. GET_PLAYER_ABILITY reclassified as IMPLEMENTED_NARROW
+  (covered by get_adj_ability1). 12 new assertions. MISSING: 221.
+  Source: SkWinCore.cpp:13194-13209.
 - ✅ 2026-07-29 DM2 ULP table: unified lookup pointer table for GDAT entries.
   getp/setp/setl/islen/getadr/R_2D87A/splitlong/query_raw_data_length.
   Pointer/length union entries with MSB marker for length mode.

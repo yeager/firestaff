@@ -44234,6 +44234,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_food_water_bridge.c"
     )
 endif()
 
+# DM2 combat helpers (stun cooldown, bones item ID).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_combat_helpers.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_combat_helpers.c")
+    add_executable(test_dm2_v1_combat_helpers
+        tests/test_dm2_v1_combat_helpers.c
+        src/dm2/dm2_v1_combat_helpers.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_combat_helpers PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_combat_helpers
+        COMMAND test_dm2_v1_combat_helpers
+    )
+endif()
+
 # DM2/skproject scene light and static GRAPHICSSET ownership.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_viewport_renderer.c")
