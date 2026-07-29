@@ -292,6 +292,10 @@ an integration build pass.
   tests PASS in `/Volumes/Extern-disk/firestaff-csb-build` (47.85 s). This
   confirms the implemented V2.x contracts; it does not promote the remaining
   reviewed-art, all-route material-consumption, or packaged-Mac capture work.
+  Re-run 2026-07-29 with the local hash-verified PC3.4 package: 109/109 CSB
+  tests PASS, including the focused 50/50 V2.0/V2.1/V2.2 lane. This verifies
+  the present V2.x implementation without claiming V2.2 material families
+  that remain intentionally source-V1.
 
 - **M12-DATA-SCAN-PROGRESSBAR:** Closed 2026-07-28. The start menu now draws
   a live progressbar from the existing asynchronous hash scan, alongside its
