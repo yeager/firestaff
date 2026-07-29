@@ -17,6 +17,14 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V2X-EXPLICIT-PRESENTATION-ISOLATION:** Closed 2026-07-29.
+  A remembered `.fsart` can no longer promote an explicit V1/V2.0/V2.1 CSB
+  launch to V2.2: only an explicit V2.2 request materializes the pack. The
+  V2.1 and V2.2 real-data captures now use an isolated Firestaff home,
+  matching the V2.0 contract, so local launcher preferences cannot alter a
+  source-page regression. V2.0, V2.1, V2.2 and entrance probes pass; V2.1
+  was repeated three times successfully.
+
 - **CSB-ARTPACK-STUDIO-HEADLESS-SOURCE-EXPORT:** Closed 2026-07-29.
   Artpack Studio can now inspect a local original graphics file without Tk and
   export only successfully decoded records as PNG previews plus a

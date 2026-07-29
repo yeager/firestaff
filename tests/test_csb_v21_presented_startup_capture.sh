@@ -17,11 +17,13 @@ if [ ! -f "$data_dir/GRAPHICS.DAT" ] || [ ! -f "$data_dir/DUNGEON.DAT" ]; then
     exit 0
 fi
 
+test_home="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v21-home-XXXXXX")"
 capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v21-presented-XXXXXX")"
 runtime_v21_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v21-runtime-XXXXXX")"
 runtime_v1_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v1-v21-runtime-XXXXXX")"
-trap 'rm -rf "$capture_dir" "$runtime_v21_dir" "$runtime_v1_dir"' EXIT HUP INT TERM
+trap 'rm -rf "$test_home" "$capture_dir" "$runtime_v21_dir" "$runtime_v1_dir"' EXIT HUP INT TERM
 
+HOME="$test_home" \
 FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$capture_dir" \
 SDL_VIDEODRIVER=dummy \
 "$firestaff_bin" \
@@ -47,6 +49,7 @@ done
 
 # EPX/upscale is a host presentation transform. The original runtime page
 # must remain identical to V1, while the terminal presented page must differ.
+HOME="$test_home" \
 FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_v21_dir" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_v21_dir/presented" \
 SDL_VIDEODRIVER=dummy \
@@ -55,6 +58,7 @@ SDL_VIDEODRIVER=dummy \
     --boot-probe --width 960 --height 600 --scale-mode 4 \
     --script 'wait120,key:enter,wait200' >"$runtime_v21_dir/firestaff.log" 2>&1
 
+HOME="$test_home" \
 FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_v1_dir" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_v1_dir/presented" \
 SDL_VIDEODRIVER=dummy \

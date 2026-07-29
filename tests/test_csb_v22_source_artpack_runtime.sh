@@ -23,11 +23,12 @@ fi
 # template. Keep the temporary output extension-free so this probe works on
 # macOS as well as GNU/Linux.
 output="$(mktemp "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-XXXXXX")"
+test_home="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-home-XXXXXX")"
 capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-startup-XXXXXX")"
 v1_capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v1-source-startup-XXXXXX")"
 runtime_capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-capture-XXXXXX")"
 v1_runtime_capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v1-runtime-capture-XXXXXX")"
-trap 'rm -f "$output"; rm -rf "$capture_dir" "$v1_capture_dir" "$runtime_capture_dir" "$v1_runtime_capture_dir"' EXIT HUP INT TERM
+trap 'rm -f "$output"; rm -rf "$test_home" "$capture_dir" "$v1_capture_dir" "$runtime_capture_dir" "$v1_runtime_capture_dir"' EXIT HUP INT TERM
 
 # V2.2 material belongs only to the admitted live viewport. The original
 # C001-C005 startup sequence must still reach the presented surface with its
@@ -37,6 +38,7 @@ trap 'rm -f "$output"; rm -rf "$capture_dir" "$v1_capture_dir" "$runtime_capture
 # with the user's persisted scaling policy; a fixed window coordinate would
 # test that policy rather than the V2.2 runtime handoff.  The C407 pointer
 # geometry remains covered by the direct entrance-pointer regression.
+HOME="$test_home" \
 FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$capture_dir" \
 SDL_VIDEODRIVER=dummy "$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v22 --duration 7000 \
@@ -57,6 +59,7 @@ fi
 # source-owned intro chain must therefore retain the V1 terminal pages. TITLE
 # palettes 5/6 advance on VBlanks and cannot be compared by a wall-clock
 # capture boundary; their source cadence has dedicated TITLE tests below.
+HOME="$test_home" \
 FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$v1_capture_dir" \
 SDL_VIDEODRIVER=dummy "$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v1 --duration 7000 \
@@ -119,6 +122,7 @@ for palette in (4, 7):
         raise SystemExit(f"FAIL: CSB V2.2 changed source startup palette {palette}")
 PY
 
+HOME="$test_home" \
 SDL_VIDEODRIVER=dummy \
 FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_capture_dir" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture_dir/presented" \
@@ -131,6 +135,7 @@ FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture_dir/presented" \
 # terminal C017/C040 HUD is source-owned and must remain byte-identical to
 # the V1 source page outside F0128's 224x136 aperture at (48,33).
 v1_output="$v1_runtime_capture_dir/firestaff.log"
+HOME="$test_home" \
 SDL_VIDEODRIVER=dummy \
 FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$v1_runtime_capture_dir" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$v1_runtime_capture_dir/presented" \

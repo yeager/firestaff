@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 CSB explicit presentation-mode isolation: a remembered
+  `.fsart` now supplies material only for an explicit V2.2 launch and cannot
+  override an explicit V1/V2.0/V2.1 request. The V2.1 real-PC3.4 capture
+  and V2.2 real-PC3.4 capture regressions now run with an isolated Firestaff
+  home, so user preferences cannot make their source-page comparisons
+  non-deterministic. V2.0, V2.1, V2.2 and entrance probes pass; V2.1 was
+  repeated three times.
+
 - ✅ 2026-07-29 CSB V2.2 G0693 catalog mapping correction: the F0128
   first-frame receipt and live V2.2 plan now translate ReDMCSB's D3-door
   source symbol `G0693` to its active PC3.4 `GRAPHICS.DAT` DoorSet record

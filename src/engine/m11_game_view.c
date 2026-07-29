@@ -15057,7 +15057,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     } else if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
         char selected_manifest[FSP_PATH_MAX];
         int selected_artpack_ready = 0;
-        if (spec->artpackPath && spec->artpackPath[0]) {
+        /* A selected .fsart is V2.2 material, not a presentation-mode
+         * override.  Explicit V1/V2.0/V2.1 requests must keep their
+         * source page untouched even when the launcher remembers a pack. */
+        if (spec->presentationMode == M12_PRESENTATION_V22_MODERN &&
+            spec->artpackPath && spec->artpackPath[0]) {
             selected_artpack_ready = m11_csb_v22_materialize_artpack(
                 spec->artpackPath, selected_manifest, sizeof(selected_manifest));
         }
@@ -15065,8 +15069,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             csb_v22_set_manifest_path(spec->dataDir);
             csb_v22_famg_set_manifest_path(spec->dataDir);
         }
-        csb_v2_presentation_mode_set_m12(selected_artpack_ready
-            ? M12_PRESENTATION_V22_MODERN : spec->presentationMode);
+        csb_v2_presentation_mode_set_m12(spec->presentationMode);
         if (selected_artpack_ready && csb_v2_presentation_mode_get() ==
             CSB_V2_PM_V22_MODERN) {
             state->presentationMode = M12_PRESENTATION_V22_MODERN;
