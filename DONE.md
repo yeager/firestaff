@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 DM2 game tables + DM1 item conversion: direction delta tables
+  (table1d27fc/table1d2804), light attenuation (table1d6712), movement speed
+  (table1d70f0), creature scatter/occupy, skill map/class, action hand map.
+  DM1-to-DM2 item conversion: 199-entry const table mapping DM1 item indices
+  to DM2 category+ID pairs (EXTENDED_LOAD_DM1_ITEM_CONVERSION_LIST).
+  Reclassified init_creatures and TEST_TEXT as NOT_APPLICABLE_ARCH.
+  19 tests across both modules. MISSING: 216.
+  Source: dm2data.cpp:66-882, SkWinCore2.cpp:71-289.
 - ✅ 2026-07-29 DM2 HUD bridges: champion stat bridge (V1 hero stats → V2
   HUD runtime percentages, per-hero bar colors via table1d69d0, redraw-dirty
   tracking) and food/water/poison panel bridge (bar percentages from raw
