@@ -5020,6 +5020,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.prepare_cause_poison = runner->prepare_cause_poison;
     context.commit_cause_poison = runner->commit_cause_poison;
     context.create_cloud = runner->create_cloud;
+    context.teleport_party = runner->teleport_party;
     context.discard_text = runner->discard_text;
     context.play_sound = runner->play_sound;
     context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;

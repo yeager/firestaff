@@ -9,7 +9,9 @@
   indirect regressions and the complete CSB CTest lane pass (98/98). The
   runtime receipt now additionally proves and atomically publishes its final
   level/x/y/direction pose; candidate execution no longer changes global
-  dungeon level state before commit.
+  dungeon level state before commit. The production DSA filter runner forwards
+  this runtime owner into its stack context; a loaded byte-map regression
+  proves both publication and receipt invalidation after pose drift.
 
 - ✅ 2026-07-29 CSB Artpack Studio headless original-record export:
   `--import-game-data ... --export-original-previews ...` now writes only

@@ -998,6 +998,9 @@ that its exact runtime path is not already source-locked and tested.
     request path. The runtime receipt verifies and atomically publishes the
     final source party pose only after the full action and candidate dungeon
     have succeeded; no candidate callback changes the shared current level.
+    The production filter runner now forwards its teleporter owner to the
+    authenticated stack context; a real byte-map regression proves commit and
+    post-publication drift rejection.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

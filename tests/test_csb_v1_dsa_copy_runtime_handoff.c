@@ -473,6 +473,65 @@ static void test_copyteleporter_runtime_receipt(void)
           "COPYTELEPORTER receipt rejects destination DB1 drift");
 }
 
+static void test_teleport_party_runtime_receipt(void)
+{
+    uint8_t raw[72] = { 0 };
+    uint16_t words[] = { 0x0686u, 0x0020u, 0x0f8bu };
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    /* One loaded two-cell level. LOCATIONREL 0x0020 is (p=0,l=0,x=1,y=0). */
+    raw[60] = 0u; raw[61] = 0u;
+    raw[62] = 1u; raw[63] = 0u;
+    raw[64] = 0x20u;
+    raw[65] = 0x20u;
+    raw[66] = 0xfeu; raw[67] = 0xffu;
+    raw[68] = 0xfeu; raw[69] = 0xffu;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 2;
+    dungeon.level_heights[0] = 1;
+    dungeon.level_offsets[0] = 64;
+    dungeon.square_bytes = 1;
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 2;
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.csbwin_extended_features_valid = 1;
+    profile.party_state_valid = 1;
+    configure_action(&action, words,
+                     (int)(sizeof(words) / sizeof(words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner));
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id;
+    runner.state_index = action.state_index;
+
+    memset(&receipt, 0, sizeof(receipt));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 1 &&
+              profile.current_level == 0 && profile.party_z == 0 &&
+              profile.party_x == 1 && profile.party_y == 0 &&
+              profile.party_dir == 0 && profile.party_state.PartyMapX == 1 &&
+              profile.party_state.PartyMapY == 0 &&
+              csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+                  &profile, &receipt) == 1 &&
+              receipt.teleport_party_count == 1u &&
+              receipt.last_teleport_party_destination == 0x0020u,
+          "TELEPORTPARTY atomically publishes its CSBWin LOCATIONREL pose");
+    profile.party_x = 0;
+    check(csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+              &profile, &receipt) == 0,
+          "TELEPORTPARTY receipt rejects post-publication party-pose drift");
+}
+
 static void test_indirect_local_variable_char_store(void)
 {
     /* CSBWin DSA.cpp EX_AMPERSAND I_Indirect format. P3=count, P4=DSAVARS
@@ -541,6 +600,7 @@ int main(void)
     CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
 
     test_copyteleporter_runtime_receipt();
+    test_teleport_party_runtime_receipt();
     test_textfetch_textsay_runtime_binding();
     test_parameter_message_runtime_binding();
     test_indirect_local_variable_char_store();
