@@ -4,6 +4,12 @@
   live CSB filter chain, and cannot alter DM1's filter fields. The runtime
   popup regression proves all four paths.
 
+- ✅ 2026-07-29 CSB V1/V2.x entrance pointer presentation: the real C407
+  enter-dungeon box is now exercised through M11's window-to-source mapper
+  at 320x200 and 960x600 in V1, V2.0, V2.1 and gated V2.2. The former Enter
+  key surrogate is gone; each route reaches the F0806 Prison handoff via its
+  original mouse command.
+
 - ✅ 2026-07-29 CSB explicit presentation-mode isolation: a remembered
   `.fsart` now supplies material only for an explicit V2.2 launch and cannot
   override an explicit V1/V2.0/V2.1 request. The V2.1 real-PC3.4 capture

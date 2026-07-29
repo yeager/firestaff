@@ -29,14 +29,14 @@ run_case() {
     SDL_VIDEODRIVER=dummy "$firestaff_bin" \
         --game csb --data-dir "$data_dir" --presentation-mode "$mode" \
         --boot-probe --width "$width" --height "$height" --scale-mode 4 \
-        --script 'wait120,key:enter,wait200' >"$output" 2>&1
+        --script "wait120,click:${click_x}:${click_y},wait200" >"$output" 2>&1
 
     if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb' "$output" ||
        ! grep -Fq 'phase=inactive startupActive=0' "$output" ||
        ! grep -Fq 'runtimeTick=148' "$output" ||
        ! grep -Eq 'csbViewportHash=[1-9][0-9]*' "$output"; then
         cat "$output" >&2
-        echo "FAIL: CSB $mode Prison pointer did not reach runtime with presentation ${expected_presentation_mode} at ${width}x${height}" >&2
+        echo "FAIL: CSB $mode C407 pointer did not reach runtime with presentation ${expected_presentation_mode} at ${width}x${height}" >&2
         exit 1
     fi
     if [ "$expected_presentation_mode" = '2-or-3' ]; then
@@ -62,12 +62,11 @@ run_case() {
     trap - EXIT HUP INT TERM
 }
 
-# ReDMCSB ENTRANCE.C F0806 accepts C200 from the original Enter route.
-# This verifies that every presentation reaches the same source-owned runtime
-# handoff without tying a startup test to dummy SDL's window-coordinate model.
-# The C407 pointer geometry is covered by the direct source-coordinate
-# entrance-pointer regression; an actual host-window pointer roundtrip remains
-# a separate M11 input integration concern.
+# ReDMCSB COMMAND.C maps C407 to the 244,45 55x14 enter-dungeon box.
+# These are host-window clicks through the complete M11 presentation mapper,
+# not a keyboard surrogate: 270,52 is the source center at 320x200, while
+# 810,156 is the same source center in a 960x600 window. Every mode must
+# therefore reach the F0806 runtime handoff from the real mouse route.
 # V2.2 resolves to V2.1 when no reviewed CSB artpack is present and stays V2.2
 # when a completed pack is installed; both must complete the same source-owned
 # runtime handoff. The separate V2.2 source-artpack test requires mode 3.

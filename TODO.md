@@ -1418,11 +1418,11 @@ that its exact runtime path is not already source-locked and tested.
 33. **CSB-INPUT-CONTROLLER-ACCESSIBILITY:** Complete mouse, keyboard,
     controller/touch mapping, modal focus, pointer coordinates, screen scale,
     and original command behavior for all CSB gameplay surfaces.
-    2026-07-29: the V1/V2.x startup handoff regression uses the original C200
-    Enter command after dummy SDL proved unable to provide a stable host-window
-    coordinate model across persisted scale policies. C407's source-coordinate
-    pointer route remains directly covered, but this is not evidence of a real
-    macOS/window mouse roundtrip; retain that host integration work here.
+    2026-07-29: the V1/V2.x startup handoff regression now uses the original
+    C407 pointer zone through M11's complete window-to-presented-to-source
+    mapper at 320x200 and 960x600. The source center reaches F0806 runtime in
+    V1, V2.0, V2.1 and gated V2.2; this replaces the former Enter surrogate.
+    Broader controller/modal coverage remains open.
     2026-07-28: V2.0/V2.1/V2.2 now consume CSB's own in-flight cardinal
     turn animation as a post-composition viewport pan in M11. The source V1
     command, timing, collision and sensors remain unchanged. This closes the
