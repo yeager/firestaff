@@ -70,6 +70,13 @@ an integration build pass.
   all nine cells paint across all four directions. This fixes consumption;
   reviewed complete CSB art remains required before V2.2 is admitted.
 
+- **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Closed 2026-07-29. The separate
+  CSB F0128 runtime renderer now owns the V2.2 cache update and in-place
+  artpack pass after it has authenticated the original PC3.4 source page.
+  It records the number of real material cells painted in the runtime receipt.
+  The source-derived 29-route pack reaches Prison runtime and proves nine
+  painted cells; non-V2.2 modes and unavailable routes retain their V1 page.
+
 - **CSB-PC34-IMG2-DECODE-ORDER:** Closed 2026-07-29. The native PC3.4
   C001-C005 records now attempt the documented byte-stride IMG2 decoder
   before the legacy planar fallback. The former order could accept the same

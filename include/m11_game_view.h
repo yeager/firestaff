@@ -1532,6 +1532,10 @@ typedef struct {
         uint32_t runtime_viewport_source_tick;
         uint32_t runtime_viewport_pixel_hash;
         uint32_t runtime_viewport_draw_counts_hash;
+        /* V2.2 source-derived artpack cells actually painted during the
+         * current CSB F0128 runtime frame. Zero means the V1 source page
+         * remains intact (for example, when no route has real material). */
+        int runtime_v22_cells_painted;
         int startup_title_active;
         int startup_title_frame;
         int startup_title_source_step;

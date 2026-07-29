@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 CSB V2.2 live M11 runtime material consumption: CSB's
+  F0128 runtime renderer has its own source-page path, so it now updates the
+  CSB V2.2 shape cache and applies the admitted source-derived artpack only
+  after the original page has passed its receipt validation. The runtime
+  receipt records painted V2.2 cells. The local complete 29-route PC3.4 pack
+  reaches Prison runtime in mode 3 and proves nine cells painted; V1 remains
+  unchanged for unadmitted or unmapped material.
+
 - ✅ 2026-07-29 CSB V2.0 filtered startup source capture: V2.0 now separates
   normal game-frame cleanup from CSB's source-owned special-palette startup
   pages. Enabling both dither cleanup and palette correction cannot rewrite

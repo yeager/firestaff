@@ -241,6 +241,9 @@ static int m11_csb_original_save_runtime_receipt_current(
 #include <stdlib.h>
 #include <string.h>
 
+static void m11_csb_collect_v22_raw_cells(const M11_GameViewState* state,
+                                           unsigned char out_cells[3][3]);
+
 #ifndef DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL
 #define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL \
     (CHAMPION_SLOT_ACTION_HAND + 1)
@@ -1877,6 +1880,7 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     CSB_V1_ViewportRuntimeDrawCounts draw_counts;
     CSB_V1_FirstLiveDungeonFrameReceipt_PC34 live_receipt;
     M11_CSB_RuntimeSpriteContext runtime_sprite_context;
+    unsigned char v22_raw_cells[3][3];
     size_t framebuffer_bytes;
     unsigned char *candidate_page;
 
@@ -1967,6 +1971,22 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
         return 0;
     }
     memcpy(framebuffer, candidate_page, framebuffer_bytes);
+    /* The CSB boot renderer is separate from the shared DM1 viewport
+     * renderer, so it must populate its own V2.2 cell cache here. Validate
+     * the original F0128 page first, then replace only mapped cells from the
+     * admitted source-derived artpack. This preserves the source receipt
+     * while making the selected V2.2 route visible at runtime. */
+    if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+        m11_csb_collect_v22_raw_cells(state, v22_raw_cells);
+        csb_v22_shape_cache_update((int)state->world.party.direction,
+                                   v22_raw_cells);
+        state->csbState.runtime_v22_cells_painted =
+            csb_v22_inplace_render_pass(framebuffer,
+                                        framebufferWidth,
+                                        framebufferHeight);
+    } else {
+        state->csbState.runtime_v22_cells_painted = 0;
+    }
     free(candidate_page);
     state->csbState.runtime_viewport_source_session_ready = 1;
     state->csbState.runtime_viewport_source_session_generation =
@@ -26081,6 +26101,27 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
         *outCell = cell;
     }
     return 1;
+}
+
+static void m11_csb_collect_v22_raw_cells(const M11_GameViewState* state,
+                                           unsigned char out_cells[3][3])
+{
+    int depth;
+
+    if (!out_cells) {
+        return;
+    }
+    for (depth = 0; depth < 3; ++depth) {
+        int lateral;
+        for (lateral = -1; lateral <= 1; ++lateral) {
+            M11_ViewportCell cell;
+            out_cells[depth][lateral + 1] = 0u;
+            if (m11_sample_viewport_cell(state, depth + 1, lateral, &cell) &&
+                cell.valid) {
+                out_cells[depth][lateral + 1] = cell.square;
+            }
+        }
+    }
 }
 
 int M11_GameView_ProbeViewportFloorItemCounts(

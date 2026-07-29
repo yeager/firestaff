@@ -36,4 +36,10 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb' "$output" ||
     exit 1
 fi
 
-echo "PASS: CSB V2.2 source artpack reaches runtime with the V2.2 route"
+if ! grep -Eq 'csbV22CellsPainted=[1-9][0-9]*' "$output"; then
+    cat "$output" >&2
+    echo "FAIL: CSB V2.2 reached runtime without painting source-derived artpack cells" >&2
+    exit 1
+fi
+
+echo "PASS: CSB V2.2 source artpack paints runtime cells through the V2.2 route"
