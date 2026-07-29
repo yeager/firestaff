@@ -42078,6 +42078,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   the original `(EDT_MessageParameters << 24)|timerID` DB11 record through an
   existing exact-size free node, restores the CSBWin heap ordering, and only
   publishes the timer/EXPOOL mutation after the whole DSA action validates.
-  The regression locks the source timer fields and actual EXPOOL payload bytes
-  and proves a later invalid opcode rolls back both. `ctest -L csb` passes
-  96/96.
+  Zero through 29 parameters are supported; zero keeps CSBWin's two-word DB11
+  record instead of becoming a delete. The regression locks source timer
+  fields and actual EXPOOL bytes and proves a later invalid opcode rolls back
+  both. `ctest -L csb` passes 96/96.

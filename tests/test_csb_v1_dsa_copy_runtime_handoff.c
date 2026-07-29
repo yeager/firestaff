@@ -68,6 +68,7 @@ static void test_parameter_message_runtime_binding(void)
      * parameter stack.  This DB11 tail contains one genuine, source-sized
      * free node for the resulting two-parameter EXPOOL record. */
     uint8_t tail[2u * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES] = { 0 };
+    uint8_t empty_tail[2u * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES] = { 0 };
     uint8_t tail_before[sizeof(tail)];
     uint16_t words[] = {
         0x0686u, 0x0088u, 0x0686u, 2u, 0x0686u, 2u,
@@ -76,6 +77,10 @@ static void test_parameter_message_runtime_binding(void)
     uint16_t rejected_words[] = {
         0x0686u, 0x0088u, 0x0686u, 2u, 0x0686u, 2u,
         0x0686u, 5u, 0x0a8bu, 0x0000u
+    };
+    uint16_t zero_words[] = {
+        0x0686u, 0x0088u, 0x0686u, 2u, 0x0686u, 0u,
+        0x0686u, 5u, 0x0a8bu
     };
     CSB_V1_RuntimeProfile profile;
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
@@ -139,15 +144,66 @@ static void test_parameter_message_runtime_binding(void)
                   profile.csbwin_appended_tail_fnv1a,
           "STKOP_Message commits one CSBWin timer, EXPOOL record and receipt");
 
-    memcpy(tail_before, profile.csbwin_appended_tail, sizeof(tail_before));
-    profile.csbwin_num_timer = 0u;
-    profile.csbwin_timer_queue_summary_count = 0u;
-    profile.csbwin_timer_queue_summary_total = 0u;
-    profile.csbwin_first_avail_timer = 1u;
-    profile.csbwin_timers[0].function = DM1_EVENT_NONE;
-    memset(&profile.timeline_queue, 0, sizeof(profile.timeline_queue));
+    /* EXPOOL::Write with NumParam == 0 remains a live two-word record, not
+     * SetSkin-style deletion. This separate source-shaped free list has only
+     * two-word nodes, so accepting it with a synthetic payload would fail. */
+    put_le16(empty_tail, 64u * 4u + 2u, 2u);
+    put_le32(empty_tail, 2u * 4u, 65u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.csbwin_extended_features_valid = 1;
+    profile.csbwin_body_runtime_summary_valid = 1;
+    profile.csbwin_timer_summary_count = 6u;
+    profile.csbwin_timer_summary_total = 6u;
+    profile.csbwin_max_timers = 6u;
+    profile.csbwin_appended_tail_valid = 1;
+    profile.csbwin_appended_tail_size = sizeof(empty_tail);
+    profile.csbwin_appended_tail_preserved_size = sizeof(empty_tail);
+    memcpy(profile.csbwin_appended_tail, empty_tail, sizeof(empty_tail));
+    profile.csbwin_appended_tail_fnv1a = fnv1a32(empty_tail,
+                                                  sizeof(empty_tail));
+    configure_action(&action, zero_words,
+                     (int)(sizeof(zero_words) / sizeof(zero_words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner));
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id;
+    runner.state_index = action.state_index;
+    memset(&receipt, 0, sizeof(receipt));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 1 &&
+              profile.csbwin_num_timer == 1u &&
+              profile.csbwin_timers[0].function == 101u &&
+              read_le32(profile.csbwin_appended_tail, 37u * 4u) == 65u &&
+              read_le32(profile.csbwin_appended_tail, 66u * 4u) ==
+                  0x01000000u &&
+              csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+                  &profile, &receipt) == 1 &&
+              receipt.parameter_message_created_count == 1u,
+          "zero-parameter STKOP_Message retains its source-sized EXPOOL record");
+
+    /* Restore the four-word free node and exercise rollback after MESSAGE
+     * itself has staged its timer and DB11 record. */
+    csb_v1_runtime_init(&profile, NULL);
+    profile.csbwin_extended_features_valid = 1;
+    profile.csbwin_body_runtime_summary_valid = 1;
+    profile.csbwin_timer_summary_count = 6u;
+    profile.csbwin_timer_summary_total = 6u;
+    profile.csbwin_max_timers = 6u;
+    profile.csbwin_appended_tail_valid = 1;
+    profile.csbwin_appended_tail_size = sizeof(tail);
+    profile.csbwin_appended_tail_preserved_size = sizeof(tail);
+    memcpy(profile.csbwin_appended_tail, tail, sizeof(tail));
+    profile.csbwin_appended_tail_fnv1a = fnv1a32(tail, sizeof(tail));
     configure_action(&action, rejected_words,
                      (int)(sizeof(rejected_words) / sizeof(rejected_words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner));
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id;
+    runner.state_index = action.state_index;
+    memcpy(tail_before, profile.csbwin_appended_tail, sizeof(tail_before));
     check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
               &profile, &runner, &action, parameters, 2, NULL) == 0 &&
               profile.csbwin_num_timer == 0u &&

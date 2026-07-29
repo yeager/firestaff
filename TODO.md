@@ -49,8 +49,10 @@ an integration build pass.
   timer pool and existing DB11 free nodes. It preserves the independent
   parameter-message sequence, writes `(EDT_MessageParameters << 24)|timerID`,
   restores the heap and event-to-slot receipts, and publishes only after the
-  complete DSA transaction succeeds. A source-shaped regression locks timer
-  fields, exact EXPOOL bytes and rollback after a later rejected word. The
+  complete DSA transaction succeeds. Zero through 29 parameters are accepted;
+  zero retains the source two-word DB11 record instead of deleting it. A
+  source-shaped regression locks timer fields, exact EXPOOL bytes and rollback
+  after a later rejected word. The
   still-open DSA world operations remain under CSB-DSA-FULL-OPCODE-FAMILY.
 
 - **CSB-DSA-SAY-TEXT-OWNER:** Closed 2026-07-29. Authenticated CSBWin

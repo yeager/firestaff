@@ -71,7 +71,8 @@ static int csb_v1_runtime_replace_appended_expool_record_internal(
     CSB_V1_RuntimeProfile *candidate,
     uint32_t record_id,
     const uint8_t *payload,
-    size_t payload_size);
+    size_t payload_size,
+    int write_empty_record);
 static uint8_t *csb_v1_runtime_mutable_thing_record(
     CSB_V1_DungeonData *dungeon, uint16_t thing, int *out_type,
     int *out_size);
@@ -21133,7 +21134,8 @@ static int csb_v1_runtime_replace_appended_expool_record_internal(
     CSB_V1_RuntimeProfile *candidate,
     uint32_t record_id,
     const uint8_t *payload,
-    size_t payload_size)
+    size_t payload_size,
+    int write_empty_record)
 {
     uint8_t *bytes;
     uint32_t total_words;
@@ -21213,8 +21215,10 @@ static int csb_v1_runtime_replace_appended_expool_record_internal(
             old_node);
     }
 
-    /* SetSkin returns after Read when the trimmed column is empty. */
-    if (payload_size == 0u) return old_node != 0u;
+    /* SetSkin returns after Read when the trimmed column is empty. `MESSAGE`
+     * differs: CSBWin EXPOOL::Write retains a two-word DB11 node when its
+     * parameter count is zero. */
+    if (payload_size == 0u && !write_empty_record) return old_node != 0u;
     write_words = (uint32_t)(payload_size / 4u) + 2u;
     if (write_words < 2u || write_words > 31u ||
         write_words + 2u >= total_words) return 0;
@@ -21229,7 +21233,9 @@ static int csb_v1_runtime_replace_appended_expool_record_internal(
         csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u));
     csb_v1_runtime_write_le32(bytes + (size_t)hashi * 4u, bucket);
     csb_v1_runtime_write_le32(bytes + (size_t)(bucket + 1u) * 4u, record_id);
-    memcpy(bytes + (size_t)(bucket + 2u) * 4u, payload, payload_size);
+    if (payload_size != 0u) {
+        memcpy(bytes + (size_t)(bucket + 2u) * 4u, payload, payload_size);
+    }
     return 1;
 }
 
@@ -21752,7 +21758,7 @@ int csb_v1_runtime_set_csbwin_wing_talents(
             csb_v1_runtime_write_le32(payload + 76u, talents);
         }
         if (!csb_v1_runtime_replace_appended_expool_record_internal(
-                &candidate, record_id, payload, sizeof(payload))) {
+                &candidate, record_id, payload, sizeof(payload), 0)) {
             return -1;
         }
         candidate.csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
@@ -21897,13 +21903,13 @@ int csb_v1_runtime_set_csbwin_saved_skin(
     }
     if (last_nonzero < 0) {
         if (!csb_v1_runtime_replace_appended_expool_record_internal(
-                &candidate, record_id, NULL, 0u)) {
+                &candidate, record_id, NULL, 0u, 0)) {
             return 0;
         }
     } else {
         source_write_size = (size_t)((last_nonzero + 4) / 4) * 4u;
         if (!csb_v1_runtime_replace_appended_expool_record_internal(
-                &candidate, record_id, column, source_write_size)) {
+                &candidate, record_id, column, source_write_size, 0)) {
             return 0;
         }
     }
@@ -21997,7 +22003,7 @@ int csb_v1_runtime_set_csbwin_extended_cell_flags(
     record_id = (2u << 24) | (((location >> 10) & 63u) << 5) |
         ((location >> 5) & 31u);
     if (!csb_v1_runtime_replace_appended_expool_record_internal(
-            &candidate, record_id, payload, sizeof(payload))) {
+            &candidate, record_id, payload, sizeof(payload), 0)) {
         return -1;
     }
     candidate.csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
@@ -23122,7 +23128,7 @@ static int csb_v1_runtime_dsa_queue_parameter_message(
     int event_index;
 
     if (out_event_type) *out_event_type = 0u;
-    if (!profile || !parameters || parameter_count == 0u ||
+    if (!profile || (parameter_count != 0u && !parameters) ||
         parameter_count > 29u || message_type > 0xffu ||
         ((target_location >> 10) & 0x3fu) >= 64u ||
         ((target_location >> 5) & 0x1fu) >= 32u ||
@@ -23154,7 +23160,7 @@ static int csb_v1_runtime_dsa_queue_parameter_message(
     }
     record_id = (1u << 24) | timer_index;
     if (!csb_v1_runtime_replace_appended_expool_record_internal(
-            profile, record_id, payload, (size_t)parameter_count * 4u)) {
+            profile, record_id, payload, (size_t)parameter_count * 4u, 1)) {
         return 0;
     }
 
@@ -25126,7 +25132,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
                                                                       &next);
                     if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT &&
                         csb_v1_runtime_replace_appended_expool_record_internal(
-                            profile, record_id, NULL, 0u) &&
+                            profile, record_id, NULL, 0u, 0) &&
                         csb_v1_runtime_unlink_thing_from_square(
                             profile->dungeon_handle, bones_thing, timer->level,
                             timer->ubyte6, timer->ubyte7)) {
