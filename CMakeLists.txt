@@ -35200,6 +35200,11 @@ target_include_directories(test_nexus_v1_face_bin PRIVATE ${CMAKE_CURRENT_SOURCE
 target_link_libraries(test_nexus_v1_face_bin PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_face_bin COMMAND test_nexus_v1_face_bin)
 set_tests_properties(nexus_v1_face_bin PROPERTIES LABELS "nexus;saturn;portrait;skip_safe")
+add_executable(test_nexus_v1_item_ibs tests/test_nexus_v1_item_ibs.c)
+target_include_directories(test_nexus_v1_item_ibs PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_item_ibs PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_item_ibs COMMAND test_nexus_v1_item_ibs)
+set_tests_properties(nexus_v1_item_ibs PROPERTIES LABELS "nexus;saturn;items;skip_safe")
 add_executable(test_nexus_v1_font256_s2d_admission
     tests/test_nexus_v1_font256_s2d_admission.c)
 target_include_directories(test_nexus_v1_font256_s2d_admission PRIVATE
