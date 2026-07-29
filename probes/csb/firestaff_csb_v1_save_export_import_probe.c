@@ -175,7 +175,7 @@ int main(int argc, char **argv)
         make_synthetic_party(&export_party, 1);
         v21_len = csb_v1_save_export_roundtrip(
             &export_party, CSB_SAVE_VERSION_V21,
-            NULL,
+            "synthetic://probe-v21.csbsave",
             envelope, sizeof(envelope));
         CHECK(v21_len > 0,
               "synthetic v2.1 1-champion round-trip builds > 0 bytes");
@@ -240,28 +240,27 @@ int main(int argc, char **argv)
             printf("SKIP: no user-staged *.csbsave file (FSSB envelope) "
                    "found under data_dir; export/import gate has "
                    "still been proven on synthetic fixtures.\n");
-            return 0;
-        }
-
-        rc = csb_v1_save_export_read_envelope(
-            scan.first_path, read_buf, sizeof(read_buf));
-        CHECK(rc > (int)CSB_V1_SAVE_EXPORT_HEADER_LEN,
-              "real envelope: read_envelope returns > header size");
-        if (rc > 0) {
-            CSB_V1_PartyState party;
-            memset(&party, 0, sizeof(party));
-            {
-                int import_rc = csb_v1_save_export_import_envelope(
-                    &party, read_buf, (size_t)rc);
-                CHECK(import_rc > 0,
-                      "real envelope: import_envelope returns > 0 "
-                      "(production loader accepts the wrapped payload)");
-                if (import_rc > 0) {
-                    CHECK(party.ChampionCount == import_rc,
-                          "real envelope: imported ChampionCount matches "
-                          "loader return code");
-                    CHECK(party.ImportSource == CSB_SAVE_IMPORT_SOURCE,
-                          "real envelope: imported ImportSource stamp");
+        } else {
+            rc = csb_v1_save_export_read_envelope(
+                scan.first_path, read_buf, sizeof(read_buf));
+            CHECK(rc > (int)CSB_V1_SAVE_EXPORT_HEADER_LEN,
+                  "real envelope: read_envelope returns > header size");
+            if (rc > 0) {
+                CSB_V1_PartyState party;
+                memset(&party, 0, sizeof(party));
+                {
+                    int import_rc = csb_v1_save_export_import_envelope(
+                        &party, read_buf, (size_t)rc);
+                    CHECK(import_rc > 0,
+                          "real envelope: import_envelope returns > 0 "
+                          "(production loader accepts the wrapped payload)");
+                    if (import_rc > 0) {
+                        CHECK(party.ChampionCount == import_rc,
+                              "real envelope: imported ChampionCount matches "
+                              "loader return code");
+                        CHECK(party.ImportSource == CSB_SAVE_IMPORT_SOURCE,
+                              "real envelope: imported ImportSource stamp");
+                    }
                 }
             }
         }

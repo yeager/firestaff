@@ -1115,6 +1115,11 @@ that its exact runtime path is not already source-locked and tested.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
+   2026-07-29: the always-run CSB save export/import probe now proves both
+   v2.0 and v2.1 FSSB envelopes through the production CSBGAME importer. A
+   missing optional external envelope no longer bypasses failed synthetic
+   checks. This tightens the existing fixture gate only; it does not replace
+   the remaining authentic CSBGAME/CSBWin corpus requirement.
    2026-07-29: the local original Atari ST set includes a 42,815-byte
    `MINI.DAT`, the main CSB dungeon selected after Prison/Utility handoff.
    DMWeb documents `MINI.DAT` as the main CSB dungeon stored in the same

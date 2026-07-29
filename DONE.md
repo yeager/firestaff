@@ -43012,3 +43012,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   synthetic `(5,5,North)` test assumption while preserving the delayed
   F0435-owned load boundary. Verification:
   `csb_v1_m11_startup_resume_gate` PASS.
+
+- ✅ 2026-07-29 CSB save export/import probe integrity: the mandatory
+  synthetic save gate now supplies a valid provenance path for its v2.1
+  envelope and reports its summary before any optional external-corpus skip.
+  A failed v2.0 or v2.1 production-loader round-trip can therefore no longer
+  pass CTest merely because no user-staged `.csbsave` exists. Verified by
+  `firestaff_csb_v1_save_export_import_probe` (16/16 checks).
