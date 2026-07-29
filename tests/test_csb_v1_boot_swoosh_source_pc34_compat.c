@@ -32,7 +32,7 @@ int main(void) {
 #else
     snprintf(root, sizeof(root), "/tmp/firestaff-csb-swsh-%ld", (long)getpid());
 #endif
-    snprintf(path, sizeof(path), "%s/SWSHSND.DAT", root);
+    snprintf(path, sizeof(path), "%s/SWSHSND.C", root);
     (void)mkdir(root, 0700);
     for (index = 0; index < (int)sizeof(source); ++index) {
         source[index] = (unsigned char)((index * 31 + 11) & 0xff);
@@ -50,7 +50,7 @@ int main(void) {
     snprintf(profile.asset_root, sizeof(profile.asset_root), "%s", root);
     profile.assets_verified = 1;
     ok &= expect(csb_v1_boot_load_swoosh_source_pc34(&profile),
-                 "selected package discovers its exact raw SWSHSND payload");
+                 "selected package discovers its exact raw SWSHSND.C payload");
     ok &= expect(profile.swoosh_source_bound &&
                      profile.swoosh_source_fnv1a != 0u &&
                      strcmp(profile.swoosh_source_path, path) == 0 &&

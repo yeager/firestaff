@@ -139,7 +139,11 @@ static uint32_t csb_v1_boot_swoosh_fnv1a_pc34(const uint8_t *bytes,
 int csb_v1_boot_load_swoosh_source_pc34(CSB_V1_BootProfile *profile)
 {
     static const char *const names[] = {
-        "SWSHSND.DAT", "SWSH.SND", "SWSHSDAT.BIN", "SWSHSDAT.DAT", NULL
+        /* ReDMCSB SWSHSND.C owns G0746.  Original PC3.4 packages use both
+         * the source-style filename and extension-renamed distribution
+         * forms; all still have the exact same fixed DMA byte count. */
+        "SWSHSND.C", "SWSHSND.DAT", "SWSH.SND", "SWSHSDAT.BIN",
+        "SWSHSDAT.DAT", NULL
     };
     static const char *const dirs[] = { "", "DATA", "data", NULL };
     unsigned int directory;

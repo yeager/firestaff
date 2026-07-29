@@ -989,9 +989,9 @@ that its exact runtime path is not already source-locked and tested.
     media; complete authenticated CSB SWSH/entrance-music admission and live
     M11 playback without generated replacements.
     2026-07-29: archive-backed PC3.4 packages now materialize every accepted
-    `SWSHSND.C` source filename beside `GRAPHICS.DAT`, so the existing strict
-    9,078-byte source loader can bind genuine swoosh media after hash-first
-    discovery. M11 now hands that verified PCM directly to the SDL audio
+    `SWSHSND.C` and extension-renamed source filenames beside `GRAPHICS.DAT`,
+    and the strict 9,078-byte loader admits each of those original package
+    names after hash-first discovery. M11 now hands that verified PCM directly to the SDL audio
     backend during the CSB FTL prelude; it remains silent when the source
     sample is absent and never borrows DM1 audio. Local CSB data presently
     lacks this optional source file, so a real-media playback capture and

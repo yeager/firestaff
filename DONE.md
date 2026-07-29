@@ -1,3 +1,10 @@
+- ✅ 2026-07-29 CSB PC3.4 `SWSHSND.C` archive-to-M11 binding. The archive
+  materializer and selected-package loader now both recognize ReDMCSB's
+  original source-style `SWSHSND.C` name in addition to documented
+  distribution aliases. Only an exact 9,078-byte payload reaches the CSB
+  startup mixer; a missing or malformed file remains silent, with no
+  generated fallback. Verified by the focused source-audio regression.
+
 - ✅ 2026-07-29 CSBWin DSA `STKOP_I_Indirect` transactional dispatch. The
   authenticated interpreter now decodes CSBWin's parameter-backed indirect
   form and routes `I_MONSTER!`, `I_CHAR!`, `I_COPY`, `I_CELL!`,

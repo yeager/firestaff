@@ -1123,7 +1123,8 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * source filename beside GRAPHICS.DAT when a verified package was
          * found inside an archive; CSB_V1_BootProfile reads these ordinary
          * cache paths and refuses any wrong-size substitute. */
-        "SWSHSND.DAT", "SWSH.SND", "SWSHSDAT.BIN", "SWSHSDAT.DAT",
+        "SWSHSND.C", "SWSHSND.DAT", "SWSH.SND", "SWSHSDAT.BIN",
+        "SWSHSDAT.DAT",
         "DUNGEONB.DAT", "HCSB.HTC", "HCSBF.HTC", "HCSBG.HTC",
         "CSBGAME.DAT", "CSB.DAT", "CSBGRAPH.DAT"
     };
