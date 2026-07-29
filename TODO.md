@@ -1531,6 +1531,12 @@ that its exact runtime path is not already source-locked and tested.
     live M11 profile-sync boundary now consumes both F0064 immediate and
     F0065 delayed completed plays once, so keyboard and pointer routes reach
     that authenticated transport rather than only updating CSB runtime state.
+    2026-07-30: the PC3.4 F0064 distance volume is now resolved in the
+    source runtime from each SOUND_DATA row's LoudDistance/SoftDistance and
+    retained with the completed F0064/F0065 event. M11 applies its exact
+    three-level source volume before the user's SFX gain while preserving the
+    original PCM bytes and PIT cadence; it no longer substitutes a fixed host
+    volume for all CSB effects.
     2026-07-29: the source runtime now retains a bounded, ordered completed-
     play history. M11 consumes every newly completed F0064 immediate request
     and F0065 pending flush in sequence, rather than forwarding only the

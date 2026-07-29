@@ -122,6 +122,7 @@ static void test_completed_play_history(void)
     CsbV1AudioRequest pending = req(CSB_V1_SOUND_SPELL,
                                     CSB_V1_MODE_PLAY_ONE_TICK_LATER, 32, 1);
     int16_t sound = CSB_V1_SOUND_NONE;
+    int16_t volume = 0;
 
     csb_v1_audio_runtime_init(&runtime);
     CHECK(csb_v1_audio_runtime_request(&runtime, &first) == 1,
@@ -134,9 +135,12 @@ static void test_completed_play_history(void)
           "pending sound completes on source tick");
     CHECK(runtime.totalCompletedPlays == 3u,
           "completed history counts every F0064/F0065 result");
-    CHECK(csb_v1_audio_runtime_completed_play_at(&runtime, 1u, &sound) &&
+    CHECK(csb_v1_audio_runtime_completed_play_details_at(
+              &runtime, 1u, &sound, &volume) &&
               sound == CSB_V1_SOUND_SWITCH,
           "completed history retains first immediate source sound");
+    CHECK(volume == 32,
+          "completed history retains first immediate source volume");
     CHECK(csb_v1_audio_runtime_completed_play_at(&runtime, 2u, &sound) &&
               sound == CSB_V1_SOUND_COMBAT,
           "completed history retains second immediate source sound");

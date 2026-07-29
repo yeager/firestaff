@@ -83,6 +83,7 @@ typedef struct {
     int csbPc34RuntimeSoundAccepted;
     int csbPc34RuntimeSoundByteCount;
     int csbPc34RuntimeSoundTimerDivisor;
+    int csbPc34RuntimeSoundSourceVolume;
     unsigned int csbPc34RuntimeSoundHash;
     int csbPc34RuntimeSoundQueuedCount;
 } M11_AudioState;
@@ -137,6 +138,16 @@ int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
                                     int sourceBytes,
                                     int timerDivisor,
                                     unsigned int sourceHash);
+/* PC3.4 SOUND.C has already resolved sourceVolume in its 1..3 distance
+ * domain. The host applies it before the user SFX gain without altering the
+ * authenticated PCM bytes or PIT cadence. */
+int M11_Audio_PlayCsbPc34RuntimePcmAtSourceVolume(
+    M11_AudioState* state,
+    const unsigned char* source,
+    int sourceBytes,
+    int timerDivisor,
+    unsigned int sourceHash,
+    int sourceVolume);
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled);
 int M11_Audio_TitleMusicEnabled(const M11_AudioState* state);

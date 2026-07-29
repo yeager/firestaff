@@ -65,6 +65,9 @@ typedef struct CsbV1AudioRequest {
 typedef struct CsbV1AudioCompletedEvent {
     uint32_t sequence;
     int16_t soundIndex;
+    /* PC3.4 SOUND.C F0064 resolves a three-step distance volume before
+     * immediate playback or pending-sound arbitration. */
+    int16_t volume;
 } CsbV1AudioCompletedEvent;
 
 typedef struct CsbV1AudioRuntime {
@@ -131,6 +134,13 @@ int csb_v1_audio_runtime_completed_play_at(
     const CsbV1AudioRuntime* runtime,
     uint32_t sequence,
     int16_t* outSoundIndex);
+/* As above, retaining the source F0064 volume resolved before the event was
+ * queued. outVolume may be NULL when a caller only needs the sound index. */
+int csb_v1_audio_runtime_completed_play_details_at(
+    const CsbV1AudioRuntime* runtime,
+    uint32_t sequence,
+    int16_t* outSoundIndex,
+    int16_t* outVolume);
 void csb_v1_audio_runtime_record_creature_attack(CsbV1AudioRuntime* runtime,
                                                  int32_t gameTime);
 void csb_v1_audio_runtime_save_snapshot(const CsbV1AudioRuntime* runtime,

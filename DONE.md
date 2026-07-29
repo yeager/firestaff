@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 CSB PC3.4 runtime sound volume: the complete F0064/F0065
+  event path now retains ReDMCSB's original three-level distance volume from
+  `SOUND_DATA` through M11 to SDL3, before the user's SFX gain. It keeps the
+  exact GRAPHICS.DAT PCM and PIT divisor; no marker or generated replacement
+  is used. Verification: focused audio/HUD regressions and the full 111-test
+  CSB lane pass.
+
 - ✅ 2026-07-30 Start-menu game-data folder selection: a selected physical
   folder now remains the active and persisted data root even when its first
   scan finds no verified game files. This prevents the launcher from falling

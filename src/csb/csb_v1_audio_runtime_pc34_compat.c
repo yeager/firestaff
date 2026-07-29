@@ -188,12 +188,13 @@ static void csb_v1_audio_clear_pending(CsbV1AudioRuntime* runtime)
 }
 
 static void csb_v1_audio_record_completed_play(CsbV1AudioRuntime* runtime,
-                                                int16_t soundIndex)
+                                                int16_t soundIndex,
+                                                int16_t volume)
 {
     uint32_t sequence;
     CsbV1AudioCompletedEvent *event;
 
-    if (!runtime || !csb_v1_audio_valid_index(soundIndex)) {
+    if (!runtime || !csb_v1_audio_valid_index(soundIndex) || volume <= 0) {
         return;
     }
     sequence = runtime->totalCompletedPlays + 1u;
@@ -207,6 +208,7 @@ static void csb_v1_audio_record_completed_play(CsbV1AudioRuntime* runtime,
         (sequence - 1u) % CSB_V1_AUDIO_COMPLETED_EVENT_CAPACITY];
     event->sequence = sequence;
     event->soundIndex = soundIndex;
+    event->volume = volume;
     runtime->totalCompletedPlays = sequence;
     runtime->lastPlayedSoundIndex = soundIndex;
 }
@@ -239,7 +241,8 @@ int csb_v1_audio_runtime_request(CsbV1AudioRuntime* runtime,
 
     runtime->totalRequests++;
     if (request->mode == CSB_V1_MODE_PLAY_IMMEDIATELY) {
-        csb_v1_audio_record_completed_play(runtime, request->soundIndex);
+        csb_v1_audio_record_completed_play(runtime, request->soundIndex,
+                                           request->volume);
         runtime->totalImmediatePlays++;
         csb_v1_audio_clear_pending(runtime);
         return 1;
@@ -273,7 +276,8 @@ int csb_v1_audio_runtime_flush_pending(CsbV1AudioRuntime* runtime)
      * one pending sound is played during the game-loop tick and the pending
      * index/volume are reset before damage and time advance.
      */
-    csb_v1_audio_record_completed_play(runtime, runtime->pendingSoundIndex);
+    csb_v1_audio_record_completed_play(runtime, runtime->pendingSoundIndex,
+                                       runtime->pendingVolume);
     runtime->totalPendingFlushes++;
     csb_v1_audio_clear_pending(runtime);
     return 1;
@@ -283,6 +287,16 @@ int csb_v1_audio_runtime_completed_play_at(
     const CsbV1AudioRuntime* runtime,
     uint32_t sequence,
     int16_t* outSoundIndex)
+{
+    return csb_v1_audio_runtime_completed_play_details_at(runtime, sequence,
+                                                           outSoundIndex, NULL);
+}
+
+int csb_v1_audio_runtime_completed_play_details_at(
+    const CsbV1AudioRuntime* runtime,
+    uint32_t sequence,
+    int16_t* outSoundIndex,
+    int16_t* outVolume)
 {
     const CsbV1AudioCompletedEvent *event;
     uint32_t first;
@@ -301,10 +315,14 @@ int csb_v1_audio_runtime_completed_play_at(
     }
     event = &runtime->completedEvents[
         (sequence - 1u) % CSB_V1_AUDIO_COMPLETED_EVENT_CAPACITY];
-    if (event->sequence != sequence || !csb_v1_audio_valid_index(event->soundIndex)) {
+    if (event->sequence != sequence || !csb_v1_audio_valid_index(event->soundIndex) ||
+        event->volume <= 0) {
         return 0;
     }
     *outSoundIndex = event->soundIndex;
+    if (outVolume) {
+        *outVolume = event->volume;
+    }
     return 1;
 }
 

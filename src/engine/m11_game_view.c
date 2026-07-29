@@ -2577,9 +2577,11 @@ static void m11_apply_csb_runtime_startup_session_state_receipt(
              receipt->import_utility_prompt);
 }
 
-static void m11_audio_emit_source_sound(M11_GameViewState* state,
-                                        int soundIndex,
-                                        M11_AudioMarker fallbackMarker);
+static void m11_audio_emit_source_sound_with_volume(
+    M11_GameViewState* state,
+    int soundIndex,
+    int sourceVolume,
+    M11_AudioMarker fallbackMarker);
 
 static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
                                                  const void *boot_profile)
@@ -2608,10 +2610,11 @@ static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
     while (state->csbRuntimeAudioCompletedPlaysConsumed <
            audio_runtime->totalCompletedPlays) {
         int16_t sound_index;
+        int16_t source_volume;
         uint32_t sequence =
             state->csbRuntimeAudioCompletedPlaysConsumed + 1u;
-        if (!csb_v1_audio_runtime_completed_play_at(
-                audio_runtime, sequence, &sound_index)) {
+        if (!csb_v1_audio_runtime_completed_play_details_at(
+                audio_runtime, sequence, &sound_index, &source_volume)) {
             /* Do not invent a missed source event if a host failed to keep
              * up with the bounded history. Resume at the current source end. */
             state->csbRuntimeAudioCompletedPlaysConsumed =
@@ -2619,7 +2622,8 @@ static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
             m11_set_status(state, "AUDIO", "SOURCE EVENT HISTORY EXPIRED");
             break;
         }
-        m11_audio_emit_source_sound(state, sound_index, M11_AUDIO_MARKER_NONE);
+        m11_audio_emit_source_sound_with_volume(
+            state, sound_index, source_volume, M11_AUDIO_MARKER_NONE);
         state->csbRuntimeAudioCompletedPlaysConsumed = sequence;
     }
     state->csbRuntimeAudioImmediatePlaysConsumed =
@@ -7191,9 +7195,11 @@ static unsigned int m11_audio_source_fnv1a(const uint8_t *bytes, size_t count) {
     return hash;
 }
 
-static void m11_audio_emit_source_sound(M11_GameViewState* state,
-                                        int soundIndex,
-                                        M11_AudioMarker fallbackMarker) {
+static void m11_audio_emit_source_sound_with_volume(
+    M11_GameViewState* state,
+    int soundIndex,
+    int sourceVolume,
+    M11_AudioMarker fallbackMarker) {
     const CSB_V1_BootProfile *csbProfile;
     CsbV1Pc34SoundPayload payload;
     if (!state) {
@@ -7208,16 +7214,24 @@ static void m11_audio_emit_source_sound(M11_GameViewState* state,
         if (csbProfile && csbProfile->graphics_path[0] != '\0' &&
             csb_v1_audio_runtime_load_pc34_sound_payload(
                 csbProfile->graphics_path, (int16_t)soundIndex, &payload)) {
-            (void)M11_Audio_PlayCsbPc34RuntimePcm(
+            (void)M11_Audio_PlayCsbPc34RuntimePcmAtSourceVolume(
                 &state->audioState, payload.bytes, (int)payload.byteCount,
                 (int)payload.spec.period,
-                m11_audio_source_fnv1a(payload.bytes, payload.byteCount));
+                m11_audio_source_fnv1a(payload.bytes, payload.byteCount),
+                sourceVolume);
         }
         csb_v1_audio_runtime_pc34_sound_payload_free(&payload);
         return;
     }
     (void)fallbackMarker;
     (void)M11_Audio_EmitSourceSoundIndex(&state->audioState, soundIndex);
+}
+
+static void m11_audio_emit_source_sound(M11_GameViewState* state,
+                                        int soundIndex,
+                                        M11_AudioMarker fallbackMarker) {
+    m11_audio_emit_source_sound_with_volume(state, soundIndex, 3,
+                                            fallbackMarker);
 }
 
 static void m11_audio_emit_creature_attack_sound_ex(M11_GameViewState* state,

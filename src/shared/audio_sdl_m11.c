@@ -1271,11 +1271,13 @@ done:
     return 0;
 }
 
-int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
-                                    const unsigned char* source,
-                                    int sourceBytes,
-                                    int timerDivisor,
-                                    unsigned int sourceHash) {
+int M11_Audio_PlayCsbPc34RuntimePcmAtSourceVolume(
+    M11_AudioState* state,
+    const unsigned char* source,
+    int sourceBytes,
+    int timerDivisor,
+    unsigned int sourceHash,
+    int sourceVolume) {
     const unsigned int pitHz = 1193180u;
     unsigned int sourceRate;
     unsigned int outputCount;
@@ -1287,6 +1289,7 @@ int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
      * not a generated substitute for unavailable source material. */
     if (!state || !state->initialized || !source || sourceBytes <= 0 ||
         timerDivisor <= 0 || sourceHash == 0u ||
+        sourceVolume < 1 || sourceVolume > 3 ||
         m11_fnv1a_bytes(source, sourceBytes) != sourceHash) {
         if (state) {
             m11_sound_clear(&state->csbPc34RuntimePcm);
@@ -1321,17 +1324,29 @@ int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
     state->csbPc34RuntimeSoundAccepted = 1;
     state->csbPc34RuntimeSoundByteCount = sourceBytes;
     state->csbPc34RuntimeSoundTimerDivisor = timerDivisor;
+    state->csbPc34RuntimeSoundSourceVolume = sourceVolume;
     state->csbPc34RuntimeSoundHash = sourceHash;
 #if M11_HAVE_SDL_AUDIO
     if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
+        int sourceScaledVolume =
+            (state->sfxVolume * sourceVolume + 1) / 3;
         if (m11_sdl_queue_samples(state, state->csbPc34RuntimePcm.samples,
                                   state->csbPc34RuntimePcm.sampleCount,
-                                  state->sfxVolume)) {
+                                  sourceScaledVolume)) {
             ++state->csbPc34RuntimeSoundQueuedCount;
         }
     }
 #endif
     return 1;
+}
+
+int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
+                                    const unsigned char* source,
+                                    int sourceBytes,
+                                    int timerDivisor,
+                                    unsigned int sourceHash) {
+    return M11_Audio_PlayCsbPc34RuntimePcmAtSourceVolume(
+        state, source, sourceBytes, timerDivisor, sourceHash, 3);
 }
 
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {

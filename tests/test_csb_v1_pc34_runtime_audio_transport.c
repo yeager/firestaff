@@ -42,6 +42,17 @@ int main(void)
                      state.csbPc34RuntimeSoundHash == hash &&
                      state.csbPc34RuntimePcm.sampleCount > 0,
                  "source identity and PIT divisor survive the transport");
+    ok &= expect(state.csbPc34RuntimeSoundSourceVolume == 3,
+                 "legacy transport defaults to full PC3.4 source volume");
+
+    ok &= expect(M11_Audio_PlayCsbPc34RuntimePcmAtSourceVolume(
+                     &state, source, (int)sizeof(source), 112, hash, 1),
+                 "quiet PC3.4 source volume is accepted");
+    ok &= expect(state.csbPc34RuntimeSoundSourceVolume == 1,
+                 "transport retains source distance volume");
+    ok &= expect(!M11_Audio_PlayCsbPc34RuntimePcmAtSourceVolume(
+                     &state, source, (int)sizeof(source), 112, hash, 4),
+                 "out-of-domain PC3.4 source volume is rejected");
 
     source[0] ^= 0x80u;
     ok &= expect(!M11_Audio_PlayCsbPc34RuntimePcm(
