@@ -1,3 +1,8 @@
+- ✅ 2026-07-29 DM2 hero stat functions: get_adj_ability1 (enchantment-boosted
+  ability with clamp 10-220), get_adj_ability2 (ability-scaled divide),
+  get_stamina_adj (stamina-weighted attribute), get_max_load (strength-based
+  carry capacity with body_flag penalty). Receipt-based pure functions.
+  12 tests. Source: skproject c_hero.cpp:80-133. MISSING: 232.
 - ✅ 2026-07-29 DM2 audit sweep (deep): reclassified ~250 more MISSING symbols.
   c_tmouse (18 mouse driver), c_image (12 image/drawing), c_gfx_main (13
   graphics pipeline), c_gui_draw (18 GUI drawing), c_gui_vp (29 viewport

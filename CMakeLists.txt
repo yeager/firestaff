@@ -12870,6 +12870,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_skproject_core
     )
 
+    add_executable(test_dm2_v1_hero_stats_pc34_compat
+        tests/test_dm2_v1_hero_stats_pc34_compat.c
+        src/dm2/dm2_v1_hero_stats_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_hero_stats_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_hero_stats_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_hero_stats_pc34_compat
+        COMMAND test_dm2_v1_hero_stats_pc34_compat
+    )
+
     add_executable(test_dm2_v1_hud_survey_helpers
         tests/test_dm2_v1_hud_survey_helpers.c
         src/dm2/dm2_v1_hud_survey_helpers.c

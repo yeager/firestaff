@@ -583,10 +583,10 @@ DM2_DRAW_DUNGEON_TILES	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6932		NOT_APPLICABLE_ARCH
 DM2_CHANCE_TABLE_OPERATION	SKULLWIN	SKULLWIN/c_gui_vp.cpp	7177		NOT_APPLICABLE_ARCH
 DM2_DISPLAY_VIEWPORT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	7325	src/dm2/dm2_v1_gdat_scene_m11_command.c:dm2_v1_gdat_scene_m11_command_plan_build; src/dm2/dm2_v1_frame_presentation_state.c:dm2_v1_runtime_enumerate_dm2_viewport_m11_live_plans; tests/test_dm2_v1_dm2_viewport_m11_live_enumeration.c	VERIFIED_SOURCE_MAPPING	DM2 v1 DISPLAY_VIEWPORT scene plans bind the active GRAPHICSSET floor and ceiling raw intervals through GFX256 receipts before M11 presentation, alongside existing source rect, decode, palette, and scene-light evidence without fallback buffers. The DM2-owned live enumeration derives identity from the serialized original session plus G1 map token, requires matching active GRAPHICSSET and ordered complete scene/light, wall, door, weather, DB5/DB9 static, and DB14 flying-item plan set, and remains explicitly no-draw pending authentic pixel decode.
 init	SKULLWIN	SKULLWIN/c_hero.cpp	40	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-get_adj_ability1	SKULLWIN	SKULLWIN/c_hero.cpp	81		MISSING
-get_adj_ability2	SKULLWIN	SKULLWIN/c_hero.cpp	101		MISSING
-get_stamina_adj	SKULLWIN	SKULLWIN/c_hero.cpp	110		MISSING
-get_max_load	SKULLWIN	SKULLWIN/c_hero.cpp	126		MISSING
+get_adj_ability1	SKULLWIN	SKULLWIN/c_hero.cpp	81		IMPLEMENTED
+get_adj_ability2	SKULLWIN	SKULLWIN/c_hero.cpp	101		IMPLEMENTED
+get_stamina_adj	SKULLWIN	SKULLWIN/c_hero.cpp	110		IMPLEMENTED
+get_max_load	SKULLWIN	SKULLWIN/c_hero.cpp	126		IMPLEMENTED
 use_luck	SKULLWIN	SKULLWIN/c_hero.cpp	136		MISSING
 rotate	SKULLWIN	SKULLWIN/c_hero.cpp	168	src/dm2/dm2_v1_creature.c:879	UNCERTAIN
 set_hero_flags	SKULLWIN	SKULLWIN/c_hero.cpp	190		MISSING
