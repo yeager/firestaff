@@ -1,3 +1,10 @@
+- ✅ 2026-07-29 CSB V1/V2.x terminal Prison capture: the existing source
+  Prison pointer regression now records both indexed and actual presented
+  terminal runtime frames at 1x and 3x for V1, V2.0, V2.1, and V2.2. V2.2
+  correctly accepts either the V2.1 fail-closed fallback without a complete
+  pack or native mode 3 with an admitted CSB-specific artpack; its dedicated
+  source-artpack test still requires mode 3 and nine painted cells.
+
 - ✅ 2026-07-29 CSB V2.2 live M11 runtime material consumption: CSB's
   F0128 runtime renderer has its own source-page path, so it now updates the
   CSB V2.2 shape cache and applies the admitted source-derived artpack only
