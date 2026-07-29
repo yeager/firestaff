@@ -42751,4 +42751,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   F0115 Thing overlays remain in original draw order. D3 and all unproven
   material types stay on V1 instead of using rectangle fallback art.
 - Verified with Ninja and the focused V2.2 source-artpack, route, cache, and
-  real PC3.4 viewport CTest lane.
+  real PC3.4 viewport CTest lane. The direct cache regression supplies an
+  admitted D1 record and requires an opaque pixel to alter only its F0128
+  clip while alpha-zero pixels preserve the original framebuffer; a changed
+  transparency contract is rejected.

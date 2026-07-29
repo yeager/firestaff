@@ -145,6 +145,82 @@ static void test_cache_uses_configured_manifest_root(void) {
     (void)root;
 }
 
+static void test_f0128_door_command_consumes_admitted_source_material(void) {
+    const char* root = "/tmp/scratch/csb-v22-command-root";
+    const char* data_dir = "/tmp/scratch/csb-v22-command-root/data/csb";
+    const char* modern_dir = "/tmp/scratch/csb-v22-command-root/assets/csb/modern";
+    const char manifest[] =
+        "{\n"
+        "  \"routeProvenance\": [\n"
+        "    {\n"
+        "      \"id\": \"door_d0_01\",\n"
+        "      \"category\": \"door_shapes\",\n"
+        "      \"sourceGraphicIndex\": 248,\n"
+        "      \"sourceRecordSha256\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n"
+        "      \"sourceDimensions\": [96, 88],\n"
+        "      \"outputDimensions\": [96, 88]\n"
+        "    }\n"
+        "  ]\n"
+        "}\n";
+    char cache_path[512];
+    char manifest_path[512];
+    unsigned char cache[72];
+    unsigned char framebuffer[320 * 200];
+    CSB_V1_ViewportRuntimeDrawCommandPc34 command;
+
+    CHECK(mkdir_p(data_dir), "create command-test data directory");
+    CHECK(mkdir_p(modern_dir), "create command-test modern directory");
+    snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", modern_dir);
+    snprintf(manifest_path, sizeof(manifest_path), "%s/modern_asset_manifest.json", modern_dir);
+    CHECK(write_file(manifest_path, manifest, strlen(manifest)),
+          "write command-test route provenance manifest");
+
+    memset(cache, 0, sizeof(cache));
+    memcpy(cache, "FSV22C\0\0", 8);
+    put_u32(cache + 8, 1);  /* format version */
+    put_u32(cache + 12, 1); /* entry count */
+    put_u32(cache + 32, fnv1a32("door_shapes"));
+    put_u32(cache + 36, fnv1a32("door_d0_01"));
+    put_u32(cache + 40, 2);
+    put_u32(cache + 44, 1);
+    put_u32(cache + 48, 8);
+    put_u32(cache + 52, 64);
+    /* First source pixel is opaque red; the second is C10-style transparent.
+     * Scaling the 2x1 source across the D1 clip makes alpha preservation easy
+     * to observe without relying on any generated art. */
+    cache[64] = 0x00; cache[65] = 0x00; cache[66] = 0xff; cache[67] = 0xff;
+    CHECK(write_file(cache_path, cache, sizeof(cache)), "write command-test cache");
+
+    memset(&command, 0, sizeof(command));
+    command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34;
+    command.transparent_color = 10;
+    command.clip_x = 48;
+    command.clip_y = 33;
+    command.clip_w = 128;
+    command.clip_h = 102;
+    command.draw_order = 0x0111;
+    memset(framebuffer, 0x5a, sizeof(framebuffer));
+
+    csb_v22_inplace_draw_shutdown();
+    csb_v22_set_manifest_path(data_dir);
+    CHECK(csb_v22_inplace_draw_init() == 1, "command-test cache initializes");
+    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 1,
+          "admitted D1 door command consumes exact source route");
+    CHECK(framebuffer[33 * 320 + 48] == 0x30,
+          "opaque modern pixel replaces the left half of the F0128 clip");
+    CHECK(framebuffer[33 * 320 + 112] == 0x5a,
+          "transparent modern pixel preserves the source framebuffer");
+    CHECK(framebuffer[32 * 320 + 48] == 0x5a &&
+          framebuffer[33 * 320 + 47] == 0x5a &&
+          framebuffer[33 * 320 + 176] == 0x5a,
+          "door replacement never escapes the original F0128 clip");
+    command.transparent_color = 0;
+    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
+          "unproven transparency contract remains source-owned");
+    csb_v22_inplace_draw_shutdown();
+    (void)root;
+}
+
 static void test_double_shutdown_safe(void) {
     csb_v22_inplace_draw_init();
     csb_v22_inplace_draw_shutdown();
@@ -201,6 +277,7 @@ int main(void) {
     test_source_evidence();
     test_cache_load_path();
     test_cache_uses_configured_manifest_root();
+    test_f0128_door_command_consumes_admitted_source_material();
     test_double_shutdown_safe();
     test_render_pass_safe_when_no_cache();
     test_render_pass_safe_with_null_args();
