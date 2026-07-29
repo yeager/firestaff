@@ -17,6 +17,12 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V2X-RUNTIME-FILTER-OWNERSHIP:** Closed 2026-07-29. CSB's F10
+  filter page now exposes only its four persisted V2 controls (scanlines,
+  strength, palette correction and dither cleanup), writes `csbV2*` rather
+  than DM1's settings, and applies the result to the live CSB filter chain.
+  The popup regression proves persistence, live state and isolation from DM1.
+
 - **CSB-V2X-EXPLICIT-PRESENTATION-ISOLATION:** Closed 2026-07-29.
   A remembered `.fsart` can no longer promote an explicit V1/V2.0/V2.1 CSB
   launch to V2.2: only an explicit V2.2 request materializes the pack. The

@@ -46414,6 +46414,8 @@ target_include_directories(test_m11_runtime_graphics_popup PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_options(test_m11_runtime_graphics_popup PRIVATE -Wall -Wextra -O2)
 add_test(NAME m11_runtime_graphics_popup COMMAND test_m11_runtime_graphics_popup)
+set_tests_properties(m11_runtime_graphics_popup PROPERTIES
+  LABELS "tier1;csb;v2;runtime;settings")
 
 add_executable(test_redmcsb_f0908_init_sound_pc34_compat
   tests/test_redmcsb_f0908_init_sound_pc34_compat.c

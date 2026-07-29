@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 CSB runtime V2 filter ownership: the F10 filter page now
+  presents only CSB's four actual V2 controls: scanlines, strength, palette
+  correction and dither cleanup. It persists `csbV2*` fields, updates the
+  live CSB filter chain, and cannot alter DM1's filter fields. The runtime
+  popup regression proves all four paths.
+
 - ✅ 2026-07-29 CSB explicit presentation-mode isolation: a remembered
   `.fsart` now supplies material only for an explicit V2.2 launch and cannot
   override an explicit V1/V2.0/V2.1 request. The V2.1 real-PC3.4 capture

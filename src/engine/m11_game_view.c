@@ -21730,9 +21730,14 @@ enum {
     M11_GRAPHICS_POPUP_H = 150
 };
 
-static int m11_graphics_popup_row_count(int page) {
-    return page == M11_GRAPHICS_POPUP_PAGE_PRESENTATION ? 9 :
-           page == M11_GRAPHICS_POPUP_PAGE_FILTERS ? 11 : 8;
+static int m11_graphics_popup_row_count(const M11_GameViewState* state,
+                                        int page) {
+    if (page == M11_GRAPHICS_POPUP_PAGE_PRESENTATION) return 9;
+    /* CSB has its own source-preserving V2 filter chain.  Do not present
+     * DM1-only colour/sharpen controls as if they altered CSB's runtime. */
+    if (page == M11_GRAPHICS_POPUP_PAGE_FILTERS &&
+        state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) return 4;
+    return page == M11_GRAPHICS_POPUP_PAGE_FILTERS ? 11 : 8;
 }
 
 static int m11_graphics_popup_game_slot(const M11_GameViewState* state) {
@@ -21751,8 +21756,22 @@ static int m11_graphics_popup_cycle(int value, int delta, int count) {
     return value;
 }
 
-static void m11_graphics_popup_apply_v2(const M12_Config* config) {
+static void m11_graphics_popup_apply_v2(const M11_GameViewState* state,
+                                        const M12_Config* config) {
     if (!config) return;
+    if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        CSB_V2_Settings settings;
+        csb_v2_settings_from_m12_config(&settings, config);
+        csb_v2_settings_apply_to_runtime(&settings);
+        (void)M11_Render_SetV2Filters(settings.crtScanlinesEnabled,
+                                      settings.crtScanlineStrength,
+                                      settings.paletteCorrectionEnabled,
+                                      100, 0, 0,
+                                      settings.paletteCorrectionEnabled,
+                                      100, settings.ditherCleanupEnabled,
+                                      0, 0);
+        return;
+    }
     /* M12 has no independent persisted interpolation preference. Palette
      * correction therefore owns the renderer's interpolation gate too, with
      * the established full-strength value. The panel names that mapping
@@ -21904,10 +21923,26 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
         if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) return 1;
         if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS) {
             switch (row) {
-                case 0: config.dm1V2CrtScanlinesEnabled = !config.dm1V2CrtScanlinesEnabled; break;
-                case 1: config.dm1V2CrtScanlineStrength = m11_graphics_popup_cycle(config.dm1V2CrtScanlineStrength, delta, 101); break;
-                case 2: config.dm1V2PaletteCorrectionEnabled = !config.dm1V2PaletteCorrectionEnabled; break;
-                case 3: config.dm1V2PaletteGamma += delta * 5; if (config.dm1V2PaletteGamma < 80) config.dm1V2PaletteGamma = 260; if (config.dm1V2PaletteGamma > 260) config.dm1V2PaletteGamma = 80; break;
+                case 0:
+                    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)
+                        config.csbV2CrtScanlinesEnabled = !config.csbV2CrtScanlinesEnabled;
+                    else config.dm1V2CrtScanlinesEnabled = !config.dm1V2CrtScanlinesEnabled;
+                    break;
+                case 1:
+                    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)
+                        config.csbV2CrtScanlineStrength = m11_graphics_popup_cycle(config.csbV2CrtScanlineStrength, delta, 101);
+                    else config.dm1V2CrtScanlineStrength = m11_graphics_popup_cycle(config.dm1V2CrtScanlineStrength, delta, 101);
+                    break;
+                case 2:
+                    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)
+                        config.csbV2PaletteCorrectionEnabled = !config.csbV2PaletteCorrectionEnabled;
+                    else config.dm1V2PaletteCorrectionEnabled = !config.dm1V2PaletteCorrectionEnabled;
+                    break;
+                case 3:
+                    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)
+                        config.csbV2DitherCleanupEnabled = !config.csbV2DitherCleanupEnabled;
+                    else { config.dm1V2PaletteGamma += delta * 5; if (config.dm1V2PaletteGamma < 80) config.dm1V2PaletteGamma = 260; if (config.dm1V2PaletteGamma > 260) config.dm1V2PaletteGamma = 80; }
+                    break;
                 case 4: config.dm1V2PaletteBrightness = m11_graphics_popup_cycle(config.dm1V2PaletteBrightness + 50, delta * 5, 101) - 50; break;
                 case 5: config.dm1V2PaletteContrast = m11_graphics_popup_cycle(config.dm1V2PaletteContrast + 50, delta * 5, 101) - 50; break;
                 case 6: config.dm1V2DitherCleanupEnabled = !config.dm1V2DitherCleanupEnabled; break;
@@ -21929,7 +21964,7 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
             }
         }
     }
-    m11_graphics_popup_apply_v2(&config);
+    m11_graphics_popup_apply_v2(state, &config);
     (void)M12_Config_Save(&config);
     return 1;
 }
@@ -21959,8 +21994,8 @@ static int m11_graphics_popup_handle_input(M11_GameViewState* state,
     if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_DOWN) {
         state->graphicsPopupSelectedRow =
             (state->graphicsPopupSelectedRow +
-             (input == M12_MENU_INPUT_UP ? m11_graphics_popup_row_count(state->graphicsPopupPage) - 1 : 1)) %
-            m11_graphics_popup_row_count(state->graphicsPopupPage);
+             (input == M12_MENU_INPUT_UP ? m11_graphics_popup_row_count(state, state->graphicsPopupPage) - 1 : 1)) %
+            m11_graphics_popup_row_count(state, state->graphicsPopupPage);
         return 1;
     }
     if (input != M12_MENU_INPUT_LEFT && input != M12_MENU_INPUT_RIGHT &&
@@ -23375,7 +23410,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 6,
                               M11_GRAPHICS_POPUP_Y + 40, 136, 110)) {
             int row = (y - (M11_GRAPHICS_POPUP_Y + 40)) / 10;
-            if (row >= 0 && row < m11_graphics_popup_row_count(state->graphicsPopupPage)) {
+            if (row >= 0 && row < m11_graphics_popup_row_count(state, state->graphicsPopupPage)) {
                 if (row == state->graphicsPopupSelectedRow) {
                     return m11_graphics_popup_adjust(state, 1)
                         ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
@@ -49160,7 +49195,7 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
     v2 = state->presentationMode != M12_PRESENTATION_V1_ORIGINAL;
     rows = state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_PRESENTATION ? presentation :
            state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ? filters : effects;
-    rowCount = m11_graphics_popup_row_count(state->graphicsPopupPage);
+    rowCount = m11_graphics_popup_row_count(state, state->graphicsPopupPage);
     title.color = M11_COLOR_YELLOW;
     normal.color = M11_COLOR_WHITE;
     selected.color = M11_COLOR_LIGHT_GREEN;
@@ -49203,6 +49238,22 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                 case 7: if (!v2) snprintf(value, sizeof(value), "320X200 LOCKED"); else { int w, h; M12_Resolution_Dimensions(config.gameResolution[slot], &w, &h); snprintf(value, sizeof(value), "%dX%d", w, h); } break;
                 default: snprintf(value, sizeof(value), "%s", config.windowModeIndex == 0 ? "WINDOW" : config.windowModeIndex == 1 ? "MAXIMIZED" : "FULLSCREEN"); break;
             }
+        } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS &&
+                   state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+            static const char* const csbFilters[] = {
+                "SCANLINE", "SCAN %", "PALETTE", "DITHER"
+            };
+            switch (i) {
+                case 0: snprintf(value, sizeof(value), "%s", config.csbV2CrtScanlinesEnabled ? "ON" : "OFF"); break;
+                case 1: snprintf(value, sizeof(value), "%d%%", config.csbV2CrtScanlineStrength); break;
+                case 2: snprintf(value, sizeof(value), "%s", config.csbV2PaletteCorrectionEnabled ? "ON" : "OFF"); break;
+                default: snprintf(value, sizeof(value), "%s", config.csbV2DitherCleanupEnabled ? "ON" : "OFF"); break;
+            }
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_GRAPHICS_POPUP_X + 7, y, csbFilters[i], &line);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_GRAPHICS_POPUP_X + 82, y, value, &line);
+            continue;
         } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS) {
             switch (i) {
                 case 0: snprintf(value, sizeof(value), "%s", config.dm1V2CrtScanlinesEnabled ? "ON" : "OFF"); break;
