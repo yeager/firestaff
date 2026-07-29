@@ -413,14 +413,14 @@ static void check_dot_dialog_result_preserves_data_directory(void) {
     M12_StartupMenuState state;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char beforeDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    static const char* const placeholders[] = { ".", "./", ".\\", "./.", ".//" };
+    size_t i;
 
     reset_dialog_stub();
     CHECK(isolate_home_and_data_root(dataRoot));
     if (failures) {
         return;
     }
-    snprintf(dialogSelectedPath, sizeof(dialogSelectedPath), ".");
-
     M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
     if (state.view == M12_MENU_VIEW_MESSAGE) {
         M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
@@ -428,19 +428,22 @@ static void check_dot_dialog_result_preserves_data_directory(void) {
     snprintf(beforeDataDir, sizeof(beforeDataDir), "%s",
              M12_AssetStatus_GetDataDir(&state.assetStatus));
 
-    state.view = M12_MENU_VIEW_SETTINGS;
-    state.settingsSelectedIndex = TEST_SETTINGS_ROW_DATA_DIR;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    for (i = 0U; i < sizeof(placeholders) / sizeof(placeholders[0]); ++i) {
+        snprintf(dialogSelectedPath, sizeof(dialogSelectedPath), "%s", placeholders[i]);
+        state.view = M12_MENU_VIEW_SETTINGS;
+        state.settingsSelectedIndex = TEST_SETTINGS_ROW_DATA_DIR;
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
 
-    CHECK(dialogCalls == 1);
-    CHECK(state.dataDirPickerActive == 0);
-    CHECK(state.dataDirScanActive == 0);
-    CHECK(state.dataDirScanJob == NULL);
-    CHECK(state.messageLine1 &&
-          strcmp(state.messageLine1, "DATA DIRECTORY UNCHANGED") == 0);
-    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
-                 beforeDataDir) == 0);
-    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), ".") != 0);
+        CHECK(dialogCalls == (int)i + 1);
+        CHECK(state.dataDirPickerActive == 0);
+        CHECK(state.dataDirScanActive == 0);
+        CHECK(state.dataDirScanJob == NULL);
+        CHECK(state.messageLine1 &&
+              strcmp(state.messageLine1, "DATA DIRECTORY UNCHANGED") == 0);
+        CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
+                     beforeDataDir) == 0);
+        CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), ".") != 0);
+    }
 
     M12_StartupMenu_Destroy(&state);
 }

@@ -1996,8 +1996,22 @@ static int m12_canonicalize_data_directory(const char* input,
  * a selection. They do not identify the folder the player picked, and must
  * never replace the persisted game-data root. */
 static int m12_data_directory_dialog_token_is_placeholder(const char* path) {
-    return path && (strcmp(path, ".") == 0 || strcmp(path, "./") == 0 ||
-                    strcmp(path, ".\\") == 0);
+    const char* cursor;
+    int sawDot = 0;
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+    /* Accept only a sequence made up of dot path components and separators.
+     * This catches SDL/macOS variants such as "./." and ".//" without
+     * rejecting a real relative choice such as "../Games/DM". */
+    for (cursor = path; *cursor; ++cursor) {
+        if (*cursor == '.') {
+            sawDot = 1;
+        } else if (*cursor != '/' && *cursor != '\\') {
+            return 0;
+        }
+    }
+    return sawDot;
 }
 
 static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
