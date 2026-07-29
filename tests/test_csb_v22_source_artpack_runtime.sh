@@ -19,7 +19,10 @@ if [ ! -f "$manifest" ] ||
     exit 77
 fi
 
-output="$(mktemp "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-XXXXXX.log")"
+# BSD mktemp requires the trailing X sequence to be at the end of its
+# template. Keep the temporary output extension-free so this probe works on
+# macOS as well as GNU/Linux.
+output="$(mktemp "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-XXXXXX")"
 capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-startup-XXXXXX")"
 runtime_capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-capture-XXXXXX")"
 trap 'rm -f "$output"; rm -rf "$capture_dir" "$runtime_capture_dir"' EXIT HUP INT TERM

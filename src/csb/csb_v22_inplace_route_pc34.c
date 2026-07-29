@@ -217,15 +217,18 @@ int csb_v22_admit_f0128_door_projection_pc34(
         return 0;
     }
 
-    /* D2/D3 carry the checked active DoorSet record from the V1 byte
+    /* D1/D2/D3 carry the checked active DoorSet record from the V1 byte
      * handoff. The source pack names nonzero sets explicitly, preventing a
      * DoorSet 1..3 frame from being silently painted with DoorSet 0. */
     dynamic_id[0] = '\0';
     if (source_command->source_graphics_item_index > 0 &&
-        (source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34 ||
+        (source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34 ||
+         source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34 ||
          source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34 ||
          source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34)) {
-        int offset = (source_command->route ==
+        int offset = source_command->route ==
+                     CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34 ? 2 :
+                     (source_command->route ==
                       CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34) ? 1 : 0;
         int set = (source_command->source_graphics_item_index - 246 - offset) / 3;
         if (set < 0 || set > 3 ||
@@ -235,7 +238,7 @@ int csb_v22_admit_f0128_door_projection_pc34(
         expected_index = source_command->source_graphics_item_index;
         if (set != 0) {
             (void)snprintf(dynamic_id, sizeof(dynamic_id), "door_set_%d_d%d", set,
-                           offset == 0 ? 3 : 2);
+                           offset == 0 ? 3 : offset == 1 ? 2 : 1);
             expected_id = dynamic_id;
         }
     }

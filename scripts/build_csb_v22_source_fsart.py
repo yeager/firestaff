@@ -80,8 +80,8 @@ SLOTS = (
 )
 
 # ReDMCSB DUNVIEW.C:2651-2658: each active map DoorSet owns consecutive
-# G0693 (D3), G0694 (D2), G0695 (D1) records. D1 has no runtime source-index
-# handoff yet; D2/D3 do, so export the nonzero set variants they can prove.
+# G0693 (D3), G0694 (D2), G0695 (D1) records. Every front-door command now
+# carries its checked active-source index, so export all nonzero-set variants.
 DOOR_SET_SLOTS = tuple(
     slot
     for door_set in range(1, 4)
@@ -92,6 +92,9 @@ DOOR_SET_SLOTS = tuple(
         ("door_shapes", f"door_set_{door_set}_d2", 247 + door_set * 3,
          (64, 96), f"G0694 active DoorSet {door_set}; F0111 D2 projection",
          "admitted_d2_active_doorset"),
+        ("door_shapes", f"door_set_{door_set}_d1", 248 + door_set * 3,
+         (64, 96), f"G0695 active DoorSet {door_set}; F0111 D1 projection",
+         "admitted_d1_active_doorset"),
     )
 )
 SOURCE_SLOTS = SLOTS + DOOR_SET_SLOTS

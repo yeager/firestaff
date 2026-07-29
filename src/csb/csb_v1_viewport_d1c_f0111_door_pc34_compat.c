@@ -10,7 +10,9 @@ enum {
     CSB_D1C_DOOR_NATIVE_WIDTH = 96,
     CSB_D1C_DOOR_NATIVE_HEIGHT = 88,
     CSB_D1C_DOOR_NATIVE_BYTE_COUNT = 4224,
-    CSB_D1C_DOOR_GRAPHICS_ITEM_INDEX = 558,
+    /* G0186 Graphic558 is the F0111 destination frame.  ReDMCSB
+     * DUNVIEW.C:2651-2658 selects the original source through G0695. */
+    CSB_D1C_DOOR_GRAPHICS_ITEM_INDEX = 248,
     CSB_C2_VIEW_DOOR_ORNAMENT_D1LCR = 2,
     CSB_M631_ZONE_DOOR_D1C = 3790,
     CSB_DOORPASS1_ORDER = 0x0218,
@@ -20,8 +22,10 @@ enum {
 static const char s_source_evidence[] =
     "Source-locked D1C F0111 door gate; the base contract keeps "
     "contract_only=1 and no fixture state, while the fail-closed real-asset "
-    "receipt binds G0186_s_Graphic558_Frames_Door_D1C to real DMCSB1 "
-    "GRAPHICS.DAT item 558 bytes before the route can be source-backed. "
+    "receipt binds G0695_ai_DoorNativeBitmapIndex_Front_D1LCR to real "
+    "DMCSB1 GRAPHICS.DAT DoorSet-0 item 248 bytes before the route can be "
+    "source-backed; G0186_s_Graphic558_Frames_Door_D1C is the destination "
+    "frame buffer rather than the source asset. "
     "ReDMCSB DUNVIEW.C:F0124_DUNGEONVIEW_DrawSquareD1C:7873-7911 locks "
     "the D1C C17_ELEMENT_DOOR_FRONT path. DUNVIEW.C:F0124:7905-7908 "
     "draws the D1C F0111 door with "

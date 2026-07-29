@@ -136,7 +136,7 @@ typedef struct {
     uint32_t decoded_fnv1a;
 } CSB_V1_ViewportFirstFramePaletteSpanPc34;
 
-/* A caller may only name decoded D2/D3 pixels after an original-data capture
+/* A caller may only name decoded D1/D2/D3 pixels after an original-data capture
  * has repeated both the compressed GRAPHICS.DAT identity and the palette
  * identity. This intentionally has no decoder or palette substitute: the
  * capture owner supplies already verified indexed spans. */
@@ -151,6 +151,11 @@ typedef struct {
     const char *palette_source_md5;
     uint32_t palette_capture_fnv1a;
     uint32_t capture_identity_hash;
+    /* ReDMCSB G0695 selects the D1 front-door source as DoorSet * 3 + 2.
+     * Graphic558 is the destination frame buffer, never the source asset. */
+    int d1_item_index;
+    size_t d1_source_byte_count;
+    uint32_t d1_source_payload_hash;
     int d2_item_index;
     size_t d2_source_byte_count;
     uint32_t d2_source_payload_hash;

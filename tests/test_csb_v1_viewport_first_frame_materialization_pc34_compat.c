@@ -181,6 +181,9 @@ static void test_checked_material_byte_handoff_and_raster(void)
     bytes.d2_d3_capture.palette_source_md5 = bytes.source_md5;
     bytes.d2_d3_capture.palette_capture_fnv1a = proof.shared_palette_hash;
     bytes.d2_d3_capture.capture_identity_hash = 0x62d3694u;
+    bytes.d2_d3_capture.d1_item_index = 248;
+    bytes.d2_d3_capture.d1_source_byte_count = material_sizes[1];
+    bytes.d2_d3_capture.d1_source_payload_hash = proof.d1_door_hash;
     bytes.d2_d3_capture.d2_item_index = proof.d2_door_capture_item_index;
     bytes.d2_d3_capture.d2_source_byte_count = proof.d2_door_capture_byte_count;
     bytes.d2_d3_capture.d2_source_payload_hash = proof.d2_door_hash;
@@ -197,6 +200,8 @@ static void test_checked_material_byte_handoff_and_raster(void)
                plan.commands[0].decoded_pixels == d2_pixels, 1);
     expect_int("bytes.command.doorset0.index",
                plan.commands[0].source_graphics_item_index, 247);
+    expect_int("bytes.command.d1.doorset0.index",
+               plan.commands[1].source_graphics_item_index, 248);
     expect_int("bytes.command.palette.attached",
                plan.commands[0].decoded_palette == palette, 1);
 
@@ -245,6 +250,16 @@ static void test_checked_material_byte_handoff_and_raster(void)
     expect_int("bytes.bind.doorset0",
                csb_v1_viewport_bind_first_frame_material_bytes_pc34(
                    &proof, &plan, &bytes, &material_receipt), 1);
+
+    /* G0695 is likewise active-map state.  The command must preserve the
+     * D1 DoorSet record rather than implicitly selecting DoorSet zero. */
+    bytes.d2_d3_capture.d1_item_index = 251;
+    expect_int("bytes.bind.d1.doorset1",
+               csb_v1_viewport_bind_first_frame_material_bytes_pc34(
+                   &proof, &plan, &bytes, &material_receipt), 1);
+    expect_int("bytes.command.d1.doorset1.index",
+               plan.commands[1].source_graphics_item_index, 251);
+    bytes.d2_d3_capture.d1_item_index = 248;
 
     expect_int("bytes.raster.reject.path.mismatch",
                csb_v1_viewport_consume_first_frame_material_raster_pc34(
@@ -558,7 +573,7 @@ static int build_route_receipts_and_proof(
     if (!read_real_graphics_item_hash(path, 693u, &d0_door_size, &d0_door_hash) ||
         !read_real_graphics_item_hash(path, (unsigned)d0_thing_spec->wall_frame_row,
                                       &d0_thing_size, &d0_thing_hash) ||
-        !read_real_graphics_item_hash(path, 558u, &d1_door_size, &d1_door_hash) ||
+        !read_real_graphics_item_hash(path, 248u, &d1_door_size, &d1_door_hash) ||
         !read_real_graphics_item_hash(path, 498u, &d1_thing_size, &d1_thing_hash) ||
         !read_real_graphics_item_hash(path, 247u, &d2_door_size, &d2_door_hash)) {
         return 0;
@@ -575,7 +590,7 @@ static int build_route_receipts_and_proof(
                    d0_thing_size, d0_thing_hash, &d0_thing), 1);
     expect_int("route.d1.door.receipt",
                csb_v1_viewport_d1c_f0111_door_real_asset_receipt_pc34(
-                   d1_door_contract, 1, 1, 1, 558, d1_door_size,
+                   d1_door_contract, 1, 1, 1, 248, d1_door_size,
                    d1_door_hash, &d1_door), 1);
     expect_int("route.d1.thing.receipt",
                csb_v1_viewport_d1c_f0115_thing_pass_real_asset_receipt_pc34(
@@ -803,6 +818,9 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
     decoded_capture.palette_source_md5 = packed_capture.source_md5;
     decoded_capture.palette_capture_fnv1a = proof.shared_palette_hash;
     decoded_capture.capture_identity_hash = packed_capture.capture_identity_hash;
+    decoded_capture.d1_item_index = 248;
+    decoded_capture.d1_source_byte_count = sizeof(other_pixels[0]);
+    decoded_capture.d1_source_payload_hash = proof.d1_door_hash;
     decoded_capture.d2_item_index = proof.d2_door_capture_item_index;
     decoded_capture.d2_source_byte_count = proof.d2_door_capture_byte_count;
     decoded_capture.d2_source_payload_hash = proof.d2_door_hash;

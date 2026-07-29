@@ -601,6 +601,23 @@ static void t_f0128_door_projection_admission(void) {
                                                      &projection) == 1 &&
           projection.valid && projection.source_graphic_index == 250,
           "D2 F0128 consumes the checked active DoorSet 1 record");
+    command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34;
+    command.clip_x = 48;
+    command.clip_y = 33;
+    command.clip_w = 128;
+    command.clip_h = 102;
+    command.draw_order = 0x0218;
+    command.source_graphics_item_index = 251;
+    strcpy(provenance.id, "door_set_1_d1");
+    provenance.source_graphic_index = 251;
+    provenance.source_width = 96;
+    provenance.source_height = 88;
+    provenance.output_width = 64;
+    provenance.output_height = 96;
+    CHECK(csb_v22_admit_f0128_door_projection_pc34(&command, &provenance,
+                                                     &projection) == 1 &&
+          projection.valid && projection.source_graphic_index == 251,
+          "D1 F0128 consumes the checked active DoorSet 1 record");
     command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34;
     command.clip_x = 24;
     command.clip_y = 28;

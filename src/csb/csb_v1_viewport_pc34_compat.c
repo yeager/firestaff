@@ -800,6 +800,10 @@ static int csb_v1_viewport_d2_d3_capture_valid_pc34(
         capture->palette_capture_fnv1a != proof->shared_palette_hash ||
         capture->palette_capture_fnv1a != bytes->palette.decoded_fnv1a ||
         capture->capture_identity_hash == 0u ||
+        !csb_v1_viewport_door_set_index_valid_pc34(capture->d1_item_index, 2) ||
+        capture->d1_source_byte_count == 0u ||
+        capture->d1_source_payload_hash == 0u ||
+        capture->d1_source_payload_hash != proof->d1_door_hash ||
         capture->d2_item_index != proof->d2_door_capture_item_index ||
         capture->d2_source_byte_count != proof->d2_door_capture_byte_count ||
         capture->d2_source_payload_hash != proof->d2_door_hash ||
@@ -920,7 +924,9 @@ int csb_v1_viewport_bind_first_frame_material_bytes_pc34(
         command->decoded_width = span->width;
         command->decoded_height = span->height;
         command->source_graphics_item_index = 0;
-        if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34) {
+        if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34) {
+            command->source_graphics_item_index = bytes->d2_d3_capture.d1_item_index;
+        } else if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34) {
             command->source_graphics_item_index = bytes->d2_d3_capture.d2_item_index;
         } else if (command->route ==
                        CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34 ||

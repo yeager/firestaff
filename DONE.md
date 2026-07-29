@@ -1,3 +1,12 @@
+- ✅ 2026-07-29 CSB V2.2 active DoorSet D1 material consumption: D1 now
+  carries the checked `G0695` source record through the V1 material binding
+  into F0128 V2.2 selection. The source-artpack exports original DoorSet 1–3
+  `door_set_N_d1` records (251/254/257), and the compositor admits them only
+  with the matching 96x88 source contract. This corrects the earlier
+  ambiguity between `G0695` and `Graphic558`: the latter is F0111's frame
+  destination, not its original GRAPHICS.DAT source. Focused D1/D2/D3
+  material, F0111 contract and V2.2 routing regressions pass.
+
 - ✅ 2026-07-29 CSB V2.2 active DoorSet D2/D3 material consumption: the
   source-artpack generator exports the original DoorSet 1–3 G0693/G0694
   records alongside DoorSet 0, with per-record SHA-256 and native dimensions.
@@ -5,8 +14,7 @@
   F0128 command, so V2.2 selects `door_set_N_d2` or `door_set_N_d3` rather
   than repainting nonzero sets with DoorSet 0. D3 retains F0791's exact
   44x38 raster inside the original 48x40 clip. Focused source-pack, route,
-  draw and DoorSet 1 regressions pass. D1 remains intentionally V1 for
-  nonzero sets until it has an equivalent live source-index capture.
+  draw and DoorSet 1 regressions pass.
 
 - ✅ 2026-07-29 CSB PC3.4 D2 active-DoorSet material handoff: the first-frame
   F0128 material decode no longer pins G0694 to obsolete record 694. It now

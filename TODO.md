@@ -91,9 +91,10 @@ an integration build pass.
   interpolated pixels. D1/D2 retain their explicit admitted projection
   statuses. The V1 material byte handoff validates the live `G0694` DoorSet
   slot (`247/250/253/256`) through the decode, provenance and plan receipts.
-  V2.2 now consumes the matching original D2/D3 DoorSet 1–3 rasters by the
-  propagated source index; D1 remains V1 for nonzero sets until its own
-  source-index capture exists.
+  V2.2 now consumes the matching original D1/D2/D3 DoorSet 1–3 rasters by
+  the propagated source index. The D1 handoff explicitly identifies
+  `G0695`'s original DoorSet record (`248/251/254/257`), never the internal
+  `Graphic558` destination frame.
   Direct and headless probes prove routing, admission, exact clip bounds and
   alpha preservation only, not live visual correctness. 2026-07-29: the admitted D1/D2 door routes now
   consume the source-owned F0128 command stream in the live V2.2 compositor:

@@ -444,10 +444,13 @@ int csb_v22_inplace_render_f0128_command(
 
     dynamic_asset_id[0] = '\0';
     if (source_command->source_graphics_item_index > 0 &&
-        (source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34 ||
+        (source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34 ||
+         source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34 ||
          source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34 ||
          source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34)) {
         int offset = source_command->route ==
+                     CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34 ? 2 :
+                     source_command->route ==
                      CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34 ? 1 : 0;
         int set = (source_command->source_graphics_item_index - 246 - offset) / 3;
         if (set < 0 || set > 3 ||
@@ -456,7 +459,8 @@ int csb_v22_inplace_render_f0128_command(
         }
         if (set != 0) {
             (void)snprintf(dynamic_asset_id, sizeof(dynamic_asset_id),
-                           "door_set_%d_d%d", set, offset == 0 ? 3 : 2);
+                           "door_set_%d_d%d", set,
+                           offset == 0 ? 3 : offset == 1 ? 2 : 1);
             asset_id = dynamic_asset_id;
         }
     }
