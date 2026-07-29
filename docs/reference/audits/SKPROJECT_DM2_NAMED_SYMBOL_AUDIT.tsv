@@ -242,7 +242,7 @@ ulptable	SKULLWIN	SKULLWIN/c_dballoc.cpp	121		MISSING
 init	SKULLWIN	SKULLWIN/c_dballoc.cpp	125	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 getadr	SKULLWIN	SKULLWIN/c_dballoc.cpp	130		MISSING
 getp	SKULLWIN	SKULLWIN/c_dballoc.cpp	132		MISSING
-setp	SKULLWIN	SKULLWIN/c_dballoc.cpp	133		IMPLEMENTED_NARROW
+setp	SKULLWIN	SKULLWIN/c_dballoc.cpp	133		MISSING
 setl	SKULLWIN	SKULLWIN/c_dballoc.cpp	134		MISSING
 islen	SKULLWIN	SKULLWIN/c_dballoc.cpp	135		MISSING
 DM2_QUERY_GDAT_RAW_DATA_LENGTH	SKULLWIN	SKULLWIN/c_dballoc.cpp	138	include/dm2_v1_asset_loader.h:261	VERIFIED_SOURCE_MAPPING
@@ -295,7 +295,7 @@ DM2_ENGAGE_COMMAND	SKULLWIN	SKULLWIN/c_engage.cpp	24		MISSING
 init	SKULLWIN	SKULLWIN/c_eventqueue.cpp	10	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 set	SKULLWIN	SKULLWIN/c_eventqueue.cpp	33	src/dm2/dm2_v2_touch_runtime.c:71	UNCERTAIN
 PROCESS_SINGLEEVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	44		MISSING
-QUEUE_EVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	55		IMPLEMENTED_NARROW
+QUEUE_EVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	55		MISSING
 DM2_3929_0b01	SKULLWIN	SKULLWIN/c_eventqueue.cpp	94		MISSING
 DM2_3929_0b20	SKULLWIN	SKULLWIN/c_eventqueue.cpp	105		MISSING
 DM2_3e74_5b7c	SKULLWIN	SKULLWIN/c_eventqueue.cpp	117		MISSING
@@ -583,7 +583,7 @@ DM2_DRAW_DUNGEON_TILES	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6932		NOT_APPLICABLE_ARCH
 DM2_CHANCE_TABLE_OPERATION	SKULLWIN	SKULLWIN/c_gui_vp.cpp	7177		NOT_APPLICABLE_ARCH
 DM2_DISPLAY_VIEWPORT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	7325	src/dm2/dm2_v1_gdat_scene_m11_command.c:dm2_v1_gdat_scene_m11_command_plan_build; src/dm2/dm2_v1_frame_presentation_state.c:dm2_v1_runtime_enumerate_dm2_viewport_m11_live_plans; tests/test_dm2_v1_dm2_viewport_m11_live_enumeration.c	VERIFIED_SOURCE_MAPPING	DM2 v1 DISPLAY_VIEWPORT scene plans bind the active GRAPHICSSET floor and ceiling raw intervals through GFX256 receipts before M11 presentation, alongside existing source rect, decode, palette, and scene-light evidence without fallback buffers. The DM2-owned live enumeration derives identity from the serialized original session plus G1 map token, requires matching active GRAPHICSSET and ordered complete scene/light, wall, door, weather, DB5/DB9 static, and DB14 flying-item plan set, and remains explicitly no-draw pending authentic pixel decode.
 init	SKULLWIN	SKULLWIN/c_hero.cpp	40	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-get_adj_ability1	SKULLWIN	SKULLWIN/c_hero.cpp	81		IMPLEMENTED_NARROW
+get_adj_ability1	SKULLWIN	SKULLWIN/c_hero.cpp	81		MISSING
 get_adj_ability2	SKULLWIN	SKULLWIN/c_hero.cpp	101		MISSING
 get_stamina_adj	SKULLWIN	SKULLWIN/c_hero.cpp	110		MISSING
 get_max_load	SKULLWIN	SKULLWIN/c_hero.cpp	126		MISSING
@@ -875,7 +875,7 @@ DM2_SET_ITEM_IMPORTANCE	SKULLWIN	SKULLWIN/c_record.cpp	498		IMPLEMENTED_NARROW
 DM2_RECYCLE_A_RECORD_FROM_THE_WORLD	SKULLWIN	SKULLWIN/c_record.cpp	544		MISSING
 DM2_ALLOC_NEW_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1076		IMPLEMENTED_NARROW
 DM2_ALLOC_NEW_DBITEM	SKULLWIN	SKULLWIN/c_record.cpp	1142		IMPLEMENTED_NARROW
-DM2_ALLOC_NEW_DBITEM_DEEPLY	SKULLWIN	SKULLWIN/c_record.cpp	1167		IMPLEMENTED_NARROW
+DM2_ALLOC_NEW_DBITEM_DEEPLY	SKULLWIN	SKULLWIN/c_record.cpp	1167		MISSING
 DM2_DEALLOC_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1205		IMPLEMENTED_NARROW
 DM2_QUERY_CLS2_OF_TEXT_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1210	src/dm2/dm2_v1_dungeon_loader.c:2347	UNCERTAIN
 DM2_GET_WALL_DECORATION_OF_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	1261		MISSING
