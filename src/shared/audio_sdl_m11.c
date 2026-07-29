@@ -481,6 +481,53 @@ static int m11_sdl_audio_backend_enabled(void) {
     return 1;
 }
 
+#if M11_HAVE_SDL_AUDIO
+/* SDL3 applies a stream gain to every queued sample.  Keep the master gain at
+ * that device boundary, then apply the music/SFX/UI gain while samples are
+ * queued.  A single shared stream previously meant that M12's music slider
+ * was recorded but had no audible effect.  This is transport-only: the
+ * source sample bytes, rate, ordering and cadence remain unchanged. */
+static int m11_sdl_queue_samples(M11_AudioState* state,
+                                 const float* samples,
+                                 int sample_count,
+                                 int domain_volume) {
+    float* scaled = NULL;
+    float gain;
+    int i;
+    int queued;
+
+    if (!state || !samples || sample_count <= 0 || !state->sdlStream) {
+        return 0;
+    }
+    domain_volume = m11_clamp_volume(domain_volume);
+    if (domain_volume == 0) {
+        return 1;
+    }
+    gain = (float)domain_volume / (float)M11_AUDIO_VOLUME_MAX;
+    if (gain == 1.0f) {
+        queued = SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
+                                        samples,
+                                        sample_count * (int)sizeof(float));
+    } else {
+        scaled = (float*)malloc((size_t)sample_count * sizeof(*scaled));
+        if (!scaled) {
+            return 0;
+        }
+        for (i = 0; i < sample_count; ++i) {
+            scaled[i] = samples[i] * gain;
+        }
+        queued = SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
+                                        scaled,
+                                        sample_count * (int)sizeof(float));
+        free(scaled);
+    }
+    if (queued) {
+        state->queuedSampleCount += sample_count;
+    }
+    return queued ? 1 : 0;
+}
+#endif
+
 static const char* m11_find_song_dat_path(char* homeBuf, size_t homeBufBytes) {
     const char* envPath = getenv("FIRESTAFF_SONG_DAT");
     const char* legacyEnvPath = getenv("SONG_DAT_PATH");
@@ -895,9 +942,8 @@ int M11_Audio_SetVolumes(M11_AudioState* state,
 #if M11_HAVE_SDL_AUDIO
     if (state->sdlStream) {
         float gain = (float)state->masterVolume / (float)M11_AUDIO_VOLUME_MAX;
-        float sfxGain = (float)state->sfxVolume / (float)M11_AUDIO_VOLUME_MAX;
         SDL_SetAudioStreamGain((SDL_AudioStream*)state->sdlStream,
-                               gain * sfxGain);
+                               gain);
     }
 #endif
 
@@ -967,13 +1013,8 @@ int M11_Audio_EmitMarker(M11_AudioState* state, M11_AudioMarker marker) {
     {
         const M11_SoundBuffer* snd = &state->sounds[marker];
         if (snd->sampleCount > 0 && state->sdlStream) {
-            int byteLen = snd->sampleCount * (int)sizeof(float);
-            SDL_PutAudioStreamData(
-                (SDL_AudioStream*)state->sdlStream,
-                snd->samples,
-                byteLen
-            );
-            state->queuedSampleCount += snd->sampleCount;
+            (void)m11_sdl_queue_samples(state, snd->samples,
+                                        snd->sampleCount, state->sfxVolume);
         }
     }
 #endif
@@ -999,15 +1040,11 @@ int M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMar
 #if M11_HAVE_SDL_AUDIO
         const M11_SoundBuffer* snd = &state->originalSounds[soundIndex];
         if (state->sdlStream) {
-            int byteLen = snd->sampleCount * (int)sizeof(float);
-            SDL_PutAudioStreamData(
-                (SDL_AudioStream*)state->sdlStream,
-                snd->samples,
-                byteLen
-            );
-            state->queuedSampleCount += snd->sampleCount;
-            state->playedMarkerCount += 1;
-            return 1;
+            if (m11_sdl_queue_samples(state, snd->samples, snd->sampleCount,
+                                      state->sfxVolume)) {
+                state->playedMarkerCount += 1;
+                return 1;
+            }
         }
 #endif
     }
@@ -1074,12 +1111,12 @@ int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
                 state->dm1SwshWaitVblankCount = (int)waits;
 #if M11_HAVE_SDL_AUDIO
                 if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
-                    SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
-                                           state->dm1SwshProgram.samples,
-                                           state->dm1SwshProgram.sampleCount *
-                                               (int)sizeof(float));
-                    state->queuedSampleCount += state->dm1SwshProgram.sampleCount;
-                    ++state->dm1SwshQueuedCount;
+                    if (m11_sdl_queue_samples(state,
+                                              state->dm1SwshProgram.samples,
+                                              state->dm1SwshProgram.sampleCount,
+                                              state->sfxVolume)) {
+                        ++state->dm1SwshQueuedCount;
+                    }
                 }
 #endif
                 return 1;
@@ -1158,12 +1195,11 @@ int M11_Audio_PlayCsbSwshPcm(M11_AudioState* state,
     state->csbSwshSourceHash = sourceHash;
 #if M11_HAVE_SDL_AUDIO
     if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
-        SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
-                               state->csbSwshPcm.samples,
-                               state->csbSwshPcm.sampleCount *
-                                   (int)sizeof(float));
-        state->queuedSampleCount += state->csbSwshPcm.sampleCount;
-        ++state->csbSwshQueuedCount;
+        if (m11_sdl_queue_samples(state, state->csbSwshPcm.samples,
+                                  state->csbSwshPcm.sampleCount,
+                                  state->sfxVolume)) {
+            ++state->csbSwshQueuedCount;
+        }
     }
 #endif
     return 1;
@@ -1220,12 +1256,11 @@ int M11_Audio_PlayCsbAtariStPsg(M11_AudioState* state,
     state->csbAtariStSoundHash = sourceHash;
 #if M11_HAVE_SDL_AUDIO
     if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
-        SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
-                               state->csbAtariStPsg.samples,
-                               state->csbAtariStPsg.sampleCount *
-                                   (int)sizeof(float));
-        state->queuedSampleCount += state->csbAtariStPsg.sampleCount;
-        ++state->csbAtariStSoundQueuedCount;
+        if (m11_sdl_queue_samples(state, state->csbAtariStPsg.samples,
+                                  state->csbAtariStPsg.sampleCount,
+                                  state->sfxVolume)) {
+            ++state->csbAtariStSoundQueuedCount;
+        }
     }
 #endif
     free(levels);
@@ -1289,12 +1324,11 @@ int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
     state->csbPc34RuntimeSoundHash = sourceHash;
 #if M11_HAVE_SDL_AUDIO
     if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
-        SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
-                               state->csbPc34RuntimePcm.samples,
-                               state->csbPc34RuntimePcm.sampleCount *
-                                   (int)sizeof(float));
-        state->queuedSampleCount += state->csbPc34RuntimePcm.sampleCount;
-        ++state->csbPc34RuntimeSoundQueuedCount;
+        if (m11_sdl_queue_samples(state, state->csbPc34RuntimePcm.samples,
+                                  state->csbPc34RuntimePcm.sampleCount,
+                                  state->sfxVolume)) {
+            ++state->csbPc34RuntimeSoundQueuedCount;
+        }
     }
 #endif
     return 1;
@@ -1337,15 +1371,12 @@ int M11_Audio_PlayTitleMusic(M11_AudioState* state) {
 
 #if M11_HAVE_SDL_AUDIO
     if (state->sdlStream) {
-        int byteLen = state->titleMusic.sampleCount * (int)sizeof(float);
-        SDL_PutAudioStreamData(
-            (SDL_AudioStream*)state->sdlStream,
-            state->titleMusic.samples,
-            byteLen
-        );
-        state->queuedSampleCount += state->titleMusic.sampleCount;
-        state->titleMusicQueuedCount += 1;
-        return 1;
+        if (m11_sdl_queue_samples(state, state->titleMusic.samples,
+                                  state->titleMusic.sampleCount,
+                                  state->musicVolume)) {
+            state->titleMusicQueuedCount += 1;
+            return 1;
+        }
     }
 #endif
 

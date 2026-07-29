@@ -1442,9 +1442,11 @@ that its exact runtime path is not already source-locked and tested.
     F0065 delayed completed plays once, so keyboard and pointer routes reach
     that authenticated transport rather than only updating CSB runtime state.
     2026-07-29: M12's persisted master/music/SFX/mute controls now reach the
-    live M11 SDL3 state after the CSB branch reinitializes it. The real PC3.4
-    M12-to-M11 handoff regression locks the exact values. This is host-volume
-    ownership only; it does not claim missing original media or timing.
+    live M11 SDL3 state after the CSB branch reinitializes it. Master gain is
+    applied at the device boundary while music and SFX are scaled separately
+    as their authenticated samples are queued. The real PC3.4 M12-to-M11
+    handoff regression locks the exact values. This is host-volume ownership
+    only; it does not claim missing original media or timing.
     Remaining: compare the complete selected original PC driver waveform/
     device behavior and capture real runtime event/timing behavior.
 32. **CSB-MAC-RELEASE-CAPTURE:** Complete real packaged app/window captures for
