@@ -123,7 +123,7 @@ fi
 
 v22_runtime_bmp="$(find "$runtime_capture_dir" -maxdepth 1 -type f -name '*.bmp' -print -quit)"
 v1_runtime_bmp="$(find "$v1_runtime_capture_dir" -maxdepth 1 -type f -name '*.bmp' -print -quit)"
-python3 - "$v1_runtime_bmp" "$v22_runtime_bmp" <<'PY'
+python3 - "$v1_runtime_bmp" "$v22_runtime_bmp" "$painted" <<'PY'
 import struct
 import sys
 
@@ -147,9 +147,14 @@ def read_bmp(path):
     return rows
 
 v1, v22 = read_bmp(sys.argv[1]), read_bmp(sys.argv[2])
+painted = int(sys.argv[3])
 for y in range(200):
     for x in range(320):
-        if 48 <= x < 272 and 33 <= y < 169:
+        # A zero counter means the V2.2 compositor admitted no F0128
+        # replacement at all. In that case even the aperture must stay
+        # byte-identical to V1. When one or more source-checked door clips
+        # are admitted, only F0128's original aperture may differ.
+        if painted > 0 and 48 <= x < 272 and 33 <= y < 169:
             continue
         start = x * 3
         if v1[y][start:start + 3] != v22[y][start:start + 3]:

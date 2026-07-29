@@ -963,7 +963,8 @@ that its exact runtime path is not already source-locked and tested.
    status panels outside F0128. The V2.2 source-artpack regression captures
    identical V1/V2.2 terminal frames and requires byte identity outside the
    original F0128 aperture `(48,33)-(271,168)`; only receipt-admitted modern
-   viewport clips may differ.
+   viewport clips may differ. When the live counter is zero, that regression
+   now requires byte identity across the entire 320x200 frame.
    CSB presentation-mode resolution uses the CSB manifest availability API,
    not DM1's global modern-asset state.
    2026-07-29: M11 now exports TITLE.C source step 21 as the distinct full

@@ -42894,3 +42894,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   byte-for-byte outside F0128's `(48,33)-(271,168)` aperture after Prison
   handoff. Verification: CSB V1 boot/handoff, V2.0/V2.1 pointer, V2 HUD and
   V2.2 source-artpack runtime regressions PASS.
+- ✅ 2026-07-29 CSB V2.2 zero-replacement frame lock: the real-data V2.2
+  runtime regression now requires full 320x200 byte identity with V1 when
+  `csbV22CellsPainted=0`. The F0128 aperture is exempt only when an
+  authenticated door projection was actually admitted, preventing an
+  uncounted modern or generic render path from altering the source frame.
+  Verification: `csb_v22_source_artpack_runtime` PASS.
