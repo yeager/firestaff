@@ -43163,3 +43163,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   mirror now refreshes once after startup dispatch and before every live
   movement, champion, action, and spell hit test, so those command surfaces
   share one authoritative party view.
+
+- ✅ 2026-07-30 CSB live keyboard-party synchronization: F1-F4 and other
+  live CSB keyboard commands now refresh the GAMEBLOCK mirror after startup
+  dispatch and before command routing. The real-save M11 regression proves
+  F1 opens the source champion inventory even when the retained M11 party was
+  deliberately emptied.

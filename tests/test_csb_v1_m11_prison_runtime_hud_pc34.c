@@ -134,6 +134,14 @@ int main(void)
                   view.world.party.championCount == 1 &&
                   view.spellPanelOpen,
               "CSB C100 refreshes GAMEBLOCK party before opening the spell panel");
+        view.world.party.championCount = 0;
+        view.inventoryPanelActive = 0;
+        CHECK(M11_GameView_HandleInput(&view,
+                                       M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
+                  M11_GAME_INPUT_REDRAW &&
+                  view.world.party.championCount == 1 &&
+                  view.inventoryPanelActive,
+              "CSB F1 refreshes GAMEBLOCK party before opening champion inventory");
         M11_GameView_Shutdown(&view);
         if (failures) return 1;
         puts("PASS: real Atari MINI.DAT reaches live M11 CSB HUD");

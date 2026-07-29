@@ -22364,6 +22364,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     }
 
     if (m11_source_is_csb(state)) {
+        /* COMMAND.C's F1-F4, movement, and disk commands all resolve against
+         * the current GAMEBLOCK party.  Refresh only after startup input has
+         * had its own source dispatcher, keeping live keyboard and pointer
+         * command surfaces on the same authoritative mirror. */
+        if (state->csbBootProfile) {
+            m11_sync_csb_state_from_boot_profile(state,
+                                                 state->csbBootProfile);
+        }
         M11_GameInputResult csbResult = m11_csb_handle_source_keyboard(state, input);
         if (csbResult != M11_GAME_INPUT_IGNORED ||
             input == M12_MENU_INPUT_FREEZE_TOGGLE ||
