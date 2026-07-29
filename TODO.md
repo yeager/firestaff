@@ -113,12 +113,17 @@ an integration build pass.
 
 - **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Open 2026-07-29. The live F0128
   renderer owns V2.2 material selection and retains the authenticated original
-  PC3.4 page. Modern replacement pixels are blocked until the receipt-owned
-  perspective projection consumer exists. The source-derived pack still
-  preserves original startup capture and reaches Prison runtime; it must not
-  claim that nine synthetic rectangles are a completed F0128 render. The
-  source-pack runtime test now skips rather than passes when that actual pack
-  is not installed, so a local V2.2 source-material claim needs a real run.
+  PC3.4 page. Its receipt-owned F0128 consumer now replaces only admitted
+  D1/D2/D3 closed-door clips after the original command and before F0115
+  overlays; all other material families remain V1 until they have equivalent
+  geometry, clipping, palette and draw-order evidence. A source-derived
+  38-asset PC3.4 pack was rebuilt from the local hash-verified `GRAPHICS.DAT`
+  on 2026-07-29 and its real startup/runtime lane passes. The standard Prison
+  ingress contains no admitted closed door, so its count is correctly zero;
+  the test accepts a nonzero count on a later real route rather than treating
+  valid source-owned door replacement as a failure. It must not claim that
+  nine synthetic rectangles are a completed F0128 render. Remaining: bind
+  every other material family to its corresponding original F0128 command.
 
 - **CSB-PC34-IMG2-DECODE-ORDER:** Closed 2026-07-29. The native PC3.4
   C001-C005 records now attempt the documented byte-stride IMG2 decoder

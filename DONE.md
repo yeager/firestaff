@@ -42865,3 +42865,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   step 21, and begins the 20-VBlank hold there. The packaged runtime capture,
   host route, full title/HUD/Entrance handoff and local PC3.4 real-asset
   launch probe all pass.
+- ✅ 2026-07-29 CSB V2.2 source-artpack runtime counter: the real-data V2.2
+  startup regression no longer treats the current Prison ingress's absence of
+  a closed F0111 door as a permanent ban on V2.2 painting. It requires the
+  source-derived pack and a well-formed runtime replacement counter, accepts
+  zero for this door-free ingress, and accepts a positive count for a later
+  route that consumes an admitted F0128 door clip. The command-level test
+  retains exact provenance, clip, transparency and draw-order coverage.
+  Verification: `csb_v22_source_artpack_runtime`,
+  `csb_v22_inplace_draw_pc34`, `csb_v22_inplace_route_pc34`, and
+  `csb_v1_boot_runtime_handoff` PASS.

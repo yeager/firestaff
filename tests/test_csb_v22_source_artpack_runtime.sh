@@ -67,11 +67,27 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb' "$output" ||
     exit 1
 fi
 
-if ! grep -Fq 'csbV22CellsPainted=0' "$output"; then
-    cat "$output" >&2
-    echo "FAIL: CSB V2.2 overpainted F0128 before a source-owned projection receipt existed" >&2
-    exit 1
-fi
+# The checked PC3.4 Prison ingress has no closed F0111 door in its first
+# viewport, so it normally reports zero V2.2 replacements.  Do not turn that
+# fixture detail into a global prohibition: a later route with an admitted
+# closed door must be allowed to report one or more exact F0128 replacements.
+# The dedicated in-place command regression owns the clip/provenance proof;
+# this real-data probe owns the startup-to-runtime handoff and merely requires
+# a well-formed runtime counter.
+painted="$(sed -n 's/.*csbV22CellsPainted=\([0-9][0-9]*\).*/\1/p' "$output" | tail -1)"
+case "$painted" in
+    '')
+        cat "$output" >&2
+        echo "FAIL: CSB V2.2 runtime did not publish its F0128 replacement count" >&2
+        exit 1
+        ;;
+    0)
+        echo "INFO: CSB V2.2 Prison ingress has no admitted closed F0128 door"
+        ;;
+    *)
+        echo "INFO: CSB V2.2 consumed $painted admitted F0128 door replacement(s)"
+        ;;
+esac
 
 runtime_capture_count="$(find "$runtime_capture_dir" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"
 runtime_presented_capture_count="$(find "$runtime_capture_dir/presented" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"
