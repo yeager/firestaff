@@ -20,7 +20,27 @@ if [ ! -f "$manifest" ] ||
 fi
 
 output="$(mktemp "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-XXXXXX.log")"
-trap 'rm -f "$output"' EXIT HUP INT TERM
+capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-startup-XXXXXX")"
+trap 'rm -f "$output"; rm -rf "$capture_dir"' EXIT HUP INT TERM
+
+# V2.2 material belongs only to the admitted live viewport. The original
+# C001-C005 startup sequence must still reach the presented surface with its
+# four source palette phases before the Prison handoff.
+FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$capture_dir" \
+SDL_VIDEODRIVER=dummy "$firestaff_bin" \
+    --game csb --data-dir "$data_dir" --presentation-mode v22 --duration 7000 \
+    >"$capture_dir/firestaff.log" 2>&1
+
+capture_count="$(find "$capture_dir" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"
+if [ "$capture_count" -ne 4 ] ||
+   ! grep -Fq 'CSB PRESENTED SOURCE CAPTURE: palette=4' "$capture_dir/firestaff.log" ||
+   ! grep -Fq 'CSB PRESENTED SOURCE CAPTURE: palette=5' "$capture_dir/firestaff.log" ||
+   ! grep -Fq 'CSB PRESENTED SOURCE CAPTURE: palette=6' "$capture_dir/firestaff.log" ||
+   ! grep -Fq 'CSB PRESENTED SOURCE CAPTURE: palette=7' "$capture_dir/firestaff.log"; then
+    cat "$capture_dir/firestaff.log" >&2
+    echo "FAIL: CSB V2.2 artpack changed the original startup palette chain" >&2
+    exit 1
+fi
 
 SDL_VIDEODRIVER=dummy "$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v22 \
@@ -42,4 +62,4 @@ if ! grep -Eq 'csbV22CellsPainted=[1-9][0-9]*' "$output"; then
     exit 1
 fi
 
-echo "PASS: CSB V2.2 source artpack paints runtime cells through the V2.2 route"
+echo "PASS: CSB V2.2 preserves startup captures and paints runtime artpack cells"
