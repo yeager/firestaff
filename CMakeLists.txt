@@ -6015,6 +6015,37 @@ if(BUILD_TESTING)
     )
 endif()
 
+# CSB V2.2 active viewport-swap consumer. This probe owns a bounded cache
+# with the route gate's depth-specific ids and verifies all nine cells paint.
+add_executable(firestaff_csb_v22_viewport_swap_probe
+    probes/firestaff_csb_v22_viewport_swap_probe.c
+    src/csb/csb_v22_viewport_swap_pc34.c
+    src/csb/csb_v22_inplace_draw_pc34.c
+    src/csb/csb_v22_inplace_route_pc34.c
+    src/csb/csb_v22_shape_cache_pc34.c
+    src/csb/csb_v22_shapes.c
+    src/csb/csb_v2_presentation_mode_pc34.c
+    src/csb/csb_v2_texture_upscale_pc34.c
+    src/dm1v2/dm1_v2_anim_timing_pc34.c
+    src/shared/fs_portable_compat.c)
+target_include_directories(firestaff_csb_v22_viewport_swap_probe PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_link_libraries(firestaff_csb_v22_viewport_swap_probe
+    PRIVATE firestaff_csb_v2 firestaff_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_csb_v22_viewport_swap_probe PRIVATE -Wall -Wextra -O2)
+endif()
+if(BUILD_TESTING)
+    add_test(
+        NAME csb_v22_viewport_swap_probe
+        COMMAND firestaff_csb_v22_viewport_swap_probe
+    )
+    set_tests_properties(csb_v22_viewport_swap_probe PROPERTIES
+        LABELS "tier2;csb;v2.2;modern-shapes;viewport;verification"
+    )
+endif()
+
 # CSB V2.2 per-cell modern-art swap / material-routing gate probe.
 # Headless: builds a synthetic per-depth + per-cell-type v22_inplace_cache.bin
 # under a probe-only HOME, walks uniform-wall / pit+stairs / field

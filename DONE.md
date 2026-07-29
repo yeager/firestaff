@@ -42082,3 +42082,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   record instead of becoming a delete. The regression locks source timer
   fields and actual EXPOOL bytes and proves a later invalid opcode rolls back
   both. `ctest -L csb` passes 96/96.
+# CSB V2.2 viewport material consumption (2026-07-29)
+
+- The active CSB V2.2 viewport swap now routes every painted cell through
+  `csb_v22_inplace_route_cell()` and therefore consumes the same depth-specific
+  `(category, asset_id)` pairs as the finished-art admission gate. The former
+  swap renderer used its stale generic mapping (`wall_dungeon_01`, etc.), which
+  could not consume a completed 29-slot CSB package. It now retains raw cell
+  values with the 3x3 swap cache and resolves the canonical route at render
+  time. `firestaff_csb_v22_viewport_swap_probe` is now registered in CTest;
+  its bounded cache uses canonical ids and proves all nine cells paint across
+  four directions. Focused V2.2 regression: 4/4 pass.

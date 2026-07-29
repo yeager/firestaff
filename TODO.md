@@ -15,6 +15,15 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V22-VIEWPORT-MATERIAL-CONSUMPTION:** Closed 2026-07-29. The active
+  CSB V2.2 viewport swap now consumes the same depth-specific material ids as
+  the completed-art gate and per-cell router (`wall_dungeon_d0/d1/d2_01`,
+  equivalent door/floor/creature ids). It no longer asks a completed pack for
+  retired generic ids such as `wall_dungeon_01`. The registered headless
+  viewport probe owns a bounded cache keyed by those canonical ids and proves
+  all nine cells paint across all four directions. This fixes consumption;
+  reviewed complete CSB art remains required before V2.2 is admitted.
+
 - **CSB-PC34-IMG2-DECODE-ORDER:** Closed 2026-07-29. The native PC3.4
   C001-C005 records now attempt the documented byte-stride IMG2 decoder
   before the legacy planar fallback. The former order could accept the same

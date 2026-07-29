@@ -32,6 +32,7 @@
 
 #include "csb_v22_viewport_swap_pc34.h"
 #include "csb_v22_inplace_draw_pc34.h"
+#include "csb_v22_inplace_route_pc34.h"
 #include "csb_v22_shape_cache_pc34.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
@@ -113,6 +114,7 @@ static const CSB_V22_SwapShapeMapping kCSBV22SwapMappingTable[] = {
  * every render pass. Repopulated by csb_v22_viewport_swap_update(). */
 typedef struct {
     CSB_V22_SwapShapeType shapes[3][3];   /* D0..D2 x L/C/R */
+    unsigned char          raw_cells[3][3];
     int                   direction;
     int                   populated;
 } CSB_V22_SwapCellCache;
@@ -231,24 +233,6 @@ const char* csb_v22_swap_category_for_shape(CSB_V22_SwapShapeType shape) {
     return NULL;
 }
 
-/* Internal helper: resolve (category, asset_id) for a shape. */
-static int csb_v22_resolve_shape_mapping(CSB_V22_SwapShapeType shape,
-                                          const char** out_category,
-                                          const char** out_asset_id) {
-    int i;
-    if (out_category) *out_category = NULL;
-    if (out_asset_id)  *out_asset_id  = NULL;
-    if (shape == CSB_V22_SWAP_SHAPE_NONE) return 0;
-    for (i = 0; kCSBV22SwapMappingTable[i].asset_id != NULL; ++i) {
-        if (kCSBV22SwapMappingTable[i].shape == shape) {
-            if (out_category) *out_category = kCSBV22SwapMappingTable[i].category;
-            if (out_asset_id)  *out_asset_id  = kCSBV22SwapMappingTable[i].asset_id;
-            return 1;
-        }
-    }
-    return 0;
-}
-
 /* ── Update + activation ─────────────────────────────────────────── */
 
 void csb_v22_viewport_swap_update(int direction,
@@ -262,6 +246,7 @@ void csb_v22_viewport_swap_update(int direction,
             for (l = 0; l < 3; ++l) {
                 g_csb_swap_cache.shapes[d][l] =
                     csb_v22_swap_shape_for_cell(raw_cells[d][l], (uint8_t)direction);
+                g_csb_swap_cache.raw_cells[d][l] = raw_cells[d][l];
             }
         }
     } else {
@@ -269,6 +254,7 @@ void csb_v22_viewport_swap_update(int direction,
         for (d = 0; d < 3; ++d) {
             for (l = 0; l < 3; ++l) {
                 g_csb_swap_cache.shapes[d][l] = CSB_V22_SWAP_SHAPE_NONE;
+                g_csb_swap_cache.raw_cells[d][l] = 0u;
             }
         }
     }
@@ -324,16 +310,13 @@ static int csb_v22_clampi(int v, int lo, int hi) {
  * via csb_v22_inplace_get_bitmap_by_id, which gives the per-cell
  * swap a clean direct lookup independent of the sibling shape
  * cache. Returns 1 on success, 0 on missing bitmap. */
-static int csb_v22_paint_cell_for_shape(unsigned char* framebuffer, int fbW, int fbH,
-                                          int dst_x, int dst_y, int dst_w, int dst_h,
-                                          CSB_V22_SwapShapeType shape) {
-    const char* category = NULL;
-    const char* asset_id = NULL;
+static int csb_v22_paint_cell_for_asset(unsigned char* framebuffer, int fbW, int fbH,
+                                         int dst_x, int dst_y, int dst_w, int dst_h,
+                                         const char* category, const char* asset_id) {
     int w = 0, h = 0;
     const uint32_t* rgba;
     int x, y;
 
-    if (!csb_v22_resolve_shape_mapping(shape, &category, &asset_id)) return 0;
     if (!category || !asset_id) return 0;
 
     rgba = csb_v22_inplace_get_bitmap_by_id(category, asset_id, &w, &h);
@@ -386,6 +369,7 @@ int csb_v22_viewport_swap_render(unsigned char* framebuffer,
                 &csb_v22_kCellRects[depth][lateral + 1];
             CSB_V22_SwapShapeType shape =
                 g_csb_swap_cache.shapes[depth][lateral + 1];
+            CSB_V22_AssetRouteDecision route;
             int dx, dy, dw, dh;
 
             if (shape == CSB_V22_SWAP_SHAPE_NONE) continue;
@@ -396,9 +380,19 @@ int csb_v22_viewport_swap_render(unsigned char* framebuffer,
             dh = csb_v22_clampi(rect->y + rect->h, 0, fbH) - dy;
             if (dw <= 0 || dh <= 0) continue;
 
-            if (csb_v22_paint_cell_for_shape(framebuffer, fbW, fbH,
+            /* The material gate and active renderer must use one source of
+             * truth.  The old swap path resolved generic ids such as
+             * wall_dungeon_01 while the completed-pack gate owns the real
+             * depth-specific ids (wall_dungeon_d0/d1/d2_01). */
+            csb_v22_inplace_route_cell(
+                depth, lateral,
+                g_csb_swap_cache.raw_cells[depth][lateral + 1],
+                1, &route);
+            if (route.use_v22 &&
+                csb_v22_paint_cell_for_asset(framebuffer, fbW, fbH,
                                               dx, dy, dw, dh,
-                                              shape)) {
+                                              route.category,
+                                              route.asset_id)) {
                 cells_painted++;
             }
         }

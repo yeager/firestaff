@@ -91,35 +91,19 @@ static int write_minimal_csb_v22_cache(const char* cache_path) {
         const char* asset_id;
         uint32_t rgba;
     } kEntries[] = {
-        /* Walls (T560) */
-        { "wall_shapes",  "wall_dungeon_01",               0xFFFF0000u },
-        { "wall_shapes",  "wall_dungeon_doorway_01",       0xFF00FF00u },
-        { "wall_shapes",  "wall_dungeon_alcove_01",        0xFF0000FFu },
-        { "wall_shapes",  "wall_dungeon_inscription_01",   0xFFFFFF00u },
-        /* Floors */
-        { "floor_shapes", "floor_plain_01",                0xFF00FFFFu },
-        { "floor_shapes", "floor_cracked_01",              0xFFFF00FFu },
+        /* The active viewport renderer consumes the same depth-specific
+         * names as csb_v22_inplace_route_cell() and the finished-pack gate. */
+        { "wall_shapes",  "wall_dungeon_d0_01",            0xFFFF0000u },
+        { "wall_shapes",  "wall_dungeon_d1_01",            0xFF00FF00u },
+        { "wall_shapes",  "wall_dungeon_d2_01",            0xFF0000FFu },
+        { "floor_shapes", "floor_plain_d0_01",             0xFF00FFFFu },
+        { "floor_shapes", "floor_cracked_d1_01",           0xFFFF00FFu },
+        { "floor_shapes", "floor_mossy_d1_01",             0xFFFF8000u },
         { "floor_shapes", "floor_pit_01",                  0xFF808000u },
-        { "floor_shapes", "floor_stairs_01",               0xFF008080u },
-        { "floor_shapes", "ceiling_plain_01",              0xFF808080u },
-        { "floor_shapes", "field_teleporter_01",           0xFF404040u },
-        { "floor_shapes", "field_chaos_rift_01",           0xFF606060u },
-        { "floor_shapes", "field_explosion_01",            0xFFA0A0A0u },
-        /* Creatures / items */
-        { "creature_shapes", "creature_chaos_fiend_01",    0xFF800080u },
-        /* Doors */
-        { "door_shapes",  "door_iron_portcullis_01",       0xFFC0C0C0u },
-        { "door_shapes",  "door_prison_01",                0xFF303030u },
-        /* UI chrome / portraits */
-        { "ui_chrome",         "ui_panel_01",              0xFF202020u },
-        { "ui_chrome",         "ui_message_log_01",        0xFF505050u },
-        { "ui_chrome",         "ui_inventory_01",          0xFF707070u },
-        { "champion_portraits","champion_warrior_csb",     0xFFB0B0B0u },
-        { "champion_portraits","statue_lord_order_01",     0xFFD0D0D0u },
-        /* CSB-only categories */
-        { "chaos_runes", "chaos_rune_01",                  0xFF90E090u },
-        { "chaos_runes", "chaos_rune_marker_01",           0xFFE09090u },
-        { "dsa_scrolls", "dsa_scroll_01",                  0xFF9090E0u }
+        { "floor_shapes", "floor_stairs_up_01",            0xFF008000u },
+        { "floor_shapes", "floor_stairs_down_01",          0xFF008080u },
+        { "creature_shapes", "creature_demon_d0_01",       0xFF800080u },
+        { "door_shapes",  "door_d2_01",                    0xFFC0C0C0u }
     };
     const int kEntryCount = (int)(sizeof(kEntries) / sizeof(kEntries[0]));
     const uint32_t kHdrSize = 32;
@@ -184,6 +168,7 @@ cleanup:
 
 static int setup_probe_home(char* out_cache_path, size_t out_size) {
     char modern_dir[FSP_PATH_MAX];
+    char data_dir[FSP_PATH_MAX];
     int n;
 
     n = snprintf(modern_dir, sizeof(modern_dir),
@@ -191,6 +176,11 @@ static int setup_probe_home(char* out_cache_path, size_t out_size) {
     if (n <= 0 || (size_t)n >= sizeof(modern_dir)) return 0;
     if (!FSP_CreateDirectoryRecursive(modern_dir)) return 0;
     if (FSP_SetEnv("HOME", "firestaff-csb-v22-probe-home", 1) != 0) return 0;
+    n = snprintf(data_dir, sizeof(data_dir),
+                 "firestaff-csb-v22-probe-home/.firestaff/data/csb");
+    if (n <= 0 || (size_t)n >= sizeof(data_dir) ||
+        !FSP_CreateDirectoryRecursive(data_dir)) return 0;
+    csb_v22_set_manifest_path(data_dir);
 
     n = snprintf(out_cache_path, out_size, "%s/v22_inplace_cache.bin", modern_dir);
     return n > 0 && (size_t)n < out_size;
@@ -431,13 +421,12 @@ int main(void) {
     /* 9. Per-cell direct bitmap lookup (proves the (category, asset_id)
      *    helper the swap uses) */
     {
-        const char* aid = csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_WALL_STRAIGHT);
-        const char* cat = csb_v22_swap_category_for_shape(CSB_V22_SWAP_SHAPE_WALL_STRAIGHT);
         int w = 0, h = 0;
-        const uint32_t* rgba = csb_v22_inplace_get_bitmap_by_id(cat, aid, &w, &h);
+        const uint32_t* rgba = csb_v22_inplace_get_bitmap_by_id(
+            "wall_shapes", "wall_dungeon_d0_01", &w, &h);
         probe_record(&stats, "CSB_V22_DIRECT_BITMAP_LOOKUP",
                      rgba != NULL && w == 4 && h == 4,
-                     "wall_dungeon_01 bitmap lookup returns 4x4 RGBA");
+                     "wall_dungeon_d0_01 bitmap lookup returns 4x4 RGBA");
     }
     {
         int w = 0, h = 0;
