@@ -44,6 +44,15 @@ an integration build pass.
   binding item below. Broader DSA world operations and real DSA save corpus
   remain open.
 
+- **CSB-DSA-PRODUCTION-TEXT-MESSAGE-BINDING:** Closed 2026-07-29. The
+  production candidate now binds `STKOP_Message` to CSBWin's fixed recovered
+  timer pool and existing DB11 free nodes. It preserves the independent
+  parameter-message sequence, writes `(EDT_MessageParameters << 24)|timerID`,
+  restores the heap and event-to-slot receipts, and publishes only after the
+  complete DSA transaction succeeds. A source-shaped regression locks timer
+  fields, exact EXPOOL bytes and rollback after a later rejected word. The
+  still-open DSA world operations remain under CSB-DSA-FULL-OPCODE-FAMILY.
+
 - **CSB-DSA-SAY-TEXT-OWNER:** Closed 2026-07-29. Authenticated CSBWin
   `STKOP_Say` and `STKOP_TextSay` now consume their original operands and
   stage text output until every source word has been accepted. `SAY` reaches
@@ -888,19 +897,7 @@ that its exact runtime path is not already source-locked and tested.
     transactional world-
     mutation batch with source-owned callbacks; do not add a synthetic VM
     fallback for missing dungeon ownership.
-22. **CSB-DSA-PRODUCTION-TEXT-MESSAGE-BINDING:** Bind the completed bounded
-    `SAY`, `TEXTSAY`, and `MESSAGE` interpreter contracts to real loaded DB2,
-    scrolling-text, timer and EXPOOL owners in `CSB_V1_RuntimeProfile`.
-    2026-07-29: `TEXT@`, `SAY`, and `TEXTSAY` now bind to the loaded DB2/text
-    bank and candidate profile receipt; no host text cache is used. The
-    `csb_v1_dsa_copy_runtime_handoff` regression drives a source-shaped
-    DB2/F0507 `TEXT@` -> `TEXTSAY` action through the production candidate,
-    proves its `HEL` receipt, and proves a later rejected opcode rolls it
-    back. `MESSAGE` remains deliberately unbound in production: it must not
-    create timers or EXPOOL records from incomplete save state. Add only a
-    transactional owner that can update the candidate profile and publish it
-    after the existing DSA receipt audit.
-23. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
+22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.
 24. **CSB-ORIGINAL-SAVE-CORPUS:** Admit real CSB/CSBWin save corpus, complete

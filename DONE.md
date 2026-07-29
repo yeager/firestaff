@@ -42072,3 +42072,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   portrait entries validate and make the critical CSB categories available.
   This validates the pack-format boundary only; source-derived full-route
   material remains required before V2.2 is admitted for gameplay.
+- ✅ 2026-07-29 CSBWin DSA production `STKOP_Message` binding. The runtime
+  candidate now allocates a `TT_ParameterMessage` from the restored fixed
+  timer pool, preserves the independent `parameterMessageSequence`, writes
+  the original `(EDT_MessageParameters << 24)|timerID` DB11 record through an
+  existing exact-size free node, restores the CSBWin heap ordering, and only
+  publishes the timer/EXPOOL mutation after the whole DSA action validates.
+  The regression locks the source timer fields and actual EXPOOL payload bytes
+  and proves a later invalid opcode rolls back both. `ctest -L csb` passes
+  96/96.

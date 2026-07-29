@@ -259,6 +259,11 @@ typedef struct {
     uint16_t last_cause_poison_timer_event_index;
     uint16_t last_cause_poison_timer_attack;
     uint32_t last_cause_poison_timer_time;
+    uint16_t parameter_message_created_count;
+    uint16_t last_parameter_message_timer_index;
+    uint16_t last_parameter_message_queue_slot;
+    uint8_t last_parameter_message_sequence;
+    uint32_t last_parameter_message_tail_fnv1a;
     uint8_t dsa_id;
     uint32_t state_index;
     uint32_t column;
@@ -615,6 +620,10 @@ typedef struct {
     uint16_t                csbwin_item16_queue_len;
     uint16_t                csbwin_max_item16;
     uint16_t                csbwin_timer_sequence;
+    /* DSA.cpp's parameterMessageSequence is independent of TIMER's heap
+     * sequence. It is runtime-only and occupies TIMER::ubyte5 for each
+     * source TT_ParameterMessage created by STKOP_Message. */
+    uint8_t                 csbwin_parameter_message_sequence;
     uint32_t                csbwin_last_monster_attack_time;
     uint32_t                csbwin_last_party_move_time;
     uint16_t                csbwin_party_move_disable_timer;
