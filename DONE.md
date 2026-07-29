@@ -37,6 +37,12 @@
   once, while an explicit `FIRESTAFF_QUICKSAVE_PATH` is never redirected.
   Verification: `csb_v1_keyboard_commands_pc34_compat`.
 
+- ✅ 2026-07-29 Launcher game-data folder persistence: native folder-picker
+  selections are normalized to an existing physical absolute path before the
+  asynchronous scan and configuration write. A legacy persisted `data_dir =
+  "."` is repaired to the default Firestaff data root unless an explicit CLI
+  or environment path owns the setting. Verification: `m12_data_dir_cancel`.
+
 - ✅ 2026-07-29 CSB V1/V2.x entrance pointer presentation: the real C407
   enter-dungeon box is now exercised through M11's window-to-source mapper
   at 320x200 and 960x600 in V1, V2.0, V2.1 and gated V2.2. The former Enter

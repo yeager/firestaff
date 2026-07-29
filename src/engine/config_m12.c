@@ -990,6 +990,11 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
 }
 
+static int m12_config_data_dir_is_placeholder(const char* path) {
+    return !path || path[0] == '\0' || strcmp(path, ".") == 0 ||
+           strcmp(path, "./") == 0 || strcmp(path, ".\\") == 0;
+}
+
 int M12_Config_Save(const M12_Config* config) {
     char parentDir[M12_CONFIG_PATH_CAPACITY];
     char tmpPath[M12_CONFIG_PATH_CAPACITY + 16];
@@ -1232,7 +1237,12 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
             shouldSave = 1;
         }
     }
-    if (config->dataDir[0] == '\0') {
+    /* Older launcher builds could persist the native-dialog relative token
+     * ".". It is not a durable game-data selection, so repair it only when
+     * no explicit command-line or environment override owns the path. */
+    if ((!dataDirOverride || dataDirOverride[0] == '\0') &&
+        (!envDataDir || envDataDir[0] == '\0') &&
+        m12_config_data_dir_is_placeholder(config->dataDir)) {
         FSP_ResolveDataDir(config->dataDir, sizeof(config->dataDir), NULL);
         shouldSave = 1;
     }

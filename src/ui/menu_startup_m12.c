@@ -1972,13 +1972,35 @@ static void m12_cancel_data_dir_scan(M12_StartupMenuState* state) {
     m12_update_data_dir_scan_message(state);
 }
 
+/* SDL's native folder dialog may return a relative path (notably "." on
+ * some macOS dialog backends). Store the resolved directory, never that
+ * display token, so the next launcher run scans the folder the user chose
+ * rather than silently treating the working directory as game data. */
+static int m12_canonicalize_data_directory(const char* input,
+                                           char* out,
+                                           size_t outSize) {
+    char normalized[FSP_PATH_MAX];
+
+    if (!input || input[0] == '\0' || !out || outSize == 0U ||
+        strlen(input) >= sizeof(normalized)) {
+        return 0;
+    }
+    snprintf(normalized, sizeof(normalized), "%s", input);
+    FSP_NormalizeSeparators(normalized);
+    return FSP_DirExists(normalized) &&
+           FSP_ResolvePhysicalPath(out, outSize, normalized) &&
+           FSP_DirExists(out);
+}
+
 static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
                                          const char* dataDir) {
     M12_DataDirScanJob* job;
+    char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     if (!state || !dataDir || dataDir[0] == '\0') {
         return 0;
     }
-    if (!FSP_DirExists(dataDir)) {
+    if (!m12_canonicalize_data_directory(dataDir, canonicalDataDir,
+                                         sizeof(canonicalDataDir))) {
         char line3[160];
         m12_format_data_dir_line(state, line3, sizeof(line3));
         m12_enter_message_view(state);
@@ -1996,14 +2018,14 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
     }
     job = (M12_DataDirScanJob*)calloc(1U, sizeof(*job));
     if (!job) {
-        return M12_StartupMenu_SetDataDirectory(state, dataDir);
+        return M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
     }
     job->mutex = SDL_CreateMutex();
     if (!job->mutex) {
         m12_free_data_dir_scan_job(job);
-        return M12_StartupMenu_SetDataDirectory(state, dataDir);
+        return M12_StartupMenu_SetDataDirectory(state, canonicalDataDir);
     }
-    snprintf(job->dataDir, sizeof(job->dataDir), "%s", dataDir);
+    snprintf(job->dataDir, sizeof(job->dataDir), "%s", canonicalDataDir);
     SDL_SetAtomicInt(&job->cancelRequested, 0);
     SDL_SetAtomicInt(&job->done, 0);
     state->dataDirScanActive = 1;
@@ -2017,7 +2039,7 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
     m12_set_buffered_message(state,
                              m12_tr(state, "SCANNING GAME DATA"),
                              m12_tr(state, "STARTING"),
-                             dataDir);
+                             canonicalDataDir);
     job->thread = SDL_CreateThread(m12_data_dir_scan_thread,
                                    "m12-data-dir-scan",
                                    job);
@@ -2033,11 +2055,13 @@ static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
 int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir) {
     M12_AssetStatusScanOptions scanOptions;
+    char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     int scanOk;
     if (!state || !dataDir || dataDir[0] == '\0') {
         return 0;
     }
-    if (!FSP_DirExists(dataDir)) {
+    if (!m12_canonicalize_data_directory(dataDir, canonicalDataDir,
+                                         sizeof(canonicalDataDir))) {
         char line3[160];
         m12_format_data_dir_line(state, line3, sizeof(line3));
         m12_enter_message_view(state);
@@ -2055,14 +2079,14 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     m12_set_buffered_message(state,
                              m12_tr(state, "SCANNING GAME DATA"),
                              m12_tr(state, "STARTING"),
-                             dataDir);
+                             canonicalDataDir);
     memset(&scanOptions, 0, sizeof(scanOptions));
     scanOptions.progressFn = m12_data_dir_scan_progress_callback;
     scanOptions.progressUserData = state;
     scanOptions.cancelFlag = &state->dataDirScanCancelRequested;
     scanOptions.honorRequestedDataDir = 1;
     scanOk = M12_AssetStatus_ScanWithOptions(&state->assetStatus,
-                                             dataDir,
+                                             canonicalDataDir,
                                              &scanOptions);
     state->dataDirScanProgress = *M12_AssetStatus_GetScanProgress(&state->assetStatus);
     state->dataDirScanActive = 0;

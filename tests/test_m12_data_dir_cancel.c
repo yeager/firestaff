@@ -366,10 +366,13 @@ static void check_active_scan_message_requests_cancel(void) {
 static void check_selected_folder_scans_asynchronously(void) {
     M12_StartupMenuState state;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char selectedPhysical[M12_ASSET_DATA_DIR_CAPACITY];
     int i;
 
     reset_dialog_stub();
     CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(FSP_ResolvePhysicalPath(selectedPhysical, sizeof(selectedPhysical),
+                                  dataRoot));
     if (failures) {
         return;
     }
@@ -401,7 +404,8 @@ static void check_selected_folder_scans_asynchronously(void) {
     CHECK(state.dataDirScanCancelled == 0);
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageLine1 && strcmp(state.messageLine1, "DATA DIRECTORY UPDATED") == 0);
-    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), dataRoot) == 0);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
+                 selectedPhysical) == 0);
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
 }
 
@@ -409,6 +413,7 @@ static void check_default_data_dir_scans_asynchronously(void) {
     M12_StartupMenuState state;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char defaultRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char defaultPhysical[M12_ASSET_DATA_DIR_CAPACITY];
     int i;
 
     reset_dialog_stub();
@@ -442,7 +447,10 @@ static void check_default_data_dir_scans_asynchronously(void) {
     CHECK(state.dataDirScanActive == 0);
     CHECK(state.dataDirScanJob == NULL);
     CHECK(state.dataDirScanCancelled == 0);
-    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), defaultRoot) == 0);
+    CHECK(FSP_ResolvePhysicalPath(defaultPhysical, sizeof(defaultPhysical),
+                                  defaultRoot));
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
+                 defaultPhysical) == 0);
 }
 
 static void check_start_menu_promotes_saved_game_leaf_to_parent(void) {
@@ -471,6 +479,25 @@ static void check_start_menu_promotes_saved_game_leaf_to_parent(void) {
                  nexusLeaf) != 0);
 
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+}
+
+static void check_dot_config_migrates_to_default_data_directory(void) {
+    M12_Config config;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char expected[M12_ASSET_DATA_DIR_CAPACITY];
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(FSP_GetDefaultOriginalsDir(expected, sizeof(expected)));
+    if (failures) {
+        return;
+    }
+    M12_Config_SetDefaults(&config);
+    snprintf(config.dataDir, sizeof(config.dataDir), ".");
+    CHECK(M12_Config_Save(&config) == 1);
+    M12_Config_Load(&config, NULL);
+    CHECK(strcmp(config.dataDir, expected) == 0);
+    CHECK(strcmp(config.dataDir, ".") != 0);
 }
 
 static void check_active_scan_renders_progress_bar(void) {
@@ -513,6 +540,7 @@ int main(void) {
     check_selected_folder_scans_asynchronously();
     check_default_data_dir_scans_asynchronously();
     check_start_menu_promotes_saved_game_leaf_to_parent();
+    check_dot_config_migrates_to_default_data_directory();
     check_active_scan_renders_progress_bar();
 
     if (failures) {
