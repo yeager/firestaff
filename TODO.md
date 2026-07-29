@@ -945,8 +945,8 @@ that its exact runtime path is not already source-locked and tested.
     filters, state transitions, and runtime mutation with hard fail-closed
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
-    remaining 27 stack words: `DEL`, `ADD`, `CAST`,
-    `FILTEREDCAST`, `THROW`, `TELEPORTPARTY`, `CREATECLOUD`, `MOVE`,
+    remaining 26 stack words: `DEL`, `ADD`, `CAST`,
+    `FILTEREDCAST`, `THROW`, `TELEPORTPARTY`, `MOVE`,
     the `I_*` indirect family (`DEL/ADD/CREATECLOUD/CAST/TELEPORTPARTY/MONSTER!/
     CHAR!/MOVE/COPY/CELL!/THROW/DELAY/DELMON/INSMON/CAUSEPOISON/
     FILTEREDCAST/SWAPCHARACTER`), plus `DELMON` and `INSMON`. `SAY` is now
@@ -958,7 +958,11 @@ that its exact runtime path is not already source-locked and tested.
     (`MONSTER!`, `CHAR!`, `COPY`, `CELL!`, `CAUSEPOISON`, `SWAPCHARACTER`).
     Its source local-variable rewrite now writes the action-local DSAVARS bank
     before the selected direct word runs; persistent save data remains outside
-    this temporary source bank.
+    this temporary source bank. 2026-07-29: direct `CREATECLOUD` now consumes
+    CSBWin's `(location,type,size)` stack contract, preserves its six legal
+    types and silent invalid-type no-op, and commits only after whole-action
+    acceptance. Its DB15/FluxCage/timer runtime owner remains open under
+    CSB-DSA-MONSTER-WORLD; no cloud is synthesized when that owner is absent.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

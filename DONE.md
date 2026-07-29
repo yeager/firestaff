@@ -72,6 +72,16 @@
   word rolls back both pending text requests. Verified by
   `csb_v1_dsa_text_bank_transaction`.
 
+- ✅ 2026-07-29 CSBWin DSA `STKOP_CreateCloud` transaction contract.
+  The authenticated stack executor now consumes `size`, `type`, and packed
+  `location` in the exact `DSA.cpp:2740-2786` order, accepts only Fireball,
+  DispellMissile, ZoSpell, PoisonCloud, MonsterDeath, and FluxCage, and keeps
+  the request pending until the full source action is accepted. Illegal types
+  remain a silent source no-op; a missing world owner or a later malformed
+  bytecode word creates nothing. Verified by the focused DSA regression and
+  the complete 98-test CSB CTest lane. The real DB15/FluxCage/timer owner is
+  intentionally still tracked in TODO.
+
 - ✅ 2026-07-29 CSBWin DSA production `TEXT@` -> `TEXTSAY` DB2 binding.
   The runtime candidate decodes its loaded DB2 text through F0507 and
   publishes it only as its authenticated scrolling-text receipt. The focused

@@ -575,7 +575,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 18u: case 19u: case 20u: case 21u: case 22u: case 23u: case 24u: case 25u:
     case 26u: case 27u: case 28u: case 29u: case 30u: case 31u: case 32u:
     case 37u: case 38u: case 39u: case 40u: case 41u: case 48u: case 50u:
-    case 59u: case 67u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
+    case 59u: case 67u: case 68u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
     case 133u: case 136u: case 139u:
         return 1;
     case 8u: case 33u: case 34u: case 35u: case 36u: case 42u: case 44u: case 45u:
@@ -771,7 +771,7 @@ static int csb_v1_csbwin_dsa_subcode_is_arithmetic(uint16_t subcode)
     case 11u: case 12u: case 13u: case 14u: case 15u: case 16u: case 17u:
     case 18u: case 19u: case 20u: case 21u: case 22u: case 24u: case 25u:
     case 27u: case 28u: case 29u: case 30u: case 31u: case 32u: case 37u:
-    case 50u: case 67u: case 70u: case 108u:
+    case 50u: case 67u: case 68u: case 70u: case 108u:
         return 1;
     default:
         return 0;
@@ -1399,6 +1399,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_EXPERIENCE_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_CLOUD_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS 100
@@ -1478,6 +1479,12 @@ typedef struct {
     int32_t character_selector;
     int32_t poison_value;
 } CSB_V1_CSBWinDSAPendingPoisonWrite;
+
+typedef struct {
+    int32_t cloud_type;
+    int32_t size;
+    uint32_t location;
+} CSB_V1_CSBWinDSAPendingCloudRequest;
 
 typedef struct {
     uint16_t thing;
@@ -1647,6 +1654,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *pending_character_swap_count,
     CSB_V1_CSBWinDSAPendingPoisonWrite *pending_poison_writes,
     int *pending_poison_write_count,
+    CSB_V1_CSBWinDSAPendingCloudRequest *pending_cloud_requests,
+    int *pending_cloud_request_count,
     CSB_V1_CSBWinDSAPendingActuatorCopy *pending_actuator_copies,
     int *pending_actuator_copy_count,
     CSB_V1_CSBWinDSAPendingSoundRequest *pending_sound_requests,
@@ -1764,6 +1773,34 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         if (!csb_v1_csbwin_dsa_stack_push(stack, depth,
                                            (w & 0xffffu) % v)) {
             return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+        }
+        break;
+    case 68u: /* STKOP_CreateCloud, CSBWin DSA.cpp:2740-2786. */
+        /* Source pops size, type, then packed Location. Invalid cloud types
+         * are a silent CSBWin no-op; valid requests are held until every
+         * later bytecode word succeeds. The runtime callback owns the exact
+         * DB15/FluxCage/timer allocation and is required up front. */
+        if (!context->create_cloud ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        switch ((int32_t)w) {
+        case 0: case 3: case 4: case 7: case 40: case 50:
+            if (*pending_cloud_request_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_CLOUD_REQUESTS) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            pending_cloud_requests[*pending_cloud_request_count].cloud_type =
+                (int32_t)w;
+            pending_cloud_requests[*pending_cloud_request_count].size =
+                (int32_t)v;
+            pending_cloud_requests[*pending_cloud_request_count].location = count;
+            ++*pending_cloud_request_count;
+            break;
+        default:
+            break;
         }
         break;
     case 69u: /* STKOP_Sound, CSBWin DSA.cpp:4612-4624. */
@@ -3639,6 +3676,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_character_swaps[CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS];
     CSB_V1_CSBWinDSAPendingPoisonWrite
         pending_poison_writes[CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES];
+    CSB_V1_CSBWinDSAPendingCloudRequest
+        pending_cloud_requests[CSB_V1_CSBWIN_DSA_PENDING_CLOUD_REQUESTS];
     CSB_V1_CSBWinDSAPendingActuatorCopy
         pending_actuator_copies[CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES];
     CSB_V1_CSBWinDSAPendingSoundRequest
@@ -3676,6 +3715,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_experience_write_count = 0;
     int pending_character_swap_count = 0;
     int pending_poison_write_count = 0;
+    int pending_cloud_request_count = 0;
     int pending_actuator_copy_count = 0;
     int pending_sound_request_count = 0;
     int discard_text_requested = 0;
@@ -4279,7 +4319,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     &pending_character_write_count, pending_experience_writes,
                     &pending_experience_write_count, pending_character_swaps,
                     &pending_character_swap_count, pending_poison_writes,
-                    &pending_poison_write_count, pending_actuator_copies,
+                    &pending_poison_write_count, pending_cloud_requests,
+                    &pending_cloud_request_count, pending_actuator_copies,
                     &pending_actuator_copy_count, pending_sound_requests,
                     &pending_sound_request_count, &discard_text_requested,
                     &adjust_skills_parameters_requested,
@@ -4507,6 +4548,21 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             pending_poison_writes[i].character_selector;
         candidate.last_cause_poison_attack =
             pending_poison_writes[i].poison_value;
+    }
+    for (i = 0; i < pending_cloud_request_count; ++i) {
+        if (!context->create_cloud || !context->create_cloud(
+                context->dungeon_user,
+                pending_cloud_requests[i].cloud_type,
+                pending_cloud_requests[i].size,
+                pending_cloud_requests[i].location)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        ++candidate.create_cloud_count;
+        candidate.last_create_cloud_type =
+            pending_cloud_requests[i].cloud_type;
+        candidate.last_create_cloud_size = pending_cloud_requests[i].size;
+        candidate.last_create_cloud_location =
+            pending_cloud_requests[i].location;
     }
     for (i = 0; i < pending_actuator_copy_count; ++i) {
         if ((context->copy_actuator_payload &&
@@ -4925,6 +4981,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.commit_character_swap = runner->commit_character_swap;
     context.prepare_cause_poison = runner->prepare_cause_poison;
     context.commit_cause_poison = runner->commit_cause_poison;
+    context.create_cloud = runner->create_cloud;
     context.discard_text = runner->discard_text;
     context.play_sound = runner->play_sound;
     context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;

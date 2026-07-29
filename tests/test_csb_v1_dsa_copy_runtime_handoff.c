@@ -95,6 +95,75 @@ static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
     return hash;
 }
 
+typedef struct {
+    int calls;
+    int32_t cloud_type;
+    int32_t size;
+    uint32_t location;
+} CloudStore;
+
+static int commit_cloud(void *user, int32_t cloud_type, int32_t size,
+                        uint32_t location)
+{
+    CloudStore *store = user;
+    if (!store) return 0;
+    ++store->calls;
+    store->cloud_type = cloud_type;
+    store->size = size;
+    store->location = location;
+    return 1;
+}
+
+static void test_create_cloud_transaction(void)
+{
+    uint16_t cloud_words[] = {
+        0x0686u, 0x0203u, 0x0686u, 7u, 0x0686u, 23u, 0x110bu
+    };
+    uint16_t invalid_type_words[] = {
+        0x0686u, 0x0203u, 0x0686u, 99u, 0x0686u, 23u, 0x110bu
+    };
+    uint16_t rollback_words[] = {
+        0x0686u, 0x0203u, 0x0686u, 7u, 0x0686u, 23u, 0x110bu, 0u
+    };
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    CloudStore store;
+
+    memset(&state, 0, sizeof(state));
+    memset(&context, 0, sizeof(context));
+    memset(&store, 0, sizeof(store));
+    configure_action(&action, cloud_words,
+                     (int)(sizeof(cloud_words) / sizeof(cloud_words[0])));
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+    context.create_cloud = commit_cloud;
+    context.dungeon_user = &store;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              store.calls == 1 && store.cloud_type == 7 && store.size == 23 &&
+              store.location == 0x0203u && execution.create_cloud_count == 1u,
+          "STKOP_CreateCloud commits the exact source request after acceptance");
+
+    configure_action(&action, invalid_type_words,
+                     (int)(sizeof(invalid_type_words) / sizeof(invalid_type_words[0])));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 0,
+          "STKOP_CreateCloud preserves CSBWin's silent illegal-type no-op");
+
+    configure_action(&action, rollback_words,
+                     (int)(sizeof(rollback_words) / sizeof(rollback_words[0])));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) != CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 0,
+          "STKOP_CreateCloud rolls back when a later source word is rejected");
+}
+
 static void test_parameter_message_runtime_binding(void)
 {
     /* STKOP_Message consumes (target, type, count, delay) and the live DSA
@@ -453,6 +522,7 @@ int main(void)
     test_textfetch_textsay_runtime_binding();
     test_parameter_message_runtime_binding();
     test_indirect_local_variable_char_store();
+    test_create_cloud_transaction();
 
     memset(&dungeon, 0, sizeof(dungeon));
     dungeon.raw_data = raw;
