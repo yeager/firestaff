@@ -967,9 +967,9 @@ that its exact runtime path is not already source-locked and tested.
     filters, state transitions, and runtime mutation with hard fail-closed
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
-    remaining 25 stack words: `DEL`, `ADD`, `CAST`,
+    remaining 24 stack words: `DEL`, `ADD`, `CAST`,
     `FILTEREDCAST`, `THROW`, `MOVE`,
-    the `I_*` indirect family (`DEL/ADD/CAST/TELEPORTPARTY/MONSTER!/
+    the `I_*` indirect family (`DEL/ADD/CAST/MONSTER!/
     CHAR!/MOVE/COPY/CELL!/THROW/DELAY/DELMON/INSMON/CAUSEPOISON/
     FILTEREDCAST/SWAPCHARACTER`), plus `DELMON` and `INSMON`. `SAY` is now
     source-owned and transactional; the listed operations still require one
@@ -993,8 +993,9 @@ that its exact runtime path is not already source-locked and tested.
     runtime decodes the source `(direction,level,x,y)` fields, removes active
     groups through the existing F0194 owner, and rotates the party through the
     regular runtime path. Missing ownership and later invalid source words
-    remain no-mutation failures. `I_TELEPORTPARTY` remains listed until its
-    indirect parameter expansion has dedicated regression coverage.
+    remain no-mutation failures. `I_TELEPORTPARTY` now consumes the same
+    source `INDIRECT(..., 1)` parameter order and reaches that exact staged
+    request path.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

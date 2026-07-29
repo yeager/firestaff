@@ -3,8 +3,10 @@
   commits only after the complete authenticated action is accepted, then
   decodes the original direction/level/x/y fields, clears active groups via
   the existing F0194 owner, and uses the normal runtime rotation path. Missing
-  teleporter ownership and a later unsupported word remain no-mutation. The
-  direct DSA regression and the complete CSB CTest lane pass (98/98).
+  teleporter ownership and a later unsupported word remain no-mutation.
+  CSBWin's `I_TeleportParty` `INDIRECT(..., 1)` form uses the same staged
+  request after its original one-value parameter expansion. The direct and
+  indirect regressions and the complete CSB CTest lane pass (98/98).
 
 - ✅ 2026-07-29 CSB Artpack Studio headless original-record export:
   `--import-game-data ... --export-original-previews ...` now writes only

@@ -1283,6 +1283,9 @@ int main(void)
     uint16_t teleport_party_then_bad[] = {
         0x0686u, 0x154cu, 0x0f8bu, 0x0000u
     };
+    /* CSBWin DSA.cpp:4963 defines I_TeleportParty as INDIRECT(..., 1).
+     * AMPERSAND subcode 90 selects the parameter-driven indirect adapter. */
+    uint16_t indirect_teleport_party[] = { 0x168bu };
     uint16_t monblk[] = { 0x0686u, 0x0du, 0x11cbu };
     /* Data.h assigns STKOP_ObjectID 123. EX_AMPERSAND keeps the complete
      * seven-bit subcode, so the authenticated source word is 123 << 6 | 11. */
@@ -2165,6 +2168,28 @@ int main(void)
               (int)(sizeof(teleport_party) / sizeof(teleport_party[0])),
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "TELEPORTPARTY remains closed without a runtime teleporter owner");
+
+    {
+        uint32_t indirect_teleport_parameters[] = {
+            83u, 1u, 0x154cu, 0u, 0u
+        };
+
+        teleport_party_enabled = 1;
+        teleport_party_count = 0;
+        teleport_party_destination = 0u;
+        check(run_with_parameter_count(
+                  &state, &action, indirect_teleport_party,
+                  (int)(sizeof(indirect_teleport_party) /
+                        sizeof(indirect_teleport_party[0])),
+                  indirect_teleport_parameters, 5, &execution) ==
+                  CSB_V1_CSBWIN_DSA_STACK_OK &&
+                  teleport_party_count == 1 &&
+                  teleport_party_destination == 0x154cu &&
+                  execution.teleport_party_count == 1u &&
+                  execution.last_teleport_party_destination == 0x154cu,
+              "I_TELEPORTPARTY expands CSBWin's one source parameter in stack order");
+        teleport_party_enabled = 0;
+    }
 
     switch_action_enabled = 1;
     switch_action_count = 0;
