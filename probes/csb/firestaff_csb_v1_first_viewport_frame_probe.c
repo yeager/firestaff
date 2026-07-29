@@ -21,7 +21,7 @@
  *      - current dungeon singleton points at the handoff-owned dungeon
  *      - runtime state == CSB_STATE_TITLE
  *      - variant_id == CSB_V1_VARIANT_PC34_EN
- *      - party_x/y/dir/difficulty seeded from the source-locked start
+ *      - party_x/y/dir/difficulty seeded from the source-owned start pose
  *      - asset path strings copied into runtime.dungeon_asset /
  *        runtime.graphics_asset
  *      - chaos_magic initialized
@@ -327,10 +327,14 @@ static const char *probe_data_dir(int argc, char **argv,
 
 static int probe_real_assets_present(const char *dir)
 {
-    char graphics_path[ASSET_PATH_MAX];
-    char dungeon_path[ASSET_PATH_MAX];
-    int graphics_match = -1;
-    int dungeon_match = -1;
+    const char *hashes[6];
+    char paths[5][ASSET_PATH_MAX];
+    int matched[5];
+    int graphics_count = 0;
+    int hash_count = 0;
+    int i;
+    int have_graphics = 0;
+    int have_dungeon = 0;
     static const char *const g_csb_graphics[] = {
         "61fbfd56887c94adc26888a9491c6611",  /* PC 3.4 EN */
         "ebf6a57af3f27782e358c0490bfd2f2e",  /* Atari ST 2.1 EN */
@@ -345,17 +349,29 @@ static int probe_real_assets_present(const char *dir)
 
     if (!dir || dir[0] == '\0') return 0;
 
-    if (!asset_find_by_md5_list(dir, g_csb_graphics,
-                                 graphics_path, sizeof(graphics_path),
-                                 &graphics_match, 4)) {
-        return 0;
+    /* Match csb_v1_boot_scan_required_paths(): prefer an already extracted,
+     * hash-verified install over opening every unrelated archive in a shared
+     * data root. The probe's real path must not turn a nearby 300 MiB RAR
+     * into a startup dependency when GRAPHICS.DAT/DUNGEON.DAT are present. */
+    for (i = 0; g_csb_graphics[i] != NULL; ++i) {
+        hashes[hash_count++] = g_csb_graphics[i];
+        ++graphics_count;
     }
-    if (!asset_find_by_md5_list(dir, g_csb_dungeon,
-                                 dungeon_path, sizeof(dungeon_path),
-                                 &dungeon_match, 4)) {
-        return 0;
+    for (i = 0; g_csb_dungeon[i] != NULL; ++i) {
+        hashes[hash_count++] = g_csb_dungeon[i];
     }
-    return 1;
+    hashes[hash_count] = NULL;
+    memset(paths, 0, sizeof(paths));
+    memset(matched, 0, sizeof(matched));
+    (void)asset_find_all_files_by_md5_list(dir, hashes, paths, matched,
+                                            hash_count, 4);
+    for (i = 0; i < graphics_count; ++i) {
+        if (matched[i]) have_graphics = 1;
+    }
+    for (i = graphics_count; i < hash_count; ++i) {
+        if (matched[i]) have_dungeon = 1;
+    }
+    return have_graphics && have_dungeon;
 }
 
 /* ── Synthetic boot profile preparation ──────────────────────────────── */
@@ -465,10 +481,14 @@ static void probe_first_viewport_frame(CSB_V1_BootProfile *profile,
           "current dungeon singleton points at the runtime-owned dungeon");
     CHECK(csb_v1_dungeon_get_current_level() == 0,
           "new-game dungeon level is map 0");
-    CHECK(profile->runtime.party_x == CSB_V1_START_PARTY_X &&
-          profile->runtime.party_y == CSB_V1_START_PARTY_Y &&
-          profile->runtime.party_dir == CSB_V1_START_PARTY_DIR,
-          "runtime keeps the source-locked CSB start pose");
+    /* LOADSAVE.C F0435 promotes the real DUNGEON.DAT header's initial
+     * location before the first F0128 frame. The fallback (5,5,N) applies
+     * only when that source record is unavailable, so asserting it for a
+     * genuine PC3.4 dungeon would reject the actual source-owned pose. */
+    CHECK(profile->runtime.party_x == (int)profile->default_party_x &&
+          profile->runtime.party_y == (int)profile->default_party_y &&
+          profile->runtime.party_dir == (int)profile->default_party_dir,
+          "runtime keeps the source-owned CSB start pose");
     CHECK(profile->runtime.chaos_magic.magic_initialized == 1,
           "CSB chaos magic is initialized at handoff");
     CHECK(profile->runtime.difficulty == CSB_V1_DIFFICULTY_HARD,

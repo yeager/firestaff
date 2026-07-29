@@ -42346,3 +42346,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   A receipt for map 0 can no longer be accompanied by the stale Entrance page.
 - Real PC3.4 V1/V2.0/V2.1/V2.2 pointer and completed V2.2-artpack runtime
   checks pass with the captured runtime frame.
+
+## 2026-07-29 - CSB real-data first viewport gate
+
+- The V1 first-viewport probe now searches ordinary hash-verified files before
+  archive containers, matching the boot scanner's loose-install priority.
+  This avoids opening unrelated large archives when a local PC3.4 pair exists.
+- The real-data contract accepts the `DUNGEON.DAT` header's initial party pose
+  through the same `LOADSAVE.C F0435` handoff used by runtime, rather than
+  incorrectly demanding the missing-data fallback. The full CSB lane passes
+  101/101 with local PC3.4 data.

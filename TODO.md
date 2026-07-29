@@ -962,6 +962,10 @@ that its exact runtime path is not already source-locked and tested.
    Entrance screenshot. The real PC3.4 V1/V2.0/V2.1/V2.2 pointer and completed
    V2.2-artpack checks pass. Broader live HUD, palette-lighting and packaged
    app capture remain open.
+   The real V1 first-viewport probe now prioritizes hash-verified loose files
+   over unrelated archives and accepts the initial party pose decoded from
+   the original DUNGEON.DAT header. It no longer times out on a normal shared
+   data directory or asserts the fallback `(5,5,N)` against real source data.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
