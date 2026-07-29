@@ -570,7 +570,9 @@ static int build_route_receipts_and_proof(
         !d1_thing_pass || !d2_door_spec) {
         return 0;
     }
-    if (!read_real_graphics_item_hash(path, 693u, &d0_door_size, &d0_door_hash) ||
+    /* ReDMCSB G0693 names the D3-door source variable.  Its PC3.4
+     * GRAPHICS.DAT payload is catalog record 246, not record 693. */
+    if (!read_real_graphics_item_hash(path, 246u, &d0_door_size, &d0_door_hash) ||
         !read_real_graphics_item_hash(path, (unsigned)d0_thing_spec->wall_frame_row,
                                       &d0_thing_size, &d0_thing_hash) ||
         !read_real_graphics_item_hash(path, 248u, &d1_door_size, &d1_door_hash) ||

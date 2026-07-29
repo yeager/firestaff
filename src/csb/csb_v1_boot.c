@@ -1603,7 +1603,10 @@ int csb_v1_boot_build_v22_f0128_draw_plan_pc34(
         profile->runtime.current_level >= profile->runtime.dungeon_handle->level_count) return 0;
     door_set = profile->runtime.dungeon_handle->map_door_set0[
         profile->runtime.current_level] & 3;
-    items[0] = 693u;
+    /* G0693 is the ReDMCSB D3-door symbol, not a GRAPHICS.DAT index.
+     * The PC3.4 GRAPHICS catalog stores that DoorSet-0 raster at record
+     * 246 (with the D2/D1 rasters at 247/248). */
+    items[0] = 246u;
     items[1] = 498u;
     items[2] = (unsigned)csb_v1_viewport_door_graphic_index_pc34(door_set, 2);
     items[3] = (unsigned)csb_v1_viewport_door_graphic_index_pc34(door_set, 1);
