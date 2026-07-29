@@ -12,6 +12,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "csb_v1_dungeon_loader_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -52,6 +54,13 @@ typedef struct {
 int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
                                          size_t size,
                                          CSB_V1_AtariSaveInfo *out_info);
+
+/* Decode and hand the authenticated MINI.DAT dungeon bytes directly to the
+ * existing memory-backed CSB dungeon loader.  The caller owns `out_dungeon`
+ * and releases it with csb_v1_dungeon_free(). */
+int csb_v1_atari_save_load_dungeon_pc34_compat(
+    const uint8_t *bytes, size_t size, CSB_V1_DungeonData *out_dungeon,
+    CSB_V1_AtariSaveInfo *out_info);
 
 const char *csb_v1_atari_save_decode_source_evidence_pc34_compat(void);
 

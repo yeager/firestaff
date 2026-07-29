@@ -1,5 +1,7 @@
 #include "csb_v1_atari_save_decode_pc34_compat.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 enum {
@@ -69,6 +71,23 @@ static int add_size(size_t *offset, size_t count, size_t unit, size_t limit)
     if (count > (limit - *offset) / unit) return 0;
     *offset += count * unit;
     return 1;
+}
+
+static void swap_atari_dungeon_words(uint8_t *bytes, size_t size)
+{
+    size_t offset;
+    if (!bytes || size < 6u) return;
+    for (offset = 0u; offset < 4u && offset + 1u < size; offset += 2u) {
+        uint8_t tmp = bytes[offset];
+        bytes[offset] = bytes[offset + 1u];
+        bytes[offset + 1u] = tmp;
+    }
+    /* Header bytes 4/5 are individual count/reserved bytes. */
+    for (offset = 6u; offset + 1u < size; offset += 2u) {
+        uint8_t tmp = bytes[offset];
+        bytes[offset] = bytes[offset + 1u];
+        bytes[offset + 1u] = tmp;
+    }
 }
 
 const char *csb_v1_atari_save_decode_source_evidence_pc34_compat(void)
@@ -163,5 +182,31 @@ int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
     out_info->item16_capacity = (int16_t)block3[CSB_BLOCK3_ITEM16_CAPACITY_WORD];
     out_info->dungeon_offset = offset;
     out_info->dungeon_size = size - offset;
+    return CSB_V1_ATARI_SAVE_OK;
+}
+
+int csb_v1_atari_save_load_dungeon_pc34_compat(
+    const uint8_t *bytes, size_t size, CSB_V1_DungeonData *out_dungeon,
+    CSB_V1_AtariSaveInfo *out_info)
+{
+    CSB_V1_AtariSaveInfo info;
+    uint8_t *little_endian;
+    int result;
+
+    if (!out_dungeon) return CSB_V1_ATARI_SAVE_ERR_NULL;
+    result = csb_v1_atari_save_decode_pc34_compat(bytes, size, &info);
+    if (result != CSB_V1_ATARI_SAVE_OK) return result;
+    if (info.dungeon_size > (size_t)0x7fffffff) {
+        return CSB_V1_ATARI_SAVE_ERR_COUNTS;
+    }
+    little_endian = (uint8_t *)malloc(info.dungeon_size);
+    if (!little_endian) return CSB_V1_ATARI_SAVE_ERR_TRUNCATED;
+    memcpy(little_endian, bytes + info.dungeon_offset, info.dungeon_size);
+    swap_atari_dungeon_words(little_endian, info.dungeon_size);
+    result = csb_v1_dungeon_load(out_dungeon, little_endian,
+                                 (int)info.dungeon_size);
+    free(little_endian);
+    if (result != 0) return result;
+    if (out_info) *out_info = info;
     return CSB_V1_ATARI_SAVE_OK;
 }

@@ -1,4 +1,5 @@
 #include "csb_v1_atari_save_decode_pc34_compat.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,6 +28,7 @@ int main(void)
     uint8_t *bytes = NULL;
     size_t size = 0u;
     CSB_V1_AtariSaveInfo info;
+    CSB_V1_DungeonData dungeon;
 
     if (csb_v1_atari_save_decode_pc34_compat(NULL, 0u, &info) != CSB_V1_ATARI_SAVE_ERR_NULL ||
         csb_v1_atari_save_decode_pc34_compat(tiny, sizeof(tiny), &info) != CSB_V1_ATARI_SAVE_ERR_BLOCK2_CHECKSUM) {
@@ -37,12 +39,14 @@ int main(void)
         return 0;
     }
     if (!read_file(path, &bytes, &size) ||
-        csb_v1_atari_save_decode_pc34_compat(bytes, size, &info) != CSB_V1_ATARI_SAVE_OK ||
+        csb_v1_atari_save_load_dungeon_pc34_compat(bytes, size, &dungeon, &info) != CSB_V1_ATARI_SAVE_OK ||
         info.champion_count != 1 || info.party_x != 22 || info.party_y != 18 ||
         info.party_direction != 2 || info.party_map_index != 4 ||
-        info.dungeon_offset != 10160u || info.dungeon_size != 32655u) {
+        info.dungeon_offset != 10160u || info.dungeon_size != 32655u ||
+        dungeon.level_count != 11 || !dungeon.raw_data) {
         free(bytes); return 1;
     }
+    csb_v1_dungeon_free(&dungeon);
     free(bytes);
     puts("PASS: original Atari CSB MINI.DAT decrypts to its source dungeon");
     return 0;

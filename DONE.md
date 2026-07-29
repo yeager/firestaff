@@ -822,9 +822,11 @@
   big-endian Block1/2/3 encryption and checksum rules now validate the
   original CSB Utility Disk's ITEM16, champion, timer, and timer-queue
   sections, and expose the authenticated unencrypted dungeon offset without
-  creating a replacement `DUNGEON.DAT`. The real local Atari artifact reaches
-  its payload at byte 10,160 (32,655 bytes). Runtime consumption remains
-  tracked under `CSB-SAVE-UTILITY`.
+  creating a replacement `DUNGEON.DAT`. The direct memory handoff applies the
+  necessary Atari word conversion and loads the original 11-level dungeon.
+  The real local Atari artifact reaches its payload at byte 10,160 (32,655
+  bytes). M11/runtime-profile consumption remains tracked under
+  `CSB-SAVE-UTILITY`.
 - ✅ 2026-07-26 Original saves and Utility Disk complete (Q-CSB-09). 32
   save/utility test files covering header build/read, F0435 provenance,
   export/import, CSBWin save loader boundary, utility save transaction.
