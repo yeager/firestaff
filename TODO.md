@@ -1448,7 +1448,11 @@ that its exact runtime path is not already source-locked and tested.
     inventory toggles now consume the shared PC34 `COMMAND.C G0447`
     C007..C015 surface. The M11 route writes through CSB's runtime party
     mirror and does not fall back to DM1 dungeon state. The focused runtime
-    regression and full 109-test CSB lane pass. CSB spell-area execution is
+    regression and full 109-test CSB lane pass. 2026-07-30: the same focused
+    runtime regression now follows the source pointer chain C116 action icon
+    -> F0389 action menu -> C114 row 1/F0391 and proves that STAB updates the
+    CSB runtime action index, clears the source action menu, and never enters
+    DM1 world state. CSB spell-area execution is
     still separate: it requires a source-owned caster/cast binding rather
     than the DM1 spell executor.
 28. **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,

@@ -464,6 +464,29 @@ int main(void)
                   state.v1ObjectDescriptionThing == dagger,
               "CSB eye panel retains the F0141-admitted runtime Thing receipt");
         (void)M11_GameView_DismissDialogOverlay(&state);
+        /* ReDMCSB COMMAND.C C116 opens champion 0's action list through
+         * F0389; C114 then invokes its second row through F0391. Exercise
+         * the real pointer route, not just the public action helper. */
+        check(M11_GameView_HandlePointerButton(
+                  &state, 234, 86, M11_DM1_MOUSE_MASK_LEFT) ==
+                  M11_GAME_INPUT_REDRAW && state.actingChampionOrdinal == 1,
+              "CSB C116 action-icon click opens champion action menu");
+        check(M11_GameView_GetActingActionIndices(&state, actions),
+              "CSB pointer-opened action menu resolves runtime action rows");
+        check(actions[0] == 42 && actions[1] == 9 && actions[2] == 28,
+              "CSB pointer-opened dagger menu retains THROW/STAB/SLASH rows");
+        check(M11_GameView_HandlePointerButton(
+                  &state, 234, 98, M11_DM1_MOUSE_MASK_LEFT) ==
+                  M11_GAME_INPUT_REDRAW,
+              "CSB C114 action-row click dispatches through runtime");
+        check(profile.runtime.party_state.Champions[0].ActionIndex == 9,
+              "CSB pointer-dispatched STAB writes runtime action index");
+        check(state.actingChampionOrdinal == 0,
+              "CSB pointer-dispatched action clears source action menu");
+        state.actionDisabledTicks[0] = 0;
+        state.world.party.champions[0].stamina.current = 100;
+        profile.runtime.party_state.Champions[0].CurrentStamina = 100;
+        write_u16(raw + 102, 80u);
         check(M11_GameView_SetActingChampion(&state, 0),
               "CSB action menu opens from runtime object action-set without DM1 world.things");
         check(M11_GameView_GetActingActionIndices(&state, actions),

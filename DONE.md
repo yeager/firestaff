@@ -43070,3 +43070,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   C007..C015 command surface when CSB owns the runtime. The route updates
   CSB's party mirror rather than falling into DM1 dungeon state. Verified by
   `test_m11_csb_leader_hand_no_dm1_fallback` and `ctest -L csb` (109/109).
+
+- ✅ 2026-07-30 CSB PC34 action-pointer runtime: the focused M11 CSB
+  regression now follows the original `COMMAND.C` C116 action-icon and C114
+  action-row routes through F0389/F0391. It proves the runtime-backed dagger
+  STAB action updates the CSB champion, clears the action menu, and never
+  uses DM1 world state.
