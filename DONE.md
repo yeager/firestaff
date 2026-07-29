@@ -42338,3 +42338,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   C005 frames after presentation.
 - Added `csb_v21_presented_startup_capture`, an opt-in PC3.4 regression that
   requires real PRESENTS, CHAOS, STRIKES BACK, and Entrance captures.
+
+## 2026-07-29 - CSB terminal F0128 capture
+
+- Fixed the boot-probe terminal path to draw and present the post-Entrance
+  F0128 dungeon frame before it writes optional indexed and host screenshots.
+  A receipt for map 0 can no longer be accompanied by the stale Entrance page.
+- Real PC3.4 V1/V2.0/V2.1/V2.2 pointer and completed V2.2-artpack runtime
+  checks pass with the captured runtime frame.

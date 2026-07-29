@@ -5197,6 +5197,24 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                                o->script,
                                                                frames,
                                                                &scriptFrames);
+            /* A boot-probe script may complete CSB's C004/C002/C003
+             * entrance handoff without entering the ordinary frame loop.
+             * Present the resulting F0128 runtime frame before emitting
+             * receipts or optional captures: otherwise the receipt described
+             * map 0 while the SDL surface still contained Entrance. */
+            if (gameView.active) {
+                M11_GameView_Draw(&gameView,
+                                  M11_Render_GetFramebuffer(),
+                                  M11_FB_WIDTH,
+                                  M11_FB_HEIGHT);
+                M11_GameView_RecordPresentedFrame(&gameView, SDL_GetTicks());
+                M11_GameView_DrawFpsOverlay(&gameView,
+                                             M11_Render_GetFramebuffer(),
+                                             M11_FB_WIDTH,
+                                             M11_FB_HEIGHT);
+                (void)m11_present_game_frame_and_publish_startup_capture(
+                    &gameView, &menuState);
+            }
             m11_phase_a_print_boot_probe_receipt(&gameView,
                                                  &menuState,
                                                  o->gameId,

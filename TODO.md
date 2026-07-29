@@ -956,6 +956,12 @@ that its exact runtime path is not already source-locked and tested.
    tested through the complete 2,036-VBlank script and its FTLCODE handoff
    in V1, V2.0, V2.1 and V2.2. Atari ST live dungeon/HUD material remains distinct
    work; it must not be routed through PC34 C017/C040 session ownership.
+   2026-07-29: the terminal boot-probe path now draws and presents the final
+   F0128 frame after its original Entrance command before emitting optional
+   captures. Receipts for map 0 can therefore no longer be paired with a stale
+   Entrance screenshot. The real PC3.4 V1/V2.0/V2.1/V2.2 pointer and completed
+   V2.2-artpack checks pass. Broader live HUD, palette-lighting and packaged
+   app capture remain open.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
