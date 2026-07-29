@@ -972,9 +972,13 @@ that its exact runtime path is not already source-locked and tested.
    data directory or asserts the fallback `(5,5,N)` against real source data.
    2026-07-29: `M11_Screenshot_CaptureCurrent` now exports the active
    source-owned indexed palette when one is installed. CSB V1 diagnostics no
-   longer reinterpret PC3.4 F0128 pixels through the generic DM1 VGA row;
-   the remaining live runtime image is therefore an honest capture. Its
-   no-party Prison light/HUD behavior remains open for a source-backed fix.
+   longer reinterpret PC3.4 F0128 pixels through the generic DM1 VGA row.
+   2026-07-29: the runtime handoff now also carries the original MAP.C
+   difficulty nibble. ReDMCSB PANEL.C F0337's difficulty-zero override is
+   therefore applied to the authentic Prison map before shared M11 light
+   fallback. A direct local PC3.4 V1 Prison capture is visibly bright again;
+   broader normal-party HUD/light consumption and packaged app capture remain
+   open.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

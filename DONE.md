@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 CSB Prison MAP.C palette handoff: the live M11 bridge now
+  retains the current original DUNGEON.DAT MAP.C difficulty nibble. This
+  restores ReDMCSB PANEL.C F0337's source rule that a zero-difficulty map is
+  fully bright before any torch or magical-light calculation. The real local
+  PC3.4 Prison route now captures a bright source viewport rather than an
+  almost-black fallback. Receipt, M11 palette-decision, and executable
+  original-data probes cover the handoff.
+
 - ✅ 2026-07-29 CSB V1/V2.x terminal Prison capture: the existing source
   Prison pointer regression now records both indexed and actual presented
   terminal runtime frames at 1x and 3x for V1, V2.0, V2.1, and V2.2. V2.2

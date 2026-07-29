@@ -2752,6 +2752,9 @@ typedef struct {
 typedef struct {
     int level_loaded;
     int current_level;
+    /* Source MAP.C high-nibble difficulty for the current level, or -1
+     * when the legacy fixture format has no such descriptor. */
+    int current_map_difficulty;
     int party_x;
     int party_y;
     int party_dir;

@@ -67,6 +67,10 @@ typedef struct CSB_V1_DungeonData {
     int map_offset_y[CSB_V1_MAX_LEVELS];
     int map_door_set0[CSB_V1_MAX_LEVELS];
     int map_door_set1[CSB_V1_MAX_LEVELS];
+    /* ReDMCSB DUNGEON_HEADER MAP.C high nibble. PANEL.C F0337 treats a
+     * zero value as the special fully-lit map rule before considering
+     * torches or magical light. */
+    int map_difficulty[CSB_V1_MAX_LEVELS];
     int map_experience_multiplier[CSB_V1_MAX_LEVELS];
     int square_bytes;
     int raw_map_data_base;

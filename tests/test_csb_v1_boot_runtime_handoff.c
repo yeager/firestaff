@@ -1368,6 +1368,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
               &mirror_receipt) == 1 && mirror_receipt.valid,
           "CSB runtime owns combined M11 mirror receipt");
     CHECK(mirror_receipt.view.level_loaded == 1 &&
+              mirror_receipt.view.current_map_difficulty == -1 &&
               mirror_receipt.view.party_x == p.runtime.party_x &&
               mirror_receipt.view.party_y == p.runtime.party_y &&
               mirror_receipt.party.party.championCount == 2 &&

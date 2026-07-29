@@ -212,6 +212,10 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
              * before PROJEXPL.C F0232 compares door defense. */
             out->map_door_set0[i] = (int)((raw_bit_d >> 8) & 0x0Fu);
             out->map_door_set1[i] = (int)((raw_bit_d >> 12) & 0x0Fu);
+            /* ReDMCSB DEFS.H MAP.C stores DungeonView palette difficulty
+             * in the high nibble. PANEL.C F0337 bypasses the normal light
+             * calculation entirely for map difficulty zero. */
+            out->map_difficulty[i] = (int)((raw_bit_c >> 12) & 0x0Fu);
             out->map_experience_multiplier[i] =
                 (int)((raw_bit_c >> 12) & 0x0Fu);
             if (out->level_widths[i] < 1 ||
@@ -310,6 +314,7 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
         out->map_offset_y[i] = 0;
         out->map_door_set0[i] = 0;
         out->map_door_set1[i] = 0;
+        out->map_difficulty[i] = -1;
         out->map_experience_multiplier[i] = 0;
         offset += 6;
     }

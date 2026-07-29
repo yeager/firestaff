@@ -2262,6 +2262,7 @@ void csb_v1_runtime_view_state_receipt_init_pc34(
         return;
     }
     memset(receipt, 0, sizeof(*receipt));
+    receipt->current_map_difficulty = -1;
 }
 
 int csb_v1_runtime_view_state_receipt_from_profile_pc34(
@@ -2280,6 +2281,14 @@ int csb_v1_runtime_view_state_receipt_from_profile_pc34(
      * pose to the runtime before the view mirrors the active state. */
     out_receipt->level_loaded = profile->dungeon_handle ? 1 : 0;
     out_receipt->current_level = profile->current_level;
+    if (profile->dungeon_handle && profile->current_level >= 0 &&
+        profile->current_level < ((const CSB_V1_DungeonData *)
+                                      profile->dungeon_handle)->level_count) {
+        const CSB_V1_DungeonData *dungeon =
+            (const CSB_V1_DungeonData *)profile->dungeon_handle;
+        out_receipt->current_map_difficulty =
+            dungeon->map_difficulty[profile->current_level];
+    }
     out_receipt->party_x = profile->party_x;
     out_receipt->party_y = profile->party_y;
     out_receipt->party_dir = profile->party_dir;

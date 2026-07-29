@@ -1512,6 +1512,7 @@ typedef struct {
     struct {
         int level_loaded;
         int current_level;
+        int current_map_difficulty;
         int party_x, party_y, party_dir;
         int tick_count;
         int runtime_object_sprite_drawn_count;

@@ -2378,6 +2378,8 @@ static void m11_apply_csb_runtime_m11_mirror_receipt(
     }
     state->csbState.level_loaded = receipt->view.level_loaded;
     state->csbState.current_level = receipt->view.current_level;
+    state->csbState.current_map_difficulty =
+        receipt->view.current_map_difficulty;
     state->csbState.party_x = receipt->view.party_x;
     state->csbState.party_y = receipt->view.party_y;
     state->csbState.party_dir = receipt->view.party_dir;
@@ -33124,6 +33126,14 @@ static int m11_dm1_dungeon_view_light(const M11_GameViewState* state,
 
 static int m11_compute_dungeon_palette_index(const M11_GameViewState* state) {
     struct DungeonViewLight_Compat light;
+    /* ReDMCSB PANEL.C F0337 first checks CurrentMap->C.Difficulty. The
+     * CSB runtime owns this MAP.C value; M11 cannot infer it from its
+     * shared DM1 world mirror, which deliberately has no CSB dungeon.
+     * Difficulty zero therefore selects the source's brightest row. */
+    if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        state->csbState.current_map_difficulty == 0) {
+        return 0;
+    }
     if (m11_dm1_dungeon_view_light(state, &light)) {
         return light.paletteIndex;
     }

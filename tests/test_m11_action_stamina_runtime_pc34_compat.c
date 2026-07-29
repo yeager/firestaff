@@ -5800,6 +5800,21 @@ static void test_light_decrements_action_hand_charges(void) {
     }
 }
 
+static void test_csb_bright_map_uses_source_f0337_palette_zero(void) {
+    M11_GameViewState state;
+
+    M11_GameView_Init(&state);
+    state.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
+    state.csbState.current_map_difficulty = 0;
+    ASSERT_EQ(M11_GameView_GetDungeonPaletteIndex(&state), 0,
+              "CSB MAP.C difficulty zero keeps ReDMCSB F0337 full-bright palette");
+
+    state.csbState.current_map_difficulty = 4;
+    ASSERT_EQ(M11_GameView_GetDungeonPaletteIndex(&state), 5,
+              "CSB nonzero MAP.C difficulty does not claim the bright-map override");
+    M11_GameView_Shutdown(&state);
+}
+
 static void test_heal_action_uses_hidden_heal_skill(void) {
     M11_GameViewState state;
 
@@ -9727,6 +9742,7 @@ int main(void) {
     test_freeze_life_blue_box_consumes_action_hand();
     test_freeze_life_green_box_consumes_action_hand_and_caps();
     test_light_decrements_action_hand_charges();
+    test_csb_bright_map_uses_source_f0337_palette_zero();
     test_heal_action_uses_hidden_heal_skill();
     test_heal_no_effect_still_runs_f0407_tail();
     test_window_action_schedules_thieves_eye_and_decrements_charges();
