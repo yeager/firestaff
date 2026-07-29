@@ -388,7 +388,10 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
     if (outPresentedFrame) {
         *outPresentedFrame = NULL;
     }
-    if (csb_v20_active && presented_frame) {
+    /* CSB's title, PRESENTS, CHAOS/STRIKES and Entrance pages own special
+     * palette indices.  V2.0 cleanup is valid for the normal game surface,
+     * but rewriting those indices corrupts their source palette mapping. */
+    if (csb_v20_active && presented_frame && specialPalette < 0) {
         static unsigned char csb_v20_scratch[M11_FB_BYTES];
         memcpy(csb_v20_scratch, presented_frame, sizeof(csb_v20_scratch));
         (void)csb_v2_filter_chain_apply_indexed(csb_v20_scratch,
@@ -642,7 +645,8 @@ static int m11_present_csb_v20_rgba_filter_if_enabled(
 
     if (!gameView ||
         gameView->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        gameView->presentationMode != M12_PRESENTATION_V20_FILTERED) {
+        gameView->presentationMode != M12_PRESENTATION_V20_FILTERED ||
+        M11_GameView_GetPresentationSpecialPalette(gameView) >= 0) {
         return 1;
     }
     filter_config = csb_v2_filter_config_get();
@@ -686,6 +690,7 @@ static int m11_present_game_frame_and_publish_startup_capture(
     const M11_GameViewState* gameView,
     M12_StartupMenuState* menuState) {
     const unsigned char* presented_frame = NULL;
+    const unsigned char* source_frame = NULL;
     const unsigned char* presented_rgba = NULL;
     int presented_width = 0;
     int presented_height = 0;
@@ -696,6 +701,9 @@ static int m11_present_game_frame_and_publish_startup_capture(
     if (!m11_present_game_frame(gameView, &presented_frame)) {
         return 0;
     }
+    /* V2.0 may put a filtered copy on the host presentation path.  Startup
+     * receipts must still authenticate the unmodified PC3.4 source page. */
+    source_frame = M11_Render_GetFramebuffer();
     /* M11_Render_GetPresentedRGBA is populated in the renderer immediately
      * before SDL_RenderPresent.  Do not promote a CSB startup receipt when
      * that actual host buffer is absent, even if SDL still has a window. */
@@ -713,27 +721,27 @@ static int m11_present_game_frame_and_publish_startup_capture(
         presented_width > 0 && presented_height > 0;
 #endif
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        presented_frame) {
+        presented_frame && source_frame) {
         csb_special_palette =
              M11_GameView_GetPresentationSpecialPalette(gameView);
         csb_source_output_matches = csb_special_palette >= 0 &&
             M11_GameView_CSBPresentedFrameMatchesCurrentSource(
-                gameView, presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
+                gameView, source_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
                 csb_special_palette) &&
             (gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED
-                 ? M11_Render_PresentedEpxIndexedSpecialMatches(
-                       presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
-                       csb_special_palette)
-                 : M11_Render_PresentedIndexedSpecialMatches(
-                       presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
-                       csb_special_palette));
+                ? M11_Render_PresentedEpxIndexedSpecialMatches(
+                      presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
+                      csb_special_palette)
+                : M11_Render_PresentedIndexedSpecialMatches(
+                      presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
+                      csb_special_palette));
     }
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-        presented_frame && presented_rgba && presented_width > 0 &&
+        source_frame && presented_frame && presented_rgba && presented_width > 0 &&
         presented_height > 0 && csb_source_output_matches) {
         M11_GameView_RecordCSBPresentedIndexedFrame(
             (M11_GameViewState *)gameView,
-            presented_frame,
+            source_frame,
             M11_FB_WIDTH,
             M11_FB_HEIGHT,
             m11_running_from_macos_app_bundle(),

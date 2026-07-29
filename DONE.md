@@ -1,3 +1,10 @@
+- ✅ 2026-07-29 CSB V2.0 filtered startup source capture: V2.0 now separates
+  normal game-frame cleanup from CSB's source-owned special-palette startup
+  pages. Enabling both dither cleanup and palette correction cannot rewrite
+  PRESENTS, CHAOS/STRIKES or Entrance before palette expansion. The production
+  V2.0 real-PC3.4 executable regression records all four source captures;
+  the V2.1 EPX capture regression also passes.
+
 - ✅ 2026-07-29 CSB startup session-contract repair: corrected the standalone
   C001 fixture to the real 320x153 title surface, TITLE.C's initial 16x4
   CHAOS zoom rectangle, and the separate step-21 hold phase. The contract
