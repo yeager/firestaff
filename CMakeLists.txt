@@ -33463,6 +33463,14 @@ add_executable(test_nexus_v1_dgn_material_raster
         COMMAND test_csb_v1_atari_save_decode_pc34_compat)
     set_tests_properties(csb_v1_atari_save_decode_pc34_compat PROPERTIES
         LABELS "tier2;csb;save;real_data;skip_safe")
+    add_test(
+        NAME csb_v1_atari_mini_archive_corpus
+        COMMAND sh "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_mini_archive_corpus.sh"
+            "$<TARGET_FILE:test_csb_v1_atari_save_decode_pc34_compat>"
+    )
+    set_tests_properties(csb_v1_atari_mini_archive_corpus PROPERTIES
+        LABELS "tier2;csb;save;real_data;archive;skip_safe"
+    )
 
     add_executable(test_csb_v1_atari_save_runtime_handoff_pc34_compat
         tests/test_csb_v1_atari_save_runtime_handoff_pc34_compat.c

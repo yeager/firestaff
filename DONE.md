@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 CSB Atari original archive save regression: CTest now extracts
+  the genuine `HardDisk/2009-02-22 PP/MINI.DAT` member from a locally supplied
+  original CSB Atari archive and validates Firestaff's big-endian decode plus
+  GAMEBLOCK2 byte-preserving write-back. The test is skip-safe when the user
+  has not supplied the archive and does not add game data to the repository.
+
 - ✅ 2026-07-29 CSB Utility Disk fail-closed presentation cleanup: removed
   M11's unused semantic-row/rectangle Utility Disk painter. It had no live
   call site and could not prove original Utility Disk pixels, so the runtime

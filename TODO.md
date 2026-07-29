@@ -1358,6 +1358,10 @@ that its exact runtime path is not already source-locked and tested.
     `FIRESTAFF_CSB_ATARI_SAVE_CORPUS` and exercises original big-endian
     GAMEBLOCK1/2 decoding, runtime Resume, atomic write-back, canonical-slot
     backup recovery, and champion mutation without creating substitute bytes.
+    2026-07-30: the local original Atari archive now has a skip-safe CTest
+    corpus regression that extracts its genuine `MINI.DAT` and proves decode
+    plus GAMEBLOCK2 byte-preserving round-trip. This is campaign-save coverage,
+    not evidence for the still-missing PC/CSBWin `CSBGAME*.DAT` corpus.
     The previously cited AnnotatedCSB `CSBGAME2.DAT` SHA-256
     (`762db0d0617a362910edb739f02a8dca246c04a6c0e44113c78399278f72b189`)
     is not present in the current data roots, so it is not claimed as a local
