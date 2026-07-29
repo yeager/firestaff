@@ -326,48 +326,86 @@ static int csb_v22_famg_find_slot_in_manifest(const char* manifest_path,
     fclose(fp);
     text[size] = '\0';
 
-    /* Object-based pass: modern_asset_manifest.json fixtures are often
-     * compact one-line JSON with multiple top-level categories. Rather
-     * than latching one category per physical line, scan every JSON
-     * object and extract its fields. The outer manifest object is also
-     * scanned but will not match later slot ids because extract_string()
-     * returns only the first id inside that outer object. */
-    const char* scan = text;
-    while ((scan = strchr(scan, '{')) != NULL) {
-        const char* end = scan;
-        int depth = 0;
-        while (*end) {
-            if (*end == '{') {
-                depth++;
-            } else if (*end == '}') {
-                depth--;
-                if (depth == 0) {
-                    break;
+    /* Locate the exact id first, then isolate its immediate JSON object.
+     * The old brace walker began with the outer manifest object and its
+     * field extractor always saw the first entry.  A finished pretty-printed
+     * 29-slot CSB pack was consequently classified as one real asset plus
+     * 28 partial assets.  Source_file names are required to be local and the
+     * manifest grammar does not permit an id string inside another entry, so
+     * the nearest enclosing braces are the selected asset object. */
+    {
+        const char* match;
+        const char* begin;
+        const char* end;
+        size_t slot_len = strlen(slot_id);
+        match = text;
+        for (;;) {
+            const char* value;
+            match = strstr(match, "\"id\"");
+            if (!match) break;
+            value = match + 4;
+            while (*value == ' ' || *value == '\t' || *value == '\r' ||
+                   *value == '\n') ++value;
+            if (*value != ':') {
+                match += 4;
+                continue;
+            }
+            ++value;
+            while (*value == ' ' || *value == '\t' || *value == '\r' ||
+                   *value == '\n') ++value;
+            if (*value == '"' &&
+                strncmp(value + 1, slot_id, slot_len) == 0 &&
+                value[slot_len + 1] == '"') {
+                break;
+            }
+            match += 4;
+        }
+        while (match) {
+            begin = match;
+            while (begin > text && *begin != '{') --begin;
+            end = match;
+            while (*end && *end != '}') ++end;
+            if (*begin != '{' || *end != '}') break;
+            csb_v22_famg_buf_reset();
+            {
+                const char* cursor = begin;
+                while (cursor <= end) {
+                    csb_v22_famg_buf_append_char(*cursor);
+                    ++cursor;
                 }
             }
-            ++end;
-        }
-        if (*end != '}') break;
-
-        csb_v22_famg_buf_reset();
-        {
-            const char* c = scan;
-            while (c <= end) {
-                csb_v22_famg_buf_append_char(*c);
-                ++c;
+            {
+                CSB_V22_FamgSlotRaw raw;
+                csb_v22_famg_slot_raw_init(&raw);
+                csb_v22_famg_extract_fields_from_buf(&raw);
+                if (raw.has_id && strcmp(raw.id, slot_id) == 0 &&
+                    raw.has_source_file) {
+                    *out = raw;
+                    free(text);
+                    return 1;
+                }
+            }
+            /* Provenance metadata may repeat an asset id. Only the actual
+             * manifest entry has source_file; continue past metadata. */
+            match = end + 1;
+            for (;;) {
+                const char* value;
+                match = strstr(match, "\"id\"");
+                if (!match) break;
+                value = match + 4;
+                while (*value == ' ' || *value == '\t' || *value == '\r' ||
+                       *value == '\n') ++value;
+                if (*value == ':') {
+                    ++value;
+                    while (*value == ' ' || *value == '\t' || *value == '\r' ||
+                           *value == '\n') ++value;
+                    if (*value == '"' &&
+                        strncmp(value + 1, slot_id, slot_len) == 0 &&
+                        value[slot_len + 1] == '"') break;
+                }
+                match += 4;
             }
         }
-
-        CSB_V22_FamgSlotRaw raw;
-        csb_v22_famg_slot_raw_init(&raw);
-        csb_v22_famg_extract_fields_from_buf(&raw);
-        if (raw.has_id && strcmp(raw.id, slot_id) == 0) {
-            *out = raw;
-            free(text);
-            return 1;
-        }
-
-        scan++;
     }
 
     free(text);

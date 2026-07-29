@@ -19,6 +19,8 @@
 #include "config_m12.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v22_finished_art_material_gate_pc34.h"
+#include "csb_v22_modern_assets_pc34.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_save_load.h"
@@ -7872,11 +7874,19 @@ int M12_StartupMenu_GetLaunchGate(
     pmode = m12_clamp_index(state->gameOptions[gameIndex].presentationModeIndex,
                             M12_PRESENTATION_MODE_COUNT);
     gate.presentationReady = 1;
-    if (pmode == M12_PRESENTATION_V22_MODERN &&
-        (!entry->gameId ||
-         (strcmp(entry->gameId, "dm1") != 0 &&
-          strcmp(entry->gameId, "nexus") != 0))) {
-        gate.presentationReady = 0;
+    if (pmode == M12_PRESENTATION_V22_MODERN) {
+        if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
+            const char* runtime_data_dir = M12_AssetStatus_GetRuntimeDataDir(
+                &state->assetStatus, "csb");
+            csb_v22_set_manifest_path(runtime_data_dir);
+            csb_v22_famg_set_manifest_path(runtime_data_dir);
+            gate.presentationReady = csb_v22_modern_assets_available() &&
+                csb_v22_famg_is_finished_real();
+        } else if (!entry->gameId ||
+                   (strcmp(entry->gameId, "dm1") != 0 &&
+                    strcmp(entry->gameId, "nexus") != 0)) {
+            gate.presentationReady = 0;
+        }
     }
     gate.dataReady = gate.boot.dataReady;
     gate.versionReady = gate.boot.versionReady;
