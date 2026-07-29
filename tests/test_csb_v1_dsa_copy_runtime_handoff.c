@@ -156,6 +156,13 @@ static void test_move_transaction(void)
         0x0686u, 1u, 0x0686u, 0u, 0x0686u, 8u,
         0x0686u, 0x0421u, 0x0686u, 0u, 0x124bu, 0u
     };
+    uint16_t indirect_words[] = { 0x168bu };
+    uint32_t indirect_parameters[] = {
+        86u, 10u,
+        0u, 0x0421u, 8u, 0u, 1u,
+        0u, 0x0203u, 4u, 0x20u, 1u,
+        0u, 0u
+    };
     CSB_V1_ChaosMagicState state;
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWinDSAStackContext context;
@@ -182,6 +189,22 @@ static void test_move_transaction(void)
               store.destination_location == 0x0421u &&
               store.destination_depth == 0u,
           "STKOP_Move commits the exact CSBWin ten-word request after acceptance");
+
+    configure_action(&action, indirect_words,
+                     (int)(sizeof(indirect_words) / sizeof(indirect_words[0])));
+    context.parameters = indirect_parameters;
+    context.parameter_count = (int)(sizeof(indirect_parameters) /
+                                    sizeof(indirect_parameters[0]));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 1 &&
+              store.source_type == 1 && store.source_object_mask == 0x20u &&
+              store.destination_type == 1 &&
+              store.destination_position_mask == 8u,
+          "STKOP_I_Move expands through the same source-owned transaction");
+    context.parameters = NULL;
+    context.parameter_count = 0;
 
     configure_action(&action, rollback_words,
                      (int)(sizeof(rollback_words) / sizeof(rollback_words[0])));

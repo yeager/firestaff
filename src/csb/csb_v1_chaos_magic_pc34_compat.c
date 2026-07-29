@@ -625,6 +625,7 @@ csb_v1_csbwin_dsa_expand_indirect(uint32_t *stack, int *depth,
     switch (parameters[0]) {
     case 84u: direct_subcode = 63u; break;  /* I_Monster! -> Monster! */
     case 85u: direct_subcode = 66u; break;  /* I_Char! -> Char! */
+    case 86u: direct_subcode = 73u; break;  /* I_Move -> Move */
     case 81u: direct_subcode = 68u; break;  /* I_CreateCloud -> CreateCloud */
     case 83u: direct_subcode = 62u; break;  /* I_TeleportParty -> TeleportParty */
     case 93u: direct_subcode = 95u; break;  /* I_DelMon -> DelMon */

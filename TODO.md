@@ -974,7 +974,7 @@ that its exact runtime path is not already source-locked and tested.
     remaining 21 fully unowned stack words: `DEL`, `ADD`, `CAST`,
     `FILTEREDCAST`, `THROW`,
     the `I_*` indirect family (`DEL/ADD/CAST/MONSTER!/
-    CHAR!/MOVE/COPY/CELL!/THROW/DELAY/CAUSEPOISON/
+    CHAR!/COPY/CELL!/THROW/DELAY/CAUSEPOISON/
     FILTEREDCAST/SWAPCHARACTER`). `SAY` is now
     source-owned and transactional; the listed operations still require one
     transactional world-
@@ -1029,7 +1029,7 @@ that its exact runtime path is not already source-locked and tested.
     preserves the requested destination cell position. A later invalid DSA
     word rolls the candidate raw list back. Multi-bit destination selection
     remains fail-closed until the original `STRandom` owner is bound; cursor,
-    character, monster and chest endpoints plus `I_MOVE` remain open rather
+    character, monster and chest endpoints remain open rather
     than being routed through a synthetic cell substitute.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
