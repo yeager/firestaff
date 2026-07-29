@@ -571,6 +571,8 @@ static void check_dot_config_migrates_to_default_data_directory(void) {
     M12_Config config;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char expected[M12_ASSET_DATA_DIR_CAPACITY];
+    static const char* const placeholders[] = { ".", "./", ".\\", "./.", ".//" };
+    size_t i;
 
     reset_dialog_stub();
     CHECK(isolate_home_and_data_root(dataRoot));
@@ -578,12 +580,14 @@ static void check_dot_config_migrates_to_default_data_directory(void) {
     if (failures) {
         return;
     }
-    M12_Config_SetDefaults(&config);
-    snprintf(config.dataDir, sizeof(config.dataDir), ".");
-    CHECK(M12_Config_Save(&config) == 1);
-    M12_Config_Load(&config, NULL);
-    CHECK(strcmp(config.dataDir, expected) == 0);
-    CHECK(strcmp(config.dataDir, ".") != 0);
+    for (i = 0U; i < sizeof(placeholders) / sizeof(placeholders[0]); ++i) {
+        M12_Config_SetDefaults(&config);
+        snprintf(config.dataDir, sizeof(config.dataDir), "%s", placeholders[i]);
+        CHECK(M12_Config_Save(&config) == 1);
+        M12_Config_Load(&config, NULL);
+        CHECK(strcmp(config.dataDir, expected) == 0);
+        CHECK(strcmp(config.dataDir, ".") != 0);
+    }
 }
 
 static void check_active_scan_renders_progress_bar(void) {

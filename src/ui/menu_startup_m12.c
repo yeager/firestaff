@@ -3170,6 +3170,8 @@ void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state) {
 
 static void m12_save_config(const M12_StartupMenuState* state) {
     M12_Config config;
+    char canonicalDataDir[M12_CONFIG_DATA_DIR_CAPACITY];
+    const char* activeDataDir;
     int gi;
     if (!state) {
         return;
@@ -3292,7 +3294,16 @@ static void m12_save_config(const M12_StartupMenuState* state) {
         config.gameAspectRatio[gi] = opts.aspectRatio;
         config.gameResolution[gi] = opts.resolution;
     }
-    snprintf(config.dataDir, sizeof(config.dataDir), "%s", M12_AssetStatus_GetDataDir(&state->assetStatus));
+    /* Do not let a platform dialog's relative display token leak back into
+     * the launcher config through an asset-status fallback. */
+    activeDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    if (m12_canonicalize_data_directory(activeDataDir,
+                                        canonicalDataDir,
+                                        sizeof(canonicalDataDir))) {
+        snprintf(config.dataDir, sizeof(config.dataDir), "%s", canonicalDataDir);
+    } else {
+        (void)FSP_ResolveDataDir(config.dataDir, sizeof(config.dataDir), NULL);
+    }
     snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s", state->quickResumeSavePath);
     M12_Config_Save(&config);
 }

@@ -991,8 +991,36 @@ static void m12_parse_line(M12_Config* config, char* line) {
 }
 
 static int m12_config_data_dir_is_placeholder(const char* path) {
-    return !path || path[0] == '\0' || strcmp(path, ".") == 0 ||
-           strcmp(path, "./") == 0 || strcmp(path, ".\\") == 0;
+    const char* cursor;
+    int sawDot = 0;
+    if (!path || path[0] == '\0') {
+        return 1;
+    }
+    /* SDL's native macOS folder chooser has returned several spellings of
+     * the current-directory display token.  None identify a durable game
+     * data location, so treat a path made exclusively of '.' components as
+     * an invalid persisted value.  Do not reject '..' or '../Games'. */
+    cursor = path;
+    while (*cursor) {
+        const char* component;
+        size_t componentLength;
+        while (*cursor == '/' || *cursor == '\\') {
+            ++cursor;
+        }
+        if (!*cursor) {
+            break;
+        }
+        component = cursor;
+        while (*cursor && *cursor != '/' && *cursor != '\\') {
+            ++cursor;
+        }
+        componentLength = (size_t)(cursor - component);
+        if (componentLength != 1U || component[0] != '.') {
+            return 0;
+        }
+        sawDot = 1;
+    }
+    return sawDot;
 }
 
 int M12_Config_Save(const M12_Config* config) {
