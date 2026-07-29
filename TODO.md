@@ -971,8 +971,8 @@ that its exact runtime path is not already source-locked and tested.
     filters, state transitions, and runtime mutation with hard fail-closed
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
-    remaining 22 fully unowned stack words: `DEL`, `ADD`, `CAST`,
-    `FILTEREDCAST`, `THROW`, `MOVE`,
+    remaining 21 fully unowned stack words: `DEL`, `ADD`, `CAST`,
+    `FILTEREDCAST`, `THROW`,
     the `I_*` indirect family (`DEL/ADD/CAST/MONSTER!/
     CHAR!/MOVE/COPY/CELL!/THROW/DELAY/CAUSEPOISON/
     FILTEREDCAST/SWAPCHARACTER`). `SAY` is now
@@ -1023,6 +1023,14 @@ that its exact runtime path is not already source-locked and tested.
     resolved C04 Thing and post-mutation C04 hash, and invalidates on later
     raw-record drift. Broader
     DSA-world behavior remains under CSB-DSA-MONSTER-WORLD.
+    2026-07-29: direct `MOVE` now consumes CSBWin's exact ten-word
+    `MoveObject` contract transactionally. Its real PC3.4 cell-to-cell owner
+    selects ordinary DB5..DB13 Things by source type/position/depth mask and
+    preserves the requested destination cell position. A later invalid DSA
+    word rolls the candidate raw list back. Multi-bit destination selection
+    remains fail-closed until the original `STRandom` owner is bound; cursor,
+    character, monster and chest endpoints plus `I_MOVE` remain open rather
+    than being routed through a synthetic cell substitute.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

@@ -581,7 +581,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 8u: case 33u: case 34u: case 35u: case 36u: case 42u: case 44u: case 45u:
     case 46u: case 49u: case 51u: case 52u: case 53u: case 54u: case 55u:
     case 56u: case 57u: case 58u: case 60u: case 62u: case 63u: case 64u: case 65u:
-    case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
+    case 66u: case 69u: case 71u: case 72u: case 73u: case 74u: case 75u: case 76u:
     case 95u: case 96u:
     case 77u: case 78u: case 92u: case 100u: case 101u: case 102u: case 106u:
     case 47u: case 90u: case 103u: case 104u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
@@ -843,6 +843,7 @@ static int csb_v1_csbwin_dsa_subcode_is_dungeon_mutation(uint16_t subcode)
     case 56u:  /* STKOP_SetBroken */
     case 58u:  /* STKOP_CellStore */
     case 63u:  /* STKOP_MonsterStore */
+    case 73u:  /* STKOP_Move */
     case 95u:  /* STKOP_DelMon */
     case 96u:  /* STKOP_InsMon */
     case 66u:  /* STKOP_CharStore */
@@ -1409,6 +1410,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_CLOUD_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_PARTY_TELEPORTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_MONSTER_GROUP_MUTATIONS 100
+#define CSB_V1_CSBWIN_DSA_PENDING_OBJECT_MOVES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS 100
@@ -1503,6 +1505,19 @@ typedef struct {
     uint32_t operand;
     int insert_monster;
 } CSB_V1_CSBWinDSAPendingMonsterGroupMutation;
+
+typedef struct {
+    int32_t source_type;
+    uint32_t source_object_mask;
+    uint32_t source_position_mask;
+    uint32_t source_location;
+    uint32_t source_depth;
+    int32_t destination_type;
+    uint32_t destination_object_mask;
+    uint32_t destination_position_mask;
+    uint32_t destination_location;
+    uint32_t destination_depth;
+} CSB_V1_CSBWinDSAPendingObjectMove;
 
 typedef struct {
     uint16_t thing;
@@ -1678,6 +1693,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *pending_party_teleport_count,
     CSB_V1_CSBWinDSAPendingMonsterGroupMutation *pending_monster_group_mutations,
     int *pending_monster_group_mutation_count,
+    CSB_V1_CSBWinDSAPendingObjectMove *pending_object_moves,
+    int *pending_object_move_count,
     CSB_V1_CSBWinDSAPendingActuatorCopy *pending_actuator_copies,
     int *pending_actuator_copy_count,
     CSB_V1_CSBWinDSAPendingSoundRequest *pending_sound_requests,
@@ -1733,6 +1750,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_poison_writes || !pending_poison_write_count ||
         !pending_party_teleports || !pending_party_teleport_count ||
         !pending_monster_group_mutations || !pending_monster_group_mutation_count ||
+        !pending_object_moves || !pending_object_move_count ||
         !pending_actuator_copies || !pending_actuator_copy_count ||
         !pending_sound_requests || !pending_sound_request_count ||
         !adjust_skills_parameters_requested || !pending_adjust_skills_parameters ||
@@ -1757,6 +1775,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_poison_write_count < 0 ||
         *pending_party_teleport_count < 0 ||
         *pending_monster_group_mutation_count < 0 ||
+        *pending_object_move_count < 0 ||
         *pending_actuator_copy_count < 0 ||
         *pending_say_text_request_count < 0 ||
         *pending_display_text_request_count < 0 ||
@@ -1863,6 +1882,36 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         pending_monster_group_mutations[*pending_monster_group_mutation_count]
             .insert_monster = subcode == 96u;
         ++*pending_monster_group_mutation_count;
+        break;
+    case 73u: /* STKOP_Move, CSBWin DSA.cpp:4664-4693. */
+        /* MoveObject validates the whole source/destination pair before it
+         * performs either mutation.  Keep its ten source operands queued in
+         * the same order until every later DSA word has succeeded. */
+        if (!context->move_object ||
+            *pending_object_move_count >= CSB_V1_CSBWIN_DSA_PENDING_OBJECT_MOVES ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_object_moves[*pending_object_move_count].destination_depth = v;
+        pending_object_moves[*pending_object_move_count].destination_location = w;
+        pending_object_moves[*pending_object_move_count].destination_position_mask = count;
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count)) goto underflow;
+        pending_object_moves[*pending_object_move_count].destination_object_mask = v;
+        pending_object_moves[*pending_object_move_count].destination_type = (int32_t)w;
+        pending_object_moves[*pending_object_move_count].source_depth = count;
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count)) goto underflow;
+        pending_object_moves[*pending_object_move_count].source_location = v;
+        pending_object_moves[*pending_object_move_count].source_position_mask = w;
+        pending_object_moves[*pending_object_move_count].source_object_mask = count;
+        if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) goto underflow;
+        pending_object_moves[*pending_object_move_count].source_type = (int32_t)v;
+        ++*pending_object_move_count;
         break;
     case 69u: /* STKOP_Sound, CSBWin DSA.cpp:4612-4624. */
         if (!context->play_sound ||
@@ -3743,6 +3792,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_party_teleports[CSB_V1_CSBWIN_DSA_PENDING_PARTY_TELEPORTS];
     CSB_V1_CSBWinDSAPendingMonsterGroupMutation pending_monster_group_mutations[
         CSB_V1_CSBWIN_DSA_PENDING_MONSTER_GROUP_MUTATIONS];
+    CSB_V1_CSBWinDSAPendingObjectMove
+        pending_object_moves[CSB_V1_CSBWIN_DSA_PENDING_OBJECT_MOVES];
     CSB_V1_CSBWinDSAPendingActuatorCopy
         pending_actuator_copies[CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES];
     CSB_V1_CSBWinDSAPendingSoundRequest
@@ -3783,6 +3834,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_cloud_request_count = 0;
     int pending_party_teleport_count = 0;
     int pending_monster_group_mutation_count = 0;
+    int pending_object_move_count = 0;
     int pending_actuator_copy_count = 0;
     int pending_sound_request_count = 0;
     int discard_text_requested = 0;
@@ -4391,6 +4443,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     &pending_party_teleport_count,
                     pending_monster_group_mutations,
                     &pending_monster_group_mutation_count,
+                    pending_object_moves, &pending_object_move_count,
                     pending_actuator_copies,
                     &pending_actuator_copy_count, pending_sound_requests,
                     &pending_sound_request_count, &discard_text_requested,
@@ -4661,6 +4714,22 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             pending_monster_group_mutations[i].operand;
         candidate.last_monster_group_insert =
             pending_monster_group_mutations[i].insert_monster;
+    }
+    for (i = 0; i < pending_object_move_count; ++i) {
+        if (!context->move_object || !context->move_object(
+                context->dungeon_user,
+                pending_object_moves[i].source_type,
+                pending_object_moves[i].source_object_mask,
+                pending_object_moves[i].source_position_mask,
+                pending_object_moves[i].source_location,
+                pending_object_moves[i].source_depth,
+                pending_object_moves[i].destination_type,
+                pending_object_moves[i].destination_object_mask,
+                pending_object_moves[i].destination_position_mask,
+                pending_object_moves[i].destination_location,
+                pending_object_moves[i].destination_depth)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
     }
     for (i = 0; i < pending_actuator_copy_count; ++i) {
         if ((context->copy_actuator_payload &&
@@ -5082,6 +5151,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.create_cloud = runner->create_cloud;
     context.teleport_party = runner->teleport_party;
     context.mutate_monster_group = runner->mutate_monster_group;
+    context.move_object = runner->move_object;
     context.discard_text = runner->discard_text;
     context.play_sound = runner->play_sound;
     context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;

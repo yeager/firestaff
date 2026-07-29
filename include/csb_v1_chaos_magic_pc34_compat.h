@@ -410,6 +410,15 @@ typedef int (*CSB_V1_CSBWinDSATeleportPartyFn)(void *user,
  * and TIMER updates; the DSA VM only stages the exact source operands. */
 typedef int (*CSB_V1_CSBWinDSAMutateMonsterGroupFn)(
     void *user, uint32_t location, uint32_t operand, int insert_monster);
+/* CSBWin MoveObject.cpp validates both endpoints before it removes an object.
+ * The VM therefore carries the complete ten-word request to the loaded
+ * runtime, which owns cell, cursor, possession, chest and timer records. */
+typedef int (*CSB_V1_CSBWinDSAMoveObjectFn)(
+    void *user, int32_t source_type, uint32_t source_object_mask,
+    uint32_t source_position_mask, uint32_t source_location,
+    uint32_t source_depth, int32_t destination_type,
+    uint32_t destination_object_mask, uint32_t destination_position_mask,
+    uint32_t destination_location, uint32_t destination_depth);
 typedef int (*CSB_V1_CSBWinDSADiscardTextFn)(void *user);
 typedef int (*CSB_V1_CSBWinDSAPlaySoundFn)(
     void *user, int32_t sound_number, int32_t volume, int32_t flags);
@@ -607,6 +616,7 @@ typedef struct {
     CSB_V1_CSBWinDSACreateCloudFn create_cloud;
     CSB_V1_CSBWinDSATeleportPartyFn teleport_party;
     CSB_V1_CSBWinDSAMutateMonsterGroupFn mutate_monster_group;
+    CSB_V1_CSBWinDSAMoveObjectFn move_object;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;
@@ -1043,6 +1053,7 @@ typedef struct {
     CSB_V1_CSBWinDSACreateCloudFn create_cloud;
     CSB_V1_CSBWinDSATeleportPartyFn teleport_party;
     CSB_V1_CSBWinDSAMutateMonsterGroupFn mutate_monster_group;
+    CSB_V1_CSBWinDSAMoveObjectFn move_object;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;

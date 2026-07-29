@@ -102,6 +102,96 @@ typedef struct {
     uint32_t location;
 } CloudStore;
 
+typedef struct {
+    int calls;
+    int32_t source_type;
+    uint32_t source_object_mask;
+    uint32_t source_position_mask;
+    uint32_t source_location;
+    uint32_t source_depth;
+    int32_t destination_type;
+    uint32_t destination_object_mask;
+    uint32_t destination_position_mask;
+    uint32_t destination_location;
+    uint32_t destination_depth;
+} MoveStore;
+
+static int commit_move(void *user, int32_t source_type,
+                       uint32_t source_object_mask,
+                       uint32_t source_position_mask,
+                       uint32_t source_location, uint32_t source_depth,
+                       int32_t destination_type,
+                       uint32_t destination_object_mask,
+                       uint32_t destination_position_mask,
+                       uint32_t destination_location,
+                       uint32_t destination_depth)
+{
+    MoveStore *store = user;
+    if (!store) return 0;
+    ++store->calls;
+    store->source_type = source_type;
+    store->source_object_mask = source_object_mask;
+    store->source_position_mask = source_position_mask;
+    store->source_location = source_location;
+    store->source_depth = source_depth;
+    store->destination_type = destination_type;
+    store->destination_object_mask = destination_object_mask;
+    store->destination_position_mask = destination_position_mask;
+    store->destination_location = destination_location;
+    store->destination_depth = destination_depth;
+    return 1;
+}
+
+static void test_move_transaction(void)
+{
+    uint16_t words[] = {
+        0x0686u, 1u, 0x0686u, 0x20u, 0x0686u, 4u,
+        0x0686u, 0x0203u, 0x0686u, 0u,
+        0x0686u, 1u, 0x0686u, 0u, 0x0686u, 8u,
+        0x0686u, 0x0421u, 0x0686u, 0u, 0x124bu
+    };
+    uint16_t rollback_words[] = {
+        0x0686u, 1u, 0x0686u, 0x20u, 0x0686u, 4u,
+        0x0686u, 0x0203u, 0x0686u, 0u,
+        0x0686u, 1u, 0x0686u, 0u, 0x0686u, 8u,
+        0x0686u, 0x0421u, 0x0686u, 0u, 0x124bu, 0u
+    };
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    MoveStore store;
+
+    memset(&state, 0, sizeof(state));
+    memset(&context, 0, sizeof(context));
+    memset(&store, 0, sizeof(store));
+    configure_action(&action, words, (int)(sizeof(words) / sizeof(words[0])));
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+    context.move_object = commit_move;
+    context.dungeon_user = &store;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              store.calls == 1 && store.source_type == 1 &&
+              store.source_object_mask == 0x20u &&
+              store.source_position_mask == 4u && store.source_location == 0x0203u &&
+              store.source_depth == 0u && store.destination_type == 1 &&
+              store.destination_object_mask == 0u &&
+              store.destination_position_mask == 8u &&
+              store.destination_location == 0x0421u &&
+              store.destination_depth == 0u,
+          "STKOP_Move commits the exact CSBWin ten-word request after acceptance");
+
+    configure_action(&action, rollback_words,
+                     (int)(sizeof(rollback_words) / sizeof(rollback_words[0])));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) != CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 0,
+          "STKOP_Move rolls back when a later source word is rejected");
+}
+
 static int commit_cloud(void *user, int32_t cloud_type, int32_t size,
                         uint32_t location)
 {
@@ -544,6 +634,65 @@ static void test_teleport_party_runtime_receipt(void)
           "TELEPORTPARTY receipt rejects post-publication party-pose drift");
 }
 
+static void test_move_runtime_cell_owner(void)
+{
+    uint8_t raw[80] = { 0 };
+    uint16_t words[] = {
+        0x0686u, 1u, 0x0686u, 1u << 5, 0x0686u, 4u,
+        0x0686u, 0u, 0x0686u, 0u,
+        0x0686u, 1u, 0x0686u, 0u, 0x0686u, 8u,
+        0x0686u, 0x0020u, 0x0686u, 0u, 0x124bu
+    };
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    /* Two byte-map object-list cells.  Source Thing is DB5 index zero at
+     * position two; destination gets the CSBWin-selected position three. */
+    raw[60] = 0u; raw[61] = 0u;
+    raw[62] = 1u; raw[63] = 0u;
+    raw[64] = 0x10u; raw[65] = 0x10u;
+    put_le16(raw, 66u, 0x9400u);
+    put_le16(raw, 68u, 0xfffeu);
+    put_le16(raw, 70u, 0xfffeu);
+    put_le16(raw, 72u, 0u);
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 2;
+    dungeon.level_heights[0] = 1;
+    dungeon.level_offsets[0] = 64;
+    dungeon.square_bytes = 1;
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 2;
+    dungeon.thing_data_bases[5] = 70;
+    dungeon.thing_type_counts[5] = 1;
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.csbwin_extended_features_valid = 1;
+    configure_action(&action, words, (int)(sizeof(words) / sizeof(words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner));
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id;
+    runner.state_index = action.state_index;
+    memset(&core, 0, sizeof(core));
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &profile.csbwin_extended_dsa_state, action.dsa_id,
+              action.state_index, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.requires_runtime_owner &&
+              csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, &action, NULL, 0, NULL) == 1 &&
+              raw[66] == 0xfeu && raw[67] == 0xffu &&
+              raw[68] == 0x00u && raw[69] == 0xd4u,
+          "STKOP_Move commits a loaded PC3.4 cell object with the requested position");
+}
+
 static void test_indirect_local_variable_char_store(void)
 {
     /* CSBWin DSA.cpp EX_AMPERSAND I_Indirect format. P3=count, P4=DSAVARS
@@ -710,6 +859,8 @@ static void test_monster_group_timer_and_item16_runtime_binding(void)
 
 int main(void)
 {
+    test_move_transaction();
+    test_move_runtime_cell_owner();
     const uint16_t source = (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10);
     const uint16_t destination = (uint16_t)(source | 1u);
     uint16_t copy_words[] = {

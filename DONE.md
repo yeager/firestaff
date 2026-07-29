@@ -42220,3 +42220,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   operand, C04 Thing and post-mutation C04 FNV-1a. Receipt retrieval fails
   after raw C04 drift, so callers cannot treat a stale stack acceptance as a
   live CSBWin world mutation.
+- ✅ 2026-07-29 CSBWin DSA direct `STKOP_Move` PC3.4 cell owner: the
+  authenticated interpreter now stages CSBWin `MoveObject.cpp`'s exact
+  ten-word operand sequence and invokes it only after the complete DSA action
+  has been accepted. The loaded candidate dungeon owns direct cell-to-cell
+  DB5..DB13 selection through source type/position/depth masks, relinks the
+  real Thing chain and writes the selected destination position atomically.
+  The core receipt marks the opcode as a runtime-owned dungeon mutation. The
+  focused regression proves operand order, late-word rollback and publication
+  into a real byte-map PC3.4 list. Cursor, character, monster and chest
+  endpoints, multi-position `STRandom`, and `I_MOVE` remain explicitly open.

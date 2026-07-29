@@ -188,6 +188,12 @@ static int csb_v1_runtime_dsa_teleport_party(void *user,
                                              uint32_t destination_location);
 static int csb_v1_runtime_dsa_mutate_monster_group(
     void *user, uint32_t location, uint32_t operand, int insert_monster);
+static int csb_v1_runtime_dsa_move_object(
+    void *user, int32_t source_type, uint32_t source_object_mask,
+    uint32_t source_position_mask, uint32_t source_location,
+    uint32_t source_depth, int32_t destination_type,
+    uint32_t destination_object_mask, uint32_t destination_position_mask,
+    uint32_t destination_location, uint32_t destination_depth);
 static int csb_v1_runtime_dsa_get_object_property(
     void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
     uint32_t *out_value);
@@ -6899,6 +6905,110 @@ int csb_v1_runtime_f0267_move_original_object(
     (void)csb_v1_runtime_apply_object_consequences_at_square(
         profile, dungeon, &moved_thing, source_map_x, &destination_level,
         &destination_map_x, &destination_map_y);
+    return 1;
+}
+
+/* CSBWin MoveObject.cpp::FindCellSource/FindCellDestination, restricted to
+ * the already decoded PC3.4 cell-list owner.  The caller runs this against a
+ * private dungeon candidate, so a following DSA failure cannot publish this
+ * list mutation.  Cursor, champion, monster and chest ownership remain
+ * deliberately unbound rather than pretending their records are cells. */
+static int csb_v1_runtime_dsa_move_object(
+    void *user, int32_t source_type, uint32_t source_object_mask,
+    uint32_t source_position_mask, uint32_t source_location,
+    uint32_t source_depth, int32_t destination_type,
+    uint32_t destination_object_mask, uint32_t destination_position_mask,
+    uint32_t destination_location, uint32_t destination_depth)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_DungeonData *dungeon;
+    CSB_V1_F0163F0164ObjectMoveReceiptPc34 receipt;
+    uint16_t selected = THING_NONE;
+    uint16_t current;
+    uint16_t moved;
+    uint8_t *destination_first;
+    uint8_t *destination_tail = NULL;
+    int source_level = (int)((source_location >> 10) & 0x3fu);
+    int source_x = (int)((source_location >> 5) & 0x1fu);
+    int source_y = (int)(source_location & 0x1fu);
+    int destination_level = (int)((destination_location >> 10) & 0x3fu);
+    int destination_x = (int)((destination_location >> 5) & 0x1fu);
+    int destination_y = (int)(destination_location & 0x1fu);
+    uint32_t source_position_bits = source_position_mask;
+    uint32_t destination_position_bits = destination_position_mask & 0x0fu;
+    int destination_position = (int)((destination_location >> 16) & 3u);
+    int type;
+    int size;
+    int guard;
+
+    (void)destination_object_mask; /* CSBWin's cell destination ignores it. */
+    if (!profile || !(dungeon = profile->dungeon_handle) ||
+        !dungeon->raw_data || source_type != 1 || destination_type != 1) {
+        return 0;
+    }
+    if (source_level < 0 || source_level >= dungeon->level_count ||
+        destination_level < 0 || destination_level >= dungeon->level_count ||
+        csb_v1_dungeon_get_raw_square(dungeon, source_level, source_x, source_y) < 0 ||
+        csb_v1_dungeon_get_raw_square(dungeon, destination_level, destination_x,
+                                      destination_y) < 0) {
+        return 1; /* MoveObject returns an ignored source/destination error. */
+    }
+    if (destination_depth != 0u ||
+        source_level == destination_level && source_x == destination_x &&
+            source_y == destination_y) {
+        return 1;
+    }
+    if (source_position_bits == UINT32_MAX) {
+        source_position_bits = 1u << ((source_location >> 16) & 3u);
+    }
+    if (destination_position_bits != 0u) {
+        if ((destination_position_bits & (destination_position_bits - 1u)) != 0u) {
+            return 0; /* source STRandom ownership is not yet bound */
+        }
+        for (destination_position = 0; destination_position < 4;
+             ++destination_position) {
+            if ((destination_position_bits & (1u << destination_position)) != 0u) break;
+        }
+    }
+    current = (uint16_t)csb_v1_dungeon_get_first_thing(
+        dungeon, source_level, source_x, source_y);
+    for (guard = 0; guard < 128 && current != THING_NONE &&
+         current != THING_ENDOFLIST; ++guard) {
+        const uint8_t *record = csb_v1_dungeon_get_thing_record(
+            dungeon, current, &type, NULL, &size);
+        if (!record || size < 2) return 0;
+        if (((source_position_bits & (1u << ((current >> 14) & 3u))) != 0u) &&
+            type >= 5 && type < 14 &&
+            (source_object_mask & (1u << type)) != 0u) {
+            if (source_depth == 0u) {
+                selected = current;
+                break;
+            }
+            --source_depth;
+        }
+        current = csb_v1_runtime_read_u16(record);
+    }
+    if (guard == 128) return 0;
+    if (selected == THING_NONE || selected == THING_ENDOFLIST) return 1;
+    if (!csb_v1_runtime_f0163_f0164_object_move_receipt_pc34(
+            dungeon, selected, source_level, source_x, source_y,
+            destination_level, destination_x, destination_y, &receipt)) {
+        return 0;
+    }
+    moved = (uint16_t)((selected & 0x3fffu) |
+                       ((uint16_t)destination_position << 14));
+    destination_first = csb_v1_runtime_square_first_thing_ptr(
+        dungeon, destination_level, destination_x, destination_y);
+    if (!destination_first) return 0;
+    if (receipt.destination_tail_thing != THING_NONE &&
+        receipt.destination_tail_thing != THING_ENDOFLIST) {
+        destination_tail = csb_v1_runtime_mutable_thing_record(
+            dungeon, receipt.destination_tail_thing, NULL, &size);
+        if (!destination_tail || size < 2) return 0;
+        csb_v1_runtime_write_u16(destination_tail, moved);
+    } else {
+        csb_v1_runtime_write_u16(destination_first, moved);
+    }
     return 1;
 }
 
@@ -27068,6 +27178,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.commit_cause_poison = csb_v1_runtime_dsa_commit_cause_poison;
     candidate.teleport_party = csb_v1_runtime_dsa_teleport_party;
     candidate.mutate_monster_group = csb_v1_runtime_dsa_mutate_monster_group;
+    candidate.move_object = csb_v1_runtime_dsa_move_object;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
@@ -27313,6 +27424,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.commit_cause_poison = csb_v1_runtime_dsa_commit_cause_poison;
     candidate.teleport_party = csb_v1_runtime_dsa_teleport_party;
     candidate.mutate_monster_group = csb_v1_runtime_dsa_mutate_monster_group;
+    candidate.move_object = csb_v1_runtime_dsa_move_object;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;
