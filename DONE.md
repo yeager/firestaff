@@ -818,6 +818,12 @@
   query/blit rect, HUD/scene/material commands.
 - ✅ 2026-07-26 Media, input and expansion complete (Q-CSB-10). Package
   identity, sound filter, expansion save identity tested. 17 test files.
+- ✅ 2026-07-29 CSB V2.x complete local verification lane: `ctest -L csb`
+  passed 103/103 with the hash-verified PC3.4 package and original Atari
+  `MINI.DAT`. V2.0, V2.1 and gated V2.2 cover startup, source presentation,
+  HUD, filters, lighting, input, runtime handoff and artpack admission.
+  Packaged Mac/release visual capture remains a separate acceptance task.
+
 - ✅ 2026-07-29 CSB Atari `MINI.DAT` native-save decode boundary: DMWeb's
   big-endian Block1/2/3 encryption and checksum rules now validate the
   original CSB Utility Disk's ITEM16, champion, timer, and timer-queue
