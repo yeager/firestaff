@@ -33,7 +33,8 @@ run_case() {
 
     if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb' "$output" ||
        ! grep -Fq 'phase=inactive startupActive=0' "$output" ||
-       ! grep -Fq 'runtimeTick=148' "$output"; then
+       ! grep -Fq 'runtimeTick=148' "$output" ||
+       ! grep -Eq 'csbViewportHash=[1-9][0-9]*' "$output"; then
         cat "$output" >&2
         echo "FAIL: CSB $mode Prison pointer did not reach runtime with presentation ${expected_presentation_mode} at ${width}x${height}" >&2
         exit 1
