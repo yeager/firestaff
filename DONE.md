@@ -42834,3 +42834,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   before FAMG re-admits V2.2. A real PC3.4 boot probe with the source-derived
   pack reaches map 0 in `presentationMode=3`; this does not claim that the
   remaining live F0128 perspective-cell renderer is complete.
+# Completed work
+
+- 2026-07-29: Fixed CSB `TITLE.C F0437` CHAOS title geometry. The first
+  visible reverse-zoom frame is 48x12 and the final full 320x80 C425 raster
+  remains present through the source `Delay(20)` hold. Verified by
+  `csb_v1_startup_receipt_coherence_pc34_compat`.
