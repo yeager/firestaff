@@ -250,8 +250,8 @@ int csb_v1_viewport_first_frame_material_proof_valid_pc34(
          proof->d3_pair_real_asset_receipt.d3l2_door_zone != 3700 ||
          proof->d3_pair_real_asset_receipt.d3r2_door_zone != 3710 ||
          proof->d3_pair_real_asset_receipt.transparent_color != 10 ||
-         proof->d3_pair_real_asset_receipt.native_bitmap_byte_width != 48 ||
-         proof->d3_pair_real_asset_receipt.native_bitmap_height != 41)) {
+         proof->d3_pair_real_asset_receipt.native_bitmap_byte_width != 44 ||
+         proof->d3_pair_real_asset_receipt.native_bitmap_height != 38)) {
         return 0;
     }
     if ((proof->route_mask & d3_routes) == 0u &&

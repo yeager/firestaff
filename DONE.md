@@ -42766,6 +42766,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `GRAPHICS.DAT`. The remaining D3 item is the real F0488 44x38-to-48x41
   native-buffer decode/padding, which stays explicitly blocked in TODO.
 
+- Follow-up: extracted ReDMCSB `MEMORY.C` and `IMAGE2.C` show that the PC/I34
+  F0111 branch calls `F0616_CopyBitmap` after F0489; it does not use the
+  legacy MEDIA009 `M075_BITMAP_BYTE_COUNT(48,41)` copy. The PC3.4 D3 contract
+  now retains the original record metadata (44x38) and rejects the former
+  fictitious padding buffer. The focused real-data D3 route regression passes.
+
 ## 2026-07-29 - CSB V2.0 full-surface startup capture
 
 - ✅ Strengthened `csb_v20_filtered_startup_capture` to validate the actual

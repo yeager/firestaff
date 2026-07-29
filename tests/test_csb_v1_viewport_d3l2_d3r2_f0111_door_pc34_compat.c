@@ -267,9 +267,9 @@ static int test_pass2_c10_frame_and_no_f0107(void)
     ok &= expect_int("d3r2.resolved.native.index",
                      right_result.resolved_native_bitmap_index, 247, A_F0111);
     ok &= expect_int("d3l2.frame.byte_width",
-                     left_result.preserved_frame_byte_width, 48, A_F0111);
+                     left_result.preserved_frame_byte_width, 44, A_F0111);
     ok &= expect_int("d3r2.frame.byte_width",
-                     right_result.preserved_frame_byte_width, 48, A_F0111);
+                     right_result.preserved_frame_byte_width, 44, A_F0111);
     ok &= expect_int("d3l2.no_f0107", left_result.f0107_called, 0, A_D3L2);
     ok &= expect_int("d3r2.no_f0107", right_result.f0107_called, 0, A_D3R2);
 
@@ -279,8 +279,8 @@ static int test_pass2_c10_frame_and_no_f0107(void)
 static int test_lineage_pixel_and_evidence(void)
 {
     int ok = 1;
-    uint8_t source[48 * 2];
-    uint8_t destination[48 * 2];
+    uint8_t source[44 * 2];
+    uint8_t destination[44 * 2];
     CSB_V1_ViewportD3L2D3R2F0111DoorResultPc34 result;
     const char *e =
         csb_v1_viewport_d3l2_d3r2_f0111_door_source_evidence_pc34();
@@ -292,8 +292,8 @@ static int test_lineage_pixel_and_evidence(void)
     memset(destination, 0xee, sizeof(destination));
     source[0] = 1;
     source[47] = 2;
-    source[48] = 3;
-    source[95] = 4;
+    source[44] = 3;
+    source[87] = 4;
 
     ok &= expect_int("lineage.trace",
                      csb_v1_viewport_d3l2_d3r2_f0111_door_trace_pc34(
@@ -309,14 +309,14 @@ static int test_lineage_pixel_and_evidence(void)
                      A_F0111);
     ok &= expect_int("pixel.blit.copied",
                      csb_v1_viewport_d3l2_d3r2_f0111_door_apply_c10_blit_pc34(
-                         d3l2, source, 48, destination, 48, 48, 2),
+                         d3l2, source, 44, destination, 44, 44, 2),
                      4, A_F0111);
     ok &= expect_int("pixel.blit.first", destination[0], 1, A_F0111);
     ok &= expect_int("pixel.blit.transparent", destination[1], 0xee, A_F0111);
-    ok &= expect_int("pixel.blit.last", destination[95], 4, A_F0111);
+    ok &= expect_int("pixel.blit.last", destination[87], 4, A_F0111);
     ok &= expect_int("pixel.blit.reject.width",
                      csb_v1_viewport_d3l2_d3r2_f0111_door_apply_c10_blit_pc34(
-                         d3l2, source, 48, destination, 48, 49, 1),
+                         d3l2, source, 44, destination, 44, 45, 1),
                      -1, A_F0111);
     ok &= expect_contains("evidence.path", result.source_lock_evidence,
                           "DUNVIEW.C F0676/F0677 C17_ELEMENT_DOOR_FRONT path",
@@ -393,8 +393,8 @@ static int test_real_graphics_dat_d3lr_door_receipt(void)
     ok &= expect_int("real.receipt.d3r2_zone", receipt.d3r2_door_zone, 3710,
                      A_D3R2);
     ok &= expect_int("real.receipt.width", receipt.native_bitmap_byte_width,
-                     48, A_F0111);
-    ok &= expect_int("real.receipt.height", receipt.native_bitmap_height, 41,
+                     44, A_F0111);
+    ok &= expect_int("real.receipt.height", receipt.native_bitmap_height, 38,
                      A_F0111);
     ok &= expect_int("real.receipt.c10", receipt.transparent_color, 10,
                      A_F0111);

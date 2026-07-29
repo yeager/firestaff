@@ -76,8 +76,10 @@ an integration build pass.
   metadata until it is bound to the corresponding F0128 command. D1/D2 front
   door routes now have that exact admission contract (records 248/247 and
   their original clips). The D3 record selection is now source-locked to
-  `M633 + DoorSet * C003` (246/249/252/255), but its 44x38 stored raster still
-  needs a proven F0488 expansion/padding receipt for F0111's 48x41 buffer.
+  `M633 + DoorSet * C003` (246/249/252/255). ReDMCSB's PC/I34 F0111 branch
+  uses `F0616_CopyBitmap`, so its native surface is the record's 44x38
+  metadata; remaining work is exact command-level V2.2 composition, not a
+  fictitious 48x41 padding buffer.
   Source door exports now
   retain the verified F0111 `C10_COLOR_FLESH` transparency as RGBA alpha and
   the cache blitter preserves the original framebuffer for transparent pixels.

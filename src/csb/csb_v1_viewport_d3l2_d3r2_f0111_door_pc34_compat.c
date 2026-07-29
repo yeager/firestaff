@@ -20,8 +20,11 @@ enum {
     CSB_C3700_ZONE_DOOR_D3L2 = 3700,       /* ReDMCSB DEFS.H:4250. */
     CSB_C3710_ZONE_DOOR_D3R2 = 3710,       /* ReDMCSB DEFS.H:4251. */
     CSB_C10_COLOR_FLESH = 10,              /* ReDMCSB DEFS.H:2088. */
-    CSB_D3_DOOR_NATIVE_BYTE_WIDTH = 48,    /* ReDMCSB DUNVIEW.C:6447 M075(48,41). */
-    CSB_D3_DOOR_NATIVE_HEIGHT = 41,        /* ReDMCSB DUNVIEW.C:6447 M075(48,41). */
+    /* PC3.4/I34 F0111 takes the F0616_CopyBitmap branch (DUNVIEW.C:4259-4261),
+     * so its native dimensions are the GRAPHICS.DAT record metadata, not the
+     * 48x41 byte-count arguments used by the older MEDIA009 branch. */
+    CSB_D3_DOOR_NATIVE_BYTE_WIDTH = 44,
+    CSB_D3_DOOR_NATIVE_HEIGHT = 38,
     CSB_LINEAGE_PWALL_D3L2_INDEX = 5,      /* CSB Viewport.cpp:2267. */
     CSB_LINEAGE_PWALL_D3R2_INDEX = 6,      /* CSB Viewport.cpp:2271. */
     CSB_LINEAGE_FRAME_BITMAP_INDEX = 5,    /* CSB Viewport.cpp:2281. */
@@ -62,7 +65,8 @@ static const char s_source_evidence[] =
     "M558_FLOOR_ORNAMENT_ORDINAL and C01_VIEW_FLOOR_D3R2, F0115 C15 "
     "order 0x0128, F0111 with G0693/C0/C3710, then sets order 0x0439. "
     "DUNVIEW.C:4218-4334 F0111 copies the resolved native bitmap through "
-    "F0489_MEMORY_GetNativeBitmapOrGraphic/F0616_CopyBitmap and blits with "
+    "F0489_MEMORY_GetNativeBitmapOrGraphic/F0616_CopyBitmap (PC/I34 uses "
+    "the record's 44x38 metadata, not the legacy 48x41 M075 byte span) and blits with "
     "C10_COLOR_FLESH. DEFS.H:2088,2610-2611,2668-2675,2750-2751,2789,"
     "4250-4251,5456 anchors constants. CSB Viewport.cpp:1813-1820, "
     "2267/2271 pWallBitmaps parity, 2281 pDoorBitmaps, 2386/2387 "
