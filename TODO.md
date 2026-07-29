@@ -913,6 +913,13 @@ that its exact runtime path is not already source-locked and tested.
    mode as well as the completed runtime handoff. A V2.2 selection therefore
    cannot regress to a stuck Entrance page while its reviewed-art gate is
    closed.
+   2026-07-29: an executable probe against the local hash-verified PC3.4
+   `GRAPHICS.DAT`/`DUNGEON.DAT` ran V1, V2.0, V2.1 and selected V2.2 through
+   Entrance and an original Enter command. V1 reached `320x200`; V2.0/V2.1
+   reached `640x400`; all reached map 0 at `(9,0,2)` with runtime tick 318.
+   The selected V2.2 route correctly resolved to V2.1 because no completed
+   real-art package is installed. This closes the live handoff check, not the
+   complete V2.2 art gate or broader visual capture.
    2026-07-28: the separate original Atari ST route now presents
    `ANIMATE.SCR`/`ANIMATE.DAT` through M11 correctly. The palette setter's
    success code is zero, so its former boolean check discarded every genuine

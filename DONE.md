@@ -42263,3 +42263,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-29 CSBWin DSA indirect `THROW` source order: the runtime
   regression now uses CSBWin's reverse `INDIRECT` stack payload and proves
   `I_THROW` reaches the same F0810 FIREBALL/timeline owner as direct `THROW`.
+- ✅ 2026-07-29 CSB executable boot sweep: local PC3.4 CSB data was exercised
+  through the real Entrance command in V1, V2.0, V2.1 and selected V2.2.
+  Each reached the map-0 runtime handoff; the incomplete V2.2 art gate
+  correctly resolved to V2.1 rather than presenting unreviewed material.
