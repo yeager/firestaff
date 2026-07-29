@@ -1014,7 +1014,10 @@ that its exact runtime path is not already source-locked and tested.
     one candidate transaction. `DELMON` retires the selected A/B timer,
     renumbers later group timers and compacts `SINGLE_MONSTER_STATUS`;
     `INSMON` duplicates A0/B0 and status 0 into the appended ordinal. A
-    malformed restored timer heap still rejects the whole action. Broader
+    malformed restored timer heap still rejects the whole action. Its public
+    runtime receipt now carries the source LOCATIONREL, operand, direction,
+    resolved C04 Thing and post-mutation C04 hash, and invalidates on later
+    raw-record drift. Broader
     DSA-world behavior remains under CSB-DSA-MONSTER-WORLD.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded

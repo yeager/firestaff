@@ -42203,3 +42203,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   creature. The action commits C04, TIMER, M10 timeline receipts and ITEM16
   only after the candidate heap revalidates. Focused runtime coverage uses a
   fear group with real C04 and A0/A1 ownership, plus stack rollback coverage.
+- ✅ 2026-07-29 CSB DSA monster-group receipt: the public DSA runtime receipt
+  now binds each accepted `DELMON`/`INSMON` to its exact source LOCATIONREL,
+  operand, C04 Thing and post-mutation C04 FNV-1a. Receipt retrieval fails
+  after raw C04 drift, so callers cannot treat a stale stack acceptance as a
+  live CSBWin world mutation.

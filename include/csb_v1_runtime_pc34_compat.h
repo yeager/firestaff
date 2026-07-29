@@ -213,6 +213,12 @@ typedef struct {
     uint8_t last_monster_store_write_mask;
     uint32_t last_monster_store_before[8];
     uint32_t last_monster_store_after[8];
+    uint16_t monster_group_mutation_count;
+    uint32_t last_monster_group_location;
+    uint32_t last_monster_group_operand;
+    int last_monster_group_insert;
+    uint16_t last_monster_group_thing;
+    uint32_t last_monster_group_record_fnv1a;
     uint16_t cell_store_count;
     uint32_t last_cell_store_location;
     uint8_t last_cell_store_write_mask;

@@ -24793,6 +24793,40 @@ static int csb_v1_runtime_dsa_execution_receipt_current(
             return 0;
         }
     }
+    if (receipt->monster_group_mutation_count != 0u) {
+        int level = (int)((receipt->last_monster_group_location >> 10) & 0x3fu);
+        int map_x = (int)((receipt->last_monster_group_location >> 5) & 0x1fu);
+        int map_y = (int)(receipt->last_monster_group_location & 0x1fu);
+        uint16_t group_thing = THING_NONE;
+        const uint8_t *record;
+        int record_size = 0;
+
+        if (receipt->monster_group_mutation_count != 1u ||
+            !profile->dungeon_handle || level < 0 ||
+            level >= profile->dungeon_handle->level_count ||
+            csb_v1_dungeon_get_raw_square(profile->dungeon_handle,
+                                           level, map_x, map_y) < 0) {
+            return 0;
+        }
+        if (!csb_v1_f0217_find_group_thing_pc34_compat(
+                profile->dungeon_handle, level, map_x, map_y, &group_thing)) {
+            /* Monster.cpp defines no group at LOCATIONREL as a legal no-op. */
+            if (receipt->last_monster_group_thing != THING_NONE ||
+                receipt->last_monster_group_record_fnv1a != 0u) {
+                return 0;
+            }
+        } else {
+            record = csb_v1_runtime_linked_group_record_pc34(
+                profile->dungeon_handle, group_thing, level, map_x, map_y,
+                &record_size);
+            if (!record || record_size < 16 ||
+                group_thing != receipt->last_monster_group_thing ||
+                csb_v1_runtime_fnv1a32(record, (size_t)record_size) !=
+                    receipt->last_monster_group_record_fnv1a) {
+                return 0;
+            }
+        }
+    }
     if (receipt->experience_plus_count != 0u) {
         int selector = receipt->last_experience_character_selector;
         int skill = receipt->last_experience_skill_number;
@@ -28093,6 +28127,44 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         memcpy(execution_receipt.last_monster_store_after,
                monster_store_after,
                sizeof(execution_receipt.last_monster_store_after));
+    }
+    execution_receipt.monster_group_mutation_count =
+        candidate.last_execution.monster_group_mutation_count;
+    if (execution_receipt.monster_group_mutation_count != 0u) {
+        uint32_t location = candidate.last_execution.last_monster_group_location;
+        int level = (int)((location >> 10) & 0x3fu);
+        int map_x = (int)((location >> 5) & 0x1fu);
+        int map_y = (int)(location & 0x1fu);
+        uint16_t group_thing = THING_NONE;
+        const uint8_t *record;
+        int record_size = 0;
+
+        if (execution_receipt.monster_group_mutation_count != 1u ||
+            !profile->dungeon_handle || level < 0 ||
+            level >= profile->dungeon_handle->level_count ||
+            csb_v1_dungeon_get_raw_square(profile->dungeon_handle,
+                                           level, map_x, map_y) < 0) {
+            return 0;
+        }
+        execution_receipt.last_monster_group_location = location;
+        execution_receipt.last_monster_group_operand =
+            candidate.last_execution.last_monster_group_operand;
+        execution_receipt.last_monster_group_insert =
+            candidate.last_execution.last_monster_group_insert ? 1 : 0;
+        if (csb_v1_f0217_find_group_thing_pc34_compat(
+                profile->dungeon_handle, level, map_x, map_y,
+                &group_thing)) {
+            record = csb_v1_runtime_linked_group_record_pc34(
+                profile->dungeon_handle, group_thing, level, map_x,
+                map_y, &record_size);
+            if (!record || record_size < 16) return 0;
+            execution_receipt.last_monster_group_thing = group_thing;
+            execution_receipt.last_monster_group_record_fnv1a =
+                csb_v1_runtime_fnv1a32(record, (size_t)record_size);
+        } else {
+            execution_receipt.last_monster_group_thing = THING_NONE;
+            execution_receipt.last_monster_group_record_fnv1a = 0u;
+        }
     }
     execution_receipt.cell_store_count =
         candidate.last_execution.cell_store_count;

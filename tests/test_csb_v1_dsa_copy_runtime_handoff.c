@@ -599,6 +599,7 @@ static void test_monster_group_timer_and_item16_runtime_binding(void)
     CSB_V1_RuntimeProfile profile;
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
 
     memset(&dungeon, 0, sizeof(dungeon));
     dungeon.raw_data = raw;
@@ -678,7 +679,14 @@ static void test_monster_group_timer_and_item16_runtime_binding(void)
               profile.csbwin_timers[1].function == 33u &&
               profile.csbwin_item16[0].single_monster_status[0] == 0x72u &&
               profile.csbwin_runtime_item16[0].single_monster_status[0] ==
-                  0x72u,
+                  0x72u &&
+              csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+                  &profile, &receipt) == 1 &&
+              receipt.monster_group_mutation_count == 1u &&
+              receipt.last_monster_group_location == 0u &&
+              !receipt.last_monster_group_insert &&
+              receipt.last_monster_group_thing == group &&
+              receipt.last_monster_group_record_fnv1a != 0u,
           "DELMON compacts C04, A/B timer ownership, and ITEM16 together");
 
     configure_action(&action, insert_words,
@@ -690,7 +698,13 @@ static void test_monster_group_timer_and_item16_runtime_binding(void)
               profile.timeline_queue.eventCount == 2 &&
               profile.csbwin_item16[0].single_monster_status[1] == 0x72u &&
               profile.csbwin_runtime_item16[0].single_monster_status[1] ==
-                  0x72u,
+                  0x72u &&
+              csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
+                  &profile, &receipt) == 1 &&
+              receipt.monster_group_mutation_count == 1u &&
+              receipt.last_monster_group_insert &&
+              receipt.last_monster_group_thing == group &&
+              receipt.last_monster_group_record_fnv1a != 0u,
           "INSMON clones source A0/B0 and ITEM16 state for the appended creature");
 }
 
