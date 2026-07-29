@@ -2943,11 +2943,25 @@ static int m12_ascii_equal_ci(const char* a, const char* b) {
 }
 
 static int m12_is_csb_original_save_basename(const char* name) {
-    return m12_ascii_equal_ci(name, "MINI.DAT") ||
-           m12_ascii_equal_ci(name, "CSBGAME.DAT") ||
-           m12_ascii_equal_ci(name, "CSBGAME.BAK") ||
-           m12_ascii_equal_ci(name, "DMSAVE.DAT") ||
-           m12_ascii_equal_ci(name, "DMSAVE.BAK");
+    static const char* const names[] = {
+        "MINI.DAT",
+        "CSBGAME.DAT", "CSBGAME.BAK",
+        "CSBGAME1.DAT", "CSBGAME1.BAK",
+        "CSBGAME2.DAT", "CSBGAME2.BAK",
+        "CSBGAME3.DAT", "CSBGAME3.BAK",
+        "CSBGAME4.DAT", "CSBGAME4.BAK",
+        "DMSAVE.DAT", "DMSAVE.BAK"
+    };
+    size_t i;
+    if (!name) {
+        return 0;
+    }
+    for (i = 0U; i < sizeof(names) / sizeof(names[0]); ++i) {
+        if (m12_ascii_equal_ci(name, names[i])) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 static int m12_is_nexus_save_slot_basename(const char* name) {

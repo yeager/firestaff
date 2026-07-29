@@ -823,6 +823,7 @@ int main(void) {
     char importedCsbWinQuickResumePath[512];
     char wrongKnownGameQuickResumePath[512];
     char originalCsbGameBrowserSavePath[512];
+    char originalCsbGameSlotSavePath[512];
     char originalDmSaveBrowserSavePath[512];
     char originalDm1SavePath[512];
     char noDm1CsbSavePath[512];
@@ -1054,6 +1055,24 @@ int main(void) {
                 intent.savePath &&
                 strcmp(intent.savePath, originalCsbGameBrowserSavePath) == 0,
                 "CSBGAME.DAT quick Resume launch intent should carry exact CSB path")) return 1;
+
+    snprintf(originalCsbGameSlotSavePath, sizeof(originalCsbGameSlotSavePath),
+             "%s/CSBGAME2.DAT", tmpTemplate);
+    if (!expect(write_raw_csbgame_roster_quicksave(originalCsbGameSlotSavePath),
+                "should write original-name CSBGAME2.DAT quick Resume fixture")) return 1;
+    M12_Config_SetLastSavePath(originalCsbGameSlotSavePath);
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    force_csb_available(&state);
+    if (!expect(state.quickResumeAvailable == 1 &&
+                strcmp(state.quickResumeGameId, "csb") == 0 &&
+                strcmp(state.quickResumeSavePath, originalCsbGameSlotSavePath) == 0,
+                "CSBGAME2.DAT must enable CSB quick Resume by content")) return 1;
+    state.selectedIndex = -1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    intent = M12_StartupMenu_GetLaunchIntent(&state);
+    if (!expect(intent.valid == 1 && intent.savePath &&
+                strcmp(intent.savePath, originalCsbGameSlotSavePath) == 0,
+                "CSBGAME2.DAT Resume launch intent should carry exact CSB path")) return 1;
 
     /* This is intentionally an opt-in real-corpus lane. MINI.DAT has a
      * distinct Atari/Amiga GAMEBLOCK layout and must classify as CSB before

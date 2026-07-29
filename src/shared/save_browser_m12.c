@@ -165,10 +165,21 @@ static int ascii_equal_ci(const char* a, const char* b) {
 }
 
 static int is_csb_original_save_basename(const char* name) {
-    return ascii_equal_ci(name, "CSBGAME.DAT") ||
-           ascii_equal_ci(name, "CSBGAME.BAK") ||
-           ascii_equal_ci(name, "DMSAVE.DAT") ||
-           ascii_equal_ci(name, "DMSAVE.BAK");
+    static const char* const names[] = {
+        "MINI.DAT",
+        "CSBGAME.DAT", "CSBGAME.BAK",
+        "CSBGAME1.DAT", "CSBGAME1.BAK",
+        "CSBGAME2.DAT", "CSBGAME2.BAK",
+        "CSBGAME3.DAT", "CSBGAME3.BAK",
+        "CSBGAME4.DAT", "CSBGAME4.BAK",
+        "DMSAVE.DAT", "DMSAVE.BAK"
+    };
+    size_t i;
+    if (!name) return 0;
+    for (i = 0U; i < sizeof(names) / sizeof(names[0]); ++i) {
+        if (ascii_equal_ci(name, names[i])) return 1;
+    }
+    return 0;
 }
 
 static int nexus_save_slot_from_basename(const char* name,

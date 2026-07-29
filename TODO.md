@@ -1147,6 +1147,9 @@ that its exact runtime path is not already source-locked and tested.
    extracted from the local original archive passes decoder, runtime handoff
    and launcher Resume checks; the archive cache regression proves the
    `MINI.DAT` member is materialized with the required CSB package files.
+   `CSBGAME1..4.DAT` and their source backup names now have the same launcher
+   and save-browser classification as the runtime's original-slot loader;
+   the focused Resume regression covers slot 2 end to end.
    This does not yet establish user-created
    `CSBGAME.DAT` extended-object/timer round-trip support.
 7. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and

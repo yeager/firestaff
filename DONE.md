@@ -6,6 +6,9 @@
   `MINI.DAT` from the local original archive: decoder, runtime handoff and
   `m12_quick_resume_gate` all passed; the archive cache regression also
   verifies `MINI.DAT` is materialized with archive-backed CSB game data.
+  Original `CSBGAME1..4.DAT` and `.BAK` slot names now share the runtime's
+  launcher/save-browser classification; slot 2 is covered through launch
+  intent in `m12_quick_resume_gate`.
 
 - ✅ 2026-07-29 Launcher audio handoff: M12's persisted master, music, SFX
   and mute values now reach M11's SDL3 audio state after every game branch's
