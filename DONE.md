@@ -43093,3 +43093,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   placeholder such as `.` can no longer enter through the public data-root
   setter and is reported as unchanged. Empty status display now says `NOT
   SET`, never `.`. Verified by `test_m12_data_dir_cancel`.
+
+- ✅ 2026-07-30 CSB V2.x feature verification: all 50 registered V2.0,
+  V2.1 and V2.2 regressions pass with local PC3.4 data. The lane covers
+  startup/title/Entrance, source and presented captures, Prison pointer
+  handoff, runtime HUD ownership, filters, scale/EPX, input affordances,
+  lighting and the reviewed V2.2 artpack gate. Unadmitted V2.2 F0128
+  material families remain open under `CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION`.

@@ -150,6 +150,12 @@ an integration build pass.
   valid source-owned door replacement as a failure. It must not claim that
   nine synthetic rectangles are a completed F0128 render. Remaining: bind
   every other material family to its corresponding original F0128 command.
+  2026-07-30 verification: the complete registered CSB V2.x lane passes
+  50/50 tests against local PC3.4 data. This covers V2.0/V2.1 startup and
+  Prison runtime, V2.1 EPX/presentation capture, V2 filters/settings/touch/
+  motion/lighting, and V2.2 source-artpack admission, startup isolation and
+  runtime HUD ownership. This proves the implemented V2.x feature surface,
+  not the still-unadmitted F0128 material families.
 
 - **CSB-V21-LIVE-UPSCALE-CONSUMPTION:** Closed 2026-07-29. The F10 CSB
   filter page now exposes the actual CSB V2.1 EPX scale (1x/2x/4x) and
