@@ -428,6 +428,10 @@ typedef int (*CSB_V1_CSBWinDSADeleteObjectFn)(
  * list mutation; the VM only preserves the source operands until commit. */
 typedef int (*CSB_V1_CSBWinDSAAddObjectFn)(
     void *user, uint32_t object, int32_t location, uint32_t position_mask);
+typedef int (*CSB_V1_CSBWinDSAThrowObjectFn)(
+    void *user, uint32_t object_type, uint32_t object_location,
+    uint32_t launch_location, uint32_t direction, uint32_t range,
+    uint32_t damage, uint32_t decay_rate);
 typedef int (*CSB_V1_CSBWinDSADiscardTextFn)(void *user);
 typedef int (*CSB_V1_CSBWinDSAPlaySoundFn)(
     void *user, int32_t sound_number, int32_t volume, int32_t flags);
@@ -628,6 +632,7 @@ typedef struct {
     CSB_V1_CSBWinDSAMoveObjectFn move_object;
     CSB_V1_CSBWinDSADeleteObjectFn delete_object;
     CSB_V1_CSBWinDSAAddObjectFn add_object;
+    CSB_V1_CSBWinDSAThrowObjectFn throw_object;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;
@@ -1067,6 +1072,7 @@ typedef struct {
     CSB_V1_CSBWinDSAMoveObjectFn move_object;
     CSB_V1_CSBWinDSADeleteObjectFn delete_object;
     CSB_V1_CSBWinDSAAddObjectFn add_object;
+    CSB_V1_CSBWinDSAThrowObjectFn throw_object;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;

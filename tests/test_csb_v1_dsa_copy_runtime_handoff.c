@@ -129,6 +129,43 @@ typedef struct {
     uint32_t position_mask;
 } AddStore;
 
+typedef struct { int calls; uint32_t v[7]; } ThrowStore;
+static int commit_throw(void *user, uint32_t a, uint32_t b, uint32_t c,
+                        uint32_t d, uint32_t e, uint32_t f, uint32_t g)
+{
+    ThrowStore *s = user;
+    if (!s) return 0;
+    ++s->calls; s->v[0] = a; s->v[1] = b; s->v[2] = c; s->v[3] = d;
+    s->v[4] = e; s->v[5] = f; s->v[6] = g; return 1;
+}
+
+static void test_throw_transaction(void)
+{
+    uint16_t words[] = { 0x0686u, 0xff80u, 0x0686u, 0x20u, 0x0686u, 0x40u,
+                         0x0686u, 1u, 0x0686u, 8u, 0x0686u, 50u,
+                         0x0686u, 2u, 0x0f4bu };
+    uint16_t indirect[] = { 0x168bu };
+    uint32_t params[] = { 89u, 7u, 0xff80u, 0x20u, 0x40u, 1u, 8u, 50u, 2u, 0u, 0u };
+    CSB_V1_ChaosMagicState state; CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSAStackContext context; CSB_V1_CSBWinDSAStackExecution execution;
+    ThrowStore store;
+    memset(&state, 0, sizeof(state)); memset(&context, 0, sizeof(context)); memset(&store, 0, sizeof(store));
+    configure_action(&action, words, (int)(sizeof(words) / sizeof(words[0])));
+    state.imported_actions = &action; state.imported_action_count = 1;
+    context.throw_object = commit_throw; context.dungeon_user = &store;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(&state, action.dsa_id,
+              action.state_index, 0, &context, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              store.calls == 1 && store.v[0] == 0xff80u && store.v[1] == 0x20u &&
+              store.v[2] == 0x40u && store.v[3] == 1u && store.v[4] == 8u &&
+              store.v[5] == 50u && store.v[6] == 2u,
+          "STKOP_Throw commits CSBWin's exact seven-word request after acceptance");
+    configure_action(&action, indirect, 1); context.parameters = params;
+    context.parameter_count = (int)(sizeof(params) / sizeof(params[0])); store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(&state, action.dsa_id,
+              action.state_index, 0, &context, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 1,
+          "STKOP_I_Throw expands through the same source-owned transaction");
+}
+
 static int commit_add(void *user, uint32_t object, int32_t location,
                       uint32_t position_mask)
 {
@@ -1170,6 +1207,7 @@ int main(void)
     CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
 
     test_add_transaction();
+    test_throw_transaction();
     test_add_runtime_cell_owner();
     test_copyteleporter_runtime_receipt();
     test_teleport_party_runtime_receipt();

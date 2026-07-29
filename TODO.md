@@ -972,7 +972,7 @@ that its exact runtime path is not already source-locked and tested.
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
     remaining source-supported stack families include `CAST`,
-    `FILTEREDCAST`, `THROW`, and their still-unowned indirect routes.
+    `FILTEREDCAST`, `CAST`, and their still-unowned indirect routes.
     `SAY` is now
     source-owned and transactional; the listed operations still require one
     transactional world-
@@ -1041,6 +1041,11 @@ that its exact runtime path is not already source-locked and tested.
     records, preserves payload bytes 2..N, and appends the selected positional
     Thing only after the whole action succeeds. DB4/DB9 recursive ownership
     and cursor/champion/monster destinations remain explicitly fail-closed.
+    2026-07-29: direct `THROW` and `I_THROW` now stage CSBWin Timer.cpp's
+    exact seven operands and use the loaded candidate's F0810 projectile plus
+    timeline owner. Original `0xFF80` spell Things and ordinary DB5..DB10
+    objects selected by source cell/position are routed without a synthetic
+    projectile; unsupported Thing kinds remain CSBWin no-ops.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

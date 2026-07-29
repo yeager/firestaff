@@ -7123,6 +7123,80 @@ static int csb_v1_runtime_dsa_add_object(
     return 1;
 }
 
+/* CSBWin Timer.cpp ThrowMissile, with only its actual spell and ordinary
+ * cell-object branches.  The DSA runner calls this against a private runtime
+ * candidate, so an accepted F0810 allocation and source-list unlink publish
+ * together. */
+static int csb_v1_runtime_dsa_throw_object(
+    void *user, uint32_t object_type, uint32_t object_location,
+    uint32_t launch_location, uint32_t direction, uint32_t range,
+    uint32_t damage, uint32_t decay_rate)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_DungeonData *dungeon;
+    struct ProjectileCreateInput_Compat input;
+    struct TimelineEvent_Compat first_move;
+    uint16_t associated = THING_NONE;
+    uint16_t current;
+    int subtype, category, attack_type, level, x, y, cell, type, size, guard;
+    int slot = -1;
+
+    if (!profile || !(dungeon = profile->dungeon_handle) || !dungeon->raw_data) return 0;
+    level = (int)((launch_location >> 10) & 0x3fu);
+    x = (int)((launch_location >> 5) & 0x1fu);
+    y = (int)(launch_location & 0x1fu);
+    cell = (int)((launch_location >> 16) & 3u);
+    if (level >= dungeon->level_count ||
+        csb_v1_dungeon_get_raw_square(dungeon, level, x, y) < 0 || direction > 3u) return 1;
+    category = PROJECTILE_CATEGORY_MAGICAL;
+    switch (object_type & 0xffffu) {
+    case 0xff80u: subtype = PROJECTILE_SUBTYPE_FIREBALL; break;
+    case 0xff81u: subtype = PROJECTILE_SUBTYPE_SLIME; break;
+    case 0xff82u: subtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT; break;
+    case 0xff83u: subtype = PROJECTILE_SUBTYPE_HARM_NON_MATERIAL; break;
+    case 0xff84u: subtype = PROJECTILE_SUBTYPE_OPEN_DOOR; break;
+    case 0xff86u: subtype = PROJECTILE_SUBTYPE_POISON_BOLT; break;
+    case 0xff87u: subtype = PROJECTILE_SUBTYPE_POISON_CLOUD; break;
+    case 0u:
+        level = (int)((object_location >> 10) & 0x3fu);
+        x = (int)((object_location >> 5) & 0x1fu);
+        y = (int)(object_location & 0x1fu);
+        cell = (int)((object_location >> 16) & 3u);
+        if (level >= dungeon->level_count ||
+            csb_v1_dungeon_get_raw_square(dungeon, level, x, y) < 0) return 1;
+        current = (uint16_t)csb_v1_dungeon_get_first_thing(dungeon, level, x, y);
+        for (guard = 0; guard < 128 && current != THING_NONE && current != THING_ENDOFLIST;
+             ++guard) {
+            const uint8_t *record = csb_v1_dungeon_get_thing_record(dungeon, current, &type, NULL, &size);
+            if (!record || size < 2) return 0;
+            if (type > 4 && type <= 10 && ((current >> 14) & 3u) == (unsigned)cell) {
+                associated = current;
+                break;
+            }
+            current = csb_v1_runtime_read_u16(record);
+        }
+        if (associated == THING_NONE || associated == THING_ENDOFLIST) return 1;
+        subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+        category = PROJECTILE_CATEGORY_KINETIC;
+        break;
+    default: return 1; /* CSBWin default leaves objectToThrow at RNeof. */
+    }
+    attack_type = csb_v1_runtime_projectile_attack_type_from_subtype(subtype);
+    memset(&input, 0, sizeof(input)); memset(&first_move, 0, sizeof(first_move));
+    input.category = category; input.subtype = subtype; input.ownerKind = PROJECTILE_OWNER_CREATURE;
+    input.mapIndex = (int)((launch_location >> 10) & 0x3fu);
+    input.mapX = (int)((launch_location >> 5) & 0x1fu); input.mapY = (int)(launch_location & 0x1fu);
+    input.cell = (int)((launch_location >> 16) & 3u); input.direction = (int)direction;
+    input.kineticEnergy = (int)range; input.attack = (int)damage; input.launcherStrength = (int)damage;
+    input.stepEnergy = (int)decay_rate; input.currentTick = (int)profile->game_time;
+    input.attackTypeCode = attack_type; input.associatedThing = associated; input.firstMoveGraceFlag = 1;
+    if (!F0810_PROJECTILE_Create_Compat(&input, &profile->projectiles, &slot, &first_move)) return 0;
+    if (associated != THING_NONE && !csb_v1_runtime_unlink_thing_from_square(
+            dungeon, associated, level, x, y)) return 0;
+    csb_v1_runtime_schedule_projectile_move_event(profile, &first_move);
+    return 1;
+}
+
 static int csb_v1_runtime_materialize_projectile_associated_object(
     CSB_V1_RuntimeProfile *profile,
     const struct ProjectileInstance_Compat *projectile,
@@ -27292,6 +27366,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.move_object = csb_v1_runtime_dsa_move_object;
     candidate.delete_object = csb_v1_runtime_dsa_delete_object;
     candidate.add_object = csb_v1_runtime_dsa_add_object;
+    candidate.throw_object = csb_v1_runtime_dsa_throw_object;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
@@ -27540,6 +27615,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.move_object = csb_v1_runtime_dsa_move_object;
     candidate.delete_object = csb_v1_runtime_dsa_delete_object;
     candidate.add_object = csb_v1_runtime_dsa_add_object;
+    candidate.throw_object = csb_v1_runtime_dsa_throw_object;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;

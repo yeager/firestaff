@@ -42247,3 +42247,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   an `ENDOFLIST` node and appends the requested positional Thing atomically.
   Focused direct, indirect, rollback and raw-byte-map regressions pass;
   recursive DB4/DB9 copies and non-cell destinations stay fail-closed.
+- ✅ 2026-07-29 CSBWin DSA `STKOP_Throw` / `STKOP_I_Throw`: the authenticated
+  stack VM now preserves Timer.cpp's `(objectType, objectLocation,
+  launchLocation, direction, range, damage, decayRate)` order until full
+  acceptance. The runtime consumes the existing CSB F0810/timeline owner for
+  original spell Things and ordinary selected cell objects, unlinks a physical
+  source Thing only when projectile creation succeeds, and keeps unsupported
+  source kinds as original no-ops. Direct and indirect operand regressions and
+  the full CSB suite pass.
