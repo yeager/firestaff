@@ -43135,3 +43135,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   handoff, runtime HUD ownership, filters, scale/EPX, input affordances,
   lighting and the reviewed V2.2 artpack gate. Unadmitted V2.2 F0128
   material families remain open under `CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION`.
+
+- ✅ 2026-07-30 CSB shared spell-panel pointer input: CSB now admits
+  ReDMCSB `COMMAND.C` C100 and C101..C109 through the same source-owned
+  C009/C011 geometry as DM1. The focused M11 regression proves panel open
+  and `Lo` rune entry while preserving the separate, still-open CSBWin cast
+  executor boundary.

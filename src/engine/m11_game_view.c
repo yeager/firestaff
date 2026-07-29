@@ -11353,7 +11353,9 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
     DM1_V1_SpellAreaRectPc34 parent;
     TouchClickZonePc34Compat zone;
 
-    if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
+    if (!state ||
+        !(m11_is_dm1_source_kind(state->sourceKind) ||
+          m11_source_is_csb(state)) ||
         state->showDebugHUD || state->inventoryPanelActive ||
         !m11_v1_chrome_mode_enabled(state)) {
         return M11_GAME_INPUT_IGNORED;
