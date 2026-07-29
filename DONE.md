@@ -818,6 +818,13 @@
   query/blit rect, HUD/scene/material commands.
 - ✅ 2026-07-26 Media, input and expansion complete (Q-CSB-10). Package
   identity, sound filter, expansion save identity tested. 17 test files.
+- ✅ 2026-07-29 CSB Atari `MINI.DAT` native-save decode boundary: DMWeb's
+  big-endian Block1/2/3 encryption and checksum rules now validate the
+  original CSB Utility Disk's ITEM16, champion, timer, and timer-queue
+  sections, and expose the authenticated unencrypted dungeon offset without
+  creating a replacement `DUNGEON.DAT`. The real local Atari artifact reaches
+  its payload at byte 10,160 (32,655 bytes). Runtime consumption remains
+  tracked under `CSB-SAVE-UTILITY`.
 - ✅ 2026-07-26 Original saves and Utility Disk complete (Q-CSB-09). 32
   save/utility test files covering header build/read, F0435 provenance,
   export/import, CSBWin save loader boundary, utility save transaction.

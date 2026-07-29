@@ -976,6 +976,11 @@ that its exact runtime path is not already source-locked and tested.
    `DUNGEON.DAT`. The current runtime does not yet admit it through the real
    save decoder. Add a source-verified MINI/CSBGAME decode and handoff route
    before claiming original Atari/CSBWin campaign-resume support.
+   2026-07-29: the Atari-native decode boundary now validates the real
+   `MINI.DAT` Block1/2/3, ITEM16, champion, timer and timer-queue checksums
+   and locates its unencrypted CSB dungeon payload at byte 10,160. Runtime
+   still needs a memory-backed dungeon-loader handoff; no temporary or
+   synthetic `DUNGEON.DAT` is created.
 7. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
    source-backed indoor HUD, wall, door, floor/ceiling, item, projectile,
    creature, and static-object rendering through the live M11 dungeon path.

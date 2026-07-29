@@ -1,0 +1,62 @@
+/*
+ * CSB Atari ST saved-game decoder boundary.
+ *
+ * DMWeb's Saved Game Files specification describes MINI.DAT as CSB's main
+ * dungeon stored in the native save format.  This module validates and
+ * locates the source-owned dungeon payload; it deliberately does not invent
+ * a Firestaff save container or silently substitute Prison's DUNGEON.DAT.
+ */
+#ifndef FIRESTAFF_CSB_V1_ATARI_SAVE_DECODE_PC34_COMPAT_H
+#define FIRESTAFF_CSB_V1_ATARI_SAVE_DECODE_PC34_COMPAT_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    CSB_V1_ATARI_SAVE_OK = 0,
+    CSB_V1_ATARI_SAVE_ERR_NULL = -1,
+    CSB_V1_ATARI_SAVE_ERR_TRUNCATED = -2,
+    CSB_V1_ATARI_SAVE_ERR_BLOCK2_CHECKSUM = -3,
+    CSB_V1_ATARI_SAVE_ERR_BLOCK3_CHECKSUM = -4,
+    CSB_V1_ATARI_SAVE_ERR_ITEM16_CHECKSUM = -5,
+    CSB_V1_ATARI_SAVE_ERR_CHARACTER_CHECKSUM = -6,
+    CSB_V1_ATARI_SAVE_ERR_TIMER_CHECKSUM = -7,
+    CSB_V1_ATARI_SAVE_ERR_TIMER_QUEUE_CHECKSUM = -8,
+    CSB_V1_ATARI_SAVE_ERR_COUNTS = -9
+} CSB_V1_AtariSaveDecodeResult;
+
+typedef struct {
+    uint32_t game_time;
+    uint32_t random_seed;
+    int16_t leader_hand_thing;
+    int16_t champion_count;
+    int16_t party_x;
+    int16_t party_y;
+    int16_t party_direction;
+    int16_t party_map_index;
+    int16_t timer_count;
+    int16_t item16_count;
+    int16_t timer_capacity;
+    int16_t item16_capacity;
+    size_t dungeon_offset;
+    size_t dungeon_size;
+} CSB_V1_AtariSaveInfo;
+
+/* Decode original big-endian Atari ST CSB save data, including MINI.DAT.
+ * The output points to no owned memory: dungeon_offset/dungeon_size refer to
+ * the caller's input buffer. */
+int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
+                                         size_t size,
+                                         CSB_V1_AtariSaveInfo *out_info);
+
+const char *csb_v1_atari_save_decode_source_evidence_pc34_compat(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
