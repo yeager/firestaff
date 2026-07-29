@@ -1992,6 +1992,14 @@ static int m12_canonicalize_data_directory(const char* input,
            FSP_DirExists(out);
 }
 
+/* SDL's macOS folder dialog has returned these relative display tokens after
+ * a selection. They do not identify the folder the player picked, and must
+ * never replace the persisted game-data root. */
+static int m12_data_directory_dialog_token_is_placeholder(const char* path) {
+    return path && (strcmp(path, ".") == 0 || strcmp(path, "./") == 0 ||
+                    strcmp(path, ".\\") == 0);
+}
+
 static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
                                          const char* dataDir) {
     M12_DataDirScanJob* job;
@@ -2429,6 +2437,10 @@ static void SDLCALL m12_data_dir_dialog_callback(void* userdata,
     }
     state->dataDirPickerActive = 0;
     if (filelist && filelist[0] && filelist[0][0] != '\0') {
+        if (m12_data_directory_dialog_token_is_placeholder(filelist[0])) {
+            m12_show_data_dir_result_popup(state, 0);
+            return;
+        }
         (void)m12_begin_async_data_dir_scan(state, filelist[0]);
         return;
     }
