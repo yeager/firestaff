@@ -971,18 +971,16 @@ that its exact runtime path is not already source-locked and tested.
     filters, state transitions, and runtime mutation with hard fail-closed
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
-    remaining 19 fully unowned stack words: `ADD`, `CAST`,
-    `FILTEREDCAST`, `THROW`,
-    the `I_*` indirect family (`ADD/CAST/MONSTER!/
-    CHAR!/COPY/CELL!/THROW/DELAY/CAUSEPOISON/
-    FILTEREDCAST/SWAPCHARACTER`). `SAY` is now
+    remaining source-supported stack families include `CAST`,
+    `FILTEREDCAST`, `THROW`, and their still-unowned indirect routes.
+    `SAY` is now
     source-owned and transactional; the listed operations still require one
     transactional world-
     mutation batch with source-owned callbacks; do not add a synthetic VM
     fallback for missing dungeon ownership. 2026-07-29: `I_Indirect` now
-    expands only to the seven already source-owned transactional operations
-    (`MONSTER!`, `CHAR!`, `COPY`, `CELL!`, `CAUSEPOISON`, `SWAPCHARACTER`,
-    `CREATECLOUD`).
+    expands only to the already source-owned transactional operations
+    (`ADD`, `MONSTER!`, `CHAR!`, `COPY`, `CELL!`, `CAUSEPOISON`,
+    `SWAPCHARACTER`, `CREATECLOUD`, `DEL`, `MOVE`).
     Its source local-variable rewrite now writes the action-local DSAVARS bank
     before the selected direct word runs; persistent save data remains outside
     this temporary source bank. 2026-07-29: direct `CREATECLOUD` now consumes
@@ -1036,6 +1034,13 @@ that its exact runtime path is not already source-locked and tested.
     source-supported DB3/DB5/DB7/DB8/DB10 Things and restores the record's
     F0166 free sentinel after full-action acceptance. Cursor and champion
     possession, plus unsupported chained record types, remain fail-closed.
+    2026-07-29: direct `ADD` and `I_ADD` now stage the exact CSBWin
+    `(positionMask,LOCATIONREL,object)` order and resolve multi-position
+    masks through the staged CSBWin `STRandom` state. The loaded PC3.4 owner
+    uses F0166 to copy flat source-supported DB3/DB5/DB6/DB7/DB8/DB10
+    records, preserves payload bytes 2..N, and appends the selected positional
+    Thing only after the whole action succeeds. DB4/DB9 recursive ownership
+    and cursor/champion/monster destinations remain explicitly fail-closed.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

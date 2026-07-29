@@ -423,6 +423,11 @@ typedef int (*CSB_V1_CSBWinDSAMoveObjectFn)(
  * the actual unlink/free-list record mutation, after complete action accept. */
 typedef int (*CSB_V1_CSBWinDSADeleteObjectFn)(
     void *user, uint32_t object, int32_t location);
+/* DSA.cpp EX_ADD copies an existing RN, then places the new record at its
+ * selected destination.  The runtime owns F0166 allocation and raw dungeon
+ * list mutation; the VM only preserves the source operands until commit. */
+typedef int (*CSB_V1_CSBWinDSAAddObjectFn)(
+    void *user, uint32_t object, int32_t location, uint32_t position_mask);
 typedef int (*CSB_V1_CSBWinDSADiscardTextFn)(void *user);
 typedef int (*CSB_V1_CSBWinDSAPlaySoundFn)(
     void *user, int32_t sound_number, int32_t volume, int32_t flags);
@@ -622,6 +627,7 @@ typedef struct {
     CSB_V1_CSBWinDSAMutateMonsterGroupFn mutate_monster_group;
     CSB_V1_CSBWinDSAMoveObjectFn move_object;
     CSB_V1_CSBWinDSADeleteObjectFn delete_object;
+    CSB_V1_CSBWinDSAAddObjectFn add_object;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;
@@ -1060,6 +1066,7 @@ typedef struct {
     CSB_V1_CSBWinDSAMutateMonsterGroupFn mutate_monster_group;
     CSB_V1_CSBWinDSAMoveObjectFn move_object;
     CSB_V1_CSBWinDSADeleteObjectFn delete_object;
+    CSB_V1_CSBWinDSAAddObjectFn add_object;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;

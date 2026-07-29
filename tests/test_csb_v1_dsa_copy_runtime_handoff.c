@@ -122,6 +122,80 @@ typedef struct {
     int32_t location;
 } DeleteStore;
 
+typedef struct {
+    int calls;
+    uint32_t object;
+    int32_t location;
+    uint32_t position_mask;
+} AddStore;
+
+static int commit_add(void *user, uint32_t object, int32_t location,
+                      uint32_t position_mask)
+{
+    AddStore *store = user;
+    if (!store) return 0;
+    ++store->calls;
+    store->object = object;
+    store->location = location;
+    store->position_mask = position_mask;
+    return 1;
+}
+
+static void test_add_transaction(void)
+{
+    uint16_t words[] = {
+        0x0686u, 4u, 0x0686u, 0u, 0x0686u, 0x1400u, 0x028bu
+    };
+    uint16_t rollback_words[] = {
+        0x0686u, 4u, 0x0686u, 0u, 0x0686u, 0x1400u, 0x028bu, 0u
+    };
+    uint16_t indirect_words[] = { 0x168bu };
+    uint32_t indirect_parameters[] = { 80u, 3u, 0x1400u, 0u, 4u, 0u, 0u };
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    AddStore store;
+
+    memset(&state, 0, sizeof(state));
+    memset(&context, 0, sizeof(context));
+    memset(&store, 0, sizeof(store));
+    configure_action(&action, words, (int)(sizeof(words) / sizeof(words[0])));
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+    context.add_object = commit_add;
+    context.dungeon_user = &store;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 1 &&
+              store.object == 0x1400u && store.location == 0 &&
+              store.position_mask == 4u,
+          "STKOP_Add commits the exact CSBWin source object, cell and position");
+
+    configure_action(&action, indirect_words,
+                     (int)(sizeof(indirect_words) / sizeof(indirect_words[0])));
+    context.parameters = indirect_parameters;
+    context.parameter_count = (int)(sizeof(indirect_parameters) /
+                                    sizeof(indirect_parameters[0]));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 1 &&
+              store.object == 0x1400u && store.location == 0 &&
+              store.position_mask == 4u,
+          "STKOP_I_Add expands through the same source-owned transaction");
+    context.parameters = NULL;
+    context.parameter_count = 0;
+
+    configure_action(&action, rollback_words,
+                     (int)(sizeof(rollback_words) / sizeof(rollback_words[0])));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) != CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 0,
+          "STKOP_Add rolls back when a later source word is rejected");
+}
+
 static int commit_delete(void *user, uint32_t object, int32_t location)
 {
     DeleteStore *store = user;
@@ -852,6 +926,54 @@ static void test_delete_runtime_cell_owner(void)
           "STKOP_Del unlinks a loaded PC3.4 object and returns its DB record to F0166");
 }
 
+static void test_add_runtime_cell_owner(void)
+{
+    uint8_t raw[80] = { 0 };
+    uint16_t words[] = {
+        0x0686u, 4u, 0x0686u, 0u, 0x0686u, 0x1400u, 0x028bu
+    };
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    CSB_V1_DSAImportedAction action;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    raw[60] = 0u; raw[61] = 0u;
+    raw[64] = 0x10u;
+    put_le16(raw, 66u, 0x1400u);
+    put_le16(raw, 70u, 0xfffeu);
+    raw[72] = 0x35u; raw[73] = 0x71u;
+    put_le16(raw, 74u, 0xffffu);
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 1;
+    dungeon.level_heights[0] = 1;
+    dungeon.level_offsets[0] = 64;
+    dungeon.square_bytes = 1;
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[5] = 70;
+    dungeon.thing_type_counts[5] = 2;
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.csbwin_extended_features_valid = 1;
+    configure_action(&action, words, (int)(sizeof(words) / sizeof(words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner));
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id;
+    runner.state_index = action.state_index;
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 1 &&
+              raw[70] == 0x01u && raw[71] == 0x94u &&
+              raw[74] == 0xfeu && raw[75] == 0xffu &&
+              raw[76] == 0x35u && raw[77] == 0x71u,
+          "STKOP_Add uses F0166 and appends a positional PC3.4 DB5 copy");
+}
+
 static void test_indirect_local_variable_char_store(void)
 {
     /* CSBWin DSA.cpp EX_AMPERSAND I_Indirect format. P3=count, P4=DSAVARS
@@ -1047,6 +1169,8 @@ int main(void)
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
 
+    test_add_transaction();
+    test_add_runtime_cell_owner();
     test_copyteleporter_runtime_receipt();
     test_teleport_party_runtime_receipt();
     test_textfetch_textsay_runtime_binding();

@@ -7074,6 +7074,55 @@ static int csb_v1_runtime_dsa_delete_object(
     return 1;
 }
 
+/* CSBWin DSA.cpp EX_ADD, constrained to copied ordinary objects in a real
+ * loaded PC3.4 cell list.  Negative cursor/champion/monster destinations and
+ * DB4 ownership are deliberately left to their dedicated runtime owners. */
+static int csb_v1_runtime_dsa_add_object(
+    void *user, uint32_t object, int32_t location, uint32_t position_mask)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_DungeonData *dungeon;
+    const uint8_t *source;
+    uint8_t *destination;
+    uint16_t copy;
+    int level, map_x, map_y, source_type, source_size, destination_size;
+    int position = 0;
+
+    if (!profile || !(dungeon = profile->dungeon_handle) || !dungeon->raw_data ||
+        location < 0 || object > UINT16_MAX) return 0;
+    level = (location >> 10) & 0x3f;
+    map_x = (location >> 5) & 0x1f;
+    map_y = location & 0x1f;
+    if (level < 0 || level >= dungeon->level_count ||
+        csb_v1_dungeon_get_raw_square(dungeon, level, map_x, map_y) < 0) return 1;
+    source = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)object,
+                                               &source_type, NULL, &source_size);
+    /* CopyItem supports these flat DB records directly. DB4/DB9 own nested
+     * possession copying and the other DB classes have dedicated semantics. */
+    if (!source || source_size < 2 ||
+        (source_type != 3 && source_type != 5 && source_type != 6 &&
+         source_type != 7 && source_type != 8 && source_type != 10)) return 1;
+    copy = csb_v1_dungeon_f0166_get_unused_thing_pc34(
+        dungeon, (uint16_t)source_type, NULL, NULL);
+    if (copy == THING_NONE || copy == THING_ENDOFLIST) return 1;
+    destination = csb_v1_runtime_mutable_thing_record(dungeon, copy, NULL,
+                                                        &destination_size);
+    if (!destination || destination_size != source_size) return 0;
+    if (position_mask != 0u) {
+        if ((position_mask & (position_mask - 1u)) != 0u) return 0;
+        while ((position_mask & (1u << position)) == 0u && position < 4) ++position;
+        if (position == 4) return 0;
+    }
+    memcpy(destination, source, (size_t)source_size);
+    /* CopyItem copies payload bytes 2..N; Generic.Next belongs to the new
+     * list node and starts at ENDOFLIST before append links it. */
+    csb_v1_runtime_write_u16(destination, THING_ENDOFLIST);
+    if (!csb_v1_runtime_append_thing_to_square_tail(
+            dungeon, (uint16_t)((copy & 0x3fffu) | ((uint16_t)position << 14)),
+            level, map_x, map_y)) return 0;
+    return 1;
+}
+
 static int csb_v1_runtime_materialize_projectile_associated_object(
     CSB_V1_RuntimeProfile *profile,
     const struct ProjectileInstance_Compat *projectile,
@@ -27242,6 +27291,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.mutate_monster_group = csb_v1_runtime_dsa_mutate_monster_group;
     candidate.move_object = csb_v1_runtime_dsa_move_object;
     candidate.delete_object = csb_v1_runtime_dsa_delete_object;
+    candidate.add_object = csb_v1_runtime_dsa_add_object;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
@@ -27489,6 +27539,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.mutate_monster_group = csb_v1_runtime_dsa_mutate_monster_group;
     candidate.move_object = csb_v1_runtime_dsa_move_object;
     candidate.delete_object = csb_v1_runtime_dsa_delete_object;
+    candidate.add_object = csb_v1_runtime_dsa_add_object;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;

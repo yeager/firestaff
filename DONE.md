@@ -42239,3 +42239,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   free sentinel. Focused tests cover operand order, indirect expansion,
   rollback, core ownership and byte-map publication. Cursor/champion and
   chained-record locations remain explicitly fail-closed.
+- ✅ 2026-07-29 CSBWin DSA `STKOP_Add` / `STKOP_I_Add`: authenticated DSA
+  now stages CSBWin's original `(positionMask, LOCATIONREL, object)` operands
+  and consumes the staged GAMEBLOCK2 `STRandom` state for a multi-bit position
+  mask. The loaded PC3.4 candidate uses F0166 to allocate a same-type DB3/
+  DB5/DB6/DB7/DB8/DB10 record, copies only source payload bytes 2..N, creates
+  an `ENDOFLIST` node and appends the requested positional Thing atomically.
+  Focused direct, indirect, rollback and raw-byte-map regressions pass;
+  recursive DB4/DB9 copies and non-cell destinations stay fail-closed.
