@@ -24,9 +24,10 @@ fi
 # macOS as well as GNU/Linux.
 output="$(mktemp "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-XXXXXX")"
 capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-startup-XXXXXX")"
+v1_capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v1-source-startup-XXXXXX")"
 runtime_capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-capture-XXXXXX")"
 v1_runtime_capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v1-runtime-capture-XXXXXX")"
-trap 'rm -f "$output"; rm -rf "$capture_dir" "$runtime_capture_dir" "$v1_runtime_capture_dir"' EXIT HUP INT TERM
+trap 'rm -f "$output"; rm -rf "$capture_dir" "$v1_capture_dir" "$runtime_capture_dir" "$v1_runtime_capture_dir"' EXIT HUP INT TERM
 
 # V2.2 material belongs only to the admitted live viewport. The original
 # C001-C005 startup sequence must still reach the presented surface with its
@@ -51,6 +52,72 @@ if [ "$capture_count" -ne 4 ] ||
     echo "FAIL: CSB V2.2 artpack changed the original startup palette chain" >&2
     exit 1
 fi
+
+# V2.2 art belongs to an admitted F0128 runtime command only. Its complete
+# source-owned intro chain must therefore retain the V1 terminal pages. TITLE
+# palettes 5/6 advance on VBlanks and cannot be compared by a wall-clock
+# capture boundary; their source cadence has dedicated TITLE tests below.
+FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$v1_capture_dir" \
+SDL_VIDEODRIVER=dummy "$firestaff_bin" \
+    --game csb --data-dir "$data_dir" --presentation-mode v1 --duration 7000 \
+    >"$v1_capture_dir/firestaff.log" 2>&1
+
+v1_capture_count="$(find "$v1_capture_dir" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"
+if [ "$v1_capture_count" -ne 4 ] ||
+   ! grep -Fq 'CSB PRESENTED SOURCE CAPTURE: palette=4' "$v1_capture_dir/firestaff.log" ||
+   ! grep -Fq 'CSB PRESENTED SOURCE CAPTURE: palette=5' "$v1_capture_dir/firestaff.log" ||
+   ! grep -Fq 'CSB PRESENTED SOURCE CAPTURE: palette=6' "$v1_capture_dir/firestaff.log" ||
+   ! grep -Fq 'CSB PRESENTED SOURCE CAPTURE: palette=7' "$v1_capture_dir/firestaff.log"; then
+    cat "$v1_capture_dir/firestaff.log" >&2
+    echo "FAIL: CSB V1 baseline did not capture the complete source startup chain" >&2
+    exit 1
+fi
+
+python3 - "$v1_capture_dir/firestaff.log" "$capture_dir/firestaff.log" <<'PY'
+from pathlib import Path
+import re
+import struct
+import sys
+
+def canonical_bmp(path):
+    data = path.read_bytes()
+    if len(data) < 54 or data[:2] != b"BM":
+        raise ValueError(f"invalid BMP: {path}")
+    offset = struct.unpack_from("<I", data, 10)[0]
+    width, height = struct.unpack_from("<ii", data, 18)
+    bpp = struct.unpack_from("<H", data, 28)[0]
+    if width <= 0 or abs(height) <= 0 or bpp != 24:
+        raise ValueError(f"unexpected startup BMP geometry: {path}: {width}x{height}x{bpp}")
+    stride = ((width * 3 + 3) // 4) * 4
+    if offset + stride * abs(height) > len(data):
+        raise ValueError(f"truncated BMP: {path}")
+    rows = []
+    for y in range(abs(height)):
+        source_y = y if height < 0 else abs(height) - 1 - y
+        begin = offset + source_y * stride
+        rows.append(data[begin:begin + width * 3])
+    return width, abs(height), b"".join(rows)
+
+def capture_paths(log_path):
+    captures = {}
+    for line in Path(log_path).read_text().splitlines():
+        match = re.search(r"CSB PRESENTED SOURCE CAPTURE: palette=(\d+) (.+\.bmp)$", line)
+        if match:
+            captures[int(match.group(1))] = Path(match.group(2))
+    if sorted(captures) != [4, 5, 6, 7] or not all(path.is_file() for path in captures.values()):
+        raise SystemExit(f"FAIL: CSB startup log lacks a complete palette capture chain: {log_path}")
+    return captures
+
+v1_files = capture_paths(sys.argv[1])
+v22_files = capture_paths(sys.argv[2])
+# Palette 4 (PRESENTS) and palette 7 (the completed Entrance page) are stable
+# terminal source pages. Palette 5/6 are the advancing CHAOS/STRIKES sequence
+# and are verified by phase/cadence receipts rather than capture timestamp.
+for palette in (4, 7):
+    v1, v22 = v1_files[palette], v22_files[palette]
+    if canonical_bmp(v1) != canonical_bmp(v22):
+        raise SystemExit(f"FAIL: CSB V2.2 changed source startup palette {palette}")
+PY
 
 SDL_VIDEODRIVER=dummy \
 FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_capture_dir" \

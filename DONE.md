@@ -42900,3 +42900,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   authenticated door projection was actually admitted, preventing an
   uncounted modern or generic render path from altering the source frame.
   Verification: `csb_v22_source_artpack_runtime` PASS.
+- ✅ 2026-07-29 CSB V2.2 source-startup frame lock: the V2.2 real-data
+  runtime probe now launches a paired V1 source session and compares the
+  stable PRESENTS (palette 4) and completed Entrance (palette 7) host pages
+  byte-for-byte. CHAOS/STRIKES remains covered through its source VBlank
+  phase/cadence receipt because a wall-clock capture can legitimately land on
+  different animation frames. Verification:
+  `csb_v22_source_artpack_runtime` PASS.
