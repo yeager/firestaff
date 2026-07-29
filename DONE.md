@@ -42932,3 +42932,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   existing CSB F0433/F0435 QuickSave/QuickLoad owners. Verified by
   `csb_v1_keyboard_commands_pc34_compat`, `csb_v1_utility_save_transaction_pc34_compat`,
   and `csb_v1_save_export_import` (3/3 PASS).
+- ✅ 2026-07-29 CSB source-owned entrance Resume pose verification: the M11
+  resume gate now retains the actual new-game pose decoded from verified
+  `DUNGEON.DAT` while proving that native, CSBWin and raw `CSBGAME` candidates
+  are not applied before the Entrance Resume command. This removes the stale
+  synthetic `(5,5,North)` test assumption while preserving the delayed
+  F0435-owned load boundary. Verification:
+  `csb_v1_m11_startup_resume_gate` PASS.

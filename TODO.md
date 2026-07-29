@@ -4840,8 +4840,11 @@ lane is carried forward in the sections below.
     header magic but fails F0429/F0435 verification cannot fall through to
     the CSBWin importer; only an independently classified CSBWin candidate
     may use that route. `csb_v1_m11_f0435_f9_reload` is corpus-backed and
-    explicitly skips without `FIRESTAFF_CSB_DATA_DIR`. The older broad
-    `csb_v1_m11_startup_resume_gate` is green. Unbound CSBgraphics entries
+    explicitly skips without `FIRESTAFF_CSB_DATA_DIR`. The broad
+    `csb_v1_m11_startup_resume_gate` is green: it verifies the decoded
+    `DUNGEON.DAT` start pose rather than an obsolete fixed host coordinate,
+    and confirms all Resume candidates stay delayed until Entrance accepts
+    Resume. Unbound CSBgraphics entries
     and custom-background bitmap/mask pairs are explicitly no-draw; positive
     wall/floor/door materialization still requires a real, operator-supplied
     declaration manifest and matching capture identity. The remaining CSB

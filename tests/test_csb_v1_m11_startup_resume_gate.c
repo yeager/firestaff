@@ -1152,6 +1152,9 @@ int main(void) {
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     CSB_V1_BootProfile* profile;
+    int startup_party_x = CSB_V1_START_PARTY_X;
+    int startup_party_y = CSB_V1_START_PARTY_Y;
+    int startup_party_dir = CSB_V1_START_PARTY_DIR;
 
     expect_true(csb_v1_startup_sequence_source_order_valid_pc34(),
                 "CSB startup source-order contract is valid");
@@ -1302,6 +1305,12 @@ int main(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
                 "M11 CSB new-game start succeeds");
+    /* A verified CSB DUNGEON.DAT owns the new-game pose.  Preserve the
+     * source-derived pose so later Resume validation can prove it did not
+     * apply a save before the entrance command is accepted. */
+    startup_party_x = view.csbState.party_x;
+    startup_party_y = view.csbState.party_y;
+    startup_party_dir = view.csbState.party_dir;
     expect_true(view.csbState.startup_entrance_active == 1 &&
                 view.csbState.startup_entrance_dismissed == 0,
                 "M11 CSB new-game start opens source-locked title/entrance");
@@ -2032,9 +2041,9 @@ int main(void) {
     expect_true(view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_resume_available == 1,
                 "M11 CSB entrance stores validated resume path");
-    expect_true(view.csbState.party_x == CSB_V1_START_PARTY_X &&
-                    view.csbState.party_y == CSB_V1_START_PARTY_Y &&
-                    view.csbState.party_dir == CSB_V1_START_PARTY_DIR,
+    expect_true(view.csbState.party_x == startup_party_x &&
+                    view.csbState.party_y == startup_party_y &&
+                    view.csbState.party_dir == startup_party_dir,
                 "M11 CSB entrance resume validation does not apply the save before Resume");
     drive_csb_entrance_to_wait(
         &view,
@@ -2374,9 +2383,9 @@ int main(void) {
     expect_true(view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_resume_available == 1,
                 "M11 CSB entrance marks verified CSBWin Resume available");
-    expect_true(view.csbState.party_x == CSB_V1_START_PARTY_X &&
-                    view.csbState.party_y == CSB_V1_START_PARTY_Y &&
-                    view.csbState.party_dir == CSB_V1_START_PARTY_DIR,
+    expect_true(view.csbState.party_x == startup_party_x &&
+                    view.csbState.party_y == startup_party_y &&
+                    view.csbState.party_dir == startup_party_dir,
                 "M11 CSB entrance CSBWin validation does not apply the save before Resume");
     drive_csb_entrance_to_wait(
         &view,
@@ -2472,9 +2481,9 @@ int main(void) {
     expect_true(view.csbState.startup_entrance_active == 1 &&
                     view.csbState.startup_entrance_resume_available == 1,
                 "M11 CSB entrance marks raw CSBGAME roster Resume available");
-    expect_true(view.csbState.party_x == CSB_V1_START_PARTY_X &&
-                    view.csbState.party_y == CSB_V1_START_PARTY_Y &&
-                    view.csbState.party_dir == CSB_V1_START_PARTY_DIR,
+    expect_true(view.csbState.party_x == startup_party_x &&
+                    view.csbState.party_y == startup_party_y &&
+                    view.csbState.party_dir == startup_party_dir,
                 "M11 CSB entrance CSBGAME validation does not apply the roster before Resume");
     M11_GameView_Shutdown(&view);
 
@@ -2484,9 +2493,9 @@ int main(void) {
                 "M11 CSB raw CSBGAME roster resume start succeeds");
     expect_true(view.active == 1,
                 "M11 CSB raw CSBGAME roster resume leaves view active");
-    expect_true(view.csbState.party_x == CSB_V1_START_PARTY_X &&
-                view.csbState.party_y == CSB_V1_START_PARTY_Y &&
-                view.csbState.party_dir == CSB_V1_START_PARTY_DIR,
+    expect_true(view.csbState.party_x == startup_party_x &&
+                view.csbState.party_y == startup_party_y &&
+                view.csbState.party_dir == startup_party_dir,
                 "M11 CSB raw CSBGAME roster resume preserves boot pose");
     profile = (CSB_V1_BootProfile*)view.csbBootProfile;
     if (profile) {
