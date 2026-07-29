@@ -13487,6 +13487,38 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_m11_utility_capture_admission
     )
 
+    add_executable(test_csb_v1_m11_prison_runtime_hud_pc34
+        tests/test_csb_v1_m11_prison_runtime_hud_pc34.c
+    )
+    target_include_directories(test_csb_v1_m11_prison_runtime_hud_pc34 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_m11_prison_runtime_hud_pc34
+        PRIVATE firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if (NOT MSVC)
+        target_compile_options(test_csb_v1_m11_prison_runtime_hud_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_m11_prison_runtime_hud_pc34
+        COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
+    )
+    set_tests_properties(csb_v1_m11_prison_runtime_hud_pc34 PROPERTIES
+        LABELS "csb;real_data;m11;hud")
+    add_test(
+        NAME csb_v20_m11_prison_runtime_hud_pc34
+        COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
+    )
+    set_tests_properties(csb_v20_m11_prison_runtime_hud_pc34 PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_PRESENTATION_MODE=1"
+        LABELS "csb;real_data;m11;hud;v20")
+    add_test(
+        NAME csb_v21_m11_prison_runtime_hud_pc34
+        COMMAND test_csb_v1_m11_prison_runtime_hud_pc34
+    )
+    set_tests_properties(csb_v21_m11_prison_runtime_hud_pc34 PROPERTIES
+        ENVIRONMENT "FIRESTAFF_CSB_PRESENTATION_MODE=2"
+        LABELS "csb;real_data;m11;hud;v21")
+
     add_executable(test_csb_v1_m11_csbwin_timer_queue_resume
         tests/test_csb_v1_m11_csbwin_timer_queue_resume.c
         tests/csbwin_resume_fixture.c
@@ -30169,6 +30201,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_swsh_source_audio_pc34_
              COMMAND test_csb_v1_swsh_source_audio_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_pc34_runtime_audio_transport.c")
+    add_executable(test_csb_v1_pc34_runtime_audio_transport
+        tests/test_csb_v1_pc34_runtime_audio_transport.c)
+    target_include_directories(test_csb_v1_pc34_runtime_audio_transport PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_pc34_runtime_audio_transport PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_pc34_runtime_audio_transport PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_pc34_runtime_audio_transport
+             COMMAND test_csb_v1_pc34_runtime_audio_transport)
+    set_tests_properties(csb_v1_pc34_runtime_audio_transport PROPERTIES
+        LABELS "csb;audio;runtime;source-lock")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_st_sound_audio.c")
     add_executable(test_csb_v1_atari_st_sound_audio
         tests/test_csb_v1_atari_st_sound_audio.c)
@@ -32330,6 +32377,10 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_audio_runtime_pc34_compat
         tests/test_csb_v1_audio_runtime_pc34_compat.c
         src/csb/csb_v1_audio_runtime_pc34_compat.c
+        src/memory/memory_graphics_dat_pc34_compat.c
+        src/memory/memory_graphics_dat_header_pc34_compat.c
+        src/memory/memory_graphics_dat_select_pc34_compat.c
+        src/memory/memory_graphics_dat_metadata_pc34_compat.c
     )
     target_include_directories(test_csb_v1_audio_runtime_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -34508,6 +34559,7 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v22_source_artpack_runtime PROPERTIES
             LABELS "tier1;csb;v22;startup;presentation;real_data;skip_safe"
+            SKIP_RETURN_CODE 77
             TIMEOUT 20
         )
     endif()

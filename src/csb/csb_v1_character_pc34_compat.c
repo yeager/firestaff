@@ -49,9 +49,18 @@
 #define DM1_HDR_GAME_TIME         10   /* 4 bytes LE: game time in ticks */
 #define DM1_HDR_CHAMPION_START    24   /* first champion record starts here */
 
-/* Utility disk serial number (from CSB Utility Disk boot sector) */
-#define CSB_UTIL_DISK_SERIAL   0x43304200u  /* 'CB0\0' — CSB Utility Disk magic */
-#define CSB_UTIL_DISK_SERIAL_ALT 0x20204342u  /* ' CB0' — alternate encoding */
+/* ReDMCSB UTIO.C F1991 checks Atari ST sector 7 for these exact source
+ * identifiers.  The Amiga path asks DOS Examine() for this volume label; an
+ * uncompressed 880 KiB ADF stores it in its root block. */
+#define CSB_V1_UTIL_ST_SECTOR7_OFFSET (6u * 512u)
+#define CSB_V1_UTIL_AMIGA_ADF_BYTES (80u * 2u * 11u * 512u)
+#define CSB_V1_UTIL_AMIGA_ROOT_BLOCK_OFFSET (880u * 512u)
+#define CSB_V1_UTIL_AMIGA_VOLUME_NAME_OFFSET 432u
+
+static const char k_csb_v1_util_st_copyright[] =
+    "copyright (c) 1987, Software Heaven, Inc.";
+static const char k_csb_v1_util_st_title[] = "Chaos Strikes Back";
+static const char k_csb_v1_util_amiga_volume[] = "FTL_CSB_Utility";
 
 /* Reincarnation stat-halving factor (1/8th reduction) */
 #define REINCARN_STAT_DIVISOR     8
@@ -716,12 +725,9 @@ int csb_v1_character_import_dm1_buffer(CSB_V1_PartyState *party,
 
 /* ── Utility disk verification ───────────────────────────────────────── */
 /* csb_v1_util_check_disk:
- *   Verifies that the disk at drive_path is the CSB Utility Disk.
- *   The original CSB Utility Disk has a specific boot-sector signature.
- *   On non-floppy platforms (macOS, Linux), this simulates the check.
- *
- *   The CSB Utility Disk serial is stored at byte offset 0x18 of the
- *   boot sector. The magic value is 0x43304200 ('CB0\0').
+ *   Verifies an original CSB Utility Disk image using the platform-specific
+ *   identity check in ReDMCSB UTIO.C F1991.  This is deliberately not a
+ *   generic boot-sector or filename heuristic.
  *
  *   ReDMCSB CedtINC7.C flow:
  *     1. Prompt "PUT THE CHAOS STRIKES BACK UTILITY DISK IN ~"
@@ -735,39 +741,47 @@ int csb_v1_character_import_dm1_buffer(CSB_V1_PartyState *party,
 int csb_v1_util_check_disk(const char *drive_path)
 {
     FILE *f;
-    uint8_t boot_sector[512];
-    uint32_t serial;
-    char path_buf[512];
+    uint8_t sector[512];
+    uint8_t amiga_name[32];
+    long size;
+    size_t name_bytes;
 
     if (!drive_path) return -1;
 
-    /* Build path to boot sector (e.g., "/dev/disk2s0" or "A:" or "/Volumes/FLOPPY") */
-    snprintf(path_buf, sizeof(path_buf), "%s", drive_path);
-
-    f = fopen(path_buf, "rb");
+    f = fopen(drive_path, "rb");
     if (!f) {
-        /* Disk not readable — may not be a real floppy environment */
         return -1;
     }
 
-    if (fread(boot_sector, 1, 512, f) != 512) {
+    if (fseek(f, 0L, SEEK_END) != 0 || (size = ftell(f)) < 0) {
         fclose(f);
         return -1;
     }
-    fclose(f);
-
-    /* Read serial at offset 0x18 (4 bytes LE) */
-    serial = (uint32_t)(boot_sector[0x18])
-           | ((uint32_t)boot_sector[0x19] << 8)
-           | ((uint32_t)boot_sector[0x1A] << 16)
-           | ((uint32_t)boot_sector[0x1B] << 24);
-
-    if (serial == CSB_UTIL_DISK_SERIAL ||
-        serial == CSB_UTIL_DISK_SERIAL_ALT) {
-        return 0; /* Correct CSB Utility Disk */
+    if ((unsigned long)size >= CSB_V1_UTIL_ST_SECTOR7_OFFSET + sizeof(sector) &&
+        fseek(f, (long)CSB_V1_UTIL_ST_SECTOR7_OFFSET, SEEK_SET) == 0 &&
+        fread(sector, 1u, sizeof(sector), f) == sizeof(sector) &&
+        memcmp(sector, k_csb_v1_util_st_copyright,
+               sizeof(k_csb_v1_util_st_copyright)) == 0 &&
+        memcmp(sector + 128u, k_csb_v1_util_st_title,
+               sizeof(k_csb_v1_util_st_title)) == 0) {
+        fclose(f);
+        return 0;
     }
-
-    return 1; /* Wrong disk */
+    if ((unsigned long)size == CSB_V1_UTIL_AMIGA_ADF_BYTES &&
+        fseek(f, (long)(CSB_V1_UTIL_AMIGA_ROOT_BLOCK_OFFSET +
+                         CSB_V1_UTIL_AMIGA_VOLUME_NAME_OFFSET), SEEK_SET) == 0 &&
+        fread(amiga_name, 1u, sizeof(amiga_name), f) == sizeof(amiga_name) &&
+        amiga_name[0] == sizeof(k_csb_v1_util_amiga_volume) - 1u) {
+        name_bytes = (size_t)amiga_name[0];
+        if (name_bytes == sizeof(k_csb_v1_util_amiga_volume) - 1u &&
+            memcmp(amiga_name + 1u, k_csb_v1_util_amiga_volume,
+                   name_bytes) == 0) {
+            fclose(f);
+            return 0;
+        }
+    }
+    fclose(f);
+    return 1;
 }
 
 /* csb_v1_util_require_disk:
@@ -780,8 +794,8 @@ int csb_v1_util_check_disk(const char *drive_path)
  *     - Loop until correct disk inserted or user cancels
  *     - Show "THAT'S THE CSB UTILITY DISK!" on success
  *
- *   In Firestaff: simulates with a file-picker / path input on desktop,
- *   and with disk-scan on real floppy hardware.
+ *   Firestaff accepts only the source-defined ST sector or Amiga volume
+ *   identity from a selected image/device path.
  */
 int csb_v1_util_require_disk(const char *drive_path,
                               char *err_msg, int err_msg_size)

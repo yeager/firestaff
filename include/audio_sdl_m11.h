@@ -66,6 +66,7 @@ typedef struct {
     M11_SoundBuffer dm1SwshProgram;
     M11_SoundBuffer csbSwshPcm;
     M11_SoundBuffer csbAtariStPsg;
+    M11_SoundBuffer csbPc34RuntimePcm;
     int dm1SwshProgramAccepted;
     int dm1SwshRegisterWriteCount;
     int dm1SwshWaitVblankCount;
@@ -79,6 +80,11 @@ typedef struct {
     int csbAtariStSoundQueuedCount;
     int csbAtariStSoundPeriod;
     unsigned int csbAtariStSoundHash;
+    int csbPc34RuntimeSoundAccepted;
+    int csbPc34RuntimeSoundByteCount;
+    int csbPc34RuntimeSoundTimerDivisor;
+    unsigned int csbPc34RuntimeSoundHash;
+    int csbPc34RuntimeSoundQueuedCount;
 } M11_AudioState;
 
 int M11_Audio_Init(M11_AudioState* state);
@@ -122,6 +128,15 @@ int M11_Audio_PlayCsbAtariStPsg(M11_AudioState* state,
                                 int sourceBytes,
                                 int sourcePeriod,
                                 unsigned int sourceHash);
+/* ReDMCSB PC3.4 IO.C F0060 passes signed 8-bit GRAPHICS.DAT samples to the
+ * IBMIO driver. The original driver uses a PIT timer divisor, so this helper
+ * preserves the source bytes and divisor during host resampling. It rejects
+ * invalid source material and has no marker/SND3/procedural fallback. */
+int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
+                                    const unsigned char* source,
+                                    int sourceBytes,
+                                    int timerDivisor,
+                                    unsigned int sourceHash);
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled);
 int M11_Audio_TitleMusicEnabled(const M11_AudioState* state);

@@ -27,6 +27,7 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
@@ -1973,18 +1974,17 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     }
     memcpy(framebuffer, candidate_page, framebuffer_bytes);
     /* The CSB boot renderer is separate from the shared DM1 viewport
-     * renderer, so it must populate its own V2.2 cell cache here. Validate
-     * the original F0128 page first, then replace only mapped cells from the
-     * admitted source-derived artpack. This preserves the source receipt
-     * while making the selected V2.2 route visible at runtime. */
+     * renderer, so it still publishes the V2.2 material selection here.
+     * Do not, however, paint the old 3x3 rectangular cache over the F0128
+     * frame. F0128 is perspective-composed, and that cache has no
+     * source-owned projection/mask receipt; using it corrupts a real CSB
+     * viewport with horizontal bands. Keep the verified original frame until
+     * the modern route can consume the actual F0128 draw geometry. */
     if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
         m11_csb_collect_v22_raw_cells(state, v22_raw_cells);
         csb_v22_shape_cache_update((int)state->world.party.direction,
                                    v22_raw_cells);
-        state->csbState.runtime_v22_cells_painted =
-            csb_v22_inplace_render_pass(framebuffer,
-                                        framebufferWidth,
-                                        framebufferHeight);
+        state->csbState.runtime_v22_cells_painted = 0;
     } else {
         state->csbState.runtime_v22_cells_painted = 0;
     }
@@ -2080,7 +2080,7 @@ static int m11_csb_v1_runtime_hud_materials_ready(
         { 28u, 76, 14 }, /* C028 champion direction strip */
         { 10u, 87, 45 }, /* C010 action area */
         { 9u, 87, 25 },  /* C009 spell-area background */
-        { 11u, 87, 33 }, /* C011 spell/rune lines */
+        { 11u, 14, 26 }, /* C011 PC3.4 spell/rune source */
         { 13u, 87, 45 }  /* C013 movement controls */
     };
     size_t index;
@@ -2088,6 +2088,9 @@ static int m11_csb_v1_runtime_hud_materials_ready(
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->csbBootProfile || !state->assetsAvailable ||
         !M11_Font_IsLoaded(&state->originalFont) ||
+        state->csbRuntimeHudMaterialPackageIdentity == 0u ||
+        state->csbRuntimeHudMaterialPackageIdentity !=
+            state->csbStartupExpectedPackageIdentity ||
         !m11_csb_startup_package_identity_current(state)) {
         return 0;
     }
@@ -2111,7 +2114,7 @@ static int m11_csb_v1_install_runtime_hud_materials(M11_GameViewState *state)
         int height;
     } required[] = {
         { 28u, 76, 14 }, { 10u, 87, 45 }, { 9u, 87, 25 },
-        { 11u, 87, 33 }, { 13u, 87, 45 }
+        { 11u, 14, 26 }, { 13u, 87, 45 }
     };
     size_t index;
 
@@ -2141,6 +2144,8 @@ static int m11_csb_v1_install_runtime_hud_materials(M11_GameViewState *state)
         }
         free(pixels);
     }
+    state->csbRuntimeHudMaterialPackageIdentity =
+        state->csbStartupExpectedPackageIdentity;
     return 1;
 }
 
@@ -2156,6 +2161,23 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
         framebufferHeight < 200) {
         return;
     }
+
+    /* CSB can legitimately enter Prison with no imported party. PANEL.C and
+     * MENUDRAW.C still own the C013 movement panel in that state. Previously
+     * the CSB-only asset install happened only after a party mirror was
+     * available, so the no-party path cleared the screen and then had no
+     * authenticated C013 pixels to present. Load the shared source material
+     * before branching on party ownership; this does not create a party HUD
+     * and keeps a missing GRAPHICS.DAT route fail-closed. */
+    if (!m11_csb_v1_runtime_hud_materials_ready(state) &&
+        !m11_csb_v1_install_runtime_hud_materials(
+            (M11_GameViewState *)state)) {
+        m11_clear_csb_v1_party_hud_source_surfaces(
+            framebuffer, framebufferWidth, framebufferHeight);
+        m11_clear_csb_v1_message_area_source_owned(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+        return;
+    }
     party_state = m11_csb_v1_party_hud_source_state(state,
                                                      &source_party_state);
     if (!party_state) {
@@ -2167,18 +2189,6 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
                                     framebufferHeight);
         m11_clear_csb_v1_message_area_source_owned(
             state, framebuffer, framebufferWidth, framebufferHeight);
-        return;
-    }
-    if (!m11_csb_v1_runtime_hud_materials_ready(party_state) &&
-        !m11_csb_v1_install_runtime_hud_materials(
-            (M11_GameViewState *)state)) {
-        /* A mixed CSB/host panel is worse than an absent panel: C017/C040
-         * stays as the only admitted base surface and all dynamic lanes are
-         * cleared instead of borrowing DM1 or procedural artwork. */
-        m11_clear_csb_v1_party_hud_source_surfaces(
-            framebuffer, framebufferWidth, framebufferHeight);
-        m11_clear_csb_v1_message_area_source_owned(
-            party_state, framebuffer, framebufferWidth, framebufferHeight);
         return;
     }
     /* ReDMCSB CHAMDRAW.C F0287/F0290 and DUNVIEW.C F0097 redraw the
@@ -2436,18 +2446,42 @@ static void m11_apply_csb_runtime_startup_session_state_receipt(
              receipt->import_utility_prompt);
 }
 
+static void m11_audio_emit_source_sound(M11_GameViewState* state,
+                                        int soundIndex,
+                                        M11_AudioMarker fallbackMarker);
+
 static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
                                                  const void *boot_profile)
 {
     CSB_V1_RuntimeM11MirrorReceipt_PC34 receipt;
+    const CSB_V1_BootProfile *profile;
+    const CsbV1AudioRuntime *audio_runtime;
     if (!state || !boot_profile) {
         return;
     }
+    profile = (const CSB_V1_BootProfile *)boot_profile;
     if (csb_v1_boot_runtime_m11_mirror_receipt_pc34(
-            (const CSB_V1_BootProfile*)boot_profile,
+            profile,
             &receipt)) {
         m11_apply_csb_runtime_m11_mirror_receipt(state, &receipt);
     }
+    /* ReDMCSB SOUND.C F0064/F0065 owns immediate and delayed playback
+     * arbitration. When its profile reports a new completed play, transport
+     * that exact PC3.4 GRAPHICS.DAT sample; do not use marker fallback. */
+    audio_runtime = &profile->runtime.audio_runtime;
+    if (audio_runtime->lastPlayedSoundIndex != CSB_V1_SOUND_NONE &&
+        (audio_runtime->totalImmediatePlays !=
+             state->csbRuntimeAudioImmediatePlaysConsumed ||
+         audio_runtime->totalPendingFlushes !=
+             state->csbRuntimeAudioPendingFlushesConsumed)) {
+        m11_audio_emit_source_sound(state,
+                                    audio_runtime->lastPlayedSoundIndex,
+                                    M11_AUDIO_MARKER_NONE);
+    }
+    state->csbRuntimeAudioImmediatePlaysConsumed =
+        audio_runtime->totalImmediatePlays;
+    state->csbRuntimeAudioPendingFlushesConsumed =
+        audio_runtime->totalPendingFlushes;
 }
 
 static int m11_csb_prepare_atari_st_animation_handoff(
@@ -4783,7 +4817,6 @@ static int m11_csb_boot_runtime_full_visual_sequence_receipt(
 static int m11_csb_boot_startup_active_from_capture(
     const M11_GameViewState *state)
 {
-    CSB_V1_BootStartupHostViewReceipt_PC34 view_receipt;
     if (!m11_csb_startup_package_identity_current(state)) {
         return 0;
     }
@@ -4794,15 +4827,10 @@ static int m11_csb_boot_startup_active_from_capture(
         state->csbState.startup_entrance_active) {
         return 1;
     }
-    if (m11_csb_boot_runtime_startup_host_view_receipt(state,
-                                                       &view_receipt) &&
-        view_receipt.valid) {
-        return view_receipt.startup_active ||
-                       state->csbState.startup_title_active ||
-                       state->csbState.startup_entrance_active
-                   ? 1
-                   : 0;
-    }
+    /* Host-view receipts describe the frame that was just captured.  They
+     * are not a second startup state machine: after the Prison command a
+     * still-valid C004 receipt can otherwise replay Entrance forever and
+     * prevent the terminal C040 -> live-HUD transition. */
     return 0;
 }
 
@@ -7121,10 +7149,43 @@ static M11_AudioMarker m11_audio_marker_from_dm1_route(
     }
 }
 
+static unsigned int m11_audio_source_fnv1a(const uint8_t *bytes, size_t count) {
+    unsigned int hash = 2166136261u;
+    size_t index;
+
+    if (!bytes || count == 0u) {
+        return 0u;
+    }
+    for (index = 0u; index < count; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static void m11_audio_emit_source_sound(M11_GameViewState* state,
                                         int soundIndex,
                                         M11_AudioMarker fallbackMarker) {
+    const CSB_V1_BootProfile *csbProfile;
+    CsbV1Pc34SoundPayload payload;
     if (!state) {
+        return;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        /* CSB PC3.4 owns its effect samples in the executable-selected
+         * GRAPHICS.DAT table, not DM1's SND3 namespace. Do not turn a missing
+         * source record into a generic marker. */
+        csbProfile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+        memset(&payload, 0, sizeof(payload));
+        if (csbProfile && csbProfile->graphics_path[0] != '\0' &&
+            csb_v1_audio_runtime_load_pc34_sound_payload(
+                csbProfile->graphics_path, (int16_t)soundIndex, &payload)) {
+            (void)M11_Audio_PlayCsbPc34RuntimePcm(
+                &state->audioState, payload.bytes, (int)payload.byteCount,
+                (int)payload.spec.period,
+                m11_audio_source_fnv1a(payload.bytes, payload.byteCount));
+        }
+        csb_v1_audio_runtime_pc34_sound_payload_free(&payload);
         return;
     }
     (void)fallbackMarker;
@@ -9047,7 +9108,8 @@ static int m11_v1_chrome_mode_enabled(const M11_GameViewState* state) {
     /* V2 vertical-slice mode is not on the V1 parity path.  Force
      * V1 chrome mode OFF when V2 is enabled so the pre-baked HUD
      * sprite composition remains intact. */
-    if (m11_v2_vertical_slice_enabled(state)) {
+    if (m11_v2_vertical_slice_enabled(state) &&
+        (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT)) {
         return 0;
     }
     env = getenv("FIRESTAFF_V1_CHROME");
@@ -41456,7 +41518,9 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
     char objectName[16];
     DM1_V1_LayoutZoneRectPc34 nameRect;
     if (!state || !framebuffer || state->showDebugHUD ||
-        !m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state)) {
+        !m11_v1_chrome_mode_enabled(state) ||
+        (m11_v2_vertical_slice_enabled(state) &&
+         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT)) {
         return;
     }
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
@@ -42764,7 +42828,9 @@ static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
     DM1_V1_MovementArrowRectPc34 outerRect;
     DM1_V1_MovementArrowRectPc34 arrowRect;
     if (!state || !framebuffer || state->showDebugHUD ||
-        !m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state)) {
+        !m11_v1_chrome_mode_enabled(state) ||
+        (m11_v2_vertical_slice_enabled(state) &&
+         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT)) {
         return;
     }
     if (!dm1_v1_movement_arrows_outer_rect_pc34(&outerRect) ||
@@ -44372,14 +44438,10 @@ skip_debug_legacy_texture_tiling:
     m11_repaint_dm1_f0128_front_wall_inscription(
         state, framebuffer, framebufferWidth, framebufferHeight);
     if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
-        /* V2.2 replaces source pixels only with a verified in-place pack.
-         * A missing cache is a no-draw condition; boot has already resolved
-         * incomplete/placeholder packs to V2.1. */
-        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
-            (void)csb_v22_inplace_render_pass(framebuffer,
-                                               framebufferWidth,
-                                               framebufferHeight);
-        } else {
+        /* CSB keeps its F0128 source page intact until the V2.2 route has a
+         * source-owned perspective projection receipt. See the boot renderer
+         * above. Other games retain their own proven in-place renderer. */
+        if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
             (void)m11_v22_inplace_render_pass(framebuffer,
                                                framebufferWidth,
                                                framebufferHeight);

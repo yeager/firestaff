@@ -411,11 +411,55 @@ static void test_import_buffer(void)
 /* ── Test 9: utility disk check ──────────────────────────────────── */
 static void test_utility_disk(void)
 {
+    const char *st_path = "/tmp/firestaff-csb-utility-st-test.img";
+    const char *amiga_path = "/tmp/firestaff-csb-utility-amiga-test.adf";
+    static const char st_copyright[] =
+        "copyright (c) 1987, Software Heaven, Inc.";
+    static const char st_title[] = "Chaos Strikes Back";
+    static const char amiga_volume[] = "FTL_CSB_Utility";
+    unsigned char zero[512] = {0};
+    unsigned char sector[512] = {0};
+    unsigned char root[512] = {0};
+    FILE *f;
+    int i;
+
     /* Non-existent path → -1 (error) */
     const char *path = "firestaff-csb-missing-utility-disk";
     remove(path);
     int r = csb_v1_util_check_disk(path);
     CHECK_EQ(r, -1, "util_check_disk on nonexistent returns -1", "d");
+
+    /* ReDMCSB UTIO.C F1991 reads sector 7 and compares both strings. */
+    remove(st_path);
+    memcpy(sector, st_copyright, sizeof(st_copyright));
+    memcpy(sector + 128, st_title, sizeof(st_title));
+    f = fopen(st_path, "wb");
+    CHECK(f != NULL, "create ST Utility Disk fixture");
+    if (f) {
+        for (i = 0; i < 6; ++i) fwrite(zero, 1u, sizeof(zero), f);
+        fwrite(sector, 1u, sizeof(sector), f);
+        fclose(f);
+        CHECK_EQ(csb_v1_util_check_disk(st_path), 0,
+                 "UTIO.C sector-7 CSB identity is admitted", "d");
+    }
+    remove(st_path);
+
+    /* The Amiga F1991 branch uses Examine()'s exact volume name.  An 880 KiB
+     * ADF stores that BSTR at root block 880, byte 432. */
+    remove(amiga_path);
+    root[432] = (unsigned char)(sizeof(amiga_volume) - 1u);
+    memcpy(root + 433, amiga_volume, sizeof(amiga_volume) - 1u);
+    f = fopen(amiga_path, "wb");
+    CHECK(f != NULL, "create Amiga Utility Disk fixture");
+    if (f) {
+        for (i = 0; i < 880; ++i) fwrite(zero, 1u, sizeof(zero), f);
+        fwrite(root, 1u, sizeof(root), f);
+        for (i = 881; i < 1760; ++i) fwrite(zero, 1u, sizeof(zero), f);
+        fclose(f);
+        CHECK_EQ(csb_v1_util_check_disk(amiga_path), 0,
+                 "UTIO.C Amiga volume identity is admitted", "d");
+    }
+    remove(amiga_path);
 }
 
 /* ── Test 10: source evidence ───────────────────────────────────── */

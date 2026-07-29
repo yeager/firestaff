@@ -1092,6 +1092,10 @@ static void run_real_launcher_handoff_if_available(void) {
         M11_GameView_Draw(&view, movement_base_frame, 320, 200);
         expect_true(dm1_v1_movement_arrows_outer_rect_pc34(&arrows) == 1,
                     "M11 CSB resolves the source C013 movement-arrow box");
+        expect_true(!frame_rect_is_color(movement_base_frame,
+                                         arrows.x, arrows.y,
+                                         arrows.w, arrows.h, 0u),
+                    "M11 CSB draws source C013 before a party is available");
         view.v1MovementArrowVisualTicks =
             DM1_V1_MOVEMENT_ARROW_VIS_TICKS_PC34;
         view.v1MovementArrowVisualMask =

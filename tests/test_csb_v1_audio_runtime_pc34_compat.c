@@ -1,6 +1,7 @@
 #include "csb_v1_audio_runtime_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_pass = 0;
@@ -44,6 +45,50 @@ static void test_init_contract(void)
     CHECK(CSB_V1_SOUND_COUNT == 35, "CSB PC/Amiga sound count is 35");
     CHECK(CSB_V1_MODE_PLAY_IF_PRIORITIZED == 1, "prioritized mode value matches source");
     CHECK(CSB_V1_MODE_PLAY_ONE_TICK_LATER == 2, "one-tick-later mode value matches source");
+}
+
+static void test_pc34_source_sound_table(void)
+{
+    const CsbV1Pc34SoundSpec* spec;
+
+    spec = csb_v1_audio_runtime_pc34_sound_spec(CSB_V1_SOUND_SWITCH);
+    CHECK(spec != NULL, "PC3.4 switch source row exists");
+    CHECK(spec && spec->graphicIndex == 672u, "switch points to graphic 672");
+    CHECK(spec && spec->period == 112u && spec->priority == 15u,
+          "switch period and priority match ReDMCSB DATA.C");
+    CHECK(spec && spec->loudDistance == 0u && spec->softDistance == 3u,
+          "switch distance envelope matches ReDMCSB DATA.C");
+
+    spec = csb_v1_audio_runtime_pc34_sound_spec(CSB_V1_SOUND_DOOR_RATTLE);
+    CHECK(spec && spec->graphicIndex == 673u && spec->period == 112u,
+          "door rattle resolves the source graphic and period");
+    spec = csb_v1_audio_runtime_pc34_sound_spec(CSB_V1_SOUND_MOVE_SKELETON);
+    CHECK(spec && spec->graphicIndex == 712u && spec->period == 150u,
+          "skeleton movement resolves the final source row");
+    CHECK(csb_v1_audio_runtime_pc34_sound_spec(-1) == NULL,
+          "negative source sound index is rejected");
+    CHECK(csb_v1_audio_runtime_pc34_sound_spec(CSB_V1_SOUND_COUNT) == NULL,
+          "out-of-range source sound index is rejected");
+}
+
+static void test_pc34_source_sound_payload(void)
+{
+    const char *path = getenv("FIRESTAFF_CSB_PC34_GRAPHICS_DAT");
+    CsbV1Pc34SoundPayload payload;
+
+    if (!path || !*path) {
+        CHECK(1, "PC3.4 payload test skipped without local original media");
+        return;
+    }
+    memset(&payload, 0, sizeof(payload));
+    CHECK(csb_v1_audio_runtime_load_pc34_sound_payload(
+              path, CSB_V1_SOUND_SWITCH, &payload) == 1,
+          "original PC3.4 switch payload admits through F0060 framing");
+    CHECK(payload.byteCount == 128u, "switch F0060 payload count is source-owned");
+    CHECK(payload.spec.graphicIndex == 672u, "payload retains the DATA.C route");
+    CHECK(payload.bytes != NULL && payload.bytes[0] == 0u,
+          "payload begins after the original big-endian byte count");
+    csb_v1_audio_runtime_pc34_sound_payload_free(&payload);
 }
 
 static void test_rejections(void)
@@ -186,6 +231,8 @@ static void test_source_evidence(void)
 int main(void)
 {
     test_init_contract();
+    test_pc34_source_sound_table();
+    test_pc34_source_sound_payload();
     test_rejections();
     test_immediate_clears_pending();
     test_pending_priority_arbitration();

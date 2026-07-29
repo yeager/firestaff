@@ -74,11 +74,11 @@ static int write_minimal_csb_v22_cache(const char* cache_path) {
     } ProbeCacheEntry;
     static const ProbeCacheEntry kEntries[] = {
         { "wall_shapes", "wall_dungeon_d0_01",
-          { 0x00ff0000u, 0x00ff0000u, 0x00ff0000u, 0x00ff0000u } },
+          { 0x00ff0000u, 0xffff0000u, 0xffff0000u, 0xffff0000u } },
         { "wall_shapes", "wall_dungeon_d1_01",
-          { 0x0000ff00u, 0x0000ff00u, 0x0000ff00u, 0x0000ff00u } },
+          { 0xff00ff00u, 0xff00ff00u, 0xff00ff00u, 0xff00ff00u } },
         { "wall_shapes", "wall_dungeon_d2_01",
-          { 0x000000ffu, 0x000000ffu, 0x000000ffu, 0x000000ffu } },
+          { 0xff0000ffu, 0xff0000ffu, 0xff0000ffu, 0xff0000ffu } },
     };
     static const int kEntryCount = (int)(sizeof(kEntries) / sizeof(kEntries[0]));
     const uint32_t data_block_size = 32u /* header */
@@ -260,11 +260,18 @@ int main(void) {
         unsigned char idx_d0 = fb[y_rows[0] * 320 + centers[0]];
         unsigned char idx_d1 = fb[y_rows[1] * 320 + centers[1]];
         unsigned char idx_d2 = fb[y_rows[2] * 320 + centers[2]];
-        probe_record(&stats, "CSB_V22_RENDER_PER_CELL_COLOR",
+    probe_record(&stats, "CSB_V22_RENDER_PER_CELL_COLOR",
                      idx_d0 == probe_rgb_to_ega_index(0xff, 0x00, 0x00) &&
                      idx_d1 == probe_rgb_to_ega_index(0x00, 0xff, 0x00) &&
                      idx_d2 == probe_rgb_to_ega_index(0x00, 0x00, 0xff),
-                     "per-depth wall art paints three distinct EGA indices");
+                 "per-depth wall art paints three distinct EGA indices");
+
+    memset(fb, 0x5a, sizeof(fb));
+    painted = csb_v22_inplace_render_pass(fb, 320, 200);
+    probe_record(&stats, "CSB_V22_RENDER_TRANSPARENT_PIXEL_PRESERVES_V1",
+                 painted == 9 && fb[103 * 320 + 8] == 0x5a &&
+                 fb[118 * 320 + 42] != 0x5a,
+                 "transparent RGBA source pixels preserve F0128 framebuffer pixels");
     }
 
     for (direction = 0; direction < 4; ++direction) {

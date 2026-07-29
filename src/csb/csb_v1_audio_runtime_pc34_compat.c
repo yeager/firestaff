@@ -7,7 +7,35 @@
 
 #include "csb_v1_audio_runtime_pc34_compat.h"
 
+#include "memory_graphics_dat_header_pc34_compat.h"
+#include "memory_graphics_dat_select_pc34_compat.h"
+
+#include <stdlib.h>
 #include <string.h>
+
+/* ReDMCSB DATA.C:1260-1302, MEDIA719_I34E_I34M. The PC table is compiled
+ * into the original executable and points at original GRAPHICS.DAT entries.
+ * Keep this separate from CSBWin's 22-entry sound1772 table. */
+static const CsbV1Pc34SoundSpec csb_v1_pc34_sound_specs[CSB_V1_SOUND_COUNT] = {
+    {671u, 112u,  11u, 3u, 6u}, {672u, 112u,  15u, 0u, 3u},
+    {673u, 112u,  72u, 3u, 6u}, {673u, 145u,  72u, 3u, 6u},
+    {674u, 112u,  10u, 3u, 6u}, {675u, 112u,  99u, 3u, 7u},
+    {675u, 112u,  98u, 0u, 4u}, {677u, 112u, 110u, 3u, 6u},
+    {678u, 112u,   2u, 3u, 6u}, {679u, 112u,  80u, 3u, 6u},
+    {680u, 112u,  82u, 3u, 6u}, {681u, 112u,  84u, 3u, 6u},
+    {682u, 112u,  86u, 3u, 6u}, {684u, 112u,  40u, 2u, 4u},
+    {685u, 112u,  70u, 1u, 4u}, {687u, 138u,  75u, 3u, 6u},
+    {683u, 112u,  95u, 3u, 6u}, {707u, 138u, 106u, 0u, 4u},
+    {704u, 138u, 105u, 0u, 4u}, {690u, 112u,  57u, 3u, 5u},
+    {691u, 112u,  52u, 3u, 5u}, {692u, 112u,  50u, 3u, 5u},
+    {693u, 112u,  96u, 2u, 4u}, {688u, 112u,  60u, 3u, 5u},
+    {708u, 138u,  56u, 0u, 4u}, {689u, 112u,  55u, 3u, 5u},
+    {709u, 112u,  58u, 0u, 4u}, {710u, 112u,  53u, 0u, 4u},
+    {701u, 138u,  24u, 0u, 4u}, {702u, 138u,  21u, 0u, 4u},
+    {703u, 138u,  23u, 0u, 4u}, {705u, 138u,  27u, 0u, 4u},
+    {706u, 138u,  28u, 0u, 4u}, {711u, 138u,  29u, 0u, 4u},
+    {712u, 150u,  22u, 0u, 4u}
+};
 
 static uint16_t csb_v1_audio_read_be16(const uint8_t* bytes)
 {
@@ -41,6 +69,90 @@ static int csb_v1_audio_valid_mode(int16_t mode)
 {
     return mode >= CSB_V1_MODE_DO_NOT_PLAY &&
            mode <= CSB_V1_MODE_PLAY_ONE_TICK_LATER;
+}
+
+const CsbV1Pc34SoundSpec*
+csb_v1_audio_runtime_pc34_sound_spec(int16_t soundIndex)
+{
+    if (!csb_v1_audio_valid_index(soundIndex)) {
+        return NULL;
+    }
+    return &csb_v1_pc34_sound_specs[soundIndex];
+}
+
+void csb_v1_audio_runtime_pc34_sound_payload_free(
+    CsbV1Pc34SoundPayload *payload)
+{
+    if (!payload) {
+        return;
+    }
+    free(payload->bytes);
+    memset(payload, 0, sizeof(*payload));
+}
+
+int csb_v1_audio_runtime_load_pc34_sound_payload(
+    const char *graphicsDatPath,
+    int16_t soundIndex,
+    CsbV1Pc34SoundPayload *outPayload)
+{
+    const CsbV1Pc34SoundSpec *spec;
+    struct MemoryGraphicsDatState_Compat state;
+    struct MemoryGraphicsDatHeader_Compat header;
+    struct MemoryGraphicsDatSelection_Compat selection;
+    uint8_t *record = NULL;
+    uint16_t payloadBytes;
+    int result = 0;
+
+    if (!graphicsDatPath || !outPayload) {
+        return 0;
+    }
+    memset(outPayload, 0, sizeof(*outPayload));
+    memset(&state, 0, sizeof(state));
+    memset(&header, 0, sizeof(header));
+    spec = csb_v1_audio_runtime_pc34_sound_spec(soundIndex);
+    if (!spec || !F0479_MEMORY_LoadGraphicsDatHeader_Compat(
+                     graphicsDatPath, &state, &header) ||
+        !F0490_MEMORY_SelectGraphicFromHeader_Compat(
+            &header, spec->graphicIndex, &selection) ||
+        selection.compressedByteCount != selection.decompressedByteCount ||
+        selection.compressedByteCount < 4u) {
+        goto cleanup;
+    }
+
+    record = (uint8_t *)malloc(selection.compressedByteCount);
+    if (!record || !F0477_MEMORY_OpenGraphicsDat_CPSDF_Compat(
+                       graphicsDatPath, &state) ||
+        !F0474_MEMORY_LoadGraphic_CPSDF_Compat(
+            selection.offset, selection.compressedByteCount, &state, record)) {
+        goto cleanup;
+    }
+    (void)F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(&state);
+
+    payloadBytes = csb_v1_audio_read_be16(record);
+    /* ReDMCSB IO.C F0060 reads the count then supplies record + 2. The PC3.4
+     * entries carry exactly two unused tail bytes after that source payload. */
+    if ((size_t)payloadBytes + 4u != selection.compressedByteCount) {
+        goto cleanup;
+    }
+    outPayload->bytes = (uint8_t *)malloc(payloadBytes);
+    if (!outPayload->bytes) {
+        goto cleanup;
+    }
+    memcpy(outPayload->bytes, record + 2u, payloadBytes);
+    outPayload->byteCount = payloadBytes;
+    outPayload->spec = *spec;
+    result = 1;
+
+cleanup:
+    if (state.referenceCount > 0) {
+        (void)F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(&state);
+    }
+    F0479_MEMORY_FreeGraphicsDatHeader_Compat(&header);
+    free(record);
+    if (!result) {
+        csb_v1_audio_runtime_pc34_sound_payload_free(outPayload);
+    }
+    return result;
 }
 
 CsbV1PsgChannelAmplitudes

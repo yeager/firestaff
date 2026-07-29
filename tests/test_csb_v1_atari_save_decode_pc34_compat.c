@@ -26,15 +26,58 @@ int main(void)
 {
     uint8_t tiny[640] = { 0 };
     const char *path = getenv("FIRESTAFF_CSB_ATARI_MINI");
+    const char *corpus_path = getenv("FIRESTAFF_CSB_ATARI_SAVE_CORPUS");
     uint8_t *bytes = NULL;
     size_t size = 0u;
     CSB_V1_AtariSaveInfo info;
+    CSB_V1_AtariSaveInfo patched_info;
+    CSB_V1_AtariSaveGameBlock2Patch patch;
     CSB_V1_DungeonData dungeon;
     CSB_V1_PartyState party;
 
     if (csb_v1_atari_save_decode_pc34_compat(NULL, 0u, &info) != CSB_V1_ATARI_SAVE_ERR_NULL ||
         csb_v1_atari_save_decode_pc34_compat(tiny, sizeof(tiny), &info) != CSB_V1_ATARI_SAVE_ERR_BLOCK2_CHECKSUM) {
         return 1;
+    }
+    if (corpus_path && corpus_path[0]) {
+        uint8_t *patched;
+        if (!read_file(corpus_path, &bytes, &size) ||
+            csb_v1_atari_save_decode_pc34_compat(bytes, size, &info) !=
+                CSB_V1_ATARI_SAVE_OK ||
+            info.champion_count < 1 || info.champion_count > CSB_V1_MAX_CHAMPIONS ||
+            info.dungeon_offset >= size || info.dungeon_size == 0u) {
+            free(bytes);
+            return 1;
+        }
+        patched = (uint8_t *)malloc(size);
+        if (!patched) { free(bytes); return 1; }
+        memset(&patch, 0, sizeof(patch));
+        patch.game_time = info.game_time + 1u;
+        patch.random_seed = info.random_seed ^ 0x10203040u;
+        patch.leader_hand_thing = info.leader_hand_thing;
+        patch.party_x = info.party_x;
+        patch.party_y = info.party_y;
+        patch.party_direction = info.party_direction;
+        patch.party_map_index = info.party_map_index;
+        if (csb_v1_atari_save_patch_gameblock2_pc34_compat(
+                bytes, size, &patch, patched, size, &patched_info) !=
+                CSB_V1_ATARI_SAVE_OK ||
+            patched_info.game_time != patch.game_time ||
+            patched_info.random_seed != patch.random_seed ||
+            patched_info.dungeon_offset != info.dungeon_offset ||
+            patched_info.dungeon_size != info.dungeon_size ||
+            memcmp(bytes + info.dungeon_offset,
+                   patched + patched_info.dungeon_offset,
+                   info.dungeon_size) != 0) {
+            free(patched);
+            free(bytes);
+            return 1;
+        }
+        free(patched);
+        printf("PASS: original Atari CSB corpus decodes (%d champions, dungeon at %zu)\n",
+               info.champion_count, info.dungeon_offset);
+        free(bytes);
+        return 0;
     }
     if (!path || !path[0]) {
         puts("SKIP: FIRESTAFF_CSB_ATARI_MINI is not set");

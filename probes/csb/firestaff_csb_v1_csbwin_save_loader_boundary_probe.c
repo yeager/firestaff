@@ -250,7 +250,7 @@ int main(int argc, char **argv)
 
         if (found_count == 0u) {
             printf("SKIP: no user-staged CSBWin / DM1 save file "
-                   "(csbgame.dat / csbgame.bak / dmsave.dat / dmsave.bak) "
+                   "(csbgame.dat through csbgame4.dat / csbgame.bak / dmsave.dat / dmsave.bak) "
                    "found under data_dir; loader-boundary gate has "
                    "data-free contract coverage, but no positive real DSA "
                    "corpus was claimed.\n");

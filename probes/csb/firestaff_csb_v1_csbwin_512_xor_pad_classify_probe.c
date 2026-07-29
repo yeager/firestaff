@@ -168,6 +168,9 @@ int main(int argc, char **argv)
     {
         static const char *const candidates[] = {
             "csbgame.dat",
+            "csbgame2.dat",
+            "csbgame3.dat",
+            "csbgame4.dat",
             "csbgame.bak",
             "dmsave.dat",
             "dmsave.bak"
@@ -219,9 +222,11 @@ int main(int argc, char **argv)
                                             &report);
     printf("classify rc=%d (%s)\n", rc,
            csb_v1_csbwin_512_xor_pad_result_name(rc));
-    printf("verdict=%s key_index=%d\n",
+    printf("verdict=%s key_index=%d byte_order=%s\n",
            csb_v1_csbwin_512_xor_pad_verdict_name(report.verdict),
-           report.key_index);
+           report.key_index,
+           report.byte_order == CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN
+               ? "big-endian" : "little-endian");
     printf("first_half_d6w=0x%04x second_half_d5w=0x%04x\n",
            report.first_half_d6w, report.second_half_d5w);
     printf("format_id=%u game_id=0x%08x platform=%d dungeon_id=0x%04x\n",
@@ -257,6 +262,9 @@ int main(int argc, char **argv)
         CHECK(report.key_index == CSB_V1_CSBWIN_512_KEY_CSB ||
               report.key_index == CSB_V1_CSBWIN_512_KEY_DM,
               "key_index is one of the documented C29 / C10 keys");
+        CHECK(report.byte_order == CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN ||
+              report.byte_order == CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN,
+              "validated word byte order is recorded");
     } else {
         printf("NOTE: real bytes produced a NEITHER verdict; this "
                "is acceptable for corrupt / foreign blocks.\n");

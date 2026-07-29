@@ -822,6 +822,10 @@ typedef struct {
     int originalFontAvailable;
     M11_AudioState audioState;
     int audioEventCount;
+    /* CSB's SOUND.C runtime owns delayed/immediate arbitration. M11 keeps
+     * only consumption cursors so completed source plays are forwarded once. */
+    uint32_t csbRuntimeAudioImmediatePlaysConsumed;
+    uint32_t csbRuntimeAudioPendingFlushesConsumed;
 
     /* ── Per-map ornament index cache ──
      * In DM1, each map has a per-map wall/floor/door ornament index
@@ -1445,6 +1449,10 @@ typedef struct {
     int csbViewportWallWidths[15];
     int csbViewportWallHeights[15];
     uint32_t csbStartupExpectedPackageIdentity;
+    /* Source identity whose IMG2/LZW C009..C013 HUD rasters currently own
+     * the shared asset cache.  Dimensions alone cannot distinguish a stale
+     * generic DM1 decode from CSB's verified PC3.4 pixels. */
+    uint32_t csbRuntimeHudMaterialPackageIdentity;
     int csbStartupF0128EntranceBound;
     uint32_t csbStartupF0128EntranceSourceTick;
     uint32_t csbStartupF0128EntranceSessionGeneration;

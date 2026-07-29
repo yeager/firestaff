@@ -13,6 +13,7 @@
 #include "menu_hit_m12.h"
 #include "menu_startup_m12.h"
 #include "config_m12.h"
+#include "menu_row_metrics_m12.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -38,7 +39,8 @@ int main(void) {
 
     printf("=== M12 settings tab hit-test (v2.7.15) ===\n");
 
-    /* The tab strip is at y=52, height 22.  Margin is fw/30 = 64. */
+    /* The tab strip is at y=52 and uses the renderer's complete height.
+     * Margin is fw/30 = 64. */
     memset(&state, 0, sizeof(state));
     state.view = M12_MENU_VIEW_SETTINGS;
     state.settingsTabIndex = 0;
@@ -46,7 +48,7 @@ int main(void) {
     /* Click each tab 0..COUNT-1 in the middle of its rect. */
     for (int i = 0; i < M12_SETTINGS_TAB_COUNT; ++i) {
         int cx = 64 + i * tabW + (tabW - 2) / 2;
-        int cy = 52 + 11;
+        int cy = 52 + M12_MENU_ROW_MODERN_TAB_HEIGHT / 2;
         hit = M12_ModernMenu_HitTest(&state, cx, cy);
         char msg[160];
         snprintf(msg, sizeof(msg),
@@ -56,6 +58,12 @@ int main(void) {
         snprintf(msg, sizeof(msg),
                  "click on tab %d -> hit.index == %d", i, i);
         CHECK(hit.index == i, msg);
+
+        hit = M12_ModernMenu_HitTest(&state, cx,
+                                     52 + M12_MENU_ROW_MODERN_TAB_HEIGHT - 1);
+        snprintf(msg, sizeof(msg),
+                 "bottom edge of tab %d remains clickable", i);
+        CHECK(hit.kind == M12_HIT_SETTINGS_TAB && hit.index == i, msg);
     }
 
     /* Click above the tab strip: should be NONE (no row up there). */

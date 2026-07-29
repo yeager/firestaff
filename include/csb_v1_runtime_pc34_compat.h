@@ -2699,6 +2699,16 @@ int csb_v1_runtime_save_game_to_path(const CSB_V1_RuntimeProfile *profile,
                                      const char *path);
 int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
                                        const char *path);
+
+/* Write a resumed original Atari/Amiga CSB save without substituting a
+ * Firestaff container. `source_path` must remain the authenticated original
+ * artifact; documented GAMEBLOCK2 and source-owned champion state are
+ * patched, while unowned character bytes, ITEM16, timers and the embedded
+ * dungeon are preserved. */
+int csb_v1_runtime_write_original_atari_save_to_path(
+    const CSB_V1_RuntimeProfile *profile,
+    const char *source_path,
+    const char *destination_path);
 int csb_v1_runtime_can_load_resume_path(const char *path);
 int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                                          const char *path,

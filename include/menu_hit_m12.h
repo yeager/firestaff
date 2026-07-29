@@ -2,7 +2,7 @@
  * menu_hit_m12.h — bounded M12 slice: mouse hit-testing for the
  * modern high-resolution startup menu.
  *
- * The modern renderer draws the startup menu at a fixed 1280x720
+ * The modern renderer draws the startup menu at a fixed 1920x1080
  * native resolution (see menu_startup_render_modern_m12.h). This
  * module maps a pointer in that same canvas space to a structured
  * hit target, and applies clicks back onto the menu state.
@@ -59,7 +59,7 @@ typedef struct {
 } M12_MouseHit;
 
 /* Pure hit-test. Does not mutate state. x/y are canvas coordinates
- * in [0..1280) x [0..720). Returns {M12_HIT_NONE,0,0} when the
+ * in [0..1920) x [0..1080). Returns {M12_HIT_NONE,0,0} when the
  * pointer does not land on any interactive region. */
 M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                                     int x, int y);

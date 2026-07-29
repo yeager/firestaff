@@ -237,6 +237,53 @@ static void test_artpack_studio_pretty_manifest_admission(void) {
           "pretty partial category manifest does not admit runtime V2.2");
 }
 
+static void test_route_provenance_metadata(void) {
+    const char* data_dir = "/tmp/scratch/csb-v22-provenance/data/csb";
+    const char* modern_dir = "/tmp/scratch/csb-v22-provenance/assets/csb/modern";
+    const char* manifest =
+        "/tmp/scratch/csb-v22-provenance/assets/csb/modern/modern_asset_manifest.json";
+    const char* content =
+        "{\n  \"routeProvenance\": [\n    {\n"
+        "      \"id\": \"door_d1_01\",\n"
+        "      \"category\": \"door_shapes\",\n"
+        "      \"sourceGraphicIndex\": 247,\n"
+        "      \"sourceDimensions\": [\n        64,\n        61\n      ],\n"
+        "      \"sourceRecordSha256\": \"7063872718410000000000000000000000000000000000000000000000000000\",\n"
+        "      \"outputDimensions\": [\n        64,\n        96\n      ]\n"
+        "    }\n  ]\n}\n";
+    CSB_V22_RouteProvenancePc34 provenance;
+
+    CHECK(mkdir_p(data_dir), "created route-provenance data dir");
+    CHECK(mkdir_p(modern_dir), "created route-provenance asset dir");
+    CHECK(write_file(manifest, content), "wrote route-provenance manifest");
+    csb_v22_set_manifest_path(data_dir);
+    CHECK(csb_v22_get_route_provenance("door_shapes", "door_d1_01",
+                                       &provenance) == 1,
+          "finds source route provenance");
+    CHECK(provenance.valid && provenance.source_graphic_index == 247 &&
+          provenance.source_width == 64 && provenance.source_height == 61,
+          "preserves graphic index and source dimensions");
+    CHECK(strcmp(provenance.source_record_sha256,
+                 "7063872718410000000000000000000000000000000000000000000000000000") == 0 &&
+          provenance.output_width == 64 && provenance.output_height == 96,
+          "requires record identity and exported dimensions");
+    CHECK(csb_v22_get_route_provenance("door_shapes", "door_d0_01",
+                                       &provenance) == 0,
+          "does not invent absent route provenance");
+    CHECK(write_file(manifest,
+        "{\"routeProvenance\":[\n"
+        "{\"id\":\"door_d1_01\",\"category\":\"door_shapes\","
+        "\"sourceGraphicIndex\":247,\"sourceDimensions\":[64,61],"
+        "\"sourceRecordSha256\":\"7063872718410000000000000000000000000000000000000000000000000000\","
+        "\"outputDimensions\":[64,96]}\n]}"),
+          "wrote compact source-artpack route provenance");
+    CHECK(csb_v22_get_route_provenance("door_shapes", "door_d1_01",
+                                       &provenance) == 1 &&
+          provenance.source_width == 64 && provenance.source_height == 61 &&
+          provenance.output_width == 64 && provenance.output_height == 96,
+          "reads Artpack Studio compact provenance arrays");
+}
+
 /* ── Main ───────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -255,6 +302,7 @@ int main(void) {
     test_source_evidence();
     test_assets_available_no_install();
     test_artpack_studio_pretty_manifest_admission();
+    test_route_provenance_metadata();
 
     printf("csb_v22_modern_assets_pc34: checks=%d failures=%d\n", checks, failures);
     if (failures > 0) {

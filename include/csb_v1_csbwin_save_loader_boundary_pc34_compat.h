@@ -179,6 +179,9 @@ typedef struct {
 typedef enum {
     CSB_V1_CSBWIN_SAVE_FILE_NONE = 0,
     CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT,
+    CSB_V1_CSBWIN_SAVE_FILE_CSBGAME2_DAT,
+    CSB_V1_CSBWIN_SAVE_FILE_CSBGAME3_DAT,
+    CSB_V1_CSBWIN_SAVE_FILE_CSBGAME4_DAT,
     CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_BAK,
     CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_DAT,
     CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_BAK
@@ -290,8 +293,8 @@ CSB_V1_CSBWinSaveFileKind
 csb_v1_csbwin_save_loader_boundary_file_kind(const char *path_hint);
 
 /* Bounded discovery/classification gate for a staged CSBWin save. It
- * combines basename discovery (`csbgame.dat`, `csbgame.bak`,
- * `dmsave.dat`, `dmsave.bak`) with the byte-shape classifier and the
+ * combines basename discovery (`csbgame.dat` through `csbgame4.dat`,
+ * `csbgame.bak`, `dmsave.dat`, `dmsave.bak`) with the byte-shape classifier and the
  * existing loader-boundary verdict. For CSBWin 512-byte GAMEBLOCK1
  * shapes it also runs the read-only XOR-pad header classifier so
  * startup can distinguish a valid CSBWin header from plain bad magic.

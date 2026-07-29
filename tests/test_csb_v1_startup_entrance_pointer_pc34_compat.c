@@ -551,10 +551,13 @@ int main(void)
                   CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 &&
               plan.title_transparent_color == -1 &&
               plan.title_empty_fallback_text == NULL &&
-              plan.title_dest_x == 136 &&
-              plan.title_dest_y == 74 &&
-              plan.title_dest_w == 48 &&
-              plan.title_dest_h == 12 &&
+              /* TITLE.C begins CHAOS at source step 2: the first
+               * source-owned scaled blit is 16x4, not the old synthetic
+               * third-frame 48x12 approximation. */
+              plan.title_dest_x == 152 &&
+              plan.title_dest_y == 78 &&
+              plan.title_dest_w == 16 &&
+              plan.title_dest_h == 4 &&
               plan.title_special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
               plan.special_palette ==
@@ -567,10 +570,10 @@ int main(void)
               plan.asset_commands[0].source_y == 0 &&
               plan.asset_commands[0].source_w == 320 &&
               plan.asset_commands[0].source_h == 80 &&
-              plan.asset_commands[0].dest_x == 136 &&
-              plan.asset_commands[0].dest_y == 74 &&
-              plan.asset_commands[0].dest_w == 48 &&
-              plan.asset_commands[0].dest_h == 12,
+              plan.asset_commands[0].dest_x == 152 &&
+              plan.asset_commands[0].dest_y == 78 &&
+              plan.asset_commands[0].dest_w == 16 &&
+              plan.asset_commands[0].dest_h == 4,
           "startup render plan exposes title CHAOS zoom stage, boxes, palette, and asset blit");
 
     render_state.title_frame =

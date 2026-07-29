@@ -202,37 +202,38 @@ static int count_changed_pixels(const unsigned char* fb, size_t len) {
 
 /* True when every CSB 9-square cell-center pixel is non-zero.
  * The CSB cell rect table is in csb_v22_shape_cache_pc34.c
- * (csb_v22_kCellRects): each cell is 640x360 at 1920x1080 with
- * the right column clipped to (1600..1920) at fbW=1920.
+ * (csb_v22_kCellRects): the original logical 320x200 viewport is scaled
+ * to 1920x1080 before composition. The 9 cells remain inside its source
+ * viewport bounds; they do not become three equal full-screen columns.
  *
- *   D0 (closest, bottom): L (320,720,640,360) C (960,720,640,360)
- *                          R (1600,720,640,360) clipped
- *   D1 (middle):          L (320,360,640,360) C (960,360,640,360)
- *                          R (1600,360,640,360) clipped
- *   D2 (farthest, top):   L (320,  0,640,360) C (960,  0,640,360)
- *                          R (1600,  0,640,360) clipped
+ *   D0 (closest, bottom): L (48,556,414,162) C (468,556,366,162)
+ *                          R (834,556,414,162)
+ *   D1 (middle):          L (48,388,414,162) C (468,388,366,162)
+ *                          R (834,388,414,162)
+ *   D2 (farthest, top):   L (48,221,414,162) C (468,221,366,162)
+ *                          R (834,221,414,162)
  *
  * Cell centers:
- *   D0: (640,900)  (1280,900) (1760,900)
- *   D1: (640,540)  (1280,540) (1760,540)
- *   D2: (640,180)  (1280,180) (1760,180)
+ *   D0: (255,637)  (651,637) (1041,637)
+ *   D1: (255,469)  (651,469) (1041,469)
+ *   D2: (255,302)  (651,302) (1041,302)
  */
 static int csb_all_cell_centers_nonzero(const unsigned char* fb, int fbW) {
     static const int centers[3][3][2] = {
         /* depth 0 (D0, closest) */ {
-            { 640,  900 },
-            {1280,  900 },
-            {1760,  900 }
+            { 255, 637 },
+            { 651, 637 },
+            {1041, 637 }
         },
         /* depth 1 (D1, middle) */ {
-            { 640,  540 },
-            {1280,  540 },
-            {1760,  540 }
+            { 255, 469 },
+            { 651, 469 },
+            {1041, 469 }
         },
         /* depth 2 (D2, farthest) */ {
-            { 640,  180 },
-            {1280,  180 },
-            {1760,  180 }
+            { 255, 302 },
+            { 651, 302 },
+            {1041, 302 }
         }
     };
     int d, l;

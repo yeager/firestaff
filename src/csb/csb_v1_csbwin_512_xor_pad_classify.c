@@ -60,6 +60,50 @@ static uint16_t read_le16(const uint8_t *bytes, size_t offset)
                       ((uint16_t)bytes[offset + 1u] << 8));
 }
 
+static uint32_t read_le32(const uint8_t *bytes, size_t offset);
+
+static uint16_t read_be16(const uint8_t *bytes, size_t offset)
+{
+    return (uint16_t)(((uint16_t)bytes[offset] << 8) |
+                      ((uint16_t)bytes[offset + 1u]));
+}
+
+static uint32_t read_be32(const uint8_t *bytes, size_t offset)
+{
+    return ((uint32_t)bytes[offset] << 24) |
+           ((uint32_t)bytes[offset + 1u] << 16) |
+           ((uint32_t)bytes[offset + 2u] << 8) |
+           ((uint32_t)bytes[offset + 3u]);
+}
+
+static uint16_t read_word(const uint8_t *bytes, size_t offset,
+                          CSB_V1_CSBWin512ByteOrder byte_order)
+{
+    return byte_order == CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN
+               ? read_be16(bytes, offset)
+               : read_le16(bytes, offset);
+}
+
+static uint32_t read_long(const uint8_t *bytes, size_t offset,
+                          CSB_V1_CSBWin512ByteOrder byte_order)
+{
+    return byte_order == CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN
+               ? read_be32(bytes, offset)
+               : read_le32(bytes, offset);
+}
+
+static void write_word(uint8_t *bytes, size_t offset, uint16_t value,
+                       CSB_V1_CSBWin512ByteOrder byte_order)
+{
+    if (byte_order == CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN) {
+        bytes[offset] = (uint8_t)(value >> 8);
+        bytes[offset + 1u] = (uint8_t)(value & 0xffu);
+    } else {
+        bytes[offset] = (uint8_t)(value & 0xffu);
+        bytes[offset + 1u] = (uint8_t)(value >> 8);
+    }
+}
+
 static uint32_t read_le32(const uint8_t *bytes, size_t offset)
 {
     return ((uint32_t)bytes[offset]) |
@@ -561,17 +605,18 @@ static void parse_timer_queue_summary(const uint8_t *decoded,
  * LE words starting at `bytes`, accumulating D6W = +/^/-/^.
  * Returns the resulting D6W as uint16 (the loop runs in
  * uint16 arithmetic per the CSBWin source). */
-static uint16_t first_half_d6w(const uint8_t *bytes)
+static uint16_t first_half_d6w(const uint8_t *bytes,
+                               CSB_V1_CSBWin512ByteOrder byte_order)
 {
     uint16_t d6 = 0u;
     size_t i;
     /* 32 iterations of 4 words = 128 words = 256 bytes. */
     for (i = 0u; i < 32u; ++i) {
         size_t off = i * 8u;
-        uint16_t w0 = read_le16(bytes, off + 0u);
-        uint16_t w1 = read_le16(bytes, off + 2u);
-        uint16_t w2 = read_le16(bytes, off + 4u);
-        uint16_t w3 = read_le16(bytes, off + 6u);
+        uint16_t w0 = read_word(bytes, off + 0u, byte_order);
+        uint16_t w1 = read_word(bytes, off + 2u, byte_order);
+        uint16_t w2 = read_word(bytes, off + 4u, byte_order);
+        uint16_t w3 = read_word(bytes, off + 6u, byte_order);
         d6 = (uint16_t)(d6 + w0);
         d6 = (uint16_t)(d6 ^ w1);
         d6 = (uint16_t)(d6 - w2);
@@ -594,7 +639,8 @@ static uint16_t first_half_d6w(const uint8_t *bytes)
  */
 static uint16_t unscramble_block(uint8_t *buf,
                                  uint16_t initial_hash,
-                                 uint16_t numword)
+                                 uint16_t numword,
+                                 CSB_V1_CSBWin512ByteOrder byte_order)
 {
     uint16_t d7 = initial_hash;
     uint16_t d6 = numword;
@@ -605,11 +651,10 @@ static uint16_t unscramble_block(uint8_t *buf,
      * matches the documented "empty second half" behaviour. */
     for (i = 0u; i < numword; ++i) {
         size_t off = i * 2u;
-        uint16_t w = read_le16(buf, off);
+        uint16_t w = read_word(buf, off, byte_order);
         d5 = (uint16_t)(d5 + w);
         w = (uint16_t)(w ^ d7);
-        buf[off + 0u] = (uint8_t)(w & 0xFFu);
-        buf[off + 1u] = (uint8_t)((w >> 8) & 0xFFu);
+        write_word(buf, off, w, byte_order);
         d5 = (uint16_t)(d5 + w);
         /* CSB source updates D7 using the *current* D6 (the
          * loop count) before decrementing. Order matters: the
@@ -624,12 +669,13 @@ static uint16_t unscramble_block(uint8_t *buf,
 /* Second-half rolling checksum from CSBWin/Chaos.cpp Unscramble
  * Block1 second loop. Sums 128 uint16 LE words from bytes 256
  * ..511 in the unscrambled second half. Returns uint16. */
-static uint16_t second_half_d5w(const uint8_t *bytes_256)
+static uint16_t second_half_d5w(const uint8_t *bytes_256,
+                                CSB_V1_CSBWin512ByteOrder byte_order)
 {
     uint16_t d5 = 0u;
     size_t i;
     for (i = 0u; i < 128u; ++i) {
-        d5 = (uint16_t)(d5 + read_le16(bytes_256, i * 2u));
+        d5 = (uint16_t)(d5 + read_word(bytes_256, i * 2u, byte_order));
     }
     return d5;
 }
@@ -665,7 +711,8 @@ static void write_csbwin_header_fields(
  * second half. Caller guarantees the buffer has been
  * successfully unscrambled. */
 static void read_public_fields(const uint8_t *bytes_256,
-                               CSB_V1_CSBWin512Public *out)
+                               CSB_V1_CSBWin512Public *out,
+                               CSB_V1_CSBWin512ByteOrder byte_order)
 {
     size_t i;
     memset(out, 0, sizeof(*out));
@@ -673,19 +720,21 @@ static void read_public_fields(const uint8_t *bytes_256,
     out->format_id = bytes_256[CSB_V1_CSBWIN_512_OFF_FORMAT_ID];
     out->save_and_play_choice =
         bytes_256[CSB_V1_CSBWIN_512_OFF_SAVE_AND_PLAY];
-    out->game_id = read_le32(bytes_256, CSB_V1_CSBWIN_512_OFF_GAME_ID);
+    out->game_id = read_long(bytes_256, CSB_V1_CSBWIN_512_OFF_GAME_ID,
+                             byte_order);
     for (i = 0u; i < 16u; ++i) {
         out->keys[i] =
-            read_le16(bytes_256, (size_t)CSB_V1_CSBWIN_512_OFF_KEYS
-                                  + i * 2u);
+            read_word(bytes_256, (size_t)CSB_V1_CSBWIN_512_OFF_KEYS
+                                  + i * 2u, byte_order);
         out->checksums[i] =
-            read_le16(bytes_256, (size_t)CSB_V1_CSBWIN_512_OFF_CHECKSUMS
-                                  + i * 2u);
+            read_word(bytes_256, (size_t)CSB_V1_CSBWIN_512_OFF_CHECKSUMS
+                                  + i * 2u, byte_order);
     }
     out->platform =
-        (int16_t)read_le16(bytes_256, CSB_V1_CSBWIN_512_OFF_PLATFORM);
+        (int16_t)read_word(bytes_256, CSB_V1_CSBWIN_512_OFF_PLATFORM,
+                           byte_order);
     out->dungeon_id =
-        read_le16(bytes_256, CSB_V1_CSBWIN_512_OFF_DUNGEON_ID);
+        read_word(bytes_256, CSB_V1_CSBWIN_512_OFF_DUNGEON_ID, byte_order);
     /* First 32 bytes of AdditionalData — bounded to keep the
      * public-field struct at a fixed size. */
     for (i = 0u; i < 32u; ++i) {
@@ -701,35 +750,35 @@ static void read_public_fields(const uint8_t *bytes_256,
     out->csbwin_byte22598 = bytes_256[300u - 256u];
     out->csbwin_byte22596 = bytes_256[301u - 256u];
     out->csbwin_save_option =
-        (int16_t)read_le16(bytes_256, 306u - 256u);
+        (int16_t)read_word(bytes_256, 306u - 256u, byte_order);
     out->csbwin_random_game_id =
-        read_le32(bytes_256, 308u - 256u);
+        read_long(bytes_256, 308u - 256u, byte_order);
     out->csbwin_block2_hash =
-        read_le16(bytes_256, 312u - 256u);
+        read_word(bytes_256, 312u - 256u, byte_order);
     out->csbwin_item16_hash =
-        read_le16(bytes_256, 314u - 256u);
+        read_word(bytes_256, 314u - 256u, byte_order);
     out->csbwin_character_hash =
-        read_le16(bytes_256, 316u - 256u);
+        read_word(bytes_256, 316u - 256u, byte_order);
     out->csbwin_timers_hash =
-        read_le16(bytes_256, 318u - 256u);
+        read_word(bytes_256, 318u - 256u, byte_order);
     out->csbwin_timer_queue_hash =
-        read_le16(bytes_256, 320u - 256u);
+        read_word(bytes_256, 320u - 256u, byte_order);
     out->csbwin_total_move_count =
-        read_le32(bytes_256, 322u - 256u);
+        read_long(bytes_256, 322u - 256u, byte_order);
     out->csbwin_block2_checksum =
-        read_le16(bytes_256, 344u - 256u);
+        read_word(bytes_256, 344u - 256u, byte_order);
     out->csbwin_item16_checksum =
-        read_le16(bytes_256, 346u - 256u);
+        read_word(bytes_256, 346u - 256u, byte_order);
     out->csbwin_character_checksum =
-        read_le16(bytes_256, 348u - 256u);
+        read_word(bytes_256, 348u - 256u, byte_order);
     out->csbwin_timers_checksum =
-        read_le16(bytes_256, 350u - 256u);
+        read_word(bytes_256, 350u - 256u, byte_order);
     out->csbwin_timer_queue_checksum =
-        read_le16(bytes_256, 352u - 256u);
+        read_word(bytes_256, 352u - 256u, byte_order);
     out->csbwin_word22594 =
-        (int16_t)read_le16(bytes_256, 376u - 256u);
+        (int16_t)read_word(bytes_256, 376u - 256u, byte_order);
     out->csbwin_word22592 =
-        (int16_t)read_le16(bytes_256, 378u - 256u);
+        (int16_t)read_word(bytes_256, 378u - 256u, byte_order);
     memcpy(out->csbwin_byte22808, bytes_256 + (380u - 256u),
            sizeof(out->csbwin_byte22808));
 }
@@ -742,6 +791,7 @@ static void read_public_fields(const uint8_t *bytes_256,
  * unscrambled scratch on failure because we copy fresh each
  * call. */
 static int try_key(const uint8_t *bytes, int key_index,
+                   CSB_V1_CSBWin512ByteOrder byte_order,
                    CSB_V1_CSBWin512Report *out_report)
 {
     uint8_t scratch[CSB_V1_CSBWIN_BLOCK1_BYTES];
@@ -766,14 +816,14 @@ static int try_key(const uint8_t *bytes, int key_index,
     if (p2_off + 1u >= CSB_V1_CSBWIN_BLOCK1_BYTES) {
         return 0;
     }
-    initial_hash = read_le16(bytes, p2_off);
+    initial_hash = read_word(bytes, p2_off, byte_order);
 
     /* Copy the 512 bytes into scratch. The first 256 bytes are
      * left intact (the first-half checksum is read-only). The
      * second 256 bytes are unscrambled in place. */
     memcpy(scratch, bytes, CSB_V1_CSBWIN_BLOCK1_BYTES);
 
-    d6 = first_half_d6w(scratch);
+    d6 = first_half_d6w(scratch, byte_order);
 
     /* Unscramble the second half. CSBWin/Chaos.cpp calls
      * Unscramble(buf+256, hash, 128) — 128 uint16 words. The
@@ -785,13 +835,13 @@ static int try_key(const uint8_t *bytes, int key_index,
      * D6W = first-half rolling checksum). We discard the
      * Unscramble return value here because the read-side
      * invariant uses the second-half sum directly. */
-    (void)unscramble_block(scratch + 256u, initial_hash, 128u);
+    (void)unscramble_block(scratch + 256u, initial_hash, 128u, byte_order);
 
     /* Compute the post-unscramble second-half sum. This is the
      * D5W that CSBWin/Chaos.cpp:1341 UnscrambleBlock1 compares
      * against D6W (= first_half_d6w). */
     {
-        uint16_t d5_post = second_half_d5w(scratch + 256u);
+        uint16_t d5_post = second_half_d5w(scratch + 256u, byte_order);
         if (d5_post != d6) {
             return 0;
         }
@@ -803,9 +853,11 @@ static int try_key(const uint8_t *bytes, int key_index,
                                   ? CSB_V1_CSBWIN_512_VERDICT_CSB
                                   : CSB_V1_CSBWIN_512_VERDICT_DM;
         out_report->key_index = key_index;
+        out_report->byte_order = byte_order;
         out_report->first_half_d6w = d6;
         out_report->second_half_d5w = d5;
-        read_public_fields(scratch + 256u, &out_report->public_fields);
+        read_public_fields(scratch + 256u, &out_report->public_fields,
+                           byte_order);
     }
     return 1;
 }
@@ -827,10 +879,16 @@ int csb_v1_csbwin_512_xor_pad_classify(
     /* CSBWin/Chaos.cpp:2357 tries CSB first, then DM. We mirror
      * that ordering so the verdict lines up with what CSBWin
      * itself would have accepted. */
-    if (try_key(bytes, CSB_V1_CSBWIN_512_KEY_CSB, out_report)) {
+    if (try_key(bytes, CSB_V1_CSBWIN_512_KEY_CSB,
+                CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN, out_report) ||
+        try_key(bytes, CSB_V1_CSBWIN_512_KEY_CSB,
+                CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN, out_report)) {
         return CSB_V1_CSBWIN_512_OK;
     }
-    if (try_key(bytes, CSB_V1_CSBWIN_512_KEY_DM, out_report)) {
+    if (try_key(bytes, CSB_V1_CSBWIN_512_KEY_DM,
+                CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN, out_report) ||
+        try_key(bytes, CSB_V1_CSBWIN_512_KEY_DM,
+                CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN, out_report)) {
         return CSB_V1_CSBWIN_512_OK;
     }
     out_report->verdict = CSB_V1_CSBWIN_512_VERDICT_NEITHER;
@@ -839,7 +897,8 @@ int csb_v1_csbwin_512_xor_pad_classify(
      * the first-half checksum so callers can sanity-check the
      * block (e.g. all-zero blocks produce D6W == 0 and a clean
      * "both keys failed" verdict). */
-    out_report->first_half_d6w = first_half_d6w(bytes);
+    out_report->first_half_d6w = first_half_d6w(
+        bytes, CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     out_report->second_half_d5w = 0u;
     return CSB_V1_CSBWIN_512_OK;
 }
@@ -855,12 +914,16 @@ int csb_v1_csbwin_512_xor_pad_classify_csb_key(
         return CSB_V1_CSBWIN_512_ERR_TOO_SMALL;
     }
     memset(out_report, 0, sizeof(*out_report));
-    if (try_key(bytes, CSB_V1_CSBWIN_512_KEY_CSB, out_report)) {
+    if (try_key(bytes, CSB_V1_CSBWIN_512_KEY_CSB,
+                CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN, out_report) ||
+        try_key(bytes, CSB_V1_CSBWIN_512_KEY_CSB,
+                CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN, out_report)) {
         return CSB_V1_CSBWIN_512_OK;
     }
     out_report->verdict = CSB_V1_CSBWIN_512_VERDICT_NEITHER;
     out_report->key_index = 0;
-    out_report->first_half_d6w = first_half_d6w(bytes);
+    out_report->first_half_d6w = first_half_d6w(
+        bytes, CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     out_report->second_half_d5w = 0u;
     return CSB_V1_CSBWIN_512_OK;
 }
@@ -876,12 +939,16 @@ int csb_v1_csbwin_512_xor_pad_classify_dm_key(
         return CSB_V1_CSBWIN_512_ERR_TOO_SMALL;
     }
     memset(out_report, 0, sizeof(*out_report));
-    if (try_key(bytes, CSB_V1_CSBWIN_512_KEY_DM, out_report)) {
+    if (try_key(bytes, CSB_V1_CSBWIN_512_KEY_DM,
+                CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN, out_report) ||
+        try_key(bytes, CSB_V1_CSBWIN_512_KEY_DM,
+                CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN, out_report)) {
         return CSB_V1_CSBWIN_512_OK;
     }
     out_report->verdict = CSB_V1_CSBWIN_512_VERDICT_NEITHER;
     out_report->key_index = 0;
-    out_report->first_half_d6w = first_half_d6w(bytes);
+    out_report->first_half_d6w = first_half_d6w(
+        bytes, CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     out_report->second_half_d5w = 0u;
     return CSB_V1_CSBWIN_512_OK;
 }
@@ -907,8 +974,9 @@ int csb_v1_csbwin_512_decode_stream_section(
      * encrypted bytes, calls Unscramble(dest, initialHash, size/2),
      * and accepts the section only when the returned checksum equals
      * the GAMEBLOCK1 section checksum. */
-    actual_checksum = unscramble_block(out, initial_hash,
-                                       (uint16_t)(size / 2u));
+    actual_checksum = unscramble_block(
+        out, initial_hash, (uint16_t)(size / 2u),
+        CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     if (actual_checksum != expected_checksum) {
         memset(out, 0, size);
         return CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM;
@@ -1356,11 +1424,13 @@ int csb_v1_csbwin_512_build_writable_champion_sections(
     out->block2_checksum = unscramble_block(
         out->block2_scrambled,
         out->block2_hash,
-        (uint16_t)(sizeof(block2_plain) / 2u));
+        (uint16_t)(sizeof(block2_plain) / 2u),
+        CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     out->character_checksum = unscramble_block(
         out->characters_scrambled,
         out->character_hash,
-        (uint16_t)(sizeof(characters_plain) / 2u));
+        (uint16_t)(sizeof(characters_plain) / 2u),
+        CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     return CSB_V1_CSBWIN_512_OK;
 }
 
@@ -1423,14 +1493,16 @@ int csb_v1_csbwin_512_build_writable_runtime_sections(
         memcpy(out->item16_scrambled, item16_plain, out->item16_size);
         out->item16_checksum = unscramble_block(out->item16_scrambled,
                                                0u,
-                                               (uint16_t)(out->item16_size / 2u));
+                                               (uint16_t)(out->item16_size / 2u),
+                                               CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     }
     if (out->timers_size > 0u) {
         memcpy(out->timers_scrambled, timers_plain, out->timers_size);
         out->timers_checksum = unscramble_block(
             out->timers_scrambled,
             0u,
-            (uint16_t)(out->timers_size / 2u));
+            (uint16_t)(out->timers_size / 2u),
+            CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     }
     if (out->timer_queue_size > 0u) {
         memcpy(out->timer_queue_scrambled, timer_queue_plain,
@@ -1438,7 +1510,8 @@ int csb_v1_csbwin_512_build_writable_runtime_sections(
         out->timer_queue_checksum = unscramble_block(
             out->timer_queue_scrambled,
             0u,
-            (uint16_t)(out->timer_queue_size / 2u));
+            (uint16_t)(out->timer_queue_size / 2u),
+            CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     }
     return CSB_V1_CSBWIN_512_OK;
 }
@@ -1466,13 +1539,16 @@ int csb_v1_csbwin_512_build_writable_header(
      * trashes the first half, writes the final first-half word so the
      * read-side D6 checksum matches D5, and then runs Unscramble() over the
      * second half before writing the 512-byte GAMEBLOCK1. */
-    d5 = second_half_d5w(out_header + 256u);
-    d6 = first_half_d6w(out_header);
+    d5 = second_half_d5w(out_header + 256u,
+                          CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
+    d6 = first_half_d6w(out_header,
+                         CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     checksum_word = (uint16_t)(d5 ^ d6);
     write_le16(out_header, 254u, checksum_word);
 
     initial_hash = read_le16(out_header, (size_t)header->key_index * 2u);
-    (void)unscramble_block(out_header + 256u, initial_hash, 128u);
+    (void)unscramble_block(out_header + 256u, initial_hash, 128u,
+                           CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
     return CSB_V1_CSBWIN_512_OK;
 }
 

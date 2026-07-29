@@ -2,9 +2,11 @@
 
 ## Active DM1/CSB Symbol Queue
 
-ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
-game material only. Unproven paths fail closed; no synthetic graphics, UI,
-timing, input, or game-data behavior.
+ReDMCSB is the primary reference for DM1/CSB shared engine behavior. For
+CSB-specific DSA, save, Utility Disk, and extended-runtime behavior, use
+CSBWin alongside it. Reuse or bind verified PC34 owners and authentic game
+material only. Unproven paths fail closed; no synthetic graphics, UI, timing,
+input, or game-data behavior.
 
 ## Priority Cross-Game Implementation Queue
 
@@ -63,23 +65,35 @@ an integration build pass.
   route regression verifies each source element. Live M11 geometry handoff is
   still open under CSB-REAL-STARTUP-HUD.
 
-- **CSB-V22-VIEWPORT-MATERIAL-CONSUMPTION:** Closed 2026-07-29. The active
-  CSB V2.2 viewport swap now consumes the same depth-specific material ids as
-  the completed-art gate and per-cell router (`wall_dungeon_d0/d1/d2_01`,
-  equivalent door/floor/creature ids). It no longer asks a completed pack for
-  retired generic ids such as `wall_dungeon_01`. The registered headless
-  viewport probe owns a bounded cache keyed by those canonical ids and proves
-  all nine cells paint across all four directions. This fixes consumption;
-  reviewed complete CSB art remains required before V2.2 is admitted.
+- **CSB-V22-VIEWPORT-MATERIAL-CONSUMPTION:** Open 2026-07-29. The route gate
+  resolves the correct depth-specific material ids, but its old 3x3 opaque
+  rectangle painter was not ReDMCSB F0128 geometry. It is intentionally no
+  longer called in production after a real-data capture showed horizontal
+  bands. Bind each modern surface to original F0128 placement, clipping,
+  transparency, palette and draw-order receipts; only then enable the modern
+  pixels. Each source-pack route now carries its exact GRAPHICS.DAT record
+  SHA-256 plus source and exported dimensions, but that provenance remains
+  metadata until it is bound to the corresponding F0128 command. D1/D2 front
+  door routes now have that exact admission contract (records 248/247 and
+  their original clips); D3 remains blocked because its 48x41 native mapping
+  is not established by the available 44x38 export. Source door exports now
+  retain the verified F0111 `C10_COLOR_FLESH` transparency as RGBA alpha and
+  the cache blitter preserves the original framebuffer for transparent pixels.
+  The source-artpack manifest now makes this distinction machine-readable:
+  `door_d2_01` is explicitly `blocked_native_g0693`, so an IMG2 preview
+  cannot be mistaken for the original D3 F0489/F0488 raster. D1/D2 retain
+  their explicit admitted projection statuses.
+  Headless probes prove routing, admission and alpha preservation only, not
+  live visual correctness.
 
-- **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Closed 2026-07-29. The separate
-  CSB F0128 runtime renderer now owns the V2.2 cache update and in-place
-  artpack pass after it has authenticated the original PC3.4 source page.
-  It records the number of real material cells painted in the runtime receipt.
-  The source-derived 29-route pack preserves all four original startup
-  palette captures, reaches Prison runtime, proves nine painted cells, and
-  writes both indexed and presented terminal-frame captures on request;
-  non-V2.2 modes and unavailable routes retain their V1 page.
+- **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Open 2026-07-29. The live F0128
+  renderer owns V2.2 material selection and retains the authenticated original
+  PC3.4 page. Modern replacement pixels are blocked until the receipt-owned
+  perspective projection consumer exists. The source-derived pack still
+  preserves original startup capture and reaches Prison runtime; it must not
+  claim that nine synthetic rectangles are a completed F0128 render. The
+  source-pack runtime test now skips rather than passes when that actual pack
+  is not installed, so a local V2.2 source-material claim needs a real run.
 
 - **CSB-PC34-IMG2-DECODE-ORDER:** Closed 2026-07-29. The native PC3.4
   C001-C005 records now attempt the documented byte-stride IMG2 decoder
@@ -195,7 +209,7 @@ an integration build pass.
   F0128 runtime frame. V2.2 remains fail-closed when its finished-art gate is
   not admitted; it is not silently substituted with generated art.
 
-- **CSB-V2X-VERIFICATION-LANE:** Closed 2026-07-28. All 41 registered
+- **CSB-V2X-VERIFICATION-LANE:** Closed 2026-07-28. All registered
   V2.0/V2.1/V2.2 contracts are now tagged as CSB verification, so the normal
   `ctest -L csb` gate covers the complete CSB suite rather than a
   partial V2.x subset. This verifies the implemented V2.x presentation,
@@ -206,7 +220,11 @@ an integration build pass.
   2026-07-29: the expanded lane is now 103/103 with the real PC3.4 package
   plus the original Atari `MINI.DAT`; it covers V2.0/V2.1/V2.2 mode, filter,
   HUD, lighting, input, viewport and artpack paths, alongside the native
-  Utility-to-runtime handoff. This does not replace Mac/release capture.
+  Utility-to-runtime handoff. Re-run 2026-07-29: the focused V2.x lane is
+  47/47 in `/Volumes/Extern-disk/firestaff-csb-build`, including the real-data
+  startup-capture contracts. This does not replace Mac/release capture.
+  Re-run after the fullscreen-cell and physical artpack-path fixes:
+  103/103 CSB tests PASS.
 
 - **M12-DATA-SCAN-PROGRESSBAR:** Closed 2026-07-28. The start menu now draws
   a live progressbar from the existing asynchronous hash scan, alongside its
@@ -927,6 +945,13 @@ that its exact runtime path is not already source-locked and tested.
    The reviewed PC3.4 source pack remains V2.2 through the Prison handoff;
    do not replace an unavailable pack with repeated or guessed GRAPHICS.DAT
    art because the 29 V2.2 routes require verified source mapping.
+   2026-07-29: a direct executable boot sweep now confirms the complete
+   original Prison interaction rather than stopping at the waiting Entrance
+   page. For V1, V2.0, V2.1 and V2.2, 500 source frames followed by `Enter`
+   reach inactive startup at map 0, party `(9,0,2)`, and runtime tick 448.
+   The admitted V2.2 route reports nine painted source-mapped cells. This
+   verifies runtime handoff in all presentation modes; it does not replace
+   the still-open broad HUD/viewport and packaged-app capture work.
    2026-07-29: repeated native executable capture against the local
    hash-verified PC3.4 pair confirms the same contract at 960x600: V1 and
    V2.0 produced SHA-256 `0998633d...c0d8c566`; V2.1 produced the distinct
@@ -985,11 +1010,18 @@ that its exact runtime path is not already source-locked and tested.
    keeps the catalog and finished-material gate on the same external volume;
    `~/.firestaff/data/csb` may therefore be a link without silently selecting
    an unrelated local manifest and falling back to V2.1.
-   Reverified after the path fix: the source-derived V2.2 runtime probe passes
-   with the default symlinked data directory, and the complete CSB CTest lane
-   passes 103/103. This proves V2.0, V2.1, and an admitted V2.2 package route;
-   it does not close the remaining real HUD/viewport breadth, source-audio,
-   save-corpus, or packaged-app capture work.
+  Reverified after the path fix: the source-derived V2.2 runtime probe passes
+  with the default symlinked data directory, and the complete CSB CTest lane
+  passes 103/103. This proves V2.0, V2.1, and an admitted V2.2 package route;
+  it does not close the remaining real HUD/viewport breadth, source-audio,
+  save-corpus, or packaged-app capture work.
+  2026-07-29 direct recheck: the default `~/.firestaff/data/csb` symlink
+  resolves to the external `firestaff-csb-v22-pc34-source` pack, whose
+  manifest records the hash-verified `GRAPHICS.DAT` source, `syntheticContent:
+  false`, and all 29 canonical routes. V2.2 remains mode 3 through the Prison
+  command and paints nine V2.2 viewport cells at runtime. The unrelated local
+  `firestaff-csb-v22-modern-1.0` manifest describes an AI/procedural first
+  cut, but is not on this launch path and must not be treated as source art.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
@@ -1147,7 +1179,12 @@ that its exact runtime path is not already source-locked and tested.
     runtime spell owner and reject incomplete payloads rather than reading an
     invented parameter tail. The live Magic.cpp level switch, optional
     spell-filter actuator traversal, and full source spell effects remain
-    open; indirect cast routes remain intentionally fail-closed.
+    open; indirect cast routes remain intentionally fail-closed. CSBWin 2023
+    `DSA.cpp:4963` serializes `I_CAST` with `INDIRECTP(..., 0, 13)`, while
+    `Magic.cpp:1411-1416` copies the 14-word `SPELL_PARAMETERS` structure
+    from `pDSAparameters + 1`. Until a real saved indirect record proves the
+    source-owned fourteenth word, Firestaff must not recover it from adjacent
+    memory or invent a value.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.
@@ -1165,11 +1202,53 @@ that its exact runtime path is not already source-locked and tested.
     blank Atari ST Save Disk and Utility Disk `DungeonSave` directories; there
     is still no authentic saved position to admit. Keep this blocked on a
     user-created original/CSBWin save, not a synthetic fixture.
+    2026-07-29: a real `CSBGAME2.DAT` corpus file is now staged externally
+    from AnnotatedCSB (SHA-256 `762db0d0617a362910edb739f02a8dca246c04a6c0e44113c78399278f72b189`).
+    It proves an original big-endian GAMEBLOCK1: Firestaff validates the
+    C29 checksum pair and recognises CSBWin slots `CSBGAME.DAT` through
+    `CSBGAME4.DAT`. The existing original Atari body decoder also verifies
+    this corpus and resumes its two-champion dungeon at runtime. Remaining:
+    Firestaff already imports and exports the authenticated CSBWin PC core
+    body (GAMEBLOCK2, ITEM16, CHARDESC, TIMER, timer queue and preserved
+    EXPOOL) through `csb_v1_runtime_apply_csbwin_resume_file()` and
+    `csb_v1_csbwin_512_export_verified_csb_save()`. Remaining: complete
+    2026-07-29: original big-endian GAMEBLOCK2 write-back now updates only
+    documented clock, RNG, hand, party pose and map fields, re-encrypts the
+    source blocks and recomputes their checksums while preserving the embedded
+    dungeon and all unowned sections byte-for-byte. The real `CSBGAME2.DAT`
+    corpus passes this round-trip and the runtime now exposes an explicit
+    source-to-destination export that writes atomically through a temporary
+    file. Remaining: original Atari/Amiga dungeon, object and timer mutation
+    write-back and broader
+    original DB11/EXPOOL corpus coverage; do not substitute the PC body layout
+    for this authenticated original route.
+    2026-07-29: CSBWin `SaveGame.cpp:926-932` confirms the original slot
+    rotation rule. Firestaff now rotates only `CSBGAME.DAT` and
+    `CSBGAME1.DAT` through `CSBGAME4.DAT` to the matching `.BAK` name,
+    restoring the old slot if final publication fails. The real
+    `CSBGAME2.DAT` corpus verifies byte-identical backup preservation before
+    the documented GAMEBLOCK2 write-back is accepted.
+    2026-07-29: CSBWin `SaveGame.cpp:1692-1697,2090` backup recovery is also
+    implemented for authenticated original slots only. A bad `CSBGAME*.DAT`
+    now falls through to the matching `.BAK`, validates its original Atari
+    body, and restores the canonical slot name after successful handoff.
+    2026-07-29: the export now also writes the documented, already-decoded
+    champion fields in each 800-byte original record (identity, pose/action,
+    vital stats, skills/experience, slots, load and shield), re-encrypting
+    that section and rebuilding its checksum. The real corpus round-trip
+    changes/reloads a champion name and health without touching the embedded
+    dungeon. Remaining scope is original dungeon/object/timer mutation and
+    DB11/EXPOOL corpus evidence; do not infer them from the PC body layout.
 24. **CSB-UTILITY-DISK-COMPLETE:** Complete Utility Disk import, preview,
     save/load/new-game, champion editing, inventory, chest, dialogs, and
     confirmation flows using original package and save material. Direct
     launcher selection of a supported archive now reaches the verified
     HCSBF.HTC Hint Oracle package; runtime menu consumption remains open.
+    2026-07-29: Utility Disk identity itself is now source-locked to ReDMCSB
+    `UTIO.C` F1991: Atari ST sector-7 copyright/title bytes and the 880 KiB
+    Amiga ADF root-volume `FTL_CSB_Utility` replace Firestaff's former
+    invented boot-sector serial. Remaining work is the actual Utility UI
+    presentation and its complete save/import/new-game actions.
 25. **CSB-TITLE-AUDIO-CADENCE:** C001 timing and FTL/PRESENTS/CHAOS/STRIKES
     composition are source-locked (60 + 20 + 20 + 2 VBlanks after swoosh).
     SDL/CoreAudio playback is now enabled by default for decoded original
@@ -1189,6 +1268,19 @@ that its exact runtime path is not already source-locked and tested.
 27. **CSB-HUD-INVENTORY-ACTIONS:** Complete C017/C040 HUD and in-game panel,
     champion, action/spell, inventory, cursor, and text rendering using real
     source surfaces and correct transparency.
+    2026-07-29: the stale C004 host receipt no longer keeps the completed
+    Prison action on the Entrance render path. The live frame admits only
+    package-identified PC3.4 C009..C013 IMG2/LZW rasters, so a generic
+    same-size cache entry cannot suppress C013. A real capture and focused
+    M11 regression now show the cyan movement panel in V1, V2.0 and V2.1.
+    Full champion/action/spell/inventory runtime coverage remains open.
+    2026-07-29: the no-party Prison route now installs the authenticated
+    `C013_GRAPHIC_MOVEMENT_ARROWS` material before checking the GAMEBLOCK
+    party receipt. ReDMCSB `MENUDRAW.C` owns this panel even before imported
+    champions exist; Firestaff therefore no longer leaves the entire movement
+    region blank merely because the party mirror is absent. Missing source
+    material still clears fail-closed. Full champion/action/spell/inventory
+    runtime coverage remains open.
 28. **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,
     pits, floor/ceiling ornaments, creatures, items, projectiles, explosions,
     and custom backgrounds through real PC34 asset ownership.
@@ -1214,12 +1306,39 @@ that its exact runtime path is not already source-locked and tested.
     incorrectly interpreted its first two samples as a control word; it now
     uses this same source layout. Runtime mixer and original timing binding
     remain open.
+    2026-07-29 source audit: the hash-verified PC3.4 CSB `GRAPHICS.DAT`
+    (`3af5396f...d256942`) is not admissible through Firestaff's DM1 SND3
+    manifest. ReDMCSB is the owner for the PC3.4 route: `DEFS.H` defines 35
+    `SOUND_DATA` entries (graphic index, two unused bytes, period, priority,
+    loud distance and soft distance), while `SOUND.C` F0064/F0065 pass the
+    table-owned graphic to F0060. The PC3.4 table is executable-owned, not
+    a Graphic 562 payload; Firestaff now binds its exact 35 rows (graphics
+    671-712) from `DATA.C:1260-1302`. It remains separate from CSBWin's
+    `sound1772[22]` table from graphic `0x232` (`CSBCode.cpp:10298-10330`).
+    Do not route either source index set through DM1 SND3 or a generated
+    marker. 2026-07-29: Firestaff now admits an original PC3.4 sound record
+    only when its F0060 `u16be` length exactly covers the selected raw graphic
+    after the two-byte source tail; the local Graphic 672 switch record proves
+    the 128-byte route. CSB runtime sound events now load that exact payload
+    and transport it at the ReDMCSB IBMIO F8119 PIT rate (`1193180 /` the
+    `SOUND_DATA` 112/138/145/150 divisor). Invalid or changed source bytes
+    fail closed and do not use DM1 SND3 or marker audio. 2026-07-29: the
+    live M11 profile-sync boundary now consumes both F0064 immediate and
+    F0065 delayed completed plays once, so keyboard and pointer routes reach
+    that authenticated transport rather than only updating CSB runtime state.
+    Remaining: compare the complete selected original PC driver waveform/
+    device behavior and capture real runtime event/timing behavior.
 32. **CSB-MAC-RELEASE-CAPTURE:** Complete real packaged app/window captures for
     title, entrance, doors, HUD, viewport, Utility Disk, and first runtime
     frame against local original CSB data.
 33. **CSB-INPUT-CONTROLLER-ACCESSIBILITY:** Complete mouse, keyboard,
     controller/touch mapping, modal focus, pointer coordinates, screen scale,
     and original command behavior for all CSB gameplay surfaces.
+    2026-07-29: the V1/V2.x startup handoff regression uses the original C200
+    Enter command after dummy SDL proved unable to provide a stable host-window
+    coordinate model across persisted scale policies. C407's source-coordinate
+    pointer route remains directly covered, but this is not evidence of a real
+    macOS/window mouse roundtrip; retain that host integration work here.
     2026-07-28: V2.0/V2.1/V2.2 now consume CSB's own in-flight cardinal
     turn animation as a post-composition viewport pan in M11. The source V1
     command, timing, collision and sensors remain unchanged. This closes the
@@ -16708,6 +16827,17 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Phase 3 - Rendering parity hardening: D3/D2 wall tables, bitmap selection, grid routing, CSB-only D3L2/D3R2 and D2L2/D2R2 draw-order/frame gates, F0107 back-wall ornament routing, initial viewport gates, and the 2026-06-21 CSB-only viewport CTest slices are in place. The CTest rows now cover first CustomBackgrounds backdrop, room-slot backdrop-1, D1C F0108 floor/ceiling ornament, D1C F0115 thing pass, D3C F0107/F0108 first-backdrop composition, D3L/D3R sidewall backdrops, and D2C F0107 wall-ornament plus F0111 door-front layering without game data. **2026-06-26 CSB V1 PC real-asset ornament blit probe landed, hardened 2026-06-29:** `firestaff_csb_v1_pc_real_asset_ornament_blit_probe` parses the DMCSB1 BE GRAPHICS.DAT header from a real PC 3.4 CSB pair, drives the source-locked F0108 zone + C10_COLOR_FLESH transparency + F0115 thing-pass math against real bytes, bounds-checks the selected bitmap payload span, writes deterministic 320x200 PPM + SHA256 + JSON provenance manifest sidecars to `/tmp`, and now reads the manifest back to assert the schema, canonical MD5, capture SHA256, source anchors, tally fields, and non-claims are present (capture sha256 `5e489ae14354d791e12a9474bbb44027eaac1be8e1021491d9d88dcef8ba9de1`); CTest `csb_v1_pc_real_asset_ornament_blit` PASS 31/31 against `~/.firestaff/data/csb`, skip-safe on hosts without user-supplied PC CSB data. Remaining work is broader viewport/HUD captures and pixel parity evidence.
 - 🔧 Runtime handoff: the old M12/M11 CSB launch-readiness blocker is retired. Hash-matched CSB assets now produce a valid launch intent, M11 hands CSB to `FS_GAME_CSB`, and `csb_v1_pc_real_asset_launch` proves canonical PC CSB `GRAPHICS.DAT`/`DUNGEON.DAT` scan, `csb_v1_boot_enter_game()`, dungeon ownership, source-locked start pose, Chaos magic init, one tick, and cleanup. The CTest runtime set also covers command chains, input-queue turn binding, queued movement, collision/no-step handling, movement-disabled gating, turn-between-step ordering, utility/import handoff, and runtime load/attribute formulas. **2026-06-28 PC 3.4 quickplay dungeon-handle probe landed:** new `firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe` (CTest `csb_v1_pc34_quickplay_dungeon_handle`, labels `tier1;csb;quickplay;boot_handoff;dungeon_handle;rescan;skip_safe`) pins the handle-survival invariants (H1-H4: runtime owns the verified DUNGEON.DAT handle after enter_game, global singleton equals the runtime handle, current level is map 0, runtime starts at TITLE) plus the rescan-clearing invariants (H5-H7: failed rescan clears the runtime handle + global singleton + profile fields + blocks re-launch) and the re-launch invariants (H8: successful rescan into verified dir releases the previous handle before enter_game re-establishes a fresh one). Probe is skip-safe — when `FIRESTAFF_CSB_PC_DATA` (or `~/.firestaff/data/csb`) carries the canonical PC 3.4 EN pair it exercises the real-asset path end-to-end; on hosts without user-supplied CSB data it falls back to a synthetic-fixture path (1 level, 2x2 legacy-format dungeon) that still drives the production `csb_v1_boot_enter_game()` / `csb_v1_boot_scan_assets()` code paths so CI stays deterministic. **Bug found and fixed:** the previous `csb_v1_boot_scan_assets()` only cleared profile metadata on rescan, NOT the runtime-owned `dungeon_handle` or the `csb_v1_dungeon_get_current()` singleton — so a follow-up rescan that lost the CSB assets could leave the runtime still pointing at the previous heap-allocated dungeon. The rescan path now releases the handle and resets the singleton before the rescan-driven profile fields are populated, matching the same release contract as `csb_v1_boot_cleanup()`. Remaining work is richer CSB-specific viewport/HUD evidence, gameplay/save/audio parity, original capture/pixel parity, and end-to-end playability verification.
 ### CSB V2.0 / V2.1 / V2.2
+
+- 🔧 V2.2 F0128 projection gate (2026-07-29): the old modern-art renderer
+  treated the CSB perspective viewport as nine opaque rectangles. Real-data
+  capture proved that this paints horizontal bands over F0128. The runtime now
+  retains the verified original F0128 frame in V2.2 while it publishes the
+  selected material route; modern pixels remain blocked until each placement,
+  clip mask, palette and draw order is consumed from an original F0128 receipt.
+  Route provenance is now readable from the selected source pack as a strict
+  `(category, id, sourceGraphicIndex, sourceDimensions)` record. Remaining:
+  attach that record to the matching F0128 command and its transparency mask
+  before enabling a modern draw.
 
 - 🔧 Phase 2 - Enhanced asset pipeline: presentation-mode selection API is wired (csb_v2_presentation_mode_set_m12, m12PresentationMode 0..3 → CSB_V2_PM_V1_FAITHFUL/V20_FILTERED/V21_UPSCALED/V22_MODERN). **2026-06-19 CSB V2.2 modern-asset module landed:** new `csb_v22_modern_assets_pc34.c/.h` (include + src) mirrors dm1_v2_modern_assets_pc34 with CSB-specific paths (`~/.firestaff/assets/csb/modern/`) and CSB source-locks (ReDMCSB LIGHT.C F0212 / DUNVIEW.C F0128 / PANEL.C F0354 / COMMAND.C:108-113,254-291 + CSBWin/Viewport.cpp:7290 + CSBWin/Chaos.cpp:60-69). Ctest `test_csb_v22_modern_assets_pc34` 33/33 (path resolution from dataDir, manifest validation missing/empty/partial, installed flag round-trip, epx warm flag round-trip, full fallback chain V1→V2.0→V2.1 cold/warm→V2.2 missing/installed, shape source name strings, missing placeholder 16x16 magenta, source evidence citation). **2026-06-19 CSB V2.2 first-cut asset pack landed:** `.openclaw/tmp/csb_v22_asset_author.py` procedural generator (5 PNGs: wall_dungeon/floor_prison/creature_chaos_fiend/panel_lord_order/champion_warrior_csb + modern_asset_manifest.json v1.0.0). CSB-specific palette accents: CHAOS_PURPLE (chaos magic), IRON_GREY (prison), LORD_GOLD (Lord Order). Smoke: `csb_v22_set_manifest_path(dataDir)` resolves correctly, `csb_v22_modern_assets_available()=1` end-to-end against real CSB data dir. **2026-06-21 CSB in-place render gate:** `csb_v22_shape_cache_update` now respects `csb_v2_presentation_mode_is_v22()`, `csb_v22_inplace_draw_init()` loads from `~/.firestaff/assets/csb/modern/`, and `csb_v22_inplace_render_pass()` uses the cache's 0..2 depth coordinates. New CTest `csb_v22_inplace_render_probe` PASS verifies a synthetic cache, V1 inactive cache, V22 bitmap lookup, 9 painted CSB cells, 4-direction sweep (36 cells), and source evidence. Remaining work: real PBR hero art (openai/gpt-image-2) for CSB + per-cell modern-art swap in CSB's 9-square viewport draw passes + per-mode pixel/material verification gates.
 - 🔧 Phase 3 - Enhanced UI overlays: scaffolded (HUD compass/depth/gold/champion bars/action strip/chaos indicator, csb_v2_hud_overlay_pc34.h/.c, build+probe pass). Mode selection gate added in this pass (csb_v2_presentation_mode_is_v22() / is_v21() / is_v20() / is_v1()) so the HUD overlay can branch on the active mode.

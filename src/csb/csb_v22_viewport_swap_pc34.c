@@ -305,6 +305,32 @@ static int csb_v22_clampi(int v, int lo, int hi) {
     return v;
 }
 
+/* The CSB viewport table is authored in the original 320x200 logical
+ * coordinate space. V2.2 renders to the host framebuffer, so scale the
+ * complete bounds before clipping; merely clamping the native values leaves
+ * the modern viewport as a tiny patch in the top-left of a large window. */
+static void csb_v22_scale_cell_rect(const CSB_V22_CellRect *rect,
+                                    int fbW, int fbH,
+                                    int *outX, int *outY,
+                                    int *outW, int *outH) {
+    int x0;
+    int y0;
+    int x1;
+    int y1;
+
+    if (!rect || !outX || !outY || !outW || !outH || fbW <= 0 || fbH <= 0) {
+        return;
+    }
+    x0 = csb_v22_clampi((rect->x * fbW) / 320, 0, fbW);
+    y0 = csb_v22_clampi((rect->y * fbH) / 200, 0, fbH);
+    x1 = csb_v22_clampi(((rect->x + rect->w) * fbW) / 320, 0, fbW);
+    y1 = csb_v22_clampi(((rect->y + rect->h) * fbH) / 200, 0, fbH);
+    *outX = x0;
+    *outY = y0;
+    *outW = x1 - x0;
+    *outH = y1 - y0;
+}
+
 /* Paint a single RGBA bitmap into the framebuffer using nearest-
  * neighbor scaling. The bitmap is keyed by (category, asset_id)
  * via csb_v22_inplace_get_bitmap_by_id, which gives the per-cell
@@ -374,10 +400,7 @@ int csb_v22_viewport_swap_render(unsigned char* framebuffer,
 
             if (shape == CSB_V22_SWAP_SHAPE_NONE) continue;
 
-            dx = csb_v22_clampi(rect->x,         0, fbW);
-            dy = csb_v22_clampi(rect->y,         0, fbH);
-            dw = csb_v22_clampi(rect->x + rect->w, 0, fbW) - dx;
-            dh = csb_v22_clampi(rect->y + rect->h, 0, fbH) - dy;
+            csb_v22_scale_cell_rect(rect, fbW, fbH, &dx, &dy, &dw, &dh);
             if (dw <= 0 || dh <= 0) continue;
 
             /* The material gate and active renderer must use one source of

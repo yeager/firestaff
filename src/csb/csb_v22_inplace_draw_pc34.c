@@ -311,6 +311,31 @@ static int clampi(int v, int lo, int hi) {
     return v;
 }
 
+/* Cell coordinates are V1 logical 320x200 coordinates. The V2.2 cache is
+ * presented at the host framebuffer size, so derive both endpoints in host
+ * space before clipping. */
+static void scale_cell_rect(const CSB_V22_CellRect* rect,
+                            int fbW, int fbH,
+                            int* outX, int* outY,
+                            int* outW, int* outH) {
+    int x0;
+    int y0;
+    int x1;
+    int y1;
+
+    if (!rect || !outX || !outY || !outW || !outH || fbW <= 0 || fbH <= 0) {
+        return;
+    }
+    x0 = clampi((rect->x * fbW) / 320, 0, fbW);
+    y0 = clampi((rect->y * fbH) / 200, 0, fbH);
+    x1 = clampi(((rect->x + rect->w) * fbW) / 320, 0, fbW);
+    y1 = clampi(((rect->y + rect->h) * fbH) / 200, 0, fbH);
+    *outX = x0;
+    *outY = y0;
+    *outW = x1 - x0;
+    *outH = y1 - y0;
+}
+
 /* Map an RGB color (0..255 per channel) to the nearest EGA/VGA
  * 6-bit-cube palette index. Equivalent to the standard VGA 0x3F
  * (bright=0, palette bits 5..0 = R*2, G*2, B*2 mapping). */
@@ -325,9 +350,10 @@ static unsigned char rgb_to_ega_index(unsigned char r,
 }
 
 /* Nearest-neighbor blit of RGBA bitmap into framebuffer[y*fbW+x]
- * sized src_w x src_h -> dst_w x dst_h. The RGBA pixels are mapped
- * to a single byte via rgb_to_ega_index (good enough for indexed
- * framebuffer V1 mode; full color-blend is a follow-up). */
+ * sized src_w x src_h -> dst_w x dst_h. Fully transparent source pixels
+ * leave the source-owned F0128 framebuffer intact; this is required for
+ * C10_COLOR_FLESH door holes. Opaque pixels are mapped to a single byte via
+ * rgb_to_ega_index. */
 static void blit_bitmap_to_cell(const uint32_t* rgba, int src_w, int src_h,
                                   unsigned char* framebuffer, int fbW, int fbH,
                                   int dst_x, int dst_y, int dst_w, int dst_h) {
@@ -342,8 +368,8 @@ static void blit_bitmap_to_cell(const uint32_t* rgba, int src_w, int src_h,
             int sx = (x * src_w) / dst_w;
             if (sx >= src_w) sx = src_w - 1;
             uint32_t px = rgba[sy * src_w + sx];
-            /* Extract RGB from RGBA. Alpha is ignored for now
-             * (opaque-only assumption; alpha-blend is a follow-up). */
+            unsigned char a = (unsigned char)((px >> 24) & 0xFFu);
+            if (a == 0u) continue;
             unsigned char r = (unsigned char)((px >> 16) & 0xFFu);
             unsigned char g = (unsigned char)((px >>  8) & 0xFFu);
             unsigned char b = (unsigned char)((px      ) & 0xFFu);
@@ -369,11 +395,8 @@ int csb_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH) {
             if (!rgba || w <= 0 || h <= 0) continue;
             const CSB_V22_CellRect* rect =
                 &csb_v22_kCellRects[depth][lateral + 1];
-            /* Clamp cell rect to framebuffer bounds */
-            int dx = clampi(rect->x, 0, fbW);
-            int dy = clampi(rect->y, 0, fbH);
-            int dw = clampi(rect->x + rect->w, 0, fbW) - dx;
-            int dh = clampi(rect->y + rect->h, 0, fbH) - dy;
+            int dx, dy, dw, dh;
+            scale_cell_rect(rect, fbW, fbH, &dx, &dy, &dw, &dh);
             if (dw <= 0 || dh <= 0) continue;
             blit_bitmap_to_cell(rgba, w, h,
                                  framebuffer, fbW, fbH,

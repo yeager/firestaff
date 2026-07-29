@@ -304,7 +304,8 @@ unsigned int csb_v1_champion_get_movement_ticks(const CSB_V1_Champion *c);
  * Source: ReDMCSB CHAMDRAW.C line 959 and CHAMPION.C F0310 line 1198. */
 int csb_v1_champion_is_overloaded(const CSB_V1_Champion *c);
 
-/* Utility disk verification (checks for CSB utility disk signature) */
+/* Utility disk verification (ReDMCSB UTIO.C F1991 Atari-sector / Amiga-volume
+ * identity checks for a selected disk image or device path). */
 int  csb_v1_util_check_disk(const char *drive_path);
 int  csb_v1_util_require_disk(const char *drive_path,
                                char *err_msg, int err_msg_size);

@@ -74,6 +74,26 @@ typedef struct CsbV1AudioSaveSnapshot {
     int32_t lastCreatureAttackTime;
 } CsbV1AudioSaveSnapshot;
 
+/* PC 3.4 source-owned sound routing. ReDMCSB DATA.C keeps this table in the
+ * executable; it is not encoded inside GRAPHICS.DAT graphic 562. */
+typedef struct CsbV1Pc34SoundSpec {
+    uint16_t graphicIndex;
+    uint8_t period;
+    uint8_t priority;
+    uint8_t loudDistance;
+    uint8_t softDistance;
+} CsbV1Pc34SoundSpec;
+
+/* A bounded, source-owned PC3.4 sound payload. DATA.C selects its graphic
+ * index and IO.C F0060 passes exactly byteCount bytes beginning at bytes[2]
+ * to the active PC sound driver. The caller owns no storage and must release
+ * the payload with csb_v1_audio_runtime_pc34_sound_payload_free(). */
+typedef struct CsbV1Pc34SoundPayload {
+    uint8_t *bytes;
+    size_t byteCount;
+    CsbV1Pc34SoundSpec spec;
+} CsbV1Pc34SoundPayload;
+
 /* ReDMCSB SOUND.C F0060 supplies a u16be output-count followed by packed
  * high-nibble-first amplitude commands. A zero command repeats initialLevel
  * or the previous nonzero command for a variable-length run. */
@@ -99,6 +119,23 @@ void csb_v1_audio_runtime_save_snapshot(const CsbV1AudioRuntime* runtime,
                                         CsbV1AudioSaveSnapshot* outSnapshot);
 void csb_v1_audio_runtime_load_snapshot(CsbV1AudioRuntime* runtime,
                                         const CsbV1AudioSaveSnapshot* snapshot);
+
+/* Returns the immutable ReDMCSB DATA.C I34E/I34M table row for soundIndex,
+ * or NULL when the index is outside the PC 3.4 sound domain. */
+const CsbV1Pc34SoundSpec*
+csb_v1_audio_runtime_pc34_sound_spec(int16_t soundIndex);
+
+/* Load one original PC3.4 GRAPHICS.DAT sound record. This accepts only an
+ * uncompressed source entry whose F0060 u16be byte count exactly consumes the
+ * record apart from the original two-byte GRAPHICS.DAT tail. It returns 1 on
+ * success, 0 for malformed/unavailable source data, and never fabricates
+ * sample data. */
+int csb_v1_audio_runtime_load_pc34_sound_payload(
+    const char *graphicsDatPath,
+    int16_t soundIndex,
+    CsbV1Pc34SoundPayload *outPayload);
+void csb_v1_audio_runtime_pc34_sound_payload_free(
+    CsbV1Pc34SoundPayload *payload);
 
 /* Resolves the three writes made by F0061_SOUND_SetChannelAmplitudes. The
  * original routine masks amplitudeIndex with 0x000f before indexing its loud

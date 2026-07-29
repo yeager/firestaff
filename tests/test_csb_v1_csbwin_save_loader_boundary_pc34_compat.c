@@ -457,6 +457,14 @@ int main(void)
               CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT,
               "file_kind recognises uppercase CSBGAME.DAT basename");
         CHECK(csb_v1_csbwin_save_loader_boundary_file_kind(
+                  "/tmp/Custom/CSBGAME2.DAT") ==
+              CSB_V1_CSBWIN_SAVE_FILE_CSBGAME2_DAT,
+              "file_kind recognises original CSBGAME2.DAT slot basename");
+        CHECK(csb_v1_csbwin_save_loader_boundary_file_kind(
+                  "/tmp/Custom/csbgame4.dat") ==
+              CSB_V1_CSBWIN_SAVE_FILE_CSBGAME4_DAT,
+              "file_kind recognises original CSBGAME4.DAT slot basename");
+        CHECK(csb_v1_csbwin_save_loader_boundary_file_kind(
                   "C:\\CSB\\DMSAVE.BAK") ==
               CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_BAK,
               "file_kind recognises backslash DMSAVE.BAK basename");

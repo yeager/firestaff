@@ -177,6 +177,129 @@ static int csb_v22_extract_int(const char* line, const char* key, int* out) {
     return 1;
 }
 
+/* Read a two-value JSON array both from Artpack Studio's compact output
+ * (`"sourceDimensions": [64, 61]`) and its pretty-printed output. */
+static int csb_v22_extract_int_pair(const char* line, const char* key,
+                                    int* first, int* second) {
+    char pattern[64];
+    const char* p;
+    char* end = NULL;
+    long a;
+    long b;
+
+    if (!line || !key || !first || !second) return 0;
+    snprintf(pattern, sizeof(pattern), "\"%s\"", key);
+    p = strstr(line, pattern);
+    if (!p) return 0;
+    p = strchr(p + strlen(pattern), '[');
+    if (!p) return 0;
+    a = strtol(p + 1, &end, 10);
+    if (end == p + 1) return 0;
+    p = strchr(end, ',');
+    if (!p) return 0;
+    b = strtol(p + 1, &end, 10);
+    if (end == p + 1 || a <= 0 || b <= 0) return 0;
+    *first = (int)a;
+    *second = (int)b;
+    return 1;
+}
+
+int csb_v22_get_route_provenance(const char* category, const char* asset_id,
+                                 CSB_V22_RouteProvenancePc34* out_provenance)
+{
+    FILE* fp;
+    char line[512];
+    int in_routes = 0;
+    int in_entry = 0;
+    int dimensions_seen = 0;
+    int output_dimensions_seen = 0;
+    CSB_V22_RouteProvenancePc34 current;
+
+    if (out_provenance) memset(out_provenance, 0, sizeof(*out_provenance));
+    if (!category || !category[0] || !asset_id || !asset_id[0] ||
+        !out_provenance || !g_v22_manifest_path[0]) {
+        return 0;
+    }
+    fp = fopen(g_v22_manifest_path, "rb");
+    if (!fp) return 0;
+    memset(&current, 0, sizeof(current));
+    current.source_graphic_index = -1;
+
+    while (fgets(line, sizeof(line), fp)) {
+        if (!in_routes) {
+            if (strstr(line, "\"routeProvenance\"") != NULL) in_routes = 1;
+            continue;
+        }
+        if (!in_entry && strchr(line, '{') != NULL) {
+            memset(&current, 0, sizeof(current));
+            current.source_graphic_index = -1;
+            dimensions_seen = 0;
+            output_dimensions_seen = 0;
+            in_entry = 1;
+        }
+        if (!in_entry) continue;
+        (void)csb_v22_extract_string(line, "id", current.id,
+                                     sizeof(current.id));
+        (void)csb_v22_extract_string(line, "category", current.category,
+                                     sizeof(current.category));
+        (void)csb_v22_extract_int(line, "sourceGraphicIndex",
+                                  &current.source_graphic_index);
+        (void)csb_v22_extract_string(line, "sourceRecordSha256",
+                                     current.source_record_sha256,
+                                     sizeof(current.source_record_sha256));
+        if (csb_v22_extract_int_pair(line, "sourceDimensions",
+                                     &current.source_width,
+                                     &current.source_height)) {
+            dimensions_seen = 0;
+        } else if (strstr(line, "\"sourceDimensions\"") != NULL) {
+            dimensions_seen = 1;
+            continue;
+        }
+        if (csb_v22_extract_int_pair(line, "outputDimensions",
+                                     &current.output_width,
+                                     &current.output_height)) {
+            output_dimensions_seen = 0;
+        } else if (strstr(line, "\"outputDimensions\"") != NULL) {
+            output_dimensions_seen = 1;
+            continue;
+        }
+        if (dimensions_seen && current.source_width == 0) {
+            current.source_width = (int)strtol(line, NULL, 10);
+            continue;
+        }
+        if (dimensions_seen && current.source_height == 0) {
+            current.source_height = (int)strtol(line, NULL, 10);
+            dimensions_seen = 0;
+            continue;
+        }
+        if (output_dimensions_seen && current.output_width == 0) {
+            current.output_width = (int)strtol(line, NULL, 10);
+            continue;
+        }
+        if (output_dimensions_seen && current.output_height == 0) {
+            current.output_height = (int)strtol(line, NULL, 10);
+            output_dimensions_seen = 0;
+        }
+        if (strchr(line, '}') != NULL) {
+            if (current.id[0] && current.category[0] &&
+                current.source_graphic_index >= 0 && current.source_width > 0 &&
+                current.source_height > 0 && current.output_width > 0 &&
+                current.output_height > 0 &&
+                strlen(current.source_record_sha256) == 64u &&
+                strcmp(current.id, asset_id) == 0 &&
+                strcmp(current.category, category) == 0) {
+                current.valid = 1;
+                *out_provenance = current;
+                fclose(fp);
+                return 1;
+            }
+            in_entry = 0;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
 /* Skip to the start of the next JSON object/array in the file */
 static void __attribute__((unused)) csb_v22_skip_to_next_object (FILE* fp) {
     int depth = 0;

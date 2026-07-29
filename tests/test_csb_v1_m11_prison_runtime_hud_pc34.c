@@ -1,0 +1,137 @@
+/* Real PC3.4 Prison handoff regression.
+ *
+ * A completed ENTRANCE.C receipt is not sufficient evidence that the live
+ * M11 page consumed PANEL.C's C013 movement raster.  Exercise the same
+ * title -> Prison command used by the executable probe and require a real
+ * GRAPHICS.DAT C013 pixel to reach its native screen rectangle.
+ */
+
+#include "m11_game_view.h"
+#include "asset_loader_m11.h"
+#include "csb_v1_boot.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static int failures;
+
+#define CHECK(condition, message) \
+    do { \
+        if (!(condition)) { \
+            fprintf(stderr, "FAIL: %s\n", (message)); \
+            ++failures; \
+        } \
+    } while (0)
+
+static const char *csb_data_dir(char *fallback, size_t fallback_size)
+{
+    const char *path = getenv("FIRESTAFF_CSB_DATA_DIR");
+    const char *home;
+
+    if (path && path[0]) return path;
+    home = getenv("HOME");
+    if (!home || !home[0] || !fallback || fallback_size == 0u) return NULL;
+    snprintf(fallback, fallback_size, "%s/.firestaff/data/csb", home);
+    return fallback;
+}
+
+int main(void)
+{
+    char fallback[1024];
+    const char *data_dir = csb_data_dir(fallback, sizeof(fallback));
+    const char *mode_text = getenv("FIRESTAFF_CSB_PRESENTATION_MODE");
+    M11_GameLaunchSpec spec;
+    M11_GameViewState view;
+    unsigned char framebuffer[320 * 200];
+    int tick;
+    int x;
+    int y;
+    int c013_nonblack = 0;
+    const M11_AssetSlot *c013;
+    unsigned char *decoded = NULL;
+    int decoded_w = 0;
+    int decoded_h = 0;
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 decode_receipt;
+
+    if (!data_dir || !data_dir[0]) {
+        puts("SKIP: no CSB PC3.4 data directory");
+        return 0;
+    }
+    memset(&spec, 0, sizeof(spec));
+    spec.title = "CHAOS STRIKES BACK";
+    spec.gameId = "csb";
+    spec.sourceId = "csb";
+    spec.dataDir = data_dir;
+    spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
+    spec.presentationMode = mode_text && mode_text[0]
+        ? atoi(mode_text) : M12_PRESENTATION_V1_ORIGINAL;
+    if (spec.presentationMode < M12_PRESENTATION_V1_ORIGINAL ||
+        spec.presentationMode > M12_PRESENTATION_V22_MODERN) {
+        fputs("SKIP: invalid CSB presentation mode\n", stderr);
+        return 0;
+    }
+    spec.presentationWidth = 320;
+    spec.presentationHeight = 200;
+
+    M11_GameView_Init(&view);
+    if (!M11_GameView_Start(&view, &spec)) {
+        puts("SKIP: verified CSB PC3.4 data is unavailable");
+        return 0;
+    }
+    memset(&decode_receipt, 0, sizeof(decode_receipt));
+    CHECK(csb_v1_boot_decode_graphics_dat_asset_pc34(
+              view.csbBootProfile ?
+                  ((CSB_V1_BootProfile *)view.csbBootProfile)->graphics_path : "",
+              13u, &decoded, &decoded_w, &decoded_h, &decode_receipt) &&
+              decoded_w == 87 && decoded_h == 45,
+          "PC3.4 decoder supplies native C013 source");
+    free(decoded);
+    decoded = NULL;
+    decoded_w = 0;
+    decoded_h = 0;
+    memset(&decode_receipt, 0, sizeof(decode_receipt));
+    CHECK(csb_v1_boot_decode_graphics_dat_asset_pc34(
+              ((CSB_V1_BootProfile *)view.csbBootProfile)->graphics_path,
+              28u, &decoded, &decoded_w, &decoded_h, &decode_receipt) &&
+              decoded_w == 76 && decoded_h == 14,
+          "PC3.4 decoder supplies native C028 source");
+    free(decoded);
+    decoded = NULL;
+    for (tick = 0; tick < 120; ++tick) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+              M11_GAME_INPUT_REDRAW,
+          "original Enter route accepts Prison handoff");
+    for (tick = 0; tick < 200; ++tick) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+    }
+    CHECK(!view.csbState.startup_title_active &&
+              !view.csbState.startup_entrance_active,
+          "Prison handoff reaches live runtime");
+    CHECK(!view.inventoryPanelActive,
+          "Prison handoff reaches the live HUD rather than an inventory surface");
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    c013 = M11_AssetLoader_Load(&view.assetLoader, 13u);
+    CHECK(c013 && c013->loaded && c013->pixels &&
+              c013->width == 87u && c013->height == 45u,
+          "runtime cache contains decoded C013 movement source");
+    /* DATA.C G0002 / MENUDRAW.C C013: 233,124, 87x45. */
+    for (y = 124; y < 169; ++y) {
+        for (x = 233; x < 320; ++x) {
+            if (framebuffer[y * 320 + x] != 0u) {
+                ++c013_nonblack;
+            }
+        }
+    }
+    CHECK(c013_nonblack > 0,
+          "live Prison framebuffer consumes real C013 movement pixels");
+    M11_GameView_Shutdown(&view);
+    if (failures) return 1;
+    puts("PASS: csb_v1_m11_prison_runtime_hud_pc34");
+    return 0;
+}

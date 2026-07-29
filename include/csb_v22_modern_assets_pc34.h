@@ -51,6 +51,23 @@ typedef enum {
     CSB_V22_SHAPE_SOURCE_COUNT
 } CSB_V22_ShapeSource;
 
+/* Original-data provenance for one V2.2 route. A modern surface may only be
+ * projected when this record agrees with the F0128 source draw command. */
+typedef struct {
+    int valid;
+    char id[96];
+    char category[48];
+    int source_graphic_index;
+    int source_width;
+    int source_height;
+    /* SHA-256 of the exact compressed GRAPHICS.DAT record selected by the
+     * source-artpack generator.  Index + dimensions alone are not an
+     * identity: a different PC release can carry a different record there. */
+    char source_record_sha256[65];
+    int output_width;
+    int output_height;
+} CSB_V22_RouteProvenancePc34;
+
 /* ── Public API ──────────────────────────────────────────────────── */
 
 /* csb_v22_set_manifest_path — set path to the modern asset manifest.
@@ -91,6 +108,12 @@ const uint32_t* csb_v22_get_missing_placeholder(int* out_w, int* out_h);
  * to a full filesystem path. Returns 1 on success, 0 if not found. */
 int csb_v22_get_shape_path(const char* category, const char* asset_id,
                             char* out_path, size_t out_path_size);
+
+/* Finds a routeProvenance record in the selected source artpack. This is a
+ * metadata admission helper only; it never invents a placement or admits a
+ * modern draw by itself. */
+int csb_v22_get_route_provenance(const char* category, const char* asset_id,
+                                 CSB_V22_RouteProvenancePc34* out_provenance);
 
 /* csb_v22_shape_source_name — human-readable name for a shape source. */
 const char* csb_v22_shape_source_name(CSB_V22_ShapeSource src);

@@ -98,9 +98,19 @@ static void expected_manifest_path(char* out, size_t outSize,
                                    const char* dataDir) {
     char p1[FSP_PATH_MAX], p2[FSP_PATH_MAX], assets[FSP_PATH_MAX];
     char csb[FSP_PATH_MAX], modern[FSP_PATH_MAX];
-    if (!FSP_ParentDir(p1, sizeof(p1), dataDir) ||
+    char physical_data_dir[FSP_PATH_MAX];
+    const char* resolved_data_dir = dataDir;
+
+    /* The production gate canonicalizes an existing data directory first;
+     * on macOS /tmp is a symlink, so derive the assertion from the same
+     * physical path rather than comparing two equivalent spellings. */
+    if (FSP_ResolvePhysicalPath(physical_data_dir, sizeof(physical_data_dir),
+                                dataDir)) {
+        resolved_data_dir = physical_data_dir;
+    }
+    if (!FSP_ParentDir(p1, sizeof(p1), resolved_data_dir) ||
         !FSP_ParentDir(p2, sizeof(p2), p1)) {
-        FSP_JoinPath(assets, sizeof(assets), dataDir, "assets");
+        FSP_JoinPath(assets, sizeof(assets), resolved_data_dir, "assets");
     } else {
         FSP_JoinPath(assets, sizeof(assets), p2, "assets");
     }

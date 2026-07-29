@@ -609,6 +609,7 @@ def csb_img2_to_image(
     width: int,
     height: int,
     palette: list[tuple[int, int, int, int]] | None = None,
+    transparent_index: int | None = None,
 ) -> Image.Image:
     pixels = csb_img2_indices(source, width, height)
     active_palette = palette or DM1_DUNGEON_PALETTE
@@ -616,7 +617,10 @@ def csb_img2_to_image(
     pix = img.load()
     for y in range(height):
         for x in range(width):
-            pix[x, y] = active_palette[pixels[y * width + x] & 0x0F]
+            index = pixels[y * width + x] & 0x0F
+            color = active_palette[index]
+            pix[x, y] = (color[0], color[1], color[2], 0) \
+                if transparent_index == index else color
     return img
 
 

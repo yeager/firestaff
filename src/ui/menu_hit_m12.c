@@ -6,6 +6,7 @@
  */
 
 #include "menu_hit_m12.h"
+#include "menu_row_metrics_m12.h"
 
 #include <string.h>
 
@@ -41,7 +42,7 @@
  * available width divided by M12_SETTINGS_TAB_COUNT. */
 #define M12_HIT_SETTINGS_TAB_MARGIN (M12_HIT_CANVAS_W / 30)
 #define M12_HIT_SETTINGS_TAB_Y      52
-#define M12_HIT_SETTINGS_TAB_H      22
+#define M12_HIT_SETTINGS_TAB_H      M12_MENU_ROW_MODERN_TAB_HEIGHT
 #define M12_HIT_SETTINGS_TAB_W      ((M12_HIT_CANVAS_W - 2 * M12_HIT_SETTINGS_TAB_MARGIN) / M12_SETTINGS_TAB_COUNT)
 #define M12_HIT_ROW_HEIGHT     50
 
@@ -161,16 +162,54 @@ static int m12_hit_settings_row_rect(int visibleRow,
     return 1;
 }
 
-static int m12_hit_gameopt_row_rect(int row, int* rx, int* ry, int* rw, int* rh) {
-    static const int yOffsets[M12_GAME_OPT_ROW_COUNT] = {
-        34, 220, 220, 220, 300, 300, 380, 380
-    };
-    /* Rows 0..M12_GAME_OPT_ROW_COUNT-1 are drawn in the panel. */
-    if (row < 0 || row >= M12_GAME_OPT_ROW_COUNT) return 0;
-    *rx = M12_HIT_PANEL_X + M12_HIT_ROW_INDENT;
-    *ry = M12_HIT_GAMEOPT_PANEL_Y + yOffsets[row];
-    *rw = M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT;
-    *rh = (row == M12_GAME_OPT_ROW_PRESENTATION) ? 156 : 64;
+static int m12_hit_gameopt_tile(int x, int y, M12_MouseHit* out) {
+    /* draw_game_options_view uses a 4-column grid.  Keep each clickable
+     * tile separate: the old full-width row test made PATCH and LANGUAGE
+     * clicks operate VERSION, and SPEED-HOTKEYS clicks operate SPEED. */
+    const int row_x = M12_HIT_PANEL_X + M12_HIT_ROW_INDENT;
+    const int row_w = M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT;
+    const int tile_gap = 16;
+    const int tile_w = (row_w - 3 * tile_gap) / 4;
+    const int tile_h = 64;
+    const int grid_y = M12_HIT_GAMEOPT_PANEL_Y + 220;
+    int column;
+    int grid_row;
+
+    if (!out || x < row_x || x >= row_x + row_w ||
+        y < grid_y || y >= grid_y + 3 * (tile_h + tile_gap) + tile_h) {
+        return 0;
+    }
+    column = (x - row_x) / (tile_w + tile_gap);
+    if (column < 0 || column >= 4 ||
+        x >= row_x + column * (tile_w + tile_gap) + tile_w) {
+        return 0;
+    }
+    grid_row = (y - grid_y) / (tile_h + tile_gap);
+    if (grid_row < 0 || grid_row >= 4 ||
+        y >= grid_y + grid_row * (tile_h + tile_gap) + tile_h) {
+        return 0;
+    }
+
+    out->kind = M12_HIT_GAMEOPT_CYCLE;
+    out->delta = x >= row_x + column * (tile_w + tile_gap) +
+                         (tile_w * M12_HIT_CYCLE_SPLIT_NUM) /
+                             M12_HIT_CYCLE_SPLIT_DEN ? 1 : -1;
+    if (grid_row == 0) {
+        if (column == 0) out->index = M12_GAME_OPT_ROW_VERSION;
+        else if (column == 2) out->index = M12_GAME_OPT_ROW_PATCH;
+        else if (column == 3) out->index = M12_GAME_OPT_ROW_LANGUAGE;
+        else return 0; /* DATA is a read-only asset status. */
+    } else if (grid_row == 1) {
+        if (column == 0) out->index = M12_GAME_OPT_ROW_CHEATS;
+        else if (column == 1 || column == 2) out->index = M12_GAME_OPT_ROW_SPEED;
+        else return 0; /* Quick Resume belongs to global settings. */
+    } else if (grid_row == 2) {
+        if (column == 0) out->index = M12_GAME_OPT_ROW_ASPECT;
+        else if (column == 1) out->index = M12_GAME_OPT_ROW_RESOLUTION;
+        else return 0; /* Renderer/window are global settings. */
+    } else {
+        return 0;
+    }
     return 1;
 }
 
@@ -358,25 +397,18 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                 hit.index = M12_GAME_OPT_ROW_COUNT;
                 return hit;
             }
-            for (i = 0; i < M12_GAME_OPT_ROW_COUNT; ++i) {
-                if (m12_hit_gameopt_row_rect(i, &rx, &ry, &rw, &rh) &&
-                    rect_contains(rx, ry, rw, rh, x, y)) {
-                    if (i == M12_GAME_OPT_ROW_PRESENTATION) {
-                        hit.kind = M12_HIT_GAMEOPT_CYCLE;
-                        hit.index = i;
-                        hit.delta = (x < rx + rw / 2) ? -1 : 1;
-                        return hit;
-                    }
-                    if (m12_hit_is_cycle_plus(rx, rw, x)) {
-                        hit.kind = M12_HIT_GAMEOPT_CYCLE;
-                        hit.index = i;
-                        hit.delta = 1;
-                    } else {
-                        hit.kind = M12_HIT_GAMEOPT_ROW;
-                        hit.index = i;
-                    }
-                    return hit;
-                }
+            /* The two large mode cards are the presentation selector. */
+            if (rect_contains(M12_HIT_PANEL_X + M12_HIT_ROW_INDENT,
+                              M12_HIT_GAMEOPT_PANEL_Y + 34,
+                              M12_HIT_PANEL_W - 2 * M12_HIT_ROW_INDENT,
+                              156, x, y)) {
+                hit.kind = M12_HIT_GAMEOPT_CYCLE;
+                hit.index = M12_GAME_OPT_ROW_PRESENTATION;
+                hit.delta = x < M12_HIT_CANVAS_W / 2 ? -1 : 1;
+                return hit;
+            }
+            if (m12_hit_gameopt_tile(x, y, &hit)) {
+                return hit;
             }
             break;
         case M12_MENU_VIEW_MESSAGE:

@@ -169,6 +169,67 @@ void csb_v22_inplace_route_reset(void) {
      * observable state change. No-op for now. */
 }
 
+int csb_v22_admit_f0128_door_projection_pc34(
+    const CSB_V1_ViewportRuntimeDrawCommandPc34* source_command,
+    const CSB_V22_RouteProvenancePc34* provenance,
+    CSB_V22_F0128ProjectionCommandPc34* out_projection)
+{
+    const char* expected_id = NULL;
+    int expected_index = -1;
+    int expected_width = 0;
+    int expected_height = 0;
+
+    if (out_projection) memset(out_projection, 0, sizeof(*out_projection));
+    if (!source_command || !provenance || !out_projection || !provenance->valid ||
+        source_command->transparent_color != 10 || source_command->clip_w <= 0 ||
+        source_command->clip_h <= 0 || source_command->draw_order <= 0) {
+        return 0;
+    }
+
+    switch (source_command->route) {
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34:
+        expected_id = "door_d0_01";
+        expected_index = 248;
+        expected_width = 96;
+        expected_height = 88;
+        break;
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34:
+        expected_id = "door_d1_01";
+        expected_index = 247;
+        expected_width = 64;
+        expected_height = 61;
+        break;
+    default:
+        return 0;
+    }
+
+    if (strcmp(provenance->category, CAT_DOOR) != 0 ||
+        strcmp(provenance->id, expected_id) != 0 ||
+        provenance->source_graphic_index != expected_index ||
+        provenance->source_width != expected_width ||
+        provenance->source_height != expected_height ||
+        provenance->output_width <= 0 || provenance->output_height <= 0 ||
+        strlen(provenance->source_record_sha256) != 64u) {
+        return 0;
+    }
+
+    out_projection->valid = 1;
+    copy_str(out_projection->asset_id, sizeof(out_projection->asset_id),
+             expected_id);
+    copy_str(out_projection->category, sizeof(out_projection->category),
+             CAT_DOOR);
+    out_projection->source_graphic_index = expected_index;
+    out_projection->source_width = expected_width;
+    out_projection->source_height = expected_height;
+    out_projection->transparent_index = 10;
+    out_projection->clip_x = source_command->clip_x;
+    out_projection->clip_y = source_command->clip_y;
+    out_projection->clip_w = source_command->clip_w;
+    out_projection->clip_h = source_command->clip_h;
+    out_projection->draw_order = source_command->draw_order;
+    return 1;
+}
+
 int csb_v22_inplace_route_for_shape(int shape_type,
                                       int v22_local,
                                       char* out_asset_id,

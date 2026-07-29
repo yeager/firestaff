@@ -833,6 +833,8 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         m11_sound_free(&state->titleMusic);
         m11_sound_free(&state->dm1SwshProgram);
         m11_sound_free(&state->csbSwshPcm);
+        m11_sound_free(&state->csbAtariStPsg);
+        m11_sound_free(&state->csbPc34RuntimePcm);
     }
 
     state->initialized = 0;
@@ -863,6 +865,15 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->csbSwshSourcePeriod = 0;
     state->csbSwshSourceHash = 0u;
     state->csbSwshQueuedCount = 0;
+    state->csbAtariStSoundAccepted = 0;
+    state->csbAtariStSoundQueuedCount = 0;
+    state->csbAtariStSoundPeriod = 0;
+    state->csbAtariStSoundHash = 0u;
+    state->csbPc34RuntimeSoundAccepted = 0;
+    state->csbPc34RuntimeSoundByteCount = 0;
+    state->csbPc34RuntimeSoundTimerDivisor = 0;
+    state->csbPc34RuntimeSoundHash = 0u;
+    state->csbPc34RuntimeSoundQueuedCount = 0;
 }
 
 int M11_Audio_IsAvailable(const M11_AudioState* state) {
@@ -1223,6 +1234,70 @@ done:
     free(levels);
     m11_sound_clear(&state->csbAtariStPsg);
     return 0;
+}
+
+int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
+                                    const unsigned char* source,
+                                    int sourceBytes,
+                                    int timerDivisor,
+                                    unsigned int sourceHash) {
+    const unsigned int pitHz = 1193180u;
+    unsigned int sourceRate;
+    unsigned int outputCount;
+    unsigned int outputIndex;
+
+    /* IBMIO.C F8119 computes its timer from 1193180 / P3304.  For the
+     * PC3.4 SOUND_DATA rows, the 112/138/145/150 field is that divisor.
+     * The bytes are original signed 8-bit PCM; host resampling is transport,
+     * not a generated substitute for unavailable source material. */
+    if (!state || !state->initialized || !source || sourceBytes <= 0 ||
+        timerDivisor <= 0 || sourceHash == 0u ||
+        m11_fnv1a_bytes(source, sourceBytes) != sourceHash) {
+        if (state) {
+            m11_sound_clear(&state->csbPc34RuntimePcm);
+            state->csbPc34RuntimeSoundAccepted = 0;
+        }
+        return 0;
+    }
+    sourceRate = pitHz / (unsigned int)timerDivisor;
+    if (sourceRate == 0u) {
+        m11_sound_clear(&state->csbPc34RuntimePcm);
+        state->csbPc34RuntimeSoundAccepted = 0;
+        return 0;
+    }
+    outputCount = ((unsigned int)sourceBytes * M11_AUDIO_SAMPLE_RATE +
+                   sourceRate - 1u) / sourceRate;
+    if (outputCount == 0u || outputCount > 65536u ||
+        !m11_sound_reserve(&state->csbPc34RuntimePcm, (int)outputCount)) {
+        m11_sound_clear(&state->csbPc34RuntimePcm);
+        state->csbPc34RuntimeSoundAccepted = 0;
+        return 0;
+    }
+    for (outputIndex = 0u; outputIndex < outputCount; ++outputIndex) {
+        unsigned int sourceIndex =
+            (outputIndex * sourceRate) / M11_AUDIO_SAMPLE_RATE;
+        if (sourceIndex >= (unsigned int)sourceBytes) {
+            sourceIndex = (unsigned int)sourceBytes - 1u;
+        }
+        state->csbPc34RuntimePcm.samples[outputIndex] =
+            (float)(int8_t)source[sourceIndex] / 128.0f;
+    }
+    state->csbPc34RuntimePcm.sampleCount = (int)outputCount;
+    state->csbPc34RuntimeSoundAccepted = 1;
+    state->csbPc34RuntimeSoundByteCount = sourceBytes;
+    state->csbPc34RuntimeSoundTimerDivisor = timerDivisor;
+    state->csbPc34RuntimeSoundHash = sourceHash;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
+        SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
+                               state->csbPc34RuntimePcm.samples,
+                               state->csbPc34RuntimePcm.sampleCount *
+                                   (int)sizeof(float));
+        state->queuedSampleCount += state->csbPc34RuntimePcm.sampleCount;
+        ++state->csbPc34RuntimeSoundQueuedCount;
+    }
+#endif
+    return 1;
 }
 
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {

@@ -85,6 +85,17 @@ static void write_le16(uint8_t *b, size_t off, uint16_t v)
     b[off + 1u] = (uint8_t)((v >> 8) & 0xFFu);
 }
 
+static uint16_t read_be16(const uint8_t *b, size_t off)
+{
+    return (uint16_t)(((uint16_t)b[off] << 8) | b[off + 1u]);
+}
+
+static void write_be16(uint8_t *b, size_t off, uint16_t v)
+{
+    b[off] = (uint8_t)(v >> 8);
+    b[off + 1u] = (uint8_t)(v & 0xffu);
+}
+
 static void write_le32(uint8_t *b, size_t off, uint32_t v)
 {
     b[off + 0u] = (uint8_t)(v & 0xFFu);
@@ -259,6 +270,33 @@ static void build_csbwin_fixture(uint8_t *buf,
      * algorithm is involutive so the read-side Unscramble(buf+256,
      * 0, 128) recovers the original second half. */
     scramble_block(buf + 256u, 0u, 128u);
+}
+
+/* Original Atari-style CSB saves use the same source algorithm but store
+ * its 16-bit words in big-endian order. Keep this fixture synthetic so no
+ * community save bytes need to be committed. */
+static void build_big_endian_csbwin_fixture(uint8_t *buf)
+{
+    uint16_t d5 = 0u;
+    uint16_t d7 = 0u;
+    uint16_t d6 = 128u;
+    size_t i;
+
+    memset(buf, 0, CSB_V1_CSBWIN_BLOCK1_BYTES);
+    for (i = 0u; i < 128u; ++i) {
+        uint16_t word = (uint16_t)(0x0101u + i * 3u);
+        write_be16(buf + 256u, i * 2u, word);
+        d5 = (uint16_t)(d5 + word);
+    }
+    write_be16(buf, 254u, d5);
+    for (i = 0u; i < 128u; ++i) {
+        size_t off = 256u + i * 2u;
+        uint16_t word = read_be16(buf, off);
+        word = (uint16_t)(word ^ d7);
+        write_be16(buf, off, word);
+        d7 = (uint16_t)(d7 + d6);
+        --d6;
+    }
 }
 
 static void write_csbwin_champion_fixture(uint8_t *record,
@@ -795,6 +833,21 @@ static int test_stream_section_decode(void)
                     NULL, sizeof(encrypted), 0x2468u, checksum,
                     decoded, sizeof(decoded)) ==
                 CSB_V1_CSBWIN_512_ERR_ARGUMENT);
+    return 1;
+}
+
+static int test_big_endian_header_accept(void)
+{
+    uint8_t bytes[CSB_V1_CSBWIN_BLOCK1_BYTES];
+    CSB_V1_CSBWin512Report report;
+
+    build_big_endian_csbwin_fixture(bytes);
+    ASSERT_TRUE(csb_v1_csbwin_512_xor_pad_classify(
+                    bytes, sizeof(bytes), &report) == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(report.verdict == CSB_V1_CSBWIN_512_VERDICT_CSB);
+    ASSERT_TRUE(report.byte_order ==
+                CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN);
+    ASSERT_TRUE(report.first_half_d6w == report.second_half_d5w);
     return 1;
 }
 
@@ -1767,6 +1820,7 @@ struct { const char *name; test_fn fn; } tests[] = {
     { "both-keys-fail-fixture",       test_both_keys_fail_fixture },
     { "csb-key-synthetic-accept",     test_csb_key_synthetic_accept },
     { "dm-key-synthetic-accept",      test_dm_key_synthetic_accept },
+    { "big-endian-header-accept",     test_big_endian_header_accept },
     { "stream-section-decode",        test_stream_section_decode },
     { "full-save-body-verify",        test_full_save_body_verify },
     { "writable-champion-sections",   test_writable_champion_sections },

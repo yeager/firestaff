@@ -200,6 +200,16 @@ typedef enum {
     CSB_V1_CSBWIN_512_VERDICT_DM      = 2
 } CSB_V1_CSBWin512KeyVerdict;
 
+/* CSBWin reads the same GAMEBLOCK1 algorithm for PC (little-endian) and
+ * original Atari/ST-style (big-endian) saves. Keep the byte order explicit
+ * in the receipt so downstream body import never silently interprets an
+ * original save as a PC save. */
+typedef enum {
+    CSB_V1_CSBWIN_512_BYTE_ORDER_NONE = 0,
+    CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN,
+    CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN
+} CSB_V1_CSBWin512ByteOrder;
+
 typedef enum {
     CSB_V1_CSBWIN_512_SECTION_BLOCK2 = 0,
     CSB_V1_CSBWIN_512_SECTION_ITEM16 = 1,
@@ -272,6 +282,7 @@ typedef struct {
 typedef struct {
     CSB_V1_CSBWin512KeyVerdict verdict;
     int                        key_index;       /* CSB_V1_CSBWIN_512_KEY_CSB / _DM, or 0 when verdict == NEITHER */
+    CSB_V1_CSBWin512ByteOrder  byte_order;      /* validated on-disk word order */
     uint16_t                   first_half_d6w;  /* CSBWin UnscrambleBlock1 D6W */
     uint16_t                   second_half_d5w; /* CSBWin UnscrambleBlock1 D5W */
     CSB_V1_CSBWin512Public     public_fields;

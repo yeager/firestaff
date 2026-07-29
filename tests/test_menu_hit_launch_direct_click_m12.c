@@ -90,6 +90,9 @@ int main(void) {
     const int settingsDataDirCenterY = 260 + 36 + 1 * 70 + 25;
     const int settingsExportCenterY = 260 + 36 + 3 * 70 + 25;
     const int settingsImportCenterY = 260 + 36 + 4 * 70 + 25;
+    const int gameTileX = 132;
+    const int gameTileW = (1656 - 3 * 16) / 4;
+    const int gameTileY = 190 + 220;
 
     if (!homeDir || !test_setenv("HOME", homeDir) ||
         !test_setenv("SDL_VIDEODRIVER", "dummy")) {
@@ -115,6 +118,36 @@ int main(void) {
     if (!expect(changed == 1, "DM1 card direct click should change menu state")) return 1;
     if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS, "DM1 card direct click should enter game options")) return 1;
     if (!expect(state.activatedIndex == 0, "DM1 direct click should activate DM1")) return 1;
+
+    /* The rendered game-options grid has independent tiles.  These checks
+     * prevent a broad row hit target from silently routing Patch/Language
+     * clicks into Version, which made visible DM1 controls appear dead. */
+    hit = M12_ModernMenu_HitTest(&state, gameTileX + 2 * (gameTileW + 16) + gameTileW / 2,
+                                 gameTileY + 32);
+    if (!expect(hit.kind == M12_HIT_GAMEOPT_CYCLE &&
+                hit.index == M12_GAME_OPT_ROW_PATCH,
+                "Patch tile should map to the patch control")) return 1;
+    state.gameOptions[0].usePatch = 0;
+    changed = M12_ModernMenu_HandlePointer(
+        &state, gameTileX + 2 * (gameTileW + 16) + gameTileW / 2,
+        gameTileY + 32, 1, NULL);
+    if (!expect(changed == 1 && state.gameOptions[0].usePatch == 1,
+                "Patch tile click should change the selected game option")) return 1;
+    hit = M12_ModernMenu_HitTest(&state, gameTileX + 3 * (gameTileW + 16) + gameTileW / 2,
+                                 gameTileY + 32);
+    if (!expect(hit.kind == M12_HIT_GAMEOPT_CYCLE &&
+                hit.index == M12_GAME_OPT_ROW_LANGUAGE,
+                "Language tile should map to the language control")) return 1;
+    hit = M12_ModernMenu_HitTest(&state, gameTileX + gameTileW / 2,
+                                 gameTileY + 80 + 32);
+    if (!expect(hit.kind == M12_HIT_GAMEOPT_CYCLE &&
+                hit.index == M12_GAME_OPT_ROW_CHEATS,
+                "Cheats tile should map to the cheats control")) return 1;
+    hit = M12_ModernMenu_HitTest(&state, gameTileX + gameTileW / 2,
+                                 gameTileY + 160 + 32);
+    if (!expect(hit.kind == M12_HIT_GAMEOPT_CYCLE &&
+                hit.index == M12_GAME_OPT_ROW_ASPECT,
+                "Aspect tile should map to the aspect control")) return 1;
 
     changed = M12_ModernMenu_HandlePointer(&state, customModeCenterX, modeChoiceCenterY, 1, NULL);
     if (!expect(changed == 1, "Custom mode column should be clickable")) return 1;

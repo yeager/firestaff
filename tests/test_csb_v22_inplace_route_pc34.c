@@ -564,6 +564,47 @@ static void t_source_square_element_boundary(void) {
           "unknown source square is fail-closed");
 }
 
+static void t_f0128_door_projection_admission(void) {
+    CSB_V1_ViewportRuntimeDrawCommandPc34 command;
+    CSB_V22_RouteProvenancePc34 provenance;
+    CSB_V22_F0128ProjectionCommandPc34 projection;
+
+    memset(&command, 0, sizeof(command));
+    memset(&provenance, 0, sizeof(provenance));
+    command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34;
+    command.transparent_color = 10;
+    command.clip_x = 76;
+    command.clip_y = 47;
+    command.clip_w = 72;
+    command.clip_h = 74;
+    command.draw_order = 0x0111;
+    provenance.valid = 1;
+    strcpy(provenance.id, "door_d1_01");
+    strcpy(provenance.category, "door_shapes");
+    provenance.source_graphic_index = 247;
+    provenance.source_width = 64;
+    provenance.source_height = 61;
+    provenance.output_width = 64;
+    provenance.output_height = 96;
+    memset(provenance.source_record_sha256, 'a', 64);
+    provenance.source_record_sha256[64] = '\0';
+    CHECK(csb_v22_admit_f0128_door_projection_pc34(&command, &provenance,
+                                                     &projection) == 1 &&
+          projection.valid && projection.clip_x == 76 &&
+          projection.clip_y == 47 && projection.clip_w == 72 &&
+          projection.clip_h == 74 && projection.transparent_index == 10,
+          "D2 F0128 door admits exact source route and clip");
+    command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34;
+    CHECK(csb_v22_admit_f0128_door_projection_pc34(&command, &provenance,
+                                                     &projection) == 0,
+          "unproven D3 native dimensions remain blocked");
+    command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34;
+    provenance.source_width = 63;
+    CHECK(csb_v22_admit_f0128_door_projection_pc34(&command, &provenance,
+                                                     &projection) == 0,
+          "mismatched source dimensions remain blocked");
+}
+
 /* ── Source evidence ──────────────────────────────────────────── */
 
 static void t_source_evidence(void) {
@@ -602,6 +643,7 @@ int main(void) {
     t_pair_recognized_table();
     t_9square_walk();
     t_source_square_element_boundary();
+    t_f0128_door_projection_admission();
     t_source_evidence();
 
     printf("--- %d / %d passed ---\n", g_total - g_failed, g_total);

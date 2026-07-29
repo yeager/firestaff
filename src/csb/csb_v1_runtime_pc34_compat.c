@@ -149,6 +149,129 @@ static int csb_v1_runtime_try_load_original_atari_save_file(
     return result;
 }
 
+/* CSBWin SaveGame.cpp rotates only the original media slot names before it
+ * creates a replacement: CSBGAME[1..4].DAT becomes CSBGAME[1..4].BAK.
+ * Keep Firestaff-native destinations out of this rule, rather than applying
+ * an invented backup convention to arbitrary user paths. */
+static int csb_v1_runtime_original_atari_backup_path(const char *path,
+                                                     char *out,
+                                                     size_t out_size)
+{
+    const char *name;
+    static const char *const names[] = {
+        "CSBGAME.DAT", "CSBGAME1.DAT", "CSBGAME2.DAT",
+        "CSBGAME3.DAT", "CSBGAME4.DAT", NULL
+    };
+    size_t index;
+
+    if (!path || !out || out_size == 0u) {
+        return 0;
+    }
+    name = strrchr(path, '/');
+    name = name ? name + 1 : path;
+    for (index = 0u; names[index] != NULL; ++index) {
+        size_t i;
+        for (i = 0u; name[i] != '\0' && names[index][i] != '\0'; ++i) {
+            char actual = name[i];
+            char expected = names[index][i];
+            if (actual >= 'a' && actual <= 'z') actual = (char)(actual - ('a' - 'A'));
+            if (actual != expected) break;
+        }
+        if (name[i] == '\0' && names[index][i] == '\0') {
+            size_t prefix_length = strlen(path) - 4u;
+            int length = snprintf(out, out_size, "%.*s.BAK",
+                                  (int)prefix_length, path);
+            return length >= 0 && (size_t)length < out_size;
+        }
+    }
+    return 0;
+}
+
+int csb_v1_runtime_write_original_atari_save_to_path(
+    const CSB_V1_RuntimeProfile *profile,
+    const char *source_path,
+    const char *destination_path)
+{
+    CSB_V1_AtariSaveGameBlock2Patch patch;
+    uint8_t *source = NULL;
+    uint8_t *output = NULL;
+    size_t size = 0u;
+    char temporary_path[1024];
+    char backup_path[1024];
+    FILE *fp = NULL;
+    int backup_created = 0;
+    int result = -1;
+
+    if (!profile || !source_path || !source_path[0] || !destination_path ||
+        !destination_path[0] || !profile->party_state_valid ||
+        profile->current_level < 0 || profile->party_x < 0 ||
+        profile->party_y < 0 || profile->party_dir < 0 ||
+        profile->party_dir > 3 ||
+        !csb_v1_runtime_read_original_atari_save_file(source_path, &source,
+                                                       &size)) {
+        return -1;
+    }
+    output = (uint8_t *)malloc(size);
+    {
+        int temporary_length = snprintf(temporary_path,
+                                        sizeof(temporary_path),
+                                        "%s.firestaff-writing",
+                                        destination_path);
+        if (!output || temporary_length < 0 ||
+            (size_t)temporary_length >= sizeof(temporary_path)) {
+            free(output);
+            free(source);
+            return -1;
+        }
+    }
+    memset(&patch, 0, sizeof(patch));
+    patch.game_time = profile->game_time;
+    patch.random_seed = profile->csbwin_gameblock2_summary_valid
+        ? profile->csbwin_random_seed : profile->dungeon_seed;
+    patch.leader_hand_thing = (int16_t)profile->party_state.LeaderHandThing;
+    patch.party_x = (int16_t)profile->party_x;
+    patch.party_y = (int16_t)profile->party_y;
+    patch.party_direction = (int16_t)(profile->party_dir & 3);
+    patch.party_map_index = (int16_t)profile->current_level;
+    if (csb_v1_atari_save_patch_gameblock2_and_party_pc34_compat(
+            source, size, &patch, &profile->party_state, output, size, NULL) !=
+        CSB_V1_ATARI_SAVE_OK) {
+        free(output);
+        free(source);
+        return -1;
+    }
+    fp = fopen(temporary_path, "wb");
+    if (fp && fwrite(output, 1u, size, fp) == size && fclose(fp) == 0) {
+        fp = NULL;
+        if (csb_v1_runtime_original_atari_backup_path(destination_path,
+                                                       backup_path,
+                                                       sizeof(backup_path))) {
+            FILE *existing = fopen(destination_path, "rb");
+            if (existing) {
+                fclose(existing);
+                (void)remove(backup_path);
+                if (rename(destination_path, backup_path) != 0) {
+                    remove(temporary_path);
+                    free(output);
+                    free(source);
+                    return -1;
+                }
+                backup_created = 1;
+            }
+        }
+        if (rename(temporary_path, destination_path) == 0) {
+            result = 0;
+        } else if (backup_created) {
+            (void)rename(backup_path, destination_path);
+        }
+    }
+    if (fp) fclose(fp);
+    if (result != 0) remove(temporary_path);
+    free(output);
+    free(source);
+    return result;
+}
+
 static int csb_v1_runtime_is_original_atari_save_file(const char *path)
 {
     uint8_t *bytes = NULL;
@@ -1759,6 +1882,7 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
 {
     CSB_V1_RuntimeSaveImageV1 image;
     CSB_V1_SaveHeader header;
+    char backup_path[1024];
     int result;
 
     if (!profile || !path) return -1;
@@ -1792,7 +1916,23 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
          * not have to special-case verified CSBWin saves outside runtime. */
         import_result =
             csb_v1_runtime_import_csbgame_roster_from_path(profile, path);
-        return (import_result == CSB_V1_LOAD_OK) ? CSB_V1_LOAD_OK : result;
+        if (import_result == CSB_V1_LOAD_OK) return CSB_V1_LOAD_OK;
+
+        /* SaveGame.cpp restores CSBGAMEx.BAK when its selected original
+         * media slot cannot be opened.  Restrict this recovery path to the
+         * original slot names so Firestaff paths never gain an invented
+         * backup convention.  The backup must fully pass the Atari decoder
+         * before it replaces the unavailable/corrupt slot. */
+        if (csb_v1_runtime_original_atari_backup_path(path, backup_path,
+                                                       sizeof(backup_path)) &&
+            csb_v1_runtime_try_load_original_atari_save_file(profile,
+                                                              backup_path) ==
+                CSB_V1_LOAD_OK) {
+            (void)remove(path);
+            (void)rename(backup_path, path);
+            return CSB_V1_LOAD_OK;
+        }
+        return result;
     }
     return csb_v1_runtime_apply_save_image(profile, &image, &header);
 }
@@ -1853,6 +1993,14 @@ int csb_v1_runtime_can_load_resume_path(const char *path)
     memset(&party, 0, sizeof(party));
     if (csb_v1_runtime_is_original_atari_save_file(path)) {
         return 1;
+    }
+    {
+        char backup_path[1024];
+        if (csb_v1_runtime_original_atari_backup_path(path, backup_path,
+                                                       sizeof(backup_path)) &&
+            csb_v1_runtime_is_original_atari_save_file(backup_path)) {
+            return 1;
+        }
     }
     return csb_v1_import_csb_save_file(&party, path) > 0;
 }

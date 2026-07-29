@@ -1,3 +1,82 @@
+- ✅ 2026-07-29 CSB Prison live C013 consumption: the terminal Prison
+  transition no longer lets a stale C004 host receipt keep M11 on the
+  Entrance render path. CSB now enters the live frame and installs the
+  package-identified PC3.4 C009..C013 IMG2/LZW rasters; a generic DM1 cache
+  decode can no longer satisfy that admission by matching dimensions alone.
+  Verification: real local PC3.4 dummy-SDL capture shows the cyan C013 panel;
+  the same M11 regression passes in V1, V2.0 and V2.1.
+
+- ✅ 2026-07-29 CSB V2.2 source-artpack route identity: every generated
+  `routeProvenance` entry now records the selected original PC3.4
+  `GRAPHICS.DAT` record SHA-256 as well as its native and exported dimensions.
+  The runtime reader accepts both Artpack Studio's compact and pretty JSON
+  arrays and rejects incomplete provenance. This prevents a matching numeric
+  record index from silently admitting different source bytes. Verification:
+  `test_csb_v22_modern_assets_pc34` PASS. This is provenance only; modern
+  pixels remain blocked until the original F0128 placement/mask/palette/order
+  bridge is implemented.
+
+- ✅ 2026-07-29 CSB V2.2 F0111 transparent-source export: source-artpack
+  generation now preserves ReDMCSB `C10_COLOR_FLESH` in PC3.4 door rasters as
+  alpha rather than flattening it into opaque black padding. The cache blitter
+  leaves alpha-zero pixels in the source-owned framebuffer unchanged. The
+  V2.2 render probe verifies this against a sentinel F0128 pixel, and Artpack
+  Studio's self-test plus source-pack export pass. Perspective placement,
+  palette conversion and draw order remain intentionally blocked by the open
+  F0128 projection item.
+
+- ✅ 2026-07-29 CSB V2.2 F0128 D1/D2 door projection admission: the modern
+  projection bridge now accepts only a source-artpack door whose identity,
+  native dimensions and C10 transparency agree with the original F0128 D1 or
+  D2 front-door command. It returns that command's exact clip and draw order,
+  never a 3x3 cell rectangle. The D3 44x38 export is explicitly refused for
+  the unproven 48x41 native route. Verification:
+  `csb_v22_inplace_route_pc34` and the per-cell route probe PASS.
+
+- ✅ 2026-07-29 CSB no-party runtime C013 panel: the Prison/new-game route
+  now installs ReDMCSB `MENUDRAW.C`'s authenticated movement-panel asset
+  before it checks for an imported GAMEBLOCK party. CSB no longer renders a
+  wholly blank movement region solely because no champion has been selected.
+  Missing source graphics remain fail-closed. Verification: live local PC3.4
+  Prison handoff capture and `ctest -L csb` 104/104.
+
+- ✅ 2026-07-29 CSB Utility Disk source identity: replaced the invented
+  Firestaff boot-sector magic with ReDMCSB `UTIO.C` F1991's actual platform
+  contracts. Atari ST images are admitted only when sector 7 contains both
+  `copyright (c) 1987, Software Heaven, Inc.` and `Chaos Strikes Back`; an
+  880 KiB Amiga ADF is admitted only when root block 880 names the volume
+  `FTL_CSB_Utility`. Focused ST/ADF fixtures and full `ctest -L csb` 103/103
+  passed.
+
+- ✅ 2026-07-29 CSB original-save slot recovery: CSB's authenticated original
+  Atari/Amiga `CSBGAME*.DAT` resume route now follows CSBWin
+  `SaveGame.cpp:1692-1697,2090`: when a selected original slot cannot be
+  loaded, its matching `.BAK` is decoded first and only then restored to the
+  canonical `.DAT` name. Arbitrary Firestaff paths remain excluded. The real
+  AnnotatedCSB `CSBGAME2.DAT` corpus verifies corrupt-slot recovery,
+  canonical-name restoration, and runtime handoff. Full `ctest -L csb`:
+  103/103 passed.
+
+- ✅ 2026-07-29 CSB original-save slot backup rotation: authenticated original
+  Atari/Amiga exports now follow CSBWin `SaveGame.cpp`: an existing
+  `CSBGAME.DAT` or `CSBGAME1` through `CSBGAME4.DAT` is rotated to the
+  matching `.BAK` name before the patched save is published. A failed final
+  publication restores the old slot. Arbitrary Firestaff/user file names do
+  not receive an invented backup convention. Verification: real AnnotatedCSB
+  `CSBGAME2.DAT` runtime export preserves the old corpus byte-for-byte as
+  `CSBGAME2.BAK`, reloads the updated file, and retains the embedded dungeon.
+
+- ✅ 2026-07-29 CSB V2.2 fullscreen viewport and artpack-path verification:
+  CSB's V2.2 in-place and per-cell swap renderers now scale the original
+  320x200 cell bounds to the active host framebuffer before clipping. This
+  prevents the modern 9-cell viewport from remaining a tiny native-resolution
+  patch in a maximized window. The finished-art gate probe now derives its
+  expected path through the same physical-path normalization used by the
+  production gate, including macOS's `/tmp` alias. Verification: focused
+  viewport-swap and finished-art probes plus `ctest -L csb` 103/103 PASS.
+  The only `.fsart` archives currently in `/Users/bosse/Downloads` identify
+  themselves as `game: dm1`; they are correctly not admitted as CSB art.
+
 - ✅ 2026-07-29 DM2 viewport tables: render order (table1d7029), column counts
   (table1d7012), wall face indices near/mid (table1d6fee/6f9c), wall ornament
   slots (table1d6fdc/6f7c/6f5c), wall visibility (table1d6f4c), wall rect IDs
@@ -42530,6 +42609,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
 
 ## 2026-07-29 - CSB real-data first viewport gate
 
+- ✅ 2026-07-29 CSB V2.x verification refresh: all 47 registered V2.0,
+  V2.1 and V2.2 contracts pass in the external Ninja build. The lane covers
+  presentation selection, filters, lighting, HUD, touch/controller routing,
+  viewport/artpack admission and source-backed startup captures. It does not
+  claim a finished V2.2 artpack when one has not passed its separate gate.
+
 - The V1 first-viewport probe now searches ordinary hash-verified files before
   archive containers, matching the boot scanner's loose-install priority.
   This avoids opening unrelated large archives when a local PC3.4 pair exists.
@@ -42537,3 +42622,122 @@ the supplied root and selected MD5 to prove this without shipping game data.
   through the same `LOADSAVE.C F0435` handoff used by runtime, rather than
   incorrectly demanding the missing-data fallback. The full CSB lane passes
   101/101 with local PC3.4 data.
+- ✅ 2026-07-29 CSB original big-endian save-header admission: the CSBWin
+  GAMEBLOCK1 classifier now validates both PC little-endian and original
+  Atari-style big-endian word streams, records the proven order, and discovers
+  all original `CSBGAME.DAT` through `CSBGAME4.DAT` slots. The external real
+  `CSBGAME2.DAT` corpus validates with C29 and the source checksum invariant.
+  Its existing original-Atari body decoder and Resume/runtime handoff verify
+  and load the two-champion dungeon without a replacement file. CSBWin PC
+  body import/export remains separately fail-closed. Verification: classifier
+  unit 20/20, loader-boundary unit 158/158, external header probe 9/9,
+  external decode/runtime probes, and full CSB CTest lane 103/103.
+- ✅ 2026-07-29 CSBWin save-body ownership audit: the existing runtime already
+  imports authenticated PC GAMEBLOCK2, ITEM16, CHARDESC, TIMER, timer queue
+  and validated EXPOOL through `csb_v1_runtime_apply_csbwin_resume_file()`.
+  The matching bounded exporter preserves source header/timer/EXPOOL evidence
+  and rejects a changed heap rather than writing a plausible replacement.
+  Existing runtime import/export and core round-trip regressions cover this
+  path. The open save gap is original Atari/Amiga dungeon-data write-back,
+  not the PC body importer.
+- ✅ 2026-07-29 Original CSB GAMEBLOCK2 write-back: Firestaff now patches the
+  documented big-endian clock, RNG, hand and party pose fields in an
+  authenticated original save, re-encrypts Block2/Block3 and rebuilds the
+  DMWeb checksum relationship in Block1. The real `CSBGAME2.DAT` corpus
+  reopens with the changed state while its complete embedded dungeon payload
+  remains byte-identical. Unowned character, ITEM16, timer and dungeon edits
+  are deliberately preserved until their source layouts are fully owned.
+- ✅ 2026-07-29 Original CSB runtime save export: a resumed original save can
+  now be written through `csb_v1_runtime_write_original_atari_save_to_path()`.
+  It derives only source-owned GAMEBLOCK2 state from the live profile, writes
+  a temporary sibling before rename, and refuses an unverified source or
+  unsupported profile. The real `CSBGAME2.DAT` runtime regression reopens the
+  result, proves the new clock and proves the embedded dungeon is unchanged.
+- ✅ 2026-07-29 CSB V2.2 source-pack runtime verification: the default
+  `~/.firestaff/data/csb` path resolves through its external-volume symlink
+  to `firestaff-csb-v22-pc34-source`, not the unrelated local AI/procedural
+  first-cut manifest. Its 29 canonical material routes declare the
+  hash-verified PC3.4 `GRAPHICS.DAT` origin with `syntheticContent: false`.
+  Direct V2.2 boot remains mode 3 through Prison and paints nine V2.2
+  viewport cells. The complete CSB test lane passed 103/103.
+- ✅ 2026-07-29 CSB original-save champion write-back: the authenticated
+  Atari/Amiga export now re-encrypts the source-owned portions of every
+  800-byte champion record alongside GAMEBLOCK2. Names, titles, pose, action
+  state, vital statistics, skills/experience, inventory references, load and
+  shield state round-trip through the real `CSBGAME2.DAT` corpus; the source
+  character checksum and outer save checksums are rebuilt. Unknown character
+  bytes, ITEM16, timers, timer queue and embedded dungeon data remain
+  untouched. The corpus test changes a champion name and health, reloads the
+  saved result, and the CSB lane passes 103/103.
+- ✅ 2026-07-29 CSB PC3.4 sound-table source binding: Firestaff now exposes
+  ReDMCSB `DATA.C:1260-1302`'s exact I34E/I34M 35-row `SOUND_DATA` mapping,
+  including source graphics 671-712, Timer-A periods, priorities and distance
+  envelopes. This replaces the incorrect assumption that CSBWin's unrelated
+  22-row `sound1772` table or GRAPHICS.DAT Graphic 562 could supply PC3.4
+  audio. The table is deliberately only a route binding: the unproven PC audio
+  payload format is still fail-closed. Verification: audio unit 53/53 and
+  full `ctest -L csb` 103/103 passed.
+- ✅ 2026-07-29 CSB PC3.4 original sound-payload admission: Firestaff now
+  loads ReDMCSB `DATA.C:1260-1302` sound routes from their real `GRAPHICS.DAT`
+  records, validates F0060's big-endian payload length, and exposes only the
+  original bytes after that length word. The verified PC3.4 switch record
+  (Graphic 672) admits 128 bytes from the local hash-pinned file. This is a
+  source-data boundary, not an invented PCM conversion; reproducing each PC
+  sound device remains tracked under `CSB-SOUND-MUSIC-MEDIA`. Verification:
+  focused audio test 57/57 and `ctest -L csb` 103/103 passed.
+- ✅ 2026-07-29 CSB V2.x real-data startup verification: the installed PC3.4
+  package passed all three executable startup gates. V2.0 preserves the four
+  original PRESENTS/CHAOS/STRIKES/Entrance palettes with its indexed filters;
+  V2.1 preserves the same source sequence through EPX; and a complete V2.2
+  pack preserves the source startup, enters map 0 after Prison input, paints
+  source-mapped cells, and captures the terminal runtime frame. Verification:
+  `csb_v20_filtered_startup_capture`, `csb_v21_presented_startup_capture`,
+  and `csb_v22_source_artpack_runtime` passed with local original data.
+- ✅ 2026-07-29 CSB PC3.4 runtime sound transport: CSB events now use their
+  ReDMCSB `DATA.C`-selected `GRAPHICS.DAT` sample, rather than the DM1 SND3
+  namespace or a procedural marker. `IO.C` F0060 framing is verified against
+  local Graphic 672; the host transport preserves the signed source bytes and
+  IBMIO F8119 PIT divisor (112/138/145/150). Changed data or invalid divisors
+  fail closed. `csb_v1_pc34_runtime_audio_transport` and
+  `csb_v1_audio_runtime_pc34_compat` pass.
+# 2026-07-29 - CSB V2.2 F0128 corruption guard
+
+- Removed the production use of the unverified 3x3 rectangular V2.2 painter.
+  It corrupted real F0128 perspective frames with horizontal bands. V2.2 now
+  keeps the source-owned viewport intact while retaining the selected modern
+  material route for the forthcoming receipt-owned projection consumer.
+- ✅ 2026-07-29 CSB V2.2 route-provenance reader: source artpacks now expose
+  an explicit route record with category, asset id, original GRAPHICS.DAT
+  index and native dimensions. The reader rejects absent records rather than
+  inventing a projection. This is the metadata prerequisite for joining a
+  V2.2 asset to ReDMCSB F0128's real clip/mask command; it does not itself
+  enable modern viewport drawing. Focused metadata test passes.
+- ✅ 2026-07-29 CSB V2.2 F0128 source-artpack projection status: generated
+  source manifests now state whether a route is actually eligible for F0128
+  projection. D1/D2 retain their ReDMCSB-bound statuses; the decodable 44x38
+  `door_d2_01` preview is `blocked_native_g0693`, because the genuine D3
+  side-door route is the separate native-packed 48x41 G0693 span through
+  F0489/F0488. Verification: local original PC3.4 source-artpack build,
+  manifest inspection, and Artpack Studio self-test PASS.
+- ✅ 2026-07-29 M12 launcher mouse geometry: the modern settings-tab hit
+  target now uses the renderer-owned 34px tab height, and the DM1 game-options
+  view maps each visible four-column tile to its own control. Patch, language,
+  cheats, speed, aspect and resolution clicks therefore no longer fall through
+  to a different full-width row. Verification: `menu_hit_launch_direct_click_m12`,
+  `menu_hit_settings_tab_m12`, `m12_menu_mouse`, and
+  `m12_menu_row_hit_height_audit` PASS; `firestaff` builds.
+- ✅ 2026-07-29 CSB V2.x startup verification repair: the real PC3.4
+  V1/V2.0/V2.1/V2.2 handoff probes now use ReDMCSB's source-owned C200
+  Enter command, rather than hard-coded window coordinates whose meaning
+  changes with the host scale mode. The direct C407 entrance-pointer regression
+  remains separate. The title-plan regression now locks TITLE.C's actual first
+  CHAOS zoom frame (16x4 at source step 2), not a later 48x12 approximation.
+  Verification: complete `ctest -L csb` 104/104 PASS.
+- ✅ 2026-07-29 CSB PC3.4 runtime-audio consumption: M11 now observes each
+  source-owned completed `SOUND.C` F0064/F0065 play while synchronizing the
+  live CSB profile and forwards its exact `GRAPHICS.DAT` PCM payload through
+  the authenticated IBMIO F8119 transport. This covers both immediate and
+  one-tick-delayed plays reached by keyboard or pointer input, without a
+  marker/SND3 fallback. Verification: `firestaff` build,
+  `test_csb_v1_pc34_runtime_audio_transport`, and the local-PC3.4
+  V2.0/V2.1 startup plus Prison-pointer probes PASS.

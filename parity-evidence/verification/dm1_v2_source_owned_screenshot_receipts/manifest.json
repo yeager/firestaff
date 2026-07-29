@@ -6,13 +6,13 @@
     "No public screenshot promotion."
   ],
   "pass": "dm1_v2_source_owned_screenshot_receipts",
-  "receipts": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/source_owned_screenshot_receipts.json",
+  "receipts": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/source_owned_screenshot_receipts.json",
   "rowCount": 16,
   "rows": [
     {
       "actual_fnv1a": "0x15996561",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-north-v1.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-north-v1.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -32,7 +32,7 @@
     {
       "actual_fnv1a": "0xc3a60503",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-north-v20.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-north-v20.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -52,7 +52,7 @@
     {
       "actual_fnv1a": "0xb0e9c09f",
       "actual_size": 768054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-north-v21.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-north-v21.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 768054,
@@ -72,7 +72,7 @@
     {
       "actual_fnv1a": "0x6a303359",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-north-v22.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-north-v22.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -92,7 +92,7 @@
     {
       "actual_fnv1a": "0xfddea8a9",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-east-v1.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-east-v1.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -112,7 +112,7 @@
     {
       "actual_fnv1a": "0xf92be9bf",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-east-v20.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-east-v20.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -132,7 +132,7 @@
     {
       "actual_fnv1a": "0xc96f73ab",
       "actual_size": 768054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-east-v21.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-east-v21.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 768054,
@@ -152,7 +152,7 @@
     {
       "actual_fnv1a": "0x7af16333",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-east-v22.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-east-v22.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -172,7 +172,7 @@
     {
       "actual_fnv1a": "0x54e723c1",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-south-v1.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-south-v1.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -192,7 +192,7 @@
     {
       "actual_fnv1a": "0x39bb461b",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-south-v20.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-south-v20.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -212,7 +212,7 @@
     {
       "actual_fnv1a": "0x3d528c1b",
       "actual_size": 768054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-south-v21.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-south-v21.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 768054,
@@ -232,7 +232,7 @@
     {
       "actual_fnv1a": "0x3ea567d9",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-south-v22.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-south-v22.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -252,7 +252,7 @@
     {
       "actual_fnv1a": "0xfddea8a9",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-west-v1.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-west-v1.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -272,7 +272,7 @@
     {
       "actual_fnv1a": "0xf92be9bf",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-west-v20.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-west-v20.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,
@@ -292,7 +292,7 @@
     {
       "actual_fnv1a": "0xc96f73ab",
       "actual_size": 768054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-west-v21.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-west-v21.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 768054,
@@ -312,7 +312,7 @@
     {
       "actual_fnv1a": "0x7af16333",
       "actual_size": 192054,
-      "bmp_path": "/Volumes/Extern-disk/firestaff-claude/build/.firestaff-probe-dm1-v2-source-owned/dir-west-v22.bmp",
+      "bmp_path": "/Volumes/Extern-disk/firestaff-csb-build/.firestaff-probe-dm1-v2-source-owned/dir-west-v22.bmp",
       "header": {
         "bit_count": 24,
         "file_size": 192054,

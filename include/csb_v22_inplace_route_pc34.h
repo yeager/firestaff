@@ -75,6 +75,9 @@
 
 #include <stddef.h>
 
+#include "csb_v1_viewport_pc34_compat.h"
+#include "csb_v22_modern_assets_pc34.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -97,6 +100,25 @@ typedef struct {
     char  fallback_reason[CSB_V22_REASON_MAX];     /* routing diagnostic */
     int   shape_type;                              /* CSB_V22_ShapeType */
 } CSB_V22_AssetRouteDecision;
+
+/* A source-artpack surface may enter the live V2.2 compositor only after it
+ * agrees with one concrete F0128 command.  This is deliberately narrower
+ * than the per-cell route gate: it carries the original clip/order and never
+ * creates geometry from a 3x3 cache cell. */
+typedef struct {
+    int valid;
+    char asset_id[CSB_V22_ASSET_ID_MAX];
+    char category[CSB_V22_CATEGORY_MAX];
+    int source_graphic_index;
+    int source_width;
+    int source_height;
+    int transparent_index;
+    int clip_x;
+    int clip_y;
+    int clip_w;
+    int clip_h;
+    int draw_order;
+} CSB_V22_F0128ProjectionCommandPc34;
 
 /* Per-cell material-routing gate.
  *
@@ -133,6 +155,17 @@ void csb_v22_inplace_route_square_element_pc34(
     int square_element,
     int v22_active,
     CSB_V22_AssetRouteDecision* out);
+
+/* Bind a source-artpack door to an existing ReDMCSB F0128 command. The
+ * admission is exact and fail-closed: it accepts only the proven D1/D2 front
+ * door rasters (PC3.4 records 248/247) with `C10_COLOR_FLESH` transparency.
+ * D3 remains rejected until its 48x41 native mapping is independently
+ * established. The result is a placement receipt for a future compositor,
+ * not a broad rectangle-paint request. */
+int csb_v22_admit_f0128_door_projection_pc34(
+    const CSB_V1_ViewportRuntimeDrawCommandPc34* source_command,
+    const CSB_V22_RouteProvenancePc34* provenance,
+    CSB_V22_F0128ProjectionCommandPc34* out_projection);
 
 /* Variant helpers — return the static asset_id / category / reason
  * a routed cell WOULD pick for the given shape type. These are the

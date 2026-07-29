@@ -49,6 +49,19 @@ typedef struct {
     size_t dungeon_size;
 } CSB_V1_AtariSaveInfo;
 
+/* The documented GAMEBLOCK2 fields that can be updated without inventing
+ * ITEM16, character, timer or dungeon bytes. Every other source section is
+ * preserved verbatim by the bounded writeback routine below. */
+typedef struct {
+    uint32_t game_time;
+    uint32_t random_seed;
+    int16_t leader_hand_thing;
+    int16_t party_x;
+    int16_t party_y;
+    int16_t party_direction;
+    int16_t party_map_index;
+} CSB_V1_AtariSaveGameBlock2Patch;
+
 /* Decode original big-endian Atari ST CSB save data, including MINI.DAT.
  * The output points to no owned memory: dungeon_offset/dungeon_size refer to
  * the caller's input buffer. */
@@ -68,6 +81,28 @@ int csb_v1_atari_save_decode_party_pc34_compat(
  * and releases it with csb_v1_dungeon_free(). */
 int csb_v1_atari_save_load_dungeon_pc34_compat(
     const uint8_t *bytes, size_t size, CSB_V1_DungeonData *out_dungeon,
+    CSB_V1_AtariSaveInfo *out_info);
+
+/* Re-encrypt an authenticated original CSB save after changing only the
+ * documented GAMEBLOCK2 state above. The caller supplies an equally large
+ * output buffer. The routine preserves the original dungeon and every
+ * unowned encrypted section byte-for-byte, recomputes the source checksums,
+ * and verifies the result before returning it. */
+int csb_v1_atari_save_patch_gameblock2_pc34_compat(
+    const uint8_t *bytes, size_t size,
+    const CSB_V1_AtariSaveGameBlock2Patch *patch,
+    uint8_t *out_bytes, size_t out_size,
+    CSB_V1_AtariSaveInfo *out_info);
+
+/* Extends the bounded GAMEBLOCK2 patch with fields already owned by
+ * csb_v1_atari_save_decode_party_pc34_compat(). The source champion count
+ * must match exactly. Unknown bytes in each 800-byte champion record, ITEM16,
+ * timers, timer queue and the embedded dungeon remain source-preserved. */
+int csb_v1_atari_save_patch_gameblock2_and_party_pc34_compat(
+    const uint8_t *bytes, size_t size,
+    const CSB_V1_AtariSaveGameBlock2Patch *patch,
+    const CSB_V1_PartyState *party,
+    uint8_t *out_bytes, size_t out_size,
     CSB_V1_AtariSaveInfo *out_info);
 
 const char *csb_v1_atari_save_decode_source_evidence_pc34_compat(void);

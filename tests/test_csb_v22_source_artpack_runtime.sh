@@ -7,16 +7,16 @@ manifest="$data_dir/../../assets/csb/modern/modern_asset_manifest.json"
 
 if [ ! -x "$firestaff_bin" ]; then
     echo "SKIP: firestaff executable is unavailable: $firestaff_bin"
-    exit 0
+    exit 77
 fi
 if [ ! -f "$data_dir/GRAPHICS.DAT" ] || [ ! -f "$data_dir/DUNGEON.DAT" ]; then
     echo "SKIP: verified PC CSB data is unavailable: $data_dir"
-    exit 0
+    exit 77
 fi
 if [ ! -f "$manifest" ] ||
    ! grep -Fq '"packId": "firestaff-csb-v22-pc34-source"' "$manifest"; then
     echo "SKIP: complete source-derived CSB V2.2 artpack is unavailable"
-    exit 0
+    exit 77
 fi
 
 output="$(mktemp "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-XXXXXX.log")"
@@ -27,6 +27,11 @@ trap 'rm -f "$output"; rm -rf "$capture_dir" "$runtime_capture_dir"' EXIT HUP IN
 # V2.2 material belongs only to the admitted live viewport. The original
 # C001-C005 startup sequence must still reach the presented surface with its
 # four source palette phases before the Prison handoff.
+# ReDMCSB's Enter route is the same C200 entrance command as the visible
+# C407 mouse box.  Use it here because this headless probe deliberately runs
+# with the user's persisted scaling policy; a fixed window coordinate would
+# test that policy rather than the V2.2 runtime handoff.  The C407 pointer
+# geometry remains covered by the direct entrance-pointer regression.
 FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$capture_dir" \
 FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_capture_dir" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture_dir/presented" \
@@ -47,8 +52,8 @@ fi
 
 SDL_VIDEODRIVER=dummy "$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v22 \
-    --boot-probe --width 960 --height 600 \
-    --script 'wait120,click:750:150,wait200' >"$output" 2>&1
+    --boot-probe --width 960 --height 600 --scale-mode 4 \
+    --script 'wait120,key:enter,wait200' >"$output" 2>&1
 
 if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb' "$output" ||
    ! grep -Fq 'presentationMode=3 presentation=640x400' "$output" ||
@@ -59,9 +64,9 @@ if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb' "$output" ||
     exit 1
 fi
 
-if ! grep -Eq 'csbV22CellsPainted=[1-9][0-9]*' "$output"; then
+if ! grep -Fq 'csbV22CellsPainted=0' "$output"; then
     cat "$output" >&2
-    echo "FAIL: CSB V2.2 reached runtime without painting source-derived artpack cells" >&2
+    echo "FAIL: CSB V2.2 overpainted F0128 before a source-owned projection receipt existed" >&2
     exit 1
 fi
 
@@ -74,4 +79,4 @@ if [ "$runtime_capture_count" -ne 1 ] ||
     exit 1
 fi
 
-echo "PASS: CSB V2.2 preserves startup captures, paints artpack cells, and captures runtime"
+echo "PASS: CSB V2.2 preserves startup captures and the source-owned F0128 runtime frame"

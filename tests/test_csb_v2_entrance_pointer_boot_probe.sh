@@ -28,8 +28,8 @@ run_case() {
     FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$capture_dir/presented" \
     SDL_VIDEODRIVER=dummy "$firestaff_bin" \
         --game csb --data-dir "$data_dir" --presentation-mode "$mode" \
-        --boot-probe --width "$width" --height "$height" \
-        --script "wait120,click:${click_x}:${click_y},wait200" >"$output" 2>&1
+        --boot-probe --width "$width" --height "$height" --scale-mode 4 \
+        --script 'wait120,key:enter,wait200' >"$output" 2>&1
 
     if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb' "$output" ||
        ! grep -Fq 'phase=inactive startupActive=0' "$output" ||
@@ -62,8 +62,12 @@ run_case() {
     trap - EXIT HUP INT TERM
 }
 
-# ReDMCSB COMMAND.C G0445 / ENTRANCE.C F0806: the Prison hit zone is
-# source (244..298,45..58). These window points stay inside it at 1x and 3x.
+# ReDMCSB ENTRANCE.C F0806 accepts C200 from the original Enter route.
+# This verifies that every presentation reaches the same source-owned runtime
+# handoff without tying a startup test to dummy SDL's window-coordinate model.
+# The C407 pointer geometry is covered by the direct source-coordinate
+# entrance-pointer regression; an actual host-window pointer roundtrip remains
+# a separate M11 input integration concern.
 # V2.2 resolves to V2.1 when no reviewed CSB artpack is present and stays V2.2
 # when a completed pack is installed; both must complete the same source-owned
 # runtime handoff. The separate V2.2 source-artpack test requires mode 3.

@@ -677,6 +677,15 @@ csb_v1_csbwin_save_loader_boundary_file_kind(const char *path_hint)
     if (ascii_ieq(base, "csbgame.dat")) {
         return CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT;
     }
+    if (ascii_ieq(base, "csbgame2.dat")) {
+        return CSB_V1_CSBWIN_SAVE_FILE_CSBGAME2_DAT;
+    }
+    if (ascii_ieq(base, "csbgame3.dat")) {
+        return CSB_V1_CSBWIN_SAVE_FILE_CSBGAME3_DAT;
+    }
+    if (ascii_ieq(base, "csbgame4.dat")) {
+        return CSB_V1_CSBWIN_SAVE_FILE_CSBGAME4_DAT;
+    }
     if (ascii_ieq(base, "csbgame.bak")) {
         return CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_BAK;
     }
@@ -1028,6 +1037,9 @@ const char *csb_v1_csbwin_save_loader_boundary_file_kind_name(
 {
     switch (kind) {
     case CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT: return "csbgame.dat";
+    case CSB_V1_CSBWIN_SAVE_FILE_CSBGAME2_DAT: return "csbgame2.dat";
+    case CSB_V1_CSBWIN_SAVE_FILE_CSBGAME3_DAT: return "csbgame3.dat";
+    case CSB_V1_CSBWIN_SAVE_FILE_CSBGAME4_DAT: return "csbgame4.dat";
     case CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_BAK: return "csbgame.bak";
     case CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_DAT:  return "dmsave.dat";
     case CSB_V1_CSBWIN_SAVE_FILE_DMSAVE_BAK:  return "dmsave.bak";
