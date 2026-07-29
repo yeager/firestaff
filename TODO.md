@@ -258,7 +258,11 @@ an integration build pass.
   47/47 in `/Volumes/Extern-disk/firestaff-csb-build`, including the real-data
   startup-capture contracts. This does not replace Mac/release capture.
   Re-run after the fullscreen-cell and physical artpack-path fixes:
-  103/103 CSB tests PASS.
+  103/103 CSB tests PASS. Re-run 2026-07-29 after the V2.0/V2.1
+  presentation-capture and V2.2 source-artpack runtime checks: 107/107 CSB
+  tests PASS in `/Volumes/Extern-disk/firestaff-csb-build` (47.85 s). This
+  confirms the implemented V2.x contracts; it does not promote the remaining
+  reviewed-art, all-route material-consumption, or packaged-Mac capture work.
 
 - **M12-DATA-SCAN-PROGRESSBAR:** Closed 2026-07-28. The start menu now draws
   a live progressbar from the existing asynchronous hash scan, alongside its

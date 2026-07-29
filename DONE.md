@@ -42918,3 +42918,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   320x200 page remains byte-identical, while the matching presented surface
   differs under V2.1's EPX/upscale path. Verification:
   `csb_v21_presented_startup_capture` PASS.
+- ✅ 2026-07-29 CSB V2.x current-suite verification: rebuilt against the
+  current CSB worktree and ran `ctest -L csb` in
+  `/Volumes/Extern-disk/firestaff-csb-build`; all 107/107 CSB tests pass in
+  47.85 seconds. The lane includes the real PC3.4 V2.0 filtered and V2.1 EPX
+  startup captures, plus the V2.2 source-artpack runtime boundary. It is
+  implementation evidence only: V2.2 still remains fail-closed until the
+  TODO-listed reviewed-material and packaged-capture requirements are met.
