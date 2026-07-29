@@ -53,11 +53,17 @@ def main() -> int:
                         default=Path.home() / ".firestaff" / "data" / "dm1" / "GRAPHICS.DAT")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--scale", type=int, default=10)
+    parser.add_argument("--max-source-width", type=int, default=320,
+                        help="largest original bitmap width to admit")
+    parser.add_argument("--max-source-height", type=int, default=200,
+                        help="largest original bitmap height to admit")
     parser.add_argument("--limit", type=int, default=0,
                         help="write at most this many decodable records (for smoke testing)")
     args = parser.parse_args()
     if args.scale < 2 or args.scale > 10:
         raise SystemExit("--scale must be between 2 and 10")
+    if args.max_source_width < 1 or args.max_source_height < 1:
+        raise SystemExit("source bitmap bounds must be positive")
 
     graphics_dat = args.graphics_dat.expanduser().resolve()
     if not graphics_dat.is_file():
@@ -97,6 +103,21 @@ def main() -> int:
             if asset.width <= 0 or asset.height <= 0:
                 manifest["skippedAssets"].append({"id": asset.asset_id,
                                                   "reason": "zero-size source record"})
+                continue
+            # GRAPHICS.DAT also carries non-bitmap tables. Their descriptor
+            # bytes can resemble huge dimensions, but they have no image
+            # encoding to upscale. Keep those records explicit and out of
+            # the artpack rather than treating data as synthetic graphics.
+            if (asset.width > args.max_source_width or
+                    asset.height > args.max_source_height):
+                manifest["skippedAssets"].append({
+                    "id": asset.asset_id,
+                    "reason": (
+                        "descriptor exceeds original display bitmap bounds "
+                        f"({asset.width}x{asset.height} > "
+                        f"{args.max_source_width}x{args.max_source_height})"
+                    ),
+                })
                 continue
             record = source_bytes[asset.offset:asset.offset + asset.compressed_bytes]
             try:
