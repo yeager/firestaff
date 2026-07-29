@@ -1141,6 +1141,12 @@ that its exact runtime path is not already source-locked and tested.
     startup/running sound events, palette/VBlank cadence, and platform-safe
     media playback without generated replacements. The host backend is no
     longer opt-in; remaining work is CSB source-media coverage and timing.
+    2026-07-29: the locally available Amiga `SWSH.FTL` archive member is a
+    18,882-byte Amiga HUNK executable (header `0x000003F3`), not a PCM
+    swoosh payload. The sibling original `Sound/*.amg` resources need their
+    own authenticated Amiga decoder/binding; neither may be fed through the
+    PC3.4 9,078-byte `SWSHSND.C` transport or substituted with generated
+    audio.
 32. **CSB-MAC-RELEASE-CAPTURE:** Complete real packaged app/window captures for
     title, entrance, doors, HUD, viewport, Utility Disk, and first runtime
     frame against local original CSB data.
