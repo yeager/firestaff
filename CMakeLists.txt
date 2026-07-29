@@ -34417,6 +34417,16 @@ if(BUILD_TESTING)
             LABELS "tier1;csb;v2;input;startup;real_data;skip_safe"
             TIMEOUT 45
         )
+        add_test(
+            NAME csb_v21_presented_startup_capture
+            COMMAND sh
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v21_presented_startup_capture.sh"
+                "$<TARGET_FILE:firestaff>"
+        )
+        set_tests_properties(csb_v21_presented_startup_capture PROPERTIES
+            LABELS "tier1;csb;v21;startup;presentation;real_data;skip_safe"
+            TIMEOUT 20
+        )
     endif()
 
     # ── CSB V1 PC 3.4 quickplay/startup dungeon-handle probe ─────

@@ -273,6 +273,15 @@ int M11_Render_PresentedIndexedSpecialMatches(const unsigned char* indexed,
                                               int height,
                                               int specialPalette);
 
+/* As above, but validate the current presentation against the renderer's
+ * Scale2x/EPX expansion of the indexed source page.  CSB V2.1 uses this
+ * route for C001-C005, so treating it as a nearest-neighbour page would
+ * reject a correct host frame after it has already been presented. */
+int M11_Render_PresentedEpxIndexedSpecialMatches(const unsigned char* indexed,
+                                                 int width,
+                                                 int height,
+                                                 int specialPalette);
+
 /* Query which SDL major version the build is linked against (2 or 3). */
 int  M11_Render_GetSdlMajorVersion(void);
 

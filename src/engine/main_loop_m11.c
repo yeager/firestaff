@@ -720,9 +720,13 @@ static int m11_present_game_frame_and_publish_startup_capture(
             M11_GameView_CSBPresentedFrameMatchesCurrentSource(
                 gameView, presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
                 csb_special_palette) &&
-            M11_Render_PresentedIndexedSpecialMatches(
-                presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
-                csb_special_palette);
+            (gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED
+                 ? M11_Render_PresentedEpxIndexedSpecialMatches(
+                       presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
+                       csb_special_palette)
+                 : M11_Render_PresentedIndexedSpecialMatches(
+                       presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT,
+                       csb_special_palette));
     }
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         presented_frame && presented_rgba && presented_width > 0 &&

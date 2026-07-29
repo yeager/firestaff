@@ -42298,3 +42298,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   through the real Entrance command in V1, V2.0, V2.1 and selected V2.2.
   Each reached the map-0 runtime handoff; the incomplete V2.2 art gate
   correctly resolved to V2.1 rather than presenting unreviewed material.
+## 2026-07-29 - CSB V2.1 EPX startup capture
+
+- Fixed the CSB V2.1 post-presentation verifier to compare the actual
+  Scale2x/EPX indexed source page before checking the source-owned special
+  palette. The prior nearest-neighbour comparison rejected correct V2.1 C001-
+  C005 frames after presentation.
+- Added `csb_v21_presented_startup_capture`, an opt-in PC3.4 regression that
+  requires real PRESENTS, CHAOS, STRIKES BACK, and Entrance captures.

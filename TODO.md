@@ -908,6 +908,13 @@ that its exact runtime path is not already source-locked and tested.
    This verifies all selectable presentation modes preserve a real startup
    route. It does not prove a V2.2 artpack, live runtime breadth, audio, or
    packaged app capture.
+   2026-07-29: fixed the V2.1 EPX presented-frame verifier. It previously
+   compared an EPX-expanded C001-C005 host frame as if it were nearest-scaled
+   from 320x200, so a correct V2.1 presentation could not publish its capture.
+   The verifier now compares against the renderer's 640x400 EPX source page;
+   a real PC3.4 V2.1 launch captures all four source palettes (PRESENTS,
+   CHAOS, STRIKES BACK, Entrance). `csb_v21_presented_startup_capture` keeps
+   that real-data route regression-tested and skip-safe.
    The tier-1 Prison pointer regression now covers V1, V2.0, V2.1 and gated
    V2.2 at both 1x and 3x window scale, and asserts the resolved presentation
    mode as well as the completed runtime handoff. A V2.2 selection therefore

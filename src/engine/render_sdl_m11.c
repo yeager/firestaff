@@ -2576,10 +2576,12 @@ const unsigned char* M11_Render_GetPresentedRGBA(int* outWidth, int* outHeight) 
     return g_state.presentBuffer;
 }
 
-int M11_Render_PresentedIndexedSpecialMatches(const unsigned char* indexed,
-                                              int width,
-                                              int height,
-                                              int specialPalette) {
+static int m11_render_presented_indexed_special_matches(
+    const unsigned char *indexed,
+    int width,
+    int height,
+    int specialPalette)
+{
     int x;
     int y;
 
@@ -2606,6 +2608,25 @@ int M11_Render_PresentedIndexedSpecialMatches(const unsigned char* indexed,
         }
     }
     return 1;
+}
+
+int M11_Render_PresentedIndexedSpecialMatches(const unsigned char* indexed,
+                                              int width,
+                                              int height,
+                                              int specialPalette) {
+    return m11_render_presented_indexed_special_matches(indexed, width, height,
+                                                        specialPalette);
+}
+
+int M11_Render_PresentedEpxIndexedSpecialMatches(const unsigned char* indexed,
+                                                 int width,
+                                                 int height,
+                                                 int specialPalette) {
+    if (!m11_epx_expand_indexed(indexed, width, height)) {
+        return 0;
+    }
+    return m11_render_presented_indexed_special_matches(
+        g_epx_present_buffer, width * 2, height * 2, specialPalette);
 }
 
 int M11_Render_GetSdlMajorVersion(void) {
