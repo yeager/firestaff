@@ -42255,3 +42255,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   source Thing only when projectile creation succeeds, and keeps unsupported
   source kinds as original no-ops. Direct and indirect operand regressions and
   the full CSB suite pass.
+- ✅ 2026-07-29 CSBWin DSA `THROW` runtime publication: opcode 61 is now
+  admitted by the same authenticated-core gate as its implemented executor.
+  Accepted `ThrowMissile` work publishes the candidate F0810 projectile and
+  its first move event atomically, while a rejected action leaves live state
+  unchanged. The focused FIREBALL regression and `ctest -L csb` pass 98/98.

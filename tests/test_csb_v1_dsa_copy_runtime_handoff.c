@@ -1011,6 +1011,37 @@ static void test_add_runtime_cell_owner(void)
           "STKOP_Add uses F0166 and appends a positional PC3.4 DB5 copy");
 }
 
+static void test_throw_runtime_magic_owner(void)
+{
+    uint8_t raw[80] = { 0 };
+    uint16_t words[] = { 0x0686u, 0xff80u, 0x0686u, 0u, 0x0686u, 0u,
+                         0x0686u, 1u, 0x0686u, 8u, 0x0686u, 50u,
+                         0x0686u, 2u, 0x0f4bu };
+    CSB_V1_DungeonData dungeon; CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner; CSB_V1_DSAImportedAction action;
+    memset(&dungeon, 0, sizeof(dungeon)); raw[60] = 0u; raw[61] = 0u; raw[64] = 0x10u;
+    put_le16(raw, 66u, 0xfffeu);
+    dungeon.raw_data = raw; dungeon.raw_size = (int)sizeof(raw); dungeon.level_count = 1;
+    dungeon.level_widths[0] = 1; dungeon.level_heights[0] = 1; dungeon.level_offsets[0] = 64;
+    dungeon.square_bytes = 1; dungeon.square_first_thing_base = 66; dungeon.square_first_thing_count = 1;
+    csb_v1_runtime_init(&profile, NULL); profile.dungeon_handle = &dungeon;
+    profile.csbwin_extended_features_valid = 1;
+    configure_action(&action, words, (int)(sizeof(words) / sizeof(words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner)); runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id; runner.state_index = action.state_index;
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 1 &&
+              profile.projectiles.count == 1 &&
+              profile.projectiles.entries[0].projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
+              profile.projectiles.entries[0].mapX == 0 && profile.projectiles.entries[0].mapY == 0 &&
+              profile.projectiles.entries[0].direction == 1 &&
+              profile.projectiles.entries[0].kineticEnergy == 8 &&
+              profile.projectiles.entries[0].attack == 50,
+          "STKOP_Throw binds original FIREBALL Thing to CSB F0810 and timeline");
+}
+
 static void test_indirect_local_variable_char_store(void)
 {
     /* CSBWin DSA.cpp EX_AMPERSAND I_Indirect format. P3=count, P4=DSAVARS
@@ -1209,6 +1240,7 @@ int main(void)
     test_add_transaction();
     test_throw_transaction();
     test_add_runtime_cell_owner();
+    test_throw_runtime_magic_owner();
     test_copyteleporter_runtime_receipt();
     test_teleport_party_runtime_receipt();
     test_textfetch_textsay_runtime_binding();

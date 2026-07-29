@@ -27416,6 +27416,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     int text_message_changed;
     int parameter_message_changed;
     int monster_group_mutation_changed;
+    int object_throw_changed;
     uint16_t parameter_message_timer_sequence_before;
     uint8_t parameter_message_sequence_before;
     CSB_V1_RuntimeTextMessageReceipt text_message_before;
@@ -27874,6 +27875,15 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         free(dungeon_raw_candidate);
         return 0;
     }
+    /* Timer.cpp::ThrowMissile owns both an F0810 slot and its first move
+     * event.  The DSA context intentionally runs against profile_candidate;
+     * publish that pair together only after the entire source action has
+     * completed and the candidate dungeon can still be committed. */
+    object_throw_changed =
+        memcmp(&profile_candidate.projectiles, &profile->projectiles,
+               sizeof(profile->projectiles)) != 0 ||
+        memcmp(&profile_candidate.timeline_queue, &profile->timeline_queue,
+               sizeof(profile->timeline_queue)) != 0;
     if (candidate.last_execution.wing_talents_store_count != 0u) {
         uint32_t before_talents = 0u;
         uint32_t after_talents = 0u;
@@ -28236,6 +28246,10 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         memcpy(profile->csbwin_runtime_item16,
                profile_candidate.csbwin_runtime_item16,
                sizeof(profile->csbwin_runtime_item16));
+    }
+    if (object_throw_changed) {
+        profile->projectiles = profile_candidate.projectiles;
+        profile->timeline_queue = profile_candidate.timeline_queue;
     }
     if (expool_changed) {
         memcpy(profile->csbwin_appended_tail,
