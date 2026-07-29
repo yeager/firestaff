@@ -21,6 +21,14 @@
   source-defined identity check. The runtime handoff regression proves that
   a valid disk is required before an imported party reaches NEW GAME.
 
+- ✅ 2026-07-29 CSB C140 save-disk menu: replaced Firestaff's incorrect
+  three-choice Ctrl-S dialog with the Atari CSB v2.1 source order: `LOAD
+  SAVED GAME`, `SAVE AND PLAY`, `SAVE AND QUIT`, and `FORMAT FLOPPY`.
+  The source Format Floppy confirmation is keyboard- and pointer-accessible.
+  Save/load use the existing CSB F0433/F0435 owners; format clears only the
+  selected host save namespace. Verification:
+  `csb_v1_keyboard_commands_pc34_compat`.
+
 - ✅ 2026-07-29 CSB V1/V2.x entrance pointer presentation: the real C407
   enter-dungeon box is now exercised through M11's window-to-source mapper
   at 320x200 and 960x600 in V1, V2.0, V2.1 and gated V2.2. The former Enter

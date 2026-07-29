@@ -14,6 +14,16 @@ static int expect_int(const char* label, int got, int want)
     return 1;
 }
 
+static int expect_string(const char* label, const char* got, const char* want)
+{
+    if (!got || strcmp(got, want) != 0) {
+        fprintf(stderr, "FAIL %s got=%s want=%s\n", label,
+                got ? got : "(null)", want);
+        return 0;
+    }
+    return 1;
+}
+
 static int expect_map(const char* label,
                       CsbV1KeyboardKeyPc34Compat key,
                       int ctrlDown,
@@ -185,16 +195,49 @@ int main(void)
                      M11_GAME_INPUT_REDRAW);
     ok &= expect_int("CSB disk menu flag set", view.csbDiskMenuActive, 1);
     ok &= expect_int("CSB disk menu opens the source dialog", view.dialogOverlayActive, 1);
-    ok &= expect_int("CSB disk menu starts on save", view.csbDiskMenuSelectedChoice, 1);
+    ok &= expect_int("CSB disk menu starts on load", view.csbDiskMenuSelectedChoice, 1);
+    ok &= expect_int("CSB disk menu exposes original four choices", view.dialogChoiceCount, 4);
+    ok &= expect_string("CSB disk menu source load label", view.dialogChoices[0],
+                        "LOAD SAVED GAME");
+    ok &= expect_string("CSB disk menu source save-and-play label", view.dialogChoices[1],
+                        "SAVE AND PLAY");
+    ok &= expect_string("CSB disk menu source save-and-quit label", view.dialogChoices[2],
+                        "SAVE AND QUIT");
+    ok &= expect_string("CSB disk menu source format label", view.dialogChoices[3],
+                        "FORMAT FLOPPY");
     ok &= expect_int("movement ignored while disk menu is open",
                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP),
                      M11_GAME_INPUT_REDRAW);
-    ok &= expect_int("CSB disk menu keyboard moves to cancel", view.csbDiskMenuSelectedChoice, 3);
+    ok &= expect_int("CSB disk menu keyboard wraps to format", view.csbDiskMenuSelectedChoice, 4);
     ok &= expect_int("Back cancels CSB disk menu",
                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK),
                      M11_GAME_INPUT_REDRAW);
     ok &= expect_int("CSB disk menu flag cleared", view.csbDiskMenuActive, 0);
     ok &= expect_int("CSB disk menu dismisses its dialog", view.dialogOverlayActive, 0);
+
+    ok &= expect_int("Ctrl-S reopens original CSB disk menu",
+                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_DISK_MENU),
+                     M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("CSB format row selected through source order",
+                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP),
+                     M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("CSB format row is fourth", view.csbDiskMenuSelectedChoice, 4);
+    ok &= expect_int("CSB format opens original confirmation",
+                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT),
+                     M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("CSB format confirmation has two source choices",
+                     view.dialogChoiceCount, 2);
+    ok &= expect_string("CSB format confirmation source prompt",
+                        view.dialogOverlayText,
+                        "THAT'S A GAME SAVE DISK!\nFORMAT DISK ANYWAY?");
+    ok &= expect_string("CSB format confirmation source OK label",
+                        view.dialogChoices[0], "OK");
+    ok &= expect_string("CSB format confirmation source cancel label",
+                        view.dialogChoices[1], "CANCEL");
+    ok &= expect_int("Back cancels CSB format confirmation",
+                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK),
+                     M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("CSB format cancel dismisses its dialog", view.dialogOverlayActive, 0);
 
     view.resting = 1;
     ok &= expect_int("Return wakes resting CSB",

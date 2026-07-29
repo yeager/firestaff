@@ -1355,11 +1355,13 @@ that its exact runtime path is not already source-locked and tested.
     the prior unchecked `utility_disk_verified` import shortcut, not the
     broader Utility Disk UI scope.
     2026-07-29: the live C140 `Ctrl-S` route now opens the source-dialog
-    geometry with Save Game, Load Game and Cancel choices. Keyboard Up/Down,
-    Enter/Escape and pointer choice all consume the same modal state; accepted
-    Save/Load invoke the existing CSB F0433/F0435 runtime owners instead of
-    merely closing a placeholder overlay. Broader Utility Disk editor/import,
-    champion and new-game flows remain open.
+    geometry with the Atari CSB v2.1 source order: Load Saved Game, Save and
+    Play, Save and Quit, Format Floppy. The source Format Floppy confirmation
+    is also present. Keyboard Up/Down, Enter/Escape and pointer choice all
+    consume the same modal state; load/save invoke the existing CSB
+    F0433/F0435 runtime owners instead of merely closing a placeholder overlay.
+    The host save namespace is only the selected virtual save disk. Broader
+    Utility Disk editor/import, champion and new-game flows remain open.
 25. **CSB-TITLE-AUDIO-CADENCE:** C001 timing and FTL/PRESENTS/CHAOS/STRIKES
     composition are source-locked (60 + 20 + 20 + 2 VBlanks after swoosh).
     SDL/CoreAudio playback is now enabled by default for decoded original

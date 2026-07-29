@@ -22024,6 +22024,12 @@ enum {
     M11_DM1_SAVE_DISK_MENU_FORMAT_CONFIRM = 2
 };
 
+enum {
+    M11_CSB_SAVE_DISK_MENU_NONE = 0,
+    M11_CSB_SAVE_DISK_MENU_MAIN = 1,
+    M11_CSB_SAVE_DISK_MENU_FORMAT_CONFIRM = 2
+};
+
 static void m11_dm1_show_save_disk_menu(M11_GameViewState* state) {
     if (!state) return;
     /* ReDMCSB LOADSAVE.C F0433:773-785.  The original physical save disk
@@ -22117,39 +22123,101 @@ static M11_GameInputResult m11_dm1_handle_save_disk_choice(
     return M11_GAME_INPUT_IGNORED;
 }
 
-/* C140 enters the CSB save-disk dialog.  Reuse the source-backed dialog
- * geometry and the CSB F0433/F0435 runtime owners rather than leaving a
- * decorative Ctrl-S state that merely closes on Enter. */
+/* C140 enters the CSB save-disk dialog.  The Atari ST v2.1 source strings
+ * at data offsets $50e..$54c give the four original choices and their order.
+ * Firestaff's per-profile path is only the host transport for that physical
+ * disk; it does not change the source menu contract. */
 static void m11_csb_show_save_disk_menu(M11_GameViewState* state) {
     if (!state) return;
     M11_GameView_ShowDialogOverlayChoices(state,
         _("PUT THE GAME SAVE DISK IN ~"),
-        _("SAVE GAME"), _("LOAD GAME"), _("CANCEL"), NULL);
+        _("LOAD SAVED GAME"), _("SAVE AND PLAY"),
+        _("SAVE AND QUIT"), _("FORMAT FLOPPY"));
     state->csbDiskMenuActive = 1;
     state->csbDiskMenuSelectedChoice = 1;
+    state->csbDiskMenuStage = M11_CSB_SAVE_DISK_MENU_MAIN;
     m11_set_status(state, "CSB", "DISK MENU");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "CSB DISK MENU");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-             "SAVE, LOAD OR CANCEL");
+             "LOAD, SAVE, QUIT OR FORMAT");
 }
 
 static M11_GameInputResult m11_csb_handle_save_disk_choice(
     M11_GameViewState* state, int choice) {
     int ok = 0;
+    int stage;
 
-    if (!state || !state->csbDiskMenuActive) return M11_GAME_INPUT_IGNORED;
-    if (choice == 1) {
-        ok = M11_GameView_QuickSave(state);
-    } else if (choice == 2) {
-        ok = M11_GameView_QuickLoad(state);
+    if (!state || !state->csbDiskMenuActive || choice <= 0) {
+        return M11_GAME_INPUT_IGNORED;
     }
-    if (choice == 3 || ok) {
-        state->dialogSelectedChoice = choice;
-        state->csbDiskMenuActive = 0;
-        state->csbDiskMenuSelectedChoice = 0;
-        M11_GameView_DismissDialogOverlay(state);
-        if (choice == 3) m11_set_status(state, "CSB", "DISK MENU CANCELLED");
+    stage = state->csbDiskMenuStage;
+    if (stage == M11_CSB_SAVE_DISK_MENU_MAIN) {
+        switch (choice) {
+        case 1:
+            ok = M11_GameView_QuickLoad(state);
+            break;
+        case 2:
+            ok = M11_GameView_QuickSave(state);
+            break;
+        case 3:
+            if (M11_GameView_QuickSave(state)) {
+                M11_GameView_DismissDialogOverlay(state);
+                m11_set_status(state, "SAVE", "CSB SAVE AND QUIT");
+                return M11_GAME_INPUT_RETURN_TO_MENU;
+            }
+            break;
+        case 4:
+            M11_GameView_ShowDialogOverlayChoices(
+                state,
+                _("THAT'S A GAME SAVE DISK!\nFORMAT DISK ANYWAY?"),
+                _("OK"), _("CANCEL"), NULL, NULL);
+            state->csbDiskMenuStage = M11_CSB_SAVE_DISK_MENU_FORMAT_CONFIRM;
+            state->csbDiskMenuSelectedChoice = 1;
+            return M11_GAME_INPUT_REDRAW;
+        default:
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (ok) {
+            state->dialogSelectedChoice = choice;
+            M11_GameView_DismissDialogOverlay(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
         return M11_GAME_INPUT_REDRAW;
+    }
+    if (stage == M11_CSB_SAVE_DISK_MENU_FORMAT_CONFIRM) {
+        if (choice == 1) {
+            char save_path[M11_GAME_VIEW_PATH_CAPACITY];
+            if (!M11_GameView_GetQuickSavePath(state, save_path,
+                                               sizeof(save_path)) ||
+                !dm1_v1_save_prepare_parent_directory_pc34(save_path)) {
+                m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            /* F0432 formats the selected game-save medium. The host save
+             * namespace is that medium; game data and unrelated saves stay
+             * untouched. */
+            (void)remove(save_path);
+            M11_GameView_DismissDialogOverlay(state);
+            m11_set_status(state, "SAVE DISK", "FORMATTED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (choice == 2) {
+            M11_GameView_DismissDialogOverlay(state);
+            m11_set_status(state, "SAVE DISK", "CANCELLED");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return M11_GAME_INPUT_IGNORED;
+}
+
+static M11_GameInputResult m11_csb_cancel_save_disk_menu(
+    M11_GameViewState* state) {
+    if (!state || !state->csbDiskMenuActive) return M11_GAME_INPUT_IGNORED;
+    {
+        state->dialogSelectedChoice = 0;
+        M11_GameView_DismissDialogOverlay(state);
+        m11_set_status(state, "SAVE DISK", "CANCELLED");
     }
     return M11_GAME_INPUT_REDRAW;
 }
@@ -22198,12 +22266,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         if (state->csbDiskMenuActive) {
             if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_DOWN) {
                 int delta = input == M12_MENU_INPUT_UP ? -1 : 1;
+                int count = state->dialogChoiceCount > 0 ?
+                    state->dialogChoiceCount : 1;
                 state->csbDiskMenuSelectedChoice =
-                    ((state->csbDiskMenuSelectedChoice - 1 + delta + 3) % 3) + 1;
+                    ((state->csbDiskMenuSelectedChoice - 1 + delta + count) % count) + 1;
                 return M11_GAME_INPUT_REDRAW;
             }
             if (input == M12_MENU_INPUT_BACK) {
-                return m11_csb_handle_save_disk_choice(state, 3);
+                return m11_csb_cancel_save_disk_menu(state);
             }
             if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
                 return m11_csb_handle_save_disk_choice(
@@ -45084,6 +45154,7 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
     if (input == M12_MENU_INPUT_FREEZE_TOGGLE) {
         state->csbGameFrozen = !state->csbGameFrozen;
         state->csbDiskMenuActive = 0;
+        state->csbDiskMenuStage = M11_CSB_SAVE_DISK_MENU_NONE;
         m11_set_status(state, "CSB", state->csbGameFrozen ? "FROZEN" : "UNFROZEN");
         snprintf(state->inspectTitle, sizeof(state->inspectTitle),
                  state->csbGameFrozen ? "CSB FROZEN" : "CSB ACTIVE");
@@ -51160,6 +51231,7 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     state->dm1SaveDiskMenuStage = 0;
     state->csbDiskMenuActive = 0;
     state->csbDiskMenuSelectedChoice = 0;
+    state->csbDiskMenuStage = M11_CSB_SAVE_DISK_MENU_NONE;
     state->dialogOverlayText[0] = '\0';
     state->dialogChoiceCount = 0;
     memset(state->dialogChoices, 0, sizeof(state->dialogChoices));

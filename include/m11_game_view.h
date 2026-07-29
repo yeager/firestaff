@@ -901,6 +901,7 @@ typedef struct {
      * Choice is one-based so it matches the source dialog hit rectangles. */
     int csbDiskMenuActive;
     int csbDiskMenuSelectedChoice;
+    int csbDiskMenuStage; /* main menu or source FORMAT FLOPPY confirmation */
     /* ReDMCSB PANEL.C F0349 food mouth animation.  The source draws four
      * icon frames into C545_ZONE_MOUTH with an 8-delay gate after a
      * leader-hand food object is removed.  These fields preserve that
