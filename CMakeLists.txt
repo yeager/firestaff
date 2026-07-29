@@ -34551,6 +34551,17 @@ if(BUILD_TESTING)
             TIMEOUT 20
         )
         add_test(
+            NAME csb_v2_explicit_mode_artpack_isolation
+            COMMAND sh
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v2_explicit_mode_artpack_isolation.sh"
+                "$<TARGET_FILE:firestaff>"
+        )
+        set_tests_properties(csb_v2_explicit_mode_artpack_isolation PROPERTIES
+            LABELS "tier1;csb;v2;v21;v22;startup;presentation;real_data;skip_safe"
+            SKIP_RETURN_CODE 77
+            TIMEOUT 45
+        )
+        add_test(
             NAME csb_v20_filtered_startup_capture
             COMMAND sh
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v20_filtered_startup_capture.sh"

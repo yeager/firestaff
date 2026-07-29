@@ -4,7 +4,9 @@
   and V2.2 real-PC3.4 capture regressions now run with an isolated Firestaff
   home, so user preferences cannot make their source-page comparisons
   non-deterministic. V2.0, V2.1, V2.2 and entrance probes pass; V2.1 was
-  repeated three times.
+  repeated three times. A source-derived temporary `.fsart` is now exercised
+  directly: it cannot override explicit V2.1, while the same package is
+  admitted by explicit V2.2 through Prison runtime.
 
 - ✅ 2026-07-29 CSB V2.2 G0693 catalog mapping correction: the F0128
   first-frame receipt and live V2.2 plan now translate ReDMCSB's D3-door
