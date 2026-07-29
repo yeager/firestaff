@@ -1892,6 +1892,7 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     state->csbState.runtime_viewport_source_tick = 0u;
     state->csbState.runtime_viewport_pixel_hash = 0u;
     state->csbState.runtime_viewport_draw_counts_hash = 0u;
+    state->csbState.runtime_v22_cells_painted = 0;
     if (!m11_csb_dsa_save_runtime_viewport_current(state) ||
         !m11_csb_dsa_restored_timer_transaction_current(state)) {
         return 0;
