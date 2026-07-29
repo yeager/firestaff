@@ -42,17 +42,18 @@ def load_studio(repo_root: Path):
 # material.
 #
 # A decodable IMG2 record is not automatically F0128 material. In particular,
-# `door_d2_01` is a 44x38 preview record while ReDMCSB's D3 side-door route
-# consumes the native-packed G0693 span at 48x41 through F0489/F0488. Keep
-# that distinction in every generated manifest so a later consumer cannot
-# promote the preview by numeric proximity alone.
+# `door_d2_01` is the source-owned 44x38 G0693 record for DoorSet 0. PC/I34
+# F0111 reaches it through F0489/F0616, so its placement is still blocked
+# until the exact F0791/F0132 command-level projection is consumed. Keep that
+# distinction in every generated manifest so a later consumer cannot promote
+# a decodable source record before it has a matching renderer receipt.
 SLOTS = (
     ("wall_shapes", "wall_dungeon_d0_01", 97, (96, 96), "F0128 nearest front wall", "unbound"),
     ("wall_shapes", "wall_dungeon_d1_01", 102, (96, 96), "F0128 middle front wall", "unbound"),
     ("wall_shapes", "wall_dungeon_d2_01", 107, (96, 96), "F0128 far front wall", "unbound"),
     ("door_shapes", "door_d0_01", 248, (64, 96), "M654 closest door frame", "admitted_d1"),
     ("door_shapes", "door_d1_01", 247, (64, 96), "M655 middle door frame", "admitted_d2"),
-    ("door_shapes", "door_d2_01", 246, (64, 96), "IMG2 preview only; ReDMCSB D3 uses native G0693 48x41", "blocked_native_g0693"),
+    ("door_shapes", "door_d2_01", 246, (64, 96), "G0693 D3 DoorSet 0 source, 44x38 F0616 bitmap; F0791 projection pending", "blocked_f0791_projection"),
     ("floor_shapes", "floor_plain_d0_01", 78, (96, 96), "M650 floor set zero", "unbound"),
     ("floor_shapes", "floor_plain_d1_01", 78, (96, 96), "M650 floor set zero", "unbound"),
     ("floor_shapes", "floor_plain_d2_01", 78, (96, 96), "M650 floor set zero", "unbound"),
@@ -85,7 +86,7 @@ def fit_source(image: Image.Image, size: tuple[int, int]) -> Image.Image:
     scale = min(target_w / image.width, target_h / image.height)
     resized = image.resize((max(1, round(image.width * scale)),
                             max(1, round(image.height * scale))),
-                           Image.Resampling.LANCZOS)
+                           Image.Resampling.NEAREST)
     # Keep original transparent pixels transparent.  In particular F0111
     # doors use ReDMCSB C10_COLOR_FLESH as a blit key; opaque black padding
     # would destroy the F0128 wall beneath the door when a later projection
@@ -126,7 +127,7 @@ def main() -> int:
         "source": {
             "file": graphics_dat.name,
             "sha256": hashlib.sha256(source_bytes).hexdigest(),
-            "pipeline": "CSB IMG2 decode, aspect-preserving Lanczos normalization only",
+            "pipeline": "CSB IMG2 decode, nearest-neighbor cache normalization only",
             "syntheticContent": False,
         },
         "warnings": warnings,

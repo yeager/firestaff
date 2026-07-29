@@ -74,8 +74,9 @@ an integration build pass.
   pixels. Each source-pack route now carries its exact GRAPHICS.DAT record
   SHA-256 plus source and exported dimensions, but that provenance remains
   metadata until it is bound to the corresponding F0128 command. D1/D2 front
-  door routes now have that exact admission contract (records 248/247 and
-  their original clips). The D3 record selection is now source-locked to
+  door routes now have that exact admission contract (the active map's
+  `G0695`/`G0694` records, `M633 + DoorSet * C003 + 2/+1`; DoorSet 0:
+  248/247). The D3 record selection is now source-locked to
   `M633 + DoorSet * C003` (246/249/252/255). ReDMCSB's PC/I34 F0111 branch
   uses `F0616_CopyBitmap`, so its native surface is the record's 44x38
   metadata; remaining work is exact command-level V2.2 composition, not a
@@ -84,8 +85,10 @@ an integration build pass.
   retain the verified F0111 `C10_COLOR_FLESH` transparency as RGBA alpha and
   the cache blitter preserves the original framebuffer for transparent pixels.
   The source-artpack manifest now makes this distinction machine-readable:
-  `door_d2_01` is explicitly `blocked_native_g0693`, so an IMG2 preview
-  cannot be mistaken for the original D3 F0489/F0488 raster. D1/D2 retain
+  `door_d2_01` is explicitly `blocked_f0791_projection`, so an IMG2 source
+  record cannot be mistaken for a completed D3 F0791/F0132 composition.
+  Source-cache normalization is nearest-neighbor only; it does not invent
+  interpolated pixels. D1/D2 retain
   their explicit admitted projection statuses.
   Direct and headless probes prove routing, admission, exact clip bounds and
   alpha preservation only, not live visual correctness. 2026-07-29: the admitted D1/D2 door routes now

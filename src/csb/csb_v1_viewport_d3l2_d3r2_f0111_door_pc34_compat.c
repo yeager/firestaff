@@ -43,14 +43,19 @@ int csb_v1_viewport_door_graphic_index_pc34(int door_set, int depth)
         door_set * CSB_DOOR_SET_GRAPHIC_COUNT + depth;
 }
 
-int csb_v1_viewport_d3_door_graphic_index_valid_pc34(int graphic_index)
+int csb_v1_viewport_door_graphic_index_valid_pc34(int graphic_index, int depth)
 {
     int door_set;
     for (door_set = 0; door_set < CSB_DOOR_SET_COUNT; ++door_set) {
         if (graphic_index == csb_v1_viewport_door_graphic_index_pc34(
-                door_set, 0)) return 1;
+                door_set, depth)) return 1;
     }
     return 0;
+}
+
+int csb_v1_viewport_d3_door_graphic_index_valid_pc34(int graphic_index)
+{
+    return csb_v1_viewport_door_graphic_index_valid_pc34(graphic_index, 0);
 }
 
 static const char s_source_evidence[] =

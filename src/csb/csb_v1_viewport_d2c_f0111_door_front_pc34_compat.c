@@ -1,4 +1,5 @@
 #include "csb_v1_viewport_d2c_f0111_door_front_pc34_compat.h"
+#include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
 
 enum {
     CSB_PRESENT = 1,
@@ -11,7 +12,9 @@ enum {
     CSB_FLOOR_VIEW_D2C = 6,
     CSB_DOORPASS1_BACKLEFT_BACKRIGHT = 0x0218,
     CSB_DOORPASS2_FRONTLEFT_FRONTRIGHT = 0x0349,
-    CSB_DOOR_FRONT_BITMAP_D2LCR = 694,
+    /* ReDMCSB DUNVIEW.C:2651-2658: G0694 is the second entry in the
+     * active map DoorSet, not a fixed GRAPHICS.DAT cache slot. */
+    CSB_DOOR_FRONT_BITMAP_D2LCR = 247,
     CSB_DOOR_ORNAMENT_D2LCR = 1,
     CSB_WALL_ZONE_D2C = 709,
     CSB_DOOR_ZONE_D2C = 3760,
@@ -40,7 +43,7 @@ enum {
 static const char s_source_evidence[] =
     "pass705 CSB V1 D2C F0111 door-front composition source-lock; "
     "contract-only base route with a fail-closed real-asset receipt for "
-    "DMCSB1 GRAPHICS.DAT item 694, and no CSB game-data load. ReDMCSB "
+    "the active map's G0694 door-set record (DoorSet 0: item 247), and no CSB game-data load. ReDMCSB "
     "DUNVIEW.C:7244-7389 F0121_DUNGEONVIEW_DrawSquareD2C reaches the "
     "single D2C C17_ELEMENT_DOOR_FRONT branch at 7313-7341: line 7314 "
     "calls F0108 floor ornament with M558_FLOOR_ORNAMENT_ORDINAL and "
@@ -247,7 +250,8 @@ int csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
     }
     if (!spec || !out_receipt || !source_graphics_dat_bound ||
         !no_synthetic_pixels || !no_fallback_visuals ||
-        source_graphics_item_index != CSB_DOOR_FRONT_BITMAP_D2LCR ||
+        !csb_v1_viewport_door_graphic_index_valid_pc34(
+            source_graphics_item_index, 1) ||
         source_byte_count == 0u || source_payload_hash == 0u ||
         !spec->source_locked_contract_only ||
         spec->view_square_index != CSB_VIEW_SQUARE_D2C ||

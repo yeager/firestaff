@@ -96,6 +96,8 @@ typedef struct {
  * each map DoorSet: D3, D2 and D1.  These helpers keep the GRAPHICS.DAT
  * identity tied to that source formula instead of a captured cache index. */
 int csb_v1_viewport_door_graphic_index_pc34(int door_set, int depth);
+int csb_v1_viewport_door_graphic_index_valid_pc34(int graphic_index,
+                                                   int depth);
 int csb_v1_viewport_d3_door_graphic_index_valid_pc34(int graphic_index);
 
 size_t csb_v1_viewport_d3l2_d3r2_f0111_door_count_pc34(void);

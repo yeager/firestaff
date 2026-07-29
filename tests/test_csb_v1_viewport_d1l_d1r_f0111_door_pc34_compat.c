@@ -562,21 +562,21 @@ static int test_real_graphics_dat_d1lr_door_receipt(void)
     }
 
     ok &= expect_int("real.hash.read",
-                     read_real_graphics_item_hash(path, 558u,
+                     read_real_graphics_item_hash(path, 248u,
                                                   &payload_size, &payload_hash),
-                     1, "DMCSB1 real GRAPHICS.DAT item 558");
+                     1, "DMCSB1 real GRAPHICS.DAT D1 DoorSet 0 item 248");
     ok &= expect_int("real.payload.nonzero", payload_size > 0u, 1,
-                     "DMCSB1 real GRAPHICS.DAT item 558");
+                     "DMCSB1 real GRAPHICS.DAT D1 DoorSet 0 item 248");
     ok &= expect_int("real.hash.nonzero", payload_hash != 0u, 1,
-                     "DMCSB1 real GRAPHICS.DAT item 558");
+                     "DMCSB1 real GRAPHICS.DAT D1 DoorSet 0 item 248");
     ok &= expect_int("real.receipt.ok",
         csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
-            d1l, d1r, 1, 1, 1, 558, payload_size, payload_hash, &receipt),
+            d1l, d1r, 1, 1, 1, 248, payload_size, payload_hash, &receipt),
         1, "D1L/D1R StdDoorGraphicsF1 real receipt");
     ok &= expect_int("real.receipt.valid", receipt.valid, 1,
                      "D1L/D1R StdDoorGraphicsF1 real receipt");
     ok &= expect_int("real.receipt.item", receipt.source_graphics_item_index,
-                     558, "D1L/D1R StdDoorGraphicsF1 real receipt");
+                     248, "D1L/D1R G0695 real receipt");
     ok &= expect_int("real.receipt.hash",
                      receipt.source_payload_hash == payload_hash, 1,
                      "D1L/D1R StdDoorGraphicsF1 real receipt");
@@ -596,31 +596,31 @@ static int test_real_graphics_dat_d1lr_door_receipt(void)
 
     ok &= expect_int("real.reject.no_source",
         csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
-            d1l, d1r, 0, 1, 1, 558, payload_size, payload_hash, &receipt),
+            d1l, d1r, 0, 1, 1, 248, payload_size, payload_hash, &receipt),
         0, "fail closed without source");
-    ok &= expect_int("real.reject.item557",
+    ok &= expect_int("real.reject.d2_item247",
         csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
-            d1l, d1r, 1, 1, 1, 557, payload_size, payload_hash, &receipt),
+            d1l, d1r, 1, 1, 1, 247, payload_size, payload_hash, &receipt),
         0, "fail closed wrong item");
-    ok &= expect_int("real.reject.item559",
+    ok &= expect_int("real.reject.next_set_d3_item249",
         csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
-            d1l, d1r, 1, 1, 1, 559, payload_size, payload_hash, &receipt),
+            d1l, d1r, 1, 1, 1, 249, payload_size, payload_hash, &receipt),
         0, "fail closed wrong item");
     ok &= expect_int("real.reject.synthetic",
         csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
-            d1l, d1r, 1, 0, 1, 558, payload_size, payload_hash, &receipt),
+            d1l, d1r, 1, 0, 1, 248, payload_size, payload_hash, &receipt),
         0, "fail closed synthetic");
     ok &= expect_int("real.reject.fallback",
         csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
-            d1l, d1r, 1, 1, 0, 558, payload_size, payload_hash, &receipt),
+            d1l, d1r, 1, 1, 0, 248, payload_size, payload_hash, &receipt),
         0, "fail closed fallback");
     ok &= expect_int("real.reject.zero_hash",
         csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
-            d1l, d1r, 1, 1, 1, 558, payload_size, 0u, &receipt),
+            d1l, d1r, 1, 1, 1, 248, payload_size, 0u, &receipt),
         0, "fail closed zero hash");
     ok &= expect_int("real.reject.same_route_twice",
         csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
-            d1l, d1l, 1, 1, 1, 558, payload_size, payload_hash, &receipt),
+            d1l, d1l, 1, 1, 1, 248, payload_size, payload_hash, &receipt),
         0, "fail closed without both D1 side routes");
 
     return ok;
@@ -656,7 +656,7 @@ static int test_evidence_strings(void)
                           "DEFS.H anchors");
     ok &= expect_contains("header.viewport", header, "Viewport.cpp lines 1192-1209",
                           "Viewport.cpp anchors");
-    ok &= expect_contains("header.item558", header, "GRAPHICS.DAT item 558",
+    ok &= expect_contains("header.item248", header, "GRAPHICS.DAT item 248",
                           "real item receipt");
     ok &= expect_contains("evidence.scope", ev ? ev->scope : NULL,
                           "real GRAPHICS.DAT", "contract scope");

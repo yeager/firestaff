@@ -1,4 +1,5 @@
 #include "csb/csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat.h"
+#include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
 
 enum {
     CSB_D1L_VIEW_SQUARE = 4,
@@ -36,7 +37,9 @@ enum {
     CSB_C6_UNKNOWN = 6,
     CSB_MASK_4000_SHIFT = 0x4000,
     CSB_C10_COLOR_FLESH = 10,
-    CSB_STANDARD_DOOR_GRAPHICS_ITEM_INDEX = 558,
+    /* ReDMCSB DUNVIEW.C:2651-2658: G0695 is the third entry in the
+     * active map DoorSet. Graphic 558 is a frame table, not this bitmap. */
+    CSB_STANDARD_DOOR_GRAPHICS_ITEM_INDEX = 248,
     CSB_RENDER_WIDTH = 16,
     CSB_RENDER_HEIGHT = 12
 };
@@ -167,8 +170,8 @@ static const char s_source_lock_header[] =
     "2596-2611, 2662, 2668-2677, 4045-4046, 4139-4153; CSB-lineage "
     "Viewport.cpp lines 1192-1209, 1865-1879, 1903-1915, 1930-1944, "
     "6507-6548 plus D1 side door-facing arrays at 1892-1900 and 1919-1927; "
-    "the real-asset receipt binds StdDoorGraphicsF1 to DMCSB1 GRAPHICS.DAT "
-    "item 558.";
+    "the real-asset receipt binds F0111 G0695 to the active map DoorSet "
+    "(DoorSet 0: DMCSB1 GRAPHICS.DAT item 248), not Graphic558 frame data.";
 
 static uint32_t fnv1a(uint32_t hash, uint32_t value)
 {
@@ -360,7 +363,8 @@ int csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
     if (!d1l_route || !d1r_route || !out_receipt ||
         !source_graphics_dat_bound || !no_synthetic_pixels ||
         !no_fallback_visuals ||
-        source_graphics_item_index != CSB_STANDARD_DOOR_GRAPHICS_ITEM_INDEX ||
+        !csb_v1_viewport_door_graphic_index_valid_pc34(
+            source_graphics_item_index, 2) ||
         source_byte_count == 0u || source_payload_hash == 0u ||
         d1l_route->view_square != CSB_D1L_VIEW_SQUARE ||
         d1r_route->view_square != CSB_D1R_VIEW_SQUARE ||

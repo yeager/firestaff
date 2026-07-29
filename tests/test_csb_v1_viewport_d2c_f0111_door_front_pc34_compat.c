@@ -185,7 +185,7 @@ static int test_route_spec(void)
                      0x0218, A_DEFS);
     ok &= expect_int("front.order", s ? (int)s->f0115_front_cell_order : -1,
                      0x0349, A_DEFS);
-    ok &= expect_int("bitmap.d2lcr", s ? s->f0111_front_bitmap_id : -1, 694,
+    ok &= expect_int("bitmap.d2lcr", s ? s->f0111_front_bitmap_id : -1, 247,
                      A_DUNVIEW);
     ok &= expect_int("ornament.d2lcr", s ? s->f0111_door_ornament_view : -1,
                      1, A_DEFS);
@@ -416,20 +416,20 @@ static int test_real_graphics_dat_d2c_door_receipt(void)
     }
 
     ok &= expect_int("real.hash.read",
-                     read_real_graphics_item_hash(path, 694u,
+                     read_real_graphics_item_hash(path, 247u,
                                                   &payload_size, &payload_hash),
-                     1, "DMCSB1 real GRAPHICS.DAT item 694");
+                     1, "DMCSB1 real GRAPHICS.DAT D2 DoorSet 0 item 247");
     ok &= expect_int("real.payload.nonzero", payload_size > 0u, 1,
-                     "DMCSB1 real GRAPHICS.DAT item 694");
+                     "DMCSB1 real GRAPHICS.DAT D2 DoorSet 0 item 247");
     ok &= expect_int("real.hash.nonzero", payload_hash != 0u, 1,
-                     "DMCSB1 real GRAPHICS.DAT item 694");
+                     "DMCSB1 real GRAPHICS.DAT D2 DoorSet 0 item 247");
     ok &= expect_int("real.receipt.ok",
         csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
-            s, 1, 1, 1, 694, payload_size, payload_hash, &receipt),
+            s, 1, 1, 1, 247, payload_size, payload_hash, &receipt),
         1, A_DUNVIEW);
     ok &= expect_int("real.receipt.valid", receipt.valid, 1, A_DUNVIEW);
     ok &= expect_int("real.receipt.item", receipt.source_graphics_item_index,
-                     694, A_DUNVIEW);
+                     247, A_DUNVIEW);
     ok &= expect_int("real.receipt.hash",
                      receipt.source_payload_hash == payload_hash, 1,
                      A_DUNVIEW);
@@ -446,27 +446,27 @@ static int test_real_graphics_dat_d2c_door_receipt(void)
 
     ok &= expect_int("real.reject.no_source",
         csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
-            s, 0, 1, 1, 694, payload_size, payload_hash, &receipt),
+            s, 0, 1, 1, 247, payload_size, payload_hash, &receipt),
         0, A_DUNVIEW);
-    ok &= expect_int("real.reject.item693",
+    ok &= expect_int("real.reject.d3_item246",
         csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
-            s, 1, 1, 1, 693, payload_size, payload_hash, &receipt),
+            s, 1, 1, 1, 246, payload_size, payload_hash, &receipt),
         0, A_DUNVIEW);
-    ok &= expect_int("real.reject.item695",
+    ok &= expect_int("real.reject.d1_item248",
         csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
-            s, 1, 1, 1, 695, payload_size, payload_hash, &receipt),
+            s, 1, 1, 1, 248, payload_size, payload_hash, &receipt),
         0, A_DUNVIEW);
     ok &= expect_int("real.reject.synthetic",
         csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
-            s, 1, 0, 1, 694, payload_size, payload_hash, &receipt),
+            s, 1, 0, 1, 247, payload_size, payload_hash, &receipt),
         0, A_DUNVIEW);
     ok &= expect_int("real.reject.fallback",
         csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
-            s, 1, 1, 0, 694, payload_size, payload_hash, &receipt),
+            s, 1, 1, 0, 247, payload_size, payload_hash, &receipt),
         0, A_DUNVIEW);
     ok &= expect_int("real.reject.zero_hash",
         csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
-            s, 1, 1, 1, 694, payload_size, 0u, &receipt),
+            s, 1, 1, 1, 247, payload_size, 0u, &receipt),
         0, A_DUNVIEW);
 
     return ok;

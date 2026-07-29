@@ -17708,6 +17708,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
         tests/test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat.c
         src/csb/csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.c
     )
     target_include_directories(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -17725,6 +17726,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_viewport_d2c_f0111_door_front_pc34_compat
         tests/test_csb_v1_viewport_d2c_f0111_door_front_pc34_compat.c
         src/csb/csb_v1_viewport_d2c_f0111_door_front_pc34_compat.c
+        src/csb/csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.c
     )
     target_include_directories(test_csb_v1_viewport_d2c_f0111_door_front_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

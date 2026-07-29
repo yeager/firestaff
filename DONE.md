@@ -42787,3 +42787,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Entrance into a partial strip. The same portable assertion is shared by the
   V2.1 EPX capture regression. Verified against the local original PC3.4
   `GRAPHICS.DAT`/`DUNGEON.DAT` package.
+- ✅ 2026-07-29 CSB PC3.4 G0693/G0694/G0695 door-set receipt correction:
+  D1 and D2 no longer validate unrelated fixed `GRAPHICS.DAT` records 558 and
+  694. All three F0111 depths now use ReDMCSB `DUNVIEW.C:2651-2658`:
+  `M633 + DoorSet * C003 + depth` (DoorSet 0: D3=246, D2=247, D1=248).
+  The generated source `.fsart` uses nearest-neighbor cache normalization
+  rather than Lanczos and records D3's true 44x38 F0616 source surface as
+  `blocked_f0791_projection`. Verification: real local CSB `GRAPHICS.DAT`
+  receipts for D1/D2/D3 and the full 107-test CSB CTest lane pass.
