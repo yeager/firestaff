@@ -21,10 +21,8 @@ int csb_v1_atari_save_handoff_runtime_pc34_compat(
     int result;
 
     if (!profile || !bytes) return CSB_V1_ATARI_RUNTIME_ERR_NULL;
-    if (!profile->party_state_valid || profile->party_state.ChampionCount < 1 ||
-        profile->party_state.ChampionCount > CSB_V1_MAX_CHAMPIONS) {
-        return CSB_V1_ATARI_RUNTIME_ERR_PARTY;
-    }
+    result = csb_v1_atari_save_decode_party_pc34_compat(bytes, size, &party, &info);
+    if (result != CSB_V1_ATARI_SAVE_OK) return CSB_V1_ATARI_RUNTIME_ERR_PARTY;
     candidate = (CSB_V1_DungeonData *)calloc(1u, sizeof(*candidate));
     if (!candidate) return CSB_V1_ATARI_RUNTIME_ERR_DUNGEON;
     result = csb_v1_atari_save_load_dungeon_pc34_compat(bytes, size,
@@ -40,11 +38,6 @@ int csb_v1_atari_save_handoff_runtime_pc34_compat(
     }
 
     /* All fallible validation happens before this one ownership transition. */
-    party = profile->party_state;
-    party.PartyMapX = info.party_x;
-    party.PartyMapY = info.party_y;
-    party.PartyDirection = info.party_direction & 3;
-    party.LeaderHandThing = (uint16_t)info.leader_hand_thing;
     if (csb_v1_runtime_set_party_state(profile, &party) != 0) {
         csb_v1_dungeon_free(candidate);
         free(candidate);

@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int read_file(const char *path, uint8_t **out, size_t *out_size)
 {
@@ -29,6 +30,7 @@ int main(void)
     size_t size = 0u;
     CSB_V1_AtariSaveInfo info;
     CSB_V1_DungeonData dungeon;
+    CSB_V1_PartyState party;
 
     if (csb_v1_atari_save_decode_pc34_compat(NULL, 0u, &info) != CSB_V1_ATARI_SAVE_ERR_NULL ||
         csb_v1_atari_save_decode_pc34_compat(tiny, sizeof(tiny), &info) != CSB_V1_ATARI_SAVE_ERR_BLOCK2_CHECKSUM) {
@@ -45,6 +47,16 @@ int main(void)
         info.dungeon_offset != 10160u || info.dungeon_size != 32655u ||
         dungeon.level_count != 11 || !dungeon.raw_data) {
         free(bytes); return 1;
+    }
+    if (csb_v1_atari_save_decode_party_pc34_compat(bytes, size, &party, NULL) !=
+            CSB_V1_ATARI_SAVE_OK || party.ChampionCount != 1 ||
+        strcmp(party.Champions[0].Name, "HALK") != 0 ||
+        strcmp(party.Champions[0].Title, "GONZO BARBARIAN") != 0 ||
+        party.Champions[0].CurrentHealth != 602 ||
+        party.Champions[0].MaximumStamina != 1262 ||
+        party.Champions[0].Statistics[CSB_V1_STAT_STR][CSB_V1_STAT_CUR] != 82u ||
+        party.Champions[0].Slots[0] != 0xffffu) {
+        csb_v1_dungeon_free(&dungeon); free(bytes); return 1;
     }
     csb_v1_dungeon_free(&dungeon);
     free(bytes);

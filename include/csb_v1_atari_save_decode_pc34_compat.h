@@ -13,6 +13,7 @@
 #include <stdint.h>
 
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_character_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,6 +55,13 @@ typedef struct {
 int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
                                          size_t size,
                                          CSB_V1_AtariSaveInfo *out_info);
+
+/* Decode the native CSB GAMEBLOCK2/character section into the runtime party
+ * shape. This consumes original bytes only; unowned timer/ITEM16 bodies stay
+ * outside this champion boundary. */
+int csb_v1_atari_save_decode_party_pc34_compat(
+    const uint8_t *bytes, size_t size, CSB_V1_PartyState *out_party,
+    CSB_V1_AtariSaveInfo *out_info);
 
 /* Decode and hand the authenticated MINI.DAT dungeon bytes directly to the
  * existing memory-backed CSB dungeon loader.  The caller owns `out_dungeon`

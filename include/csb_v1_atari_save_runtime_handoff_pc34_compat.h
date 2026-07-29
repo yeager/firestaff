@@ -20,8 +20,8 @@ typedef enum {
     CSB_V1_ATARI_RUNTIME_ERR_POSE = -4
 } CSB_V1_AtariRuntimeResult;
 
-/* MINI.DAT does not own the prison-selected party transfer.  Therefore this
- * commits only after a real party already exists in the runtime. */
+/* The native GAMEBLOCK2/character sections are decoded before the dungeon
+ * ownership transition, so this route does not need a synthetic party. */
 int csb_v1_atari_save_handoff_runtime_pc34_compat(
     CSB_V1_RuntimeProfile *profile, const uint8_t *bytes, size_t size,
     CSB_V1_AtariSaveInfo *out_info);

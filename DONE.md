@@ -832,9 +832,10 @@
   necessary Atari word conversion and loads the original 11-level dungeon.
   The real local Atari artifact reaches its payload at byte 10,160 (32,655
   bytes). The authenticated runtime handoff replaces the loaded Prison
-  dungeon only after the real Utility/Prison party exists, then restores
-  original time and map/position/direction. M11/menu consumption and broader
-  saved-character ownership remain tracked under `CSB-SAVE-UTILITY`.
+  dungeon, then restores original time, map/position/direction and native
+  GAMEBLOCK2 champion identity, vitals, attributes, skills and possessions.
+  M11/menu consumption and timer/extended-object ownership remain tracked
+  under `CSB-SAVE-UTILITY`.
 - ✅ 2026-07-26 Original saves and Utility Disk complete (Q-CSB-09). 32
   save/utility test files covering header build/read, F0435 provenance,
   export/import, CSBWin save loader boundary, utility save transaction.

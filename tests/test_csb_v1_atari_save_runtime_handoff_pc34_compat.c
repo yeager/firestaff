@@ -19,7 +19,6 @@ int main(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_ATARI_MINI");
     CSB_V1_RuntimeProfile runtime;
-    CSB_V1_PartyState party;
     CSB_V1_AtariSaveInfo info;
     uint8_t *bytes = NULL;
     size_t size = 0u;
@@ -28,14 +27,13 @@ int main(void)
     if (csb_v1_atari_save_handoff_runtime_pc34_compat(&runtime, NULL, 0u, &info) !=
         CSB_V1_ATARI_RUNTIME_ERR_NULL) return 1;
     if (!path || !path[0]) { puts("SKIP: FIRESTAFF_CSB_ATARI_MINI is not set"); return 0; }
-    memset(&party, 0, sizeof(party));
-    party.ChampionCount = 1; party.LeaderIndex = 0; party.Champions[0].CurrentHealth = 100;
-    party.Champions[0].MaximumHealth = 100;
-    if (csb_v1_runtime_set_party_state(&runtime, &party) != 0 || !read_file(path, &bytes, &size) ||
+    if (!read_file(path, &bytes, &size) ||
         csb_v1_atari_save_handoff_runtime_pc34_compat(&runtime, bytes, size, &info) != 0 ||
         runtime.dungeon_handle == NULL || runtime.level_count != 11 || runtime.current_level != 4 ||
         runtime.party_x != 22 || runtime.party_y != 18 || runtime.party_dir != 2 ||
         runtime.game_time != 19u || runtime.party_state.PartyMapX != 22 ||
+        runtime.party_state.ChampionCount != 1 ||
+        strcmp(runtime.party_state.Champions[0].Name, "HALK") != 0 ||
         csb_v1_dungeon_get_current() != runtime.dungeon_handle) {
         free(bytes); csb_v1_runtime_cleanup(&runtime); return 1;
     }

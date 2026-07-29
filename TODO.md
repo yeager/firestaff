@@ -985,10 +985,11 @@ that its exact runtime path is not already source-locked and tested.
    and locates its unencrypted CSB dungeon payload at byte 10,160. It now
    hands that payload directly to the existing memory-backed dungeon loader
    after the source-required Atari word conversion. The authenticated handoff
-   now replaces the live runtime dungeon and restores the source game time and
-   party pose only after the Prison/Utility-selected party already exists; it
-   creates no champion or `DUNGEON.DAT` substitute. M11/menu consumption and
-   user-created `CSBGAME.DAT` character/timer restoration remain open.
+   now replaces the live runtime dungeon and restores the source game time,
+   party pose and native GAMEBLOCK2 champion records (identity, vital signs,
+   attributes, skill state and possessions). It creates no champion or
+   `DUNGEON.DAT` substitute. M11/menu consumption and user-created
+   `CSBGAME.DAT` timer/extended-object restoration remain open.
 7. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
    source-backed indoor HUD, wall, door, floor/ceiling, item, projectile,
    creature, and static-object rendering through the live M11 dungeon path.
