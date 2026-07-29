@@ -11942,6 +11942,8 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     intent.rendererBackend = M12_StartupMenu_GetRendererBackend(state);
     intent.rendererBackendAvailable = M12_StartupMenu_RendererBackendAvailable(intent.rendererBackend);
     intent.options = state->gameOptions[gi];
+    intent.artpackPath = state->settings.artpackPath[0] ?
+        state->settings.artpackPath : NULL;
     intent.options.versionIndex = selectedVersionIndex;
     intent.options.presentationModeIndex = pmode;
     if (state->quickResumeAvailable &&

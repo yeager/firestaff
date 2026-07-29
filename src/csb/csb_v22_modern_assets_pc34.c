@@ -384,6 +384,17 @@ void csb_v22_set_manifest_path(const char* dataDir) {
     csb_v22_famg_set_manifest_path(asset_data_dir);
 }
 
+void csb_v22_set_manifest_file_path(const char* manifest_path) {
+    if (!manifest_path || manifest_path[0] == '\0') {
+        g_v22_manifest_path[0] = '\0';
+        csb_v22_famg_set_manifest_file_path(NULL);
+        return;
+    }
+    snprintf(g_v22_manifest_path, sizeof(g_v22_manifest_path), "%s",
+             manifest_path);
+    csb_v22_famg_set_manifest_file_path(g_v22_manifest_path);
+}
+
 const char* csb_v22_get_manifest_path(void) {
     return g_v22_manifest_path;
 }
@@ -523,6 +534,11 @@ int csb_v22_modern_assets_available(void) {
      * imported catalog. Runtime admission, however, must cover every pair
      * the active per-cell router can emit and require real source files. */
     if (!csb_v22_famg_is_finished_real()) return 0;
+
+    /* FAMG validates every active route pair and its resolved source file.
+     * Do not downgrade a valid pretty-printed FSART through the legacy
+     * fixed-line category scan below. */
+    return 1;
 
     /* Quick check: open the manifest and look for at least the three
      * critical categories (wall_shapes, floor_shapes, creature_shapes)

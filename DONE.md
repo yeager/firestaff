@@ -42828,3 +42828,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   pack marks this as `admitted_d3_f0791_native`; it no longer invents a
   48x41 or scaled D3 panel. Verification: source-pack manifest inspection and
   focused V2.2 admission/cache CTests pass.
+- ✅ 2026-07-29 CSB selected `.fsart` runtime materialization: a launcher
+  selection now reaches M11, is extracted into a MD5-keyed user cache through
+  the shared ZIP reader, and binds its manifest plus `v22_inplace_cache.bin`
+  before FAMG re-admits V2.2. A real PC3.4 boot probe with the source-derived
+  pack reaches map 0 in `presentationMode=3`; this does not claim that the
+  remaining live F0128 perspective-cell renderer is complete.

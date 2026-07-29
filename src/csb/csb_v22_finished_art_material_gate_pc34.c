@@ -291,6 +291,14 @@ void csb_v22_famg_set_manifest_path(const char* dataDir) {
                  csb_modern_dir, "modern_asset_manifest.json");
 }
 
+void csb_v22_famg_set_manifest_file_path(const char* manifest_path) {
+    if (!manifest_path || manifest_path[0] == '\0') {
+        g_manifest_path[0] = '\0';
+        return;
+    }
+    snprintf(g_manifest_path, sizeof(g_manifest_path), "%s", manifest_path);
+}
+
 const char* csb_v22_famg_get_manifest_path(void) {
     return g_manifest_path;
 }

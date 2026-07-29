@@ -660,7 +660,7 @@ static int zip_deflated_entry_extract(FILE *fp, uint32_t dataOffset,
         fclose(out);
         return 0;
     }
-    do {
+    for (;;) {
         size_t chunk;
         if (zs.avail_in == 0 && remaining > 0U) {
             chunk = remaining > sizeof(inBuf) ? sizeof(inBuf) : (size_t)remaining;
@@ -673,31 +673,50 @@ static int zip_deflated_entry_extract(FILE *fp, uint32_t dataOffset,
             zs.next_in = inBuf;
             zs.avail_in = (uInt)chunk;
         }
-        do {
-            zs.next_out = outBuf;
-            zs.avail_out = (uInt)sizeof(outBuf);
-            ret = inflate(&zs, remaining == 0U ? Z_FINISH : Z_NO_FLUSH);
-            if (ret != Z_OK && ret != Z_STREAM_END && ret != Z_BUF_ERROR) {
+        zs.next_out = outBuf;
+        zs.avail_out = (uInt)sizeof(outBuf);
+        /* The final compressed input can share a buffer with earlier bytes.
+         * Z_NO_FLUSH lets zlib consume that tail and report STREAM_END;
+         * switching to Z_FINISH merely because no more file bytes remain
+         * can return Z_BUF_ERROR before the tail is consumed. */
+        ret = inflate(&zs, Z_NO_FLUSH);
+        if (ret == Z_BUF_ERROR && remaining == 0U && zs.avail_in == 0U &&
+            produced == uncompressedSize) {
+            break;
+        }
+        if (ret != Z_OK && ret != Z_STREAM_END) {
+            /* Z_BUF_ERROR is only benign while more input remains. With no
+             * input left it means the archive entry was truncated. */
+            inflateEnd(&zs);
+            fclose(out);
+            return 0;
+        }
+        chunk = sizeof(outBuf) - zs.avail_out;
+        if (chunk > 0U) {
+            if (fwrite(outBuf, 1U, chunk, out) != chunk) {
                 inflateEnd(&zs);
                 fclose(out);
                 return 0;
             }
-            chunk = sizeof(outBuf) - zs.avail_out;
-            if (chunk > 0U) {
-                if (fwrite(outBuf, 1U, chunk, out) != chunk) {
-                    inflateEnd(&zs);
-                    fclose(out);
-                    return 0;
-                }
-                produced += (uint32_t)chunk;
-                if (produced > uncompressedSize) {
-                    inflateEnd(&zs);
-                    fclose(out);
-                    return 0;
-                }
+            produced += (uint32_t)chunk;
+            if (produced > uncompressedSize) {
+                inflateEnd(&zs);
+                fclose(out);
+                return 0;
             }
-        } while (zs.avail_out == 0);
-    } while (ret != Z_STREAM_END && (remaining > 0U || zs.avail_in > 0U));
+        }
+        if (ret == Z_STREAM_END) {
+            break;
+        }
+        /* A highly-compressible entry can consume its last input before it
+         * has drained zlib's pending output. Keep calling inflate while the
+         * output buffer was filled; only a no-progress call is malformed. */
+        if (zs.avail_in == 0 && remaining == 0U && chunk == 0U) {
+            inflateEnd(&zs);
+            fclose(out);
+            return 0;
+        }
+    }
     inflateEnd(&zs);
     if (produced != uncompressedSize) {
         fclose(out);

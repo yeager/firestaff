@@ -1,4 +1,7 @@
 #include "m11_game_view.h"
+#include "csb_v22_modern_assets_pc34.h"
+#include "csb_v22_finished_art_material_gate_pc34.h"
+#include "csb_v2_presentation_mode_pc34.h"
 #include "theron_v1_track02_loader_output_record_admission.h"
 #include "m11_dm2_runtime_frame_receipt_gate.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
@@ -215,6 +218,112 @@ static int m11_csb_dsa_overlay_material_current(
     const M11_GameViewState *state);
 static int m11_csb_original_save_runtime_receipt_current(
     const M11_GameViewState *state);
+
+/* Extract only the assets referenced by CSB's reviewed V2.2 route table.
+ * The archive stays user-owned and immutable; its MD5 becomes the cache key.
+ * This avoids trusting a filename or replacing original game data. */
+static int m11_csb_v22_materialize_artpack(const char *artpack_path,
+                                           char *out_manifest,
+                                           size_t out_manifest_size) {
+    static const char *const extra_door_ids[] = {
+        "door_set_1_d1", "door_set_1_d2", "door_set_1_d3",
+        "door_set_2_d1", "door_set_2_d2", "door_set_2_d3",
+        "door_set_3_d1", "door_set_3_d2", "door_set_3_d3"
+    };
+    char md5[33];
+    char user_data[FSP_PATH_MAX];
+    char cache_root[FSP_PATH_MAX];
+    char cache_dir[FSP_PATH_MAX];
+    char manifest[FSP_PATH_MAX];
+    int slot;
+    size_t i;
+
+    if (!artpack_path || !artpack_path[0] || !out_manifest ||
+        out_manifest_size == 0U ||
+        !asset_file_md5_hex(artpack_path, md5) ||
+        !FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
+        !FSP_JoinPath(cache_root, sizeof(cache_root), user_data, "artpack-cache") ||
+        !FSP_JoinPath(cache_root, sizeof(cache_root), cache_root, "csb") ||
+        !FSP_JoinPath(cache_dir, sizeof(cache_dir), cache_root, md5) ||
+        !FSP_CreateDirectoryRecursive(cache_dir) ||
+        !FSP_JoinPath(manifest, sizeof(manifest), cache_dir,
+                      "modern_asset_manifest.json")) {
+        return 0;
+    }
+    {
+        char virtual_path[ASSET_PATH_MAX];
+        if (snprintf(virtual_path, sizeof(virtual_path), "%s::%s",
+                     artpack_path, "modern_asset_manifest.json") >=
+                (int)sizeof(virtual_path) ||
+            !asset_extract_virtual_path(virtual_path, manifest)) {
+            return 0;
+        }
+    }
+    {
+        char cache_file[FSP_PATH_MAX];
+        char virtual_path[ASSET_PATH_MAX];
+        if (!FSP_JoinPath(cache_file, sizeof(cache_file), cache_dir,
+                          "v22_inplace_cache.bin") ||
+            snprintf(virtual_path, sizeof(virtual_path), "%s::%s",
+                     artpack_path, "v22_inplace_cache.bin") >=
+                (int)sizeof(virtual_path) ||
+            !asset_extract_virtual_path(virtual_path, cache_file)) {
+            return 0;
+        }
+    }
+    csb_v22_set_manifest_file_path(manifest);
+    for (slot = 0; slot < CSB_V22_FAMG_MATERIAL_COUNT; ++slot) {
+        CSB_V22_FamgSlotInfo info;
+        char destination[FSP_PATH_MAX];
+        char virtual_path[ASSET_PATH_MAX];
+        if (!csb_v22_famg_get_slot_info((CSB_V22_FamgSlot)slot, &info) ||
+            !info.category[0] || !info.source_file[0] ||
+            strchr(info.source_file, '/') || strchr(info.source_file, '\\') ||
+            strstr(info.source_file, "..") ||
+            !FSP_JoinPath(destination, sizeof(destination), cache_dir,
+                          info.category) ||
+            !FSP_CreateDirectoryRecursive(destination) ||
+            !FSP_JoinPath(destination, sizeof(destination), destination,
+                          info.source_file) ||
+            snprintf(virtual_path, sizeof(virtual_path), "%s::%s/%s",
+                     artpack_path, info.category, info.source_file) >=
+                (int)sizeof(virtual_path) ||
+            !asset_extract_virtual_path(virtual_path, destination)) {
+            return 0;
+        }
+    }
+    for (i = 0U; i < sizeof(extra_door_ids) / sizeof(extra_door_ids[0]); ++i) {
+        char destination[FSP_PATH_MAX];
+        char virtual_path[ASSET_PATH_MAX];
+        if (!FSP_JoinPath(destination, sizeof(destination), cache_dir,
+                          "door_shapes") ||
+            !FSP_CreateDirectoryRecursive(destination) ||
+            !FSP_JoinPath(destination, sizeof(destination), destination,
+                          extra_door_ids[i]) ||
+            strlcat(destination, ".png", sizeof(destination)) >=
+                sizeof(destination)) {
+            return 0;
+        }
+        if (snprintf(virtual_path, sizeof(virtual_path), "%s::door_shapes/%s.png",
+                     artpack_path, extra_door_ids[i]) >= (int)sizeof(virtual_path) ||
+            !asset_extract_virtual_path(virtual_path, destination)) {
+            /* DoorSet variants extend the reviewed core F0128 pack but are
+             * not part of its complete FAMG contract yet. Their absence may
+             * affect only that optional material, never reject a verified
+             * complete core package. */
+            continue;
+        }
+    }
+    /* The launcher scan runs before an optional user package is materialized.
+     * Publish the post-extraction admission result before the presentation
+     * mode resolver selects V2.2. The resolver independently rechecks FAMG
+     * against this exact manifest before admitting modern rendering. */
+    csb_v22_set_installed(csb_v22_famg_is_finished_real());
+    csb_v2_presentation_mode_set_modern_pack_available(
+        csb_v22_famg_is_finished_real());
+    snprintf(out_manifest, out_manifest_size, "%s", manifest);
+    return 1;
+}
 #include "firestaff_po_loader.h"
 #include "dm1_v1_viewport_fakewall_pc34_compat.h"
 #include "dm1_v2_phase5_runtime_bridge_pc34.h"
@@ -14903,9 +15012,22 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             }
         }
     } else if (spec->gameId && strcmp(spec->gameId, "csb") == 0) {
-        csb_v22_set_manifest_path(spec->dataDir);
-        csb_v22_famg_set_manifest_path(spec->dataDir);
-        csb_v2_presentation_mode_set_m12(spec->presentationMode);
+        char selected_manifest[FSP_PATH_MAX];
+        int selected_artpack_ready = 0;
+        if (spec->artpackPath && spec->artpackPath[0]) {
+            selected_artpack_ready = m11_csb_v22_materialize_artpack(
+                spec->artpackPath, selected_manifest, sizeof(selected_manifest));
+        }
+        if (!selected_artpack_ready) {
+            csb_v22_set_manifest_path(spec->dataDir);
+            csb_v22_famg_set_manifest_path(spec->dataDir);
+        }
+        csb_v2_presentation_mode_set_m12(selected_artpack_ready
+            ? M12_PRESENTATION_V22_MODERN : spec->presentationMode);
+        if (selected_artpack_ready && csb_v2_presentation_mode_get() ==
+            CSB_V2_PM_V22_MODERN) {
+            state->presentationMode = M12_PRESENTATION_V22_MODERN;
+        }
         if (csb_v2_presentation_mode_get() == CSB_V2_PM_V21_UPSCALED &&
             spec->presentationMode == M12_PRESENTATION_V22_MODERN) {
             state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
@@ -15473,6 +15595,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     }
     if (menuState->launchRequested) {
         spec.savePath = intent.savePath;
+        spec.artpackPath = intent.artpackPath;
         spec.csbSaveCandidateIdentity =
             (entry->gameId && strcmp(entry->gameId, "csb") == 0)
                 ? menuState->csbSaveCandidateIdentity : 0u;

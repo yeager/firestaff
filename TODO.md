@@ -5437,8 +5437,10 @@ lane is carried forward in the sections below.
 
 - 2026-07-16 Launcher `.fsart` follow-up: the startup menu now persists a
   selected `.fsart` artpack path and an optional broad Unicode font path.
-  Remaining work is the runtime loader step: safely unpack/validate `.fsart`,
-  promote its `modern_asset_manifest.json` into the existing V2.2 asset-cache
+  Closed 2026-07-29 for CSB: the M11 handoff now hash-keys a private cache,
+  extracts the manifest, native V2.2 cache and reviewed route assets through
+  the shared ZIP reader, then rechecks the existing FAMG gate before V2.2.
+  Remaining work is live F0128 draw-command consumption, not package loading.
   path, and wire the chosen Unicode font into the modern menu renderer when a
   real TTF backend is available. Do not synthesize missing art or glyphs.
 

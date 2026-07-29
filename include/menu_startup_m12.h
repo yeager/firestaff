@@ -340,6 +340,9 @@ typedef struct {
      * intended options even for a blocked launch). */
     M12_LauncherRuntimeOptions launcherOptions;
     int launcherOptionsBound;
+    /* Optional user-selected .fsart package. M12 owns the selection while
+     * M11 materializes it into a game-specific runtime cache at launch. */
+    const char* artpackPath;
     const char* savePath;  /* Non-NULL when launching via quick resume */
     const char* csbImportDm1SavePath; /* Non-NULL when CSB utility-imports a DM1 save */
     /* Theron carries a value copy of M12's direct campaign-media identity.

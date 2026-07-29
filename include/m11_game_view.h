@@ -555,6 +555,7 @@ typedef struct {
     const char* savePath; /* Optional quick-resume save to restore after dungeon init. */
     const char* entranceResumeSavePath; /* Optional validated save for in-entrance Resume buttons. */
     const char* csbImportDm1SavePath; /* Optional CSB utility startup import candidate. */
+    const char* artpackPath; /* Optional M12-selected .fsart package. */
     uint32_t csbSaveCandidateIdentity; /* M12-selected CSB save discovery identity. */
     int languageIndex;
     int rendererBackend;

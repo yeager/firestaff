@@ -191,6 +191,10 @@ typedef struct {
  * Passing NULL or "" clears the stored manifest path. */
 void csb_v22_famg_set_manifest_path(const char* dataDir);
 
+/* Same direct binding as csb_v22_set_manifest_file_path(). Keeps the
+ * material admission gate and runtime catalog on one selected package. */
+void csb_v22_famg_set_manifest_file_path(const char* manifest_path);
+
 /* Returns the resolved manifest path (read-only). May be empty if the
  * path has not been set. */
 const char* csb_v22_famg_get_manifest_path(void);

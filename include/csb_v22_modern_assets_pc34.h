@@ -75,6 +75,10 @@ typedef struct {
  * Walks up two levels to ~/.firestaff then appends assets/csb/modern/. */
 void csb_v22_set_manifest_path(const char* dataDir);
 
+/* Bind an already-materialized manifest directly. This is used for a
+ * launcher-selected .fsart cache; the manifest remains read-only at runtime. */
+void csb_v22_set_manifest_file_path(const char* manifest_path);
+
 /* Returns the resolved modern asset manifest path, or an empty string before
  * csb_v22_set_manifest_path(). The pointer remains valid until the next set. */
 const char* csb_v22_get_manifest_path(void);
