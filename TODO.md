@@ -15,6 +15,15 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-DSA-INDIRECT-TRANSACTIONAL-DISPATCH:** Closed 2026-07-29.
+  Authenticated CSBWin `STKOP_I_Indirect` now unpacks its source parameter
+  payload and dispatches `I_MONSTER!`, `I_CHAR!`, `I_COPY`, `I_CELL!`,
+  `I_CAUSEPOISON`, and `I_SWAPCHARACTER` through their existing
+  transactional runtime owners. The local-variable rewrite form and every
+  still-unowned target reject before a dungeon/save mutation. The focused
+  `I_COPY` regression verifies the source operand order and rollback; the
+  complete 98-test CSB CTest lane passes.
+
 - **CSB-ARTPACK-STUDIO-PC34-IMG2-PREVIEW:** Closed 2026-07-29. Artpack
   Studio now recognizes CSB PC3.4 `GRAPHICS.DAT` as big-endian byte-stride
   IMG2 rather than sending it through DM1's little-endian nibble IMG3
@@ -936,15 +945,20 @@ that its exact runtime path is not already source-locked and tested.
     filters, state transitions, and runtime mutation with hard fail-closed
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
-    remaining 28 stack words: `DEL`, `ADD`, `CAST`,
+    remaining 27 stack words: `DEL`, `ADD`, `CAST`,
     `FILTEREDCAST`, `THROW`, `TELEPORTPARTY`, `CREATECLOUD`, `MOVE`,
     the `I_*` indirect family (`DEL/ADD/CREATECLOUD/CAST/TELEPORTPARTY/MONSTER!/
-    CHAR!/MOVE/COPY/CELL!/THROW/INDIRECT/DELAY/DELMON/INSMON/CAUSEPOISON/
+    CHAR!/MOVE/COPY/CELL!/THROW/DELAY/DELMON/INSMON/CAUSEPOISON/
     FILTEREDCAST/SWAPCHARACTER`), plus `DELMON` and `INSMON`. `SAY` is now
     source-owned and transactional; the listed operations still require one
     transactional world-
     mutation batch with source-owned callbacks; do not add a synthetic VM
-    fallback for missing dungeon ownership.
+    fallback for missing dungeon ownership. 2026-07-29: `I_Indirect` now
+    expands only to the six already source-owned transactional operations
+    (`MONSTER!`, `CHAR!`, `COPY`, `CELL!`, `CAUSEPOISON`, `SWAPCHARACTER`).
+    Its source local-variable rewrite now writes the action-local DSAVARS bank
+    before the selected direct word runs; persistent save data remains outside
+    this temporary source bank.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

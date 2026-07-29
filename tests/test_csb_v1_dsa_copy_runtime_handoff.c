@@ -8,6 +8,39 @@ static int failures;
 
 #define CSB_TEST_THING_TYPE_TEXTSTRING 2u
 
+typedef struct {
+    int prepare_count;
+    int commit_count;
+    int32_t selector;
+    uint32_t value;
+} IndirectCharacterStore;
+
+static int indirect_prepare_character_store(void *user,
+                                            int32_t selector,
+                                            uint32_t values[59],
+                                            uint32_t word_count)
+{
+    IndirectCharacterStore *store = user;
+    if (!store || !values || word_count != 1u) return -1;
+    ++store->prepare_count;
+    store->selector = selector;
+    store->value = values[0];
+    return 1;
+}
+
+static int indirect_commit_character_store(void *user,
+                                           int32_t selector,
+                                           const uint32_t values[59],
+                                           uint32_t word_count)
+{
+    IndirectCharacterStore *store = user;
+    if (!store || !values || word_count != 1u) return 0;
+    ++store->commit_count;
+    store->selector = selector;
+    store->value = values[0];
+    return 1;
+}
+
 static void check(int condition, const char *message)
 {
     if (condition) printf("PASS: %s\n", message);
@@ -349,6 +382,46 @@ static void test_copyteleporter_runtime_receipt(void)
           "COPYTELEPORTER receipt rejects destination DB1 drift");
 }
 
+static void test_indirect_local_variable_char_store(void)
+{
+    /* CSBWin DSA.cpp EX_AMPERSAND I_Indirect format. P3=count, P4=DSAVARS
+     * index and P5=character selector become the direct CHAR! stack words;
+     * P7 writes the selected action-local DSAVARS entry before CHAR! runs. */
+    uint16_t words[] = { 0x168bu };
+    uint32_t parameters[] = {
+        85u, 3u, 1u, 0u, 1u, 1u, 0x12345678u, 0u
+    };
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    IndirectCharacterStore store;
+
+    memset(&action, 0, sizeof(action));
+    csb_v1_chaos_init(&state);
+    memset(&context, 0, sizeof(context));
+    memset(&store, 0, sizeof(store));
+    action.dsa_id = 23u;
+    action.state_index = 1u;
+    action.program_words = words;
+    action.program_word_count = (int)(sizeof(words) / sizeof(words[0]));
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+    context.parameters = parameters;
+    context.parameter_count = (int)(sizeof(parameters) / sizeof(parameters[0]));
+    context.dungeon_user = &store;
+    context.prepare_character_store = indirect_prepare_character_store;
+    context.set_character_info = indirect_commit_character_store;
+
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 23, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK &&
+              store.prepare_count == 1 && store.commit_count == 1 &&
+              store.selector == 1 && store.value == 0x12345678u &&
+              execution.stack_depth == 0u,
+          "STKOP_I_Indirect applies action-local DSAVARS before CHAR!");
+}
+
 int main(void)
 {
     const uint16_t source = (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10);
@@ -358,6 +431,10 @@ int main(void)
     };
     uint16_t copy_then_unknown_words[] = {
         0x0686u, source, 0x0686u, destination, 0x130bu, 0x0000u
+    };
+    uint16_t indirect_copy_words[] = { 0x168bu };
+    uint32_t indirect_copy_parameters[] = {
+        87u, 2u, destination, source, 0u, 0u
     };
     uint16_t modify_message_words[] = {
         0x0686u, 2u, 0x0686u, 9u, 0x0686u, 7u, 0x0295u
@@ -375,6 +452,7 @@ int main(void)
     test_copyteleporter_runtime_receipt();
     test_textfetch_textsay_runtime_binding();
     test_parameter_message_runtime_binding();
+    test_indirect_local_variable_char_store();
 
     memset(&dungeon, 0, sizeof(dungeon));
     dungeon.raw_data = raw;
@@ -401,6 +479,19 @@ int main(void)
               runner.last_execution.last_actuator_copy_destination_thing ==
                   destination,
           "STKOP_Copy commits a source-owned DB3 pair through the runtime candidate");
+
+    memcpy(raw + 2, "ABCDEF", 6u);
+    memcpy(raw + 10, "ghijkl", 6u);
+    configure_action(&action, indirect_copy_words,
+                     (int)(sizeof(indirect_copy_words) /
+                           sizeof(indirect_copy_words[0])));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, (int *)indirect_copy_parameters,
+              (int)(sizeof(indirect_copy_parameters) /
+                    sizeof(indirect_copy_parameters[0])), NULL) == 1 &&
+              memcmp(raw + 2, raw + 10, 6u) == 0 &&
+              runner.last_execution.actuator_copy_count == 1u,
+          "STKOP_I_Indirect expands I_Copy through the same DB3 transaction");
 
     memcpy(raw + 2, "ABCDEF", 6u);
     memcpy(raw + 10, "ghijkl", 6u);

@@ -1,3 +1,12 @@
+- ✅ 2026-07-29 CSBWin DSA `STKOP_I_Indirect` transactional dispatch. The
+  authenticated interpreter now decodes CSBWin's parameter-backed indirect
+  form and routes `I_MONSTER!`, `I_CHAR!`, `I_COPY`, `I_CELL!`,
+  `I_CAUSEPOISON`, and `I_SWAPCHARACTER` through their existing source-owned
+  transactional callbacks. The source local-variable rewrite targets the
+  action-local DSAVARS bank before dispatch; unowned target operations still
+  fail before a live mutation. Focused `I_COPY` and `I_CHAR!` regressions
+  prove operand order, DSAVARS rewrite and rollback; all 98 CSB CTests pass.
+
 - ✅ 2026-07-29 CSB PC3.4 Artpack Studio source preview. Artpack Studio now
   uses a bounded big-endian byte-stride IMG2 decoder for CSB `GRAPHICS.DAT`,
   rather than DM1's incompatible little-endian IMG3 preview route. Against

@@ -583,7 +583,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 56u: case 57u: case 58u: case 60u: case 63u: case 64u: case 65u:
     case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
     case 77u: case 78u: case 92u: case 100u: case 101u: case 102u: case 106u:
-    case 47u: case 103u: case 104u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
+    case 47u: case 90u: case 103u: case 104u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
     case 115u: case 116u: case 117u: case 118u: case 123u: case 124u: case 125u:
     case 121u: case 122u: case 130u: case 131u: case 132u: case 134u: case 135u: case 137u:
     case 138u:
@@ -592,6 +592,99 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     default:
         return 0;
     }
+}
+
+static int csb_v1_csbwin_dsa_stack_push(uint32_t *stack, int *depth,
+                                         uint32_t value);
+
+/* CSBWin DSA.cpp EX_AMPERSAND expands I_Indirect from the live parameter
+ * array before it enters the normal stack-word dispatcher.  Firestaff keeps
+ * the parameter count outside that array, so this adapter is deliberately
+ * strict: only the direct operations which already own a transactional
+ * runtime callback may be selected. Its local-variable rewrite targets the
+ * action-local DSAVARS bank, exactly as CSBWin ProcessDSATimer does. */
+static CSB_V1_CSBWinDSAStackResult
+csb_v1_csbwin_dsa_expand_indirect(uint32_t *stack, int *depth,
+    uint32_t *variables, uint8_t *variable_state, uint32_t *parameters,
+    int parameter_count, uint16_t *out_subcode,
+    int *out_effective_parameter_count)
+{
+    uint16_t direct_subcode;
+    uint32_t stack_count;
+    uint32_t return_parameter_count;
+    int cursor;
+    int i;
+
+    if (!stack || !depth || !variables || !variable_state || !parameters ||
+        !out_subcode ||
+        !out_effective_parameter_count || parameter_count < 3 ||
+        parameter_count > 26) {
+        return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+    }
+    switch (parameters[0]) {
+    case 84u: direct_subcode = 63u; break;  /* I_Monster! -> Monster! */
+    case 85u: direct_subcode = 66u; break;  /* I_Char! -> Char! */
+    case 87u: direct_subcode = 76u; break;  /* I_Copy -> Copy */
+    case 88u: direct_subcode = 58u; break;  /* I_Cell! -> Cell! */
+    case 111u: direct_subcode = 110u; break; /* I_CausePoison */
+    case 126u: direct_subcode = 118u; break; /* I_SwapCharacter */
+    default:
+        return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+    }
+
+    stack_count = parameters[1];
+    if (stack_count > (uint32_t)(parameter_count - 3)) {
+        return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+    }
+    /* Source starts at pDSAparameters[1], then pushes P3..P(2+n) in
+     * reverse order. Firestaff's zero-based payload is P1..Pn. */
+    cursor = 2 + (int)stack_count;
+    for (i = 0; i < (int)stack_count; ++i) {
+        if (!csb_v1_csbwin_dsa_stack_push(stack, depth, parameters[--cursor])) {
+            return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+        }
+    }
+    cursor += (int)stack_count;
+    if (cursor >= parameter_count) {
+        return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+    }
+    /* CSBWin's DSAVARS belongs to this ProcessDSATimer action. Apply the
+     * source parameter-backed rewrite to the staged action-local bank before
+     * the selected direct stack word observes it. */
+    if (parameters[cursor++] != 0u) {
+        uint32_t variable_count;
+        uint32_t variable_index;
+
+        if (parameter_count < 4) {
+            return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+        }
+        variable_count = parameters[2];
+        variable_index = parameters[3];
+        if (variable_index > CSB_V1_CSBWIN_DSA_VARIABLE_COUNT ||
+            variable_count >
+                CSB_V1_CSBWIN_DSA_VARIABLE_COUNT - variable_index ||
+            variable_count > (uint32_t)(parameter_count - cursor)) {
+            return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+        }
+        for (i = 0; i < (int)variable_count; ++i) {
+            variables[variable_index + (uint32_t)i] = parameters[cursor++];
+            variable_state[variable_index + (uint32_t)i] = 1u;
+        }
+    }
+    if (cursor >= parameter_count) {
+        return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+    }
+    return_parameter_count = parameters[cursor++];
+    if (return_parameter_count > 26u ||
+        return_parameter_count > (uint32_t)(parameter_count - cursor)) {
+        return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+    }
+    for (i = 0; i < (int)return_parameter_count; ++i) {
+        parameters[i] = parameters[cursor++];
+    }
+    *out_subcode = direct_subcode;
+    *out_effective_parameter_count = (int)return_parameter_count;
+    return CSB_V1_CSBWIN_DSA_STACK_OK;
 }
 
 static CSB_V1_CSBWinDSACoreVerifyResult
@@ -4111,6 +4204,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_AMPERSAND ||
                    opcode == CSB_V1_CSBWIN_DSACMD_AMPERSAND2) {
             uint16_t subcode = (uint16_t)((command >> 6) & 0x7fu);
+            int effective_parameter_count = context->parameter_count;
             next_state = csb_v1_csbwin_dsa_sign_extend((uint16_t)(command >> 13), 3);
             if (next_state == -4) {
                 if (cursor >= action->program_word_count) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
@@ -4121,6 +4215,13 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 /* CSBWin DSA.cpp:5143-5148 dispatches AMPERSAND2 through
                  * EX_AMPERSAND(exPkt, 128), not a distinct bytecode grammar. */
                 subcode = (uint16_t)(subcode + 128u);
+            }
+            if (subcode == 90u) {
+                rc = csb_v1_csbwin_dsa_expand_indirect(
+                    stack, &depth, variables, variable_state, parameters,
+                    context->parameter_count,
+                    &subcode, &effective_parameter_count);
+                if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
             }
             if (subcode == 98u || subcode == 99u) {
                 const CSB_V1_DSAImportedAction *target_action;
@@ -4166,7 +4267,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 rc = csb_v1_csbwin_dsa_execute_stack_subcode(
                     subcode, stack, &depth, &candidate.forced_state, variables,
                     variable_state, parameters,
-                    context->parameter_count, &context_candidate, pending_skin_writes,
+                    effective_parameter_count, &context_candidate, pending_skin_writes,
                     &pending_skin_write_count, pending_excell_writes,
                     &pending_excell_write_count, pending_generator_writes,
                     &pending_generator_write_count, pending_monster_writes,
