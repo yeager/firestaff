@@ -5,8 +5,8 @@
  *
  * Observed CSB Utility Disk sound-effect AMG files use:
  *   u16be sampleByteCount
- *   u16be controlWord
  *   i8    sampleBytes[sampleByteCount]
+ *   u8    trailingBytes[0..3]
  *
  * NAKED.AMG under the Utility Disk MIDI directory is not this
  * sound-effect container and is intentionally rejected by this parser.
@@ -23,7 +23,7 @@ extern "C" {
 
 typedef struct CsbV1AmgSoundInfo {
     uint16_t sampleByteCount;
-    uint16_t controlWord;
+    size_t trailingByteCount;
     size_t sampleOffset;
     int8_t minSample;
     int8_t maxSample;

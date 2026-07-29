@@ -1150,6 +1150,12 @@ that its exact runtime path is not already source-locked and tested.
     own authenticated Amiga decoder/binding; neither may be fed through the
     PC3.4 9,078-byte `SWSHSND.C` transport or substituted with generated
     audio.
+    2026-07-29: authenticated all five local Utility Disk `.AMG` files
+    against the documented SND2 layout: `u16be sampleCount`, signed 8-bit
+    samples, then zero to three trailing bytes. The duplicate CSB parser had
+    incorrectly interpreted its first two samples as a control word; it now
+    uses this same source layout. Runtime mixer and original timing binding
+    remain open.
 32. **CSB-MAC-RELEASE-CAPTURE:** Complete real packaged app/window captures for
     title, entrance, doors, HUD, viewport, Utility Disk, and first runtime
     frame against local original CSB data.

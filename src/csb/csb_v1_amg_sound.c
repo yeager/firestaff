@@ -16,35 +16,40 @@ int csb_v1_amg_sound_parse(const uint8_t* data,
                            CsbV1AmgSoundInfo* outInfo)
 {
     uint16_t sampleBytes;
-    uint16_t controlWord;
+    size_t trailingByteCount;
     size_t i;
     int8_t minSample;
     int8_t maxSample;
 
-    if (!data || !outInfo || size < 5u || size > 0x10003u) {
+    if (!data || !outInfo || size < 2u || size > 0x10003u) {
         return -1;
     }
 
     sampleBytes = read_be16(data);
-    controlWord = read_be16(data + 2);
-    if (sampleBytes == 0u || (size_t)sampleBytes + 4u != size) {
+    if ((size_t)sampleBytes + 2u > size) {
         return -2;
     }
-    if (controlWord == 0u) {
+    trailingByteCount = size - ((size_t)sampleBytes + 2u);
+    if (trailingByteCount > 3u) {
         return -3;
     }
 
-    minSample = (int8_t)data[4];
-    maxSample = (int8_t)data[4];
+    if (sampleBytes == 0u) {
+        minSample = 0;
+        maxSample = 0;
+    } else {
+        minSample = (int8_t)data[2];
+        maxSample = (int8_t)data[2];
+    }
     for (i = 0; i < sampleBytes; ++i) {
-        int8_t s = (int8_t)data[4u + i];
+        int8_t s = (int8_t)data[2u + i];
         if (s < minSample) minSample = s;
         if (s > maxSample) maxSample = s;
     }
 
     outInfo->sampleByteCount = sampleBytes;
-    outInfo->controlWord = controlWord;
-    outInfo->sampleOffset = 4u;
+    outInfo->trailingByteCount = trailingByteCount;
+    outInfo->sampleOffset = 2u;
     outInfo->minSample = minSample;
     outInfo->maxSample = maxSample;
     return 0;

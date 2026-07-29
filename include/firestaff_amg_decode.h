@@ -55,8 +55,8 @@ typedef struct {
  *   0  on success.
  *  -1  on invalid arguments or data shorter than the 2-byte header.
  *  -2  when the declared sample count does not fit in data_size.
- *  -3  when more than 3 trailing bytes remain, which violates dmweb's
- *      SND2 bound and usually means this is not a single-item SND2 .AMG.
+ *  -3  when more than 3 trailing bytes remain, which violates the SND2
+ *      bound and usually means this is not a single-item SND2 .AMG.
  */
 int FirestaffAmgSnd2_Decode(const uint8_t* data, size_t data_size,
                             FirestaffAmgSnd2* out);
