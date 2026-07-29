@@ -1,3 +1,30 @@
+- ✅ 2026-07-29 Nexus BPPK menu graphics decoder: MENU.BPK BPPK/BMPD
+  container with 164 bitmap entries (162 PRS3-compressed). Each entry
+  has width, height, flags, and PRS3 block for UI overlay graphics.
+
+- ✅ 2026-07-29 Nexus TITLE.CG tile decoder and RES* resource parser:
+  TITLE.CG 5249 tiles of 8×8 4bpp for title sequence. RES* container
+  format parses TITLE.BIN (60 entries), RLOWFIX.BIN (14), RHIFIX.BIN
+  (5), and POTEFT.BIN (6) with DGT2/PALT/TEXT/FONT/CRET/SPLL tags.
+
+- ✅ 2026-07-29 Nexus DGN dungeon level decoder: all 16 LEVxx.DGN files
+  decoded — block-aligned header, Structure1 map (64×64 grid with floor
+  texture, rotation, flip, slope, ceiling, doors), Structure2 texture
+  catalog, Structure1E door entries. 30-1554 model refs per level.
+
+- ✅ 2026-07-29 Nexus MNS creature model decoder: all 30 MNS files —
+  DMDF header, joint hierarchy (52 bytes/joint with sibling/child),
+  per-joint mesh (vertices int32 XYZ, faces quad/tri with flip+texture),
+  TEXT section textures (2 bytes/pixel BGR555 direct color).
+
+- ✅ 2026-07-29 Nexus ITEM.IBS decoder: 243 item declarations, 223
+  inventory images (16×16 4bpp, 8 palettes via association table), 109
+  floor images (variable-size 4bpp with palette inheritance by ID).
+
+- ✅ 2026-07-29 Nexus SMAP automap decoder: all 16 SMAPxx.BIN level
+  automaps — LVMP header, 256-color BGR555 palette, 80×76 tilemap with
+  H/V flip, renders 640×608 RGBA images. Unique hashes per level.
+
 - ✅ 2026-07-29 CSB V2.2 symlinked package/artpack resolution: CSB's modern
   catalog and finished-material gate now resolve an existing game-data
   symlink before deriving the sibling `assets/csb/modern` directory. A

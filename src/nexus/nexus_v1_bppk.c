@@ -8,7 +8,7 @@ static uint32_t read_be32(const uint8_t *p) {
 
 int nexus_v1_bppk_decode(const uint8_t *data, int data_size,
                           Nexus_V1_BppkDecodeResult *out) {
-    uint32_t bmpd_off, bmpd_size;
+    uint32_t bmpd_off;
     int offset_count, i;
     uint32_t fnv;
 
@@ -22,7 +22,6 @@ int nexus_v1_bppk_decode(const uint8_t *data, int data_size,
     bmpd_off = 12;
     if ((int)(bmpd_off + 8) > data_size) return 0;
     if (read_be32(data + bmpd_off) != NEXUS_BMPD_MAGIC) return 0;
-    bmpd_size = read_be32(data + bmpd_off + 4);
 
     offset_count = 0;
     for (i = 0; i < NEXUS_BPPK_MAX_ENTRIES; ++i) {
