@@ -1,3 +1,14 @@
+- ✅ 2026-07-29 DM2 timer handler expansion: wired 5 new timer type handlers
+  into DM2_PROCEED_TIMERS dispatcher. 0x02 DESTROY_DOOR (tile state mutation
+  to DESTROYED=5), 0x58 RELEASE_DOOR_BUTTON (record byte@3 bit 0x08 clear),
+  0x59 PROCESS_TIMER_59 (record byte@4 bit 0x01 clear with 0x04 guard),
+  0x5b record byte@4 &= ~0x01, 0x5c record byte@2 |= 0x01. All gate on
+  record_pools_valid except DESTROY_DOOR which only needs tile data. Tests
+  extended in test_dm2_v1_proceed_timers_pc34_compat.c. Audit TSV updated
+  for 3 symbols (DESTROY_DOOR, RELEASE_DOOR_BUTTON, PROCESS_TIMER_59).
+  Source: skproject/SKULLWIN/c_tim_proc.cpp:422-440, 1068-1074, 1077-1090,
+  4219-4226, 4278-4280.
+
 - ✅ 2026-07-29 Nexus data file decoder coverage complete: all Nexus game
   data formats now have decoders. Final batch: FONT256.S2D (SCR tilemap
   font, 5 sections, 16×256 tilemap, 2048 tiles, 256-color palette),

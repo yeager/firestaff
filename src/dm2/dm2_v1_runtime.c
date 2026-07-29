@@ -4065,6 +4065,189 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
  *         skproject/SKULLWIN/c_ai.cpp:5649-5677   (DM2_THINK_CREATURE)
  *         skproject/SKULLWIN/c_querydb.cpp:1486-1507 (DM2_GET_CREATURE_AT)
  */
+
+/*
+ * dm2_runtime_destroy_door_timer — DM2-owned 0x02 handler.
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:422-440 DM2_PROCESS_TIMER_DESTROY_DOOR:
+ * sets the tile square's lower 3 bits to 5 (DESTROYED state) by
+ * masking byte with 0xf8 | 0x05.  Also checks if current map matches
+ * ddat.v1e0266 to set ddat.v1e0390.l_00 = 3 (viewport redraw flag).
+ *
+ * Bounded slice: reads the tile byte, applies the bit mutation, writes
+ * back.  The viewport redraw flag is tracked as a counter.
+ */
+static int dm2_runtime_destroy_door_timer(void *user,
+                                          const DM2_V1_SourceTimer *timer,
+                                          uint16_t source_index,
+                                          DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    int x, y;
+    uint16_t raw;
+    (void)source_index;
+    (void)receipt;
+
+    if (!timer || !rt->boot || !rt->boot->dungeon_data)
+        return 1;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+
+    raw = (uint16_t)dm2_v1_dungeon_get_tile_raw(
+        dungeon, rt->dungeon_level, x, y);
+    raw = (raw & 0xfff8u) | 0x0005u;
+    (void)dm2_v1_dungeon_set_tile_raw(
+        dungeon, rt->dungeon_level, x, y, raw);
+    return 1;
+}
+
+/*
+ * dm2_runtime_release_door_button_timer — DM2-owned 0x58 handler.
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:1068-1074
+ * DM2_PROCESS_TIMER_RELEASE_DOOR_BUTTON:
+ * GET_ADDRESS_OF_RECORD(timer->valueA), then clears bit 0x08 on
+ * record byte@3 (and8(location(RG1P + 3), 0xf7)).
+ *
+ * Bounded slice: walks the record pool to find the record, clears the
+ * bit.  Fails closed when record pools are not valid.
+ */
+static int dm2_runtime_release_door_button_timer(
+    void *user,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    uint16_t record_id;
+    uint8_t *record;
+    int type, size;
+    (void)source_index;
+    (void)receipt;
+
+    if (!timer || !rt->record_pools_valid || !rt->boot ||
+        !rt->boot->dungeon_data)
+        return 1;
+
+    record_id = (uint16_t)(timer->value_a & 0xffffu);
+    record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        record_id, &type, NULL, &size);
+    if (!record || size < 4)
+        return 1;
+
+    record[3] &= (uint8_t)~0x08u;
+    return 1;
+}
+
+/*
+ * dm2_runtime_process_timer_59 — DM2-owned 0x59 handler.
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:1077-1090 DM2_PROCESS_TIMER_59:
+ * GET_ADDRESS_OF_RECORD(timer->valueB).  If record byte@4 bit 0x04
+ * is set, returns early (already processing).  Otherwise: if current
+ * map matches party map, sets viewport redraw flag (ddat.v1e0390.b_00
+ * |= 1).  Clears bit 0x01 on record byte@4.
+ *
+ * Bounded slice: the record byte mutation is the critical path.
+ */
+static int dm2_runtime_process_timer_59(
+    void *user,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    uint16_t record_id;
+    uint8_t *record;
+    int type, size;
+    (void)source_index;
+    (void)receipt;
+
+    if (!timer || !rt->record_pools_valid || !rt->boot ||
+        !rt->boot->dungeon_data)
+        return 1;
+
+    record_id = (uint16_t)(timer->value_b & 0xffffu);
+    record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        record_id, &type, NULL, &size);
+    if (!record || size < 5)
+        return 1;
+
+    if (record[4] & 0x04u)
+        return 1;
+
+    record[4] &= (uint8_t)~0x01u;
+    return 1;
+}
+
+/*
+ * dm2_runtime_5b_record_clear — DM2-owned 0x5b handler.
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4278-4280 (fall-through for 0x5b):
+ * GET_ADDRESS_OF_RECORD(timer->valueA), then byte@4 &= ~0x01.
+ */
+static int dm2_runtime_5b_record_clear(
+    void *user,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    uint16_t record_id;
+    uint8_t *record;
+    int type, size;
+    (void)source_index;
+    (void)receipt;
+
+    if (!timer || !rt->record_pools_valid || !rt->boot ||
+        !rt->boot->dungeon_data)
+        return 1;
+
+    record_id = (uint16_t)(timer->value_a & 0xffffu);
+    record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        record_id, &type, NULL, &size);
+    if (!record || size < 5)
+        return 1;
+
+    record[4] &= (uint8_t)~0x01u;
+    return 1;
+}
+
+/*
+ * dm2_runtime_5c_record_set — DM2-owned 0x5c handler.
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4223-4225 (0x5c inline):
+ * GET_ADDRESS_OF_RECORD(timer->valueA), then byte@2 |= 0x01.
+ */
+static int dm2_runtime_5c_record_set(
+    void *user,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    uint16_t record_id;
+    uint8_t *record;
+    int type, size;
+    (void)source_index;
+    (void)receipt;
+
+    if (!timer || !rt->record_pools_valid || !rt->boot ||
+        !rt->boot->dungeon_data)
+        return 1;
+
+    record_id = (uint16_t)(timer->value_a & 0xffffu);
+    record = (uint8_t *)(uintptr_t)dm2_v1_dungeon_get_thing_record(
+        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        record_id, &type, NULL, &size);
+    if (!record || size < 3)
+        return 1;
+
+    record[2] |= 0x01u;
+    return 1;
+}
+
 static int dm2_runtime_think_creature_timer(void *user,
                                             const DM2_V1_SourceTimer *timer,
                                             uint16_t source_index,
@@ -4776,6 +4959,18 @@ void dm2_v1_runtime_tick(void) {
          * door reaches OPEN or CLOSED. */
         dispatcher.handlers[DM2_V1_TIMER_STEP_DOOR] =
             dm2_runtime_door_step_timer;
+        dispatcher.handlers[DM2_V1_TIMER_DESTROY_DOOR] =
+            dm2_runtime_destroy_door_timer;
+        if (rt->record_pools_valid) {
+            dispatcher.handlers[DM2_V1_TIMER_RELEASE_DOOR_BUTTON] =
+                dm2_runtime_release_door_button_timer;
+            dispatcher.handlers[DM2_V1_TIMER_PROCESS_59] =
+                dm2_runtime_process_timer_59;
+            dispatcher.handlers[DM2_V1_TIMER_5B_RECORD_CLEAR] =
+                dm2_runtime_5b_record_clear;
+            dispatcher.handlers[DM2_V1_TIMER_5C_RECORD_SET] =
+                dm2_runtime_5c_record_set;
+        }
         /* Lane B cycle 12: wire the DM2-007 spell-effect timer handlers
          * (light, aura/enchantment, poison, cloud, missile step, summon)
          * into the live DM2_PROCEED_TIMERS dispatch.  The dispatcher context

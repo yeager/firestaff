@@ -13,7 +13,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "NEXUS READY: gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260728-143827.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260728-143827.bmp",
+        "stderr": "NEXUS READY: gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260729-092430.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260729-092430.bmp",
         "stdout": "Nexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus sound: initialized (stub \u2014 no actual audio playback)\nSaturn font: 256 chars, 16x16, 24964 bytes\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso')\nNexus level 0: 64x64 Structure1B, payload=604 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus script VM: level 0 source=1 verified=1 bytes=2388 parser=task-header rules=0\nNexus sound: loaded level 0 SFX (SAL=297082 bytes, MAP=66 bytes)\nNexus music: CD track 2 (playing)\nNexus: CD track 2 for level 0\nNexus launcher: loaded level 0"
       },
       "id": "canonical_extracted_root",
@@ -25,7 +25,7 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260728-143827.bmp",
+          "name": "firestaff-presented-20260729-092430.bmp",
           "non_black_pixels": 35655,
           "sha256": "41979d5f516bcb55550103788d46e5ad6aff5dcc5f77847e4c5a8a594c62e7fe",
           "size": 1555254,
@@ -74,7 +74,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260728-143827.bmp",
+          "name": "firestaff-20260729-092430.bmp",
           "non_black_pixels": 22742,
           "sha256": "e8f229556eb95caff8ae589daf8dee02fe9d781ba21460b1ad47b39a452207d9",
           "size": 192054,
@@ -99,7 +99,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "NEXUS READY: gameId=nexus dataDir=<saturn_ja_track1_iso-data-dir>/Dungeon Master Nexus (Japan) (Track 1).bin\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260728-143830.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260728-143830.bmp",
+        "stderr": "NEXUS READY: gameId=nexus dataDir=<saturn_ja_track1_iso-data-dir>/Dungeon Master Nexus (Japan) (Track 1).bin\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260729-092432.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260729-092432.bmp",
         "stdout": "Nexus: opened disc image <saturn_ja_track1_iso-data-dir>/Dungeon Master Nexus (Japan) (Track 1).bin with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus sound: initialized (stub \u2014 no actual audio playback)\nSaturn font: 256 chars, 16x16, 24964 bytes\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<saturn_ja_track1_iso-data-dir>/Dungeon Master Nexus (Japan) (Track 1).bin')\nNexus level 0: 64x64 Structure1B, payload=604 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus script VM: level 0 source=1 verified=1 bytes=2388 parser=task-header rules=0\nNexus sound: loaded level 0 SFX (SAL=297082 bytes, MAP=66 bytes)\nNexus music: CD track 2 (playing)\nNexus: CD track 2 for level 0\nNexus launcher: loaded level 0"
       },
       "id": "saturn_ja_track1_iso",
@@ -111,7 +111,7 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260728-143830.bmp",
+          "name": "firestaff-presented-20260729-092432.bmp",
           "non_black_pixels": 26841,
           "sha256": "590e8aef39ae7f0a88bcbf41c8d5654f45c012cd65f4c71bef8f7ee633eebdbe",
           "size": 1555254,
@@ -160,7 +160,7 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260728-143830.bmp",
+          "name": "firestaff-20260729-092432.bmp",
           "non_black_pixels": 22094,
           "sha256": "958bfff0d8fe24493b28457f2748e762221353560c07c022373a3e9c5e9351c9",
           "size": 192054,
@@ -174,7 +174,7 @@
     }
   ],
   "firestaff": "build/firestaff",
-  "generated_at": "2026-07-28T12:38:22.271787+00:00",
+  "generated_at": "2026-07-29T07:24:29.231156+00:00",
   "non_claims": [
     "No public Nexus screenshot image is promoted.",
     "No generated or mock image is used.",

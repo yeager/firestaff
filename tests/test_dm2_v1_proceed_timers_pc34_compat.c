@@ -288,6 +288,90 @@ int main(void)
     CHECK(dm2_v1_proceed_timers(NULL, 0, &dispatcher, &receipt) == 0,
           "NULL queue rejected");
 
+    /* New timer types 0x02, 0x58, 0x59 route through handlers when bound. */
+    {
+        HandlerLog log2;
+        memset(&log2, 0, sizeof(log2));
+        log2.reject_type = -1;
+        memset(&dispatcher, 0, sizeof(dispatcher));
+        dispatcher.context = &log2;
+        dispatcher.handlers[DM2_V1_TIMER_DESTROY_DOOR] = logging_handler;
+        dispatcher.handlers[DM2_V1_TIMER_RELEASE_DOOR_BUTTON] = logging_handler;
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_59] = logging_handler;
+
+        dm2_v1_source_timer_queue_init(&queue);
+        memset(&receipt, 0, sizeof(receipt));
+        {
+            DM2_V1_SourceTimer t02 = mk_timer(10, 0, DM2_V1_TIMER_DESTROY_DOOR, 0);
+            DM2_V1_SourceTimer t58 = mk_timer(10, 0, DM2_V1_TIMER_RELEASE_DOOR_BUTTON, 0);
+            DM2_V1_SourceTimer t59 = mk_timer(10, 0, DM2_V1_TIMER_PROCESS_59, 0);
+            (void)dm2_v1_source_timer_enqueue(&queue, &t02, 0);
+            (void)dm2_v1_source_timer_enqueue(&queue, &t58, 1);
+            (void)dm2_v1_source_timer_enqueue(&queue, &t59, 2);
+        }
+        (void)dm2_v1_proceed_timers(&queue, 10, &dispatcher, &receipt);
+        CHECK(log2.count == 3,
+              "0x02/0x58/0x59 all dispatched through handlers");
+        CHECK(receipt.dispatched_count == 3,
+              "0x02/0x58/0x59 consumed count matches");
+        CHECK(receipt.type_tally[DM2_V1_TIMER_DESTROY_DOOR] == 1,
+              "0x02 tallied once");
+        CHECK(receipt.type_tally[DM2_V1_TIMER_RELEASE_DOOR_BUTTON] == 1,
+              "0x58 tallied once");
+        CHECK(receipt.type_tally[DM2_V1_TIMER_PROCESS_59] == 1,
+              "0x59 tallied once");
+    }
+
+    /* 0x5b and 0x5c route through handlers when bound. */
+    {
+        HandlerLog log3;
+        memset(&log3, 0, sizeof(log3));
+        log3.reject_type = -1;
+        memset(&dispatcher, 0, sizeof(dispatcher));
+        dispatcher.context = &log3;
+        dispatcher.handlers[DM2_V1_TIMER_5B_RECORD_CLEAR] = logging_handler;
+        dispatcher.handlers[DM2_V1_TIMER_5C_RECORD_SET] = logging_handler;
+
+        dm2_v1_source_timer_queue_init(&queue);
+        memset(&receipt, 0, sizeof(receipt));
+        {
+            DM2_V1_SourceTimer t5b = mk_timer(12, 0, DM2_V1_TIMER_5B_RECORD_CLEAR, 0);
+            DM2_V1_SourceTimer t5c = mk_timer(12, 0, DM2_V1_TIMER_5C_RECORD_SET, 0);
+            (void)dm2_v1_source_timer_enqueue(&queue, &t5b, 0);
+            (void)dm2_v1_source_timer_enqueue(&queue, &t5c, 1);
+        }
+        (void)dm2_v1_proceed_timers(&queue, 12, &dispatcher, &receipt);
+        CHECK(log3.count == 2, "0x5b/0x5c both dispatched");
+        CHECK(receipt.type_tally[DM2_V1_TIMER_5B_RECORD_CLEAR] == 1,
+              "0x5b tallied once");
+        CHECK(receipt.type_tally[DM2_V1_TIMER_5C_RECORD_SET] == 1,
+              "0x5c tallied once");
+    }
+
+    /* Without bound handlers, 0x02/0x58/0x59/0x5b/0x5c fail closed. */
+    {
+        dm2_v1_source_timer_queue_init(&queue);
+        memset(&dispatcher, 0, sizeof(dispatcher));
+        memset(&receipt, 0, sizeof(receipt));
+        {
+            DM2_V1_SourceTimer t02 = mk_timer(11, 0, DM2_V1_TIMER_DESTROY_DOOR, 0);
+            DM2_V1_SourceTimer t58 = mk_timer(11, 0, DM2_V1_TIMER_RELEASE_DOOR_BUTTON, 0);
+            DM2_V1_SourceTimer t59 = mk_timer(11, 0, DM2_V1_TIMER_PROCESS_59, 0);
+            DM2_V1_SourceTimer t5b = mk_timer(11, 0, DM2_V1_TIMER_5B_RECORD_CLEAR, 0);
+            DM2_V1_SourceTimer t5c = mk_timer(11, 0, DM2_V1_TIMER_5C_RECORD_SET, 0);
+            (void)dm2_v1_source_timer_enqueue(&queue, &t02, 0);
+            (void)dm2_v1_source_timer_enqueue(&queue, &t58, 1);
+            (void)dm2_v1_source_timer_enqueue(&queue, &t59, 2);
+            (void)dm2_v1_source_timer_enqueue(&queue, &t5b, 3);
+            (void)dm2_v1_source_timer_enqueue(&queue, &t5c, 4);
+        }
+        (void)dm2_v1_proceed_timers(&queue, 11, &dispatcher, &receipt);
+        CHECK(receipt.fail_closed_count == 5,
+              "0x02/0x58/0x59/0x5b/0x5c fail closed without handlers");
+        CHECK(receipt.dispatched_count == 0,
+              "none dispatched without handlers");
+    }
+
     CHECK(strstr(dm2_v1_proceed_timers_source_evidence(),
                  "c_tim_proc.cpp") != NULL,
           "source evidence cites c_tim_proc.cpp");
