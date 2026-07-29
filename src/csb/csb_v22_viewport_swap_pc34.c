@@ -77,7 +77,8 @@ static const CSB_V22_SwapShapeMapping kCSBV22SwapMappingTable[] = {
 
     /* Ceilings */
     { CSB_V22_SWAP_SHAPE_CEILING_PLAIN,     "floor_shapes", "ceiling_plain_01" },
-    { CSB_V22_SWAP_SHAPE_CEILING_VAULTED,   "floor_shapes", "ceiling_plain_01" }, /* placeholder */
+    /* A vaulted ceiling is not the plain-ceiling source route.  Keep its
+     * original F0128 pixels until a separately reviewed projection exists. */
 
     /* Creatures. Item variants intentionally have no mapping: V1 owns their
      * pixels until a reviewed CSB item-art family is available. */
@@ -86,7 +87,7 @@ static const CSB_V22_SwapShapeMapping kCSBV22SwapMappingTable[] = {
 
     /* Fields (CSB-only routing) */
     { CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER,     "floor_shapes", "field_teleporter_01" },
-    { CSB_V22_SWAP_SHAPE_FIELD_FLUXCAGE,       "floor_shapes", "field_chaos_rift_01" }, /* placeholder */
+    /* Fluxcage and chaos rift have different source semantics and timing. */
     { CSB_V22_SWAP_SHAPE_FIELD_EXPLOSION,      "floor_shapes", "field_explosion_01" },
     { CSB_V22_SWAP_SHAPE_FIELD_CHAOS_RIFT,     "floor_shapes", "field_chaos_rift_01" },
 

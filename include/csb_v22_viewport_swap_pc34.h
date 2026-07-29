@@ -36,12 +36,14 @@
  *   Floor CRACKED/MOSSY         -> floor_cracked_01
  *   Floor PIT                   -> floor_pit_01
  *   Stairs (up/down)            -> floor_stairs_01
- *   Ceiling PLAIN/VAULTED       -> ceiling_plain_01
+ *   Ceiling PLAIN               -> ceiling_plain_01
+ *   Ceiling VAULTED             -> source V1 until separately projected
  *   Creature (any)              -> creature_chaos_fiend_01
  *   Item (floor/projectile)     -> creature_chaos_fiend_01
  *   Door                        -> door_iron_portcullis_01
  *   Field TELEPORTER            -> field_teleporter_01
- *   Field FLUXCAGE/CHAOS_RIFT   -> field_chaos_rift_01
+ *   Field CHAOS_RIFT            -> field_chaos_rift_01
+ *   Field FLUXCAGE              -> source V1 until separately projected
  *   Field EXPLOSION             -> field_explosion_01
  *   UI chrome                   -> ui_panel_01
  *   UI portrait                 -> champion_warrior_csb

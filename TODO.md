@@ -130,7 +130,10 @@ an integration build pass.
   each original door command is drawn first, then only the matching complete
   pack surface may replace its exact clip before later F0115 overlays. D3 is
   included through its native F0791 receipt; every non-door route remains
-  source V1 until it has an equivalent receipt.
+  source V1 until it has an equivalent receipt. 2026-07-29: the dormant
+  per-cell mapper no longer aliases vaulted ceilings to plain ceilings or
+  fluxcages to chaos rifts. Both are explicitly source-V1 until their own
+  F0128 projection, palette and timing receipts exist.
 
 - **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Open 2026-07-29. The live F0128
   renderer owns V2.2 material selection and retains the authenticated original

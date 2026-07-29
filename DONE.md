@@ -1,3 +1,10 @@
+- ✅ 2026-07-29 CSB V2.2 source-route hardening: vaulted ceilings and
+  fluxcages no longer borrow plain-ceiling or chaos-rift V2.2 assets from
+  the dormant per-cell mapper. They remain on their original V1 F0128 route
+  until separately reviewed material, palette, timing and projection evidence
+  exists. The focused V2.2 viewport-swap regression proves both fail-closed
+  decisions.
+
 - ✅ 2026-07-29 CSB Atari/Amiga `MINI.DAT` launcher Resume and live HUD:
   M12 now
   classifies the original campaign-save basename as CSB and preserves the

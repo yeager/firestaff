@@ -140,6 +140,14 @@ static void test_asset_id_mapping_creatures_fields(void) {
     CHECK(strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FIELD_CHAOS_RIFT),
                  "field_chaos_rift_01") == 0,
           "FIELD_CHAOS_RIFT -> field_chaos_rift_01");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FIELD_FLUXCAGE) == NULL,
+          "FLUXCAGE stays source-owned rather than borrowing chaos-rift art");
+    CHECK(csb_v22_swap_category_for_shape(CSB_V22_SWAP_SHAPE_FIELD_FLUXCAGE) == NULL,
+          "FLUXCAGE has no modern category before a reviewed projection");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_CEILING_VAULTED) == NULL,
+          "VAULTED CEILING stays source-owned rather than borrowing plain-ceiling art");
+    CHECK(csb_v22_swap_category_for_shape(CSB_V22_SWAP_SHAPE_CEILING_VAULTED) == NULL,
+          "VAULTED CEILING has no modern category before a reviewed projection");
 }
 
 static void test_asset_id_mapping_csb_only_shapes(void) {
