@@ -584,6 +584,116 @@ static void test_indirect_local_variable_char_store(void)
           "STKOP_I_Indirect applies action-local DSAVARS before CHAR!");
 }
 
+static void test_monster_group_timer_and_item16_runtime_binding(void)
+{
+    uint8_t raw[144] = { 0 };
+    const uint16_t sensor = (uint16_t)(THING_TYPE_SENSOR << 10);
+    const uint16_t group = (uint16_t)(THING_TYPE_GROUP << 10);
+    uint16_t delete_words[] = {
+        0x0686u, 0u, 0x0686u, 0u, 0x17cbu
+    };
+    uint16_t insert_words[] = {
+        0x0686u, 0u, 0x0686u, 0x0fu, 0x180bu
+    };
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    CSB_V1_DSAImportedAction action;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 1;
+    dungeon.level_heights[0] = 1;
+    dungeon.level_offsets[0] = 80;
+    dungeon.square_bytes = 1;
+    dungeon.square_first_thing_base = 90;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[THING_TYPE_SENSOR] = 100;
+    dungeon.thing_type_counts[THING_TYPE_SENSOR] = 1;
+    dungeon.thing_data_bases[THING_TYPE_GROUP] = 108;
+    dungeon.thing_type_counts[THING_TYPE_GROUP] = 1;
+    raw[80] = 0x10u;
+    put_le16(raw, 60u, 0u);
+    put_le16(raw, 90u, sensor);
+    put_le16(raw, 100u, group);
+    put_le16(raw, 108u, THING_ENDOFLIST);
+    raw[112] = 3u;
+    raw[113] = 0x08u;
+    put_le16(raw, 114u, 0x0111u);
+    put_le16(raw, 116u, 0x0222u);
+    put_le16(raw, 122u, 0x0026u); /* Two creatures and CSBWin fear state. */
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.csbwin_extended_features_valid = 1;
+    profile.csbwin_body_runtime_summary_valid = 1;
+    profile.csbwin_item16_summary_count = 1u;
+    profile.csbwin_item16_summary_total = 1u;
+    profile.csbwin_item16[0].valid = 1;
+    profile.csbwin_item16[0].monster_index = group;
+    profile.csbwin_item16[0].current_x = 0u;
+    profile.csbwin_item16[0].current_y = 0u;
+    profile.csbwin_item16[0].single_monster_status[0] = 0x41u;
+    profile.csbwin_item16[0].single_monster_status[1] = 0x72u;
+    check(csb_v1_runtime_materialize_csbwin_item16_summaries(&profile) == 1,
+          "DELMON runtime fixture materializes its CSBWin ITEM16 owner");
+    profile.csbwin_timer_summary_count = 4u;
+    profile.csbwin_timer_summary_total = 4u;
+    profile.csbwin_max_timers = 4u;
+    profile.csbwin_num_timer = 2u;
+    profile.csbwin_timer_queue_summary_count = 2u;
+    profile.csbwin_timer_queue_summary_total = 2u;
+    profile.csbwin_timer_queue[0] = 0u;
+    profile.csbwin_timer_queue[1] = 1u;
+    profile.csbwin_first_avail_timer = 2u;
+    profile.csbwin_timers[0].valid = 1;
+    profile.csbwin_timers[0].source_index = 0u;
+    profile.csbwin_timers[0].time = 10u;
+    profile.csbwin_timers[0].function = 33u;
+    profile.csbwin_timers[0].level = 0u;
+    profile.csbwin_timers[1].valid = 1;
+    profile.csbwin_timers[1].source_index = 1u;
+    profile.csbwin_timers[1].time = 11u;
+    profile.csbwin_timers[1].function = 34u;
+    profile.csbwin_timers[1].level = 0u;
+    profile.csbwin_timers[2].function = DM1_EVENT_NONE;
+    profile.csbwin_timers[3].function = DM1_EVENT_NONE;
+    check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 2,
+          "DELMON runtime fixture materializes CSBWin A0/A1 timers");
+    configure_action(&action, delete_words,
+                     (int)(sizeof(delete_words) / sizeof(delete_words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner));
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id;
+    runner.state_index = action.state_index;
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 1 &&
+              ((raw[122] >> 5) & 3u) == 0u &&
+              profile.csbwin_num_timer == 1u &&
+              profile.timeline_queue.eventCount == 1 &&
+              profile.csbwin_timers[1].function == 33u &&
+              profile.csbwin_item16[0].single_monster_status[0] == 0x72u &&
+              profile.csbwin_runtime_item16[0].single_monster_status[0] ==
+                  0x72u,
+          "DELMON compacts C04, A/B timer ownership, and ITEM16 together");
+
+    configure_action(&action, insert_words,
+                     (int)(sizeof(insert_words) / sizeof(insert_words[0])));
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, NULL, 0, NULL) == 1 &&
+              ((raw[122] >> 5) & 3u) == 1u &&
+              profile.csbwin_num_timer == 2u &&
+              profile.timeline_queue.eventCount == 2 &&
+              profile.csbwin_item16[0].single_monster_status[1] == 0x72u &&
+              profile.csbwin_runtime_item16[0].single_monster_status[1] ==
+                  0x72u,
+          "INSMON clones source A0/B0 and ITEM16 state for the appended creature");
+}
+
 int main(void)
 {
     const uint16_t source = (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10);
@@ -617,6 +727,7 @@ int main(void)
     test_parameter_message_runtime_binding();
     test_indirect_local_variable_char_store();
     test_create_cloud_transaction();
+    test_monster_group_timer_and_item16_runtime_binding();
 
     memset(&dungeon, 0, sizeof(dungeon));
     dungeon.raw_data = raw;

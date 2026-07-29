@@ -1009,12 +1009,13 @@ that its exact runtime path is not already source-locked and tested.
     refuses deletion of the final creature, uses descriptor horizontal-size
     limits, compacts/copies raw health and cell data, and updates live group
     direction/aspect data. `I_DELMON` and `I_INSMON` are admitted through the
-    same `INDIRECT` expansion. The remaining tail is deliberately open under
-    CSB-DSA-MONSTER-WORLD: source `Monster.cpp` also deletes or clones the
-    matching per-creature A/B timer and copies ITEM16 status on the party
-    level. Firestaff rejects a feared/timer-owned deletion instead of
-    inventing a timer mutation; do not promote this bounded path to full
-    DSA-world coverage until those source owners are transactional.
+    same `INDIRECT` expansion. 2026-07-29: the runtime owner now mutates the
+    CSBWin TIMER heap, materialized timeline receipt and both ITEM16 forms as
+    one candidate transaction. `DELMON` retires the selected A/B timer,
+    renumbers later group timers and compacts `SINGLE_MONSTER_STATUS`;
+    `INSMON` duplicates A0/B0 and status 0 into the appended ordinal. A
+    malformed restored timer heap still rejects the whole action. Broader
+    DSA-world behavior remains under CSB-DSA-MONSTER-WORLD.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

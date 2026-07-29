@@ -42196,7 +42196,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   publish only after the complete action succeeds. The runtime uses loaded
   C04 group records, source horizontal-size limits and active-group state;
   it preserves no-group/no-room no-ops, refuses final-creature deletion, and
-  never substitutes a synthetic monster. The current bounded owner rejects
-  feared/timer-owned deletion until CSBWin `Monster.cpp`'s A/B timer and
-  ITEM16 status changes can be made transactionally. Focused stack rollback
-  coverage plus the complete CSB lane (98/98) and CSB V2.x lane (44/44) pass.
+  never substitutes a synthetic monster. 2026-07-29 follow-up completes the
+  coupled `Monster.cpp` timer/ITEM16 path: `DELMON` removes the selected
+  A/B TIMER, renumbers later timer functions and compacts both saved and live
+  ITEM16 status; `INSMON` duplicates A0/B0 and status 0 for the appended
+  creature. The action commits C04, TIMER, M10 timeline receipts and ITEM16
+  only after the candidate heap revalidates. Focused runtime coverage uses a
+  fear group with real C04 and A0/A1 ownership, plus stack rollback coverage.

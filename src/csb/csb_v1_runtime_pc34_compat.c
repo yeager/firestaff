@@ -217,6 +217,10 @@ static int csb_v1_runtime_csbwin_chest_weight_from_expool(
     int *out_weight);
 static int csb_v1_runtime_reheapify_live_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile);
+static int csb_v1_runtime_csbwin_timer_pool_counts_valid(
+    const CSB_V1_RuntimeProfile *profile);
+static int csb_v1_runtime_validate_csbwin_timer_heap(
+    const CSB_V1_RuntimeProfile *profile);
 static int csb_v1_runtime_replace_dispatched_csbwin_timer(
     CSB_V1_RuntimeProfile *profile,
     uint16_t consumed_queue_slot,
@@ -12763,10 +12767,254 @@ int csb_v1_runtime_f0178_group_cells_compact_receipt_pc34(
     return 1;
 }
 
-/* CSBWin Monster.cpp:4613-4850.  DELMON/INSMON are deliberately narrower
+/* CSBWin Monster.cpp:4613-4850 keeps ITEM16's per-creature status array in
+ * lock-step with a C04 group.  Do this for both the materialized live table
+ * and the original-save summary so a later SaveGame.cpp round-trip cannot
+ * resurrect a deleted creature's status byte. */
+static void csb_v1_runtime_dsa_mutate_monster_item16(
+    CSB_V1_RuntimeProfile *profile, uint16_t group_thing,
+    int level, int map_x, int map_y, int creature_index, int creature_count,
+    int insert_monster)
+{
+    uint16_t i;
+
+    if (!profile || creature_index < 0 || creature_index > 3 ||
+        creature_count < 1 || creature_count > 4) return;
+    for (i = 0u; i < profile->csbwin_runtime_item16_count; ++i) {
+        CSB_V1_CSBWinRuntimeItem16 *item =
+            &profile->csbwin_runtime_item16[i];
+        int j;
+
+        if (!item->valid ||
+            csb_v1_runtime_csbwin_item16_group_thing(item->monster_index) !=
+                group_thing ||
+            (item->live_ai_owned &&
+             (item->live_ai_map_index != level ||
+              item->live_ai_map_x != map_x || item->live_ai_map_y != map_y))) {
+            continue;
+        }
+        if (insert_monster) {
+            item->single_monster_status[creature_count] =
+                item->single_monster_status[0];
+        } else {
+            for (j = creature_index; j < creature_count - 1; ++j) {
+                item->single_monster_status[j] =
+                    item->single_monster_status[j + 1];
+            }
+            item->single_monster_status[creature_count - 1] = 0u;
+        }
+    }
+    if (!profile->csbwin_body_runtime_summary_valid) return;
+    for (i = 0u; i < profile->csbwin_item16_summary_count; ++i) {
+        CSB_V1_CSBWin512Item16Summary *item = &profile->csbwin_item16[i];
+        int j;
+
+        if (!item->valid ||
+            csb_v1_runtime_csbwin_item16_group_thing(item->monster_index) !=
+                group_thing ||
+            item->current_x != (uint8_t)map_x ||
+            item->current_y != (uint8_t)map_y) {
+            continue;
+        }
+        if (insert_monster) {
+            item->single_monster_status[creature_count] =
+                item->single_monster_status[0];
+        } else {
+            for (j = creature_index; j < creature_count - 1; ++j) {
+                item->single_monster_status[j] =
+                    item->single_monster_status[j + 1];
+            }
+            item->single_monster_status[creature_count - 1] = 0u;
+        }
+    }
+}
+
+/* Timer.cpp DeleteTimer/SetTimer preserve one heap handle per live TIMER.
+ * DELMON removes the killed creature's A/B timer and renumbers later ones;
+ * INSMON duplicates A0/B0 for the newly appended creature.  The CSB runtime
+ * mirrors those changes into the materialized M10 queue before rebuilding
+ * Timer.cpp ordering and source queue-slot receipts. */
+static int csb_v1_runtime_dsa_mutate_monster_timers(
+    CSB_V1_RuntimeProfile *profile, int level, int map_x, int map_y,
+    int creature_index, int creature_count, int insert_monster)
+{
+    uint16_t queue_slot;
+
+    if (!profile || !profile->csbwin_body_runtime_summary_valid) return 1;
+    if (!csb_v1_runtime_csbwin_timer_pool_counts_valid(profile) ||
+        !csb_v1_runtime_validate_csbwin_timer_heap(profile) ||
+        profile->timeline_queue.eventCount !=
+            (int)profile->csbwin_num_timer) {
+        return 0;
+    }
+
+    if (insert_monster) {
+        uint16_t source_timer_index = CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+        uint16_t timer_index;
+        uint16_t next_free;
+        CSB_V1_CSBWin512TimerSummary timer;
+        struct DM1_Event_V1 event;
+        int event_index;
+
+        for (queue_slot = 0u; queue_slot < profile->csbwin_num_timer;
+             ++queue_slot) {
+            uint16_t candidate = profile->csbwin_timer_queue[queue_slot];
+            const CSB_V1_CSBWin512TimerSummary *source;
+            if (candidate >= profile->csbwin_timer_summary_count) return 0;
+            source = &profile->csbwin_timers[candidate];
+            if (!source->valid || source->truncated) return 0;
+            if (source->level == (uint8_t)level &&
+                source->ubyte6 == (uint8_t)map_x &&
+                source->ubyte7 == (uint8_t)map_y &&
+                (source->function == 33u || source->function == 38u)) {
+                source_timer_index = candidate;
+                break;
+            }
+        }
+        /* A group with no active A0/B0 owner has nothing to duplicate. */
+        if (source_timer_index == CSB_V1_CSBWIN_TIMER_QUEUE_NONE) return 1;
+        if (profile->csbwin_num_timer >= profile->csbwin_max_timers ||
+            profile->csbwin_num_timer >=
+                CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
+            profile->timeline_queue.eventCount >= DM1_EVENT_MAX_COUNT) {
+            return 0;
+        }
+        next_free = profile->csbwin_first_avail_timer;
+        while (next_free < profile->csbwin_max_timers &&
+               profile->csbwin_timers[next_free].function != DM1_EVENT_NONE) {
+            ++next_free;
+        }
+        if (next_free >= profile->csbwin_max_timers) return 0;
+        timer = profile->csbwin_timers[source_timer_index];
+        timer.function = (uint8_t)(timer.function + creature_count);
+        timer.source_index = next_free;
+        timer.sequence = profile->csbwin_timer_sequence++;
+        memset(&event, 0, sizeof(event));
+        event.map_time = timer.time;
+        event.type = timer.function;
+        event.priority = timer.ubyte5;
+        event.b_mapX = timer.ubyte6;
+        event.b_mapY = timer.ubyte7;
+        event.c_cell = timer.ubyte8;
+        event.c_effect = timer.ubyte9;
+        event_index = csb_v1_runtime_add_timeline_event(profile, &event);
+        if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
+        timer_index = next_free;
+        profile->csbwin_timers[timer_index] = timer;
+        profile->csbwin_timer_queue[profile->csbwin_num_timer] = timer_index;
+        profile->csbwin_timeline_event_queue_slot[event_index] =
+            profile->csbwin_num_timer;
+        ++profile->csbwin_num_timer;
+        ++profile->csbwin_timer_queue_summary_count;
+        profile->csbwin_timer_queue_summary_total =
+            profile->csbwin_timer_queue_summary_count;
+        next_free = (uint16_t)(timer_index + 1u);
+        while (next_free < profile->csbwin_max_timers &&
+               profile->csbwin_timers[next_free].function != DM1_EVENT_NONE) {
+            ++next_free;
+        }
+        profile->csbwin_first_avail_timer = next_free;
+        return csb_v1_runtime_reheapify_live_csbwin_timer_queue(profile);
+    }
+
+    queue_slot = 0u;
+    while (queue_slot < profile->csbwin_num_timer) {
+        uint16_t timer_index = profile->csbwin_timer_queue[queue_slot];
+        CSB_V1_CSBWin512TimerSummary *timer;
+        int timer_creature = -1;
+        int event_index = -1;
+        uint16_t event_ordinal;
+        uint16_t last_queue_slot;
+
+        if (timer_index >= profile->csbwin_timer_summary_count) return 0;
+        timer = &profile->csbwin_timers[timer_index];
+        if (!timer->valid || timer->truncated) return 0;
+        if (timer->level == (uint8_t)level &&
+            timer->ubyte6 == (uint8_t)map_x &&
+            timer->ubyte7 == (uint8_t)map_y) {
+            if (timer->function >= 33u && timer->function <= 36u) {
+                timer_creature = (int)(timer->function - 33u);
+            } else if (timer->function >= 38u && timer->function <= 41u) {
+                timer_creature = (int)(timer->function - 38u);
+            }
+        }
+        if (timer_creature < 0) {
+            ++queue_slot;
+            continue;
+        }
+        if (timer_creature > creature_index) {
+            uint16_t ordinal;
+            --timer->function;
+            /* DeleteMonsterInGroup changes the source timer function before
+             * AdjustTimerPriority. Keep the materialized EVENT identity in
+             * sync so the later heap/receipt rebuild still proves the same
+             * TIMER slot. */
+            for (ordinal = 0u;
+                 ordinal < (uint16_t)profile->timeline_queue.eventCount;
+                 ++ordinal) {
+                int event_index = profile->timeline_queue.timeline[ordinal];
+                if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT &&
+                    profile->csbwin_timeline_event_queue_slot[event_index] ==
+                        queue_slot) {
+                    profile->timeline_queue.events[event_index].type =
+                        timer->function;
+                    break;
+                }
+            }
+            if (ordinal >= (uint16_t)profile->timeline_queue.eventCount) {
+                return 0;
+            }
+            ++queue_slot;
+            continue;
+        }
+        if (timer_creature != creature_index) {
+            ++queue_slot;
+            continue;
+        }
+        for (event_ordinal = 0u;
+             event_ordinal < (uint16_t)profile->timeline_queue.eventCount;
+             ++event_ordinal) {
+            int candidate = profile->timeline_queue.timeline[event_ordinal];
+            if (candidate >= 0 && candidate < DM1_EVENT_MAX_COUNT &&
+                profile->csbwin_timeline_event_queue_slot[candidate] ==
+                    queue_slot) {
+                event_index = candidate;
+                break;
+            }
+        }
+        if (event_index < 0 ||
+            !dm1v1_event_delete(&profile->timeline_queue, event_index)) {
+            return 0;
+        }
+        profile->csbwin_timeline_event_queue_slot[event_index] =
+            CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+        timer->function = DM1_EVENT_NONE;
+        last_queue_slot = (uint16_t)(profile->csbwin_num_timer - 1u);
+        if (queue_slot != last_queue_slot) {
+            uint16_t i;
+            profile->csbwin_timer_queue[queue_slot] =
+                profile->csbwin_timer_queue[last_queue_slot];
+            for (i = 0u; i < DM1_EVENT_MAX_COUNT; ++i) {
+                if (profile->csbwin_timeline_event_queue_slot[i] ==
+                    last_queue_slot) {
+                    profile->csbwin_timeline_event_queue_slot[i] = queue_slot;
+                }
+            }
+        }
+        --profile->csbwin_num_timer;
+        --profile->csbwin_timer_queue_summary_count;
+        profile->csbwin_timer_queue_summary_total =
+            profile->csbwin_timer_queue_summary_count;
+        if (timer_index < profile->csbwin_first_avail_timer) {
+            profile->csbwin_first_avail_timer = timer_index;
+        }
+    }
+    return csb_v1_runtime_reheapify_live_csbwin_timer_queue(profile);
+}
+
+/* CSBWin Monster.cpp:4613-4850. DELMON/INSMON are deliberately narrower
  * than F0190: the source does not kill the group, drop possessions, or make
- * smoke.  A live source timer which must be deleted/duplicated is rejected
- * until its exact Timer.cpp owner can be changed transactionally. */
+ * smoke.  TIMER and ITEM16 ownership is updated transactionally with C04. */
 static int csb_v1_runtime_dsa_mutate_monster_group(
     void *user, uint32_t location, uint32_t operand, int insert_monster)
 {
@@ -12802,8 +13050,8 @@ static int csb_v1_runtime_dsa_mutate_monster_group(
     if (!insert_monster) {
         int index = (int)operand;
         if (operand > 3u || count <= 1 || index >= count) return 1;
-        /* Fear groups own per-creature A/B timers in CSBWin. */
-        if ((flags & 0x000fu) == 6u) return 0;
+        if (!csb_v1_runtime_dsa_mutate_monster_timers(
+                profile, level, map_x, map_y, index, count, 0)) return 0;
         for (i = index; i < count - 1; ++i) {
             csb_v1_runtime_write_u16(record + 6 + i * 2,
                 csb_v1_runtime_read_u16(record + 8 + i * 2));
@@ -12824,6 +13072,8 @@ static int csb_v1_runtime_dsa_mutate_monster_group(
         flags = (uint16_t)((flags & ~(uint16_t)(3u << 5)) |
             (uint16_t)((count - 2) << 5));
         csb_v1_runtime_write_u16(record + 14, flags);
+        csb_v1_runtime_dsa_mutate_monster_item16(
+            profile, group_thing, level, map_x, map_y, index, count, 0);
         return 1;
     }
 
@@ -12850,6 +13100,8 @@ static int csb_v1_runtime_dsa_mutate_monster_group(
             new_cell = i; break;
         }
         if (new_cell < 0) return 1;
+        if (!csb_v1_runtime_dsa_mutate_monster_timers(
+                profile, level, map_x, map_y, 0, count, 1)) return 0;
         record[5] = (uint8_t)csb_v1_runtime_group_cells_set_value(
             record[5], count, new_cell);
         csb_v1_runtime_write_u16(record + 6 + count * 2,
@@ -12864,6 +13116,8 @@ static int csb_v1_runtime_dsa_mutate_monster_group(
         flags = (uint16_t)((flags & ~(uint16_t)(3u << 5)) |
             (uint16_t)(count << 5));
         csb_v1_runtime_write_u16(record + 14, flags);
+        csb_v1_runtime_dsa_mutate_monster_item16(
+            profile, group_thing, level, map_x, map_y, 0, count, 1);
         return 1;
     }
 }
@@ -26828,6 +27082,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     uint32_t random_state_after;
     int text_message_changed;
     int parameter_message_changed;
+    int monster_group_mutation_changed;
     uint16_t parameter_message_timer_sequence_before;
     uint8_t parameter_message_sequence_before;
     CSB_V1_RuntimeTextMessageReceipt text_message_before;
@@ -27270,6 +27525,18 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         free(dungeon_raw_candidate);
         return 0;
     }
+    monster_group_mutation_changed =
+        candidate.last_execution.monster_group_mutation_count != 0u;
+    if (monster_group_mutation_changed &&
+        (candidate.last_execution.monster_group_mutation_count != 1u ||
+         (profile_candidate.csbwin_body_runtime_summary_valid &&
+          (!csb_v1_runtime_csbwin_timer_pool_counts_valid(&profile_candidate) ||
+           !csb_v1_runtime_validate_csbwin_timer_heap(&profile_candidate) ||
+           profile_candidate.timeline_queue.eventCount !=
+               (int)profile_candidate.csbwin_num_timer)))) {
+        free(dungeon_raw_candidate);
+        return 0;
+    }
     if (candidate.last_execution.wing_talents_store_count != 0u) {
         uint32_t before_talents = 0u;
         uint32_t after_talents = 0u;
@@ -27604,6 +27871,34 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             profile_candidate.csbwin_timer_queue_summary_count;
         profile->csbwin_timer_queue_summary_total =
             profile_candidate.csbwin_timer_queue_summary_total;
+    }
+    if (monster_group_mutation_changed) {
+        /* Monster.cpp's DELMON/INSMON mutates C04, ITEM16 and TIMER as one
+         * source transaction. Publish the complete candidate ownership set
+         * only after the timer heap and materialized timeline re-validated. */
+        profile->timeline_queue = profile_candidate.timeline_queue;
+        memcpy(profile->csbwin_timers, profile_candidate.csbwin_timers,
+               sizeof(profile->csbwin_timers));
+        memcpy(profile->csbwin_timer_queue,
+               profile_candidate.csbwin_timer_queue,
+               sizeof(profile->csbwin_timer_queue));
+        memcpy(profile->csbwin_timeline_event_queue_slot,
+               profile_candidate.csbwin_timeline_event_queue_slot,
+               sizeof(profile->csbwin_timeline_event_queue_slot));
+        profile->csbwin_num_timer = profile_candidate.csbwin_num_timer;
+        profile->csbwin_first_avail_timer =
+            profile_candidate.csbwin_first_avail_timer;
+        profile->csbwin_timer_sequence =
+            profile_candidate.csbwin_timer_sequence;
+        profile->csbwin_timer_queue_summary_count =
+            profile_candidate.csbwin_timer_queue_summary_count;
+        profile->csbwin_timer_queue_summary_total =
+            profile_candidate.csbwin_timer_queue_summary_total;
+        memcpy(profile->csbwin_item16, profile_candidate.csbwin_item16,
+               sizeof(profile->csbwin_item16));
+        memcpy(profile->csbwin_runtime_item16,
+               profile_candidate.csbwin_runtime_item16,
+               sizeof(profile->csbwin_runtime_item16));
     }
     if (expool_changed) {
         memcpy(profile->csbwin_appended_tail,
