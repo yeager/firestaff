@@ -578,7 +578,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 59u: case 67u: case 68u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
     case 133u: case 136u: case 139u:
         return 1;
-    case 8u: case 33u: case 34u: case 35u: case 36u: case 42u: case 44u: case 45u:
+    case 8u: case 9u: case 33u: case 34u: case 35u: case 36u: case 42u: case 44u: case 45u:
     case 46u: case 49u: case 51u: case 52u: case 53u: case 54u: case 55u:
     case 56u: case 57u: case 58u: case 60u: case 62u: case 63u: case 64u: case 65u:
     case 66u: case 69u: case 71u: case 72u: case 73u: case 74u: case 75u: case 76u:
@@ -623,6 +623,7 @@ csb_v1_csbwin_dsa_expand_indirect(uint32_t *stack, int *depth,
         return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     }
     switch (parameters[0]) {
+    case 79u: direct_subcode = 9u; break;   /* I_Del -> Del */
     case 84u: direct_subcode = 63u; break;  /* I_Monster! -> Monster! */
     case 85u: direct_subcode = 66u; break;  /* I_Char! -> Char! */
     case 86u: direct_subcode = 73u; break;  /* I_Move -> Move */
@@ -837,6 +838,7 @@ static int csb_v1_csbwin_dsa_subcode_is_dungeon_mutation(uint16_t subcode)
 {
     switch (subcode) {
     case 33u:  /* STKOP_FalsePit */
+    case 9u:   /* STKOP_Del */
     case 34u:  /* STKOP_GeneratorDelayStore */
     case 45u:  /* STKOP_StoreExCellFlg */
     case 52u:  /* STKOP_SetCurse */
@@ -1412,6 +1414,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_PARTY_TELEPORTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_MONSTER_GROUP_MUTATIONS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_OBJECT_MOVES 100
+#define CSB_V1_CSBWIN_DSA_PENDING_OBJECT_DELETES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS 100
@@ -1519,6 +1522,11 @@ typedef struct {
     uint32_t destination_location;
     uint32_t destination_depth;
 } CSB_V1_CSBWinDSAPendingObjectMove;
+
+typedef struct {
+    uint32_t object;
+    int32_t location;
+} CSB_V1_CSBWinDSAPendingObjectDelete;
 
 typedef struct {
     uint16_t thing;
@@ -1696,6 +1704,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *pending_monster_group_mutation_count,
     CSB_V1_CSBWinDSAPendingObjectMove *pending_object_moves,
     int *pending_object_move_count,
+    CSB_V1_CSBWinDSAPendingObjectDelete *pending_object_deletes,
+    int *pending_object_delete_count,
     CSB_V1_CSBWinDSAPendingActuatorCopy *pending_actuator_copies,
     int *pending_actuator_copy_count,
     CSB_V1_CSBWinDSAPendingSoundRequest *pending_sound_requests,
@@ -1752,6 +1762,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_party_teleports || !pending_party_teleport_count ||
         !pending_monster_group_mutations || !pending_monster_group_mutation_count ||
         !pending_object_moves || !pending_object_move_count ||
+        !pending_object_deletes || !pending_object_delete_count ||
         !pending_actuator_copies || !pending_actuator_copy_count ||
         !pending_sound_requests || !pending_sound_request_count ||
         !adjust_skills_parameters_requested || !pending_adjust_skills_parameters ||
@@ -1777,6 +1788,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_party_teleport_count < 0 ||
         *pending_monster_group_mutation_count < 0 ||
         *pending_object_move_count < 0 ||
+        *pending_object_delete_count < 0 ||
         *pending_actuator_copy_count < 0 ||
         *pending_say_text_request_count < 0 ||
         *pending_display_text_request_count < 0 ||
@@ -1788,6 +1800,17 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
+    case 9u: /* STKOP_Del, CSBWin DSA.cpp:1646-1741. */
+        if (!context->delete_object ||
+            *pending_object_delete_count >= CSB_V1_CSBWIN_DSA_PENDING_OBJECT_DELETES ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_object_deletes[*pending_object_delete_count].location = (int32_t)v;
+        pending_object_deletes[*pending_object_delete_count].object = w;
+        ++*pending_object_delete_count;
+        break;
     case 1u: /* STKOP_Plus */
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
@@ -3819,6 +3842,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         CSB_V1_CSBWIN_DSA_PENDING_MONSTER_GROUP_MUTATIONS];
     CSB_V1_CSBWinDSAPendingObjectMove
         pending_object_moves[CSB_V1_CSBWIN_DSA_PENDING_OBJECT_MOVES];
+    CSB_V1_CSBWinDSAPendingObjectDelete
+        pending_object_deletes[CSB_V1_CSBWIN_DSA_PENDING_OBJECT_DELETES];
     CSB_V1_CSBWinDSAPendingActuatorCopy
         pending_actuator_copies[CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES];
     CSB_V1_CSBWinDSAPendingSoundRequest
@@ -3860,6 +3885,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_party_teleport_count = 0;
     int pending_monster_group_mutation_count = 0;
     int pending_object_move_count = 0;
+    int pending_object_delete_count = 0;
     int pending_actuator_copy_count = 0;
     int pending_sound_request_count = 0;
     int discard_text_requested = 0;
@@ -4469,6 +4495,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     pending_monster_group_mutations,
                     &pending_monster_group_mutation_count,
                     pending_object_moves, &pending_object_move_count,
+                    pending_object_deletes, &pending_object_delete_count,
                     pending_actuator_copies,
                     &pending_actuator_copy_count, pending_sound_requests,
                     &pending_sound_request_count, &discard_text_requested,
@@ -4753,6 +4780,13 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_object_moves[i].destination_position_mask,
                 pending_object_moves[i].destination_location,
                 pending_object_moves[i].destination_depth)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+    }
+    for (i = 0; i < pending_object_delete_count; ++i) {
+        if (!context->delete_object || !context->delete_object(
+                context->dungeon_user, pending_object_deletes[i].object,
+                pending_object_deletes[i].location)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
     }
@@ -5177,6 +5211,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.teleport_party = runner->teleport_party;
     context.mutate_monster_group = runner->mutate_monster_group;
     context.move_object = runner->move_object;
+    context.delete_object = runner->delete_object;
     context.discard_text = runner->discard_text;
     context.play_sound = runner->play_sound;
     context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;

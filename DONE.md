@@ -42232,3 +42232,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   endpoints remain explicitly open. Multi-position `STRandom` now consumes
   the staged GAMEBLOCK2 LCG state, and `I_MOVE` uses the identical
   parameter-backed source transaction.
+- ✅ 2026-07-29 CSBWin DSA `STKOP_Del` / `STKOP_I_Del`: authenticated DSA
+  now stages the original `(object, location)` request until its full program
+  has been consumed. The real PC3.4 cell owner unlinks supported DB3/DB5/
+  DB7/DB8/DB10 Things and returns the raw record to F0166 using the original
+  free sentinel. Focused tests cover operand order, indirect expansion,
+  rollback, core ownership and byte-map publication. Cursor/champion and
+  chained-record locations remain explicitly fail-closed.

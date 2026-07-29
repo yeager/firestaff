@@ -194,6 +194,8 @@ static int csb_v1_runtime_dsa_move_object(
     uint32_t source_depth, int32_t destination_type,
     uint32_t destination_object_mask, uint32_t destination_position_mask,
     uint32_t destination_location, uint32_t destination_depth);
+static int csb_v1_runtime_dsa_delete_object(
+    void *user, uint32_t object, int32_t location);
 static int csb_v1_runtime_dsa_get_object_property(
     void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
     uint32_t *out_value);
@@ -7009,6 +7011,66 @@ static int csb_v1_runtime_dsa_move_object(
     } else {
         csb_v1_runtime_write_u16(destination_first, moved);
     }
+    return 1;
+}
+
+/* CSBWin DSA.cpp EX_DEL deletes only cell-resident actuators and ordinary
+ * misc/potion/weapon/clothing records.  The source marks the selected DB
+ * entry free after unlinking it; raw PC3.4 F0166 then observes the `0xffff`
+ * next-word sentinel as an available record. */
+static int csb_v1_runtime_dsa_delete_object(
+    void *user, uint32_t object, int32_t location)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_DungeonData *dungeon;
+    uint16_t current;
+    uint16_t previous = THING_NONE;
+    uint8_t *first;
+    uint8_t *record;
+    int level;
+    int map_x;
+    int map_y;
+    int type;
+    int size;
+    int guard;
+
+    if (!profile || !(dungeon = profile->dungeon_handle) ||
+        !dungeon->raw_data || location < 0 || object > UINT16_MAX) {
+        return 0;
+    }
+    level = (location >> 10) & 0x3f;
+    map_x = (location >> 5) & 0x1f;
+    map_y = location & 0x1f;
+    if (level < 0 || level >= dungeon->level_count ||
+        csb_v1_dungeon_get_raw_square(dungeon, level, map_x, map_y) < 0) {
+        return 1;
+    }
+    first = csb_v1_runtime_square_first_thing_ptr(dungeon, level, map_x, map_y);
+    if (!first) return 1;
+    current = csb_v1_runtime_read_u16(first);
+    for (guard = 0; guard < 128 && current != THING_NONE &&
+         current != THING_ENDOFLIST; ++guard) {
+        record = csb_v1_runtime_mutable_thing_record(dungeon, current, &type, &size);
+        if (!record || size < 2) return 0;
+        if (current == (uint16_t)object) break;
+        previous = current;
+        current = csb_v1_runtime_read_u16(record);
+    }
+    if (guard == 128) return 0;
+    if (current == THING_NONE || current == THING_ENDOFLIST) return 1;
+    if (type != CSB_V1_THING_TYPE_ACTUATOR && type != 5 && type != 7 &&
+        type != 8 && type != 10) {
+        return 1;
+    }
+    if (previous == THING_NONE) {
+        csb_v1_runtime_write_u16(first, csb_v1_runtime_read_u16(record));
+    } else {
+        uint8_t *previous_record = csb_v1_runtime_mutable_thing_record(
+            dungeon, previous, NULL, &size);
+        if (!previous_record || size < 2) return 0;
+        csb_v1_runtime_write_u16(previous_record, csb_v1_runtime_read_u16(record));
+    }
+    csb_v1_runtime_write_u16(record, THING_NONE);
     return 1;
 }
 
@@ -27179,6 +27241,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.teleport_party = csb_v1_runtime_dsa_teleport_party;
     candidate.mutate_monster_group = csb_v1_runtime_dsa_mutate_monster_group;
     candidate.move_object = csb_v1_runtime_dsa_move_object;
+    candidate.delete_object = csb_v1_runtime_dsa_delete_object;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
@@ -27425,6 +27488,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.teleport_party = csb_v1_runtime_dsa_teleport_party;
     candidate.mutate_monster_group = csb_v1_runtime_dsa_mutate_monster_group;
     candidate.move_object = csb_v1_runtime_dsa_move_object;
+    candidate.delete_object = csb_v1_runtime_dsa_delete_object;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;

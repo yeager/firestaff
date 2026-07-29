@@ -419,6 +419,10 @@ typedef int (*CSB_V1_CSBWinDSAMoveObjectFn)(
     uint32_t source_depth, int32_t destination_type,
     uint32_t destination_object_mask, uint32_t destination_position_mask,
     uint32_t destination_location, uint32_t destination_depth);
+/* DSA.cpp EX_DEL queues a source RN and location.  The loaded runtime owns
+ * the actual unlink/free-list record mutation, after complete action accept. */
+typedef int (*CSB_V1_CSBWinDSADeleteObjectFn)(
+    void *user, uint32_t object, int32_t location);
 typedef int (*CSB_V1_CSBWinDSADiscardTextFn)(void *user);
 typedef int (*CSB_V1_CSBWinDSAPlaySoundFn)(
     void *user, int32_t sound_number, int32_t volume, int32_t flags);
@@ -617,6 +621,7 @@ typedef struct {
     CSB_V1_CSBWinDSATeleportPartyFn teleport_party;
     CSB_V1_CSBWinDSAMutateMonsterGroupFn mutate_monster_group;
     CSB_V1_CSBWinDSAMoveObjectFn move_object;
+    CSB_V1_CSBWinDSADeleteObjectFn delete_object;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;
@@ -1054,6 +1059,7 @@ typedef struct {
     CSB_V1_CSBWinDSATeleportPartyFn teleport_party;
     CSB_V1_CSBWinDSAMutateMonsterGroupFn mutate_monster_group;
     CSB_V1_CSBWinDSAMoveObjectFn move_object;
+    CSB_V1_CSBWinDSADeleteObjectFn delete_object;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;

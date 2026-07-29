@@ -971,9 +971,9 @@ that its exact runtime path is not already source-locked and tested.
     filters, state transitions, and runtime mutation with hard fail-closed
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
-    remaining 21 fully unowned stack words: `DEL`, `ADD`, `CAST`,
+    remaining 19 fully unowned stack words: `ADD`, `CAST`,
     `FILTEREDCAST`, `THROW`,
-    the `I_*` indirect family (`DEL/ADD/CAST/MONSTER!/
+    the `I_*` indirect family (`ADD/CAST/MONSTER!/
     CHAR!/COPY/CELL!/THROW/DELAY/CAUSEPOISON/
     FILTEREDCAST/SWAPCHARACTER`). `SAY` is now
     source-owned and transactional; the listed operations still require one
@@ -1031,6 +1031,11 @@ that its exact runtime path is not already source-locked and tested.
     now consumes the candidate GAMEBLOCK2 `STRandom` state before commit;
     cursor, character, monster and chest endpoints remain open rather
     than being routed through a synthetic cell substitute.
+    2026-07-29: direct `DEL` and `I_DEL` now stage CSBWin's exact
+    `(object,location)` operands. Their loaded PC3.4 cell owner unlinks only
+    source-supported DB3/DB5/DB7/DB8/DB10 Things and restores the record's
+    F0166 free sentinel after full-action acceptance. Cursor and champion
+    possession, plus unsupported chained record types, remain fail-closed.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

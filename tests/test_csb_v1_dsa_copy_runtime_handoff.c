@@ -116,6 +116,73 @@ typedef struct {
     uint32_t destination_depth;
 } MoveStore;
 
+typedef struct {
+    int calls;
+    uint32_t object;
+    int32_t location;
+} DeleteStore;
+
+static int commit_delete(void *user, uint32_t object, int32_t location)
+{
+    DeleteStore *store = user;
+    if (!store) return 0;
+    ++store->calls;
+    store->object = object;
+    store->location = location;
+    return 1;
+}
+
+static void test_delete_transaction(void)
+{
+    uint16_t words[] = { 0x0686u, 0x1400u, 0x0686u, 0x0020u, 0x024bu };
+    uint16_t rollback_words[] = {
+        0x0686u, 0x1400u, 0x0686u, 0x0020u, 0x024bu, 0u
+    };
+    uint16_t indirect_words[] = { 0x168bu };
+    uint32_t indirect_parameters[] = { 79u, 2u, 0x0020u, 0x1400u, 0u, 0u };
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    DeleteStore store;
+
+    memset(&state, 0, sizeof(state));
+    memset(&context, 0, sizeof(context));
+    memset(&store, 0, sizeof(store));
+    configure_action(&action, words, (int)(sizeof(words) / sizeof(words[0])));
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+    context.delete_object = commit_delete;
+    context.dungeon_user = &store;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 1 &&
+              store.object == 0x1400u && store.location == 0x0020,
+          "STKOP_Del commits the exact CSBWin object and location after acceptance");
+
+    configure_action(&action, indirect_words,
+                     (int)(sizeof(indirect_words) / sizeof(indirect_words[0])));
+    context.parameters = indirect_parameters;
+    context.parameter_count = (int)(sizeof(indirect_parameters) /
+                                    sizeof(indirect_parameters[0]));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 1 &&
+              store.object == 0x1400u && store.location == 0x0020,
+          "STKOP_I_Del expands through the same source-owned transaction");
+    context.parameters = NULL;
+    context.parameter_count = 0;
+
+    configure_action(&action, rollback_words,
+                     (int)(sizeof(rollback_words) / sizeof(rollback_words[0])));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) != CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 0,
+          "STKOP_Del rolls back when a later source word is rejected");
+}
+
 static int commit_move(void *user, int32_t source_type,
                        uint32_t source_object_mask,
                        uint32_t source_position_mask,
@@ -735,6 +802,56 @@ static void test_move_runtime_cell_owner(void)
           "STKOP_Move commits a loaded PC3.4 cell object with the requested position");
 }
 
+static void test_delete_runtime_cell_owner(void)
+{
+    uint8_t raw[80] = { 0 };
+    uint16_t words[] = { 0x0686u, 0x1400u, 0x0686u, 0u, 0x024bu };
+    CSB_V1_DungeonData dungeon;
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    raw[60] = 0u; raw[61] = 0u;
+    raw[64] = 0x10u;
+    put_le16(raw, 66u, 0x1400u);
+    put_le16(raw, 70u, 0xfffeu);
+    put_le16(raw, 72u, 0u);
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 1;
+    dungeon.level_heights[0] = 1;
+    dungeon.level_offsets[0] = 64;
+    dungeon.square_bytes = 1;
+    dungeon.square_first_thing_base = 66;
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_data_bases[5] = 70;
+    dungeon.thing_type_counts[5] = 1;
+
+    csb_v1_runtime_init(&profile, NULL);
+    profile.dungeon_handle = &dungeon;
+    profile.csbwin_extended_features_valid = 1;
+    configure_action(&action, words, (int)(sizeof(words) / sizeof(words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner));
+    runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id;
+    runner.state_index = action.state_index;
+    memset(&core, 0, sizeof(core));
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &profile.csbwin_extended_dsa_state, action.dsa_id,
+              action.state_index, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.requires_runtime_owner &&
+              csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, &action, NULL, 0, NULL) == 1 &&
+              raw[66] == 0xfeu && raw[67] == 0xffu &&
+              raw[70] == 0xffu && raw[71] == 0xffu,
+          "STKOP_Del unlinks a loaded PC3.4 object and returns its DB record to F0166");
+}
+
 static void test_indirect_local_variable_char_store(void)
 {
     /* CSBWin DSA.cpp EX_AMPERSAND I_Indirect format. P3=count, P4=DSAVARS
@@ -901,8 +1018,10 @@ static void test_monster_group_timer_and_item16_runtime_binding(void)
 
 int main(void)
 {
+    test_delete_transaction();
     test_move_transaction();
     test_move_runtime_cell_owner();
+    test_delete_runtime_cell_owner();
     const uint16_t source = (uint16_t)(CSB_V1_THING_TYPE_ACTUATOR << 10);
     const uint16_t destination = (uint16_t)(source | 1u);
     uint16_t copy_words[] = {
