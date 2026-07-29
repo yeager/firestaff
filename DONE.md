@@ -6,7 +6,10 @@
   teleporter ownership and a later unsupported word remain no-mutation.
   CSBWin's `I_TeleportParty` `INDIRECT(..., 1)` form uses the same staged
   request after its original one-value parameter expansion. The direct and
-  indirect regressions and the complete CSB CTest lane pass (98/98).
+  indirect regressions and the complete CSB CTest lane pass (98/98). The
+  runtime receipt now additionally proves and atomically publishes its final
+  level/x/y/direction pose; candidate execution no longer changes global
+  dungeon level state before commit.
 
 - ✅ 2026-07-29 CSB Artpack Studio headless original-record export:
   `--import-game-data ... --export-original-previews ...` now writes only

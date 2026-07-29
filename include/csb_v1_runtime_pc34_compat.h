@@ -178,6 +178,8 @@ typedef struct {
     int32_t last_sound_number;
     int32_t last_sound_volume;
     int32_t last_sound_flags;
+    uint16_t teleport_party_count;
+    uint32_t last_teleport_party_destination;
     uint16_t teleporter_copy_count;
     uint32_t last_teleporter_copy_source_location;
     uint32_t last_teleporter_copy_destination_location;

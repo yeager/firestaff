@@ -995,7 +995,9 @@ that its exact runtime path is not already source-locked and tested.
     regular runtime path. Missing ownership and later invalid source words
     remain no-mutation failures. `I_TELEPORTPARTY` now consumes the same
     source `INDIRECT(..., 1)` parameter order and reaches that exact staged
-    request path.
+    request path. The runtime receipt verifies and atomically publishes the
+    final source party pose only after the full action and candidate dungeon
+    have succeeded; no candidate callback changes the shared current level.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

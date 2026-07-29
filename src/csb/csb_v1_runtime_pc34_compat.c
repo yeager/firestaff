@@ -3516,7 +3516,6 @@ static int csb_v1_runtime_dsa_teleport_party(void *user,
     profile->party_y = y;
     profile->party_state.PartyMapX = x;
     profile->party_state.PartyMapY = y;
-    csb_v1_dungeon_set_current_level(level);
     return csb_v1_runtime_rotate_party(profile, direction) == 0;
 }
 
@@ -24333,6 +24332,27 @@ static int csb_v1_runtime_dsa_execution_receipt_current(
          profile->csbwin_random_seed != receipt->random_state_after)) {
         return 0;
     }
+    if (receipt->teleport_party_count != 0u) {
+        uint32_t destination = receipt->last_teleport_party_destination;
+        int level = (int)((destination >> 10) & 0x3fu);
+        int map_x = (int)((destination >> 5) & 0x1fu);
+        int map_y = (int)(destination & 0x1fu);
+        int direction = (int)((destination >> 16) & 3u);
+
+        /* The direct/indirect DSA opcode is current only while the final
+         * CSBWin LOCATIONREL still owns the live party pose. */
+        if (!profile->dungeon_handle || level < 0 ||
+            level >= profile->dungeon_handle->level_count ||
+            csb_v1_dungeon_get_raw_square(profile->dungeon_handle, level,
+                                           map_x, map_y) < 0 ||
+            profile->current_level != level || profile->party_z != level ||
+            profile->party_x != map_x || profile->party_y != map_y ||
+            profile->party_dir != direction ||
+            profile->party_state.PartyMapX != map_x ||
+            profile->party_state.PartyMapY != map_y) {
+            return 0;
+        }
+    }
     if (receipt->object_property_store_count != 0u) {
         uint32_t value = 0u;
 
@@ -26753,6 +26773,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     uint32_t teleporter_copy_source_before[5];
     uint32_t teleporter_copy_destination_before[5];
     uint32_t teleporter_copy_destination_after[5];
+    int teleport_party_receipt_valid = 0;
     int i;
 
     if (!profile || !runner || !action ||
@@ -27316,6 +27337,30 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
                sizeof(teleporter_copy_destination_after));
         teleporter_copy_receipt_valid = 1;
     }
+    if (candidate.last_execution.teleport_party_count != 0u) {
+        uint32_t destination =
+            candidate.last_execution.last_teleport_party_destination;
+        int level = (int)((destination >> 10) & 0x3fu);
+        int map_x = (int)((destination >> 5) & 0x1fu);
+        int map_y = (int)(destination & 0x1fu);
+        int direction = (int)((destination >> 16) & 3u);
+
+        if (!profile_candidate.dungeon_handle || level < 0 ||
+            level >= profile_candidate.dungeon_handle->level_count ||
+            csb_v1_dungeon_get_raw_square(profile_candidate.dungeon_handle,
+                                           level, map_x, map_y) < 0 ||
+            profile_candidate.current_level != level ||
+            profile_candidate.party_z != level ||
+            profile_candidate.party_x != map_x ||
+            profile_candidate.party_y != map_y ||
+            profile_candidate.party_dir != direction ||
+            profile_candidate.party_state.PartyMapX != map_x ||
+            profile_candidate.party_state.PartyMapY != map_y) {
+            free(dungeon_raw_candidate);
+            return 0;
+        }
+        teleport_party_receipt_valid = 1;
+    }
     if (candidate.last_execution.missile_info_store_count != 0u) {
         const uint8_t *before_missile;
         const uint8_t *after_missile;
@@ -27406,6 +27451,17 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
                    profile_candidate.party_state.Champions[i].SkillExperience,
                    sizeof(profile->party_state.Champions[i].SkillExperience));
         }
+    }
+    if (teleport_party_receipt_valid) {
+        /* Publish the complete candidate pose only after every source word,
+         * dependent save mutation, and candidate-dungeon check succeeded. */
+        profile->current_level = profile_candidate.current_level;
+        profile->party_z = profile_candidate.party_z;
+        profile->party_x = profile_candidate.party_x;
+        profile->party_y = profile_candidate.party_y;
+        profile->party_dir = profile_candidate.party_dir;
+        profile->party_state = profile_candidate.party_state;
+        csb_v1_dungeon_set_current_level(profile->current_level);
     }
     if (cause_poison_receipt_valid) {
         profile->party_state = profile_candidate.party_state;
@@ -27549,6 +27605,10 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         candidate.last_execution.last_sound_volume;
     execution_receipt.last_sound_flags =
         candidate.last_execution.last_sound_flags;
+    execution_receipt.teleport_party_count =
+        candidate.last_execution.teleport_party_count;
+    execution_receipt.last_teleport_party_destination =
+        candidate.last_execution.last_teleport_party_destination;
     execution_receipt.teleporter_copy_count =
         candidate.last_execution.teleporter_copy_count;
     execution_receipt.last_teleporter_copy_source_location =
