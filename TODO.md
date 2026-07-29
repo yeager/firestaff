@@ -91,9 +91,10 @@ an integration build pass.
   map's DoorSet 0–3 through `M633 + DoorSet * C003 + depth`. Missing or
   non-PC34 sources, non-door cells, and open doors leave the verified V1
   frame intact. 2026-07-29 correction: the D3 `G0693` symbol is now
-  materialized from its actual PC3.4 `GRAPHICS.DAT` record 246 rather than
-  treating the symbol number 693 as a catalog record. The same corrected
-  record is used by the real first-frame receipt and V2.2 plan. Remaining: a fully
+  materialized from its active PC3.4 `GRAPHICS.DAT` DoorSet record
+  (246/249/252/255) rather than treating the symbol number 693 as a catalog
+  record. The same corrected record is used by the real first-frame receipt
+  and V2.2 plan. Remaining: a fully
   checked native V1 raster-byte handoff for all F0128 material families.
   The source-artpack manifest now makes this distinction machine-readable:
   `door_d2_01` is explicitly `admitted_d3_f0791_native`, carrying the real

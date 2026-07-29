@@ -1,8 +1,9 @@
 - ✅ 2026-07-29 CSB V2.2 G0693 catalog mapping correction: the F0128
   first-frame receipt and live V2.2 plan now translate ReDMCSB's D3-door
-  source symbol `G0693` to PC3.4 `GRAPHICS.DAT` record 246. They no longer
-  hash record 693, which is unrelated catalog data. The symbol remains the
-  semantic source owner; record 246 is the authenticated 44x38 payload.
+  source symbol `G0693` to its active PC3.4 `GRAPHICS.DAT` DoorSet record
+  (246/249/252/255). They no longer hash record 693, which is unrelated
+  catalog data. The symbol remains the semantic source owner; its selected
+  record is the authenticated 44x38 payload.
   Verification: first-frame materialization, boot handoff, V2.2 source-pack,
   draw and route regressions PASS.
 
