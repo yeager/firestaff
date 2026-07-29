@@ -887,6 +887,14 @@ that its exact runtime path is not already source-locked and tested.
    V2.1 because no complete, source-mapped CSB material pack is installed.
    Do not replace that fallback with repeated or guessed GRAPHICS.DAT art:
    the 29 V2.2 routes require a verified source mapping.
+   2026-07-29: repeated native executable capture against the local
+   hash-verified PC3.4 pair confirms the same contract at 960x600: V1 and
+   V2.0 produced SHA-256 `0998633d...c0d8c566`; V2.1 produced the distinct
+   upscaled SHA-256 `74b455a3...04c57fc34`; V2.2 produced that same V2.1
+   image because the CSB-specific complete-artpack gate remained closed.
+   This verifies all selectable presentation modes preserve a real startup
+   route. It does not prove a V2.2 artpack, live runtime breadth, audio, or
+   packaged app capture.
    2026-07-28: the separate original Atari ST route now presents
    `ANIMATE.SCR`/`ANIMATE.DAT` through M11 correctly. The palette setter's
    success code is zero, so its former boolean check discarded every genuine

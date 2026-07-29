@@ -1,3 +1,13 @@
+- ✅ 2026-07-29 CSB V1/V2 presentation-mode real-data executable capture:
+  ran the current native `firestaff` binary against the local hash-verified
+  PC3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` pair at 960x600 in V1, V2.0, V2.1 and
+  V2.2. V1/V2.0 retained the identical original startup frame; V2.1 used its
+  distinct upscale presentation; V2.2 correctly resolved to V2.1 because no
+  complete CSB-specific reviewed `.fsart` material pack is installed. This is
+  a verification completion only: source-backed live HUD/viewport breadth,
+  authentic audio and a real V2.2 pack remain open in `CSB-REAL-STARTUP-HUD`
+  and related CSB TODO items.
+
 - ✅ 2026-07-29 CSB PC3.4 `SWSHSND.C` archive-to-M11 binding. The archive
   materializer and selected-package loader now both recognize ReDMCSB's
   original source-style `SWSHSND.C` name in addition to documented
