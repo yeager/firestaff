@@ -238,16 +238,16 @@ DM2_4FCC	SKULLWIN	SKULLWIN/c_creature.cpp	3299		IMPLEMENTED_NARROW
 DM2_ALLOC_CPX_LINK_NODE	SKULLWIN	SKULLWIN/c_dballoc.cpp	26	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_reuse_list_init	VERIFIED_SOURCE_MAPPING	DM2 v1 CPX1 receipt links reusable CPX blocks in source descending amount order without allocating decoded buffers.
 DM2_ALLOC_CPX_UNLINK_NODE	SKULLWIN	SKULLWIN/c_dballoc.cpp	65	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_cpx1_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 CPX1 receipt unlinks the selected reusable block before source remainder handling and never exposes backing bytes.
 DM2_ALLOC_CPX1	SKULLWIN	SKULLWIN/c_dballoc.cpp	87	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_cpx1_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 CPX1 receipt selects an exact reusable block when available, otherwise the largest block, and retains only remainders of at least 30 bytes.
-ulptable	SKULLWIN	SKULLWIN/c_dballoc.cpp	121		MISSING
+ulptable	SKULLWIN	SKULLWIN/c_dballoc.cpp	121		IMPLEMENTED
 init	SKULLWIN	SKULLWIN/c_dballoc.cpp	125	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-getadr	SKULLWIN	SKULLWIN/c_dballoc.cpp	130		MISSING
-getp	SKULLWIN	SKULLWIN/c_dballoc.cpp	132		MISSING
-setp	SKULLWIN	SKULLWIN/c_dballoc.cpp	133		MISSING
-setl	SKULLWIN	SKULLWIN/c_dballoc.cpp	134		MISSING
-islen	SKULLWIN	SKULLWIN/c_dballoc.cpp	135		MISSING
+getadr	SKULLWIN	SKULLWIN/c_dballoc.cpp	130		IMPLEMENTED
+getp	SKULLWIN	SKULLWIN/c_dballoc.cpp	132		IMPLEMENTED
+setp	SKULLWIN	SKULLWIN/c_dballoc.cpp	133		IMPLEMENTED
+setl	SKULLWIN	SKULLWIN/c_dballoc.cpp	134		IMPLEMENTED
+islen	SKULLWIN	SKULLWIN/c_dballoc.cpp	135		IMPLEMENTED
 DM2_QUERY_GDAT_RAW_DATA_LENGTH	SKULLWIN	SKULLWIN/c_dballoc.cpp	138	include/dm2_v1_asset_loader.h:261	VERIFIED_SOURCE_MAPPING
-R_2D87A	SKULLWIN	SKULLWIN/c_dballoc.cpp	152		MISSING
-splitlong	SKULLWIN	SKULLWIN/c_dballoc.cpp	164		MISSING
+R_2D87A	SKULLWIN	SKULLWIN/c_dballoc.cpp	152		IMPLEMENTED
+splitlong	SKULLWIN	SKULLWIN/c_dballoc.cpp	164		IMPLEMENTED
 DM2_SETUP_DB_ALLOCATION	SKULLWIN	SKULLWIN/c_dballoc.cpp	257		MISSING
 DM2_SET_PPPW_ENTRY	SKULLWIN	SKULLWIN/c_dballoc.cpp	277		MISSING
 DM2_dballoc_38c8_0109	SKULLWIN	SKULLWIN/c_dballoc.cpp	290		MISSING

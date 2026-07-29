@@ -1,3 +1,7 @@
+- ✅ 2026-07-29 DM2 ULP table: unified lookup pointer table for GDAT entries.
+  getp/setp/setl/islen/getadr/R_2D87A/splitlong/query_raw_data_length.
+  Pointer/length union entries with MSB marker for length mode.
+  6 tests. Source: skproject c_dballoc.cpp:118-170. MISSING: 224.
 - ✅ 2026-07-29 DM2 hero stat functions: get_adj_ability1 (enchantment-boosted
   ability with clamp 10-220), get_adj_ability2 (ability-scaled divide),
   get_stamina_adj (stamina-weighted attribute), get_max_load (strength-based
