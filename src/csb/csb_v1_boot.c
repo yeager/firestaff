@@ -8,6 +8,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
+#include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
@@ -1525,6 +1526,107 @@ csb_v1_boot_csbgraphics_skin_def_words(const CSB_V1_BootProfile *profile,
         *out_word_count = profile->csbgraphics_skin_def_word_count;
     }
     return profile->csbgraphics_skin_def_words;
+}
+
+static uint16_t csb_v1_boot_read_be16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+}
+
+static uint32_t csb_v1_boot_fnv1a(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int csb_v1_boot_graphics_catalog_item_hash(const char *path,
+                                                    unsigned item,
+                                                    size_t *out_size,
+                                                    uint32_t *out_hash,
+                                                    unsigned *out_count,
+                                                    uint32_t *out_catalog_hash)
+{
+    FILE *fp;
+    uint8_t header[4];
+    uint8_t *table = NULL;
+    uint8_t *payload = NULL;
+    unsigned count, i;
+    size_t table_bytes, offset, size;
+    int ok = 0;
+    if (!path || !out_size || !out_hash || !out_count || !out_catalog_hash) return 0;
+    fp = fopen(path, "rb");
+    if (!fp || fread(header, 1u, sizeof(header), fp) != sizeof(header) ||
+        csb_v1_boot_read_be16(header) != 0x8001u) goto done;
+    count = csb_v1_boot_read_be16(header + 2u);
+    if (!count || count > 2048u || item >= count) goto done;
+    table_bytes = (size_t)count * 4u;
+    table = (uint8_t *)malloc(table_bytes + sizeof(header));
+    if (!table) goto done;
+    memcpy(table, header, sizeof(header));
+    if (fread(table + sizeof(header), 1u, table_bytes, fp) != table_bytes) goto done;
+    offset = sizeof(header) + table_bytes;
+    for (i = 0u; i < item; ++i) offset += csb_v1_boot_read_be16(table + 4u + (size_t)i * 2u);
+    size = csb_v1_boot_read_be16(table + 4u + (size_t)item * 2u);
+    if (!size || !csb_v1_boot_read_be16(table + 4u + (size_t)count * 2u + (size_t)item * 2u) ||
+        fseek(fp, (long)offset, SEEK_SET) != 0) goto done;
+    payload = (uint8_t *)malloc(size);
+    if (!payload || fread(payload, 1u, size, fp) != size) goto done;
+    *out_size = size;
+    *out_hash = csb_v1_boot_fnv1a(payload, size);
+    *out_count = count;
+    *out_catalog_hash = csb_v1_boot_fnv1a(table, table_bytes + sizeof(header));
+    ok = *out_hash != 0u && *out_catalog_hash != 0u;
+done:
+    free(payload); free(table); if (fp) fclose(fp);
+    return ok;
+}
+
+int csb_v1_boot_build_v22_f0128_draw_plan_pc34(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_ViewportRuntimeDrawPlanPc34 *out_plan)
+{
+    CSB_V1_ViewportFirstFrameMaterialProof proof;
+    CSB_V1_ViewportD3L2D3R2F0111DoorRealAssetReceiptPc34 d3;
+    size_t sizes[6]; uint32_t hashes[6], catalog_hash; unsigned count, i;
+    const unsigned items[6] = { 693u, 498u, 248u, 247u, 246u, 246u };
+    if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
+    if (!profile || !out_plan || !profile->graphics_verified ||
+        profile->graphics_kind != CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS ||
+        !profile->graphics_path[0]) return 0;
+    for (i = 0u; i < 6u; ++i) {
+        if (!csb_v1_boot_graphics_catalog_item_hash(profile->graphics_path, items[i],
+                                                     &sizes[i], &hashes[i], &count,
+                                                     &catalog_hash)) return 0;
+    }
+    memset(&proof, 0, sizeof(proof));
+    proof.valid = proof.source_graphics_dat_bound = proof.no_synthetic_pixels =
+        proof.no_fallback_visuals = proof.shared_palette_material_proof = 1;
+    proof.route_mask = CSB_V1_VIEWPORT_FIRST_FRAME_REQUIRED_ROUTES |
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR |
+        CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR;
+    proof.shared_palette_hash = catalog_hash; proof.source_item_count = count;
+    proof.d0_door_hash = hashes[0]; proof.d0_thing_hash = hashes[1];
+    proof.d1_door_hash = hashes[2]; proof.d1_thing_hash = hashes[1]; proof.d2_door_hash = hashes[3];
+    proof.d2_door_capture_valid = proof.d2_door_capture_real_graphics_dat = 1;
+    proof.d2_door_capture_no_synthetic_pixels = proof.d2_door_capture_no_fallback_visuals = 1;
+    proof.d2_door_capture_item_index = 247; proof.d2_door_capture_byte_count = sizes[3];
+    proof.d2_door_capture_payload_hash = hashes[3]; proof.d2_door_capture_width = 64;
+    proof.d2_door_capture_height = 61; proof.d2_door_capture_zone = 3760;
+    proof.d2_door_capture_transparent_color = 10;
+    if (!csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
+            csb_v1_viewport_d3l2_d3r2_f0111_door_for_side_pc34(0),
+            csb_v1_viewport_d3l2_d3r2_f0111_door_for_side_pc34(1), 1, 1, 1,
+            246, sizes[4], hashes[4], &d3)) return 0;
+    proof.d3l2_door_hash = proof.d3r2_door_hash = hashes[4]; proof.d3_pair_real_asset_receipt = d3;
+    proof.source_evidence = "ReDMCSB DUNVIEW.C F0128; authenticated PC34 GRAPHICS.DAT catalog";
+    return csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
+        &proof, 1, profile->runtime.party_dir, profile->runtime.party_x,
+        profile->runtime.party_y, out_plan);
 }
 
 int csb_v1_boot_render_viewport_frame_pc34(

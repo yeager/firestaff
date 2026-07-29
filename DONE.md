@@ -42836,6 +42836,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   remaining live F0128 perspective-cell renderer is complete.
 # Completed work
 
+- 2026-07-29: Wired CSB V2.2 modern door art to a source-owned ReDMCSB
+  `DUNVIEW.C F0128` command plan. M11 now authenticates the active PC3.4
+  `GRAPHICS.DAT` catalog and passes the D1/D2/D3 DoorSet-0 commands
+  (248/247/246) with original clipping, transparency and draw order to the
+  V2.2 renderer. Unsupported source archives remain V1, fail closed.
+  Verified by the focused CSB startup, F0128 material and V2.2 cache CTests.
+
 - 2026-07-29: Fixed CSB `TITLE.C F0437` CHAOS title geometry. The first
   visible reverse-zoom frame is 48x12 and the final full 320x80 C425 raster
   remains present through the source `Delay(20)` hold. Verified by

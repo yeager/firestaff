@@ -1788,6 +1788,12 @@ int csb_v1_boot_render_viewport_frame_pc34(
     int framebuffer_height,
     const CSB_V1_ViewportRuntimeDrawerBinding *drawer_binding,
     CSB_V1_ViewportRuntimeDrawCounts *out_counts);
+/* Builds the source-owned F0128 door-command geometry used by the V2.2
+ * artpack renderer.  It admits only a native PC34 GRAPHICS.DAT catalog and
+ * never supplies substitute V1 pixels. */
+int csb_v1_boot_build_v22_f0128_draw_plan_pc34(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_ViewportRuntimeDrawPlanPc34 *out_plan);
 /* Source-bound C49/F0219 admission for the live boot profile.  The request
  * succeeds only while the exact C14 remains in the resolved F0161 list. */
 int csb_v1_boot_admit_post_teleport_projectile_impact_pc34(

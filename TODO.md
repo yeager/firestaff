@@ -84,6 +84,13 @@ an integration build pass.
   Source door exports now
   retain the verified F0111 `C10_COLOR_FLESH` transparency as RGBA alpha and
   the cache blitter preserves the original framebuffer for transparent pixels.
+  2026-07-29 update: M11 now builds and consumes a fail-closed F0128 command
+  plan from the active, authenticated PC3.4 `GRAPHICS.DAT` catalog before it
+  applies V2.2 art.  The plan carries the original D1/D2/D3 DoorSet-0 record
+  identities (248/247/246), C3700/C3710 clipping and draw order; missing or
+  non-PC34 sources leave the verified V1 frame intact.  Remaining: dynamic
+  DoorSet selection and a fully checked native V1 raster-byte handoff for all
+  F0128 material families.
   The source-artpack manifest now makes this distinction machine-readable:
   `door_d2_01` is explicitly `admitted_d3_f0791_native`, carrying the real
   44x38 source dimensions and the D3 F0791/F0132 composition contract.

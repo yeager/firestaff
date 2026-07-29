@@ -2090,10 +2090,22 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
      * viewport with horizontal bands. Keep the verified original frame until
      * the modern route can consume the actual F0128 draw geometry. */
     if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+        CSB_V1_ViewportRuntimeDrawPlanPc34 v22_plan;
+        int command;
         m11_csb_collect_v22_raw_cells(state, v22_raw_cells);
         csb_v22_shape_cache_update((int)state->world.party.direction,
                                    v22_raw_cells);
         state->csbState.runtime_v22_cells_painted = 0;
+        if (csb_v1_boot_build_v22_f0128_draw_plan_pc34(
+                (const CSB_V1_BootProfile *)state->csbBootProfile,
+                &v22_plan)) {
+            for (command = 0; command < v22_plan.command_count; ++command) {
+                state->csbState.runtime_v22_cells_painted +=
+                    csb_v22_inplace_render_f0128_command(
+                        &v22_plan.commands[command], candidate_page,
+                        framebufferWidth, framebufferHeight);
+            }
+        }
     } else {
         state->csbState.runtime_v22_cells_painted = 0;
     }
