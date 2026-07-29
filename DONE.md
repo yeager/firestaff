@@ -43158,3 +43158,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   runtime party mirror before CASTER.C resolves the source caster. The same
   real-save regression proves that an empty stale M11 party no longer blocks
   a valid mouse-open request.
+
+- ✅ 2026-07-30 CSB live mouse-party synchronization: the CSB GAMEBLOCK
+  mirror now refreshes once after startup dispatch and before every live
+  movement, champion, action, and spell hit test, so those command surfaces
+  share one authoritative party view.

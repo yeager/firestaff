@@ -11362,12 +11362,6 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
         !m11_v1_chrome_mode_enabled(state)) {
         return M11_GAME_INPUT_IGNORED;
     }
-    /* CASTER.C resolves the live party before it opens C009.  CSB's
-     * authoritative party lives in its GAMEBLOCK runtime mirror, so do not
-     * let an older retained M11 copy make a valid source spell box inert. */
-    if (m11_source_is_csb(state) && state->csbBootProfile) {
-        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
-    }
     parent = dm1_v1_spell_area_click_rect_pc34();
     if (!m11_point_in_rect(x, y, parent.x, parent.y, parent.w, parent.h)) {
         return M11_GAME_INPUT_IGNORED;
@@ -23568,6 +23562,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 state,
                 &dispatch_receipt);
         }
+    }
+
+    /* COMMAND.C resolves all live C007..C116 UI commands against the
+     * current party.  CSB's party authority is GAMEBLOCK, so refresh the
+     * presentation mirror once after the startup-only dispatcher and before
+     * movement, champion, action, or spell hit testing. */
+    if (m11_source_is_csb(state) && state->csbBootProfile) {
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
     }
 
     /* CSB's live mouse route is the same source-owned G0448 command surface
