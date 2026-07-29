@@ -47,6 +47,8 @@
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
 #include "csb_v22_modern_assets_pc34.h"
+#include "csb_v1_boot.h"
+#include "csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1620,11 +1622,14 @@ static void m11_play_ftl_swoosh_for_game_if_available(
     const unsigned char* dosoundProgram = NULL;
     unsigned int dosoundProgramBytes = 0U;
     int swshAudioInitialized = 0;
+    int csbSwshAudioInitialized = 0;
+    CSB_V1_BootProfile csbBoot;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     int hasDm1Media = 0;
     if (skipSwoosh) return;
     memset(&logoPayload, 0, sizeof(logoPayload));
     memset(&swshAudio, 0, sizeof(swshAudio));
+    memset(&csbBoot, 0, sizeof(csbBoot));
     memset(&dm1Media, 0, sizeof(dm1Media));
     if (dm1MediaReceipt && dm1MediaReceipt->handled) {
         dm1Media = *dm1MediaReceipt;
@@ -1693,6 +1698,28 @@ static void m11_play_ftl_swoosh_for_game_if_available(
               M11_Audio_Shutdown(&swshAudio);
           }
       }
+      /* CSB PC3.4 has its own SWSHSND.C F0908 DMA sample.  The audio
+       * transport already accepts that exact source format, but the old M11
+       * prelude only initialized the DM1 PSG branch.  Scan the selected CSB
+       * root through the normal hash-first boot profile and queue only the
+       * authenticated 9,078-byte source buffer.  Missing media remains
+       * silent: no DM1 cue or generated substitute is permitted. */
+      if (gameId && strcmp(gameId, "csb") == 0 && dataDir && dataDir[0]) {
+          csb_v1_boot_profile_init(&csbBoot);
+          if (csb_v1_boot_scan_assets(&csbBoot, dataDir) == 0 &&
+              csbBoot.swoosh_source_bound && M11_Audio_Init(&swshAudio)) {
+              if (M11_Audio_PlayCsbSwshPcm(
+                      &swshAudio,
+                      csbBoot.swoosh_source_bytes,
+                      (int)sizeof(csbBoot.swoosh_source_bytes),
+                      CSB_V1_SWSH_F0908_SOUND_PERIOD_PC34,
+                      csbBoot.swoosh_source_fnv1a)) {
+                  csbSwshAudioInitialized = 1;
+              } else {
+                  M11_Audio_Shutdown(&swshAudio);
+              }
+          }
+      }
       m11_swsh_indexed_to_rgba(screenFbIndexed, screenRgba, swshPalette);
       M11_Render_PresentRGBA(screenRgba, M11_FB_WIDTH, M11_FB_HEIGHT);
       if (m11_delay_ms_with_intro_event_pump(
@@ -1733,7 +1760,7 @@ static void m11_play_ftl_swoosh_for_game_if_available(
           hasDm1Media ? dm1Media.swsh_final_hold_ms :
                         SWSH_Compat_GetRuntimeFinalHoldMs()); }
 cleanup:
-    if (swshAudioInitialized) {
+    if (swshAudioInitialized || csbSwshAudioInitialized) {
         M11_Audio_Shutdown(&swshAudio);
     }
     SWSH_Compat_ReleaseLogoImagePayload(&logoPayload);
