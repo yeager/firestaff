@@ -42368,6 +42368,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 
 ## 2026-07-29 - CSB terminal F0128 capture
 
+- ✅ 2026-07-29 Indexed runtime screenshot palette preservation. `M11_Screenshot_CaptureCurrent` now prefers the renderer's active source-owned RGB6 palette over the generic VGA fallback. This makes CSB/DM2 indexed runtime captures match their actual rendered palette; the standalone BMP regression proves RGB6 expansion and preserves the legacy fallback.
+
 - Fixed the boot-probe terminal path to draw and present the post-Entrance
   F0128 dungeon frame before it writes optional indexed and host screenshots.
   A receipt for map 0 can no longer be accompanied by the stale Entrance page.

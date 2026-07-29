@@ -216,6 +216,7 @@ int M11_Screenshot_CaptureCurrent(const char* outputDir,
                                   char* outPath, int outPathCap) {
     unsigned char* fb;
     static unsigned char palette[256 * 3];
+    uint8_t indexed_palette_rgb6[256][3];
     static unsigned char masked[M11_FB_BYTES];
     int level, i;
     int n = M11_FB_BYTES;
@@ -223,20 +224,35 @@ int M11_Screenshot_CaptureCurrent(const char* outputDir,
     fb = M11_Render_GetFramebuffer();
     if (!fb) return 0;
 
-    level = M11_Render_GetPaletteLevel();
-    if (level < 0) level = 0;
-    if (level >= M11_PALETTE_LEVELS) level = M11_PALETTE_LEVELS - 1;
-
     /* Drop level bits so the index fits the 16-entry VGA palette. */
     for (i = 0; i < n; i++) {
         masked[i] = (unsigned char)(fb[i] & M11_FB_INDEX_MASK);
     }
-    /* Expand 16-entry palette into a 256-entry RGB array (wraparound). */
-    for (i = 0; i < 256; i++) {
-        int idx = i & 0x0F;
-        palette[i * 3 + 0] = G9010_auc_VgaPaletteAll_Compat[level][idx][0];
-        palette[i * 3 + 1] = G9010_auc_VgaPaletteAll_Compat[level][idx][1];
-        palette[i * 3 + 2] = G9010_auc_VgaPaletteAll_Compat[level][idx][2];
+    /* CSB and DM2 install source-owned indexed palettes for their runtime
+     * pages.  Capture the same expanded RGB values that M11 presents rather
+     * than reinterpreting their source indices through the generic DM1 VGA
+     * row.  This keeps diagnostics and real-data evidence faithful to the
+     * actual renderer while retaining the legacy 16-colour fallback. */
+    if (M11_Render_CopyIndexedPaletteRgb6(indexed_palette_rgb6)) {
+        for (i = 0; i < 256; i++) {
+            palette[i * 3 + 0] = (unsigned char)((indexed_palette_rgb6[i][0] << 2) |
+                                                   (indexed_palette_rgb6[i][0] >> 4));
+            palette[i * 3 + 1] = (unsigned char)((indexed_palette_rgb6[i][1] << 2) |
+                                                   (indexed_palette_rgb6[i][1] >> 4));
+            palette[i * 3 + 2] = (unsigned char)((indexed_palette_rgb6[i][2] << 2) |
+                                                   (indexed_palette_rgb6[i][2] >> 4));
+        }
+    } else {
+        level = M11_Render_GetPaletteLevel();
+        if (level < 0) level = 0;
+        if (level >= M11_PALETTE_LEVELS) level = M11_PALETTE_LEVELS - 1;
+        /* Expand 16-entry palette into a 256-entry RGB array (wraparound). */
+        for (i = 0; i < 256; i++) {
+            int idx = i & 0x0F;
+            palette[i * 3 + 0] = G9010_auc_VgaPaletteAll_Compat[level][idx][0];
+            palette[i * 3 + 1] = G9010_auc_VgaPaletteAll_Compat[level][idx][1];
+            palette[i * 3 + 2] = G9010_auc_VgaPaletteAll_Compat[level][idx][2];
+        }
     }
     return M11_Screenshot_Capture(masked, M11_FB_WIDTH, M11_FB_HEIGHT,
                                   palette, outputDir, outPath, outPathCap);

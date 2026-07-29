@@ -970,6 +970,11 @@ that its exact runtime path is not already source-locked and tested.
    over unrelated archives and accepts the initial party pose decoded from
    the original DUNGEON.DAT header. It no longer times out on a normal shared
    data directory or asserts the fallback `(5,5,N)` against real source data.
+   2026-07-29: `M11_Screenshot_CaptureCurrent` now exports the active
+   source-owned indexed palette when one is installed. CSB V1 diagnostics no
+   longer reinterpret PC3.4 F0128 pixels through the generic DM1 VGA row;
+   the remaining live runtime image is therefore an honest capture. Its
+   no-party Prison light/HUD behavior remains open for a source-backed fix.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
