@@ -42191,3 +42191,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - 2026-07-29 CSB V2.x Prison pointer regression: boot-probe now presents the
   active V2 surface before mapping a click. Real PC3.4 data proves G0445
   Prison entry reaches runtime in V1, V2.0 and V2.1 at 320x200 and 960x600.
+- ✅ 2026-07-29 CSBWin DSA bounded `DELMON`/`INSMON` C04 ownership:
+  authenticated direct opcode words now stage the exact source pop order and
+  publish only after the complete action succeeds. The runtime uses loaded
+  C04 group records, source horizontal-size limits and active-group state;
+  it preserves no-group/no-room no-ops, refuses final-creature deletion, and
+  never substitutes a synthetic monster. The current bounded owner rejects
+  feared/timer-owned deletion until CSBWin `Monster.cpp`'s A/B timer and
+  ITEM16 status changes can be made transactionally. Focused stack rollback
+  coverage plus the complete CSB lane (98/98) and CSB V2.x lane (44/44) pass.

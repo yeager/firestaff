@@ -86,6 +86,11 @@ static int32_t sound_flags;
 static int teleport_party_enabled;
 static int teleport_party_count;
 static uint32_t teleport_party_destination;
+static int monster_group_mutation_enabled;
+static int monster_group_mutation_count;
+static uint32_t monster_group_location;
+static uint32_t monster_group_operand;
+static int monster_group_insert;
 static int monster_move_inhibit_enabled;
 static int most_recent_interesting_object_enabled;
 static int adjust_skills_parameters_enabled;
@@ -197,6 +202,18 @@ static int teleport_party(void *user, uint32_t destination_location)
     if (!teleport_party_enabled) return 0;
     ++teleport_party_count;
     teleport_party_destination = destination_location;
+    return 1;
+}
+
+static int mutate_monster_group(void *user, uint32_t location,
+                                uint32_t operand, int insert_monster)
+{
+    (void)user;
+    if (!monster_group_mutation_enabled) return 0;
+    ++monster_group_mutation_count;
+    monster_group_location = location;
+    monster_group_operand = operand;
+    monster_group_insert = insert_monster;
     return 1;
 }
 
@@ -869,6 +886,9 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     if (discard_text_enabled) context.discard_text = discard_text;
     if (sound_enabled) context.play_sound = play_sound;
     if (teleport_party_enabled) context.teleport_party = teleport_party;
+    if (monster_group_mutation_enabled) {
+        context.mutate_monster_group = mutate_monster_group;
+    }
     if (adjust_skills_parameters_enabled) {
         context.set_adjust_skills_parameters = set_adjust_skills_parameters;
     }
@@ -1283,6 +1303,16 @@ int main(void)
     uint16_t teleport_party_then_bad[] = {
         0x0686u, 0x154cu, 0x0f8bu, 0x0000u
     };
+    uint16_t delete_monster[] = {
+        0x0686u, 0x154cu, 0x0686u, 2u, 0x17cbu
+    };
+    uint16_t insert_monster[] = {
+        0x0686u, 0x154cu, 0x0686u, 15u, 0x180bu
+    };
+    uint16_t delete_monster_then_bad[] = {
+        0x0686u, 0x154cu, 0x0686u, 2u, 0x17cbu, 0x0000u
+    };
+    uint16_t indirect_delete_monster[] = { 0x168bu };
     /* CSBWin DSA.cpp:4963 defines I_TeleportParty as INDIRECT(..., 1).
      * AMPERSAND subcode 90 selects the parameter-driven indirect adapter. */
     uint16_t indirect_teleport_party[] = { 0x168bu };
@@ -2164,6 +2194,54 @@ int main(void)
               teleport_party_count == 0,
           "TELEPORTPARTY does not publish before a later rejected source word");
     teleport_party_enabled = 0;
+
+    monster_group_mutation_enabled = 1;
+    monster_group_mutation_count = 0;
+    check(run(&state, &action, delete_monster,
+              (int)(sizeof(delete_monster) / sizeof(delete_monster[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              monster_group_mutation_count == 1 &&
+              monster_group_location == 0x154cu &&
+              monster_group_operand == 2u && !monster_group_insert &&
+              execution.monster_group_mutation_count == 1u &&
+              execution.last_monster_group_location == 0x154cu,
+          "DELMON commits CSBWin location/index only after action acceptance");
+    monster_group_mutation_count = 0;
+    check(run(&state, &action, delete_monster_then_bad,
+              (int)(sizeof(delete_monster_then_bad) /
+                    sizeof(delete_monster_then_bad[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              monster_group_mutation_count == 0,
+          "DELMON does not publish before a later malformed word");
+    monster_group_mutation_count = 0;
+    check(run(&state, &action, insert_monster,
+              (int)(sizeof(insert_monster) / sizeof(insert_monster[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              monster_group_mutation_count == 1 &&
+              monster_group_location == 0x154cu &&
+              monster_group_operand == 15u && monster_group_insert &&
+              execution.last_monster_group_insert,
+          "INSMON preserves CSBWin location/mask stack order");
+    monster_group_mutation_enabled = 0;
+    {
+        uint32_t indirect_delete_parameters[] = {
+            93u, 2u, 2u, 0x154cu, 0u, 0u
+        };
+
+        monster_group_mutation_enabled = 1;
+        monster_group_mutation_count = 0;
+        check(run_with_parameter_count(
+                  &state, &action, indirect_delete_monster,
+                  (int)(sizeof(indirect_delete_monster) /
+                        sizeof(indirect_delete_monster[0])),
+                  indirect_delete_parameters, 6, &execution) ==
+                  CSB_V1_CSBWIN_DSA_STACK_OK &&
+                  monster_group_mutation_count == 1 &&
+                  monster_group_location == 0x154cu &&
+                  monster_group_operand == 2u && !monster_group_insert,
+              "I_DELMON expands CSBWin's two source operands in stack order");
+        monster_group_mutation_enabled = 0;
+    }
     check(run(&state, &action, teleport_party,
               (int)(sizeof(teleport_party) / sizeof(teleport_party[0])),
               parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,

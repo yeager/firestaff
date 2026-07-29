@@ -186,6 +186,8 @@ static int csb_v1_runtime_dsa_queue_switch_action(
     int message_route, uint8_t *out_event_type);
 static int csb_v1_runtime_dsa_teleport_party(void *user,
                                              uint32_t destination_location);
+static int csb_v1_runtime_dsa_mutate_monster_group(
+    void *user, uint32_t location, uint32_t operand, int insert_monster);
 static int csb_v1_runtime_dsa_get_object_property(
     void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
     uint32_t *out_value);
@@ -12759,6 +12761,111 @@ int csb_v1_runtime_f0178_group_cells_compact_receipt_pc34(
     local_receipt.valid = 1;
     *out_receipt = local_receipt;
     return 1;
+}
+
+/* CSBWin Monster.cpp:4613-4850.  DELMON/INSMON are deliberately narrower
+ * than F0190: the source does not kill the group, drop possessions, or make
+ * smoke.  A live source timer which must be deleted/duplicated is rejected
+ * until its exact Timer.cpp owner can be changed transactionally. */
+static int csb_v1_runtime_dsa_mutate_monster_group(
+    void *user, uint32_t location, uint32_t operand, int insert_monster)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    CSB_V1_DungeonData *dungeon;
+    uint16_t group_thing;
+    uint8_t *record;
+    CSB_V1_RuntimeActiveGroupState *state;
+    int level = (int)((location >> 10) & 0x3fu);
+    int map_x = (int)((location >> 5) & 0x1fu);
+    int map_y = (int)(location & 0x1fu);
+    int record_size = 0;
+    uint16_t flags;
+    int count;
+    int i;
+
+    if (!profile || !profile->dungeon_handle || level < 0 ||
+        level >= profile->dungeon_handle->level_count ||
+        csb_v1_dungeon_get_raw_square(profile->dungeon_handle, level,
+                                       map_x, map_y) < 0) return 0;
+    dungeon = profile->dungeon_handle;
+    if (!csb_v1_f0217_find_group_thing_pc34_compat(
+            dungeon, level, map_x, map_y, &group_thing)) return 1;
+    record = (uint8_t *)csb_v1_runtime_linked_group_record_pc34(
+        dungeon, group_thing, level, map_x, map_y, &record_size);
+    if (!record || record_size < 16) return 0;
+    flags = csb_v1_runtime_read_u16(record + 14);
+    count = (int)((flags >> 5) & 3u) + 1;
+    if (count < 1 || count > 4) return 0;
+    state = csb_v1_runtime_active_group_state_for(
+        profile, group_thing, level, map_x, map_y, 0);
+
+    if (!insert_monster) {
+        int index = (int)operand;
+        if (operand > 3u || count <= 1 || index >= count) return 1;
+        /* Fear groups own per-creature A/B timers in CSBWin. */
+        if ((flags & 0x000fu) == 6u) return 0;
+        for (i = index; i < count - 1; ++i) {
+            csb_v1_runtime_write_u16(record + 6 + i * 2,
+                csb_v1_runtime_read_u16(record + 8 + i * 2));
+        }
+        csb_v1_runtime_write_u16(record + 6 + (count - 1) * 2, 0u);
+        if (record[5] != 0xffu) {
+            for (i = index; i < count - 1; ++i) {
+                record[5] = (uint8_t)csb_v1_runtime_group_cells_set_value(
+                    record[5], i,
+                    csb_v1_runtime_group_cell_value(record[5], i + 1));
+            }
+            record[5] &= (uint8_t)((1u << ((count - 1) * 2)) - 1u);
+        }
+        if (state) {
+            csb_v1_runtime_compact_active_group_state_after_kill(
+                profile, group_thing, level, map_x, map_y, index, count);
+        }
+        flags = (uint16_t)((flags & ~(uint16_t)(3u << 5)) |
+            (uint16_t)((count - 2) << 5));
+        csb_v1_runtime_write_u16(record + 14, flags);
+        return 1;
+    }
+
+    {
+        CSB_V1_F0144CreatureAttributesReceiptPc34 attributes;
+        int size;
+        int max_count;
+        int new_cell = -1;
+        uint8_t allowed = (uint8_t)operand;
+
+        if (!csb_v1_runtime_f0144_creature_attributes_receipt_pc34(
+                dungeon, group_thing, &attributes)) return 0;
+        size = attributes.attributes & 3;
+        if (size == 0) { max_count = 4; allowed &= 0x0fu; }
+        else if (size == 1) { max_count = 2; allowed &= 0x05u; }
+        else return 1;
+        if (count >= max_count) return 1;
+        for (i = 0; i < count; ++i) {
+            int occupied = csb_v1_runtime_group_cell_value(record[5], i);
+            if (occupied >= 0 && occupied < 4) allowed &=
+                (uint8_t)~(1u << occupied);
+        }
+        for (i = 0; i < 4; ++i) if ((allowed & (1u << i)) != 0u) {
+            new_cell = i; break;
+        }
+        if (new_cell < 0) return 1;
+        record[5] = (uint8_t)csb_v1_runtime_group_cells_set_value(
+            record[5], count, new_cell);
+        csb_v1_runtime_write_u16(record + 6 + count * 2,
+            csb_v1_runtime_read_u16(record + 6));
+        if (state) {
+            state->cells = record[5];
+            state->directions = csb_v1_runtime_group_directions_set_value(
+                state->directions, count,
+                csb_v1_runtime_group_direction_value(state->directions, 0));
+            state->aspect[count] = state->aspect[0];
+        }
+        flags = (uint16_t)((flags & ~(uint16_t)(3u << 5)) |
+            (uint16_t)(count << 5));
+        csb_v1_runtime_write_u16(record + 14, flags);
+        return 1;
+    }
 }
 
 int csb_v1_runtime_f0183_active_group_receipt_pc34(
@@ -26672,6 +26779,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.prepare_cause_poison = csb_v1_runtime_dsa_prepare_cause_poison;
     candidate.commit_cause_poison = csb_v1_runtime_dsa_commit_cause_poison;
     candidate.teleport_party = csb_v1_runtime_dsa_teleport_party;
+    candidate.mutate_monster_group = csb_v1_runtime_dsa_mutate_monster_group;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
@@ -26915,6 +27023,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.prepare_cause_poison = csb_v1_runtime_dsa_prepare_cause_poison;
     candidate.commit_cause_poison = csb_v1_runtime_dsa_commit_cause_poison;
     candidate.teleport_party = csb_v1_runtime_dsa_teleport_party;
+    candidate.mutate_monster_group = csb_v1_runtime_dsa_mutate_monster_group;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;

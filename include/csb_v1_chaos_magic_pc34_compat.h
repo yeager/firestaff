@@ -405,6 +405,11 @@ typedef int (*CSB_V1_CSBWinDSACreateCloudFn)(
  * group cleanup and party pose publication. */
 typedef int (*CSB_V1_CSBWinDSATeleportPartyFn)(void *user,
                                                uint32_t destination_location);
+/* CSBWin Monster.cpp DeleteMonsterInGroup/InsertMonsterInGroup operate on
+ * an existing DB4 group at LOCATIONREL.  The loaded runtime owns C04, ITEM16
+ * and TIMER updates; the DSA VM only stages the exact source operands. */
+typedef int (*CSB_V1_CSBWinDSAMutateMonsterGroupFn)(
+    void *user, uint32_t location, uint32_t operand, int insert_monster);
 typedef int (*CSB_V1_CSBWinDSADiscardTextFn)(void *user);
 typedef int (*CSB_V1_CSBWinDSAPlaySoundFn)(
     void *user, int32_t sound_number, int32_t volume, int32_t flags);
@@ -601,6 +606,7 @@ typedef struct {
     CSB_V1_CSBWinDSACommitCausePoisonFn commit_cause_poison;
     CSB_V1_CSBWinDSACreateCloudFn create_cloud;
     CSB_V1_CSBWinDSATeleportPartyFn teleport_party;
+    CSB_V1_CSBWinDSAMutateMonsterGroupFn mutate_monster_group;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;
@@ -846,6 +852,10 @@ typedef struct {
     uint32_t last_create_cloud_location;
     uint16_t teleport_party_count;
     uint32_t last_teleport_party_destination;
+    uint16_t monster_group_mutation_count;
+    uint32_t last_monster_group_location;
+    uint32_t last_monster_group_operand;
+    int last_monster_group_insert;
     uint16_t override_p_count;
     uint32_t last_override_position;
     /* DSA.cpp STKOP_JumpGear/GosubGear use stack-selected state/column
@@ -1032,6 +1042,7 @@ typedef struct {
     CSB_V1_CSBWinDSACommitCausePoisonFn commit_cause_poison;
     CSB_V1_CSBWinDSACreateCloudFn create_cloud;
     CSB_V1_CSBWinDSATeleportPartyFn teleport_party;
+    CSB_V1_CSBWinDSAMutateMonsterGroupFn mutate_monster_group;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;

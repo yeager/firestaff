@@ -582,6 +582,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 46u: case 49u: case 51u: case 52u: case 53u: case 54u: case 55u:
     case 56u: case 57u: case 58u: case 60u: case 62u: case 63u: case 64u: case 65u:
     case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
+    case 95u: case 96u:
     case 77u: case 78u: case 92u: case 100u: case 101u: case 102u: case 106u:
     case 47u: case 90u: case 103u: case 104u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
     case 115u: case 116u: case 117u: case 118u: case 123u: case 124u: case 125u:
@@ -626,6 +627,8 @@ csb_v1_csbwin_dsa_expand_indirect(uint32_t *stack, int *depth,
     case 85u: direct_subcode = 66u; break;  /* I_Char! -> Char! */
     case 81u: direct_subcode = 68u; break;  /* I_CreateCloud -> CreateCloud */
     case 83u: direct_subcode = 62u; break;  /* I_TeleportParty -> TeleportParty */
+    case 93u: direct_subcode = 95u; break;  /* I_DelMon -> DelMon */
+    case 94u: direct_subcode = 96u; break;  /* I_InsMon -> InsMon */
     case 87u: direct_subcode = 76u; break;  /* I_Copy -> Copy */
     case 88u: direct_subcode = 58u; break;  /* I_Cell! -> Cell! */
     case 111u: direct_subcode = 110u; break; /* I_CausePoison */
@@ -840,6 +843,8 @@ static int csb_v1_csbwin_dsa_subcode_is_dungeon_mutation(uint16_t subcode)
     case 56u:  /* STKOP_SetBroken */
     case 58u:  /* STKOP_CellStore */
     case 63u:  /* STKOP_MonsterStore */
+    case 95u:  /* STKOP_DelMon */
+    case 96u:  /* STKOP_InsMon */
     case 66u:  /* STKOP_CharStore */
     case 75u:  /* STKOP_SetPoisoned */
     case 76u:  /* STKOP_Copy */
@@ -1403,6 +1408,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_CLOUD_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_PARTY_TELEPORTS 100
+#define CSB_V1_CSBWIN_DSA_PENDING_MONSTER_GROUP_MUTATIONS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS 100
@@ -1491,6 +1497,12 @@ typedef struct {
 typedef struct {
     uint32_t destination_location;
 } CSB_V1_CSBWinDSAPendingPartyTeleport;
+
+typedef struct {
+    uint32_t location;
+    uint32_t operand;
+    int insert_monster;
+} CSB_V1_CSBWinDSAPendingMonsterGroupMutation;
 
 typedef struct {
     uint16_t thing;
@@ -1664,6 +1676,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *pending_cloud_request_count,
     CSB_V1_CSBWinDSAPendingPartyTeleport *pending_party_teleports,
     int *pending_party_teleport_count,
+    CSB_V1_CSBWinDSAPendingMonsterGroupMutation *pending_monster_group_mutations,
+    int *pending_monster_group_mutation_count,
     CSB_V1_CSBWinDSAPendingActuatorCopy *pending_actuator_copies,
     int *pending_actuator_copy_count,
     CSB_V1_CSBWinDSAPendingSoundRequest *pending_sound_requests,
@@ -1718,6 +1732,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_character_swaps || !pending_character_swap_count ||
         !pending_poison_writes || !pending_poison_write_count ||
         !pending_party_teleports || !pending_party_teleport_count ||
+        !pending_monster_group_mutations || !pending_monster_group_mutation_count ||
         !pending_actuator_copies || !pending_actuator_copy_count ||
         !pending_sound_requests || !pending_sound_request_count ||
         !adjust_skills_parameters_requested || !pending_adjust_skills_parameters ||
@@ -1741,6 +1756,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_character_swap_count < 0 ||
         *pending_poison_write_count < 0 ||
         *pending_party_teleport_count < 0 ||
+        *pending_monster_group_mutation_count < 0 ||
         *pending_actuator_copy_count < 0 ||
         *pending_say_text_request_count < 0 ||
         *pending_display_text_request_count < 0 ||
@@ -1826,6 +1842,27 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         pending_party_teleports[*pending_party_teleport_count]
             .destination_location = v;
         ++*pending_party_teleport_count;
+        break;
+    case 95u: /* STKOP_DelMon, CSBWin DSA.cpp:1742-1748. */
+    case 96u: /* STKOP_InsMon, CSBWin DSA.cpp:1751-1757. */
+        /* Both source operations pop operand then LOCATIONREL.  They are
+         * illegal inside a DSA filter and are deferred until the complete
+         * authenticated action has passed.  The runtime callback owns DB4,
+         * ITEM16 and TIMER mutation; a missing owner is never emulated. */
+        if (!context->mutate_monster_group ||
+            *pending_monster_group_mutation_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_MONSTER_GROUP_MUTATIONS ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_monster_group_mutations[*pending_monster_group_mutation_count]
+            .location = w;
+        pending_monster_group_mutations[*pending_monster_group_mutation_count]
+            .operand = v;
+        pending_monster_group_mutations[*pending_monster_group_mutation_count]
+            .insert_monster = subcode == 96u;
+        ++*pending_monster_group_mutation_count;
         break;
     case 69u: /* STKOP_Sound, CSBWin DSA.cpp:4612-4624. */
         if (!context->play_sound ||
@@ -3704,6 +3741,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_cloud_requests[CSB_V1_CSBWIN_DSA_PENDING_CLOUD_REQUESTS];
     CSB_V1_CSBWinDSAPendingPartyTeleport
         pending_party_teleports[CSB_V1_CSBWIN_DSA_PENDING_PARTY_TELEPORTS];
+    CSB_V1_CSBWinDSAPendingMonsterGroupMutation pending_monster_group_mutations[
+        CSB_V1_CSBWIN_DSA_PENDING_MONSTER_GROUP_MUTATIONS];
     CSB_V1_CSBWinDSAPendingActuatorCopy
         pending_actuator_copies[CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES];
     CSB_V1_CSBWinDSAPendingSoundRequest
@@ -3743,6 +3782,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_poison_write_count = 0;
     int pending_cloud_request_count = 0;
     int pending_party_teleport_count = 0;
+    int pending_monster_group_mutation_count = 0;
     int pending_actuator_copy_count = 0;
     int pending_sound_request_count = 0;
     int discard_text_requested = 0;
@@ -4348,7 +4388,10 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     &pending_character_swap_count, pending_poison_writes,
                     &pending_poison_write_count, pending_cloud_requests,
                     &pending_cloud_request_count, pending_party_teleports,
-                    &pending_party_teleport_count, pending_actuator_copies,
+                    &pending_party_teleport_count,
+                    pending_monster_group_mutations,
+                    &pending_monster_group_mutation_count,
+                    pending_actuator_copies,
                     &pending_actuator_copy_count, pending_sound_requests,
                     &pending_sound_request_count, &discard_text_requested,
                     &adjust_skills_parameters_requested,
@@ -4601,6 +4644,23 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         ++candidate.teleport_party_count;
         candidate.last_teleport_party_destination =
             pending_party_teleports[i].destination_location;
+    }
+    for (i = 0; i < pending_monster_group_mutation_count; ++i) {
+        if (!context->mutate_monster_group ||
+            !context->mutate_monster_group(
+                context->dungeon_user,
+                pending_monster_group_mutations[i].location,
+                pending_monster_group_mutations[i].operand,
+                pending_monster_group_mutations[i].insert_monster)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        ++candidate.monster_group_mutation_count;
+        candidate.last_monster_group_location =
+            pending_monster_group_mutations[i].location;
+        candidate.last_monster_group_operand =
+            pending_monster_group_mutations[i].operand;
+        candidate.last_monster_group_insert =
+            pending_monster_group_mutations[i].insert_monster;
     }
     for (i = 0; i < pending_actuator_copy_count; ++i) {
         if ((context->copy_actuator_payload &&
@@ -5021,6 +5081,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.commit_cause_poison = runner->commit_cause_poison;
     context.create_cloud = runner->create_cloud;
     context.teleport_party = runner->teleport_party;
+    context.mutate_monster_group = runner->mutate_monster_group;
     context.discard_text = runner->discard_text;
     context.play_sound = runner->play_sound;
     context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;

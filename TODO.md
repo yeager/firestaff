@@ -967,11 +967,11 @@ that its exact runtime path is not already source-locked and tested.
     filters, state transitions, and runtime mutation with hard fail-closed
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
-    remaining 24 stack words: `DEL`, `ADD`, `CAST`,
+    remaining 22 fully unowned stack words: `DEL`, `ADD`, `CAST`,
     `FILTEREDCAST`, `THROW`, `MOVE`,
     the `I_*` indirect family (`DEL/ADD/CAST/MONSTER!/
-    CHAR!/MOVE/COPY/CELL!/THROW/DELAY/DELMON/INSMON/CAUSEPOISON/
-    FILTEREDCAST/SWAPCHARACTER`), plus `DELMON` and `INSMON`. `SAY` is now
+    CHAR!/MOVE/COPY/CELL!/THROW/DELAY/CAUSEPOISON/
+    FILTEREDCAST/SWAPCHARACTER`). `SAY` is now
     source-owned and transactional; the listed operations still require one
     transactional world-
     mutation batch with source-owned callbacks; do not add a synthetic VM
@@ -1002,7 +1002,19 @@ that its exact runtime path is not already source-locked and tested.
     authenticated stack context; a real byte-map regression proves commit and
     post-publication drift rejection. Core admission now marks the opcode as
     runtime-owned, preventing it from being classified as a pure-stack DSA
-    operation.
+    operation. 2026-07-29: direct `DELMON`/`INSMON` now stage CSBWin's
+    exact `(LOCATIONREL,index)` and `(LOCATIONREL,positionMask)` operands,
+    commit only after the complete action succeeds, and reach a loaded C04
+    group owner. The owner preserves CSBWin's no-group/no-room no-ops,
+    refuses deletion of the final creature, uses descriptor horizontal-size
+    limits, compacts/copies raw health and cell data, and updates live group
+    direction/aspect data. `I_DELMON` and `I_INSMON` are admitted through the
+    same `INDIRECT` expansion. The remaining tail is deliberately open under
+    CSB-DSA-MONSTER-WORLD: source `Monster.cpp` also deletes or clones the
+    matching per-creature A/B timer and copies ITEM16 status on the party
+    level. Firestaff rejects a feared/timer-owned deletion instead of
+    inventing a timer mutation; do not promote this bounded path to full
+    DSA-world coverage until those source owners are transactional.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.
