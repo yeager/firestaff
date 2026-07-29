@@ -9179,9 +9179,15 @@ static int m11_v2_vertical_slice_test_override(void) {
  * running.  The environment variable remains a test/developer override for
  * isolated layout probes, but must not be the production mode selector. */
 static int m11_v2_vertical_slice_enabled(const M11_GameViewState* state) {
-    return (state &&
-            state->presentationMode != M12_PRESENTATION_V1_ORIGINAL) ||
-           m11_v2_vertical_slice_test_override();
+    if (m11_v2_vertical_slice_test_override()) {
+        return 1;
+    }
+    /* CSB V2.x keeps the source-owned C017/C040 HUD and F0128 page. Its
+     * filters, upscale and admitted V2.2 door projections are not the DM1
+     * vertical-slice layout; applying that layout overwrites CSB HUD pixels
+     * with generic status panels. */
+    return state && state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
+           state->presentationMode != M12_PRESENTATION_V1_ORIGINAL;
 }
 
 /* Pass 42: V1 chrome-mode switch.

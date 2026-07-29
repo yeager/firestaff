@@ -25,7 +25,8 @@ fi
 output="$(mktemp "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-XXXXXX")"
 capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-startup-XXXXXX")"
 runtime_capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-capture-XXXXXX")"
-trap 'rm -f "$output"; rm -rf "$capture_dir" "$runtime_capture_dir"' EXIT HUP INT TERM
+v1_runtime_capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v1-runtime-capture-XXXXXX")"
+trap 'rm -f "$output"; rm -rf "$capture_dir" "$runtime_capture_dir" "$v1_runtime_capture_dir"' EXIT HUP INT TERM
 
 # V2.2 material belongs only to the admitted live viewport. The original
 # C001-C005 startup sequence must still reach the presented surface with its
@@ -36,8 +37,6 @@ trap 'rm -f "$output"; rm -rf "$capture_dir" "$runtime_capture_dir"' EXIT HUP IN
 # test that policy rather than the V2.2 runtime handoff.  The C407 pointer
 # geometry remains covered by the direct entrance-pointer regression.
 FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$capture_dir" \
-FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_capture_dir" \
-FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture_dir/presented" \
 SDL_VIDEODRIVER=dummy "$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v22 --duration 7000 \
     >"$capture_dir/firestaff.log" 2>&1
@@ -53,10 +52,25 @@ if [ "$capture_count" -ne 4 ] ||
     exit 1
 fi
 
-SDL_VIDEODRIVER=dummy "$firestaff_bin" \
+SDL_VIDEODRIVER=dummy \
+FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_capture_dir" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture_dir/presented" \
+"$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v22 \
     --boot-probe --width 960 --height 600 --scale-mode 4 \
     --script 'wait120,key:enter,wait200' >"$output" 2>&1
+
+# V2.2 may replace only a receipt-admitted F0128 viewport command.  The
+# terminal C017/C040 HUD is source-owned and must remain byte-identical to
+# the V1 source page outside F0128's 224x136 aperture at (48,33).
+v1_output="$v1_runtime_capture_dir/firestaff.log"
+SDL_VIDEODRIVER=dummy \
+FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$v1_runtime_capture_dir" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$v1_runtime_capture_dir/presented" \
+"$firestaff_bin" \
+    --game csb --data-dir "$data_dir" --presentation-mode v1 \
+    --boot-probe --width 960 --height 600 --scale-mode 4 \
+    --script 'wait120,key:enter,wait200' >"$v1_output" 2>&1
 
 if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb' "$output" ||
    ! grep -Fq 'presentationMode=3 presentation=640x400' "$output" ||
@@ -97,5 +111,49 @@ if [ "$runtime_capture_count" -ne 1 ] ||
     echo "FAIL: CSB V2.2 boot probe did not capture the terminal runtime frame" >&2
     exit 1
 fi
+
+v1_runtime_capture_count="$(find "$v1_runtime_capture_dir" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"
+v1_runtime_presented_capture_count="$(find "$v1_runtime_capture_dir/presented" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"
+if [ "$v1_runtime_capture_count" -ne 1 ] ||
+   [ "$v1_runtime_presented_capture_count" -ne 1 ]; then
+    find "$v1_runtime_capture_dir" -maxdepth 2 -type f -print >&2 || true
+    echo "FAIL: CSB V1 baseline did not capture the terminal runtime frame" >&2
+    exit 1
+fi
+
+v22_runtime_bmp="$(find "$runtime_capture_dir" -maxdepth 1 -type f -name '*.bmp' -print -quit)"
+v1_runtime_bmp="$(find "$v1_runtime_capture_dir" -maxdepth 1 -type f -name '*.bmp' -print -quit)"
+python3 - "$v1_runtime_bmp" "$v22_runtime_bmp" <<'PY'
+import struct
+import sys
+
+def read_bmp(path):
+    data = open(path, "rb").read()
+    if len(data) < 54 or data[:2] != b"BM":
+        raise ValueError(f"invalid BMP: {path}")
+    offset = struct.unpack_from("<I", data, 10)[0]
+    width, height = struct.unpack_from("<ii", data, 18)
+    bpp = struct.unpack_from("<H", data, 28)[0]
+    if width != 320 or abs(height) != 200 or bpp != 24:
+        raise ValueError(f"unexpected runtime BMP geometry: {path}: {width}x{height}x{bpp}")
+    stride = ((width * 3 + 3) // 4) * 4
+    if offset + stride * abs(height) > len(data):
+        raise ValueError(f"truncated BMP: {path}")
+    rows = []
+    for y in range(abs(height)):
+        source_y = y if height < 0 else abs(height) - 1 - y
+        start = offset + source_y * stride
+        rows.append(data[start:start + width * 3])
+    return rows
+
+v1, v22 = read_bmp(sys.argv[1]), read_bmp(sys.argv[2])
+for y in range(200):
+    for x in range(320):
+        if 48 <= x < 272 and 33 <= y < 169:
+            continue
+        start = x * 3
+        if v1[y][start:start + 3] != v22[y][start:start + 3]:
+            raise SystemExit(f"FAIL: CSB V2.2 changed source-owned HUD pixel at {x},{y}")
+PY
 
 echo "PASS: CSB V2.2 preserves startup captures and the source-owned F0128 runtime frame"
