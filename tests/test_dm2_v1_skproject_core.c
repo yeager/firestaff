@@ -5358,6 +5358,28 @@ static void test_skwin_core_symbol_batch_cycle10(void)
               "CLS1 type 14 blocked without pool");
     }
 
+    /* DM2_GET_DISTINCTIVE_ITEMTYPE combines record type + cls2. */
+    {
+        DM2_V1_SkprojectDistinctiveItemtypeReceipt dr;
+        uint16_t dtype = 0;
+        /* Type 5 (0x1400), table base=0x0000, cls2=0x0a -> 0x000a */
+        CHECK(dm2_v1_skproject_get_distinctive_itemtype(
+                  0x1400u, 0x0a, &dtype, &dr) && dr.valid && dtype == 0x000a,
+              "DISTINCTIVE type 5 cls2=0x0a -> 0x000a");
+        /* Type 4 (0x1000), table base=0x01b0, cls2=5 -> 0x01b5 */
+        CHECK(dm2_v1_skproject_get_distinctive_itemtype(
+                  0x1000u, 5, &dtype, &dr) && dr.valid && dtype == 0x01b5,
+              "DISTINCTIVE type 4 cls2=5 -> 0x01b5");
+        /* Type 0 (0x0000), table base=0x81ff (high bit) -> 0x01ff */
+        CHECK(dm2_v1_skproject_get_distinctive_itemtype(
+                  0x0000u, 0x0a, &dtype, &dr) && dr.valid && dtype == 0x01ff,
+              "DISTINCTIVE type 0 high-bit -> 0x01ff");
+        /* End marker */
+        CHECK(!dm2_v1_skproject_get_distinctive_itemtype(
+                  0xffffu, 0, &dtype, &dr) && dr.blocked_end_marker,
+              "DISTINCTIVE end marker blocked");
+    }
+
     /* DM2_GET_CREATURE_WEIGHT records a caller-resolved weight. */
     CHECK(dm2_v1_skproject_get_creature_weight(
               100u, &weight, &weight_receipt) &&

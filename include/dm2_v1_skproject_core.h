@@ -9634,6 +9634,24 @@ int dm2_v1_skproject_query_cls1_from_record_ex(
     uint8_t *out_cls1,
     DM2_V1_SkprojectQueryCls1Receipt *out_receipt);
 
+/* SKULLWIN/c_record.cpp:175 DM2_GET_DISTINCTIVE_ITEMTYPE — combine record-type
+   bits (via table1d3278) and cls2 into a single 16-bit distinctive type.
+   The distinctive type is used throughout DM2 for item identity checks. */
+typedef struct {
+    int valid;
+    uint16_t record_word;
+    uint16_t distinctive_type;
+    uint8_t record_type;
+    uint8_t cls2;
+    int blocked_end_marker;
+} DM2_V1_SkprojectDistinctiveItemtypeReceipt;
+
+int dm2_v1_skproject_get_distinctive_itemtype(
+    uint16_t record_word,
+    uint8_t cls2,
+    uint16_t *out_type,
+    DM2_V1_SkprojectDistinctiveItemtypeReceipt *out_receipt);
+
 typedef struct DM2_V1_SkprojectDtorMemoryAllocationReceipt {
     int8_t was_allocated;
     int8_t freed;

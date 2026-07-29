@@ -11832,6 +11832,56 @@ int dm2_v1_skproject_update_glob_var(
     return 1;
 }
 
+/* SKULLWIN/dm2data.cpp:482 table1d3278 — record-type to distinctive base. */
+static const int16_t dm2_table1d3278[16] = {
+    (int16_t)0x81ff, (int16_t)0x81ff, (int16_t)0x81ff, (int16_t)0x81ff,
+    0x01b0, 0x0000, 0x0080, (int16_t)0x81fc,
+    0x0180, 0x01e0, 0x0100, (int16_t)0x81ff,
+    (int16_t)0x81ff, (int16_t)0x81ff, (int16_t)0x81ff, (int16_t)0x81ff
+};
+
+int dm2_v1_skproject_get_distinctive_itemtype(
+    uint16_t record_word,
+    uint8_t cls2,
+    uint16_t *out_type,
+    DM2_V1_SkprojectDistinctiveItemtypeReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDistinctiveItemtypeReceipt receipt;
+    uint16_t rtype;
+    int16_t base;
+    uint16_t result;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_word = record_word;
+    receipt.cls2 = cls2;
+
+    if (record_word == 0xffffu) {
+        receipt.blocked_end_marker = 1;
+        receipt.distinctive_type = 0x01ff;
+        if (out_type) *out_type = 0x01ff;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    rtype = (record_word & 0x3c00u) >> 10;
+    receipt.record_type = (uint8_t)rtype;
+    base = dm2_table1d3278[rtype];
+
+    if ((base & 0x8000u) != 0) {
+        receipt.distinctive_type = (uint16_t)(base & 0x7fffu);
+        result = receipt.distinctive_type;
+    } else {
+        result = (uint16_t)((uint16_t)cls2 + (uint16_t)base);
+        receipt.distinctive_type = result;
+    }
+
+    receipt.valid = 1;
+    if (out_type) *out_type = result;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 /* SKULLWIN/dm2data.cpp:487 table1d3298 — record-type to cls1 mapping. */
 static const int8_t dm2_table1d3298[16] = {
     0x0e, 0x18, (int8_t)0xff, (int8_t)0xff,

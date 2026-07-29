@@ -1,3 +1,7 @@
+- ✅ 2026-07-29 DM2 record classification batch: DM2_GET_DISTINCTIVE_ITEMTYPE
+  combines record-type base (table1d3278[16]) with cls2 into a distinctive
+  type ID. Audit TSV updated (1 symbol + 2 timer queue symbols). Source:
+  skproject c_record.cpp:175-201, dm2data.cpp:482-485.
 - ✅ 2026-07-29 DM2 record classifier: DM2_QUERY_CLS1_FROM_RECORD extracts
   record-type class-1 via table1d3298[16] lookup on bits 10-13 of record word.
   Both simple version and _ex version with record-pool type-14 chain-follow.
