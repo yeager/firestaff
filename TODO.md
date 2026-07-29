@@ -1292,12 +1292,15 @@ that its exact runtime path is not already source-locked and tested.
     blank Atari ST Save Disk and Utility Disk `DungeonSave` directories; there
     is still no authentic saved position to admit. Keep this blocked on a
     user-created original/CSBWin save, not a synthetic fixture.
-    2026-07-29: a real `CSBGAME2.DAT` corpus file is now staged externally
-    from AnnotatedCSB (SHA-256 `762db0d0617a362910edb739f02a8dca246c04a6c0e44113c78399278f72b189`).
-    It proves an original big-endian GAMEBLOCK1: Firestaff validates the
-    C29 checksum pair and recognises CSBWin slots `CSBGAME.DAT` through
-    `CSBGAME4.DAT`. The existing original Atari body decoder also verifies
-    this corpus and resumes its two-champion dungeon at runtime. Remaining:
+    2026-07-29: the external corpus runner accepts an operator-supplied
+    `FIRESTAFF_CSB_ATARI_SAVE_CORPUS` and exercises original big-endian
+    GAMEBLOCK1/2 decoding, runtime Resume, atomic write-back, canonical-slot
+    backup recovery, and champion mutation without creating substitute bytes.
+    The previously cited AnnotatedCSB `CSBGAME2.DAT` SHA-256
+    (`762db0d0617a362910edb739f02a8dca246c04a6c0e44113c78399278f72b189`)
+    is not present in the current data roots, so it is not claimed as a local
+    passing corpus. Firestaff validates the C29 checksum pair and recognises
+    CSBWin slots `CSBGAME.DAT` through `CSBGAME4.DAT`. Remaining:
     Firestaff already imports and exports the authenticated CSBWin PC core
     body (GAMEBLOCK2, ITEM16, CHARDESC, TIMER, timer queue and preserved
     EXPOOL) through `csb_v1_runtime_apply_csbwin_resume_file()` and
@@ -1305,19 +1308,20 @@ that its exact runtime path is not already source-locked and tested.
     2026-07-29: original big-endian GAMEBLOCK2 write-back now updates only
     documented clock, RNG, hand, party pose and map fields, re-encrypts the
     source blocks and recomputes their checksums while preserving the embedded
-    dungeon and all unowned sections byte-for-byte. The real `CSBGAME2.DAT`
-    corpus passes this round-trip and the runtime now exposes an explicit
-    source-to-destination export that writes atomically through a temporary
-    file. Remaining: original Atari/Amiga dungeon, object and timer mutation
-    write-back and broader
+    dungeon and all unowned sections byte-for-byte. The runtime exposes an
+    explicit source-to-destination export that writes atomically through a
+    temporary file; a real-corpus round-trip remains externally runnable but
+    unverified on this host. Remaining: original Atari/Amiga dungeon, object
+    and timer mutation write-back and broader
     original DB11/EXPOOL corpus coverage; do not substitute the PC body layout
     for this authenticated original route.
     2026-07-29: CSBWin `SaveGame.cpp:926-932` confirms the original slot
     rotation rule. Firestaff now rotates only `CSBGAME.DAT` and
     `CSBGAME1.DAT` through `CSBGAME4.DAT` to the matching `.BAK` name,
-    restoring the old slot if final publication fails. The real
-    `CSBGAME2.DAT` corpus verifies byte-identical backup preservation before
-    the documented GAMEBLOCK2 write-back is accepted.
+    restoring the old slot if final publication fails. The external
+    original-save runner verifies byte-identical backup preservation before
+    the documented GAMEBLOCK2 write-back is accepted when an operator supplies
+    a real corpus.
     2026-07-29: CSBWin `SaveGame.cpp:1692-1697,2090` backup recovery is also
     implemented for authenticated original slots only. A bad `CSBGAME*.DAT`
     now falls through to the matching `.BAK`, validates its original Atari
@@ -1325,10 +1329,11 @@ that its exact runtime path is not already source-locked and tested.
     2026-07-29: the export now also writes the documented, already-decoded
     champion fields in each 800-byte original record (identity, pose/action,
     vital stats, skills/experience, slots, load and shield), re-encrypting
-    that section and rebuilding its checksum. The real corpus round-trip
-    changes/reloads a champion name and health without touching the embedded
-    dungeon. Remaining scope is original dungeon/object/timer mutation and
-    DB11/EXPOOL corpus evidence; do not infer them from the PC body layout.
+    that section and rebuilding its checksum. The external corpus runner is
+    ready to prove a champion-name/health round-trip without touching the
+    embedded dungeon once a real saved position is supplied. Remaining scope
+    is original dungeon/object/timer mutation and DB11/EXPOOL corpus evidence;
+    do not infer them from the PC body layout.
 24. **CSB-UTILITY-DISK-COMPLETE:** Complete Utility Disk import, preview,
     save/load/new-game, champion editing, inventory, chest, dialogs, and
     confirmation flows using original package and save material. Direct

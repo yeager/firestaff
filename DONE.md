@@ -127,19 +127,23 @@
   Atari/Amiga `CSBGAME*.DAT` resume route now follows CSBWin
   `SaveGame.cpp:1692-1697,2090`: when a selected original slot cannot be
   loaded, its matching `.BAK` is decoded first and only then restored to the
-  canonical `.DAT` name. Arbitrary Firestaff paths remain excluded. The real
-  AnnotatedCSB `CSBGAME2.DAT` corpus verifies corrupt-slot recovery,
-  canonical-name restoration, and runtime handoff. Full `ctest -L csb`:
-  103/103 passed.
+  canonical `.DAT` name. Arbitrary Firestaff paths remain excluded. The
+  external original-save runner covers corrupt-slot recovery, canonical-name
+  restoration, and runtime handoff when `FIRESTAFF_CSB_ATARI_SAVE_CORPUS` is
+  supplied. The current machine has no user-created `CSBGAME*.DAT`, so this
+  item does not claim a local real-corpus pass. Full `ctest -L csb`: 103/103
+  passed.
 
 - ✅ 2026-07-29 CSB original-save slot backup rotation: authenticated original
   Atari/Amiga exports now follow CSBWin `SaveGame.cpp`: an existing
   `CSBGAME.DAT` or `CSBGAME1` through `CSBGAME4.DAT` is rotated to the
   matching `.BAK` name before the patched save is published. A failed final
   publication restores the old slot. Arbitrary Firestaff/user file names do
-  not receive an invented backup convention. Verification: real AnnotatedCSB
-  `CSBGAME2.DAT` runtime export preserves the old corpus byte-for-byte as
-  `CSBGAME2.BAK`, reloads the updated file, and retains the embedded dungeon.
+  not receive an invented backup convention. The external original-save runner
+  preserves the old selected slot byte-for-byte as its matching `.BAK`, reloads
+  the updated file, and retains the embedded dungeon when a real corpus is
+  supplied. Local real-corpus verification remains open under
+  `CSB-ORIGINAL-SAVE-CORPUS`.
 
 - ✅ 2026-07-29 CSB V2.2 fullscreen viewport and artpack-path verification:
   CSB's V2.2 in-place and per-cell swap renderers now scale the original
