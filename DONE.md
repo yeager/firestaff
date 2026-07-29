@@ -1,3 +1,10 @@
+- ✅ 2026-07-29 CSB Utility Disk fail-closed presentation cleanup: removed
+  M11's unused semantic-row/rectangle Utility Disk painter. It had no live
+  call site and could not prove original Utility Disk pixels, so the runtime
+  now keeps the source-raster admission boundary intact instead of retaining
+  a dormant synthetic fallback. Verification: `firestaff` build, focused
+  Utility/boot/HUD/entrance regressions, and the full 109-test CSB lane pass.
+
 - ✅ 2026-07-29 Start-menu data-folder picker: current-directory display
   tokens from the macOS dialog cannot replace the selected data root, while
   the valid relative parent directory `..` is no longer rejected. The

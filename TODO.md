@@ -1378,7 +1378,10 @@ that its exact runtime path is not already source-locked and tested.
     `UTIO.C` F1991: Atari ST sector-7 copyright/title bytes and the 880 KiB
     Amiga ADF root-volume `FTL_CSB_Utility` replace Firestaff's former
     invented boot-sector serial. Remaining work is the actual Utility UI
-    presentation and its complete save/import/new-game actions.
+    presentation and its complete save/import/new-game actions. 2026-07-29:
+    the unused M11 semantic-row/rectangle Utility Disk painter was removed;
+    it had no production call site and cannot substitute for a decoded
+    original Utility Disk raster.
     2026-07-29: DM1-party import now requires a physically verified Utility
     Disk before it can commit a party. The runtime finds only six known
     original Amiga Utility Disk ADF hashes (English R1/R2/R3, French, German
