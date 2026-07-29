@@ -947,7 +947,7 @@ that its exact runtime path is not already source-locked and tested.
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
     remaining 26 stack words: `DEL`, `ADD`, `CAST`,
     `FILTEREDCAST`, `THROW`, `TELEPORTPARTY`, `MOVE`,
-    the `I_*` indirect family (`DEL/ADD/CREATECLOUD/CAST/TELEPORTPARTY/MONSTER!/
+    the `I_*` indirect family (`DEL/ADD/CAST/TELEPORTPARTY/MONSTER!/
     CHAR!/MOVE/COPY/CELL!/THROW/DELAY/DELMON/INSMON/CAUSEPOISON/
     FILTEREDCAST/SWAPCHARACTER`), plus `DELMON` and `INSMON`. `SAY` is now
     source-owned and transactional; the listed operations still require one
