@@ -969,6 +969,11 @@ that its exact runtime path is not already source-locked and tested.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
+   2026-07-29: the local original Atari ST set includes a 42,815-byte
+   `MINI.DAT`, the main CSB dungeon selected after Prison/Utility handoff.
+   It is not a `DUNGEON.DAT`-layout file and must not be treated as a save or
+   substituted for one. Add a source-verified MINI decode and handoff route
+   before claiming original Atari/CSBWin campaign-resume support.
 7. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
    source-backed indoor HUD, wall, door, floor/ceiling, item, projectile,
    creature, and static-object rendering through the live M11 dungeon path.
