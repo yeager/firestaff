@@ -872,6 +872,12 @@ that its exact runtime path is not already source-locked and tested.
    capture confirms coherent PRESENTS and Prison frames. This closes the
    startup geometric corruption; the remaining item scope is live HUD/
    viewport breadth, audio admission, and packaged app capture.
+   2026-07-29: local PC3.4 runtime captures exercised V1, V2.0, V2.1, and
+   V2.2 at the completed Entrance page. V1/V2.0 preserve the source page,
+   V2.1 uses the expected upscale path, and V2.2 resolves fail-closed to
+   V2.1 because no complete, source-mapped CSB material pack is installed.
+   Do not replace that fallback with repeated or guessed GRAPHICS.DAT art:
+   the 29 V2.2 routes require a verified source mapping.
    2026-07-28: the separate original Atari ST route now presents
    `ANIMATE.SCR`/`ANIMATE.DAT` through M11 correctly. The palette setter's
    success code is zero, so its former boolean check discarded every genuine
