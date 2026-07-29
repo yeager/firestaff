@@ -1227,6 +1227,16 @@ that its exact runtime path is not already source-locked and tested.
     expands only to the already source-owned transactional operations
     (`ADD`, `MONSTER!`, `CHAR!`, `COPY`, `CELL!`, `CAUSEPOISON`,
     `SWAPCHARACTER`, `CREATECLOUD`, `DEL`, `MOVE`).
+    2026-07-30 audit against CSBWin `DSA.cpp:2094-2199,2345-2374,
+    3092-3107,4958-4973` and `Magic.cpp:1408-1418`: direct `CAST` and
+    `FILTEREDCAST` already retain all 14 `SPELL_PARAMETERS` words and have
+    rollback coverage, but the live saved-timer runner does not bind its
+    `cast_spell` callback. `I_CAST`/`I_FILTEREDCAST` also remain intentionally
+    rejected: CSBWin serializes only 13 parameter words through `INDIRECTP`,
+    while `DSACastSpell` copies the full 14-word structure. Bind an exact
+    original parameter-message corpus and a runtime spell owner before
+    admitting either route; do not pad the missing word or send it through a
+    DM1 spell substitute.
     Its source local-variable rewrite now writes the action-local DSAVARS bank
     before the selected direct word runs; persistent save data remains outside
     this temporary source bank. 2026-07-29: direct `CREATECLOUD` now consumes
