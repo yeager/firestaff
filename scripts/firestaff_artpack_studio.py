@@ -1001,6 +1001,16 @@ class Artpack:
             fp.write("\n")
         tmp.replace(self.manifest_path)
 
+    def ensure_loaded(self) -> None:
+        """Load the manifest before a non-GUI API operation mutates it.
+
+        The GUI always calls ``load_or_create`` when a pack is selected, but
+        CLI consumers may construct ``Artpack`` directly.  Saving an unloaded
+        instance must never replace an existing manifest with an empty one.
+        """
+        if not self.data:
+            self.load_or_create()
+
     def entries(self) -> list[AssetEntry]:
         out: list[AssetEntry] = []
         for category in categories_for_game(self.game):
@@ -1140,6 +1150,7 @@ class Artpack:
         keeps `.fsart` authoring portable while letting native runtimes avoid a
         Python/Pillow dependency during game startup.
         """
+        self.ensure_loaded()
         if max_dimension < 1 or max_dimension > 1024:
             raise ValueError("cache max dimension must be between 1 and 1024")
         self.save()
@@ -1197,6 +1208,7 @@ class Artpack:
         return output
 
     def export_fsart(self, archive_path: Path) -> Path:
+        self.ensure_loaded()
         self.save()
         archive_path = archive_path.expanduser()
         if archive_path.suffix.lower() != FSART_SUFFIX:
@@ -2024,6 +2036,13 @@ def self_test() -> int:
         archive = Path(td) / "dm1-modern.fsart"
         pack.export_fsart(archive)
         assert archive.exists()
+        # CLI/API callers can construct a pack directly.  Export must load an
+        # existing manifest first rather than replacing it with an empty one.
+        direct_archive = Path(td) / "dm1-modern-direct.fsart"
+        Artpack("dm1", root).export_fsart(direct_archive)
+        assert direct_archive.exists()
+        with zipfile.ZipFile(direct_archive, "r") as archive_file:
+            assert "wall_shapes/wall_d3_carved_hero_01.png" in archive_file.namelist()
         imported = Artpack("dm1", Path(td) / "imported" / "dm1" / "modern")
         imported.load_or_create()
         imported.import_fsart(archive)
