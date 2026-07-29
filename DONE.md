@@ -4,8 +4,9 @@
   after the original page has passed its receipt validation. The runtime
   receipt records painted V2.2 cells. The local complete 29-route PC3.4 pack
   preserves C001-C005's four original palette captures, reaches Prison runtime
-  in mode 3, and proves nine cells painted; V1 remains unchanged for
-  unadmitted or unmapped material.
+  in mode 3, proves nine cells painted, and produces indexed plus actual
+  presented terminal-frame captures through the opt-in boot-probe capture
+  path; V1 remains unchanged for unadmitted or unmapped material.
 
 - ✅ 2026-07-29 CSB V2.0 filtered startup source capture: V2.0 now separates
   normal game-frame cleanup from CSB's source-owned special-palette startup

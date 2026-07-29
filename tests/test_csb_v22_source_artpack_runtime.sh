@@ -21,12 +21,15 @@ fi
 
 output="$(mktemp "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-XXXXXX.log")"
 capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-startup-XXXXXX")"
-trap 'rm -f "$output"; rm -rf "$capture_dir"' EXIT HUP INT TERM
+runtime_capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-v22-source-runtime-capture-XXXXXX")"
+trap 'rm -f "$output"; rm -rf "$capture_dir" "$runtime_capture_dir"' EXIT HUP INT TERM
 
 # V2.2 material belongs only to the admitted live viewport. The original
 # C001-C005 startup sequence must still reach the presented surface with its
 # four source palette phases before the Prison handoff.
 FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$capture_dir" \
+FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_capture_dir" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture_dir/presented" \
 SDL_VIDEODRIVER=dummy "$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v22 --duration 7000 \
     >"$capture_dir/firestaff.log" 2>&1
@@ -62,4 +65,13 @@ if ! grep -Eq 'csbV22CellsPainted=[1-9][0-9]*' "$output"; then
     exit 1
 fi
 
-echo "PASS: CSB V2.2 preserves startup captures and paints runtime artpack cells"
+runtime_capture_count="$(find "$runtime_capture_dir" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"
+runtime_presented_capture_count="$(find "$runtime_capture_dir/presented" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"
+if [ "$runtime_capture_count" -ne 1 ] ||
+   [ "$runtime_presented_capture_count" -ne 1 ]; then
+    find "$runtime_capture_dir" -maxdepth 2 -type f -print >&2 || true
+    echo "FAIL: CSB V2.2 boot probe did not capture the terminal runtime frame" >&2
+    exit 1
+fi
+
+echo "PASS: CSB V2.2 preserves startup captures, paints artpack cells, and captures runtime"

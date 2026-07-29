@@ -5832,6 +5832,20 @@ boot_probe_terminal_exit:
      * The SDL renderer, however, is owned by M11_Render alone, so shut it
      * down: without this a second in-process M11_PhaseA_Run boot probe
      * (multi-game gates) dies on M11_RENDER_ERR_ALREADY_INIT. */
+    /* Keep optional visual evidence available for the exact terminal runtime
+     * page. This is deliberately opt-in and runs before the renderer is
+     * released, so real-data V1/V2.x capture tests do not need a synthetic
+     * second presentation loop merely to obtain a screenshot. */
+    m11_write_autotest_screenshot(getenv("FIRESTAFF_AUTOTEST_SCREENSHOT_DIR"));
+    m11_write_autotest_presented_screenshot(
+        getenv("FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR"));
+    m11_write_autotest_runtime_probe(
+        getenv("FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON"),
+        launchedEver,
+        &gameView,
+        inputRedrawDrawCount,
+        inputRedrawAfterViewportDirtyCount,
+        lastInputRedrawAfterViewportDirty);
     M11_Render_Shutdown();
     free(launcherFramebuffer);
     if (modernRgba) {

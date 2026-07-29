@@ -75,7 +75,8 @@ an integration build pass.
   artpack pass after it has authenticated the original PC3.4 source page.
   It records the number of real material cells painted in the runtime receipt.
   The source-derived 29-route pack preserves all four original startup
-  palette captures, reaches Prison runtime, and proves nine painted cells;
+  palette captures, reaches Prison runtime, proves nine painted cells, and
+  writes both indexed and presented terminal-frame captures on request;
   non-V2.2 modes and unavailable routes retain their V1 page.
 
 - **CSB-PC34-IMG2-DECODE-ORDER:** Closed 2026-07-29. The native PC3.4
