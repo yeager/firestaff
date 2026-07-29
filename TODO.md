@@ -968,6 +968,15 @@ that its exact runtime path is not already source-locked and tested.
    V2.2 with V1 source launches and byte-compares stable PRESENTS and completed
    Entrance host pages; dynamic CHAOS/STRIKES frames remain tied to their
    source VBlank-cadence receipt rather than nondeterministic capture time.
+   2026-07-29: V2.0's CRT, palette and dither controls now have a real-PC3.4
+   Prison runtime proof. The V1/V2.0 raw 320x200 source pages are identical,
+   while V2.0's 960x540 presented surface differs with all three controls
+   enabled. This confirms presentation filtering is live without mutating
+   C017/C040/F0128 source ownership.
+   2026-07-29: V2.1 now has the corresponding real-PC3.4 Prison proof: its
+   raw 320x200 page is V1-identical while the same-size presented host surface
+   differs under EPX/upscale. V2.1 presentation therefore cannot silently
+   bypass its runtime transform or mutate the original indexed page.
    CSB presentation-mode resolution uses the CSB manifest availability API,
    not DM1's global modern-asset state.
    2026-07-29: M11 now exports TITLE.C source step 21 as the distinct full

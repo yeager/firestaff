@@ -42907,3 +42907,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   phase/cadence receipt because a wall-clock capture can legitimately land on
   different animation frames. Verification:
   `csb_v22_source_artpack_runtime` PASS.
+- ✅ 2026-07-29 CSB V2.0 live filter ownership: the real-PC3.4 V2.0 test
+  now boots through Prison with CRT scanlines, palette correction and dither
+  cleanup enabled. It proves the indexed 320x200 source frame is byte-identical
+  to V1 while the 960x540 presented surface changes, so filters are live only
+  after source-page ownership is complete. Verification:
+  `csb_v20_filtered_startup_capture` PASS.
+- ✅ 2026-07-29 CSB V2.1 live EPX/upscale ownership: the real-PC3.4 V2.1
+  runtime test now pairs the completed Prison handoff with V1. The source
+  320x200 page remains byte-identical, while the matching presented surface
+  differs under V2.1's EPX/upscale path. Verification:
+  `csb_v21_presented_startup_capture` PASS.
