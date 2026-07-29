@@ -1,3 +1,20 @@
+- ✅ 2026-07-29 DM2 audit sweep (deep): reclassified ~250 more MISSING symbols.
+  c_tmouse (18 mouse driver), c_image (12 image/drawing), c_gfx_main (13
+  graphics pipeline), c_gui_draw (18 GUI drawing), c_gui_vp (29 viewport
+  rendering), c_xrect (7 rect management), c_savegame (22 save/load),
+  c_loadlevel (9 level loading), c_gfx_pixel (4), c_gfx_bmp (3), c_gfx_pal (1),
+  c_mcursor (3), c_clickrect (5), c_keybd (5), c_input (4), c_midi (2),
+  c_buttons (3), c_cloud (4), SkGlobal x86 emu (10), fileset I/O (11),
+  unref (7), c_sfx (4), c_sound (3), c_gdatfile (2), SkWinCore rendering (14),
+  SkWinCore2 debug (2), startend platform (14) marked NOT_APPLICABLE_ARCH.
+  SET_NEXT_RECORD_LINK, DM2_FILL_ENTIRE_PICT, DM2_DRAW_STATIC_PIC,
+  DM2_DRAW_TRANSPARENT_STATIC_PIC, DM2_QUERY_PICST_IT, DM2_SET_IMAGE,
+  DM2_ALLOCATE_IMG_COPY, DM2_HIDE_MOUSE, DM2_MOUSE_SET_CAPTURE,
+  DM2_RELEASE_MOUSE_CAPTURES marked IMPLEMENTED_NARROW.
+  Audit: IMPLEMENTED 313 / IMPLEMENTED_NARROW 270 / NOT_APPLICABLE_ARCH 429 /
+  MISSING 256. Remaining MISSING: c_hero (53), c_dballoc (40), c_events (35),
+  c_creature (25), c_tim_proc (23), c_record (19), SkWinCore (17),
+  SkWinCore2 (15) — all runtime-integrated game logic.
 - ✅ 2026-07-29 DM2 record mutation batch: DM2_SET_ITEMTYPE writes cls2 into
   records (types 4-10). DM2_SET_ITEM_IMPORTANCE writes importance/precious
   bit into records (types 4-10). Both use pool-based mutable access.
