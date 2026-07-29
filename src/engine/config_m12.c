@@ -1026,9 +1026,23 @@ static int m12_config_data_dir_is_placeholder(const char* path) {
 int M12_Config_Save(const M12_Config* config) {
     char parentDir[M12_CONFIG_PATH_CAPACITY];
     char tmpPath[M12_CONFIG_PATH_CAPACITY + 16];
+    char persistedDataDir[M12_CONFIG_DATA_DIR_CAPACITY];
     FILE* fp;
     if (!config || config->path[0] == '\0') {
         return 0;
+    }
+    /* The native folder picker has, on macOS, reported "." for a selected
+     * directory. Config writes are the final persistence boundary: never
+     * serialize that placeholder, even when it entered outside the dialog. */
+    if (m12_config_data_dir_is_placeholder(config->dataDir)) {
+        if (!FSP_ResolveDataDir(persistedDataDir,
+                                sizeof(persistedDataDir),
+                                NULL)) {
+            return 0;
+        }
+    } else {
+        snprintf(persistedDataDir, sizeof(persistedDataDir), "%s",
+                 config->dataDir);
     }
     if (FSP_ParentDir(parentDir, sizeof(parentDir), config->path)) {
         if (!FSP_CreateDirectoryRecursive(parentDir)) {
@@ -1167,7 +1181,7 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "v22_modern_assets_installed = %d\n", config->v22_modern_assets_installed ? 1 : 0);
     fputs("artpack_path = ", fp); m12_escape_and_write(fp, config->artpackPath); fputc('\n', fp);
     fputs("data_dir = ", fp);
-    m12_escape_and_write(fp, config->dataDir);
+    m12_escape_and_write(fp, persistedDataDir);
     fputc('\n', fp);
     fputs("last_save_path = ", fp);
     m12_escape_and_write(fp, config->lastSavePath);

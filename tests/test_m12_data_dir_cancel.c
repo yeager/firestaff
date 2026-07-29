@@ -169,6 +169,28 @@ static int write_text_file(const char* path, const char* text) {
     return fclose(fp) == 0;
 }
 
+static int config_persisted_dot_data_dir(const char* path) {
+    FILE* fp;
+    char line[1024];
+    if (!path) {
+        return 0;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        if (strcmp(line, "data_dir = \".\"\n") == 0 ||
+            strcmp(line, "data_dir = \"./\"\n") == 0 ||
+            strcmp(line, "data_dir = \".\\\\\"\n") == 0) {
+            fclose(fp);
+            return 1;
+        }
+    }
+    fclose(fp);
+    return 0;
+}
+
 static int seed_dm1_under_data_root(const char* dataRoot,
                                     char graphicsMd5[M12_ASSET_MD5_CAPACITY],
                                     char dungeonMd5[M12_ASSET_MD5_CAPACITY]) {
@@ -584,6 +606,7 @@ static void check_dot_config_migrates_to_default_data_directory(void) {
         M12_Config_SetDefaults(&config);
         snprintf(config.dataDir, sizeof(config.dataDir), "%s", placeholders[i]);
         CHECK(M12_Config_Save(&config) == 1);
+        CHECK(!config_persisted_dot_data_dir(M12_Config_GetPath(&config)));
         M12_Config_Load(&config, NULL);
         CHECK(strcmp(config.dataDir, expected) == 0);
         CHECK(strcmp(config.dataDir, ".") != 0);
