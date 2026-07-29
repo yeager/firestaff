@@ -35283,6 +35283,18 @@ add_test(NAME nexus_v1_font256_s2d_subrecord_grammar_real
         $<TARGET_FILE:test_nexus_v1_font256_s2d_subrecord_grammar>)
 set_tests_properties(nexus_v1_font256_s2d_subrecord_grammar_real PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;font;real_data;skip_safe")
+add_executable(test_nexus_v1_font_s2d tests/test_nexus_v1_font_s2d.c)
+target_include_directories(test_nexus_v1_font_s2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_font_s2d PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_font_s2d COMMAND test_nexus_v1_font_s2d)
+set_tests_properties(nexus_v1_font_s2d PROPERTIES LABELS "nexus;saturn;font;skip_safe")
+
+add_executable(test_nexus_v1_stmp tests/test_nexus_v1_stmp.c)
+target_include_directories(test_nexus_v1_stmp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_stmp PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_stmp COMMAND test_nexus_v1_stmp)
+set_tests_properties(nexus_v1_stmp PROPERTIES LABELS "nexus;saturn;tilemap;skip_safe")
+
 add_executable(test_nexus_v1_warning_dgt2_source_admission
     tests/test_nexus_v1_warning_dgt2_source_admission.c)
 target_include_directories(test_nexus_v1_warning_dgt2_source_admission PRIVATE
