@@ -11515,6 +11515,54 @@ int main(void)
         CHECK(receipt.valid == 1 && cls2 == 5, "cls2: inline >= 0xff80 -> low byte - 0x80");
     }
 
+    /* --- DM2_SET_ITEMTYPE tests --- */
+    {
+        DM2_V1_SkprojectSetItemtypeReceipt receipt;
+        dm2_v1_skproject_set_itemtype(0xffff, 0x05, NULL, &receipt);
+        CHECK(receipt.blocked_invalid_type == 1, "set_itemtype: end marker blocked");
+    }
+    {
+        DM2_V1_SkprojectSetItemtypeReceipt receipt;
+        uint16_t rw = (0 << 10) | 0x05;
+        dm2_v1_skproject_set_itemtype(rw, 0x05, NULL, &receipt);
+        CHECK(receipt.blocked_invalid_type == 1, "set_itemtype: type 0 blocked");
+    }
+    {
+        DM2_V1_SkprojectSetItemtypeReceipt receipt;
+        uint16_t rw = (7 << 10) | 0x05;
+        dm2_v1_skproject_set_itemtype(rw, 0x05, NULL, &receipt);
+        CHECK(receipt.blocked_no_record == 1, "set_itemtype: type 7 no pool blocked");
+    }
+    {
+        DM2_V1_RecordPoolSet pools;
+        memset(&pools, 0, sizeof(pools));
+        uint8_t rec_bytes[16] = {0};
+        pools.pools[4].bytes = rec_bytes;
+        pools.pools[4].record_count = 1;
+        pools.pools[4].record_size = 16;
+        pools.valid = 1;
+
+        uint16_t rw = (4 << 10) | 0x00;
+        DM2_V1_SkprojectSetItemtypeReceipt receipt;
+        dm2_v1_skproject_set_itemtype(rw, 0x42, &pools, &receipt);
+        CHECK(receipt.valid == 1 && rec_bytes[4] == 0x42, "set_itemtype: type 4 writes byte[4]");
+    }
+    {
+        DM2_V1_RecordPoolSet pools;
+        memset(&pools, 0, sizeof(pools));
+        uint8_t rec_bytes[8] = {0};
+        pools.pools[5].bytes = rec_bytes;
+        pools.pools[5].record_count = 1;
+        pools.pools[5].record_size = 4;
+        pools.valid = 1;
+
+        uint16_t rw = (5 << 10) | 0x00;
+        DM2_V1_SkprojectSetItemtypeReceipt receipt;
+        dm2_v1_skproject_set_itemtype(rw, 0x35, &pools, &receipt);
+        CHECK(receipt.valid == 1 && (rec_bytes[2] & 0x7f) == 0x35,
+              "set_itemtype: type 5 writes word[1] low 7 bits");
+    }
+
     /* --- DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR tests --- */
     {
         uint16_t db;

@@ -24912,6 +24912,92 @@ int dm2_v1_skproject_query_cls2_from_record(
 }
 
 /* -----------------------------------------------------------------------
+ * SKULLWIN/c_record.cpp:284 DM2_SET_ITEMTYPE
+ *
+ * Writes the itemtype/cls2 value into a record's data bytes.  This is
+ * the inverse of CLS2 extraction for types 4-10.  The switch index is
+ * (record_type - 4); only types 4-10 are valid targets.
+ * ----------------------------------------------------------------------- */
+int dm2_v1_skproject_set_itemtype(
+    uint16_t record_word,
+    uint8_t new_itemtype,
+    DM2_V1_RecordPoolSet *pools,
+    DM2_V1_SkprojectSetItemtypeReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->record_word = record_word;
+    out_receipt->new_itemtype = new_itemtype;
+
+    if (record_word == 0xffff || record_word >= 0xff80) {
+        out_receipt->blocked_invalid_type = 1;
+        return 1;
+    }
+
+    uint8_t record_type = (record_word >> 10) & 0xf;
+    out_receipt->record_type = record_type;
+
+    if (record_type < 4 || record_type > 10) {
+        out_receipt->blocked_invalid_type = 1;
+        return 1;
+    }
+
+    if (!pools) { out_receipt->blocked_no_record = 1; return 1; }
+    uint8_t *rec = dm2_v1_record_pool_address_mut(pools, (int16_t)record_word);
+    if (!rec) { out_receipt->blocked_no_record = 1; return 1; }
+
+    int sw = record_type - 4;
+    switch (sw) {
+    case 0: /* type 4 */
+        rec[4] = new_itemtype;
+        /* fallthrough to case 3 (return) — matches skproject */
+        out_receipt->valid = 1;
+        return 1;
+
+    case 3: /* type 7 — no-op */
+        out_receipt->valid = 1;
+        return 1;
+
+    case 1: /* type 5 */
+    case 2: /* type 6 */
+    case 6: /* type 10 */
+        rec[2] = (rec[2] & 0x80) | (new_itemtype & 0x7f);
+        out_receipt->valid = 1;
+        return 1;
+
+    case 4: { /* type 8 */
+        rec[3] &= 0x80;
+        uint16_t w1 = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
+        w1 |= (uint16_t)(new_itemtype & 0x7f) << 8;
+        rec[2] = (uint8_t)(w1 & 0xff);
+        rec[3] = (uint8_t)((w1 >> 8) & 0xff);
+        out_receipt->valid = 1;
+        return 1;
+    }
+
+    case 5: { /* type 9 — complex split */
+        uint16_t w2 = (uint16_t)rec[4] | ((uint16_t)rec[5] << 8);
+        uint8_t hi_part = (uint8_t)(new_itemtype / 8);
+        w2 = (w2 & ~0x6u) | (uint16_t)((hi_part & 0x3) * 2);
+        uint8_t lo_part = new_itemtype & 0x7;
+        w2 = (w2 & 0x1fffu) | ((uint16_t)(lo_part & 0x7) << 13);
+        rec[4] = (uint8_t)(w2 & 0xff);
+        rec[5] = (uint8_t)((w2 >> 8) & 0xff);
+        if ((w2 & 0x6) == 2) {
+            rec[6] = 0xff;
+            rec[7] = 0xff;
+        }
+        out_receipt->valid = 1;
+        return 1;
+    }
+
+    default:
+        out_receipt->blocked_invalid_type = 1;
+        return 1;
+    }
+}
+
+/* -----------------------------------------------------------------------
  * SKULLWIN/c_record.cpp:367 DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR
  *
  * Maps a 9-bit actuator itemspec to its DB (record pool) index.

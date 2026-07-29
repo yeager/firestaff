@@ -9675,6 +9675,24 @@ int dm2_v1_skproject_query_cls2_from_record(
     uint8_t *out_cls2,
     DM2_V1_SkprojectQueryCls2Receipt *out_receipt);
 
+/* SKULLWIN/c_record.cpp:284 DM2_SET_ITEMTYPE — writes cls2/itemtype into
+   a record's data bytes.  Inverse of DM2_QUERY_CLS2_FROM_RECORD for
+   types 4-10.  Mutates record bytes via pool. */
+typedef struct {
+    int valid;
+    uint16_t record_word;
+    uint8_t record_type;
+    uint8_t new_itemtype;
+    int blocked_invalid_type;
+    int blocked_no_record;
+} DM2_V1_SkprojectSetItemtypeReceipt;
+
+int dm2_v1_skproject_set_itemtype(
+    uint16_t record_word,
+    uint8_t new_itemtype,
+    struct DM2_V1_RecordPoolSet *pools,
+    DM2_V1_SkprojectSetItemtypeReceipt *out_receipt);
+
 /* SKULLWIN/c_record.cpp:367 DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR — maps an
    actuator itemspec (9-bit value) to its DB (record pool) index.
    Returns the DB index (4-10 range) or 0xffff for out-of-range specs. */

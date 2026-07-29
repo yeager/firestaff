@@ -1,3 +1,8 @@
+- ✅ 2026-07-29 DM2 record mutation: DM2_SET_ITEMTYPE writes cls2/itemtype into
+  record bytes via pool (inverse of CLS2 extraction for types 4-10). Handles
+  type 4 (byte[4]), types 5/6/10 (word[1] low 7), type 7 (no-op), type 8
+  (word[1] high 7), type 9 (split word[2] bits). Tests with mock pools.
+  MISSING: 509. Source: skproject c_record.cpp:284-350.
 - ✅ 2026-07-29 DM2 CLS2 record classifier: DM2_QUERY_CLS2_FROM_RECORD extracts
   class-2 from record data via type-specific bit extraction (13 of 15 types
   handled; types 2/3 blocked on sub-functions). Pool-based with type-14
