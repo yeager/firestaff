@@ -1339,6 +1339,16 @@ that its exact runtime path is not already source-locked and tested.
     Amiga ADF root-volume `FTL_CSB_Utility` replace Firestaff's former
     invented boot-sector serial. Remaining work is the actual Utility UI
     presentation and its complete save/import/new-game actions.
+    2026-07-29: DM1-party import now requires a physically verified Utility
+    Disk before it can commit a party. The runtime finds only six known
+    original Amiga Utility Disk ADF hashes (English R1/R2/R3, French, German
+    R1/R2) under the selected CSB data root, including virtual `.7z` members;
+    it materializes an archived member solely for the existing root-block
+    check and removes it afterwards. An explicitly supplied image is still
+    checked by that same root-block identity. Missing, unreadable or wrong
+    media fail before the Utility flow reaches IMPORT/NEW GAME. This closes
+    the prior unchecked `utility_disk_verified` import shortcut, not the
+    broader Utility Disk UI scope.
     2026-07-29: the live C140 `Ctrl-S` route now opens the source-dialog
     geometry with Save Game, Load Game and Cancel choices. Keyboard Up/Down,
     Enter/Escape and pointer choice all consume the same modal state; accepted

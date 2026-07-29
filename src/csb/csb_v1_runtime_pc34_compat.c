@@ -63,6 +63,20 @@ static const char *const g_csb_dungeon_hashes[] = {
     NULL
 };
 
+/* Original Amiga CSB Utility Disk ADFs observed in the local corpus.  The
+ * utility-flow checker validates the AmigaDOS root block afterwards, so an
+ * archive entry must satisfy both its known original identity and the
+ * source-defined F0452-style disk signature. */
+static const char *const g_csb_utility_disk_hashes[] = {
+    "4ea453b460ae38a756585bd2e8d8a0a1", /* English release 1 */
+    "23596a959e983beeb607c90c9bf27b1f", /* English release 2 */
+    "85091454b3885a216f6bdbbe5c47cc75", /* English release 3 */
+    "c415b842d81ba120b9ef2126a209e891", /* French */
+    "d954871dbb2f4e74966234117f2c50b0", /* German release 1 */
+    "29bdaaf3c41e4e785603f3250f0e5b6c", /* German release 2 */
+    NULL
+};
+
 static int csb_v1_runtime_locate_appended_expool_record_internal(
     const CSB_V1_RuntimeProfile *profile,
     uint32_t record_id,
@@ -2014,6 +2028,10 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
 {
     CSB_V1_UtilFlowContext flow;
     CSB_V1_PartyState party;
+    char utility_media[ASSET_PATH_MAX];
+    char checked_utility_media[ASSET_PATH_MAX];
+    const char *explicit_utility_media;
+    int remove_checked_utility_media = 0;
     int count;
 
     if (out_count) {
@@ -2029,6 +2047,50 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
         return 0;
     }
 
+    utility_media[0] = '\0';
+    checked_utility_media[0] = '\0';
+    /* An explicit physical image remains supported for operators.  Normal
+     * launches discover only known original ADF bytes, including inside
+     * supported archives, rather than trusting a filename or a synthetic
+     * "disk verified" flag. */
+    explicit_utility_media = getenv("FIRESTAFF_CSB_UTILITY_DISK");
+    if (explicit_utility_media && explicit_utility_media[0] != '\0') {
+        snprintf(utility_media, sizeof(utility_media), "%s",
+                 explicit_utility_media);
+    } else if (profile->data_dir && profile->data_dir[0] != '\0') {
+        (void)asset_find_by_md5_list(profile->data_dir,
+                                     g_csb_utility_disk_hashes,
+                                     utility_media, sizeof(utility_media),
+                                     NULL, 8);
+    }
+    if (utility_media[0] == '\0') {
+        return 0;
+    }
+    if (strstr(utility_media, "::") != NULL) {
+        int written;
+        if (!profile->save_dir || profile->save_dir[0] == '\0') {
+            return 0;
+        }
+        written = snprintf(checked_utility_media,
+                           sizeof(checked_utility_media),
+                           "%s%ccsb-utility-import.adf", profile->save_dir,
+                           CSB_PATH_SEP);
+        if (written < 0 ||
+            (size_t)written >= sizeof(checked_utility_media) ||
+            !asset_extract_virtual_path(utility_media,
+                                        checked_utility_media)) {
+            return 0;
+        }
+        remove_checked_utility_media = 1;
+    } else {
+        snprintf(checked_utility_media, sizeof(checked_utility_media), "%s",
+                 utility_media);
+    }
+    if (csb_v1_util_check_disk(checked_utility_media) != 0) {
+        if (remove_checked_utility_media) (void)remove(checked_utility_media);
+        return 0;
+    }
+
     /* ReDMCSB/CSBWin utility startup imports a DM1 party before the
      * CSB dungeon starts.  Keep this as a runtime-party handoff rather
      * than a Resume save: the entrance still owns the final Enter click.
@@ -2037,42 +2099,45 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
      * by the launcher utility path. */
     csb_v1_util_flow_init(&flow);
     csb_v1_util_flow_set_dm1_path(&flow, path);
+    csb_v1_util_flow_set_utility_disk_path(&flow, checked_utility_media);
+    /* The physical identity was proven immediately above. This preserves the
+     * source-visible DISK_OK state without a duplicate archive extraction. */
     csb_v1_util_flow_mark_utility_disk_verified(&flow, 1);
     if (csb_v1_util_flow_step(&flow) != 0 ||
         flow.state != CSB_V1_UTIL_FLOW_INSERT_DISK) {
-        return 0;
+        goto cleanup_utility_media;
     }
     if (csb_v1_util_flow_step(&flow) != 0 ||
         flow.state != CSB_V1_UTIL_FLOW_VERIFY_DISK) {
-        return 0;
+        goto cleanup_utility_media;
     }
     if (csb_v1_util_flow_step(&flow) != 0 ||
         flow.state != CSB_V1_UTIL_FLOW_DISK_OK) {
-        return 0;
+        goto cleanup_utility_media;
     }
     if (csb_v1_util_flow_step(&flow) != 0 ||
         flow.state != CSB_V1_UTIL_FLOW_SELECT_ACTION) {
-        return 0;
+        goto cleanup_utility_media;
     }
     if (!csb_v1_util_flow_accept_import_action(&flow)) {
-        return 0;
+        goto cleanup_utility_media;
     }
     if (csb_v1_util_flow_step(&flow) != 0 ||
         flow.state != CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS) {
-        return 0;
+        goto cleanup_utility_media;
     }
     if (csb_v1_util_flow_step(&flow) != 0 ||
         flow.state != CSB_V1_UTIL_FLOW_CONFIRM_IMPORT) {
-        return 0;
+        goto cleanup_utility_media;
     }
     csb_v1_util_flow_confirm_import(&flow, 1);
     if (csb_v1_util_flow_step(&flow) != 0 ||
         flow.state != CSB_V1_UTIL_FLOW_NEW_GAME) {
-        return 0;
+        goto cleanup_utility_media;
     }
     if (csb_v1_util_flow_step(&flow) != 1 ||
         flow.state != CSB_V1_UTIL_FLOW_DONE) {
-        return 0;
+        goto cleanup_utility_media;
     }
     if (out_utility_state) {
         *out_utility_state = (int)flow.state;
@@ -2086,15 +2151,20 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     memset(&party, 0, sizeof(party));
     count = csb_v1_util_flow_get_party(&flow, &party);
     if (count <= 0 || !party.ImportedFromDM1) {
-        return 0;
+        goto cleanup_utility_media;
     }
     if (csb_v1_runtime_set_party_state(profile, &party) != 0) {
-        return 0;
+        goto cleanup_utility_media;
     }
     if (out_count) {
         *out_count = count;
     }
+    if (remove_checked_utility_media) (void)remove(checked_utility_media);
     return 1;
+
+cleanup_utility_media:
+    if (remove_checked_utility_media) (void)remove(checked_utility_media);
+    return 0;
 }
 
 void csb_v1_runtime_startup_handoff_receipt_init_pc34(

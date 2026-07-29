@@ -60,12 +60,44 @@ static int failed;
 #define TEST_LZW_MAX_CODE 4096
 #define TEST_CSB_OBJECT_NAMES_INDEX 564u
 #define TEST_CSB_OBJECT_NAME_COUNT 199
+#define TEST_CSB_UTILITY_ADF_BYTES (80u * 2u * 11u * 512u)
+#define TEST_CSB_UTILITY_ROOT_OFFSET (880u * 512u)
+#define TEST_CSB_UTILITY_NAME_OFFSET 432u
 
 typedef struct {
     uint8_t *buf;
     size_t cap;
     size_t bit_pos;
 } TestBitWriter;
+
+static int write_csb_utility_adf_fixture(const char *path)
+{
+    static const char volume[] = "FTL_CSB_Utility";
+    FILE *fp;
+    if (!path) return 0;
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fseek(fp, (long)TEST_CSB_UTILITY_ADF_BYTES - 1L, SEEK_SET) != 0 ||
+        fputc(0, fp) == EOF ||
+        fseek(fp, (long)(TEST_CSB_UTILITY_ROOT_OFFSET +
+                         TEST_CSB_UTILITY_NAME_OFFSET), SEEK_SET) != 0 ||
+        fputc((int)(sizeof(volume) - 1u), fp) == EOF ||
+        fwrite(volume, 1u, sizeof(volume) - 1u, fp) != sizeof(volume) - 1u) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
+static void set_csb_utility_disk_env(const char *path)
+{
+#ifdef _WIN32
+    (void)_putenv_s("FIRESTAFF_CSB_UTILITY_DISK", path ? path : "");
+#else
+    if (path) (void)setenv("FIRESTAFF_CSB_UTILITY_DISK", path, 1);
+    else (void)unsetenv("FIRESTAFF_CSB_UTILITY_DISK");
+#endif
+}
 
 typedef struct {
     uint8_t dict_first[TEST_LZW_MAX_CODE];
@@ -2111,6 +2143,7 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
     CSB_V1_RuntimeStartupHandoffReceipt_PC34 receipt;
     uint8_t save_buf[1024];
     const char *path = "/tmp/firestaff-csb-v1-runtime-dm1-import.sav";
+    const char *utility_path = "/tmp/firestaff-csb-v1-runtime-utility.adf";
     FILE *f;
     int imported_count = 0;
     int utility_state = -1;
@@ -2125,6 +2158,19 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
               "runtime DM1 import fixture writes the full source buffer");
         fclose(f);
     }
+    set_csb_utility_disk_env(NULL);
+    csb_v1_runtime_init(&runtime, NULL);
+    CHECK(csb_v1_runtime_import_dm1_party_path(&runtime,
+                                               path,
+                                               &imported_count,
+                                               &utility_state,
+                                               utility_prompt,
+                                               sizeof(utility_prompt)) == 0,
+          "runtime DM1 import rejects missing Utility Disk media");
+    csb_v1_runtime_cleanup(&runtime);
+    CHECK(write_csb_utility_adf_fixture(utility_path),
+          "runtime DM1 import fixture writes a valid Utility Disk identity");
+    set_csb_utility_disk_env(utility_path);
 
     csb_v1_runtime_init(&runtime, NULL);
     utility_prompt[0] = '\0';
@@ -2384,6 +2430,8 @@ static void test_runtime_import_dm1_party_path_owns_utility_handoff(void)
     }
     csb_v1_runtime_cleanup(&runtime);
     remove(path);
+    set_csb_utility_disk_env(NULL);
+    remove(utility_path);
 }
 
 static void test_runtime_view_state_receipt_owns_scalar_handoff(void)

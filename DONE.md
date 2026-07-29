@@ -12,6 +12,15 @@
   palettes remain unfiltered and source-owned. The runtime popup regression
   proves persisted 4x/bilinear values and the live CSB upscale globals.
 
+- ✅ 2026-07-29 CSB Utility Disk-gated DM1 import: the runtime no longer
+  authorizes a DM1-party import with an unchecked Utility Disk flag. It finds
+  the six known original Amiga Utility Disk ADF hashes under the selected
+  CSB data root, including archived members, materializes only long enough
+  to validate the original `FTL_CSB_Utility` root block, and removes the
+  temporary member afterwards. A manually supplied image uses the same
+  source-defined identity check. The runtime handoff regression proves that
+  a valid disk is required before an imported party reaches NEW GAME.
+
 - ✅ 2026-07-29 CSB V1/V2.x entrance pointer presentation: the real C407
   enter-dungeon box is now exercised through M11's window-to-source mapper
   at 320x200 and 960x600 in V1, V2.0, V2.1 and gated V2.2. The former Enter
