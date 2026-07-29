@@ -70,7 +70,7 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
     right = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
     entrance = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
     title->valid = 1; title->pixels = c001_pixels; title->source_asset_id = 1;
-    title->width = 320; title->height = 200; title->transparent_color = -1;
+    title->width = 320; title->height = 153; title->transparent_color = -1;
     presents->valid = 1; presents->pixels = presents_pixels; presents->source_asset_id = 1;
     presents->source_x = 0; presents->source_y = 137;
     presents->width = 320; presents->height = 16; presents->transparent_color = -1;
@@ -115,7 +115,7 @@ static void make_title_host(
         host->frame.title_phase_tick = 1;
         host->frame.title_phase_mask = 0x01;
     } else if (stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34) {
-        host->frame.title_phase_tick = 21;
+        host->frame.title_phase_tick = 2;
         host->frame.title_phase_mask = 0x02;
     } else if (stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
         host->frame.title_phase_tick = 22;
@@ -247,7 +247,7 @@ int main(void)
     state.title_frame = csb_v1_startup_title_presents_ticks_pc34();
     check(csb_v1_startup_source_render_plan_from_state_pc34(&state, &plan) &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-              plan.title_dest_w == 48 && plan.title_dest_h == 12 &&
+              plan.title_dest_w == 16 && plan.title_dest_h == 4 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
           "C001 CHAOS retains source-owned zoom geometry and palette");
     memset(&state, 0, sizeof(state));
@@ -433,6 +433,7 @@ int main(void)
               &strikes_host, &opening_host, &title_opening),
           "PRESENTS source step cannot be relabeled as a CHAOS title capture");
     chaos_host.frame.title_phase_tick = 21;
+    chaos_host.frame.title_phase_mask = 0x04;
     strikes_host.raster.pixel_hash = presents_host.raster.pixel_hash;
     check(!csb_v1_startup_session_title_opening_consumption_receipt_pc34(
               &session, &package_receipt, &presents_host, &chaos_host,
@@ -473,7 +474,7 @@ int main(void)
     check(!csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt),
           "forged one-line C001 cannot authorize terminal C017/C040");
     session.surfaces.surfaces[
-        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = 200;
+        CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height = 153;
     set_terminal_playback(&session);
     check(csb_v1_startup_session_terminal_receipt_pc34(&session, &receipt) &&
               receipt.valid,

@@ -1,3 +1,8 @@
+- ✅ 2026-07-29 CSB startup session-contract repair: corrected the standalone
+  C001 fixture to the real 320x153 title surface, TITLE.C's initial 16x4
+  CHAOS zoom rectangle, and the separate step-21 hold phase. The contract
+  suite now passes instead of masking a stale 320x200/48x12 fixture.
+
 - ✅ 2026-07-29 CSB TITLE.C CHAOS-hold host binding: M11's source-owned C001
   host frame now exports the genuine full-size CHAOS hold as phase `0x04` at
   source step 21, distinct from the preceding zoom `0x02`. The session
