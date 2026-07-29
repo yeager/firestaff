@@ -178,6 +178,8 @@ int csb_v22_admit_f0128_door_projection_pc34(
     int expected_index = -1;
     int expected_width = 0;
     int expected_height = 0;
+    int expected_output_width = 0;
+    int expected_output_height = 0;
 
     if (out_projection) memset(out_projection, 0, sizeof(*out_projection));
     if (!source_command || !provenance || !out_projection || !provenance->valid ||
@@ -199,6 +201,17 @@ int csb_v22_admit_f0128_door_projection_pc34(
         expected_width = 64;
         expected_height = 61;
         break;
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34:
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34:
+        /* PC/I34 F0111 copies G0693 with F0616 and F0791 then draws its
+         * native 44x38 raster inside the C3700/C3710 48x40 layout clip. */
+        expected_id = "door_d2_01";
+        expected_index = 246;
+        expected_width = 44;
+        expected_height = 38;
+        expected_output_width = 44;
+        expected_output_height = 38;
+        break;
     default:
         return 0;
     }
@@ -208,6 +221,9 @@ int csb_v22_admit_f0128_door_projection_pc34(
         provenance->source_graphic_index != expected_index ||
         provenance->source_width != expected_width ||
         provenance->source_height != expected_height ||
+        (expected_output_width > 0 &&
+         (provenance->output_width != expected_output_width ||
+          provenance->output_height != expected_output_height)) ||
         provenance->output_width <= 0 || provenance->output_height <= 0 ||
         strlen(provenance->source_record_sha256) != 64u) {
         return 0;

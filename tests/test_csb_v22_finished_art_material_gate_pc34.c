@@ -87,7 +87,7 @@ static const SlotFixture k_slots[] = {
     SLOT(CSB_V22_FAMG_WALL_DUNGEON_D2, "wall_dungeon_d2_01", "wall_shapes", 96, 96),
     SLOT(CSB_V22_FAMG_DOOR_D0, "door_d0_01", "door_shapes", 64, 96),
     SLOT(CSB_V22_FAMG_DOOR_D1, "door_d1_01", "door_shapes", 64, 96),
-    SLOT(CSB_V22_FAMG_DOOR_D2, "door_d2_01", "door_shapes", 64, 96),
+    SLOT(CSB_V22_FAMG_DOOR_D2, "door_d2_01", "door_shapes", 44, 38),
     SLOT(CSB_V22_FAMG_FLOOR_PLAIN_D0, "floor_plain_d0_01", "floor_shapes", 96, 96),
     SLOT(CSB_V22_FAMG_FLOOR_PLAIN_D1, "floor_plain_d1_01", "floor_shapes", 96, 96),
     SLOT(CSB_V22_FAMG_FLOOR_PLAIN_D2, "floor_plain_d2_01", "floor_shapes", 96, 96),

@@ -433,6 +433,10 @@ int csb_v22_inplace_render_f0128_command(
     case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34:
         asset_id = "door_d1_01";
         break;
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34:
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34:
+        asset_id = "door_d2_01";
+        break;
     default:
         return 0;
     }
@@ -456,9 +460,22 @@ int csb_v22_inplace_render_f0128_command(
     if (!rgba || width <= 0 || height <= 0) {
         return 0;
     }
-    blit_bitmap_to_cell(rgba, width, height, framebuffer, fbW, fbH,
-                        projection.clip_x, projection.clip_y,
-                        projection.clip_w, projection.clip_h);
+    if (source_command->route ==
+            CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34 ||
+        source_command->route ==
+            CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34) {
+        /* F0791 uses the source bitmap dimensions.  The layout clip is 48x40
+         * but PC/I34's real G0693 surface is 44x38, so scaling it to the
+         * whole clip would invent pixels and overwrite source background. */
+        if (width != projection.source_width || height != projection.source_height ||
+            width > projection.clip_w || height > projection.clip_h) return 0;
+        blit_bitmap_to_cell(rgba, width, height, framebuffer, fbW, fbH,
+                            projection.clip_x, projection.clip_y, width, height);
+    } else {
+        blit_bitmap_to_cell(rgba, width, height, framebuffer, fbW, fbH,
+                            projection.clip_x, projection.clip_y,
+                            projection.clip_w, projection.clip_h);
+    }
     return 1;
 }
 

@@ -78,15 +78,15 @@ an integration build pass.
   `G0695`/`G0694` records, `M633 + DoorSet * C003 + 2/+1`; DoorSet 0:
   248/247). The D3 record selection is now source-locked to
   `M633 + DoorSet * C003` (246/249/252/255). ReDMCSB's PC/I34 F0111 branch
-  uses `F0616_CopyBitmap`, so its native surface is the record's 44x38
-  metadata; remaining work is exact command-level V2.2 composition, not a
+  uses `F0616_CopyBitmap`; V2.2 now consumes D3 as the record's native 44x38
+  F0791 surface inside its C3700/C3710 48x40 clip, rather than inventing a
   fictitious 48x41 padding buffer.
   Source door exports now
   retain the verified F0111 `C10_COLOR_FLESH` transparency as RGBA alpha and
   the cache blitter preserves the original framebuffer for transparent pixels.
   The source-artpack manifest now makes this distinction machine-readable:
-  `door_d2_01` is explicitly `blocked_f0791_projection`, so an IMG2 source
-  record cannot be mistaken for a completed D3 F0791/F0132 composition.
+  `door_d2_01` is explicitly `admitted_d3_f0791_native`, carrying the real
+  44x38 source dimensions and the D3 F0791/F0132 composition contract.
   Source-cache normalization is nearest-neighbor only; it does not invent
   interpolated pixels. D1/D2 retain
   their explicit admitted projection statuses.

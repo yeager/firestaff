@@ -42795,3 +42795,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   rather than Lanczos and records D3's true 44x38 F0616 source surface as
   `blocked_f0791_projection`. Verification: real local CSB `GRAPHICS.DAT`
   receipts for D1/D2/D3 and the full 107-test CSB CTest lane pass.
+- ✅ 2026-07-29 CSB V2.2 D3 F0791 native-door consumption: the D3L2/D3R2
+  F0128 command consumer now admits the real G0693 DoorSet record 246 only
+  when its `.fsart` provenance retains the PC/I34 44x38 surface. It draws
+  that raster at the source-owned C3700/C3710 clip origin, leaving the final
+  4x2 clip margin and all C10-transparent source pixels untouched. The source
+  pack marks this as `admitted_d3_f0791_native`; it no longer invents a
+  48x41 or scaled D3 panel. Verification: source-pack manifest inspection and
+  focused V2.2 admission/cache CTests pass.

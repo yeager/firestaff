@@ -157,11 +157,11 @@ void csb_v22_inplace_route_square_element_pc34(
     CSB_V22_AssetRouteDecision* out);
 
 /* Bind a source-artpack door to an existing ReDMCSB F0128 command. The
- * admission is exact and fail-closed: it accepts only the proven D1/D2 front
- * door rasters (PC3.4 records 248/247) with `C10_COLOR_FLESH` transparency.
- * D3 remains rejected until its 48x41 native mapping is independently
- * established. The result is a placement receipt for a future compositor,
- * not a broad rectangle-paint request. */
+ * admission is exact and fail-closed: D1/D2 accept PC3.4 records 248/247;
+ * D3 accepts G0693 record 246 only as its exact 44x38 F0616/F0791 surface
+ * inside the source-owned C3700/C3710 48x40 clip. All use
+ * `C10_COLOR_FLESH` transparency. The result is a placement receipt for a
+ * future compositor, not a broad rectangle-paint request. */
 int csb_v22_admit_f0128_door_projection_pc34(
     const CSB_V1_ViewportRuntimeDrawCommandPc34* source_command,
     const CSB_V22_RouteProvenancePc34* provenance,

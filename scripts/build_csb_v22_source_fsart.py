@@ -53,7 +53,7 @@ SLOTS = (
     ("wall_shapes", "wall_dungeon_d2_01", 107, (96, 96), "F0128 far front wall", "unbound"),
     ("door_shapes", "door_d0_01", 248, (64, 96), "M654 closest door frame", "admitted_d1"),
     ("door_shapes", "door_d1_01", 247, (64, 96), "M655 middle door frame", "admitted_d2"),
-    ("door_shapes", "door_d2_01", 246, (64, 96), "G0693 D3 DoorSet 0 source, 44x38 F0616 bitmap; F0791 projection pending", "blocked_f0791_projection"),
+    ("door_shapes", "door_d2_01", 246, (44, 38), "G0693 D3 DoorSet 0 source; F0791 exact native placement", "admitted_d3_f0791_native"),
     ("floor_shapes", "floor_plain_d0_01", 78, (96, 96), "M650 floor set zero", "unbound"),
     ("floor_shapes", "floor_plain_d1_01", 78, (96, 96), "M650 floor set zero", "unbound"),
     ("floor_shapes", "floor_plain_d2_01", 78, (96, 96), "M650 floor set zero", "unbound"),
