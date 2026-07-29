@@ -43064,3 +43064,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   an expired history fails closed rather than inventing a marker. Verified by
   `csb_v1_audio_runtime_pc34_compat` (64 checks) and the PC3.4 transport
   regression.
+
+- ✅ 2026-07-30 CSB PC34 champion-HUD input: visible status boxes and
+  right-click inventory toggles now use the shared ReDMCSB `COMMAND.C G0447`
+  C007..C015 command surface when CSB owns the runtime. The route updates
+  CSB's party mirror rather than falling into DM1 dungeon state. Verified by
+  `test_m11_csb_leader_hand_no_dm1_fallback` and `ctest -L csb` (109/109).

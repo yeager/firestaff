@@ -420,6 +420,20 @@ int main(void)
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
             dagger;
 
+        /* CSB shares ReDMCSB COMMAND.C G0447 C007..C015 with the PC34
+         * dungeon view.  These visible status boxes must remain live even
+         * though CSB owns a separate runtime profile. */
+        state.inventoryPanelActive = 0;
+        check(M11_GameView_HandlePointerButton(
+                  &state, 10, 10, M11_DM1_MOUSE_MASK_LEFT) ==
+                  M11_GAME_INPUT_REDRAW && state.inventoryPanelActive == 1,
+              "CSB status-box click opens its runtime-backed champion inventory");
+        check(M11_GameView_HandlePointerButton(
+                  &state, 10, 10, M11_DM1_MOUSE_MASK_RIGHT) ==
+                  M11_GAME_INPUT_REDRAW && state.inventoryPanelActive == 0,
+              "CSB right-click status-box toggle closes the same inventory");
+        state.inventoryPanelActive = 1;
+
         check(M11_GameView_GetObjectIconIndexForThing(&state, dagger) == 32,
               "CSB object icon accessor uses CSB runtime dungeon records without DM1 world.things");
         check(M11_GameView_GetV1InventorySlotIconIndex(

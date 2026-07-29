@@ -23674,7 +23674,13 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         return M11_GAME_INPUT_IGNORED;
     }
 
-    if (m11_is_dm1_source_kind(state->sourceKind) && !state->showDebugHUD &&
+    /* CSB uses the same PC34 G0447 primary interface table for its
+     * right-button champion inventory toggles.  Keep this restricted to the
+     * shared HUD route: CSB viewport and spell ownership remain in their
+     * dedicated source handlers below. */
+    if ((m11_is_dm1_source_kind(state->sourceKind) ||
+         state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) &&
+        !state->showDebugHUD &&
         (buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34)) {
         int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
         int zoneId = 0;
@@ -23718,7 +23724,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * chrome compositor.  V2.x retains the original status-bar ownership,
      * so C007..C015 must remain clickable when its presentation mode turns
      * the V1 chrome switch off. */
-    if (m11_is_dm1_source_kind(state->sourceKind) && !state->showDebugHUD) {
+    /* ReDMCSB COMMAND.C G0447 C007..C015 is shared by the PC34 DM1 and
+     * CSB game views.  CSB previously skipped this branch solely because it
+     * has its own source kind, leaving visible champion HUD boxes inert.
+     * The toggle helper writes through CSB's runtime mirror, so this admits
+     * only the original interface command rather than a DM1 world fallback. */
+    if ((m11_is_dm1_source_kind(state->sourceKind) ||
+         state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) &&
+        !state->showDebugHUD) {
         int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
         int zoneId = 0;
         int command;

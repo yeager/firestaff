@@ -1444,6 +1444,13 @@ that its exact runtime path is not already source-locked and tested.
     region blank merely because the party mirror is absent. Missing source
     material still clears fail-closed. Full champion/action/spell/inventory
     runtime coverage remains open.
+    2026-07-30: visible CSB champion status boxes and their right-click
+    inventory toggles now consume the shared PC34 `COMMAND.C G0447`
+    C007..C015 surface. The M11 route writes through CSB's runtime party
+    mirror and does not fall back to DM1 dungeon state. The focused runtime
+    regression and full 109-test CSB lane pass. CSB spell-area execution is
+    still separate: it requires a source-owned caster/cast binding rather
+    than the DM1 spell executor.
 28. **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,
     pits, floor/ceiling ornaments, creatures, items, projectiles, explosions,
     and custom backgrounds through real PC34 asset ownership.
