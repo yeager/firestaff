@@ -35210,6 +35210,11 @@ target_include_directories(test_nexus_v1_mns PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 target_link_libraries(test_nexus_v1_mns PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_mns COMMAND test_nexus_v1_mns)
 set_tests_properties(nexus_v1_mns PROPERTIES LABELS "nexus;saturn;creatures;skip_safe")
+add_executable(test_nexus_v1_dgn tests/test_nexus_v1_dgn.c)
+target_include_directories(test_nexus_v1_dgn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_dgn PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_dgn COMMAND test_nexus_v1_dgn)
+set_tests_properties(nexus_v1_dgn PROPERTIES LABELS "nexus;saturn;dungeon;skip_safe")
 add_executable(test_nexus_v1_font256_s2d_admission
     tests/test_nexus_v1_font256_s2d_admission.c)
 target_include_directories(test_nexus_v1_font256_s2d_admission PRIVATE
