@@ -4195,6 +4195,36 @@ static int csb_v1_runtime_creature_movement_sound_index(int creature_type)
     return (int)creature_sounds_movement[ordinal - 1];
 }
 
+/* ReDMCSB PC3.4 SOUND.C F0064 uses a three-step distance domain: loud is 3,
+ * then one level falls for each square until SoftDistance.  Compute it at
+ * the source-runtime boundary so the completed event retains the same value
+ * that F0709 would receive; host audio never reconstructs distance later. */
+static int csb_v1_runtime_request_source_sound(
+    CSB_V1_RuntimeProfile *profile,
+    CsbV1AudioRequest *request)
+{
+    const CsbV1Pc34SoundSpec *spec;
+    int distance;
+    int volume;
+
+    if (!profile || !request) return 0;
+    spec = csb_v1_audio_runtime_pc34_sound_spec(request->soundIndex);
+    if (!spec) return 0;
+    /* The live profile only dispatches this helper while its current world
+     * context is the party map; off-map F0064 calls are not materialized by
+     * this runner and therefore cannot enter the host audio queue. */
+    distance = abs((int)request->mapX - profile->party_x) +
+               abs((int)request->mapY - profile->party_y);
+    if (distance > (int)spec->softDistance) return 0;
+    volume = distance < (int)spec->loudDistance
+        ? 3
+        : 3 - (distance - (int)spec->loudDistance);
+    if (volume < 1) return 0;
+    request->volume = (int16_t)volume;
+    request->priority = spec->priority;
+    return csb_v1_audio_runtime_request(&profile->audio_runtime, request);
+}
+
 static void csb_v1_runtime_request_creature_movement_sound(
     CSB_V1_RuntimeProfile *profile,
     int creature_type,
@@ -4213,13 +4243,11 @@ static void csb_v1_runtime_request_creature_movement_sound(
     request.mapX = (int16_t)map_x;
     request.mapY = (int16_t)map_y;
     request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-    request.volume = 64;
-    request.priority = 4u;
     /* ReDMCSB MOVESENS.C F0267 lines 847-853 calls F0514, which maps
      * CreatureInfo.AttackSoundOrdinal through DUNGEON.C
      * G2003_aauc_CreatureSounds[][C1_MOVEMENT_SOUND] and requests
      * SOUND.C F0064 with C01_MODE_PLAY_IF_PRIORITIZED after a group move. */
-    (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+    (void)csb_v1_runtime_request_source_sound(profile, &request);
 }
 
 static void csb_v1_runtime_request_creature_attack_sound(
@@ -4240,13 +4268,11 @@ static void csb_v1_runtime_request_creature_attack_sound(
     request.mapX = (int16_t)map_x;
     request.mapY = (int16_t)map_y;
     request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-    request.volume = 64;
-    request.priority = 6u;
     /* ReDMCSB GROUP.C F0207 lines 1807-1808 maps
      * CreatureInfo.AttackSoundOrdinal through DUNGEON.C
      * G2003_aauc_CreatureSounds[][C0_ATTACK_SOUND], then requests
      * SOUND.C F0064 with C01_MODE_PLAY_IF_PRIORITIZED. */
-    (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+    (void)csb_v1_runtime_request_source_sound(profile, &request);
 }
 
 static void csb_v1_runtime_request_buzz_sound(
@@ -4262,11 +4288,9 @@ static void csb_v1_runtime_request_buzz_sound(
     request.mapX = (int16_t)map_x;
     request.mapY = (int16_t)map_y;
     request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-    request.volume = 64;
-    request.priority = 4u;
     /* ReDMCSB GROUP.C F0209 line 2283 requests M560_SOUND_BUZZ at the
      * archenemy double-move destination with C01_MODE_PLAY_IF_PRIORITIZED. */
-    (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+    (void)csb_v1_runtime_request_source_sound(profile, &request);
 }
 
 static int csb_v1_runtime_direction_from_source_to_destination(
@@ -7993,12 +8017,10 @@ static int csb_v1_runtime_drop_creature_fixed_possessions(
         request.mapX = (int16_t)map_x;
         request.mapY = (int16_t)map_y;
         request.mode = CSB_V1_MODE_PLAY_IMMEDIATELY;
-        request.volume = 64;
-        request.priority = 4u;
         /* ReDMCSB GROUP.C F0186 line 645 calls F0064 even when every
          * allocation was exhausted; L0362 is based on the resolved table,
          * not on successful F0166 allocations. */
-        (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+        (void)csb_v1_runtime_request_source_sound(profile, &request);
     }
     return 1;
 }
@@ -8094,11 +8116,9 @@ static int csb_v1_runtime_drop_group_slot_possessions(
         request.mapX = (int16_t)map_x;
         request.mapY = (int16_t)map_y;
         request.mode = CSB_V1_MODE_PLAY_IMMEDIATELY;
-        request.volume = 64;
-        request.priority = 4u;
         /* ReDMCSB GROUP.C F0188 lines 724-734 requests one thud after the
          * complete Slot chain is moved, choosing C00 if any item was C05. */
-        (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+        (void)csb_v1_runtime_request_source_sound(profile, &request);
     }
     /* A non-terminating Slot chain is not a valid GROUP.C F0188 source
      * record.  Do not clear C04.Slot after walking only a prefix. */
@@ -10611,10 +10631,7 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
             request.mapX = (int16_t)map_x;
             request.mapY = (int16_t)map_y;
             request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-            request.volume = 64;
-            request.priority = 4u;
-            (void)csb_v1_audio_runtime_request(&profile->audio_runtime,
-                                                &request);
+            (void)csb_v1_runtime_request_source_sound(profile, &request);
         }
         if ((flags_word >> 2) & 0x01u) {
             uint8_t *mutable_sensor = csb_v1_runtime_mutable_thing_record(
@@ -10797,10 +10814,7 @@ static void csb_v1_runtime_process_object_wall_sensors_at(
             request.mapX = (int16_t)map_x;
             request.mapY = (int16_t)map_y;
             request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-            request.volume = 64;
-            request.priority = 4u;
-            (void)csb_v1_audio_runtime_request(&profile->audio_runtime,
-                                                &request);
+            (void)csb_v1_runtime_request_source_sound(profile, &request);
         }
         if ((flags_word >> 2) & 0x01u) {
             uint8_t *mutable_sensor = csb_v1_runtime_mutable_thing_record(
@@ -15018,22 +15032,18 @@ static void csb_v1_runtime_request_closed_door_melee_sounds(
     request.mapX = (int16_t)profile->party_x;
     request.mapY = (int16_t)profile->party_y;
     request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-    request.volume = 64;
-    request.priority = 6u;
-    (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+    (void)csb_v1_runtime_request_source_sound(profile, &request);
 
     memset(&request, 0, sizeof(request));
     request.soundIndex = CSB_V1_SOUND_WOODEN_THUD_ATTACK_TROLIN_ANTMAN_STONE_GOLEM;
     request.mapX = (int16_t)profile->party_x;
     request.mapY = (int16_t)profile->party_y;
     request.mode = CSB_V1_MODE_PLAY_ONE_TICK_LATER;
-    request.volume = 64;
-    request.priority = 4u;
     /* ReDMCSB MENU.C F0407 lines 1308-1324 requests M563 immediately and
      * C04 one tick later for the closed-door melee branch. The bounded CSB
-     * audio runtime records pending sound arbitration; actual mixing remains
-     * outside this game-logic bridge. */
-    (void)csb_v1_audio_runtime_request(&profile->audio_runtime, &request);
+     * audio runtime records pending sound arbitration and M11 consumes the
+     * completed source event with its F0064 distance volume. */
+    (void)csb_v1_runtime_request_source_sound(profile, &request);
 }
 
 static int csb_v1_runtime_queue_door_destruction_event(
@@ -15854,10 +15864,7 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
             request.mapX = (int16_t)map_x;
             request.mapY = (int16_t)map_y;
             request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
-            request.volume = 64;
-            request.priority = 4u;
-            (void)csb_v1_audio_runtime_request(&profile->audio_runtime,
-                                                &request);
+            (void)csb_v1_runtime_request_source_sound(profile, &request);
             result->sensor_audible_count++;
         }
         if ((flags_word >> 2) & 0x01u) {
