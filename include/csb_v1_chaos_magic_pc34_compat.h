@@ -432,6 +432,10 @@ typedef int (*CSB_V1_CSBWinDSAThrowObjectFn)(
     void *user, uint32_t object_type, uint32_t object_location,
     uint32_t launch_location, uint32_t direction, uint32_t range,
     uint32_t damage, uint32_t decay_rate);
+/* CSBWin Magic.cpp::DSACastSpell copies the complete 14-word
+ * SPELL_PARAMETERS block from pDSAparameters + 1. */
+typedef int (*CSB_V1_CSBWinDSACastSpellFn)(
+    void *user, const int32_t parameters[14], int filtered);
 typedef int (*CSB_V1_CSBWinDSADiscardTextFn)(void *user);
 typedef int (*CSB_V1_CSBWinDSAPlaySoundFn)(
     void *user, int32_t sound_number, int32_t volume, int32_t flags);
@@ -633,6 +637,7 @@ typedef struct {
     CSB_V1_CSBWinDSADeleteObjectFn delete_object;
     CSB_V1_CSBWinDSAAddObjectFn add_object;
     CSB_V1_CSBWinDSAThrowObjectFn throw_object;
+    CSB_V1_CSBWinDSACastSpellFn cast_spell;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;
@@ -882,6 +887,9 @@ typedef struct {
     uint32_t last_monster_group_location;
     uint32_t last_monster_group_operand;
     int last_monster_group_insert;
+    uint16_t cast_spell_count;
+    int last_cast_spell_filtered;
+    int32_t last_cast_spell_parameters[14];
     uint16_t override_p_count;
     uint32_t last_override_position;
     /* DSA.cpp STKOP_JumpGear/GosubGear use stack-selected state/column
@@ -1073,6 +1081,7 @@ typedef struct {
     CSB_V1_CSBWinDSADeleteObjectFn delete_object;
     CSB_V1_CSBWinDSAAddObjectFn add_object;
     CSB_V1_CSBWinDSAThrowObjectFn throw_object;
+    CSB_V1_CSBWinDSACastSpellFn cast_spell;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;

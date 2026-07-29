@@ -139,6 +139,85 @@ static int commit_throw(void *user, uint32_t a, uint32_t b, uint32_t c,
     s->v[4] = e; s->v[5] = f; s->v[6] = g; return 1;
 }
 
+typedef struct {
+    int calls;
+    int filtered;
+    int32_t parameters[14];
+} CastStore;
+
+static int commit_cast(void *user, const int32_t parameters[14], int filtered)
+{
+    CastStore *store = user;
+    if (!store || !parameters) return 0;
+    ++store->calls;
+    store->filtered = filtered;
+    memcpy(store->parameters, parameters, sizeof(store->parameters));
+    return 1;
+}
+
+static void test_cast_transaction(void)
+{
+    uint16_t cast_words[] = { 0x0acbu };
+    uint16_t filtered_words[] = { 0x1dcbu };
+    uint16_t rollback_words[] = { 0x0acbu, 0u };
+    uint32_t parameters[14] = {
+        0u, 1234u, 2u, UINT32_MAX, UINT32_MAX, 0x0421u, 3u,
+        UINT32_MAX, UINT32_MAX, 2u, UINT32_MAX, UINT32_MAX,
+        UINT32_MAX, UINT32_MAX
+    };
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    CSB_V1_CSBWinDSACoreProgramReceipt receipt;
+    CastStore store;
+
+    memset(&state, 0, sizeof(state));
+    memset(&context, 0, sizeof(context));
+    memset(&store, 0, sizeof(store));
+    configure_action(&action, cast_words,
+                     (int)(sizeof(cast_words) / sizeof(cast_words[0])));
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+    context.parameters = parameters;
+    context.parameter_count = 14;
+    context.cast_spell = commit_cast;
+    context.dungeon_user = &store;
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, action.dsa_id, action.state_index, 0, &receipt) ==
+              CSB_V1_CSBWIN_DSA_CORE_OK && receipt.stack_core &&
+              receipt.requires_runtime_owner,
+          "STKOP_Cast is admitted only as a runtime-owned CSBWin DSA action");
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              store.calls == 1 && !store.filtered &&
+              store.parameters[1] == 1234 && store.parameters[2] == 2 &&
+              store.parameters[13] == -1 &&
+              execution.cast_spell_count == 1u &&
+              !execution.last_cast_spell_filtered,
+          "STKOP_Cast commits CSBWin's complete SPELL_PARAMETERS block");
+
+    configure_action(&action, filtered_words,
+                     (int)(sizeof(filtered_words) / sizeof(filtered_words[0])));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              store.calls == 1 && store.filtered &&
+              execution.cast_spell_count == 1u &&
+              execution.last_cast_spell_filtered,
+          "STKOP_FilteredCast retains CSBWin's spell-filter flag");
+
+    configure_action(&action, rollback_words,
+                     (int)(sizeof(rollback_words) / sizeof(rollback_words[0])));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) != CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 0,
+          "STKOP_Cast is not published after a later invalid source word");
+}
+
 static void test_throw_transaction(void)
 {
     uint16_t words[] = { 0x0686u, 0xff80u, 0x0686u, 0x20u, 0x0686u, 0x40u,
@@ -1272,6 +1351,7 @@ int main(void)
 
     test_add_transaction();
     test_throw_transaction();
+    test_cast_transaction();
     test_add_runtime_cell_owner();
     test_throw_runtime_magic_owner();
     test_indirect_throw_runtime_magic_owner();

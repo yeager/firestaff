@@ -42191,6 +42191,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   both. `ctest -L csb` passes 96/96.
 # CSB V2.2 viewport material consumption (2026-07-29)
 
+- ✅ 2026-07-29 CSBWin DSA direct `CAST` / `FILTEREDCAST` transaction:
+  authenticated DSA execution now admits both source opcodes only as
+  runtime-owned operations, keeps Magic.cpp's exact signed 14-word
+  `SPELL_PARAMETERS` layout, and invokes its owner only after all later
+  source words have succeeded. Incomplete payloads, missing owners and a
+  later invalid word fail closed without a cast. The focused DSA regression
+  and the full 98-test CSB CTest lane pass. Full Magic.cpp effects and
+  indirect routes remain explicitly open in `CSB-DSA-FULL-OPCODE-FAMILY`.
+
 - 2026-07-29 CSB V2.2 manifest lookup now selects the exact asset object,
   including pretty-printed manifests with separate provenance metadata. The
   old outer-object walker classified only the first entry of a 29-slot pack.

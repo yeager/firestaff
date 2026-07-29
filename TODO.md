@@ -979,7 +979,7 @@ that its exact runtime path is not already source-locked and tested.
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
     remaining source-supported stack families include `CAST`,
-    `FILTEREDCAST`, `CAST`, and their still-unowned indirect routes.
+    `FILTEREDCAST`, and their still-unowned indirect routes.
     `SAY` is now
     source-owned and transactional; the listed operations still require one
     transactional world-
@@ -1059,6 +1059,13 @@ that its exact runtime path is not already source-locked and tested.
     regression covers both direct and `I_THROW` parameter-stack order, and
     the complete CSB CTest lane passes; remaining DSA families stay open under
     this item.
+    2026-07-29: direct `CAST` and `FILTEREDCAST` now preserve CSBWin
+    Magic.cpp's exact signed 14-word `SPELL_PARAMETERS` payload and defer it
+    until the complete authenticated action succeeds. They require a real
+    runtime spell owner and reject incomplete payloads rather than reading an
+    invented parameter tail. The live Magic.cpp level switch, optional
+    spell-filter actuator traversal, and full source spell effects remain
+    open; indirect cast routes remain intentionally fail-closed.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

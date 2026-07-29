@@ -584,9 +584,9 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 66u: case 69u: case 71u: case 72u: case 73u: case 74u: case 75u: case 76u:
     case 95u: case 96u:
     case 77u: case 78u: case 92u: case 100u: case 101u: case 102u: case 106u:
-    case 47u: case 90u: case 103u: case 104u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
+    case 43u: case 47u: case 90u: case 103u: case 104u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
     case 115u: case 116u: case 117u: case 118u: case 123u: case 124u: case 125u:
-    case 121u: case 122u: case 130u: case 131u: case 132u: case 134u: case 135u: case 137u:
+    case 119u: case 121u: case 122u: case 130u: case 131u: case 132u: case 134u: case 135u: case 137u:
     case 138u:
         if (requires_runtime_owner) *requires_runtime_owner = 1;
         return 1;
@@ -1420,6 +1420,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_OBJECT_DELETES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_OBJECT_ADDS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_OBJECT_THROWS 100
+#define CSB_V1_CSBWIN_DSA_PENDING_CAST_SPELLS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS 100
@@ -1542,6 +1543,10 @@ typedef struct {
     uint32_t object_type, object_location, launch_location, direction;
     uint32_t range, damage, decay_rate;
 } CSB_V1_CSBWinDSAPendingObjectThrow;
+typedef struct {
+    int32_t parameters[14];
+    int filtered;
+} CSB_V1_CSBWinDSAPendingCastSpell;
 
 typedef struct {
     uint16_t thing;
@@ -1725,6 +1730,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *pending_object_add_count,
     CSB_V1_CSBWinDSAPendingObjectThrow *pending_object_throws,
     int *pending_object_throw_count,
+    CSB_V1_CSBWinDSAPendingCastSpell *pending_cast_spells,
+    int *pending_cast_spell_count,
     CSB_V1_CSBWinDSAPendingActuatorCopy *pending_actuator_copies,
     int *pending_actuator_copy_count,
     CSB_V1_CSBWinDSAPendingSoundRequest *pending_sound_requests,
@@ -1785,6 +1792,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_object_deletes || !pending_object_delete_count ||
         !pending_object_adds || !pending_object_add_count ||
         !pending_object_throws || !pending_object_throw_count ||
+        !pending_cast_spells || !pending_cast_spell_count ||
         !pending_actuator_copies || !pending_actuator_copy_count ||
         !pending_sound_requests || !pending_sound_request_count ||
         !adjust_skills_parameters_requested || !pending_adjust_skills_parameters ||
@@ -1813,6 +1821,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_object_delete_count < 0 ||
         *pending_object_add_count < 0 ||
         *pending_object_throw_count < 0 ||
+        *pending_cast_spell_count < 0 ||
         *pending_actuator_copy_count < 0 ||
         *pending_say_text_request_count < 0 ||
         *pending_display_text_request_count < 0 ||
@@ -1844,6 +1853,25 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         pending_object_throws[*pending_object_throw_count].object_location = throw_values[5];
         pending_object_throws[*pending_object_throw_count].object_type = throw_values[6];
         ++*pending_object_throw_count;
+        break;
+    case 43u: /* STKOP_Cast, CSBWin DSA.cpp:3092-3099. */
+    case 119u: /* STKOP_FilteredCast, CSBWin DSA.cpp:3100-3107. */
+        /* Magic.cpp::DSACastSpell copies SPELL_PARAMETERS directly from
+         * pDSAparameters + 1. The bounded Firestaff parameter surface has
+         * no implicit tail, so reject incomplete source blocks rather than
+         * reading stale host memory. */
+        if (!context->cast_spell || parameter_count != 14 ||
+            *pending_cast_spell_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_CAST_SPELLS) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        for (sv = 0; sv < 14; ++sv) {
+            pending_cast_spells[*pending_cast_spell_count].parameters[sv] =
+                (int32_t)parameters[sv];
+        }
+        pending_cast_spells[*pending_cast_spell_count].filtered =
+            subcode == 119u;
+        ++*pending_cast_spell_count;
         break;
     case 10u: /* STKOP_Add, CSBWin DSA.cpp:1968-2070. */
         if (!context->add_object ||
@@ -3921,6 +3949,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_object_adds[CSB_V1_CSBWIN_DSA_PENDING_OBJECT_ADDS];
     CSB_V1_CSBWinDSAPendingObjectThrow
         pending_object_throws[CSB_V1_CSBWIN_DSA_PENDING_OBJECT_THROWS];
+    CSB_V1_CSBWinDSAPendingCastSpell
+        pending_cast_spells[CSB_V1_CSBWIN_DSA_PENDING_CAST_SPELLS];
     CSB_V1_CSBWinDSAPendingActuatorCopy
         pending_actuator_copies[CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES];
     CSB_V1_CSBWinDSAPendingSoundRequest
@@ -3965,6 +3995,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_object_delete_count = 0;
     int pending_object_add_count = 0;
     int pending_object_throw_count = 0;
+    int pending_cast_spell_count = 0;
     int pending_actuator_copy_count = 0;
     int pending_sound_request_count = 0;
     int discard_text_requested = 0;
@@ -4577,6 +4608,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     pending_object_deletes, &pending_object_delete_count,
                     pending_object_adds, &pending_object_add_count,
                     pending_object_throws, &pending_object_throw_count,
+                    pending_cast_spells, &pending_cast_spell_count,
                     pending_actuator_copies,
                     &pending_actuator_copy_count, pending_sound_requests,
                     &pending_sound_request_count, &discard_text_requested,
@@ -4888,6 +4920,18 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_object_throws[i].damage, pending_object_throws[i].decay_rate)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+    }
+    for (i = 0; i < pending_cast_spell_count; ++i) {
+        if (!context->cast_spell || !context->cast_spell(
+                context->dungeon_user, pending_cast_spells[i].parameters,
+                pending_cast_spells[i].filtered)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        ++candidate.cast_spell_count;
+        candidate.last_cast_spell_filtered = pending_cast_spells[i].filtered;
+        memcpy(candidate.last_cast_spell_parameters,
+               pending_cast_spells[i].parameters,
+               sizeof(candidate.last_cast_spell_parameters));
     }
     for (i = 0; i < pending_actuator_copy_count; ++i) {
         if ((context->copy_actuator_payload &&
@@ -5313,6 +5357,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.delete_object = runner->delete_object;
     context.add_object = runner->add_object;
     context.throw_object = runner->throw_object;
+    context.cast_spell = runner->cast_spell;
     context.discard_text = runner->discard_text;
     context.play_sound = runner->play_sound;
     context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;
