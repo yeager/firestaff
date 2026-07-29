@@ -531,6 +531,10 @@ static void run_real_launcher_handoff_if_available(void) {
     M12_StartupMenu_BindCSBSaveCandidateIdentity(&menu, 0x9ac34e71u);
     menu.settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
     menu.gameOptions[1].presentationModeIndex = M12_PRESENTATION_V1_ORIGINAL;
+    menu.settings.audioMasterVolume = 83;
+    menu.settings.audioMusicVolume = 61;
+    menu.settings.audioSfxVolume = 47;
+    menu.settings.audioMuted = 0;
     intent = M12_StartupMenu_GetLaunchIntent(&menu);
     expect_true(intent.valid == 1,
                 "M12 CSB launch intent is valid with real staged data");
@@ -551,6 +555,16 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 CSB launcher handoff claims CSB boot source");
     expect_true(view.csbBootProfile != NULL,
                 "M11 CSB launcher handoff owns a CSB boot profile");
+    {
+        int master = -1;
+        int sfx = -1;
+        int music = -1;
+        int ui = -1;
+        expect_true(M11_Audio_GetVolumes(&view.audioState, &master, &sfx,
+                                         &music, &ui) == 1 &&
+                        master == 83 && music == 61 && sfx == 47 && ui == 47,
+                    "M11 CSB launcher consumes M12 audio volumes at runtime");
+    }
     expect_true(view.csbStartupRuntimeAssetSession != NULL &&
                     ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
                          view.csbStartupRuntimeAssetSession)->valid &&

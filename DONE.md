@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 Launcher audio handoff: M12's persisted master, music, SFX
+  and mute values now reach M11's SDL3 audio state after every game branch's
+  reinitialization. CSB's real M12-to-M11 PC3.4 handoff regression verifies
+  the exact live values; muting uses a zero-gain runtime state while retaining
+  the saved preferences in the launcher snapshot.
+
 - ✅ 2026-07-29 CSB runtime V2 filter ownership: the F10 filter page now
   presents only CSB's four actual V2 controls: scanlines, strength, palette
   correction and dither cleanup. It persists `csbV2*` fields, updates the

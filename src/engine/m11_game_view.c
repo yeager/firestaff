@@ -15050,11 +15050,29 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
 static void m11_apply_launcher_options_handoff(
     M11_GameViewState* state,
     const M11_GameLaunchSpec* spec) {
+    int master;
+    int music;
+    int sfx;
     if (!state || !spec || !spec->launcherOptionsBound) {
         return;
     }
     state->launcherOptions = spec->launcherOptions;
     state->launcherOptionsBound = 1;
+
+    /* M12 persists these controls and exports them with every launch, but
+     * until now M11 only retained the snapshot.  That left the Audio page
+     * visually changeable while its values never reached SDL3.  This is a
+     * Firestaff host preference, so apply it after every branch's re-init
+     * without changing any source-owned CSB timing or sound selection. */
+    master = spec->launcherOptions.audioMasterVolume;
+    music = spec->launcherOptions.audioMusicVolume;
+    sfx = spec->launcherOptions.audioSfxVolume;
+    if (spec->launcherOptions.audioMuted) {
+        master = 0;
+        music = 0;
+        sfx = 0;
+    }
+    (void)M11_Audio_SetVolumes(&state->audioState, master, sfx, music, sfx);
 }
 
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {
