@@ -1,4 +1,5 @@
-- ✅ 2026-07-29 CSB Atari/Amiga `MINI.DAT` launcher Resume: M12 now
+- ✅ 2026-07-29 CSB Atari/Amiga `MINI.DAT` launcher Resume and live HUD:
+  M12 now
   classifies the original campaign-save basename as CSB and preserves the
   chosen path into the CSB launch intent. Archive-backed CSB scans
   materialize `MINI.DAT` plus `CSBGAME1.DAT` through `CSBGAME4.DAT` with the
@@ -8,7 +9,9 @@
   verifies `MINI.DAT` is materialized with archive-backed CSB game data.
   Original `CSBGAME1..4.DAT` and `.BAK` slot names now share the runtime's
   launcher/save-browser classification; slot 2 is covered through launch
-  intent in `m12_quick_resume_gate`.
+  intent in `m12_quick_resume_gate`. The M11 HUD regression now also runs
+  the real `MINI.DAT`: it verifies HALK's restored source pose and native
+  `C013` HUD material in live runtime, without generated party data.
 
 - ✅ 2026-07-29 Launcher audio handoff: M12's persisted master, music, SFX
   and mute values now reach M11's SDL3 audio state after every game branch's

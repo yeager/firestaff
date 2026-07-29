@@ -41,6 +41,7 @@ int main(void)
     char fallback[1024];
     const char *data_dir = csb_data_dir(fallback, sizeof(fallback));
     const char *mode_text = getenv("FIRESTAFF_CSB_PRESENTATION_MODE");
+    const char *atari_mini = getenv("FIRESTAFF_CSB_ATARI_MINI");
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     unsigned char framebuffer[320 * 200];
@@ -63,6 +64,7 @@ int main(void)
     spec.gameId = "csb";
     spec.sourceId = "csb";
     spec.dataDir = data_dir;
+    spec.savePath = atari_mini && atari_mini[0] ? atari_mini : NULL;
     spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
     spec.presentationMode = mode_text && mode_text[0]
         ? atoi(mode_text) : M12_PRESENTATION_V1_ORIGINAL;
@@ -77,6 +79,36 @@ int main(void)
     M11_GameView_Init(&view);
     if (!M11_GameView_Start(&view, &spec)) {
         puts("SKIP: verified CSB PC3.4 data is unavailable");
+        return 0;
+    }
+    if (spec.savePath) {
+        const CSB_V1_BootProfile *profile =
+            (const CSB_V1_BootProfile *)view.csbBootProfile;
+        CHECK(profile && profile->runtime.party_state.ChampionCount == 1 &&
+                  strcmp(profile->runtime.party_state.Champions[0].Name,
+                         "HALK") == 0 &&
+                  profile->runtime.party_x == 22 &&
+                  profile->runtime.party_y == 18 &&
+                  profile->runtime.party_dir == 2 &&
+                  profile->runtime.current_level == 4,
+              "real Atari MINI.DAT restores its party pose and champion into M11 CSB runtime");
+        CHECK(view.world.party.championCount == 1 &&
+                  memcmp(view.world.party.champions[0].name, "HALK", 4u) == 0 &&
+                  view.world.party.mapX == 22 && view.world.party.mapY == 18 &&
+                  view.world.party.direction == 2 && view.world.party.mapIndex == 4,
+              "M11 party mirror consumes the real Atari MINI.DAT champion state");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        c013 = M11_AssetLoader_Load(&view.assetLoader, 13u);
+        CHECK(!view.csbState.startup_title_active &&
+                  !view.csbState.startup_entrance_active &&
+                  c013 && c013->loaded && c013->pixels,
+              "real MINI.DAT Resume enters live CSB with source-owned HUD material");
+        CHECK(c013->width == 87u && c013->height == 45u,
+              "real MINI.DAT Resume retains the native source C013 HUD dimensions");
+        M11_GameView_Shutdown(&view);
+        if (failures) return 1;
+        puts("PASS: real Atari MINI.DAT reaches live M11 CSB HUD");
         return 0;
     }
     memset(&decode_receipt, 0, sizeof(decode_receipt));

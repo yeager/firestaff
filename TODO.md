@@ -1149,7 +1149,12 @@ that its exact runtime path is not already source-locked and tested.
    `MINI.DAT` member is materialized with the required CSB package files.
    `CSBGAME1..4.DAT` and their source backup names now have the same launcher
    and save-browser classification as the runtime's original-slot loader;
-   the focused Resume regression covers slot 2 end to end.
+   the focused Resume regression covers slot 2 end to end. A real
+   `MINI.DAT` Resume now also reaches the live M11 HUD regression: it proves
+   the source-owned `HALK` party pose is mirrored into M11, bypasses the
+   title/Entrance path as an authentic resume must, and retains native
+   87x45 `C013` movement-panel material from the verified package. No
+   generated party or HUD art participates in that route.
    This does not yet establish user-created
    `CSBGAME.DAT` extended-object/timer round-trip support.
 7. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
