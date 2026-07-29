@@ -10,22 +10,43 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
+import shutil
 import struct
 import subprocess
 from pathlib import Path
 from typing import Any
 
 HOME = Path.home()
-ROOTS = [
-    HOME / ".openclaw/data/firestaff-original-games/DM",
-    HOME / ".openclaw/data/firestaff-original-games/DM/_extracted",
-]
-OUTPUT = Path("parity-evidence/verification/csb_sample_save_search_blocker.json")
+
+
+def configured_roots() -> list[Path]:
+    """Return bounded, user-owned CSB locations without scanning a whole disk."""
+    defaults = [
+        HOME / ".firestaff/data/csb",
+        HOME / ".firestaff/saves/csb",
+        HOME / ".openclaw/data/firestaff-original-games/DM",
+        HOME / ".openclaw/data/firestaff-original-games/DM/_extracted",
+    ]
+    configured = os.environ.get("FIRESTAFF_CSB_SAMPLE_SAVE_ROOTS", "")
+    extras = [Path(entry).expanduser() for entry in configured.split(os.pathsep) if entry]
+    roots: list[Path] = []
+    for root in [*extras, *defaults]:
+        if root not in roots:
+            roots.append(root)
+    return roots
+
+
+ROOTS = configured_roots()
+OUTPUT = Path(os.environ.get(
+    "FIRESTAFF_CSB_SAMPLE_SAVE_OUTPUT",
+    "parity-evidence/verification/csb_sample_save_search_blocker.json",
+))
 CSB_SAMPLE_RE = re.compile(r"^CSBGAME(?:[0-9FG]|[0-9]+)?\.(?:DAT|BAK)$", re.IGNORECASE)
 GENERAL_SAVE_RE = re.compile(r"(?:CSBGAME|DMGAME|DMSAVE|SKSAVE|SAVE|\.SAV$)", re.IGNORECASE)
 IMAGE_SUFFIXES = {".adf", ".msa", ".st"}
-ARCHIVE_SUFFIXES = {".zip"}
+ARCHIVE_SUFFIXES = {".7z", ".zip", ".rar"}
 MSA_MAGIC = 0x0E0F
 MSA_RLE_MARKER = 0xE5
 SAVE_DISK_RE = re.compile(r"save disk.*\.msa$", re.IGNORECASE)
@@ -58,8 +79,13 @@ def sha256(path: Path) -> str:
 
 
 def archive_hits(path: Path) -> list[str]:
+    """List likely save members using an installed, read-only archive lister."""
+    command = ["7zz", "l", "-ba", str(path)]
+    if path.suffix.lower() == ".zip" and not shutil.which("7zz"):
+        command = ["unzip", "-l", str(path)]
     try:
-        proc = subprocess.run(["unzip", "-l", str(path)], text=True, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, timeout=10, check=False)
+        proc = subprocess.run(command, text=True, stdout=subprocess.PIPE,
+                              stderr=subprocess.DEVNULL, timeout=20, check=False)
     except (OSError, subprocess.TimeoutExpired):
         return []
     hits: list[str] = []
