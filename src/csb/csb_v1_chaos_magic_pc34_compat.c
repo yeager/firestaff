@@ -575,12 +575,12 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 18u: case 19u: case 20u: case 21u: case 22u: case 23u: case 24u: case 25u:
     case 26u: case 27u: case 28u: case 29u: case 30u: case 31u: case 32u:
     case 37u: case 38u: case 39u: case 40u: case 41u: case 48u: case 50u:
-    case 59u: case 62u: case 67u: case 68u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
+    case 59u: case 67u: case 68u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
     case 133u: case 136u: case 139u:
         return 1;
     case 8u: case 33u: case 34u: case 35u: case 36u: case 42u: case 44u: case 45u:
     case 46u: case 49u: case 51u: case 52u: case 53u: case 54u: case 55u:
-    case 56u: case 57u: case 58u: case 60u: case 63u: case 64u: case 65u:
+    case 56u: case 57u: case 58u: case 60u: case 62u: case 63u: case 64u: case 65u:
     case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
     case 77u: case 78u: case 92u: case 100u: case 101u: case 102u: case 106u:
     case 47u: case 90u: case 103u: case 104u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:

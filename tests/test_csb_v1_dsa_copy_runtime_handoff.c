@@ -414,6 +414,7 @@ static void test_copyteleporter_runtime_receipt(void)
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
 
     memset(&dungeon, 0, sizeof(dungeon));
     /* Two real byte-map teleporter squares: column starts at 60, map at 64,
@@ -455,7 +456,12 @@ static void test_copyteleporter_runtime_receipt(void)
     runner.state_index = action.state_index;
 
     memset(&receipt, 0, sizeof(receipt));
-    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+    memset(&core, 0, sizeof(core));
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &profile.csbwin_extended_dsa_state, action.dsa_id,
+              action.state_index, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.requires_runtime_owner &&
+              csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
               &profile, &runner, &action, NULL, 0, NULL) == 1 &&
               raw[65] == raw[64] && memcmp(raw + 78, raw + 72, 4u) == 0 &&
               csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
@@ -482,6 +488,7 @@ static void test_teleport_party_runtime_receipt(void)
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 receipt;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
 
     memset(&dungeon, 0, sizeof(dungeon));
     /* One loaded two-cell level. LOCATIONREL 0x0020 is (p=0,l=0,x=1,y=0). */
@@ -515,7 +522,12 @@ static void test_teleport_party_runtime_receipt(void)
     runner.state_index = action.state_index;
 
     memset(&receipt, 0, sizeof(receipt));
-    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+    memset(&core, 0, sizeof(core));
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &profile.csbwin_extended_dsa_state, action.dsa_id,
+              action.state_index, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.requires_runtime_owner &&
+              csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
               &profile, &runner, &action, NULL, 0, NULL) == 1 &&
               profile.current_level == 0 && profile.party_z == 0 &&
               profile.party_x == 1 && profile.party_y == 0 &&
@@ -525,7 +537,7 @@ static void test_teleport_party_runtime_receipt(void)
                   &profile, &receipt) == 1 &&
               receipt.teleport_party_count == 1u &&
               receipt.last_teleport_party_destination == 0x0020u,
-          "TELEPORTPARTY atomically publishes its CSBWin LOCATIONREL pose");
+          "TELEPORTPARTY requires runtime ownership and atomically publishes LOCATIONREL");
     profile.party_x = 0;
     check(csb_v1_runtime_get_last_csbwin_dsa_execution_receipt_pc34(
               &profile, &receipt) == 0,
