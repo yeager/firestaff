@@ -597,7 +597,7 @@ static void test_real_d3_pair_extends_material_plan(void)
     uint32_t payload_hash = 0u;
 
     if (!build_route_receipts_and_proof(&proof)) return;
-    if (!read_real_graphics_item_hash(path, 693u, &payload_size, &payload_hash)) {
+    if (!read_real_graphics_item_hash(path, 246u, &payload_size, &payload_hash)) {
         printf("SKIP real D3 G0693 source unavailable at %s\n", path);
         return;
     }
@@ -607,7 +607,7 @@ static void test_real_d3_pair_extends_material_plan(void)
         CSB_V1_VIEWPORT_D3L2_D3R2_F0111_DOOR_SIDE_D3R2_PC34);
     expect_int("d3.receipt",
                csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
-                   d3l2, d3r2, 1, 1, 1, 693, payload_size, payload_hash,
+                   d3l2, d3r2, 1, 1, 1, 246, payload_size, payload_hash,
                    &d3_receipt), 1);
     proof.route_mask |= CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR |
                         CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR;
@@ -651,9 +651,9 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
         0x00u, 0x10u, 0x00u, 0x00u
     };
     static unsigned char d2_packed[32u * 61u];
-    static unsigned char d3_packed[24u * 41u];
+    static unsigned char d3_packed[22u * 38u];
     static unsigned char d2_pixels[64u * 61u];
-    static unsigned char d3_pixels[48u * 41u];
+    static unsigned char d3_pixels[44u * 38u];
     static const unsigned char other_pixels[4][4] = {
         { 31u, 32u, 33u, 34u }, { 41u, 42u, 43u, 44u },
         { 51u, 52u, 53u, 54u }, { 61u, 62u, 63u, 64u }
@@ -700,7 +700,7 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
         CSB_V1_VIEWPORT_D3L2_D3R2_F0111_DOOR_SIDE_D3R2_PC34);
     expect_int("capture.d3.route.receipt",
                csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
-                   d3l2, d3r2, 1, 1, 1, 693, 2183u,
+                   d3l2, d3r2, 1, 1, 1, 246, 307u,
                    fnv1a32(d3_packed, sizeof(d3_packed)), &d3_receipt), 1);
     proof.d3l2_door_hash = d3_receipt.source_payload_hash;
     proof.d3r2_door_hash = d3_receipt.source_payload_hash;
@@ -723,7 +723,7 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
     packed_capture.d2_packed_pixels = d2_packed;
     packed_capture.d2_packed_size = sizeof(d2_packed);
     packed_capture.d2_packed_fnv1a = proof.d2_door_hash;
-    packed_capture.d3_item_index = 693;
+    packed_capture.d3_item_index = 246;
     packed_capture.d3_source_payload_hash = proof.d3l2_door_hash;
     packed_capture.d3_packed_pixels = d3_packed;
     packed_capture.d3_packed_size = sizeof(d3_packed);
@@ -745,7 +745,7 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
     expect_int("table.admit.d3.original.layout",
                csb_v1_viewport_admit_graphics_table_provenance_pc34(
                    graphics_table, sizeof(graphics_table),
-                   packed_capture.source_path, packed_capture.source_md5, 693u,
+                   packed_capture.source_path, packed_capture.source_md5, 246u,
                    &d3_table), 1);
     expect_int("table.reject.no.native.mapping",
                d2_table.native_bitmap_mapping_proven == 0 &&
@@ -784,15 +784,15 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
     decoded_capture.d2_decoded_fnv1a = fnv1a32(d2_pixels, sizeof(d2_pixels));
     decoded_capture.d2_width = 64;
     decoded_capture.d2_height = 61;
-    decoded_capture.d3_item_index = 693;
+    decoded_capture.d3_item_index = 246;
     decoded_capture.d3_source_byte_count =
         proof.d3_pair_real_asset_receipt.source_byte_count;
     decoded_capture.d3_source_payload_hash = proof.d3l2_door_hash;
     decoded_capture.d3_decoded_pixels = d3_pixels;
     decoded_capture.d3_decoded_size = sizeof(d3_pixels);
     decoded_capture.d3_decoded_fnv1a = fnv1a32(d3_pixels, sizeof(d3_pixels));
-    decoded_capture.d3_width = 48;
-    decoded_capture.d3_height = 41;
+    decoded_capture.d3_width = 44;
+    decoded_capture.d3_height = 38;
     proof.d2_door_decoded_hash = decoded_capture.d2_decoded_fnv1a;
     proof.d3l2_door_decoded_hash = decoded_capture.d3_decoded_fnv1a;
     proof.d3r2_door_decoded_hash = decoded_capture.d3_decoded_fnv1a;
@@ -816,8 +816,8 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
             span->decoded_pixels = d3_pixels;
             span->decoded_size = sizeof(d3_pixels);
             span->decoded_fnv1a = proof.d3l2_door_decoded_hash;
-            span->width = 48;
-            span->height = 41;
+            span->width = 44;
+            span->height = 38;
             break;
         case CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D2_F0111_DOOR:
             span->decoded_pixels = d2_pixels;

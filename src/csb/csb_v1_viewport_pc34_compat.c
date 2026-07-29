@@ -605,8 +605,8 @@ int csb_v1_viewport_decode_d2_d3_native_packed_capture_pc34(
 {
     const size_t d2_packed_required = 32u * 61u;
     const size_t d2_decoded_required = 64u * 61u;
-    const size_t d3_packed_required = 24u * 41u;
-    const size_t d3_decoded_required = 48u * 41u;
+    const size_t d3_packed_required = 22u * 38u;
+    const size_t d3_decoded_required = 44u * 38u;
     const unsigned int d3_routes =
         CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR |
         CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR;
@@ -665,12 +665,14 @@ int csb_v1_viewport_decode_d2_d3_native_packed_capture_pc34(
          packed_capture->d3_table_provenance->raster_blocked_without_mapping ||
          !packed_capture->d3_table_provenance->source_path ||
          !packed_capture->d3_table_provenance->source_md5 ||
-         packed_capture->d3_table_provenance->native_bitmap_index != 693u ||
+         !csb_v1_viewport_d3_door_graphic_index_valid_pc34(
+             (int)packed_capture->d3_table_provenance->native_bitmap_index) ||
          strcmp(packed_capture->d3_table_provenance->source_path,
                 packed_capture->source_path) != 0 ||
          strcmp(packed_capture->d3_table_provenance->source_md5,
                 packed_capture->source_md5) != 0 ||
-         packed_capture->d3_item_index != 693 ||
+         !csb_v1_viewport_d3_door_graphic_index_valid_pc34(
+             packed_capture->d3_item_index) ||
          packed_capture->d3_source_payload_hash != proof->d3l2_door_hash ||
          packed_capture->d3_source_payload_hash != proof->d3r2_door_hash ||
          !packed_capture->d3_packed_pixels ||
@@ -715,7 +717,7 @@ int csb_v1_viewport_decode_d2_d3_native_packed_capture_pc34(
     out_receipt->d2_width = 64;
     out_receipt->d2_height = 61;
     if (has_d3) {
-        out_receipt->d3_item_index = 693;
+        out_receipt->d3_item_index = packed_capture->d3_item_index;
         out_receipt->d3_source_byte_count =
             proof->d3_pair_real_asset_receipt.source_byte_count;
         out_receipt->d3_source_payload_hash = proof->d3l2_door_hash;
@@ -723,8 +725,8 @@ int csb_v1_viewport_decode_d2_d3_native_packed_capture_pc34(
         out_receipt->d3_decoded_size = d3_decoded_required;
         out_receipt->d3_decoded_fnv1a = csb_v1_viewport_fnv1a_bytes_pc34(
             d3_decoded_pixels, d3_decoded_required);
-        out_receipt->d3_width = 48;
-        out_receipt->d3_height = 41;
+        out_receipt->d3_width = 44;
+        out_receipt->d3_height = 38;
     }
     return 1;
 }
@@ -769,13 +771,14 @@ static int csb_v1_viewport_d2_d3_capture_valid_pc34(
               (CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR |
                CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR)) != 0u;
     if (has_d3 &&
-        (capture->d3_item_index != 693 ||
+        (!csb_v1_viewport_d3_door_graphic_index_valid_pc34(
+             capture->d3_item_index) ||
          capture->d3_source_byte_count !=
              proof->d3_pair_real_asset_receipt.source_byte_count ||
          capture->d3_source_payload_hash != proof->d3l2_door_hash ||
          capture->d3_source_payload_hash != proof->d3r2_door_hash ||
          !capture->d3_decoded_pixels || capture->d3_decoded_size == 0u ||
-         capture->d3_width != 48 || capture->d3_height != 41 ||
+         capture->d3_width != 44 || capture->d3_height != 38 ||
          capture->d3_decoded_size != (size_t)capture->d3_width * capture->d3_height ||
          capture->d3_decoded_fnv1a == 0u ||
          capture->d3_decoded_fnv1a != csb_v1_viewport_fnv1a_bytes_pc34(

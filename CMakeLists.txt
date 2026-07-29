@@ -17610,7 +17610,10 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/csb
     )
-    target_link_libraries(test_csb_v1_viewport_first_frame_materialization_pc34_compat PRIVATE firestaff_m10)
+    target_link_libraries(test_csb_v1_viewport_first_frame_materialization_pc34_compat PRIVATE
+        firestaff_m10
+        firestaff_csb_v2
+    )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_first_frame_materialization_pc34_compat
             PRIVATE -Wall -Wextra -O2)

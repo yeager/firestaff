@@ -42772,6 +42772,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   now retains the original record metadata (44x38) and rejects the former
   fictitious padding buffer. The focused real-data D3 route regression passes.
 
+- The broad first-frame materialization target now links `firestaff_csb_v2`,
+  matching the production V2.2 call edge. Its D3 fixtures consume the same
+  DoorSet-0 record 246 and 44x38 packed/expanded contract as the PC/I34
+  implementation. The target now links and passes instead of hiding the V2.2
+  consumer behind unresolved symbols.
+
 ## 2026-07-29 - CSB V2.0 full-surface startup capture
 
 - ✅ Strengthened `csb_v20_filtered_startup_capture` to validate the actual
