@@ -21,6 +21,8 @@
 #include <direct.h>
 #include <process.h>
 #define MKDIR(path) _mkdir(path)
+#define TEST_GETCWD(buffer, size) _getcwd((buffer), (int)(size))
+#define TEST_CHDIR(path) _chdir(path)
 static int test_setenv(const char* name, const char* value) {
     return _putenv_s(name, value) == 0;
 }
@@ -38,6 +40,8 @@ static char* test_mkdtemp(char* templ) {
 #include <sys/stat.h>
 #include <unistd.h>
 #define MKDIR(path) mkdir((path), 0700)
+#define TEST_GETCWD(buffer, size) getcwd((buffer), (size))
+#define TEST_CHDIR(path) chdir(path)
 static int test_setenv(const char* name, const char* value) {
     return setenv(name, value, 1) == 0;
 }
@@ -448,6 +452,49 @@ static void check_dot_dialog_result_preserves_data_directory(void) {
     M12_StartupMenu_Destroy(&state);
 }
 
+static void check_parent_dialog_result_is_not_a_placeholder(void) {
+    M12_StartupMenuState state;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char expectedParent[M12_ASSET_DATA_DIR_CAPACITY];
+    char parentPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char originalCwd[FSP_PATH_MAX];
+    int i;
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(TEST_GETCWD(originalCwd, sizeof(originalCwd)) != NULL);
+    snprintf(parentPath, sizeof(parentPath), "%s/..", dataRoot);
+    CHECK(FSP_ResolvePhysicalPath(expectedParent, sizeof(expectedParent),
+                                  parentPath));
+    if (failures) {
+        return;
+    }
+    CHECK(TEST_CHDIR(dataRoot) == 0);
+    snprintf(dialogSelectedPath, sizeof(dialogSelectedPath), "..");
+
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsSelectedIndex = TEST_SETTINGS_ROW_DATA_DIR;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+
+    CHECK(dialogCalls == 1);
+    CHECK(state.dataDirScanActive == 1);
+    CHECK(state.messageLine1 &&
+          strcmp(state.messageLine1, "SCANNING GAME DATA") == 0);
+    for (i = 0; i < 200 && state.dataDirScanJob != NULL; ++i) {
+        (void)M12_StartupMenu_Update(&state);
+        SDL_Delay(1);
+    }
+    CHECK(state.dataDirScanActive == 0);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
+                 expectedParent) == 0);
+    M12_StartupMenu_Destroy(&state);
+    CHECK(TEST_CHDIR(originalCwd) == 0);
+}
+
 static void check_default_data_dir_scans_asynchronously(void) {
     M12_StartupMenuState state;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -578,6 +625,7 @@ int main(void) {
     check_active_scan_message_requests_cancel();
     check_selected_folder_scans_asynchronously();
     check_dot_dialog_result_preserves_data_directory();
+    check_parent_dialog_result_is_not_a_placeholder();
     check_default_data_dir_scans_asynchronously();
     check_start_menu_promotes_saved_game_leaf_to_parent();
     check_dot_config_migrates_to_default_data_directory();

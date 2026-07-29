@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 Start-menu data-folder picker: current-directory display
+  tokens from the macOS dialog cannot replace the selected data root, while
+  the valid relative parent directory `..` is no longer rejected. The
+  asynchronous scan stores the resolved physical path; its focused dialog
+  regression covers both cases.
+
 - ✅ 2026-07-29 CSB V2.2 source-route hardening: vaulted ceilings and
   fluxcages no longer borrow plain-ceiling or chaos-rift V2.2 assets from
   the dormant per-cell mapper. They remain on their original V1 F0128 route

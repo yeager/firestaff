@@ -303,7 +303,10 @@ an integration build pass.
 - **M12-DATA-SCAN-PROGRESSBAR:** Closed 2026-07-28. The start menu now draws
   a live progressbar from the existing asynchronous hash scan, alongside its
   current game/task label. The same popup exposes `CANCEL` while the scan is
-  active and does not introduce a second scanner.
+  active and does not introduce a second scanner. 2026-07-29: folder-picker
+  cleanup now rejects only current-directory display tokens (`.`, `./`,
+  `./.`) while accepting a real relative parent selection (`..`) for the
+  same canonical async scan.
 
 - **DM1-F10-FPS-OVERLAY:** Closed 2026-07-28. The compact F10 presentation
   page now has a persisted `FPS` switch. Its overlay measures completed SDL
