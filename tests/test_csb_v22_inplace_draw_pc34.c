@@ -159,12 +159,20 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
         "      \"sourceRecordSha256\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n"
         "      \"sourceDimensions\": [96, 88],\n"
         "      \"outputDimensions\": [96, 88]\n"
+        "    },\n"
+        "    {\n"
+        "      \"id\": \"door_d1_01\",\n"
+        "      \"category\": \"door_shapes\",\n"
+        "      \"sourceGraphicIndex\": 247,\n"
+        "      \"sourceRecordSha256\": \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\n"
+        "      \"sourceDimensions\": [64, 61],\n"
+        "      \"outputDimensions\": [64, 96]\n"
         "    }\n"
         "  ]\n"
         "}\n";
     char cache_path[512];
     char manifest_path[512];
-    unsigned char cache[72];
+    unsigned char cache[112];
     unsigned char framebuffer[320 * 200];
     CSB_V1_ViewportRuntimeDrawCommandPc34 command;
 
@@ -178,17 +186,24 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
     memset(cache, 0, sizeof(cache));
     memcpy(cache, "FSV22C\0\0", 8);
     put_u32(cache + 8, 1);  /* format version */
-    put_u32(cache + 12, 1); /* entry count */
+    put_u32(cache + 12, 2); /* entry count */
     put_u32(cache + 32, fnv1a32("door_shapes"));
     put_u32(cache + 36, fnv1a32("door_d0_01"));
     put_u32(cache + 40, 2);
     put_u32(cache + 44, 1);
     put_u32(cache + 48, 8);
-    put_u32(cache + 52, 64);
+    put_u32(cache + 52, 96);
+    put_u32(cache + 64, fnv1a32("door_shapes"));
+    put_u32(cache + 68, fnv1a32("door_d1_01"));
+    put_u32(cache + 72, 2);
+    put_u32(cache + 76, 1);
+    put_u32(cache + 80, 8);
+    put_u32(cache + 84, 104);
     /* First source pixel is opaque red; the second is C10-style transparent.
      * Scaling the 2x1 source across the D1 clip makes alpha preservation easy
      * to observe without relying on any generated art. */
-    cache[64] = 0x00; cache[65] = 0x00; cache[66] = 0xff; cache[67] = 0xff;
+    cache[96] = 0x00; cache[97] = 0x00; cache[98] = 0xff; cache[99] = 0xff;
+    cache[104] = 0xff; cache[105] = 0x00; cache[106] = 0x00; cache[107] = 0xff;
     CHECK(write_file(cache_path, cache, sizeof(cache)), "write command-test cache");
 
     memset(&command, 0, sizeof(command));
@@ -214,6 +229,24 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
           framebuffer[33 * 320 + 47] == 0x5a &&
           framebuffer[33 * 320 + 176] == 0x5a,
           "door replacement never escapes the original F0128 clip");
+
+    memset(framebuffer, 0x5a, sizeof(framebuffer));
+    command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34;
+    command.clip_x = 76;
+    command.clip_y = 47;
+    command.clip_w = 72;
+    command.clip_h = 74;
+    command.draw_order = 0x0111;
+    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 1,
+          "admitted D2 door command consumes its distinct source route");
+    CHECK(framebuffer[47 * 320 + 76] == 0x03,
+          "D2 opaque pixel uses its own cache entry within the F0128 clip");
+    CHECK(framebuffer[47 * 320 + 112] == 0x5a,
+          "D2 transparent modern pixel preserves the source framebuffer");
+    CHECK(framebuffer[46 * 320 + 76] == 0x5a &&
+          framebuffer[47 * 320 + 75] == 0x5a &&
+          framebuffer[47 * 320 + 148] == 0x5a,
+          "D2 replacement never escapes its original F0128 clip");
     command.transparent_color = 0;
     CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
           "unproven transparency contract remains source-owned");

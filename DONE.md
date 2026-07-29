@@ -42752,6 +42752,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   material types stay on V1 instead of using rectangle fallback art.
 - Verified with Ninja and the focused V2.2 source-artpack, route, cache, and
   real PC3.4 viewport CTest lane. The direct cache regression supplies an
-  admitted D1 record and requires an opaque pixel to alter only its F0128
-  clip while alpha-zero pixels preserve the original framebuffer; a changed
-  transparency contract is rejected.
+  admitted D1 and D2 records and requires an opaque pixel to alter only each
+  original F0128 clip while alpha-zero pixels preserve the source framebuffer;
+  a changed transparency contract is rejected.
