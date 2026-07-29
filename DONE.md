@@ -43076,3 +43076,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   action-row routes through F0389/F0391. It proves the runtime-backed dagger
   STAB action updates the CSB champion, clears the action menu, and never
   uses DM1 world state.
+- ✅ 2026-07-30 CSB F0128 viewport baseline: the CSB runtime bridge now uses
+  `dm1_viewport_3d_init()` before it applies its live dungeon configuration.
+  This preserves the shared ReDMCSB G2107/G2110 default wall and door-frame
+  tables instead of starting the F0128 frame with zeroed legacy slots.
+  Verification: `csb_v1_boot_viewport_render_gate`,
+  `csb_v1_m11_prison_runtime_hud_pc34`, and `ctest -L csb` (109/109).

@@ -5004,12 +5004,12 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
      * work without modification. */
     DM1_Viewport3DState vp;
     CSB_V1_CustomBackgroundsPreSquareDrawContext custom_bg_ctx;
-    memset(&vp, 0, sizeof(vp));
-    vp.viewport_pixels = cfg->viewport_pixels;
-    vp.viewport_stride = cfg->viewport_stride > 0 ? cfg->viewport_stride : 320;
-    vp.floor_area = cfg->viewport_pixels +
-                    DM1_VIEWPORT_FLOOR_Y * vp.viewport_stride;
-    vp.floor_ceiling_dirty = true;
+    /* F0128 shares the V1 viewport's initialized wall/door-frame tables.
+     * Clearing this state by hand leaves G2107/G2110-style defaults at zero
+     * before CSB applies the active map set, which makes the CSB path depend
+     * on absent host state instead of the source-defined renderer baseline. */
+    dm1_viewport_3d_init(&vp, cfg->viewport_pixels,
+                         cfg->viewport_stride > 0 ? cfg->viewport_stride : 320);
     vp.graphic_provider_callback = cfg->graphic_provider_callback;
     vp.graphic_provider_user_data = cfg->graphic_provider_user_data;
     vp.wall_ornament_ordinal_callback = cfg->wall_ornament_ordinal_callback;

@@ -1040,6 +1040,12 @@ that its exact runtime path is not already source-locked and tested.
    capture confirms coherent PRESENTS and Prison frames. This closes the
    startup geometric corruption; the remaining item scope is live HUD/
    viewport breadth, audio admission, and packaged app capture.
+   2026-07-30: the CSB F0128 bridge now begins with the shared V1 viewport
+   initializer rather than a zeroed local state. This retains ReDMCSB's
+   G2107/G2110 wall and door-frame defaults before the active CSB map set is
+   applied; the prior zeroed state could select absent frame slots on legacy
+   fallback paths. The focused viewport and real Prison HUD regressions pass,
+   as does the complete CSB lane (109/109).
    2026-07-29: local PC3.4 runtime captures exercised V1, V2.0, V2.1, and
    V2.2 at the completed Entrance page. V1/V2.0 preserve the source page,
    V2.1 uses the expected upscale path, and V2.2 falls back fail-closed to
