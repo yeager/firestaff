@@ -42762,5 +42762,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   top-down BMP geometry and storage size and to require non-black pixels over
   at least half of each captured axis. Four files alone can no longer hide a
   host-scaling regression that collapses PRESENTS, CHAOS, STRIKES BACK, or
-  Entrance into a partial strip. Verified against the local original PC3.4
+  Entrance into a partial strip. The same portable assertion is shared by the
+  V2.1 EPX capture regression. Verified against the local original PC3.4
   `GRAPHICS.DAT`/`DUNGEON.DAT` package.

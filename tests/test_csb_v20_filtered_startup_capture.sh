@@ -3,6 +3,10 @@ set -eu
 
 firestaff_bin="${1:?firestaff executable path is required}"
 data_dir="${FIRESTAFF_CSB_PC_DATA:-$HOME/.firestaff/data/csb}"
+script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+
+# shellcheck source=verify_csb_presented_capture_surface.sh
+. "$script_dir/verify_csb_presented_capture_surface.sh"
 
 if [ ! -x "$firestaff_bin" ]; then
     echo "SKIP: firestaff executable is unavailable: $firestaff_bin"
@@ -45,70 +49,8 @@ if [ "$capture_count" -ne 4 ] ||
     exit 1
 fi
 
-# A capture file alone is not proof that V2.0 retained its explicit 640x400
-# presentation target.  With a dummy-renderer regression, the source page can
-# be collapsed to a narrow host strip and still be emitted as a valid BMP.
-# The capture may use the active host size (for example 960x540), so read its
-# 24-bit BMP geometry and require a correctly sized file plus non-black pixels
-# across a substantial span of both axes.
 for capture in "$capture_dir"/*.bmp; do
-    dimensions="$(od -An -v -tu1 -j 18 -N 8 "$capture" | awk '
-        {
-            for (i = 1; i <= NF; ++i) bytes[count++] = $i;
-        }
-        END {
-            if (count == 8) {
-                width = bytes[0] + 256 * bytes[1] + 65536 * bytes[2] + 16777216 * bytes[3];
-                height = bytes[4] + 256 * bytes[5] + 65536 * bytes[6] + 16777216 * bytes[7];
-                # Presented captures are top-down BMPs, so biHeight is
-                # negative and must be converted from its unsigned byte form.
-                if (height >= 2147483648) height = 4294967296 - height;
-                print width, height;
-            }
-        }
-    ')"
-    set -- $dimensions
-    width="${1:-0}"
-    height="${2:-0}"
-    if [ "$width" -le 0 ] || [ "$height" -le 0 ]; then
-        echo "FAIL: CSB V2.0 capture has invalid BMP geometry: $capture" >&2
-        exit 1
-    fi
-
-    row_bytes=$((width * 3))
-    padded_row_bytes=$(((row_bytes + 3) / 4 * 4))
-    expected_bytes=$((54 + padded_row_bytes * height))
-    capture_bytes="$(wc -c < "$capture" | tr -d ' ')"
-    if [ "$capture_bytes" -ne "$expected_bytes" ]; then
-        echo "FAIL: CSB V2.0 capture has wrong BMP size: $capture ($capture_bytes)" >&2
-        exit 1
-    fi
-
-    if ! od -An -v -tu1 -j 54 "$capture" | awk -v width="$width" -v height="$height" '
-        {
-            for (i = 1; i <= NF; ++i) {
-                channel = pixel_byte % 3;
-                value[channel] = $i;
-                ++pixel_byte;
-                if (channel != 2) continue;
-                if (value[0] != 0 || value[1] != 0 || value[2] != 0) {
-                    x = pixel % width;
-                    y = int(pixel / width);
-                    if (!seen || x < min_x) min_x = x;
-                    if (!seen || x > max_x) max_x = x;
-                    if (!seen || y < min_y) min_y = y;
-                    if (!seen || y > max_y) max_y = y;
-                    seen = 1;
-                }
-                ++pixel;
-            }
-        }
-        END {
-            if (!seen || max_x - min_x + 1 < width / 2 || max_y - min_y + 1 < height / 2)
-                exit 1;
-        }
-    '; then
-        echo "FAIL: CSB V2.0 capture collapsed to a partial presentation surface: $capture" >&2
+    if ! verify_csb_presented_capture_surface "$capture"; then
         exit 1
     fi
 done

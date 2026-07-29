@@ -3,6 +3,10 @@ set -eu
 
 firestaff_bin="${1:?firestaff executable path is required}"
 data_dir="${FIRESTAFF_CSB_PC_DATA:-$HOME/.firestaff/data/csb}"
+script_dir="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+
+# shellcheck source=verify_csb_presented_capture_surface.sh
+. "$script_dir/verify_csb_presented_capture_surface.sh"
 
 if [ ! -x "$firestaff_bin" ]; then
     echo "SKIP: firestaff executable is unavailable: $firestaff_bin"
@@ -32,5 +36,11 @@ if [ "$capture_count" -ne 4 ] ||
     echo "FAIL: CSB V2.1 EPX startup did not retain all source palette captures" >&2
     exit 1
 fi
+
+for capture in "$capture_dir"/*.bmp; do
+    if ! verify_csb_presented_capture_surface "$capture"; then
+        exit 1
+    fi
+done
 
 echo "PASS: CSB V2.1 EPX startup retains PRESENTS/CHAOS/STRIKES/Entrance captures"
