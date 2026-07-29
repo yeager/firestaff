@@ -43129,7 +43129,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   setter and is reported as unchanged. Empty status display now says `NOT
   SET`, never `.`. Verified by `test_m12_data_dir_cancel`.
 
-- ✅ 2026-07-30 CSB V2.x feature verification: all 50 registered V2.0,
+- ✅ 2026-07-30 CSB V2.x feature verification: all 51 registered V2.0,
   V2.1 and V2.2 regressions pass with local PC3.4 data. The lane covers
   startup/title/Entrance, source and presented captures, Prison pointer
   handoff, runtime HUD ownership, filters, scale/EPX, input affordances,
@@ -43141,3 +43141,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   C009/C011 geometry as DM1. The focused M11 regression proves panel open
   and `Lo` rune entry while preserving the separate, still-open CSBWin cast
   executor boundary.
+
+- ✅ 2026-07-30 CSB V2.x current-main verification: all 51 tests selected by
+  the intersected `csb` and `v2` CTest labels pass. The lane covers V2.0
+  filters, V2.1 presented startup/upscale, V2.2 reviewed-art gates and
+  runtime HUD/input/settings/lighting paths. This does not admit unreviewed
+  V2.2 viewport materials; those remain fail-closed by design.

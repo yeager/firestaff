@@ -151,7 +151,7 @@ an integration build pass.
   nine synthetic rectangles are a completed F0128 render. Remaining: bind
   every other material family to its corresponding original F0128 command.
   2026-07-30 verification: the complete registered CSB V2.x lane passes
-  50/50 tests against local PC3.4 data. This covers V2.0/V2.1 startup and
+  51/51 tests against local PC3.4 data. This covers V2.0/V2.1 startup and
   Prison runtime, V2.1 EPX/presentation capture, V2 filters/settings/touch/
   motion/lighting, and V2.2 source-artpack admission, startup isolation and
   runtime HUD ownership. This proves the implemented V2.x feature surface,
@@ -304,7 +304,7 @@ an integration build pass.
   confirms the implemented V2.x contracts; it does not promote the remaining
   reviewed-art, all-route material-consumption, or packaged-Mac capture work.
   Re-run 2026-07-29 with the local hash-verified PC3.4 package: 109/109 CSB
-  tests PASS, including the focused 50/50 V2.0/V2.1/V2.2 lane. This verifies
+  tests PASS, including the focused 51/51 V2.0/V2.1/V2.2 lane. This verifies
   the present V2.x implementation without claiming V2.2 material families
   that remain intentionally source-V1.
 
