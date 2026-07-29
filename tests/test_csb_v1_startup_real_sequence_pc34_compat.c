@@ -298,7 +298,8 @@ int main(void)
               plan.title_source_step == 21 &&
               plan.title_special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
-              receipt_for_plan(&session, &plan, 3u, &chaos_hold_host),
+              receipt_for_plan(&session, &plan, 3u, &chaos_hold_host) &&
+              chaos_hold_host.frame.title_phase_mask == 0x04,
           "real C001 CHAOS hold raster reaches host surface receipt");
     title_snapshot.boot_profile = &profile;
     title_snapshot.entrance_active = 1;

@@ -879,6 +879,10 @@ that its exact runtime path is not already source-locked and tested.
    that distinction explicit.
    CSB presentation-mode resolution uses the CSB manifest availability API,
    not DM1's global modern-asset state.
+   2026-07-29: M11 now exports TITLE.C source step 21 as the distinct full
+   CHAOS hold phase (`0x04`) rather than a final zoom frame (`0x02`). The
+   runtime/session contract consumes the genuine 20-VBlank hold before
+   STRIKES BACK.
    2026-07-28: the canonical PC 3.4 real-data gate now proves the full
    source-owned startup chain: Swoosh, C001 PRESENTS/CHAOS/STRIKES, all 31
    C004/C002/C003 opening pages, C017/C040 HUD handoff and the DUNGEON.DAT

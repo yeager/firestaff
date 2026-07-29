@@ -26,6 +26,7 @@
 #define CSB_V1_CONTRACT_TITLE_STRIKES_STEP_PC34 22
 #define CSB_V1_CONTRACT_TITLE_PRESENTS_MASK_PC34 0x01
 #define CSB_V1_CONTRACT_TITLE_CHAOS_MASK_PC34 0x02
+#define CSB_V1_CONTRACT_TITLE_CHAOS_HOLD_MASK_PC34 0x04
 #define CSB_V1_CONTRACT_TITLE_STRIKES_MASK_PC34 0x08
 #define CSB_V1_CONTRACT_DOOR_STEP_COUNT_PC34 31
 
@@ -137,9 +138,12 @@ static int csb_v1_startup_session_title_host_phase_matches_pc34(
             expected_step_max = CSB_V1_CONTRACT_TITLE_PRESENTS_STEP_PC34;
             break;
         case CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34:
-            expected_mask = CSB_V1_CONTRACT_TITLE_CHAOS_MASK_PC34;
             expected_step_min = CSB_V1_CONTRACT_TITLE_CHAOS_FIRST_STEP_PC34;
             expected_step_max = CSB_V1_CONTRACT_TITLE_CHAOS_LAST_STEP_PC34;
+            expected_mask = host->frame.title_phase_tick ==
+                    CSB_V1_CONTRACT_TITLE_CHAOS_LAST_STEP_PC34
+                ? CSB_V1_CONTRACT_TITLE_CHAOS_HOLD_MASK_PC34
+                : CSB_V1_CONTRACT_TITLE_CHAOS_MASK_PC34;
             break;
         case CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34:
             expected_mask = CSB_V1_CONTRACT_TITLE_STRIKES_MASK_PC34;

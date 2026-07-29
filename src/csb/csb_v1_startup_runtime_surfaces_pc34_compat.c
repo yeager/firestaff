@@ -1111,13 +1111,18 @@ int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
 }
 
 static int csb_v1_startup_frame_title_phase_mask_pc34(
-    CSB_V1_StartupStage_PC34 stage)
+    CSB_V1_StartupStage_PC34 stage,
+    int title_source_step)
 {
     if (stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
         return 0x01;
     }
     if (stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34) {
-        return 0x02;
+        /* TITLE.C F0437 retains the fully scaled C001 CHAOS raster for its
+         * final 20 VBlanks.  This is a distinct presentation phase: the
+         * runtime lifecycle must consume it rather than treating it as an
+         * extra zoom frame. */
+        return title_source_step == 21 ? 0x04 : 0x02;
     }
     if (stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
         return 0x08;
@@ -1187,7 +1192,8 @@ int csb_v1_boot_startup_runtime_asset_session_frame_pc34(
         out_frame->title_phase_tick = plan->title_source_step;
         out_frame->title_phase_tick_count = csb_v1_startup_title_total_ticks_pc34();
         out_frame->title_phase_mask =
-            csb_v1_startup_frame_title_phase_mask_pc34(out_frame->stage);
+            csb_v1_startup_frame_title_phase_mask_pc34(
+                out_frame->stage, plan->title_source_step);
         /* TITLE.C F0437's plan addresses the resident C001 bitmap.  The
          * retained phase crops prove package geometry at load time, but are
          * not a second coordinate system for M11 presentation. */

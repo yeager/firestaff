@@ -1,3 +1,10 @@
+- ✅ 2026-07-29 CSB TITLE.C CHAOS-hold host binding: M11's source-owned C001
+  host frame now exports the genuine full-size CHAOS hold as phase `0x04` at
+  source step 21, distinct from the preceding zoom `0x02`. The session
+  contract rejects a hold relabeled as zoom, and the runtime lifecycle can
+  consume the required 20-VBlank hold before STRIKES BACK. Focused title and
+  runtime-coupling tests pass.
+
 - ✅ 2026-07-29 CSB DSA `STKOP_TeleportParty`: implemented CSBWin
   `DSA.cpp:4583-4606` as a transactional packed-`LOCATIONREL` request. It
   commits only after the complete authenticated action is accepted, then
