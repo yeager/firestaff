@@ -11780,6 +11780,58 @@ int dm2_v1_skproject_get_glob_var(
     return 1;
 }
 
+/* SKULLWIN/dm2global.cpp:20 DM2_UPDATE_GLOB_VAR — bounded receipt over
+   a caller-owned global-words table.  Implements the source's 7 operation
+   modes using the simplified flat-word model. */
+int dm2_v1_skproject_update_glob_var(
+    uint16_t index,
+    uint16_t op,
+    int16_t operand,
+    uint16_t *global_words,
+    uint16_t global_word_count,
+    DM2_V1_SkprojectUpdateGlobVarReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUpdateGlobVarReceipt receipt;
+    int16_t val;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.index = index;
+    receipt.op = op;
+    receipt.operand = operand;
+
+    if (!global_words || global_word_count == 0u ||
+        index >= global_word_count) {
+        receipt.blocked_out_of_range = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (op > 6u) {
+        receipt.blocked_bad_op = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.old_value = global_words[index];
+    val = (int16_t)global_words[index];
+
+    switch (op) {
+        case 0: val = 1; break;
+        case 1: val = 0; break;
+        case 2: val = (val != 0) ? 0 : 1; break;
+        case 3: val = (int16_t)(val + operand); break;
+        case 4: val = (int16_t)(val - operand); break;
+        case 5: break;
+        case 6: val = operand; break;
+    }
+
+    global_words[index] = (uint16_t)val;
+    receipt.new_value = (uint16_t)val;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 /* SKULLWIN/c_querydb.cpp:982 DM2_GET_CREATURE_WEIGHT — source-locked receipt
    for a caller-resolved creature weight.  The helper records the value and
    the source overweight threshold used by the lift-admission family. */

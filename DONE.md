@@ -1,3 +1,9 @@
+- ✅ 2026-07-29 DM2 actuator infrastructure: DM2_INVOKE_MESSAGE creates 0x04
+  timers with actor encoding, DM2_INVOKE_ACTUATOR extracts record w4/w6 fields
+  for delay/target/action. DM2_UPDATE_GLOB_VAR implements 7 operation modes
+  (set1/set0/toggle/add/sub/nop/assign) on flat word array. Tests added for
+  UPDATE_GLOB_VAR. Audit TSV updated (1 symbol). Source: skproject
+  c_tim_proc.cpp:4332-4392, dm2global.cpp:20-116.
 - ✅ 2026-07-29 DM2 timer handler expansion: wired 5 new timer type handlers
   into DM2_PROCEED_TIMERS dispatcher. 0x02 DESTROY_DOOR (tile state mutation
   to DESTROYED=5), 0x58 RELEASE_DOOR_BUTTON (record byte@3 bit 0x08 clear),

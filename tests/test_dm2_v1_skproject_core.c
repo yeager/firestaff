@@ -5290,6 +5290,50 @@ static void test_skwin_core_symbol_batch_cycle10(void)
               glob_receipt.blocked_out_of_range,
           "DM2_GET_GLOB_VAR rejects out-of-range index");
 
+    /* DM2_UPDATE_GLOB_VAR modifies the global-words table. */
+    {
+        DM2_V1_SkprojectUpdateGlobVarReceipt ug;
+        global_words[10] = 0x0005u;
+        CHECK(dm2_v1_skproject_update_glob_var(
+                  10u, 0, 0, global_words, 64u, &ug) &&
+                  ug.valid && ug.new_value == 1u,
+              "DM2_UPDATE_GLOB_VAR op 0 sets to 1");
+        CHECK(dm2_v1_skproject_update_glob_var(
+                  10u, 1, 0, global_words, 64u, &ug) &&
+                  ug.valid && ug.new_value == 0u,
+              "DM2_UPDATE_GLOB_VAR op 1 sets to 0");
+        global_words[10] = 0u;
+        CHECK(dm2_v1_skproject_update_glob_var(
+                  10u, 2, 0, global_words, 64u, &ug) &&
+                  ug.valid && ug.new_value == 1u,
+              "DM2_UPDATE_GLOB_VAR op 2 toggles 0 to 1");
+        CHECK(dm2_v1_skproject_update_glob_var(
+                  10u, 2, 0, global_words, 64u, &ug) &&
+                  ug.valid && ug.new_value == 0u,
+              "DM2_UPDATE_GLOB_VAR op 2 toggles nonzero to 0");
+        global_words[10] = 10u;
+        CHECK(dm2_v1_skproject_update_glob_var(
+                  10u, 3, 5, global_words, 64u, &ug) &&
+                  ug.valid && ug.new_value == 15u,
+              "DM2_UPDATE_GLOB_VAR op 3 adds");
+        CHECK(dm2_v1_skproject_update_glob_var(
+                  10u, 4, 3, global_words, 64u, &ug) &&
+                  ug.valid && ug.new_value == 12u,
+              "DM2_UPDATE_GLOB_VAR op 4 subtracts");
+        CHECK(dm2_v1_skproject_update_glob_var(
+                  10u, 6, 42, global_words, 64u, &ug) &&
+                  ug.valid && ug.new_value == 42u,
+              "DM2_UPDATE_GLOB_VAR op 6 assigns");
+        CHECK(!dm2_v1_skproject_update_glob_var(
+                  64u, 0, 0, global_words, 64u, &ug) &&
+                  ug.blocked_out_of_range,
+              "DM2_UPDATE_GLOB_VAR rejects out-of-range");
+        CHECK(!dm2_v1_skproject_update_glob_var(
+                  10u, 7, 0, global_words, 64u, &ug) &&
+                  ug.blocked_bad_op,
+              "DM2_UPDATE_GLOB_VAR rejects bad op");
+    }
+
     /* DM2_GET_CREATURE_WEIGHT records a caller-resolved weight. */
     CHECK(dm2_v1_skproject_get_creature_weight(
               100u, &weight, &weight_receipt) &&

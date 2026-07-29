@@ -4805,6 +4805,30 @@ int dm2_v1_skproject_get_glob_var(
     uint16_t *out_value,
     DM2_V1_SkprojectGetGlobVarReceipt *out_receipt);
 
+/* SKULLWIN/dm2global.cpp:20 DM2_UPDATE_GLOB_VAR — source-locked receipt over
+   a caller-owned global-words table.  Operation modes (op):
+     0=set to 1, 1=set to 0, 2=toggle (0->1, nonzero->0),
+     3=add value, 4=subtract value, 5=no-op, 6=assign value.
+   Returns the new value written. */
+typedef struct {
+    int valid;
+    uint16_t index;
+    uint16_t old_value;
+    uint16_t new_value;
+    uint16_t op;
+    int16_t operand;
+    int blocked_out_of_range;
+    int blocked_bad_op;
+} DM2_V1_SkprojectUpdateGlobVarReceipt;
+
+int dm2_v1_skproject_update_glob_var(
+    uint16_t index,
+    uint16_t op,
+    int16_t operand,
+    uint16_t *global_words,
+    uint16_t global_word_count,
+    DM2_V1_SkprojectUpdateGlobVarReceipt *out_receipt);
+
 /* SKULLWIN/c_querydb.cpp:982 DM2_GET_CREATURE_WEIGHT — source-locked receipt
    over a caller-resolved creature weight; >0xfd is recorded as overweight. */
 typedef struct {
