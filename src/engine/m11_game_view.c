@@ -21736,7 +21736,7 @@ static int m11_graphics_popup_row_count(const M11_GameViewState* state,
     /* CSB has its own source-preserving V2 filter chain.  Do not present
      * DM1-only colour/sharpen controls as if they altered CSB's runtime. */
     if (page == M11_GRAPHICS_POPUP_PAGE_FILTERS &&
-        state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) return 4;
+        state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) return 6;
     return page == M11_GRAPHICS_POPUP_PAGE_FILTERS ? 11 : 8;
 }
 
@@ -21943,8 +21943,20 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
                         config.csbV2DitherCleanupEnabled = !config.csbV2DitherCleanupEnabled;
                     else { config.dm1V2PaletteGamma += delta * 5; if (config.dm1V2PaletteGamma < 80) config.dm1V2PaletteGamma = 260; if (config.dm1V2PaletteGamma > 260) config.dm1V2PaletteGamma = 80; }
                     break;
-                case 4: config.dm1V2PaletteBrightness = m11_graphics_popup_cycle(config.dm1V2PaletteBrightness + 50, delta * 5, 101) - 50; break;
-                case 5: config.dm1V2PaletteContrast = m11_graphics_popup_cycle(config.dm1V2PaletteContrast + 50, delta * 5, 101) - 50; break;
+                case 4:
+                    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+                        static const int scaleChoices[] = { 100, 200, 400 };
+                        int choice = config.csbV2ScalePercent == 100 ? 0 :
+                                     config.csbV2ScalePercent == 400 ? 2 : 1;
+                        config.csbV2ScalePercent = scaleChoices[
+                            m11_graphics_popup_cycle(choice, delta, 3)];
+                    } else config.dm1V2PaletteBrightness = m11_graphics_popup_cycle(config.dm1V2PaletteBrightness + 50, delta * 5, 101) - 50;
+                    break;
+                case 5:
+                    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)
+                        config.csbV2BilinearEnabled = !config.csbV2BilinearEnabled;
+                    else config.dm1V2PaletteContrast = m11_graphics_popup_cycle(config.dm1V2PaletteContrast + 50, delta * 5, 101) - 50;
+                    break;
                 case 6: config.dm1V2DitherCleanupEnabled = !config.dm1V2DitherCleanupEnabled; break;
                 case 7: config.dm1V2SharpeningEnabled = !config.dm1V2SharpeningEnabled; break;
                 case 8: config.dm1V2SharpeningStrength = m11_graphics_popup_cycle(config.dm1V2SharpeningStrength, delta, 101); break;
@@ -49241,13 +49253,15 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
         } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS &&
                    state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
             static const char* const csbFilters[] = {
-                "SCANLINE", "SCAN %", "PALETTE", "DITHER"
+                "SCANLINE", "SCAN %", "PALETTE", "DITHER", "EPX", "BILINEAR"
             };
             switch (i) {
                 case 0: snprintf(value, sizeof(value), "%s", config.csbV2CrtScanlinesEnabled ? "ON" : "OFF"); break;
                 case 1: snprintf(value, sizeof(value), "%d%%", config.csbV2CrtScanlineStrength); break;
                 case 2: snprintf(value, sizeof(value), "%s", config.csbV2PaletteCorrectionEnabled ? "ON" : "OFF"); break;
-                default: snprintf(value, sizeof(value), "%s", config.csbV2DitherCleanupEnabled ? "ON" : "OFF"); break;
+                case 3: snprintf(value, sizeof(value), "%s", config.csbV2DitherCleanupEnabled ? "ON" : "OFF"); break;
+                case 4: snprintf(value, sizeof(value), "%dX", config.csbV2ScalePercent / 100); break;
+                default: snprintf(value, sizeof(value), "%s", config.csbV2BilinearEnabled ? "ON" : "OFF"); break;
             }
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           M11_GRAPHICS_POPUP_X + 7, y, csbFilters[i], &line);

@@ -22,6 +22,7 @@
 #include "render_sdl_m11.h"
 #include "dm1_v2_startup_title_filter_handoff_pc34.h"
 #include "csb_v2_filter_config_pc34.h"
+#include "csb_v2_texture_upscale_pc34.h"
 #include "m11_qol_runtime.h"
 #include "dm1_v1_minimap_pc34_compat.h"
 #include "dm1_v1_automap_pc34_compat.h"
@@ -464,16 +465,21 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
     }
     if (gameView &&
         gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
+        int epxScale = 2;
+        if (gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+            epxScale = csb_v2_upscale_get_scale();
+            if (csb_v2_upscale_get_bilinear()) {
+                (void)M11_Render_SetScaleFilter(M11_SCALE_FILTER_LINEAR);
+            }
+        }
         (void)M11_GameView_PresentationTarget(gameView->presentationMode,
                                                gameView->presentationWidth,
                                                gameView->presentationHeight,
                                                &targetW,
                                                &targetH);
-        result = M11_Render_PresentEpxIndexedToResolution(presented_frame,
-                                                           M11_FB_WIDTH,
-                                                           M11_FB_HEIGHT,
-                                                           targetW,
-                                                           targetH);
+        result = M11_Render_PresentEpxIndexedToResolutionAtScale(
+            presented_frame, M11_FB_WIDTH, M11_FB_HEIGHT, targetW, targetH,
+            epxScale);
         if (restoreFilter) {
             M11_Render_SetScaleFilter(requestedFilter);
         }

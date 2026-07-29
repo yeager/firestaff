@@ -4,6 +4,14 @@
   live CSB filter chain, and cannot alter DM1's filter fields. The runtime
   popup regression proves all four paths.
 
+- ✅ 2026-07-29 CSB V2.1 live upscale consumption: F10 now exposes CSB's
+  persisted 1x/2x/4x EPX and bilinear settings as real runtime controls.
+  M11 applies zero, one, or two EPX passes to ordinary V2.1 CSB frames before
+  the selected target-resolution presenter; bilinear selects only the
+  enhanced normal-frame sampling route. Original title/Entrance special
+  palettes remain unfiltered and source-owned. The runtime popup regression
+  proves persisted 4x/bilinear values and the live CSB upscale globals.
+
 - ✅ 2026-07-29 CSB V1/V2.x entrance pointer presentation: the real C407
   enter-dungeon box is now exercised through M11's window-to-source mapper
   at 320x200 and 960x600 in V1, V2.0, V2.1 and gated V2.2. The former Enter

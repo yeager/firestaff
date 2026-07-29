@@ -146,6 +146,16 @@ int  M11_Render_PresentEpxIndexedToResolution(const unsigned char* framebuffer,
                                               int logicalHeight,
                                               int targetWidth,
                                               int targetHeight);
+/* Present an indexed frame after zero, one, or two EPX passes.  V2.1 uses
+ * this to make its persisted 1x/2x/4x setting a real render choice while
+ * leaving the source 320x200 framebuffer untouched. */
+int  M11_Render_PresentEpxIndexedToResolutionAtScale(
+    const unsigned char* framebuffer,
+    int logicalWidth,
+    int logicalHeight,
+    int targetWidth,
+    int targetHeight,
+    int epxScale);
 int  M11_Render_PresentIndexedWithSpecialPalette(const unsigned char* framebuffer,
                                                  int logicalWidth,
                                                  int logicalHeight,

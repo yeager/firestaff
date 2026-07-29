@@ -125,6 +125,9 @@ static M11_RenderState g_state = {0};
 static unsigned char *g_epx_present_buffer = NULL;
 static int g_epx_present_w = 0;
 static int g_epx_present_h = 0;
+static unsigned char *g_epx_second_present_buffer = NULL;
+static int g_epx_second_present_w = 0;
+static int g_epx_second_present_h = 0;
 
 static const unsigned char *m11_palette_rgb_for_pixel(unsigned char raw,
                                                        int *out_level)
@@ -163,8 +166,14 @@ static void m11_free_present_buffer(void) {
         free(g_epx_present_buffer);
         g_epx_present_buffer = NULL;
     }
+    if (g_epx_second_present_buffer) {
+        free(g_epx_second_present_buffer);
+        g_epx_second_present_buffer = NULL;
+    }
     g_epx_present_w = 0;
     g_epx_present_h = 0;
+    g_epx_second_present_w = 0;
+    g_epx_second_present_h = 0;
 }
 
 /* Ensure previousFrameBuffer matches the requested size.  On size
@@ -770,7 +779,9 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
     g_state.v2_movement_active = 0;
 }
 
-static int m11_epx_expand_indexed(const unsigned char *src, int w, int h) {
+static int m11_epx_expand_indexed_to(const unsigned char *src, int w, int h,
+                                     unsigned char **buffer_ptr,
+                                     int *buffer_w, int *buffer_h) {
     size_t bytes;
     unsigned char *buffer;
     int x;
@@ -780,14 +791,17 @@ static int m11_epx_expand_indexed(const unsigned char *src, int w, int h) {
         return 0;
     }
     bytes = (size_t)w * 2u * (size_t)h * 2u;
-    if (g_epx_present_w != w * 2 || g_epx_present_h != h * 2) {
-        buffer = (unsigned char*)realloc(g_epx_present_buffer, bytes);
+    if (!buffer_ptr || !buffer_w || !buffer_h) {
+        return 0;
+    }
+    if (*buffer_w != w * 2 || *buffer_h != h * 2) {
+        buffer = (unsigned char*)realloc(*buffer_ptr, bytes);
         if (!buffer) {
             return 0;
         }
-        g_epx_present_buffer = buffer;
-        g_epx_present_w = w * 2;
-        g_epx_present_h = h * 2;
+        *buffer_ptr = buffer;
+        *buffer_w = w * 2;
+        *buffer_h = h * 2;
     }
 
     for (y = 0; y < h; ++y) {
@@ -797,19 +811,24 @@ static int m11_epx_expand_indexed(const unsigned char *src, int w, int h) {
             const unsigned char b = (x + 1 < w) ? src[(size_t)y * (size_t)w + (size_t)(x + 1)] : p;
             const unsigned char c = (x > 0) ? src[(size_t)y * (size_t)w + (size_t)(x - 1)] : p;
             const unsigned char d = (y + 1 < h) ? src[(size_t)(y + 1) * (size_t)w + (size_t)x] : p;
-            const size_t dst = ((size_t)y * 2u * (size_t)g_epx_present_w) + (size_t)x * 2u;
+            const size_t dst = ((size_t)y * 2u * (size_t)*buffer_w) + (size_t)x * 2u;
 
-            if (c == a && c != d && a != b) g_epx_present_buffer[dst] = a;
-            else g_epx_present_buffer[dst] = p;
-            if (a == b && a != c && b != d) g_epx_present_buffer[dst + 1u] = b;
-            else g_epx_present_buffer[dst + 1u] = p;
-            if (d == c && d != b && c != a) g_epx_present_buffer[dst + (size_t)g_epx_present_w] = c;
-            else g_epx_present_buffer[dst + (size_t)g_epx_present_w] = p;
-            if (b == d && b != a && d != c) g_epx_present_buffer[dst + (size_t)g_epx_present_w + 1u] = d;
-            else g_epx_present_buffer[dst + (size_t)g_epx_present_w + 1u] = p;
+            if (c == a && c != d && a != b) (*buffer_ptr)[dst] = a;
+            else (*buffer_ptr)[dst] = p;
+            if (a == b && a != c && b != d) (*buffer_ptr)[dst + 1u] = b;
+            else (*buffer_ptr)[dst + 1u] = p;
+            if (d == c && d != b && c != a) (*buffer_ptr)[dst + (size_t)*buffer_w] = c;
+            else (*buffer_ptr)[dst + (size_t)*buffer_w] = p;
+            if (b == d && b != a && d != c) (*buffer_ptr)[dst + (size_t)*buffer_w + 1u] = d;
+            else (*buffer_ptr)[dst + (size_t)*buffer_w + 1u] = p;
         }
     }
     return 1;
+}
+
+static int m11_epx_expand_indexed(const unsigned char *src, int w, int h) {
+    return m11_epx_expand_indexed_to(src, w, h, &g_epx_present_buffer,
+                                     &g_epx_present_w, &g_epx_present_h);
 }
 
 /* Special TITLE/ENTRANCE palettes are source-owned RGB rows rather than a
@@ -1870,6 +1889,37 @@ int M11_Render_PresentEpxIndexedToResolution(const unsigned char* framebuffer,
                                                  logicalHeight * 2,
                                                  targetWidth,
                                                  targetHeight);
+}
+
+int M11_Render_PresentEpxIndexedToResolutionAtScale(
+    const unsigned char* framebuffer,
+    int logicalWidth,
+    int logicalHeight,
+    int targetWidth,
+    int targetHeight,
+    int epxScale) {
+    if (epxScale == 1) {
+        return M11_Render_PresentIndexedToResolution(framebuffer, logicalWidth,
+                                                      logicalHeight, targetWidth,
+                                                      targetHeight);
+    }
+    if (epxScale == 2) {
+        return M11_Render_PresentEpxIndexedToResolution(framebuffer, logicalWidth,
+                                                         logicalHeight, targetWidth,
+                                                         targetHeight);
+    }
+    if (epxScale != 4 ||
+        !m11_epx_expand_indexed(framebuffer, logicalWidth, logicalHeight) ||
+        !m11_epx_expand_indexed_to(g_epx_present_buffer, logicalWidth * 2,
+                                   logicalHeight * 2, &g_epx_second_present_buffer,
+                                   &g_epx_second_present_w,
+                                   &g_epx_second_present_h)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    return M11_Render_PresentIndexedToResolution(g_epx_second_present_buffer,
+                                                  logicalWidth * 4,
+                                                  logicalHeight * 4,
+                                                  targetWidth, targetHeight);
 }
 
 

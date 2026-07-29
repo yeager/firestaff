@@ -4,6 +4,7 @@
 #include "csb_v22_finished_art_material_gate_pc34.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v2_filter_config_pc34.h"
+#include "csb_v2_texture_upscale_pc34.h"
 #include "fs_portable_compat.h"
 
 #include <assert.h>
@@ -360,6 +361,8 @@ int main(void) {
     config.csbV2CrtScanlineStrength = 35;
     config.csbV2PaletteCorrectionEnabled = 0;
     config.csbV2DitherCleanupEnabled = 0;
+    config.csbV2ScalePercent = 200;
+    config.csbV2BilinearEnabled = 0;
     assert(M12_Config_Save(&config) == 1);
     state.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
     state.presentationMode = M12_PRESENTATION_V21_UPSCALED;
@@ -394,6 +397,23 @@ int main(void) {
     assert(M12_Config_Load(&config, NULL) == 1);
     assert(config.csbV2DitherCleanupEnabled == 1);
     assert(csb_v2_filter_config_get()->ditherCleanupEnabled == 1);
+    /* The remaining CSB-only rows are real V2.1 presentation controls.
+     * They must update the independent CSB EPX runtime, not merely persist
+     * decoration in M12's config. */
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.csbV2ScalePercent == 400);
+    assert(csb_v2_upscale_get_scale() == 4);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.csbV2BilinearEnabled == 1);
+    assert(csb_v2_upscale_get_bilinear() == 1);
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupActive == 0);

@@ -146,6 +146,18 @@ an integration build pass.
   nine synthetic rectangles are a completed F0128 render. Remaining: bind
   every other material family to its corresponding original F0128 command.
 
+- **CSB-V21-LIVE-UPSCALE-CONSUMPTION:** Closed 2026-07-29. The F10 CSB
+  filter page now exposes the actual CSB V2.1 EPX scale (1x/2x/4x) and
+  bilinear setting alongside the CSB filter chain. M11 consumes the
+  scale in its live V2.1 normal-frame presenter: 1x preserves the original
+  indexed surface, 2x runs one edge-preserving EPX pass, and 4x runs two
+  EPX passes before the selected target-resolution presentation. Bilinear
+  applies only to this enhanced normal-frame route. C001-C005 startup pages
+  continue to use their original source-owned special palettes unchanged.
+  The runtime popup regression proves persistence plus live CSB upscale
+  globals for 4x/bilinear; renderer scale routing is bounded to valid
+  1/2/4 factors.
+
 - **CSB-PC34-IMG2-DECODE-ORDER:** Closed 2026-07-29. The native PC3.4
   C001-C005 records now attempt the documented byte-stride IMG2 decoder
   before the legacy planar fallback. The former order could accept the same
