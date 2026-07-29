@@ -119,6 +119,24 @@ decode warning; the studio does not invent replacement pixels for them.
 The status line reports imported asset count, warning count, and byte size. The
 **Warnings** button shows file-level and per-record warnings.
 
+### Headless Original-Record Export
+
+The same source inspection path is available without starting Tk. This is
+useful for reviewing a local CSB PC3.4 `GRAPHICS.DAT` on a build machine:
+
+```sh
+python3 scripts/firestaff_artpack_studio.py \
+  --import-game-data "$HOME/.firestaff/data/csb/GRAPHICS.DAT" \
+  --export-original-previews /tmp/csb-original-previews
+```
+
+This writes every successfully decoded original record as a PNG and records
+the source SHA-256, record offsets, dimensions, byte counts and decode
+warnings in `original_graphics_preview_manifest.json`. It deliberately does
+not write an `.fsart` or assign V2.2 material IDs: an operator must review and
+map source records to the CSB 29-slot runtime contract before a pack can pass
+the finished-art gate.
+
 ## AI Generation Hook
 
 The studio does not hard-code a specific cloud AI API. Instead it runs an

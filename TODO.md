@@ -15,6 +15,15 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-ARTPACK-STUDIO-HEADLESS-SOURCE-EXPORT:** Closed 2026-07-29.
+  Artpack Studio can now inspect a local original graphics file without Tk and
+  export only successfully decoded records as PNG previews plus a
+  SHA-256/offset/dimension provenance manifest. The local PC3.4 CSB
+  `GRAPHICS.DAT` export decoded 687 of 749 records; the remaining 62 are
+  retained as explicit metadata/decode warnings. The command never produces
+  an `.fsart` or guesses a V2.2 material slot, so the 29-route reviewed-art
+  gate remains authoritative.
+
 - **CSB-DSA-INDIRECT-TRANSACTIONAL-DISPATCH:** Closed 2026-07-29.
   Authenticated CSBWin `STKOP_I_Indirect` now unpacks its source parameter
   payload and dispatches `I_MONSTER!`, `I_CHAR!`, `I_COPY`, `I_CELL!`,

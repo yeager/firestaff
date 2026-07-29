@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 CSB Artpack Studio headless original-record export:
+  `--import-game-data ... --export-original-previews ...` now writes only
+  successfully decoded original records plus a SHA-256/offset/dimensions
+  provenance manifest, without inventing V2.2 mappings or emitting an
+  `.fsart`. The installed PC3.4 CSB `GRAPHICS.DAT` produced 687 PNG previews
+  from 749 records and left 62 explicit decode warnings. The Studio self-test
+  covers a big-endian CSB IMG2 fixture and preview export.
+
 - ✅ 2026-07-29 CSB V1/V2 presentation-mode real-data executable capture:
   ran the current native `firestaff` binary against the local hash-verified
   PC3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` pair at 960x600 in V1, V2.0, V2.1 and

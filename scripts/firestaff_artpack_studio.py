@@ -1061,6 +1061,93 @@ def import_game_data_file(path: Path) -> GameDataImportResult:
     return GameDataImportResult(path, detected_game, detected_variant, sha, len(data), assets, warnings)
 
 
+def decode_game_data_asset(asset: GameDataAsset) -> Image.Image | None:
+    """Decode one source record for inspection or source-preview export.
+
+    This deliberately preserves the record's native dimensions and palette.
+    It is not an art generator and it never assigns a V2.2 material slot:
+    those mappings require an explicit, reviewed source mapping.
+    """
+    if asset.source_kind.startswith("GRAPHICS.DAT"):
+        data = asset.path.read_bytes()
+        record = data[asset.offset : asset.offset + asset.compressed_bytes]
+        try:
+            if asset.source_game == "csb":
+                if asset.index == 1:
+                    return csb_img2_to_image(
+                        record, asset.width, asset.height,
+                        CSB_TITLE_CHAOS_PREVIEW_PALETTE,
+                    )
+                if 2 <= asset.index <= 5:
+                    return csb_img2_to_image(
+                        record, asset.width, asset.height,
+                        CSB_ENTRANCE_PREVIEW_PALETTE,
+                    )
+                return csb_img2_to_image(record, asset.width, asset.height)
+            return expand_img3_to_image(record, asset.width, asset.height)
+        except Exception:
+            return None
+    if asset.source_kind == "DM2-GDAT":
+        data = asset.path.read_bytes()
+        record = data[asset.offset : asset.offset + asset.compressed_bytes]
+        try:
+            image, _kind = dm2_decode_gdat_image(record)
+            return image
+        except Exception:
+            return None
+    if asset.source_kind == "image":
+        return ensure_rgba(Image.open(asset.path))
+    return None
+
+
+def export_original_previews(result: GameDataImportResult, output_dir: Path) -> Path:
+    """Export decodable original records plus provenance metadata.
+
+    The output is intentionally *not* an .fsart. It lets an operator review
+    actual decoded records before manually binding them to a V2.2 slot.
+    """
+    output_dir = output_dir.expanduser().resolve()
+    output_dir.mkdir(parents=True, exist_ok=True)
+    records: list[dict[str, Any]] = []
+    exported = 0
+    for asset in result.assets:
+        decoded = decode_game_data_asset(asset)
+        item: dict[str, Any] = {
+            "id": asset.asset_id,
+            "index": asset.index,
+            "categoryHint": asset.category,
+            "width": asset.width,
+            "height": asset.height,
+            "offset": asset.offset,
+            "compressedBytes": asset.compressed_bytes,
+            "decompressedBytes": asset.decompressed_bytes,
+            "warning": asset.warning,
+        }
+        if decoded is not None:
+            filename = f"{asset.index:04d}_{safe_asset_filename(asset.asset_id)}"
+            decoded.save(output_dir / filename)
+            item["previewFile"] = filename
+            exported += 1
+        else:
+            item["previewFile"] = None
+        records.append(item)
+    metadata = {
+        "format": "firestaff-original-graphics-preview-v1",
+        "sourcePath": str(result.path),
+        "sourceSha256": result.file_sha256,
+        "detectedGame": result.detected_game,
+        "detectedVariant": result.detected_variant,
+        "sourceBytes": result.file_size,
+        "warnings": result.warnings,
+        "decodedPreviewCount": exported,
+        "records": records,
+        "mappingNotice": "Previews are original source records only; no V2.2 slot mapping is implied.",
+    }
+    metadata_path = output_dir / "original_graphics_preview_manifest.json"
+    metadata_path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
+    return metadata_path
+
+
 def scan_reference_assets(game: str, root: Path) -> list[ReferenceAsset]:
     root = root.expanduser()
     if not root.exists():
@@ -1884,36 +1971,7 @@ class ArtpackStudio(tk.Tk):
         messagebox.showwarning("Game data warnings", "\n".join(lines[:80]), parent=self)
 
     def decode_game_data_asset(self, asset: GameDataAsset) -> Image.Image | None:
-        if asset.source_kind.startswith("GRAPHICS.DAT"):
-            data = asset.path.read_bytes()
-            record = data[asset.offset : asset.offset + asset.compressed_bytes]
-            try:
-                if asset.source_game == "csb":
-                    if asset.index == 1:
-                        return csb_img2_to_image(
-                            record, asset.width, asset.height,
-                            CSB_TITLE_CHAOS_PREVIEW_PALETTE,
-                        )
-                    if 2 <= asset.index <= 5:
-                        return csb_img2_to_image(
-                            record, asset.width, asset.height,
-                            CSB_ENTRANCE_PREVIEW_PALETTE,
-                        )
-                    return csb_img2_to_image(record, asset.width, asset.height)
-                return expand_img3_to_image(record, asset.width, asset.height)
-            except Exception:
-                return None
-        if asset.source_kind == "DM2-GDAT":
-            data = asset.path.read_bytes()
-            record = data[asset.offset : asset.offset + asset.compressed_bytes]
-            try:
-                image, _kind = dm2_decode_gdat_image(record)
-                return image
-            except Exception:
-                return None
-        if asset.source_kind == "image":
-            return ensure_rgba(Image.open(asset.path))
-        return None
+        return decode_game_data_asset(asset)
 
     def metadata_image(self, asset: GameDataAsset) -> Image.Image:
         img = Image.new("RGBA", (max(320, asset.width or 320), max(160, asset.height or 160)), "#202020")
@@ -2209,6 +2267,29 @@ def self_test() -> int:
         csb_raw = b"\x00\x02\x00\x02\x03\x04\x05\x06"
         assert csb_img2_indices(csb_raw, 2, 2) == b"\x03\x04\x05\x06"
         assert csb_img2_to_image(csb_raw, 2, 2).size == (2, 2)
+        csb_graphics = Path(td) / "CSB_GRAPHICS.DAT"
+        csb_graphics.write_bytes(
+            b"\x80\x01"  # PC3.4 big-endian 0x8001 signature
+            b"\x00\x01"  # one entry
+            b"\x00\x08"  # compressed bytes
+            b"\x00\x08"  # decompressed bytes
+            b"\x00\x02\x00\x02"  # width/height table
+            + csb_raw
+        )
+        csb_assets, csb_warnings = parse_graphics_dat_assets(
+            csb_graphics, csb_graphics.read_bytes(), "csb"
+        )
+        assert len(csb_assets) == 1
+        assert csb_warnings == ["big-endian GRAPHICS.DAT header detected"]
+        csb_result = GameDataImportResult(
+            csb_graphics, "csb", "csb-pc34-self-test",
+            hashlib.sha256(csb_graphics.read_bytes()).hexdigest(),
+            csb_graphics.stat().st_size, csb_assets, csb_warnings,
+        )
+        preview_manifest = export_original_previews(csb_result, Path(td) / "csb-previews")
+        preview_data = json.loads(preview_manifest.read_text(encoding="utf-8"))
+        assert preview_data["decodedPreviewCount"] == 1
+        assert (preview_manifest.parent / preview_data["records"][0]["previewFile"]).is_file()
     print("firestaff_artpack_studio self-test: PASS")
     return 0
 
@@ -2283,6 +2364,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     ap.add_argument("--screenshot", type=Path, help="Render a static UI screenshot preview and exit")
     ap.add_argument("--build-runtime-cache", action="store_true",
                     help="Build v22_inplace_cache.bin for --game/--pack-dir and exit")
+    ap.add_argument("--import-game-data", type=Path,
+                    help="Inspect a local original graphics file without opening the GUI")
+    ap.add_argument("--export-original-previews", type=Path,
+                    help="Export decoded original records and provenance metadata; requires --import-game-data")
     ap.add_argument("--smoke-ui", action="store_true", help="Create and validate the GUI widget tree, then exit")
     return ap.parse_args(argv)
 
@@ -2294,6 +2379,21 @@ def main(argv: list[str]) -> int:
     if args.screenshot:
         out = render_demo_screenshot(args.screenshot, args.game)
         print(out)
+        return 0
+    if args.export_original_previews and not args.import_game_data:
+        raise SystemExit("--export-original-previews requires --import-game-data")
+    if args.import_game_data:
+        result = import_game_data_file(args.import_game_data)
+        if args.export_original_previews:
+            print(export_original_previews(result, args.export_original_previews))
+        else:
+            print(json.dumps({
+                "source": str(result.path),
+                "game": result.detected_game,
+                "variant": result.detected_variant,
+                "assets": len(result.assets),
+                "warnings": result.warnings,
+            }, indent=2))
         return 0
     if args.build_runtime_cache:
         pack = Artpack(args.game, args.pack_dir or default_modern_dir(args.game))
