@@ -2028,6 +2028,22 @@ static int m12_canonicalize_data_directory(const char* input,
            FSP_DirExists(out);
 }
 
+/* A folder choice is valid independently of whether the first scan finds a
+ * recognised game file. Keep that physical path visible and persistent when
+ * the scanner returns an otherwise empty status record. */
+static void m12_preserve_selected_data_directory(M12_StartupMenuState* state,
+                                                 const char* selectedDataDir) {
+    const char* scannedDataDir;
+    if (!state || !selectedDataDir || selectedDataDir[0] == '\0') {
+        return;
+    }
+    scannedDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    if (m12_data_directory_dialog_token_is_placeholder(scannedDataDir)) {
+        snprintf(state->assetStatus.dataDir, sizeof(state->assetStatus.dataDir),
+                 "%s", selectedDataDir);
+    }
+}
+
 static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
                                          const char* dataDir) {
     M12_DataDirScanJob* job;
@@ -2145,6 +2161,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                  line3);
         return 0;
     }
+    m12_preserve_selected_data_directory(state, canonicalDataDir);
     m12_apply_completed_asset_scan(state);
     m12_show_data_dir_result_popup(state, 1);
     return 1;
@@ -11356,8 +11373,9 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         state->dataDirScanCancelled =
             job->result ? 0 : state->dataDirScanProgress.cancelled;
         state->dataDirScanJob = NULL;
-        if (job->result && !state->dataDirScanCancelled) {
+        if (!state->dataDirScanCancelled) {
             state->assetStatus = job->assetStatus;
+            m12_preserve_selected_data_directory(state, job->dataDir);
             m12_apply_completed_asset_scan(state);
             m12_show_data_dir_result_popup(state, 1);
         } else {

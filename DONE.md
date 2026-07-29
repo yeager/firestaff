@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 Start-menu game-data folder selection: a selected physical
+  folder now remains the active and persisted data root even when its first
+  scan finds no verified game files. This prevents the launcher from falling
+  back to the `.` display token after a valid folder selection. Verification:
+  `m12_data_dir_cancel` and `menu_hit_launch_direct_click_m12` pass.
+
 - ✅ 2026-07-30 CSB title/Entrance visual contract: added a real-PC3.4,
   skip-safe CTest which runs the full source startup cadence and validates the
   visible palette/raster signatures for PRESENTS, FTL, CHAOS STRIKES BACK and
