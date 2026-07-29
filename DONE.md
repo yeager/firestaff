@@ -1,3 +1,8 @@
+- ✅ 2026-07-29 DM2 audit sweep: reclassified ~190 MISSING symbols. emu.cpp (39),
+  types.cpp/xtypes.cpp (21), fileio.cpp (27), xxx.cpp (34), dm2debug.cpp (13),
+  startend.cpp platform init (12) marked NOT_APPLICABLE_ARCH. Record pool
+  functions (9), timer queue (6), DM2_RAND, DM2_ROTATE_5x5_POS,
+  DM2_READ_DUNGEON_STRUCTURE marked IMPLEMENTED_NARROW. MISSING: 703 -> 511.
 - ✅ 2026-07-29 DM2 actuator itemspec mappers: DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR
   maps 9-bit itemspec to DB index via quadrant dispatch,
   DM2_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR maps to type-local offset,
