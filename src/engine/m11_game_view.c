@@ -2081,7 +2081,6 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
         free(candidate_page);
         return 0;
     }
-    memcpy(framebuffer, candidate_page, framebuffer_bytes);
     /* The CSB boot renderer is separate from the shared DM1 viewport
      * renderer, so it still publishes the V2.2 material selection here.
      * Do not, however, paint the old 3x3 rectangular cache over the F0128
@@ -2109,6 +2108,11 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     } else {
         state->csbState.runtime_v22_cells_painted = 0;
     }
+    /* Commit after the optional V2.2 F0128 command replacements.  The page
+     * stays transactional: an absent artpack or an unsupported command keeps
+     * the verified source frame, while admitted modern pixels reach the host
+     * only as part of the same completed frame. */
+    memcpy(framebuffer, candidate_page, framebuffer_bytes);
     free(candidate_page);
     state->csbState.runtime_viewport_source_session_ready = 1;
     state->csbState.runtime_viewport_source_session_generation =

@@ -106,8 +106,9 @@ an integration build pass.
   alpha preservation only, not live visual correctness. 2026-07-29: the admitted D1/D2 door routes now
   consume the source-owned F0128 command stream in the live V2.2 compositor:
   each original door command is drawn first, then only the matching complete
-  pack surface may replace its exact clip before later F0115 overlays. D3 and
-  every non-door route remain source V1 until they have equivalent receipts.
+  pack surface may replace its exact clip before later F0115 overlays. D3 is
+  included through its native F0791 receipt; every non-door route remains
+  source V1 until it has an equivalent receipt.
 
 - **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Open 2026-07-29. The live F0128
   renderer owns V2.2 material selection and retains the authenticated original
