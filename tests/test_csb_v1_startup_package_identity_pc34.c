@@ -134,8 +134,8 @@ static void test_title_capture_uses_source_owned_chaos_step(void)
     snapshot.entrance_active = 1;
     snapshot.entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
     snapshot.title_active = 1;
-    snapshot.title_frame = 77;
-    snapshot.title_source_step = 19;
+    snapshot.title_frame = 79;
+    snapshot.title_source_step = 21;
     CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
               &snapshot, &view) && view.title_chaos_visible &&
           view.title_chaos_hold_visible && !view.title_chaos_zoom_visible &&

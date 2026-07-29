@@ -1021,14 +1021,15 @@ static void csb_v1_startup_set_title_rect_pc34(
         /* ReDMCSB PC TITLE.C F0437 lines 340-360 creates shrinked
          * bitmaps from the full 320x80 title source, and lines 385-387
          * blit those bitmaps centered on the screen.  Do not crop the
-         * source: the animation grows the full CHAOS image from 48x12 to
+         * source: the animation grows the full CHAOS image from 16x4 to
          * 320x80. */
-        /* TITLE.C's first PC-visible reverse-zoom bitmap is 48x12, not
-         * the intermediate 16x4 working bitmap.  Steps 19..21 already
-         * own the full C425 raster; step 21 then remains visible for the
-         * source Delay(20) hold. */
-        zoom_index = plan->title_source_step < 19
-            ? 19 - plan->title_source_step
+        /* The source starts its visible reverse zoom at C425 step 2 with
+         * the 16x4 working bitmap.  The twentieth step is the full 320x80
+         * raster; only that final step feeds TITLE.C's later Delay(20).
+         * Keeping steps 19 and 20 as full size skips two source frames and
+         * visibly breaks the PC title cadence. */
+        zoom_index = plan->title_source_step < 21
+            ? 21 - plan->title_source_step
             : 0;
         zoom_w = 320 - 16 * zoom_index;
         zoom_h = 80 - 4 * zoom_index;

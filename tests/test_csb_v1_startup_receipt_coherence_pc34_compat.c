@@ -57,9 +57,9 @@ int main(void)
               &facts, &receipt) &&
               receipt.render_plan.title_stage ==
                   CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-              receipt.render_plan.title_dest_w == 48 &&
-              receipt.render_plan.title_dest_h == 12,
-          "CHAOS begins with ReDMCSB's 48x12 first reverse-zoom bitmap");
+              receipt.render_plan.title_dest_w == 16 &&
+              receipt.render_plan.title_dest_h == 4,
+          "CHAOS begins with ReDMCSB's 16x4 first reverse-zoom bitmap");
 
     make_entrance_facts(&facts);
     facts.title_active = 1;
@@ -94,7 +94,7 @@ int main(void)
               receipt.render_plan.title_dest_h == 80,
           "CHAOS ends on ReDMCSB's full 320x80 bitmap");
 
-    --facts.title_frame;
+    ++facts.title_frame;
     facts.title_source_step =
         (int)csb_v1_startup_title_source_step_for_frame_pc34(
             facts.title_frame);

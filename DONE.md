@@ -42859,3 +42859,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   visible reverse-zoom frame is 48x12 and the final full 320x80 C425 raster
   remains present through the source `Delay(20)` hold. Verified by
   `csb_v1_startup_receipt_coherence_pc34_compat`.
+- ✅ 2026-07-29 CSB PC3.4 CHAOS title cadence: restored the real C001 zoom
+  geometry after an erroneous 48x12 shortcut skipped the first two frames.
+  TITLE.C now starts at 16x4 for source step 2, reaches full 320x80 only at
+  step 21, and begins the 20-VBlank hold there. The packaged runtime capture,
+  host route, full title/HUD/Entrance handoff and local PC3.4 real-asset
+  launch probe all pass.
