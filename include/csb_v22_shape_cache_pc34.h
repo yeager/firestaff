@@ -22,9 +22,10 @@
 extern "C" {
 #endif
 
-/* Cell rectangle on the CSB 3x3 viewport (1920x1080 presentation
- * canvas). x/y is top-left, w/h is size. D0 is closest (bottom of
- * screen), D2 is farthest (top of screen). L=-1, C=0, R=+1. */
+/* Cell rectangle on the original PC34 320x200 viewport. x/y is top-left,
+ * w/h is size. D0 is closest (bottom of screen), D2 is farthest (top of
+ * screen). L=-1, C=0, R=+1. Presentation scaling happens after this source
+ * composition; V2.2 must not introduce a second 1920x1080 geometry. */
 typedef struct {
     int x, y, w, h;
 } CSB_V22_CellRect;

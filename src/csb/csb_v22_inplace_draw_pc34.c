@@ -304,27 +304,6 @@ const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,
 
 /* ── In-place bitmap blit ──────────────────────────────────────── */
 
-/* CSB 3x3 cell rect coordinates (depth x lateral). Must match
- * csb_v22_kCellRects in csb_v22_shape_cache_pc34.c (exposed as
- * CSB_V22_CellRect in csb_v22_shape_cache_pc34.h). */
-static const CSB_V22_CellRect kV22CellRects[3][3] = {
-    /* depth 0 = D1 (closest) */ {
-        {  8, 103, 69, 30 },
-        { 78, 103, 61, 30 },
-        {139, 103, 69, 30 }
-    },
-    /* depth 1 = D2 (middle) */ {
-        {  8,  72, 69, 30 },
-        { 78,  72, 61, 30 },
-        {139,  72, 69, 30 }
-    },
-    /* depth 2 = D3 (back) */ {
-        {  8,  41, 69, 30 },
-        { 78,  41, 61, 30 },
-        {139,  41, 69, 30 }
-    }
-};
-
 /* Clamp helper */
 static int clampi(int v, int lo, int hi) {
     if (v < lo) return lo;
@@ -388,7 +367,8 @@ int csb_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH) {
             const uint32_t* rgba =
                 csb_v22_inplace_get_cell_bitmap(depth, lateral, &w, &h);
             if (!rgba || w <= 0 || h <= 0) continue;
-            const CSB_V22_CellRect* rect = &kV22CellRects[depth][lateral + 1];
+            const CSB_V22_CellRect* rect =
+                &csb_v22_kCellRects[depth][lateral + 1];
             /* Clamp cell rect to framebuffer bounds */
             int dx = clampi(rect->x, 0, fbW);
             int dy = clampi(rect->y, 0, fbH);

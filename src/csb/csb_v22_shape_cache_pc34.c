@@ -15,26 +15,24 @@ static CSB_V22_ShapeRuntimeResult g_csb_cache[3][3];
 static int g_csb_cache_raw[3][3];
 static int g_csb_cache_populated = 0;
 
-/* 9-cell rect table (D0..D2 x L/C/R). At 1920x1080, each cell is
- * roughly 640x360 with the 4:3 dungeon viewport centered. These
- * are placeholder rectangles (for first cut) — they will be refined
- * to match CSBWin/Viewport.cpp:7290 exact coords once V1 draw
- * integration is in place. */
+/* ReDMCSB PC34 viewport cells (D1..D3 x L/C/R) in the 320x200 source
+ * framebuffer.  The in-place renderer and swap consumer must share these
+ * coordinates; output resolution scaling is M11's later responsibility. */
 const CSB_V22_CellRect csb_v22_kCellRects[3][3] = {
-    /* depth 0 = D0 (closest) */ {
-        { 320, 720, 640, 360 },
-        { 960, 720, 640, 360 },
-        {1600, 720, 640, 360 }
+    /* depth 0 = D1 (closest) */ {
+        {  8, 103, 69, 30 },
+        { 78, 103, 61, 30 },
+        {139, 103, 69, 30 }
     },
-    /* depth 1 = D1 (middle) */ {
-        { 320, 360, 640, 360 },
-        { 960, 360, 640, 360 },
-        {1600, 360, 640, 360 }
+    /* depth 1 = D2 (middle) */ {
+        {  8,  72, 69, 30 },
+        { 78,  72, 61, 30 },
+        {139,  72, 69, 30 }
     },
-    /* depth 2 = D2 (farthest) */ {
-        { 320,   0, 640, 360 },
-        { 960,   0, 640, 360 },
-        {1600,   0, 640, 360 }
+    /* depth 2 = D3 (back) */ {
+        {  8,  41, 69, 30 },
+        { 78,  41, 61, 30 },
+        {139,  41, 69, 30 }
     }
 };
 

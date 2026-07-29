@@ -1059,7 +1059,7 @@ that its exact runtime path is not already source-locked and tested.
     regression covers both direct and `I_THROW` parameter-stack order, and
     the complete CSB CTest lane passes; remaining DSA families stay open under
     this item.
-    2026-07-29: direct `CAST` and `FILTEREDCAST` now preserve CSBWin
+   2026-07-29: direct `CAST` and `FILTEREDCAST` now preserve CSBWin
     Magic.cpp's exact signed 14-word `SPELL_PARAMETERS` payload and defer it
     until the complete authenticated action succeeds. They require a real
     runtime spell owner and reject incomplete payloads rather than reading an

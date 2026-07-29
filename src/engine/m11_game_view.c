@@ -227,6 +227,8 @@ static int m11_csb_original_save_runtime_receipt_current(
 #include "dm1_v2_settings_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v2_settings_pc34.h"
+#include "csb_v22_inplace_draw_pc34.h"
+#include "csb_v22_shape_cache_pc34.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
 #include "theron_v2_presentation_mode_pc34.h"
@@ -6031,6 +6033,17 @@ static int m11_csb_apply_boot_runtime_receipt(
     (void)m11_csb_startup_apply_host_receipt(
         state,
         &receipt->receipts.launch_host_receipt);
+    if (state->presentationMode == M12_PRESENTATION_V22_MODERN &&
+        !csb_v22_inplace_draw_init()) {
+        /* The CSB-specific finished-pack gate admitted the manifest, but the
+         * selected cache still has to be readable by the live CSB renderer.
+         * Fall back to V2.1 rather than using DM1's V2.2 cache. */
+        csb_v2_runtime_cleanup();
+        csb_v2_presentation_mode_set(CSB_V2_PM_V21_UPSCALED);
+        csb_v2_runtime_init(2);
+        csb_v2_runtime_bind_to_v1(&receipt->profile->runtime);
+        state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
+    }
     return 1;
 }
 
@@ -13984,6 +13997,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         state->theronAssets = theronAssets;
     }
     m11_v22_inplace_draw_shutdown();
+    csb_v22_inplace_draw_shutdown();
     if (state->csbStartupRuntimeAssetSession) {
         csb_v1_boot_startup_runtime_asset_session_release_pc34(
             (CSB_V1_StartupRuntimeAssetSession_PC34 *)
@@ -43935,7 +43949,14 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 raw_squares[d][s] = cells[d][s].square;
             }
         }
-        m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);
+        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+            state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+            csb_v22_shape_cache_update((int)state->world.party.direction,
+                                       raw_squares);
+        } else {
+            m11_v22_shape_cache_update((int)state->world.party.direction,
+                                       raw_squares);
+        }
     }
     visibility = m11_dm1_lane_visibility(cells);
     maxVisibleForward = visibility.max_visible_forward;
@@ -44302,9 +44323,15 @@ skip_debug_legacy_texture_tiling:
         /* V2.2 replaces source pixels only with a verified in-place pack.
          * A missing cache is a no-draw condition; boot has already resolved
          * incomplete/placeholder packs to V2.1. */
-        (void)m11_v22_inplace_render_pass(framebuffer,
-                                           framebufferWidth,
-                                           framebufferHeight);
+        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+            (void)csb_v22_inplace_render_pass(framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight);
+        } else {
+            (void)m11_v22_inplace_render_pass(framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight);
+        }
     }
 
     m11_apply_viewport_turn_pan(framebuffer, framebufferWidth, framebufferHeight,

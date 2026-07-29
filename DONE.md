@@ -42191,6 +42191,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   both. `ctest -L csb` passes 96/96.
 # CSB V2.2 viewport material consumption (2026-07-29)
 
+- ✅ 2026-07-29 CSB V2.2 M11 renderer ownership: the live CSB path now
+  initializes and consumes `csb_v22_inplace_draw`, updates the CSB 3x3 shape
+  cache from its own sampled cells, and paints through the CSB route gate.
+  M11 no longer invokes the DM1 V2.2 cache for a CSB session. The previously
+  stale shared 1920x1080 placeholder rectangles were replaced by the active
+  PC34 source-frame coordinates, so the cache and both CSB V2.2 consumers
+  agree before final presentation scaling. Cache-open failure resolves to
+  V2.1 rather than drawing foreign art. V2.2 gate, in-place, swap and
+  real-data Entrance probes pass, as does a live PC3.4 V2.2 boot to map 0.
+
 - ✅ 2026-07-29 CSBWin DSA direct `CAST` / `FILTEREDCAST` transaction:
   authenticated DSA execution now admits both source opcodes only as
   runtime-owned operations, keeps Magic.cpp's exact signed 14-word
