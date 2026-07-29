@@ -863,7 +863,7 @@ DM2_GET_NEXT_RECORD_LINK	SKULLWIN	SKULLWIN/c_record.cpp	54	src/dm2/dm2_v1_dungeo
 DM2_APPEND_RECORD_TO	SKULLWIN	SKULLWIN/c_record.cpp	60	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader implements the bounded source mutation for APPEND_RECORD_TO: reject end/null append inputs, reset appended GenericRecord::w0 to OBJECT_END_MARKER, append through a parent link or existing tile chain, and insert into an empty byte-square tile with ground-stack shift plus column-index bump.
 DM2_CUT_RECORD_FROM	SKULLWIN	SKULLWIN/c_record.cpp	121	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_cut_record_from	VERIFIED_SOURCE_MAPPING	DM2 v1 loader implements the bounded source mutation for CUT_RECORD_FROM: reject end/null cut inputs, mask direction bits with 0x3fff for record address and comparisons, unlink from parent-owned chains or tile chains, replace first tile roots with their next link, compact single-root tile ground-stack entries, decrement later column offsets, and reset the cut GenericRecord::w0 to OBJECT_END_MARKER.
 DM2_GET_DISTINCTIVE_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	175		IMPLEMENTED_NARROW
-DM2_QUERY_CLS2_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	203		MISSING
+DM2_QUERY_CLS2_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	203		IMPLEMENTED_NARROW
 DM2_SET_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	284		MISSING
 DM2_QUERY_GDAT_DBSPEC_WORD_VALUE	SKULLWIN	SKULLWIN/c_record.cpp	352		MISSING
 DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	367		IMPLEMENTED_NARROW

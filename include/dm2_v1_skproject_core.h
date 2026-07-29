@@ -9652,6 +9652,29 @@ int dm2_v1_skproject_get_distinctive_itemtype(
     uint16_t *out_type,
     DM2_V1_SkprojectDistinctiveItemtypeReceipt *out_receipt);
 
+/* SKULLWIN/c_record.cpp:203 DM2_QUERY_CLS2_FROM_RECORD — extract record class-2
+   from the record data bytes.  The cls2 meaning varies by record type:
+   type 4: byte at offset 4; types 5/6/10/15: word[1] & 0x7f;
+   type 7: always 0; type 8: (word[1]*2) >> 9; type 9: composite from word[2];
+   type 14: chain-follow through word[1].
+   Types 2 (text) and 3 (actuator) need sub-functions; this implementation
+   blocks on those (returns 0xff). */
+typedef struct {
+    int valid;
+    uint16_t record_word;
+    uint8_t cls2;
+    uint8_t record_type;
+    int blocked_end_marker;
+    int blocked_type_2_text;
+    int blocked_type_3_actuator;
+} DM2_V1_SkprojectQueryCls2Receipt;
+
+int dm2_v1_skproject_query_cls2_from_record(
+    uint16_t record_word,
+    const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t *out_cls2,
+    DM2_V1_SkprojectQueryCls2Receipt *out_receipt);
+
 /* SKULLWIN/c_record.cpp:367 DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR — maps an
    actuator itemspec (9-bit value) to its DB (record pool) index.
    Returns the DB index (4-10 range) or 0xffff for out-of-range specs. */

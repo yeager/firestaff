@@ -1,3 +1,7 @@
+- ✅ 2026-07-29 DM2 CLS2 record classifier: DM2_QUERY_CLS2_FROM_RECORD extracts
+  class-2 from record data via type-specific bit extraction (13 of 15 types
+  handled; types 2/3 blocked on sub-functions). Pool-based with type-14
+  chain-follow. Tests added. MISSING: 510. Source: skproject c_record.cpp:203-282.
 - ✅ 2026-07-29 DM2 audit sweep: reclassified ~190 MISSING symbols. emu.cpp (39),
   types.cpp/xtypes.cpp (21), fileio.cpp (27), xxx.cpp (34), dm2debug.cpp (13),
   startend.cpp platform init (12) marked NOT_APPLICABLE_ARCH. Record pool

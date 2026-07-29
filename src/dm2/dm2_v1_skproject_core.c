@@ -24794,6 +24794,124 @@ int32_t dm2_v1_skproject_dtor_memory_allocation_classify(
 }
 
 /* -----------------------------------------------------------------------
+ * SKULLWIN/c_record.cpp:203 DM2_QUERY_CLS2_FROM_RECORD
+ *
+ * Extracts the class-2 value from a record's data bytes.  The extraction
+ * method depends on the record type (bits 10-13 of the record word):
+ *   type 0,1,11,12,13: 0xff (no cls2)
+ *   type 2 (text):  blocked (needs DM2_QUERY_CLS2_OF_TEXT_RECORD)
+ *   type 3 (actuator): blocked (needs DM2_GET_WALL_DECORATION_OF_ACTUATOR)
+ *   type 4: byte at offset 4
+ *   type 5,6,10,15: word[1] & 0x7f
+ *   type 7: always 0
+ *   type 8: (word[1] * 2) >> 9
+ *   type 9: composite of word[2] bit fields
+ *   type 14: chain-follow through word[1] (loops back)
+ * ----------------------------------------------------------------------- */
+int dm2_v1_skproject_query_cls2_from_record(
+    uint16_t record_word,
+    const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t *out_cls2,
+    DM2_V1_SkprojectQueryCls2Receipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->record_word = record_word;
+
+    uint16_t rw = record_word;
+
+    for (int safety = 0; safety < 64; safety++) {
+        if (rw == 0xffff) {
+            out_receipt->blocked_end_marker = 1;
+            out_receipt->cls2 = 0xff;
+            if (out_cls2) *out_cls2 = 0xff;
+            return 1;
+        }
+        if (rw >= 0xff80) {
+            uint8_t cls2 = (uint8_t)(rw & 0xff) - 0x80;
+            out_receipt->valid = 1;
+            out_receipt->cls2 = cls2;
+            if (out_cls2) *out_cls2 = cls2;
+            return 1;
+        }
+
+        uint8_t record_type = (rw >> 10) & 0xf;
+        out_receipt->record_type = record_type;
+
+        const uint8_t *rec = NULL;
+        if (pools) rec = dm2_v1_record_pool_address(pools, (int16_t)rw);
+
+        switch (record_type) {
+        case 0: case 1: case 11: case 12: case 13:
+            out_receipt->cls2 = 0xff;
+            if (out_cls2) *out_cls2 = 0xff;
+            return 1;
+
+        case 2:
+            out_receipt->blocked_type_2_text = 1;
+            out_receipt->cls2 = 0xff;
+            if (out_cls2) *out_cls2 = 0xff;
+            return 1;
+
+        case 3:
+            out_receipt->blocked_type_3_actuator = 1;
+            out_receipt->cls2 = 0xff;
+            if (out_cls2) *out_cls2 = 0xff;
+            return 1;
+
+        case 4:
+            if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
+            { uint8_t cls2 = rec[4];
+              out_receipt->valid = 1; out_receipt->cls2 = cls2;
+              if (out_cls2) *out_cls2 = cls2; return 1; }
+
+        case 5: case 6: case 10: case 15:
+            if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
+            { uint16_t w1 = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
+              uint8_t cls2 = (uint8_t)(w1 & 0x7f);
+              out_receipt->valid = 1; out_receipt->cls2 = cls2;
+              if (out_cls2) *out_cls2 = cls2; return 1; }
+
+        case 7:
+            out_receipt->valid = 1; out_receipt->cls2 = 0;
+            if (out_cls2) *out_cls2 = 0; return 1;
+
+        case 8:
+            if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
+            { uint16_t w1 = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
+              uint8_t cls2 = (uint8_t)((w1 * 2) >> 9);
+              out_receipt->valid = 1; out_receipt->cls2 = cls2;
+              if (out_cls2) *out_cls2 = cls2; return 1; }
+
+        case 9:
+            if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
+            { uint16_t w2 = (uint16_t)rec[4] | ((uint16_t)rec[5] << 8);
+              uint8_t hi = (uint8_t)((w2 << 13) >> 14);
+              hi = (uint8_t)(8 * hi);
+              hi = (uint8_t)(hi & 0xff);
+              uint8_t lo = (uint8_t)(w2 >> 13);
+              uint8_t cls2 = lo | hi;
+              out_receipt->valid = 1; out_receipt->cls2 = cls2;
+              if (out_cls2) *out_cls2 = cls2; return 1; }
+
+        case 14:
+            if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
+            rw = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
+            break;
+
+        default:
+            out_receipt->cls2 = 0xff;
+            if (out_cls2) *out_cls2 = 0xff;
+            return 1;
+        }
+    }
+
+    out_receipt->cls2 = 0xff;
+    if (out_cls2) *out_cls2 = 0xff;
+    return 1;
+}
+
+/* -----------------------------------------------------------------------
  * SKULLWIN/c_record.cpp:367 DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR
  *
  * Maps a 9-bit actuator itemspec to its DB (record pool) index.

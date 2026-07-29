@@ -11473,6 +11473,48 @@ int main(void)
           strstr(dm2_v1_skproject_core_source_evidence(), "DM2_DTOR_MEMORYALLOCATION") != 0,
           "source evidence names cycle-25 batch-25a+25b");
 
+    /* --- DM2_QUERY_CLS2_FROM_RECORD tests --- */
+    {
+        uint8_t cls2;
+        DM2_V1_SkprojectQueryCls2Receipt receipt;
+        dm2_v1_skproject_query_cls2_from_record(0xffff, NULL, &cls2, &receipt);
+        CHECK(cls2 == 0xff && receipt.blocked_end_marker == 1, "cls2: end marker -> 0xff");
+    }
+    {
+        uint8_t cls2;
+        DM2_V1_SkprojectQueryCls2Receipt receipt;
+        dm2_v1_skproject_query_cls2_from_record(0x0000, NULL, &cls2, &receipt);
+        CHECK(cls2 == 0xff, "cls2: type 0 -> 0xff");
+    }
+    {
+        uint8_t cls2;
+        DM2_V1_SkprojectQueryCls2Receipt receipt;
+        uint16_t rw = (7 << 10) | 0x05;
+        dm2_v1_skproject_query_cls2_from_record(rw, NULL, &cls2, &receipt);
+        CHECK(receipt.valid == 1 && cls2 == 0, "cls2: type 7 -> always 0");
+    }
+    {
+        uint8_t cls2;
+        DM2_V1_SkprojectQueryCls2Receipt receipt;
+        uint16_t rw = (2 << 10) | 0x05;
+        dm2_v1_skproject_query_cls2_from_record(rw, NULL, &cls2, &receipt);
+        CHECK(receipt.blocked_type_2_text == 1, "cls2: type 2 -> blocked text");
+    }
+    {
+        uint8_t cls2;
+        DM2_V1_SkprojectQueryCls2Receipt receipt;
+        uint16_t rw = (3 << 10) | 0x05;
+        dm2_v1_skproject_query_cls2_from_record(rw, NULL, &cls2, &receipt);
+        CHECK(receipt.blocked_type_3_actuator == 1, "cls2: type 3 -> blocked actuator");
+    }
+    {
+        uint8_t cls2;
+        DM2_V1_SkprojectQueryCls2Receipt receipt;
+        uint16_t rw = 0xff85;
+        dm2_v1_skproject_query_cls2_from_record(rw, NULL, &cls2, &receipt);
+        CHECK(receipt.valid == 1 && cls2 == 5, "cls2: inline >= 0xff80 -> low byte - 0x80");
+    }
+
     /* --- DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR tests --- */
     {
         uint16_t db;
