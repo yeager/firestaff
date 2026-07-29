@@ -82,6 +82,12 @@
   the complete 98-test CSB CTest lane. The real DB15/FluxCage/timer owner is
   intentionally still tracked in TODO.
 
+- ✅ 2026-07-29 CSBWin DSA `STKOP_I_CreateCloud` dispatch. `I_Indirect` now
+  maps source opcode 81 to the authenticated direct `CREATECLOUD` transaction
+  and preserves CSBWin's reverse packed stack order: `size`, `type`, then
+  `location`. The focused regression verifies exact operands and the complete
+  CSB lane remains covered by the existing verification test.
+
 - ✅ 2026-07-29 CSBWin DSA production `TEXT@` -> `TEXTSAY` DB2 binding.
   The runtime candidate decodes its loaded DB2 text through F0507 and
   publishes it only as its authenticated scrolling-text receipt. The focused

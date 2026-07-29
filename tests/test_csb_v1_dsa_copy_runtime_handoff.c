@@ -125,6 +125,12 @@ static void test_create_cloud_transaction(void)
     uint16_t rollback_words[] = {
         0x0686u, 0x0203u, 0x0686u, 7u, 0x0686u, 23u, 0x110bu, 0u
     };
+    uint16_t indirect_words[] = { 0x168bu };
+    uint32_t indirect_parameters[] = {
+        /* EX_AMPERSAND pushes P5, P4, P3: direct CreateCloud therefore
+         * receives its source pop order (size, type, location). */
+        81u, 3u, 23u, 7u, 0x0203u, 0u, 0u
+    };
     CSB_V1_ChaosMagicState state;
     CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWinDSAStackContext context;
@@ -146,6 +152,22 @@ static void test_create_cloud_transaction(void)
               store.calls == 1 && store.cloud_type == 7 && store.size == 23 &&
               store.location == 0x0203u && execution.create_cloud_count == 1u,
           "STKOP_CreateCloud commits the exact source request after acceptance");
+
+    configure_action(&action, indirect_words,
+                     (int)(sizeof(indirect_words) / sizeof(indirect_words[0])));
+    context.parameters = indirect_parameters;
+    context.parameter_count = (int)(sizeof(indirect_parameters) /
+                                    sizeof(indirect_parameters[0]));
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              store.calls == 1 && store.cloud_type == 7 && store.size == 23 &&
+              store.location == 0x0203u && execution.create_cloud_count == 1u,
+          "STKOP_I_Indirect expands I_CreateCloud through the same transaction");
+
+    context.parameters = NULL;
+    context.parameter_count = 0;
 
     configure_action(&action, invalid_type_words,
                      (int)(sizeof(invalid_type_words) / sizeof(invalid_type_words[0])));

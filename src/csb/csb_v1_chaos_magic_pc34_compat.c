@@ -624,6 +624,7 @@ csb_v1_csbwin_dsa_expand_indirect(uint32_t *stack, int *depth,
     switch (parameters[0]) {
     case 84u: direct_subcode = 63u; break;  /* I_Monster! -> Monster! */
     case 85u: direct_subcode = 66u; break;  /* I_Char! -> Char! */
+    case 81u: direct_subcode = 68u; break;  /* I_CreateCloud -> CreateCloud */
     case 87u: direct_subcode = 76u; break;  /* I_Copy -> Copy */
     case 88u: direct_subcode = 58u; break;  /* I_Cell! -> Cell! */
     case 111u: direct_subcode = 110u; break; /* I_CausePoison */

@@ -18,7 +18,7 @@ an integration build pass.
 - **CSB-DSA-INDIRECT-TRANSACTIONAL-DISPATCH:** Closed 2026-07-29.
   Authenticated CSBWin `STKOP_I_Indirect` now unpacks its source parameter
   payload and dispatches `I_MONSTER!`, `I_CHAR!`, `I_COPY`, `I_CELL!`,
-  `I_CAUSEPOISON`, and `I_SWAPCHARACTER` through their existing
+  `I_CAUSEPOISON`, `I_SWAPCHARACTER`, and `I_CREATECLOUD` through their existing
   transactional runtime owners. The local-variable rewrite form and every
   still-unowned target reject before a dungeon/save mutation. The focused
   `I_COPY` regression verifies the source operand order and rollback; the
@@ -954,8 +954,9 @@ that its exact runtime path is not already source-locked and tested.
     transactional world-
     mutation batch with source-owned callbacks; do not add a synthetic VM
     fallback for missing dungeon ownership. 2026-07-29: `I_Indirect` now
-    expands only to the six already source-owned transactional operations
-    (`MONSTER!`, `CHAR!`, `COPY`, `CELL!`, `CAUSEPOISON`, `SWAPCHARACTER`).
+    expands only to the seven already source-owned transactional operations
+    (`MONSTER!`, `CHAR!`, `COPY`, `CELL!`, `CAUSEPOISON`, `SWAPCHARACTER`,
+    `CREATECLOUD`).
     Its source local-variable rewrite now writes the action-local DSAVARS bank
     before the selected direct word runs; persistent save data remains outside
     this temporary source bank. 2026-07-29: direct `CREATECLOUD` now consumes
@@ -963,6 +964,8 @@ that its exact runtime path is not already source-locked and tested.
     types and silent invalid-type no-op, and commits only after whole-action
     acceptance. Its DB15/FluxCage/timer runtime owner remains open under
     CSB-DSA-MONSTER-WORLD; no cloud is synthesized when that owner is absent.
+    `I_CREATECLOUD` now uses that identical request path with CSBWin's reverse
+    parameter-stack order (`size,type,location`).
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.
