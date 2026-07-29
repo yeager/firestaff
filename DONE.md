@@ -8,8 +8,12 @@
   event path now retains ReDMCSB's original three-level distance volume from
   `SOUND_DATA` through M11 to SDL3, before the user's SFX gain. It keeps the
   exact GRAPHICS.DAT PCM and PIT divisor; no marker or generated replacement
-  is used. Verification: focused audio/HUD regressions and the full 111-test
-  CSB lane pass.
+  is used. The C004 projectile/materialization regression now also asserts
+  the source switch row's party-cell volume `3` and priority `0`, instead of
+  obsolete host values. The C004 fixture positions the live party beside the
+  impact and locks the resulting source volume `2` plus priority `15`.
+  Verification: focused audio/HUD regressions and the
+  full 111-test CSB lane pass.
 
 - ✅ 2026-07-30 Start-menu game-data folder selection: a selected physical
   folder now remains the active and persisted data root even when its first

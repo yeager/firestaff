@@ -86,6 +86,10 @@ int main(void)
 
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
+    /* F0064 must measure this C004 impact from the live party, not from the
+     * default Prison handoff pose used by runtime_init(). */
+    profile.party_x = 0;
+    profile.party_y = 0;
     profile.dungeon_handle = &dungeon;
     memset(&input, 0, sizeof(input));
     memset(&first_move, 0, sizeof(first_move));
@@ -113,10 +117,10 @@ int main(void)
     CHECK(profile.projectiles.count == 0,
           "C49 impact consumes the projectile");
     CHECK(profile.audio_runtime.pendingSoundIndex == CSB_V1_SOUND_SWITCH &&
-              profile.audio_runtime.pendingVolume == 64 &&
-              profile.audio_runtime.pendingPriority == 4u &&
+              profile.audio_runtime.pendingVolume == 2 &&
+              profile.audio_runtime.pendingPriority == 15u &&
               profile.audio_runtime.totalRequests == 1u,
-          "Audible C004 requests the source prioritized switch sound");
+          "Audible C004 retains the source switch volume and priority");
     CHECK(profile.timeline_queue.eventCount == 1 &&
               profile.timeline_queue.events[0].type == DM1_EVENT_FAKEWALL &&
               profile.timeline_queue.events[0].c_effect == DM1_EFFECT_SET,
