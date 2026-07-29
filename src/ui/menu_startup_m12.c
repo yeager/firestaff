@@ -1651,7 +1651,7 @@ static void m12_format_data_dir_line(const M12_StartupMenuState* state,
         return;
     }
     if (!dir || dir[0] == '\0') {
-        dir = ".";
+        dir = m12_tr(state, "NOT SET");
     }
     len = strlen(dir);
     if (len + prefixLen < outSize) {
@@ -1972,26 +1972,6 @@ static void m12_cancel_data_dir_scan(M12_StartupMenuState* state) {
     m12_update_data_dir_scan_message(state);
 }
 
-/* SDL's native folder dialog may return a relative path (notably "." on
- * some macOS dialog backends). Store the resolved directory, never that
- * display token, so the next launcher run scans the folder the user chose
- * rather than silently treating the working directory as game data. */
-static int m12_canonicalize_data_directory(const char* input,
-                                           char* out,
-                                           size_t outSize) {
-    char normalized[FSP_PATH_MAX];
-
-    if (!input || input[0] == '\0' || !out || outSize == 0U ||
-        strlen(input) >= sizeof(normalized)) {
-        return 0;
-    }
-    snprintf(normalized, sizeof(normalized), "%s", input);
-    FSP_NormalizeSeparators(normalized);
-    return FSP_DirExists(normalized) &&
-           FSP_ResolvePhysicalPath(out, outSize, normalized) &&
-           FSP_DirExists(out);
-}
-
 /* SDL's macOS folder dialog has returned these relative display tokens after
  * a selection. They do not identify the folder the player picked, and must
  * never replace the persisted game-data root. */
@@ -2027,11 +2007,36 @@ static int m12_data_directory_dialog_token_is_placeholder(const char* path) {
     return sawDot;
 }
 
+/* SDL's native folder dialog may return a relative path (notably "." on
+ * some macOS dialog backends). Store the resolved directory, never that
+ * display token, so the next launcher run scans the folder the user chose
+ * rather than silently treating the working directory as game data. */
+static int m12_canonicalize_data_directory(const char* input,
+                                           char* out,
+                                           size_t outSize) {
+    char normalized[FSP_PATH_MAX];
+
+    if (!input || input[0] == '\0' || !out || outSize == 0U ||
+        m12_data_directory_dialog_token_is_placeholder(input) ||
+        strlen(input) >= sizeof(normalized)) {
+        return 0;
+    }
+    snprintf(normalized, sizeof(normalized), "%s", input);
+    FSP_NormalizeSeparators(normalized);
+    return FSP_DirExists(normalized) &&
+           FSP_ResolvePhysicalPath(out, outSize, normalized) &&
+           FSP_DirExists(out);
+}
+
 static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
                                          const char* dataDir) {
     M12_DataDirScanJob* job;
     char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     if (!state || !dataDir || dataDir[0] == '\0') {
+        return 0;
+    }
+    if (m12_data_directory_dialog_token_is_placeholder(dataDir)) {
+        m12_show_data_dir_result_popup(state, 0);
         return 0;
     }
     if (!m12_canonicalize_data_directory(dataDir, canonicalDataDir,
@@ -2093,6 +2098,10 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     int scanOk;
     if (!state || !dataDir || dataDir[0] == '\0') {
+        return 0;
+    }
+    if (m12_data_directory_dialog_token_is_placeholder(dataDir)) {
+        m12_show_data_dir_result_popup(state, 0);
         return 0;
     }
     if (!m12_canonicalize_data_directory(dataDir, canonicalDataDir,

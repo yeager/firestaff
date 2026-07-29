@@ -469,6 +469,13 @@ static void check_dot_dialog_result_preserves_data_directory(void) {
         CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
                      beforeDataDir) == 0);
         CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), ".") != 0);
+
+        state.view = M12_MENU_VIEW_SETTINGS;
+        CHECK(M12_StartupMenu_SetDataDirectory(&state, placeholders[i]) == 0);
+        CHECK(state.messageLine1 &&
+              strcmp(state.messageLine1, "DATA DIRECTORY UNCHANGED") == 0);
+        CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
+                     beforeDataDir) == 0);
     }
 
     M12_StartupMenu_Destroy(&state);

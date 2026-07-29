@@ -43088,3 +43088,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   user screenshot has the same source-owned palette as the window rather
   than a later dungeon palette. Verification: V2.0/V2.1/V2.2 real-data
   startup capture regressions.
+
+- ✅ 2026-07-30 Launcher game-data directory persistence: a folder-picker
+  placeholder such as `.` can no longer enter through the public data-root
+  setter and is reported as unchanged. Empty status display now says `NOT
+  SET`, never `.`. Verified by `test_m12_data_dir_cancel`.

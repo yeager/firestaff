@@ -7,6 +7,7 @@
 #include "menu_hit_m12.h"
 #include "menu_startup_m12.h"
 #include "config_m12.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,6 +74,7 @@ int main(void) {
     char homeTemplate[] = "/tmp/firestaff-m12-hit-home-XXXXXX";
     char* homeDir = test_mkdtemp(homeTemplate);
     char manualDir[512];
+    char manualPhysicalDir[512];
     const int gridLeft = 42 + 390 + 44;
     const int cardW = (1920 - gridLeft - 48 - 22 * 2) / 3;
     const int cardH = ((1080 - 130) - 40 - 22) / 2;
@@ -102,6 +104,11 @@ int main(void) {
     snprintf(manualDir, sizeof(manualDir), "%s/manual-data-root", homeDir);
     if (!test_mkdir(manualDir)) {
         fprintf(stderr, "FAIL: temporary manual data directory setup failed\n");
+        return 1;
+    }
+    if (!FSP_ResolvePhysicalPath(manualPhysicalDir, sizeof(manualPhysicalDir),
+                                 manualDir)) {
+        fprintf(stderr, "FAIL: temporary manual data directory resolution failed\n");
         return 1;
     }
 
@@ -223,10 +230,10 @@ int main(void) {
     state.view = M12_MENU_VIEW_SETTINGS;
     if (!expect(M12_StartupMenu_SetDataDirectory(&state, manualDir) == 1,
                 "manual data directory setter should accept an existing arbitrary folder")) return 1;
-    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
+    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualPhysicalDir) == 0,
                 "manual data directory setter should rescan the chosen folder")) return 1;
     M12_Config_Load(&config, NULL);
-    if (!expect(strcmp(config.dataDir, manualDir) == 0,
+    if (!expect(strcmp(config.dataDir, manualPhysicalDir) == 0,
                 "manual data directory setter should persist the chosen folder")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     state.view = M12_MENU_VIEW_SETTINGS;
@@ -236,10 +243,10 @@ int main(void) {
                 "Import Settings missing-file click should show a public result message")) return 1;
     if (!expect(strcmp(state.messageLine1, "IMPORT FAILED") == 0,
                 "Import Settings missing-file click should report import failure")) return 1;
-    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
+    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualPhysicalDir) == 0,
                 "failed settings import should preserve the active data directory")) return 1;
     M12_Config_Load(&config, NULL);
-    if (!expect(strcmp(config.dataDir, manualDir) == 0,
+    if (!expect(strcmp(config.dataDir, manualPhysicalDir) == 0,
                 "failed settings import should preserve the persisted data directory")) return 1;
 
     puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1; Smooth Turn Pan toggles/persists; settings rows export/import JSON, missing import preserves data directory, and data directory accepts an arbitrary selected folder");
