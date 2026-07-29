@@ -44200,6 +44200,40 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_champion_hud_helpers.c"
     )
 endif()
 
+# DM2 champion stat bridge (V1 hero stats → V2 HUD runtime percentages).
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_champion_stat_bridge.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_champion_stat_bridge.c")
+    add_executable(test_dm2_v1_champion_stat_bridge
+        tests/test_dm2_v1_champion_stat_bridge.c
+        src/dm2/dm2_v1_champion_stat_bridge.c
+        src/dm2/dm2_v1_champion_hud_helpers.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_champion_stat_bridge PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_champion_stat_bridge
+        COMMAND test_dm2_v1_champion_stat_bridge
+    )
+endif()
+
+# DM2 food/water/poison panel bridge.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_food_water_bridge.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_food_water_bridge.c")
+    add_executable(test_dm2_v1_food_water_bridge
+        tests/test_dm2_v1_food_water_bridge.c
+        src/dm2/dm2_v1_food_water_bridge.c
+        src/dm2/dm2_v1_champion_hud_helpers.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_food_water_bridge PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_food_water_bridge
+        COMMAND test_dm2_v1_food_water_bridge
+    )
+endif()
+
 # DM2/skproject scene light and static GRAPHICSSET ownership.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_viewport_renderer.c")
