@@ -42925,3 +42925,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   startup captures, plus the V2.2 source-artpack runtime boundary. It is
   implementation evidence only: V2.2 still remains fail-closed until the
   TODO-listed reviewed-material and packaged-capture requirements are met.
+- ✅ 2026-07-29 CSB C140 disk/save menu runtime: Ctrl-S no longer sets an
+  inert `csbDiskMenuActive` flag. It opens the existing source-dialog surface
+  with Save Game, Load Game and Cancel; keyboard navigation, Enter/Escape and
+  pointer choices share one modal state, and accepted choices call the
+  existing CSB F0433/F0435 QuickSave/QuickLoad owners. Verified by
+  `csb_v1_keyboard_commands_pc34_compat`, `csb_v1_utility_save_transaction_pc34_compat`,
+  and `csb_v1_save_export_import` (3/3 PASS).

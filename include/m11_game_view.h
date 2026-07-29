@@ -897,7 +897,10 @@ typedef struct {
     int inventoryPanelActive;    /* 1 when full inventory grid is displayed */
     int inventorySelectedSlot;   /* currently highlighted slot index (-1 = none) */
     int csbGameFrozen;           /* CSB C147/C148 freeze/unfreeze keyboard state */
-    int csbDiskMenuActive;       /* CSB Ctrl-S disk-menu overlay placeholder */
+    /* ReDMCSB COMMAND.C C140 / LOADSAVE.C F0433-F0435 save-disk modal.
+     * Choice is one-based so it matches the source dialog hit rectangles. */
+    int csbDiskMenuActive;
+    int csbDiskMenuSelectedChoice;
     /* ReDMCSB PANEL.C F0349 food mouth animation.  The source draws four
      * icon frames into C545_ZONE_MOUTH with an 8-delay gate after a
      * leader-hand food object is removed.  These fields preserve that

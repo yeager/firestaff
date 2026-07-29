@@ -1310,6 +1310,12 @@ that its exact runtime path is not already source-locked and tested.
     Amiga ADF root-volume `FTL_CSB_Utility` replace Firestaff's former
     invented boot-sector serial. Remaining work is the actual Utility UI
     presentation and its complete save/import/new-game actions.
+    2026-07-29: the live C140 `Ctrl-S` route now opens the source-dialog
+    geometry with Save Game, Load Game and Cancel choices. Keyboard Up/Down,
+    Enter/Escape and pointer choice all consume the same modal state; accepted
+    Save/Load invoke the existing CSB F0433/F0435 runtime owners instead of
+    merely closing a placeholder overlay. Broader Utility Disk editor/import,
+    champion and new-game flows remain open.
 25. **CSB-TITLE-AUDIO-CADENCE:** C001 timing and FTL/PRESENTS/CHAOS/STRIKES
     composition are source-locked (60 + 20 + 20 + 2 VBlanks after swoosh).
     SDL/CoreAudio playback is now enabled by default for decoded original

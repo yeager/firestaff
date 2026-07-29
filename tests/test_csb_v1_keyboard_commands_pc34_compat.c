@@ -184,13 +184,17 @@ int main(void)
                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_DISK_MENU),
                      M11_GAME_INPUT_REDRAW);
     ok &= expect_int("CSB disk menu flag set", view.csbDiskMenuActive, 1);
+    ok &= expect_int("CSB disk menu opens the source dialog", view.dialogOverlayActive, 1);
+    ok &= expect_int("CSB disk menu starts on save", view.csbDiskMenuSelectedChoice, 1);
     ok &= expect_int("movement ignored while disk menu is open",
                      M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP),
-                     M11_GAME_INPUT_IGNORED);
-    ok &= expect_int("Accept closes disk menu",
-                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT),
+                     M11_GAME_INPUT_REDRAW);
+    ok &= expect_int("CSB disk menu keyboard moves to cancel", view.csbDiskMenuSelectedChoice, 3);
+    ok &= expect_int("Back cancels CSB disk menu",
+                     M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK),
                      M11_GAME_INPUT_REDRAW);
     ok &= expect_int("CSB disk menu flag cleared", view.csbDiskMenuActive, 0);
+    ok &= expect_int("CSB disk menu dismisses its dialog", view.dialogOverlayActive, 0);
 
     view.resting = 1;
     ok &= expect_int("Return wakes resting CSB",

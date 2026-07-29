@@ -7138,8 +7138,23 @@ static void m11_draw_dialog_choices_source(const M11_GameViewState* state,
                                                  i, &r)) {
             continue;
         }
-        m11_draw_dialog_choice_text(framebuffer, framebufferWidth, framebufferHeight,
-                                    r.x, r.y, r.w, state->dialogChoices[i]);
+        if (state->csbDiskMenuActive &&
+            state->csbDiskMenuSelectedChoice == i + 1) {
+            M11_TextStyle selectedStyle = g_text_shadow;
+            selectedStyle.color = M11_COLOR_YELLOW;
+            selectedStyle.shadowColor = M11_COLOR_BROWN;
+            m11_draw_text_centered_in_rect(framebuffer, framebufferWidth,
+                                           framebufferHeight,
+                                           M11_VIEWPORT_X + r.x,
+                                           M11_VIEWPORT_Y + r.y, r.w,
+                                           state->dialogChoices[i],
+                                           &selectedStyle);
+        } else {
+            m11_draw_dialog_choice_text(framebuffer, framebufferWidth,
+                                        framebufferHeight,
+                                        r.x, r.y, r.w,
+                                        state->dialogChoices[i]);
+        }
     }
 }
 
@@ -22052,6 +22067,43 @@ static M11_GameInputResult m11_dm1_handle_save_disk_choice(
     return M11_GAME_INPUT_IGNORED;
 }
 
+/* C140 enters the CSB save-disk dialog.  Reuse the source-backed dialog
+ * geometry and the CSB F0433/F0435 runtime owners rather than leaving a
+ * decorative Ctrl-S state that merely closes on Enter. */
+static void m11_csb_show_save_disk_menu(M11_GameViewState* state) {
+    if (!state) return;
+    M11_GameView_ShowDialogOverlayChoices(state,
+        _("PUT THE GAME SAVE DISK IN ~"),
+        _("SAVE GAME"), _("LOAD GAME"), _("CANCEL"), NULL);
+    state->csbDiskMenuActive = 1;
+    state->csbDiskMenuSelectedChoice = 1;
+    m11_set_status(state, "CSB", "DISK MENU");
+    snprintf(state->inspectTitle, sizeof(state->inspectTitle), "CSB DISK MENU");
+    snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+             "SAVE, LOAD OR CANCEL");
+}
+
+static M11_GameInputResult m11_csb_handle_save_disk_choice(
+    M11_GameViewState* state, int choice) {
+    int ok = 0;
+
+    if (!state || !state->csbDiskMenuActive) return M11_GAME_INPUT_IGNORED;
+    if (choice == 1) {
+        ok = M11_GameView_QuickSave(state);
+    } else if (choice == 2) {
+        ok = M11_GameView_QuickLoad(state);
+    }
+    if (choice == 3 || ok) {
+        state->dialogSelectedChoice = choice;
+        state->csbDiskMenuActive = 0;
+        state->csbDiskMenuSelectedChoice = 0;
+        M11_GameView_DismissDialogOverlay(state);
+        if (choice == 3) m11_set_status(state, "CSB", "DISK MENU CANCELLED");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    return M11_GAME_INPUT_REDRAW;
+}
+
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input) {
     uint8_t command = CMD_NONE;
@@ -22093,6 +22145,22 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
     /* Dialog overlay: text plaques dismiss; return-to-menu confirm requires an explicit choice. */
     if (state->dialogOverlayActive) {
+        if (state->csbDiskMenuActive) {
+            if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_DOWN) {
+                int delta = input == M12_MENU_INPUT_UP ? -1 : 1;
+                state->csbDiskMenuSelectedChoice =
+                    ((state->csbDiskMenuSelectedChoice - 1 + delta + 3) % 3) + 1;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            if (input == M12_MENU_INPUT_BACK) {
+                return m11_csb_handle_save_disk_choice(state, 3);
+            }
+            if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+                return m11_csb_handle_save_disk_choice(
+                    state, state->csbDiskMenuSelectedChoice);
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (state->dm1SaveDiskMenuStage != M11_DM1_SAVE_DISK_MENU_NONE) {
             if (input == M12_MENU_INPUT_BACK) {
                 return m11_dm1_handle_save_disk_choice(
@@ -23321,6 +23389,10 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     /* Click dismisses normal dialogs; return-to-menu confirm acts on YES/NO. */
     if (state->dialogOverlayActive) {
         int choice = m11_dialog_choice_at_point(state, x, y);
+        if (state->csbDiskMenuActive) {
+            if (choice > 0) return m11_csb_handle_save_disk_choice(state, choice);
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (state->dm1SaveDiskMenuStage != M11_DM1_SAVE_DISK_MENU_NONE) {
             if (choice > 0) {
                 return m11_dm1_handle_save_disk_choice(state, choice);
@@ -44975,25 +45047,14 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
     }
 
     if (input == M12_MENU_INPUT_DISK_MENU) {
-        state->csbDiskMenuActive = 1;
         state->mapOverlayActive = 0;
         state->inventoryPanelActive = 0;
         state->spellPanelOpen = 0;
-        m11_set_status(state, "CSB", "DISK MENU");
-        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "CSB DISK MENU");
-        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                 "CTRL-S OPENED THE SOURCE-LOCKED C140 DISK/SAVE MENU ROUTE");
+        m11_csb_show_save_disk_menu(state);
         return M11_GAME_INPUT_REDRAW;
     }
 
     if (state->csbDiskMenuActive) {
-        if (input == M12_MENU_INPUT_ACCEPT ||
-            input == M12_MENU_INPUT_ACTION ||
-            input == M12_MENU_INPUT_BACK) {
-            state->csbDiskMenuActive = 0;
-            m11_set_status(state, "CSB", "DISK MENU CLOSED");
-            return M11_GAME_INPUT_REDRAW;
-        }
         return M11_GAME_INPUT_IGNORED;
     }
 
@@ -51029,6 +51090,8 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     state->returnToMenuConfirmActive = 0;
     state->quitGuardActive = 0;
     state->dm1SaveDiskMenuStage = 0;
+    state->csbDiskMenuActive = 0;
+    state->csbDiskMenuSelectedChoice = 0;
     state->dialogOverlayText[0] = '\0';
     state->dialogChoiceCount = 0;
     memset(state->dialogChoices, 0, sizeof(state->dialogChoices));
