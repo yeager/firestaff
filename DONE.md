@@ -42105,3 +42105,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   time. `firestaff_csb_v22_viewport_swap_probe` is now registered in CTest;
   its bounded cache uses canonical ids and proves all nine cells paint across
   four directions. Focused V2.2 regression: 4/4 pass.
+- 2026-07-29 CSB V2.x Prison pointer regression: boot-probe now presents the
+  active V2 surface before mapping a click. Real PC3.4 data proves G0445
+  Prison entry reaches runtime in V1, V2.0 and V2.1 at 320x200 and 960x600.

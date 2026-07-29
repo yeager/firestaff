@@ -3494,6 +3494,15 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
         return 1;
     }
     if (sscanf(buffer, "click:%d:%d", &x, &y) == 2) {
+        /* The normal SDL event loop has already presented the current frame
+         * before it maps a window point through its content rectangle.  A
+         * boot-probe advances game state without drawing, which left the
+         * renderer reporting its stale 320x200 V1 content size for V2.0/V2.1
+         * clicks.  Present once here so the probe exercises the identical
+         * 640x400/upscaled input geometry as a live CSB window. */
+        if (!m11_present_game_frame(gameView, NULL)) {
+            return 1;
+        }
         if (!m11_map_window_pointer_to_game_source(gameView, x, y, &x, &y)) {
             return 1;
         }
@@ -3507,6 +3516,9 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
         return 1;
     }
     if (sscanf(buffer, "move:%d:%d", &x, &y) == 2) {
+        if (!m11_present_game_frame(gameView, NULL)) {
+            return 1;
+        }
         if (!m11_map_window_pointer_to_game_source(gameView, x, y, &x, &y)) {
             return 1;
         }

@@ -34403,6 +34403,22 @@ if(BUILD_TESTING)
         )
     endif()
 
+    # Real-data, end-to-end pointer regression for the source-owned Prison
+    # entrance command.  The boot probe must present the V2 surface before
+    # it maps the click, otherwise V2.0/V2.1 divide source coordinates twice.
+    if(TARGET firestaff)
+        add_test(
+            NAME csb_v2_entrance_pointer_boot_probe
+            COMMAND sh
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v2_entrance_pointer_boot_probe.sh"
+                "$<TARGET_FILE:firestaff>"
+        )
+        set_tests_properties(csb_v2_entrance_pointer_boot_probe PROPERTIES
+            LABELS "tier1;csb;v2;input;startup;real_data;skip_safe"
+            TIMEOUT 45
+        )
+    endif()
+
     # ── CSB V1 PC 3.4 quickplay/startup dungeon-handle probe ─────
     # Tier 1 / Skip-safe: hosts without user-supplied PC CSB data
     # fall through to the synthetic-fixture path and still drive

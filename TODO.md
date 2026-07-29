@@ -15,6 +15,15 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V2X-PRISON-POINTER-PRESENTATION:** Closed 2026-07-29. Boot-probe
+  pointer commands now present the active game surface before window-to-source
+  mapping. V2.0/V2.1 previously retained the stale 320x200 renderer geometry
+  while their actual presentation was 640x400, which applied the source scale
+  a second time and silently missed ReDMCSB G0445's Prison zone. The real
+  PC3.4 regression now drives the original `C407_ZONE_ENTRANCE_ENTER` region
+  through V1, V2.0 and V2.1 at 320x200 and 960x600 and requires the runtime
+  handoff. The source route remains `COMMAND.C:346` / `ENTRANCE.C:F0806`.
+
 - **CSB-V22-SOURCE-SQUARE-BOUNDARY:** Closed 2026-07-29. The V2.2 per-cell
   material gate now has an explicit ReDMCSB `M034_SQUARE_TYPE` entry point for
   the seven genuine dungeon elements: wall, corridor, pit, stairs, door,
