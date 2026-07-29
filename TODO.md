@@ -90,9 +90,10 @@ an integration build pass.
   Source-cache normalization is nearest-neighbor only; it does not invent
   interpolated pixels. D1/D2 retain their explicit admitted projection
   statuses. The V1 material byte handoff validates the live `G0694` DoorSet
-  slot (`247/250/253/256`) through the decode, provenance and plan receipts;
-  V2.2 still needs matching per-DoorSet pack selection before it can consume
-  nonzero DoorSets.
+  slot (`247/250/253/256`) through the decode, provenance and plan receipts.
+  V2.2 now consumes the matching original D2/D3 DoorSet 1–3 rasters by the
+  propagated source index; D1 remains V1 for nonzero sets until its own
+  source-index capture exists.
   Direct and headless probes prove routing, admission, exact clip bounds and
   alpha preservation only, not live visual correctness. 2026-07-29: the admitted D1/D2 door routes now
   consume the source-owned F0128 command stream in the live V2.2 compositor:

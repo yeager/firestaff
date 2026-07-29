@@ -42,11 +42,11 @@ def load_studio(repo_root: Path):
 # material.
 #
 # A decodable IMG2 record is not automatically F0128 material. In particular,
-# `door_d2_01` is the source-owned 44x38 G0693 record for DoorSet 0. PC/I34
-# F0111 reaches it through F0489/F0616, so its placement is still blocked
-# until the exact F0791/F0132 command-level projection is consumed. Keep that
-# distinction in every generated manifest so a later consumer cannot promote
-# a decodable source record before it has a matching renderer receipt.
+# `door_d2_01` is the source-owned 44x38 G0693 record for DoorSet 0. The
+# active-map D2/D3 F0111 handoff can select any of the four PC3.4 DoorSets,
+# so this pack also exports the named nonzero-set records. PC/I34 F0111
+# reaches D3 through F0489/F0616/F0791; keep placement provenance explicit so
+# a decodable source record is never promoted without its renderer receipt.
 SLOTS = (
     ("wall_shapes", "wall_dungeon_d0_01", 97, (96, 96), "F0128 nearest front wall", "unbound"),
     ("wall_shapes", "wall_dungeon_d1_01", 102, (96, 96), "F0128 middle front wall", "unbound"),
@@ -78,6 +78,23 @@ SLOTS = (
     ("chaos_runes", "chaos_rune_3_01", 12, (32, 32), "Chaos UI rune source", "unbound"),
     ("dsa_scrolls", "dsa_scroll_01", 25, (32, 32), "C017/C040 source scroll UI", "unbound"),
 )
+
+# ReDMCSB DUNVIEW.C:2651-2658: each active map DoorSet owns consecutive
+# G0693 (D3), G0694 (D2), G0695 (D1) records. D1 has no runtime source-index
+# handoff yet; D2/D3 do, so export the nonzero set variants they can prove.
+DOOR_SET_SLOTS = tuple(
+    slot
+    for door_set in range(1, 4)
+    for slot in (
+        ("door_shapes", f"door_set_{door_set}_d3", 246 + door_set * 3,
+         (44, 38), f"G0693 active DoorSet {door_set}; F0791 native placement",
+         "admitted_d3_f0791_native"),
+        ("door_shapes", f"door_set_{door_set}_d2", 247 + door_set * 3,
+         (64, 96), f"G0694 active DoorSet {door_set}; F0111 D2 projection",
+         "admitted_d2_active_doorset"),
+    )
+)
+SOURCE_SLOTS = SLOTS + DOOR_SET_SLOTS
 
 
 def fit_source(image: Image.Image, size: tuple[int, int]) -> Image.Image:
@@ -138,7 +155,7 @@ def main() -> int:
 
     with tempfile.TemporaryDirectory(prefix="firestaff-csb-v22-") as td:
         root = Path(td)
-        for category, asset_id, index, size, rationale, projection_status in SLOTS:
+        for category, asset_id, index, size, rationale, projection_status in SOURCE_SLOTS:
             asset = by_index.get(index)
             if not asset or asset.warning:
                 raise SystemExit(f"source record {index} is not decodable: {asset.warning if asset else 'missing'}")
@@ -173,7 +190,7 @@ def main() -> int:
                 "f0128ProjectionStatus": projection_status,
             })
 
-        manifest["assetCount"] = len(SLOTS)
+        manifest["assetCount"] = len(SOURCE_SLOTS)
         (root / "modern_asset_manifest.json").write_text(
             json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
         pack = studio.Artpack("csb", root)
@@ -182,7 +199,7 @@ def main() -> int:
         pack.write_finish_receipt("source-derived build")
         pack.export_fsart(output)
 
-    print(f"wrote {len(SLOTS)} source-derived CSB V2.2 assets: {output}")
+    print(f"wrote {len(SOURCE_SLOTS)} source-derived CSB V2.2 assets: {output}")
     return 0
 
 

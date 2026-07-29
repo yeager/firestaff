@@ -919,6 +919,15 @@ int csb_v1_viewport_bind_first_frame_material_bytes_pc34(
         command->decoded_size = span->decoded_size;
         command->decoded_width = span->width;
         command->decoded_height = span->height;
+        command->source_graphics_item_index = 0;
+        if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34) {
+            command->source_graphics_item_index = bytes->d2_d3_capture.d2_item_index;
+        } else if (command->route ==
+                       CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34 ||
+                   command->route ==
+                       CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34) {
+            command->source_graphics_item_index = bytes->d2_d3_capture.d3_item_index;
+        }
         command->decoded_palette = bytes->palette.decoded_palette;
         command->decoded_palette_size = bytes->palette.decoded_size;
     }

@@ -399,6 +399,9 @@ typedef struct {
     size_t decoded_size;
     int decoded_width;
     int decoded_height;
+    /* Active map G0693/G0694 record admitted by the checked byte handoff.
+     * Zero means that this command has no source-index receipt. */
+    int source_graphics_item_index;
     const uint8_t *decoded_palette;
     size_t decoded_palette_size;
     int view_depth;

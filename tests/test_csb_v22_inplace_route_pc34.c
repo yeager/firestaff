@@ -594,14 +594,22 @@ static void t_f0128_door_projection_admission(void) {
           projection.clip_y == 47 && projection.clip_w == 72 &&
           projection.clip_h == 74 && projection.transparent_index == 10,
           "D2 F0128 door admits exact source route and clip");
+    command.source_graphics_item_index = 250;
+    strcpy(provenance.id, "door_set_1_d2");
+    provenance.source_graphic_index = 250;
+    CHECK(csb_v22_admit_f0128_door_projection_pc34(&command, &provenance,
+                                                     &projection) == 1 &&
+          projection.valid && projection.source_graphic_index == 250,
+          "D2 F0128 consumes the checked active DoorSet 1 record");
     command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34;
     command.clip_x = 24;
     command.clip_y = 28;
     command.clip_w = 48;
     command.clip_h = 40;
     command.draw_order = 0x0218;
-    strcpy(provenance.id, "door_d2_01");
-    provenance.source_graphic_index = 246;
+    command.source_graphics_item_index = 255;
+    strcpy(provenance.id, "door_set_3_d3");
+    provenance.source_graphic_index = 255;
     provenance.source_width = 44;
     provenance.source_height = 38;
     provenance.output_width = 44;
@@ -611,7 +619,7 @@ static void t_f0128_door_projection_admission(void) {
           projection.valid && projection.source_width == 44 &&
           projection.source_height == 38 && projection.clip_w == 48 &&
           projection.clip_h == 40,
-          "D3 F0791 door admits exact native source surface and layout clip");
+          "D3 F0791 door admits active DoorSet 3's native source surface and layout clip");
     command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34;
     provenance.source_width = 63;
     CHECK(csb_v22_admit_f0128_door_projection_pc34(&command, &provenance,

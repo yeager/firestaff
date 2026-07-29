@@ -1,3 +1,13 @@
+- ✅ 2026-07-29 CSB V2.2 active DoorSet D2/D3 material consumption: the
+  source-artpack generator exports the original DoorSet 1–3 G0693/G0694
+  records alongside DoorSet 0, with per-record SHA-256 and native dimensions.
+  The checked V1 byte handoff propagates its active record index into the
+  F0128 command, so V2.2 selects `door_set_N_d2` or `door_set_N_d3` rather
+  than repainting nonzero sets with DoorSet 0. D3 retains F0791's exact
+  44x38 raster inside the original 48x40 clip. Focused source-pack, route,
+  draw and DoorSet 1 regressions pass. D1 remains intentionally V1 for
+  nonzero sets until it has an equivalent live source-index capture.
+
 - ✅ 2026-07-29 CSB PC3.4 D2 active-DoorSet material handoff: the first-frame
   F0128 material decode no longer pins G0694 to obsolete record 694. It now
   validates the actual second record of the map's DoorSet through the proof,

@@ -411,6 +411,7 @@ int csb_v22_inplace_render_f0128_command(
     const CSB_V1_ViewportRuntimeDrawCommandPc34* source_command,
     unsigned char* framebuffer, int fbW, int fbH)
 {
+    char dynamic_asset_id[CSB_V22_ASSET_ID_MAX];
     const char* asset_id = NULL;
     CSB_V22_RouteProvenancePc34 provenance;
     CSB_V22_F0128ProjectionCommandPc34 projection;
@@ -439,6 +440,25 @@ int csb_v22_inplace_render_f0128_command(
         break;
     default:
         return 0;
+    }
+
+    dynamic_asset_id[0] = '\0';
+    if (source_command->source_graphics_item_index > 0 &&
+        (source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34 ||
+         source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34 ||
+         source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34)) {
+        int offset = source_command->route ==
+                     CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34 ? 1 : 0;
+        int set = (source_command->source_graphics_item_index - 246 - offset) / 3;
+        if (set < 0 || set > 3 ||
+            source_command->source_graphics_item_index != 246 + set * 3 + offset) {
+            return 0;
+        }
+        if (set != 0) {
+            (void)snprintf(dynamic_asset_id, sizeof(dynamic_asset_id),
+                           "door_set_%d_d%d", set, offset == 0 ? 3 : 2);
+            asset_id = dynamic_asset_id;
+        }
     }
 
     memset(&provenance, 0, sizeof(provenance));

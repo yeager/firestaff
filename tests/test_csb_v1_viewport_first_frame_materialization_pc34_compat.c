@@ -195,6 +195,8 @@ static void test_checked_material_byte_handoff_and_raster(void)
     expect_int("bytes.bind.receipt", material_receipt.valid, 1);
     expect_int("bytes.command.material.attached",
                plan.commands[0].decoded_pixels == d2_pixels, 1);
+    expect_int("bytes.command.doorset0.index",
+               plan.commands[0].source_graphics_item_index, 247);
     expect_int("bytes.command.palette.attached",
                plan.commands[0].decoded_palette == palette, 1);
 
@@ -233,6 +235,8 @@ static void test_checked_material_byte_handoff_and_raster(void)
     expect_int("bytes.bind.doorset1",
                csb_v1_viewport_bind_first_frame_material_bytes_pc34(
                    &proof, &plan, &bytes, &material_receipt), 1);
+    expect_int("bytes.command.doorset1.index",
+               plan.commands[0].source_graphics_item_index, 250);
     proof.d2_door_capture_item_index = 247;
     bytes.d2_d3_capture.d2_item_index = 247;
     expect_int("bytes.plan.doorset0",
