@@ -1117,6 +1117,11 @@ that its exact runtime path is not already source-locked and tested.
     `CSBGAME.DAT` or other saved position on it. Treat it as Utility Disk
     media only; it must not satisfy this corpus gate. The local CSBWin binary
     and installed archives likewise contain no user-created save.
+    2026-07-29: re-scanned all local CSB `.7z`/`.zip`/`.rar` packages for
+    `CSBGAME`, CSBWin and save-disk payload names. The only hits remain the
+    blank Atari ST Save Disk and Utility Disk `DungeonSave` directories; there
+    is still no authentic saved position to admit. Keep this blocked on a
+    user-created original/CSBWin save, not a synthetic fixture.
 24. **CSB-UTILITY-DISK-COMPLETE:** Complete Utility Disk import, preview,
     save/load/new-game, champion editing, inventory, chest, dialogs, and
     confirmation flows using original package and save material. Direct
