@@ -24792,3 +24792,122 @@ int32_t dm2_v1_skproject_dtor_memory_allocation_classify(
 
     return 1;
 }
+
+/* -----------------------------------------------------------------------
+ * SKULLWIN/c_record.cpp:367 DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR
+ *
+ * Maps a 9-bit actuator itemspec to its DB (record pool) index.
+ * The itemspec encodes DB + type-local offset in a packed format:
+ *   bits 7-8 select a quadrant (0=DB5, 1=DB6, 2=DB10, 3=variable).
+ *   Quadrant 3 further subdivides by range thresholds.
+ * ----------------------------------------------------------------------- */
+int dm2_v1_skproject_get_itemdb_of_itemspec_actuator(
+    uint16_t itemspec,
+    uint16_t *out_db,
+    DM2_V1_SkprojectItemdbOfItemspecReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->itemspec = itemspec & 0x1ff;
+
+    uint16_t spec = itemspec & 0x1ff;
+    uint16_t quadrant = spec >> 7;
+
+    if (quadrant > 3) {
+        if (out_db) *out_db = 0xffff;
+        return 1;
+    }
+
+    uint16_t db;
+    switch (quadrant) {
+    case 0: db = 5; break;
+    case 1: db = 6; break;
+    case 2: db = 10; break;
+    case 3:
+        if (spec > 0x1fc) { db = 0xffff; break; }
+        if (spec == 0x1fc) { db = 7; break; }
+        if (spec >= 0x1e0) { db = 9; break; }
+        db = (spec < 0x1b0) ? 8 : 4;
+        break;
+    default: db = 0xffff; break;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->db = db;
+    if (out_db) *out_db = db;
+    return 1;
+}
+
+/* -----------------------------------------------------------------------
+ * SKULLWIN/c_record.cpp:403 DM2_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR
+ *
+ * Maps an actuator itemspec to its type-local offset.  Each quadrant
+ * subtracts its base offset so the result is 0-based within the DB.
+ * ----------------------------------------------------------------------- */
+int dm2_v1_skproject_get_itemtype_of_itemspec_actuator(
+    uint16_t itemspec,
+    uint16_t *out_itemtype,
+    DM2_V1_SkprojectItemtypeOfItemspecReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->itemspec = itemspec & 0x1ff;
+
+    uint16_t spec = itemspec & 0x1ff;
+    uint16_t quadrant = spec >> 7;
+
+    if (quadrant > 3) {
+        if (out_itemtype) *out_itemtype = spec;
+        return 1;
+    }
+
+    uint16_t result;
+    switch (quadrant) {
+    case 0: result = spec; break;
+    case 1: result = spec - 0x80; break;
+    case 2: result = spec - 0x100; break;
+    case 3:
+        if (spec >= 0x1fc)       { result = 0; break; }
+        if (spec >= 0x1e0)       { result = spec - 0x1e0; break; }
+        if (spec < 0x1b0)        result = spec - 0x180;
+        else                     result = spec - 0x1b0;
+        break;
+    default: result = spec; break;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->itemtype = result;
+    if (out_itemtype) *out_itemtype = result;
+    return 1;
+}
+
+/* -----------------------------------------------------------------------
+ * SKULLWIN/c_record.cpp:449 DM2_QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE
+ *
+ * Chains: distinctive_type -> itemdb_of_itemspec -> cls1 lookup.
+ * The distinctive type's low 16 bits are treated as an itemspec; the
+ * result is the cls1 of the record handle (db << 10).
+ * ----------------------------------------------------------------------- */
+int dm2_v1_skproject_query_itemdb_from_distinctive_itemtype(
+    uint16_t distinctive_type,
+    uint8_t *out_itemdb,
+    DM2_V1_SkprojectItemdbFromDistinctiveReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->distinctive_type = distinctive_type;
+
+    uint16_t db;
+    DM2_V1_SkprojectItemdbOfItemspecReceipt db_receipt;
+    dm2_v1_skproject_get_itemdb_of_itemspec_actuator(distinctive_type, &db, &db_receipt);
+
+    uint16_t record_word = (db << 10) & 0xffff;
+    uint8_t cls1;
+    DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
+    dm2_v1_skproject_query_cls1_from_record(record_word, &cls1, &cls1_receipt);
+
+    out_receipt->valid = 1;
+    out_receipt->itemdb = cls1;
+    if (out_itemdb) *out_itemdb = cls1;
+    return 1;
+}

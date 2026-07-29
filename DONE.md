@@ -1,3 +1,8 @@
+- ✅ 2026-07-29 DM2 actuator itemspec mappers: DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR
+  maps 9-bit itemspec to DB index via quadrant dispatch,
+  DM2_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR maps to type-local offset,
+  DM2_QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE chains itemspec->cls1.
+  Tests added. Audit: 700 MISSING. Source: skproject c_record.cpp:367-451.
 - ✅ 2026-07-29 DM2 record classification batch: DM2_GET_DISTINCTIVE_ITEMTYPE
   combines record-type base (table1d3278[16]) with cls2 into a distinctive
   type ID. Audit TSV updated (1 symbol + 2 timer queue symbols). Source:

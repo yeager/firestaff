@@ -9652,6 +9652,46 @@ int dm2_v1_skproject_get_distinctive_itemtype(
     uint16_t *out_type,
     DM2_V1_SkprojectDistinctiveItemtypeReceipt *out_receipt);
 
+/* SKULLWIN/c_record.cpp:367 DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR — maps an
+   actuator itemspec (9-bit value) to its DB (record pool) index.
+   Returns the DB index (4-10 range) or 0xffff for out-of-range specs. */
+typedef struct {
+    int valid;
+    uint16_t itemspec;
+    uint16_t db;
+} DM2_V1_SkprojectItemdbOfItemspecReceipt;
+
+int dm2_v1_skproject_get_itemdb_of_itemspec_actuator(
+    uint16_t itemspec,
+    uint16_t *out_db,
+    DM2_V1_SkprojectItemdbOfItemspecReceipt *out_receipt);
+
+/* SKULLWIN/c_record.cpp:403 DM2_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR — maps an
+   actuator itemspec to a type-local offset within its DB. */
+typedef struct {
+    int valid;
+    uint16_t itemspec;
+    uint16_t itemtype;
+} DM2_V1_SkprojectItemtypeOfItemspecReceipt;
+
+int dm2_v1_skproject_get_itemtype_of_itemspec_actuator(
+    uint16_t itemspec,
+    uint16_t *out_itemtype,
+    DM2_V1_SkprojectItemtypeOfItemspecReceipt *out_receipt);
+
+/* SKULLWIN/c_record.cpp:449 DM2_QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE —
+   chains DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR -> CLS1 lookup. */
+typedef struct {
+    int valid;
+    uint16_t distinctive_type;
+    uint8_t itemdb;
+} DM2_V1_SkprojectItemdbFromDistinctiveReceipt;
+
+int dm2_v1_skproject_query_itemdb_from_distinctive_itemtype(
+    uint16_t distinctive_type,
+    uint8_t *out_itemdb,
+    DM2_V1_SkprojectItemdbFromDistinctiveReceipt *out_receipt);
+
 typedef struct DM2_V1_SkprojectDtorMemoryAllocationReceipt {
     int8_t was_allocated;
     int8_t freed;

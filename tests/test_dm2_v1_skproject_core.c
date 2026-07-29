@@ -11473,6 +11473,102 @@ int main(void)
           strstr(dm2_v1_skproject_core_source_evidence(), "DM2_DTOR_MEMORYALLOCATION") != 0,
           "source evidence names cycle-25 batch-25a+25b");
 
+    /* --- DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR tests --- */
+    {
+        uint16_t db;
+        DM2_V1_SkprojectItemdbOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemdb_of_itemspec_actuator(0x00, &db, &receipt);
+        CHECK(receipt.valid == 1 && db == 5, "itemdb_of_itemspec: quadrant 0 -> DB5");
+    }
+    {
+        uint16_t db;
+        DM2_V1_SkprojectItemdbOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemdb_of_itemspec_actuator(0x80, &db, &receipt);
+        CHECK(receipt.valid == 1 && db == 6, "itemdb_of_itemspec: quadrant 1 -> DB6");
+    }
+    {
+        uint16_t db;
+        DM2_V1_SkprojectItemdbOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemdb_of_itemspec_actuator(0x100, &db, &receipt);
+        CHECK(receipt.valid == 1 && db == 10, "itemdb_of_itemspec: quadrant 2 -> DB10");
+    }
+    {
+        uint16_t db;
+        DM2_V1_SkprojectItemdbOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemdb_of_itemspec_actuator(0x1fc, &db, &receipt);
+        CHECK(receipt.valid == 1 && db == 7, "itemdb_of_itemspec: 0x1fc -> DB7");
+    }
+    {
+        uint16_t db;
+        DM2_V1_SkprojectItemdbOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemdb_of_itemspec_actuator(0x1e0, &db, &receipt);
+        CHECK(receipt.valid == 1 && db == 9, "itemdb_of_itemspec: 0x1e0 -> DB9");
+    }
+    {
+        uint16_t db;
+        DM2_V1_SkprojectItemdbOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemdb_of_itemspec_actuator(0x180, &db, &receipt);
+        CHECK(receipt.valid == 1 && db == 8, "itemdb_of_itemspec: 0x180 -> DB8");
+    }
+    {
+        uint16_t db;
+        DM2_V1_SkprojectItemdbOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemdb_of_itemspec_actuator(0x1b0, &db, &receipt);
+        CHECK(receipt.valid == 1 && db == 4, "itemdb_of_itemspec: 0x1b0 -> DB4");
+    }
+    {
+        uint16_t db;
+        DM2_V1_SkprojectItemdbOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemdb_of_itemspec_actuator(0x1fd, &db, &receipt);
+        CHECK(receipt.valid == 1 && db == 0xffff, "itemdb_of_itemspec: 0x1fd -> invalid");
+    }
+
+    /* --- DM2_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR tests --- */
+    {
+        uint16_t itemtype;
+        DM2_V1_SkprojectItemtypeOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemtype_of_itemspec_actuator(0x05, &itemtype, &receipt);
+        CHECK(receipt.valid == 1 && itemtype == 0x05, "itemtype_of_itemspec: quadrant 0 passthrough");
+    }
+    {
+        uint16_t itemtype;
+        DM2_V1_SkprojectItemtypeOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemtype_of_itemspec_actuator(0x85, &itemtype, &receipt);
+        CHECK(receipt.valid == 1 && itemtype == 0x05, "itemtype_of_itemspec: quadrant 1 subtract 0x80");
+    }
+    {
+        uint16_t itemtype;
+        DM2_V1_SkprojectItemtypeOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemtype_of_itemspec_actuator(0x105, &itemtype, &receipt);
+        CHECK(receipt.valid == 1 && itemtype == 0x05, "itemtype_of_itemspec: quadrant 2 subtract 0x100");
+    }
+    {
+        uint16_t itemtype;
+        DM2_V1_SkprojectItemtypeOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemtype_of_itemspec_actuator(0x185, &itemtype, &receipt);
+        CHECK(receipt.valid == 1 && itemtype == 0x05, "itemtype_of_itemspec: quadrant 3 low range");
+    }
+    {
+        uint16_t itemtype;
+        DM2_V1_SkprojectItemtypeOfItemspecReceipt receipt;
+        dm2_v1_skproject_get_itemtype_of_itemspec_actuator(0x1e2, &itemtype, &receipt);
+        CHECK(receipt.valid == 1 && itemtype == 0x02, "itemtype_of_itemspec: quadrant 3 0x1e0 range");
+    }
+
+    /* --- DM2_QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE tests --- */
+    {
+        uint8_t itemdb;
+        DM2_V1_SkprojectItemdbFromDistinctiveReceipt receipt;
+        dm2_v1_skproject_query_itemdb_from_distinctive_itemtype(0x05, &itemdb, &receipt);
+        CHECK(receipt.valid == 1, "itemdb_from_distinctive: spec 0x05 valid");
+    }
+    {
+        uint8_t itemdb;
+        DM2_V1_SkprojectItemdbFromDistinctiveReceipt receipt;
+        dm2_v1_skproject_query_itemdb_from_distinctive_itemtype(0x80, &itemdb, &receipt);
+        CHECK(receipt.valid == 1, "itemdb_from_distinctive: spec 0x80 valid");
+    }
+
     if (failed) {
         printf("%d failure(s)\n", failed);
         return 1;
