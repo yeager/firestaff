@@ -8,6 +8,13 @@
   authentic audio and a real V2.2 pack remain open in `CSB-REAL-STARTUP-HUD`
   and related CSB TODO items.
 
+- ✅ 2026-07-29 CSB V2 Prison-to-runtime regression coverage: extended the
+  real-data pointer probe to assert the source Prison command at 1x and 3x
+  for V1, V2.0, V2.1 and V2.2. The test also requires V2.2 to resolve to V2.1
+  when no complete reviewed CSB artpack is installed, while still reaching the
+  real runtime handoff. This prevents an unavailable modern pack from making
+  the selectable CSB startup path hang.
+
 - ✅ 2026-07-29 CSB PC3.4 `SWSHSND.C` archive-to-M11 binding. The archive
   materializer and selected-package loader now both recognize ReDMCSB's
   original source-style `SWSHSND.C` name in addition to documented
