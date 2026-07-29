@@ -5334,6 +5334,30 @@ static void test_skwin_core_symbol_batch_cycle10(void)
               "DM2_UPDATE_GLOB_VAR rejects bad op");
     }
 
+    /* DM2_QUERY_CLS1_FROM_RECORD maps record-type bits to cls1. */
+    {
+        DM2_V1_SkprojectQueryCls1Receipt cr;
+        uint8_t cls1 = 0;
+        CHECK(dm2_v1_skproject_query_cls1_from_record(
+                  0x0000u, &cls1, &cr) && cr.valid && cls1 == 0x0e,
+              "CLS1 type 0 -> 0x0e");
+        CHECK(dm2_v1_skproject_query_cls1_from_record(
+                  0x1000u, &cls1, &cr) && cr.valid && cls1 == 0x0f,
+              "CLS1 type 4 -> 0x0f");
+        CHECK(dm2_v1_skproject_query_cls1_from_record(
+                  0x2400u, &cls1, &cr) && cr.valid && cls1 == 0x14,
+              "CLS1 type 9 -> 0x14");
+        CHECK(dm2_v1_skproject_query_cls1_from_record(
+                  0x3c00u, &cls1, &cr) && cr.valid && cls1 == 0x0d,
+              "CLS1 type 15 -> 0x0d");
+        CHECK(!dm2_v1_skproject_query_cls1_from_record(
+                  0xffffu, &cls1, &cr) && cr.blocked_end_marker,
+              "CLS1 end marker blocked");
+        CHECK(!dm2_v1_skproject_query_cls1_from_record(
+                  0x3800u, &cls1, &cr) && cr.blocked_type_14_no_pool,
+              "CLS1 type 14 blocked without pool");
+    }
+
     /* DM2_GET_CREATURE_WEIGHT records a caller-resolved weight. */
     CHECK(dm2_v1_skproject_get_creature_weight(
               100u, &weight, &weight_receipt) &&

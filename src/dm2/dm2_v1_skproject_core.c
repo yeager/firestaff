@@ -11832,6 +11832,102 @@ int dm2_v1_skproject_update_glob_var(
     return 1;
 }
 
+/* SKULLWIN/dm2data.cpp:487 table1d3298 — record-type to cls1 mapping. */
+static const int8_t dm2_table1d3298[16] = {
+    0x0e, 0x18, (int8_t)0xff, (int8_t)0xff,
+    0x0f, 0x10, 0x11, 0x12,
+    0x13, 0x14, 0x15, (int8_t)0xff,
+    (int8_t)0xff, (int8_t)0xff, (int8_t)0xff, 0x0d
+};
+
+int dm2_v1_skproject_query_cls1_from_record(
+    uint16_t record_word,
+    uint8_t *out_cls1,
+    DM2_V1_SkprojectQueryCls1Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQueryCls1Receipt receipt;
+    uint16_t rtype;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_word = record_word;
+
+    if (record_word == 0xffffu) {
+        receipt.blocked_end_marker = 1;
+        receipt.cls1 = 0xff;
+        if (out_cls1) *out_cls1 = 0xff;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    rtype = (record_word & 0x3c00u) >> 10;
+    receipt.record_type = (uint8_t)rtype;
+    if (rtype == 14) {
+        receipt.blocked_type_14_no_pool = 1;
+        receipt.cls1 = 0xff;
+        if (out_cls1) *out_cls1 = 0xff;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.cls1 = (uint8_t)dm2_table1d3298[rtype];
+    receipt.valid = 1;
+    if (out_cls1) *out_cls1 = receipt.cls1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_query_cls1_from_record_ex(
+    uint16_t record_word,
+    const DM2_V1_RecordPoolSet *pools,
+    uint8_t *out_cls1,
+    DM2_V1_SkprojectQueryCls1Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQueryCls1Receipt receipt;
+    uint16_t rtype;
+    uint16_t rw = record_word;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_word = record_word;
+
+    while (rw != 0xffffu) {
+        rtype = (rw & 0x3c00u) >> 10;
+        receipt.record_type = (uint8_t)rtype;
+        if (rtype != 14) {
+            receipt.cls1 = (uint8_t)dm2_table1d3298[rtype];
+            receipt.valid = 1;
+            if (out_cls1) *out_cls1 = receipt.cls1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (!pools) {
+            receipt.blocked_type_14_no_pool = 1;
+            receipt.cls1 = 0xff;
+            if (out_cls1) *out_cls1 = 0xff;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        {
+            int thing_type = 0;
+            int thing_size = 0;
+            const uint8_t *rec = dm2_v1_dungeon_get_thing_record(
+                pools, rw, &thing_type, NULL, &thing_size);
+            if (!rec || thing_size < 4) {
+                receipt.blocked_type_14_no_pool = 1;
+                receipt.cls1 = 0xff;
+                if (out_cls1) *out_cls1 = 0xff;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            rw = (uint16_t)(rec[2] | (rec[3] << 8));
+        }
+    }
+    receipt.blocked_end_marker = 1;
+    receipt.cls1 = 0xff;
+    if (out_cls1) *out_cls1 = 0xff;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
 /* SKULLWIN/c_querydb.cpp:982 DM2_GET_CREATURE_WEIGHT — source-locked receipt
    for a caller-resolved creature weight.  The helper records the value and
    the source overweight threshold used by the lift-admission family. */

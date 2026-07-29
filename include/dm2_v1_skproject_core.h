@@ -9609,6 +9609,31 @@ int32_t dm2_v1_skproject_setup_memory_allocation_classify(
     void *ctx,
     DM2_V1_SkprojectSetupMemoryAllocationReceipt *out_receipt);
 
+/* SKULLWIN/c_record.cpp:454 DM2_QUERY_CLS1_FROM_RECORD — extract record-type
+   class-1 from a 16-bit record word.  Bits 10-13 index table1d3298[16].
+   Type 14 chains through record word[2]; chain-follow requires record_pool
+   access (not performed here — returns 0xff for type 14 without pool). */
+typedef struct {
+    int valid;
+    uint16_t record_word;
+    uint8_t record_type;
+    uint8_t cls1;
+    int blocked_end_marker;
+    int blocked_type_14_no_pool;
+} DM2_V1_SkprojectQueryCls1Receipt;
+
+int dm2_v1_skproject_query_cls1_from_record(
+    uint16_t record_word,
+    uint8_t *out_cls1,
+    DM2_V1_SkprojectQueryCls1Receipt *out_receipt);
+
+/* SKULLWIN/c_record.cpp:454 — version with record-pool for type-14 chain. */
+int dm2_v1_skproject_query_cls1_from_record_ex(
+    uint16_t record_word,
+    const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t *out_cls1,
+    DM2_V1_SkprojectQueryCls1Receipt *out_receipt);
+
 typedef struct DM2_V1_SkprojectDtorMemoryAllocationReceipt {
     int8_t was_allocated;
     int8_t freed;

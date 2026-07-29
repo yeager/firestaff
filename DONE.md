@@ -1,3 +1,8 @@
+- ✅ 2026-07-29 DM2 record classifier: DM2_QUERY_CLS1_FROM_RECORD extracts
+  record-type class-1 via table1d3298[16] lookup on bits 10-13 of record word.
+  Both simple version and _ex version with record-pool type-14 chain-follow.
+  Tests added. Audit TSV updated (1 symbol). Source: skproject
+  c_record.cpp:454-475, dm2data.cpp:487-490.
 - ✅ 2026-07-29 DM2 actuator infrastructure: DM2_INVOKE_MESSAGE creates 0x04
   timers with actor encoding, DM2_INVOKE_ACTUATOR extracts record w4/w6 fields
   for delay/target/action. DM2_UPDATE_GLOB_VAR implements 7 operation modes
