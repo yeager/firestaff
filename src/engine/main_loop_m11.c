@@ -3089,7 +3089,15 @@ static void m11_capture_user_screenshot(const M11_GameViewState* gameView,
     if (menuState && menuState->settings.screenshotPath[0] != '\0') {
         outputDir = menuState->settings.screenshotPath;
     }
-    if (m11_game_view_is_dm1(gameView) &&
+    /* TITLE.C/ENTRANCE.C have already expanded their source-owned indexed
+     * page through a phase-specific VGA palette. Capturing the raw M11
+     * framebuffer here would reinterpret C001--C005 with the live dungeon
+     * palette, so the saved CSB screenshot would not match the window. */
+    if (M11_GameView_GetPresentationSpecialPalette(gameView) >= 0) {
+        captured = M11_Screenshot_CapturePresentedRGBA(outputDir,
+                                                        outPath,
+                                                        (int)sizeof(outPath));
+    } else if (m11_game_view_is_dm1(gameView) &&
         gameView->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
         /* V2.1 only enlarges DM1's original indexed graphics.  Do not turn
          * an asset-free fallback frame into a user-facing capture receipt. */

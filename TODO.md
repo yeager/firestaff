@@ -1046,6 +1046,11 @@ that its exact runtime path is not already source-locked and tested.
    applied; the prior zeroed state could select absent frame slots on legacy
    fallback paths. The focused viewport and real Prison HUD regressions pass,
    as does the complete CSB lane (109/109).
+   2026-07-30: CSB user screenshots now capture the renderer's already
+   presented RGBA image while C001-C005 owns a special palette. This prevents
+   a raw indexed screenshot from reinterpreting PRESENTS/CHAOS/STRIKES or
+   Entrance with the later dungeon palette. V2.0, V2.1 and V2.2 startup
+   capture regressions remain green.
    2026-07-29: local PC3.4 runtime captures exercised V1, V2.0, V2.1, and
    V2.2 at the completed Entrance page. V1/V2.0 preserve the source page,
    V2.1 uses the expected upscale path, and V2.2 falls back fail-closed to

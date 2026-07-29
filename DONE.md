@@ -43082,3 +43082,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   tables instead of starting the F0128 frame with zeroed legacy slots.
   Verification: `csb_v1_boot_viewport_render_gate`,
   `csb_v1_m11_prison_runtime_hud_pc34`, and `ctest -L csb` (109/109).
+
+- ✅ 2026-07-30 CSB special-palette screenshot fidelity: F12 now captures
+  the renderer's presented RGBA frame during C001-C005 startup phases, so a
+  user screenshot has the same source-owned palette as the window rather
+  than a later dungeon palette. Verification: V2.0/V2.1/V2.2 real-data
+  startup capture regressions.
