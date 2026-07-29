@@ -1451,6 +1451,11 @@ that its exact runtime path is not already source-locked and tested.
     sample is absent and never borrows DM1 audio. Local CSB data presently
     lacks this optional source file, so a real-media playback capture and
     entrance music decoder remain open.
+    2026-07-30: a skip-safe, real-PC3.4 title/Entrance regression now captures
+    all four source stages and verifies their distinct visible palette/raster
+    signatures (PRESENTS, FTL, CHAOS STRIKES BACK, Prison/Entrance). It catches
+    a black/flat presentation or palette collapse without using replacement
+    art. Original audio media and packaged-app capture remain open.
 26. **CSB-ENTRANCE-DOOR-CREDITS:** Complete C002-C005 closed/opening entrance,
     credits, prompts, input timing, palette, sound, and runtime handoff from
     real CSBgraphics/package data.

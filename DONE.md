@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 CSB title/Entrance visual contract: added a real-PC3.4,
+  skip-safe CTest which runs the full source startup cadence and validates the
+  visible palette/raster signatures for PRESENTS, FTL, CHAOS STRIKES BACK and
+  Prison/Entrance. This catches title blackouts, palette collapse and flat
+  Entrance output without using substitute graphics.
+
 - ✅ 2026-07-30 CSB Atari original archive save regression: CTest now extracts
   the genuine `HardDisk/2009-02-22 PP/MINI.DAT` member from a locally supplied
   original CSB Atari archive and validates Firestaff's big-endian decode plus

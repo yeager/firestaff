@@ -34580,6 +34580,15 @@ if(BUILD_TESTING)
             TIMEOUT 20
         )
         add_test(
+            NAME csb_v1_title_entrance_visual_contract
+            COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_title_entrance_visual_contract.sh"
+                "$<TARGET_FILE:firestaff>"
+        )
+        set_tests_properties(csb_v1_title_entrance_visual_contract PROPERTIES
+            LABELS "tier2;csb;v1;startup;title;entrance;real_data;skip_safe"
+            TIMEOUT 30
+        )
+        add_test(
             NAME csb_v22_source_artpack_runtime
             COMMAND sh
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v22_source_artpack_runtime.sh"
