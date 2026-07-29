@@ -1023,6 +1023,24 @@ static int m12_config_data_dir_is_placeholder(const char* path) {
     return sawDot;
 }
 
+/* Configuration is a durable user preference, unlike the command-line data
+ * resolver.  Never let FIRESTAFF_DATA="." turn into a persisted directory:
+ * use the normal per-user originals root when the candidate is only a native
+ * dialog/current-directory token. */
+static int m12_config_resolve_persisted_data_dir(char* out, size_t outSize) {
+    const char* envData;
+    if (!out || outSize == 0U) {
+        return 0;
+    }
+    envData = getenv("FIRESTAFF_DATA");
+    if (envData && envData[0] != '\0' &&
+        !m12_config_data_dir_is_placeholder(envData)) {
+        m12_copy_string(out, outSize, envData);
+        return 1;
+    }
+    return FSP_GetDefaultOriginalsDir(out, outSize);
+}
+
 int M12_Config_Save(const M12_Config* config) {
     char parentDir[M12_CONFIG_PATH_CAPACITY];
     char tmpPath[M12_CONFIG_PATH_CAPACITY + 16];
@@ -1035,9 +1053,8 @@ int M12_Config_Save(const M12_Config* config) {
      * directory. Config writes are the final persistence boundary: never
      * serialize that placeholder, even when it entered outside the dialog. */
     if (m12_config_data_dir_is_placeholder(config->dataDir)) {
-        if (!FSP_ResolveDataDir(persistedDataDir,
-                                sizeof(persistedDataDir),
-                                NULL)) {
+        if (!m12_config_resolve_persisted_data_dir(persistedDataDir,
+                                                   sizeof(persistedDataDir))) {
             return 0;
         }
     } else {
@@ -1274,6 +1291,7 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
     } else {
         envDataDir = getenv("FIRESTAFF_DATA");
         if (envDataDir && envDataDir[0] != '\0' &&
+            !m12_config_data_dir_is_placeholder(envDataDir) &&
             strcmp(config->dataDir, envDataDir) != 0) {
             m12_copy_string(config->dataDir, sizeof(config->dataDir), envDataDir);
             shouldSave = 1;
@@ -1283,9 +1301,11 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
      * ".". It is not a durable game-data selection, so repair it only when
      * no explicit command-line or environment override owns the path. */
     if ((!dataDirOverride || dataDirOverride[0] == '\0') &&
-        (!envDataDir || envDataDir[0] == '\0') &&
+        (!envDataDir || envDataDir[0] == '\0' ||
+         m12_config_data_dir_is_placeholder(envDataDir)) &&
         m12_config_data_dir_is_placeholder(config->dataDir)) {
-        FSP_ResolveDataDir(config->dataDir, sizeof(config->dataDir), NULL);
+        m12_config_resolve_persisted_data_dir(config->dataDir,
+                                              sizeof(config->dataDir));
         shouldSave = 1;
     }
     if (shouldSave) {

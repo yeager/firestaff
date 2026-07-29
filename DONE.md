@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 Start-menu data-folder persistence: `FIRESTAFF_DATA=.` is
+  now treated as the invalid macOS dialog/current-directory token at the
+  configuration boundary. The launcher keeps a physical selected folder and
+  falls back to the per-user originals root rather than displaying or saving
+  `.`. Verification: `m12_data_dir_cancel` covers dialog, save and reload.
+
 - ✅ 2026-07-30 CSB PC3.4 runtime sound volume: the complete F0064/F0065
   event path now retains ReDMCSB's original three-level distance volume from
   `SOUND_DATA` through M11 to SDL3, before the user's SFX gain. It keeps the

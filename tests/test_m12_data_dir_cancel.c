@@ -26,6 +26,9 @@
 static int test_setenv(const char* name, const char* value) {
     return _putenv_s(name, value) == 0;
 }
+static int test_unsetenv(const char* name) {
+    return _putenv_s(name, "") == 0;
+}
 static char* test_mkdtemp(char* templ) {
     char* marker = strstr(templ, "XXXXXX");
     int i;
@@ -44,6 +47,9 @@ static char* test_mkdtemp(char* templ) {
 #define TEST_CHDIR(path) chdir(path)
 static int test_setenv(const char* name, const char* value) {
     return setenv(name, value, 1) == 0;
+}
+static int test_unsetenv(const char* name) {
+    return unsetenv(name) == 0;
 }
 static char* test_mkdtemp(char* templ) {
     return mkdtemp(templ);
@@ -620,6 +626,28 @@ static void check_dot_config_migrates_to_default_data_directory(void) {
     }
 }
 
+static void check_dot_environment_never_persists_as_data_directory(void) {
+    M12_Config config;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char expected[M12_ASSET_DATA_DIR_CAPACITY];
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(FSP_GetDefaultOriginalsDir(expected, sizeof(expected)));
+    CHECK(test_setenv("FIRESTAFF_DATA", "."));
+    if (failures) {
+        (void)test_unsetenv("FIRESTAFF_DATA");
+        return;
+    }
+    M12_Config_SetDefaults(&config);
+    CHECK(strcmp(config.dataDir, ".") == 0);
+    CHECK(M12_Config_Save(&config) == 1);
+    M12_Config_Load(&config, NULL);
+    CHECK(strcmp(config.dataDir, expected) == 0);
+    CHECK(!config_persisted_dot_data_dir(M12_Config_GetPath(&config)));
+    CHECK(test_unsetenv("FIRESTAFF_DATA"));
+}
+
 static void check_active_scan_renders_progress_bar(void) {
     M12_StartupMenuState state;
     const int width = M12_ModernMenu_NativeWidth();
@@ -663,6 +691,7 @@ int main(void) {
     check_default_data_dir_scans_asynchronously();
     check_start_menu_promotes_saved_game_leaf_to_parent();
     check_dot_config_migrates_to_default_data_directory();
+    check_dot_environment_never_persists_as_data_directory();
     check_active_scan_renders_progress_bar();
 
     if (failures) {
