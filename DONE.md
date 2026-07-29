@@ -43153,3 +43153,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   action surfaces do. The real-save M11 Prison regression forces the retained
   M11 party empty and proves the source spell panel still draws from the
   actual CSB GAMEBLOCK champion state.
+
+- ✅ 2026-07-30 CSB GAMEBLOCK spell-panel input: C100 now refreshes the CSB
+  runtime party mirror before CASTER.C resolves the source caster. The same
+  real-save regression proves that an empty stale M11 party no longer blocks
+  a valid mouse-open request.

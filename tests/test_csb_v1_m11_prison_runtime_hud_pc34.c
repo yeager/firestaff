@@ -127,6 +127,13 @@ int main(void)
         }
         CHECK(c009_nonblack > 0,
               "CSB spell panel uses fresh GAMEBLOCK party mirror, not stale M11 party");
+        view.spellPanelOpen = 0;
+        view.dm1SpellCasting.magicCasterIndex = -1;
+        CHECK(M11_GameView_HandlePointerButton(&view, 234, 43, 0x0002) ==
+                  M11_GAME_INPUT_REDRAW &&
+                  view.world.party.championCount == 1 &&
+                  view.spellPanelOpen,
+              "CSB C100 refreshes GAMEBLOCK party before opening the spell panel");
         M11_GameView_Shutdown(&view);
         if (failures) return 1;
         puts("PASS: real Atari MINI.DAT reaches live M11 CSB HUD");

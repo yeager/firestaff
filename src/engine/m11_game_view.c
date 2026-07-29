@@ -8582,6 +8582,8 @@ static int m11_build_dm1_hoc_current_front_mirror_runtime_decision(
 static int m11_front_cell_has_live_f0115_floor_item_request(
     const M11_GameViewState* state);
 static int m11_source_is_csb(const M11_GameViewState* state);
+static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
+                                                 const void *boot_profile);
 static int m11_get_front_cell(const M11_GameViewState* state, struct M11_ViewportCell* outCell);
 static int m11_toggle_front_door(M11_GameViewState* state);
 static int m11_apply_tick(M11_GameViewState* state,
@@ -11359,6 +11361,12 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
         state->showDebugHUD || state->inventoryPanelActive ||
         !m11_v1_chrome_mode_enabled(state)) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    /* CASTER.C resolves the live party before it opens C009.  CSB's
+     * authoritative party lives in its GAMEBLOCK runtime mirror, so do not
+     * let an older retained M11 copy make a valid source spell box inert. */
+    if (m11_source_is_csb(state) && state->csbBootProfile) {
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
     }
     parent = dm1_v1_spell_area_click_rect_pc34();
     if (!m11_point_in_rect(x, y, parent.x, parent.y, parent.w, parent.h)) {

@@ -1491,7 +1491,8 @@ that its exact runtime path is not already source-locked and tested.
     source-owned CSBWin caster/cast binding rather than the DM1 spell
     executor. 2026-07-30: C009/C011 now consumes the current CSB GAMEBLOCK
     party mirror, matching the C028/action consumers. A stale retained M11
-    party can no longer black out a valid CSB spell panel.
+    party can no longer black out a valid CSB spell panel or reject its C100
+    mouse input before CASTER.C can select the source caster.
 28. **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,
     pits, floor/ceiling ornaments, creatures, items, projectiles, explosions,
     and custom backgrounds through real PC34 asset ownership.
