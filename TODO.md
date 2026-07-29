@@ -979,6 +979,11 @@ that its exact runtime path is not already source-locked and tested.
    fallback. A direct local PC3.4 V1 Prison capture is visibly bright again;
    broader normal-party HUD/light consumption and packaged app capture remain
    open.
+   2026-07-29: V2.2 now resolves a symlinked CSB data directory to its
+   physical package root before locating the adjacent reviewed artpack. This
+   keeps the catalog and finished-material gate on the same external volume;
+   `~/.firestaff/data/csb` may therefore be a link without silently selecting
+   an unrelated local manifest and falling back to V2.1.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

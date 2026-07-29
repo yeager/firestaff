@@ -123,6 +123,26 @@ char* FSP_NormalizeSeparators(char* path) {
     return path;
 }
 
+int FSP_ResolvePhysicalPath(char* out, size_t outSize, const char* path) {
+    if (!out || outSize == 0U || !path || path[0] == '\0') {
+        return 0;
+    }
+#if defined(_WIN32)
+    {
+        DWORD written = GetFullPathNameA(path, (DWORD)outSize, out, NULL);
+        return written > 0U && (size_t)written < outSize;
+    }
+#else
+    {
+        char resolved[FSP_PATH_MAX];
+        if (!realpath(path, resolved)) {
+            return 0;
+        }
+        return fsp_copy(out, outSize, resolved);
+    }
+#endif
+}
+
 /* ── Filesystem queries ─────────────────────────────────────────────── */
 
 int FSP_PathExists(const char* path) {

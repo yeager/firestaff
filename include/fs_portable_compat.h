@@ -42,6 +42,12 @@ int FSP_ParentDir(char* out, size_t outSize, const char* path);
  */
 char* FSP_NormalizeSeparators(char* path);
 
+/* Resolve an existing path through filesystem links into a physical path.
+ * This is needed when a game-data directory is a symlink and companion
+ * assets are intentionally stored beside the link target. Returns 1 on
+ * success, 0 when the path cannot be resolved. */
+int FSP_ResolvePhysicalPath(char* out, size_t outSize, const char* path);
+
 /* ── Filesystem queries ─────────────────────────────────────────────── */
 
 /*

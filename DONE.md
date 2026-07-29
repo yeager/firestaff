@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 CSB V2.2 symlinked package/artpack resolution: CSB's modern
+  catalog and finished-material gate now resolve an existing game-data
+  symlink before deriving the sibling `assets/csb/modern` directory. A
+  standard `~/.firestaff/data/csb` link to the reviewed external package no
+  longer sees a stale local manifest and incorrectly falls back to V2.1. The
+  V2.2 real-data runtime probe passes without data-root environment overrides
+  and proves source-artpack cells are painted.
+
 - ✅ 2026-07-29 CSB Prison MAP.C palette handoff: the live M11 bridge now
   retains the current original DUNGEON.DAT MAP.C difficulty nibble. This
   restores ReDMCSB PANEL.C F0337's source rule that a zero-difficulty map is

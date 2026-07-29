@@ -223,10 +223,19 @@ static void __attribute__((unused)) csb_v22_skip_to_next_object (FILE* fp) {
  *
  * Source: FSP_ParentDir finds the last separator and truncates there. */
 void csb_v22_set_manifest_path(const char* dataDir) {
+    char resolved_data_dir[FSP_PATH_MAX];
+    const char *asset_data_dir = dataDir;
     if (!dataDir || dataDir[0] == '\0') {
         g_v22_manifest_path[0] = '\0';
         csb_v22_famg_set_manifest_path(NULL);
         return;
+    }
+    /* A launcher may keep ~/.firestaff/data/csb as a symlink to a larger
+     * external volume. Resolve it before walking to the sibling assets root,
+     * otherwise the catalog and the source package refer to different media. */
+    if (FSP_ResolvePhysicalPath(resolved_data_dir,
+                                sizeof(resolved_data_dir), dataDir)) {
+        asset_data_dir = resolved_data_dir;
     }
     /* Build: ~/.firestaff/assets/csb/modern/modern_asset_manifest.json
      * Walk up two levels from dataDir (e.g. data/csb -> data -> ~/.firestaff)
@@ -235,11 +244,11 @@ void csb_v22_set_manifest_path(const char* dataDir) {
     char parent2[FSP_PATH_MAX];
     char assetsRoot[FSP_PATH_MAX];
     char modernDir[FSP_PATH_MAX];
-    if (!FSP_ParentDir(parent1, sizeof(parent1), dataDir) ||
+    if (!FSP_ParentDir(parent1, sizeof(parent1), asset_data_dir) ||
         !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
         /* Fallback: try treating dataDir as already being ~/.firestaff
          * (single-component dataDir from a custom setup). */
-        FSP_JoinPath(assetsRoot, sizeof(assetsRoot), dataDir, "assets");
+        FSP_JoinPath(assetsRoot, sizeof(assetsRoot), asset_data_dir, "assets");
     } else {
         FSP_JoinPath(assetsRoot, sizeof(assetsRoot), parent2, "assets");
     }
@@ -249,7 +258,7 @@ void csb_v22_set_manifest_path(const char* dataDir) {
                  modernDir, "modern_asset_manifest.json");
     /* Keep the public catalog API and the runtime admission gate on the
      * same manifest root. A partial catalog must never expose V2.2. */
-    csb_v22_famg_set_manifest_path(dataDir);
+    csb_v22_famg_set_manifest_path(asset_data_dir);
 }
 
 const char* csb_v22_get_manifest_path(void) {

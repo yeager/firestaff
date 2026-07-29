@@ -262,9 +262,15 @@ static void csb_v22_famg_extract_fields_from_buf(CSB_V22_FamgSlotRaw* out) {
 
 /* ── Path resolution ───────────────────────────────────────────── */
 void csb_v22_famg_set_manifest_path(const char* dataDir) {
+    char resolved_data_dir[FSP_PATH_MAX];
+    const char *asset_data_dir = dataDir;
     if (!dataDir || dataDir[0] == '\0') {
         g_manifest_path[0] = '\0';
         return;
+    }
+    if (FSP_ResolvePhysicalPath(resolved_data_dir,
+                                sizeof(resolved_data_dir), dataDir)) {
+        asset_data_dir = resolved_data_dir;
     }
     /* ~/.firestaff/data/csb -> ~/.firestaff -> assets/csb/modern/modern_asset_manifest.json
      * Walks two parents up from dataDir, same pattern as
@@ -273,9 +279,9 @@ void csb_v22_famg_set_manifest_path(const char* dataDir) {
     char parent2[FSP_PATH_MAX];
     char assets_root[FSP_PATH_MAX];
     char csb_modern_dir[FSP_PATH_MAX];
-    if (!FSP_ParentDir(parent1, sizeof(parent1), dataDir) ||
+    if (!FSP_ParentDir(parent1, sizeof(parent1), asset_data_dir) ||
         !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
-        FSP_JoinPath(assets_root, sizeof(assets_root), dataDir, "assets");
+        FSP_JoinPath(assets_root, sizeof(assets_root), asset_data_dir, "assets");
     } else {
         FSP_JoinPath(assets_root, sizeof(assets_root), parent2, "assets");
     }
