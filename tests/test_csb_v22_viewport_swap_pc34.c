@@ -119,9 +119,6 @@ static void test_asset_id_mapping_walls_floors(void) {
     CHECK(strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FLOOR_PIT),
                  "floor_pit_01") == 0,
           "FLOOR_PIT -> floor_pit_01");
-    CHECK(strcmp(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FLOOR_STAIRS_UP),
-                 "floor_stairs_01") == 0,
-          "FLOOR_STAIRS_UP -> floor_stairs_01");
 }
 
 static void test_asset_id_mapping_creatures_fields(void) {
@@ -148,6 +145,13 @@ static void test_asset_id_mapping_creatures_fields(void) {
           "VAULTED CEILING stays source-owned rather than borrowing plain-ceiling art");
     CHECK(csb_v22_swap_category_for_shape(CSB_V22_SWAP_SHAPE_CEILING_VAULTED) == NULL,
           "VAULTED CEILING has no modern category before a reviewed projection");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FLOOR_MOSSY) == NULL,
+          "MOSSY FLOOR stays source-owned rather than borrowing cracked-floor art");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FLOOR_STAIRS_UP) == NULL &&
+          csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FLOOR_STAIRS_DOWN) == NULL,
+          "STAIRS stay source-owned until orientation-specific projections exist");
+    CHECK(csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_CREATURE_PROJECTILE) == NULL,
+          "CREATURE PROJECTILE stays source-owned rather than borrowing creature art");
 }
 
 static void test_asset_id_mapping_csb_only_shapes(void) {

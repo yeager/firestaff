@@ -69,10 +69,7 @@ static const CSB_V22_SwapShapeMapping kCSBV22SwapMappingTable[] = {
     /* Floors */
     { CSB_V22_SWAP_SHAPE_FLOOR_PLAIN,       "floor_shapes", "floor_plain_01" },
     { CSB_V22_SWAP_SHAPE_FLOOR_CRACKED,     "floor_shapes", "floor_cracked_01" },
-    { CSB_V22_SWAP_SHAPE_FLOOR_MOSSY,       "floor_shapes", "floor_cracked_01" }, /* no mossy variant in v1.4.0 */
     { CSB_V22_SWAP_SHAPE_FLOOR_PIT,         "floor_shapes", "floor_pit_01" },
-    { CSB_V22_SWAP_SHAPE_FLOOR_STAIRS_UP,   "floor_shapes", "floor_stairs_01" },
-    { CSB_V22_SWAP_SHAPE_FLOOR_STAIRS_DOWN, "floor_shapes", "floor_stairs_01" },
     { CSB_V22_SWAP_SHAPE_FLOOR_DOOR,        "door_shapes",  "door_iron_portcullis_01" },
 
     /* Ceilings */
@@ -83,7 +80,6 @@ static const CSB_V22_SwapShapeMapping kCSBV22SwapMappingTable[] = {
     /* Creatures. Item variants intentionally have no mapping: V1 owns their
      * pixels until a reviewed CSB item-art family is available. */
     { CSB_V22_SWAP_SHAPE_CREATURE,             "creature_shapes", "creature_chaos_fiend_01" },
-    { CSB_V22_SWAP_SHAPE_CREATURE_PROJECTILE,  "creature_shapes", "creature_chaos_fiend_01" },
 
     /* Fields (CSB-only routing) */
     { CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER,     "floor_shapes", "field_teleporter_01" },

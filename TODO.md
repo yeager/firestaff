@@ -133,7 +133,9 @@ an integration build pass.
   source V1 until it has an equivalent receipt. 2026-07-29: the dormant
   per-cell mapper no longer aliases vaulted ceilings to plain ceilings or
   fluxcages to chaos rifts. Both are explicitly source-V1 until their own
-  F0128 projection, palette and timing receipts exist.
+  F0128 projection, palette and timing receipts exist. The same rule now
+  covers mossy floors, both stair directions and creature-projectile cells;
+  none may borrow cracked-floor, generic-stair or creature pixels.
 
 - **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Open 2026-07-29. The live F0128
   renderer owns V2.2 material selection and retains the authenticated original

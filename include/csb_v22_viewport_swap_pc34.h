@@ -33,13 +33,14 @@
  * Per-cell asset_id mapping (first cut, conservative):
  *   Walls (any)                 -> wall_dungeon_01
  *   Floor PLAIN                 -> floor_plain_01
- *   Floor CRACKED/MOSSY         -> floor_cracked_01
+ *   Floor CRACKED               -> floor_cracked_01
+ *   Floor MOSSY                 -> source V1 until separately projected
  *   Floor PIT                   -> floor_pit_01
- *   Stairs (up/down)            -> floor_stairs_01
+ *   Stairs (up/down)            -> source V1 until separately projected
  *   Ceiling PLAIN               -> ceiling_plain_01
  *   Ceiling VAULTED             -> source V1 until separately projected
- *   Creature (any)              -> creature_chaos_fiend_01
- *   Item (floor/projectile)     -> creature_chaos_fiend_01
+ *   Creature                    -> creature_chaos_fiend_01
+ *   Creature projectile/item    -> source V1 until separately projected
  *   Door                        -> door_iron_portcullis_01
  *   Field TELEPORTER            -> field_teleporter_01
  *   Field CHAOS_RIFT            -> field_chaos_rift_01

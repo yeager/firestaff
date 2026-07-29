@@ -8,7 +8,9 @@
   fluxcages no longer borrow plain-ceiling or chaos-rift V2.2 assets from
   the dormant per-cell mapper. They remain on their original V1 F0128 route
   until separately reviewed material, palette, timing and projection evidence
-  exists. The focused V2.2 viewport-swap regression proves both fail-closed
+  exists. Mossy floors, stairs and creature-projectile cells now follow the
+  same rule rather than borrowing cracked-floor, generic-stair or creature
+  assets. The focused V2.2 viewport-swap regression proves these fail-closed
   decisions.
 
 - ✅ 2026-07-29 CSB Atari/Amiga `MINI.DAT` launcher Resume and live HUD:
