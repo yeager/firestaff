@@ -883,6 +883,11 @@ that its exact runtime path is not already source-locked and tested.
    retain exact original palette indices and authenticated source capture.
    The isolated real-PC3.4 V2.0 regression enables both controls and records
    all four startup phases; V2.1 EPX capture remains separately covered.
+   2026-07-29: the complete source-derived 29-route CSB V2.2 artpack now has
+   a positive real-data runtime check: it must remain V2.2 (`presentationMode=3`)
+   through the original Prison command and reach map 0 at `(9,0,2)`. Hosts
+   without that reviewed local pack skip the optional check and retain the
+   existing V2.1 fallback coverage.
    CSB presentation-mode resolution uses the CSB manifest availability API,
    not DM1's global modern-asset state.
    2026-07-29: M11 now exports TITLE.C source step 21 as the distinct full

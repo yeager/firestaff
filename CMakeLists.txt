@@ -34437,6 +34437,16 @@ if(BUILD_TESTING)
             LABELS "tier1;csb;v20;startup;presentation;real_data;skip_safe"
             TIMEOUT 20
         )
+        add_test(
+            NAME csb_v22_source_artpack_runtime
+            COMMAND sh
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v22_source_artpack_runtime.sh"
+                "$<TARGET_FILE:firestaff>"
+        )
+        set_tests_properties(csb_v22_source_artpack_runtime PROPERTIES
+            LABELS "tier1;csb;v22;startup;presentation;real_data;skip_safe"
+            TIMEOUT 20
+        )
     endif()
 
     # ── CSB V1 PC 3.4 quickplay/startup dungeon-handle probe ─────

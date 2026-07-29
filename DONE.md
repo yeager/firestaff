@@ -5,6 +5,12 @@
   V2.0 real-PC3.4 executable regression records all four source captures;
   the V2.1 EPX capture regression also passes.
 
+- ✅ 2026-07-29 CSB V2.2 source-artpack runtime handoff: the complete,
+  source-derived 29-route PC3.4 pack is proven to remain on presentation mode
+  3 through the original Prison command and reach runtime map 0 at `(9,0,2)`.
+  The regression is optional for hosts without the reviewed local pack; the
+  existing V2.1 fallback regression remains mandatory.
+
 - ✅ 2026-07-29 CSB startup session-contract repair: corrected the standalone
   C001 fixture to the real 320x153 title surface, TITLE.C's initial 16x4
   CHAOS zoom rectangle, and the separate step-21 hold phase. The contract
