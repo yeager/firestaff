@@ -145,7 +145,7 @@ static void test_throw_transaction(void)
                          0x0686u, 1u, 0x0686u, 8u, 0x0686u, 50u,
                          0x0686u, 2u, 0x0f4bu };
     uint16_t indirect[] = { 0x168bu };
-    uint32_t params[] = { 89u, 7u, 0xff80u, 0x20u, 0x40u, 1u, 8u, 50u, 2u, 0u, 0u };
+    uint32_t params[] = { 89u, 7u, 2u, 50u, 8u, 1u, 0x40u, 0x20u, 0xff80u, 0u, 0u };
     CSB_V1_ChaosMagicState state; CSB_V1_DSAImportedAction action;
     CSB_V1_CSBWinDSAStackContext context; CSB_V1_CSBWinDSAStackExecution execution;
     ThrowStore store;
@@ -162,7 +162,10 @@ static void test_throw_transaction(void)
     configure_action(&action, indirect, 1); context.parameters = params;
     context.parameter_count = (int)(sizeof(params) / sizeof(params[0])); store.calls = 0;
     check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(&state, action.dsa_id,
-              action.state_index, 0, &context, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 1,
+              action.state_index, 0, &context, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              store.calls == 1 && store.v[0] == 0xff80u && store.v[1] == 0x20u &&
+              store.v[2] == 0x40u && store.v[3] == 1u && store.v[4] == 8u &&
+              store.v[5] == 50u && store.v[6] == 2u,
           "STKOP_I_Throw expands through the same source-owned transaction");
 }
 
@@ -1042,6 +1045,36 @@ static void test_throw_runtime_magic_owner(void)
           "STKOP_Throw binds original FIREBALL Thing to CSB F0810 and timeline");
 }
 
+static void test_indirect_throw_runtime_magic_owner(void)
+{
+    uint8_t raw[80] = { 0 };
+    uint16_t words[] = { 0x168bu };
+    int parameters[] = { 89, 7, 2, 50, 8, 1, 0, 0, 0xff80, 0, 0 };
+    CSB_V1_DungeonData dungeon; CSB_V1_RuntimeProfile profile;
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner; CSB_V1_DSAImportedAction action;
+    memset(&dungeon, 0, sizeof(dungeon)); raw[60] = 0u; raw[61] = 0u; raw[64] = 0x10u;
+    put_le16(raw, 66u, 0xfffeu);
+    dungeon.raw_data = raw; dungeon.raw_size = (int)sizeof(raw); dungeon.level_count = 1;
+    dungeon.level_widths[0] = 1; dungeon.level_heights[0] = 1; dungeon.level_offsets[0] = 64;
+    dungeon.square_bytes = 1; dungeon.square_first_thing_base = 66; dungeon.square_first_thing_count = 1;
+    csb_v1_runtime_init(&profile, NULL); profile.dungeon_handle = &dungeon;
+    profile.csbwin_extended_features_valid = 1;
+    configure_action(&action, words, (int)(sizeof(words) / sizeof(words[0])));
+    profile.csbwin_extended_dsa_state.imported_actions = &action;
+    profile.csbwin_extended_dsa_state.imported_action_count = 1;
+    memset(&runner, 0, sizeof(runner)); runner.programs = &profile.csbwin_extended_dsa_state;
+    runner.dsa_id = action.dsa_id; runner.state_index = action.state_index;
+    check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+              &profile, &runner, &action, parameters,
+              (int)(sizeof(parameters) / sizeof(parameters[0])), NULL) == 1 &&
+              profile.projectiles.count == 1 &&
+              profile.projectiles.entries[0].projectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
+              profile.projectiles.entries[0].direction == 1 &&
+              profile.projectiles.entries[0].kineticEnergy == 8 &&
+              profile.projectiles.entries[0].attack == 50,
+          "STKOP_I_Throw binds the parameter-owned FIREBALL to CSB F0810");
+}
+
 static void test_indirect_local_variable_char_store(void)
 {
     /* CSBWin DSA.cpp EX_AMPERSAND I_Indirect format. P3=count, P4=DSAVARS
@@ -1241,6 +1274,7 @@ int main(void)
     test_throw_transaction();
     test_add_runtime_cell_owner();
     test_throw_runtime_magic_owner();
+    test_indirect_throw_runtime_magic_owner();
     test_copyteleporter_runtime_receipt();
     test_teleport_party_runtime_receipt();
     test_textfetch_textsay_runtime_binding();

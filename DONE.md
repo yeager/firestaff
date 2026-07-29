@@ -42260,3 +42260,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Accepted `ThrowMissile` work publishes the candidate F0810 projectile and
   its first move event atomically, while a rejected action leaves live state
   unchanged. The focused FIREBALL regression and `ctest -L csb` pass 98/98.
+- ✅ 2026-07-29 CSBWin DSA indirect `THROW` source order: the runtime
+  regression now uses CSBWin's reverse `INDIRECT` stack payload and proves
+  `I_THROW` reaches the same F0810 FIREBALL/timeline owner as direct `THROW`.

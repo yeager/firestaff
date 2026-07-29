@@ -1049,8 +1049,9 @@ that its exact runtime path is not already source-locked and tested.
     follow-up admits opcode 61 to the authenticated core verifier and
     atomically publishes the candidate F0810 slot plus first move event only
     after complete source-action acceptance. The focused FIREBALL runtime
-    regression and complete CSB CTest lane pass; remaining DSA families stay
-    open under this item.
+    regression covers both direct and `I_THROW` parameter-stack order, and
+    the complete CSB CTest lane passes; remaining DSA families stay open under
+    this item.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.
