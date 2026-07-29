@@ -43019,3 +43019,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   A failed v2.0 or v2.1 production-loader round-trip can therefore no longer
   pass CTest merely because no user-staged `.csbsave` exists. Verified by
   `firestaff_csb_v1_save_export_import_probe` (16/16 checks).
+
+- ✅ 2026-07-29 CSB PC3.4 runtime audio event ordering: completed SOUND.C
+  F0064 immediate plays and F0065 pending flushes now retain a bounded,
+  source-ordered sequence for M11. Multiple valid sound events between host
+  synchronizations each reach the authenticated `GRAPHICS.DAT` PCM transport;
+  an expired history fails closed rather than inventing a marker. Verified by
+  `csb_v1_audio_runtime_pc34_compat` (64 checks) and the PC3.4 transport
+  regression.

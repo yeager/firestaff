@@ -1446,6 +1446,12 @@ that its exact runtime path is not already source-locked and tested.
     live M11 profile-sync boundary now consumes both F0064 immediate and
     F0065 delayed completed plays once, so keyboard and pointer routes reach
     that authenticated transport rather than only updating CSB runtime state.
+    2026-07-29: the source runtime now retains a bounded, ordered completed-
+    play history. M11 consumes every newly completed F0064 immediate request
+    and F0065 pending flush in sequence, rather than forwarding only the
+    final `lastPlayedSoundIndex` when several source events occur before one
+    host sync. Missing history fails closed with an explicit audio status;
+    no marker or generated substitute is used.
     2026-07-29: M12's persisted master/music/SFX/mute controls now reach the
     live M11 SDL3 state after the CSB branch reinitializes it. Master gain is
     applied at the device boundary while music and SFX are scaled separately

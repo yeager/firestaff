@@ -24,6 +24,10 @@ extern "C" {
 
 #define CSB_V1_SOUND_NONE (-1)
 #define CSB_V1_SOUND_COUNT 35
+/* SOUND.C may complete more than one immediate F0064 request before M11's
+ * next host sync. Keep a bounded ordered history so the transport does not
+ * collapse those source-owned writes into the last sound index. */
+#define CSB_V1_AUDIO_COMPLETED_EVENT_CAPACITY 64u
 
 #define CSB_V1_SOUND_METALLIC_THUD 0
 #define CSB_V1_SOUND_SWITCH 1
@@ -58,6 +62,11 @@ typedef struct CsbV1AudioRequest {
     uint8_t priority;
 } CsbV1AudioRequest;
 
+typedef struct CsbV1AudioCompletedEvent {
+    uint32_t sequence;
+    int16_t soundIndex;
+} CsbV1AudioCompletedEvent;
+
 typedef struct CsbV1AudioRuntime {
     int16_t pendingSoundIndex;
     int16_t pendingVolume;
@@ -68,6 +77,9 @@ typedef struct CsbV1AudioRuntime {
     uint32_t totalImmediatePlays;
     uint32_t totalPendingFlushes;
     uint32_t totalRejectedRequests;
+    uint32_t totalCompletedPlays;
+    CsbV1AudioCompletedEvent
+        completedEvents[CSB_V1_AUDIO_COMPLETED_EVENT_CAPACITY];
 } CsbV1AudioRuntime;
 
 typedef struct CsbV1AudioSaveSnapshot {
@@ -113,6 +125,12 @@ void csb_v1_audio_runtime_init(CsbV1AudioRuntime* runtime);
 int csb_v1_audio_runtime_request(CsbV1AudioRuntime* runtime,
                                  const CsbV1AudioRequest* request);
 int csb_v1_audio_runtime_flush_pending(CsbV1AudioRuntime* runtime);
+/* Return the source-completed sound at a one-based sequence number. The
+ * event is available only while it remains inside the bounded history. */
+int csb_v1_audio_runtime_completed_play_at(
+    const CsbV1AudioRuntime* runtime,
+    uint32_t sequence,
+    int16_t* outSoundIndex);
 void csb_v1_audio_runtime_record_creature_attack(CsbV1AudioRuntime* runtime,
                                                  int32_t gameTime);
 void csb_v1_audio_runtime_save_snapshot(const CsbV1AudioRuntime* runtime,

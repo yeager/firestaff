@@ -2600,14 +2600,27 @@ static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
      * arbitration. When its profile reports a new completed play, transport
      * that exact PC3.4 GRAPHICS.DAT sample; do not use marker fallback. */
     audio_runtime = &profile->runtime.audio_runtime;
-    if (audio_runtime->lastPlayedSoundIndex != CSB_V1_SOUND_NONE &&
-        (audio_runtime->totalImmediatePlays !=
-             state->csbRuntimeAudioImmediatePlaysConsumed ||
-         audio_runtime->totalPendingFlushes !=
-             state->csbRuntimeAudioPendingFlushesConsumed)) {
-        m11_audio_emit_source_sound(state,
-                                    audio_runtime->lastPlayedSoundIndex,
-                                    M11_AUDIO_MARKER_NONE);
+    if (audio_runtime->totalCompletedPlays <
+        state->csbRuntimeAudioCompletedPlaysConsumed) {
+        /* A newly loaded source runtime starts a fresh transient sequence. */
+        state->csbRuntimeAudioCompletedPlaysConsumed = 0u;
+    }
+    while (state->csbRuntimeAudioCompletedPlaysConsumed <
+           audio_runtime->totalCompletedPlays) {
+        int16_t sound_index;
+        uint32_t sequence =
+            state->csbRuntimeAudioCompletedPlaysConsumed + 1u;
+        if (!csb_v1_audio_runtime_completed_play_at(
+                audio_runtime, sequence, &sound_index)) {
+            /* Do not invent a missed source event if a host failed to keep
+             * up with the bounded history. Resume at the current source end. */
+            state->csbRuntimeAudioCompletedPlaysConsumed =
+                audio_runtime->totalCompletedPlays;
+            m11_set_status(state, "AUDIO", "SOURCE EVENT HISTORY EXPIRED");
+            break;
+        }
+        m11_audio_emit_source_sound(state, sound_index, M11_AUDIO_MARKER_NONE);
+        state->csbRuntimeAudioCompletedPlaysConsumed = sequence;
     }
     state->csbRuntimeAudioImmediatePlaysConsumed =
         audio_runtime->totalImmediatePlays;

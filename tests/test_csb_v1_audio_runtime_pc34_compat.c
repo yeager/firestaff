@@ -112,6 +112,43 @@ static void test_rejections(void)
     CHECK(runtime.pendingSoundIndex == CSB_V1_SOUND_NONE, "rejections leave pending empty");
 }
 
+static void test_completed_play_history(void)
+{
+    CsbV1AudioRuntime runtime;
+    CsbV1AudioRequest first = req(CSB_V1_SOUND_SWITCH,
+                                  CSB_V1_MODE_PLAY_IMMEDIATELY, 32, 1);
+    CsbV1AudioRequest second = req(CSB_V1_SOUND_COMBAT,
+                                   CSB_V1_MODE_PLAY_IMMEDIATELY, 32, 1);
+    CsbV1AudioRequest pending = req(CSB_V1_SOUND_SPELL,
+                                    CSB_V1_MODE_PLAY_ONE_TICK_LATER, 32, 1);
+    int16_t sound = CSB_V1_SOUND_NONE;
+
+    csb_v1_audio_runtime_init(&runtime);
+    CHECK(csb_v1_audio_runtime_request(&runtime, &first) == 1,
+          "first immediate sound completes");
+    CHECK(csb_v1_audio_runtime_request(&runtime, &second) == 1,
+          "second immediate sound completes");
+    CHECK(csb_v1_audio_runtime_request(&runtime, &pending) == 1,
+          "pending sound is accepted");
+    CHECK(csb_v1_audio_runtime_flush_pending(&runtime) == 1,
+          "pending sound completes on source tick");
+    CHECK(runtime.totalCompletedPlays == 3u,
+          "completed history counts every F0064/F0065 result");
+    CHECK(csb_v1_audio_runtime_completed_play_at(&runtime, 1u, &sound) &&
+              sound == CSB_V1_SOUND_SWITCH,
+          "completed history retains first immediate source sound");
+    CHECK(csb_v1_audio_runtime_completed_play_at(&runtime, 2u, &sound) &&
+              sound == CSB_V1_SOUND_COMBAT,
+          "completed history retains second immediate source sound");
+    CHECK(csb_v1_audio_runtime_completed_play_at(&runtime, 3u, &sound) &&
+              sound == CSB_V1_SOUND_SPELL,
+          "completed history retains F0065 pending flush sound");
+    CHECK(!csb_v1_audio_runtime_completed_play_at(&runtime, 4u, &sound),
+          "future completed-history sequence rejects");
+    CHECK(!csb_v1_audio_runtime_completed_play_at(&runtime, 0u, &sound),
+          "zero completed-history sequence rejects");
+}
+
 static void test_immediate_clears_pending(void)
 {
     CsbV1AudioRuntime runtime;
@@ -234,6 +271,7 @@ int main(void)
     test_pc34_source_sound_table();
     test_pc34_source_sound_payload();
     test_rejections();
+    test_completed_play_history();
     test_immediate_clears_pending();
     test_pending_priority_arbitration();
     test_flush_contract();

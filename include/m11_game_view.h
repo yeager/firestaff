@@ -827,6 +827,7 @@ typedef struct {
      * only consumption cursors so completed source plays are forwarded once. */
     uint32_t csbRuntimeAudioImmediatePlaysConsumed;
     uint32_t csbRuntimeAudioPendingFlushesConsumed;
+    uint32_t csbRuntimeAudioCompletedPlaysConsumed;
 
     /* ── Per-map ornament index cache ──
      * In DM1, each map has a per-map wall/floor/door ornament index
