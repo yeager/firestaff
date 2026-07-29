@@ -163,6 +163,17 @@ int main(void)
                      M12_MENU_INPUT_STRAFE_RIGHT);
 
     seed_csb_view(&view);
+    {
+        char default_save_path[M11_GAME_VIEW_PATH_CAPACITY];
+        ok &= expect_int("CSB default save path resolves",
+                         M11_GameView_GetQuickSavePath(
+                             &view, default_save_path,
+                             sizeof(default_save_path)), 1);
+        ok &= expect_int("CSB saves use their own namespace",
+                         strstr(default_save_path,
+                                "/saves/csb/firestaff-csb-save.sav") != NULL,
+                         1);
+    }
     ok &= expect_int("F3 inventory redraw",
                      M11_GameView_HandleInput(&view,
                          M12_MENU_INPUT_CHAMPION_3_INVENTORY),

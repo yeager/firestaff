@@ -29,6 +29,14 @@
   selected host save namespace. Verification:
   `csb_v1_keyboard_commands_pc34_compat`.
 
+- ✅ 2026-07-29 CSB default save namespace: native Firestaff CSB snapshots
+  now use `saves/csb/firestaff-csb-save.sav`, rather than sharing DM1's
+  directory. This deliberately remains distinct from original `CSBGAME.DAT`
+  media; direct original save import/export keeps its own authenticated path.
+  An absent new default can read the prior `saves/dm1/firestaff-csb-dm1save.sav`
+  once, while an explicit `FIRESTAFF_QUICKSAVE_PATH` is never redirected.
+  Verification: `csb_v1_keyboard_commands_pc34_compat`.
+
 - ✅ 2026-07-29 CSB V1/V2.x entrance pointer presentation: the real C407
   enter-dungeon box is now exercised through M11's window-to-source mapper
   at 320x200 and 960x600 in V1, V2.0, V2.1 and gated V2.2. The former Enter

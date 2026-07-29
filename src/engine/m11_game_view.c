@@ -7809,6 +7809,8 @@ int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
                                   size_t outSize) {
     const char* envPath;
     const char* sourceId = "dm1";
+    const char* saveNamespace = "saves/dm1";
+    const char* filenameFormat = "firestaff-%s-dm1save.sav";
     int rc;
 
     if (!out || outSize == 0U) {
@@ -7824,6 +7826,15 @@ int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
     if (state && state->sourceId[0] != '\0') {
         sourceId = state->sourceId;
     }
+    /* A CSB save is not a DM1 save with a different source id.  Keep its
+     * Firestaff-native envelope separate from original CSBGAME.DAT media:
+     * original paths may be imported/exported explicitly, while the default
+     * host quicksave cannot be mistaken for one of those source files. */
+    if (state && (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT ||
+                  strcmp(sourceId, "csb") == 0)) {
+        saveNamespace = "saves/csb";
+        filenameFormat = "firestaff-%s-save.sav";
+    }
 
     {
         char user_data[FSP_PATH_MAX];
@@ -7831,13 +7842,47 @@ int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
         char filename[128];
 
         if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
-            !FSP_JoinPath(saves_dir, sizeof(saves_dir), user_data, "saves/dm1") ||
-            snprintf(filename, sizeof(filename), "firestaff-%s-dm1save.sav",
-                     sourceId) <= 0 ||
+            !FSP_JoinPath(saves_dir, sizeof(saves_dir), user_data,
+                          saveNamespace) ||
+            snprintf(filename, sizeof(filename), filenameFormat, sourceId) <= 0 ||
             !FSP_JoinPath(out, outSize, saves_dir, filename)) {
             return 0;
         }
     }
+    return 1;
+}
+
+/* Firestaff builds before the CSB namespace split stored the bounded native
+ * CSB snapshot under saves/dm1.  Keep a read-only migration path so an
+ * upgrade neither hides a user's existing save nor treats it as original
+ * CSBGAME media.  Explicit paths remain entirely caller-owned. */
+static int m11_get_legacy_csb_quicksave_path(char* out, size_t outSize)
+{
+    char user_data[FSP_PATH_MAX];
+    char saves_dir[FSP_PATH_MAX];
+
+    if (!out || outSize == 0u || !FSP_GetUserDataDir(user_data,
+                                                      sizeof(user_data)) ||
+        !FSP_JoinPath(saves_dir, sizeof(saves_dir), user_data, "saves/dm1") ||
+        !FSP_JoinPath(out, outSize, saves_dir,
+                      "firestaff-csb-dm1save.sav")) {
+        return 0;
+    }
+    return 1;
+}
+
+static int m11_path_is_readable(const char *path)
+{
+    FILE *file;
+
+    if (!path || path[0] == '\0') {
+        return 0;
+    }
+    file = fopen(path, "rb");
+    if (!file) {
+        return 0;
+    }
+    (void)fclose(file);
     return 1;
 }
 
@@ -18915,6 +18960,8 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         uint32_t game_time = 0U;
         CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 original_receipt;
+        char legacy_path[M11_GAME_VIEW_PATH_CAPACITY];
+        const char *explicit_path = getenv("FIRESTAFF_QUICKSAVE_PATH");
 
         if (!state->csbBootProfile) {
             m11_set_status(state, "LOAD", "CSB PROFILE MISSING");
@@ -18935,6 +18982,21 @@ int M11_GameView_QuickLoad(M11_GameViewState* state) {
                    CSB_V1_LOAD_OK) {
             /* CSBWin is independently authenticated by its existing runtime
              * loader and cannot inherit a native F0435 provenance receipt. */
+            memset(&state->csbOriginalSaveRuntimeReceipt, 0,
+                   sizeof(state->csbOriginalSaveRuntimeReceipt));
+            state->csbOriginalSaveRuntimeReceiptRequired = 0;
+        } else if ((!explicit_path || explicit_path[0] == '\0') &&
+                   !m11_path_is_readable(path) &&
+                   m11_get_legacy_csb_quicksave_path(
+                       legacy_path, sizeof(legacy_path)) &&
+                   m11_path_is_readable(legacy_path) &&
+                   csb_v1_boot_runtime_load_game_from_path_pc34(
+                       state->csbBootProfile, legacy_path, &game_time) ==
+                       CSB_V1_LOAD_OK) {
+            /* Only an absent new default may fall back. A malformed native
+             * CSB save must report its failure rather than silently loading
+             * an unrelated old snapshot. */
+            snprintf(path, sizeof(path), "%s", legacy_path);
             memset(&state->csbOriginalSaveRuntimeReceipt, 0,
                    sizeof(state->csbOriginalSaveRuntimeReceipt));
             state->csbOriginalSaveRuntimeReceiptRequired = 0;

@@ -1360,7 +1360,9 @@ that its exact runtime path is not already source-locked and tested.
     is also present. Keyboard Up/Down, Enter/Escape and pointer choice all
     consume the same modal state; load/save invoke the existing CSB
     F0433/F0435 runtime owners instead of merely closing a placeholder overlay.
-    The host save namespace is only the selected virtual save disk. Broader
+    The host save namespace is `saves/csb/firestaff-csb-save.sav`, separate
+    from both DM1 snapshots and original `CSBGAME.DAT` media; an absent new
+    default still reads the old Firestaff CSB path once for migration. Broader
     Utility Disk editor/import, champion and new-game flows remain open.
 25. **CSB-TITLE-AUDIO-CADENCE:** C001 timing and FTL/PRESENTS/CHAOS/STRIKES
     composition are source-locked (60 + 20 + 20 + 2 VBlanks after swoosh).
