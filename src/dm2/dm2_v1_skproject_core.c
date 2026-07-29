@@ -24998,6 +24998,69 @@ int dm2_v1_skproject_set_itemtype(
 }
 
 /* -----------------------------------------------------------------------
+ * SKULLWIN/c_record.cpp:498 DM2_SET_ITEM_IMPORTANCE
+ *
+ * Writes an importance/precious bit into a record.  Only valid for
+ * types 4-10 (switch index = type - 4).  Bit position varies by type.
+ * ----------------------------------------------------------------------- */
+int dm2_v1_skproject_set_item_importance(
+    uint16_t record_word,
+    int importance,
+    DM2_V1_RecordPoolSet *pools,
+    DM2_V1_SkprojectSetItemImportanceReceipt *out_receipt)
+{
+    if (out_receipt == NULL) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->record_word = record_word;
+
+    uint8_t record_type = (record_word >> 10) & 0xf;
+    out_receipt->record_type = record_type;
+
+    if (record_type < 4 || record_type > 10) {
+        out_receipt->blocked_invalid_type = 1;
+        return 1;
+    }
+
+    if (!pools) { out_receipt->blocked_no_record = 1; return 1; }
+    uint8_t *rec = dm2_v1_record_pool_address_mut(pools, (int16_t)record_word);
+    if (!rec) { out_receipt->blocked_no_record = 1; return 1; }
+
+    uint8_t bit = (uint8_t)(importance & 1);
+    int sw = record_type - 4;
+    switch (sw) {
+    case 0: { /* type 4: bit 10 of word[7] (byte[14..15]) */
+        rec[0xf] &= ~0x04;
+        uint16_t w = (uint16_t)rec[0xe] | ((uint16_t)rec[0xf] << 8);
+        w |= (uint16_t)bit << 10;
+        rec[0xe] = (uint8_t)(w & 0xff);
+        rec[0xf] = (uint8_t)((w >> 8) & 0xff);
+        break; }
+    case 1: case 2: case 6: { /* types 5,6,10: bit 7 of byte[2] */
+        rec[2] &= 0x7f;
+        uint16_t w = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
+        w |= (uint16_t)bit << 7;
+        rec[2] = (uint8_t)(w & 0xff);
+        rec[3] = (uint8_t)((w >> 8) & 0xff);
+        break; }
+    case 3: case 5: /* types 7,9: no-op */
+        break;
+    case 4: { /* type 8: bit 15 of word[1] */
+        rec[3] &= 0x7f;
+        uint16_t w = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
+        w |= (uint16_t)bit << 15;
+        rec[2] = (uint8_t)(w & 0xff);
+        rec[3] = (uint8_t)((w >> 8) & 0xff);
+        break; }
+    default:
+        out_receipt->blocked_invalid_type = 1;
+        return 1;
+    }
+
+    out_receipt->valid = 1;
+    return 1;
+}
+
+/* -----------------------------------------------------------------------
  * SKULLWIN/c_record.cpp:367 DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR
  *
  * Maps a 9-bit actuator itemspec to its DB (record pool) index.

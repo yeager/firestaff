@@ -9693,6 +9693,22 @@ int dm2_v1_skproject_set_itemtype(
     struct DM2_V1_RecordPoolSet *pools,
     DM2_V1_SkprojectSetItemtypeReceipt *out_receipt);
 
+/* SKULLWIN/c_record.cpp:498 DM2_SET_ITEM_IMPORTANCE — writes an importance
+   bit into a record's data bytes.  Similar structure to SET_ITEMTYPE. */
+typedef struct {
+    int valid;
+    uint16_t record_word;
+    uint8_t record_type;
+    int blocked_invalid_type;
+    int blocked_no_record;
+} DM2_V1_SkprojectSetItemImportanceReceipt;
+
+int dm2_v1_skproject_set_item_importance(
+    uint16_t record_word,
+    int importance,
+    struct DM2_V1_RecordPoolSet *pools,
+    DM2_V1_SkprojectSetItemImportanceReceipt *out_receipt);
+
 /* SKULLWIN/c_record.cpp:367 DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR — maps an
    actuator itemspec (9-bit value) to its DB (record pool) index.
    Returns the DB index (4-10 range) or 0xffff for out-of-range specs. */

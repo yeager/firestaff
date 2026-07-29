@@ -11563,6 +11563,29 @@ int main(void)
               "set_itemtype: type 5 writes word[1] low 7 bits");
     }
 
+    /* --- DM2_SET_ITEM_IMPORTANCE tests --- */
+    {
+        DM2_V1_SkprojectSetItemImportanceReceipt receipt;
+        uint16_t rw = (0 << 10) | 0x05;
+        dm2_v1_skproject_set_item_importance(rw, 1, NULL, &receipt);
+        CHECK(receipt.blocked_invalid_type == 1, "set_importance: type 0 blocked");
+    }
+    {
+        DM2_V1_RecordPoolSet pools;
+        memset(&pools, 0, sizeof(pools));
+        uint8_t rec_bytes[8] = {0};
+        pools.pools[5].bytes = rec_bytes;
+        pools.pools[5].record_count = 1;
+        pools.pools[5].record_size = 4;
+        pools.valid = 1;
+
+        uint16_t rw = (5 << 10) | 0x00;
+        DM2_V1_SkprojectSetItemImportanceReceipt receipt;
+        dm2_v1_skproject_set_item_importance(rw, 1, &pools, &receipt);
+        CHECK(receipt.valid == 1 && (rec_bytes[2] & 0x80) == 0x80,
+              "set_importance: type 5 sets bit 7 of byte[2]");
+    }
+
     /* --- DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR tests --- */
     {
         uint16_t db;

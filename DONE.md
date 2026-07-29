@@ -1,4 +1,7 @@
-- ✅ 2026-07-29 DM2 record mutation: DM2_SET_ITEMTYPE writes cls2/itemtype into
+- ✅ 2026-07-29 DM2 record mutation batch: DM2_SET_ITEMTYPE writes cls2 into
+  records (types 4-10). DM2_SET_ITEM_IMPORTANCE writes importance/precious
+  bit into records (types 4-10). Both use pool-based mutable access.
+  Tests with mock pools. MISSING: 508. Source: skproject c_record.cpp:284-542. writes cls2/itemtype into
   record bytes via pool (inverse of CLS2 extraction for types 4-10). Handles
   type 4 (byte[4]), types 5/6/10 (word[1] low 7), type 7 (no-op), type 8
   (word[1] high 7), type 9 (split word[2] bits). Tests with mock pools.
