@@ -6963,7 +6963,7 @@ static int csb_v1_runtime_dsa_move_object(
     }
     if (destination_position_bits != 0u) {
         if ((destination_position_bits & (destination_position_bits - 1u)) != 0u) {
-            return 0; /* source STRandom ownership is not yet bound */
+            return 0; /* DSA staging resolves CSBWin STRandom before commit. */
         }
         for (destination_position = 0; destination_position < 4;
              ++destination_position) {

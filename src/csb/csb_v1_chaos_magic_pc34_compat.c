@@ -1898,6 +1898,30 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         pending_object_moves[*pending_object_move_count].destination_depth = v;
         pending_object_moves[*pending_object_move_count].destination_location = w;
         pending_object_moves[*pending_object_move_count].destination_position_mask = count;
+        if ((count & 0x0fu) != 0u &&
+            ((count & 0x0fu) & ((count & 0x0fu) - 1u)) != 0u) {
+            uint32_t choice_count = 0u;
+            uint32_t choice;
+            uint32_t bit;
+
+            if (!context->random_state_valid) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            for (bit = 0u; bit < 4u; ++bit) {
+                if ((count & (1u << bit)) != 0u) ++choice_count;
+            }
+            *staged_random_state =
+                *staged_random_state * 0xbb40e62du + 11u;
+            choice = ((*staged_random_state >> 8) & 0x00ffffffu) % choice_count;
+            for (bit = 0u; bit < 4u; ++bit) {
+                if ((count & (1u << bit)) == 0u) continue;
+                if (choice-- == 0u) {
+                    pending_object_moves[*pending_object_move_count]
+                        .destination_position_mask = 1u << bit;
+                    break;
+                }
+            }
+        }
         if (!csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &count)) goto underflow;

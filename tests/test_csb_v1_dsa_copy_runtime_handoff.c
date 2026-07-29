@@ -157,6 +157,12 @@ static void test_move_transaction(void)
         0x0686u, 0x0421u, 0x0686u, 0u, 0x124bu, 0u
     };
     uint16_t indirect_words[] = { 0x168bu };
+    uint16_t multi_position_words[] = {
+        0x0686u, 1u, 0x0686u, 0x20u, 0x0686u, 4u,
+        0x0686u, 0x0203u, 0x0686u, 0u,
+        0x0686u, 1u, 0x0686u, 0u, 0x0686u, 12u,
+        0x0686u, 0x0421u, 0x0686u, 0u, 0x124bu
+    };
     uint32_t indirect_parameters[] = {
         86u, 10u,
         0u, 0x0421u, 8u, 0u, 1u,
@@ -205,6 +211,19 @@ static void test_move_transaction(void)
           "STKOP_I_Move expands through the same source-owned transaction");
     context.parameters = NULL;
     context.parameter_count = 0;
+
+    configure_action(&action, multi_position_words,
+                     (int)(sizeof(multi_position_words) /
+                           sizeof(multi_position_words[0])));
+    context.random_state_valid = 1;
+    context.random_state = 0u;
+    store.calls = 0;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, action.dsa_id, action.state_index, 0, &context,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_OK && store.calls == 1 &&
+              store.destination_position_mask == 4u &&
+              context.random_state == 11u,
+          "STKOP_Move consumes CSBWin STRandom for a multi-position destination");
 
     configure_action(&action, rollback_words,
                      (int)(sizeof(rollback_words) / sizeof(rollback_words[0])));

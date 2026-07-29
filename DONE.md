@@ -42229,5 +42229,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   The core receipt marks the opcode as a runtime-owned dungeon mutation. The
   focused regression proves operand order, late-word rollback and publication
   into a real byte-map PC3.4 list. Cursor, character, monster and chest
-  endpoints and multi-position `STRandom` remain explicitly open. `I_MOVE`
-  now uses the identical parameter-backed source transaction.
+  endpoints remain explicitly open. Multi-position `STRandom` now consumes
+  the staged GAMEBLOCK2 LCG state, and `I_MOVE` uses the identical
+  parameter-backed source transaction.
