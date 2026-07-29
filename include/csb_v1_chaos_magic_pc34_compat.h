@@ -399,6 +399,12 @@ typedef int (*CSB_V1_CSBWinDSACommitCausePoisonFn)(
  * FluxCage special case belong to the loaded dungeon runtime. */
 typedef int (*CSB_V1_CSBWinDSACreateCloudFn)(
     void *user, int32_t cloud_type, int32_t size, uint32_t location);
+/* DSA.cpp STKOP_TeleportParty constructs a temporary DB1 teleporter from one
+ * packed LOCATIONREL and moves the party through the normal party/object
+ * teleporter path. The runtime callback owns loaded-level switching, bounds,
+ * group cleanup and party pose publication. */
+typedef int (*CSB_V1_CSBWinDSATeleportPartyFn)(void *user,
+                                               uint32_t destination_location);
 typedef int (*CSB_V1_CSBWinDSADiscardTextFn)(void *user);
 typedef int (*CSB_V1_CSBWinDSAPlaySoundFn)(
     void *user, int32_t sound_number, int32_t volume, int32_t flags);
@@ -594,6 +600,7 @@ typedef struct {
     CSB_V1_CSBWinDSAPrepareCausePoisonFn prepare_cause_poison;
     CSB_V1_CSBWinDSACommitCausePoisonFn commit_cause_poison;
     CSB_V1_CSBWinDSACreateCloudFn create_cloud;
+    CSB_V1_CSBWinDSATeleportPartyFn teleport_party;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;
@@ -837,6 +844,8 @@ typedef struct {
     int32_t last_create_cloud_type;
     int32_t last_create_cloud_size;
     uint32_t last_create_cloud_location;
+    uint16_t teleport_party_count;
+    uint32_t last_teleport_party_destination;
     uint16_t override_p_count;
     uint32_t last_override_position;
     /* DSA.cpp STKOP_JumpGear/GosubGear use stack-selected state/column
@@ -1022,6 +1031,7 @@ typedef struct {
     CSB_V1_CSBWinDSAPrepareCausePoisonFn prepare_cause_poison;
     CSB_V1_CSBWinDSACommitCausePoisonFn commit_cause_poison;
     CSB_V1_CSBWinDSACreateCloudFn create_cloud;
+    CSB_V1_CSBWinDSATeleportPartyFn teleport_party;
     CSB_V1_CSBWinDSADiscardTextFn discard_text;
     CSB_V1_CSBWinDSAPlaySoundFn play_sound;
     void *dungeon_user;

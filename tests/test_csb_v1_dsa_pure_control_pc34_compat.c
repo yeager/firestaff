@@ -83,6 +83,9 @@ static int sound_count;
 static int32_t sound_number;
 static int32_t sound_volume;
 static int32_t sound_flags;
+static int teleport_party_enabled;
+static int teleport_party_count;
+static uint32_t teleport_party_destination;
 static int monster_move_inhibit_enabled;
 static int most_recent_interesting_object_enabled;
 static int adjust_skills_parameters_enabled;
@@ -185,6 +188,15 @@ static int copy_teleporter(void *user, uint32_t source_location,
     ++teleporter_copy_count;
     teleporter_copy_source = source_location;
     teleporter_copy_destination = destination_location;
+    return 1;
+}
+
+static int teleport_party(void *user, uint32_t destination_location)
+{
+    (void)user;
+    if (!teleport_party_enabled) return 0;
+    ++teleport_party_count;
+    teleport_party_destination = destination_location;
     return 1;
 }
 
@@ -856,6 +868,7 @@ static CSB_V1_CSBWinDSAStackResult run_with_parameter_count(
     }
     if (discard_text_enabled) context.discard_text = discard_text;
     if (sound_enabled) context.play_sound = play_sound;
+    if (teleport_party_enabled) context.teleport_party = teleport_party;
     if (adjust_skills_parameters_enabled) {
         context.set_adjust_skills_parameters = set_adjust_skills_parameters;
     }
@@ -1265,6 +1278,10 @@ int main(void)
     uint16_t sound[] = { 0x0686u, 7u, 0x0686u, 100u, 0x0686u, 3u, 0x114bu };
     uint16_t sound_then_bad[] = {
         0x0686u, 7u, 0x0686u, 100u, 0x0686u, 3u, 0x114bu, 0x0000u
+    };
+    uint16_t teleport_party[] = { 0x0686u, 0x154cu, 0x0f8bu };
+    uint16_t teleport_party_then_bad[] = {
+        0x0686u, 0x154cu, 0x0f8bu, 0x0000u
     };
     uint16_t monblk[] = { 0x0686u, 0x0du, 0x11cbu };
     /* Data.h assigns STKOP_ObjectID 123. EX_AMPERSAND keeps the complete
@@ -2125,6 +2142,29 @@ int main(void)
               (int)(sizeof(sound) / sizeof(sound[0])), parameters,
               &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
           "SOUND remains closed without a CSB audio owner");
+
+    teleport_party_enabled = 1;
+    teleport_party_count = 0;
+    check(run(&state, &action, teleport_party,
+              (int)(sizeof(teleport_party) / sizeof(teleport_party[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_OK &&
+              teleport_party_count == 1 &&
+              teleport_party_destination == 0x154cu &&
+              execution.teleport_party_count == 1u &&
+              execution.last_teleport_party_destination == 0x154cu,
+          "TELEPORTPARTY stages and commits the original packed LOCATIONREL");
+    teleport_party_count = 0;
+    check(run(&state, &action, teleport_party_then_bad,
+              (int)(sizeof(teleport_party_then_bad) /
+                    sizeof(teleport_party_then_bad[0])), parameters,
+              &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              teleport_party_count == 0,
+          "TELEPORTPARTY does not publish before a later rejected source word");
+    teleport_party_enabled = 0;
+    check(run(&state, &action, teleport_party,
+              (int)(sizeof(teleport_party) / sizeof(teleport_party[0])),
+              parameters, &execution) == CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "TELEPORTPARTY remains closed without a runtime teleporter owner");
 
     switch_action_enabled = 1;
     switch_action_count = 0;

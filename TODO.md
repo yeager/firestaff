@@ -967,8 +967,8 @@ that its exact runtime path is not already source-locked and tested.
     filters, state transitions, and runtime mutation with hard fail-closed
     bounds for unknown behavior. 2026-07-29 source inventory against
     CSBWin 2023 `Data.h:1736-1875` and `DSA.cpp:2345-4977` identifies the
-    remaining 26 stack words: `DEL`, `ADD`, `CAST`,
-    `FILTEREDCAST`, `THROW`, `TELEPORTPARTY`, `MOVE`,
+    remaining 25 stack words: `DEL`, `ADD`, `CAST`,
+    `FILTEREDCAST`, `THROW`, `MOVE`,
     the `I_*` indirect family (`DEL/ADD/CAST/TELEPORTPARTY/MONSTER!/
     CHAR!/MOVE/COPY/CELL!/THROW/DELAY/DELMON/INSMON/CAUSEPOISON/
     FILTEREDCAST/SWAPCHARACTER`), plus `DELMON` and `INSMON`. `SAY` is now
@@ -987,7 +987,14 @@ that its exact runtime path is not already source-locked and tested.
     acceptance. Its DB15/FluxCage/timer runtime owner remains open under
     CSB-DSA-MONSTER-WORLD; no cloud is synthesized when that owner is absent.
     `I_CREATECLOUD` now uses that identical request path with CSBWin's reverse
-    parameter-stack order (`size,type,location`).
+    parameter-stack order (`size,type,location`). 2026-07-29: direct
+    `TELEPORTPARTY` now stages CSBWin's packed `LOCATIONREL`, then invokes the
+    runtime's party/object teleporter only after whole-action acceptance. The
+    runtime decodes the source `(direction,level,x,y)` fields, removes active
+    groups through the existing F0194 owner, and rotates the party through the
+    regular runtime path. Missing ownership and later invalid source words
+    remain no-mutation failures. `I_TELEPORTPARTY` remains listed until its
+    indirect parameter expansion has dedicated regression coverage.
 22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
     sensors, timers, level context, and world mutation through actual loaded
     CSB dungeon/save data.

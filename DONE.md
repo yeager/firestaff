@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 CSB DSA `STKOP_TeleportParty`: implemented CSBWin
+  `DSA.cpp:4583-4606` as a transactional packed-`LOCATIONREL` request. It
+  commits only after the complete authenticated action is accepted, then
+  decodes the original direction/level/x/y fields, clears active groups via
+  the existing F0194 owner, and uses the normal runtime rotation path. Missing
+  teleporter ownership and a later unsupported word remain no-mutation. The
+  direct DSA regression and the complete CSB CTest lane pass (98/98).
+
 - ✅ 2026-07-29 CSB Artpack Studio headless original-record export:
   `--import-game-data ... --export-original-previews ...` now writes only
   successfully decoded original records plus a SHA-256/offset/dimensions

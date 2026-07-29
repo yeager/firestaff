@@ -184,6 +184,8 @@ static int csb_v1_runtime_dsa_copy_teleporter(
 static int csb_v1_runtime_dsa_queue_switch_action(
     void *user, uint32_t delay, uint32_t action, uint32_t target_location,
     int message_route, uint8_t *out_event_type);
+static int csb_v1_runtime_dsa_teleport_party(void *user,
+                                             uint32_t destination_location);
 static int csb_v1_runtime_dsa_get_object_property(
     void *user, uint16_t thing, CSB_V1_CSBWinDSAObjectProperty property,
     uint32_t *out_value);
@@ -3487,6 +3489,35 @@ static int csb_v1_runtime_dsa_play_sound(void *user, int32_t sound_number,
     profile->csbwin_dsa_sound_receipt.flags = flags;
     profile->csbwin_dsa_sound_receipt.source_game_time = profile->game_time;
     return 1;
+}
+
+static int csb_v1_runtime_dsa_teleport_party(void *user,
+                                             uint32_t destination_location)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+    int level = (int)((destination_location >> 10) & 0x3fu);
+    int x = (int)((destination_location >> 5) & 0x1fu);
+    int y = (int)(destination_location & 0x1fu);
+    int direction = (int)((destination_location >> 16) & 3u);
+
+    /* CSBWin DSA.cpp STKOP_TeleportParty builds a DB1 teleporter with
+     * what=party+objects, rotation=LOCATIONREL.p, facingMode=0 and no sound,
+     * then sends the party through MoveObject. The candidate callback owns
+     * the corresponding loaded dungeon pose and cannot target an absent cell. */
+    if (!profile || !profile->dungeon_handle ||
+        level < 0 || level >= profile->dungeon_handle->level_count ||
+        csb_v1_dungeon_get_raw_square(profile->dungeon_handle, level, x, y) < 0 ||
+        csb_v1_runtime_f0194_remove_all_active_groups_pc34(profile) < 0) {
+        return 0;
+    }
+    profile->current_level = level;
+    profile->party_z = level;
+    profile->party_x = x;
+    profile->party_y = y;
+    profile->party_state.PartyMapX = x;
+    profile->party_state.PartyMapY = y;
+    csb_v1_dungeon_set_current_level(level);
+    return csb_v1_runtime_rotate_party(profile, direction) == 0;
 }
 
 static void csb_v1_runtime_write_u16(uint8_t *p, uint16_t value)
@@ -26620,6 +26651,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
     candidate.prepare_cause_poison = csb_v1_runtime_dsa_prepare_cause_poison;
     candidate.commit_cause_poison = csb_v1_runtime_dsa_commit_cause_poison;
+    candidate.teleport_party = csb_v1_runtime_dsa_teleport_party;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
@@ -26861,6 +26893,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.add_experience_plus = csb_v1_runtime_dsa_add_experience_plus;
     candidate.prepare_cause_poison = csb_v1_runtime_dsa_prepare_cause_poison;
     candidate.commit_cause_poison = csb_v1_runtime_dsa_commit_cause_poison;
+    candidate.teleport_party = csb_v1_runtime_dsa_teleport_party;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;

@@ -575,7 +575,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 18u: case 19u: case 20u: case 21u: case 22u: case 23u: case 24u: case 25u:
     case 26u: case 27u: case 28u: case 29u: case 30u: case 31u: case 32u:
     case 37u: case 38u: case 39u: case 40u: case 41u: case 48u: case 50u:
-    case 59u: case 67u: case 68u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
+    case 59u: case 62u: case 67u: case 68u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
     case 133u: case 136u: case 139u:
         return 1;
     case 8u: case 33u: case 34u: case 35u: case 36u: case 42u: case 44u: case 45u:
@@ -625,6 +625,7 @@ csb_v1_csbwin_dsa_expand_indirect(uint32_t *stack, int *depth,
     case 84u: direct_subcode = 63u; break;  /* I_Monster! -> Monster! */
     case 85u: direct_subcode = 66u; break;  /* I_Char! -> Char! */
     case 81u: direct_subcode = 68u; break;  /* I_CreateCloud -> CreateCloud */
+    case 83u: direct_subcode = 62u; break;  /* I_TeleportParty -> TeleportParty */
     case 87u: direct_subcode = 76u; break;  /* I_Copy -> Copy */
     case 88u: direct_subcode = 58u; break;  /* I_Cell! -> Cell! */
     case 111u: direct_subcode = 110u; break; /* I_CausePoison */
@@ -1401,6 +1402,7 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_CHARACTER_SWAPS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_CLOUD_REQUESTS 100
+#define CSB_V1_CSBWIN_DSA_PENDING_PARTY_TELEPORTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS 100
@@ -1486,6 +1488,9 @@ typedef struct {
     int32_t size;
     uint32_t location;
 } CSB_V1_CSBWinDSAPendingCloudRequest;
+typedef struct {
+    uint32_t destination_location;
+} CSB_V1_CSBWinDSAPendingPartyTeleport;
 
 typedef struct {
     uint16_t thing;
@@ -1657,6 +1662,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *pending_poison_write_count,
     CSB_V1_CSBWinDSAPendingCloudRequest *pending_cloud_requests,
     int *pending_cloud_request_count,
+    CSB_V1_CSBWinDSAPendingPartyTeleport *pending_party_teleports,
+    int *pending_party_teleport_count,
     CSB_V1_CSBWinDSAPendingActuatorCopy *pending_actuator_copies,
     int *pending_actuator_copy_count,
     CSB_V1_CSBWinDSAPendingSoundRequest *pending_sound_requests,
@@ -1710,6 +1717,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_experience_writes || !pending_experience_write_count ||
         !pending_character_swaps || !pending_character_swap_count ||
         !pending_poison_writes || !pending_poison_write_count ||
+        !pending_party_teleports || !pending_party_teleport_count ||
         !pending_actuator_copies || !pending_actuator_copy_count ||
         !pending_sound_requests || !pending_sound_request_count ||
         !adjust_skills_parameters_requested || !pending_adjust_skills_parameters ||
@@ -1732,6 +1740,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_experience_write_count < 0 ||
         *pending_character_swap_count < 0 ||
         *pending_poison_write_count < 0 ||
+        *pending_party_teleport_count < 0 ||
         *pending_actuator_copy_count < 0 ||
         *pending_say_text_request_count < 0 ||
         *pending_display_text_request_count < 0 ||
@@ -1803,6 +1812,20 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         default:
             break;
         }
+        break;
+    case 62u: /* STKOP_TeleportParty, CSBWin DSA.cpp:4583-4606. */
+        /* The original pops exactly one packed LOCATIONREL then constructs a
+         * party/object DB1 teleporter with facingMode=0, audible=0. Keep that
+         * request staged until the complete DSA action has been accepted. */
+        if (!context->teleport_party ||
+            *pending_party_teleport_count >=
+                CSB_V1_CSBWIN_DSA_PENDING_PARTY_TELEPORTS ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_party_teleports[*pending_party_teleport_count]
+            .destination_location = v;
+        ++*pending_party_teleport_count;
         break;
     case 69u: /* STKOP_Sound, CSBWin DSA.cpp:4612-4624. */
         if (!context->play_sound ||
@@ -3679,6 +3702,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_poison_writes[CSB_V1_CSBWIN_DSA_PENDING_POISON_WRITES];
     CSB_V1_CSBWinDSAPendingCloudRequest
         pending_cloud_requests[CSB_V1_CSBWIN_DSA_PENDING_CLOUD_REQUESTS];
+    CSB_V1_CSBWinDSAPendingPartyTeleport
+        pending_party_teleports[CSB_V1_CSBWIN_DSA_PENDING_PARTY_TELEPORTS];
     CSB_V1_CSBWinDSAPendingActuatorCopy
         pending_actuator_copies[CSB_V1_CSBWIN_DSA_PENDING_ACTUATOR_COPIES];
     CSB_V1_CSBWinDSAPendingSoundRequest
@@ -3717,6 +3742,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_character_swap_count = 0;
     int pending_poison_write_count = 0;
     int pending_cloud_request_count = 0;
+    int pending_party_teleport_count = 0;
     int pending_actuator_copy_count = 0;
     int pending_sound_request_count = 0;
     int discard_text_requested = 0;
@@ -4321,7 +4347,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     &pending_experience_write_count, pending_character_swaps,
                     &pending_character_swap_count, pending_poison_writes,
                     &pending_poison_write_count, pending_cloud_requests,
-                    &pending_cloud_request_count, pending_actuator_copies,
+                    &pending_cloud_request_count, pending_party_teleports,
+                    &pending_party_teleport_count, pending_actuator_copies,
                     &pending_actuator_copy_count, pending_sound_requests,
                     &pending_sound_request_count, &discard_text_requested,
                     &adjust_skills_parameters_requested,
@@ -4564,6 +4591,16 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         candidate.last_create_cloud_size = pending_cloud_requests[i].size;
         candidate.last_create_cloud_location =
             pending_cloud_requests[i].location;
+    }
+    for (i = 0; i < pending_party_teleport_count; ++i) {
+        if (!context->teleport_party || !context->teleport_party(
+                context->dungeon_user,
+                pending_party_teleports[i].destination_location)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        ++candidate.teleport_party_count;
+        candidate.last_teleport_party_destination =
+            pending_party_teleports[i].destination_location;
     }
     for (i = 0; i < pending_actuator_copy_count; ++i) {
         if ((context->copy_actuator_payload &&
