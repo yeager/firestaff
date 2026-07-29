@@ -33374,6 +33374,22 @@ add_executable(test_nexus_v1_dgn_material_raster
     set_tests_properties(csb_v1_atari_save_decode_pc34_compat PROPERTIES
         LABELS "tier2;csb;save;real_data;skip_safe")
 
+    add_executable(test_csb_v1_atari_save_runtime_handoff_pc34_compat
+        tests/test_csb_v1_atari_save_runtime_handoff_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_atari_save_runtime_handoff_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_atari_save_runtime_handoff_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_atari_save_runtime_handoff_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_atari_save_runtime_handoff_pc34_compat
+        COMMAND test_csb_v1_atari_save_runtime_handoff_pc34_compat)
+    set_tests_properties(csb_v1_atari_save_runtime_handoff_pc34_compat PROPERTIES
+        LABELS "tier2;csb;save;runtime;real_data;skip_safe")
+
     # CSB Hint Oracle UI/runtime binding surface.
     # Data-free contract tests for the report / hint / resolve
     # helpers built on top of csb_hint_oracle_htc and
