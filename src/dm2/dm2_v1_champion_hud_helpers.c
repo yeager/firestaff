@@ -153,9 +153,63 @@ int dm2_v1_REFRESH_PLAYER_STAT_DISP(
     return 1;
 }
 
+const int16_t dm2_v1_default_hero_bar_color[DM2_V1_CHAMPION_HUD_HERO_COUNT] = {
+    7, 11, 8, 14
+};
+
+int16_t dm2_v1_QUERY_FOOD_WATER_BAR_COLOR(
+    int16_t gdat_value,
+    int16_t default_color,
+    DM2_V1_BarColorReceipt *out_receipt)
+{
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (gdat_value >= 0) {
+        int16_t color = (int16_t)(256 + gdat_value);
+        if (out_receipt) {
+            out_receipt->valid = 1;
+            out_receipt->color = color;
+            out_receipt->gdat_override = 1;
+        }
+        return color;
+    }
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->color = default_color;
+        out_receipt->gdat_override = 0;
+    }
+    return default_color;
+}
+
+int16_t dm2_v1_QUERY_3STAT_BAR_COLOR(
+    int16_t gdat_value,
+    int16_t default_color,
+    DM2_V1_BarColorReceipt *out_receipt)
+{
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (gdat_value >= 0) {
+        if (out_receipt) {
+            out_receipt->valid = 1;
+            out_receipt->color = gdat_value;
+            out_receipt->gdat_override = 1;
+        }
+        return gdat_value;
+    }
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->color = default_color;
+        out_receipt->gdat_override = 0;
+    }
+    return default_color;
+}
+
 const char *dm2_v1_champion_hud_helpers_source_evidence(void)
 {
     return "skproject SKWIN/SkWinCore.cpp PROCESS_ITEM_BONUS:5277 "
-           "QUERY_PLAYER_SKILL_LV:8381 REFRESH_PLAYER_STAT_DISP:14573; "
+           "QUERY_PLAYER_SKILL_LV:8381 REFRESH_PLAYER_STAT_DISP:14573 "
+           "QUERY_FOOD_WATER_BAR_COLOR:13194 QUERY_3STAT_BAR_COLOR:13203; "
            "bounded champion/HUD receipts only.";
 }

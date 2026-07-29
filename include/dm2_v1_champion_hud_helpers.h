@@ -71,6 +71,37 @@ int dm2_v1_REFRESH_PLAYER_STAT_DISP(
     DM2_V1_PlayerStatDisplay *out_display,
     DM2_V1_ChampionHudReceipt *out_receipt);
 
+/* Bar color queries.
+ * Source: SkWinCore.cpp:13194 QUERY_FOOD_WATER_BAR_COLOR
+ *         SkWinCore.cpp:13203 QUERY_3STAT_BAR_COLOR
+ *
+ * Both accept an optional GDAT override (gdat_value >= 0 means GDAT
+ * entry was found; < 0 means not found → use default). */
+
+#define DM2_V1_CHAMPION_HUD_DEFAULT_FOOD_COLOR   5   /* COLOR_BROWN */
+#define DM2_V1_CHAMPION_HUD_DEFAULT_WATER_COLOR  14  /* COLOR_BLUE  */
+
+typedef struct {
+    int valid;
+    int16_t color;
+    int gdat_override;
+} DM2_V1_BarColorReceipt;
+
+int16_t dm2_v1_QUERY_FOOD_WATER_BAR_COLOR(
+    int16_t gdat_value,
+    int16_t default_color,
+    DM2_V1_BarColorReceipt *out_receipt);
+
+int16_t dm2_v1_QUERY_3STAT_BAR_COLOR(
+    int16_t gdat_value,
+    int16_t default_color,
+    DM2_V1_BarColorReceipt *out_receipt);
+
+/* Default per-hero 3-stat bar colors (table1d69d0).
+ * Index 0..3 → hero 0..3. */
+#define DM2_V1_CHAMPION_HUD_HERO_COUNT 4
+extern const int16_t dm2_v1_default_hero_bar_color[DM2_V1_CHAMPION_HUD_HERO_COUNT];
+
 const char *dm2_v1_champion_hud_helpers_source_evidence(void);
 
 #ifdef __cplusplus
