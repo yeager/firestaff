@@ -82,7 +82,8 @@ static void set_d2_door_capture(
     proof->d2_door_capture_real_graphics_dat = 1;
     proof->d2_door_capture_no_synthetic_pixels = 1;
     proof->d2_door_capture_no_fallback_visuals = 1;
-    proof->d2_door_capture_item_index = 694;
+    /* ReDMCSB DUNVIEW.C:2651-2658: G0694 is DoorSet base + 1. */
+    proof->d2_door_capture_item_index = 247;
     proof->d2_door_capture_byte_count = byte_count;
     proof->d2_door_capture_payload_hash = payload_hash;
     proof->d2_door_capture_width = 64;
@@ -180,7 +181,7 @@ static void test_checked_material_byte_handoff_and_raster(void)
     bytes.d2_d3_capture.palette_source_md5 = bytes.source_md5;
     bytes.d2_d3_capture.palette_capture_fnv1a = proof.shared_palette_hash;
     bytes.d2_d3_capture.capture_identity_hash = 0x62d3694u;
-    bytes.d2_d3_capture.d2_item_index = 694;
+    bytes.d2_d3_capture.d2_item_index = proof.d2_door_capture_item_index;
     bytes.d2_d3_capture.d2_source_byte_count = proof.d2_door_capture_byte_count;
     bytes.d2_d3_capture.d2_source_payload_hash = proof.d2_door_hash;
     bytes.d2_d3_capture.d2_decoded_pixels = d2_pixels;
@@ -220,6 +221,25 @@ static void test_checked_material_byte_handoff_and_raster(void)
                    &proof, &plan, &bytes, &material_receipt), 0);
     bytes.materials[0].decoded_fnv1a = fnv1a32(d2_pixels, sizeof(d2_pixels));
     expect_int("bytes.rebind", csb_v1_viewport_bind_first_frame_material_bytes_pc34(
+                   &proof, &plan, &bytes, &material_receipt), 1);
+
+    /* DoorSet 1 proves this handoff follows G0694's active-map slot instead
+     * of silently accepting the obsolete fixed record 694. */
+    proof.d2_door_capture_item_index = 250;
+    bytes.d2_d3_capture.d2_item_index = 250;
+    expect_int("bytes.plan.doorset1",
+               csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
+                   &proof, 1, 0, 5, 5, &plan), 1);
+    expect_int("bytes.bind.doorset1",
+               csb_v1_viewport_bind_first_frame_material_bytes_pc34(
+                   &proof, &plan, &bytes, &material_receipt), 1);
+    proof.d2_door_capture_item_index = 247;
+    bytes.d2_d3_capture.d2_item_index = 247;
+    expect_int("bytes.plan.doorset0",
+               csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
+                   &proof, 1, 0, 5, 5, &plan), 1);
+    expect_int("bytes.bind.doorset0",
+               csb_v1_viewport_bind_first_frame_material_bytes_pc34(
                    &proof, &plan, &bytes, &material_receipt), 1);
 
     expect_int("bytes.raster.reject.path.mismatch",
@@ -536,7 +556,7 @@ static int build_route_receipts_and_proof(
                                       &d0_thing_size, &d0_thing_hash) ||
         !read_real_graphics_item_hash(path, 558u, &d1_door_size, &d1_door_hash) ||
         !read_real_graphics_item_hash(path, 498u, &d1_thing_size, &d1_thing_hash) ||
-        !read_real_graphics_item_hash(path, 694u, &d2_door_size, &d2_door_hash)) {
+        !read_real_graphics_item_hash(path, 247u, &d2_door_size, &d2_door_hash)) {
         return 0;
     }
 
@@ -559,7 +579,7 @@ static int build_route_receipts_and_proof(
                    d1_thing_hash, &d1_thing), 1);
     expect_int("route.d2.door.receipt",
                csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
-                   d2_door_spec, 1, 1, 1, 694, d2_door_size,
+                   d2_door_spec, 1, 1, 1, 247, d2_door_size,
                    d2_door_hash, &d2_door), 1);
 
     proof->valid = d0_door.valid && d0_thing.valid && d1_door.valid &&
@@ -718,7 +738,7 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
     packed_capture.palette_source_md5 = packed_capture.source_md5;
     packed_capture.palette_capture_fnv1a = proof.shared_palette_hash;
     packed_capture.capture_identity_hash = 0x693694u;
-    packed_capture.d2_item_index = 694;
+    packed_capture.d2_item_index = proof.d2_door_capture_item_index;
     packed_capture.d2_source_payload_hash = proof.d2_door_hash;
     packed_capture.d2_packed_pixels = d2_packed;
     packed_capture.d2_packed_size = sizeof(d2_packed);
@@ -731,16 +751,19 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
     expect_int("table.reject.truncated.layout",
                csb_v1_viewport_admit_graphics_table_provenance_pc34(
                    graphics_table, 4u, packed_capture.source_path,
-                   packed_capture.source_md5, 694u, &rejected_table), 0);
+                   packed_capture.source_md5,
+                   (uint32_t)proof.d2_door_capture_item_index, &rejected_table), 0);
     expect_int("table.reject.invalid.source.identity",
                csb_v1_viewport_admit_graphics_table_provenance_pc34(
                    graphics_table, sizeof(graphics_table),
-                   packed_capture.source_path, "not-an-md5", 694u,
+                   packed_capture.source_path, "not-an-md5",
+                   (uint32_t)proof.d2_door_capture_item_index,
                    &rejected_table), 0);
     expect_int("table.admit.d2.original.layout",
                csb_v1_viewport_admit_graphics_table_provenance_pc34(
                    graphics_table, sizeof(graphics_table),
-                   packed_capture.source_path, packed_capture.source_md5, 694u,
+                   packed_capture.source_path, packed_capture.source_md5,
+                   (uint32_t)proof.d2_door_capture_item_index,
                    &d2_table), 1);
     expect_int("table.admit.d3.original.layout",
                csb_v1_viewport_admit_graphics_table_provenance_pc34(
@@ -776,7 +799,7 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
     decoded_capture.palette_source_md5 = packed_capture.source_md5;
     decoded_capture.palette_capture_fnv1a = proof.shared_palette_hash;
     decoded_capture.capture_identity_hash = packed_capture.capture_identity_hash;
-    decoded_capture.d2_item_index = 694;
+    decoded_capture.d2_item_index = proof.d2_door_capture_item_index;
     decoded_capture.d2_source_byte_count = proof.d2_door_capture_byte_count;
     decoded_capture.d2_source_payload_hash = proof.d2_door_hash;
     decoded_capture.d2_decoded_pixels = d2_pixels;

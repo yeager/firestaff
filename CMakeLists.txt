@@ -937,6 +937,10 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0060_sound_play_pc34_c
     add_executable(test_csb_v1_f0060_sound_play_pc34_compat
         tests/test_csb_v1_f0060_sound_play_pc34_compat.c
         src/csb/csb_v1_audio_runtime_pc34_compat.c
+        src/memory/memory_graphics_dat_pc34_compat.c
+        src/memory/memory_graphics_dat_header_pc34_compat.c
+        src/memory/memory_graphics_dat_metadata_pc34_compat.c
+        src/memory/memory_graphics_dat_select_pc34_compat.c
     )
     target_include_directories(test_csb_v1_f0060_sound_play_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

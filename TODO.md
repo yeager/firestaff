@@ -88,8 +88,11 @@ an integration build pass.
   `door_d2_01` is explicitly `admitted_d3_f0791_native`, carrying the real
   44x38 source dimensions and the D3 F0791/F0132 composition contract.
   Source-cache normalization is nearest-neighbor only; it does not invent
-  interpolated pixels. D1/D2 retain
-  their explicit admitted projection statuses.
+  interpolated pixels. D1/D2 retain their explicit admitted projection
+  statuses. The V1 material byte handoff validates the live `G0694` DoorSet
+  slot (`247/250/253/256`) through the decode, provenance and plan receipts;
+  V2.2 still needs matching per-DoorSet pack selection before it can consume
+  nonzero DoorSets.
   Direct and headless probes prove routing, admission, exact clip bounds and
   alpha preservation only, not live visual correctness. 2026-07-29: the admitted D1/D2 door routes now
   consume the source-owned F0128 command stream in the live V2.2 compositor:

@@ -33,6 +33,47 @@
 #include <string.h>
 #include <stdio.h>
 
+/* The source-owned V1 viewport library is deliberately usable by small
+ * loader/save/audio probes. M11 supplies the strong V2.2 implementation for
+ * an actual V2.2 session; these weak local defaults keep V1-only tools free
+ * from a presentation-library link dependency. */
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((weak)) int csb_v2_presentation_mode_is_v22(void)
+{
+    return 0;
+}
+
+__attribute__((weak)) int csb_v22_inplace_render_f0128_command(
+    const CSB_V1_ViewportRuntimeDrawCommandPc34 *source_command,
+    unsigned char *framebuffer, int framebuffer_width, int framebuffer_height)
+{
+    (void)source_command;
+    (void)framebuffer;
+    (void)framebuffer_width;
+    (void)framebuffer_height;
+    return 0;
+}
+#define CSB_V1_OPTIONAL_V22_AVAILABLE() 1
+#else
+#define CSB_V1_OPTIONAL_V22_AVAILABLE() 0
+#endif
+
+/* ReDMCSB DUNVIEW.C:2651-2658 defines G0693/G0694/G0695 as the three
+ * consecutive records in the active DoorSet. Keep the V1 material binding
+ * self-contained so narrow loaders do not need to link a presentation helper. */
+static int csb_v1_viewport_door_set_index_valid_pc34(int graphic_index,
+                                                      int door_set_offset)
+{
+    const int first = 246; /* M633_GRAPHIC_FIRST_DOOR_SET */
+    const int count = 3;   /* C003_DOOR_SET_GRAPHIC_COUNT */
+    const int sets = 4;    /* PC3.4 DoorSet 0..3 */
+
+    return door_set_offset >= 0 && door_set_offset < count &&
+           graphic_index >= first + door_set_offset &&
+           graphic_index < first + sets * count &&
+           ((graphic_index - first) % count) == door_set_offset;
+}
+
 enum {
     CSB_V1_ORNAMENT_SLOT_RIGHT = 1, /* M551_RIGHT_WALL_ORNAMENT_ORDINAL */
     CSB_V1_ORNAMENT_SLOT_FRONT = 2, /* M552_FRONT_WALL_ORNAMENT_ORDINAL */
@@ -239,8 +280,8 @@ int csb_v1_viewport_first_frame_material_proof_valid_pc34(
          !proof->d3_pair_real_asset_receipt.source_graphics_dat_bound ||
          !proof->d3_pair_real_asset_receipt.no_synthetic_pixels ||
          !proof->d3_pair_real_asset_receipt.no_fallback_visuals ||
-         !csb_v1_viewport_d3_door_graphic_index_valid_pc34(
-             proof->d3_pair_real_asset_receipt.source_graphics_item_index) ||
+         !csb_v1_viewport_door_set_index_valid_pc34(
+             proof->d3_pair_real_asset_receipt.source_graphics_item_index, 0) ||
          proof->d3_pair_real_asset_receipt.source_byte_count == 0u ||
          proof->d3_pair_real_asset_receipt.source_payload_hash == 0u ||
          proof->d3_pair_real_asset_receipt.source_payload_hash !=
@@ -265,7 +306,8 @@ int csb_v1_viewport_first_frame_material_proof_valid_pc34(
         !proof->d2_door_capture_real_graphics_dat ||
         !proof->d2_door_capture_no_synthetic_pixels ||
         !proof->d2_door_capture_no_fallback_visuals ||
-        proof->d2_door_capture_item_index != 694 ||
+        !csb_v1_viewport_door_set_index_valid_pc34(
+            proof->d2_door_capture_item_index, 1) ||
         proof->d2_door_capture_byte_count == 0u ||
         proof->d2_door_capture_payload_hash == 0u ||
         proof->d2_door_capture_payload_hash != proof->d2_door_hash ||
@@ -642,12 +684,13 @@ int csb_v1_viewport_decode_d2_d3_native_packed_capture_pc34(
         packed_capture->d2_table_provenance->raster_blocked_without_mapping ||
         !packed_capture->d2_table_provenance->source_path ||
         !packed_capture->d2_table_provenance->source_md5 ||
-        packed_capture->d2_table_provenance->native_bitmap_index != 694u ||
+        !csb_v1_viewport_door_set_index_valid_pc34(
+            (int)packed_capture->d2_table_provenance->native_bitmap_index, 1) ||
         strcmp(packed_capture->d2_table_provenance->source_path,
                packed_capture->source_path) != 0 ||
         strcmp(packed_capture->d2_table_provenance->source_md5,
                packed_capture->source_md5) != 0 ||
-        packed_capture->d2_item_index != 694 ||
+        packed_capture->d2_item_index != proof->d2_door_capture_item_index ||
         packed_capture->d2_source_payload_hash != proof->d2_door_hash ||
         !packed_capture->d2_packed_pixels ||
         packed_capture->d2_packed_size != d2_packed_required ||
@@ -665,14 +708,14 @@ int csb_v1_viewport_decode_d2_d3_native_packed_capture_pc34(
          packed_capture->d3_table_provenance->raster_blocked_without_mapping ||
          !packed_capture->d3_table_provenance->source_path ||
          !packed_capture->d3_table_provenance->source_md5 ||
-         !csb_v1_viewport_d3_door_graphic_index_valid_pc34(
-             (int)packed_capture->d3_table_provenance->native_bitmap_index) ||
+         !csb_v1_viewport_door_set_index_valid_pc34(
+             (int)packed_capture->d3_table_provenance->native_bitmap_index, 0) ||
          strcmp(packed_capture->d3_table_provenance->source_path,
                 packed_capture->source_path) != 0 ||
          strcmp(packed_capture->d3_table_provenance->source_md5,
                 packed_capture->source_md5) != 0 ||
-         !csb_v1_viewport_d3_door_graphic_index_valid_pc34(
-             packed_capture->d3_item_index) ||
+         !csb_v1_viewport_door_set_index_valid_pc34(
+             packed_capture->d3_item_index, 0) ||
          packed_capture->d3_source_payload_hash != proof->d3l2_door_hash ||
          packed_capture->d3_source_payload_hash != proof->d3r2_door_hash ||
          !packed_capture->d3_packed_pixels ||
@@ -707,7 +750,7 @@ int csb_v1_viewport_decode_d2_d3_native_packed_capture_pc34(
     out_receipt->palette_source_md5 = packed_capture->palette_source_md5;
     out_receipt->palette_capture_fnv1a = palette->decoded_fnv1a;
     out_receipt->capture_identity_hash = packed_capture->capture_identity_hash;
-    out_receipt->d2_item_index = 694;
+    out_receipt->d2_item_index = proof->d2_door_capture_item_index;
     out_receipt->d2_source_byte_count = proof->d2_door_capture_byte_count;
     out_receipt->d2_source_payload_hash = proof->d2_door_hash;
     out_receipt->d2_decoded_pixels = d2_decoded_pixels;
@@ -757,7 +800,7 @@ static int csb_v1_viewport_d2_d3_capture_valid_pc34(
         capture->palette_capture_fnv1a != proof->shared_palette_hash ||
         capture->palette_capture_fnv1a != bytes->palette.decoded_fnv1a ||
         capture->capture_identity_hash == 0u ||
-        capture->d2_item_index != 694 ||
+        capture->d2_item_index != proof->d2_door_capture_item_index ||
         capture->d2_source_byte_count != proof->d2_door_capture_byte_count ||
         capture->d2_source_payload_hash != proof->d2_door_hash ||
         !capture->d2_decoded_pixels || capture->d2_decoded_size == 0u ||
@@ -771,8 +814,8 @@ static int csb_v1_viewport_d2_d3_capture_valid_pc34(
               (CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3L2_F0111_DOOR |
                CSB_V1_VIEWPORT_FIRST_FRAME_ROUTE_D3R2_F0111_DOOR)) != 0u;
     if (has_d3 &&
-        (!csb_v1_viewport_d3_door_graphic_index_valid_pc34(
-             capture->d3_item_index) ||
+        (!csb_v1_viewport_door_set_index_valid_pc34(
+             capture->d3_item_index, 0) ||
          capture->d3_source_byte_count !=
              proof->d3_pair_real_asset_receipt.source_byte_count ||
          capture->d3_source_payload_hash != proof->d3l2_door_hash ||
@@ -959,7 +1002,8 @@ int csb_v1_viewport_consume_first_frame_material_raster_pc34(
          * F0128 command stream. The source door has already established its
          * clip and draw order; later source Thing commands still compose over
          * the replacement. Unsupported commands remain entirely V1. */
-        if (csb_v2_presentation_mode_is_v22()) {
+        if (CSB_V1_OPTIONAL_V22_AVAILABLE() &&
+            csb_v2_presentation_mode_is_v22()) {
             (void)csb_v22_inplace_render_f0128_command(
                 command, framebuffer, framebuffer_width, framebuffer_height);
         }

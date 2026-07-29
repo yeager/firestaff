@@ -1,3 +1,10 @@
+- ✅ 2026-07-29 CSB PC3.4 D2 active-DoorSet material handoff: the first-frame
+  F0128 material decode no longer pins G0694 to obsolete record 694. It now
+  validates the actual second record of the map's DoorSet through the proof,
+  native-table provenance, packed/decode receipt and runtime plan; DoorSet 0
+  and DoorSet 1 regressions cover records 247 and 250. ReDMCSB
+  `DUNVIEW.C:2651-2658` is the source owner.
+
 - ✅ 2026-07-29 CSB Prison live C013 consumption: the terminal Prison
   transition no longer lets a stale C004 host receipt keep M11 on the
   Entrance render path. CSB now enters the live frame and installs the
