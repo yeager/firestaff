@@ -1145,7 +1145,9 @@ that its exact runtime path is not already source-locked and tested.
    `MINI.DAT` and the four original `CSBGAME[1..4].DAT` sibling names beside
    their verified runtime package files. A real 42,815-byte Atari `MINI.DAT`
    extracted from the local original archive passes decoder, runtime handoff
-   and launcher Resume checks. This does not yet establish user-created
+   and launcher Resume checks; the archive cache regression proves the
+   `MINI.DAT` member is materialized with the required CSB package files.
+   This does not yet establish user-created
    `CSBGAME.DAT` extended-object/timer round-trip support.
 7. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
    source-backed indoor HUD, wall, door, floor/ceiling, item, projectile,

@@ -4,7 +4,8 @@
   materialize `MINI.DAT` plus `CSBGAME1.DAT` through `CSBGAME4.DAT` with the
   verified package files. Verification used the real 42,815-byte Atari
   `MINI.DAT` from the local original archive: decoder, runtime handoff and
-  `m12_quick_resume_gate` all passed.
+  `m12_quick_resume_gate` all passed; the archive cache regression also
+  verifies `MINI.DAT` is materialized with archive-backed CSB game data.
 
 - ✅ 2026-07-29 Launcher audio handoff: M12's persisted master, music, SFX
   and mute values now reach M11's SDL3 audio state after every game branch's

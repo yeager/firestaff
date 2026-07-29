@@ -47,6 +47,8 @@ static const char kCsbHintPayload[] =
     "Firestaff synthetic CSB utility HCSB hint fixture v1\n";
 static const char kCsbSavePayload[] =
     "Firestaff synthetic CSB utility CSBGAME fixture v1\n";
+static const char kCsbMiniSavePayload[] =
+    "Firestaff synthetic CSB Atari MINI campaign fixture v1\n";
 static const char kCsbWrongGraphicsPayload[] =
     "Firestaff synthetic CSB wrong graphics archive fixture v1\n";
 static const char kCsbGraphicsMd5[] = "5b5922a7c89d7a885f7334000df4846a";
@@ -333,11 +335,12 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char cachedSwshSound[512];
     char cachedHint[512];
     char cachedSave[512];
+    char cachedMiniSave[512];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     const char* runtimeDir;
-    TestZipEntry zipEntries[6];
+    TestZipEntry zipEntries[7];
     M12_AssetStatus status;
 
     memset(csbCacheDir, 0, sizeof(csbCacheDir));
@@ -346,6 +349,7 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     memset(cachedSwshSound, 0, sizeof(cachedSwshSound));
     memset(cachedHint, 0, sizeof(cachedHint));
     memset(cachedSave, 0, sizeof(cachedSave));
+    memset(cachedMiniSave, 0, sizeof(cachedMiniSave));
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
               "positive ZIP path should fit");
     check_int(join_path(isoPath, sizeof(isoPath), root, "csb_required.iso"),
@@ -363,6 +367,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     zipEntries[4].payload = kCsbHintPayload;
     zipEntries[5].name = "archive/CSBGAME.DAT";
     zipEntries[5].payload = kCsbSavePayload;
+    zipEntries[6].name = "archive/MINI.DAT";
+    zipEntries[6].payload = kCsbMiniSavePayload;
     check_int(write_stored_zip_entries(zipPath,
                                        zipEntries,
                                        sizeof(zipEntries) / sizeof(zipEntries[0])),
@@ -436,7 +442,9 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                   FSP_JoinPath(cachedHint, sizeof(cachedHint),
                                csbCacheDir, "HCSB.HTC") &&
                   FSP_JoinPath(cachedSave, sizeof(cachedSave),
-                               csbCacheDir, "CSBGAME.DAT"),
+                               csbCacheDir, "CSBGAME.DAT") &&
+                  FSP_JoinPath(cachedMiniSave, sizeof(cachedMiniSave),
+                               csbCacheDir, "MINI.DAT"),
               "CSB optional startup cache paths should resolve");
     check_int(file_matches_payload(cachedBonusDungeon, kCsbBonusDungeonPayload),
               "archive-backed CSB bonus dungeon should be materialized next to GRAPHICS.DAT");
@@ -448,6 +456,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
               "archive-backed CSB HCSB.HTC utility data should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedSave, kCsbSavePayload),
               "archive-backed CSB CSBGAME.DAT utility save should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedMiniSave, kCsbMiniSavePayload),
+              "archive-backed CSB MINI.DAT campaign save should be materialized next to GRAPHICS.DAT");
 }
 
 static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {
