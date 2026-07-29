@@ -36,6 +36,7 @@
 #define FIRESTAFF_CSB_V22_INPLACE_DRAW_PC34_H
 
 #include <stdint.h>
+#include "csb_v1_viewport_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -99,6 +100,14 @@ const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,
  *
  * Returns the number of cells painted. */
 int csb_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH);
+
+/* Replace one already-composed, source-owned F0128 command in place. Only
+ * commands admitted by csb_v22_admit_f0128_door_projection_pc34() can paint;
+ * this currently means the proven D1/D2 door routes. The caller invokes this
+ * immediately after the source command, preserving later F0115 overlays. */
+int csb_v22_inplace_render_f0128_command(
+    const CSB_V1_ViewportRuntimeDrawCommandPc34* source_command,
+    unsigned char* framebuffer, int fbW, int fbH);
 
 /* Source evidence for tests/probes. */
 const char* csb_v22_inplace_draw_source_evidence(void);

@@ -42741,3 +42741,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   marker/SND3 fallback. Verification: `firestaff` build,
   `test_csb_v1_pc34_runtime_audio_transport`, and the local-PC3.4
   V2.0/V2.1 startup plus Prison-pointer probes PASS.
+## 2026-07-29 - CSB V2.2 F0128 door-command consumption
+
+- Bound the two proven PC3.4 front-door routes to the live CSB V2.2
+  compositor. `door_d0_01` and `door_d1_01` now require their exact
+  GRAPHICS.DAT provenance, `C10_COLOR_FLESH` transparency, and the original
+  F0128 clip/order before their replacement pixels can appear.
+- The replacement runs immediately after its V1 source command, so later
+  F0115 Thing overlays remain in original draw order. D3 and all unproven
+  material types stay on V1 instead of using rectangle fallback art.
+- Verified with Ninja and the focused V2.2 source-artpack, route, cache, and
+  real PC3.4 viewport CTest lane.

@@ -25,6 +25,8 @@
 #include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
 #include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
 #include "csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.h"
+#include "csb_v22_inplace_draw_pc34.h"
+#include "csb_v2_presentation_mode_pc34.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include <stdlib.h>
@@ -948,6 +950,14 @@ int csb_v1_viewport_consume_first_frame_material_raster_pc34(
                     framebuffer[(size_t)(command->clip_y + y) * framebuffer_width +
                                 command->clip_x + x] = pixel;
             }
+        }
+        /* A V2.2 replacement is permitted only at this exact point in the
+         * F0128 command stream. The source door has already established its
+         * clip and draw order; later source Thing commands still compose over
+         * the replacement. Unsupported commands remain entirely V1. */
+        if (csb_v2_presentation_mode_is_v22()) {
+            (void)csb_v22_inplace_render_f0128_command(
+                command, framebuffer, framebuffer_width, framebuffer_height);
         }
     }
     raster_hash = csb_v1_viewport_fnv1a_bytes_pc34(

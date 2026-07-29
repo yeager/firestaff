@@ -84,7 +84,11 @@ an integration build pass.
   cannot be mistaken for the original D3 F0489/F0488 raster. D1/D2 retain
   their explicit admitted projection statuses.
   Headless probes prove routing, admission and alpha preservation only, not
-  live visual correctness.
+  live visual correctness. 2026-07-29: the admitted D1/D2 door routes now
+  consume the source-owned F0128 command stream in the live V2.2 compositor:
+  each original door command is drawn first, then only the matching complete
+  pack surface may replace its exact clip before later F0115 overlays. D3 and
+  every non-door route remain source V1 until they have equivalent receipts.
 
 - **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Open 2026-07-29. The live F0128
   renderer owns V2.2 material selection and retains the authenticated original

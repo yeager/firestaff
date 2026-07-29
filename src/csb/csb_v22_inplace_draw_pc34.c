@@ -407,6 +407,61 @@ int csb_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH) {
     return cells_painted;
 }
 
+int csb_v22_inplace_render_f0128_command(
+    const CSB_V1_ViewportRuntimeDrawCommandPc34* source_command,
+    unsigned char* framebuffer, int fbW, int fbH)
+{
+    const char* asset_id = NULL;
+    CSB_V22_RouteProvenancePc34 provenance;
+    CSB_V22_F0128ProjectionCommandPc34 projection;
+    const uint32_t* rgba;
+    int width = 0;
+    int height = 0;
+
+    if (!source_command || !framebuffer || fbW <= 0 || fbH <= 0 ||
+        !csb_v22_inplace_draw_active()) {
+        return 0;
+    }
+
+    /* ReDMCSB's known PC3.4 front-door commands have distinct source record
+     * identities. No other command can enter this path until it has the same
+     * F0128 placement/provenance receipt. */
+    switch (source_command->route) {
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34:
+        asset_id = "door_d0_01";
+        break;
+    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34:
+        asset_id = "door_d1_01";
+        break;
+    default:
+        return 0;
+    }
+
+    memset(&provenance, 0, sizeof(provenance));
+    memset(&projection, 0, sizeof(projection));
+    if (!csb_v22_get_route_provenance("door_shapes", asset_id, &provenance) ||
+        !csb_v22_admit_f0128_door_projection_pc34(source_command,
+                                                    &provenance,
+                                                    &projection) ||
+        !projection.valid || projection.clip_x < 0 || projection.clip_y < 0 ||
+        projection.clip_w <= 0 || projection.clip_h <= 0 ||
+        projection.clip_x + projection.clip_w > fbW ||
+        projection.clip_y + projection.clip_h > fbH) {
+        return 0;
+    }
+
+    rgba = csb_v22_inplace_get_bitmap_by_id(projection.category,
+                                              projection.asset_id,
+                                              &width, &height);
+    if (!rgba || width <= 0 || height <= 0) {
+        return 0;
+    }
+    blit_bitmap_to_cell(rgba, width, height, framebuffer, fbW, fbH,
+                        projection.clip_x, projection.clip_y,
+                        projection.clip_w, projection.clip_h);
+    return 1;
+}
+
 const char* csb_v22_inplace_draw_source_evidence(void) {
     return "csb_v22_shape_cache_pc34.c (per-cell V22 shape cache); "
            "dm1_v2_modern_assets_pc34.c (manifest path resolution); "
