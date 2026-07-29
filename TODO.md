@@ -922,10 +922,11 @@ that its exact runtime path is not already source-locked and tested.
    viewport breadth, audio admission, and packaged app capture.
    2026-07-29: local PC3.4 runtime captures exercised V1, V2.0, V2.1, and
    V2.2 at the completed Entrance page. V1/V2.0 preserve the source page,
-   V2.1 uses the expected upscale path, and V2.2 resolves fail-closed to
-   V2.1 because no complete, source-mapped CSB material pack is installed.
-   Do not replace that fallback with repeated or guessed GRAPHICS.DAT art:
-   the 29 V2.2 routes require a verified source mapping.
+   V2.1 uses the expected upscale path, and V2.2 falls back fail-closed to
+   V2.1 only when no complete, source-mapped CSB material pack is installed.
+   The reviewed PC3.4 source pack remains V2.2 through the Prison handoff;
+   do not replace an unavailable pack with repeated or guessed GRAPHICS.DAT
+   art because the 29 V2.2 routes require verified source mapping.
    2026-07-29: repeated native executable capture against the local
    hash-verified PC3.4 pair confirms the same contract at 960x600: V1 and
    V2.0 produced SHA-256 `0998633d...c0d8c566`; V2.1 produced the distinct
@@ -984,6 +985,11 @@ that its exact runtime path is not already source-locked and tested.
    keeps the catalog and finished-material gate on the same external volume;
    `~/.firestaff/data/csb` may therefore be a link without silently selecting
    an unrelated local manifest and falling back to V2.1.
+   Reverified after the path fix: the source-derived V2.2 runtime probe passes
+   with the default symlinked data directory, and the complete CSB CTest lane
+   passes 103/103. This proves V2.0, V2.1, and an admitted V2.2 package route;
+   it does not close the remaining real HUD/viewport breadth, source-audio,
+   save-corpus, or packaged-app capture work.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
