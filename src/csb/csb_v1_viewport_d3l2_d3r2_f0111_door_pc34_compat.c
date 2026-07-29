@@ -12,7 +12,10 @@ enum {
     CSB_DOOR_PASS1_D3R2 = 0x0128,          /* ReDMCSB DEFS.H:2668. */
     CSB_DOOR_PASS2_D3L2 = 0x0349,          /* ReDMCSB DEFS.H:2672. */
     CSB_DOOR_PASS2_D3R2 = 0x0439,          /* ReDMCSB DEFS.H:2675. */
-    CSB_DOOR_NATIVE_BITMAP_FRONT_D3LCR = 693, /* ReDMCSB DEFS.H:5456. */
+    CSB_DOOR_GRAPHIC_FIRST_SET = 246,         /* ReDMCSB DEFS.H M633. */
+    CSB_DOOR_SET_GRAPHIC_COUNT = 3,           /* ReDMCSB DEFS.H C003. */
+    CSB_DOOR_SET_COUNT = 4,                   /* PC3.4 I34 DoorSet 0..3. */
+    CSB_DOOR_NATIVE_BITMAP_FRONT_D3LCR = 246, /* DoorSet 0's G0693. */
     CSB_C0_VIEW_DOOR_ORNAMENT_D3LCR = 0,   /* ReDMCSB DEFS.H:2789. */
     CSB_C3700_ZONE_DOOR_D3L2 = 3700,       /* ReDMCSB DEFS.H:4250. */
     CSB_C3710_ZONE_DOOR_D3R2 = 3710,       /* ReDMCSB DEFS.H:4251. */
@@ -28,6 +31,24 @@ enum {
     CSB_LINEAGE_DOOR_GRAPHIC_SIZE = 984,   /* CSB Viewport.cpp:2602-2604. */
     CSB_LINEAGE_DOOR_NEARNESS = 0          /* CSB Viewport.cpp:2602-2604. */
 };
+
+int csb_v1_viewport_door_graphic_index_pc34(int door_set, int depth)
+{
+    if (door_set < 0 || door_set >= CSB_DOOR_SET_COUNT ||
+        depth < 0 || depth >= CSB_DOOR_SET_GRAPHIC_COUNT) return -1;
+    return CSB_DOOR_GRAPHIC_FIRST_SET +
+        door_set * CSB_DOOR_SET_GRAPHIC_COUNT + depth;
+}
+
+int csb_v1_viewport_d3_door_graphic_index_valid_pc34(int graphic_index)
+{
+    int door_set;
+    for (door_set = 0; door_set < CSB_DOOR_SET_COUNT; ++door_set) {
+        if (graphic_index == csb_v1_viewport_door_graphic_index_pc34(
+                door_set, 0)) return 1;
+    }
+    return 0;
+}
 
 static const char s_source_evidence[] =
     "DUNVIEW.C F0676/F0677 C17_ELEMENT_DOOR_FRONT path; "
@@ -227,7 +248,8 @@ int csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
     }
     if (!d3l2 || !d3r2 || !out_receipt || !source_graphics_dat_bound ||
         !no_synthetic_pixels || !no_fallback_visuals ||
-        source_graphics_item_index != CSB_DOOR_NATIVE_BITMAP_FRONT_D3LCR ||
+        !csb_v1_viewport_d3_door_graphic_index_valid_pc34(
+            source_graphics_item_index) ||
         source_byte_count == 0u || source_payload_hash == 0u ||
         d3l2->side != CSB_V1_VIEWPORT_D3L2_D3R2_F0111_DOOR_SIDE_D3L2_PC34 ||
         d3r2->side != CSB_V1_VIEWPORT_D3L2_D3R2_F0111_DOOR_SIDE_D3R2_PC34 ||

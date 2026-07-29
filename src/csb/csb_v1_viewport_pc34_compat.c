@@ -239,7 +239,8 @@ int csb_v1_viewport_first_frame_material_proof_valid_pc34(
          !proof->d3_pair_real_asset_receipt.source_graphics_dat_bound ||
          !proof->d3_pair_real_asset_receipt.no_synthetic_pixels ||
          !proof->d3_pair_real_asset_receipt.no_fallback_visuals ||
-         proof->d3_pair_real_asset_receipt.source_graphics_item_index != 693 ||
+         !csb_v1_viewport_d3_door_graphic_index_valid_pc34(
+             proof->d3_pair_real_asset_receipt.source_graphics_item_index) ||
          proof->d3_pair_real_asset_receipt.source_byte_count == 0u ||
          proof->d3_pair_real_asset_receipt.source_payload_hash == 0u ||
          proof->d3_pair_real_asset_receipt.source_payload_hash !=

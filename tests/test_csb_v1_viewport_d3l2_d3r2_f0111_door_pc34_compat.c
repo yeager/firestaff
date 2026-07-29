@@ -203,9 +203,9 @@ static int test_f0115_and_f0111_dispatch(void)
     ok &= expect_int("d3r2.f0111.called", right_result.f0111_called, 1,
                      A_D3R2);
     ok &= expect_int("d3l2.f0111.native_index_family",
-                     left_result.f0111_native_bitmap_index_family, 693, A_F0111);
+                     left_result.f0111_native_bitmap_index_family, 246, A_F0111);
     ok &= expect_int("d3r2.f0111.native_index_family",
-                     right_result.f0111_native_bitmap_index_family, 693, A_F0111);
+                     right_result.f0111_native_bitmap_index_family, 246, A_F0111);
     ok &= expect_int("d3l2.f0111.ornament",
                      left_result.f0111_door_ornament_view, 0, A_F0111);
     ok &= expect_int("d3r2.f0111.ornament",
@@ -263,9 +263,9 @@ static int test_pass2_c10_frame_and_no_f0107(void)
     ok &= expect_int("d3r2.native.fetch.f0489",
                      right_result.native_bitmap_fetches_via_f0489, 1, A_F0111);
     ok &= expect_int("d3l2.resolved.native.index",
-                     left_result.resolved_native_bitmap_index, 694, A_F0111);
+                     left_result.resolved_native_bitmap_index, 247, A_F0111);
     ok &= expect_int("d3r2.resolved.native.index",
-                     right_result.resolved_native_bitmap_index, 694, A_F0111);
+                     right_result.resolved_native_bitmap_index, 247, A_F0111);
     ok &= expect_int("d3l2.frame.byte_width",
                      left_result.preserved_frame_byte_width, 48, A_F0111);
     ok &= expect_int("d3r2.frame.byte_width",
@@ -347,25 +347,41 @@ static int test_real_graphics_dat_d3lr_door_receipt(void)
     size_t payload_size = 0u;
     uint32_t payload_hash = 0u;
 
+    ok &= expect_int("door_set0.d3.index",
+                     csb_v1_viewport_door_graphic_index_pc34(0, 0), 246,
+                     A_F0111);
+    ok &= expect_int("door_set3.d3.index",
+                     csb_v1_viewport_door_graphic_index_pc34(3, 0), 255,
+                     A_F0111);
+    ok &= expect_int("door_set3.d1.index",
+                     csb_v1_viewport_door_graphic_index_pc34(3, 2), 257,
+                     A_F0111);
+    ok &= expect_int("door_set.reject.out_of_range",
+                     csb_v1_viewport_door_graphic_index_pc34(4, 0), -1,
+                     A_F0111);
+    ok &= expect_int("d3.index.reject.d2",
+                     csb_v1_viewport_d3_door_graphic_index_valid_pc34(247), 0,
+                     A_F0111);
+
     if (!path || !path[0]) {
         path = "/Users/bosse/.firestaff/data/csb/GRAPHICS.DAT";
     }
 
     ok &= expect_int("real.hash.read",
-                     read_real_graphics_item_hash(path, 693u,
+                     read_real_graphics_item_hash(path, 246u,
                                                   &payload_size, &payload_hash),
-                     1, "DMCSB1 real GRAPHICS.DAT item 693");
+                     1, "DMCSB1 real GRAPHICS.DAT DoorSet-0 D3 item 246");
     ok &= expect_int("real.payload.nonzero", payload_size > 0u, 1,
-                     "DMCSB1 real GRAPHICS.DAT item 693");
+                     "DMCSB1 real GRAPHICS.DAT DoorSet-0 D3 item 246");
     ok &= expect_int("real.hash.nonzero", payload_hash != 0u, 1,
-                     "DMCSB1 real GRAPHICS.DAT item 693");
+                     "DMCSB1 real GRAPHICS.DAT DoorSet-0 D3 item 246");
     ok &= expect_int("real.receipt.ok",
         csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
-            d3l2, d3r2, 1, 1, 1, 693, payload_size, payload_hash, &receipt),
+            d3l2, d3r2, 1, 1, 1, 246, payload_size, payload_hash, &receipt),
         1, A_F0111);
     ok &= expect_int("real.receipt.valid", receipt.valid, 1, A_F0111);
     ok &= expect_int("real.receipt.item", receipt.source_graphics_item_index,
-                     693, A_F0111);
+                     246, A_F0111);
     ok &= expect_int("real.receipt.hash",
                      receipt.source_payload_hash == payload_hash, 1, A_F0111);
     ok &= expect_int("real.receipt.d3l2_square", receipt.d3l2_view_square,
@@ -385,31 +401,31 @@ static int test_real_graphics_dat_d3lr_door_receipt(void)
 
     ok &= expect_int("real.reject.no_source",
         csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
-            d3l2, d3r2, 0, 1, 1, 693, payload_size, payload_hash, &receipt),
+            d3l2, d3r2, 0, 1, 1, 246, payload_size, payload_hash, &receipt),
         0, A_F0111);
     ok &= expect_int("real.reject.item692",
         csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
-            d3l2, d3r2, 1, 1, 1, 692, payload_size, payload_hash, &receipt),
+            d3l2, d3r2, 1, 1, 1, 247, payload_size, payload_hash, &receipt),
         0, A_F0111);
     ok &= expect_int("real.reject.item694",
         csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
-            d3l2, d3r2, 1, 1, 1, 694, payload_size, payload_hash, &receipt),
+            d3l2, d3r2, 1, 1, 1, 248, payload_size, payload_hash, &receipt),
         0, A_F0111);
     ok &= expect_int("real.reject.synthetic",
         csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
-            d3l2, d3r2, 1, 0, 1, 693, payload_size, payload_hash, &receipt),
+            d3l2, d3r2, 1, 0, 1, 246, payload_size, payload_hash, &receipt),
         0, A_F0111);
     ok &= expect_int("real.reject.fallback",
         csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
-            d3l2, d3r2, 1, 1, 0, 693, payload_size, payload_hash, &receipt),
+            d3l2, d3r2, 1, 1, 0, 246, payload_size, payload_hash, &receipt),
         0, A_F0111);
     ok &= expect_int("real.reject.zero_hash",
         csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
-            d3l2, d3r2, 1, 1, 1, 693, payload_size, 0u, &receipt),
+            d3l2, d3r2, 1, 1, 1, 246, payload_size, 0u, &receipt),
         0, A_F0111);
     ok &= expect_int("real.reject.same_side",
         csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
-            d3l2, d3l2, 1, 1, 1, 693, payload_size, payload_hash, &receipt),
+            d3l2, d3l2, 1, 1, 1, 246, payload_size, payload_hash, &receipt),
         0, A_F0111);
 
     return ok;

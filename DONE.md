@@ -42756,6 +42756,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   original F0128 clip while alpha-zero pixels preserve the source framebuffer;
   a changed transparency contract is rejected.
 
+## 2026-07-29 - CSB D3 door-set source binding
+
+- Corrected the CSB D3 F0111 receipt from a captured, invalid hard-coded
+  `GRAPHICS.DAT` index 693 to ReDMCSB `DUNVIEW.C:2651-2658`'s actual
+  `M633 + DoorSet * C003` selection. The acceptance gate now admits only the
+  four PC3.4 D3 records 246, 249, 252 and 255, and rejects D2/D1 neighbours.
+  The focused real-data D3L2/D3R2 regression passes against the local CSB
+  `GRAPHICS.DAT`. The remaining D3 item is the real F0488 44x38-to-48x41
+  native-buffer decode/padding, which stays explicitly blocked in TODO.
+
 ## 2026-07-29 - CSB V2.0 full-surface startup capture
 
 - ✅ Strengthened `csb_v20_filtered_startup_capture` to validate the actual

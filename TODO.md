@@ -75,8 +75,10 @@ an integration build pass.
   SHA-256 plus source and exported dimensions, but that provenance remains
   metadata until it is bound to the corresponding F0128 command. D1/D2 front
   door routes now have that exact admission contract (records 248/247 and
-  their original clips); D3 remains blocked because its 48x41 native mapping
-  is not established by the available 44x38 export. Source door exports now
+  their original clips). The D3 record selection is now source-locked to
+  `M633 + DoorSet * C003` (246/249/252/255), but its 44x38 stored raster still
+  needs a proven F0488 expansion/padding receipt for F0111's 48x41 buffer.
+  Source door exports now
   retain the verified F0111 `C10_COLOR_FLESH` transparency as RGBA alpha and
   the cache blitter preserves the original framebuffer for transparent pixels.
   The source-artpack manifest now makes this distinction machine-readable:
