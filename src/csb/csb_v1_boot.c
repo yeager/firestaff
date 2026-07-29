@@ -1593,11 +1593,23 @@ int csb_v1_boot_build_v22_f0128_draw_plan_pc34(
     CSB_V1_ViewportFirstFrameMaterialProof proof;
     CSB_V1_ViewportD3L2D3R2F0111DoorRealAssetReceiptPc34 d3;
     size_t sizes[6]; uint32_t hashes[6], catalog_hash; unsigned count, i;
-    const unsigned items[6] = { 693u, 498u, 248u, 247u, 246u, 246u };
+    unsigned items[6];
+    int door_set;
     if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
     if (!profile || !out_plan || !profile->graphics_verified ||
         profile->graphics_kind != CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS ||
-        !profile->graphics_path[0]) return 0;
+        !profile->graphics_path[0] || !profile->runtime.dungeon_handle ||
+        profile->runtime.current_level < 0 ||
+        profile->runtime.current_level >= profile->runtime.dungeon_handle->level_count) return 0;
+    door_set = profile->runtime.dungeon_handle->map_door_set0[
+        profile->runtime.current_level] & 3;
+    items[0] = 693u;
+    items[1] = 498u;
+    items[2] = (unsigned)csb_v1_viewport_door_graphic_index_pc34(door_set, 2);
+    items[3] = (unsigned)csb_v1_viewport_door_graphic_index_pc34(door_set, 1);
+    items[4] = (unsigned)csb_v1_viewport_door_graphic_index_pc34(door_set, 0);
+    items[5] = items[4];
+    if ((int)items[2] < 0 || (int)items[3] < 0 || (int)items[4] < 0) return 0;
     for (i = 0u; i < 6u; ++i) {
         if (!csb_v1_boot_graphics_catalog_item_hash(profile->graphics_path, items[i],
                                                      &sizes[i], &hashes[i], &count,
@@ -1614,19 +1626,30 @@ int csb_v1_boot_build_v22_f0128_draw_plan_pc34(
     proof.d1_door_hash = hashes[2]; proof.d1_thing_hash = hashes[1]; proof.d2_door_hash = hashes[3];
     proof.d2_door_capture_valid = proof.d2_door_capture_real_graphics_dat = 1;
     proof.d2_door_capture_no_synthetic_pixels = proof.d2_door_capture_no_fallback_visuals = 1;
-    proof.d2_door_capture_item_index = 247; proof.d2_door_capture_byte_count = sizes[3];
+    proof.d2_door_capture_item_index = (int)items[3]; proof.d2_door_capture_byte_count = sizes[3];
     proof.d2_door_capture_payload_hash = hashes[3]; proof.d2_door_capture_width = 64;
     proof.d2_door_capture_height = 61; proof.d2_door_capture_zone = 3760;
     proof.d2_door_capture_transparent_color = 10;
     if (!csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
             csb_v1_viewport_d3l2_d3r2_f0111_door_for_side_pc34(0),
             csb_v1_viewport_d3l2_d3r2_f0111_door_for_side_pc34(1), 1, 1, 1,
-            246, sizes[4], hashes[4], &d3)) return 0;
+            (int)items[4], sizes[4], hashes[4], &d3)) return 0;
     proof.d3l2_door_hash = proof.d3r2_door_hash = hashes[4]; proof.d3_pair_real_asset_receipt = d3;
     proof.source_evidence = "ReDMCSB DUNVIEW.C F0128; authenticated PC34 GRAPHICS.DAT catalog";
-    return csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
+    if (!csb_v1_viewport_build_first_frame_runtime_draw_plan_pc34(
         &proof, 1, profile->runtime.party_dir, profile->runtime.party_x,
-        profile->runtime.party_y, out_plan);
+        profile->runtime.party_y, out_plan)) return 0;
+    for (i = 0u; i < (unsigned)out_plan->command_count; ++i) {
+        CSB_V1_ViewportRuntimeDrawCommandPc34 *command = &out_plan->commands[i];
+        if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34)
+            command->source_graphics_item_index = (int)items[2];
+        else if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34)
+            command->source_graphics_item_index = (int)items[3];
+        else if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34 ||
+                 command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34)
+            command->source_graphics_item_index = (int)items[4];
+    }
+    return 1;
 }
 
 int csb_v1_boot_render_viewport_frame_pc34(

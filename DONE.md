@@ -42836,6 +42836,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   remaining live F0128 perspective-cell renderer is complete.
 # Completed work
 
+- 2026-07-29: Extended the CSB V2.2 F0128 art-command bridge to all real
+  PC3.4 map DoorSets. The live dungeon header now selects `G0693/G0694/G0695`
+  with ReDMCSB's `M633 + DoorSet * C003 + depth` formula, so V2.2 cannot paint
+  a DoorSet-0 asset over later maps. Verified by the CSB F0128 material,
+  V2.2 route/cache and startup sequence CTests.
+
 - 2026-07-29: Wired CSB V2.2 modern door art to a source-owned ReDMCSB
   `DUNVIEW.C F0128` command plan. M11 now authenticates the active PC3.4
   `GRAPHICS.DAT` catalog and passes the D1/D2/D3 DoorSet-0 commands
