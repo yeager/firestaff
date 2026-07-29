@@ -323,6 +323,27 @@ DM1_DUNGEON_PALETTE = [
     (0xFF, 0xFF, 0xFF, 255),
 ]
 
+# CSB's startup changes the active VGA palette by phase.  These are the
+# source-owned C25/VIDEODRV values used by the CSB TITLE and ENTRANCE paths;
+# they deliberately are not the generic dungeon-light palette above.
+CSB_TITLE_CHAOS_PREVIEW_PALETTE = [
+    (0, 0, 109, 255), (0, 0, 109, 255), (0, 0, 109, 255),
+    (188, 156, 60, 255), (146, 73, 36, 255), (219, 182, 36, 255),
+    (182, 109, 36, 255), (0, 0, 109, 255), (255, 255, 73, 255),
+    (0, 0, 109, 255), (0, 0, 109, 255), (0, 0, 109, 255),
+    (0, 0, 109, 255), (0, 0, 109, 255), (0, 0, 109, 255),
+    (255, 0, 0, 255),
+]
+
+CSB_ENTRANCE_PREVIEW_PALETTE = [
+    (0, 0, 0, 255), (109, 109, 109, 255), (142, 142, 142, 255),
+    (142, 77, 12, 255), (207, 174, 142, 255), (77, 45, 45, 255),
+    (12, 142, 12, 255), (12, 174, 12, 255), (142, 109, 77, 255),
+    (255, 12, 12, 255), (174, 142, 109, 255), (109, 77, 45, 255),
+    (77, 77, 77, 255), (174, 174, 174, 255), (109, 45, 12, 255),
+    (255, 255, 255, 255),
+]
+
 DM2_PREVIEW_PALETTE = [
     (0x00, 0x00, 0x00, 255),
     (0x2A, 0x2A, 0x2A, 255),
@@ -502,6 +523,100 @@ def expand_img3_to_image(source: bytes, width: int, height: int) -> Image.Image:
     for y in range(height):
         for x in range(width):
             pix[x, y] = DM1_DUNGEON_PALETTE[get_pixel(y * stride_pixels + x) & 0x0F]
+    return img
+
+
+def csb_img2_indices(source: bytes, width: int, height: int) -> bytes:
+    """Decode a PC3.4 CSB big-endian IMG2 record to 4-bit indices.
+
+    CSB's GRAPHICS.DAT records are not DM1's little-endian nibble IMG3
+    streams.  They carry a big-endian width/height prefix followed by the
+    byte-addressed RLE used by CSB's original C001-C005 startup surfaces.
+    Keep this decoder separate so importing real CSB media never silently
+    previews it through the DM1 path.
+    """
+    if width <= 0 or height <= 0 or len(source) < 5:
+        raise ValueError("entry too short for CSB IMG2")
+    if be16(source, 0) != width or be16(source, 2) != height:
+        raise ValueError("CSB IMG2 big-endian width/height prefix mismatch")
+    total = width * height
+    pixels = bytearray(total)
+    pos = 0
+    cursor = 4
+    while pos < total:
+        if cursor >= len(source):
+            raise ValueError("truncated CSB IMG2 command stream")
+        command = source[cursor]
+        cursor += 1
+        color = command & 0x0F
+        if (command & 0x80) == 0:
+            count = (command >> 4) + 1
+            if count > total - pos:
+                raise ValueError("CSB IMG2 literal run exceeds output")
+            pixels[pos : pos + count] = bytes([color]) * count
+            pos += count
+            continue
+
+        if cursor >= len(source):
+            raise ValueError("truncated CSB IMG2 extended run")
+        count = source[cursor] + 1
+        cursor += 1
+        if command & 0x40:
+            if cursor >= len(source):
+                raise ValueError("truncated CSB IMG2 long run")
+            count = ((count - 1) << 8) + source[cursor] + 1
+            cursor += 1
+        if count > total - pos:
+            raise ValueError("CSB IMG2 run exceeds output")
+        mode = command & 0x30
+        if mode == 0x00:
+            pixels[pos : pos + count] = bytes([color]) * count
+            pos += count
+        elif mode == 0x10:
+            # An odd literal run starts with the command colour, followed by
+            # packed high-nibble/low-nibble source values.
+            literal_count = count
+            if literal_count & 1:
+                pixels[pos] = color
+                pos += 1
+                literal_count -= 1
+            packed_count = literal_count // 2
+            if cursor + packed_count > len(source):
+                raise ValueError("truncated CSB IMG2 packed literal run")
+            for _ in range(packed_count):
+                packed = source[cursor]
+                cursor += 1
+                pixels[pos] = packed >> 4
+                pixels[pos + 1] = packed & 0x0F
+                pos += 2
+        elif mode == 0x30:
+            # ReDMCSB's byte IMG2 form copies an earlier raster line, then
+            # emits the command colour as the final pixel.
+            if pos < width or count + 1 > total - pos:
+                raise ValueError("invalid CSB IMG2 previous-line run")
+            for _ in range(count):
+                pixels[pos] = pixels[pos - width]
+                pos += 1
+            pixels[pos] = color
+            pos += 1
+        else:
+            raise ValueError("unsupported CSB IMG2 command mode")
+    return bytes(pixels)
+
+
+def csb_img2_to_image(
+    source: bytes,
+    width: int,
+    height: int,
+    palette: list[tuple[int, int, int, int]] | None = None,
+) -> Image.Image:
+    pixels = csb_img2_indices(source, width, height)
+    active_palette = palette or DM1_DUNGEON_PALETTE
+    img = Image.new("RGBA", (width, height))
+    pix = img.load()
+    for y in range(height):
+        for x in range(width):
+            pix[x, y] = active_palette[pixels[y * width + x] & 0x0F]
     return img
 
 
@@ -693,9 +808,13 @@ def parse_graphics_dat_assets(path: Path, data: bytes, detected_game: str) -> tu
             record = data[cursor : min(len(data), cursor + comp)]
             if record and not warning:
                 try:
-                    expand_img3_to_image(record, width, height)
+                    if big_endian and detected_game == "csb":
+                        csb_img2_to_image(record, width, height)
+                    else:
+                        expand_img3_to_image(record, width, height)
                 except Exception as exc:
-                    warning = f"metadata only; IMG3 decode warning: {exc}"
+                    kind = "CSB IMG2" if big_endian and detected_game == "csb" else "IMG3"
+                    warning = f"metadata only; {kind} decode warning: {exc}"
             assets.append(
                 GameDataAsset(
                     category=category_for_graphics_index(index, detected_game),
@@ -1769,6 +1888,18 @@ class ArtpackStudio(tk.Tk):
             data = asset.path.read_bytes()
             record = data[asset.offset : asset.offset + asset.compressed_bytes]
             try:
+                if asset.source_game == "csb":
+                    if asset.index == 1:
+                        return csb_img2_to_image(
+                            record, asset.width, asset.height,
+                            CSB_TITLE_CHAOS_PREVIEW_PALETTE,
+                        )
+                    if 2 <= asset.index <= 5:
+                        return csb_img2_to_image(
+                            record, asset.width, asset.height,
+                            CSB_ENTRANCE_PREVIEW_PALETTE,
+                        )
+                    return csb_img2_to_image(record, asset.width, asset.height)
                 return expand_img3_to_image(record, asset.width, asset.height)
             except Exception:
                 return None
@@ -2073,6 +2204,11 @@ def self_test() -> int:
         dm2_img, dm2_kind = dm2_decode_gdat_image(dm2_raw)
         assert dm2_kind == "U4"
         assert dm2_img.size == (2, 1)
+        # CSB PC3.4 records are big-endian IMG2 streams, not the DM1 IMG3
+        # format above. Four short colour runs form a 2x2 source raster.
+        csb_raw = b"\x00\x02\x00\x02\x03\x04\x05\x06"
+        assert csb_img2_indices(csb_raw, 2, 2) == b"\x03\x04\x05\x06"
+        assert csb_img2_to_image(csb_raw, 2, 2).size == (2, 2)
     print("firestaff_artpack_studio self-test: PASS")
     return 0
 

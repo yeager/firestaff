@@ -1,3 +1,13 @@
+- ✅ 2026-07-29 CSB PC3.4 Artpack Studio source preview. Artpack Studio now
+  uses a bounded big-endian byte-stride IMG2 decoder for CSB `GRAPHICS.DAT`,
+  rather than DM1's incompatible little-endian IMG3 preview route. Against
+  the installed original PC3.4 package it decodes 690/749 records, including
+  C001 title and C002-C005 Entrance images. The title and Entrance previews
+  use CSB's source-owned special palettes, not the DM1 dungeon palette.
+  Verified by the Studio self-test and the complete 98/98 CSB CTest lane.
+  This is source-asset inspection only; it does not promote incomplete V2.2
+  art to the reviewed-art gate.
+
 - ✅ 2026-07-29 CSB V2 stairs presentation consumption. Pure ReDMCSB
   `F0364` level changes now pass the active V2 vertical interpolation lane to
   M11's completed viewport y-pan. The change is presentation-only: V1 retains

@@ -15,6 +15,16 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-ARTPACK-STUDIO-PC34-IMG2-PREVIEW:** Closed 2026-07-29. Artpack
+  Studio now recognizes CSB PC3.4 `GRAPHICS.DAT` as big-endian byte-stride
+  IMG2 rather than sending it through DM1's little-endian nibble IMG3
+  previewer. It decodes 690 of the 749 locally installed original records,
+  including C001 title and C002-C005 Entrance surfaces, and uses the
+  source-owned CSB title/Entrance preview palette for those UI records.
+  `firestaff_artpack_studio_self_test` and the complete 98-test CSB CTest
+  lane pass. This only fixes local source-asset inspection; it does not admit
+  V2.2 without the existing reviewed-art gate.
+
 - **CSB-V2X-PRISON-POINTER-PRESENTATION:** Closed 2026-07-29. Boot-probe
   pointer commands now present the active game surface before window-to-source
   mapping. V2.0/V2.1 previously retained the stale 320x200 renderer geometry
