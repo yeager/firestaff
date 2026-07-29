@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 Nexus data file decoder coverage complete: all Nexus game
+  data formats now have decoders. Final batch: FONT256.S2D (SCR tilemap
+  font, 5 sections, 16×256 tilemap, 2048 tiles, 256-color palette),
+  STABG.BIN (STMP tilemap, 11 planes with 40×21 background + overlays),
+  LOGOBG.DG2 (8bpp 320×224 paletted image), and raw binary classifier
+  for DM.BIN/NBG3.BIN/STONE.BIN/DEATH.BIN/SWTCHR.BIN/TM.BIN/SDDRVS.TSK.
+  DMV*.AVI are standard RIFF/AVI video, DMN_*.TXT are Shift-JIS text.
+
 - ✅ 2026-07-29 Nexus BPPK menu graphics decoder: MENU.BPK BPPK/BMPD
   container with 164 bitmap entries (162 PRS3-compressed). Each entry
   has width, height, flags, and PRS3 block for UI overlay graphics.
