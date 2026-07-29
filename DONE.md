@@ -1,3 +1,11 @@
+- ✅ 2026-07-29 DM2 viewport tables: render order (table1d7029), column counts
+  (table1d7012), wall face indices near/mid (table1d6fee/6f9c), wall ornament
+  slots (table1d6fdc/6f7c/6f5c), wall visibility (table1d6f4c), wall rect IDs
+  (table1d6f2c), depth index (table1d6f27), floor item near (table1d6f0b),
+  tile walk/scan deltas (table1d62b0/62d0), facing remap (table1d26a8/62e8),
+  creature draw order (table1d26d0), champion pane rects (table1d27c4/27d4),
+  light curve (table1d6702), palette masks (table1d7092/7072/7052/7042).
+  13 tests. Source: dm2data.cpp:60-450.
 - ✅ 2026-07-29 DM2 game tables + DM1 item conversion: direction delta tables
   (table1d27fc/table1d2804), light attenuation (table1d6712), movement speed
   (table1d70f0), creature scatter/occupy, skill map/class, action hand map.

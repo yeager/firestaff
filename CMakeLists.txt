@@ -44250,6 +44250,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_combat_helpers.c"
     )
 endif()
 
+# DM2 viewport tables (render order, wall faces, creature positions, palette masks)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_viewport_tables.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_viewport_tables.c")
+    add_executable(test_dm2_v1_viewport_tables
+        tests/test_dm2_v1_viewport_tables.c
+        src/dm2/dm2_v1_viewport_tables.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_viewport_tables PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_viewport_tables
+        COMMAND test_dm2_v1_viewport_tables
+    )
+endif()
+
 # DM2 game tables (direction deltas, light, movement, creature, skill, action maps)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_game_tables.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_game_tables.c")
