@@ -426,6 +426,91 @@ static int csb_v22_famg_find_slot_in_manifest(const char* manifest_path,
     return 0;
 }
 
+/* A source-derived bitmap alone is not enough to replace a V1 F0128 draw.
+ * The artpack records its source-geometry result separately in
+ * routeProvenance.  Keep the finished-art gate tied to that explicit result:
+ * an "unbound" route may be useful to Artpack Studio, but it must remain on
+ * the V1 path at runtime. */
+static int csb_v22_famg_route_provenance_admits_slot(
+    const char* manifest_path, const char* category, const char* slot_id) {
+    FILE* fp;
+    char* text;
+    long size;
+    const char* route;
+    const char* match;
+    const size_t slot_len = slot_id ? strlen(slot_id) : 0U;
+
+    if (!manifest_path || !category || !slot_id || slot_len == 0U) return 0;
+    fp = fopen(manifest_path, "rb");
+    if (!fp) return 0;
+    if (fseek(fp, 0, SEEK_END) != 0 || (size = ftell(fp)) < 0 ||
+        size > 1024L * 1024L || fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return 0;
+    }
+    text = (char*)malloc((size_t)size + 1U);
+    if (!text || fread(text, 1, (size_t)size, fp) != (size_t)size) {
+        free(text);
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    text[size] = '\0';
+    route = strstr(text, "\"routeProvenance\"");
+    if (!route) {
+        free(text);
+        return 0;
+    }
+
+    match = route;
+    while ((match = strstr(match, "\"id\"")) != NULL) {
+        const char* value = match + 4;
+        const char* begin;
+        const char* end;
+        char entry_category[64];
+        char projection_status[64];
+
+        while (*value == ' ' || *value == '\t' || *value == '\r' ||
+               *value == '\n') ++value;
+        if (*value != ':') {
+            match += 4;
+            continue;
+        }
+        ++value;
+        while (*value == ' ' || *value == '\t' || *value == '\r' ||
+               *value == '\n') ++value;
+        if (*value != '"' || strncmp(value + 1, slot_id, slot_len) != 0 ||
+            value[slot_len + 1] != '"') {
+            match += 4;
+            continue;
+        }
+        begin = match;
+        while (begin > route && *begin != '{') --begin;
+        end = match;
+        while (*end && *end != '}') ++end;
+        if (*begin != '{' || *end != '}') break;
+        csb_v22_famg_buf_reset();
+        while (begin <= end) csb_v22_famg_buf_append_char(*begin++);
+        entry_category[0] = '\0';
+        projection_status[0] = '\0';
+        if (csb_v22_famg_extract_string(g_entry_buf, "category",
+                                         entry_category,
+                                         sizeof(entry_category)) &&
+            csb_v22_famg_extract_string(g_entry_buf,
+                                         "f0128ProjectionStatus",
+                                         projection_status,
+                                         sizeof(projection_status)) &&
+            strcmp(entry_category, category) == 0 &&
+            strncmp(projection_status, "admitted_", 9) == 0) {
+            free(text);
+            return 1;
+        }
+        match = end + 1;
+    }
+    free(text);
+    return 0;
+}
+
 /* Resolve a manifest source_file (relative) against the manifest dir.
  * Returns 1 if the resolved path exists on disk, 0 otherwise.
  *
@@ -516,15 +601,18 @@ CSB_V22_FamgClass csb_v22_famg_classify_slot(CSB_V22_FamgSlot slot) {
     }
 
     /* Real asset: required fields + non-placeholder generator +
-     * source_file resolves on disk. */
+     * source_file resolves on disk + an exact source projection. */
     char resolved_path[FSP_PATH_MAX];
     int exists = csb_v22_famg_resolve_source_file(g_manifest_path,
                                                   k_slot_table[slot].category,
                                                   raw.source_file,
                                                   resolved_path,
                                                   sizeof(resolved_path));
-    return exists ? CSB_V22_FAMG_CLASS_REAL
-                  : CSB_V22_FAMG_CLASS_PARTIAL;
+    return exists && csb_v22_famg_route_provenance_admits_slot(
+                         g_manifest_path, k_slot_table[slot].category,
+                         k_slot_table[slot].id)
+        ? CSB_V22_FAMG_CLASS_REAL
+        : CSB_V22_FAMG_CLASS_PARTIAL;
 }
 
 int csb_v22_famg_get_slot_info(CSB_V22_FamgSlot slot,
@@ -748,8 +836,9 @@ const char* csb_v22_famg_source_evidence(void) {
         "Source: docs/FIRESTAFF_GAP_LIST.md B3 V2 per-mode material row\n"
         "Manifest path: ~/.firestaff/assets/csb/modern/modern_asset_manifest.json\n"
         "Schema: { id, generator, source_file, width, height } per slot entry\n"
+        "Each REAL slot also needs routeProvenance.f0128ProjectionStatus=admitted_*\n"
         "Generator 'placeholder' is the procedural fallback marker (synthetic)\n"
-        "Non-placeholder generator + source_file resolves on disk = REAL\n"
+        "Non-placeholder generator + source_file + admitted projection = REAL\n"
         "Gate states: NOT_PROBED / NO_MANIFEST / SYNTHETIC_PLACEHOLDER / PARTIAL / FINISHED_REAL\n"
         "FINISHED_REAL requires every tracked slot to be REAL with non-placeholder generator\n"
         "V1 invariant: V1 command routes, dungeon state, save/restore NEVER bypassed\n"
@@ -758,6 +847,7 @@ const char* csb_v22_famg_source_evidence(void) {
         "It does NOT claim finished PBR art has been reviewed or shipped.\n"
         "FINISHED_REAL promotion requires operator-installed hero PNGs at\n"
         "~/.firestaff/assets/csb/modern/<category>/<source_file> with\n"
-        "generator != 'placeholder' and a non-zero width/height, plus a\n"
+        "generator != 'placeholder', a non-zero width/height, and an\n"
+        "explicit admitted F0128 projection, plus a\n"
         "sibling gap-list update to mark the real-asset promotion gate green.\n";
 }

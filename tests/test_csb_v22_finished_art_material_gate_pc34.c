@@ -50,6 +50,7 @@
 
 static int s_pass = 0;
 static int s_fail = 0;
+static const char* s_projection_status = "admitted_test";
 
 #define CHECK(expr, msg)                                                  \
     do {                                                                  \
@@ -205,8 +206,15 @@ static int write_manifest(const char* path,
                           int omitDimsFirst) {
     FILE* fp = fopen(path, "wb");
     if (!fp) return 0;
-    fprintf(fp, "{\"manifestVersion\":\"1.0.0\",\"packId\":\"csb-v22-famg-test\",\"slots\":[");
+    fprintf(fp, "{\"manifestVersion\":\"1.0.0\",\"packId\":\"csb-v22-famg-test\",\"routeProvenance\":[");
     int count = firstOnly ? 1 : (int)CSB_V22_FAMG_MATERIAL_COUNT;
+    for (int i = 0; i < count; ++i) {
+        const SlotFixture* s = &k_slots[i];
+        if (i > 0) fprintf(fp, ",");
+        fprintf(fp, "{\"id\":\"%s\",\"category\":\"%s\",\"f0128ProjectionStatus\":\"%s\"}",
+                s->id, s->category, s_projection_status);
+    }
+    fprintf(fp, "],\"slots\":[");
     for (int i = 0; i < count; ++i) {
         const SlotFixture* s = &k_slots[i];
         const char* gen = (realMask & (1 << i)) ? "pbr_hero" : "placeholder";
@@ -458,6 +466,30 @@ static void test_finished_real_manifest(void) {
               CSB_V22_FAMG_CLASS_REAL,
               "all-real -> slot REAL");
     }
+}
+
+static void test_unbound_projection_stays_partial(void) {
+    const char* dataDir = "/tmp/scratch/csb-v22-famg-test/data/csb";
+    char manifestPath[FSP_PATH_MAX];
+    char modernDir[FSP_PATH_MAX];
+    int allMask = (1 << CSB_V22_FAMG_MATERIAL_COUNT) - 1;
+
+    clean_scratch();
+    setup_manifest_dirs(dataDir, manifestPath, sizeof(manifestPath),
+                        modernDir, sizeof(modernDir));
+    csb_v22_famg_set_manifest_path(dataDir);
+    for (size_t i = 0; i < CSB_V22_FAMG_MATERIAL_COUNT; ++i) {
+        create_real_file(modernDir, &k_slots[i]);
+    }
+    s_projection_status = "unbound";
+    CHECK(write_manifest(manifestPath, allMask, 0, 0, 0),
+          "wrote source-derived but unbound manifest");
+    CHECK(csb_v22_famg_classify_slot(CSB_V22_FAMG_WALL_DUNGEON_D0) ==
+              CSB_V22_FAMG_CLASS_PARTIAL,
+          "unbound source surface cannot enter V2.2 runtime");
+    CHECK(csb_v22_famg_gate() == CSB_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER,
+          "all-unbound pack cannot promote V2.2");
+    s_projection_status = "admitted_test";
 }
 
 static void test_get_slot_info(void) {
@@ -714,6 +746,7 @@ int main(void) {
     test_missing_file_partial();
     test_incomplete_metadata();
     test_finished_real_manifest();
+    test_unbound_projection_stays_partial();
     test_get_slot_info();
     test_slot_info_unknown_assets();
     test_null_and_oob_safety();

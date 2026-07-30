@@ -204,7 +204,12 @@ an integration build pass.
   of forcing set zero. The M11 provider selects records `78 + FloorSet * 2`
   and `86 + WallSet * 40 + 7 + surface`, invalidating decoded caches on a
   set change. This corrects native source material ownership for every map;
-  it does not admit unproven V2.2 replacement surfaces.
+  it does not admit unproven V2.2 replacement surfaces. 2026-07-30: the
+  finished-art gate now independently requires every advertised slot to carry
+  `routeProvenance.f0128ProjectionStatus=admitted_*`. The local source pack's
+  `unbound` wall/floor/etc. routes therefore remain V1 at runtime, even when
+  their decoded bitmap files exist; the focused regression proves that this
+  cannot accidentally promote a source-derived artpack to finished V2.2.
 
 - **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Open 2026-07-29. The live F0128
   renderer owns V2.2 material selection and retains the authenticated original
