@@ -2174,8 +2174,9 @@ that its exact runtime path is not already source-locked and tested.
    to the 16x16 object-icon atlas when its perspective native bitmap is
    unbound. ReDMCSB `DUNVIEW.C` F0115 instead enters
    `T0115015_DrawProjectileAsObject` and selects the G0209/M612 native object
-   bitmap in the C2900 lane. The production route now leaves that cell
-   unchanged; binding this native projection remains open.
+   bitmap in the C2900 lane. The verified C2900 routes now bind that positive
+   F0142 branch through the real associated C05--C0B record, including M066
+   weapon-aspect selection; missing or unverified routes remain no-draw.
    Source-bound group rendering also rejects an undecodable creature type
    without drawing the former diagnostic cross; the original F0115 path has
    no marker fallback for malformed C04 data.

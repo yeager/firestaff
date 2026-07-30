@@ -28,6 +28,7 @@
 #include "csb_v22_inplace_draw_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
+#include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include <stdlib.h>
 #include <string.h>
@@ -2718,6 +2719,10 @@ int csb_v1_viewport_runtime_bind_projectile_material(
     CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement)
 {
     unsigned short thing;
+    CSB_V1_RuntimeObjectOverlayInfo object_info;
+    DM1_WeaponInfo weapon_info;
+    int weapon_projectile_aspect_ordinal = 0;
+    int aspect;
 
     if (!projectile || !placement) {
         return 0;
@@ -2726,14 +2731,68 @@ int csb_v1_viewport_runtime_bind_projectile_material(
     thing = (unsigned short)projectile->reserved1;
     placement->material_thing = (int)thing;
     placement->material_icon_index = -1;
+    placement->material_thing_type = -1;
+    placement->material_subtype_index = -1;
+    placement->material_object_aspect_index = -1;
 
     if (!runtime || thing == THING_NONE || thing == THING_ENDOFLIST) {
         return 0;
     }
 
-    placement->material_icon_index =
-        csb_v1_runtime_object_icon_index(runtime, thing);
+    if (!csb_v1_runtime_object_overlay_info(runtime, thing, &object_info)) {
+        return 0;
+    }
+    placement->material_icon_index = object_info.icon_index;
+    placement->material_thing_type = object_info.thing_type;
+    placement->material_subtype_index = object_info.subtype_index;
+    if (object_info.thing_type == THING_TYPE_WEAPON &&
+        dm1_weapon_info_pc34(object_info.subtype_index, &weapon_info)) {
+        weapon_projectile_aspect_ordinal =
+            (weapon_info.attributes >> 8) & 0x1f;
+    }
+    /* ReDMCSB DUNGEON.C F0142 reads the live associated C05..C0B record,
+     * then F0115 uses a non-negative selector as G0209 object material.
+     * Do not infer this from C14's generic subtype: M066 weapons may select
+     * M613 projectile art instead. */
+    aspect = dm1_v1_f0142_get_projectile_aspect_pc34(
+        projectile->projectileSubtype, object_info.thing_type,
+        object_info.subtype_index, weapon_projectile_aspect_ordinal);
+    if (aspect >= 0) {
+        placement->material_object_aspect_index = aspect;
+    }
     return placement->material_icon_index >= 0;
+}
+
+int csb_v1_viewport_runtime_projectile_object_sprite_blit(
+    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeProjectileObjectSpriteBlit *out_blit)
+{
+    CSB_V1_ViewportRuntimeProjectileObjectSpriteBlit blit;
+
+    memset(&blit, 0, sizeof(blit));
+    blit.graphic_index = -1;
+    blit.object_aspect_index = -1;
+    if (!placement || !out_blit || !placement->visible ||
+        placement->material_thing_type < 0 ||
+        placement->material_subtype_index < 0 ||
+        placement->material_object_aspect_index < 0 ||
+        placement->forward < 1 || placement->source_zone_row < 0) {
+        if (out_blit) *out_blit = blit;
+        return 0;
+    }
+    blit.graphic_index = csb_v1_viewport_f0115_first_object_native_graphic_pc34(
+        placement->material_thing_type, placement->material_subtype_index);
+    if (blit.graphic_index < 0) {
+        *out_blit = blit;
+        return 0;
+    }
+    blit.object_aspect_index = placement->material_object_aspect_index;
+    blit.depth_index = placement->forward - 1;
+    blit.relative_cell = placement->view_cell;
+    blit.view_lane = placement->side;
+    blit.source_zone_row = placement->source_zone_row;
+    *out_blit = blit;
+    return 1;
 }
 
 int csb_v1_viewport_runtime_projectile_sprite_blit(
@@ -3108,7 +3167,20 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
         /* ReDMCSB DUNVIEW.C F0115 lines 5668-5683 map projectiles through
          * G2028 and C2900_ZONE_ + row*4 + ViewCell.  OBJECT.C F0032/F0033
          * resolves the material thing identity used by the fallback marker. */
-        if (cfg->projectile_sprite_drawer) {
+        if (placement.material_object_aspect_index >= 0 &&
+            cfg->projectile_object_sprite_drawer) {
+            CSB_V1_ViewportRuntimeProjectileObjectSpriteBlit object_blit;
+            if (csb_v1_viewport_runtime_projectile_object_sprite_blit(
+                    &placement, &object_blit) &&
+                cfg->projectile_object_sprite_drawer(
+                    cfg->projectile_object_sprite_user, &object_blit,
+                    cfg->viewport_pixels, cfg->viewport_stride)) {
+                ++cfg->runtime_projectile_sprite_drawn_count;
+                continue;
+            }
+        }
+        if (placement.material_object_aspect_index < 0 &&
+            cfg->projectile_sprite_drawer) {
             CSB_V1_ViewportRuntimeProjectileSpriteBlit blit;
             if (csb_v1_viewport_runtime_projectile_sprite_blit(
                     &placement, &blit) &&
@@ -4296,6 +4368,8 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         cfg->projectile_sprite_drawer = NULL;
         cfg->projectile_sprite_user = NULL;
         cfg->projectile_sprite_drawer_source_bound = 0;
+        cfg->projectile_object_sprite_drawer = NULL;
+        cfg->projectile_object_sprite_user = NULL;
         cfg->explosion_sprite_drawer = NULL;
         cfg->explosion_sprite_user = NULL;
         cfg->runtime_overlay_source_required = 0;
@@ -4336,6 +4410,10 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
     cfg->projectile_sprite_user = binding->projectile_sprite_user;
     cfg->projectile_sprite_drawer_source_bound =
         binding->projectile_sprite_drawer_source_bound ? 1 : 0;
+    cfg->projectile_object_sprite_drawer =
+        binding->projectile_object_sprite_drawer;
+    cfg->projectile_object_sprite_user =
+        binding->projectile_object_sprite_user;
     cfg->explosion_sprite_drawer = binding->explosion_sprite_drawer;
     cfg->explosion_sprite_user = binding->explosion_sprite_user;
     cfg->runtime_overlay_source_required =

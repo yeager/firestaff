@@ -706,6 +706,20 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
                                          int transparentColor,
                                          int usesF0791Blit,
                                          int publishFloorItemHostReceipt);
+static int m11_draw_thrown_object_projectile_sprite(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int gfxIndex,
+    int objectAspectIndex,
+    int depthIndex,
+    int relativeCell,
+    int viewLane,
+    int sourceZoneRow);
+static int m11_csb_install_runtime_source_graphic(
+    const M11_GameViewState *state,
+    unsigned int graphic_index);
 static void m11_draw_v1_movement_arrows(const M11_GameViewState* state,
                                         unsigned char* framebuffer,
                                         int framebufferWidth,
@@ -1693,6 +1707,31 @@ static int m11_csb_viewport_projectile_sprite_drawer(
         blit->uses_f0791_blit);
 }
 
+static int m11_csb_viewport_projectile_object_sprite_drawer(
+    void *user,
+    const CSB_V1_ViewportRuntimeProjectileObjectSpriteBlit *blit,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    const M11_CSB_RuntimeSpriteContext *ctx =
+        (const M11_CSB_RuntimeSpriteContext *)user;
+
+    if (!ctx || !ctx->state || !blit || !screen_pixels ||
+        screen_stride <= 0 || !ctx->state->assetsAvailable) {
+        return 0;
+    }
+    if (!m11_csb_install_runtime_source_graphic(ctx->state,
+                                                (unsigned int)blit->graphic_index)) {
+        return 0;
+    }
+    /* ReDMCSB DUNVIEW.C F0115:5896-5900: F0142's positive G0209 result
+     * re-enters the object code only to consume C2900's projectile lane. */
+    return m11_draw_thrown_object_projectile_sprite(
+        ctx->state, screen_pixels, screen_stride, ctx->framebuffer_height,
+        blit->graphic_index, blit->object_aspect_index, blit->depth_index,
+        blit->relative_cell, blit->view_lane, blit->source_zone_row);
+}
+
 static int m11_csb_viewport_explosion_sprite_drawer(
     void *user,
     const CSB_V1_ViewportRuntimeExplosionSpriteBlit *blit,
@@ -2552,6 +2591,9 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
         m11_csb_viewport_projectile_sprite_drawer;
     drawer_binding.projectile_sprite_user = &runtime_sprite_context;
     drawer_binding.projectile_sprite_drawer_source_bound = 1;
+    drawer_binding.projectile_object_sprite_drawer =
+        m11_csb_viewport_projectile_object_sprite_drawer;
+    drawer_binding.projectile_object_sprite_user = &runtime_sprite_context;
     drawer_binding.explosion_sprite_drawer =
         m11_csb_viewport_explosion_sprite_drawer;
     drawer_binding.explosion_sprite_user = &runtime_sprite_context;

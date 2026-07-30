@@ -44253,3 +44253,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `dm1_v1_original_save_pc34_external_hoc_runtime` passed from the same save.
   This closes the live-group requirement only; the separate C13 and varied
   C03/C04-layout corpus requirements remain open.
+- ✅ 2026-07-30 CSB F0142/G0209 thrown-object viewport binding: a live C14
+  projectile now reads its associated original C05--C0B record, preserves
+  M066 weapon projectile-aspect selection, and routes a positive F0142
+  result through the source M612/G0209 bitmap and C2900 geometry. M11
+  installs the exact active CSB graphics record before the draw; unavailable
+  material stays no-draw rather than becoming an icon or marker. The focused
+  CSB viewport regression passes 2 654 checks.

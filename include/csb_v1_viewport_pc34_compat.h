@@ -22,6 +22,8 @@ typedef struct CSB_V1_ViewportRuntimeExplosionOverlayPlacement
     CSB_V1_ViewportRuntimeExplosionOverlayPlacement;
 typedef struct CSB_V1_ViewportRuntimeProjectileSpriteBlit
     CSB_V1_ViewportRuntimeProjectileSpriteBlit;
+typedef struct CSB_V1_ViewportRuntimeProjectileObjectSpriteBlit
+    CSB_V1_ViewportRuntimeProjectileObjectSpriteBlit;
 typedef struct CSB_V1_ViewportRuntimeObjectSpriteBlit
     CSB_V1_ViewportRuntimeObjectSpriteBlit;
 typedef struct CSB_V1_ViewportRuntimeObjectIconBlit
@@ -453,6 +455,12 @@ typedef int (*CSB_V1_ViewportProjectileSpriteDrawer)(
     uint8_t *screen_pixels,
     int screen_stride);
 
+typedef int (*CSB_V1_ViewportProjectileObjectSpriteDrawer)(
+    void *user,
+    const struct CSB_V1_ViewportRuntimeProjectileObjectSpriteBlit *blit,
+    uint8_t *screen_pixels,
+    int screen_stride);
+
 typedef int (*CSB_V1_ViewportExplosionSpriteDrawer)(
     void *user,
     const CSB_V1_ViewportRuntimeExplosionSpriteBlit *blit,
@@ -548,6 +556,8 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     int runtime_group_marker_drawn_count;
     int runtime_projectile_material_resolved_count;
     int runtime_projectile_material_icon_drawn_count;
+    CSB_V1_ViewportProjectileObjectSpriteDrawer projectile_object_sprite_drawer;
+    void *projectile_object_sprite_user;
     CSB_V1_ViewportProjectileSpriteDrawer projectile_sprite_drawer;
     void *projectile_sprite_user;
     /* A verified CSB GRAPHICS.DAT projectile drawer must fail closed.  A
@@ -633,6 +643,8 @@ typedef struct {
     CSB_V1_ViewportProjectileSpriteDrawer projectile_sprite_drawer;
     void *projectile_sprite_user;
     int projectile_sprite_drawer_source_bound;
+    CSB_V1_ViewportProjectileObjectSpriteDrawer projectile_object_sprite_drawer;
+    void *projectile_object_sprite_user;
     CSB_V1_ViewportExplosionSpriteDrawer explosion_sprite_drawer;
     void *explosion_sprite_user;
     int runtime_overlay_source_required;
@@ -956,6 +968,9 @@ struct CSB_V1_ViewportRuntimeProjectileOverlayPlacement {
     int sprite_uses_f0791_blit;
     int material_thing;
     int material_icon_index;
+    int material_thing_type;
+    int material_subtype_index;
+    int material_object_aspect_index;
 };
 
 struct CSB_V1_ViewportRuntimeProjectileSpriteBlit {
@@ -977,6 +992,17 @@ struct CSB_V1_ViewportRuntimeProjectileSpriteBlit {
     int derived_bitmap_cache_slot;
     int transparent_color;
     int uses_f0791_blit;
+};
+
+/* ReDMCSB DUNVIEW.C F0115:5896-5900 reaches this from F0142's positive
+ * G0209 selector. It is a C2900 projectile draw, not a floor-object draw. */
+struct CSB_V1_ViewportRuntimeProjectileObjectSpriteBlit {
+    int graphic_index;
+    int object_aspect_index;
+    int depth_index;
+    int relative_cell;
+    int view_lane;
+    int source_zone_row;
 };
 
 struct CSB_V1_ViewportRuntimeObjectOverlayPlacement {
@@ -1490,6 +1516,9 @@ int csb_v1_viewport_runtime_bind_projectile_material(
 int csb_v1_viewport_runtime_projectile_sprite_blit(
     const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
     CSB_V1_ViewportRuntimeProjectileSpriteBlit *out_blit);
+int csb_v1_viewport_runtime_projectile_object_sprite_blit(
+    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
+    CSB_V1_ViewportRuntimeProjectileObjectSpriteBlit *out_blit);
 int csb_v1_viewport_runtime_projectile_material_icon_blit(
     const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
     CSB_V1_ViewportRuntimeObjectIconBlit *out_blit);

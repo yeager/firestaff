@@ -2,6 +2,7 @@
 #include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -2386,7 +2387,7 @@ static void test_csb_f0115_projectile_blit_contracts(void)
             CSB_V1_DungeonData dungeon;
             struct ProjectileInstance_Compat projectile;
             uint8_t raw[16];
-            uint16_t dagger = (uint16_t)((THING_TYPE_WEAPON << 10) | 0);
+            uint16_t dagger = (uint16_t)((THING_TYPE_ARMOUR << 10) | 0);
 
             memset(&runtime, 0, sizeof(runtime));
             memset(&dungeon, 0, sizeof(dungeon));
@@ -2394,8 +2395,8 @@ static void test_csb_f0115_projectile_blit_contracts(void)
             memset(raw, 0, sizeof(raw));
             dungeon.raw_data = raw;
             dungeon.raw_size = (int)sizeof(raw);
-            dungeon.thing_type_counts[THING_TYPE_WEAPON] = 1;
-            dungeon.thing_data_bases[THING_TYPE_WEAPON] = 0;
+            dungeon.thing_type_counts[THING_TYPE_ARMOUR] = 1;
+            dungeon.thing_data_bases[THING_TYPE_ARMOUR] = 0;
             write_fixture_u16(raw, 0, THING_ENDOFLIST);
             write_fixture_u16(raw, 2, 8u);
             runtime.dungeon_handle = &dungeon;
@@ -2410,7 +2411,36 @@ static void test_csb_f0115_projectile_blit_contracts(void)
             check_int("csb.projectile_overlay.material_bind_thing",
                       placement.material_thing, dagger);
             check_int("csb.projectile_overlay.material_bind_icon",
-                      placement.material_icon_index, 32);
+                      placement.material_icon_index, 84);
+            check_int("csb.projectile_overlay.material_bind_object_aspect",
+                      placement.material_object_aspect_index,
+                      dm1_item_aspect_index(THING_TYPE_ARMOUR, 8));
+            {
+                CSB_V1_ViewportRuntimeProjectileObjectSpriteBlit object_blit;
+                CSB_V1_ViewportRuntimeProjectileOverlayPlacement c2900_placement =
+                    placement;
+                /* ReDMCSB DUNVIEW.C F0115:5683,5896-5900: D3L2 row 3,
+                 * view cell 2 selects C2900 zone 2914 before the positive
+                 * F0142 branch re-enters T0115015. */
+                c2900_placement.forward = 3;
+                c2900_placement.side = -2;
+                c2900_placement.view_cell = 2;
+                c2900_placement.source_zone_row = 3;
+                check_int("csb.projectile_overlay.material_object_blit",
+                          csb_v1_viewport_runtime_projectile_object_sprite_blit(
+                              &c2900_placement, &object_blit),
+                          1);
+                check_int("csb.projectile_overlay.material_object_blit.graphic",
+                          object_blit.graphic_index,
+                          csb_v1_viewport_f0115_first_object_native_graphic_pc34(
+                              THING_TYPE_ARMOUR, 8));
+                check_int("csb.projectile_overlay.material_object_blit.aspect",
+                          object_blit.object_aspect_index,
+                          dm1_item_aspect_index(THING_TYPE_ARMOUR, 8));
+                check_int("csb.projectile_overlay.material_object_blit.row",
+                          object_blit.source_zone_row,
+                          3);
+            }
             {
                 CSB_V1_ViewportRuntimeObjectIconBlit icon_blit;
                 check_int("csb.projectile_overlay.material_icon_blit",
@@ -2418,7 +2448,7 @@ static void test_csb_f0115_projectile_blit_contracts(void)
                               &placement, &icon_blit),
                           1);
                 check_int("csb.projectile_overlay.material_icon_blit.icon",
-                          icon_blit.icon_index, 32);
+                          icon_blit.icon_index, 84);
                 check_int("csb.projectile_overlay.material_icon_blit.x",
                           icon_blit.draw_x, 104);
                 check_int("csb.projectile_overlay.material_icon_blit.y",
