@@ -680,6 +680,7 @@ static void check_dot_asset_status_does_not_replace_saved_directory(void) {
      * settings change saves the launcher configuration. */
     snprintf(state.assetStatus.dataDir, sizeof(state.assetStatus.dataDir), ".");
     M12_StartupMenu_SaveConfig(&state);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), expected) == 0);
     M12_Config_Load(&config, NULL);
     CHECK(strcmp(config.dataDir, expected) == 0);
     CHECK(strcmp(config.dataDir, ".") != 0);

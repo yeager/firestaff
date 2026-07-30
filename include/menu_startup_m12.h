@@ -842,7 +842,7 @@ void M12_StartupMenu_BindCSBSaveCandidateIdentity(
 int M12_StartupMenu_ConsumeCSBSaveCandidateDiscovery(
     M12_StartupMenuState* state,
     const CSB_V1_CSBWinSaveCorpusDiscoveryReceipt_PC34* discovery);
-void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state);
+void M12_StartupMenu_SaveConfig(M12_StartupMenuState* state);
 
 /* ── Language cycle accessors ───────────────────────────────────────
  * M12_StartupMenu_GetLanguageCount() returns the number of locales

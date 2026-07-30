@@ -328,7 +328,7 @@ static void m12_init_game_options(M12_GameOptions* opts);
 static void m12_cycle_game_opt_with_mode(M12_GameOptions* opts, int row, int delta, int presentationMode);
 static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentationMode);
 static void m12_probe_quick_resume(M12_StartupMenuState* state);
-static void m12_save_config(const M12_StartupMenuState* state);
+static void m12_save_config(M12_StartupMenuState* state);
 static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
                                           int hasExplicitDataDirOverride,
@@ -3192,13 +3192,13 @@ static void m12_probe_quick_resume(M12_StartupMenuState* state) {
              "%s", config.lastSavePath);
 }
 
-static void m12_save_config(const M12_StartupMenuState* state);
+static void m12_save_config(M12_StartupMenuState* state);
 
-void M12_StartupMenu_SaveConfig(const M12_StartupMenuState* state) {
+void M12_StartupMenu_SaveConfig(M12_StartupMenuState* state) {
     m12_save_config(state);
 }
 
-static void m12_save_config(const M12_StartupMenuState* state) {
+static void m12_save_config(M12_StartupMenuState* state) {
     M12_Config config;
     char canonicalDataDir[M12_CONFIG_DATA_DIR_CAPACITY];
     const char* activeDataDir;
@@ -3352,6 +3352,20 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     }
     snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s", state->quickResumeSavePath);
     M12_Config_Save(&config);
+    /* Saving an unrelated setting may race a platform scanner that briefly
+     * reports its current-directory display token.  Keep the live launcher
+     * view aligned with the durable path too; otherwise the config is fixed
+     * on disk while the Settings row continues to show '.'. */
+    if (m12_data_directory_dialog_token_is_placeholder(
+            M12_AssetStatus_GetDataDir(&state->assetStatus)) &&
+        m12_canonicalize_data_directory(config.dataDir,
+                                        canonicalDataDir,
+                                        sizeof(canonicalDataDir))) {
+        snprintf(state->assetStatus.dataDir,
+                 sizeof(state->assetStatus.dataDir),
+                 "%s",
+                 canonicalDataDir);
+    }
 }
 
 static int m12_startup_data_dir_is_game_leaf(const char* dataDir) {
