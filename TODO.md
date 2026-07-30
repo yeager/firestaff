@@ -2179,6 +2179,9 @@ that its exact runtime path is not already source-locked and tested.
    Source-bound group rendering also rejects an undecodable creature type
    without drawing the former diagnostic cross; the original F0115 path has
    no marker fallback for malformed C04 data.
+   The M11 drawer binding now marks object sprites source-bound as well as
+   projectiles and groups, so a failed object decode cannot silently reopen
+   the icon/marker fallback path.
 29. **CSB-SENSOR-THING-RUNTIME:** Complete real Thing chains, generic object
     sensors, remote actions, pits, teleporters, stairs, door and actuator
     side effects in the CSB live runtime.

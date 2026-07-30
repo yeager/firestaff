@@ -321,6 +321,7 @@ static void test_runtime_drawer_binding_and_count_helpers(void)
 
     binding.object_sprite_drawer = test_object_sprite_drawer;
     binding.object_sprite_user = &thing_capture;
+    binding.object_sprite_drawer_source_bound = 1;
     binding.object_icon_drawer = test_object_icon_drawer;
     binding.object_icon_user = &thing_capture;
     binding.group_sprite_drawer = test_group_sprite_drawer;
@@ -336,7 +337,7 @@ static void test_runtime_drawer_binding_and_count_helpers(void)
     check_true("runtime.binding.object_sprite_user",
                cfg.object_sprite_user == &thing_capture);
     check_int("runtime.binding.object_source_bound",
-              cfg.object_sprite_drawer_source_bound, 0);
+              cfg.object_sprite_drawer_source_bound, 1);
     check_true("runtime.binding.object_icon",
                cfg.object_icon_drawer == test_object_icon_drawer);
     check_true("runtime.binding.group_sprite",

@@ -44147,6 +44147,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   geometry callers. Verification: `test_csb_v1_viewport_phase3_rendering`
   passes 2649 assertions.
 
+- ✅ M11 now propagates source ownership into the object-sprite drawer
+  binding, matching its existing projectile and group bindings. A verified
+  CSB session therefore cannot reopen the icon/marker fallback when an F0115
+  object bitmap fails to decode. Verification: the phase-3 viewport contract
+  passes 2649 assertions and `test_m11_csb_leader_hand_no_dm1_fallback`
+  passes.
+
 # CSB V2.x verification (2026-07-30)
 
 - ✅ Rebuilt current `main` with Ninja and ran the registered CSB V2.x lane

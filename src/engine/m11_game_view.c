@@ -2558,6 +2558,10 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     drawer_binding.object_sprite_drawer =
         m11_csb_viewport_object_sprite_drawer;
     drawer_binding.object_sprite_user = &runtime_sprite_context;
+    /* DUNVIEW.C F0115 owns the perspective object bitmap.  If M11 cannot
+     * decode that active CSB GRAPHICS.DAT record, the viewport must not fall
+     * back to the icon atlas or a diagnostic marker. */
+    drawer_binding.object_sprite_drawer_source_bound = 1;
     drawer_binding.object_icon_drawer =
         m11_csb_viewport_object_icon_drawer;
     drawer_binding.object_icon_user = &runtime_sprite_context;
