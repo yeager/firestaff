@@ -2,6 +2,12 @@
 
 ## Active DM1/CSB Symbol Queue
 
+- **DM1-V1-STARTUP-VISUAL-CADENCE:** Closed 2026-07-30. The C001 PRESENTS
+  interval again retains all 30 source-side preparation slots rather than
+  donating them to the macOS zoom-frame dwell. The Entrance curtain now holds
+  its black source frame for one VBlank before C004 appears. Focused startup
+  timing/palette CTest verification passes 3/3.
+
 - **DM1-V1-HUD-SOURCE-GATE-REFRESH:** Closed 2026-07-30. The action/spell,
   champion-name and M648 presentation gates now inspect the current
   source-owned M653 glyph route, data-driven spell plan and material-bound

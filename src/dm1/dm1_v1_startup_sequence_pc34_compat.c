@@ -5260,6 +5260,13 @@ unsigned int dm1_v1_startup_entrance_step_delay_ms_pc34(
         media_receipt->entrance_pre_open_delay_ms > 0U) {
         return media_receipt->entrance_pre_open_delay_ms;
     }
+    /* ENTRANCE.C:426-443 curtains the micro-dungeon to black before C004 is
+     * drawn. It is a visible palette operation, not an instantaneous host
+     * buffer clear. Keep the resulting black frame for one source VBlank so
+     * the title-to-Entrance handoff cannot collapse into a single present. */
+    if (entrance_event_kind == ENTRANCE_COMPAT_SOURCE_EVENT_FADE_TO_BLACK) {
+        return media_receipt->entrance_vblank_ms;
+    }
     if (delay_ticks > 0U) {
         if (delay_ticks > 0xffffffffU / media_receipt->entrance_vblank_ms) {
             return 0U;
@@ -5506,20 +5513,14 @@ unsigned int dm1_v1_startup_title_frame_bank_equivalent_steps_pc34(void) {
 }
 
 unsigned int dm1_v1_startup_title_presents_hold_vblanks_pc34(void) {
-    /* TITLE.C F0437 has 23 source events, but PRESENTS and the
-     * MASTER/STRIKES BACK blit themselves do not consume M526 VBlanks.
-     * C001 has only 18 geometric zoom rasters while its authenticated title
-     * bank covers 53 cadence slots. Keep each real raster visible for two
-     * host VBlank slots and assign the remaining slots to PRESENTS. */
-    unsigned int paced_ticks =
-        DM1_V1_STARTUP_TITLE_ZOOM_STEPS_PC34 *
-            DM1_V1_STARTUP_TITLE_HOST_ZOOM_DISPLAY_VBLANKS_PC34 +
-        DM1_V1_STARTUP_TITLE_POST_ZOOM_VBLANKS_PC34 +
-        DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34;
-    if (DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 <= paced_ticks) {
-        return 0u;
-    }
-    return DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 - paced_ticks;
+    /* TITLE.C F0437 has 23 visible source events while the authenticated
+     * PC34 title bank carries 53 cadence slots. The 30-slot difference is
+     * source-side C001 preparation while PRESENTS remains on screen. Do not
+     * spend that hold on the later host display extension for zoom rasters:
+     * that made PRESENTS flash by and shortened the observed DM1 startup on
+     * high-refresh macOS displays. */
+    return DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 -
+           DM1_V1_STARTUP_TITLE_SOURCE_ANIMATION_STEPS_PC34;
 }
 
 unsigned int dm1_v1_startup_title_vblank_tick_ms_pc34(void) {

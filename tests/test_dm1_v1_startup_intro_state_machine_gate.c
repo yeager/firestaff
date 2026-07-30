@@ -590,6 +590,17 @@ static void check_title_to_menu_boundary(void) {
                  entranceStep.delayTicks,
                  entranceStep.vblankLoopCount),
              media.entrance_pre_open_delay_ms);
+    expect_i("DM1 full graphics media receipt curtain step exists",
+             ENTRANCE_Compat_GetSourceAnimationStep(2u, &entranceStep) &&
+                 entranceStep.kind == ENTRANCE_COMPAT_SOURCE_EVENT_FADE_TO_BLACK,
+             1);
+    expect_u("DM1 entrance curtain remains visible for one source vblank",
+             dm1_v1_startup_entrance_step_delay_ms_pc34(
+                 &media,
+                 (int)entranceStep.kind,
+                 entranceStep.delayTicks,
+                 entranceStep.vblankLoopCount),
+             media.entrance_vblank_ms);
     badMedia = media;
     badMedia.entrance_vblank_ms = 1u;
     expect_i("DM1 entrance timing validator rejects too-fast vblank",

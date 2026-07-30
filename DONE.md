@@ -25,6 +25,13 @@
   owner before its next event. F0733 expectations now include `CHAMPION.C
   F0313`'s mandatory final half-scale. Focused CTest passes 5/5.
 
+- ✅ 2026-07-30 DM1 C001 startup visual cadence correction: the C001
+  PRESENTS phase now retains its full 30-slot source-side preparation period
+  while the real zoom rasters retain their Mac-safe display dwell. The
+  title-to-Entrance curtain is also presented for one source VBlank before
+  C004, rather than collapsing the palette operation into the next frame.
+  Focused startup timing/palette CTest passes 3/3.
+
 - ✅ 2026-07-30 DM1 C001 title cadence: redistributed the existing verified
   53-slot title-bank budget so each of the 18 real `GRAPHICS.DAT` C001 zoom
   rasters remains on screen for two V1 cadence ticks. PRESENTS is shortened

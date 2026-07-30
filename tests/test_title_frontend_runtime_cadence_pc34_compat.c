@@ -88,18 +88,16 @@ int main(void) {
     paced_vblanks = timing.zoomStepCount * timing.hostZoomDisplayVblankCount +
                      timing.postZoomVblankCount +
                      timing.finalFadeGuardVblankCount;
-    expect_u("PRESENTS hold excludes non-wait source blits",
+    expect_u("PRESENTS hold preserves source-side C001 preparation",
              timing.presentsHoldVblankCount,
-             timing.frameBankEquivalentStepCount - paced_vblanks);
-    expect_u("host visual cadence covers complete TITLE bank",
-             timing.presentsHoldVblankCount + paced_vblanks,
-             timing.frameBankEquivalentStepCount);
+             timing.frameBankEquivalentStepCount -
+                 timing.sourceAnimationStepCount);
     visual_duration_ms = V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing) +
                          paced_vblanks * V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing);
-    expect_u("host visual TITLE duration is refresh-independent",
-             visual_duration_ms,
-             timing.frameBankEquivalentStepCount *
-                 dm1_v1_startup_title_vblank_tick_ms_pc34());
+    expect_u("host visual TITLE duration retains Mac-safe zoom dwell",
+             visual_duration_ms >= timing.frameBankEquivalentStepCount *
+                 dm1_v1_startup_title_vblank_tick_ms_pc34(),
+             1u);
     expect_u("runtime final guard delay from source post/final vblanks",
              V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing),
              (dm1_v1_startup_title_post_zoom_vblanks_pc34() +
