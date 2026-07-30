@@ -58,6 +58,7 @@
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_graphics_hidden_item_skip_pc34_compat.h"
 #include "csb_v1_cmp_import_pc34_compat.h"
+#include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_boot.h"
 #include "fs_portable_compat.h"
@@ -266,6 +267,55 @@ static int run_atari_st(tally_t* t, const char* atari_dir)
           "Atari ST GRAPHICS.DAT opens via DMCSB1 parser");
     CHECK(t, gfx.item_count == 563,
           "Atari ST GRAPHICS.DAT reports 563 items (CSB Atari ST 2.x)");
+
+    /* CSBWin's HUD positions are data, not host constants. Verify that the
+     * C232 plan can name each original HUD record and that the same Atari
+     * decoder can materialize the required source bitmap before M11 consumes
+     * it. */
+    {
+        CSB_V1_CSBWinLayout0232 layout;
+        CSB_V1_CSBWinHudMaterialPlan0232 plan;
+        size_t entry;
+
+        memset(&layout, 0, sizeof(layout));
+        memset(&plan, 0, sizeof(plan));
+        CHECK(t, csb_v1_csbwin_layout_0232_read_graphics_dat(
+                     graphics_path, &layout),
+              "CSBWin C232 HUD layout decodes from original Atari data");
+        CHECK(t, csb_v1_csbwin_layout_0232_build_hud_material_plan(
+                     &layout, &plan),
+              "CSBWin C232 produces a source-owned HUD material plan");
+        for (entry = 0; plan.valid && entry < plan.count; ++entry) {
+            unsigned char *pixels = NULL;
+            int width = 0;
+            int height = 0;
+            CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+            char msg[160];
+            int decoded;
+
+            memset(&receipt, 0, sizeof(receipt));
+            decoded = csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                graphics_path, plan.entries[entry].graphic_index, &pixels,
+                &width, &height, &receipt);
+            snprintf(msg, sizeof(msg),
+                     "C232 HUD graphic %u decodes through Atari source path",
+                     (unsigned)plan.entries[entry].graphic_index);
+            CHECK(t, decoded && receipt.valid, msg);
+            if (decoded) {
+                snprintf(msg, sizeof(msg),
+                         "C232 HUD graphic %u covers its source/destination rectangle",
+                         (unsigned)plan.entries[entry].graphic_index);
+                CHECK(t, plan.entries[entry].source_x < (unsigned)width &&
+                      plan.entries[entry].destination.x2 -
+                          plan.entries[entry].destination.x1 + 1 <= width -
+                          (int)plan.entries[entry].source_x &&
+                      plan.entries[entry].destination.y2 -
+                          plan.entries[entry].destination.y1 + 1 <= height,
+                      msg);
+            }
+            free(pixels);
+        }
+    }
 
     /* 3. Verify item 21, 538, 548 decompress and look like code. */
     if (gfx.loaded) {

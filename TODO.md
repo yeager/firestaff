@@ -1152,6 +1152,10 @@ that its exact runtime path is not already source-locked and tested.
    C028 direction slices, C020/C030-C032 food-water and poison regions, and
    C013/C009 movement and magic panels to those original rectangles. M11
    consumption of that plan remains the next open runtime step.
+   The real Atari probe now decodes all ten C232 HUD material requests
+   (four C028 direction slices, C020, C030-C032, C013 and C009) through the
+   original IMG3/LZW path and verifies their source/destination bounds;
+   54/54 real-data checks pass (2026-07-30).
    2026-07-30: CSB runtime boot now passes the actual selected loose-file
    MD5 identities into variant detection; the real Atari ST 2.x corpus had
    previously booted as `UNKNOWN` because both detection arguments were
