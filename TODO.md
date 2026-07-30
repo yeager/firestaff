@@ -211,12 +211,12 @@ an integration build pass.
   nine synthetic rectangles are a completed F0128 render. Remaining: bind
   every other material family to its corresponding original F0128 command.
   2026-07-30 verification: the complete registered CSB V2.x lane passes
-  51/51 tests against local PC3.4 data. This covers V2.0/V2.1 startup and
+  52/52 tests against local PC3.4 data. This covers V2.0/V2.1 startup and
   Prison runtime, V2.1 EPX/presentation capture, V2 filters/settings/touch/
   motion/lighting, and V2.2 source-artpack admission, startup isolation and
   runtime HUD ownership. This proves the implemented V2.x feature surface,
   not the still-unadmitted F0128 material families.
-  2026-07-30 current-main verification: `ctest -L csb` passes all 115
+  2026-07-30 current-main verification: `ctest -L csb` passes all 116
   registered CSB regressions. The overlapping V2 labels cover 45 `v2`, 3
   `v2.0`, 1 `v2.1`, and 6 `v2.2` contracts, including real-PC3.4 startup and
   Prison runtime captures. This is a regression receipt for the implemented
@@ -457,7 +457,7 @@ an integration build pass.
   confirms the implemented V2.x contracts; it does not promote the remaining
   reviewed-art, all-route material-consumption, or packaged-Mac capture work.
   Re-run 2026-07-29 with the local hash-verified PC3.4 package: 109/109 CSB
-  tests PASS, including the focused 51/51 V2.0/V2.1/V2.2 lane. This verifies
+  tests PASS, including the focused 52/52 V2.0/V2.1/V2.2 lane. This verifies
   the present V2.x implementation without claiming V2.2 material families
   that remain intentionally source-V1.
 
@@ -1299,6 +1299,13 @@ that its exact runtime path is not already source-locked and tested.
   command and paints nine V2.2 viewport cells at runtime. The unrelated local
   `firestaff-csb-v22-modern-1.0` manifest describes an AI/procedural first
   cut, but is not on this launch path and must not be treated as source art.
+  2026-07-30: the supplied standard CSBWin package has the canonical Atari
+  `GRAPHICS.DAT`/`DUNGEON.DAT` pair but no `ANIMATE.SCR`/`ANIMATE.DAT`.
+  Firestaff now admits its decoded original C001-C005 title/Entrance route in
+  V1, V2.0 and V2.1 (V2.2 correctly resolves to V2.1 without an admitted
+  pack). It deliberately does not produce a release/runtime receipt: C040
+  expands to `144x0`, so the later PC3.4 terminal-HUD and dungeon handoff
+  remain blocked until CSBWin's real runtime panel owner is established.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.

@@ -1,3 +1,12 @@
+- ✅ 2026-07-30 CSBWin standard startup route: the canonical Atari
+  `GRAPHICS.DAT`/`DUNGEON.DAT` package without `ANIMATE.SCR`/`ANIMATE.DAT`
+  now reaches its decoded original C001-C005 title/Entrance path in V1,
+  V2.0 and V2.1; V2.2 resolves fail-closed to V2.1 without an admitted CSB
+  artpack. Its `144x0` C040 is explicitly not treated as PC3.4 HUD material,
+  so no release/runtime receipt or synthetic HUD is created. Verification:
+  the focused M11 test and direct CLI boot probes pass against the supplied
+  CSBWin data directory in all selectable presentation modes.
+
 - ✅ 2026-07-30 DM2 audit: all 1751 skproject symbols resolved. Zero
   UNCERTAIN remaining. 189 MISSING (deeply stateful runtime), 511
   NOT_APPLICABLE_ARCH, 579 VERIFIED_SOURCE_MAPPING, 343 IMPLEMENTED_NARROW,

@@ -40,6 +40,7 @@ int main(void)
 {
     char fallback[1024];
     const char *data_dir = csb_data_dir(fallback, sizeof(fallback));
+    const char *csbwin_data_dir = getenv("FIRESTAFF_CSBWIN_DATA_DIR");
     const char *mode_text = getenv("FIRESTAFF_CSB_PRESENTATION_MODE");
     const char *atari_mini = getenv("FIRESTAFF_CSB_ATARI_MINI");
     const char *csbwin_graphics = getenv("FIRESTAFF_CSBWIN_GRAPHICS");
@@ -56,6 +57,44 @@ int main(void)
     int decoded_w = 0;
     int decoded_h = 0;
     CSB_V1_StartupGraphicDecodeReceipt_PC34 decode_receipt;
+
+    if (csbwin_data_dir && csbwin_data_dir[0]) {
+        const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+        int nonblack = 0;
+
+        memset(&spec, 0, sizeof(spec));
+        spec.title = "CHAOS STRIKES BACK";
+        spec.gameId = "csb";
+        spec.sourceId = "csb";
+        spec.dataDir = csbwin_data_dir;
+        spec.rendererBackend = M12_RENDERER_BACKEND_SOFTWARE;
+        spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+        spec.presentationWidth = 320;
+        spec.presentationHeight = 200;
+        M11_GameView_Init(&view);
+        CHECK(M11_GameView_Start(&view, &spec),
+              "CSBWin standard GRAPHICS.DAT opens its original C001-C005 startup route");
+        session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+            view.csbStartupRuntimeAssetSession;
+        CHECK(session && session->valid && session->full_startup_ready &&
+                  !session->hud_assets_bound &&
+                  !view.csbStartupReleaseAppCaptureReceipt.valid &&
+                  view.csbState.startup_title_active,
+              "CSBWin standard route stays startup-only without inventing PC3.4 C040 HUD ownership");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        for (y = 0; y < 200; ++y) {
+            for (x = 0; x < 320; ++x) {
+                if (framebuffer[y * 320 + x] != 0u) ++nonblack;
+            }
+        }
+        CHECK(nonblack > 0,
+              "CSBWin standard route presents decoded original startup pixels");
+        M11_GameView_Shutdown(&view);
+        if (failures) return 1;
+        puts("PASS: CSBWin standard C001-C005 startup-only route");
+        return 0;
+    }
 
     if (!data_dir || !data_dir[0]) {
         puts("SKIP: no CSB PC3.4 data directory");

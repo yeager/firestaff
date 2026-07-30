@@ -5902,6 +5902,38 @@ static int m11_csb_release_delivery_receipt_current(
            lifecycle->release_capture_hash == release->release_app_capture_hash;
 }
 
+/* CSBWin can supply the canonical Atari GRAPHICS.DAT/DUNGEON.DAT pair without
+ * ANIMATE.SCR/DAT. C001-C005 are still original startup records, while item
+ * 40 has no image height and cannot satisfy the separate PC3.4 C040 HUD
+ * contract. Admit only this source-owned title/Entrance session. The normal
+ * release receipt and the dungeon handoff remain unavailable until a real
+ * CSBWin runtime HUD owner has been recovered. */
+static int m11_csb_csbwin_graphics_startup_only_eligible(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    if (!profile || !session ||
+        (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !session->valid || !session->real_asset_matched ||
+        !session->full_startup_ready || !session->title_presents_ready ||
+        !session->title_chaos_ready || !session->title_strikes_back_ready ||
+        !session->entrance_assets_ready || !session->door_assets_ready ||
+        session->hud_assets_bound || session->surfaces.hud_surfaces_ready) {
+        return 0;
+    }
+    return session->surfaces.surfaces[
+               CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].valid &&
+        session->surfaces.surfaces[
+               CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].valid &&
+        session->surfaces.surfaces[
+               CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].valid &&
+        session->surfaces.surfaces[
+               CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].valid &&
+        session->surfaces.surfaces[
+               CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34].valid;
+}
+
 static int m11_csb_dsa_save_runtime_viewport_current(
     const M11_GameViewState *state)
 {
@@ -6259,6 +6291,21 @@ static int m11_csb_apply_boot_runtime_receipt(
     state->csbStartupExpectedPackageIdentity = package_identity ? package_identity : 1u;
     if (!m11_csb_bind_release_app_capture_receipt(
             state, &receipt->startup_asset_gate)) {
+        if (m11_csb_csbwin_graphics_startup_only_eligible(
+                (const CSB_V1_BootProfile *)state->csbBootProfile,
+                (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                    state->csbStartupRuntimeAssetSession)) {
+            /* This is explicitly not a release-app receipt. It enables the
+             * original C001-C005 introduction only; ENTRANCE.C F0806's
+             * runtime handoff remains blocked by the absent HUD owner. */
+            m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+            m11_csb_startup_init_state_receipt_to_m11(
+                state, &receipt->receipts.init_state);
+            m11_apply_csb_runtime_startup_session_state_receipt(
+                state, &receipt->receipts.session_state);
+            m11_set_status(state, "CSB STARTUP", "CSBWIN HUD OWNER REQUIRED");
+            return 1;
+        }
         csb_v1_boot_startup_runtime_asset_session_release_pc34(
             (CSB_V1_StartupRuntimeAssetSession_PC34 *)
                 state->csbStartupRuntimeAssetSession);
