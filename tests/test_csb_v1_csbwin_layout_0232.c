@@ -303,6 +303,58 @@ static void check_viewport_wall_plan(
           CSB_V1_CSBWIN_VIEWPORT_WALL_F0R1);
 }
 
+static void check_wall_projection_blit(
+    const CSB_V1_CSBWinViewportLayout022e *layout)
+{
+    uint8_t source_pixels[48 * 64];
+    uint8_t destination[224 * 136];
+    uint8_t *packed = NULL;
+    size_t packed_count = 0u;
+    CSB_V1_CSBWinPlanarBitmap source;
+    CSB_V1_CSBWinViewportProjectionRectangle f0;
+    const CSB_V1_CSBWinViewportProjectionRectangle *projection;
+    int x;
+    int y;
+
+    memset(source_pixels, 0, sizeof(source_pixels));
+    for (y = 0; y < 64; ++y) {
+        for (x = 0; x < 48; ++x) {
+            source_pixels[y * 48 + x] = (uint8_t)((x + y) & 15);
+        }
+    }
+    projection = &layout->rectangles[13];
+    source_pixels[(size_t)projection->source_y * 48u + projection->source_x] =
+        10u;
+    CHECK(csb_v1_csbwin_planar_bitmap_pack_indexed(
+        source_pixels, 48u, 64u, &packed, &packed_count));
+    memset(&source, 0, sizeof(source));
+    source.bytes = packed;
+    source.width = 48u;
+    source.height = 64u;
+    source.byte_stride = 24u;
+    CHECK(packed_count == 24u * 64u);
+    memset(destination, 0xa5, sizeof(destination));
+    CHECK(csb_v1_csbwin_planar_bitmap_blit_wall_projection(
+        &source, projection, 0, destination, 224, 136, 224));
+    CHECK(destination[(size_t)projection->y1 * 224u + projection->x1] ==
+          0xa5u);
+    CHECK(destination[(size_t)projection->y1 * 224u + projection->x1 + 1u] ==
+          source_pixels[(size_t)projection->source_y * 48u +
+                        projection->source_x + 1u]);
+    memset(destination, 0xa5, sizeof(destination));
+    CHECK(csb_v1_csbwin_planar_bitmap_blit_wall_projection(
+        &source, projection, 1, destination, 224, 136, 224));
+    CHECK(destination[(size_t)projection->y1 * 224u + projection->x1] ==
+          source_pixels[(size_t)projection->source_y * 48u +
+                        projection->source_x +
+                        (projection->x2 - projection->x1)]);
+    f0 = layout->rectangles[9];
+    f0.source_stride = f0.source_height = f0.source_x = f0.source_y = 0u;
+    CHECK(!csb_v1_csbwin_planar_bitmap_blit_wall_projection(
+        &source, &f0, 0, destination, 224, 136, 224));
+    free(packed);
+}
+
 static void check_real_viewport_wall_plan(const char *path)
 {
     CSB_V1_CSBWinViewportLayout022e layout;
@@ -405,6 +457,7 @@ int main(void)
               decoded_layout.rectangles[13].x2 == 33u &&
               decoded_layout.rectangles[6].source_stride == 24u);
         check_viewport_wall_plan(&decoded_layout, 2u);
+        check_wall_projection_blit(&decoded_layout);
         viewport_layout[CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET + 4u] = 0u;
         CHECK(!csb_v1_csbwin_viewport_layout_022e_decode(
             viewport_layout, sizeof(viewport_layout), &decoded_layout));

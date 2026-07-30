@@ -119,3 +119,54 @@ int csb_v1_csbwin_planar_bitmap_blit_indexed(
     }
     return copied;
 }
+
+int csb_v1_csbwin_planar_bitmap_blit_wall_projection(
+    const CSB_V1_CSBWinPlanarBitmap *source,
+    const CSB_V1_CSBWinViewportProjectionRectangle *projection,
+    int mirrored, uint8_t *destination, int destination_width,
+    int destination_height, int destination_stride)
+{
+    int width;
+    int height;
+    int source_width;
+    int x;
+    int y;
+    int copied = 0;
+
+    if (!csb_v1_csbwin_planar_bitmap_valid(source) || !projection ||
+        !csb_v1_csbwin_viewport_projection_rectangle_is_valid(projection) ||
+        !destination || destination_width <= 0 || destination_height <= 0 ||
+        destination_stride < destination_width ||
+        projection->source_stride == 0u || projection->source_height == 0u ||
+        (mirrored != 0 && mirrored != 1)) return 0;
+    width = (int)projection->x2 - (int)projection->x1 + 1;
+    height = (int)projection->y2 - (int)projection->y1 + 1;
+    source_width = (int)projection->source_stride * 2;
+    if (width <= 0 || height <= 0 ||
+        (int)projection->source_x + width > source_width ||
+        (int)projection->source_y + height > (int)projection->source_height ||
+        source_width > (int)source->width ||
+        projection->source_height > source->height) return 0;
+    for (y = 0; y < height; ++y) {
+        const int destination_y = (int)projection->y1 + y;
+        if (destination_y < 0 || destination_y >= destination_height) continue;
+        for (x = 0; x < width; ++x) {
+            const int destination_x = (int)projection->x1 + x;
+            const int source_x = (int)projection->source_x +
+                (mirrored ? width - 1 - x : x);
+            uint8_t color;
+
+            if (destination_x < 0 || destination_x >= destination_width ||
+                !csb_v1_csbwin_planar_bitmap_pixel_at(
+                    source, (uint16_t)source_x,
+                    (uint16_t)((int)projection->source_y + y), &color)) {
+                continue;
+            }
+            if (color == 10u) continue;
+            destination[(size_t)destination_y * destination_stride +
+                        destination_x] = color;
+            copied = 1;
+        }
+    }
+    return copied;
+}

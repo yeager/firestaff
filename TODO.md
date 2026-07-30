@@ -26,6 +26,14 @@
   available WallSets. This is command recovery only; M11 must still consume
   the plan through CSBWin's original packed-byte blitter semantics.
 
+- **CSB-V1-CSBWIN-TAG0088B2-PACKED-BLIT:** Closed 2026-07-30. The restored
+  Atari four-plane raster path now executes the source-owned indexed boundary
+  of `Graphics.cpp::TAG0088b2` for a recovered wall command: inclusive
+  destination, byte-stride-derived source width, source x/y, color-10
+  transparency and CSBWin's F3R2 mirror are all explicit. It refuses F0's
+  source-less local-cell rectangle. This is a reusable command primitive;
+  final M11 frame scheduling and all non-wall F0128 families remain open.
+
 ReDMCSB is the primary reference for DM1/CSB shared engine behavior. For
 CSB-specific DSA, save, Utility Disk, and extended-runtime behavior, use
 CSBWin alongside it. Reuse or bind verified PC34 owners and authentic game

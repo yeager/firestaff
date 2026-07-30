@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 CSBWin `TAG0088b2` packed wall blit: Firestaff now executes
+  the original wall-command projection boundary over the restored Atari
+  four-plane raster: inclusive destination rectangle, packed source stride,
+  source offsets, color-10 transparency and F3R2 reflection. The helper
+  rejects the deliberately source-less F0 rectangle. The full 119-test CSB
+  lane passes with the one expected incomplete-V2.2-artpack skip.
+
 - ✅ 2026-07-30 CSBWin `TAG0088b2` wall draw-plan recovery: Firestaff now
   combines CSBWin's `Viewport.cpp` pWallBitmaps source selection, F3R2 mirror
   step and `0x22e` `wallRectangles[]` destination for every thirteen

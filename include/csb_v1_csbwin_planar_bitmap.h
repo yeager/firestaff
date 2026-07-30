@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "csb_v1_csbwin_viewport_graphics_map.h"
+
 /* CSBWin Graphics.cpp:TAG0088b2 consumes Atari ST four-plane words: every
  * 16-pixel group occupies eight bytes, one big-endian word per colour plane.
  * This restores that source layout from Firestaff's decoder-owned indexed
@@ -33,5 +35,16 @@ int csb_v1_csbwin_planar_bitmap_blit_indexed(
     uint8_t *destination, int destination_width, int destination_height,
     int destination_stride, int destination_x, int destination_y,
     int transparent_color);
+
+/* Indexed equivalent of CSBWin Graphics.cpp::TAG0088b2 as called by
+ * BltShapeToViewport. The command's packed source stride and pixel offsets
+ * come from GRAPHICS.DAT item 0x22e; destination coordinates are inclusive.
+ * Source color 10 is transparent for wall shapes. `mirrored` matches the
+ * MakeMirror-generated F3R2 source lane. */
+int csb_v1_csbwin_planar_bitmap_blit_wall_projection(
+    const CSB_V1_CSBWinPlanarBitmap *source,
+    const CSB_V1_CSBWinViewportProjectionRectangle *projection,
+    int mirrored, uint8_t *destination, int destination_width,
+    int destination_height, int destination_stride);
 
 #endif
