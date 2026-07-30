@@ -43548,3 +43548,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Verification: opt-in `csb_v1_m11_prison_runtime_hud_pc34` real-package
   checks pass, together with V1/V2.0/V2.1 HUD, title/Entrance, and six V2.2
   presentation-material contracts.
+
+- ✅ 2026-07-30 CSB V2.x current verification: all 52 registered CSB V2.0,
+  V2.1 and V2.2 CTest contracts pass from the current Ninja build with local
+  PC3.4 data. Coverage includes original title/Entrance, real Prison handoff,
+  HUD ownership, F10 graphics settings, filters, resolution, V2.1 capture,
+  and the reviewed V2.2 source-artpack route. This verifies implemented
+  behavior only; unadmitted F0128 material families remain open in `TODO.md`.
