@@ -96,7 +96,19 @@ rm -f "$DMG_PATH" "$ZIP_PATH"
   cd "$STAGE_DIR"
   /usr/bin/ditto -c -k --sequesterRsrc . "$ZIP_PATH"
 )
-hdiutil create -volname "Firestaff" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_PATH" >/dev/null
+# GitHub's arm64 macOS runners occasionally retain a transient DiskImages lock.
+# Retry the idempotent create operation rather than failing an otherwise complete release.
+for attempt in 1 2 3; do
+  if hdiutil create -volname "Firestaff" -srcfolder "$STAGE_DIR" -ov -format UDZO "$DMG_PATH" >/dev/null; then
+    break
+  fi
+  if [[ "$attempt" == 3 ]]; then
+    echo "Could not create DMG after ${attempt} attempts: $DMG_PATH" >&2
+    exit 1
+  fi
+  rm -f "$DMG_PATH"
+  sleep "$attempt"
+done
 
 echo "Created: $DMG_PATH"
 echo "Created: $ZIP_PATH"
