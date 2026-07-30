@@ -1489,6 +1489,17 @@ that its exact runtime path is not already source-locked and tested.
     `FIRESTAFF_CSBWIN_REAL_SAVE` set). This verifies the accepted core and
     preserved tail only; it does not promote the opaque dungeon tail to a
     mutable runtime owner.
+    2026-07-30 CSBWin source audit: `SaveGame.cpp::_ReadEntireGame` calls
+    `ReadDatabases` immediately after the verified GAMEBLOCK1/2, ITEM16,
+    CHARDESC, TIMER and queue streams. For a resumed save, the trailing
+    payload is an ordered, checksummed stream of `DUNGEONDATINDEX` (44 bytes),
+    `LEVELDESC[NumLevel]` (16 bytes each), column pointers, object list,
+    indirect-text index and compressed text, DB0..DB15 records, cell flags,
+    then a final u16 checksum. `SaveGame.cpp:1240-1337,2536-2840` and
+    `CSB.h:DUNGEONDATINDEX/LEVELDESC` are the implementation reference.
+    The exact framing is now known; the remaining work is to bind it to
+    Firestaff's owned dungeon/object stores and verify its source checksum,
+    rather than treating its bytes as EXPOOL or synthesizing a dungeon.
     2026-07-30: resumed CSBWin source saves can now be exported byte-for-byte
     through their FNV-bound provenance, including the Extended Features prefix
     and opaque variable dungeon payload. The export refuses any source file
