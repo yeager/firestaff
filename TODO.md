@@ -78,6 +78,13 @@
   The real V2.0/V2.1/V2.2 presentation smoke that previously stopped before
   its presented capture now also passes across all six focused render lanes.
 
+- **DM1-V1-STAIRS-C10-COMPOSITION:** Closed 2026-07-30. M11's live F0104/
+  F0105 stairs route now uses ReDMCSB `DEFS.H` `C10_COLOR_FLESH` as its
+  transparency key, just like the corresponding pit route. It previously
+  keyed index zero and painted the source stair bitmap's mask over the HoC
+  floor/wall backing. Real GRAPHICS.DAT material, focused stairs CTests, and
+  a dummy-video DM1 launch pass.
+
 - **DM1-V1-F0172-TELEPORTER-ASPECT:** Closed 2026-07-30. M11 now requires
   both original teleporter `VISIBLE` and `OPEN` bits before exposing the
   F0113 field route. The movement, stairs/pits and SHOOT source gates were

@@ -112,6 +112,10 @@ int main(void)
             goto fail;
         }
     }
+    if (DM1_V1_STAIRS_TRANSPARENT_COLOR_PC34 != 10) {
+        fputs("C10 stairs compositing contract failed\n", stderr);
+        goto fail;
+    }
     ++materials[0].pixelsFNV1a;
     {
         DM1_V1_FloorFeatureMaterialReceiptPc34 receipt;

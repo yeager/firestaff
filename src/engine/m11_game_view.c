@@ -30195,7 +30195,9 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
         blit.dstY = pitBlit->dstY;
         blit.width = pitBlit->width;
         blit.height = pitBlit->height;
-        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &blit, 10);
+        (void)m11_draw_dm1_zone_blit(
+            state, framebuffer, fbW, fbH, &blit,
+            DM1_V1_STAIRS_TRANSPARENT_COLOR_PC34);
     }
 }
 
@@ -31465,7 +31467,10 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
         blit.dstY = stairBlit->dstY;
         blit.width = stairBlit->width;
         blit.height = stairBlit->height;
-        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &blit, 0);
+        /* F0104/F0105 preserve the already-drawn floor/wall through the
+         * source bitmap's C10_COLOR_FLESH mask. Treating index 0 as the
+         * key made the stair backing opaque, most visibly in HoC. */
+        (void)m11_draw_dm1_zone_blit(state, framebuffer, fbW, fbH, &blit, 10);
     }
 }
 

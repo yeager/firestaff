@@ -3,6 +3,12 @@
   verifies the resulting real C020/C030/C031 food-water panel pixels. This is
   a live save/UI route, not a synthetic panel fixture.
 
+- ✅ 2026-07-30 DM1 HoC stairs composition: M11 now supplies ReDMCSB
+  `DEFS.H` `C10_COLOR_FLESH` (palette index 10) to the live F0104/F0105
+  stair blit. It previously treated index zero as transparent and painted
+  the stair bitmap mask over its original backing. The real-material and
+  stairs-plan CTests pass, as does a direct DM1 launch with local game data.
+
 - ✅ 2026-07-30 DM1 original-save inventory portrait ordering: normal C017
   inventory now draws the F0435-restored M516 32x29 portrait after F0355's
   F0291 slot pass, matching PANEL.C's final F0292 call. This prevents C509
