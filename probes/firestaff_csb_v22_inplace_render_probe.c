@@ -248,9 +248,9 @@ int main(void) {
     memset(fb, 0x00, sizeof(fb));
     painted = csb_v22_inplace_render_pass(fb, 320, 200);
     changed = count_changed_pixels(fb, sizeof(fb));
-    probe_record(&stats, "CSB_V22_RENDER_9_CELLS",
-                 painted == 9 && changed > 0 && csb_all_cell_centers_nonzero(fb, 320),
-                 "render pass paints all 9 CSB viewport cells");
+    probe_record(&stats, "CSB_V22_RENDER_UNBOUND_NO_PAINT",
+                 painted == 0 && changed == 0 && !csb_all_cell_centers_nonzero(fb, 320),
+                 "unbound synthetic cells cannot replace the V1 F0128 frame");
 
     {
         /* Per-depth color distinctness: 0xff0000 -> ri=3 gi=0 bi=0
@@ -260,18 +260,16 @@ int main(void) {
         unsigned char idx_d0 = fb[y_rows[0] * 320 + centers[0]];
         unsigned char idx_d1 = fb[y_rows[1] * 320 + centers[1]];
         unsigned char idx_d2 = fb[y_rows[2] * 320 + centers[2]];
-    probe_record(&stats, "CSB_V22_RENDER_PER_CELL_COLOR",
-                     idx_d0 == probe_rgb_to_ega_index(0xff, 0x00, 0x00) &&
-                     idx_d1 == probe_rgb_to_ega_index(0x00, 0xff, 0x00) &&
-                     idx_d2 == probe_rgb_to_ega_index(0x00, 0x00, 0xff),
-                 "per-depth wall art paints three distinct EGA indices");
+    probe_record(&stats, "CSB_V22_RENDER_UNBOUND_PRESERVES_BLACK",
+                     idx_d0 == 0u && idx_d1 == 0u && idx_d2 == 0u,
+                 "unbound assets leave the source frame unchanged");
 
     memset(fb, 0x5a, sizeof(fb));
     painted = csb_v22_inplace_render_pass(fb, 320, 200);
-    probe_record(&stats, "CSB_V22_RENDER_TRANSPARENT_PIXEL_PRESERVES_V1",
-                 painted == 9 && fb[103 * 320 + 8] == 0x5a &&
-                 fb[118 * 320 + 42] != 0x5a,
-                 "transparent RGBA source pixels preserve F0128 framebuffer pixels");
+    probe_record(&stats, "CSB_V22_RENDER_UNBOUND_PRESERVES_V1",
+                 painted == 0 && fb[103 * 320 + 8] == 0x5a &&
+                 fb[118 * 320 + 42] == 0x5a,
+                 "unbound assets cannot alter the V1 framebuffer");
     }
 
     for (direction = 0; direction < 4; ++direction) {
@@ -279,9 +277,9 @@ int main(void) {
         csb_v22_shape_cache_update(direction, (const unsigned char (*)[3])raw_cells);
         sweep_painted += csb_v22_inplace_render_pass(fb, 320, 200);
     }
-    probe_record(&stats, "CSB_V22_DIRECTION_SWEEP_4X9",
-                 sweep_painted == 36,
-                 "all 4 directions paint 4x9 CSB V22 cells");
+    probe_record(&stats, "CSB_V22_DIRECTION_SWEEP_UNBOUND_NO_PAINT",
+                 sweep_painted == 0,
+                 "all directions preserve V1 until source admission");
 
     {
         const char* ev = csb_v22_inplace_draw_source_evidence();

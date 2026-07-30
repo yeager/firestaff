@@ -2,6 +2,7 @@
 #define FIRESTAFF_CSB_V1_CSBWIN_VIEWPORT_GRAPHICS_MAP_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 /* CSBWin CSBCode.cpp:2933-2940: Atari/CSBWin uses 13 records per wall set,
  * starting at 77. Entries 0..6 are door bitmaps, 7..12 wall bitmaps. */
@@ -38,6 +39,33 @@ typedef enum {
     CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT
 } CSB_V1_CSBWinViewportWall;
 
+/* CSBWin CSBCode.cpp:10245 expands GRAPHICS.DAT item 0x22e directly to
+ * Data::Byte7248 + 2. Data.h places wallRectangles[0] at source address
+ * Byte3074. These entries are byte-coordinate RectPos records consumed by
+ * TAG0088b2 via BltShapeToViewport: x1..y2 describe the inclusive viewport
+ * destination; source_stride/source_height/source_x/source_y describe the
+ * packed 4-bit source bitmap. They are not PC34 rectangles. */
+#define CSB_V1_CSBWIN_LAYOUT_022E_GRAPHIC_INDEX 0x22eu
+#define CSB_V1_CSBWIN_LAYOUT_022E_DECODED_SIZE 0x1270u
+#define CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET 4172u
+
+typedef struct {
+    uint8_t x1;
+    uint8_t x2;
+    uint8_t y1;
+    uint8_t y2;
+    uint8_t source_stride;
+    uint8_t source_height;
+    uint8_t source_x;
+    uint8_t source_y;
+} CSB_V1_CSBWinViewportProjectionRectangle;
+
+typedef struct {
+    int valid;
+    CSB_V1_CSBWinViewportProjectionRectangle rectangles[
+        CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT];
+} CSB_V1_CSBWinViewportLayout022e;
+
 int csb_v1_csbwin_floor_ceiling_graphic_index(uint16_t floor_set,
                                                int ceiling,
                                                uint16_t *out_graphic_index);
@@ -63,5 +91,19 @@ int csb_v1_csbwin_viewport_wall_source(uint16_t wall_set,
  * shared source bitmap is mirrored only on the right. */
 int csb_v1_csbwin_viewport_wall_projection_rectangle(
     CSB_V1_CSBWinViewportWall wall, uint8_t *out_rectangle_index);
+
+int csb_v1_csbwin_viewport_layout_022e_decode(
+    const uint8_t *decoded_graphic, size_t decoded_size,
+    CSB_V1_CSBWinViewportLayout022e *out_layout);
+
+int csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(
+    const char *graphics_dat_path, CSB_V1_CSBWinViewportLayout022e *out_layout);
+
+/* TAG0088b2 accepts inclusive screen coordinates and a packed source row
+ * stride. CSBWin's F0 local-cell rectangle is the deliberate no-source
+ * exception; otherwise source_x must fit inside the stride measured as two
+ * pixels per byte. */
+int csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+    const CSB_V1_CSBWinViewportProjectionRectangle *rectangle);
 
 #endif

@@ -244,6 +244,32 @@ static void check_real_viewport_wall_catalog(const char *path)
     }
 }
 
+static void check_real_viewport_projection_layout(const char *path)
+{
+    CSB_V1_CSBWinViewportLayout022e layout;
+    unsigned int wall;
+
+    if (!path || !path[0]) return;
+    CHECK(csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(path, &layout));
+    if (!layout.valid) return;
+    /* Current original Atari-CSBWin 0x22e: the far-centre wall and F0 local
+     * cell prove both the packed source coordinates and the no-source case. */
+    CHECK(layout.rectangles[0].x1 == 74u && layout.rectangles[0].x2 == 149u &&
+          layout.rectangles[0].source_stride == 64u &&
+          layout.rectangles[0].source_x == 18u);
+    CHECK(layout.rectangles[9].x1 == 0u && layout.rectangles[9].x2 == 223u &&
+          layout.rectangles[9].source_stride == 0u &&
+          layout.rectangles[9].source_height == 0u);
+    for (wall = 0u; wall < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT; ++wall) {
+        uint8_t rectangle_index = UINT8_MAX;
+        CHECK(csb_v1_csbwin_viewport_wall_projection_rectangle(
+            (CSB_V1_CSBWinViewportWall)wall, &rectangle_index));
+        CHECK(rectangle_index < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT);
+        CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+            &layout.rectangles[rectangle_index]));
+    }
+}
+
 /* The DMCSB1 decoder exposes a convenient expanded indexed raster, while
  * CSBWin's viewport blitter addresses the same source through packed bytes.
  * Lock the reversible boundary against every standard wall/floor source, not
@@ -309,6 +335,35 @@ int main(void)
     const char *tmpdir;
     const char *real_graphics_dat;
     int index;
+
+    {
+        uint8_t viewport_layout[CSB_V1_CSBWIN_LAYOUT_022E_DECODED_SIZE];
+        CSB_V1_CSBWinViewportLayout022e decoded_layout;
+        memset(viewport_layout, 0, sizeof(viewport_layout));
+        for (index = 0; index < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT; ++index) {
+            uint8_t *rect = viewport_layout +
+                CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET +
+                (size_t)index * 8u;
+            rect[0] = (uint8_t)(10 + index);
+            rect[1] = (uint8_t)(20 + index);
+            rect[2] = 30u;
+            rect[3] = 40u;
+            rect[4] = 24u;
+            rect[5] = 64u;
+            rect[6] = 4u;
+            rect[7] = 2u;
+        }
+        CHECK(csb_v1_csbwin_viewport_layout_022e_decode(
+            viewport_layout, sizeof(viewport_layout), &decoded_layout));
+        CHECK(decoded_layout.valid && decoded_layout.rectangles[0].x1 == 10u &&
+              decoded_layout.rectangles[13].x2 == 33u &&
+              decoded_layout.rectangles[6].source_stride == 24u);
+        viewport_layout[CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET + 4u] = 0u;
+        CHECK(!csb_v1_csbwin_viewport_layout_022e_decode(
+            viewport_layout, sizeof(viewport_layout), &decoded_layout));
+        CHECK(!csb_v1_csbwin_viewport_layout_022e_decode(
+            viewport_layout, sizeof(viewport_layout) - 1u, &decoded_layout));
+    }
 
     memset(graphic, 0, sizeof(graphic));
     for (index = 0; index < 4; ++index) {
@@ -431,9 +486,10 @@ int main(void)
     check_real_layout(real_graphics_dat);
     check_real_hud_composition(real_graphics_dat);
     check_real_viewport_wall_catalog(real_graphics_dat);
+    check_real_viewport_projection_layout(real_graphics_dat);
     check_real_viewport_planar_roundtrip(real_graphics_dat);
 
     if (failures) return 1;
-    puts("PASS: CSBWin GRAPHICS.DAT 0x232 layout decode");
+    puts("PASS: CSBWin GRAPHICS.DAT 0x232/0x22e layout decode");
     return 0;
 }

@@ -182,6 +182,18 @@ static int write_manifest(const char* path, int realMask, int firstOnly,
         }
         fprintf(fp, "}");
     }
+    /* A real V2.2 slot needs an explicit source-command admission. The test
+     * fixture is intentionally synthetic on disk, but its manifest must use
+     * the same schema as a reviewed pack so this probe tests the gate rather
+     * than an obsolete pre-provenance manifest format. */
+    fprintf(fp, "],\"routeProvenance\":[");
+    for (int i = 0; i < count; ++i) {
+        const SlotFixture* s = &k_slots[i];
+        if (i > 0) fprintf(fp, ",");
+        fprintf(fp, "{\"id\":\"%s\",\"category\":\"%s\","
+                    "\"f0128ProjectionStatus\":\"admitted_probe\"}",
+                s->id, s->category);
+    }
     fprintf(fp, "]}");
     fclose(fp);
     return 1;

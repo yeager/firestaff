@@ -393,18 +393,18 @@ int main(void) {
     memset(fb, 0x00, sizeof(fb));
     painted = csb_v22_viewport_swap_render(fb, 1920, 1080);
     changed = count_changed_pixels(fb, sizeof(fb));
-    probe_record(&stats, "CSB_V22_RENDER_9_CELLS",
-                 painted == 9 && changed > 0 &&
-                 csb_all_cell_centers_nonzero(fb, 1920),
-                 "render pass paints all 9 CSB viewport cells");
+    probe_record(&stats, "CSB_V22_RENDER_UNBOUND_NO_PAINT",
+                 painted == 0 && changed == 0 &&
+                 !csb_all_cell_centers_nonzero(fb, 1920),
+                 "unbound cache cannot replace source viewport cells");
 
     /* Capture the painted-cell counter IMMEDIATELY after the render,
      * before the next update() resets it to 0. */
     {
         int counter = csb_v22_viewport_swap_cells_painted();
-        probe_record(&stats, "CSB_V22_CELLS_PAINTED_COUNTER",
-                     counter == 9,
-                     "cells_painted counter == 9 after one render call");
+        probe_record(&stats, "CSB_V22_CELLS_PAINTED_COUNTER_UNBOUND",
+                     counter == 0,
+                     "unbound cache leaves the replacement counter at zero");
     }
 
     /* 8. 4-direction sweep (all 4 directions should paint 9 cells) */
@@ -415,9 +415,9 @@ int main(void) {
         memset(fb, 0x00, sizeof(fb));
         sweep_painted += csb_v22_viewport_swap_render(fb, 1920, 1080);
     }
-    probe_record(&stats, "CSB_V22_DIRECTION_SWEEP_4X9",
-                 sweep_painted == 36,
-                 "all 4 directions paint 4x9 CSB V22 cells");
+    probe_record(&stats, "CSB_V22_DIRECTION_SWEEP_UNBOUND_NO_PAINT",
+                 sweep_painted == 0,
+                 "all directions preserve source rendering without admission");
 
     /* 9. Per-cell direct bitmap lookup (proves the (category, asset_id)
      *    helper the swap uses) */

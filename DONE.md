@@ -1,3 +1,19 @@
+- ✅ 2026-07-30 CSBWin `TAG0088b2` raw projection layout: Firestaff now
+  decodes original Atari/CSBWin `GRAPHICS.DAT` item `0x22e` at CSBWin's exact
+  `Byte7248 + 2` -> `wallRectangles[0]/Byte3074` offset. All fourteen
+  byte-coordinate records expose their inclusive target, packed source stride
+  and height, and x/y source offsets. The zero-source F0 local cell is
+  accepted only in its original all-zero form. The real-data regression locks
+  both F3's packed source tuple and F0's no-bitmap contract. This is a
+  geometry/decoder recovery, not an unproven live material replacement.
+
+- ✅ 2026-07-30 CSB V2.2 verification repair: three old probes were still
+  asserting that a synthetic cache may paint a 3x3 viewport. They now prove
+  the implemented production contract: unbound cells leave V1 pixels and
+  counters unchanged in every direction. The finished-art manifest fixture
+  also supplies the required `routeProvenance.f0128ProjectionStatus` field,
+  so it tests the current admission schema rather than an obsolete one.
+
 - ✅ 2026-07-30 CSBWin save-tail database framing: the read-only CSBWin tail
   parser now follows the original prefix through DB0--DB15, including legacy
   8-byte actuators, pre-B 4-byte scrolls, extended cell-flag lengths and the

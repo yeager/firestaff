@@ -10,8 +10,13 @@
   F0 centre is explicitly projection-only because CSBWin has no separate
   `StdBitmapPointers` wall source for it; F3R2's bitmap mirror remains
   separately source-locked. Verified by the
-  CSBWin layout test against the local Atari-ST `GRAPHICS.DAT`; this locks
-  command identity, not the still-open native-raster V2.2 material handoff.
+  CSBWin layout test against the local Atari-ST `GRAPHICS.DAT`. 2026-07-30:
+  item `0x22e` now also decodes every raw byte-coordinate `RectPos` at the
+  exact `Byte7248 + 2` -> `Byte3074` offset: inclusive destination, packed
+  source stride/height, and source x/y. The deliberately source-less F0
+  local-cell rectangle is explicitly admitted only in its all-zero form.
+  This locks command geometry, not the still-open native-raster V2.2 material
+  handoff.
 
 ReDMCSB is the primary reference for DM1/CSB shared engine behavior. For
 CSB-specific DSA, save, Utility Disk, and extended-runtime behavior, use
@@ -259,6 +264,13 @@ an integration build pass.
   paths only; unreconciled F0128 material families and the CSBWin spell owner
   remain open. Full `ctest -L csb` result: 116 passed, 1 correctly skipped
   (the unavailable completed V2.2 artpack runtime probe).
+  2026-07-30: stale V2.2 probes that expected an arbitrary synthetic cache to
+  paint nine cells now assert the production rule instead: without an
+  authenticated F0128 receipt, every direction preserves the V1 frame and
+  the replacement counter stays zero. The finished-art fixture now carries
+  the same explicit `routeProvenance.f0128ProjectionStatus=admitted_*` schema
+  required by production. This restores the suite as a verification of the
+  fail-closed boundary, not a route around it.
   2026-07-30: `csb_v2_title_boot_probe` now checks the actual local PC3.4
   C001 runtime at VBlank 50 in V1, V2.0, V2.1 and admitted V2.2. It requires
   the original 60-VBlank PRESENTS phase rather than accepting a title that

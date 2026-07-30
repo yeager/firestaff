@@ -237,18 +237,14 @@ int main(void) {
         csb_v22_shape_cache_update(0, raw_walls);
         memset(fb, 0x00, sizeof(fb));
         painted = csb_v22_inplace_render_pass(fb, 320, 200);
-        probe_record(&stats, "CSB_V22_PER_CELL_SCENE1_PAINT",
-                     painted == 9,
-                     "9-cell wall scene paints all 9 cells");
+        probe_record(&stats, "CSB_V22_PER_CELL_SCENE1_UNBOUND_NO_PAINT",
+                     painted == 0,
+                     "unbound wall scene cannot replace source cells");
         /* depth 0/1/2 should each show a distinct center pixel. */
-        probe_record(&stats, "CSB_V22_PER_CELL_SCENE1_DEPTH_COLOR",
-                     fb_pixel(fb, 0, 0) != fb_pixel(fb, 1, 0) &&
-                     fb_pixel(fb, 1, 0) != fb_pixel(fb, 2, 0) &&
-                     fb_pixel(fb, 0, 0) != fb_pixel(fb, 2, 0) &&
-                     fb_pixel(fb, 0, 0) == probe_rgb_to_ega(0x00, 0x00, 0xff) &&
-                     fb_pixel(fb, 1, 0) == probe_rgb_to_ega(0x00, 0xff, 0x00) &&
-                     fb_pixel(fb, 2, 0) == probe_rgb_to_ega(0xff, 0x00, 0x00),
-                     "depth-driven wall per-cell swap paints 3 distinct EGA colors");
+        probe_record(&stats, "CSB_V22_PER_CELL_SCENE1_UNBOUND_PRESERVES_V1",
+                     fb_pixel(fb, 0, 0) == 0u && fb_pixel(fb, 1, 0) == 0u &&
+                     fb_pixel(fb, 2, 0) == 0u,
+                     "unbound depth variants leave the V1 frame intact");
     }
 
     /* ── Scene 2: pit + stairs_up + stairs_down + surrounding walls ──
@@ -265,34 +261,33 @@ int main(void) {
         csb_v22_shape_cache_update(0, raw_mix);
         memset(fb, 0x00, sizeof(fb));
         painted = csb_v22_inplace_render_pass(fb, 320, 200);
-        probe_record(&stats, "CSB_V22_PER_CELL_SCENE2_PAINT",
-                     painted == 9,
-                     "pit + stairs + walls scene paints all 9 cells");
+        probe_record(&stats, "CSB_V22_PER_CELL_SCENE2_UNBOUND_NO_PAINT",
+                     painted == 0,
+                     "unbound pit and stair routes cannot replace V1 pixels");
         /* pit (depth=2, lateral=0) must paint the floor_pit_01
          * sentinel and NOT floor_cracked_d2_01 (0x804000). */
         {
             unsigned char pit_pixel = fb_pixel(fb, 2, 0);
             unsigned char pit_expected = probe_rgb_to_ega(0x00, 0x00, 0x55);
             unsigned char cracked_expected = probe_rgb_to_ega(0x80, 0x40, 0x00);
-            probe_record(&stats, "CSB_V22_PER_CELL_SCENE2_PIT_NOT_CRACKED",
-                         pit_pixel == pit_expected &&
+            probe_record(&stats, "CSB_V22_PER_CELL_SCENE2_PIT_UNBOUND",
+                         pit_pixel == 0u && pit_pixel != pit_expected &&
                          pit_pixel != cracked_expected,
-                         "pit cell uses floor_pit_01, not floor_cracked_d2_01");
+                         "unbound pit cannot borrow cracked-floor material");
         }
         /* stairs_up (depth=1, lateral=-1) -> 0x00ffff. */
-        probe_record(&stats, "CSB_V22_PER_CELL_SCENE2_STAIRS_UP",
-                     fb_pixel(fb, 1, -1) == probe_rgb_to_ega(0x00, 0xff, 0xff),
-                     "stairs_up uses floor_stairs_up_01 (not cracked)");
+        probe_record(&stats, "CSB_V22_PER_CELL_SCENE2_STAIRS_UP_UNBOUND",
+                     fb_pixel(fb, 1, -1) == 0u,
+                     "unbound stairs-up leaves V1 pixels intact");
         /* stairs_down (depth=2, lateral=-1) -> 0x808000. */
-        probe_record(&stats, "CSB_V22_PER_CELL_SCENE2_STAIRS_DOWN",
-                     fb_pixel(fb, 2, -1) == probe_rgb_to_ega(0x80, 0x80, 0x00),
-                     "stairs_down uses floor_stairs_down_01 (not cracked)");
+        probe_record(&stats, "CSB_V22_PER_CELL_SCENE2_STAIRS_DOWN_UNBOUND",
+                     fb_pixel(fb, 2, -1) == 0u,
+                     "unbound stairs-down leaves V1 pixels intact");
         /* All three floor specials distinct. */
-        probe_record(&stats, "CSB_V22_PER_CELL_SCENE2_PIT_STAIRS_DISTINCT",
-                     fb_pixel(fb, 2, 1) != fb_pixel(fb, 1, -1) &&
-                     fb_pixel(fb, 1, -1) != fb_pixel(fb, 2, -1) &&
-                     fb_pixel(fb, 2, 1)  != fb_pixel(fb, 2, -1),
-                     "pit / stairs_up / stairs_down are three distinct assets");
+        probe_record(&stats, "CSB_V22_PER_CELL_SCENE2_UNBOUND_NO_BORROW",
+                     fb_pixel(fb, 2, 1) == 0u && fb_pixel(fb, 1, -1) == 0u &&
+                     fb_pixel(fb, 2, -1) == 0u,
+                     "unbound floor families cannot borrow one another's art");
     }
 
     /* ── Scene 3: field no-asset (teleporter + fluxcage) + walls ──
@@ -378,9 +373,9 @@ int main(void) {
             memset(fb, 0x00, sizeof(fb));
             sweep_painted += csb_v22_inplace_render_pass(fb, 320, 200);
         }
-        probe_record(&stats, "CSB_V22_PER_CELL_DIRECTION_SWEEP",
-                     sweep_painted == 36,
-                     "all 4 directions paint 4x9 cells via per-cell route");
+        probe_record(&stats, "CSB_V22_PER_CELL_DIRECTION_SWEEP_UNBOUND",
+                     sweep_painted == 0,
+                     "all directions stay source-owned without F0128 admission");
     }
 
     /* ── Source evidence ──────────────────────────────────────── */
