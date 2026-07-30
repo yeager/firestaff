@@ -9,6 +9,12 @@
 
 ## Active DM1/CSB Symbol Queue
 
+- **DM1-V1-SAVED-PORTRAIT-INVENTORY-ORDER:** Closed 2026-07-30. The normal
+  C017 inventory path now restores F0435's saved M516 32x29 portrait only
+  after F0355's F0291 slot pass, matching PANEL.C's final F0292 state draw.
+  This prevents C509 from overwriting the lower portrait edge in resumed
+  original PC34 saves. The fixture-free external-corpus runtime test passes.
+
 - **LAUNCHER-FULL-WINDOW-PRESENTATION:** Closed 2026-07-30. The start menu
   now uses a full host-window presentation rectangle and matching pointer
   transform, rather than inheriting 4:3/content letterboxing from a selected

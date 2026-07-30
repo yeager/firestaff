@@ -49099,6 +49099,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
          * full C520..C536 backpack namespace. */
         int sourceSlotBox;
         int slotIdx;
+
         for (sourceSlotBox = 8; sourceSlotBox <= 37; ++sourceSlotBox) {
             DM1_V1_InventorySlotBoxZonePc34 zone;
             int zx = 0, zy = 0;
@@ -49152,6 +49153,14 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 }
             }
         }
+        /* PANEL.C F0355 calls CHAMDRAW.C F0292 after its F0291 slot loop.
+         * F0435 restored this exact 32x29 M516 bitmap from the save; it is
+         * not interchangeable with the C026 recruit atlas.  The order is
+         * observable because C509's box overlaps the portrait's lower edge.
+         * Leave the C017 inset untouched when no saved portrait is valid. */
+        (void)m11_draw_saved_champion_portrait_pc34(
+            champ, framebuffer, framebufferWidth, framebufferHeight,
+            M11_VIEWPORT_X + 5, M11_VIEWPORT_Y + 4);
         m11_draw_dm2_inventory_object_icons(state, framebuffer,
                                             framebufferWidth,
                                             framebufferHeight);

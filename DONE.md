@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 original-save inventory portrait ordering: normal C017
+  inventory now draws the F0435-restored M516 32x29 portrait after F0355's
+  F0291 slot pass, matching PANEL.C's final F0292 call. This prevents C509
+  from overpainting the portrait's lower edge; the real DOSBox PC34 save
+  runtime test passes.
+
 - ✅ 2026-07-30 All-games source-material guard: removed the legacy
   production test maze, generic wall/HUD, and coloured-creature fallback
   pixels. Missing or unbound source material now produces no substitute game
