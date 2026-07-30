@@ -1500,6 +1500,14 @@ that its exact runtime path is not already source-locked and tested.
     The exact framing is now known; the remaining work is to bind it to
     Firestaff's owned dungeon/object stores and verify its source checksum,
     rather than treating its bytes as EXPOOL or synthesizing a dungeon.
+    2026-07-30 implementation: `csb_v1_csbwin_dungeon_tail_parse_prefix`
+    now consumes that source-defined prefix with big-endian saved words and
+    exact bounds for `DUNGEONDATINDEX`, `LEVELDESC`, column pointers, object
+    list and direct/indirect text. It passes the data-free framing contract
+    and the staged `csbgame3.dat` corpus after the authenticated 12-byte
+    TIMER core. DB0--DB15, cell flags and the final running checksum remain
+    deliberately unowned; this is an admission boundary, not a synthetic
+    dungeon loader.
     2026-07-30: resumed CSBWin source saves can now be exported byte-for-byte
     through their FNV-bound provenance, including the Extended Features prefix
     and opaque variable dungeon payload. The export refuses any source file

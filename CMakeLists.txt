@@ -3768,6 +3768,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_startup_presentation_receipt_pc34_compat.c
     src/csb/csb_v1_csbwin_512_xor_pad_classify.c
+    src/csb/csb_v1_csbwin_dungeon_tail.c
     src/csb/csb_v1_csbwin_graphics_signature_gate.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
     src/csb/csb_v1_utility_flow_pc34.c
@@ -33374,6 +33375,26 @@ add_executable(test_nexus_v1_dgn_material_raster
     )
     set_tests_properties(csb_v1_csbwin_512_xor_pad_classify_unit PROPERTIES
         LABELS "tier2;csb;csbwin_custom_resource;data_free"
+    )
+
+    add_executable(test_csb_v1_csbwin_dungeon_tail
+        tests/test_csb_v1_csbwin_dungeon_tail.c
+        src/csb/csb_v1_csbwin_dungeon_tail.c
+        src/csb/csb_v1_csbwin_512_xor_pad_classify.c
+    )
+    target_include_directories(test_csb_v1_csbwin_dungeon_tail PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_dungeon_tail PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_dungeon_tail
+        COMMAND test_csb_v1_csbwin_dungeon_tail
+    )
+    set_tests_properties(csb_v1_csbwin_dungeon_tail PROPERTIES
+        LABELS "tier2;csb;csbwin_custom_resource;save_runtime;data_free"
     )
 
     add_executable(test_csb_v1_csbwin_graphics_signature_gate
