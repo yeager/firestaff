@@ -47226,6 +47226,7 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
     int useV2PartyHud = 0;
     int slotStep;
     int slotW;
+    int topRowReceiptFallback = 0;
     if (state) {
         activeIndex = state->world.party.activeChampionIndex;
         /* CSB V2.x may transform the final presented surface, but its
@@ -47236,13 +47237,20 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
             state->sourceKind != M11_GAME_SOURCE_CSB_BOOT;
     }
     if (m11_dm1_v1_top_row_receipt_required(state)) {
-        if (!m11_draw_dm1_v1_top_row_receipt(
+        if (m11_draw_dm1_v1_top_row_receipt(
                 state, framebuffer, framebufferWidth, framebufferHeight)) {
+            return;
+        }
+        {
             m11_dm1_runtime_capture_route_evidence(
                 state, M11_DM1_RUNTIME_CAPTURE_TOP_ROW, 0, 0, 0,
                 0u, 0u, 0u);
         }
-        return;
+        /* The atomic receipt can reject a frame for a missing auxiliary
+         * material. The direct path below still draws the same source-owned
+         * C008/C028/C033-C035 surfaces, so do not turn a valid HUD into a
+         * black strip solely because the capture receipt is incomplete. */
+        topRowReceiptFallback = 1;
     }
     slotStep = m11_party_slot_step(state);
     slotW    = m11_party_slot_w(state);
@@ -47767,6 +47775,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                               x + 4, y + 16, "EMPTY", &g_text_small);
             }
         }
+    }
+    if (topRowReceiptFallback) {
+        m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth,
+                                   framebufferHeight);
     }
 }
 

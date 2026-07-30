@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 DM1 HUD receipt fallback: a rejected auxiliary top-row
+  receipt no longer clears the live champion HUD to black. M11 now consumes
+  the existing source-owned C008/C028/C033--C035 direct composition in that
+  case, including the original status frames, name fields, bars, portraits,
+  hand frames and 16x16 icons. Real `GRAPHICS.DAT` runtime probes verify the
+  complete four-champion HUD and inventory-owner hand-slot path.
+
 - ✅ 2026-07-30 DM1 champion HUD names: C159--C162 name fields are now
   source-centred through the original F0650 geometry rather than left-locked
   at C163. Short names therefore align with their status boxes; the layout
