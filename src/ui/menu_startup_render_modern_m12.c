@@ -1666,6 +1666,79 @@ static void draw_settings_view(M12_ModernCanvas* c, const M12_StartupMenuState* 
     }
 }
 
+static const char *modern_extras_label(M12_ExtrasItem item)
+{
+    static const char *labels[M12_EXTRAS_COUNT] = {
+        "MUSEUM OF LORE",
+        "MANUAL / DOCS",
+        "BESTIARY",
+        "SPELL REFERENCE",
+        "MAP VIEWER",
+        "ITEM ENCYCLOPEDIA",
+        "CHANGELOG",
+        "SCREENSHOT GALLERY"
+    };
+
+    if (item < 0 || item >= M12_EXTRAS_COUNT) return "EXTRA";
+    return labels[item];
+}
+
+static int modern_extras_available(M12_ExtrasItem item)
+{
+    return item == M12_EXTRAS_MUSEUM || item == M12_EXTRAS_MANUAL ||
+           item == M12_EXTRAS_BESTIARY || item == M12_EXTRAS_ITEMS ||
+           item == M12_EXTRAS_CHANGELOG || item == M12_EXTRAS_SCREENSHOTS;
+}
+
+/* Extras already has a source-of-truth input state in menu_startup_m12.c.
+ * Keep this view a pure presentation of that state so mouse, keyboard and
+ * controller input all keep using the same M12 command transitions. */
+static void draw_extras_view(M12_ModernCanvas* c,
+                             const M12_StartupMenuState* state)
+{
+    const int panelX = c->w / 20;
+    const int panelY = c->h / 5 - 54;
+    const int panelW = c->w / 2;
+    const int rowY = c->h / 5;
+    const int rowH = 26;
+    ModernTextStyle heading = text_style_make(4, COLOR_ACCENT(), 2);
+    ModernTextStyle hint = text_style_make(2, COLOR_TEXT_DIM(), 1);
+    int item;
+
+    draw_back_button(c, 0);
+    draw_panel(c, panelX, panelY, panelW, 70 + M12_EXTRAS_COUNT * rowH,
+               rgb(14, 16, 36), COLOR_PANEL_EDGE(), 16);
+    draw_text(c, panelX + 26, panelY + 20,
+              M12_StartupMenu_Translate(state, "EXTRAS"), &heading);
+    draw_text(c, panelX + 28, panelY + 62,
+              M12_StartupMenu_Translate(state, "EXPLORE FIRESTAFF"), &hint);
+    for (item = 0; item < M12_EXTRAS_COUNT; ++item) {
+        const int y = rowY + item * rowH;
+        const int selected = state && (int)state->extrasSelected == item;
+        const int available = modern_extras_available((M12_ExtrasItem)item);
+        ModernTextStyle label = text_style_make(
+            2, available ? (selected ? COLOR_ACCENT_HI() : COLOR_TEXT())
+                         : COLOR_TEXT_FAINT(), 1);
+
+        if (selected) {
+            fill_rounded_rect(c, panelX + 20, y - 4, panelW - 40, rowH,
+                              7, rgb(40, 38, 72));
+            stroke_rounded_rect(c, panelX + 20, y - 4, panelW - 40, rowH,
+                                7, COLOR_ACCENT());
+        }
+        draw_text(c, panelX + 40, y + 2,
+                  M12_StartupMenu_Translate(state,
+                                             modern_extras_label((M12_ExtrasItem)item)),
+                  &label);
+        if (!available) {
+            ModernTextStyle unavailable = text_style_make(1, COLOR_TEXT_FAINT(), 1);
+            draw_text(c, panelX + panelW - 130, y + 6,
+                      M12_StartupMenu_Translate(state, "UNAVAILABLE"),
+                      &unavailable);
+        }
+    }
+}
+
 typedef struct {
     const char* title;
     const char* subtitle;
@@ -2318,6 +2391,13 @@ void M12_ModernMenu_Render(const M12_StartupMenuState* state,
                              : "ENTER OR ESC RETURNS TO MENU";
             break;
         case M12_MENU_VIEW_MAIN:
+            if (m12_get_nav_level() == M12_NAV_EXTRAS) {
+                draw_extras_view(&c, state);
+                footerLeft = "UP DOWN MOVE    ENTER OPEN    ESC BACK";
+            } else {
+                draw_main_view(&c, state);
+            }
+            break;
         default:
             draw_main_view(&c, state);
             break;

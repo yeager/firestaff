@@ -43769,6 +43769,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   covers all three pointer targets, together with the existing keyboard,
   touch, localization, font/artpack, and launcher-handoff tests.
 
+- ✅ Modern Extras presentation now follows the existing `M12_NAV_EXTRAS`
+  input state instead of incorrectly drawing the main game-card view. The
+  rendered Extras list uses the same selection, availability, mouse-hit, and
+  keyboard/controller command path as the launcher state machine.
+
 # CSB Entrance pre-open composition (2026-07-30)
 
 - ✅ The source-owned CSB `OPENING_DELAY` state now keeps C004 with its
