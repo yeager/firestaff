@@ -25,20 +25,33 @@ presentation targets from 640x400 up to 3840x2160.
 
 ## Screenshots
 
-Real in-game captures. The **Original** captures are taken from the
-runtime at 320x200 with the original DM PC 3.4 VGA palette and the
-original SWSH/TITLE/DUNGEON cadence. The **Custom** captures are taken
-through the selectable filtered 640x400 target or the 4K 3840x2160
-target, while gameplay still runs in the original 320x200 coordinate
-space.
+These are captured from Firestaff's runtime, not generated mock-ups. **Original
+(V1)** uses the native 320x200 coordinate space and source palette. **Custom
+(V2.x)** uses the same gameplay state with the selected presentation pipeline.
 
-| Original (V1) dungeon view, 320x200 | Original (V1) TITLE.DAT render, 320x200 |
-|---|---|
-| ![Original (V1) dungeon view, captured live from the runtime at 320x200](verification-screens/01_ingame_start_latest.png) | ![Original (V1) TITLE.DAT render at the original 320x200 cadence and palette](docs/compare/v1/title.png) |
+### Dungeon Master
 
-| Custom (V2.0/V2.1) filtered title, 640x400 | Custom (V2.1/V2.2) 4K presentation, 3840x2160 |
+| Original (V1), runtime dungeon and HUD | Custom (V2.x), runtime dungeon presentation |
 |---|---|
-| ![Custom filtered title rendering at 640x400](docs/compare/v21/title.png) | ![Custom 4K presentation capture at 3840x2160](verification-screens/v2-initial-4k/firestaff-v2-initial-ingame-4k.png) |
+| ![Dungeon Master Original V1 runtime capture at 320x200](verification-screens/07_party_hud_with_champions.png) | ![Dungeon Master Custom V2.x runtime capture at 3840x2160](verification-screens/v2-initial-4k/firestaff-v2-initial-ingame-4k.png) |
+
+| Original (V1), title palette | Custom (V2.1), filtered title |
+|---|---|
+| ![Dungeon Master Original V1 title capture](docs/compare/v1/title.png) | ![Dungeon Master Custom V2.1 title capture](docs/compare/v21/title.png) |
+
+### Capture Coverage
+
+| Game | Original (V1) | Custom (V2.x) |
+|---|---|---|
+| Dungeon Master | Published runtime captures | Published runtime captures |
+| Chaos Strikes Back | Capture pending verified package-data session | Capture pending verified package-data session |
+| Dungeon Master II: Skullkeep | Capture pending verified GDAT session | Capture pending verified GDAT session |
+| Theron's Quest | Capture pending verified Track 02 session | Capture pending verified Track 02 session |
+| DM Nexus | Capture pending verified Saturn package session | Capture pending verified Saturn package session |
+
+The remaining games are intentionally not illustrated with placeholder art.
+Their screenshots will be added only after each title has a repeatable,
+data-backed runtime capture.
 
 ## Current Status
 
