@@ -11749,6 +11749,16 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
     if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
         return m11_cast_nexus_light_spell(state);
     }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        /* CSB shares C100/C101..C109 spell-panel geometry with DM1, but not
+         * DM1's spell table or effect executor.  ReDMCSB CASTER.C/CSBWin
+         * owns the eventual cast transaction, including DSA/filter side
+         * effects.  Keep the source rune line intact until that owner can
+         * consume it; falling through here would debit a CSB champion and
+         * mutate the world through DM1's F0750--F0754 route. */
+        m11_set_status(state, "CAST", "CSB CAST OWNER UNAVAILABLE");
+        return 0;
+    }
     casterIndex = m11_dm1_spell_caster_index(state);
     if (casterIndex < 0 || casterIndex >= CHAMPION_MAX_PARTY) {
         m11_set_status(state, "CAST", "NO ACTIVE CHAMPION");

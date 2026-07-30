@@ -476,6 +476,40 @@ static void test_candidate_panel_blocks_direct_spell_helpers(void)
                                 "C040 direct spell helpers do not tick");
 }
 
+static void test_csb_cast_never_uses_dm1_spell_executor(void)
+{
+    M11_GameViewState state;
+    uint32_t tick;
+    unsigned short mana;
+
+    seed_active_view(&state);
+    state.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
+    state.spellPanelOpen = 1;
+    state.spellRuneRow = 1;
+    state.spellBuffer.runeCount = 2;
+    state.spellBuffer.runes[0] = 0x60;
+    state.spellBuffer.runes[1] = 0x61;
+    state.world.party.champions[0].mana.current = 50;
+    state.world.party.champions[0].mana.maximum = 50;
+    tick = state.world.gameTick;
+    mana = state.world.party.champions[0].mana.current;
+
+    ASSERT_EQ(M11_GameView_CastSpell(&state), 0,
+              "CSB cast is rejected without a CSB source executor");
+    ASSERT_EQ(state.world.party.champions[0].mana.current, mana,
+              "CSB cast rejection preserves champion mana");
+    ASSERT_EQ(state.world.gameTick, tick,
+              "CSB cast rejection does not run a DM1 tick");
+    ASSERT_EQ(state.spellPanelOpen, 1,
+              "CSB cast rejection preserves source spell panel");
+    ASSERT_EQ(state.spellBuffer.runeCount, 2,
+              "CSB cast rejection preserves source rune line");
+    ASSERT_EQ(state.spellBuffer.runes[0], 0x60,
+              "CSB cast rejection preserves first rune");
+    ASSERT_EQ(state.spellBuffer.runes[1], 0x61,
+              "CSB cast rejection preserves second rune");
+}
+
 static void test_candidate_panel_blocks_direct_inventory_toggle(void)
 {
     M11_GameViewState state;
@@ -1874,6 +1908,7 @@ int main(void)
     test_inventory_overlay_blocks_keyboard_command();
     test_map_overlay_blocks_mouse_command();
     test_candidate_panel_blocks_direct_spell_helpers();
+    test_csb_cast_never_uses_dm1_spell_executor();
     test_candidate_panel_blocks_direct_inventory_toggle();
     test_candidate_panel_blocks_direct_map_toggle();
     test_candidate_panel_uses_dm1_hoc_menu_route_receipt();

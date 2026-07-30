@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 CSB cast source-ownership guard: the shared spell-button
+  boundary no longer falls through into DM1 F0750--F0754 when CSB owns the
+  runtime. An unavailable CSBWin caster/cast transaction preserves CSB
+  runes, mana, panel state and world tick rather than applying a DM1 spell.
+  Verification: `test_m11_overlay_command_queue_block` passes 190/190.
+
 - ✅ 2026-07-30 CSB V2.2 source-artpack admission reverified: the installed
   `firestaff-csb-v22-pc34-source` pack contains all 29 required
   non-placeholder entries, each derived from the hash-verified PC3.4

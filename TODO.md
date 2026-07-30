@@ -1597,7 +1597,10 @@ that its exact runtime path is not already source-locked and tested.
     recant, and caster tabs retain their source geometry and per-champion
     state. CSB spell-area execution is still separate: casting requires a
     source-owned CSBWin caster/cast binding rather than the DM1 spell
-    executor. 2026-07-30: C009/C011 now consumes the current CSB GAMEBLOCK
+    executor. 2026-07-30: the shared `M11_GameView_CastSpell` boundary now
+    explicitly rejects CSB before DM1 F0750--F0754 can run. A rejected CSB
+    cast preserves the source rune line, champion mana and world tick until
+    the CSBWin caster/cast transaction can own them. 2026-07-30: C009/C011 now consumes the current CSB GAMEBLOCK
     party mirror, matching the C028/action consumers. A stale retained M11
     party can no longer black out a valid CSB spell panel or reject its C100
     mouse input before CASTER.C can select the source caster. The same
