@@ -3787,6 +3787,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_ccm.c
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_creature_tables.c
+    src/dm2/dm2_v1_party.c
     src/dm2/dm2_v1_companion.c
     src/dm2/dm2_v1_hand_action_gdat.c
     src/dm2/dm2_v1_progression.c
@@ -44573,6 +44574,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_ai_table_genuine.c"
     add_test(
         NAME dm2_v1_ai_table_genuine
         COMMAND test_dm2_v1_ai_table_genuine
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_party.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_party.c")
+    add_executable(test_dm2_v1_party
+        tests/test_dm2_v1_party.c
+        src/dm2/dm2_v1_party.c
+    )
+    target_include_directories(test_dm2_v1_party PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_party PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_party
+        COMMAND test_dm2_v1_party
     )
 endif()
 

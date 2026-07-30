@@ -587,10 +587,10 @@ get_adj_ability1	SKULLWIN	SKULLWIN/c_hero.cpp	81		IMPLEMENTED
 get_adj_ability2	SKULLWIN	SKULLWIN/c_hero.cpp	101		IMPLEMENTED
 get_stamina_adj	SKULLWIN	SKULLWIN/c_hero.cpp	110		IMPLEMENTED
 get_max_load	SKULLWIN	SKULLWIN/c_hero.cpp	126		IMPLEMENTED
-use_luck	SKULLWIN	SKULLWIN/c_hero.cpp	136		MISSING
+use_luck	SKULLWIN	SKULLWIN/c_hero.cpp	136		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
 rotate	SKULLWIN	SKULLWIN/c_hero.cpp	168	src/dm2/dm2_v1_creature.c:879	IMPLEMENTED_NARROW
-set_hero_flags	SKULLWIN	SKULLWIN/c_hero.cpp	190		MISSING
-get_player_weight	SKULLWIN	SKULLWIN/c_hero.cpp	197		MISSING
+set_hero_flags	SKULLWIN	SKULLWIN/c_hero.cpp	190		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
+get_player_weight	SKULLWIN	SKULLWIN/c_hero.cpp	197		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
 calc_player_weight	SKULLWIN	SKULLWIN/c_hero.cpp	208		IMPLEMENTED_NARROW
 DM2_CALC_PLAYER_ATTACK_DAMAGE	SKULLWIN	SKULLWIN/c_hero.cpp	232		MISSING
 DM2_hero_39796	SKULLWIN	SKULLWIN/c_hero.cpp	464		MISSING
@@ -603,8 +603,8 @@ DM2_BRING_CHAMPION_TO_LIFE	SKULLWIN	SKULLWIN/c_hero.cpp	916		MISSING
 DM2_REVIVE_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	957		MISSING
 DM2_SELECT_CHAMPION	SKULLWIN	SKULLWIN/c_hero.cpp	1052		MISSING
 DM2_ADJUST_SKILLS	SKULLWIN	SKULLWIN/c_hero.cpp	1166		MISSING
-DM2_hero_2c1d_132c	SKULLWIN	SKULLWIN/c_hero.cpp	1383		MISSING
-DM2_hero_2c1d_135d	SKULLWIN	SKULLWIN/c_hero.cpp	1403		MISSING
+DM2_hero_2c1d_132c	SKULLWIN	SKULLWIN/c_hero.cpp	1383		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
+DM2_hero_2c1d_135d	SKULLWIN	SKULLWIN/c_hero.cpp	1403		MISSING	
 DM2_WOUND_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	1496		MISSING
 DM2_ADJUST_STAMINA	SKULLWIN	SKULLWIN/c_hero.cpp	1722		MISSING
 DM2_UPDATE_CHAMPIONS_STATS	SKULLWIN	SKULLWIN/c_hero.cpp	1757		MISSING
@@ -636,7 +636,7 @@ DM2_ADD_COIN_TO_WALLET	SKULLWIN	SKULLWIN/c_hero.cpp	3506		MISSING
 DM2_2759_0e93	SKULLWIN	SKULLWIN/c_hero.cpp	3580	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2759_0e93_hand_activation; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	SKULLWIN/c_hero.cpp alias of SKWIN/SkWinCore.cpp _2759_0e93; same hand activation predicate receipt applies.
 DM2_LOAD_PROJECTILE_TO_HAND	SKULLWIN	SKULLWIN/c_hero.cpp	3643	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models projectile-to-empty-hand transfer while preserving source-head mutation; occupied hands and malformed input fail closed.
 DM2_CAST_CHAMPION_MISSILE_SPELL	SKULLWIN	SKULLWIN/c_hero.cpp	3840		MISSING
-DM2_2c1d_0e23	SKULLWIN	SKULLWIN/c_hero.cpp	3879		MISSING
+DM2_2c1d_0e23	SKULLWIN	SKULLWIN/c_hero.cpp	3879		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
 DM2_hero_2c1d_1de2	SKULLWIN	SKULLWIN/c_hero.cpp	3903		MISSING
 DM2_CHANGE_PLAYER_POS	SKULLWIN	SKULLWIN/c_hero.cpp	4037		MISSING
 DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION	SKULLWIN	SKULLWIN/c_hero.cpp	4141		MISSING
