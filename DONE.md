@@ -1,3 +1,12 @@
+- ✅ 2026-07-30 CSB startup placeholder audit: verified the active PC3.4
+  startup chain against local original data. C001 title, C002/C003 doors,
+  C004 entrance, C005 credits and C017/C040 HUD are all decoded from the
+  verified GRAPHICS.DAT session; the source-sequence regression covers the
+  title-to-Entrance-to-HUD transition and rejects stale source or palette
+  receipts. Named synthetic blit helpers found in the CSB tree are
+  contract-test-only and have no production callers. No startup placeholder
+  route was promoted or replaced by generated pixels.
+
 - ✅ 2026-07-30 DM1 original-save F0345 runtime proof: the fixture-free PC34
   corpus test opens C017, sends the source C545 mouth click at `(64,54)`, and
   verifies the resulting real C020/C030/C031 food-water panel pixels. This is
