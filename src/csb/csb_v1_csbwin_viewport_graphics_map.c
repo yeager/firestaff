@@ -95,16 +95,57 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
     CSB_V1_CSBWinViewportLayout022e *out_layout)
 {
     size_t index;
+    const CSB_V1_CSBWinViewportProjectionRectangle *door_rectangles;
 
     if (!out_layout) return 0;
     memset(out_layout, 0, sizeof(*out_layout));
     if (!decoded_graphic || decoded_size !=
         CSB_V1_CSBWIN_LAYOUT_022E_DECODED_SIZE) return 0;
-    if (CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET +
+    if (CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_OFFSET +
+            sizeof(out_layout->door_rectangles) > decoded_size ||
+        CSB_V1_CSBWIN_LAYOUT_022E_DOOR_TRACK_RECTANGLE_OFFSET +
+            sizeof(out_layout->door_track_rectangles) > decoded_size ||
+        CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_OFFSET +
+            sizeof(out_layout->door_frame_rectangles) > decoded_size ||
+        CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET +
             sizeof(out_layout->rectangles) > decoded_size) return 0;
+    memcpy(out_layout->door_rectangles,
+           decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_OFFSET,
+           sizeof(out_layout->door_rectangles));
+    memcpy(out_layout->door_track_rectangles,
+           decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_DOOR_TRACK_RECTANGLE_OFFSET,
+           sizeof(out_layout->door_track_rectangles));
+    memcpy(out_layout->door_frame_rectangles,
+           decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_OFFSET,
+           sizeof(out_layout->door_frame_rectangles));
     memcpy(out_layout->rectangles,
            decoded_graphic + CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET,
            sizeof(out_layout->rectangles));
+    door_rectangles = &out_layout->door_rectangles[0][0];
+    for (index = 0u; index < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_FAMILY_COUNT *
+            CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_STATE_COUNT; ++index) {
+        if (!csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+                door_rectangles + index)) {
+            memset(out_layout, 0, sizeof(*out_layout));
+            return 0;
+        }
+    }
+    for (index = 0u; index < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_TRACK_RECTANGLE_COUNT;
+         ++index) {
+        if (!csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+                &out_layout->door_track_rectangles[index])) {
+            memset(out_layout, 0, sizeof(*out_layout));
+            return 0;
+        }
+    }
+    for (index = 0u; index < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_COUNT;
+         ++index) {
+        if (!csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+                &out_layout->door_frame_rectangles[index])) {
+            memset(out_layout, 0, sizeof(*out_layout));
+            return 0;
+        }
+    }
     for (index = 0u; index < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT; ++index) {
         if (!csb_v1_csbwin_viewport_projection_rectangle_is_valid(
                 &out_layout->rectangles[index])) {

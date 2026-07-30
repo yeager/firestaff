@@ -270,6 +270,8 @@ static void check_real_viewport_projection_layout(const char *path)
 {
     CSB_V1_CSBWinViewportLayout022e layout;
     unsigned int wall;
+    unsigned int family;
+    unsigned int state;
 
     if (!path || !path[0]) return;
     CHECK(csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(path, &layout));
@@ -282,6 +284,30 @@ static void check_real_viewport_projection_layout(const char *path)
     CHECK(layout.rectangles[9].x1 == 0u && layout.rectangles[9].x2 == 223u &&
           layout.rectangles[9].source_stride == 0u &&
           layout.rectangles[9].source_height == 0u);
+    /* CSBWin Data.h puts DoorRectsF1R1..DoorRectsF3L1, then track/frame
+     * RectPos records directly before wallRectangles.  Reading them from the
+     * original 0x22e record prevents later render work from inventing door
+     * projection geometry. */
+    for (family = 0u;
+         family < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_FAMILY_COUNT;
+         ++family) {
+        for (state = 0u;
+             state < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_STATE_COUNT;
+             ++state) {
+            CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+                &layout.door_rectangles[family][state]));
+        }
+    }
+    for (wall = 0u; wall < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_TRACK_RECTANGLE_COUNT;
+         ++wall) {
+        CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+            &layout.door_track_rectangles[wall]));
+    }
+    for (wall = 0u; wall < CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_COUNT;
+         ++wall) {
+        CHECK(csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+            &layout.door_frame_rectangles[wall]));
+    }
     for (wall = 0u; wall < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT; ++wall) {
         uint8_t rectangle_index = UINT8_MAX;
         CHECK(csb_v1_csbwin_viewport_wall_projection_rectangle(

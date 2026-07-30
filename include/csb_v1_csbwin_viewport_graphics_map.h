@@ -47,6 +47,13 @@ typedef enum {
  * packed 4-bit source bitmap. They are not PC34 rectangles. */
 #define CSB_V1_CSBWIN_LAYOUT_022E_GRAPHIC_INDEX 0x22eu
 #define CSB_V1_CSBWIN_LAYOUT_022E_DECODED_SIZE 0x1270u
+#define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_OFFSET 3332u
+#define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_FAMILY_COUNT 9u
+#define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_STATE_COUNT 10u
+#define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_TRACK_RECTANGLE_OFFSET 4052u
+#define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_TRACK_RECTANGLE_COUNT 7u
+#define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_OFFSET 4108u
+#define CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_COUNT 8u
 #define CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET 4172u
 
 typedef struct {
@@ -62,6 +69,17 @@ typedef struct {
 
 typedef struct {
     int valid;
+    /* Data.h / Viewport.cpp keeps these families immediately before
+     * wallRectangles[]. They are source-owned TAG0088b2 RectPos records:
+     * panel families are ordered F1R1, F1, F1L1, F2R1, F2, F2L1, F3R1,
+     * F3, F3L1; each has ten door-state destinations. */
+    CSB_V1_CSBWinViewportProjectionRectangle door_rectangles[
+        CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_FAMILY_COUNT][
+        CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_STATE_COUNT];
+    CSB_V1_CSBWinViewportProjectionRectangle door_track_rectangles[
+        CSB_V1_CSBWIN_LAYOUT_022E_DOOR_TRACK_RECTANGLE_COUNT];
+    CSB_V1_CSBWinViewportProjectionRectangle door_frame_rectangles[
+        CSB_V1_CSBWIN_LAYOUT_022E_DOOR_FRAME_RECTANGLE_COUNT];
     CSB_V1_CSBWinViewportProjectionRectangle rectangles[
         CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT];
 } CSB_V1_CSBWinViewportLayout022e;

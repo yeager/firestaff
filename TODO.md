@@ -1278,6 +1278,13 @@ that its exact runtime path is not already source-locked and tested.
    owner remains open: F0 centre-cell, doors, objects, pits, teleporters,
    stairs, decorations and ordering must each use their own Viewport.cpp
    command paths rather than borrowing this stone-wall lane. 2026-07-30 follow-up: the supplied standard
+   Atari `0x22e` layout decoder now also carries all nine `DoorRects*`
+   ten-state families, seven top-track and eight frame projections in their
+   exact `Data.h` order. This removes rectangle guessing from the next door
+   step. Remains: bind DB0 door state/type and the original
+   `DoorGraphic[3][2]` panel selection before drawing any live door; frames
+   alone are not a complete door and must not be presented as one.
+   2026-07-30 follow-up: the supplied standard
    Atari `GRAPHICS.DAT` confirms the contract for WallSet 0 (records 84--89
    expand to the exact `0x22e` source widths/heights), but later `77 + 13 *
    WallSet + slot` records expose incompatible stream headers under the

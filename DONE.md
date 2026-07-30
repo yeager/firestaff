@@ -43754,3 +43754,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   visible, persisted Graphics setting and feeds the existing M11 runtime
   overlay. `menu_hit_settings_tab_m12` covers the new row and both pointer
   directions; the focused M12 suite passes 10/10.
+- ✅ 2026-07-30 CSBWin `0x22e` door-layout recovery: Firestaff now decodes
+  the original nine `DoorRectsF1R1..DoorRectsF3L1` ten-state projection
+  families plus all seven top-track and eight frame `RectPos` records from
+  Atari `GRAPHICS.DAT` item `0x22e`. The offsets are source-locked to
+  `CSBWin Data.h` immediately before `wallRectangles[]`; real Atari data and
+  the M12/M11 handoff boundary pass 589 assertions. This intentionally
+  recovers geometry only: actual door panels still require the source DB0
+  state/type and `DoorGraphic[3][2]` material owner.
