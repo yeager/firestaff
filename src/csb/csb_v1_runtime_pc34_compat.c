@@ -15634,15 +15634,24 @@ int csb_v1_runtime_load_object_names_m564(
 {
     size_t offset = 0u;
     int name_index;
+    int high_bit_terminated = 0;
 
     if (!profile || !bytes || byte_count == 0u) return 0;
     memset(profile->object_names, 0, sizeof(profile->object_names));
     profile->object_name_table_valid = 0;
 
-    /* ReDMCSB OBJECT.C F0031 lines ~58-109 loads
-     * M564_GRAPHIC_OBJECT_NAMES for PC media as C199 icon-indexed strings.
-     * Each string ends when the source byte has bit 7 set; the stored
-     * character is byte & 0x7f, followed by a C null terminator. */
+    /* ReDMCSB OBJECT.C F0031 has two authenticated PC stream shapes for
+     * M564_GRAPHIC_OBJECT_NAMES: MEDIA060/I34E ends each source name with
+     * bit 7 set (lines 102-109), while MEDIA574/P20/I34M walks ordinary
+     * NUL-terminated strings (lines 110-114). Choose only from the supplied
+     * raw source bytes; an incomplete stream never gets generated names. */
+    for (offset = 0u; offset < byte_count; ++offset) {
+        if ((bytes[offset] & 0x80u) != 0u) {
+            high_bit_terminated = 1;
+            break;
+        }
+    }
+    offset = 0u;
     for (name_index = 0;
          name_index < CSB_V1_OBJECT_NAME_COUNT;
          ++name_index) {
@@ -15651,11 +15660,17 @@ int csb_v1_runtime_load_object_names_m564(
 
         while (offset < byte_count) {
             unsigned char c = bytes[offset++];
-            if (written < (size_t)CSB_V1_OBJECT_NAME_MAX_CHARS) {
-                profile->object_names[name_index][written++] =
-                    (char)(c & 0x7fu);
+            if (high_bit_terminated) {
+                if (written < (size_t)CSB_V1_OBJECT_NAME_MAX_CHARS) {
+                    profile->object_names[name_index][written++] =
+                        (char)(c & 0x7fu);
+                }
+            } else if (c != 0u &&
+                       written < (size_t)CSB_V1_OBJECT_NAME_MAX_CHARS) {
+                profile->object_names[name_index][written++] = (char)c;
             }
-            if ((c & 0x80u) != 0u) {
+            if ((high_bit_terminated && (c & 0x80u) != 0u) ||
+                (!high_bit_terminated && c == 0u)) {
                 terminated = 1;
                 break;
             }

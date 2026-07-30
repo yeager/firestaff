@@ -58,7 +58,8 @@ static int failed;
 #define TEST_LZW_END_CODE 257
 #define TEST_LZW_FIRST_CODE 258
 #define TEST_LZW_MAX_CODE 4096
-#define TEST_CSB_OBJECT_NAMES_INDEX 564u
+/* ReDMCSB DEFS.H:2394 maps M564_GRAPHIC_OBJECT_NAMES to PC/I34E item 694. */
+#define TEST_CSB_OBJECT_NAMES_INDEX 694u
 #define TEST_CSB_OBJECT_NAME_COUNT 199
 #define TEST_CSB_UTILITY_ADF_BYTES (80u * 2u * 11u * 512u)
 #define TEST_CSB_UTILITY_ROOT_OFFSET (880u * 512u)
@@ -312,10 +313,10 @@ static void render_probe_executor_init(
     probe->draw_opening_frame_result = 1;
 }
 
-static void write_le16(uint8_t *buf, size_t off, uint16_t value)
+static void write_be16(uint8_t *buf, size_t off, uint16_t value)
 {
-    buf[off] = (uint8_t)(value & 0xffu);
-    buf[off + 1u] = (uint8_t)((value >> 8) & 0xffu);
+    buf[off] = (uint8_t)((value >> 8) & 0xffu);
+    buf[off + 1u] = (uint8_t)(value & 0xffu);
 }
 
 static void bw_init(TestBitWriter *bw)
@@ -502,20 +503,19 @@ static int write_synthetic_graphics_dat_with_m564(const char *path)
         free(compressed);
         return -1;
     }
-    /* F0479's new-file marker is the literal big-endian byte pair 80 01;
-     * subsequent PC size tables remain little-endian. */
+    /* F0479's new-file header is big-endian: marker 80 01, count and tables. */
     file_bytes[0] = 0x80u;
     file_bytes[1] = 0x01u;
-    write_le16(file_bytes, 2u, count);
-    write_le16(file_bytes, 4u + TEST_CSB_OBJECT_NAMES_INDEX * 2u,
+    write_be16(file_bytes, 2u, count);
+    write_be16(file_bytes, 4u + TEST_CSB_OBJECT_NAMES_INDEX * 2u,
                (uint16_t)compressed_size);
-    write_le16(file_bytes,
+    write_be16(file_bytes,
                4u + (size_t)count * 2u + TEST_CSB_OBJECT_NAMES_INDEX * 2u,
                (uint16_t)decoded_size);
-    write_le16(file_bytes,
+    write_be16(file_bytes,
                4u + (size_t)count * 4u + TEST_CSB_OBJECT_NAMES_INDEX * 4u,
                1u);
-    write_le16(file_bytes,
+    write_be16(file_bytes,
                4u + (size_t)count * 4u + TEST_CSB_OBJECT_NAMES_INDEX * 4u + 2u,
                (uint16_t)decoded_size);
     memcpy(file_bytes + header_size, compressed, compressed_size);
@@ -1610,6 +1610,41 @@ static void test_enter_game_loads_m564_object_names_from_graphics_dat(void)
     CHECK(strcmp(p.runtime.object_names[7], "SOURCE TORCH") == 0,
           "M564 entry 7 decodes as SOURCE TORCH");
 
+    csb_v1_boot_cleanup(&p);
+}
+
+static void test_enter_game_loads_real_m564_object_names_when_supplied(void)
+{
+    const char *graphics_path = getenv("FIRESTAFF_CSB_GRAPHICS_DAT");
+    const char *dungeon_path = getenv("FIRESTAFF_CSB_DUNGEON_DAT");
+    CSB_V1_BootProfile p;
+
+    if (!graphics_path || !graphics_path[0] || !dungeon_path || !dungeon_path[0]) {
+        printf("  SKIP: real M564 test needs FIRESTAFF_CSB_GRAPHICS_DAT and FIRESTAFF_CSB_DUNGEON_DAT\n");
+        return;
+    }
+
+    /* ReDMCSB OBJECT.C:58-61 loads M564_GRAPHIC_OBJECT_NAMES (DEFS.H:2394
+     * item 694) before object UI reads icon-indexed names. The caller supplies
+     * the hash-verified PC3.4 pair; no test-side GRAPHICS.DAT is substituted. */
+    memset(&p, 0, sizeof(p));
+    csb_v1_boot_profile_init(&p);
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", dungeon_path);
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s", graphics_path);
+    p.dungeon_verified = 1;
+    p.graphics_verified = 1;
+    p.assets_verified = 1;
+    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+    p.entrance_map_index = 255U;
+    p.start_map_index = 0U;
+
+    CHECK(csb_v1_boot_enter_game(&p) == 0,
+          "real PC3.4 pair enters the CSB boot handoff");
+    CHECK(p.runtime.object_name_table_valid == 1,
+          "real PC3.4 GRAPHICS.DAT item 694 loads the M564 name stream");
+    CHECK(p.runtime.object_names[0][0] != '\0',
+          "real M564 stream supplies a non-empty first object name");
     csb_v1_boot_cleanup(&p);
 }
 
@@ -5240,6 +5275,7 @@ int main(void)
         return failed ? 1 : 0;
     }
     test_enter_game_loads_m564_object_names_from_graphics_dat();
+    test_enter_game_loads_real_m564_object_names_when_supplied();
     test_enter_game_preserves_imported_party_and_switches_leader();
     test_runtime_import_dm1_party_path_owns_utility_handoff();
     test_runtime_view_state_receipt_owns_scalar_handoff();

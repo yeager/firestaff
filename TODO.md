@@ -64,8 +64,8 @@
 
 - **CSB-V1-GRAPHIC560-MATERIAL-BINDING:** The recognised PC 3.4 CSB
   `GRAPHICS.DAT` corpus (`61fbfd56887c94adc26888a9491c6611`) uses F0479's
-  mixed-endian new-file header: literal marker bytes `80 01` (`0x8001`), then
-  little-endian count/size tables. The C564 reader now accepts that marker;
+  big-endian new-file header: literal marker bytes `80 01` (`0x8001`), count
+  and size/dimension tables. The C564 reader now accepts that file shape;
   recover C560's bounded raw global-variable layout, validate it against
   ReDMCSB `STARTUP2.C:574`, `MENU.C:20-27` and `MEMORY.C F0479`, then bind
   M11 action sets/names only after the live CSB session carries that receipt.

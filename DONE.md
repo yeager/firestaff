@@ -1,10 +1,12 @@
 - ✅ 2026-07-30 CSB PC3.4 GRAPHICS.DAT new-header marker correction: the raw
   C564 object-name reader now reads ReDMCSB F0479's literal big-endian `80 01`
-  (`0x8001`) marker before decoding the little-endian PC count and size tables.
-  It previously treated those marker bytes as a little-endian number (`0x0180`)
-  and rejected the recognised original PC3.4 corpus. The boot-handoff fixture
-  now writes the real mixed-endian header shape; the original-data Prison HUD
-  regression passes.
+  (`0x8001`) marker before decoding the big-endian PC count and size/dimension
+  tables. The C564 name stream now correctly resolves to item
+  694 (`DEFS.H:2394`), rather than confusing its symbol number with a file
+  index. It previously treated the marker bytes as a little-endian number
+  (`0x0180`) and rejected the recognised original PC3.4 corpus. The
+  boot-handoff fixture now writes the real mixed-endian header shape; the
+  original-data Prison HUD regression passes.
 
 - ✅ 2026-07-30 CSB generic-inventory fallback isolation: CSB now rejects the
   legacy M11 inventory-slot box, label and substitute-icon branches even in

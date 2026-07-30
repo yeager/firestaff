@@ -653,7 +653,9 @@ int csb_v1_boot_startup_presentation_state_receipt_from_runtime_state_pc34(
  *       ReDMCSB LOADSAVE.C F0435 line 1940-1944 sets map 0 for new games. */
 static const char *g_csb_assume_last_reason = "csb_boot/assume_no_dm1_runtime: ok";
 
-#define CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX 564u
+/* ReDMCSB DEFS.H:2394: the PC3.4/I34E media layout stores symbol M564 at
+ * GRAPHICS.DAT item 694. The symbol number is not a file index. */
+#define CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX 694u
 #define CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES 65535u
 #define CSB_V1_GRAPHICS_LZW_MAX_CODE 4096
 #define CSB_V1_GRAPHICS_LZW_CLEAR_CODE 256
@@ -669,11 +671,6 @@ typedef struct {
     int chunk_bit_count;
     int needs_refill;
 } CSB_V1_GraphicsBitReader;
-
-static uint16_t csb_v1_graphics_read_le16(const uint8_t *bytes)
-{
-    return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
-}
 
 static uint16_t csb_v1_graphics_read_be16(const uint8_t *bytes)
 {
@@ -885,12 +882,13 @@ static int csb_v1_graphics_decode_entry_m564(const uint8_t *file_bytes,
     }
     *out_size = 0u;
     /* ReDMCSB MEMORY.C F0479 reads the new-file marker as the literal
-     * 0x8001, then reads the PC count and size tables in little-endian
-     * order. The PC3.4 corpus consequently starts with bytes 80 01 ED 02:
-     * interpreting the marker as a little-endian count turns it into 0x0180
-     * and silently rejects real C560/C564 material. */
+     * 0x8001 before its count/size-table path. The admitted PC3.4 bytes are
+     * big-endian throughout: marker 80 01, count 02 ED and size/dimension
+     * words (for example C560's 00 25 size). Keeping that file order explicit
+     * prevents 0x0180 / 0xED02 / 0x2500 from rejecting real C560/C564
+     * material. */
     signature = csb_v1_graphics_read_be16(file_bytes);
-    count = csb_v1_graphics_read_le16(file_bytes + 2u);
+    count = csb_v1_graphics_read_be16(file_bytes + 2u);
     if ((signature & 0x8000u) == 0u ||
         count <= CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX) {
         return -1;
@@ -906,14 +904,14 @@ static int csb_v1_graphics_decode_entry_m564(const uint8_t *file_bytes,
     entry_offset = payload_offset;
     for (i = 0u; i < CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX; i++) {
         entry_offset +=
-            (size_t)csb_v1_graphics_read_le16(file_bytes + compressed_table + i * 2u);
+            (size_t)csb_v1_graphics_read_be16(file_bytes + compressed_table + i * 2u);
         if (entry_offset > file_size) {
             return -1;
         }
     }
-    compressed_size = csb_v1_graphics_read_le16(
+    compressed_size = csb_v1_graphics_read_be16(
         file_bytes + compressed_table + CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX * 2u);
-    decompressed_size = csb_v1_graphics_read_le16(
+    decompressed_size = csb_v1_graphics_read_be16(
         file_bytes + decompressed_table + CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX * 2u);
     if (compressed_size == 0u || decompressed_size == 0u ||
         decompressed_size > out_capacity ||
@@ -921,12 +919,19 @@ static int csb_v1_graphics_decode_entry_m564(const uint8_t *file_bytes,
         return -1;
     }
 
-    if (csb_v1_graphics_lzw_decode(file_bytes + entry_offset,
-                                   (size_t)compressed_size,
-                                   out,
-                                   (size_t)decompressed_size,
-                                   &decoded_size) != 0 ||
-        decoded_size != (size_t)decompressed_size) {
+    /* ReDMCSB MEMORY.C F0490/F0474 loads an equal-size member directly and
+     * invokes F0497 LZW only when compressed and decompressed counts differ.
+     * The verified PC3.4 M564/item-556 name stream is an equal-size raw
+     * record, while the test fixture also exercises the compressed route. */
+    if (compressed_size == decompressed_size) {
+        memcpy(out, file_bytes + entry_offset, (size_t)decompressed_size);
+        decoded_size = (size_t)decompressed_size;
+    } else if (csb_v1_graphics_lzw_decode(file_bytes + entry_offset,
+                                           (size_t)compressed_size,
+                                           out,
+                                           (size_t)decompressed_size,
+                                           &decoded_size) != 0 ||
+               decoded_size != (size_t)decompressed_size) {
         return -1;
     }
     *out_size = decoded_size;
