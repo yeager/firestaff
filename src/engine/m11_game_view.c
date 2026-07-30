@@ -42,7 +42,6 @@
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
-#include "csb_v1_csbwin_viewport_graphics_map.h"
 #include "csb_v2_runtime.h"
 #include "csb_v2_smooth_movement.h"
 #include "dm2_v1_boot.h"
@@ -1957,12 +1956,10 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
     int *cached_width;
     int *cached_height;
     unsigned int source_graphic;
-    uint16_t csbwin_source_graphic;
     int expected_width;
     int expected_height;
     int floor_set;
     int wall_set;
-    int is_csbwin;
     const CSB_V1_BootProfile *profile;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
@@ -1984,15 +1981,8 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
     if (floor_set < 0 || floor_set > 15 || wall_set < 0 || wall_set > 15) {
         return 0;
     }
-    is_csbwin = profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
-        profile->variant_id == CSB_V1_VARIANT_ST21_EN;
     if (graphic_index == -1) {
-        if (is_csbwin && !csb_v1_csbwin_floor_ceiling_graphic_index(
-                (uint16_t)floor_set, 0, &csbwin_source_graphic)) {
-            return 0;
-        }
-        if (is_csbwin) source_graphic = csbwin_source_graphic;
-        if (!is_csbwin) source_graphic = M11_CSB_PC34_GRAPHIC_FLOOR_SET0 +
+        source_graphic = M11_CSB_PC34_GRAPHIC_FLOOR_SET0 +
             (unsigned int)floor_set * M11_CSB_PC34_FLOOR_SET_GRAPHIC_COUNT;
         expected_width = 224;
         expected_height = 97;
@@ -2000,12 +1990,7 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         cached_width = &state->csbViewportFloorWidth;
         cached_height = &state->csbViewportFloorHeight;
     } else if (graphic_index == -2) {
-        if (is_csbwin && !csb_v1_csbwin_floor_ceiling_graphic_index(
-                (uint16_t)floor_set, 1, &csbwin_source_graphic)) {
-            return 0;
-        }
-        if (is_csbwin) source_graphic = csbwin_source_graphic;
-        if (!is_csbwin) source_graphic = M11_CSB_PC34_GRAPHIC_CEILING_SET0 +
+        source_graphic = M11_CSB_PC34_GRAPHIC_CEILING_SET0 +
             (unsigned int)floor_set * M11_CSB_PC34_FLOOR_SET_GRAPHIC_COUNT;
         expected_width = 224;
         expected_height = 39;

@@ -1175,8 +1175,12 @@ that its exact runtime path is not already source-locked and tested.
    `CSBCode.cpp:2933-2940`; PC3.4's 40-record F0095 catalog remains isolated.
    All 52 records for CSBWin WallSet 0–3 decode through the original Atari
    IMG3/LZW path in the real-data regression.
-   M11 now consumes the CSBWin floor/ceiling catalog for Atari runtime
-   backgrounds; wall-slot geometry remains the next source-owned F0128 step.
+   M11 consumption remains blocked on CSBWin's packed-byte blitter stride:
+   the current Atari decoder expands pixels to full width, while the original
+   viewport applies the source's half-width packed stride. Direct reuse would
+   distort the frame, so the route remains fail-closed until that decoder/
+   blitter contract is recovered. Wall-slot geometry remains the next
+   source-owned F0128 step.
    2026-07-30: CSB runtime boot now passes the actual selected loose-file
    MD5 identities into variant detection; the real Atari ST 2.x corpus had
    previously booted as `UNKNOWN` because both detection arguments were
