@@ -425,17 +425,16 @@ diagnostic; it must not silently fall back to a generated visual.
   Source door exports now
   retain the verified F0111 `C10_COLOR_FLESH` transparency as RGBA alpha and
   the cache blitter preserves the original framebuffer for transparent pixels.
-  2026-07-29 update: M11 now builds and consumes a fail-closed F0128 command
-  plan from the active, authenticated PC3.4 `GRAPHICS.DAT` catalog before it
-  applies V2.2 art.  The plan carries the original D1/D2/D3 DoorSet-0 record
+  2026-07-29 candidate investigation (superseded): a local F0128 command
+  plan carried the original D1/D2/D3 DoorSet-0 record
   identities, C3700/C3710 clipping and draw order; it resolves the active
   map's DoorSet 0–3 through `M633 + DoorSet * C003 + depth`. Missing or
   non-PC34 sources, non-door cells, and open doors leave the verified V1
   frame intact. 2026-07-29 correction: the D3 `G0693` symbol is now
   materialized from its active PC3.4 `GRAPHICS.DAT` DoorSet record
   (246/249/252/255) rather than treating the symbol number 693 as a catalog
-  record. The same corrected record is used by the real first-frame receipt
-  and V2.2 plan. Remaining: a fully
+  record. The same corrected record is used by the real first-frame receipt.
+  Remaining: a fully
   checked native V1 raster-byte handoff for all F0128 material families.
   2026-07-30 update: `csb_v1_pc34_wallset_graphics_map` now provides the
   exact PC/I34 F0095 catalog mapping for the seven door-frame and fifteen
@@ -461,13 +460,15 @@ diagnostic; it must not silently fall back to a generated visual.
   interpolated pixels. Source-derived WallSet-0 centre-front replacements also
   require output dimensions identical to the authenticated source raster, so
   a normalized 96x96 export cannot enter an F0128 clip. D1/D2 retain their explicit admitted projection
-  statuses. The V1 material-byte handoff and candidate plan validate the
+  statuses. The V1 material-byte handoff tests validate the
   active `G0694` DoorSet slot (`247/250/253/256`) through decode, provenance
   and plan receipts; the D1 handoff identifies `G0695`'s original DoorSet
   record (`248/251/254/257`), never the internal `Graphic558` destination
   frame. **2026-07-30 audit correction:** production boot does not currently
-  populate `CSB_V1_ViewportFirstFrameMaterialBytesPc34`, so the candidate
-  plan reaches no live F0128 compositor and V2.2 paints zero replacements.
+  populate `CSB_V1_ViewportFirstFrameMaterialBytesPc34`, so V2.2 paints zero
+  replacements. The unbound candidate API has been removed rather than leave
+  an apparently source-owned plan that cannot carry authenticated decoded
+  pixels or palette bytes into the compositor.
   This is fail-closed, not live V2.2 material consumption. Bind the selected
   authenticated record bytes and palette to the plan before claiming a live
   door or wall replacement; preserve F0115 ordering when doing so. Every

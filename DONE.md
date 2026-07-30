@@ -50,6 +50,13 @@
   can no longer manufacture extra C001 title frames when original
   `GRAPHICS.DAT` C001 is available. Focused source-timing, C001 admission and
   startup-state CTests pass 3/3.
+- ✅ 2026-07-30 CSB V2.2 unbound-plan removal: removed the unused boot API
+  that built F0128 V2.2 draw geometry from compressed catalog hashes but
+  could not bind the decoded source pixels and palette required by the live
+  compositor. This keeps CSB V2.2 fail-closed until a complete original-byte
+  handoff exists; it does not claim a live replacement path. Focused boot,
+  first-frame materialization and V2.2 in-place draw tests pass.
+
 - ✅ 2026-07-30 CSB V2.2 source-palette gate: an admitted F0128 replacement
   now requires the active source-owned indexed palette. The old generated
   EGA quantization fallback is gone, so a direct or malformed host command
