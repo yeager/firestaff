@@ -1,3 +1,12 @@
+- ✅ 2026-07-30 CSBWin door command recovery: Firestaff now reproduces
+  `Viewport.cpp`'s static F1/F2/F3 track and frame plan, including the native
+  `pDoorBitmaps[0]`/right-frame and F3-side mirror rules. It also mirrors
+  `CSBCode.cpp::DrawDoor`'s state selection: closed has no panel, DB0 doors
+  use their direct partial rectangle, and ordinary partial doors use the
+  source split pairs. All projections come directly from GRAPHICS.DAT item
+  `0x22e`; focused layout and M11 handoff tests pass. Actual panel pixels
+  remain owned by the still-unresolved original `DoorGraphic[3][2]` route.
+
 - ✅ 2026-07-30 CSBWin `TAG0088b2` packed wall blit: Firestaff now executes
   the original wall-command projection boundary over the restored Atari
   four-plane raster: inclusive destination rectangle, packed source stride,

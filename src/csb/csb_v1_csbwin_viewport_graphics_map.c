@@ -222,3 +222,108 @@ int csb_v1_csbwin_viewport_build_wall_plan(
         CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT;
     return out_plan->valid;
 }
+
+int csb_v1_csbwin_viewport_door_panel_projections(
+    const CSB_V1_CSBWinViewportLayout022e *layout,
+    CSB_V1_CSBWinDoorPanelFamily family, uint8_t door_state,
+    int db0_mode, const CSB_V1_CSBWinViewportProjectionRectangle **out_first,
+    const CSB_V1_CSBWinViewportProjectionRectangle **out_second)
+{
+    if (out_first) *out_first = NULL;
+    if (out_second) *out_second = NULL;
+    if (!layout || !layout->valid || !out_first || !out_second ||
+        (unsigned int)family >= CSB_V1_CSBWIN_DOOR_PANEL_COUNT ||
+        door_state >= CSB_V1_CSBWIN_LAYOUT_022E_DOOR_RECTANGLE_STATE_COUNT) {
+        return 0;
+    }
+    if (door_state == 0u) return 1;
+    if (door_state >= 4u) {
+        *out_first = &layout->door_rectangles[family][0];
+        return 1;
+    }
+    if (db0_mode) {
+        *out_first = &layout->door_rectangles[family][door_state];
+        return 1;
+    }
+    *out_first = &layout->door_rectangles[family][4u + door_state - 1u];
+    *out_second = &layout->door_rectangles[family][7u + door_state - 1u];
+    return 1;
+}
+
+static int append_door_frame_draw(
+    CSB_V1_CSBWinDoorFramePlan *plan, uint8_t bitmap_slot, int mirrored,
+    const CSB_V1_CSBWinViewportProjectionRectangle *projection)
+{
+    CSB_V1_CSBWinDoorFrameDraw *draw;
+
+    if (!plan || !projection || plan->count >= sizeof(plan->draws) /
+        sizeof(plan->draws[0])) return 0;
+    draw = &plan->draws[plan->count++];
+    draw->bitmap_slot = bitmap_slot;
+    draw->mirrored = mirrored;
+    draw->projection = *projection;
+    return 1;
+}
+
+int csb_v1_csbwin_viewport_build_door_frame_plan(
+    const CSB_V1_CSBWinViewportLayout022e *layout,
+    CSB_V1_CSBWinDoorPanelFamily family,
+    CSB_V1_CSBWinDoorFramePlan *out_plan)
+{
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!layout || !layout->valid ||
+        (unsigned int)family >= CSB_V1_CSBWIN_DOOR_PANEL_COUNT) return 0;
+    switch (family) {
+    case CSB_V1_CSBWIN_DOOR_PANEL_F1R1:
+        if (!append_door_frame_draw(out_plan, 6u, 0,
+                &layout->door_track_rectangles[0])) return 0;
+        break;
+    case CSB_V1_CSBWIN_DOOR_PANEL_F1:
+        if (!append_door_frame_draw(out_plan, 6u, 0,
+                &layout->door_track_rectangles[1]) ||
+            !append_door_frame_draw(out_plan, 2u, 0,
+                &layout->door_frame_rectangles[1]) ||
+            !append_door_frame_draw(out_plan, 0u, 0,
+                &layout->door_frame_rectangles[0])) return 0;
+        break;
+    case CSB_V1_CSBWIN_DOOR_PANEL_F1L1:
+        if (!append_door_frame_draw(out_plan, 6u, 0,
+                &layout->door_track_rectangles[2])) return 0;
+        break;
+    case CSB_V1_CSBWIN_DOOR_PANEL_F2R1:
+        if (!append_door_frame_draw(out_plan, 7u, 0,
+                &layout->door_track_rectangles[3])) return 0;
+        break;
+    case CSB_V1_CSBWIN_DOOR_PANEL_F2:
+        if (!append_door_frame_draw(out_plan, 7u, 0,
+                &layout->door_track_rectangles[4]) ||
+            !append_door_frame_draw(out_plan, 3u, 0,
+                &layout->door_frame_rectangles[3]) ||
+            !append_door_frame_draw(out_plan, 3u, 1,
+                &layout->door_frame_rectangles[2])) return 0;
+        break;
+    case CSB_V1_CSBWIN_DOOR_PANEL_F2L1:
+        if (!append_door_frame_draw(out_plan, 7u, 0,
+                &layout->door_track_rectangles[5])) return 0;
+        break;
+    case CSB_V1_CSBWIN_DOOR_PANEL_F3R1:
+        if (!append_door_frame_draw(out_plan, 5u, 1,
+                &layout->door_frame_rectangles[6])) return 0;
+        break;
+    case CSB_V1_CSBWIN_DOOR_PANEL_F3:
+        if (!append_door_frame_draw(out_plan, 4u, 0,
+                &layout->door_frame_rectangles[5]) ||
+            !append_door_frame_draw(out_plan, 4u, 1,
+                &layout->door_frame_rectangles[4])) return 0;
+        break;
+    case CSB_V1_CSBWIN_DOOR_PANEL_F3L1:
+        if (!append_door_frame_draw(out_plan, 5u, 0,
+                &layout->door_frame_rectangles[7])) return 0;
+        break;
+    default:
+        return 0;
+    }
+    out_plan->valid = 1;
+    return 1;
+}

@@ -351,6 +351,47 @@ static void check_viewport_wall_plan(
           CSB_V1_CSBWIN_VIEWPORT_WALL_F0R1);
 }
 
+static void check_viewport_door_plans(
+    const CSB_V1_CSBWinViewportLayout022e *layout)
+{
+    CSB_V1_CSBWinDoorFramePlan frame_plan;
+    const CSB_V1_CSBWinViewportProjectionRectangle *first;
+    const CSB_V1_CSBWinViewportProjectionRectangle *second;
+
+    CHECK(csb_v1_csbwin_viewport_door_panel_projections(
+        layout, CSB_V1_CSBWIN_DOOR_PANEL_F2, 0u, 0, &first, &second));
+    CHECK(!first && !second);
+    CHECK(csb_v1_csbwin_viewport_door_panel_projections(
+        layout, CSB_V1_CSBWIN_DOOR_PANEL_F2, 2u, 1, &first, &second));
+    CHECK(first == &layout->door_rectangles[CSB_V1_CSBWIN_DOOR_PANEL_F2][2] &&
+          !second);
+    CHECK(csb_v1_csbwin_viewport_door_panel_projections(
+        layout, CSB_V1_CSBWIN_DOOR_PANEL_F2, 2u, 0, &first, &second));
+    CHECK(first == &layout->door_rectangles[CSB_V1_CSBWIN_DOOR_PANEL_F2][5] &&
+          second == &layout->door_rectangles[CSB_V1_CSBWIN_DOOR_PANEL_F2][8]);
+    CHECK(csb_v1_csbwin_viewport_door_panel_projections(
+        layout, CSB_V1_CSBWIN_DOOR_PANEL_F3, 5u, 0, &first, &second));
+    CHECK(first == &layout->door_rectangles[CSB_V1_CSBWIN_DOOR_PANEL_F3][0] &&
+          !second);
+    CHECK(!csb_v1_csbwin_viewport_door_panel_projections(
+        layout, CSB_V1_CSBWIN_DOOR_PANEL_COUNT, 1u, 0, &first, &second));
+
+    CHECK(csb_v1_csbwin_viewport_build_door_frame_plan(
+        layout, CSB_V1_CSBWIN_DOOR_PANEL_F1, &frame_plan));
+    CHECK(frame_plan.valid && frame_plan.count == 3u &&
+          frame_plan.draws[0].bitmap_slot == 6u &&
+          frame_plan.draws[1].bitmap_slot == 2u &&
+          frame_plan.draws[2].bitmap_slot == 0u);
+    CHECK(csb_v1_csbwin_viewport_build_door_frame_plan(
+        layout, CSB_V1_CSBWIN_DOOR_PANEL_F2, &frame_plan));
+    CHECK(frame_plan.count == 3u && frame_plan.draws[0].bitmap_slot == 7u &&
+          frame_plan.draws[2].bitmap_slot == 3u && frame_plan.draws[2].mirrored);
+    CHECK(csb_v1_csbwin_viewport_build_door_frame_plan(
+        layout, CSB_V1_CSBWIN_DOOR_PANEL_F3R1, &frame_plan));
+    CHECK(frame_plan.count == 1u && frame_plan.draws[0].bitmap_slot == 5u &&
+          frame_plan.draws[0].mirrored);
+}
+
 static void check_wall_projection_blit(
     const CSB_V1_CSBWinViewportLayout022e *layout)
 {
@@ -505,6 +546,7 @@ int main(void)
               decoded_layout.rectangles[13].x2 == 33u &&
               decoded_layout.rectangles[6].source_stride == 24u);
         check_viewport_wall_plan(&decoded_layout, 2u);
+        check_viewport_door_plans(&decoded_layout);
         check_wall_projection_blit(&decoded_layout);
         viewport_layout[CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET + 4u] = 0u;
         CHECK(!csb_v1_csbwin_viewport_layout_022e_decode(

@@ -380,6 +380,12 @@ an integration build pass.
   resolves every visible CSBWin stone lane to its real six-image owner;
   F3R2 is explicitly reflected from F3L2 through the original `MakeMirror`
   step rather than read as a non-existent extra GRAPHICS.DAT record.
+  2026-07-30: `DoorRectsF1R1..DoorRectsF3L1`, `DoorTrackTopRect` and
+  `DoorFrameRect` now have source-locked command selection for every native
+  distance/side family, including `DrawDoor`'s DB0 partial-door split and
+  mirror choices. The remaining runtime task is deliberately narrower: bind
+  those commands to the original `DoorGraphic[3][2]` material owner and M11's
+  Atari viewport compositor; do not substitute PC3.4 or synthetic panels.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature

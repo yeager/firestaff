@@ -105,6 +105,36 @@ typedef struct {
         CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT];
 } CSB_V1_CSBWinViewportWallPlan;
 
+/* Data.h's nine DoorRects families, in native memory and Viewport.cpp order. */
+typedef enum {
+    CSB_V1_CSBWIN_DOOR_PANEL_F1R1 = 0,
+    CSB_V1_CSBWIN_DOOR_PANEL_F1,
+    CSB_V1_CSBWIN_DOOR_PANEL_F1L1,
+    CSB_V1_CSBWIN_DOOR_PANEL_F2R1,
+    CSB_V1_CSBWIN_DOOR_PANEL_F2,
+    CSB_V1_CSBWIN_DOOR_PANEL_F2L1,
+    CSB_V1_CSBWIN_DOOR_PANEL_F3R1,
+    CSB_V1_CSBWIN_DOOR_PANEL_F3,
+    CSB_V1_CSBWIN_DOOR_PANEL_F3L1,
+    CSB_V1_CSBWIN_DOOR_PANEL_COUNT
+} CSB_V1_CSBWinDoorPanelFamily;
+
+typedef struct {
+    uint8_t bitmap_slot;
+    int mirrored;
+    CSB_V1_CSBWinViewportProjectionRectangle projection;
+} CSB_V1_CSBWinDoorFrameDraw;
+
+/* Source-owned static track/frame composition. bitmap_slot is pDoorBitmaps'
+ * index (0 is the native mirror of 2; 1..7 are the seven source records in
+ * CSBCode.cpp:2933-2940), so callers still resolve all pixels from
+ * the original wall-set record rather than inventing a texture. */
+typedef struct {
+    int valid;
+    size_t count;
+    CSB_V1_CSBWinDoorFrameDraw draws[3];
+} CSB_V1_CSBWinDoorFramePlan;
+
 int csb_v1_csbwin_floor_ceiling_graphic_index(uint16_t floor_set,
                                                int ceiling,
                                                uint16_t *out_graphic_index);
@@ -144,6 +174,23 @@ int csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(
 int csb_v1_csbwin_viewport_build_wall_plan(
     uint16_t wall_set, const CSB_V1_CSBWinViewportLayout022e *layout,
     CSB_V1_CSBWinViewportWallPlan *out_plan);
+
+/* CSBCode.cpp:4199-4235's exact DrawDoor panel selection. A closed door
+ * (state 0) produces no panel. State 4/5 uses rect 0; partial states use
+ * rect[state] for animated DB0 doors, otherwise the native split pairs. */
+int csb_v1_csbwin_viewport_door_panel_projections(
+    const CSB_V1_CSBWinViewportLayout022e *layout,
+    CSB_V1_CSBWinDoorPanelFamily family, uint8_t door_state,
+    int db0_mode, const CSB_V1_CSBWinViewportProjectionRectangle **out_first,
+    const CSB_V1_CSBWinViewportProjectionRectangle **out_second);
+
+/* Viewport.cpp:2281-2289, 2378-2404. Builds the static track/frame commands
+ * that surround a door panel at its native lane. F3L1/F3R1 only carry their
+ * side frame; F1/F2 lateral lanes only carry tracks. */
+int csb_v1_csbwin_viewport_build_door_frame_plan(
+    const CSB_V1_CSBWinViewportLayout022e *layout,
+    CSB_V1_CSBWinDoorPanelFamily family,
+    CSB_V1_CSBWinDoorFramePlan *out_plan);
 
 /* TAG0088b2 accepts inclusive screen coordinates and a packed source row
  * stride. CSBWin's F0 local-cell rectangle is the deliberate no-source
