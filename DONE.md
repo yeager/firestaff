@@ -44462,3 +44462,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   no-op placeholder marker and stale placeholder wording from the built V1
   viewport path. Wall and door stages are described and verified as direct
   source-GDAT material routes.
+- ✅ 2026-07-30 DM2 PC-G1 creature material census: corrected the real-data
+  viewport proof to match the hash-verified PC corpus. Its 33 direct creature
+  roots expose no complete FB/FC/FD V5 chain, so all remain fail-closed rather
+  than being promoted through map-chip or invented material; 38/38 checks pass.

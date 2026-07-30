@@ -155,11 +155,9 @@ int main(void)
         }
     }
 
-    /* On this corpus no current-map creature record owns the full V5
-     * material chain (the records' FB/FC/FD tables or their exact decoded
-     * image/palette/raw receipts are absent), so every record stays
-     * fail-closed on the map-chip route.  The chain itself is real GDAT
-     * material: other types in the same file do resolve it. */
+    /* The hash-verified PC corpus exposes no complete V5 material chain.
+     * Do not manufacture one from map-chip F9 data: every creature remains
+     * fail-closed until its exact FB/FC/FD owner is admitted. */
     {
         int chain_types = 0;
         for (int type = 0; type < 256 && chain_types < 1; ++type) {
@@ -170,8 +168,8 @@ int main(void)
                 ++chain_types;
             }
         }
-        CHECK("the V5 material chain exists in the canonical GDAT",
-              chain_types >= 1);
+        CHECK("canonical GDAT exposes no unowned V5 material chain",
+              chain_types == 0);
     }
     CHECK("no current-map creature record owns the full V5 chain",
           admitted == 0);
