@@ -43783,6 +43783,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_scale_boundary_sourc
     if(NOT MSVC)
         target_compile_options(test_m11_input_scale_boundary_source_to_screen_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
+    target_link_libraries(test_m11_input_scale_boundary_source_to_screen_pc34_compat
+        PRIVATE SDL3::SDL3)
     add_test(
         NAME m11_input_scale_boundary_source_to_screen_pc34_compat
         COMMAND test_m11_input_scale_boundary_source_to_screen_pc34_compat

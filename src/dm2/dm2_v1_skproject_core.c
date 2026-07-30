@@ -11957,10 +11957,12 @@ int dm2_v1_skproject_query_cls1_from_record_ex(
             return 0;
         }
         {
-            int thing_type = 0;
-            int thing_size = 0;
-            const uint8_t *rec = dm2_v1_dungeon_get_thing_record(
-                pools, rw, &thing_type, NULL, &thing_size);
+            int pool = dm2_v1_record_handle_pool((int16_t)rw);
+            int thing_size = pool >= 0 && pool < DM2_V1_RECORD_POOL_COUNT
+                ? pools->pools[pool].record_size
+                : 0;
+            const uint8_t *rec = dm2_v1_record_pool_address(
+                pools, (int16_t)rw);
             if (!rec || thing_size < 4) {
                 receipt.blocked_type_14_no_pool = 1;
                 receipt.cls1 = 0xff;
