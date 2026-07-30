@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 original PC34 save corpus: configured F0435/F0433
+  round-trip verification now prioritizes the provenance-attested
+  `saves/dm1/original-pc34` corpus. The real DOSBox `DMSAVE.DAT` completes
+  import, core-state preservation and re-import; an ordinary un-attested
+  duplicate no longer rejects the configured corpus.
+
 - ✅ 2026-07-30 DM1 spell-panel runtime probe: the C009/C011 pixel probe now
   enters through the real C100/F0394 caster-selection and rune route, rather
   than forcing an incomplete host state. It separately validates G0000's

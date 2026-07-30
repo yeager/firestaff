@@ -579,6 +579,12 @@ int dm1_v1_original_save_resolve_configured_corpus_root(
                      "%s%c.firestaff%csaves%cdm1", home,
                      DM1OS_PATH_SEP, DM1OS_PATH_SEP, DM1OS_PATH_SEP);
         if (n <= 0 || (size_t)n >= sizeof(default_root) ||
+            /* A provenance-attested original corpus belongs in this
+             * dedicated child. Prefer it over ordinary Firestaff saves,
+             * which may legitimately contain an un-attested copy of the
+             * same PC34 bytes. */
+            !append_configured_root_child(roots, &root_count, default_root,
+                                          "original-pc34") ||
             !append_configured_root(roots, &root_count, default_root)) {
             return 0;
         }

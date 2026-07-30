@@ -2124,10 +2124,11 @@ that its exact runtime path is not already source-locked and tested.
     save, HUD, dungeon, scene, input, AI, audio, and transition routes into a
     complete real-data play session with fail-closed unsupported content.
 
-- **DM1 original PC3.4 save corpus:** obtain and admit an authentic
-  `DMSAVE.DAT` from the original PC 3.4 engine. The current F0417/F0418
-  remaining-word key schedule follows the documented DMWeb pseudocode, but
-  still needs a real-file round trip before it can be marked source-locked.
+- **DM1 original PC3.4 save corpus:** Closed 2026-07-30. The DOSBox-created
+  original PC 3.4 `DMSAVE.DAT` is provenance-attested and passes the real
+  F0435 -> F0433 -> F0435 core-state round trip. Configured discovery now
+  prioritizes `saves/dm1/original-pc34` over ordinary Firestaff saves, so an
+  un-attested duplicate cannot invalidate the verified corpus.
 
 `F2606-F2685` has been removed from the CSB queue: those symbols do not
 exist in the ReDMCSB inventory, whose callable F range ends at F2104. Do not
