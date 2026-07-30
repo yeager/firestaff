@@ -209,6 +209,14 @@ an integration build pass.
   is a regression receipt for the implemented paths only; unreconciled
   F0128 material families and the CSBWin spell owner remain open.
 
+- **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
+  F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature
+  surfaces now enter M11 only through CSB PC3.4's own GRAPHICS.DAT
+  IMG3/LZW decoder. The source-package-scoped cache remembers both accepted
+  and rejected records, so a malformed or absent record fails closed without
+  falling back to the generic DM1 cache or reopening the archive every frame.
+  Verification: `test_csb_v1_viewport_phase3_rendering` PASS.
+
 - **CSB-V21-LIVE-UPSCALE-CONSUMPTION:** Closed 2026-07-29. The F10 CSB
   filter page now exposes the actual CSB V2.1 EPX scale (1x/2x/4x) and
   bilinear setting alongside the CSB filter chain. M11 consumes the

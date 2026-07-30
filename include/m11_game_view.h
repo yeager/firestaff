@@ -1459,6 +1459,14 @@ typedef struct {
      * the shared asset cache.  Dimensions alone cannot distinguish a stale
      * generic DM1 decode from CSB's verified PC3.4 pixels. */
     uint32_t csbRuntimeHudMaterialPackageIdentity;
+    /* Dynamic F0114/F0115 surfaces use the CSB PC3.4 decoder too.  Keep a
+     * compact package-scoped ownership map so presentation never repeatedly
+     * re-decodes the same source graphic on every frame. */
+    uint32_t csbRuntimeSourceGraphicsPackageIdentity;
+    uint64_t csbRuntimeSourceGraphicsBound[
+        (M11_ASSET_CACHE_SLOTS + 63u) / 64u];
+    uint64_t csbRuntimeSourceGraphicsRejected[
+        (M11_ASSET_CACHE_SLOTS + 63u) / 64u];
     int csbStartupF0128EntranceBound;
     uint32_t csbStartupF0128EntranceSourceTick;
     uint32_t csbStartupF0128EntranceSessionGeneration;

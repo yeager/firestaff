@@ -43307,3 +43307,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `csb_v1_dsa_copy_runtime_handoff`; `I_CAST` and `I_FILTEREDCAST` remain
   intentionally fail-closed because their CSBWin indirect parameter corpus
   lacks the fourteenth `SPELL_PARAMETERS` word.
+
+- ✅ 2026-07-30 CSB dynamic runtime sprite decoder ownership: projectile,
+  explosion, item, D0-pattern and creature draws now install CSB PC3.4
+  GRAPHICS.DAT records via the CSB IMG3/LZW decoder before M11 consumes them.
+  The cache is package-scoped and records rejected entries, preventing generic
+  DM1 cache fallbacks and repeated decode attempts. Verification:
+  `test_csb_v1_viewport_phase3_rendering` PASS.

@@ -1981,6 +1981,75 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
     return 1;
 }
 
+/* The shared M11 loader understands the common PC34 container, but CSB's
+ * GRAPHICS.DAT has its own IMG3/LZW ownership.  Runtime F0115/F0114 sprites
+ * must therefore enter the cache through the same CSB decoder as the boot,
+ * HUD and viewport surfaces.  A failed source decode deliberately leaves the
+ * sprite absent; it must not fall back to a DM1-decoded cache entry. */
+static int m11_csb_install_runtime_source_graphic(
+    const M11_GameViewState *state, unsigned int graphic_index)
+{
+    M11_GameViewState *mutable_state = (M11_GameViewState *)state;
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+    uint32_t package_identity;
+    unsigned int word_index;
+    uint64_t graphic_mask;
+    unsigned char *pixels = NULL;
+    int width = 0;
+    int height = 0;
+    int installed = 0;
+
+    if (!state || graphic_index >= M11_ASSET_CACHE_SLOTS ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->assetsAvailable || !state->csbBootProfile ||
+        !((const CSB_V1_BootProfile *)state->csbBootProfile)->graphics_verified ||
+        !((const CSB_V1_BootProfile *)state->csbBootProfile)->graphics_path[0]) {
+        return 0;
+    }
+    package_identity = state->csbStartupExpectedPackageIdentity;
+    if (package_identity == 0u) return 0;
+    if (mutable_state->csbRuntimeSourceGraphicsPackageIdentity !=
+        package_identity) {
+        memset(mutable_state->csbRuntimeSourceGraphicsBound, 0,
+               sizeof(mutable_state->csbRuntimeSourceGraphicsBound));
+        memset(mutable_state->csbRuntimeSourceGraphicsRejected, 0,
+               sizeof(mutable_state->csbRuntimeSourceGraphicsRejected));
+        mutable_state->csbRuntimeSourceGraphicsPackageIdentity =
+            package_identity;
+    }
+    word_index = graphic_index / 64u;
+    graphic_mask = UINT64_C(1) << (graphic_index % 64u);
+    if (mutable_state->csbRuntimeSourceGraphicsBound[word_index] &
+        graphic_mask) {
+        return 1;
+    }
+    if (mutable_state->csbRuntimeSourceGraphicsRejected[word_index] &
+        graphic_mask) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (csb_v1_boot_decode_graphics_dat_asset_pc34(
+            ((const CSB_V1_BootProfile *)state->csbBootProfile)->graphics_path,
+            graphic_index, &pixels, &width, &height, &receipt) && receipt.valid &&
+        width > 0 && height > 0 && width <= 65535 && height <= 65535) {
+        installed = M11_AssetLoader_InstallDecodedPixels(
+            &mutable_state->assetLoader, graphic_index, pixels,
+            (unsigned short)width, (unsigned short)height);
+    }
+    free(pixels);
+    if (installed) {
+        mutable_state->csbRuntimeSourceGraphicsBound[word_index] |=
+            graphic_mask;
+    } else {
+        /* The package is immutable for a running session.  Remember an
+         * absent or invalid source graphic as well, otherwise a live frame
+         * would repeatedly reopen GRAPHICS.DAT for the same fail-closed draw. */
+        mutable_state->csbRuntimeSourceGraphicsRejected[word_index] |=
+            graphic_mask;
+    }
+    return installed;
+}
+
 static int m11_render_csb_boot_viewport(M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
@@ -24995,6 +25064,10 @@ static int m11_draw_projectile_sprite_ex(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable || gfxIndex < 454 ||
         gfxIndex >= 486) return 0;
     (void)relativeDir;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(state, (unsigned int)gfxIndex)) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, (unsigned int)gfxIndex);
     /* F0115 may scale only a decoded M613 projectile surface. A cache entry
      * with dimensions but no pixel payload is not source material. */
@@ -25387,6 +25460,10 @@ static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
     int effectiveTransparentColor;
     if (!state || !state->assetsAvailable) return 0;
     if (aspect < 0 || gfxIndex < 0) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(state, (unsigned int)gfxIndex)) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)gfxIndex);
     /* F0114 may scale only a decoded PC34 explosion surface. A cache entry
@@ -25512,6 +25589,11 @@ static int m11_draw_d0c_explosion_pattern(const M11_GameViewState* state,
     graphicIndex = dm1_v1_explosion_pattern_graphic_index(explosionType,
                                                             attack);
     if (graphicIndex < DM1_GFX_FIRST_EXPLOSION_PATTERN) {
+        return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(state,
+                                                (unsigned int)graphicIndex)) {
         return 0;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
@@ -31591,6 +31673,11 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
         : dm1_item_sprite_index(thingType, subtype);
     if (gfxIdx == 0 || gfxIdx >= M11_GFX_ITEM_SPRITE_END) return 0;
 
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(state, gfxIdx)) {
+        return 0;
+    }
+
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     /* F0115 floor-object material must be a decoded PC34 source surface,
      * not a dimension-only cache placeholder. */
@@ -32220,6 +32307,10 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
 
     if (!dm1_creature_palette_for_depth(creatureType, depthIndex, palette)) return 0;
 
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(state, spriteIdx)) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
     /* F0115 draws the C584+ bitmap selected by G0221/G0222. A cached
      * dimension record or a pane-relative side hint is not source material. */
@@ -32327,6 +32418,10 @@ static int m11_draw_creature_sprite_source_anchored(
         return 0;
     }
     transparentColor = dm1_creature_transparent_color(creatureType);
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(state, spriteIdx)) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
     if (!slot || !slot->loaded || !slot->pixels ||
         slot->width == 0 || slot->height == 0) {
