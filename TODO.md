@@ -1164,8 +1164,9 @@ that its exact runtime path is not already source-locked and tested.
    54/54 real-data checks pass (2026-07-30).
    2026-07-30: the C232 plan now has an atomic indexed 320x200 compositor.
    It resolves every one of those ten entries from the active original
-   GRAPHICS.DAT source, copies only the rectangle CSBWin defines, and leaves
-   the caller's frame unchanged if any source image is absent, malformed or
+   GRAPHICS.DAT source, overlays only the rectangle CSBWin defines without
+   erasing the dungeon frame, and leaves the caller's frame unchanged if any
+   source image is absent, malformed or
    too small. The focused test uses the real Atari decoder and source bytes,
    not a PC3.4 C017/C040 replacement. M11 still needs to consume this
    source-owned panel layer with the corresponding CSBWin dungeon owner.

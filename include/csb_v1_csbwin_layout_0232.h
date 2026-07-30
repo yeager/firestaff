@@ -107,9 +107,10 @@ int csb_v1_csbwin_layout_0232_build_hud_material_plan(
     const CSB_V1_CSBWinLayout0232 *layout,
     CSB_V1_CSBWinHudMaterialPlan0232 *out_plan);
 
-/* Atomically compose C232's original indexed HUD materials into a 320x200
- * logical frame.  Every one of the ten original records must resolve with
- * sufficient source pixels; otherwise output and receipt remain invalid.
+/* Atomically overlay C232's original indexed HUD materials onto a 320x200
+ * logical frame. Every one of the ten original records must resolve with
+ * sufficient source pixels; otherwise the caller's frame and receipt remain
+ * unchanged/invalid.
  * This is intentionally only the C232 source-owned panel layer.  Dungeon,
  * party-state and DSA execution retain their independent CSBWin owners. */
 int csb_v1_csbwin_layout_0232_compose_hud(

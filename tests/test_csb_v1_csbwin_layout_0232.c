@@ -139,7 +139,7 @@ static void check_hud_composition(const CSB_V1_CSBWinHudMaterialPlan0232 *plan)
           receipt.source_hash != 0u && receipt.composed_hash != 0u);
     CHECK(frame[30u * 320u + 10u] == 28u + 0x20u);
     CHECK(frame[160u * 320u + 216u] == 9u + 0x20u);
-    CHECK(frame[0] == 0u);
+    CHECK(frame[0] == 0xa5u);
 
     memcpy(unchanged, frame, sizeof(frame));
     source.deny_graphic = 13;

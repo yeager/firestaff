@@ -244,7 +244,7 @@ int csb_v1_csbwin_layout_0232_compose_hud(
         !resolver || !out_pixels || out_size < sizeof(candidate)) {
         return 0;
     }
-    memset(candidate, 0, sizeof(candidate));
+    memcpy(candidate, out_pixels, sizeof(candidate));
     for (index = 0; index < plan->count; ++index) {
         const CSB_V1_CSBWinHudMaterial0232 *entry = &plan->entries[index];
         const uint8_t *source = NULL;
