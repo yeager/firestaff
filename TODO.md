@@ -302,10 +302,11 @@ diagnostic; it must not silently fall back to a generated visual.
 - **CSB-V22-SOURCE-PALETTE-COMPOSITION:** Closed 2026-07-30. CSB V2.2
   F0128 replacements now quantize RGBA art through the active source-owned
   PC3.4 indexed palette, supplied by M11 after it selects the current
-  ReDMCSB dungeon brightness row. The old generic EGA-cube conversion remains
-  only as a data-free fallback; live CSB door swaps preserve the original
-  palette family. The focused regression proves an exact palette-index match,
-  and the complete 113-test CSB lane passes. This does not admit the remaining
+  ReDMCSB dungeon brightness row. There is no data-free palette fallback:
+  commands without an active source palette remain untouched. Live CSB door
+  swaps preserve the original palette family. The focused regression proves an
+  exact palette-index match, and the complete 113-test CSB lane passes. This
+  does not admit the remaining
   unbound wall, floor, ceiling, thing or field material families.
 
 - **CSB-V1-STARTUP-SOURCE-CADENCE:** Closed 2026-07-30. M11 no longer
