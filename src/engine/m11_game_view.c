@@ -14613,8 +14613,13 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                         state->world.things, textIndex,
                         DUNGEON_TEXT_TYPE_MESSAGE, decoded,
                         (int)sizeof(decoded)) > 0) {
-                    M11_MessageLog_Push(&state->messageLog, decoded,
-                                        M11_COLOR_WHITE);
+                    /* TEXT.C F0047 owns C015. Keep decoded source text in
+                     * its source state, not in M11's diagnostic log. */
+                    dm1_v1_text_set_game_time(
+                        &state->dm1V1TextMessage,
+                        (long)state->world.gameTick);
+                    dm1_v1_text_print_message(&state->dm1V1TextMessage,
+                                              DM1_V1_COLOR_WHITE, decoded);
                 }
                 break;
             }
@@ -14772,6 +14777,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     m11_dm1_c13_visible_runtime_handoff_clear(state);
     memset(state, 0, sizeof(*state));
     dm1_spell_init(&state->dm1SpellCasting);
+    dm1_v1_text_init(&state->dm1V1TextMessage);
     firestaff_ra_overlay_init(&state->retroAchievementsOverlay);
     (void)M11_Audio_Init(&state->audioState);
     if (state->audioState.originalSongAvailable &&
@@ -49669,6 +49675,29 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
      * surface.  CSB has its own source-bound receipt consumer below; DM1
      * deliberately stays blank until its decoded TEXT.C state is connected. */
     if (m11_is_dm1_source_kind(state->sourceKind)) {
+        int sourceRow;
+        if (!g_activeOriginalFont || !M11_Font_IsLoaded(g_activeOriginalFont)) {
+            return;
+        }
+        for (sourceRow = 0;
+             sourceRow < DM1_V1_MESSAGE_AREA_ROW_COUNT;
+             ++sourceRow) {
+            const DM1_V1_MessageRow* row = dm1_v1_text_get_row(
+                &state->dm1V1TextMessage, sourceRow);
+            if (!row || row->text[0] == '\0') {
+                continue;
+            }
+            M11_Font_DrawString(g_activeOriginalFont,
+                                framebuffer,
+                                framebufferWidth,
+                                framebufferHeight,
+                                messageX,
+                                messageY + sourceRow * DM1_V1_TEXT_LINE_HEIGHT,
+                                row->text,
+                                (unsigned char)row->color,
+                                -1,
+                                1);
+        }
         return;
     }
 
@@ -51810,6 +51839,11 @@ void M11_GameView_TickAnimation(M11_GameViewState* state) {
     { int ci; for (ci = 0; ci < 4; ++ci) {
         if (state->championDamageTimer[ci] > 0) state->championDamageTimer[ci]--;
     }}
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        dm1_v1_text_set_game_time(&state->dm1V1TextMessage,
+                                  (long)state->world.gameTick);
+        dm1_v1_text_clear_expired_rows(&state->dm1V1TextMessage);
+    }
 }
 
 void M11_GameView_NotifyDamageFlash(M11_GameViewState* state,

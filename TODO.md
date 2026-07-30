@@ -751,8 +751,9 @@ diagnostic; it must not silently fall back to a generated visual.
 - **DM1-HOC-SYNTHETIC-HELP-STRIP:** Reopened 2026-07-30. The direct-start
   receipt no longer seeds the Firestaff-only `READY: CLICK CENTER ...` text,
   but the generic M11 log renderer could still put host `READY`/`INSPECT`
-  scaffolding into C015. DM1 now clears C015 and rejects that log; connect
-  decoded ReDMCSB TEXT.C row state before any DM1 text is rendered there.
+  scaffolding into C015. Closed 2026-07-30: M11 now rejects that log and
+  renders only decoded TEXT.C F0047 rows using the source font. Remaining
+  inscription/scroll panels stay owned by their separate F0341/F0342 routes.
 
 - **DM1-C140-SAVE-ROUTE:** Closed 2026-07-27. The visible inventory SAVE
   control's actual C140 click hotspot writes a native DM1 save that M11

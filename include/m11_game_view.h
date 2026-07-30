@@ -20,6 +20,7 @@
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_light_runtime.h"
 #include "dm1_v1_vblank_timing.h"
+#include "dm1_v1_text_message_pc34_compat.h"
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_movement_pipeline_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
@@ -811,6 +812,9 @@ typedef struct {
     /* ReDMCSB CHAMPION.C F0316/F0317/F0331 source state for Thieves Eye. */
     DM1_V1_NeedsScentListPc34Compat championScents;
     M11_MessageLog messageLog;
+    /* TEXT.C F0042-F0054 state for source-owned C015 text. This remains
+     * separate from the host-side diagnostic message log. */
+    DM1_V1_TextMessageState dm1V1TextMessage;
     int resting;
     int partyDead;
     unsigned char championDeathHandledMask;

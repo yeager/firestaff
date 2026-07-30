@@ -43858,11 +43858,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ DM1's C015 message area no longer renders the generic M11 event log.
   That log contains host status and inspection scaffolding rather than
   ReDMCSB TEXT.C-owned message rows, so rendering it produced the visible
-  `READY`/`INSPECT` help text in Hall of Champions. The DM1 surface is now
-  cleared and fails closed until decoded TEXT.C row state is consumed; CSB's
-  separate source-bound message receipt remains unchanged. The launcher
-  handoff regression injects a `READY` host-log entry and proves C015 remains
-  black in V1, V2.0, V2.1 and V2.2.
+  `READY`/`INSPECT` help text in Hall of Champions. The DM1 surface now
+  consumes only decoded TEXT.C F0047 rows through the existing source model,
+  with its original wrapping, expiry and font; CSB's separate source-bound
+  message receipt remains unchanged. The launcher handoff regression injects
+  a `READY` host-log entry and proves C015 remains black in V1, V2.0, V2.1
+  and V2.2 when no source row exists.
 
 - ✅ Data-directory selection now preserves the normalised path the player
   selected while scanning through its canonical physical path. This prevents
