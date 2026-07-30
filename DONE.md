@@ -39,6 +39,13 @@
   side-by-side routing and modern-resolution composition. This is automated
   coverage only; the separate original Mac/capture TODO items remain open.
 
+- ✅ 2026-07-30 DM1 V2.2 reviewed-material fixture: the in-place renderer
+  probe now supplies all seven entries in the finished-art manifest order and
+  asserts that only reviewed original-backed art replaces V1 pixels. It rejects
+  stale first-cut ids, preserves V1 stairs without a reviewed replacement, and
+  validates the teleporter route. The focused Ninja-built V2.x lane passes
+  87/87.
+
 - ✅ 2026-07-30 DM1 PC3.4 decoded dungeon write-back: F0433 keeps the
   original dungeon tail byte-exact, patches only changed admitted Thing rows,
   square-first-thing/text state and raw map squares, then recalculates the
