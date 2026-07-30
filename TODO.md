@@ -233,7 +233,12 @@ an integration build pass.
   charges that source table before appending a rune and mirrors the mana write
   into the save-visible CSB party state. Full `CastMagic`/`CastSpell`, DSA
   filter traversal and effects remain a separate CSBWin runtime owner; they
-  must not fall through into DM1.
+  must not fall through into DM1. 2026-07-30: the same decoded source block
+  now also exposes the exact 25-entry CSBWin `SPELL` table at `0x404`:
+  source rune identity, skill requirement, skill kind and descriptor are
+  decoded without a DM1 spell table. This is the required data owner for the
+  later CastMagic transaction; effect classes remain closed until their
+  character/object/timer/save side effects are implemented together.
   2026-07-30 hardening: the obsolete V2.2 3x3 rectangle painters now return
   without touching the framebuffer. They had no F0128 command receipts and
   therefore cannot consume wall, floor, creature, ornament or Thing assets.

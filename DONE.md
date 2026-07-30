@@ -43522,3 +43522,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   are invalidated when the active level changes set. Verification:
   `csb_v1_dungeon_loader_pc34_compat` passes 16/16, including nonzero
   FloorSet/WallSet/DoorSet decoding.
+- ✅ 2026-07-30 CSBWin source spell-table binding: the decoded PC3.4
+  `GRAPHICS.DAT` graphic `0x230` now yields CSBWin's 25 original `SPELL`
+  records at offset `0x404`, retaining its rune ID, required skill, skill kind
+  and descriptor. Lookup follows `Magic.cpp::Incantation2Spell`'s source
+  packing, so future CSB casts cannot borrow DM1 definitions. Verification:
+  `csb_v1_magic_rune_cost_pc34_compat` passes source-table decode, lookup and
+  descriptor checks; the full CSB lane remains green.

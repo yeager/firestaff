@@ -13,6 +13,17 @@ static uint32_t fnv1a32(const uint8_t *bytes, size_t size)
     return value;
 }
 
+static uint32_t read_u32be(const uint8_t *bytes)
+{
+    return ((uint32_t)bytes[0] << 24) | ((uint32_t)bytes[1] << 16) |
+           ((uint32_t)bytes[2] << 8) | (uint32_t)bytes[3];
+}
+
+static uint16_t read_u16be(const uint8_t *bytes)
+{
+    return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
+}
+
 int csb_v1_magic_rune_cost_table_from_decoded_graphic_pc34(
     const uint8_t *decoded_graphic, size_t decoded_size,
     CSB_V1_MagicRuneCostTablePc34 *out_table)
@@ -66,6 +77,91 @@ int csb_v1_magic_rune_cost_table_from_cache_pc34(
     }
     return csb_v1_magic_rune_cost_table_from_decoded_graphic_pc34(
         payload, written, out_table);
+}
+
+int csb_v1_magic_spell_table_from_decoded_graphic_pc34(
+    const uint8_t *decoded_graphic, size_t decoded_size,
+    CSB_V1_MagicSpellTablePc34 *out_table)
+{
+    CSB_V1_MagicSpellTablePc34 table;
+    size_t i;
+
+    if (out_table) memset(out_table, 0, sizeof(*out_table));
+    if (!decoded_graphic || !out_table ||
+        decoded_size != CSB_V1_MAGIC_RUNE_TABLE_DECODED_SIZE_PC34 ||
+        CSB_V1_MAGIC_SPELL_TABLE_OFFSET_PC34 +
+                CSB_V1_MAGIC_SPELL_COUNT_PC34 *
+                    CSB_V1_MAGIC_SPELL_RECORD_SIZE_PC34 > decoded_size) {
+        return 0;
+    }
+    memset(&table, 0, sizeof(table));
+    for (i = 0u; i < CSB_V1_MAGIC_SPELL_COUNT_PC34; ++i) {
+        const uint8_t *record = decoded_graphic +
+            CSB_V1_MAGIC_SPELL_TABLE_OFFSET_PC34 +
+            i * CSB_V1_MAGIC_SPELL_RECORD_SIZE_PC34;
+        table.spells[i].spell_id = read_u32be(record);
+        table.spells[i].skill_required = record[4];
+        table.spells[i].skill_kind = record[5];
+        table.spells[i].descriptor = read_u16be(record + 6);
+        /* Every CSBWin source entry has an incantation and a class. */
+        if (table.spells[i].spell_id == 0u ||
+            (table.spells[i].descriptor & 0x0fu) == 0u) return 0;
+    }
+    table.decoded_payload_fnv1a = fnv1a32(decoded_graphic, decoded_size);
+    if (table.decoded_payload_fnv1a == 0u) return 0;
+    table.valid = 1;
+    *out_table = table;
+    return 1;
+}
+
+int csb_v1_magic_spell_table_from_cache_pc34(
+    const CSB_V1_CSBGraphicsDatRealCache *cache,
+    CSB_V1_MagicSpellTablePc34 *out_table)
+{
+    uint8_t payload[CSB_V1_MAGIC_RUNE_TABLE_DECODED_SIZE_PC34];
+    CSB_V1_CSBGraphicsEntrySpan span;
+    size_t written = 0u;
+    int rc;
+
+    if (out_table) memset(out_table, 0, sizeof(*out_table));
+    if (!cache || !cache->loaded || !cache->file_buffer || !out_table) return 0;
+    rc = csb_v1_csbgraphics_dat_entry_span(
+        cache->file_buffer, cache->file_size,
+        CSB_V1_MAGIC_RUNE_TABLE_GRAPHICS_ENTRY_PC34, &span);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK ||
+        span.decompressed_size != sizeof(payload)) return 0;
+    rc = csb_v1_csbgraphics_dat_decode_entry(
+        cache->file_buffer, cache->file_size,
+        CSB_V1_MAGIC_RUNE_TABLE_GRAPHICS_ENTRY_PC34,
+        payload, sizeof(payload), &written);
+    if (rc != CSB_V1_CSBGRAPHICS_CLASSIFY_OK || written != sizeof(payload)) {
+        return 0;
+    }
+    return csb_v1_magic_spell_table_from_decoded_graphic_pc34(
+        payload, written, out_table);
+}
+
+const CSB_V1_MagicSpellPc34 *csb_v1_magic_spell_lookup_pc34(
+    const CSB_V1_MagicSpellTablePc34 *table, const uint8_t runes[4])
+{
+    uint32_t packed = 0u;
+    size_t i;
+    size_t rune;
+
+    if (!table || !table->valid || !runes || runes[1] == 0u) return NULL;
+    for (rune = 0u; rune < 4u && runes[rune] != 0u; ++rune) {
+        /* Data.h's spelling is deliberately source-shaped: 4-4 is
+         * 0x00696f00, rather than a host byte-order-dependent integer. */
+        packed |= (uint32_t)runes[rune] <<
+            (rune < 3u ? 16u - (uint32_t)rune * 8u : 24u);
+    }
+    for (i = 0u; i < CSB_V1_MAGIC_SPELL_COUNT_PC34; ++i) {
+        const CSB_V1_MagicSpellPc34 *spell = &table->spells[i];
+        if (spell->spell_id == packed) {
+            return spell;
+        }
+    }
+    return NULL;
 }
 
 int csb_v1_magic_rune_cost_compute_pc34(
