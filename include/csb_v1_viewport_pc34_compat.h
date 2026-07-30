@@ -408,6 +408,9 @@ typedef struct {
     /* Active map G0693/G0694 record admitted by the checked byte handoff.
      * Zero means that this command has no source-index receipt. */
     int source_graphics_item_index;
+    /* SHA-256 of the exact compressed GRAPHICS.DAT catalog record.  V2.2
+     * compares this with the artpack provenance before replacing V1 pixels. */
+    char source_record_sha256[65];
     const uint8_t *decoded_palette;
     size_t decoded_palette_size;
     int view_depth;

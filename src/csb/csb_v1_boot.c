@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "firestaff_x68k_media_receipt.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
 
 #include "asset_find_by_hash.h"
@@ -1549,7 +1550,9 @@ static int csb_v1_boot_graphics_catalog_item_hash(const char *path,
                                                     size_t *out_size,
                                                     uint32_t *out_hash,
                                                     unsigned *out_count,
-                                                    uint32_t *out_catalog_hash)
+                                                    uint32_t *out_catalog_hash,
+                                                    char *out_sha256,
+                                                    size_t out_sha256_size)
 {
     FILE *fp;
     uint8_t header[4];
@@ -1558,7 +1561,9 @@ static int csb_v1_boot_graphics_catalog_item_hash(const char *path,
     unsigned count, i;
     size_t table_bytes, offset, size;
     int ok = 0;
-    if (!path || !out_size || !out_hash || !out_count || !out_catalog_hash) return 0;
+    if (!path || !out_size || !out_hash || !out_count || !out_catalog_hash ||
+        !out_sha256 || out_sha256_size < 65u) return 0;
+    out_sha256[0] = '\0';
     fp = fopen(path, "rb");
     if (!fp || fread(header, 1u, sizeof(header), fp) != sizeof(header) ||
         csb_v1_boot_read_be16(header) != 0x8001u) goto done;
@@ -1580,7 +1585,9 @@ static int csb_v1_boot_graphics_catalog_item_hash(const char *path,
     *out_hash = csb_v1_boot_fnv1a(payload, size);
     *out_count = count;
     *out_catalog_hash = csb_v1_boot_fnv1a(table, table_bytes + sizeof(header));
-    ok = *out_hash != 0u && *out_catalog_hash != 0u;
+    ok = *out_hash != 0u && *out_catalog_hash != 0u &&
+        firestaff_x68k_media_receipt_sha256_hex(payload, size, out_sha256,
+                                                out_sha256_size) == 0;
 done:
     free(payload); free(table); if (fp) fclose(fp);
     return ok;
@@ -1593,6 +1600,7 @@ int csb_v1_boot_build_v22_f0128_draw_plan_pc34(
     CSB_V1_ViewportFirstFrameMaterialProof proof;
     CSB_V1_ViewportD3L2D3R2F0111DoorRealAssetReceiptPc34 d3;
     size_t sizes[6]; uint32_t hashes[6], catalog_hash; unsigned count, i;
+    char record_sha256[6][65];
     unsigned items[6];
     int door_set;
     if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
@@ -1616,7 +1624,8 @@ int csb_v1_boot_build_v22_f0128_draw_plan_pc34(
     for (i = 0u; i < 6u; ++i) {
         if (!csb_v1_boot_graphics_catalog_item_hash(profile->graphics_path, items[i],
                                                      &sizes[i], &hashes[i], &count,
-                                                     &catalog_hash)) return 0;
+                                                     &catalog_hash, record_sha256[i],
+                                                     sizeof(record_sha256[i]))) return 0;
     }
     memset(&proof, 0, sizeof(proof));
     proof.valid = proof.source_graphics_dat_bound = proof.no_synthetic_pixels =
@@ -1645,12 +1654,18 @@ int csb_v1_boot_build_v22_f0128_draw_plan_pc34(
     for (i = 0u; i < (unsigned)out_plan->command_count; ++i) {
         CSB_V1_ViewportRuntimeDrawCommandPc34 *command = &out_plan->commands[i];
         if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34)
-            command->source_graphics_item_index = (int)items[2];
+            command->source_graphics_item_index = (int)items[2],
+            snprintf(command->source_record_sha256,
+                     sizeof(command->source_record_sha256), "%s", record_sha256[2]);
         else if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34)
-            command->source_graphics_item_index = (int)items[3];
+            command->source_graphics_item_index = (int)items[3],
+            snprintf(command->source_record_sha256,
+                     sizeof(command->source_record_sha256), "%s", record_sha256[3]);
         else if (command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34 ||
                  command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34)
-            command->source_graphics_item_index = (int)items[4];
+            command->source_graphics_item_index = (int)items[4],
+            snprintf(command->source_record_sha256,
+                     sizeof(command->source_record_sha256), "%s", record_sha256[4]);
     }
     return 1;
 }

@@ -3751,6 +3751,8 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
+    src/shared/firestaff_x68k_media_receipt.c
+    src/shared/firestaff_x68k_media_classify.c
     src/shared/fs_portable_compat.c
     src/shared/dungeon_decompressor_ftl.c
     src/shared/asset_find_by_hash.c

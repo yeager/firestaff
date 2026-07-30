@@ -588,6 +588,7 @@ static void t_f0128_door_projection_admission(void) {
     provenance.output_height = 96;
     memset(provenance.source_record_sha256, 'a', 64);
     provenance.source_record_sha256[64] = '\0';
+    strcpy(command.source_record_sha256, provenance.source_record_sha256);
     CHECK(csb_v22_admit_f0128_door_projection_pc34(&command, &provenance,
                                                      &projection) == 1 &&
           projection.valid && projection.clip_x == 76 &&
@@ -601,6 +602,11 @@ static void t_f0128_door_projection_admission(void) {
                                                      &projection) == 1 &&
           projection.valid && projection.source_graphic_index == 250,
           "D2 F0128 consumes the checked active DoorSet 1 record");
+    command.source_record_sha256[0] = 'b';
+    CHECK(csb_v22_admit_f0128_door_projection_pc34(&command, &provenance,
+                                                     &projection) == 0,
+          "D2 F0128 rejects a manifest hash that is not the active source record");
+    strcpy(command.source_record_sha256, provenance.source_record_sha256);
     command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34;
     command.clip_x = 48;
     command.clip_y = 33;

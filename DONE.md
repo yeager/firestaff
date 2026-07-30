@@ -43245,6 +43245,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   route provenance record requires a syntactically valid SHA-256 digest.
   Verification: `csb_v22_modern_assets_pc34`, `csb_v22_inplace_draw_pc34`,
   `csb_v22_inplace_route_pc34`, and `csb_v22_source_artpack_runtime` PASS.
+- ✅ 2026-07-30 CSB V2.2 live door-record hash binding: F0128 D1/D2/D3 door
+  commands now carry the SHA-256 of their exact compressed PC3.4
+  `GRAPHICS.DAT` catalog record. V2.2 admits a source artpack surface only
+  when that runtime hash matches its manifest provenance; a mismatched record
+  fails closed. Verification: `csb_v22_inplace_route_pc34`,
+  `csb_v1_boot_runtime_handoff`, and the real-data
+  `csb_v22_source_artpack_runtime` PASS.
 - ✅ 2026-07-30 CSB DSA cast-runner audit: corrected stale TODO status after
   verifying that the saved-timer/filter runner already binds
   `csb_v1_runtime_dsa_cast_spell` into the transactional stack context.

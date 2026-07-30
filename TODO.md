@@ -11,10 +11,12 @@ CSBWin alongside it. Reuse or bind verified PC34 owners and authentic game
   names when resolving an imported artpack. Compact Artpack Studio entries
   now consume `id`/`source_file` before their closing brace, and route
   provenance requires a well-formed 64-digit SHA-256 identity rather than
-  merely a 64-character string. The focused asset, in-place route/draw, and
-  real PC3.4 V2.2 startup/runtime regressions pass. This hardens the existing
-  V2.2 admission boundary; it does not promote still-unbound F0128 material
-  families.
+  merely a 64-character string. The live F0128 door command now also carries
+  the SHA-256 of its exact compressed `GRAPHICS.DAT` catalog record, which
+  must equal that manifest identity before V2.2 replaces source pixels. The
+  focused asset, in-place route/draw, and real PC3.4 V2.2 startup/runtime
+  regressions pass. This hardens the existing V2.2 admission boundary; it
+  does not promote still-unbound F0128 material families.
 material only. Unproven paths fail closed; no synthetic graphics, UI, timing,
 input, or game-data behavior.
 

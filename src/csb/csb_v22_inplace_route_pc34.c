@@ -252,7 +252,9 @@ int csb_v22_admit_f0128_door_projection_pc34(
          (provenance->output_width != expected_output_width ||
           provenance->output_height != expected_output_height)) ||
         provenance->output_width <= 0 || provenance->output_height <= 0 ||
-        strlen(provenance->source_record_sha256) != 64u) {
+        strlen(provenance->source_record_sha256) != 64u ||
+        strcmp(source_command->source_record_sha256,
+               provenance->source_record_sha256) != 0) {
         return 0;
     }
 
