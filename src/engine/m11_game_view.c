@@ -42166,6 +42166,13 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     char nameBuf[16];
     const struct ChampionState_Compat* champ;
     if (!state) return 0;
+    /* M11_GameView_GetActionName() is deliberately DM1-only: it reads
+     * MENU.C G0490's packed DM1 action strings. CSB has no equivalent
+     * TEXT.C/GAMEBLOCK receipt yet, so its action area may retain the
+     * source C010 background and source-owned icon cells but must never
+     * receive borrowed DM1 labels or a generated champion header.
+     * ReDMCSB MENU.C F0384 owns the string lookup. */
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) return 0;
     actingIndex = state->actingChampionOrdinal > 0
                       ? (int)state->actingChampionOrdinal - 1
                       : -1;
