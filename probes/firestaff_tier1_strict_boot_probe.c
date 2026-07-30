@@ -53,7 +53,7 @@ typedef struct {
     int expect_title_ready;
 } Tier1PathSpec;
 
-#define EXPECT_DM1_RUNTIME   0, 1, -1, "dm1-title", 0, 53, 53, 53, 1
+#define EXPECT_DM1_RUNTIME   0, 1, -1, "dm1-title", 0, 23, 23, 23, 1
 #define EXPECT_CSB_RUNTIME   0, 1, -1, "csb-runtime", 0, 53, 53, 53, 1
 #define EXPECT_DM2_RUNTIME   0, 1, -1, "dm2-runtime", 0, 0, 0, 0, 1
 #define EXPECT_NEXUS_RUNTIME 0, 1, -1, "nexus-runtime", 0, -1, -1, 102, 1
@@ -254,9 +254,9 @@ static int make_startup_spec(const Tier1PathSpec *runtime_spec,
         startup_spec->expect_runtime_tick_max = -1;
         startup_spec->expect_animation = "dm1-title";
         startup_spec->expect_animation_active = 0;
-        startup_spec->expect_title_frame_min = 53;
-        startup_spec->expect_title_frame_max = 53;
-        startup_spec->expect_title_frame_boundary = 53;
+        startup_spec->expect_title_frame_min = 23;
+        startup_spec->expect_title_frame_max = 23;
+        startup_spec->expect_title_frame_boundary = 23;
         startup_spec->expect_title_ready = 1;
     } else if (strcmp(runtime_spec->game, "csb") == 0) {
         startup_spec->expect_phase = "csb-title-1";

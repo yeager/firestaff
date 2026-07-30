@@ -16985,6 +16985,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     Firestaff now retains that 2.4-second source dwell before `START.PRG`.
     Remaining work is a packaged macOS visual smoke for title-to-Entrance
     cadence after this corrected swoosh handoff.
+  - 2026-07-30 C001 receipt correction: completed boot metadata now reports
+    TITLE.C's 23 source events, not the unrelated 53-frame `TITLE.DAT` bank.
+    Remaining work is still packaged macOS visual capture, not another title
+    decoder or timing fallback.
   - 2026-07-05 update: current local work now also restores the ReDMCSB PC/F20 entrance keyboard path so fresh Return and keypad Enter activate `C001_MODE_LOAD_DUNGEON` during the entrance wait loop, while Space remains inert and mouse/touch button routes stay source-locked. Remaining entrance/startup work is packaged-app smoke for visible entrance/title behavior on MacBook Pro and any still-missing original credits/save-button affordance proof, not the Return/KP Enter command route.
   - 2026-07-05 update: current local work now also makes the entrance credits command show GRAPHICS.DAT C005 with the PC34 credits palette and wait through the ReDMCSB 1800-tick input window before returning to entrance. Remaining entrance/startup work is packaged-app smoke and broader original save/resume button behavior proof, not the credits-button handoff.
   - 2026-07-05 update: current local work now also routes entrance RESUME through the launcher's validated DM1 quick-resume path before falling back to the older local source-id filename, while rejecting foreign-game quick-resume paths. Remaining DM1 entrance work is broader live saved-game proof from packaged app/original-save corpora, not the launcher-to-entrance path selection.

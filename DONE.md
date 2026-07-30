@@ -44043,3 +44043,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   teleporter visual lock now follows the DM1-owned C070-C077 asset binding,
   visible/open gate and source phase sampler consumed by M11. Verification:
   47 group/timeline/teleporter/spell-tick regressions pass from Ninja.
+# DM1 C001 boot-receipt source ownership (2026-07-30)
+
+- ✅ DM1's completed startup boot receipt now reports TITLE.C F0437's 23
+  source-visible C001 events, rather than the unrelated 53-frame TITLE.DAT
+  decoder bank. This keeps probe/capture consumers on the actual PRESENTS,
+  zoom, STRIKES BACK and guard route; TITLE.DAT remains confined to its
+  separate decoder contract. Verification: Ninja build, the focused startup
+  state-machine gate, and real PC34 V1/V2.0/V2.1/V2.2 boot probes all pass
+  with `titleFrame=23` and `titleFrameMax=23`.

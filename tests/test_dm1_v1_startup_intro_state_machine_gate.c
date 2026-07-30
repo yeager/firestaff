@@ -4010,10 +4010,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
              0);
     expect_i("boot probe receipt launcher title frame",
              title_frame,
-             (int)V1_TITLE_DAT_FRAME_MAX);
+             (int)dm1_v1_startup_title_source_animation_steps_pc34());
     expect_i("boot probe receipt launcher title frame max",
              title_frame_max,
-             (int)V1_TITLE_DAT_FRAME_MAX);
+             (int)dm1_v1_startup_title_source_animation_steps_pc34());
     expect_i("boot probe receipt launcher title ready",
              title_ready,
              1);

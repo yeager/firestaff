@@ -4631,8 +4631,14 @@ int dm1_v1_startup_boot_probe_receipt_pc34(int level_loaded,
     snprintf(out_animation, (size_t)out_animation_size, "%s", animation);
     *out_startup_active = 0;
     *out_animation_active = 0;
-    *out_title_frame = V1_TITLE_DAT_FRAME_MAX;
-    *out_title_frame_max = V1_TITLE_DAT_FRAME_MAX;
+    /* The normal PC34 startup is TITLE.C F0437's C001 program, not the
+     * separately decoded TITLE.DAT frame bank.  Keep the completed source
+     * event ordinal in the public boot receipt so a 53-frame bank cannot
+     * make timing/capture consumers certify the wrong title route. */
+    *out_title_frame =
+        (int)dm1_v1_startup_title_source_animation_steps_pc34();
+    *out_title_frame_max =
+        (int)dm1_v1_startup_title_source_animation_steps_pc34();
     *out_title_ready = 1;
     return 1;
 }
