@@ -57,12 +57,38 @@ failed:
     return 0;
 }
 
+static void check_real_layout(const char *path)
+{
+    CSB_V1_CSBWinLayout0232 layout;
+    size_t index;
+
+    if (!path || !path[0]) return;
+    CHECK(csb_v1_csbwin_layout_0232_read_graphics_dat(path, &layout));
+    if (!layout.valid) return;
+    for (index = 0; index < 4u; ++index) {
+        CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(
+            &layout.party_direction[index]));
+    }
+    CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.eye_box));
+    CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.mouth_box));
+    CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.poison_box));
+    CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(
+        &layout.food_water_box));
+    CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(
+        &layout.movement_box));
+    CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.magic_box));
+    CHECK(layout.default_graphic_list[0] != 0u);
+    CHECK(layout.default_graphic_list[
+        CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT - 1u] != 0u);
+}
+
 int main(void)
 {
     uint8_t graphic[CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE];
     CSB_V1_CSBWinLayout0232 layout;
     char path[512];
     const char *tmpdir;
+    const char *real_graphics_dat;
     int index;
 
     memset(graphic, 0, sizeof(graphic));
@@ -119,6 +145,12 @@ int main(void)
     CHECK(csb_v1_csbwin_layout_0232_read_graphics_dat(path, &layout));
     CHECK(layout.valid && layout.party_direction[0].x1 == 10);
     remove(path);
+
+    /* The fixture proves format mechanics.  CI/users may additionally point
+     * this at a legally supplied Atari/CSBWin GRAPHICS.DAT to prove that the
+     * fixed offsets survive real source bytes. */
+    real_graphics_dat = getenv("FIRESTAFF_CSBWIN_GRAPHICS_DAT");
+    check_real_layout(real_graphics_dat);
 
     if (failures) return 1;
     puts("PASS: CSBWin GRAPHICS.DAT 0x232 layout decode");

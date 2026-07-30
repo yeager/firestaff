@@ -1145,7 +1145,10 @@ that its exact runtime path is not already source-locked and tested.
    HUD/inventory composition can select original material rather than infer
    PC3.4 coordinates. It is intentionally not yet used as a PC3.4 C017/C040
    substitute: next work is consuming those coordinates with CSBWin's own
-   source graphics.
+   source graphics. The decoder is now also exercised against a real Atari
+   CSB `GRAPHICS.DAT` supplied through `FIRESTAFF_CSBWIN_GRAPHICS_DAT`; all
+   four direction regions and all central HUD rectangles validate in the
+   original byte stream (2026-07-30).
    2026-07-28: fixed the live Prison-to-F0128 black frame. The CSB viewport
    now decodes original GRAPHICS.DAT floor/ceiling entries through the CSB
    IMG3/LZW path and draws them at the source aperture `(48,33)`. The real
