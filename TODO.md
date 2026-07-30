@@ -1249,6 +1249,12 @@ that its exact runtime path is not already source-locked and tested.
    palette now have real-data M11 routes and a macOS smoke. Finish C017/C040
    HUD/viewport consumption and original audio media admission; remove
    remaining production wrappers rather than adding substitutes.
+   2026-07-30: a real PC3.4 Prison capture confirms that C017 is the complete
+   224x136 inventory page at source `(0,33)`, not a normal runtime HUD base.
+   Normal runtime must retain the F0128 viewport and draw its live C013/C009
+   HUD layers; C017/C040 may be composed only while the inventory/candidate
+   panel is active. This is a verified ownership boundary, not completion of
+   the broader HUD task.
    2026-07-30: CSBWin's separate `GRAPHICS.DAT` configuration graphic `0x232`
    now has a strict 0x722-byte big-endian layout decoder for the four party
    direction boxes, eye/mouth/poison/food-water boxes, and movement/magic
