@@ -1,3 +1,13 @@
+- ✅ 2026-07-30 DM2 audit: all 1751 skproject symbols resolved. Zero
+  UNCERTAIN remaining. 189 MISSING (deeply stateful runtime), 511
+  NOT_APPLICABLE_ARCH, 579 VERIFIED_SOURCE_MAPPING, 343 IMPLEMENTED_NARROW,
+  73 NONAPPLICABLE, 55 IMPLEMENTED, 1 EXISTING_EQUIVALENT. All dm2data.cpp
+  const tables (6 modules) extracted. 78 c_dballoc/platform/init/debug symbols
+  reclassified as NOT_APPLICABLE_ARCH. Remaining MISSING: c_hero 48,
+  c_events 35, c_creature 22, c_tim_proc 22, c_record 14, c_item 7,
+  c_eventqueue 7, c_dialog 7, startend 6, SkWinCore 7, SkWinCore2 5,
+  c_moverec 5, c_light 3, c_engage 1.
+
 - ✅ 2026-07-30 CSB V2.2 unproven-material hard boundary: the obsolete
   cell-grid painters now return without changing the framebuffer. CSB can
   only replace source pixels through the authenticated F0128 D1/D2/D3 door

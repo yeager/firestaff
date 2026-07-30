@@ -44523,6 +44523,489 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_misc_tables.c"
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_door_mechanics.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_door_mechanics.c")
+    add_executable(test_dm2_door_mechanics
+        tests/test_dm2_door_mechanics.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/memory/memory_projectile_pc34_compat.c
+    )
+    target_include_directories(test_dm2_door_mechanics PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_door_mechanics PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_door_mechanics
+        COMMAND test_dm2_door_mechanics
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_champion_portrait_gdat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_champion_portrait_gdat.c")
+    add_executable(test_dm2_v1_champion_portrait_gdat
+        tests/test_dm2_v1_champion_portrait_gdat.c
+        src/dm2/dm2_v1_champion_portrait_gdat.c
+    )
+    target_include_directories(test_dm2_v1_champion_portrait_gdat PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_champion_portrait_gdat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_champion_portrait_gdat
+        COMMAND test_dm2_v1_champion_portrait_gdat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_door_material_gate.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_viewport_renderer.c")
+    add_executable(test_dm2_v1_door_material_gate
+        tests/test_dm2_v1_door_material_gate.c
+        src/dm2/dm2_v1_viewport_renderer.c
+    )
+    target_include_directories(test_dm2_v1_door_material_gate PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_door_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_door_material_gate
+        COMMAND test_dm2_v1_door_material_gate
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_dungeon_room_helpers.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_dungeon_room_helpers.c")
+    add_executable(test_dm2_v1_dungeon_room_helpers
+        tests/test_dm2_v1_dungeon_room_helpers.c
+        src/dm2/dm2_v1_dungeon_room_helpers.c
+    )
+    target_include_directories(test_dm2_v1_dungeon_room_helpers PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_dungeon_room_helpers PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_dungeon_room_helpers
+        COMMAND test_dm2_v1_dungeon_room_helpers
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_extended_spells_definition_asset_stub.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_asset_loader.c")
+    add_executable(test_dm2_v1_extended_spells_definition_asset_stub
+        tests/test_dm2_v1_extended_spells_definition_asset_stub.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_extended_spells_definition_asset_stub PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_extended_spells_definition_asset_stub PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_extended_spells_definition_asset_stub
+        COMMAND test_dm2_v1_extended_spells_definition_asset_stub
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_direct_container_runtime_real_data.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_dungeon_loader.c")
+    add_executable(test_dm2_v1_g1_direct_container_runtime_real_data
+        tests/test_dm2_v1_g1_direct_container_runtime_real_data.c
+        src/dm2/dm2_v1_dungeon_loader.c
+    )
+    target_include_directories(test_dm2_v1_g1_direct_container_runtime_real_data PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_g1_direct_container_runtime_real_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_g1_direct_container_runtime_real_data
+        COMMAND test_dm2_v1_g1_direct_container_runtime_real_data
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_packed_address_semantics.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_viewport_renderer.c")
+    add_executable(test_dm2_v1_gdat_packed_address_semantics
+        tests/test_dm2_v1_gdat_packed_address_semantics.c
+        src/dm2/dm2_v1_viewport_renderer.c
+    )
+    target_include_directories(test_dm2_v1_gdat_packed_address_semantics PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_gdat_packed_address_semantics PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gdat_packed_address_semantics
+        COMMAND test_dm2_v1_gdat_packed_address_semantics
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_hmp_music_parser.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_sound.c")
+    add_executable(test_dm2_v1_hmp_music_parser
+        tests/test_dm2_v1_hmp_music_parser.c
+        src/dm2/dm2_v1_sound.c
+    )
+    target_include_directories(test_dm2_v1_hmp_music_parser PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_hmp_music_parser PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_hmp_music_parser
+        COMMAND test_dm2_v1_hmp_music_parser
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_hud_panel_routing.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_panel_routing.c")
+    add_executable(test_dm2_v1_hud_panel_routing
+        tests/test_dm2_v1_hud_panel_routing.c
+        src/dm2/dm2_v1_hud_panel_routing.c
+    )
+    target_include_directories(test_dm2_v1_hud_panel_routing PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_hud_panel_routing PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_hud_panel_routing
+        COMMAND test_dm2_v1_hud_panel_routing
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_img3_u4_header.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_asset_loader.c")
+    add_executable(test_dm2_v1_img3_u4_header
+        tests/test_dm2_v1_img3_u4_header.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_img3_u4_header PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_img3_u4_header PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_img3_u4_header
+        COMMAND test_dm2_v1_img3_u4_header
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_interface_action_table.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_interface_action_table.c")
+    add_executable(test_dm2_v1_interface_action_table
+        tests/test_dm2_v1_interface_action_table.c
+        src/dm2/dm2_v1_interface_action_table.c
+    )
+    target_include_directories(test_dm2_v1_interface_action_table PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_interface_action_table PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_interface_action_table
+        COMMAND test_dm2_v1_interface_action_table
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_hand_slot_backdrop_gate.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_inventory_panel.c")
+    add_executable(test_dm2_v1_inventory_hand_slot_backdrop_gate
+        tests/test_dm2_v1_inventory_hand_slot_backdrop_gate.c
+        src/dm2/dm2_v1_inventory_panel.c
+    )
+    target_include_directories(test_dm2_v1_inventory_hand_slot_backdrop_gate PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_inventory_hand_slot_backdrop_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_inventory_hand_slot_backdrop_gate
+        COMMAND test_dm2_v1_inventory_hand_slot_backdrop_gate
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_survey_frame_gate.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_inventory_panel.c")
+    add_executable(test_dm2_v1_inventory_survey_frame_gate
+        tests/test_dm2_v1_inventory_survey_frame_gate.c
+        src/dm2/dm2_v1_inventory_panel.c
+    )
+    target_include_directories(test_dm2_v1_inventory_survey_frame_gate PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_inventory_survey_frame_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_inventory_survey_frame_gate
+        COMMAND test_dm2_v1_inventory_survey_frame_gate
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_memory_mement_helpers.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_memory_mement_helpers.c")
+    add_executable(test_dm2_v1_memory_mement_helpers
+        tests/test_dm2_v1_memory_mement_helpers.c
+        src/dm2/dm2_v1_memory_mement_helpers.c
+    )
+    target_include_directories(test_dm2_v1_memory_mement_helpers PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_memory_mement_helpers PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_memory_mement_helpers
+        COMMAND test_dm2_v1_memory_mement_helpers
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_midi_backend_capability.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_midi_backend.c")
+    add_executable(test_dm2_v1_midi_backend_capability
+        tests/test_dm2_v1_midi_backend_capability.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_midi_backend_capability PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_midi_backend_capability PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_midi_backend_capability
+        COMMAND test_dm2_v1_midi_backend_capability
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_no_synthetic_startup_timers.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timeline.c")
+    add_executable(test_dm2_v1_no_synthetic_startup_timers
+        tests/test_dm2_v1_no_synthetic_startup_timers.c
+        src/dm2/dm2_v1_timeline.c
+    )
+    target_include_directories(test_dm2_v1_no_synthetic_startup_timers PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_no_synthetic_startup_timers PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_no_synthetic_startup_timers
+        COMMAND test_dm2_v1_no_synthetic_startup_timers
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_outdoor_scene_material_gate.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_viewport_renderer.c")
+    add_executable(test_dm2_v1_outdoor_scene_material_gate
+        tests/test_dm2_v1_outdoor_scene_material_gate.c
+        src/dm2/dm2_v1_viewport_renderer.c
+    )
+    target_include_directories(test_dm2_v1_outdoor_scene_material_gate PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_outdoor_scene_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_outdoor_scene_material_gate
+        COMMAND test_dm2_v1_outdoor_scene_material_gate
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_pict_picst_helpers.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_pict_picst_helpers.c")
+    add_executable(test_dm2_v1_pict_picst_helpers
+        tests/test_dm2_v1_pict_picst_helpers.c
+        src/dm2/dm2_v1_pict_picst_helpers.c
+    )
+    target_include_directories(test_dm2_v1_pict_picst_helpers PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_pict_picst_helpers PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_pict_picst_helpers
+        COMMAND test_dm2_v1_pict_picst_helpers
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_record_name_helper.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_record_name_helper.c")
+    add_executable(test_dm2_v1_record_name_helper
+        tests/test_dm2_v1_record_name_helper.c
+        src/dm2/dm2_v1_record_name_helper.c
+    )
+    target_include_directories(test_dm2_v1_record_name_helper PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_record_name_helper PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_record_name_helper
+        COMMAND test_dm2_v1_record_name_helper
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_runtime_static_scene_receipt.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime.c")
+    add_executable(test_dm2_v1_runtime_static_scene_receipt
+        tests/test_dm2_v1_runtime_static_scene_receipt.c
+        src/dm2/dm2_v1_runtime.c
+    )
+    target_include_directories(test_dm2_v1_runtime_static_scene_receipt PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_runtime_static_scene_receipt PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_runtime_static_scene_receipt
+        COMMAND test_dm2_v1_runtime_static_scene_receipt
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_skcore2_gdat_word_helpers.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_asset_loader.c")
+    add_executable(test_dm2_v1_skcore2_gdat_word_helpers
+        tests/test_dm2_v1_skcore2_gdat_word_helpers.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_skcore2_gdat_word_helpers PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_skcore2_gdat_word_helpers PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_skcore2_gdat_word_helpers
+        COMMAND test_dm2_v1_skcore2_gdat_word_helpers
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_source_name_helpers.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_source_name_helpers.c")
+    add_executable(test_dm2_v1_source_name_helpers
+        tests/test_dm2_v1_source_name_helpers.c
+        src/dm2/dm2_v1_source_name_helpers.c
+    )
+    target_include_directories(test_dm2_v1_source_name_helpers PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_source_name_helpers PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_source_name_helpers
+        COMMAND test_dm2_v1_source_name_helpers
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_spell_gdat_receipt.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_spell.c")
+    add_executable(test_dm2_v1_spell_gdat_receipt
+        tests/test_dm2_v1_spell_gdat_receipt.c
+        src/dm2/dm2_v1_spell.c
+    )
+    target_include_directories(test_dm2_v1_spell_gdat_receipt PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_spell_gdat_receipt PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_spell_gdat_receipt
+        COMMAND test_dm2_v1_spell_gdat_receipt
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_startup_static_menu_timing.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_startup_menu.c")
+    add_executable(test_dm2_v1_startup_static_menu_timing
+        tests/test_dm2_v1_startup_static_menu_timing.c
+        src/dm2/dm2_v1_startup_menu.c
+    )
+    target_include_directories(test_dm2_v1_startup_static_menu_timing PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_startup_static_menu_timing PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_startup_static_menu_timing
+        COMMAND test_dm2_v1_startup_static_menu_timing
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_ui_event_name_helper.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_ui_event_name_helper.c")
+    add_executable(test_dm2_v1_ui_event_name_helper
+        tests/test_dm2_v1_ui_event_name_helper.c
+        src/dm2/dm2_v1_ui_event_name_helper.c
+    )
+    target_include_directories(test_dm2_v1_ui_event_name_helper PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_ui_event_name_helper PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_ui_event_name_helper
+        COMMAND test_dm2_v1_ui_event_name_helper
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_wall_ornate_alcove_type.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_wall_ornament.c")
+    add_executable(test_dm2_v1_wall_ornate_alcove_type
+        tests/test_dm2_v1_wall_ornate_alcove_type.c
+        src/dm2/dm2_v1_wall_ornament.c
+    )
+    target_include_directories(test_dm2_v1_wall_ornate_alcove_type PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_wall_ornate_alcove_type PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_wall_ornate_alcove_type
+        COMMAND test_dm2_v1_wall_ornate_alcove_type
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_no_synthetic_overlay.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_viewport_renderer.c")
+    add_executable(test_dm2_v1_weather_no_synthetic_overlay
+        tests/test_dm2_v1_weather_no_synthetic_overlay.c
+        src/dm2/dm2_v1_viewport_renderer.c
+    )
+    target_include_directories(test_dm2_v1_weather_no_synthetic_overlay PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_weather_no_synthetic_overlay PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_weather_no_synthetic_overlay
+        COMMAND test_dm2_v1_weather_no_synthetic_overlay
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_runtime_admission.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_graphics_data_open.c")
+    add_executable(test_dm2_v1_weather_runtime_admission
+        tests/test_dm2_v1_weather_runtime_admission.c
+        src/dm2/dm2_v1_graphics_data_open.c
+        src/dm2/dm2_v1_weather_gdat.c
+    )
+    target_include_directories(test_dm2_v1_weather_runtime_admission PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_weather_runtime_admission PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_weather_runtime_admission
+        COMMAND test_dm2_v1_weather_runtime_admission
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_timer_receipts.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_weather.c")
+    add_executable(test_dm2_v1_weather_timer_receipts
+        tests/test_dm2_v1_weather_timer_receipts.c
+        src/dm2/dm2_v1_weather.c
+    )
+    target_include_directories(test_dm2_v1_weather_timer_receipts PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_weather_timer_receipts PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_weather_timer_receipts
+        COMMAND test_dm2_v1_weather_timer_receipts
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_world_model_g1_handoff_real_data.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_world_model.c")
+    add_executable(test_dm2_v1_world_model_g1_handoff_real_data
+        tests/test_dm2_v1_world_model_g1_handoff_real_data.c
+        src/dm2/dm2_v1_world_model.c
+    )
+    target_include_directories(test_dm2_v1_world_model_g1_handoff_real_data PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_world_model_g1_handoff_real_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_world_model_g1_handoff_real_data
+        COMMAND test_dm2_v1_world_model_g1_handoff_real_data
+    )
+endif()
+
+
 # DM2/skproject scene light and static GRAPHICSSET ownership.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_viewport_renderer.c")
