@@ -398,6 +398,12 @@
   The only `.fsart` archives currently in `/Users/bosse/Downloads` identify
   themselves as `game: dm1`; they are correctly not admitted as CSB art.
 
+- ✅ 2026-07-30 DM2 creature/rendering tables: creature movement params (132),
+  direction rotation (4x5), step deltas (2x4), attack/facing/projectile maps,
+  creature render descriptors (92), creature GFX face/ornament/flip/side (6 each),
+  inventory slot remaps (identity/mirror/alt, 25 each), tile type visibility (23),
+  text charset (37 chars), skill abbreviations (18 strings).
+  8 tests. Source: dm2data.cpp:889-999.
 - ✅ 2026-07-30 DM2 HUD tables: button descriptors (table1d3d23, 62 entries),
   click map (table1d3cd0, 83 entries), panel layout (table1d3ba0, 76 entries),
   action icons (table1d3ed5, 10 entries). Extended viewport tables with tile

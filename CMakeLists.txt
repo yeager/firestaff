@@ -44470,6 +44470,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_hud_tables.c"
     )
 endif()
 
+# DM2 creature/movement/rendering tables (skproject dm2data.cpp)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_creature_tables.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_creature_tables.c")
+    add_executable(test_dm2_v1_creature_tables
+        tests/test_dm2_v1_creature_tables.c
+        src/dm2/dm2_v1_creature_tables.c
+    )
+    target_include_directories(test_dm2_v1_creature_tables PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_creature_tables PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_tables
+        COMMAND test_dm2_v1_creature_tables
+    )
+endif()
+
 # DM2/skproject scene light and static GRAPHICSSET ownership.
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_viewport_renderer.c")
