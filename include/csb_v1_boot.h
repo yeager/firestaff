@@ -1610,6 +1610,14 @@ int csb_v1_boot_decode_graphics_dat_asset_pc34(
     const char *path, unsigned int graphic_index,
     unsigned char **out_pixels, int *out_width, int *out_height,
     CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_decode_receipt);
+/* Decode an original Atari ST DMCSB1 GRAPHICS.DAT item through the same
+ * CSBWin ExpandGraphic-compatible source decoder used for PC startup
+ * records.  This is for standard CSBWin packages which retain the original
+ * ST graphics/dungeon pair but do not ship ANIMATE.SCR/ANIMATE.DAT. */
+int csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+    const char *path, unsigned int graphic_index,
+    unsigned char **out_pixels, int *out_width, int *out_height,
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_decode_receipt);
 int csb_v1_boot_startup_runtime_asset_session_open_pc34(
     const CSB_V1_BootProfile *profile,
     CSB_V1_StartupRuntimeAssetSession_PC34 *out_session);

@@ -239,6 +239,18 @@ an integration build pass.
   decoded without a DM1 spell table. This is the required data owner for the
   later CastMagic transaction; effect classes remain closed until their
   character/object/timer/save side effects are implemented together.
+  2026-07-30 CSBWin standard-package check: the supplied `graphics.dat`
+  (`ebf6a57af3f27782e358c0490bfd2f2e`) plus `Dungeon.dat` is correctly
+  recognised as Atari ST 2.1, but the CSBWin game directory has no
+  `ANIMATE.SCR`/`ANIMATE.DAT`. M12 currently reports the pair READY while
+  the ST startup handoff refuses to launch. Add a CSBWin-standard graphics
+  startup decoder/route from `CSBCode.cpp::_DisplayChaosStrikesBack` and
+  `_OpenPrisonDoors`; do not relabel it as PC3.4 or substitute Atari media.
+  The DMCSB1 table reader now reaches the shared ExpandGraphic decoder and
+  positively decodes C001 (320x200) and C003 (128x161) from that package.
+  C002 still rejects at the terminal planar pad, while C004/C005 are the
+  source's `ReadAndExpandGraphic(0x8000 | n)` raw-page route, not IMG2; bind
+  those exact forms before enabling the CSBWin fallback startup session.
   2026-07-30 hardening: the obsolete V2.2 3x3 rectangle painters now return
   without touching the framebuffer. They had no F0128 command receipts and
   therefore cannot consume wall, floor, creature, ornament or Thing assets.

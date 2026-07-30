@@ -6,6 +6,7 @@
 #include "memory_graphics_dat_select_pc34_compat.h"
 #include "memory_graphics_dat_state_pc34_compat.h"
 #include "csb_v1_graphics_lzw_pc34_compat.h"
+#include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_startup_img3_decode_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
@@ -274,6 +275,63 @@ done:
     return ok;
 }
 
+static uint16_t csb_v1_startup_read_be16_pc34(const unsigned char *bytes)
+{
+    return (uint16_t)(((uint16_t)bytes[0] << 8u) | bytes[1]);
+}
+
+int csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+    const char *path, unsigned int graphic_index, unsigned char **out_pixels,
+    int *out_width, int *out_height,
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_decode_receipt)
+{
+    CSB_AtariStLoader loader;
+    unsigned char *stream = NULL;
+    unsigned char *pixels = NULL;
+    uint16_t width;
+    uint16_t height;
+    size_t pixel_count;
+    int ok = 0;
+
+    if (out_pixels) *out_pixels = NULL;
+    if (out_width) *out_width = 0;
+    if (out_height) *out_height = 0;
+    if (out_decode_receipt) memset(out_decode_receipt, 0,
+                                   sizeof(*out_decode_receipt));
+    if (!path || !path[0] || !out_pixels || !out_width || !out_height ||
+        graphic_index > UINT16_MAX) return 0;
+
+    csb_atari_st_graphics_loader_init(&loader);
+    if (!csb_atari_st_graphics_loader_open(&loader, path) ||
+        graphic_index >= loader.item_count ||
+        loader.items[graphic_index].decompressed_size < 5u) goto done;
+    stream = (unsigned char *)malloc(loader.items[graphic_index].decompressed_size);
+    if (!stream || csb_atari_st_graphics_loader_read_item(
+            &loader, (uint16_t)graphic_index, stream,
+            loader.items[graphic_index].decompressed_size) !=
+            (int)loader.items[graphic_index].decompressed_size) goto done;
+    width = csb_v1_startup_read_be16_pc34(stream);
+    height = csb_v1_startup_read_be16_pc34(stream + 2u);
+    if (width == 0u || height == 0u ||
+        height > SIZE_MAX / width ||
+        (pixel_count = (size_t)width * height) >
+            CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34) goto done;
+    pixels = (unsigned char *)malloc(pixel_count);
+    if (!pixels || !csb_v1_startup_img3_decode_to_indexed_with_receipt_pc34_compat(
+            stream, loader.items[graphic_index].decompressed_size, width, height,
+            pixels, pixel_count, out_decode_receipt)) goto done;
+    *out_pixels = pixels;
+    *out_width = width;
+    *out_height = height;
+    pixels = NULL;
+    ok = 1;
+done:
+    free(pixels);
+    free(stream);
+    csb_atari_st_graphics_loader_close(&loader);
+    return ok;
+}
+
 static int csb_v1_startup_surface_crop_pc34(
     CSB_V1_StartupRuntimeSurface_PC34 *out, const unsigned char *source,
     int source_width, int source_height, int asset_id, int source_x,
@@ -397,10 +455,17 @@ static int csb_v1_startup_session_load_surface_pc34(
         return csb_v1_startup_session_load_csbgraphics_surface_pc34(
             profile, binding, surface);
     }
-    if (binding->source != CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
-        !csb_v1_boot_decode_graphics_dat_asset_pc34(
-            binding->path, binding->graphic_index, &pixels, &width, &height,
-            &surface->decode_receipt)) {
+    if (binding->source != CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34) {
+        return 0;
+    }
+    if (((profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+          profile->variant_id == CSB_V1_VARIANT_ST21_EN)
+             ? !csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                   binding->path, binding->graphic_index, &pixels, &width,
+                   &height, &surface->decode_receipt)
+             : !csb_v1_boot_decode_graphics_dat_asset_pc34(
+                   binding->path, binding->graphic_index, &pixels, &width,
+                   &height, &surface->decode_receipt))) {
         return 0;
     }
     surface->pixels = pixels;
@@ -490,7 +555,9 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
     }
     if (!csb_v1_startup_graphic_decode_capture_admitted_pc34(
             &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34],
-            1, 320, 153) ||
+            1, 320,
+            (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+             profile->variant_id == CSB_V1_VARIANT_ST21_EN) ? 200 : 153) ||
         !csb_v1_startup_graphic_decode_capture_admitted_pc34(
             &surfaces->surfaces[
                 CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34],

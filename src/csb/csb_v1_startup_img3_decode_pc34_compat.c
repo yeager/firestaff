@@ -279,11 +279,14 @@ static int csb_v1_img2_planar_decode_to_indexed_pc34(
             literal = (command & 0x10u) != 0u;
             previous = literal && (command & 0x20u) != 0u;
         }
-        if (previous) {
-            if (emitted < physical_width || count > physical_pixels - emitted)
-                goto fail;
-        } else if (count > physical_pixels - emitted) {
-            goto fail;
+        if (previous && emitted < physical_width) goto fail;
+        if (count > physical_pixels - emitted) {
+            /* CSBWin ExpandGraphic is destination-bounded: its final packed
+             * command may cover the small planar pad beyond the requested
+             * rectangle.  Preserve only the source-owned destination pixels
+             * instead of rejecting a valid C001 record or writing beyond it. */
+            if (physical_pixels - emitted > 15u) goto fail;
+            count = physical_pixels - emitted;
         }
         for (i = 0u; i < count; ++i) {
             uint8_t value = color;
@@ -346,7 +349,7 @@ static int csb_v1_img2_planar_decode_to_indexed_pc34(
         receipt->physical_planar_pixels = physical_pixels;
         receipt->stream_fnv1a = csb_v1_img3_fnv1a_pc34(graphic, graphic_byte_count);
         receipt->indexed_pixel_fnv1a = csb_v1_img3_fnv1a_pc34(pixels, pixel_count);
-        receipt->ended_at_record_boundary = source == graphic_byte_count;
+        receipt->ended_at_record_boundary = emitted == physical_pixels;
         receipt->implicit_blank_tail = emitted < physical_pixels;
         receipt->indexed_colors_are_4bit = 1;
     }
@@ -377,7 +380,7 @@ static int csb_v1_startup_indexed_region_has_visible_pixel_pc34(
 int csb_v1_startup_title_c001_regions_admit_pc34_compat(
     const uint8_t *indexed_pixels, uint16_t width, uint16_t height)
 {
-    return indexed_pixels && width == 320u && height == 153u &&
+    return indexed_pixels && width == 320u && height >= 153u &&
         csb_v1_startup_indexed_region_has_visible_pixel_pc34(
             indexed_pixels, width, 0u, 80u) &&
         csb_v1_startup_indexed_region_has_visible_pixel_pc34(

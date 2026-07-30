@@ -6222,10 +6222,13 @@ static int m11_csb_apply_boot_runtime_receipt(
         state->csbAtariStAnimationFrameBound = 0;
         state->csbAtariStAnimationEndVbl = 0u;
         state->csbAtariStRuntimeHandoffComplete = 0;
-        if (!m11_csb_prepare_atari_st_animation_handoff(state)) {
-            return 0;
+        if (m11_csb_prepare_atari_st_animation_handoff(state)) {
+            return 1;
         }
-        return 1;
+        /* CSBWin's standard package can retain the authentic ST
+         * GRAPHICS.DAT/DUNGEON.DAT pair while omitting the optional Atari
+         * ANIMATE.SCR/DAT program.  Continue below through the verified
+         * GRAPHICS.DAT startup records; do not fake an Atari animation. */
     }
     state->csbStartupRuntimeAssetSession = calloc(
         1, sizeof(CSB_V1_StartupRuntimeAssetSession_PC34));
@@ -6234,6 +6237,12 @@ static int m11_csb_apply_boot_runtime_receipt(
             (const CSB_V1_BootProfile *)state->csbBootProfile,
             (CSB_V1_StartupRuntimeAssetSession_PC34 *)
                 state->csbStartupRuntimeAssetSession)) {
+        fprintf(stderr,
+                "firestaff: CSB startup surface session rejected for graphics %s "
+                "(variant=%d)\n",
+                receipt->profile->graphics_path,
+                (int)receipt->profile->variant_id);
+        m11_set_status(state, "CSB STARTUP", "GRAPHICS SURFACE DECODE FAILED");
         free(state->csbStartupRuntimeAssetSession);
         state->csbStartupRuntimeAssetSession = NULL;
         return 0;
@@ -6295,7 +6304,8 @@ static void m11_csb_startup_tick_receipt_to_m11(
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
     if (profile && (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
                     profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
-        state->csbState.startup_title_active) {
+        state->csbState.startup_title_active &&
+        !state->csbStartupRuntimeAssetSession) {
         uint32_t units;
         if (!state->csbAtariStAnimationClockStarted) {
             state->csbAtariStAnimationClockStarted = 1;
@@ -19493,7 +19503,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         if ((csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
              csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
-            state->csbState.startup_title_active) {
+            state->csbState.startup_title_active &&
+            !state->csbStartupRuntimeAssetSession) {
             uint32_t units = (uint32_t)state->csbAtariStAnimationVblRemainder +
                 csb_profile->tick_ms * 50u;
             state->csbAtariStAnimationClockStarted = 1;

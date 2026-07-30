@@ -42,6 +42,7 @@ int main(void)
     const char *data_dir = csb_data_dir(fallback, sizeof(fallback));
     const char *mode_text = getenv("FIRESTAFF_CSB_PRESENTATION_MODE");
     const char *atari_mini = getenv("FIRESTAFF_CSB_ATARI_MINI");
+    const char *csbwin_graphics = getenv("FIRESTAFF_CSBWIN_GRAPHICS");
     M11_GameLaunchSpec spec;
     M11_GameViewState view;
     unsigned char framebuffer[320 * 200];
@@ -59,6 +60,29 @@ int main(void)
     if (!data_dir || !data_dir[0]) {
         puts("SKIP: no CSB PC3.4 data directory");
         return 0;
+    }
+    if (csbwin_graphics && csbwin_graphics[0]) {
+        memset(&decode_receipt, 0, sizeof(decode_receipt));
+        CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                  csbwin_graphics, 1u, &decoded, &decoded_w, &decoded_h,
+                  &decode_receipt) && decode_receipt.valid &&
+                  decoded_w == 320 && decoded_h == 200,
+              "CSBWin standard GRAPHICS.DAT decodes C001 title source");
+        free(decoded);
+        decoded = NULL;
+        decoded_w = 0;
+        decoded_h = 0;
+        memset(&decode_receipt, 0, sizeof(decode_receipt));
+        CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                  csbwin_graphics, 3u, &decoded, &decoded_w, &decoded_h,
+                  &decode_receipt) && decode_receipt.valid &&
+                  decoded_w == 128 && decoded_h == 161,
+              "CSBWin standard GRAPHICS.DAT decodes C003 right-door source");
+        free(decoded);
+        decoded = NULL;
+        decoded_w = 0;
+        decoded_h = 0;
+        if (failures) return 1;
     }
     memset(&spec, 0, sizeof(spec));
     spec.title = "CHAOS STRIKES BACK";

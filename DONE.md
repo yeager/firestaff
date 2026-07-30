@@ -43539,3 +43539,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   packing, so future CSB casts cannot borrow DM1 definitions. Verification:
   `csb_v1_magic_rune_cost_pc34_compat` passes source-table decode, lookup and
   descriptor checks; the full CSB lane remains green.
+- ✅ 2026-07-30 CSBWin standard GRAPHICS.DAT decoder boundary: Firestaff now
+  parses the authentic Atari ST DMCSB1 size tables before handing C001/C003
+  to the existing CSBWin `ExpandGraphic`-compatible planar decoder. This
+  verifies the supplied CSBWin package's 320x200 title source and 128x161
+  right-door source without relabelling it as PC3.4 or generating artwork.
+  Verification: opt-in `csb_v1_m11_prison_runtime_hud_pc34` real-package
+  checks pass, together with V1/V2.0/V2.1 HUD, title/Entrance, and six V2.2
+  presentation-material contracts.
