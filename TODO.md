@@ -6,6 +6,15 @@
   palettes, and synthetic HUD art are not acceptable when authentic game data
   exists. Each remaining renderer is to bind the real format or present no
   game pixel; test fixtures remain explicitly isolated from production paths.
+
+- **DM2-STARTUP-HUD-PHASE-BOUNDARY:** The verified PC-English
+  `GRAPHICS.DAT` proves SK-projects `SHOW_MENU_SCREEN` title/menu fields
+  `TITLE/0/1` and `TITLE/0/4`, plus the complete nine-command HUD material
+  plan. The combined startup visual receipt currently also demands a live
+  runtime-HUD capture before `GAME_LOAD`, where the source has no party.
+  Split the title-menu proof from the post-`GAME_LOAD` runtime-HUD proof;
+  retain fail-closed no-draw behavior and never synthesize four portraits in
+  the title-menu phase.
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage
   selection. SK-projects `SKWINSPX/src/v4/skcrture.cpp::QUERY_CREATURE_AI_SPEC_FROM_TYPE`
