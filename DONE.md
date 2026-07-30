@@ -4,6 +4,13 @@
   retains native source glyphs and terminator handling rather than restoring
   old host-font checks. Focused CTest passes 3/3.
 
+- ✅ 2026-07-30 DM1 original-data placeholder audit: normal V1 rendering
+  does not reach the legacy procedural door, stair, corridor or texture
+  fallback helpers; those are gated behind `showDebugHUD`. The live
+  F0134/F0135 inventory route instead consumes original GRAPHICS.DAT C020,
+  C030, C031 and C032 surfaces, the original LIGHT0 palette and source
+  zones. Local real-media material and source-frame tests pass 7/7.
+
 - ✅ 2026-07-30 DM1 F0128 side F0115 composition: removed the extra M11
   side-lane visibility filter from the source-owned D3/D2/D1 side-content
   dispatch. ReDMCSB calls every side-square routine before its matching
