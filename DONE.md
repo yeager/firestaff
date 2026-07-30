@@ -728,6 +728,13 @@
   catalog and skips same-named PC packages instead of reporting a false decode
   failure.
 
+- ✅ 2026-07-30 CSB V1/V2.x integration verification: the complete CSB CTest
+  lane passes 118/119 checks against the locally installed original PC3.4
+  package. V1, V2.0 and V2.1 have real title, Entrance and Prison runtime
+  coverage. V2.2 correctly skips its optional artpack-runtime check while
+  unbound F0128 wall/floor routes remain fail-closed; this is verified gating,
+  not a V2.2 completion claim.
+
 - ✅ 2026-07-29 CSB V2.2 source-artpack runtime handoff: the complete,
   source-derived 29-route PC3.4 pack is proven to remain on presentation mode
   3 through the original Prison command and reach runtime map 0 at `(9,0,2)`.

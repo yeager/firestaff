@@ -208,6 +208,13 @@ an integration build pass.
   with catalog-bound rejection. This removes the next record-index ambiguity,
   but does not yet supply the per-command native bytes, clip receipts or V2.2
   replacement assets required to admit a wall surface.
+  2026-07-30 verification: the full CSB CTest lane passes 118/119 tests with
+  the locally installed original PC3.4 package. The sole skipped check is the
+  optional V2.2 source-artpack runtime test: its installed
+  `firestaff-csb-v22-pc34-source` manifest correctly remains unadmitted
+  because wall/floor routes still declare `f0128ProjectionStatus: unbound`.
+  Do not change those statuses merely to enable V2.2; recover the original
+  per-command F0128 raster/clip path first.
   The source-artpack manifest now makes this distinction machine-readable:
   `door_d2_01` is explicitly `admitted_d3_f0791_native`, carrying the real
   44x38 source dimensions and the D3 F0791/F0132 composition contract.
