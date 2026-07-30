@@ -1242,6 +1242,7 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
     const DM2_V1_StartupHostActionReceipt *action_receipt)
 {
     const DM2_V1_StartupHostMenuRouteReceipt *route;
+    DM2_V1_BootProfile *profile;
 
     if (!state || !action_receipt) {
         return M11_GAME_INPUT_IGNORED;
@@ -1255,17 +1256,25 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
     if (route->valid) {
         if (route->status_scope &&
             strcmp(route->status_scope, "GAME_LOAD") == 0) {
+            DM2_V1_BootNewDungeonReceipt new_dungeon;
+            const char *status = route->status
+                ? route->status : "DM2 GAME_LOAD DATA REQUIRED";
             /* SKWINSPX SkWinCore.cpp::SHOW_MENU_SCREEN returns to INIT,
              * which calls GAME_LOAD()/LOAD_NEW_DUNGEON.  Do not replace that
              * source-owned load with dm2_v1_session_new(): its canned party,
              * gold and map pose are a save-fixture helper, not DM2 data.
-             * Until GAME_LOAD can hand off verified original records, retain
-             * the title-menu boundary and report the required data path. */
+             * Reload the verified original DUNGEON.DAT portion first, then
+             * retain the title-menu boundary until GAME_LOAD can hand off its
+             * party, leader and timer records. */
+            memset(&new_dungeon, 0, sizeof(new_dungeon));
+            profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
+            if (dm2_v1_boot_load_new_dungeon(profile, &new_dungeon) &&
+                new_dungeon.valid && new_dungeon.reloaded &&
+                !new_dungeon.synthetic_party_created) {
+                status = "DM2 GAME_LOAD DUNGEON READY: PARTY DATA REQUIRED";
+            }
             state->dm2State.startup_menu_active = 1;
-            m11_set_status(state,
-                           route->status_scope,
-                           route->status ? route->status
-                                         : "DM2 GAME_LOAD DATA REQUIRED");
+            m11_set_status(state, route->status_scope, status);
             return M11_GAME_INPUT_REDRAW;
         }
         if (route->close_startup_menu) {

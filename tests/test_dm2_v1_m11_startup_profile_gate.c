@@ -1734,8 +1734,8 @@ int main(void) {
                 "M11 DM2 startup menu NEW GAME reaches GAME_LOAD gate");
     expect_true(view.dm2State.startup_menu_active == 1 &&
                     strstr(view.lastOutcome,
-                           "DM2 GAME_LOAD DATA REQUIRED") != NULL,
-                "M11 DM2 startup menu rejects fixture-party runtime after NEW GAME");
+                           "DM2 GAME_LOAD DUNGEON READY: PARTY DATA REQUIRED") != NULL,
+                "M11 DM2 startup reloads original dungeon but rejects fixture-party runtime after NEW GAME");
     /* The following runtime/save assertions exercise resume separately. A
      * New Game may not create the former fixture party merely to enter this
      * block; GAME_LOAD owns that source transition. */

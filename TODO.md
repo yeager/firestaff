@@ -9,8 +9,10 @@
 
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing
-  a fixture party. Bind `GAME_LOAD`/`LOAD_NEW_DUNGEON`'s original DB records,
-  timers and party-selection state before allowing the menu to enter runtime.
+  a fixture party. New Game now reloads the hash-verified original
+  `DUNGEON.DAT` through `LOAD_NEW_DUNGEON`, but still requires
+  `GAME_LOAD`'s original DB records, timers and party-selection state before
+  allowing the menu to enter runtime.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

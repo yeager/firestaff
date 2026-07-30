@@ -44414,3 +44414,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-30 DM2 V2 overlay-enable cleanup: the retired overlay's enable
   flag is gone and its compatibility setter is a no-op, so no later phase-gate
   call can re-enable pixel generation through that API.
+- ✅ 2026-07-30 DM2 New Game original-dungeon handoff: M11 now invokes the
+  hash-verified `LOAD_NEW_DUNGEON` portion of `GAME_LOAD` before reporting
+  that original party data is still required. It reloads no fixture session,
+  party, leader hand or timer state and keeps the source title/menu boundary
+  active until those records are modeled.
