@@ -62,14 +62,14 @@
 
 ## Active DM1/CSB Symbol Queue
 
-- **CSB-V1-GRAPHIC560-MATERIAL-BINDING:** The recognised PC 3.4 CSB
-  `GRAPHICS.DAT` corpus (`61fbfd56887c94adc26888a9491c6611`) uses F0479's
-  big-endian new-file header: literal marker bytes `80 01` (`0x8001`), count
-  and size/dimension tables. The C564 reader now accepts that file shape;
-  recover C560's bounded raw global-variable layout, validate it against
-  ReDMCSB `STARTUP2.C:574`, `MENU.C:20-27` and `MEMORY.C F0479`, then bind
-  M11 action sets/names only after the live CSB session carries that receipt.
-  Do not substitute DM1's compiled table or invent a byte layout.
+- **CSB-V1-C699-ACTION-NAME-MATERIAL-BINDING:** The recognised PC 3.4 CSB
+  `GRAPHICS.DAT` corpus (`61fbfd56887c94adc26888a9491c6611`) proves the live
+  action-name stream is raw C699 (289 bytes, `N\\0BLOCK\\0...FUSE\\0`), not
+  C560. ReDMCSB `MENU.C F0620:543-551` loads C699 into
+  `G0490_ac_Graphic560_ActionNames` for this media branch. Bind the verified
+  C699 bytes to the live CSB session and use them for M11 action text; action
+  sets still need their independently verified owner. Do not substitute DM1's
+  compiled table or invent a byte layout.
 
 - **DM1-PC34-SAVE-CORPUS-FINGERPRINT:** Closed 2026-07-30. The successful
   F0435 -> F0433 corpus receipt now carries a stable, nonzero FNV-1a
