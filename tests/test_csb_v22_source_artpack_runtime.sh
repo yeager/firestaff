@@ -19,6 +19,26 @@ if [ ! -f "$manifest" ] ||
     exit 77
 fi
 
+# A source export is not automatically a V2.2 pack. Every advertised route
+# must carry an admitted F0128 projection before this probe can require the
+# V2.2 runtime rather than the deliberate V2.1 fallback.
+python3 - "$manifest" <<'PY'
+import json
+import sys
+
+with open(sys.argv[1], encoding="utf-8") as stream:
+    manifest = json.load(stream)
+routes = manifest.get("routeProvenance")
+if not isinstance(routes, list) or not routes:
+    print("SKIP: CSB V2.2 route provenance is unavailable")
+    raise SystemExit(77)
+for route in routes:
+    status = route.get("f0128ProjectionStatus") if isinstance(route, dict) else None
+    if not isinstance(status, str) or not status.startswith("admitted_"):
+        print("SKIP: CSB V2.2 source pack retains unadmitted F0128 routes")
+        raise SystemExit(77)
+PY
+
 # BSD mktemp requires the trailing X sequence to be at the end of its
 # template. Keep the temporary output extension-free so this probe works on
 # macOS as well as GNU/Linux.

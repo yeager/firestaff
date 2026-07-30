@@ -388,41 +388,48 @@ static void __attribute__((unused)) csb_v22_skip_to_next_object (FILE* fp) {
  * Source: FSP_ParentDir finds the last separator and truncates there. */
 void csb_v22_set_manifest_path(const char* dataDir) {
     char resolved_data_dir[FSP_PATH_MAX];
-    const char *asset_data_dir = dataDir;
+    const char *candidates[2];
+    int candidate_count = 1;
+    int candidate_index;
     if (!dataDir || dataDir[0] == '\0') {
         g_v22_manifest_path[0] = '\0';
         csb_v22_famg_set_manifest_path(NULL);
         return;
     }
-    /* A launcher may keep ~/.firestaff/data/csb as a symlink to a larger
-     * external volume. Resolve it before walking to the sibling assets root,
-     * otherwise the catalog and the source package refer to different media. */
+    candidates[0] = dataDir;
     if (FSP_ResolvePhysicalPath(resolved_data_dir,
-                                sizeof(resolved_data_dir), dataDir)) {
-        asset_data_dir = resolved_data_dir;
+                                sizeof(resolved_data_dir), dataDir) &&
+        strcmp(resolved_data_dir, dataDir) != 0) {
+        candidates[candidate_count++] = resolved_data_dir;
     }
-    /* Build: ~/.firestaff/assets/csb/modern/modern_asset_manifest.json
-     * Walk up two levels from dataDir (e.g. data/csb -> data -> ~/.firestaff)
-     * then append assets/csb/modern/. */
-    char parent1[FSP_PATH_MAX];
-    char parent2[FSP_PATH_MAX];
-    char assetsRoot[FSP_PATH_MAX];
-    char modernDir[FSP_PATH_MAX];
-    if (!FSP_ParentDir(parent1, sizeof(parent1), asset_data_dir) ||
-        !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
-        /* Fallback: try treating dataDir as already being ~/.firestaff
-         * (single-component dataDir from a custom setup). */
-        FSP_JoinPath(assetsRoot, sizeof(assetsRoot), asset_data_dir, "assets");
-    } else {
-        FSP_JoinPath(assetsRoot, sizeof(assetsRoot), parent2, "assets");
+    for (candidate_index = 0; candidate_index < candidate_count;
+         ++candidate_index) {
+        char parent1[FSP_PATH_MAX];
+        char parent2[FSP_PATH_MAX];
+        char assetsRoot[FSP_PATH_MAX];
+        char modernDir[FSP_PATH_MAX];
+        char manifest[FSP_PATH_MAX];
+        const char *asset_data_dir = candidates[candidate_index];
+        if (!FSP_ParentDir(parent1, sizeof(parent1), asset_data_dir) ||
+            !FSP_ParentDir(parent2, sizeof(parent2), parent1)) {
+            FSP_JoinPath(assetsRoot, sizeof(assetsRoot), asset_data_dir,
+                         "assets");
+        } else {
+            FSP_JoinPath(assetsRoot, sizeof(assetsRoot), parent2, "assets");
+        }
+        FSP_JoinPath(modernDir, sizeof(modernDir), assetsRoot, "csb");
+        FSP_JoinPath(modernDir, sizeof(modernDir), modernDir, "modern");
+        FSP_JoinPath(manifest, sizeof(manifest), modernDir,
+                     "modern_asset_manifest.json");
+        if (candidate_index + 1 == candidate_count || FSP_FileExists(manifest)) {
+            snprintf(g_v22_manifest_path, sizeof(g_v22_manifest_path), "%s",
+                     manifest);
+            break;
+        }
     }
-    FSP_JoinPath(modernDir, sizeof(modernDir), assetsRoot, "csb");
-    FSP_JoinPath(modernDir, sizeof(modernDir), modernDir, "modern");
-    FSP_JoinPath(g_v22_manifest_path, sizeof(g_v22_manifest_path),
-                 modernDir, "modern_asset_manifest.json");
     /* Keep the public catalog API and the runtime admission gate on the
      * same manifest root. A partial catalog must never expose V2.2. */
-    csb_v22_famg_set_manifest_path(asset_data_dir);
+    csb_v22_famg_set_manifest_path(dataDir);
 }
 
 void csb_v22_set_manifest_file_path(const char* manifest_path) {

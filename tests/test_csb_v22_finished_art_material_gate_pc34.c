@@ -45,6 +45,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 /* ── Test harness ───────────────────────────────────────────────── */
 
@@ -277,6 +280,46 @@ static void test_missing_manifest_file(void) {
     CHECK(csb_v22_famg_validate_manifest(NULL) == -1,
           "missing manifest validate -> -1");
 }
+
+#ifndef _WIN32
+static void test_logical_symlink_data_dir_prefers_local_assets(void) {
+    const char* root = "/tmp/scratch/csb-v22-famg-symlink";
+    const char* logical_data_dir =
+        "/tmp/scratch/csb-v22-famg-symlink/home/data/csb";
+    const char* physical_data_dir =
+        "/tmp/scratch/csb-v22-famg-symlink/external/csb";
+    char logical_parent[FSP_PATH_MAX];
+    char manifest_path[FSP_PATH_MAX];
+    char modern_dir[FSP_PATH_MAX];
+
+    system("rm -rf /tmp/scratch/csb-v22-famg-symlink");
+    CHECK(FSP_CreateDirectoryRecursive(physical_data_dir) == 1,
+          "created physical symlink target");
+    snprintf(logical_parent, sizeof(logical_parent), "%s/home/data", root);
+    CHECK(FSP_CreateDirectoryRecursive(logical_parent) == 1,
+          "created logical data parent");
+    CHECK(symlink(physical_data_dir, logical_data_dir) == 0,
+          "created logical CSB data symlink");
+    build_expected_manifest_path(manifest_path, sizeof(manifest_path),
+                                 logical_data_dir);
+    snprintf(modern_dir, sizeof(modern_dir), "%s", manifest_path);
+    {
+        char* slash = strrchr(modern_dir, '/');
+        CHECK(slash != NULL, "logical manifest has parent");
+        if (slash) {
+            *slash = '\0';
+            CHECK(FSP_CreateDirectoryRecursive(modern_dir) == 1,
+                  "created logical sibling assets directory");
+        }
+    }
+    CHECK(write_file(manifest_path, "{}") == 1,
+          "wrote logical sibling manifest");
+    csb_v22_famg_set_manifest_path(logical_data_dir);
+    CHECK(strcmp(csb_v22_famg_get_manifest_path(), manifest_path) == 0,
+          "symlinked data dir prefers logical sibling asset manifest");
+    system("rm -rf /tmp/scratch/csb-v22-famg-symlink");
+}
+#endif
 
 static void test_garbage_manifest(void) {
     const char* dataDir = "/tmp/scratch/csb-v22-famg-test/data/csb";
@@ -738,6 +781,9 @@ static void test_per_cell_routing(void) {
 int main(void) {
     test_unset_manifest_path();
     test_missing_manifest_file();
+#ifndef _WIN32
+    test_logical_symlink_data_dir_prefers_local_assets();
+#endif
     test_garbage_manifest();
     test_empty_manifest();
     test_placeholder_manifest();
