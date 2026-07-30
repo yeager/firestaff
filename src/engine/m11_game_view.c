@@ -295,13 +295,20 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
     for (i = 0U; i < sizeof(extra_door_ids) / sizeof(extra_door_ids[0]); ++i) {
         char destination[FSP_PATH_MAX];
         char virtual_path[ASSET_PATH_MAX];
+        size_t destination_length;
         if (!FSP_JoinPath(destination, sizeof(destination), cache_dir,
                           "door_shapes") ||
             !FSP_CreateDirectoryRecursive(destination) ||
             !FSP_JoinPath(destination, sizeof(destination), destination,
-                          extra_door_ids[i]) ||
-            strlcat(destination, ".png", sizeof(destination)) >=
-                sizeof(destination)) {
+                          extra_door_ids[i])) {
+            return 0;
+        }
+        destination_length = strlen(destination);
+        if (destination_length >= sizeof(destination) ||
+            snprintf(destination + destination_length,
+                     sizeof(destination) - destination_length,
+                     ".png") >=
+                (int)(sizeof(destination) - destination_length)) {
             return 0;
         }
         if (snprintf(virtual_path, sizeof(virtual_path), "%s::door_shapes/%s.png",

@@ -43812,6 +43812,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/firestaff_m11_input_scale_boundary
     target_include_directories(firestaff_m11_input_scale_boundary_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_link_libraries(firestaff_m11_input_scale_boundary_probe PRIVATE
+        SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(firestaff_m11_input_scale_boundary_probe PRIVATE -Wall -Wextra -O2)
     endif()
