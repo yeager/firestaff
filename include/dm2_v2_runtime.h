@@ -201,16 +201,17 @@ void dm2_v2_runtime_set_hud_enabled(int enhanced);
  * Phase 3 HUD — presentation-only; V1 game state unchanged. */
 DM2_V2_HudOverlay *dm2_v2_runtime_get_hud(void);
 
-/* dm2_v2_runtime_hud_render — render Phase 3 HUD overlay into framebuffer.
- * Called from the render pipeline after V1 viewport has been drawn.
- * When s_enhanced_hud=0, this is a no-op (V1 source-locked HUD intact).
+/* dm2_v2_runtime_hud_render — retired procedural Phase 3 HUD entry point.
+ * It is deliberately no-draw: it has no original GDAT fetch/palette binding.
+ * M11 renders authenticated `INTERFACE_GENERAL`/`CHAMPIONS` material through
+ * dm2_v2_hud_runtime_render() instead.
  *
  * fb:       320×200 VGA framebuffer (indexed colour, 1 byte/pixel)
  * stride:   bytes per row (typically 320 for VGA mode 13h)
  * h_res:   horizontal resolution (typically 320)
  *
  * Source: SKULL.ASM T560 (HUD rendering)
- *         SKULLWIN/SKWIN/c_gui_vp.cpp (DM2 UI chrome layout) */
+ *         SKWINSPX/src/v4/c_gui_vp.cpp (DM2 UI chrome layout) */
 void dm2_v2_runtime_hud_render(uint8_t *fb, int stride, int h_res);
 
 /* ── Phase 5: V1 Runtime Profile Binding (binding seam) ─────────── */

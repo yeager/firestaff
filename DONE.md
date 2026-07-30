@@ -44393,3 +44393,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   procedural HUD overlay. It now delegates only to the authenticated
   `INTERFACE_GENERAL`/`CHAMPIONS` GDAT path; manifest classification remains
   diagnostic-only and cannot create game pixels.
+- ✅ 2026-07-30 DM2 V2 direct-overlay gate: the older
+  `dm2_v2_runtime_hud_render()` API is now no-draw because it has no original
+  GDAT fetch/palette binding. This prevents direct callers from bypassing the
+  authenticated M11 HUD route with the retired procedural overlay.

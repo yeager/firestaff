@@ -215,7 +215,7 @@ int main(void) {
     for (int i = 0; i < (int)(sizeof(fb)/sizeof(fb[0])); i++) {
         if (fb[i] != 0) hud_pixels++;
     }
-    check("hud_render when enabled: pixels written", hud_pixels > 0);
+    check("retired runtime HUD path stays no-draw when enabled", hud_pixels == 0);
     check("hud direction=E after set", gh->compass.direction == 1);
     check("hud level=3/8 after set", gh->depth.current_level == 3 && gh->depth.max_level == 8);
     check("hud gold=5432 after set", gh->gold.party_gold == 5432);
