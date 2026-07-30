@@ -2,6 +2,7 @@
 #define FIRESTAFF_MAIN_LOOP_M11_H
 
 #include "menu_startup_m12.h"
+#include "gamepad_config_m12.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -120,6 +121,16 @@ int M11_MapSourcePointToPresentedForPresentation(int presentationMode,
                                                  int presentationHeight,
                                                  int* x,
                                                  int* y);
+
+/* Translate the launcher gamepad action vocabulary into the shared M11
+   input tokens.  The live SDL event path uses these tokens for every game;
+   CSB then consumes them through its source-backed COMMAND.C dispatcher. */
+M12_MenuInput M11_GamepadActionToMenuInput(M12_InputAction action,
+                                           int gameplayActive);
+M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
+                                         M12_AxisRole role,
+                                         int processedValue,
+                                         int gameplayActive);
 
 /* V1 original and V2.0 filtered both present the source-locked 320x200 glyph
    layer.  They must stay nearest-neighbor so small original glyphs such as DM1

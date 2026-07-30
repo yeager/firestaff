@@ -43694,6 +43694,30 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_gamepad_config_m12.c"
     )
 endif()
 
+# CSB consumes the common M11 gamepad tokens through its source-backed
+# COMMAND.C route. Keep the SDL default map -> M11 token bridge independently
+# testable, including gameplay/menu context and axis dead-zone behavior.
+if(BUILD_TESTING AND
+   EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_gamepad_csb_input_bridge.c")
+    add_executable(test_m11_gamepad_csb_input_bridge
+        tests/test_m11_gamepad_csb_input_bridge.c
+        src/engine/m11_game_input_mapping.c
+        src/shared/gamepad_config_m12.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_m11_gamepad_csb_input_bridge PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_link_libraries(test_m11_gamepad_csb_input_bridge PRIVATE SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m11_gamepad_csb_input_bridge PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME m11_gamepad_csb_input_bridge
+             COMMAND test_m11_gamepad_csb_input_bridge)
+    set_tests_properties(m11_gamepad_csb_input_bridge PROPERTIES
+        LABELS "csb;input;gamepad;steamdeck")
+endif()
+
 # M11 input scale boundary contract for the source-to-screen
 # direction. Pins the inverse helper
 # `M11_MapSourcePointToPresentedForPresentation()` (new in this

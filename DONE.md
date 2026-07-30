@@ -43183,3 +43183,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   full-page C002-C005 Entrance coverage, catching decoder-stride and blit
   placement regressions that could otherwise retain plausible colors.
   Verification: `csb_v1_title_entrance_visual_contract` PASS.
+
+- ✅ 2026-07-30 CSB controller bridge regression: extracted the shared SDL
+  gamepad action/axis translation into `m11_game_input_mapping.c` and added
+  a data-free CSB contract for the default map, menu/gameplay contexts, stick
+  directions, and dead-zone. This verifies that CSB receives the same M11
+  COMMAND.C input tokens as keyboard and pointer routes.

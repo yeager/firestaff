@@ -1585,6 +1585,11 @@ that its exact runtime path is not already source-locked and tested.
     turn animation as a post-composition viewport pan in M11. The source V1
     command, timing, collision and sensors remain unchanged. This closes the
     smooth-turn presentation subtask; broad controller/modal coverage remains.
+    2026-07-30: the SDL gamepad bridge now has a standalone CSB regression:
+    default D-pad, shoulders, face buttons, menu/gameplay translation, and
+    stick dead-zone resolve to the exact shared M11 tokens consumed by CSB's
+    GAMEBLOCK/COMMAND.C route. Controller remapping, modal focus and touch
+    coverage remain open.
 34. **CSB-EXPANSION-AND-CUSTOM-DUNGEONS:** Complete safe original-data handling
     for CSB expansion/custom dungeon package selection, admission, runtime,
     save namespace, and no-cross-game asset leakage.

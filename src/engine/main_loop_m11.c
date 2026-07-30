@@ -3693,66 +3693,6 @@ static M12_MenuInput m11_motion_input_from_scancode(SDL_Scancode scancode) {
     return m11_menu_input_for_m11_action(action);
 }
 
-M12_MenuInput M11_GamepadActionToMenuInput(M12_InputAction action,
-                                           int gameplayActive) {
-    switch (action) {
-        case M12_ACTION_MOVE_FORWARD:
-            return M12_MENU_INPUT_UP;
-        case M12_ACTION_MOVE_BACKWARD:
-            return M12_MENU_INPUT_DOWN;
-        case M12_ACTION_TURN_LEFT:
-            return gameplayActive ? M12_MENU_INPUT_TURN_LEFT : M12_MENU_INPUT_LEFT;
-        case M12_ACTION_TURN_RIGHT:
-            return gameplayActive ? M12_MENU_INPUT_TURN_RIGHT : M12_MENU_INPUT_RIGHT;
-        case M12_ACTION_STRAFE_LEFT:
-            return gameplayActive ? M12_MENU_INPUT_STRAFE_LEFT : M12_MENU_INPUT_LEFT;
-        case M12_ACTION_STRAFE_RIGHT:
-            return gameplayActive ? M12_MENU_INPUT_STRAFE_RIGHT : M12_MENU_INPUT_RIGHT;
-        case M12_ACTION_ACCEPT:
-            return M12_MENU_INPUT_ACCEPT;
-        case M12_ACTION_BACK:
-            return M12_MENU_INPUT_BACK;
-        case M12_ACTION_ACTION:
-            return M12_MENU_INPUT_ACTION;
-        case M12_ACTION_CYCLE_CHAMPION:
-            return M12_MENU_INPUT_CYCLE_CHAMPION;
-        case M12_ACTION_REST_TOGGLE:
-            return M12_MENU_INPUT_REST_TOGGLE;
-        case M12_ACTION_USE_STAIRS:
-            return M12_MENU_INPUT_USE_STAIRS;
-        case M12_ACTION_PICKUP_ITEM:
-            return M12_MENU_INPUT_PICKUP_ITEM;
-        case M12_ACTION_DROP_ITEM:
-            return M12_MENU_INPUT_DROP_ITEM;
-        case M12_ACTION_SPELL_RUNE_1:
-            return M12_MENU_INPUT_SPELL_RUNE_1;
-        case M12_ACTION_SPELL_RUNE_2:
-            return M12_MENU_INPUT_SPELL_RUNE_2;
-        case M12_ACTION_SPELL_RUNE_3:
-            return M12_MENU_INPUT_SPELL_RUNE_3;
-        case M12_ACTION_SPELL_RUNE_4:
-            return M12_MENU_INPUT_SPELL_RUNE_4;
-        case M12_ACTION_SPELL_RUNE_5:
-            return M12_MENU_INPUT_SPELL_RUNE_5;
-        case M12_ACTION_SPELL_RUNE_6:
-            return M12_MENU_INPUT_SPELL_RUNE_6;
-        case M12_ACTION_SPELL_CAST:
-            return M12_MENU_INPUT_SPELL_CAST;
-        case M12_ACTION_SPELL_CLEAR:
-            return M12_MENU_INPUT_SPELL_CLEAR;
-        case M12_ACTION_USE_ITEM:
-            return M12_MENU_INPUT_ACTION;
-        case M12_ACTION_MAP_TOGGLE:
-            return M12_MENU_INPUT_MAP_TOGGLE;
-        case M12_ACTION_INVENTORY_TOGGLE:
-            return M12_MENU_INPUT_INVENTORY_TOGGLE;
-        case M12_ACTION_QUICK_SAVE:
-            return M12_MENU_INPUT_SAVE_GAME;
-        default:
-            return M12_MENU_INPUT_NONE;
-    }
-}
-
 static M12_MenuInput m11_gamepad_button_input(const M12_GamepadMap* map,
                                               SDL_GamepadButton button,
                                               int gameplayActive) {
@@ -3761,40 +3701,6 @@ static M12_MenuInput m11_gamepad_button_input(const M12_GamepadMap* map,
     action = M12_GamepadMap_ActionForButton(map, button);
     if (action == M12_ACTION_COUNT) return M12_MENU_INPUT_NONE;
     return M11_GamepadActionToMenuInput(action, gameplayActive);
-}
-
-M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
-                                         M12_AxisRole role,
-                                         int processedValue,
-                                         int gameplayActive) {
-    if (processedValue > -16000 && processedValue < 16000) {
-        return M12_MENU_INPUT_NONE;
-    }
-
-    /* ReDMCSB COMMAND.C F0358/F0359 consumes the same source-locked
-     * navigation commands regardless of host device. Keep controller
-     * directions on the tokens used by keyboard and click-arrow receipts. */
-    if (role == M12_AXIS_ROLE_MOVE) {
-        if (axis == SDL_GAMEPAD_AXIS_LEFTY || axis == SDL_GAMEPAD_AXIS_RIGHTY) {
-            return processedValue < 0 ? M12_MENU_INPUT_UP : M12_MENU_INPUT_DOWN;
-        }
-        if (axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_RIGHTX) {
-            if (gameplayActive) {
-                return processedValue < 0 ? M12_MENU_INPUT_STRAFE_LEFT
-                                          : M12_MENU_INPUT_STRAFE_RIGHT;
-            }
-            return processedValue < 0 ? M12_MENU_INPUT_LEFT : M12_MENU_INPUT_RIGHT;
-        }
-    } else if (role == M12_AXIS_ROLE_TURN) {
-        if (axis == SDL_GAMEPAD_AXIS_LEFTX || axis == SDL_GAMEPAD_AXIS_RIGHTX) {
-            if (gameplayActive) {
-                return processedValue < 0 ? M12_MENU_INPUT_TURN_LEFT
-                                          : M12_MENU_INPUT_TURN_RIGHT;
-            }
-            return processedValue < 0 ? M12_MENU_INPUT_LEFT : M12_MENU_INPUT_RIGHT;
-        }
-    }
-    return M12_MENU_INPUT_NONE;
 }
 
 static M12_MenuInput m11_gamepad_axis_input(const M12_GamepadMap* map,
