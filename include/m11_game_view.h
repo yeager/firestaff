@@ -1716,6 +1716,15 @@ int M11_GameView_CSBPresentedFrameMatchesCurrentSource(
     int width,
     int height,
     int specialPalette);
+
+/* Validates a normal-palette CSB runtime page without rebuilding startup
+ * receipts. The F0128 base must come from the current verified package
+ * session; later source-owned object passes may change its final pixels. */
+int M11_GameView_CSBNormalRuntimeFrameHasCurrentSourceReceipt(
+    const M11_GameViewState* state,
+    const unsigned char* indexedPixels,
+    int width,
+    int height);
 int M11_GameView_BindCSBDSASaveRuntimeHandoff(
     M11_GameViewState *state,
     const CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 *receipt);

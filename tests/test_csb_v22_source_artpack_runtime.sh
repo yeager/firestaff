@@ -126,6 +126,7 @@ HOME="$test_home" \
 SDL_VIDEODRIVER=dummy \
 FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_capture_dir" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$runtime_capture_dir/presented" \
+FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$runtime_capture_dir/csb-presented-source" \
 "$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v22 \
     --boot-probe --width 960 --height 600 --scale-mode 4 \
@@ -139,6 +140,7 @@ HOME="$test_home" \
 SDL_VIDEODRIVER=dummy \
 FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$v1_runtime_capture_dir" \
 FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$v1_runtime_capture_dir/presented" \
+FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$v1_runtime_capture_dir/csb-presented-source" \
 "$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v1 \
     --boot-probe --width 960 --height 600 --scale-mode 4 \
@@ -184,12 +186,24 @@ if [ "$runtime_capture_count" -ne 1 ] ||
     exit 1
 fi
 
+if ! grep -Fq 'CSB PRESENTED RUNTIME CAPTURE:' "$output"; then
+    cat "$output" >&2
+    echo "FAIL: CSB V2.2 did not capture the authenticated normal runtime page" >&2
+    exit 1
+fi
+
 v1_runtime_capture_count="$(find "$v1_runtime_capture_dir" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"
 v1_runtime_presented_capture_count="$(find "$v1_runtime_capture_dir/presented" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"
 if [ "$v1_runtime_capture_count" -ne 1 ] ||
    [ "$v1_runtime_presented_capture_count" -ne 1 ]; then
     find "$v1_runtime_capture_dir" -maxdepth 2 -type f -print >&2 || true
     echo "FAIL: CSB V1 baseline did not capture the terminal runtime frame" >&2
+    exit 1
+fi
+
+if ! grep -Fq 'CSB PRESENTED RUNTIME CAPTURE:' "$v1_output"; then
+    cat "$v1_output" >&2
+    echo "FAIL: CSB V1 did not capture the authenticated normal runtime page" >&2
     exit 1
 fi
 

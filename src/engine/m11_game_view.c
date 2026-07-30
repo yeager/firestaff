@@ -16359,6 +16359,35 @@ int M11_GameView_CSBPresentedFrameMatchesCurrentSource(
         specialPalette);
 }
 
+int M11_GameView_CSBNormalRuntimeFrameHasCurrentSourceReceipt(
+    const M11_GameViewState* state,
+    const unsigned char* indexedPixels,
+    int width,
+    int height)
+{
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    /* Startup palette metadata may remain available after its final frame.
+     * Runtime ownership is instead authenticated by the completed F0128
+     * receipt created in the same frame that produced these indexed pixels. */
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !indexedPixels || width < 320 || height < 200 ||
+        !state->csbStartupRuntimeAssetSession ||
+        !m11_csb_startup_package_identity_current(state) ||
+        !state->csbState.runtime_viewport_source_session_ready ||
+        !state->csbState.runtime_viewport_source_session_generation ||
+        !state->csbState.runtime_viewport_pixel_hash) {
+        return 0;
+    }
+    session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    if (!session->valid || !session->real_asset_matched ||
+        session->generation !=
+            state->csbState.runtime_viewport_source_session_generation) {
+        return 0;
+    }
+    return state->csbState.runtime_viewport_source_tick != 0u;
+}
+
 static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
                                            const char* savePath) {
     Nexus_V1_LauncherResumeReceipt receipt;

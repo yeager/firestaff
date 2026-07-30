@@ -612,6 +612,28 @@ static void m11_capture_csb_presented_source_phase(int special_palette)
             special_palette, output_path);
 }
 
+/* The normal game page has no TITLE/ENTRANCE palette identifier. It is still
+ * captured only after M11 has authenticated the completed source-owned F0128
+ * aperture for the current package session. */
+static void m11_capture_csb_presented_runtime_source(void)
+{
+    const char *capture_dir = getenv("FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR");
+    static int captured_runtime;
+    char output_path[1024];
+
+    if (captured_runtime || !capture_dir || !capture_dir[0]) {
+        return;
+    }
+    if (!M11_Screenshot_CapturePresentedRGBA(capture_dir, output_path,
+                                              (int)sizeof(output_path))) {
+        fprintf(stderr, "firestaff: CSB runtime presented capture failed: %s\n",
+                capture_dir);
+        return;
+    }
+    captured_runtime = 1;
+    fprintf(stderr, "CSB PRESENTED RUNTIME CAPTURE: %s\n", output_path);
+}
+
 /* CSB V2.0 has two source-preserving presentation passes: indexed cleanup
  * happens before palette conversion in m11_present_game_frame(), while CRT
  * scanlines operate on the final RGBA surface. Keep the second pass here,
@@ -725,16 +747,21 @@ static int m11_present_game_frame_and_publish_startup_capture(
     }
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         source_frame && presented_frame && presented_rgba && presented_width > 0 &&
-        presented_height > 0 && csb_source_output_matches) {
-        M11_GameView_RecordCSBPresentedIndexedFrame(
-            (M11_GameViewState *)gameView,
-            source_frame,
-            M11_FB_WIDTH,
-            M11_FB_HEIGHT,
-            m11_running_from_macos_app_bundle(),
-            mac_window_capture_ready
-        );
-        m11_capture_csb_presented_source_phase(csb_special_palette);
+        presented_height > 0) {
+        if (csb_source_output_matches) {
+            M11_GameView_RecordCSBPresentedIndexedFrame(
+                (M11_GameViewState *)gameView,
+                source_frame,
+                M11_FB_WIDTH,
+                M11_FB_HEIGHT,
+                m11_running_from_macos_app_bundle(),
+                mac_window_capture_ready
+            );
+            m11_capture_csb_presented_source_phase(csb_special_palette);
+        } else if (M11_GameView_CSBNormalRuntimeFrameHasCurrentSourceReceipt(
+                       gameView, source_frame, M11_FB_WIDTH, M11_FB_HEIGHT)) {
+            m11_capture_csb_presented_runtime_source();
+        }
     }
     m11_publish_dm1_hoc_presented_capture_to_m12(gameView, menuState);
     return 1;

@@ -43216,3 +43216,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   it no longer replays an overlay after composition. Verification: 112/112
   CSB CTests, including `csb_v22_inplace_draw_pc34`,
   `csb_v22_inplace_route_pc34`, and `csb_v22_source_artpack_runtime`.
+
+- ✅ 2026-07-30 CSB normal runtime presented capture: the opt-in capture path
+  now writes one normal-palette page only after the current verified package
+  session and completed F0128 source receipt agree. It deliberately permits
+  later source-owned object passes to change the final aperture rather than
+  requiring a stale base-raster hash. Verification:
+  `csb_v22_source_artpack_runtime` captures the authenticated runtime page in
+  both V1 and V2.2.

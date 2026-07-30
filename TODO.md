@@ -13862,9 +13862,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       against the hash-verified PC3.4 package with
       `FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR`, emitted four actual presented
       RGBA frames for C001 PRESENTS and the distinct CHAOS/STRIKES/Entrance
-      palette phases. Remaining work is packaged `.app` capture, terminal
-      C017/C040 normal-palette app capture, and broader original-presentation
-      comparison.
+      palette phases. The same capture path now admits one normal-palette
+      runtime page only after the current source package/session and completed
+      F0128 receipt agree; later source-owned object passes are allowed to
+      alter the final aperture. Remaining work is packaged `.app` capture and
+      broader original-presentation comparison.
     - 2026-07-15 HUD text ownership update: CSBWin `Timer.cpp::ProcessTT_OPENROOM` now admits its one source-defined party-square DB2 path. It records only a newly visible, sole `DUNGEON.DAT` TextString through ReDMCSB `DUNGEON.C F0168`; M11 clears C015 with `TEXT.C F0049` then draws that receipt with the loaded original font. Generic `messageLog`, cached host mirrors, wrapping, and missing/malformed source data remain no-draw. Remaining work is the wider authenticated QuePrintLines queue, multi-line/scroll ownership, and real CSB capture.
     - 2026-07-15 movement-arrow ownership update: CSB now consumes the verified C013 panel unchanged. M11's hatch/cyan keyboard feedback has no ReDMCSB/CSBWin framebuffer proof and is suppressed for CSB. A genuine source-owned pressed-arrow state is required before any CSB overlay may alter C013.
     - 2026-07-15 champion-icon ownership update: CSB C113..C116 now require the complete real C028 four-frame strip (76x14). Missing, malformed, or detached C028 clears the icon zones instead of retaining a host-generated color-only party marker. Further CSB HUD work still needs authenticated dynamic status/name/bar state.
