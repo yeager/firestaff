@@ -44348,3 +44348,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   handoff/suppression before `GAME_LOAD`, without inventing party portraits.
   The real nine-command HUD proof remains a separate post-`GAME_LOAD`
   verification using PC-English `GRAPHICS.DAT`.
+- ✅ 2026-07-30 DM2 M11 New Game source gate: M11 no longer calls the
+  save-fixture `dm2_v1_session_new()` helper after New Game. Per
+  `SKWINSPX/src/v4/skcore.cpp::SHOW_MENU_SCREEN`, it keeps the title/menu
+  active and reports `DM2 GAME_LOAD DATA REQUIRED` until original
+  `GAME_LOAD` data can be handed off; no canned party, gold or map pose
+  reaches runtime.

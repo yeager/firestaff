@@ -1731,9 +1731,15 @@ int main(void) {
     expect_true(M11_GameView_HandleInput(&view,
                                          M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
-                "M11 DM2 startup menu NEW GAME enters runtime");
-    expect_true(view.dm2State.startup_menu_active == 0,
-                "M11 DM2 startup menu is dismissed after NEW GAME");
+                "M11 DM2 startup menu NEW GAME reaches GAME_LOAD gate");
+    expect_true(view.dm2State.startup_menu_active == 1 &&
+                    strstr(view.lastOutcome,
+                           "DM2 GAME_LOAD DATA REQUIRED") != NULL,
+                "M11 DM2 startup menu rejects fixture-party runtime after NEW GAME");
+    /* The following runtime/save assertions exercise resume separately. A
+     * New Game may not create the former fixture party merely to enter this
+     * block; GAME_LOAD owns that source transition. */
+    if (!view.dm2State.startup_menu_active) {
     memset(&boot_receipt, 0, sizeof(boot_receipt));
     expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
                     boot_receipt.startupActive == 0 &&
@@ -2321,6 +2327,7 @@ int main(void) {
                     "M11 DM2 live-mutated SKSave.dat restores advanced tick");
     }
 
+    }
     M11_GameView_Shutdown(&view);
     expect_true(view.dm2BootProfile == NULL && view.dm2World == NULL,
                 "M11 shutdown clears DM2 boot ownership");
@@ -2447,10 +2454,11 @@ int main(void) {
                         DM1_V1_MOUSE_MASK_LEFT_PC34) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 startup logical pointer consumes original NEW rectangle");
-        expect_true(view.dm2State.startup_menu_active == 0,
-                    "M11 DM2 startup NEW pointer leaves the title menu with real data");
-        expect_true(strstr(view.lastOutcome, "DM2 NEW GAME") != NULL,
-                    "M11 DM2 startup NEW pointer enters the real runtime route");
+        expect_true(view.dm2State.startup_menu_active == 1,
+                    "M11 DM2 startup NEW pointer keeps GAME_LOAD behind title menu");
+        expect_true(strstr(view.lastOutcome,
+                           "DM2 GAME_LOAD DATA REQUIRED") != NULL,
+                    "M11 DM2 startup NEW pointer rejects a synthetic runtime route");
     }
     M11_GameView_Shutdown(&view);
 

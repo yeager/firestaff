@@ -1254,16 +1254,19 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
     route = &action_receipt->host_menu_route;
     if (route->valid) {
         if (route->status_scope &&
-            strcmp(route->status_scope, "GAME_LOAD") == 0 &&
-            state->dm2BootProfile) {
-            DM2_V1_SessionState session;
-            dm2_v1_session_new(&session);
-            if (m11_dm2_startup_apply_session(state, &session)) {
-                state->dm2State.startup_menu_active = 0;
-                state->dm2State.startup_title_animation_tick = 48;
-                m11_set_status(state, "RUNTIME", "DM2 NEW GAME");
-                return M11_GAME_INPUT_REDRAW;
-            }
+            strcmp(route->status_scope, "GAME_LOAD") == 0) {
+            /* SKWINSPX SkWinCore.cpp::SHOW_MENU_SCREEN returns to INIT,
+             * which calls GAME_LOAD()/LOAD_NEW_DUNGEON.  Do not replace that
+             * source-owned load with dm2_v1_session_new(): its canned party,
+             * gold and map pose are a save-fixture helper, not DM2 data.
+             * Until GAME_LOAD can hand off verified original records, retain
+             * the title-menu boundary and report the required data path. */
+            state->dm2State.startup_menu_active = 1;
+            m11_set_status(state,
+                           route->status_scope,
+                           route->status ? route->status
+                                         : "DM2 GAME_LOAD DATA REQUIRED");
+            return M11_GAME_INPUT_REDRAW;
         }
         if (route->close_startup_menu) {
             state->dm2State.startup_menu_active = 0;
