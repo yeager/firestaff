@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.184
+
+- Start menu: prevent a transient macOS folder-dialog `.` token from becoming
+  the visible, saved, or runtime game-data directory.
+- CSB: validate the terminal big-endian checksum on source CSBWin saved
+  dungeon tails before accepting their parsed prefix.
+
 # Firestaff v3.0.183
 
 - CSB: corrected the real Entrance C28/G8174 palette, removing green edge
