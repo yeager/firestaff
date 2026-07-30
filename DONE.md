@@ -51,6 +51,13 @@
   Verification: an exact palette-index in-place regression and the complete
   112-test CSB CTest lane pass.
 
+- ✅ 2026-07-30 CSB full regression receipt: `ctest -L csb` passes all
+  113 registered CSB tests in the Ninja build. This includes V1 startup,
+  HUD, viewport, save, DSA and audio boundaries, plus the 51-test V2.x
+  intersection. It verifies implemented routes only; incomplete F0128
+  material families and the full CSBWin spell/save owners remain open in
+  TODO.
+
 - ✅ 2026-07-30 Start-menu data-folder persistence: `FIRESTAFF_DATA=.` is
   now treated as the invalid macOS dialog/current-directory token at the
   configuration boundary. The launcher keeps a physical selected folder and

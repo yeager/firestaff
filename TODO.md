@@ -55,7 +55,7 @@ an integration build pass.
   ReDMCSB dungeon brightness row. The old generic EGA-cube conversion remains
   only as a data-free fallback; live CSB door swaps preserve the original
   palette family. The focused regression proves an exact palette-index match,
-  and the complete 112-test CSB lane passes. This does not admit the remaining
+  and the complete 113-test CSB lane passes. This does not admit the remaining
   unbound wall, floor, ceiling, thing or field material families.
 
 - **CSB-V1-STARTUP-SOURCE-CADENCE:** Closed 2026-07-30. M11 no longer
@@ -204,7 +204,7 @@ an integration build pass.
   motion/lighting, and V2.2 source-artpack admission, startup isolation and
   runtime HUD ownership. This proves the implemented V2.x feature surface,
   not the still-unadmitted F0128 material families.
-  2026-07-30 current-main verification: `ctest -L csb` passes all 112
+  2026-07-30 current-main verification: `ctest -L csb` passes all 113
   registered CSB regressions, including the 51-test V2.x intersection. This
   is a regression receipt for the implemented paths only; unreconciled
   F0128 material families and the CSBWin spell owner remain open.
@@ -256,7 +256,7 @@ an integration build pass.
   direct `csb_v21_presented_startup_capture` and
   `csb_v22_source_artpack_runtime` PASS, proving equal V1/V2 source pages
   and a changed final V2 presentation. The complete `ctest -L csb` lane
-  also passes 112/112 after the source-page fix.
+  also passes 113/113 after the source-page fix.
 
 - **CSB-V21-LIVE-UPSCALE-CONSUMPTION:** Closed 2026-07-29. The F10 CSB
   filter page now exposes the actual CSB V2.1 EPX scale (1x/2x/4x) and
