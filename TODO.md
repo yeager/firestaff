@@ -17604,9 +17604,17 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   C346/C026/C017/C040/C027 material gates now use resident original assets
   rather than the broader launcher-completeness latch. The champion top-row
   source plan, live action/spell material requirements, and PC34 resume
-  adoption are now individually source-gated and tested. Remaining work is
-  production M11 consumption of the new top-row plan, full original-save
-  corpus coverage, and the remaining action/spell and HoC frame-path work.
+  adoption are now individually source-gated and tested. The production M11
+  consumer now draws the source-validated top row; remaining work is full
+  original-save corpus coverage, original-vs-Firestaff capture, and the
+  remaining action/spell and HoC frame-path work.
+  - 2026-07-30 status correction: `m11_draw_dm1_v1_top_row_receipt()`
+    consumes the atomic C008/C028/C033-C035 receipt in the live framebuffer,
+    including original M653 champion names, C187 bars, C211/C212 hand zones,
+    C015/C016 damage overlays, and capture-route evidence. The focused M11
+    consumption/host-render/runtime-bridge tests and the local-PC34 geometry
+    probe pass. Do not reopen a second top-row consumption implementation;
+    only paired original capture remains.
   - 2026-07-22 update: the top-row plan now has a dedicated original-asset
     receipt that resolves and validates C008/C028/C033/C034/C035 directly
     from the live M11 GRAPHICS.DAT loader. It fails closed on index, byte, or

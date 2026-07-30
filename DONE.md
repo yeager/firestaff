@@ -44086,3 +44086,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   restoring its four champions, party position `(16,14,2)`, and source tick
   `428`. `--save` without `--game` is rejected, and a missing save makes the
   direct launch fail rather than falling back to a new or synthetic game.
+- ✅ 2026-07-30 DM1 top-row M11 consumption audit: verified that the
+  production `m11_draw_dm1_v1_top_row_receipt()` already consumes the
+  source-bound C008/C028/C033-C035 atomic plan into the live framebuffer,
+  with M653 names, status bars, hand icons and pending-damage overlays.
+  Focused top-row host-consumption, M11-consumption, host-render and runtime
+  bridge CTests pass, and the installed-PC34 geometry probe passes for all
+  four champion slots. The remaining task is original paired capture, not
+  another renderer implementation.
