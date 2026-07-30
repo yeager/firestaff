@@ -675,6 +675,11 @@ static uint16_t csb_v1_graphics_read_le16(const uint8_t *bytes)
     return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
 }
 
+static uint16_t csb_v1_graphics_read_be16(const uint8_t *bytes)
+{
+    return (uint16_t)(((uint16_t)bytes[0] << 8) | (uint16_t)bytes[1]);
+}
+
 static int csb_v1_graphics_read_bits(CSB_V1_GraphicsBitReader *br,
                                      int bit_count,
                                      uint16_t *out_code)
@@ -879,7 +884,12 @@ static int csb_v1_graphics_decode_entry_m564(const uint8_t *file_bytes,
         return -1;
     }
     *out_size = 0u;
-    signature = csb_v1_graphics_read_le16(file_bytes);
+    /* ReDMCSB MEMORY.C F0479 reads the new-file marker as the literal
+     * 0x8001, then reads the PC count and size tables in little-endian
+     * order. The PC3.4 corpus consequently starts with bytes 80 01 ED 02:
+     * interpreting the marker as a little-endian count turns it into 0x0180
+     * and silently rejects real C560/C564 material. */
+    signature = csb_v1_graphics_read_be16(file_bytes);
     count = csb_v1_graphics_read_le16(file_bytes + 2u);
     if ((signature & 0x8000u) == 0u ||
         count <= CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX) {

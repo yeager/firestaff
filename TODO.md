@@ -60,15 +60,14 @@
 
 ## Active DM1/CSB Symbol Queue
 
-- **CSB-V1-GRAPHIC560-OLD-HEADER-MATERIAL-BINDING:** The recognised PC 3.4
-  CSB `GRAPHICS.DAT` corpus (`61fbfd56887c94adc26888a9491c6611`) begins with
-  the legacy `0x0180` header, but `csb_v1_boot_load_object_names_m564()`
-  currently admits only the newer `0x8000` header path. Recover one bounded,
-  source-locked old-header reader for raw C560 global-variable material,
-  validate its byte layout against ReDMCSB `STARTUP2.C:574`, `MENU.C:20-27`
-  and `MEMORY.C F0479`, then bind M11 action sets/names only after the live
-  CSB session carries that receipt. Do not substitute DM1's compiled table or
-  invent a byte layout while the old-header route remains unproven.
+- **CSB-V1-GRAPHIC560-MATERIAL-BINDING:** The recognised PC 3.4 CSB
+  `GRAPHICS.DAT` corpus (`61fbfd56887c94adc26888a9491c6611`) uses F0479's
+  mixed-endian new-file header: literal marker bytes `80 01` (`0x8001`), then
+  little-endian count/size tables. The C564 reader now accepts that marker;
+  recover C560's bounded raw global-variable layout, validate it against
+  ReDMCSB `STARTUP2.C:574`, `MENU.C:20-27` and `MEMORY.C F0479`, then bind
+  M11 action sets/names only after the live CSB session carries that receipt.
+  Do not substitute DM1's compiled table or invent a byte layout.
 
 - **DM1-V1-SAVED-PORTRAIT-INVENTORY-ORDER:** Closed 2026-07-30. The normal
   C017 inventory path now restores F0435's saved M516 32x29 portrait only

@@ -502,7 +502,10 @@ static int write_synthetic_graphics_dat_with_m564(const char *path)
         free(compressed);
         return -1;
     }
-    write_le16(file_bytes, 0u, 0x8001u);
+    /* F0479's new-file marker is the literal big-endian byte pair 80 01;
+     * subsequent PC size tables remain little-endian. */
+    file_bytes[0] = 0x80u;
+    file_bytes[1] = 0x01u;
     write_le16(file_bytes, 2u, count);
     write_le16(file_bytes, 4u + TEST_CSB_OBJECT_NAMES_INDEX * 2u,
                (uint16_t)compressed_size);
