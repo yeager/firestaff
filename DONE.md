@@ -44141,6 +44141,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   diagnostics. Verification: `test_csb_v1_viewport_phase3_rendering` (2649
   assertions) and `test_m11_csb_leader_hand_no_dm1_fallback` pass.
 
+- ✅ Hardened the same source-bound F0115 group path for malformed C04 data:
+  an undecodable creature type now remains no-draw instead of reaching the
+  diagnostic group cross. The marker remains available only to data-free
+  geometry callers. Verification: `test_csb_v1_viewport_phase3_rendering`
+  passes 2649 assertions.
+
 # CSB V2.x verification (2026-07-30)
 
 - ✅ Rebuilt current `main` with Ninja and ran the registered CSB V2.x lane

@@ -3355,7 +3355,8 @@ static void csb_v1_viewport_draw_runtime_thing_overlays(
                                creature_type)) {
                     ++cfg->runtime_group_marker_drawn_count;
                 }
-            } else if (csb_v1_viewport_draw_runtime_group_marker(
+            } else if (!cfg->group_sprite_drawer_source_bound &&
+                       csb_v1_viewport_draw_runtime_group_marker(
                            cfg->viewport_pixels,
                            cfg->viewport_stride,
                            screen_height,

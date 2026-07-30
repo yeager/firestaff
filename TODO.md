@@ -2176,6 +2176,9 @@ that its exact runtime path is not already source-locked and tested.
    `T0115015_DrawProjectileAsObject` and selects the G0209/M612 native object
    bitmap in the C2900 lane. The production route now leaves that cell
    unchanged; binding this native projection remains open.
+   Source-bound group rendering also rejects an undecodable creature type
+   without drawing the former diagnostic cross; the original F0115 path has
+   no marker fallback for malformed C04 data.
 29. **CSB-SENSOR-THING-RUNTIME:** Complete real Thing chains, generic object
     sensors, remote actions, pits, teleporters, stairs, door and actuator
     side effects in the CSB live runtime.
