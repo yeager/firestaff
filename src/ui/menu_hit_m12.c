@@ -232,6 +232,17 @@ static int m12_hit_is_cycle_plus(int rx, int rw, int x) {
     return x >= split;
 }
 
+/* A settings row has a descriptive left half and an explicit value control
+ * on the right.  The old hit map changed a value even when the label itself
+ * was clicked, while displaying no affordance for that behaviour. */
+static int m12_hit_settings_cycle_delta(int rx, int rw, int x, int* outDelta) {
+    int valueStart = rx + (rw * M12_HIT_CYCLE_SPLIT_NUM) / M12_HIT_CYCLE_SPLIT_DEN;
+    int valueMid = valueStart + (rx + rw - valueStart) / 2;
+    if (x < valueStart) return 0;
+    if (outDelta) *outDelta = x < valueMid ? -1 : 1;
+    return 1;
+}
+
 static int m12_hit_language_popup_item(int x, int y) {
     int count = M12_StartupMenu_GetLanguageCount();
     int i;
@@ -349,10 +360,9 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                         hit.kind = M12_HIT_SETTINGS_CYCLE;
                         hit.index = rowIndex;
                         hit.delta = 1;
-                    } else if (m12_hit_is_cycle_plus(rx, rw, x)) {
+                    } else if (m12_hit_settings_cycle_delta(rx, rw, x, &hit.delta)) {
                         hit.kind = M12_HIT_SETTINGS_CYCLE;
                         hit.index = rowIndex;
-                        hit.delta = 1;
                     } else {
                         /* Left half just selects the row */
                         hit.kind = M12_HIT_SETTINGS_ROW;
@@ -498,6 +508,10 @@ int M12_ModernMenu_ApplyHit(M12_StartupMenuState* state,
                 return 1;
             }
             state->languagePopupOpen = 0;
+            if (hit.kind == M12_HIT_SETTINGS_ROW) {
+                /* Selecting a label is intentionally non-destructive. */
+                return 1;
+            }
             /* Cycle the value of the selected row (not the tab
              * strip — that's M12_HIT_SETTINGS_TAB).  v2.7.15
              * split tab cycling (LEFT/RIGHT) from value cycling

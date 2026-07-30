@@ -43747,3 +43747,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   resolves V2.2 to V2.1 rather than drawing guessed modern pixels. V1,
   V2.0, V2.1, settings, filter, input, HUD, title, Entrance and the admitted
   V2.2 command boundaries are all covered by this lane.
+- ✅ 2026-07-30 M12 startup-settings interaction cleanup: the modern launcher
+  now gives every ordinary settings value explicit `<` / `>` controls; a
+  label click selects without silently changing its value. Long labels and
+  values are fitted inside their own half of the row. `FPS OVERLAY` is now a
+  visible, persisted Graphics setting and feeds the existing M11 runtime
+  overlay. `menu_hit_settings_tab_m12` covers the new row and both pointer
+  directions; the focused M12 suite passes 10/10.

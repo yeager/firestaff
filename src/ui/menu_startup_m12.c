@@ -148,6 +148,8 @@ enum {
     M12_SETTINGS_ROW_ARTPACK,
     M12_SETTINGS_ROW_UNICODE_FONT_PATH,
     M12_SETTINGS_ROW_ARTPACK_PATH,
+    /* Kept at the end so old persisted row identities stay stable. */
+    M12_SETTINGS_ROW_FPS_OVERLAY,
     M12_SETTINGS_ROW_COUNT
 };
 
@@ -183,6 +185,8 @@ _Static_assert(M12_STARTUP_SETTINGS_ROW_UNICODE_FONT == M12_SETTINGS_ROW_UNICODE
                "settings row contract: unicode font");
 _Static_assert(M12_STARTUP_SETTINGS_ROW_ARTPACK == M12_SETTINGS_ROW_ARTPACK,
                "settings row contract: artpack");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_FPS_OVERLAY == M12_SETTINGS_ROW_FPS_OVERLAY,
+               "settings row contract: fps overlay");
 
 enum {
     M12_MUSEUM_CATEGORY_DM1 = 0,
@@ -1094,6 +1098,7 @@ const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount) {
         M12_SETTINGS_ROW_INTEGER_SCALING,
         M12_SETTINGS_ROW_SCALING_FILTER,
         M12_SETTINGS_ROW_VSYNC,
+        M12_SETTINGS_ROW_FPS_OVERLAY,
         M12_SETTINGS_ROW_VIEWPORT_STYLE,
         M12_SETTINGS_ROW_SMOOTH_TURN_PAN
     };
@@ -4417,6 +4422,7 @@ const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
         case M12_SETTINGS_ROW_INTEGER_SCALING: return m12_tr(state, "PIXEL SNAP");
         case M12_SETTINGS_ROW_SCALING_FILTER: return m12_tr(state, "FILTER");
         case M12_SETTINGS_ROW_VSYNC: return m12_tr(state, "VSYNC");
+        case M12_SETTINGS_ROW_FPS_OVERLAY: return m12_tr(state, "FPS OVERLAY");
         case M12_SETTINGS_ROW_VIEWPORT_STYLE: return m12_tr(state, "VIEWPORT STYLE");
         case M12_SETTINGS_ROW_INPUT_MODE: return m12_tr(state, "INPUT MODE");
         case M12_SETTINGS_ROW_RESERVED_WAS: return m12_text(state, M12_TEXT_EYEBROW);
@@ -4482,6 +4488,8 @@ const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
         case M12_SETTINGS_ROW_INTEGER_SCALING: return m12_settings_value_integer_scaling(state);
         case M12_SETTINGS_ROW_SCALING_FILTER: return m12_settings_value_scaling_filter(state);
         case M12_SETTINGS_ROW_VSYNC: return m12_settings_value_vsync(state);
+        case M12_SETTINGS_ROW_FPS_OVERLAY:
+            return m12_tr(state, g_toggleModes[state && state->settings.showFpsOverlay ? 1 : 0]);
         case M12_SETTINGS_ROW_VIEWPORT_STYLE: return m12_settings_value_viewport_style(state);
         case M12_SETTINGS_ROW_INPUT_MODE: return m12_settings_value_input_mode(state);
         case M12_SETTINGS_ROW_RESERVED_WAS: return m12_text(state, M12_TEXT_EYEBROW);
@@ -4972,6 +4980,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
         case M12_SETTINGS_ROW_VSYNC:
             state->settings.vsyncIndex = m12_cycle_index(
                 state->settings.vsyncIndex,
+                delta,
+                (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_FPS_OVERLAY:
+            state->settings.showFpsOverlay = m12_cycle_index(
+                state->settings.showFpsOverlay ? 1 : 0,
                 delta,
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
             break;

@@ -85,7 +85,7 @@ int main(void) {
         int rowCount = 0;
         state.settingsTabIndex = tab;
         rows = M12_StartupMenu_GetSettingsRowsForTab(tab, &rowCount);
-        CHECK(rows != NULL && rowCount > 0 && rowCount <= 11,
+        CHECK(rows != NULL && rowCount > 0 && rowCount <= 12,
               "settings tab publishes a bounded clickable row catalogue");
         for (int row = 0; rows && row < rowCount; ++row) {
             const int useTwoColumns = rowCount > 8;
@@ -166,6 +166,32 @@ int main(void) {
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     CHECK(state.settings.retroAchievementsEnabled == 1,
           "settings keyboard ACCEPT toggles RetroAchievements");
+
+    /* Settings labels select without mutating; explicit value controls on
+     * the right provide deterministic decrement/increment hit targets. */
+    state.settingsTabIndex = M12_SETTINGS_TAB_GRAPHICS;
+    state.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_GRAPHICS;
+    state.settings.showFpsOverlay = 0;
+    hit = M12_ModernMenu_HitTest(&state, 1000, settingsRowY0 + 70 * 3 + 25);
+    CHECK(hit.kind == M12_HIT_SETTINGS_ROW &&
+          hit.index == M12_STARTUP_SETTINGS_ROW_FPS_OVERLAY,
+          "FPS overlay label is a non-destructive settings selection");
+    (void)M12_ModernMenu_ApplyHit(&state, hit);
+    CHECK(state.settings.showFpsOverlay == 0,
+          "FPS overlay label click does not alter its value");
+    hit = M12_ModernMenu_HitTest(&state, 1450, settingsRowY0 + 70 * 3 + 25);
+    CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.delta == -1 &&
+          hit.index == M12_STARTUP_SETTINGS_ROW_FPS_OVERLAY,
+          "FPS overlay left control is a decrement target");
+    hit = M12_ModernMenu_HitTest(&state, 1650, settingsRowY0 + 70 * 3 + 25);
+    CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.delta == 1 &&
+          hit.index == M12_STARTUP_SETTINGS_ROW_FPS_OVERLAY,
+          "FPS overlay right control is an increment target");
+    (void)M12_ModernMenu_ApplyHit(&state, hit);
+    CHECK(state.settings.showFpsOverlay == 1,
+          "FPS overlay setting persists through the shared menu state");
+
+    state.settingsTabIndex = M12_SETTINGS_TAB_ONLINE;
 
     hit = M12_ModernMenu_HitTest(&state,
                                  settingsRowXRight,

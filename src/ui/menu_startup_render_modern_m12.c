@@ -1527,9 +1527,19 @@ static void draw_setting_row(M12_ModernCanvas* c, int x, int y, int w,
     stroke_rounded_rect(c, x, y, w, M12_MENU_ROW_MODERN_SETTINGS_HEIGHT, 10, edge);
     ModernTextStyle L = text_style_make(2, COLOR_TEXT_DIM(), 1);
     ModernTextStyle V = text_style_make(2, selected ? COLOR_ACCENT_HI() : COLOR_TEXT(), 1);
-    draw_text(c, x + 20, y + 14, label, &L);
-    int vw = text_width_px(value, &V);
-    draw_text(c, x + w - 20 - vw, y + 14, value, &V);
+    const int valueStart = x + (w * 55) / 100;
+    const int arrowW = 30;
+    const int valueX = valueStart + arrowW;
+    const int valueW = x + w - 20 - arrowW - valueX;
+    ModernTextStyle arrow = text_style_make(2,
+        selected ? COLOR_ACCENT_HI() : COLOR_TEXT_DIM(), 1);
+
+    /* Keep every label/value inside its half of a two-column row. */
+    draw_text_centered_fit(c, x + 18 + (valueStart - x - 28) / 2,
+                           y + 14, label, &L, valueStart - x - 28);
+    draw_text(c, valueStart + 4, y + 14, "<", &arrow);
+    draw_text_centered_fit(c, valueX + valueW / 2, y + 14, value, &V, valueW);
+    draw_text(c, x + w - 20 - 12, y + 14, ">", &arrow);
 }
 
 static const char* modern_settings_tab_label(const M12_StartupMenuState* state,
