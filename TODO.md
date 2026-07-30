@@ -1061,6 +1061,11 @@ that its exact runtime path is not already source-locked and tested.
    a raw indexed screenshot from reinterpreting PRESENTS/CHAOS/STRIKES or
    Entrance with the later dungeon palette. V2.0, V2.1 and V2.2 startup
    capture regressions remain green.
+   2026-07-30: the real PC3.4 title/Entrance visual contract now checks
+   foreground bounds as well as palette signatures: PRESENTS must retain its
+   C001 placement, CHAOS its C425 zoom scale, STRIKES BACK its C426 span, and
+   Entrance must consume the complete C002-C005 page. This hardens against a
+   wrong IMG2 stride or a palette-correct but misplaced source blit.
    2026-07-29: local PC3.4 runtime captures exercised V1, V2.0, V2.1, and
    V2.2 at the completed Entrance page. V1/V2.0 preserve the source page,
    V2.1 uses the expected upscale path, and V2.2 falls back fail-closed to

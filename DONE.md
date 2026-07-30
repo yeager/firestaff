@@ -43176,3 +43176,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   51/51. This verifies the implemented V1/V2.0/V2.1/V2.2 paths and preserves
   the explicit fail-closed boundaries for unreviewed V2.2 F0128 materials and
   CSBWin direct spell execution.
+
+- ✅ 2026-07-30 CSB title/Entrance visual composition guard: strengthened the
+  real PC3.4 executable capture contract beyond palette counts. It now checks
+  PRESENTS C001 placement, C425 CHAOS zoom bounds, C426 STRIKES BACK span, and
+  full-page C002-C005 Entrance coverage, catching decoder-stride and blit
+  placement regressions that could otherwise retain plausible colors.
+  Verification: `csb_v1_title_entrance_visual_contract` PASS.
