@@ -138,9 +138,22 @@ static int m11_map_window_pointer_to_game_source(const M11_GameViewState* gameVi
                                                  int* outY);
 static int m11_draw_entrance_credits_asset(M11_GameViewState* gameView,
                                            unsigned char* framebuffer) {
-    (void)gameView;
-    (void)framebuffer;
-    return 0;
+    const M11_AssetSlot* credits;
+    if (!gameView || !framebuffer || !gameView->assetsAvailable) {
+        return 0;
+    }
+    /* ReDMCSB ENTRANCE.C:F0442 displays C005 directly.  It must never
+     * substitute a host-made frame when the authenticated PC34 page is
+     * available, because its colour indices only make sense with G0019. */
+    credits = M11_AssetLoader_Load(&gameView->assetLoader, 5U);
+    if (!credits || !credits->pixels || credits->width == 0U ||
+        credits->height == 0U) {
+        return 0;
+    }
+    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
+    M11_AssetLoader_Blit(credits, framebuffer,
+                         M11_FB_WIDTH, M11_FB_HEIGHT, 0, 0, -1);
+    return 1;
 }
 static int DM1_V1_Entrance_FullStartRenderReceiptHostReadyPc34Compat(
     const DM1_V1_EntranceFullStartRenderReceiptPc34* receipt) {
@@ -1164,13 +1177,7 @@ static int m11_show_redmcsb_entrance_credits(M11_GameViewState* gameView,
     int waitResult;
     if (!gameView || !framebuffer) return M11_ENTRANCE_COMMAND_NONE;
     if (!m11_draw_entrance_credits_asset(gameView, framebuffer)) {
-        memset(framebuffer, 0, (size_t)M11_FB_BYTES);
-        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                              0, 0, M11_FB_WIDTH, M11_FB_HEIGHT, 1);
-        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                              36, 88, 248, 24, 15);
-        m11_fill_rect_indexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-                              40, 92, 240, 16, 0);
+        return M11_ENTRANCE_COMMAND_NONE;
     }
     credits = M11_AssetLoader_Load(&gameView->assetLoader, 5U);
     if (!credits || !dm1_v1_startup_entrance_credits_presentation_command_pc34(

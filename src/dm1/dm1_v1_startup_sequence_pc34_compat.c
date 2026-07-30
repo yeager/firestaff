@@ -5463,7 +5463,9 @@ int dm1_v1_startup_entrance_credits_presentation_command_pc34(
     command.source_asset_receipt_consumed = 1;
     command.source_palette_receipt_consumed = 1;
     command.source_timing_receipt_consumed = 1;
-    command.special_palette = media_receipt->entrance_credits_palette;
+    /* entrance_credits_palette is the media receipt's availability flag.
+     * F0442 selects G0019 (the credits row), not the entrance palette. */
+    command.special_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
     command.credits_wait_ticks = media_receipt->entrance_credits_wait_ticks;
     command.vblank_delay_ms =
         media_receipt->entrance_vblank_ms *

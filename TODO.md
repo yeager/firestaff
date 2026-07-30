@@ -18,8 +18,15 @@
 - **LAUNCHER-FULL-WINDOW-PRESENTATION:** Closed 2026-07-30. The start menu
   now uses a full host-window presentation rectangle and matching pointer
   transform, rather than inheriting 4:3/content letterboxing from a selected
-  game. Runtime game frames explicitly restore their configured aspect.
-  Focused Ninja/CTest verification passes.
+  game. The branded pre-menu intro uses the same full-window rule. Runtime
+  game frames explicitly restore their configured aspect. Focused Ninja/CTest
+  verification passes.
+
+- **DM1-V1-ENTRANCE-CREDITS-PALETTE:** Closed 2026-07-30. F0442 now blits
+  the decoded PC34 C005 credits page and selects the explicit G0019 credits
+  palette. The old route mistakenly treated the receipt's availability flag
+  as a palette index, selecting the Entrance palette; it no longer falls back
+  to a generated credits card when real C005 is present. Focused CTest passes.
 
 - **DM1-V1-F0172-TELEPORTER-ASPECT:** Closed 2026-07-30. M11 now requires
   both original teleporter `VISIBLE` and `OPEN` bits before exposing the

@@ -1,4 +1,5 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -181,6 +182,23 @@ static void test_full_graphics_media_receipt_for_dm1(void)
     assert(receipt.entrance_source_animation_steps > 0);
 }
 
+static void test_entrance_credits_uses_credits_palette(void)
+{
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+    DM1_V1_StartupEntranceCreditsPresentationCommand_PC34 command;
+    static unsigned char c005[320 * 200];
+
+    memset(&media, 0, sizeof(media));
+    memset(&command, 0, sizeof(command));
+    memset(c005, 1, sizeof(c005));
+    assert(dm1_v1_startup_full_graphics_media_receipt_pc34("dm1", &media) == 1);
+    assert(dm1_v1_startup_entrance_credits_presentation_command_pc34(
+        &media, c005, 320, 200, &command) == 1);
+    assert(command.present_credits_frame == 1);
+    assert(command.special_palette == VGA_PALETTE_PC34_SPECIAL_CREDITS);
+    assert(command.special_palette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE);
+}
+
 static void test_handoff_prelude_plan_null_rejected(void)
 {
     DM1_V1_StartupHandoffPreludePlan_PC34 plan;
@@ -228,10 +246,11 @@ int main(void)
     test_graphics_bind_receipt_null_rejected();
     test_full_graphics_media_receipt_null_rejected();
     test_full_graphics_media_receipt_for_dm1();
+    test_entrance_credits_uses_credits_palette();
     test_handoff_prelude_plan_null_rejected();
     test_receipt_phase_null_rejected();
     test_receipt_phase_returns_string();
 
-    puts("ok: DM1 startup sequence (Q-DM1-08) 15 tests passed");
+    puts("ok: DM1 startup sequence (Q-DM1-08) 16 tests passed");
     return 0;
 }
