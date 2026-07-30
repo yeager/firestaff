@@ -44242,7 +44242,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   now initialize the optional save path, preventing an unset CLI `--save`
   field from becoming a bogus resume path after DUNGEON.DAT loaded. Verified
   with both direct no-save HoC entry and an explicit original PC34 `DMSAVE.DAT`
-  resume under the dummy SDL runtime.
+  resume under the dummy SDL runtime. The dependent V2.0/V2.1/V2.2 real
+  presentation suite passes 6/6, including actual/presented screenshot
+  capture and each V2 renderer silicon probe.
 
 - ✅ 2026-07-30 DM1 Entrance credits now render the real decoded C005 page
   with ReDMCSB `ENTRANCE.C:F0442`'s G0019 credits palette. The source receipt's

@@ -75,6 +75,8 @@
   stray pointer, causing `--game dm1` to fail after DUNGEON.DAT loaded by
   attempting an unintended save resume. New-game and explicit PC34-save
   direct launches both pass.
+  The real V2.0/V2.1/V2.2 presentation smoke that previously stopped before
+  its presented capture now also passes across all six focused render lanes.
 
 - **DM1-V1-F0172-TELEPORTER-ASPECT:** Closed 2026-07-30. M11 now requires
   both original teleporter `VISIBLE` and `OPEN` bits before exposing the
