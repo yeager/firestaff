@@ -1,4 +1,5 @@
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
+#include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
 
@@ -31,6 +32,22 @@ int main(void)
     expect_int("chest.clip_h", chest.clip_h, 136);
     expect_int("chest.c10", chest.transparent_color, 10);
     expect_int("chest.c2548_bound", chest.coordinate_binding_ready, 1);
+
+    {
+        DM1_F0115FloorObjectMaterialReceiptPc34 receipt;
+        expect_int("chest.alcove_receipt",
+                   dm1_v1_f0115_floor_object_material_receipt_pc34(
+                       THING_TYPE_CONTAINER, 0, chest.source_zone,
+                       chest.source_zone, chest.transparent_color, 1,
+                       chest.graphic_index, 32, 32, &receipt), 1);
+        expect_int("chest.alcove_receipt_graphic",
+                   (int)receipt.graphic_index, (int)chest.graphic_index);
+        expect_int("chest.floor_bitmap_rejected_in_alcove",
+                   dm1_v1_f0115_floor_object_material_receipt_pc34(
+                       THING_TYPE_CONTAINER, 0, chest.source_zone,
+                       chest.source_zone, chest.transparent_color, 1,
+                       chest.graphic_index - 1, 32, 32, &receipt), 0);
+    }
 
     expect_int("scroll.plan",
                dm1_v1_f0115_alcove_item_material_plan_pc34(

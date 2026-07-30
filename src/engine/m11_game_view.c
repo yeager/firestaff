@@ -32315,6 +32315,16 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
     gfxIdx = csb_native_graphic >= 0
         ? (unsigned int)csb_native_graphic
         : dm1_item_sprite_index(thingType, subtype);
+    /* ReDMCSB F0121/F0124 reaches F0115 through C2548.  Its object-aspect
+     * flag selects the adjacent alcove-native bitmap, rather than the
+     * ordinary floor-object image used by C2500. */
+    if (csb_native_graphic < 0 && sourceZone >= 2548 && sourceZone < 2569) {
+        int aspectIndex = dm1_item_aspect_index(thingType, subtype);
+        if (aspectIndex >= 0 &&
+            (dm1_object_aspect_graphic_info(aspectIndex) & 0x0010u) != 0u) {
+            ++gfxIdx;
+        }
+    }
     if (gfxIdx == 0 || gfxIdx >= M11_GFX_ITEM_SPRITE_END) return 0;
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&

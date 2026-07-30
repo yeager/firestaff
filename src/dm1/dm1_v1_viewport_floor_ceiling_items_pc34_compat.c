@@ -267,6 +267,7 @@ int dm1_v1_f0115_floor_object_material_receipt_pc34(
 {
     DM1_F0115FloorObjectMaterialReceiptPc34 receipt;
     unsigned int expected_graphic;
+    int aspect_index;
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
@@ -277,6 +278,15 @@ int dm1_v1_f0115_floor_object_material_receipt_pc34(
         return 0;
     }
     expected_graphic = dm1_item_sprite_index(thing_type, subtype);
+    /* F0121/F0124 call F0115 through C2548.  Some object aspects have a
+     * dedicated alcove bitmap immediately after their ordinary C2500
+     * bitmap; accepting the ordinary image there makes chests and similar
+     * HoC alcove objects look like a different item. */
+    aspect_index = dm1_item_aspect_index(thing_type, subtype);
+    if (source_zone >= 2548 && source_zone < 2569 && aspect_index >= 0 &&
+        (dm1_object_aspect_graphic_info(aspect_index) & 0x0010u) != 0u) {
+        ++expected_graphic;
+    }
     if (expected_graphic == 0u || expected_graphic != selected_graphic_index) {
         *out_receipt = receipt;
         return 0;
