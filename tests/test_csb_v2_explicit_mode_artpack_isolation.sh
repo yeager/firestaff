@@ -60,10 +60,10 @@ run_case() {
     fi
 }
 
-# The selected package is material for V2.2 only.  V2.1 must retain its
-# source-owned 320x200 page and EPX presentation; V2.2 may consume the same
-# reviewed package after its own explicit request.
+# The source-derived fixture deliberately carries unbound F0128 routes. V2.1
+# must retain its source-owned 320x200 page and EPX presentation; an explicit
+# V2.2 request must resolve back to V2.1 until a package proves every route.
 run_case v21 2
-run_case v22 3
+run_case v22 2
 
-echo "PASS: a selected CSB .fsart cannot override explicit V2.1 and admits explicit V2.2"
+echo "PASS: an unbound CSB .fsart cannot override V2.1 or falsely admit V2.2"

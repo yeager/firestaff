@@ -1,0 +1,71 @@
+#include "csb_v1_csbwin_layout_0232.h"
+
+#include <string.h>
+
+enum {
+    CSBWIN_0232_PARTY_DIRECTION_OFFSET = 376,
+    CSBWIN_0232_EYE_BOX_OFFSET = 424,
+    CSBWIN_0232_MOUTH_BOX_OFFSET = 432,
+    CSBWIN_0232_POISON_BOX_OFFSET = 864,
+    CSBWIN_0232_FOOD_WATER_BOX_OFFSET = 904,
+    CSBWIN_0232_MOVEMENT_BOX_OFFSET = 1802,
+    CSBWIN_0232_MAGIC_BOX_OFFSET = 1818,
+    CSBWIN_0232_RECT_SIZE = 8
+};
+
+static int16_t csb_v1_csbwin_layout_0232_read_be16(const uint8_t *bytes)
+{
+    return (int16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
+}
+
+static void csb_v1_csbwin_layout_0232_read_rect(
+    const uint8_t *bytes, CSB_V1_CSBWinRect0232 *out_rect)
+{
+    out_rect->x1 = csb_v1_csbwin_layout_0232_read_be16(bytes);
+    out_rect->x2 = csb_v1_csbwin_layout_0232_read_be16(bytes + 2);
+    out_rect->y1 = csb_v1_csbwin_layout_0232_read_be16(bytes + 4);
+    out_rect->y2 = csb_v1_csbwin_layout_0232_read_be16(bytes + 6);
+}
+
+int csb_v1_csbwin_layout_0232_rect_is_screen_valid(
+    const CSB_V1_CSBWinRect0232 *rect)
+{
+    return rect && rect->x1 >= 0 && rect->x1 <= rect->x2 &&
+        rect->x2 < 320 && rect->y1 >= 0 && rect->y1 <= rect->y2 &&
+        rect->y2 < 200;
+}
+
+int csb_v1_csbwin_layout_0232_decode(
+    const uint8_t *decoded_graphic, size_t decoded_size,
+    CSB_V1_CSBWinLayout0232 *out_layout)
+{
+    size_t index;
+
+    if (!out_layout) return 0;
+    memset(out_layout, 0, sizeof(*out_layout));
+    if (!decoded_graphic || decoded_size != CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE) {
+        return 0;
+    }
+    for (index = 0; index < 4u; ++index) {
+        csb_v1_csbwin_layout_0232_read_rect(
+            decoded_graphic + CSBWIN_0232_PARTY_DIRECTION_OFFSET +
+                index * CSBWIN_0232_RECT_SIZE,
+            &out_layout->party_direction[index]);
+    }
+    csb_v1_csbwin_layout_0232_read_rect(
+        decoded_graphic + CSBWIN_0232_EYE_BOX_OFFSET, &out_layout->eye_box);
+    csb_v1_csbwin_layout_0232_read_rect(
+        decoded_graphic + CSBWIN_0232_MOUTH_BOX_OFFSET, &out_layout->mouth_box);
+    csb_v1_csbwin_layout_0232_read_rect(
+        decoded_graphic + CSBWIN_0232_POISON_BOX_OFFSET, &out_layout->poison_box);
+    csb_v1_csbwin_layout_0232_read_rect(
+        decoded_graphic + CSBWIN_0232_FOOD_WATER_BOX_OFFSET,
+        &out_layout->food_water_box);
+    csb_v1_csbwin_layout_0232_read_rect(
+        decoded_graphic + CSBWIN_0232_MOVEMENT_BOX_OFFSET,
+        &out_layout->movement_box);
+    csb_v1_csbwin_layout_0232_read_rect(
+        decoded_graphic + CSBWIN_0232_MAGIC_BOX_OFFSET, &out_layout->magic_box);
+    out_layout->valid = 1;
+    return 1;
+}
