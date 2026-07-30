@@ -58,6 +58,7 @@ static int run_diagonal_c37(int source_x, int source_y,
     unsigned char squares[25];
     unsigned char raw_group[32];
     unsigned short square_first_things[25];
+    unsigned short columns[5];
     int primary = -1;
     int secondary = -1;
     int event_index;
@@ -71,17 +72,26 @@ static int run_diagonal_c37(int source_x, int source_y,
     memset(squares, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(squares));
     memset(raw_group, 0, sizeof(raw_group));
     memset(square_first_things, 0xff, sizeof(square_first_things));
+    memset(columns, 0, sizeof(columns));
     CHECK(F0881_WORLD_InitDefault_Compat(&world, 0x0383u),
           "initialize timeline world");
 
     map.width = 5;
     map.height = 5;
     map.difficulty = 0;
-    /* Primary is occupied by a real C04 group. It blocks F0202 without
-     * changing F0200 sight, so only the F0228 secondary remains admissible. */
+    /* Primary is occupied by a real C04 group. The source group also owns the
+     * C37 square, as required by F0209's loaded C04/SFT admission. */
     squares[blocked_x * map.height + blocked_y] |= DUNGEON_SQUARE_MASK_THING_LIST;
-    /* squareFirstThings is compacted to flagged squares, not map offsets. */
-    square_first_things[0] = group_thing_ref(1);
+    squares[source_x * map.height + source_y] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    for (int x = 0, count = 0; x < map.width; ++x) {
+        columns[x] = (unsigned short)count;
+        for (int y = 0; y < map.height; ++y) {
+            if (squares[x * map.height + y] & DUNGEON_SQUARE_MASK_THING_LIST) {
+                square_first_things[count++] =
+                    (x == source_x && y == source_y) ? group_thing_ref(0) : group_thing_ref(1);
+            }
+        }
+    }
     tiles.squareData = squares;
     tiles.squareCount = (int)sizeof(squares);
     dungeon.header.mapCount = 1;
@@ -89,19 +99,21 @@ static int run_diagonal_c37(int source_x, int source_y,
     dungeon.tiles = &tiles;
     dungeon.loaded = 1;
     dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount = columns;
+    dungeon.dungeonColumnCount = map.width;
 
     /* C04 and persistent active-group data remain equal across both routes. */
     groups[0].next = THING_ENDOFLIST;
     groups[0].creatureType = DM1_CREATURE_TYPE_STONE_GOLEM;
     groups[0].count = 0;
-    groups[0].cells = 0xff;
+    groups[0].cells = 1;
     groups[0].direction = 0;
     groups[0].behavior = DM1_BEHAVIOR_APPROACH;
     groups[0].health[0] = 100;
     groups[1].next = THING_ENDOFLIST;
     groups[1].creatureType = DM1_CREATURE_TYPE_STONE_GOLEM;
     groups[1].count = 0;
-    groups[1].cells = 0xff;
+    groups[1].cells = 1;
     groups[1].health[0] = 100;
     things.groups = groups;
     things.groupCount = 2;
@@ -128,9 +140,11 @@ static int run_diagonal_c37(int source_x, int source_y,
     world.creatureAI[0].stateKind = AI_STATE_APPROACH;
     world.creatureAI[0].creatureType = groups[0].creatureType;
     world.creatureAI[0].groupMapIndex = 0;
-    world.creatureAI[0].groupMapX = 0;
-    world.creatureAI[0].groupMapY = 0;
+    world.creatureAI[0].groupMapX = source_x;
+    world.creatureAI[0].groupMapY = source_y;
     world.creatureAI[0].groupCells = groups[0].cells;
+    world.pc34ActiveGroupSourceCount = 1;
+    world.pc34ActiveGroupDirections[0] = groups[0].direction;
     CHECK(F0730_COMBAT_RngInit_Compat(&world.masterRng, rng_seed),
           "initialize live F0209 RNG");
     CHECK(F0730_COMBAT_RngInit_Compat(&direction_rng, rng_seed),
@@ -149,6 +163,7 @@ static int run_diagonal_c37(int source_x, int source_y,
     event.mapX = source_x;
     event.mapY = source_y;
     event.aux0 = 0;
+    event.aux1 = groups[0].creatureType;
     event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
     CHECK(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event),
           "schedule diagonal C37 event");

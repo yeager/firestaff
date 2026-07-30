@@ -15,11 +15,10 @@
  *  T2  NULL outDefense returns 0
  *  T3  woundSlotIndex=-1 returns 0
  *  T4  woundSlotIndex=6 returns 0 (only 0..5 valid)
- *  T5  useSharpDefense=0: baseline + partyShieldDefense +
- *      (WoundDefenseFactor[slot] * vitality) >> 8
- *  T6  useSharpDefense=1: above + (WoundDefenseFactor[slot] >> 1)
- *  T7  Zero baseline: result = partyShieldDefense + (factor * vit) >> 8
- *  T8  Zero vitality: result = baseline + partyShieldDefense
+ *  T5  useSharpDefense=0: source accumulation followed by F0313's final /2
+ *  T6  useSharpDefense=1: sharp accumulation followed by that final /2
+ *  T7  Zero baseline: source accumulation followed by final /2
+ *  T8  Zero vitality: baseline + shield followed by final /2
  *  T9  Different slots use different WoundDefenseFactor values
  *  T10 All 6 slots (0..5) work
  *  T11 outDefense is set on success
@@ -66,7 +65,7 @@ int main(void) {
     /* T5: useSharpDefense=0.  WoundDefenseFactor[0] = 5 (current
      * source-locked value in the compat layer, G0050 mirror).
      * For vitality=100: 5*100>>8 = 500>>8 = 1.
-     * Defense = 50 + 20 + 1 = 71. */
+     * F0313 then applies its final half-scale: (50 + 20 + 1) >> 1 = 35. */
     memset(&champ, 0, sizeof(champ));
     champ.woundDefense[0] = 50;
     champ.partyShieldDefense = 20;
@@ -74,10 +73,10 @@ int main(void) {
     defense = -1;
     CHECK(F0733_COMBAT_GetChampionWoundDefense_Compat(&champ, 0, 0, &defense) == 1,
           "T5a: returns 1");
-    CHECK(defense == 71, "T5b: defense = 71 (50 baseline + 20 shield + 1 vitality)");
+    CHECK(defense == 35, "T5b: defense = (50 baseline + 20 shield + 1 vitality) >> 1");
 
     /* T6: useSharpDefense=1.  Sharp bonus = factor >> 1 = 5>>1 = 2.
-     * Defense = 50 + 20 + 1 + 2 = 73. */
+     * Final F0313 half-scale: (50 + 20 + 1 + 2) >> 1 = 36. */
     memset(&champ, 0, sizeof(champ));
     champ.woundDefense[0] = 50;
     champ.partyShieldDefense = 20;
@@ -85,17 +84,17 @@ int main(void) {
     defense = -1;
     CHECK(F0733_COMBAT_GetChampionWoundDefense_Compat(&champ, 0, 1, &defense) == 1,
           "T6a: returns 1 with sharp");
-    CHECK(defense == 73, "T6b: defense = 73 (50 + 20 + 1 + 2 sharp)");
+    CHECK(defense == 36, "T6b: defense = (50 + 20 + 1 + 2 sharp) >> 1");
 
     /* T7: Zero baseline.  With vitality=256: 5*256>>8 = 1280>>8 = 5.
-     * Defense = 0 + 10 + 5 = 15. */
+     * Final F0313 half-scale: (0 + 10 + 5) >> 1 = 7. */
     memset(&champ, 0, sizeof(champ));
     champ.woundDefense[0] = 0;
     champ.partyShieldDefense = 10;
     champ.statisticVitality = 256;
     defense = -1;
     F0733_COMBAT_GetChampionWoundDefense_Compat(&champ, 0, 0, &defense);
-    CHECK(defense == 15, "T7: zero baseline + shield + vitality = 15");
+    CHECK(defense == 7, "T7: source defense uses the final half-scale");
 
     /* T8: Zero vitality. */
     memset(&champ, 0, sizeof(champ));
@@ -104,7 +103,7 @@ int main(void) {
     champ.statisticVitality = 0;
     defense = -1;
     F0733_COMBAT_GetChampionWoundDefense_Compat(&champ, 0, 0, &defense);
-    CHECK(defense == 150, "T8: baseline + shield = 150 (no vitality)");
+    CHECK(defense == 75, "T8: baseline + shield uses the final half-scale");
 
     /* T9: Different slots have different factors.
      * WoundDefenseFactor (compat layer): 5, 5, 4, 6, 3, 1 (slot 0..5)
@@ -165,7 +164,7 @@ int main(void) {
     champ.statisticVitality = 0;
     defense = -999;
     F0733_COMBAT_GetChampionWoundDefense_Compat(&champ, 0, 0, &defense);
-    CHECK(defense == 50, "T11: outDefense set to 50 (was -999)");
+    CHECK(defense == 25, "T11: outDefense applies the F0313 final half-scale");
 
     /* T12: Returns 1 on success. */
     memset(&champ, 0, sizeof(champ));

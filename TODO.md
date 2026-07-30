@@ -2,6 +2,14 @@
 
 ## Active DM1/CSB Symbol Queue
 
+- **DM1-V1-F0209-REAL-C04-TEST-FIXTURES:** Closed 2026-07-30. The affected
+  G0378/G0379/G0381/G0382/G0383 regressions now construct the loaded compact
+  SquareFirstThing chain, raw C04 identity, C29/C37 creature type and active
+  group ownership that ReDMCSB `GROUP.C F0209` requires. They no longer admit
+  a group at invented event coordinates. The F0733 wound-defense contract
+  also includes `CHAMPION.C F0313`'s final half-scale. Focused Ninja/CTest
+  verification passes 5/5.
+
 - **CSB-V2X-CURRENT-MAIN-VERIFICATION:** Closed 2026-07-30. Ninja-built
   current `main` passes 52 of 53 registered CSB V2.x contracts with the
   local PC3.4 corpus. The one skip is intentional:

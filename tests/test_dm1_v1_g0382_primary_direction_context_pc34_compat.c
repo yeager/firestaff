@@ -35,6 +35,11 @@ static void authenticate_group_c04(struct DungeonThings_Compat* things,
     things->rawThingData[THING_TYPE_GROUP] = raw_group;
 }
 
+static unsigned short group_thing_ref(int index)
+{
+    return (unsigned short)((THING_TYPE_GROUP << 10) | index);
+}
+
 static int run_c37_attack_entry(int source_x, int source_y, int expected_primary)
 {
     struct GameWorld_Compat world;
@@ -47,6 +52,8 @@ static int run_c37_attack_entry(int source_x, int source_y, int expected_primary
     struct TickResult_Compat result;
     unsigned char squares[16];
     unsigned char raw_group[16];
+    unsigned short square_first_things[1];
+    unsigned short columns[4];
     int index;
     int c38_count = 0;
 
@@ -57,6 +64,7 @@ static int run_c37_attack_entry(int source_x, int source_y, int expected_primary
     memset(&things, 0, sizeof(things));
     memset(&group, 0, sizeof(group));
     memset(squares, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(squares));
+    memset(columns, 0, sizeof(columns));
     CHECK(F0881_WORLD_InitDefault_Compat(&world, 0x0382u),
           "initialize timeline world");
 
@@ -70,19 +78,27 @@ static int run_c37_attack_entry(int source_x, int source_y, int expected_primary
     dungeon.tiles = &tiles;
     dungeon.loaded = 1;
     dungeon.tilesLoaded = 1;
+    /* F0209 only consumes a live C04 that owns the event square. */
+    squares[source_x * map.height + source_y] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    for (index = source_x + 1; index < map.width; ++index) columns[index] = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount = columns;
+    dungeon.dungeonColumnCount = map.width;
 
     /* Wizard Eye has the source SIDE_ATTACK attribute: either adjacent C37
      * source can enter attack while its C04 starts identically north-facing. */
     group.next = THING_ENDOFLIST;
     group.creatureType = DM1_CREATURE_TYPE_WIZARD_EYE;
     group.count = 0;
-    group.cells = 0xff;
+    group.cells = 1;
     group.direction = 0;
     group.behavior = DM1_BEHAVIOR_WANDER;
     group.health[0] = 100;
     things.groups = &group;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
+    square_first_things[0] = group_thing_ref(0);
+    things.squareFirstThings = square_first_things;
+    things.squareFirstThingCount = 1;
     things.loaded = 1;
     authenticate_group_c04(&things, &group, raw_group);
 
@@ -102,10 +118,12 @@ static int run_c37_attack_entry(int source_x, int source_y, int expected_primary
     world.creatureAI[0].stateKind = AI_STATE_WANDER;
     world.creatureAI[0].creatureType = group.creatureType;
     world.creatureAI[0].groupMapIndex = 0;
-    /* Persistent group data is deliberately fixed; G0382 comes from C37. */
-    world.creatureAI[0].groupMapX = 0;
-    world.creatureAI[0].groupMapY = 0;
+    /* The event coordinates are the current physical C04 location. */
+    world.creatureAI[0].groupMapX = source_x;
+    world.creatureAI[0].groupMapY = source_y;
     world.creatureAI[0].groupCells = group.cells;
+    world.pc34ActiveGroupSourceCount = 1;
+    world.pc34ActiveGroupDirections[0] = group.direction;
     CHECK(F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u),
           "initialize deterministic creature RNG");
 
@@ -116,6 +134,7 @@ static int run_c37_attack_entry(int source_x, int source_y, int expected_primary
     event.mapX = source_x;
     event.mapY = source_y;
     event.aux0 = 0;
+    event.aux1 = group.creatureType;
     event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
     CHECK(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event),
           "schedule source C37 event");

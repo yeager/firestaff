@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 DM1 F0209/C04 regression integrity: repaired five stale
+  group/combat regression fixtures so they supply the real compact SFT C04
+  owner, matching ACTIVE_GROUP coordinates and C29/C37 creature identity
+  required by `GROUP.C F0209`. The G0381 physical move now advances the C04
+  owner before its next event. F0733 expectations now include `CHAMPION.C
+  F0313`'s mandatory final half-scale. Focused CTest passes 5/5.
+
 - ✅ 2026-07-30 DM1 C001 title cadence: redistributed the existing verified
   53-slot title-bank budget so each of the 18 real `GRAPHICS.DAT` C001 zoom
   rasters remains on screen for two V1 cadence ticks. PRESENTS is shortened

@@ -25,6 +25,7 @@ static int schedule_c37(struct GameWorld_Compat* world, int map_x, int map_y)
     event.mapX = map_x;
     event.mapY = map_y;
     event.aux0 = 0;
+    event.aux1 = world->things->groups[0].creatureType;
     event.aux2 = DM1_EVENT_UPDATE_BEHAVIOR_GROUP;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
 }
@@ -50,6 +51,11 @@ static void authenticate_group_c04(struct DungeonThings_Compat* things,
     things->rawThingData[THING_TYPE_GROUP] = raw_group;
 }
 
+static unsigned short group_thing_ref(int index)
+{
+    return (unsigned short)((THING_TYPE_GROUP << 10) | index);
+}
+
 int main(void)
 {
     struct GameWorld_Compat world;
@@ -61,6 +67,8 @@ int main(void)
     struct TickResult_Compat result;
     unsigned char squares[16];
     unsigned char raw_group[16];
+    unsigned short square_first_things[2];
+    unsigned short columns[4] = { 0, 0, 0, 0 };
 
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -82,17 +90,29 @@ int main(void)
     dungeon.tiles = &tiles;
     dungeon.loaded = 1;
     dungeon.tilesLoaded = 1;
+    /* The group begins at y=3 and has an existing empty SFT slot at y=2 for
+     * its F0267 approach move. Compact SFT rows are ordered low-to-high. */
+    squares[3 * map.height + 2] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squares[3 * map.height + 3] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    dungeon.columnsCumulativeSquareFirstThingCount = columns;
+    dungeon.dungeonColumnCount = map.width;
 
     group.next = THING_ENDOFLIST;
-    group.creatureType = 9;
+    /* Skeleton has a one-square source attack range: the two source
+     * distances below distinguish approach from attack. */
+    group.creatureType = DM1_CREATURE_TYPE_SKELETON;
     group.count = 0;
-    group.cells = 0xff;
+    group.cells = 1;
     group.direction = 0; /* North for both C37 events. */
     group.behavior = DM1_BEHAVIOR_WANDER;
     group.health[0] = 100;
     things.groups = &group;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
+    square_first_things[0] = THING_ENDOFLIST;
+    square_first_things[1] = group_thing_ref(0);
+    things.squareFirstThings = square_first_things;
+    things.squareFirstThingCount = 2;
     things.loaded = 1;
     authenticate_group_c04(&things, &group, raw_group);
 
@@ -115,6 +135,8 @@ int main(void)
     world.creatureAI[0].groupMapX = 3;
     world.creatureAI[0].groupMapY = 3;
     world.creatureAI[0].groupCells = group.cells;
+    world.pc34ActiveGroupSourceCount = 1;
+    world.pc34ActiveGroupDirections[0] = group.direction;
     CHECK(F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u),
           "initialize deterministic creature RNG");
 
@@ -129,6 +151,12 @@ int main(void)
           "G0381 distance two selects approach");
     CHECK(group.direction == 0 && (raw_group[15] & 0x03u) == 0,
           "distance-two event preserves C04 facing");
+
+    /* Advance the physical C04 owner to its loaded destination SFT before
+     * dispatching the next source event, matching the preceding F0267 move. */
+    square_first_things[1] = THING_ENDOFLIST;
+    square_first_things[0] = group_thing_ref(0);
+    world.creatureAI[0].groupMapY = 2;
 
     /* C04 and all static group fields stay fixed. The source advances one
      * square, so the same party is now at G0381 distance one. */

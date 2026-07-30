@@ -26,6 +26,7 @@ static int schedule_aspect_event(
     event.mapX = map_x;
     event.mapY = map_y;
     event.aux0 = 0;
+    event.aux1 = world->things->groups[0].creatureType;
     event.aux2 = DM1_EVENT_UPDATE_ASPECT_GROUP;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
 }
@@ -52,6 +53,11 @@ static void authenticate_group_c04(struct DungeonThings_Compat* things,
     things->rawThingData[THING_TYPE_GROUP] = raw_group;
 }
 
+static unsigned short group_thing_ref(int index)
+{
+    return (unsigned short)((THING_TYPE_GROUP << 10) | index);
+}
+
 int main(void)
 {
     struct GameWorld_Compat world;
@@ -63,6 +69,8 @@ int main(void)
     struct TickResult_Compat result;
     unsigned char squares[16];
     unsigned char raw_group[16];
+    unsigned short square_first_things[2];
+    unsigned short columns[4] = { 0, 0, 1, 1 };
 
     memset(&world, 0, sizeof(world));
     memset(&dungeon, 0, sizeof(dungeon));
@@ -84,17 +92,27 @@ int main(void)
     dungeon.tiles = &tiles;
     dungeon.loaded = 1;
     dungeon.tilesLoaded = 1;
+    /* The two legitimate physical C04 locations retain their compact SFT
+     * slots while the fixture advances the group between source events. */
+    squares[1 * map.height + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squares[3 * map.height + 3] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    dungeon.columnsCumulativeSquareFirstThingCount = columns;
+    dungeon.dungeonColumnCount = map.width;
 
     group.next = THING_ENDOFLIST;
     group.creatureType = 9;
     group.count = 0;
-    group.cells = 0xff;
+    group.cells = 1;
     group.direction = 0; /* North: deliberately constant for both events. */
     group.behavior = DM1_BEHAVIOR_WANDER;
     group.health[0] = 100;
     things.groups = &group;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
+    square_first_things[0] = group_thing_ref(0);
+    square_first_things[1] = THING_ENDOFLIST;
+    things.squareFirstThings = square_first_things;
+    things.squareFirstThingCount = 2;
     things.loaded = 1;
     authenticate_group_c04(&things, &group, raw_group);
 
@@ -117,6 +135,8 @@ int main(void)
     world.creatureAI[0].groupMapX = 1;
     world.creatureAI[0].groupMapY = 1;
     world.creatureAI[0].groupCells = group.cells;
+    world.pc34ActiveGroupSourceCount = 1;
+    world.pc34ActiveGroupDirections[0] = group.direction;
     CHECK(F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u),
           "initialize deterministic creature RNG");
 
@@ -133,9 +153,12 @@ int main(void)
     CHECK(group.direction == 0 && (raw_group[15] & 0x03u) == 0,
           "first event does not alter C04 facing");
 
-    /* C04 and all group state above remain unchanged. Only the event source
-     * moves to the party's north-facing column, which makes the same party
-     * visible to the next F0209 context. */
+    /* Move the physical C04 owner into the next loaded SFT slot. The event
+     * coordinates and active-group location advance together, as in F0267. */
+    square_first_things[0] = THING_ENDOFLIST;
+    square_first_things[1] = group_thing_ref(0);
+    world.creatureAI[0].groupMapX = 3;
+    world.creatureAI[0].groupMapY = 3;
     CHECK(schedule_aspect_event(&world, 3, 3),
           "schedule visible-party aspect event");
     memset(&result, 0, sizeof(result));
