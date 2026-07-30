@@ -2168,8 +2168,14 @@ that its exact runtime path is not already source-locked and tested.
     need their source-owned CSBWin transaction; this does not enable DM1
     F0750--F0754 for CSB.
 28. **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,
-    pits, floor/ceiling ornaments, creatures, items, projectiles, explosions,
-    and custom backgrounds through real PC34 asset ownership.
+   pits, floor/ceiling ornaments, creatures, items, projectiles, explosions,
+   and custom backgrounds through real PC34 asset ownership.
+   2026-07-30: a source-bound thrown-object projectile no longer falls back
+   to the 16x16 object-icon atlas when its perspective native bitmap is
+   unbound. ReDMCSB `DUNVIEW.C` F0115 instead enters
+   `T0115015_DrawProjectileAsObject` and selects the G0209/M612 native object
+   bitmap in the C2900 lane. The production route now leaves that cell
+   unchanged; binding this native projection remains open.
 29. **CSB-SENSOR-THING-RUNTIME:** Complete real Thing chains, generic object
     sensors, remote actions, pits, teleporters, stairs, door and actuator
     side effects in the CSB live runtime.

@@ -544,6 +544,26 @@ static void test_runtime_projectile_and_explosion_overlays(void)
                   cfg.runtime_projectile_material_icon_drawn_count, 1);
         check_int("runtime.projectile_overlay.runtime_material_marker_count",
                   cfg.runtime_projectile_marker_drawn_count, 0);
+        /* ReDMCSB DUNVIEW.C F0115 routes a positive projectile aspect through
+         * T0115015's perspective native object bitmap, not the 16x16 icon
+         * atlas. A source-bound M11 route must therefore no-draw while that
+         * object projection is unbound. */
+        memset(framebuffer, 0, sizeof(framebuffer));
+        cfg.projectile_sprite_drawer_source_bound = 1;
+        icon_capture.object_icon_calls = 0;
+        cfg.runtime_projectile_material_resolved_count = 0;
+        cfg.runtime_projectile_material_icon_drawn_count = 0;
+        cfg.runtime_projectile_marker_drawn_count = 0;
+        csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+        check_int("runtime.projectile_overlay.source_bound_object_no_icon_pixel",
+                  framebuffer[icon_offset], 0);
+        check_int("runtime.projectile_overlay.source_bound_object_no_icon_calls",
+                  icon_capture.object_icon_calls, 0);
+        check_int("runtime.projectile_overlay.source_bound_object_no_icon_count",
+                  cfg.runtime_projectile_material_icon_drawn_count, 0);
+        check_int("runtime.projectile_overlay.source_bound_object_no_marker_count",
+                  cfg.runtime_projectile_marker_drawn_count, 0);
+        cfg.projectile_sprite_drawer_source_bound = 0;
         cfg.object_icon_drawer = NULL;
         cfg.object_icon_user = NULL;
         cfg.runtime_profile = NULL;

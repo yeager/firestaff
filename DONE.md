@@ -44130,6 +44130,17 @@ the supplied root and selected MD5 to prove this without shipping game data.
   DM1 surface or generated replacement was admitted. This records an audit,
   not completion of the remaining CSB HUD or full viewport work.
 
+# CSB thrown-object projectile containment (2026-07-30)
+
+- ✅ Removed the production fallback that drew a 16×16 object-atlas icon when
+  a source-bound thrown-object projectile had no resolved perspective bitmap.
+  ReDMCSB `DUNVIEW.C` F0115 instead branches through
+  `T0115015_DrawProjectileAsObject`, selecting the G0209/M612 native object
+  bitmap for the C2900/F0791 lane. The cell now remains unchanged until that
+  native projection is bound; data-free geometry probes retain their explicit
+  diagnostics. Verification: `test_csb_v1_viewport_phase3_rendering` (2649
+  assertions) and `test_m11_csb_leader_hand_no_dm1_fallback` pass.
+
 # CSB V2.x verification (2026-07-30)
 
 - ✅ Rebuilt current `main` with Ninja and ran the registered CSB V2.x lane

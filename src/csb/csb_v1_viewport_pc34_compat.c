@@ -3121,7 +3121,16 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
                 continue;
             }
         }
-        if (placement.material_icon_index >= 0) {
+        /* ReDMCSB DUNVIEW.C F0115's positive projectile-aspect branch
+         * enters T0115015_DrawProjectileAsObject: it selects G0209's
+         * perspective-specific native object bitmap, then blits it through
+         * the C2900/F0791 lane.  The 16x16 icon atlas is original data, but
+         * it is not that bitmap and therefore cannot stand in for it in a
+         * source-bound M11 frame.  Leave the cell unchanged until the native
+         * object-projection route is bound.  Data-free geometry callers keep
+         * their explicit icon/marker diagnostics below. */
+        if (!cfg->projectile_sprite_drawer_source_bound &&
+            placement.material_icon_index >= 0) {
             ++cfg->runtime_projectile_material_resolved_count;
             if (cfg->object_icon_drawer) {
                 CSB_V1_ViewportRuntimeObjectIconBlit icon_blit;
