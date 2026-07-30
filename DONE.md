@@ -8,11 +8,12 @@
   byte-identical export of the official local `csbgame3.dat` corpus.
 
 - ✅ 2026-07-30 CSB direct-package boot: the runtime now checks the selected
-  directory's hash-authenticated `DUNGEON.DAT` and `GRAPHICS.DAT` before its
-  archive-aware fallback. A normal loose PC3.4 package therefore reaches the
-  CSB startup route without unpacking unrelated Amiga/ST archives; renamed,
-  nested and archive-only packages retain the existing hash-first fallback.
-  Verification: direct headless PC3.4 launch reaches `CSB READY`, and
+  directory and its game-specific `csb/` child for hash-authenticated
+  `DUNGEON.DAT` and `GRAPHICS.DAT` before its archive-aware fallback. A normal
+  loose PC3.4 package therefore reaches the CSB startup route without
+  unpacking unrelated Amiga/ST archives; renamed, nested and archive-only
+  packages retain the existing hash-first fallback. Verification: direct
+  headless PC3.4 launches from both directory forms reach `CSB READY`, and
   `csb_v1_boot_profile_smoke`, `csb_v1_boot_runtime_handoff` and
   `csb_v1_runtime_route_first_frame_movement_utility_gate` pass.
 

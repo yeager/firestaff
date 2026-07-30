@@ -1239,22 +1239,35 @@ const char *csb_v1_runtime_find_dungeon(const char *data_dir,
     static const char *const direct_names[] = {
         "DUNGEON.DAT", "dungeon.dat", NULL
     };
+    char selected_csb_dir[ASSET_PATH_MAX];
+    const char *candidate_dirs[3];
+    size_t dir_index;
     const char *const *name;
 
     if (!data_dir || !out_result) return NULL;
     memset(out_result, 0, sizeof(*out_result));
 
-    /* A selected PC package commonly exposes DUNGEON.DAT directly.  Check
-     * that authenticated file before the archive-aware fallback: extracting
+    selected_csb_dir[0] = '\0';
+    (void)snprintf(selected_csb_dir, sizeof(selected_csb_dir), "%s/csb",
+                   data_dir);
+    candidate_dirs[0] = data_dir;
+    candidate_dirs[1] = selected_csb_dir;
+    candidate_dirs[2] = NULL;
+
+    /* A selected PC package commonly exposes DUNGEON.DAT directly, either
+     * as the selected directory or in its game-specific csb child. Check the
+     * authenticated file before the archive-aware fallback: extracting
      * unrelated Amiga/ST media here delays an otherwise immediate CSB boot. */
-    for (name = direct_names; *name; ++name) {
-        int written = snprintf(found_path, sizeof(found_path), "%s/%s",
-                               data_dir, *name);
-        if (written > 0 && (size_t)written < sizeof(found_path) &&
-            asset_file_matches_md5(found_path, g_csb_dungeon_hashes[0])) {
-            out_result->path = found_path;
-            out_result->kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
-            return found_path;
+    for (dir_index = 0u; candidate_dirs[dir_index]; ++dir_index) {
+        for (name = direct_names; *name; ++name) {
+            int written = snprintf(found_path, sizeof(found_path), "%s/%s",
+                                   candidate_dirs[dir_index], *name);
+            if (written > 0 && (size_t)written < sizeof(found_path) &&
+                asset_file_matches_md5(found_path, g_csb_dungeon_hashes[0])) {
+                out_result->path = found_path;
+                out_result->kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
+                return found_path;
+            }
         }
     }
 
@@ -1299,6 +1312,9 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
     const CSB_V1_VariantInfo *requested_info = NULL;
     const char *requested_hashes[3] = { NULL, NULL, NULL };
     const char *const *accepted_hashes;
+    char selected_csb_dir[ASSET_PATH_MAX];
+    const char *candidate_dirs[3];
+    size_t dir_index;
 
     if (!data_dir || !out_result) return NULL;
     memset(out_result, 0, sizeof(*out_result));
@@ -1321,26 +1337,35 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
     }
 
     accepted_hashes = requested_info ? requested_hashes : g_csb_graphics_hashes;
+    selected_csb_dir[0] = '\0';
+    (void)snprintf(selected_csb_dir, sizeof(selected_csb_dir), "%s/csb",
+                   data_dir);
+    candidate_dirs[0] = data_dir;
+    candidate_dirs[1] = selected_csb_dir;
+    candidate_dirs[2] = NULL;
 
     /* Do not unpack every unrelated release archive when the selected game
-     * directory already contains the authenticated graphics package. */
-    for (names = g_csb_gfx_search; *names != NULL; ++names) {
-        const char *const *expected;
-        int written = snprintf(found_path, sizeof(found_path), "%s/%s",
-                               data_dir, *names);
-        if (written <= 0 || (size_t)written >= sizeof(found_path)) continue;
-        for (expected = accepted_hashes; *expected; ++expected) {
-            if (asset_file_matches_md5(found_path, *expected)) {
-                CSB_V1_AssetGfxArchiveType kind =
-                    CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
-                if (strcasecmp(*names, "CSB.DAT") == 0) {
-                    kind = CSB_V1_ASSET_GFX_ARCHIVE_CSB;
-                } else if (strcasecmp(*names, "CSBGRAPH.DAT") == 0) {
-                    kind = CSB_V1_ASSET_GFX_ARCHIVE_CSBGRAF;
+     * directory (or its game-specific csb child) already contains the
+     * authenticated graphics package. */
+    for (dir_index = 0u; candidate_dirs[dir_index]; ++dir_index) {
+        for (names = g_csb_gfx_search; *names != NULL; ++names) {
+            const char *const *expected;
+            int written = snprintf(found_path, sizeof(found_path), "%s/%s",
+                                   candidate_dirs[dir_index], *names);
+            if (written <= 0 || (size_t)written >= sizeof(found_path)) continue;
+            for (expected = accepted_hashes; *expected; ++expected) {
+                if (asset_file_matches_md5(found_path, *expected)) {
+                    CSB_V1_AssetGfxArchiveType kind =
+                        CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+                    if (strcasecmp(*names, "CSB.DAT") == 0) {
+                        kind = CSB_V1_ASSET_GFX_ARCHIVE_CSB;
+                    } else if (strcasecmp(*names, "CSBGRAPH.DAT") == 0) {
+                        kind = CSB_V1_ASSET_GFX_ARCHIVE_CSBGRAF;
+                    }
+                    out_result->path = found_path;
+                    out_result->kind = kind;
+                    return found_path;
                 }
-                out_result->path = found_path;
-                out_result->kind = kind;
-                return found_path;
             }
         }
     }
