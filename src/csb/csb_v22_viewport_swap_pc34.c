@@ -295,131 +295,16 @@ int csb_v22_viewport_swap_cells_painted(void) {
 
 /* ── Render ──────────────────────────────────────────────────────── */
 
-/* Clamp helper. */
-static int csb_v22_clampi(int v, int lo, int hi) {
-    if (v < lo) return lo;
-    if (v > hi) return hi;
-    return v;
-}
-
-/* The CSB viewport table is authored in the original 320x200 logical
- * coordinate space. V2.2 renders to the host framebuffer, so scale the
- * complete bounds before clipping; merely clamping the native values leaves
- * the modern viewport as a tiny patch in the top-left of a large window. */
-static void csb_v22_scale_cell_rect(const CSB_V22_CellRect *rect,
-                                    int fbW, int fbH,
-                                    int *outX, int *outY,
-                                    int *outW, int *outH) {
-    int x0;
-    int y0;
-    int x1;
-    int y1;
-
-    if (!rect || !outX || !outY || !outW || !outH || fbW <= 0 || fbH <= 0) {
-        return;
-    }
-    x0 = csb_v22_clampi((rect->x * fbW) / 320, 0, fbW);
-    y0 = csb_v22_clampi((rect->y * fbH) / 200, 0, fbH);
-    x1 = csb_v22_clampi(((rect->x + rect->w) * fbW) / 320, 0, fbW);
-    y1 = csb_v22_clampi(((rect->y + rect->h) * fbH) / 200, 0, fbH);
-    *outX = x0;
-    *outY = y0;
-    *outW = x1 - x0;
-    *outH = y1 - y0;
-}
-
-/* Paint a single RGBA bitmap into the framebuffer using nearest-
- * neighbor scaling. The bitmap is keyed by (category, asset_id)
- * via csb_v22_inplace_get_bitmap_by_id, which gives the per-cell
- * swap a clean direct lookup independent of the sibling shape
- * cache. Returns 1 on success, 0 on missing bitmap. */
-static int csb_v22_paint_cell_for_asset(unsigned char* framebuffer, int fbW, int fbH,
-                                         int dst_x, int dst_y, int dst_w, int dst_h,
-                                         const char* category, const char* asset_id) {
-    int w = 0, h = 0;
-    const uint32_t* rgba;
-    int x, y;
-
-    if (!category || !asset_id) return 0;
-
-    rgba = csb_v22_inplace_get_bitmap_by_id(category, asset_id, &w, &h);
-    if (!rgba || w <= 0 || h <= 0) return 0;
-
-    if (dst_w <= 0 || dst_h <= 0) return 0;
-    for (y = 0; y < dst_h; ++y) {
-        int sy = (y * h) / dst_h;
-        if (sy >= h) sy = h - 1;
-        int py = dst_y + y;
-        if (py < 0 || py >= fbH) continue;
-        for (x = 0; x < dst_w; ++x) {
-            int sx = (x * w) / dst_w;
-            if (sx >= w) sx = w - 1;
-            uint32_t px = rgba[sy * w + sx];
-            unsigned char r = (unsigned char)((px >> 16) & 0xFFu);
-            unsigned char g = (unsigned char)((px >>  8) & 0xFFu);
-            unsigned char b = (unsigned char)((px      ) & 0xFFu);
-            /* Same 2-bit-per-channel quantizer as
-             * csb_v22_inplace_render_pass (the existing V22 pass) and
-             * dm2_v22_viewport_swap_render (the sibling module). */
-            int ri = (r * 3 + 127) / 255;
-            int gi = (g * 3 + 127) / 255;
-            int bi = (b * 3 + 127) / 255;
-            unsigned char idx = (unsigned char)((ri << 4) | (gi << 2) | bi);
-            int px_x = dst_x + x;
-            if (px_x < 0 || px_x >= fbW) continue;
-            framebuffer[py * fbW + px_x] = idx;
-        }
-    }
-    return 1;
-}
-
 int csb_v22_viewport_swap_render(unsigned char* framebuffer,
                                    int fbW, int fbH) {
-    int cells_painted = 0;
-    int depth, lateral;
-
-    if (!framebuffer || fbW <= 0 || fbH <= 0) return 0;
-    if (!csb_v22_viewport_swap_active()) return 0;
-    if (!csb_v22_viewport_swap_populated()) return 0;
-
-    /* CSB 9-square viewport: paint the 9 cells (D0..D2 x L/C/R).
-     * The cell rects are sourced from the sibling shape cache so the
-     * swap module shares the same coords with the (future) overlay
-     * pass and the existing in-place render pass. */
-    for (depth = 0; depth < 3; ++depth) {
-        for (lateral = -1; lateral <= 1; ++lateral) {
-            const CSB_V22_CellRect* rect =
-                &csb_v22_kCellRects[depth][lateral + 1];
-            CSB_V22_SwapShapeType shape =
-                g_csb_swap_cache.shapes[depth][lateral + 1];
-            CSB_V22_AssetRouteDecision route;
-            int dx, dy, dw, dh;
-
-            if (shape == CSB_V22_SWAP_SHAPE_NONE) continue;
-
-            csb_v22_scale_cell_rect(rect, fbW, fbH, &dx, &dy, &dw, &dh);
-            if (dw <= 0 || dh <= 0) continue;
-
-            /* The material gate and active renderer must use one source of
-             * truth.  The old swap path resolved generic ids such as
-             * wall_dungeon_01 while the completed-pack gate owns the real
-             * depth-specific ids (wall_dungeon_d0/d1/d2_01). */
-            csb_v22_inplace_route_cell(
-                depth, lateral,
-                g_csb_swap_cache.raw_cells[depth][lateral + 1],
-                1, &route);
-            if (route.use_v22 &&
-                csb_v22_paint_cell_for_asset(framebuffer, fbW, fbH,
-                                              dx, dy, dw, dh,
-                                              route.category,
-                                              route.asset_id)) {
-                cells_painted++;
-            }
-        }
-    }
-
-    g_csb_cells_painted += cells_painted;
-    return cells_painted;
+    /* The historical swap used synthetic 3x3 rectangles. It has no exact
+     * F0128 placement or draw-order proof, so it must never replace a live
+     * CSB frame. The accepted door route is consumed by the source-command
+     * compositor in csb_v1_viewport_pc34_compat.c instead. */
+    (void)framebuffer;
+    (void)fbW;
+    (void)fbH;
+    return 0;
 }
 
 /* ── Source evidence ─────────────────────────────────────────────── */

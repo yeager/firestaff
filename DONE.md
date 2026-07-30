@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 CSB V2.2 unproven-material hard boundary: the obsolete
+  cell-grid painters now return without changing the framebuffer. CSB can
+  only replace source pixels through the authenticated F0128 D1/D2/D3 door
+  command stream, so a future call cannot paint a synthetic wall, floor,
+  creature, ornament or Thing over the original frame. Verification:
+  `csb_v22_inplace_draw_pc34` and `csb_v22_viewport_swap_pc34` pass.
+
 - ✅ 2026-07-30 CSB source-owned rune costs: M11 now decodes CSBWin's
   GRAPHICS.DAT graphic `0x230` and consumes the original `Byte19010` cost
   matrix plus `Byte19016` power multipliers before accepting a CSB rune. The

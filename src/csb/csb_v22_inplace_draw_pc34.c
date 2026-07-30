@@ -327,38 +327,6 @@ const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,
 
 /* ── In-place bitmap blit ──────────────────────────────────────── */
 
-/* Clamp helper */
-static int clampi(int v, int lo, int hi) {
-    if (v < lo) return lo;
-    if (v > hi) return hi;
-    return v;
-}
-
-/* Cell coordinates are V1 logical 320x200 coordinates. The V2.2 cache is
- * presented at the host framebuffer size, so derive both endpoints in host
- * space before clipping. */
-static void scale_cell_rect(const CSB_V22_CellRect* rect,
-                            int fbW, int fbH,
-                            int* outX, int* outY,
-                            int* outW, int* outH) {
-    int x0;
-    int y0;
-    int x1;
-    int y1;
-
-    if (!rect || !outX || !outY || !outW || !outH || fbW <= 0 || fbH <= 0) {
-        return;
-    }
-    x0 = clampi((rect->x * fbW) / 320, 0, fbW);
-    y0 = clampi((rect->y * fbH) / 200, 0, fbH);
-    x1 = clampi(((rect->x + rect->w) * fbW) / 320, 0, fbW);
-    y1 = clampi(((rect->y + rect->h) * fbH) / 200, 0, fbH);
-    *outX = x0;
-    *outY = y0;
-    *outW = x1 - x0;
-    *outH = y1 - y0;
-}
-
 /* Map an RGB color (0..255 per channel) to the nearest EGA/VGA
  * 6-bit-cube palette index. Equivalent to the standard VGA 0x3F
  * (bright=0, palette bits 5..0 = R*2, G*2, B*2 mapping). */
@@ -444,29 +412,16 @@ static void blit_bitmap_to_cell(const uint32_t* rgba, int src_w, int src_h,
 }
 
 int csb_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH) {
-    int depth, lateral;
-    int cells_painted = 0;
-    if (!framebuffer || fbW <= 0 || fbH <= 0) return 0;
-    if (!csb_v22_inplace_draw_active()) return 0;
-    if (!csb_v22_shape_cache_populated()) return 0;
-    for (depth = 0; depth < 3; ++depth) {
-        for (lateral = -1; lateral <= 1; ++lateral) {
-            int w = 0, h = 0;
-            const uint32_t* rgba =
-                csb_v22_inplace_get_cell_bitmap(depth, lateral, &w, &h);
-            if (!rgba || w <= 0 || h <= 0) continue;
-            const CSB_V22_CellRect* rect =
-                &csb_v22_kCellRects[depth][lateral + 1];
-            int dx, dy, dw, dh;
-            scale_cell_rect(rect, fbW, fbH, &dx, &dy, &dw, &dh);
-            if (dw <= 0 || dh <= 0) continue;
-            blit_bitmap_to_cell(rgba, w, h,
-                                 framebuffer, fbW, fbH,
-                                 dx, dy, dw, dh);
-            cells_painted++;
-        }
-    }
-    return cells_painted;
+    /* This old grid painter has no ReDMCSB F0128 command, clipping or
+     * draw-order receipt.  It used to replace arbitrary 3x3 cells with a
+     * stretched pack bitmap, which can hide source walls, ornaments and
+     * Things.  Keep the ABI while failing closed: the only admitted V2.2
+     * compositor is csb_v22_inplace_render_f0128_command(), called directly
+     * from the authenticated source command stream. */
+    (void)framebuffer;
+    (void)fbW;
+    (void)fbH;
+    return 0;
 }
 
 int csb_v22_inplace_render_f0128_command(

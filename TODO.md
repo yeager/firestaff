@@ -210,7 +210,7 @@ an integration build pass.
   motion/lighting, and V2.2 source-artpack admission, startup isolation and
   runtime HUD ownership. This proves the implemented V2.x feature surface,
   not the still-unadmitted F0128 material families.
-  2026-07-30 current-main verification: `ctest -L csb` passes all 114
+  2026-07-30 current-main verification: `ctest -L csb` passes all 115
   registered CSB regressions. The overlapping V2 labels cover 45 `v2`, 3
   `v2.0`, 1 `v2.1`, and 6 `v2.2` contracts, including real-PC3.4 startup and
   Prison runtime captures. This is a regression receipt for the implemented
@@ -228,6 +228,11 @@ an integration build pass.
   into the save-visible CSB party state. Full `CastMagic`/`CastSpell`, DSA
   filter traversal and effects remain a separate CSBWin runtime owner; they
   must not fall through into DM1.
+  2026-07-30 hardening: the obsolete V2.2 3x3 rectangle painters now return
+  without touching the framebuffer. They had no F0128 command receipts and
+  therefore cannot consume wall, floor, creature, ornament or Thing assets.
+  The only live V2.2 replacement remains the admitted D1/D2/D3 door command
+  compositor; this TODO stays open for every other material family.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature

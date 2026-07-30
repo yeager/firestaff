@@ -98,19 +98,11 @@ const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,
                                                   const char* asset_id,
                                                   int* out_w, int* out_h);
 
-/* csb_v22_inplace_render_pass — paints the cached V22 bitmaps into
- * the framebuffer at the CSB 3x3 cell rectangles (D0/D1/D2 × L/C/R).
- * For each V22-active cell with a
- * cached bitmap, nearest-neighbor scales the bitmap into the cell
- * rect and writes to framebuffer[y*fbW+x] (single-byte indexed mode).
- *
- * This is the V22 in-place equivalent of csb_v22_render_overlay:
- * the caller (typically the M11 game view) invokes this AFTER V1
- * rendering, so the V22 art replaces the V1 sprite at the same
- * Z-order. The bitmap's color_tint-tinted average is mapped to the
- * nearest EGA palette index for the indexed framebuffer.
- *
- * Returns the number of cells painted. */
+/* Legacy 3x3-cell painter retained for ABI compatibility. It always returns
+ * zero: arbitrary cell rectangles are not ReDMCSB F0128 projections. CSB
+ * V2.2 replacements are instead admitted command-by-command through
+ * csb_v22_inplace_render_f0128_command(), preserving native clipping,
+ * palette and later F0115 overlays. */
 int csb_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH);
 
 /* Replace one already-composed, source-owned F0128 command in place. Only
