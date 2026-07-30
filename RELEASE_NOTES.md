@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.185
+
+- CSB: map the original PC3.4 F0095 wall-set graphics catalog precisely for
+  the F0128 viewport material path.
+- Build: make input-remap headers SDL-independent and repair portable probe
+  linking and string assembly.
+- Release: build the application and release smoke probes directly, avoiding
+  the development-only test catalog during packaging.
+
 # Firestaff v3.0.184
 
 - Start menu: prevent a transient macOS folder-dialog `.` token from becoming
