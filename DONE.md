@@ -161,6 +161,16 @@
   This removes a false failure without weakening the actual presentation
   contract.
 
+- ✅ 2026-07-30 CSBWin/Atari source viewport core: M11 now reproduces the
+  source-defined `Viewport.cpp::FloorAndCeilingOnly` page (224x136 at
+  `(48,33)`: 29 ceiling rows, 37 black rows, 70 floor rows) from active
+  `GRAPHICS.DAT` material. It re-packs decoded indexed pixels into the exact
+  four-plane row stride consumed by `TAG0088b2`, then applies C22E wall
+  projections only for authenticated `roomSTONE` cells. The pure Atari
+  launcher regression proves nonblank source pixels inside that aperture
+  after FTLCODE handoff. This does not claim door, object, F0-centre,
+  teleporter, pit, stair or decoration ownership.
+
 - ✅ 2026-07-30 Start-menu data-directory token containment: the runtime
   data-directory accessor and scan-progress status line now use the same
   durable selected/configured path as the Settings row. A transient macOS

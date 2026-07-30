@@ -104,6 +104,23 @@ static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
     return nonzero;
 }
 
+static int count_nonzero_region(const unsigned char *pixels, int stride,
+                                int x, int y, int width, int height) {
+    int row;
+    int count = 0;
+    if (!pixels || stride <= 0 || x < 0 || y < 0 || width <= 0 || height <= 0 ||
+        x + width > stride) return 0;
+    for (row = 0; row < height; ++row) {
+        int column;
+        for (column = 0; column < width; ++column) {
+            if (pixels[(size_t)(y + row) * stride + x + column] != 0u) {
+                ++count;
+            }
+        }
+    }
+    return count;
+}
+
 static int count_changed_pixels(const unsigned char* a,
                                 const unsigned char* b,
                                 size_t count) {
@@ -1672,6 +1689,7 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         int tick;
         int animation_pixels_visible = 0;
         int runtime_hud_pixels_visible = 0;
+        int runtime_viewport_pixels_visible = 0;
 
         init_menu_without_gallery(&menu, data_dir, "csb");
         dismiss_initial_message(&menu);
@@ -1718,8 +1736,12 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         runtime_hud_pixels_visible =
             count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0;
+        runtime_viewport_pixels_visible =
+            count_nonzero_region(framebuffer, 320, 48, 33, 224, 136) > 0;
         expect_true(runtime_hud_pixels_visible,
                     "Atari ST C232 HUD material reaches the first FTLCODE frame");
+        expect_true(runtime_viewport_pixels_visible,
+                    "Atari ST floor/ceiling and wall source pixels reach the FTLCODE aperture");
         expect_true(view.presentationMode == requested,
                     "Atari ST runtime retains the requested presentation mode");
         M11_GameView_Shutdown(&view);

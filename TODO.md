@@ -1269,12 +1269,15 @@ that its exact runtime path is not already source-locked and tested.
    `CSBCode.cpp:2933-2940`; PC3.4's 40-record F0095 catalog remains isolated.
    All 52 records for CSBWin WallSet 0–3 decode through the original Atari
    IMG3/LZW path in the real-data regression.
-   Full CSBWin dungeon consumption remains blocked on CSBWin's packed-byte blitter stride:
-   the current Atari decoder expands pixels to full width, while the original
-   viewport applies the source's half-width packed stride. Direct reuse would
-   distort the frame, so the route remains fail-closed until that decoder/
-   blitter contract is recovered. Wall-slot geometry remains the next
-   source-owned F0128 step. 2026-07-30 follow-up: the supplied standard
+   2026-07-30: M11 now consumes the recoverable CSBWin viewport core rather
+   than treating packed source rows as incompatible. `Viewport.cpp` proves a
+   224x136 page of 29 ceiling rows, 37 black rows and 70 floor rows; M11
+   decodes those original images, reconstructs CSBWin's four-plane packed
+   byte rows, and applies the C22E `TAG0088b2` wall projections only when the
+   current original dungeon cell is `roomSTONE`. The full CSBWin dungeon
+   owner remains open: F0 centre-cell, doors, objects, pits, teleporters,
+   stairs, decorations and ordering must each use their own Viewport.cpp
+   command paths rather than borrowing this stone-wall lane. 2026-07-30 follow-up: the supplied standard
    Atari `GRAPHICS.DAT` confirms the contract for WallSet 0 (records 84--89
    expand to the exact `0x22e` source widths/heights), but later `77 + 13 *
    WallSet + slot` records expose incompatible stream headers under the

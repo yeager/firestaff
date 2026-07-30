@@ -31,6 +31,7 @@
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
@@ -2204,7 +2205,135 @@ static int m11_csb_present_atari_st_runtime_hud(
         memcpy(framebuffer + (size_t)y * (size_t)framebuffer_width,
                candidate + (size_t)y * 320u, 320u);
     }
-    m11_set_status(state, "CSB", "CSBWIN HUD READY - DUNGEON OWNER REQUIRED");
+    m11_set_status(state, "CSB", "CSBWIN SOURCE FRAME - EXTENDED CELLS REQUIRED");
+    return 1;
+}
+
+/* CSBWin's Viewport.cpp::FloorAndCeilingOnly builds a 224x136 packed page:
+ * 29 rows ceiling, 37 rows black and 70 rows floor.  The active decoder
+ * yields the same source pixels as indexed bytes, so re-pack them through
+ * the reversible four-plane boundary before TAG0088b2-equivalent wall
+ * commands consume their byte strides. */
+static int m11_csb_present_atari_st_runtime_viewport(
+    M11_GameViewState *state, unsigned char *framebuffer,
+    int framebuffer_width, int framebuffer_height)
+{
+    enum {
+        VIEWPORT_X = 48, VIEWPORT_Y = 33, VIEWPORT_WIDTH = 224,
+        VIEWPORT_HEIGHT = 136, CEILING_HEIGHT = 29, BLACK_HEIGHT = 37,
+        FLOOR_HEIGHT = 70
+    };
+    static const struct {
+        int forward;
+        int right;
+    } wall_locations[CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT] = {
+        {3, -2}, {3, -1}, {3, 0}, {3, 1}, {3, 2},
+        {2, -1}, {2, 0}, {2, 1}, {1, -1}, {1, 0}, {1, 1},
+        {0, -1}, {0, 0}, {0, 1}
+    };
+    const CSB_V1_BootProfile *profile;
+    const CSB_V1_DungeonData *dungeon;
+    CSB_V1_CSBWinViewportLayout022e layout;
+    CSB_V1_CSBWinViewportWallPlan wall_plan;
+    const M11_AssetSlot *ceiling;
+    const M11_AssetSlot *floor;
+    unsigned char viewport[VIEWPORT_WIDTH * VIEWPORT_HEIGHT];
+    uint16_t ceiling_graphic;
+    uint16_t floor_graphic;
+    int floor_set;
+    int wall_set;
+    int y;
+    size_t draw_index;
+
+    if (!state || !framebuffer || framebuffer_width < 320 ||
+        framebuffer_height < 200 || !state->csbAtariStRuntimeHandoffComplete ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!profile || (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+                     profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !profile->graphics_verified || !profile->graphics_path[0] ||
+        !profile->runtime.dungeon_handle ||
+        profile->runtime.current_level < 0 ||
+        profile->runtime.current_level >=
+            profile->runtime.dungeon_handle->level_count) {
+        return 0;
+    }
+    dungeon = profile->runtime.dungeon_handle;
+    floor_set = dungeon->map_floor_set[profile->runtime.current_level];
+    wall_set = dungeon->map_wall_set[profile->runtime.current_level];
+    if (floor_set < 0 || floor_set > 15 || wall_set < 0 || wall_set > 15 ||
+        !csb_v1_csbwin_floor_ceiling_graphic_index((uint16_t)floor_set, 1,
+                                                    &ceiling_graphic) ||
+        !csb_v1_csbwin_floor_ceiling_graphic_index((uint16_t)floor_set, 0,
+                                                    &floor_graphic) ||
+        !m11_csb_install_runtime_source_graphic(state, ceiling_graphic) ||
+        !m11_csb_install_runtime_source_graphic(state, floor_graphic)) {
+        return 0;
+    }
+    ceiling = M11_AssetLoader_Load(&state->assetLoader, ceiling_graphic);
+    floor = M11_AssetLoader_Load(&state->assetLoader, floor_graphic);
+    if (!ceiling || !floor || !ceiling->pixels || !floor->pixels ||
+        ceiling->width != VIEWPORT_WIDTH || ceiling->height != CEILING_HEIGHT ||
+        floor->width != VIEWPORT_WIDTH || floor->height != FLOOR_HEIGHT ||
+        !csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(
+            profile->graphics_path, &layout) ||
+        !csb_v1_csbwin_viewport_build_wall_plan((uint16_t)wall_set, &layout,
+                                                &wall_plan)) {
+        return 0;
+    }
+    memset(viewport, 0, sizeof(viewport));
+    memcpy(viewport, ceiling->pixels, (size_t)VIEWPORT_WIDTH * CEILING_HEIGHT);
+    memcpy(viewport + (size_t)(CEILING_HEIGHT + BLACK_HEIGHT) * VIEWPORT_WIDTH,
+           floor->pixels, (size_t)VIEWPORT_WIDTH * FLOOR_HEIGHT);
+    for (draw_index = 0u; draw_index < wall_plan.count; ++draw_index) {
+        const CSB_V1_CSBWinViewportWallDraw *draw = &wall_plan.draws[draw_index];
+        const M11_AssetSlot *wall;
+        uint8_t *packed = NULL;
+        size_t packed_size = 0u;
+        CSB_V1_CSBWinPlanarBitmap packed_wall;
+        int square_type;
+
+        if ((unsigned)draw->wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT ||
+            draw->wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F0) {
+            return 0;
+        }
+        square_type = csb_v1_dungeon_f0153_get_relative_square_type_pc34(
+            dungeon, profile->runtime.current_level, profile->runtime.party_dir,
+            wall_locations[draw->wall].forward, wall_locations[draw->wall].right,
+            profile->runtime.party_x, profile->runtime.party_y);
+        /* Viewport.cpp's DrawCellF* wall branch is entered only for
+         * roomSTONE.  Every other room kind owns a different source command. */
+        if (square_type != 0) continue;
+        if (!m11_csb_install_runtime_source_graphic(state, draw->graphic_index)) {
+            return 0;
+        }
+        wall = M11_AssetLoader_Load(&state->assetLoader, draw->graphic_index);
+        if (!wall || !wall->pixels || wall->width == 0u || wall->height == 0u ||
+            !csb_v1_csbwin_planar_bitmap_pack_indexed(
+                wall->pixels, wall->width, wall->height, &packed, &packed_size)) {
+            free(packed);
+            return 0;
+        }
+        memset(&packed_wall, 0, sizeof(packed_wall));
+        packed_wall.bytes = packed;
+        packed_wall.width = wall->width;
+        packed_wall.height = wall->height;
+        packed_wall.byte_stride = (uint16_t)(((unsigned)wall->width + 15u) / 16u * 8u);
+        if (packed_size != (size_t)packed_wall.byte_stride * packed_wall.height ||
+            !csb_v1_csbwin_planar_bitmap_blit_wall_projection(
+                &packed_wall, &draw->projection, draw->mirrored, viewport,
+                VIEWPORT_WIDTH, VIEWPORT_HEIGHT, VIEWPORT_WIDTH)) {
+            free(packed);
+            return 0;
+        }
+        free(packed);
+    }
+    for (y = 0; y < VIEWPORT_HEIGHT; ++y) {
+        memcpy(framebuffer + (size_t)(VIEWPORT_Y + y) * framebuffer_width + VIEWPORT_X,
+               viewport + (size_t)y * VIEWPORT_WIDTH, VIEWPORT_WIDTH);
+    }
     return 1;
 }
 
@@ -50138,7 +50267,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         /* Standard CSBWin/Atari has its own C232 HUD layout rather than the
          * PC3.4 C017/C040 terminal session.  Once ANIM.C has yielded to the
          * game, consume that real source layer directly. */
-        if (m11_csb_present_atari_st_runtime_hud(csb_state, framebuffer,
+        if (m11_csb_present_atari_st_runtime_viewport(
+                csb_state, framebuffer, framebufferWidth, framebufferHeight) &&
+            m11_csb_present_atari_st_runtime_hud(csb_state, framebuffer,
                                                  framebufferWidth,
                                                  framebufferHeight)) {
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
