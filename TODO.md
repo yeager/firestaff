@@ -250,9 +250,11 @@ an integration build pass.
   positively decodes C001--C005 from that package. C002's source-defined
   terminal RLE clipping is handled, and C004/C005 are decoded after their
   deferred `ReadAndExpandGraphic(0x8000 | n)` raw-page load. The remaining
-  blocker is the later PC3.4-only C017/C040 HUD/release-capture gate; make
-  that gate consume the corresponding CSBWin source forms before enabling
-  the fallback startup session.
+  blocker is the later PC3.4-only C017/C040 HUD/release-capture gate. The
+  supplied CSBWin standard package decodes C017 as 224x136, but its index 40
+  declares 144x0 and therefore is not PC3.4 C040. Recover CSBWin's actual
+  panel index/owner from `CSBCode.cpp` before enabling the fallback session;
+  never infer a height or substitute a generated panel.
   2026-07-30 hardening: the obsolete V2.2 3x3 rectangle painters now return
   without touching the framebuffer. They had no F0128 command receipts and
   therefore cannot consume wall, floor, creature, ornament or Thing assets.
