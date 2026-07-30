@@ -7,6 +7,15 @@
   `test_csb_v1_csbwin_save_provenance_pc34_compat` passes 14/14, including
   byte-identical export of the official local `csbgame3.dat` corpus.
 
+- ✅ 2026-07-30 CSB direct-package boot: the runtime now checks the selected
+  directory's hash-authenticated `DUNGEON.DAT` and `GRAPHICS.DAT` before its
+  archive-aware fallback. A normal loose PC3.4 package therefore reaches the
+  CSB startup route without unpacking unrelated Amiga/ST archives; renamed,
+  nested and archive-only packages retain the existing hash-first fallback.
+  Verification: direct headless PC3.4 launch reaches `CSB READY`, and
+  `csb_v1_boot_profile_smoke`, `csb_v1_boot_runtime_handoff` and
+  `csb_v1_runtime_route_first_frame_movement_utility_gate` pass.
+
 - ✅ 2026-07-30 Start-menu data-folder runtime guard: startup asset consumers
   now use the last accepted physical data directory, rather than a transient
   scanner `.` token from the macOS native folder dialog. This keeps the
