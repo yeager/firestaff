@@ -33,12 +33,6 @@
 
 /* ── Drop resolution result ──────────────────────────────────────────── */
 
-typedef struct {
-    int item_id;          /* GDAT item ID or 0 if no drop */
-    int count;            /* quantity */
-    int random_flags;     /* random/variation encoding */
-} DM2_DropEntry;
-
 /* ── Source-ordered slot resolution (DM2-006) ──────────────────────────
  * skproject/SKWINSPX/src/v4/skcrture.cpp:2084-2118 DROP_CREATURE_POSSESSION
  * resolves the 11 creature GDAT word fields CREATURE_STAT_DROP_FIRST
@@ -136,25 +130,6 @@ int dm2_v1_drops_resolve_gdat_creature_drops(
     DM2_V1_DropSlotReceipt out_receipts[DM2_DROP_SLOT_COUNT],
     DM2_V1_DropGdatReceipt *out_receipt);
 
-/* ── Drop table struct ──────────────────────────────────────────────────
- * Source: SKWin.GDAT2.InternalCodes.txt (11 slots per creature)
- * Extended GDAT category 0x0A CREATURE has 11 sub-slots (0x0A-0x14) */
-
-typedef struct {
-    DM2_DropEntry slots[DM2_DROP_SLOT_COUNT];
-    uint16_t drop_seed;   /* DropTableSeed from GDAT */
-    uint8_t  slot_count;  /* actual used slots (0-11) */
-} DM2_V1_DropTable;
-
-/* ── Special drops ────────────────────────────────────────────────────
- * Source: docs/dm2_characters.md (Thorn Demon worm food), SKWinCore.cpp */
-
-#define DM2_DROP_THORN_DEMON_WORM_FOOD  1  /* sellable "steak" from Thorn Demon */
-
-/* ── Public API ──────────────────────────────────────────────────────── */
-
-int dm2_v1_drops_generate(const DM2_V1_DropTable *table, uint32_t rng_state,
-    DM2_DropEntry *out_drop);
 const char *dm2_v1_drops_source_evidence(void);
 
 #endif /* FIRESTAFF_DM2_V1_DROPS_H */

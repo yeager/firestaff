@@ -2870,8 +2870,8 @@ file and DONE.md after every completed job.
     292 (0x9241); the live death path
     (`dm2_v1_creature_load_ai_table_from_gdat` → `dm2_v1_creature_death_check`)
     reports the real item through the observer with replica-exact RNG draws.
-    Thorn Demon keeps its documented data-free fallback (the real GDAT has
-    no drop words for type 19, so nothing proven is displaced).
+    A creature without imported GDAT drop words now produces no generated
+    loot, exactly as `DROP_CREATURE_POSSESSION` does for eleven zero words.
   - Combat: melee/ranged resolution gained the real-data defense route —
     `dm2_v1_combat_bind_creature_defense_fn()` (caller-owned provider hook,
     same pattern as the CAII word providers) and
@@ -18749,7 +18749,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     from `DME.h::Creature::b15_0_1`, matching `DRAW_MAP_CHIP`; ObjectID
     direction bits are no longer substituted for atlas selection. Remaining:
     bind authentic mutable command state before dynamic frame selection.
-- DM2-006 — `skproject/SKULLWIN/c_creature.cpp` AI/death paths and `c_ai.cpp`: `src/dm2/dm2_v1_creature.c` uses a zero-initialised AI table and fixed Thorn Demon drop behaviour, while `dm2_v1_drops.c` selects the first non-empty entry. The bounded real-data chain `CREATURES[type] dtWordValue(0x05) -> CREATURE_AI row -> AIDefinition.w30/w32` is now available as evidence for `DRAW_PUT_DOWN_ITEM`; it preserves the source w30 eligibility gate and still does not create a click target until owner records and rect expansion are both proven. Bind real GDAT AI/drop records and reproduce source RNG, eligibility, possession, death, and cooldown ordering.
+- DM2-006 — `skproject/SKWIN/c_creature.cpp` AI/death paths and `c_ai.cpp`: the bounded real-data chain `CREATURES[type] dtWordValue(0x05) -> CREATURE_AI row -> AIDefinition.w30/w32` is available as evidence for `DRAW_PUT_DOWN_ITEM`; it preserves the source w30 eligibility gate and still does not create a click target until owner records and rect expansion are both proven. Bind real GDAT AI records and reproduce source eligibility, possession, death, and cooldown ordering.
   - 2026-07-23 update (Lane E, cycle 16): the real-data drop route is now
     public and proven against the local canonical GRAPHICS.DAT:
     `dm2_v1_drops_resolve_gdat_creature_drops()` reads CREATURES word
@@ -18763,9 +18763,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `dm2_v1_creature_ai_defense()` accessor and reject explicitly when the
     defense is unproven — which is the case for the local PC English GDAT
     (no CREATURE_AI/0x19 category), so combat damage stays fail-closed
-    locally.  `dm2_v1_drops_generate()` keeps its data-free fallback role
-    (Thorn Demon has no GDAT drop words, so the fallback does not contradict
-    proven data).  Remaining: a CREATURE_AI-proven graphics session to light
+    locally. Remaining: a CREATURE_AI-proven graphics session to light
     up the defense/BaseHP route, DUNGEON.DAT door-record evidence for the
     door-destruction table, and ALLOC_NEW_DBITEM item-record creation.
   - 2026-07-18 update: `dm2_v1_drops_resolve_source_slots` now binds

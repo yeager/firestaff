@@ -7,8 +7,8 @@
  *   - dm2_v1_creature_death_check populates the death/drop observer with
  *     the killed creature's identity (slot, AI, world coords, map) and the
  *     resulting loot state (item_id, count, dropped).
- *   - Thorn Demon (AI 19) drops DM2_DROP_THORN_DEMON_WORM_FOOD count=1.
- *   - Other AIs drop nothing (dropped=0) but still record the death.
+ *   - Only imported GDAT drop words can create generated loot.
+ *   - Unbound AIs record no generated drop (dropped=0) but still record death.
  *   - Out-of-range instance ids, dead-creature re-checks, and positive-HP
  *     calls are all rejected without polluting the observer.
  *
@@ -23,7 +23,6 @@
  *   SKULLWIN/c_creature.h b_1a / b_17 fields
  *   skproject/SKWIN/SkWinCore.cpp:16815-16936 ALLOC_NEW_CREATURE
  *   SKWin.GDAT2.InternalCodes.txt creature category 0x0A (11 drop slots)
- *   docs/dm2_characters.md Thorn Demon worm food
  */
 
 #include "dm2_v1_creature.h"
@@ -55,11 +54,11 @@ static int g_failures   = 0;
     } \
 } while (0)
 
-/* ── Thorn Demon → worm food ─────────────────────────────────────── */
+/* ── Unbound Thorn Demon → no generated drop ──────────────────────── */
 
-static void test_thorn_demon_worm_food(void)
+static void test_unbound_thorn_demon_no_generated_drop(void)
 {
-    printf("--- Thorn Demon → worm food ---\n");
+    printf("--- Unbound Thorn Demon → no generated drop ---\n");
     dm2_v1_creature_reset_death_observer();
 
     int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 5, 10, 0, 1, 0);
@@ -70,9 +69,9 @@ static void test_thorn_demon_worm_food(void)
 
     DM2_V1_CreatureDeathDropObserver obs;
     CHECK_EQ(dm2_v1_creature_last_death_drop(&obs), 1);
-    CHECK_EQ(obs.dropped, 1);
-    CHECK_EQ(obs.item_id, DM2_DROP_THORN_DEMON_WORM_FOOD);
-    CHECK_EQ(obs.count, 1);
+    CHECK_EQ(obs.dropped, 0);
+    CHECK_EQ(obs.item_id, 0);
+    CHECK_EQ(obs.count, 0);
     CHECK_EQ(obs.instance_id, slot);
     CHECK_EQ(obs.ai_index, DM2_AI_THORN_DEMON);
     CHECK_EQ(obs.world_x, 5);
@@ -207,7 +206,6 @@ static void test_source_and_constants(void)
     CHECK_EQ(DM2_DROP_SLOT_COUNT, 11);
     CHECK_EQ(DM2_DROP_SLOT_FIRST, 10);
     CHECK_EQ(DM2_DROP_SLOT_LAST, 20);
-    CHECK_EQ(DM2_DROP_THORN_DEMON_WORM_FOOD, 1);
     CHECK_EQ(DM2_AI_THORN_DEMON, 19);
     CHECK_EQ(DM2_AI_CAVE_BAT, 23);
 }
@@ -218,9 +216,9 @@ int main(void)
     printf("Source: SKULL.ASM + SKWin.GDAT2.InternalCodes.txt +\n"
            "        skproject/SKWIN/SkWinCore.cpp:16815-16936 +\n"
            "        SKULLWIN/c_creature.cpp DM2_PROCEED_CCM +\n"
-           "        docs/dm2_characters.md Thorn Demon worm food.\n\n");
+           "        SKWINSPX/src/v4/skcrture.cpp DROP_CREATURE_POSSESSION.\n\n");
 
-    test_thorn_demon_worm_food();
+    test_unbound_thorn_demon_no_generated_drop();
     test_non_thorn_demon_no_drop();
     test_rejection_paths();
     test_reset();

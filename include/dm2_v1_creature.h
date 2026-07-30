@@ -445,12 +445,9 @@ void dm2_v1_creature_test_set_drop_slots(int creature_type,
  * state" impossible to gate.  These accessors expose the most recent death
  * event so the CTest gate can assert the loot-state contract:
  *
- *   1. spawn Thorn Demon (AI 19) → deal_damage until hp==0
- *      → tick → death_check fires
- *      → drop_observer.item_id == DM2_DROP_THORN_DEMON_WORM_FOOD
- *      → drop_observer.count   == 1
- *      → drop_observer.instance_id matches the killed slot
- *      → drop_observer.dropped == 1
+ *   1. spawn a creature → deal_damage until hp==0 → tick → death_check
+ *      fires. Only imported CREATURES GDAT fields 0x0A..0x14 can produce
+ *      drop_observer items; an unbound session reports no generated loot.
  *      → death_observer_count incremented
  *
  *   2. spawn non-Thorn-Demon (Cavern Bat, AI 23) → kill

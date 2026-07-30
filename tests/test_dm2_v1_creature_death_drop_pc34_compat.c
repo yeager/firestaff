@@ -3,8 +3,8 @@
  * DM2 V1 creature death → drop observer CTest gate.
  *
  * Source-locked coverage of:
- *   1. Thorn Demon (AI 19) kill → DM2_DROP_THORN_DEMON_WORM_FOOD
- *      with count=1 is captured in the death/drop observer.
+ *   1. A creature without imported GDAT drop words records no generated
+ *      loot in the death/drop observer.
  *   2. Cavern Bat (AI 23, no Thorn Demon special case) kill →
  *      observer records dropped=0 (death landed, no loot).
  *   3. Out-of-range instance_id is rejected before observer fires.
@@ -32,7 +32,6 @@
  *   SKULLWIN/c_creature.cpp: DM2_PROCEED_CCM (CCM b_1a dispatch)
  *   SKULLWIN/c_creature.h: b_1a / b_17 fields
  *   SKWin.GDAT2.InternalCodes.txt (creature category 0x0A, 11 drop slots 0x0A-0x14)
- *   docs/dm2_characters.md (Thorn Demon worm food)
  *   docs/dm2_dungeon_design.md (11 drop slots, DropTableSeed RNG)
  *   ReDMCSB DEFS.H C040-equivalent dead-instance sentinel
  *
@@ -61,9 +60,9 @@ static int tests_passed = 0;
     } \
 } while (0)
 
-/* ── Thorn Demon kill → worm food drop ────────────────────────────── */
+/* ── Unbound creature data → no generated drop ────────────────────── */
 
-static int test_thorn_demon_drops_worm_food(void) {
+static int test_unbound_creature_has_no_generated_drop(void) {
     dm2_v1_creature_reset_death_observer();
 
     int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 5, 10, 0, 1, 0);
@@ -76,9 +75,9 @@ static int test_thorn_demon_drops_worm_food(void) {
     DM2_V1_CreatureDeathDropObserver obs;
     int rc = dm2_v1_creature_last_death_drop(&obs);
     return rc == 1
-        && obs.dropped == 1
-        && obs.item_id == DM2_DROP_THORN_DEMON_WORM_FOOD
-        && obs.count == 1
+        && obs.dropped == 0
+        && obs.item_id == 0
+        && obs.count == 0
         && obs.instance_id == slot
         && obs.ai_index == DM2_AI_THORN_DEMON
         && obs.world_x == 5
@@ -87,7 +86,7 @@ static int test_thorn_demon_drops_worm_food(void) {
         && dm2_v1_creature_death_observer_count() == 1;
 }
 
-/* ── Cavern Bat kill → no drop (only Thorn Demon has special drops) ── */
+/* ── Cavern Bat kill → no generated drop ──────────────────────────── */
 
 static int test_non_thorn_demon_no_drop(void) {
     dm2_v1_creature_reset_death_observer();
@@ -284,13 +283,12 @@ static int test_observer_snapshot_fields(void) {
         && obs.instance_id == slot;
 }
 
-/* ── Drops constants still source-locked ──────────────────────────── */
+/* ── Drop slot constants remain source-locked ─────────────────────── */
 
 static int test_drops_source_lock_constants(void) {
     return DM2_DROP_SLOT_COUNT == 11
         && DM2_DROP_SLOT_FIRST == 10
-        && DM2_DROP_SLOT_LAST == 20
-        && DM2_DROP_THORN_DEMON_WORM_FOOD == 1;
+        && DM2_DROP_SLOT_LAST == 20;
 }
 
 int main(void) {
@@ -298,9 +296,9 @@ int main(void) {
     printf("Source: SKULL.ASM:10620-10710, SKWin.GDAT2.InternalCodes.txt,\n"
            "        skproject/SKWIN/SkWinCore.cpp:16815-16936,\n"
            "        SKULLWIN/c_creature.cpp (DM2_PROCEED_CCM),\n"
-           "        docs/dm2_characters.md (Thorn Demon worm food).\n\n");
+           "        SKWINSPX/src/v4/skcrture.cpp DROP_CREATURE_POSSESSION.\n\n");
 
-    TEST(thorn_demon_drops_worm_food);
+    TEST(unbound_creature_has_no_generated_drop);
     TEST(non_thorn_demon_no_drop);
     TEST(out_of_range_instance_id_rejected);
     TEST(dead_creature_death_check_is_noop);

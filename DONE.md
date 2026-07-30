@@ -247,6 +247,17 @@
   source split pairs. All projections come directly from GRAPHICS.DAT item
   `0x22e`; focused layout and M11 handoff tests pass. The same commands now
   consume the recovered original `DoorGraphic[3][2]` pixels.
+- ✅ 2026-07-30 DM2 creature-drop synthetic fallback removal: death handling
+  no longer turns Thorn Demon type 19 into a hardcoded item 1 drop when
+  no GDAT data was imported. It now follows SK-projects
+  `SKWINSPX/src/v4/skcrture.cpp::DROP_CREATURE_POSSESSION`, whose only
+  generated-drop inputs are CREATURES fields 0x0A–0x14; an unbound or all-zero
+  table records the death but produces no loot. The generic first-nonempty
+  `DM2_V1_DropTable` stub and its public fake item constant were removed.
+  Verification: focused CTests `dm2_v1_creature_death_drop_pc34_compat` and
+  `dm2_v1_drops_source_order_pc34_compat`, the death-drop probe and strict C11
+  syntax checks.
+
 - ✅ 2026-07-30 DM2 actuator-shooter synthetic-projectile removal: missile,
   weapon and item shooter actuators no longer fabricate projectile category,
   subtype, party-facing direction, owner, energy or attack from incomplete

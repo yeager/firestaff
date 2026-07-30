@@ -910,17 +910,6 @@ void dm2_v1_creature_death_check(int instance_id) {
                                         c->world_x, c->world_y,
                                         c->world_x, c->world_y);
 
-    /* Stub: Thorn Demon always drops sellable worm food.
-     * Real: GDAT creature category 0x0A, sub-entries 0x0A-0x14, 11 slots.
-     * Source: SKWin.GDAT2.InternalCodes.txt, dm2_v1_drops.c */
-    DM2_V1_DropTable dt = {0};
-    if (snap_ai == DM2_AI_THORN_DEMON) {
-        dt.slots[0].item_id = DM2_DROP_THORN_DEMON_WORM_FOOD;
-        dt.slots[0].count   = 1;
-    }
-    DM2_DropEntry drop = {0};
-    int drop_hit = dm2_v1_drops_generate(&dt, (uint32_t)instance_id, &drop);
-
     /* DM2-006: when the GDAT CREATURES drop words were imported for this
      * creature type, resolve them in source order
      * (skcrture.cpp:2092-2118 DROP_CREATURE_POSSESSION,
@@ -947,9 +936,9 @@ void dm2_v1_creature_death_check(int instance_id) {
     }
 
     /* Populate the observer so the CTest gate can assert the loot-state
-     * contract deterministically.  drop_hit==1 + drop.item_id!=0 means
-     * a non-empty drop entry; for non-Thorn-Demon AI the stub returns 0
-     * and the observer records dropped=0 (death still observed). */
+     * contract deterministically.  Without imported source words this is
+     * a recorded death with no generated drops: DROP_CREATURE_POSSESSION
+     * has no creature-type special case or fabricated fallback. */
     memset(&g_last_death_drop, 0, sizeof(g_last_death_drop));
     g_last_death_drop.instance_id = instance_id;
     g_last_death_drop.ai_index    = snap_ai;
@@ -965,10 +954,6 @@ void dm2_v1_creature_death_check(int instance_id) {
             g_last_death_drop.item_id = source_first_item;
             g_last_death_drop.count   = source_total_items;
         }
-    } else if (drop_hit && drop.item_id != 0) {
-        g_last_death_drop.dropped = 1;
-        g_last_death_drop.item_id = drop.item_id;
-        g_last_death_drop.count   = drop.count;
     }
     g_death_observer_count++;
 }

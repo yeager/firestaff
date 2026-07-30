@@ -150,8 +150,8 @@ int main(void)
         dm2_v1_creature_test_clear_ai_overrides();
     }
 
-    /* 6. Data-free fallback unchanged: Thorn Demon worm food still lands
-     *    when no GDAT drop words are bound. */
+    /* 6. No GDAT words means no generated drops.  DROP_CREATURE_POSSESSION
+     *    has no creature-specific fallback. */
     {
         dm2_v1_creature_test_reset_instances();
         dm2_v1_creature_reset_death_observer();
@@ -164,11 +164,9 @@ int main(void)
 
         DM2_V1_CreatureDeathDropObserver obs;
         CHECK(dm2_v1_creature_last_death_drop(&obs) == 1, "death observed");
-        CHECK(obs.source_ordered == 0, "fallback path, not source-ordered");
-        CHECK(obs.dropped == 1 &&
-                  obs.item_id == DM2_DROP_THORN_DEMON_WORM_FOOD &&
-                  obs.count == 1,
-              "thorn demon fallback preserved");
+        CHECK(obs.source_ordered == 0, "no imported source drop words");
+        CHECK(obs.dropped == 0 && obs.item_id == 0 && obs.count == 0,
+              "unbound drop data is rejected");
     }
 
     /* 7. Source evidence strings bound. */

@@ -205,20 +205,10 @@ static void test_combat_resolver(void)
     }
 }
 
-/* ── Drops stub ────────────────────────────────────────────────────────── */
+/* ── GDAT-backed drops ─────────────────────────────────────────────────── */
 static void test_drops(void)
 {
-    printf("--- drops (stub) ---\n");
-    DM2_V1_DropTable empty_table = {0};
-    DM2_DropEntry drop = {0};
-    /* All-zero table generates no drop */
-    PROBE_ASSERT(dm2_v1_drops_generate(NULL, 0, &drop) == 0,
-                 "NULL table returns 0");
-    PROBE_ASSERT(dm2_v1_drops_generate(&empty_table, 0, NULL) == 0,
-                 "NULL output returns 0");
-    empty_table.slots[0].item_id = 0;  /* empty slot */
-    PROBE_ASSERT(dm2_v1_drops_generate(&empty_table, 0, &drop) == 0,
-                 "all-empty table returns 0");
+    printf("--- GDAT-backed drops ---\n");
     /* DM2_DROP_SLOT_COUNT is 11 */
     PROBE_ASSERT(DM2_DROP_SLOT_COUNT == 11, "DM2_DROP_SLOT_COUNT == 11");
 
@@ -330,7 +320,6 @@ static void test_drop_constants(void)
     PROBE_ASSERT(DM2_DROP_SLOT_COUNT == 11, "DM2_DROP_SLOT_COUNT == 11");
     PROBE_ASSERT(DM2_DROP_SLOT_FIRST == 10, "DM2_DROP_SLOT_FIRST == 10");
     PROBE_ASSERT(DM2_DROP_SLOT_LAST == 20, "DM2_DROP_SLOT_LAST == 20");
-    PROBE_ASSERT(DM2_DROP_THORN_DEMON_WORM_FOOD == 1, "DM2_DROP_THORN_DEMON_WORM_FOOD == 1");
 }
 
 /* ── Instance lifecycle ─────────────────────────────────────────────── */
