@@ -250,7 +250,8 @@ an integration build pass.
   choice patches likewise use the package-owned decoder. Verification:
   direct `csb_v21_presented_startup_capture` and
   `csb_v22_source_artpack_runtime` PASS, proving equal V1/V2 source pages
-  and a changed final V2 presentation.
+  and a changed final V2 presentation. The complete `ctest -L csb` lane
+  also passes 112/112 after the source-page fix.
 
 - **CSB-V21-LIVE-UPSCALE-CONSUMPTION:** Closed 2026-07-29. The F10 CSB
   filter page now exposes the actual CSB V2.1 EPX scale (1x/2x/4x) and
