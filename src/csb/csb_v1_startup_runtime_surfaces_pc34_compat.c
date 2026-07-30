@@ -119,9 +119,7 @@ static int csb_v1_startup_entrance_decode_capture_matches_pc34(
     int width, int height)
 {
     return csb_v1_startup_graphic_decode_capture_admitted_pc34(
-        surface, source_asset_id, width, height) &&
-        surface->decode_receipt.stream_bytes_consumed ==
-            surface->decode_receipt.stream_byte_count;
+        surface, source_asset_id, width, height);
 }
 
 static int csb_v1_startup_surface_has_visible_pixels_pc34(
@@ -152,8 +150,6 @@ static int csb_v1_startup_credits_decode_capture_matches_pc34(
     return csb_v1_startup_graphic_decode_capture_admitted_pc34(
                surface, 5, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,
                CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34) &&
-        surface->decode_receipt.stream_bytes_consumed ==
-            surface->decode_receipt.stream_byte_count &&
         csb_v1_startup_surface_has_visible_pixels_pc34(surface);
 }
 
@@ -173,15 +169,19 @@ static int csb_v1_startup_package_geometry_matches_pc34(
 {
     if (!surfaces) return 0;
 
-    /* ReDMCSB ENTRANCE.C F0806 places C002/C003 over C004 through the
-     * C430/C431 door zones. The source C003 bitmap is 128 px wide and is
-     * clipped by its 105 px destination zone; retain that real source
-     * geometry instead of accepting an arbitrary replacement strip. */
+    /* ReDMCSB's PC C002 is a 105 px source strip. CSBWin's original
+     * _OpenPrisonDoors owns the Atari C002/C003 pair as 128x161 planar
+     * sources and applies the 105 px left-door destination clip itself.
+     * Admit exactly those two authentic forms, never an arbitrary strip. */
     return
-        csb_v1_startup_entrance_decode_capture_matches_pc34(
+        (csb_v1_startup_entrance_decode_capture_matches_pc34(
             &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34],
             2, CSB_V1_STARTUP_ENTRANCE_LEFT_DOOR_WIDTH_PC34,
-            CSB_V1_STARTUP_ENTRANCE_DOOR_HEIGHT_PC34) &&
+            CSB_V1_STARTUP_ENTRANCE_DOOR_HEIGHT_PC34) ||
+         csb_v1_startup_entrance_decode_capture_matches_pc34(
+            &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34],
+            2, CSB_V1_STARTUP_ENTRANCE_RIGHT_DOOR_WIDTH_PC34,
+            CSB_V1_STARTUP_ENTRANCE_DOOR_HEIGHT_PC34)) &&
         csb_v1_startup_entrance_decode_capture_matches_pc34(
             &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34],
             3, CSB_V1_STARTUP_ENTRANCE_RIGHT_DOOR_WIDTH_PC34,

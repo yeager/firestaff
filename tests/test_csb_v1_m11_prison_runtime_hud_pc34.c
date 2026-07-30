@@ -74,10 +74,40 @@ int main(void)
         decoded_h = 0;
         memset(&decode_receipt, 0, sizeof(decode_receipt));
         CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                  csbwin_graphics, 2u, &decoded, &decoded_w, &decoded_h,
+                  &decode_receipt) && decode_receipt.valid &&
+                  decoded_w == 128 && decoded_h == 161,
+              "CSBWin standard GRAPHICS.DAT decodes C002 left-door source");
+        free(decoded);
+        decoded = NULL;
+        decoded_w = 0;
+        decoded_h = 0;
+        memset(&decode_receipt, 0, sizeof(decode_receipt));
+        CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
                   csbwin_graphics, 3u, &decoded, &decoded_w, &decoded_h,
                   &decode_receipt) && decode_receipt.valid &&
                   decoded_w == 128 && decoded_h == 161,
               "CSBWin standard GRAPHICS.DAT decodes C003 right-door source");
+        free(decoded);
+        decoded = NULL;
+        decoded_w = 0;
+        decoded_h = 0;
+        memset(&decode_receipt, 0, sizeof(decode_receipt));
+        CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                  csbwin_graphics, 4u, &decoded, &decoded_w, &decoded_h,
+                  &decode_receipt) && decode_receipt.valid &&
+                  decoded_w == 320 && decoded_h == 200,
+              "CSBWin standard GRAPHICS.DAT decodes C004 entrance source");
+        free(decoded);
+        decoded = NULL;
+        decoded_w = 0;
+        decoded_h = 0;
+        memset(&decode_receipt, 0, sizeof(decode_receipt));
+        CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                  csbwin_graphics, 5u, &decoded, &decoded_w, &decoded_h,
+                  &decode_receipt) && decode_receipt.valid &&
+                  decoded_w == 320 && decoded_h == 200,
+              "CSBWin standard GRAPHICS.DAT decodes C005 credits source");
         free(decoded);
         decoded = NULL;
         decoded_w = 0;

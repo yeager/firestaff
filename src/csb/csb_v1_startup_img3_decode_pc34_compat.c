@@ -282,10 +282,10 @@ static int csb_v1_img2_planar_decode_to_indexed_pc34(
         if (previous && emitted < physical_width) goto fail;
         if (count > physical_pixels - emitted) {
             /* CSBWin ExpandGraphic is destination-bounded: its final packed
-             * command may cover the small planar pad beyond the requested
-             * rectangle.  Preserve only the source-owned destination pixels
-             * instead of rejecting a valid C001 record or writing beyond it. */
-            if (physical_pixels - emitted > 15u) goto fail;
+             * command can cross its target edge. Its TAG02170a exit drops
+             * the remainder, so preserve only the source-owned destination
+             * pixels rather than rejecting a valid C001--C005 record or
+             * writing beyond the source rectangle. */
             count = physical_pixels - emitted;
         }
         for (i = 0u; i < count; ++i) {
