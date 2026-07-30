@@ -1671,6 +1671,13 @@ that its exact runtime path is not already source-locked and tested.
     GAMEBLOCK refresh now precedes all live CSB mouse hit testing, covering
     champion, action, movement, and spell commands, and also precedes the
     live keyboard route for F1-F4 and movement/utility commands.
+    2026-07-30: selecting a live C109 caster now commits
+    `MagicCasterIndex` to the CSB runtime profile before M11 redraws the
+    shared spell panel. This follows `CASTER.C F0394` / CSBWin
+    `Magic.cpp::SelectMagicCaster` and keeps the persisted CSB runtime state
+    distinct from the party leader. Rune-cost entry and `CastMagic` still
+    need their source-owned CSBWin transaction; this does not enable DM1
+    F0750--F0754 for CSB.
 28. **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,
     pits, floor/ceiling ornaments, creatures, items, projectiles, explosions,
     and custom backgrounds through real PC34 asset ownership.

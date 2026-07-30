@@ -11290,6 +11290,17 @@ static int m11_dm1_spell_select_caster(M11_GameViewState* state, int caster)
     if (state->dm1SpellCasting.magicCasterIndex == caster) {
         return 0; /* F0394 same-caster short-circuit. */
     }
+    if (m11_source_is_csb(state)) {
+        CSB_V1_BootProfile *profile;
+
+        if (!state->csbBootProfile) {
+            return 0;
+        }
+        profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+        if (csb_v1_runtime_set_magic_caster(&profile->runtime, caster) <= 0) {
+            return 0;
+        }
+    }
     m11_dm1_spell_sync_legacy_to_caster(state);
     state->dm1SpellCasting.magicCasterIndex = caster;
     m11_dm1_spell_sync_caster_to_legacy(state);

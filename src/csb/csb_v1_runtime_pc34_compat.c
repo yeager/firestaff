@@ -19312,6 +19312,35 @@ int csb_v1_runtime_set_party_state(CSB_V1_RuntimeProfile *profile,
     return 0;
 }
 
+int csb_v1_runtime_set_magic_caster(CSB_V1_RuntimeProfile *profile,
+                                    int champion_index)
+{
+    const CSB_V1_Champion *champion;
+
+    if (!profile || !profile->party_state_valid ||
+        champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS) {
+        return -1;
+    }
+    champion = &profile->party_state.Champions[champion_index];
+    if (csb_v1_champion_is_dead(champion) || champion->CurrentHealth <= 0) {
+        return -1;
+    }
+    if (profile->magic_caster_index == champion_index &&
+        profile->party_state.MagicCasterIndex == champion_index) {
+        return 0;
+    }
+
+    /* ReDMCSB CASTER.C F0394 and CSBWin Magic.cpp::SelectMagicCaster own
+     * this selector separately from G0411/the leader.  Keep both persisted
+     * runtime mirrors coherent so the next native or CSBWin export observes
+     * the same caster that accepted the spell-area command. */
+    profile->magic_caster_index = champion_index;
+    profile->party_state.MagicCasterIndex = champion_index;
+    return 1;
+}
+
 int csb_v1_runtime_get_party_state(const CSB_V1_RuntimeProfile *profile,
                                    CSB_V1_PartyState *out_party)
 {

@@ -94,6 +94,31 @@ static void init_runtime_with_party(CSB_V1_RuntimeProfile *profile)
     (void)csb_v1_runtime_set_party_state(profile, &party);
 }
 
+static void test_magic_caster_runtime_selection(void)
+{
+    CSB_V1_RuntimeProfile profile;
+
+    init_runtime_with_party(&profile);
+    CHECK_EQ(csb_v1_runtime_set_magic_caster(&profile, 1), 1,
+             "F0394 caster selection commits to the CSB runtime");
+    CHECK_EQ(profile.magic_caster_index, 1,
+             "runtime caster is independent from the party leader");
+    CHECK_EQ(profile.party_state.MagicCasterIndex, 1,
+             "CSB party mirror receives the selected caster");
+    CHECK_EQ(profile.party_state.LeaderIndex, 0,
+             "F0394 caster selection does not change the leader");
+    CHECK_EQ(csb_v1_runtime_set_magic_caster(&profile, 1), 0,
+             "same-caster F0394 selection is a no-op");
+    profile.party_state.Champions[0].CurrentHealth = 0;
+    CHECK_EQ(csb_v1_runtime_set_magic_caster(&profile, 0), -1,
+             "dead CSB champion cannot become the magic caster");
+    CHECK_EQ(profile.magic_caster_index, 1,
+             "rejected caster selection preserves the live CSB caster");
+    CHECK_EQ(csb_v1_runtime_set_magic_caster(&profile, 2), -1,
+             "out-of-party caster selection is rejected");
+    csb_v1_runtime_cleanup(&profile);
+}
+
 static void test_source_evidence(void)
 {
     const char *evidence = CSB_V1_InputCommandBridge_SourceEvidencePc34Compat();
@@ -411,6 +436,7 @@ int main(void)
 {
     printf("=== CSB V1 Input Command Bridge Gate (startup-adjacent) ===\n\n");
     test_source_evidence();
+    test_magic_caster_runtime_selection();
     test_menu_input_to_event_mapping();
     test_unmapped_menu_inputs();
     test_turn_right_reaches_csb_runtime_state();

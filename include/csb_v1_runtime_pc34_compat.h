@@ -2066,6 +2066,14 @@ int csb_v1_runtime_csbwin_movement_filter_stack_runner_callback(
 
 int csb_v1_runtime_set_leader(CSB_V1_RuntimeProfile *profile,
                               int champion_index);
+
+/* ReDMCSB CASTER.C F0394 / CSBWin Magic.cpp::SelectMagicCaster updates the
+ * live caster independently of the party leader.  This only owns selection:
+ * rune costs and CastMagic remain in their separate source-owned transaction.
+ * Returns 1 when a living party champion becomes the caster, 0 for an
+ * unchanged selection, and -1 for an invalid or dead selection. */
+int csb_v1_runtime_set_magic_caster(CSB_V1_RuntimeProfile *profile,
+                                    int champion_index);
 int csb_v1_runtime_select_champion_portrait_render_source(
     const CSB_V1_RuntimeProfile *profile,
     int champion_index,

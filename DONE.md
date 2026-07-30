@@ -1,3 +1,13 @@
+- ✅ 2026-07-30 CSB live spellcaster ownership: C109/F0394 caster selection
+  now commits the selected living champion to both runtime
+  `magic_caster_index` and the save-visible CSB party mirror, without changing
+  the party leader. M11 performs this CSB-owned update before redrawing the
+  common spell-panel surface. Rune-cost mutation and CSBWin `CastMagic` remain
+  deliberately separate and are not routed through DM1 spell code.
+  Verification: `csb_v1_input_command_bridge_pc34_compat` passes its caster
+  selection, same-caster, dead-caster and out-of-party gates; `firestaff`
+  builds successfully.
+
 - ✅ 2026-07-30 CSB V2.x regression verification: current `ctest -L csb`
   passes 114/114. The overlapping V2 labels cover filtered, upscaled and
   admitted V2.2 startup/runtime contracts with real PC3.4 data. This verifies
