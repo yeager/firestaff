@@ -2,6 +2,7 @@
 #define FIRESTAFF_DM2_V1_CREATURE_TABLES_H
 
 #include <stdint.h>
+#include "dm2_v1_creature.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,6 +31,9 @@ extern const int8_t dm2_v1_tile_type_visibility[23];
 
 extern const char dm2_v1_text_charset[38];
 extern const char *dm2_v1_skill_abbrev[18];
+
+#define DM2_AI_TABLE_GENUINE_SIZE 62
+extern const DM2_AIDefinition dm2_v1_ai_table_genuine[DM2_AI_TABLE_GENUINE_SIZE];
 
 const char *dm2_v1_creature_tables_source_evidence(void);
 

@@ -44506,6 +44506,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_creature_tables.c"
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_ai_table_genuine.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_creature.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_creature_tables.c")
+    add_executable(test_dm2_v1_ai_table_genuine
+        tests/test_dm2_v1_ai_table_genuine.c
+        src/dm2/dm2_v1_creature_tables.c
+    )
+    target_include_directories(test_dm2_v1_ai_table_genuine PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_ai_table_genuine PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_ai_table_genuine
+        COMMAND test_dm2_v1_ai_table_genuine
+    )
+endif()
+
 # DM2 misc tables (skproject dm2data.cpp remaining const tables)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_misc_tables.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_misc_tables.c")
@@ -44529,6 +44546,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_door_mechanics.c"
         tests/test_dm2_door_mechanics.c
         src/dm2/dm2_v1_door_mechanics.c
         src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_door_mechanics PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44545,6 +44563,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_champion_portrait_gdat.
     add_executable(test_dm2_v1_champion_portrait_gdat
         tests/test_dm2_v1_champion_portrait_gdat.c
         src/dm2/dm2_v1_champion_portrait_gdat.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_champion_portrait_gdat PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44561,6 +44580,12 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_door_material_gate.c"
     add_executable(test_dm2_v1_door_material_gate
         tests/test_dm2_v1_door_material_gate.c
         src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
     )
     target_include_directories(test_dm2_v1_door_material_gate PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44609,6 +44634,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_direct_container_run
     add_executable(test_dm2_v1_g1_direct_container_runtime_real_data
         tests/test_dm2_v1_g1_direct_container_runtime_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_container_runtime_real_data PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44641,6 +44667,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_hmp_music_parser.c"
     add_executable(test_dm2_v1_hmp_music_parser
         tests/test_dm2_v1_hmp_music_parser.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_hmp_music_parser PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44689,6 +44717,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_interface_action_table.
     add_executable(test_dm2_v1_interface_action_table
         tests/test_dm2_v1_interface_action_table.c
         src/dm2/dm2_v1_interface_action_table.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_interface_action_table PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44785,6 +44814,12 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_outdoor_scene_material_
     add_executable(test_dm2_v1_outdoor_scene_material_gate
         tests/test_dm2_v1_outdoor_scene_material_gate.c
         src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
     )
     target_include_directories(test_dm2_v1_outdoor_scene_material_gate PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44897,6 +44932,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_startup_static_menu_tim
     add_executable(test_dm2_v1_startup_static_menu_timing
         tests/test_dm2_v1_startup_static_menu_timing.c
         src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_startup_static_menu_timing PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44929,6 +44965,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_wall_ornate_alcove_type
     add_executable(test_dm2_v1_wall_ornate_alcove_type
         tests/test_dm2_v1_wall_ornate_alcove_type.c
         src/dm2/dm2_v1_wall_ornament.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_wall_ornate_alcove_type PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44945,6 +44982,12 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_no_synthetic_ov
     add_executable(test_dm2_v1_weather_no_synthetic_overlay
         tests/test_dm2_v1_weather_no_synthetic_overlay.c
         src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
     )
     target_include_directories(test_dm2_v1_weather_no_synthetic_overlay PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44962,6 +45005,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_runtime_admissi
         tests/test_dm2_v1_weather_runtime_admission.c
         src/dm2/dm2_v1_graphics_data_open.c
         src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_weather_runtime_admission PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -44994,6 +45038,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_world_model_g1_handoff_
     add_executable(test_dm2_v1_world_model_g1_handoff_real_data
         tests/test_dm2_v1_world_model_g1_handoff_real_data.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
     )
     target_include_directories(test_dm2_v1_world_model_g1_handoff_real_data PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")

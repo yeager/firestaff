@@ -12,6 +12,7 @@
  */
 
 #include "dm2_v1_creature.h"
+#include "dm2_v1_creature_tables.h"
 #include "dm2_v1_ccm.h"
 #include "dm2_v1_drops.h"
 #include "dm2_v1_sound.h"
@@ -19,7 +20,7 @@
 
 #define DM2_CREATURE_DOOR_ATTR_CREATURES_CAN_SEE_THROUGH 0x0001u
 
-/* ── dAITableGenuine — 64-entry AI definition table (hardcoded) ───────────
+/* ── dAITableGenuine — 62-entry AI definition table (hardcoded) ───────────
  * Source: skproject/SKWIN/SkWinCore.cpp:741-810 (getAIName)
  * Extended mode override: EXTENDED_LOAD_AI_DEFINITION() at SkWinCore.cpp:233-400
  *
@@ -100,10 +101,9 @@ static const char *const g_ai_names[DM2_AI_TABLE_SIZE] = {
     [62] = "EVIL ATTACK MINION (EVIL)", /* DM2: duplicate of index 43 */
 };
 
-/* AIDefinition table — zero-initialized stub.
- * Real implementation loads from GDAT via EXTENDED_LOAD_AI_DEFINITION().
- * Values populated from SKWIN/GDAT at SkWinCore.cpp:233-400.
- * Stub shows field offsets consistent with DME.h:1505-1545. */
+/* AIDefinition table — pre-populated from dAITableGenuine[62],
+ * then overridden from GDAT via EXTENDED_LOAD_AI_DEFINITION().
+ * Source: skproject/SKWIN/_4976_03a2.h + xcoreenh.cpp:61-217. */
 static DM2_AIDefinition g_ai_table[DM2_AI_TABLE_SIZE];
 static uint8_t g_ai_table_loaded[DM2_AI_TABLE_SIZE];
 static uint8_t g_creature_ai_row[DM2_AI_TABLE_SIZE];
@@ -252,6 +252,7 @@ int dm2_v1_creature_gdat_word1(int creature_type, uint16_t *out_word) {
 }
 
 void dm2_v1_creature_reset_ai_table(void) {
+    int i;
     memset(g_ai_table, 0, sizeof(g_ai_table));
     memset(g_ai_table_loaded, 0, sizeof(g_ai_table_loaded));
     memset(g_creature_ai_row, 0, sizeof(g_creature_ai_row));
@@ -262,6 +263,12 @@ void dm2_v1_creature_reset_ai_table(void) {
     memset(g_creature_gdat_word1, 0, sizeof(g_creature_gdat_word1));
     memset(g_creature_gdat_word1_loaded, 0,
            sizeof(g_creature_gdat_word1_loaded));
+    /* EXTENDED_LOAD_AI_DEFINITION (xcoreenh.cpp:69): always copies
+     * dAITableGenuine first, then overrides from GDAT. */
+    for (i = 0; i < DM2_AI_TABLE_GENUINE_SIZE && i < DM2_AI_TABLE_SIZE; ++i) {
+        g_ai_table[i] = dm2_v1_ai_table_genuine[i];
+        g_ai_table_loaded[i] = 1;
+    }
 }
 
 int dm2_v1_creature_drop_slots_loaded(int creature_type) {
