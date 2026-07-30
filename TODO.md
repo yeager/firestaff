@@ -5,6 +5,16 @@
 ReDMCSB is the primary reference for DM1/CSB shared engine behavior. For
 CSB-specific DSA, save, Utility Disk, and extended-runtime behavior, use
 CSBWin alongside it. Reuse or bind verified PC34 owners and authentic game
+
+- **CSB-V22-ARTPACK-PROVENANCE-HARDENING:** Closed 2026-07-30. CSB V2.2
+  now accepts only safe single-component category, asset and source-file
+  names when resolving an imported artpack. Compact Artpack Studio entries
+  now consume `id`/`source_file` before their closing brace, and route
+  provenance requires a well-formed 64-digit SHA-256 identity rather than
+  merely a 64-character string. The focused asset, in-place route/draw, and
+  real PC3.4 V2.2 startup/runtime regressions pass. This hardens the existing
+  V2.2 admission boundary; it does not promote still-unbound F0128 material
+  families.
 material only. Unproven paths fail closed; no synthetic graphics, UI, timing,
 input, or game-data behavior.
 

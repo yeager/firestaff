@@ -43239,3 +43239,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `csb_v1_m11_startup_vblank_cadence`, `csb_v2_entrance_pointer_boot_probe`,
   `csb_v21_presented_startup_capture`, and
   `csb_v20_filtered_startup_capture` pass.
+- ✅ 2026-07-30 CSB V2.2 artpack provenance hardening: imported artpack
+  category, asset and source-file fields are now constrained to safe path
+  components, compact manifest entries read their fields before `}`, and a
+  route provenance record requires a syntactically valid SHA-256 digest.
+  Verification: `csb_v22_modern_assets_pc34`, `csb_v22_inplace_draw_pc34`,
+  `csb_v22_inplace_route_pc34`, and `csb_v22_source_artpack_runtime` PASS.

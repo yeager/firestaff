@@ -204,6 +204,37 @@ static int csb_v22_extract_int_pair(const char* line, const char* key,
     return 1;
 }
 
+/* Artpacks are user-imported archives.  Their manifest must not be able to
+ * escape the selected pack through a category or file path. */
+static int csb_v22_safe_path_component(const char* value) {
+    const unsigned char* p = (const unsigned char*)value;
+    if (!p || !p[0] || strcmp(value, ".") == 0 || strcmp(value, "..") == 0) {
+        return 0;
+    }
+    while (*p) {
+        if (!((*p >= 'a' && *p <= 'z') || (*p >= 'A' && *p <= 'Z') ||
+              (*p >= '0' && *p <= '9') || *p == '_' || *p == '-' ||
+              *p == '.')) {
+            return 0;
+        }
+        ++p;
+    }
+    return 1;
+}
+
+static int csb_v22_sha256_hex(const char* value) {
+    size_t i;
+    if (!value || strlen(value) != 64u) return 0;
+    for (i = 0u; i < 64u; ++i) {
+        unsigned char c = (unsigned char)value[i];
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') ||
+              (c >= 'A' && c <= 'F'))) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int csb_v22_get_route_provenance(const char* category, const char* asset_id,
                                  CSB_V22_RouteProvenancePc34* out_provenance)
 {
@@ -285,7 +316,7 @@ int csb_v22_get_route_provenance(const char* category, const char* asset_id,
                 current.source_graphic_index >= 0 && current.source_width > 0 &&
                 current.source_height > 0 && current.output_width > 0 &&
                 current.output_height > 0 &&
-                strlen(current.source_record_sha256) == 64u &&
+                csb_v22_sha256_hex(current.source_record_sha256) &&
                 strcmp(current.id, asset_id) == 0 &&
                 strcmp(current.category, category) == 0) {
                 current.valid = 1;
@@ -714,6 +745,9 @@ const uint32_t* csb_v22_get_missing_placeholder(int* out_w, int* out_h) {
 int csb_v22_get_shape_path(const char* category, const char* asset_id,
                             char* out_path, size_t out_path_size) {
     if (!category || !asset_id || !out_path || out_path_size == 0U) return 0;
+    out_path[0] = '\0';
+    if (!csb_v22_safe_path_component(category) ||
+        !csb_v22_safe_path_component(asset_id)) return 0;
     if (g_v22_manifest_path[0] == '\0') return 0;
 
     FILE* fp = fopen(g_v22_manifest_path, "rb");
@@ -747,18 +781,9 @@ int csb_v22_get_shape_path(const char* category, const char* asset_id,
 
         if (!in_target_entry) continue;
 
-        /* Field extraction */
-        if (strchr(line, '}') != NULL) {
-            /* End of entry */
-            in_target_entry = 0;
-            if (resolved_id[0] != '\0' && strcmp(resolved_id, asset_id) == 0) {
-                found_entry = 1;
-                break;
-            }
-            continue;
-        }
-
-        /* Extract id and source_file fields */
+        /* Extract before checking the closing brace. Artpack Studio also
+         * writes compact entries whose id, source_file and `}` share one
+         * line. */
         char val[256];
         if (csb_v22_extract_string(line, "id", val, sizeof(val))) {
             csb_v22_trim(resolved_id, val, sizeof(resolved_id));
@@ -766,11 +791,19 @@ int csb_v22_get_shape_path(const char* category, const char* asset_id,
         if (csb_v22_extract_string(line, "source_file", val, sizeof(val))) {
             csb_v22_trim(resolved_file, val, sizeof(resolved_file));
         }
+        if (strchr(line, '}') != NULL) {
+            /* End of entry */
+            in_target_entry = 0;
+            if (resolved_id[0] != '\0' && strcmp(resolved_id, asset_id) == 0) {
+                found_entry = 1;
+                break;
+            }
+        }
     }
 
     fclose(fp);
 
-    if (!found_entry || resolved_file[0] == '\0') return 0;
+    if (!found_entry || !csb_v22_safe_path_component(resolved_file)) return 0;
 
     /* Resolve the file relative to the manifest's directory:
      * <modern_dir>/<category>/<source_file> */

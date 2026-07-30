@@ -282,6 +282,50 @@ static void test_route_provenance_metadata(void) {
           provenance.source_width == 64 && provenance.source_height == 61 &&
           provenance.output_width == 64 && provenance.output_height == 96,
           "reads Artpack Studio compact provenance arrays");
+
+    CHECK(write_file(manifest,
+        "{\"routeProvenance\":[\n"
+        "{\"id\":\"door_d1_01\",\"category\":\"door_shapes\","
+        "\"sourceGraphicIndex\":247,\"sourceDimensions\":[64,61],"
+        "\"sourceRecordSha256\":\"not-a-sha256-identity\","
+        "\"outputDimensions\":[64,96]}\n]}"),
+          "wrote malformed route provenance hash");
+    CHECK(csb_v22_get_route_provenance("door_shapes", "door_d1_01",
+                                       &provenance) == 0,
+          "rejects non-SHA256 route provenance identity");
+}
+
+static void test_shape_path_stays_inside_artpack(void) {
+    const char* data_dir = "/tmp/scratch/csb-v22-path/data/csb";
+    const char* manifest =
+        "/tmp/scratch/csb-v22-path/assets/csb/modern/modern_asset_manifest.json";
+    char resolved[FSP_PATH_MAX];
+    CHECK(mkdir_p(data_dir), "created safe-path data dir");
+    CHECK(mkdir_p("/tmp/scratch/csb-v22-path/assets/csb/modern/wall_shapes"),
+          "created safe-path wall category");
+    CHECK(write_file("/tmp/scratch/csb-v22-path/assets/csb/modern/wall_shapes/wall.png", "x"),
+          "wrote safe-path source file");
+    CHECK(write_file(manifest,
+        "{\n\"wall_shapes\": [\n"
+        "{\"id\": \"wall_dungeon_d0_01\", \"source_file\": \"wall.png\"}\n"
+        "]\n}"),
+          "wrote safe-path manifest");
+    csb_v22_set_manifest_path(data_dir);
+    CHECK(csb_v22_get_shape_path("wall_shapes", "wall_dungeon_d0_01",
+                                 resolved, sizeof(resolved)) == 1 &&
+          strstr(resolved, "/wall_shapes/wall.png") != NULL,
+          "resolves an artpack-local source file");
+    CHECK(csb_v22_get_shape_path("../wall_shapes", "wall_dungeon_d0_01",
+                                 resolved, sizeof(resolved)) == 0,
+          "rejects a category traversal");
+    CHECK(write_file(manifest,
+        "{\n\"wall_shapes\": [\n"
+        "{\"id\": \"wall_dungeon_d0_01\", \"source_file\": \"../wall.png\"}\n"
+        "]\n}"),
+          "wrote traversal source-file manifest");
+    CHECK(csb_v22_get_shape_path("wall_shapes", "wall_dungeon_d0_01",
+                                 resolved, sizeof(resolved)) == 0,
+          "rejects a source-file traversal");
 }
 
 /* ── Main ───────────────────────────────────────────────────────── */
@@ -303,6 +347,7 @@ int main(void) {
     test_assets_available_no_install();
     test_artpack_studio_pretty_manifest_admission();
     test_route_provenance_metadata();
+    test_shape_path_stays_inside_artpack();
 
     printf("csb_v22_modern_assets_pc34: checks=%d failures=%d\n", checks, failures);
     if (failures > 0) {
