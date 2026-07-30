@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 CSB V1/V2.x full local verification: Ninja/CTest completed
+  all 118 runnable CSB contracts against the supplied PC3.4 and Atari-ST
+  corpora. The single V2.2 source-artpack test skipped correctly because its
+  manifest contains unbound material routes; V2.2 therefore remains on V2.1
+  source pixels instead of accepting invented artwork.
+
 - ✅ 2026-07-30 CSBWin Atari runtime door frames: M11 now draws the original
   `DoorTrackTopRect`/`DoorFrameRect` commands for visible `roomDOOR` cells,
   using active WallSet pDoor sources and the native mirror rules. It leaves

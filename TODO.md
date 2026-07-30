@@ -10,6 +10,9 @@
   resolves to V2.1 rather than painting guessed material. This verifies
   implemented V1/V2.0/V2.1/V2.2 presentation, settings, HUD, input, title
   and Entrance boundaries, not the still-open full V2.2 F0128 recovery.
+  2026-07-30 full CSB verification additionally passes all 118 runnable
+  V1/V2.x contracts against the supplied PC3.4 and Atari-ST corpora; the
+  same unbound V2.2 source-artpack contract is the sole intentional skip.
 
 - **CSB-V1-ENTRANCE-PREOPEN-REAL-COMPOSITION:** Closed 2026-07-30. The
   source-defined `OPENING_DELAY` plan now composes the real C004 screen and
