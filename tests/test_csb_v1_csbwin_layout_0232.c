@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_csbwin_viewport_graphics_map.h"
 #include "csb_v1_boot.h"
 
 static int failures;
@@ -237,6 +238,15 @@ int main(void)
     put_be16(graphic, 1534u + 138u, 562);
 
     CHECK(csb_v1_csbwin_layout_0232_decode(graphic, sizeof(graphic), &layout));
+    {
+        uint16_t graphic_index = 0;
+        CHECK(csb_v1_csbwin_viewport_graphic_index(0u, 0u, &graphic_index) &&
+              graphic_index == 77u);
+        CHECK(csb_v1_csbwin_viewport_graphic_index(3u, 12u, &graphic_index) &&
+              graphic_index == 128u);
+        CHECK(!csb_v1_csbwin_viewport_graphic_index(16u, 0u, &graphic_index));
+        CHECK(!csb_v1_csbwin_viewport_graphic_index(0u, 13u, &graphic_index));
+    }
     CHECK(layout.valid);
     CHECK(layout.party_direction[3].x1 == 70 && layout.party_direction[3].x2 == 89);
     CHECK(layout.eye_box.y1 == 48 && layout.mouth_box.y1 == 64);

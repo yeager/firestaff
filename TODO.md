@@ -1170,6 +1170,9 @@ that its exact runtime path is not already source-locked and tested.
    too small. The focused test uses the real Atari decoder and source bytes,
    not a PC3.4 C017/C040 replacement. M11 still needs to consume this
    source-owned panel layer with the corresponding CSBWin dungeon owner.
+   2026-07-30: CSBWin's native viewport wall catalog is now source-locked as
+   `77 + 13 * WallSet + slot` (seven door then six wall records), matching
+   `CSBCode.cpp:2933-2940`; PC3.4's 40-record F0095 catalog remains isolated.
    2026-07-30: CSB runtime boot now passes the actual selected loose-file
    MD5 identities into variant detection; the real Atari ST 2.x corpus had
    previously booted as `UNKNOWN` because both detection arguments were
