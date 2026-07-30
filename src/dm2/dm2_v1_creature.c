@@ -267,7 +267,6 @@ void dm2_v1_creature_reset_ai_table(void) {
      * dAITableGenuine first, then overrides from GDAT. */
     for (i = 0; i < DM2_AI_TABLE_GENUINE_SIZE && i < DM2_AI_TABLE_SIZE; ++i) {
         g_ai_table[i] = dm2_v1_ai_table_genuine[i];
-        g_ai_table_loaded[i] = 1;
     }
 }
 

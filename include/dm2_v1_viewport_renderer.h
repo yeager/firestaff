@@ -650,6 +650,10 @@ typedef struct {
     uint16_t scene_colorkey;
     uint8_t colorkey_palette_index;
     uint16_t ambient_darkness;
+    uint16_t ambient_light;
+    uint16_t highest_light_level;
+    uint16_t scene_flags;
+    int outdoor_scene;
     uint8_t light_floor;
     uint8_t walk_path_depth;
     int light_check_enabled;

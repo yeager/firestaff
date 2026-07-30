@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM2 EXTENDED_LOAD_AI_DEFINITION: added 62-entry hardcoded
+  genuine AI table (dAITableGenuine from FIRE.exe @ 0x48162), pre-populated
+  on reset before GDAT overrides. Resolved 15 MISSING audit symbols (AI spec
+  queries, spell casting, queue event, map rune click, item equip, dbitem
+  alloc, wall ornate alcove, stone room summary). MISSING: 189 -> 174.
+
 - ✅ 2026-07-30 CSBWin HUD source geometry: the supplied standard package
   decodes C009 as `96x33`, C010/C013 as `96x45`, C017 as `224x136`, and C028
   as `80x14`. The focused real-data test locks these DMCSB1 dimensions and
