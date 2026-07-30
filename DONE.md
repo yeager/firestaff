@@ -43853,6 +43853,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
 
 # M12 startup-menu reliability pass (2026-07-30)
 
+# DM1 C015 host-message regression containment (2026-07-30)
+
+- ✅ DM1's C015 message area no longer renders the generic M11 event log.
+  That log contains host status and inspection scaffolding rather than
+  ReDMCSB TEXT.C-owned message rows, so rendering it produced the visible
+  `READY`/`INSPECT` help text in Hall of Champions. The DM1 surface is now
+  cleared and fails closed until decoded TEXT.C row state is consumed; CSB's
+  separate source-bound message receipt remains unchanged.
+
 - ✅ Data-directory selection now preserves the normalised path the player
   selected while scanning through its canonical physical path. This prevents
   macOS `/private` aliases from replacing a valid `/tmp` or symlinked data

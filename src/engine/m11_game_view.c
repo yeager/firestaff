@@ -49663,6 +49663,15 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   messageX, messageY, messageW, messageH, M11_COLOR_BLACK);
 
+    /* M11's DM1 messageLog is host telemetry and inspect/status scaffolding,
+     * not the TEXT.C state that owns C015.  Showing a filtered subset still
+     * leaks invented lines such as READY or INSPECT into the original game
+     * surface.  CSB has its own source-bound receipt consumer below; DM1
+     * deliberately stays blank until its decoded TEXT.C state is connected. */
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        return;
+    }
+
     for (reverseIndex = 0; reverseIndex < state->messageLog.count; ++reverseIndex) {
         const M11_LogEntry* entry = m11_log_entry_at(&state->messageLog, reverseIndex);
         texts[reverseIndex] = entry ? entry->text : NULL;
