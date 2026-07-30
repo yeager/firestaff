@@ -502,9 +502,14 @@ diagnostic; it must not silently fall back to a generated visual.
   record and palette to the command stream, in original order before F0115
   overlays, before enabling the matching pack surface. All other material
   families remain V1 until they have equivalent geometry, clipping, palette
-  and draw-order evidence. A source-derived
-  38-asset PC3.4 pack was rebuilt from the local hash-verified `GRAPHICS.DAT`
-  on 2026-07-29 and its real startup/runtime lane passes. The standard Prison
+  and draw-order evidence. A source-derived 38-asset PC3.4 pack was rebuilt
+  from the local hash-verified `GRAPHICS.DAT` on 2026-07-29 and its real
+  startup/runtime lane passes.
+  2026-07-30 hardening: even the narrow V2.2 door compositor now rejects a
+  metadata-only command. It requires the checked V1 command's decoded raster,
+  native dimensions and matching FNV identity before a provenance-matched pack
+  entry can replace any pixel. This preserves the no-draw production state
+  while boot has no authenticated material-byte handoff. The standard Prison
   ingress contains no admitted closed door, so its count is correctly zero;
   the test accepts a nonzero count on a later real route rather than treating
   valid source-owned door replacement as a failure. It must not claim that

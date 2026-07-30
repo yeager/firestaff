@@ -32,6 +32,15 @@ static unsigned fnv1a32(const char* text) {
     return h;
 }
 
+static unsigned fnv1a_bytes(const unsigned char *bytes, size_t size) {
+    unsigned hash = 2166136261u;
+    size_t index;
+    for (index = 0; index < size; ++index) {
+        hash = (hash ^ bytes[index]) * 16777619u;
+    }
+    return hash;
+}
+
 static void put_u32(unsigned char* out, unsigned value) {
     out[0] = (unsigned char)(value & 0xffu);
     out[1] = (unsigned char)((value >> 8) & 0xffu);
@@ -175,6 +184,8 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
     unsigned char cache[112];
     unsigned char framebuffer[320 * 200];
     uint8_t palette[256][3];
+    unsigned char d1_source[96 * 88];
+    unsigned char d2_source[64 * 61];
     CSB_V1_ViewportRuntimeDrawCommandPc34 command;
 
     CHECK(mkdir_p(data_dir), "create command-test data directory");
@@ -219,6 +230,8 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
     command.clip_h = 102;
     command.draw_order = 0x0111;
     memset(framebuffer, 0x5a, sizeof(framebuffer));
+    memset(d1_source, 0x41, sizeof(d1_source));
+    memset(d2_source, 0x52, sizeof(d2_source));
 
     csb_v22_inplace_draw_shutdown();
     csb_v22_set_manifest_path(data_dir);
@@ -230,6 +243,13 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
     palette[0x03][2] = 63; /* original indexed blue used by the D2 fixture */
     CHECK(csb_v22_inplace_draw_set_indexed_palette_rgb6(palette) == 1,
           "command-test binds an original indexed palette");
+    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
+          "route metadata without a decoded original source span is rejected");
+    command.decoded_pixels = d1_source;
+    command.decoded_size = sizeof(d1_source);
+    command.decoded_width = 96;
+    command.decoded_height = 88;
+    command.material_hash = fnv1a_bytes(d1_source, sizeof(d1_source));
     CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 1,
           "admitted D1 door command consumes exact source route");
     CHECK(framebuffer[33 * 320 + 48] == 0x30,
@@ -251,6 +271,11 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
     command.clip_w = 72;
     command.clip_h = 74;
     command.draw_order = 0x0111;
+    command.decoded_pixels = d2_source;
+    command.decoded_size = sizeof(d2_source);
+    command.decoded_width = 64;
+    command.decoded_height = 61;
+    command.material_hash = fnv1a_bytes(d2_source, sizeof(d2_source));
     CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 1,
           "admitted D2 door command consumes its distinct source route");
     CHECK(framebuffer[47 * 320 + 76] == 0x03,
@@ -289,6 +314,7 @@ static void test_f0128_door_uses_bound_source_palette(void) {
     unsigned char cache[68];
     unsigned char framebuffer[320 * 200];
     uint8_t palette[256][3];
+    unsigned char d1_source[96 * 88];
     CSB_V1_ViewportRuntimeDrawCommandPc34 command;
     CSB_V22_RouteProvenancePc34 provenance;
 
@@ -324,6 +350,12 @@ static void test_f0128_door_uses_bound_source_palette(void) {
     command.clip_x = 48; command.clip_y = 33;
     command.clip_w = 96; command.clip_h = 88;
     command.draw_order = 0x0111;
+    memset(d1_source, 0x63, sizeof(d1_source));
+    command.decoded_pixels = d1_source;
+    command.decoded_size = sizeof(d1_source);
+    command.decoded_width = 96;
+    command.decoded_height = 88;
+    command.material_hash = fnv1a_bytes(d1_source, sizeof(d1_source));
     memset(framebuffer, 0, sizeof(framebuffer));
 
     csb_v22_inplace_draw_shutdown();

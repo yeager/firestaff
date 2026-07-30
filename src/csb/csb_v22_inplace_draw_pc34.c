@@ -149,6 +149,21 @@ static uint32_t fnv1a_hash(const char* s) {
     return h;
 }
 
+static uint32_t fnv1a_bytes(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t index;
+
+    if (!bytes || size == 0u) {
+        return 0u;
+    }
+    for (index = 0u; index < size; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static int v22_find_bitmap(uint32_t category_hash, uint32_t asset_id_hash) {
     for (int i = 0; i < g_v22_bitmap_count; ++i) {
         if (g_v22_bitmaps[i].entry.category_hash == category_hash &&
@@ -476,6 +491,23 @@ int csb_v22_inplace_render_f0128_command(
         projection.clip_w <= 0 || projection.clip_h <= 0 ||
         projection.clip_x + projection.clip_w > fbW ||
         projection.clip_y + projection.clip_h > fbH) {
+        return 0;
+    }
+
+    /* The V2.2 pack may replace a door only after the V1 command carries
+     * the decoded original raster selected by ReDMCSB F0111.  A route/index
+     * tuple and a manifest hash alone can be fabricated by a caller; require
+     * the exact source span that the checked F0128 byte handoff validated. */
+    if (!source_command->decoded_pixels || source_command->decoded_width <= 0 ||
+        source_command->decoded_height <= 0 ||
+        source_command->decoded_width != projection.source_width ||
+        source_command->decoded_height != projection.source_height ||
+        source_command->decoded_size !=
+            (size_t)source_command->decoded_width *
+                (size_t)source_command->decoded_height ||
+        source_command->material_hash == 0u ||
+        source_command->material_hash != fnv1a_bytes(
+            source_command->decoded_pixels, source_command->decoded_size)) {
         return 0;
     }
 

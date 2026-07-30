@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 CSB V2.2 F0128 source-span gate: an in-place door replacement
+  now requires the V1 command's decoded original raster, native dimensions
+  and matching FNV identity in addition to route, record index and SHA-256
+  provenance. A metadata-only caller therefore leaves the source F0128 page
+  untouched. The V2.2 command, route and V1 material-handoff regressions
+  pass; production remains fail-closed until boot supplies these bytes.
+
 - ✅ 2026-07-30 CSB terminal HUD source-owner gate: the C017/C040 session
   contract now requires an explicit original GRAPHICS.DAT or verified
   CSBgraphics.dat owner before it can authorize F0807's terminal HUD handoff.
