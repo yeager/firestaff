@@ -247,6 +247,19 @@
   source split pairs. All projections come directly from GRAPHICS.DAT item
   `0x22e`; focused layout and M11 handoff tests pass. The same commands now
   consume the recovered original `DoorGraphic[3][2]` pixels.
+- ✅ 2026-07-30 DM2 missiltimer synthetic-projectile removal: the bounded
+  `DM2_STEP_MISSILE` handler no longer calls the test-only synthetic
+  projectile dispatcher with fabricated creature ownership, north-facing
+  direction, fixed energy and fixed attack values. When real record-pool data
+  is available it still materializes the source-shaped DB14 flying-item and
+  its DB10 object; cache-projectile admission remains closed until the full
+  source-owned DB14/timer owner handoff is implemented. This follows
+  `SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD` and
+  `c_tim_proc.cpp::DM2_STEP_MISSILE`, where the restored DB14/timer graph owns
+  projectile state. Verification: strict C11 syntax check of
+  `dm2_v1_spell_timer_handlers_pc34_compat.c`, focused build, and CTest
+  `dm2_v1_spell_cast_player_pc34_compat` 1/1 PASS.
+
 - ✅ 2026-07-30 DM2 world-state synthetic-save removal: removed the
   Firestaff-private `FS2E` minimap envelope from the DM2 world-state save and
   load path. The bounded world-state model now returns `NULL` with output size

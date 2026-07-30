@@ -562,17 +562,19 @@ static int dm2_v1_spell_timer_handle_projectile(
         return 1; /* consumed, but no projectile created */
     }
 
-    /* Instantiate a champion-owned projectile at the origin cell facing
-     * north (direction 0) as a bounded default.  The source would derive
-     * direction from the caster; without that owner we keep a deterministic
-     * default and record the accepted slot. */
-    slot = dm2_v1_projectile_dispatch_synthetic(
-        PROJECTILE_CATEGORY_MAGICAL, subtype,
-        origin_x, origin_y, ctx->map_id, 0);
-    if (slot >= 0) {
-        ctx->receipt.missile_projectile_accepted = 1;
-        ctx->receipt.missile_projectile_slot = slot;
-    }
+    /* DM2_STEP_MISSILE owns its DB14 record, actor, direction, attack and
+     * energy.  This bounded timer has only the effect and cell, so it cannot
+     * legitimately manufacture the missing owner state.  The old path called
+     * a test helper with a creature owner, north direction and fixed combat
+     * values.  Keep the verified DB14 allocation above, but leave the live
+     * projectile cache untouched until the original DB14/timer owner handoff
+     * is present.
+     *
+     * Source: SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD restores DB14 and
+     * timers before c_tim_proc.cpp::DM2_STEP_MISSILE advances the record. */
+    (void)subtype;
+    slot = -1;
+    ctx->receipt.missile_projectile_slot = slot;
     return 1;
 }
 

@@ -6,6 +6,12 @@
   palettes, and synthetic HUD art are not acceptable when authentic game data
   exists. Each remaining renderer is to bind the real format or present no
   game pixel; test fixtures remain explicitly isolated from production paths.
+- **DM2-STEP-MISSILE-OWNER-HANDOFF:** Port the source-owned DB14/timer
+  projectile handoff from `c_tim_proc.cpp::DM2_STEP_MISSILE` with its record
+  owner, facing, energy, attack and map state. The current bounded timer path
+  allocates a verified DB14 record where possible but deliberately does not
+  invent a cache projectile from an incomplete timer payload.
+
 - **DM2-SKSAVE-ORIGINAL-WRITER:** `dm2_v1_world_state_serialize()` is now
   deliberately fail-closed. Port SK-projects
   `SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_SAVE` and its complete

@@ -710,10 +710,9 @@ static void test_spell_timer_projectile_fireball(void)
                 "missile origin y recorded");
     expect_true(ctx.receipt.missile_object_effect == DM2_OBJECT_EFFECT_FIREBALL,
                 "missile object effect recorded");
-    expect_true(ctx.receipt.missile_projectile_accepted == 1,
-                "fireball mapped to a live projectile");
-    expect_true(ctx.receipt.missile_projectile_slot >= 0,
-                "fireball projectile slot allocated");
+    expect_true(ctx.receipt.missile_projectile_accepted == 0 &&
+                ctx.receipt.missile_projectile_slot < 0,
+                "fireball rejects cache projectile without source owner state");
     expect_true(receipt.dispatched_count == 1,
                 "missile timer consumed");
 }
@@ -949,8 +948,9 @@ static void test_spell_timer_projectile_real_data(void)
                 "missile allocated a DB14 flying-item record");
     expect_true(ctx.receipt.missile_object_handle != DM2_V1_RECORD_HANDLE_NULL,
                 "missile DB10 object handle is valid");
-    expect_true(ctx.receipt.missile_projectile_accepted == 1,
-                "fireball still dispatches a live projectile");
+    expect_true(ctx.receipt.missile_projectile_accepted == 0 &&
+                ctx.receipt.missile_projectile_slot < 0,
+                "DB14 record does not fabricate a cache projectile");
 
     free_test_record_pool(&pool_set);
     free_test_dungeon(&dungeon);
