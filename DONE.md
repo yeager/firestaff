@@ -43710,3 +43710,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   F0128 aperture receives the same verified C004 source during this state;
   no synthetic frame or door geometry was added. Focused startup composition
   and pointer regressions pass.
+
+# CSB V2.x verification (2026-07-30)
+
+- ✅ Rebuilt current `main` with Ninja and ran the registered CSB V2.x lane
+  against the local PC3.4 corpus: 52 of 53 tests passed. The sole skipped
+  test, `csb_v22_source_artpack_runtime`, correctly requires a complete
+  independently admitted V2.2 material pack. The installed source export
+  declares its unfinished F0128 wall/floor routes as `unbound`, so the host
+  resolves V2.2 to V2.1 rather than drawing guessed modern pixels. V1,
+  V2.0, V2.1, settings, filter, input, HUD, title, Entrance and the admitted
+  V2.2 command boundaries are all covered by this lane.

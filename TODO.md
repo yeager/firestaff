@@ -2,6 +2,15 @@
 
 ## Active DM1/CSB Symbol Queue
 
+- **CSB-V2X-CURRENT-MAIN-VERIFICATION:** Closed 2026-07-30. Ninja-built
+  current `main` passes 52 of 53 registered CSB V2.x contracts with the
+  local PC3.4 corpus. The one skip is intentional:
+  `csb_v22_source_artpack_runtime` refuses the installed source export
+  because its unfinished wall/floor routes are explicitly `unbound`; V2.2
+  resolves to V2.1 rather than painting guessed material. This verifies
+  implemented V1/V2.0/V2.1/V2.2 presentation, settings, HUD, input, title
+  and Entrance boundaries, not the still-open full V2.2 F0128 recovery.
+
 - **CSB-V1-ENTRANCE-PREOPEN-REAL-COMPOSITION:** Closed 2026-07-30. The
   source-defined `OPENING_DELAY` plan now composes the real C004 screen and
   closed C002/C003 strips exactly as the preceding Entrance wait screen.
