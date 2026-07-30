@@ -11668,6 +11668,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     }
     memset(&report, 0, sizeof(report));
     report.first_failure_result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+    report.roundtrip_hash = 2166136261u;
     report.provenance_fingerprint = 2166136261u;
     memset(&corpus, 0, sizeof(corpus));
     if (!dm1_v1_original_save_classify_corpus_root(root, &corpus)) {
@@ -12187,6 +12188,17 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.core_state_matches) {
             ++report.roundtrip_succeeded_count;
             ++report.core_state_match_count;
+            /* Keep the corpus receipt bound to the successful transient
+             * F0435 -> F0433 export.  A zero hash is reserved for a corpus
+             * where no original save completed the round trip. */
+            report.roundtrip_hash = dm1_original_save_corpus_fingerprint_mix(
+                report.roundtrip_hash, (uint32_t)receipt->game_id);
+            report.roundtrip_hash = dm1_original_save_corpus_fingerprint_mix(
+                report.roundtrip_hash, receipt->source_hash);
+            report.roundtrip_hash = dm1_original_save_corpus_fingerprint_mix(
+                report.roundtrip_hash, receipt->exported_hash);
+            report.roundtrip_hash = dm1_original_save_corpus_fingerprint_mix(
+                report.roundtrip_hash, receipt->exported_byte_count);
             if (!report.first_roundtrip_path[0]) {
                 snprintf(report.first_roundtrip_path,
                          sizeof(report.first_roundtrip_path), "%s",
@@ -12207,7 +12219,6 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     if (report.roundtrip_succeeded_count == 0) {
         report.roundtrip_hash = 0u;
     }
-    report.provenance_fingerprint = report.roundtrip_hash;
     *out_report = report;
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }

@@ -266,6 +266,10 @@ int main(void)
               report.provenance_sidecar_invalid_count == 0 &&
               report.provenance_sidecar_admitted_count == report.pc34_candidate_count,
           "external corpus binds every candidate to an exact provenance sidecar");
+    CHECK(report.roundtrip_hash != 0u,
+          "successful external PC34 corpus publishes a nonzero roundtrip fingerprint");
+    CHECK(report.provenance_fingerprint != 0u,
+          "external PC34 corpus retains its independent provenance fingerprint");
 
     for (i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];

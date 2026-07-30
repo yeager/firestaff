@@ -23244,6 +23244,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     route was boot-proved against that same DOSBox file in V1, V2.0, V2.1,
     and V2.2. All four modes restored party `16,14,2` with four champions
     and a full original-asset HoC receipt.
+  - 2026-07-30 receipt-integrity follow-up: successful F0435 -> F0433 ->
+    F0435 corpus entries now publish a nonzero, stable FNV-1a fingerprint of
+    their admitted source and transient export. The independent provenance
+    fingerprint is retained instead of being overwritten by that receipt.
 
 ## DM1 F0134/F0135 production material follow-up
 

@@ -1222,7 +1222,8 @@ typedef struct {
     int runtime_adopt_succeeded_count;
     int runtime_adopt_failed_count;
     /* Stable FNV-1a fingerprint of successful transient F0435->F0433
-     * exports. Zero means no original save completed the round trip. */
+     * exports and their admitted original input. Zero means no original save
+     * completed the round trip. */
     uint32_t roundtrip_hash;
     int firestaff_manifest_rejected_count;
     int nonoriginal_envelope_rejected_count;
