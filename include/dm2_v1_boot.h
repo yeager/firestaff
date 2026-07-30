@@ -954,6 +954,9 @@ typedef struct {
     int sampled_menu_unique_composite_hash_count;
     uint32_t sampled_menu_composite_hash;
     int sampled_runtime_hud_handoff_capture_ready;
+    /* Runtime-HUD fields are intentionally zero during SHOW_MENU_SCREEN,
+     * which occurs before GAME_LOAD creates a source party. They are retained
+     * for the separate post-GAME_LOAD runtime-HUD proof. */
     int runtime_hud_capture_consumed;
     int runtime_hud_real_gdat_ready;
     int runtime_hud_direction_mask;

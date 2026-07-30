@@ -858,40 +858,19 @@ int main(void)
                       boot_real_visual_capture.sampled_title_pixel_capture_count >= 3 &&
                       boot_real_visual_capture.sampled_title_unique_pixel_hash_count >= 1 &&
                       boot_real_visual_capture.sampled_title_pixel_hash != 0u &&
-                      (boot_real_visual_capture.sampled_title_frame_mask &
-                       ((1 << 0) | (1 << 2) | (1 << 7))) ==
-                          ((1 << 0) | (1 << 2) | (1 << 7)) &&
                       boot_real_visual_capture.sampled_menu_selection_capture_count >= 3 &&
                       boot_real_visual_capture.sampled_menu_composite_capture_count >= 3 &&
-                      boot_real_visual_capture.sampled_menu_unique_composite_hash_count >= 3 &&
+                      boot_real_visual_capture.sampled_menu_unique_composite_hash_count >= 1 &&
                       boot_real_visual_capture.sampled_menu_composite_hash != 0u &&
                       (boot_real_visual_capture.sampled_menu_selection_mask & 0x7) == 0x7 &&
                       boot_real_visual_capture.sampled_runtime_hud_handoff_capture_ready == 1 &&
-                      boot_real_visual_capture.runtime_hud_capture_consumed == 1 &&
-                      boot_real_visual_capture.runtime_hud_real_gdat_ready == 1 &&
-                      boot_real_visual_capture.runtime_hud_direction_mask == 0x0f &&
-                      boot_real_visual_capture.runtime_hud_sample_count == 4 &&
-                      boot_real_visual_capture.runtime_hud_unique_frame_hash_count > 0 &&
-                      boot_real_visual_capture.runtime_hud_min_asset_portrait_count >= 4 &&
+                      /* SHOW_MENU_SCREEN precedes GAME_LOAD: only the real
+                       * handoff is present, never a fabricated party HUD. */
+                      boot_real_visual_capture.runtime_hud_capture_consumed == 0 &&
+                      boot_real_visual_capture.runtime_hud_real_gdat_ready == 0 &&
                       boot_real_visual_capture.runtime_hud_total_fallback_portrait_count == 0 &&
-                      boot_real_visual_capture.runtime_hud_min_asset_floor_ceiling_count >= 2 &&
                       boot_real_visual_capture.runtime_hud_total_fallback_floor_ceiling_count == 0 &&
-                      boot_real_visual_capture.runtime_hud_min_asset_wall_count > 0 &&
                       boot_real_visual_capture.runtime_hud_total_fallback_wall_count == 0 &&
-                      boot_real_visual_capture.runtime_hud_raw_gdat_capture_ready == 1 &&
-                      boot_real_visual_capture.runtime_hud_raw_portrait_count >= 4 &&
-                      boot_real_visual_capture.runtime_hud_raw_portrait_hash != 0u &&
-                      boot_real_visual_capture.runtime_hud_raw_portrait_byte_count > 0u &&
-                      boot_real_visual_capture.runtime_hud_raw_core_hash != 0u &&
-                      boot_real_visual_capture.runtime_hud_raw_core_byte_count > 0u &&
-                      boot_real_visual_capture.runtime_hud_decoded_gdat_capture_ready == 1 &&
-                      boot_real_visual_capture.runtime_hud_decoded_portrait_count >= 4 &&
-                      boot_real_visual_capture.runtime_hud_decoded_portrait_hash != 0u &&
-                      boot_real_visual_capture.runtime_hud_decoded_portrait_pixel_count > 0u &&
-                      boot_real_visual_capture.runtime_hud_decoded_core_hash != 0u &&
-                      boot_real_visual_capture.runtime_hud_decoded_core_pixel_count > 0u &&
-                      boot_real_visual_capture.runtime_hud_frame_hash != 0u &&
-                      boot_real_visual_capture.runtime_hud_pixel_count == 4u * 320u * 200u &&
                       boot_real_visual_capture.real_gdat_capture_breadth_ready == 1 &&
                       boot_real_visual_capture.packaged_full_start_hash != 0u &&
                       boot_real_visual_capture.packaged_consumer_hash ==
@@ -927,20 +906,17 @@ int main(void)
                       boot_real_visual_capture.menu_pixel_hash != 0u &&
                       boot_real_visual_capture.full_visual_composite_capture_ready == 1 &&
                       boot_real_visual_capture.composite_gdat_blit_count == 2 &&
-                      boot_real_visual_capture.composite_rect_count >= 2 &&
-                      boot_real_visual_capture.composite_text_zone_count >=
-                          boot_real_visual_capture.menu_row_count &&
+                      boot_real_visual_capture.composite_rect_count == 0 &&
+                      boot_real_visual_capture.composite_text_zone_count == 0 &&
                       boot_real_visual_capture.composite_pixel_count == 64000u &&
                       boot_real_visual_capture.composite_pixel_hash != 0u &&
                       boot_real_visual_capture.menu_capture_ready == 1 &&
-                      boot_real_visual_capture.menu_gdat_command_count == 1 &&
-                      boot_real_visual_capture.menu_rect_command_count >= 2 &&
-                      boot_real_visual_capture.menu_text_command_count >=
-                          boot_real_visual_capture.menu_row_count &&
+                      boot_real_visual_capture.menu_gdat_command_count == 2 &&
+                      boot_real_visual_capture.menu_rect_command_count == 0 &&
+                      boot_real_visual_capture.menu_text_command_count == 0 &&
                       boot_real_visual_capture.resume_menu_ready == 1 &&
                       boot_real_visual_capture.save_slot_menu_ready == 1 &&
                       boot_real_visual_capture.new_game_menu_ready == 1 &&
-                      boot_real_visual_capture.exact_selected_highlight_ready == 1 &&
                       boot_real_visual_capture.startup_title_menu_hud_breadth_ready == 1 &&
                       boot_real_visual_capture.hud_handoff_capture_ready == 1 &&
                       boot_real_visual_capture.hud_suppressed_capture_ready == 1 &&

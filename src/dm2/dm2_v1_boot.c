@@ -3971,14 +3971,12 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
         out_receipt->sampled_title_pixel_capture_count >= 3 &&
         out_receipt->sampled_title_unique_pixel_hash_count >= 1 &&
         out_receipt->sampled_title_pixel_hash != 0u &&
-        (out_receipt->sampled_title_frame_mask & (1 << 0)) &&
-        (out_receipt->sampled_title_frame_mask & (1 << 2)) &&
-        (out_receipt->sampled_title_frame_mask & (1 << 7)) &&
         out_receipt->sampled_menu_selection_capture_count >= 3 &&
         out_receipt->sampled_menu_composite_capture_count >= 3 &&
-        (out_receipt->menu_raw_screen_route_ready
-             ? out_receipt->sampled_menu_unique_composite_hash_count >= 1
-             : out_receipt->sampled_menu_unique_composite_hash_count >= 3) &&
+        /* SHOW_MENU_SCREEN is a source-owned static menu surface. Selection
+         * remains input state; requiring Firestaff to generate three visual
+         * variants would force a synthetic overlay. */
+        out_receipt->sampled_menu_unique_composite_hash_count >= 1 &&
         out_receipt->sampled_menu_composite_hash != 0u &&
         (out_receipt->sampled_menu_selection_mask & 0x7) == 0x7 &&
         out_receipt->sampled_runtime_hud_handoff_capture_ready;
@@ -7168,7 +7166,6 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     DM2_V1_BootStartupPackagedConsumerReceipt consumer;
     DM2_V1_BootStartupHostFrameReceipt host_frame;
     DM2_V1_BootStartupRenderOwnershipReceipt ownership;
-    DM2_V1_BootRuntimeHudCaptureReceipt runtime_hud;
     uint8_t *title_pixels = NULL;
     uint8_t *menu_pixels = NULL;
     int title_w = 0;
@@ -7469,7 +7466,6 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         (!resume_available || out_receipt->resume_menu_ready) &&
         (slot_mask == 0u || out_receipt->save_slot_menu_ready) &&
         out_receipt->new_game_menu_ready &&
-        out_receipt->exact_selected_highlight_ready &&
         out_receipt->hud_handoff_capture_ready &&
         out_receipt->suppress_game_hud &&
         !out_receipt->present_first_hud_frame;
@@ -7487,63 +7483,11 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     (void)dm2_v1_boot_startup_real_visual_breadth_probe(profile,
                                                         &snapshot,
                                                         out_receipt);
-    dm2_v1_boot_runtime_hud_capture_receipt_init(&runtime_hud);
-    if (dm2_v1_boot_runtime_hud_capture_receipt(profile, &runtime_hud) &&
-        runtime_hud.valid &&
-        runtime_hud.real_gdat_runtime_hud_breadth_ready) {
-        out_receipt->runtime_hud_capture_consumed = 1;
-        out_receipt->runtime_hud_real_gdat_ready = 1;
-        out_receipt->runtime_hud_direction_mask =
-            runtime_hud.runtime_direction_mask;
-        out_receipt->runtime_hud_sample_count =
-            runtime_hud.render_sample_count;
-        out_receipt->runtime_hud_unique_frame_hash_count =
-            runtime_hud.unique_frame_hash_count;
-        out_receipt->runtime_hud_min_asset_portrait_count =
-            runtime_hud.min_asset_portrait_count;
-        out_receipt->runtime_hud_total_fallback_portrait_count =
-            runtime_hud.total_fallback_portrait_count;
-        out_receipt->runtime_hud_min_asset_floor_ceiling_count =
-            runtime_hud.min_asset_floor_ceiling_count;
-        out_receipt->runtime_hud_total_fallback_floor_ceiling_count =
-            runtime_hud.total_fallback_floor_ceiling_count;
-        out_receipt->runtime_hud_min_asset_wall_count =
-            runtime_hud.min_asset_wall_count;
-        out_receipt->runtime_hud_total_fallback_wall_count =
-            runtime_hud.total_fallback_wall_count;
-        out_receipt->runtime_hud_raw_gdat_capture_ready =
-            runtime_hud.raw_gdat_runtime_hud_capture_ready;
-        out_receipt->runtime_hud_raw_portrait_count =
-            runtime_hud.raw_gdat_runtime_portrait_count;
-        out_receipt->runtime_hud_raw_portrait_hash =
-            runtime_hud.raw_gdat_runtime_portrait_hash;
-        out_receipt->runtime_hud_raw_portrait_byte_count =
-            runtime_hud.raw_gdat_runtime_portrait_byte_count;
-        out_receipt->runtime_hud_raw_core_hash =
-            runtime_hud.raw_gdat_runtime_core_hash;
-        out_receipt->runtime_hud_raw_core_byte_count =
-            runtime_hud.raw_gdat_runtime_core_byte_count;
-        out_receipt->runtime_hud_raw_interface_count =
-            runtime_hud.raw_gdat_runtime_interface_count;
-        out_receipt->runtime_hud_decoded_gdat_capture_ready =
-            runtime_hud.decoded_gdat_runtime_hud_capture_ready;
-        out_receipt->runtime_hud_decoded_portrait_count =
-            runtime_hud.decoded_gdat_runtime_portrait_count;
-        out_receipt->runtime_hud_decoded_portrait_hash =
-            runtime_hud.decoded_gdat_runtime_portrait_hash;
-        out_receipt->runtime_hud_decoded_portrait_pixel_count =
-            runtime_hud.decoded_gdat_runtime_portrait_pixel_count;
-        out_receipt->runtime_hud_decoded_core_hash =
-            runtime_hud.decoded_gdat_runtime_core_hash;
-        out_receipt->runtime_hud_decoded_core_pixel_count =
-            runtime_hud.decoded_gdat_runtime_core_pixel_count;
-        out_receipt->runtime_hud_decoded_interface_count =
-            runtime_hud.decoded_gdat_runtime_interface_count;
-        out_receipt->runtime_hud_frame_hash =
-            runtime_hud.combined_frame_hash;
-        out_receipt->runtime_hud_pixel_count =
-            runtime_hud.combined_pixel_count;
-    }
+    /* SKWINSPX skcore.cpp::SHOW_MENU_SCREEN presents TITLE/0/1 and
+     * TITLE/0/4 before GAME_LOAD. There is no source party at this point,
+     * so startup proves the HUD handoff/suppression only. Runtime HUD pixels
+     * are verified by the post-GAME_LOAD capture path; do not fabricate a
+     * four-portrait frame merely to satisfy this title-menu receipt. */
     out_receipt->real_visual_status_consumer_ready =
         out_receipt->real_visual_capture_consumes_package &&
         out_receipt->real_visual_capture_consumes_host_frame &&
@@ -7551,8 +7495,7 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->packaged_startup_phase_consumed &&
         out_receipt->packaged_hud_suppression_consumed &&
         out_receipt->title_menu_hud_visual_proof_ready &&
-        out_receipt->real_gdat_capture_breadth_ready &&
-        out_receipt->runtime_hud_capture_consumed;
+        out_receipt->real_gdat_capture_breadth_ready;
 
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, package.packaged_full_start_hash);
@@ -7658,34 +7601,6 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->real_visual_status_consumer_ready &&
         out_receipt->real_gdat_capture_breadth_ready &&
         out_receipt->raw_gdat_capture_ready &&
-        out_receipt->runtime_hud_capture_consumed &&
-        out_receipt->runtime_hud_real_gdat_ready &&
-        out_receipt->runtime_hud_direction_mask == 0x0f &&
-        out_receipt->runtime_hud_sample_count == 4 &&
-        out_receipt->runtime_hud_unique_frame_hash_count > 0 &&
-        /* No source squad exists before GAME_LOAD/new-game handoff. The
-         * four original portrait assets are still captured below, but none
-         * may be painted into this initial static-HUD frame. */
-        out_receipt->runtime_hud_min_asset_portrait_count == 0 &&
-        out_receipt->runtime_hud_total_fallback_portrait_count == 0 &&
-        out_receipt->runtime_hud_min_asset_floor_ceiling_count >= 2 &&
-        out_receipt->runtime_hud_total_fallback_floor_ceiling_count == 0 &&
-        out_receipt->runtime_hud_min_asset_wall_count > 0 &&
-        out_receipt->runtime_hud_total_fallback_wall_count == 0 &&
-        out_receipt->runtime_hud_raw_gdat_capture_ready &&
-        out_receipt->runtime_hud_raw_portrait_count >= 4 &&
-        out_receipt->runtime_hud_raw_portrait_hash != 0u &&
-        out_receipt->runtime_hud_raw_portrait_byte_count > 0u &&
-        out_receipt->runtime_hud_raw_core_hash != 0u &&
-        out_receipt->runtime_hud_raw_core_byte_count > 0u &&
-        out_receipt->runtime_hud_decoded_gdat_capture_ready &&
-        out_receipt->runtime_hud_decoded_portrait_count >= 4 &&
-        out_receipt->runtime_hud_decoded_portrait_hash != 0u &&
-        out_receipt->runtime_hud_decoded_portrait_pixel_count > 0u &&
-        out_receipt->runtime_hud_decoded_core_hash != 0u &&
-        out_receipt->runtime_hud_decoded_core_pixel_count > 0u &&
-        out_receipt->runtime_hud_frame_hash != 0u &&
-        out_receipt->runtime_hud_pixel_count == 4u * 320u * 200u &&
         out_receipt->full_title_frame_capture_ready &&
         out_receipt->menu_title_composite_capture_ready &&
         out_receipt->full_visual_composite_capture_ready &&

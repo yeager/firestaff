@@ -44327,3 +44327,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Test fixtures retain explicitly compiled test-only rows. Verification:
   `dm2_v1_creature_gdat_ai_table`, `dm2_v1_creature_combat_probe` and
   `dm2_v1_projectile_pc34_compat` pass; strict C11 and `git diff --check` pass.
+- ✅ 2026-07-30 DM2 startup HUD phase boundary: the startup receipt now
+  follows `SKWINSPX/src/v4/skcore.cpp::SHOW_MENU_SCREEN`: it verifies the
+  original `TITLE/0/1` and `TITLE/0/4` title/menu surfaces plus HUD
+  handoff/suppression before `GAME_LOAD`, without inventing party portraits.
+  The real nine-command HUD proof remains a separate post-`GAME_LOAD`
+  verification using PC-English `GRAPHICS.DAT`.
