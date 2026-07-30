@@ -1,3 +1,12 @@
+- ✅ 2026-07-30 CSBWin `TAG0088b2` wall draw-plan recovery: Firestaff now
+  combines CSBWin's `Viewport.cpp` pWallBitmaps source selection, F3R2 mirror
+  step and `0x22e` `wallRectangles[]` destination for every thirteen
+  bitmap-backed wall lane. F0 remains excluded as CSBWin's source-less local
+  composition path. The focused test checks the complete command list and
+  validates every WallSet 0--3 against the supplied Atari-ST `GRAPHICS.DAT`.
+  This intentionally stops before host rendering: the original packed-byte
+  blitter still owns final rasterization.
+
 - ✅ 2026-07-30 CSBWin `TAG0088b2` raw projection layout: Firestaff now
   decodes original Atari/CSBWin `GRAPHICS.DAT` item `0x22e` at CSBWin's exact
   `Byte7248 + 2` -> `wallRectangles[0]/Byte3074` offset. All fourteen

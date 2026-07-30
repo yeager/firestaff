@@ -66,6 +66,27 @@ typedef struct {
         CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT];
 } CSB_V1_CSBWinViewportLayout022e;
 
+/* One source-owned TAG0088b2 wall command after Viewport.cpp has selected
+ * both its pWallBitmaps source and its wallRectangles destination. F0 is
+ * intentionally absent: it is CSBWin's local-cell composition path, not a
+ * GRAPHICS.DAT wall bitmap. */
+typedef struct {
+    CSB_V1_CSBWinViewportWall wall;
+    uint16_t graphic_index;
+    int mirrored;
+    CSB_V1_CSBWinViewportProjectionRectangle projection;
+} CSB_V1_CSBWinViewportWallDraw;
+
+#define CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT \
+    (CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT - 1u)
+
+typedef struct {
+    int valid;
+    size_t count;
+    CSB_V1_CSBWinViewportWallDraw draws[
+        CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT];
+} CSB_V1_CSBWinViewportWallPlan;
+
 int csb_v1_csbwin_floor_ceiling_graphic_index(uint16_t floor_set,
                                                int ceiling,
                                                uint16_t *out_graphic_index);
@@ -98,6 +119,13 @@ int csb_v1_csbwin_viewport_layout_022e_decode(
 
 int csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(
     const char *graphics_dat_path, CSB_V1_CSBWinViewportLayout022e *out_layout);
+
+/* Resolves the 13 pWallBitmaps-backed CSBWin wall commands for a single
+ * WallSet. This is command metadata only: it does not invent a local F0
+ * bitmap, infer dungeon visibility, or perform a host blit. */
+int csb_v1_csbwin_viewport_build_wall_plan(
+    uint16_t wall_set, const CSB_V1_CSBWinViewportLayout022e *layout,
+    CSB_V1_CSBWinViewportWallPlan *out_plan);
 
 /* TAG0088b2 accepts inclusive screen coordinates and a packed source row
  * stride. CSBWin's F0 local-cell rectangle is the deliberate no-source

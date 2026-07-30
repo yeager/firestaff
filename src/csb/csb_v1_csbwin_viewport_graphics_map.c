@@ -143,3 +143,41 @@ done:
     csb_atari_st_graphics_loader_close(&loader);
     return ok;
 }
+
+int csb_v1_csbwin_viewport_build_wall_plan(
+    uint16_t wall_set, const CSB_V1_CSBWinViewportLayout022e *layout,
+    CSB_V1_CSBWinViewportWallPlan *out_plan)
+{
+    unsigned int wall;
+
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!layout || !layout->valid || wall_set > 15u) return 0;
+    for (wall = 0u; wall < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT; ++wall) {
+        CSB_V1_CSBWinViewportWallDraw *draw;
+        uint8_t rectangle_index;
+        uint16_t graphic_index;
+        int mirrored;
+
+        if ((CSB_V1_CSBWinViewportWall)wall ==
+            CSB_V1_CSBWIN_VIEWPORT_WALL_F0) continue;
+        if (out_plan->count >= CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT ||
+            !csb_v1_csbwin_viewport_wall_projection_rectangle(
+                (CSB_V1_CSBWinViewportWall)wall, &rectangle_index) ||
+            !csb_v1_csbwin_viewport_wall_source(
+                wall_set, (CSB_V1_CSBWinViewportWall)wall,
+                &graphic_index, &mirrored) ||
+            rectangle_index >= CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT) {
+            memset(out_plan, 0, sizeof(*out_plan));
+            return 0;
+        }
+        draw = &out_plan->draws[out_plan->count++];
+        draw->wall = (CSB_V1_CSBWinViewportWall)wall;
+        draw->graphic_index = graphic_index;
+        draw->mirrored = mirrored;
+        draw->projection = layout->rectangles[rectangle_index];
+    }
+    out_plan->valid = out_plan->count ==
+        CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT;
+    return out_plan->valid;
+}

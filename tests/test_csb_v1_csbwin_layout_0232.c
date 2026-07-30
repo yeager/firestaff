@@ -270,6 +270,52 @@ static void check_real_viewport_projection_layout(const char *path)
     }
 }
 
+static void check_viewport_wall_plan(
+    const CSB_V1_CSBWinViewportLayout022e *layout, uint16_t wall_set)
+{
+    CSB_V1_CSBWinViewportWallPlan plan;
+    size_t draw;
+
+    CHECK(csb_v1_csbwin_viewport_build_wall_plan(wall_set, layout, &plan));
+    CHECK(plan.valid && plan.count == CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT);
+    for (draw = 0u; draw < plan.count; ++draw) {
+        const CSB_V1_CSBWinViewportWallDraw *entry = &plan.draws[draw];
+        uint8_t rectangle_index = UINT8_MAX;
+        uint16_t graphic_index = 0u;
+        int mirrored = 0;
+
+        CHECK(entry->wall != CSB_V1_CSBWIN_VIEWPORT_WALL_F0);
+        CHECK(csb_v1_csbwin_viewport_wall_projection_rectangle(
+            entry->wall, &rectangle_index));
+        CHECK(csb_v1_csbwin_viewport_wall_source(
+            wall_set, entry->wall, &graphic_index, &mirrored));
+        CHECK(entry->graphic_index == graphic_index &&
+              entry->mirrored == mirrored &&
+              !memcmp(&entry->projection, &layout->rectangles[rectangle_index],
+                      sizeof(entry->projection)));
+    }
+    CHECK(plan.draws[0].wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F3L2 &&
+          plan.draws[0].graphic_index ==
+              CSB_V1_CSBWIN_WALLSET_FIRST_GRAPHIC + wall_set * 13u + 12u);
+    CHECK(plan.draws[4].wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F3R2 &&
+          plan.draws[4].mirrored);
+    CHECK(plan.draws[plan.count - 1u].wall ==
+          CSB_V1_CSBWIN_VIEWPORT_WALL_F0R1);
+}
+
+static void check_real_viewport_wall_plan(const char *path)
+{
+    CSB_V1_CSBWinViewportLayout022e layout;
+    unsigned int wall_set;
+
+    if (!path || !path[0]) return;
+    CHECK(csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(path, &layout));
+    if (!layout.valid) return;
+    for (wall_set = 0u; wall_set < 4u; ++wall_set) {
+        check_viewport_wall_plan(&layout, (uint16_t)wall_set);
+    }
+}
+
 /* The DMCSB1 decoder exposes a convenient expanded indexed raster, while
  * CSBWin's viewport blitter addresses the same source through packed bytes.
  * Lock the reversible boundary against every standard wall/floor source, not
@@ -358,6 +404,7 @@ int main(void)
         CHECK(decoded_layout.valid && decoded_layout.rectangles[0].x1 == 10u &&
               decoded_layout.rectangles[13].x2 == 33u &&
               decoded_layout.rectangles[6].source_stride == 24u);
+        check_viewport_wall_plan(&decoded_layout, 2u);
         viewport_layout[CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET + 4u] = 0u;
         CHECK(!csb_v1_csbwin_viewport_layout_022e_decode(
             viewport_layout, sizeof(viewport_layout), &decoded_layout));
@@ -487,6 +534,7 @@ int main(void)
     check_real_hud_composition(real_graphics_dat);
     check_real_viewport_wall_catalog(real_graphics_dat);
     check_real_viewport_projection_layout(real_graphics_dat);
+    check_real_viewport_wall_plan(real_graphics_dat);
     check_real_viewport_planar_roundtrip(real_graphics_dat);
 
     if (failures) return 1;

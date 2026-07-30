@@ -18,6 +18,14 @@
   This locks command geometry, not the still-open native-raster V2.2 material
   handoff.
 
+- **CSB-V1-CSBWIN-TAG0088B2-WALL-PLAN:** Closed 2026-07-30. Firestaff now
+  joins CSBWin's exact `Viewport.cpp` source-bitmap selection with the decoded
+  `0x22e` destination rectangle for all thirteen bitmap-backed lanes in a
+  WallSet. The F3R2 mirror and the source-less F0 local cell remain explicit.
+  The focused contract and the local Atari-ST `GRAPHICS.DAT` exercise all four
+  available WallSets. This is command recovery only; M11 must still consume
+  the plan through CSBWin's original packed-byte blitter semantics.
+
 ReDMCSB is the primary reference for DM1/CSB shared engine behavior. For
 CSB-specific DSA, save, Utility Disk, and extended-runtime behavior, use
 CSBWin alongside it. Reuse or bind verified PC34 owners and authentic game
