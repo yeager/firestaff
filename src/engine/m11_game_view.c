@@ -5103,20 +5103,31 @@ static void m11_draw_dm1_status_name_text(unsigned char* framebuffer,
                                           unsigned char fgColor,
                                           unsigned char bgColor) {
     int i;
+    int charCount = 0;
+    int drawX;
     if (!framebuffer || !g_activeOriginalFont ||
         !M11_Font_IsLoaded(g_activeOriginalFont)) {
         return;
     }
-    for (i = 0; i < DM1_V1_CPNBC_NAME_FIELD_VISIBLE_CHARS_PC34; ++i) {
+    /* CHAMDRAW.C F0292 delegates the C159..C162 name strips to F0650,
+     * which centers the bounded seven-character Name[] field. The caller
+     * supplies C163's one-pixel text inset, so recover the C159 field left
+     * before applying the original 43-pixel zone geometry. */
+    while (charCount < DM1_V1_CPNBC_NAME_FIELD_VISIBLE_CHARS_PC34 &&
+           text && text[charCount] != '\0') {
+        ++charCount;
+    }
+    drawX = x - DM1_V1_CPNBC_NAME_BOX_LEFT_PAD_PC34 +
+        (DM1_V1_CPNBC_NAME_BOX_LEFT_TO_RIGHT_PC34 -
+         charCount * DM1_V1_CPNBC_GLYPH_WIDTH_PC34) / 2;
+
+    for (i = 0; i < charCount; ++i) {
         unsigned char ch;
-        if (!text || text[i] == '\0') {
-            break;
-        }
         ch = (unsigned char)text[i];
         (void)M11_Font_DrawChar(
             g_activeOriginalFont, framebuffer, framebufferWidth,
             framebufferHeight,
-            x + i * DM1_V1_CPNBC_GLYPH_WIDTH_PC34,
+            drawX + i * DM1_V1_CPNBC_GLYPH_WIDTH_PC34,
             y - (M11_FONT_CHAR_VISIBLE_H - 1),
             ch, fgColor, (int)bgColor, 1);
     }

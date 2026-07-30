@@ -103,6 +103,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-V1-HUD-NAME-CENTERING:** Closed 2026-07-30. M11 now reproduces
+  CHAMDRAW.C F0292's F0650-centred C159--C162 name-field placement. The
+  previous renderer always started at C163's left inset, visibly misaligning
+  short champion names. The original 43-pixel field, one-pixel source inset,
+  seven-character bound and native 6-pixel glyph advance are retained.
+  Champion-status layout and name-box clip regressions pass.
+
 - **CSB-V20-RUNTIME-HUD-FILTER-BOUNDARY:** Closed 2026-07-30. The optional
   V2.0 indexed cleanup chain now operates on CSBWin's authenticated
   `(48,33) 224x136` dungeon viewport copy only. It cannot rewrite the

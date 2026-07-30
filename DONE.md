@@ -1,3 +1,8 @@
+- ✅ 2026-07-30 DM1 champion HUD names: C159--C162 name fields are now
+  source-centred through the original F0650 geometry rather than left-locked
+  at C163. Short names therefore align with their status boxes; the layout
+  and name-box clip contracts pass.
+
 - ✅ 2026-07-30 CSB V2.0 runtime filter boundary: dither cleanup and palette
   interpolation now run only on CSBWin's original `(48,33) 224x136` dungeon
   viewport copy. Source-owned C009/C013 HUD controls and panel text are left
