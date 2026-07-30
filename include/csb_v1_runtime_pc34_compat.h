@@ -2660,6 +2660,11 @@ int csb_v1_runtime_object_name(
 const char *csb_v1_runtime_variant_name(CSB_V1_VariantId id);
 const CSB_V1_VariantInfo *csb_v1_runtime_get_variant_info(CSB_V1_VariantId id);
 
+/* Resolve the stable launcher/probe version token to a known CSB media
+ * variant. Unknown or absent tokens deliberately return UNKNOWN so callers
+ * can retain hash-first discovery across mixed, user-managed data roots. */
+CSB_V1_VariantId csb_v1_runtime_variant_from_hint(const char *version_hint);
+
 /* Detect variant by matching gfx + dungeon MD5 hashes.
  * Returns the best-matching VariantId, or CSB_V1_VARIANT_UNKNOWN. */
 int csb_v1_runtime_detect_variant(const char *gfx_path,
@@ -2680,7 +2685,9 @@ const char *csb_v1_runtime_find_dungeon(const char *data_dir,
                                          CSB_V1_AssetResult *out_result);
 
 /* Find CSB graphics archive.
- * Searches csb.dat / CSBGRAPH.DAT / GRAPHICS.DAT in order.
+ * A recognised version_hint restricts hash discovery to that original
+ * variant and refuses a filename-only substitute. Unknown hints search
+ * csb.dat / CSBGRAPH.DAT / GRAPHICS.DAT in the legacy hash-first order.
  * Returns absolute path, or NULL if none found. */
 const char *csb_v1_runtime_find_graphics(const char *data_dir,
                                            const char *version_hint,

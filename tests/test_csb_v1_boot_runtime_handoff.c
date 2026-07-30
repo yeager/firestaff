@@ -5168,6 +5168,58 @@ static void test_startup_full_runtime_receipt_requires_complete_real_session(voi
           "CSB full startup runtime receipt rejects partial title sequence");
 }
 
+static void test_runtime_variant_hint_identity(void)
+{
+    static const struct {
+        const char *hint;
+        CSB_V1_VariantId expected;
+    } cases[] = {
+        { "pc34_en", CSB_V1_VARIANT_PC34_EN },
+        { "PC34_MULTI", CSB_V1_VARIANT_PC34_MULTI },
+        { "st20_en", CSB_V1_VARIANT_ST20_EN },
+        { "st21_en", CSB_V1_VARIANT_ST21_EN },
+        { "amiga35_en", CSB_V1_VARIANT_AMIGA35_EN },
+        { "amiga35_multi", CSB_V1_VARIANT_AMIGA35_MULTI },
+        { "st_f20j", CSB_V1_VARIANT_ST_F20J },
+        { "st_f20e", CSB_V1_VARIANT_ST_F20E }
+    };
+    const char *tmp_dir = "/tmp/firestaff-csb-v1-graphics-hint";
+    char graphics_path[ASSET_PATH_MAX];
+    CSB_V1_AssetResult result;
+    FILE *file;
+    size_t i;
+
+    for (i = 0; i < sizeof(cases) / sizeof(cases[0]); ++i) {
+        CHECK(csb_v1_runtime_variant_from_hint(cases[i].hint) == cases[i].expected,
+              "CSB known launcher hint resolves to its exact media variant");
+    }
+    CHECK(csb_v1_runtime_variant_from_hint(NULL) == CSB_V1_VARIANT_UNKNOWN,
+          "CSB absent launcher hint retains broad hash discovery");
+    CHECK(csb_v1_runtime_variant_from_hint("custom_dungeon") ==
+              CSB_V1_VARIANT_UNKNOWN,
+          "CSB unknown launcher hint retains broad hash discovery");
+
+    (void)TEST_MKDIR(tmp_dir);
+    snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+    remove(graphics_path);
+    file = fopen(graphics_path, "wb");
+    CHECK(file != NULL, "CSB graphics-hint fixture opens");
+    if (file) {
+        static const unsigned char unverified[] = { 0x43u, 0x53u, 0x42u, 0x00u };
+        CHECK(fwrite(unverified, 1u, sizeof(unverified), file) == sizeof(unverified),
+              "CSB graphics-hint fixture writes unverified archive bytes");
+        fclose(file);
+        memset(&result, 0, sizeof(result));
+        CHECK(csb_v1_runtime_find_graphics(tmp_dir, "pc34_en", &result) == NULL,
+              "CSB selected PC3.4 variant rejects filename-only graphics substitute");
+        memset(&result, 0, sizeof(result));
+        CHECK(csb_v1_runtime_find_graphics(tmp_dir, "custom_dungeon", &result) != NULL &&
+                  result.kind == CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS,
+              "CSB unknown variant retains legacy filename fallback");
+    }
+    remove(graphics_path);
+}
+
 int main(void)
 {
     const char *focus_dsa_save_handoff =
@@ -5187,6 +5239,7 @@ int main(void)
     test_runtime_utility_startup_receipt_facades();
     test_startup_real_asset_receipt_is_skip_safe_and_deterministic();
     test_startup_full_runtime_receipt_requires_complete_real_session();
+    test_runtime_variant_hint_identity();
     test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_runtime_handoff_is_idempotent();

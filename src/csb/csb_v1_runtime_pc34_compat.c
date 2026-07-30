@@ -1141,6 +1141,34 @@ const CSB_V1_VariantInfo *csb_v1_runtime_get_variant_info(CSB_V1_VariantId id)
     return &g_csb_variants[CSB_V1_VARIANT_UNKNOWN];
 }
 
+CSB_V1_VariantId csb_v1_runtime_variant_from_hint(const char *version_hint)
+{
+    static const struct {
+        const char *hint;
+        CSB_V1_VariantId id;
+    } known_hints[] = {
+        { "pc34_en",      CSB_V1_VARIANT_PC34_EN },
+        { "pc34_multi",   CSB_V1_VARIANT_PC34_MULTI },
+        { "st20_en",      CSB_V1_VARIANT_ST20_EN },
+        { "st21_en",      CSB_V1_VARIANT_ST21_EN },
+        { "amiga35_en",   CSB_V1_VARIANT_AMIGA35_EN },
+        { "amiga35_multi", CSB_V1_VARIANT_AMIGA35_MULTI },
+        { "st_f20j",      CSB_V1_VARIANT_ST_F20J },
+        { "st_f20e",      CSB_V1_VARIANT_ST_F20E }
+    };
+    size_t i;
+
+    if (!version_hint || version_hint[0] == '\0') {
+        return CSB_V1_VARIANT_UNKNOWN;
+    }
+    for (i = 0; i < sizeof(known_hints) / sizeof(known_hints[0]); ++i) {
+        if (strcasecmp(version_hint, known_hints[i].hint) == 0) {
+            return known_hints[i].id;
+        }
+    }
+    return CSB_V1_VARIANT_UNKNOWN;
+}
+
 /*
  * Detect variant by matching gfx + dungeon MD5 hashes to known variants.
  * Falls back to UNKNOWN if no hash matches (assets not yet verified).
@@ -1226,15 +1254,29 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
 {
     static char found_path[ASSET_PATH_MAX];
     const char *const *names;
-    (void)version_hint; /* TODO: narrow search by version hint */
+    CSB_V1_VariantId requested_variant;
+    const CSB_V1_VariantInfo *requested_info = NULL;
+    const char *requested_hashes[2] = { NULL, NULL };
 
     if (!data_dir || !out_result) return NULL;
     memset(out_result, 0, sizeof(*out_result));
 
+    requested_variant = csb_v1_runtime_variant_from_hint(version_hint);
+    if (requested_variant != CSB_V1_VARIANT_UNKNOWN) {
+        requested_info = csb_v1_runtime_get_variant_info(requested_variant);
+        if (!requested_info || requested_info->md5_gfx[0] == '\0') {
+            return NULL;
+        }
+        requested_hashes[0] = requested_info->md5_gfx;
+    }
+
     /* Prefer MD5-hash search so files in arbitrary subdirs and renamed
-     * user layouts are discovered before any legacy filename fallback. */
+     * user layouts are discovered before any legacy filename fallback. A
+     * recognised launcher variant is a media identity, not a presentation
+     * preference: it must not silently consume another platform's archive. */
     int matchIndex = -1;
-    if (asset_find_by_md5_list(data_dir, g_csb_graphics_hashes,
+    if (asset_find_by_md5_list(data_dir,
+                                 requested_info ? requested_hashes : g_csb_graphics_hashes,
                                  found_path, sizeof(found_path),
                                  &matchIndex, 8)) {
         /* Determine archive kind from the matched hash + extension */
@@ -1251,6 +1293,13 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
         out_result->path = found_path;
         out_result->kind = kind;
         return found_path;
+    }
+
+    /* Filename fallback cannot prove the selected original variant. Keep it
+     * only for legacy/unknown callers, where the existing broad search is the
+     * documented behaviour. */
+    if (requested_info) {
+        return NULL;
     }
 
     for (names = g_csb_gfx_search; *names != NULL; names++) {
@@ -29762,7 +29811,7 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
 
     if (!profile) return -1;
 
-    search_dir = data_dir ? data_dir : ".",
+    search_dir = data_dir ? data_dir : ".";
 
     /* Step 1: Find dungeon by CSB hash (ReDMCSB DUNGEON.C F0237) */
     dun_path = csb_v1_runtime_find_dungeon(search_dir, &dun_result);

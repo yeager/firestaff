@@ -1,3 +1,12 @@
+- ✅ 2026-07-30 CSB runtime variant identity discovery: a recognised
+  `pc34_en`, `pc34_multi`, Atari ST, or Amiga launcher/probe variant now
+  searches only for its verified original graphics MD5 and refuses a
+  filename-only `GRAPHICS.DAT` substitute from another platform. Unknown and
+  custom variant tokens retain the legacy hash-first, filename fallback for
+  user-managed layouts. Verification: `csb_v1_boot_runtime_handoff` covers
+  all documented tokens plus the selected-variant rejection boundary; focused
+  CSB V1 startup and V2.2 viewport regressions pass.
+
 - ✅ 2026-07-30 CSB V2.2 compact artpack provenance: the runtime parser now
   accepts a `routeProvenance` array whose first complete object is on the same
   JSON line as the array key. This keeps compact Artpack Studio exports
