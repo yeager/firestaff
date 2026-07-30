@@ -70,6 +70,13 @@
   M11 action sets/names only after the live CSB session carries that receipt.
   Do not substitute DM1's compiled table or invent a byte layout.
 
+- **DM1-PC34-SAVE-CORPUS-FINGERPRINT:** Closed 2026-07-30. The successful
+  F0435 -> F0433 corpus receipt now carries a stable, nonzero FNV-1a
+  fingerprint over each admitted original input and its transient export.
+  The old report never populated `roundtrip_hash`, so an admitted corpus was
+  incorrectly reported as `00000000`. The external-corpus gate now rejects a
+  zero successful fingerprint and preserves its independent provenance hash.
+
 - **DM1-V1-SAVED-PORTRAIT-INVENTORY-ORDER:** Closed 2026-07-30. The normal
   C017 inventory path now restores F0435's saved M516 32x29 portrait only
   after F0355's F0291 slot pass, matching PANEL.C's final F0292 state draw.

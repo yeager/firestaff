@@ -51,6 +51,12 @@
   contract-test-only and have no production callers. No startup placeholder
   route was promoted or replaced by generated pixels.
 
+- ✅ 2026-07-30 DM1 PC34 save-corpus fingerprint: successful F0435 -> F0433
+  corpus round trips now publish a stable nonzero FNV-1a hash over the
+  original input and transient export. The fixture-free external corpus test
+  rejects a zero hash and the local DOSBox `DMSAVE.DAT` deterministically
+  reports `5a560bab`.
+
 - ✅ 2026-07-30 DM1 original-save F0345 runtime proof: the fixture-free PC34
   corpus test opens C017, sends the source C545 mouth click at `(64,54)`, and
   verifies the resulting real C020/C030/C031 food-water panel pixels. This is
