@@ -191,6 +191,30 @@ int main(void) {
     CHECK(state.settings.showFpsOverlay == 1,
           "FPS overlay setting persists through the shared menu state");
 
+    /* DATA DIRECTORY presents real left/right affordances as well.  The
+     * previous hit map sent both halves straight to the native picker, which
+     * made the visible left control misleading and prevented a player from
+     * returning to Firestaff's default originals directory with the mouse. */
+    state.settingsTabIndex = M12_SETTINGS_TAB_GAME;
+    /* GAME has eleven rows, so DATA DIRECTORY is in the first column.
+     * Its row rectangle spans x=132..996; the value control begins at
+     * x=607 and its two halves meet at x=801. */
+    hit = M12_ModernMenu_HitTest(&state, 300,
+                                 settingsRowY0 + 70 + 25);
+    CHECK(hit.kind == M12_HIT_SETTINGS_ROW &&
+          hit.index == M12_STARTUP_SETTINGS_ROW_DATA_DIR,
+          "data-directory label is a non-destructive selection target");
+    hit = M12_ModernMenu_HitTest(&state, 700,
+                                 settingsRowY0 + 70 + 25);
+    CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.delta == -1 &&
+          hit.index == M12_STARTUP_SETTINGS_ROW_DATA_DIR,
+          "data-directory left control restores the default directory");
+    hit = M12_ModernMenu_HitTest(&state, 900,
+                                 settingsRowY0 + 70 + 25);
+    CHECK(hit.kind == M12_HIT_SETTINGS_CYCLE && hit.delta == 1 &&
+          hit.index == M12_STARTUP_SETTINGS_ROW_DATA_DIR,
+          "data-directory right control opens the directory picker");
+
     state.settingsTabIndex = M12_SETTINGS_TAB_ONLINE;
 
     hit = M12_ModernMenu_HitTest(&state,

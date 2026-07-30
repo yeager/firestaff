@@ -43762,6 +43762,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   mouse, keyboard, touch, localization, data-picker cancellation, save
   browser, accessibility and every launcher handoff boundary.
 
+- ✅ Settings-pointer completion: `DATA DIRECTORY` now consumes the visible
+  left/right controls consistently. The left control restores Firestaff's
+  default originals directory; the right control opens the native directory
+  picker; clicking the label only selects the row. `menu_hit_settings_tab_m12`
+  covers all three pointer targets, together with the existing keyboard,
+  touch, localization, font/artpack, and launcher-handoff tests.
+
 # CSB Entrance pre-open composition (2026-07-30)
 
 - ✅ The source-owned CSB `OPENING_DELAY` state now keeps C004 with its

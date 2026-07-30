@@ -374,13 +374,8 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
                     if (rowIndex == M12_STARTUP_SETTINGS_ROW_LANGUAGE) {
                         hit.kind = M12_HIT_SETTINGS_ROW;
                         hit.index = rowIndex;
-                    } else if (rowIndex == M12_STARTUP_SETTINGS_ROW_DATA_DIR ||
-                        rowIndex == M12_STARTUP_SETTINGS_ROW_EXPORT ||
-                        rowIndex == M12_STARTUP_SETTINGS_ROW_IMPORT) {
-                        hit.kind = M12_HIT_SETTINGS_CYCLE;
-                        hit.index = rowIndex;
-                        hit.delta = 1;
-                    } else if (m12_hit_settings_cycle_delta(rx, rw, x, &hit.delta)) {
+                    } else if (m12_hit_settings_cycle_delta(rx, rw, x,
+                                                            &hit.delta)) {
                         hit.kind = M12_HIT_SETTINGS_CYCLE;
                         hit.index = rowIndex;
                     } else {
