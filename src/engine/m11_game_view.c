@@ -12080,8 +12080,7 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
     if (!state ||
         !(m11_is_dm1_source_kind(state->sourceKind) ||
           m11_source_is_csb(state)) ||
-        state->showDebugHUD || state->inventoryPanelActive ||
-        !m11_v1_chrome_mode_enabled(state)) {
+        state->showDebugHUD || state->inventoryPanelActive) {
         return M11_GAME_INPUT_IGNORED;
     }
     parent = dm1_v1_spell_area_click_rect_pc34();

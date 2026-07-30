@@ -71,7 +71,7 @@ int main(void)
     }
 
     ok &= require_text(source,
-                       "if (state->spellPanelOpen && !m11_v1_chrome_mode_enabled() &&");
+                       "if (state->spellPanelOpen && !m11_v1_chrome_mode_enabled(state) &&");
     ok &= require_text(source,
                        "!m11_is_dm1_source_kind(state->sourceKind))");
     ok &= require_text(source,

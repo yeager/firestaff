@@ -63,20 +63,6 @@ static int prepare_candidate_with_spell(M11_GameViewState* game,
                      M11_GameView_GetFrontMirrorOrdinal(game),
                      expectedMirrorOrdinal);
 
-    /* ReDMCSB COMMAND.C:2303-2311 suppresses spell/action area routes while
-     * G0299 is nonzero; preloading a valid Firestaff spell-buffer state makes
-     * any missing suppression observable as a cast/clear mutation. */
-    ok &= expect_int("open spell panel",
-                     M11_GameView_OpenSpellPanel(game), 1);
-    ok &= expect_int("enter rune 1",
-                     M11_GameView_EnterRune(game, 0), 1);
-    ok &= expect_int("enter rune 2",
-                     M11_GameView_EnterRune(game, 0), 1);
-    ok &= expect_int("spell panel preselect",
-                     game->spellPanelOpen, 1);
-    ok &= expect_int("spell buffer preselect",
-                     game->spellBuffer.runeCount, 2);
-
     /* ReDMCSB REVIVE.C:272-276 sets G0299 when the candidate is appended;
      * Firestaff mirrors that as candidateMirrorPanelActive plus the
      * candidate ordinal/party-index fields. */
@@ -92,6 +78,17 @@ static int prepare_candidate_with_spell(M11_GameViewState* game,
                      game->world.party.championCount, 1);
     ok &= expect_int("candidate inventory live",
                      game->inventoryPanelActive, 1);
+
+    /* A live C040 panel normally owns the input before C100 can reach
+     * F0370. Seed a previously admitted spell line only after the candidate
+     * exists, rather than pretending a party with no champion can cast. */
+    game->spellPanelOpen = 1;
+    game->spellRuneRow = 2;
+    game->spellBuffer.runeCount = 2;
+    game->spellBuffer.runes[0] = 0x60;
+    game->spellBuffer.runes[1] = 0x60;
+    ok &= expect_int("spell panel preselect", game->spellPanelOpen, 1);
+    ok &= expect_int("spell buffer preselect", game->spellBuffer.runeCount, 2);
     return ok;
 }
 

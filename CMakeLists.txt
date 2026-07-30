@@ -39365,7 +39365,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.py
         )
-        set_tests_properties(pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat)
+        set_tests_properties(pass786_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live PROPERTIES DEPENDS dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass787_dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.py
@@ -39545,7 +39545,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass830_dm1_v1_box_spell_area
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass830_dm1_v1_box_spell_area_pc34_compat.py
         )
-        set_tests_properties(pass830_dm1_v1_box_spell_area PROPERTIES DEPENDS dm1_v1_box_spell_area_pc34_compat)
+        set_tests_properties(pass830_dm1_v1_box_spell_area PROPERTIES DEPENDS dm1_v1_box_spell_area_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass831_dm1_v1_box_action_area
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass831_dm1_v1_box_action_area_pc34_compat.py
@@ -39880,7 +39880,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass933_dm1_v1_graphic560_box_spell_area_controls
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass933_dm1_v1_graphic560_box_spell_area_controls_pc34_compat.py
         )
-        set_tests_properties(pass933_dm1_v1_graphic560_box_spell_area_controls PROPERTIES DEPENDS dm1_v1_graphic560_box_spell_area_controls_pc34_compat)
+        set_tests_properties(pass933_dm1_v1_graphic560_box_spell_area_controls PROPERTIES DEPENDS dm1_v1_graphic560_box_spell_area_controls_pc34_compat ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass884_dm1_v1_animtown_color_presents
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass884_dm1_v1_animtown_color_presents_pc34_compat.py

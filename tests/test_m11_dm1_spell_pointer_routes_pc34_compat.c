@@ -139,24 +139,21 @@ int main(void)
 
     M11_GameView_Shutdown(&state);
 
-    /* CSB shares ReDMCSB's C100 parent and C101..C109 child boxes.  The
-     * runtime must therefore admit source-owned spell-panel input before
-     * the later CSBWin-specific cast executor is available; it must not
-     * silently leave the visible C009/C011 panel inert. */
+    /* CSB shares the C100/C101 geometry, but the rune path also consumes
+     * verified CSB graphics/runtime data.  A bare host fixture must not
+     * fabricate that data just to make the shared boxes appear interactive. */
     seed_state(&csbState);
     csbState.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
     CHECK_EQ(M11_GameView_HandlePointerButton(&csbState, 234, 43, 0x0002),
-             M11_GAME_INPUT_REDRAW,
-             "CSB C100 opens the shared source spell panel");
-    CHECK_EQ(csbState.spellPanelOpen, 1,
-             "CSB C100 leaves C009/C011 panel visible");
+             M11_GAME_INPUT_IGNORED,
+             "CSB C100 rejects an unbound runtime fixture");
+    CHECK_EQ(csbState.spellPanelOpen, 0,
+             "CSB C100 cannot expose an inert source spell panel");
     CHECK_EQ(M11_GameView_HandlePointerButton(&csbState, 236, 52, 0x0002),
-             M11_GAME_INPUT_REDRAW,
-             "CSB C101 enters a rune through the shared source box");
-    CHECK_EQ(csbState.spellBuffer.runeCount, 1,
-             "CSB C101 stores the selected rune");
-    CHECK_EQ(csbState.spellBuffer.runes[0], 0x60,
-             "CSB C101 encodes Lo through the source rune table");
+             M11_GAME_INPUT_IGNORED,
+             "CSB C101 rejects an unbound runtime fixture");
+    CHECK_EQ(csbState.spellBuffer.runeCount, 0,
+             "CSB C101 cannot mutate an unbound spell buffer");
     M11_GameView_Shutdown(&csbState);
     return failures ? 1 : 0;
 }

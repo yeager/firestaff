@@ -191,6 +191,7 @@ static int test_f0249_c14_c04_teleporter_rotates_m10_and_c48(void) {
     unsigned char squareData[2][3];
     unsigned short firstThings[6];
     unsigned char rawProjectile[8];
+    unsigned char rawTeleporter[6];
     unsigned short projectileThing = (unsigned short)(THING_TYPE_PROJECTILE << 10);
     unsigned short teleporterThing = (unsigned short)(THING_TYPE_TELEPORTER << 10);
 
@@ -206,6 +207,7 @@ static int test_f0249_c14_c04_teleporter_rotates_m10_and_c48(void) {
     memset(squareData, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(squareData));
     memset(firstThings, 0xff, sizeof(firstThings));
     memset(rawProjectile, 0, sizeof(rawProjectile));
+    memset(rawTeleporter, 0, sizeof(rawTeleporter));
 
     maps[0].width = maps[1].width = 3;
     maps[0].height = maps[1].height = 1;
@@ -239,6 +241,12 @@ static int test_f0249_c14_c04_teleporter_rotates_m10_and_c48(void) {
     rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
     rawProjectile[2] = (unsigned char)(THING_NONE & 0xffu);
     rawProjectile[3] = (unsigned char)(THING_NONE >> 8);
+    rawTeleporter[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawTeleporter[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawTeleporter[2] = 2;
+    rawTeleporter[3] = (unsigned char)((1u << 2) | (2u << 5));
+    rawTeleporter[4] = 0;
+    rawTeleporter[5] = 1;
     things.loaded = 1;
     things.squareFirstThings = firstThings;
     things.squareFirstThingCount = 6;
@@ -246,6 +254,8 @@ static int test_f0249_c14_c04_teleporter_rotates_m10_and_c48(void) {
     things.projectileCount = 1;
     things.teleporters = &teleporter;
     things.teleporterCount = 1;
+    things.thingCounts[THING_TYPE_TELEPORTER] = 1;
+    things.rawThingData[THING_TYPE_TELEPORTER] = rawTeleporter;
     things.thingCounts[THING_TYPE_PROJECTILE] = 1;
     things.rawThingData[THING_TYPE_PROJECTILE] = rawProjectile;
     world.dungeon = &dungeon;
@@ -310,6 +320,7 @@ static int test_f0249_c14_c04_chain_accumulates_rotation_once(void) {
     unsigned char squareData[3][3];
     unsigned short firstThings[4];
     unsigned char rawProjectile[8];
+    unsigned char rawTeleporters[12];
     unsigned short projectileThing = (unsigned short)(THING_TYPE_PROJECTILE << 10);
     unsigned short teleporterThing = (unsigned short)(THING_TYPE_TELEPORTER << 10);
 
@@ -325,6 +336,7 @@ static int test_f0249_c14_c04_chain_accumulates_rotation_once(void) {
     memset(squareData, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(squareData));
     memset(firstThings, 0xff, sizeof(firstThings));
     memset(rawProjectile, 0, sizeof(rawProjectile));
+    memset(rawTeleporters, 0, sizeof(rawTeleporters));
 
     for (int mapIndex = 0; mapIndex < 3; ++mapIndex) {
         maps[mapIndex].width = 3;
@@ -368,6 +380,18 @@ static int test_f0249_c14_c04_chain_accumulates_rotation_once(void) {
     rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
     rawProjectile[2] = (unsigned char)(THING_NONE & 0xffu);
     rawProjectile[3] = (unsigned char)(THING_NONE >> 8);
+    rawTeleporters[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawTeleporters[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawTeleporters[2] = 1;
+    rawTeleporters[3] = (unsigned char)((1u << 2) | (2u << 5));
+    rawTeleporters[4] = 0;
+    rawTeleporters[5] = 1;
+    rawTeleporters[6] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawTeleporters[7] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawTeleporters[8] = 2;
+    rawTeleporters[9] = (unsigned char)((1u << 2) | (2u << 5));
+    rawTeleporters[10] = 0;
+    rawTeleporters[11] = 2;
     things.loaded = 1;
     things.squareFirstThings = firstThings;
     things.squareFirstThingCount = 4;
@@ -375,6 +399,8 @@ static int test_f0249_c14_c04_chain_accumulates_rotation_once(void) {
     things.projectileCount = 1;
     things.teleporters = teleporters;
     things.teleporterCount = 2;
+    things.thingCounts[THING_TYPE_TELEPORTER] = 2;
+    things.rawThingData[THING_TYPE_TELEPORTER] = rawTeleporters;
     things.thingCounts[THING_TYPE_PROJECTILE] = 1;
     things.rawThingData[THING_TYPE_PROJECTILE] = rawProjectile;
     world.dungeon = &dungeon;
@@ -510,6 +536,10 @@ static int test_f0249_c14_open_c02_then_c04_continues_one_owner(void) {
     rawDoor[1] = (unsigned char)(THING_ENDOFLIST >> 8);
     rawTeleporter[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
     rawTeleporter[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawTeleporter[2] = 2;
+    rawTeleporter[3] = (unsigned char)((1u << 2) | (2u << 5));
+    rawTeleporter[4] = 0;
+    rawTeleporter[5] = 1;
     rawProjectile[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
     rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
     rawProjectile[2] = (unsigned char)(weaponThing & 0xffu);
