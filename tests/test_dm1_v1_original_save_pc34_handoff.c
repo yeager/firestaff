@@ -1541,8 +1541,8 @@ static void make_temp_save_path(char *out, size_t out_size)
         root = "/tmp";
     }
     n = snprintf(out, out_size,
-                 "%s/firestaff_dm1_original_pc34_handoff_fixture.sav",
-                 root);
+                 "%s/firestaff_dm1_original_pc34_handoff_%ld_fixture.sav",
+                 root, (long)test_getpid());
     CHECK(n > 0 && (size_t)n < out_size,
           "temporary save path fits");
 }

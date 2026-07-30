@@ -101,6 +101,49 @@ is still open before starting it, reuse original game material where it is
 available, and move a completed item to DONE.md only after focused tests and
 an integration build pass.
 
+### Original-data replacement inventory (2026-07-30)
+
+This is a production-runtime inventory only.  Synthetic test fixtures,
+receipt-only probes, and deliberate fail-closed/no-draw boundaries are not
+replacement targets.  A target is closed only when the runtime consumes the
+listed local original material and a focused real-data test proves it.
+
+- **DM1-ORIGINAL-REPLACE-001:** Replace any remaining V2.2 wall/shape
+  placeholder material with bound `dm1/GRAPHICS.DAT` records where an enabled
+  `.fsart` does not provide reviewed replacement art.  The existing material
+  gate must continue to reject incomplete artpacks rather than paint a
+  placeholder.
+- **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
+  placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
+  `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less
+  F0 local-cell rectangle into invented pixels.
+- **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
+  and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
+  the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
+  must remain no-draw until their original decoder is implemented.
+- **DM2-ORIGINAL-REPLACE-002:** Replace the V2 HUD's synthetic 1x1/overlay
+  route with real interface/widget records from `dm2/GRAPHICS.DAT`; do not
+  use generated PNG pixels as a runtime fallback.
+- **THERON-ORIGINAL-REPLACE-001:** Replace the coloured UI chrome, checkerboard
+  palette and chapter-marker placeholders with real US/JP Track 02 bitmap,
+  palette and loader-selected records.  The supplied `TQUS02.bin`, CUE and
+  ISO corpus are the admission sources; unknown records remain blocked.
+- **THERON-ORIGINAL-REPLACE-002:** Replace item-as-creature and direction-bar
+  viewport placeholders only after the HuC6280 CD-read table binds their
+  exact Track 02 records.  No inferred object graphics or palette may ship.
+- **NEXUS-ORIGINAL-REPLACE-001:** Replace the procedural DGN dungeon fallback
+  with Structure1C/Structure1F face/mesh data from the supplied `LEV*.DGN`
+  corpus.  Keep the route fail-closed until real geometry, face order and
+  texture references are decoded.
+- **NEXUS-ORIGINAL-REPLACE-002:** Replace the synthetic BPX3/PRS3 MENU.BPK
+  layout with a verified decoder for the supplied Saturn `MENU.BPK` package
+  and its real palette/pixel records.  Do not display a guessed title surface.
+- **ALL-ORIGINAL-REPLACE-001:** Audit startup, title, entrance, HUD and
+  dungeon runtime paths for placeholder pixels on every supported game before
+  release.  Where matching original data exists under `.firestaff/data`, bind
+  it; otherwise make the route visibly fail-closed with a precise missing-data
+  diagnostic, never a generated visual substitute.
+
 ## Recently Closed
 
 - **DM1-PC34-F0195-AND-F0113-REFERENCE-DRIFT:** Closed 2026-07-30. F0195's
@@ -1243,17 +1286,7 @@ that its exact runtime path is not already source-locked and tested.
     outdoor + 13 weather tests pass. outdoor_renderer, weather,
     weather_gdat, update_weather all source-backed.
 
-1. **DM1-PC34-SAVE-CORPUS:** Admit a real original PC 3.4 `DMSAVE.DAT`,
-   complete F0417/F0418/F0435 byte round-trip validation, and use it through
-   M11/M12 save and resume paths. No generated corpus may satisfy this.
-   2026-07-28: the operator-created DOSBox PC34 save is now provenance-bound
-   and validates its real F7057 envelope (five raw parts through byte 9408),
-   including 110 allocated C04 group records and 467 C03/C04 rows. F0435
-   import, C3/C4 receipt, and source dungeon-tail staging now succeed without
-   truncating the empty live timeline. The final F0417/F0418 byte round-trip
-   and M11/M12 resume-route verification passed on 2026-07-28. Keep this row
-   only for additional fixture-free C13-bearing corpus coverage.
-2. **DM1-HOC-RUNTIME-RENDER:** Finish the M11 HoC render consumer for mirrors,
+1. **DM1-HOC-RUNTIME-RENDER:** Finish the M11 HoC render consumer for mirrors,
    wall inscriptions, objects, actions, spells, and viewport materialization
    from real PC34 GRAPHICS.DAT/DUNGEON.DAT records; remove production fallback
    drawing where an authenticated source surface exists.
@@ -1266,14 +1299,14 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-28: V2.2 no longer drops the final source M648 inscription pass.
    Its artpack has no reviewed inscription replacement, so the real PC34
    font is repainted after V22 art just as it is in V2.0/V2.1.
-3. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
+2. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
    live group, line-of-sight, projectile-impact, teleporter, and spell-tick
    runtime paths using raw C04/C05/C14/C15 ownership and source scheduling.
-4. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
+3. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
    saved actions, including supported control flow and live monster/filter
    effects, with transactional save/runtime handoff and fail-closed unsupported
    opcodes.
-5. **CSB-REAL-STARTUP-HUD:** C001-C005 title, Entrance, door-opening and
+4. **CSB-REAL-STARTUP-HUD:** C001-C005 title, Entrance, door-opening and
    palette now have real-data M11 routes and a macOS smoke. Finish C017/C040
    HUD/viewport consumption and original audio media admission; remove
    remaining production wrappers rather than adding substitutes.
@@ -1560,7 +1593,7 @@ that its exact runtime path is not already source-locked and tested.
   Real CSBWin HUD dimensions differ from PC3.4: C009=`96x33`, C010/C013=
   `96x45`, C017=`224x136`, C028=`80x14`. A separate source layout is required;
   PC3.4's `87px` and `76px` panel positions must not be stretched or reused.
-6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
+5. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
    2026-07-29: the always-run CSB save export/import probe now proves both
@@ -1605,47 +1638,47 @@ that its exact runtime path is not already source-locked and tested.
    generated party or HUD art participates in that route.
    This does not yet establish user-created
    `CSBGAME.DAT` extended-object/timer round-trip support.
-7. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
+6. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
    source-backed indoor HUD, wall, door, floor/ceiling, item, projectile,
    creature, and static-object rendering through the live M11 dungeon path.
-8. **DM2-G1-SAVE-RUNTIME:** Complete real G1 `c_record` addressing, map/scene
+7. **DM2-G1-SAVE-RUNTIME:** Complete real G1 `c_record` addressing, map/scene
    object semantics, and original `SKSAVE` corpus import/resume so runtime
    state comes from verified original bytes rather than bounded approximations.
-9. **DM2-STARTUP-INPUT-AUDIO:** Complete skproject-style title/menu animation,
+8. **DM2-STARTUP-INPUT-AUDIO:** Complete skproject-style title/menu animation,
    palette, clickable input, startup audio, HUD handoff, and packaged runtime
    route using real GDAT/SND material.
-10. **DM2-CREATURE-WEATHER-SCENE:** Complete skproject creature/AI, CCM opcode,
+9. **DM2-CREATURE-WEATHER-SCENE:** Complete skproject creature/AI, CCM opcode,
     light, weather, door-table, and outdoor/indoor scene integration with real
     data and deterministic source receipts.
-11. **DM1-ORIGINAL-NEWGAME-SAVE:** Complete PC34 F0803/F0433 new-game and
+10. **DM1-ORIGINAL-NEWGAME-SAVE:** Complete PC34 F0803/F0433 new-game and
     Save-and-Quit ownership, including original-format export, backup, error,
     and resume paths against a real corpus.
-12. **DONE 2026-07-23 DM1-CHAMPION-MIRROR-RESURRECTION:** C127 mirror
+11. **DONE 2026-07-23 DM1-CHAMPION-MIRROR-RESURRECTION:** C127 mirror
     selection, C160 resurrection, C161 rename/reincarnate, C162 cancellation,
     real C026 portraits, sensor state, party handoff, and HiDPI/fullscreen
     input are verified against PC34 data. Do not reopen without a repro.
-13. **DM1-ACTION-SPELL-HUD:** Complete original C010/C011 action and spell
+12. **DM1-ACTION-SPELL-HUD:** Complete original C010/C011 action and spell
     panel source surfaces, typography, cursor/hit routing, cooldowns, and
     M11 consumption without host-font substitutes.
-14. **DM1-VIEWPORT-WALLS-DOORS:** Complete F0107-F0115 wall, door, floor,
+13. **DM1-VIEWPORT-WALLS-DOORS:** Complete F0107-F0115 wall, door, floor,
     ceiling, ornament, mirror, item, creature, projectile, and explosion
     material routing for all visible dungeon depths from PC34 assets.
-15. **DM1-DOOR-SENSOR-LIVE:** Complete source-owned door animations, buttons,
+14. **DM1-DOOR-SENSOR-LIVE:** Complete source-owned door animations, buttons,
     fakewalls, pits, teleporters, and sensor-triggered object/party movement
     with raw Thing ownership and timeline correctness.
-16. **DM1-CREATURE-COMBAT-AI:** Complete remaining original group movement,
+15. **DM1-CREATURE-COMBAT-AI:** Complete remaining original group movement,
     LoS, attacks, projectile impacts, drops, deaths, sound, and active-group
     scheduling beyond the current bounded receipts.
-17. **DM1-ITEM-INVENTORY-INTERACTION:** Complete C05-C13 object placement,
+16. **DM1-ITEM-INVENTORY-INTERACTION:** Complete C05-C13 object placement,
     chest, quiver, food, potion, scroll, weapon, armour, and inventory drag/
     drop interaction from original data records.
-18. **DM1-SOUND-MUSIC-STARTUP:** Complete original DM1 sound/music playback,
+17. **DM1-SOUND-MUSIC-STARTUP:** Complete original DM1 sound/music playback,
     title/swoosh/entrance cadence, palette transitions, and runtime sound
     events with real media and no generated timing.
-19. **DM1-INPUT-NAVIGATION:** Complete source-owned keyboard, mouse, touch,
+18. **DM1-INPUT-NAVIGATION:** Complete source-owned keyboard, mouse, touch,
     controller, turn/strafe, click targets, focus, and fullscreen coordinate
     mapping across HoC, HUD, inventory, dialogs, and dungeon gameplay.
-20. **DM1-MAC-RELEASE-CAPTURE:** Complete packaged macOS/window capture and
+19. **DM1-MAC-RELEASE-CAPTURE:** Complete packaged macOS/window capture and
     release-app evidence for title, Entrance, HoC, HUD, viewport, wall text,
     mirrors, objects, actions, and spells using actual assets.
 21. **CSB-DSA-FULL-OPCODE-FAMILY:** Extend authenticated CSBWin DSA execution

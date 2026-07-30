@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 PC3.4 save regression isolation: the original-save
+  handoff fixture now includes its process id in the temporary primary and
+  `.bak` paths. Concurrent CTest runs can no longer rename or delete each
+  other's source corpus fixture; the F0435 backup-promotion round trip passes
+  from an isolated temporary directory.
+
 - ✅ 2026-07-30 DM1 HoC C127 ownership across view changes: C160/C161 now
   retains the source SENSOR owner captured when the C040 mirror panel opens.
   Confirming after an internal party/view rotation therefore closes the
