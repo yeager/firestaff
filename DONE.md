@@ -44117,6 +44117,19 @@ the supplied root and selected MD5 to prove this without shipping game data.
   no synthetic frame or door geometry was added. Focused startup composition
   and pointer regressions pass.
 
+# CSB source-owned presentation audit (2026-07-30)
+
+- ✅ Rechecked the production order start, menu boundary, Entrance, HUD and
+  viewport against the local hash-verified CSB packages. The PC3.4 real-data
+  launch probe passed 75 checks: C001 title phases, C002/C003/C004 entrance
+  composition across all 31 opening pages, and C017/C040 terminal HUD
+  ownership all use decoded original pixels. The Atari M12/M11 handoff passed
+  589 checks using its separate CSBWin-owned graphics path. Shared PC3.4 HUD
+  and viewport sprite helpers install the active CSB graphic before drawing
+  and leave the destination unchanged when it is missing; no marker, generic
+  DM1 surface or generated replacement was admitted. This records an audit,
+  not completion of the remaining CSB HUD or full viewport work.
+
 # CSB V2.x verification (2026-07-30)
 
 - ✅ Rebuilt current `main` with Ninja and ran the registered CSB V2.x lane

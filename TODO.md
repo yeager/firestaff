@@ -1442,6 +1442,13 @@ that its exact runtime path is not already source-locked and tested.
    palette now have real-data M11 routes and a macOS smoke. Finish C017/C040
    HUD/viewport consumption and original audio media admission; remove
    remaining production wrappers rather than adding substitutes.
+   2026-07-30 source audit: the hash-verified local PC3.4 package passed the
+   C001-C005/C017/C040 runtime probe (75 checks), including all 31 original
+   C004/C002/C003 opening pages. The Atari M12/M11 handoff also passed 589
+   checks against its own source package. The audit found that shared PC3.4
+   HUD and viewport sprite helpers first install the active CSB graphic and
+   fail closed when it is absent; it does not close the remaining live HUD,
+   object, creature, effect or full viewport coverage.
    2026-07-30: a real PC3.4 Prison capture confirms that C017 is the complete
    224x136 inventory page at source `(0,33)`, not a normal runtime HUD base.
    Normal runtime must retain the F0128 viewport and draw its live C013/C009
