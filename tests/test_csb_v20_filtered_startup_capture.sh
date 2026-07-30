@@ -67,7 +67,7 @@ SDL_VIDEODRIVER=dummy \
 "$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v20 \
     --boot-probe --width 960 --height 600 --scale-mode 4 \
-    --script 'wait120,key:enter,wait200' >"$runtime_v20_dir/firestaff.log" 2>&1
+    --script 'wait120,key:enter,wait56' >"$runtime_v20_dir/firestaff.log" 2>&1
 
 HOME="$test_home" \
 FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$runtime_v1_dir" \
@@ -76,11 +76,11 @@ SDL_VIDEODRIVER=dummy \
 "$firestaff_bin" \
     --game csb --data-dir "$data_dir" --presentation-mode v1 \
     --boot-probe --width 960 --height 600 --scale-mode 4 \
-    --script 'wait120,key:enter,wait200' >"$runtime_v1_dir/firestaff.log" 2>&1
+    --script 'wait120,key:enter,wait56' >"$runtime_v1_dir/firestaff.log" 2>&1
 
 if ! grep -Fq 'presentationMode=1 presentation=640x400' "$runtime_v20_dir/firestaff.log" ||
    ! grep -Fq 'phase=inactive startupActive=0' "$runtime_v20_dir/firestaff.log" ||
-   ! grep -Fq 'runtimeTick=148' "$runtime_v20_dir/firestaff.log" ||
+   ! grep -Fq 'runtimeTick=4' "$runtime_v20_dir/firestaff.log" ||
    ! grep -Fq 'presentationMode=0 presentation=320x200' "$runtime_v1_dir/firestaff.log"; then
     cat "$runtime_v20_dir/firestaff.log" >&2
     cat "$runtime_v1_dir/firestaff.log" >&2

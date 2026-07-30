@@ -274,6 +274,13 @@ an integration build pass.
   therefore cannot consume wall, floor, creature, ornament or Thing assets.
   The only live V2.2 replacement remains the admitted D1/D2/D3 door command
   compositor; this TODO stays open for every other material family.
+  2026-07-30 verification: the V2.0 filter capture now samples the first
+  stable post-door F0128 runtime frame (tick 4), rather than a later live
+  frame whose legitimate HUD redraw may differ after 200 idle ticks. It still
+  requires byte-identical V1/V2.0 source bytes and a distinct filtered
+  presented surface. With the verified local PC3.4 package, the full CSB
+  lane passes 116/116. This improves deterministic evidence only; it does
+  not admit the remaining non-door V2.2 material families.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature
