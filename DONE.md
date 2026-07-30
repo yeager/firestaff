@@ -44105,3 +44105,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   bridge CTests pass, and the installed-PC34 geometry probe passes for all
   four champion slots. The remaining task is original paired capture, not
   another renderer implementation.
+
+# DM1 original PC34 ACTIVE_GROUP corpus verification (2026-07-30)
+
+- ✅ The fixture-free, operator-supplied DOSBox PC34 `DMSAVE.DAT` has 110
+  live C04 ACTIVE_GROUP records. Its F0435 stage/adoption receipt proves each
+  record's loaded GROUP Thing and unique current-map SquareFirstThing chain,
+  plus packed cells/directions/aspects and C03/C04 timeline identity. The
+  same receipt remains valid after runtime adoption. Verification:
+  `dm1_v1_original_save_pc34_external_corpus` passed against the provenance-
+  bound local original corpus (`groups=110/110`), and
+  `dm1_v1_original_save_pc34_external_hoc_runtime` passed from the same save.
+  This closes the live-group requirement only; the separate C13 and varied
+  C03/C04-layout corpus requirements remain open.
