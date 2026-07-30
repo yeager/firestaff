@@ -193,6 +193,12 @@ static void check_real_hud_composition(const char *path)
         &plan, resolve_real_hud_source, &source, frame, sizeof(frame), &receipt));
     CHECK(receipt.valid && receipt.material_count == plan.count &&
           receipt.source_hash != 0u && receipt.composed_hash != 0u);
+    CHECK(source.pixels[28] &&
+          frame[(size_t)plan.entries[0].destination.y1 * 320u +
+                plan.entries[0].destination.x1] == source.pixels[28][0]);
+    CHECK(source.pixels[9] &&
+          frame[(size_t)plan.entries[9].destination.y1 * 320u +
+                plan.entries[9].destination.x1] == source.pixels[9][0]);
     for (index = 0; index < 33u; ++index) free(source.pixels[index]);
 }
 
