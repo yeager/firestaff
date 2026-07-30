@@ -392,7 +392,11 @@ an integration build pass.
   2026-07-30: M11 now consumes the verified static track/frame commands in
   the Atari viewport for source `roomDOOR` lanes, resolving each pDoor bitmap
   from the active 13-record WallSet and preserving CSBWin's mirror semantics.
-  Only the dynamic panel is still withheld pending the original owner.
+  The dynamic `DoorGraphic[3][2]` owner is now recovered from
+  `Code390e.cpp::ReadGraphicsForLevel`: for each map DoorSet it is catalog
+  `108 + 3 * DoorSet`, with F3/F2/F1 selecting offsets 0/1/2. Remaining:
+  bind the live CSBWin DB0 door type and source door state to this recovered
+  panel command; do not infer either from an unrelated PC34 door object.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature

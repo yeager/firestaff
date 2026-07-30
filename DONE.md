@@ -11,6 +11,14 @@
   dynamic panel with PC3.4 or generated pixels. The real Atari handoff probe
   passes 589 checks.
 
+- ✅ 2026-07-30 CSBWin dynamic door-panel catalog owner: Firestaff now
+  reproduces `Code390e.cpp::ReadGraphicsForLevel`'s exact
+  `DoorGraphic[3][2]` initialization. Each level's DoorSet selects source
+  records `108 + 3 * DoorSet`; Viewport F3/F2/F1 use the first/second/third
+  record respectively, independently for both source door types. The focused
+  CSBWin layout regression covers both selectors, all three distances and
+  source bounds. Live DB0 state/type routing remains separately fail-closed.
+
 - ✅ 2026-07-30 CSBWin door command recovery: Firestaff now reproduces
   `Viewport.cpp`'s static F1/F2/F3 track and frame plan, including the native
   `pDoorBitmaps[0]`/right-frame and F3-side mirror rules. It also mirrors

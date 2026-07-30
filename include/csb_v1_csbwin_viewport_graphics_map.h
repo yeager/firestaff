@@ -147,6 +147,16 @@ int csb_v1_csbwin_viewport_graphic_index(uint16_t wall_set,
                                           uint16_t slot,
                                           uint16_t *out_graphic_index);
 
+/* CSBWin Code390e.cpp::ReadGraphicsForLevel initializes DoorGraphic[3][2]
+ * from the current map's Door1Type/Door2Type selectors. For each door type
+ * it reads 108 + 3 * DoorSet .. +2, storing the first value at F3, the
+ * second at F2 and the third at F1. `nearness` is Viewport.cpp's
+ * StdDoorGraphics ordinal: F1=0, F2=1, F3=2. */
+int csb_v1_csbwin_door_panel_graphic_index(uint16_t door_set,
+                                            uint8_t door_type,
+                                            uint8_t nearness,
+                                            uint16_t *out_graphic_index);
+
 /* Resolves the GRAPHICS.DAT wall slot and whether CSBWin's `MakeMirror`
  * must reflect it before its native viewport projection. */
 int csb_v1_csbwin_viewport_wall_source(uint16_t wall_set,

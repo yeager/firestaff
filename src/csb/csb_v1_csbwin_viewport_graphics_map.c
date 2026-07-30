@@ -37,6 +37,22 @@ int csb_v1_csbwin_viewport_graphic_index(uint16_t wall_set,
     return 1;
 }
 
+int csb_v1_csbwin_door_panel_graphic_index(uint16_t door_set,
+                                            uint8_t door_type,
+                                            uint8_t nearness,
+                                            uint16_t *out_graphic_index)
+{
+    unsigned int first_graphic;
+
+    if (!out_graphic_index || door_set > 15u || door_type > 1u ||
+        nearness > 2u) return 0;
+    first_graphic = 108u + 3u * (unsigned int)door_set;
+    /* Code390e writes backward through DoorGraphic's first dimension:
+     * F3=first, F2=first+1, F1=first+2. */
+    *out_graphic_index = (uint16_t)(first_graphic + 2u - nearness);
+    return 1;
+}
+
 int csb_v1_csbwin_viewport_wall_source(
     uint16_t wall_set, CSB_V1_CSBWinViewportWall wall,
     uint16_t *out_graphic_index, int *out_mirrored)

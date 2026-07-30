@@ -524,6 +524,31 @@ int main(void)
     int index;
 
     {
+        uint16_t panel_graphic = 0u;
+        CHECK(csb_v1_csbwin_door_panel_graphic_index(0u, 0u, 2u,
+                                                      &panel_graphic) &&
+              panel_graphic == 108u);
+        CHECK(csb_v1_csbwin_door_panel_graphic_index(0u, 0u, 1u,
+                                                      &panel_graphic) &&
+              panel_graphic == 109u);
+        CHECK(csb_v1_csbwin_door_panel_graphic_index(0u, 0u, 0u,
+                                                      &panel_graphic) &&
+              panel_graphic == 110u);
+        CHECK(csb_v1_csbwin_door_panel_graphic_index(15u, 1u, 2u,
+                                                      &panel_graphic) &&
+              panel_graphic == 153u);
+        CHECK(csb_v1_csbwin_door_panel_graphic_index(15u, 1u, 0u,
+                                                      &panel_graphic) &&
+              panel_graphic == 155u);
+        CHECK(!csb_v1_csbwin_door_panel_graphic_index(16u, 0u, 0u,
+                                                       &panel_graphic));
+        CHECK(!csb_v1_csbwin_door_panel_graphic_index(0u, 2u, 0u,
+                                                       &panel_graphic));
+        CHECK(!csb_v1_csbwin_door_panel_graphic_index(0u, 0u, 3u,
+                                                       &panel_graphic));
+    }
+
+    {
         uint8_t viewport_layout[CSB_V1_CSBWIN_LAYOUT_022E_DECODED_SIZE];
         CSB_V1_CSBWinViewportLayout022e decoded_layout;
         memset(viewport_layout, 0, sizeof(viewport_layout));
