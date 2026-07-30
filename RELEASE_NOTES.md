@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.189
+
+- CSB: admit verified standard CSBWin `graphics.dat` C001-C005 startup
+  presentation without substituting a synthetic HUD or dungeon handoff.
+- CSB: decode runtime source graphics through the active container format,
+  including CSBWin DMCSB1 data rather than incorrectly assuming PC3.4.
+- CSB: lock the measured CSBWin HUD source geometry and retain the separate
+  source-owned runtime-layout requirement instead of stretching PC HUD assets.
+
 # Firestaff v3.0.187
 
 - CSB: decode the original source spell table from graphic 0x230, including
