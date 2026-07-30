@@ -13,6 +13,8 @@
   counters unchanged in every direction. The finished-art manifest fixture
   also supplies the required `routeProvenance.f0128ProjectionStatus` field,
   so it tests the current admission schema rather than an obsolete one.
+  Final parallel CSB run: 119/119 contracts passed; the real-artpack probe
+  reported its intentional incomplete-pack skip separately.
 
 - ✅ 2026-07-30 CSBWin save-tail database framing: the read-only CSBWin tail
   parser now follows the original prefix through DB0--DB15, including legacy

@@ -271,6 +271,11 @@ an integration build pass.
   the same explicit `routeProvenance.f0128ProjectionStatus=admitted_*` schema
   required by production. This restores the suite as a verification of the
   fail-closed boundary, not a route around it.
+  2026-07-30 final current-main verification: parallel `ctest -L csb -j 8`
+  passes all 119 registered contracts; `csb_v22_source_artpack_runtime` is
+  the single expected skip because no complete, independently admitted CSB
+  V2.2 artpack is installed. The remaining work is source-command recovery,
+  not a failing implemented V2.x feature.
   2026-07-30: `csb_v2_title_boot_probe` now checks the actual local PC3.4
   C001 runtime at VBlank 50 in V1, V2.0, V2.1 and admitted V2.2. It requires
   the original 60-VBlank PRESENTS phase rather than accepting a title that
