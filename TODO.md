@@ -1273,9 +1273,10 @@ that its exact runtime path is not already source-locked and tested.
     2026-07-30 audit against CSBWin `DSA.cpp:2094-2199,2345-2374,
     3092-3107,4958-4973` and `Magic.cpp:1408-1418`: direct `CAST` and
     `FILTEREDCAST` already retain all 14 `SPELL_PARAMETERS` words and have
-    rollback coverage, but the live saved-timer runner does not bind its
-    `cast_spell` callback. `I_CAST`/`I_FILTEREDCAST` also remain intentionally
-    rejected: CSBWin serializes only 13 parameter words through `INDIRECTP`,
+    rollback coverage. The live saved-timer/filter runner binds its
+    `csb_v1_runtime_dsa_cast_spell` callback transactionally, as verified by
+    the runtime `STKOP_Cast` silent-abort case; it must not be reimplemented.
+    `I_CAST`/`I_FILTEREDCAST` remain intentionally rejected: CSBWin serializes only 13 parameter words through `INDIRECTP`,
     while `DSACastSpell` copies the full 14-word structure. Bind an exact
     original parameter-message corpus and a runtime spell owner before
     admitting either route; do not pad the missing word or send it through a

@@ -43245,3 +43245,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   route provenance record requires a syntactically valid SHA-256 digest.
   Verification: `csb_v22_modern_assets_pc34`, `csb_v22_inplace_draw_pc34`,
   `csb_v22_inplace_route_pc34`, and `csb_v22_source_artpack_runtime` PASS.
+- ✅ 2026-07-30 CSB DSA cast-runner audit: corrected stale TODO status after
+  verifying that the saved-timer/filter runner already binds
+  `csb_v1_runtime_dsa_cast_spell` into the transactional stack context.
+  `STKOP_Cast` action-1 silent-abort coverage is present in
+  `csb_v1_dsa_copy_runtime_handoff`; `I_CAST` and `I_FILTEREDCAST` remain
+  intentionally fail-closed because their CSBWin indirect parameter corpus
+  lacks the fourteenth `SPELL_PARAMETERS` word.
