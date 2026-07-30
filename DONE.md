@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 V2.x regression verification: the complete registered
+  `dm1_v2`/`dm1_v22` lane passes 90/90, covering V2.0 startup timing, V2.1
+  palette capture, V2.2 source-art selection, runtime viewport/HUD/input,
+  side-by-side routing and modern-resolution composition. This is automated
+  coverage only; the separate original Mac/capture TODO items remain open.
+
 - ✅ 2026-07-30 DM1 PC3.4 decoded dungeon write-back: F0433 retains an
   exact original dungeon tail only while every admitted decoded Thing still
   packs to its source bytes. A live mutation instead rebuilds the tail in
