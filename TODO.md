@@ -108,6 +108,13 @@ receipt-only probes, and deliberate fail-closed/no-draw boundaries are not
 replacement targets.  A target is closed only when the runtime consumes the
 listed local original material and a focused real-data test proves it.
 
+**Policy:** this includes every user-visible placeholder: generated menus,
+flat-colour/chrome fallbacks, diagnostic sprites, checkerboards, substitute
+icons, and temporary text.  When authenticated original game bytes exist in
+the selected game's data set, Firestaff must decode and use those bytes.  A
+missing or still-undecoded original format must fail closed with a specific
+diagnostic; it must not silently fall back to a generated visual.
+
 - **DM1-ORIGINAL-REPLACE-001:** Replace any remaining V2.2 wall/shape
   placeholder material with bound `dm1/GRAPHICS.DAT` records where an enabled
   `.fsart` does not provide reviewed replacement art.  The existing material
