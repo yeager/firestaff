@@ -5554,6 +5554,8 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
         (host_view.render_draw.render_plan.surface ==
              CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
          host_view.render_draw.render_plan.surface ==
+             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 ||
+         host_view.render_draw.render_plan.surface ==
              CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34)) {
         int f0128_ok = csb_v1_startup_entrance_f0128_produce_pc34(
              session, &host_view.render_draw.render_plan,

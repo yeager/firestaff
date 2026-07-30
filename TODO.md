@@ -2,6 +2,16 @@
 
 ## Active DM1/CSB Symbol Queue
 
+- **CSB-V1-ENTRANCE-PREOPEN-REAL-COMPOSITION:** Closed 2026-07-30. The
+  source-defined `OPENING_DELAY` plan now composes the real C004 screen and
+  closed C002/C003 strips exactly as the preceding Entrance wait screen.
+  Firestaff previously rejected that valid plan at the host-surface boundary,
+  producing an avoidable black frame before door motion. The F0128 handoff
+  now accepts the same checked C004 aperture during the delay; opening frames
+  retain their separate clipped-strip contract. Verified by
+  `csb_v1_boot_title_import_ui_gate_pc34_compat` and
+  `csb_v1_startup_entrance_pointer_pc34_compat`.
+
 - **CSB-V1-CSBWIN-TAG0088B2-PROJECTION-RECTANGLES:** Closed 2026-07-30.
   `csb_v1_csbwin_viewport_wall_projection_rectangle()` now locks all fourteen
   visible CSBWin wall lanes to the exact `Viewport.cpp:2304-2317`

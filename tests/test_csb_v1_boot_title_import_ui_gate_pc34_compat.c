@@ -824,6 +824,15 @@ static void test_runtime_rasterizer_composes_title_and_opening_from_owned_pixels
           "runtime rasterizer composites the closed C002/C003 entrance over C004");
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
 
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34;
+    CHECK(csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+              &frame, &plan, &raster) == 1 && raster.valid &&
+              raster.entrance_composited && raster.door_composited &&
+              raster.source_surface_count == 3 && raster.pixels[0] == 5 &&
+              raster.pixels[28 * 320] == 7 && raster.pixels[28 * 320 + 105] == 9,
+          "runtime rasterizer keeps the real closed C002/C003 entrance visible during door delay");
+    csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34;
     plan.opening_composite_valid = 1;

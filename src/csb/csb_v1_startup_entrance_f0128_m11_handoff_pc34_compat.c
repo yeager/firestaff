@@ -28,6 +28,7 @@ int csb_v1_startup_entrance_f0128_produce_pc34(
         out_pixel_count != CSB_V1_F0128_VIEWPORT_BYTES_PC34 ||
         source_tick == 0u || session->generation == 0u ||
         (plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+         plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34 &&
          plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34)) {
         return 0;
     }

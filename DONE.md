@@ -43700,3 +43700,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   all 65 selected M12/menu-hit/startup-menu/launcher tests pass, including
   mouse, keyboard, touch, localization, data-picker cancellation, save
   browser, accessibility and every launcher handoff boundary.
+
+# CSB Entrance pre-open composition (2026-07-30)
+
+- ✅ The source-owned CSB `OPENING_DELAY` state now keeps C004 with its
+  closed C002/C003 door strips visible until the first real opening step.
+  The previous host-surface gate accepted only the closed and moving-door
+  variants, which left a black frame during the legitimate delay. The
+  F0128 aperture receives the same verified C004 source during this state;
+  no synthetic frame or door geometry was added. Focused startup composition
+  and pointer regressions pass.

@@ -799,7 +799,11 @@ int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
             plan->surface_transparent_color);
         out_raster->entrance_composited = copied ? 1 : 0;
         out_raster->source_surface_count = copied ? 1 : 0;
-        if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34) {
+        if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
+            plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34) {
+            /* ENTRANCE.C F0441 keeps C004/C002/C003 on screen during the
+             * pre-open delay.  It is a real closed-door composition, not a
+             * blank transition frame. */
             if (!frame->left_door_surface || !frame->right_door_surface) goto done;
             left_door_copied = csb_v1_startup_raster_blit_pc34(
                 pixels, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,
@@ -1436,7 +1440,9 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
                 CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34;
             receipt.door_opening_decision = 1;
         } else if (plan->surface ==
-                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34) {
+                       CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
+                   plan->surface ==
+                       CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_DELAY_PC34) {
             if (!receipt.raster.entrance_composited ||
                 !receipt.raster.door_composited ||
                 receipt.raster.source_surface_count != 3) {
