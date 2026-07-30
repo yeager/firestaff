@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 full original inscription sweep: the real PC34
+  `DUNGEON.DAT`/`GRAPHICS.DAT` probe traversed all 56 visible wall texts,
+  including multi-line and palette-variant routes. M648 glyph cells matched
+  their captured source pixels with C10 transparency preserved; 787 checks
+  passed with no host-font or generated-text route.
+
 - ✅ 2026-07-30 DM1 C001 title-boundary correction: ReDMCSB `TITLE.C`
   F0437's 23 source events now set the C001 menu/Entrance boundary. The
   separate 53-frame `TITLE.DAT` decoder remains provenance/fallback-only and
