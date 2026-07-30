@@ -4,8 +4,15 @@
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
 
-#include <assert.h>
+#include <stdio.h>
 #include <string.h>
+
+#define REQUIRE(expr) do { \
+    if (!(expr)) { \
+        fprintf(stderr, "FAIL %s:%d: %s\n", __FILE__, __LINE__, #expr); \
+        return 1; \
+    } \
+} while (0)
 
 static unsigned short make_thing(int type, int index)
 {
@@ -47,6 +54,8 @@ int main(void)
     struct TimelineEvent_Compat earlierC11;
     unsigned char squareData[9];
     unsigned short squareFirstThing[1];
+    unsigned char weaponRaw[4];
+    unsigned char doorRaw[4];
     unsigned char actions[3];
     const struct TimelineEvent_Compat* event;
     int swingRow = -1;
@@ -64,6 +73,8 @@ int main(void)
     memset(&weapon, 0, sizeof(weapon));
     memset(&door, 0, sizeof(door));
     memset(squareData, 0, sizeof(squareData));
+    memset(weaponRaw, 0, sizeof(weaponRaw));
+    memset(doorRaw, 0, sizeof(doorRaw));
     M11_GameView_Init(&state);
     state.active = 1;
     state.world.gameTick = 7u;
@@ -107,7 +118,12 @@ int main(void)
         DUNGEON_ELEMENT_DOOR, DUNGEON_SQUARE_MASK_THING_LIST | 4);
     squareFirstThing[0] = make_thing(THING_TYPE_DOOR, 0);
     weapon.type = 2; /* PC34 ActionSet 5 exposes SWING. */
+    weaponRaw[0] = 0xfe;
+    weaponRaw[1] = 0xff;
+    weaponRaw[2] = weapon.type;
     door.next = THING_ENDOFLIST;
+    doorRaw[0] = 0xfe;
+    doorRaw[1] = 0xff;
     door.type = 0;
     door.meleeDestructible = 1;
     things.loaded = 1;
@@ -115,8 +131,12 @@ int main(void)
     things.squareFirstThingCount = 1;
     things.weapons = &weapon;
     things.weaponCount = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
     things.doors = &door;
     things.doorCount = 1;
+    things.rawThingData[THING_TYPE_DOOR] = doorRaw;
+    things.thingCounts[THING_TYPE_DOOR] = 1;
     state.world.dungeon = &dungeon;
     state.world.things = &things;
 
@@ -129,33 +149,33 @@ int main(void)
     earlierC11.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
     earlierC11.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
     earlierC11.aux4 = 0;
-    assert(F0721_TIMELINE_Schedule_Compat(
+    REQUIRE(F0721_TIMELINE_Schedule_Compat(
         &state.world.timeline, &earlierC11));
 
-    assert(M11_GameView_SetActingChampion(&state, 0));
-    assert(M11_GameView_GetActingActionIndices(&state, actions));
+    REQUIRE(M11_GameView_SetActingChampion(&state, 0));
+    REQUIRE(M11_GameView_GetActingActionIndices(&state, actions));
     for (i = 0; i < 3; ++i) {
         if (actions[i] == DM1_ACTION_SWING) swingRow = i;
     }
-    assert(swingRow >= 0);
+    REQUIRE(swingRow >= 0);
     (void)M11_GameView_TriggerActionRow(&state, swingRow);
     event = find_pending_c11(&state.world);
-    assert(event != NULL);
-    assert(state.actionDisabledTicks[0] > 0);
-    assert(event->aux1 == 0);
+    REQUIRE(event != NULL);
+    REQUIRE(state.actionDisabledTicks[0] > 0);
+    REQUIRE(event->aux1 == 0);
     actionDefenseAfterBegin = state.world.party.champions[0].actionDefense;
     c11Tick = event->fireAtTick;
     localLockExpiryTick = state.world.gameTick + state.actionDisabledTicks[0];
-    assert(actionDefenseAfterBegin != 0);
-    assert(c11Tick > localLockExpiryTick);
+    REQUIRE(actionDefenseAfterBegin != 0);
+    REQUIRE(c11Tick > localLockExpiryTick);
 
     while (state.world.gameTick < localLockExpiryTick) {
-        assert(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
+        REQUIRE(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
     }
-    assert(state.world.party.champions[0].actionDefense == actionDefenseAfterBegin);
-    assert(state.world.party.champions[0].actionIndex == DM1_ACTION_SWING);
-    assert(state.actionDisabledTicks[0] > 0u);
-    assert(state.actionDisabledIndex[0] == DM1_ACTION_SWING);
+    REQUIRE(state.world.party.champions[0].actionDefense == actionDefenseAfterBegin);
+    REQUIRE(state.world.party.champions[0].actionIndex == DM1_ACTION_SWING);
+    REQUIRE(state.actionDisabledTicks[0] > 0u);
+    REQUIRE(state.actionDisabledIndex[0] == DM1_ACTION_SWING);
 
     /* The real F0330 C11 owner reaches TIMELINE.C F0253 through the normal
      * M11 idle tick.  Its ordinal-zero SWING receipt must restore the action
@@ -164,13 +184,13 @@ int main(void)
     /* F0884 dispatches due timeline entries at the next tick boundary, so
      * advance through the recorded C11 time before observing F0253 state. */
     while (state.world.gameTick <= c11Tick) {
-        assert(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
+        REQUIRE(M11_GameView_AdvanceIdleTick(&state) == M11_GAME_INPUT_REDRAW);
     }
-    assert(state.world.party.champions[0].actionDefense == 0);
-    assert(state.world.party.champions[0].actionIndex == 0xFFu);
-    assert(state.actionDisabledTicks[0] == 0u);
-    assert(state.actionDisabledIndex[0] == 0xFFu);
-    assert(state.actionEnableSlotOrdinal[0] == 0xFFu);
-    assert(state.dm1LiveActionEffects.count == 0);
+    REQUIRE(state.world.party.champions[0].actionDefense == 0);
+    REQUIRE(state.world.party.champions[0].actionIndex == 0xFFu);
+    REQUIRE(state.actionDisabledTicks[0] == 0u);
+    REQUIRE(state.actionDisabledIndex[0] == 0xFFu);
+    REQUIRE(state.actionEnableSlotOrdinal[0] == 0xFFu);
+    REQUIRE(state.dm1LiveActionEffects.count == 0);
     return 0;
 }

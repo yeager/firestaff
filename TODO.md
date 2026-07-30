@@ -23005,11 +23005,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   C101/C500/C501 placement; C038 status-border selection uses its live 67x29
   source destination. Remaining work is external capture comparison only.
 
-## DM1 F0407 C11 swing receipt regression
-
-- [ ] The focused `dm1_v1_f0407_swing_c11_receipt_pc34_compat` contract still
-  crashes after it dispatches SWING. Investigate the action/timeline fault
-  before claiming the F0407 C11 path verified.
 ## DM1 C13 F0435 stale-fence follow-up
 
 - [ ] Run the fixture-free PC34 C13 corpus target with operator-owned saves

@@ -1,3 +1,8 @@
+- ✅ 2026-07-30 DM1 F0407/C11 SWING receipt: the focused runtime contract
+  no longer relies on `assert()` expressions, which release builds omit along
+  with their side effects. It now always executes the source-shaped action,
+  cooldown and C11 timeline path, and verifies the post-receipt reset.
+
 - ✅ 2026-07-30 DM1 capture-row determinism: the live capture gate now
   re-runs the row builder against the exact same capture paths while writing
   a separate TSV. Absolute paths are intentional event fields, so moving the
