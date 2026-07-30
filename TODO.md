@@ -1500,8 +1500,8 @@ that its exact runtime path is not already source-locked and tested.
     then a final u16 checksum. `SaveGame.cpp:1240-1337,2536-2840` and
     `CSB.h:DUNGEONDATINDEX/LEVELDESC` are the implementation reference.
     The exact framing is now known; the remaining work is to bind it to
-    Firestaff's owned dungeon/object stores and verify its source checksum,
-    rather than treating its bytes as EXPOOL or synthesizing a dungeon.
+    Firestaff's owned dungeon/object stores rather than treating its bytes as
+    EXPOOL or synthesizing a dungeon.
     2026-07-30 implementation: `csb_v1_csbwin_dungeon_tail_parse_prefix`
     now consumes that source-defined prefix with big-endian saved words and
     exact bounds for `DUNGEONDATINDEX`, `LEVELDESC`, column pointers, object
@@ -1514,6 +1514,11 @@ that its exact runtime path is not already source-locked and tested.
     65536 and `ReadDatabases` reads the terminal big-endian u16. The staged
     corpus passes this check. DB0--DB15 and cell flags remain the only
     unconsumed tail sections.
+    2026-07-30: production resume now applies both checks before staging a
+    non-EXPOOL extended tail. The staged file still resumes and a copy with
+    only its final checksum byte changed is rejected transactionally (16/16
+    provenance checks). DB0--DB15 and cell flags remain read-only until they
+    have real runtime owners.
     2026-07-30: resumed CSBWin source saves can now be exported byte-for-byte
     through their FNV-bound provenance, including the Extended Features prefix
     and opaque variable dungeon payload. The export refuses any source file

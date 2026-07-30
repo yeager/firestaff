@@ -23,6 +23,7 @@
 #include "csb_v1_f0248_local_effect_runtime_pc34_compat.h"
 #include "csb_v1_f0217_group_lookup_pc34_compat.h"
 #include "csb_v1_csbgraphics_runtime_plan.h"
+#include "csb_v1_csbwin_dungeon_tail.h"
 #include "csb_v1_dungeon_world_pc34_compat.h"
 #include "csb_v1_f0243_timeline_door_destruction_pc34_compat.h"
 #include "csb_v1_movement_command_step_runtime_pc34_compat.h"
@@ -20695,6 +20696,7 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     CSB_V1_CSBWinExtendedFeaturesReport features;
     CSB_V1_CSBWinExtendedDSAReport dsa;
     CSB_V1_CSBWinExtendedTailReport tail;
+    CSB_V1_CSBWinDungeonTailPrefix dungeon_tail;
 
     CSB_V1_RuntimeProfile candidate;
     size_t core_offset = 0u;
@@ -20772,6 +20774,23 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         !(core_offset != 0u && tail.valid && report.appended_size != 0u)) {
         free(bytes);
         return -1;
+    }
+    /* SaveGame.cpp writes a source-defined dungeon tail after an Extended
+     * Features/core body. It is neither a Firestaff EXPOOL tail nor opaque
+     * arbitrary data: admit it only when its documented prefix and terminal
+     * WriteAndChecksum word are both valid. */
+    if (!csb_v1_csbwin_512_validate_appended_expool_tail(&report)) {
+        const uint8_t *dungeon_tail_bytes =
+            bytes + core_offset + report.appended_offset;
+        memset(&dungeon_tail, 0, sizeof(dungeon_tail));
+        if (csb_v1_csbwin_dungeon_tail_parse_prefix(
+                dungeon_tail_bytes, report.appended_size, features.flags,
+                &dungeon_tail) != CSB_V1_CSBWIN_DUNGEON_TAIL_OK ||
+            csb_v1_csbwin_dungeon_tail_validate_checksum(
+                dungeon_tail_bytes, report.appended_size, NULL, NULL) != 1) {
+            free(bytes);
+            return -1;
+        }
     }
     candidate = *profile;
     previous_dungeon_level = csb_v1_dungeon_get_current_level();

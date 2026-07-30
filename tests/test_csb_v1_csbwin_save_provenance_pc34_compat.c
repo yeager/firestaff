@@ -53,6 +53,25 @@ static int files_equal(const char *left_path, const char *right_path)
     return equal;
 }
 
+static int flip_last_byte(const char *path)
+{
+    FILE *fp = fopen(path, "r+b");
+    long size;
+    int byte;
+
+    if (!fp || fseek(fp, 0L, SEEK_END) != 0 || (size = ftell(fp)) <= 0 ||
+        fseek(fp, size - 1L, SEEK_SET) != 0 || (byte = fgetc(fp)) == EOF ||
+        fseek(fp, size - 1L, SEEK_SET) != 0) {
+        if (fp) fclose(fp);
+        return 0;
+    }
+    if (fputc(byte ^ 0x01, fp) == EOF) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static void test_staged_real_csbwin_save(void)
 {
     const char *path = getenv("FIRESTAFF_CSBWIN_REAL_SAVE");
@@ -80,6 +99,15 @@ static void test_staged_real_csbwin_save(void)
     CHECK(csb_v1_runtime_export_csbwin_source_save_to_path(&runtime, copy) == 0 &&
           files_equal(path, copy),
           "staged CSBWin save exports byte-identically through its authenticated core");
+    CHECK(flip_last_byte(copy),
+          "corrupts only the staged CSBWin terminal dungeon-tail checksum");
+    {
+        CSB_V1_RuntimeProfile rejected;
+        csb_v1_runtime_init(&rejected, NULL);
+        CHECK(csb_v1_runtime_apply_csbwin_resume_file(&rejected, copy, 0u) != 0,
+              "production resume rejects a bad CSBWin dungeon-tail checksum");
+        csb_v1_runtime_cleanup(&rejected);
+    }
     remove(copy);
     csb_v1_runtime_cleanup(&runtime);
 }

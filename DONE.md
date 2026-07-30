@@ -16,8 +16,10 @@
   `DUNGEONDATINDEX`, level descriptors, column-pointer extent, object-list
   extent and direct/indirect text extent, and verifies CSBWin's terminal
   big-endian running byte checksum. It remains read-only until DB0--DB15 have
-  a full live owner. Verification: the focused framing test passes on its
-  data-free contract and on the staged 61,465-byte CSBWin corpus.
+  a full live owner. Production resume now gates non-EXPOOL extended tails on
+  both checks before runtime staging. Verification: the focused framing test
+  passes on its data-free contract and the staged 61,465-byte CSBWin corpus;
+  the provenance test accepts that corpus and rejects a checksum-only change.
 
 - ✅ 2026-07-30 CSBWin source-save preservation: a resumed CSBWin save now
   exports through an FNV-bound, source-preserving writer, retaining the full
