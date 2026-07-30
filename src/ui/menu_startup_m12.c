@@ -3206,7 +3206,11 @@ static void m12_save_config(const M12_StartupMenuState* state) {
     if (!state) {
         return;
     }
-    M12_Config_SetDefaults(&config);
+    /* Start from the persisted configuration so a transient scanner/display
+     * token cannot discard the last accepted game-data directory while an
+     * unrelated launcher option is saved.  The fields owned by the current
+     * menu state are overwritten below. */
+    (void)M12_Config_Load(&config, NULL);
     config.languageIndex = state->settings.languageIndex;
     config.languageExplicit = state->languageExplicit ? 1 : 0;
     config.graphicsIndex = state->settings.graphicsIndex;
@@ -3331,8 +3335,20 @@ static void m12_save_config(const M12_StartupMenuState* state) {
                                         canonicalDataDir,
                                         sizeof(canonicalDataDir))) {
         snprintf(config.dataDir, sizeof(config.dataDir), "%s", canonicalDataDir);
+    } else if (!m12_data_directory_dialog_token_is_placeholder(config.dataDir) &&
+               m12_canonicalize_data_directory(config.dataDir,
+                                                canonicalDataDir,
+                                                sizeof(canonicalDataDir))) {
+        /* A scanner/backend can temporarily expose a relative display token
+         * while another setting is being saved.  Preserve the last accepted
+         * directory instead of replacing it with that token or a fallback. */
+        snprintf(config.dataDir, sizeof(config.dataDir), "%s", canonicalDataDir);
     } else {
-        (void)FSP_ResolveDataDir(config.dataDir, sizeof(config.dataDir), NULL);
+        /* No previously accepted directory is available.  Use the stable
+         * per-user default rather than FSP_ResolveDataDir(), whose explicit
+         * environment override may itself be the invalid "." token. */
+        (void)FSP_GetDefaultOriginalsDir(config.dataDir,
+                                         sizeof(config.dataDir));
     }
     snprintf(config.lastSavePath, sizeof(config.lastSavePath), "%s", state->quickResumeSavePath);
     M12_Config_Save(&config);

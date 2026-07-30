@@ -660,6 +660,32 @@ static void check_dot_environment_never_persists_as_data_directory(void) {
     CHECK(test_unsetenv("FIRESTAFF_DATA"));
 }
 
+static void check_dot_asset_status_does_not_replace_saved_directory(void) {
+    M12_StartupMenuState state;
+    M12_Config config;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char expected[M12_ASSET_DATA_DIR_CAPACITY];
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    if (failures) {
+        return;
+    }
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    CHECK(M12_StartupMenu_SetDataDirectory(&state, dataRoot) == 1);
+    M12_Config_Load(&config, NULL);
+    snprintf(expected, sizeof(expected), "%s", config.dataDir);
+    CHECK(strcmp(expected, ".") != 0);
+    /* Reproduce a platform/backend status token arriving while an unrelated
+     * settings change saves the launcher configuration. */
+    snprintf(state.assetStatus.dataDir, sizeof(state.assetStatus.dataDir), ".");
+    M12_StartupMenu_SaveConfig(&state);
+    M12_Config_Load(&config, NULL);
+    CHECK(strcmp(config.dataDir, expected) == 0);
+    CHECK(strcmp(config.dataDir, ".") != 0);
+    M12_StartupMenu_Destroy(&state);
+}
+
 static void check_active_scan_renders_progress_bar(void) {
     M12_StartupMenuState state;
     const int width = M12_ModernMenu_NativeWidth();
@@ -704,6 +730,7 @@ int main(void) {
     check_start_menu_promotes_saved_game_leaf_to_parent();
     check_dot_config_migrates_to_default_data_directory();
     check_dot_environment_never_persists_as_data_directory();
+    check_dot_asset_status_does_not_replace_saved_directory();
     check_active_scan_renders_progress_bar();
 
     if (failures) {
