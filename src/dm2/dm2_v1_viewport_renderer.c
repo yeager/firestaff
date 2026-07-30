@@ -3789,7 +3789,9 @@ int dm2_v1_viewport_build_door_render_plan(
                     vs->door_gfx_index,
                     square);
         }
-        row->fallback_color = 10;
+        /* skproject SKWINSPX/src/v4/c_gui_vp.cpp::DM2_DRAW_DOOR_FRAMES
+         * resolves the panel from its GDAT owner.  It has no generated-colour
+         * substitute, so an unresolved panel is removed from the plan below. */
         if (!dm2_v1_viewport_door_panel_rect_for_square_from_source(
                 s, square, row->panel_gdat_index, &panel_rect) &&
             !dm2_v1_viewport_door_panel_rect_for_square(square, &panel_rect)) {

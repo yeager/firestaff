@@ -44371,3 +44371,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `SKWINSPX/src/v4/c_gui_vp.cpp::DM2_DRAW_WALL`, each planned cell now has
   only its GDAT owner and source/destination rectangles; unresolved material
   remains no-draw.
+- ✅ 2026-07-30 DM2 viewport door fallback removal: the V1 door plan no
+  longer carries an unused generic colour fallback. Per
+  `SKWINSPX/src/v4/c_gui_vp.cpp::DM2_DRAW_DOOR_FRAMES`, door panels are owned
+  by GDAT; an unresolved source rectangle removes the panel from the plan
+  rather than inventing a coloured replacement.

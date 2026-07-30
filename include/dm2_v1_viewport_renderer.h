@@ -472,7 +472,6 @@ typedef struct {
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect button_rect;
     uint8_t door_open_pct;
-    uint8_t fallback_color;
     uint8_t door_state;
 } DM2_V1_DoorRender;
 
