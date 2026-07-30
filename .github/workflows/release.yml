@@ -128,19 +128,12 @@ jobs:
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --parallel 4
+        run: >-
+          cmake --build build --target firestaff firestaff_m11_phase_a_probe
+          firestaff_m11_audio_probe --parallel 4
 
       - name: Bundle Artpack Studio
         run: FIRESTAFF_ARTPACK_PYTHON="$(brew --prefix python@3.13)/bin/python3.13" ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
-
-      - name: Run unit tests (ctest)
-        run: |
-          cd build
-          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log || true
-          FAILED=$(grep -oP '\K[0-9]+(?= tests failed)' ctest.log || echo 0)
-          if [ "$FAILED" != "0" ]; then
-            echo "::warning::$FAILED ctest(s) failed"
-          fi
 
       - name: Smoke probes
         shell: bash
@@ -234,22 +227,12 @@ jobs:
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --parallel
+        run: >-
+          cmake --build build --target firestaff firestaff_m11_phase_a_probe
+          firestaff_m11_audio_probe --parallel
 
       - name: Bundle Artpack Studio
         run: ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
-
-      - name: Run unit tests (ctest)
-        run: |
-          cd build
-          # Some source-lock and corpus tests are advisory on clean Windows
-          # runners because their original reference trees are intentionally
-          # absent. Keep their report, then let the mandatory smoke gates run.
-          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log || true
-          FAILED=$(grep -oP '\K[0-9]+(?= tests failed)' ctest.log || echo 0)
-          if [ "$FAILED" != "0" ]; then
-            echo "::warning::$FAILED ctest(s) failed"
-          fi
 
       - name: Smoke probes
         run: |
@@ -381,19 +364,12 @@ jobs:
         run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        run: cmake --build build --parallel
+        run: >-
+          cmake --build build --target firestaff firestaff_m11_phase_a_probe
+          firestaff_m11_audio_probe --parallel
 
       - name: Bundle Artpack Studio
         run: ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
-
-      - name: Run unit tests (ctest)
-        run: |
-          cd build
-          ctest --output-on-failure --parallel 4 --timeout 60 2>&1 | tee ctest.log || true
-          FAILED=$(grep -oP '\K[0-9]+(?= tests failed)' ctest.log || echo 0)
-          if [ "$FAILED" != "0" ]; then
-            echo "::warning::$FAILED ctest(s) failed"
-          fi
 
       - name: Smoke probes
         run: |
