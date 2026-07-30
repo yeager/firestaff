@@ -2326,13 +2326,6 @@ static int pc34_write_dungeon_tail(
     if (dstAvail < tailSize) {
         return -1;
     }
-    if (dungeon->originalSaveTailPristine &&
-        dungeon->originalSaveTailBytes != 0 &&
-        dungeon->originalSaveTailByteCount == tailSize) {
-        memcpy(dst, dungeon->originalSaveTailBytes, (size_t)tailSize);
-        return tailSize;
-    }
-
     /* ReDMCSB LOADSAVE.C F0433 lines ~1661-1682 writes these
      * sections with F0422 byte-sum checksum in this exact order. */
     pc34_pack_dungeon_header(scratch, &dungeon->header);
