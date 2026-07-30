@@ -1,3 +1,14 @@
+- ✅ 2026-07-30 DM1 capture-row determinism: the live capture gate now
+  re-runs the row builder against the exact same capture paths while writing
+  a separate TSV. Absolute paths are intentional event fields, so moving the
+  otherwise identical temporary corpus can no longer create a false failure.
+  The live-row and capture-runbook contracts pass.
+
+- ✅ 2026-07-30 DM1 chest eye/action-hand transition verification: the
+  F0333/F0334 switch test now supplies source-shaped raw weapon and container
+  rows alongside decoded mirrors. It verifies the real chest-A close,
+  eight-slot truncation, chest-B eye-open, and same-chest no-op path.
+
 - ✅ 2026-07-30 DM1 inventory route/corpus verification: the C101 fallback
   route assertion now follows the four narrower C140/C145/C011/C141 controls,
   and the chest floor-drop fixture supplies the same raw C09 container row

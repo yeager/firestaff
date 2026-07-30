@@ -430,13 +430,15 @@ def _run_row_builder_for_binding(
     pass623_path: Path,
     run_id: str,
     write_header: bool,
+    events_tsv: Path | None = None,
 ) -> tuple[int, list[str], Path | None]:
     """Invoke the on-disk row builder for one live-binding row.
     Returns (matched, failures, events_tsv_path).  When
     ``write_header`` is True the very first invocation also
     writes the EVENTS_TSV_HEADER line so subsequent invocations
     can be concatenated."""
-    events_tsv = sandbox / "events.tsv"
+    if events_tsv is None:
+        events_tsv = sandbox / "events.tsv"
     cmd = [
         sys.executable, str(ROW_BUILDER),
         "--label",        binding["pass623_label"],
@@ -938,37 +940,19 @@ def _check_c9_events_tsv_determinism_rerun(sandbox: Path) -> tuple[int, list[str
         return 0, [f"first-build events TSV missing: {first_events_tsv}"]
     first_sha = _sha256_of_file(first_events_tsv)
 
-    # Rebuild the events TSV from scratch in a sibling
-    # sandbox so the row builder's stdout is captured
-    # only for the second build.  We deliberately do NOT
-    # reuse the C4 events.tsv — the determinism check is
-    # "the same inputs produce the same bytes", not
-    # "the gate writes the same bytes twice".
-    rerun_sandbox = sandbox / "rerun"
-    rerun_sandbox.mkdir(parents=True, exist_ok=True)
-    receipt_path    = rerun_sandbox / "preflight_receipt.json"
-    pass623_path    = rerun_sandbox / "pass623.json"
-    manifest_path   = rerun_sandbox / "capture_manifest.tsv"
-    captures_dir    = rerun_sandbox / "original"
-
-    _write_synth_receipt(receipt_path)
-    _write_synth_pass623(pass623_path)
-    _write_synth_capture_manifest(manifest_path)
-    captures_dir.mkdir(parents=True, exist_ok=True)
-    rgb_per_index = [(40, 40, 40), (50, 50, 50), (60, 60, 60)]
-    for idx, binding in enumerate(LIVE_BINDING_TABLE):
-        rgb = rgb_per_index[idx % len(rgb_per_index)]
-        raw_path  = captures_dir / binding["live_filename"]
-        crop_path = captures_dir / binding["live_filename"].replace(".png", "_viewport.png")
-        write_png(raw_path,  320, 200, rgb)
-        write_png(crop_path, 224, 136, rgb)
-
-    events_tsv_rerun = rerun_sandbox / "events.tsv"
+    # Rebuild into a separate output file but reuse the exact C4 paths and
+    # bytes.  The TSV intentionally records the absolute capture paths, so
+    # relocating otherwise equal files would test path serialization, not
+    # row-builder determinism.
+    receipt_path = sandbox / "preflight_receipt.json"
+    pass623_path = sandbox / "pass623.json"
+    captures_dir = sandbox / "original"
+    events_tsv_rerun = sandbox / "events.rerun.tsv"
     for idx, binding in enumerate(LIVE_BINDING_TABLE):
         raw_path  = captures_dir / binding["live_filename"]
         crop_path = captures_dir / binding["live_filename"].replace(".png", "_viewport.png")
         matched, fails, path = _run_row_builder_for_binding(
-            sandbox=rerun_sandbox,
+            sandbox=sandbox,
             binding=binding,
             raw_path=raw_path,
             crop_path=crop_path,
@@ -976,6 +960,7 @@ def _check_c9_events_tsv_determinism_rerun(sandbox: Path) -> tuple[int, list[str
             pass623_path=pass623_path,
             run_id="live_row_gate_run_001",
             write_header=(idx == 0),
+            events_tsv=events_tsv_rerun,
         )
         if matched != 1 or fails or path is None:
             return 0, [

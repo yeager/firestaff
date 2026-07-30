@@ -103,6 +103,32 @@ static unsigned short make_container_thing(int containerIndex)
     return (unsigned short)((THING_TYPE_CONTAINER << 10) | containerIndex);
 }
 
+static void bind_raw_chest_data(struct DungeonThings_Compat* things,
+                                const struct DungeonWeapon_Compat* weapons,
+                                int weaponCount,
+                                const struct DungeonContainer_Compat* containers,
+                                int containerCount,
+                                unsigned char* weaponRaw,
+                                unsigned char* containerRaw)
+{
+    int i;
+    for (i = 0; i < weaponCount; ++i) {
+        weaponRaw[i * 4] = (unsigned char)(weapons[i].next & 0xffu);
+        weaponRaw[i * 4 + 1] = (unsigned char)(weapons[i].next >> 8);
+        weaponRaw[i * 4 + 2] = weapons[i].type;
+    }
+    for (i = 0; i < containerCount; ++i) {
+        containerRaw[i * 8] = (unsigned char)(containers[i].next & 0xffu);
+        containerRaw[i * 8 + 1] = (unsigned char)(containers[i].next >> 8);
+        containerRaw[i * 8 + 2] = (unsigned char)(containers[i].slot & 0xffu);
+        containerRaw[i * 8 + 3] = (unsigned char)(containers[i].slot >> 8);
+    }
+    things->rawThingData[THING_TYPE_WEAPON] = weaponRaw;
+    things->thingCounts[THING_TYPE_WEAPON] = weaponCount;
+    things->rawThingData[THING_TYPE_CONTAINER] = containerRaw;
+    things->thingCounts[THING_TYPE_CONTAINER] = containerCount;
+}
+
 static void seed_champion(struct ChampionState_Compat* champ)
 {
     int i;
@@ -221,6 +247,8 @@ static void test_eye_routes_open_chest_a_to_leader_hand_chest_b(void)
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[WEAPON_BASE_FOR_CHEST_B + CHEST_B_CHAIN_COUNT];
     struct DungeonContainer_Compat containers[2];
+    unsigned char weaponRaw[(WEAPON_BASE_FOR_CHEST_B + CHEST_B_CHAIN_COUNT) * 4];
+    unsigned char containerRaw[2 * 8];
     unsigned short chestA = make_container_thing(CHEST_A_INDEX);
     unsigned short chestB = make_container_thing(CHEST_B_INDEX);
     unsigned short firstChestAWeapon = make_weapon_thing(WEAPON_BASE_FOR_CHEST_A);
@@ -243,6 +271,10 @@ static void test_eye_routes_open_chest_a_to_leader_hand_chest_b(void)
     seed_chest_b_chain(weapons, things.weaponCount);
     containers[CHEST_A_INDEX].slot = firstChestAWeapon;
     containers[CHEST_B_INDEX].slot = firstChestBWeapon;
+    containers[CHEST_A_INDEX].next = THING_ENDOFLIST;
+    containers[CHEST_B_INDEX].next = THING_ENDOFLIST;
+    bind_raw_chest_data(&things, weapons, things.weaponCount, containers, 2,
+                        weaponRaw, containerRaw);
 
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestA;
 
@@ -379,6 +411,8 @@ static void test_eye_switch_is_idempotent_when_already_open(void)
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[WEAPON_BASE_FOR_CHEST_B + CHEST_B_CHAIN_COUNT];
     struct DungeonContainer_Compat containers[2];
+    unsigned char weaponRaw[(WEAPON_BASE_FOR_CHEST_B + CHEST_B_CHAIN_COUNT) * 4];
+    unsigned char containerRaw[2 * 8];
     unsigned short chestA = make_container_thing(CHEST_A_INDEX);
     unsigned short chestB = make_container_thing(CHEST_B_INDEX);
     unsigned short firstChestAWeapon = make_weapon_thing(WEAPON_BASE_FOR_CHEST_A);
@@ -398,6 +432,10 @@ static void test_eye_switch_is_idempotent_when_already_open(void)
     seed_chest_b_chain(weapons, things.weaponCount);
     containers[CHEST_A_INDEX].slot = firstChestAWeapon;
     containers[CHEST_B_INDEX].slot = firstChestBWeapon;
+    containers[CHEST_A_INDEX].next = THING_ENDOFLIST;
+    containers[CHEST_B_INDEX].next = THING_ENDOFLIST;
+    bind_raw_chest_data(&things, weapons, things.weaponCount, containers, 2,
+                        weaponRaw, containerRaw);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestA;
     (void)chestA;
 
