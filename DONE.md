@@ -719,6 +719,15 @@
   V2.0 real-PC3.4 executable regression records all four source captures;
   the V2.1 EPX capture regression also passes.
 
+- ✅ 2026-07-30 CSB V2.0 runtime-source preservation: the real-PC3.4 Prison
+  regression exposed V2.0 incorrectly initialising CSB's smooth V2 runtime,
+  which changed the raw 320x200 source page before presentation. V2.0 now
+  starts only its source-preserving filter copies; smooth runtime binding
+  starts in V2.1. Focused V1/V2.0/V2.1 capture tests pass. The optional
+  CSBWin GRAPHICS.DAT layout lane now recognises its required 563-entry Atari
+  catalog and skips same-named PC packages instead of reporting a false decode
+  failure.
+
 - ✅ 2026-07-29 CSB V2.2 source-artpack runtime handoff: the complete,
   source-derived 29-route PC3.4 pack is proven to remain on presentation mode
   3 through the original Prison command and reach runtime map 0 at `(9,0,2)`.

@@ -74,6 +74,28 @@ failed:
     return 0;
 }
 
+/* PC3.4 and Atari/CSBWin packages both commonly call this file
+ * GRAPHICS.DAT.  The optional real-data lane is specifically for CSBWin's
+ * big-endian 563-entry catalog; silently treating a PC package as that
+ * catalog gives misleading failures when a broad data-root environment
+ * variable is exported. */
+static int is_csbwin_graphics_dat(const char *path)
+{
+    FILE *file;
+    unsigned char count_bytes[2];
+
+    if (!path || !path[0]) return 0;
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (fread(count_bytes, 1, sizeof(count_bytes), file) !=
+        sizeof(count_bytes)) {
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    return (((unsigned int)count_bytes[0] << 8) | count_bytes[1]) == 563u;
+}
+
 static void check_real_layout(const char *path)
 {
     CSB_V1_CSBWinLayout0232 layout;
@@ -583,12 +605,20 @@ int main(void)
      * this at a legally supplied Atari/CSBWin GRAPHICS.DAT to prove that the
      * fixed offsets survive real source bytes. */
     real_graphics_dat = getenv("FIRESTAFF_CSBWIN_GRAPHICS_DAT");
-    check_real_layout(real_graphics_dat);
-    check_real_hud_composition(real_graphics_dat);
-    check_real_viewport_wall_catalog(real_graphics_dat);
-    check_real_viewport_projection_layout(real_graphics_dat);
-    check_real_viewport_wall_plan(real_graphics_dat);
-    check_real_viewport_planar_roundtrip(real_graphics_dat);
+    if (real_graphics_dat && real_graphics_dat[0] &&
+        !is_csbwin_graphics_dat(real_graphics_dat)) {
+        fprintf(stderr,
+                "SKIP: FIRESTAFF_CSBWIN_GRAPHICS_DAT is not a CSBWin "
+                "563-entry Atari GRAPHICS.DAT: %s\n",
+                real_graphics_dat);
+    } else {
+        check_real_layout(real_graphics_dat);
+        check_real_hud_composition(real_graphics_dat);
+        check_real_viewport_wall_catalog(real_graphics_dat);
+        check_real_viewport_projection_layout(real_graphics_dat);
+        check_real_viewport_wall_plan(real_graphics_dat);
+        check_real_viewport_planar_roundtrip(real_graphics_dat);
+    }
 
     if (failures) return 1;
     puts("PASS: CSBWin GRAPHICS.DAT 0x232/0x22e layout decode");

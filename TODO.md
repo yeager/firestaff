@@ -1320,6 +1320,13 @@ that its exact runtime path is not already source-locked and tested.
    while V2.0's 960x540 presented surface differs with all three controls
    enabled. This confirms presentation filtering is live without mutating
    C017/C040/F0128 source ownership.
+   2026-07-30: the same executable proof caught an unintended V2.0 smooth
+   runtime initialisation: it changed the source-owned Prison page before the
+   filter copy was made. V2.0 now leaves the CSB smooth/runtime binding to
+   V2.1/V2.2 and applies only its indexed/RGBA filters to presentation copies.
+   The focused real-PC3.4 V1/V2.0/V2.1 capture suite passes. The optional
+   CSBWin layout test now also rejects a same-named PC `GRAPHICS.DAT` rather
+   than mixing PC and Atari catalog formats.
    2026-07-29: V2.1 now has the corresponding real-PC3.4 Prison proof: its
    raw 320x200 page is V1-identical while the same-size presented host surface
    differs under EPX/upscale. V2.1 presentation therefore cannot silently

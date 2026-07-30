@@ -6166,11 +6166,14 @@ static int m11_csb_apply_boot_runtime_receipt(
             resolved_presentation_mode = M12_PRESENTATION_V1_ORIGINAL;
             break;
     }
-    /* The V2 runtime is presentation-only, but it must observe the same
-     * live CSB profile M11 uses for V1 ticks.  Keep it absent in original
-     * mode so its global smooth/clock state cannot leak into a V1 launch. */
+    /* V2.0 is a source-preserving filter route.  Its indexed and RGBA
+     * filters are applied to presentation copies in main_loop_m11.c; it must
+     * not initialise the smooth camera/runtime because that would alter the
+     * source-owned 320x200 page before capture.  The V2 runtime therefore
+     * starts with V2.1, whose upscale/smooth presentation contract owns it. */
     csb_v2_runtime_cleanup();
-    if (resolved_presentation_mode != M12_PRESENTATION_V1_ORIGINAL) {
+    if (resolved_presentation_mode == M12_PRESENTATION_V21_UPSCALED ||
+        resolved_presentation_mode == M12_PRESENTATION_V22_MODERN) {
         csb_v2_runtime_init(
             resolved_presentation_mode == M12_PRESENTATION_V22_MODERN ? 4 : 2);
         csb_v2_runtime_bind_to_v1(&receipt->profile->runtime);
