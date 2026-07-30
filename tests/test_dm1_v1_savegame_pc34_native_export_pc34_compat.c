@@ -1690,6 +1690,29 @@ static void test_world_pc34_export_writes_dungeon_tail(void) {
     CHECK(decodedReloadWorld.things->doors[0].next == 0x7777u,
           "pc34 dungeon tail: decoded thing mutation survives reload");
     F0883_WORLD_Free_Compat(&decodedReloadWorld);
+
+    importedWorld.dungeon->tiles[0].squareData[5] =
+        (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 3u);
+    memset(roundTripExportBuf, 0, sizeof(roundTripExportBuf));
+    roundTripWritten = 0;
+    rc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+        &importedWorld, 0x12344324u,
+        roundTripExportBuf, (int)sizeof(roundTripExportBuf),
+        &roundTripWritten);
+    CHECK(rc == SAVEGAME_PC34_OK,
+          "pc34 dungeon tail: imported door-square mutation export rc == OK");
+    tailStart = skip_pc34_parts_and_portraits(roundTripExportBuf,
+                                              roundTripWritten);
+    tail = roundTripExportBuf + tailStart;
+    cursor = DUNGEON_HEADER_SIZE + DUNGEON_MAP_DESC_SIZE + 4 +
+             (int)sizeof(squareFirstThings) + (int)sizeof(textData) +
+             (int)sizeof(doorRaw) + (int)sizeof(weaponRaw);
+    CHECK(tail[cursor + 5] ==
+          (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 3u),
+          "pc34 dungeon tail: imported door-square mutation patches raw map");
+    CHECK(rd16le(tail + cursor + (int)sizeof(squares)) ==
+          test_byte_checksum(tail, cursor + (int)sizeof(squares)),
+          "pc34 dungeon tail: imported door-square mutation updates checksum");
     F0883_WORLD_Free_Compat(&importedWorld);
 
     memset(&doorStep, 0, sizeof(doorStep));

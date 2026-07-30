@@ -2311,6 +2311,52 @@ static int pc34_patch_pristine_thing_tail(
         }
         cursor += count * slotBytes;
     }
+    if (dungeon->header.squareFirstThingCount > 0 &&
+        things->squareFirstThings) {
+        int squareFirstThingOffset = DUNGEON_HEADER_SIZE +
+            (int)dungeon->header.mapCount * DUNGEON_MAP_DESC_SIZE +
+            pc34_dungeon_column_count(dungeon) * 2;
+        int squareFirstThingBytes =
+            (int)dungeon->header.squareFirstThingCount * 2;
+        if (squareFirstThingOffset < 0 ||
+            squareFirstThingBytes > tailSize - 2 - squareFirstThingOffset) {
+            return 0;
+        }
+        memcpy(dst + squareFirstThingOffset, things->squareFirstThings,
+               (size_t)squareFirstThingBytes);
+    }
+    if (dungeon->header.textDataWordCount > 0 && things->textData) {
+        int textOffset = DUNGEON_HEADER_SIZE +
+            (int)dungeon->header.mapCount * DUNGEON_MAP_DESC_SIZE +
+            pc34_dungeon_column_count(dungeon) * 2 +
+            (int)dungeon->header.squareFirstThingCount * 2;
+        int textBytes = (int)dungeon->header.textDataWordCount * 2;
+        if (textOffset < 0 || textBytes > tailSize - 2 - textOffset) return 0;
+        memcpy(dst + textOffset, things->textData, (size_t)textBytes);
+    }
+    {
+        int rawMapBytes = pc34_dungeon_raw_map_bytes(dungeon);
+        int rawMapOffset = tailSize - 2 - rawMapBytes;
+        int mapIndex;
+        if (rawMapBytes < 0 || rawMapOffset < cursor) return 0;
+        for (mapIndex = 0; mapIndex < (int)dungeon->header.mapCount; ++mapIndex) {
+            const struct DungeonMapDesc_Compat* map = &dungeon->maps[mapIndex];
+            int squares = (int)map->width * (int)map->height;
+            int offset = (int)map->rawMapDataByteOffset;
+            if (!dungeon->tiles[mapIndex].squareData || squares < 0 ||
+                offset < 0 || offset + squares + (int)map->creatureTypeCount >
+                    rawMapBytes) {
+                return 0;
+            }
+            memcpy(dst + rawMapOffset + offset,
+                   dungeon->tiles[mapIndex].squareData, (size_t)squares);
+            if (map->creatureTypeCount > 0) {
+                memcpy(dst + rawMapOffset + offset + squares,
+                       map->allowedCreatureTypes,
+                       (size_t)map->creatureTypeCount);
+            }
+        }
+    }
     if (cursor > tailSize - 2) return 0;
     checksum = pc34_dungeon_checksum_add(0u, dst, tailSize - 2);
     write_u16_le(dst + tailSize - 2, checksum);

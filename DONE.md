@@ -6,10 +6,10 @@
 
 - ✅ 2026-07-30 DM1 PC3.4 decoded dungeon write-back: F0433 keeps the
   original dungeon tail byte-exact, patches only changed admitted Thing rows,
-  and recalculates the F0422 byte checksum. This preserves unknown original
-  header/map/tail bytes while allowing live state changes. The real DOSBox
-  corpus and a mutated door `next` both pass F0433 -> F0435 round-trip
-  verification.
+  square-first-thing/text state and raw map squares, then recalculates the
+  F0422 byte checksum. This preserves unknown original header/tail bytes while
+  allowing live state changes. The real DOSBox corpus, a mutated door `next`,
+  and an imported opened-door square pass F0433 -> F0435 verification.
 
 - ✅ 2026-07-30 DM1 F0407/C11 SWING receipt: the focused runtime contract
   no longer relies on `assert()` expressions, which release builds omit along
