@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.186
+
+- CSB: select the original PC3.4 floor and wall graphics sets from the active
+  MAP.D level instead of always rendering set zero.
+- DM2: include the newly extracted source table coverage from main.
+
 # Firestaff v3.0.185
 
 - CSB: map the original PC3.4 F0095 wall-set graphics catalog precisely for
