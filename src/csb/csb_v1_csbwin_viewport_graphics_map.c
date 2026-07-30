@@ -10,6 +10,14 @@ int csb_v1_csbwin_floor_ceiling_graphic_index(uint16_t floor_set,
     return 1;
 }
 
+int csb_v1_csbwin_packed_byte_width(uint16_t pixel_width,
+                                    uint16_t *out_byte_width)
+{
+    if (!out_byte_width || pixel_width == 0u) return 0;
+    *out_byte_width = (uint16_t)(((unsigned int)pixel_width + 1u) / 2u);
+    return 1;
+}
+
 int csb_v1_csbwin_viewport_graphic_index(uint16_t wall_set,
                                           uint16_t slot,
                                           uint16_t *out_graphic_index)

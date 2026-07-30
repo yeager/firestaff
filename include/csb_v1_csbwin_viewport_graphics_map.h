@@ -18,6 +18,10 @@ int csb_v1_csbwin_floor_ceiling_graphic_index(uint16_t floor_set,
                                                int ceiling,
                                                uint16_t *out_graphic_index);
 
+/* CSBWin Bitmaps.cpp:187: two indexed 4-bit pixels occupy one source byte. */
+int csb_v1_csbwin_packed_byte_width(uint16_t pixel_width,
+                                    uint16_t *out_byte_width);
+
 int csb_v1_csbwin_viewport_graphic_index(uint16_t wall_set,
                                           uint16_t slot,
                                           uint16_t *out_graphic_index);

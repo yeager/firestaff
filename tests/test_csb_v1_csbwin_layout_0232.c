@@ -288,6 +288,11 @@ int main(void)
         CHECK(!csb_v1_csbwin_viewport_graphic_index(0u, 13u, &graphic_index));
         CHECK(csb_v1_csbwin_floor_ceiling_graphic_index(3u, 1, &graphic_index) &&
               graphic_index == 82u);
+        CHECK(csb_v1_csbwin_packed_byte_width(224u, &graphic_index) &&
+              graphic_index == 112u);
+        CHECK(csb_v1_csbwin_packed_byte_width(45u, &graphic_index) &&
+              graphic_index == 23u);
+        CHECK(!csb_v1_csbwin_packed_byte_width(0u, &graphic_index));
     }
     CHECK(layout.valid);
     CHECK(layout.party_direction[3].x1 == 70 && layout.party_direction[3].x2 == 89);
