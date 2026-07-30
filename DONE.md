@@ -44412,9 +44412,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   that original party data is still required. It reloads no fixture session,
   party, leader hand or timer state and keeps the source title/menu boundary
   active until those records are modeled.
-
 - ✅ 2026-07-30 DM1 original-save corpus receipt integrity: successful
   provenance-bound F0435 -> F0433 -> F0435 entries now produce a stable,
   nonzero fingerprint of the original input and transient export. The live
   V1 PC34 boot receipt reports `5a560bab`; the external-corpus regression
   also preserves its independent provenance fingerprint.
+
+- ✅ 2026-07-30 DM2 New Game source-state audit: corrected the GAME_LOAD
+  diagnostic and handoff contract to match `skgame.cpp::LOAD_NEW_DUNGEON` and
+  `skchamp.cpp::SELECT_CHAMPION`: an empty party/leader hand is source state,
+  the G1 header owns the start pose, and champions are later selected at
+  dungeon mirrors. The remaining gate is actuator/timer initialization and
+  source-owned mirror UI, not a fabricated starter party.

@@ -1265,13 +1265,15 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
              * gold and map pose are a save-fixture helper, not DM2 data.
              * Reload the verified original DUNGEON.DAT portion first, then
              * retain the title-menu boundary until GAME_LOAD can hand off its
-             * party, leader and timer records. */
+             * actuator initialization and champion-selection UI. The source
+             * deliberately starts with no champions or leader hand; those
+             * are created only by SELECT_CHAMPION at a dungeon mirror. */
             memset(&new_dungeon, 0, sizeof(new_dungeon));
             profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
             if (dm2_v1_boot_load_new_dungeon(profile, &new_dungeon) &&
                 new_dungeon.valid && new_dungeon.reloaded &&
                 !new_dungeon.synthetic_party_created) {
-                status = "DM2 GAME_LOAD DUNGEON READY: PARTY DATA REQUIRED";
+                status = "DM2 GAME_LOAD DUNGEON READY: INITIALIZATION REQUIRED";
             }
             state->dm2State.startup_menu_active = 1;
             m11_set_status(state, route->status_scope, status);
