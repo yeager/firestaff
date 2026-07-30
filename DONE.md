@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 CSBWin `TAG0088b2` wall projection completion: Firestaff now
+  records all fourteen `Viewport.cpp::StdRectanglePointers` wall selections,
+  including the previously omitted `F0=wallRectangles[9]`. `F0` is
+  projection-only, matching CSBWin's absence of `BMP_StdWallBitmapF0`, and
+  therefore cannot accidentally reuse an adjacent wall bitmap. Verified by
+  `test_csb_v1_csbwin_layout_0232` against local Atari ST `GRAPHICS.DAT`.
+
 - ✅ 2026-07-30 DM2: implement 8 c_hero party functions. hero_2c1d_0300
   (ability diminishing curve), hero_37BEA/GET_PARTY_SPECIAL_FORCE (special
   force), RESET_SQUAD_DIR, SELECT_CHAMPION_LEADER, ADJUST_HAND_COOLDOWN,

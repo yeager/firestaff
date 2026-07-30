@@ -38,12 +38,14 @@ int csb_v1_csbwin_viewport_wall_source(
     uint16_t *out_graphic_index, int *out_mirrored)
 {
     static const uint8_t source_slot[CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT] = {
-        5u, 4u, 4u, 4u, 5u, 3u, 3u, 3u, 2u, 2u, 2u, 1u, 0u
+        5u, 4u, 4u, 4u, 5u, 3u, 3u, 3u, 2u, 2u, 2u, 1u, UINT8_MAX, 0u
     };
 
     if (out_mirrored) *out_mirrored = 0;
     if (!out_graphic_index || !out_mirrored ||
         (unsigned int)wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT) return 0;
+    /* StdBitmapPointers deliberately has no BMP_StdWallBitmapF0. */
+    if (source_slot[wall] == UINT8_MAX) return 0;
     if (!csb_v1_csbwin_viewport_graphic_index(
             wall_set, (uint16_t)(CSB_V1_CSBWIN_DOOR_GRAPHIC_COUNT +
                                   source_slot[wall]), out_graphic_index)) {
@@ -57,7 +59,7 @@ int csb_v1_csbwin_viewport_wall_projection_rectangle(
     CSB_V1_CSBWinViewportWall wall, uint8_t *out_rectangle_index)
 {
     static const uint8_t rectangle_index[CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT] = {
-        13u, 1u, 0u, 2u, 12u, 4u, 3u, 5u, 7u, 6u, 8u, 10u, 11u
+        13u, 1u, 0u, 2u, 12u, 4u, 3u, 5u, 7u, 6u, 8u, 10u, 9u, 11u
     };
 
     if (!out_rectangle_index ||

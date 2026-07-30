@@ -30,6 +30,10 @@ typedef enum {
     CSB_V1_CSBWIN_VIEWPORT_WALL_F1,
     CSB_V1_CSBWIN_VIEWPORT_WALL_F1R1,
     CSB_V1_CSBWIN_VIEWPORT_WALL_F0L1,
+    /* Viewport.cpp has a centre F0 rectangle too.  Unlike the surrounding
+     * lanes it has no StdBitmapPointers wall source; it is composed by the
+     * caller's local-cell path and must not borrow an adjacent bitmap. */
+    CSB_V1_CSBWIN_VIEWPORT_WALL_F0,
     CSB_V1_CSBWIN_VIEWPORT_WALL_F0R1,
     CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT
 } CSB_V1_CSBWinViewportWall;

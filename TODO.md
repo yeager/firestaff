@@ -3,11 +3,13 @@
 ## Active DM1/CSB Symbol Queue
 
 - **CSB-V1-CSBWIN-TAG0088B2-PROJECTION-RECTANGLES:** Closed 2026-07-30.
-  `csb_v1_csbwin_viewport_wall_projection_rectangle()` now locks all thirteen
+  `csb_v1_csbwin_viewport_wall_projection_rectangle()` now locks all fourteen
   visible CSBWin wall lanes to the exact `Viewport.cpp:2304-2317`
   `wallRectangles[]` selection: F3L2=13, F3L1=1, F3=0, F3R1=2, F3R2=12,
-  F2L1=4, F2=3, F2R1=5, F1L1=7, F1=6, F1R1=8, F0L1=10, F0R1=11. The
-  F3R2 bitmap mirror remains separately source-locked. Verified by the
+  F2L1=4, F2=3, F2R1=5, F1L1=7, F1=6, F1R1=8, F0L1=10, F0=9, F0R1=11. The
+  F0 centre is explicitly projection-only because CSBWin has no separate
+  `StdBitmapPointers` wall source for it; F3R2's bitmap mirror remains
+  separately source-locked. Verified by the
   CSBWin layout test against the local Atari-ST `GRAPHICS.DAT`; this locks
   command identity, not the still-open native-raster V2.2 material handoff.
 

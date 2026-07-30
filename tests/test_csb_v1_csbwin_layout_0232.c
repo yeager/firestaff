@@ -364,7 +364,8 @@ int main(void)
         {
             static const uint8_t expected_rectangles[
                 CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT] = {
-                13u, 1u, 0u, 2u, 12u, 4u, 3u, 5u, 7u, 6u, 8u, 10u, 11u
+                13u, 1u, 0u, 2u, 12u, 4u, 3u, 5u, 7u, 6u, 8u, 10u, 9u,
+                11u
             };
             unsigned int wall;
             for (wall = 0u; wall < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT; ++wall) {
@@ -376,6 +377,8 @@ int main(void)
         }
         CHECK(!csb_v1_csbwin_viewport_wall_projection_rectangle(
             CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT, &rectangle_index));
+        CHECK(!csb_v1_csbwin_viewport_wall_source(0u,
+            CSB_V1_CSBWIN_VIEWPORT_WALL_F0, &graphic_index, &mirrored));
         CHECK(!csb_v1_csbwin_viewport_wall_source(0u,
             CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT, &graphic_index, &mirrored));
     }
