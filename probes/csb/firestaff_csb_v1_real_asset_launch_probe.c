@@ -399,6 +399,19 @@ static int run_amiga(tally_t* t, const char* amiga_dir)
         char want[65] = "3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942";
         CHECK(t, strcmp(sha, want) == 0,
               "sha256 of local Amiga GRAPHICS.DAT matches docs/VERIFIED_HASHES.md");
+        /* Do not turn an optional Amiga corpus into an unbounded scan of
+         * unrelated CSB archives. The caller selected this directory as an
+         * Amiga pair, so a different direct GRAPHICS.DAT is definitive for
+         * this probe. Runtime discovery remains responsible for an explicit
+         * user-selected archive or a directory that actually contains a
+         * matching package. */
+        if (strcmp(sha, want) != 0 ||
+            (csb_v1_runtime_detect_variant(graphics_path, dungeon_path,
+                                            NULL, NULL) !=
+             CSB_V1_VARIANT_AMIGA35_EN)) {
+            printf("  SKIP: direct GRAPHICS.DAT is not the Amiga 3.5 corpus\n");
+            return 0;
+        }
     }
     rc = sha256_hex_of_file(dungeon_path, sha);
     CHECK(t, rc == 0, "sha256 of Amiga DUNGEON.DAT succeeds");

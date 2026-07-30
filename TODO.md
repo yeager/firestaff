@@ -1152,6 +1152,12 @@ that its exact runtime path is not already source-locked and tested.
    C028 direction slices, C020/C030-C032 food-water and poison regions, and
    C013/C009 movement and magic panels to those original rectangles. M11
    consumption of that plan remains the next open runtime step.
+   2026-07-30: CSB runtime boot now passes the actual selected loose-file
+   MD5 identities into variant detection; the real Atari ST 2.x corpus had
+   previously booted as `UNKNOWN` because both detection arguments were
+   unconditionally `NULL`. The real-asset probe now completes 32/32 checks
+   and skips an unrelated optional Amiga corpus rather than scanning every
+   archive in the selected CSB directory.
    2026-07-28: fixed the live Prison-to-F0128 black frame. The CSB viewport
    now decodes original GRAPHICS.DAT floor/ceiling entries through the CSB
    IMG3/LZW path and draws them at the source aperture `(48,33)`. The real

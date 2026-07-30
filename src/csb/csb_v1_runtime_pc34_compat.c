@@ -30099,10 +30099,14 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
     const char *dun_path;
     const char *gfx_path;
     const char *search_dir;
+    char dungeon_md5[33];
+    char graphics_md5[33];
 
     if (!profile) return -1;
 
     search_dir = data_dir ? data_dir : ".";
+    dungeon_md5[0] = '\0';
+    graphics_md5[0] = '\0';
 
     /* Step 1: Find dungeon by CSB hash (ReDMCSB DUNGEON.C F0237) */
     dun_path = csb_v1_runtime_find_dungeon(search_dir, &dun_result);
@@ -30157,9 +30161,17 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
     profile->graphics_path = gfx_path ? gfx_path : "";
     profile->graphics_asset = gfx_result;
 
-    /* Step 3: Detect variant from asset hashes */
+    /* Step 3: Detect the selected original variant from the actual file
+     * identities. Passing NULL here made every normal loose-file boot report
+     * UNKNOWN, even after the hash-gated finder had selected verified Atari,
+     * Amiga, or PC media. Virtual container paths remain fail-closed: the
+     * scanner owns their entry identity and direct-file MD5 cannot attest it. */
+    if (dun_path) (void)asset_file_md5_hex(dun_path, dungeon_md5);
+    if (gfx_path) (void)asset_file_md5_hex(gfx_path, graphics_md5);
     profile->variant_id = csb_v1_runtime_detect_variant(
-        gfx_path, dun_path, NULL, NULL);
+        gfx_path, dun_path,
+        graphics_md5[0] ? graphics_md5 : NULL,
+        dungeon_md5[0] ? dungeon_md5 : NULL);
 
     /* Step 4: Initialize Chaos Magic spell grid (ReDMCSB CASTER.C F0211) */
     profile->chaos_magic.magic_initialized = 1;
