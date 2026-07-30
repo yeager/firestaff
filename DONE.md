@@ -44,6 +44,11 @@
   can no longer manufacture extra C001 title frames when original
   `GRAPHICS.DAT` C001 is available. Focused source-timing, C001 admission and
   startup-state CTests pass 3/3.
+- ✅ 2026-07-30 CSB runtime-HUD fail-closed status surfaces: the shared
+  champion-panel consumer now stops at a black status rectangle if CSB's
+  C017/C040-owned base material is unavailable. It cannot continue into the
+  generic M11 procedural panel path. The real PC3.4 Prison HUD regression
+  and the 75-check real-asset launch probe pass.
 
 - ✅ 2026-07-30 DM1 HUD source-gate refresh: action/spell glyph, champion
   name and inscription presentation regressions now verify the current M653

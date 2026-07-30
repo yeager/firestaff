@@ -47378,6 +47378,17 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                     drewStatusBox = 1;
                 }
             }
+            /* ReDMCSB CHAMDRAW.C F0292 only continues with the name, bars,
+             * hand slots, and overlays after it has established this status
+             * surface.  CSB's C017/C040 page is source-owned, so a missing
+             * decoded C008/base surface must leave the zone black instead of
+             * falling through to the shared M11 procedural panel path. */
+            if (!drewStatusBox &&
+                state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              x, y, slotW, slotH, M11_COLOR_BLACK);
+                continue;
+            }
             if (!drewStatusBox && !m11_v1_chrome_mode_enabled(state) &&
                 !m11_is_dm1_source_kind(state->sourceKind) &&
                 !s_m11_dm1_hoc_presented_frame_consumer_receipt.suppressFallbackVisuals) {
