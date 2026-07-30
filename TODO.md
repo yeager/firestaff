@@ -233,11 +233,10 @@ an integration build pass.
   2026-07-30 current-main verification: the local 38-asset source export
   retains explicit `unbound` F0128 routes and correctly resolves a requested
   V2.2 launch to V2.1. The V2.2 real-artpack runtime probe now skips for that
-  state rather than presenting an incomplete replacement. The isolated CSB
-  V2.x suite passes 51/51 registered tests, with that one expected skip
-  reported separately (2026-07-30).
   incomplete export instead of treating V2.1's EPX startup surface as a V2.2
-  raster regression. The overlapping V2 labels cover 45 `v2`, 3
+  raster regression. The isolated CSB V2.x suite passes 51/51 registered
+  tests, with that one expected skip reported separately (2026-07-30). The
+  overlapping V2 labels cover 45 `v2`, 3
   `v2.0`, 1 `v2.1`, and 6 `v2.2` contracts, including real-PC3.4 startup and
   Prison runtime captures. This is a regression receipt for the implemented
   paths only; unreconciled F0128 material families and the CSBWin spell owner
