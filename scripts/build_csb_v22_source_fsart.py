@@ -16,11 +16,10 @@ import importlib.util
 import io
 import json
 import sys
-import tempfile
 import zipfile
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageEnhance, ImageFilter
 
 
 def load_studio(repo_root: Path):
@@ -117,6 +116,18 @@ def fit_source(image: Image.Image, size: tuple[int, int]) -> Image.Image:
     return canvas
 
 
+def restore_10x(image: Image.Image, scale: int) -> Image.Image:
+    """Upscale a decoded original without inventing any replacement pixels."""
+    restored = image.resize((image.width * scale, image.height * scale),
+                            resample=Image.Resampling.LANCZOS)
+    restored = restored.filter(ImageFilter.MedianFilter(3))
+    restored = restored.filter(ImageFilter.GaussianBlur(0.65))
+    restored = ImageEnhance.Color(restored).enhance(1.13)
+    restored = ImageEnhance.Contrast(restored).enhance(1.06)
+    return restored.filter(ImageFilter.UnsharpMask(radius=2.6, percent=72,
+                                                    threshold=10))
+
+
 def main() -> int:
     repo_root = Path(__file__).resolve().parents[1]
     parser = argparse.ArgumentParser(description=__doc__)
@@ -124,6 +135,10 @@ def main() -> int:
                         default=Path.home() / ".firestaff" / "data" / "csb" / "GRAPHICS.DAT")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--pack-id", default="firestaff-csb-v22-pc34-source")
+    parser.add_argument("--all-assets", action="store_true",
+                        help="export every decodable original GRAPHICS.DAT bitmap")
+    parser.add_argument("--scale", type=int, default=10,
+                        help="source-only scale for --all-assets (2-10, default: 10)")
     args = parser.parse_args()
 
     graphics_dat = args.graphics_dat.expanduser().resolve()
@@ -133,6 +148,8 @@ def main() -> int:
     if output.suffix.lower() != ".fsart":
         output = output.with_suffix(".fsart")
     output.parent.mkdir(parents=True, exist_ok=True)
+    if args.scale < 2 or args.scale > 10:
+        raise SystemExit("--scale must be between 2 and 10")
 
     studio = load_studio(repo_root)
     source_bytes = graphics_dat.read_bytes()
@@ -147,7 +164,9 @@ def main() -> int:
         "source": {
             "file": graphics_dat.name,
             "sha256": hashlib.sha256(source_bytes).hexdigest(),
-            "pipeline": "CSB IMG2 decode, nearest-neighbor cache normalization only",
+            "pipeline": ("CSB IMG2 decode, Lanczos, median deblock, Gaussian smoothing, "
+                         "palette expansion, restrained local contrast" if args.all_assets else
+                         "CSB IMG2 decode, nearest-neighbor cache normalization only"),
             "syntheticContent": False,
         },
         "warnings": warnings,
@@ -156,53 +175,45 @@ def main() -> int:
     for category in studio.categories_for_game("csb"):
         manifest[category] = []
 
-    with tempfile.TemporaryDirectory(prefix="firestaff-csb-v22-") as td:
-        root = Path(td)
-        for category, asset_id, index, size, rationale, projection_status in SOURCE_SLOTS:
-            asset = by_index.get(index)
-            if not asset or asset.warning:
-                raise SystemExit(f"source record {index} is not decodable: {asset.warning if asset else 'missing'}")
+    selected = assets if args.all_assets else [by_index[index] for _, _, index, *_ in SOURCE_SLOTS]
+    with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED,
+                         compresslevel=6, allowZip64=True) as archive:
+        written = 0
+        for asset in selected:
+            if asset.warning or asset.width <= 0 or asset.height <= 0:
+                manifest.setdefault("skippedAssets", []).append({"id": asset.asset_id,
+                                                                    "reason": asset.warning or "zero-size source record"})
+                continue
             record = source_bytes[asset.offset:asset.offset + asset.compressed_bytes]
-            transparent_index = 10 if category == "door_shapes" else None
-            original = studio.csb_img2_to_image(
-                record, asset.width, asset.height, transparent_index=transparent_index)
-            image = fit_source(original, size)
-            category_dir = root / category
-            category_dir.mkdir(parents=True, exist_ok=True)
-            filename = f"{asset_id}.png"
-            image.save(category_dir / filename, format="PNG", optimize=False,
-                       compress_level=6)
-            manifest[category].append({
-                "id": asset_id,
+            try:
+                original = studio.csb_img2_to_image(record, asset.width, asset.height)
+                image = restore_10x(original, args.scale) if args.all_assets else fit_source(
+                    original, next(size for _, asset_id, _, size, *_ in SOURCE_SLOTS if asset_id == asset.asset_id))
+            except Exception as exc:
+                manifest.setdefault("skippedAssets", []).append({"id": asset.asset_id, "reason": str(exc)})
+                continue
+            filename = f"{asset.asset_id}{'_10x' if args.all_assets else ''}.png"
+            import io
+            png = io.BytesIO()
+            image.save(png, format="PNG", optimize=False, compress_level=6)
+            archive.writestr(f"{asset.category}/{filename}", png.getvalue())
+            manifest[asset.category].append({
+                "id": asset.asset_id,
                 "source_file": filename,
                 "width": image.width,
                 "height": image.height,
-                "generator": "original_csb_pc34_graphics_dat",
-                "source_graphic_index": index,
+                "generator": "original_csb_pc34_graphics_dat_10x" if args.all_assets else "original_csb_pc34_graphics_dat",
+                "source_graphic_index": asset.index,
                 "source_record_sha256": asset.sha256,
             })
-            manifest["routeProvenance"].append({
-                "id": asset_id,
-                "category": category,
-                "sourceGraphicIndex": index,
-                "sourceDimensions": [asset.width, asset.height],
-                "sourceRecordSha256": asset.sha256,
-                "outputDimensions": [image.width, image.height],
-                "transparentIndex": transparent_index,
-                "rationale": rationale,
-                "f0128ProjectionStatus": projection_status,
-            })
+            written += 1
+            if written % 50 == 0:
+                print(f"wrote {written}/{len(selected)} source records", flush=True)
+        manifest["assetCount"] = written
+        manifest["routeProvenance"] = [] if args.all_assets else manifest["routeProvenance"]
+        archive.writestr("modern_asset_manifest.json", json.dumps(manifest, indent=2) + "\n")
 
-        manifest["assetCount"] = len(SOURCE_SLOTS)
-        (root / "modern_asset_manifest.json").write_text(
-            json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-        pack = studio.Artpack("csb", root)
-        pack.load_or_create()
-        pack.build_v22_runtime_cache()
-        pack.write_finish_receipt("source-derived build")
-        pack.export_fsart(output)
-
-    print(f"wrote {len(SOURCE_SLOTS)} source-derived CSB V2.2 assets: {output}")
+    print(f"wrote {written} source-derived CSB V2.2 assets: {output}")
     return 0
 
 
