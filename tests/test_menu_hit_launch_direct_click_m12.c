@@ -88,7 +88,9 @@ int main(void) {
     const int settingsColumnW = (1920 - 2 * 96 - 2 * 36 - 24) / 2;
     const int settingsLeftColumnCycleX = 132 + settingsColumnW * 4 / 5;
     const int settingsRightColumnCycleX = 132 + settingsColumnW + 24 + settingsColumnW * 4 / 5;
-    const int settingsSmoothTurnPanCenterY = 260 + 36 + 4 * 70 + 25;
+    /* Graphics publishes twelve rows. Smooth Turn Pan is the final row in
+     * the second six-row column. */
+    const int settingsSmoothTurnPanCenterY = 260 + 36 + 5 * 70 + 25;
     const int settingsDataDirCenterY = 260 + 36 + 1 * 70 + 25;
     const int settingsExportCenterY = 260 + 36 + 3 * 70 + 25;
     const int settingsImportCenterY = 260 + 36 + 4 * 70 + 25;
@@ -230,10 +232,10 @@ int main(void) {
     state.view = M12_MENU_VIEW_SETTINGS;
     if (!expect(M12_StartupMenu_SetDataDirectory(&state, manualDir) == 1,
                 "manual data directory setter should accept an existing arbitrary folder")) return 1;
-    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualPhysicalDir) == 0,
-                "manual data directory setter should rescan the chosen folder")) return 1;
+    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
+                "manual data directory setter should preserve the chosen folder spelling")) return 1;
     M12_Config_Load(&config, NULL);
-    if (!expect(strcmp(config.dataDir, manualPhysicalDir) == 0,
+    if (!expect(strcmp(config.dataDir, manualDir) == 0,
                 "manual data directory setter should persist the chosen folder")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     state.view = M12_MENU_VIEW_SETTINGS;
@@ -243,11 +245,23 @@ int main(void) {
                 "Import Settings missing-file click should show a public result message")) return 1;
     if (!expect(strcmp(state.messageLine1, "IMPORT FAILED") == 0,
                 "Import Settings missing-file click should report import failure")) return 1;
-    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualPhysicalDir) == 0,
+    if (!expect(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), manualDir) == 0,
                 "failed settings import should preserve the active data directory")) return 1;
     M12_Config_Load(&config, NULL);
-    if (!expect(strcmp(config.dataDir, manualPhysicalDir) == 0,
+    if (!expect(strcmp(config.dataDir, manualDir) == 0,
                 "failed settings import should preserve the persisted data directory")) return 1;
+
+    /* Museum is rendered in the left Firestaff rail, rather than one of the
+     * six grid tiles. It must remain a first-class mouse route. */
+    M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
+    if (state.view == M12_MENU_VIEW_MESSAGE) {
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    }
+    changed = M12_ModernMenu_HandlePointer(&state, 42 + 24 + (390 - 48) / 2,
+                                           40 + (1080 - 132) - 106 + 29,
+                                           1, NULL);
+    if (!expect(changed == 1 && state.view == M12_MENU_VIEW_MUSEUM,
+                "Museum rail button should open Museum of Lore with a click")) return 1;
 
     puts("ok: mouse hover navigates main cards; clicks open DM1, Firestaff settings and launch DM1; Smooth Turn Pan toggles/persists; settings rows export/import JSON, missing import preserves data directory, and data directory accepts an arbitrary selected folder");
     return 0;

@@ -17,6 +17,12 @@
 /* --- Main view layout (mirrors draw_main_view) --- */
 #define M12_HIT_MAIN_RAIL_X         42
 #define M12_HIT_MAIN_RAIL_W         390
+#define M12_HIT_MAIN_RAIL_Y         40
+#define M12_HIT_MAIN_RAIL_H         (M12_HIT_CANVAS_H - 132)
+#define M12_HIT_MAIN_MUSEUM_X       (M12_HIT_MAIN_RAIL_X + 24)
+#define M12_HIT_MAIN_MUSEUM_Y       (M12_HIT_MAIN_RAIL_Y + M12_HIT_MAIN_RAIL_H - 106)
+#define M12_HIT_MAIN_MUSEUM_W       (M12_HIT_MAIN_RAIL_W - 48)
+#define M12_HIT_MAIN_MUSEUM_H       58
 #define M12_HIT_MAIN_GRID_LEFT      (M12_HIT_MAIN_RAIL_X + M12_HIT_MAIN_RAIL_W + 44)
 #define M12_HIT_MAIN_GRID_TOP       40
 #define M12_HIT_MAIN_GRID_BOTTOM    (M12_HIT_CANVAS_H - 130)
@@ -304,6 +310,20 @@ M12_MouseHit M12_ModernMenu_HitTest(const M12_StartupMenuState* state,
             int entryCount = M12_StartupMenu_GetEntryCount();
             int cardCount = M12_HIT_MAIN_CARD_MAX_COUNT;
             int settingsIndex = entryCount - 1;
+            /* Five game covers and Settings occupy the 3x2 grid.  The
+             * Museum is deliberately presented in the Firestaff rail, so
+             * give it an equally direct pointer path instead of leaving it
+             * keyboard-only. */
+            if (entryCount > 5 &&
+                rect_contains(M12_HIT_MAIN_MUSEUM_X,
+                              M12_HIT_MAIN_MUSEUM_Y,
+                              M12_HIT_MAIN_MUSEUM_W,
+                              M12_HIT_MAIN_MUSEUM_H,
+                              x, y)) {
+                hit.kind = M12_HIT_MAIN_CARD;
+                hit.index = 5;
+                return hit;
+            }
             if (settingsIndex < 0) settingsIndex = 0;
             for (i = 0; i < cardCount; ++i) {
                 if (m12_hit_main_card_rect(i, cardCount, &rx, &ry, &rw, &rh) &&

@@ -1492,6 +1492,26 @@ static void draw_main_view(M12_ModernCanvas* c, const M12_StartupMenuState* stat
 
     draw_tall_firestaff_rail(c, state, railX, railY, railW, railH);
 
+    /* The six-card grid carries the five games plus Settings.  Keep Museum
+     * of Lore visible and mouse-addressable in the permanent Firestaff rail
+     * rather than burying it behind keyboard-only navigation. */
+    if (entryCount > 5) {
+        const int museumX = railX + 24;
+        const int museumY = railY + railH - 106;
+        const int museumW = railW - 48;
+        const int museumH = 58;
+        const int selected = state->selectedIndex == 5;
+        M12_RGB fill = selected ? rgb(45, 39, 77) : rgb(26, 24, 52);
+        M12_RGB edge = selected ? COLOR_ACCENT() : COLOR_PANEL_EDGE();
+        ModernTextStyle label = text_style_make(2,
+            selected ? COLOR_ACCENT_HI() : COLOR_TEXT(), 1);
+        fill_rounded_rect(c, museumX, museumY, museumW, museumH, 8, fill);
+        stroke_rounded_rect(c, museumX, museumY, museumW, museumH, 8, edge);
+        draw_text_centered_fit(c, museumX + museumW / 2, museumY + 19,
+                               M12_StartupMenu_Translate(state, "MUSEUM OF LORE"),
+                               &label, museumW - 30);
+    }
+
     for (int i = 0; i < 6; ++i) {
         int entryIndex = i < 5 ? i : settingsIndex;
         int col = i % cols;
