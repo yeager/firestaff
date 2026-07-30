@@ -5,7 +5,8 @@
   write; original slot names retain CSBWin's `.BAK` rotation. This is not a
   mutation writer until the dungeon tail has a real owner. Verification:
   `test_csb_v1_csbwin_save_provenance_pc34_compat` passes 14/14, including
-  byte-identical export of the official local `csbgame3.dat` corpus.
+  byte-identical export of the staged local `csbgame3.dat` corpus
+  (SHA-256 `7becf812492ca16f085215963c0ce8d4ef8c78dd`).
 
 - ✅ 2026-07-30 CSB direct-package boot: the runtime now checks the selected
   directory and its game-specific `csb/` child for hash-authenticated
@@ -43431,10 +43432,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
 
 # CSBWin real-save resume corpus (2026-07-30)
 
-- The official CSBWin `csbgame3.dat` corpus now completes production resume:
+- The staged CSBWin `csbgame3.dat` corpus now completes production resume:
   verified Extended Features, C29 GAMEBLOCK1, 12-byte sequenced TIMER stream,
   436 timer slots, party state and source-file provenance. The focused
-  `test_csb_v1_csbwin_save_provenance_pc34_compat` passes 10/10 with
+  `test_csb_v1_csbwin_save_provenance_pc34_compat` passes 14/14 with
   `FIRESTAFF_CSBWIN_REAL_SAVE` set to the staged original file. Its later
   dungeon payload remains opaque rather than being falsely consumed as EXPOOL;
   full tail loading and write-back remain tracked in `CSB-ORIGINAL-SAVE-CORPUS`.

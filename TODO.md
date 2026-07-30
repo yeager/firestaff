@@ -1474,8 +1474,8 @@ that its exact runtime path is not already source-locked and tested.
     `FIRESTAFF_CSB_ATARI_SAVE_CORPUS` and exercises original big-endian
     GAMEBLOCK1/2 decoding, runtime Resume, atomic write-back, canonical-slot
     backup recovery, and champion mutation without creating substitute bytes.
-    2026-07-30: a real official CSBWin `csbgame3.dat` corpus save (61,465
-    bytes; SHA-256 `b3a8d7fb920346835c48c86a945d90d565b6bc5c250f83b5a56c1b0d8b95ec70`)
+    2026-07-30: the currently staged real CSBWin `csbgame3.dat` corpus save
+    (61,465 bytes; SHA-256 `7becf812492ca16f085215963c0ce8d4ef8c78dd`)
     now completes the production resume handoff. Its authenticated Extended
     Features preamble selects the 12-byte sequenced TIMER layout, its C29
     GAMEBLOCK1 uses big-endian stream authentication, and all 436 timer slots
@@ -1483,6 +1483,12 @@ that its exact runtime path is not already source-locked and tested.
     it is preserved in source provenance but not misclassified as EXPOOL.
     Remaining: full original dungeon-tail loader/write-back and a broader
     multi-version corpus with DSA-bearing saves.
+    2026-07-30 current-host verification: the staged file completes the
+    production resume handoff and byte-identical provenance export through
+    `test_csb_v1_csbwin_save_provenance_pc34_compat` (14/14 with
+    `FIRESTAFF_CSBWIN_REAL_SAVE` set). This verifies the accepted core and
+    preserved tail only; it does not promote the opaque dungeon tail to a
+    mutable runtime owner.
     2026-07-30: resumed CSBWin source saves can now be exported byte-for-byte
     through their FNV-bound provenance, including the Extended Features prefix
     and opaque variable dungeon payload. The export refuses any source file
