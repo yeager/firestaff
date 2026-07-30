@@ -43614,3 +43614,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   HUD ownership, F10 graphics settings, filters, resolution, V2.1 capture,
   and the reviewed V2.2 source-artpack route. This verifies implemented
   behavior only; unadmitted F0128 material families remain open in `TODO.md`.
+# CSBWin TAG0088b2 wall projection rectangles (2026-07-30)
+
+- ✅ The CSBWin viewport mapping now exposes the exact `wallRectangles[]`
+  index for every visible wall lane, independently of source-bitmap and
+  F3R2 mirror selection. `test_csb_v1_csbwin_layout_0232` passes against the
+  local Atari-ST `GRAPHICS.DAT`.

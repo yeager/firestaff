@@ -2,6 +2,15 @@
 
 ## Active DM1/CSB Symbol Queue
 
+- **CSB-V1-CSBWIN-TAG0088B2-PROJECTION-RECTANGLES:** Closed 2026-07-30.
+  `csb_v1_csbwin_viewport_wall_projection_rectangle()` now locks all thirteen
+  visible CSBWin wall lanes to the exact `Viewport.cpp:2304-2317`
+  `wallRectangles[]` selection: F3L2=13, F3L1=1, F3=0, F3R1=2, F3R2=12,
+  F2L1=4, F2=3, F2R1=5, F1L1=7, F1=6, F1R1=8, F0L1=10, F0R1=11. The
+  F3R2 bitmap mirror remains separately source-locked. Verified by the
+  CSBWin layout test against the local Atari-ST `GRAPHICS.DAT`; this locks
+  command identity, not the still-open native-raster V2.2 material handoff.
+
 ReDMCSB is the primary reference for DM1/CSB shared engine behavior. For
 CSB-specific DSA, save, Utility Disk, and extended-runtime behavior, use
 CSBWin alongside it. Reuse or bind verified PC34 owners and authentic game
