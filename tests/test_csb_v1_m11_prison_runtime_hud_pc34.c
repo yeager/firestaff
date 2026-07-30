@@ -49,7 +49,6 @@ int main(void)
     int x;
     int y;
     int c013_nonblack = 0;
-    int c009_nonblack = 0;
     int viewport_nonblack = 0;
     const M11_AssetSlot *c013;
     unsigned char *decoded = NULL;
@@ -129,13 +128,6 @@ int main(void)
         view.dm1SpellCasting.input[0].symbolStep = 0;
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
-        for (y = 42; y < 67; ++y) {
-            for (x = 233; x < 320; ++x) {
-                if (framebuffer[y * 320 + x] != 0u) {
-                    ++c009_nonblack;
-                }
-            }
-        }
         /* C009 itself may be all palette index zero in an original save
          * state. The following C100/F1 input receipts verify the fresh
          * GAMEBLOCK party mirror rather than treating a transparent source
