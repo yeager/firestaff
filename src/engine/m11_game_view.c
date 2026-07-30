@@ -716,6 +716,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                                  unsigned char* framebuffer,
                                  int framebufferWidth,
                                  int framebufferHeight);
+static void m11_clear_dm1_v1_top_row_receipt_zones(
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
 static void m11_fill_rect(unsigned char* framebuffer,
                           int framebufferWidth,
                           int framebufferHeight,
@@ -2334,6 +2338,29 @@ static int m11_csb_v1_install_runtime_hud_materials(M11_GameViewState *state)
     return 1;
 }
 
+/* CHAMDRAW.C F0287/F0291/F0292 and F0320/F0345 use these independent
+ * GRAPHICS.DAT records after C017/C040 has been installed.  They are not
+ * interchangeable with the generic DM1 cache: all must be admitted from the
+ * active CSB package before the shared champion-row consumer may draw. */
+static int m11_csb_v1_install_runtime_champion_materials(
+    const M11_GameViewState *state)
+{
+    static const unsigned int graphics[] = {
+        8u, 15u, 16u, 28u, 32u, 33u, 34u, 35u, 37u, 38u, 39u
+    };
+    size_t index;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        return 0;
+    }
+    for (index = 0; index < sizeof(graphics) / sizeof(graphics[0]); ++index) {
+        if (!m11_csb_install_runtime_source_graphic(state, graphics[index])) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
                                         unsigned char *framebuffer,
                                         int framebufferWidth,
@@ -2372,6 +2399,15 @@ static void m11_draw_csb_v1_runtime_hud(const M11_GameViewState *state,
          * receipt must not replace them with an M11 party fallback. */
         m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth,
                                     framebufferHeight);
+        m11_clear_csb_v1_message_area_source_owned(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+        return;
+    }
+    if (!m11_csb_v1_install_runtime_champion_materials(state)) {
+        /* The shared renderer is permitted to draw the row only after every
+         * source-owned CHAMDRAW surface is installed through CSB's decoder. */
+        m11_clear_dm1_v1_top_row_receipt_zones(
+            framebuffer, framebufferWidth, framebufferHeight);
         m11_clear_csb_v1_message_area_source_owned(
             state, framebuffer, framebufferWidth, framebufferHeight);
         return;

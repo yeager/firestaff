@@ -43326,3 +43326,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   presentation, startup, HUD, filter, source-artpack and runtime-handoff
   coverage. This verifies implemented behavior only; the source-data gaps
   explicitly retained in `TODO.md` remain open.
+
+- ✅ 2026-07-30 CSB champion-row decoder ownership: source-owned C008/C028,
+  hand-frame, poison, damage and shield records are installed through CSB
+  PC3.4 IMG3/LZW as one package-scoped CHAMDRAW set. V1/V2.0/V2.1 runtime HUD
+  plus V2.2 presentation paths now fail closed instead of consuming DM1 cache
+  pixels. Verification: 10 focused V1/V2.x tests PASS.

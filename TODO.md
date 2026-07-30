@@ -227,6 +227,14 @@ an integration build pass.
   `csb_v22_source_artpack_runtime`, `csb_v2_hud_overlay_pc34` and
   `csb_v2_hud_runtime` PASS.
 
+- **CSB-V1-RUNTIME-CHAMPION-DECODER-OWNERSHIP:** Closed 2026-07-30. The
+  complete live CHAMDRAW material set (C008, C028, C033--C035, C015/C016,
+  C032 and C037--C039) is now decoded from the active CSB PC3.4 package
+  before the shared champion-row consumer runs. Incomplete source material
+  clears the row rather than borrowing DM1 cache pixels. Verification:
+  V1/V2.0/V2.1 Prison HUD, viewport, V2.x startup, V2.2 source-artpack and
+  V2 HUD tests PASS (10 focused tests).
+
 - **CSB-V21-LIVE-UPSCALE-CONSUMPTION:** Closed 2026-07-29. The F10 CSB
   filter page now exposes the actual CSB V2.1 EPX scale (1x/2x/4x) and
   bilinear setting alongside the CSB filter chain. M11 consumes the
