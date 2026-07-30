@@ -224,7 +224,10 @@ diagnostic; it must not silently fall back to a generated visual.
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less
-  F0 local-cell rectangle into invented pixels.
+  F0 local-cell rectangle into invented pixels.  **2026-07-30 update:** the
+  retired missing-modern-art checkerboard now fails closed (no surface), so
+  it cannot substitute generated pixels while the remaining original-material
+  bindings are recovered.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

@@ -105,7 +105,12 @@ int  csb_v22_get_epx_cache_warm(void);
  * Fallback chain: MODERN → UPSCALED (V2.1) → FILTERED (V2.0) → ORIGINAL (V1). */
 CSB_V22_ShapeSource csb_v22_best_available_shape_source(int presentation_mode_index);
 
-/* csb_v22_get_missing_placeholder — 16x16 RGBA magenta checkerboard. */
+/*
+ * Compatibility query for the retired missing-asset fallback.  A missing V2.2
+ * bitmap must leave the original V1 command intact, never substitute generated
+ * pixels.  This function therefore returns NULL and reports a zero-sized
+ * surface.
+ */
 const uint32_t* csb_v22_get_missing_placeholder(int* out_w, int* out_h);
 
 /* csb_v22_get_shape_path — resolves (category, asset_id) from manifest

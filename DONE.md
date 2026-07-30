@@ -44029,6 +44029,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   F3R2 mirror selection. `test_csb_v1_csbwin_layout_0232` passes against the
   local Atari-ST `GRAPHICS.DAT`.
 
+# CSB V2.2 missing-art containment (2026-07-30)
+
+- ✅ Retired the 16×16 magenta checkerboard missing-art surface from the CSB
+  V2.2 modern-asset boundary. A missing modern bitmap now reports a null,
+  zero-sized surface, leaving the source-owned V1 command intact rather than
+  injecting generated pixels. `test_csb_v22_modern_assets_pc34` covers this
+  fail-closed contract. This does not claim completion of the still-open
+  source-material bindings in `CSB-ORIGINAL-REPLACE-001`.
+
 # M12 startup-menu reliability pass (2026-07-30)
 
 # DM1 C015 host-message regression containment (2026-07-30)
