@@ -232,6 +232,10 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "boot-probe refuses invalid script tokens before data scan");
 
     M11_PhaseA_SetDefaultOptions(&opts);
+    expect_true(opts.savePath == NULL,
+                "phase-a default leaves optional save path unset");
+    expect_true(opts.retroAchievementsEndpoint == NULL,
+                "phase-a default leaves optional RA endpoint unset");
     expect_true(opts.bootProbeFrames == 0,
                 "boot-probe default advances zero startup frames");
     expect_true(opts.bootProbeExpectRuntime == 0,

@@ -44238,6 +44238,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   for the corrected I34E swoosh dwell and C001-to-Entrance cadence.
 # DM1 original-save CLI resume (2026-07-30)
 
+- ✅ 2026-07-30 Fixed DM1 direct new-game launch: Phase-A option defaults
+  now initialize the optional save path, preventing an unset CLI `--save`
+  field from becoming a bogus resume path after DUNGEON.DAT loaded. Verified
+  with both direct no-save HoC entry and an explicit original PC34 `DMSAVE.DAT`
+  resume under the dummy SDL runtime.
+
 - ✅ 2026-07-30 DM1 Entrance credits now render the real decoded C005 page
   with ReDMCSB `ENTRANCE.C:F0442`'s G0019 credits palette. The source receipt's
   availability flag is no longer treated as the special-palette index, and a

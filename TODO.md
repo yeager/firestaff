@@ -69,6 +69,13 @@
   as a palette index, selecting the Entrance palette; it no longer falls back
   to a generated credits card when real C005 is present. Focused CTest passes.
 
+- **DM1-DIRECT-LAUNCH-OPTION-INITIALIZATION:** Closed 2026-07-30. The
+  Phase-A defaults now explicitly clear optional `savePath` and
+  RetroAchievements endpoint fields. An unset `savePath` had been read as a
+  stray pointer, causing `--game dm1` to fail after DUNGEON.DAT loaded by
+  attempting an unintended save resume. New-game and explicit PC34-save
+  direct launches both pass.
+
 - **DM1-V1-F0172-TELEPORTER-ASPECT:** Closed 2026-07-30. M11 now requires
   both original teleporter `VISIBLE` and `OPEN` bits before exposing the
   F0113 field route. The movement, stairs/pits and SHOOT source gates were

@@ -2780,6 +2780,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->presentEveryMs = 16;
     opts->script         = NULL;
     opts->dataDir        = NULL;
+    opts->savePath       = NULL;
     opts->gameId         = NULL;
     opts->directLaunch   = 0;
     opts->bootProbe      = 0;
@@ -2814,6 +2815,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->retroAchievementsHardcore = 1;
     opts->retroAchievementsUser = NULL;
     opts->retroAchievementsToken = NULL;
+    opts->retroAchievementsEndpoint = NULL;
 }
 
 static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
