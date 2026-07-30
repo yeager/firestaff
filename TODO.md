@@ -300,7 +300,10 @@ an integration build pass.
   floor/ceiling records in sets 0--3. This supplies the exact packed-source
   boundary for the later `TAG0088b2` projection port, but does not yet claim
   that its planar destination masks or F0128 command geometry have been
-  recovered.
+  recovered. The recovered `Viewport.cpp:2267-2279` source map now also
+  resolves every visible CSBWin stone lane to its real six-image owner;
+  F3R2 is explicitly reflected from F3L2 through the original `MakeMirror`
+  step rather than read as a non-existent extra GRAPHICS.DAT record.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature

@@ -337,6 +337,7 @@ int main(void)
     CHECK(csb_v1_csbwin_layout_0232_decode(graphic, sizeof(graphic), &layout));
     {
         uint16_t graphic_index = 0;
+        int mirrored = 0;
         CHECK(csb_v1_csbwin_viewport_graphic_index(0u, 0u, &graphic_index) &&
               graphic_index == 77u);
         CHECK(csb_v1_csbwin_viewport_graphic_index(3u, 12u, &graphic_index) &&
@@ -350,6 +351,17 @@ int main(void)
         CHECK(csb_v1_csbwin_packed_byte_width(45u, &graphic_index) &&
               graphic_index == 23u);
         CHECK(!csb_v1_csbwin_packed_byte_width(0u, &graphic_index));
+        CHECK(csb_v1_csbwin_viewport_wall_source(0u,
+            CSB_V1_CSBWIN_VIEWPORT_WALL_F3L2, &graphic_index, &mirrored) &&
+              graphic_index == 89u && !mirrored);
+        CHECK(csb_v1_csbwin_viewport_wall_source(0u,
+            CSB_V1_CSBWIN_VIEWPORT_WALL_F3R2, &graphic_index, &mirrored) &&
+              graphic_index == 89u && mirrored);
+        CHECK(csb_v1_csbwin_viewport_wall_source(3u,
+            CSB_V1_CSBWIN_VIEWPORT_WALL_F0R1, &graphic_index, &mirrored) &&
+              graphic_index == 123u && !mirrored);
+        CHECK(!csb_v1_csbwin_viewport_wall_source(0u,
+            CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT, &graphic_index, &mirrored));
     }
     CHECK(layout.valid);
     CHECK(layout.party_direction[3].x1 == 70 && layout.party_direction[3].x2 == 89);
