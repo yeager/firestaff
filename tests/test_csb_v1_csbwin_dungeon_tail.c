@@ -27,6 +27,8 @@ static void check_staged_real_save(void)
     CSB_V1_CSBWinExtendedFeaturesReport features;
     CSB_V1_CSBWin512BodyReport body;
     CSB_V1_CSBWinDungeonTailPrefix prefix;
+    uint16_t computed;
+    uint16_t stored;
 
     if (!path || path[0] == '\0') {
         puts("SKIP: FIRESTAFF_CSBWIN_REAL_SAVE is not staged");
@@ -67,12 +69,18 @@ static void check_staged_real_save(void)
               body.appended_size, features.flags, &prefix) == 0);
     CHECK(prefix.valid && prefix.level_count > 0u);
     CHECK(prefix.next_database_offset < body.appended_size);
+    CHECK(csb_v1_csbwin_dungeon_tail_validate_checksum(
+              bytes + extension.next_payload_offset + body.appended_offset,
+              body.appended_size, &computed, &stored) == 1);
+    CHECK(computed == stored);
     free(bytes);
 }
 
 int main(void)
 {
     uint8_t tail[512];
+    const uint8_t checksum_good[] = { 1u, 2u, 3u, 0u, 6u };
+    const uint8_t checksum_bad[] = { 1u, 2u, 3u, 0u, 7u };
     CSB_V1_CSBWinDungeonTailPrefix report;
     const size_t levels = 2u;
     const size_t descriptors = CSB_V1_CSBWIN_DUNGEON_INDEX_BYTES +
@@ -108,6 +116,11 @@ int main(void)
     CHECK(report.indirect_text);
     CHECK(csb_v1_csbwin_dungeon_tail_parse_prefix(tail, 43u, 0u, &report) ==
           CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_TRUNCATED);
+    CHECK(csb_v1_csbwin_dungeon_tail_validate_checksum(
+              checksum_good, sizeof(checksum_good), NULL, NULL) == 1);
+    CHECK(csb_v1_csbwin_dungeon_tail_validate_checksum(
+              checksum_bad, sizeof(checksum_bad), NULL, NULL) == 0);
+    CHECK(csb_v1_csbwin_dungeon_tail_validate_checksum(NULL, 0u, NULL, NULL) == -1);
     put_be16(tail + 4u, 0u);
     CHECK(csb_v1_csbwin_dungeon_tail_parse_prefix(tail, sizeof(tail), 0u,
               &report) == CSB_V1_CSBWIN_DUNGEON_TAIL_ERR_LEVEL_COUNT);

@@ -91,6 +91,26 @@ int csb_v1_csbwin_dungeon_tail_parse_prefix(
     return CSB_V1_CSBWIN_DUNGEON_TAIL_OK;
 }
 
+int csb_v1_csbwin_dungeon_tail_validate_checksum(
+    const uint8_t *tail,
+    size_t tail_size,
+    uint16_t *out_computed,
+    uint16_t *out_stored)
+{
+    uint16_t computed = 0u;
+    uint16_t stored;
+    size_t i;
+
+    if (!tail || tail_size < 2u) return -1;
+    for (i = 0u; i + 2u < tail_size; ++i) {
+        computed = (uint16_t)(computed + tail[i]);
+    }
+    stored = read_be16(tail + tail_size - 2u);
+    if (out_computed) *out_computed = computed;
+    if (out_stored) *out_stored = stored;
+    return computed == stored ? 1 : 0;
+}
+
 const char *csb_v1_csbwin_dungeon_tail_source_evidence(void)
 {
     return "CSBWin SaveGame.cpp:1236-1337,2536-2840; "

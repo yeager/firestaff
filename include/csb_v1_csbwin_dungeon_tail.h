@@ -57,6 +57,16 @@ int csb_v1_csbwin_dungeon_tail_parse_prefix(
     uint8_t extended_flags,
     CSB_V1_CSBWinDungeonTailPrefix *out);
 
+/* CSBWin SaveGame.cpp WriteAndChecksum()/ReadDatabases() carries a running
+ * unsigned-byte checksum over the tail and stores its final u16 in big-endian
+ * order. Returns 1 for a verified tail, 0 for a checksum mismatch, and -1
+ * for an invalid argument or a tail without the terminal checksum word. */
+int csb_v1_csbwin_dungeon_tail_validate_checksum(
+    const uint8_t *tail,
+    size_t tail_size,
+    uint16_t *out_computed,
+    uint16_t *out_stored);
+
 const char *csb_v1_csbwin_dungeon_tail_source_evidence(void);
 
 #ifdef __cplusplus

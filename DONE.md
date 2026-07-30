@@ -1,10 +1,10 @@
 - ✅ 2026-07-30 CSBWin dungeon-tail framing: Firestaff now parses the
   source-defined saved-dungeon prefix after the authenticated CSBWin core:
   `DUNGEONDATINDEX`, level descriptors, column-pointer extent, object-list
-  extent and direct/indirect text extent. It checks all bounds before exposing
-  the first DB offset and remains read-only until DB0--DB15 have a full live
-  owner. Verification: the focused framing test passes on its data-free
-  contract and on the staged 61,465-byte CSBWin corpus.
+  extent and direct/indirect text extent, and verifies CSBWin's terminal
+  big-endian running byte checksum. It remains read-only until DB0--DB15 have
+  a full live owner. Verification: the focused framing test passes on its
+  data-free contract and on the staged 61,465-byte CSBWin corpus.
 
 - ✅ 2026-07-30 CSBWin source-save preservation: a resumed CSBWin save now
   exports through an FNV-bound, source-preserving writer, retaining the full

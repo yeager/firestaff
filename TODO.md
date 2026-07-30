@@ -1505,9 +1505,13 @@ that its exact runtime path is not already source-locked and tested.
     exact bounds for `DUNGEONDATINDEX`, `LEVELDESC`, column pointers, object
     list and direct/indirect text. It passes the data-free framing contract
     and the staged `csbgame3.dat` corpus after the authenticated 12-byte
-    TIMER core. DB0--DB15, cell flags and the final running checksum remain
-    deliberately unowned; this is an admission boundary, not a synthetic
-    dungeon loader.
+    TIMER core. DB0--DB15 and cell flags remain deliberately unowned; this is
+    an admission boundary, not a synthetic dungeon loader.
+    2026-07-30: the same reader now verifies the source terminal checksum:
+    `WriteAndChecksum`/`FetchDataBytes` accumulate unsigned bytes modulo
+    65536 and `ReadDatabases` reads the terminal big-endian u16. The staged
+    corpus passes this check. DB0--DB15 and cell flags remain the only
+    unconsumed tail sections.
     2026-07-30: resumed CSBWin source saves can now be exported byte-for-byte
     through their FNV-bound provenance, including the Extended Features prefix
     and opaque variable dungeon payload. The export refuses any source file
