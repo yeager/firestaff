@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 CSB title/import menu source-kind test hardening: the
+  title, entrance and C002/C003 test surfaces now explicitly identify as
+  GRAPHICS.DAT material instead of silently taking the zero-valued source
+  kind. This removes four incomplete aggregate initializers and keeps the
+  menu-raster regression aligned with the source-owned production contract.
+  The complete title/import UI gate passes 137/137.
+
 - ✅ 2026-07-30 CSB startup placeholder audit: verified the active PC3.4
   startup chain against local original data. C001 title, C002/C003 doors,
   C004 entrance, C005 credits and C017/C040 HUD are all decoded from the

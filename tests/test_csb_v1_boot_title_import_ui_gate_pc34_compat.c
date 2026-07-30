@@ -782,7 +782,13 @@ static void test_runtime_rasterizer_composes_title_and_opening_from_owned_pixels
     frame.no_legacy_wrappers = 1;
     frame.frame_route_hash = 77u;
     frame.title_surface = &(CSB_V1_StartupRuntimeSurface_PC34){
-        title, 320, 80, 1, 1, 0, 0, -1};
+        .pixels = title,
+        .width = 320,
+        .height = 80,
+        .source_asset_id = 1,
+        .valid = 1,
+        .transparent_color = -1,
+        .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34};
     plan.surface = CSB_V1_STARTUP_RENDER_TITLE_PC34;
     plan.title_source_x = 0;
     plan.title_source_y = 0;
@@ -802,11 +808,29 @@ static void test_runtime_rasterizer_composes_title_and_opening_from_owned_pixels
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
 
     frame.entrance_surface = &(CSB_V1_StartupRuntimeSurface_PC34){
-        entrance, 320, 200, 4, 1, 0, 0, -1};
+        .pixels = entrance,
+        .width = 320,
+        .height = 200,
+        .source_asset_id = 4,
+        .valid = 1,
+        .transparent_color = -1,
+        .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34};
     frame.left_door_surface = &(CSB_V1_StartupRuntimeSurface_PC34){
-        left, 128, 161, 2, 1, 0, 0, -1};
+        .pixels = left,
+        .width = 128,
+        .height = 161,
+        .source_asset_id = 2,
+        .valid = 1,
+        .transparent_color = -1,
+        .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34};
     frame.right_door_surface = &(CSB_V1_StartupRuntimeSurface_PC34){
-        right, 128, 161, 3, 1, 0, 0, -1};
+        .pixels = right,
+        .width = 128,
+        .height = 161,
+        .source_asset_id = 3,
+        .valid = 1,
+        .transparent_color = -1,
+        .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34};
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
     plan.closed_left_w = 105;
