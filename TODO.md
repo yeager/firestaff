@@ -461,18 +461,17 @@ diagnostic; it must not silently fall back to a generated visual.
   interpolated pixels. Source-derived WallSet-0 centre-front replacements also
   require output dimensions identical to the authenticated source raster, so
   a normalized 96x96 export cannot enter an F0128 clip. D1/D2 retain their explicit admitted projection
-  statuses. The V1 material byte handoff validates the live `G0694` DoorSet
-  slot (`247/250/253/256`) through the decode, provenance and plan receipts.
-  V2.2 now consumes the matching original D1/D2/D3 DoorSet 1–3 rasters by
-  the propagated source index. The D1 handoff explicitly identifies
-  `G0695`'s original DoorSet record (`248/251/254/257`), never the internal
-  `Graphic558` destination frame.
-  Direct and headless probes prove routing, admission, exact clip bounds and
-  alpha preservation only, not live visual correctness. 2026-07-29: the admitted D1/D2 door routes now
-  consume the source-owned F0128 command stream in the live V2.2 compositor:
-  each original door command is drawn first, then only the matching complete
-  pack surface may replace its exact clip before later F0115 overlays. D3 is
-  included through its native F0791 receipt; every non-door route remains
+  statuses. The V1 material-byte handoff and candidate plan validate the
+  active `G0694` DoorSet slot (`247/250/253/256`) through decode, provenance
+  and plan receipts; the D1 handoff identifies `G0695`'s original DoorSet
+  record (`248/251/254/257`), never the internal `Graphic558` destination
+  frame. **2026-07-30 audit correction:** production boot does not currently
+  populate `CSB_V1_ViewportFirstFrameMaterialBytesPc34`, so the candidate
+  plan reaches no live F0128 compositor and V2.2 paints zero replacements.
+  This is fail-closed, not live V2.2 material consumption. Bind the selected
+  authenticated record bytes and palette to the plan before claiming a live
+  door or wall replacement; preserve F0115 ordering when doing so. Every
+  non-door route remains
   source V1 until it has an equivalent receipt. 2026-07-29: the dormant
   per-cell mapper no longer aliases vaulted ceilings to plain ceilings or
   fluxcages to chaos rifts. Both are explicitly source-V1 until their own
@@ -498,11 +497,14 @@ diagnostic; it must not silently fall back to a generated visual.
   WallSets remain V1 until they have equally complete command receipts.
 
 - **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Open 2026-07-29. The live F0128
-  renderer owns V2.2 material selection and retains the authenticated original
-  PC3.4 page. Its receipt-owned F0128 consumer now replaces only admitted
-  D1/D2/D3 closed-door clips after the original command and before F0115
-  overlays; all other material families remain V1 until they have equivalent
-  geometry, clipping, palette and draw-order evidence. A source-derived
+  renderer retains the authenticated original PC3.4 page. Its candidate
+  V2.2 consumer has receipts for admitted D1/D2/D3 closed-door clips, but it
+  receives no `CSB_V1_ViewportFirstFrameMaterialBytesPc34` from production
+  boot and therefore performs zero replacements. Bind each selected original
+  record and palette to the command stream, in original order before F0115
+  overlays, before enabling the matching pack surface. All other material
+  families remain V1 until they have equivalent geometry, clipping, palette
+  and draw-order evidence. A source-derived
   38-asset PC3.4 pack was rebuilt from the local hash-verified `GRAPHICS.DAT`
   on 2026-07-29 and its real startup/runtime lane passes. The standard Prison
   ingress contains no admitted closed door, so its count is correctly zero;
