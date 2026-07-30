@@ -218,6 +218,26 @@ int  M11_Render_SetWindowSize(int width, int height);
 int  M11_Render_SetScaleMode(int scaleMode);
 int  M11_Render_GetScaleMode(void);
 int  M11_Render_CycleScaleMode(void);
+/* Launcher surfaces are application UI, not a source-resolution game frame.
+ * When enabled they occupy the complete host window; game presentation keeps
+ * its selected aspect ratio.  Window-to-framebuffer pointer mapping consumes
+ * the same state. */
+int  M11_Render_SetPresentationFillWindow(int enabled);
+int  M11_Render_GetPresentationFillWindow(void);
+int  M11_Render_ComputeFillWindowPresentationRect(int windowW,
+                                                   int windowH,
+                                                   int* outX,
+                                                   int* outY,
+                                                   int* outW,
+                                                   int* outH);
+int  M11_Render_MapPointToFillWindowFramebuffer(int windowX,
+                                                 int windowY,
+                                                 int windowW,
+                                                 int windowH,
+                                                 int contentW,
+                                                 int contentH,
+                                                 int* outFbX,
+                                                 int* outFbY);
 int  M11_Render_SetDisplayAspectMode(int aspectMode);
 int  M11_Render_GetDisplayAspectMode(void);
 int  M11_Render_ComputePresentationRect(int windowW,

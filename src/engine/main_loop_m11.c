@@ -232,6 +232,10 @@ static void m11_draw_launcher(const M12_StartupMenuState* menuState,
 static int m11_present_launcher(unsigned char* launcherFramebuffer,
                                 unsigned char* modernRgba,
                                 int useModern) {
+    /* The launcher is application UI, not a 320x200 game surface.  It must
+     * occupy a maximized/fullscreen window regardless of the selected game
+     * aspect.  The renderer uses the same flag when it maps menu clicks. */
+    (void)M11_Render_SetPresentationFillWindow(1);
     if (useModern && modernRgba) {
         return M11_Render_PresentRGBA(modernRgba,
                                       M11_LAUNCHER_MODERN_WIDTH,
@@ -383,6 +387,10 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
         M11_GameView_GetPresentationSpecialPalette(gameView);
     int targetW = M11_FB_WIDTH;
     int targetH = M11_FB_HEIGHT;
+
+    /* Restore source/game presentation before the first runtime frame after
+     * a launcher click. */
+    (void)M11_Render_SetPresentationFillWindow(0);
     int requestedFilter = M11_Render_GetScaleFilter();
     int effectiveFilter = M11_ResolveGameScaleFilterForPresentation(
         gameView ? gameView->presentationMode : M12_PRESENTATION_V1_ORIGINAL,
@@ -5149,6 +5157,19 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     o->gameId ? o->gameId : "(null)");
             runRc = 2;
             goto cleanup;
+        }
+        /* Keep CLI resume on the same M12 intent -> M11 launch contract as
+         * the save browser. The game-specific importer remains the only
+         * authority on the supplied bytes; this only supplies its path. */
+        if (o->savePath && o->savePath[0] != '\0') {
+            snprintf(menuState.quickResumeSavePath,
+                     sizeof(menuState.quickResumeSavePath),
+                     "%s", o->savePath);
+            snprintf(menuState.quickResumeGameId,
+                     sizeof(menuState.quickResumeGameId),
+                     "%s", o->gameId ? o->gameId : "");
+            menuState.quickResumeAvailable = 1;
+            menuState.quickResumeLaunchRequested = 1;
         }
         /* CLI direct launch bypasses only the M12 menu. The launch still
          * enters through M11_GameView_OpenSelectedMenuEntry(), so DM1 keeps

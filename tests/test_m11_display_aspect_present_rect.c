@@ -42,6 +42,31 @@ static int scaled_window_coord(int rectStart, int rectSize, int logical, int log
     return rectStart + ((logical * rectSize) + (rectSize / 2)) / logicalSize;
 }
 
+static void check_fill_window_mapping(void) {
+    int x = -1;
+    int y = -1;
+    int w = -1;
+    int h = -1;
+    int fbX = -1;
+    int fbY = -1;
+
+    CHECK(M11_Render_ComputeFillWindowPresentationRect(1512, 982,
+                                                        &x, &y, &w, &h) ==
+          M11_RENDER_OK);
+    CHECK(x == 0 && y == 0 && w == 1512 && h == 982);
+    CHECK(M11_Render_MapPointToFillWindowFramebuffer(0, 0, 1512, 982,
+                                                      1920, 1080,
+                                                      &fbX, &fbY) == 1);
+    CHECK(fbX == 0 && fbY == 0);
+    CHECK(M11_Render_MapPointToFillWindowFramebuffer(1511, 981, 1512, 982,
+                                                      1920, 1080,
+                                                      &fbX, &fbY) == 1);
+    CHECK(fbX == 1918 && fbY == 1078);
+    CHECK(M11_Render_MapPointToFillWindowFramebuffer(-1, 0, 1512, 982,
+                                                      1920, 1080,
+                                                      &fbX, &fbY) == 0);
+}
+
 static void check_map_edges(int windowW,
                             int windowH,
                             int scaleMode,
@@ -1314,6 +1339,7 @@ int main(void) {
                160, 40, 1600, 1000);
     check_scaled_dm1_command(264, 126, 3, 70);
     check_scaled_letterbox_rejection();
+    check_fill_window_mapping();
     check_map_edges(1512, 982, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
     check_map_edges(3024, 1964, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);
     check_map_edges(3600, 2092, M11_SCALE_FIT, 0, M11_DISPLAY_ASPECT_CONTENT);

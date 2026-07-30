@@ -2,6 +2,12 @@
 
 ## Active DM1/CSB Symbol Queue
 
+- **LAUNCHER-FULL-WINDOW-PRESENTATION:** Closed 2026-07-30. The start menu
+  now uses a full host-window presentation rectangle and matching pointer
+  transform, rather than inheriting 4:3/content letterboxing from a selected
+  game. Runtime game frames explicitly restore their configured aspect.
+  Focused Ninja/CTest verification passes.
+
 - **DM1-V1-F0172-TELEPORTER-ASPECT:** Closed 2026-07-30. M11 now requires
   both original teleporter `VISIBLE` and `OPEN` bits before exposing the
   F0113 field route. The movement, stairs/pits and SHOOT source gates were

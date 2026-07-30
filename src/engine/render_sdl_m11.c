@@ -50,6 +50,7 @@ typedef struct {
     int renderH;
     int scaleMode;
     int displayAspectMode;
+    int presentationFillWindow;
     int paletteLevel;
     int windowMode;
     int integerScaling;
@@ -475,6 +476,12 @@ static void m11_compute_present_rect(int* outX, int* outY, int* outW, int* outH)
      * here causes the game content to render at half size. */
     int rw = g_state.renderW > 0 ? g_state.renderW : g_state.windowW;
     int rh = g_state.renderH > 0 ? g_state.renderH : g_state.windowH;
+    if (g_state.presentationFillWindow) {
+        (void)M11_Render_ComputeFillWindowPresentationRect(rw, rh,
+                                                            outX, outY,
+                                                            outW, outH);
+        return;
+    }
     (void)M11_Render_ComputePresentationRect(rw,
                                              rh,
                                              contentW,
@@ -1144,6 +1151,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
 #endif
     g_state.scaleMode = scaleMode;
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_CONTENT; /* content-native aspect */
+    g_state.presentationFillWindow = 0;
     g_state.paletteLevel = 0;
     g_state.windowMode = M11_WINDOW_MODE_MAXIMIZED;
     g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
@@ -1193,6 +1201,7 @@ void M11_Render_Shutdown(void) {
     g_state.renderH = 0;
     g_state.paletteLevel = 0;
     g_state.displayAspectMode = M11_DISPLAY_ASPECT_16_9;
+    g_state.presentationFillWindow = 0;
     g_state.windowMode = M11_WINDOW_MODE_WINDOWED;
     g_state.integerScaling = 0; /* non-integer scaling for full-window FIT */
     g_state.scaleFilter = M11_SCALE_FILTER_NEAREST;
@@ -2358,6 +2367,58 @@ int M11_Render_CycleScaleMode(void) {
     return g_state.scaleMode;
 }
 
+int M11_Render_SetPresentationFillWindow(int enabled) {
+    if (!g_state.initialised) {
+        return M11_RENDER_ERR_NOT_INIT;
+    }
+    if (!m11_validate_binary_setting(enabled)) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    g_state.presentationFillWindow = enabled;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetPresentationFillWindow(void) {
+    return g_state.presentationFillWindow;
+}
+
+int M11_Render_ComputeFillWindowPresentationRect(int windowW,
+                                                  int windowH,
+                                                  int* outX,
+                                                  int* outY,
+                                                  int* outW,
+                                                  int* outH) {
+    if (windowW <= 0 || windowH <= 0) {
+        return M11_RENDER_ERR_INVALID_ARG;
+    }
+    if (outX) *outX = 0;
+    if (outY) *outY = 0;
+    if (outW) *outW = windowW;
+    if (outH) *outH = windowH;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_MapPointToFillWindowFramebuffer(int windowX,
+                                                int windowY,
+                                                int windowW,
+                                                int windowH,
+                                                int contentW,
+                                                int contentH,
+                                                int* outFbX,
+                                                int* outFbY) {
+    if (!outFbX || !outFbY || windowW <= 0 || windowH <= 0 ||
+        contentW <= 0 || contentH <= 0 ||
+        windowX < 0 || windowY < 0 ||
+        windowX >= windowW || windowY >= windowH) {
+        return 0;
+    }
+    *outFbX = (windowX * contentW) / windowW;
+    *outFbY = (windowY * contentH) / windowH;
+    if (*outFbX >= contentW) *outFbX = contentW - 1;
+    if (*outFbY >= contentH) *outFbY = contentH - 1;
+    return 1;
+}
+
 int M11_Render_SetDisplayAspectMode(int aspectMode) {
     if (!g_state.initialised) {
         return M11_RENDER_ERR_NOT_INIT;
@@ -2470,6 +2531,14 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
             mapWindowW = ww;
             mapWindowH = wh;
         }
+    }
+
+    if (g_state.presentationFillWindow) {
+        int contentW = g_state.contentW > 0 ? g_state.contentW : M11_FB_WIDTH;
+        int contentH = g_state.contentH > 0 ? g_state.contentH : M11_FB_HEIGHT;
+        return M11_Render_MapPointToFillWindowFramebuffer(
+            windowX, windowY, mapWindowW, mapWindowH,
+            contentW, contentH, outFbX, outFbY);
     }
 
     return M11_Render_MapPointToFramebuffer(

@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 Launcher maximized-window presentation: the Firestaff
+  start menu is now an application-UI surface that fills the complete host
+  window, independent of a selected game's 4:3/content aspect. Its mouse
+  mapping uses that same full-window rectangle; first game presentation
+  restores the selected source aspect. Ninja build and the presentation-rect
+  regression test pass.
+
 - ✅ 2026-07-30 DM1 PC34/I34E swoosh final dwell correction: Firestaff had
   regressed to the P20JB `SwooshDelay(20)` branch after sound completion.
   It now follows ReDMCSB `SWSH.C:3037` I34E `F0022_MAIN_SwooshDelay(120)`,
