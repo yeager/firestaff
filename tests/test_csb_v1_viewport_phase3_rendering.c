@@ -491,6 +491,17 @@ static void test_runtime_projectile_and_explosion_overlays(void)
     check_int("runtime.projectile_overlay.default_marker_count",
               cfg.runtime_projectile_marker_drawn_count, 1);
 
+    /* A live PC3.4 M11 session must not replace a missing F0115 projectile
+     * bitmap with this data-free diagnostic marker. */
+    memset(framebuffer, 0, sizeof(framebuffer));
+    cfg.projectile_sprite_drawer_source_bound = 1;
+    csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+    check_int("runtime.projectile_overlay.source_bound_no_marker_pixel",
+              framebuffer[center_offset], 0);
+    check_int("runtime.projectile_overlay.source_bound_no_marker_count",
+              cfg.runtime_projectile_marker_drawn_count, 0);
+    cfg.projectile_sprite_drawer_source_bound = 0;
+
     {
         CSB_V1_RuntimeProfile runtime;
         CSB_V1_DungeonData dungeon;

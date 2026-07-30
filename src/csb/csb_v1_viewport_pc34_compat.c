@@ -3137,15 +3137,22 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
                 }
             }
         }
-        color = (uint8_t)csb_v1_viewport_projectile_material_overlay_color(
-            placement.material_icon_index);
-        csb_v1_viewport_draw_runtime_overlay_cross(
-            cfg,
-            placement.viewport_x,
-            placement.viewport_y,
-            color,
-            placement.source_zone >= 0 ? 2 : 1);
-        ++cfg->runtime_projectile_marker_drawn_count;
+        /* The M11 PC3.4 route has authenticated source graphics.  If its
+         * F0115 projectile decoder cannot provide a bitmap, preserve the
+         * source page rather than drawing the former diagnostic cross.  That
+         * cross had no ReDMCSB owner and could leak into live V1/V2 captures.
+         * Data-free geometry probes retain their explicit marker behaviour. */
+        if (!cfg->projectile_sprite_drawer_source_bound) {
+            color = (uint8_t)csb_v1_viewport_projectile_material_overlay_color(
+                placement.material_icon_index);
+            csb_v1_viewport_draw_runtime_overlay_cross(
+                cfg,
+                placement.viewport_x,
+                placement.viewport_y,
+                color,
+                placement.source_zone >= 0 ? 2 : 1);
+            ++cfg->runtime_projectile_marker_drawn_count;
+        }
     }
 }
 
@@ -4278,6 +4285,7 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         cfg->group_sprite_drawer_source_bound = 0;
         cfg->projectile_sprite_drawer = NULL;
         cfg->projectile_sprite_user = NULL;
+        cfg->projectile_sprite_drawer_source_bound = 0;
         cfg->explosion_sprite_drawer = NULL;
         cfg->explosion_sprite_user = NULL;
         cfg->runtime_overlay_source_required = 0;
@@ -4316,6 +4324,8 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         binding->group_sprite_drawer_source_bound ? 1 : 0;
     cfg->projectile_sprite_drawer = binding->projectile_sprite_drawer;
     cfg->projectile_sprite_user = binding->projectile_sprite_user;
+    cfg->projectile_sprite_drawer_source_bound =
+        binding->projectile_sprite_drawer_source_bound ? 1 : 0;
     cfg->explosion_sprite_drawer = binding->explosion_sprite_drawer;
     cfg->explosion_sprite_user = binding->explosion_sprite_user;
     cfg->runtime_overlay_source_required =

@@ -6,6 +6,15 @@ ReDMCSB is the primary reference for DM1/CSB shared engine behavior. For
 CSB-specific DSA, save, Utility Disk, and extended-runtime behavior, use
 CSBWin alongside it. Reuse or bind verified PC34 owners and authentic game
 
+- **CSB-V1-PROJECTILE-MARKER-LEAK:** Closed 2026-07-30. The live PC3.4
+  F0115 projectile route now fails closed when its authenticated bitmap drawer
+  cannot materialize a projectile. It no longer draws the old coloured
+  diagnostic cross into the source-owned page, which could land at an invalid
+  viewport offset and make V1/V2 runtime captures nondeterministic. Markers
+  remain available only to data-free geometry probes. The phase-3 viewport
+  regression proves the source-bound no-marker contract; repeated V2.0/V2.1
+  raw-page capture checks remain the integration gate.
+
 - **CSB-V1-VARIANT-IDENTITY-DISCOVERY:** Closed 2026-07-30. A recognised
   CSB launcher/probe variant token now restricts graphics discovery to that
   variant's verified original MD5 (including both documented Atari ST 2.x

@@ -2030,6 +2030,7 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     drawer_binding.projectile_sprite_drawer =
         m11_csb_viewport_projectile_sprite_drawer;
     drawer_binding.projectile_sprite_user = &runtime_sprite_context;
+    drawer_binding.projectile_sprite_drawer_source_bound = 1;
     drawer_binding.explosion_sprite_drawer =
         m11_csb_viewport_explosion_sprite_drawer;
     drawer_binding.explosion_sprite_user = &runtime_sprite_context;

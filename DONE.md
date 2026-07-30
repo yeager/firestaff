@@ -1,3 +1,11 @@
+- ✅ 2026-07-30 CSB source-bound projectile rendering: authenticated PC3.4
+  F0115 sessions no longer substitute a coloured diagnostic projectile cross
+  when a source bitmap is unavailable. This removes a nondeterministic,
+  incorrectly offset host overlay from V1/V2 raw pages while retaining the
+  marker solely for data-free geometry tests. Verification:
+  `csb_v1_viewport_phase3_rendering`, `csb_v20_filtered_startup_capture`, and
+  `csb_v21_presented_startup_capture`.
+
 - ✅ 2026-07-30 CSB runtime variant identity discovery: a recognised
   `pc34_en`, `pc34_multi`, Atari ST, or Amiga launcher/probe variant now
   searches only for its verified original graphics MD5 (the Atari ST 2.x

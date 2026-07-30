@@ -550,6 +550,10 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     int runtime_projectile_material_icon_drawn_count;
     CSB_V1_ViewportProjectileSpriteDrawer projectile_sprite_drawer;
     void *projectile_sprite_user;
+    /* A verified CSB GRAPHICS.DAT projectile drawer must fail closed.  A
+     * coloured host marker is useful only in data-free geometry probes; it
+     * is not source material and must never reach a live CSB page. */
+    int projectile_sprite_drawer_source_bound;
     int runtime_projectile_sprite_drawn_count;
     int runtime_projectile_marker_drawn_count;
     const CSB_V1_F0219ProjectileImpactMaterialHandoffPc34
@@ -628,6 +632,7 @@ typedef struct {
     int group_sprite_drawer_source_bound;
     CSB_V1_ViewportProjectileSpriteDrawer projectile_sprite_drawer;
     void *projectile_sprite_user;
+    int projectile_sprite_drawer_source_bound;
     CSB_V1_ViewportExplosionSpriteDrawer explosion_sprite_drawer;
     void *explosion_sprite_user;
     int runtime_overlay_source_required;
