@@ -6,6 +6,24 @@
   palettes, and synthetic HUD art are not acceptable when authentic game data
   exists. Each remaining renderer is to bind the real format or present no
   game pixel; test fixtures remain explicitly isolated from production paths.
+- **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
+  `creature_type -> AIDefinition` fallback with the original two-stage
+  selection. SK-projects `SKWINSPX/src/v4/skcrture.cpp::QUERY_CREATURE_AI_SPEC_FROM_TYPE`
+  first reads `CREATURES[type]` word field `CREATURE_STAT_AI` (0x05), then
+  selects that AI row from the source-initialized `dAITableGenuine` table or
+  its GDAT override. The existing runtime carries the verified row when a
+  GDAT loader is active but must not treat the raw creature type as an AI-row
+  when that owner data is absent. Bind live DB4 creature records and the
+  active loader through spawn, attack, spell and HP paths; reject unowned
+  records rather than inventing a direct mapping.
+
+- **DM2-LEGACY-GAME-LOOP-DATA-ADMISSION:** `src/engine/firestaff_game_loop.c`
+  is not part of the built M11 DM2 launch route and still contains diagnostic
+  ceiling/floor and test-maze code. It must remain disconnected. Before any
+  future repair or reactivation, remove those substitutes and route startup
+  through `dm2_v1_boot_startup_launch_alloc()` so only hash-verified original
+  `GRAPHICS.DAT` plus `DUNGEON.DAT` can reach a runtime frame.
+
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   DB14/timer scheduling and record-owned projectile fields from SK-projects.
   Shooter records currently reject until their owner, facing, energy and
