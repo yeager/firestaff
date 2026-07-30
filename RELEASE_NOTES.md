@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.193
+
+- CSB: detect the authentic selected loose-file graphics and dungeon variant
+  during runtime boot, including the verified Atari ST 2.x package.
+- CSBWin: validate the original C232 HUD layout with real Atari data and
+  expose the source-owned HUD material plan for subsequent M11 consumption.
+
 # Firestaff v3.0.192
 
 - CSB: decode the original CSBWin `GRAPHICS.DAT` HUD-layout record `0x232`,
