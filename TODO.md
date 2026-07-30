@@ -422,6 +422,10 @@ diagnostic; it must not silently fall back to a generated visual.
   optional V2.2 source-artpack runtime test: its installed
   `firestaff-csb-v22-pc34-source` manifest correctly remains unadmitted
   because wall/floor routes still declare `f0128ProjectionStatus: unbound`.
+  **2026-07-30 update:** an artpack must now also declare the exact
+  `original_csb_pc34_graphics_dat` generator emitted by the checked-in source
+  exporter. Arbitrary `pbr_hero`, AI or reviewer labels remain unadmitted even
+  when their PNG files and projection-status fields are present.
   Do not change those statuses merely to enable V2.2; recover the original
   per-command F0128 raster/clip path first.
   The source-artpack manifest now makes this distinction machine-readable:

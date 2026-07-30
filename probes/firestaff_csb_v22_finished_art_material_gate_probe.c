@@ -170,7 +170,8 @@ static int write_manifest(const char* path, int realMask, int firstOnly,
     fprintf(fp, "{\"manifestVersion\":\"1.0.0\",\"packId\":\"csb-v22-famg-probe\",\"slots\":[");
     for (int i = 0; i < count; ++i) {
         const SlotFixture* s = &k_slots[i];
-        const char* gen = (realMask & (1 << i)) ? "pbr_hero" : "placeholder";
+        const char* gen = (realMask & (1 << i))
+            ? "original_csb_pc34_graphics_dat" : "placeholder";
         char file[128];
         source_file(file, sizeof(file), s);
         if (missingFirst && i == 0) snprintf(file, sizeof(file), "missing_%s.png", s->id);

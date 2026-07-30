@@ -8,8 +8,8 @@
  * This module is the CI-runnable distinction between:
  *   - SYNTHETIC_PLACEHOLDER (procedural / "placeholder" generator,
  *     the current honest runtime default)
- *   - FINISHED_REAL        (operator-installed hero PNGs with
- *     generator != "placeholder" and source_file resolving on disk)
+ *   - FINISHED_REAL        (the documented PC3.4 GRAPHICS.DAT export with
+ *     generator == "original_csb_pc34_graphics_dat")
  *
  * It runs in CI without requiring real PBR art on disk by:
  *   1. Reading the existing modern_asset_manifest.json (when present)
@@ -19,11 +19,10 @@
  *
  * The manifest schema reuses the modern_asset_manifest.json format
  * parsed by src/csb/csb_v22_modern_assets_pc34.c, with the
- * addition of an optional `generator` field. When `generator` ==
- * "placeholder", the slot is the procedural fallback. Any other
- * value (e.g. "pbr_hero", "ai_upscale", "reviewed") is a non-
- * placeholder marker that, combined with a disk-resolvable
- * `source_file`, promotes the slot to REAL.
+ * addition of an optional `generator` field. Only the exact generator emitted
+ * by scripts/build_csb_v22_source_fsart.py can promote a slot. A label such
+ * as "pbr_hero", "ai_upscale" or "reviewed" is not evidence that pixels
+ * came from the authenticated original archive.
  *
  * Source-lock:
  *   - ReDMCSB DUNVIEW.C F0128 (CSB viewport routing)
@@ -114,6 +113,8 @@ static const CSB_V22_FamgSlotDesc k_slot_table[CSB_V22_FAMG_MATERIAL_COUNT] = {
 static char               g_manifest_path[FSP_PATH_MAX] = {0};
 static int                g_installed = 0;     /* last gate: 1 if PARTIAL/FINISHED_REAL */
 static CSB_V22_FamgGate   g_last_gate = CSB_V22_FAMG_GATE_NOT_PROBED;
+
+#define CSB_V22_FAMG_SOURCE_EXPORT_GENERATOR "original_csb_pc34_graphics_dat"
 
 /* ── Trimming / JSON helpers ───────────────────────────────────── */
 static void csb_v22_famg_trim(char* dst, const char* src, size_t dstSize) {
@@ -617,8 +618,15 @@ CSB_V22_FamgClass csb_v22_famg_classify_slot(CSB_V22_FamgSlot slot) {
         return CSB_V22_FAMG_CLASS_PLACEHOLDER;
     }
 
-    /* Real asset: required fields + non-placeholder generator +
-     * source_file resolves on disk + an exact source projection. */
+    /* A non-placeholder label is not provenance. The only production
+     * exporter is build_csb_v22_source_fsart.py, which emits this exact
+     * generator token for a decoded PC3.4 GRAPHICS.DAT record. */
+    if (strcmp(raw.generator, CSB_V22_FAMG_SOURCE_EXPORT_GENERATOR) != 0) {
+        return CSB_V22_FAMG_CLASS_PARTIAL;
+    }
+
+    /* Original export metadata + source_file resolves on disk + an exact
+     * source projection. */
     char resolved_path[FSP_PATH_MAX];
     int exists = csb_v22_famg_resolve_source_file(g_manifest_path,
                                                   k_slot_table[slot].category,
@@ -848,23 +856,23 @@ const char* csb_v22_famg_source_evidence(void) {
         "Source: include/csb_v22_inplace_draw_pc34.h (cell -> variant -> asset_id)\n"
         "Source: include/csb_v22_modern_assets_pc34.h (modern asset manifest path)\n"
         "Source: include/csb_v22_shapes.h     (CSB V2.2 shape classification)\n"
-        "Source: src/csb/csb_v22_modern_assets_pc34.c (missing-asset placeholder 16x16 magenta)\n"
+        "Source: scripts/build_csb_v22_source_fsart.py (PC3.4 source export)\n"
         "Source: sibling dm1_v22 / dm2_v22 FAMG modules (placeholder-vs-real pattern)\n"
         "Source: docs/FIRESTAFF_GAP_LIST.md B3 V2 per-mode material row\n"
         "Manifest path: ~/.firestaff/assets/csb/modern/modern_asset_manifest.json\n"
         "Schema: { id, generator, source_file, width, height } per slot entry\n"
         "Each REAL slot also needs routeProvenance.f0128ProjectionStatus=admitted_*\n"
         "Generator 'placeholder' is the procedural fallback marker (synthetic)\n"
-        "Non-placeholder generator + source_file + admitted projection = REAL\n"
+        "Only generator 'original_csb_pc34_graphics_dat' + source_file + admitted projection = REAL\n"
         "Gate states: NOT_PROBED / NO_MANIFEST / SYNTHETIC_PLACEHOLDER / PARTIAL / FINISHED_REAL\n"
-        "FINISHED_REAL requires every tracked slot to be REAL with non-placeholder generator\n"
+        "FINISHED_REAL requires every tracked slot to be a PC3.4 source export\n"
         "V1 invariant: V1 command routes, dungeon state, save/restore NEVER bypassed\n"
         "V2 rule: finished-art material only activates when V2 launch+profile enabled\n"
         "Honest boundary: this gate tracks manifest classification only.\n"
         "It does NOT claim finished PBR art has been reviewed or shipped.\n"
-        "FINISHED_REAL promotion requires operator-installed hero PNGs at\n"
+        "FINISHED_REAL promotion requires operator-installed PC3.4 source exports at\n"
         "~/.firestaff/assets/csb/modern/<category>/<source_file> with\n"
-        "generator != 'placeholder', a non-zero width/height, and an\n"
+        "generator == 'original_csb_pc34_graphics_dat', non-zero width/height, and an\n"
         "explicit admitted F0128 projection, plus a\n"
         "sibling gap-list update to mark the real-asset promotion gate green.\n";
 }

@@ -8,10 +8,10 @@
  * champion_warrior_csb) plus CSB-only chaos_rune / dsa_scroll entries.
  * When the pack is shipped it is procedurally generated (placeholder
  * colors) - the honest baseline for this pass. When a reviewer has
- * signed off on real finished art, the manifest entries for those slots
+ * signed off on a source-derived export, the manifest entries for those slots
  * carry:
  *
- *   generator    != "placeholder"  (e.g. "pbr_hero" | "ai_upscale")
+ *   generator    == "original_csb_pc34_graphics_dat"
  *   source_file  resolves on disk under the modern asset root
  *   width,height match the on-disk PNG header
  *
@@ -24,9 +24,9 @@
  *                          generator == "placeholder" (the CI default)
  *   PARTIAL            - at least one slot is REAL, at least one is
  *                          PLACEHOLDER / MISSING / UNKNOWN
- *   FINISHED_REAL      - every required material slot is REAL with
- *                          generator != "placeholder" and source_file
- *                          resolving on disk
+ *   FINISHED_REAL      - every required material slot is a documented
+ *                          PC3.4 source export with its file resolving
+ *                          on disk
  *
  * The CSB V2.2 viewport is the 9-square (3 depth x 3 lateral) layout
  * defined in CSBWin/Viewport.cpp:7290. The slots below mirror the asset
@@ -44,9 +44,9 @@
  *   - sibling dm1_v22 / dm2_v22 FAMG modules (placeholder-vs-real pattern)
  *
  * Honest boundary: this gate reports the manifest state. It does NOT
- * claim any finished PBR art has been reviewed or shipped. The
+ * claim any unrelated modern art has been reviewed or shipped. The
  * FINISHED_REAL state is reachable only when an operator has dropped a
- * non-placeholder manifest with source_file paths that resolve on disk;
+ * PC3.4 source-export manifest with source_file paths that resolve on disk;
  * until then the gate stays in SYNTHETIC_PLACEHOLDER, which matches the
  * honest current default.
  */
@@ -171,7 +171,7 @@ typedef struct {
     char            category[32];      /* "wall_shapes" / "creature_shapes" /
                                          "champion_portraits" / "door_shapes" /
                                          "ui_chrome" / "chaos_runes" */
-    char            generator[32];     /* "placeholder" / "pbr_hero" / "" */
+    char            generator[32];     /* source export / "placeholder" / "" */
     char            source_file[256];  /* manifest source_file or "" */
     char            resolved_path[1024];/* full path or "" */
     int             width;
@@ -266,9 +266,8 @@ int  csb_v22_famg_get_installed(void);
 int csb_v22_famg_uses_placeholder(CSB_V22_FamgSlot slot);
 
 /* Returns 1 if the gate is FINISHED_REAL — i.e. every required slot
- * is REAL with a non-placeholder generator and a source_file path that
- * resolves on disk. This is the "real reviewed finished-art pack"
- * state the gap-list row asks the gate to distinguish. */
+ * is REAL with the documented PC3.4 source-export generator and a
+ * source_file path that resolves on disk. */
 int csb_v22_famg_is_finished_real(void);
 
 /* Returns 1 if the gate is in SYNTHETIC_PLACEHOLDER or PARTIAL —

@@ -54,6 +54,7 @@
 static int s_pass = 0;
 static int s_fail = 0;
 static const char* s_projection_status = "admitted_test";
+static const char* s_real_generator = "original_csb_pc34_graphics_dat";
 
 #define CHECK(expr, msg)                                                  \
     do {                                                                  \
@@ -198,7 +199,7 @@ static void create_real_file(const char* modernDir, const SlotFixture* s) {
           "created source_file on disk");
 }
 
-/* Write a manifest. realMask bit i -> pbr_hero, else placeholder.
+/* Write a manifest. realMask bit i -> the documented source exporter, else placeholder.
  * firstOnly=1 -> emit only slot 0. missingFirst=1 -> slot 0 has
  * a non-existent source_file. omitDimsFirst=1 -> slot 0 omits width
  * + height fields (partial metadata). */
@@ -220,7 +221,7 @@ static int write_manifest(const char* path,
     fprintf(fp, "],\"slots\":[");
     for (int i = 0; i < count; ++i) {
         const SlotFixture* s = &k_slots[i];
-        const char* gen = (realMask & (1 << i)) ? "pbr_hero" : "placeholder";
+        const char* gen = (realMask & (1 << i)) ? s_real_generator : "placeholder";
         char file[128];
         source_filename(file, sizeof(file), s);
         if (missingFirst && i == 0) {
@@ -442,7 +443,7 @@ static void test_missing_file_partial(void) {
                         manifestPath, sizeof(manifestPath),
                         modernDir, sizeof(modernDir));
     csb_v22_famg_set_manifest_path(dataDir);
-    /* Manifest declares pbr_hero for slot 0 but the source_file
+    /* Manifest declares the source exporter for slot 0 but the source_file
      * points to a path that is not on disk -> PARTIAL classification. */
     CHECK(write_manifest(manifestPath, 1, 1, 1, 0),
           "wrote missing-file manifest");
@@ -511,6 +512,27 @@ static void test_finished_real_manifest(void) {
     }
 }
 
+static void test_untrusted_generator_stays_partial(void) {
+    const char* dataDir = "/tmp/scratch/csb-v22-famg-test/data/csb";
+    char manifestPath[FSP_PATH_MAX];
+    char modernDir[FSP_PATH_MAX];
+
+    clean_scratch();
+    setup_manifest_dirs(dataDir, manifestPath, sizeof(manifestPath),
+                        modernDir, sizeof(modernDir));
+    csb_v22_famg_set_manifest_path(dataDir);
+    create_real_file(modernDir, &k_slots[0]);
+    s_real_generator = "pbr_hero";
+    CHECK(write_manifest(manifestPath, 1, 1, 0, 0),
+          "wrote arbitrary-generator manifest");
+    CHECK(csb_v22_famg_classify_slot(CSB_V22_FAMG_WALL_DUNGEON) ==
+              CSB_V22_FAMG_CLASS_PARTIAL,
+          "PBR label cannot substitute source-export provenance");
+    CHECK(csb_v22_famg_gate() == CSB_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER,
+          "arbitrary generator cannot promote V2.2");
+    s_real_generator = "original_csb_pc34_graphics_dat";
+}
+
 static void test_unbound_projection_stays_partial(void) {
     const char* dataDir = "/tmp/scratch/csb-v22-famg-test/data/csb";
     char manifestPath[FSP_PATH_MAX];
@@ -557,7 +579,7 @@ static void test_get_slot_info(void) {
           "get_slot_info -> id populated");
     CHECK(strcmp(info.category, "wall_shapes") == 0,
           "get_slot_info -> category populated");
-    CHECK(strcmp(info.generator, "pbr_hero") == 0,
+    CHECK(strcmp(info.generator, "original_csb_pc34_graphics_dat") == 0,
           "get_slot_info -> generator populated");
     CHECK(info.width == 96 && info.height == 96,
           "get_slot_info -> width/height populated");
@@ -792,6 +814,7 @@ int main(void) {
     test_missing_file_partial();
     test_incomplete_metadata();
     test_finished_real_manifest();
+    test_untrusted_generator_stays_partial();
     test_unbound_projection_stays_partial();
     test_get_slot_info();
     test_slot_info_unknown_assets();

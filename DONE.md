@@ -44050,6 +44050,20 @@ the supplied root and selected MD5 to prove this without shipping game data.
   the real Atari-ST M12/M11 handoff regression passes 589 checks. This does
   not promote unbound F0128 viewport materials.
 
+# CSB V2.2 source-export admission hardening (2026-07-30)
+
+- ✅ The V2.2 material gate no longer treats an arbitrary non-placeholder
+  generator label as provenance. It admits only
+  `original_csb_pc34_graphics_dat`, the identifier emitted by
+  `scripts/build_csb_v22_source_fsart.py` for decoded, hash-verified PC3.4
+  `GRAPHICS.DAT` records. A disk-resident `pbr_hero`, AI or reviewer-labelled
+  PNG remains partial even if it declares an admitted projection. Verification:
+  `test_csb_v22_finished_art_material_gate_pc34` passes 823/823 and
+  `firestaff_csb_v22_finished_art_material_gate_probe` passes 203/203;
+  modern-assets and in-place command regressions remain green. This is an
+  admission boundary, not a claim that currently unbound F0128 routes render
+  in V2.2.
+
 # M12 startup-menu reliability pass (2026-07-30)
 
 # DM1 C015 host-message regression containment (2026-07-30)
