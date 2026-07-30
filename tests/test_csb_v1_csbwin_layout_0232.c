@@ -86,6 +86,7 @@ int main(void)
 {
     uint8_t graphic[CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE];
     CSB_V1_CSBWinLayout0232 layout;
+    CSB_V1_CSBWinHudMaterialPlan0232 plan;
     char path[512];
     const char *tmpdir;
     const char *real_graphics_dat;
@@ -99,6 +100,8 @@ int main(void)
     put_rect(graphic, 424u, 100, 115, 48, 59);
     put_rect(graphic, 432u, 100, 115, 64, 75);
     put_rect(graphic, 864u, 110, 157, 80, 91);
+    put_rect(graphic, 872u, 110, 181, 92, 103);
+    put_rect(graphic, 880u, 110, 181, 69, 80);
     put_rect(graphic, 904u, 110, 181, 69, 100);
     put_rect(graphic, 1802u, 216, 319, 88, 159);
     put_rect(graphic, 1818u, 216, 319, 160, 199);
@@ -118,6 +121,7 @@ int main(void)
     CHECK(layout.party_direction[3].x1 == 70 && layout.party_direction[3].x2 == 89);
     CHECK(layout.eye_box.y1 == 48 && layout.mouth_box.y1 == 64);
     CHECK(layout.food_water_box.x2 == 181 && layout.poison_box.y2 == 91);
+    CHECK(layout.food_label_box.y1 == 69 && layout.water_label_box.y1 == 92);
     CHECK(layout.movement_box.x1 == 216 && layout.movement_box.y2 == 159);
     CHECK(layout.magic_box.x2 == 319 && layout.magic_box.y1 == 160);
     CHECK(layout.icon_display[0].pixel_x == 112 &&
@@ -131,6 +135,14 @@ int main(void)
           layout.default_graphic_list[69] == 562);
     CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.movement_box));
     CHECK(!csb_v1_csbwin_layout_0232_rect_is_screen_valid(NULL));
+    CHECK(csb_v1_csbwin_layout_0232_build_hud_material_plan(&layout, &plan));
+    CHECK(plan.valid && plan.count == CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT);
+    CHECK(plan.entries[0].graphic_index == 28u && plan.entries[0].source_x == 0u);
+    CHECK(plan.entries[3].graphic_index == 28u && plan.entries[3].source_x == 57u);
+    CHECK(plan.entries[4].graphic_index == 20u &&
+          plan.entries[4].destination.y1 == 69);
+    CHECK(plan.entries[9].graphic_index == 9u &&
+          plan.entries[9].destination.y1 == 160);
     layout.magic_box.y2 = 200;
     CHECK(!csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.magic_box));
     CHECK(!csb_v1_csbwin_layout_0232_decode(graphic, sizeof(graphic) - 1u, &layout));

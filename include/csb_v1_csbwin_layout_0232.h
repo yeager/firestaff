@@ -19,6 +19,7 @@ typedef struct {
 #define CSB_V1_CSBWIN_LAYOUT_0232_ICON_COUNT 46u
 #define CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_GROUPS 7u
 #define CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT 70u
+#define CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT 10u
 
 typedef struct {
     int16_t pixel_x;
@@ -33,6 +34,8 @@ typedef struct {
     CSB_V1_CSBWinRect0232 mouth_box;
     CSB_V1_CSBWinRect0232 poison_box;
     CSB_V1_CSBWinRect0232 food_water_box;
+    CSB_V1_CSBWinRect0232 food_label_box;
+    CSB_V1_CSBWinRect0232 water_label_box;
     CSB_V1_CSBWinRect0232 movement_box;
     CSB_V1_CSBWinRect0232 magic_box;
     CSB_V1_CSBWinIconDisplay0232 icon_display[
@@ -42,6 +45,30 @@ typedef struct {
     uint16_t default_graphic_list[
         CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT];
 } CSB_V1_CSBWinLayout0232;
+
+typedef enum {
+    CSB_V1_CSBWIN_HUD_MATERIAL_DIRECTION = 0,
+    CSB_V1_CSBWIN_HUD_MATERIAL_FOOD_WATER,
+    CSB_V1_CSBWIN_HUD_MATERIAL_FOOD_LABEL,
+    CSB_V1_CSBWIN_HUD_MATERIAL_WATER_LABEL,
+    CSB_V1_CSBWIN_HUD_MATERIAL_POISON,
+    CSB_V1_CSBWIN_HUD_MATERIAL_MOVEMENT,
+    CSB_V1_CSBWIN_HUD_MATERIAL_MAGIC
+} CSB_V1_CSBWinHudMaterialKind0232;
+
+typedef struct {
+    CSB_V1_CSBWinHudMaterialKind0232 kind;
+    uint16_t graphic_index;
+    uint16_t source_x;
+    CSB_V1_CSBWinRect0232 destination;
+} CSB_V1_CSBWinHudMaterial0232;
+
+typedef struct {
+    int valid;
+    size_t count;
+    CSB_V1_CSBWinHudMaterial0232 entries[
+        CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT];
+} CSB_V1_CSBWinHudMaterialPlan0232;
 
 /* Decode only the source-owned layout record.  The caller owns decompression
  * of graphic 0x232 and can decide independently whether its graphics package
@@ -59,5 +86,11 @@ int csb_v1_csbwin_layout_0232_read_graphics_dat(
 /* Rectangles use inclusive CSBWin screen coordinates. */
 int csb_v1_csbwin_layout_0232_rect_is_screen_valid(
     const CSB_V1_CSBWinRect0232 *rect);
+
+/* Build CSBWin's source-owned HUD material composition. Direction uses a
+ * 19-pixel source slice from C028; other entries use their complete graphic. */
+int csb_v1_csbwin_layout_0232_build_hud_material_plan(
+    const CSB_V1_CSBWinLayout0232 *layout,
+    CSB_V1_CSBWinHudMaterialPlan0232 *out_plan);
 
 #endif

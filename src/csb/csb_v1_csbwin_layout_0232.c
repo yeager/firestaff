@@ -9,6 +9,8 @@ enum {
     CSBWIN_0232_EYE_BOX_OFFSET = 424,
     CSBWIN_0232_MOUTH_BOX_OFFSET = 432,
     CSBWIN_0232_POISON_BOX_OFFSET = 864,
+    CSBWIN_0232_WATER_LABEL_BOX_OFFSET = 872,
+    CSBWIN_0232_FOOD_LABEL_BOX_OFFSET = 880,
     CSBWIN_0232_FOOD_WATER_BOX_OFFSET = 904,
     CSBWIN_0232_ICON_DISPLAY_OFFSET = 914,
     CSBWIN_0232_OBJECT_GRAPHIC_FIRST_OFFSET = 1218,
@@ -72,6 +74,12 @@ int csb_v1_csbwin_layout_0232_decode(
         decoded_graphic + CSBWIN_0232_FOOD_WATER_BOX_OFFSET,
         &out_layout->food_water_box);
     csb_v1_csbwin_layout_0232_read_rect(
+        decoded_graphic + CSBWIN_0232_FOOD_LABEL_BOX_OFFSET,
+        &out_layout->food_label_box);
+    csb_v1_csbwin_layout_0232_read_rect(
+        decoded_graphic + CSBWIN_0232_WATER_LABEL_BOX_OFFSET,
+        &out_layout->water_label_box);
+    csb_v1_csbwin_layout_0232_read_rect(
         decoded_graphic + CSBWIN_0232_MOVEMENT_BOX_OFFSET,
         &out_layout->movement_box);
     csb_v1_csbwin_layout_0232_read_rect(
@@ -131,4 +139,78 @@ done:
     free(decoded);
     csb_atari_st_graphics_loader_close(&loader);
     return ok;
+}
+
+static int csb_v1_csbwin_layout_0232_append_hud_material(
+    CSB_V1_CSBWinHudMaterialPlan0232 *plan,
+    CSB_V1_CSBWinHudMaterialKind0232 kind, uint16_t graphic_index,
+    uint16_t source_x, const CSB_V1_CSBWinRect0232 *destination)
+{
+    CSB_V1_CSBWinHudMaterial0232 *entry;
+
+    if (!plan || !destination || plan->count >=
+        CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT) return 0;
+    entry = &plan->entries[plan->count++];
+    entry->kind = kind;
+    entry->graphic_index = graphic_index;
+    entry->source_x = source_x;
+    entry->destination = *destination;
+    return 1;
+}
+
+int csb_v1_csbwin_layout_0232_build_hud_material_plan(
+    const CSB_V1_CSBWinLayout0232 *layout,
+    CSB_V1_CSBWinHudMaterialPlan0232 *out_plan)
+{
+    size_t index;
+
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!layout || !layout->valid ||
+        !csb_v1_csbwin_layout_0232_rect_is_screen_valid(
+            &layout->food_water_box) ||
+        !csb_v1_csbwin_layout_0232_rect_is_screen_valid(
+            &layout->food_label_box) ||
+        !csb_v1_csbwin_layout_0232_rect_is_screen_valid(
+            &layout->water_label_box) ||
+        !csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout->poison_box) ||
+        !csb_v1_csbwin_layout_0232_rect_is_screen_valid(
+            &layout->movement_box) ||
+        !csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout->magic_box)) {
+        return 0;
+    }
+    for (index = 0; index < 4u; ++index) {
+        if (!csb_v1_csbwin_layout_0232_rect_is_screen_valid(
+                &layout->party_direction[index]) ||
+            !csb_v1_csbwin_layout_0232_append_hud_material(
+                out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_DIRECTION, 28u,
+                (uint16_t)(index * 19u), &layout->party_direction[index])) {
+            memset(out_plan, 0, sizeof(*out_plan));
+            return 0;
+        }
+    }
+    if (!csb_v1_csbwin_layout_0232_append_hud_material(
+            out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_FOOD_WATER, 20u, 0u,
+            &layout->food_water_box) ||
+        !csb_v1_csbwin_layout_0232_append_hud_material(
+            out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_FOOD_LABEL, 30u, 0u,
+            &layout->food_label_box) ||
+        !csb_v1_csbwin_layout_0232_append_hud_material(
+            out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_WATER_LABEL, 31u, 0u,
+            &layout->water_label_box) ||
+        !csb_v1_csbwin_layout_0232_append_hud_material(
+            out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_POISON, 32u, 0u,
+            &layout->poison_box) ||
+        !csb_v1_csbwin_layout_0232_append_hud_material(
+            out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_MOVEMENT, 13u, 0u,
+            &layout->movement_box) ||
+        !csb_v1_csbwin_layout_0232_append_hud_material(
+            out_plan, CSB_V1_CSBWIN_HUD_MATERIAL_MAGIC, 9u, 0u,
+            &layout->magic_box)) {
+        memset(out_plan, 0, sizeof(*out_plan));
+        return 0;
+    }
+    out_plan->valid = out_plan->count ==
+        CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT;
+    return out_plan->valid;
 }
