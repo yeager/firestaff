@@ -23109,6 +23109,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   requires the authenticated LIGHT0 palette, pixel receipts, and exact
   C101/C500/C501 placement; C038 status-border selection uses its live 67x29
   source destination. Remaining work is external capture comparison only.
+  - 2026-07-30: CLI `--game dm1 --save <original DMSAVE.DAT>` now reaches the
+    already validated M12/M11 resume path, making this capture reproducible
+    without synthetic save fixtures. The full F0344/F0345 visual sequence is
+    still required before this item can close.
 
 ## DM1 C13 F0435 stale-fence follow-up
 

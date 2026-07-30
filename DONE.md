@@ -44067,3 +44067,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   The capture uses the normal scalable window, not a synthetic screen or
   TITLE.DAT replacement. This closes the package-level visual smoke requested
   for the corrected I34E swoosh dwell and C001-to-Entrance cadence.
+# DM1 original-save CLI resume (2026-07-30)
+
+- ✅ Added `--save <path>` for direct game launches. It forwards only the
+  supplied path through the existing M12 quick-resume intent to the existing
+  game-specific M11 importer; it does not synthesize save bytes or bypass
+  validation. A real PC34 `DMSAVE.DAT` resumes through `--game dm1 --save`,
+  restoring its four champions, party position `(16,14,2)`, and source tick
+  `428`. `--save` without `--game` is rejected, and a missing save makes the
+  direct launch fail rather than falling back to a new or synthetic game.

@@ -35,6 +35,7 @@ static void usage(const char* prog) {
             "  --presentation-mode <v1|v20|v21|v22> Select game presentation without changing saved settings\n"
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,action,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
+            "  --save <path>       Resume a validated save for --game\n"
             "  --scan-data         Recursively scan asset directory by hash and exit\n"
             "  --scan-game-data    Alias for --scan-data\n"
             "  --boot-probe        With --game, verify selected-entry boot handoff and exit\n"
@@ -361,6 +362,10 @@ int main(int argc, char** argv) {
             opts.directLaunch = 1;
             continue;
         }
+        if (strcmp(a, "--save") == 0 && i + 1 < argc) {
+            opts.savePath = argv[++i];
+            continue;
+        }
         if (strcmp(a, "--retroachievements") == 0) {
             opts.retroAchievementsEnabled = 1;
             continue;
@@ -427,6 +432,10 @@ int main(int argc, char** argv) {
 
     if (opts.bootProbe && !opts.gameId) {
         fprintf(stderr, "firestaff: --boot-probe requires --game <id>\n");
+        return 2;
+    }
+    if (opts.savePath && !opts.gameId) {
+        fprintf(stderr, "firestaff: --save requires --game <id>\n");
         return 2;
     }
 

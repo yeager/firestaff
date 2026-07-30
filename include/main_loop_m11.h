@@ -37,6 +37,7 @@ typedef struct {
                               frames without input. */
     const char* dataDir;   /* Optional override for asset detection.
                               Falls back to FIRESTAFF_DATA. */
+    const char* savePath;  /* Optional validated save to resume after launch. */
     const char* gameId;    /* Optional game to pre-select: dm1, csb, dm2,
                               nexus, theron. Overrides auto-detection. */
     int directLaunch;      /* Non-zero when --game should bypass M12. */
