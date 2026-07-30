@@ -267,8 +267,11 @@ V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
         dm1_v1_startup_title_post_zoom_vblanks_pc34();
     timing.finalFadeGuardVblankCount =
         dm1_v1_startup_title_final_guard_vblanks_pc34();
-    timing.firstMenuEligibleStep = V1_TITLE_DAT_FRAME_MAX + 1u;
     timing.sourceAnimationStepCount = V1_TitleFrontend_GetSourceAnimationStepCount();
+    /* C001 is the authoritative PC34 startup path.  TITLE.DAT's 53-frame
+     * bank is provenance for its separate fallback decoder, not a hidden
+     * extra C001 animation phase. */
+    timing.firstMenuEligibleStep = timing.sourceAnimationStepCount + 1u;
     timing.frameBankEquivalentStepCount =
         dm1_v1_startup_title_frame_bank_equivalent_steps_pc34();
     timing.sourceFile = "ReDMCSB_WIP20210206/Toolchains/Common/Source/TITLE.C";

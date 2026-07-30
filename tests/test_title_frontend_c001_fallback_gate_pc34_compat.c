@@ -418,9 +418,9 @@ static void check_startup_source_timing_contract(void) {
     expect_u("startup TITLE has no fallback cadence padding",
              media.title_c001_cadence_pad_ms,
              0u);
-    expect_u("startup TITLE enters menu after frame-bank-equivalent boundary",
+    expect_u("startup TITLE enters menu after C001 source boundary",
              media.title_menu_boundary_frame,
-             dm1_v1_startup_title_frame_bank_equivalent_steps_pc34() + 1u);
+             dm1_v1_startup_title_source_animation_steps_pc34() + 1u);
     expect_i("startup TITLE palette transition is C12 then C13/C14",
              media.title_presents_palette ==
                      VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&

@@ -888,7 +888,7 @@ int dm1_v1_startup_handoff_post_launch_plan_pc34(
         title_facts.title_frame =
             out_plan->media_receipt.title_menu_boundary_frame;
         title_facts.title_frame_max =
-            out_plan->media_receipt.title_frame_bank_equivalent_steps;
+            out_plan->media_receipt.title_source_animation_steps;
         title_facts.advance_requested = 1;
         title_facts.title_handoff_ready = 1;
         if (!dm1_v1_startup_title_menu_eligibility_receipt_pc34(
@@ -4767,7 +4767,7 @@ int dm1_v1_startup_title_menu_eligibility_receipt_pc34(
 
     frame_max = facts->title_frame_max
                     ? facts->title_frame_max
-                    : dm1_v1_startup_title_frame_bank_equivalent_steps_pc34();
+                    : dm1_v1_startup_title_source_animation_steps_pc34();
     if (!facts->title_handoff_ready || facts->title_frame <= frame_max) {
         *out_receipt = receipt;
         return 1;
@@ -4845,12 +4845,11 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
         title_timing.sourceAnimationStepCount;
     receipt.title_frame_bank_equivalent_steps =
         title_timing.frameBankEquivalentStepCount;
-    /* TITLE.C F0437 consumes 23 source-visible events, but the original
-     * startup front-end does not release into ENTRANCE.C until the V1 title
-     * frame-bank-equivalent boundary is crossed. Hold the verified C001
-     * surface through that boundary without admitting TITLE.DAT pixels. */
+    /* TITLE.C F0437 consumes 23 source-visible events.  TITLE.DAT's
+     * 53-frame bank is a separate file decoder and must not manufacture a
+     * longer C001 startup phase when the original C001 surface is present. */
     receipt.title_menu_boundary_frame =
-        title_timing.frameBankEquivalentStepCount + 1U;
+        title_timing.sourceAnimationStepCount + 1U;
     receipt.title_presents_palette = presents_palette;
     receipt.title_zoom_palette = title_palette;
     receipt.title_menu_eligible = 1;
@@ -4997,7 +4996,7 @@ int dm1_v1_startup_title_timing_receipt_valid_pc34(
         media_receipt->title_frame_bank_equivalent_steps ==
             timing.frameBankEquivalentStepCount &&
         media_receipt->title_menu_boundary_frame ==
-            timing.frameBankEquivalentStepCount + 1u &&
+            timing.sourceAnimationStepCount + 1u &&
         media_receipt->title_presents_palette == presents_palette &&
         media_receipt->title_zoom_palette == title_palette;
 }

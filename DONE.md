@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 DM1 C001 title-boundary correction: ReDMCSB `TITLE.C`
+  F0437's 23 source events now set the C001 menu/Entrance boundary. The
+  separate 53-frame `TITLE.DAT` decoder remains provenance/fallback-only and
+  can no longer manufacture extra C001 title frames when original
+  `GRAPHICS.DAT` C001 is available. Focused source-timing, C001 admission and
+  startup-state CTests pass 3/3.
+
 - ✅ 2026-07-30 DM1 HUD source-gate refresh: action/spell glyph, champion
   name and inscription presentation regressions now verify the current M653
   raster-cell, plan-driven F0397/F0398 and material-bound M648 routes. This

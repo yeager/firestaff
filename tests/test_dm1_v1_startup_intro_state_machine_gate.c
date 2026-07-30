@@ -424,9 +424,8 @@ static void check_title_to_menu_boundary(void) {
 
     /* ReDMCSB TITLE.C F0437 lines 319-324 draw PRESENTS, lines 385-387
      * run the title zoom blits, lines 395-409 complete the post-zoom,
-     * STRIKES BACK, and final VBlank guard. Firestaff's decoded TITLE
-     * frame bank must not make the menu eligible before frame 53 is held.
-     */
+     * STRIKES BACK, and final VBlank guard. The separate TITLE.DAT decoder
+     * must not extend the C001 menu boundary to its 53-frame bank. */
     expect_u("TITLE source step count",
              titleTiming.sourceAnimationStepCount,
              dm1_v1_startup_title_source_animation_steps_pc34());
@@ -435,7 +434,7 @@ static void check_title_to_menu_boundary(void) {
              dm1_v1_startup_title_presents_hold_vblanks_pc34());
     expect_u("TITLE first menu-eligible step",
              titleTiming.firstMenuEligibleStep,
-             V1_TITLE_DAT_FRAME_MAX + 1u);
+             dm1_v1_startup_title_source_animation_steps_pc34() + 1u);
     expect_i("TITLE source step 1 exists",
              V1_TitleFrontend_GetSourceAnimationStep(1u, &sourceStep),
              1);
@@ -498,7 +497,7 @@ static void check_title_to_menu_boundary(void) {
              V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&titleTiming));
     expect_u("DM1 full graphics media receipt menu boundary",
              media.title_menu_boundary_frame,
-             V1_TITLE_DAT_FRAME_MAX + 1u);
+             dm1_v1_startup_title_source_animation_steps_pc34() + 1u);
     expect_i("DM1 full graphics media receipt PRESENTS palette",
              media.title_presents_palette,
              expected_presents_palette);
@@ -1414,7 +1413,7 @@ static void check_dm1_launch_path_bypass_contract(void) {
              0);
     expect_i("DM1 post-launch plan carries title boundary frame",
              post.title_menu_boundary_frame,
-             (int)dm1_v1_startup_title_frame_bank_equivalent_steps_pc34() + 1);
+             (int)dm1_v1_startup_title_source_animation_steps_pc34() + 1);
     expect_i("DM1 post-launch plan marks title menu eligible",
              post.title_menu_eligible,
              1);
