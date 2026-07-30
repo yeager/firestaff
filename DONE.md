@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 CSB V2.x regression verification: current `ctest -L csb`
+  passes 114/114. The overlapping V2 labels cover filtered, upscaled and
+  admitted V2.2 startup/runtime contracts with real PC3.4 data. This verifies
+  implemented V2.x behavior; unreconciled F0128 material families remain
+  intentionally V1 source pixels.
+
 - ✅ 2026-07-30 Start-menu data-directory token containment: the runtime
   data-directory accessor and scan-progress status line now use the same
   durable selected/configured path as the Settings row. A transient macOS

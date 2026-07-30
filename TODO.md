@@ -204,10 +204,12 @@ an integration build pass.
   motion/lighting, and V2.2 source-artpack admission, startup isolation and
   runtime HUD ownership. This proves the implemented V2.x feature surface,
   not the still-unadmitted F0128 material families.
-  2026-07-30 current-main verification: `ctest -L csb` passes all 113
-  registered CSB regressions, including the 51-test V2.x intersection. This
-  is a regression receipt for the implemented paths only; unreconciled
-  F0128 material families and the CSBWin spell owner remain open.
+  2026-07-30 current-main verification: `ctest -L csb` passes all 114
+  registered CSB regressions. The overlapping V2 labels cover 45 `v2`, 3
+  `v2.0`, 1 `v2.1`, and 6 `v2.2` contracts, including real-PC3.4 startup and
+  Prison runtime captures. This is a regression receipt for the implemented
+  paths only; unreconciled F0128 material families and the CSBWin spell owner
+  remain open.
   2026-07-30: `csb_v2_title_boot_probe` now checks the actual local PC3.4
   C001 runtime at VBlank 50 in V1, V2.0, V2.1 and admitted V2.2. It requires
   the original 60-VBlank PRESENTS phase rather than accepting a title that
