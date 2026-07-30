@@ -1236,9 +1236,27 @@ const char *csb_v1_runtime_find_dungeon(const char *data_dir,
                                          CSB_V1_AssetResult *out_result)
 {
     static char found_path[ASSET_PATH_MAX];
+    static const char *const direct_names[] = {
+        "DUNGEON.DAT", "dungeon.dat", NULL
+    };
+    const char *const *name;
 
     if (!data_dir || !out_result) return NULL;
     memset(out_result, 0, sizeof(*out_result));
+
+    /* A selected PC package commonly exposes DUNGEON.DAT directly.  Check
+     * that authenticated file before the archive-aware fallback: extracting
+     * unrelated Amiga/ST media here delays an otherwise immediate CSB boot. */
+    for (name = direct_names; *name; ++name) {
+        int written = snprintf(found_path, sizeof(found_path), "%s/%s",
+                               data_dir, *name);
+        if (written > 0 && (size_t)written < sizeof(found_path) &&
+            asset_file_matches_md5(found_path, g_csb_dungeon_hashes[0])) {
+            out_result->path = found_path;
+            out_result->kind = CSB_V1_ASSET_GFX_ARCHIVE_NONE;
+            return found_path;
+        }
+    }
 
     if (!asset_find_by_md5_list(data_dir, g_csb_dungeon_hashes,
                                  found_path, sizeof(found_path), NULL, 8)) {
@@ -1280,6 +1298,7 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
     CSB_V1_VariantId requested_variant;
     const CSB_V1_VariantInfo *requested_info = NULL;
     const char *requested_hashes[3] = { NULL, NULL, NULL };
+    const char *const *accepted_hashes;
 
     if (!data_dir || !out_result) return NULL;
     memset(out_result, 0, sizeof(*out_result));
@@ -1301,13 +1320,37 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
         }
     }
 
+    accepted_hashes = requested_info ? requested_hashes : g_csb_graphics_hashes;
+
+    /* Do not unpack every unrelated release archive when the selected game
+     * directory already contains the authenticated graphics package. */
+    for (names = g_csb_gfx_search; *names != NULL; ++names) {
+        const char *const *expected;
+        int written = snprintf(found_path, sizeof(found_path), "%s/%s",
+                               data_dir, *names);
+        if (written <= 0 || (size_t)written >= sizeof(found_path)) continue;
+        for (expected = accepted_hashes; *expected; ++expected) {
+            if (asset_file_matches_md5(found_path, *expected)) {
+                CSB_V1_AssetGfxArchiveType kind =
+                    CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+                if (strcasecmp(*names, "CSB.DAT") == 0) {
+                    kind = CSB_V1_ASSET_GFX_ARCHIVE_CSB;
+                } else if (strcasecmp(*names, "CSBGRAPH.DAT") == 0) {
+                    kind = CSB_V1_ASSET_GFX_ARCHIVE_CSBGRAF;
+                }
+                out_result->path = found_path;
+                out_result->kind = kind;
+                return found_path;
+            }
+        }
+    }
+
     /* Prefer MD5-hash search so files in arbitrary subdirs and renamed
      * user layouts are discovered before any legacy filename fallback. A
      * recognised launcher variant is a media identity, not a presentation
      * preference: it must not silently consume another platform's archive. */
     int matchIndex = -1;
-    if (asset_find_by_md5_list(data_dir,
-                                 requested_info ? requested_hashes : g_csb_graphics_hashes,
+    if (asset_find_by_md5_list(data_dir, accepted_hashes,
                                  found_path, sizeof(found_path),
                                  &matchIndex, 8)) {
         /* Determine archive kind from the matched hash + extension */

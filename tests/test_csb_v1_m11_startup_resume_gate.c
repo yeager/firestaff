@@ -1145,6 +1145,7 @@ int main(void) {
     char roster_save_path[560];
     char csbwin_save_path[560];
     char dm1_import_path[560];
+    char direct_dungeon_path[560];
     const char* data_dir = csb_data_dir(fallback);
     CSB_V1_BootProfile preflight;
     CSB_V1_RuntimeProfile expected;
@@ -1305,6 +1306,11 @@ int main(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
                 "M11 CSB new-game start succeeds");
+    snprintf(direct_dungeon_path, sizeof(direct_dungeon_path),
+             "%s%sDUNGEON.DAT", data_dir, TEST_PATH_SEP);
+    profile = (CSB_V1_BootProfile*)view.csbBootProfile;
+    expect_true(profile && strcmp(profile->dungeon_path, direct_dungeon_path) == 0,
+                "M11 CSB prefers the selected loose DUNGEON.DAT before archive scan");
     /* A verified CSB DUNGEON.DAT owns the new-game pose.  Preserve the
      * source-derived pose so later Resume validation can prove it did not
      * apply a save before the entrance command is accepted. */

@@ -7956,6 +7956,35 @@ static int m11_resolve_builtin_dungeon_path(char* out,
                         }
                     }
                 }
+                if (strcmp(gameId, "csb") == 0) {
+                    char directPath[M11_GAME_VIEW_PATH_CAPACITY];
+
+                    /* A selected CSB directory normally contains the
+                     * authenticated loose PC3.4 pair.  Resolve that exact
+                     * DUNGEON.DAT before the recursive hash finder reaches
+                     * unrelated CSB ports, CD images, or large archives in
+                     * the same user data root.  The later MD5 scan remains
+                     * the archive/renamed-media path. */
+                    if (FSP_JoinPath(directPath, sizeof(directPath), dataDir,
+                                     "DUNGEON.DAT") &&
+                        asset_file_matches_md5(directPath, expectedMd5)) {
+                        strncpy(out, directPath, outSize - 1);
+                        out[outSize - 1] = '\0';
+                        return 1;
+                    }
+                    {
+                        char subdirPath[M11_GAME_VIEW_PATH_CAPACITY];
+                        if (FSP_JoinPath(subdirPath, sizeof(subdirPath),
+                                         dataDir, "csb") &&
+                            FSP_JoinPath(directPath, sizeof(directPath),
+                                         subdirPath, "DUNGEON.DAT") &&
+                            asset_file_matches_md5(directPath, expectedMd5)) {
+                            strncpy(out, directPath, outSize - 1);
+                            out[outSize - 1] = '\0';
+                            return 1;
+                        }
+                    }
+                }
                 /* Try this hash; if it fails, keep looking for a
                  * secondary match in the same game's entry list
                  * (e.g. theron JP -> US fallback). */
