@@ -156,6 +156,10 @@ an integration build pass.
   motion/lighting, and V2.2 source-artpack admission, startup isolation and
   runtime HUD ownership. This proves the implemented V2.x feature surface,
   not the still-unadmitted F0128 material families.
+  2026-07-30 current-main verification: `ctest -L csb` passes all 111
+  registered CSB regressions, including the 51-test V2.x intersection. This
+  is a regression receipt for the implemented paths only; unreconciled
+  F0128 material families and the CSBWin spell owner remain open.
 
 - **CSB-V21-LIVE-UPSCALE-CONSUMPTION:** Closed 2026-07-29. The F10 CSB
   filter page now exposes the actual CSB V2.1 EPX scale (1x/2x/4x) and

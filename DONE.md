@@ -43169,3 +43169,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   dispatch and before command routing. The real-save M11 regression proves
   F1 opens the source champion inventory even when the retained M11 party was
   deliberately emptied.
+
+- ✅ 2026-07-30 CSB current regression receipt: rebuilt current `main` and
+  ran `ctest -L csb` in `/Volumes/Extern-disk/firestaff-csb-build`; all
+  111/111 registered CSB tests passed. The intersected V2.x lane remains
+  51/51. This verifies the implemented V1/V2.0/V2.1/V2.2 paths and preserves
+  the explicit fail-closed boundaries for unreviewed V2.2 F0128 materials and
+  CSBWin direct spell execution.
