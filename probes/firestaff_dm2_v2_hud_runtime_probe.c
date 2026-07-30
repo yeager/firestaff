@@ -129,7 +129,7 @@ int main(void) {
         CHECK(nonzero == 0);
     }
 
-    /* 13. Render paints into framebuffer when V2 enabled + HUD visible */
+    /* 13. V2 enabled without original GDAT still leaves V1 framebuffer alone. */
     {
         DM2_V2_PhaseGateConfig gate = { 1, 1 };  /* both on */
         dm2_v2_hud_runtime_set_gate_config(&gate);
@@ -140,7 +140,7 @@ int main(void) {
         for (int i = 0; i < (int)sizeof(fb_zero); i++) {
             if (fb_zero[i] != 0) { nonzero++; break; }
         }
-        CHECK(nonzero > 0);
+        CHECK(nonzero == 0);
     }
 
     /* 14. Render is no-op when opacity = 0 */
@@ -165,11 +165,11 @@ int main(void) {
         CHECK(dm2_v2_hud_runtime_is_active() == 0);
     }
 
-    /* 16. is_active returns 1 when V2 enabled + visible (default after init) */
+    /* 16. V2 is not active until the original GDAT owner is mounted. */
     {
         DM2_V2_PhaseGateConfig gate = { 1, 1 };
         dm2_v2_hud_runtime_set_gate_config(&gate);
-        CHECK(dm2_v2_hud_runtime_is_active() == 1);
+        CHECK(dm2_v2_hud_runtime_is_active() == 0);
     }
 
     /* 17. force_active_for_test bypasses the gate */
@@ -178,14 +178,14 @@ int main(void) {
         dm2_v2_hud_runtime_set_gate_config(&gate);
         CHECK(dm2_v2_hud_runtime_is_active() == 0);
         dm2_v2_hud_runtime_force_active_for_test(1);
-        CHECK(dm2_v2_hud_runtime_is_active() == 1);
+        CHECK(dm2_v2_hud_runtime_is_active() == 0);
         clear_fb(fb_zero, sizeof(fb_zero));
         dm2_v2_hud_runtime_render(fb_zero, 320, 200);
         int nonzero = 0;
         for (int i = 0; i < (int)sizeof(fb_zero); i++) {
             if (fb_zero[i] != 0) { nonzero++; break; }
         }
-        CHECK(nonzero > 0);
+        CHECK(nonzero == 0);
         dm2_v2_hud_runtime_force_active_for_test(0);
     }
 
@@ -204,7 +204,7 @@ int main(void) {
         clear_fb(fb_zero, sizeof(fb_zero));
     }
 
-    /* 19. V2 active + champion bar setter → pixels appear in champion bar area
+    /* 19. Champion state cannot create a bar without original GDAT material.
      * Champion bars are at y=4..12, x=4..67,4..67+66,4..67+132,4..67+198
      * (4 bars at DM2_CHAMP_BAR_X_START=4, width=64, spacing=2) */
     {
@@ -220,10 +220,10 @@ int main(void) {
                 if (fb_zero[y * 320 + x] != 0) { nonzero++; }
             }
         }
-        CHECK(nonzero > 0);
+        CHECK(nonzero == 0);
     }
 
-    /* 20. Action strip with active icon paints a non-zero pixel
+    /* 20. Action state cannot create an icon without original GDAT material.
      * Action strip is at y=172, x=16..156 (5 icons * 28 wide) */
     {
         DM2_V2_PhaseGateConfig gate = { 1, 1 };
@@ -237,7 +237,7 @@ int main(void) {
                 if (fb_zero[y * 320 + x] != 0) { nonzero++; }
             }
         }
-        CHECK(nonzero > 0);
+        CHECK(nonzero == 0);
     }
 
     /* 21. source_evidence returns the citation string */

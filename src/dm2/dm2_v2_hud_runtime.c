@@ -1,7 +1,6 @@
 /* DM2 V2 HUD: original GDAT-backed presentation only. */
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v1_viewport_renderer.h"
-#include "dm2_v2_hud_widget_bitmap_blit.h"
 #include <string.h>
 
 static DM2_V2_HudOverlay s_hud;
@@ -151,69 +150,6 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h)
 int dm2_v2_hud_runtime_is_active(void) { return render_allowed() && s_original_data_mounted && s_gdat_fetch && s_gdat_palette_fetch; }
 void dm2_v2_hud_runtime_force_active_for_test(int active) { s_force_active = active ? 1 : 0; }
 
-/* ── Asset-aware render (Phase 3 widget bitmap hook) ─────────────
- * Restored after the a192cb2b0 worktree merge: the public header and
- * firestaff_dm2_v2_hud_widget_runtime_hook_probe kept this contract
- * while the definitions were dropped. Walks the Phase 3 widget slots
- * the dm2_v2_hud_widget_assets gate classifies, records REAL_BITMAP vs
- * PROCEDURAL_FALLBACK per slot, and dispatches the procedural render.
- * REAL slots get a bounded 1x1 blit from
- * dm2_v2_hud_widget_bitmap_blit_render_slot() when the manifest
- * source_file resolves, else a 1-pixel anchor stamp. */
-
-/* Anchor pixel positions for the real-bitmap stamp, relative to the
- * HUD's 320x200 layout. */
-typedef struct {
-    int x;
-    int y;
-} DM2_V2_HudSlotAnchor;
-
-static const DM2_V2_HudSlotAnchor
-    k_real_stamp_anchors[DM2_V2_HUD_WIDGET_COUNT] = {
-    /* INVENTORY_QUICK_VIEW — top-left of HUD, Phase 3 primary */
-    { 80,  4 },
-    /* ACTION_PROMPT — top-right of HUD, Phase 3 primary */
-    { 220, 4 },
-    /* COMPASS_ROSE — top-left of HUD chrome */
-    { 11, 16 },
-    /* DEPTH_INDICATOR — top-right of HUD chrome */
-    { 286, 8 },
-    /* GOLD_COUNTER — bottom-right of HUD chrome */
-    { 286, 178 },
-    /* CHAMPION_BAR_FRAME — top status bar */
-    { 4, 4 },
-    /* ACTION_STRIP_FRAME — bottom action strip */
-    { 16, 172 },
-};
-
-static void dm2_v2_hud_runtime_stamp_real_slot(
-    uint8_t *fb, int w, int h_res, DM2_V2_HudWidgetSlot slot)
-{
-    const DM2_V2_HudSlotAnchor *a;
-    DM2_V2_HudWidgetSlotInfo info;
-
-    if (!fb || w <= 0 || h_res <= 0) return;
-    if ((unsigned)slot >= (unsigned)DM2_V2_HUD_WIDGET_COUNT) return;
-    a = &k_real_stamp_anchors[slot];
-    if (a->x < 0 || a->x >= w) return;
-    if (a->y < 0 || a->y >= h_res) return;
-
-    /* Bounded-blit first: when the slot is REAL, look up its resolved
-     * manifest source_file and try the synthetic 1x1 RGBA blit. */
-    memset(&info, 0, sizeof(info));
-    if (dm2_v2_hud_widget_assets_get_slot_info(slot, &info) &&
-        info.classification == DM2_V2_HUD_WIDGET_CLASS_REAL &&
-        info.resolved_path[0] != '\0' &&
-        dm2_v2_hud_widget_bitmap_blit_render_slot(
-            &info, fb, w, h_res, a->x, a->y)) {
-        return; /* bounded blit succeeded */
-    }
-
-    /* Fallback: 1-pixel anchor stamp with the HUD opacity so a probe
-     * can still detect that the gate reached the runtime end-to-end. */
-    fb[a->y * w + a->x] = (uint8_t)s_hud.opacity;
-}
-
 void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res) {
     int i;
     int render_will_run = 1;
@@ -255,16 +191,11 @@ void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res) {
         return;
     }
 
-    /* Procedural overlay first; REAL-slot stamps land afterwards so the
-     * probe can read them from the framebuffer. */
-    dm2_v2_hud_render(&s_hud, fb, w, h_res);
-
-    for (i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
-        if (s_last_path_mode[i] == DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP) {
-            dm2_v2_hud_runtime_stamp_real_slot(
-                fb, w, h_res, (DM2_V2_HudWidgetSlot)i);
-        }
-    }
+    /* The widget manifest may classify external art for diagnostics, but it
+     * is never a DM2 pixel owner.  SKWIN's HUD consumes INTERFACE_GENERAL
+     * and CHAMPIONS GDAT records, so this compatibility entry point uses the
+     * same authenticated GDAT route as the production renderer. */
+    dm2_v2_hud_runtime_render(fb, w, h_res);
 }
 
 DM2_V2_HudRuntimePathMode dm2_v2_hud_runtime_last_path_mode(

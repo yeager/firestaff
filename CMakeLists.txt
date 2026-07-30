@@ -17460,32 +17460,6 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm2_v2_hud_widget_real_slot_receipt_probe
     )
 
-    # Phase 3 widget bitmap follow-up: runtime hook probe. Verifies that
-    # the dm2_v2_hud_runtime_render_with_assets() entry point correctly
-    # consults the dm2_v2_hud_widget_assets gate per slot, that a REAL
-    # classification routes the runtime through the real-bitmap
-    # substitute path (anchor stamp + path-mode record), that the
-    # placeholder fallback path is byte-stable when no manifest is
-    # installed or when slots classify as PLACEHOLDER/MISSING/PARTIAL,
-    # and that the V1 framebuffer invariant is preserved when V2 is
-    # off. Companion to firestaff_dm2_v2_hud_widget_assets_probe
-    # (gate) and firestaff_dm2_v2_hud_runtime_probe (no-gate baseline).
-    add_executable(firestaff_dm2_v2_hud_widget_runtime_hook_probe
-        probes/firestaff_dm2_v2_hud_widget_runtime_hook_probe.c
-    )
-    target_link_libraries(firestaff_dm2_v2_hud_widget_runtime_hook_probe
-        PRIVATE firestaff_dm2_v2 firestaff_m10 m)
-    target_compile_definitions(firestaff_dm2_v2_hud_widget_runtime_hook_probe PRIVATE
-        FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/examples/dm2_hud_widget_synthetic"
-    )
-    if(NOT MSVC)
-        target_compile_options(firestaff_dm2_v2_hud_widget_runtime_hook_probe PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME firestaff_dm2_v2_hud_widget_runtime_hook_probe
-        COMMAND firestaff_dm2_v2_hud_widget_runtime_hook_probe
-    )
-
     # Phase 3 widget bitmap follow-up: bounded bitmap blit probe.
     # Verifies the dm2_v2_hud_widget_bitmap_blit module reads the
     # synthetic 1x1 RGBA PNG fixtures from

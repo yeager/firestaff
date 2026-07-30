@@ -90,10 +90,8 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h_res);
 /* ── Asset-aware render (Phase 3 widget bitmap hook) ───────────── */
 /* Per-slot path mode recorded by dm2_v2_hud_runtime_render_with_assets().
  * Mirrors the asset gate classification but uses a render-perspective
- * vocabulary (REAL_BITMAP = the slot's manifest classification is
- * DM2_V2_HUD_WIDGET_CLASS_REAL and the runtime took the real-asset
- * path; PROCEDURAL_FALLBACK = the slot was not REAL and the existing
- * procedural rectangle/letter fallback drew the slot).
+ * vocabulary. It is diagnostic-only: widget manifests do not own runtime
+ * pixels. The runtime always draws authenticated original GDAT or no-draw.
  *
  * The mapping is:
  *   REAL classification  → DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP
@@ -102,14 +100,8 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h_res);
  *   MISSING              → DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK
  *   UNKNOWN              → DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK
  *
- * The runtime never claims a finished bitmap decode happened for any
- * slot. The "real asset path" hook is the integration seam where
- * real bitmap decode will land when operator-installed art ships.
- * Currently it routes through dm2_v2_hud_widget_bitmap_blit_render_slot()
- * for synthetic 1x1 RGBA PNG fixtures (Phase 3 follow-up), and falls
- * back to a 1-pixel anchor stamp when the bounded blit cannot run.
- * The path-mode array records REAL_BITMAP in both cases so wire-up
- * tests can prove the gate is reaching the runtime end-to-end. */
+ * A manifest classification is retained for tooling only; it cannot promote
+ * generated, operator-provided, or placeholder pixels into the game. */
 typedef enum {
     DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK = 0,
     DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP         = 1
@@ -117,8 +109,8 @@ typedef enum {
 
 /* Asset-aware variant of dm2_v2_hud_runtime_render(). Walks the seven
  * Phase 3 / chrome-supporting widget slots (see dm2_v2_hud_widget_assets),
- * records the path-mode the runtime took per slot, and then renders the
- * HUD the same way dm2_v2_hud_runtime_render() does.
+ * records the manifest classification per slot, then renders the HUD through
+ * dm2_v2_hud_runtime_render()'s original-GDAT-only route.
  *
  * Phase-gated like the regular render: no-op when V2 launch/profile are
  * both off, when the HUD is hidden, or when opacity is 0.

@@ -44388,3 +44388,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   colour, radius or velocity-stroke fallbacks. `DRAW_ITEM` and
   `DRAW_TEMP_PICST` now retain only source GDAT identity and source-owned
   placement; unavailable material remains no-draw.
+- ✅ 2026-07-30 DM2 V2 HUD synthetic hook removal: the legacy asset-aware
+  entry point no longer blits test PNGs, stamps anchor pixels or invokes the
+  procedural HUD overlay. It now delegates only to the authenticated
+  `INTERFACE_GENERAL`/`CHAMPIONS` GDAT path; manifest classification remains
+  diagnostic-only and cannot create game pixels.

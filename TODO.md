@@ -258,7 +258,10 @@ diagnostic; it must not silently fall back to a generated visual.
   must remain no-draw until their original decoder is implemented.
 - **DM2-ORIGINAL-REPLACE-002:** Replace the V2 HUD's synthetic 1x1/overlay
   route with real interface/widget records from `dm2/GRAPHICS.DAT`; do not
-  use generated PNG pixels as a runtime fallback.
+  use generated PNG pixels as a runtime fallback. **2026-07-30 update:** the
+  legacy 1x1 PNG/anchor-stamp entry point now delegates exclusively to the
+  original `INTERFACE_GENERAL`/`CHAMPIONS` GDAT renderer; remaining work is
+  only source-verified coverage for any HUD surfaces not yet decoded.
 - **THERON-ORIGINAL-REPLACE-001:** Replace the coloured UI chrome, checkerboard
   palette and chapter-marker placeholders with real US/JP Track 02 bitmap,
   palette and loader-selected records.  The supplied `TQUS02.bin`, CUE and
