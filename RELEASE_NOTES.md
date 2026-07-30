@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.187
+
+- CSB: decode the original source spell table from graphic 0x230, including
+  spell identity, required skill and descriptor lookup for the CSB magic path.
+- DM2: finish the source-symbol audit and mark platform-specific routines that
+  do not apply to Firestaff's architecture accordingly.
+
 # Firestaff v3.0.186
 
 - CSB: select the original PC3.4 floor and wall graphics sets from the active
