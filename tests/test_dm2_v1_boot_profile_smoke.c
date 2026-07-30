@@ -168,14 +168,10 @@ static void test_scan_nested_data_dir(void)
           "nested dungeon.dat fixture written");
 
     dm2_v1_boot_profile_init(&p);
-    CHECK(dm2_v1_boot_scan_assets(&p, root) == 0,
-          "scan_assets accepts extracted DOS data/ layout");
-    CHECK(strstr(p.graphics_path, "data") != NULL,
-          "graphics_path points into data/ layout");
-    CHECK(strstr(p.dungeon_path, "data") != NULL,
-          "dungeon_path points into data/ layout");
-    CHECK(strstr(p.asset_root, "data") != NULL,
-          "asset_root follows resolved data/ layout");
+    CHECK(dm2_v1_boot_scan_assets(&p, root) == -1,
+          "scan_assets rejects unverified extracted-name fixtures");
+    CHECK(p.graphics_path[0] == '\0' && p.dungeon_path[0] == '\0',
+          "unverified fixture paths are not retained");
     CHECK(dm2_v1_boot_probe_available(root) == 0,
           "probe_available still rejects tiny synthetic fixtures");
 

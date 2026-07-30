@@ -44445,3 +44445,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   prevents an earlier runtime pose from leaking into a new game; it creates
   no party, leader hand, gold or timer data. Verified by the focused contract
   test plus the canonical PC G1 graph and arrange-dungeon receipts.
+- ✅ 2026-07-30 DM2 hash-only asset admission: removed the boot scanner's
+  legacy filename/size fallback for incomplete developer fixtures. Startup
+  availability and launch now discover DM2 data only through the supported
+  original-file hashes, including genuine files with arbitrary names. The
+  smoke test verifies that named fake files are rejected while renamed real
+  PC files remain accepted.

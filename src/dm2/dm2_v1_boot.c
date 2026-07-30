@@ -666,61 +666,6 @@ static int path_md5_hex(const char *path, char out_hex[33]) {
     return 1;
 }
 
-/* ── Resolve asset path for a single file ───────────────────────────── */
-
-static int resolve_asset_path(const char *base_dir,
-                              const char *subdir,
-                              const char *file_candidates[],
-                              char resolved_path[512],
-                              size_t *out_size,
-                              char out_md5[33]) {
-    char path[512];
-    size_t i;
-    for (i = 0; file_candidates[i]; i++) {
-        /* Try base_dir/subdir/filename */
-        if (subdir && subdir[0]) {
-            snprintf(path, sizeof(path), "%s%c%s%c%s",
-                     base_dir, DM2_PATH_SEP, subdir, DM2_PATH_SEP, file_candidates[i]);
-        } else {
-            snprintf(path, sizeof(path), "%s%c%s",
-                     base_dir, DM2_PATH_SEP, file_candidates[i]);
-        }
-        if (file_size(path) > 0) {
-            strncpy(resolved_path, path, 511);
-            resolved_path[511] = '\0';
-            if (out_size) *out_size = file_size(path);
-            if (out_md5 && path_md5_hex(path, out_md5)) {
-                /* MD5 computed */
-            } else if (out_md5) {
-                out_md5[0] = '\0';
-            }
-            return 1;
-        }
-    }
-    return 0;
-}
-
-static int resolve_dm2_asset_path(const char *base,
-                                  const char *file_candidates[],
-                                  char resolved_path[512],
-                                  size_t *out_size,
-                                  char out_md5[33]) {
-    const char *subdirs[] = {
-        "dm2",
-        "data",
-        "",
-        NULL
-    };
-    size_t i;
-    for (i = 0; subdirs[i]; ++i) {
-        if (resolve_asset_path(base, subdirs[i], file_candidates,
-                               resolved_path, out_size, out_md5)) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
 static int dm2_try_hash_scan_root(const char *root,
                                   char graphics_path[512],
                                   size_t *graphics_size,
@@ -856,35 +801,6 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                                      &profile->dungeon_size,
                                      profile->dungeon_md5);
 
-    /* Legacy fallback for incomplete/synthetic developer fixtures. */
-    if (!profile->graphics_path[0]) {
-        const char *gfx_candidates[] = {
-            "DM2GRAPHICS.DAT",
-            "GRAPHICS.DAT",
-            "dm2graphics.dat",
-            "graphics.dat",
-            NULL
-        };
-        resolve_dm2_asset_path(base, gfx_candidates,
-                               profile->graphics_path,
-                               &profile->graphics_size,
-                               profile->graphics_md5);
-    }
-
-    if (!profile->dungeon_path[0]) {
-        const char *dun_candidates[] = {
-            "DM2DUNGEON.DAT",
-            "DUNGEON.DAT",
-            "dm2dungeon.dat",
-            "dungeon.dat",
-            NULL
-        };
-        resolve_dm2_asset_path(base, dun_candidates,
-                               profile->dungeon_path,
-                               &profile->dungeon_size,
-                               profile->dungeon_md5);
-    }
-
     /* Determine if using DM2-specific filenames */
     profile->use_dm2_filenames =
         (strstr(profile->graphics_path, "DM2GRAPHICS") != NULL ||
@@ -981,11 +897,9 @@ void dm2_v1_boot_profile_init(DM2_V1_BootProfile *profile) {
 /* ── Probe availability ───────────────────────────────────────────────── */
 
 int dm2_v1_boot_probe_available(const char *data_dir) {
-    char path[512];
     char gfxPath[ASSET_PATH_MAX];
     char dunPath[ASSET_PATH_MAX];
     const char *base = data_dir ? data_dir : ".";
-    struct stat st;
     gfxPath[0] = '\0';
     dunPath[0] = '\0';
     if (asset_find_by_md5_list(base, g_dm2_graphics_hashes, gfxPath,
@@ -994,26 +908,7 @@ int dm2_v1_boot_probe_available(const char *data_dir) {
                                (int)sizeof(dunPath), NULL, 8)) {
         return 1;
     }
-    /* Legacy quick check for incomplete/synthetic developer fixtures:
-     * look for DM2DUNGEON.DAT or DUNGEON.DAT in dm2/, data/, or root.
-     * Extracted DOS installs use data/dungeon.dat. */
-    int hasGfx = 0;
-    int hasDungeon = 0;
-    snprintf(path, sizeof(path), "%s%cdm2%cDM2DUNGEON.DAT", base, DM2_PATH_SEP, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 1000) hasDungeon = 1;
-    snprintf(path, sizeof(path), "%s%cdm2%cDUNGEON.DAT", base, DM2_PATH_SEP, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 1000) hasDungeon = 1;
-    snprintf(path, sizeof(path), "%s%cdm2%cGRAPHICS.DAT", base, DM2_PATH_SEP, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 100000) hasGfx = 1;
-    snprintf(path, sizeof(path), "%s%cdata%cdungeon.dat", base, DM2_PATH_SEP, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 1000) hasDungeon = 1;
-    snprintf(path, sizeof(path), "%s%cdata%cgraphics.dat", base, DM2_PATH_SEP, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 100000) hasGfx = 1;
-    snprintf(path, sizeof(path), "%s%cDUNGEON.DAT", base, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 1000) hasDungeon = 1;
-    snprintf(path, sizeof(path), "%s%cGRAPHICS.DAT", base, DM2_PATH_SEP);
-    if (stat(path, &st) == 0 && st.st_size > 100000) hasGfx = 1;
-    return hasGfx && hasDungeon;
+    return 0;
 }
 
 /* ── Save root ───────────────────────────────────────────────────────── */

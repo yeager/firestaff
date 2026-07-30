@@ -4,7 +4,8 @@
   Production rendering must fail closed for a missing or unbound original
   asset. Procedural mazes, generic walls, coloured creature blocks, substitute
   palettes, and synthetic HUD art are not acceptable when authentic game data
-  exists. Each remaining renderer is to bind the real format or present no
+  exists. Asset admission must likewise use verified hashes, never filename
+  guesses. Each remaining renderer is to bind the real format or present no
   game pixel; test fixtures remain explicitly isolated from production paths.
 
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
