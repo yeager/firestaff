@@ -68,8 +68,8 @@ static CSB_V22_RouteProvenancePc34 make_provenance(
     snprintf(provenance.source_record_sha256,
              sizeof(provenance.source_record_sha256), "%s",
              expected->record_sha256);
-    provenance.output_width = 96;
-    provenance.output_height = 96;
+    provenance.output_width = expected->width;
+    provenance.output_height = expected->height;
     return provenance;
 }
 
@@ -117,6 +117,11 @@ static void check_fail_closed_contract(void)
         0, 0, 97u, kExpected[0].record_sha256, &provenance, &projection));
 
     provenance.source_width = 159;
+    CHECK(!csb_v22_admit_f0128_front_wall_projection_pc34(
+        0, 0, 749u, kExpected[0].record_sha256, &provenance, &projection));
+    provenance = make_provenance(&kExpected[0]);
+    provenance.output_width = 96;
+    provenance.output_height = 96;
     CHECK(!csb_v22_admit_f0128_front_wall_projection_pc34(
         0, 0, 749u, kExpected[0].record_sha256, &provenance, &projection));
     provenance = make_provenance(&kExpected[0]);

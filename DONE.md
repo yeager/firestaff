@@ -57,6 +57,13 @@
   indices. The V2.2 in-place command test passes with both reject and bound
   palette coverage.
 
+- ✅ 2026-07-30 CSB V2.2 WallSet-0 source-dimension gate: centre-front wall
+  replacements now require exported dimensions identical to their authenticated
+  PC3.4 GRAPHICS.DAT raster. The F0124/F0121/F0118 admission path therefore
+  rejects a normalized 96x96 surface instead of resampling records 97, 102 or
+  107 into the original F0128 clip. The focused real-PC3.4 projection test
+  passes 79 checks.
+
 - ✅ 2026-07-30 CSB F0115 smoke material: split the F0663 admission by the
   original command. Scaled smoke now validates only its real C488 source;
   D0C validates exactly its selected C498--C500 pattern. This follows

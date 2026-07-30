@@ -238,7 +238,11 @@ int csb_v22_admit_f0128_front_wall_projection_pc34(
         provenance->source_graphic_index != (int)source_graphic_index ||
         provenance->source_width != fact->source_width ||
         provenance->source_height != fact->source_height ||
-        provenance->output_width <= 0 || provenance->output_height <= 0 ||
+        /* ReDMCSB F0792/F0765 copies the native C04/C09/C14 raster into its
+         * exact C712/C709/C704 zone. A resized export would manufacture
+         * pixels, so this source-derived route must remain fail-closed. */
+        provenance->output_width != fact->source_width ||
+        provenance->output_height != fact->source_height ||
         strcmp(provenance->source_record_sha256,
                source_record_sha256) != 0) {
         return 0;

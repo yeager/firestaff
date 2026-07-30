@@ -458,7 +458,9 @@ diagnostic; it must not silently fall back to a generated visual.
   `door_d2_01` is explicitly `admitted_d3_f0791_native`, carrying the real
   44x38 source dimensions and the D3 F0791/F0132 composition contract.
   Source-cache normalization is nearest-neighbor only; it does not invent
-  interpolated pixels. D1/D2 retain their explicit admitted projection
+  interpolated pixels. Source-derived WallSet-0 centre-front replacements also
+  require output dimensions identical to the authenticated source raster, so
+  a normalized 96x96 export cannot enter an F0128 clip. D1/D2 retain their explicit admitted projection
   statuses. The V1 material byte handoff validates the live `G0694` DoorSet
   slot (`247/250/253/256`) through the decode, provenance and plan receipts.
   V2.2 now consumes the matching original D1/D2/D3 DoorSet 1–3 rasters by
