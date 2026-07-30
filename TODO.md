@@ -295,9 +295,12 @@ an integration build pass.
   `csb_v1_csbwin_packed_bitmap` now restores CSBWin's high-nibble-first,
   two-pixels-per-byte source rows after the DMCSB1 decoder expands a graphic.
   Its data-free contract covers odd-width rows, source bounds, clipping and
-  transparent writes. This supplies the exact packed-source boundary for the
-  later `TAG0088b2` projection port, but does not yet claim that its planar
-  destination masks or F0128 command geometry have been recovered.
+  transparent writes. The real CSBWin Atari catalog regression round-trips
+  every decoded pixel through that packed stride for all 52 wall/door and 8
+  floor/ceiling records in sets 0--3. This supplies the exact packed-source
+  boundary for the later `TAG0088b2` projection port, but does not yet claim
+  that its planar destination masks or F0128 command geometry have been
+  recovered.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature
