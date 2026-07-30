@@ -1357,8 +1357,6 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
     s->carried_item_present = 0;
     s->projectile_count = 0;
 
-    /* wall_set arrays are static in this .c file, not in viewport state */
-    (void)0; /* placeholder */
 }
 
 int dm2_v1_viewport_bind_surface(DM2_V1_ViewportState *s, uint8_t *framebuffer,
@@ -6431,8 +6429,7 @@ void dm2_v1_render_doors(DM2_V1_ViewportState *s)
      * DM2 door frames: larger/more ornate than DM1 (G2116-G2119 + G2196).
      * Source: DUNVIEW.C:148-157 (door frame indices).
      *
-     * Phase 3: placeholder door rects on DM2_SQF_HAS_DOOR squares.
-     * Real door graphics from GRAPHICS.DAT (Phase 4). */
+     * Door panels are admitted from the source GRAPHICS.DAT plan. */
 
     if (!dm2_v1_viewport_build_door_render_plan(s, &plan)) {
         return;
@@ -9304,7 +9301,7 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         /* 2b. Source-owned TELEPORTERS/0/F9 map-chip fields. */
         dm2_v1_render_teleporter_fields(s);
 
-        /* 3. Walls — placeholder pass (real walls need GRAPHICS.DAT) */
+        /* 3. Walls — source GRAPHICS.DAT material pass. */
         dm2_v1_render_walls(s);
         if (s->source_materials_required &&
             s->last_dungeon_wall_presentation_command.valid) {

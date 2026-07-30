@@ -44458,3 +44458,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   filename. It therefore reads the external DOS `GRAPHICS.DAT` corpus before
   reporting an unadmitted source route, rather than treating case-preserved
   original data as absent.
+- ✅ 2026-07-30 DM2 viewport placeholder cleanup: removed the remaining
+  no-op placeholder marker and stale placeholder wording from the built V1
+  viewport path. Wall and door stages are described and verified as direct
+  source-GDAT material routes.
