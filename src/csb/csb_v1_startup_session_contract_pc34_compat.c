@@ -40,6 +40,8 @@ static int csb_v1_startup_session_surface_matches_pc34(
     int transparent_color)
 {
     return surface && surface->valid && surface->pixels &&
+        surface->source_kind ==
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34 &&
         surface->source_asset_id == source_asset_id &&
         surface->source_x == source_x && surface->source_y == source_y &&
         surface->width == width && surface->height == height &&
@@ -232,14 +234,25 @@ int csb_v1_startup_session_hud_surface_contract_pc34(
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34];
     c040 = &session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34];
-    return c017->valid && c017->pixels && c017->source_asset_id == 17 &&
+    /* ReDMCSB PANEL.C F0346/F0347 bind C017/C040 from a real graphics
+       owner; the terminal handoff must not bless an untyped cache entry. */
+    return c017->valid && c017->pixels &&
+        (c017->source_kind ==
+             CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34 ||
+         c017->source_kind ==
+             CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_CSBGRAPHICS_DAT_PC34) &&
+        c017->source_asset_id == 17 &&
         c017->width == CSB_V1_CONTRACT_C017_WIDTH_PC34 &&
         c017->height == CSB_V1_CONTRACT_C017_HEIGHT_PC34 &&
         c017->transparent_color == -1 && c040->valid && c040->pixels &&
         c040->source_asset_id == 40 &&
         c040->width == CSB_V1_CONTRACT_C040_WIDTH_PC34 &&
         c040->height == CSB_V1_CONTRACT_C040_HEIGHT_PC34 &&
-        c040->transparent_color == CSB_V1_CONTRACT_C040_TRANSPARENT_PC34;
+        c040->transparent_color == CSB_V1_CONTRACT_C040_TRANSPARENT_PC34 &&
+        (c040->source_kind ==
+             CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34 ||
+         c040->source_kind ==
+             CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_CSBGRAPHICS_DAT_PC34);
 }
 
 int csb_v1_startup_session_full_surface_contract_pc34(

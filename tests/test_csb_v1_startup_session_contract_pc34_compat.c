@@ -59,9 +59,11 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
     c017->valid = 1; c017->pixels = &c017_pixel; c017->source_asset_id = 17;
     c017->width = 224; c017->height = 136;
     c017->transparent_color = -1;
+    c017->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     c040->valid = 1; c040->pixels = &c040_pixel; c040->source_asset_id = 40;
     c040->width = 144; c040->height = 73;
     c040->transparent_color = 6;
+    c040->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     title = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34];
     presents = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34];
     chaos = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34];
@@ -71,21 +73,28 @@ static void make_terminal_session(CSB_V1_StartupRuntimeAssetSession_PC34 *sessio
     entrance = &session->surfaces.surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
     title->valid = 1; title->pixels = c001_pixels; title->source_asset_id = 1;
     title->width = 320; title->height = 153; title->transparent_color = -1;
+    title->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     presents->valid = 1; presents->pixels = presents_pixels; presents->source_asset_id = 1;
     presents->source_x = 0; presents->source_y = 137;
     presents->width = 320; presents->height = 16; presents->transparent_color = -1;
+    presents->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     chaos->valid = 1; chaos->pixels = chaos_pixels; chaos->source_asset_id = 1;
     chaos->source_x = 0; chaos->source_y = 0;
     chaos->width = 320; chaos->height = 80; chaos->transparent_color = -1;
+    chaos->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     strikes->valid = 1; strikes->pixels = strikes_pixels; strikes->source_asset_id = 1;
     strikes->source_x = 0; strikes->source_y = 80;
     strikes->width = 320; strikes->height = 57; strikes->transparent_color = 0;
+    strikes->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     left->valid = 1; left->pixels = c002_pixels; left->source_asset_id = 2;
     left->width = 105; left->height = 161; left->transparent_color = -1;
+    left->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     right->valid = 1; right->pixels = c003_pixels; right->source_asset_id = 3;
     right->width = 128; right->height = 161; right->transparent_color = -1;
+    right->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     entrance->valid = 1; entrance->pixels = c004_pixels; entrance->source_asset_id = 4;
     entrance->width = 320; entrance->height = 200; entrance->transparent_color = -1;
+    entrance->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
 }
 
 static void make_title_host(
@@ -272,6 +281,16 @@ int main(void)
           "source-owned door-opening frame starts at ReDMCSB step 1");
 
     make_terminal_session(&session);
+    check(csb_v1_startup_session_hud_surface_contract_pc34(&session),
+          "C017/C040 HUD contract accepts explicit graphics owners");
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_NONE_PC34;
+    check(!csb_v1_startup_session_hud_surface_contract_pc34(&session),
+          "C017/C040 HUD contract rejects an untyped inventory cache entry");
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     memset(&package_receipt, 0, sizeof(package_receipt));
     package_receipt.valid = package_receipt.real_package_matched = 1;
     package_receipt.c001_title_consumed = 1;

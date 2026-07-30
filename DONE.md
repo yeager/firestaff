@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 CSB terminal HUD source-owner gate: the C017/C040 session
+  contract now requires an explicit original GRAPHICS.DAT or verified
+  CSBgraphics.dat owner before it can authorize F0807's terminal HUD handoff.
+  The focused contract regression rejects an untyped C017 cache entry; the
+  CSBgraphics receipt regression and the full original-PC3.4 startup sequence
+  remain green.
+
 - ✅ 2026-07-30 CSB C004 entrance source-kind gate: the F0128 entrance
   producer now requires C004 to identify as an original GRAPHICS.DAT surface,
   in addition to its entry id, dimensions and decoder receipt. A focused
