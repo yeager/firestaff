@@ -1,3 +1,8 @@
+- ✅ 2026-07-30 DM1 V1/V2.x real-save boot sweep: V1, V2.0, V2.1 and V2.2
+  booted the local original PC3.4 media through title/Entrance to HoC while
+  retaining real assets, no host fallback visuals, and the provenance-attested
+  DOSBox save's PC3.4 round-trip/runtime-adoption receipt.
+
 - ✅ 2026-07-30 DM1 configured original-save discovery: new-game boot no
   longer scans beside `DUNGEON.DAT` for a PC3.4 corpus. It uses the existing
   provenance-aware resolver, so the local DOSBox `DMSAVE.DAT` under
