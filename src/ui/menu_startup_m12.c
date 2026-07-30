@@ -2134,6 +2134,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                      const char* dataDir) {
     M12_AssetStatusScanOptions scanOptions;
     char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char selectedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     int scanOk;
     if (!state || !dataDir || dataDir[0] == '\0') {
         return 0;
@@ -2153,6 +2154,12 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                  line3);
         return 0;
     }
+    /* Keep the player's selected spelling for the settings row and config.
+     * The scanner uses canonicalDataDir so aliases/symlinks are resolved for
+     * file discovery, but exposing macOS's /private path here makes a valid
+     * selected folder look as if it changed underneath the player. */
+    snprintf(selectedDataDir, sizeof(selectedDataDir), "%s", dataDir);
+    FSP_NormalizeSeparators(selectedDataDir);
     state->dataDirScanActive = 1;
     state->dataDirScanCancelRequested = 0;
     state->dataDirScanCancelled = 0;
@@ -2183,7 +2190,7 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
                                  line3);
         return 0;
     }
-    m12_preserve_selected_data_directory(state, canonicalDataDir);
+    m12_preserve_selected_data_directory(state, selectedDataDir);
     m12_apply_completed_asset_scan(state);
     m12_show_data_dir_result_popup(state, 1);
     return 1;
@@ -3355,18 +3362,19 @@ static void m12_save_config(M12_StartupMenuState* state) {
     activeDataDir = state->selectedDataDir[0]
                         ? state->selectedDataDir
                         : M12_AssetStatus_GetDataDir(&state->assetStatus);
-    if (m12_canonicalize_data_directory(activeDataDir,
-                                        canonicalDataDir,
-                                        sizeof(canonicalDataDir))) {
+    if (!m12_data_directory_dialog_token_is_placeholder(activeDataDir) &&
+        FSP_DirExists(activeDataDir)) {
+        /* Persist the normalised path selected by the player, not the
+         * physical /private alias returned by a scanner on macOS. */
+        snprintf(canonicalDataDir, sizeof(canonicalDataDir), "%s", activeDataDir);
+        FSP_NormalizeSeparators(canonicalDataDir);
         snprintf(config.dataDir, sizeof(config.dataDir), "%s", canonicalDataDir);
     } else if (!m12_data_directory_dialog_token_is_placeholder(config.dataDir) &&
-               m12_canonicalize_data_directory(config.dataDir,
-                                                canonicalDataDir,
-                                                sizeof(canonicalDataDir))) {
+               FSP_DirExists(config.dataDir)) {
         /* A scanner/backend can temporarily expose a relative display token
          * while another setting is being saved.  Preserve the last accepted
          * directory instead of replacing it with that token or a fallback. */
-        snprintf(config.dataDir, sizeof(config.dataDir), "%s", canonicalDataDir);
+        FSP_NormalizeSeparators(config.dataDir);
     } else {
         /* No previously accepted directory is available.  Use the stable
          * per-user default rather than FSP_ResolveDataDir(), whose explicit

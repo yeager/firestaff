@@ -18,38 +18,60 @@ root = Path(__file__).resolve().parents[1]
 main = (root / "src/engine/main_loop_m11.c").read_text()
 frontend = (root / "src/frontend/title_frontend_v1.c").read_text()
 title_h = (root / "include/title_dat_loader_v1.h").read_text()
+startup = (root / "src/dm1/dm1_v1_startup_sequence_pc34_compat.c").read_text()
+pathfinder = (root / "src/frontend/v1_title_intro_pathfinder_pc34_compat.c").read_text()
 
 errors = []
 
-m = re.search(r"static int m11_open_requested_launch\([^)]*\) \{(?P<body>.*?)\n\}", main, re.S)
-if not m:
+def function_body(source, name):
+    """Return a complete C function body, including nested blocks."""
+    match = re.search(rf"\b{name}\s*\([^;]*?\)\s*\{{", source, re.S)
+    if not match:
+        return None
+    start = source.find("{", match.start())
+    depth = 0
+    for index in range(start, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start + 1:index]
+    return None
+
+body = function_body(main, "m11_open_requested_launch")
+if body is None:
     errors.append("m11_open_requested_launch() not found")
 else:
-    body = m.group("body")
-    title_idx = body.find("m11_play_redmcsb_title_intro_if_available(menuState, gameView")
-    open_idx = body.find("M11_GameView_OpenSelectedMenuEntry(gameView, menuState)")
-    entrance_idx = body.find("m11_play_redmcsb_entrance_transition(gameView")
-    if title_idx < 0:
-        errors.append("launcher handoff does not call m11_play_redmcsb_title_intro_if_available")
-    if open_idx < 0:
-        errors.append("launcher handoff does not open selected game view")
-    if title_idx >= 0 and open_idx >= 0 and not open_idx < title_idx:
-        errors.append("TITLE intro must run after M11_GameView_OpenSelectedMenuEntry so GRAPHICS.DAT C001 is available")
-    if title_idx >= 0 and entrance_idx >= 0 and not title_idx < entrance_idx:
-        errors.append("TITLE intro must run before entrance transition")
-    if "m11_play_redmcsb_entrance_transition(gameView, 1200)" not in body:
-        errors.append("modern launcher must auto-confirm entrance wait shortly after explicit Launch")
-    guard_start = body.rfind("M12_StartupMenu_GetPresentationMode", 0, title_idx if title_idx >= 0 else 0)
-    if title_idx >= 0 and guard_start >= 0:
-        errors.append("TITLE intro call is still guarded by presentation mode; DM1 TITLE must run before Entrance in every DM1 presentation mode")
-    if title_idx >= 0 and 'strcmp(launchEntry->gameId, "dm1") == 0' not in body:
-        errors.append("TITLE intro call must remain guarded to DM1 launches only")
-    if title_idx >= 0 and "F0437_STARTEND_DrawTitle before" not in body[max(0, title_idx - 700):title_idx + 700]:
-        errors.append("TITLE handoff must cite ReDMCSB title-before-entrance source order")
+    for needle in [
+        "dm1HandoffCallbacks.play_title = m11_dm1_handoff_play_title",
+        "dm1HandoffCallbacks.play_entrance = m11_dm1_handoff_play_entrance",
+        "dm1_v1_startup_execute_selected_launch_transaction_pc34",
+    ]:
+        if needle not in body:
+            errors.append(f"launcher does not wire DM1-owned TITLE/entrance transaction: {needle}")
 
-phase = re.search(r"int M11_PhaseA_Run\([^)]*\) \{(?P<body>.*?)\n\}", main, re.S)
-if phase:
-    body = phase.group("body")
+for name, needle in [
+    ("m11_dm1_handoff_play_title", "m11_play_redmcsb_title_intro_if_available"),
+    ("m11_dm1_handoff_play_entrance", "m11_play_redmcsb_entrance_transition"),
+]:
+    body = function_body(main, name)
+    if body is None or needle not in body:
+        errors.append(f"DM1 host callback does not consume its runtime helper: {name}")
+
+post_launch = function_body(startup, "dm1_v1_startup_execute_handoff_post_launch_pc34")
+if post_launch is None:
+    errors.append("DM1 post-launch transaction not found")
+else:
+    title_idx = post_launch.find("callbacks->play_title")
+    entrance_idx = post_launch.find("callbacks->play_entrance")
+    if title_idx < 0 or entrance_idx < 0 or title_idx >= entrance_idx:
+        errors.append("DM1-owned transaction must call TITLE before entrance")
+    if "F0437_STARTEND_DrawTitle precedes" not in post_launch:
+        errors.append("DM1 transaction must retain ReDMCSB title-before-entrance evidence")
+
+body = function_body(main, "M11_PhaseA_Run")
+if body:
     initial_draw_idx = body.find("m11_draw_launcher(&menuState")
     early_title_idx = body.find("m11_play_redmcsb_title_intro_if_available(&menuState")
     if early_title_idx >= 0 and (initial_draw_idx < 0 or early_title_idx < initial_draw_idx):
@@ -57,11 +79,10 @@ if phase:
 else:
     errors.append("M11_PhaseA_Run() not found")
 
-intro = re.search(r"static void m11_play_redmcsb_title_intro_if_available\([^)]*\) \{(?P<body>.*?)\n\}", main, re.S)
-if not intro:
+body = function_body(main, "m11_play_redmcsb_title_intro_if_available")
+if body is None:
     errors.append("m11_play_redmcsb_title_intro_if_available() not found")
 else:
-    body = intro.group("body")
     for needle in [
         "M11_Audio_Init(&titleAudio)",
         "M11_Audio_PlayTitleMusic(&titleAudio)",
@@ -73,35 +94,32 @@ else:
         if needle not in body:
             errors.append(f"TITLE intro missing required runtime step: {needle}")
 
-graphic_intro = re.search(r"static int m11_play_redmcsb_title_graphic_intro_if_available\([^)]*\) \{(?P<body>.*?)\n\}", main, re.S)
-if not graphic_intro:
+body = function_body(main, "m11_play_redmcsb_title_graphic_intro_if_available")
+if body is None:
     errors.append("m11_play_redmcsb_title_graphic_intro_if_available() not found")
 else:
-    body = graphic_intro.group("body")
     for needle in [
         "M11_AssetLoader_Load(&gameView->assetLoader, 1U)",
         "V1_TitleFrontend_GetSourceAnimationStep",
-        "V1_TITLE_FRONTEND_SOURCE_EVENT_PRESENTS",
+        "V1_TitleFrontend_GetC001BlitPlanForStep",
+        "dm1_v1_startup_title_presentation_command_pc34",
+        "V1_TITLE_FRONTEND_C001_BLIT_REGION",
         "M11_AssetLoader_BlitRegion(titleGraphic",
-        "0, 137, 320, 16",
-        "V1_TITLE_FRONTEND_SOURCE_EVENT_ZOOM_BLIT",
+        "V1_TITLE_FRONTEND_C001_BLIT_SCALED_REGION",
         "M11_AssetLoader_BlitSubRectScaled(titleGraphic",
-        "0,\n                                              0,\n                                              320,\n                                              80",
-        "V1_TITLE_FRONTEND_SOURCE_EVENT_MASTER_STRIKES_BACK_BLIT",
-        "0, 80, 320, 57",
         "VGA_PALETTE_PC34_SPECIAL_TITLE",
         "M11_Audio_PlayTitleMusic(&titleAudio)",
-        "V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing)",
+        "command.post_present_delay_ms",
     ]:
         if needle not in body:
             errors.append(f"GRAPHICS.DAT C001 TITLE intro missing source runtime step: {needle}")
 
 
 for needle in [
-    "V1_Title_IsCanonicalPc34Title(envPath",
-    "V1_Title_IsCanonicalPc34Title(candidate",
+    "v1_title_intro_candidate_is_valid",
+    "V1_Title_IsCanonicalPc34Title(path",
 ]:
-    if needle not in main:
+    if needle not in (main + startup + pathfinder):
         errors.append(f"TITLE path selection is not hash/provenance gated: {needle}")
 
 for needle in [

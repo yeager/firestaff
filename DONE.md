@@ -43689,3 +43689,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   index for every visible wall lane, independently of source-bitmap and
   F3R2 mirror selection. `test_csb_v1_csbwin_layout_0232` passes against the
   local Atari-ST `GRAPHICS.DAT`.
+
+# M12 startup-menu reliability pass (2026-07-30)
+
+- ✅ Data-directory selection now preserves the normalised path the player
+  selected while scanning through its canonical physical path. This prevents
+  macOS `/private` aliases from replacing a valid `/tmp` or symlinked data
+  root in the UI or saved configuration. The embedded changelog's current
+  header now follows the generated CMake version automatically. Verification:
+  all 65 selected M12/menu-hit/startup-menu/launcher tests pass, including
+  mouse, keyboard, touch, localization, data-picker cancellation, save
+  browser, accessibility and every launcher handoff boundary.

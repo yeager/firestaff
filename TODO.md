@@ -11448,6 +11448,13 @@ per-game V2 filter chains (DM1 palette/CRT/postprocess and CSB/Theron V2
 filters) are persisted but do not yet have a dedicated editable advanced UI;
 add those rows only with runtime application coverage.
 
+2026-07-30 launcher reliability update: the selected game-data directory now
+retains the player's normalised path across scans and restarts instead of
+persisting macOS's scanner-only `/private` alias. The embedded changelog also
+derives its current-build header from CMake version metadata. Keyboard, mouse,
+touch, language-popup, data-picker, accessibility, save-browser and launcher
+handoff coverage is green in the full M12/launcher test selection.
+
 ## Theron Authentic CD Trace Follow-up (2026-07-12)
 
 2026-07-13 live stage-two correction: the authentic US-CUE/System Card capture
