@@ -3102,7 +3102,6 @@ static void dm2_runtime_finish_item_render_receipt(
     g_dm2_last_item_render.gdat_index = render->gdat_index;
     g_dm2_last_item_render.draw_order = viewport->last_item_draw_order;
     g_dm2_last_item_render.flip_mirror = render->flip_mirror;
-    g_dm2_last_item_render.fallback_radius = render->fallback_radius;
 
     if (!viewport->last_item_asset_blit_valid ||
         viewport->last_item_asset_blit.draw_order !=
@@ -3168,9 +3167,6 @@ static void dm2_runtime_finish_projectile_render_receipt(
     g_dm2_last_projectile_render.flip_mirror = render->flip_mirror;
     g_dm2_last_projectile_render.cloud_flip_from_seed =
         render->cloud_flip_from_seed;
-    g_dm2_last_projectile_render.fallback_dx = render->fallback_dx;
-    g_dm2_last_projectile_render.fallback_dy = render->fallback_dy;
-    g_dm2_last_projectile_render.fallback_len = render->fallback_len;
 
     if (!viewport->last_projectile_asset_blit_valid ||
         viewport->last_projectile_asset_blit.draw_order !=

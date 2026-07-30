@@ -1410,7 +1410,7 @@ static void test_sprite_asset_provider(void)
     viewport.items[0].screen_x = 80;
     viewport.items[0].screen_y = 90;
     memset(&item_plan, 0, sizeof(item_plan));
-    CHECK("DM2 item render plan owns map-chip identity and fallback",
+    CHECK("DM2 item render plan owns only map-chip identity",
           dm2_v1_viewport_build_item_render_plan(&viewport,
                                                  &item_plan) == 1 &&
               item_plan.item_count == 1 &&
@@ -1421,9 +1421,7 @@ static void test_sprite_asset_provider(void)
               item_plan.items[0].center_x == 80 &&
               item_plan.items[0].center_y == 90 &&
               item_plan.items[0].gdat_index ==
-                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0x04) &&
-              item_plan.items[0].fallback_radius == 4 &&
-              item_plan.items[0].fallback_color == 3);
+                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0x04));
     dm2_v1_render_items(&viewport);
     CHECK("item without source material blocks instead of drawing fallback pixels",
           viewport.asset_item_drawn_count == 0 &&
@@ -1536,10 +1534,7 @@ static void test_sprite_asset_provider(void)
               possession_plan.items[0].center_x == 100 &&
               possession_plan.items[0].center_y == 80 &&
               possession_plan.items[0].gdat_index ==
-                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0) &&
-              possession_plan.items[0].fallback_radius == 3 &&
-              possession_plan.items[0].fallback_color ==
-                  (uint8_t)(9 + (0x22 & 5)));
+                  dm2_v1_viewport_item_graphic_index(0x10, 0x22, 0));
     dm2_v1_render_creature_possession_items(&viewport);
     CHECK("creature possession without source material blocks instead of fallback pixels",
           viewport.asset_creature_possession_item_drawn_count == 0 &&
@@ -1617,10 +1612,7 @@ static void test_sprite_asset_provider(void)
               carried_item_plan.item.gdat_index ==
                   dm2_v1_viewport_item_graphic_index(0x15, 0x22, 0x04) &&
               carried_item_plan.item.center_x == 120 &&
-              carried_item_plan.item.center_y == 70 &&
-              carried_item_plan.item.fallback_radius == 5 &&
-              carried_item_plan.item.fallback_color ==
-                  (uint8_t)(12 + (0x22 & 3)));
+              carried_item_plan.item.center_y == 70);
     dm2_v1_render_carried_item(&viewport);
     CHECK("carried item without source material blocks instead of fallback pixels",
           viewport.asset_carried_item_drawn_count == 0 &&
@@ -1686,7 +1678,7 @@ static void test_sprite_asset_provider(void)
     viewport.projectiles[0].screen_y = 70;
     viewport.projectiles[0].velocity_x = 3;
     memset(&projectile_plan, 0, sizeof(projectile_plan));
-    CHECK("DM2 projectile render plan owns missile identity and fallback",
+    CHECK("DM2 projectile render plan owns source missile identity",
           dm2_v1_viewport_build_projectile_render_plan(&viewport,
                                                        &projectile_plan) == 1 &&
               projectile_plan.projectile_count == 1 &&
@@ -1699,11 +1691,7 @@ static void test_sprite_asset_provider(void)
               projectile_plan.projectiles[0].gdat_index ==
                   dm2_v1_viewport_projectile_graphic_index(0x0d, 0x02, 0x01) &&
               projectile_plan.projectiles[0].flip_mirror ==
-                  dm2_v1_viewport_projectile_flip_for_direction(0, 0) &&
-              projectile_plan.projectiles[0].fallback_dx == 3 &&
-              projectile_plan.projectiles[0].fallback_dy == 0 &&
-              projectile_plan.projectiles[0].fallback_len == 3 &&
-              projectile_plan.projectiles[0].fallback_color == 15);
+                  dm2_v1_viewport_projectile_flip_for_direction(0, 0));
     dm2_v1_render_projectiles(&viewport);
     CHECK("projectile without source material blocks instead of fallback pixels",
           viewport.asset_projectile_drawn_count == 0 &&

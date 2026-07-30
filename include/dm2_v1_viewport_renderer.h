@@ -1393,8 +1393,6 @@ typedef struct {
     uint32_t source_static_object_raw4_hash;
     uint32_t source_static_object_raw4_receipt_hash;
     int flip_mirror;
-    int fallback_radius;
-    uint8_t fallback_color;
     /* INTERFACE_GENERAL dt07/0x0A Rect14 row placement for this item, when the
      * runtime has bound the table and the frame index selects a valid row.
      * Source: SKWIN/SkWinCore.cpp QUERY_CREATURE_PICST / DRAW_ITEM. */
@@ -1479,10 +1477,6 @@ typedef struct {
     int gdat_index;
     int flip_mirror;
     int cloud_flip_from_seed;
-    int fallback_dx;
-    int fallback_dy;
-    int fallback_len;
-    uint8_t fallback_color;
     /* INTERFACE_GENERAL dt07/0x0A Rect14 row placement for this projectile,
      * when the runtime has bound the table and the frame index selects a valid
      * row. Source: SKWIN/SkWinCore.cpp QUERY_CREATURE_PICST / DRAW_TEMP_PICST. */

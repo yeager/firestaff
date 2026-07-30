@@ -4800,8 +4800,9 @@ int dm2_v1_viewport_build_item_render_plan(
         row->source_static_object_raw_gfx256_receipt_hash = src->source_static_object_raw_gfx256_receipt_hash;
         row->source_static_object_raw4_hash = src->source_static_object_raw4_hash;
         row->source_static_object_raw4_receipt_hash = src->source_static_object_raw4_receipt_hash;
-        row->fallback_radius = 4;
-        row->fallback_color = 3;
+        /* skproject SKWINSPX/src/v4/skcore.cpp::DRAW_ITEM draws only the
+         * resolved GDAT map-chip.  This plan deliberately carries no
+         * generated colour or radius substitute. */
 
         /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM/QUERY_CREATURE_PICST consumes
          * INTERFACE_GENERAL dt07/0x0A Rect14 rows for source placement.  Static
@@ -4946,8 +4947,6 @@ int dm2_v1_viewport_build_carried_item_render_plan(
         category,
         src->item_type,
         src->frame_index);
-    row->fallback_radius = 5;
-    row->fallback_color = (uint8_t)(12 + (src->item_type & 3));
     return 1;
 }
 
@@ -5003,8 +5002,6 @@ int dm2_v1_viewport_build_creature_possession_item_render_plan(
             dm2_v1_viewport_map_chip_flip_for_object_direction(
                 src->direction,
                 s->party_dir);
-        row->fallback_radius = 3;
-        row->fallback_color = (uint8_t)(9 + (src->item_type & 5));
     }
     return 1;
 }
@@ -5146,7 +5143,6 @@ int dm2_v1_viewport_build_projectile_render_plan(
         const DM2_Projectile *src = &s->projectiles[i];
         DM2_V1_ProjectileRender *row;
         int category;
-        int speed;
 
         if (src->screen_x < 0 || src->screen_x >= DM2_VP_WIDTH ||
             src->screen_y < 0 || src->screen_y >= DM2_VP_HEIGHT ||
@@ -5177,8 +5173,8 @@ int dm2_v1_viewport_build_projectile_render_plan(
             s->party_dir);
         row->cloud_flip_from_seed =
             (src->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD);
-        row->fallback_color = (uint8_t)(15 - (src->palette_shift & 7));
-        row->fallback_len = 3;
+        /* skproject SKWINSPX/src/v4/skcore.cpp::DRAW_TEMP_PICST resolves a
+         * source map-chip and placement; missing material is no-draw. */
 
         /* skproject SKWIN/SkWinCore.cpp DRAW_TEMP_PICST may consume
          * INTERFACE_GENERAL dt07/0x0A Rect14 rows for source placement when the
@@ -5218,12 +5214,6 @@ int dm2_v1_viewport_build_projectile_render_plan(
             }
         }
 
-        speed = (int)sqrtf((float)(src->velocity_x * src->velocity_x +
-                                   src->velocity_y * src->velocity_y));
-        if (speed > 0) {
-            row->fallback_dx = (src->velocity_x * row->fallback_len) / speed;
-            row->fallback_dy = (src->velocity_y * row->fallback_len) / speed;
-        }
     }
     return 1;
 }

@@ -44376,3 +44376,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `SKWINSPX/src/v4/c_gui_vp.cpp::DM2_DRAW_DOOR_FRAMES`, door panels are owned
   by GDAT; an unresolved source rectangle removes the panel from the plan
   rather than inventing a coloured replacement.
+- ✅ 2026-07-30 DM2 viewport map-chip fallback removal: item, carried-item,
+  creature-possession and projectile plans no longer carry unused generic
+  colour, radius or velocity-stroke fallbacks. `DRAW_ITEM` and
+  `DRAW_TEMP_PICST` now retain only source GDAT identity and source-owned
+  placement; unavailable material remains no-draw.

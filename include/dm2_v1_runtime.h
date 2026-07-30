@@ -466,7 +466,6 @@ typedef struct DM2_V1_RuntimeItemRenderReceipt {
     int atlas_frame_w;
     int atlas_frame_h;
     DM2_V1_ViewportRect asset_dst_rect;
-    int fallback_radius;
 } DM2_V1_RuntimeItemRenderReceipt;
 int dm2_v1_runtime_last_item_render_receipt(
     DM2_V1_RuntimeItemRenderReceipt *out_receipt);
@@ -546,9 +545,6 @@ typedef struct DM2_V1_RuntimeProjectileRenderReceipt {
     int atlas_frame_w;
     int atlas_frame_h;
     DM2_V1_ViewportRect asset_dst_rect;
-    int fallback_dx;
-    int fallback_dy;
-    int fallback_len;
     uint32_t random_seed_before;
     uint32_t random_seed_after;
 } DM2_V1_RuntimeProjectileRenderReceipt;
