@@ -44,12 +44,6 @@
   can no longer manufacture extra C001 title frames when original
   `GRAPHICS.DAT` C001 is available. Focused source-timing, C001 admission and
   startup-state CTests pass 3/3.
-- ✅ 2026-07-30 CSB F0115 smoke-material completion: the live CSB viewport
-  now materializes the full original C488/C498--C500 smoke family before
-  accepting BASE.C F0663 palette substitution. Missing source pixels still
-  produce no draw; no generated smoke path exists. Focused viewport contract
-  (2,654 checks) and real PC3.4 Prison HUD regression pass.
-
 - ✅ 2026-07-30 CSB runtime-HUD fail-closed status surfaces: the shared
   champion-panel consumer now stops at a black status rectangle if CSB's
   C017/C040-owned base material is unavailable. It cannot continue into the

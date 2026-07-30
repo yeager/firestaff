@@ -26005,17 +26005,6 @@ static int m11_dm1_v1_f0663_smoke_material_ready(
     if (!state || !outReceipt || !state->assetsAvailable) return 0;
     memset(surfaces, 0, sizeof(surfaces));
     for (i = 0; i < DM1_V1_F0663_SURFACE_COUNT_PC34; ++i) {
-        /* ReDMCSB BASE.C F0663 consumes the complete C488/C498..C500
-         * family before applying G0212's smoke palette substitutions.  The
-         * CSB viewport may request one member lazily, but that is not enough
-         * to prove the remaining source inputs.  Materialize each member
-         * from the active CSB GRAPHICS.DAT instead of treating an empty M11
-         * cache as permission for a generated smoke substitute. */
-        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-            !m11_csb_install_runtime_source_graphic(
-                state, (unsigned int)graphics[i])) {
-            return 0;
-        }
         const M11_AssetSlot* slot = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader, (unsigned int)graphics[i]);
         if (!slot || !slot->loaded || !slot->pixels ||
