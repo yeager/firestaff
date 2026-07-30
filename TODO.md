@@ -398,8 +398,10 @@ an integration build pass.
   live F1/F2/F3 panels from the same loaded map's raw door-state bits and DB0
   `doorType`/`mode` fields, using F0150 to reach the exact Thing chain before
   `DrawDoor`'s source-owned projection. Missing or malformed DB0 chains draw
-  no panel. Remaining: recover the separate F3L2/F3R2/F0 local-cell owners
-  and add a captured real route for every DB0 state/ornateness variant.
+  no panel. `Viewport.cpp` confirms F3L2/F3R2 never dispatch a door script
+  and F0 door-facing has no `StdDrawDoor`, so no panel is withheld there.
+  Remaining: captured real routes for every DB0 state/ornateness variant and
+  the broader F0 local object/ceiling-pit composition.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature

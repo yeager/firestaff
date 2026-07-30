@@ -20,6 +20,9 @@
   CSBWin layout regression covers both selectors, all three distances and
   source bounds. M11 consumes the selected panel only after a valid loaded
   DB0 record, raw door state, and source projection have all been recovered.
+  `Viewport.cpp` further confirms that the F3L2/F3R2 cells do not dispatch a
+  door script and F0 door-facing has no panel command, so their absence is
+  source behavior rather than a missing `DoorGraphic` route.
 
 - ✅ 2026-07-30 CSBWin door command recovery: Firestaff now reproduces
   `Viewport.cpp`'s static F1/F2/F3 track and frame plan, including the native
