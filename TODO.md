@@ -221,6 +221,12 @@ an integration build pass.
   `unbound` wall/floor/etc. routes therefore remain V1 at runtime, even when
   their decoded bitmap files exist; the focused regression proves that this
   cannot accidentally promote a source-derived artpack to finished V2.2.
+  2026-07-30: WallSet-0 centre-front D1C/D2C/D3C now each have a
+  source-locked V2.2 admission receipt: PC/I34 catalog records 97/102/107,
+  real decoded dimensions and SHA-256 provenance, exact F0124/F0121/F0118
+  clips, opaque F0792/F0765 semantics, and draw order. This is only an
+  admission boundary; side walls, ornaments, floors, Things and nonzero
+  WallSets remain V1 until they have equally complete command receipts.
 
 - **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Open 2026-07-29. The live F0128
   renderer owns V2.2 material selection and retains the authenticated original
@@ -1673,8 +1679,14 @@ that its exact runtime path is not already source-locked and tested.
     2026-07-30: the same reader now verifies the source terminal checksum:
     `WriteAndChecksum`/`FetchDataBytes` accumulate unsigned bytes modulo
     65536 and `ReadDatabases` reads the terminal big-endian u16. The staged
-    corpus passes this check. DB0--DB15 and cell flags remain the only
-    unconsumed tail sections.
+    corpus passes this check.
+    2026-07-30: a bounded metadata parser now verifies the complete DB0--DB15
+    span table after the prefix, including source `dbEntrySizes`, legacy
+    four-byte versus current six-byte DB7 scroll records, eight-byte versus
+    ten-byte DB3 actuator records, Extended Features versus legacy cell-flag
+    sizing, exact end-of-tail framing, and the terminal checksum. The local
+    `csbgame3.dat` corpus passes this contract. Record contents and cell flags
+    remain read-only and have no runtime or write-back owner.
     2026-07-30: production resume now applies both checks before staging a
     non-EXPOOL extended tail. The staged file still resumes and a copy with
     only its final checksum byte changed is rejected transactionally (16/16

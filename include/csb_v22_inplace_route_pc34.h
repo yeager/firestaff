@@ -167,6 +167,24 @@ int csb_v22_admit_f0128_door_projection_pc34(
     const CSB_V22_RouteProvenancePc34* provenance,
     CSB_V22_F0128ProjectionCommandPc34* out_projection);
 
+/* Admit the smallest source-complete wall family: WallSet 0 center-front
+ * walls D1C/D2C/D3C, exposed to V2.2 as depths 0/1/2. The function binds
+ * ReDMCSB's exact PC/I34 F0095 record, C712/C709/C704 projection rectangle,
+ * opaque F0792/F0765 write contract, and compressed-record SHA-256.
+ *
+ * Nonzero wall sets remain closed until their V2.2 assets have distinct
+ * provenance ids. No side wall, ornament, floor, Thing, or field is admitted
+ * by this boundary. */
+int csb_v22_admit_f0128_front_wall_projection_pc34(
+    int depth,
+    int wall_set,
+    uint32_t graphics_entry_count,
+    const char* source_record_sha256,
+    const CSB_V22_RouteProvenancePc34* provenance,
+    CSB_V22_F0128ProjectionCommandPc34* out_projection);
+
+const char* csb_v22_f0128_front_wall_projection_source_evidence_pc34(void);
+
 /* Variant helpers — return the static asset_id / category / reason
  * a routed cell WOULD pick for the given shape type. These are the
  * single source of truth that csb_v22_inplace_draw_pc34.c and the

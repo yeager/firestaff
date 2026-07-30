@@ -23923,6 +23923,12 @@ if(BUILD_TESTING)
         src/csb/csb_v22_shapes.c
     )
     target_link_libraries(test_csb_v22_inplace_route_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
+    add_executable(test_csb_v22_f0128_front_wall_projection_pc34
+        tests/test_csb_v22_f0128_front_wall_projection_pc34.c
+    )
+    target_link_libraries(test_csb_v22_f0128_front_wall_projection_pc34
+        PRIVATE firestaff_csb_v2 firestaff_m11 firestaff_m12 firestaff_m10 m
+    )
     add_executable(test_csb_v22_viewport_swap_pc34
         tests/test_csb_v22_viewport_swap_pc34.c
         src/csb/csb_v22_viewport_swap_pc34.c
@@ -24655,11 +24661,18 @@ if(BUILD_TESTING)
         COMMAND test_csb_v22_inplace_route_pc34
     )
     add_test(
+        NAME csb_v22_f0128_front_wall_projection_pc34
+        COMMAND test_csb_v22_f0128_front_wall_projection_pc34
+    )
+    add_test(
         NAME csb_v22_viewport_swap_pc34
         COMMAND test_csb_v22_viewport_swap_pc34
     )
     set_tests_properties(csb_v22_inplace_route_pc34 PROPERTIES
         LABELS "tier2;csb;v2.2;modern-shapes;per-cell-route;presentation-only"
+    )
+    set_tests_properties(csb_v22_f0128_front_wall_projection_pc34 PROPERTIES
+        LABELS "tier2;csb;v2.2;f0128;wall;real-data;presentation-only"
     )
     set_tests_properties(csb_v22_viewport_swap_pc34 PROPERTIES
         LABELS "tier2;csb;v2.2;modern-shapes;viewport;presentation-only"
@@ -49661,6 +49674,7 @@ set(_firestaff_csb_v2_verification_tests
     csb_v22_modern_assets_pc34
     csb_v22_inplace_draw_pc34
     csb_v22_inplace_route_pc34
+    csb_v22_f0128_front_wall_projection_pc34
     csb_v2_phase1_launch_profile_separation
     csb_v2_hud_overlay_pc34
     csb_v2_hud_runtime

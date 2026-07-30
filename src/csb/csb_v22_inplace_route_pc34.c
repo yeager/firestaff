@@ -47,9 +47,11 @@
  */
 
 #include "csb_v22_inplace_route_pc34.h"
+#include "csb_v1_pc34_wallset_graphics_map.h"
 #include "csb_v22_shapes.h"
 #include "csb_v22_shape_cache_pc34.h"
 
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -167,6 +169,110 @@ void csb_v22_inplace_route_reset(void) {
     /* The gate is stateless; this hook exists so a future readiness
      * probe can call it before/after a reload and assert no
      * observable state change. No-op for now. */
+}
+
+typedef struct {
+    int depth;
+    CSB_V1_PC34WallSetSurface surface;
+    const char* asset_id;
+    int source_width;
+    int source_height;
+    int clip_x;
+    int clip_y;
+    int clip_w;
+    int clip_h;
+    int draw_order;
+} CSB_V22_F0128FrontWallFactPc34;
+
+static const CSB_V22_F0128FrontWallFactPc34 kFrontWallFacts[] = {
+    /* D1C: C04_WALL_D1C / C712_ZONE_WALL_D1C / F0124. */
+    { 0, CSB_V1_PC34_WALLSET_WALL_D1C, "wall_dungeon_d0_01",
+      160, 111, 32, 9, 160, 111, 0x0124 },
+    /* D2C: C09_WALL_D2C / C709_ZONE_WALL_D2C / F0121. */
+    { 1, CSB_V1_PC34_WALLSET_WALL_D2C, "wall_dungeon_d1_01",
+      106, 74, 59, 19, 106, 74, 0x0121 },
+    /* D3C: C14_WALL_D3C / C704_ZONE_WALL_D3C / F0118. */
+    { 2, CSB_V1_PC34_WALLSET_WALL_D3C, "wall_dungeon_d2_01",
+      70, 49, 77, 25, 70, 49, 0x0118 }
+};
+
+static int csb_v22_sha256_hex_string(const char* value)
+{
+    size_t index;
+
+    if (!value || strlen(value) != 64u) return 0;
+    for (index = 0; index < 64u; ++index) {
+        if (!isxdigit((unsigned char)value[index])) return 0;
+    }
+    return 1;
+}
+
+int csb_v22_admit_f0128_front_wall_projection_pc34(
+    int depth,
+    int wall_set,
+    uint32_t graphics_entry_count,
+    const char* source_record_sha256,
+    const CSB_V22_RouteProvenancePc34* provenance,
+    CSB_V22_F0128ProjectionCommandPc34* out_projection)
+{
+    const CSB_V22_F0128FrontWallFactPc34* fact;
+    uint32_t source_graphic_index = 0u;
+
+    if (out_projection) memset(out_projection, 0, sizeof(*out_projection));
+    if (!out_projection || !provenance || !provenance->valid ||
+        depth < 0 || depth >= (int)(sizeof(kFrontWallFacts) /
+                                    sizeof(kFrontWallFacts[0])) ||
+        wall_set != 0 ||
+        !csb_v22_sha256_hex_string(source_record_sha256) ||
+        !csb_v22_sha256_hex_string(provenance->source_record_sha256)) {
+        return 0;
+    }
+
+    fact = &kFrontWallFacts[depth];
+    if (fact->depth != depth ||
+        !csb_v1_pc34_wallset_graphics_entry_index(
+            wall_set, fact->surface, graphics_entry_count,
+            &source_graphic_index) ||
+        strcmp(provenance->category, CAT_WALL) != 0 ||
+        strcmp(provenance->id, fact->asset_id) != 0 ||
+        provenance->source_graphic_index != (int)source_graphic_index ||
+        provenance->source_width != fact->source_width ||
+        provenance->source_height != fact->source_height ||
+        provenance->output_width <= 0 || provenance->output_height <= 0 ||
+        strcmp(provenance->source_record_sha256,
+               source_record_sha256) != 0) {
+        return 0;
+    }
+
+    out_projection->valid = 1;
+    copy_str(out_projection->asset_id, sizeof(out_projection->asset_id),
+             fact->asset_id);
+    copy_str(out_projection->category, sizeof(out_projection->category),
+             CAT_WALL);
+    out_projection->source_graphic_index = (int)source_graphic_index;
+    out_projection->source_width = fact->source_width;
+    out_projection->source_height = fact->source_height;
+    out_projection->transparent_index = -1;
+    out_projection->clip_x = fact->clip_x;
+    out_projection->clip_y = fact->clip_y;
+    out_projection->clip_w = fact->clip_w;
+    out_projection->clip_h = fact->clip_h;
+    out_projection->draw_order = fact->draw_order;
+    return 1;
+}
+
+const char* csb_v22_f0128_front_wall_projection_source_evidence_pc34(void)
+{
+    return
+        "ReDMCSB PC/I34 DUNVIEW.C F0095_LoadWallSet: records "
+        "86 + WallSet*40 + C04/C09/C14; F0124 D1C uses "
+        "C712_ZONE_WALL_D1C at (32,9) 160x111; F0121 D2C uses "
+        "C709_ZONE_WALL_D2C at (59,19) 106x74; F0118 D3C uses "
+        "C704_ZONE_WALL_D3C at (77,25) 70x49. F0792 and F0765 select "
+        "CM1_COLOR_NO_TRANSPARENCY for these PC34 center-wall writes. "
+        "CSB source artpack records 97/102/107 retain the exact compressed "
+        "GRAPHICS.DAT SHA-256 and decoded dimensions; no side-wall, "
+        "ornament, Thing, floor, field, or generated fallback is admitted.";
 }
 
 int csb_v22_admit_f0128_door_projection_pc34(

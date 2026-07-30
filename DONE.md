@@ -1,3 +1,15 @@
+- ✅ 2026-07-30 CSBWin save-tail database framing: the read-only CSBWin tail
+  parser now follows the original prefix through DB0--DB15, including legacy
+  8-byte actuators, pre-B 4-byte scrolls, extended cell-flag lengths and the
+  terminal checksum. `sizeOfCompressedText` uses CSBWin's little-endian host
+  field, verified against the real local `csbgame3.dat`; no database record
+  is mutated or guessed.
+
+- ✅ 2026-07-30 CSB V2.2 WallSet-0 centre-front admission: D1C/D2C/D3C now
+  bind original PC/I34 records 97/102/107 to F0124/F0121/F0118 clips and
+  source-hashed artpack provenance. The boundary is fail-closed and excludes
+  side walls, nonzero WallSets and all other material families.
+
 - ✅ 2026-07-30 CSBWin `TAG0088b2` wall projection completion: Firestaff now
   records all fourteen `Viewport.cpp::StdRectanglePointers` wall selections,
   including the previously omitted `F0=wallRectangles[9]`. `F0` is
