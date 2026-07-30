@@ -59,7 +59,7 @@ int main(void)
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host;
     M11_GameViewState view;
     unsigned char pixels[224 * 136];
-    const CSB_V1_StartupRuntimeSurface_PC34 *c004;
+    CSB_V1_StartupRuntimeSurface_PC34 *c004;
     const uint32_t source_tick = 41u;
     int row;
 
@@ -106,6 +106,17 @@ int main(void)
         }
     }
     if (row == 136) check(1, "producer pixels exactly match C004's native 224x136 viewport");
+
+    c004->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_CSBGRAPHICS_DAT_PC34;
+    check(!csb_v1_startup_entrance_f0128_produce_pc34(
+              &session, &plan, source_tick, &material, &raster, pixels,
+              sizeof(pixels)),
+          "producer rejects a C004 surface relabelled away from GRAPHICS.DAT");
+    c004->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
+    check(csb_v1_startup_entrance_f0128_produce_pc34(
+              &session, &plan, source_tick, &material, &raster, pixels,
+              sizeof(pixels)),
+          "producer accepts the restored original C004 source binding");
 
     M11_GameView_Init(&view);
     check(M11_GameView_SetCsbEntranceF0128Raster(

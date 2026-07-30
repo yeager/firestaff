@@ -1,3 +1,11 @@
+- ✅ 2026-07-30 CSB C004 entrance source-kind gate: the F0128 entrance
+  producer now requires C004 to identify as an original GRAPHICS.DAT surface,
+  in addition to its entry id, dimensions and decoder receipt. A focused
+  real-PC3.4 regression proves that a C004 surface relabelled as
+  CSBgraphics.dat is rejected, then that the restored original binding
+  composes before C002/C003. The complete real startup sequence remains
+  green.
+
 - ✅ 2026-07-30 CSB title/import menu source-kind test hardening: the
   title, entrance and C002/C003 test surfaces now explicitly identify as
   GRAPHICS.DAT material instead of silently taking the zero-valued source

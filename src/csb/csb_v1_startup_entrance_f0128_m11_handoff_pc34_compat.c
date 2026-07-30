@@ -42,6 +42,8 @@ int csb_v1_startup_entrance_f0128_produce_pc34(
         CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
     if (!session->valid || !session->real_asset_matched ||
         !session->rejects_legacy_wrappers || !c004->valid || !c004->pixels ||
+        c004->source_kind !=
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34 ||
         c004->source_asset_id != 4 || c004->width != 320 || c004->height != 200 ||
         frame.entrance_surface != c004 || !c004->decode_receipt.valid ||
         !c004->decode_receipt.ended_at_record_boundary ||
