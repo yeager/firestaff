@@ -919,7 +919,10 @@ static int check_action_icon_cell_pixels(const M11_GameViewState* game,
 static int check_spell_area_asset_composition(const M11_GameViewState* game,
                                               const unsigned char* fb,
                                               int spellOpen) {
-    DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_area_graphic_rect_pc34();
+    /* G0000 owns the physical 96x33 source box. C009 is only the
+     * 87x25 bitmap placed inside it, so this probe must not use the
+     * graphic rectangle when it verifies the clear extent. */
+    DM1_V1_SpellAreaRectPc34 rect = dm1_v1_spell_area_source_box_rect_pc34();
     const M11_AssetSlot* background;
     const M11_AssetSlot* lines;
     int ok = 1;
@@ -1048,11 +1051,12 @@ int main(int argc, char** argv) {
     }
     ok &= check_spell_area_asset_composition(&game, fb, 0);
 
-    game.spellPanelOpen = 1;
-    game.spellRuneRow = 1;
-    game.spellBuffer.runeCount = 2;
-    game.spellBuffer.runes[0] = '`';
-    game.spellBuffer.runes[1] = 'a';
+    /* Enter through C100/F0394's public route. Merely flipping
+     * spellPanelOpen skips its selected-caster record, which correctly
+     * causes the live painter to retain the source black clear. */
+    ok &= expect_true("spell panel source open", M11_GameView_OpenSpellPanel(&game));
+    ok &= expect_true("spell panel source rune 0", M11_GameView_EnterRune(&game, 0));
+    ok &= expect_true("spell panel source rune 1", M11_GameView_EnterRune(&game, 1));
     memset(fb, PROBE_STALE_PIXEL, sizeof(fb));
     M11_GameView_Draw(&game, fb, PROBE_FB_W, PROBE_FB_H);
     ok &= check_spell_area_asset_composition(&game, fb, 1);

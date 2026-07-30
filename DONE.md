@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 spell-panel runtime probe: the C009/C011 pixel probe now
+  enters through the real C100/F0394 caster-selection and rune route, rather
+  than forcing an incomplete host state. It separately validates G0000's
+  96x33 physical clear box and C009's 87x25 bitmap surface. The complete
+  source-backed spell panel probe passes.
+
 - ✅ 2026-07-30 DM1 HUD receipt fallback: a rejected auxiliary top-row
   receipt no longer clears the live champion HUD to black. M11 now consumes
   the existing source-owned C008/C028/C033--C035 direct composition in that
