@@ -125,8 +125,8 @@ int main(void) {
 
     CHECK(dm2_v1_creature_load_ai_table_from_gdat(NULL) == -1,
           "NULL loader rejected");
-    CHECK(dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON)->BaseHP == 400,
-          "reset pre-populates AI table from genuine defaults");
+    CHECK(dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON) == NULL,
+          "reset does not expose an AI row without a CREATURES owner binding");
     CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) == 3,
           "GDAT import loads three AI definitions");
 
@@ -134,8 +134,6 @@ int main(void) {
         dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON);
     const DM2_AIDefinition *bat =
         dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT);
-    const DM2_AIDefinition *unused =
-        dm2_v1_creature_ai_spec(DM2_AI_GIGGLER);
 
     CHECK(thorn->w0AIFlags == DM2_AIFLAG_WORM_GLOP &&
               thorn->ArmorClass == 7 &&
@@ -172,8 +170,8 @@ int main(void) {
     CHECK(dm2_v1_creature_attacks_party(0, 0) == 0,
           "imported static AI row suppresses attack routing");
 
-    CHECK(unused->BaseHP == 90,
-          "missing GDAT entries preserve genuine table defaults");
+    CHECK(dm2_v1_creature_ai_spec(DM2_AI_GIGGLER) == NULL,
+          "missing creature owner binding remains unavailable");
 
     int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 1, 2, 0, 0, 16);
     const DM2_V1_CreatureInstance *inst = dm2_v1_creature_get_instance(slot);
@@ -186,13 +184,13 @@ int main(void) {
     loader.entry_count = 1;
     CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) == 1 &&
               dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON)->BaseHP == 80 &&
-              dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT)->BaseHP == 30,
-          "replacement GDAT session resets to genuine before re-importing");
+              dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT) == NULL,
+          "replacement GDAT session removes absent creature owner bindings");
 
     dm2_v1_creature_reset_ai_table();
-    CHECK(dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON)->BaseHP == 400 &&
-              dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT)->BaseHP == 30,
-          "reset restores genuine AI defaults");
+    CHECK(dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON) == NULL &&
+              dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT) == NULL,
+          "reset clears live creature owner bindings");
 
     printf("DM2 V1 creature GDAT AI table: %d/%d passed\n",
            tests_passed,

@@ -167,6 +167,7 @@ static DM2_V1_ProjectileDispatchResult create_projectile(
 
     /* Look up AI spec for AttackStrength. */
     const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(c->ai_index);
+    if (spec == NULL) return r;
 
     /* Build F0810 input.  Source: skproject/SKWIN/SkWinCore.cpp:27038-27096,
      * memory_projectile_pc34_compat.h ProjectileCreateInput_Compat. */
@@ -183,8 +184,8 @@ static DM2_V1_ProjectileDispatchResult create_projectile(
     input.direction = compute_direction(
         c->world_x, c->world_y, target_world_x, target_world_y);
     input.kineticEnergy = 100;  /* DM1 default for creature-launched */
-    input.attack = spec ? (int)spec->AttackStrength : 10;
-    if (input.attack < 1) input.attack = 1;
+    input.attack = (int)spec->AttackStrength;
+    if (input.attack < 1) return r;
     input.stepEnergy = 8;  /* ReDMCSB GROUP.C:1695-1770 step energy */
     input.currentTick = 0;  /* DM2 V1 runtime uses game_tick */
     input.poisonAttack = (subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
@@ -228,6 +229,7 @@ DM2_V1_ProjectileDispatchResult dm2_v1_projectile_dispatch(
     if (!c) return r;
     if (!c->alive) return r;
     const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(c->ai_index);
+    if (spec == NULL) return r;
     int category = 0, subtype = 0;
     if (!dm2_v1_projectile_pick_category(spec->AttacksSpells,
                                           &category, &subtype)) {

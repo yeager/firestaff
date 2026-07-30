@@ -51,6 +51,22 @@
 static int tests_run = 0;
 static int tests_passed = 0;
 
+/* Fixture-only records: production dispatch is deliberately unavailable
+ * without a verified CREATURES[type] -> AIDefinition binding. */
+static void install_test_creature_rows(void) {
+    DM2_AIDefinition spec;
+
+    memset(&spec, 0, sizeof(spec));
+    spec.BaseHP = 8;
+    dm2_v1_creature_test_set_ai_spec(0, &spec);
+    spec.AttacksSpells = AI_ATTACK_FLAGS__SHOOT;
+    spec.AttackStrength = 12;
+    dm2_v1_creature_test_set_ai_spec(36, &spec);
+    spec.AttacksSpells = AI_ATTACK_FLAGS__FIREBALL;
+    spec.AttackStrength = 16;
+    dm2_v1_creature_test_set_ai_spec(51, &spec);
+}
+
 #define TEST(name_) do { \
     printf("  %s...\n", #name_); \
     tests_run++; \
@@ -271,6 +287,7 @@ int main(void) {
     printf("Source: SKULL.ASM:10620-10710/11100-11200,\n"
            "        ReDMCSB PROJEXPL.C:76-92, GROUP.C:1695-1770,\n"
            "        skproject/SKWIN/SkWinCore.cpp:10479-10561\n");
+    install_test_creature_rows();
 
     /* Attack-flag mapping */
     TEST(pick_shoot);

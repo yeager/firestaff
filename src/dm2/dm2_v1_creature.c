@@ -136,15 +136,16 @@ const char *dm2_v1_creature_ai_name(int ai_index) {
 }
 
 const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
-    /* QUERY_CREATURE_AI_SPEC_FROM_TYPE at SkWinCore.cpp:2995
-     * In extended mode: uses EXTENDED_LOAD_AI_DEFINITION() result
-     * In fixed mode: uses hardcoded dAITableGenuine[]
-     * Stub: index by creature_type (capped) */
-    int idx = creature_type;
-    if (idx < 0) idx = 0;
-    if (idx >= DM2_AI_TABLE_SIZE) idx = DM2_AI_TABLE_SIZE - 1;
-    (void)creature_type;
-    return &g_ai_table[idx];
+    const DM2_AIDefinition *spec = NULL;
+
+    /* SK-projects skcrture.cpp::QUERY_CREATURE_AI_SPEC_FROM_TYPE:
+     * CREATURES[type] word 0x05 owns the AIDefinition row.  Never turn a
+     * raw creature type into an AI-table index: without that source-owned
+     * binding this runtime must not manufacture creature behavior. */
+    if (dm2_v1_creature_ai_spec_def(creature_type, &spec) != 1) {
+        return NULL;
+    }
+    return spec;
 }
 
 int dm2_v1_creature_ai_spec_flags(int creature_type, uint16_t *out_flags) {
@@ -576,20 +577,6 @@ static int dm2_v1_creature_door_blocks_creature(int door_state,
     return 1;
 }
 
-static int dm2_v1_creature_ai_has_gdat_spec(int ai_index) {
-    return ai_index >= 0 && ai_index < DM2_AI_TABLE_SIZE &&
-           g_ai_table_loaded[ai_index] != 0;
-}
-
-static int dm2_v1_creature_is_static_ai_index(int ai_index) {
-    return ai_index == 0  || ai_index == 1  || ai_index == 4
-        || ai_index == 5  || ai_index == 6  || ai_index == 7
-        || ai_index == 8  || ai_index == 9  || ai_index == 10
-        || ai_index == 11 || ai_index == 12 || ai_index == 20
-        || ai_index == 33 || ai_index == 45 || ai_index == 59
-        || ai_index == 60;
-}
-
 static int dm2_v1_creature_attack_flags_are_ranged(uint16_t flags) {
     return (flags & (AI_ATTACK_FLAGS__SHOOT |
                      AI_ATTACK_FLAGS__FIREBALL |
@@ -612,21 +599,16 @@ static int dm2_v1_creature_attack_flags_are_ranged(uint16_t flags) {
  * objects suppressed by w0AIFlags. Data-free fallback preserves the
  * original no-assets probe behavior for rows not yet imported. */
 int dm2_v1_creature_attacks_party(int ai_index, int distance) {
+    const DM2_AIDefinition *spec;
+    uint16_t attacks;
+
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return 0;
     if (distance < 0) return 0;
-
-    if (dm2_v1_creature_ai_has_gdat_spec(ai_index)) {
-        const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(ai_index);
-        uint16_t attacks = spec ? spec->AttacksSpells : 0;
-
-        if (!spec || (spec->w0AIFlags & DM2_AIFLAG_STATIC) != 0) return 0;
-        if ((attacks & AI_ATTACK_FLAGS__MELEE) != 0 && distance <= 1) return 1;
-        if (dm2_v1_creature_attack_flags_are_ranged(attacks) && distance <= 6) return 1;
-        return 0;
-    }
-
-    if (dm2_v1_creature_is_static_ai_index(ai_index)) return 0;
-    return distance <= 1 ? 1 : 0;
+    spec = dm2_v1_creature_ai_spec(ai_index);
+    if (!spec || (spec->w0AIFlags & DM2_AIFLAG_STATIC) != 0) return 0;
+    attacks = spec->AttacksSpells;
+    if ((attacks & AI_ATTACK_FLAGS__MELEE) != 0 && distance <= 1) return 1;
+    return dm2_v1_creature_attack_flags_are_ranged(attacks) && distance <= 6;
 }
 
 /* dm2_v1_creature_resolves_spell — map AI_ATTACK_FLAGS to spell effect
@@ -636,25 +618,12 @@ int dm2_v1_creature_attacks_party(int ai_index, int distance) {
  * AIDefinition.AttacksSpells. Data-free fallback preserves the old
  * flag-only classification for rows not yet imported. */
 int dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags) {
+    const DM2_AIDefinition *spec;
+
     if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return 0;
     if (!dm2_v1_creature_attack_flags_are_ranged(attack_flags)) return 0;
-
-    if (dm2_v1_creature_ai_has_gdat_spec(ai_index)) {
-        const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(ai_index);
-        return spec && (spec->AttacksSpells & attack_flags) != 0;
-    }
-
-    if (attack_flags & (AI_ATTACK_FLAGS__FIREBALL |
-                        AI_ATTACK_FLAGS__DISPELL  |
-                        AI_ATTACK_FLAGS__LIGHTNING |
-                        AI_ATTACK_FLAGS__POISON_CLOUD |
-                        AI_ATTACK_FLAGS__POISON_BOLT |
-                        AI_ATTACK_FLAGS__POISON_BLOB |
-                        AI_ATTACK_FLAGS__PUSH_SPELL |
-                        AI_ATTACK_FLAGS__PULL_SPELL)) {
-        return 1;
-    }
-    return 0;
+    spec = dm2_v1_creature_ai_spec(ai_index);
+    return spec != NULL && (spec->AttacksSpells & attack_flags) != 0;
 }
 
 /* ── Creature instance pool ──────────────────────────────────────────────
@@ -704,7 +673,15 @@ static void dm2_v1_creature_write_render_state(DM2_V1_CreatureInstance *c,
  * healthMultiplier: 0=default (8), 1–16 scale HP. DM2_CREATURE_SPAWN_MAX=64. */
 int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
                           int map_index, int direction, int health_multiplier) {
+    const DM2_AIDefinition *spec;
     int slot = -1;
+    int mult;
+    int hp;
+
+    spec = dm2_v1_creature_ai_spec(ai_index);
+    if (spec == NULL || ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) {
+        return -1;
+    }
     for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; i++) {
         if (!g_creature_pool[i].alive) { slot = i; break; }
     }
@@ -713,7 +690,7 @@ int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
     DM2_V1_CreatureInstance *c = &g_creature_pool[slot];
     memset(c, 0, sizeof(*c));
     c->instance_id = g_next_instance_id++;
-    c->ai_index    = (ai_index >= 0 && ai_index < DM2_AI_TABLE_SIZE) ? ai_index : 0;
+    c->ai_index    = ai_index;
     c->world_x     = world_x;
     c->world_y     = world_y;
     c->map_index   = map_index;
@@ -728,10 +705,9 @@ int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
     c->poison_ticks    = 0;
     dm2_v1_creature_write_render_state(c, 0);
 
-    int mult = (health_multiplier > 0) ? health_multiplier : 8;
-    const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(ai_index);
-    int hp = spec ? (int)spec->BaseHP * mult / 8 : 10;
-    if (hp <= 0) hp = 1;  /* minimum 1 HP so zero-init stub creatures can die */
+    mult = (health_multiplier > 0) ? health_multiplier : 8;
+    hp = (int)spec->BaseHP * mult / 8;
+    if (hp <= 0) return -1;
     c->hp_max     = hp;
     c->hp_current = c->hp_max;
     ++c->render_revision;
@@ -851,6 +827,8 @@ void dm2_v1_creature_test_set_ai_spec(int ai_index,
     if (!spec) return;
     g_ai_table[ai_index] = *spec;
     g_ai_table_loaded[ai_index] = 1;
+    g_creature_ai_row[ai_index] = (uint8_t)ai_index;
+    g_creature_ai_row_loaded[ai_index] = 1;
 }
 
 void dm2_v1_creature_test_clear_ai_overrides(void) {
@@ -1092,8 +1070,9 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
                                   door_y,
                                   &door_state,
                                   &door_attributes) == 1) {
-        int nonmaterial = dm2_v1_creature_ai_spec(c->ai_index)->w0AIFlags &
-                          DM2_AIFLAG_NONMATERIAL;
+        const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(c->ai_index);
+        int nonmaterial = spec != NULL &&
+                          (spec->w0AIFlags & DM2_AIFLAG_NONMATERIAL) != 0;
         door_valid = 1;
         door_blocks = dm2_v1_creature_door_blocks_creature(
             door_state, door_attributes, nonmaterial != 0);

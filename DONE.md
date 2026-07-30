@@ -44288,3 +44288,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   installs the exact active CSB graphics record before the draw; unavailable
   material stays no-draw rather than becoming an icon or marker. The focused
   CSB viewport regression passes 2 654 checks.
+- ✅ 2026-07-30 DM2 creature AI owner gate: `dm2_v1_creature_ai_spec()` now
+  follows SK-projects `skcrture.cpp::QUERY_CREATURE_AI_SPEC_FROM_TYPE` through
+  the loaded `CREATURES[type]` word-0x05 owner binding, rather than treating a
+  creature type as an AI row. Unbound runtime creatures, attacks, spells and
+  projectiles reject without creating fallback HP, attack strength or behavior.
+  Test fixtures retain explicitly compiled test-only rows. Verification:
+  `dm2_v1_creature_gdat_ai_table`, `dm2_v1_creature_combat_probe` and
+  `dm2_v1_projectile_pc34_compat` pass; strict C11 and `git diff --check` pass.
