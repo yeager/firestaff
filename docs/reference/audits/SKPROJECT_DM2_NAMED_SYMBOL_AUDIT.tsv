@@ -71,7 +71,7 @@ DM2_1c9a_381c	SKULLWIN	SKULLWIN/c_1c9a.cpp	9696	src/dm2/dm2_v1_skproject_core.c:
 DM2_1c9a_38a8	SKULLWIN	SKULLWIN/c_1c9a.cpp	9748	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1c9a_38a8; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Belongs to DM2_14cd_0389; searches action list and dispatches FIND_WALK_PATH.
 DM2_FILL_CAII_CUR_MAP	SKULLWIN	SKULLWIN/c_1c9a.cpp	9895	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_fill_caii_cur_map; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Iterates current map tiles, walks thing lists for creatures, allocates CAII entries.
 DM2_FILL_ORPHAN_CAII	SKULLWIN	SKULLWIN/c_1c9a.cpp	9995	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_fill_orphan_caii; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
-init	SKULLWIN	SKULLWIN/c_350.cpp	3	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_350.cpp	3	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 event_loop_T1	SKULLWIN	SKULLWIN/c_addon.cpp	30	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_event_loop_t1; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 wait_for_vsync	SKULLWIN	SKULLWIN/c_addon.cpp	122	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_wait_for_vsync; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 wft	SKULLWIN	SKULLWIN/c_addon.cpp	127	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_wft; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
@@ -154,15 +154,15 @@ DM2_SELECT_CREATURE_37FC	SKULLWIN	SKULLWIN/c_ai.cpp	4723		VERIFIED_SOURCE_MAPPIN
 DM2_14cd_09e2	SKULLWIN	SKULLWIN/c_ai.cpp	4743		VERIFIED_SOURCE_MAPPING
 DM2_50CB	SKULLWIN	SKULLWIN/c_ai.cpp	5275		VERIFIED_SOURCE_MAPPING
 DM2_13e4_0982	SKULLWIN	SKULLWIN/c_ai.cpp	5341		VERIFIED_SOURCE_MAPPING
-DM2_THINK_CREATURE	SKULLWIN	SKULLWIN/c_ai.cpp	5649	src/dm2/dm2_v1_creature.c:396	UNCERTAIN
+DM2_THINK_CREATURE	SKULLWIN	SKULLWIN/c_ai.cpp	5649	src/dm2/dm2_v1_creature.c:396	IMPLEMENTED_NARROW
 DM2_4EA8	SKULLWIN	SKULLWIN/c_ai.cpp	5786		VERIFIED_SOURCE_MAPPING
 DM2_PREPARE_LOCAL_CREATURE_VAR	SKULLWIN	SKULLWIN/c_ai.cpp	5817		VERIFIED_SOURCE_MAPPING
 DM2_UNPREPARE_LOCAL_CREATURE_VAR	SKULLWIN	SKULLWIN/c_ai.cpp	5895		VERIFIED_SOURCE_MAPPING
 DM2_ai_13e4_0360	SKULLWIN	SKULLWIN/c_ai.cpp	5912		VERIFIED_SOURCE_MAPPING
 DM2_ai_13e4_071b	SKULLWIN	SKULLWIN/c_ai.cpp	5962		VERIFIED_SOURCE_MAPPING
 DM2_ai_13e4_0806	SKULLWIN	SKULLWIN/c_ai.cpp	6001		VERIFIED_SOURCE_MAPPING
-restart	SKULLWIN	SKULLWIN/c_allegro.cpp	17	src/dm2/dm2_v1_sound.c:553	UNCERTAIN
-start	SKULLWIN	SKULLWIN/c_allegro.cpp	25	src/dm2/dm2_v2_touch_runtime.c:98	UNCERTAIN
+restart	SKULLWIN	SKULLWIN/c_allegro.cpp	17	src/dm2/dm2_v1_sound.c:553	NOT_APPLICABLE_ARCH
+start	SKULLWIN	SKULLWIN/c_allegro.cpp	25	src/dm2/dm2_v2_touch_runtime.c:98	NOT_APPLICABLE_ARCH
 dtor	SKULLWIN	SKULLWIN/c_allegro.cpp	77		VERIFIED_SOURCE_MAPPING
 set_mouse	SKULLWIN	SKULLWIN/c_allegro.cpp	99		VERIFIED_SOURCE_MAPPING
 vsync	SKULLWIN	SKULLWIN/c_allegro.cpp	104		VERIFIED_SOURCE_MAPPING
@@ -170,7 +170,7 @@ stretchblit	SKULLWIN	SKULLWIN/c_allegro.cpp	109		VERIFIED_SOURCE_MAPPING
 start_timer	SKULLWIN	SKULLWIN/c_allegro.cpp	147		VERIFIED_SOURCE_MAPPING
 stop_timer	SKULLWIN	SKULLWIN/c_allegro.cpp	152		VERIFIED_SOURCE_MAPPING
 hide_mouse	SKULLWIN	SKULLWIN/c_allegro.cpp	157		VERIFIED_SOURCE_MAPPING
-init	SKULLWIN	SKULLWIN/c_alloc.cpp	65	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_alloc.cpp	65	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 DM2_GET_FROM_FREEPOOL	SKULLWIN	SKULLWIN/c_alloc.cpp	81		VERIFIED_SOURCE_MAPPING
 DM2_FIND_FREE_POOL	SKULLWIN	SKULLWIN/c_alloc.cpp	89		VERIFIED_SOURCE_MAPPING
 DM2_ALLOC_MEMORY_RAM	SKULLWIN	SKULLWIN/c_alloc.cpp	111		VERIFIED_SOURCE_MAPPING
@@ -187,7 +187,7 @@ DM2_RESTORE_FREEPOOL	SKULLWIN	SKULLWIN/c_alloc.cpp	254		VERIFIED_SOURCE_MAPPING
 DM2_COMPLETE_ALLOCATION	SKULLWIN	SKULLWIN/c_alloc.cpp	270		VERIFIED_SOURCE_MAPPING
 DM2_SETUP_MEMORYALLOCATION	SKULLWIN	SKULLWIN/c_alloc.cpp	299		VERIFIED_SOURCE_MAPPING
 DM2_DTOR_MEMORYALLOCATION	SKULLWIN	SKULLWIN/c_alloc.cpp	323		VERIFIED_SOURCE_MAPPING
-init	SKULLWIN	SKULLWIN/c_buttons.cpp	11	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_buttons.cpp	11	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 init_global_buttongroups	SKULLWIN	SKULLWIN/c_buttons.cpp	25		NOT_APPLICABLE_ARCH
 DM2_OFFSET_RECT	SKULLWIN	SKULLWIN/c_buttons.cpp	31	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_offset_rect; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps c_buttons DM2_OFFSET_RECT by subtracting the button/origin rect x/y from the source rect and preserving width/height.
 DM2_ADJUST_BUTTONGROUP_RECTS	SKULLWIN	SKULLWIN/c_buttons.cpp	43		NOT_APPLICABLE_ARCH
@@ -209,37 +209,37 @@ DM2_WOUND_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	165		MISSING
 DM2_ATTACK_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	318		IMPLEMENTED_NARROW
 DM2_CREATURE_ATTACKS_PLAYER	SKULLWIN	SKULLWIN/c_creature.cpp	651		MISSING
 DM2_CREATURE_ATTACKS_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	906		MISSING
-DM2_CREATURE_ATTACKS_PARTY	SKULLWIN	SKULLWIN/c_creature.cpp	1000	src/dm2/dm2_v1_creature.c:388	UNCERTAIN
+DM2_CREATURE_ATTACKS_PARTY	SKULLWIN	SKULLWIN/c_creature.cpp	1000	src/dm2/dm2_v1_creature.c:388	IMPLEMENTED_NARROW
 DM2_CONFUSE_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	1308		MISSING
 DM2_CREATURE_CAN_HANDLE_IT	SKULLWIN	SKULLWIN/c_creature.cpp	1344		MISSING
 DM2_CREATURE_CCM06	SKULLWIN	SKULLWIN/c_creature.cpp	1574		MISSING
-DM2_CREATURE_CCM03	SKULLWIN	SKULLWIN/c_creature.cpp	1609	src/dm2/dm2_v1_ccm.c:194	UNCERTAIN
-DM2_CREATURE_JUMPS	SKULLWIN	SKULLWIN/c_creature.cpp	1636	src/dm2/dm2_v1_ccm.c:207	UNCERTAIN
+DM2_CREATURE_CCM03	SKULLWIN	SKULLWIN/c_creature.cpp	1609	src/dm2/dm2_v1_ccm.c:194	IMPLEMENTED_NARROW
+DM2_CREATURE_JUMPS	SKULLWIN	SKULLWIN/c_creature.cpp	1636	src/dm2/dm2_v1_ccm.c:207	IMPLEMENTED_NARROW
 DM2_CREATURE_USES_LADDER_HOLE	SKULLWIN	SKULLWIN/c_creature.cpp	1709		MISSING
 DM2_CREATURE_CAST_SPELL	SKULLWIN	SKULLWIN/c_creature.cpp	1865		MISSING
 DM2_CREATURE_STEAL_FROM_CHAMPION	SKULLWIN	SKULLWIN/c_creature.cpp	1972		MISSING
 DM2_CREATURE_CCM0B	SKULLWIN	SKULLWIN/c_creature.cpp	2145		MISSING
-DM2_CREATURE_TAKES_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2176	src/dm2/dm2_v1_ccm.c:246	UNCERTAIN
+DM2_CREATURE_TAKES_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2176	src/dm2/dm2_v1_ccm.c:246	IMPLEMENTED_NARROW
 DM2_CREATURE_CCM0C	SKULLWIN	SKULLWIN/c_creature.cpp	2247		MISSING
-DM2_CREATURE_PUTS_DOWN_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2284	src/dm2/dm2_v1_ccm.c:240	UNCERTAIN
+DM2_CREATURE_PUTS_DOWN_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2284	src/dm2/dm2_v1_ccm.c:240	IMPLEMENTED_NARROW
 DM2_CREATURE_KILL_ON_TIMER_POSITION	SKULLWIN	SKULLWIN/c_creature.cpp	2352		MISSING
 DM2_CREATURE_SHOOT_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2359		MISSING
 DM2_CREATURE_ROTATES_TARGET_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	2394		MISSING
 DM2_PLACE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2411		MISSING
 DM2_TAKE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2509		MISSING
 DM2_CREATURE_ACTIVATES_WALL	SKULLWIN	SKULLWIN/c_creature.cpp	2564		MISSING
-DM2_CREATURE_TRANSFORM	SKULLWIN	SKULLWIN/c_creature.cpp	2637	src/dm2/dm2_v1_ccm.c:319	UNCERTAIN
-DM2_CREATURE_EXPLODE_OR_SUMMON	SKULLWIN	SKULLWIN/c_creature.cpp	2762	src/dm2/dm2_v1_ccm.c:341	UNCERTAIN
+DM2_CREATURE_TRANSFORM	SKULLWIN	SKULLWIN/c_creature.cpp	2637	src/dm2/dm2_v1_ccm.c:319	IMPLEMENTED_NARROW
+DM2_CREATURE_EXPLODE_OR_SUMMON	SKULLWIN	SKULLWIN/c_creature.cpp	2762	src/dm2/dm2_v1_ccm.c:341	IMPLEMENTED_NARROW
 DM2_CREATURE_WALK_NOW	SKULLWIN	SKULLWIN/c_creature.cpp	2845		MISSING
 DM2_1B7D5	SKULLWIN	SKULLWIN/c_creature.cpp	2916		MISSING
-DM2_PROCEED_CCM	SKULLWIN	SKULLWIN/c_creature.cpp	2930	src/dm2/dm2_v1_creature.c:388	UNCERTAIN
+DM2_PROCEED_CCM	SKULLWIN	SKULLWIN/c_creature.cpp	2930	src/dm2/dm2_v1_creature.c:388	IMPLEMENTED_NARROW
 DM2_GET_CREATURE_ANIMATION_FRAME	SKULLWIN	SKULLWIN/c_creature.cpp	3217	src/dm2/dm2_v1_creature_animation_gdat.c:dm2_v1_creature_animation_gdat_select_dynamic_v5; src/dm2/dm2_v1_boot.c:dm2_v1_boot_dynamic_creature_material_receipt; tests/test_dm2_v1_dynamic_creature_material_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 dynamic creature material follows the SKULLWIN FB/FC/FD animation tables to its exact CREATURES dtImage field, then requires matching GFX256 raw interval, decoded image, local palette, and M11 creature placement-plan identity; it cannot borrow the DB4/F9 map-chip image or a generic sprite fallback.
 DM2_4FCC	SKULLWIN	SKULLWIN/c_creature.cpp	3299		IMPLEMENTED_NARROW
 DM2_ALLOC_CPX_LINK_NODE	SKULLWIN	SKULLWIN/c_dballoc.cpp	26	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_reuse_list_init	VERIFIED_SOURCE_MAPPING	DM2 v1 CPX1 receipt links reusable CPX blocks in source descending amount order without allocating decoded buffers.
 DM2_ALLOC_CPX_UNLINK_NODE	SKULLWIN	SKULLWIN/c_dballoc.cpp	65	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_cpx1_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 CPX1 receipt unlinks the selected reusable block before source remainder handling and never exposes backing bytes.
 DM2_ALLOC_CPX1	SKULLWIN	SKULLWIN/c_dballoc.cpp	87	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_cpx1_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 CPX1 receipt selects an exact reusable block when available, otherwise the largest block, and retains only remainders of at least 30 bytes.
 ulptable	SKULLWIN	SKULLWIN/c_dballoc.cpp	121		IMPLEMENTED
-init	SKULLWIN	SKULLWIN/c_dballoc.cpp	125	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_dballoc.cpp	125	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 getadr	SKULLWIN	SKULLWIN/c_dballoc.cpp	130		IMPLEMENTED
 getp	SKULLWIN	SKULLWIN/c_dballoc.cpp	132		IMPLEMENTED
 setp	SKULLWIN	SKULLWIN/c_dballoc.cpp	133		IMPLEMENTED
@@ -248,52 +248,52 @@ islen	SKULLWIN	SKULLWIN/c_dballoc.cpp	135		IMPLEMENTED
 DM2_QUERY_GDAT_RAW_DATA_LENGTH	SKULLWIN	SKULLWIN/c_dballoc.cpp	138	include/dm2_v1_asset_loader.h:261	VERIFIED_SOURCE_MAPPING
 R_2D87A	SKULLWIN	SKULLWIN/c_dballoc.cpp	152		IMPLEMENTED
 splitlong	SKULLWIN	SKULLWIN/c_dballoc.cpp	164		IMPLEMENTED
-DM2_SETUP_DB_ALLOCATION	SKULLWIN	SKULLWIN/c_dballoc.cpp	257		MISSING
-DM2_SET_PPPW_ENTRY	SKULLWIN	SKULLWIN/c_dballoc.cpp	277		MISSING
-DM2_dballoc_38c8_0109	SKULLWIN	SKULLWIN/c_dballoc.cpp	290		MISSING
-DM2_dballoc_38c8_0224	SKULLWIN	SKULLWIN/c_dballoc.cpp	341		MISSING
-DM2_ALLOC_CPX_SETUP	SKULLWIN	SKULLWIN/c_dballoc.cpp	454		MISSING
-DM2_dballoc_3e74_5561	SKULLWIN	SKULLWIN/c_dballoc.cpp	499		MISSING
-DM2_ALLOCATION1	SKULLWIN	SKULLWIN/c_dballoc.cpp	511		MISSING
-DM2_ALLOCATION2	SKULLWIN	SKULLWIN/c_dballoc.cpp	522		MISSING
-DM2_ALLOCATION3	SKULLWIN	SKULLWIN/c_dballoc.cpp	586		MISSING
-DM2_ALLOC_CPX_GET_WTABLE_ENTRY	SKULLWIN	SKULLWIN/c_dballoc.cpp	646		MISSING
-DM2_dballoc_2E52C	SKULLWIN	SKULLWIN/c_dballoc.cpp	660		MISSING
-DM2_ADD_TO_PRESERVED_GFX	SKULLWIN	SKULLWIN/c_dballoc.cpp	678		MISSING
-DM2_FIND_IN_PRESERVED_GFX	SKULLWIN	SKULLWIN/c_dballoc.cpp	698		MISSING
-DM2_ALLOCATION6	SKULLWIN	SKULLWIN/c_dballoc.cpp	730		MISSING
-DM2_ALLOCATION7	SKULLWIN	SKULLWIN/c_dballoc.cpp	817		MISSING
-DM2_DEALLOC_BIGPOOL_STRUCT_BEFORE	SKULLWIN	SKULLWIN/c_dballoc.cpp	907		MISSING
-DM2_GUARANTEE_FREE_CPXHEAP_SIZE	SKULLWIN	SKULLWIN/c_dballoc.cpp	916		MISSING
-DM2_INIT_GFX_TABLE	SKULLWIN	SKULLWIN/c_dballoc.cpp	927		MISSING
-DM2_ALLOC_CPXHEAP_CREATE_POINTER	SKULLWIN	SKULLWIN/c_dballoc.cpp	965		MISSING
-DM2_ALLOC_CPXHEAP_CREATE_INDEX	SKULLWIN	SKULLWIN/c_dballoc.cpp	994		MISSING
+DM2_SETUP_DB_ALLOCATION	SKULLWIN	SKULLWIN/c_dballoc.cpp	257		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_SET_PPPW_ENTRY	SKULLWIN	SKULLWIN/c_dballoc.cpp	277		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_dballoc_38c8_0109	SKULLWIN	SKULLWIN/c_dballoc.cpp	290		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_dballoc_38c8_0224	SKULLWIN	SKULLWIN/c_dballoc.cpp	341		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOC_CPX_SETUP	SKULLWIN	SKULLWIN/c_dballoc.cpp	454		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_dballoc_3e74_5561	SKULLWIN	SKULLWIN/c_dballoc.cpp	499		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOCATION1	SKULLWIN	SKULLWIN/c_dballoc.cpp	511		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOCATION2	SKULLWIN	SKULLWIN/c_dballoc.cpp	522		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOCATION3	SKULLWIN	SKULLWIN/c_dballoc.cpp	586		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOC_CPX_GET_WTABLE_ENTRY	SKULLWIN	SKULLWIN/c_dballoc.cpp	646		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_dballoc_2E52C	SKULLWIN	SKULLWIN/c_dballoc.cpp	660		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ADD_TO_PRESERVED_GFX	SKULLWIN	SKULLWIN/c_dballoc.cpp	678		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_FIND_IN_PRESERVED_GFX	SKULLWIN	SKULLWIN/c_dballoc.cpp	698		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOCATION6	SKULLWIN	SKULLWIN/c_dballoc.cpp	730		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOCATION7	SKULLWIN	SKULLWIN/c_dballoc.cpp	817		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_DEALLOC_BIGPOOL_STRUCT_BEFORE	SKULLWIN	SKULLWIN/c_dballoc.cpp	907		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_GUARANTEE_FREE_CPXHEAP_SIZE	SKULLWIN	SKULLWIN/c_dballoc.cpp	916		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_INIT_GFX_TABLE	SKULLWIN	SKULLWIN/c_dballoc.cpp	927		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOC_CPXHEAP_CREATE_POINTER	SKULLWIN	SKULLWIN/c_dballoc.cpp	965		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOC_CPXHEAP_CREATE_INDEX	SKULLWIN	SKULLWIN/c_dballoc.cpp	994		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
 DM2_ALLOC_CPXHEAP_MEM	SKULLWIN	SKULLWIN/c_dballoc.cpp	1009	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt allocates from the low edge of the first sufficient ordered free span and records exact-fit versus split behavior.
-DM2_ALLOCATION9	SKULLWIN	SKULLWIN/c_dballoc.cpp	1023		MISSING
-DM2_ALLOCATION10	SKULLWIN	SKULLWIN/c_dballoc.cpp	1032		MISSING
-DM2_ALLOCATION11	SKULLWIN	SKULLWIN/c_dballoc.cpp	1055		MISSING
-DM2_dballoc_2636_03d4	SKULLWIN	SKULLWIN/c_dballoc.cpp	1074		MISSING
-DM2_dballoc_3e74_55f9	SKULLWIN	SKULLWIN/c_dballoc.cpp	1086		MISSING
-DM2_GET_BMP	SKULLWIN	SKULLWIN/c_dballoc.cpp	1106		MISSING
+DM2_ALLOCATION9	SKULLWIN	SKULLWIN/c_dballoc.cpp	1023		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOCATION10	SKULLWIN	SKULLWIN/c_dballoc.cpp	1032		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOCATION11	SKULLWIN	SKULLWIN/c_dballoc.cpp	1055		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_dballoc_2636_03d4	SKULLWIN	SKULLWIN/c_dballoc.cpp	1074		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_dballoc_3e74_55f9	SKULLWIN	SKULLWIN/c_dballoc.cpp	1086		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_GET_BMP	SKULLWIN	SKULLWIN/c_dballoc.cpp	1106		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
 DM2_ALLOCATE_GFX256	SKULLWIN	SKULLWIN/c_dballoc.cpp	1112	include/dm2_v1_asset_loader.h:dm2_v1_gdat_allocate_gfx256_material_receipt; dm2_v1_gdat_allocate_gfx256_raw_material_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 GFX256 receipts expose either a decoded image route or a bounded raw GDAT interval for source consumers such as DRAW_DOOR_FRAMES; neither route allocates a cache node or substitute pixels.
-DM2_dballoc_3e74_2439	SKULLWIN	SKULLWIN/c_dballoc.cpp	1119		MISSING
-DM2_ALLOC_GENERATE_ID	SKULLWIN	SKULLWIN/c_dballoc.cpp	1133		MISSING
-DM2_dballoc_3e74_5888	SKULLWIN	SKULLWIN/c_dballoc.cpp	1145		MISSING
-DM2_dballoc_3e74_58a3	SKULLWIN	SKULLWIN/c_dballoc.cpp	1153		MISSING
+DM2_dballoc_3e74_2439	SKULLWIN	SKULLWIN/c_dballoc.cpp	1119		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOC_GENERATE_ID	SKULLWIN	SKULLWIN/c_dballoc.cpp	1133		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_dballoc_3e74_5888	SKULLWIN	SKULLWIN/c_dballoc.cpp	1145		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_dballoc_3e74_58a3	SKULLWIN	SKULLWIN/c_dballoc.cpp	1153		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
 DM2_ALLOCATE_GFX16	SKULLWIN	SKULLWIN/c_dballoc.cpp	1160	include/dm2_v1_asset_loader.h:dm2_v1_gdat_allocate_gfx16_material_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 GFX16 material receipt resolves the exact source image tuple, using only SKULLWIN's MISCELLANEOUS/FE/FE GDAT fallback when the requested image row is absent, and exposes no synthetic bitmap.
-DM2_dballoc_3e74_5992	SKULLWIN	SKULLWIN/c_dballoc.cpp	1173		MISSING
-DM2_ALLOC_NEW_CREATURE	SKULLWIN	SKULLWIN/c_dballoc.cpp	1187		MISSING
+DM2_dballoc_3e74_5992	SKULLWIN	SKULLWIN/c_dballoc.cpp	1173		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
+DM2_ALLOC_NEW_CREATURE	SKULLWIN	SKULLWIN/c_dballoc.cpp	1187		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
 _DEBUG_SHOW_BIGPOOL	SKULLWIN	SKULLWIN/c_dballoc.cpp	1248		NOT_APPLICABLE_ARCH
 DM2_2066_33c4	SKULLWIN	SKULLWIN/c_dialog.cpp	29		MISSING
-DM2_dialog_2066_3820	SKULLWIN	SKULLWIN/c_dialog.cpp	44	include/dm2_v1_dialogue_gdat.h:17	UNCERTAIN
-DM2_dialog_2066_33e7	SKULLWIN	SKULLWIN/c_dialog.cpp	86	include/dm2_v1_dialogue_gdat.h:100	UNCERTAIN
+DM2_dialog_2066_3820	SKULLWIN	SKULLWIN/c_dialog.cpp	44	include/dm2_v1_dialogue_gdat.h:17	MISSING
+DM2_dialog_2066_33e7	SKULLWIN	SKULLWIN/c_dialog.cpp	86	include/dm2_v1_dialogue_gdat.h:100	MISSING
 DM2_dialog_2066_38d9	SKULLWIN	SKULLWIN/c_dialog.cpp	307		MISSING
-DM2_dialog_OPEN_DIALOG_PANEL	SKULLWIN	SKULLWIN/c_dialog.cpp	352	include/dm2_v1_dialogue_gdat.h:29	UNCERTAIN
+DM2_dialog_OPEN_DIALOG_PANEL	SKULLWIN	SKULLWIN/c_dialog.cpp	352	include/dm2_v1_dialogue_gdat.h:29	MISSING
 DM2_dialog_2066_37f2	SKULLWIN	SKULLWIN/c_dialog.cpp	433		MISSING
 DM2_dialog_2066_398a	SKULLWIN	SKULLWIN/c_dialog.cpp	454		MISSING
 DM2_ENGAGE_COMMAND	SKULLWIN	SKULLWIN/c_engage.cpp	24		MISSING
-init	SKULLWIN	SKULLWIN/c_eventqueue.cpp	10	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-set	SKULLWIN	SKULLWIN/c_eventqueue.cpp	33	src/dm2/dm2_v2_touch_runtime.c:71	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_eventqueue.cpp	10	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
+set	SKULLWIN	SKULLWIN/c_eventqueue.cpp	33	src/dm2/dm2_v2_touch_runtime.c:71	NOT_APPLICABLE_ARCH
 PROCESS_SINGLEEVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	44		MISSING
 QUEUE_EVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	55		MISSING
 DM2_3929_0b01	SKULLWIN	SKULLWIN/c_eventqueue.cpp	94		MISSING
@@ -339,7 +339,7 @@ DM2_events_443c_0434	SKULLWIN	SKULLWIN/c_events.cpp	3958		MISSING
 DM2_QUERY_NEXT_GDAT_ENTRY	SKULLWIN	SKULLWIN/c_gdatfile.cpp	31	include/dm2_v1_asset_loader.h:dm2_v1_query_next_gdat_entry	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile iterator receipt walks the parsed ENT1 table with source-shaped category range and optional class filters, preserving raw/scalar entry identity without fabricating buffers.
 DM2_dballoc_3e74_24b8	SKULLWIN	SKULLWIN/c_gdatfile.cpp	273	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_gdat_sound_allocation_scan	IMPLEMENTED
 DM2_dballoc_3e74_2162	SKULLWIN	SKULLWIN/c_gdatfile.cpp	336	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_gdat_accepts_current_zone	IMPLEMENTED
-init	SKULLWIN	SKULLWIN/c_gdatfile.cpp	349	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_gdatfile.cpp	349	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 DM2_GRAPHICS_DATA_OPEN	SKULLWIN	SKULLWIN/c_gdatfile.cpp	368	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
 DM2_GRAPHICS_DATA_CLOSE	SKULLWIN	SKULLWIN/c_gdatfile.cpp	384	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
 DM2_GRAPHICS_DATA_READ	SKULLWIN	SKULLWIN/c_gdatfile.cpp	399	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	IMPLEMENTED_NARROW
@@ -424,7 +424,7 @@ dec9_1	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	547	src/dm2/dm2_v1_gfx_decode_receipt.
 dec9_2	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	672	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img9_mode2; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
 dec9_3	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	708	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img9_mode3; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
 decode_img9	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	744	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img9; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
-init	SKULLWIN	SKULLWIN/c_gfx_main.cpp	19	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_gfx_main.cpp	19	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 DM2_INIT_BACKBUFF	SKULLWIN	SKULLWIN/c_gfx_main.cpp	37		NOT_APPLICABLE_ARCH
 DM2_DRAW_GAMELOAD_DIALOGUE_TO_SCREEN	SKULLWIN	SKULLWIN/c_gfx_main.cpp	48		NOT_APPLICABLE_ARCH
 DM2_gfxmain_3929_0914	SKULLWIN	SKULLWIN/c_gfx_main.cpp	79		NOT_APPLICABLE_ARCH
@@ -444,8 +444,8 @@ color_to_palettecolor	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	14	src/dm2/dm2_v1_skprojec
 ui8_to_palettecolor	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	15	src/dm2/dm2_v1_skproject_core.c:289	VERIFIED_SOURCE_MAPPING
 palettecolor_to_ui8	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	16	src/dm2/dm2_v1_skproject_core.c:297	VERIFIED_SOURCE_MAPPING
 palettecolor_to_pixel	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	17	src/dm2/dm2_v1_skproject_core.c:305	VERIFIED_SOURCE_MAPPING
-conv	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	19	src/dm2/dm2_v2_touch_runtime.c:110	UNCERTAIN
-init	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	75	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+conv	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	19	src/dm2/dm2_v2_touch_runtime.c:110	NOT_APPLICABLE_ARCH
+init	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	75	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 driver_setcolors	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	89		NOT_APPLICABLE_ARCH
 DM2_CONVERT_DRIVERPALETTE	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	117	src/dm2/dm2_v1_skproject_core.c:313	IMPLEMENTED_NARROW
 DM2_SELECT_PALETTE_SET	SKULLWIN	SKULLWIN/c_gfx_pal.cpp	146	src/dm2/dm2_v1_skproject_core.c:344	IMPLEMENTED_NARROW
@@ -569,7 +569,7 @@ DM2_guivp_32cb_3e08	SKULLWIN	SKULLWIN/c_gui_vp.cpp	4070		NOT_APPLICABLE_ARCH
 DM2_SUMMARY_DRAW_CREATURE	SKULLWIN	SKULLWIN/c_gui_vp.cpp	4144		NOT_APPLICABLE_ARCH
 DM2_DRAW_STATIC_OBJECT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	4239	src/dm2/dm2_v1_runtime.c; src/dm2/dm2_v1_viewport_renderer.c:dm2_v1_viewport_build_static_object_m11_delivery_plan; src/dm2/dm2_v1_boot.c; tests/test_dm2_v1_static_object_m11_delivery_plan.c	IMPLEMENTED_NARROW	DM2 v1 admits bounded D1C/D2C DB5/F0 and DB9/F0/F4 delivery plans only after matching session, selector/data, cell/pass/clip, GFX256 raw, IMG3 palette and RAW4 identities. F9 DRAW_MAP_CHIP and all missing/drifted receipts reject; accepted M11 delivery remains no-draw until original pixel decoding is proven.
 DM2_DRAW_EXTERNAL_TILE	SKULLWIN	SKULLWIN/c_gui_vp.cpp	4427		NOT_APPLICABLE_ARCH
-DM2_DRAW_DOOR	SKULLWIN	SKULLWIN/c_gui_vp.cpp	4806	src/dm2/dm2_v1_viewport_renderer.c:4009	UNCERTAIN
+DM2_DRAW_DOOR	SKULLWIN	SKULLWIN/c_gui_vp.cpp	4806	src/dm2/dm2_v1_viewport_renderer.c:4009	IMPLEMENTED_NARROW
 DM2_guivp_32cb_3edd	SKULLWIN	SKULLWIN/c_gui_vp.cpp	5106		NOT_APPLICABLE_ARCH
 DM2_DRAW_DOOR_TILE	SKULLWIN	SKULLWIN/c_gui_vp.cpp	5125		NOT_APPLICABLE_ARCH
 DM2_DRAW_PLAYER_TILE	SKULLWIN	SKULLWIN/c_gui_vp.cpp	5288		NOT_APPLICABLE_ARCH
@@ -582,13 +582,13 @@ DM2_ENVIRONMENT_DISPLAY_ELEMENTS	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6815	src/dm2/dm2
 DM2_DRAW_DUNGEON_TILES	SKULLWIN	SKULLWIN/c_gui_vp.cpp	6932		NOT_APPLICABLE_ARCH
 DM2_CHANCE_TABLE_OPERATION	SKULLWIN	SKULLWIN/c_gui_vp.cpp	7177		NOT_APPLICABLE_ARCH
 DM2_DISPLAY_VIEWPORT	SKULLWIN	SKULLWIN/c_gui_vp.cpp	7325	src/dm2/dm2_v1_gdat_scene_m11_command.c:dm2_v1_gdat_scene_m11_command_plan_build; src/dm2/dm2_v1_frame_presentation_state.c:dm2_v1_runtime_enumerate_dm2_viewport_m11_live_plans; tests/test_dm2_v1_dm2_viewport_m11_live_enumeration.c	VERIFIED_SOURCE_MAPPING	DM2 v1 DISPLAY_VIEWPORT scene plans bind the active GRAPHICSSET floor and ceiling raw intervals through GFX256 receipts before M11 presentation, alongside existing source rect, decode, palette, and scene-light evidence without fallback buffers. The DM2-owned live enumeration derives identity from the serialized original session plus G1 map token, requires matching active GRAPHICSSET and ordered complete scene/light, wall, door, weather, DB5/DB9 static, and DB14 flying-item plan set, and remains explicitly no-draw pending authentic pixel decode.
-init	SKULLWIN	SKULLWIN/c_hero.cpp	40	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_hero.cpp	40	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 get_adj_ability1	SKULLWIN	SKULLWIN/c_hero.cpp	81		IMPLEMENTED
 get_adj_ability2	SKULLWIN	SKULLWIN/c_hero.cpp	101		IMPLEMENTED
 get_stamina_adj	SKULLWIN	SKULLWIN/c_hero.cpp	110		IMPLEMENTED
 get_max_load	SKULLWIN	SKULLWIN/c_hero.cpp	126		IMPLEMENTED
 use_luck	SKULLWIN	SKULLWIN/c_hero.cpp	136		MISSING
-rotate	SKULLWIN	SKULLWIN/c_hero.cpp	168	src/dm2/dm2_v1_creature.c:879	UNCERTAIN
+rotate	SKULLWIN	SKULLWIN/c_hero.cpp	168	src/dm2/dm2_v1_creature.c:879	IMPLEMENTED_NARROW
 set_hero_flags	SKULLWIN	SKULLWIN/c_hero.cpp	190		MISSING
 get_player_weight	SKULLWIN	SKULLWIN/c_hero.cpp	197		MISSING
 calc_player_weight	SKULLWIN	SKULLWIN/c_hero.cpp	208		IMPLEMENTED_NARROW
@@ -641,7 +641,7 @@ DM2_hero_2c1d_1de2	SKULLWIN	SKULLWIN/c_hero.cpp	3903		MISSING
 DM2_CHANGE_PLAYER_POS	SKULLWIN	SKULLWIN/c_hero.cpp	4037		MISSING
 DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION	SKULLWIN	SKULLWIN/c_hero.cpp	4141		MISSING
 init_global_images	SKULLWIN	SKULLWIN/c_image.cpp	18		NOT_APPLICABLE_ARCH
-init	SKULLWIN	SKULLWIN/c_image.cpp	27	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_image.cpp	27	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 DM2_0b36_068f	SKULLWIN	SKULLWIN/c_image.cpp	65		NOT_APPLICABLE_ARCH
 DM2_image_0b36_11c0	SKULLWIN	SKULLWIN/c_image.cpp	70	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_11c0_draw_cached_picture; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the cached-picture draw wrapper through caller-owned cache bits, blit rects, offset rect math, DRAW_DEF_PICT receipt flags, and button-group dirty rect updates.
 DM2_QUERY_PICST_IT	SKULLWIN	SKULLWIN/c_image.cpp	98		NOT_APPLICABLE_ARCH
@@ -656,7 +656,7 @@ DM2_DRAW_STATIC_PIC	SKULLWIN	SKULLWIN/c_image.cpp	436		NOT_APPLICABLE_ARCH
 DM2_DRAW_DUNGEON_GRAPHIC	SKULLWIN	SKULLWIN/c_image.cpp	450		NOT_APPLICABLE_ARCH
 DM2_image_0b36_1446	SKULLWIN	SKULLWIN/c_image.cpp	478		NOT_APPLICABLE_ARCH
 DEBUGBLIT	SKULLWIN	SKULLWIN/c_image.cpp	532		NOT_APPLICABLE_ARCH
-init	SKULLWIN	SKULLWIN/c_input.cpp	40	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_input.cpp	40	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 DM2_1031_03f2	SKULLWIN	SKULLWIN/c_input.cpp	55	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_03f2_find_action; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the recursive action-code search through admitted UI nodes and source-terminated action lists.
 DM2_ADJUST_UI_EVENT	SKULLWIN	SKULLWIN/c_input.cpp	112	include/dm2_v1_skproject_core.h:dm2_v1_skproject_adjust_ui_event	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves the c_input hand-action and spell/leader event adjustment rules over caller-supplied player-position, cooldown, and hand-activable state; it does not synthesize UI events or champion state.
 DM2_TRANSMIT_UI_EVENT	SKULLWIN	SKULLWIN/c_input.cpp	180	src/dm2/dm2_v1_hud_panel_routing.c; include/dm2_v1_hud_panel_routing.h; tests/test_dm2_v1_hud_panel_routing.c	IMPLEMENTED_NARROW	DM2 v1 HUD panel routing exposes the SKULLWIN alias through the same bounded HUD UI-event receipt as TRANSMIT_UI_EVENT.
@@ -680,7 +680,7 @@ DM2_F958	SKULLWIN	SKULLWIN/c_item.cpp	1034		MISSING
 DM2_SHOOT_ITEM	SKULLWIN	SKULLWIN/c_item.cpp	1043		MISSING
 DM2_PUT_OBJECT_INTO_CONTAINER	SKULLWIN	SKULLWIN/c_item.cpp	1146	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models bounded append-to-container chain planning over caller-owned links; duplicate or malformed chain data fails closed.
 DM2_TAKE_OBJECT	SKULLWIN	SKULLWIN/c_item.cpp	1185		MISSING
-init	SKULLWIN	SKULLWIN/c_keybd.cpp	77	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_keybd.cpp	77	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 getkey	SKULLWIN	SKULLWIN/c_keybd.cpp	87		NOT_APPLICABLE_ARCH
 putkey	SKULLWIN	SKULLWIN/c_keybd.cpp	99		NOT_APPLICABLE_ARCH
 DM2_HAS_KEY	SKULLWIN	SKULLWIN/c_keybd.cpp	114		NOT_APPLICABLE_ARCH
@@ -701,7 +701,7 @@ DM2_3a15_38b6	SKULLWIN	SKULLWIN/c_loadlevel.cpp	1125		NOT_APPLICABLE_ARCH
 DM2_LOAD_NEWMAP	SKULLWIN	SKULLWIN/c_loadlevel.cpp	1337		NOT_APPLICABLE_ARCH
 tile_to_ulong	SKULLWIN	SKULLWIN/c_map.cpp	25	src/dm2/dm2_v1_dungeon_loader.c; include/dm2_v1_dungeon_loader.h; tests/test_dm2_v1_c_map_tile_access.c	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps skproject t_tile to unsigned-long cast preserving the full 16-bit tile payload.
 tile_to_ubyte	SKULLWIN	SKULLWIN/c_map.cpp	30	src/dm2/dm2_v1_dungeon_loader.c; include/dm2_v1_dungeon_loader.h; tests/test_dm2_v1_c_map_tile_access.c	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps skproject t_tile low-byte cast.
-init	SKULLWIN	SKULLWIN/c_map.cpp	35	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_map.cpp	35	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 DM2_GET_OBJECT_INDEX_FROM_TILE	SKULLWIN	SKULLWIN/c_map.cpp	44	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_object_index_from_tile	VERIFIED_SOURCE_MAPPING
 DM2_GET_TILE_RECORD_LINK	SKULLWIN	SKULLWIN/c_map.cpp	61	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_walk_square_things	VERIFIED_SOURCE_MAPPING
 DM2_GET_ADDRESS_OF_TILE_RECORD	SKULLWIN	SKULLWIN/c_map.cpp	69	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_c_map_get_address_of_tile_record	VERIFIED_SOURCE_MAPPING
@@ -723,8 +723,8 @@ DM2_map_3BF83	SKULLWIN	SKULLWIN/c_map.cpp	1304	src/dm2/dm2_v1_skproject_core.c:d
 init_mousecursors	SKULLWIN	SKULLWIN/c_mcursor.cpp	20		NOT_APPLICABLE_ARCH
 generate_cursor	SKULLWIN	SKULLWIN/c_mcursor.cpp	33		NOT_APPLICABLE_ARCH
 DM2_INITBASICCURSORS	SKULLWIN	SKULLWIN/c_mcursor.cpp	78		NOT_APPLICABLE_ARCH
-do_music	SKULLWIN	SKULLWIN/c_midi.cpp	19	src/dm2/dm2_v1_sound.c:599	UNCERTAIN
-stop_music	SKULLWIN	SKULLWIN/c_midi.cpp	40	src/dm2/dm2_v1_sound.c:598	UNCERTAIN
+do_music	SKULLWIN	SKULLWIN/c_midi.cpp	19	src/dm2/dm2_v1_sound.c:599	NOT_APPLICABLE_ARCH
+stop_music	SKULLWIN	SKULLWIN/c_midi.cpp	40	src/dm2/dm2_v1_sound.c:598	NOT_APPLICABLE_ARCH
 set_midi_volume	SKULLWIN	SKULLWIN/c_midi.cpp	56		NOT_APPLICABLE_ARCH
 init_midi	SKULLWIN	SKULLWIN/c_midi.cpp	61		NOT_APPLICABLE_ARCH
 DM2_12b4_0953	SKULLWIN	SKULLWIN/c_move.cpp	32	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_side_offset; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
@@ -790,7 +790,7 @@ DM2_GET_ORNATE_ANIM_LEN	SKULLWIN	SKULLWIN/c_querydb.cpp	992	include/dm2_v1_asset
 DM2_QUERY_GDAT_FOOD_VALUE_FROM_RECORD	SKULLWIN	SKULLWIN/c_querydb.cpp	1038	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_food_value_from_record_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_CREATURES_ITEM_MASK	SKULLWIN	SKULLWIN/c_querydb.cpp	1045	include/dm2_v1_asset_loader.h:dm2_v1_query_creatures_item_mask_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt parses real CREATURES dtText(cls4+0x10) rows into the source 64-byte item bitmask grammar with C/W/A/J/P/S base handling and no synthetic defaults.
 DM2_IS_ITEM_FIT_FOR_EQUIP	SKULLWIN	SKULLWIN/c_querydb.cpp	1188	include/dm2_v1_asset_loader.h:dm2_v1_is_item_fit_for_equip_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt reads resolved DB-spec dtWordValue field 0x04, applies skproject slot masks, and requires caller-owned active-hand evidence for the recursive over-slot branch.
-DM2_QUERY_MESSAGE_TEXT	SKULLWIN	SKULLWIN/c_querydb.cpp	1239	src/dm2/dm2_v1_dungeon_loader.c:2293	UNCERTAIN
+DM2_QUERY_MESSAGE_TEXT	SKULLWIN	SKULLWIN/c_querydb.cpp	1239	src/dm2/dm2_v1_dungeon_loader.c:2293	IMPLEMENTED_NARROW
 DM2_GET_MISSILE_REF_OF_MINION	SKULLWIN	SKULLWIN/c_querydb.cpp	1449	src/dm2/dm2_v1_item_missile_helpers.c; include/dm2_v1_item_missile_helpers.h; tests/test_dm2_v1_item_missile_helpers.c	IMPLEMENTED_NARROW	DM2 v1 item/missile helper models bounded missile-slot lookup over caller-owned minion missile refs; out-of-range slots reject and null missile refs remain explicit.
 DM2_GET_CREATURE_AT	SKULLWIN	SKULLWIN/c_querydb.cpp	1486	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_get_creature_at; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core wraps the proven cell-chain resolver and returns the first DB4 creature record on (map,x,y).
 DM2_FIND_HAND_WITH_EMPTY_FLASK	SKULLWIN	SKULLWIN/c_querydb.cpp	1509	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_find_hand_with_empty_flask; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 skproject core maps the two-hand scan for a type-8 item with cls2 0x14; cls2 resolved through caller callback because full record semantics are not yet proven.
@@ -809,7 +809,7 @@ DM2_COUNT_BY_COIN_TYPES	SKULLWIN	SKULLWIN/c_querydb.cpp	2088	src/dm2/dm2_v1_skpr
 DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW	SKULLWIN	SKULLWIN/c_querydb.cpp	2144	src/dm2/dm2_v1_weather_gdat.c:dm2_v1_weather_gdat_overlay_plan; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 weather overlay plans preserve the source CD/FW command text fields, cloud-then-rain slot order, zero offsets, 0x40 scale initialization, decoded material identity, and fail-closed no-draw behavior for missing material.
 DM2_CALC_PLAYER_WALK_DELAY	SKULLWIN	SKULLWIN/c_querydb.cpp	2175	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_calc_player_walk_delay; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 skproject core maps the encumbrance/bodyflag/walkspeed walk-delay formula with caller-resolved hero fields.
 DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH	SKULLWIN	SKULLWIN/c_querydb.cpp	2237	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_compute_player_attack_or_throw_strength; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 skproject core maps the attack/throw strength formula with caller-resolved ability, max_load, item_weight, skill and dbspec fields.
-DM2_QUERY_TEMP_PICST	SKULLWIN	SKULLWIN/c_querydb.cpp	2381	src/dm2/dm2_v1_viewport_renderer.c:5116	UNCERTAIN
+DM2_QUERY_TEMP_PICST	SKULLWIN	SKULLWIN/c_querydb.cpp	2381	src/dm2/dm2_v1_viewport_renderer.c:5116	IMPLEMENTED_NARROW
 DM2_query_32cb_0804	SKULLWIN	SKULLWIN/c_querydb.cpp	2431	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_query_32cb_0804; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 skproject core maps the palette/alpha query dispatcher inputs; the GDAT-dependent B073/0b36_037e consumers are not yet modeled and the helper fails closed without them.
 DM2_query_0b36_037e	SKULLWIN	SKULLWIN/c_querydb.cpp	2477	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_query_0b36_037e; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 skproject core maps the cached-picture palette path inputs; the CPX/dballoc cache layer is not yet modeled and the helper fails closed without it.
 DM2_CONVERT_PALETTE256	SKULLWIN	SKULLWIN/c_querydb.cpp	2499	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_convert_palette256; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the 256-entry RGB888-to-RGB666 palette conversion with optional translation table.
@@ -849,7 +849,7 @@ DM2_query_0cee_3275	SKULLWIN	SKULLWIN/c_querydb.cpp	4998	include/dm2_v1_asset_lo
 DM2_QUERY_DOOR_STRENGTH	SKULLWIN	SKULLWIN/c_querydb.cpp	5007	include/dm2_v1_asset_loader.h:dm2_v1_query_door_strength_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_IS_CREATURE_ALLOWED_ON_LEVEL	SKULLWIN	SKULLWIN/c_querydb.cpp	5025	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_creature_allowed_on_level; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the level allowance predicate: AI spec flags bit 0x40 of the high byte always allows, otherwise the record cls2 must appear in the caller-resolved level allowance list (source count ((word@0xc << 8) >> 12) & 0xf).
 DM2_query_0cee_319e	SKULLWIN	SKULLWIN/c_querydb.cpp	5073	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_query_0cee_319e; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the GDAT entry 9 data index 11 query keyed by record cls2 with the source 0xff-to-0 fallback over caller-owned cls2/GDAT accessors.
-init	SKULLWIN	SKULLWIN/c_random.cpp	7	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_random.cpp	7	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 DM2_RAND	SKULLWIN	SKULLWIN/c_random.cpp	13		IMPLEMENTED_NARROW
 DM2_RAND16	SKULLWIN	SKULLWIN/c_random.cpp	21	include/dm2_v1_skproject_core.h:dm2_v1_skproject_rand16	VERIFIED_SOURCE_MAPPING
 DM2_RANDBIT	SKULLWIN	SKULLWIN/c_random.cpp	30	include/dm2_v1_skproject_core.h:dm2_v1_skproject_randbit	VERIFIED_SOURCE_MAPPING
@@ -877,7 +877,7 @@ DM2_ALLOC_NEW_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1076		IMPLEMENTED_NARROW
 DM2_ALLOC_NEW_DBITEM	SKULLWIN	SKULLWIN/c_record.cpp	1142		IMPLEMENTED_NARROW
 DM2_ALLOC_NEW_DBITEM_DEEPLY	SKULLWIN	SKULLWIN/c_record.cpp	1167		MISSING
 DM2_DEALLOC_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1205		IMPLEMENTED_NARROW
-DM2_QUERY_CLS2_OF_TEXT_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1210	src/dm2/dm2_v1_dungeon_loader.c:2347	UNCERTAIN
+DM2_QUERY_CLS2_OF_TEXT_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1210	src/dm2/dm2_v1_dungeon_loader.c:2347	IMPLEMENTED_NARROW
 DM2_GET_WALL_DECORATION_OF_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	1261		MISSING
 DM2_GET_FLOOR_DECORATION_OF_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	1288		MISSING
 DM2_IS_WALL_ORNATE_ALCOVE_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1317		MISSING
@@ -898,7 +898,7 @@ DM2_LOAD_NEW_DUNGEON	SKULLWIN	SKULLWIN/c_savegame.cpp	615		NOT_APPLICABLE_ARCH
 DM2_SKLOAD_READ	SKULLWIN	SKULLWIN/c_savegame.cpp	637		NOT_APPLICABLE_ARCH
 DM2_SUPPRESS_READER	SKULLWIN	SKULLWIN/c_savegame.cpp	653	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps the source SUPPRESS reader to the shared stateful bitstream receipt, preserving MSB-first READ_1BIT consumption, section carry, fill policy, and underflow rejection.
 DM2_READ_1BIT	SKULLWIN	SKULLWIN/c_savegame.cpp	733	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps READ_1BIT to the same source SUPPRESS reader receipt, including cross-section pending-bit state and fail-closed stream underflow.
-DM2_SELECT_LOAD_GAME	SKULLWIN	SKULLWIN/c_savegame.cpp	742	include/dm2_v1_runtime.h:526	UNCERTAIN
+DM2_SELECT_LOAD_GAME	SKULLWIN	SKULLWIN/c_savegame.cpp	742	include/dm2_v1_runtime.h:526	IMPLEMENTED_NARROW
 DM2_ADD_INDEX_TO_POSSESSION_INDICES	SKULLWIN	SKULLWIN/c_savegame.cpp	788		NOT_APPLICABLE_ARCH
 DM2_READ_RECORD_CHECKCODE	SKULLWIN	SKULLWIN/c_savegame.cpp	806		NOT_APPLICABLE_ARCH
 DM2_2066_197c	SKULLWIN	SKULLWIN/c_savegame.cpp	974		NOT_APPLICABLE_ARCH
@@ -907,7 +907,7 @@ DM2_PROCEED_GLOBAL_EFFECT_TIMERS	SKULLWIN	SKULLWIN/c_savegame.cpp	1038		NOT_APPL
 DM2_READ_SKSAVE_DUNGEON	SKULLWIN	SKULLWIN/c_savegame.cpp	1105		NOT_APPLICABLE_ARCH
 DM2_SUPPRESS_INIT	SKULLWIN	SKULLWIN/c_savegame.cpp	1342	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps SUPPRESS_INIT to zeroed reader/writer pending-byte state before any save-section bit IO.
 DM2_3a15_020f	SKULLWIN	SKULLWIN/c_savegame.cpp	1348		NOT_APPLICABLE_ARCH
-DM2_GAME_LOAD	SKULLWIN	SKULLWIN/c_savegame.cpp	1412	include/dm2_v1_runtime.h:527	UNCERTAIN
+DM2_GAME_LOAD	SKULLWIN	SKULLWIN/c_savegame.cpp	1412	include/dm2_v1_runtime.h:527	IMPLEMENTED_NARROW
 DM2_SKSAVE_WRITE	SKULLWIN	SKULLWIN/c_savegame.cpp	1584		NOT_APPLICABLE_ARCH
 DM2_SUPPRESS_WRITER	SKULLWIN	SKULLWIN/c_savegame.cpp	1593	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps SUPPRESS_WRITER to the stateful MSB-first source-bit writer, preserving pending bits across adjacent save sections.
 DM2_WRITE_1BIT	SKULLWIN	SKULLWIN/c_savegame.cpp	1655	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps WRITE_1BIT to the writer receipt that emits selected source bits MSB-first and retains partial output bytes until flush.
@@ -922,13 +922,13 @@ SUBSAVE	SKULLWIN	SKULLWIN/c_savegame.cpp	2056		NOT_APPLICABLE_ARCH
 FSUBSAVE	SKULLWIN	SKULLWIN/c_savegame.cpp	2059		NOT_APPLICABLE_ARCH
 DM2_GAME_SAVE_MENU	SKULLWIN	SKULLWIN/c_savegame.cpp	2084		NOT_APPLICABLE_ARCH
 init_sfx	SKULLWIN	SKULLWIN/c_sfx.cpp	31		NOT_APPLICABLE_ARCH
-stop_sample	SKULLWIN	SKULLWIN/c_sfx.cpp	39	src/dm2/dm2_v1_sound.c:600	UNCERTAIN
+stop_sample	SKULLWIN	SKULLWIN/c_sfx.cpp	39	src/dm2/dm2_v1_sound.c:600	NOT_APPLICABLE_ARCH
 do_sound	SKULLWIN	SKULLWIN/c_sfx.cpp	47		NOT_APPLICABLE_ARCH
 stop_sfx	SKULLWIN	SKULLWIN/c_sfx.cpp	79		NOT_APPLICABLE_ARCH
 R_1FB7D	SKULLWIN	SKULLWIN/c_sfx.cpp	88		NOT_APPLICABLE_ARCH
-DM2_QUEUE_NOISE_GEN1	SKULLWIN	SKULLWIN/c_sfx.cpp	138	src/dm2/dm2_v1_sound.c:647	UNCERTAIN
+DM2_QUEUE_NOISE_GEN1	SKULLWIN	SKULLWIN/c_sfx.cpp	138	src/dm2/dm2_v1_sound.c:647	IMPLEMENTED_NARROW
 DM2_QUEUE_NOISE_GEN2	SKULLWIN	SKULLWIN/c_sfx.cpp	334		NOT_APPLICABLE_ARCH
-init	SKULLWIN	SKULLWIN/c_sound.cpp	22	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_sound.cpp	22	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 sndptr6	SKULLWIN	SKULLWIN/c_sound.cpp	50		NOT_APPLICABLE_ARCH
 stop_all_sound	SKULLWIN	SKULLWIN/c_sound.cpp	95		NOT_APPLICABLE_ARCH
 dtor	SKULLWIN	SKULLWIN/c_sound.cpp	101		VERIFIED_SOURCE_MAPPING
@@ -966,7 +966,7 @@ DM2_PROCESS_TIMER_0C	SKULLWIN	SKULLWIN/c_tim_proc.cpp	30		MISSING
 DM2_PROCESS_TIMER_RESURRECTION	SKULLWIN	SKULLWIN/c_tim_proc.cpp	39		MISSING
 DM2_STEP_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	127		IMPLEMENTED_NARROW
 DM2_PROCESS_TIMER_DESTROY_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	422	dm2_runtime_destroy_door_timer (dm2_v1_runtime.c)	IMPLEMENTED_NARROW
-DM2_STEP_MISSILE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	442	include/dm2_v1_projectile_pc34_compat.h:207	UNCERTAIN
+DM2_STEP_MISSILE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	442	include/dm2_v1_projectile_pc34_compat.h:207	IMPLEMENTED_NARROW
 DM2_PROCESS_TIMER_3D	SKULLWIN	SKULLWIN/c_tim_proc.cpp	902		MISSING
 DM2_PROCESS_TIMER_LIGHT	SKULLWIN	SKULLWIN/c_tim_proc.cpp	918		IMPLEMENTED_NARROW
 DM2_CONTINUE_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	961		MISSING
@@ -1000,20 +1000,20 @@ DM2_INVOKE_ACTUATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4367		IMPLEMENTED_NARROW
 DM2_PROCESS_ACTUATOR_TICK_GENERATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4395		MISSING
 DM2_OPERATE_PIT_TELE_TILE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4513		MISSING
 DM2_TRY_ORNATE_NOISE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4591		MISSING
-init	SKULLWIN	SKULLWIN/c_timer.cpp	8	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-DM2_cmp_timers	SKULLWIN	SKULLWIN/c_timer.cpp	31	src/dm2/dm2_v1_runtime.c:189	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_timer.cpp	8	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
+DM2_cmp_timers	SKULLWIN	SKULLWIN/c_timer.cpp	31	src/dm2/dm2_v1_runtime.c:189	IMPLEMENTED_NARROW
 DM2_timer_3a15_0486	SKULLWIN	SKULLWIN/c_timer.cpp	50		IMPLEMENTED_NARROW
 DM2_REARRANGE_TIMERLIST	SKULLWIN	SKULLWIN/c_timer.cpp	97		IMPLEMENTED_NARROW
-DM2_SORT_TIMERS	SKULLWIN	SKULLWIN/c_timer.cpp	126	include/dm2_v1_runtime.h:191	UNCERTAIN
+DM2_SORT_TIMERS	SKULLWIN	SKULLWIN/c_timer.cpp	126	include/dm2_v1_runtime.h:191	IMPLEMENTED_NARROW
 DM2_GET_TIMER_NEW_INDEX	SKULLWIN	SKULLWIN/c_timer.cpp	202		IMPLEMENTED_NARROW
 DM2_DELETE_TIMER	SKULLWIN	SKULLWIN/c_timer.cpp	216		IMPLEMENTED_NARROW
 DM2_QUEUE_TIMER	SKULLWIN	SKULLWIN/c_timer.cpp	235		IMPLEMENTED_NARROW
 DM2_GET_AND_DELETE_NEXT_TIMER	SKULLWIN	SKULLWIN/c_timer.cpp	261		IMPLEMENTED_NARROW
 DM2_IS_TIMER_TO_PROCEED	SKULLWIN	SKULLWIN/c_timer.cpp	269		IMPLEMENTED_NARROW
 DM2_timer_3a15_05f7	SKULLWIN	SKULLWIN/c_timer.cpp	281		IMPLEMENTED_NARROW
-init	SKULLWIN	SKULLWIN/c_tmouse.cpp	16	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-push	SKULLWIN	SKULLWIN/c_tmouse.cpp	22	src/dm2/dm2_v1_viewport_renderer.c:1383	UNCERTAIN
-pop	SKULLWIN	SKULLWIN/c_tmouse.cpp	34	src/dm2/dm2_v1_creature.c:105	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_tmouse.cpp	16	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
+push	SKULLWIN	SKULLWIN/c_tmouse.cpp	22	src/dm2/dm2_v1_viewport_renderer.c:1383	NOT_APPLICABLE_ARCH
+pop	SKULLWIN	SKULLWIN/c_tmouse.cpp	34	src/dm2/dm2_v1_creature.c:105	NOT_APPLICABLE_ARCH
 send_command	SKULLWIN	SKULLWIN/c_tmouse.cpp	48		NOT_APPLICABLE_ARCH
 command_interpreter	SKULLWIN	SKULLWIN/c_tmouse.cpp	59		NOT_APPLICABLE_ARCH
 T1_queue_0x20	SKULLWIN	SKULLWIN/c_tmouse.cpp	240		NOT_APPLICABLE_ARCH
@@ -1022,7 +1022,7 @@ T1_drawmouse	SKULLWIN	SKULLWIN/c_tmouse.cpp	348		NOT_APPLICABLE_ARCH
 T1_driver_mouseint	SKULLWIN	SKULLWIN/c_tmouse.cpp	419		NOT_APPLICABLE_ARCH
 blit_hline	SKULLWIN	SKULLWIN/c_tmouse.cpp	439		NOT_APPLICABLE_ARCH
 blit_hline_masked	SKULLWIN	SKULLWIN/c_tmouse.cpp	450		NOT_APPLICABLE_ARCH
-blit	SKULLWIN	SKULLWIN/c_tmouse.cpp	467	src/dm2/dm2_v1_inventory_panel.c:269	UNCERTAIN
+blit	SKULLWIN	SKULLWIN/c_tmouse.cpp	467	src/dm2/dm2_v1_inventory_panel.c:269	NOT_APPLICABLE_ARCH
 blit_hline_stretched	SKULLWIN	SKULLWIN/c_tmouse.cpp	489		NOT_APPLICABLE_ARCH
 driver_blockmouseinput	SKULLWIN	SKULLWIN/c_tmouse.cpp	522		NOT_APPLICABLE_ARCH
 driver_unblockmouseinput	SKULLWIN	SKULLWIN/c_tmouse.cpp	528		NOT_APPLICABLE_ARCH
@@ -1037,7 +1037,7 @@ DM2_GET_MOUSE_ENTRY_DATA	SKULLWIN	SKULLWIN/c_tmouse.cpp	591		NOT_APPLICABLE_ARCH
 DM2_SET_TIMER_WEATHER	SKULLWIN	SKULLWIN/c_weather.cpp	22	src/dm2/dm2_v1_weather.c; src/dm2/dm2_v1_weather_gdat.c:dm2_v1_weather_gdat_outdoor_m11_receipt; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 outdoor M11 weather admission consumes the live source scheduling receipt only when it is valid, outdoor, scheduled, and paired with complete raw ENVIRONMENT material evidence; a non-outdoor or absent owner cannot promote a weather draw.
 DM2_UPDATE_WEATHER	SKULLWIN	SKULLWIN/c_weather.cpp	33	src/dm2/dm2_v1_weather_gdat.c:dm2_v1_scene_weather_light_runtime_receipt; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 weather runtime chain source-maps UPDATE_WEATHER's G1/GRAPHICSSET weather boundary: real MapGraphicsStyle weather command text and GRAPHICS_DATA_OPEN admission are joined to scene light/c_light, while absent local weather image material remains a blocked no-fallback renderer.
 DM2_weather_3df7_0037	SKULLWIN	SKULLWIN/c_weather.cpp	509	src/dm2/dm2_v1_weather.c	VERIFIED_SOURCE_MAPPING
-init	SKULLWIN	SKULLWIN/c_xrect.cpp	9	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_xrect.cpp	9	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 DM2_PT_IN_EXPANDED_RECT	SKULLWIN	SKULLWIN/c_xrect.cpp	21		NOT_APPLICABLE_ARCH
 DM2_CALC_SIZE_OF_COMPRESSED_RECT	SKULLWIN	SKULLWIN/c_xrect.cpp	31		NOT_APPLICABLE_ARCH
 DM2_QUERY_RECT	SKULLWIN	SKULLWIN/c_xrect.cpp	58	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the c_xrect linked rnode lookup and mask-expanded rectangle decode: zero rect rejects, missing ranges fail closed, common x/y, byte x/y, signed-byte dimensions, unsigned-byte dimensions, and word dimensions round-trip through focused codec tests.
@@ -1048,9 +1048,9 @@ DM2_QUERY_TOPLEFT_OF_RECT	SKULLWIN	SKULLWIN/c_xrect.cpp	476		NOT_APPLICABLE_ARCH
 DM2_SCALE_RECT	SKULLWIN	SKULLWIN/c_xrect.cpp	489		NOT_APPLICABLE_ARCH
 DM2_QUERY_EXPANDED_RECT	SKULLWIN	SKULLWIN/c_xrect.cpp	524		NOT_APPLICABLE_ARCH
 DM2_COMPRESS_RECTS	SKULLWIN	SKULLWIN/c_xrect.cpp	530	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the c_xrect raw4 compressor into a bounded Firestaff rnode table, preserving skproject mask selection, common coordinate storage, signed/unsigned byte size packing, multi-range linkage, and malformed raw4 rejection without synthetic rectangle data.
-init	SKULLWIN	SKULLWIN/dm2data.cpp	1017	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-MAX	SKULLWIN	SKULLWIN/dm2debug.cpp	39	src/dm2/dm2_v1_inventory_panel.c:199	UNCERTAIN
-MIN	SKULLWIN	SKULLWIN/dm2debug.cpp	40	src/dm2/dm2_v1_creature.c:51	UNCERTAIN
+init	SKULLWIN	SKULLWIN/dm2data.cpp	1017	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
+MAX	SKULLWIN	SKULLWIN/dm2debug.cpp	39	src/dm2/dm2_v1_inventory_panel.c:199	NOT_APPLICABLE_ARCH
+MIN	SKULLWIN	SKULLWIN/dm2debug.cpp	40	src/dm2/dm2_v1_creature.c:51	NOT_APPLICABLE_ARCH
 SPX_DEBUG_DECREASE_DEPTH	SKULLWIN	SKULLWIN/dm2debug.cpp	51		NOT_APPLICABLE_ARCH
 FFLUSH	SKULLWIN	SKULLWIN/dm2debug.cpp	56		NOT_APPLICABLE_ARCH
 SPX_DEBUG_POP_ALL	SKULLWIN	SKULLWIN/dm2debug.cpp	62		NOT_APPLICABLE_ARCH
@@ -1071,13 +1071,13 @@ lpeek	SKULLWIN	SKULLWIN/emu.cpp	12		NOT_APPLICABLE_ARCH
 bpoke	SKULLWIN	SKULLWIN/emu.cpp	14		NOT_APPLICABLE_ARCH
 wpoke	SKULLWIN	SKULLWIN/emu.cpp	15		NOT_APPLICABLE_ARCH
 lpoke	SKULLWIN	SKULLWIN/emu.cpp	16		NOT_APPLICABLE_ARCH
-byte_at	SKULLWIN	SKULLWIN/emu.cpp	20	include/dm2_v1_projectile_step_pc34_compat.h:56	UNCERTAIN
+byte_at	SKULLWIN	SKULLWIN/emu.cpp	20	include/dm2_v1_projectile_step_pc34_compat.h:56	NOT_APPLICABLE_ARCH
 ubyte_at	SKULLWIN	SKULLWIN/emu.cpp	21		NOT_APPLICABLE_ARCH
 word_at	SKULLWIN	SKULLWIN/emu.cpp	22		NOT_APPLICABLE_ARCH
 uword_at	SKULLWIN	SKULLWIN/emu.cpp	23		NOT_APPLICABLE_ARCH
 long_at	SKULLWIN	SKULLWIN/emu.cpp	24		NOT_APPLICABLE_ARCH
 pointer_at	SKULLWIN	SKULLWIN/emu.cpp	26		NOT_APPLICABLE_ARCH
-mov8	SKULLWIN	SKULLWIN/emu.cpp	33	include/dm2_v1_projectile_step_pc34_compat.h:58	UNCERTAIN
+mov8	SKULLWIN	SKULLWIN/emu.cpp	33	include/dm2_v1_projectile_step_pc34_compat.h:58	NOT_APPLICABLE_ARCH
 mov16	SKULLWIN	SKULLWIN/emu.cpp	34		NOT_APPLICABLE_ARCH
 mov32	SKULLWIN	SKULLWIN/emu.cpp	35		NOT_APPLICABLE_ARCH
 movp	SKULLWIN	SKULLWIN/emu.cpp	36		NOT_APPLICABLE_ARCH
@@ -1106,7 +1106,7 @@ _lr16	SKULLWIN	SKULLWIN/emu.cpp	78		NOT_APPLICABLE_ARCH
 shr16	SKULLWIN	SKULLWIN/emu.cpp	84		NOT_APPLICABLE_ARCH
 sar8	SKULLWIN	SKULLWIN/emu.cpp	86		NOT_APPLICABLE_ARCH
 lrshift6e	SKULLWIN	SKULLWIN/emu.cpp	88		NOT_APPLICABLE_ARCH
-init	SKULLWIN	SKULLWIN/fileio.cpp	21	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/fileio.cpp	21	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 SYS_gettransferadress	SKULLWIN	SKULLWIN/fileio.cpp	30		NOT_APPLICABLE_ARCH
 SYS_createfile	SKULLWIN	SKULLWIN/fileio.cpp	50		NOT_APPLICABLE_ARCH
 SYS_openfile	SKULLWIN	SKULLWIN/fileio.cpp	92		NOT_APPLICABLE_ARCH
@@ -1135,10 +1135,10 @@ DM2_FILE_RENAME	SKULLWIN	SKULLWIN/fileio.cpp	717		NOT_APPLICABLE_ARCH
 DM2_FILE_CLOSE	SKULLWIN	SKULLWIN/fileio.cpp	726		NOT_APPLICABLE_ARCH
 DM2_READ_BINARY	SKULLWIN	SKULLWIN/fileio.cpp	738		NOT_APPLICABLE_ARCH
 driver_timerint_T1	SKULLWIN	SKULLWIN/ints.cpp	14		NOT_APPLICABLE_ARCH
-cleanup	SKULLWIN	SKULLWIN/main.cpp	109	include/dm2_v1_world_model.h:196	UNCERTAIN
+cleanup	SKULLWIN	SKULLWIN/main.cpp	109	include/dm2_v1_world_model.h:196	NOT_APPLICABLE_ARCH
 thread_func	SKULLWIN	SKULLWIN/main.cpp	152		NOT_APPLICABLE_ARCH
 ProcessArgs	SKULLWIN	SKULLWIN/main.cpp	240		NOT_APPLICABLE_ARCH
-main	SKULLWIN	SKULLWIN/main.cpp	313	src/dm2/dm2_v1_viewport_renderer.c:1184	UNCERTAIN
+main	SKULLWIN	SKULLWIN/main.cpp	313	src/dm2/dm2_v1_viewport_renderer.c:1184	NOT_APPLICABLE_ARCH
 R_D2C	SKULLWIN	SKULLWIN/map.cpp	1		NOT_APPLICABLE_ARCH
 DM2_WATCOM_ERRHANDLING	SKULLWIN	SKULLWIN/startend.cpp	60		NOT_APPLICABLE_ARCH
 DM2_WATCOM_MARK_ERROR	SKULLWIN	SKULLWIN/startend.cpp	94		NOT_APPLICABLE_ARCH
@@ -1150,7 +1150,7 @@ DM2_FIRE_EXIT	SKULLWIN	SKULLWIN/startend.cpp	170		NOT_APPLICABLE_ARCH
 DM2_FIRE_SHUTDOWN	SKULLWIN	SKULLWIN/startend.cpp	178		NOT_APPLICABLE_ARCH
 R_C470	SKULLWIN	SKULLWIN/startend.cpp	185		NOT_APPLICABLE_ARCH
 DM2_2481_0002	SKULLWIN	SKULLWIN/startend.cpp	207		NOT_APPLICABLE_ARCH
-DM2_SHOW_MENU_SCREEN	SKULLWIN	SKULLWIN/startend.cpp	238	include/dm2_v1_startup_menu.h:231	UNCERTAIN
+DM2_SHOW_MENU_SCREEN	SKULLWIN	SKULLWIN/startend.cpp	238	include/dm2_v1_startup_menu.h:231	EXISTING_EQUIVALENT
 DM2_LOAD_RECTS_AND_COMPRESS	SKULLWIN	SKULLWIN/startend.cpp	326		NOT_APPLICABLE_ARCH
 DM2_098d_1208	SKULLWIN	SKULLWIN/startend.cpp	359		NOT_APPLICABLE_ARCH
 R_D2C	SKULLWIN	SKULLWIN/startend.cpp	365		NOT_APPLICABLE_ARCH
@@ -1159,7 +1159,7 @@ DM2_3929_07e1	SKULLWIN	SKULLWIN/startend.cpp	385		NOT_APPLICABLE_ARCH
 DM2_3929_0e16	SKULLWIN	SKULLWIN/startend.cpp	417		NOT_APPLICABLE_ARCH
 DM2_2405_0009	SKULLWIN	SKULLWIN/startend.cpp	460		NOT_APPLICABLE_ARCH
 DM2_1c9a_3c30	SKULLWIN	SKULLWIN/startend.cpp	466		NOT_APPLICABLE_ARCH
-DM2_INIT	SKULLWIN	SKULLWIN/startend.cpp	508	include/dm2_v1_new_game.h:95	UNCERTAIN
+DM2_INIT	SKULLWIN	SKULLWIN/startend.cpp	508	include/dm2_v1_new_game.h:95	MISSING
 DM2_GLOBAL_UPDATE_UNKNOW1	SKULLWIN	SKULLWIN/startend.cpp	571		MISSING
 DM2_2759_12e6	SKULLWIN	SKULLWIN/startend.cpp	598		NOT_APPLICABLE_ARCH
 DM2_3929_086f	SKULLWIN	SKULLWIN/startend.cpp	720		NOT_APPLICABLE_ARCH
@@ -1175,14 +1175,14 @@ DM2_END_GAME	SKULLWIN	SKULLWIN/startend.cpp	1247		MISSING
 DM2_SHOW_CREDITS	SKULLWIN	SKULLWIN/startend.cpp	1303		NOT_APPLICABLE_ARCH
 bcon	SKULLWIN	SKULLWIN/types.cpp	3		NOT_APPLICABLE_ARCH
 wcon	SKULLWIN	SKULLWIN/types.cpp	4		NOT_APPLICABLE_ARCH
-lcon	SKULLWIN	SKULLWIN/types.cpp	5	include/dm2_v1_projectile_step_pc34_compat.h:56	UNCERTAIN
+lcon	SKULLWIN	SKULLWIN/types.cpp	5	include/dm2_v1_projectile_step_pc34_compat.h:56	NOT_APPLICABLE_ARCH
 ubcon	SKULLWIN	SKULLWIN/types.cpp	6		NOT_APPLICABLE_ARCH
 uwcon	SKULLWIN	SKULLWIN/types.cpp	7		NOT_APPLICABLE_ARCH
 ulcon	SKULLWIN	SKULLWIN/types.cpp	8		NOT_APPLICABLE_ARCH
 signedword	SKULLWIN	SKULLWIN/types.cpp	12		NOT_APPLICABLE_ARCH
 signedlong	SKULLWIN	SKULLWIN/types.cpp	13		NOT_APPLICABLE_ARCH
 unsignedword	SKULLWIN	SKULLWIN/types.cpp	15		NOT_APPLICABLE_ARCH
-unsignedlong	SKULLWIN	SKULLWIN/types.cpp	16	include/dm2_v1_projectile_step_pc34_compat.h:55	UNCERTAIN
+unsignedlong	SKULLWIN	SKULLWIN/types.cpp	16	include/dm2_v1_projectile_step_pc34_compat.h:55	NOT_APPLICABLE_ARCH
 CUTX16	SKULLWIN	SKULLWIN/types.cpp	24		NOT_APPLICABLE_ARCH
 CUTLX8	SKULLWIN	SKULLWIN/types.cpp	25		NOT_APPLICABLE_ARCH
 CUTX8	SKULLWIN	SKULLWIN/types.cpp	28		NOT_APPLICABLE_ARCH
@@ -1214,13 +1214,13 @@ DM2_ATIMESB_RSHIFTC	SKULLWIN	SKULLWIN/util.cpp	85	src/dm2/dm2_v1_skproject_core.
 DM2_WAIT_SCREEN_REFRESH	SKULLWIN	SKULLWIN/util.cpp	90		NOT_APPLICABLE_ARCH
 DM2_SLEEP_SEVERAL_TIME	SKULLWIN	SKULLWIN/util.cpp	114		NOT_APPLICABLE_ARCH
 DM2_MIN	SKULLWIN	SKULLWIN/util.cpp	120		NOT_APPLICABLE_ARCH
-DM2_MAX	SKULLWIN	SKULLWIN/util.cpp	127	src/dm2/dm2_v1_creature.c:448	UNCERTAIN
+DM2_MAX	SKULLWIN	SKULLWIN/util.cpp	127	src/dm2/dm2_v1_creature.c:448	NOT_APPLICABLE_ARCH
 DM2_COPY_MEMORY	SKULLWIN	SKULLWIN/util.cpp	135		NOT_APPLICABLE_ARCH
 DM2_4BYTES_TO_LONG	SKULLWIN	SKULLWIN/util.cpp	142		NOT_APPLICABLE_ARCH
 DM2_ROTATE_5x5_POS	SKULLWIN	SKULLWIN/util.cpp	147		IMPLEMENTED_NARROW
 sgn8	SKULLWIN	SKULLWIN/util.cpp	181		NOT_APPLICABLE_ARCH
 jul_shl32	SKULLWIN	SKULLWIN/util.cpp	187		NOT_APPLICABLE_ARCH
-init	SKULLWIN	SKULLWIN/xtypes.cpp	3	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
+init	SKULLWIN	SKULLWIN/xtypes.cpp	3	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 peek8	SKULLWIN	SKULLWIN/xtypes.cpp	18		NOT_APPLICABLE_ARCH
 peek16	SKULLWIN	SKULLWIN/xtypes.cpp	19		NOT_APPLICABLE_ARCH
 poke16	SKULLWIN	SKULLWIN/xtypes.cpp	20		NOT_APPLICABLE_ARCH
@@ -1244,18 +1244,18 @@ sub32	SKULLWIN	SKULLWIN/xtypes.cpp	47		NOT_APPLICABLE_ARCH
 getbyte3	SKULLWIN	SKULLWIN/xtypes.cpp	49		NOT_APPLICABLE_ARCH
 or32	SKULLWIN	SKULLWIN/xtypes.cpp	52		NOT_APPLICABLE_ARCH
 getlong	SKULLWIN	SKULLWIN/xtypes.cpp	54		NOT_APPLICABLE_ARCH
-<UNREADABLE_SOURCE>	SKULLWIN/c_music_wav	SKULLWIN/c_music_wav.cpp	0	local source file did not become readable within 3s; no symbol claim	UNCERTAIN
-<UNREADABLE_SOURCE>	SKULLWIN/c_rect	SKULLWIN/c_rect.cpp	0	local source file did not become readable within 3s; no symbol claim	UNCERTAIN
-CDialog	SKWIN	SKWIN/AboutDlg.cpp	11	src/dm2/dm2_v1_shop.c:108	UNCERTAIN
+<UNREADABLE_SOURCE>	SKULLWIN/c_music_wav	SKULLWIN/c_music_wav.cpp	0	local source file did not become readable within 3s; no symbol claim	NOT_APPLICABLE_ARCH
+<UNREADABLE_SOURCE>	SKULLWIN/c_rect	SKULLWIN/c_rect.cpp	0	local source file did not become readable within 3s; no symbol claim	NOT_APPLICABLE_ARCH
+CDialog	SKWIN	SKWIN/AboutDlg.cpp	11	src/dm2/dm2_v1_shop.c:108	NOT_APPLICABLE_ARCH
 CAboutDlg	SKWIN	SKWIN/AboutDlg.cpp	16	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 DoDataExchange	SKWIN	SKWIN/AboutDlg.cpp	20	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 BEGIN_MESSAGE_MAP	SKWIN	SKWIN/AboutDlg.cpp	26	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 DBType	SKWIN	SKWIN/DME.cpp	20		NOT_APPLICABLE_ARCH
 VcppException	SKWIN	SKWIN/SBlast.cpp	160	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 StartWrite	SKWIN	SKWIN/SkGlobal.cpp	72		NOT_APPLICABLE_ARCH
-Write	SKWIN	SKWIN/SkGlobal.cpp	83	include/dm2_v2_hud_widget_bitmap_blit.h:116	UNCERTAIN
+Write	SKWIN	SKWIN/SkGlobal.cpp	83	include/dm2_v2_hud_widget_bitmap_blit.h:116	NOT_APPLICABLE_ARCH
 StartRead	SKWIN	SKWIN/SkGlobal.cpp	97		NOT_APPLICABLE_ARCH
-Read	SKWIN	SKWIN/SkGlobal.cpp	114	src/dm2/dm2_v22_finished_art_material_gate_pc34.c:15	UNCERTAIN
+Read	SKWIN	SKWIN/SkGlobal.cpp	114	src/dm2/dm2_v22_finished_art_material_gate_pc34.c:15	NOT_APPLICABLE_ARCH
 lodsb	SKWIN	SKWIN/SkGlobal.cpp	1289		NOT_APPLICABLE_ARCH
 stosb	SKWIN	SKWIN/SkGlobal.cpp	1298		NOT_APPLICABLE_ARCH
 lodsw	SKWIN	SKWIN/SkGlobal.cpp	1304		NOT_APPLICABLE_ARCH
@@ -1266,13 +1266,13 @@ RCJ	SKWIN	SKWIN/SkGlobal.cpp	1342		NOT_APPLICABLE_ARCH
 UtilConvertU16ToTile	SKWIN	SKWIN/SkGlobal.cpp	1358		NOT_APPLICABLE_ARCH
 CheckSafePointer	SKWIN	SKWIN/SkGlobal.cpp	1389		NOT_APPLICABLE_ARCH
 EXTENDED_LOAD_SPELLS_DEFINITION	SKWIN	SKWIN/SkWinCore.cpp	189		IMPLEMENTED_NARROW
-EXTENDED_LOAD_AI_DEFINITION	SKWIN	SKWIN/SkWinCore.cpp	233	src/dm2/dm2_v1_creature.c:24	UNCERTAIN
+EXTENDED_LOAD_AI_DEFINITION	SKWIN	SKWIN/SkWinCore.cpp	233	src/dm2/dm2_v1_creature.c:24	MISSING
 getXActrName	SKWIN	SKWIN/SkWinCore.cpp	451		NOT_APPLICABLE_ARCH
 getSpellTypeName	SKWIN	SKWIN/SkWinCore.cpp	461		NOT_APPLICABLE_ARCH
 getSkillName	SKWIN	SKWIN/SkWinCore.cpp	474		NOT_APPLICABLE_ARCH
 getStatBonusName	SKWIN	SKWIN/SkWinCore.cpp	503		NOT_APPLICABLE_ARCH
 getUIEventName	SKWIN	SKWIN/SkWinCore.cpp	558		NOT_APPLICABLE_ARCH
-getAIName	SKWIN	SKWIN/SkWinCore.cpp	741	src/dm2/dm2_v1_creature.c:23	UNCERTAIN
+getAIName	SKWIN	SKWIN/SkWinCore.cpp	741	src/dm2/dm2_v1_creature.c:23	IMPLEMENTED_NARROW
 getRecordNameOf	SKWIN	SKWIN/SkWinCore.cpp	824		NOT_APPLICABLE_ARCH
 printDistMap	SKWIN	SKWIN/SkWinCore.cpp	864		NOT_APPLICABLE_ARCH
 IS_NEGATIVE	SKWIN	SKWIN/SkWinCore.cpp	906	include/dm2_v1_skproject_core.h:dm2_v1_skproject_is_negative; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Signed-word predicate matches SkWinCore.cpp:906 and records exact 0/1 result.
@@ -1355,7 +1355,7 @@ GET_TILE_RECORD_LINK	SKWIN	SKWIN/SkWinCore.cpp	2822	src/dm2/dm2_v1_dungeon_loade
 GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2839		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN tile-record address route through the bounded GET_ADDRESS_OF_RECORD receipt.
 IS_TILE_PASSAGE	SKWIN	SKWIN/SkWinCore.cpp	2846		IMPLEMENTED_NARROW
 GET_TILE_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2874		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_TILE_VALUE including in-bounds tile bytes, adjacent boundary masks, corner probes, and 0xE0 blocked edges.
-QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/SkWinCore.cpp	2995	src/dm2/dm2_v1_creature.c:1022	UNCERTAIN
+QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/SkWinCore.cpp	2995	src/dm2/dm2_v1_creature.c:1022	IMPLEMENTED_NARROW
 QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/SkWinCore.cpp	3008	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 SET_TILE_ATTRIBUTE_02	SKWIN	SKWIN/SkWinCore.cpp	3050		MISSING
 _1c9a_02c3	SKWIN	SKWIN/SkWinCore.cpp	3058	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1c9a_02c3_creature_ai_pointer; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _1c9a_02c3 as a narrow creature AI pointer resolver: static-object branch returns caller object + 8, else creature-info table entry + 8.
@@ -1416,12 +1416,12 @@ _2759_0e93	SKWIN	SKWIN/SkWinCore.cpp	5506	src/dm2/dm2_v1_skproject_core.c:dm2_v1
 LOAD_PROJECTILE_TO_HAND	SKWIN	SKWIN/SkWinCore.cpp	5543	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models projectile-to-empty-hand transfer while preserving source-head mutation; occupied hands and malformed input fail closed.
 QUERY_GDAT_ENTRY_DATA_PTR	SKWIN	SKWIN/SkWinCore.cpp	5683	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_entry_data_ptr	VERIFIED_SOURCE_MAPPING	DM2 v1 SKWIN alias follows the exact typed GDAT data-pointer route: query data index, reject absent scalar buffers, expose only real loadable raw payloads, and use the same default-image behavior as the SKULLWIN querydb receipt when applicable.
 FREE_PICT6	SKWIN	SKWIN/SkWinCore.cpp	5719	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_free_pict6; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the global free gate, upper/lower allocation selector, and required redraw of the icon entry without owning raw heap pointers.
-QUERY_GDAT_PICT_OFFSET	SKWIN	SKWIN/SkWinCore.cpp	5740	src/dm2/dm2_v1_asset_loader.c:863	UNCERTAIN
-QUERY_GDAT_SUMMARY_IMAGE	SKWIN	SKWIN/SkWinCore.cpp	5805	include/dm2_v1_weather_gdat.h:160	UNCERTAIN
+QUERY_GDAT_PICT_OFFSET	SKWIN	SKWIN/SkWinCore.cpp	5740	src/dm2/dm2_v1_asset_loader.c:863	IMPLEMENTED_NARROW
+QUERY_GDAT_SUMMARY_IMAGE	SKWIN	SKWIN/SkWinCore.cpp	5805	include/dm2_v1_weather_gdat.h:160	IMPLEMENTED_NARROW
 DRAW_DEF_PICT	SKWIN	SKWIN/SkWinCore.cpp	5877	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_def_pict; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 QUERY_PICT_BITS	SKWIN	SKWIN/SkWinCore.cpp	6006		NOT_APPLICABLE_ARCH
 _0b36_11c0	SKWIN	SKWIN/SkWinCore.cpp	6030	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_11c0_draw_cached_picture; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps QUERY_MEMENT_BUFF_FROM_CACHE_INDEX, QUERY_PICT_BITS, QUERY_BLIT_RECT, OFFSET_RECT, DRAW_DEF_PICT, and _0b36_0d67 dirty-rect handoff without fabricating picture data.
-CALC_STRETCHED_SIZE	SKWIN	SKWIN/SkWinCore.cpp	6074	src/dm2/dm2_v1_viewport_renderer.c:153	UNCERTAIN
+CALC_STRETCHED_SIZE	SKWIN	SKWIN/SkWinCore.cpp	6074	src/dm2/dm2_v1_viewport_renderer.c:153	IMPLEMENTED_NARROW
 _0b36_00c3	SKWIN	SKWIN/SkWinCore.cpp	6084	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_00c3_cache_picture; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core binds cache-index mement payload headers into picture metadata, preserving w4=8, w12 cache ownership, dimensions, and word22 while rejecting missing payloads.
 QUERY_PICST_IMAGE	SKWIN	SKWIN/SkWinCore.cpp	6113		NOT_APPLICABLE_ARCH
 ALLOC_IMAGE_MEMENT	SKWIN	SKWIN/SkWinCore.cpp	6141	include/dm2_v1_skproject_core.h:dm2_v1_skproject_alloc_image_mement	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core selects real/fallback GDAT image entries, touches existing mements, and pins only source-shaped 8bpp images with Y offset -32; it rejects missing or mismatched image data without fabricating buffers.
@@ -1438,10 +1438,10 @@ FIRE_STRETCH_BLIT_TO_MEMORY_4TO4BPP	SKWIN	SKWIN/SkWinCore.cpp	6592		NOT_APPLICAB
 QUERY_PICST_IT	SKWIN	SKWIN/SkWinCore.cpp	6647		NOT_APPLICABLE_ARCH
 DRAW_SIMPLE_STR	SKWIN	SKWIN/SkWinCore.cpp	6815		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds simple text metric query, blit rect, draw string, and dirty rect route.
 DRAW_ICON_PICT_BUFF	SKWIN	SKWIN/SkWinCore.cpp	6855	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_icon_pict_buff; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_ICON_PICT_ENTRY	SKWIN	SKWIN/SkWinCore.cpp	6901	src/dm2/dm2_v1_inventory_panel.c:334	UNCERTAIN
+DRAW_ICON_PICT_ENTRY	SKWIN	SKWIN/SkWinCore.cpp	6901	src/dm2/dm2_v1_inventory_panel.c:334	IMPLEMENTED_NARROW
 SHOW_ATTACK_RESULT	SKWIN	SKWIN/SkWinCore.cpp	6929	src/dm2/dm2_v1_hud_survey_helpers.c; include/dm2_v1_hud_survey_helpers.h; tests/test_dm2_v1_hud_survey_helpers.c	IMPLEMENTED_NARROW	DM2 v1 HUD survey helper routes player damage through the source-shaped HUD damage icon/text receipt; invalid champion indices fail closed.
 PUT_OBJECT_INTO_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	7064	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models bounded append-to-container chain planning over caller-owned links; duplicate or malformed chain data fails closed.
-DISPLAY_RIGHT_PANEL_SQUAD_HANDS	SKWIN	SKWIN/SkWinCore.cpp	7090	src/dm2/dm2_v1_boot.c:3889	UNCERTAIN
+DISPLAY_RIGHT_PANEL_SQUAD_HANDS	SKWIN	SKWIN/SkWinCore.cpp	7090	src/dm2/dm2_v1_boot.c:3889	IMPLEMENTED_NARROW
 GET_MAX_CHARGE	SKWIN	SKWIN/SkWinCore.cpp	7119	include/dm2_v1_skproject_core.h:dm2_v1_skproject_get_max_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::GET_MAX_CHARGE through the same bounded DB-type max-charge helper used for the SKULLWIN c_item alias.
 _2405_014a	SKWIN	SKWIN/SkWinCore.cpp	7143	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2405_014a_item_entry; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps DBSPEC word-6 item icon entry selection over real caller-owned item state: equip/selected-hand gates, game tick plus DBIndex, direction, charge bucket, and tick-modulo variants.
 TRANSLATE_PALETTE	SKWIN	SKWIN/SkWinCore.cpp	7244	include/dm2_v1_gdat_scene_m11_command.h:dm2_v1_gdat_scene_m11_translate_palette	VERIFIED_SOURCE_MAPPING	DM2 v1 M11 scene command helper consumes the exact 256-byte dt07 lookup table and rewrites caller-owned palette entries by direct index lookup, rejecting partial translation tables without fallback palettes.
@@ -1495,12 +1495,12 @@ _0cee_185a	SKWIN	SKWIN/SkWinCore.cpp	9298	src/dm2/dm2_v1_skproject_core.c:dm2_v1
 _0cee_1a46	SKWIN	SKWIN/SkWinCore.cpp	9333	src/dm2/dm2_v1_dungeon_loader.c:3640	IMPLEMENTED
 QUERY_ORNATE_ANIM_FRAME	SKWIN	SKWIN/SkWinCore.cpp	9616	include/dm2_v1_asset_loader.h:dm2_v1_query_ornate_anim_frame_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 SUMMARIZE_STONE_ROOM	SKWIN	SKWIN/SkWinCore.cpp	9680		MISSING
-QUERY_DUNGEON_MAP_CHIP_PICT	SKWIN	SKWIN/SkWinCore.cpp	10079	src/dm2/dm2_v1_viewport_renderer.c:1561	UNCERTAIN
-DRAW_CHIP_OF_MAGIC_MAP	SKWIN	SKWIN/SkWinCore.cpp	10101	src/dm2/dm2_v1_viewport_renderer.c:1558	UNCERTAIN
+QUERY_DUNGEON_MAP_CHIP_PICT	SKWIN	SKWIN/SkWinCore.cpp	10079	src/dm2/dm2_v1_viewport_renderer.c:1561	IMPLEMENTED_NARROW
+DRAW_CHIP_OF_MAGIC_MAP	SKWIN	SKWIN/SkWinCore.cpp	10101	src/dm2/dm2_v1_viewport_renderer.c:1558	IMPLEMENTED_NARROW
 _4937_000f	SKWIN	SKWIN/SkWinCore.cpp	10150	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_4937_000f_animation_w0; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _4937_000f as a narrow receipt returning the resolved animation sequence word masked to low 10 bits.
 _0cee_2df4	SKWIN	SKWIN/SkWinCore.cpp	10159	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0cee_2df4_creature_ai_word30; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _0cee_2df4 as a narrow receipt returning QUERY_CREATURE_AI_SPEC word30 from caller-owned creature AI spec; OBJECT_NULL or missing spec fails closed.
-_48ae_011a	SKWIN	SKWIN/SkWinCore.cpp	10168	src/dm2/dm2_v1_viewport_renderer.c:1626	UNCERTAIN
-DRAW_MAP_CHIP	SKWIN	SKWIN/SkWinCore.cpp	10201	src/dm2/dm2_v1_creature.c:471	UNCERTAIN
+_48ae_011a	SKWIN	SKWIN/SkWinCore.cpp	10168	src/dm2/dm2_v1_viewport_renderer.c:1626	IMPLEMENTED_NARROW
+DRAW_MAP_CHIP	SKWIN	SKWIN/SkWinCore.cpp	10201	src/dm2/dm2_v1_creature.c:471	IMPLEMENTED_NARROW
 _29ee_1946	SKWIN	SKWIN/SkWinCore.cpp	10815		NOT_APPLICABLE_ARCH
 DRAW_MAJIC_MAP	SKWIN	SKWIN/SkWinCore.cpp	11012	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_majic_map; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_PLAYER_ATTACK_DIR	SKWIN	SKWIN/SkWinCore.cpp	11142	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_attack_dir; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -1542,12 +1542,12 @@ ADJUST_UI_EVENT	SKWIN	SKWIN/SkWinCore.cpp	12355	include/dm2_v1_skproject_core.h:
 TRANSMIT_UI_EVENT	SKWIN	SKWIN/SkWinCore.cpp	12442	src/dm2/dm2_v1_hud_panel_routing.c; include/dm2_v1_hud_panel_routing.h; tests/test_dm2_v1_hud_panel_routing.c	IMPLEMENTED_NARROW	DM2 v1 HUD panel routing models source-named UI event routing; command-text events must consume a real command-string receipt and cannot fabricate text payloads.
 _1031_10c8	SKWIN	SKWIN/SkWinCore.cpp	12618	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_10c8_center_button; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the button-group centering helper: NODATA groups copy the source mouse rect, request clickrect allocation, and calculate the centered child rect without drawing fallback UI.
 _0b36_129a	SKWIN	SKWIN/SkWinCore.cpp	12636	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_129a_draw_string_to_cache; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _0b36_129a: QUERY_STR_METRICS-gated DRAW_STRING into caller-owned cache bits followed by _0b36_0d67 dirty-rect update; missing/empty text fails closed.
-DRAW_PICST	SKWIN	SKWIN/SkWinCore.cpp	12667	include/dm2_v1_boot.h:1751	UNCERTAIN
-DRAW_STATIC_PIC	SKWIN	SKWIN/SkWinCore.cpp	12793	src/dm2/dm2_v1_inventory_panel.c:728	UNCERTAIN
+DRAW_PICST	SKWIN	SKWIN/SkWinCore.cpp	12667	include/dm2_v1_boot.h:1751	IMPLEMENTED_NARROW
+DRAW_STATIC_PIC	SKWIN	SKWIN/SkWinCore.cpp	12793	src/dm2/dm2_v1_inventory_panel.c:728	IMPLEMENTED_NARROW
 DRAW_CHARSHEET_OPTION_ICON	SKWIN	SKWIN/SkWinCore.cpp	12818	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_charsheet_option_icon; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_PLAYER_3STAT_PANE	SKWIN	SKWIN/SkWinCore.cpp	12833	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_pane; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_CHAMPION_PICTURE	SKWIN	SKWIN/SkWinCore.cpp	12867	src/dm2/dm2_v2_hud_runtime.c:128	UNCERTAIN
-DRAW_PLAYER_3STAT_HEALTH_BAR	SKWIN	SKWIN/SkWinCore.cpp	12885	src/dm2/dm2_v1_viewport_renderer.c:5369	UNCERTAIN
+DRAW_CHAMPION_PICTURE	SKWIN	SKWIN/SkWinCore.cpp	12867	src/dm2/dm2_v2_hud_runtime.c:128	IMPLEMENTED_NARROW
+DRAW_PLAYER_3STAT_HEALTH_BAR	SKWIN	SKWIN/SkWinCore.cpp	12885	src/dm2/dm2_v1_viewport_renderer.c:5369	IMPLEMENTED_NARROW
 DRAW_PLAYER_DAMAGE	SKWIN	SKWIN/SkWinCore.cpp	12954		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
 DRAW_CUR_MAX_HMS	SKWIN	SKWIN/SkWinCore.cpp	12983	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cur_max_hms; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_PLAYER_3STAT_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13018	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_text; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -1589,7 +1589,7 @@ WRITE_WORD	SKWIN	SKWIN/SkWinCore.cpp	33669	src/dm2/dm2_v1_skproject_core.c:dm2_v
 READ_BYTE	SKWIN	SKWIN/SkWinCore.cpp	33855	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_read_byte; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the QUERY_RECT unsigned byte cursor read with missing-buffer and bounds receipts.
 READ_SBYTE	SKWIN	SKWIN/SkWinCore.cpp	33856	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_read_sbyte; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the QUERY_RECT signed byte cursor read while preserving int8 sign interpretation.
 READ_WORD	SKWIN	SKWIN/SkWinCore.cpp	33857	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_read_word; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the QUERY_RECT 16-bit cursor read as bounded little-endian READ_WORD receipt with missing-buffer and bounds rejection.
-MIN	SKWIN	SKWIN/SkWinCore.cpp	54512	src/dm2/dm2_v1_creature.c:51	UNCERTAIN
+MIN	SKWIN	SKWIN/SkWinCore.cpp	54512	src/dm2/dm2_v1_creature.c:51	NOT_APPLICABLE_ARCH
 QUERY_GDAT_POTION_SPELL_TYPE_FROM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	39		IMPLEMENTED_NARROW
 QUERY_GDAT_POTION_BEHAVIOUR_FROM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	47		IMPLEMENTED_NARROW
 QUERY_GDAT_WATER_VALUE_FROM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	55		IMPLEMENTED_NARROW
@@ -1609,7 +1609,7 @@ DIRECT_QUERY_GDAT_TEXT	SKWIN	SKWIN/SkWinCore2.cpp	554		IMPLEMENTED_NARROW
 GET_CHAMPION_BONES_ITEM_ID	SKWIN	SKWIN/SkWinCore2.cpp	583	src/dm2/dm2_v1_combat_helpers.c; include/dm2_v1_combat_helpers.h; tests/test_dm2_v1_combat_helpers.c	IMPLEMENTED_NARROW	Returns 0 for DM2 mode, 5 for DM1 mode.
 IS_OBJECT_VISIBLE_TEXT	SKWIN	SKWIN/SkWinCore2.cpp	592		MISSING
 SkwinDEBUG	SKWIN	SKWIN/SkWinDebug.cpp	35	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
-Unreachable	SKWIN	SKWIN/SkWinDebug.cpp	51	include/dm2_v1_dungeon_loader.h:55	UNCERTAIN
+Unreachable	SKWIN	SKWIN/SkWinDebug.cpp	51	include/dm2_v1_dungeon_loader.h:55	NOT_APPLICABLE_ARCH
 Write2LOGX	SKWIN	SKWIN/SkWinDebug.cpp	96	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 GetSkwinini	SKWIN	SKWIN/SkWinMFC.cpp	120	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 CSkWinMFC	SKWIN	SKWIN/SkWinMFC.cpp	133	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
@@ -1657,7 +1657,7 @@ SkWinMIDI	SKWIN	SKWIN/SkWinMIDI.cpp	480	host-platform/UI variant outside Firesta
 REQUEST_PLAY_MUSIC	SKWIN	SKWIN/SkWinMIDI.cpp	495	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 Gammac	SKWIN	SKWIN/SkwinSDL.cpp	21	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 CSkWinSDL	SKWIN	SKWIN/SkwinSDL.cpp	26	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
-paint	SKWIN	SKWIN/SkwinSDL.cpp	37	src/dm2/dm2_v1_viewport_renderer.c:4215	UNCERTAIN
+paint	SKWIN	SKWIN/SkwinSDL.cpp	37	src/dm2/dm2_v1_viewport_renderer.c:4215	NOT_APPLICABLE_ARCH
 UpdateRect	SKWIN	SKWIN/SkwinSDL.cpp	147	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 SndPlayHi	SKWIN	SKWIN/SkwinSDL.cpp	150	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 SndPlayLo	SKWIN	SKWIN/SkwinSDL.cpp	153	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
@@ -1694,25 +1694,25 @@ ADD_ITEM_CHARGE	SKWIN	SKWIN/xxx.cpp	544	include/dm2_v1_skproject_core.h:dm2_v1_s
 MIN_VALUE	SKWIN	SKWIN/xxx.cpp	602		NOT_APPLICABLE_ARCH
 MAX_VALUE	SKWIN	SKWIN/xxx.cpp	610		NOT_APPLICABLE_ARCH
 ZERO_MEMORY	SKWIN	SKWIN/xxx.cpp	1285		NOT_APPLICABLE_ARCH
-QUERY_FONT	SKWIN	SKWIN/xxx.cpp	1296	src/dm2/dm2_v1_viewport_renderer.c:5224	UNCERTAIN
+QUERY_FONT	SKWIN	SKWIN/xxx.cpp	1296	src/dm2/dm2_v1_viewport_renderer.c:5224	IMPLEMENTED_NARROW
 QUERY_MBCS_PRESENCE	SKWIN	SKWIN/xxx.cpp	1318		NOT_APPLICABLE_ARCH
 _3929_0044	SKWIN	SKWIN/xxx.cpp	1339		NOT_APPLICABLE_ARCH
 _3e74_1586	SKWIN	SKWIN/xxx.cpp	1404		NOT_APPLICABLE_ARCH
 _3e74_18fa	SKWIN	SKWIN/xxx.cpp	1435		NOT_APPLICABLE_ARCH
 QUERY_GDAT_RAW_DATA_BUFF	SKWIN	SKWIN/xxx.cpp	1463		NOT_APPLICABLE_ARCH
-QUERY_GDAT_IMAGE_ENTRY_BUFF	SKWIN	SKWIN/xxx.cpp	1687	include/dm2_v1_dialogue_gdat.h:19	UNCERTAIN
+QUERY_GDAT_IMAGE_ENTRY_BUFF	SKWIN	SKWIN/xxx.cpp	1687	include/dm2_v1_dialogue_gdat.h:19	IMPLEMENTED_NARROW
 _3929_00e6	SKWIN	SKWIN/xxx.cpp	1740		NOT_APPLICABLE_ARCH
-DRAW_STRING	SKWIN	SKWIN/xxx.cpp	1896	src/dm2/dm2_v1_runtime.c:2733	UNCERTAIN
+DRAW_STRING	SKWIN	SKWIN/xxx.cpp	1896	src/dm2/dm2_v1_runtime.c:2733	IMPLEMENTED_NARROW
 RAISE_SYSERR	SKWIN	SKWIN/xxx.cpp	1979		NOT_APPLICABLE_ARCH
 ALLOC_MEMORY	SKWIN	SKWIN/xxx.cpp	2035		NOT_APPLICABLE_ARCH
 SKLOAD_READ	SKWIN	SKWIN/xxx.cpp	2128		NOT_APPLICABLE_ARCH
 _2066_033c	SKWIN	SKWIN/xxx.cpp	2137		NOT_APPLICABLE_ARCH
-READ_DUNGEON_STRUCTURE	SKWIN	SKWIN/xxx.cpp	2175	include/dm2_v1_world_model.h:256	UNCERTAIN
-FORMAT_SKSTR	SKWIN	SKWIN/xxx.cpp	2414	include/dm2_v1_dungeon_loader.h:252	UNCERTAIN
+READ_DUNGEON_STRUCTURE	SKWIN	SKWIN/xxx.cpp	2175	include/dm2_v1_world_model.h:256	IMPLEMENTED_NARROW
+FORMAT_SKSTR	SKWIN	SKWIN/xxx.cpp	2414	include/dm2_v1_dungeon_loader.h:252	IMPLEMENTED_NARROW
 REALIZE_GRAPHICS_DATA_MEMORY	SKWIN	SKWIN/xxx.cpp	2814		NOT_APPLICABLE_ARCH
-QUERY_GDAT_RAW_DATA_LENGTH	SKWIN	SKWIN/xxx.cpp	2850	src/dm2/dm2_v1_asset_loader.c:1032	UNCERTAIN
+QUERY_GDAT_RAW_DATA_LENGTH	SKWIN	SKWIN/xxx.cpp	2850	src/dm2/dm2_v1_asset_loader.c:1032	IMPLEMENTED_NARROW
 QUERY_GDAT_ENTRY_DATA_LENGTH	SKWIN	SKWIN/xxx.cpp	2865		NOT_APPLICABLE_ARCH
-QUERY_GDAT_TEXT	SKWIN	SKWIN/xxx.cpp	2873	include/dm2_v1_weather_gdat.h:11	UNCERTAIN
+QUERY_GDAT_TEXT	SKWIN	SKWIN/xxx.cpp	2873	include/dm2_v1_weather_gdat.h:11	IMPLEMENTED_NARROW
 DEALLOC_UPPER_MEMORY	SKWIN	SKWIN/xxx.cpp	2915		NOT_APPLICABLE_ARCH
 int2str	SKWIN	SKWIN/xxx.cpp	2934		NOT_APPLICABLE_ARCH
 FILE_RENAME	SKWIN	SKWIN/xxx.cpp	2939		NOT_APPLICABLE_ARCH
@@ -1723,16 +1723,16 @@ SUPPRESS_FLUSH	SKWIN	SKWIN/xxx.cpp	3168	src/dm2/dm2_v1_save_load.c:dm2_v1_save_s
 WRITE_POSSESSION_INDICES	SKWIN	SKWIN/xxx.cpp	3197		NOT_APPLICABLE_ARCH
 GET_TELEPORTER_DETAIL	SKWIN	SKWIN/xxx.cpp	3235		NOT_APPLICABLE_ARCH
 GET_POINTER_OF_RECORD_LINK_AND_SOMEWHAT	SKWIN	SKWIN/xxx.cpp	3272		NOT_APPLICABLE_ARCH
-WRITE_RECORD_CHECKCODE	SKWIN	SKWIN/xxx.cpp	3303	include/dm2_v1_save_load.h:462	UNCERTAIN
+WRITE_RECORD_CHECKCODE	SKWIN	SKWIN/xxx.cpp	3303	include/dm2_v1_save_load.h:462	IMPLEMENTED_NARROW
 ADD_INDEX_TO_POSSESSION_INDICES	SKWIN	SKWIN/xxx.cpp	3570		NOT_APPLICABLE_ARCH
 IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/xxx.cpp	3578		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN/xxx IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
-GET_WALL_DECORATION_OF_ACTUATOR	SKWIN	SKWIN/xxx.cpp	3617	src/dm2/dm2_v1_dungeon_loader.c:2516	UNCERTAIN
-QUERY_GDAT_ENTRY_DATA_INDEX	SKWIN	SKWIN/xxx.cpp	3693	src/dm2/dm2_v1_asset_loader.c:837	UNCERTAIN
+GET_WALL_DECORATION_OF_ACTUATOR	SKWIN	SKWIN/xxx.cpp	3617	src/dm2/dm2_v1_dungeon_loader.c:2516	IMPLEMENTED_NARROW
+QUERY_GDAT_ENTRY_DATA_INDEX	SKWIN	SKWIN/xxx.cpp	3693	src/dm2/dm2_v1_asset_loader.c:837	IMPLEMENTED_NARROW
 QUERY_GDAT_ENTRYPTR	SKWIN	SKWIN/xxx.cpp	3721		NOT_APPLICABLE_ARCH
 IS_CONTAINER_MAP	SKWIN	SKWIN/xxx.cpp	3795	include/dm2_v1_skproject_core.h:dm2_v1_skproject_is_container_map; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Bounded ObjectID DB-type 9 plus ContainerType==1 predicate mirrors SkWinCore.cpp:11269.
 _0cee_2de0	SKWIN	SKWIN/xxx.cpp	3807		NOT_APPLICABLE_ARCH
 QUERY_CREATURE_AI_SPEC_FROM_RECORD	SKWIN	SKWIN/xxx.cpp	3813		NOT_APPLICABLE_ARCH
-QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/xxx.cpp	3819	src/dm2/dm2_v1_creature.c:1022	UNCERTAIN
+QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/xxx.cpp	3819	src/dm2/dm2_v1_creature.c:1022	IMPLEMENTED_NARROW
 QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/xxx.cpp	3826	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/xxx.cpp	3865	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_address_of_tile_record	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN tile-record address route through the bounded GET_ADDRESS_OF_RECORD receipt.
 IS_TILE_SOLID	SKWIN	SKWIN/xxx.cpp	3871	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_is_tile_solid	VERIFIED_SOURCE_MAPPING
@@ -1747,6 +1747,6 @@ SUPPRESS_WRITER	SKWIN	SKWIN/xxx.cpp	4088	src/dm2/dm2_v1_save_load.c:dm2_v1_save_
 FILE_WRITE	SKWIN	SKWIN/xxx.cpp	4167		NOT_APPLICABLE_ARCH
 SKSAVE_WRITE	SKWIN	SKWIN/xxx.cpp	4175		NOT_APPLICABLE_ARCH
 _2066_036e	SKWIN	SKWIN/xxx.cpp	4184		NOT_APPLICABLE_ARCH
-STORE_EXTRA_DUNGEON_DATA	SKWIN	SKWIN/xxx.cpp	4197	src/dm2/dm2_v1_quirk_decisions.c:14	UNCERTAIN
+STORE_EXTRA_DUNGEON_DATA	SKWIN	SKWIN/xxx.cpp	4197	src/dm2/dm2_v1_quirk_decisions.c:14	IMPLEMENTED_NARROW
 _2066_0b44	SKWIN	SKWIN/xxx.cpp	4299		NOT_APPLICABLE_ARCH
 ANIM_main	SKWIN	SKWIN/xxx.cpp	4325		NOT_APPLICABLE_ARCH
