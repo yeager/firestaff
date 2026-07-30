@@ -634,12 +634,12 @@ static void test_first_tick_after_boot_profile_handoff(void)
           "runtime item-generator actuator records generated object target");
     CHECK(dm2_v1_runtime_invoke_actuator(
               0, 0, 0, DM2_ACTUATOR_MISSILE_SHOOTER,
-              DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL) == 0 &&
+              DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL) == -1 &&
           dm2_v1_runtime_get_last_actuator_type() ==
               DM2_ACTUATOR_MISSILE_SHOOTER &&
-          dm2_v1_runtime_get_last_projectile_slot() >= 0 &&
-          dm2_v1_runtime_get_projectile_actuator_count() == 1,
-          "runtime missile-shooter actuator dispatches a projectile target");
+          dm2_v1_runtime_get_last_projectile_slot() < 0 &&
+          dm2_v1_runtime_get_projectile_actuator_count() == 0,
+          "runtime missile-shooter rejects synthetic projectile state");
     {
         uint8_t fixture[128];
         size_t fixture_size = build_skproject_square_actuator_fixture(

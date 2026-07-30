@@ -9388,9 +9388,6 @@ static int dm2_runtime_decode_square_actuator(
 int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
                                    DM2_ActuatorType type, uint16_t flag) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    int projectile_slot;
-    int projectile_category;
-    int projectile_subtype;
 
     if (dm2_v1_runtime_get_square_type(level, x, y) < 0) return -1;
     dm2_runtime_record_actuator(rt, level, x, y, type);
@@ -9419,20 +9416,16 @@ int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
     if (type == DM2_ACTUATOR_MISSILE_SHOOTER ||
         type == DM2_ACTUATOR_WEAPON_SHOOTER ||
         type == DM2_ACTUATOR_ITEM_SHOOTER) {
-        projectile_category = PROJECTILE_CATEGORY_KINETIC;
-        projectile_subtype = DM2_PROJ_SUBTYPE_KINETIC_ARROW;
-        if (type == DM2_ACTUATOR_MISSILE_SHOOTER) {
-            projectile_category = PROJECTILE_CATEGORY_MAGICAL;
-            projectile_subtype = flag ? (int)flag : DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL;
-        } else if (type == DM2_ACTUATOR_ITEM_SHOOTER) {
-            projectile_subtype = flag ? (int)flag : DM2_PROJ_SUBTYPE_BOMB;
-        }
-        projectile_slot = dm2_v1_projectile_dispatch_synthetic(
-            projectile_category, projectile_subtype, x, y, level,
-            g_dm2_runtime.view_dir);
-        rt->last_projectile_slot = projectile_slot;
-        if (projectile_slot >= 0) rt->projectile_actuator_count++;
-        return projectile_slot >= 0 ? 0 : -1;
+        /* The decoded actuator exposes neither the source DB14 owner nor its
+         * direction, attack and energy fields.  Do not replace those bytes
+         * with an arrow/fireball/bomb default or the party view direction.
+         *
+         * Source: SKWINSPX/src/v5/c_tim_proc.cpp::DM2_INVOKE_ACTUATOR and
+         *         ::DM2_STEP_MISSILE consume the record-owned projectile
+         *         state after the timer has been scheduled. */
+        (void)flag;
+        rt->last_projectile_slot = -1;
+        return -1;
     }
     if (type == DM2_ACTUATOR_CROSS_MAP ||
         type == DM2_ACTUATOR_RELAY_1 ||

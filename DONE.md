@@ -247,6 +247,16 @@
   source split pairs. All projections come directly from GRAPHICS.DAT item
   `0x22e`; focused layout and M11 handoff tests pass. The same commands now
   consume the recovered original `DoorGraphic[3][2]` pixels.
+- ✅ 2026-07-30 DM2 actuator-shooter synthetic-projectile removal: missile,
+  weapon and item shooter actuators no longer fabricate projectile category,
+  subtype, party-facing direction, owner, energy or attack from incomplete
+  decoded data. They now reject with no cache projectile until the source DB14
+  and timer ownership path is available. This follows SK-projects
+  `c_tim_proc.cpp::DM2_INVOKE_ACTUATOR` and `::DM2_STEP_MISSILE`, which use
+  record-owned projectile state. Verification: strict C11 syntax check of
+  `dm2_v1_runtime.c`, focused build, and CTest
+  `dm2_v1_runtime_handoff_smoke` 1/1 PASS.
+
 - ✅ 2026-07-30 DM2 V2.2 missing-art no-draw: removed the magenta/black
   checkerboard from the DM2 modern-asset API. A missing V2.2 resource now
   returns `NULL` with zero dimensions, preserving the existing V1/V2 fallback

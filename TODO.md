@@ -6,6 +6,11 @@
   palettes, and synthetic HUD art are not acceptable when authentic game data
   exists. Each remaining renderer is to bind the real format or present no
   game pixel; test fixtures remain explicitly isolated from production paths.
+- **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
+  DB14/timer scheduling and record-owned projectile fields from SK-projects.
+  Shooter records currently reject until their owner, facing, energy and
+  attack can be traced from original data.
+
 - **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
   Bind any future enhanced art only through verified original V1 GDAT material
   and a complete, provenance-checked V2.2 pack; never reintroduce diagnostic
