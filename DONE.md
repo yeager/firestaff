@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 CSB generic-inventory fallback isolation: CSB now rejects the
+  legacy M11 inventory-slot box, label and substitute-icon branches even in
+  diagnostic HUD mode. Normal CSB already consumes the verified C017/C040
+  terminal surface, but this prevents a future routing change from turning a
+  missing source slot into host-drawn chrome. The original-PC3.4 viewport
+  material, Prison-HUD and M12-to-M11 handoff regressions pass.
+
 - ✅ 2026-07-30 CSB V2.2 F0128 source-span gate: an in-place door replacement
   now requires the V1 command's decoded original raster, native dimensions
   and matching FNV identity in addition to route, record index and SHA-256

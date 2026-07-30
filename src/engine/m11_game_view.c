@@ -48045,8 +48045,9 @@ static void m11_draw_fullscreen_map(const M11_GameViewState* state,
  */
 
 /* Helper: draw one equipment slot box using original GRAPHICS.DAT
- * slot box bitmaps (18×18).  Falls back to procedural 16×16 box
- * when the asset is unavailable.
+ * slot box bitmaps (18×18).  The legacy non-source view may use a
+ * procedural 16×16 diagnostic box when the asset is unavailable; CSB and
+ * DM1 never may.
  *
  * Original DM1 uses three slot box variants:
  *   graphic 33 = normal slot (C033_GRAPHIC_SLOT_BOX_NORMAL)
@@ -48090,18 +48091,20 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
         }
     }
 
-    if (!drewSlotBox &&
-        (!m11_is_dm1_source_kind(state->sourceKind) || state->showDebugHUD)) {
-        /* Non-DM1 diagnostic/legacy fallback. DM1 V1 must retain the clear
-         * source panel until C033-C035 are decoded, never invent a frame. */
+    if (!drewSlotBox && !m11_is_dm1_source_kind(state->sourceKind) &&
+        !m11_source_is_csb(state)) {
+        /* Non-source diagnostic/legacy fallback. DM1 V1 and CSB must retain
+         * the clear source panel until their slot-box material is decoded,
+         * never invent a frame. ReDMCSB INVNTORY.C DrawIconInSlotBox. */
         unsigned char borderColor = selected ? M11_COLOR_LIGHT_GREEN : M11_COLOR_DARK_GRAY;
         m11_fill_rect(fb, fbW, fbH, sx, sy, SZ, SZ, M11_COLOR_BLACK);
         m11_draw_rect(fb, fbW, fbH, sx, sy, SZ, SZ, borderColor);
     }
 
     /* Selection highlight: bright border around the slot box */
-    if (selected && (drewSlotBox || !m11_is_dm1_source_kind(state->sourceKind) ||
-                     state->showDebugHUD)) {
+    if (selected && (drewSlotBox ||
+                     (!m11_is_dm1_source_kind(state->sourceKind) &&
+                      !m11_source_is_csb(state)))) {
         m11_draw_rect(fb, fbW, fbH, sx, sy, slotBoxW, slotBoxH,
                       M11_COLOR_LIGHT_GREEN);
     }
@@ -48119,7 +48122,8 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
                 state, fb, fbW, fbH, iconIndex, sx + 1, sy + 1, 0);
         }
         if (!drewSprite && state->assetsAvailable && state->world.things &&
-            (!m11_is_dm1_source_kind(state->sourceKind) || state->showDebugHUD)) {
+            !m11_is_dm1_source_kind(state->sourceKind) &&
+            !m11_source_is_csb(state)) {
             unsigned int gfxIdx = m11_inventory_thing_sprite_index(
                 state->world.things, thingId);
             if (gfxIdx > 0 && gfxIdx < M11_GFX_ITEM_SPRITE_END) {
@@ -48134,10 +48138,10 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
                 }
             }
         }
-        if (!drewSprite &&
-            (!m11_is_dm1_source_kind(state->sourceKind) || state->showDebugHUD)) {
-            /* Diagnostic/legacy fallback only. Normal DM1 uses F0038's
-             * icon atlas or leaves an unavailable icon blank. */
+        if (!drewSprite && !m11_is_dm1_source_kind(state->sourceKind) &&
+            !m11_source_is_csb(state)) {
+            /* Diagnostic/legacy fallback only. Normal DM1 and CSB use
+             * F0038's icon atlas or leave an unavailable icon blank. */
             int thingType = THING_GET_TYPE(thingId);
             const char* tag = "?";
             M11_TextStyle s = g_text_small;
@@ -48153,9 +48157,9 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
             }
             m11_draw_text(fb, fbW, fbH, sx + 3, sy + 4, tag, &s);
         }
-    } else if (!drewSlotBox &&
-               (!m11_is_dm1_source_kind(state->sourceKind) || state->showDebugHUD)) {
-        /* Diagnostic/legacy hint only; it is not a DM1 source visual. */
+    } else if (!drewSlotBox && !m11_is_dm1_source_kind(state->sourceKind) &&
+               !m11_source_is_csb(state)) {
+        /* Diagnostic/legacy hint only; it is not a DM1 or CSB source visual. */
         M11_TextStyle dim = g_text_small;
         dim.color = M11_COLOR_DARK_GRAY;
         m11_draw_text(fb, fbW, fbH, sx + 2, sy + 4, shortLabel, &dim);

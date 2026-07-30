@@ -519,6 +519,10 @@ diagnostic; it must not silently fall back to a generated visual.
   valid source-owned door replacement as a failure. It must not claim that
   nine synthetic rectangles are a completed F0128 render. Remaining: bind
   every other material family to its corresponding original F0128 command.
+  2026-07-30 defensive HUD follow-up: the legacy generic inventory-slot
+  fallback now explicitly excludes CSB, including debug HUD mode. The live
+  route continues to require C017/C040, and a future route regression cannot
+  turn an unavailable CSB slot bitmap into a host-drawn frame, label or icon.
   2026-07-30 verification: the complete registered CSB V2.x lane passes
   52/52 tests against local PC3.4 data. This covers V2.0/V2.1 startup and
   Prison runtime, V2.1 EPX/presentation capture, V2 filters/settings/touch/
