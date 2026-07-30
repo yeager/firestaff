@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 Start-menu data-directory token containment: the runtime
+  data-directory accessor and scan-progress status line now use the same
+  durable selected/configured path as the Settings row. A transient macOS
+  folder-dialog scanner token such as `.` can no longer be displayed as, saved
+  as, or passed on as a game-data root. Verification: `m12_data_dir_cancel`
+  and `menu_hit_launch_direct_click_m12` pass.
+
 - ✅ 2026-07-30 CSBWin dungeon-tail framing: Firestaff now parses the
   source-defined saved-dungeon prefix after the authenticated CSBWin core:
   `DUNGEONDATINDEX`, level descriptors, column-pointer extent, object-list

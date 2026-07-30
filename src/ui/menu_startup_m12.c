@@ -957,7 +957,11 @@ const char* M12_StartupMenu_AssetDataDir(const M12_StartupMenuState* state) {
         FSP_DirExists(state->selectedDataDir)) {
         return state->selectedDataDir;
     }
-    return state->assetStatus.dataDir;
+    /* Do not expose a scanner/dialog current-directory token to a launch
+     * path.  GetVisibleDataDir falls back through the persisted selection and
+     * then the normal originals root, so this accessor has the same durable
+     * contract as the Settings row. */
+    return M12_StartupMenu_GetVisibleDataDir(state);
 }
 
 const M12_AssetVersionStatus* M12_StartupMenu_AssetVersion(
@@ -1656,7 +1660,7 @@ static void m12_append_text(char* out, size_t outSize, const char* text) {
 static void m12_format_data_dir_line(const M12_StartupMenuState* state,
                                      char* out,
                                      size_t outSize) {
-    const char* dir = state ? M12_AssetStatus_GetDataDir(&state->assetStatus) : "";
+    const char* dir = state ? M12_StartupMenu_GetVisibleDataDir(state) : "";
     size_t prefixLen = strlen("DATA DIR: ");
     size_t len;
     if (!out || outSize == 0U) {
