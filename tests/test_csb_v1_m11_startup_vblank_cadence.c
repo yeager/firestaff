@@ -1,6 +1,7 @@
 /* CSB startup must consume one source VBlank per host idle tick. */
 
 #include "m11_game_view.h"
+#include "csb_v1_boot.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -39,13 +40,23 @@ int main(void) {
 
     view.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
     view.csbState.startup_title_active = 1;
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 20u,
-                    "CSB title startup receives one VBlank per 20 ms");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
+                    "CSB title startup receives one PC34 source VBlank per 55 ms");
 
     view.csbState.startup_title_active = 0;
     view.csbState.startup_entrance_active = 1;
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 400), 20u,
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 400), 55u,
                     "CSB entrance startup does not inherit QoL game speed");
+
+    {
+        CSB_V1_BootProfile profile;
+        memset(&profile, 0, sizeof(profile));
+        profile.tick_ms = 61u;
+        view.csbBootProfile = &profile;
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 61u,
+                        "CSB startup consumes the authenticated profile cadence");
+        view.csbBootProfile = NULL;
+    }
 
     view.csbState.startup_entrance_active = 0;
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 200u,

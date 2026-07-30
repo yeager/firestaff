@@ -1797,7 +1797,8 @@ int M11_GameView_InputConsumesDm1V1SourceTick(const M11_GameViewState* state,
 int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state);
 
 /* Resolve the host idle cadence for the active source state. CSB startup
- * advances one source VBlank per M11 idle tick and retains the 20 ms cadence. */
+ * advances one source VBlank per M11 idle tick using its authenticated
+ * package profile cadence (55 ms for the PC34 route). */
 uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* state,
                                          int speedMultiplier);
 

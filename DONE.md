@@ -43230,3 +43230,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   pass. The V2.x intersection remains 51 tests covering the implemented
   V2.0/V2.1/V2.2 feature surface. Unadmitted V2.2 F0128 material families
   remain intentionally source-V1 under `CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION`.
+
+- ✅ 2026-07-30 CSB PC34 title/Entrance cadence: M11 now consumes the
+  authenticated 55 ms CSB profile tick while the source-owned title or
+  Entrance is active, rather than advancing at a 20 ms host cadence. This
+  preserves `TITLE.C F0437`'s PRESENTS/CHAOS sequence and final
+  `Delay(2)` STRIKES BACK hold on modern Macs. Verification:
+  `csb_v1_m11_startup_vblank_cadence`, `csb_v2_entrance_pointer_boot_probe`,
+  `csb_v21_presented_startup_capture`, and
+  `csb_v20_filtered_startup_capture` pass.

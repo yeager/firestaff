@@ -17,6 +17,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V1-STARTUP-SOURCE-CADENCE:** Closed 2026-07-30. M11 no longer
+  advances the source-owned PC34 `TITLE.C F0437` / `ENTRANCE.C` VBlank
+  sequence at the host display's 20 ms cadence. Startup now consumes the
+  authenticated CSB boot-profile cadence (55 ms for PC3.4), including the
+  final `Delay(2)` STRIKES BACK hold. The focused cadence regression plus
+  V2.0/V2.1 real-data title and entrance-capture tests pass.
+
 - **CSB-V2X-RUNTIME-FILTER-OWNERSHIP:** Closed 2026-07-29. CSB's F10
   filter page now exposes only its four persisted V2 controls (scanlines,
   strength, palette correction and dither cleanup), writes `csbV2*` rather

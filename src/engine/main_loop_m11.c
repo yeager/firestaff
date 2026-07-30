@@ -100,7 +100,16 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
         (gameView->csbState.startup_title_active ||
          gameView->csbState.startup_entrance_active)) {
-        return 20u;
+        const CSB_V1_BootProfile* profile =
+            (const CSB_V1_BootProfile*)gameView->csbBootProfile;
+        /* TITLE.C F0437's waits are source VBlank waits.  The CSB runtime
+         * profile owns the corresponding PC cadence (55 ms); using the host
+         * display's 20 ms cadence made PRESENTS/CHAOS/STRIKES race through
+         * in roughly two seconds on modern Macs. */
+        if (profile && profile->tick_ms != 0u) {
+            return profile->tick_ms;
+        }
+        return CSB_V1_TICK_MS_NOMINAL;
     }
 
     if (speedMultiplier < 50) speedMultiplier = 50;
