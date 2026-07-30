@@ -44453,3 +44453,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   original-file hashes, including genuine files with arbitrary names. The
   smoke test verifies that named fake files are rejected while renamed real
   PC files remain accepted.
+- ✅ 2026-07-30 DM2 external-data probe path fix: the real GDAT creature
+  animation probe now accepts both case variants of the original graphics
+  filename. It therefore reads the external DOS `GRAPHICS.DAT` corpus before
+  reporting an unadmitted source route, rather than treating case-preserved
+  original data as absent.

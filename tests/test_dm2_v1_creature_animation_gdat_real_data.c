@@ -53,8 +53,14 @@ int main(void)
         snprintf(fallback, sizeof(fallback), "%s/.firestaff/data/dm2/data", home);
         root = fallback;
     }
+    /* Asset admission is hash based and case-preserving external media often
+     * uses the DOS spelling. The real-data probe must not turn that into a
+     * filename requirement. */
     snprintf(path, sizeof(path), "%s/graphics.dat", root);
     if (!read_file(path, &graphics, &graphics_size)) {
+        snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
+    }
+    if (graphics == NULL) {
         puts("SKIP: no local canonical DM2 data");
         return 0;
     }
