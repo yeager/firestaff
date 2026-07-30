@@ -20,7 +20,7 @@ static __attribute__((unused)) int fb_has_nonzero(void) {
     return 0;
 }
 
-static int fb_pixel(int x, int y) {
+static __attribute__((unused)) int fb_pixel(int x, int y) {
     if (x < 0 || x >= FB_W || y < 0 || y >= FB_H) return -1;
     return g_fb[y * FB_W + x];
 }
@@ -166,7 +166,7 @@ static void test_set_chaos_active(void) {
     printf("  set_chaos_active OK\n");
 }
 
-static void test_render_draws_pixels(void) {
+static void test_render_fails_closed(void) {
     CSB_V2_HudOverlay h;
     csb_v2_hud_init(&h);
     csb_v2_hud_set_champion_bar(&h, 0, 100, 80, 60, true, false);
@@ -175,8 +175,8 @@ static void test_render_draws_pixels(void) {
     csb_v2_hud_set_action_active(&h, CSB_V2_ACTION_ATTACK);
     clear_fb();
     csb_v2_hud_render(&h, g_fb, FB_W, FB_H);
-    assert(fb_has_nonzero());
-    printf("  render_draws_pixels OK\n");
+    assert(!fb_has_nonzero());
+    printf("  render_fails_closed OK\n");
 }
 
 static void test_render_invisible_noop(void) {
@@ -210,8 +210,8 @@ static void test_render_compass_region(void) {
     for (int y = 0; y < 30; y++)
         for (int x = 0; x < 30; x++)
             if (fb_pixel(x, y) != 0) compass_pixels++;
-    assert(compass_pixels > 0);
-    printf("  render_compass_region OK\n");
+    assert(compass_pixels == 0);
+    printf("  render_compass_region_no_draw OK\n");
 }
 
 static void test_render_action_strip_region(void) {
@@ -227,11 +227,11 @@ static void test_render_action_strip_region(void) {
              x < CSB_ACTION_ICONS_X_START + CSB_V2_ACTION_COUNT * (CSB_ACTION_ICON_W + 4);
              x++)
             if (fb_pixel(x, y) != 0) action_pixels++;
-    assert(action_pixels > 0);
-    printf("  render_action_strip_region OK\n");
+    assert(action_pixels == 0);
+    printf("  render_action_strip_region_no_draw OK\n");
 }
 
-static void test_render_hit_flash_decrements(void) {
+static void test_render_hit_flash_state_preserved_no_draw(void) {
     CSB_V2_HudOverlay h;
     csb_v2_hud_init(&h);
     csb_v2_hud_set_action_active(&h, CSB_V2_ACTION_ATTACK);
@@ -239,15 +239,15 @@ static void test_render_hit_flash_decrements(void) {
     assert(h.hit_flash_timer == 6);
     clear_fb();
     csb_v2_hud_render(&h, g_fb, FB_W, FB_H);
-    assert(h.hit_flash_timer == 5);
+    assert(h.hit_flash_timer == 6);
     assert(h.hit_flash_active == true);
     for (int i = 0; i < 5; i++) {
         clear_fb();
         csb_v2_hud_render(&h, g_fb, FB_W, FB_H);
     }
-    assert(h.hit_flash_timer == 0);
-    assert(h.hit_flash_active == false);
-    printf("  render_hit_flash_decrements OK\n");
+    assert(h.hit_flash_timer == 6);
+    assert(h.hit_flash_active == true);
+    printf("  render_hit_flash_state_preserved_no_draw OK\n");
 }
 
 static void test_render_null_safety(void) {
@@ -295,12 +295,12 @@ int main(void) {
     test_toggle();
     test_set_opacity();
     test_set_chaos_active();
-    test_render_draws_pixels();
+    test_render_fails_closed();
     test_render_invisible_noop();
     test_render_zero_opacity_noop();
     test_render_compass_region();
     test_render_action_strip_region();
-    test_render_hit_flash_decrements();
+    test_render_hit_flash_state_preserved_no_draw();
     test_render_null_safety();
     test_source_evidence();
     printf("  ALL PASSED\n");

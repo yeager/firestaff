@@ -44038,6 +44038,18 @@ the supplied root and selected MD5 to prove this without shipping game data.
   fail-closed contract. This does not claim completion of the still-open
   source-material bindings in `CSB-ORIGINAL-REPLACE-001`.
 
+# CSB V2 HUD generated-chrome containment (2026-07-30)
+
+- ✅ Retired the procedural compass, numeric font, champion bars, action
+  icons and chaos-rune overlay from the CSB V2 HUD render entry points. The
+  compatibility state API remains available, but both direct and runtime
+  render calls are strict no-draw, including when the V2 phase gate permits
+  presentation. PC3.4 C017/C040 and Atari ST C232 remain the only HUD pixel
+  owners. Verification: `test_csb_v2_hud_overlay_pc34`,
+  `test_csb_v2_hud_runtime` and `firestaff_csb_v2_hud_overlay_probe` pass;
+  the real Atari-ST M12/M11 handoff regression passes 589 checks. This does
+  not promote unbound F0128 viewport materials.
+
 # M12 startup-menu reliability pass (2026-07-30)
 
 # DM1 C015 host-message regression containment (2026-07-30)

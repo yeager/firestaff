@@ -227,7 +227,9 @@ diagnostic; it must not silently fall back to a generated visual.
   F0 local-cell rectangle into invented pixels.  **2026-07-30 update:** the
   retired missing-modern-art checkerboard now fails closed (no surface), so
   it cannot substitute generated pixels while the remaining original-material
-  bindings are recovered.
+  bindings are recovered. **2026-07-30 update:** the retired V2 HUD bitmap
+  renderer is likewise strict no-draw; PC3.4 C017/C040 and Atari ST C232 are
+  the only admitted HUD pixel owners.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

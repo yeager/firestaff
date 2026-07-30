@@ -32,7 +32,7 @@ extern "C" {
  *   csb_v2_hud_runtime_set_action_active(icon);
  *   csb_v2_hud_runtime_trigger_hit_flash();
  *   csb_v2_hud_runtime_set_chaos_active(active, rune_count);
- *   csb_v2_hud_render(fb, w, h_res);   // uses current phase gate config
+ *   csb_v2_hud_render(fb, w, h_res);   // compatibility no-draw
  *
  * Source: CSBWin/Viewport.cpp (CSB HUD layout, 7290 lines)
  *         CSBWin/Graphics.cpp (CSB graphics, 3186 lines)
@@ -101,9 +101,7 @@ void csb_v2_hud_runtime_toggle(void);
 void csb_v2_hud_runtime_set_opacity(uint8_t val);
 
 /* ── Render ─────────────────────────────────────────────────────── */
-/* Render the HUD overlay into the supplied 320×200 framebuffer.
- * Respects the phase gate: when v2PresentationEnabled is false,
- * this is a no-op. Does NOT mutate any V1 state. */
+/* Always no-draw. The runtime HUD is owned by decoded V1 source surfaces. */
 void csb_v2_hud_runtime_render(uint8_t *fb, int stride, int h_res);
 
 /* ── Direct HUD access ─────────────────────────────────────────── */

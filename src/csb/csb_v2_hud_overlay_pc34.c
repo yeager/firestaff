@@ -1,13 +1,12 @@
 /*
  * csb_v2_hud_overlay_pc34.c — CSB V2 HUD Overlay Implementation
  *
- * Phase 3: CSB V2 enhanced in-game overlay presentation, UI chrome,
- * and interaction feedback.
+ * Retired Phase 3 compatibility state for CSB V2 HUD presentation.
  *
  * Architecture:
- *   This module is deliberately presentation-only: it draws optional
- *   overlay elements into the supplied framebuffer and does NOT mutate
- *   dungeon, champion, or command runtime state.
+ *   The state API does not mutate dungeon, champion, or command runtime
+ *   state. Rendering is deliberately no-draw: original HUD pixels belong to
+ *   PC3.4 C017/C040 or Atari ST C232, never a generated overlay.
  *
  * V2.0/V2.1 overlay elements:
  *   - Compass rose (4-way directional indicator, top-left)
@@ -37,6 +36,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/*
+ * Retired procedural HUD painter.
+ *
+ * PC3.4 owns C017/C040 and Atari ST owns C232 plus its referenced graphics.
+ * The live M11 paths consume those decoded source surfaces. Retain this
+ * historical implementation outside the build while the state API remains
+ * compatible; it must not create substitute pixels for callers.
+ */
+#if 0
 /* ── Pixel helpers ──────────────────────────────────────────────── */
 static void hud_plot(uint8_t *fb, int w, int x, int y, uint8_t val) {
     if (x >= 0 && x < w && y >= 0 && y < 200) {
@@ -284,6 +292,8 @@ static void hud_draw_chaos_indicator(uint8_t *fb, int w, int x, int y,
     }
 }
 
+#endif
+
 /* ── Lifecycle ──────────────────────────────────────────────────── */
 void csb_v2_hud_init(CSB_V2_HudOverlay *h) {
     if (!h) return;
@@ -380,71 +390,18 @@ void csb_v2_hud_set_chaos_active(CSB_V2_HudOverlay *h, bool active, int power_ru
 
 /* ── Main render entry ──────────────────────────────────────────── */
 void csb_v2_hud_render(CSB_V2_HudOverlay *h, uint8_t *fb, int w, int h_res) {
-    if (!h || !fb || w <= 0 || h_res <= 0) return;
-    if (!h->visible) return;
-    if (h->opacity == 0) return;
-
-    uint8_t base = (uint8_t)(h->opacity / 2);
-    uint8_t high = h->opacity;
-
-    /* ── Top-left: Compass ─────────────────────────────────────── */
-    hud_compass_draw(fb, w, 16, 16, h->compass.direction, base, high);
-
-    /* ── Chaos magic indicator (next to compass) ─────────────── */
-    if (h->chaos.visible) {
-        hud_draw_chaos_indicator(fb, w, 34, 16,
-            h->chaos.chaos_active, h->chaos.power_rune_count, base, high);
-    }
-
-    /* ── Top-right: Depth "cur/max" ─────────────────────────────── */
-    int dx = w - 56;
-    hud_draw_number(fb, w, dx, 8, h->depth.current_level, high);
-    hud_plot(fb, w, dx + 16, 10, high);
-    hud_draw_number(fb, w, dx + 24, 8, h->depth.max_level, high);
-
-    /* ── Top status bar: 4 champion mini-bars ────────────────────── */
-    if (h->stats_bar_visible) {
-        for (int i = 0; i < 4; i++) {
-            CSB_V2_HudChampionBar *cb = &h->champion_bars[i];
-            int bx = CSB_CHAMP_BAR_X_START + i * (CSB_CHAMP_BAR_W + CSB_CHAMP_BAR_SPACING);
-            hud_draw_champion_bar(fb, w, bx, CSB_CHAMP_BAR_Y, i,
-                cb->hp_pct, cb->stamina_pct, cb->mana_pct,
-                cb->leader, cb->spell_ready, high);
-        }
-    }
-
-    /* ── Bottom action strip ───────────────────────────────────── */
-    if (h->action_strip.visible) {
-        for (int i = 0; i < CSB_V2_ACTION_COUNT; i++) {
-            int ax = CSB_ACTION_ICONS_X_START + i * (CSB_ACTION_ICON_W + 4);
-            CSB_V2_ActionIconState *st = &h->action_strip.icons[i];
-            bool flash = h->hit_flash_active && st->active;
-            hud_draw_action_icon(fb, w, ax, CSB_ACTION_STRIP_Y,
-                (CSB_V2_ActionIcon)i, st->active, flash, base, high);
-        }
-        /* Decrement flash timer */
-        if (h->hit_flash_timer > 0) {
-            h->hit_flash_timer--;
-            if (h->hit_flash_timer == 0) {
-                h->hit_flash_active = false;
-            }
-        }
-    }
-
-    /* ── Bottom-right: gold counter ─────────────────────────────── */
-    if (h->gold.visible) {
-        int gx = w - 60;
-        int gy = CSB_ACTION_STRIP_Y + 4;
-        hud_draw_letter(fb, w, gx, gy, 'G', high);
-        hud_draw_letter(fb, w, gx + 4, gy, 'p', base);
-        gx += 14;
-        hud_draw_number(fb, w, gx, gy, h->gold.party_gold, high);
-    }
+    /* A state-only compatibility API. Its former bitmap font, bars and
+     * icons were generated host artwork, not CSB source material. */
+    (void)h;
+    (void)fb;
+    (void)w;
+    (void)h_res;
 }
 
 const char *csb_v2_hud_source_evidence(void) {
     return
-        "CSB V2.0/V2.1: compass, depth, gold, champion bars, action strip, chaos indicator\n"
+        "CSB V2 HUD compatibility state is no-draw; source-owned HUD pixels\n"
+        "are composed by PC3.4 C017/C040 or Atari ST C232.\n"
         "  Source: CSBWin/Viewport.cpp (CSB HUD layout, 7290 lines)\n"
         "  Source: CSBWin/Graphics.cpp (CSB graphics, 3186 lines)\n"
         "  Source: ReDMCSB PANEL.C F0354 (champion status-box rendering)\n"

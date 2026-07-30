@@ -140,8 +140,8 @@ void csb_v2_hud_set_chaos_active(CSB_V2_HudOverlay *h, bool active, int power_ru
 #define CSB_ACTION_ICONS_X_START 16
 
 /* ── Rendering ───────────────────────────────────────────────────── */
-/* csb_v2_hud_render — draw V2 overlay into 320×200 VGA framebuffer.
- * x200 resolution (VGA 13h modenum).  Opacity 0 = no-op. */
+/* Compatibility render entry. It is always no-draw: generated HUD chrome
+ * cannot replace PC3.4 C017/C040 or Atari ST C232 source surfaces. */
 void csb_v2_hud_render(CSB_V2_HudOverlay *h, uint8_t *fb, int w, int h_res);
 
 /* ── V1 compatibility seam ─────────────────────────────────────── */

@@ -193,9 +193,9 @@ static void test_render_no_gate(void) {
     csb_v2_hud_runtime_set_party_gold(42);
     clear_fb();
     csb_v2_hud_runtime_render(g_fb, FB_W, FB_H);
-    assert(fb_has_nonzero());
+    assert(!fb_has_nonzero());
     csb_v2_hud_runtime_shutdown();
-    printf("  render_no_gate OK\n");
+    printf("  render_no_gate_no_draw OK\n");
 }
 
 static void test_render_with_gate_allowed(void) {
@@ -207,10 +207,10 @@ static void test_render_with_gate_allowed(void) {
     csb_v2_hud_runtime_set_champion(0, 100, 100, 100, true, false);
     clear_fb();
     csb_v2_hud_runtime_render(g_fb, FB_W, FB_H);
-    assert(fb_has_nonzero());
+    assert(!fb_has_nonzero());
     csb_v2_hud_runtime_set_gate_config(NULL);
     csb_v2_hud_runtime_shutdown();
-    printf("  render_with_gate_allowed OK\n");
+    printf("  render_with_gate_allowed_no_draw OK\n");
 }
 
 static void test_render_with_gate_blocked(void) {

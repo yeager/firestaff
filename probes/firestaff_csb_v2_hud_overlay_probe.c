@@ -155,7 +155,7 @@ int main(void) {
     for (int i = 0; i < (int)(sizeof(fb)/sizeof(fb[0])); i++) {
         if (fb[i] != 0) pixels++;
     }
-    check("hud_render: some pixels written", pixels > 0);
+    check("hud_render: generated HUD is no-draw", pixels == 0);
 
     /* Hidden HUD: opacity=0 → no pixels */
     memset(fb, 0, sizeof(fb));
@@ -182,7 +182,7 @@ int main(void) {
     }
     check("hud_runtime_render (v2=0): no-op", gated == 0);
 
-    /* With v2PresentationEnabled=1, HUD renders */
+    /* Even with V2 enabled, generated HUD pixels remain prohibited. */
     CSB_V2_PhaseGateConfig v2_on = {1, 0};
     csb_v2_hud_runtime_set_gate_config(&v2_on);
     csb_v2_hud_runtime_set_direction(1);
@@ -197,7 +197,7 @@ int main(void) {
     for (int i = 0; i < (int)(sizeof(fb)/sizeof(fb[0])); i++) {
         if (fb[i] != 0) hud_pixels++;
     }
-    check("hud_runtime_render (v2=1): pixels written", hud_pixels > 0);
+    check("hud_runtime_render (v2=1): no generated pixels", hud_pixels == 0);
 
     /* Verify state via get_hud */
     CSB_V2_HudOverlay *gh = csb_v2_hud_runtime_get_hud();
