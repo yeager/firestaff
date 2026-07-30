@@ -36,6 +36,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_f0093_replacement_palette_pc34_compat.h"
 #include "csb_v1_input_command_bridge_pc34_compat.h"
+#include "csb_v1_magic_rune_cost_pc34_compat.h"
 #include "csb_v1_command_input_geometry_pc34_compat.h"
 #include "csb_v1_neophyte_mode_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
@@ -11443,12 +11444,58 @@ static int m11_action_hand_has_magic_map_f0802(
     return strcmp(decoded, "MAGICMAP") == 0;
 }
 
+static int m11_csb_consume_source_rune_cost(
+    M11_GameViewState *state, int symbol_step, int symbol_index)
+{
+    CSB_V1_BootProfile *profile;
+    CSB_V1_MagicRuneCostTablePc34 costs;
+    struct ChampionState_Compat *champion;
+    int caster;
+    int power_rune;
+    int cost;
+
+    if (!state || !m11_source_is_csb(state) || !state->csbBootProfile) {
+        return 0;
+    }
+    profile = (CSB_V1_BootProfile *)state->csbBootProfile;
+    caster = m11_dm1_spell_caster_index(state);
+    if (caster < 0 || caster >= state->world.party.championCount ||
+        caster >= CHAMPION_MAX_PARTY) {
+        m11_set_status(state, "RUNE", "CSB NO MAGIC CASTER");
+        return 0;
+    }
+    champion = &state->world.party.champions[caster];
+    power_rune = symbol_step == 0 ? -1 : (int)state->spellBuffer.runes[0];
+    if (!csb_v1_magic_rune_cost_table_from_cache_pc34(
+            &profile->csbgraphics_cache, &costs) ||
+        !csb_v1_magic_rune_cost_compute_pc34(
+            &costs, symbol_step, symbol_index, power_rune, &cost)) {
+        m11_set_status(state, "RUNE", "CSB RUNE DATA UNAVAILABLE");
+        return 0;
+    }
+    if (cost < 0 || champion->mana.current < (unsigned int)cost) {
+        m11_set_status(state, "RUNE", "NOT ENOUGH MANA");
+        return 0;
+    }
+    champion->mana.current = (unsigned short)(champion->mana.current - cost);
+    if (profile->runtime.party_state_valid &&
+        caster < profile->runtime.party_state.ChampionCount) {
+        profile->runtime.party_state.Champions[caster].CurrentMana =
+            (int16_t)champion->mana.current;
+    }
+    return 1;
+}
+
 int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex) {
     DM1_V1_SpellPanelStatePc34 panel =
         m11_dm1_spell_panel_state_pc34(state);
     DM1_V1_SpellPanelReceiptPc34 receipt =
         dm1_v1_spell_panel_enter_rune_pc34(&panel, symbolIndex);
     if (!receipt.accepted) return 0;
+    if (m11_source_is_csb(state) &&
+        !m11_csb_consume_source_rune_cost(state, panel.rune_row, symbolIndex)) {
+        return 0;
+    }
     m11_apply_dm1_spell_panel_receipt(state, &receipt);
 
     m11_log_event(state, M11_COLOR_WHITE, "T%u: RUNE %s (%d)",

@@ -1,3 +1,11 @@
+- ✅ 2026-07-30 CSB source-owned rune costs: M11 now decodes CSBWin's
+  GRAPHICS.DAT graphic `0x230` and consumes the original `Byte19010` cost
+  matrix plus `Byte19016` power multipliers before accepting a CSB rune. The
+  committed mana is mirrored into the CSB runtime party/save state. Missing,
+  malformed or non-authenticated source data blocks the rune rather than
+  borrowing DM1 costs. Verification: `csb_v1_magic_rune_cost_pc34_compat`,
+  `csb_v1_pc34_wallset_graphics_map`, and `firestaff` build pass.
+
 - ✅ 2026-07-30 CSB PC3.4 wall-set catalog mapping: Firestaff now exposes the
   source-defined F0095 mapping for all 22 F0128 wall-set surfaces per
   40-record PC/I34 wall set, including the seven door-frame records and the

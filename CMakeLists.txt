@@ -3771,6 +3771,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_csbwin_512_xor_pad_classify.c
     src/csb/csb_v1_csbwin_dungeon_tail.c
     src/csb/csb_v1_csbwin_graphics_signature_gate.c
+    src/csb/csb_v1_magic_rune_cost_pc34_compat.c
     src/csb/csb_v1_pc34_wallset_graphics_map.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
     src/csb/csb_v1_utility_flow_pc34.c
@@ -4694,6 +4695,24 @@ foreach(probe_source IN LISTS THERON_V1_HYGIENE_PROBE_SOURCES THERON_V1_HYGIENE_
         target_compile_options(${probe_target} PRIVATE -Wall -Wextra -O2)
     endif()
 endforeach()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_magic_rune_cost_pc34_compat.c")
+    add_executable(test_csb_v1_magic_rune_cost_pc34_compat
+        tests/test_csb_v1_magic_rune_cost_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_magic_rune_cost_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_magic_rune_cost_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_magic_rune_cost_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(NAME csb_v1_magic_rune_cost_pc34_compat
+             COMMAND test_csb_v1_magic_rune_cost_pc34_compat)
+    set_tests_properties(csb_v1_magic_rune_cost_pc34_compat PROPERTIES LABELS "csb")
+endif()
 foreach(probe_source IN LISTS THERON_V1_HYGIENE_PROBE_SOURCES)
     get_filename_component(probe_target "${probe_source}" NAME_WE)
     string(REGEX REPLACE "^firestaff_" "" probe_test "${probe_target}")

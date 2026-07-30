@@ -221,6 +221,13 @@ an integration build pass.
   the original 60-VBlank PRESENTS phase rather than accepting a title that
   has silently advanced to Entrance. This narrows startup regression risk;
   it does not admit any unreconciled F0128 material family.
+  2026-07-30: CSB rune entry now reads CSBWin's decoded GRAPHICS.DAT graphic
+  `0x230` directly: the six `Byte19016` power multipliers at `0x4cc` and the
+  four-by-six `Byte19010` base-cost table at `0x4d2`. The live M11 CSB path
+  charges that source table before appending a rune and mirrors the mana write
+  into the save-visible CSB party state. Full `CastMagic`/`CastSpell`, DSA
+  filter traversal and effects remain a separate CSBWin runtime owner; they
+  must not fall through into DM1.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature
