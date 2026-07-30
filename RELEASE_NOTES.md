@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.190
+
+- CSB: retain explicit launch scaling and preserve the actual user window
+  through startup, fixing Prison/Entrance pointer mapping in larger windows
+  across V1 and V2.x.
+
 # Firestaff v3.0.189
 
 - CSB: admit verified standard CSBWin `graphics.dat` C001-C005 startup
