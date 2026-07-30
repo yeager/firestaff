@@ -74,10 +74,9 @@ const uint32_t* m11_v22_inplace_get_cell_bitmap(int depth, int lateral,
  *
  * This is the seam between the shape variant enum and the asset
  * pack. The mapping is intentionally conservative in this first
- * cut: walls all map to wall_d3_carved_01 (the most common carved
- * stone), floors map by tile pattern, creatures map by silhouette
- * tag. Per-cell refinement (e.g., mossy walls for slime zones) is
- * a follow-up. */
+ * cut: only receipt-reviewed original-backed pack ids may replace a
+ * V1 surface (for example wall_d3_carved_hero_01). Unreviewed routes
+ * return NULL so the original V1 pixels remain visible. */
 const char* m11_v22_inplace_get_cell_asset_id(int depth, int lateral);
 
 /* m11_v22_inplace_render_pass — paints the cached V22 bitmaps into

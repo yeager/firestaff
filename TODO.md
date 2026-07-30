@@ -172,6 +172,9 @@ diagnostic; it must not silently fall back to a generated visual.
   Unreviewed stairs retain their original V1 pixels. The real-art material
   gate, runtime admission gate and M11 handoff source lock pass; the complete
   registered DM1 V2.0/V2.1/V2.2 CTest lane passes 97/97 from the Ninja build.
+  The in-place probe fixture now carries all seven manifest-ordered reviewed
+  materials, preventing stale synthetic ids or a partial cache from masking a
+  field-route failure; the current focused V2 lane passes 87/87.
 
 - **DM1-V1-HUD-NAME-CENTERING:** Closed 2026-07-30. M11 now reproduces
   CHAMDRAW.C F0292's F0650-centred C159--C162 name-field placement. The

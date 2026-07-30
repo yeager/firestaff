@@ -74,27 +74,27 @@ static int write_minimal_dm1_v22_cache(const char* cache_path) {
     const ProbeCacheEntry fixtures[5] = {
         {
             "wall_shapes",
-            "wall_d3_carved_01",
+            "wall_d3_carved_hero_01",
             { 0x00ff0000u, 0x00ff0000u, 0x00ff0000u, 0x00ff0000u }
         },
         {
             "floor_shapes",
-            "floor_plain_01",
+            "floor_plain_hero_01",
             { 0x0000ff00u, 0x0000ff00u, 0x0000ff00u, 0x0000ff00u }
         },
         {
             "floor_shapes",
-            "floor_pit_01",
+            "floor_pit_hero_01",
             { 0x000000ffu, 0x000000ffu, 0x000000ffu, 0x000000ffu }
         },
         {
             "floor_shapes",
-            "floor_stairs_down_01",
+            "creature_demon_hero_01",
             { 0x00ffff00u, 0x00ffff00u, 0x00ffff00u, 0x00ffff00u }
         },
         {
             "field_shapes",
-            "field_teleporter_01",
+            "field_teleporter_hero_01",
             { 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu }
         }
     };
@@ -286,16 +286,17 @@ static void test_v22_inplace_material_signature(uint32_t* out_signature) {
     CHECK(m11_v22_inplace_draw_active() == 0);
 
     m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
-    CHECK(strcmp(m11_v22_inplace_get_cell_asset_id(1, -1),
-                 "wall_d3_carved_01") == 0);
-    CHECK(strcmp(m11_v22_inplace_get_cell_asset_id(1, 0),
-                 "floor_plain_01") == 0);
-    CHECK(strcmp(m11_v22_inplace_get_cell_asset_id(1, 1),
-                 "floor_pit_01") == 0);
-    CHECK(strcmp(m11_v22_inplace_get_cell_asset_id(2, -1),
-                 "floor_stairs_down_01") == 0);
+    asset_id = m11_v22_inplace_get_cell_asset_id(1, -1);
+    CHECK(asset_id != NULL && strcmp(asset_id, "wall_d3_carved_hero_01") == 0);
+    asset_id = m11_v22_inplace_get_cell_asset_id(1, 0);
+    CHECK(asset_id != NULL && strcmp(asset_id, "floor_plain_hero_01") == 0);
+    asset_id = m11_v22_inplace_get_cell_asset_id(1, 1);
+    CHECK(asset_id != NULL && strcmp(asset_id, "floor_pit_hero_01") == 0);
+    /* Stairs have no reviewed V2.2 surface. Their V1 pixels must remain
+     * visible instead of substituting a floor or synthetic stair texture. */
+    CHECK(m11_v22_inplace_get_cell_asset_id(2, -1) == NULL);
     asset_id = m11_v22_inplace_get_cell_asset_id(2, 1);
-    CHECK(asset_id != NULL && strcmp(asset_id, "field_teleporter_01") == 0);
+    CHECK(asset_id != NULL && strcmp(asset_id, "field_teleporter_hero_01") == 0);
 
     memset(fb, 0, sizeof(fb));
     painted = m11_v22_inplace_render_pass(fb, 320, 200);

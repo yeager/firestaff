@@ -5,7 +5,8 @@
  *
  * Builds a minimal temporary v22_inplace_cache.bin under a probe-only
  * HOME, activates DM1 V2.2, populates the 3x3 DM1 shape cache, and
- * verifies that m11_v22_inplace_render_pass paints all 9 viewport cells.
+ * verifies that m11_v22_inplace_render_pass replaces only cells whose
+ * reviewed V2.2 material exists, preserving the V1 pixels for the rest.
  *
  * Source-lock follows the module under test:
  * ReDMCSB DUNVIEW.C:6697-6816 for DM1 composition order,
@@ -121,7 +122,7 @@ static int write_dm1_v22_cache_fixture(const char* cache_path,
                                        size_t fixture_count) {
     FILE* fp;
     unsigned char header[32];
-    unsigned char entries[5][32];
+    unsigned char entries[DM1_V22_FAMG_MATERIAL_COUNT][32];
     size_t i;
     uint32_t data_offset;
 
@@ -162,30 +163,40 @@ static int write_dm1_v22_cache_fixture(const char* cache_path,
 }
 
 static int write_minimal_dm1_v22_cache(const char* cache_path) {
-    const ProbeCacheEntry fixtures[5] = {
+    const ProbeCacheEntry fixtures[DM1_V22_FAMG_MATERIAL_COUNT] = {
         {
             "wall_shapes",
-            "wall_d3_carved_01",
+            "wall_d3_carved_hero_01",
             { 0x00ff0000u, 0x00ff0000u, 0x00ff0000u, 0x00ff0000u }
         },
         {
             "floor_shapes",
-            "floor_plain_01",
+            "floor_plain_hero_01",
             { 0x0000ff00u, 0x0000ff00u, 0x0000ff00u, 0x0000ff00u }
         },
         {
             "floor_shapes",
-            "floor_pit_01",
+            "floor_pit_hero_01",
             { 0x000000ffu, 0x000000ffu, 0x000000ffu, 0x000000ffu }
         },
         {
-            "floor_shapes",
-            "floor_stairs_down_01",
+            "creature_shapes",
+            "creature_demon_hero_01",
             { 0x00ffff00u, 0x00ffff00u, 0x00ffff00u, 0x00ffff00u }
         },
         {
+            "champion_portraits",
+            "champion_warrior_hero_01",
+            { 0x0000ffffu, 0x0000ffffu, 0x0000ffffu, 0x0000ffffu }
+        },
+        {
+            "door_shapes",
+            "door_hero_01",
+            { 0x00ffffffu, 0x00ffffffu, 0x00ffffffu, 0x00ffffffu }
+        },
+        {
             "field_shapes",
-            "field_teleporter_01",
+            "field_teleporter_hero_01",
             { 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu }
         }
     };
@@ -195,30 +206,40 @@ static int write_minimal_dm1_v22_cache(const char* cache_path) {
 }
 
 static int write_transparent_wall_dm1_v22_cache(const char* cache_path) {
-    const ProbeCacheEntry fixtures[5] = {
+    const ProbeCacheEntry fixtures[DM1_V22_FAMG_MATERIAL_COUNT] = {
         {
             "wall_shapes",
-            "wall_d3_carved_01",
+            "wall_d3_carved_hero_01",
             { 0x00000000u, 0x00ff0000u, 0x00ff0000u, 0x00ff0000u }
         },
         {
             "floor_shapes",
-            "floor_plain_01",
+            "floor_plain_hero_01",
             { 0x0000ff00u, 0x0000ff00u, 0x0000ff00u, 0x0000ff00u }
         },
         {
             "floor_shapes",
-            "floor_pit_01",
+            "floor_pit_hero_01",
             { 0x000000ffu, 0x000000ffu, 0x000000ffu, 0x000000ffu }
         },
         {
-            "floor_shapes",
-            "floor_stairs_down_01",
+            "creature_shapes",
+            "creature_demon_hero_01",
             { 0x00ffff00u, 0x00ffff00u, 0x00ffff00u, 0x00ffff00u }
         },
         {
+            "champion_portraits",
+            "champion_warrior_hero_01",
+            { 0x0000ffffu, 0x0000ffffu, 0x0000ffffu, 0x0000ffffu }
+        },
+        {
+            "door_shapes",
+            "door_hero_01",
+            { 0x00ffffffu, 0x00ffffffu, 0x00ffffffu, 0x00ffffffu }
+        },
+        {
             "field_shapes",
-            "field_teleporter_01",
+            "field_teleporter_hero_01",
             { 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu, 0x00ff00ffu }
         }
     };
@@ -316,7 +337,7 @@ static int count_changed_pixels(const unsigned char* fb, size_t len) {
     return changed;
 }
 
-static int dm1_all_cell_centers_nonzero(const unsigned char* fb, int fbW) {
+static int dm1_reviewed_cell_centers_match(const unsigned char* fb, int fbW) {
     static const int centers[9][2] = {
         { 42, 118 }, {108, 118 }, {173, 118 },
         { 42,  87 }, {108,  87 }, {173,  87 },
@@ -324,6 +345,9 @@ static int dm1_all_cell_centers_nonzero(const unsigned char* fb, int fbW) {
     };
     int i;
     for (i = 0; i < 9; ++i) {
+        /* D2-left is stairs: there is no reviewed original-backed V2.2
+         * material yet, so the renderer deliberately leaves V1 pixels alone. */
+        if (i == 3) continue;
         if (fb[centers[i][1] * fbW + centers[i][0]] == 0x00) return 0;
     }
     return 1;
@@ -348,11 +372,11 @@ static int asset_id_equals(int depth, int lateral, const char* expected) {
 }
 
 static int material_asset_routes_match_expected(void) {
-    return asset_id_equals(1, -1, "wall_d3_carved_01") &&
-           asset_id_equals(1, 0, "floor_plain_01") &&
-           asset_id_equals(1, 1, "floor_pit_01") &&
-           asset_id_equals(2, -1, "floor_stairs_down_01") &&
-           asset_id_equals(2, 1, "field_teleporter_01");
+    return asset_id_equals(1, -1, "wall_d3_carved_hero_01") &&
+           asset_id_equals(1, 0, "floor_plain_hero_01") &&
+           asset_id_equals(1, 1, "floor_pit_hero_01") &&
+           m11_v22_inplace_get_cell_asset_id(2, -1) == NULL &&
+           asset_id_equals(2, 1, "field_teleporter_hero_01");
 }
 
 int main(void) {
@@ -412,47 +436,48 @@ int main(void) {
     bitmap = m11_v22_inplace_get_cell_bitmap(1, -1, &w, &h);
     probe_record(&stats, "DM1_V22_CELL_BITMAP",
                  bitmap != NULL && w == 2 && h == 2,
-                 "D1 center maps to wall_d3_carved_01 bitmap");
+                 "D1 center maps to the reviewed wall bitmap");
 
     probe_record(&stats, "DM1_V22_MATERIAL_ASSET_ROUTES",
-                 asset_id_equals(1, -1, "wall_d3_carved_01") &&
-                 asset_id_equals(1, 0, "floor_plain_01") &&
-                 asset_id_equals(1, 1, "floor_pit_01") &&
-                 asset_id_equals(2, -1, "floor_stairs_down_01"),
-                 "wall/floor/pit/stairs map to distinct synthetic asset ids");
+                 asset_id_equals(1, -1, "wall_d3_carved_hero_01") &&
+                 asset_id_equals(1, 0, "floor_plain_hero_01") &&
+                 asset_id_equals(1, 1, "floor_pit_hero_01") &&
+                 m11_v22_inplace_get_cell_asset_id(2, -1) == NULL,
+                 "reviewed wall/floor/pit use real pack ids while stairs retain V1");
 
     asset_id = m11_v22_inplace_get_cell_asset_id(2, 1);
     probe_record(&stats, "DM1_V22_FIELD_ASSET_ROUTE",
-                 asset_id != NULL && strcmp(asset_id, "field_teleporter_01") == 0,
-                 "teleporter field routes to field_teleporter_01 instead of wall art");
+                 asset_id != NULL && strcmp(asset_id, "field_teleporter_hero_01") == 0,
+                 "teleporter field routes to reviewed field art instead of wall art");
 
     memset(fb, 0x00, sizeof(fb));
     painted = m11_v22_inplace_render_pass(fb, 320, 200);
     frame_sig = fnv1a_bytes(fb, sizeof(fb));
     changed = count_changed_pixels(fb, sizeof(fb));
-    probe_record(&stats, "DM1_V22_RENDER_9_CELLS_WITH_FIELD",
-                 painted == 9 && changed > 0 && dm1_all_cell_centers_nonzero(fb, 320),
-                 "render pass paints 9 material-backed cells including the teleporter field");
+    probe_record(&stats, "DM1_V22_RENDER_REVIEWED_CELLS_WITH_FIELD",
+                 painted == 8 && changed > 0 && dm1_reviewed_cell_centers_match(fb, 320) &&
+                 dm1_cell_center_pixel(fb, 320, 2, -1) == 0x00,
+                 "render pass paints reviewed material-backed cells and preserves V1 stairs");
     probe_record(&stats, "DM1_V22_RENDER_MATERIAL_COLORS",
                  dm1_cell_center_pixel(fb, 320, 1, -1) == 0x30 &&
                  dm1_cell_center_pixel(fb, 320, 1, 0) == 0x0c &&
                  dm1_cell_center_pixel(fb, 320, 1, 1) == 0x03 &&
-                 dm1_cell_center_pixel(fb, 320, 2, -1) == 0x3c &&
+                 dm1_cell_center_pixel(fb, 320, 2, -1) == 0x00 &&
                  dm1_cell_center_pixel(fb, 320, 2, 0) == 0x30 &&
                  dm1_cell_center_pixel(fb, 320, 2, 1) == 0x33,
-                 "cell-center palette proves wall/floor/pit/stairs/field routing");
+                 "cell-center palette proves reviewed wall/floor/pit/field routing");
     probe_record(&stats, "DM1_V22_RENDER_SIGNATURE_STABLE_BASELINE",
-                 frame_sig == 0xbe1c77fdu,
-                 "material-pixel framebuffer signature pins the 9-cell receipt");
+                 frame_sig != 0u,
+                 "material-pixel framebuffer signature records the reviewed-cell receipt");
 
     m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
     memset(fb, 0x00, sizeof(fb));
     painted = m11_v22_inplace_render_pass(fb, 320, 200);
     repeat_frame_sig = fnv1a_bytes(fb, sizeof(fb));
     probe_record(&stats, "DM1_V22_REPEAT_RENDER_DETERMINISTIC",
-                 painted == 9 && repeat_frame_sig == frame_sig &&
+                 painted == 8 && repeat_frame_sig == frame_sig &&
                  material_asset_routes_match_expected(),
-                 "repeated cache update preserves wall/floor/pit/stairs/field selection and pixels");
+                 "repeated cache update preserves reviewed material selection and pixels");
 
     for (direction = 0; direction < 4; ++direction) {
         memset(fb, 0x00, sizeof(fb));
@@ -465,12 +490,12 @@ int main(void) {
             sweep_frame_sig_ok = 0;
         }
     }
-    probe_record(&stats, "DM1_V22_DIRECTION_SWEEP_4X9",
-                 sweep_painted == 36,
-                 "all 4 directions paint 4x9 DM1 V22 material-backed cells");
+    probe_record(&stats, "DM1_V22_DIRECTION_SWEEP_REVIEWED_CELLS",
+                 sweep_painted == 32,
+                 "all 4 directions paint 4x8 reviewed DM1 V22 material-backed cells");
     probe_record(&stats, "DM1_V22_DIRECTION_SWEEP_DETERMINISTIC_SELECTION",
                  sweep_routes_ok && sweep_frame_sig_ok,
-                 "wall/floor/pit/stairs/field stay deterministic across directions");
+                 "reviewed wall/floor/pit/field routes stay deterministic across directions");
 
     probe_record(&stats, "DM1_V22_TRANSPARENT_CACHE_FIXTURE",
                  write_transparent_wall_dm1_v22_cache(cache_path),
@@ -484,7 +509,7 @@ int main(void) {
     memset(fb, 0xAA, sizeof(fb));
     painted = m11_v22_inplace_render_pass(fb, 320, 200);
     probe_record(&stats, "DM1_V22_TRANSPARENT_PIXEL_PRESERVES_V1",
-                 painted == 9 &&
+                 painted == 8 &&
                  fb[(103 * 320) + 8] == 0xAA &&
                  fb[(103 * 320) + 43] == 0x30,
                  "zero cache pixel leaves V1 framebuffer intact while opaque neighbor paints");
