@@ -43847,6 +43847,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_input_scale_inverse_safety
         tests/test_m11_input_scale_inverse_safety_pc34_compat.c
         src/engine/m11_game_input_mapping.c
     )
+    target_link_libraries(test_m11_input_scale_inverse_safety_pc34_compat PRIVATE
+        SDL3::SDL3)
     if(NOT MSVC)
         target_compile_options(test_m11_input_scale_inverse_safety_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()

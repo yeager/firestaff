@@ -5,6 +5,8 @@
  * Persists to keybindings.toml in the Firestaff config directory.
  */
 
+#include <SDL3/SDL.h>
+
 #include "input_remap_m12.h"
 #include "fs_portable_compat.h"
 

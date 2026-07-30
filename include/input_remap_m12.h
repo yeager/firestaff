@@ -9,11 +9,11 @@
  * The remap UI lets the player press a key to reassign an action.
  */
 
-#include <SDL3/SDL.h>
+#include <stdint.h>
 
-#if !SDL_VERSION_ATLEAST(3, 0, 0)
-#include <SDL.h>
-#endif
+/* SDL_Keycode is an unsigned 32-bit integer. Keep this public launcher-data
+ * header SDL-free so source-locked runtime tests do not need SDL headers. */
+typedef uint32_t M12_Keycode;
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,8 +56,8 @@ typedef enum {
 
 typedef struct {
     M12_InputAction action;
-    SDL_Keycode     primary;     /* main binding */
-    SDL_Keycode     secondary;   /* alternate binding (0 = none) */
+    M12_Keycode     primary;     /* main binding */
+    M12_Keycode     secondary;   /* alternate binding (0 = none) */
 } M12_KeyBinding;
 
 /* ── Binding table ──────────────────────────────────────────────────── */
@@ -87,20 +87,20 @@ int M12_InputMap_Load(M12_InputMap* map);
 int M12_InputMap_Save(const M12_InputMap* map);
 
 /* Look up the keycode bound to `action` (primary). Returns 0 if none. */
-SDL_Keycode M12_InputMap_GetKey(const M12_InputMap* map, M12_InputAction action);
+M12_Keycode M12_InputMap_GetKey(const M12_InputMap* map, M12_InputAction action);
 
 /* Look up the secondary keycode bound to `action`. Returns 0 if none. */
-SDL_Keycode M12_InputMap_GetSecondaryKey(const M12_InputMap* map, M12_InputAction action);
+M12_Keycode M12_InputMap_GetSecondaryKey(const M12_InputMap* map, M12_InputAction action);
 
 /* Find which action (if any) is bound to `key`. Returns M12_ACTION_COUNT if
  * no match. */
-M12_InputAction M12_InputMap_ActionForKey(const M12_InputMap* map, SDL_Keycode key);
+M12_InputAction M12_InputMap_ActionForKey(const M12_InputMap* map, M12_Keycode key);
 
 /* Human-readable name for an action (English). */
 const char* M12_InputAction_Name(M12_InputAction action);
 
 /* Human-readable name for an SDL keycode. Returns a static buffer. */
-const char* M12_Keycode_Name(SDL_Keycode key);
+const char* M12_Keycode_Name(M12_Keycode key);
 
 /* ── Remap helpers ──────────────────────────────────────────────────── */
 
@@ -109,7 +109,7 @@ void M12_Remap_Begin(M12_RemapState* state, M12_InputAction action, int slot);
 
 /* Feed a keypress while remapping. Returns 1 if remap completed, 0 if
  * cancelled (Escape pressed). The binding is assigned in `map`. */
-int M12_Remap_HandleKey(M12_RemapState* state, M12_InputMap* map, SDL_Keycode key);
+int M12_Remap_HandleKey(M12_RemapState* state, M12_InputMap* map, M12_Keycode key);
 
 /* Cancel an active remap without changing the binding. */
 void M12_Remap_Cancel(M12_RemapState* state);
