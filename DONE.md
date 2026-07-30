@@ -43143,6 +43143,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   setter and is reported as unchanged. Empty status display now says `NOT
   SET`, never `.`. Verified by `test_m12_data_dir_cancel`.
 
+- ✅ 2026-07-30 Launcher selected-directory ownership: start-menu state now
+  retains the last accepted game-data directory independently of transient
+  asset-scanner/dialog output. A macOS/SDL `.` token therefore cannot replace
+  the visible picker location or the next config write after a valid folder
+  has been selected. Verified by `m12_data_dir_cancel` and
+  `asset_status_data_dir_change_cache_invalidation`.
+
 - ✅ 2026-07-30 CSB V2.x feature verification: all 51 registered V2.0,
   V2.1 and V2.2 regressions pass with local PC3.4 data. The lane covers
   startup/title/Entrance, source and presented captures, Prison pointer
