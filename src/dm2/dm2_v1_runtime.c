@@ -5755,9 +5755,9 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
  *   - Dungeon: first-person 3D view using DM2 wall/floor graphics
  *   - Outdoor: overhead or 3D sky view with weather overlay
  *
- * For Phase 1, this renders a placeholder frame that distinguishes
- * DM2 from DM1/CSB: a blue-ish sky for outdoor, dark dungeon for indoor.
- * Real DM2 rendering is Phase 4.
+ * The runtime admits a frame only through the source-backed GDAT material
+ * routes below.  Missing material blocks the frame rather than substituting
+ * a host-coloured placeholder.
  *
  * Returns 0 on success.
  *
