@@ -1256,7 +1256,7 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
     const char *const *names;
     CSB_V1_VariantId requested_variant;
     const CSB_V1_VariantInfo *requested_info = NULL;
-    const char *requested_hashes[2] = { NULL, NULL };
+    const char *requested_hashes[3] = { NULL, NULL, NULL };
 
     if (!data_dir || !out_result) return NULL;
     memset(out_result, 0, sizeof(*out_result));
@@ -1268,6 +1268,14 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
             return NULL;
         }
         requested_hashes[0] = requested_info->md5_gfx;
+        /* The documented Atari ST 2.x hard-disk package is a second
+         * authenticated MEDIA332 graphics identity. The existing variant
+         * detector maps it to ST21; both ST20/ST21 launcher labels describe
+         * the same compatible source family and must therefore admit it. */
+        if (requested_variant == CSB_V1_VARIANT_ST20_EN ||
+            requested_variant == CSB_V1_VARIANT_ST21_EN) {
+            requested_hashes[1] = "e0ce7ac5160ca5540e90cf09ab9fad49";
+        }
     }
 
     /* Prefer MD5-hash search so files in arbitrary subdirs and renamed

@@ -1,6 +1,7 @@
 - ✅ 2026-07-30 CSB runtime variant identity discovery: a recognised
   `pc34_en`, `pc34_multi`, Atari ST, or Amiga launcher/probe variant now
-  searches only for its verified original graphics MD5 and refuses a
+  searches only for its verified original graphics MD5 (the Atari ST 2.x
+  route admits both documented floppy and hard-disk identities) and refuses a
   filename-only `GRAPHICS.DAT` substitute from another platform. Unknown and
   custom variant tokens retain the legacy hash-first, filename fallback for
   user-managed layouts. Verification: `csb_v1_boot_runtime_handoff` covers

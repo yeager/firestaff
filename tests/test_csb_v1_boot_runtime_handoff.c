@@ -5198,6 +5198,11 @@ static void test_runtime_variant_hint_identity(void)
     CHECK(csb_v1_runtime_variant_from_hint("custom_dungeon") ==
               CSB_V1_VARIANT_UNKNOWN,
           "CSB unknown launcher hint retains broad hash discovery");
+    CHECK(strcmp(csb_v1_runtime_get_variant_info(CSB_V1_VARIANT_ST20_EN)->md5_gfx,
+                 "ebf6a57af3f27782e358c0490bfd2f2e") == 0 &&
+              strcmp(csb_v1_runtime_get_variant_info(CSB_V1_VARIANT_ST21_EN)->md5_gfx,
+                 "ebf6a57af3f27782e358c0490bfd2f2e") == 0,
+          "CSB ST2.x variant tokens share the canonical floppy graphics identity");
 
     (void)TEST_MKDIR(tmp_dir);
     snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);

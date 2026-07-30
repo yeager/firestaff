@@ -8,7 +8,8 @@ CSBWin alongside it. Reuse or bind verified PC34 owners and authentic game
 
 - **CSB-V1-VARIANT-IDENTITY-DISCOVERY:** Closed 2026-07-30. A recognised
   CSB launcher/probe variant token now restricts graphics discovery to that
-  variant's verified original MD5 and rejects a filename-only archive from a
+  variant's verified original MD5 (including both documented Atari ST 2.x
+  floppy and hard-disk identities) and rejects a filename-only archive from a
   different platform. Unknown/custom tokens retain the prior hash-first,
   filename-fallback search needed for user-managed custom layouts. The boot
   handoff regression covers every documented token and the mixed-layout
