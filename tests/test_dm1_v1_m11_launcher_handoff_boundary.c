@@ -97,6 +97,28 @@ static int count_nonzero_pixels(const unsigned char* pixels, size_t count) {
     return nonzero;
 }
 
+static int message_area_is_black(const unsigned char* framebuffer,
+                                 int framebuffer_width,
+                                 int framebuffer_height) {
+    int x;
+    int y;
+
+    if (!framebuffer || framebuffer_width < 320 || framebuffer_height < 200) {
+        return 0;
+    }
+    /* ReDMCSB TEXT.C's PC message surface is C015 at y=173..199.  Until
+     * a decoded TEXT.C producer is wired, generic M11 telemetry must not
+     * become visible game text in that source-owned rectangle. */
+    for (y = 173; y < 200; ++y) {
+        for (x = 0; x < 320; ++x) {
+            if (framebuffer[y * framebuffer_width + x] != 0u) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 static void make_empty_data_dir(char out[512]) {
     int rc = snprintf(out, 512,
                       "%s%sfirestaff_dm1_launcher_empty_%ld",
@@ -205,6 +227,11 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
     expect_mode_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
                      mode, "M11 launcher frame draws nonblank pixels");
+    M11_MessageLog_Push(&launcher_view.messageLog,
+                        "READY: CLICK CENTER TO ADVANCE", 0);
+    M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
+    expect_mode_true(message_area_is_black(framebuffer, 320, 200), mode,
+                     "M11 host telemetry cannot draw into source-owned C015");
 
     M11_GameView_Shutdown(&launcher_view);
 }
