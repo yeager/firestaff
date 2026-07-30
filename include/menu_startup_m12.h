@@ -646,6 +646,10 @@ typedef struct M12_StartupMenuState {
     char csbImportDm1ConfirmFilename[128];
     M12_MenuView saveBrowserReturnView;
     int dataDirPickerActive;
+    /* Last folder explicitly accepted by the launcher. Asset scans can
+     * temporarily expose a platform-dialog token such as "."; it must
+     * never replace the path shown or persisted by Settings. */
+    char selectedDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     int dataDirScanActive;
     int dataDirScanCancelRequested;
     int dataDirScanCancelled;

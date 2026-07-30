@@ -2046,6 +2046,8 @@ static void m12_preserve_selected_data_directory(M12_StartupMenuState* state,
         snprintf(state->assetStatus.dataDir, sizeof(state->assetStatus.dataDir),
                  "%s", selectedDataDir);
     }
+    snprintf(state->selectedDataDir, sizeof(state->selectedDataDir), "%s",
+             selectedDataDir);
 }
 
 static int m12_begin_async_data_dir_scan(M12_StartupMenuState* state,
@@ -3334,7 +3336,9 @@ static void m12_save_config(M12_StartupMenuState* state) {
     }
     /* Do not let a platform dialog's relative display token leak back into
      * the launcher config through an asset-status fallback. */
-    activeDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    activeDataDir = state->selectedDataDir[0]
+                        ? state->selectedDataDir
+                        : M12_AssetStatus_GetDataDir(&state->assetStatus);
     if (m12_canonicalize_data_directory(activeDataDir,
                                         canonicalDataDir,
                                         sizeof(canonicalDataDir))) {
@@ -3768,6 +3772,20 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                   hasExplicitDataDirOverride,
                                   gameId,
                                   options && options->looseFilesOnlyAssetScan);
+    {
+        char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* scannedDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+        if (!m12_data_directory_dialog_token_is_placeholder(config.dataDir) &&
+            FSP_DirExists(config.dataDir)) {
+            snprintf(state->selectedDataDir, sizeof(state->selectedDataDir),
+                     "%s", config.dataDir);
+        } else if (m12_canonicalize_data_directory(scannedDataDir,
+                                                   canonicalDataDir,
+                                                   sizeof(canonicalDataDir))) {
+            snprintf(state->selectedDataDir, sizeof(state->selectedDataDir),
+                     "%s", canonicalDataDir);
+        }
+    }
     /* Mirror V2.2 modern-assets installation state into the config struct
      * so the value is persisted on save (even though it's set by
      * M12_AssetStatus_Scan at runtime, not by the user). */
@@ -4336,6 +4354,10 @@ const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state)
     }
     if (!state) {
         return "";
+    }
+    if (!m12_data_directory_dialog_token_is_placeholder(state->selectedDataDir) &&
+        FSP_DirExists(state->selectedDataDir)) {
+        return state->selectedDataDir;
     }
     activeDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
     if (!m12_data_directory_dialog_token_is_placeholder(activeDataDir)) {
