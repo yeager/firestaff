@@ -1430,6 +1430,23 @@ int main(void)
               receipt.timer_type_modifiers[2] == 2u,
           "STKOP_ModifyMessage publishes only its authenticated timer-scope receipt");
 
+    {
+        uint16_t abort_cast_words[] = { 0x0acbu };
+        int abort_cast_parameters[14] = {
+            1, 0, -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1, -1, -1
+        };
+
+        configure_action(&action, abort_cast_words, 1);
+        check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, &action, abort_cast_parameters, 14,
+                  NULL) == 1 &&
+                  runner.last_execution.cast_spell_count == 1u &&
+                  runner.last_execution.last_cast_spell_parameters[0] == 1 &&
+                  !runner.last_execution.last_cast_spell_filtered,
+              "STKOP_Cast publishes Magic.cpp action-1 silent abort without a synthetic spell");
+    }
+
     /* The dungeon is caller-owned stack storage; the process exits after this
      * focused receipt check, so do not hand it to the owning cleanup path. */
     return failures == 0 ? 0 : 1;

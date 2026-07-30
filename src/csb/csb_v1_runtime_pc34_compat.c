@@ -27554,6 +27554,23 @@ int csb_v1_runtime_execute_csbwin_cursor_resume_saved_game_filter(
         profile, CSB_V1_EXPOOL_ESL_CURSOR_FILTER, 0, parameters, 6);
 }
 
+/* Magic.cpp::CastSpell action 1 is the one DSA CAST outcome that has no
+ * character, spell-table, timer, projectile, or UI side effect: it is the
+ * explicit "abort without message" branch and returns before any other
+ * source state is read.  Bind only that exact complete case until the other
+ * spell classes can publish their full CHARDESC/TIMER/object transactions.
+ */
+static int csb_v1_runtime_dsa_cast_spell(void *user,
+                                         const int32_t parameters[14],
+                                         int filtered)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+
+    (void)filtered;
+    if (!profile || !parameters) return 0;
+    return parameters[0] == 1 && parameters[3] == -1;
+}
+
 int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_RuntimeDSAFilterBinding *binding,
@@ -27682,6 +27699,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.delete_object = csb_v1_runtime_dsa_delete_object;
     candidate.add_object = csb_v1_runtime_dsa_add_object;
     candidate.throw_object = csb_v1_runtime_dsa_throw_object;
+    candidate.cast_spell = csb_v1_runtime_dsa_cast_spell;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
@@ -27932,6 +27950,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.delete_object = csb_v1_runtime_dsa_delete_object;
     candidate.add_object = csb_v1_runtime_dsa_add_object;
     candidate.throw_object = csb_v1_runtime_dsa_throw_object;
+    candidate.cast_spell = csb_v1_runtime_dsa_cast_spell;
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;

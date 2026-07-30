@@ -43189,3 +43189,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   a data-free CSB contract for the default map, menu/gameplay contexts, stick
   directions, and dead-zone. This verifies that CSB receives the same M11
   COMMAND.C input tokens as keyboard and pointer routes.
+
+- ✅ 2026-07-30 CSBWin DSA silent-cast binding: the production candidate
+  runner now accepts only `Magic.cpp::CastSpell` action 1 with disabled-time
+  `-1`, CSBWin's explicit no-message/no-state-change abort. The runtime test
+  proves `STKOP_Cast` publishes that exact fourteen-word request; all other
+  spell classes remain intentionally fail-closed pending complete owners.
