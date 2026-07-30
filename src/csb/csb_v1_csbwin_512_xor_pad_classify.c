@@ -245,6 +245,7 @@ static void write_fixed_text(uint8_t *dst, size_t dst_size, const char *src)
 }
 
 static void parse_champion_summary(const uint8_t *record,
+                                   CSB_V1_CSBWin512ByteOrder byte_order,
                                    CSB_V1_CSBWin512ChampionSummary *out)
 {
     size_t i;
@@ -255,7 +256,7 @@ static void parse_champion_summary(const uint8_t *record,
                     record + CSBWIN_CHARDESC_OFF_NAME, 8u);
     copy_fixed_text(out->title, sizeof(out->title),
                     record + CSBWIN_CHARDESC_OFF_TITLE, 16u);
-    out->word24 = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_WORD24);
+    out->word24 = (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_WORD24, byte_order);
     out->facing = record[CSBWIN_CHARDESC_OFF_FACING];
     out->char_position = record[CSBWIN_CHARDESC_OFF_POSITION];
     out->byte30 = record[CSBWIN_CHARDESC_OFF_BYTE30];
@@ -270,23 +271,23 @@ static void parse_champion_summary(const uint8_t *record,
     out->poison_count = record[CSBWIN_CHARDESC_OFF_POISON_COUNT];
     out->ubyte43 = record[CSBWIN_CHARDESC_OFF_UBYTE43];
     out->busy_timer =
-        (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_BUSY_TIMER);
+        (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_BUSY_TIMER, byte_order);
     out->timer_index =
-        (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_TIMER_INDEX);
+        (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_TIMER_INDEX, byte_order);
     out->char_flags =
-        (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_CHAR_FLAGS);
-    out->wounds = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_WOUNDS);
-    out->hp = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 0u);
-    out->max_hp = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 2u);
-    out->stamina = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 4u);
+        (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_CHAR_FLAGS, byte_order);
+    out->wounds = (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_WOUNDS, byte_order);
+    out->hp = (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_HP + 0u, byte_order);
+    out->max_hp = (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_HP + 2u, byte_order);
+    out->stamina = (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_HP + 4u, byte_order);
     out->max_stamina =
-        (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 6u);
-    out->mana = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 8u);
+        (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_HP + 6u, byte_order);
+    out->mana = (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_HP + 8u, byte_order);
     out->max_mana =
-        (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_HP + 10u);
-    out->word64 = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_WORD64);
-    out->food = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_FOOD);
-    out->water = (int16_t)read_le16(record, CSBWIN_CHARDESC_OFF_WATER);
+        (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_HP + 10u, byte_order);
+    out->word64 = (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_WORD64, byte_order);
+    out->food = (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_FOOD, byte_order);
+    out->water = (int16_t)read_word(record, CSBWIN_CHARDESC_OFF_WATER, byte_order);
     for (i = 0u; i < 7u; ++i) {
         const size_t base = CSBWIN_CHARDESC_OFF_ATTRIBUTES + i * 3u;
         out->attributes[i][0] = record[base + 0u];
@@ -295,21 +296,21 @@ static void parse_champion_summary(const uint8_t *record,
     }
     for (i = 0u; i < 20u; ++i) {
         const size_t base = CSBWIN_CHARDESC_OFF_SKILLS + i * 6u;
-        out->skill_temp_adjust[i] = (int16_t)read_le16(record, base);
-        out->skill_experience[i] = read_le32(record, base + 2u);
+        out->skill_temp_adjust[i] = (int16_t)read_word(record, base, byte_order);
+        out->skill_experience[i] = read_long(record, base + 2u, byte_order);
     }
     for (i = 0u; i < 30u; ++i) {
         out->possessions[i] =
-            read_le16(record, CSBWIN_CHARDESC_OFF_POSSESSIONS + i * 2u);
+            read_word(record, CSBWIN_CHARDESC_OFF_POSSESSIONS + i * 2u, byte_order);
     }
-    out->load = read_le16(record, CSBWIN_CHARDESC_OFF_LOAD);
-    out->shield_strength = read_le16(record, CSBWIN_CHARDESC_OFF_SHIELD);
-    out->talents = read_le32(record, CSBWIN_CHARDESC_OFF_TALENTS);
-    out->fingerprint = read_le16(record, CSBWIN_CHARDESC_OFF_FINGERPRINT);
+    out->load = read_word(record, CSBWIN_CHARDESC_OFF_LOAD, byte_order);
+    out->shield_strength = read_word(record, CSBWIN_CHARDESC_OFF_SHIELD, byte_order);
+    out->talents = read_long(record, CSBWIN_CHARDESC_OFF_TALENTS, byte_order);
+    out->fingerprint = read_word(record, CSBWIN_CHARDESC_OFF_FINGERPRINT, byte_order);
     out->cause_of_damage =
-        read_le16(record, CSBWIN_CHARDESC_OFF_CAUSE_OF_DAMAGE);
+        read_word(record, CSBWIN_CHARDESC_OFF_CAUSE_OF_DAMAGE, byte_order);
     out->monster_causing_damage =
-        read_le16(record, CSBWIN_CHARDESC_OFF_MONSTER_CAUSING_DAMAGE);
+        read_word(record, CSBWIN_CHARDESC_OFF_MONSTER_CAUSING_DAMAGE, byte_order);
     memcpy(out->portrait,
            record + CSBWIN_CHARDESC_OFF_PORTRAIT,
            CSBWIN_CHARDESC_PORTRAIT_BYTES);
@@ -388,6 +389,7 @@ static void write_champion_summary(
 }
 
 static void parse_character_tail(const uint8_t *characters,
+                                 CSB_V1_CSBWin512ByteOrder byte_order,
                                  CSB_V1_CSBWin512BodyReport *out)
 {
     const uint8_t *tail;
@@ -395,17 +397,17 @@ static void parse_character_tail(const uint8_t *characters,
     if (!characters || !out) return;
     tail = characters + CSBWIN_CHARACTER_TAIL_OFF;
     out->character_tail_brightness =
-        (int16_t)read_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_BRIGHTNESS);
+        (int16_t)read_word(tail, CSBWIN_CHARACTER_TAIL_OFF_BRIGHTNESS, byte_order);
     out->character_tail_see_thru_walls =
         tail[CSBWIN_CHARACTER_TAIL_OFF_SEE_THRU_WALLS];
     out->character_tail_magic_footprints_active =
         tail[CSBWIN_CHARACTER_TAIL_OFF_MAGIC_FOOTPRINTS_ACTIVE];
     out->character_tail_party_shield =
-        (int16_t)read_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_PARTY_SHIELD);
+        (int16_t)read_word(tail, CSBWIN_CHARACTER_TAIL_OFF_PARTY_SHIELD, byte_order);
     out->character_tail_fire_shield =
-        (int16_t)read_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_FIRE_SHIELD);
+        (int16_t)read_word(tail, CSBWIN_CHARACTER_TAIL_OFF_FIRE_SHIELD, byte_order);
     out->character_tail_spell_shield =
-        (int16_t)read_le16(tail, CSBWIN_CHARACTER_TAIL_OFF_SPELL_SHIELD);
+        (int16_t)read_word(tail, CSBWIN_CHARACTER_TAIL_OFF_SPELL_SHIELD, byte_order);
     out->character_tail_num_footprint_entries =
         tail[CSBWIN_CHARACTER_TAIL_OFF_NUM_FOOTPRINT_ENT];
     out->character_tail_freeze_life_timer =
@@ -416,8 +418,8 @@ static void parse_character_tail(const uint8_t *characters,
         tail[CSBWIN_CHARACTER_TAIL_OFF_LAST_MAGIC_FOOTPRINT];
     for (i = 0u; i < 24u; ++i) {
         out->character_tail_party_footprints[i] =
-            read_le16(tail,
-                      CSBWIN_CHARACTER_TAIL_OFF_PARTY_FOOTPRINTS + i * 2u);
+            read_word(tail, CSBWIN_CHARACTER_TAIL_OFF_PARTY_FOOTPRINTS + i * 2u,
+                      byte_order);
         out->character_tail_byte13220[i] =
             tail[CSBWIN_CHARACTER_TAIL_OFF_BYTE13220 + i];
     }
@@ -465,6 +467,7 @@ static void write_character_tail(
 
 static void parse_item16_summaries(const uint8_t *decoded,
                                    uint16_t total,
+                                   CSB_V1_CSBWin512ByteOrder byte_order,
                                    CSB_V1_CSBWin512BodyReport *out)
 {
     size_t i;
@@ -482,7 +485,7 @@ static void parse_item16_summaries(const uint8_t *decoded,
         memset(item, 0, sizeof(*item));
         item->valid = 1;
         item->truncated = (total > CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES);
-        item->monster_index = read_le16(record, 0u);
+        item->monster_index = read_word(record, 0u, byte_order);
         item->facings = record[2u];
         item->positions = record[3u];
         item->ubyte4 = record[4u];
@@ -526,6 +529,7 @@ static void write_item16_summary(uint8_t *record,
 static void parse_timer_summaries(const uint8_t *decoded,
                                   uint16_t total,
                                   uint16_t record_size,
+                                  CSB_V1_CSBWin512ByteOrder byte_order,
                                   CSB_V1_CSBWin512BodyReport *out)
 {
     size_t i;
@@ -544,7 +548,7 @@ static void parse_timer_summaries(const uint8_t *decoded,
         timer->valid = 1;
         timer->truncated = (total > CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES);
         timer->source_index = (uint16_t)i;
-        timer->time = read_le32(record, 0u);
+        timer->time = read_long(record, 0u, byte_order);
         timer->function = record[4u];
         timer->ubyte5 = record[5u];
         timer->ubyte6 = record[6u];
@@ -552,7 +556,7 @@ static void parse_timer_summaries(const uint8_t *decoded,
         timer->ubyte8 = record[8u];
         timer->ubyte9 = record[9u];
         if (record_size >= 12u) {
-            timer->sequence = read_le16(record, 10u);
+            timer->sequence = read_word(record, 10u, byte_order);
         }
         if (record_size >= 13u) {
             timer->level = record[12u];
@@ -584,6 +588,7 @@ static void write_timer_summary(uint8_t *record,
 
 static void parse_timer_queue_summary(const uint8_t *decoded,
                                       uint16_t total,
+                                      CSB_V1_CSBWin512ByteOrder byte_order,
                                       CSB_V1_CSBWin512BodyReport *out)
 {
     size_t i;
@@ -596,7 +601,7 @@ static void parse_timer_queue_summary(const uint8_t *decoded,
     }
     out->timer_queue_summary_count = (uint16_t)count;
     for (i = 0u; i < count; ++i) {
-        out->timer_queue[i] = read_le16(decoded, i * 2u);
+        out->timer_queue[i] = read_word(decoded, i * 2u, byte_order);
     }
 }
 
@@ -961,6 +966,20 @@ int csb_v1_csbwin_512_decode_stream_section(
     uint8_t *out,
     size_t out_capacity)
 {
+    return csb_v1_csbwin_512_decode_stream_section_ordered(
+        src, size, initial_hash, expected_checksum,
+        CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN, out, out_capacity);
+}
+
+int csb_v1_csbwin_512_decode_stream_section_ordered(
+    const uint8_t *src,
+    size_t size,
+    uint16_t initial_hash,
+    uint16_t expected_checksum,
+    CSB_V1_CSBWin512ByteOrder byte_order,
+    uint8_t *out,
+    size_t out_capacity)
+{
     uint16_t actual_checksum;
 
     if (!src || !out) {
@@ -975,8 +994,7 @@ int csb_v1_csbwin_512_decode_stream_section(
      * and accepts the section only when the returned checksum equals
      * the GAMEBLOCK1 section checksum. */
     actual_checksum = unscramble_block(
-        out, initial_hash, (uint16_t)(size / 2u),
-        CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN);
+        out, initial_hash, (uint16_t)(size / 2u), byte_order);
     if (actual_checksum != expected_checksum) {
         memset(out, 0, size);
         return CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM;
@@ -1714,6 +1732,7 @@ static int verify_body_section(
     size_t section_size,
     uint16_t initial_hash,
     uint16_t expected_checksum,
+    CSB_V1_CSBWin512ByteOrder byte_order,
     CSB_V1_CSBWin512BodySectionReport *section,
     uint8_t **out_decoded)
 {
@@ -1746,9 +1765,9 @@ static int verify_body_section(
     if (!decoded) {
         return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
     }
-    rc = csb_v1_csbwin_512_decode_stream_section(
+    rc = csb_v1_csbwin_512_decode_stream_section_ordered(
         bytes + offset, section_size, initial_hash, expected_checksum,
-        decoded, section_size);
+        byte_order, decoded, section_size);
     if (rc != CSB_V1_CSBWIN_512_OK) {
         free(decoded);
         return rc;
@@ -1772,6 +1791,8 @@ int csb_v1_csbwin_512_verify_save_body(
     size_t item16_size = 0u;
     size_t timer_size = 0u;
     size_t timer_queue_size = 0u;
+    CSB_V1_CSBWin512ByteOrder body_byte_order =
+        CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN;
     int rc;
 
     if (!bytes || !out) {
@@ -1796,6 +1817,9 @@ int csb_v1_csbwin_512_verify_save_body(
         return CSB_V1_CSBWIN_512_ERR_BAD_KEYS;
     }
     out->header_valid = 1;
+    /* The header classifier's authenticated word order also applies to this
+     * producer's encrypted body images. */
+    body_byte_order = out->header.byte_order;
 
     /* CSBWin/SaveGame.cpp lines 1768-1775: GAMEBLOCK2 is the
      * first body section after GAMEBLOCK1 and is always 128 bytes. */
@@ -1803,6 +1827,7 @@ int csb_v1_csbwin_512_verify_save_body(
         bytes, size, CSB_V1_CSBWIN_512_SECTION_BLOCK2, offset, 128u,
         out->header.public_fields.csbwin_block2_hash,
         out->header.public_fields.csbwin_block2_checksum,
+        out->header.byte_order,
         &section, &block2);
     if (rc != CSB_V1_CSBWIN_512_OK) {
         return rc;
@@ -1815,27 +1840,27 @@ int csb_v1_csbwin_512_verify_save_body(
      * the load path at lines 1775-1811 after swapBlock2(). These
      * fields are the bounded startup/resume handoff summary; the
      * raw decoded sections are still not imported here. */
-    out->game_time = read_le32(block2, 0u);
-    out->random_seed = read_le32(block2, 4u);
-    out->object_in_hand = read_le16(block2, 8u);
-    out->num_character = read_le16(block2, 10u);
-    out->party_x = read_le16(block2, 12u);
-    out->party_y = read_le16(block2, 14u);
-    out->party_facing = read_le16(block2, 16u);
-    out->party_level = read_le16(block2, 18u);
-    out->hand_char = read_le16(block2, 20u);
-    out->magic_caster = read_le16(block2, 22u);
-    out->num_timer = read_le16(block2, 24u);
-    out->first_avail_timer = read_le16(block2, 26u);
-    out->max_timers = read_le16(block2, 28u);
-    out->item16_queue_len = read_le16(block2, 30u);
-    out->last_monster_attack_time = read_le32(block2, 32u);
-    out->last_party_move_time = read_le32(block2, 36u);
-    out->party_move_disable_timer = read_le16(block2, 40u);
-    out->word11712 = read_le16(block2, 42u);
-    out->word11714 = read_le16(block2, 44u);
-    out->max_item16 = read_le16(block2, 46u);
-    out->timer_sequence = read_le16(block2, 48u);
+    out->game_time = read_long(block2, 0u, body_byte_order);
+    out->random_seed = read_long(block2, 4u, body_byte_order);
+    out->object_in_hand = read_word(block2, 8u, body_byte_order);
+    out->num_character = read_word(block2, 10u, body_byte_order);
+    out->party_x = read_word(block2, 12u, body_byte_order);
+    out->party_y = read_word(block2, 14u, body_byte_order);
+    out->party_facing = read_word(block2, 16u, body_byte_order);
+    out->party_level = read_word(block2, 18u, body_byte_order);
+    out->hand_char = read_word(block2, 20u, body_byte_order);
+    out->magic_caster = read_word(block2, 22u, body_byte_order);
+    out->num_timer = read_word(block2, 24u, body_byte_order);
+    out->first_avail_timer = read_word(block2, 26u, body_byte_order);
+    out->max_timers = read_word(block2, 28u, body_byte_order);
+    out->item16_queue_len = read_word(block2, 30u, body_byte_order);
+    out->last_monster_attack_time = read_long(block2, 32u, body_byte_order);
+    out->last_party_move_time = read_long(block2, 36u, body_byte_order);
+    out->party_move_disable_timer = read_word(block2, 40u, body_byte_order);
+    out->word11712 = read_word(block2, 42u, body_byte_order);
+    out->word11714 = read_word(block2, 44u, body_byte_order);
+    out->max_item16 = read_word(block2, 46u, body_byte_order);
+    out->timer_sequence = read_word(block2, 48u, body_byte_order);
     free(block2);
     block2 = NULL;
 
@@ -1854,6 +1879,7 @@ int csb_v1_csbwin_512_verify_save_body(
         bytes, size, CSB_V1_CSBWIN_512_SECTION_ITEM16, offset, item16_size,
         out->header.public_fields.csbwin_item16_hash,
         out->header.public_fields.csbwin_item16_checksum,
+        out->header.byte_order,
         &section, &decoded);
     if (rc != CSB_V1_CSBWIN_512_OK) {
         return rc;
@@ -1864,7 +1890,8 @@ int csb_v1_csbwin_512_verify_save_body(
         /* CSBWin/SaveGame.cpp:480-486 swaps ITEM16.word0 after reading
          * the ITEM16 body. CSBWin/CSB.h:2193-2230 defines the remaining
          * byte fields as raw group movement/status state. */
-        parse_item16_summaries(decoded, out->max_item16, out);
+        parse_item16_summaries(decoded, out->max_item16,
+                               body_byte_order, out);
     }
     free(decoded);
     decoded = NULL;
@@ -1874,6 +1901,7 @@ int csb_v1_csbwin_512_verify_save_body(
         bytes, size, CSB_V1_CSBWIN_512_SECTION_CHARACTERS, offset, 3328u,
         out->header.public_fields.csbwin_character_hash,
         out->header.public_fields.csbwin_character_checksum,
+        out->header.byte_order,
         &section, &decoded);
     if (rc != CSB_V1_CSBWIN_512_OK) {
         return rc;
@@ -1893,9 +1921,10 @@ int csb_v1_csbwin_512_verify_save_body(
              ++champion_index) {
             parse_champion_summary(
                 decoded + champion_index * CSBWIN_CHARDESC_STRIDE,
+                body_byte_order,
                 &out->champions[champion_index]);
         }
-        parse_character_tail(decoded, out);
+        parse_character_tail(decoded, body_byte_order, out);
     }
     free(decoded);
     decoded = NULL;
@@ -1905,6 +1934,7 @@ int csb_v1_csbwin_512_verify_save_body(
         bytes, size, CSB_V1_CSBWIN_512_SECTION_TIMERS, offset, timer_size,
         out->header.public_fields.csbwin_timers_hash,
         out->header.public_fields.csbwin_timers_checksum,
+        out->header.byte_order,
         &section, &decoded);
     if (rc != CSB_V1_CSBWIN_512_OK) {
         return rc;
@@ -1915,7 +1945,12 @@ int csb_v1_csbwin_512_verify_save_body(
         /* CSBWin/SaveGame.cpp:563-615 swaps timer time/sequence and
          * function-specific words after reading. This summary keeps the raw
          * fixed TIMER fields plus the already-decoded LE time/sequence. */
-        parse_timer_summaries(decoded, out->max_timers, timer_record_size, out);
+        parse_timer_summaries(decoded, out->max_timers, timer_record_size,
+                              /* SaveGame.cpp swapTimers serializes TIMER's
+                               * multi-byte fields as LE even when the older
+                               * GAMEBLOCK/queue producer uses BE words. */
+                              CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN,
+                              out);
         if (timer_size <= sizeof(out->timer_raw)) {
             memcpy(out->timer_raw, decoded, timer_size);
             out->timer_raw_size = timer_size;
@@ -1931,6 +1966,7 @@ int csb_v1_csbwin_512_verify_save_body(
         timer_queue_size,
         out->header.public_fields.csbwin_timer_queue_hash,
         out->header.public_fields.csbwin_timer_queue_checksum,
+        out->header.byte_order,
         &section, &decoded);
     if (rc != CSB_V1_CSBWIN_512_OK) {
         return rc;
@@ -1940,7 +1976,8 @@ int csb_v1_csbwin_512_verify_save_body(
     if (decoded) {
         /* CSBWin/Data.h:1562 exposes TimerQueue() as uint16 entries and
          * SaveGame.cpp:1851 decodes exactly MaxTimers * 2 bytes. */
-        parse_timer_queue_summary(decoded, out->max_timers, out);
+        parse_timer_queue_summary(decoded, out->max_timers,
+                                  body_byte_order, out);
         if (timer_queue_size <= sizeof(out->timer_queue_raw)) {
             memcpy(out->timer_queue_raw, decoded, timer_queue_size);
             out->timer_queue_raw_size = timer_queue_size;

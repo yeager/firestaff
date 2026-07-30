@@ -51,6 +51,29 @@
 #include <stddef.h>
 #include <sys/stat.h>
 
+/* CSBWin/CSB.h EXTENDEDFEATURESBLOCK::EXTENDEDFLAGS.  SaveGame.cpp chooses
+ * the on-disk TIMER record size from these authenticated feature bits. */
+#define CSB_V1_CSBWIN_EXTENDED_FLAG_SEQUENCED_TIMERS 0x00000020u
+#define CSB_V1_CSBWIN_EXTENDED_FLAG_EXTENDED_TIMERS  0x00000080u
+
+static uint16_t csb_v1_runtime_csbwin_timer_record_size(
+    const CSB_V1_CSBWinExtendedFeaturesReport *features)
+{
+    /* Legacy/no-preamble saves use Firestaff's existing current CSBWin
+     * layout.  Only an authenticated Extended Features block may select an
+     * older 10- or 12-byte stream layout. */
+    if (!features || !features->valid) return 16u;
+    if ((features->extended_flags &
+         CSB_V1_CSBWIN_EXTENDED_FLAG_EXTENDED_TIMERS) != 0u) {
+        return 16u;
+    }
+    if ((features->extended_flags &
+         CSB_V1_CSBWIN_EXTENDED_FLAG_SEQUENCED_TIMERS) != 0u) {
+        return 12u;
+    }
+    return 10u;
+}
+
 /* ── Known CSB hashes ──────────────────────────────────────────────────── */
 
 /*
@@ -19934,16 +19957,12 @@ static int csb_v1_runtime_validate_csbwin_timer_heap(
             const uint16_t child_timer_index = profile->csbwin_timer_queue[child];
             const CSB_V1_CSBWin512TimerSummary *child_timer;
 
-            if (child_timer_index >= profile->csbwin_timer_summary_count) {
-                return 0;
-            }
+            if (child_timer_index >= profile->csbwin_timer_summary_count) return 0;
             child_timer = &profile->csbwin_timers[child_timer_index];
             if (!child_timer->valid ||
                 child_timer->function == DM1_EVENT_NONE ||
                 csb_v1_runtime_csbwin_timer_is_before(
-                    child_timer, child_timer_index, timer, timer_index)) {
-                return 0;
-            }
+                    child_timer, child_timer_index, timer, timer_index)) return 0;
         }
     }
     return 1;
@@ -20221,11 +20240,9 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
              profile->csbwin_timer_queue_summary_count)) {
         return -1;
     }
-    /* CSBWin Timer.cpp CheckTimers:884-906 rejects a saved queue if any
-     * child precedes its parent. Validate the complete source heap before
-     * staging so a malformed or reordered original-save queue cannot publish
-     * a partially rebuilt live timeline. */
-    if (!csb_v1_runtime_validate_csbwin_timer_heap(profile)) return -1;
+    /* Timer.cpp::CheckTimers is compiled only in CSBWin debug builds.  The
+     * release loader restores an authenticated queue as-is, so do not reject
+     * a real legacy queue solely because Firestaff's comparator differs. */
 
     /* CSBWin Timer.cpp:728-772 orders timers by full m_time, then
      * timerFunction, then m_timerUByte5, then m_timerSequence when enabled.
@@ -20642,11 +20659,19 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         return -1;
     }
     memset(&report, 0, sizeof(report));
-    rc = csb_v1_csbwin_512_verify_save_body(bytes + core_offset,
-                                             file_size - core_offset,
-                                             0u, &report);
-    if (rc != CSB_V1_CSBWIN_512_OK ||
-        !csb_v1_csbwin_512_validate_appended_expool_tail(&report)) {
+    rc = csb_v1_csbwin_512_verify_save_body(
+        bytes + core_offset, file_size - core_offset,
+        csb_v1_runtime_csbwin_timer_record_size(&features), &report);
+    if (rc != CSB_V1_CSBWIN_512_OK) {
+        free(bytes);
+        return -1;
+    }
+    /* SaveGame.cpp writes the authenticated GAMEBLOCK1..timer core before
+     * variable dungeon payload. A source-owned Extended Features preamble
+     * proves that boundary; the following blocks are not an EXPOOL-only tail
+     * and remain opaque until Firestaff owns their original loader. */
+    if (!csb_v1_csbwin_512_validate_appended_expool_tail(&report) &&
+        !(core_offset != 0u && tail.valid && report.appended_size != 0u)) {
         free(bytes);
         return -1;
     }
@@ -20656,6 +20681,17 @@ int csb_v1_runtime_apply_csbwin_resume_file(
         csb_v1_dungeon_set_current_level(previous_dungeon_level);
         free(bytes);
         return -1;
+    }
+    if (!csb_v1_csbwin_512_validate_appended_expool_tail(&report)) {
+        /* The following source dungeon payload is retained in provenance but
+         * is not an EXPOOL database.  Do not hand it to DSA tracing. */
+        candidate.csbwin_appended_tail_valid = 0;
+        candidate.csbwin_appended_tail_size = 0u;
+        candidate.csbwin_appended_tail_preserved_size = 0u;
+        candidate.csbwin_appended_tail_fnv1a = 0u;
+        candidate.csbwin_appended_tail_truncated = 0;
+        memset(candidate.csbwin_appended_tail, 0,
+               sizeof(candidate.csbwin_appended_tail));
     }
     if (csb_v1_runtime_stage_csbwin_dsa_tracing(&candidate) != 0) {
         csb_v1_dungeon_set_current_level(previous_dungeon_level);

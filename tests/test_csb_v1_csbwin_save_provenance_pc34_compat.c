@@ -3,6 +3,7 @@
 #include "csbwin_resume_fixture.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int passed;
@@ -27,6 +28,32 @@ static int append_invalid_expool_tail(const char *path)
         return 0;
     }
     return fclose(fp) == 0;
+}
+
+static void test_staged_real_csbwin_save(void)
+{
+    const char *path = getenv("FIRESTAFF_CSBWIN_REAL_SAVE");
+    CSB_V1_RuntimeProfile runtime;
+    CSB_V1_CSBWinSaveProvenance_PC34 provenance;
+
+    if (!path || path[0] == '\0') {
+        printf("SKIP: FIRESTAFF_CSBWIN_REAL_SAVE is not staged\n");
+        return;
+    }
+
+    csb_v1_runtime_init(&runtime, NULL);
+    CHECK(csb_v1_runtime_apply_csbwin_resume_file(&runtime, path, 0u) == 0,
+          "staged CSBWin save completes the production resume handoff");
+    CHECK(csb_v1_runtime_get_csbwin_save_provenance(&runtime, &provenance) == 0 &&
+          provenance.valid && provenance.source_size > provenance.core_offset &&
+          provenance.core_offset > 0u &&
+          provenance.key_verdict == CSB_V1_CSBWIN_512_VERDICT_CSB &&
+          strcmp(provenance.source_path, path) == 0,
+          "staged CSBWin resume preserves the authenticated prefix/core provenance");
+    CHECK(runtime.csbwin_extended_features_valid &&
+          runtime.party_state_valid && runtime.csbwin_body_runtime_summary_valid,
+          "staged CSBWin save publishes Extended Features and source body state");
+    csb_v1_runtime_cleanup(&runtime);
 }
 
 int main(void)
@@ -64,6 +91,8 @@ int main(void)
           runtime.csbwin_save_provenance.valid &&
           strcmp(runtime.csbwin_save_provenance.source_path, good) == 0,
           "failed original-save import rolls back live runtime and provenance");
+
+    test_staged_real_csbwin_save();
 
     remove(good);
     remove(bad);

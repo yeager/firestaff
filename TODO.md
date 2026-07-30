@@ -1474,6 +1474,15 @@ that its exact runtime path is not already source-locked and tested.
     `FIRESTAFF_CSB_ATARI_SAVE_CORPUS` and exercises original big-endian
     GAMEBLOCK1/2 decoding, runtime Resume, atomic write-back, canonical-slot
     backup recovery, and champion mutation without creating substitute bytes.
+    2026-07-30: a real official CSBWin `csbgame3.dat` corpus save (61,465
+    bytes; SHA-256 `b3a8d7fb920346835c48c86a945d90d565b6bc5c250f83b5a56c1b0d8b95ec70`)
+    now completes the production resume handoff. Its authenticated Extended
+    Features preamble selects the 12-byte sequenced TIMER layout, its C29
+    GAMEBLOCK1 uses big-endian stream authentication, and all 436 timer slots
+    are retained. The post-core dungeon payload remains intentionally opaque:
+    it is preserved in source provenance but not misclassified as EXPOOL.
+    Remaining: full original dungeon-tail loader/write-back and a broader
+    multi-version corpus with DSA-bearing saves.
     2026-07-30: the local original Atari archive now has a skip-safe CTest
     corpus regression that extracts its genuine `MINI.DAT` and proves decode
     plus GAMEBLOCK2 byte-preserving round-trip. This is campaign-save coverage,

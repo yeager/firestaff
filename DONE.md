@@ -43390,3 +43390,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   its proven silent-abort route; filtered casts remain fail-closed until that
   full source transaction is implemented. The runtime DSA regression covers
   both outcomes.
+
+# CSBWin real-save resume corpus (2026-07-30)
+
+- The official CSBWin `csbgame3.dat` corpus now completes production resume:
+  verified Extended Features, C29 GAMEBLOCK1, 12-byte sequenced TIMER stream,
+  436 timer slots, party state and source-file provenance. The focused
+  `test_csb_v1_csbwin_save_provenance_pc34_compat` passes 10/10 with
+  `FIRESTAFF_CSBWIN_REAL_SAVE` set to the staged original file. Its later
+  dungeon payload remains opaque rather than being falsely consumed as EXPOOL;
+  full tail loading and write-back remain tracked in `CSB-ORIGINAL-SAVE-CORPUS`.

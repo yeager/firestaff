@@ -58,23 +58,29 @@ static int g_failures;
 
 /* ── Helpers ────────────────────────────────────────────────────────── */
 
-static int read_file_first_n(const char *path, uint8_t *buf, size_t buf_cap,
-                             size_t *out_size)
+static int read_file_alloc(const char *path, size_t max_size,
+                           uint8_t **out_bytes, size_t *out_size)
 {
     FILE *f;
     long sz;
     size_t got;
-    if (!path || !buf || buf_cap == 0u || !out_size) return 0;
+    uint8_t *bytes;
+    if (!path || !out_bytes || !out_size) return 0;
+    *out_bytes = NULL;
+    *out_size = 0u;
     f = fopen(path, "rb");
     if (!f) return 0;
     if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return 0; }
     sz = ftell(f);
     if (sz < 0) { fclose(f); return 0; }
-    if (fseek(f, 0, SEEK_SET) != 0) { fclose(f); return 0; }
-    if ((size_t)sz > buf_cap) sz = (long)buf_cap;
-    got = fread(buf, 1u, (size_t)sz, f);
+    if ((size_t)sz == 0u || (size_t)sz > max_size ||
+        fseek(f, 0, SEEK_SET) != 0) { fclose(f); return 0; }
+    bytes = (uint8_t *)malloc((size_t)sz);
+    if (!bytes) { fclose(f); return 0; }
+    got = fread(bytes, 1u, (size_t)sz, f);
     fclose(f);
-    if (got == 0u) return 0;
+    if (got != (size_t)sz) { free(bytes); return 0; }
+    *out_bytes = bytes;
     *out_size = got;
     return 1;
 }
@@ -155,9 +161,15 @@ int main(int argc, char **argv)
 {
     char default_dir[1024];
     const char *dir;
+    uint8_t *save_bytes = NULL;
     uint8_t scratch[CSB_V1_CSBWIN_BLOCK1_BYTES];
     uint8_t scratch_copy[CSB_V1_CSBWIN_BLOCK1_BYTES];
     size_t file_size = 0u;
+    size_t gameblock_offset = 0u;
+    CSB_V1_CSBWinExtendedFeaturesReport features;
+    CSB_V1_CSBWinExtendedDSAReport dsa;
+    CSB_V1_CSBWinExtendedTailReport tail;
+    CSB_V1_CSBWin512BodyReport body;
     CSB_V1_CSBWin512Report report;
     CSB_V1_CSBWin512Report report2;
     int rc;
@@ -196,23 +208,43 @@ int main(int argc, char **argv)
         }
         printf("real_save=%s\n", found_path);
 
-        if (!read_file_first_n(found_path, scratch, sizeof(scratch),
-                               &file_size)) {
+        if (!read_file_alloc(found_path, 4u * 1024u * 1024u, &save_bytes,
+                             &file_size)) {
             printf("SKIP: failed to read %s; data-free unit test "
                    "still proves the contract.\n", found_path);
             return 0;
         }
-        printf("real_save_size=%zu (clamped to first %zu bytes for "
-               "the 512-byte XOR-pad classifier)\n",
-               file_size, sizeof(scratch));
-        if (file_size < CSB_V1_CSBWIN_BLOCK1_BYTES) {
+        printf("real_save_size=%zu\n", file_size);
+        memset(&features, 0, sizeof(features));
+        memset(&dsa, 0, sizeof(dsa));
+        memset(&tail, 0, sizeof(tail));
+        rc = csb_v1_csbwin_512_inspect_extended_tail(
+            save_bytes, file_size, &tail, &dsa, &features);
+        if (rc == CSB_V1_CSBWIN_EXTENDED_ABSENT) {
+            gameblock_offset = 0u;
+            printf("extended_features=absent gameblock1_offset=0\n");
+        } else if (rc == CSB_V1_CSBWIN_EXTENDED_OK && tail.valid) {
+            gameblock_offset = tail.next_payload_offset;
+            printf("extended_features=valid dsa_count=%u gameblock1_offset=%zu\n",
+                   features.dsa_count, gameblock_offset);
+            printf("extended_flags=0x%08x\n", features.extended_flags);
+        } else {
+            printf("SKIP: CSBWin Extended Features are not fully authenticated "
+                   "(result=%d); no GAMEBLOCK1 offset may be guessed.\n", rc);
+            free(save_bytes);
+            return 0;
+        }
+        if (gameblock_offset > file_size ||
+            file_size - gameblock_offset < CSB_V1_CSBWIN_BLOCK1_BYTES) {
             printf("SKIP: real save is %zu bytes; the 512-byte "
-                   "XOR-pad classifier requires at least 512 bytes "
+                   "XOR-pad classifier requires a complete GAMEBLOCK1 "
                    "(CSBWin/Chaos.cpp:1326 ReadGameBlock1). "
                    "Data-free unit test still proves the contract.\n",
                    file_size);
+            free(save_bytes);
             return 0;
         }
+        memcpy(scratch, save_bytes + gameblock_offset, sizeof(scratch));
     }
 
     /* ── Classify the real bytes ── */
@@ -247,12 +279,12 @@ int main(int argc, char **argv)
     /* ── Invariants ── */
     CHECK(rc == CSB_V1_CSBWIN_512_OK,
           "classify returns OK on real bytes");
-    /* Real CSBWin saves should resolve to either CSB or DM
-     * (NEITHER would mean the block is corrupt or foreign). */
+    /* The offset is source-owned: CSBWin reads Extended Features first and
+     * calls ReadUnscrambleBlock only at its tail boundary. A discovered
+     * GAMEBLOCK1 must resolve to the CSB or DM key, never NEITHER. */
     CHECK(report.verdict == CSB_V1_CSBWIN_512_VERDICT_CSB ||
-          report.verdict == CSB_V1_CSBWIN_512_VERDICT_DM ||
-          report.verdict == CSB_V1_CSBWIN_512_VERDICT_NEITHER,
-          "verdict is one of the documented enum values");
+          report.verdict == CSB_V1_CSBWIN_512_VERDICT_DM,
+          "source-owned GAMEBLOCK1 resolves to a documented CSBWin key");
     /* If the verdict is CSB or DM, the first-half and second-half
      * checksums must agree (D5W == D6W per CSBWin
      * UnscrambleBlock1). */
@@ -265,9 +297,6 @@ int main(int argc, char **argv)
         CHECK(report.byte_order == CSB_V1_CSBWIN_512_BYTE_ORDER_LITTLE_ENDIAN ||
               report.byte_order == CSB_V1_CSBWIN_512_BYTE_ORDER_BIG_ENDIAN,
               "validated word byte order is recorded");
-    } else {
-        printf("NOTE: real bytes produced a NEITHER verdict; this "
-               "is acceptable for corrupt / foreign blocks.\n");
     }
 
     /* ── Buffer non-mutation invariant ── */
@@ -282,17 +311,40 @@ int main(int argc, char **argv)
           "second classify returns OK on the same buffer");
     CHECK(report2.verdict == report.verdict,
           "second classify verdict matches the first");
-    if (report.verdict != CSB_V1_CSBWIN_512_VERDICT_NEITHER) {
-        CHECK(report2.key_index == report.key_index &&
-              report2.first_half_d6w == report.first_half_d6w &&
-              report2.second_half_d5w == report.second_half_d5w &&
-              report2.public_fields.format_id ==
-                  report.public_fields.format_id &&
-              report2.public_fields.game_id == report.public_fields.game_id,
-              "second classify reports identical public fields");
+    CHECK(report2.key_index == report.key_index &&
+          report2.first_half_d6w == report.first_half_d6w &&
+          report2.second_half_d5w == report.second_half_d5w &&
+          report2.public_fields.format_id == report.public_fields.format_id &&
+          report2.public_fields.game_id == report.public_fields.game_id,
+          "second classify reports identical public fields");
+
+    {
+        static const uint16_t timer_record_sizes[] = { 10u, 12u, 16u };
+        size_t i;
+        for (i = 0u; i < sizeof(timer_record_sizes) / sizeof(timer_record_sizes[0]);
+             ++i) {
+            memset(&body, 0, sizeof(body));
+            rc = csb_v1_csbwin_512_verify_save_body(
+                save_bytes + gameblock_offset, file_size - gameblock_offset,
+                timer_record_sizes[i], &body);
+            printf("body_verify timer_record_size=%u rc=%d (%s) sections=%u\n",
+                   timer_record_sizes[i], rc,
+                   csb_v1_csbwin_512_xor_pad_result_name(rc),
+                   body.sections_verified);
+            if (rc == CSB_V1_CSBWIN_512_OK) {
+                printf("body party=%u,%u l=%u f=%u champions=%u timers=%u/%u queue=%u\n",
+                       body.party_x, body.party_y, body.party_level,
+                       body.party_facing, body.num_character, body.num_timer,
+                       body.max_timers, body.timer_queue_summary_count);
+                printf("body tail=%zu bytes expool=%d truncated=%d\n",
+                       body.appended_size, body.appended_expool_candidate,
+                       body.appended_truncated);
+            }
+        }
     }
 
     printf("\n=== Summary: %d checks, %d failures ===\n",
            g_checks, g_failures);
+    free(save_bytes);
     return g_failures == 0 ? 0 : 1;
 }

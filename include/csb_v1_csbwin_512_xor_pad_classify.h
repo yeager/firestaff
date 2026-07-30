@@ -115,8 +115,12 @@ extern "C" {
  * bounds traps. */
 #define CSB_V1_CSBWIN_BLOCK1_BYTES  512u
 #define CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES 64u
-#define CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES 64u
-#define CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES 64u
+/* CSBWin GAMEBLOCK2 allocates the timer heap from the save.  The official
+ * csbgame3 corpus carries 436 entries, so the former 64-entry inspection
+ * cap could authenticate a save but not resume it.  Keep a bounded runtime
+ * allocation while covering the documented corpus without truncation. */
+#define CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES 512u
+#define CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES 512u
 /* CSBWin SaveGame.cpp writes EDT_Palette as 24 complete 256-byte DB11
  * EXPOOL blocks (6144 bytes). Keep room for that source bundle plus the
  * adjacent DSA/database records. (Restored 2026-07-18 after the a192cb2b0
@@ -657,6 +661,18 @@ int csb_v1_csbwin_512_decode_stream_section(
     size_t size,
     uint16_t initial_hash,
     uint16_t expected_checksum,
+    uint8_t *out,
+    size_t out_capacity);
+
+/* Byte-order-aware form used for a classified GAMEBLOCK1.  Original
+ * CSBWin saves can retain the producer's word order, so body streams must
+ * use the same order authenticated by the header. */
+int csb_v1_csbwin_512_decode_stream_section_ordered(
+    const uint8_t *src,
+    size_t size,
+    uint16_t initial_hash,
+    uint16_t expected_checksum,
+    CSB_V1_CSBWin512ByteOrder byte_order,
     uint8_t *out,
     size_t out_capacity);
 
