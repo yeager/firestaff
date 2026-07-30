@@ -43224,3 +43224,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   requiring a stale base-raster hash. Verification:
   `csb_v22_source_artpack_runtime` captures the authenticated runtime page in
   both V1 and V2.2.
+
+- ✅ 2026-07-30 CSB current-main regression verification: rebuilt the current
+  main worktree and ran `ctest -L csb`; all 112 registered CSB regressions
+  pass. The V2.x intersection remains 51 tests covering the implemented
+  V2.0/V2.1/V2.2 feature surface. Unadmitted V2.2 F0128 material families
+  remain intentionally source-V1 under `CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION`.
