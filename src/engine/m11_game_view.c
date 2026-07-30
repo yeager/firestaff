@@ -5091,7 +5091,9 @@ static void m11_draw_dm1_ui_text_trailing_spaces(
 
 /* CHAMDRAW.C F0292 writes Name[8] through F0053 into a 43x7 status strip.
  * The strip is cleared by its caller; TEXT2 then emits at most seven native
- * 6px cells from x+1,y=5.  Do not center, scale, or substitute host text. */
+ * 6px cells from x+1,y=5.  F0053's Y coordinate is the text baseline, while
+ * M11_Font_DrawChar expects the first bitmap row.  Convert at this boundary
+ * so the 6-pixel glyph remains within C159..C162's seven-row strip. */
 static void m11_draw_dm1_status_name_text(unsigned char* framebuffer,
                                           int framebufferWidth,
                                           int framebufferHeight,
@@ -5115,7 +5117,7 @@ static void m11_draw_dm1_status_name_text(unsigned char* framebuffer,
             g_activeOriginalFont, framebuffer, framebufferWidth,
             framebufferHeight,
             x + i * DM1_V1_CPNBC_GLYPH_WIDTH_PC34,
-            y,
+            y - (M11_FONT_CHAR_VISIBLE_H - 1),
             ch, fgColor, (int)bgColor, 1);
     }
 }
@@ -49218,10 +49220,14 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             state, framebuffer, framebufferWidth, framebufferHeight);
         (void)m11_draw_v1_mouth_visual_frame(
             state, framebuffer, framebufferWidth, framebufferHeight);
-        /* F0355's C017 slot/object pass is only the first panel layer.
-         * F0354 immediately follows with the active champion portrait and
-         * status data.  Returning here made ordinary V1 inventory omit that
-         * live layer entirely, including portraits restored by F0435. */
+        /* C017/F0355 and the source slot-box namespace above own the normal
+         * PC34 inventory page.  The legacy freehand workbench below was
+         * written for the debug HUD and overpainted C017 with differently
+         * sized slots, labels and bars.  That made a clicked champion's
+         * inventory visibly diverge from ReDMCSB.  Keep that layout solely
+         * for debug HUD; the normal V1 page must stop after its source-backed
+         * panel layers. */
+        return;
     }
 
     /* ── Champion identity ── portrait + name + stat bars */
