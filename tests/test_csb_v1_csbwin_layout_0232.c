@@ -76,6 +76,16 @@ int main(void)
     put_rect(graphic, 904u, 110, 181, 69, 100);
     put_rect(graphic, 1802u, 216, 319, 88, 159);
     put_rect(graphic, 1818u, 216, 319, 160, 199);
+    put_be16(graphic, 914u, 112);
+    put_be16(graphic, 916u, 71);
+    put_be16(graphic, 918u, 44);
+    put_be16(graphic, 914u + 45u * 6u, 224);
+    put_be16(graphic, 914u + 45u * 6u + 2u, 96);
+    put_be16(graphic, 914u + 45u * 6u + 4u, 179);
+    put_be16(graphic, 1218u, 0);
+    put_be16(graphic, 1218u + 12u, 96);
+    put_be16(graphic, 1534u, 1);
+    put_be16(graphic, 1534u + 138u, 562);
 
     CHECK(csb_v1_csbwin_layout_0232_decode(graphic, sizeof(graphic), &layout));
     CHECK(layout.valid);
@@ -84,6 +94,15 @@ int main(void)
     CHECK(layout.food_water_box.x2 == 181 && layout.poison_box.y2 == 91);
     CHECK(layout.movement_box.x1 == 216 && layout.movement_box.y2 == 159);
     CHECK(layout.magic_box.x2 == 319 && layout.magic_box.y1 == 160);
+    CHECK(layout.icon_display[0].pixel_x == 112 &&
+          layout.icon_display[0].pixel_y == 71 &&
+          layout.icon_display[0].object_type == 44);
+    CHECK(layout.icon_display[45].pixel_x == 224 &&
+          layout.icon_display[45].object_type == 179);
+    CHECK(layout.object_graphic_first[0] == 0 &&
+          layout.object_graphic_first[6] == 96);
+    CHECK(layout.default_graphic_list[0] == 1 &&
+          layout.default_graphic_list[69] == 562);
     CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.movement_box));
     CHECK(!csb_v1_csbwin_layout_0232_rect_is_screen_valid(NULL));
     layout.magic_box.y2 = 200;

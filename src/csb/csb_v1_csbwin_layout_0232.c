@@ -10,6 +10,9 @@ enum {
     CSBWIN_0232_MOUTH_BOX_OFFSET = 432,
     CSBWIN_0232_POISON_BOX_OFFSET = 864,
     CSBWIN_0232_FOOD_WATER_BOX_OFFSET = 904,
+    CSBWIN_0232_ICON_DISPLAY_OFFSET = 914,
+    CSBWIN_0232_OBJECT_GRAPHIC_FIRST_OFFSET = 1218,
+    CSBWIN_0232_DEFAULT_GRAPHIC_LIST_OFFSET = 1534,
     CSBWIN_0232_MOVEMENT_BOX_OFFSET = 1802,
     CSBWIN_0232_MAGIC_BOX_OFFSET = 1818,
     CSBWIN_0232_RECT_SIZE = 8
@@ -18,6 +21,11 @@ enum {
 static int16_t csb_v1_csbwin_layout_0232_read_be16(const uint8_t *bytes)
 {
     return (int16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
+}
+
+static uint16_t csb_v1_csbwin_layout_0232_read_u16be(const uint8_t *bytes)
+{
+    return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
 }
 
 static void csb_v1_csbwin_layout_0232_read_rect(
@@ -68,6 +76,28 @@ int csb_v1_csbwin_layout_0232_decode(
         &out_layout->movement_box);
     csb_v1_csbwin_layout_0232_read_rect(
         decoded_graphic + CSBWIN_0232_MAGIC_BOX_OFFSET, &out_layout->magic_box);
+    for (index = 0; index < CSB_V1_CSBWIN_LAYOUT_0232_ICON_COUNT; ++index) {
+        const uint8_t *entry = decoded_graphic +
+            CSBWIN_0232_ICON_DISPLAY_OFFSET + index * 6u;
+        out_layout->icon_display[index].pixel_x =
+            csb_v1_csbwin_layout_0232_read_be16(entry);
+        out_layout->icon_display[index].pixel_y =
+            csb_v1_csbwin_layout_0232_read_be16(entry + 2u);
+        out_layout->icon_display[index].object_type =
+            csb_v1_csbwin_layout_0232_read_be16(entry + 4u);
+    }
+    for (index = 0; index < CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_GROUPS;
+         ++index) {
+        out_layout->object_graphic_first[index] =
+            csb_v1_csbwin_layout_0232_read_u16be(decoded_graphic +
+                CSBWIN_0232_OBJECT_GRAPHIC_FIRST_OFFSET + index * 2u);
+    }
+    for (index = 0; index < CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT;
+         ++index) {
+        out_layout->default_graphic_list[index] =
+            csb_v1_csbwin_layout_0232_read_u16be(decoded_graphic +
+                CSBWIN_0232_DEFAULT_GRAPHIC_LIST_OFFSET + index * 2u);
+    }
     out_layout->valid = 1;
     return 1;
 }

@@ -16,6 +16,16 @@ typedef struct {
     int16_t y2;
 } CSB_V1_CSBWinRect0232;
 
+#define CSB_V1_CSBWIN_LAYOUT_0232_ICON_COUNT 46u
+#define CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_GROUPS 7u
+#define CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT 70u
+
+typedef struct {
+    int16_t pixel_x;
+    int16_t pixel_y;
+    int16_t object_type;
+} CSB_V1_CSBWinIconDisplay0232;
+
 typedef struct {
     int valid;
     CSB_V1_CSBWinRect0232 party_direction[4];
@@ -25,6 +35,12 @@ typedef struct {
     CSB_V1_CSBWinRect0232 food_water_box;
     CSB_V1_CSBWinRect0232 movement_box;
     CSB_V1_CSBWinRect0232 magic_box;
+    CSB_V1_CSBWinIconDisplay0232 icon_display[
+        CSB_V1_CSBWIN_LAYOUT_0232_ICON_COUNT];
+    uint16_t object_graphic_first[
+        CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_GROUPS];
+    uint16_t default_graphic_list[
+        CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT];
 } CSB_V1_CSBWinLayout0232;
 
 /* Decode only the source-owned layout record.  The caller owns decompression
