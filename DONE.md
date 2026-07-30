@@ -94,6 +94,13 @@
   each provenance-attested PC34 save. This is diagnostic evidence only and
   does not treat a C13-free save as proof of C13 lifecycle support.
 
+- ✅ 2026-07-30 DM1 V2.2 original-material fallback: unreviewed or missing
+  V2.2 shapes return no replacement bitmap, so the already-rendered original
+  `GRAPHICS.DAT` pixels remain visible. They cannot become a generated wall,
+  creature, item or stair substitute. The V2.2 in-place, source-owned route,
+  real-material, finished-art and pack-receipt gates pass with local DM1
+  media.
+
 - ✅ 2026-07-30 DM1 spell-panel runtime probe: the C009/C011 pixel probe now
   enters through the real C100/F0394 caster-selection and rune route, rather
   than forcing an incomplete host state. It separately validates G0000's

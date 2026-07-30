@@ -121,11 +121,6 @@ diagnostic; it must not silently fall back to a generated visual.
   unavailable. The affected source rectangle remains blank until the real
   material is decoded; diagnostic and non-DM1 routes retain their tooling.
 
-- **DM1-ORIGINAL-REPLACE-001:** Replace any remaining V2.2 wall/shape
-  placeholder material with bound `dm1/GRAPHICS.DAT` records where an enabled
-  `.fsart` does not provide reviewed replacement art.  The existing material
-  gate must continue to reject incomplete artpacks rather than paint a
-  placeholder.
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less
