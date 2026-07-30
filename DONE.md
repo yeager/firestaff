@@ -615,7 +615,8 @@
   quantize their RGBA pixels against the live source-owned PC3.4 indexed
   palette selected by M11, rather than an unrelated EGA cube. This retains
   the active ReDMCSB brightness/palette family during admitted V2.2 door
-  replacement; data-free tests retain only a deliberate fallback mapping.
+  replacement; a command without that palette leaves the original page
+  untouched.
   Verification: an exact palette-index in-place regression and the complete
   112-test CSB CTest lane pass.
 
