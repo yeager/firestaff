@@ -2038,7 +2038,11 @@ static void m12_preserve_selected_data_directory(M12_StartupMenuState* state,
         return;
     }
     scannedDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
-    if (m12_data_directory_dialog_token_is_placeholder(scannedDataDir)) {
+    /* The scan is allowed to resolve individual game leaves for discovery,
+     * but the directory selected in the native dialog is the user's durable
+     * launcher root.  In particular, never let a backend's "." result win
+     * over that canonical selection. */
+    if (strcmp(scannedDataDir, selectedDataDir) != 0) {
         snprintf(state->assetStatus.dataDir, sizeof(state->assetStatus.dataDir),
                  "%s", selectedDataDir);
     }

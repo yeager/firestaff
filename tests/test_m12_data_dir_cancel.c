@@ -397,6 +397,8 @@ static void check_active_scan_message_requests_cancel(void) {
 
 static void check_selected_folder_scans_asynchronously(void) {
     M12_StartupMenuState state;
+    M12_StartupMenuState reloadedState;
+    M12_Config config;
     char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char selectedPhysical[M12_ASSET_DATA_DIR_CAPACITY];
     int i;
@@ -439,6 +441,16 @@ static void check_selected_folder_scans_asynchronously(void) {
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus),
                  selectedPhysical) == 0);
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "dm1") == 0);
+
+    /* The physical folder selected in the dialog must survive the config
+     * write and become the root used by a fresh launcher process. */
+    M12_Config_Load(&config, NULL);
+    CHECK(strcmp(config.dataDir, selectedPhysical) == 0);
+    M12_StartupMenu_Init(&reloadedState);
+    CHECK(strcmp(M12_AssetStatus_GetDataDir(&reloadedState.assetStatus),
+                 selectedPhysical) == 0);
+    M12_StartupMenu_Destroy(&reloadedState);
+    M12_StartupMenu_Destroy(&state);
 }
 
 static void check_dot_dialog_result_preserves_data_directory(void) {
