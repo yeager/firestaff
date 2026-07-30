@@ -256,6 +256,7 @@ typedef struct {
     int consumed_by_raster;
     int rejected;
     int command_count;
+    int v22_f0128_replacement_count;
     uint32_t combined_material_hash;
     uint32_t raster_hash;
 } CSB_V1_ViewportFirstFrameRasterReceiptPc34;
@@ -576,6 +577,10 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     int first_frame_material_raster_consumed_count;
     int first_frame_material_raster_blocked_count;
     uint32_t first_frame_material_raster_hash;
+    /* V2.2 replacements are counted at the source-owned F0128 command
+     * boundary. Keeping this beside the draw-plan receipt prevents M11 from
+     * replaying a replacement after the source command stream has finished. */
+    int v22_f0128_replacement_count;
 
     /* The shared F0128/F0098 core asks its caller for the PC3.4-expanded
      * C079/C078 aperture.  CSB owns this bridge so a verified session never
@@ -660,6 +665,7 @@ typedef struct {
     int first_frame_material_raster_consumed_count;
     int first_frame_material_raster_blocked_count;
     uint32_t first_frame_material_raster_hash;
+    int v22_f0128_replacement_count;
 } CSB_V1_ViewportRuntimeDrawCounts;
 
 typedef struct {

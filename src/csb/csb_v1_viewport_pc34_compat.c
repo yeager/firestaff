@@ -1019,8 +1019,14 @@ int csb_v1_viewport_consume_first_frame_material_raster_pc34(
          * the replacement. Unsupported commands remain entirely V1. */
         if (CSB_V1_OPTIONAL_V22_AVAILABLE() &&
             csb_v2_presentation_mode_is_v22()) {
-            (void)csb_v22_inplace_render_f0128_command(
-                command, framebuffer, framebuffer_width, framebuffer_height);
+            if (out_receipt) {
+                out_receipt->v22_f0128_replacement_count +=
+                    csb_v22_inplace_render_f0128_command(
+                        command, framebuffer, framebuffer_width, framebuffer_height);
+            } else {
+                (void)csb_v22_inplace_render_f0128_command(
+                    command, framebuffer, framebuffer_width, framebuffer_height);
+            }
         }
     }
     raster_hash = csb_v1_viewport_fnv1a_bytes_pc34(
@@ -4293,6 +4299,7 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         cfg->first_frame_material_raster_consumed_count = 0;
         cfg->first_frame_material_raster_blocked_count = 0;
         cfg->first_frame_material_raster_hash = 0u;
+        cfg->v22_f0128_replacement_count = 0;
         cfg->graphic_provider_callback = NULL;
         cfg->graphic_provider_user_data = NULL;
         return;
@@ -4403,6 +4410,8 @@ void csb_v1_viewport_runtime_draw_counts_from_config(
         cfg->first_frame_material_raster_blocked_count;
     counts->first_frame_material_raster_hash =
         cfg->first_frame_material_raster_hash;
+    counts->v22_f0128_replacement_count =
+        cfg->v22_f0128_replacement_count;
 }
 
 void csb_v1_viewport_set_first_frame_material_proof_pc34(
@@ -4421,6 +4430,7 @@ void csb_v1_viewport_set_first_frame_material_proof_pc34(
     cfg->first_frame_draw_plan_command_count = 0;
     cfg->first_frame_draw_plan_hash = 0u;
     cfg->first_frame_draw_plan_palette_hash = 0u;
+    cfg->v22_f0128_replacement_count = 0;
 }
 
 void csb_v1_viewport_set_wall_set(CSB_V1_ViewportConfig *cfg, int set) {
@@ -5069,6 +5079,7 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     if (cfg->first_frame_material_proof) {
         CSB_V1_ViewportFirstFrameMaterializationReceipt receipt;
         CSB_V1_ViewportRuntimeDrawPlanPc34 draw_plan;
+        CSB_V1_ViewportFirstFrameRasterReceiptPc34 raster_receipt;
         if (csb_v1_viewport_admit_first_frame_materialization_pc34(
                 cfg->first_frame_material_proof,
                 cfg->real_graphics_session,
@@ -5098,9 +5109,11 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
                     cfg->first_frame_material_source_path,
                     cfg->first_frame_material_source_md5,
                     cfg->viewport_pixels, vp.viewport_stride, 200,
-                    NULL)) {
+                    &raster_receipt)) {
                 cfg->first_frame_material_raster_consumed_count = 1;
                 cfg->first_frame_material_raster_blocked_count = 0;
+                cfg->v22_f0128_replacement_count =
+                    raster_receipt.v22_f0128_replacement_count;
                 cfg->first_frame_material_raster_hash =
                     csb_v1_viewport_fnv1a_bytes_pc34(
                         cfg->viewport_pixels,
@@ -5109,6 +5122,7 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
                 cfg->first_frame_material_raster_consumed_count = 0;
                 cfg->first_frame_material_raster_blocked_count = 1;
                 cfg->first_frame_material_raster_hash = 0u;
+                cfg->v22_f0128_replacement_count = 0;
             }
         } else {
             cfg->first_frame_material_consumed_count = 0;
@@ -5122,6 +5136,7 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
             cfg->first_frame_material_raster_consumed_count = 0;
             cfg->first_frame_material_raster_blocked_count = 1;
             cfg->first_frame_material_raster_hash = 0u;
+            cfg->v22_f0128_replacement_count = 0;
         }
     } else {
         cfg->first_frame_material_consumed_count = 0;

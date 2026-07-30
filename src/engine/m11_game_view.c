@@ -353,9 +353,6 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 
 static void m11_csb_collect_v22_raw_cells(const M11_GameViewState* state,
                                            unsigned char out_cells[3][3]);
-static int m11_csb_v22_f0128_command_visible_door(
-    const M11_GameViewState *state,
-    const CSB_V1_ViewportRuntimeDrawCommandPc34 *command);
 
 #ifndef DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL
 #define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL \
@@ -2060,6 +2057,14 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     drawer_binding.graphic_provider_callback = m11_csb_viewport_graphic_provider;
     drawer_binding.graphic_provider_user_data = state;
 
+    /* F0128 consumes the V2.2 shape cache while composing the source command
+     * stream, so populate it before (never after) the renderer starts. */
+    if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+        m11_csb_collect_v22_raw_cells(state, v22_raw_cells);
+        csb_v22_shape_cache_update((int)state->world.party.direction,
+                                   v22_raw_cells);
+    }
+
     if (!csb_v1_boot_render_viewport_frame_pc34(
             state->csbBootProfile,
             candidate_page,
@@ -2084,33 +2089,12 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
         free(candidate_page);
         return 0;
     }
-    /* The CSB boot renderer is separate from the shared DM1 viewport
-     * renderer, so it still publishes the V2.2 material selection here.
-     * Do not, however, paint the old 3x3 rectangular cache over the F0128
-     * frame. F0128 is perspective-composed, and that cache has no
-     * source-owned projection/mask receipt; using it corrupts a real CSB
-     * viewport with horizontal bands. Keep the verified original frame until
-     * the modern route can consume the actual F0128 draw geometry. */
+    /* The CSB renderer owns F0128 composition. It reports modern replacements
+     * from the exact source command that admitted them, rather than replaying
+     * an overlay from M11 after the source draw order has completed. */
     if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
-        CSB_V1_ViewportRuntimeDrawPlanPc34 v22_plan;
-        int command;
-        m11_csb_collect_v22_raw_cells(state, v22_raw_cells);
-        csb_v22_shape_cache_update((int)state->world.party.direction,
-                                   v22_raw_cells);
-        state->csbState.runtime_v22_cells_painted = 0;
-        if (csb_v1_boot_build_v22_f0128_draw_plan_pc34(
-                (const CSB_V1_BootProfile *)state->csbBootProfile,
-                &v22_plan)) {
-            for (command = 0; command < v22_plan.command_count; ++command) {
-                if (m11_csb_v22_f0128_command_visible_door(
-                        state, &v22_plan.commands[command])) {
-                    state->csbState.runtime_v22_cells_painted +=
-                        csb_v22_inplace_render_f0128_command(
-                            &v22_plan.commands[command], candidate_page,
-                            framebufferWidth, framebufferHeight);
-                }
-            }
-        }
+        state->csbState.runtime_v22_cells_painted =
+            draw_counts.v22_f0128_replacement_count;
     } else {
         state->csbState.runtime_v22_cells_painted = 0;
     }
@@ -26561,36 +26545,6 @@ static void m11_csb_collect_v22_raw_cells(const M11_GameViewState* state,
             }
         }
     }
-}
-
-static int m11_csb_v22_f0128_command_visible_door(
-    const M11_GameViewState *state,
-    const CSB_V1_ViewportRuntimeDrawCommandPc34 *command)
-{
-    M11_ViewportCell cell;
-    int side;
-
-    if (!state || !command) return 0;
-    switch (command->route) {
-    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34:
-        side = 0;
-        break;
-    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34:
-        side = 0;
-        break;
-    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34:
-        side = -1;
-        break;
-    case CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34:
-        side = 1;
-        break;
-    default:
-        return 0;
-    }
-    memset(&cell, 0, sizeof(cell));
-    return m11_sample_viewport_cell(state, command->input_forward, side, &cell) &&
-           cell.valid && cell.elementType == DUNGEON_ELEMENT_DOOR &&
-           !DM1_V1_Viewport_SquareIsOpenPc34Compat(cell.square);
 }
 
 int M11_GameView_ProbeViewportFloorItemCounts(

@@ -43203,3 +43203,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   keeping normal startup's C001-C005/C017/C040 terminal receipt unchanged.
   Verification: `csb_v1_m11_prison_runtime_hud_pc34` with the real 42,815-byte
   `HardDisk/2009-02-22 PP/MINI.DAT` corpus member.
+
+- ✅ 2026-07-30 CSB local macOS presentation capture: the production SDL
+  binary captured actual post-present PRESENTS, CHAOS, STRIKES and Entrance
+  frames from the verified PC3.4 package. Normal-palette runtime capture
+  remains intentionally separate until it has an equally source-owned gate.
+
+- ✅ 2026-07-30 CSB V2.2 F0128 command ownership: admitted original D1/D2/D3
+  door commands now replace pixels exactly once inside the source F0128 draw
+  stream, with the verified clip, C10 transparency and pack provenance. M11
+  prepares the V2.2 cache before F0128 and receives the source-pass count;
+  it no longer replays an overlay after composition. Verification: 112/112
+  CSB CTests, including `csb_v22_inplace_draw_pc34`,
+  `csb_v22_inplace_route_pc34`, and `csb_v22_source_artpack_runtime`.
