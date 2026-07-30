@@ -2389,6 +2389,15 @@ static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
     }
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
         state->csbStartupRuntimeAssetSession;
+    /* LOADSAVE.C F0435 restores a live GAMEBLOCK directly. It has no
+     * TITLE.C/ENTRANCE.C terminal page to consume, but must still retain the
+     * same verified package, real HUD bindings, and a live save mirror. */
+    if (session->direct_resume_loaded) {
+        return session->valid && session->real_asset_matched &&
+            session->hud_assets_bound && session->generation != 0u &&
+            m11_csb_dsa_save_runtime_viewport_current(state) &&
+            m11_csb_dsa_restored_timer_transaction_current(state);
+    }
     /* ENTRANCE.C F0806 releases C004/C002/C003 only after the opening loop;
      * PANEL.C F0346/F0347 then owns C040/C017 before DUNVIEW.C F0128 starts
      * the first live page. M11 therefore consumes the completed CSB host
@@ -5767,6 +5776,16 @@ static int m11_csb_dsa_save_runtime_viewport_current(
     session = (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
         state->csbStartupRuntimeAssetSession;
     receipt = &state->csbDsaSaveRuntimeReceipt;
+    /* A real LOADSAVE.C F0435 resume has no startup terminal transaction.
+     * Its current dungeon identity and loaded GAMEBLOCK are the source-owned
+     * admission boundary; do not demand a title-generated DSA receipt. */
+    if (session->direct_resume_loaded) {
+        return profile->assets_verified && profile->graphics_verified &&
+            profile->dungeon_verified && profile->runtime.dungeon_handle &&
+            strlen(profile->dungeon_md5) == 32u && session->valid &&
+            session->real_asset_matched && session->hud_assets_bound &&
+            session->csbStartupPackageIdentity != 0u;
+    }
     return receipt->valid && receipt->source_admission_consumed &&
            receipt->save_handoff_consumed &&
            receipt->dungeon_identity_current &&
@@ -6080,6 +6099,9 @@ static int m11_csb_apply_boot_runtime_receipt(
     ((CSB_V1_StartupRuntimeAssetSession_PC34 *)
         state->csbStartupRuntimeAssetSession)->csbStartupPackageIdentity =
         package_identity ? package_identity : 1u;
+    ((CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession)->direct_resume_loaded =
+        receipt->receipts.handoff.direct_resume_loaded ? 1 : 0;
     state->csbStartupExpectedPackageIdentity = package_identity ? package_identity : 1u;
     if (!m11_csb_bind_release_app_capture_receipt(
             state, &receipt->startup_asset_gate)) {
@@ -49661,7 +49683,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * terminal generation must not reveal a newly drawn viewport before
          * the session transaction rejects it. */
         if (!m11_csb_live_hud_session_ready(state) ||
-            !m11_csb_consume_c040_clear_session(csb_state) ||
+            (!((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                   csb_state->csbStartupRuntimeAssetSession)
+                  ->direct_resume_loaded &&
+             !m11_csb_consume_c040_clear_session(csb_state)) ||
             !m11_render_csb_boot_viewport(csb_state, framebuffer,
                                           framebufferWidth,
                                           framebufferHeight)) {

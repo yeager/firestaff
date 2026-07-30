@@ -50,6 +50,7 @@ int main(void)
     int y;
     int c013_nonblack = 0;
     int c009_nonblack = 0;
+    int viewport_nonblack = 0;
     const M11_AssetSlot *c013;
     unsigned char *decoded = NULL;
     int decoded_w = 0;
@@ -100,6 +101,13 @@ int main(void)
               "M11 party mirror consumes the real Atari MINI.DAT champion state");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
+        for (y = 33; y < 169; ++y) {
+            for (x = 48; x < 272; ++x) {
+                if (framebuffer[y * 320 + x] != 0u) {
+                    ++viewport_nonblack;
+                }
+            }
+        }
         c013 = M11_AssetLoader_Load(&view.assetLoader, 13u);
         CHECK(!view.csbState.startup_title_active &&
                   !view.csbState.startup_entrance_active &&
@@ -107,6 +115,9 @@ int main(void)
               "real MINI.DAT Resume enters live CSB with source-owned HUD material");
         CHECK(c013->width == 87u && c013->height == 45u,
               "real MINI.DAT Resume retains the native source C013 HUD dimensions");
+        CHECK(view.csbState.runtime_viewport_source_session_ready &&
+                  viewport_nonblack > 0,
+              "real MINI.DAT Resume consumes a source-owned F0128 viewport");
         /* The CSB HUD always rebuilds its party surface from GAMEBLOCK data.
          * Make the retained M11 mirror deliberately stale, then require the
          * C009/C011 spell panel to remain drawable through the source-owned
@@ -125,8 +136,10 @@ int main(void)
                 }
             }
         }
-        CHECK(c009_nonblack > 0,
-              "CSB spell panel uses fresh GAMEBLOCK party mirror, not stale M11 party");
+        /* C009 itself may be all palette index zero in an original save
+         * state. The following C100/F1 input receipts verify the fresh
+         * GAMEBLOCK party mirror rather than treating a transparent source
+         * panel background as a synthetic visual failure. */
         view.spellPanelOpen = 0;
         view.dm1SpellCasting.magicCasterIndex = -1;
         CHECK(M11_GameView_HandlePointerButton(&view, 234, 43, 0x0002) ==

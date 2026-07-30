@@ -960,6 +960,9 @@ struct CSB_V1_StartupRuntimeAssetSession_PC34 {
     uint32_t generation;
     uint32_t csbSaveCandidateIdentity;
     uint32_t csbStartupPackageIdentity;
+    /* LOADSAVE.C F0435 enters live dungeon state without replaying the
+     * TITLE.C/ENTRANCE.C terminal surface transaction. */
+    int direct_resume_loaded;
     CSB_V1_StartupAssetBinding_PC34 hud_inventory_binding;
     CSB_V1_StartupAssetBinding_PC34 hud_resurrect_binding;
     int csbgraphics_palette_receipt_ready;

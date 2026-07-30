@@ -43195,3 +43195,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `-1`, CSBWin's explicit no-message/no-state-change abort. The runtime test
   proves `STKOP_Cast` publishes that exact fourteen-word request; all other
   spell classes remain intentionally fail-closed pending complete owners.
+
+- ✅ 2026-07-30 CSB original-save direct runtime handoff: original Atari
+  `MINI.DAT` resume now takes a dedicated `LOADSAVE.C F0435` route rather than
+  pretending it completed TITLE.C/ENTRANCE.C. It verifies the loaded package,
+  dungeon, source HUD assets and live viewport before drawing F0128, while
+  keeping normal startup's C001-C005/C017/C040 terminal receipt unchanged.
+  Verification: `csb_v1_m11_prison_runtime_hud_pc34` with the real 42,815-byte
+  `HardDisk/2009-02-22 PP/MINI.DAT` corpus member.

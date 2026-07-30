@@ -1964,13 +1964,20 @@ int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
         framebuffer_width < 320 || framebuffer_height < 200 ||
         !profile->assets_verified || !profile->graphics_verified ||
         !profile->dungeon_verified || !profile->runtime.dungeon_handle ||
-        !csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
-        !terminal.valid ||
-        !csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
-            session, &full_runtime) ||
-        !full_runtime.valid || !full_runtime.title_to_hud_same_session ||
-        !full_runtime.playback_route_ready ||
-        full_runtime.session_generation != terminal.session_generation) {
+        (!session->direct_resume_loaded &&
+         (!csb_v1_startup_session_terminal_receipt_pc34(session, &terminal) ||
+          !terminal.valid ||
+          !csb_v1_boot_startup_full_runtime_receipt_from_session_pc34(
+              session, &full_runtime) ||
+          !full_runtime.valid || !full_runtime.title_to_hud_same_session ||
+          !full_runtime.playback_route_ready ||
+          full_runtime.session_generation != terminal.session_generation))) {
+        return 0;
+    }
+    if (session->direct_resume_loaded &&
+        (!session->valid || !session->real_asset_matched ||
+         !session->hud_assets_bound || session->generation == 0u ||
+         session->csbStartupPackageIdentity == 0u)) {
         return 0;
     }
 
@@ -2000,13 +2007,15 @@ int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
     receipt.terminal_session_owned = 1;
     receipt.viewport_frame_consumed = 1;
     receipt.no_synthetic_surface = 1;
-    receipt.session_generation = terminal.session_generation;
-    receipt.source_tick = terminal.source_tick;
+    receipt.session_generation = session->direct_resume_loaded
+        ? session->generation : terminal.session_generation;
+    receipt.source_tick = session->direct_resume_loaded
+        ? session->source_tick : terminal.source_tick;
     receipt.viewport_pixel_hash = pixel_hash ? pixel_hash : 1u;
     receipt.draw_counts_hash = counts_hash ? counts_hash : 1u;
     receipt.source_evidence =
         "ReDMCSB ENTRANCE.C F0806 lines 857-889; DUNVIEW.C F0128 "
-        "lines 8318-8542; PANEL.C F0346/F0347";
+        "lines 8318-8542; PANEL.C F0346/F0347; LOADSAVE.C F0435";
     receipt.valid = receipt.real_asset_matched && receipt.terminal_session_owned &&
         receipt.viewport_frame_consumed && receipt.no_synthetic_surface &&
         receipt.session_generation != 0u && receipt.viewport_pixel_hash != 0u &&
