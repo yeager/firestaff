@@ -1331,6 +1331,15 @@ int csb_v1_runtime_apply_csbwin_resume_file(
 int csb_v1_runtime_get_csbwin_save_provenance(
     const CSB_V1_RuntimeProfile *profile,
     CSB_V1_CSBWinSaveProvenance_PC34 *out);
+/* Copy the exact authenticated CSBWin source artifact to a destination using
+ * SaveGame.cpp's original-slot backup rotation. This is intentionally a
+ * source-preserving export: Firestaff does not yet own the variable dungeon
+ * payload following GAMEBLOCK1, so live mutations must not be serialized as
+ * a plausible replacement save. The source file must still match the FNV
+ * provenance captured by csb_v1_runtime_apply_csbwin_resume_file(). */
+int csb_v1_runtime_export_csbwin_source_save_to_path(
+    const CSB_V1_RuntimeProfile *profile,
+    const char *destination_path);
 int csb_v1_runtime_export_csbwin_core_save_to_memory(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t *out,

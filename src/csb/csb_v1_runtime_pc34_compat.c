@@ -20598,6 +20598,7 @@ int csb_v1_runtime_apply_csbwin_resume_file(
     CSB_V1_CSBWinExtendedFeaturesReport features;
     CSB_V1_CSBWinExtendedDSAReport dsa;
     CSB_V1_CSBWinExtendedTailReport tail;
+
     CSB_V1_RuntimeProfile candidate;
     size_t core_offset = 0u;
     int previous_dungeon_level;
@@ -20742,6 +20743,102 @@ int csb_v1_runtime_get_csbwin_save_provenance(
     if (!profile || !out || !profile->csbwin_save_provenance.valid) return -1;
     *out = profile->csbwin_save_provenance;
     return 0;
+}
+
+int csb_v1_runtime_export_csbwin_source_save_to_path(
+    const CSB_V1_RuntimeProfile *profile,
+    const char *destination_path)
+{
+    uint8_t *source = NULL;
+    size_t source_size = 0u;
+    size_t core_offset = 0u;
+    size_t core_size = 0u;
+    char temporary_path[1024];
+    char backup_path[1024];
+    FILE *fp = NULL;
+    int backup_created = 0;
+    int result = -1;
+    int extended_rc;
+    int temporary_length;
+    CSB_V1_CSBWinExtendedFeaturesReport features;
+    CSB_V1_CSBWinExtendedDSAReport dsa;
+    CSB_V1_CSBWinExtendedTailReport tail;
+
+    temporary_path[0] = '\0';
+
+    if (!profile || !destination_path || !destination_path[0] ||
+        !profile->csbwin_save_provenance.valid ||
+        !profile->csbwin_save_provenance.source_path[0] ||
+        !csb_v1_runtime_read_original_atari_save_file(
+            profile->csbwin_save_provenance.source_path, &source, &source_size) ||
+        source_size != profile->csbwin_save_provenance.source_size ||
+        csb_v1_runtime_fnv1a32(source, source_size) !=
+            profile->csbwin_save_provenance.source_fnv1a) {
+        free(source);
+        return -1;
+    }
+
+    memset(&features, 0, sizeof(features));
+    memset(&dsa, 0, sizeof(dsa));
+    memset(&tail, 0, sizeof(tail));
+    extended_rc = csb_v1_csbwin_512_inspect_extended_tail(source, source_size,
+                                                           &tail, &dsa, &features);
+    if (extended_rc == CSB_V1_CSBWIN_EXTENDED_OK) {
+        if (!tail.valid || tail.next_payload_offset > source_size) {
+            goto cleanup;
+        }
+        core_offset = tail.next_payload_offset;
+    } else if (extended_rc == CSB_V1_CSBWIN_EXTENDED_ABSENT) {
+        core_offset = 0u;
+    } else {
+        goto cleanup;
+    }
+    core_size = source_size - core_offset;
+    if (core_size != profile->csbwin_save_provenance.source_size -
+                     profile->csbwin_save_provenance.core_offset ||
+        csb_v1_runtime_fnv1a32(source + core_offset, core_size) !=
+            profile->csbwin_save_provenance.core_fnv1a) {
+        goto cleanup;
+    }
+    /* The resumed profile authenticated this exact source core on import.
+     * Do not reclassify its following variable dungeon payload as EXPOOL:
+     * official CSBWin saves may carry a source-owned non-EXPOOL payload here.
+     * This API intentionally preserves the complete file verbatim until that
+     * payload has a real loader and mutation writer. */
+    temporary_length = snprintf(temporary_path, sizeof(temporary_path),
+                                "%s.firestaff-writing", destination_path);
+    if (temporary_length < 0 ||
+        (size_t)temporary_length >= sizeof(temporary_path)) {
+        goto cleanup;
+    }
+    fp = fopen(temporary_path, "wb");
+    if (!fp || fwrite(source, 1u, source_size, fp) != source_size ||
+        fclose(fp) != 0) {
+        fp = NULL;
+        goto cleanup;
+    }
+    fp = NULL;
+    if (csb_v1_runtime_original_atari_backup_path(destination_path, backup_path,
+                                                   sizeof(backup_path))) {
+        FILE *existing = fopen(destination_path, "rb");
+        if (existing) {
+            fclose(existing);
+            (void)remove(backup_path);
+            if (rename(destination_path, backup_path) != 0) goto cleanup;
+            backup_created = 1;
+        }
+    }
+    if (rename(temporary_path, destination_path) != 0) {
+        if (backup_created) (void)rename(backup_path, destination_path);
+        goto cleanup;
+    }
+    result = 0;
+
+cleanup:
+    if (fp) fclose(fp);
+    if (result != 0) (void)remove(temporary_path);
+    free(source);
+    return result;
 }
 
 static int csb_v1_runtime_build_csbwin_core_summary(

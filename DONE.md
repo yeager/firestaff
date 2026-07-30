@@ -1,3 +1,12 @@
+- ✅ 2026-07-30 CSBWin source-save preservation: a resumed CSBWin save now
+  exports through an FNV-bound, source-preserving writer, retaining the full
+  original file including Extended Features and the currently opaque variable
+  dungeon payload. Changed source bytes are rejected before any destination
+  write; original slot names retain CSBWin's `.BAK` rotation. This is not a
+  mutation writer until the dungeon tail has a real owner. Verification:
+  `test_csb_v1_csbwin_save_provenance_pc34_compat` passes 14/14, including
+  byte-identical export of the official local `csbgame3.dat` corpus.
+
 - ✅ 2026-07-30 Start-menu data-folder runtime guard: startup asset consumers
   now use the last accepted physical data directory, rather than a transient
   scanner `.` token from the macOS native folder dialog. This keeps the

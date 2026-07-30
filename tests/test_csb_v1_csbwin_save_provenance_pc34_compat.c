@@ -30,9 +30,33 @@ static int append_invalid_expool_tail(const char *path)
     return fclose(fp) == 0;
 }
 
+static int files_equal(const char *left_path, const char *right_path)
+{
+    FILE *left = fopen(left_path, "rb");
+    FILE *right = fopen(right_path, "rb");
+    int equal = 1;
+    int left_byte;
+    int right_byte;
+
+    if (!left || !right) {
+        if (left) fclose(left);
+        if (right) fclose(right);
+        return 0;
+    }
+    do {
+        left_byte = fgetc(left);
+        right_byte = fgetc(right);
+        if (left_byte != right_byte) equal = 0;
+    } while (equal && left_byte != EOF && right_byte != EOF);
+    fclose(left);
+    fclose(right);
+    return equal;
+}
+
 static void test_staged_real_csbwin_save(void)
 {
     const char *path = getenv("FIRESTAFF_CSBWIN_REAL_SAVE");
+    const char *copy = "firestaff-csbwin-real-copy.sav";
     CSB_V1_RuntimeProfile runtime;
     CSB_V1_CSBWinSaveProvenance_PC34 provenance;
 
@@ -53,6 +77,10 @@ static void test_staged_real_csbwin_save(void)
     CHECK(runtime.csbwin_extended_features_valid &&
           runtime.party_state_valid && runtime.csbwin_body_runtime_summary_valid,
           "staged CSBWin save publishes Extended Features and source body state");
+    CHECK(csb_v1_runtime_export_csbwin_source_save_to_path(&runtime, copy) == 0 &&
+          files_equal(path, copy),
+          "staged CSBWin save exports byte-identically through its authenticated core");
+    remove(copy);
     csb_v1_runtime_cleanup(&runtime);
 }
 
@@ -60,6 +88,7 @@ int main(void)
 {
     const char *good = "firestaff-csbwin-provenance-good.sav";
     const char *bad = "firestaff-csbwin-provenance-bad.sav";
+    const char *copy = "firestaff-csbwin-provenance-copy.sav";
     CSB_V1_RuntimeProfile runtime;
     CSB_V1_CSBWinSaveProvenance_PC34 provenance;
     uint32_t preserved_time;
@@ -78,6 +107,14 @@ int main(void)
           provenance.key_verdict == CSB_V1_CSBWIN_512_VERDICT_CSB &&
           strcmp(provenance.source_path, good) == 0,
           "records exact original-save provenance after commit");
+    CHECK(csb_v1_runtime_export_csbwin_source_save_to_path(&runtime, copy) == 0 &&
+          files_equal(good, copy),
+          "source-preserving export retains the complete authenticated CSBWin artifact");
+
+    CHECK(append_invalid_expool_tail(good),
+          "changes the source artifact after provenance capture");
+    CHECK(csb_v1_runtime_export_csbwin_source_save_to_path(&runtime, copy) != 0,
+          "source-preserving export rejects source bytes that drift after resume");
 
     CHECK(firestaff_test_write_csbwin_resume_fixture(bad, 0),
           "writes second verified CSBWin save");
@@ -96,6 +133,7 @@ int main(void)
 
     remove(good);
     remove(bad);
+    remove(copy);
     printf("%d passed, %d failed\\n", passed, failed);
     return failed != 0;
 }

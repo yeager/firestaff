@@ -1483,6 +1483,12 @@ that its exact runtime path is not already source-locked and tested.
     it is preserved in source provenance but not misclassified as EXPOOL.
     Remaining: full original dungeon-tail loader/write-back and a broader
     multi-version corpus with DSA-bearing saves.
+    2026-07-30: resumed CSBWin source saves can now be exported byte-for-byte
+    through their FNV-bound provenance, including the Extended Features prefix
+    and opaque variable dungeon payload. The export refuses any source file
+    that drifted after resume and uses original-slot backup rotation. It is
+    deliberately not a runtime-mutation writer: that remains blocked on the
+    real dungeon-tail loader/write-back rather than emitting a plausible save.
     2026-07-30: the local original Atari archive now has a skip-safe CTest
     corpus regression that extracts its genuine `MINI.DAT` and proves decode
     plus GAMEBLOCK2 byte-preserving round-trip. This is campaign-save coverage,
