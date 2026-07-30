@@ -103,6 +103,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **CSB-V20-RUNTIME-HUD-FILTER-BOUNDARY:** Closed 2026-07-30. The optional
+  V2.0 indexed cleanup chain now operates on CSBWin's authenticated
+  `(48,33) 224x136` dungeon viewport copy only. It cannot rewrite the
+  source-owned C009/C013 HUD or panel text. The real PC3.4 Prison capture
+  shows intact cyan movement controls with dither and palette correction
+  enabled; the focused filter, V2.0 capture and runtime HUD contracts pass.
+
 - **CSB-V22-SOURCE-PALETTE-COMPOSITION:** Closed 2026-07-30. CSB V2.2
   F0128 replacements now quantize RGBA art through the active source-owned
   PC3.4 indexed palette, supplied by M11 after it selects the current

@@ -400,12 +400,44 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
     }
     /* CSB's title, PRESENTS, CHAOS/STRIKES and Entrance pages own special
      * palette indices.  V2.0 cleanup is valid for the normal game surface,
-     * but rewriting those indices corrupts their source palette mapping. */
+     * but rewriting those indices corrupts their source palette mapping.
+     *
+     * At runtime, CSBWin's source viewport is exactly (48,33) 224x136;
+     * the remainder is source-owned panel/HUD material.  Filter only a
+     * detached viewport copy so palette interpolation and dither cleanup
+     * cannot fragment C013's cyan controls or mutate panel text. */
     if (csb_v20_active && presented_frame && specialPalette < 0) {
+        enum {
+            CSB_RUNTIME_VIEWPORT_X = 48,
+            CSB_RUNTIME_VIEWPORT_Y = 33,
+            CSB_RUNTIME_VIEWPORT_WIDTH = 224,
+            CSB_RUNTIME_VIEWPORT_HEIGHT = 136
+        };
         static unsigned char csb_v20_scratch[M11_FB_BYTES];
+        static unsigned char csb_v20_viewport[
+            CSB_RUNTIME_VIEWPORT_WIDTH * CSB_RUNTIME_VIEWPORT_HEIGHT];
+        int y;
+
         memcpy(csb_v20_scratch, presented_frame, sizeof(csb_v20_scratch));
-        (void)csb_v2_filter_chain_apply_indexed(csb_v20_scratch,
-                                                 M11_FB_WIDTH, M11_FB_HEIGHT);
+        for (y = 0; y < CSB_RUNTIME_VIEWPORT_HEIGHT; ++y) {
+            memcpy(csb_v20_viewport +
+                       (size_t)y * CSB_RUNTIME_VIEWPORT_WIDTH,
+                   csb_v20_scratch +
+                       (size_t)(CSB_RUNTIME_VIEWPORT_Y + y) * M11_FB_WIDTH +
+                       CSB_RUNTIME_VIEWPORT_X,
+                   CSB_RUNTIME_VIEWPORT_WIDTH);
+        }
+        (void)csb_v2_filter_chain_apply_indexed(
+            csb_v20_viewport, CSB_RUNTIME_VIEWPORT_WIDTH,
+            CSB_RUNTIME_VIEWPORT_HEIGHT);
+        for (y = 0; y < CSB_RUNTIME_VIEWPORT_HEIGHT; ++y) {
+            memcpy(csb_v20_scratch +
+                       (size_t)(CSB_RUNTIME_VIEWPORT_Y + y) * M11_FB_WIDTH +
+                       CSB_RUNTIME_VIEWPORT_X,
+                   csb_v20_viewport +
+                       (size_t)y * CSB_RUNTIME_VIEWPORT_WIDTH,
+                   CSB_RUNTIME_VIEWPORT_WIDTH);
+        }
         presented_frame = csb_v20_scratch;
     }
 

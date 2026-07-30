@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 CSB V2.0 runtime filter boundary: dither cleanup and palette
+  interpolation now run only on CSBWin's original `(48,33) 224x136` dungeon
+  viewport copy. Source-owned C009/C013 HUD controls and panel text are left
+  byte-for-byte intact. The real PC3.4 Prison capture plus focused V2.0/HUD
+  tests pass.
+
 - ✅ 2026-07-30 CSB V1/V2.x full local verification: Ninja/CTest completed
   all 118 runnable CSB contracts against the supplied PC3.4 and Atari-ST
   corpora. The single V2.2 source-artpack test skipped correctly because its
