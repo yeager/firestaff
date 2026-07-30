@@ -33929,6 +33929,11 @@ static int m11_draw_dm_object_icon_index(const M11_GameViewState* state,
         srcH != M11_DM_ACTION_ICON_INNER_H) {
         return 0;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(
+            state, (unsigned int)graphicIndex)) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)graphicIndex);
     if (!slot || !slot->loaded || !slot->pixels ||

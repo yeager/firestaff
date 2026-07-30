@@ -235,6 +235,14 @@ an integration build pass.
   V1/V2.0/V2.1 Prison HUD, viewport, V2.x startup, V2.2 source-artpack and
   V2 HUD tests PASS (10 focused tests).
 
+- **CSB-V1-RUNTIME-OBJECT-ICON-DECODER-OWNERSHIP:** Closed 2026-07-30. The
+  common F0038/F0386 object-icon blitter now installs each CSB icon source
+  graphic through the active package's PC3.4 IMG3/LZW decoder. Action cells,
+  champion hands and inventory icon routes therefore fail closed instead of
+  reading a generic DM1 cache payload. Verification: V1/V2.0/V2.1 Prison HUD,
+  viewport, V2.2 artpack and V2 HUD tests pass; the V2.1 source-page capture
+  also passed three consecutive isolated runs.
+
 - **CSB-V21-LIVE-UPSCALE-CONSUMPTION:** Closed 2026-07-29. The F10 CSB
   filter page now exposes the actual CSB V2.1 EPX scale (1x/2x/4x) and
   bilinear setting alongside the CSB filter chain. M11 consumes the

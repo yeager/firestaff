@@ -43332,3 +43332,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   PC3.4 IMG3/LZW as one package-scoped CHAMDRAW set. V1/V2.0/V2.1 runtime HUD
   plus V2.2 presentation paths now fail closed instead of consuming DM1 cache
   pixels. Verification: 10 focused V1/V2.x tests PASS.
+
+- ✅ 2026-07-30 CSB object-icon decoder ownership: shared F0038/F0386 icons
+  now resolve from the authenticated CSB PC3.4 package in action, hand and
+  inventory paths. The V2.1 source-page capture passed three consecutive
+  isolated runs, alongside V1/V2.0/V2.1/V2.2 focused HUD and viewport tests.
