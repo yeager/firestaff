@@ -22,12 +22,11 @@
  *   returns RGBA pointer + dimensions.
  *
  * Variant -> asset mapping (first cut, intentionally conservative):
- *   - Walls (any variant) -> wall_d3_carved_01
- *   - Floor PLAIN pattern  -> floor_plain_01
- *   - Floor CRACKED pattern -> floor_cracked_01
- *   - Floor MOSSY pattern  -> floor_plain_01 (no mossy variant in v1.4.0)
- *   - Teleporter fields    -> field_teleporter_01
- *   - Creatures (any)      -> creature_demon_01
+ *   - Walls (any variant) -> wall_d3_carved_hero_01
+ *   - Floor PLAIN pattern  -> floor_plain_hero_01
+ *   - Floor CRACKED/MOSSY  -> floor_plain_hero_01 (no reviewed variant)
+ *   - Teleporter fields    -> field_teleporter_hero_01
+ *   - Creatures (any)      -> creature_demon_hero_01
  *   - Items                -> no V2.2 substitution until a reviewed item
  *                             material is available; preserve V1 pixels
  *
@@ -84,16 +83,13 @@ static int              g_v22_bitmap_count = 0;
 
 /* ── Variant -> asset_id mapping ───────────────────────────────── */
 
-/* For first cut, all walls use wall_d3_carved_01 (the most common
- * carved stone). All creatures use creature_demon_01. Floors use
- * the tile pattern. */
-static const char* v22_wall_asset_id  = "wall_d3_carved_01";
-static const char* v22_floor_plain_id = "floor_plain_01";
-static const char* v22_floor_cracked_id = "floor_cracked_01";
-static const char* v22_floor_pit_id = "floor_pit_01";
-static const char* v22_floor_stairs_down_id = "floor_stairs_down_01";
-static const char* v22_field_teleporter_id = "field_teleporter_01";
-static const char* v22_creature_asset_id = "creature_demon_01";
+/* Only identifiers included in the reviewed finished-art manifest can
+ * replace V1 pixels. Unreviewed material classes retain their source frame. */
+static const char* v22_wall_asset_id  = "wall_d3_carved_hero_01";
+static const char* v22_floor_plain_id = "floor_plain_hero_01";
+static const char* v22_floor_pit_id = "floor_pit_hero_01";
+static const char* v22_field_teleporter_id = "field_teleporter_hero_01";
+static const char* v22_creature_asset_id = "creature_demon_hero_01";
 
 static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
     if (!m11_v22_shape_cache_active(depth, lateral)) return NULL;
@@ -110,12 +106,12 @@ static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
             return v22_floor_plain_id;
         case M11_V22_SHAPE_FLOOR_CRACKED:
         case M11_V22_SHAPE_FLOOR_MOSSY:
-            return v22_floor_cracked_id;
+            return v22_floor_plain_id;
         case M11_V22_SHAPE_FLOOR_PIT:
             return v22_floor_pit_id;
         case M11_V22_SHAPE_FLOOR_STAIRS_UP:
         case M11_V22_SHAPE_FLOOR_STAIRS_DOWN:
-            return v22_floor_stairs_down_id;
+            return NULL;
         case M11_V22_SHAPE_FIELD_TELEPORTER:
             /* ReDMCSB DUNVIEW.C F0113 draws the teleporter/fluxcage
              * field as its own C10-transparent surface after the floor/

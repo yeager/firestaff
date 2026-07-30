@@ -24145,6 +24145,7 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_modern_assets_pc34.c
         src/dm1v2/dm1_v22_finished_art_material_gate_pc34.c
         src/dm1v2/dm1_v22_finished_pack_receipt_pc34.c
+        src/dm1v2/dm1_v22_real_art_runtime_gate_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/dm1v2/dm1_v2_texture_upscale_pc34.c
         src/shared/fs_portable_compat.c
@@ -39959,7 +39960,9 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass872_dm1_v1_palette_changes_cursor_mask_v2
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass872_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat.py
         )
-        set_tests_properties(pass872_dm1_v1_palette_changes_cursor_mask_v2 PROPERTIES DEPENDS dm1_v1_palette_changes_cursor_mask_v2_pc34_compat)
+        set_tests_properties(pass872_dm1_v1_palette_changes_cursor_mask_v2 PROPERTIES
+            DEPENDS dm1_v1_palette_changes_cursor_mask_v2_pc34_compat
+            ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass840_dm1_v1_box_entrance_doors
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass840_dm1_v1_box_entrance_doors_pc34_compat.py

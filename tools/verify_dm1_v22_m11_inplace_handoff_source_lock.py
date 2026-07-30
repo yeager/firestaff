@@ -74,7 +74,8 @@ def main() -> int:
         '#include "m11_v22_inplace_draw_pc34.h"',
         "m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])",
         "raw_squares[d][s] = cells[d][s].square;",
-        "m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
+        "m11_v22_shape_cache_update((int)state->world.party.direction,\n"
+        "                                       raw_squares);",
         "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
         "if (state->presentationMode == M12_PRESENTATION_V22_MODERN)",
         "(void)m11_v22_inplace_render_pass(framebuffer,",
@@ -102,7 +103,8 @@ def main() -> int:
         [
             "m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])",
             "raw_squares[d][s] = cells[d][s].square;",
-            "m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
+            "m11_v22_shape_cache_update((int)state->world.party.direction,\n"
+            "                                       raw_squares);",
             "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,",
             "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
             "if (state->presentationMode == M12_PRESENTATION_V22_MODERN)",
@@ -114,11 +116,16 @@ def main() -> int:
             "DM1 V2.2 must not fall back to synthetic overlay art")
 
     inplace_required = [
-        "static const char* v22_floor_pit_id = \"floor_pit_01\";",
-        "static const char* v22_floor_stairs_down_id = \"floor_stairs_down_01\";",
+        "static const char* v22_wall_asset_id  = \"wall_d3_carved_hero_01\";",
+        "static const char* v22_floor_plain_id = \"floor_plain_hero_01\";",
+        "static const char* v22_floor_pit_id = \"floor_pit_hero_01\";",
+        "static const char* v22_field_teleporter_id = \"field_teleporter_hero_01\";",
+        "static const char* v22_creature_asset_id = \"creature_demon_hero_01\";",
+        "case M11_V22_SHAPE_FLOOR_STAIRS_UP:\n"
+        "        case M11_V22_SHAPE_FLOOR_STAIRS_DOWN:\n"
+        "            return NULL;",
         "case M11_V22_SHAPE_FLOOR_PIT:",
         "case M11_V22_SHAPE_FIELD_TELEPORTER:",
-        "return NULL;",
         "int m11_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH)",
         "if (!m11_v22_inplace_draw_active()) return 0;",
         "if (!m11_v22_shape_cache_populated()) return 0;",

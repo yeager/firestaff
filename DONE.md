@@ -43839,3 +43839,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   the M12/M11 handoff boundary pass 589 assertions. This intentionally
   recovers geometry only: actual door panels still require the source DB0
   state/type and `DoorGraphic[3][2]` material owner.
+
+# DM1 V2.2 reviewed-art runtime consumption (2026-07-30)
+
+- ✅ DM1 V2.2 now consumes the reviewed `*_hero_01` identifiers declared by
+  the installed finished-art manifest. The earlier in-place renderer still
+  requested stale first-cut identifiers, so an admitted pack could not reach
+  its wall, floor, pit, teleporter or creature replacement pixels. Unreviewed
+  stairs now deliberately preserve their original V1 material. The real-art
+  material gate uses the same aggregate runtime admission as production, and
+  the out-of-tree Ninja test verifier receives its configured build directory.
+  Verification: all registered DM1 V2.0/V2.1/V2.2 contracts pass, 97/97.
