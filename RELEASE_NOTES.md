@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.192
+
+- CSB: decode the original CSBWin `GRAPHICS.DAT` HUD-layout record `0x232`,
+  including party controls, status regions, icon positions, and source graphic
+  tables for the remaining runtime HUD integration.
+- CSB V2.2: keep source-derived material on the verified V2.1 path until every
+  route has recorded F0128 projection evidence.
+
 # Firestaff v3.0.191
 
 - CSB: make the V2.0 startup-capture regression inspect the first stable
