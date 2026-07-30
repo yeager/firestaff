@@ -2209,6 +2209,60 @@ static int m11_csb_present_atari_st_runtime_hud(
     return 1;
 }
 
+static int m11_csb_door_panel_family_for_wall(
+    CSB_V1_CSBWinViewportWall wall, CSB_V1_CSBWinDoorPanelFamily *out_family)
+{
+    static const CSB_V1_CSBWinDoorPanelFamily families[
+        CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT] = {
+        CSB_V1_CSBWIN_DOOR_PANEL_COUNT, CSB_V1_CSBWIN_DOOR_PANEL_F3L1,
+        CSB_V1_CSBWIN_DOOR_PANEL_F3, CSB_V1_CSBWIN_DOOR_PANEL_F3R1,
+        CSB_V1_CSBWIN_DOOR_PANEL_COUNT, CSB_V1_CSBWIN_DOOR_PANEL_F2L1,
+        CSB_V1_CSBWIN_DOOR_PANEL_F2, CSB_V1_CSBWIN_DOOR_PANEL_F2R1,
+        CSB_V1_CSBWIN_DOOR_PANEL_F1L1, CSB_V1_CSBWIN_DOOR_PANEL_F1,
+        CSB_V1_CSBWIN_DOOR_PANEL_F1R1, CSB_V1_CSBWIN_DOOR_PANEL_COUNT,
+        CSB_V1_CSBWIN_DOOR_PANEL_COUNT, CSB_V1_CSBWIN_DOOR_PANEL_COUNT
+    };
+
+    if (!out_family || (unsigned int)wall >=
+        CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT ||
+        families[wall] == CSB_V1_CSBWIN_DOOR_PANEL_COUNT) return 0;
+    *out_family = families[wall];
+    return 1;
+}
+
+static int m11_csb_blit_atari_st_viewport_graphic(
+    M11_GameViewState *state, uint16_t graphic_index, int mirrored,
+    const CSB_V1_CSBWinViewportProjectionRectangle *projection,
+    unsigned char *viewport, int viewport_width, int viewport_height)
+{
+    const M11_AssetSlot *asset;
+    uint8_t *packed = NULL;
+    size_t packed_size = 0u;
+    CSB_V1_CSBWinPlanarBitmap planar;
+    int ok = 0;
+
+    if (!state || !projection || !viewport ||
+        !m11_csb_install_runtime_source_graphic(state, graphic_index)) return 0;
+    asset = M11_AssetLoader_Load(&state->assetLoader, graphic_index);
+    if (!asset || !asset->pixels || asset->width == 0u || asset->height == 0u ||
+        !csb_v1_csbwin_planar_bitmap_pack_indexed(
+            asset->pixels, asset->width, asset->height, &packed, &packed_size)) {
+        goto done;
+    }
+    memset(&planar, 0, sizeof(planar));
+    planar.bytes = packed;
+    planar.width = asset->width;
+    planar.height = asset->height;
+    planar.byte_stride = (uint16_t)(((unsigned)asset->width + 15u) / 16u * 8u);
+    ok = packed_size == (size_t)planar.byte_stride * planar.height &&
+        csb_v1_csbwin_planar_bitmap_blit_wall_projection(
+            &planar, projection, mirrored, viewport, viewport_width,
+            viewport_height, viewport_width);
+done:
+    free(packed);
+    return ok;
+}
+
 /* CSBWin's Viewport.cpp::FloorAndCeilingOnly builds a 224x136 packed page:
  * 29 rows ceiling, 37 rows black and 70 rows floor.  The active decoder
  * yields the same source pixels as indexed bytes, so re-pack them through
@@ -2303,8 +2357,39 @@ static int m11_csb_present_atari_st_runtime_viewport(
             dungeon, profile->runtime.current_level, profile->runtime.party_dir,
             wall_locations[draw->wall].forward, wall_locations[draw->wall].right,
             profile->runtime.party_x, profile->runtime.party_y);
+        if (square_type == 4) {
+            CSB_V1_CSBWinDoorPanelFamily family;
+            CSB_V1_CSBWinDoorFramePlan door_plan;
+            size_t door_draw;
+
+            /* CSBWin has no DoorRects family for F3L2/F3R2/F0 lanes; their
+             * local-cell owners are separate and must not borrow a frame. */
+            if (!m11_csb_door_panel_family_for_wall(draw->wall, &family)) {
+                continue;
+            }
+            if (!csb_v1_csbwin_viewport_build_door_frame_plan(
+                    &layout, family, &door_plan)) return 0;
+            for (door_draw = 0u; door_draw < door_plan.count; ++door_draw) {
+                const CSB_V1_CSBWinDoorFrameDraw *door_draw_command =
+                    &door_plan.draws[door_draw];
+                uint16_t door_graphic;
+                int source_mirrored = door_draw_command->bitmap_slot == 0u;
+
+                if (!csb_v1_csbwin_viewport_graphic_index(
+                        (uint16_t)wall_set,
+                        (uint16_t)(door_draw_command->bitmap_slot == 0u ? 1u :
+                            door_draw_command->bitmap_slot - 1u),
+                        &door_graphic) ||
+                    !m11_csb_blit_atari_st_viewport_graphic(
+                        state, door_graphic,
+                        source_mirrored != door_draw_command->mirrored,
+                        &door_draw_command->projection, viewport,
+                        VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
+            }
+            continue;
+        }
         /* Viewport.cpp's DrawCellF* wall branch is entered only for
-         * roomSTONE.  Every other room kind owns a different source command. */
+         * roomSTONE. Every other room kind owns a different source command. */
         if (square_type != 0) continue;
         if (!m11_csb_install_runtime_source_graphic(state, draw->graphic_index)) {
             return 0;

@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 CSBWin Atari runtime door frames: M11 now draws the original
+  `DoorTrackTopRect`/`DoorFrameRect` commands for visible `roomDOOR` cells,
+  using active WallSet pDoor sources and the native mirror rules. It leaves
+  F3L2/F3R2/F0 to their separate source owners and never fills the unresolved
+  dynamic panel with PC3.4 or generated pixels. The real Atari handoff probe
+  passes 589 checks.
+
 - ✅ 2026-07-30 CSBWin door command recovery: Firestaff now reproduces
   `Viewport.cpp`'s static F1/F2/F3 track and frame plan, including the native
   `pDoorBitmaps[0]`/right-frame and F3-side mirror rules. It also mirrors

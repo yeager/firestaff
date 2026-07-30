@@ -386,6 +386,10 @@ an integration build pass.
   mirror choices. The remaining runtime task is deliberately narrower: bind
   those commands to the original `DoorGraphic[3][2]` material owner and M11's
   Atari viewport compositor; do not substitute PC3.4 or synthetic panels.
+  2026-07-30: M11 now consumes the verified static track/frame commands in
+  the Atari viewport for source `roomDOOR` lanes, resolving each pDoor bitmap
+  from the active 13-record WallSet and preserving CSBWin's mirror semantics.
+  Only the dynamic panel is still withheld pending the original owner.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature
