@@ -1432,6 +1432,7 @@ int main(void)
 
     {
         uint16_t abort_cast_words[] = { 0x0acbu };
+        uint16_t filtered_abort_cast_words[] = { 0x1dcbu };
         int abort_cast_parameters[14] = {
             1, 0, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1
@@ -1445,6 +1446,12 @@ int main(void)
                   runner.last_execution.last_cast_spell_parameters[0] == 1 &&
                   !runner.last_execution.last_cast_spell_filtered,
               "STKOP_Cast publishes Magic.cpp action-1 silent abort without a synthetic spell");
+
+        configure_action(&action, filtered_abort_cast_words, 1);
+        check(csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
+                  &profile, &runner, &action, abort_cast_parameters, 14,
+                  NULL) == 0,
+              "STKOP_FilteredCast rejects even a silent abort until CallSpellFilter has a source owner");
     }
 
     /* The dungeon is caller-owned stack storage; the process exits after this

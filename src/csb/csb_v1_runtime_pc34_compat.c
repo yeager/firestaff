@@ -27623,8 +27623,13 @@ static int csb_v1_runtime_dsa_cast_spell(void *user,
 {
     CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
 
-    (void)filtered;
     if (!profile || !parameters) return 0;
+    /* Magic.cpp::DSACastSpell calls CallSpellFilter before CastSpell when
+     * STKOP_FilteredCast is used.  The runtime does not yet own that full
+     * actuator/EXPOOL transaction, so accepting a filtered action merely
+     * because its later CastSpell branch is silent would skip source effects.
+     * Keep FILTEREDCAST fail-closed until that owner is complete. */
+    if (filtered) return 0;
     return parameters[0] == 1 && parameters[3] == -1;
 }
 

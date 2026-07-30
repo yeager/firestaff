@@ -43374,3 +43374,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   silently shortcutting title playback into Entrance. This is a regression
   gate for the real startup chain, not a claim that unreconciled V2.2 F0128
   material families are complete.
+# CSB DSA FILTEREDCAST owner guard (2026-07-30)
+
+- `STKOP_FilteredCast` no longer accepts the otherwise side-effect-free
+  `action=1, disableTime=-1` CastSpell branch. CSBWin `Magic.cpp::DSACastSpell`
+  runs `CallSpellFilter` first, so treating the later silent CastSpell result
+  as sufficient skipped original actuator/EXPOOL effects. Direct `CAST` keeps
+  its proven silent-abort route; filtered casts remain fail-closed until that
+  full source transaction is implemented. The runtime DSA regression covers
+  both outcomes.

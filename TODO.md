@@ -1367,6 +1367,9 @@ that its exact runtime path is not already source-locked and tested.
     non-abort cast classes remain fail-closed until their CHARDESC, spell
     table, object/projectile, timer and save publication transaction is
     complete; `I_CAST`/`I_FILTEREDCAST` remain closed for their missing word.
+    `FILTEREDCAST` itself is also fail-closed, including action 1: CSBWin's
+    `DSACastSpell(true)` invokes `CallSpellFilter` before the later silent
+    CastSpell branch, and Firestaff must not skip that actuator/EXPOOL owner.
     Its source local-variable rewrite now writes the action-local DSAVARS bank
     before the selected direct word runs; persistent save data remains outside
     this temporary source bank. 2026-07-29: direct `CREATECLOUD` now consumes
