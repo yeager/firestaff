@@ -284,6 +284,19 @@ static void test_route_provenance_metadata(void) {
           "reads Artpack Studio compact provenance arrays");
 
     CHECK(write_file(manifest,
+        "{\"routeProvenance\":[{\"id\":\"door_d1_01\",\"category\":\"door_shapes\","
+        "\"sourceGraphicIndex\":247,\"sourceDimensions\":[64,61],"
+        "\"sourceRecordSha256\":\"7063872718410000000000000000000000000000000000000000000000000000\","
+        "\"outputDimensions\":[64,96]}]}"),
+          "wrote single-line source-artpack route provenance");
+    CHECK(csb_v22_get_route_provenance("door_shapes", "door_d1_01",
+                                       &provenance) == 1 &&
+          provenance.source_graphic_index == 247 &&
+          provenance.source_width == 64 && provenance.source_height == 61 &&
+          provenance.output_width == 64 && provenance.output_height == 96,
+          "reads fully compact Artpack Studio route provenance");
+
+    CHECK(write_file(manifest,
         "{\"routeProvenance\":[\n"
         "{\"id\":\"door_d1_01\",\"category\":\"door_shapes\","
         "\"sourceGraphicIndex\":247,\"sourceDimensions\":[64,61],"

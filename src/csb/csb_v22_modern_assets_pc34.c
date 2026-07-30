@@ -258,8 +258,18 @@ int csb_v22_get_route_provenance(const char* category, const char* asset_id,
 
     while (fgets(line, sizeof(line), fp)) {
         if (!in_routes) {
-            if (strstr(line, "\"routeProvenance\"") != NULL) in_routes = 1;
-            continue;
+            const char *route_key = strstr(line, "\"routeProvenance\"");
+            if (!route_key) {
+                continue;
+            }
+            in_routes = 1;
+            /* Artpack Studio may compact the array opener and the first
+             * provenance object onto one line.  Only defer processing when
+             * that line contains no object after the routeProvenance key;
+             * its leading root-object brace must never become an entry. */
+            if (strchr(route_key + strlen("\"routeProvenance\""), '{') == NULL) {
+                continue;
+            }
         }
         if (!in_entry && strchr(line, '{') != NULL) {
             memset(&current, 0, sizeof(current));

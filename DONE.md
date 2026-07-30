@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 CSB V2.2 compact artpack provenance: the runtime parser now
+  accepts a `routeProvenance` array whose first complete object is on the same
+  JSON line as the array key. This keeps compact Artpack Studio exports
+  source-locked rather than silently falling back to V1. Verification:
+  pretty, compact multiline and fully single-line provenance tests pass.
+
 - ✅ 2026-07-30 CSB V2.2 source-palette composition: V2.2 F0128 swaps now
   quantize their RGBA pixels against the live source-owned PC3.4 indexed
   palette selected by M11, rather than an unrelated EGA cube. This retains

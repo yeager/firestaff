@@ -9,7 +9,9 @@ CSBWin alongside it. Reuse or bind verified PC34 owners and authentic game
 - **CSB-V22-ARTPACK-PROVENANCE-HARDENING:** Closed 2026-07-30. CSB V2.2
   now accepts only safe single-component category, asset and source-file
   names when resolving an imported artpack. Compact Artpack Studio entries
-  now consume `id`/`source_file` before their closing brace, and route
+  now consume `id`/`source_file` before their closing brace; route provenance
+  likewise accepts both pretty-printed and fully single-line JSON entries.
+  Route
   provenance requires a well-formed 64-digit SHA-256 identity rather than
   merely a 64-character string. The live F0128 door command now also carries
   the SHA-256 of its exact compressed `GRAPHICS.DAT` catalog record, which
