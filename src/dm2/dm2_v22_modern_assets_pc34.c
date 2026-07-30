@@ -21,8 +21,8 @@
  *   wall_shapes, floor_shapes, creature_shapes, ui_chrome, champion_portraits
  *
  * Asset-not-found guard: if a specific modern asset referenced in the
- * manifest cannot be opened, the shape system returns
- * DM2_V22_SHAPE_MISSING_PLACEHOLDER rather than crashing.
+ * manifest cannot be opened, the shape system returns no pixels and the
+ * caller falls back through the verified V1/V2 presentation route.
  */
 
 #include "dm2_v22_modern_assets_pc34.h"
@@ -52,31 +52,6 @@ static int g_epx_cache_warm = 0;
  * directory at startup (via M12_AssetStatus_Scan) or from the default
  * ~/.firestaff/assets/dm2/modern/ location. */
 static char g_v22_manifest_path[FSP_PATH_MAX];
-
-/* ── Placeholder for missing assets ──────────────────────────────── */
-
-/* DM2_V22_SHAPE_MISSING_PLACEHOLDER — returned by shape-fetching
- * functions when a modern asset referenced in the manifest cannot
- * be opened. This is a 16×16 RGBA magenta checkerboard pattern that
- * clearly signals "missing texture" in-game without crashing. */
-static const uint32_t DM2_V22_SHAPE_MISSING_PLACEHOLDER_DATA[16 * 16] = {
-    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
-    0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF,
-    0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF,
-    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
-    0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF,
-    0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF,
-    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
-    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
-    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
-    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
-    0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
-    0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
-    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
-    0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF,
-    0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF, 0xFF000000, 0xFF000000, 0xFFFF00FF,
-    0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF, 0xFFFF00FF,
-};
 
 /* ── Shape source enum is defined in dm2_v22_modern_assets_pc34.h
  * (shared between the header API declarations and this implementation). */
@@ -538,12 +513,13 @@ DM2_V22_ShapeSource dm2_v22_best_available_shape_source(int presentation_mode_in
     }
 }
 
-/* dm2_v22_get_missing_placeholder — returns the missing-asset
- * placeholder surface (16×16 RGBA). Never returns NULL. */
+/* Missing V2.2 art is not drawable material.  Returning a no-draw result
+ * preserves the real V1/V2 fallback chain instead of painting diagnostic
+ * pixels into a game frame. */
 const uint32_t* dm2_v22_get_missing_placeholder(int* out_w, int* out_h) {
-    if (out_w) *out_w = 16;
-    if (out_h) *out_h = 16;
-    return DM2_V22_SHAPE_MISSING_PLACEHOLDER_DATA;
+    if (out_w) *out_w = 0;
+    if (out_h) *out_h = 0;
+    return NULL;
 }
 
 /* dm2_v22_get_shape_path — given a category and asset id from the

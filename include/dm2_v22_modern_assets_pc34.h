@@ -79,7 +79,8 @@ int  dm2_v22_get_epx_cache_warm(void);
  * Fallback chain: MODERN → UPSCALED (V2.1) → FILTERED (V2.0) → ORIGINAL (V1). */
 DM2_V22_ShapeSource dm2_v22_best_available_shape_source(int presentation_mode_index);
 
-/* dm2_v22_get_missing_placeholder — 16x16 RGBA magenta checkerboard. */
+/* dm2_v22_get_missing_placeholder — no-draw result for missing art.
+ * Returns NULL and sets dimensions to zero. */
 const uint32_t* dm2_v22_get_missing_placeholder(int* out_w, int* out_h);
 
 /* dm2_v22_get_shape_path — resolves (category, asset_id) from manifest

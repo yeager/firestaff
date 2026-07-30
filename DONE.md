@@ -247,6 +247,15 @@
   source split pairs. All projections come directly from GRAPHICS.DAT item
   `0x22e`; focused layout and M11 handoff tests pass. The same commands now
   consume the recovered original `DoorGraphic[3][2]` pixels.
+- ✅ 2026-07-30 DM2 V2.2 missing-art no-draw: removed the magenta/black
+  checkerboard from the DM2 modern-asset API. A missing V2.2 resource now
+  returns `NULL` with zero dimensions, preserving the existing V1/V2 fallback
+  route instead of drawing invented pixels. This is consistent with the
+  source-owned GDAT `MapGraphicsStyle` material route in SK-projects; enhanced
+  art remains unavailable until its provenance gate is complete. Verification:
+  strict C11 syntax check of `dm2_v22_modern_assets_pc34.c`, focused build,
+  and CTest `dm2_v22_modern_assets_pc34` 1/1 PASS.
+
 - ✅ 2026-07-30 DM2 missiltimer synthetic-projectile removal: the bounded
   `DM2_STEP_MISSILE` handler no longer calls the test-only synthetic
   projectile dispatcher with fabricated creature ownership, north-facing

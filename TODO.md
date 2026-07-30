@@ -6,6 +6,11 @@
   palettes, and synthetic HUD art are not acceptable when authentic game data
   exists. Each remaining renderer is to bind the real format or present no
   game pixel; test fixtures remain explicitly isolated from production paths.
+- **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
+  Bind any future enhanced art only through verified original V1 GDAT material
+  and a complete, provenance-checked V2.2 pack; never reintroduce diagnostic
+  substitute pixels.
+
 - **DM2-STEP-MISSILE-OWNER-HANDOFF:** Port the source-owned DB14/timer
   projectile handoff from `c_tim_proc.cpp::DM2_STEP_MISSILE` with its record
   owner, facing, energy, attack and map state. The current bounded timer path
