@@ -33733,6 +33733,10 @@ static int m11_blit_panel_asset_native(const M11_GameViewState* state,
     if (!state || !state->assetsAvailable) {
         return 0;
     }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(state, gfxIdx)) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
     /* A dimension-bearing cache record is not a drawable PC34 surface.
      * F0387/F0394 may present only decoded GRAPHICS.DAT pixels. */
@@ -33759,6 +33763,10 @@ static int m11_panel_asset_source_loaded(const M11_GameViewState* state,
     if (outWidth) *outWidth = 0;
     if (outHeight) *outHeight = 0;
     if (!state || !state->assetsAvailable) {
+        return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(state, gfxIdx)) {
         return 0;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
@@ -33788,6 +33796,10 @@ static int m11_blit_panel_asset_region_native(const M11_GameViewState* state,
                                               int y) {
     const M11_AssetSlot* slot;
     if (!state || !state->assetsAvailable || sourceW <= 0 || sourceH <= 0) {
+        return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(state, gfxIdx)) {
         return 0;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);

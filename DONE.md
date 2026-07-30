@@ -43314,3 +43314,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   The cache is package-scoped and records rejected entries, preventing generic
   DM1 cache fallbacks and repeated decode attempts. Verification:
   `test_csb_v1_viewport_phase3_rendering` PASS.
+
+- ✅ 2026-07-30 CSB runtime panel decoder ownership: C009--C013 action,
+  spell and movement panel blits now acquire their source surfaces through
+  CSB PC3.4 IMG3/LZW before M11 cache consumption. This preserves the same
+  source pixels in V1, V2.0, V2.1 and V2.2. Verification: the focused
+  V1/V2.x startup, HUD and V2.2 source-artpack suite passes 8/8.

@@ -217,6 +217,16 @@ an integration build pass.
   falling back to the generic DM1 cache or reopening the archive every frame.
   Verification: `test_csb_v1_viewport_phase3_rendering` PASS.
 
+- **CSB-V1-RUNTIME-PANEL-DECODER-OWNERSHIP:** Closed 2026-07-30. Shared
+  F0387/F0394/MENUDRAW panel blits now route C009--C013 through the CSB PC3.4
+  IMG3/LZW decoder before reading M11's cache. This covers action, spell and
+  movement panels in V1 and the V2.x presentation paths, so a generic DM1
+  cache entry cannot silently supply CSB HUD pixels. Verification:
+  `csb_v1_viewport_phase3_rendering`, `csb_v2_entrance_pointer_boot_probe`,
+  `csb_v20_filtered_startup_capture`, `csb_v21_presented_startup_capture`,
+  `csb_v22_source_artpack_runtime`, `csb_v2_hud_overlay_pc34` and
+  `csb_v2_hud_runtime` PASS.
+
 - **CSB-V21-LIVE-UPSCALE-CONSUMPTION:** Closed 2026-07-29. The F10 CSB
   filter page now exposes the actual CSB V2.1 EPX scale (1x/2x/4x) and
   bilinear setting alongside the CSB filter chain. M11 consumes the
