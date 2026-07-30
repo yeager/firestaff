@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 HoC C127 ownership across view changes: C160/C161 now
+  retains the source SENSOR owner captured when the C040 mirror panel opens.
+  Confirming after an internal party/view rotation therefore closes the
+  selected mirror instead of rejecting it because the current front cell
+  changed. The party-shuffle portrait and dedicated close regressions pass.
+
 - ✅ 2026-07-30 DM1 registered regression lane: with the provenance-bound
   DOSBox PC3.4 corpus configured, every registered `dm1` CTest passes
   (33/33), including V1 F0435/F0433 round-trip, HoC runtime handoff,

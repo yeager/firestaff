@@ -3953,6 +3953,7 @@ static const M11_FontState* g_activeOriginalFont = NULL;
 typedef struct {
     const M11_GameViewState* owner;
     int valid;
+    int firstSensorIndex;
     uint32_t sensorGeneration;
     uint32_t panelGeneration;
     DM1_V1_HocCandidateSelectionStateReceiptPc34 selection;
@@ -21825,6 +21826,7 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     const M11_AssetSlot* portraits;
     const M11_AssetSlot* c040Panel;
     int previousPartyCount;
+    int firstSensorIndex = -1;
     int wallCell = -1;
     char mirrorName[16];
     char mirrorTitle[32];
@@ -21846,6 +21848,9 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
             state, &mirrorDecision) || !mirrorDecision.valid ||
         !mirrorDecision.drawChampionPortraitAsWallOverlay ||
         mirrorDecision.render.renderIndex != mirrorOrdinal) {
+        return 0;
+    }
+    if (!m11_front_mirror_first_sensor_index_pc34(state, &firstSensorIndex)) {
         return 0;
     }
     m11_repair_dead_party_leader(state);
@@ -22004,6 +22009,7 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     state->inventoryPanelActive = 1;
     s_m11_dm1_hoc_candidate_receipts.selection = selectionReceipt;
     s_m11_dm1_hoc_candidate_receipts.valid = 1;
+    s_m11_dm1_hoc_candidate_receipts.firstSensorIndex = firstSensorIndex;
     s_m11_dm1_hoc_candidate_receipts.sensorGeneration =
         selectionReceipt.sensorGeneration;
     s_m11_dm1_hoc_candidate_receipts.panelGeneration =
@@ -22050,12 +22056,11 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         state->candidateMirrorRenameActive || state->candidateMirrorOrdinal < 0) {
         return 0;
     }
-    /* REVIVE.C F0282:805-817 walks the source chain once for the active
-     * C160/C161 command, then mutates party/UI state before it clears that
-     * selected SENSOR. Keep the resolved first owner; a second scan after
-     * mutation can select a different custom sensor or none at all. */
-    firstSensorIndex = -1;
-    (void)m11_front_mirror_first_sensor_index_pc34(state, &firstSensorIndex);
+    /* The C127 owner belongs to the selection receipt. The modal can remain
+     * open while the view changes, but C160/C161 must still clear the sensor
+     * that admitted this candidate rather than re-scanning a new front cell. */
+    firstSensorIndex = s_m11_dm1_hoc_candidate_receipts.owner == state
+        ? s_m11_dm1_hoc_candidate_receipts.firstSensorIndex : -1;
     championIndex = state->candidateMirrorPartyIndex;
     if (championIndex < 0 || championIndex >= state->world.party.championCount ||
         championIndex >= CHAMPION_MAX_PARTY ||
