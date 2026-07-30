@@ -1340,6 +1340,13 @@
   reloads immediately; original-PC34 corpus/timeline interop remains
   explicitly open.
 
+- ✅ 2026-07-30 DM1 `TEXT.C` C015 ownership across V1/V2.x. The message-area
+  renderer now preserves decoded F0047 source rows in V1, V2.0, V2.1, and
+  V2.2 while continuing to reject Firestaff host-log telemetry. The focused
+  `dm1_v1_m11_launcher_handoff_boundary` test covers an empty C015 after an
+  injected host message, then visible original-font pixels after a decoded
+  source message in every presentation mode.
+
 - ✅ 2026-07-27 DM1 PC34 wall-ornament metadata offset. M11's ornament cache
   now includes the TextData section before typed Thing records, matching the
   DUNGEON.DAT loader and restoring real map-local ornament indices. The real

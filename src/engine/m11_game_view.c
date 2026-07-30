@@ -46114,8 +46114,10 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
                                         int framebufferHeight) {
     int slot;
     const M11_AssetSlot* iconStrip = NULL;
-    if (!state || !framebuffer || state->showDebugHUD ||
-        !m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state)) {
+    if (!state || !framebuffer || state->showDebugHUD) {
+        return;
+    }
+    if (!m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state)) {
         return;
     }
     if (state->assetsAvailable) {
@@ -49650,8 +49652,14 @@ static void m11_draw_v1_message_area(const M11_GameViewState* state,
     int row;
     int savedFontScaleOverride;
 
-    if (!state || !framebuffer || state->showDebugHUD ||
-        !m11_v1_chrome_mode_enabled(state) || m11_v2_vertical_slice_enabled(state)) {
+    if (!state || !framebuffer || state->showDebugHUD) {
+        return;
+    }
+    /* V2.x changes presentation, not TEXT.C ownership. Only the legacy
+     * non-DM1 log renderer remains limited to the V1 chrome path. */
+    if (!m11_is_dm1_source_kind(state->sourceKind) &&
+        (!m11_v1_chrome_mode_enabled(state) ||
+         m11_v2_vertical_slice_enabled(state))) {
         return;
     }
     if (!dm1_v1_message_area_zone_id_pc34()) {

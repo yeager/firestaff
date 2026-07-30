@@ -119,6 +119,25 @@ static int message_area_is_black(const unsigned char* framebuffer,
     return 1;
 }
 
+static int message_area_has_source_pixels(const unsigned char* framebuffer,
+                                          int framebuffer_width,
+                                          int framebuffer_height) {
+    int x;
+    int y;
+
+    if (!framebuffer || framebuffer_width < 320 || framebuffer_height < 200) {
+        return 0;
+    }
+    for (y = 173; y < 200; ++y) {
+        for (x = 0; x < 320; ++x) {
+            if (framebuffer[y * framebuffer_width + x] != 0u) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 static void make_empty_data_dir(char out[512]) {
     int rc = snprintf(out, 512,
                       "%s%sfirestaff_dm1_launcher_empty_%ld",
@@ -232,6 +251,13 @@ static void run_launcher_handoff_for_mode(M12_StartupMenuState* menu, int mode) 
     M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
     expect_mode_true(message_area_is_black(framebuffer, 320, 200), mode,
                      "M11 host telemetry cannot draw into source-owned C015");
+    dm1_v1_text_set_game_time(&launcher_view.dm1V1TextMessage,
+                              (long)launcher_view.world.gameTick);
+    dm1_v1_text_print_message(&launcher_view.dm1V1TextMessage,
+                              DM1_V1_COLOR_WHITE, "SOURCE MESSAGE");
+    M11_GameView_Draw(&launcher_view, framebuffer, 320, 200);
+    expect_mode_true(message_area_has_source_pixels(framebuffer, 320, 200), mode,
+                     "decoded TEXT.C rows draw in source-owned C015");
 
     M11_GameView_Shutdown(&launcher_view);
 }

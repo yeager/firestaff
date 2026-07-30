@@ -754,12 +754,11 @@ diagnostic; it must not silently fall back to a generated visual.
   C70 identity retained for F0433. The PC34 export suite now covers a
   tail-backed roundtrip and keeps unproven C24 Fluxcage events fail-closed.
 
-- **DM1-HOC-SYNTHETIC-HELP-STRIP:** Reopened 2026-07-30. The direct-start
-  receipt no longer seeds the Firestaff-only `READY: CLICK CENTER ...` text,
-  but the generic M11 log renderer could still put host `READY`/`INSPECT`
-  scaffolding into C015. Closed 2026-07-30: M11 now rejects that log and
-  renders only decoded TEXT.C F0047 rows using the source font. Remaining
-  inscription/scroll panels stay owned by their separate F0341/F0342 routes.
+- **DM1-HOC-SYNTHETIC-HELP-STRIP:** Closed 2026-07-30. The direct-start
+  receipt no longer seeds the Firestaff-only `READY: CLICK CENTER ...` text;
+  M11 rejects host `READY`/`INSPECT` log scaffolding from C015 and renders
+  only decoded TEXT.C F0047 rows with the original font in V1, V2.0, V2.1,
+  and V2.2. Inscription/scroll panels remain owned by F0341/F0342.
 
 - **DM1-C140-SAVE-ROUTE:** Closed 2026-07-27. The visible inventory SAVE
   control's actual C140 click hotspot writes a native DM1 save that M11
