@@ -35633,6 +35633,23 @@ const char* M11_GameView_GetActionName(unsigned char actionIndex) {
     return dm1_v1_action_name_f0384_pc34(actionIndex);
 }
 
+/* ReDMCSB MENU.C F0620:543-551 binds the PC3.4 CSB action text from
+ * C699_GRAPHIC_ACTION_NAMES.  A CSB M11 session must consume that runtime
+ * receipt rather than silently borrowing DM1's compiled string table. */
+static const char *m11_action_name_for_state(
+        const M11_GameViewState *state,
+        unsigned char action_index)
+{
+    const CSB_V1_BootProfile *profile;
+
+    if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+        return csb_v1_runtime_action_name_c699(
+            profile ? &profile->runtime : NULL, action_index);
+    }
+    return M11_GameView_GetActionName(action_index);
+}
+
 /* Resolve the ActionSet index for a given champion slot's action
  * hand.  Returns 2 (empty-hand set: PUNCH, KICK, WAR CRY) when the
  * hand is empty (DM1 F0389_MENUS_SetActingChampion fallback), the
@@ -40472,7 +40489,7 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
         return 0;
     }
 
-    actionName = M11_GameView_GetActionName(chosen);
+    actionName = m11_action_name_for_state(state, chosen);
     if (!actionName) actionName = "";
 
     /* DM1-style log line.  F0391 itself does not emit a message but
@@ -40671,7 +40688,7 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
         return 0;
     }
 
-    actionName = M11_GameView_GetActionName((unsigned char)actionIndex);
+    actionName = m11_action_name_for_state(state, (unsigned char)actionIndex);
     if (!actionName) actionName = "";
     m11_format_champion_name(champ->name, champName, sizeof(champName));
     if (actionName[0] != '\0') {
@@ -42285,7 +42302,7 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     for (row = 0; row < renderPlan->row_count; ++row) {
         const char* name;
         name = (gotActions && row < visibleRows)
-                   ? M11_GameView_GetActionName(actions[row])
+                   ? m11_action_name_for_state(state, actions[row])
                    : "";
         {
             m11_draw_dm1_ui_text_trailing_spaces(

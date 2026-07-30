@@ -1645,6 +1645,15 @@ static void test_enter_game_loads_real_m564_object_names_when_supplied(void)
           "real PC3.4 GRAPHICS.DAT item 694 loads the M564 name stream");
     CHECK(p.runtime.object_names[0][0] != '\0',
           "real M564 stream supplies a non-empty first object name");
+    /* ReDMCSB MENU.C F0620:543-551 loads C699_GRAPHIC_ACTION_NAMES into
+     * G0490 before the action UI reads its text. These assertions stay bound
+     * to the supplied hash-verified PC3.4 corpus, not a test-side table. */
+    CHECK(p.runtime.action_name_table_valid == 1,
+          "real PC3.4 GRAPHICS.DAT item 699 loads the C699 action-name stream");
+    CHECK(strcmp(csb_v1_runtime_action_name_c699(&p.runtime, 1u), "BLOCK") == 0,
+          "real C699 action-name stream supplies BLOCK at index 1");
+    CHECK(strcmp(csb_v1_runtime_action_name_c699(&p.runtime, 43u), "FUSE") == 0,
+          "real C699 action-name stream supplies FUSE at index 43");
     csb_v1_boot_cleanup(&p);
 }
 

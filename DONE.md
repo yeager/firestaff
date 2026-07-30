@@ -44466,3 +44466,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   viewport proof to match the hash-verified PC corpus. Its 33 direct creature
   roots expose no complete FB/FC/FD V5 chain, so all remain fail-closed rather
   than being promoted through map-chip or invented material; 38/38 checks pass.
+- ✅ 2026-07-30 CSB C699 action-name source binding: the recognised PC3.4
+  `GRAPHICS.DAT` corpus (`61fbfd56887c94adc26888a9491c6611`) now loads raw
+  item 699 as exactly 44 bounded NUL-terminated action names. ReDMCSB
+  `MENU.C F0620:543-551` assigns C699 to
+  `G0490_ac_Graphic560_ActionNames`; M11's CSB action menu and action log now
+  consume that runtime-owned receipt and render no CSB action text if it is
+  absent or malformed. The real-data boot regression proves `BLOCK` and
+  `FUSE` at their source indices; the original-PC3.4 Prison HUD regression
+  passes. The separate action-set owner remains open.

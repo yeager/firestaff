@@ -2062,10 +2062,10 @@ void M11_GameView_ClearActingChampion(M11_GameViewState* state);
 int M11_GameView_GetActingActionIndices(const M11_GameViewState* state,
                                         unsigned char outIndices[3]);
 
-/* Look up the DM1 action name for an action index (0..43, or 255).
- * Returns an empty string for C0xFF_ACTION_NONE and a pointer to a
- * static string otherwise.  Verbatim names from
- * G0490_ac_Graphic560_ActionNames (ReDMCSB MENU.C). */
+/* Look up the compiled DM1 action name for an action index (0..43, or 255).
+ * Returns an empty string for C0xFF_ACTION_NONE and a pointer to a static
+ * string otherwise. CSB M11 paths use their session-owned C699 source bytes
+ * instead; see ReDMCSB MENU.C F0620 and G0490. */
 const char* M11_GameView_GetActionName(unsigned char actionIndex);
 
 /* Trigger the DM1 action-row click pathway for the currently acting

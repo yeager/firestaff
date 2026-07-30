@@ -770,6 +770,8 @@ typedef struct {
     int                     object_name_table_valid;
     char                    object_names[CSB_V1_OBJECT_NAME_COUNT]
                                             [CSB_V1_OBJECT_NAME_MAX_CHARS + 1];
+    int                     action_name_table_valid;
+    char                    action_names[44][13];
     struct Dm1V1InputCommandQueuePc34Compat input_command_queue;
     struct Dm1V1InputQueueProcessResultPc34Compat last_input_dispatch;
     uint32_t                input_dispatch_count;
@@ -2664,6 +2666,17 @@ int csb_v1_runtime_load_object_names_m564(
     CSB_V1_RuntimeProfile *profile,
     const uint8_t *bytes,
     size_t byte_count);
+
+/* ReDMCSB MENU.C F0620 loads PC3.4 C699_GRAPHIC_ACTION_NAMES into the
+ * G0490 action-name owner. The supplied stream must contain exactly 44
+ * bounded NUL-terminated names; missing or malformed source stays invalid. */
+int csb_v1_runtime_load_action_names_c699(
+    CSB_V1_RuntimeProfile *profile,
+    const uint8_t *bytes,
+    size_t byte_count);
+const char *csb_v1_runtime_action_name_c699(
+    const CSB_V1_RuntimeProfile *profile,
+    unsigned char action_index);
 
 /* Resolve a CSB runtime object thing to the leader-hand object name from
  * CSB dungeon records, without using DM1 M11 world tables. */

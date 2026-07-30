@@ -15686,6 +15686,59 @@ int csb_v1_runtime_load_object_names_m564(
     return 1;
 }
 
+int csb_v1_runtime_load_action_names_c699(
+    CSB_V1_RuntimeProfile *profile,
+    const uint8_t *bytes,
+    size_t byte_count)
+{
+    size_t offset = 0u;
+    int action_index;
+
+    if (!profile || !bytes || byte_count == 0u) return 0;
+    memset(profile->action_names, 0, sizeof(profile->action_names));
+    profile->action_name_table_valid = 0;
+
+    /* ReDMCSB MENU.C F0620:543-551 loads C699_GRAPHIC_ACTION_NAMES into
+     * G0490. Its PC3.4 stream is exactly the 44 NUL-terminated rows that
+     * F0384 walks; do not fall back to the DM1 compiled copy for CSB. */
+    for (action_index = 0; action_index < 44; ++action_index) {
+        size_t written = 0u;
+        int terminated = 0;
+        while (offset < byte_count) {
+            unsigned char c = bytes[offset++];
+            if (c == 0u) {
+                terminated = 1;
+                break;
+            }
+            if (written >= sizeof(profile->action_names[action_index]) - 1u) {
+                memset(profile->action_names, 0, sizeof(profile->action_names));
+                return 0;
+            }
+            profile->action_names[action_index][written++] = (char)c;
+        }
+        if (!terminated || written == 0u) {
+            memset(profile->action_names, 0, sizeof(profile->action_names));
+            return 0;
+        }
+    }
+    if (offset != byte_count) {
+        memset(profile->action_names, 0, sizeof(profile->action_names));
+        return 0;
+    }
+    profile->action_name_table_valid = 1;
+    return 1;
+}
+
+const char *csb_v1_runtime_action_name_c699(
+    const CSB_V1_RuntimeProfile *profile,
+    unsigned char action_index)
+{
+    if (!profile || !profile->action_name_table_valid || action_index >= 44u) {
+        return "";
+    }
+    return profile->action_names[action_index];
+}
+
 int csb_v1_runtime_object_name(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing,

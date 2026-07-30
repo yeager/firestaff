@@ -656,6 +656,7 @@ static const char *g_csb_assume_last_reason = "csb_boot/assume_no_dm1_runtime: o
 /* ReDMCSB DEFS.H:2394: the PC3.4/I34E media layout stores symbol M564 at
  * GRAPHICS.DAT item 694. The symbol number is not a file index. */
 #define CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX 694u
+#define CSB_V1_GRAPHICS_ACTION_NAMES_INDEX 699u
 #define CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES 65535u
 #define CSB_V1_GRAPHICS_LZW_MAX_CODE 4096
 #define CSB_V1_GRAPHICS_LZW_CLEAR_CODE 256
@@ -859,11 +860,12 @@ static int csb_v1_graphics_lzw_decode(const uint8_t *input,
     }
 }
 
-static int csb_v1_graphics_decode_entry_m564(const uint8_t *file_bytes,
-                                             size_t file_size,
-                                             uint8_t *out,
-                                             size_t out_capacity,
-                                             size_t *out_size)
+static int csb_v1_graphics_decode_raw_entry(const uint8_t *file_bytes,
+                                            size_t file_size,
+                                            unsigned int entry_index,
+                                            uint8_t *out,
+                                            size_t out_capacity,
+                                            size_t *out_size)
 {
     uint16_t signature;
     uint16_t count;
@@ -890,7 +892,7 @@ static int csb_v1_graphics_decode_entry_m564(const uint8_t *file_bytes,
     signature = csb_v1_graphics_read_be16(file_bytes);
     count = csb_v1_graphics_read_be16(file_bytes + 2u);
     if ((signature & 0x8000u) == 0u ||
-        count <= CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX) {
+        count <= entry_index) {
         return -1;
     }
     compressed_table = 4u;
@@ -902,7 +904,7 @@ static int csb_v1_graphics_decode_entry_m564(const uint8_t *file_bytes,
     }
 
     entry_offset = payload_offset;
-    for (i = 0u; i < CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX; i++) {
+    for (i = 0u; i < entry_index; i++) {
         entry_offset +=
             (size_t)csb_v1_graphics_read_be16(file_bytes + compressed_table + i * 2u);
         if (entry_offset > file_size) {
@@ -910,9 +912,9 @@ static int csb_v1_graphics_decode_entry_m564(const uint8_t *file_bytes,
         }
     }
     compressed_size = csb_v1_graphics_read_be16(
-        file_bytes + compressed_table + CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX * 2u);
+        file_bytes + compressed_table + entry_index * 2u);
     decompressed_size = csb_v1_graphics_read_be16(
-        file_bytes + decompressed_table + CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX * 2u);
+        file_bytes + decompressed_table + entry_index * 2u);
     if (compressed_size == 0u || decompressed_size == 0u ||
         decompressed_size > out_capacity ||
         entry_offset + (size_t)compressed_size > file_size) {
@@ -975,9 +977,10 @@ static int csb_v1_boot_load_object_names_m564(CSB_V1_BootProfile *profile)
     read_count = fread(file_bytes, 1u, (size_t)file_len, file);
     fclose(file);
     if (read_count == (size_t)file_len &&
-        csb_v1_graphics_decode_entry_m564(
+        csb_v1_graphics_decode_raw_entry(
             file_bytes,
             (size_t)file_len,
+            CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX,
             decoded,
             CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES,
             &decoded_size) == 0) {
@@ -991,6 +994,47 @@ static int csb_v1_boot_load_object_names_m564(CSB_V1_BootProfile *profile)
     free(decoded);
     free(file_bytes);
     return ok == 1 ? 1 : 0;
+}
+
+static int csb_v1_boot_load_action_names_c699(CSB_V1_BootProfile *profile)
+{
+    FILE *file;
+    long file_len;
+    uint8_t *file_bytes = NULL;
+    uint8_t *decoded = NULL;
+    size_t read_count;
+    size_t decoded_size = 0u;
+    int ok = 0;
+
+    if (!profile || !profile->graphics_verified || !profile->graphics_path[0]) {
+        return 0;
+    }
+    file = fopen(profile->graphics_path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (file_len = ftell(file)) <= 0 || fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    file_bytes = (uint8_t *)malloc((size_t)file_len);
+    decoded = (uint8_t *)malloc(CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES);
+    if (!file_bytes || !decoded) {
+        fclose(file);
+        free(decoded);
+        free(file_bytes);
+        return 0;
+    }
+    read_count = fread(file_bytes, 1u, (size_t)file_len, file);
+    fclose(file);
+    if (read_count == (size_t)file_len &&
+        csb_v1_graphics_decode_raw_entry(
+            file_bytes, (size_t)file_len, CSB_V1_GRAPHICS_ACTION_NAMES_INDEX,
+            decoded, CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES, &decoded_size) == 0) {
+        ok = csb_v1_runtime_load_action_names_c699(&profile->runtime,
+                                                    decoded, decoded_size);
+    }
+    free(decoded);
+    free(file_bytes);
+    return ok;
 }
 
 const char *csb_v1_boot_last_assumption_reason(void)
@@ -8285,6 +8329,7 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
                                              &profile->imported_party);
     }
     (void)csb_v1_boot_load_object_names_m564(profile);
+    (void)csb_v1_boot_load_action_names_c699(profile);
     /* Load the verified DUNGEON.DAT into the runtime so that the
      * dungeon-layer accessors (csb_v1_dungeon_get_current_level,
      * csb_v1_dungeon_get_square_type, ...) become live immediately
