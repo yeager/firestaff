@@ -297,6 +297,8 @@ static void check_palette_cross_source_contract(void) {
 
 static void check_startup_source_timing_contract(void) {
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media;
+    V1_TitleFrontendSourceTiming timing =
+        V1_TitleFrontend_GetSourceTimingEvidence();
     SWSH_CompatSourceAnimationStep swshStep;
     EntranceCompatSourceAnimationStep doorStep;
     EntranceCompatSourceAnimationStep finalDoorStep;
@@ -404,9 +406,9 @@ static void check_startup_source_timing_contract(void) {
     expect_u("startup TITLE retains the source PRESENTS build hold",
              media.title_presents_hold_ms,
              dm1_v1_startup_title_presents_hold_ms_pc34());
-    expect_u("startup TITLE uses the source VBlank zoom cadence",
+    expect_u("startup TITLE holds each real C001 zoom frame visibly",
              media.title_zoom_frame_delay_ms,
-             dm1_v1_startup_title_vblank_tick_ms_pc34());
+             V1_TitleFrontend_GetRuntimeC001ZoomFrameDelayMs(&timing));
     expect_u("startup TITLE retains only source post-zoom guard",
              media.title_post_zoom_guard_ms,
              dm1_v1_startup_title_post_zoom_vblanks_pc34() *

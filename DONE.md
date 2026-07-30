@@ -1,3 +1,11 @@
+- ✅ 2026-07-30 DM1 C001 title cadence: redistributed the existing verified
+  53-slot title-bank budget so each of the 18 real `GRAPHICS.DAT` C001 zoom
+  rasters remains on screen for two V1 cadence ticks. PRESENTS is shortened
+  by the same budget, avoiding any synthetic frames or longer startup. Local
+  macOS capture confirms a readable multi-frame DUNGEON MASTER zoom followed
+  by the complete Master Strikes Back frame before Entrance; three focused
+  source-lock tests pass.
+
 - ✅ 2026-07-30 DM1 V1/V2.x real-save boot sweep: V1, V2.0, V2.1 and V2.2
   booted the local original PC3.4 media through title/Entrance to HoC while
   retaining real assets, no host fallback visuals, and the provenance-attested

@@ -75,14 +75,17 @@ int main(void) {
     expect_u("runtime frame delay from source vblank cadence",
              V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing),
              dm1_v1_startup_title_vblank_tick_ms_pc34());
+    expect_u("runtime C001 zoom holds real frames for two cadence slots",
+             V1_TitleFrontend_GetRuntimeC001ZoomFrameDelayMs(&timing),
+             2u * dm1_v1_startup_title_vblank_tick_ms_pc34());
     expect_u("runtime PRESENTS hold prevents one-tick flash",
              V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing),
              dm1_v1_startup_title_presents_hold_ms_pc34());
-    /* Host visual timing: TITLE.C F0437 has 18 zoom waits, two post-zoom
-     * waits and a final guard. PRESENTS owns the remaining ticks in the
-     * 53-frame observed bank. This detects the old `53 - 23` event-count
-     * calculation, which made macOS C001 presentation two ticks too fast. */
-    paced_vblanks = timing.zoomStepCount * timing.vblankBeforeEachZoomStep +
+    /* TITLE.C waits one VBlank before each zoom blit. The host holds each
+     * decoded C001 raster for two known title-bank cadence slots, so the
+     * 18 real zoom frames do not collapse into a one-second burst. */
+    expect_u("host C001 zoom hold count", timing.hostZoomDisplayVblankCount, 2u);
+    paced_vblanks = timing.zoomStepCount * timing.hostZoomDisplayVblankCount +
                      timing.postZoomVblankCount +
                      timing.finalFadeGuardVblankCount;
     expect_u("PRESENTS hold excludes non-wait source blits",

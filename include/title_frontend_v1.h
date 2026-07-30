@@ -69,6 +69,10 @@ typedef struct V1_TitleFrontendSourceTiming {
     unsigned int zoomStepCount;
     unsigned int presentsHoldVblankCount;
     unsigned int vblankBeforeEachZoomStep;
+    /* The C001 path has 18 geometric zoom frames but the authenticated PC
+     * title bank spans 53 cadence slots. Keep source VBlank facts separate
+     * from the host hold that makes every real C001 frame observable. */
+    unsigned int hostZoomDisplayVblankCount;
     unsigned int postZoomVblankCount;
     unsigned int finalFadeGuardVblankCount;
     unsigned int firstMenuEligibleStep;
@@ -130,6 +134,8 @@ V1_TitleFrontendSequenceDecision V1_TitleFrontend_DecideSequenceStep(unsigned in
 
 V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void);
 unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourceTiming* timing);
+unsigned int V1_TitleFrontend_GetRuntimeC001ZoomFrameDelayMs(
+    const V1_TitleFrontendSourceTiming* timing);
 unsigned int V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(const V1_TitleFrontendSourceTiming* timing);
 unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontendSourceTiming* timing);
 unsigned int V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(const V1_TitleFrontendSourceTiming* timing);

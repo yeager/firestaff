@@ -1116,6 +1116,11 @@ that its exact runtime path is not already source-locked and tested.
    the DM1-owned handoff facade. Superseded 2026-07-30: the bridge no
    longer auto-acknowledges title/Entrance; only the real selected-launch
    transaction may mark the source-visible startup sequence complete.
+   2026-07-30: local macOS capture showed the 18 real C001 title rasters
+   were visible for only one V1 tick while the rest of the verified 53-slot
+   budget sat on PRESENTS. The host now holds each real raster for two ticks
+   and shortens PRESENTS by the same budget; source-lock tests and app
+   capture pass.
    Title animation fully implemented: 53-frame TITLE.DAT loader,
    C001 blit plans, palette mapping, cadence timing, handoff decisions.
    Entrance palette module and fade transition module exist.

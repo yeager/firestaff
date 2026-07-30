@@ -492,7 +492,7 @@ static void check_title_to_menu_boundary(void) {
              V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&titleTiming));
     expect_u("DM1 full graphics media receipt keeps TITLE zoom delay",
              media.title_zoom_frame_delay_ms,
-             V1_TitleFrontend_GetRuntimeFrameDelayMs(&titleTiming));
+             V1_TitleFrontend_GetRuntimeC001ZoomFrameDelayMs(&titleTiming));
     expect_u("DM1 full graphics media receipt keeps TITLE C001 pad",
              media.title_c001_cadence_pad_ms,
              V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(&titleTiming));

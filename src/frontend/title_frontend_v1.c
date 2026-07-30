@@ -262,6 +262,7 @@ V1_TitleFrontendSourceTiming V1_TitleFrontend_GetSourceTimingEvidence(void) {
     timing.presentsHoldVblankCount =
         dm1_v1_startup_title_presents_hold_vblanks_pc34();
     timing.vblankBeforeEachZoomStep = 1u;
+    timing.hostZoomDisplayVblankCount = 2u;
     timing.postZoomVblankCount =
         dm1_v1_startup_title_post_zoom_vblanks_pc34();
     timing.finalFadeGuardVblankCount =
@@ -284,6 +285,16 @@ unsigned int V1_TitleFrontend_GetRuntimeFrameDelayMs(const V1_TitleFrontendSourc
         return dm1_v1_startup_title_vblank_tick_ms_pc34();
     }
     return 50u;
+}
+
+unsigned int V1_TitleFrontend_GetRuntimeC001ZoomFrameDelayMs(
+    const V1_TitleFrontendSourceTiming* timing) {
+    unsigned int tick = V1_TitleFrontend_GetRuntimeFrameDelayMs(timing);
+    unsigned int slots = timing && timing->hostZoomDisplayVblankCount
+                             ? timing->hostZoomDisplayVblankCount
+                             : 1u;
+    if (slots > 0xffffffffu / tick) return 0xffffffffu;
+    return slots * tick;
 }
 
 unsigned int V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(const V1_TitleFrontendSourceTiming* timing) {
@@ -400,22 +411,11 @@ unsigned int V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(const V1_TitleFrontend
 }
 
 unsigned int V1_TitleFrontend_GetRuntimeC001CadencePadDelayMs(const V1_TitleFrontendSourceTiming* timing) {
-    unsigned int missingSteps;
-    if (!timing ||
-        timing->frameBankEquivalentStepCount <= timing->sourceAnimationStepCount) {
-        return 0u;
-    }
-    missingSteps = timing->frameBankEquivalentStepCount -
-                   timing->sourceAnimationStepCount;
-    if (missingSteps <= timing->presentsHoldVblankCount) {
-        return 0u;
-    }
-    missingSteps -= timing->presentsHoldVblankCount;
-    if (missingSteps >
-        0xffffffffu / dm1_v1_startup_title_vblank_tick_ms_pc34()) {
-        return 0xffffffffu;
-    }
-    return missingSteps * dm1_v1_startup_title_vblank_tick_ms_pc34();
+    /* The finite C001 production-bank budget is now consumed by PRESENTS,
+     * the visible zoom holds, and the three source guard VBlanks. A separate
+     * pad would replay that same budget and make the title handoff stutter. */
+    (void)timing;
+    return 0u;
 }
 
 int V1_TitleFrontend_RenderFrameToScreen(const char* titleDatPath,

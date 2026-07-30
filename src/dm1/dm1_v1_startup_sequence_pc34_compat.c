@@ -20,6 +20,7 @@
 /* C001's 53-frame production bank shares the game's V1 55 ms cadence. */
 #define DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 53u
 #define DM1_V1_STARTUP_TITLE_VBLANK_TICK_MS_PC34 55u
+#define DM1_V1_STARTUP_TITLE_HOST_ZOOM_DISPLAY_VBLANKS_PC34 2u
 
 static unsigned int dm1_v1_startup_entrance_palette_fingerprint_pc34(void) {
     const unsigned int *palette = dm1_v1_palette_entrance_table_pc34();
@@ -4834,7 +4835,7 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     receipt.title_presents_hold_ms =
         V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&title_timing);
     receipt.title_zoom_frame_delay_ms =
-        V1_TitleFrontend_GetRuntimeFrameDelayMs(&title_timing);
+        V1_TitleFrontend_GetRuntimeC001ZoomFrameDelayMs(&title_timing);
     receipt.title_zoom_step_count = title_timing.zoomStepCount;
     receipt.title_post_zoom_guard_ms =
         V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&title_timing);
@@ -4985,7 +4986,7 @@ int dm1_v1_startup_title_timing_receipt_valid_pc34(
         media_receipt->title_presents_hold_ms ==
             V1_TitleFrontend_GetRuntimePresentsHoldDelayMs(&timing) &&
         media_receipt->title_zoom_frame_delay_ms ==
-            V1_TitleFrontend_GetRuntimeFrameDelayMs(&timing) &&
+            V1_TitleFrontend_GetRuntimeC001ZoomFrameDelayMs(&timing) &&
         media_receipt->title_zoom_step_count == timing.zoomStepCount &&
         media_receipt->title_post_zoom_guard_ms ==
             V1_TitleFrontend_GetRuntimeFinalGuardDelayMs(&timing) &&
@@ -5507,11 +5508,12 @@ unsigned int dm1_v1_startup_title_frame_bank_equivalent_steps_pc34(void) {
 unsigned int dm1_v1_startup_title_presents_hold_vblanks_pc34(void) {
     /* TITLE.C F0437 has 23 source events, but PRESENTS and the
      * MASTER/STRIKES BACK blit themselves do not consume M526 VBlanks.
-     * The host title duration must account for the 18 zoom waits, two
-     * post-zoom waits, and final guard: 21 paced ticks.  Subtracting all 23
-     * events made the C001 path two 55 ms ticks too short on macOS. */
+     * C001 has only 18 geometric zoom rasters while its authenticated title
+     * bank covers 53 cadence slots. Keep each real raster visible for two
+     * host VBlank slots and assign the remaining slots to PRESENTS. */
     unsigned int paced_ticks =
-        DM1_V1_STARTUP_TITLE_ZOOM_STEPS_PC34 +
+        DM1_V1_STARTUP_TITLE_ZOOM_STEPS_PC34 *
+            DM1_V1_STARTUP_TITLE_HOST_ZOOM_DISPLAY_VBLANKS_PC34 +
         DM1_V1_STARTUP_TITLE_POST_ZOOM_VBLANKS_PC34 +
         DM1_V1_STARTUP_TITLE_FINAL_GUARD_VBLANKS_PC34;
     if (DM1_V1_STARTUP_TITLE_FRAME_BANK_EQUIVALENT_STEPS_PC34 <= paced_ticks) {
