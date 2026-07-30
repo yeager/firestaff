@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 HUD source-gate refresh: action/spell glyph, champion
+  name and inscription presentation regressions now verify the current M653
+  raster-cell, plan-driven F0397/F0398 and material-bound M648 routes. This
+  retains native source glyphs and terminator handling rather than restoring
+  old host-font checks. Focused CTest passes 3/3.
+
 - ✅ 2026-07-30 DM1 F0128 side F0115 composition: removed the extra M11
   side-lane visibility filter from the source-owned D3/D2/D1 side-content
   dispatch. ReDMCSB calls every side-square routine before its matching

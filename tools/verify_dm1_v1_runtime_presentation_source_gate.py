@@ -30,7 +30,7 @@ def main() -> int:
     ornaments = function_body(m11, "static void m11_draw_dm1_wall_ornaments")
     viewport = function_body(m11, "static void m11_draw_viewport")
     font_loader = function_body(
-        m11, "static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_glyphs")
+        m11, "static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_material")
     glyphs = function_body(m11, "static int m11_draw_dm1_inscription_glyph_line")
     actions = function_body(m11, "static void m11_draw_dm1_ui_text_trailing_spaces")
 
@@ -51,7 +51,7 @@ def main() -> int:
         assert token in glyphs, f"missing M648 source token: {token}"
     assert "BlitScaled" not in glyphs, "M648 cells must remain native 8x8"
 
-    assert "M11_Font_DrawChar" in actions
+    assert "m11_draw_dm1_m653_cell_clipped_at_baseline" in actions
     assert "m11_draw_text" not in actions, "ACTIDRAW cannot use a host-font fallback"
     print("ok: DM1 M648 and ACTIDRAW presentation remain source-owned")
     return 0

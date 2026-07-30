@@ -2,6 +2,12 @@
 
 ## Active DM1/CSB Symbol Queue
 
+- **DM1-V1-HUD-SOURCE-GATE-REFRESH:** Closed 2026-07-30. The action/spell,
+  champion-name and M648 presentation gates now inspect the current
+  source-owned M653 glyph route, data-driven spell plan and material-bound
+  inscription font loader rather than retired inline helpers. Focused CTest
+  verification passes 3/3.
+
 - **DM1-V1-F0128-SIDE-F0115-DISPATCH:** Closed 2026-07-30. The late M11
   side-content pass no longer re-applies a host lane-visibility heuristic
   after ReDMCSB `DUNVIEW.C F0128` has explicitly dispatched D3L/D3R,

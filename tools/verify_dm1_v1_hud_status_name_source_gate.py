@@ -37,7 +37,8 @@ def main() -> int:
     assert "m11_draw_text" not in status_name, "F0292 status names cannot use host text"
     assert "DM1_V1_CPNBC_NAME_FIELD_VISIBLE_CHARS_PC34" in status_name
     assert "DM1_V1_CPNBC_GLYPH_WIDTH_PC34" in status_name
-    assert "break;" in status_name, "F0053 must stop at Name[8] terminator"
+    assert "text[charCount] != '\\0'" in status_name, (
+        "F0053 must stop at Name[8] terminator")
 
     assert "m11_draw_dm1_status_name_text" in party_panel
     assert "DM1_V1_CPNBC_NAME_BOX_PRINT_Y_PC34" in party_panel
