@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.191
+
+- CSB: make the V2.0 startup-capture regression inspect the first stable
+  source-owned runtime frame after the Prison door handoff, avoiding a later
+  legitimate HUD redraw while retaining byte-identical V1/V2.0 source checks.
+- DM2: include the verified party/hero save-model and scene-control source
+  additions already merged on `main`.
+
 # Firestaff v3.0.190
 
 - CSB: retain explicit launch scaling and preserve the actual user window
