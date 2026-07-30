@@ -1,3 +1,11 @@
+- ✅ 2026-07-30 CSB PC3.4 wall-set catalog mapping: Firestaff now exposes the
+  source-defined F0095 mapping for all 22 F0128 wall-set surfaces per
+  40-record PC/I34 wall set, including the seven door-frame records and the
+  fifteen G2107 wall perspectives. Catalog bounds reject incomplete source
+  data rather than crossing into a neighbouring set. Verification:
+  `csb_v1_pc34_wallset_graphics_map` covers set 0, set 1, boundary, negative
+  and invalid-surface cases; `firestaff` builds successfully.
+
 - ✅ 2026-07-30 CSB live spellcaster ownership: C109/F0394 caster selection
   now commits the selected living champion to both runtime
   `magic_caster_index` and the save-visible CSB party mirror, without changing

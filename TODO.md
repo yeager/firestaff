@@ -161,6 +161,12 @@ an integration build pass.
   record. The same corrected record is used by the real first-frame receipt
   and V2.2 plan. Remaining: a fully
   checked native V1 raster-byte handoff for all F0128 material families.
+  2026-07-30 update: `csb_v1_pc34_wallset_graphics_map` now provides the
+  exact PC/I34 F0095 catalog mapping for the seven door-frame and fifteen
+  G2107 wall surfaces in each 40-record wall set (starting at record 86),
+  with catalog-bound rejection. This removes the next record-index ambiguity,
+  but does not yet supply the per-command native bytes, clip receipts or V2.2
+  replacement assets required to admit a wall surface.
   The source-artpack manifest now makes this distinction machine-readable:
   `door_d2_01` is explicitly `admitted_d3_f0791_native`, carrying the real
   44x38 source dimensions and the D3 F0791/F0132 composition contract.
