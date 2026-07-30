@@ -413,6 +413,13 @@
   The only `.fsart` archives currently in `/Users/bosse/Downloads` identify
   themselves as `game: dm1`; they are correctly not admitted as CSB art.
 
+- ✅ 2026-07-30 DM2 misc tables: complete extraction of all remaining const tables
+  from dm2data.cpp. 47 table arrays: DB spec masks (631a 60, 6356 263), tile
+  type mapping (3278/3298), subpos bitmasks (2660/26f8), projectile offsets
+  (275a 32x2), direction matrices (6a54/6a64 4x4), movement deltas (6e68 4x8x2),
+  staircase geometry (6c1e/6c35/6c4c), inventory grid coords (6e03 26x2),
+  character codes (292c 32), plus ~30 smaller tables. dm2data.cpp is now
+  100% extracted — all const tables are in Firestaff. 10 tests.
 - ✅ 2026-07-30 DM2 creature/rendering tables: creature movement params (132),
   direction rotation (4x5), step deltas (2x4), attack/facing/projectile maps,
   creature render descriptors (92), creature GFX face/ornament/flip/side (6 each),
