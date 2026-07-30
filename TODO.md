@@ -1092,8 +1092,9 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-26: DM1 startup handoff M11 bridge created. Callback
    implementations for play_swsh, play_title, play_entrance wired into
    M11 launcher boot path. Prelude and post-launch phases execute through
-   DM1-owned handoff facade. SWSH gated on swooshBound, title auto-
-   acknowledges, entrance auto-enters. [v3.0.149]
+   the DM1-owned handoff facade. Superseded 2026-07-30: the bridge no
+   longer auto-acknowledges title/Entrance; only the real selected-launch
+   transaction may mark the source-visible startup sequence complete.
    Title animation fully implemented: 53-frame TITLE.DAT loader,
    C001 blit plans, palette mapping, cadence timing, handoff decisions.
    Entrance palette module and fade transition module exist.
@@ -1104,7 +1105,8 @@ that its exact runtime path is not already source-locked and tested.
    In-game SFX: SND3 decoder (graphics_dat_snd3_loader_v1), sound event
    mapping (sound_event_snd3_map_v1, 35 events → 33 SND3 items), and
    SDL3 audio playback (audio_sdl_m11.c with SND3 resampling) all
-   implemented. Q-DM1-08 complete.
+   implemented. Q-DM1-08 complete; real packaged-app/Mac capture remains
+   tracked separately under Q-DM1-10.
 9. **Q-DM1-09 Input and controller coverage:** command behavior for keyboard,
    mouse, touch, controller, fullscreen scaling and modal focus.
    2026-07-26: Host input bridge (dm1_v1_host_input_bridge), mouse input

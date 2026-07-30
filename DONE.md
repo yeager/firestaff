@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 startup handoff ownership: removed the duplicate M11
+  bridge acknowledgement that could mark SWSH/title/Entrance complete before
+  presenting them. Only the real selected-launch transaction now publishes
+  `dm1StartupHandoffExecuted`; focused startup and original-save regressions
+  pass.
+
 - ✅ 2026-07-30 DM1 PC3.4 save regression isolation: the original-save
   handoff fixture now includes its process id in the temporary primary and
   `.bak` paths. Concurrent CTest runs can no longer rename or delete each

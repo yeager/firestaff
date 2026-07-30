@@ -2575,6 +2575,13 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         }
         g_m11_intro_delay_fast_forward = oldFastForward;
         if (dm1SelectedLaunchResult.runtime_handoff_receipt.handled) {
+            /* Only the real selected-launch transaction may publish this
+             * state.  M11_GameView_OpenSelectedMenuEntry merely opens the
+             * dungeon so it cannot claim that source-visible startup frames
+             * have already played. */
+            gameView->dm1StartupHandoffExecuted =
+                dm1SelectedLaunchResult.runtime_handoff_receipt
+                        .runtime_first_frame_ready ? 1 : 0;
             return (dm1SelectedLaunchResult.runtime_handoff_receipt
                         .runtime_first_frame_ready ||
                     dm1SelectedLaunchResult.runtime_handoff_receipt

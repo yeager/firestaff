@@ -165,7 +165,6 @@
 #include "dm1_v1_action_spell_source_asset_runtime_pc34_compat.h"
 #include "dm1_v1_action_spell_runtime_capture_pc34_compat.h"
 #include "dm1_v1_hoc_presented_frame_consumer_pc34_compat.h"
-#include "dm1_v1_startup_handoff_m11_bridge_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_confirmation_apply_bridge_pc34_compat.h"
 #include "dm1_v1_hoc_mirror_candidate_click_admission_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_presentation_receipt_pc34_compat.h"
@@ -16412,17 +16411,11 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             (void)m11_apply_dm1_startup_launch_path_receipt(
                 state,
                 DM1_V1_STARTUP_LAUNCH_PATH_LAUNCHER_PC34);
-            if (!state->dm1StartupIntroBypassed) {
-                DM1_V1_StartupHandoffM11BridgeStatePc34 handoff;
-                dm1_v1_startup_handoff_m11_bridge_init_pc34(&handoff,
-                                                            state);
-                if (dm1_v1_startup_handoff_m11_bridge_execute_prelude_pc34(
-                        &handoff, entry->gameId) &&
-                    dm1_v1_startup_handoff_m11_bridge_execute_post_launch_pc34(
-                        &handoff, spec.sourceId)) {
-                    state->dm1StartupHandoffExecuted = 1;
-                }
-            }
+            /* The caller owns the source-visible SWSH -> TITLE -> ENTRANCE
+             * transaction.  Do not acknowledge it here: this helper only
+             * opens the world, and the old bridge marked the phases complete
+             * without presenting their original frames. */
+            state->dm1StartupHandoffExecuted = 0;
         }
         return ok;
     }
