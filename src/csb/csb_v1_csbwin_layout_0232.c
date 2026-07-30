@@ -1,5 +1,7 @@
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 enum {
@@ -68,4 +70,35 @@ int csb_v1_csbwin_layout_0232_decode(
         decoded_graphic + CSBWIN_0232_MAGIC_BOX_OFFSET, &out_layout->magic_box);
     out_layout->valid = 1;
     return 1;
+}
+
+int csb_v1_csbwin_layout_0232_read_graphics_dat(
+    const char *graphics_dat_path, CSB_V1_CSBWinLayout0232 *out_layout)
+{
+    CSB_AtariStLoader loader;
+    uint8_t *decoded = NULL;
+    int ok = 0;
+
+    if (!out_layout) return 0;
+    memset(out_layout, 0, sizeof(*out_layout));
+    if (!graphics_dat_path || !graphics_dat_path[0]) return 0;
+    csb_atari_st_graphics_loader_init(&loader);
+    if (!csb_atari_st_graphics_loader_open(&loader, graphics_dat_path) ||
+        loader.item_count != 563u || loader.items[0x232u].decompressed_size !=
+            CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE) {
+        goto done;
+    }
+    decoded = (uint8_t *)malloc(CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE);
+    if (!decoded || csb_atari_st_graphics_loader_read_item(
+            &loader, 0x232u, decoded,
+            CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE) !=
+            (int)CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE) {
+        goto done;
+    }
+    ok = csb_v1_csbwin_layout_0232_decode(
+        decoded, CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE, out_layout);
+done:
+    free(decoded);
+    csb_atari_st_graphics_loader_close(&loader);
+    return ok;
 }

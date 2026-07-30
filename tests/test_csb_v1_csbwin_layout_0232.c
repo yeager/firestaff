@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "csb_v1_csbwin_layout_0232.h"
 
@@ -27,10 +29,40 @@ static void put_rect(uint8_t *bytes, size_t offset,
     put_be16(bytes, offset + 6u, y2);
 }
 
+static int write_standard_graphics_dat(const char *path, const uint8_t *graphic)
+{
+    FILE *file = fopen(path, "wb");
+    uint8_t word[2];
+    int index;
+
+    if (!file) return 0;
+    put_be16(word, 0u, 563);
+    if (fwrite(word, 1, sizeof(word), file) != sizeof(word)) goto failed;
+    for (index = 0; index < 563; ++index) {
+        put_be16(word, 0u, index == 0x232 ?
+                 CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE : 0);
+        if (fwrite(word, 1, sizeof(word), file) != sizeof(word)) goto failed;
+    }
+    for (index = 0; index < 563; ++index) {
+        put_be16(word, 0u, index == 0x232 ?
+                 CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE : 0);
+        if (fwrite(word, 1, sizeof(word), file) != sizeof(word)) goto failed;
+    }
+    if (fwrite(graphic, 1, CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE, file) !=
+        CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE) goto failed;
+    fclose(file);
+    return 1;
+failed:
+    fclose(file);
+    return 0;
+}
+
 int main(void)
 {
     uint8_t graphic[CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE];
     CSB_V1_CSBWinLayout0232 layout;
+    char path[512];
+    const char *tmpdir;
     int index;
 
     memset(graphic, 0, sizeof(graphic));
@@ -59,6 +91,15 @@ int main(void)
     CHECK(!csb_v1_csbwin_layout_0232_decode(graphic, sizeof(graphic) - 1u, &layout));
     CHECK(!csb_v1_csbwin_layout_0232_decode(NULL, sizeof(graphic), &layout));
     CHECK(!csb_v1_csbwin_layout_0232_decode(graphic, sizeof(graphic), NULL));
+
+    tmpdir = getenv("TMPDIR");
+    if (!tmpdir || !tmpdir[0]) tmpdir = ".";
+    snprintf(path, sizeof(path), "%s/firestaff-csbwin-layout-0232-%lu.dat",
+             tmpdir, (unsigned long)clock());
+    CHECK(write_standard_graphics_dat(path, graphic));
+    CHECK(csb_v1_csbwin_layout_0232_read_graphics_dat(path, &layout));
+    CHECK(layout.valid && layout.party_direction[0].x1 == 10);
+    remove(path);
 
     if (failures) return 1;
     puts("PASS: CSBWin GRAPHICS.DAT 0x232 layout decode");

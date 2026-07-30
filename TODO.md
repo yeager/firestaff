@@ -1138,9 +1138,11 @@ that its exact runtime path is not already source-locked and tested.
    direction boxes, eye/mouth/poison/food-water boxes, and movement/magic
    rectangles. Its offsets are taken directly from CSBWin `Data.h` and the
    `CSBCode.cpp` post-expand swaps, with a dedicated data-free regression.
-   It is intentionally not yet used as a PC3.4 C017/C040 substitute: next
-   work is binding a real `0x232` decompression receipt and consuming those
-   coordinates with CSBWin's own source graphics.
+   The decoder now also reads the real 563-item DMCSB1 `GRAPHICS.DAT` index,
+   LZW-decompresses item `0x232`, and rejects any other expanded size before
+   accepting the layout. It is intentionally not yet used as a PC3.4
+   C017/C040 substitute: next work is consuming those coordinates with
+   CSBWin's own source graphics.
    2026-07-28: fixed the live Prison-to-F0128 black frame. The CSB viewport
    now decodes original GRAPHICS.DAT floor/ceiling entries through the CSB
    IMG3/LZW path and draws them at the source aperture `(48,33)`. The real

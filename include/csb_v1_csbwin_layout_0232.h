@@ -34,6 +34,12 @@ int csb_v1_csbwin_layout_0232_decode(
     const uint8_t *decoded_graphic, size_t decoded_size,
     CSB_V1_CSBWinLayout0232 *out_layout);
 
+/* Read and LZW-decompress standard CSBWin/Atari GRAPHICS.DAT item 0x232,
+ * then decode its source layout. The file must expose the original 563-item
+ * DMCSB1 index and item 0x232 must expand to exactly 0x722 bytes. */
+int csb_v1_csbwin_layout_0232_read_graphics_dat(
+    const char *graphics_dat_path, CSB_V1_CSBWinLayout0232 *out_layout);
+
 /* Rectangles use inclusive CSBWin screen coordinates. */
 int csb_v1_csbwin_layout_0232_rect_is_screen_valid(
     const CSB_V1_CSBWinRect0232 *rect);
