@@ -660,6 +660,29 @@ static void check_dot_environment_never_persists_as_data_directory(void) {
     CHECK(test_unsetenv("FIRESTAFF_DATA"));
 }
 
+static void check_fresh_config_repairs_dot_in_memory(void) {
+    M12_Config config;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char expected[M12_ASSET_DATA_DIR_CAPACITY];
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(FSP_GetDefaultOriginalsDir(expected, sizeof(expected)));
+    CHECK(test_setenv("FIRESTAFF_DATA", "."));
+    if (failures) {
+        (void)test_unsetenv("FIRESTAFF_DATA");
+        return;
+    }
+
+    /* First-run is the important case: config save previously repaired the
+     * file but left this live config object at '.', so Settings rendered it. */
+    CHECK(M12_Config_Load(&config, NULL) == 0);
+    CHECK(strcmp(config.dataDir, expected) == 0);
+    CHECK(strcmp(config.dataDir, ".") != 0);
+    CHECK(!config_persisted_dot_data_dir(M12_Config_GetPath(&config)));
+    CHECK(test_unsetenv("FIRESTAFF_DATA"));
+}
+
 static void check_dot_asset_status_does_not_replace_saved_directory(void) {
     M12_StartupMenuState state;
     M12_Config config;
@@ -732,6 +755,7 @@ int main(void) {
     check_start_menu_promotes_saved_game_leaf_to_parent();
     check_dot_config_migrates_to_default_data_directory();
     check_dot_environment_never_persists_as_data_directory();
+    check_fresh_config_repairs_dot_in_memory();
     check_dot_asset_status_does_not_replace_saved_directory();
     check_active_scan_renders_progress_bar();
 

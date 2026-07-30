@@ -1266,6 +1266,14 @@ int M12_Config_Load(M12_Config* config, const char* dataDirOverride) {
     }
     fp = fopen(config->path, "rb");
     if (!fp) {
+        /* M12_Config_Save protects the file from a native-dialog "."
+         * token, but it cannot modify this caller-owned structure.  Repair
+         * the in-memory value as well, otherwise the first launcher session
+         * can still display "." until it is restarted. */
+        if (m12_config_data_dir_is_placeholder(config->dataDir)) {
+            (void)m12_config_resolve_persisted_data_dir(config->dataDir,
+                                                         sizeof(config->dataDir));
+        }
         M12_Config_Save(config);
         return 0;
     }

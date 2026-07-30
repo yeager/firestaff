@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 Start-menu first-run data-folder repair: when a macOS folder
+  dialog or `FIRESTAFF_DATA` supplies the placeholder `.`, the newly created
+  configuration now repairs its live in-memory path as well as the file on
+  disk. Settings therefore shows the physical per-user originals directory
+  immediately, rather than only after a restart. Verification:
+  `m12_data_dir_cancel` and `menu_hit_launch_direct_click_m12` pass.
+
 - ✅ 2026-07-30 CSB cast source-ownership guard: the shared spell-button
   boundary no longer falls through into DM1 F0750--F0754 when CSB owns the
   runtime. An unavailable CSBWin caster/cast transaction preserves CSB
