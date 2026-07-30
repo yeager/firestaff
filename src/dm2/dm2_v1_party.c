@@ -137,6 +137,21 @@ int16_t dm2_v1_hero_2c1d_132c(int16_t a, int16_t b) {
     return result;
 }
 
+/* skproject DM2_timproc_3a15_1da8 (c_tim_proc.cpp:1488)
+ * Ornate animator toggle helper. Returns:
+ *   input 0 → 1, input 1 → 0, input 2 → toggle bit 0 of second param,
+ *   anything else → 0. */
+int32_t dm2_v1_timproc_3a15_1da8(int32_t a, int32_t b) {
+    uint16_t au = (uint16_t)a;
+    if (au < 1)
+        return (int16_t)a == 0 ? 1 : 0;
+    if (au <= 1)
+        return 0;
+    if ((int16_t)a != 2)
+        return 0;
+    return (int32_t)(((uint8_t)b ^ 1) | (b & ~0xFF));
+}
+
 /* skproject DM2_2c1d_0e23 (c_hero.cpp:3879)
  * Stamina cost from item weight. Standalone arithmetic. */
 int16_t dm2_v1_hero_2c1d_0e23(int16_t weight) {

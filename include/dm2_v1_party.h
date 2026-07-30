@@ -133,6 +133,8 @@ int16_t dm2_v1_hero_2c1d_132c(int16_t a, int16_t b);
 
 int16_t dm2_v1_hero_2c1d_0e23(int16_t weight);
 
+int32_t dm2_v1_timproc_3a15_1da8(int32_t a, int32_t b);
+
 #ifdef __cplusplus
 }
 #endif

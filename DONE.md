@@ -1,3 +1,14 @@
+- ✅ 2026-07-30 DM2 audit: reclassify 49 MISSING symbols as
+  NOT_APPLICABLE_ARCH (startend init/loop/end 6, c_eventqueue dispatch 6,
+  c_dialog UI 7, c_events click/GUI dispatch 30). Implement
+  DM2_timproc_3a15_1da8 ornate animator toggle helper. MISSING: 169 → 119.
+
+- ✅ 2026-07-30 DM2 party/hero data model: DM2_V1_Hero 263-byte packed
+  savegame struct matching skproject c_hero layout. Implemented 5 standalone
+  c_hero functions (use_luck, set_hero_flags, get_player_weight,
+  hero_2c1d_132c, 2c1d_0e23). Fixed 6 broken tests, wired 6 source files,
+  added viewport scene control fields. MISSING: 174 → 169.
+
 - ✅ 2026-07-30 DM2 EXTENDED_LOAD_AI_DEFINITION: added 62-entry hardcoded
   genuine AI table (dAITableGenuine from FIRE.exe @ 0x48162), pre-populated
   on reset before GDAT overrides. Resolved 15 MISSING audit symbols (AI spec

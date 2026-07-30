@@ -74,5 +74,13 @@ int main(void) {
     assert(dm2_v1_hero_2c1d_0e23(4) == 2);
     assert(dm2_v1_hero_2c1d_0e23(20) == 10);
 
+    /* timproc_3a15_1da8: ornate animator toggle */
+    assert(dm2_v1_timproc_3a15_1da8(0, 0) == 1);
+    assert(dm2_v1_timproc_3a15_1da8(1, 0) == 0);
+    assert(dm2_v1_timproc_3a15_1da8(2, 0) == 1);
+    assert(dm2_v1_timproc_3a15_1da8(2, 1) == 0);
+    assert(dm2_v1_timproc_3a15_1da8(3, 0) == 0);
+    assert(dm2_v1_timproc_3a15_1da8(5, 99) == 0);
+
     return 0;
 }

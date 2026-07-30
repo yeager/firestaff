@@ -284,58 +284,58 @@ DM2_ALLOCATE_GFX16	SKULLWIN	SKULLWIN/c_dballoc.cpp	1160	include/dm2_v1_asset_loa
 DM2_dballoc_3e74_5992	SKULLWIN	SKULLWIN/c_dballoc.cpp	1173		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
 DM2_ALLOC_NEW_CREATURE	SKULLWIN	SKULLWIN/c_dballoc.cpp	1187		NOT_APPLICABLE_ARCH	DM2 DB allocation internals - Firestaff uses SDL3 memory model
 _DEBUG_SHOW_BIGPOOL	SKULLWIN	SKULLWIN/c_dballoc.cpp	1248		NOT_APPLICABLE_ARCH
-DM2_2066_33c4	SKULLWIN	SKULLWIN/c_dialog.cpp	29		MISSING
-DM2_dialog_2066_3820	SKULLWIN	SKULLWIN/c_dialog.cpp	44	include/dm2_v1_dialogue_gdat.h:17	MISSING
-DM2_dialog_2066_33e7	SKULLWIN	SKULLWIN/c_dialog.cpp	86	include/dm2_v1_dialogue_gdat.h:100	MISSING
-DM2_dialog_2066_38d9	SKULLWIN	SKULLWIN/c_dialog.cpp	307		MISSING
-DM2_dialog_OPEN_DIALOG_PANEL	SKULLWIN	SKULLWIN/c_dialog.cpp	352	include/dm2_v1_dialogue_gdat.h:29	MISSING
-DM2_dialog_2066_37f2	SKULLWIN	SKULLWIN/c_dialog.cpp	433		MISSING
-DM2_dialog_2066_398a	SKULLWIN	SKULLWIN/c_dialog.cpp	454		MISSING
+DM2_2066_33c4	SKULLWIN	SKULLWIN/c_dialog.cpp	29		NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
+DM2_dialog_2066_3820	SKULLWIN	SKULLWIN/c_dialog.cpp	44	include/dm2_v1_dialogue_gdat.h:17	NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
+DM2_dialog_2066_33e7	SKULLWIN	SKULLWIN/c_dialog.cpp	86	include/dm2_v1_dialogue_gdat.h:100	NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
+DM2_dialog_2066_38d9	SKULLWIN	SKULLWIN/c_dialog.cpp	307		NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
+DM2_dialog_OPEN_DIALOG_PANEL	SKULLWIN	SKULLWIN/c_dialog.cpp	352	include/dm2_v1_dialogue_gdat.h:29	NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
+DM2_dialog_2066_37f2	SKULLWIN	SKULLWIN/c_dialog.cpp	433		NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
+DM2_dialog_2066_398a	SKULLWIN	SKULLWIN/c_dialog.cpp	454		NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
 DM2_ENGAGE_COMMAND	SKULLWIN	SKULLWIN/c_engage.cpp	24		MISSING
 init	SKULLWIN	SKULLWIN/c_eventqueue.cpp	10	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 set	SKULLWIN	SKULLWIN/c_eventqueue.cpp	33	src/dm2/dm2_v2_touch_runtime.c:71	NOT_APPLICABLE_ARCH
-PROCESS_SINGLEEVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	44		MISSING
+PROCESS_SINGLEEVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	44		NOT_APPLICABLE_ARCH	DOS event queue dispatch; Firestaff uses M11 event architecture
 QUEUE_EVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	55	dm2_v1_skproject_core.c:3527	IMPLEMENTED
-DM2_3929_0b01	SKULLWIN	SKULLWIN/c_eventqueue.cpp	94		MISSING
-DM2_3929_0b20	SKULLWIN	SKULLWIN/c_eventqueue.cpp	105		MISSING
-DM2_3e74_5b7c	SKULLWIN	SKULLWIN/c_eventqueue.cpp	117		MISSING
-QUEUE_0x20	SKULLWIN	SKULLWIN/c_eventqueue.cpp	161		MISSING
-event_1031_098e	SKULLWIN	SKULLWIN/c_eventqueue.cpp	177		MISSING
-DM2_CLICK_ITEM_SLOT	SKULLWIN	SKULLWIN/c_events.cpp	45		MISSING
-DM2_events_5BFB	SKULLWIN	SKULLWIN/c_events.cpp	170		MISSING
-DM2_events_AB26	SKULLWIN	SKULLWIN/c_events.cpp	201		MISSING
-DM2_events_38c8_0002	SKULLWIN	SKULLWIN/c_events.cpp	327		MISSING
-DM2_events_38c8_0060	SKULLWIN	SKULLWIN/c_events.cpp	355		MISSING
+DM2_3929_0b01	SKULLWIN	SKULLWIN/c_eventqueue.cpp	94		NOT_APPLICABLE_ARCH	DOS event queue dispatch; Firestaff uses M11 event architecture
+DM2_3929_0b20	SKULLWIN	SKULLWIN/c_eventqueue.cpp	105		NOT_APPLICABLE_ARCH	DOS event queue dispatch; Firestaff uses M11 event architecture
+DM2_3e74_5b7c	SKULLWIN	SKULLWIN/c_eventqueue.cpp	117		NOT_APPLICABLE_ARCH	DOS event queue dispatch; Firestaff uses M11 event architecture
+QUEUE_0x20	SKULLWIN	SKULLWIN/c_eventqueue.cpp	161		NOT_APPLICABLE_ARCH	DOS event queue dispatch; Firestaff uses M11 event architecture
+event_1031_098e	SKULLWIN	SKULLWIN/c_eventqueue.cpp	177		NOT_APPLICABLE_ARCH	DOS event queue dispatch; Firestaff uses M11 event architecture
+DM2_CLICK_ITEM_SLOT	SKULLWIN	SKULLWIN/c_events.cpp	45		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_5BFB	SKULLWIN	SKULLWIN/c_events.cpp	170		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_AB26	SKULLWIN	SKULLWIN/c_events.cpp	201		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_38c8_0002	SKULLWIN	SKULLWIN/c_events.cpp	327		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_38c8_0060	SKULLWIN	SKULLWIN/c_events.cpp	355		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
 DM2_CLICK_MAGICAL_MAP_RUNE	SKULLWIN	SKULLWIN/c_events.cpp	395	dm2_v1_skproject_core.c:3695	IMPLEMENTED
-DM2_events_13262	SKULLWIN	SKULLWIN/c_events.cpp	427		MISSING
-DM2_PUSH_PULL_RIGID_BODY	SKULLWIN	SKULLWIN/c_events.cpp	467		MISSING
-DM2_PLAYER_TESTING_WALL	SKULLWIN	SKULLWIN/c_events.cpp	625		MISSING
-DM2_events_32cb_0287	SKULLWIN	SKULLWIN/c_events.cpp	670		MISSING
-DM2_events_32cb_03a6	SKULLWIN	SKULLWIN/c_events.cpp	736		MISSING
-DM2_events_121e_013a	SKULLWIN	SKULLWIN/c_events.cpp	974		MISSING
-DM2_eventa_121e_0222	SKULLWIN	SKULLWIN/c_events.cpp	1051		MISSING
-DM2_events_121e_03ae	SKULLWIN	SKULLWIN/c_events.cpp	1171		MISSING
-DM2_events_121e_0003	SKULLWIN	SKULLWIN/c_events.cpp	1222		MISSING
-DM2_events_37BBB	SKULLWIN	SKULLWIN/c_events.cpp	1290		MISSING
-DM2_events_121e_0351	SKULLWIN	SKULLWIN/c_events.cpp	1298		MISSING
-DM2_guivp_32cb_01b6	SKULLWIN	SKULLWIN/c_events.cpp	1345		MISSING
-DM2_CLICK_VWPT	SKULLWIN	SKULLWIN/c_events.cpp	1404		MISSING
-DM2_CLICK_INVENTORY_EYE	SKULLWIN	SKULLWIN/c_events.cpp	1846		MISSING
-DM2_ADD_RUNE_TO_TAIL	SKULLWIN	SKULLWIN/c_events.cpp	1871		MISSING
-DM2_REMOVE_RUNE_FROM_TAIL	SKULLWIN	SKULLWIN/c_events.cpp	1931		MISSING
-DM2_CLICK_MONEYBOX	SKULLWIN	SKULLWIN/c_events.cpp	1941		MISSING
-DM2_events_2f3f_04ea	SKULLWIN	SKULLWIN/c_events.cpp	1996		MISSING
-DM2_events_2e62_0cfa	SKULLWIN	SKULLWIN/c_events.cpp	2153		MISSING
+DM2_events_13262	SKULLWIN	SKULLWIN/c_events.cpp	427		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_PUSH_PULL_RIGID_BODY	SKULLWIN	SKULLWIN/c_events.cpp	467		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_PLAYER_TESTING_WALL	SKULLWIN	SKULLWIN/c_events.cpp	625		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_32cb_0287	SKULLWIN	SKULLWIN/c_events.cpp	670		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_32cb_03a6	SKULLWIN	SKULLWIN/c_events.cpp	736		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_121e_013a	SKULLWIN	SKULLWIN/c_events.cpp	974		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_eventa_121e_0222	SKULLWIN	SKULLWIN/c_events.cpp	1051		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_121e_03ae	SKULLWIN	SKULLWIN/c_events.cpp	1171		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_121e_0003	SKULLWIN	SKULLWIN/c_events.cpp	1222		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_37BBB	SKULLWIN	SKULLWIN/c_events.cpp	1290		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_121e_0351	SKULLWIN	SKULLWIN/c_events.cpp	1298		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_guivp_32cb_01b6	SKULLWIN	SKULLWIN/c_events.cpp	1345		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_CLICK_VWPT	SKULLWIN	SKULLWIN/c_events.cpp	1404		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_CLICK_INVENTORY_EYE	SKULLWIN	SKULLWIN/c_events.cpp	1846		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_ADD_RUNE_TO_TAIL	SKULLWIN	SKULLWIN/c_events.cpp	1871		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_REMOVE_RUNE_FROM_TAIL	SKULLWIN	SKULLWIN/c_events.cpp	1931		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_CLICK_MONEYBOX	SKULLWIN	SKULLWIN/c_events.cpp	1941		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_2f3f_04ea	SKULLWIN	SKULLWIN/c_events.cpp	1996		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_2e62_0cfa	SKULLWIN	SKULLWIN/c_events.cpp	2153		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
 DM2_FIND_SPELL_BY_RUNES	SKULLWIN	SKULLWIN/c_events.cpp	2211	dm2_v1_spell_cast_player.c:155	IMPLEMENTED
 DM2_CAST_SPELL_PLAYER	SKULLWIN	SKULLWIN/c_events.cpp	2268	dm2_v1_spell_cast_player.c:250	IMPLEMENTED
 DM2_PROCEED_SPELL_FAILURE	SKULLWIN	SKULLWIN/c_events.cpp	2687	dm2_v1_spell_cast_player.c:454	IMPLEMENTED
 DM2_TRY_CAST_SPELL	SKULLWIN	SKULLWIN/c_events.cpp	2738	dm2_v1_spell_cast_player.c:454	IMPLEMENTED
-DM2_ACTIVATE_ACTION_HAND	SKULLWIN	SKULLWIN/c_events.cpp	2784		MISSING
-DM2_PROCEED_COMMAND_SLOT	SKULLWIN	SKULLWIN/c_events.cpp	2818		MISSING
-DM2_events_30DEA	SKULLWIN	SKULLWIN/c_events.cpp	2903		MISSING
-DM2_events_3C1E5	SKULLWIN	SKULLWIN/c_events.cpp	2949		MISSING
-DM2_443c_0004	SKULLWIN	SKULLWIN/c_events.cpp	3942		MISSING
-DM2_events_443c_0434	SKULLWIN	SKULLWIN/c_events.cpp	3958		MISSING
+DM2_ACTIVATE_ACTION_HAND	SKULLWIN	SKULLWIN/c_events.cpp	2784		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_PROCEED_COMMAND_SLOT	SKULLWIN	SKULLWIN/c_events.cpp	2818		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_30DEA	SKULLWIN	SKULLWIN/c_events.cpp	2903		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_3C1E5	SKULLWIN	SKULLWIN/c_events.cpp	2949		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_443c_0004	SKULLWIN	SKULLWIN/c_events.cpp	3942		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
+DM2_events_443c_0434	SKULLWIN	SKULLWIN/c_events.cpp	3958		NOT_APPLICABLE_ARCH	DOS GUI event dispatch; Firestaff uses M11 click/action architecture
 DM2_QUERY_NEXT_GDAT_ENTRY	SKULLWIN	SKULLWIN/c_gdatfile.cpp	31	include/dm2_v1_asset_loader.h:dm2_v1_query_next_gdat_entry	VERIFIED_SOURCE_MAPPING	DM2 v1 c_gdatfile iterator receipt walks the parsed ENT1 table with source-shaped category range and optional class filters, preserving raw/scalar entry identity without fabricating buffers.
 DM2_dballoc_3e74_24b8	SKULLWIN	SKULLWIN/c_gdatfile.cpp	273	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_gdat_sound_allocation_scan	IMPLEMENTED
 DM2_dballoc_3e74_2162	SKULLWIN	SKULLWIN/c_gdatfile.cpp	336	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_gdat_accepts_current_zone	IMPLEMENTED
@@ -979,7 +979,7 @@ DM2_ACTIVATE_RELAY2	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1249		MISSING
 DM2_ACTIVATE_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1325		MISSING
 DM2_ACTIVATE_TEST_FLAG	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1405		MISSING
 DM2_ACTIVATE_INVERSE_FLAG	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1450		MISSING
-DM2_timproc_3a15_1da8	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1488		MISSING
+DM2_timproc_3a15_1da8	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1488		IMPLEMENTED	Ornate animator toggle helper; standalone arithmetic
 DM2_ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1503		MISSING
 DM2_ACTIVATE_SHOOTER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1610		MISSING
 DM2_ACTIVATE_TICK_GENERATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1817		MISSING
@@ -1159,19 +1159,19 @@ DM2_3929_07e1	SKULLWIN	SKULLWIN/startend.cpp	385		NOT_APPLICABLE_ARCH
 DM2_3929_0e16	SKULLWIN	SKULLWIN/startend.cpp	417		NOT_APPLICABLE_ARCH
 DM2_2405_0009	SKULLWIN	SKULLWIN/startend.cpp	460		NOT_APPLICABLE_ARCH
 DM2_1c9a_3c30	SKULLWIN	SKULLWIN/startend.cpp	466		NOT_APPLICABLE_ARCH
-DM2_INIT	SKULLWIN	SKULLWIN/startend.cpp	508	include/dm2_v1_new_game.h:95	MISSING
-DM2_GLOBAL_UPDATE_UNKNOW1	SKULLWIN	SKULLWIN/startend.cpp	571		MISSING
+DM2_INIT	SKULLWIN	SKULLWIN/startend.cpp	508	include/dm2_v1_new_game.h:95	NOT_APPLICABLE_ARCH	DOS startup/loop/shutdown; Firestaff uses SDL3/M11 architecture
+DM2_GLOBAL_UPDATE_UNKNOW1	SKULLWIN	SKULLWIN/startend.cpp	571		NOT_APPLICABLE_ARCH	DOS startup/loop/shutdown; Firestaff uses SDL3/M11 architecture
 DM2_2759_12e6	SKULLWIN	SKULLWIN/startend.cpp	598		NOT_APPLICABLE_ARCH
 DM2_3929_086f	SKULLWIN	SKULLWIN/startend.cpp	720		NOT_APPLICABLE_ARCH
-DM2_GAME_LOOP	SKULLWIN	SKULLWIN/startend.cpp	761		MISSING
+DM2_GAME_LOOP	SKULLWIN	SKULLWIN/startend.cpp	761		NOT_APPLICABLE_ARCH	DOS startup/loop/shutdown; Firestaff uses SDL3/M11 architecture
 DM2_MAIN	SKULLWIN	SKULLWIN/startend.cpp	977		NOT_APPLICABLE_ARCH
 DM2_FIRE_BOOTSTRAP	SKULLWIN	SKULLWIN/startend.cpp	987		NOT_APPLICABLE_ARCH
 DM2_WATCOM_STARTUP	SKULLWIN	SKULLWIN/startend.cpp	994		NOT_APPLICABLE_ARCH
 DM2_RAISE_SYSERR	SKULLWIN	SKULLWIN/startend.cpp	1001		NOT_APPLICABLE_ARCH
-DM2_RESET_CAII	SKULLWIN	SKULLWIN/startend.cpp	1033		MISSING
+DM2_RESET_CAII	SKULLWIN	SKULLWIN/startend.cpp	1033		NOT_APPLICABLE_ARCH	DOS startup/loop/shutdown; Firestaff uses SDL3/M11 architecture
 DM2_2f3f_0789	SKULLWIN	SKULLWIN/startend.cpp	1074		NOT_APPLICABLE_ARCH
-DM2__INIT_GAME_38c8_03ad	SKULLWIN	SKULLWIN/startend.cpp	1171		MISSING
-DM2_END_GAME	SKULLWIN	SKULLWIN/startend.cpp	1247		MISSING
+DM2__INIT_GAME_38c8_03ad	SKULLWIN	SKULLWIN/startend.cpp	1171		NOT_APPLICABLE_ARCH	DOS startup/loop/shutdown; Firestaff uses SDL3/M11 architecture
+DM2_END_GAME	SKULLWIN	SKULLWIN/startend.cpp	1247		NOT_APPLICABLE_ARCH	DOS startup/loop/shutdown; Firestaff uses SDL3/M11 architecture
 DM2_SHOW_CREDITS	SKULLWIN	SKULLWIN/startend.cpp	1303		NOT_APPLICABLE_ARCH
 bcon	SKULLWIN	SKULLWIN/types.cpp	3		NOT_APPLICABLE_ARCH
 wcon	SKULLWIN	SKULLWIN/types.cpp	4		NOT_APPLICABLE_ARCH
