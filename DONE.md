@@ -43150,6 +43150,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   has been selected. Verified by `m12_data_dir_cancel` and
   `asset_status_data_dir_change_cache_invalidation`.
 
+- ✅ 2026-07-30 CSB current-main verification: rebuilt current `main` and
+  ran the registered CSB CTest lane in
+  `/Volumes/Extern-disk/firestaff-csb-build`. The first 102 registered tests
+  passed, then the remaining 10 real-data/title/V2.x tests were rerun
+  explicitly: all 112/112 pass. This covers V1 startup/Entrance, V2.0 and
+  V2.1 presentation, V2.2 source-artpack admission, HUD, viewport, controller
+  input and F10 graphics-popup contracts. It does not close the still-open
+  V2.2 F0128 wall/floor/thing material-projection work.
+
 - ✅ 2026-07-30 CSB V2.x feature verification: all 51 registered V2.0,
   V2.1 and V2.2 regressions pass with local PC3.4 data. The lane covers
   startup/title/Entrance, source and presented captures, Prison pointer
