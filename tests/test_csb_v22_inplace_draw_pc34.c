@@ -208,6 +208,9 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
 
     memset(&command, 0, sizeof(command));
     command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34;
+    command.source_graphics_item_index = 248;
+    memset(command.source_record_sha256, 'a', 64);
+    command.source_record_sha256[64] = '\0';
     command.transparent_color = 10;
     command.clip_x = 48;
     command.clip_y = 33;
@@ -232,6 +235,9 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
 
     memset(framebuffer, 0x5a, sizeof(framebuffer));
     command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34;
+    command.source_graphics_item_index = 247;
+    memset(command.source_record_sha256, 'b', 64);
+    command.source_record_sha256[64] = '\0';
     command.clip_x = 76;
     command.clip_y = 47;
     command.clip_w = 72;
@@ -250,6 +256,82 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
     command.transparent_color = 0;
     CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
           "unproven transparency contract remains source-owned");
+    csb_v22_inplace_draw_shutdown();
+    (void)root;
+}
+
+static void test_f0128_door_uses_bound_source_palette(void) {
+    const char* root = "/tmp/scratch/csb-v22-palette-root";
+    const char* data_dir = "/tmp/scratch/csb-v22-palette-root/data/csb";
+    const char* modern_dir = "/tmp/scratch/csb-v22-palette-root/assets/csb/modern";
+    const char manifest[] =
+        "{\n"
+        "  \"routeProvenance\": [\n"
+        "  {\n"
+        "    \"id\": \"door_d0_01\",\n"
+        "    \"category\": \"door_shapes\",\n"
+        "    \"sourceGraphicIndex\": 248,\n"
+        "    \"sourceRecordSha256\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\n"
+        "    \"sourceDimensions\": [96, 88],\n"
+        "    \"outputDimensions\": [96, 88]\n"
+        "  }]\n"
+        "}\n";
+    char cache_path[512];
+    char manifest_path[512];
+    unsigned char cache[68];
+    unsigned char framebuffer[320 * 200];
+    uint8_t palette[256][3];
+    CSB_V1_ViewportRuntimeDrawCommandPc34 command;
+    CSB_V22_RouteProvenancePc34 provenance;
+
+    CHECK(mkdir_p(data_dir), "create palette-test data directory");
+    CHECK(mkdir_p(modern_dir), "create palette-test modern directory");
+    snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", modern_dir);
+    snprintf(manifest_path, sizeof(manifest_path), "%s/modern_asset_manifest.json", modern_dir);
+    CHECK(write_file(manifest_path, manifest, strlen(manifest)),
+          "write palette-test route provenance manifest");
+    memset(cache, 0, sizeof(cache));
+    memcpy(cache, "FSV22C\0\0", 8);
+    put_u32(cache + 8, 1);
+    put_u32(cache + 12, 1);
+    put_u32(cache + 32, fnv1a32("door_shapes"));
+    put_u32(cache + 36, fnv1a32("door_d0_01"));
+    put_u32(cache + 40, 1);
+    put_u32(cache + 44, 1);
+    put_u32(cache + 48, 4);
+    put_u32(cache + 52, 64);
+    /* AARRGGBB: this deliberately does not have an EGA-cube exact match. */
+    cache[64] = 0x11; cache[65] = 0x22; cache[66] = 0x33; cache[67] = 0xff;
+    CHECK(write_file(cache_path, cache, sizeof(cache)), "write palette-test cache");
+
+    memset(palette, 0, sizeof(palette));
+    /* 8-bit RGB (16,32,49) after six-bit expansion: exact source match. */
+    palette[7][0] = 4; palette[7][1] = 8; palette[7][2] = 12;
+    memset(&command, 0, sizeof(command));
+    command.route = CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34;
+    command.source_graphics_item_index = 248;
+    memset(command.source_record_sha256, 'a', 64);
+    command.source_record_sha256[64] = '\0';
+    command.transparent_color = 10;
+    command.clip_x = 48; command.clip_y = 33;
+    command.clip_w = 96; command.clip_h = 88;
+    command.draw_order = 0x0111;
+    memset(framebuffer, 0, sizeof(framebuffer));
+
+    csb_v22_inplace_draw_shutdown();
+    csb_v22_set_manifest_path(data_dir);
+    CHECK(csb_v22_inplace_draw_init() == 1, "palette-test cache initializes");
+    memset(&provenance, 0, sizeof(provenance));
+    CHECK(csb_v22_get_route_provenance("door_shapes", "door_d0_01", &provenance) == 1,
+          "palette-test provenance is parsed");
+    CHECK(strcmp(provenance.source_record_sha256, command.source_record_sha256) == 0,
+          "palette-test command has exact source record identity");
+    CHECK(csb_v22_inplace_draw_set_indexed_palette_rgb6(palette) == 1,
+          "bind original indexed palette");
+    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 1,
+          "palette-bound source command paints");
+    CHECK(framebuffer[33 * 320 + 48] == 7,
+          "RGBA pixel maps to exact bound source palette index");
     csb_v22_inplace_draw_shutdown();
     (void)root;
 }
@@ -311,6 +393,7 @@ int main(void) {
     test_cache_load_path();
     test_cache_uses_configured_manifest_root();
     test_f0128_door_command_consumes_admitted_source_material();
+    test_f0128_door_uses_bound_source_palette();
     test_double_shutdown_safe();
     test_render_pass_safe_when_no_cache();
     test_render_pass_safe_with_null_args();

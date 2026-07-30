@@ -57,6 +57,18 @@ void csb_v22_inplace_draw_shutdown(void);
 /* True when in-place has at least one cached bitmap. */
 int csb_v22_inplace_draw_active(void);
 
+/* Supplies the active source-owned indexed palette for V2.2's final
+ * indexed composition.  CSB's PC3.4 viewport uses palette indices, not an
+ * EGA cube: RGBA art must therefore be quantized to this exact runtime
+ * palette before it enters the original F0128 framebuffer.  The pointer is
+ * copied, so callers may reuse their frame-local palette buffer. */
+int csb_v22_inplace_draw_set_indexed_palette_rgb6(
+    const uint8_t rgb6[256][3]);
+
+/* Removes the source palette binding.  This is only for shutdown and
+ * data-free tests; production CSB frames provide the live palette above. */
+void csb_v22_inplace_draw_clear_indexed_palette(void);
+
 /* Get the cached RGBA bitmap for a V22 cell. depth in {0,1,2},
  * lateral in {-1,0,1}. Sets *out_w, *out_h to the bitmap dimensions.
  * Returns NULL if the cell has no V22 shape, the shape has no

@@ -78,6 +78,11 @@ static size_t           g_v22_cache_size = 0;
 static int              g_v22_cache_mapped = 0;    /* 1 if mmap, 0 if malloc */
 static FsV22CachedBitmap g_v22_bitmaps[FSV22C_MAX_ENT];
 static int              g_v22_bitmap_count = 0;
+/* The M11 CSB renderer publishes the active original PC3.4 palette before
+ * F0128 runs.  Keep a private copy so this low-level cache never borrows a
+ * transient renderer buffer. */
+static uint8_t          g_v22_palette_rgb6[256][3];
+static int              g_v22_palette_active = 0;
 
 /* ── Variant -> asset_id mapping ───────────────────────────────── */
 
@@ -240,10 +245,28 @@ void csb_v22_inplace_draw_shutdown(void) {
     g_v22_inplace_active = 0;
     memset(g_csb_v22_inplace_asset_mirror_valid, 0,
            sizeof(g_csb_v22_inplace_asset_mirror_valid));
+    csb_v22_inplace_draw_clear_indexed_palette();
 }
 
 int csb_v22_inplace_draw_active(void) {
     return g_v22_inplace_active;
+}
+
+int csb_v22_inplace_draw_set_indexed_palette_rgb6(
+    const uint8_t rgb6[256][3])
+{
+    if (!rgb6) {
+        return 0;
+    }
+    memcpy(g_v22_palette_rgb6, rgb6, sizeof(g_v22_palette_rgb6));
+    g_v22_palette_active = 1;
+    return 1;
+}
+
+void csb_v22_inplace_draw_clear_indexed_palette(void)
+{
+    g_v22_palette_active = 0;
+    memset(g_v22_palette_rgb6, 0, sizeof(g_v22_palette_rgb6));
 }
 
 const uint32_t* csb_v22_inplace_get_cell_bitmap(int depth, int lateral,
@@ -349,11 +372,50 @@ static unsigned char rgb_to_ega_index(unsigned char r,
     return (unsigned char)((ri << 4) | (gi << 2) | bi);
 }
 
+/* RGB art is projected into the same current CSB palette that the original
+ * indexed F0128 passes use.  The native PC3.4 page intentionally duplicates
+ * its 16 source colours over the 256 byte index range; choosing the first
+ * nearest entry gives deterministic original indices and avoids the old
+ * unrelated EGA-cube colours. */
+static unsigned char rgb_to_source_palette_index(unsigned char r,
+                                                 unsigned char g,
+                                                 unsigned char b)
+{
+    unsigned int best_distance = UINT32_MAX;
+    unsigned char best_index = 0;
+    int index;
+
+    if (!g_v22_palette_active) {
+        return rgb_to_ega_index(r, g, b);
+    }
+    for (index = 0; index < 256; ++index) {
+        int pr = (int)((g_v22_palette_rgb6[index][0] << 2) |
+                       (g_v22_palette_rgb6[index][0] >> 4));
+        int pg = (int)((g_v22_palette_rgb6[index][1] << 2) |
+                       (g_v22_palette_rgb6[index][1] >> 4));
+        int pb = (int)((g_v22_palette_rgb6[index][2] << 2) |
+                       (g_v22_palette_rgb6[index][2] >> 4));
+        int dr = (int)r - pr;
+        int dg = (int)g - pg;
+        int db = (int)b - pb;
+        unsigned int distance = (unsigned int)(dr * dr + dg * dg + db * db);
+        if (distance < best_distance) {
+            best_distance = distance;
+            best_index = (unsigned char)index;
+            if (distance == 0u) {
+                break;
+            }
+        }
+    }
+    return best_index;
+}
+
 /* Nearest-neighbor blit of RGBA bitmap into framebuffer[y*fbW+x]
  * sized src_w x src_h -> dst_w x dst_h. Fully transparent source pixels
  * leave the source-owned F0128 framebuffer intact; this is required for
  * C10_COLOR_FLESH door holes. Opaque pixels are mapped to a single byte via
- * rgb_to_ega_index. */
+ * the current CSB source palette.  A data-free test with no bound palette
+ * keeps the legacy EGA mapping as an explicitly non-production fallback. */
 static void blit_bitmap_to_cell(const uint32_t* rgba, int src_w, int src_h,
                                   unsigned char* framebuffer, int fbW, int fbH,
                                   int dst_x, int dst_y, int dst_w, int dst_h) {
@@ -373,7 +435,7 @@ static void blit_bitmap_to_cell(const uint32_t* rgba, int src_w, int src_h,
             unsigned char r = (unsigned char)((px >> 16) & 0xFFu);
             unsigned char g = (unsigned char)((px >>  8) & 0xFFu);
             unsigned char b = (unsigned char)((px      ) & 0xFFu);
-            unsigned char idx = rgb_to_ega_index(r, g, b);
+            unsigned char idx = rgb_to_source_palette_index(r, g, b);
             int px_x = dst_x + x;
             if (px_x < 0 || px_x >= fbW) continue;
             framebuffer[py * fbW + px_x] = idx;

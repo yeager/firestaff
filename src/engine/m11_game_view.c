@@ -49513,8 +49513,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             rgb6[color][2] = (uint8_t)(rgb[2] >> 2);
         }
         (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
+        /* V2.2 swaps are still composed into the source-owned indexed F0128
+         * page.  Give the compositor the exact palette just admitted above;
+         * otherwise its RGBA cache would quantize against a generic EGA cube
+         * and visibly change authentic CSB colours. */
+        (void)csb_v22_inplace_draw_set_indexed_palette_rgb6(rgb6);
     } else {
         M11_Render_ClearIndexedPaletteRgb6();
+        csb_v22_inplace_draw_clear_indexed_palette();
     }
     /* Set file-scope draw state for asset-backed rendering helpers */
     g_drawState = state;

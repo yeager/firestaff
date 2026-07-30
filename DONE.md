@@ -1,3 +1,11 @@
+- ✅ 2026-07-30 CSB V2.2 source-palette composition: V2.2 F0128 swaps now
+  quantize their RGBA pixels against the live source-owned PC3.4 indexed
+  palette selected by M11, rather than an unrelated EGA cube. This retains
+  the active ReDMCSB brightness/palette family during admitted V2.2 door
+  replacement; data-free tests retain only a deliberate fallback mapping.
+  Verification: an exact palette-index in-place regression and the complete
+  112-test CSB CTest lane pass.
+
 - ✅ 2026-07-30 Start-menu data-folder persistence: `FIRESTAFF_DATA=.` is
   now treated as the invalid macOS dialog/current-directory token at the
   configuration boundary. The launcher keeps a physical selected folder and
