@@ -18,6 +18,8 @@ CHAMPION = RED / "CHAMPION.C"
 DUNGEON = RED / "DUNGEON.C"
 TIMELINE = RED / "TIMELINE.C"
 GAME_VIEW = ROOT / "src/engine/m11_game_view.c"
+WEAPON_LOOKUP = ROOT / "src/dm1/dm1_v1_dungeon_weapon_info_pc34_compat.c"
+COMBAT = ROOT / "src/dm1/dm1_v1_combat_pc34_compat.c"
 PROBE = ROOT / "probes/m11/firestaff_m11_game_view_probe.c"
 
 
@@ -104,31 +106,33 @@ def main() -> int:
     citations.append("TIMELINE.C:1597-1607 F0253 refills empty ready hand from compatible quiver ammo")
 
     game = GAME_VIEW.read_text(encoding="utf-8")
+    weapon_lookup = WEAPON_LOOKUP.read_text(encoding="utf-8")
+    combat = COMBAT.read_text(encoding="utf-8")
     probe = PROBE.read_text(encoding="utf-8")
 
-    require("m11_game_view.c source table", game, [
-        "ReDMCSB DUNGEON.C:261-308 G0238_as_Graphic559_WeaponInfo",
-        "{ 20,  50,  50}, /* BOW */",
-        "{ 30, 180, 120}, /* CROSSBOW */",
-        "{ 10,  10,   0}, /* ARROW */",
-        "{ 39,  20,  50}, /* SLING */",
-        "{ 11,  18,   0}, /* ROCK */",
-        "{ 26, 220, 125}, /* SPEEDBOW */",
+    require("DM1 F0158 raw weapon lookup", weapon_lookup, [
+        "dm1_v1_dungeon_get_weapon_info_pc34",
+        "PC3.4 WEAPON.Type is bits 0..6 of bytes 2..3",
+        "weaponType = rawWeapon[2] & 0x7f",
+        "dm1_weapon_info_pc34(weaponType, outInfo)",
+        "F0156(thing)->WEAPON.Type indexes G0238_as_Graphic559_WeaponInfo",
+    ])
+    require("DM1 SHOOT parameter resolver", combat, [
+        "dm1_ranged_shoot_resolve_pc34",
+        "MENU.C:1363-1395 F0407 C032_ACTION_SHOOT",
+        "actionHandWeapon->kineticEnergy + readyHandObject->kineticEnergy",
+        "(actionHandWeapon->attributes & 0x00FF) + shootSkillLevel",
+        "projectileMovementDisabledTicks = DM1_PROJECTILE_DISABLED_MOVEMENT_TICKS_PC34",
     ])
     require("m11_game_view.c SHOOT path", game, [
         "case 32: { /* SHOOT */",
         "ReDMCSB MENU.C:1363-1396 validates C01 action-hand",
-        "m11_dm1_weapon_info_for_thing(state, actionThing)",
-        "m11_dm1_weapon_info_for_thing(state, readyThing)",
-        "m11_dm1_shoot_ammunition_matches(actionInfo, readyInfo)",
-        "m11_dm1_shoot_step_energy(actionClass, &stepEnergy)",
+        "m11_dm1_shoot_weapon_info_for_thing",
+        "dm1_ranged_shoot_resolve_pc34",
         "m11_dm1_shoot_skill_level(state, championIndex)",
-        "shootAttack = ((int)actionInfo->shootAttack + skillShoot) << 1",
-        "kineticEnergy = (int)actionInfo->kineticEnergy +",
-        "m11_dm1_projectile_launch_cell(championIndex & 3,",
         "m11_spawn_action_projectile_ex(",
         "champ->inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE",
-        "m11_refill_ready_hand_after_dm1_shoot(state, championIndex)",
+        "pendingShootReadyHandRefill[championIndex] = 1u",
         "HAS NO AMMUNITION",
     ])
     require_re("m11_game_view.c PC34 no projectile movement lock", game,
@@ -150,7 +154,7 @@ def main() -> int:
         "p->cell == 1",
         "projectileDisabledMovementTicks == 0",
         "INV_GV_339D",
-        "SHOOT action closure reloads compatible quiver ammo",
+        "reloads from quiver",
         "INV_GV_339B",
         "SHOOT sling/rock uses source",
         "p->kineticEnergy == 38",

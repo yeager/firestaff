@@ -27,6 +27,7 @@ SRC = {
 COMPAT_C = ROOT / "src/memory/memory_movement_pc34_compat.c"
 COMPAT_H = ROOT / "include/memory_movement_pc34_compat.h"
 ORCH_C = ROOT / "src/memory/memory_tick_orchestrator_pc34_compat.c"
+ORCH_ROUTE_C = ROOT / "src/dm1/dm1_v1_movement_pc34_compat.c"
 PROBE_C = ROOT / "probes/firestaff_m10_tick_orchestrator_probe.c"
 GROUP_PROBE_C = ROOT / "probes/firestaff_m11_pass44_party_group_collision_probe.c"
 MOVEMENT_CORE_TEST_C = ROOT / "tests/test_dm1_v1_movement_core_pc34_compat.c"
@@ -121,6 +122,7 @@ def verify_firestaff() -> list[dict[str, Any]]:
     c = COMPAT_C.read_text()
     h = COMPAT_H.read_text()
     orch = ORCH_C.read_text()
+    orch_route = ORCH_ROUTE_C.read_text()
     probe = PROBE_C.read_text()
     group_probe = GROUP_PROBE_C.read_text()
     movement_core_test = MOVEMENT_CORE_TEST_C.read_text()
@@ -137,21 +139,25 @@ def verify_firestaff() -> list[dict[str, Any]]:
     for cite, text, needles in impl_checks:
         checks.append(require(cite, text, needles))
     checks.append(require("memory_tick_orchestrator_pc34_compat.c:F0888 disabled movement gate", orch, [
-        "movement_command_disabled_redmcsb_compat",
-        "COMMAND.C:2095-2100 / 2104-2110",
-        "world->disabledMovementTicks > 0",
-        "world->projectileDisabledMovementTicks > 0",
-        "lastProjectileDisabledMovementDirection",
-        "if (movement_command_disabled_redmcsb_compat(world, mv)) return 0",
+        "DM1_V1_Movement_OrchestratorRoutePlanPc34Compat",
+        "if (routePlan.movementDisabledGate) return 0",
         "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat",
         "CLIKMENU.C:291-318",
         "leave party/cooldowns",
     ]))
+    checks.append(require("dm1_v1_movement_pc34_compat.c route-plan movement gate", orch_route, [
+        "DM1_V1_Movement_OrchestratorRoutePlanPc34Compat",
+        "ReDMCSB COMMAND.C F0380 lines ~2073-2078 gates movement",
+        "outPlan->dispatchedMove",
+        "disabledMovementTicks > 0",
+        "projectileDisabledMovementTicks > 0",
+        "lastProjectileDisabledMovementDirection",
+        "outPlan->movementDisabledGate = 1",
+    ]))
     checks.append(require("memory_tick_orchestrator_pc34_compat.c:F0888 successful movement cooldown", orch, [
-        "redmcsb_party_move_cooldown_ticks_compat",
-        "CLIKMENU.C:330-346",
-        "F0841_LIFECYCLE_ComputeMoveTicks_Compat",
-        "world->disabledMovementTicks = redmcsb_party_move_cooldown_ticks_compat(&world->party)",
+        "DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat",
+        "world->disabledMovementTicks =",
+        "&world->party, NULL",
         "world->projectileDisabledMovementTicks = 0",
     ]))
     checks.append(require("memory_tick_orchestrator_pc34_compat.c:F0890 cooldown decrement", orch, [

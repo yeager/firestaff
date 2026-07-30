@@ -135,8 +135,9 @@ def main() -> int:
     ])
 
     require("tools/verify_dm1_v1_movement_source_lock.py keeps implementation gate", move_lock, [
-        "movement_command_disabled_redmcsb_compat",
-        "COMMAND.C:2095-2100 / 2104-2110",
+        "DM1_V1_Movement_OrchestratorRoutePlanPc34Compat",
+        "ReDMCSB COMMAND.C F0380 lines ~2073-2078 gates movement",
+        "outPlan->movementDisabledGate = 1",
         "projectileDisabledMovementTicks blocks only matching absolute movement direction",
     ])
     require("tools/verify_dm1_v1_input_command_queue_source_lock.py keeps queue gate", input_lock, [

@@ -45027,7 +45027,8 @@ static void m11_dm1_f0128_scheduler_input_from_cell(
             !dm1_v1_floor_pit_square_uses_invisible_pc34(cell->square);
     } else if (cell->elementType == DUNGEON_ELEMENT_TELEPORTER) {
         out->pitOrTeleporterVisible =
-            (cell->square & DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34) != 0;
+            (cell->square & DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34) != 0 &&
+            (cell->square & DM1_FIELD_TELEPORTER_OPEN_MASK_PC34) != 0;
     } else {
         out->pitOrTeleporterVisible = 0;
     }

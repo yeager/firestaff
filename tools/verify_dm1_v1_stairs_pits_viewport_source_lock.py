@@ -144,15 +144,16 @@ def verify_firestaff() -> list[dict[str, Any]]:
     ], "M11 calls the compat transition layer and requests redraw/hash refresh after transitions."))
     checks.append(require("m11_game_view.c:stairs_up_bit", m11, [
         "cell->square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP",
-        "cell.square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP",
     ], "Stairs up/down rendering uses MASK0x0004_STAIRS_UP (not 0x01)."))
     checks.append(require("m11_game_view.c:pit_open_check", m11, [
-        "!(cell.square & 0x08)) { /* not PIT_OPEN",
-        "cell->square & 0x08) { /* PIT_OPEN",
+        "Only open pits (MASK0x0008_PIT_OPEN) show the hole.",
+        "if (cell->square & 0x08) { /* PIT_OPEN */",
     ], "Pit rendering checks MASK0x0008_PIT_OPEN before drawing the hole graphic."))
     checks.append(require("m11_game_view.c:teleporter_visible_check", m11, [
-        "MASK0x0004_TELEPORTER_VISIBLE, MASK0x0008_TELEPORTER_OPEN",
-        "(cell.square & 0x04) == 0 || (cell.square & 0x08) == 0",
+        "DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34",
+        "DM1_FIELD_TELEPORTER_OPEN_MASK_PC34",
+        "(cell->square & DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34) != 0",
+        "(cell->square & DM1_FIELD_TELEPORTER_OPEN_MASK_PC34) != 0",
     ], "Teleporter field rendering checks both VISIBLE and OPEN bits."))
     checks.append(require("CMakeLists.txt:dm1_v1_stairs_pits_viewport_source_lock", cmake, [
         "NAME dm1_v1_stairs_pits_viewport_source_lock",

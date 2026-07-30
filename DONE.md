@@ -25,6 +25,13 @@
   owner before its next event. F0733 expectations now include `CHAMPION.C
   F0313`'s mandatory final half-scale. Focused CTest passes 5/5.
 
+- ✅ 2026-07-30 DM1 F0172 teleporter aspect: M11 now requires both
+  `MASK0x0004_TELEPORTER_VISIBLE` and `MASK0x0008_TELEPORTER_OPEN` before
+  drawing the F0113 teleporter field, matching ReDMCSB `DUNGEON.C F0172`.
+  Refreshed movement, stairs/pits and SHOOT source gates verify the current
+  source-owned route-plan and F0158 raw WEAPON.Type paths. Focused Ninja/CTest
+  passes 5/5.
+
 - ✅ 2026-07-30 DM1 C001 startup visual cadence correction: the C001
   PRESENTS phase now retains its full 30-slot source-side preparation period
   while the real zoom rasters retain their Mac-safe display dwell. The
