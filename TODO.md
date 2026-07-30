@@ -18,6 +18,14 @@
   `GAME_LOAD` actuator/timer initialization plus source-owned mirror-selection
   UI before allowing the menu to enter runtime.
 
+- **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
+  decodes the source `skload_table_60` game-state block and its following
+  sections, but Firestaff's session-only gold, reputation and time fields do
+  not yet have a proven owner in those source records. Do not clear them to
+  guessed zeroes or seed them from the fixture-session defaults. Trace the
+  owning `GAME_LOAD`/global-state records in SK-projects, then replace the
+  fixture initialization in the importer atomically with those exact values.
+
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage
   selection. SK-projects `SKWINSPX/src/v4/skcrture.cpp::QUERY_CREATURE_AI_SPEC_FROM_TYPE`
