@@ -3443,8 +3443,21 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
         int first_pc34_index = -1;
         memset(&corpus, 0, sizeof(corpus));
         memset(&corpus_receipt, 0, sizeof(corpus_receipt));
-        if (dm1_v1_startup_resume_root_from_path_pc34(
-                resume_host.resume_path, corpus_root) &&
+        const char *resume_leaf = complete_facts->resume_path
+            ? strrchr(complete_facts->resume_path, '/') : NULL;
+        int new_game_dungeon_path;
+        resume_leaf = resume_leaf ? resume_leaf + 1 :
+            (complete_facts->resume_path ? complete_facts->resume_path : "");
+        new_game_dungeon_path = strcmp(resume_leaf, "DUNGEON.DAT") == 0;
+
+        /* A new-game route carries DUNGEON.DAT as its host path.  Its parent
+         * is game media, not save media, so resolve the configured,
+         * provenance-attested corpus. Actual resume paths and data-free
+         * handoff fixtures retain their local parent directory. */
+        if ((new_game_dungeon_path
+                ? dm1_v1_original_save_resolve_configured_corpus_root(corpus_root)
+                : dm1_v1_startup_resume_root_from_path_pc34(
+                      resume_host.resume_path, corpus_root)) &&
             dm1_v1_original_save_classify_corpus_root(corpus_root,
                                                        &corpus) &&
             dm1_v1_original_save_pc34_roundtrip_corpus_root(corpus_root,

@@ -973,6 +973,10 @@ that its exact runtime path is not already source-locked and tested.
    DOSBox `DMSAVE.DAT` now proves F0417/F0418/F0435 import, live resume,
    export, backup and re-import. A C13-free authentic save is admitted by
    its preserved C3/C4 envelope rather than requiring fabricated C13 proof.
+   2026-07-30: the live new-game boot probe resolves the configured,
+   provenance-attested save corpus rather than treating `DUNGEON.DAT`'s
+   parent as a save directory. The local DOSBox save is now discovered,
+   round-tripped and runtime-adopted through the normal launcher route.
    Fixture-free C13-bearing corpus breadth remains separately tracked below;
    it is additional coverage, not a reason to reject this authenticated save.
 2. **Q-DM1-02 HoC presented-frame consumer:** finish source-backed mirrors,

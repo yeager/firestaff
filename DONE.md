@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 configured original-save discovery: new-game boot no
+  longer scans beside `DUNGEON.DAT` for a PC3.4 corpus. It uses the existing
+  provenance-aware resolver, so the local DOSBox `DMSAVE.DAT` under
+  `~/.firestaff/saves/dm1/original-pc34` is classified, round-tripped and
+  runtime-adopted by the live launcher probe.
+
 - ✅ 2026-07-30 DM1 startup handoff ownership: removed the duplicate M11
   bridge acknowledgement that could mark SWSH/title/Entrance complete before
   presenting them. Only the real selected-launch transaction now publishes
