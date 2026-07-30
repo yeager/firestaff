@@ -2265,32 +2265,55 @@ static void pc34_pack_decoded_thing_slot(unsigned char* out,
     }
 }
 
-static int pc34_decoded_things_match_raw(
+static int pc34_patch_pristine_thing_tail(
+    unsigned char* dst,
+    int tailSize,
     const struct DungeonDatState_Compat* dungeon,
     const struct DungeonThings_Compat* things)
 {
+    int cursor;
     int type;
+    uint16_t checksum;
 
-    if (!dungeon || !things) return 0;
+    if (!dst || !dungeon || !things || tailSize < 2 ||
+        !dungeon->originalSaveTailBytes ||
+        dungeon->originalSaveTailByteCount != tailSize) {
+        return 0;
+    }
+    memcpy(dst, dungeon->originalSaveTailBytes, (size_t)tailSize);
+    cursor = DUNGEON_HEADER_SIZE +
+        (int)dungeon->header.mapCount * DUNGEON_MAP_DESC_SIZE +
+        pc34_dungeon_column_count(dungeon) * 2 +
+        (int)dungeon->header.squareFirstThingCount * 2 +
+        (int)dungeon->header.textDataWordCount * 2;
     for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
         int count = (int)dungeon->header.thingCounts[type];
         int slotBytes = (int)s_thingDataByteCount[type];
         int i;
-        if (!pc34_can_pack_decoded_things(things, type, count)) continue;
-        if (!things->rawThingData[type]) return 0;
-        for (i = 0; i < count; ++i) {
-            unsigned char packed[16];
-            if (slotBytes <= 0 || slotBytes > (int)sizeof(packed)) return 0;
-            memcpy(packed, things->rawThingData[type] + (size_t)i * slotBytes,
-                   (size_t)slotBytes);
-            pc34_pack_decoded_thing_slot(packed, things, type, i);
-            if (memcmp(packed,
-                       things->rawThingData[type] + (size_t)i * slotBytes,
-                       (size_t)slotBytes) != 0) {
-                return 0;
+        if (count < 0 || slotBytes < 0 ||
+            count > (tailSize - cursor - 2) / (slotBytes ? slotBytes : 1)) {
+            return 0;
+        }
+        if (pc34_can_pack_decoded_things(things, type, count) &&
+            things->rawThingData[type]) {
+            for (i = 0; i < count; ++i) {
+                unsigned char packed[16];
+                unsigned char* raw = things->rawThingData[type] +
+                    (size_t)i * slotBytes;
+                if (slotBytes <= 0 || slotBytes > (int)sizeof(packed)) return 0;
+                memcpy(packed, raw, (size_t)slotBytes);
+                pc34_pack_decoded_thing_slot(packed, things, type, i);
+                if (memcmp(packed, raw, (size_t)slotBytes) != 0) {
+                    memcpy(dst + cursor + i * slotBytes, packed,
+                           (size_t)slotBytes);
+                }
             }
         }
+        cursor += count * slotBytes;
     }
+    if (cursor > tailSize - 2) return 0;
+    checksum = pc34_dungeon_checksum_add(0u, dst, tailSize - 2);
+    write_u16_le(dst + tailSize - 2, checksum);
     return 1;
 }
 
@@ -2356,10 +2379,7 @@ static int pc34_write_dungeon_tail(
         return -1;
     }
     if (dungeon->originalSaveTailPristine &&
-        dungeon->originalSaveTailBytes != 0 &&
-        dungeon->originalSaveTailByteCount == tailSize &&
-        pc34_decoded_things_match_raw(dungeon, things)) {
-        memcpy(dst, dungeon->originalSaveTailBytes, (size_t)tailSize);
+        pc34_patch_pristine_thing_tail(dst, tailSize, dungeon, things)) {
         return tailSize;
     }
     /* ReDMCSB LOADSAVE.C F0433 lines ~1661-1682 writes these

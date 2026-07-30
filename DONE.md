@@ -4,12 +4,12 @@
   side-by-side routing and modern-resolution composition. This is automated
   coverage only; the separate original Mac/capture TODO items remain open.
 
-- ✅ 2026-07-30 DM1 PC3.4 decoded dungeon write-back: F0433 retains an
-  exact original dungeon tail only while every admitted decoded Thing still
-  packs to its source bytes. A live mutation instead rebuilds the tail in
-  ReDMCSB section/checksum order, preserving raw unknown bits while packing
-  admitted records. The real DOSBox corpus and a mutated door `next` both
-  pass F0433 -> F0435 round-trip verification.
+- ✅ 2026-07-30 DM1 PC3.4 decoded dungeon write-back: F0433 keeps the
+  original dungeon tail byte-exact, patches only changed admitted Thing rows,
+  and recalculates the F0422 byte checksum. This preserves unknown original
+  header/map/tail bytes while allowing live state changes. The real DOSBox
+  corpus and a mutated door `next` both pass F0433 -> F0435 round-trip
+  verification.
 
 - ✅ 2026-07-30 DM1 F0407/C11 SWING receipt: the focused runtime contract
   no longer relies on `assert()` expressions, which release builds omit along
