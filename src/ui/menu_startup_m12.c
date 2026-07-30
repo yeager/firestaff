@@ -2510,7 +2510,11 @@ static void m12_begin_data_dir_browse(M12_StartupMenuState* state) {
     if (!state || state->dataDirPickerActive) {
         return;
     }
-    current = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    /* Use the same defensive value shown in Settings.  SDL's macOS dialog
+     * can briefly leave assetStatus at its current-directory token (".");
+     * feeding that straight back into the next dialog makes the bad display
+     * state self-perpetuating. */
+    current = M12_StartupMenu_GetVisibleDataDir(state);
     if (!current || current[0] == '\0') {
         current = NULL;
     }
@@ -4325,10 +4329,34 @@ static const char* m12_settings_value_streamer_mode(const M12_StartupMenuState* 
 }
 
 const char* M12_StartupMenu_GetVisibleDataDir(const M12_StartupMenuState* state) {
+    const char* activeDataDir;
+    static char persistedDataDir[M12_CONFIG_DATA_DIR_CAPACITY];
     if (state && state->settings.streamerMode) {
         return "(hidden)";
     }
-    return state ? M12_AssetStatus_GetDataDir(&state->assetStatus) : "";
+    if (!state) {
+        return "";
+    }
+    activeDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    if (!m12_data_directory_dialog_token_is_placeholder(activeDataDir)) {
+        return activeDataDir;
+    }
+    /* Keep a transient native-dialog result out of the visible launcher UI.
+     * The persisted config is the authoritative last accepted selection. */
+    {
+        M12_Config config;
+        if (M12_Config_Load(&config, NULL) &&
+            m12_canonicalize_data_directory(config.dataDir,
+                                            persistedDataDir,
+                                            sizeof(persistedDataDir))) {
+            return persistedDataDir;
+        }
+    }
+    if (FSP_GetDefaultOriginalsDir(persistedDataDir,
+                                   sizeof(persistedDataDir))) {
+        return persistedDataDir;
+    }
+    return "";
 }
 
 const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,

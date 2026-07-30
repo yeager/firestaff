@@ -679,6 +679,7 @@ static void check_dot_asset_status_does_not_replace_saved_directory(void) {
     /* Reproduce a platform/backend status token arriving while an unrelated
      * settings change saves the launcher configuration. */
     snprintf(state.assetStatus.dataDir, sizeof(state.assetStatus.dataDir), ".");
+    CHECK(strcmp(M12_StartupMenu_GetVisibleDataDir(&state), expected) == 0);
     M12_StartupMenu_SaveConfig(&state);
     CHECK(strcmp(M12_AssetStatus_GetDataDir(&state.assetStatus), expected) == 0);
     M12_Config_Load(&config, NULL);
