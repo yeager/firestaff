@@ -71,9 +71,9 @@ int SWSH_Compat_ValidatePc34DosoundProgram(const unsigned char* program,
 #define SWSH_COMPAT_SOURCE_SOUND_WAIT_VBLANK_COUNT 20u
 #define SWSH_COMPAT_RUNTIME_VBLANK_MS 20u
 #define SWSH_COMPAT_SOURCE_INITIAL_LOGO_HOLD_VBLANKS 20u
-/* ReDMCSB NECIO.C F2255 ends with F0022_MAIN_SwooshDelay(20), after the
- * sound-complete wait.  120 belongs to a different, non-PC palette program
- * and made the PC 3.4 handoff linger on a stale logo frame. */
-#define SWSH_COMPAT_SOURCE_FINAL_HOLD_VBLANKS 20u
+/* ReDMCSB SWSH.C:3037: the PC 3.4 I34E branch waits 120 VBlanks after
+ * sound completion before handing off to START.PRG.  The 20-VBlank branch
+ * immediately above it is for P20JB, not PC34. */
+#define SWSH_COMPAT_SOURCE_FINAL_HOLD_VBLANKS 120u
 
 #endif

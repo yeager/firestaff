@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 PC34/I34E swoosh final dwell correction: Firestaff had
+  regressed to the P20JB `SwooshDelay(20)` branch after sound completion.
+  It now follows ReDMCSB `SWSH.C:3037` I34E `F0022_MAIN_SwooshDelay(120)`,
+  retaining the original 2.4-second final FTL-logo dwell before START.PRG.
+  Built with Ninja; focused SWSH/title handoff CTests pass 4/4.
+
 - ✅ 2026-07-30 DM1 full original inscription sweep: the real PC34
   `DUNGEON.DAT`/`GRAPHICS.DAT` probe traversed all 56 visible wall texts,
   including multi-line and palette-variant routes. M648 glyph cells matched

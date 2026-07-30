@@ -145,7 +145,7 @@ static int test_swsh_source_animation_schedule(void) {
     if (SWSH_Compat_GetRuntimeDelayMsForVblankCount(1u) != SWSH_COMPAT_RUNTIME_VBLANK_MS) ok = 0;
     if (SWSH_Compat_GetRuntimeDelayMsForVblankCount(3u) != 3u * SWSH_COMPAT_RUNTIME_VBLANK_MS) ok = 0;
     if (SWSH_Compat_GetRuntimeInitialLogoHoldMs() != 20u * SWSH_COMPAT_RUNTIME_VBLANK_MS) ok = 0;
-    if (SWSH_Compat_GetRuntimeFinalHoldMs() != 20u * SWSH_COMPAT_RUNTIME_VBLANK_MS) ok = 0;
+    if (SWSH_Compat_GetRuntimeFinalHoldMs() != 120u * SWSH_COMPAT_RUNTIME_VBLANK_MS) ok = 0;
     printf("runtimeDelaysMs=oneVblank:%u initialLogo:%u finalHold:%u\n",
            SWSH_Compat_GetRuntimeDelayMsForVblankCount(1u),
            SWSH_Compat_GetRuntimeInitialLogoHoldMs(),
