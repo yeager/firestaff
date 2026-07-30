@@ -254,6 +254,9 @@ static int m11_play_firestaff_startup_intro(void) {
     rgba = (unsigned char*)malloc((size_t)M12_STARTUP_INTRO_WIDTH *
                                   (size_t)M12_STARTUP_INTRO_HEIGHT * 4U);
     if (!rgba) return 0;
+    /* The branded intro is part of the launcher shell.  Do not inherit a
+     * previous game's 4:3/content-aspect presentation while it is visible. */
+    (void)M11_Render_SetPresentationFillWindow(1);
     (void)M12_StartupIntro_LoadBackground("assets/branding/firestaff-startup-intro.ppm");
     basePath = SDL_GetBasePath();
     if (basePath) {
