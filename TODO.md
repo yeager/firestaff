@@ -208,6 +208,11 @@ an integration build pass.
   registered CSB regressions, including the 51-test V2.x intersection. This
   is a regression receipt for the implemented paths only; unreconciled
   F0128 material families and the CSBWin spell owner remain open.
+  2026-07-30: `csb_v2_title_boot_probe` now checks the actual local PC3.4
+  C001 runtime at VBlank 50 in V1, V2.0, V2.1 and admitted V2.2. It requires
+  the original 60-VBlank PRESENTS phase rather than accepting a title that
+  has silently advanced to Entrance. This narrows startup regression risk;
+  it does not admit any unreconciled F0128 material family.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature

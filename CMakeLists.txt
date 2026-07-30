@@ -34552,6 +34552,16 @@ if(BUILD_TESTING)
             TIMEOUT 45
         )
         add_test(
+            NAME csb_v2_title_boot_probe
+            COMMAND sh
+                "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v2_title_boot_probe.sh"
+                "$<TARGET_FILE:firestaff>"
+        )
+        set_tests_properties(csb_v2_title_boot_probe PROPERTIES
+            LABELS "tier1;csb;v2;startup;title;real_data;skip_safe"
+            TIMEOUT 20
+        )
+        add_test(
             NAME csb_v21_presented_startup_capture
             COMMAND sh
                 "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v21_presented_startup_capture.sh"

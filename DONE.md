@@ -43364,3 +43364,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   apply their visual changes only after source rendering. Dialog backdrops and
   patches follow the same source decoder route. Direct V2.1 and V2.2 runtime
   capture scripts PASS.
+# CSB V2.x source-title runtime gate (2026-07-30)
+
+- Added `csb_v2_title_boot_probe`: with real local PC3.4 `GRAPHICS.DAT` and
+  `DUNGEON.DAT`, V1, V2.0, V2.1 and admitted V2.2 must all remain on the
+  original C001 PRESENTS stage at TITLE.C F0437 VBlank 50. The probe locks
+  `csb-title-1`, source title state, frame `50/102` and each mode's resolved
+  presentation identity. It prevents filters, upscale or V2.2 selection from
+  silently shortcutting title playback into Entrance. This is a regression
+  gate for the real startup chain, not a claim that unreconciled V2.2 F0128
+  material families are complete.
