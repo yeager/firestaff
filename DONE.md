@@ -1,3 +1,8 @@
+- ✅ 2026-07-30 CSBWin HUD source geometry: the supplied standard package
+  decodes C009 as `96x33`, C010/C013 as `96x45`, C017 as `224x136`, and C028
+  as `80x14`. The focused real-data test locks these DMCSB1 dimensions and
+  prevents PC3.4's `87px`/`76px` HUD geometry from being silently reused.
+
 - ✅ 2026-07-30 CSBWin runtime graphics decoder selection: M11's CSB
   source-graphic, HUD-material and viewport-provider paths now select the
   canonical Atari DMCSB1 decoder for ST20/ST21 packages, while PC3.4 remains

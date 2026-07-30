@@ -59,8 +59,45 @@ int main(void)
     CSB_V1_StartupGraphicDecodeReceipt_PC34 decode_receipt;
 
     if (csbwin_data_dir && csbwin_data_dir[0]) {
+        static const struct {
+            unsigned int graphic;
+            int width;
+            int height;
+            const char *name;
+        } source_hud_graphics[] = {
+            { 9u, 96, 33, "C009 CSBWin spell background" },
+            { 10u, 96, 45, "C010 CSBWin action panel" },
+            { 13u, 96, 45, "C013 CSBWin movement panel" },
+            { 17u, 224, 136, "C017 normal HUD panel" },
+            { 28u, 80, 14, "C028 CSBWin champion direction strip" }
+        };
         const CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+        char csbwin_graphics_path[1200];
         int nonblack = 0;
+        size_t graphic_index;
+
+        snprintf(csbwin_graphics_path, sizeof(csbwin_graphics_path),
+                 "%s/graphics.dat", csbwin_data_dir);
+        for (graphic_index = 0u;
+             graphic_index < sizeof(source_hud_graphics) /
+                 sizeof(source_hud_graphics[0]);
+             ++graphic_index) {
+            unsigned char *hud_pixels = NULL;
+            int hud_width = 0;
+            int hud_height = 0;
+            int decoded;
+            CSB_V1_StartupGraphicDecodeReceipt_PC34 hud_receipt;
+
+            memset(&hud_receipt, 0, sizeof(hud_receipt));
+            decoded = csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                csbwin_graphics_path, source_hud_graphics[graphic_index].graphic,
+                &hud_pixels, &hud_width, &hud_height, &hud_receipt);
+            CHECK(decoded && hud_receipt.valid &&
+                      hud_width == source_hud_graphics[graphic_index].width &&
+                      hud_height == source_hud_graphics[graphic_index].height,
+                  source_hud_graphics[graphic_index].name);
+            free(hud_pixels);
+        }
 
         memset(&spec, 0, sizeof(spec));
         spec.title = "CHAOS STRIKES BACK";

@@ -1309,6 +1309,9 @@ that its exact runtime path is not already source-locked and tested.
   The shared M11 source-graphic/HUD/viewport decoder now correctly selects
   CSBWin's DMCSB1 decoder for ST20/ST21 instead of attempting PC3.4 IMG3;
   this prepares real runtime ingress but does not prove CSBWin F0128 geometry.
+  Real CSBWin HUD dimensions differ from PC3.4: C009=`96x33`, C010/C013=
+  `96x45`, C017=`224x136`, C028=`80x14`. A separate source layout is required;
+  PC3.4's `87px` and `76px` panel positions must not be stretched or reused.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
