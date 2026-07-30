@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 registered regression lane: with the provenance-bound
+  DOSBox PC3.4 corpus configured, every registered `dm1` CTest passes
+  (33/33), including V1 F0435/F0433 round-trip, HoC runtime handoff,
+  inscriptions, inventory, V2.x presentations and screenshot receipts.
+  This does not close the separate external Mac/original capture TODOs.
+
 - ✅ 2026-07-30 DM1 V2.x regression verification: the complete registered
   `dm1_v2`/`dm1_v22` lane passes 90/90, covering V2.0 startup timing, V2.1
   palette capture, V2.2 source-art selection, runtime viewport/HUD/input,
