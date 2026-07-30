@@ -43515,3 +43515,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `FIRESTAFF_CSBWIN_REAL_SAVE` set to the staged original file. Its later
   dungeon payload remains opaque rather than being falsely consumed as EXPOOL;
   full tail loading and write-back remain tracked in `CSB-ORIGINAL-SAVE-CORPUS`.
+- ✅ 2026-07-30 CSB active-map F0094/F0095 material ownership: `MAP.D` now
+  decodes the source FloorSet/WallSet nibbles alongside its DoorSets, and the
+  live M11 PC3.4 provider selects floor/ceiling records `78 + FloorSet * 2`
+  and the 15 G2107 wall records from `86 + WallSet * 40 + 7`. Decoded caches
+  are invalidated when the active level changes set. Verification:
+  `csb_v1_dungeon_loader_pc34_compat` passes 16/16, including nonzero
+  FloorSet/WallSet/DoorSet decoding.

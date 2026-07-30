@@ -1708,7 +1708,15 @@ int csb_v1_boot_render_viewport_frame_pc34(
             profile->runtime.current_level, dungeon_grid)) {
         return 0;
     }
-    cfg.wall_set_index = 0;
+    /* F0094/F0095 load the current MAP.C FloorSet/WallSet before F0128.
+     * A fixed zero here makes every later level borrow Prison's surfaces. */
+    if (profile->runtime.current_level < 0 ||
+        profile->runtime.current_level >=
+            profile->runtime.dungeon_handle->level_count) {
+        return 0;
+    }
+    cfg.wall_set_index = profile->runtime.dungeon_handle->map_wall_set[
+        profile->runtime.current_level];
     cfg.runtime_profile = &profile->runtime;
     cfg.runtime_projectiles = &profile->runtime.projectiles;
     cfg.runtime_explosions = &profile->runtime.explosions;

@@ -208,8 +208,10 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
             out->map_offset_y[i] = (int)map_desc[5];
             /* ReDMCSB DEFS.H MAP.D for PC/I34E stores FloorSet, WallSet,
              * DoorSet0, DoorSet1 as low-to-high nibbles in the final map
-             * descriptor word. F0174 copies these into CurrentMapDoorInfo
-             * before PROJEXPL.C F0232 compares door defense. */
+             * descriptor word. F0094/F0095 consume the first two before
+             * F0128; F0174 copies the latter pair into CurrentMapDoorInfo. */
+            out->map_floor_set[i] = (int)(raw_bit_d & 0x0Fu);
+            out->map_wall_set[i] = (int)((raw_bit_d >> 4) & 0x0Fu);
             out->map_door_set0[i] = (int)((raw_bit_d >> 8) & 0x0Fu);
             out->map_door_set1[i] = (int)((raw_bit_d >> 12) & 0x0Fu);
             /* ReDMCSB DEFS.H MAP.C stores DungeonView palette difficulty

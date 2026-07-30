@@ -1923,9 +1923,13 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
                                              int *out_height)
 {
     enum {
-        /* ReDMCSB DEFS.H M650/M651: PC3.4 set-zero C078/C079. */
+        /* ReDMCSB DEFS.H M644/M646: PC3.4 FloorSet 0 and WallSet 0. */
         M11_CSB_PC34_GRAPHIC_FLOOR_SET0 = 78,
-        M11_CSB_PC34_GRAPHIC_CEILING_SET0 = 79
+        M11_CSB_PC34_GRAPHIC_CEILING_SET0 = 79,
+        M11_CSB_PC34_GRAPHIC_FIRST_WALL_SET = 86,
+        M11_CSB_PC34_FLOOR_SET_GRAPHIC_COUNT = 2,
+        M11_CSB_PC34_WALL_SET_GRAPHIC_COUNT = 40,
+        M11_CSB_PC34_WALL_SURFACE_OFFSET = 7
     };
     M11_GameViewState *state = (M11_GameViewState *)user_data;
     CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
@@ -1935,21 +1939,40 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
     unsigned int source_graphic;
     int expected_width;
     int expected_height;
+    int floor_set;
+    int wall_set;
+    const CSB_V1_BootProfile *profile;
 
     if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
         !state->assetsAvailable || !out_pixels || !out_width ||
         !out_height) {
         return 0;
     }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!profile || !profile->runtime.dungeon_handle ||
+        profile->runtime.current_level < 0 ||
+        profile->runtime.current_level >=
+            profile->runtime.dungeon_handle->level_count) {
+        return 0;
+    }
+    floor_set = profile->runtime.dungeon_handle->map_floor_set[
+        profile->runtime.current_level];
+    wall_set = profile->runtime.dungeon_handle->map_wall_set[
+        profile->runtime.current_level];
+    if (floor_set < 0 || floor_set > 15 || wall_set < 0 || wall_set > 15) {
+        return 0;
+    }
     if (graphic_index == -1) {
-        source_graphic = M11_CSB_PC34_GRAPHIC_FLOOR_SET0;
+        source_graphic = M11_CSB_PC34_GRAPHIC_FLOOR_SET0 +
+            (unsigned int)floor_set * M11_CSB_PC34_FLOOR_SET_GRAPHIC_COUNT;
         expected_width = 224;
         expected_height = 97;
         cached_pixels = &state->csbViewportFloorPixels;
         cached_width = &state->csbViewportFloorWidth;
         cached_height = &state->csbViewportFloorHeight;
     } else if (graphic_index == -2) {
-        source_graphic = M11_CSB_PC34_GRAPHIC_CEILING_SET0;
+        source_graphic = M11_CSB_PC34_GRAPHIC_CEILING_SET0 +
+            (unsigned int)floor_set * M11_CSB_PC34_FLOOR_SET_GRAPHIC_COUNT;
         expected_width = 224;
         expected_height = 39;
         cached_pixels = &state->csbViewportCeilingPixels;
@@ -1957,7 +1980,9 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         cached_height = &state->csbViewportCeilingHeight;
     } else if (graphic_index >= 93 && graphic_index <= 107) {
         const int wall_slot = graphic_index - 93;
-        source_graphic = (unsigned int)graphic_index;
+        source_graphic = M11_CSB_PC34_GRAPHIC_FIRST_WALL_SET +
+            (unsigned int)wall_set * M11_CSB_PC34_WALL_SET_GRAPHIC_COUNT +
+            M11_CSB_PC34_WALL_SURFACE_OFFSET + (unsigned int)wall_slot;
         expected_width = 1;
         expected_height = 1;
         cached_pixels = &state->csbViewportWallPixels[wall_slot];
@@ -1965,6 +1990,28 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         cached_height = &state->csbViewportWallHeights[wall_slot];
     } else {
         return 0;
+    }
+    if ((graphic_index < 0 && state->csbViewportFloorSet != floor_set) ||
+        (graphic_index >= 93 && graphic_index <= 107 &&
+         state->csbViewportWallSet != wall_set)) {
+        int i;
+        if (graphic_index < 0) {
+            free(state->csbViewportFloorPixels);
+            free(state->csbViewportCeilingPixels);
+            state->csbViewportFloorPixels = NULL;
+            state->csbViewportCeilingPixels = NULL;
+            state->csbViewportFloorWidth = state->csbViewportFloorHeight = 0;
+            state->csbViewportCeilingWidth = state->csbViewportCeilingHeight = 0;
+            state->csbViewportFloorSet = floor_set;
+        } else {
+            for (i = 0; i < 15; ++i) {
+                free(state->csbViewportWallPixels[i]);
+                state->csbViewportWallPixels[i] = NULL;
+                state->csbViewportWallWidths[i] = 0;
+                state->csbViewportWallHeights[i] = 0;
+            }
+            state->csbViewportWallSet = wall_set;
+        }
     }
     if (!*cached_pixels) {
         memset(&receipt, 0, sizeof(receipt));

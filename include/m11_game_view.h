@@ -1449,11 +1449,13 @@ typedef struct {
     int csbViewportFloorHeight;
     int csbViewportCeilingWidth;
     int csbViewportCeilingHeight;
-    /* PC3.4 GRAPHICS.DAT C093..C107: F0128 wall-set-zero cells. Their
+    int csbViewportFloorSet;
+    /* PC3.4 GRAPHICS.DAT C093..C107: active F0128 wall-set cells. Their
      * dimensions vary by view square, so they cannot use the DM1 test atlas. */
     unsigned char *csbViewportWallPixels[15];
     int csbViewportWallWidths[15];
     int csbViewportWallHeights[15];
+    int csbViewportWallSet;
     uint32_t csbStartupExpectedPackageIdentity;
     /* Source identity whose IMG2/LZW C009..C013 HUD rasters currently own
      * the shared asset cache.  Dimensions alone cannot distinguish a stale

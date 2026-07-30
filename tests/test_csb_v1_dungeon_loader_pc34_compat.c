@@ -156,6 +156,29 @@ static void test_real_header_initial_party_pose(void)
     csb_v1_dungeon_free(&dungeon);
 }
 
+static void test_map_floor_wall_door_nibble_decode(void)
+{
+    uint8_t bytes[90] = {0};
+    CSB_V1_DungeonData dungeon;
+
+    /* MAP.D final little-endian word: Floor=3, Wall=4, Door0=10, Door1=11.
+     * ReDMCSB DEFS.H MAP.C and DUNVIEW.C F0094/F0095 consume the first
+     * pair before the door selectors. */
+    bytes[4] = 1;
+    bytes[44 + 8] = 0x40;
+    bytes[44 + 9] = 0x02;
+    bytes[44 + 14] = 0x43;
+    bytes[44 + 15] = 0xBA;
+    bytes[80] = 0x20;
+    memset(&dungeon, 0, sizeof(dungeon));
+    assert(csb_v1_dungeon_load(&dungeon, bytes, (int)sizeof(bytes)) == 0);
+    assert(dungeon.map_floor_set[0] == 3);
+    assert(dungeon.map_wall_set[0] == 4);
+    assert(dungeon.map_door_set0[0] == 10);
+    assert(dungeon.map_door_set1[0] == 11);
+    csb_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     test_load_null_path();
@@ -175,6 +198,7 @@ int main(void)
     test_get_thing_record_null();
     test_source_evidence();
     test_real_header_initial_party_pose();
+    test_map_floor_wall_door_nibble_decode();
 
     puts("ok: CSB dungeon loader (Q-CSB-04) 16 tests passed");
     return 0;

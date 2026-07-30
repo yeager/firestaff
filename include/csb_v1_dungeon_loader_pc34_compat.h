@@ -65,6 +65,10 @@ typedef struct CSB_V1_DungeonData {
     int map_levels[CSB_V1_MAX_LEVELS];
     int map_offset_x[CSB_V1_MAX_LEVELS];
     int map_offset_y[CSB_V1_MAX_LEVELS];
+    /* ReDMCSB DEFS.H MAP.C's final word stores the four source selectors
+     * low-to-high as FloorSet, WallSet, DoorSet0 and DoorSet1. */
+    int map_floor_set[CSB_V1_MAX_LEVELS];
+    int map_wall_set[CSB_V1_MAX_LEVELS];
     int map_door_set0[CSB_V1_MAX_LEVELS];
     int map_door_set1[CSB_V1_MAX_LEVELS];
     /* ReDMCSB DUNGEON_HEADER MAP.C high nibble. PANEL.C F0337 treats a

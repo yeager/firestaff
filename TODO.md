@@ -190,6 +190,12 @@ an integration build pass.
   F0128 projection, palette and timing receipts exist. The same rule now
   covers mossy floors, both stair directions and creature-projectile cells;
   none may borrow cracked-floor, generic-stair or creature pixels.
+  2026-07-30 update: the underlying V1 F0094/F0095 source route now reads
+  `FloorSet` and `WallSet` from the active PC/I34 `MAP.D` descriptor instead
+  of forcing set zero. The M11 provider selects records `78 + FloorSet * 2`
+  and `86 + WallSet * 40 + 7 + surface`, invalidating decoded caches on a
+  set change. This corrects native source material ownership for every map;
+  it does not admit unproven V2.2 replacement surfaces.
 
 - **CSB-V22-LIVE-M11-RUNTIME-CONSUMPTION:** Open 2026-07-29. The live F0128
   renderer owns V2.2 material selection and retains the authenticated original
