@@ -1,8 +1,9 @@
-- ✅ 2026-07-30 DM1 PC3.4 decoded dungeon write-back: F0433 export no
-  longer returns a retained raw dungeon tail before checking its decoded
-  runtime records. It rebuilds the tail in ReDMCSB section/checksum order,
-  preserving raw unknown bits while packing admitted decoded records. A live
-  door `next` mutation now survives F0433 -> F0435 round-trip verification.
+- ✅ 2026-07-30 DM1 PC3.4 decoded dungeon write-back: F0433 retains an
+  exact original dungeon tail only while every admitted decoded Thing still
+  packs to its source bytes. A live mutation instead rebuilds the tail in
+  ReDMCSB section/checksum order, preserving raw unknown bits while packing
+  admitted records. The real DOSBox corpus and a mutated door `next` both
+  pass F0433 -> F0435 round-trip verification.
 
 - ✅ 2026-07-30 DM1 F0407/C11 SWING receipt: the focused runtime contract
   no longer relies on `assert()` expressions, which release builds omit along

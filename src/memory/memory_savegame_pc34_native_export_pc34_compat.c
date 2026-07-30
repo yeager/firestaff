@@ -2265,6 +2265,35 @@ static void pc34_pack_decoded_thing_slot(unsigned char* out,
     }
 }
 
+static int pc34_decoded_things_match_raw(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things)
+{
+    int type;
+
+    if (!dungeon || !things) return 0;
+    for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
+        int count = (int)dungeon->header.thingCounts[type];
+        int slotBytes = (int)s_thingDataByteCount[type];
+        int i;
+        if (!pc34_can_pack_decoded_things(things, type, count)) continue;
+        if (!things->rawThingData[type]) return 0;
+        for (i = 0; i < count; ++i) {
+            unsigned char packed[16];
+            if (slotBytes <= 0 || slotBytes > (int)sizeof(packed)) return 0;
+            memcpy(packed, things->rawThingData[type] + (size_t)i * slotBytes,
+                   (size_t)slotBytes);
+            pc34_pack_decoded_thing_slot(packed, things, type, i);
+            if (memcmp(packed,
+                       things->rawThingData[type] + (size_t)i * slotBytes,
+                       (size_t)slotBytes) != 0) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 static int pc34_write_dungeon_thing_chunk(
     unsigned char* dst,
     int dstAvail,
@@ -2325,6 +2354,13 @@ static int pc34_write_dungeon_tail(
     }
     if (dstAvail < tailSize) {
         return -1;
+    }
+    if (dungeon->originalSaveTailPristine &&
+        dungeon->originalSaveTailBytes != 0 &&
+        dungeon->originalSaveTailByteCount == tailSize &&
+        pc34_decoded_things_match_raw(dungeon, things)) {
+        memcpy(dst, dungeon->originalSaveTailBytes, (size_t)tailSize);
+        return tailSize;
     }
     /* ReDMCSB LOADSAVE.C F0433 lines ~1661-1682 writes these
      * sections with F0422 byte-sum checksum in this exact order. */
