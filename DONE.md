@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 Start-menu data-folder runtime guard: startup asset consumers
+  now use the last accepted physical data directory, rather than a transient
+  scanner `.` token from the macOS native folder dialog. This keeps the
+  visible setting, persisted configuration, and title/swoosh asset lookup on
+  the same selected folder. Verification: `m12_data_dir_cancel` and
+  `data_dir_picker_platform_matrix` pass.
+
 - ✅ 2026-07-30 Start-menu first-run data-folder repair: when a macOS folder
   dialog or `FIRESTAFF_DATA` supplies the placeholder `.`, the newly created
   configuration now repairs its live in-memory path as well as the file on

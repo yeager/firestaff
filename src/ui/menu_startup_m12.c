@@ -54,6 +54,7 @@
 #include <time.h>
 
 void m12_update_game_availability(const FS_GameAvailability *avail);
+static int m12_data_directory_dialog_token_is_placeholder(const char* path);
 
 typedef struct M12_DataDirScanJob {
     SDL_Thread* thread;
@@ -945,7 +946,18 @@ int M12_StartupMenu_GetEntryCount(void) {
 }
 
 const char* M12_StartupMenu_AssetDataDir(const M12_StartupMenuState* state) {
-    return state ? state->assetStatus.dataDir : NULL;
+    /* The native macOS folder dialog can transiently expose "." through the
+     * scanner while it completes.  Runtime pathfinders use this accessor, so
+     * give them the last accepted physical folder just as the Settings row
+     * does; never let a display token become an asset root. */
+    if (!state) {
+        return NULL;
+    }
+    if (!m12_data_directory_dialog_token_is_placeholder(state->selectedDataDir) &&
+        FSP_DirExists(state->selectedDataDir)) {
+        return state->selectedDataDir;
+    }
+    return state->assetStatus.dataDir;
 }
 
 const M12_AssetVersionStatus* M12_StartupMenu_AssetVersion(
