@@ -175,30 +175,40 @@ def main() -> int:
     for category in studio.categories_for_game("csb"):
         manifest[category] = []
 
-    selected = assets if args.all_assets else [by_index[index] for _, _, index, *_ in SOURCE_SLOTS]
+    if args.all_assets:
+        selected = [
+            (asset.category, asset.asset_id, asset, None, None, None)
+            for asset in assets
+        ]
+    else:
+        selected = [
+            (category, asset_id, by_index[index], size, rationale, projection_status)
+            for category, asset_id, index, size, rationale, projection_status in SOURCE_SLOTS
+        ]
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_DEFLATED,
                          compresslevel=6, allowZip64=True) as archive:
         written = 0
-        for asset in selected:
+        for category, asset_id, asset, size, rationale, projection_status in selected:
             if asset.warning or asset.width <= 0 or asset.height <= 0:
                 manifest.setdefault("skippedAssets", []).append({"id": asset.asset_id,
                                                                     "reason": asset.warning or "zero-size source record"})
                 continue
             record = source_bytes[asset.offset:asset.offset + asset.compressed_bytes]
             try:
-                original = studio.csb_img2_to_image(record, asset.width, asset.height)
-                image = restore_10x(original, args.scale) if args.all_assets else fit_source(
-                    original, next(size for _, asset_id, _, size, *_ in SOURCE_SLOTS if asset_id == asset.asset_id))
+                transparent_index = 10 if category == "door_shapes" and not args.all_assets else None
+                original = studio.csb_img2_to_image(record, asset.width, asset.height,
+                                                    transparent_index=transparent_index)
+                image = restore_10x(original, args.scale) if args.all_assets else fit_source(original, size)
             except Exception as exc:
                 manifest.setdefault("skippedAssets", []).append({"id": asset.asset_id, "reason": str(exc)})
                 continue
-            filename = f"{asset.asset_id}{'_10x' if args.all_assets else ''}.png"
+            filename = f"{asset_id}{'_10x' if args.all_assets else ''}.png"
             import io
             png = io.BytesIO()
             image.save(png, format="PNG", optimize=False, compress_level=6)
-            archive.writestr(f"{asset.category}/{filename}", png.getvalue())
-            manifest[asset.category].append({
-                "id": asset.asset_id,
+            archive.writestr(f"{category}/{filename}", png.getvalue())
+            manifest[category].append({
+                "id": asset_id,
                 "source_file": filename,
                 "width": image.width,
                 "height": image.height,
@@ -206,6 +216,18 @@ def main() -> int:
                 "source_graphic_index": asset.index,
                 "source_record_sha256": asset.sha256,
             })
+            if not args.all_assets:
+                manifest["routeProvenance"].append({
+                    "id": asset_id,
+                    "category": category,
+                    "sourceGraphicIndex": asset.index,
+                    "sourceDimensions": [asset.width, asset.height],
+                    "sourceRecordSha256": asset.sha256,
+                    "outputDimensions": [image.width, image.height],
+                    "transparentIndex": transparent_index,
+                    "rationale": rationale,
+                    "f0128ProjectionStatus": projection_status,
+                })
             written += 1
             if written % 50 == 0:
                 print(f"wrote {written}/{len(selected)} source records", flush=True)
