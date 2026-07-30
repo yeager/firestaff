@@ -116,6 +116,79 @@ int main(void) {
     int16_t weights[4] = {30, 0, 0, 0};
     assert(dm2_v1_get_party_special_force(&party, weights) == (0x32 + 0x32));
 
+    /* reset_squad_dir: all heroes face same direction */
+    dm2_v1_party_init(&party);
+    party.heros_in_party = 3;
+    party.hero[0].absdir = 0;
+    party.hero[1].absdir = 1;
+    party.hero[2].absdir = 2;
+    dm2_v1_party_reset_squad_dir(&party, 3);
+    assert(party.hero[0].absdir == 3);
+    assert(party.hero[1].absdir == 3);
+    assert(party.hero[2].absdir == 3);
+
+    /* select_champion_leader: basic selection */
+    dm2_v1_party_init(&party);
+    party.heros_in_party = 2;
+    party.hero[0].curHP = 50;
+    party.hero[0].heroflag = 0;
+    party.hero[1].curHP = 40;
+    party.hero[1].heroflag = 0;
+    dm2_v1_party_select_champion_leader(&party, 1, -1, 3);
+    assert(party.curactevhero == DM2_HERO_1);
+    assert((party.hero[1].heroflag & 0x1400) == 0x1400);
+
+    /* select_champion_leader: dead hero rejected */
+    dm2_v1_party_init(&party);
+    party.heros_in_party = 2;
+    party.hero[0].curHP = 0;
+    dm2_v1_party_select_champion_leader(&party, 0, -1, 2);
+    assert(party.curactevhero == DM2_HERO_NONE);
+
+    /* select_champion_leader: same leader is no-op */
+    dm2_v1_party_init(&party);
+    party.heros_in_party = 1;
+    party.hero[0].curHP = 50;
+    party.curactevhero = DM2_HERO_0;
+    dm2_v1_party_select_champion_leader(&party, 0, 0, 1);
+    assert(party.hero[0].heroflag == 0);
+
+    /* adjust_hand_cooldown: single hand */
+    dm2_v1_hero_init(&hero);
+    dm2_v1_hero_adjust_hand_cooldown(&hero, 0, 10, 0);
+    assert(hero.handcooldown[0] > 0);
+    assert(hero.handcooldown[1] == 0);
+
+    /* adjust_hand_cooldown: all hands (hand_idx = -1) */
+    dm2_v1_hero_init(&hero);
+    dm2_v1_hero_adjust_hand_cooldown(&hero, -1, 20, 0);
+    assert(hero.handcooldown[0] > 0);
+    assert(hero.handcooldown[1] > 0);
+    assert(hero.handcooldown[2] > 0);
+
+    /* adjust_hand_cooldown: savegames1_b04 reduces delay */
+    dm2_v1_hero_init(&hero);
+    dm2_v1_hero_adjust_hand_cooldown(&hero, 0, 40, 0);
+    int8_t cd_normal = hero.handcooldown[0];
+    dm2_v1_hero_init(&hero);
+    dm2_v1_hero_adjust_hand_cooldown(&hero, 0, 40, 1);
+    assert(hero.handcooldown[0] < cd_normal);
+
+    /* use_dexterity_attribute: basic range check */
+    dm2_v1_hero_init(&hero);
+    hero.ability[DM2_ABILITY_DEXTERITY][DM2_CUR] = 50;
+    hero.ability[DM2_ABILITY_DEXTERITY][DM2_MAX] = 60;
+    int16_t dex_result = dm2_v1_hero_use_dexterity_attribute_raw(
+        &hero, 30, 500, 0, 3, 3, 3);
+    assert(dex_result >= 1 && dex_result <= 100);
+
+    /* use_dexterity_attribute: sleep flag halves */
+    int16_t dex_awake = dm2_v1_hero_use_dexterity_attribute_raw(
+        &hero, 30, 500, 0, 0, 0, 0);
+    int16_t dex_sleep = dm2_v1_hero_use_dexterity_attribute_raw(
+        &hero, 30, 500, 1, 0, 0, 0);
+    assert(dex_sleep <= dex_awake);
+
     /* timproc_3a15_1da8: ornate animator toggle */
     assert(dm2_v1_timproc_3a15_1da8(0, 0) == 1);
     assert(dm2_v1_timproc_3a15_1da8(1, 0) == 0);

@@ -195,6 +195,91 @@ int32_t dm2_v1_get_party_special_force(DM2_V1_Party *party, const int16_t *carri
     return total;
 }
 
+/* skproject DM2_RESET_SQUAD_DIR (c_hero.cpp:2939) */
+void dm2_v1_party_reset_squad_dir(DM2_V1_Party *party, int8_t facing_dir) {
+    for (int i = 0; i < party->heros_in_party; i++)
+        party->hero[i].absdir = facing_dir;
+}
+
+/* skproject DM2_SELECT_CHAMPION_LEADER (c_hero.cpp:2325)
+ * current_leader = eventqueue.event_heroidx, next_champion_number = ddat.v1e0288 */
+void dm2_v1_party_select_champion_leader(
+    DM2_V1_Party *party, int16_t new_leader,
+    int16_t current_leader, int16_t next_champion_number)
+{
+    if (new_leader == current_leader)
+        return;
+    if (new_leader != -1) {
+        if (party->hero[new_leader].curHP == 0)
+            return;
+    }
+    if (current_leader != -1)
+        party->hero[current_leader].heroflag |= 0x1400;
+    party->curactevhero = (DM2_HeroIndex)new_leader;
+    if (new_leader == -1)
+        return;
+    if (new_leader + 1 == next_champion_number)
+        return;
+    party->hero[new_leader].heroflag |= 0x1400;
+}
+
+/* skproject DM2_ADJUST_HAND_COOLDOWN (c_hero.cpp:2432)
+ * hand_idx: -1 means slots 0..2, else single slot hand_idx.
+ * savegames1_b04: ddat.savegames1.b_04 flag. */
+void dm2_v1_hero_adjust_hand_cooldown(
+    DM2_V1_Hero *hero, int16_t hand_idx, int16_t base_delay,
+    int savegames1_b04)
+{
+    uint16_t delay = (uint16_t)base_delay;
+    delay += delay / 4;
+    int16_t start, count;
+    if (hand_idx != -1) {
+        start = hand_idx;
+        count = 1;
+    } else {
+        start = 0;
+        count = 3;
+    }
+    if (savegames1_b04)
+        delay >>= 2;
+    delay += 2;
+    for (int16_t i = start; count > 0; i++, count--) {
+        uint16_t cur = (uint8_t)hero->handcooldown[i];
+        uint16_t add;
+        if (delay <= cur)
+            add = delay / 2;
+        else
+            add = cur / 2;
+        uint16_t result = (delay > cur ? delay : cur) + add;
+        if (result > 0xff)
+            result = 0xff;
+        hero->handcooldown[i] = (int8_t)result;
+    }
+}
+
+/* skproject DM2_USE_DEXTERITY_ATTRIBUTE (c_hero.cpp:2026)
+ * Deterministic: caller provides RNG values (rand & 0x7 each). */
+int16_t dm2_v1_hero_use_dexterity_attribute_raw(
+    DM2_V1_Hero *hero, int16_t carried_weight, int16_t max_load,
+    int sleep_flag, int16_t rand7_1, int16_t rand7_2, int16_t rand7_3)
+{
+    int16_t dex = dm2_v1_hero_get_adj_ability1_raw(
+        hero, DM2_ABILITY_DEXTERITY, DM2_CUR, 0);
+    int16_t r2 = (int16_t)(rand7_1 + dex);
+    int32_t product = (int32_t)((int16_t)(r2 / 2)) * (int32_t)carried_weight;
+    int32_t load = (int32_t)max_load;
+    if (load <= 0) load = 1;
+    int16_t sub = (int16_t)(product / load);
+    r2 = (int16_t)(r2 - sub);
+    int16_t val = r2 < 2 ? 2 : r2;
+    if (sleep_flag)
+        val = (int16_t)(val >> 1);
+    int16_t hi = (int16_t)(100 - rand7_2);
+    int16_t mid = (int16_t)(val / 2);
+    int16_t lo = (int16_t)(rand7_3 + 1);
+    return dm2_between_value(lo, hi, mid);
+}
+
 /* skproject DM2_2c1d_0e23 (c_hero.cpp:3879)
  * Stamina cost from item weight. Standalone arithmetic. */
 int16_t dm2_v1_hero_2c1d_0e23(int16_t weight) {

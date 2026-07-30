@@ -141,6 +141,20 @@ int32_t dm2_v1_hero_37bea(DM2_V1_Party *party, int16_t hero_idx, int16_t carried
 
 int32_t dm2_v1_get_party_special_force(DM2_V1_Party *party, const int16_t *carried_weights);
 
+void dm2_v1_party_reset_squad_dir(DM2_V1_Party *party, int8_t facing_dir);
+
+void dm2_v1_party_select_champion_leader(
+    DM2_V1_Party *party, int16_t new_leader,
+    int16_t current_leader, int16_t next_champion_number);
+
+void dm2_v1_hero_adjust_hand_cooldown(
+    DM2_V1_Hero *hero, int16_t hand_idx, int16_t base_delay,
+    int savegames1_b04);
+
+int16_t dm2_v1_hero_use_dexterity_attribute_raw(
+    DM2_V1_Hero *hero, int16_t carried_weight, int16_t max_load,
+    int sleep_flag, int16_t rand7_1, int16_t rand7_2, int16_t rand7_3);
+
 #ifdef __cplusplus
 }
 #endif
