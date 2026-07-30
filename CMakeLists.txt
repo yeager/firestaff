@@ -33175,6 +33175,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/csb_v1_runtime_overlay_link_stub.c
         src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_f0115_first_object_pc34_compat.c
         src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_csbgraphics_runtime_plan.c
@@ -33207,6 +33208,9 @@ add_executable(test_nexus_v1_dgn_material_raster
     )
     target_include_directories(test_csb_v1_viewport_custom_background_mask_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_viewport_custom_background_mask_pc34_compat PRIVATE
+        firestaff_m10
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_viewport_custom_background_mask_pc34_compat PRIVATE
@@ -33256,6 +33260,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         tests/csb_v1_runtime_overlay_link_stub.c
         src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_f0115_first_object_pc34_compat.c
         src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c
@@ -33287,6 +33292,9 @@ add_executable(test_nexus_v1_dgn_material_raster
     )
     target_include_directories(test_csb_v1_csbgraphics_runtime_plan PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbgraphics_runtime_plan PRIVATE
+        firestaff_m10
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_csbgraphics_runtime_plan PRIVATE
@@ -33508,9 +33516,13 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_csb_v1_csbwin_planar_bitmap
         tests/test_csb_v1_csbwin_planar_bitmap.c
         src/csb/csb_v1_csbwin_planar_bitmap.c
+        src/csb/csb_v1_csbwin_viewport_graphics_map.c
     )
     target_include_directories(test_csb_v1_csbwin_planar_bitmap PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_planar_bitmap PRIVATE
+        firestaff_m10
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_csbwin_planar_bitmap PRIVATE
