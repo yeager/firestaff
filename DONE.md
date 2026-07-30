@@ -44404,3 +44404,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `dm2_v2_runtime_hud_render()` API is now no-draw because it has no original
   GDAT fetch/palette binding. This prevents direct callers from bypassing the
   authenticated M11 HUD route with the retired procedural overlay.
+- ✅ 2026-07-30 DM2 V2 overlay-enable cleanup: the retired overlay's enable
+  flag is gone and its compatibility setter is a no-op, so no later phase-gate
+  call can re-enable pixel generation through that API.

@@ -70,11 +70,6 @@ static DM2_V2_OutdoorFX      s_outdoor_fx;
  * Phase 4 in profile domain.  When 0, Phase 4 functions are no-ops. */
 static int s_enhanced_outdoor = 0;
 
-/* Phase gate: HUD overlay enabled?
- * Default 0 (V1 fallback); set to 1 when dm2_v2_phase_gate binds
- * Phase 3 in HUD domain (requires LAUNCH+PROFILE to be enabled). */
-static int s_enhanced_hud = 0;
-
 /* DM2 V2 Phase 3: HUD overlay state (compass, depth, gold, champion bars, action strip).
  * Phase 3 enhanced UI chrome — presentation-only; V1 game state unchanged.
  * Initialised in dm2_v2_runtime_init(); bound in dm2_v2_runtime_set_hud_enabled(). */
@@ -206,17 +201,15 @@ void dm2_v2_runtime_init(int scale) {
     dm2_v2_outdoor_fx_init(&s_outdoor_fx);
     s_enhanced_outdoor = 0;
 
-    /* Phase 3: initialise HUD overlay (compass, depth, gold, champion bars,
-     * action strip).  HUD defaults to invisible until the phase gate bind
-     * enables it in the profile domain.  When s_enhanced_hud=0, all HUD
-     * render calls are no-ops — V1 source is locked.
+    /* Phase 3: initialise HUD state (compass, depth, gold, champion bars,
+     * action strip). The direct overlay entry point is no-draw; M11 binds
+     * original GDAT material through dm2_v2_hud_runtime instead.
      *
      * Source: SKULL.ASM T560 (HUD rendering); SKULLWIN/SKWIN/c_gui_vp.cpp
      *         (DM2 UI chrome layout); ReDMCSB PANEL.C F0354
      *         (champion status-box drawing); ReDMCSB DUNGEON.C F0260
      *         (stat-bar refresh timing) */
     dm2_v2_hud_init(&s_hud);
-    s_enhanced_hud = 0;
 }
 
 DM2_V2_ViewportState *dm2_v2_runtime_get_viewport(void) {
@@ -656,14 +649,8 @@ void dm2_v2_runtime_set_enhanced_outdoor(int enhanced) {
 
 /*
  * dm2_v2_runtime_set_hud_enabled — enable/disable Phase 3 HUD overlay.
- * Called from dm2_v2_phase_gate_bind when HUD domain is enabled
- * (LAUNCH + PROFILE both active).  When disabled, dm2_v2_runtime_hud_render
- * is a no-op and the V1 source-locked HUD chrome is used instead.
- *
- * enhanced: 1 = Phase 3 HUD overlay active; 0 = V1 fallback.
- *
- * This function does NOT mutate V1 game state.  It only controls
- * whether the V2 presentation overlay is rendered on top of the V1 HUD.
+ * Retained for ABI compatibility. The direct renderer has no original GDAT
+ * fetch/palette binding and is therefore permanently no-draw.
  *
  * Source: SKULL.ASM T560 (HUD rendering)
  *         SKULLWIN/SKWIN/c_gui_vp.cpp (DM2 UI chrome layout)
@@ -671,7 +658,7 @@ void dm2_v2_runtime_set_enhanced_outdoor(int enhanced) {
  *         ReDMCSB DUNGEON.C F0260 (stat-bar refresh timing)
  */
 void dm2_v2_runtime_set_hud_enabled(int enhanced) {
-    s_enhanced_hud = enhanced ? 1 : 0;
+    (void)enhanced;
 }
 
 /*

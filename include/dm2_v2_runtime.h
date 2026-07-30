@@ -181,13 +181,10 @@ void dm2_v2_runtime_set_enhanced_outdoor(int enhanced);
 
 /* ── Phase 3: Enhanced HUD Overlay ──────────────────────────────── */
 
-/* dm2_v2_runtime_set_hud_enabled — enable/disable Phase 3 HUD overlay.
- * Called from dm2_v2_phase_gate_bind when HUD domain is enabled
- * (LAUNCH + PROFILE both active).  When disabled, dm2_v2_runtime_hud_render
- * is a no-op and the V1 source-locked HUD chrome is used instead.
- *
- * This function does NOT mutate V1 game state.  It only controls
- * whether the V2 presentation overlay is rendered on top of the V1 HUD.
+/* dm2_v2_runtime_set_hud_enabled — retained compatibility no-op.
+ * The direct overlay renderer is retired because it has no original GDAT
+ * owner. M11 renders source-locked HUD material through
+ * dm2_v2_hud_runtime_render().
  *
  * Source: SKULL.ASM T560 (HUD rendering)
  *         SKULLWIN/SKWIN/c_gui_vp.cpp (DM2 UI chrome layout)
