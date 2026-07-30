@@ -43320,3 +43320,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   CSB PC3.4 IMG3/LZW before M11 cache consumption. This preserves the same
   source pixels in V1, V2.0, V2.1 and V2.2. Verification: the focused
   V1/V2.x startup, HUD and V2.2 source-artpack suite passes 8/8.
+
+- ✅ 2026-07-30 CSB full regression receipt: `ctest -L csb` passes 112/112
+  tests from the current Ninja build. The run includes V2.0, V2.1 and V2.2
+  presentation, startup, HUD, filter, source-artpack and runtime-handoff
+  coverage. This verifies implemented behavior only; the source-data gaps
+  explicitly retained in `TODO.md` remain open.
