@@ -43865,6 +43865,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   a `READY` host-log entry and proves C015 remains black in V1, V2.0, V2.1
   and V2.2 when no source row exists.
 
+# DM1 inventory placeholder containment (2026-07-30)
+
+- ✅ Normal DM1 V1 inventory rendering now rejects generated slot frames,
+  scaled viewport-sprite stand-ins, two-letter item tags and slot labels.
+  C033-C035 and F0038's icon atlas are the only admitted visual owners;
+  unavailable original material leaves the source rectangle blank. Debug and
+  non-DM1 tooling paths remain explicitly separate.
+
 - ✅ Data-directory selection now preserves the normalised path the player
   selected while scanning through its canonical physical path. This prevents
   macOS `/private` aliases from replacing a valid `/tmp` or symlinked data

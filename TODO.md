@@ -115,6 +115,12 @@ the selected game's data set, Firestaff must decode and use those bytes.  A
 missing or still-undecoded original format must fail closed with a specific
 diagnostic; it must not silently fall back to a generated visual.
 
+- **DM1-ORIGINAL-REPLACE-003:** Closed 2026-07-30. Normal DM1 V1 inventory
+  slots no longer substitute generated slot frames, scaled viewport sprites,
+  type tags or position labels when C033-C035 or the F0038 icon atlas is
+  unavailable. The affected source rectangle remains blank until the real
+  material is decoded; diagnostic and non-DM1 routes retain their tooling.
+
 - **DM1-ORIGINAL-REPLACE-001:** Replace any remaining V2.2 wall/shape
   placeholder material with bound `dm1/GRAPHICS.DAT` records where an enabled
   `.fsart` does not provide reviewed replacement art.  The existing material

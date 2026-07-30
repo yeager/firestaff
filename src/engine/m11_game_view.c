@@ -48046,15 +48046,18 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
         }
     }
 
-    if (!drewSlotBox) {
-        /* Procedural fallback */
+    if (!drewSlotBox &&
+        (!m11_is_dm1_source_kind(state->sourceKind) || state->showDebugHUD)) {
+        /* Non-DM1 diagnostic/legacy fallback. DM1 V1 must retain the clear
+         * source panel until C033-C035 are decoded, never invent a frame. */
         unsigned char borderColor = selected ? M11_COLOR_LIGHT_GREEN : M11_COLOR_DARK_GRAY;
         m11_fill_rect(fb, fbW, fbH, sx, sy, SZ, SZ, M11_COLOR_BLACK);
         m11_draw_rect(fb, fbW, fbH, sx, sy, SZ, SZ, borderColor);
     }
 
     /* Selection highlight: bright border around the slot box */
-    if (selected) {
+    if (selected && (drewSlotBox || !m11_is_dm1_source_kind(state->sourceKind) ||
+                     state->showDebugHUD)) {
         m11_draw_rect(fb, fbW, fbH, sx, sy, slotBoxW, slotBoxH,
                       M11_COLOR_LIGHT_GREEN);
     }
@@ -48071,7 +48074,8 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
             drewSprite = m11_draw_dm_object_icon_index(
                 state, fb, fbW, fbH, iconIndex, sx + 1, sy + 1, 0);
         }
-        if (!drewSprite && state->assetsAvailable && state->world.things) {
+        if (!drewSprite && state->assetsAvailable && state->world.things &&
+            (!m11_is_dm1_source_kind(state->sourceKind) || state->showDebugHUD)) {
             unsigned int gfxIdx = m11_inventory_thing_sprite_index(
                 state->world.things, thingId);
             if (gfxIdx > 0 && gfxIdx < M11_GFX_ITEM_SPRITE_END) {
@@ -48086,8 +48090,10 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
                 }
             }
         }
-        if (!drewSprite) {
-            /* Fallback: 2-char type tag */
+        if (!drewSprite &&
+            (!m11_is_dm1_source_kind(state->sourceKind) || state->showDebugHUD)) {
+            /* Diagnostic/legacy fallback only. Normal DM1 uses F0038's
+             * icon atlas or leaves an unavailable icon blank. */
             int thingType = THING_GET_TYPE(thingId);
             const char* tag = "?";
             M11_TextStyle s = g_text_small;
@@ -48103,8 +48109,9 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
             }
             m11_draw_text(fb, fbW, fbH, sx + 3, sy + 4, tag, &s);
         }
-    } else if (!drewSlotBox) {
-        /* Empty + no original graphic — faint position hint */
+    } else if (!drewSlotBox &&
+               (!m11_is_dm1_source_kind(state->sourceKind) || state->showDebugHUD)) {
+        /* Diagnostic/legacy hint only; it is not a DM1 source visual. */
         M11_TextStyle dim = g_text_small;
         dim.color = M11_COLOR_DARK_GRAY;
         m11_draw_text(fb, fbW, fbH, sx + 2, sy + 4, shortLabel, &dim);
