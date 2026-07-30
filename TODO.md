@@ -16983,8 +16983,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-30 correction: the PC34/I34E branch at `SWSH.C:3037` uses
     `F0022_MAIN_SwooshDelay(120)`, not the preceding P20JB 20-VBlank branch.
     Firestaff now retains that 2.4-second source dwell before `START.PRG`.
-    Remaining work is a packaged macOS visual smoke for title-to-Entrance
-    cadence after this corrected swoosh handoff.
+    Closed 2026-07-30 by a clean native macOS capture: FTL at 2 s, PRESENTS
+    at 5 s, C001 title at 8 s, and Entrance at 11 s. No TITLE.DAT replacement
+    or synthetic frame was used.
   - 2026-07-30 C001 receipt correction: completed boot metadata now reports
     TITLE.C's 23 source events, not the unrelated 53-frame `TITLE.DAT` bank.
     Remaining work is still packaged macOS visual capture, not another title

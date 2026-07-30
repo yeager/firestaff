@@ -44052,3 +44052,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   separate decoder contract. Verification: Ninja build, the focused startup
   state-machine gate, and real PC34 V1/V2.0/V2.1/V2.2 boot probes all pass
   with `titleFrame=23` and `titleFrameMax=23`.
+# DM1 macOS source-start capture (2026-07-30)
+
+- ✅ A clean native macOS run with the local PC34 `GRAPHICS.DAT` captured the
+  source-owned startup handoff in order: FTL swoosh at 2 s, PRESENTS at 5 s,
+  the C001 Dungeon Master / Strikes Back title at 8 s, and Entrance at 11 s.
+  The capture uses the normal scalable window, not a synthetic screen or
+  TITLE.DAT replacement. This closes the package-level visual smoke requested
+  for the corrected I34E swoosh dwell and C001-to-Entrance cadence.
