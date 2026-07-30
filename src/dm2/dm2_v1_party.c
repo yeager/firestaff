@@ -152,6 +152,49 @@ int32_t dm2_v1_timproc_3a15_1da8(int32_t a, int32_t b) {
     return (int32_t)(((uint8_t)b ^ 1) | (b & ~0xFF));
 }
 
+/* skproject DM2_hero_2c1d_0300 (c_hero.cpp:652)
+ * Adjusts hero ability[idx][CUR] toward MAX by delta with diminishing curve. */
+void dm2_v1_hero_2c1d_0300(DM2_V1_Hero *hero, int16_t ability_idx, int16_t delta) {
+    int16_t diff = (int16_t)(hero->ability[ability_idx][DM2_CUR]
+                           - hero->ability[ability_idx][DM2_MAX] + delta);
+    int16_t sign_diff = diff < 0;
+    int16_t sign_delta = delta < 0;
+    if (sign_diff == sign_delta) {
+        int16_t abs_diff = diff < 0 ? (int16_t)-diff : diff;
+        for (;;) {
+            if (abs_diff <= 0x14)
+                break;
+            int16_t quarter = (int16_t)(delta / 4);
+            delta = (int16_t)(delta - quarter);
+            abs_diff = (int16_t)(abs_diff - 0x14);
+        }
+    }
+    int16_t result = (int16_t)((uint8_t)hero->ability[ability_idx][DM2_CUR] + delta);
+    hero->ability[ability_idx][DM2_CUR] =
+        (int8_t)dm2_between_value(10, 0xdc, result);
+}
+
+/* skproject DM2_hero_37BEA (c_hero.cpp:2383)
+ * Per-hero special force contribution. carried_weight is hero's total weight. */
+int32_t dm2_v1_hero_37bea(DM2_V1_Party *party, int16_t hero_idx, int16_t carried_weight) {
+    if (party->hero[hero_idx].curHP == 0)
+        return 0;
+    int16_t flag_bit = (int16_t)(party->hero[hero_idx].heroflag & 0x10);
+    int32_t w = (uint16_t)carried_weight;
+    int32_t div10 = w / 10;
+    int32_t combined = div10 + (uint16_t)flag_bit;
+    return combined != 0 ? 0x32 : 0x28;
+}
+
+/* skproject DM2_GET_PARTY_SPECIAL_FORCE (c_hero.cpp:2407)
+ * Sums hero special-force contributions. carried_weights[i] = weight for hero i. */
+int32_t dm2_v1_get_party_special_force(DM2_V1_Party *party, const int16_t *carried_weights) {
+    int32_t total = 0;
+    for (int16_t i = 0; i < party->heros_in_party; i++)
+        total += dm2_v1_hero_37bea(party, i, carried_weights[i]);
+    return total;
+}
+
 /* skproject DM2_2c1d_0e23 (c_hero.cpp:3879)
  * Stamina cost from item weight. Standalone arithmetic. */
 int16_t dm2_v1_hero_2c1d_0e23(int16_t weight) {

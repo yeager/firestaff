@@ -74,6 +74,48 @@ int main(void) {
     assert(dm2_v1_hero_2c1d_0e23(4) == 2);
     assert(dm2_v1_hero_2c1d_0e23(20) == 10);
 
+    /* hero_2c1d_0300: ability adjustment with diminishing curve */
+    dm2_v1_hero_init(&hero);
+    hero.ability[DM2_ABILITY_STRENGTH][DM2_CUR] = 50;
+    hero.ability[DM2_ABILITY_STRENGTH][DM2_MAX] = 60;
+    dm2_v1_hero_2c1d_0300(&hero, DM2_ABILITY_STRENGTH, 5);
+    assert(hero.ability[DM2_ABILITY_STRENGTH][DM2_CUR] == 55);
+
+    /* Small delta within 20 of max: no diminishing */
+    dm2_v1_hero_init(&hero);
+    hero.ability[DM2_ABILITY_DEXTERITY][DM2_CUR] = 45;
+    hero.ability[DM2_ABILITY_DEXTERITY][DM2_MAX] = 60;
+    dm2_v1_hero_2c1d_0300(&hero, DM2_ABILITY_DEXTERITY, 10);
+    assert(hero.ability[DM2_ABILITY_DEXTERITY][DM2_CUR] == 55);
+
+    /* Clamp to [10, 220] */
+    dm2_v1_hero_init(&hero);
+    hero.ability[DM2_ABILITY_LUCK][DM2_CUR] = 5;
+    hero.ability[DM2_ABILITY_LUCK][DM2_MAX] = 5;
+    dm2_v1_hero_2c1d_0300(&hero, DM2_ABILITY_LUCK, -10);
+    assert(hero.ability[DM2_ABILITY_LUCK][DM2_CUR] == 10);
+
+    /* hero_37bea: special force per hero */
+    dm2_v1_party_init(&party);
+    party.heros_in_party = 2;
+    party.hero[0].curHP = 50;
+    party.hero[0].heroflag = 0;
+    party.hero[1].curHP = 0;
+    assert(dm2_v1_hero_37bea(&party, 0, 30) == 0x32);
+    assert(dm2_v1_hero_37bea(&party, 1, 30) == 0);
+    /* No weight, no flag -> 0x28 */
+    assert(dm2_v1_hero_37bea(&party, 0, 0) == 0x28);
+
+    /* get_party_special_force: sum of contributions */
+    dm2_v1_party_init(&party);
+    party.heros_in_party = 2;
+    party.hero[0].curHP = 50;
+    party.hero[0].heroflag = 0;
+    party.hero[1].curHP = 40;
+    party.hero[1].heroflag = 0x10;
+    int16_t weights[4] = {30, 0, 0, 0};
+    assert(dm2_v1_get_party_special_force(&party, weights) == (0x32 + 0x32));
+
     /* timproc_3a15_1da8: ornate animator toggle */
     assert(dm2_v1_timproc_3a15_1da8(0, 0) == 1);
     assert(dm2_v1_timproc_3a15_1da8(1, 0) == 0);

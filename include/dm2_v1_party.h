@@ -135,6 +135,12 @@ int16_t dm2_v1_hero_2c1d_0e23(int16_t weight);
 
 int32_t dm2_v1_timproc_3a15_1da8(int32_t a, int32_t b);
 
+void dm2_v1_hero_2c1d_0300(DM2_V1_Hero *hero, int16_t ability_idx, int16_t delta);
+
+int32_t dm2_v1_hero_37bea(DM2_V1_Party *party, int16_t hero_idx, int16_t carried_weight);
+
+int32_t dm2_v1_get_party_special_force(DM2_V1_Party *party, const int16_t *carried_weights);
+
 #ifdef __cplusplus
 }
 #endif
