@@ -32,6 +32,12 @@ int main(void) {
 
     M12_GamepadMap_SetDefaults(&map);
     CHECK(map.enabled == 1);
+    CHECK(M11_GamepadEnabledForInputMode(0, 1) == 1);
+    CHECK(M11_GamepadEnabledForInputMode(1, 1) == 0);
+    CHECK(M11_GamepadEnabledForInputMode(2, 1) == 0);
+    CHECK(M11_GamepadEnabledForInputMode(3, 1) == 1);
+    CHECK(M11_GamepadEnabledForInputMode(99, 1) == 1);
+    CHECK(M11_GamepadEnabledForInputMode(3, 0) == 0);
 
     /* Default CSB gameplay mapping: these are source input tokens, not a
      * parallel controller simulation.  M11_GameView_HandleInput forwards

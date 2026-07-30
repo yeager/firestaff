@@ -17,6 +17,12 @@
   `csb_v1_boot_profile_smoke`, `csb_v1_boot_runtime_handoff` and
   `csb_v1_runtime_route_first_frame_movement_utility_gate` pass.
 
+- ✅ 2026-07-30 CSB input-mode runtime ownership: the launcher Input Mode
+  setting now controls the live SDL gamepad route. Keyboard+Mouse and Touch
+  suppress controller events, while Auto and Gamepad retain the persisted
+  user mapping. Verification: `m11_gamepad_csb_input_bridge` passes its
+  default CSB command and all four input-mode gates.
+
 - ✅ 2026-07-30 Start-menu data-folder runtime guard: startup asset consumers
   now use the last accepted physical data directory, rather than a transient
   scanner `.` token from the macOS native folder dialog. This keeps the

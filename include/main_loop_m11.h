@@ -132,6 +132,12 @@ M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
                                          int processedValue,
                                          int gameplayActive);
 
+/* Resolve whether the configured gamepad map may consume SDL controller
+   events for a launcher input mode. `configuredEnabled` preserves an
+   operator's persisted gamepad.toml choice; M12 modes 1 (keyboard/mouse) and
+   2 (touch) additionally suppress the controller route. */
+int M11_GamepadEnabledForInputMode(int inputModeIndex, int configuredEnabled);
+
 /* V1 original and V2.0 filtered both present the source-locked 320x200 glyph
    layer.  They must stay nearest-neighbor so small original glyphs such as DM1
    wall inscriptions remain readable when the window is enlarged. */

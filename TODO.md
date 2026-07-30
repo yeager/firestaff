@@ -1715,6 +1715,12 @@ that its exact runtime path is not already source-locked and tested.
     stick dead-zone resolve to the exact shared M11 tokens consumed by CSB's
     GAMEBLOCK/COMMAND.C route. Controller remapping, modal focus and touch
     coverage remain open.
+    2026-07-30: M12's persisted Input Mode is now consumed by that live SDL
+    route: Keyboard+Mouse and Touch suppress configured gamepad input, while
+    Auto and Gamepad preserve the user-owned `gamepad.toml` map. The mapping
+    is reapplied while Settings is open, so a changed mode takes effect before
+    the next event without restarting the launcher. Per-action remap UI and
+    broader modal focus coverage remain open.
 34. **CSB-EXPANSION-AND-CUSTOM-DUNGEONS:** Complete safe original-data handling
     for CSB expansion/custom dungeon package selection, admission, runtime,
     save namespace, and no-cross-game asset leakage.

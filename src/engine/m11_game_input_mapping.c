@@ -71,6 +71,16 @@ M12_MenuInput M11_GamepadAxisToMenuInput(SDL_GamepadAxis axis,
     return M12_MENU_INPUT_NONE;
 }
 
+int M11_GamepadEnabledForInputMode(int inputModeIndex, int configuredEnabled)
+{
+    if (!configuredEnabled) return 0;
+    /* M12's persisted order is Auto, Keyboard+Mouse, Touch, Gamepad.
+     * Keyboard/mouse and touch are exclusive device choices; Auto and
+     * Gamepad retain the user-owned controller map. Unknown values resolve
+     * to Auto so a corrupt preference cannot disable a working controller. */
+    return inputModeIndex != 1 && inputModeIndex != 2;
+}
+
 int M11_MapPresentedGamePointToSourceForPresentation(int presentationMode,
                                                      int presentationWidth,
                                                      int presentationHeight,

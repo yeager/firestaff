@@ -4930,6 +4930,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     uint32_t idleAccumulatorMs = 0;
     M12_GamepadMap gamepadMap;
     M12_GamepadStatus gamepadStatus;
+    int gamepadConfiguredEnabled;
     struct Dm1V1PendingMotionQueuePc34Compat pendingDm1V1MotionQueue;
     Firestaff_RA_Runtime raRuntime;
 
@@ -5011,6 +5012,7 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     DM1_V1_PendingMotionQueue_InitPc34Compat(&pendingDm1V1MotionQueue);
     M12_GamepadMap_SetDefaults(&gamepadMap);
     (void)M12_GamepadMap_Load(&gamepadMap);
+    gamepadConfiguredEnabled = gamepadMap.enabled ? 1 : 0;
     memset(&gamepadStatus, 0, sizeof(gamepadStatus));
     M12_GamepadStatus_Update(&gamepadStatus);
     int launchedEver = 0;
@@ -5454,6 +5456,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M11_GameInputResult pointerResult = M11_GAME_INPUT_IGNORED;
         uint32_t tickBeforeEvents = gameView.world.gameTick;
         uint32_t tickBeforeInput = gameView.world.gameTick;
+
+        /* Settings may change while the launcher is visible. Apply the
+         * persisted input-mode choice before either event or held-state
+         * controller input is translated into shared CSB command tokens. */
+        gamepadMap.enabled = M11_GamepadEnabledForInputMode(
+            menuState.settings.inputModeIndex, gamepadConfiguredEnabled);
 
         {
             int speedMul = M11_QolRuntime_GetSpeedMultiplier();
