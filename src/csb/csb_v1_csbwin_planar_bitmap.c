@@ -1,20 +1,30 @@
-#include "csb_v1_csbwin_packed_bitmap.h"
+#include "csb_v1_csbwin_planar_bitmap.h"
 
-#include <limits.h>
 #include <stdlib.h>
 
-static int csb_v1_csbwin_packed_bitmap_valid(
-    const CSB_V1_CSBWinPackedBitmap *bitmap)
+static uint16_t csb_v1_csbwin_read_be16(const uint8_t *bytes)
+{
+    return (uint16_t)(((uint16_t)bytes[0] << 8u) | bytes[1]);
+}
+
+static void csb_v1_csbwin_write_be16(uint8_t *bytes, uint16_t value)
+{
+    bytes[0] = (uint8_t)(value >> 8u);
+    bytes[1] = (uint8_t)value;
+}
+
+static int csb_v1_csbwin_planar_bitmap_valid(
+    const CSB_V1_CSBWinPlanarBitmap *bitmap)
 {
     unsigned int minimum_stride;
 
     if (!bitmap || !bitmap->bytes || bitmap->width == 0u ||
         bitmap->height == 0u) return 0;
-    minimum_stride = ((unsigned int)bitmap->width + 1u) / 2u;
+    minimum_stride = (((unsigned int)bitmap->width + 15u) / 16u) * 8u;
     return bitmap->byte_stride >= minimum_stride;
 }
 
-int csb_v1_csbwin_packed_bitmap_pack_indexed(
+int csb_v1_csbwin_planar_bitmap_pack_indexed(
     const uint8_t *indexed_pixels, uint16_t width, uint16_t height,
     uint8_t **out_bytes, size_t *out_byte_count)
 {
@@ -25,7 +35,7 @@ int csb_v1_csbwin_packed_bitmap_pack_indexed(
     if (out_byte_count) *out_byte_count = 0u;
     if (!indexed_pixels || !out_bytes || !out_byte_count || width == 0u ||
         height == 0u) return 0;
-    stride = ((size_t)width + 1u) / 2u;
+    stride = (((size_t)width + 15u) / 16u) * 8u;
     if (stride == 0u || stride > SIZE_MAX / height) return 0;
     byte_count = stride * height;
     bytes = (uint8_t *)calloc(byte_count, 1u);
@@ -33,14 +43,20 @@ int csb_v1_csbwin_packed_bitmap_pack_indexed(
     for (y = 0u; y < height; ++y) {
         for (x = 0u; x < width; ++x) {
             uint8_t color = indexed_pixels[y * width + x];
+            unsigned int plane;
+            size_t base = y * stride + (x / 16u) * 8u;
+            uint16_t mask = (uint16_t)(1u << (15u - (x & 15u)));
             if (color > 15u) {
                 free(bytes);
                 return 0;
             }
-            if ((x & 1u) == 0u)
-                bytes[y * stride + x / 2u] = (uint8_t)(color << 4u);
-            else
-                bytes[y * stride + x / 2u] |= color;
+            for (plane = 0u; plane < 4u; ++plane) {
+                uint16_t word;
+                if ((color & (uint8_t)(1u << plane)) == 0u) continue;
+                word = csb_v1_csbwin_read_be16(bytes + base + plane * 2u);
+                csb_v1_csbwin_write_be16(bytes + base + plane * 2u,
+                                          (uint16_t)(word | mask));
+            }
         }
     }
     *out_bytes = bytes;
@@ -48,22 +64,30 @@ int csb_v1_csbwin_packed_bitmap_pack_indexed(
     return 1;
 }
 
-int csb_v1_csbwin_packed_bitmap_pixel_at(
-    const CSB_V1_CSBWinPackedBitmap *bitmap, uint16_t x, uint16_t y,
+int csb_v1_csbwin_planar_bitmap_pixel_at(
+    const CSB_V1_CSBWinPlanarBitmap *bitmap, uint16_t x, uint16_t y,
     uint8_t *out_color)
 {
-    uint8_t packed;
+    unsigned int plane;
+    uint8_t color = 0u;
+    size_t base;
+    uint16_t mask;
 
     if (out_color) *out_color = 0u;
-    if (!out_color || !csb_v1_csbwin_packed_bitmap_valid(bitmap) ||
+    if (!out_color || !csb_v1_csbwin_planar_bitmap_valid(bitmap) ||
         x >= bitmap->width || y >= bitmap->height) return 0;
-    packed = bitmap->bytes[(size_t)y * bitmap->byte_stride + x / 2u];
-    *out_color = (x & 1u) == 0u ? packed >> 4u : packed & 0x0fu;
+    base = (size_t)y * bitmap->byte_stride + (x / 16u) * 8u;
+    mask = (uint16_t)(1u << (15u - (x & 15u)));
+    for (plane = 0u; plane < 4u; ++plane) {
+        if ((csb_v1_csbwin_read_be16(bitmap->bytes + base + plane * 2u) &
+             mask) != 0u) color |= (uint8_t)(1u << plane);
+    }
+    *out_color = color;
     return 1;
 }
 
-int csb_v1_csbwin_packed_bitmap_blit_indexed(
-    const CSB_V1_CSBWinPackedBitmap *source,
+int csb_v1_csbwin_planar_bitmap_blit_indexed(
+    const CSB_V1_CSBWinPlanarBitmap *source,
     int source_x, int source_y, int width, int height,
     uint8_t *destination, int destination_width, int destination_height,
     int destination_stride, int destination_x, int destination_y,
@@ -71,20 +95,20 @@ int csb_v1_csbwin_packed_bitmap_blit_indexed(
 {
     int x, y, copied = 0;
 
-    if (!csb_v1_csbwin_packed_bitmap_valid(source) || !destination ||
+    if (!csb_v1_csbwin_planar_bitmap_valid(source) || !destination ||
         source_x < 0 || source_y < 0 || width <= 0 || height <= 0 ||
         destination_width <= 0 || destination_height <= 0 ||
         destination_stride < destination_width || transparent_color < -1 ||
         transparent_color > 15 || source_x > (int)source->width - width ||
         source_y > (int)source->height - height) return 0;
     for (y = 0; y < height; ++y) {
-        const int dst_y = destination_y + y;
+        int dst_y = destination_y + y;
         if (dst_y < 0 || dst_y >= destination_height) continue;
         for (x = 0; x < width; ++x) {
-            const int dst_x = destination_x + x;
+            int dst_x = destination_x + x;
             uint8_t color;
             if (dst_x < 0 || dst_x >= destination_width ||
-                !csb_v1_csbwin_packed_bitmap_pixel_at(
+                !csb_v1_csbwin_planar_bitmap_pixel_at(
                     source, (uint16_t)(source_x + x),
                     (uint16_t)(source_y + y), &color)) continue;
             if (transparent_color >= 0 && color == (uint8_t)transparent_color)

@@ -292,11 +292,11 @@ an integration build pass.
   presented surface. With the verified local PC3.4 package, the full CSB
   lane passes 116/116. This improves deterministic evidence only; it does
   not admit the remaining non-door V2.2 material families. 2026-07-30:
-  `csb_v1_csbwin_packed_bitmap` now restores CSBWin's high-nibble-first,
-  two-pixels-per-byte source rows after the DMCSB1 decoder expands a graphic.
-  Its data-free contract covers odd-width rows, source bounds, clipping and
+  `csb_v1_csbwin_planar_bitmap` now restores CSBWin's big-endian four-plane
+  source words after the DMCSB1 decoder expands a graphic. Its data-free
+  contract covers non-word-aligned widths, source bounds, clipping and
   transparent writes. The real CSBWin Atari catalog regression round-trips
-  every decoded pixel through that packed stride for all 52 wall/door and 8
+  every decoded pixel through that planar stride for all 52 wall/door and 8
   floor/ceiling records in sets 0--3. This supplies the exact packed-source
   boundary for the later `TAG0088b2` projection port, but does not yet claim
   that its planar destination masks or F0128 command geometry have been

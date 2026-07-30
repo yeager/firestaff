@@ -4,7 +4,7 @@
 #include <time.h>
 
 #include "csb_v1_csbwin_layout_0232.h"
-#include "csb_v1_csbwin_packed_bitmap.h"
+#include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_csbwin_viewport_graphics_map.h"
 #include "csb_v1_boot.h"
 
@@ -248,7 +248,7 @@ static void check_real_viewport_wall_catalog(const char *path)
  * CSBWin's viewport blitter addresses the same source through packed bytes.
  * Lock the reversible boundary against every standard wall/floor source, not
  * just a synthetic odd-width sample. */
-static void check_real_viewport_packed_roundtrip(const char *path)
+static void check_real_viewport_planar_roundtrip(const char *path)
 {
     unsigned int group;
 
@@ -258,7 +258,7 @@ static void check_real_viewport_packed_roundtrip(const char *path)
         unsigned char *pixels = NULL;
         uint8_t *packed = NULL;
         size_t packed_count = 0u;
-        CSB_V1_CSBWinPackedBitmap bitmap;
+        CSB_V1_CSBWinPlanarBitmap bitmap;
         CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
         int width = 0;
         int height = 0;
@@ -279,17 +279,17 @@ static void check_real_viewport_packed_roundtrip(const char *path)
             graphic_index, &pixels, &width, &height, &receipt));
         CHECK(pixels && receipt.valid && width > 0 && height > 0);
         if (!pixels || width <= 0 || height <= 0) goto next;
-        CHECK(csb_v1_csbwin_packed_bitmap_pack_indexed(pixels,
+        CHECK(csb_v1_csbwin_planar_bitmap_pack_indexed(pixels,
             (uint16_t)width, (uint16_t)height, &packed, &packed_count));
         memset(&bitmap, 0, sizeof(bitmap));
         bitmap.bytes = packed;
         bitmap.width = (uint16_t)width;
         bitmap.height = (uint16_t)height;
-        bitmap.byte_stride = (uint16_t)((width + 1) / 2);
+        bitmap.byte_stride = (uint16_t)(((width + 15) / 16) * 8);
         CHECK(packed_count == (size_t)bitmap.byte_stride * bitmap.height);
         for (pixel = 0u; packed && pixel < (size_t)width * height; ++pixel) {
             uint8_t color = 0u;
-            CHECK(csb_v1_csbwin_packed_bitmap_pixel_at(&bitmap,
+            CHECK(csb_v1_csbwin_planar_bitmap_pixel_at(&bitmap,
                 (uint16_t)(pixel % (size_t)width),
                 (uint16_t)(pixel / (size_t)width), &color));
             CHECK(color == pixels[pixel]);
@@ -400,7 +400,7 @@ int main(void)
     check_real_layout(real_graphics_dat);
     check_real_hud_composition(real_graphics_dat);
     check_real_viewport_wall_catalog(real_graphics_dat);
-    check_real_viewport_packed_roundtrip(real_graphics_dat);
+    check_real_viewport_planar_roundtrip(real_graphics_dat);
 
     if (failures) return 1;
     puts("PASS: CSBWin GRAPHICS.DAT 0x232 layout decode");
