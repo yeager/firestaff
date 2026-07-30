@@ -52,3 +52,16 @@ int csb_v1_csbwin_viewport_wall_source(
     *out_mirrored = wall == CSB_V1_CSBWIN_VIEWPORT_WALL_F3R2;
     return 1;
 }
+
+int csb_v1_csbwin_viewport_wall_projection_rectangle(
+    CSB_V1_CSBWinViewportWall wall, uint8_t *out_rectangle_index)
+{
+    static const uint8_t rectangle_index[CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT] = {
+        13u, 1u, 0u, 2u, 12u, 4u, 3u, 5u, 7u, 6u, 8u, 10u, 11u
+    };
+
+    if (!out_rectangle_index ||
+        (unsigned int)wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT) return 0;
+    *out_rectangle_index = rectangle_index[wall];
+    return 1;
+}

@@ -337,6 +337,7 @@ int main(void)
     CHECK(csb_v1_csbwin_layout_0232_decode(graphic, sizeof(graphic), &layout));
     {
         uint16_t graphic_index = 0;
+        uint8_t rectangle_index = 0u;
         int mirrored = 0;
         CHECK(csb_v1_csbwin_viewport_graphic_index(0u, 0u, &graphic_index) &&
               graphic_index == 77u);
@@ -360,6 +361,21 @@ int main(void)
         CHECK(csb_v1_csbwin_viewport_wall_source(3u,
             CSB_V1_CSBWIN_VIEWPORT_WALL_F0R1, &graphic_index, &mirrored) &&
               graphic_index == 123u && !mirrored);
+        {
+            static const uint8_t expected_rectangles[
+                CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT] = {
+                13u, 1u, 0u, 2u, 12u, 4u, 3u, 5u, 7u, 6u, 8u, 10u, 11u
+            };
+            unsigned int wall;
+            for (wall = 0u; wall < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT; ++wall) {
+                uint8_t rectangle_index = UINT8_MAX;
+                CHECK(csb_v1_csbwin_viewport_wall_projection_rectangle(
+                    (CSB_V1_CSBWinViewportWall)wall, &rectangle_index));
+                CHECK(rectangle_index == expected_rectangles[wall]);
+            }
+        }
+        CHECK(!csb_v1_csbwin_viewport_wall_projection_rectangle(
+            CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT, &rectangle_index));
         CHECK(!csb_v1_csbwin_viewport_wall_source(0u,
             CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT, &graphic_index, &mirrored));
     }

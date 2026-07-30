@@ -53,4 +53,11 @@ int csb_v1_csbwin_viewport_wall_source(uint16_t wall_set,
                                         uint16_t *out_graphic_index,
                                         int *out_mirrored);
 
+/* CSBWin Viewport.cpp:2304-2317 selects one of the fourteen byte-coordinate
+ * `wallRectangles[]` entries for TAG0088b2.  This mapping is deliberately
+ * separate from the source-bitmap mapping: F3L2/F3R2 use 13/12 while their
+ * shared source bitmap is mirrored only on the right. */
+int csb_v1_csbwin_viewport_wall_projection_rectangle(
+    CSB_V1_CSBWinViewportWall wall, uint8_t *out_rectangle_index);
+
 #endif
