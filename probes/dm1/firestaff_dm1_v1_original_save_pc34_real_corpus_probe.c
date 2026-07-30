@@ -13,12 +13,31 @@ static int check_int(const char *label, int got, int want)
     return 1;
 }
 
+static void print_receipt_coverage(const DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    if (!receipt) return;
+    printf("DM1 original-save coverage path=%s c3_records=%u c3_bytes=%u "
+           "c4_indices=%u c4_bytes=%u c13_events=%d c13_bytes=%u "
+           "stage_events=%d stage_c13=%d active_groups=%d\n",
+           receipt->path,
+           receipt->source_c3_event_record_count,
+           receipt->source_c3_event_byte_count,
+           receipt->source_c4_timeline_index_count,
+           receipt->source_c4_timeline_byte_count,
+           receipt->source_c13_event_count,
+           receipt->source_c13_event_byte_count,
+           receipt->source_runtime_stage_event_count,
+           receipt->source_runtime_stage_c13_event_count,
+           receipt->source_runtime_stage_active_group_count);
+}
+
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
     DM1OriginalSavePC34CorpusRoundtripReport report;
     int result;
     int passed = 1;
+    int i;
 
     /* This is intentionally an opt-in real-media probe. It never builds a
      * fixture or supplies a fallback directory: a configured corpus must
@@ -42,6 +61,9 @@ int main(void)
            report.nonoriginal_envelope_rejected_count,
            dm1_v1_original_save_pc34_handoff_result_name(
                report.first_failure_result));
+    for (i = 0; i < report.receipt_count; ++i) {
+        print_receipt_coverage(&report.receipts[i]);
+    }
 
     passed &= check_int("corpus scan result",
                         result, DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK);

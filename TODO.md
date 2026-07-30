@@ -23072,6 +23072,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   covering changed timeline and active-group states. The runtime fence now
   revokes stale C13 identity before presentation; generated saves are not
   accepted as positive evidence.
+  - 2026-07-30 diagnostic update: the opt-in real-corpus probe now emits the
+    per-file C3 record/byte count, C4 timeline index/byte count, C13 event
+    count/bytes, staged event/C13 counts, and active-group count. A passing
+    corpus result therefore cannot be mistaken for C13 coverage when its
+    original file contains zero C13 events.
 ## DM1 C03/C04 runtime identity follow-up
 
 - [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
