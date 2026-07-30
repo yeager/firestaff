@@ -561,9 +561,9 @@ static void test_first_tick_after_boot_profile_handoff(void)
     }
 
     state = (DM2_V1_GameState *)profile.dm2_state;
-    CHECK(state->party_x == 15 && state->party_y == 15 &&
+    CHECK(state->party_x == 0 && state->party_y == 0 &&
           state->party_dir == 0 && state->current_level == 0,
-          "boot handoff starts at the documented DM2 V1 party snapshot");
+          "fixture-only boot handoff does not invent a party snapshot");
 
     CHECK(dm2_v1_runtime_bind_boot_profile(NULL) == 0,
           "runtime boot-profile bind rejects NULL");
@@ -596,10 +596,10 @@ static void test_first_tick_after_boot_profile_handoff(void)
           "runtime tick counter starts at zero after handoff bind");
     CHECK(dm2_v1_runtime_has_dungeon_data() == 1,
           "runtime bind exposes the boot handoff dungeon data");
-    CHECK(dm2_v1_runtime_get_party_x() == 15 &&
-          dm2_v1_runtime_get_party_y() == 15 &&
+    CHECK(dm2_v1_runtime_get_party_x() == 0 &&
+          dm2_v1_runtime_get_party_y() == 0 &&
           dm2_v1_runtime_get_party_dir() == 0,
-          "runtime accessors read the handoff party snapshot");
+          "runtime accessors preserve the unowned fixture party state");
     CHECK(dm2_v1_runtime_get_last_target_message() == NULL &&
           dm2_v1_runtime_get_spawn_count() == 0,
           "runtime target receipts start empty after handoff bind");

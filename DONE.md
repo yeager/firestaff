@@ -44485,3 +44485,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   than falling through to DM1's parallel G0489 table. Real PC3.4 boot checks
   the empty-hand and one-row STAB sets; the CSB M11 regression proves the
   missing-receipt fail-closed boundary.
+- ✅ 2026-07-30 DM2 boot-state fixture removal: `dm2_v1_init()` now only
+  allocates a zeroed game state and records its data root. It no longer seeds
+  the old `(15,15,N)`, 100-gold or noon values before game data is loaded.
+  A real new game receives its pose from the hash-verified G1 header; session
+  values remain unavailable until their original owner is imported. The boot
+  profile smoke test passes all 87 checks, and the isolated runtime smoke
+  fixture now proves it cannot fabricate that party snapshot.

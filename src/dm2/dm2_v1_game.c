@@ -24,11 +24,10 @@ void dm2_v1_init(DM2_V1_GameState *state, const char *data_dir) {
     if (!state) return;
     memset(state, 0, sizeof(*state));
     state->data_dir = data_dir;
-    state->party_x = 15;
-    state->party_y = 15;
-    state->party_dir = 0;
-    state->gold = 100;
-    state->time_of_day = 720;
+    /* This is allocation only.  A real new game receives its party pose
+     * from the hash-verified G1 header in dm2_v1_boot_enter_game(); session
+     * fields such as gold and time arrive only from their original owner.
+     * Do not seed a playable-looking state with the former fixture values. */
 }
 
 int dm2_v1_load_dungeon(DM2_V1_GameState *state) {
