@@ -38,7 +38,7 @@ def main() -> int:
     assert "m11_dm1_side_lane_clear_for_rel" not in ornaments, (
         "F0107 wall material must not use the side-lane content occlusion gate")
     assert "F0116/F0117 (D3L/D3R), F0119/F0120 (D2L/D2R)" in side_walls
-    assert "blit.relForward > maxVisibleForward" in side_walls
+    assert "spec->runtime_rel_forward > maxVisibleForward" in side_walls
     assert "m11_viewport_cell_is_wall_like(&cell)" in side_walls
 
     for square, depth, lateral, function in (

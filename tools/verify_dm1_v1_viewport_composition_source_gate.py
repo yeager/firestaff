@@ -32,13 +32,17 @@ def main() -> int:
     side_contents = function_body(source, "static void m11_draw_dm1_side_contents_at_depth")
     ornaments = function_body(source, "static void m11_draw_dm1_wall_ornaments")
 
+    content_loop = viewport[viewport.find("kContentSquares"):]
+    assert "DM1_V1_F0128_VIEW_SQUARE_D3L" in content_loop
+    assert "DM1_V1_F0128_VIEW_SQUARE_D3C" in content_loop
     assert re.search(
-        r"centerContentMask\s*=.*?for \(depth = 2; depth >= 0; --depth\).*?"
-        r"m11_draw_dm1_side_contents_at_depth.*?"
-        r"m11_draw_wall_contents",
-        viewport,
+        r"D3L.*?D3R.*?D3C.*?D2L.*?D2R.*?D2C.*?D1L.*?D1R.*?D1C",
+        content_loop,
         re.S,
-    ), "F0128 must run side F0115 before same-depth center F0115 in D3 -> D2 -> D1"
+    ), "F0128 square scheduler must retain D3 -> D2 -> D1 order"
+    assert "else if (!sidesDrawnForDepth[squareDepth])" in content_loop
+    assert "m11_draw_dm1_side_contents_at_depth" in content_loop
+    assert "m11_draw_wall_contents" in content_loop
     assert "int depth," in side_contents
     assert "for (sideSlot = 0; sideSlot < 2; ++sideSlot)" in side_contents
 

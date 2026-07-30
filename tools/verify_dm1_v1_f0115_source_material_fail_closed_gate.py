@@ -37,7 +37,7 @@ def main() -> int:
     assert "m11_draw_creature_sprite" in center
     assert "m11_draw_creature_cue" not in center
     assert "m11_draw_dm1_f0115_floor_item_sprite" in side
-    assert "m11_draw_creature_sprite_ex" in side
+    assert "m11_draw_creature_sprite_source_anchored" in side
     assert "m11_draw_viewport_projectile_sprite" in side
     assert "m11_fill_rect" not in side
 

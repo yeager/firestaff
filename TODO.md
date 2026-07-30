@@ -2,6 +2,13 @@
 
 ## Active DM1/CSB Symbol Queue
 
+- **DM1-V1-F0128-SIDE-F0115-DISPATCH:** Closed 2026-07-30. The late M11
+  side-content pass no longer re-applies a host lane-visibility heuristic
+  after ReDMCSB `DUNVIEW.C F0128` has explicitly dispatched D3L/D3R,
+  D2L/D2R and D1L/D1R. Side objects, creatures and projectiles therefore
+  retain their original per-square F0115 route; nearer panels overpaint in
+  source order. Focused renderer source gates pass 3/3.
+
 - **DM1-V1-F0209-REAL-C04-TEST-FIXTURES:** Closed 2026-07-30. The affected
   G0378/G0379/G0381/G0382/G0383 regressions now construct the loaded compact
   SquareFirstThing chain, raw C04 identity, C29/C37 creature type and active

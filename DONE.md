@@ -1,3 +1,10 @@
+- ✅ 2026-07-30 DM1 F0128 side F0115 composition: removed the extra M11
+  side-lane visibility filter from the source-owned D3/D2/D1 side-content
+  dispatch. ReDMCSB calls every side-square routine before its matching
+  center route; a nearer side panel overpaints rather than cancelling the
+  farther square's F0115 material. Focused side-wall, composition and
+  fail-closed material gates pass 3/3.
+
 - ✅ 2026-07-30 DM1 F0209/C04 regression integrity: repaired five stale
   group/combat regression fixtures so they supply the real compact SFT C04
   owner, matching ACTIVE_GROUP coordinates and C29/C37 creature identity

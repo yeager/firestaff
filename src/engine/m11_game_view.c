@@ -33429,9 +33429,10 @@ static void m11_draw_dm1_side_contents_at_depth(
             if (!cell->valid || !m11_viewport_cell_is_open(cell)) {
                 continue;
             }
-            if (!m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)) {
-                continue;
-            }
+            /* DUNVIEW.C F0128 invokes each DnL/DnR square explicitly before
+             * DnC.  Do not apply Firestaff's later lane-visibility heuristic
+             * to the source F0115 call: a nearer side panel is an overpaint,
+             * not permission to omit the farther side square's own material. */
             if (side < 0) {
                 paneX = outer->x + 4;
                 paneW = (inner->x - outer->x) - 8;
@@ -33548,17 +33549,6 @@ static int m11_dm1_center_line_clear_before_depth(
     return 1;
 }
 
-static int m11_dm1_side_lane_clear_before_depth(
-    const M11_ViewportCell cells[3][3], int depth, int sideIndex) {
-    int d;
-    for (d = 2; d > depth; --d) {
-        if (!m11_dm1_side_lane_clear_for_rel(cells, d + 1, sideIndex == 0 ? -1 : 1)) {
-            return 0;
-        }
-    }
-    return 1;
-}
-
 static void m11_draw_dm1_side_contents(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
@@ -33573,15 +33563,8 @@ static void m11_draw_dm1_side_contents(
         return;
     }
     for (depth = 2; depth >= 0; --depth) {
-        int sideSlot;
         if (!m11_dm1_center_line_clear_before_depth(cells, depth)) {
             continue;
-        }
-        for (sideSlot = 0; sideSlot < 2; ++sideSlot) {
-            int sideIndex = sideSlot;
-            if (!m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)) {
-                continue;
-            }
         }
         m11_draw_dm1_side_contents_at_depth(
             state, framebuffer, framebufferWidth, framebufferHeight,
