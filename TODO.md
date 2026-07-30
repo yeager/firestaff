@@ -23138,6 +23138,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     already validated M12/M11 resume path, making this capture reproducible
     without synthetic save fixtures. The full F0344/F0345 visual sequence is
     still required before this item can close.
+  - 2026-07-30 runtime proof: the fixture-free external PC34 save test now
+    opens C017, sends the real C545 mouth click at `(64,54)`, and verifies the
+    resulting F0345 C020/C030/C031 food-water pixels. This closes neither an
+    original-frame comparison nor the broader F0344 interaction sweep.
 
 ## DM1 C13 F0435 stale-fence follow-up
 

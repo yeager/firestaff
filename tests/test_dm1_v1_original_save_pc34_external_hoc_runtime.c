@@ -220,6 +220,25 @@ static unsigned int viewport_fingerprint(const unsigned char *pixels,
     return hash;
 }
 
+static int region_has_nonzero_pixel(const unsigned char *pixels,
+                                    int framebuffer_width,
+                                    int x, int y, int width, int height)
+{
+    int row;
+    int col;
+
+    if (!pixels || framebuffer_width <= 0 || width <= 0 || height <= 0) {
+        return 0;
+    }
+    for (row = 0; row < height; ++row) {
+        const unsigned char *line = pixels + (y + row) * framebuffer_width + x;
+        for (col = 0; col < width; ++col) {
+            if (line[col] != 0u) return 1;
+        }
+    }
+    return 0;
+}
+
 static int find_pending_poison_expiry(const struct GameWorld_Compat *world,
                                       uint32_t now,
                                       uint32_t *out_fire_at_tick,
@@ -408,6 +427,21 @@ int main(void)
                   &state.world.party.champions[state.world.party.activeChampionIndex],
                   framebuffer, 320),
               "M11 inventory consumes the F0435 saved portrait pixels");
+        /* PANEL.C F0349 command 70 dispatches F0345 through C545, the
+         * source-owned mouth zone.  The restored save supplies the champion
+         * state; no fixture may manufacture its food/water panel. */
+        CHECK(M11_GameView_HandlePointer(&state, 64, 54, 1) ==
+                  M11_GAME_INPUT_REDRAW,
+              "C545 mouth click reaches the F0345 source panel route");
+        CHECK(state.v1FoodWaterPanelActive,
+              "C545 activates the original food/water panel state");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&state, framebuffer, 320, 200);
+        CHECK(region_has_nonzero_pixel(framebuffer, 320,
+                                       PC34_VIEWPORT_X + 112,
+                                       PC34_VIEWPORT_Y + 60,
+                                       46, 32),
+              "F0345 materializes original C020/C030/C031 food-water panel pixels");
         CHECK(!M11_GameView_ToggleInventoryPanel(&state),
               "M11 closes the source inventory panel after the portrait receipt");
         memset(framebuffer, 0, sizeof(framebuffer));

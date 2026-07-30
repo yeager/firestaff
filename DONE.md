@@ -1,3 +1,8 @@
+- ✅ 2026-07-30 DM1 original-save F0345 runtime proof: the fixture-free PC34
+  corpus test opens C017, sends the source C545 mouth click at `(64,54)`, and
+  verifies the resulting real C020/C030/C031 food-water panel pixels. This is
+  a live save/UI route, not a synthetic panel fixture.
+
 - ✅ 2026-07-30 DM1 original-save inventory portrait ordering: normal C017
   inventory now draws the F0435-restored M516 32x29 portrait after F0355's
   F0291 slot pass, matching PANEL.C's final F0292 call. This prevents C509
