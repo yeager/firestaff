@@ -1,10 +1,3 @@
-- ✅ 2026-07-30 CSB action-name source isolation: the shared M11 action-menu
-  painter reads DM1 MENU.C G0490 names, while CSB has no equivalent
-  TEXT.C/GAMEBLOCK receipt. CSB therefore retains only its source C010
-  background and source-owned icon cells, never borrowed DM1 action labels or
-  a generated champion header. The real Prison-HUD and M12-to-M11 handoff
-  regressions remain green.
-
 - ✅ 2026-07-30 CSB generic-inventory fallback isolation: CSB now rejects the
   legacy M11 inventory-slot box, label and substitute-icon branches even in
   diagnostic HUD mode. Normal CSB already consumes the verified C017/C040

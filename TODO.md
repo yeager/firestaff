@@ -525,10 +525,6 @@ diagnostic; it must not silently fall back to a generated visual.
   fallback now explicitly excludes CSB, including debug HUD mode. The live
   route continues to require C017/C040, and a future route regression cannot
   turn an unavailable CSB slot bitmap into a host-drawn frame, label or icon.
-  The shared action-menu text painter is likewise DM1-only: it reads MENU.C
-  G0490 strings, for which CSB has no authenticated TEXT.C/GAMEBLOCK receipt.
-  CSB now leaves that text lane unavailable while retaining only its real
-  C010 background and source-owned icon cells.
   2026-07-30 verification: the complete registered CSB V2.x lane passes
   52/52 tests against local PC3.4 data. This covers V2.0/V2.1 startup and
   Prison runtime, V2.1 EPX/presentation capture, V2 filters/settings/touch/
