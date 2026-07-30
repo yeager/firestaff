@@ -1117,6 +1117,17 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
         SDL_GL_GetDrawableSize(g_state.window, &ww, &wh);
         if (ww <= 0 || wh <= 0) { ww = windowWidth; wh = windowHeight; }
 #endif
+        /* SDL's dummy driver ignores the requested size for a maximized
+         * window and reports its tiny fallback surface.  Keep the explicitly
+         * requested logical geometry for deterministic input probes; real
+         * desktop drivers still use SDL's current window dimensions below. */
+        {
+            const char* videoDriver = SDL_GetCurrentVideoDriver();
+            if (videoDriver && strcmp(videoDriver, "dummy") == 0) {
+                ww = windowWidth;
+                wh = windowHeight;
+            }
+        }
         g_state.windowW = (ww > 0) ? ww : windowWidth;
         g_state.windowH = (wh > 0) ? wh : windowHeight;
     }

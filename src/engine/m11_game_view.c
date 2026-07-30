@@ -15320,12 +15320,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
     state->presentationWidth = spec->presentationWidth;
     state->presentationHeight = spec->presentationHeight;
     state->hudLaunchMode = spec->hudLaunchMode;
-    if (M12_PresentationMode_AllowsResolutionChoice(spec->presentationMode) &&
-        spec->presentationWidth > 0 &&
-        spec->presentationHeight > 0) {
-        (void)M11_Render_SetWindowSize(spec->presentationWidth,
-                                       spec->presentationHeight);
-    }
+    /* Presentation dimensions describe the off-screen game surface.  They
+     * must not resize the user's window: doing so collapsed a maximized or
+     * command-line 960x600 CSB window back to 320x200/640x400 at launch,
+     * and made the real C407 Prison button miss after pointer mapping. */
     /* V2 presentation-mode selection: push the launcher
      * M12_PRESENTATION_* enum into the per-game V2 presentation
      * runtime. DM1 V2 boot owns the V22 asset-root and cache setup. */

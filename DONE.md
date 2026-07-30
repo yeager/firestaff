@@ -33722,6 +33722,14 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
 
 ## Chaos Strikes Back (CSB)
 
+- ✅ 2026-07-30 CSB V1/V2.x window-scale ownership: an explicit
+  `--scale-mode` survives startup-menu configuration application, while game
+  presentation dimensions remain off-screen surface dimensions rather than
+  resizing the user window. The source C407 Prison pointer therefore maps
+  through the active FIT rectangle at 320x200 and 960x600 in V1, V2.0, V2.1
+  and V2.2. Verification: real-PC3.4 entrance-pointer/title/HUD/V2.2 runtime
+  regressions pass.
+
 ### CSB V1
 
 - ✅ Phase 0 - Provenance and source audit setup.

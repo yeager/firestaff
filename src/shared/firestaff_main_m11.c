@@ -387,6 +387,7 @@ int main(int argc, char** argv) {
         }
         if (strcmp(a, "--scale-mode") == 0 && i + 1 < argc) {
             opts.scaleMode = atoi(argv[++i]);
+            opts.scaleModeOverride = 1;
             continue;
         }
         if (strcmp(a, "--presentation-mode") == 0 && i + 1 < argc) {

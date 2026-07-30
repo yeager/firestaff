@@ -121,6 +121,15 @@ an integration build pass.
   absent or admitted V2.2 when its completed CSB-specific pack is installed.
   The source route remains `COMMAND.C:346` / `ENTRANCE.C:F0806`.
 
+- **CSB-V2X-WINDOW-SCALE-OWNERSHIP:** Closed 2026-07-30. An explicit
+  `--scale-mode` now survives startup-menu configuration application, and a
+  game presentation surface no longer resizes the user's chosen window.
+  This keeps the original C407 Prison hitbox mapped through the active FIT
+  rectangle at both 320x200 and 960x600 instead of falling back to a centred
+  1x surface. The CSB V1/V2.0/V2.1/V2.2 entrance-pointer probe, title probe,
+  V2 HUD regression and admitted V2.2 source-artpack runtime regression pass
+  against verified PC3.4 data.
+
 - **CSB-V22-SOURCE-SQUARE-BOUNDARY:** Closed 2026-07-29. The V2.2 per-cell
   material gate now has an explicit ReDMCSB `M034_SQUARE_TYPE` entry point for
   the seven genuine dungeon elements: wall, corridor, pit, stairs, door,

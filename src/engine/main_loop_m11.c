@@ -2717,6 +2717,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->windowWidth    = 960;
     opts->windowHeight   = 540;
     opts->scaleMode      = M11_SCALE_FIT;
+    opts->scaleModeOverride = 0;
     opts->presentationModeOverride = -1;
     opts->durationMs     = -1;
     opts->presentEveryMs = 16;
@@ -4962,6 +4963,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     }
     menuState.settings.windowWidth = M11_Render_GetWindowWidth();
     menuState.settings.windowHeight = M11_Render_GetWindowHeight();
+    if (o->scaleModeOverride) {
+        menuState.settings.scaleModeIndex = o->scaleMode;
+    }
     if (o->presentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
         o->presentationModeOverride < M12_PRESENTATION_MODE_COUNT) {
         int game_slot = 0;
