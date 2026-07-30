@@ -44,6 +44,14 @@
   can no longer manufacture extra C001 title frames when original
   `GRAPHICS.DAT` C001 is available. Focused source-timing, C001 admission and
   startup-state CTests pass 3/3.
+- ✅ 2026-07-30 CSB F0115 smoke material: split the F0663 admission by the
+  original command. Scaled smoke now validates only its real C488 source;
+  D0C validates exactly its selected C498--C500 pattern. This follows
+  `DUNVIEW.C F0114/F0675` and `F0115:6048-6056`, avoids a false dependency
+  on unrelated records, and still fails closed for a missing or mismatched
+  source bitmap. Focused F0663 unit/real-media gates and the 2,654-check CSB
+  viewport contract pass.
+
 - ✅ 2026-07-30 CSB runtime-HUD fail-closed status surfaces: the shared
   champion-panel consumer now stops at a black status rectangle if CSB's
   C017/C040-owned base material is unavailable. It cannot continue into the

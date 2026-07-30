@@ -25989,40 +25989,31 @@ static int m11_draw_viewport_projectile_sprite(
     return rendered;
 }
 
-static int m11_dm1_v1_f0663_smoke_material_ready(
+static int m11_dm1_v1_f0663_smoke_surface_ready(
     const M11_GameViewState* state,
-    DM1_V1_F0663SmokeMaterialReceiptPc34* outReceipt)
+    const M11_AssetSlot* slot,
+    int expected_graphic_index,
+    DM1_V1_F0663SmokeSurfaceReceiptPc34* outReceipt)
 {
-    const int graphics[DM1_V1_F0663_SURFACE_COUNT_PC34] = {
-        DM1_V1_F0663_C488_POISON_SOURCE_PC34,
-        DM1_V1_F0663_C498_SMOKE_PATTERN_SMALL_PC34,
-        DM1_V1_F0663_C499_SMOKE_PATTERN_MEDIUM_PC34,
-        DM1_V1_F0663_C500_SMOKE_PATTERN_LARGE_PC34
-    };
-    DM1_V1_F0663SourceSurfacePc34 surfaces[DM1_V1_F0663_SURFACE_COUNT_PC34];
-    int i;
+    DM1_V1_F0663SourceSurfacePc34 surface;
 
-    if (!state || !outReceipt || !state->assetsAvailable) return 0;
-    memset(surfaces, 0, sizeof(surfaces));
-    for (i = 0; i < DM1_V1_F0663_SURFACE_COUNT_PC34; ++i) {
-        const M11_AssetSlot* slot = M11_AssetLoader_Load(
-            (M11_AssetLoader*)&state->assetLoader, (unsigned int)graphics[i]);
-        if (!slot || !slot->loaded || !slot->pixels ||
-            slot->width == 0 || slot->height == 0) {
-            return 0;
-        }
-        surfaces[i].graphicsDatOwned = 1;
-        surfaces[i].graphicIndex = (int)slot->graphicIndex;
-        surfaces[i].width = (int)slot->width;
-        surfaces[i].height = (int)slot->height;
-        surfaces[i].indexedPixelCount = surfaces[i].width * surfaces[i].height;
-        surfaces[i].indexedPixels = slot->pixels;
-        surfaces[i].pixelsFNV1a = dm1_v1_f0663_smoke_material_fnv1a_pc34(
-            surfaces[i].indexedPixels, surfaces[i].indexedPixelCount);
-        if (!surfaces[i].pixelsFNV1a) return 0;
+    if (!state || !slot || !outReceipt || !state->assetsAvailable ||
+        !slot->loaded || !slot->pixels || slot->width == 0 ||
+        slot->height == 0) {
+        return 0;
     }
-    return dm1_v1_f0663_smoke_material_receipt_pc34(
-               surfaces, DM1_V1_F0663_SURFACE_COUNT_PC34,
+    memset(&surface, 0, sizeof(surface));
+    surface.graphicsDatOwned = 1;
+    surface.graphicIndex = (int)slot->graphicIndex;
+    surface.width = (int)slot->width;
+    surface.height = (int)slot->height;
+    surface.indexedPixelCount = surface.width * surface.height;
+    surface.indexedPixels = slot->pixels;
+    surface.pixelsFNV1a = dm1_v1_f0663_smoke_material_fnv1a_pc34(
+        surface.indexedPixels, surface.indexedPixelCount);
+    if (!surface.pixelsFNV1a) return 0;
+    return dm1_v1_f0663_smoke_surface_receipt_pc34(
+               &surface, expected_graphic_index,
                dm1_v1_f0663_smoke_palette_changes_pc34(),
                DM1_V1_F0663_PALETTE_COUNT_PC34, outReceipt) &&
            outReceipt->valid && outReceipt->suppressSyntheticFallback;
@@ -26214,10 +26205,11 @@ static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
     }
 
     if (plan.is_smoke) {
-        DM1_V1_F0663SmokeMaterialReceiptPc34 smokeMaterial;
+        DM1_V1_F0663SmokeSurfaceReceiptPc34 smokeMaterial;
         memset(&smokeMaterial, 0, sizeof(smokeMaterial));
         if (gfxIndex != DM1_V1_F0663_C488_POISON_SOURCE_PC34 ||
-            !m11_dm1_v1_f0663_smoke_material_ready(state, &smokeMaterial)) {
+            !m11_dm1_v1_f0663_smoke_surface_ready(
+                state, slot, gfxIndex, &smokeMaterial)) {
             return 0;
         }
         M11_AssetLoader_BlitScaledReplace(
@@ -26309,11 +26301,12 @@ static int m11_draw_d0c_explosion_pattern(const M11_GameViewState* state,
         return 0;
     }
     if (dm1_v1_explosion_is_smoke(explosionType)) {
-        DM1_V1_F0663SmokeMaterialReceiptPc34 smokeMaterial;
+        DM1_V1_F0663SmokeSurfaceReceiptPc34 smokeMaterial;
         memset(&smokeMaterial, 0, sizeof(smokeMaterial));
         if (graphicIndex < DM1_V1_F0663_C498_SMOKE_PATTERN_SMALL_PC34 ||
             graphicIndex > DM1_V1_F0663_C500_SMOKE_PATTERN_LARGE_PC34 ||
-            !m11_dm1_v1_f0663_smoke_material_ready(state, &smokeMaterial)) {
+            !m11_dm1_v1_f0663_smoke_surface_ready(
+                state, slot, graphicIndex, &smokeMaterial)) {
             return 0;
         }
         M11_AssetLoader_BlitScaledReplace(

@@ -36,11 +36,36 @@ typedef struct DM1_V1_F0663SmokeMaterialReceiptPc34 {
     uint32_t materialFingerprint;
 } DM1_V1_F0663SmokeMaterialReceiptPc34;
 
+/* BASE.C F0663 transforms one native bitmap at a time.  F0115's ordinary
+ * scaled smoke path consumes C488; its D0C pattern path consumes exactly one
+ * of C498..C500.  Keep that per-command admission separate from the optional
+ * complete-family audit above, so a valid C488 route is never made dependent
+ * on unrelated D0C pattern records. */
+typedef struct DM1_V1_F0663SmokeSurfaceReceiptPc34 {
+    int valid;
+    int suppressSyntheticFallback;
+    int graphicIndex;
+    int paletteChangeCount;
+    int replacementSourceA;
+    int replacementDestinationA;
+    int replacementSourceB;
+    int replacementDestinationB;
+    uint32_t sourceFingerprint;
+    uint32_t paletteFingerprint;
+} DM1_V1_F0663SmokeSurfaceReceiptPc34;
+
 uint32_t dm1_v1_f0663_smoke_material_fnv1a_pc34(
     const unsigned char* bytes, int byteCount);
 
 /* ReDMCSB DUNVIEW.C G0212_auc_Graphic558_PaletteChanges_Smoke. */
 const unsigned char* dm1_v1_f0663_smoke_palette_changes_pc34(void);
+
+int dm1_v1_f0663_smoke_surface_receipt_pc34(
+    const DM1_V1_F0663SourceSurfacePc34* surface,
+    int expectedGraphicIndex,
+    const unsigned char* paletteChanges,
+    int paletteChangeCount,
+    DM1_V1_F0663SmokeSurfaceReceiptPc34* outReceipt);
 
 /* BASE.C F0663 receives C488 and the D0C C498..C500 pattern family through
  * the same original smoke palette copy. No generated bloom or palette is

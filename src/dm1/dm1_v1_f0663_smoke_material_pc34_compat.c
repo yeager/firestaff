@@ -26,6 +26,51 @@ const unsigned char* dm1_v1_f0663_smoke_palette_changes_pc34(void)
     return kDm1V1F0663SmokePaletteChangesPc34;
 }
 
+int dm1_v1_f0663_smoke_surface_receipt_pc34(
+    const DM1_V1_F0663SourceSurfacePc34* surface,
+    int expectedGraphicIndex,
+    const unsigned char* paletteChanges,
+    int paletteChangeCount,
+    DM1_V1_F0663SmokeSurfaceReceiptPc34* outReceipt)
+{
+    uint32_t sourceHash;
+    uint32_t paletteHash;
+
+    if (!outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!surface || !surface->graphicsDatOwned || !surface->indexedPixels ||
+        surface->graphicIndex != expectedGraphicIndex ||
+        surface->width <= 0 || surface->height <= 0 ||
+        surface->indexedPixelCount != surface->width * surface->height ||
+        (expectedGraphicIndex != DM1_V1_F0663_C488_POISON_SOURCE_PC34 &&
+         (expectedGraphicIndex < DM1_V1_F0663_C498_SMOKE_PATTERN_SMALL_PC34 ||
+          expectedGraphicIndex > DM1_V1_F0663_C500_SMOKE_PATTERN_LARGE_PC34)) ||
+        !paletteChanges ||
+        paletteChangeCount != DM1_V1_F0663_PALETTE_COUNT_PC34 ||
+        memcmp(paletteChanges, kDm1V1F0663SmokePaletteChangesPc34,
+               DM1_V1_F0663_PALETTE_COUNT_PC34) != 0) {
+        return 0;
+    }
+    sourceHash = dm1_v1_f0663_smoke_material_fnv1a_pc34(
+        surface->indexedPixels, surface->indexedPixelCount);
+    paletteHash = dm1_v1_f0663_smoke_material_fnv1a_pc34(
+        paletteChanges, paletteChangeCount);
+    if (!sourceHash || sourceHash != surface->pixelsFNV1a || !paletteHash) {
+        return 0;
+    }
+    outReceipt->valid = 1;
+    outReceipt->suppressSyntheticFallback = 1;
+    outReceipt->graphicIndex = expectedGraphicIndex;
+    outReceipt->paletteChangeCount = paletteChangeCount;
+    outReceipt->replacementSourceA = 6;
+    outReceipt->replacementDestinationA = 12;
+    outReceipt->replacementSourceB = 7;
+    outReceipt->replacementDestinationB = 1;
+    outReceipt->sourceFingerprint = sourceHash;
+    outReceipt->paletteFingerprint = paletteHash;
+    return 1;
+}
+
 int dm1_v1_f0663_smoke_material_receipt_pc34(
     const DM1_V1_F0663SourceSurfacePc34* surfaces,
     int surfaceCount,
