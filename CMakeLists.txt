@@ -23492,16 +23492,17 @@ if(BUILD_TESTING)
         tests/test_dm1_v2_selected_resolution_input_mapping_pc34.c
         src/engine/m11_game_input_mapping.c
     )
+    target_link_libraries(test_dm1_v2_selected_resolution_input_mapping_pc34 PRIVATE firestaff_v2 SDL3::SDL3)
     add_executable(test_dm1_v2_4k_input_zone_mapping_pc34
         tests/test_dm1_v2_4k_input_zone_mapping_pc34.c
         src/engine/m11_game_input_mapping.c
     )
-    target_link_libraries(test_dm1_v2_4k_input_zone_mapping_pc34 PRIVATE firestaff_v2)
+    target_link_libraries(test_dm1_v2_4k_input_zone_mapping_pc34 PRIVATE firestaff_v2 SDL3::SDL3)
     add_executable(test_m11_input_scale_boundary_pc34_compat
         tests/test_m11_input_scale_boundary_pc34_compat.c
         src/engine/m11_game_input_mapping.c
     )
-    target_link_libraries(test_m11_input_scale_boundary_pc34_compat PRIVATE firestaff_v2)
+    target_link_libraries(test_m11_input_scale_boundary_pc34_compat PRIVATE firestaff_v2 SDL3::SDL3)
     add_executable(test_dm1_v22_modern_resolution_matrix_pc34
         tests/test_dm1_v22_modern_resolution_matrix_pc34.c
     )
