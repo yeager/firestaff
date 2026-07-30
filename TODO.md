@@ -11,7 +11,8 @@
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing
   a fixture party. New Game now reloads the hash-verified original
   `DUNGEON.DAT` through `LOAD_NEW_DUNGEON`. SK-projects deliberately clears
-  the party and leader hand there; G1 owns the initial pose and dungeon
+  the party and leader hand there; G1 owns the initial pose, which the reload
+  now restores before entrance, and dungeon
   mirrors later create champions through `SELECT_CHAMPION`. Bind the remaining
   `GAME_LOAD` actuator/timer initialization plus source-owned mirror-selection
   UI before allowing the menu to enter runtime.

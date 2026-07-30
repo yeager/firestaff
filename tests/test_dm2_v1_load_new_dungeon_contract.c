@@ -2,6 +2,7 @@
 
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_game.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -57,6 +58,7 @@ int main(void)
     DM2_V1_BootProfile profile;
     DM2_V1_BootNewDungeonReceipt receipt;
     DM2_V1_DungeonData *active;
+    DM2_V1_GameState *game;
     size_t dungeon_size;
 
     dungeon_size = build_pc_g1_fixture(dungeon, sizeof(dungeon));
@@ -74,7 +76,17 @@ int main(void)
     dm2_v1_boot_profile_init(&profile);
     profile.assets_verified = 1;
     snprintf(profile.dungeon_path, sizeof(profile.dungeon_path), "%s", path);
-    if (dm2_v1_boot_enter_game(&profile) != 0 ||
+    if (dm2_v1_boot_enter_game(&profile) != 0) {
+        remove(path);
+        return 1;
+    }
+    game = (DM2_V1_GameState *)profile.dm2_state;
+    game->party_x = 31;
+    game->party_y = 31;
+    game->party_dir = 3;
+    game->current_level = 9;
+    game->outdoor = 1;
+    if (
         dm2_v1_boot_load_new_dungeon(&profile, &receipt) != 1 ||
         !receipt.valid || !receipt.reloaded ||
         !receipt.source_party_reset_required ||
@@ -97,6 +109,16 @@ int main(void)
     active = (DM2_V1_DungeonData *)profile.dungeon_data;
     if (active->square_bytes != 1 || active->raw_size != (int)dungeon_size) {
         fprintf(stderr, "FAIL: reload did not retain the real G1 layout\n");
+        dm2_v1_boot_cleanup(&profile);
+        remove(path);
+        return 1;
+    }
+    if (!active->initial_party_pose_valid ||
+        game->party_x != active->initial_party_x ||
+        game->party_y != active->initial_party_y ||
+        game->party_dir != active->initial_party_dir ||
+        game->current_level != 0 || game->outdoor != 0) {
+        fprintf(stderr, "FAIL: LOAD_NEW_DUNGEON retained a non-source entrance pose\n");
         dm2_v1_boot_cleanup(&profile);
         remove(path);
         return 1;

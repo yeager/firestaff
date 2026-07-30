@@ -44432,3 +44432,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   the G1 header owns the start pose, and champions are later selected at
   dungeon mirrors. The remaining gate is actuator/timer initialization and
   source-owned mirror UI, not a fabricated starter party.
+- ✅ 2026-07-30 DM2 New Game entrance-pose restore: `LOAD_NEW_DUNGEON` now
+  resets the live game state's position, direction, map and outdoor flag from
+  the reloaded G1 header before the later mirror-selection entrance. This
+  follows `SKWINSPX/src/v4/skcore.cpp::GAME_LOAD` → `LOAD_NEW_DUNGEON` and
+  prevents an earlier runtime pose from leaking into a new game; it creates
+  no party, leader hand, gold or timer data. Verified by the focused contract
+  test plus the canonical PC G1 graph and arrange-dungeon receipts.

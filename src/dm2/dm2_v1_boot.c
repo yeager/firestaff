@@ -1171,6 +1171,7 @@ int dm2_v1_boot_load_new_dungeon(
     char current_md5[33];
     DM2_V1_DungeonData candidate;
     DM2_V1_DungeonData previous;
+    DM2_V1_GameState *game;
     DM2_V1_BootNewDungeonReceipt receipt;
     uint32_t hash = 2166136261u;
 
@@ -1221,6 +1222,20 @@ int dm2_v1_boot_load_new_dungeon(
     if (receipt.raw_byte_count == 0u) {
         dm2_v1_dungeon_free(&candidate);
         return 0;
+    }
+
+    /* SKWINSPX skcore.cpp::GAME_LOAD reaches LOAD_NEW_DUNGEON before the
+     * mirror-selection flow creates any champion. LOAD_NEW_DUNGEON still
+     * replaces the source-owned G1 start pose: retaining an earlier world's
+     * pose would make the eventual entrance synthetic. Update only this
+     * header-owned state; party, hand, gold and timers remain untouched. */
+    game = (DM2_V1_GameState *)profile->dm2_state;
+    if (candidate.initial_party_pose_valid) {
+        game->party_x = candidate.initial_party_x;
+        game->party_y = candidate.initial_party_y;
+        game->party_dir = candidate.initial_party_dir & 3;
+        game->current_level = 0;
+        game->outdoor = 0;
     }
 
     /* c_savegame.cpp reloads the structure before later GAME_LOAD party and
