@@ -6329,8 +6329,9 @@
       - Added `dm2_runtime_creature_read_door()` and wired it into the
         creature-field runtime so CCM creature ticks can read live door
         state and report open-percent.
-      - Added deterministic timeline display message
-        `"The dungeon awakens..."` in `dm2_v1_runtime_tick()`.
+      - The former deterministic timeline display message was removed: DM2
+        messages now reach the runtime only through source-owned trigger or
+        actuator data; no fabricated text is emitted on each tick.
       - Added local fallback wall-gfx discovery helpers
         (`dm2_runtime_find_text_wall_gfx_fallback`,
         `dm2_runtime_resolve_actuator_wall_gfx_fallback`) that walk the

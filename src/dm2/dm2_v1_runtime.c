@@ -4979,12 +4979,6 @@ void dm2_v1_runtime_tick(void) {
 
     dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
 
-    /* Source-owned timeline display-message target: every bounded tick
-     * records a deterministic message so the M11 message receipt reflects the
-     * DM2 timeline advancing.  skproject/SKULLWIN/c_tim_proc.cpp dispatches
-     * timer-derived message actuators through the same message path. */
-    dm2_runtime_record_message(rt, "The dungeon awakens...");
-
     /* DM2-003: every DM2 timer routes through the DM2-owned source-order
      * dispatcher (skproject/SKULLWIN/c_tim_proc.cpp:3980-4230
      * DM2_PROCEED_TIMERS).  The former unconditional host-side creature
