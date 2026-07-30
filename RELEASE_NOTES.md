@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.194
+
+- CSBWin: verify all ten original C232 HUD material sources against real Atari
+  data, including party controls, status labels, poison, movement, and magic.
+- CSB V2.2: resolve modern artpacks beside logical symlinked game-data paths
+  while keeping unbound source exports on the verified V2.1 rendering path.
+
 # Firestaff v3.0.193
 
 - CSB: detect the authentic selected loose-file graphics and dungeon variant
