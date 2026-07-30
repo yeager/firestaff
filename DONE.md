@@ -4,12 +4,13 @@
   manifest contains unbound material routes; V2.2 therefore remains on V2.1
   source pixels instead of accepting invented artwork.
 
-- ✅ 2026-07-30 CSBWin Atari runtime door frames: M11 now draws the original
-  `DoorTrackTopRect`/`DoorFrameRect` commands for visible `roomDOOR` cells,
-  using active WallSet pDoor sources and the native mirror rules. It leaves
-  F3L2/F3R2/F0 to their separate source owners and never fills the unresolved
-  dynamic panel with PC3.4 or generated pixels. The real Atari handoff probe
-  passes 589 checks.
+- ✅ 2026-07-30 CSBWin Atari runtime doors: M11 now draws the original
+  `DoorTrackTopRect`/`DoorFrameRect` commands and the source DB0-selected
+  dynamic panel for visible F1/F2/F3 `roomDOOR` cells. It reads the map's
+  raw state bits, DB0 `doorType`/`mode`, and the matching `Door1Type` or
+  `Door2Type` catalog instead of borrowing a PC3.4 panel. F3L2/F3R2/F0 remain
+  with their separate source owners. The real Atari handoff probe and focused
+  F0150/layout regressions pass.
 
 - ✅ 2026-07-30 CSBWin dynamic door-panel catalog owner: Firestaff now
   reproduces `Code390e.cpp::ReadGraphicsForLevel`'s exact
@@ -17,7 +18,8 @@
   records `108 + 3 * DoorSet`; Viewport F3/F2/F1 use the first/second/third
   record respectively, independently for both source door types. The focused
   CSBWin layout regression covers both selectors, all three distances and
-  source bounds. Live DB0 state/type routing remains separately fail-closed.
+  source bounds. M11 consumes the selected panel only after a valid loaded
+  DB0 record, raw door state, and source projection have all been recovered.
 
 - ✅ 2026-07-30 CSBWin door command recovery: Firestaff now reproduces
   `Viewport.cpp`'s static F1/F2/F3 track and frame plan, including the native
@@ -25,8 +27,8 @@
   `CSBCode.cpp::DrawDoor`'s state selection: closed has no panel, DB0 doors
   use their direct partial rectangle, and ordinary partial doors use the
   source split pairs. All projections come directly from GRAPHICS.DAT item
-  `0x22e`; focused layout and M11 handoff tests pass. Actual panel pixels
-  remain owned by the still-unresolved original `DoorGraphic[3][2]` route.
+  `0x22e`; focused layout and M11 handoff tests pass. The same commands now
+  consume the recovered original `DoorGraphic[3][2]` pixels.
 
 - ✅ 2026-07-30 CSBWin `TAG0088b2` packed wall blit: Firestaff now executes
   the original wall-command projection boundary over the restored Atari

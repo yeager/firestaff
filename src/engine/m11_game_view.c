@@ -2230,6 +2230,57 @@ static int m11_csb_door_panel_family_for_wall(
     return 1;
 }
 
+/* Viewport.cpp passes the room's DB0 record and the raw door-state bits to
+ * DrawDoor.  Keep both lookups on the loaded CSB map: a panel must never
+ * borrow the active map's first DoorSet or an invented closed-door state. */
+static int m11_csb_atari_st_resolve_door_panel(
+    const CSB_V1_DungeonData *dungeon, int level, int direction,
+    int party_x, int party_y, int steps_forward, int steps_right,
+    uint8_t nearness, uint8_t *out_door_state, int *out_db0_mode,
+    uint16_t *out_graphic_index)
+{
+    const uint8_t *record;
+    int map_x;
+    int map_y;
+    int raw_square;
+    int thing;
+    int thing_type;
+    int thing_size;
+    uint16_t door_word;
+    uint16_t door_set;
+
+    if (out_door_state) *out_door_state = 0u;
+    if (out_db0_mode) *out_db0_mode = 0;
+    if (out_graphic_index) *out_graphic_index = 0u;
+    if (!dungeon || !out_door_state || !out_db0_mode || !out_graphic_index ||
+        level < 0 || level >= dungeon->level_count || nearness > 2u ||
+        csb_v1_dungeon_f0150_get_relative_location_pc34(
+            direction, steps_forward, steps_right, party_x, party_y,
+            &map_x, &map_y) != 0 ||
+        (raw_square = csb_v1_dungeon_f0151_get_square_pc34(
+            dungeon, level, map_x, map_y)) < 0 ||
+        ((raw_square >> 5) & 0x07) != 4 ||
+        (raw_square & 0x07) > 5 ||
+        (thing = csb_v1_dungeon_get_first_thing(
+            dungeon, level, map_x, map_y)) < 0 ||
+        !(record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)thing, &thing_type, NULL, &thing_size)) ||
+        thing_type != 0 || thing_size < 4) {
+        return 0;
+    }
+    door_word = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    door_set = (uint16_t)((door_word & 0x0001u) != 0u
+        ? dungeon->map_door_set1[level] : dungeon->map_door_set0[level]);
+    if (!csb_v1_csbwin_door_panel_graphic_index(
+            door_set, (uint8_t)(door_word & 0x0001u), nearness,
+            out_graphic_index)) {
+        return 0;
+    }
+    *out_door_state = (uint8_t)(raw_square & 0x07);
+    *out_db0_mode = (door_word & 0x0020u) != 0u;
+    return 1;
+}
+
 static int m11_csb_blit_atari_st_viewport_graphic(
     M11_GameViewState *state, uint16_t graphic_index, int mirrored,
     const CSB_V1_CSBWinViewportProjectionRectangle *projection,
@@ -2360,6 +2411,11 @@ static int m11_csb_present_atari_st_runtime_viewport(
         if (square_type == 4) {
             CSB_V1_CSBWinDoorPanelFamily family;
             CSB_V1_CSBWinDoorFramePlan door_plan;
+            const CSB_V1_CSBWinViewportProjectionRectangle *panel_first;
+            const CSB_V1_CSBWinViewportProjectionRectangle *panel_second;
+            uint16_t panel_graphic;
+            uint8_t door_state;
+            int db0_mode;
             size_t door_draw;
 
             /* CSBWin has no DoorRects family for F3L2/F3R2/F0 lanes; their
@@ -2386,6 +2442,31 @@ static int m11_csb_present_atari_st_runtime_viewport(
                         &door_draw_command->projection, viewport,
                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
             }
+            /* CSBWin Viewport.cpp's facing scripts draw track/frame material
+             * before StdDrawDoor.  DrawDoor then selects a real DB0 panel
+             * bitmap and one or two state rectangles.  An absent/malformed
+             * DB0 record leaves the pre-existing source frame visible rather
+             * than manufacturing a panel. */
+            if (!m11_csb_atari_st_resolve_door_panel(
+                    dungeon, profile->runtime.current_level,
+                    profile->runtime.party_dir, profile->runtime.party_x,
+                    profile->runtime.party_y,
+                    wall_locations[draw->wall].forward,
+                    wall_locations[draw->wall].right,
+                    draw->wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_F1L1 ? 0u :
+                    draw->wall >= CSB_V1_CSBWIN_VIEWPORT_WALL_F2L1 ? 1u : 2u,
+                    &door_state, &db0_mode, &panel_graphic)) {
+                continue;
+            }
+            if (!csb_v1_csbwin_viewport_door_panel_projections(
+                    &layout, family, door_state, db0_mode,
+                    &panel_first, &panel_second)) return 0;
+            if (panel_first && !m11_csb_blit_atari_st_viewport_graphic(
+                    state, panel_graphic, 0, panel_first, viewport,
+                    VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
+            if (panel_second && !m11_csb_blit_atari_st_viewport_graphic(
+                    state, panel_graphic, 0, panel_second, viewport,
+                    VIEWPORT_WIDTH, VIEWPORT_HEIGHT)) return 0;
             continue;
         }
         /* Viewport.cpp's DrawCellF* wall branch is entered only for

@@ -394,9 +394,12 @@ an integration build pass.
   from the active 13-record WallSet and preserving CSBWin's mirror semantics.
   The dynamic `DoorGraphic[3][2]` owner is now recovered from
   `Code390e.cpp::ReadGraphicsForLevel`: for each map DoorSet it is catalog
-  `108 + 3 * DoorSet`, with F3/F2/F1 selecting offsets 0/1/2. Remaining:
-  bind the live CSBWin DB0 door type and source door state to this recovered
-  panel command; do not infer either from an unrelated PC34 door object.
+  `108 + 3 * DoorSet`, with F3/F2/F1 selecting offsets 0/1/2. M11 now binds
+  live F1/F2/F3 panels from the same loaded map's raw door-state bits and DB0
+  `doorType`/`mode` fields, using F0150 to reach the exact Thing chain before
+  `DrawDoor`'s source-owned projection. Missing or malformed DB0 chains draw
+  no panel. Remaining: recover the separate F3L2/F3R2/F0 local-cell owners
+  and add a captured real route for every DB0 state/ornateness variant.
 
 - **CSB-V1-RUNTIME-SPRITE-DECODER-OWNERSHIP:** Closed 2026-07-30. Dynamic
   F0114/F0115 projectile, explosion, item, D0 explosion-pattern and creature

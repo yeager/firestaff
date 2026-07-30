@@ -21,6 +21,8 @@ int main(void)
 {
     CSB_V1_DungeonData dungeon;
     uint8_t map[9];
+    int relative_x = -1;
+    int relative_y = -1;
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(map, 0, sizeof(map));
@@ -50,6 +52,11 @@ int main(void)
         &dungeon, 0, 1, 2, 1, 0, 0) == 0x20);
     CHECK(csb_v1_dungeon_f0153_get_relative_square_type_pc34(
         &dungeon, 0, 1, 2, 1, 0, 0) == 1);
+    CHECK(csb_v1_dungeon_f0150_get_relative_location_pc34(
+        1, 2, 1, 0, 0, &relative_x, &relative_y) == 0 &&
+          relative_x == 2 && relative_y == 1);
+    CHECK(csb_v1_dungeon_f0150_get_relative_location_pc34(
+        4, 1, 0, 1, 1, &relative_x, &relative_y) == -1);
     CHECK(csb_v1_dungeon_f0152_get_relative_square_pc34(
         &dungeon, 0, 0, 1, 0, 1, 0) == 0x02);
     CHECK(csb_v1_dungeon_f0152_get_relative_square_pc34(

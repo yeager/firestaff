@@ -158,6 +158,12 @@ int csb_v1_dungeon_get_raw_square(const CSB_V1_DungeonData *d, int level, int x,
  * malformed maps rather than manufacturing a square. */
 int csb_v1_dungeon_f0151_get_square_pc34(
     const CSB_V1_DungeonData *d, int level, int x, int y);
+/* ReDMCSB DUNGEON.C F0150's relative-view coordinate transform, exposed so
+ * source consumers can obtain the same map position before resolving a
+ * square-owned Thing chain. */
+int csb_v1_dungeon_f0150_get_relative_location_pc34(
+    int direction, int steps_forward, int steps_right,
+    int map_x, int map_y, int *out_map_x, int *out_map_y);
 int csb_v1_dungeon_f0152_get_relative_square_pc34(
     const CSB_V1_DungeonData *d, int level, int direction,
     int steps_forward, int steps_right, int map_x, int map_y);

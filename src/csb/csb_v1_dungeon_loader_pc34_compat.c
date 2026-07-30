@@ -517,6 +517,20 @@ static int csb_v1_f0150_update_relative_coordinates(
     return 0;
 }
 
+int csb_v1_dungeon_f0150_get_relative_location_pc34(
+    int direction, int steps_forward, int steps_right,
+    int map_x, int map_y, int *out_map_x, int *out_map_y)
+{
+    if (!out_map_x || !out_map_y ||
+        csb_v1_f0150_update_relative_coordinates(
+            direction, steps_forward, steps_right, &map_x, &map_y) != 0) {
+        return -1;
+    }
+    *out_map_x = map_x;
+    *out_map_y = map_y;
+    return 0;
+}
+
 int csb_v1_dungeon_f0152_get_relative_square_pc34(
     const CSB_V1_DungeonData *d, int level, int direction,
     int steps_forward, int steps_right, int map_x, int map_y)
