@@ -12,6 +12,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 FIRE_VIEW = ROOT / "src/engine/m11_game_view.c"
+DM1_FIELD = ROOT / "src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c"
 DOC = ROOT / "docs/graphics/DM1_V1_TELEPORTER_FIELD_SOURCE_LOCK.md"
 RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 RED_DUNVIEW = RED_ROOT / "DUNVIEW.C"
@@ -34,7 +35,7 @@ def line_no(text: str, pos: int) -> int:
 
 
 def find_function(text: str, name: str) -> tuple[int, str]:
-    m = re.search(r"\bstatic\s+(?:int|void)\s+" + re.escape(name) + r"\s*\(", text)
+    m = re.search(r"\b(?:static\s+)?(?:int|void)\s+" + re.escape(name) + r"\s*\(", text)
     if not m:
         raise AssertionError(f"missing function {name}")
     brace = text.find("{", m.end())
@@ -60,6 +61,7 @@ def require_ordered(text: str, markers: list[str], label: str) -> None:
 
 def main() -> int:
     fire = FIRE_VIEW.read_text(encoding="utf-8")
+    dm1_field = DM1_FIELD.read_text(encoding="utf-8")
     red = RED_DUNVIEW.read_text(encoding="latin-1")
     doc = DOC.read_text(encoding="utf-8")
 
@@ -84,26 +86,39 @@ def main() -> int:
 
     field_zone_pos, field_zone = find_function(fire, "m11_draw_dm1_field_zone")
     require_ordered(field_zone, [
-        "M11_GFX_DM1_FIELD_TELEPORTER",
-        "M11_GFX_DM1_FIELD_MASK_BASE + maskIndex",
-        "fieldStartUnit = baseStartUnit + (int)((state->animTick >> 1) & 1u);",
-        "fieldYPhase = (int)((state->animTick * 7u) & 31u);",
-        "sx = (x + (fieldStartUnit * 16)) % (int)field->width;",
-        "sy = (y + fieldYPhase) % (int)field->height;",
+        "dm1_v1_field_asset_binding_pc34(plan, &binding)",
+        "binding.fieldGraphicIndex",
+        "binding.maskGraphicIndex",
+        "dm1_v1_field_bitmap_pixel_pc34(",
     ], "Firestaff source field bitmap shimmer")
+
+    _, field_bitmap = find_function(dm1_field, "dm1_v1_field_bitmap_sample_pc34")
+    require_ordered(field_bitmap, [
+        "fieldStartUnit = plan->baseStartUnit + (int)((animTick >> 1) & 1u);",
+        "fieldYPhase = (int)((animTick * 7u) & 31u);",
+        "outSample->fieldX = (localX + (fieldStartUnit * 16)) % fieldWidth;",
+        "outSample->fieldY = (localY + fieldYPhase) % fieldHeight;",
+    ], "DM1-owned source field bitmap shimmer")
 
     fields_pos, fields = find_function(fire, "m11_draw_dm1_teleporter_fields")
     require_ordered(fields, [
         "cell.elementType != DUNGEON_ELEMENT_TELEPORTER",
-        "if ((cell.square & 0x04) == 0 || (cell.square & 0x08) == 0)",
+        "dm1_v1_field_square_is_visible_open_pc34(cell.square)",
         "m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH,",
     ], "Firestaff teleporter open/visible field gate")
+
+    _, visible_open = find_function(dm1_field, "dm1_v1_field_square_is_visible_open_pc34")
+    require_ordered(visible_open, [
+        "DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34",
+        "DM1_FIELD_TELEPORTER_OPEN_MASK_PC34",
+    ], "DM1-owned teleporter open/visible field gate")
 
     require(doc, "Status: source-backed implementation present", "source-lock document")
     require(doc, "procedural sparkle, crosshair, or particle effect", "source-lock document")
 
     print("DM1 V1 teleporter visual effect source-lock passed")
     print(f"- Firestaff field blit: {FIRE_VIEW}:{line_no(fire, field_zone_pos)}")
+    print(f"- DM1 field sampling: {DM1_FIELD}")
     print(f"- Firestaff teleporter field rows: {FIRE_VIEW}:{line_no(fire, fields_pos)}")
     for needle in red_needles:
         pos = red.find(needle)

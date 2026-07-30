@@ -103,6 +103,13 @@ an integration build pass.
 
 ## Recently Closed
 
+- **DM1-PC34-F0195-AND-F0113-REFERENCE-DRIFT:** Closed 2026-07-30. F0195's
+  PC 3.4 branch admits up to 110 active groups, unlike the 60-slot Atari
+  branch. Its capacity regression now exercises the correct source limit.
+  The F0113 teleporter visual lock now verifies the DM1-owned C070-C077
+  binding and phase sampler consumed by M11, rather than stale host-local
+  constants. The focused DM1 group/timeline/teleporter suite passes 47/47.
+
 - **DM1-V22-REVIEWED-ASSET-ID-RUNTIME-CONSUMPTION:** Closed 2026-07-30.
   The in-place V2.2 renderer now resolves the reviewed hero asset identifiers
   declared by the finished-art manifest rather than stale first-cut ids.

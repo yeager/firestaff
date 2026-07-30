@@ -46,7 +46,7 @@ int main(void)
     unsigned short capSft[61];
     int index;
 
-    /* GROUP.C F0196 (PC 3.4): a new world owns exactly sixty initialized
+    /* GROUP.C F0196 (PC 3.4): a new world owns exactly 110 initialized
      * ACTIVE_GROUP records. M10 maps GroupThingIndex to reserved0 and must
      * leave its four non-source spare records untouched. */
     memset(&world, 0x5a, sizeof(world));
@@ -153,8 +153,8 @@ int main(void)
               world.timeline.events[2].aux0 == 1,
           "F0195 starts the second group wandering from its raw C04 square");
 
-    /* PC3.4 F0196 owns 60 ACTIVE_GROUP slots.  F0183 returns at capacity,
-     * while F0195 still reaches F0180 for the raw sixty-first C04. */
+    /* PC3.4 F0196 owns 110 ACTIVE_GROUP slots.  This is distinct from the
+     * 60-slot Atari branch in GROUP.C. F0195 must admit every C04 here. */
     memset(&world, 0, sizeof(world));
     memset(capGroups, 0, sizeof(capGroups));
     memset(capSquares, 0x10, sizeof(capSquares));
@@ -180,10 +180,10 @@ int main(void)
     world.partyMapIndex = 0;
     CHECK(F0720_TIMELINE_Init_Compat(&world.timeline, 0),
           "capacity timeline initialization");
-    CHECK(F0195_DM1_GROUP_AddAllActiveGroups_Compat(&world) == 60 &&
-              world.creatureAICount == DM1_PC34_ACTIVE_GROUP_CAPACITY &&
+    CHECK(F0195_DM1_GROUP_AddAllActiveGroups_Compat(&world) == 61 &&
+              world.creatureAICount == 61 &&
               world.timeline.count == 61,
-          "F0195 preserves PC3.4's 60 active C04 slots while F0180 still runs");
+          "F0195 admits every PC3.4 C04 below the 110-slot capacity");
 
     puts("PASS: DM1 F0195 source-locked active-group map activation");
     return 0;

@@ -193,9 +193,9 @@ struct DM1GroupSmellDirectionPlan_Compat;
 
 #define TICK_EMISSION_CAPACITY          64
 #define GAMEWORLD_CREATURE_AI_CAPACITY  128
-/* ReDMCSB PC3.4 GROUP.C F0196 initializes exactly 60 ACTIVE_GROUP slots.
- * The larger host array remains an implementation container; F0195 must not
- * admit a sixty-first original-map group into its PC3.4 active prefix. */
+/* ReDMCSB PC3.4 GROUP.C F0196 initializes exactly 110 ACTIVE_GROUP slots.
+ * The Atari branch uses 60; do not impose that lower platform limit on PC3.4
+ * current-map C04 activation. */
 /* Real PC 3.4 GLOBAL_DATA.MaximumActiveGroupCount can be 110. */
 #define DM1_PC34_ACTIVE_GROUP_CAPACITY  110
 #define TICK_INPUT_SERIALIZED_SIZE      16

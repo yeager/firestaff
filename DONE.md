@@ -43850,3 +43850,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   material gate uses the same aggregate runtime admission as production, and
   the out-of-tree Ninja test verifier receives its configured build directory.
   Verification: all registered DM1 V2.0/V2.1/V2.2 contracts pass, 97/97.
+
+# DM1 PC 3.4 group and teleporter reference locks (2026-07-30)
+
+- ✅ Corrected the F0195 capacity proof to the PC 3.4 `GROUP.C` branch:
+  `F0196` initializes 110 active-group slots. The 60-slot branch belongs to
+  older Atari media and must not constrain PC 3.4 group activation. The F0113
+  teleporter visual lock now follows the DM1-owned C070-C077 asset binding,
+  visible/open gate and source phase sampler consumed by M11. Verification:
+  47 group/timeline/teleporter/spell-tick regressions pass from Ninja.
