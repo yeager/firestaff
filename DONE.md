@@ -1,3 +1,8 @@
+- ✅ 2026-07-30 DM1 original-save presentation sweep: the operator-owned
+  DOSBox PC34 `DMSAVE.DAT` now boot-proves through the public `--save` route
+  in V1, V2.0, V2.1 and V2.2. Every mode restored the original party at
+  `16,14,2` with four champions and retained the full real-asset HoC receipt.
+
 - ✅ 2026-07-30 Launcher maximized-window presentation: the Firestaff
   start menu is now an application-UI surface that fills the complete host
   window, independent of a selected game's 4:3/content aspect. Its mouse

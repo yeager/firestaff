@@ -23098,9 +23098,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     reaches F0435 staging, runtime adoption, a visible saved-portrait
     inventory panel, and an F0435 -> F0433 -> F0435 core-state/tail round
     trip. Portrait, inactive-champion, C3, C4 and tail receipts now travel
-  through the round-trip report. The fixture-free external-corpus target now
-  admits this C13-free original by its preserved C3/C4 envelope without
-  weakening the separate C13-bearing fixture lifecycle checks.
+    through the round-trip report. The fixture-free external-corpus target now
+    admits this C13-free original by its preserved C3/C4 envelope without
+    weakening the separate C13-bearing fixture lifecycle checks.
+  - 2026-07-30 presentation follow-up: the public `--game dm1 --save`
+    route was boot-proved against that same DOSBox file in V1, V2.0, V2.1,
+    and V2.2. All four modes restored party `16,14,2` with four champions
+    and a full original-asset HoC receipt.
 
 ## DM1 F0134/F0135 production material follow-up
 
