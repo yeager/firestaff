@@ -174,6 +174,7 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
     char manifest_path[512];
     unsigned char cache[112];
     unsigned char framebuffer[320 * 200];
+    uint8_t palette[256][3];
     CSB_V1_ViewportRuntimeDrawCommandPc34 command;
 
     CHECK(mkdir_p(data_dir), "create command-test data directory");
@@ -222,6 +223,13 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
     csb_v22_inplace_draw_shutdown();
     csb_v22_set_manifest_path(data_dir);
     CHECK(csb_v22_inplace_draw_init() == 1, "command-test cache initializes");
+    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
+          "unbound palette leaves the source F0128 command untouched");
+    memset(palette, 0, sizeof(palette));
+    palette[0x30][0] = 63; /* original indexed red used by the fixture */
+    palette[0x03][2] = 63; /* original indexed blue used by the D2 fixture */
+    CHECK(csb_v22_inplace_draw_set_indexed_palette_rgb6(palette) == 1,
+          "command-test binds an original indexed palette");
     CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 1,
           "admitted D1 door command consumes exact source route");
     CHECK(framebuffer[33 * 320 + 48] == 0x30,

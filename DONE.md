@@ -44,6 +44,13 @@
   can no longer manufacture extra C001 title frames when original
   `GRAPHICS.DAT` C001 is available. Focused source-timing, C001 admission and
   startup-state CTests pass 3/3.
+- ✅ 2026-07-30 CSB V2.2 source-palette gate: an admitted F0128 replacement
+  now requires the active source-owned indexed palette. The old generated
+  EGA quantization fallback is gone, so a direct or malformed host command
+  preserves the original page rather than introducing fabricated palette
+  indices. The V2.2 in-place command test passes with both reject and bound
+  palette coverage.
+
 - ✅ 2026-07-30 CSB F0115 smoke material: split the F0663 admission by the
   original command. Scaled smoke now validates only its real C488 source;
   D0C validates exactly its selected C498--C500 pattern. This follows

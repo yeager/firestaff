@@ -327,19 +327,6 @@ const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,
 
 /* ── In-place bitmap blit ──────────────────────────────────────── */
 
-/* Map an RGB color (0..255 per channel) to the nearest EGA/VGA
- * 6-bit-cube palette index. Equivalent to the standard VGA 0x3F
- * (bright=0, palette bits 5..0 = R*2, G*2, B*2 mapping). */
-static unsigned char rgb_to_ega_index(unsigned char r,
-                                      unsigned char g,
-                                      unsigned char b) {
-    /* Quantize each channel to 2 bits (0/85/170/255) and combine. */
-    int ri = (r * 3 + 127) / 255;
-    int gi = (g * 3 + 127) / 255;
-    int bi = (b * 3 + 127) / 255;
-    return (unsigned char)((ri << 4) | (gi << 2) | bi);
-}
-
 /* RGB art is projected into the same current CSB palette that the original
  * indexed F0128 passes use.  The native PC3.4 page intentionally duplicates
  * its 16 source colours over the 256 byte index range; choosing the first
@@ -353,9 +340,6 @@ static unsigned char rgb_to_source_palette_index(unsigned char r,
     unsigned char best_index = 0;
     int index;
 
-    if (!g_v22_palette_active) {
-        return rgb_to_ega_index(r, g, b);
-    }
     for (index = 0; index < 256; ++index) {
         int pr = (int)((g_v22_palette_rgb6[index][0] << 2) |
                        (g_v22_palette_rgb6[index][0] >> 4));
@@ -382,8 +366,8 @@ static unsigned char rgb_to_source_palette_index(unsigned char r,
  * sized src_w x src_h -> dst_w x dst_h. Fully transparent source pixels
  * leave the source-owned F0128 framebuffer intact; this is required for
  * C10_COLOR_FLESH door holes. Opaque pixels are mapped to a single byte via
- * the current CSB source palette.  A data-free test with no bound palette
- * keeps the legacy EGA mapping as an explicitly non-production fallback. */
+ * the current CSB source palette. Without that source-owned palette the
+ * command is rejected; a generated EGA fallback would alter F0128 output. */
 static void blit_bitmap_to_cell(const uint32_t* rgba, int src_w, int src_h,
                                   unsigned char* framebuffer, int fbW, int fbH,
                                   int dst_x, int dst_y, int dst_w, int dst_h) {
@@ -437,7 +421,7 @@ int csb_v22_inplace_render_f0128_command(
     int height = 0;
 
     if (!source_command || !framebuffer || fbW <= 0 || fbH <= 0 ||
-        !csb_v22_inplace_draw_active()) {
+        !csb_v22_inplace_draw_active() || !g_v22_palette_active) {
         return 0;
     }
 
