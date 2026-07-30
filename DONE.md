@@ -23,6 +23,12 @@
   user mapping. Verification: `m11_gamepad_csb_input_bridge` passes its
   default CSB command and all four input-mode gates.
 
+- ✅ 2026-07-30 CSB Utility Disk discovery reuse: repeated CSB import and
+  preview requests reuse a hash-admitted archive member for the active data
+  root, avoiding repeated broad archive inventories. Each use still extracts
+  and validates the original Utility Disk before importing anything; a stale
+  cache is discarded. Verification: CSB runtime-handoff regression passes.
+
 - ✅ 2026-07-30 Start-menu data-folder runtime guard: startup asset consumers
   now use the last accepted physical data directory, rather than a transient
   scanner `.` token from the macOS native folder dialog. This keeps the

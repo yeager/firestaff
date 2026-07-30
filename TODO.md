@@ -1559,6 +1559,11 @@ that its exact runtime path is not already source-locked and tested.
     media fail before the Utility flow reaches IMPORT/NEW GAME. This closes
     the prior unchecked `utility_disk_verified` import shortcut, not the
     broader Utility Disk UI scope.
+    2026-07-30: repeated import/preview requests now reuse the already
+    hash-admitted archive member for the same selected CSB root. Each request
+    still extracts that member and reruns the original Utility Disk check;
+    only the expensive broad archive inventory is cached. A changed or
+    unreadable cached member invalidates the cache and fails closed.
     2026-07-29: the live C140 `Ctrl-S` route now opens the source-dialog
     geometry with the Atari CSB v2.1 source order: Load Saved Game, Save and
     Play, Save and Quit, Format Floppy. The source Format Floppy confirmation

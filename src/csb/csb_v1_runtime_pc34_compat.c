@@ -100,6 +100,13 @@ static const char *const g_csb_utility_disk_hashes[] = {
     NULL
 };
 
+/* Utility Disk discovery can be requested repeatedly while a CSB launch
+ * builds its import/preview receipts. Keep the admitted archive member for
+ * this process and data root, but never cache extracted bytes: every use
+ * still materializes the member and performs the original disk check. */
+static char g_csb_utility_media_cache_root[ASSET_PATH_MAX];
+static char g_csb_utility_media_cache_path[ASSET_PATH_MAX];
+
 static int csb_v1_runtime_locate_appended_expool_record_internal(
     const CSB_V1_RuntimeProfile *profile,
     uint32_t record_id,
@@ -2180,6 +2187,7 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     char checked_utility_media[ASSET_PATH_MAX];
     const char *explicit_utility_media;
     int remove_checked_utility_media = 0;
+    int used_discovery_cache = 0;
     int count;
 
     if (out_count) {
@@ -2205,11 +2213,24 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
     if (explicit_utility_media && explicit_utility_media[0] != '\0') {
         snprintf(utility_media, sizeof(utility_media), "%s",
                  explicit_utility_media);
+    } else if (profile->data_dir && profile->data_dir[0] != '\0' &&
+               strcmp(profile->data_dir, g_csb_utility_media_cache_root) == 0 &&
+               g_csb_utility_media_cache_path[0] != '\0') {
+        snprintf(utility_media, sizeof(utility_media), "%s",
+                 g_csb_utility_media_cache_path);
+        used_discovery_cache = 1;
     } else if (profile->data_dir && profile->data_dir[0] != '\0') {
-        (void)asset_find_by_md5_list(profile->data_dir,
-                                     g_csb_utility_disk_hashes,
-                                     utility_media, sizeof(utility_media),
-                                     NULL, 8);
+        if (asset_find_by_md5_list(profile->data_dir,
+                                   g_csb_utility_disk_hashes,
+                                   utility_media, sizeof(utility_media),
+                                   NULL, 8)) {
+            snprintf(g_csb_utility_media_cache_root,
+                     sizeof(g_csb_utility_media_cache_root), "%s",
+                     profile->data_dir);
+            snprintf(g_csb_utility_media_cache_path,
+                     sizeof(g_csb_utility_media_cache_path), "%s",
+                     utility_media);
+        }
     }
     if (utility_media[0] == '\0') {
         return 0;
@@ -2227,6 +2248,10 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
             (size_t)written >= sizeof(checked_utility_media) ||
             !asset_extract_virtual_path(utility_media,
                                         checked_utility_media)) {
+            if (used_discovery_cache) {
+                g_csb_utility_media_cache_root[0] = '\0';
+                g_csb_utility_media_cache_path[0] = '\0';
+            }
             return 0;
         }
         remove_checked_utility_media = 1;
@@ -2235,6 +2260,10 @@ int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,
                  utility_media);
     }
     if (csb_v1_util_check_disk(checked_utility_media) != 0) {
+        if (used_discovery_cache) {
+            g_csb_utility_media_cache_root[0] = '\0';
+            g_csb_utility_media_cache_path[0] = '\0';
+        }
         if (remove_checked_utility_media) (void)remove(checked_utility_media);
         return 0;
     }
