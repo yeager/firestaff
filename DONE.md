@@ -44366,3 +44366,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   materializing its save-fixture party. `SKWINSPX/src/v4/skcore.cpp` keeps
   party and entrance state in `GAME_LOAD`/`LOAD_NEW_DUNGEON`; fixtures remain
   explicit test helpers only.
+- ✅ 2026-07-30 DM2 viewport wall fallback removal: the V1 wall material
+  plan no longer carries a generic colour fallback. Per
+  `SKWINSPX/src/v4/c_gui_vp.cpp::DM2_DRAW_WALL`, each planned cell now has
+  only its GDAT owner and source/destination rectangles; unresolved material
+  remains no-draw.

@@ -356,7 +356,6 @@ typedef struct {
     int gdat_index;
     DM2_V1_ViewportRect src_rect;
     DM2_V1_ViewportRect dst_rect;
-    uint8_t fallback_color;
 } DM2_V1_WallPanelRender;
 
 typedef struct {

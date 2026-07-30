@@ -1221,11 +1221,6 @@ int dm2_v1_viewport_dialogue_box_graphic_index(void)
     return DM2_V1_VIEWPORT_GFX_DIALOGUE_BOX;
 }
 
-static uint8_t dm2_v1_wall_fallback_color_for_step(int render_step)
-{
-    return (uint8_t)(2 + (render_step / 3) * 2);
-}
-
 /* ── Helper: resolve blit clipping gate ─────────────────────────── */
 
 /* Clip gate for blit operations — prevents out-of-bounds writes.
@@ -2815,7 +2810,9 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
             frame->right_x - frame->left_x + 1,
             frame->bottom_y - frame->top_y + 1
         };
-        row->fallback_color = dm2_v1_wall_fallback_color_for_step(step);
+        /* SKWIN c_gui_vp.cpp::DM2_DRAW_WALL resolves this cell's GDAT
+         * image before blitting. The plan intentionally has no colour
+         * fallback: an unresolved source image is a no-draw condition. */
         out_plan->selected_square_mask |= (uint16_t)(1u << (unsigned)square);
     }
     return 1;
