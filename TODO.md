@@ -6,6 +6,13 @@
   palettes, and synthetic HUD art are not acceptable when authentic game data
   exists. Each remaining renderer is to bind the real format or present no
   game pixel; test fixtures remain explicitly isolated from production paths.
+- **DM2-SKSAVE-ORIGINAL-WRITER:** `dm2_v1_world_state_serialize()` is now
+  deliberately fail-closed. Port SK-projects
+  `SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_SAVE` and its complete
+  `DM2_SUPPRESS_WRITER` graph before enabling save output: the source writes
+  the 0x3c save block, global state, heroes, timers and dungeon sections in
+  source order. Do not introduce a Firestaff-private envelope or minimap
+  extension as a substitute for an original `SKSave.dat`.
 
 ## Active DM1/CSB Symbol Queue
 

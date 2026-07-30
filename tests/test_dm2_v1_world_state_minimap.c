@@ -20,7 +20,6 @@ int main(void)
     int pass = 0;
     int total = 0;
     DM2_WorldState state;
-    DM2_WorldState *loaded;
     uint8_t *serialized;
     size_t serialized_size = 0;
 
@@ -44,24 +43,8 @@ int main(void)
         "out-of-range level reads as unexplored");
 
     serialized = dm2_v1_world_state_serialize(&state, &serialized_size);
-    RUN(serialized != NULL, "world-state serialization returns a buffer");
-    RUN(serialized_size > 64, "serialized buffer carries exploration extension");
-
-    loaded = dm2_v1_world_state_load_from_mem(serialized, serialized_size);
-    RUN(loaded != NULL, "serialized world-state reloads from memory");
-    if (loaded) {
-        RUN(dm2_v1_world_state_get_explored(loaded, 0, 3, 4) == 1,
-            "level 0 reveal persists across save/load");
-        RUN(dm2_v1_world_state_get_explored(loaded, 0, 31, 31) == 1,
-            "edge-cell reveal persists across save/load");
-        RUN(dm2_v1_world_state_get_explored(loaded, 2, 2, 30) == 1,
-            "different-level reveal persists across save/load");
-        RUN(dm2_v1_world_state_get_explored(loaded, 2, 1, 30) == 0,
-            "cleared reveal remains clear across save/load");
-        RUN(dm2_v1_world_state_get_explored(loaded, 1, 3, 4) == 0,
-            "same coordinate on another level remains unexplored");
-        dm2_v1_world_state_free(loaded);
-    }
+    RUN(serialized == NULL && serialized_size == 0u,
+        "incomplete world state never fabricates an SKSave buffer");
 
     free(serialized);
 #undef RUN

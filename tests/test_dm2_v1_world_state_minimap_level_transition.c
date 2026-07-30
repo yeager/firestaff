@@ -2,7 +2,7 @@
  * test_dm2_v1_world_state_minimap_level_transition.c
  *
  * DM2 V1 minimap/exploration persistence regression across one
- * level transition and one save/load boundary.
+ * level transition.
  *
  * Scope:
  *   - reveal tiles on level A
@@ -10,9 +10,7 @@
  *   - confirm level A reveals are intact (current_level pointer
  *     must not wipe exploration history)
  *   - reveal tiles on level B
- *   - save + reload the world state
- *   - confirm both A and B reveal bitmaps survive the round-trip
- *   - confirm current_level survives the round-trip
+ *   - reject save output until the complete original save graph is present
  *   - confirm the level-transition setter rejects out-of-range
  *     targets without mutating current_level or any explored bit
  *
@@ -26,7 +24,7 @@
  *         ReDMCSB LOADSAVE.C:1515-1524 GLOBAL_DATA round-trip
  *         ReDMCSB CLIKMENU.C:177-179,265 stairs / map transition
  *         SKULL.ASM T520 party placement tick
- *         docs/dm2_save_format.md — SUPPRESS save format
+ *         SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_SAVE
  */
 
 #include "dm2_v1_world_state.h"
@@ -54,7 +52,6 @@ static int expect_true(int condition, const char *message)
 int main(void)
 {
     DM2_WorldState state;
-    DM2_WorldState *loaded = NULL;
     uint8_t *serialized = NULL;
     size_t serialized_size = 0;
     int sentinel_kept = 0;
@@ -132,55 +129,10 @@ int main(void)
     expect_true(dm2_v1_world_state_get_explored(&state, 5, 10, 10) == 1,
                 "level 5 reveal untouched by rejected setter");
 
-    /* ── 7. Save/load round-trip across the transition boundary ── */
+    /* ── 7. The bounded model must not fabricate an original save. ── */
     serialized = dm2_v1_world_state_serialize(&state, &serialized_size);
-    if (!expect_true(serialized != NULL,
-                     "serialize returns a buffer with transition history"))
-    {
-        fprintf(stderr,
-                "DM2 V1 world-state minimap level-transition: %d/%d passed\n",
-                g_pass, g_total);
-        return 1;
-    }
-    expect_true(serialized_size > 64,
-                "serialized buffer carries exploration extension");
-
-    loaded = dm2_v1_world_state_load_from_mem(serialized, serialized_size);
-    if (!expect_true(loaded != NULL,
-                     "loaded world-state is non-NULL after round-trip"))
-    {
-        free(serialized);
-        fprintf(stderr,
-                "DM2 V1 world-state minimap level-transition: %d/%d passed\n",
-                g_pass, g_total);
-        return 1;
-    }
-
-    /* current_level pointer survives the round-trip. */
-    expect_true(loaded->current_level == 0,
-                "current_level pointer survives save/load");
-
-    /* Per-level reveal bitmaps survive the round-trip. */
-    expect_true(dm2_v1_world_state_get_explored(loaded, 0, 2, 3) == 1,
-                "level 0 reveal survives save/load after transitions");
-    expect_true(dm2_v1_world_state_get_explored(loaded, 0, 7, 8) == 1,
-                "level 0 cell (7,8) reveal survives save/load");
-    expect_true(dm2_v1_world_state_get_explored(loaded, 0, 31, 0) == 1,
-                "level 0 edge reveal survives save/load");
-    expect_true(dm2_v1_world_state_get_explored(loaded, 1, 5, 5) == 1,
-                "level 1 reveal survives save/load after transitions");
-    expect_true(dm2_v1_world_state_get_explored(loaded, 1, 6, 5) == 1,
-                "level 1 second reveal survives save/load");
-    expect_true(dm2_v1_world_state_get_explored(loaded, 5, 10, 10) == 1,
-                "level 5 reveal survives save/load");
-    /* A level we never touched stays unexplored after the round-trip. */
-    expect_true(dm2_v1_world_state_get_explored(loaded, 2, 0, 0) == 0,
-                "level 2 stays unexplored after save/load round-trip");
-    /* Same cell coordinate on a different level is independently tracked. */
-    expect_true(dm2_v1_world_state_get_explored(loaded, 4, 2, 3) == 0,
-                "level 4 cell (2,3) is unexplored even though level 0 was");
-
-    dm2_v1_world_state_free(loaded);
+    expect_true(serialized == NULL && serialized_size == 0u,
+                "incomplete world state rejects save instead of fabricating one");
     free(serialized);
 
     fprintf(stderr,

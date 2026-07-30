@@ -247,6 +247,19 @@
   source split pairs. All projections come directly from GRAPHICS.DAT item
   `0x22e`; focused layout and M11 handoff tests pass. The same commands now
   consume the recovered original `DoorGraphic[3][2]` pixels.
+- ✅ 2026-07-30 DM2 world-state synthetic-save removal: removed the
+  Firestaff-private `FS2E` minimap envelope from the DM2 world-state save and
+  load path. The bounded world-state model now returns `NULL` with output size
+  zero rather than emitting a fabricated `SKSave.dat`; real original save
+  candidates still go through the existing parser. This follows
+  `SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_SAVE`, which writes the full
+  source-owned 0x3c state block, globals, heroes, timers and dungeon through
+  `DM2_SUPPRESS_WRITER`. The minimap and level-transition tests now enforce
+  this fail-closed boundary, and the real-DUNGEON probe asserts the same
+  contract. Verification: strict syntax check of
+  `src/dm2/dm2_v1_world_state.c`; CMake build of
+  `probe_dm2_v1_world_state`; BUILD_TESTING CMake build and CTest of
+  `dm2_v1_world_state_minimap_level_transition`; `git diff --check`.
 
 - ✅ 2026-07-30 CSBWin `TAG0088b2` packed wall blit: Firestaff now executes
   the original wall-command projection boundary over the restored Atari

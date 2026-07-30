@@ -23,28 +23,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#define DM2_WORLD_STATE_STUB_SIZE 64u
-#define DM2_WORLD_STATE_EXPLORE_MAGIC "FS2E"
-#define DM2_WORLD_STATE_EXPLORE_HEADER_SIZE 12u
-#define DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE \
-    (DM2_WORLD_STATE_MAX_LEVELS * DM2_WORLD_STATE_EXPLORED_BYTES)
-
-static void write_u32_le(uint8_t *p, uint32_t v)
-{
-    p[0] = (uint8_t)(v & 0xFFu);
-    p[1] = (uint8_t)((v >> 8) & 0xFFu);
-    p[2] = (uint8_t)((v >> 16) & 0xFFu);
-    p[3] = (uint8_t)((v >> 24) & 0xFFu);
-}
-
-static uint32_t read_u32_le(const uint8_t *p)
-{
-    return (uint32_t)p[0]
-         | ((uint32_t)p[1] << 8)
-         | ((uint32_t)p[2] << 16)
-         | ((uint32_t)p[3] << 24);
-}
-
 static int dm2_v1_world_state_has_slot_header(const uint8_t *data, size_t size)
 {
     return data && size >= 42u && data[38] == 0xBEu && data[39] == 0xEFu &&
@@ -209,38 +187,20 @@ DM2_WorldState *dm2_v1_world_state_new_from_dungeon(const uint8_t *dungeon_data,
  *   [champion inventories] + [leader hand] + [extra dungeon] +
  *   [minion association]
  *
- * Source: docs/dm2_save_format.md
+ * SK-projects has a real writer, but it writes the complete source-owned
+ * save graph: DM2_GAME_SAVE first records the 0x3c save block, global bytes
+ * and words, heroes, timers and then the dungeon through DM2_SUPPRESS_WRITER.
+ * This model holds only a bounded load projection, so emitting any buffer
+ * would invent missing original state.  Reject until that full writer is
+ * ported and bound to verified game data.
+ *
+ * Source: SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_SAVE and
+ *         ::DM2_SUPPRESS_WRITER (the source-owned save route).
  */
 uint8_t *dm2_v1_world_state_serialize(const DM2_WorldState *state, size_t *out_size) {
-    /* Placeholder: full SUPPRESS encoding is a separate implementation.
-     * For Phase 2, return a minimal valid buffer with a Firestaff-private
-     * explored-map extension. The extension stays outside the original DM2
-     * SUPPRESS claim until the full save writer lands. */
-    const size_t total_size = DM2_WORLD_STATE_STUB_SIZE
-                            + DM2_WORLD_STATE_EXPLORE_HEADER_SIZE
-                            + DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE;
-    uint8_t *buf;
-
-    if (!state) { if (out_size) *out_size = 0; return NULL; }
-
-    buf = malloc(total_size);
-    if (!buf) { if (out_size) *out_size = 0; return NULL; }
-    memset(buf, 0, total_size);
-    /* Write save slot magic markers (BEET/DEAD) */
-    buf[38] = 0xBE; buf[39] = 0xEF;
-    buf[40] = 0xDE; buf[41] = 0xAD;
-    memcpy(buf + DM2_WORLD_STATE_STUB_SIZE, DM2_WORLD_STATE_EXPLORE_MAGIC, 4);
-    buf[DM2_WORLD_STATE_STUB_SIZE + 4] = 1; /* extension version */
-    buf[DM2_WORLD_STATE_STUB_SIZE + 5] = DM2_WORLD_STATE_MAX_LEVELS;
-    buf[DM2_WORLD_STATE_STUB_SIZE + 6] = DM2_WORLD_STATE_MAP_EDGE;
-    buf[DM2_WORLD_STATE_STUB_SIZE + 7] = DM2_WORLD_STATE_MAP_EDGE;
-    write_u32_le(buf + DM2_WORLD_STATE_STUB_SIZE + 8,
-                 (uint32_t)DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE);
-    memcpy(buf + DM2_WORLD_STATE_STUB_SIZE + DM2_WORLD_STATE_EXPLORE_HEADER_SIZE,
-           state->explored_by_level,
-           DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE);
-    if (out_size) *out_size = total_size;
-    return buf;
+    (void)state;
+    if (out_size) *out_size = 0u;
+    return NULL;
 }
 
 /*
@@ -248,64 +208,16 @@ uint8_t *dm2_v1_world_state_serialize(const DM2_WorldState *state, size_t *out_s
  * Source: docs/dm2_save_format.md
  */
 DM2_WorldState *dm2_v1_world_state_load_from_mem(const uint8_t *data, size_t size) {
-    DM2_WorldState *state;
-
     if (!data || size == 0u) return NULL;
 
-    /* Firestaff's small minimap extension is intentionally distinguished
-     * from an original slot.  Every non-extension input goes through the
-     * full candidate parser before allocating/publishing a world state. */
-    if (!(size >= DM2_WORLD_STATE_STUB_SIZE +
-                  DM2_WORLD_STATE_EXPLORE_HEADER_SIZE &&
-          dm2_v1_world_state_has_slot_header(data, size) &&
-          memcmp(data + DM2_WORLD_STATE_STUB_SIZE,
-                 DM2_WORLD_STATE_EXPLORE_MAGIC, 4) == 0)) {
-        const uint8_t *payload = data;
-        size_t payload_size = size;
-
-        /* SKWIN validates the 42-byte slot envelope before loading its body.
-         * Keep that ordering: only strip a demonstrably valid envelope, then
-         * let the original-body parser validate all SUPPRESS sections. */
-        if (dm2_v1_world_state_has_slot_header(data, size)) {
-            if (size <= 42u) return NULL;
-            payload = data + 42u;
-            payload_size = size - 42u;
-        }
-        return dm2_v1_world_state_from_candidate(payload, payload_size);
+    /* SKWIN validates the 42-byte slot envelope before loading its body.
+     * Keep that ordering: only strip a demonstrably valid envelope, then let
+     * the original-body parser validate all SUPPRESS sections. */
+    if (dm2_v1_world_state_has_slot_header(data, size)) {
+        if (size <= 42u) return NULL;
+        return dm2_v1_world_state_from_candidate(data + 42u, size - 42u);
     }
-
-    state = calloc(1, sizeof(DM2_WorldState));
-    if (!state) return NULL;
-
-    state->raw_save = malloc(size);
-    if (!state->raw_save) { free(state); return NULL; }
-    memcpy(state->raw_save, data, size);
-    state->raw_save_size = size;
-
-    /* Firestaff-private minimap extension.  It is never mistaken for an
-     * original save: original payloads use the candidate path above. */
-    state->game_tick = 0;
-    state->timer_count = 0;
-    state->quest_count = 0;
-
-    if (size >= DM2_WORLD_STATE_STUB_SIZE + DM2_WORLD_STATE_EXPLORE_HEADER_SIZE &&
-        memcmp(data + DM2_WORLD_STATE_STUB_SIZE, DM2_WORLD_STATE_EXPLORE_MAGIC, 4) == 0) {
-        const uint8_t *ext = data + DM2_WORLD_STATE_STUB_SIZE;
-        uint32_t payload_size = read_u32_le(ext + 8);
-        size_t payload_offset = DM2_WORLD_STATE_STUB_SIZE + DM2_WORLD_STATE_EXPLORE_HEADER_SIZE;
-        if (ext[4] == 1 &&
-            ext[5] == DM2_WORLD_STATE_MAX_LEVELS &&
-            ext[6] == DM2_WORLD_STATE_MAP_EDGE &&
-            ext[7] == DM2_WORLD_STATE_MAP_EDGE &&
-            payload_size == DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE &&
-            size >= payload_offset + DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE) {
-            memcpy(state->explored_by_level,
-                   data + payload_offset,
-                   DM2_WORLD_STATE_EXPLORE_PAYLOAD_SIZE);
-        }
-    }
-
-    return state;
+    return dm2_v1_world_state_from_candidate(data, size);
 }
 
 DM2_WorldState *dm2_v1_world_state_load_from_file(const char *path) {

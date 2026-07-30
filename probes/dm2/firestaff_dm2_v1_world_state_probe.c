@@ -124,23 +124,13 @@ int main(int argc, char **argv) {
         PROBE_ASSERT(bad_hp2 == -1, "Champion HP 99 = -1 (OOB)");
     }
 
-    /* ── Test SUPPRESS serialize (stub) ── */
+    /* ── Incomplete save graph must fail closed ── */
     fprintf(stderr, "\n--- Testing dm2_v1_world_state_serialize --- \n");
     if (state) {
         size_t ser_size = 0;
         uint8_t *ser_buf = dm2_v1_world_state_serialize(state, &ser_size);
-        PROBE_ASSERT(ser_buf != NULL,
-                     "dm2_v1_world_state_serialize returns non-NULL");
-        PROBE_ASSERT(ser_size > 0,
-                     "Serialized size > 0 (got %zu)", ser_size);
-        if (ser_buf) {
-            /* Check save slot magic markers (BEET/DEAD) */
-            PROBE_ASSERT(ser_buf[38] == 0xBE && ser_buf[39] == 0xEF,
-                         "Save slot magic BEET present at offset 38");
-            PROBE_ASSERT(ser_buf[40] == 0xDE && ser_buf[41] == 0xAD,
-                         "Save slot magic DEAD present at offset 40");
-            free(ser_buf);
-        }
+        PROBE_ASSERT(ser_buf == NULL && ser_size == 0u,
+                     "incomplete model rejects synthetic SKSave output");
     }
 
     /* ── Null guards ── */

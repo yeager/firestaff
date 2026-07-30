@@ -161,8 +161,12 @@ DM2_WorldState *dm2_v1_world_state_load_from_mem(const uint8_t *data, size_t siz
 DM2_WorldState *dm2_v1_world_state_new_from_dungeon(const uint8_t *dungeon_data, size_t size);
 
 /* Save world state to a SUPPRESS-encoded buffer (caller frees).
- * Returns buffer size in *out_size on success.
- * Source: docs/dm2_save_format.md */
+ *
+ * This bounded load projection deliberately returns NULL until the complete
+ * original writer is implemented.  It must never emit a Firestaff-private
+ * buffer in place of a DM2 SKSave file.
+ * Source: SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_SAVE,
+ *         ::DM2_SUPPRESS_WRITER */
 uint8_t *dm2_v1_world_state_serialize(const DM2_WorldState *state, size_t *out_size);
 
 /* Free world state and all owned resources. Safe with NULL. */
