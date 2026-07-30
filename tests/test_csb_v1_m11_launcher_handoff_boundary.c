@@ -1469,6 +1469,7 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
         unsigned char framebuffer[320 * 200];
         const int requested = requested_modes[i];
         int expected = requested;
+        int runtime_binding_expected;
 
         init_menu_without_gallery(&menu, data_dir, "csb");
         dismiss_initial_message(&menu);
@@ -1512,15 +1513,25 @@ static void run_real_v2_launcher_handoffs_if_available(void) {
                             probe.presentationHeight > 0,
                         "CSB V2 boot receipt exposes the resolved presentation mode");
         }
-        expect_true(csb_v2_runtime_is_bound() == 1,
-                    "CSB V2 runtime observes the real V1 runtime profile");
+        /* V2.0 is deliberately a source-preserving filter-only path.  It
+         * must not bind the smooth runtime because that would alter the
+         * source-owned page before the capture boundary. */
+        runtime_binding_expected =
+            expected == M12_PRESENTATION_V21_UPSCALED ||
+            expected == M12_PRESENTATION_V22_MODERN;
+        expect_true(csb_v2_runtime_is_bound() == runtime_binding_expected,
+                    runtime_binding_expected
+                        ? "CSB V2 runtime observes the real V1 runtime profile"
+                        : "CSB V2.0 remains filter-only without a smooth-runtime bind");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
                     "CSB V2 title consumes a real source-owned title surface");
         M11_GameView_TickAnimation(&view);
-        expect_true(csb_v2_runtime_is_bound() == 1,
-                    "CSB V2 binding survives a presented animation frame");
+        expect_true(csb_v2_runtime_is_bound() == runtime_binding_expected,
+                    runtime_binding_expected
+                        ? "CSB V2 binding survives a presented animation frame"
+                        : "CSB V2.0 remains filter-only after a presented frame");
         {
             int tick;
             for (tick = 0; tick < 128 && view.csbState.startup_title_active;
@@ -1660,6 +1671,7 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         const int requested = requested_modes[mode_index];
         int tick;
         int animation_pixels_visible = 0;
+        int runtime_hud_pixels_visible = 0;
 
         init_menu_without_gallery(&menu, data_dir, "csb");
         dismiss_initial_message(&menu);
@@ -1702,6 +1714,12 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                         view.csbState.level_loaded &&
                         view.csbAtariStRuntimeHandoffComplete,
                     "Atari ST ANIMATE.SCR reaches its source-owned FTLCODE handoff");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        runtime_hud_pixels_visible =
+            count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0;
+        expect_true(runtime_hud_pixels_visible,
+                    "Atari ST C232 HUD material reaches the first FTLCODE frame");
         expect_true(view.presentationMode == requested,
                     "Atari ST runtime retains the requested presentation mode");
         M11_GameView_Shutdown(&view);

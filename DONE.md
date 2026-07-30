@@ -145,6 +145,22 @@
   implemented V2.x behavior; unreconciled F0128 material families remain
   intentionally V1 source pixels.
 
+- ✅ 2026-07-30 CSBWin/Atari runtime HUD handoff: M11 now consumes the
+  original CSBWin `GRAPHICS.DAT` C232 layout immediately after the verified
+  `ANIM.C` to `FTLCODE` transition. All four C028 direction slices plus
+  C020/C030-C032/C013/C009 are decoded from the active Atari IMG3/LZW package
+  and committed atomically at their C232 coordinates; no PC3.4 HUD or
+  generated panel is substituted. The real Atari M12/M11 regression now
+  proves a nonblank first runtime HUD frame in every admitted V1/V2.x mode.
+  The separate packed-byte CSBWin dungeon viewport remains open.
+
+- ✅ 2026-07-30 CSB V2 launcher contract correction: the M12/M11 handoff
+  regression now distinguishes V2.0's intentionally filter-only mode from
+  V2.1/V2.2 smooth-runtime modes. V2.0 proves it remains unbound before and
+  after a presented frame; V2.1/V2.2 prove their runtime binding survives.
+  This removes a false failure without weakening the actual presentation
+  contract.
+
 - ✅ 2026-07-30 Start-menu data-directory token containment: the runtime
   data-directory accessor and scan-progress status line now use the same
   durable selected/configured path as the Settings row. A transient macOS

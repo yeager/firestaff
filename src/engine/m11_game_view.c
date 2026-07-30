@@ -30,6 +30,7 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
 #include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
@@ -2123,6 +2124,88 @@ static int m11_csb_install_runtime_source_graphic(
             graphic_mask;
     }
     return installed;
+}
+
+/* CSBWin's item C232 is not a bitmap: it is the original 0x722-byte HUD
+ * layout record used by CSBCode.cpp.  It names the exact GRAPHICS.DAT images
+ * and their destination rectangles.  Keep this resolver on the active
+ * source decoder so an Atari ST/CSBWin session can never accidentally pull
+ * similarly-numbered PC3.4 pixels from the generic M11 loader. */
+static int m11_csb_csbwin_hud_source_resolver(
+    void *user_data, uint16_t graphic_index, const uint8_t **out_pixels,
+    int *out_width, int *out_height)
+{
+    M11_GameViewState *state = (M11_GameViewState *)user_data;
+    const M11_AssetSlot *asset;
+
+    if (!state || !out_pixels || !out_width || !out_height ||
+        !m11_csb_install_runtime_source_graphic(state, graphic_index)) {
+        return 0;
+    }
+    asset = M11_AssetLoader_Load(&state->assetLoader, graphic_index);
+    if (!asset || !asset->loaded || !asset->pixels ||
+        asset->width == 0u || asset->height == 0u) {
+        return 0;
+    }
+    *out_pixels = asset->pixels;
+    *out_width = (int)asset->width;
+    *out_height = (int)asset->height;
+    return 1;
+}
+
+/* The Atari/CSBWin startup route has no PC34 C017/C040 terminal page.  Its
+ * real runtime HUD owner is instead the C232 coordinate record plus the
+ * source graphics it references.  Present that complete, atomic layer after
+ * ANIM.C hands control to FTLCODE.  This deliberately does not claim to be
+ * a dungeon renderer: no unproven PC34 viewport record is substituted for
+ * the still-unbound CSBWin dungeon owner. */
+static int m11_csb_present_atari_st_runtime_hud(
+    M11_GameViewState *state, unsigned char *framebuffer,
+    int framebuffer_width, int framebuffer_height)
+{
+    const CSB_V1_BootProfile *profile;
+    CSB_V1_CSBWinLayout0232 layout;
+    CSB_V1_CSBWinHudMaterialPlan0232 plan;
+    CSB_V1_CSBWinHudCompositionReceipt0232 receipt;
+    unsigned char candidate[320 * 200];
+    int y;
+
+    if (!state || !framebuffer || framebuffer_width < 320 ||
+        framebuffer_height < 200 || !state->csbAtariStRuntimeHandoffComplete ||
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!profile || (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+                     profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !profile->graphics_verified || !profile->graphics_path[0]) {
+        return 0;
+    }
+    memset(&layout, 0, sizeof(layout));
+    memset(&plan, 0, sizeof(plan));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!csb_v1_csbwin_layout_0232_read_graphics_dat(profile->graphics_path,
+                                                      &layout) ||
+        !csb_v1_csbwin_layout_0232_build_hud_material_plan(&layout, &plan)) {
+        return 0;
+    }
+    for (y = 0; y < 200; ++y) {
+        memcpy(candidate + (size_t)y * 320u,
+               framebuffer + (size_t)y * (size_t)framebuffer_width,
+               320u);
+    }
+    if (!csb_v1_csbwin_layout_0232_compose_hud(
+            &plan, m11_csb_csbwin_hud_source_resolver, state, candidate,
+            sizeof(candidate), &receipt) || !receipt.valid ||
+        receipt.material_count != CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT) {
+        return 0;
+    }
+    for (y = 0; y < 200; ++y) {
+        memcpy(framebuffer + (size_t)y * (size_t)framebuffer_width,
+               candidate + (size_t)y * 320u, 320u);
+    }
+    m11_set_status(state, "CSB", "CSBWIN HUD READY - DUNGEON OWNER REQUIRED");
+    return 1;
 }
 
 static int m11_render_csb_boot_viewport(M11_GameViewState *state,
@@ -50045,6 +50128,19 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                           framebuffer,
                                           framebufferWidth,
                                           framebufferHeight);
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+            g_drawState = NULL;
+            g_activeOriginalFont = NULL;
+            g_m11_font_scale_override = 0;
+            return;
+        }
+        /* Standard CSBWin/Atari has its own C232 HUD layout rather than the
+         * PC3.4 C017/C040 terminal session.  Once ANIM.C has yielded to the
+         * game, consume that real source layer directly. */
+        if (m11_csb_present_atari_st_runtime_hud(csb_state, framebuffer,
+                                                 framebufferWidth,
+                                                 framebufferHeight)) {
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
             g_drawState = NULL;

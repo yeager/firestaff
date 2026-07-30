@@ -1256,14 +1256,20 @@ that its exact runtime path is not already source-locked and tested.
    erasing the dungeon frame, and leaves the caller's frame unchanged if any
    source image is absent, malformed or
    too small. The focused test uses the real Atari decoder and source bytes,
-   not a PC3.4 C017/C040 replacement. M11 still needs to consume this
-   source-owned panel layer with the corresponding CSBWin dungeon owner.
+   not a PC3.4 C017/C040 replacement. 2026-07-30: M11 now consumes that
+   source-owned panel layer immediately after ANIM.C's verified FTLCODE
+   handoff. The renderer resolves every C232-referenced graphic through the
+   active Atari IMG3/LZW decoder and commits all ten panels atomically; a
+   missing source leaves the post-title page fail-closed. The real Atari
+   M12/M11 handoff test now draws and proves the first nonblank FTLCODE HUD
+   frame in V1/V2.0/V2.1/V2.2. This is deliberately only the authentic C232
+   HUD layer, not a substitute dungeon backdrop or PC3.4 viewport.
    2026-07-30: CSBWin's native viewport wall catalog is now source-locked as
    `77 + 13 * WallSet + slot` (seven door then six wall records), matching
    `CSBCode.cpp:2933-2940`; PC3.4's 40-record F0095 catalog remains isolated.
    All 52 records for CSBWin WallSet 0–3 decode through the original Atari
    IMG3/LZW path in the real-data regression.
-   M11 consumption remains blocked on CSBWin's packed-byte blitter stride:
+   Full CSBWin dungeon consumption remains blocked on CSBWin's packed-byte blitter stride:
    the current Atari decoder expands pixels to full width, while the original
    viewport applies the source's half-width packed stride. Direct reuse would
    distort the frame, so the route remains fail-closed until that decoder/
