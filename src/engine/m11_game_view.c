@@ -33970,6 +33970,11 @@ static int m11_draw_dm_dialog_backdrop(const M11_GameViewState* state,
                                        int framebufferHeight) {
     const M11_AssetSlot* slot;
     if (!state || !state->assetsAvailable || !framebuffer) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(
+            state, (unsigned int)dm1_v1_graphic_dialog_box_pc34())) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)dm1_v1_graphic_dialog_box_pc34());
     if (!slot || !slot->loaded || !slot->pixels ||
@@ -33995,6 +34000,11 @@ static int m11_copy_dm_dialog_patch(const M11_GameViewState* state,
     const M11_AssetSlot* slot;
     int x, y;
     if (!state || !state->assetsAvailable || !framebuffer) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(
+            state, (unsigned int)dm1_v1_graphic_dialog_box_pc34())) {
+        return 0;
+    }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)dm1_v1_graphic_dialog_box_pc34());
     if (!slot || !slot->loaded || !slot->pixels) return 0;
@@ -46589,7 +46599,12 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
     int slotW;
     if (state) {
         activeIndex = state->world.party.activeChampionIndex;
-        useV2PartyHud = m11_v2_vertical_slice_enabled(state);
+        /* CSB V2.x may transform the final presented surface, but its
+         * 320x200 source page remains the PC3.4 C017/C040 composition.
+         * Drawing the alternate party HUD here made V2 alter source pixels
+         * before the presentation pass and violated the V2.1/V2.2 contract. */
+        useV2PartyHud = m11_v2_vertical_slice_enabled(state) &&
+            state->sourceKind != M11_GAME_SOURCE_CSB_BOOT;
     }
     if (m11_dm1_v1_top_row_receipt_required(state)) {
         if (!m11_draw_dm1_v1_top_row_receipt(

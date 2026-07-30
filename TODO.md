@@ -243,6 +243,15 @@ an integration build pass.
   viewport, V2.2 artpack and V2 HUD tests pass; the V2.1 source-page capture
   also passed three consecutive isolated runs.
 
+- **CSB-V2X-SOURCE-PAGE-HUD-ISOLATION:** Closed 2026-07-30. CSB V2.x now
+  keeps C017/C040 champion composition on the original 320x200 source page;
+  the alternate V2 party-HUD path is presentation-only and no longer writes
+  V2 pixels before EPX/filter/artpack processing. CSB dialog backdrops and
+  choice patches likewise use the package-owned decoder. Verification:
+  direct `csb_v21_presented_startup_capture` and
+  `csb_v22_source_artpack_runtime` PASS, proving equal V1/V2 source pages
+  and a changed final V2 presentation.
+
 - **CSB-V21-LIVE-UPSCALE-CONSUMPTION:** Closed 2026-07-29. The F10 CSB
   filter page now exposes the actual CSB V2.1 EPX scale (1x/2x/4x) and
   bilinear setting alongside the CSB filter chain. M11 consumes the

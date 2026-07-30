@@ -43337,3 +43337,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   now resolve from the authenticated CSB PC3.4 package in action, hand and
   inventory paths. The V2.1 source-page capture passed three consecutive
   isolated runs, alongside V1/V2.0/V2.1/V2.2 focused HUD and viewport tests.
+
+- ✅ 2026-07-30 CSB V2.x source-page HUD isolation: V2.0/V2.1/V2.2 now keep
+  the original C017/C040 champion composition in the 320x200 source page and
+  apply their visual changes only after source rendering. Dialog backdrops and
+  patches follow the same source decoder route. Direct V2.1 and V2.2 runtime
+  capture scripts PASS.
