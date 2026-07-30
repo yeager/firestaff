@@ -255,6 +255,11 @@ an integration build pass.
   declares 144x0 and therefore is not PC3.4 C040. Recover CSBWin's actual
   panel index/owner from `CSBCode.cpp` before enabling the fallback session;
   never infer a height or substitute a generated panel.
+  2026-07-30 follow-up: the supplied DMCSB1 item 40 expands to 1,560 source
+  bytes while retaining the `144x0` header. `Graphics.cpp::GetBasicGraphicAddress`
+  uses its caller's minimum `72x6` only to avoid a buffer fault; it is not an
+  original image dimension or a valid replacement for PC3.4's `144x73` C040.
+  Keep this package fail-closed until a separate CSBWin HUD owner is proven.
   2026-07-30 hardening: the obsolete V2.2 3x3 rectangle painters now return
   without touching the framebuffer. They had no F0128 command receipts and
   therefore cannot consume wall, floor, creature, ornament or Thing assets.
