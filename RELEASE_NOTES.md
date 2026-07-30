@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.195
+
+- CSBWin: verify the original floor, ceiling, wall, and door graphic catalog
+  against real Atari `GRAPHICS.DAT` data and preserve the packed-bitmap stride
+  contract required for a safe viewport integration.
+- CSB: retain the verified V2.x source-art fallback path when no bound V2.2
+  artpack is available.
+
 # Firestaff v3.0.194
 
 - CSBWin: verify all ten original C232 HUD material sources against real Atari
