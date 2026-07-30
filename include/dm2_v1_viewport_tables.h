@@ -36,6 +36,29 @@ extern const uint32_t dm2_v1_vp_palette_mask_full[8];
 extern const uint32_t dm2_v1_vp_palette_mask_rgb[8];
 extern const uint32_t dm2_v1_vp_palette_alpha[4];
 
+extern const int8_t dm2_v1_vp_column_offset[23];
+extern const int8_t dm2_v1_vp_tile_neighbor[23][4];
+extern const int8_t dm2_v1_vp_tile_pos[23][2];
+extern const int8_t dm2_v1_vp_tile_mirror[23];
+extern const int8_t dm2_v1_vp_tile_depth[23];
+extern const int8_t dm2_v1_vp_tile_to_near[23];
+extern const int8_t dm2_v1_vp_tile_to_far[23];
+extern const int8_t dm2_v1_vp_depth_light[5];
+
+extern const int8_t dm2_v1_vp_creature_cell_pos[16][2];
+extern const int8_t dm2_v1_vp_creature_cell_visible[16];
+extern const int8_t dm2_v1_vp_creature_cell_depth[16];
+
+extern const int16_t dm2_v1_vp_door_face[16];
+extern const int8_t dm2_v1_vp_door_flip[16];
+extern const int8_t dm2_v1_vp_door_ornament[16];
+extern const int8_t dm2_v1_vp_door_ornament_alt[16];
+extern const int16_t dm2_v1_vp_door_rect[16];
+
+extern const int8_t dm2_v1_vp_floor_ornament[14][2];
+extern const int8_t dm2_v1_vp_floor_depth[14];
+extern const int8_t dm2_v1_vp_floor_item_id[14];
+
 const char *dm2_v1_viewport_tables_source_evidence(void);
 
 #ifdef __cplusplus

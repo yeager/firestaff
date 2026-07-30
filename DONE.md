@@ -398,6 +398,13 @@
   The only `.fsart` archives currently in `/Users/bosse/Downloads` identify
   themselves as `game: dm1`; they are correctly not admitted as CSB art.
 
+- ✅ 2026-07-30 DM2 HUD tables: button descriptors (table1d3d23, 62 entries),
+  click map (table1d3cd0, 83 entries), panel layout (table1d3ba0, 76 entries),
+  action icons (table1d3ed5, 10 entries). Extended viewport tables with tile
+  adjacency (table1d6a74, 23x4), tile positions (table1d6ad0, 23x2), tile
+  mirror/depth/near/far maps, depth light, creature cell positions, door face/
+  flip/ornament/rect tables, floor ornament/depth/item tables. 24 new table
+  arrays total. 6+5 tests. Source: dm2data.cpp:494-802.
 - ✅ 2026-07-29 DM2 viewport tables: render order (table1d7029), column counts
   (table1d7012), wall face indices near/mid (table1d6fee/6f9c), wall ornament
   slots (table1d6fdc/6f7c/6f5c), wall visibility (table1d6f4c), wall rect IDs

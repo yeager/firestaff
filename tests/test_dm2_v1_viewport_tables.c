@@ -91,6 +91,47 @@ static void test_depth_index(void)
     assert(dm2_v1_vp_depth_index[4] == -1);
 }
 
+static void test_tile_neighbor(void)
+{
+    assert(dm2_v1_vp_tile_neighbor[0][0] == 0x01);
+    assert(dm2_v1_vp_tile_neighbor[0][1] == 0x02);
+    assert(dm2_v1_vp_tile_neighbor[0][2] == 0x03);
+    assert(dm2_v1_vp_tile_neighbor[0][3] == -1);
+    assert(dm2_v1_vp_tile_neighbor[6][2] == 0x0b);
+}
+
+static void test_tile_pos(void)
+{
+    assert(dm2_v1_vp_tile_pos[0][0] == 0);
+    assert(dm2_v1_vp_tile_pos[0][1] == 0);
+    assert(dm2_v1_vp_tile_pos[1][0] == -1);
+    assert(dm2_v1_vp_tile_pos[22][0] == 3);
+    assert(dm2_v1_vp_tile_pos[22][1] == 4);
+}
+
+static void test_tile_mirror(void)
+{
+    assert(dm2_v1_vp_tile_mirror[0] == 0);
+    assert(dm2_v1_vp_tile_mirror[1] == 2);
+    assert(dm2_v1_vp_tile_mirror[2] == 1);
+}
+
+static void test_door_tables(void)
+{
+    assert(dm2_v1_vp_door_face[0] == 0x035e);
+    assert(dm2_v1_vp_door_face[9] == -1);
+    assert(dm2_v1_vp_door_flip[2] == 1);
+    assert(dm2_v1_vp_door_rect[0] == 0x02be);
+}
+
+static void test_floor_tables(void)
+{
+    assert(dm2_v1_vp_floor_ornament[0][0] == (int8_t)0xd3);
+    assert(dm2_v1_vp_floor_depth[0] == 4);
+    assert(dm2_v1_vp_floor_depth[3] == 3);
+    assert(dm2_v1_vp_floor_item_id[3] == 0x12);
+}
+
 int main(void)
 {
     test_render_order();
@@ -105,6 +146,11 @@ int main(void)
     test_light_curve();
     test_palette_masks();
     test_depth_index();
+    test_tile_neighbor();
+    test_tile_pos();
+    test_tile_mirror();
+    test_door_tables();
+    test_floor_tables();
     assert(dm2_v1_viewport_tables_source_evidence() != NULL);
     printf("All dm2_v1_viewport_tables tests passed.\n");
     return 0;
