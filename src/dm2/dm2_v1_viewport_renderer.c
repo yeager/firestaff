@@ -1330,16 +1330,11 @@ void dm2_v1_viewport_init(DM2_V1_ViewportState *s,
     s->surface_snapshot.stride = (uint16_t)s->fb_stride;
     s->surface_snapshot.resolution = 8u;
     s->surface_snapshot.generation = 1u;
-    s->party_dir    = 0;
-    s->party_x      = 15;
-    s->party_y      = 15;
-    s->dungeon_level = 0;
-    s->is_outdoor   = 0;
-    s->weather      = 0;
-    s->rain_intensity = 0;
-    s->time_of_day  = 0.5f;
+    /* Position, level, weather, clock and RNG are supplied by the live
+     * source-owned runtime immediately after this allocation.  Keep the
+     * zeroed state unavailable until that handoff instead of carrying the
+     * former Hall-of-Champions/noon fixture values. */
     s->dirty        = 1;
-    s->random_seed  = 0x0100u;
     s->last_hud_core_gdat_hash = 2166136261u;
 
     /* Initialize all view squares to empty */

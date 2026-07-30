@@ -44492,3 +44492,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   values remain unavailable until their original owner is imported. The boot
   profile smoke test passes all 87 checks, and the isolated runtime smoke
   fixture now proves it cannot fabricate that party snapshot.
+- ✅ 2026-07-30 DM2 viewport bootstrap fixture removal: the V1 viewport
+  allocation no longer carries the former Hall-of-Champions position, noon
+  clock or fixed weather RNG. `dm2_v1_runtime_render_frame()` supplies those
+  fields from the bound runtime/G1 session before any source-GDAT draw. This
+  leaves an unbound viewport with no implicit playable world state; the
+  hash-verified boot profile smoke remains 87/87.
