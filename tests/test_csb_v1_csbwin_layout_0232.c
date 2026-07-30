@@ -203,6 +203,32 @@ static void check_real_hud_composition(const char *path)
     for (index = 0; index < 33u; ++index) free(source.pixels[index]);
 }
 
+static void check_real_viewport_wall_catalog(const char *path)
+{
+    uint16_t graphic_index;
+    unsigned char *pixels;
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+    int width;
+    int height;
+    unsigned int wall_set;
+    unsigned int slot;
+
+    if (!path || !path[0]) return;
+    for (wall_set = 0u; wall_set < 4u; ++wall_set) {
+        for (slot = 0u; slot < CSB_V1_CSBWIN_WALLSET_GRAPHIC_COUNT; ++slot) {
+            pixels = NULL;
+            width = height = 0;
+            memset(&receipt, 0, sizeof(receipt));
+            CHECK(csb_v1_csbwin_viewport_graphic_index((uint16_t)wall_set,
+                (uint16_t)slot, &graphic_index));
+            CHECK(csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(path,
+                graphic_index, &pixels, &width, &height, &receipt));
+            CHECK(receipt.valid && pixels && width > 0 && height > 0);
+            free(pixels);
+        }
+    }
+}
+
 int main(void)
 {
     uint8_t graphic[CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE];
@@ -295,6 +321,7 @@ int main(void)
     real_graphics_dat = getenv("FIRESTAFF_CSBWIN_GRAPHICS_DAT");
     check_real_layout(real_graphics_dat);
     check_real_hud_composition(real_graphics_dat);
+    check_real_viewport_wall_catalog(real_graphics_dat);
 
     if (failures) return 1;
     puts("PASS: CSBWin GRAPHICS.DAT 0x232 layout decode");
