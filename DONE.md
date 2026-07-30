@@ -44475,3 +44475,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   absent or malformed. The real-data boot regression proves `BLOCK` and
   `FUSE` at their source indices; the original-PC3.4 Prison HUD regression
   passes. The separate action-set owner remains open.
+
+- ✅ 2026-07-30 CSB G0489 action-set ownership: ReDMCSB `MENU.C:90-136`
+  establishes the PC3.4 action rows as 44 compiled six-byte records, not a
+  `GRAPHICS.DAT` member. CSB runtime now owns that complete source table and
+  M11 consumes its three action indices only through the CSB session. F0389
+  refuses to publish an action menu if the receipt is unavailable, rather
+  than falling through to DM1's parallel G0489 table. Real PC3.4 boot checks
+  the empty-hand and one-row STAB sets; the CSB M11 regression proves the
+  missing-receipt fail-closed boundary.

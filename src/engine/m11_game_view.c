@@ -35689,6 +35689,8 @@ unsigned int M11_GameView_GetActingChampionOrdinal(const M11_GameViewState* stat
 
 int M11_GameView_SetActingChampion(M11_GameViewState* state, int championIndex) {
     unsigned int setIdx;
+    unsigned char csb_action_indices[3];
+    const CSB_V1_BootProfile *csb_profile;
     if (!state) return 0;
     if (state->candidateMirrorPanelActive) {
         /* ReDMCSB MENU.C F0390 lines 751-759: while
@@ -35710,6 +35712,17 @@ int M11_GameView_SetActingChampion(M11_GameViewState* state, int championIndex) 
      * can't actually be used. */
     setIdx = m11_resolve_action_set_for_champion(state, championIndex);
     if (setIdx == 0) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        csb_profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+        /* ReDMCSB MENU.C F0389 dereferences G0489 before it publishes
+         * G0506. Without CSB's source-owned record, do not open a menu that
+         * could later inherit a DM1 row. */
+        if (!csb_v1_runtime_action_set_indices_g0489(
+                csb_profile ? &csb_profile->runtime : NULL,
+                setIdx, csb_action_indices)) {
+            return 0;
+        }
+    }
     /* DM1 stores an ORDINAL (1-based), matching G0506. */
     state->actingChampionOrdinal = (unsigned int)(championIndex + 1);
     return 1;
@@ -35724,6 +35737,7 @@ int M11_GameView_GetActingActionIndices(const M11_GameViewState* state,
                                         unsigned char outIndices[3]) {
     int idx;
     unsigned int setIdx;
+    const CSB_V1_BootProfile *csb_profile;
     if (!state || !outIndices) return 0;
     if (state->candidateMirrorPanelActive) {
         /* ReDMCSB MENU.C:F0390 lines 751-754 clears G0506 while
@@ -35737,6 +35751,11 @@ int M11_GameView_GetActingActionIndices(const M11_GameViewState* state,
     if (idx < 0 || idx >= CHAMPION_MAX_PARTY) return 0;
     setIdx = m11_resolve_action_set_for_champion(state, idx);
     if (setIdx == 0 || setIdx >= 44) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        csb_profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+        return csb_v1_runtime_action_set_indices_g0489(
+            csb_profile ? &csb_profile->runtime : NULL, setIdx, outIndices);
+    }
     outIndices[0] = M11_ACTION_SET_ACTIONS[setIdx][0];
     outIndices[1] = M11_ACTION_SET_ACTIONS[setIdx][1];
     outIndices[2] = M11_ACTION_SET_ACTIONS[setIdx][2];

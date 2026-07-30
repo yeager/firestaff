@@ -1654,6 +1654,24 @@ static void test_enter_game_loads_real_m564_object_names_when_supplied(void)
           "real C699 action-name stream supplies BLOCK at index 1");
     CHECK(strcmp(csb_v1_runtime_action_name_c699(&p.runtime, 43u), "FUSE") == 0,
           "real C699 action-name stream supplies FUSE at index 43");
+    /* G0489 is executable-initialized PC3.4 source data (MENU.C:90-136),
+     * not a GRAPHICS.DAT record. The boot runtime owns the exact six-byte
+     * rows independently of M11's DM1 table. */
+    CHECK(p.runtime.action_set_table_valid == 1,
+          "PC3.4 runtime owns the ReDMCSB G0489 action-set source table");
+    {
+        unsigned char action_set[3];
+        CHECK(csb_v1_runtime_action_set_indices_g0489(
+                  &p.runtime, 2u, action_set) == 1 &&
+              action_set[0] == 6u && action_set[1] == 7u &&
+              action_set[2] == 8u,
+              "CSB G0489 set 2 preserves PUNCH KICK WAR CRY");
+        CHECK(csb_v1_runtime_action_set_indices_g0489(
+                  &p.runtime, 5u, action_set) == 1 &&
+              action_set[0] == 13u && action_set[1] == 255u &&
+              action_set[2] == 255u,
+              "CSB G0489 set 5 preserves the one-row STAB action set");
+    }
     csb_v1_boot_cleanup(&p);
 }
 

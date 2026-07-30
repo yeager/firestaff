@@ -15739,6 +15739,58 @@ const char *csb_v1_runtime_action_name_c699(
     return profile->action_names[action_index];
 }
 
+static void csb_v1_runtime_init_action_sets_g0489(
+    CSB_V1_RuntimeProfile *profile)
+{
+    /* ReDMCSB MENU.C:90-136, PC3.4 G0489_as_Graphic560_ActionSets[44].
+     * This is executable-initialized source data, rather than a GRAPHICS.DAT
+     * payload. Keep all six bytes (three action indexes, two properties and
+     * the source's unused byte) so later CSB consumers do not reconstruct it
+     * from the parallel DM1 table. */
+    static const uint8_t source[CSB_V1_ACTION_SET_COUNT]
+                               [CSB_V1_ACTION_SET_BYTES] = {
+        {255,255,255,  0,  0, 0}, { 27, 43, 35,  0,  0, 3},
+        {  6,  7,  8,  0,  0, 9}, {  0,  0,  0,  0,  0, 0},
+        {  0,  0,  0,  0,  0, 0}, { 13,255,255,  0,  0, 4},
+        { 13, 20,255,128,  0,16}, { 13, 23,255,128,  0,17},
+        { 28, 41, 22,  2,128,14}, { 16,  2, 23,  0,128,17},
+        {  2, 25, 20,  2,128,16}, { 17, 41, 34,  3,  5,16},
+        { 42,  9, 28,  0,  2, 9}, { 13, 17,  2,  2,  3, 4},
+        { 16, 17, 15,  1,  5, 5}, { 28, 17, 25,  1,  5, 4},
+        {  2, 25, 15,  5,  6, 5}, {  9,  2, 29,  2,  5, 4},
+        { 16, 29, 24,  2,  4, 3}, { 13, 15, 19,  5,  7, 4},
+        { 13,  2, 25,  0,  5, 4}, {  2, 29, 19,  3,  8, 4},
+        { 13, 30, 31,  2,  4, 6}, { 13, 31, 25,  3,  6, 6},
+        { 42, 30,255,  0,  0, 6}, {  0,  0,  0,  0,  0, 0},
+        { 42,  9,255,  0,  0, 9}, { 32,255,255,  0,  0,11},
+        { 37, 33, 36,128,  3,15}, { 37, 33, 34,128,128,15},
+        { 17, 38, 21,128,128,16}, { 13, 21, 34,128,128,16},
+        { 36, 37, 41,  2,  3,18}, { 13, 23, 39,128,128,17},
+        { 13, 17, 40,  0,128,17}, { 17, 36, 38,  3,128,19},
+        {  4,255,255,  0,  0,14}, {  5,255,255,  0,  0, 0},
+        { 11,255,255,  0,  0,14}, { 10,255,255,  0,  0, 8},
+        { 42,  9,255,  0,  0, 9}, {  1, 12,255,  2,  0, 9},
+        { 42,255,255,  0,  0,10}, {  6, 11,255,128,  0, 3}
+    };
+
+    if (!profile) return;
+    memcpy(profile->action_sets, source, sizeof(source));
+    profile->action_set_table_valid = 1;
+}
+
+int csb_v1_runtime_action_set_indices_g0489(
+    const CSB_V1_RuntimeProfile *profile,
+    unsigned int action_set_index,
+    unsigned char out_indices[3])
+{
+    if (!profile || !out_indices || !profile->action_set_table_valid ||
+        action_set_index >= CSB_V1_ACTION_SET_COUNT) {
+        return 0;
+    }
+    memcpy(out_indices, profile->action_sets[action_set_index], 3u);
+    return 1;
+}
+
 int csb_v1_runtime_object_name(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing,
@@ -18720,6 +18772,7 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     memset(&profile->last_input_dispatch, 0,
            sizeof(profile->last_input_dispatch));
     profile->input_dispatch_count = 0;
+    csb_v1_runtime_init_action_sets_g0489(profile);
 
     profile->data_dir = data_dir;
     profile->save_dir = csb_v1_runtime_save_dir();

@@ -399,6 +399,8 @@ typedef struct {
 
 #define CSB_V1_OBJECT_NAME_COUNT 199
 #define CSB_V1_OBJECT_NAME_MAX_CHARS 31
+#define CSB_V1_ACTION_SET_COUNT 44
+#define CSB_V1_ACTION_SET_BYTES 6
 
 /* ── Difficulty ───────────────────────────────────────────────────────── */
 /*
@@ -772,6 +774,9 @@ typedef struct {
                                             [CSB_V1_OBJECT_NAME_MAX_CHARS + 1];
     int                     action_name_table_valid;
     char                    action_names[44][13];
+    int                     action_set_table_valid;
+    uint8_t                 action_sets[CSB_V1_ACTION_SET_COUNT]
+                                           [CSB_V1_ACTION_SET_BYTES];
     struct Dm1V1InputCommandQueuePc34Compat input_command_queue;
     struct Dm1V1InputQueueProcessResultPc34Compat last_input_dispatch;
     uint32_t                input_dispatch_count;
@@ -2677,6 +2682,14 @@ int csb_v1_runtime_load_action_names_c699(
 const char *csb_v1_runtime_action_name_c699(
     const CSB_V1_RuntimeProfile *profile,
     unsigned char action_index);
+
+/* ReDMCSB MENU.C G0489 is compiled PC3.4 executable data, not a
+ * GRAPHICS.DAT member. The runtime owns its exact six-byte records so CSB
+ * M11 never borrows the parallel DM1 table. */
+int csb_v1_runtime_action_set_indices_g0489(
+    const CSB_V1_RuntimeProfile *profile,
+    unsigned int action_set_index,
+    unsigned char out_indices[3]);
 
 /* Resolve a CSB runtime object thing to the leader-hand object name from
  * CSB dungeon records, without using DM1 M11 world tables. */

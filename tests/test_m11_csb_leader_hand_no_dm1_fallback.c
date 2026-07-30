@@ -420,6 +420,18 @@ int main(void)
         state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
             dagger;
 
+        /* CSB must not fall through to M11's DM1 G0489 table. A missing
+         * CSB runtime receipt therefore disables the action-menu route. */
+        check(profile.runtime.action_set_table_valid == 1,
+              "CSB runtime initializes its source-owned G0489 action sets");
+        profile.runtime.action_set_table_valid = 0;
+        check(!M11_GameView_SetActingChampion(&state, 0),
+              "CSB action menu fails closed without its G0489 receipt");
+        profile.runtime.action_set_table_valid = 1;
+        check(M11_GameView_SetActingChampion(&state, 0),
+              "CSB action menu resumes from its own G0489 receipt");
+        M11_GameView_ClearActingChampion(&state);
+
         /* CSB shares ReDMCSB COMMAND.C G0447 C007..C015 with the PC34
          * dungeon view.  These visible status boxes must remain live even
          * though CSB owns a separate runtime profile. */

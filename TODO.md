@@ -70,12 +70,6 @@
 
 ## Active DM1/CSB Symbol Queue
 
-- **CSB-V1-ACTION-SET-MATERIAL-BINDING:** C699 now owns CSB action text, but
-  the independently source-verified owner for the 3-entry action-set rows
-  (`G0489_as_Graphic560_ActionSets`) is still required. Bind that PC3.4
-  material before treating the current action-index selection as full CSB
-  parity. Do not substitute DM1 tables or invent a byte layout.
-
 - **DM1-PC34-SAVE-CORPUS-FINGERPRINT:** Closed 2026-07-30. The successful
   F0435 -> F0433 corpus receipt now carries a stable, nonzero FNV-1a
   fingerprint over each admitted original input and its transient export.
