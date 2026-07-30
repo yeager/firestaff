@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM1 inventory route/corpus verification: the C101 fallback
+  route assertion now follows the four narrower C140/C145/C011/C141 controls,
+  and the chest floor-drop fixture supplies the same raw C09 container row
+  required by F0333/F0334. The real action-hand close pixel probe and all
+  three focused contracts pass.
+
 - ✅ 2026-07-30 DM1 original PC34 save corpus: configured F0435/F0433
   round-trip verification now prioritizes the provenance-attested
   `saves/dm1/original-pc34` corpus. The real DOSBox `DMSAVE.DAT` completes

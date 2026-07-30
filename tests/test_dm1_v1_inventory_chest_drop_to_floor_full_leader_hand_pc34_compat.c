@@ -89,6 +89,7 @@ static void seed_runtime_view(M11_GameViewState* state,
                               unsigned char* weaponRaw,
                               int weaponCount,
                               struct DungeonContainer_Compat* containers,
+                              unsigned char* containerRaw,
                               int containerCount)
 {
     int i;
@@ -103,6 +104,7 @@ static void seed_runtime_view(M11_GameViewState* state,
     memset(weapons, 0, sizeof(*weapons) * (size_t)weaponCount);
     memset(weaponRaw, 0, (size_t)weaponCount * 4);
     memset(containers, 0, sizeof(*containers) * (size_t)containerCount);
+    memset(containerRaw, 0, (size_t)containerCount * 8);
 
     M11_GameView_Init(state);
     state->active = 1;
@@ -130,6 +132,8 @@ static void seed_runtime_view(M11_GameViewState* state,
     things->weaponCount = weaponCount;
     things->containers = containers;
     things->containerCount = containerCount;
+    things->rawThingData[THING_TYPE_CONTAINER] = containerRaw;
+    things->thingCounts[THING_TYPE_CONTAINER] = containerCount;
     things->rawThingData[THING_TYPE_WEAPON] = weaponRaw;
     things->thingCounts[THING_TYPE_WEAPON] = weaponCount;
     /* 4143a6828 hardened allowed-slots/icon lookups to consume the raw
@@ -158,6 +162,7 @@ static void seed_overfull_chest(struct DungeonWeapon_Compat* weapons,
                                 unsigned char* weaponRaw,
                                 int weaponCount,
                                 struct DungeonContainer_Compat* containers,
+                                unsigned char* containerRaw,
                                 unsigned short* weaponThings)
 {
     int i;
@@ -172,7 +177,11 @@ static void seed_overfull_chest(struct DungeonWeapon_Compat* weapons,
         weapons[i].next = weaponThings[i + 1];
         raw_set_next(weaponRaw, i, weaponThings[i + 1]);
     }
+    containers[0].next = THING_ENDOFLIST;
     containers[0].slot = weaponThings[0];
+    raw_set_next(containerRaw, 0, THING_ENDOFLIST);
+    containerRaw[2] = (unsigned char)(weaponThings[0] & 0xFFu);
+    containerRaw[3] = (unsigned char)(weaponThings[0] >> 8);
 }
 
 static int weapon_chain_count(const struct DungeonWeapon_Compat* weapons,
@@ -297,6 +306,7 @@ int DM1_V1_InventoryChestDropToFloorFullLeaderHand_RunPc34(
     struct DungeonWeapon_Compat weapons[WEAPON_COUNT];
     unsigned char weaponRaw[WEAPON_COUNT * 4];
     struct DungeonContainer_Compat containers[1];
+    unsigned char containerRaw[8];
     unsigned short weaponThings[WEAPON_COUNT];
     unsigned short chestThing = thing_ref(THING_TYPE_CONTAINER, CHEST_INDEX);
     unsigned short leaderThing;
@@ -314,8 +324,8 @@ int DM1_V1_InventoryChestDropToFloorFullLeaderHand_RunPc34(
 
     seed_runtime_view(&state, &dungeon, maps, tiles, squareData,
                       squareFirstThings, &things, weapons, weaponRaw,
-                      WEAPON_COUNT, containers, 1);
-    seed_overfull_chest(weapons, weaponRaw, WEAPON_COUNT, containers,
+                      WEAPON_COUNT, containers, containerRaw, 1);
+    seed_overfull_chest(weapons, weaponRaw, WEAPON_COUNT, containers, containerRaw,
                         weaponThings);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         chestThing;
@@ -409,13 +419,14 @@ static void test_empty_hand_eye_does_not_populate_floor(void)
     struct DungeonWeapon_Compat weapons[WEAPON_COUNT];
     unsigned char weaponRaw[WEAPON_COUNT * 4];
     struct DungeonContainer_Compat containers[1];
+    unsigned char containerRaw[8];
     unsigned short weaponThings[WEAPON_COUNT];
     unsigned short chestThing = thing_ref(THING_TYPE_CONTAINER, CHEST_INDEX);
 
     seed_runtime_view(&state, &dungeon, maps, tiles, squareData,
                       squareFirstThings, &things, weapons, weaponRaw,
-                      WEAPON_COUNT, containers, 1);
-    seed_overfull_chest(weapons, weaponRaw, WEAPON_COUNT, containers,
+                      WEAPON_COUNT, containers, containerRaw, 1);
+    seed_overfull_chest(weapons, weaponRaw, WEAPON_COUNT, containers, containerRaw,
                         weaponThings);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         chestThing;

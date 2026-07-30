@@ -112,7 +112,9 @@ int main(void) {
     assert_route(DM1_V1_MOUSE_LIST_PANEL_CHEST_PC34, 0, 58,
                  DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 537,
                  DM1_V1_MOUSE_MASK_LEFT_PC34, "panel chest route");
-    assert_route(DM1_V1_MOUSE_LIST_INVENTORY_PC34, 41, 81,
+    /* C140/C145/C011/C141 are narrow C101-overlapping controls and must
+     * precede the broad parent route. */
+    assert_route(DM1_V1_MOUSE_LIST_INVENTORY_PC34, 45, 81,
                  DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 101,
                  DM1_V1_MOUSE_MASK_LEFT_PC34, "inventory panel fallback route");
     assert_route(DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34, 0, 146,
