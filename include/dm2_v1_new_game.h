@@ -531,21 +531,17 @@ typedef enum {
     DM2_FLOW_BAD_SESSION    = -3,
     DM2_FLOW_SLOT_ERROR     = -4,
     DM2_FLOW_ALLOC_ERROR    = -5,
+    DM2_FLOW_GAME_LOAD_REQUIRED = -6,
 } DM2_FlowResult;
 
-/* Initialize a new DM2 game from the boot profile.
- * This is the full new-game flow:
+/* Request a new DM2 game from the boot profile.
+ * This stops at the original GAME_LOAD boundary:
  *   1. Scan and verify DM2 assets (uses boot profile's scan)
  *   2. Load dungeon data
- *   3. Generate starter party (4 champions)
- *   4. Set initial party position (Hall of Champions)
+ *   3. Require GAME_LOAD/LOAD_NEW_DUNGEON to provide original party records
+ *      and initial position; no fixture session is constructed.
  *
- * After this function, the session is ready for the game loop.
- *
- * Source: SKULL.ASM T520 — party_placement (Hall of Champions, N)
- *         SKULL.ASM T560 — DUNGEON_Load completion
- *         CHAMPION.C F0280 — starter party generation
- *         CHAMPRST.C F0278 — CHAMPION_ResetDataToStartGame
+ * Source: SKWINSPX SkWinCore.cpp::SHOW_MENU_SCREEN / GAME_LOAD
  */
 DM2_FlowResult dm2_v1_new_game_flow(DM2_V1_SessionState *session,
                                       const DM2_V1_BootProfile *boot);

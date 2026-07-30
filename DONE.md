@@ -44354,3 +44354,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   active and reports `DM2 GAME_LOAD DATA REQUIRED` until original
   `GAME_LOAD` data can be handed off; no canned party, gold or map pose
   reaches runtime.
+- ✅ 2026-07-30 DM2 public New Game source gate: `dm2_v1_new_game_flow()`
+  now returns `DM2_FLOW_GAME_LOAD_REQUIRED` after asset admission instead of
+  materializing its save-fixture party. `SKWINSPX/src/v4/skcore.cpp` keeps
+  party and entrance state in `GAME_LOAD`/`LOAD_NEW_DUNGEON`; fixtures remain
+  explicit test helpers only.

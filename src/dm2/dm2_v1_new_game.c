@@ -1626,20 +1626,11 @@ DM2_FlowResult dm2_v1_new_game_flow(DM2_V1_SessionState *session,
         }
     }
 
-    /* Initialize session (clears all, sets Hall of Champions position) */
-    dm2_v1_session_new(session);
-
-    /* Use dungeon seed from boot profile if available */
-    if (boot->deterministic.dungeon_seed != 0) {
-        session->rng_seed = boot->deterministic.dungeon_seed;
-    }
-
-    /* Validate session */
-    if (!dm2_v1_session_validate(session)) {
-        return DM2_FLOW_BAD_SESSION;
-    }
-
-    return DM2_FLOW_OK;
+    /* SKWINSPX SkWinCore.cpp::SHOW_MENU_SCREEN returns to INIT, then
+     * GAME_LOAD()/LOAD_NEW_DUNGEON owns the original records, party choice,
+     * random seed and entrance pose. dm2_v1_session_new() contains explicit
+     * save-fixture defaults and must never substitute for that transaction. */
+    return DM2_FLOW_GAME_LOAD_REQUIRED;
 }
 
 /* ════════════════════════════════════════════════════════════════

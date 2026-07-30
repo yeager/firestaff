@@ -418,23 +418,16 @@ static void test_new_game_flow(void)
     DM2_V1_BootProfile boot;
 
     dm2_v1_boot_profile_init(&boot);
-    /* Don't set assets — new_game_flow should handle that gracefully */
-
+    /* The public flow must not recurse through an arbitrary test cwd merely
+     * to manufacture a session. Exercise the admitted-asset boundary. */
+    boot.assets_verified = 1;
+    memset(&session, 0xA5, sizeof(session));
     DM2_FlowResult result = dm2_v1_new_game_flow(&session, &boot);
-    /* Without real assets, this may return NO_ASSETS — that's OK for flow test.
-     * We just verify the flow result code is valid. */
-    (void)result; /* Just ensure it doesn't crash */
-    CHECK(result <= 0, "new_game_flow returns valid result code");
-    CHECK(result == DM2_FLOW_NO_ASSETS || result == DM2_FLOW_OK,
-          "Result is NO_ASSETS (expected without real assets) or OK");
-
-    /* If we did get OK, verify session */
-    if (result == DM2_FLOW_OK) {
-        CHECK(dm2_v1_session_validate(&session),
-              "Session valid after new_game_flow");
-        CHECK(session.champion_count == 4,
-              "4 champions after new_game_flow");
-    }
+    CHECK(result <= 0, "new_game_flow returns a non-success gate result");
+    CHECK(result == DM2_FLOW_GAME_LOAD_REQUIRED,
+          "verified assets still require original GAME_LOAD records");
+    CHECK(((const unsigned char *)&session)[0] == 0xA5,
+          "new_game_flow leaves fixture session bytes untouched");
 }
 
 /* ── Test 8: Source evidence ── */
@@ -473,6 +466,8 @@ static void test_flow_result_codes(void)
     CHECK(DM2_FLOW_BAD_SESSION < 0, "DM2_FLOW_BAD_SESSION < 0");
     CHECK(DM2_FLOW_SLOT_ERROR < 0, "DM2_FLOW_SLOT_ERROR < 0");
     CHECK(DM2_FLOW_ALLOC_ERROR < 0, "DM2_FLOW_ALLOC_ERROR < 0");
+    CHECK(DM2_FLOW_GAME_LOAD_REQUIRED < 0,
+          "DM2_FLOW_GAME_LOAD_REQUIRED < 0");
 }
 
 /* ════════════════════════════════════════════════════════════════════════
