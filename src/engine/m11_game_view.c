@@ -1916,6 +1916,25 @@ static int m11_csb_viewport_group_sprite_drawer(
  * GRAPHICS.DAT loader as the rest of the CSB M11 session.  The current CSB
  * loader has source proof only for the PC3.4 set-zero floor pair; unrelated
  * graphic requests remain no-draw until their CSBWin ownership is bound. */
+static int m11_csb_decode_active_source_graphic(
+    const CSB_V1_BootProfile *profile, unsigned int graphic_index,
+    unsigned char **out_pixels, int *out_width, int *out_height,
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_receipt)
+{
+    if (!profile || !profile->graphics_verified || !profile->graphics_path[0]) {
+        return 0;
+    }
+    if (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+        profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
+        return csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+            profile->graphics_path, graphic_index, out_pixels, out_width,
+            out_height, out_receipt);
+    }
+    return csb_v1_boot_decode_graphics_dat_asset_pc34(
+        profile->graphics_path, graphic_index, out_pixels, out_width,
+        out_height, out_receipt);
+}
+
 static int m11_csb_viewport_graphic_provider(void *user_data,
                                              int graphic_index,
                                              const uint8_t **out_pixels,
@@ -2015,12 +2034,9 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
     }
     if (!*cached_pixels) {
         memset(&receipt, 0, sizeof(receipt));
-        if (!state->csbBootProfile ||
-            !csb_v1_boot_decode_graphics_dat_asset_pc34(
-                ((const CSB_V1_BootProfile *)state->csbBootProfile)
-                    ->graphics_path,
-                source_graphic, cached_pixels, cached_width, cached_height,
-                &receipt) || !receipt.valid ||
+        if (!m11_csb_decode_active_source_graphic(
+                profile, source_graphic, cached_pixels, cached_width,
+                cached_height, &receipt) || !receipt.valid ||
             (graphic_index < 0 && (*cached_width != expected_width ||
                                    *cached_height != expected_height))) {
             free(*cached_pixels);
@@ -2087,9 +2103,9 @@ static int m11_csb_install_runtime_source_graphic(
         return 0;
     }
     memset(&receipt, 0, sizeof(receipt));
-    if (csb_v1_boot_decode_graphics_dat_asset_pc34(
-            ((const CSB_V1_BootProfile *)state->csbBootProfile)->graphics_path,
-            graphic_index, &pixels, &width, &height, &receipt) && receipt.valid &&
+    if (m11_csb_decode_active_source_graphic(
+            (const CSB_V1_BootProfile *)state->csbBootProfile, graphic_index,
+            &pixels, &width, &height, &receipt) && receipt.valid &&
         width > 0 && height > 0 && width <= 65535 && height <= 65535) {
         installed = M11_AssetLoader_InstallDecodedPixels(
             &mutable_state->assetLoader, graphic_index, pixels,
@@ -2373,8 +2389,8 @@ static int m11_csb_v1_install_runtime_hud_materials(M11_GameViewState *state)
         CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
 
         memset(&receipt, 0, sizeof(receipt));
-        if (!csb_v1_boot_decode_graphics_dat_asset_pc34(
-                ((const CSB_V1_BootProfile *)state->csbBootProfile)->graphics_path,
+        if (!m11_csb_decode_active_source_graphic(
+                (const CSB_V1_BootProfile *)state->csbBootProfile,
                 required[index].graphic, &pixels, &width, &height, &receipt) ||
             !receipt.valid || width != required[index].width ||
             height != required[index].height ||

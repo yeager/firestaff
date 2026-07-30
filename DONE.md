@@ -1,3 +1,11 @@
+- ✅ 2026-07-30 CSBWin runtime graphics decoder selection: M11's CSB
+  source-graphic, HUD-material and viewport-provider paths now select the
+  canonical Atari DMCSB1 decoder for ST20/ST21 packages, while PC3.4 remains
+  on its IMG3/LZW decoder. This removes a PC-container assumption from the
+  shared CSB runtime ingress without altering graphic ordinals or generating
+  replacement pixels. Verification: standard-CSBWin startup, PC3.4 Prison,
+  V2 title/HUD, and admitted V2.2 source-artpack tests pass.
+
 - ✅ 2026-07-30 CSBWin standard startup route: the canonical Atari
   `GRAPHICS.DAT`/`DUNGEON.DAT` package without `ANIMATE.SCR`/`ANIMATE.DAT`
   now reaches its decoded original C001-C005 title/Entrance path in V1,

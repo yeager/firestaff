@@ -1306,6 +1306,9 @@ that its exact runtime path is not already source-locked and tested.
   pack). It deliberately does not produce a release/runtime receipt: C040
   expands to `144x0`, so the later PC3.4 terminal-HUD and dungeon handoff
   remain blocked until CSBWin's real runtime panel owner is established.
+  The shared M11 source-graphic/HUD/viewport decoder now correctly selects
+  CSBWin's DMCSB1 decoder for ST20/ST21 instead of attempting PC3.4 IMG3;
+  this prepares real runtime ingress but does not prove CSBWin F0128 geometry.
 6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
    Utility Disk and champion/inventory interaction routes using real save and
    package data, including DSA/EXPOOL ownership that remains open.
