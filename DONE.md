@@ -1,3 +1,9 @@
+- ✅ 2026-07-30 DM2: implement 8 c_hero party functions. hero_2c1d_0300
+  (ability diminishing curve), hero_37BEA/GET_PARTY_SPECIAL_FORCE (special
+  force), RESET_SQUAD_DIR, SELECT_CHAMPION_LEADER, ADJUST_HAND_COOLDOWN,
+  USE_DEXTERITY_ATTRIBUTE. Exhaustive analysis confirms remaining 112 MISSING
+  symbols all require full runtime context (ddat/record/timer). MISSING: 119 → 112.
+
 - ✅ 2026-07-30 DM2 audit: reclassify 49 MISSING symbols as
   NOT_APPLICABLE_ARCH (startend init/loop/end 6, c_eventqueue dispatch 6,
   c_dialog UI 7, c_events click/GUI dispatch 30). Implement
