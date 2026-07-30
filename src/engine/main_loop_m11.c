@@ -529,25 +529,6 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
     return result == M11_RENDER_OK;
 }
 
-static void m11_record_csb_presented_frame(M11_GameViewState *gameView)
-{
-    int width = 0;
-    int height = 0;
-    const unsigned char *rgba;
-
-    if (!gameView || gameView->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
-        return;
-    }
-    (void)M11_Render_GetPresentedRGBA(&width, &height);
-    M11_GameView_RecordCSBPresentedIndexedFrame(
-        gameView,
-        M11_Render_GetFramebuffer(),
-        M11_FB_WIDTH,
-        M11_FB_HEIGHT,
-        m11_running_from_macos_app_bundle(),
-        width > 0 && height > 0);
-}
-
 static void m11_publish_dm1_hoc_presented_capture_to_m12(
     const M11_GameViewState* gameView,
     M12_StartupMenuState* menuState) {
