@@ -55,13 +55,8 @@ void fs_creatures_render(FS_ViewportRenderer *vp,
             fs_vp_draw_bitmap_scaled(vp, cr->sprite_index, dx, dy,
                 sprite_size, sprite_size);
         } else {
-            /* Fallback: colored rectangle for creature */
-            int px, py2;
-            uint8_t color = 11 + (cr->type_id % 5);
-            for (py2 = dy; py2 < dy + sprite_size; py2++)
-                for (px = dx; px < dx + sprite_size; px++)
-                    if (px >= VP_X && px < VP_X+VP_W && py2 >= VP_Y && py2 < VP_Y+VP_H)
-                        vp->framebuffer[py2 * FB_W + px] = color;
+            /* Missing original sprite data is not visual material. */
+            continue;
         }
 
         /* Health bar below creature */
@@ -85,4 +80,3 @@ void fs_creature_draw_health(FS_ViewportRenderer *vp,
         }
     }
 }
-

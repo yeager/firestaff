@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- **ALL-GAMES-NO-PLACEHOLDER-WHEN-SOURCE-EXISTS:** Active 2026-07-30.
+  Production rendering must fail closed for a missing or unbound original
+  asset. Procedural mazes, generic walls, coloured creature blocks, substitute
+  palettes, and synthetic HUD art are not acceptable when authentic game data
+  exists. Each remaining renderer is to bind the real format or present no
+  game pixel; test fixtures remain explicitly isolated from production paths.
+
 ## Active DM1/CSB Symbol Queue
 
 - **LAUNCHER-FULL-WINDOW-PRESENTATION:** Closed 2026-07-30. The start menu

@@ -1,3 +1,8 @@
+- ✅ 2026-07-30 All-games source-material guard: removed the legacy
+  production test maze, generic wall/HUD, and coloured-creature fallback
+  pixels. Missing or unbound source material now produces no substitute game
+  visual; active renderer follow-up is tracked in TODO.md.
+
 - ✅ 2026-07-30 DM1 original-save presentation sweep: the operator-owned
   DOSBox PC34 `DMSAVE.DAT` now boot-proves through the public `--save` route
   in V1, V2.0, V2.1 and V2.2. Every mode restored the original party at

@@ -122,10 +122,12 @@ void fs_init_default_palette(void) {
  *
  * For FS_GAME_CSB: delegates to csb_v1_viewport_render_frame() which
  *   uses the DM1 V1 viewport engine with CSB-specific wall sets.
- * For other games: uses the existing placeholder rendering.
+ * Other games must bind their own source-backed renderer.  This legacy
+ * integration point deliberately leaves a cleared frame instead of
+ * manufacturing a dungeon from test geometry or substitute pixels.
  */
 static void fs_game_render_viewport(FS_GameState *state) {
-    int x, y, px, py, dir;
+    int px, py, dir;
     if (!state) return;
     px = state->party_x;
     py = state->party_y;
@@ -191,149 +193,12 @@ static void fs_game_render_viewport(FS_GameState *state) {
              * Per V1 tick cadence (55ms).  No-op when V1 is active
              * (lighting state preserved for V1 palette). */
             dm2_v2_lighting_runtime_tick(0.055f /* V1 tick = 55ms */, 0);
-        } else {
-            /* DM2 boot not complete — render placeholder ceiling/floor */
-            for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
-                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
-                    g_framebuffer[y * FS_FB_W + x] = 4;  /* dark red ceiling */
-            for (y = FS_VP_Y + FS_VP_H / 2; y < FS_VP_Y + FS_VP_H; y++)
-                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
-                    g_framebuffer[y * FS_FB_W + x] = 6;  /* brown floor */
-        }
-
-    } else {
-
-    /* Blit viewport background from GRAPHICS.DAT #0 (224x136) */
-    if (g_assets_ready) {
-        static uint8_t gfx_extract_bg[224 * 136];
-        static int bg_loaded = 0;
-        if (!bg_loaded) {
-            int bw = 0, bh = 0;
-            if (fs_gfx_get_bitmap(&g_gfx_dat, 0, gfx_extract_bg,
-                    sizeof(gfx_extract_bg), &bw, &bh) > 0) {
-                bg_loaded = 1;
-            }
-        }
-        if (bg_loaded) {
-            for (y = 0; y < FS_VP_H && y < 136; y++)
-                for (x = 0; x < FS_VP_W && x < 224; x++)
-                    g_framebuffer[(FS_VP_Y + y) * FS_FB_W + FS_VP_X + x] =
-                        gfx_extract_bg[y * 224 + x];
-        } else {
-            /* Fallback: gray ceiling + brown floor */
-            for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
-                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
-                    g_framebuffer[y * FS_FB_W + x] = 8;
-            for (y = FS_VP_Y + FS_VP_H / 2; y < FS_VP_Y + FS_VP_H; y++)
-                for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
-                    g_framebuffer[y * FS_FB_W + x] = 6;
         }
     } else {
-        for (y = FS_VP_Y; y < FS_VP_Y + FS_VP_H / 2; y++)
-            for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
-                g_framebuffer[y * FS_FB_W + x] = 8;
-        for (y = FS_VP_Y + FS_VP_H / 2; y < FS_VP_Y + FS_VP_H; y++)
-            for (x = FS_VP_X; x < FS_VP_X + FS_VP_W; x++)
-                g_framebuffer[y * FS_FB_W + x] = 6;
+        /* A game without a live, source-backed renderer remains blank here.
+         * Never substitute a procedural maze, wall, HUD, or palette. */
+        return;
     }
-
-    /* Compute view cone from party position */
-    FS_ViewCone view_cone;
-    memset(&view_cone, 0, sizeof(view_cone));
-    /* Dungeon data is loaded via M11 game view / tick orchestrator.
-     * The legacy game loop fallback generates a test maze pattern. */
-    {
-        static uint8_t test_dungeon[32*32];
-        static int maze_init = 0;
-        if (!maze_init) {
-            for (int my = 0; my < 32; my++)
-                for (int mx = 0; mx < 32; mx++)
-                    test_dungeon[my*32+mx] = ((mx+my)%3==0 || mx==0 || my==0 || mx==31 || my==31) ? 0 : 1;
-            maze_init = 1;
-        }
-        fs_dungeon_compute_view_cone(test_dungeon, 32, 32, px, py, dir, &view_cone);
-    }
-
-    /* Draw walls using real GRAPHICS.DAT bitmaps when available */
-    {
-        int fx = px, fy = py;
-        int ddx[] = {0, 1, 0, -1};
-        int ddy[] = {-1, 0, 1, 0};
-        fx += ddx[dir]; fy += ddy[dir];
-
-        if (view_cone.has_wall[0][1]) { /* D0 center has wall */
-            if (g_assets_ready) {
-                /* Blit real wall bitmap from GRAPHICS.DAT */
-                /* Wall set graphics start around index 30-60 in DM1 */
-                /* D1C front wall = graphic index varies by wall set */
-                static uint8_t wall_pixels[16384];
-                int ww = 0, wh = 0;
-                int wall_gfx_idx = 33; /* D1C front wall in default set */
-                int got = fs_gfx_extract_bitmap(&g_gfx_dat, wall_gfx_idx,
-                    wall_pixels, sizeof(wall_pixels), &ww, &wh);
-                if (got > 0 && ww > 0 && wh > 0) {
-                    /* Blit wall bitmap centered in viewport */
-                    int ox = FS_VP_X + (FS_VP_W - ww) / 2;
-                    int oy = FS_VP_Y + (FS_VP_H - wh) / 2;
-                    for (int by = 0; by < wh && oy + by < FS_VP_Y + FS_VP_H; by++) {
-                        for (int bx = 0; bx < ww && ox + bx < FS_VP_X + FS_VP_W; bx++) {
-                            uint8_t pixel = wall_pixels[by * ww + bx];
-                            if (pixel != 0) /* skip transparent */
-                                g_framebuffer[(oy + by) * FS_FB_W + (ox + bx)] = pixel;
-                        }
-                    }
-                } else {
-                    /* Fallback: solid gray wall */
-                    for (y = FS_VP_Y + 20; y < FS_VP_Y + FS_VP_H - 20; y++)
-                        for (x = FS_VP_X + 40; x < FS_VP_X + FS_VP_W - 40; x++)
-                            g_framebuffer[y * FS_FB_W + x] = 7;
-                }
-            } else {
-                /* No assets: solid gray wall */
-                for (y = FS_VP_Y + 20; y < FS_VP_Y + FS_VP_H - 20; y++)
-                    for (x = FS_VP_X + 40; x < FS_VP_X + FS_VP_W - 40; x++)
-                        g_framebuffer[y * FS_FB_W + x] = 7;
-            }
-        }
-    }
-
-    /* Draw HUD panel from GRAPHICS.DAT #1 (320x200, use bottom 64 rows) */
-    if (g_assets_ready) {
-        static uint8_t gfx_extract_hud[320 * 200];
-        static int hud_loaded = 0;
-        if (!hud_loaded) {
-            int hw = 0, hh = 0;
-            if (fs_gfx_get_bitmap(&g_gfx_dat, 1, gfx_extract_hud,
-                    sizeof(gfx_extract_hud), &hw, &hh) > 0 && hw == 320) {
-                hud_loaded = 1;
-            }
-        }
-        if (hud_loaded) {
-            for (y = FS_VP_H; y < FS_FB_H; y++)
-                for (x = 0; x < FS_FB_W; x++)
-                    g_framebuffer[y * FS_FB_W + x] =
-                        gfx_extract_hud[y * 320 + x];
-        } else {
-            for (y = FS_VP_H; y < FS_FB_H; y++)
-                for (x = 0; x < FS_FB_W; x++)
-                    g_framebuffer[y * FS_FB_W + x] = 1;
-        }
-    } else {
-        for (y = FS_VP_H; y < FS_FB_H; y++)
-            for (x = 0; x < FS_FB_W; x++)
-                g_framebuffer[y * FS_FB_W + x] = 1;
-    }
-
-    /* Draw compass indicator */
-    {
-        const char *dirs[] = {"N", "E", "S", "W"};
-        int cx = 288, cy = FS_VP_H + 10;
-        (void)dirs; (void)cx; (void)cy; (void)dir;
-        /* Text rendering would go here */
-    }
-
-    /* Draw position text (debug) */
-    /* Would use dm1_v1_text_message for proper rendering */
 }
 
 /* Convert indexed framebuffer to RGBA using palette */
