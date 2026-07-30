@@ -11954,16 +11954,15 @@ the original title surface. Remaining work is real CSB runtime/Mac capture,
 not scaler code.
 
 CSB V2.2 shape, material-admission, in-place-draw, and per-cell-routing
-regressions pass, but the installed pack is not a finished real-art pack.
-Its manifest lacks per-slot generator provenance and does not satisfy all 29
-concrete pairs emitted by the active router. Runtime stays on the source-owned
-V2.1 fallback until every route material is operator-reviewed and has a
-resolvable non-placeholder source file. Remaining work is reviewed CSB art,
-the corresponding runtime material consumption, and real runtime/Mac capture.
-The selected-menu regression explicitly verifies that V2.2 refuses to launch
-until that gate passes rather than silently using a placeholder or synthetic
-pack. The full CSB CTest lane passes 94/94; this is implementation
-verification, not artpack promotion.
+regressions pass. The installed `firestaff-csb-v22-pc34-source` pack is
+source-derived from the hash-verified PC3.4 `GRAPHICS.DAT`, carries all 29
+required non-placeholder manifest entries, and passes the real V2.2 startup
+and runtime capture. It may replace only receipt-admitted closed-door F0128
+commands; wall, floor, ceiling, thing and field routes remain source V1 until
+their original placement, clip, palette and ordering contracts are proven.
+Remaining work is those runtime material bindings and real Mac/app capture,
+not pack admission. The selected-menu regression still rejects missing or
+partial packs rather than silently using a placeholder or synthetic pack.
 
 ## Theron CUE IPL/Stage-Two Follow-up (2026-07-12)
 

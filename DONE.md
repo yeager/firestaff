@@ -1,3 +1,11 @@
+- ✅ 2026-07-30 CSB V2.2 source-artpack admission reverified: the installed
+  `firestaff-csb-v22-pc34-source` pack contains all 29 required
+  non-placeholder entries, each derived from the hash-verified PC3.4
+  `GRAPHICS.DAT`. The real V2.2 startup/runtime probe passes and preserves
+  the source-owned page outside receipt-admitted F0128 door clips. This is
+  pack admission evidence only; unbound wall, floor, ceiling, thing and field
+  commands remain V1 until their original F0128 composition is proven.
+
 - ✅ 2026-07-30 CSB source-bound projectile rendering: authenticated PC3.4
   F0115 sessions no longer substitute a coloured diagnostic projectile cross
   when a source bitmap is unavailable. This removes a nondeterministic,
