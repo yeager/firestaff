@@ -214,3 +214,79 @@ int csb_v1_csbwin_layout_0232_build_hud_material_plan(
         CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT;
     return out_plan->valid;
 }
+
+static uint32_t csb_v1_csbwin_layout_0232_hash_bytes(
+    uint32_t hash, const uint8_t *bytes, size_t size)
+{
+    size_t index;
+
+    for (index = 0; index < size; ++index) {
+        hash ^= bytes[index];
+        hash *= UINT32_C(16777619);
+    }
+    return hash;
+}
+
+int csb_v1_csbwin_layout_0232_compose_hud(
+    const CSB_V1_CSBWinHudMaterialPlan0232 *plan,
+    CSB_V1_CSBWinHudPixelResolver0232 resolver, void *resolver_user_data,
+    uint8_t *out_pixels, size_t out_size,
+    CSB_V1_CSBWinHudCompositionReceipt0232 *out_receipt)
+{
+    enum { SCREEN_WIDTH = 320, SCREEN_HEIGHT = 200 };
+    uint8_t candidate[SCREEN_WIDTH * SCREEN_HEIGHT];
+    uint32_t source_hash = UINT32_C(2166136261);
+    size_t index;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!plan || !plan->valid ||
+        plan->count != CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT ||
+        !resolver || !out_pixels || out_size < sizeof(candidate)) {
+        return 0;
+    }
+    memset(candidate, 0, sizeof(candidate));
+    for (index = 0; index < plan->count; ++index) {
+        const CSB_V1_CSBWinHudMaterial0232 *entry = &plan->entries[index];
+        const uint8_t *source = NULL;
+        int source_width = 0;
+        int source_height = 0;
+        int destination_width;
+        int destination_height;
+        int row;
+
+        if (!csb_v1_csbwin_layout_0232_rect_is_screen_valid(
+                &entry->destination) ||
+            !resolver(resolver_user_data, entry->graphic_index, &source,
+                      &source_width, &source_height) || !source ||
+            source_width <= 0 || source_height <= 0) {
+            return 0;
+        }
+        destination_width = entry->destination.x2 - entry->destination.x1 + 1;
+        destination_height = entry->destination.y2 - entry->destination.y1 + 1;
+        if (entry->source_x > (uint16_t)source_width ||
+            destination_width > source_width - (int)entry->source_x ||
+            destination_height > source_height) {
+            return 0;
+        }
+        for (row = 0; row < destination_height; ++row) {
+            const uint8_t *source_row = source + (size_t)row *
+                (size_t)source_width + entry->source_x;
+            uint8_t *destination_row = candidate +
+                (size_t)(entry->destination.y1 + row) * SCREEN_WIDTH +
+                entry->destination.x1;
+
+            memcpy(destination_row, source_row, (size_t)destination_width);
+            source_hash = csb_v1_csbwin_layout_0232_hash_bytes(
+                source_hash, source_row, (size_t)destination_width);
+        }
+    }
+    memcpy(out_pixels, candidate, sizeof(candidate));
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->material_count = plan->count;
+        out_receipt->source_hash = source_hash;
+        out_receipt->composed_hash = csb_v1_csbwin_layout_0232_hash_bytes(
+            UINT32_C(2166136261), candidate, sizeof(candidate));
+    }
+    return 1;
+}

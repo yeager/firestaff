@@ -33502,7 +33502,9 @@ add_executable(test_nexus_v1_dgn_material_raster
         target_compile_options(test_csb_v1_csbwin_layout_0232 PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
     endif()
-    target_link_libraries(test_csb_v1_csbwin_layout_0232 PRIVATE firestaff_m10)
+    target_link_libraries(test_csb_v1_csbwin_layout_0232 PRIVATE
+        firestaff_m11 firestaff_m10
+    )
     add_test(
         NAME csb_v1_csbwin_layout_0232_unit
         COMMAND test_csb_v1_csbwin_layout_0232

@@ -1160,6 +1160,13 @@ that its exact runtime path is not already source-locked and tested.
    (four C028 direction slices, C020, C030-C032, C013 and C009) through the
    original IMG3/LZW path and verifies their source/destination bounds;
    54/54 real-data checks pass (2026-07-30).
+   2026-07-30: the C232 plan now has an atomic indexed 320x200 compositor.
+   It resolves every one of those ten entries from the active original
+   GRAPHICS.DAT source, copies only the rectangle CSBWin defines, and leaves
+   the caller's frame unchanged if any source image is absent, malformed or
+   too small. The focused test uses the real Atari decoder and source bytes,
+   not a PC3.4 C017/C040 replacement. M11 still needs to consume this
+   source-owned panel layer with the corresponding CSBWin dungeon owner.
    2026-07-30: CSB runtime boot now passes the actual selected loose-file
    MD5 identities into variant detection; the real Atari ST 2.x corpus had
    previously booted as `UNKNOWN` because both detection arguments were

@@ -4,8 +4,23 @@
 #include <time.h>
 
 #include "csb_v1_csbwin_layout_0232.h"
+#include "csb_v1_boot.h"
 
 static int failures;
+
+typedef struct {
+    uint8_t pixels[33][128 * 128];
+    int widths[33];
+    int heights[33];
+    int deny_graphic;
+} TestHudSource0232;
+
+typedef struct {
+    const char *graphics_dat_path;
+    uint8_t *pixels[33];
+    int widths[33];
+    int heights[33];
+} RealHudSource0232;
 
 #define CHECK(expr) do { \
     if (!(expr)) { \
@@ -82,6 +97,105 @@ static void check_real_layout(const char *path)
         CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT - 1u] != 0u);
 }
 
+static int resolve_test_hud_source(void *user_data, uint16_t graphic_index,
+                                   const uint8_t **out_pixels,
+                                   int *out_width, int *out_height)
+{
+    TestHudSource0232 *source = (TestHudSource0232 *)user_data;
+
+    if (!source || graphic_index >= 33u ||
+        source->deny_graphic == (int)graphic_index ||
+        source->widths[graphic_index] <= 0 ||
+        source->heights[graphic_index] <= 0) return 0;
+    *out_pixels = source->pixels[graphic_index];
+    *out_width = source->widths[graphic_index];
+    *out_height = source->heights[graphic_index];
+    return 1;
+}
+
+static void check_hud_composition(const CSB_V1_CSBWinHudMaterialPlan0232 *plan)
+{
+    TestHudSource0232 source;
+    CSB_V1_CSBWinHudCompositionReceipt0232 receipt;
+    uint8_t frame[320 * 200];
+    uint8_t unchanged[320 * 200];
+    size_t index;
+
+    memset(&source, 0, sizeof(source));
+    memset(frame, 0xa5, sizeof(frame));
+    for (index = 0; index < plan->count; ++index) {
+        const CSB_V1_CSBWinHudMaterial0232 *entry = &plan->entries[index];
+        size_t pixel_count;
+        source.widths[entry->graphic_index] = 128;
+        source.heights[entry->graphic_index] = 128;
+        pixel_count = (size_t)source.widths[entry->graphic_index] *
+            source.heights[entry->graphic_index];
+        memset(source.pixels[entry->graphic_index],
+               (int)(0x20u + entry->graphic_index), pixel_count);
+    }
+    CHECK(csb_v1_csbwin_layout_0232_compose_hud(
+        plan, resolve_test_hud_source, &source, frame, sizeof(frame), &receipt));
+    CHECK(receipt.valid && receipt.material_count == plan->count &&
+          receipt.source_hash != 0u && receipt.composed_hash != 0u);
+    CHECK(frame[30u * 320u + 10u] == 28u + 0x20u);
+    CHECK(frame[160u * 320u + 216u] == 9u + 0x20u);
+    CHECK(frame[0] == 0u);
+
+    memcpy(unchanged, frame, sizeof(frame));
+    source.deny_graphic = 13;
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(!csb_v1_csbwin_layout_0232_compose_hud(
+        plan, resolve_test_hud_source, &source, frame, sizeof(frame), &receipt));
+    CHECK(!receipt.valid && !memcmp(frame, unchanged, sizeof(frame)));
+}
+
+static int resolve_real_hud_source(void *user_data, uint16_t graphic_index,
+                                   const uint8_t **out_pixels,
+                                   int *out_width, int *out_height)
+{
+    RealHudSource0232 *source = (RealHudSource0232 *)user_data;
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+
+    if (!source || !source->graphics_dat_path || graphic_index >= 33u) return 0;
+    if (!source->pixels[graphic_index]) {
+        memset(&receipt, 0, sizeof(receipt));
+        if (!csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                source->graphics_dat_path, graphic_index,
+                &source->pixels[graphic_index], &source->widths[graphic_index],
+                &source->heights[graphic_index], &receipt) || !receipt.valid) {
+            free(source->pixels[graphic_index]);
+            source->pixels[graphic_index] = NULL;
+            source->widths[graphic_index] = source->heights[graphic_index] = 0;
+            return 0;
+        }
+    }
+    *out_pixels = source->pixels[graphic_index];
+    *out_width = source->widths[graphic_index];
+    *out_height = source->heights[graphic_index];
+    return 1;
+}
+
+static void check_real_hud_composition(const char *path)
+{
+    CSB_V1_CSBWinLayout0232 layout;
+    CSB_V1_CSBWinHudMaterialPlan0232 plan;
+    CSB_V1_CSBWinHudCompositionReceipt0232 receipt;
+    RealHudSource0232 source;
+    uint8_t frame[320 * 200];
+    size_t index;
+
+    if (!path || !path[0]) return;
+    memset(&source, 0, sizeof(source));
+    source.graphics_dat_path = path;
+    CHECK(csb_v1_csbwin_layout_0232_read_graphics_dat(path, &layout));
+    CHECK(csb_v1_csbwin_layout_0232_build_hud_material_plan(&layout, &plan));
+    CHECK(csb_v1_csbwin_layout_0232_compose_hud(
+        &plan, resolve_real_hud_source, &source, frame, sizeof(frame), &receipt));
+    CHECK(receipt.valid && receipt.material_count == plan.count &&
+          receipt.source_hash != 0u && receipt.composed_hash != 0u);
+    for (index = 0; index < 33u; ++index) free(source.pixels[index]);
+}
+
 int main(void)
 {
     uint8_t graphic[CSB_V1_CSBWIN_LAYOUT_0232_DECODED_SIZE];
@@ -143,6 +257,7 @@ int main(void)
           plan.entries[4].destination.y1 == 69);
     CHECK(plan.entries[9].graphic_index == 9u &&
           plan.entries[9].destination.y1 == 160);
+    check_hud_composition(&plan);
     layout.magic_box.y2 = 200;
     CHECK(!csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.magic_box));
     CHECK(!csb_v1_csbwin_layout_0232_decode(graphic, sizeof(graphic) - 1u, &layout));
@@ -163,6 +278,7 @@ int main(void)
      * fixed offsets survive real source bytes. */
     real_graphics_dat = getenv("FIRESTAFF_CSBWIN_GRAPHICS_DAT");
     check_real_layout(real_graphics_dat);
+    check_real_hud_composition(real_graphics_dat);
 
     if (failures) return 1;
     puts("PASS: CSBWin GRAPHICS.DAT 0x232 layout decode");

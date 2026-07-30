@@ -70,6 +70,20 @@ typedef struct {
         CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT];
 } CSB_V1_CSBWinHudMaterialPlan0232;
 
+/* A source image resolver is deliberately supplied by the caller.  C232 is
+ * a layout record; it never owns a synthetic replacement for a missing
+ * GRAPHICS.DAT image.  Pixels stay valid for the whole composition call. */
+typedef int (*CSB_V1_CSBWinHudPixelResolver0232)(
+    void *user_data, uint16_t graphic_index, const uint8_t **out_pixels,
+    int *out_width, int *out_height);
+
+typedef struct {
+    int valid;
+    size_t material_count;
+    uint32_t source_hash;
+    uint32_t composed_hash;
+} CSB_V1_CSBWinHudCompositionReceipt0232;
+
 /* Decode only the source-owned layout record.  The caller owns decompression
  * of graphic 0x232 and can decide independently whether its graphics package
  * is admitted for runtime use. */
@@ -92,5 +106,16 @@ int csb_v1_csbwin_layout_0232_rect_is_screen_valid(
 int csb_v1_csbwin_layout_0232_build_hud_material_plan(
     const CSB_V1_CSBWinLayout0232 *layout,
     CSB_V1_CSBWinHudMaterialPlan0232 *out_plan);
+
+/* Atomically compose C232's original indexed HUD materials into a 320x200
+ * logical frame.  Every one of the ten original records must resolve with
+ * sufficient source pixels; otherwise output and receipt remain invalid.
+ * This is intentionally only the C232 source-owned panel layer.  Dungeon,
+ * party-state and DSA execution retain their independent CSBWin owners. */
+int csb_v1_csbwin_layout_0232_compose_hud(
+    const CSB_V1_CSBWinHudMaterialPlan0232 *plan,
+    CSB_V1_CSBWinHudPixelResolver0232 resolver, void *resolver_user_data,
+    uint8_t *out_pixels, size_t out_size,
+    CSB_V1_CSBWinHudCompositionReceipt0232 *out_receipt);
 
 #endif
