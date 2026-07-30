@@ -25,6 +25,16 @@ int main(void)
     expect_int("pack", csb_v1_csbwin_planar_bitmap_pack_indexed(
                    indexed, 5u, 2u, &planar, &planar_count), 1);
     expect_int("planar_count", (int)planar_count, 16);
+    /* CSBWin Graphics.cpp TAG0088b2 reads four big-endian words in plane
+     * order 0..3 for each 16-pixel group. First row colours 1,2,3,4,5 give
+     * plane masks A800,6000,1800,0000 respectively. */
+    expect_int("plane0_be_hi", planar ? planar[0] : 0, 0xa8);
+    expect_int("plane0_be_lo", planar ? planar[1] : 0, 0x00);
+    expect_int("plane1_be_hi", planar ? planar[2] : 0, 0x60);
+    expect_int("plane1_be_lo", planar ? planar[3] : 0, 0x00);
+    expect_int("plane2_be_hi", planar ? planar[4] : 0, 0x18);
+    expect_int("plane2_be_lo", planar ? planar[5] : 0, 0x00);
+    expect_int("plane3_empty", planar ? planar[6] : 0, 0x00);
     memset(&source, 0, sizeof(source));
     source.bytes = planar;
     source.width = 5u;
