@@ -3765,7 +3765,8 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f1726_f1765_source_boundary_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f1766_f1805_media_source_boundary_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f1886_f1925_hintload_source_boundary_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f1966_f2005_hint_source_boundary_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f1966_f2005_hint_source_boundary_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f2046_f2085_platform_source_boundary_pc34_compat.c")
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
