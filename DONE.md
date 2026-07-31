@@ -47000,6 +47000,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   label from the legacy M12 card path. Nexus now reports readiness only from
   the verified asset-version match, like the other games; `firestaff_m12`
   rebuild and diff check pass.
+- ✅ 2026-07-31 Nexus real FONT256 handoff: fixed the inverted
+  `nexus_v1_font_s2d_decode()` success check in engine init. The supplied
+  `FONT256.S2D` now reaches the engine's source-admitted state; the separate
+  page-to-character glyph-render gate remains closed, so no guessed glyphs are
+  emitted. Real Track 1 capture readiness passes 29/29, FONT256 decoder and
+  startup-menu tests pass.
 - ✅ 2026-07-31 Theron production combat boundary: removed the inferred
   creature/combat template table from `firestaff_theron`. Production now
   links explicit fail-closed symbols from
