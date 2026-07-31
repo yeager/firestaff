@@ -2281,7 +2281,9 @@ that its exact runtime path is not already source-locked and tested.
     generic cyan utility frame, champion/status text or light bar when
     C009/C010 source material is absent; that CSB region remains source black.
     The same switch no longer lets the legacy non-game rune workbench paint
-    over CSB's F0128 viewport while a CSB spell state is open.
+    over CSB's F0128 viewport while a CSB spell state is open. An unavailable
+    source dialog backdrop is likewise strict no-draw; only an explicit host
+    return-confirmation flow may use host UI.
 28. **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,
    pits, floor/ceiling ornaments, creatures, items, projectiles, explosions,
    and custom backgrounds through real PC34 asset ownership.

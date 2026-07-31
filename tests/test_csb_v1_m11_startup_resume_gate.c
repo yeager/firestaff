@@ -2217,6 +2217,16 @@ int main(void) {
                                     0, 33, 224, 136) == 0,
                     "CSB chrome-off spell state does not paint the legacy workbench over F0128");
         view.spellPanelOpen = 0;
+        view.dialogOverlayActive = 1;
+        snprintf(view.dialogOverlayText, sizeof(view.dialogOverlayText),
+                 "%s", "SOURCE DIALOG REQUIRED");
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(&view, fb, 320, 200);
+        expect_true(count_diff_rect(expected_fb, fb, 320,
+                                    0, 33, 224, 136) == 0,
+                    "CSB chrome-off dialog does not paint a host plaque over F0128");
+        view.dialogOverlayActive = 0;
+        view.dialogOverlayText[0] = '\0';
         expect_true(test_setenv("FIRESTAFF_V1_CHROME", "1") == 0,
                     "restore V1 chrome after the CSB no-workbench regression");
     }

@@ -51563,6 +51563,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             drewSourceBackdrop = m11_draw_dm_dialog_backdrop(
                 state, framebuffer, framebufferWidth, framebufferHeight);
         }
+        /* The generic plaque frame is Firestaff UI, not a ReDMCSB dialog
+         * surface. CSB may draw only the admitted source backdrop; a missing
+         * C000-like source surface remains no-draw even when the optional
+         * DM1 chrome path is disabled. Return confirmations are host UI and
+         * keep their separate explicit branch above. */
+        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+            !drewSourceBackdrop && !state->returnToMenuConfirmActive) {
+            return;
+        }
         if (!drewSourceBackdrop && !state->returnToMenuConfirmActive) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX, dlgY, dlgW, dlgH, M11_COLOR_BLACK);

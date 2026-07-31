@@ -44615,6 +44615,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   open spell state cannot paint host controls over F0128. Verification: the
   CSB M11 startup/resume regression compares the complete 224×136 source
   viewport with chrome disabled and passes; Prison-runtime HUD also passes.
+- ✅ 2026-07-31 CSB dialog fallback containment: an unavailable source dialog
+  backdrop no longer falls through to Firestaff's generic plaque frame when
+  the DM1 chrome option is disabled. CSB leaves the existing source frame
+  untouched; the distinct return-to-menu confirmation remains explicit host
+  UI. Verification: the CSB M11 startup/resume source-viewport comparison
+  covers the chrome-off dialog state and passes.
 - ✅ 2026-07-31 DM2 V2 HUD synthetic-PNG closure: the public one-pixel PNG
   compatibility hooks now return strict no-draw even for a valid fixture.
   SK-projects `c_gdatfile.cpp::DM2_LOAD_GDAT_INTERFACE_00_02` establishes
