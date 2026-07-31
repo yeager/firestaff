@@ -47322,6 +47322,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   probe now asserts the retained `0x0108e938` seed directly on the loaded
   level, alongside the existing raw candidate checks.
 
+- ✅ 2026-07-31 Theron opaque header-index binding: level load now preserves
+  the Track 02 header's `0x0026` level-index value in a separate opaque field,
+  without confusing it with Firestaff's internal 0-based level slot. The real
+  handoff probe asserts it; result remains `fail=0` with one known ISO skip.
+
 - ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
   offsets and the 216-entry DMWeb TABL code table are parsed from the real
   retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy

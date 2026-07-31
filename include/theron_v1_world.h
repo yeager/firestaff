@@ -194,6 +194,7 @@ typedef struct {
     int   level_index;          /* 0..2 within this dungeon */
     int   width, height;        /* typically 20x20 for TQR mini-dungeons */
     uint32_t dungeon_seed;      /* source header seed, never inferred */
+    uint16_t source_header_level_index; /* opaque Track 02 header value */
     int   start_x, start_y;    /* party spawn position (THQUEST.ASM T520) */
     int   start_dir;            /* 0=N 1=E 2=S 3=W */
     uint8_t squares[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];

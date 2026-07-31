@@ -1384,6 +1384,9 @@ static void probe_real_data_initial_candidate(const char *label,
     check_u32("real initial candidate level seed",
               level.dungeon_seed,
               0x0108e938u);
+    check_int("real initial candidate source header level",
+              level.source_header_level_index,
+              0x0026);
     check_int("real initial candidate start x", level.start_x, 4);
     check_int("real initial candidate start y", level.start_y, 0);
     check_int("real initial candidate start dir", level.start_dir, 0);

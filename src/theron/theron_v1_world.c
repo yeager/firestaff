@@ -205,6 +205,7 @@ Theron_MapLoadResult theron_v1_level_load(Theron_V1_Level *level,
     uint16_t w    = rb16(data + 0);
     uint16_t h    = rb16(data + 2);
     uint32_t seed = rb32(data + 4);
+    uint16_t source_header_level_index = rb16(data + 8);
 
     if (w == 0 || w > THERON_MAX_MAP_SIZE || h == 0 || h > THERON_MAX_MAP_SIZE) {
         return THERON_MAP_ERR_INVALID_GRID;
@@ -212,6 +213,7 @@ Theron_MapLoadResult theron_v1_level_load(Theron_V1_Level *level,
     level->width  = w;
     level->height = h;
     level->dungeon_seed = seed;
+    level->source_header_level_index = source_header_level_index;
     /* Track 02's bounded level envelope does not carry a start direction;
      * the verified runtime receipt admits its documented North pose. */
     level->start_dir = 0;
