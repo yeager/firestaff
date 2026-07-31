@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 V2 host-pipeline isolation: removed the unused
+  `dm2_v2_asset_pipeline.c` from the production DM2 V2 archive. It contains
+  an unimplemented palette-correction LUT and only remains compiled by its
+  isolated diagnostic probe; M11 continues to present verified GDAT pixels.
+  Verification: production `firestaff` link, phase-2 probe, and archive-symbol
+  check showing no host-pipeline entry points.
+
 - ✅ 2026-07-31 DM2 save-codec fixture isolation: removed the fixed-byte
   SUPPRESS self-verification routine from the production save archive. Its
   explicit codec check now compiles only into the save-load test; live save

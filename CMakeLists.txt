@@ -3958,6 +3958,7 @@ file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c" "src/dm2/dm2_v22
 list(REMOVE_ITEM DM2_V2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_bitmap_blit.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_assets.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_asset_pipeline.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_finished_art_material_gate_pc34.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_inplace_draw_pc34.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_modern_assets_pc34.c"

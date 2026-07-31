@@ -207,7 +207,8 @@
   now test-only too. M11 no longer configures its arbitrary indexed-pixel
   conversion or stub palette-LUT path; a live DM2 image must stay on the
   existing GDAT-backed renderer until a source-bound enhancement consumer is
-  implemented.
+  implemented. The pipeline source is explicitly removed from the production
+  DM2 V2 archive and compiled only by its isolated probe.
   **2026-07-31 update:** the local V2 HUD widget-manifest classifier is now
   compiled only by its diagnostic HUD probe. Production HUD code never scans
   local widget metadata and the final executable has no widget-manifest
