@@ -170,31 +170,8 @@ void nexus_raster_triangle(Nexus_Framebuffer *fb,
     Nexus_RasterVertex v0, Nexus_RasterVertex v1, Nexus_RasterVertex v2,
     const Nexus_Camera *cam)
 {
-    Vec2i s[3]; float z[3]; int bbox[4]; float area, inv; int x, y;
-    Nexus_RasterVertex vs[3] = {v0, v1, v2};
-
-    if (!fb || !cam) return;
-    tri_project(vs, cam, s, z, bbox);
-    area = edge_fn(s[0], s[1], s[2]);
-    if (area <= 0) return;
-    inv = 1.0f / area;
-
-    for (y = bbox[2]; y <= bbox[3]; y++) {
-        for (x = bbox[0]; x <= bbox[1]; x++) {
-            Vec2i p = {x, y};
-            float w0 = edge_fn(s[1], s[2], p) * inv;
-            float w1 = edge_fn(s[2], s[0], p) * inv;
-            float w2 = 1.0f - w0 - w1;
-            if (w0 >= 0 && w1 >= 0 && w2 >= 0) {
-                float zf = w0*z[0] + w1*z[1] + w2*z[2];
-                int idx = y * NEXUS_FB_W + x;
-                if (zf < fb->z_buffer[idx] && zf > 0) {
-                    fb->z_buffer[idx] = zf;
-                    fb->color_buffer[idx] = v0.color;
-                }
-            }
-        }
-    }
+    /* Flat-colour geometry has no verified Saturn material contract. */
+    (void)fb; (void)v0; (void)v1; (void)v2; (void)cam;
 }
 
 void nexus_raster_triangle_tex(Nexus_Framebuffer *fb,
