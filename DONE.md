@@ -47691,3 +47691,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm2_v1_m11_startup_profile_gate` and the production-linked
   `test_dm2_v1_quicksave_original_writer_gate` pass, including the explicit
   no-output save regression.
+- ✅ 2026-07-31 Nexus DMWeb SAL/MAP parser correction: retail maps now parse
+  eight-byte DataID/ID/start/L/area records from byte zero with the FF
+  terminator, preserving 24-bit fields and distinguishing DataID 0 tone-bank
+  memory from DataID 1-3 sequence/DSP regions. The former 24-byte-header
+  interpretation is retained only in synthetic fixtures. Verification:
+  all 16 real SNDLEV pairs (154 records) and the sound-runtime receipt suite
+  pass; playback remains blocked pending the SDDRVS event handoff.
