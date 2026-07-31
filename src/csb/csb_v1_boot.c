@@ -381,7 +381,6 @@ const char *csb_v1_boot_startup_asset_source_name_pc34(
     switch (source) {
     case CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34: return "graphics.dat";
     case CSB_V1_STARTUP_ASSET_SOURCE_CSBGRAPHICS_DAT_PC34: return "csbgraphics.dat";
-    case CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34: return "fallback";
     case CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34:
     default: return "none";
     }
@@ -441,7 +440,6 @@ int csb_v1_boot_startup_render_plan_uses_real_assets_pc34(
         binding = csb_v1_boot_startup_asset_binding_pc34(profile, role);
         if (!binding || !binding->verified ||
             binding->source == CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34 ||
-            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34 ||
             binding->path[0] == '\0') {
             return 0;
         }
@@ -478,8 +476,7 @@ static int csb_v1_boot_startup_asset_roles_owned_pc34(
             csb_v1_boot_startup_asset_binding_pc34(profile, roles[i]);
         if (!binding || !binding->verified || !binding->rejects_generic_or_test_asset ||
             binding->path[0] == '\0' ||
-            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34 ||
-            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34) {
+            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34) {
             return 0;
         }
     }
@@ -509,7 +506,6 @@ static uint32_t csb_v1_boot_startup_asset_binding_hash_pc34(
         if (!binding || !binding->verified ||
             !binding->rejects_generic_or_test_asset ||
             binding->source == CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34 ||
-            binding->source == CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34 ||
             binding->path[0] == '\0') {
             return 0u;
         }

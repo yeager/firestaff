@@ -46334,3 +46334,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   its alarm event, but creature materialization now stays fail-closed until
   the real Track 02 object-tail/spawn table is decoded. Regression coverage
   verifies activation and no fabricated object (`52/52` mechanics checks).
+- ✅ 2026-07-31 CSB startup-assettyper: tog bort den oanvända
+  `fallback`-källtypen och den döda `fallback-original`-aliasen från
+  CSBgraphics-bindningen. Startup accepterar nu enbart verifierad
+  `GRAPHICS.DAT` eller verifierad `CSBgraphics.dat`; negativa tester använder
+  den verkliga ogiltiga typen `NONE`. Verifiering:
+  `test_csb_v1_boot_title_import_ui_gate_pc34_compat` 137/137 och
+  `test_csb_v1_csbgraphics_runtime_binding` 83/83 passerar.

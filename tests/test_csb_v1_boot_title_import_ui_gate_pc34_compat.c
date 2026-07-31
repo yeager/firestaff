@@ -613,7 +613,7 @@ static void test_real_startup_asset_selection_rejects_generic_paths(void)
           "mismatched palette path closes the boot-to-runtime receipt");
 
     p.startup_assets.bindings[CSB_V1_STARTUP_ASSET_ROLE_TITLE_CHAOS_PC34].source =
-        CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34;
+        CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34;
     CHECK(csb_v1_boot_startup_render_plan_uses_real_assets_pc34(&p, &plan) == 0,
           "real-data title plan rejects a generic or test fallback source");
     csb_v1_boot_cleanup(&p);
@@ -641,7 +641,7 @@ static void test_runtime_asset_gate_binds_session_and_owned_artwork(void)
           "runtime gate binds verified title, entrance, HUD, and session ownership");
 
     p.startup_assets.bindings[CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_RIGHT_DOOR_PC34]
-        .source = CSB_V1_STARTUP_ASSET_SOURCE_FALLBACK_PC34;
+        .source = CSB_V1_STARTUP_ASSET_SOURCE_NONE_PC34;
     CHECK(csb_v1_boot_startup_runtime_asset_gate_from_launch_receipts_pc34(
               &p, &launch, &gate) == 0,
           "runtime gate rejects a fallback entrance-door binding");

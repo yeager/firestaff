@@ -51,11 +51,7 @@ typedef enum {
     /* An unavailable or untrusted source span does not select an alternate
      * renderer. It preserves the caller's original page byte-for-byte. */
     CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_REJECTED_NO_DRAW = 0,
-    CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_BIND_OVERRIDE = 1,
-    /* Compatibility spelling for callers compiled against the old contract.
-     * It is an alias only; it must never imply a generated fallback. */
-    CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_FALLBACK_ORIGINAL =
-        CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_REJECTED_NO_DRAW
+    CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_BIND_OVERRIDE = 1
 } CSB_V1_CSBGraphicsRuntimeDecision;
 
 typedef struct {
