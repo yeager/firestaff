@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 CSB V2 lighting runtime receipt correction: aligned the
+  phase-gate and runtime evidence with the product boundary. Even when V2 is
+  selected, its tick reaches only the no-draw source-palette receipt; no RGB
+  map, flicker or DSA light pulse can affect a visible frame. Verification:
+  production `firestaff` build, `csb_v2_lighting_runtime_gate`, V2
+  HUD/shape/VFX gates and `firestaff_csb_v2_runtime_wireup_probe` pass.
+
 - ✅ 2026-07-31 CSB V2 lighting isolation: removed the hand-authored RGB
   light map, point-light falloff, flimmer curves and DSA pulse effects from
   the playable V2 archive. The product gate retains only PANEL.C's factual

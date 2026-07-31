@@ -1114,7 +1114,9 @@ diagnostic; it must not silently fall back to a generated visual.
   källdata.
   **2026-07-31 viewport-light follow-up:** the public V2 viewport lighting
   bridge now also rejects arbitrary RGB torches and DSA pulses. ReDMCSB light
-  tables stay available as data, but cannot become host-rendered effects.
+  tables stay available as data, but cannot become host-rendered effects. Its
+  phase-gated runtime wrapper is likewise observability-only: an enabled tick
+  reaches the no-draw palette boundary and never creates a visible light map.
   **2026-07-31 D2C follow-up:** the contract-only synthetic C10 field blit
   has been removed from the product API. The remaining D2C record describes
   ReDMCSB routing and zones only; real F0113 pixels still require source data.
