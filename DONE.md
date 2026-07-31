@@ -45326,6 +45326,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   inspection state, so untrained champions no longer fill the panel with
   `NOVICE` rows. Verification: the source-panel runtime test exercises all
   four level-one skills and confirms that no base-skill row is published.
+- ✅ 2026-07-31 DM1 F0351 C101 text containment: the real-PC34 inventory
+  framebuffer regression now captures the ordinary panel, opens empty-hand
+  eye statistics, and verifies that the complete source M653 skill/statistic
+  draw changes no pixel outside C101's original 144-pixel bounds. This locks
+  the visible six-pixel glyph advance for long `ANTI-MAGIC` and `ANTI-FIRE`
+  rows. Verification: `m11_inventory_full_panel_runtime_source_lock`
+  passes 702/702 with the local original `GRAPHICS.DAT`.
 - ✅ 2026-07-31 CSB PC3.4 D3 side-door atlas containment: F0116/F0117 no
   longer perform pointer arithmetic on the unpopulated legacy wall-frame
   atlas when a D3L/D3R front door is reached. The route now leaves the frame

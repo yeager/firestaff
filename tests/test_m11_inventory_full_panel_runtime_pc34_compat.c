@@ -548,6 +548,23 @@ static int framebuffer_has_color_in_rect(const unsigned char* framebuffer,
     return 0;
 }
 
+static int framebuffer_rect_changed(const unsigned char* before,
+                                    const unsigned char* after,
+                                    int x, int y, int w, int h) {
+    int row;
+    int col;
+    if (!before || !after || x < 0 || y < 0 || x + w > 320 || y + h > 200) {
+        return 0;
+    }
+    for (row = 0; row < h; ++row) {
+        for (col = 0; col < w; ++col) {
+            const int offset = (y + row) * 320 + x + col;
+            if (before[offset] != after[offset]) return 1;
+        }
+    }
+    return 0;
+}
+
 static void seed_inventory_view(M11_GameViewState* state,
                                 struct DungeonThings_Compat* things,
                                 struct DungeonWeapon_Compat* weapon) {
@@ -2915,6 +2932,7 @@ static void test_eye_panel_champion_stats_and_skills(void) {
     struct DungeonWeapon_Compat weapon;
     struct ChampionState_Compat* champ;
     unsigned char framebuffer[320 * 200];
+    unsigned char inactiveFramebuffer[320 * 200];
     int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
 
     seed_inventory_view(&state, &things, &weapon);
@@ -2946,6 +2964,12 @@ static void test_eye_panel_champion_stats_and_skills(void) {
     champ->skillLevels[CHAMPION_SKILL_NINJA] = 3;
     champ->skillLevels[CHAMPION_SKILL_PRIEST] = 4;
     champ->skillLevels[CHAMPION_SKILL_WIZARD] = 5;
+
+    /* C101 is a 144-pixel source panel. Capture its ordinary inventory
+     * background first, then make the long F0351 rows prove that visible
+     * M653 cells never spill into the adjacent viewport. */
+    memset(inactiveFramebuffer, 0xEE, sizeof(inactiveFramebuffer));
+    M11_GameView_Draw(&state, inactiveFramebuffer, 320, 200);
 
     ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
               M11_GAME_INPUT_REDRAW,
@@ -3056,6 +3080,12 @@ static void test_eye_panel_champion_stats_and_skills(void) {
                           (panelX + DM1_STATISTIC_NAME_REL_X + 1)],
               DM1_COLOR_LIGHTEST_GRAY,
               "drawn statistic name pixel is source gray");
+    ASSERT_EQ(framebuffer_rect_changed(
+                  inactiveFramebuffer, framebuffer,
+                  panelX + panelW, 33 + panelY,
+                  320 - (panelX + panelW), panelH),
+              0,
+              "F0351 M653 skill/stat rows remain inside the original C101 panel");
 
     /* PANEL.C F0351:2026-2029 skips the base level before it formats a
      * skill.  Default party skills therefore leave the skill area clear,

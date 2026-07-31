@@ -4923,6 +4923,11 @@ lane is carried forward in the sections below.
     use M653's visible six-pixel cell advance, so their source C557/C559
     coordinates fit the 144-pixel panel. The remaining work is an original
     pixel capture comparison, not host-font layout recovery.
+  - 2026-07-31 C101 containment regression: the real-PC34 inventory runtime
+    now compares inactive and F0351-active framebuffers and proves that even
+    the longest `ANTI-MAGIC`/`ANTI-FIRE` rows do not alter pixels outside the
+    original 144-pixel C101 panel. This closes the reported oversized-text
+    regression boundary; original DOS pixel comparison remains open.
 - 2026-07-23 F0344/F0658 HUD material follow-up: a DM1-only receipt now
   requires real C010 action pixels for C079/C077/C011 crop ownership,
   C009/C011 spell rows, C020, C030/C031/C032 F0658 label surfaces, and raw
