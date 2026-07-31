@@ -65,11 +65,27 @@ static void test_decompress_copy_ref(void) {
           "copy ref: copied bytes match");
 }
 
+static void test_decompress_forward_window_ref(void) {
+    uint8_t output[23];
+    Nexus_V1_Prs3DecodeResult r;
+    uint8_t src[] = {
+        0xFF, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0xFF, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+        0x0F, 0x10, 0x11, 0x12, 0x13, 0x00, 0x00
+        /* raw offset 0 => relative offset 18, len 3 */
+    };
+    r = nexus_v1_prs3_decompress(src, sizeof(src), output, sizeof(output), 23);
+    check(r.success == 1, "forward-window ref: success");
+    check(output[20] == 0x12 && output[21] == 0x13 && output[22] == 0x12,
+          "forward-window ref: DMWeb +18 source byte copied");
+}
+
 int main(void) {
     printf("=== Nexus V1 PRS3 Decode test ===\n");
     test_header_parse();
     test_decompress_literal_run();
     test_decompress_copy_ref();
+    test_decompress_forward_window_ref();
     printf("=== %d passed, %d failed ===\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

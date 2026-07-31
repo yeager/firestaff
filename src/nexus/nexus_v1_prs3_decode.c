@@ -65,7 +65,11 @@ Nexus_V1_Prs3DecodeResult nexus_v1_prs3_decompress(
                 b1 = compressed[sp++];
                 num_pixels = 3 + (b1 & 0x0F);
                 raw_offset = ((b1 >> 4) << 8) | b0;
-                offset = raw_offset - 4078;
+                /* DMWeb DMNDataFileDecoder.vbs::DecodePRS3: values below
+                 * &HFDC are forward-window references after the +18 bias;
+                 * only &HFDC..&HFFF encode the negative window. */
+                offset = raw_offset >= 0xFDC ?
+                    raw_offset - 0xFEE : raw_offset + 18;
                 while (out_pos - offset > 4095) {
                     offset += 4096;
                 }
