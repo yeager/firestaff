@@ -52,9 +52,11 @@ int dm2_v1_load_dungeon(DM2_V1_GameState *state) {
 }
 
 int dm2_v1_enter_shop(DM2_V1_GameState *state) {
-    if (!state || !state->outdoor) return -1;
-    printf("DM2: entering shop (gold: %d)\n", state->gold);
-    return 0;
+    (void)state;
+    /* SKProject routes commerce through the active shop-glass actuator,
+     * its WALL_GFX/GDAT image chain and record-owned stock. An outdoor flag
+     * and a host gold field cannot identify any of those source owners. */
+    return -1;
 }
 
 int dm2_v1_is_outdoor(const DM2_V1_GameState *state) {

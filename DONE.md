@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
+  longer treats an outdoor flag as evidence for a shop and cannot report a
+  successful transaction route from host gold alone. It remains closed until
+  the original shop-glass actuator, WALL_GFX/GDAT material and stock record
+  owners are supplied.
+
 - ✅ 2026-07-31 DM2 weather IMG9 source admission: ENVIRONMENT weather
   commands `0x64..0x6c` now accept only the original PC IMG9 global-palette
   format. The former local-palette IMG3/U4 test shape cannot authorise an

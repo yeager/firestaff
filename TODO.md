@@ -36,6 +36,8 @@
   `PLACE_MERCHANDISE`/`TAKE_MERCHANDISE` CCM records, including source-owned
   merchandise data and UI text, before enabling merchant interaction. Do not
   restore a fixed merchant identity, dialog table or reputation counter.
+  **2026-07-31 update:** the legacy `dm2_v1_enter_shop()` shortcut is also
+  closed; an outdoor flag and host gold value cannot enter a shop.
 
 - **DM2-DYNAMIC-CLIGHT-OWNER-HANDOFF:** The map-only dynamic-light fallback
   is closed. Port the complete `DM2_RECALC_LIGHT_LEVEL` inputs: leader and

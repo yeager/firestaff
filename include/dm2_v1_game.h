@@ -20,8 +20,9 @@ typedef struct DM2_V1_GameState {
 
 void dm2_v1_init(DM2_V1_GameState *state, const char *data_dir);
 int dm2_v1_load_dungeon(DM2_V1_GameState *state);
+/* Always fails until the caller supplies the original shop-glass actuator,
+ * WALL_GFX/GDAT material and record-owned transaction state. */
 int dm2_v1_enter_shop(DM2_V1_GameState *state);
 int dm2_v1_is_outdoor(const DM2_V1_GameState *state);
 
 #endif
-
