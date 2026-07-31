@@ -3,8 +3,14 @@
 #include "dm2_v1_viewport_renderer.h"
 #include <string.h>
 
-static DM2_V2_HudOverlay s_hud;
 static int s_initialized;
+/* The old overlay state held invented compass, gold, level and champion-bar
+ * values.  None is a source-owned HUD input and the GDAT route never reads
+ * it: SKWIN draws those values from its live GUI/session state.  Retain only
+ * the visibility gate needed to preserve the V1 framebuffer until authenticated
+ * INTERFACE_GENERAL records are available. */
+static int s_visible;
+static uint8_t s_opacity;
 static const DM2_V2_PhaseGateConfig *s_gate_config;
 static int s_force_active;
 static DM2_V2_HudGdatFetch s_gdat_fetch;
@@ -41,14 +47,15 @@ static void reset_path_record(void)
 static void ensure_init(void)
 {
     if (!s_initialized) {
-        dm2_v2_hud_init(&s_hud);
         s_initialized = 1;
+        s_visible = 1;
+        s_opacity = 255u;
     }
 }
 
 static int render_allowed(void)
 {
-    if (!s_initialized || !s_hud.visible || s_hud.opacity == 0) return 0;
+    if (!s_initialized || !s_visible || s_opacity == 0u) return 0;
     if (s_force_active) return 1;
     return s_gate_config && s_gate_config->v2LaunchEnabled &&
         s_gate_config->v2ProfileEnabled;
@@ -119,8 +126,8 @@ static void render_original_hud(uint8_t *fb, int w, int h)
 void dm2_v2_hud_runtime_init(void) { ensure_init(); s_force_active = 0; reset_path_record(); }
 void dm2_v2_hud_runtime_shutdown(void)
 {
-    if (s_initialized) dm2_v2_hud_reset(&s_hud);
     s_initialized = 0; s_gate_config = NULL; s_force_active = 0;
+    s_visible = 0; s_opacity = 0u;
     s_gdat_fetch = NULL; s_gdat_palette_fetch = NULL; s_gdat_user = NULL; s_original_data_mounted = 0;
     reset_path_record();
 }
@@ -129,14 +136,14 @@ void dm2_v2_hud_runtime_set_gdat_source(DM2_V2_HudGdatFetch fetch,
                                          DM2_V2_HudGdatPaletteFetch palette_fetch,
                                          void *user, int mounted)
 { s_gdat_fetch = fetch; s_gdat_palette_fetch = palette_fetch; s_gdat_user = user; s_original_data_mounted = mounted ? 1 : 0; }
-void dm2_v2_hud_runtime_set_party_gold(int v) { ensure_init(); dm2_v2_hud_set_gold(&s_hud, v); }
-void dm2_v2_hud_runtime_set_direction(int v) { ensure_init(); dm2_v2_hud_set_direction(&s_hud, v); }
-void dm2_v2_hud_runtime_set_level(int a, int b) { ensure_init(); dm2_v2_hud_set_level(&s_hud, a, b); }
+void dm2_v2_hud_runtime_set_party_gold(int v) { (void)v; ensure_init(); }
+void dm2_v2_hud_runtime_set_direction(int v) { (void)v; ensure_init(); }
+void dm2_v2_hud_runtime_set_level(int a, int b) { (void)a; (void)b; ensure_init(); }
 void dm2_v2_hud_runtime_set_champion(int i, int a, int b, int c, bool d, bool e)
-{ ensure_init(); dm2_v2_hud_set_champion_bar(&s_hud, i, a, b, c, d, e); }
-void dm2_v2_hud_runtime_set_action_active(DM2_V2_ActionIcon v) { ensure_init(); dm2_v2_hud_set_action_active(&s_hud, v); }
-void dm2_v2_hud_runtime_trigger_hit_flash(void) { ensure_init(); dm2_v2_hud_trigger_hit_flash(&s_hud); }
-void dm2_v2_hud_runtime_set_opacity(uint8_t v) { ensure_init(); dm2_v2_hud_set_opacity(&s_hud, v); }
+{ (void)i; (void)a; (void)b; (void)c; (void)d; (void)e; ensure_init(); }
+void dm2_v2_hud_runtime_set_action_active(DM2_V2_ActionIcon v) { (void)v; ensure_init(); }
+void dm2_v2_hud_runtime_trigger_hit_flash(void) { ensure_init(); }
+void dm2_v2_hud_runtime_set_opacity(uint8_t v) { ensure_init(); s_opacity = v; }
 void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h)
 {
     if (!fb || w <= 0 || h <= 0 || !render_allowed()) return;
@@ -160,8 +167,8 @@ void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res) {
     }
 
     if (!s_initialized) render_will_run = 0;
-    if (!s_force_active && !s_hud.visible) render_will_run = 0;
-    if (s_hud.opacity == 0) render_will_run = 0;
+    if (!s_force_active && !s_visible) render_will_run = 0;
+    if (s_opacity == 0u) render_will_run = 0;
     if (!s_force_active) {
         if (!s_gate_config) render_will_run = 0;
         else if (!s_gate_config->v2LaunchEnabled) render_will_run = 0;

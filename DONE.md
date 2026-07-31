@@ -47388,7 +47388,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   V2 companion, crafting or smooth-viewport symbols. Verification: complete
   production link, real-data DM2 startup gate and archive/executable-symbol
   checks.
-
 - ✅ 2026-07-31 CSB V2.2 installed-state hardening: a launcher-set
   `installed` flag can no longer select modern art on its own. The V2.2
   source selector now rechecks the finished-art gate and every route's
@@ -47402,3 +47401,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   material/provenance gate; fixture cache pixels remain invisible even with a
   matching source span and palette. The focused in-place test verifies the
   framebuffer stays source-owned.
+
+- ✅ 2026-07-31 DM2 V2 HUD overlay-state isolation: removed the retired
+  procedural overlay module from the production V2 archive. Its invented
+  compass, gold, level and champion values no longer enter the live renderer;
+  the GDAT HUD route retains only a visibility gate and can draw only
+  authenticated `INTERFACE_GENERAL` records. Historical overlay code remains
+  explicitly test-scoped. Verification: production link, 74/74 direct-overlay
+  regression, real-data DM2 M11 startup gate and archive/executable symbols.

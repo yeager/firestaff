@@ -285,6 +285,12 @@
   no-draw until an imported runtime/save owner supplies the real chain. Keep
   weather fixtures confined to their unit tests; do not present them as a
   playable-session capture.
+  **2026-07-31 follow-up:** removed the now no-draw V2 overlay state module
+  from the production archive as well. Its default compass, gold, level and
+  champion-bar values were host inventions with no save/session receipt. The
+  GDAT runtime now retains only its visibility gate and draws only decoded
+  `INTERFACE_GENERAL` records; historical overlay experiments compile only in
+  their focused tests.
   **2026-07-31 update:** the unconnected HUD panel-routing and survey helper
   modules now compile only in their focused tests. M11 and the production DM2
   archive contain no accidental HUD route for those standalone receipts; a

@@ -3982,6 +3982,7 @@ file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c" "src/dm2/dm2_v22
 list(REMOVE_ITEM DM2_V2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_bitmap_blit.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_assets.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_overlay.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_asset_pipeline.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_interaction_feedback.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_lighting.c"
@@ -13249,6 +13250,7 @@ if(BUILD_TESTING)
         # The retired V2 runtime remains available to this diagnostic-only
         # regression target. It is deliberately absent from firestaff_dm2_v2.
         src/dm2/dm2_v2_runtime.c
+        src/dm2/dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_lighting.c
         src/dm2/dm2_v2_outdoor_enhanced.c
         src/dm2/dm2_v2_smooth_movement.c
