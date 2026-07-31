@@ -42,6 +42,9 @@
   metadata at all; the seven-entry table is compiled only for the explicit
   fixture startup probe.
 
+  The unused synthetic companion template has also been removed from the
+  production world module.
+
 - **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
   placeholder labels are now fixture/probe-only. The verified receipt no
   longer projects fixture mirror counts or fallback-label counts; runtime

@@ -52,37 +52,6 @@ static uint32_t rb32(const uint8_t *p) {
     return ((uint32_t)rb16(p) << 16) | rb16(p + 2);
 }
 
-/* ── Default companion template ────────────────────────────────────── */
-/* Minimal starting stats for companion slots 1-3.
- * Real stats set by player during character creation. */
-static const Theron_V1_Champion __attribute__((unused)) g_blank_companion = {
-    .name           = {0},
-    .portrait_index = 0,
-    .primary_class  = THERON_CLASS_FIGHTER,
-    .alive          = 1,
-    .health         = 10,  .max_health  = 10,
-    .stamina        = 10,  .max_stamina = 10,
-    .mana           =  0,  .max_mana    =  0,
-    .strength       = 10,
-    .dexterity      = 10,
-    .wisdom         = 10,
-    .vitality       = 10,
-    .anti_magic     =  0,
-    .anti_fire      =  0,
-    .fighter_level  =  1,
-    .ninja_level    =  0,
-    .priest_level   =  0,
-    .wizard_level   =  0,
-    .wounds         =  0,
-    .attributes     =  0,
-    .inventory      = {0},
-    .slots          = {-1,-1,-1,-1,-1,-1,-1,-1,-1},
-    .load           =  0,
-    .max_load       = 180,   /* (10<<3)+100 */
-    .food           = 10,
-    .water          = 10,
-};
-
 /* ══════════════════════════════════════════════════════════════════════
  * Party management
  * ============================================================================
