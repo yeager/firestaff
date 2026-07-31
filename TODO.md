@@ -23787,6 +23787,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the installed original `DUNGEON.DAT`. Like the earlier first save, it has
     zero C13 and active-group entries, so it adds real interop coverage but
     does not close the C13 requirement.
+  - 2026-07-31 visual-resume gap: the second operator-owned DOSBox-X save
+    (`a6fa347b`, map 1, party `(6,2,2)`) reaches the same runtime tuple in
+    Firestaff, but its in-game viewport is materially darker than the paired
+    original DOSBox-X capture. The original frame contains the party's
+    equipped lit-torch state; the restored Firestaff frame selects the dark
+    F0337 dungeon-view light route. Do not compensate with a renderer-wide
+    palette override: it also corrupts the source HUD palette. Restore the
+    original PC34 champion hand/equipment light inputs through F0435 so the
+    existing F0337 palette calculation selects the source level.
 ## DM1 C03/C04 runtime identity follow-up
 
 - [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
