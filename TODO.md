@@ -446,6 +446,9 @@ diagnostic; it must not silently fall back to a generated visual.
   transparency metadata; no synthetic door page can be produced.
   **2026-07-31 D3C follow-up:** the contract-only C10 teleporter-field blit
   is removed. D3C retains its source route and zone metadata only.
+  **2026-07-31 D2L2/D2R2 door follow-up:** the remaining contract-only C10
+  partly-open-door blit is removed. Its F0111 branch, zone, clip and
+  transparency metadata remain, but unbound material cannot write a viewport.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

@@ -44612,6 +44612,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
 
 # CSB source-owned presentation audit (2026-07-30)
 
+- ✅ 2026-07-31 CSB D2L2/D2R2 F0111 partly-open-door synthetic blit removal:
+  removed the contract-only C10 framebuffer writer and its generated fixture.
+  The source-lock probe now covers ReDMCSB branch selection, D2 lane routing,
+  zones, clipping and transparency metadata without manufacturing pixels.
+
 - ✅ Rechecked the production order start, menu boundary, Entrance, HUD and
   viewport against the local hash-verified CSB packages. The PC3.4 real-data
   launch probe passed 75 checks: C001 title phases, C002/C003/C004 entrance

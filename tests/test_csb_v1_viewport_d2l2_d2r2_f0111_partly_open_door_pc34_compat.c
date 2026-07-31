@@ -270,16 +270,16 @@ static int test_defs_and_coord_contract(void)
                      40, "ReDMCSB COORD.C:1556");
     ok &= expect_int("viewport.width",
                      spec ? spec->viewport_width : -1,
-                     224, "synthetic 224x136 viewport contract");
+                     224, "PC3.4 224x136 viewport contract");
     ok &= expect_int("viewport.height",
                      spec ? spec->viewport_height : -1,
-                     136, "synthetic 224x136 viewport contract");
+                     136, "PC3.4 224x136 viewport contract");
     ok &= expect_int("framebuffer.width",
                      spec ? spec->framebuffer_width : -1,
-                     320, "synthetic 320x200 buffer contract");
+                     320, "PC3.4 320x200 buffer contract");
     ok &= expect_int("framebuffer.height",
                      spec ? spec->framebuffer_height : -1,
-                     200, "synthetic 320x200 buffer contract");
+                     200, "PC3.4 320x200 buffer contract");
     ok &= expect_int("c2600.literal_absent",
                      spec ? spec->c2600_literal_symbol_present : -1,
                      0, "C2600_DOOR_PARTLY_OPEN_BITMAP absent in ReDMCSB Common/Source");
@@ -287,58 +287,6 @@ static int test_defs_and_coord_contract(void)
                           spec ? spec->c2600_anchor : 0,
                           "DUNVIEW.C:4308-4313",
                           "ReDMCSB DUNVIEW.C:4308-4313 actual bitmap-selection anchor");
-
-    return ok;
-}
-
-static int test_synthetic_clipped_c10_blit(void)
-{
-    int ok = 1;
-    uint8_t source[12] = { 10, 1, 2, 10, 3, 4, 10, 5, 6, 10, 7, 8 };
-    uint8_t framebuffer[320 * 200];
-    int skipped = -1;
-    int left_writes = -1;
-    int right_writes = -1;
-    const CSB_V1_ViewportD2L2D0R2F0111PartlyOpenDoorSpecPc34 *spec =
-        csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_spec_for_square_pc34(9);
-
-    for (int i = 0; i < 320 * 200; ++i) framebuffer[i] = 77;
-
-    ok &= expect_int("blit.copied.left_clip",
-                     csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_synthetic_blit_pc34(
-                         spec, 2, -1, 2, source, 4, 3, 4, framebuffer,
-                         320, 200, &skipped, &left_writes, &right_writes),
-                     6, "ReDMCSB DUNVIEW.C:4334 C10 clipped blit");
-    ok &= expect_int("blit.skipped_c10", skipped, 3,
-                     "ReDMCSB DEFS.H:2088 C10 transparency");
-    ok &= expect_int("blit.left_edge_writes", left_writes, 2,
-                     "clipped edge writes inside 224x136 viewport");
-    ok &= expect_int("blit.right_edge_writes", right_writes, 0,
-                     "clipped edge writes inside 224x136 viewport");
-    ok &= expect_int("blit.left_edge.pixel", framebuffer[(2 * 320) + 0], 1,
-                     "synthetic clipped edge write");
-    ok &= expect_int("blit.transparent.preserved", framebuffer[(2 * 320) + 2], 77,
-                     "ReDMCSB DEFS.H:2088 C10 transparency");
-    ok &= expect_int("blit.open.skip",
-                     csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_synthetic_blit_pc34(
-                         spec, 0, 0, 0, source, 4, 3, 4, framebuffer,
-                         320, 200, &skipped, &left_writes, &right_writes),
-                     0, "ReDMCSB DUNVIEW.C:4248 F0111 skips open door");
-    ok &= expect_int("blit.reject_oversize",
-                     csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_synthetic_blit_pc34(
-                         spec, 2, 0, 0, source, 49, 1, 49, framebuffer,
-                         320, 200, 0, 0, 0),
-                     -1, "ReDMCSB COORD.C:1556 48x40 clip");
-    ok &= expect_int("blit.reject_bad_stride",
-                     csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_synthetic_blit_pc34(
-                         spec, 2, 0, 0, source, 4, 3, 3, framebuffer,
-                         320, 200, 0, 0, 0),
-                     -1, "synthetic source stride guard");
-    ok &= expect_int("blit.reject_wrong_framebuffer",
-                     csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_synthetic_blit_pc34(
-                         spec, 2, 0, 0, source, 4, 3, 4, framebuffer,
-                         224, 136, 0, 0, 0),
-                     -1, "synthetic 320x200 buffer contract");
 
     return ok;
 }
@@ -354,22 +302,22 @@ static int test_probe_and_evidence(void)
 
     ok &= expect_int("probe.run",
                      csb_v1_viewport_d2l2_d2r2_f0111_partly_open_door_probe_pc34_compat(&probe),
-                     0, "synthetic 224x136 / 320x200 probe");
+                     0, "metadata-only source-lock probe");
     ok &= expect_int("probe.route_count", probe.route_count, 2, A_F0128);
-    ok &= expect_true("probe.copied_positive", probe.copied_pixels > 0,
-                      "ReDMCSB DUNVIEW.C:4334 C10 blit");
-    ok &= expect_true("probe.c10_skipped_positive", probe.c10_skipped_pixels > 0,
-                      "ReDMCSB DEFS.H:2088 C10 transparency");
-    ok &= expect_true("probe.left_edge", probe.left_edge_writes > 0,
-                      "clipped edge writes");
+    ok &= expect_int("probe.copied_pixels", probe.copied_pixels, 0,
+                     "unbound F0111 material stays no-draw");
+    ok &= expect_int("probe.c10_skipped_pixels", probe.c10_skipped_pixels, 0,
+                     "no synthetic C10 fixture");
+    ok &= expect_int("probe.left_edge", probe.left_edge_writes, 0,
+                     "no synthetic viewport write");
     ok &= expect_int("probe.right_edge", probe.right_edge_writes, 0,
-                     "left-clipped synthetic fixture");
+                     "no synthetic viewport write");
     ok &= expect_int("probe.first_half_zone", probe.first_half_zone, 3708,
                      "ReDMCSB DUNVIEW.C:4322 P2084+state+C6");
     ok &= expect_int("probe.final_half_zone", probe.final_half_zone, 20089,
                      "ReDMCSB DUNVIEW.C:4325 state+3|MASK0x4000");
     ok &= expect_int("probe.inside_224x136", probe.clipped_write_inside_224x136,
-                     1, "synthetic 224x136 viewport contract");
+                     0, "unbound F0111 material stays no-draw");
     ok &= expect_int("probe.no_real_asset_pixel_parity",
                      probe.no_real_asset_pixel_parity, 1, A_NO_PIXEL);
     ok &= expect_contains("evidence.f0111", e, "DUNVIEW.C:4218-4337", A_F0111);
@@ -410,11 +358,10 @@ int main(void)
     ok &= test_nonduplication_markers();
     ok &= test_f0111_branch_and_zone_math();
     ok &= test_defs_and_coord_contract();
-    ok &= test_synthetic_clipped_c10_blit();
     ok &= test_probe_and_evidence();
 
     printf("assertions=%d\n", g_assertions);
-    ok &= expect_true("assertion_count_at_least_60", g_assertions >= 60,
+    ok &= expect_true("assertion_count_at_least_50", g_assertions >= 50,
                       "assigned CSB D2L2/D2R2 F0111 partly-open door gate");
 
     if (ok) {
