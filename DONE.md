@@ -47800,3 +47800,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   source decoder now validates the data pointer, base-plus-offset arithmetic,
   palette span, and packed image span before forming reads. Real ITEM.IBS
   decoder and PLRD/RLOWFIX regression tests pass.
+- ✅ 2026-07-31 Nexus ITEM.IBS inventory-image bounds hardening: the generic
+  16x16 image renderer now validates the complete selected image span with
+  64-bit end arithmetic before forming its source pointer. Real ITEM.IBS and
+  PLRD/RLOWFIX regressions pass.

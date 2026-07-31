@@ -220,6 +220,7 @@ int nexus_v1_item_ibs_render_image(const uint8_t *data, int data_size,
                                     uint32_t *rgba_out) {
     Nexus_V1_ItemIbsHeader hdr;
     uint32_t pal_base, assoc_base, img_base;
+    uint64_t image_end;
     const uint8_t *src;
     int i;
 
@@ -230,6 +231,10 @@ int nexus_v1_item_ibs_render_image(const uint8_t *data, int data_size,
     pal_base = hdr.images_section_offset;
     assoc_base = pal_base + (uint32_t)hdr.palette_count * 32;
     img_base = assoc_base + (uint32_t)hdr.assoc_count * 2;
+    image_end = (uint64_t)img_base +
+        (uint64_t)image_index * NEXUS_ITEM_IBS_IMG_SIZE +
+        NEXUS_ITEM_IBS_IMG_SIZE;
+    if (image_end > (uint64_t)data_size) return 0;
     src = data + img_base + image_index * NEXUS_ITEM_IBS_IMG_SIZE;
 
     for (i = 0; i < NEXUS_ITEM_IBS_IMG_SIZE; ++i) {
