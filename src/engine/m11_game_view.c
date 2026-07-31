@@ -45815,11 +45815,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                              framebufferWidth, framebufferHeight);
 
     /* The Firestaff procedural corridor/trapezoid renderer is not DM1
-     * DRAWVIEW output.  It stays available in debug HUD mode, but normal
-     * V1 should not draw these invented wall panels over the source floor
-     * and ceiling base.  Next source-bound pass should replace this with
-     * DUNVIEW.C wall zones C702..C717 and wall-set entries 93..107. */
-    if (state->showDebugHUD) {
+     * DRAWVIEW output.  It stays available for non-CSB diagnostics, but a
+     * CSB source session must never draw these invented wall panels over
+     * source-owned material, even when the debug HUD is enabled.  The
+     * remaining DM1 diagnostic route is to be replaced with DUNVIEW.C wall
+     * zones C702..C717 and wall-set entries 93..107. */
+    if (state->showDebugHUD && !m11_source_is_csb(state)) {
         for (depth = 0; depth < 3; ++depth) {
             m11_draw_corridor_frame(framebuffer, framebufferWidth, framebufferHeight,
                                     &frames[depth], &frames[depth + 1], depth);
@@ -45885,10 +45886,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
 
     /* Debug/prototype only: the old Firestaff path tiled GRAPHICS.DAT
      * wall/floor strips across procedural trapezoids.  That creates the
-     * noisy, speckled "not DM1" viewport Daniel called out.  Normal V1
-     * must wait for source-bound DRAWVIEW-style wall/floor placement
-     * instead of this placeholder tiling. */
-    if (state->assetsAvailable && state->showDebugHUD) {
+     * noisy, speckled "not DM1" viewport Daniel called out.  CSB stays
+     * source-owned even in debug mode; non-CSB V1 must wait for
+     * source-bound DRAWVIEW-style wall/floor placement instead. */
+    if (state->assetsAvailable && state->showDebugHUD &&
+        !m11_source_is_csb(state)) {
         int d;
         int mapWallSet;
         int mapFloorSet;

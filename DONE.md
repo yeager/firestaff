@@ -44972,3 +44972,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm1_v1_viewport_3d_pc34_compat`,
   `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 CSB debug viewport no-fake closure: a CSB source session
+  now suppresses the Firestaff procedural corridor/trapezoid renderer and
+  legacy texture tiling even when the diagnostic HUD is enabled. Diagnostic
+  annotations remain available, but cannot draw host-created dungeon
+  geometry or tiles over source-owned viewport material. Verification:
+  `test_csb_v1_viewport_phase3_rendering` (2 677/0) and the CSB M12/M11
+  launcher handoff boundary (567/0, one expected Atari skip) pass.
