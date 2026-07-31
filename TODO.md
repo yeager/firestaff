@@ -554,8 +554,8 @@ diagnostic; it must not silently fall back to a generated visual.
   has an explicit whole-frame no-draw regression; an empty, untrusted,
   malformed or unsupported original entry cannot mutate the 320x200 source
   page or become generated chrome. Its runtime decision is explicitly named
-  `rejected-no-draw`; the former `fallback-original` spelling is retained
-  only as a source-compatible alias. **2026-07-31 V2.2 cache audit:** a
+  `rejected-no-draw`; the retired `fallback-original` alias is removed.
+  **2026-07-31 V2.2 cache audit:** a
   malformed source-derived cache entry now rejects and discards the complete
   package: dimensions, exact RGBA byte count and non-wrapping data offsets
   must all validate before any bitmap can become available. Each key and RGBA

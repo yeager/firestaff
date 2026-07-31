@@ -46354,6 +46354,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   den verkliga ogiltiga typen `NONE`. Verifiering:
   `test_csb_v1_boot_title_import_ui_gate_pc34_compat` 137/137 och
   `test_csb_v1_csbgraphics_runtime_binding` 83/83 passerar.
+- ✅ 2026-07-31 CSB källinventering: korrigerade den felmärkta Lord Order-
+  typen. `0x19` är ReDMCSB `DEFS.H:1364` C25_CREATURE_LORD_ORDER, inte en
+  placeholder, även om originaldungeonerna saknar sådana grupper. Uppdaterade
+  även TODO:s inaktuella uppgift om det borttagna `fallback-original`-aliaset.
+  Verifiering: `test_csb_v1_monster_generator_gate_pc34_compat` passerar.
 
 - ✅ 2026-07-31 DM1 HoC candidate time-effects and endgame fallback gates:
   the live M11 idle route now proves ReDMCSB `CHAMPION.C F0331` excludes the

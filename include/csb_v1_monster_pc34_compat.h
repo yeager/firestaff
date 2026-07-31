@@ -59,7 +59,9 @@ typedef struct {
 
 #define CSB_CREATURE_TYPE_COUNT 27
 #define CSB_CREATURE_TYPE_GREY_LORD 0x1a
-#define CSB_CREATURE_TYPE_LORD_ORDER 0x19  /* unused placeholder */
+/* ReDMCSB DEFS.H:1364 C25_CREATURE_LORD_ORDER. This source-defined type is
+ * absent from the original dungeon groups, but is not a placeholder. */
+#define CSB_CREATURE_TYPE_LORD_ORDER 0x19
 #define CSB_CREATURE_TYPE_LORD_CHAOS 0x17
 #define CSB_CREATURE_TYPE_VEXIRK 0x0e
 #define CSB_CREATURE_TYPE_DEMON 0x16
