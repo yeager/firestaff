@@ -20,6 +20,7 @@
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_sound.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_startup_layout.h"
 #include "dm2_v1_startup_menu.h"
@@ -1158,6 +1159,8 @@ int main(void) {
                 "M11 stores the DM2 V1 world pointer");
     expect_true(view.dm2State.level_loaded == 1,
                 "M11 DM2 mirror state reports level loaded");
+    expect_true(dm2_v1_sound_playback_backend_bound(),
+                "M11 DM2 binds playback only after the verified boot profile");
     expect_true(view.dm2State.party_x == 3 && view.dm2State.party_y == 5 &&
                 view.dm2State.party_dir == 2,
                 "M11 DM2 mirror state reports the boot pose");

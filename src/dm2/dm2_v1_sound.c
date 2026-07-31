@@ -1170,6 +1170,11 @@ void dm2_v1_sound_bind_playback_backend(
     g_dm2_sound_backend_open_attempted = 0;
 }
 
+int dm2_v1_sound_playback_backend_bound(void)
+{
+    return g_dm2_sound_backend != NULL;
+}
+
 static int dm2_v1_sound_backend_ready(void)
 {
     if (!g_dm2_sound_backend || !g_dm2_sound_backend->is_ready)

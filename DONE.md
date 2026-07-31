@@ -4,7 +4,8 @@
   or synthetic PCM can become audible. Source: SKProject
   `SKWIN/SkwinSDL.cpp::OpenAudio` and `c_sound.cpp`. Verification:
   `test_dm2_v1_sound_playback_sdl` plays original `GRAPHICS.DAT` PCM through
-  SDL's dummy device; `test_dm2_v1_m11_startup_profile_gate` passes.
+  SDL's dummy device; `test_dm2_v1_m11_startup_profile_gate` directly proves
+  that the verified M11 boot bound the backend.
 
 - ✅ 2026-07-31 DM1 V2.2 missing-shape placeholder removal: removed the
   unused magenta/black checkerboard surface and public accessor from the

@@ -321,6 +321,11 @@ typedef struct {
 void dm2_v1_sound_bind_playback_backend(
     const DM2_V1_SoundPlaybackBackend *backend);
 
+/* True only while a host has bound a real playback backend. This does not
+ * open a device or admit sound data; GDAT verification remains mandatory at
+ * each playback request. */
+int dm2_v1_sound_playback_backend_bound(void);
+
 typedef struct {
     uint8_t valid;
     uint8_t rejected_no_loader;
