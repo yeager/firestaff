@@ -45486,6 +45486,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   dmweb's file-format documentation and CSBWin's decoder lineage are cited
   in the source. Verification: focused test passes against the local CSB
   `GRAPHICS.DAT` (22 checks).
+- ✅ 2026-07-31 CSB active D1L/D1R viewport binding hardening: the live M11
+  provider now requires the native 60x111 C03/C02 rasters before caching
+  GRAPHICS.DAT records 96/95 (wall set 0) for C713/C714. It rejects a wrong
+  but decodable record instead of accepting arbitrary dimensions. Source:
+  ReDMCSB `DUNVIEW.C` F0095/F0122/F0123. Verification: real-data first
+  viewport-frame, F0108/F0115 ornament and D2C F0107/F0111 probes pass
+  against `~/.firestaff/data/csb`.
 - ✅ 2026-07-31 DM2 HUD stat-colour ownership closure: the generic HUD plan
   no longer turns an unbound champion bar colour into a source-bound default.
   The real runtime alone imports SKProject `INIT`'s original

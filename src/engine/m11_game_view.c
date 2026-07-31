@@ -2101,8 +2101,19 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         source_graphic = M11_CSB_PC34_GRAPHIC_FIRST_WALL_SET +
             (unsigned int)wall_set * M11_CSB_PC34_WALL_SET_GRAPHIC_COUNT +
             M11_CSB_PC34_WALL_SURFACE_OFFSET + (unsigned int)wall_slot;
-        expected_width = 1;
-        expected_height = 1;
+        /* ReDMCSB DUNVIEW.C F0122/F0123 pass the native C03/C02 D1 side
+         * rasters to F0104/F0105.  Accepting an arbitrary decoded size here
+         * could silently bind a different (but structurally valid) PC3.4
+         * GRAPHICS.DAT record to C713/C714.  These source records are the
+         * 60x111 D1L/D1R pair; retain the broader per-surface validation for
+         * the remaining wall slots until each native raster is bound. */
+        if (graphic_index == 95 || graphic_index == 96) {
+            expected_width = 60;
+            expected_height = 111;
+        } else {
+            expected_width = 1;
+            expected_height = 1;
+        }
         cached_pixels = &state->csbViewportWallPixels[wall_slot];
         cached_width = &state->csbViewportWallWidths[wall_slot];
         cached_height = &state->csbViewportWallHeights[wall_slot];
@@ -2198,8 +2209,10 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         if (!m11_csb_decode_active_source_graphic(
                 profile, source_graphic, cached_pixels, cached_width,
                 cached_height, &receipt) || !receipt.valid ||
-            (graphic_index < 0 && (*cached_width != expected_width ||
-                                   *cached_height != expected_height))) {
+            ((graphic_index < 0 || graphic_index == 95 ||
+              graphic_index == 96) &&
+             (*cached_width != expected_width ||
+              *cached_height != expected_height))) {
             free(*cached_pixels);
             *cached_pixels = NULL;
             *cached_width = 0;

@@ -555,6 +555,11 @@ diagnostic; it must not silently fall back to a generated visual.
   for wall set 0) with the compressed-record receipt. Its prior synthetic
   frame compositor and synthetic raster runner are gone. The remaining
   viewport-material inventory stays open for routes not yet bound this way.
+  **2026-07-31 active-provider follow-up:** the live M11 CSB viewport loader
+  now rejects any D1L/D1R C03/C02 decode that is not the native 60x111
+  raster. This closes the former arbitrary-dimension acceptance in the
+  production route; it cannot cache a structurally valid but wrong wall
+  record for C713/C714.
   **2026-07-31 D1L2 wall follow-up:** removed the fabricated D1L2 analogue.
   ReDMCSB exposes D1C/D1L/D1R only, so no source-owned D1L2 material exists.
   **2026-07-31 D1L2/D1R2 F0115 follow-up:** removed the matching fabricated
