@@ -45588,3 +45588,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   the unconsumed F0111 contract route. ReDMCSB F0678/F0679 supplies D2L2/D2R2
   wall/teleporter handling, whose wall cases return before F0111; the removed
   route had neither a source material record nor a production consumer.
+- ✅ 2026-07-31 CSB fabricated D0L2/D0R2 wall removal: removed the unused
+  wall contract module, CTest and synthetic parity manifest. ReDMCSB F0125/
+  F0126 owns D0L/D0R; no D0L2/D0R2 PC3.4 view squares exist.
