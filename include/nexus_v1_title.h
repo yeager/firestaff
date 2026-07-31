@@ -4,6 +4,7 @@
 #include "nexus_v1_engine.h"
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_title_sequence.h"
+#include <stddef.h>
 #include <stdint.h>
 
 enum {
@@ -60,6 +61,14 @@ typedef struct {
     int decoded_map_count;
     int decoded_map_source_bound;
 } Nexus_TitleScreen;
+
+/* DMWeb TITLE.BIN MAPD/TIBG composition: five 64x28 maps selecting the
+ * 8x8 4bpp tiles stored in TITLE.CG.  This is a source-format decoder only;
+ * it does not claim a Saturn VDP1/VDP2 presentation rectangle. */
+int nexus_v1_title_decode_mapd(const uint8_t *mapd, size_t mapd_size,
+                               const uint8_t *title_cg,
+                               size_t title_cg_bytes,
+                               Nexus_TitleScreen *title);
 
 int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine);
 void nexus_title_free(Nexus_TitleScreen *title);

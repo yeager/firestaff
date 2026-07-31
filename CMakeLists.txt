@@ -90,6 +90,16 @@ add_executable(test_nexus_v1_m11_bpk_no_draw_host tests/test_nexus_v1_m11_bpk_no
 target_include_directories(test_nexus_v1_m11_bpk_no_draw_host PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_m11_bpk_no_draw_host PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_m11_bpk_no_draw_host COMMAND test_nexus_v1_m11_bpk_no_draw_host)
+add_executable(test_nexus_v1_title_mapd_real
+    tests/test_nexus_v1_title_mapd_real.c
+    src/shared/asset_find_by_hash.c)
+target_include_directories(test_nexus_v1_title_mapd_real PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_title_mapd_real PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_title_mapd_real COMMAND test_nexus_v1_title_mapd_real)
+set_tests_properties(nexus_v1_title_mapd_real PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=$ENV{HOME}/.firestaff/data/nexus"
+    SKIP_RETURN_CODE 77)
 add_executable(test_nexus_v1_saturn_card_m11_no_draw_startup tests/test_nexus_v1_saturn_card_m11_no_draw_startup.c src/shared/asset_find_by_hash.c)
 target_include_directories(test_nexus_v1_saturn_card_m11_no_draw_startup PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_saturn_card_m11_no_draw_startup PRIVATE firestaff_nexus)

@@ -12,11 +12,11 @@ static uint16_t nexus_title_be16(const uint8_t *p)
 
 /* DMWeb, Dungeon Master Nexus Data File Decoder: MAPD contains five
  * 64x28 tilemaps; TITLE.CG supplies the 5249 contiguous 8x8 4bpp tiles. */
-static int nexus_title_decode_mapd(const uint8_t *mapd,
-                                   size_t mapd_size,
-                                   const uint8_t *title_cg,
-                                   size_t title_cg_bytes,
-                                   Nexus_TitleScreen *title)
+int nexus_v1_title_decode_mapd(const uint8_t *mapd,
+                               size_t mapd_size,
+                               const uint8_t *title_cg,
+                               size_t title_cg_bytes,
+                               Nexus_TitleScreen *title)
 {
     int map;
     if (!mapd || mapd_size < 0x8c70U || !title_cg || !title ||
@@ -214,7 +214,7 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
         if (data && size > 0) {
             int cg_size = 0;
             uint8_t *cg = nexus_v1_read_file(engine, "TITLE.CG", &cg_size);
-            (void)nexus_title_decode_mapd(
+            (void)nexus_v1_title_decode_mapd(
                                           data + 0x0e278U,
                                           (size_t)size - 0x0e278U, cg,
                                           cg_size > 0 ? (size_t)cg_size : 0U,
@@ -259,7 +259,7 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
 
     {
         uint8_t *mapd = nexus_v1_read_file(engine, "TITLE.BIN", &size);
-        (void)nexus_title_decode_mapd(
+        (void)nexus_v1_title_decode_mapd(
                                       mapd && size > (int)0x0e278U
                                           ? mapd + 0x0e278U : NULL,
                                       size > (int)0x0e278U
