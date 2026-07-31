@@ -10,7 +10,7 @@
  *     -> optional post: scanlines + palette correction + sharpening
  *
  * Fallback chain:
- *   MODERN (V2.2) -> UPSCALED (V2.1) -> FILTERED (V2.0) -> ORIGINAL (V1)
+ *   UPSCALED (V2.1) -> FILTERED (V2.0) -> ORIGINAL (V1)
  *
  * Source-lock anchors (SKULL.ASM / ReDMCSB):
  *   SKULL.ASM T560  — dungeon viewport rendering
@@ -393,43 +393,13 @@ void dm2_v2_asset_invalidate_cached_palette(void) {
 /* ── V2.2 Modern Asset Mode ───────────────────────────────────────── */
 
 int dm2_v2_asset_load_modern_asset_manifest(void) {
-    /* Scan for modern asset manifest at:
-     *   ~/.firestaff/assets/dm2/modern/modern_asset_manifest.json
-     *
-     * If present, record root for renderer path building.
-     * If absent, silently fall back to V2.1 EPX pipeline. */
-    char home[512] = {0};
-    char manifest_path[768] = {0};
-    FILE* fp = NULL;
-
-#if defined(_WIN32) || defined(_WIN64)
-    {
-        const char* home_env = getenv("USERPROFILE");
-        if (home_env && home_env[0]) snprintf(home, sizeof(home), "%s", home_env);
-    }
-#else
-    {
-        const char* home_env = getenv("HOME");
-        if (home_env && home_env[0]) snprintf(home, sizeof(home), "%s", home_env);
-    }
-#endif
-
-    if (!home[0]) return 0;
-
-    snprintf(manifest_path, sizeof(manifest_path),
-             "%s/.firestaff/assets/dm2/modern/modern_asset_manifest.json", home);
-
-    fp = fopen(manifest_path, "r");
-    if (!fp) {
-        g_modern_asset_root[0] = '\0';
-        return 0;
-    }
-    fclose(fp);
-
-    snprintf(g_modern_asset_root, sizeof(g_modern_asset_root),
-             "%s/.firestaff/assets/dm2/modern", home);
-
-    return 1;
+    /* A disk-local manifest is not provenance for a DM2 presentation
+     * surface.  SKProject's c_gui_vp.cpp::DM2_guivp_32cb_15b8 obtains live
+     * images from the mounted GRAPHICS.DAT GDAT tables; no matching GDAT
+     * category/index/byte receipt exists for this retired drop-in route.
+     * Keep it unavailable until such a source-material bridge exists. */
+    g_modern_asset_root[0] = '\0';
+    return 0;
 }
 
 void dm2_v2_asset_get_modern_asset_root(char* out, size_t out_size) {
@@ -440,10 +410,10 @@ void dm2_v2_asset_get_modern_asset_root(char* out, size_t out_size) {
 /* ── Shape source selection ───────────────────────────────────────── */
 
 DM2_V22_ShapeSource dm2_v2_best_available_shape_source(int presentation_mode_index) {
-    /* Fallback chain: MODERN -> UPSCALED -> FILTERED -> ORIGINAL */
+    /* V2.2 stays on the verified V1-derived chain.  A local manifest must
+     * never substitute art for GRAPHICS.DAT GDAT material. */
     switch (presentation_mode_index) {
         case 3: /* V2.2 MODERN */
-            if (g_modern_asset_root[0]) return DM2_V22_SHAPE_SOURCE_V2_MODERN;
             /* fall through */
         case 2: /* V2.1 UPSCALED */
             if (g_config.epx_enabled) return DM2_V22_SHAPE_SOURCE_V2_UPSCALED;

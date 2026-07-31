@@ -907,7 +907,11 @@ static void m11_dm2_configure_v2_presentation(
     } else if (state->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
         mode = DM2_V2_GFX_MODE_V2_UPSCALED;
     } else if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
-        mode = DM2_V2_GFX_MODE_V2_MODERN;
+        /* V2.2 has no admitted DM2 original-data material bridge yet.  Do
+         * not let a launcher request promote a local art directory to live
+         * game pixels: SKProject's c_gui_vp.cpp::DM2_guivp_32cb_15b8 selects
+         * viewport images from mounted GRAPHICS.DAT GDAT records. */
+        mode = DM2_V2_GFX_MODE_V2_UPSCALED;
     }
     dm2_v2_asset_set_gfx_mode(mode);
 

@@ -87,8 +87,10 @@ int main(void) {
         int lighting_tick_pre = dm2_v2_lighting_runtime_tick_count();
         int touch_xlate_pre = dm2_v2_touch_runtime_translation_count();
 
-        /* All three runtimes should be active */
-        CHECK(hud_pre == 1);
+        /* HUD requires mounted original GDAT callbacks.  This data-free
+         * probe has none, so it must remain no-draw rather than inventing
+         * chrome; touch and lighting may still be presentation-active. */
+        CHECK(hud_pre == 0);
         CHECK(touch_pre == 1);
         CHECK(lighting_pre == 1);
 
@@ -115,9 +117,8 @@ int main(void) {
         int touch_xlate_post = dm2_v2_touch_runtime_translation_count();
         CHECK(touch_xlate_post == touch_xlate_pre + 1);
 
-        /* HUD doesn't have a tick counter (it's render-only) but
-         * we verify it's still active and gate-driven */
-        CHECK(dm2_v2_hud_runtime_is_active() == 1);
+        /* HUD remains source-gated without an original GDAT owner. */
+        CHECK(dm2_v2_hud_runtime_is_active() == 0);
 
         /* Cleanup (M11 shutdown order: reverse of init) */
         dm2_v2_lighting_runtime_shutdown();
@@ -184,11 +185,12 @@ int main(void) {
         dm2_v2_touch_runtime_init();
         dm2_v2_lighting_runtime_init();
 
-        /* V2 on → all active */
+        /* V2 on activates touch/lighting, while the data-free HUD remains
+         * no-draw until M11 provides its original GDAT callbacks. */
         dm2_v2_hud_runtime_set_gate_config(&on);
         dm2_v2_touch_runtime_set_gate_config(&on);
         dm2_v2_lighting_runtime_set_gate_config(&on);
-        CHECK(dm2_v2_hud_runtime_is_active() == 1);
+        CHECK(dm2_v2_hud_runtime_is_active() == 0);
         CHECK(dm2_v2_touch_runtime_is_active() == 1);
         CHECK(dm2_v2_lighting_runtime_is_active() == 1);
 

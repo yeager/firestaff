@@ -61,7 +61,10 @@
   `FINISHED_REAL`; it has no GDAT category/index/field or raw-byte receipt.
   The cache lookup is now no-draw as well, so no caller can bypass the V2.2
   swap pass with local RGBA data. The M12 availability flag likewise refuses
-  a local manifest, so V2.2 cannot be advertised as installed. A future
+  a local manifest, so V2.2 cannot be advertised as installed. The older
+  Phase-2 manifest loader and M11 presentation mapping now apply the same
+  refusal: a V2.2 request resolves to V2.1 and no ordinary filesystem
+  manifest can provide a `V2_MODERN` source. A future
   bridge must carry those exact original-data facts before enabling any V2.2
   replacement.
 

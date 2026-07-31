@@ -14,7 +14,7 @@
  *     -> optional post: scanlines + palette correction + sharpening
  *
  * Fallback chain:
- *   MODERN (V2.2) -> UPSCALED (V2.1) -> FILTERED (V2.0) -> ORIGINAL (V1)
+ *   UPSCALED (V2.1) -> FILTERED (V2.0) -> ORIGINAL (V1)
  *
  * Source-lock anchors (SKULL.ASM / ReDMCSB):
  *   SKULL.ASM T560  — dungeon viewport rendering
@@ -132,20 +132,19 @@ const char* dm2_v2_asset_surface_category_name(DM2_V2_SurfaceCategory cat);
  *   V1 ORIGINAL  -- raw V1 indexed surfaces at 320x200 (no upscaling)
  *   V2.0 FILTERED -- V1 + CRT scanlines + palette correction post-process
  *   V2.1 UPSCALED -- EPX 2x from V1 indexed -> RGBA 640x400
- *   V2.2 MODERN   -- hand-crafted modern assets at target resolution
+ *   V2.2 MODERN   -- reserved; falls back to source-derived V2.1
  *
  * Asset selection order (per surface category):
- *   1. MODERN (V2.2) if gfx_mode == V2.2 MODERN and modern asset found
- *   2. UPSCALED (V2.1) if gfx_mode >= V2.1 UPSCALED -- EPX pipeline
- *   3. FILTERED (V2.0) if gfx_mode >= V2.0 FILTERED -- V1 + post-process
- *   4. ORIGINAL (V1)   -- always available as final fallback
+ *   1. UPSCALED (V2.1) if gfx_mode >= V2.1 UPSCALED -- EPX pipeline
+ *   2. FILTERED (V2.0) if gfx_mode >= V2.0 FILTERED -- V1 + post-process
+ *   3. ORIGINAL (V1)   -- always available as final fallback
  * ================================================================= */
 
 typedef enum {
     DM2_V2_GFX_MODE_V1_ORIGINAL = 0, /* 320x200 native, pixel-perfect */
     DM2_V2_GFX_MODE_V2_FILTERED  = 1, /* V1 + scanlines + palette correction */
     DM2_V2_GFX_MODE_V2_UPSCALED  = 2, /* EPX 2x (640x400 RGBA) */
-    DM2_V2_GFX_MODE_V2_MODERN    = 3  /* Modern 1920x1080 drop-in assets */
+    DM2_V2_GFX_MODE_V2_MODERN    = 3  /* Reserved; runtime falls back to V2.1 */
 } DM2_V2_GfxMode;
 
 #define DM2_V2_GFX_MODE_DEFAULT  DM2_V2_GFX_MODE_V1_ORIGINAL
@@ -247,11 +246,12 @@ void dm2_v2_asset_pipeline_init(void);
 /* =================================================================
  * V2.2 Modern Asset Mode
  *
- * Modern assets installed to: ~/.firestaff/assets/dm2/modern/
+ * V2.2 local modern assets are deliberately unavailable until original GDAT
+ * material provenance can be verified.
  * ================================================================= */
 
-/* Scan for modern asset manifest.
- * Returns 1 if manifest found, 0 if absent (falls back to EPX pipeline). */
+/* Retired local-manifest route.  Always returns 0 and falls back to the EPX
+ * pipeline; a filesystem manifest is not original-game provenance. */
 int dm2_v2_asset_load_modern_asset_manifest(void);
 
 /* Returns modern asset root, or "". */

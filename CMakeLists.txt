@@ -4842,6 +4842,24 @@ if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_phase1_launch_profile_separation_probe PRIVATE -Wall -Wextra -O2)
 endif()
 
+# DM2 V2 Phase 2 — source-derived presentation pipeline probe.
+# Headless: verifies V2.2 cannot be enabled by an ordinary local manifest.
+add_executable(firestaff_dm2_v2_phase2_asset_pipeline_probe
+    probes/dm2/firestaff_dm2_v2_phase2_asset_pipeline_probe.c)
+target_link_libraries(firestaff_dm2_v2_phase2_asset_pipeline_probe
+    PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+if(NOT MSVC)
+    target_compile_options(firestaff_dm2_v2_phase2_asset_pipeline_probe PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm2_v2_phase2_asset_pipeline_probe
+    COMMAND firestaff_dm2_v2_phase2_asset_pipeline_probe
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+)
+set_tests_properties(dm2_v2_phase2_asset_pipeline_probe PROPERTIES
+    LABELS "tier2;dm2;v2;phase2;asset-pipeline;source-locked"
+)
+
 # DM2 V2 Phase 3 — Enhanced UI Overlay Probe (HUD: compass, depth, gold,
 # champion bars, action strip).
 # Headless: no game assets, no SDL rendering required.

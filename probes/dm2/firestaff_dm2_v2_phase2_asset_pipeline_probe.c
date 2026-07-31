@@ -364,8 +364,17 @@ static void test_shape_source(void)
 {
     sec("dm2_v2_best_available_shape_source");
 
-    /* With modern root empty → falls through to V1 */
+    /* A local V2.2 manifest is never evidence for original GRAPHICS.DAT
+     * material, so the retired loader must not advertise an asset root. */
     dm2_v2_asset_set_gfx_mode(DM2_V2_GFX_MODE_V2_MODERN);
+    CHECK("local V2.2 manifest loader is unavailable",
+          dm2_v2_asset_load_modern_asset_manifest() == 0);
+    {
+        char modern_root[512];
+        dm2_v2_asset_get_modern_asset_root(modern_root, sizeof(modern_root));
+        CHECK("local V2.2 manifest loader leaves root empty",
+              modern_root[0] == '\0');
+    }
     DM2_V22_ShapeSource src = dm2_v2_best_available_shape_source(3);
     CHECK("V2_MODERN without modern root → not V2_MODERN",
           src != DM2_V22_SHAPE_SOURCE_V2_MODERN);

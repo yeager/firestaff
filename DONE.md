@@ -44707,3 +44707,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   G0693/G0694/G0695 derive the active `DoorSet * 3 + offset` record; missing
   selection remains V1/no-draw. Verification: `test_csb_v22_inplace_route_pc34`
   passes 145/145 and `test_csb_v22_inplace_draw_pc34` passes 66/66.
+- ✅ 2026-07-31 DM2 V2.2 legacy-pipeline closure: M11 now resolves a V2.2
+  request to the verified V2.1 EPX path, and the older Phase-2 local-manifest
+  loader is no-op. `dm2_v2_best_available_shape_source(3)` therefore cannot
+  report `V2_MODERN` from an ordinary filesystem directory; only a future
+  GDAT category/index/raw-byte provenance bridge may enable it. The focused
+  Phase-2 pipeline probe verifies the loader/root rejection (89/89), and the
+  M11 wire-up probe now correctly verifies the data-free HUD remains no-draw
+  until M11 supplies an original GDAT owner (36/36).
