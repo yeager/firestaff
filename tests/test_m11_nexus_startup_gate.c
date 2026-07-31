@@ -548,7 +548,7 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                                           48,
                                           48,
                                           NULL) < 0 &&
-                    ui.surfaces[NEXUS_SURFACE_FACE0 + 23].data == NULL,
+                    ui.surfaces[NEXUS_SURFACE_FACE19].data == NULL,
                 "Nexus FACE PRS3 frame leaves no synthetic portrait surface");
     memset(&decode_info, 0, sizeof(decode_info));
     expect_true(nexus_ui_expand_face_record_48x48(face_bytes,

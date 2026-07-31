@@ -47826,3 +47826,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   regular-image, floor-descriptor, and declared floor-data ranges are now
   checked in full with 64-bit end arithmetic before any decoder can read them.
   Synthetic and real ITEM.IBS plus PLRD/RLOWFIX regressions pass.
+- ✅ 2026-07-31 Nexus startup regression bounds correction: the M11 startup
+  test now checks the last real FACE.BIN slot (0..19) after rejecting an
+  out-of-range portrait request, instead of indexing past the 20-entry surface
+  array. Real Nexus startup gate passes without the previous array-bounds
+  warning.
