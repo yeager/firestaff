@@ -23802,9 +23802,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     original DOSBox-X capture. The original frame contains the party's
     equipped lit-torch state; the restored Firestaff frame selects the dark
     F0337 dungeon-view light route. Do not compensate with a renderer-wide
-    palette override: it also corrupts the source HUD palette. Restore the
-    original PC34 champion hand/equipment light inputs through F0435 so the
-    existing F0337 palette calculation selects the source level.
+    palette override: it also corrupts the source HUD palette. Trace the
+    exact F0435 materialized hand/object identities and PARTY_INFO light
+    state into F0337 before changing its calculation; the PC3.4 importer
+    already restores the complete champion slot stream. DMweb's saved-game
+    format notes corroborate that PC 3.4 champion data is a 1,404-byte,
+    little-endian block with the portraits held externally.
 ## DM1 C03/C04 runtime identity follow-up
 
 - [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
