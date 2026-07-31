@@ -84,6 +84,9 @@
   title/swoosh/ending media belong to other platform families. Continue to
   admit such media only through a hash-verified, platform-specific decoder;
   no generic external animation fallback may enter the PC route.
+  **2026-07-31 update:** boot-profile documentation and diagnostic output no
+  longer describe install names as an admission fallback. Continue auditing
+  every remaining user-facing diagnostic for the same hash-only distinction.
   **2026-07-31 update:** DM2 boot now rejects the generic loader's retired
   16-bit fixture layout and an unreadable/absent dungeon payload. Only the
   verified PC G1 byte-square route can cross from the startup menu into a

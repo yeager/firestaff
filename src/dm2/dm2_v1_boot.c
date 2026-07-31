@@ -3,7 +3,7 @@
  *
  * Phase 1: Runtime profile split for Skullkeep/DM2.
  * Separates DM2 boot from DM1/CSB, including:
- *   - Asset discovery by known DM2 hashes, with legacy filename fallback
+ *   - Asset discovery by known DM2 hashes; filenames are display metadata
  *   - Menu launch routing
  *   - Save namespace (saves/dm2/)
  *   - Platform/version diagnostics
@@ -10708,7 +10708,7 @@ size_t dm2_v1_diagnostic_report(const DM2_V1_BootProfile *profile,
         "DUNGEON:      %s\n"
         "  size:       %zu bytes\n"
         "  MD5:        %.32s%s\n"
-        "Filenames:    %s\n"
+        "Resolved names:%s\n"
         "Hash verified:%s\n"
         "Save root:    %s\n"
         "\n"
@@ -10732,7 +10732,7 @@ size_t dm2_v1_diagnostic_report(const DM2_V1_BootProfile *profile,
         profile->dungeon_size,
         profile->dungeon_md5,
         profile->assets_verified ? "" : "  ← UNVERIFIED",
-        profile->use_dm2_filenames ? "DM2GRAPHICS.DAT/DM2DUNGEON.DAT" : "GRAPHICS.DAT/DUNGEON.DAT",
+        profile->use_dm2_filenames ? " DM2GRAPHICS.DAT/DM2DUNGEON.DAT" : " GRAPHICS.DAT/DUNGEON.DAT",
         profile->assets_verified ? "YES" : "NO",
         profile->save_root,
         profile->deterministic.tick_rate_hz,

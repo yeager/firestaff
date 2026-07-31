@@ -106,8 +106,11 @@ typedef struct {
 
     /* ── Asset paths ─────────────────────────────────────── */
     char    asset_root[512];   /* parent dir of resolved dungeon/graphics data */
-    char    graphics_path[512]; /* resolved by known MD5 hash, filename fallback */
-    char    dungeon_path[512]; /* resolved by known MD5 hash, filename fallback */
+    /* Resolved only by a recognised content hash.  The original install name
+     * is retained as display metadata after admission; it is never a lookup
+     * fallback or a launch credential. */
+    char    graphics_path[512];
+    char    dungeon_path[512];
     char    songlist_path[512]; /* optional PC SONGLIST.DAT, resolved by hash */
     int     use_dm2_filenames;  /* 1 if legacy DM2* filenames were used */
     int     assets_verified;    /* 1 if MD5 hash matched a known version */
