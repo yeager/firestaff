@@ -47,6 +47,9 @@
   the original hero records, timer payload, DB14/DB4 links and GDAT rows.
   The arbitrary public CAII mode-byte setter is closed as well: only the
   original CCM/record writer may select a delete mode for a live creature.
+  **2026-07-31 update:** caller-selected CAII capacity is now test-only too.
+  Production refuses it until `DM2_INIT` imports the original
+  `ddat.v1e08a0` save/session owner.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

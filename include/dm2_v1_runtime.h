@@ -1015,11 +1015,9 @@ int dm2_v1_runtime_think_creature_receipt(
 int dm2_v1_runtime_schedule_creature_at(
     int map_id, int x, int y,
     DM2_V1_CreatureScheduleReceipt *out);
-/* DM2-003/005 follow-up: session-owned CAII (creature-array) setup.
- * `capacity` stands in for ddat.v1e08a0 (computed at DM2_INIT by
- * DM2_1c9a_3c30, startend.cpp:467-494 — the savegame word@0x14 owner is
- * unproven, so the caller owns the capacity).  Returns 1 when the array
- * is ready; re-initializing frees the previous array. */
+/* Test-only CAII fixture setup.  Production always returns 0: DM2_INIT must
+ * derive ddat.v1e08a0 from the original save/session owner rather than
+ * accepting a caller-authored capacity. */
 int dm2_v1_runtime_caii_init(int capacity);
 /* DM2-003/005 follow-up: DM2-owned lazy creature-activation boundary —
  * the bounded slice of DM2_ALLOC_CAII_TO_CREATURE

@@ -46009,3 +46009,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   The CAII free regression now proves that an arbitrary mode cannot trigger
   deletion or an invoke-message side effect. Source: SKProject
   `SKWIN/c_1c9a.cpp:5921-5929`.
+- ✅ 2026-07-31 DM2 CAII allocation-fixture isolation: arbitrary CAII array
+  capacity is no longer accepted by the production runtime. The only callers
+  were focused tests, which now compile the helper with
+  `FIRESTAFF_DM2_CAII_TESTING`; ordinary builds return failure until DM2_INIT
+  binds the original `ddat.v1e08a0` session/save owner. This prevents a
+  host-selected pool size from creating a live creature simulation. Source:
+  SKProject `startend.cpp:467-494`, `DM2_1c9a_3c30`.

@@ -5385,6 +5385,7 @@ int dm2_v1_runtime_schedule_creature_at(int map_id, int x, int y,
 
 int dm2_v1_runtime_caii_init(int capacity)
 {
+#ifdef FIRESTAFF_DM2_CAII_TESTING
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
 
     if (rt->caii_ready) {
@@ -5394,6 +5395,13 @@ int dm2_v1_runtime_caii_init(int capacity)
     dm2_v1_caii_array_init(&rt->caii, capacity);
     rt->caii_ready = rt->caii.valid;
     return rt->caii_ready;
+#else
+    (void)capacity;
+    /* DM2_INIT derives ddat.v1e08a0 from the original session/save owner.
+     * A caller-supplied capacity is fixture data, never a valid live CAII
+     * allocation contract. */
+    return 0;
+#endif
 }
 
 /*
