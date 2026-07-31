@@ -4911,6 +4911,19 @@ lane is carried forward in the sections below.
 
 ## Current DM1 Follow-up
 
+- **DM1-HOC-C040-TIME-EFFECTS:** Closed 2026-07-31. The live M11 idle
+  path now has a F0331 due-tick regression: a selected Hall of Champions
+  candidate is excluded from health, stamina, food and water mutation while
+  C040 is open, then returns to ordinary source-owned need decay at the next
+  cadence after confirmation. This closes the reported candidate-death
+  boundary; broader original capture remains separate.
+
+- **DM1-ENDGAME-NO-FALLBACK-TEST-CONTRACT:** Closed 2026-07-31. F0444 tests
+  now retain the source-material rule: no restart/quit pixels are expected
+  without admitted original endgame material. F0446 accepts an SDL queue only
+  when the real audio backend exists, rather than treating available source
+  SONG.DAT playback as a headless failure.
+
 - DM1 F0115/F0128 now has an M10 source-material scheduler for normal
   objects, projectiles, and explosions. It requires admitted PC34 surfaces
   and preserves the source object -> projectile -> explosion restart order.

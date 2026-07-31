@@ -40,7 +40,8 @@ static void seed_starving_state(M11_GameViewState* state,
     M11_GameView_Init(state);
     state->active = 1;
     state->world.dungeon = dungeon;
-    state->world.gameTick = 5; /* AdvanceIdleTick increments to 6. */
+    /* F0331 runs every 64th source tick while the party is awake. */
+    state->world.gameTick = 63; /* AdvanceIdleTick increments to due tick 64. */
     state->world.partyMapIndex = 0;
     state->world.newPartyMapIndex = 0;
     state->world.party.mapIndex = 0;
@@ -75,11 +76,55 @@ static void test_starvation_pending_damage_reaches_runtime_hp(void) {
                 "source dehydration path continues water depletion");
 }
 
+/* ReDMCSB CHAMPION.C F0331 excludes G0299 while REVIVE.C C040 is open.
+ * The candidate is appended to the party before the player confirms, so an
+ * M11 idle tick must not drain its needs or turn it into a dead champion. */
+static void test_hoc_candidate_is_excluded_from_time_effects_until_confirmed(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    int hp_before;
+    int stamina_before;
+    int food_before;
+    int water_before;
+
+    seed_starving_state(&state, &dungeon, maps);
+    state.candidateMirrorPanelActive = 1;
+    state.candidateMirrorPartyIndex = 0;
+    state.candidateMirrorOrdinal = 1;
+    hp_before = state.world.party.champions[0].hp.current;
+    stamina_before = state.world.party.champions[0].stamina.current;
+    food_before = state.world.party.champions[0].food;
+    water_before = state.world.party.champions[0].water;
+
+    (void)M11_GameView_AdvanceIdleTick(&state);
+
+    ASSERT_TRUE(state.world.party.champions[0].hp.current == hp_before,
+                "HoC candidate survives the due F0331 idle tick");
+    ASSERT_TRUE(state.world.party.champions[0].stamina.current == stamina_before,
+                "HoC candidate stamina is unchanged while C040 is open");
+    ASSERT_TRUE(state.world.party.champions[0].food == food_before,
+                "HoC candidate food is unchanged while C040 is open");
+    ASSERT_TRUE(state.world.party.champions[0].water == water_before,
+                "HoC candidate water is unchanged while C040 is open");
+
+    state.candidateMirrorPanelActive = 0;
+    state.candidateMirrorPartyIndex = -1;
+    /* The panel may close between F0331 cadences.  Advance to the next
+     * source-owned due boundary before asserting ordinary need decay. */
+    state.world.gameTick = 127;
+    (void)M11_GameView_AdvanceIdleTick(&state);
+
+    ASSERT_TRUE(state.world.party.champions[0].hp.current < hp_before,
+                "confirmed candidate re-enters normal F0331 time effects");
+}
+
 int main(void) {
     printf("=== M11 Starvation Runtime Source-Lock Gate ===\n");
     printf("ReDMCSB: CHAMPION.C F0331 starvation/dehydration and F0325 underflow damage\n\n");
 
     test_starvation_pending_damage_reaches_runtime_hp();
+    test_hoc_candidate_is_excluded_from_time_effects_until_confirmed();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail ? 1 : 0;

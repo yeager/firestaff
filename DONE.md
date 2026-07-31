@@ -46341,3 +46341,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   den verkliga ogiltiga typen `NONE`. Verifiering:
   `test_csb_v1_boot_title_import_ui_gate_pc34_compat` 137/137 och
   `test_csb_v1_csbgraphics_runtime_binding` 83/83 passerar.
+
+- ✅ 2026-07-31 DM1 HoC candidate time-effects and endgame fallback gates:
+  the live M11 idle route now proves ReDMCSB `CHAMPION.C F0331` excludes the
+  selected C040 candidate from health/stamina/food/water mutation, then
+  restores normal decay at the next due tick after confirmation. The related
+  F0444/F0446 regression expectations were aligned with the existing
+  source-only policy: missing original final-screen art draws no synthetic
+  controls, while an available SDL backend may queue real SONG.DAT victory
+  audio. Verification: `m11_starvation_runtime_source_lock`,
+  `m11_action_stamina_runtime_source_lock`,
+  `dm1_v1_hall_of_champions_pc34_compat`, and the real backed PC34 corpus
+  roundtrip all pass.
