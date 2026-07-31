@@ -44770,3 +44770,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   enligt `246 + DoorSet * 3 + depth`. Ogiltiga PC34-val blir no-draw och
   kan inte tyst lånas från DoorSet 0. Den fokuserade F0111-dörrtesten och
   F0128-provenanstesten passerar.
+- ✅ 2026-07-31 CSB live closed-D3 F0111 binding: D3L2/D3R2 now resolve
+  their actual PC3.4 MAP.D/DB0 DoorSet record, retain only F0172 front-facing
+  `C4_DOOR_STATE_CLOSED` cells, and hand that exact GRAPHICS.DAT index to the
+  M11 source decoder before the existing F0111 panel blit. No default DoorSet,
+  replacement pixels or partial-door geometry is used. Viewport and M12→M11
+  handoff regressions pass (2 675/2 675 and 567/567).
