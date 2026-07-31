@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
+  structural no-op seam. Reconnect the real Track 02 level handoff only after
+  the authenticated tile/material/UI banks and square mapping are decoded.
+  Keep BIN/CUE/ISO receipt normalization and later object/level records on
+  the same verified-media path.
+
 - **THERON-V1-UI-CHROME-REAL-DATA:** The inferred bar/text/champion-slot
   implementation is now fixture-only. Production exposes a no-op API until
   the original Track 02 UI chrome bank and font records are decoded. The

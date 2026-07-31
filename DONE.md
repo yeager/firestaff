@@ -6367,6 +6367,14 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-31 Theron V1 viewport production isolation: removed the
+  procedural dungeon, UI chrome, tile selector, and indexed-to-M11 presenter
+  from the production archive. Production now owns a lifecycle-preserving
+  no-op viewport seam; the pixel renderer remains explicit in fixture and
+  probe targets. Verification: viewport renderer, first-room runtime, and V2
+  overlay seed probes passed; the production archive contains only
+  `theron_v1_viewport_runtime_noop.c.o` for the viewport.
+
 - ✅ 2026-07-31 Theron HUD placeholder cleanup: removed the dead procedural
   champion-slot renderer from the production compilation path. The legacy
   V1 chrome compositor remains fail-closed until a verified original UI bank
