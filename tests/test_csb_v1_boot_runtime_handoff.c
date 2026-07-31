@@ -4444,7 +4444,6 @@ static void test_runtime_utility_startup_receipt_facades(void)
     poisoned_view_receipt.render_plan.menu_option_count = 1;
     poisoned_view_receipt.render_plan.menu_options[0].selected = 0;
     poisoned_view_receipt.render_plan.menu_options[1].selected = 1;
-    poisoned_view_receipt.render_plan.fallback_prompt_text = "STALE";
     CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
               &poisoned_view_receipt,
               &hud_draw_receipt) == 1 &&
@@ -4463,7 +4462,6 @@ static void test_runtime_utility_startup_receipt_facades(void)
               receipt_closed_door_plan.menu_option_count == 4 &&
               receipt_closed_door_plan.menu_options[0].selected &&
               !receipt_closed_door_plan.menu_options[1].selected &&
-              receipt_closed_door_plan.fallback_prompt_text == NULL &&
               !receipt_closed_door_plan.blink_prompt_visible,
           "boot startup closed-door HUD/menu receipt rejects host text fallback");
     CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
@@ -4515,7 +4513,6 @@ static void test_runtime_utility_startup_receipt_facades(void)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               host_view_receipt.render_plan.waiting_for_input &&
               host_view_receipt.render_plan.menu_option_count == 4 &&
-              host_view_receipt.render_plan.fallback_prompt_text == NULL &&
               host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.hud_menu_draw_ready &&
               host_view_receipt.hud_menu_draw_valid,

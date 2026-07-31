@@ -490,11 +490,6 @@ int main(void)
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
               plan.special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
-              plan.fallback_title_text == NULL &&
-              plan.fallback_subtitle_text == NULL &&
-              plan.fallback_prompt_text == NULL &&
-              plan.title_empty_fallback_text == NULL &&
-              plan.fallback_text_row_count == 0 &&
               plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
@@ -550,7 +545,6 @@ int main(void)
               plan.title_blit_kind ==
                   CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 &&
               plan.title_transparent_color == -1 &&
-              plan.title_empty_fallback_text == NULL &&
               /* TITLE.C begins CHAOS at source step 2: the first
                * source-owned scaled blit is 16x4, not the old synthetic
                * third-frame 48x12 approximation. */
@@ -608,7 +602,6 @@ int main(void)
               plan.title_blit_kind ==
                   CSB_V1_STARTUP_TITLE_BLIT_REGION_PC34 &&
               plan.title_transparent_color == 0 &&
-              plan.title_empty_fallback_text == NULL &&
               plan.title_dest_x == 0 &&
               plan.title_dest_y == 118 &&
               plan.title_dest_w == 320 &&
@@ -671,28 +664,12 @@ int main(void)
               plan.closed_left_dest_y == 30 &&
               plan.closed_left_w == 105 &&
               plan.closed_left_h == 161 &&
-              plan.closed_left_fallback_fill_color == 0 &&
-              plan.closed_left_fallback_light_edge_color == 0 &&
-              plan.closed_left_fallback_dark_edge_color == 0 &&
               plan.closed_right_source_x == 0 &&
               plan.closed_right_source_y == 0 &&
               plan.closed_right_dest_x == 105 &&
               plan.closed_right_dest_y == 30 &&
               plan.closed_right_w == 127 &&
               plan.closed_right_h == 161 &&
-              plan.closed_right_fallback_fill_color == 0 &&
-              plan.closed_right_fallback_light_edge_color == 0 &&
-              plan.closed_right_fallback_dark_edge_color == 0 &&
-              plan.fallback_title_text == NULL &&
-              plan.fallback_subtitle_text == NULL &&
-              plan.fallback_status_text == NULL &&
-              !plan.fallback_status_visible &&
-              !plan.fallback_frame_valid &&
-              plan.fallback_detail_text == NULL &&
-              !plan.fallback_detail_visible &&
-              !plan.fallback_runtime_detail_visible &&
-              plan.fallback_prompt_text == NULL &&
-              plan.fallback_text_row_count == 0 &&
               plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
@@ -739,10 +716,6 @@ int main(void)
           "startup render plan owns closed entrance command order");
     render_state.utility_overlay_active = 1;
     check(build_render_plan_from_host_receipt(&render_state, &plan) &&
-              !plan.fallback_status_visible &&
-              !plan.fallback_detail_visible &&
-              !plan.fallback_runtime_detail_visible &&
-              plan.fallback_text_row_count == 0 &&
               plan.menu_option_count == 4 &&
               plan.menu_options[1].command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34,
@@ -751,8 +724,7 @@ int main(void)
     render_state.utility_overlay_active = 0;
     render_state.entrance_frame = 12;
     check(build_render_plan_from_host_receipt(&render_state, &plan) &&
-              !plan.blink_prompt_visible &&
-              plan.fallback_text_row_count == 0,
+              !plan.blink_prompt_visible,
           "startup render plan does not synthesize an Entrance prompt blink");
 
     memset(&render_state, 0, sizeof(render_state));
@@ -767,10 +739,6 @@ int main(void)
               plan.surface_h == 200 &&
               plan.surface_transparent_color == -1 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CREDITS &&
-              plan.fallback_title_text == NULL &&
-              plan.fallback_subtitle_text == NULL &&
-              plan.fallback_prompt_text == NULL &&
-              plan.fallback_text_row_count == 0 &&
               plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
@@ -804,8 +772,6 @@ int main(void)
               plan.surface_transparent_color == -1 &&
               plan.closed_left_asset_id == 2 &&
               plan.closed_right_asset_id == 3 &&
-              plan.closed_left_fallback_fill_color == 0 &&
-              plan.closed_right_fallback_fill_color == 0 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE &&
               plan.opening_step == 0 &&
               plan.primitive_command_count == 1 &&
@@ -842,8 +808,6 @@ int main(void)
               plan.surface_transparent_color == -1 &&
               plan.closed_left_asset_id == 2 &&
               plan.closed_right_asset_id == 3 &&
-              plan.closed_left_fallback_light_edge_color == 0 &&
-              plan.closed_right_fallback_dark_edge_color == 0 &&
               plan.opening_step == 2 &&
               plan.opening_door_valid &&
               plan.opening_door_step == 2 &&

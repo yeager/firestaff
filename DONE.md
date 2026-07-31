@@ -46311,3 +46311,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Downstream routes remain fail-closed until real consumer/decoder evidence
   exists, matching the bounded Theron status in `docs/DMWEB_REFERENCE.md` and
   TODO.md. Verification: `theron_v1_media_inventory_probe` passes.
+- ✅ 2026-07-31 CSB startup-fallbackkontrakt: tog bort den döda
+  title-/entrance-planens text- och dörrfallbackfält, dess gamla
+  renderkommandon och den host-återgivning de kunde bära. CSB:s uppstart
+  representerar nu endast originalets C001–C005, C017 och C040; en saknad
+  källa blir no-draw i stället för text eller färgpaneler. Källa: ReDMCSB
+  `TITLE.C F0437`, `ENTRANCE.C F0438/F0441/F0806`; CSBWin
+  `Viewport.cpp`. Verifiering: startup-plan 139/139, boot-handoff 501/501,
+  realdata-sekvensen C001–C005/C017/C040 och titelkadensproben passerar.

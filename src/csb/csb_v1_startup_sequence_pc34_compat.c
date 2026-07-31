@@ -242,10 +242,6 @@ static void csb_v1_startup_clear_title_rect_pc34(
     plan->title_source_h = 0;
     plan->title_blit_kind = CSB_V1_STARTUP_TITLE_BLIT_NONE_PC34;
     plan->title_transparent_color = -1;
-    plan->title_empty_fallback_x = 0;
-    plan->title_empty_fallback_y = 0;
-    plan->title_empty_fallback_style = 0;
-    plan->title_empty_fallback_text = NULL;
     plan->title_dest_x = 0;
     plan->title_dest_y = 0;
     plan->title_dest_w = 0;
@@ -293,9 +289,6 @@ static void csb_v1_startup_clear_door_rects_pc34(
     plan->closed_left_dest_y = 0;
     plan->closed_left_w = 0;
     plan->closed_left_h = 0;
-    plan->closed_left_fallback_fill_color = 0;
-    plan->closed_left_fallback_light_edge_color = 0;
-    plan->closed_left_fallback_dark_edge_color = 0;
     plan->closed_right_source_x = 0;
     plan->closed_right_source_y = 0;
     plan->closed_right_asset_id = 0;
@@ -303,9 +296,6 @@ static void csb_v1_startup_clear_door_rects_pc34(
     plan->closed_right_dest_y = 0;
     plan->closed_right_w = 0;
     plan->closed_right_h = 0;
-    plan->closed_right_fallback_fill_color = 0;
-    plan->closed_right_fallback_light_edge_color = 0;
-    plan->closed_right_fallback_dark_edge_color = 0;
     plan->opening_door_valid = 0;
     plan->opening_door_step = 0;
     plan->opening_left_source_x = 0;
@@ -335,53 +325,6 @@ static void csb_v1_startup_clear_door_rects_pc34(
     plan->opening_composite_right_box_h = 0;
     plan->opening_composite_left_source_x = 0;
     plan->opening_composite_right_source_x = 0;
-}
-
-static void csb_v1_startup_clear_fallback_text_pc34(
-    CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    int i;
-    if (!plan) {
-        return;
-    }
-    plan->fallback_title_x = 0;
-    plan->fallback_title_y = 0;
-    plan->fallback_title_style = 0;
-    plan->fallback_title_text = NULL;
-    plan->fallback_subtitle_x = 0;
-    plan->fallback_subtitle_y = 0;
-    plan->fallback_subtitle_style = 0;
-    plan->fallback_subtitle_text = NULL;
-    plan->fallback_status_x = 0;
-    plan->fallback_status_y = 0;
-    plan->fallback_status_style = 0;
-    plan->fallback_status_text = NULL;
-    plan->fallback_status_visible = 0;
-    plan->fallback_frame_valid = 0;
-    plan->fallback_frame_x = 0;
-    plan->fallback_frame_y = 0;
-    plan->fallback_frame_w = 0;
-    plan->fallback_frame_h = 0;
-    plan->fallback_frame_color = 0;
-    plan->fallback_detail_x = 0;
-    plan->fallback_detail_y = 0;
-    plan->fallback_detail_style = 0;
-    plan->fallback_detail_text = NULL;
-    plan->fallback_detail_visible = 0;
-    plan->fallback_runtime_detail_visible = 0;
-    plan->fallback_runtime_detail_text[0] = '\0';
-    plan->fallback_prompt_x = 0;
-    plan->fallback_prompt_y = 0;
-    plan->fallback_prompt_style = 0;
-    plan->fallback_prompt_text = NULL;
-    plan->fallback_text_row_count = 0;
-    for (i = 0; i < CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34; ++i) {
-        plan->fallback_text_rows[i].x = 0;
-        plan->fallback_text_rows[i].y = 0;
-        plan->fallback_text_rows[i].style = 0;
-        plan->fallback_text_rows[i].visible = 0;
-        plan->fallback_text_rows[i].text = NULL;
-    }
 }
 
 static void csb_v1_startup_clear_primitive_commands_pc34(
@@ -738,7 +681,6 @@ int csb_v1_startup_execute_render_plan_pc34(
                     return 0;
                 }
                 break;
-            case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34:
             case CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34:
                 if (!drew_asset) {
                     return 1;
@@ -747,11 +689,6 @@ int csb_v1_startup_execute_render_plan_pc34(
                     return 0;
                 }
                 executor->draw_closed_doors(executor->user, plan);
-                break;
-            case CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34:
-                /* Retained for old serialized plans. A CSB package failure
-                 * must stay visible as a failed draw, never synthesized UI. */
-                if (!drew_asset) return 0;
                 break;
             case CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34:
                 if (plan->waiting_for_input && executor->draw_utility_panel) {
@@ -888,9 +825,6 @@ static void csb_v1_startup_set_closed_door_rects_pc34(
     plan->closed_left_h = 161;
     /* ReDMCSB ENTRANCE.C F0806 owns C002/C003.  Preserve these legacy plan
      * fields as zero only; M11 admits no generated door fallback. */
-    plan->closed_left_fallback_fill_color = 0;
-    plan->closed_left_fallback_light_edge_color = 0;
-    plan->closed_left_fallback_dark_edge_color = 0;
     plan->closed_right_source_x = 0;
     plan->closed_right_source_y = 0;
     plan->closed_right_asset_id = CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR_PC34;
@@ -898,9 +832,6 @@ static void csb_v1_startup_set_closed_door_rects_pc34(
     plan->closed_right_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
     plan->closed_right_w = 127;
     plan->closed_right_h = 161;
-    plan->closed_right_fallback_fill_color = 0;
-    plan->closed_right_fallback_light_edge_color = 0;
-    plan->closed_right_fallback_dark_edge_color = 0;
 }
 
 static void csb_v1_startup_set_opening_door_rects_pc34(
@@ -1812,7 +1743,6 @@ static int csb_v1_startup_build_render_plan_from_state_pc34(
     csb_v1_startup_clear_surface_blit_pc34(&plan);
     csb_v1_startup_clear_title_rect_pc34(&plan);
     csb_v1_startup_clear_door_rects_pc34(&plan);
-    csb_v1_startup_clear_fallback_text_pc34(&plan);
     csb_v1_startup_clear_asset_commands_pc34(&plan);
     csb_v1_startup_clear_primitive_commands_pc34(&plan);
     csb_v1_startup_clear_menu_options_pc34(&plan);

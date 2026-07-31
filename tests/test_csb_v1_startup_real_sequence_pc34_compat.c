@@ -376,7 +376,6 @@ int main(void)
               title_view.render_plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               title_view.render_plan.source_asset_id == 4 &&
-              title_view.render_plan.fallback_text_row_count == 0 &&
               receipt_for_plan(&session, &title_view.render_plan, 6u,
                                &closed_host) &&
               closed_host.host_surface ==

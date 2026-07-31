@@ -3682,14 +3682,6 @@ static int csb_v1_boot_startup_capture_render_plan_pc34(
 
     if (capture_receipt->render_view.opening_door_route) {
         *out_plan = capture_receipt->render_view.render_plan;
-        for (i = 0; i < out_plan->render_command_count &&
-                    i < CSB_V1_STARTUP_RENDER_COMMAND_CAP_PC34; ++i) {
-            if (out_plan->render_commands[i].kind ==
-                CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34) {
-                out_plan->render_commands[i].kind =
-                    CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34;
-            }
-        }
         /* ReDMCSB ENTRANCE.C F0806 lines 857-883 moves from title/menu into
          * the door-open startup animation before runtime handoff. Keep that
          * full-start graphic path available through the aggregate receipt,
@@ -4266,10 +4258,9 @@ static int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc
         receipt->closed_door_asset_command_count;
     out_plan->menu_option_count =
         receipt->closed_door_menu_option_count;
-    /* ENTRANCE.C F0439 owns the C004/C002/C003 page. The retained prompt is
-     * command metadata, not source graphic material, so it must never be
-     * reintroduced as a host text draw after the real entrance raster. */
-    out_plan->fallback_prompt_text = NULL;
+    /* ENTRANCE.C F0439 owns the C004/C002/C003 page. Prompt metadata stays
+     * outside the raster plan, so host text cannot be reintroduced over the
+     * real entrance surface. */
     out_plan->blink_prompt_visible = 0;
     out_plan->render_command_count = 0;
     out_plan->render_commands[out_plan->render_command_count++].kind =
@@ -6827,10 +6818,7 @@ static void csb_v1_boot_startup_hud_menu_from_presentation_pc34(
         snprintf(out_state->resume_path, sizeof(out_state->resume_path), "%s",
                  facts->resume_path ? facts->resume_path : "");
     }
-    snprintf(out_state->prompt, sizeof(out_state->prompt), "%s",
-             presentation->render_plan.fallback_prompt_text
-                 ? presentation->render_plan.fallback_prompt_text
-                 : "");
+    out_state->prompt[0] = '\0';
 }
 
 static void csb_v1_boot_startup_route_from_presentation_pc34(

@@ -173,7 +173,6 @@ typedef enum CSB_V1_StartupTitleBlitKind_PC34 {
     CSB_V1_STARTUP_TITLE_BLIT_SCALED_REGION_PC34 = 2
 } CSB_V1_StartupTitleBlitKind_PC34;
 
-#define CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34 5
 #define CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34 4
 #define CSB_V1_STARTUP_PRIMITIVE_COMMAND_CAP_PC34 4
 #define CSB_V1_STARTUP_MENU_OPTION_CAP_PC34 4
@@ -193,14 +192,6 @@ typedef enum CSB_V1_StartupPrimitiveCommandKind_PC34 {
     CSB_V1_STARTUP_PRIMITIVE_DRAW_RECT_PC34 = 2,
     CSB_V1_STARTUP_PRIMITIVE_DOOR_PANEL_PC34 = 3
 } CSB_V1_StartupPrimitiveCommandKind_PC34;
-
-typedef struct CSB_V1_StartupFallbackTextRow_PC34 {
-    int x;
-    int y;
-    int style;
-    int visible;
-    const char *text;
-} CSB_V1_StartupFallbackTextRow_PC34;
 
 typedef struct CSB_V1_StartupAssetCommand_PC34 {
     CSB_V1_StartupAssetCommandKind_PC34 kind;
@@ -248,10 +239,8 @@ typedef enum CSB_V1_StartupRenderCommandKind_PC34 {
     CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_OR_TEXT_PC34 = 3,
     CSB_V1_STARTUP_RENDER_COMMAND_SURFACE_PC34 = 4,
     CSB_V1_STARTUP_RENDER_COMMAND_OPENING_FRAME_IF_SURFACE_PC34 = 5,
-    CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_ELSE_FALLBACK_PC34 = 6,
-    CSB_V1_STARTUP_RENDER_COMMAND_FALLBACK_IF_NO_SURFACE_PC34 = 7,
-    CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34 = 8,
-    CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34 = 9
+    CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34 = 6,
+    CSB_V1_STARTUP_RENDER_COMMAND_DOORS_IF_SURFACE_PC34 = 7
 } CSB_V1_StartupRenderCommandKind_PC34;
 
 typedef struct CSB_V1_StartupRenderCommand_PC34 {
@@ -289,10 +278,6 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int title_stage;
     int title_blit_kind;
     int title_transparent_color;
-    int title_empty_fallback_x;
-    int title_empty_fallback_y;
-    int title_empty_fallback_style;
-    const char *title_empty_fallback_text;
     int title_source_x;
     int title_source_y;
     int title_source_w;
@@ -313,18 +298,12 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int closed_left_dest_y;
     int closed_left_w;
     int closed_left_h;
-    int closed_left_fallback_fill_color;
-    int closed_left_fallback_light_edge_color;
-    int closed_left_fallback_dark_edge_color;
     int closed_right_source_x;
     int closed_right_source_y;
     int closed_right_dest_x;
     int closed_right_dest_y;
     int closed_right_w;
     int closed_right_h;
-    int closed_right_fallback_fill_color;
-    int closed_right_fallback_light_edge_color;
-    int closed_right_fallback_dark_edge_color;
     int opening_door_valid;
     int opening_door_step;
     int opening_left_source_x;
@@ -356,39 +335,6 @@ typedef struct CSB_V1_StartupRenderPlan_PC34 {
     int opening_composite_left_source_y;
     int opening_composite_right_source_x;
     int opening_composite_right_source_y;
-    int fallback_title_x;
-    int fallback_title_y;
-    int fallback_title_style;
-    const char *fallback_title_text;
-    int fallback_subtitle_x;
-    int fallback_subtitle_y;
-    int fallback_subtitle_style;
-    const char *fallback_subtitle_text;
-    int fallback_status_x;
-    int fallback_status_y;
-    int fallback_status_style;
-    const char *fallback_status_text;
-    int fallback_status_visible;
-    int fallback_frame_valid;
-    int fallback_frame_x;
-    int fallback_frame_y;
-    int fallback_frame_w;
-    int fallback_frame_h;
-    int fallback_frame_color;
-    int fallback_detail_x;
-    int fallback_detail_y;
-    int fallback_detail_style;
-    const char *fallback_detail_text;
-    int fallback_detail_visible;
-    int fallback_runtime_detail_visible;
-    char fallback_runtime_detail_text[96];
-    int fallback_prompt_x;
-    int fallback_prompt_y;
-    int fallback_prompt_style;
-    const char *fallback_prompt_text;
-    int fallback_text_row_count;
-    CSB_V1_StartupFallbackTextRow_PC34 fallback_text_rows[
-        CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34];
     int asset_command_count;
     CSB_V1_StartupAssetCommand_PC34 asset_commands[
         CSB_V1_STARTUP_ASSET_COMMAND_CAP_PC34];
