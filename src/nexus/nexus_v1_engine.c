@@ -3029,6 +3029,7 @@ static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
     int size = 0;
 
     if (!engine) return;
+    nexus_itemdef_clear_ibs_declarations();
     memset(&engine->item_ibs_bank, 0, sizeof(engine->item_ibs_bank));
     memset(&engine->item_ibs_runtime_source, 0,
            sizeof(engine->item_ibs_runtime_source));

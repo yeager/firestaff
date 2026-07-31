@@ -85,6 +85,9 @@ int main(void) {
             !nexus_itemdef_get(0) ||
             nexus_itemdef_get(0)->weight != bank.item_weight[0] ||
             nexus_itemdef_get(0)->name != NULL) return 1;
+        nexus_itemdef_clear_ibs_declarations();
+        if (nexus_itemdef_count() != 0 || nexus_itemdef_get(0) != NULL)
+            return 1;
         free(item_bytes);
     }
     free(bytes);

@@ -47745,3 +47745,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   DMWeb nibble decoder and preventing the final pixel from being discarded on
   odd-sized surfaces. Verification: real `/Users/bosse/.firestaff/data/nexus/ITEM.IBS`
   passes `test_nexus_v1_champion_plrd`.
+- ✅ 2026-07-31 Nexus ITEM.IBS source-session isolation: the source-bound item
+  declaration table is explicitly cleared before each engine load, preventing
+  a later package without authenticated ITEM.IBS from inheriting the previous
+  session's item metadata. The real ITEM.IBS regression now also verifies the
+  clear path and zero live declarations afterward.

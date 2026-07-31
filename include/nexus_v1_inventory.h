@@ -97,6 +97,8 @@ void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
                                          const uint16_t *action2_string,
                                          const uint16_t *action3_string,
                                          int count);
+/* Forget the previous source package before opening a new Nexus engine. */
+void nexus_itemdef_clear_ibs_declarations(void);
 const char *nexus_itemdef_category_name(Nexus_ItemCategory cat);
 
 /* ═══════════════════════════════════════════════════════════════════

@@ -86,6 +86,18 @@ static uint16_t g_ibs_action3_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
 static int g_ibs_count;
 static Nexus_ItemDef g_ibs_defs[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
 
+void nexus_itemdef_clear_ibs_declarations(void) {
+    g_ibs_category = NULL;
+    g_ibs_weight = NULL;
+    g_ibs_count = 0;
+    memset(g_ibs_name_string, 0, sizeof(g_ibs_name_string));
+    memset(g_ibs_desc_string, 0, sizeof(g_ibs_desc_string));
+    memset(g_ibs_action1_string, 0, sizeof(g_ibs_action1_string));
+    memset(g_ibs_action2_string, 0, sizeof(g_ibs_action2_string));
+    memset(g_ibs_action3_string, 0, sizeof(g_ibs_action3_string));
+    memset(g_ibs_defs, 0, sizeof(g_ibs_defs));
+}
+
 void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
                                          const uint8_t *weight,
                                          const uint16_t *name_string,
