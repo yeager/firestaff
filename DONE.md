@@ -47862,3 +47862,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   out-of-range portrait request, instead of indexing past the 20-entry surface
   array. Real Nexus startup gate passes without the previous array-bounds
   warning.
+# 2026-07-31 Nexus SAL DataID 0 directory provenance
+
+- Added the DMWeb `DMNDataFileDecoder.vbs` `DecodeSNDLEVxxMAP` tone-bank
+  parser to the Nexus sound runtime. It walks the real MAP-owned SAL parts,
+  locates DataID 0, validates its big-endian offset table and entry bounds,
+  decodes the four variable entries plus `4 + 32*n` entries, and records
+  PCM width/source-control and sample-payload metadata.
+- The runtime still refuses playback because Saturn event→selector ownership
+  and the `SDDRVS.TSK` ABI are not authenticated. No synthetic sample or
+  fallback audio was introduced.
+- Verification: `test_nexus_v1_sal_map_corpus` and
+  `test_nexus_v1_sound_runtime_receipt` pass against
+  `/Users/bosse/.firestaff/data/nexus`.

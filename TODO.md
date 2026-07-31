@@ -1327,6 +1327,13 @@ diagnostic; it must not silently fall back to a generated visual.
   250 full-width glyphs and 710 Kanji glyphs, and identifies its menu/item/
   dialog/save usages; neither reference supplies the missing Nexus-specific
   glyph-code, register or VRAM trace.
+- **NEXUS-SAL-SFX-REAL-DATA:** DMWeb's `DecodeSNDLEVxxMAP` tone-bank grammar
+  is now implemented against the supplied `SNDLEV00-15.SAL/.MAP` corpus:
+  DataID 0 entry offsets, four variable entries, later `4 + 32*n` entries,
+  PCM 8/16-bit selection, source-control counts and bounded sample payload
+  metadata are retained in the runtime receipt. The route remains blocked for
+  playback until Saturn event→selector ownership and the SDDRVS.TSK call ABI
+  are proven; no host or synthetic audio is admitted.
 - **ALL-ORIGINAL-REPLACE-001:** Audit startup, title, entrance, HUD and
   dungeon runtime paths for placeholder pixels on every supported game before
   release.  Where matching original data exists under `.firestaff/data`, bind

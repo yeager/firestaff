@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <limits.h>
 
-/* Nexus V1 sound system — source-bound opaque implementation.
+/* Nexus V1 sound system — source-bound SAL directory implementation.
  * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
  * docs/nexus_music.md, nexus_v1_engine.c CD track switching.
  *
@@ -13,9 +13,9 @@
  * CD audio: 8 tracks (2-9) mapped to level pairs.
  * Sound driver: SDDRVS.TSK (26 KB Saturn sound driver task).
  *
- * SAL/MAP sample codec and Saturn event dispatch remain unproven; no actual
- * SFX playback is admitted. The implementation retains bounded source
- * receipts and logs blocked playback attempts.
+ * DMWeb's DataID 0 tone-bank directory and PCM entry metadata are decoded;
+ * Saturn event dispatch, SDDRVS ABI submission and host playback remain
+ * unproven, so no actual SFX playback is admitted.
  * Source: docs/nexus_sfx.md (no SFX implementation found in current source). */
 
 /* Event name table */
@@ -433,6 +433,120 @@ static void clear_sal_profile(Nexus_SoundEngine *eng) {
     eng->sal_first_nonzero_offset = -1;
     eng->sal_last_nonzero_offset = -1;
     eng->sal_checksum16 = 0;
+    eng->sal_tone_bank_directory_supported = 0;
+    eng->sal_tone_bank_offset = -1;
+    eng->sal_tone_bank_bytes = 0;
+    eng->sal_tone_entry_count = 0;
+    eng->sal_tone_entry_count_decoded = 0;
+    eng->sal_tone_pcm8_count = 0;
+    eng->sal_tone_pcm16_count = 0;
+    eng->sal_tone_memory_source_count = 0;
+    eng->sal_tone_noise_source_count = 0;
+    eng->sal_tone_sample_payload_offset = -1;
+    eng->sal_tone_sample_payload_bytes = 0;
+}
+
+/* DMWeb: DMNDataFileDecoder.vbs DecodeSNDLEVxxMAP, DataID 0.  The MAP
+ * entries are consumed in order from the SAL file; after the first part the
+ * decoder skips 2752 bytes.  The tone-bank directory then starts with a
+ * BE16 offset table, followed by four variable entries and fixed 4+32*n
+ * entries.  Keep this as metadata only: no host audio device or Saturn
+ * SDDRVS call is implied by parsing it. */
+static void parse_sal_tone_bank_directory(Nexus_SoundEngine *eng) {
+    int cursor = 0;
+    int i;
+    int tone_offset = -1;
+    int tone_bytes = 0;
+    int first_part = 1;
+    int directory_offset;
+    int entry_count;
+    int directory_bytes;
+    int entry_table_end;
+    int entry_offset;
+
+    if (!eng || !eng->sal_data || !eng->map_data ||
+        !eng->map_record_table_supported) return;
+    for (i = 0; i < eng->map_record_count; ++i) {
+        const Nexus_SoundMapWindow *r = &eng->map_records[i];
+        if (r->sal_size <= 0 || cursor > eng->sal_size - r->sal_size)
+            return;
+        if (r->data_id == 0 && tone_offset < 0) {
+            tone_offset = cursor;
+            tone_bytes = r->sal_size;
+        }
+        cursor += r->sal_size;
+        if (first_part) {
+            cursor = (cursor <= INT_MAX - 2752) ? cursor + 2752 : INT_MAX;
+            first_part = 0;
+        }
+    }
+    if (tone_offset < 0 || tone_bytes < 2 ||
+        tone_offset > eng->sal_size - tone_bytes) return;
+
+    directory_offset = read_u16_be(eng->sal_data + tone_offset);
+    if (directory_offset < 8 || directory_offset > tone_bytes ||
+        (directory_offset & 1) != 0) return;
+    entry_count = directory_offset / 2;
+    if (entry_count < 5 || entry_count > 1024) return;
+    directory_bytes = directory_offset;
+    entry_table_end = tone_offset + directory_bytes;
+    if (entry_table_end > eng->sal_size) return;
+
+    eng->sal_tone_bank_directory_supported = 1;
+    eng->sal_tone_bank_offset = tone_offset;
+    eng->sal_tone_bank_bytes = tone_bytes;
+    eng->sal_tone_entry_count = entry_count;
+    entry_offset = directory_bytes;
+    for (i = 0; i < entry_count; ++i) {
+        const uint8_t *entry;
+        int entry_size;
+        int next;
+        int bytes_per_sample;
+        int sound_source_control;
+        int layer_start;
+        int loop_end;
+        int required_bytes;
+
+        if (i < entry_count - 1) {
+            int a = read_u16_be(eng->sal_data + tone_offset + i * 2);
+            next = read_u16_be(eng->sal_data + tone_offset + (i + 1) * 2);
+            if (a != entry_offset || next < a || next > tone_bytes) return;
+            entry_size = next - a;
+        } else {
+            entry_size = 4;
+            if (entry_offset > tone_bytes - entry_size) return;
+        }
+        if (i < 4) {
+            if (entry_size < 1) return;
+        } else {
+            entry = eng->sal_data + tone_offset + entry_offset;
+            if (entry_size < 4 || entry[2] > 0x7fU) return;
+            entry_size = 4 + 32 * ((int)entry[2] + 1);
+            if (entry_offset > tone_bytes - entry_size) return;
+        }
+        entry = eng->sal_data + tone_offset + entry_offset;
+        if (i >= 4) {
+            bytes_per_sample = (((entry[7] >> 4) & 1) != 0) ? 1 : 2;
+            sound_source_control = 2 * (entry[6] & 1) + (entry[7] >> 7);
+            layer_start = ((entry[7] & 0x0f) << 16) |
+                          ((int)entry[8] << 8) | entry[9];
+            loop_end = ((int)entry[12] << 8) | entry[13];
+            required_bytes = (loop_end + 1) * bytes_per_sample;
+            if (layer_start < 0 || required_bytes < 0 ||
+                layer_start > tone_bytes ||
+                required_bytes > tone_bytes - layer_start) return;
+            if (bytes_per_sample == 1) eng->sal_tone_pcm8_count++;
+            else eng->sal_tone_pcm16_count++;
+            if (sound_source_control == 0)
+                eng->sal_tone_memory_source_count++;
+            else
+                eng->sal_tone_noise_source_count++;
+        }
+        eng->sal_tone_entry_count_decoded++;
+        entry_offset += entry_size;
+    }
+    eng->sal_tone_sample_payload_offset = tone_offset + entry_offset;
+    eng->sal_tone_sample_payload_bytes = tone_bytes - entry_offset;
 }
 
 static void parse_sal_profile(Nexus_SoundEngine *eng) {
@@ -509,7 +623,7 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     eng->current_level = -1;
     clear_map_route(eng);
     clear_sal_profile(eng);
-    printf("Nexus sound: initialized (opaque source receipts; playback blocked)\n");
+    printf("Nexus sound: initialized (source-bound SAL metadata; playback blocked)\n");
     return 0;
 }
 
@@ -589,6 +703,7 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
     }
     parse_map_record_table(eng);
     parse_sal_profile(eng);
+    parse_sal_tone_bank_directory(eng);
 
     printf("Nexus sound: loaded level %d SFX (SAL=%d bytes, MAP=%d bytes)\n",
         level_index, sal_size, map_size);
@@ -627,7 +742,8 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
     out_receipt->sound_driver_canonical_source_verified =
         eng->sound_driver_canonical_source_verified;
     out_receipt->sal_decode_supported =
-        nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK);
+        eng->sal_tone_bank_directory_supported &&
+        eng->sal_tone_entry_count_decoded == eng->sal_tone_entry_count;
     out_receipt->map_decode_supported =
         nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_MAP_TABLE);
     out_receipt->map_event_count = eng->map_event_count;
@@ -726,6 +842,23 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
     out_receipt->sal_first_nonzero_offset = eng->sal_first_nonzero_offset;
     out_receipt->sal_last_nonzero_offset = eng->sal_last_nonzero_offset;
     out_receipt->sal_checksum16 = eng->sal_checksum16;
+    out_receipt->sal_tone_bank_directory_supported =
+        eng->sal_tone_bank_directory_supported;
+    out_receipt->sal_tone_bank_offset = eng->sal_tone_bank_offset;
+    out_receipt->sal_tone_bank_bytes = eng->sal_tone_bank_bytes;
+    out_receipt->sal_tone_entry_count = eng->sal_tone_entry_count;
+    out_receipt->sal_tone_entry_count_decoded =
+        eng->sal_tone_entry_count_decoded;
+    out_receipt->sal_tone_pcm8_count = eng->sal_tone_pcm8_count;
+    out_receipt->sal_tone_pcm16_count = eng->sal_tone_pcm16_count;
+    out_receipt->sal_tone_memory_source_count =
+        eng->sal_tone_memory_source_count;
+    out_receipt->sal_tone_noise_source_count =
+        eng->sal_tone_noise_source_count;
+    out_receipt->sal_tone_sample_payload_offset =
+        eng->sal_tone_sample_payload_offset;
+    out_receipt->sal_tone_sample_payload_bytes =
+        eng->sal_tone_sample_payload_bytes;
 
     if (eng->current_level < 0 ||
         eng->current_level >= NEXUS_V1_AUDIO_LEVEL_COUNT) {

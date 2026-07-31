@@ -551,6 +551,16 @@ static void test_optional_real_sal_corpus_profile(void) {
               "real SAL/MAP corpus receipt emits");
         if (receipt.sal_package_profile_supported) {
             profiled++;
+            CHECK(receipt.sal_tone_bank_directory_supported == 1 &&
+                  receipt.sal_tone_entry_count_decoded ==
+                      receipt.sal_tone_entry_count &&
+                  receipt.sal_tone_entry_count > 4 &&
+                  receipt.sal_tone_pcm8_count + receipt.sal_tone_pcm16_count ==
+                      receipt.sal_tone_entry_count - 4 &&
+                  receipt.sal_tone_memory_source_count > 0 &&
+                  receipt.sal_tone_sample_payload_offset >= 0 &&
+                  receipt.sal_tone_sample_payload_bytes > 0,
+                  "DMWeb SAL DataID 0 tone-bank directory decodes real entries");
             CHECK(receipt.status == NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
                   receipt.blocks_real_sfx_playback == 1 &&
                   receipt.sal_container_preamble_supported == 1 &&

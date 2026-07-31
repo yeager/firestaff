@@ -10,9 +10,12 @@ raw attribute byte, big-endian SAL offset, and big-endian SAL size. It accepts
 a selector only when it occurs exactly once and its complete SAL window is in
 bounds. The focused corpus test covers all sixteen pairs.
 
-This is a container route, not an audio route: the selector and attribute have
-no asserted Saturn event meaning, returned SAL bytes are never decoded, and
-no playback is requested from this result.
+The SAL side now also decodes the DMWeb `DataID 0` tone-bank directory from
+the real SAL stream: its big-endian entry-offset table, four variable entries,
+the later `4 + 32*n` entries, PCM width bit, source-control bit, and bounded
+sample payload metadata. This is still not an audio route: the MAP selector
+and attribute have no asserted Saturn event meaning, and no playback is
+requested from this result.
 
 ## Host-Side Event Dispatch (Still Unmapped)
 
@@ -26,9 +29,9 @@ dispatch table is fail-closed.
 
 ## TODO
 
-Establish the Saturn sound-driver call ABI and the SAL codec from executable
-trace or disassembly evidence. Only that evidence can assign selector meaning,
-interpret the attribute byte, or permit audio playback.
+Establish the Saturn sound-driver call ABI and event→selector mapping from
+executable trace or disassembly evidence. Only that evidence can assign
+selector meaning, interpret the attribute byte, or permit audio playback.
 
 ## Verification
 

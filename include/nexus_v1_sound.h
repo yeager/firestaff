@@ -151,6 +151,20 @@ typedef struct {
     int sal_first_nonzero_offset;
     int sal_last_nonzero_offset;
     int sal_checksum16;
+    /* DMWeb DMNDataFileDecoder.vbs: authenticated DataID 0 tone-bank
+     * directory and sample-entry metadata.  These are source facts only;
+     * event dispatch and Saturn driver submission remain separate gates. */
+    int sal_tone_bank_directory_supported;
+    int sal_tone_bank_offset;
+    int sal_tone_bank_bytes;
+    int sal_tone_entry_count;
+    int sal_tone_entry_count_decoded;
+    int sal_tone_pcm8_count;
+    int sal_tone_pcm16_count;
+    int sal_tone_memory_source_count;
+    int sal_tone_noise_source_count;
+    int sal_tone_sample_payload_offset;
+    int sal_tone_sample_payload_bytes;
     uint16_t event_sample_index[32];
     uint32_t event_sal_offset[32];
     uint16_t event_sal_size[32];
@@ -241,6 +255,17 @@ typedef struct {
     int sal_first_nonzero_offset;
     int sal_last_nonzero_offset;
     int sal_checksum16;
+    int sal_tone_bank_directory_supported;
+    int sal_tone_bank_offset;
+    int sal_tone_bank_bytes;
+    int sal_tone_entry_count;
+    int sal_tone_entry_count_decoded;
+    int sal_tone_pcm8_count;
+    int sal_tone_pcm16_count;
+    int sal_tone_memory_source_count;
+    int sal_tone_noise_source_count;
+    int sal_tone_sample_payload_offset;
+    int sal_tone_sample_payload_bytes;
     int sal_canonical_source_verified;
     int map_canonical_source_verified;
     int sound_driver_canonical_source_verified;
