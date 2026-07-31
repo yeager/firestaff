@@ -12,6 +12,9 @@
   `GRAPHICS.DAT`/`DUNGEON.DAT` candidates. Renamed and archived data remains
   supported through the shared hash scanner. The remaining work is limited to
   format-specific decode gaps listed per game, not generic substitute loading.
+  **2026-07-31 update:** DM2's source-owned credits event now reaches the
+  common 0xEF dismissal route for either original mouse button; M11 no longer
+  traps the title menu in credits because of a host-only left-click filter.
   **2026-07-31 update:** CSB's boot handoff now refuses both unreadable
   verified paths and the retired 16-bit parser fixture. A session becomes
   runtime-ready only after the ReDMCSB byte-map and its initial party pose are

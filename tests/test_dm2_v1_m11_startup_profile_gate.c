@@ -1826,6 +1826,16 @@ int main(void) {
                         view.dm2State.startup_credits_active == 0 &&
                         view.dm2State.startup_credits_remaining_ticks == 0,
                     "M11 DM2 credits leave only through source event 239");
+        expect_true(M11_GameView_HandlePointer(&view, 90, 165, 1) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.dm2State.startup_credits_active == 1,
+                    "M11 DM2 credits may re-enter before a secondary click");
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view, 0, 0, DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.dm2State.startup_credits_active == 0 &&
+                        view.dm2State.startup_credits_remaining_ticks == 0,
+                    "M11 DM2 credits leave through the source right-button 239 event");
     }
     while (view.dm2State.startup_menu_selected_row + 1 <
            view.dm2State.startup_menu_row_count) {

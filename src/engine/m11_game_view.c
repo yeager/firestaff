@@ -24655,7 +24655,8 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
 static M11_GameInputResult m11_dm2_handle_startup_pointer(
     M11_GameViewState *state,
     int x,
-    int y)
+    int y,
+    int buttonMask)
 {
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
@@ -24669,13 +24670,19 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     }
     if (state->dm2State.startup_credits_active) {
         Dm2TouchClickZonePc34Compat zone;
+        unsigned int sourceButton =
+            (buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0
+                ? TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT
+                : TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
         if (DM2_TOUCHCLICK_Compat_HitTestInView(
                 DM2_TOUCH_CLICK_VIEW_CREDITS_PC34_COMPAT, x, y,
-                TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &zone) &&
+                sourceButton, &zone) &&
             zone.commandId == 239u) {
-            /* SKProject startend.cpp::DM2_SHOW_CREDITS lines 1390-1401:
-             * event 0xEF exits credits and returns 0xDA to the title-menu
-             * loop.  M11 retains the original menu owner throughout. */
+            /* SKProject startend.cpp::DM2_SHOW_CREDITS lines 1381-1401:
+             * DM2_EVENT_LOOP exits on its common 0xEF event, whose source
+             * click table accepts either mouse button.  Do not make the
+             * host's left-button convention trap the source-owned credits
+             * screen. */
             state->dm2State.startup_credits_active = 0;
             state->dm2State.startup_credits_remaining_ticks = 0;
             m11_set_status(state, "STARTUP", "DM2 STARTUP GDAT");
@@ -25045,9 +25052,10 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             return nexusStartupPointer;
         }
     }
-    if (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) {
+    if (buttonMask & (DM1_V1_MOUSE_MASK_LEFT_PC34 |
+                      DM1_V1_MOUSE_MASK_RIGHT_PC34)) {
         M11_GameInputResult dm2StartupPointer =
-            m11_dm2_handle_startup_pointer(state, x, y);
+            m11_dm2_handle_startup_pointer(state, x, y, buttonMask);
         if (dm2StartupPointer != M11_GAME_INPUT_IGNORED) {
             return dm2StartupPointer;
         }

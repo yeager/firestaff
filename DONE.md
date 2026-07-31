@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 DM2 credits mouse-route correction: M11 now forwards both
+  source mouse buttons to `DM2_SHOW_CREDITS`' common 0xEF dismissal event.
+  The title-menu routes remain left-button-only, as in the original event
+  table. Regression coverage verifies re-entering credits and dismissing it
+  with the secondary button against the hash-verified PC English data.
+
 - ✅ 2026-07-31 DM2 unattached stairs-front fallback removal: removed the
   public no-draw receipt helper, its hard-coded substitute field/rectangle
   tables, and its isolated test target. No M11 production caller existed; a
