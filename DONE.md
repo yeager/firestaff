@@ -46170,7 +46170,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   material routes. References reviewed: ReDMCSB `DUNVIEW.C F0111/F0115/F0122/F0123`
   and CSBWin `Viewport.cpp`. Verification: M11 build, local-PC34 first-frame
   material test 109/109, and `git diff --check`.
-
 - ✅ 2026-07-31 DM2 CCM GDAT-field inference closure: boot no longer scans
   arbitrary `CREATURE_AI` fields and promotes the first decodable byte stream
   into a live CCM program. A creature without the source-owned program and
@@ -46181,3 +46180,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `EXTENDED_LOAD_AI_DEFINITION`. Verification: production CCM field-probe
   gate, fixture CCM runtime bridge 84/84, `firestaff_dm2` build, and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass.
+
+- ✅ 2026-07-31 CSB V2.2 legacy swap cleanup: removed the retired raw-cell
+  3×3 swap API, its no-draw compatibility renderer, and the probe/test targets
+  that existed only to preserve that obsolete placeholder boundary. The active
+  V2.2 route remains the F0128 command/provenance gate; unbound material stays
+  on the original V1 page. References: ReDMCSB `DUNVIEW.C F0128` and CSBWin
+  `Viewport.cpp`. Verification: M11 build, V2.2 in-place route 145/145,
+  front-wall projection 82/82, in-place draw 66/66, and `git diff --check`.

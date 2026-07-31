@@ -17,7 +17,6 @@
 #include "csb_v1_boot.h"
 #include "csb_v22_inplace_route_pc34.h"
 #include "csb_v22_shapes.h"
-#include "csb_v22_viewport_swap_pc34.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -95,13 +94,6 @@ int main(void)
     check_unbound_route(CSB_V22_SHAPE_FIELD_TELEPORTER,
                         "v1_original_material_unbound_field_teleporter",
                         "CSB_A02_FIELD_RETAINS_V1");
-    check("CSB_A02_SWAP_HAS_NO_CEILING_SUBSTITUTE",
-          csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_CEILING_PLAIN) == NULL);
-    check("CSB_A02_SWAP_HAS_NO_ITEM_SUBSTITUTE",
-          csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_ITEM) == NULL);
-    check("CSB_A02_SWAP_HAS_NO_FIELD_SUBSTITUTE",
-          csb_v22_swap_asset_id_for_shape(CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER) == NULL);
-
     printf("CSB-A02 Atari ST original-material probe: %d/%d passed\n",
            check_count - failure_count, check_count);
     return failure_count == 0 ? 0 : 1;
