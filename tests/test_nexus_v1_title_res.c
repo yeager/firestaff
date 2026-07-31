@@ -1,5 +1,6 @@
 #include "nexus_v1_title_cg.h"
 #include "nexus_v1_res.h"
+#include "nexus_v1_font012.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,6 +84,42 @@ static int test_res_file(const char *name) {
     return 0;
 }
 
+static int test_font012_headers(void) {
+    const char *home = getenv("HOME");
+    char path[512];
+    uint8_t *data;
+    int size = 0;
+    Nexus_V1_ResDecodeResult res;
+    Nexus_V1_Font012Receipt receipt;
+    const uint32_t indices[] = {0U, 1U, 2U};
+    const uint32_t counts[] = {291U, 250U, 710U};
+    const uint32_t widths[] = {6U, 12U, 12U};
+    const uint32_t offsets[] = {0xC0U, 0x1C2CU, 0x3F78U};
+    int i;
+
+    if (!home) return 0;
+    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/RLOWFIX.BIN", home);
+    data = load_file(path, &size);
+    if (!data) { printf("  SKIP FONT012 (no file)\n"); return 0; }
+    if (!nexus_v1_res_decode(data, size, &res)) { free(data); return 1; }
+    for (i = 0; i < 3; ++i) {
+        const Nexus_V1_ResEntry *entry =
+            nexus_v1_res_find(&res, "FONT", (int)indices[i]);
+        if (!entry || entry->offset != offsets[i] ||
+            !nexus_v1_font012_parse(data + entry->offset, entry->size,
+                                     indices[i], &receipt) || !receipt.valid ||
+            receipt.character_count != counts[i] ||
+            receipt.character_width != widths[i] ||
+            receipt.character_height != 12U) {
+            free(data);
+            return 1;
+        }
+    }
+    free(data);
+    puts("  PASS FONT012 headers: FONT#0/#1/#2 retail geometry admitted");
+    return 0;
+}
+
 int main(void) {
     int fail = 0;
     printf("=== Nexus V1 TITLE.CG & RES* Decoder ===\n");
@@ -91,6 +128,7 @@ int main(void) {
     fail += test_res_file("RLOWFIX.BIN");
     fail += test_res_file("RHIFIX.BIN");
     fail += test_res_file("POTEFT.BIN");
+    fail += test_font012_headers();
     printf("summary: fail=%d\n", fail);
     return fail ? 1 : 0;
 }

@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 Nexus FONT012 retail admission: added a bounded `FONT#0/#1/#2`
+  header receipt for the real `RLOWFIX.BIN` resources. It verifies the retail
+  resource tags/indices and the documented 291×6×12, 250×12×12 and 710×12×12
+  geometry, while retaining the ambiguous header word as opaque and refusing
+  to infer glyph packing, character codes or VDP2 placement. Verification:
+  `test_nexus_v1_title_res` passes with the local retail corpus.
+
 - ✅ 2026-07-31 Nexus PLRD label provenance cleanup: removed the hardcoded
   English/Japanese champion labels from the real `RLOWFIX.BIN` parser. PLRD
   now retains only its source TABL indices/codes and leaves display names
