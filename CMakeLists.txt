@@ -3901,6 +3901,8 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shapes\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_widget_assets_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_ui_chrome\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_tile_renderer\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_inplace_draw_pc34\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_modern_assets_pc34\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
         src/theron/theron_v1_combat_runtime_noop.c

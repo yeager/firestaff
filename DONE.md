@@ -47051,3 +47051,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   diagnostic tile-renderer probe still compiles the implementation explicitly;
   production now returns no tile and preserves the framebuffer until a real
   Track 02 tile-bank handoff exists.
+
+- ✅ 2026-07-31 Theron V2.2 local-art isolation: removed the modern-art
+  manifest/cache and inplace rectangle renderer from the production archive.
+  Their focused V2.2 tests retain explicit source compilation, but `firestaff`
+  cannot promote local cache/manifest pixels into the runtime.

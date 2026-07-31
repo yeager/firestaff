@@ -14,6 +14,10 @@
   table is now fixture-only. Production exposes no tile selection, decode or
   raster pixels until Track 02 tile-bank semantics are decoded.
 
+- **THERON-V22-LOCAL-ART-REAL-DATA:** The local modern-art manifest/cache
+  and inplace rectangle renderer are now fixture-only. Do not reconnect them
+  until source-owned Track 02 V2.2 records and pixel assets are decoded.
+
 - **THERON-STARTUP-LEGACY-FALLBACK-ROOM:** The M11 production path uses
   `verified_only` Track 02 admission and the authenticated startup bitmap
   atlas. The older public compatibility API still synthesizes the
