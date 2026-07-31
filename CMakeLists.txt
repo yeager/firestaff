@@ -3768,7 +3768,6 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_companion.c
     src/dm2/dm2_v1_hand_action_gdat.c
     src/dm2/dm2_v1_progression.c
-    src/dm2/dm2_v2_asset_pipeline.c
     src/dm2/dm2_v2_companion_ui.c
     src/dm2/dm2_v2_tech_crafting.c
     src/dm2/dm2_v1_asset_loader.c
@@ -4823,7 +4822,8 @@ endif()
 # DM2 V2 Phase 2 — source-derived presentation pipeline probe.
 # Headless: verifies V2.2 cannot be enabled by an ordinary local manifest.
 add_executable(firestaff_dm2_v2_phase2_asset_pipeline_probe
-    probes/dm2/firestaff_dm2_v2_phase2_asset_pipeline_probe.c)
+    probes/dm2/firestaff_dm2_v2_phase2_asset_pipeline_probe.c
+    src/dm2/dm2_v2_asset_pipeline.c)
 target_link_libraries(firestaff_dm2_v2_phase2_asset_pipeline_probe
     PRIVATE firestaff_dm2_v2 firestaff_m10 m)
 if(NOT MSVC)

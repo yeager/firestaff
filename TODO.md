@@ -66,6 +66,11 @@
   well. M11 no longer parses or classifies that data before routing V2.2 to
   the authenticated V2.1 presentation; the complete production executable
   links without the local-art chain.
+  **2026-07-31 update:** the unused V2 host palette/RGBA asset pipeline is
+  now test-only too. M11 no longer configures its arbitrary indexed-pixel
+  conversion or stub palette-LUT path; a live DM2 image must stay on the
+  existing GDAT-backed renderer until a source-bound enhancement consumer is
+  implemented.
   **2026-07-31 update:** CSB's boot handoff now refuses both unreadable
   verified paths and the retired 16-bit parser fixture. A session becomes
   runtime-ready only after the ReDMCSB byte-map and its initial party pose are

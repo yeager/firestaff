@@ -60,7 +60,6 @@
 #include "dm2_touch_click_zone_matrix_pc34_compat.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v2_runtime.h"
-#include "dm2_v2_asset_pipeline.h"
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v2_lighting_runtime.h"
 #include "dm2_v2_phase_gate.h"
@@ -932,8 +931,6 @@ static void m11_dm2_configure_v2_presentation(
     const M11_GameViewState *state,
     DM2_V1_BootProfile *profile)
 {
-    DM2_V2_GfxMode mode = DM2_V2_GFX_MODE_V1_ORIGINAL;
-    DM2_V2_AssetPipelineConfig pipeline;
     int v2_active;
 
     if (!state || !profile) {
@@ -944,37 +941,6 @@ static void m11_dm2_configure_v2_presentation(
     g_m11_dm2_v2_gate.v2LaunchEnabled = v2_active;
     g_m11_dm2_v2_gate.v2ProfileEnabled = v2_active;
     dm2_v2_phase_gate_defaults(&g_m11_dm2_v2_lighting_gate);
-
-    dm2_v2_asset_pipeline_init();
-    if (state->presentationMode == M12_PRESENTATION_V20_FILTERED) {
-        mode = DM2_V2_GFX_MODE_V2_FILTERED;
-    } else if (state->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
-        mode = DM2_V2_GFX_MODE_V2_UPSCALED;
-    } else if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
-        /* V2.2 has no admitted DM2 original-data material bridge yet.  Do
-         * not let a launcher request promote a local art directory to live
-         * game pixels: SKProject's c_gui_vp.cpp::DM2_guivp_32cb_15b8 selects
-         * viewport images from mounted GRAPHICS.DAT GDAT records. */
-        mode = DM2_V2_GFX_MODE_V2_UPSCALED;
-    }
-    dm2_v2_asset_set_gfx_mode(mode);
-
-    /* Keep the per-surface DM2 pipeline aligned with the M11 present
-     * route.  V2.1 is an EPX expansion of the original indexed GDAT pixels,
-     * not a request for generated replacement art or a made-up palette. */
-    pipeline.scale_mode = DM2_V2_SCALE_MODE_NATIVE;
-    pipeline.palette_mode = DM2_V2_PALETTE_MODE_ORIGINAL;
-    pipeline.epx_enabled = 0;
-    pipeline.bilinear_enabled = 0;
-    pipeline.palette_enhanced = 0;
-    pipeline.scanlines_enabled = 0;
-    pipeline.sharpen_enabled = 0;
-    pipeline.source_light_floor = 0;
-    if (mode >= DM2_V2_GFX_MODE_V2_UPSCALED) {
-        pipeline.scale_mode = DM2_V2_SCALE_MODE_EPX_2X;
-        pipeline.epx_enabled = 1;
-    }
-    dm2_v2_asset_pipeline_configure(&pipeline);
 
     dm2_v2_hud_runtime_set_gate_config(&g_m11_dm2_v2_gate);
     dm2_v2_lighting_runtime_set_gate_config(&g_m11_dm2_v2_lighting_gate);

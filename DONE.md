@@ -10,6 +10,13 @@
   `csb_v1_dungeon_load_from_file()`, which rejects the retired 16-bit
   fixture format; the in-memory parser is documented only for authenticated
   save images and isolated tests.
+- ✅ 2026-07-31 DM2 V2 host asset-pipeline isolation: removed
+  `dm2_v2_asset_pipeline.c` from M10 and all M11 configuration. Its arbitrary
+  indexed-to-RGBA conversion and stub palette-LUT rebuild had no GDAT receipt
+  or production pixel consumer, so it now compiles only into its focused
+  diagnostic probe. Verification: complete `firestaff` link, final executable
+  has no asset-pipeline symbol, probe 89/89, and real-data M11 DM2
+  startup/profile gate.
 
 - ✅ 2026-07-31 Theron viewport-level admission: renderaren kräver nu både
   laddad tile-atlas och en faktiskt `level_loaded`-markerad dungeon/level.
