@@ -466,8 +466,6 @@ static int viewport_render_structure3_mesh(
     Nexus_V1_DgnStructure3CompleteSourceSceneReceipt scene;
     int entry_index, face_count_total = 0, textured_count = 0;
     int flat_color_count = 0, animated_static_fallback_count = 0;
-    uint16_t flat_colors[254];
-    int flat_color_palette_count = 0;
 
     if (!vp || !engine || !engine->level_loaded) return 0;
     if (nexus_v1_current_level_structure3_complete_source_scene_receipt(
@@ -556,35 +554,12 @@ static int viewport_render_structure3_mesh(
                         ++animated_static_fallback_count;
                     }
                 }
-            } else if (packet.face.fill_selector & 0x8000U) {
-                uint16_t color15 = packet.face.fill_selector & 0x7FFFU;
-                int ci = -1, k;
-                for (k = 0; k < flat_color_palette_count; ++k) {
-                    if (flat_colors[k] == color15) {
-                        ci = k + 1;
-                        break;
-                    }
-                }
-                if (ci < 0 && flat_color_palette_count < 254) {
-                    ci = flat_color_palette_count + 1;
-                    flat_colors[flat_color_palette_count] = color15;
-                    vp->fb.palette[ci] =
-                        nexus_v1_saturn_15bit_to_rgba(color15);
-                    ++flat_color_palette_count;
-                }
-                if (ci < 0) continue;
-                rv[0].color = (uint8_t)ci;
-                rv[1].color = (uint8_t)ci;
-                rv[2].color = (uint8_t)ci;
-                if (slot_count == 4) {
-                    rv[3].color = (uint8_t)ci;
-                    nexus_raster_quad(&vp->fb, rv[0], rv[1], rv[2], rv[3],
-                        &vp->cam);
-                } else {
-                    nexus_raster_triangle(&vp->fb, rv[0], rv[1], rv[2],
-                        &vp->cam);
-                }
-                ++flat_color_count;
+            } else {
+                /* DMWeb: non-00/non-08 material words carry a 15-bit
+                 * one-off colour.  The generic flat primitive is deliberately
+                 * no-draw until the Saturn VDP1 material contract is verified;
+                 * do not report this face as rendered. */
+                (void)flat_color_count;
             }
         }
     }
