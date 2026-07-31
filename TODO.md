@@ -37,9 +37,12 @@
   selects that AI row from the source-initialized `dAITableGenuine` table or
   its GDAT override. The existing runtime carries the verified row when a
   GDAT loader is active but must not treat the raw creature type as an AI-row
-  when that owner data is absent. Spawn, attack, spell, HP and projectile
-  paths now reject an unowned row. Bind the live DB4 creature record and
-  active loader through the remaining CCM and field-runtime consumers.
+  when that owner data is absent. **2026-07-31 update:** the separate packed
+  36-byte `CREATURE_AI` fixture fallback is also removed; source ownership
+  now requires the `CREATURES[type].word(0x05)` plus per-field GDAT route.
+  Spawn, attack, spell, HP and projectile paths reject an unowned row. Bind
+  the live DB4 creature record and active loader through the remaining CCM
+  and field-runtime consumers.
 
 - **DM2-LEGACY-GAME-LOOP-DATA-ADMISSION:** `src/engine/firestaff_game_loop.c`
   is not part of the built M11 DM2 launch route and still contains diagnostic

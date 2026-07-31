@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 packed-AI fixture closure: removed the production
+  `CREATURE_AI` raw-36-byte fallback. SKProject's
+  `EXTENDED_LOAD_AI_DEFINITION` requires a source-owned
+  `CREATURES[type].dtWordValue(0x05)` row and individually queried AI fields;
+  an unowned packed test block can now neither enter the AI table nor spawn,
+  attack, or resolve spells. Verification:
+  `test_dm2_v1_creature_gdat_ai_table` passes 6/6.
+
 - ✅ 2026-07-31 DM2 V2.2 availability closure: a disk-resolvable modern
   manifest can no longer set the V2.2 installed flag or select `V2_MODERN`.
   The launcher/status path now falls through to V2.1/V2.0 just like the M11

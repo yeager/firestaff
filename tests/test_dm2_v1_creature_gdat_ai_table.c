@@ -1,6 +1,6 @@
 /* test_dm2_v1_creature_gdat_ai_table.c
  *
- * DM2 V1 GDAT-backed creature AI table import gate.
+ * DM2 V1 GDAT-backed creature AI table admission gate.
  *
  * Source-lock anchors:
  *   skproject/SKWIN/SkWinCore.cpp:233-400 EXTENDED_LOAD_AI_DEFINITION
@@ -127,65 +127,21 @@ int main(void) {
           "NULL loader rejected");
     CHECK(dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON) == NULL,
           "reset does not expose an AI row without a CREATURES owner binding");
-    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) == 3,
-          "GDAT import loads three AI definitions");
-
-    const DM2_AIDefinition *thorn =
-        dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON);
-    const DM2_AIDefinition *bat =
-        dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT);
-
-    CHECK(thorn->w0AIFlags == DM2_AIFLAG_WORM_GLOP &&
-              thorn->ArmorClass == 7 &&
-              thorn->b3 == -3 &&
-              thorn->BaseHP == 80 &&
-              thorn->AttackStrength == 12 &&
-              thorn->PoisonDamage == 4 &&
-              thorn->Defense == 9 &&
-              thorn->AttacksSpells ==
-                  (AI_ATTACK_FLAGS__MELEE | AI_ATTACK_FLAGS__POISON_BOLT) &&
-              thorn->Weight == 31,
-          "Thorn Demon spec decodes 36-byte little-endian AIDefinition");
-
-    CHECK(bat->w0AIFlags == DM2_AIFLAG_ABSORBS_MISSILE &&
-              bat->BaseHP == 24 &&
-              bat->AttacksSpells == AI_ATTACK_FLAGS__SHOOT &&
-              bat->w30 == DM2_AI_W30_TURNS_MISSILE,
-          "Cavern Bat spec decodes missile/attack flags");
-
-    CHECK(dm2_v1_creature_attacks_party(DM2_AI_THORN_DEMON, 1) == 1 &&
-              dm2_v1_creature_attacks_party(DM2_AI_THORN_DEMON, 7) == 0,
-          "imported melee/spell creature attacks only inside GDAT range gate");
-
-    CHECK(dm2_v1_creature_attacks_party(DM2_AI_CAVE_BAT, 4) == 1 &&
-              dm2_v1_creature_attacks_party(DM2_AI_CAVE_BAT, 7) == 0,
-          "imported shooter creature attacks inside ranged GDAT gate");
-
-    CHECK(dm2_v1_creature_resolves_spell(DM2_AI_THORN_DEMON,
-                                         AI_ATTACK_FLAGS__POISON_BOLT) == 1 &&
+    /* A packed 36-byte record is a test fixture, not the source's GDAT
+     * query graph.  EXTENDED_LOAD_AI_DEFINITION first obtains the owner from
+     * CREATURES[type].dtWordValue(0x05), then obtains each requested
+     * CREATURE_AI word value.  No owner/word records here means no AI. */
+    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) == 0,
+          "packed raw AI fixture cannot enter the runtime table");
+    CHECK(dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON) == NULL &&
+              dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT) == NULL &&
+              dm2_v1_creature_ai_spec(0) == NULL,
+          "unowned raw rows cannot expose creature behavior");
+    CHECK(dm2_v1_creature_attacks_party(DM2_AI_THORN_DEMON, 1) == 0 &&
               dm2_v1_creature_resolves_spell(DM2_AI_THORN_DEMON,
-                                             AI_ATTACK_FLAGS__FIREBALL) == 0,
-          "spell resolution intersects requested flags with imported GDAT attacks");
-
-    CHECK(dm2_v1_creature_attacks_party(0, 0) == 0,
-          "imported static AI row suppresses attack routing");
-
-    CHECK(dm2_v1_creature_ai_spec(DM2_AI_GIGGLER) == NULL,
-          "missing creature owner binding remains unavailable");
-
-    int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 1, 2, 0, 0, 16);
-    const DM2_V1_CreatureInstance *inst = dm2_v1_creature_get_instance(slot);
-    CHECK(slot >= 0 && inst && inst->hp_max == 160 && inst->hp_current == 160,
-          "spawn HP scales from imported BaseHP");
-
-    /* A mounted replacement GRAPHICS.DAT can legitimately provide a smaller
-     * CREATURE_AI set.  Its absent rows must not retain the former session's
-     * decoded combat flags. */
-    loader.entry_count = 1;
-    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) == 1 &&
-              dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON)->BaseHP == 80 &&
-              dm2_v1_creature_ai_spec(DM2_AI_CAVE_BAT) == NULL,
-          "replacement GDAT session removes absent creature owner bindings");
+                                             AI_ATTACK_FLAGS__POISON_BOLT) == 0 &&
+              dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 1, 2, 0, 0, 16) < 0,
+          "raw fixture cannot create attack or spawn behavior");
 
     dm2_v1_creature_reset_ai_table();
     CHECK(dm2_v1_creature_ai_spec(DM2_AI_THORN_DEMON) == NULL &&
