@@ -51086,8 +51086,21 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         }
     } else if (state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
                state->csbBootProfile) {
+        const CSB_V1_BootProfile *csb_profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
         uint8_t rgb6[256][3];
         int color;
+        if (csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+            csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
+            /* ReDMCSB PALETTE.C F1125/F0436 and CSBWin's
+             * SelectPaletteForLightLevel own the Atari runtime palette.
+             * GRAPHICS.DAT supplies indexed TAG0088b2 material but not an
+             * interchangeable PC3.4 VGA table. Until that active Atari
+             * palette is admitted as source bytes, never colour its page
+             * with G9010's PC table. */
+            M11_Render_ClearIndexedPaletteRgb6();
+            csb_v22_inplace_draw_clear_indexed_palette();
+        } else {
         /* CSB's PC3.4 IMG3 decoder emits original four-bit VGA indices.
          * F0128 runs after this common renderer setup, which previously
          * cleared any indexed palette and made its source pixels appear as
@@ -51112,6 +51125,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * otherwise its RGBA cache would quantize against a generic EGA cube
          * and visibly change authentic CSB colours. */
         (void)csb_v22_inplace_draw_set_indexed_palette_rgb6(rgb6);
+        }
     } else {
         M11_Render_ClearIndexedPaletteRgb6();
         csb_v22_inplace_draw_clear_indexed_palette();

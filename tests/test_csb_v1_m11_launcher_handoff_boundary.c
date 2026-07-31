@@ -30,6 +30,7 @@
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "main_loop_m11.h"
 #include "menu_startup_m12.h"
+#include "render_sdl_m11.h"
 #include "vga_palette_pc34_compat.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v2_runtime.h"
@@ -1746,6 +1747,11 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                     "Atari ST floor/ceiling and wall source pixels reach the FTLCODE aperture");
         expect_true(view.csbState.runtime_v22_cells_painted == 0,
                     "Atari ST TAG0088b2 page bypasses the PC3.4 V2.2 compositor");
+        {
+            uint8_t palette[256][3];
+            expect_true(!M11_Render_CopyIndexedPaletteRgb6(palette),
+                        "Atari ST page does not receive the PC3.4 VGA palette");
+        }
         expect_true(strcmp(view.lastOutcome,
                            "CSBWIN SOURCE FRAME - EXTENDED CELLS REQUIRED") != 0,
                     "Atari ST source frame does not publish diagnostic chrome");
