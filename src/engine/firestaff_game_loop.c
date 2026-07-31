@@ -276,16 +276,45 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
                 scanRoot = resolvedDataDir;
             }
         }
-        (void)csb_v1_boot_scan_assets(&s_csb_boot,
-                                      scanRoot && scanRoot[0] ? scanRoot : NULL);
+        if (csb_v1_boot_scan_assets(&s_csb_boot,
+                                    scanRoot && scanRoot[0] ? scanRoot : NULL) != 0 ||
+            !s_csb_boot.assets_verified || !s_csb_boot.graphics_verified ||
+            !s_csb_boot.dungeon_verified || !s_csb_boot.graphics_path[0] ||
+            !s_csb_boot.dungeon_path[0]) {
+            fs_set_error(&state->last_error, -2,
+                         "CSB original data required",
+                         "Hash-verified CSB GRAPHICS.DAT and DUNGEON.DAT were not both found",
+                         "Install a supported original CSB data set and select its data directory");
+            state->running = 0;
+            state->csb_boot = NULL;
+            g_fs_state = NULL;
+            return -1;
+        }
         if (state->config.save_dir) {
             csb_v1_boot_set_save_root(&s_csb_boot, state->config.save_dir);
         } else {
             csb_v1_boot_set_save_root(&s_csb_boot, NULL);
         }
-        (void)csb_v1_boot_enter_game(&s_csb_boot);
+        if (csb_v1_boot_enter_game(&s_csb_boot) != 0 ||
+            s_csb_boot.state != CSB_V1_BOOT_STATE_RUNTIME_READY ||
+            !s_csb_boot.runtime.dungeon_handle ||
+            csb_v1_dungeon_get_current() != s_csb_boot.runtime.dungeon_handle) {
+            fs_set_error(&state->last_error, -2,
+                         "CSB original game load failed",
+                         "The verified CSB data could not materialize a source dungeon runtime",
+                         "Check the original data set and restart from the launcher");
+            csb_v1_boot_cleanup(&s_csb_boot);
+            state->running = 0;
+            state->csb_boot = NULL;
+            g_fs_state = NULL;
+            return -1;
+        }
         csb_v1_boot_print_summary(&s_csb_boot);
         state->csb_boot = (void *)&s_csb_boot;
+        state->current_level = s_csb_boot.runtime.current_level;
+        state->party_x = s_csb_boot.runtime.party_x;
+        state->party_y = s_csb_boot.runtime.party_y;
+        state->party_direction = s_csb_boot.runtime.party_dir;
         if (!config->skip_menu) {
             char diag[1024];
             size_t dn = csb_v1_boot_diagnostic_report(&s_csb_boot, diag, sizeof(diag));
@@ -385,6 +414,31 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
 int fs_game_load_assets(FS_GameState *state) {
     if (!state) return -1;
     memset(&state->last_error, 0, sizeof(state->last_error));
+    /* The direct CSB loop owns its only admissible source handoff in the
+     * CSB boot profile.  Re-parsing the data through the generic dungeon
+     * reader would both duplicate the load and restore that reader's DM1
+     * fallback coordinate path.  ReDMCSB LOADSAVE.C F0435 materializes the
+     * selected CSB dungeon before the first view, which csb_v1_boot_enter_game
+     * already did above. */
+    if (state->config.game == FS_GAME_CSB) {
+        const CSB_V1_BootProfile *boot =
+            (const CSB_V1_BootProfile *)state->csb_boot;
+        if (!boot || boot->state != CSB_V1_BOOT_STATE_RUNTIME_READY ||
+            !boot->runtime.dungeon_handle ||
+            csb_v1_dungeon_get_current() != boot->runtime.dungeon_handle) {
+            fs_set_error(&state->last_error, -2,
+                         "CSB original game load failed",
+                         "No materialized CSB dungeon is available for the direct game loop",
+                         "Return to the launcher and select verified original CSB data");
+            state->running = 0;
+            return -1;
+        }
+        state->current_level = boot->runtime.current_level;
+        state->party_x = boot->runtime.party_x;
+        state->party_y = boot->runtime.party_y;
+        state->party_direction = boot->runtime.party_dir;
+        return 0;
+    }
     /* Load GRAPHICS.DAT and DUNGEON.DAT based on game */
     if (!state->config.skip_menu) {
         printf("Firestaff: loading assets for game %d from %s\n",

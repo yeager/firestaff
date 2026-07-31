@@ -46544,3 +46544,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   TELEPORT/TELEPORT2/TELEPORT3 blockerar utan förflyttning; registrerad länk
   dispatchas oförändrad. Verifiering: `test_nexus_v1_pit_teleporter_runtime`
   passerar 44/44.
+
+- ✅ 2026-07-31 CSB direct-loop source handoff: `fs_game_init()` now rejects
+  absent or unmaterialized CSB media, just like the boot/M11 route, and
+  `fs_game_load_assets()` consumes the boot-owned dungeon and party pose.
+  The generic DM1 parser can no longer supply its fixed `(11,29)` start point
+  to a CSB session. Verification: direct launch against
+  `/Users/bosse/.firestaff/data/csb`, `test_csb_v1_boot_viewport_render_gate`
+  and `test_csb_v1_boot_runtime_handoff`.

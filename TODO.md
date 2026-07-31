@@ -16,6 +16,10 @@
   verified paths and the retired 16-bit parser fixture. A session becomes
   runtime-ready only after the ReDMCSB byte-map and its initial party pose are
   materialized, so M11's HUD and viewport cannot bind an empty dungeon.
+  **2026-07-31 update:** the legacy direct game loop now shares that CSB boot
+  boundary. It rejects missing or unmaterialized CSB data and consumes the
+  boot-owned party pose instead of re-entering the generic DM1 parser and its
+  fixed Hall-of-Champions fallback coordinate.
   Direct synthetic DM2 projectile construction is now isolated to explicit
   test and probe targets and is absent from the production library. The DM2
   champion-stat bridge also rejects a missing source GDAT/palette bar-colour
