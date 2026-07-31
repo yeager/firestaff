@@ -30299,6 +30299,8 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
             }
             /* No header/pose means no original game state.  Do not expose
              * the old ENDOF-tolerant title route to callers. */
+            profile->dungeon_path = NULL;
+            memset(&profile->dungeon_asset, 0, sizeof(profile->dungeon_asset));
             return -1;
         }
     }
