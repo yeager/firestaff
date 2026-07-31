@@ -47460,3 +47460,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   legacy table remains compiled only for the explicit fixture startup probe.
   Verification: production Theron archive build and startup-flow plus
   save/resume probes.
+- ✅ 2026-07-31 DM2 combat-resolver isolation: removed the unattached
+  hand-authored combat calculator from the production V1 archive. It had no
+  live caller and no record-bound weapon, door or creature input. Its explicit
+  source-contract tests remain available, while gameplay cannot invoke its
+  invented damage tables. Verification: production link, combat probe 13/13,
+  combat compatibility test 56/56, real-data M11 startup gate and production
+  archive/executable-symbol checks.
