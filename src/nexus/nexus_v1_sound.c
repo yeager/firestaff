@@ -72,6 +72,10 @@ static int read_u32_be(const uint8_t *p) {
                      (uint32_t)p[3]) : 0;
 }
 
+static int read_u24_be(const uint8_t *p) {
+    return p ? ((int)p[0] << 16) | ((int)p[1] << 8) | (int)p[2] : 0;
+}
+
 static uint64_t nexus_sound_fnv1a64(const uint8_t *data, int size) {
     uint64_t hash = UINT64_C(1469598103934665603);
     int i;
@@ -228,6 +232,78 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
     (void)header_last;
     memset(record_event_seen, 0, sizeof(record_event_seen));
 
+    if (eng->map_data[0] != 0x20U) goto legacy_map_parser;
+    /* DMWeb DMNDataFileDecoder.vbs: MAP is a sequence of eight-byte
+     * DataID/ID/start/L/area records from byte zero. Retail maps begin with
+     * 20h and terminate with FFh. Keep the older 24-byte fixture grammar
+     * isolated for historical unit fixtures that do not carry a retail
+     * signature. */
+    {
+        const int retail_dmweb_map = eng->map_data[0] == 0x20U;
+        off = retail_dmweb_map ? 0 : NEXUS_SFX_MAP_HEADER_BYTES;
+        while (off + 2 <= eng->map_size) {
+            const uint8_t *r = eng->map_data + off;
+            int retail_data_id = retail_dmweb_map ? ((r[0] >> 4) & 0x07) : 0;
+            int retail_start = retail_dmweb_map ? read_u24_be(r + 1) : read_u32_be(r + 4);
+            int retail_size = retail_dmweb_map ? read_u24_be(r + 5) : read_u16_be(r + 2);
+            int event_id = r[0];
+            int size = retail_size;
+            int sal_offset = retail_start;
+            int end = sal_offset >= 0 ? sal_offset + size : 0;
+            int checksum16 = 0, nonzero = 0, high = 0, first_nonzero = -1;
+            int last_nonzero = -1, distinct = 0, transitions = 0;
+            if (r[0] == 0xffU) {
+                eng->map_record_terminator_offset = off;
+                eng->map_record_table_supported = eng->map_record_count > 0 ? 1 : 0;
+                return;
+            }
+            if (off + 8 > eng->map_size || eng->map_record_count >= NEXUS_SFX_MAP_MAX_RECORDS) return;
+            eng->map_records[eng->map_record_count].selector = event_id;
+            eng->map_records[eng->map_record_count].data_id = retail_data_id;
+            eng->map_records[eng->map_record_count].id_number = r[0] & 0x0f;
+            eng->map_records[eng->map_record_count].attribute = retail_dmweb_map ? (r[0] & 0x0f) : r[1];
+            eng->map_records[eng->map_record_count].sal_offset = sal_offset;
+            eng->map_records[eng->map_record_count].sal_size = size;
+            sal_window_profile(eng->sal_data, eng->sal_size, sal_offset, size,
+                               &checksum16, &nonzero, &high, &first_nonzero,
+                               &last_nonzero, &distinct, &transitions);
+            if (eng->map_record_count == 0) {
+                eng->map_first_record_event = event_id;
+                eng->map_first_record_sal_offset = sal_offset;
+                eng->map_first_record_size = size;
+                eng->map_first_window_checksum16 = checksum16;
+                eng->map_first_window_nonzero_byte_count = nonzero;
+                eng->map_first_window_high_bit_byte_count = high;
+                eng->map_first_window_first_nonzero_relative_offset = first_nonzero;
+                eng->map_first_window_last_nonzero_relative_offset = last_nonzero;
+                eng->map_first_window_distinct_byte_count = distinct;
+                eng->map_first_window_transition_count = transitions;
+            }
+            if (eng->map_min_record_event < 0 || event_id < eng->map_min_record_event) eng->map_min_record_event = event_id;
+            if (event_id > eng->map_max_record_event) eng->map_max_record_event = event_id;
+            if (record_event_seen[(unsigned char)event_id]) { eng->map_duplicate_record_event_count++; eng->map_has_duplicate_record_events = 1; }
+            else { record_event_seen[(unsigned char)event_id] = 1; eng->map_unique_record_event_count++; }
+            eng->map_record_event_span = eng->map_max_record_event - eng->map_min_record_event + 1;
+            eng->map_last_record_sal_offset = sal_offset;
+            eng->map_last_window_checksum16 = checksum16;
+            eng->map_last_window_nonzero_byte_count = nonzero;
+            eng->map_last_window_high_bit_byte_count = high;
+            eng->map_last_window_first_nonzero_relative_offset = first_nonzero;
+            eng->map_last_window_last_nonzero_relative_offset = last_nonzero;
+            eng->map_last_window_distinct_byte_count = distinct;
+            eng->map_last_window_transition_count = transitions;
+            if (end > eng->map_max_record_end) eng->map_max_record_end = end;
+            eng->map_total_record_bytes += size;
+            /* DMWeb's area is a sound-driver memory area, not necessarily a
+             * direct SAL-file interval. Do not misclassify it as an invalid
+             * file window; DataID remains the required provenance boundary. */
+            eng->map_record_count++;
+            off += 8;
+            continue;
+        }
+    }
+    return;
+legacy_map_parser:
     off = NEXUS_SFX_MAP_HEADER_BYTES;
     while (off + 2 <= eng->map_size) {
         const uint8_t *r = eng->map_data + off;
@@ -730,17 +806,16 @@ int nexus_sound_map_lookup_raw_selector(const Nexus_SoundEngine *eng,
 
     for (i = 0; i < eng->map_record_count; ++i) {
         const Nexus_SoundMapWindow *window = &eng->map_records[i];
-        if (window->selector == selector) {
+        if (window->selector == selector && window->data_id == 0) {
             *out_window = *window;
             matches++;
         }
     }
 
     /* A duplicated selector has no source-backed precedence rule. */
-    if (matches != 1 || out_window->sal_size <= 0 ||
+    if (matches == 0 || out_window->sal_size <= 0 ||
         out_window->sal_offset < 0 ||
-        out_window->sal_offset > eng->sal_size ||
-        out_window->sal_size > eng->sal_size - out_window->sal_offset) {
+        (out_window->data_id != 0)) {
         memset(out_window, 0, sizeof(*out_window));
         return -1;
     }

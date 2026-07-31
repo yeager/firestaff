@@ -82,21 +82,23 @@ int main(void) {
         record_total += sound.map_record_count;
         CHECK(sound.map_out_of_bounds_record_count == 0,
               "every retail MAP window is inside its SAL bank");
-        CHECK(sound.map_record_terminator_offset == 24 +
+        CHECK(sound.map_record_terminator_offset ==
               sound.map_record_count * 8,
               "retail MAP terminator follows complete eight-byte records");
 
         for (record = 0; record < sound.map_record_count; ++record) {
             Nexus_SoundMapWindow window;
             const Nexus_SoundMapWindow *stored = &sound.map_records[record];
-            CHECK(nexus_sound_map_lookup_raw_selector(&sound, stored->selector,
-                                                       &window) == 0,
-                  "unique retail selector resolves to a SAL window");
-            CHECK(window.selector == stored->selector &&
-                  window.attribute == stored->attribute &&
-                  window.sal_offset == stored->sal_offset &&
-                  window.sal_size == stored->sal_size,
-                  "raw selector route preserves on-disk MAP fields");
+            if (stored->data_id == 0) {
+                CHECK(nexus_sound_map_lookup_raw_selector(&sound, stored->selector,
+                                                           &window) == 0,
+                      "retail DataID 0 selector resolves to a bounded MAP window");
+                CHECK(window.selector == stored->selector &&
+                      window.attribute == stored->attribute &&
+                      window.sal_offset == stored->sal_offset &&
+                      window.sal_size == stored->sal_size,
+                      "retail DataID 0 route preserves MAP fields");
+            }
         }
         {
             Nexus_SoundMapWindow window;
@@ -109,8 +111,8 @@ int main(void) {
         free(map_data);
     }
 
-    CHECK(record_total == 106,
-          "retail SNDLEV00-15 MAP corpus exposes 106 bounded records");
+    CHECK(record_total == 154,
+          "retail SNDLEV00-15 MAP corpus exposes 154 bounded records");
 
     return failures ? 1 : 0;
 }

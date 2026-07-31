@@ -50,6 +50,8 @@ typedef enum {
 /* One raw SNDLEV##.MAP record. `selector` and `attribute` are on-disk bytes;
  * no Saturn event-dispatch or audio-codec meaning is claimed for either. */
 typedef struct {
+    int data_id;
+    int id_number;
     int selector;
     int attribute;
     int sal_offset;

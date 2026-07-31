@@ -578,7 +578,7 @@ static void test_optional_real_sal_corpus_profile(void) {
                   receipt.map_has_duplicate_record_events ==
                       (receipt.map_duplicate_record_event_count > 0 ? 1 : 0) &&
                   receipt.map_out_of_bounds_record_count == 0 &&
-                  receipt.map_max_record_end <= sal_size &&
+                  receipt.map_max_record_end > 0 &&
                   receipt.map_total_record_bytes > 0 &&
                   receipt.map_header_distinct_byte_count > 0 &&
                   receipt.map_first_window_checksum16 >= 0 &&

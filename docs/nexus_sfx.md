@@ -10,8 +10,11 @@ Sound effects (SFX) in Nexus V1 are **not currently implemented** in the engine 
 
 The supplied retail corpus contains `SNDLEV00.SAL` through `SNDLEV15.SAL`,
 their matching `.MAP` files, and `SDDRVS.TSK`. Firestaff retains bounded
-source provenance and MAP record tables for these files. That is structural
-evidence only; it does not identify a playable PCM codec.
+source provenance and DMWeb-shaped MAP record tables for these files. The
+DMWeb decoder identifies DataID 0 as the tone bank and documents 8/16-bit
+sample extraction, while DataID 1-3 are sequence/DSP areas. Firestaff now
+retains those DataID boundaries, but does not yet promote a sample to host
+playback without the complete SAL entry-table and driver-event handoff.
 
 The following DM1 SFX infrastructure has **no equivalent** in Nexus V1:
 
@@ -53,9 +56,9 @@ The Saturn version of Dungeon Master Nexus would likely have SFX data on the CD,
 3. **Resource fork or auxiliary data track** — separate data track for PCM samples
 
 The actual CD image and extracted SAL/MAP data are present. The remaining
-unknown is the SAL sample codec and the SDDRVS task ABI/event dispatch. Until
-those are decoded from source or an authenticated Saturn trace, playback stays
-blocked and SAL bytes are not reinterpreted as PCM.
+unknown is the complete SDDRVS task ABI/event dispatch and the runtime binding
+from host events to the DataID 0 entry table. Until that handoff is decoded
+from source or an authenticated Saturn trace, playback stays blocked.
 
 ## Comparison with DM1
 
