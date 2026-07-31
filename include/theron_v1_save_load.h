@@ -44,6 +44,7 @@ typedef struct {
     uint8_t     quest_items;  /* Quest items collected (7-bit bitmap) */
     uint8_t     current_dungeon;
     uint8_t     dungeon_state; /* Current dungeon state */
+    uint32_t    party_gold;     /* Shared party gold from save header */
     uint32_t    playtime_secs; /* Total playtime in seconds */
     size_t      size_bytes;   /* Total save file size */
 } Theron_SaveSlot;
@@ -111,6 +112,17 @@ int theron_v1_save_to_slot(const char *save_root,
                            size_t champion_data_size,
                            const void *dungeon_progression, /* Theron_DungeonProgression */
                            const char *label);
+
+/* Save variant with the live party gold value supplied explicitly.  The
+ * legacy API above remains available for callers that have no party context
+ * and writes an honest zero/no-gold value. */
+int theron_v1_save_to_slot_with_gold(const char *save_root,
+                                     int slot_index,
+                                     const void *champion_data,
+                                     size_t champion_data_size,
+                                     const void *dungeon_progression,
+                                     uint32_t party_gold,
+                                     const char *label);
 
 /* Load game state from slot index (0..7).
  * Populates champion_data and dungeon_progression from the save.

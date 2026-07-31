@@ -292,11 +292,12 @@ int main(void) {
                 THERON_MAX_CHAMPIONS * theron_v1_champion_block_size(),
                 "pack_size matches 4×block_size");
 
-    rc = theron_v1_save_to_slot(temp_dir,
+    rc = theron_v1_save_to_slot_with_gold(temp_dir,
                                 /* slot_index = */ 4,
                                 champion_buffer,
                                 packed,
                                 &prog_before,
+                                party_before.gold,
                                 "After Crypt of Shadows entrance");
     expect_true(rc == 0, "save to slot 4 succeeded");
 
@@ -334,6 +335,8 @@ int main(void) {
     expect_true(slot_info.current_dungeon ==
                 THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
                 "loaded slot header: current dungeon");
+    expect_true(slot_info.party_gold == party_before.gold,
+                "loaded slot header: party gold round-trips");
     expect_true(slot_info.quest_items ==
                 THERON_QUEST_ITEM_1_SACRED_AMPLIFIER,
                 "loaded slot header: quest marker");
@@ -564,11 +567,12 @@ int main(void) {
         expect_true(packed_v2 == theron_v1_party_pack_size(),
                     "re-save pack filled the full stream");
 
-        rc = theron_v1_save_to_slot(temp_dir,
+        rc = theron_v1_save_to_slot_with_gold(temp_dir,
                                     4,
                                     champion_buffer,
                                     packed_v2,
                                     &prog_v2,
+                                    party_v2.gold,
                                     "Abyss of Flames level 2");
         expect_true(rc == 0, "re-save to slot 4 succeeded");
 

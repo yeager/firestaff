@@ -46490,3 +46490,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   each (70/70): square-state dispatch, three F0248 launchers, fake-wall
   group deferral, and both F0190 killed-all handoffs. This closes only the
   stale crash report, not the broader original-runtime or pixel-parity work.
+# 2026-07-31 Theron party-gold save binding
+
+- ✅ Replaced the save-header gold placeholder with an explicit
+  `theron_v1_save_to_slot_with_gold()` API. The real party round-trip test now
+  supplies `party.gold`, the save header persists it, and slot metadata reads
+  it back as `party_gold`; the legacy API remains a documented no-gold wrapper
+  for callers without party context. Verification:
+  `test_theron_v1_save_progress_roundtrip_pc34` and
+  `test_theron_v1_m11_direct_launch` pass; `git diff --check` passes.

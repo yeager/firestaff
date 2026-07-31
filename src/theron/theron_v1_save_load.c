@@ -140,6 +140,7 @@ static size_t build_save_image(
     uint8_t current_dungeon,
     uint8_t dungeon_state,
     uint32_t playtime_secs,
+    uint32_t party_gold,
     uint8_t *out_image,
     size_t max_image_size)
 {
@@ -192,9 +193,9 @@ static size_t build_save_image(
         for (int i = 0; i < THERON_DUNGEON_COUNT && i < 7; i++) {
             states_off[i] = (uint8_t)prog->dungeon_states[i];
         }
-        /* champion gold (4 bytes, placeholders — gold tracked separately) */
+        /* Party gold is supplied by the save API's live-party variant. */
         uint32_t *gold_off = (uint32_t *)(out_image + THERON_SAVE_OFF_CHAMPION_GOLD);
-        *gold_off = 0; /* placeholder for Phase 7 */
+        *gold_off = party_gold;
     }
 
     /* playtime */
@@ -334,6 +335,7 @@ static int parse_save_image(
         out_info->quest_items = deobuf[THERON_SAVE_OFF_QUEST_ITEMS];
         out_info->current_dungeon = deobuf[THERON_SAVE_OFF_CURRENT_DUNGEON];
         out_info->dungeon_state = deobuf[THERON_SAVE_OFF_DUNGEON_STATE];
+        out_info->party_gold = *(uint32_t *)(deobuf + THERON_SAVE_OFF_CHAMPION_GOLD);
         out_info->playtime_secs = *(uint32_t *)(deobuf + THERON_SAVE_OFF_PLAYTIME);
         out_info->timestamp = *(uint32_t *)(deobuf + THERON_SAVE_OFF_TIMESTAMP);
         out_info->size_bytes = image_size;
@@ -410,12 +412,13 @@ int theron_v1_save_enum_slots(const char *save_root,
     return count;
 }
 
-int theron_v1_save_to_slot(const char *save_root,
-                           int slot_index,
-                           const void *champion_data,
-                           size_t champion_data_size,
-                           const void *dungeon_progression,
-                           const char *label) {
+int theron_v1_save_to_slot_with_gold(const char *save_root,
+                                     int slot_index,
+                                     const void *champion_data,
+                                     size_t champion_data_size,
+                                     const void *dungeon_progression,
+                                     uint32_t party_gold,
+                                     const char *label) {
     if (slot_index < 0 || slot_index >= THERON_SAVE_SLOT_COUNT) return -1;
     if (ensure_save_dir(save_root) != 0) return -1;
 
@@ -438,7 +441,8 @@ int theron_v1_save_to_slot(const char *save_root,
     size_t written = build_save_image(champion_data, champion_data_size,
                                        dungeon_progression, label,
                                        quest_items, current_dungeon, dungeon_state,
-                                       playtime_secs, image, total_size);
+                                       playtime_secs, party_gold,
+                                       image, total_size);
     if (written == 0) {
         free(image);
         return -1;
@@ -458,6 +462,17 @@ int theron_v1_save_to_slot(const char *save_root,
     free(image);
 
     return (n == written) ? 0 : -1;
+}
+
+int theron_v1_save_to_slot(const char *save_root,
+                           int slot_index,
+                           const void *champion_data,
+                           size_t champion_data_size,
+                           const void *dungeon_progression,
+                           const char *label) {
+    return theron_v1_save_to_slot_with_gold(save_root, slot_index,
+                                            champion_data, champion_data_size,
+                                            dungeon_progression, 0u, label);
 }
 
 int theron_v1_save_load_from_slot(const char *save_root,
