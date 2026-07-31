@@ -24593,3 +24593,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   contract-only. Real package-owned startup receipts remain the sole active
   proof route; interactive app capture against the original corpus is still
   needed.
+
+- 🔧 CSB Utility Disk CMP follow-up: production accepts CMP bytes only as a
+  portrait/name/title overlay for an already authenticated champion. A
+  positive original CMP-plus-save corpus is still needed before exposing that
+  combined import route in the launcher.

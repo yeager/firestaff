@@ -24,13 +24,9 @@
  *     ReDMCSB PORTRAIT.C F0515_CHAMPION_ConvertPortraits
  *     ToAtariSTPlanar and is a Tier 3 follow-up).
  *
- *   csb_v1_cmp_import_to_party
- *     Decodes a CMP buffer and inserts the resulting champion
- *     into a CSB_V1_PartyState at the next free slot
- *     (ChampionCount). Returns the slot index on success.
- *
- *   csb_v1_cmp_import_self_test
- *     Round-trip self-test. Returns 0 on success, -1 on failure.
+ * A CMP has no source-backed stats, skills, vitals, equipment, or champion
+ * slot ownership. Production callers must import that state from an original
+ * save first and then use csb_v1_cmp_import_champion() as a portrait overlay.
  *
  * Source:
  *   - ReDMCSB DEFS.H CMP typedef (size 496 = 32 header + 464 portrait).
@@ -51,6 +47,10 @@
 extern "C" {
 #endif
 
+/* Historical fixture helpers. They are intentionally absent from production:
+ * creating a party member from a portrait-only CMP would invent game state.
+ */
+#ifdef CSB_V1_CMP_IMPORT_CONTRACT_ONLY
 /*
  * Import a 496-byte CMP buffer into a CSB_V1_Champion record.
  *
@@ -103,6 +103,7 @@ int csb_v1_cmp_import_to_party(CSB_V1_PartyState* party,
  * portrait bytes copied, and Name/Title copied.
  */
 int csb_v1_cmp_import_self_test(void);
+#endif /* CSB_V1_CMP_IMPORT_CONTRACT_ONLY */
 
 #ifdef __cplusplus
 }

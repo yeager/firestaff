@@ -47513,3 +47513,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Their receipt tests remain explicit, while production cannot present them as
   original DM2 text. Verification: production link, all three helper tests,
   real-data M11 startup gate and archive/executable-symbol checks.
+
+- ✅ 2026-07-31 CSB CMP party-state isolation: a portrait-only Utility Disk
+  `.CMP` can no longer manufacture a live party member with default stats,
+  equipment or vitals. Production keeps the source-locked decoder solely for
+  overlays on already authenticated champion records; fixture-only party
+  builders and self-tests require an explicit contract build. The boot
+  regression now compares a rejected CMP path with the original dungeon
+  header's start pose.

@@ -61,6 +61,7 @@ int csb_v1_cmp_import_champion(CSB_V1_Champion* champion,
     return 0;
 }
 
+#ifdef CSB_V1_CMP_IMPORT_CONTRACT_ONLY
 int csb_v1_cmp_import_to_party(CSB_V1_PartyState* party,
                                 const uint8_t*     cmp_data,
                                 size_t             cmp_size)
@@ -181,3 +182,4 @@ int csb_v1_cmp_import_self_test(void)
 
     return 0;
 }
+#endif /* CSB_V1_CMP_IMPORT_CONTRACT_ONLY */

@@ -27,11 +27,9 @@
  *      not see a stale "v2.1" string from the prior CSB
  *      handoff.
  *
- *   4. csb_v1_boot_set_imported_party_from_cmp() on a valid
- *      synthetic CMP buffer increments the boot profile's
- *      imported_party.ChampionCount, sets imported_party_ready
- *      to 1, and the helper's cmp_import_attempted +
- *      cmp_import_succeeded flags report a successful import.
+ *   4. csb_v1_boot_set_imported_party_from_cmp() rejects a valid
+ *      CMP-only buffer: it lacks the source-backed champion state
+ *      required for a live CSB party.
  *
  *   5. csb_v1_boot_set_imported_party_from_cmp() on a buffer
  *      with a bad CMP magic sets cmp_import_attempted to 1,
@@ -53,12 +51,13 @@
  *   ReDMCSB DEFS.H CMP typedef (size 496 bytes).
  *   CSBWin/CedtData.cpp (CSB Utility Disk tool flow).
  *
- * Data-free: no real DM1/CSB assets required.
+ * The boot checks run against an operator-supplied original CSB package.
  */
 
 #include "csb_v1_boot.h"
 #include "csb_v1_cmp_import_pc34_compat.h"
 #include "csb_v1_engine_version_display_pc34_compat.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_game_state_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
@@ -206,7 +205,7 @@ static void test_enter_game_without_assets_leaves_version_at_dm1(void)
     csb_v1_boot_cleanup(&p);
 }
 
-static void test_cmp_import_reaches_boot_party_slot(void)
+static void test_cmp_import_cannot_create_boot_party(void)
 {
     CSB_V1_BootProfile p;
     uint8_t cmp_buf[FIRESTAFF_CMP_FILE_SIZE];
@@ -222,38 +221,32 @@ static void test_cmp_import_reaches_boot_party_slot(void)
                                 "HECTOR", "WARRIOR", 0xA5) == 0,
           "synthetic CMP buffer is built");
     CHECK(csb_v1_boot_set_imported_party_from_cmp(&p, cmp_buf,
-                                                   sizeof(cmp_buf)) == 0,
-          "CMP import helper returns 0 on success");
+                                                   sizeof(cmp_buf)) != 0,
+          "CMP-only import cannot create a live party");
     CHECK(p.cmp_import_attempted == 1,
           "cmp_import_attempted is 1 after import");
-    CHECK(p.cmp_import_succeeded == 1,
-          "cmp_import_succeeded is 1 after successful import");
-    CHECK(p.cmp_imported_slot == 0,
-          "cmp_imported_slot reports the destination slot index");
-    CHECK(p.cmp_imported_champion_count == 1,
-          "cmp_imported_champion_count reflects imported_party count");
-    CHECK(p.imported_party.ChampionCount == 1,
-          "imported_party now holds one champion");
-    CHECK(strcmp(p.imported_party.Champions[0].Name, "HECTOR") == 0,
-          "imported_party champion name matches the CMP file");
-    CHECK(strcmp(p.imported_party.Champions[0].Title, "WARRIOR") == 0,
-          "imported_party champion title matches the CMP file");
-    CHECK(p.imported_party.Champions[0].Portrait[0] == 0xA5,
-          "imported_party champion portrait bytes copied");
-    CHECK(p.imported_party_ready == 1,
-          "imported_party_ready is set so enter_game hands it to runtime");
-    /* Now run enter_game and verify the runtime receives the CMP
-     * champion via the existing imported_party_ready path. */
+    CHECK(p.cmp_import_succeeded == 0,
+          "CMP-only import does not report a completed party import");
+    CHECK(p.cmp_imported_slot == -1,
+          "CMP-only import publishes no champion slot");
+    CHECK(p.imported_party.ChampionCount == 0,
+          "CMP-only import leaves the party untouched");
+    CHECK(p.imported_party_ready == 0,
+          "CMP-only import never marks the party ready");
     CHECK(csb_v1_boot_enter_game(&p) == 0,
-          "enter_game accepts the profile with CMP-imported party");
+          "enter_game accepts the profile without a CMP-created party");
     CHECK(p.state == CSB_V1_BOOT_STATE_RUNTIME_READY,
-          "boot profile reaches RUNTIME_READY with CMP party");
+          "boot profile reaches RUNTIME_READY without a CMP-created party");
     csb_v1_boot_cleanup(&p);
 }
 
 static void test_cmp_import_bad_magic_rejected(void)
 {
     CSB_V1_BootProfile p;
+    int map_index;
+    int map_x;
+    int map_y;
+    int map_dir;
     uint8_t cmp_buf[FIRESTAFF_CMP_FILE_SIZE];
 
     prime_verified_profile(&p);
@@ -274,13 +267,17 @@ static void test_cmp_import_bad_magic_rejected(void)
           "imported_party_ready stays 0 so runtime does not consume bad CMP");
     CHECK(csb_v1_boot_enter_game(&p) == 0,
           "enter_game still succeeds without a CMP import");
-    /* The runtime party must remain at the source-locked start pose
-     * because imported_party_ready == 0.  This proves the runtime did
-     * NOT fall back to consuming the corrupt CMP bytes. */
-    CHECK(p.runtime.party_x == CSB_V1_START_PARTY_X &&
-          p.runtime.party_y == CSB_V1_START_PARTY_Y &&
-          p.runtime.party_dir == CSB_V1_START_PARTY_DIR,
-          "runtime keeps source-locked CSB start pose after rejected CMP");
+    /* The runtime party must retain DUNGEON_HEADER.InitialPartyLocation,
+     * not a compile-time pose or data from the rejected CMP. ReDMCSB
+     * LOADSAVE.C F0435 reads this packed location after the real load. */
+    CHECK(p.runtime.dungeon_handle != NULL &&
+          csb_v1_dungeon_initial_party_pose_pc34(
+              (const CSB_V1_DungeonData *)p.runtime.dungeon_handle,
+              &map_index, &map_x, &map_y, &map_dir) &&
+          p.runtime.current_level == map_index &&
+          p.runtime.party_x == map_x && p.runtime.party_y == map_y &&
+          p.runtime.party_dir == map_dir,
+          "runtime keeps the original dungeon start pose after rejected CMP");
     csb_v1_boot_cleanup(&p);
 }
 
@@ -1134,7 +1131,7 @@ int main(void)
     test_enter_game_flips_engine_version_to_csb();
     test_cleanup_resets_engine_version_to_dm1();
     test_enter_game_without_assets_leaves_version_at_dm1();
-    test_cmp_import_reaches_boot_party_slot();
+    test_cmp_import_cannot_create_boot_party();
     test_cmp_import_bad_magic_rejected();
     test_mark_imported_party_ready_uses_existing_party();
     test_utility_action_cursor_drives_select_action();

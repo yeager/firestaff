@@ -3,7 +3,6 @@
 #include "csb_v1_startup_session_contract_pc34_compat.h"
 
 #include "asset_find_by_hash.h"
-#include "csb_v1_cmp_import_pc34_compat.h"
 #include "csb_v1_csbgraphics_dat_real_scan.h"
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_dungeon_loader_pc34_compat.h"
@@ -8081,22 +8080,16 @@ int csb_v1_boot_set_imported_party_from_cmp(CSB_V1_BootProfile *profile,
                                             const uint8_t *cmp_buf,
                                             size_t cmp_size)
 {
-    int slot;
     if (!profile || !cmp_buf) return -1;
+    (void)cmp_size;
+    /* ReDMCSB CEDT002/CEDT021 persists only a CMP portrait/name/title
+     * record. It cannot establish the champion's stats, possessions or slot,
+     * which instead come from the original DM save/import route. Do not turn
+     * a portrait-only file into a synthetic live party member. */
     profile->cmp_import_attempted = 1;
-    slot = csb_v1_cmp_import_to_party(&profile->imported_party,
-                                      cmp_buf, cmp_size);
-    if (slot < 0) {
-        profile->cmp_import_succeeded = 0;
-        profile->cmp_imported_slot = slot;
-        return slot;
-    }
-    profile->cmp_import_succeeded = 1;
-    profile->cmp_imported_slot = slot;
-    profile->cmp_imported_champion_count =
-        profile->imported_party.ChampionCount;
-    profile->imported_party_ready = 1;
-    return 0;
+    profile->cmp_import_succeeded = 0;
+    profile->cmp_imported_slot = -1;
+    return -1;
 }
 
 int csb_v1_boot_mark_imported_party_ready(CSB_V1_BootProfile *profile)

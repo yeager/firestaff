@@ -33908,6 +33908,8 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_v1_cmp_import PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_compile_definitions(test_csb_v1_cmp_import PRIVATE
+        CSB_V1_CMP_IMPORT_CONTRACT_ONLY=1)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_cmp_import PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
@@ -33928,6 +33930,8 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_v1_portrait_render_handoff_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_compile_definitions(test_csb_v1_portrait_render_handoff_pc34_compat PRIVATE
+        CSB_V1_CMP_IMPORT_CONTRACT_ONLY=1)
     target_link_libraries(test_csb_v1_portrait_render_handoff_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_portrait_render_handoff_pc34_compat PRIVATE
