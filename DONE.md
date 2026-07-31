@@ -46557,3 +46557,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Fältet uppdateras av den källbundna gold-pile-pickup-vägen; fallback till
   noll används endast när mechanics-pekaren saknas. Verifiering:
   full `firestaff`-build och `test_nexus_v1_dgn_runtime_materialization`.
+- ✅ 2026-07-31 Nexus HUD-startgate: produktionsvägarna för launcher-start och
+  save-resume använder inte längre `force_active_for_test(1)` för HUD:n.
+  HUD-rendering kräver därmed den normala V2-presentationsgaten; testläget
+  finns kvar endast för explicita integrationstester. Verifiering:
+  `test_nexus_v2_hud_runtime_integration` passerar 9/9 och full `firestaff`
+  build passerar.

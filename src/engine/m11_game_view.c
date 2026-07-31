@@ -16173,7 +16173,6 @@ static int m11_nexus_apply_launcher_runtime_receipt(
     }
     state->nexusEngine = receipt->engine;
     nexus_v2_hud_runtime_init();
-    nexus_v2_hud_runtime_force_active_for_test(1);
     nexus_v2_lighting_runtime_init();
     nexus_v2_lighting_runtime_force_active_for_test(1);
     nexus_v2_smooth_movement_runtime_init();
@@ -17734,7 +17733,6 @@ static int m11_nexus_resume_from_save_path(M11_GameViewState* state,
 
     state->nexusEngine = receipt.engine;
     nexus_v2_hud_runtime_init();
-    nexus_v2_hud_runtime_force_active_for_test(1);
     nexus_v2_lighting_runtime_init();
     nexus_v2_lighting_runtime_force_active_for_test(1);
     nexus_v2_smooth_movement_runtime_init();
