@@ -327,15 +327,19 @@ int csb_v22_admit_f0128_door_projection_pc34(
         return 0;
     }
 
-    /* D1/D2/D3 carry the checked active DoorSet record from the V1 byte
-     * handoff. The source pack names nonzero sets explicitly, preventing a
-     * DoorSet 1..3 frame from being silently painted with DoorSet 0. */
+    /* ReDMCSB DUNVIEW.C F0096 lines 2651-2658 derives every front-door
+     * bitmap as M633_GRAPHIC_FIRST_DOOR_SET + DoorSet * 3 + {0,1,2} for
+     * G0693/G0694/G0695.  Never infer DoorSet zero when the F0128 command
+     * has no selected source record: provenance metadata cannot substitute
+     * for that live, source-owned selection. */
     dynamic_id[0] = '\0';
-    if (source_command->source_graphics_item_index > 0 &&
-        (source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34 ||
-         source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34 ||
-         source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34 ||
-         source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34)) {
+    if (source_command->source_graphics_item_index <= 0) {
+        return 0;
+    }
+    if (source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34 ||
+        source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D2_F0111_DOOR_PC34 ||
+        source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3L2_F0111_DOOR_PC34 ||
+        source_command->route == CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D3R2_F0111_DOOR_PC34) {
         int offset = source_command->route ==
                      CSB_V1_VIEWPORT_RUNTIME_DRAW_ROUTE_D1_F0111_DOOR_PC34 ? 2 :
                      (source_command->route ==

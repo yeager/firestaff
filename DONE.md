@@ -44657,3 +44657,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   live G1 square's derived map-chip row. This prevents a coincidental
   same-square bitmap from being displayed at a placement owned by another
   source record; the mismatch is strict no-draw.
+- ✅ 2026-07-31 CSB V2.2 DoorSet-source binding: F0128's narrow door
+  replacement admission now rejects commands without a selected
+  `GRAPHICS.DAT` item index. It can no longer infer DoorSet 0 from artpack
+  provenance alone. This follows ReDMCSB `DUNVIEW.C F0096:2651-2658`, where
+  G0693/G0694/G0695 derive the active `DoorSet * 3 + offset` record; missing
+  selection remains V1/no-draw. Verification: `test_csb_v22_inplace_route_pc34`
+  passes 145/145 and `test_csb_v22_inplace_draw_pc34` passes 66/66.

@@ -599,6 +599,11 @@ diagnostic; it must not silently fall back to a generated visual.
   valid source-owned door replacement as a failure. It must not claim that
   nine synthetic rectangles are a completed F0128 render. Remaining: bind
   every other material family to its corresponding original F0128 command.
+  2026-07-31 follow-up: the narrow door admission also rejects an absent
+  `source_graphics_item_index`; it no longer guesses DoorSet 0 from manifest
+  metadata. ReDMCSB `DUNVIEW.C F0096:2651-2658` derives G0693/G0694/G0695
+  from the active map's `DoorSet * 3 + offset`, so V2.2 remains V1 whenever
+  the live command has not retained that selected source record.
   2026-07-30 defensive HUD follow-up: the legacy generic inventory-slot
   fallback now explicitly excludes CSB, including debug HUD mode. The live
   route continues to require C017/C040, and a future route regression cannot

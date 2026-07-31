@@ -590,6 +590,10 @@ static void t_f0128_door_projection_admission(void) {
     provenance.source_record_sha256[64] = '\0';
     strcpy(command.source_record_sha256, provenance.source_record_sha256);
     CHECK(csb_v22_admit_f0128_door_projection_pc34(&command, &provenance,
+                                                     &projection) == 0,
+          "D2 F0128 rejects an absent source DoorSet record");
+    command.source_graphics_item_index = 247;
+    CHECK(csb_v22_admit_f0128_door_projection_pc34(&command, &provenance,
                                                      &projection) == 1 &&
           projection.valid && projection.clip_x == 76 &&
           projection.clip_y == 47 && projection.clip_w == 72 &&
