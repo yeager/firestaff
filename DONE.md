@@ -47750,3 +47750,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   a later package without authenticated ITEM.IBS from inheriting the previous
   session's item metadata. The real ITEM.IBS regression now also verifies the
   clear path and zero live declarations afterward.
+- ✅ 2026-07-31 Nexus ITEM.IBS VDP1-capture byte-count fidelity: the guarded
+  0008 capture admission and decoder now use `ceil(width*height/2)` packed
+  bytes and the exact texel count, preserving odd-sized surfaces while keeping
+  the original VDP1-command gate closed. Verification: real ITEM.IBS decoder,
+  DGN geometry readiness, and production Nexus library build pass.

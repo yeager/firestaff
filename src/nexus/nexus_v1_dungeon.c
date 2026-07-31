@@ -7232,7 +7232,7 @@ int nexus_v1_item_ibs_bind_0008_vdp1_capture(
         *out_receipt = receipt;
         return -1;
     }
-    expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height) / 2U;
+    expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height + 1U) / 2U;
     receipt.candidate_framing_valid = candidate->item_ibs_fnv1a64 != 0U &&
         candidate->packed_span_fnv1a64 != 0U &&
         candidate->palette_fnv1a64 != 0U && candidate->vdp1_state_fnv1a64 != 0U &&
@@ -7302,13 +7302,13 @@ int nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
         *out_receipt = receipt;
         return -1;
     }
-    expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height) / 2U;
+    expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height + 1U) / 2U;
     receipt.descriptor_0008_verified = floor->encoding == 8U;
     receipt.packed_span_verified = expected_bytes > 0U &&
         expected_bytes <= NEXUS_V1_ITEM_IBS_FLOOR_IMAGE_MAX_PACKED_BYTES &&
         floor->packed_4bpp_valid && floor->packed_4bpp_bytes == expected_bytes;
     receipt.palette_bound = floor->palette_bound;
-    texel_count = (int)(expected_bytes * 2U);
+    texel_count = (int)((uint32_t)floor->width * (uint32_t)floor->height);
     if (!capture || !capture->original_vdp1_capture_verified ||
         !capture->decode_authorized || capture->fallback_visuals_permitted) {
         receipt.blocked_missing_vdp1_command_provenance = 1;
