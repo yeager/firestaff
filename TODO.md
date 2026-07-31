@@ -12,6 +12,9 @@
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
+  - 2026-07-31: Removed the unbuilt `csb_v1_game` shim that carried fixed
+    positions and a no-op DM1 import. Continue checking unreferenced CSB
+    compatibility surfaces before treating their fixture support as runtime.
   Production rendering must fail closed for a missing or unbound original
   asset. Procedural mazes, generic walls, coloured creature blocks, substitute
   palettes, and synthetic HUD art are not acceptable when authentic game data

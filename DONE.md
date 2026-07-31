@@ -46667,3 +46667,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Utan en autentiserad retail-widget/VDP-placement receipt förblir overlayn
   stängd; explicit V2-integrationstest kan fortfarande aktivera den.
   Verifiering: full `firestaff`-build, HUD 9/9 och DGN materialization-test.
+- ✅ 2026-07-31 CSB dead state-shim removal: deleted the unbuilt
+  `csb_v1_game` skeleton, which exposed fixed `(5,5)`/`(0,0)` positions and
+  marked DM1 import complete without loading anything. CSB now has only the
+  verified `CSB_V1_RuntimeProfile`/dungeon/Utility ownership documented by
+  the integration and source-lock references; no production caller used the
+  retired API.

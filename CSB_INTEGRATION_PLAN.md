@@ -1,9 +1,9 @@
 # CSB Integration Plan — Firestaff
 ## Chaos Strikes Back Technical Integration Guide
 
-**Document:** CSB_INTEGRATION_PLAN.md  
-**Repo:** `/home/trv2/work/firestaff`  
-**Status:** Draft — Needs Validation  
+**Document:** CSB_INTEGRATION_PLAN.md
+**Repo:** `/home/trv2/work/firestaff`
+**Status:** Draft — Needs Validation
 **Last Updated:** 2026-05-26
 
 ---
@@ -27,7 +27,9 @@ Source evidence:
 - `include/csb_v1_character_pc34_compat.h`: "CSB uses imported DM1 champions. No champion selection hall."
 - CSBCode.cpp lines 369-372: Fighter, Ninja, Priest, Wizard classes
 
-CSB does **not** have a Hall of Champions. Champions are imported from an existing DM1 save game via `csb_v1_import_dm1_save()`. The startup flow:
+CSB does **not** have a Hall of Champions. Champions are imported from an
+existing DM1 save through the source-locked CSB Utility flow. The startup
+flow is owned by `CSB_V1_RuntimeProfile`:
 
 ```
 CSB Title Screen
@@ -151,17 +153,16 @@ static const char *const csb_dungeon_hashes[] = {
 
 ### 2.4 Memory / State
 
-CSB state struct (from `include/csb_v1_game.h`):
-- `party_x`, `party_y`, `party_dir`
-- `current_level`
-- `dm1_import_done`
-- `difficulty` (1.5x creature stats)
+CSB runtime state is owned by `CSB_V1_RuntimeProfile` and its loaded
+`CSB_V1_DungeonData` receipt. Party position, direction, current level,
+import provenance and difficulty are materialized from the verified boot and
+runtime paths; there is no separate lightweight CSB state shim.
 
 **Party import flow:**
 1. User selects "Import DM1 Save" on CSB title
-2. `csb_v1_import_dm1_save()` reads DM1 save file
-3. Champions extracted and placed in CSB party struct
-4. `dm1_import_done = 1`
+2. The source-locked Utility flow validates the DM1 save and media
+3. Champions enter the runtime-owned party state
+4. Import provenance is retained on that party receipt
 
 **Champion compatibility:** `CSB_V1_MAX_CHAMPIONS = 4` matches DM1. No mapping needed.
 
@@ -271,12 +272,9 @@ The exact number of CSB wall sets and their indices in GRAPHICS.DAT are not docu
 
 ### Blocker 3: CSB Champion Import Validation
 
-The `csb_v1_import_dm1_save()` function is a stub. Need to:
-1. Define exact DM1 save file format
-2. Implement extraction of champions from DM1 save
-3. Map DM1 champion fields to `CSB_V1_Champion` struct
-
-**Priority:** High. Without import, CSB cannot start.
+The active Utility route validates the DM1 save and its required media before
+mapping champions to the runtime-owned party state. Remaining work is
+real-corpus compatibility proof, not a parallel lightweight importer.
 
 ### Blocker 4: ReDMCSB Command Dispatcher
 
@@ -288,8 +286,8 @@ CSB command dispatch system needs source-lock validation against ReDMCSB COMMAND
 
 ## Section 5: Recommended Implementation Order
 
-**Phase 1: Foundation (Stub)**
-- `csb_v1_import_dm1_save()` — stub with graceful failure
+**Phase 1: Foundation**
+- source-locked CSB Utility import route
 - `csb_v1_dungeon_load()` — already implemented
 - CSB title screen with "Import DM1" option
 
@@ -326,7 +324,7 @@ CSB command dispatch system needs source-lock validation against ReDMCSB COMMAND
 | `csb_v1_viewport_pc34_compat.c` | Viewport.cpp + Graphics.cpp | ~100 | Stub |
 | `csb_v1_chaos_magic_pc34_compat.c` | Chaos.cpp + DSA.cpp | ~400 | Stub |
 | `csb_v1_monster_pc34_compat.c` | Monster.cpp + Attack.cpp | ~300 | Not started |
-| `csb_v1_game.c` | CSBCode.cpp main | ~150 | Skeleton |
+| `csb_v1_runtime_pc34_compat.c` | CSBCode.cpp main / LOADSAVE.C | active | Runtime owner |
 
 ---
 

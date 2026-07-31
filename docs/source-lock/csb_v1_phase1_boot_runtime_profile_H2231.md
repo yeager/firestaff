@@ -269,7 +269,6 @@ Spell grid version increments each V1 tick, providing a monotonic counter for pr
 ```cmake
 set(CSB_V1_SOURCES
     src/csb/csb_v1_runtime_pc34_compat.c   # NEW
-    src/csb/csb_v1_game.c
     src/csb/csb_v1_game_state_pc34_compat.c
     src/csb/csb_v1_save_load_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
