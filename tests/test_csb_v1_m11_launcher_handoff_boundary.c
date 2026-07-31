@@ -1744,6 +1744,8 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                     "Atari ST C232 HUD material reaches the first FTLCODE frame");
         expect_true(runtime_viewport_pixels_visible,
                     "Atari ST floor/ceiling and wall source pixels reach the FTLCODE aperture");
+        expect_true(view.csbState.runtime_v22_cells_painted == 0,
+                    "Atari ST TAG0088b2 page bypasses the PC3.4 V2.2 compositor");
         expect_true(strcmp(view.lastOutcome,
                            "CSBWIN SOURCE FRAME - EXTENDED CELLS REQUIRED") != 0,
                     "Atari ST source frame does not publish diagnostic chrome");

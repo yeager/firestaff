@@ -2602,6 +2602,11 @@ static int m11_csb_present_atari_st_runtime_viewport(
                                                 &wall_plan)) {
         return 0;
     }
+    /* ReDMCSB/CSBWin Viewport.cpp::FloorAndCeilingOnly and TAG0088b2 own
+     * this complete Atari page.  It never crosses the PC3.4 F0128 V2.2
+     * command compositor, so retire any earlier PC-frame accounting before
+     * publishing the source-owned result. */
+    state->csbState.runtime_v22_cells_painted = 0;
     memset(viewport, 0, sizeof(viewport));
     memcpy(viewport, ceiling->pixels, (size_t)VIEWPORT_WIDTH * CEILING_HEIGHT);
     memcpy(viewport + (size_t)(CEILING_HEIGHT + BLACK_HEIGHT) * VIEWPORT_WIDTH,

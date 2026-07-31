@@ -447,7 +447,12 @@ diagnostic; it must not silently fall back to a generated visual.
   directly. The remaining bridge must translate that Atari plan into the same
   source-owned F0128 command contract with its own graphic index, projection
   and palette receipt; it must not reuse PC3.4 indices or add a post-draw
-  rectangle/overlay. **2026-07-31 follow-up:** the retired raw-cell V2.2
+  rectangle/overlay.
+  **2026-07-31 accounting follow-up:** the direct Atari TAG0088b2 page now
+  clears PC3.4 V2.2 paint accounting after its source layout and graphics
+  plan have verified, and the real Atari-ST handoff regression asserts that
+  boundary. This prevents stale PC compositor telemetry from being attributed
+  to an Atari source page. **2026-07-31 follow-up:** the retired raw-cell V2.2
   classifier now returns no shape, category or asset for every input, and its
   legacy 3x3 renderer is permanently no-draw. A populated cache or installed
   artpack cannot activate this compatibility route; only the source-command

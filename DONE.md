@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 CSB Atari V2.2 accounting boundary: the direct Atari ST
+  `FloorAndCeilingOnly`/TAG0088b2 page now clears the PC3.4 F0128 V2.2 paint
+  counter only after its original layout and wall plan validate. The real
+  Atari handoff regression proves that source page never reports PC-compositor
+  cells. Verification: `test_csb_v1_m11_launcher_handoff_boundary` and the
+  focused PC3.4 real-data viewport regressions pass.
+
 - ✅ 2026-07-31 DM2 shop-state default closure: the unavailable shop module
   no longer seeds host gold, negotiator skill or a diagnostic party hash, and
   unknown objects no longer receive an `ITEM…` label. Those values require a
