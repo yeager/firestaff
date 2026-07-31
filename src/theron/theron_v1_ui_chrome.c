@@ -203,17 +203,6 @@ void tr_ui_render_right_panel(TQR_PlanarFramebuffer *fb,
  * Champion slot rendering
  * ══════════════════════════════════════════════════════════════════════ */
 
-/* Champion name string (truncated to fit slot) */
-static void champ_slot_name(char *buf, size_t buf_size,
-                            const Theron_V1_Champion *c) {
-    if (!c || !buf || buf_size == 0) return;
-    if (c->name[0] == '\0') {
-        snprintf(buf, buf_size, "---");
-        return;
-    }
-    snprintf(buf, buf_size, "%-12s", c->name);
-}
-
 /*
  * Render a single champion slot (80×56 bottom panel).
  * Source: THQUEST.ASM T800 (champion panel rendering).
@@ -224,9 +213,16 @@ void tr_ui_draw_champion_slot(TQR_PlanarFramebuffer *fb,
                                const Theron_V1_Champion *champion) {
     if (!fb || !fb->data) return;
     if (slot_idx < 0 || slot_idx >= THERON_MAX_CHAMPIONS) return;
+    (void)x;
+    (void)y;
+    (void)champion;
     /* No authenticated chrome bank is available yet. */
     return;
 
+#if 0
+    /* Retained only as historical layout notes.  This procedural slot
+     * renderer is not a source-bound implementation and must never be
+     * compiled into a production draw path. */
     uint8_t bg         = TR_CHROME_BG;
     uint8_t frame      = TR_CHROME_FRAME;
     uint8_t name_color = TR_CHROME_NAME;
@@ -322,6 +318,7 @@ void tr_ui_draw_champion_slot(TQR_PlanarFramebuffer *fb,
                        champion->mana, champion->max_mana,
                        mana_col, bg);
     }
+#endif
 }
 
 /* ══════════════════════════════════════════════════════════════════════
