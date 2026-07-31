@@ -47185,3 +47185,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   inventories local, existing-owner and foreign-platform symbols and blocks
   execution for all of them. It now compiles solely into its focused contract
   test; M10 retains only actual authenticated CSB consumers.
+
+- ✅ 2026-07-31 CSB platform-helper isolation: the combined F1048/F1049/
+  F1053/F1055/F1061 wrapper only exported a disabled alias and explicit
+  Amiga fake-code no-ops, with no production caller. It is excluded from M10;
+  source-faithful shared fail-closed boundaries remain available for their
+  separate focused tests.
