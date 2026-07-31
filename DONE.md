@@ -46539,3 +46539,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `nexus_stairs_resolve()` returnerar explicit unresolved-sentineller tills en
   källbunden länk registrerats; registrerade länkar är oförändrade.
   Verifiering: C11-check för både unresolved och registrerad länk.
+- ✅ 2026-07-31 Nexus teleporter-owner gate: mechanics kontrollerar nu
+  teleporter-länken före party-positionen muteras. En oregistrerad
+  TELEPORT/TELEPORT2/TELEPORT3 blockerar utan förflyttning; registrerad länk
+  dispatchas oförändrad. Verifiering: `test_nexus_v1_pit_teleporter_runtime`
+  passerar 44/44.

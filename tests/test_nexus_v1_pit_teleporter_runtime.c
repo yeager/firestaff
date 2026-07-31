@@ -157,8 +157,8 @@ static void test_teleporter_unregistered_no_effect(void) {
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     nexus_mechanics_tick(&st, &engine);
 
-    CHECK(st.party_x == 10 && st.party_y == 9,
-          "unregistered teleporter still allows party onto square");
+    CHECK(st.party_x == 10 && st.party_y == 10,
+          "unregistered teleporter blocks before party position changes");
     CHECK(st.pending_teleport == 0,
           "unregistered teleporter does not set pending_teleport");
     CHECK(st.pending_level_change == -1,

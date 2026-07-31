@@ -857,6 +857,16 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 sq = 0; /* treat as wall */
             }
 
+            /* A teleporter without a decoded source link is not an ordinary
+             * floor square. Reject it before mutating party position; the
+             * square-event dispatcher may consume only registered links. */
+            if ((sq == NEXUS_SQUARE_TELEPORT ||
+                 sq == NEXUS_SQUARE_TELEPORT2 ||
+                 sq == NEXUS_SQUARE_TELEPORT3) &&
+                nexus_teleporters_resolve(t_x, t_y, NULL, NULL, NULL) != 0) {
+                sq = 0;
+            }
+
             if (sq != 0 && nexus_v1_level_move_allowed(&engine->current_level,
                                                        st->party_x, st->party_y,
                                                        t_x, t_y)) {
