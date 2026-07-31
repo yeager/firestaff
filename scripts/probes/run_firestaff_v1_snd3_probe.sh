@@ -9,14 +9,15 @@
 set -eu
 
 HERE="$(cd -- "$(dirname -- "$0")" >/dev/null 2>&1 && pwd)"
+ROOT="$(cd -- "$HERE/../.." >/dev/null 2>&1 && pwd)"
 OUT_DIR=${1:-$HERE/verification-m11/audio}
 mkdir -p "$OUT_DIR"
 
 PROBE_BIN="$OUT_DIR/firestaff_v1_graphics_dat_snd3_probe_bin"
 
-cc -std=c99 -Wall -Wextra -O2 -I "$HERE" \
+cc -std=c99 -Wall -Wextra -O2 -I "$ROOT/include" \
     -o "$PROBE_BIN" \
-    "$HERE/probes/v1/firestaff_v1_graphics_dat_snd3_probe.c" \
-    "$HERE/graphics_dat_snd3_loader_v1.c"
+    "$ROOT/probes/v1/firestaff_v1_graphics_dat_snd3_probe.c" \
+    "$ROOT/src/shared/graphics_dat_snd3_loader_v1.c"
 
 "$PROBE_BIN" | tee "$OUT_DIR/v1_graphics_dat_snd3_probe.log"

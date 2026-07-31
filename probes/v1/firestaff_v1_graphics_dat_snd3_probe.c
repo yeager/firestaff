@@ -13,7 +13,7 @@
  * vendored or implied by this probe.
  */
 
-#include "../../graphics_dat_snd3_loader_v1.h"
+#include "graphics_dat_snd3_loader_v1.h"
 
 #include <stdio.h>
 #include <stdlib.h>
