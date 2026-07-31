@@ -1273,6 +1273,8 @@ size_t theron_v1_first_room_synthesize(uint8_t *out_buf,
     out_level->level_index = level_index;
     out_level->width       = width;
     out_level->height      = height;
+    out_level->dungeon_seed = dungeon_seed;
+    out_level->source_header_level_index = (uint16_t)level_index;
     out_level->start_x     = 1;
     out_level->start_y     = 1;
     /* 1 = EAST (matches THERON_DIR_EAST in theron_v1_mechanics.h).
@@ -1360,6 +1362,8 @@ size_t theron_v1_startup_fallback_room_synthesize(uint8_t *out_buf,
     out_level->level_index = 0;
     out_level->width = width;
     out_level->height = height;
+    out_level->dungeon_seed = 0x0108e938u;
+    out_level->source_header_level_index = 0;
     out_level->start_x = (int16_t)start_x;
     out_level->start_y = (int16_t)start_y;
     out_level->start_dir = (int8_t)start_dir;
