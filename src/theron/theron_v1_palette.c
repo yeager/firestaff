@@ -3,15 +3,15 @@
  *
  * Implementations for the TQR tile/palette system.
  *
- * Phase 4 provides deterministic stub implementations:
- *   - tqr_palette_init_defaults(): fills palette with PC Engine dungeon stone tones
+ * Palette state is source-gated:
+ *   - tqr_palette_init_defaults(): clears the palette until verified data loads
  *   - tqr_decode_tile_row(): planar bitplane decode (2bpp/4bpp → indexed)
  *   - tqr_decode_tile(): full 8x8 tile decode
  *   - tqr_tile_strip_load(): load tile strip into atlas
- *   - All other functions: no-op stubs returning 0/-1/NULL
+ *   - Unsupported extraction paths fail closed with 0/-1/NULL
  *
- * Full Track 02 tile/palette extraction (Phase 5) will replace these
- * with real implementations that parse the PC Engine CD-ROM data track.
+ * Track 02 tile/palette extraction must populate the state from the PC Engine
+ * CD-ROM data track before the viewport is admitted to draw.
  *
  * Source: THQUEST.ASM T400 (tile bank loading), T520 (tile selection),
  *         HuC6260/HuC6270 datasheet, tqr_v1_phase2_data_formats_H2339.md §7
@@ -33,8 +33,8 @@ void tqr_decode_tile_row(uint8_t *TQR_RESTRICT out_row,
      *
      * Decoded byte per pixel = sum(bitplane_n[bit_n] << n) for n=0..bpp-1
      *
-     * Since we only have raw bytes and no actual tile data yet,
-     * we fill with a placeholder pattern (checkerboard using bpp bits). */
+     * Decode the supplied planar bytes directly; never synthesize fallback
+     * pixels when source data is absent. */
     if (bpp == 2) {
         /* 2bpp: bitplane 0 at src_row[0], bitplane 1 at src_row[1] */
         for (int i = 0; i < 8; i++) {
@@ -79,27 +79,14 @@ void tqr_decode_tile(uint8_t *TQR_RESTRICT out64,
  *   12-15: blue-gray (ceiling/special)
  * Groups 1-3 follow similar distributions for their domains.
  *
- * Generated deterministically using a fixed formula:
- *   entry[n].bgr444 = ((n / 16) << 8) | (((n % 16) * 15) / 16 << 4) | (n % 16)
- * which gives a recognizable dungeon stone gradient.
+ * No palette is generated locally: entries remain zero until source bytes
+ * have been loaded through a verified route.
  */
 
-/* Stub: fills all 512 palette entries with deterministic stone gradient.
- * This ensures the same output on all platforms even without Track 02 data. */
+/* Leave the palette unbound until verified source data is decoded. */
 void tqr_palette_init_defaults(TQR_PaletteState *pal) {
     if (!pal) return;
     memset(pal, 0, sizeof(*pal));
-    pal->tile_count = 0;
-
-    /* Deterministic gradient: BGR444 formula gives a recognizable
-     * dungeon stone palette across all 512 entries (16 groups x 16). */
-    for (int i = 0; i < TQR_PALETTE_SIZE; i++) {
-        /* BGR444: ((idx & 0xF) << 8) | (((idx >> 4) & 0xF) << 4) | (idx & 0xF)
-         * Produces a smooth diagonal gradient: black→blue→...→white */
-        uint16_t bgr444 = (uint16_t)(((i & 0xF) << 8) | (((i >> 4) & 0xF) << 4) | (i & 0xF));
-        pal->entries[i].bgr444 = bgr444;
-        pal->entries[i].rgba = tqr_bgr444_to_rgba(bgr444);
-    }
 }
 
 /* ── Palette load ─────────────────────────────────────────────────── */

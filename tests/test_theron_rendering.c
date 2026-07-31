@@ -852,12 +852,8 @@ static int test_palette_state_init(void) {
     ASSERT(pal.tile_count >= 0, "tile_count should be >= 0");
     ASSERT(pal.tile_count >= 0, "tile_count should be >= 0");
 
-    /* Palette should have some non-zero entries */
-    int colors_non_zero = 0;
-    for (int i = 0; i < 16 && !colors_non_zero; i++) {
-        if (pal.entries[i].bgr444 != 0) colors_non_zero = 1;
-    }
-    ASSERT(colors_non_zero, "Palette should have some non-zero colors");
+    ASSERT(pal.entries[0].bgr444 == 0 && pal.entries[15].bgr444 == 0,
+           "Unbound palette must not synthesize colors");
 
     tqr_palette_free_tiles(&pal);
     PASS();

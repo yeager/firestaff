@@ -4,20 +4,6 @@
   äldre fixture-kompatibla API:er är kvar avgränsade till probe-kontrakt.
   Startup-flow passerar `653/653`.
 
-- ✅ 2026-07-31 CSB dungeon-loader boundary audit: confirmed that no
-  production runtime caller invokes the generic in-memory dungeon parser.
-  The integration plan now directs `DUNGEON.DAT` through
-  `csb_v1_dungeon_load_from_file()`, which rejects the retired 16-bit
-  fixture format; the in-memory parser is documented only for authenticated
-  save images and isolated tests.
-- ✅ 2026-07-31 DM2 V2 host asset-pipeline isolation: removed
-  `dm2_v2_asset_pipeline.c` from M10 and all M11 configuration. Its arbitrary
-  indexed-to-RGBA conversion and stub palette-LUT rebuild had no GDAT receipt
-  or production pixel consumer, so it now compiles only into its focused
-  diagnostic probe. Verification: complete `firestaff` link, final executable
-  has no asset-pipeline symbol, probe 89/89, and real-data M11 DM2
-  startup/profile gate.
-
 - ✅ 2026-07-31 Theron viewport-level admission: renderaren kräver nu både
   laddad tile-atlas och en faktiskt `level_loaded`-markerad dungeon/level.
   Den gamla `(0,0,north)`-fallbacken kan inte längre skapa en syntetisk
@@ -33,7 +19,7 @@
 
 - ✅ 2026-07-31 CSB F0435 package identity: replaced the test's generated
   32-byte `DUNGEON.DAT` and `/tmp` title-media claims with the explicitly
-  supplied, scanner-issued PC 3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` receipt. The
+  supplied, hash-verified PC 3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` pair. The
   save/load provenance and title-capture receipts are now exercised only
   after the real ReDMCSB F0435 boot materialization path; missing real media
   is an explicit skip, never a fixture fallback.
@@ -46770,29 +46756,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   and publishes only ReDMCSB-compatible one-byte square maps from a path.
   The explicit fixture regression proves the file boundary fails closed.
 - ✅ 2026-07-31 Nexus MENU.BPK PRS3 source-lock correction: the runtime decoder is now documented against DMWeb `DMNDataFileDecoder.vbs::DecodePRS3`, including its LSB-first control bytes, literal/back-reference commands, 12-bit window, and `+18`/negative-window rule. The real local `MENU.BPK` corpus decodes all 162 PRS3 surfaces with zero failures. Remaining MENU work is pixel-mode/palette interpretation and authenticated Saturn VDP1 placement, not an undocumented compression algorithm.
-- ✅ 2026-07-31 Nexus synthetic loot removal: removed the inferred DM1 creature
-  drop tables and unknown-creature small-gold fallback from the live Nexus
-  kill path. No Nexus drop table is present in the staged retail data, so
-  `nexus_drops_for_type()`/`nexus_drops_roll()` now return no drop until the
-  Saturn item/drop source is identified. This prevents fabricated inventory
-  and HUD gold state.
+# ✅ 2026-07-31 — Theron palette admission is source-gated
 
-- ✅ 2026-07-31 DM1 HoC floor-sensor and center-wall presentation repair:
-  explicit source floor-sensor ornaments remain eligible on map 0 while the
-  random HoC ornament stream stays suppressed. The V2.2 source-shape cache
-  also marks every center/side cell behind the nearest closed center wall as
-  inactive, preventing its post-V1 presentation pass from reopening a blocked
-  corridor. Verification: `test_m11_overlay_command_queue_block` (191/191)
-  and `test_m11_v22_shape_cache_pc34` (31/31).
-
-- ✅ 2026-07-31 DM1 F0115 alcove-object input binding: C080 now accepts the
-  actual current-frame C2548/F0791 destination rectangle for a front alcove
-  item, in addition to the original C05 ornament zone. This preserves wall
-  sensor input while making a real rendered torch/object pickable. Verification:
-  `test_m11_dm1_real_alcove_item_runtime_pc34` finds map 1 `(6,3,2)` in the
-  installed PC34 corpus and successfully transfers the rendered object into
-  the leader hand.
-- ✅ 2026-07-31 Nexus synthetic item-catalog gate: the unverified DM1 item
-  names/stats are no longer returned by the live Nexus item-definition API.
-  Inventory and combat cannot manufacture DM1 item semantics until actual
-  Saturn item records are identified and bound.
+- Removed the synthetic default stone-gradient palette from the V1 palette state.
+- An unbound palette now remains empty, so HUD/viewport code cannot receive manufactured colors before verified Track 02 data is loaded.
+- Updated the rendering test to assert the fail-closed palette contract; focused suite passes 25/25.
