@@ -46632,3 +46632,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   agreement with the boot profile's scanned receipt before any CSB pixels can
   be decoded. A file replaced after scan fails closed instead of inheriting a
   stale verified flag; the focused boot-profile test covers this regression.
+- ✅ 2026-07-31 Nexus FONT256 Page/palette words: bounded API:er läser nu
+  DMWeb:s 4096 big-endian Page/tilemapord och 256 big-endian BGR555-
+  paletteord från de verkliga regionerna. Retailtestet verifierar tilemapord
+  1 = `0x0002`, paletteord 0 = `0x8000` samt indexgränser; ingen glyph- eller
+  menybetydelse härleds ännu. Verifiering: `test_nexus_v1_font_s2d`.

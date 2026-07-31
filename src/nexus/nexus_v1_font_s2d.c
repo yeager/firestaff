@@ -39,6 +39,47 @@ int nexus_v1_font_s2d_copy_character_generator_tile(
     return 0;
 }
 
+static int copy_region_be16(const uint8_t *data, int data_size,
+                            uint32_t region_offset, uint32_t region_size,
+                            int prefix_size, int index, int count,
+                            uint16_t *out_word)
+{
+    uint32_t offset;
+    if (!data || data_size <= 0 || !out_word || index < 0 || index >= count ||
+        region_size < (uint32_t)prefix_size + (uint32_t)count * 2U) {
+        return -1;
+    }
+    offset = region_offset + (uint32_t)prefix_size + (uint32_t)index * 2U;
+    if (offset > (uint32_t)data_size || 2U > (uint32_t)data_size - offset ||
+        offset < region_offset || offset + 2U > region_offset + region_size) {
+        return -1;
+    }
+    *out_word = (uint16_t)(((uint16_t)data[offset] << 8) | data[offset + 1U]);
+    return 0;
+}
+
+int nexus_v1_font_s2d_page_tilemap_word(
+    const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded,
+    int tilemap_index, uint16_t *out_word)
+{
+    if (!decoded) return -1;
+    return copy_region_be16(data, data_size, decoded->page_offset,
+                            decoded->page_size, 16, tilemap_index, 4096,
+                            out_word);
+}
+
+int nexus_v1_font_s2d_palette_word(
+    const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded,
+    int palette_index, uint16_t *out_word)
+{
+    if (!decoded) return -1;
+    return copy_region_be16(data, data_size, decoded->palette_offset,
+                            decoded->palette_size, 16, palette_index, 256,
+                            out_word);
+}
+
 int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
                               Nexus_V1_FontS2dDecodeResult *out) {
     int i;

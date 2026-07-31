@@ -44,6 +44,19 @@ int nexus_v1_font_s2d_copy_character_generator_tile(
     const Nexus_V1_FontS2dDecodeResult *decoded,
     int tile_index, uint8_t out_tile[64]);
 
+/* DMWeb page data: 16-byte prefix followed by 4096 big-endian tilemap
+ * words. Palette data: 16-byte prefix followed by 256 big-endian BGR555
+ * words. These helpers expose source words only; they do not assign glyph
+ * or menu meaning. */
+int nexus_v1_font_s2d_page_tilemap_word(
+    const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded,
+    int tilemap_index, uint16_t *out_word);
+int nexus_v1_font_s2d_palette_word(
+    const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded,
+    int palette_index, uint16_t *out_word);
+
 int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
                               Nexus_V1_FontS2dDecodeResult *out);
 

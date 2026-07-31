@@ -80,6 +80,23 @@ static int test_font256(void) {
         }
         printf("  PASS DMWeb Character Generator: 242 bounded 8x8 tiles\n");
     }
+    {
+        uint16_t tilemap_word = 0;
+        uint16_t palette_word = 0;
+        if (nexus_v1_font_s2d_page_tilemap_word(
+                data, size, &r, 1, &tilemap_word) != 0 ||
+            tilemap_word != 2U ||
+            nexus_v1_font_s2d_palette_word(
+                data, size, &r, 0, &palette_word) != 0 ||
+            palette_word != 0x8000U ||
+            nexus_v1_font_s2d_page_tilemap_word(
+                data, size, &r, 4096, &tilemap_word) == 0) {
+            printf("  FAIL DMWeb tilemap/palette source words\n");
+            free(data);
+            return 1;
+        }
+        printf("  PASS DMWeb Page tilemap + palette source words\n");
+    }
 
     for (i = 0; i < r.section_count; i++) {
         printf("    section %d: offset=0x%X size=0x%X\n",
