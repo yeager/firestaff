@@ -34159,9 +34159,12 @@ static void m11_draw_dm1_side_contents_at_depth(
                                         depth + 1, side);
             }
 
+            /* The DnL/DnR F0115 route has the same C127 payload boundary as
+             * DnC.  Do not let the side-only path bypass a live mirror or
+             * other source decision that explicitly suppresses object
+             * materialization. */
             if (cell->floorItemCount > 0 &&
-                cell->dm1MaterializationDecisionReady &&
-                cell->dm1MaterializationDecision.drawFloorItems) {
+                m11_dm1_floor_item_material_allowed(cell, 0)) {
                 int ii;
                 int itemArea = paneH / 3;
                 int itemBaseY = paneY + paneH - itemArea - 2;

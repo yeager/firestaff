@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM1 side-lane F0115 object admission: D3/D2/D1 side cells
+  now apply the same source-owned material gate as center cells. A C127
+  mirror or other explicitly suppressed payload therefore cannot bypass its
+  runtime decision through the DnL/DnR object path. Verification: real PC34
+  floor-item capture, HoC orientation/item regression, M11 overlay regression
+  (193/193), and action/stamina source-lock regression (1337/1337).
+
 - ✅ 2026-07-31 DM2 PC startup-media provenance: corrected the DM2 intro
   reference so it no longer invents external PC `title.anim` media. The
   source-owned PC menu and credits are `GRAPHICS.DAT` TITLE fields 4 and 1;
