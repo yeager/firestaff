@@ -593,6 +593,11 @@ diagnostic; it must not silently fall back to a generated visual.
   They had no M11 runtime consumer, so their source-index checks could not
   prove pixel provenance. Active source-bound F0115 sprite drawers remain
   unchanged and suppress drawing when the required original sprite is absent.
+  **2026-07-31 D0C F0111 orphan follow-up:** removed the test-only panel
+  compositor and its public API. Although it validated a supplied live-frame
+  receipt, no M11 route invoked it; it therefore could not establish a real
+  D0C drawing path. The authenticated viewport materialization remains the
+  only owner of production pixels.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
