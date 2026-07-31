@@ -47243,3 +47243,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   callable symbol in this range, and the table only reports a blocked receipt.
   It now compiles only into its contract test; local source labels cannot
   become a synthetic CSB entrance, startup or graphics implementation.
+
+- ✅ 2026-07-31 CSB F1526–F1565 platform-boundary isolation: this
+  workstation/mouse/AES table has no authenticated CSB PC 3.4 consumer and
+  blocks all routes. It now compiles only into its contract test, preventing a
+  foreign-platform receipt from standing in for CSB input or presentation.
