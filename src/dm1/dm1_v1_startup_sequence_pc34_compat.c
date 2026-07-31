@@ -11,6 +11,7 @@
 #include "title_frontend_v1.h"
 #include "vga_palette_pc34_compat.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #define DM1_V1_STARTUP_TITLE_ZOOM_STEPS_PC34 18u
@@ -3441,34 +3442,24 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
         char corpus_root[DM1_ORIGINAL_SAVE_PATH_MAX];
         DM1OriginalSaveCorpusManifest corpus;
         DM1OriginalSavePC34CorpusRoundtripReport corpus_receipt;
+        const char *explicit_corpus = getenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
+        const char *explicit_save_dir = getenv("FIRESTAFF_DM1_ORIGINAL_SAVE_DIR");
         int first_pc34_index = -1;
         memset(&corpus, 0, sizeof(corpus));
         memset(&corpus_receipt, 0, sizeof(corpus_receipt));
-        const char *resume_leaf = complete_facts->resume_path
-            ? strrchr(complete_facts->resume_path, '/') : NULL;
-        int new_game_dungeon_path;
-        resume_leaf = resume_leaf ? resume_leaf + 1 :
-            (complete_facts->resume_path ? complete_facts->resume_path : "");
-        new_game_dungeon_path = strcmp(resume_leaf, "DUNGEON.DAT") == 0;
 
-        /* A new-game route carries DUNGEON.DAT as its host path.  Its parent
-         * is game media, not save media, so resolve the configured,
-         * provenance-attested corpus. Actual resume paths and data-free
-         * handoff fixtures retain their local parent directory. */
-        if ((new_game_dungeon_path
-                ? dm1_v1_original_save_resolve_configured_corpus_root(corpus_root)
-                : dm1_v1_startup_resume_root_from_path_pc34(
-                      resume_host.resume_path, corpus_root)) &&
+        /* A configured corpus is authoritative. Do not scan arbitrary
+         * resume-parent directories as if they were original-save evidence. */
+        if (((explicit_corpus && explicit_corpus[0]) ||
+             (explicit_save_dir && explicit_save_dir[0])) &&
+            dm1_v1_original_save_resolve_configured_corpus_root(corpus_root) &&
             dm1_v1_original_save_classify_corpus_root(corpus_root,
-                                                       &corpus) &&
-            dm1_v1_original_save_pc34_roundtrip_corpus_root(corpus_root,
-                                                             &corpus_receipt) ==
-                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
-            corpus_receipt.scan_succeeded &&
-            corpus_receipt.pc34_candidate_count > 0 &&
-            corpus_receipt.roundtrip_succeeded_count ==
-                corpus_receipt.pc34_candidate_count &&
-            corpus_receipt.roundtrip_failed_count == 0) {
+                                                       &corpus)) {
+            /* Discovery is an independent fact from F0435 -> F0433 proof.
+             * A live PC34 save can require the selected M11 DUNGEON.DAT
+             * backing, while this startup census intentionally has no
+             * dungeon owner. Never erase a real classified corpus just
+             * because that unbacked roundtrip cannot certify it. */
             save_facts.observed_user_save_corpus_scan = 1;
             save_facts.observed_user_save_corpus_files =
                 corpus.scanned_file_count;
@@ -3477,23 +3468,37 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
             save_facts.observed_user_save_corpus_pc34 =
                 corpus.pc34_importer_candidate_count;
             save_facts.observed_user_save_corpus_part_envelope =
-                corpus_receipt.pc34_candidate_count;
-            save_facts.observed_user_save_corpus_roundtrip_verified =
-                corpus_receipt.roundtrip_succeeded_count;
-            save_facts.observed_user_save_corpus_roundtrip_failed =
-                corpus_receipt.roundtrip_failed_count;
-            save_facts.observed_user_save_corpus_roundtrip_hash =
-                corpus_receipt.roundtrip_hash;
-            save_facts.observed_user_save_corpus_runtime_adopt_attempted =
-                corpus_receipt.runtime_adopt_attempted_count;
-            save_facts.observed_user_save_corpus_runtime_adopt_succeeded =
-                corpus_receipt.runtime_adopt_succeeded_count;
-            save_facts.observed_user_save_corpus_runtime_adopt_failed =
-                corpus_receipt.runtime_adopt_failed_count;
+                corpus.pc34_loader_part_envelope_count;
             save_facts.observed_user_save_corpus_rejected =
                 corpus.rejected_count;
             save_facts.observed_user_save_corpus_truncated =
                 corpus.truncated_count;
+            if (corpus.pc34_loader_part_envelope_count > 0 &&
+                dm1_v1_original_save_pc34_roundtrip_corpus_root(
+                    corpus_root, &corpus_receipt) ==
+                    DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+                corpus_receipt.scan_succeeded) {
+                /* The F0435 census walks every header-qualified file below
+                 * the explicit root. Use its candidate count rather than a
+                 * narrower header summary, so renamed original saves cannot
+                 * disappear from the startup receipt. */
+                save_facts.observed_user_save_corpus_pc34 =
+                    corpus_receipt.pc34_candidate_count;
+                save_facts.observed_user_save_corpus_part_envelope =
+                    corpus_receipt.pc34_candidate_count;
+                save_facts.observed_user_save_corpus_roundtrip_verified =
+                    corpus_receipt.roundtrip_succeeded_count;
+                save_facts.observed_user_save_corpus_roundtrip_failed =
+                    corpus_receipt.roundtrip_failed_count;
+                save_facts.observed_user_save_corpus_roundtrip_hash =
+                    corpus_receipt.roundtrip_hash;
+                save_facts.observed_user_save_corpus_runtime_adopt_attempted =
+                    corpus_receipt.runtime_adopt_attempted_count;
+                save_facts.observed_user_save_corpus_runtime_adopt_succeeded =
+                    corpus_receipt.runtime_adopt_succeeded_count;
+                save_facts.observed_user_save_corpus_runtime_adopt_failed =
+                    corpus_receipt.runtime_adopt_failed_count;
+            }
             for (int i = 0; i < corpus.present_count; ++i) {
                 if (corpus.results[i].pc34_loader_part_envelope_candidate) {
                     first_pc34_index = i;

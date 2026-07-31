@@ -23687,6 +23687,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     deliberately remains open: a live C03/C04 save must never be certified
     without its matching dungeon backing. Reference: ReDMCSB `LOADSAVE.C`
     F0433/F0435 and DMweb saved-game file-format documentation.
+  - 2026-07-31 startup-census update: when an operator explicitly configures
+    `FIRESTAFF_DM1_PC34_SAVE_CORPUS` or
+    `FIRESTAFF_DM1_ORIGINAL_SAVE_DIR`, startup now publishes its classified
+    PC34 corpus facts even if the unbacked F0435 preflight cannot certify a
+    live save. The receipt therefore distinguishes discovered envelopes from
+    successful roundtrips and never treats a resume-parent directory or a
+    synthetic fixture as external corpus evidence. The actual M11 selected-
+    save path remains the backing-aware authority.
 
 ## CSB completed save-contract verification
 

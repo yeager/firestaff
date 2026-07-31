@@ -45158,6 +45158,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm1_v1_viewport_3d_pc34_compat`,
   `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 DM1 startup original-save census: an explicitly configured
+  PC34 corpus is now reported independently from the unbacked F0435 preflight.
+  This prevents a live C03/C04 save from disappearing from the startup receipt
+  merely because it needs M11's real `DUNGEON.DAT` backing. Unconfigured
+  resume-parent directories and unconfigured test fixtures remain excluded.
+  Verification: `test_dm1_v1_startup_intro_state_machine_gate` and a real
+  `--game dm1 --save` boot probe against the local operator corpus.
 - ✅ 2026-07-31 DM1 original PC34 backed runtime roundtrip: native quicksave
   now preserves an authenticated F0435 C03/C04 receipt and the unchanged
   source dungeon tail where present, so F0433 re-emits source-owned bytes
