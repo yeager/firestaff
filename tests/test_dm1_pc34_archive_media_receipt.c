@@ -54,6 +54,12 @@ static const unsigned char kDungeonPayload[] =
     "DUNGEON-HASH-ONLY-RECEIPT-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n"
     "DUNGEON-HASH-ONLY-RECEIPT-BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n";
 
+static const unsigned char kTitlePayload[] =
+    "Firestaff original-layout TITLE startup media receipt payload\n";
+
+static const unsigned char kSwooshPayload[] =
+    "Firestaff original-layout SWOOSH startup media receipt payload\n";
+
 static void put16(unsigned char* p, unsigned int v) {
     p[0] = (unsigned char)(v & 0xffU);
     p[1] = (unsigned char)((v >> 8U) & 0xffU);
@@ -303,11 +309,13 @@ int main(void) {
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char cachedGraphics[M12_ASSET_DATA_DIR_CAPACITY];
     char cachedDungeon[M12_ASSET_DATA_DIR_CAPACITY];
+    char cachedTitle[M12_ASSET_DATA_DIR_CAPACITY];
+    char cachedSwoosh[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus status;
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
-    ZipEntry entries[2];
+    ZipEntry entries[4];
 
     memset(entries, 0, sizeof(entries));
     entries[0].name = kGraphicsEntry;
@@ -316,6 +324,14 @@ int main(void) {
     entries[1].name = kDungeonEntry;
     entries[1].payload = kDungeonPayload;
     entries[1].payloadSize = sizeof(kDungeonPayload) - 1U;
+    /* The original DOS layout keeps TITLE/SWOOSH above DATA/.  This also
+     * makes the optional cache resolver prove its parent-directory walk. */
+    entries[2].name = "TITLE";
+    entries[2].payload = kTitlePayload;
+    entries[2].payloadSize = sizeof(kTitlePayload) - 1U;
+    entries[3].name = "SWOOSH";
+    entries[3].payload = kSwooshPayload;
+    entries[3].payloadSize = sizeof(kSwooshPayload) - 1U;
 
     if (!make_isolated_home(home, sizeof(home)) ||
         !FSP_JoinPath(dataRoot, sizeof(dataRoot), home, "configured-data") ||
@@ -327,8 +343,8 @@ int main(void) {
         !write_payload_file(dungeonPath, kDungeonPayload, sizeof(kDungeonPayload) - 1U) ||
         !m12_file_md5_hex(graphicsPath, graphicsMd5) ||
         !m12_file_md5_hex(dungeonPath, dungeonMd5) ||
-        !write_zip_fixture(zipPath, entries, 2U)) {
-        free_zip_entries(entries, 2U);
+        !write_zip_fixture(zipPath, entries, 4U)) {
+        free_zip_entries(entries, 4U);
         fprintf(stderr, "fixture setup failed\n");
         return 1;
     }
@@ -342,7 +358,7 @@ int main(void) {
     check_int(entries[0].method == 0U && entries[0].packedSize == entries[0].payloadSize,
               "without zlib the GRAPHICS fixture should use a stored ZIP entry");
 #endif
-    free_zip_entries(entries, 2U);
+    free_zip_entries(entries, 4U);
 
     if (!test_setenv("HOME", home) ||
         !test_setenv("FIRESTAFF_DATA", dataRoot) ||
@@ -398,7 +414,11 @@ int main(void) {
     check_int(FSP_JoinPath(cachedGraphics, sizeof(cachedGraphics), cacheRoot,
                            "dm1/GRAPHICS.DAT") &&
               FSP_JoinPath(cachedDungeon, sizeof(cachedDungeon), cacheRoot,
-                           "dm1/DUNGEON.DAT"),
+                           "dm1/DUNGEON.DAT") &&
+              FSP_JoinPath(cachedTitle, sizeof(cachedTitle), cacheRoot,
+                           "dm1/TITLE") &&
+              FSP_JoinPath(cachedSwoosh, sizeof(cachedSwoosh), cacheRoot,
+                           "dm1/SWOOSH"),
               "expected DM1 cached DAT paths should resolve");
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm1"),
                      cacheRoot) == 0,
@@ -424,6 +444,12 @@ int main(void) {
     check_int(file_matches_payload(cachedDungeon, kDungeonPayload,
                                    sizeof(kDungeonPayload) - 1U),
               "cached DUNGEON.DAT should contain the hash-matched ZIP payload");
+    check_int(file_matches_payload(cachedTitle, kTitlePayload,
+                                   sizeof(kTitlePayload) - 1U),
+              "cached TITLE should come from the original-layout parent directory");
+    check_int(file_matches_payload(cachedSwoosh, kSwooshPayload,
+                                   sizeof(kSwooshPayload) - 1U),
+              "cached SWOOSH should come from the original-layout parent directory");
 
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);

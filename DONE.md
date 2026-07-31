@@ -47430,3 +47430,22 @@ the supplied root and selected MD5 to prove this without shipping game data.
   translator remains probe-scoped until a real DM2 input source is imported.
   Verification: complete production link, 62/62 touch probe, real-data M11
   startup gate and archive/executable-symbol checks.
+- ✅ 2026-07-31 DM1 original TITLE verification: repaired the standalone
+  TITLE probe launcher after the source tree moved. The installed hash-locked
+  PC 3.4 `TITLE` (12,002 bytes) now passes all 59 Greatstone mapfile-record,
+  53-frame and two-palette-phase checks. The runtime TITLE palette and
+  SWSH-to-C001 handoff probes also pass against the installed original
+  `GRAPHICS.DAT`; no replacement title frame is used by these checks.
+# 2026-07-31 DM1 archive-backed startup media
+
+- ✅ Fixed optional DM1 startup media materialization from external archives.
+  `7zz` reports a missing member as a successful zero-byte stream; that
+  previously stopped the cache resolver at `DATA/TITLE` or `DATA/SWOOSH`
+  and left empty aliases instead of continuing to the original DOS archive's
+  parent directory. Optional archive members must now be non-empty before
+  they are accepted. Verified against the real bundled PC 3.4 DOS `.7z`:
+  hash-pinned `GRAPHICS.DAT` and `DUNGEON.DAT`, plus `TITLE` (12,002 bytes,
+  SHA-256 `adc7f191...`) and `SWOOSH` (7,570 bytes), materialize into the
+  DM1 runtime cache and complete the direct boot probe. Extended
+  `test_dm1_pc34_archive_media_receipt` to cover parent-directory TITLE and
+  SWOOSH cache materialization (23 assertions).

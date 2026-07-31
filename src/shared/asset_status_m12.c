@@ -1029,7 +1029,26 @@ static int m12_materialize_optional_virtual_sibling(const char* seedVirtualPath,
     if (rc <= 0 || (size_t)rc >= sizeof(candidate)) {
         return 0;
     }
-    return asset_extract_virtual_path(candidate, outPath);
+    /* 7zz accepts a missing member as a successful, zero-byte stdout
+     * stream.  Optional DM1 startup files are non-empty source media, so a
+     * zero-byte extraction must not stop the parent-directory search (for
+     * example GRAPHICS.DAT lives in DATA/, while TITLE and SWOOSH live one
+     * level above it in the original DOS archive). */
+    if (!asset_extract_virtual_path(candidate, outPath)) {
+        return 0;
+    }
+    {
+        FILE* extracted = fopen(outPath, "rb");
+        long length = 0L;
+        if (!extracted || fseek(extracted, 0L, SEEK_END) != 0 ||
+            (length = ftell(extracted)) <= 0L) {
+            if (extracted) fclose(extracted);
+            (void)remove(outPath);
+            return 0;
+        }
+        fclose(extracted);
+    }
+    return 1;
 }
 
 static int m12_materialize_optional_for_cache_seed(const char* seedPath,
