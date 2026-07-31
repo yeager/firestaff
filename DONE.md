@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 Nexus PRS3 forward-window correction: fixed the shared
+  DMWeb `DMNDataFileDecoder.vbs::DecodePRS3` implementation so raw offsets
+  below `0xFDC` use the documented `+18` bias, while the negative window uses
+  the `0xFDC`/`0xFEE` adjustment. Added regression coverage for the forward
+  branch. Verification: `test_nexus_v1_prs3_decode` 17/17 and
+  `test_nexus_v1_bpk_surface_class` pass; pushed to `main` as
+  `9966263ff`.
+
 - ✅ 2026-07-31 Nexus PLRD label provenance cleanup: removed the hardcoded
   English/Japanese champion labels from the real `RLOWFIX.BIN` parser. PLRD
   now retains only its source TABL indices/codes and leaves display names
