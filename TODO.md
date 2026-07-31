@@ -576,6 +576,10 @@
   unowned bounded session-rain field cannot fabricate the `0x54` weather
   timer chain or enable clouds, rain, or lightning. Import the exact
   `v1e14xx`/savegame owner before admitting that chain.
+  **2026-07-31 audit:** the legacy colour-only outdoor facade is outside the
+  production archive. The active viewport's outdoor route requires G1 map,
+  GDAT/local-palette, c_light and source timer-slot receipts together; seven
+  focused scene/light/weather gates pass without a fallback draw.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following

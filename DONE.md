@@ -6407,6 +6407,16 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-31 DM2 G1 scene/light/weather production audit: confirmed that
+  the legacy outdoor colour facade is excluded from `firestaff_dm2` and can
+  return only no-draw. The active viewport accepts outdoor pixels only after
+  an admitted G1 map token, matching GDAT material/local palette, c_light
+  receipt and source-timer-owned DistantEnvironment slot. Verification:
+  outdoor-material, ambient-light, c_light, outdoor-weather-frame,
+  local-palette, scene-light-control and weather-renderer gater pass (7/7).
+  This is a closure of fallback exposure, not a claim that the remaining
+  source-owned outdoor scene paths are complete.
+
 - ✅ 2026-07-31 DM2 public session-writer closure: the remaining
   `dm2_v1_session_save_slot()` and `dm2_v1_session_save_last_session()`
   compatibility APIs now return `DM2_V1_SESSION_WRITE_ORIGINAL_WRITER_REQUIRED`
