@@ -47036,6 +47036,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   original shape implementation; live production cannot promote its guessed
   tints or geometry.
 # Isolated the inferred Theron V2 HUD widget manifest/parser from production and added a no-op gate seam; procedural HUD pixels can no longer render in the verified runtime without a complete real asset manifest.
+
+- ✅ 2026-07-31 Nexus champion provenance audit: confirmed that the 24-entry
+  `nexus_v1_champions.c` table is a development fixture, not a verified
+  Saturn roster. The supplied European corpus provides portraits but no
+  admitted champion-record decoder; the source-status boundary is explicit
+  in `docs/nexus_champions.md` and replacement work is tracked in `TODO.md`.
 - ✅ 2026-07-31 Theron V1 UI chrome isolation: removed the inferred bars,
   labels and champion-slot pixels from the production archive. The public
   chrome API now fails closed through a no-op seam until the original Track
