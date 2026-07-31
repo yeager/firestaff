@@ -15,7 +15,11 @@
   Direct synthetic DM2 projectile construction is now isolated to explicit
   test and probe targets and is absent from the production library. The DM2
   champion-stat bridge also rejects a missing source GDAT/palette bar-colour
-  receipt rather than using the retired host colour table.
+  receipt rather than using the retired host colour table. **2026-07-31
+  update:** the HUD render plan no longer promotes a missing per-champion
+  colour into a source-bound value; only the source INIT/runtime bridge may
+  supply the logical colour, and the active original interface palette remains
+  mandatory before bars draw.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

@@ -922,12 +922,6 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
     const DM2_V1_HudPartyState *party,
     DM2_V1_HudChromeRenderPlan *out_plan)
 {
-    /* SKProject SkWinCore.cpp::INIT initializes glbChampionColor in player
-     * order. DRAW_PLAYER_3STAT_HEALTH_BAR indexes this single source table
-     * for HP, stamina, and mana; it does not invent a separate color per
-     * resource. */
-    static const uint8_t source_default_stat_bar_color[
-        DM2_V1_HUD_CHAMPION_SLOT_COUNT] = { 7u, 11u, 8u, 14u };
     if (!dm2_v1_viewport_build_hud_chrome_plan(is_outdoor, out_plan)) {
         return 0;
     }
@@ -956,9 +950,6 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
         dst->mana_pct = dm2_v1_hud_clamp_pct((int)src->mana_pct);
         if (src->stat_bar_color_source_bound && src->stat_bar_color < 16u) {
             dst->stat_bar_color = src->stat_bar_color;
-            dst->stat_bar_color_source_bound = 1;
-        } else {
-            dst->stat_bar_color = source_default_stat_bar_color[slot];
             dst->stat_bar_color_source_bound = 1;
         }
         /* skproject passes Champion::HeroType directly to
@@ -2600,6 +2591,8 @@ int dm2_v1_viewport_hud_dynamic_overlay_ready(
      * dt04 rectangles, the interface palette, and QUERY_FONT's dt07 rows.
      * All four inputs must stay boot/session-owned in a source-only frame. */
     return s && champion && champion->state_source_bound &&
+        champion->stat_bar_color_source_bound &&
+        champion->stat_bar_color < 16u &&
         s->gdat_interface_hud_layout &&
         s->gdat_interface_palette_ready &&
         s->gdat_interface_palette_hash != 0u &&

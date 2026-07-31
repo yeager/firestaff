@@ -54,17 +54,19 @@ int main(void)
     party.champions[0].occupied = 1;
     party.champions[0].leader = 1;
     party.champions[0].portrait_index = 3;
-    CHECK("HUD plan retains an explicitly unbound portrait type",
+    CHECK("HUD plan does not manufacture an unbound stat-bar colour",
           dm2_v1_viewport_build_hud_chrome_plan_for_party(0, &party, &plan) &&
               !plan.champion_slots[0].portrait_type_source_bound &&
-              plan.champion_slots[0].stat_bar_color_source_bound &&
-              plan.champion_slots[0].stat_bar_color == 7u);
+              !plan.champion_slots[0].stat_bar_color_source_bound);
 
     party.champion_count = 4;
     for (int slot = 0; slot < party.champion_count; ++slot) {
         party.champions[slot].occupied = 1;
+        party.champions[slot].stat_bar_color =
+            (uint8_t[]){ 7u, 11u, 8u, 14u }[slot];
+        party.champions[slot].stat_bar_color_source_bound = 1;
     }
-    CHECK("HUD plan consumes SKProject's per-player default bar colors",
+    CHECK("HUD plan consumes the source-owned per-player bar colors",
           dm2_v1_viewport_build_hud_chrome_plan_for_party(0, &party, &plan) &&
               plan.champion_slots[0].stat_bar_color == 7u &&
               plan.champion_slots[1].stat_bar_color == 11u &&

@@ -429,6 +429,8 @@ static void test_hud_chrome_render_plan(void)
     party.champions[0].hp_pct = 50;
     party.champions[0].stamina_pct = 70;
     party.champions[0].mana_pct = 10;
+    party.champions[0].stat_bar_color = 7;
+    party.champions[0].stat_bar_color_source_bound = 1;
     party.champions[0].portrait_index = 3;
     memcpy(party.champions[0].name, "Theron", 6);
     party.champions[1].occupied = 1;
@@ -436,6 +438,8 @@ static void test_hud_chrome_render_plan(void)
     party.champions[1].hp_pct = 25;
     party.champions[1].stamina_pct = 40;
     party.champions[1].mana_pct = 100;
+    party.champions[1].stat_bar_color = 11;
+    party.champions[1].stat_bar_color_source_bound = 1;
     memcpy(party.champions[1].name, "Karla", 5);
     CHECK("DM2 HUD party plan binds champion bars and leader marker",
           dm2_v1_viewport_build_hud_chrome_plan_for_party(
@@ -1210,6 +1214,8 @@ static void test_sprite_asset_provider(void)
         party.champions[0].hp_pct = 50;
         party.champions[0].stamina_pct = 70;
         party.champions[0].mana_pct = 10;
+        party.champions[0].stat_bar_color = 7;
+        party.champions[0].stat_bar_color_source_bound = 1;
         party.champions[0].portrait_index = 3;
         memcpy(party.champions[0].name, "Theron", 6);
         memset(framebuffer, 0, sizeof(framebuffer));

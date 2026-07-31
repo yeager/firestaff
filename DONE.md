@@ -45395,3 +45395,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `DM2_INIT` palette route. Verification:
   `test_dm2_v1_m11_startup_profile_gate` passes against
   `~/.firestaff/data/dm2`.
+- ✅ 2026-07-31 DM2 HUD stat-colour ownership closure: the generic HUD plan
+  no longer turns an unbound champion bar colour into a source-bound default.
+  The real runtime alone imports SKProject `INIT`'s original
+  `glbChampionColor` values and the renderer requires that receipt together
+  with the verified `INTERFACE_GENERAL/0/dtPalIRGB/0xFE` palette before it
+  writes bar pixels. Source: `SKWIN/SkWinCore.cpp::INIT`,
+  `DRAW_PLAYER_3STAT_HEALTH_BAR` and `DRAW_POWER_STAT_BAR`. Verification:
+  `test_dm2_v1_hud_hero_type_gdat_route`,
+  `test_dm2_v1_lighting_falloff_boundary`, and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass.
