@@ -16768,6 +16768,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_creature_ccm_runtime_pc34_compat
     )
 
+    # Production must not guess which CREATURE_AI field owns CCM bytecode.
+    add_executable(test_dm2_v1_creature_ccm_production_gate
+        tests/test_dm2_v1_creature_ccm_production_gate.c
+    )
+    target_include_directories(test_dm2_v1_creature_ccm_production_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_ccm_production_gate PRIVATE
+        firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_ccm_production_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_ccm_production_gate
+        COMMAND test_dm2_v1_creature_ccm_production_gate
+    )
+
     # ── DM2 V1 Phase 5: Projectile drain to M11 (probe only) ──
     add_executable(firestaff_dm2_v1_projectile_drain_probe
         probes/dm2/firestaff_dm2_v1_projectile_drain_probe.c

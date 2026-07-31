@@ -60,6 +60,10 @@
   host program counter as a creature command byte. It rejects without
   mutation; only an authenticated decoded command stream may enter
   `DM2_PROCEED_CCM` compatibility execution.
+  **2026-07-31 update:** boot no longer probes arbitrary `CREATURE_AI` GDAT
+  fields looking for decodable CCM bytes, and creature ticks no longer rebuild
+  missing operands from reduced local instance fields. The CCM route remains
+  unavailable until the source's live record/field owner is recovered.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

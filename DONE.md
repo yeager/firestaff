@@ -46170,3 +46170,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   material routes. References reviewed: ReDMCSB `DUNVIEW.C F0111/F0115/F0122/F0123`
   and CSBWin `Viewport.cpp`. Verification: M11 build, local-PC34 first-frame
   material test 109/109, and `git diff --check`.
+
+- ✅ 2026-07-31 DM2 CCM GDAT-field inference closure: boot no longer scans
+  arbitrary `CREATURE_AI` fields and promotes the first decodable byte stream
+  into a live CCM program. A creature without the source-owned program and
+  operand record now performs no CCM action instead of rebuilding operands
+  from reduced local fields. The fixture-only explicit import remains solely
+  for decoder coverage. Source: SKProject `SKULLWIN/c_creature.cpp`
+  `DM2_PROCEED_CCM` and `SKWIN/SkWinCore.cpp`
+  `EXTENDED_LOAD_AI_DEFINITION`. Verification: production CCM field-probe
+  gate, fixture CCM runtime bridge 84/84, `firestaff_dm2` build, and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass.

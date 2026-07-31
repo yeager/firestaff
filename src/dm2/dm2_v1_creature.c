@@ -449,6 +449,8 @@ int dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader
 int dm2_v1_creature_load_ccm_programs_from_gdat_auto(
     const DM2_V1_AssetLoader *loader,
     int *out_field) {
+    if (out_field) *out_field = -1;
+#if defined(FIRESTAFF_DM2_CREATURE_TESTING)
     static const int k_fields[] = {
         1, 2, 3, 4, 5, 6, 7,
         8, 9, 10, 11, 12, 13, 14, 15,
@@ -456,7 +458,6 @@ int dm2_v1_creature_load_ccm_programs_from_gdat_auto(
     };
     int i;
 
-    if (out_field) *out_field = -1;
     if (!loader || !loader->loaded) return -1;
 
     /* skproject/SKWIN/SkWinCore.cpp EXTENDED_LOAD_AI_DEFINITION (~233-400)
@@ -476,6 +477,16 @@ int dm2_v1_creature_load_ccm_programs_from_gdat_auto(
 
     dm2_v1_creature_reset_ccm_programs();
     return 0;
+#else
+    (void)loader;
+    /* DM2_PROCEED_CCM reads b_1a from the live creature/CCM record; it does
+     * not probe arbitrary CREATURE_AI fields until a byte sequence decodes.
+     * The source field owner has not been recovered, therefore production
+     * cannot select one by pattern matching.  Explicit test imports retain
+     * coverage for the decoder only. */
+    dm2_v1_creature_reset_ccm_programs();
+    return 0;
+#endif
 }
 
 int dm2_v1_creature_loaded_ccm_program_count(void) {
@@ -1043,7 +1054,23 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
             door_state, door_attributes, nonmaterial != 0);
     }
     imported_op = dm2_v1_creature_imported_ccm_op(c, &imported_pc);
-    if (imported_op) {
+    if (!imported_op) {
+#if !defined(FIRESTAFF_DM2_CREATURE_TESTING)
+        /* The source has no local b_17 -> operand reconstruction: its CCM
+         * command and operands belong to the live imported record.  Do not
+         * turn the reduced CreatureInstance fields into an executable CCM
+         * action when that record is absent. */
+        memset(&g_last_ccm_tick, 0, sizeof(g_last_ccm_tick));
+        g_last_ccm_tick.valid = 1;
+        g_last_ccm_tick.instance_id = slot;
+        g_last_ccm_tick.ai_index = c->ai_index;
+        g_last_ccm_tick.before_b_1a = opcode;
+        g_last_ccm_tick.ccm_result = (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
+        g_last_ccm_tick.program_pc_before = -1;
+        g_last_ccm_tick.program_pc_after = -1;
+        return;
+#endif
+    } else {
         opcode = (int)imported_op->opcode;
     }
     dm2_v1_ccm_init_state(&state);
@@ -1059,6 +1086,8 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
             args[i] = imported_op->args[i];
         }
     } else {
+        /* Explicit fixture-only route; normal builds returned above because
+         * no source-owned CCM program and operand record was available. */
         dm2_v1_creature_make_ccm_args(c, opcode, args);
         argc = dm2_v1_creature_ccm_argc(opcode);
     }

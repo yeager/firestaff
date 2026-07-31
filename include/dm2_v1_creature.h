@@ -232,8 +232,13 @@ int  dm2_v1_creature_gdat_word1(int creature_type, uint16_t *out_word);
  * Rows absent from the supplied CREATURE_AI category are cleared and cannot
  * retain behavior from a previous graphics session. */
 int  dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader);
+/* Explicit field import used by source-shape tests.  Production cannot infer
+ * the CCM stream field from decodable bytes; it remains unavailable until the
+ * SKProject record owner is bound. */
 int  dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
                                                   int field);
+/* Fixture-only field probe.  Normal builds always return zero and leave no
+ * CCM program installed rather than promoting a guessed GDAT field. */
 int  dm2_v1_creature_load_ccm_programs_from_gdat_auto(const DM2_V1_AssetLoader *loader,
                                                        int *out_field);
 int  dm2_v1_creature_loaded_ccm_program_count(void);
