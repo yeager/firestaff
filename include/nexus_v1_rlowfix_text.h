@@ -10,6 +10,7 @@ typedef struct {
     uint16_t string_count;
     uint32_t resource_offset;
     uint32_t table_end;
+    uint32_t resource_end;
 } Nexus_V1_RlowfixText;
 
 typedef struct {

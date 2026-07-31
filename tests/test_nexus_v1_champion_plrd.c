@@ -30,6 +30,18 @@ int main(void) {
     if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size, 0xe824,
                                      &menu_text) ||
         menu_text.resource_index != 4 || menu_text.string_count != 15) return 1;
+    {
+        uint16_t menu_index;
+        for (menu_index = 0; menu_index < menu_text.string_count;
+             ++menu_index) {
+            const uint8_t *menu_bytes;
+            size_t menu_size;
+            if (!nexus_v1_rlowfix_text_span(bytes, (size_t)size,
+                                            &menu_text, menu_index,
+                                            &menu_bytes, &menu_size) ||
+                !menu_bytes || menu_size == 0) return 1;
+        }
+    }
     if (!nexus_v1_rlowfix_tabl_parse(bytes, (size_t)size, 0x118d4, &tabl) ||
         tabl.entry_count != 216 || tabl.code[0] != 0x05 ||
         tabl.code[1] != 0xe16e) return 1;
