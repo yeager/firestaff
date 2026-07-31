@@ -44646,6 +44646,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   helper. The source-lock test retains ReDMCSB D2 wall dimensions and routing
   metadata without generating viewport pixels.
 
+- ✅ 2026-07-31 CSB D3L/D3R wall fixture removal: removed the matching C10
+  frame-copy helper and retained ReDMCSB D3 wall geometry metadata only.
+
 - ✅ Rechecked the production order start, menu boundary, Entrance, HUD and
   viewport against the local hash-verified CSB packages. The PC3.4 real-data
   launch probe passed 75 checks: C001 title phases, C002/C003/C004 entrance

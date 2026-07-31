@@ -306,7 +306,7 @@ static int test_trace_and_transparency(void)
     return ok;
 }
 
-static int test_synthetic_blit(void)
+static int test_frame_metadata(void)
 {
     int ok = 1;
     const CSB_V1_D3LD3RWallSpecPc34 *d3l =
@@ -315,54 +315,14 @@ static int test_synthetic_blit(void)
     const CSB_V1_D3LD3RWallSpecPc34 *d3r =
         csb_v1_viewport_d3l_d3r_wall_spec_for_side_pc34(
             CSB_V1_D3L_D3R_WALL_SIDE_D3R_PC34);
-    uint8_t source[SOURCE_WIDTH * SOURCE_HEIGHT];
-    uint8_t viewport[VIEWPORT_WIDTH * VIEWPORT_HEIGHT];
-    CSB_V1_D3LD3RWallBlitStatsPc34 stats;
-
-    memset(source, TRANSPARENT, sizeof(source));
-    memset(viewport, 0xee, sizeof(viewport));
-    source[source_offset(0, 0)] = 0x21u;
-    source[source_offset(0, 1)] = 0x22u;
-    source[source_offset(50, 63)] = 0x23u;
-    ok &= expect_int("blit.d3l.native",
-                     csb_v1_viewport_d3l_d3r_wall_apply_c10_frame_clip_pc34(
-                         d3l, source, SOURCE_WIDTH, SOURCE_HEIGHT, viewport,
-                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 0, &stats),
-                     3, A_F0104);
-    ok &= expect_int("blit.d3l.transparent", stats.transparent_pixels,
-                     (64 * 51) - 3, A_DEFS_C10);
-    ok &= expect_int("blit.d3l.top_left", viewport[viewport_offset(25, 0)],
-                     0x21, A_F0104);
-    ok &= expect_int("blit.d3l.top_next", viewport[viewport_offset(25, 1)],
-                     0x22, A_F0104);
-    ok &= expect_int("blit.d3l.bottom_right", viewport[viewport_offset(75, 63)],
-                     0x23, A_F0104);
-    ok &= expect_int("blit.d3l.transparent_pixel",
-                     viewport[viewport_offset(25, 2)], 0xee, A_DEFS_C10);
-    ok &= expect_int("blit.d3l.after_band", viewport[viewport_offset(76, 0)],
-                     0xee, "ReDMCSB DUNVIEW.C:584 D3L frame bottom");
-
-    memset(viewport, 0xee, sizeof(viewport));
-    ok &= expect_int("blit.d3r.flip",
-                     csb_v1_viewport_d3l_d3r_wall_apply_c10_frame_clip_pc34(
-                         d3r, source, SOURCE_WIDTH, SOURCE_HEIGHT, viewport,
-                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 1, &stats),
-                     3, A_F0105);
-    ok &= expect_int("blit.d3r.flipped_left",
-                     viewport[viewport_offset(25, 202)], 0x21, A_F0105);
-    ok &= expect_int("blit.d3r.flipped_next",
-                     viewport[viewport_offset(25, 201)], 0x22, A_F0105);
-    ok &= expect_int("blit.d3r.flipped_bottom",
-                     viewport[viewport_offset(75, 139)], 0x23, A_F0105);
-    ok &= expect_int("blit.d3r.left_neighbor",
-                     viewport[viewport_offset(25, 138)], 0xee,
-                     "ReDMCSB DUNVIEW.C:585 D3R frame left");
-    ok &= expect_int("blit.reject",
-                     csb_v1_viewport_d3l_d3r_wall_apply_c10_frame_clip_pc34(
-                         d3r, source, 63, SOURCE_HEIGHT, viewport,
-                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 0, &stats),
-                     -1, A_F0104);
-    ok &= expect_int("blit.reject.flag", stats.rejected, 1, A_F0104);
+    ok &= expect_int("frame.d3l.width", d3l ? d3l->wall_frame_byte_width : -1,
+                     64, A_F0104);
+    ok &= expect_int("frame.d3l.height", d3l ? d3l->wall_frame_height : -1,
+                     51, A_F0104);
+    ok &= expect_int("frame.d3r.width", d3r ? d3r->wall_frame_byte_width : -1,
+                     64, A_F0105);
+    ok &= expect_int("frame.d3r.height", d3r ? d3r->wall_frame_height : -1,
+                     51, A_F0105);
 
     return ok;
 }
@@ -405,7 +365,7 @@ int main(void)
     ok &= test_specs();
     ok &= test_frames_and_ornaments();
     ok &= test_trace_and_transparency();
-    ok &= test_synthetic_blit();
+    ok &= test_frame_metadata();
     ok &= test_run_and_evidence();
 
     printf("assertions=%d failures=%d\n", g_assertions, g_failures);
