@@ -434,6 +434,17 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
         return;
     }
 
+    /* A tile bank alone is not a level handoff.  Do not fall back to the
+     * historical (0,0,north) pose when the real dungeon record has not been
+     * admitted into the world yet. */
+    if (world->current_dungeon < 1 ||
+        world->current_dungeon > THERON_DUNGEON_COUNT ||
+        world->current_level < 0 ||
+        world->current_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        !world->level_loaded[world->current_dungeon - 1][world->current_level]) {
+        return;
+    }
+
     /* The level-to-tile bank mapping has not yet been observed in an
      * original Track 02 execution. Preserve the preceding source-owned
      * surface outside the tiles we can actually decode; a generated black

@@ -1,3 +1,8 @@
+- ✅ 2026-07-31 Theron viewport-level admission: renderaren kräver nu både
+  laddad tile-atlas och en faktiskt `level_loaded`-markerad dungeon/level.
+  Den gamla `(0,0,north)`-fallbacken kan inte längre skapa en syntetisk
+  viewport när world-handoff saknas. Renderingstest `25/25`.
+
 - ✅ 2026-07-31 Theron viewport admission: viewport-rendering vägrar nu skriva
   även när spärrflaggan saknas om ingen faktisk tile-atlas är laddad
   (`tile_count <= 0`). Hårdkodade tile-index kan därmed inte skapa en
