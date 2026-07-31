@@ -45275,6 +45275,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   and M655/G2117 source-bound renderer remains the only D1C material route;
   ReDMCSB F0124/F0104/F0105 metadata remains cross-checked with CSBWin and
   dmweb without enabling caller-supplied pixels.
+- ✅ 2026-07-31 CSB V2.2 missing-art placeholder retirement: removed the
+  obsolete no-draw placeholder API rather than retaining a named fallback
+  surface. Missing V2.2 material is represented only by failed lookup and
+  the established source-owned V1/V2 selection path; no generated art can
+  be requested by a caller.
 - ✅ 2026-07-31 CSB PC3.4 D1 side-door source binding: D1L/D1R now draw
   their original M659/G2112 top strips through G0176/G0178 instead of a
   legacy atlas crop. Both G2111 and G2110 are source aliases of G2112.

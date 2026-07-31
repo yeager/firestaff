@@ -723,14 +723,6 @@ CSB_V22_ShapeSource csb_v22_best_available_shape_source(int presentation_mode_in
     }
 }
 
-/* Missing modern art is a failed admission, not an opportunity to inject a
- * generated checkerboard into a source-owned game frame. */
-const uint32_t* csb_v22_get_missing_placeholder(int* out_w, int* out_h) {
-    if (out_w) *out_w = 0;
-    if (out_h) *out_h = 0;
-    return NULL;
-}
-
 /* csb_v22_get_shape_path — given a category and asset id from the
  * manifest, returns the full filesystem path to the asset file.
  * Returns 1 on success, 0 if not found or manifest not available. */

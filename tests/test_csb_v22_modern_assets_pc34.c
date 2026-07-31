@@ -172,13 +172,6 @@ static void test_shape_source_name(void) {
           "name unknown");
 }
 
-static void test_missing_asset_fails_closed(void) {
-    int w = 0, h = 0;
-    const uint32_t* px = csb_v22_get_missing_placeholder(&w, &h);
-    CHECK(px == NULL, "missing modern art has no generated pixel fallback");
-    CHECK(w == 0 && h == 0, "missing modern art reports no surface");
-}
-
 static void test_source_evidence(void) {
     const char* ev = csb_v22_source_evidence();
     CHECK(ev != NULL, "evidence non-null");
@@ -353,7 +346,6 @@ int main(void) {
     test_epx_cache_flag();
     test_best_available_shape_source();
     test_shape_source_name();
-    test_missing_asset_fails_closed();
     test_source_evidence();
     test_assets_available_no_install();
     test_artpack_studio_pretty_manifest_admission();
