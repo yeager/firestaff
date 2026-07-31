@@ -47089,3 +47089,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   equipment defaults before runtime entry. Source-roster identity metadata is
   retained; undecoded numeric champion records fail closed instead of being
   presented as real data.
+
+- ✅ 2026-07-31 CSB SWSH F0908/F0909/F0910 receipt isolation: the metadata
+  chain for sound init, playback and release has no production caller. M11
+  keeps using the real-byte `RedmcsbF0908_InitSoundPc34` path, while the
+  receipt chain compiles solely into its focused test and cannot authenticate
+  host audio as original SWSH data.

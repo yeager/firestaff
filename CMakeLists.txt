@@ -3733,7 +3733,8 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_custom_backgrounds_room_pass_order_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0904_swsh_palette_animation_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0904_swsh_palette_animation_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.c")
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
