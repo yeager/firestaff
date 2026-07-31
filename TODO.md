@@ -23453,6 +23453,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     count/bytes, staged event/C13 counts, and active-group count. A passing
     corpus result therefore cannot be mistaken for C13 coverage when its
     original file contains zero C13 events.
+  - 2026-07-31 re-verification: the operator-owned DOSBox `DMSAVE.DAT`
+    (`80a50d66`, 48,561 bytes) passed the fixture-free F0435 -> F0433 ->
+    F0435 corpus route with 467 C3 records and 467 C4 indices, but reports
+    zero C13 events and zero active groups. It remains valid original-save
+    interop evidence only; it does not close the C13 or changed-layout corpus
+    requirements below.
 ## DM1 C03/C04 runtime identity follow-up
 
 - [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
