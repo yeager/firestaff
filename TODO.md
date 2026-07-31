@@ -618,6 +618,10 @@ diagnostic; it must not silently fall back to a generated visual.
   metadata. ReDMCSB `DUNVIEW.C F0096:2651-2658` derives G0693/G0694/G0695
   from the active map's `DoorSet * 3 + offset`, so V2.2 remains V1 whenever
   the live command has not retained that selected source record.
+  2026-07-31: the PC3.4 F0490 decoder receipt now retains SHA-256 for its
+  exact compressed selected record, verified against the real D1C/D2C/D3C
+  catalog posts. The remaining live handoff must attach that receipt, the
+  decoded span and active palette to the actual F0128 command before F0115.
   The CSBgraphics custom-background pass now follows the same rule: a real
   GRAPHICS.DAT session ignores caller-supplied test masks and decodes the
   selected CSBWin BACKGROUND_MASK, otherwise it applies no layer.

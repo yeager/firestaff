@@ -17,6 +17,11 @@ typedef struct CSB_V1_StartupGraphicDecodeReceipt_PC34 {
     size_t physical_planar_pixels;
     uint32_t stream_fnv1a;
     uint32_t indexed_pixel_fnv1a;
+    /* SHA-256 of the exact compressed GRAPHICS.DAT record selected by
+     * F0490. The decoded-pixel FNV values establish decoder output; this
+     * retains the source-record identity required by the live F0128 V2.2
+     * command gate. */
+    char compressed_record_sha256[65];
     int ended_at_record_boundary;
     int implicit_blank_tail;
     int indexed_colors_are_4bit;

@@ -185,6 +185,10 @@ static void check_real_pc34_records(void)
         CHECK(fnv1a32(pixels, (size_t)width * (size_t)height) ==
               expected->decoded_fnv1a);
         CHECK(receipt.indexed_pixel_fnv1a == expected->decoded_fnv1a);
+        /* The live F0128 gate must bind this exact compressed F0490 record,
+         * not merely an equivalent decoded raster. */
+        CHECK(strcmp(receipt.compressed_record_sha256,
+                     expected->record_sha256) == 0);
         CHECK(csb_v22_admit_f0128_front_wall_projection_pc34(
             expected->depth, 0, 749u, expected->record_sha256,
             &provenance, &projection));

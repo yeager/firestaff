@@ -8,6 +8,7 @@
 #include "csb_v1_graphics_lzw_pc34_compat.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
 #include "csb_v1_startup_img3_decode_pc34_compat.h"
+#include "firestaff_x68k_media_receipt.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdlib.h>
@@ -259,6 +260,17 @@ int csb_v1_boot_decode_graphics_dat_asset_pc34(
             decompressed, (size_t)selection.decompressedByteCount,
             selection.widthHeight.Width, selection.widthHeight.Height,
             pixels, pixel_count, out_decode_receipt)) {
+        goto done;
+    }
+    /* ReDMCSB MEMORY.C F0490 selects this compressed record before F0488/
+     * CSBWin ExpandGraphic decodes it. Keep that source identity with the
+     * decoder receipt: decoded-pixel FNV cannot prove the V2.2 surface came
+     * from this particular live F0128 command. */
+    if (!out_decode_receipt ||
+        firestaff_x68k_media_receipt_sha256_hex(
+            compressed, (size_t)selection.compressedByteCount,
+            out_decode_receipt->compressed_record_sha256,
+            sizeof(out_decode_receipt->compressed_record_sha256)) != 0) {
         goto done;
     }
     *out_pixels = pixels;

@@ -44729,3 +44729,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Phase-2 pipeline probe verifies the loader/root rejection (89/89), and the
   M11 wire-up probe now correctly verifies the data-free HUD remains no-draw
   until M11 supplies an original GDAT owner (36/36).
+- ✅ 2026-07-31 CSB F0128 compressed-record identity: the PC3.4
+  `GRAPHICS.DAT` decoder now retains SHA-256 for the exact compressed record
+  selected by ReDMCSB `F0490`, alongside its decoded-pixel receipt. This
+  gives the live F0128 material handoff the source identity required to match
+  V2.2 provenance, without accepting a same-looking decoded raster as a
+  substitute. The real-PC3.4 D1C/D2C/D3C record regression and focused
+  launcher/viewport tests pass.
