@@ -26,6 +26,10 @@
 extern "C" {
 #endif
 
+/* Marks a sampled cell that F0128 has hidden behind a nearer center wall or
+ * door.  V2.2 must leave the already-composed source frame untouched there. */
+#define M11_V22_SHAPE_CACHE_HIDDEN_SQUARE 0xffu
+
 /* Populate the cache from a 3x3 array of raw square bytes
  * (D1..D3, L/C/R order). direction is the party facing (0..3).
  * When V22 is not the active mode, all cells are marked active=0. */

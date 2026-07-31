@@ -85,6 +85,28 @@ static void t_v1_to_v22_to_v1_transition(void) {
     check(m11_v22_shape_cache_active(2, 0) == 0, "V22->V1: D2C inactive");
 }
 
+static void t_hidden_source_cell_stays_inactive(void) {
+    unsigned char squares[3][3] = {
+        { 0x00, 0x00, 0x00 },
+        { M11_V22_SHAPE_CACHE_HIDDEN_SQUARE,
+          M11_V22_SHAPE_CACHE_HIDDEN_SQUARE,
+          M11_V22_SHAPE_CACHE_HIDDEN_SQUARE },
+        { M11_V22_SHAPE_CACHE_HIDDEN_SQUARE,
+          M11_V22_SHAPE_CACHE_HIDDEN_SQUARE,
+          M11_V22_SHAPE_CACHE_HIDDEN_SQUARE }
+    };
+    dm1_v2_presentation_mode_reset();
+    dm1_v2_presentation_mode_set_modern_pack_available(1);
+    dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
+    m11_v22_shape_cache_update(0, squares);
+    check(m11_v22_shape_cache_active(1, 0) == 1,
+          "V22: visible D1C remains active");
+    check(m11_v22_shape_cache_active(2, 0) == 0,
+          "V22: hidden D2C remains source-owned");
+    check(m11_v22_shape_cache_active(3, -1) == 0,
+          "V22: hidden D3L remains source-owned");
+}
+
 static void t_oob(void) {
     /* Out-of-range depth/lateral returns NULL. */
     check(m11_v22_shape_cache_get(0, 0) == NULL, "D0 (out of range) -> NULL");
@@ -131,6 +153,7 @@ int main(void) {
     t_v1_default();
     t_v22_active();
     t_v1_to_v22_to_v1_transition();
+    t_hidden_source_cell_stays_inactive();
     t_oob();
     t_reset_unpopulated();
     t_evidence();

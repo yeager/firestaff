@@ -44,6 +44,12 @@ void m11_v22_shape_cache_update(int direction,
         for (s = 0; s < 3; ++s) {
             DM1_V2_ShapeRuntimeResult* r = &s_v22_shape_cache[d][s];
             memset(r, 0, sizeof(*r));
+            /* F0128 does not expose cells behind the nearest center blocker.
+             * Keeping a generated V2.2 rectangle active there repaints the
+             * source wall and makes a corridor appear to continue through it. */
+            if (raw_squares[d][s] == M11_V22_SHAPE_CACHE_HIDDEN_SQUARE) {
+                continue;
+            }
             if (!dm1_v2_shape_runtime_v22_active()) {
                 r->active = 0;  /* V1 path */
                 continue;

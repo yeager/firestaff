@@ -45827,12 +45827,21 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * path therefore never populates it: CSB V2.2 may replace pixels only
      * inside csb_v1_viewport_consume_first_frame_material_raster_pc34(),
      * where each admitted source command owns those facts. */
+    visibility = m11_dm1_lane_visibility(cells);
+    maxVisibleForward = visibility.max_visible_forward;
     {
         unsigned char raw_squares[3][3];
         int d, s;
         for (d = 0; d < 3; ++d) {
             for (s = 0; s < 3; ++s) {
                 raw_squares[d][s] = cells[d][s].square;
+                /* F0128's nearest closed D1/D2/D3 center square owns the
+                 * final wall/door pixels. Do not let a later V2.2 cell pass
+                 * reopen its occluded depth with generated art. */
+                if (visibility.nearest_blocking_center_depth_index >= 0 &&
+                    d > visibility.nearest_blocking_center_depth_index) {
+                    raw_squares[d][s] = M11_V22_SHAPE_CACHE_HIDDEN_SQUARE;
+                }
             }
         }
         if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
@@ -45840,8 +45849,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                        raw_squares);
         }
     }
-    visibility = m11_dm1_lane_visibility(cells);
-    maxVisibleForward = visibility.max_visible_forward;
 
     /* ReDMCSB DUNVIEW.C F0128:8318-8561 builds its per-square draw
      * schedule from the live view each pass. M11 consumes that transaction
