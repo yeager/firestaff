@@ -573,6 +573,10 @@ diagnostic; it must not silently fall back to a generated visual.
   floor/ceiling/ornament trace and its generated-pixel hash. ReDMCSB's
   F0122/F0123 name only D1L/D1R; the real PC3.4 material routes remain the
   sole source of viewport pixels for that pair.
+  **2026-07-31 F0115 wall-text follow-up:** removed the synthetic D1C
+  wall-text renderer, its made-up glyph pattern, hard-coded palette and
+  verification fixture. The original F0107 inscription route must now remain
+  no-draw until it receives its actual source bitmap and palette receipt.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

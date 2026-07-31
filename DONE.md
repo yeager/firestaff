@@ -45610,6 +45610,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   unconsumed floor/ceiling/ornament trace, its generated-pixel hash and CTest.
   ReDMCSB `DUNVIEW.C` F0122/F0123 exposes D1L/D1R, not D1L2/D1R2; the live
   PC3.4 material routes remain the only pixel owner for the actual pair.
+- ✅ 2026-07-31 CSB F0115 synthetic wall-text removal: removed the test-only
+  D1C renderer that invented a wall colour, glyph pattern and palette instead
+  of decoding original inscription material. The F0107/F0115 source route is
+  now no-draw without an authentic graphics and palette receipt.
 
 - ✅ 2026-07-31 DM1 V1 verification-route repair: PC3.4 object-name
   admission now uses the production GRAPHICS.DAT record constant (694 rather
