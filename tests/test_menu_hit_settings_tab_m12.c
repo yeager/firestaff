@@ -85,7 +85,8 @@ int main(void) {
         int rowCount = 0;
         state.settingsTabIndex = tab;
         rows = M12_StartupMenu_GetSettingsRowsForTab(tab, &rowCount);
-        CHECK(rows != NULL && rowCount > 0 && rowCount <= 12,
+        CHECK(rows != NULL && rowCount > 0 &&
+                  rowCount <= M12_SETTINGS_MAX_ROWS_PER_TAB,
               "settings tab publishes a bounded clickable row catalogue");
         for (int row = 0; rows && row < rowCount; ++row) {
             const int useTwoColumns = rowCount > 8;

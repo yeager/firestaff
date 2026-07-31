@@ -89,6 +89,11 @@ typedef enum {
     M12_STARTUP_SETTINGS_ROW_DISPLAY_BRIGHTNESS = 58
 } M12_StartupSettingsRow;
 
+/* The modern settings panel switches to two columns after eight rows.  Sixteen
+ * rows remain inside its fixed 1920x1080 panel geometry (eight per column)
+ * and therefore have matching renderer and hit-test coverage. */
+#define M12_SETTINGS_MAX_ROWS_PER_TAB 16
+
 typedef struct {
     const char* title;
     const char* gameId;

@@ -19,6 +19,10 @@
   **2026-07-31 update:** DM2's source-owned credits event now reaches the
   common 0xEF dismissal route for either original mouse button; M11 no longer
   traps the title menu in credits because of a host-only left-click filter.
+  **2026-07-31 update:** the M12 settings catalogue now has one explicit
+  sixteen-row two-column capacity shared by the renderer, hit-test contract
+  and regression suite; the renderer/brightness additions no longer leave a
+  stale twelve-row menu assertion behind.
   **2026-07-31 update:** CSB's boot handoff now refuses both unreadable
   verified paths and the retired 16-bit parser fixture. A session becomes
   runtime-ready only after the ReDMCSB byte-map and its initial party pose are

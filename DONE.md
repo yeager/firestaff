@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 M12 settings mouse-catalogue capacity: the modern launcher
+  now declares its 16-row/two-column settings-panel capacity. This covers the
+  13-row Graphics tab introduced by renderer and brightness preferences, and
+  the mouse hit-test regression passes all 135 checks without excluding any
+  visible row.
+
 - ✅ 2026-07-31 DM2 credits mouse-route correction: M11 now forwards both
   source mouse buttons to `DM2_SHOW_CREDITS`' common 0xEF dismissal event.
   The title-menu routes remain left-button-only, as in the original event
