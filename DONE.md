@@ -46868,3 +46868,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Track 02 startup/object/level route receipt initializers now default `fallback_visuals_allowed` to `0` for unknown or malformed input.
 - A caller must receive explicit verified route evidence before any visual permission can exist; bad input cannot grant placeholder rendering.
 - Verification: `test_theron_rendering` 25/25.
+
+- ✅ 2026-07-31 CSB viewport contract isolation: three more contract-only
+  CustomBackgrounds modules (D1L/D1R first backdrop, floor/ceiling mask
+  ordering and room-pass ordering) now compile exclusively into their focused
+  tests, not `firestaff_m10`. Live viewport code retains only the source-bound
+  room-slot/material path. Verification: focused regressions (74 + 563 + 86
+  assertions) and complete `firestaff` link.

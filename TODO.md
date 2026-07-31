@@ -197,6 +197,9 @@
   **2026-07-31 update:** the room-slot backdrop1 trace fixture is no longer
   linked into production M10. It remains available only to its contract test;
   live CSB viewport paths must bind authentic dungeon and graphics material.
+  The adjacent contract-only pass-order and backdrop traces are likewise test
+  binaries only; the room-slot selector remains in M10 because live CSB
+  material binding uses it.
   **2026-07-31 update:** C407-regressionen mappar nu probernas 320×200- och
   960×600-koordinater mot den begärda logiska ytan i stället för dummy-SDL:s
   gamla 1024×768-fönster.
