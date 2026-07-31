@@ -129,6 +129,10 @@
   `GRAPHICS.DAT`/`DUNGEON.DAT` candidates. Renamed and archived data remains
   supported through the shared hash scanner. The remaining work is limited to
   format-specific decode gaps listed per game, not generic substitute loading.
+  **2026-07-31 update:** M12's synthetic data-scanner setters are absent from
+  the production library and executable. The DM2 missing-graphics and M12
+  popup regressions compile their own fixture-enabled asset-status object; a
+  live launcher can only scan the checked-in hash registry.
   **2026-07-31 update:** DM2's source-owned credits event now reaches the
   common 0xEF dismissal route for either original mouse button; M11 no longer
   traps the title menu in credits because of a host-only left-click filter.

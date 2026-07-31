@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 M12 data-scanner fixture isolation: removed
+  `FIRESTAFF_ASSET_STATUS_TESTING` from the production M12 archive. The DM2
+  missing-graphics and M12 popup regressions now compile their own
+  fixture-enabled asset-status object, while the launcher can only use the
+  checked-in hash registry. Verification: complete `firestaff` link, both
+  focused regressions, and an executable-symbol check for all asset-status
+  test hooks.
+
 - ✅ 2026-07-31 DM1 side-lane F0115 object admission: D3/D2/D1 side cells
   now apply the same source-owned material gate as center cells. A C127
   mirror or other explicitly suppressed payload therefore cannot bypass its

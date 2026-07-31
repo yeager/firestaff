@@ -4349,9 +4349,10 @@ add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements)
 firestaff_link_zlib(firestaff_m12 PUBLIC)
-# Enable test-only M12 helpers (TestResetScanMetrics, TestSetTheronSyntheticHash, ...)
-# so the launcher scan-reuse and other Theron direct-launch tests can use them.
-target_compile_definitions(firestaff_m12 PUBLIC FIRESTAFF_ASSET_STATUS_TESTING=1)
+# Asset-status test hooks are deliberately excluded from the production M12
+# archive. Data-free scanner tests compile asset_status_m12.c themselves with
+# FIRESTAFF_ASSET_STATUS_TESTING; a launcher binary must use only the checked-in
+# hash registry and cannot register synthetic game media.
 if(NOT MSVC)
     # -Wno-restrict is a GCC-only flag; skip on Clang/MSVC to avoid
     # -Wunknown-warning-option noise.
@@ -11255,8 +11256,11 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_missing_graphics_profile_gate
         tests/test_dm2_v1_missing_graphics_profile_gate.c
+        src/shared/asset_status_m12.c
     )
     target_link_libraries(test_dm2_v1_missing_graphics_profile_gate PRIVATE firestaff_m12)
+    target_compile_definitions(test_dm2_v1_missing_graphics_profile_gate PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_missing_graphics_profile_gate PRIVATE -Wall -Wextra -O2)
     endif()
@@ -43865,8 +43869,11 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_no_data_popup_once_gate.c")
     add_executable(test_m12_no_data_popup_once_gate
         tests/test_m12_no_data_popup_once_gate.c
+        src/shared/asset_status_m12.c
     )
     target_link_libraries(test_m12_no_data_popup_once_gate PRIVATE firestaff_m12 SDL3::SDL3)
+    target_compile_definitions(test_m12_no_data_popup_once_gate PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_m12_no_data_popup_once_gate PRIVATE -Wall -Wextra -O2)
     endif()
