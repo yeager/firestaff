@@ -1,6 +1,7 @@
 #include "nexus_v1_champions.h"
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_inventory.h"
+#include "nexus_v1_rlowfix_text.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,6 +14,7 @@ int main(void) {
     uint8_t *bytes;
     Nexus_V1_ChampionPool pool;
     Nexus_V1_ItemIbsBank bank;
+    Nexus_V1_RlowfixText text;
     if (!f) { puts("SKIP: local Nexus RLOWFIX.BIN not present"); return 0; }
     if (fseek(f, 0, SEEK_END) != 0) return 1;
     size = ftell(f);
@@ -21,6 +23,15 @@ int main(void) {
     if (!bytes || fread(bytes, 1, (size_t)size, f) != (size_t)size) return 1;
     fclose(f);
     if (!nexus_v1_champions_init_from_rlowfix(&pool, bytes, (size_t)size)) return 1;
+    if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size, 0xa374, &text) ||
+        text.resource_index != 0 || text.string_count != 449) return 1;
+    {
+        const uint8_t *span;
+        size_t span_size;
+        if (!nexus_v1_rlowfix_text_span(bytes, (size_t)size, &text, 0,
+                                        &span, &span_size) || !span ||
+            span_size == 0) return 1;
+    }
     if (pool.champion_count != NEXUS_NEXUS_PLRD_CHAMPION_COUNT) return 1;
     if (strcmp(pool.champions[0].name_jp, "アレックス") != 0 ||
         pool.champions[0].health != 50 || pool.champions[0].stamina != 57 ||
