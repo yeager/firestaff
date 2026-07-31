@@ -46240,3 +46240,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
    References: ReDMCSB `DUNVIEW.C F0111/F0128` and CSBWin `Viewport.cpp`.
    Verification: whole-tree consumer audit, M11 build, real-data viewport test,
    and `git diff --check`.
+# 2026-07-31 Theron Track 02 quest-block extraction
+
+- ✅ Added a source-data extractor for the seven 256 KiB quest blocks present
+  in the verified US Track 02 raw BIN. Each block is reconstructed from
+  MODE1/2352 sectors into contiguous 2048-byte user-data bytes and checked by
+  an independent FNV-1a receipt in the bank probe. JP media remains explicitly
+  unsupported until its corresponding block offsets are independently
+  verified. This is real-data byte extraction only; it does not claim dungeon
+  record, object-table, palette, bitmap, or runtime-render semantics.
+  Verification: `theron_v1_track02_bank` and the clean-branch C11 syntax checks.

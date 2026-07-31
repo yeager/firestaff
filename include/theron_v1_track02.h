@@ -8,6 +8,8 @@
 
 #define THERON_TRACK02_MAX_BANK_ANCHORS 3u
 #define THERON_TRACK02_DUNGEON_COUNT 7u
+#define THERON_TRACK02_QUEST_BLOCK_COUNT 7u
+#define THERON_TRACK02_QUEST_BLOCK_BYTES 0x40000u
 
 /* Maximum number of entries the documented 9-word stride table can hold.
  * The 0x1584 descriptor observed in the hash-verified US Track 02 ISO and
@@ -78,6 +80,20 @@ typedef enum {
     THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT = -2,
     THERON_TRACK02_SIGNAL_INSUFFICIENT_ZERO_IMAGE = -3
 } Theron_Track02SignalStatus;
+
+typedef enum {
+    THERON_TRACK02_BLOCK_OK = 1,
+    THERON_TRACK02_BLOCK_BAD_INPUT = -1,
+    THERON_TRACK02_BLOCK_UNSUPPORTED_VARIANT = -2,
+    THERON_TRACK02_BLOCK_OUT_OF_RANGE = -3
+} Theron_Track02BlockStatus;
+
+Theron_Track02BlockStatus theron_v1_track02_extract_quest_block(
+    const uint8_t *track02_data, size_t track02_size,
+    Theron_Track02Variant variant, size_t dungeon_index,
+    uint8_t *out_block, size_t out_size);
+const char *theron_v1_track02_block_status_name(
+    Theron_Track02BlockStatus status);
 
 typedef enum {
     THERON_TRACK01_CDDA_AVAILABLE = 1,
