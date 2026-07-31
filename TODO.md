@@ -8,6 +8,12 @@
   launch paths; a future build-boundary cleanup may remove its 37 fixture
   assertions entirely.
 
+- **THERON-CREATURE-COMBAT-REAL-DATA:** `theron_v1_compat.c` still contains
+  inferred creature stats, attack values and drops. It is now excluded from
+  the production archive; production symbols fail closed until Track 02
+  creature records are decoded. Keep replacing the fixture implementation
+  only after matching source records, not by promoting its estimates.
+
 - **ALL-GAMES-NO-PLACEHOLDER-WHEN-SOURCE-EXISTS:** Active 2026-07-30.
   - 2026-07-31: CSB graphics discovery is now hash-only for both recognised
     and unknown launcher hints. Continue auditing remaining CSB import and

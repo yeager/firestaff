@@ -3893,8 +3893,11 @@ endif()
 
 # ── Theron V1 static library ─────────────────────────────────────────
 file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/theron/theron_v2_*.c" "src/theron/theron_v22_*.c")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_compat\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_combat_runtime_noop\\.c$")
 if(THERON_SOURCES)
-    add_library(firestaff_theron STATIC ${THERON_SOURCES})
+    add_library(firestaff_theron STATIC ${THERON_SOURCES}
+        src/theron/theron_v1_combat_runtime_noop.c)
     target_include_directories(firestaff_theron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     # Theron's Track 01 CDDA bridge includes SDL3 directly.  Keep that
     # dependency on the owning target so standalone test targets configured
@@ -36646,6 +36649,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_combat_mechanics
         tests/test_theron_v1_combat_mechanics.c
+        src/theron/theron_v1_compat.c
     )
     target_link_libraries(test_theron_v1_combat_mechanics PRIVATE
         firestaff_theron
