@@ -41,15 +41,8 @@ void nexus_fb_init(Nexus_Framebuffer *fb) {
     if (!fb) return;
     memset(fb, 0, sizeof(*fb));
     fb->clear_color = 0;
-    fb->palette[0]  = 0xFF000000U;
-    fb->palette[1]  = 0xFF1A1A2EU;  fb->palette[2]  = 0xFF16213EU;
-    fb->palette[3]  = 0xFF0F3460U;  fb->palette[4]  = 0xFF533483U;
-    fb->palette[5]  = 0xFF404040U;  fb->palette[6]  = 0xFF606060U;
-    fb->palette[7]  = 0xFF808080U;
-    fb->palette[8]  = 0xFF3C3C3CU;  fb->palette[9]  = 0xFF2A2A2EU;
-    fb->palette[10] = 0xFF8B4513U; fb->palette[11] = 0xFF556B2FU;
-    fb->palette[12] = 0xFFB22222U; fb->palette[13] = 0xFF4169E1U;
-    fb->palette[14] = 0xFFDAA520U; fb->palette[15] = 0xFFFFFFFFU;
+    /* No invented palette: only verified TITLE/STABG/VDP1 material may
+     * populate the framebuffer palette through nexus_fb_set_palette(). */
 }
 
 void nexus_fb_clear(Nexus_Framebuffer *fb) {
@@ -214,9 +207,9 @@ void nexus_raster_triangle_tex(Nexus_Framebuffer *fb,
     Nexus_RasterVertex vs[3] = {v0, v1, v2};
 
     if (!fb || !cam) return;
-    /* Fallback to flat if any texture param is invalid */
+    /* Strict route: an unbound texture is not a license to synthesize a
+     * flat-colour surface.  The caller must submit a verified material. */
     if (!tex_data || !tex_palette || tex_w <= 0 || tex_h <= 0) {
-        nexus_raster_triangle(fb, v0, v1, v2, cam);
         return;
     }
     tri_project(vs, cam, s, z, bbox);
@@ -581,11 +574,8 @@ void nexus_draw_door(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     dv[0].texture_id = dv[1].texture_id =
         dv[2].texture_id = dv[3].texture_id = -1;
 
-    if (tex_data && tex_palette && tex_w > 0 && tex_h > 0)
-        nexus_raster_quad_tex(fb, dv[0], dv[1], dv[2], dv[3], cam,
-            tex_data, tex_w, tex_h, tex_palette);
-    else
-        nexus_raster_quad(fb, dv[0], dv[1], dv[2], dv[3], cam);
+    nexus_raster_quad_tex(fb, dv[0], dv[1], dv[2], dv[3], cam,
+        tex_data, tex_w, tex_h, tex_palette);
 }
 
 /* ── Billboard / creature model bridge ──────────────────────────── */
@@ -639,7 +629,8 @@ void nexus_raster_creature_billboard(Nexus_Framebuffer *fb,
     float dist;
     float w;
 
-    if (!fb || !cam) return;
+    if (!fb || !cam || !tex_data || !tex_palette || tex_w <= 0 || tex_h <= 0)
+        return;
 
     /* LEVITATION: hover 0.2 units above floor */
     if (creature_flags & 0x0001U)  /* NEXUS_CATTR_LEVITATION */
@@ -658,11 +649,8 @@ void nexus_raster_creature_billboard(Nexus_Framebuffer *fb,
     quad[0].texture_id = quad[1].texture_id =
         quad[2].texture_id = quad[3].texture_id = texture_id;
 
-    if (tex_data && tex_palette && tex_w > 0 && tex_h > 0)
-        nexus_raster_quad_tex(fb, quad[0], quad[1], quad[2], quad[3], cam,
-            tex_data, tex_w, tex_h, tex_palette);
-    else
-        nexus_raster_quad(fb, quad[0], quad[1], quad[2], quad[3], cam);
+    nexus_raster_quad_tex(fb, quad[0], quad[1], quad[2], quad[3], cam,
+        tex_data, tex_w, tex_h, tex_palette);
 }
 
 /* ── Projectile rendering ───────────────────────────────────────── */
@@ -685,6 +673,11 @@ void nexus_raster_projectile(Nexus_Framebuffer *fb,
     (void)arc_points; (void)n_points;
 
     if (!fb || !cam || !palette) return;
+
+    /* The legacy body below synthesizes spell pixels from palette indices
+     * and host rand() jitter.  No verified Saturn effect stream or VDP1
+     * binding exists for it, so Nexus must emit no projectile pixels here. */
+    return;
 
     switch (type) {
     case NEXUS_PROJ_FIREBALL:    pal_base = 96;  break;
