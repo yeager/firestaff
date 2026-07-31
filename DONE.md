@@ -46477,3 +46477,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   clearing a real door's locked flag; absent keys leave the door closed.
   Verification: `test_theron_v1_m11_direct_launch` passes and
   `git diff --check` passes.
+- ✅ 2026-07-31 Nexus STABG indexed-blit gate: `nexus_ui_render_stabg()` now
+  refuses to copy retail palette indices into a framebuffer unless the same
+  surface carries its verified source palette. This closes the remaining
+  public wrapper path for unpaletted/synthetic HUD pixels; Saturn VDP
+  placement remains a separate no-draw gate. Verification: Nexus startup-media
+  and FACE real-data tests pass against `/Users/bosse/.firestaff/data/nexus`.
