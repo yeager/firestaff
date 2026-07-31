@@ -3802,10 +3802,12 @@ file and DONE.md after every completed job.
     backend source).
   Verify: `ctest --test-dir build -R dm2_v1_sound` 4/4 PASS;
   `firestaff_dm2_v1_creature_combat_probe` 158/158 PASS.
-  Remaining: wire the backend binding into the M11 DM2 runtime path (app-side
-  `dm2_v1_sound_bind_playback_backend()` after verified GDAT load), bind a
-  verified music asset root when `*.hmp.mid` assets are proven, and prove
-  wall-occlusion/facing routing before positional cues leave the queue.
+  **2026-07-31 update:** M11 now describes and binds the SDL backend only
+  after `dm2_v1_boot_startup_launch_alloc()` admits the verified boot
+  profile, then unbinds it during DM2 shutdown. The real-data M11 startup
+  gate proves that lifecycle. Remaining: bind a verified music asset root
+  when `*.hmp.mid` assets are proven, and prove wall-occlusion/facing routing
+  before positional cues leave the queue.
 
 - **Lane E (next) — DM2 combat follow-ups (cycle 16/17):** bind a verified
   music asset root; ALLOC_NEW_DBITEM drop-slot materialization (c_dballoc);

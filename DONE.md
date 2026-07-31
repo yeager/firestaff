@@ -13,6 +13,13 @@
   Verification: 21/21 real-data frame checks, GDAT material receipt test and
   M11 frame-receipt gate.
 
+- ✅ 2026-07-31 DM2 verified-audio lifecycle: reconciled the active-work log
+  with M11's existing source-gated lifecycle. M11 describes and binds the
+  SDL backend only after the hash-verified boot profile succeeds, and unbinds
+  it at DM2 shutdown; no unverified startup can open the playback route.
+  Verification: real-data `test_dm2_v1_m11_startup_profile_gate` with
+  `SDL_AUDIODRIVER=dummy`.
+
 - ✅ 2026-07-31 CSB synthetic viewport-fixture isolation: removed the
   room-slot backdrop1 contract trace from the production `firestaff_m10`
   archive. Its 10×10 synthetic skin/dungeon arrangement is now compiled only
