@@ -920,18 +920,6 @@ static int run_real_asset_ornament_blit(const char *data_dir,
     return 0;
 }
 
-/* ── Self-tests for the source-locked ornament view modules ──── */
-
-static int run_self_tests(void)
-{
-    printf("\n=== Source-locked CSB V1 ornament view self-tests ===\n");
-    CHECK(run_csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_self_test() == 1,
-          "csb_v1_viewport_d1c_f0108_floor_ceiling_ornament_self_test (returns result.ok: 1=success)");
-    CHECK(csb_v1_viewport_d1c_f0115_thing_pass_count_pc34() > 0,
-          "csb_v1_viewport_d1c_f0115_thing_pass contract has >= 1 entry");
-    return 0;
-}
-
 /* ── Main ────────────────────────────────────────────────────── */
 
 int main(int argc, char **argv)
@@ -965,9 +953,6 @@ int main(int argc, char **argv)
     snprintf(graphics_md5, sizeof(graphics_md5), "%s",
              profile.graphics_md5);
     csb_v1_boot_cleanup(&profile);
-
-    /* Run self-tests for the source-locked ornament view modules. */
-    run_self_tests();
 
     /* Run the real-asset DMCSB1 BE parser + ornament blit math + capture. */
     run_real_asset_ornament_blit(dir, graphics_path, graphics_md5);

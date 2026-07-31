@@ -45743,7 +45743,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   mapping remains ReDMCSB-owned; an object draws only after M11 installs and
   decodes its original PC3.4 graphics record. Verification: configure/build
   and PC3.4 real-asset viewport/startup regressions.
-
 - ✅ 2026-07-31 DM1 PC34 corpus expansion: provenance-attested the third
   operator-supplied DOSBox `DMSAVE.DAT` (`5bcee58c`, 48,561 bytes) and added
   it to the external corpus. It passes the real `DUNGEON.DAT`-backed F0435 ->
@@ -45751,3 +45750,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   to three original saves. Its empty C13/C03/C04 runtime state is documented
   separately and does not claim unobserved coverage. Reference: ReDMCSB
   `LOADSAVE.C F0419/F0420/F0433/F0435` and DMweb Saved Game Files.
+
+- ✅ 2026-07-31 CSB D1C F0108 real-material boundary: removed the isolated
+  seed-driven floor/ceiling/ornament trace, its generated-pixel hash, public
+  self-test contract and data-free CTest target. The remaining F0108 helpers
+  are only C10 transparency and ReDMCSB's `C1500 + CoordinateSet * 11 +
+  ViewFloor` zone formula, consumed by the PC3.4 real-data ornament probe
+  over decoded, hash-verified `GRAPHICS.DAT` bytes. Source: ReDMCSB
+  `DUNVIEW.C` F0108:3940-4011 and `DEFS.H`:2088; dmweb documents PC CSB
+  `GRAPHICS.DAT` as DMCSB1 big-endian. Verification: configured build of
+  `firestaff`, `firestaff_csb_v1_pc_real_asset_ornament_blit_probe` and
+  `firestaff_csb_v1_pc_real_asset_launch_probe`; focused CTest 3/3 passes;
+  real ornament probe 29/29 and real startup/title/entrance/HUD probe 75/75
+  pass with `/Users/bosse/.firestaff/data/csb`.

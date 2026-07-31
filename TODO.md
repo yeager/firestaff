@@ -603,6 +603,11 @@ diagnostic; it must not silently fall back to a generated visual.
   removed its public caller-buffer API. A CSB object now reaches that loop
   only after the live PC3.4 graphics record has been installed and decoded;
   an unbound caller can no longer supply an arbitrary object raster.
+  **2026-07-31 D1C F0108 source-helper follow-up:** removed the seed-driven
+  ornament trace, generated pixels, public self-test API and its data-free
+  CTest target. The retained C10 and `C1500 + CoordinateSet * 11 + ViewFloor`
+  helpers are exercised only against decoded, hash-verified PC3.4
+  `GRAPHICS.DAT` bytes by the real-asset ornament probe.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
