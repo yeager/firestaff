@@ -47029,3 +47029,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   original shape implementation; live production cannot promote its guessed
   tints or geometry.
 # Isolated the inferred Theron V2 HUD widget manifest/parser from production and added a no-op gate seam; procedural HUD pixels can no longer render in the verified runtime without a complete real asset manifest.
+- ✅ 2026-07-31 Theron V1 UI chrome isolation: removed the inferred bars,
+  labels and champion-slot pixels from the production archive. The public
+  chrome API now fails closed through a no-op seam until the original Track
+  02 UI bank is decoded; the old implementation remains fixture-only.

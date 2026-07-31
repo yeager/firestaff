@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- **THERON-V1-UI-CHROME-REAL-DATA:** The inferred bar/text/champion-slot
+  implementation is now fixture-only. Production exposes a no-op API until
+  the original Track 02 UI chrome bank and font records are decoded.
+
 - **THERON-STARTUP-LEGACY-FALLBACK-ROOM:** The M11 production path uses
   `verified_only` Track 02 admission and the authenticated startup bitmap
   atlas. The older public compatibility API still synthesizes the
