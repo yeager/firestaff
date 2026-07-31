@@ -24,6 +24,11 @@
   rejects rather than fabricating a name, health, combat values, loyalty or
   AI behaviour. A future companion route must bind the live DB creature,
   CAII/CCM, inventory and dialogue records before it can populate state.
+  **2026-07-31 update:** M11 no longer enables the procedural V2 lighting and
+  outdoor-FX state merely because V2 presentation is selected. That runtime
+  remains dormant until it receives the live V1 ENVIRONMENT-GDAT weather
+  receipt (timer, images and palette); the existing source-backed V1 weather
+  renderer remains the only active owner meanwhile.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

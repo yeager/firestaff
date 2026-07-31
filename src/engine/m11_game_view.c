@@ -926,6 +926,13 @@ static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
  * decoded GDAT UI images after the game profile is mounted; no M11 artwork
  * is substituted when that original source is unavailable. */
 static DM2_V2_PhaseGateConfig g_m11_dm2_v2_gate;
+/* V2 lighting is deliberately separate from the general presentation gate.
+ * A presentation-mode selection proves neither the live ENVIRONMENT timer
+ * state nor the decoded ENVIRONMENT GDAT image/palette chain.  The V1 DM2
+ * runtime owns that evidence (weather_gdat_outdoor_m11_receipt); until its
+ * receipt is handed to this V2 layer, procedural sky/fog/lightning state
+ * must stay dormant. */
+static DM2_V2_PhaseGateConfig g_m11_dm2_v2_lighting_gate;
 
 static void m11_dm2_configure_v2_presentation(
     const M11_GameViewState *state,
@@ -942,6 +949,7 @@ static void m11_dm2_configure_v2_presentation(
     dm2_v2_phase_gate_defaults(&g_m11_dm2_v2_gate);
     g_m11_dm2_v2_gate.v2LaunchEnabled = v2_active;
     g_m11_dm2_v2_gate.v2ProfileEnabled = v2_active;
+    dm2_v2_phase_gate_defaults(&g_m11_dm2_v2_lighting_gate);
 
     dm2_v2_asset_pipeline_init();
     if (state->presentationMode == M12_PRESENTATION_V20_FILTERED) {
@@ -975,7 +983,7 @@ static void m11_dm2_configure_v2_presentation(
     dm2_v2_asset_pipeline_configure(&pipeline);
 
     dm2_v2_hud_runtime_set_gate_config(&g_m11_dm2_v2_gate);
-    dm2_v2_lighting_runtime_set_gate_config(&g_m11_dm2_v2_gate);
+    dm2_v2_lighting_runtime_set_gate_config(&g_m11_dm2_v2_lighting_gate);
     dm2_v2_touch_runtime_set_gate_config(&g_m11_dm2_v2_gate);
     dm2_v2_hud_runtime_set_gdat_source(
         dm2_v1_boot_viewport_asset_fetch,

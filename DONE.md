@@ -45845,3 +45845,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   changing state until a live DB creature plus CAII/CCM, inventory and
   dialogue ownership is imported. Verification:
   `test_dm2_v1_companion_source_gate` 6/6 passes.
+- ✅ 2026-07-31 DM2 V2 lighting admission closure: M11 now gives V2 lighting
+  a separate disabled production gate, rather than enabling procedural sky,
+  fog and lightning state through the generic V2 presentation selection.
+  Activation now waits for a live V1 `ENVIRONMENT` GDAT weather receipt
+  (timer, original image and palette chain). The source-backed V1 weather
+  renderer remains the only admitted outdoor pixel owner. Source:
+  SKProject `SKWIN/SkWinCore.cpp::ENVIRONMENT_DRAW_DISTANT_ELEMENT` and
+  `SKULLWIN/c_weather.cpp`. Verification:
+  `test_dm2_v1_m11_startup_profile_gate` passes with real DM2 data.
