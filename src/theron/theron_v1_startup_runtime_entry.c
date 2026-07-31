@@ -7,6 +7,11 @@
 #include <stdio.h>
 #include <string.h>
 
+static int theron_v1_startup_runtime_has_verified_track02_request(
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex);
+
 typedef struct {
     const uint8_t *hucard_rom;
     size_t hucard_rom_size;
@@ -138,6 +143,27 @@ static int theron_v1_startup_runtime_level_load_callback(
                                                         dungeon_id,
                                                         receipt,
                                                         receipt_cap);
+}
+
+int theron_v1_startup_runtime_load_initial_level_verified_only(
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_DungeonID dungeon_id,
+    char *receipt,
+    size_t receipt_cap) {
+    if (!theron_v1_startup_runtime_has_verified_track02_request(
+            hucard_rom, hucard_rom_size, md5_hex)) {
+        if (receipt && receipt_cap > 0u) {
+            snprintf(receipt, receipt_cap,
+                     "no verified Track 02 semantic runtime handoff; synthetic fallback room disabled");
+        }
+        return 0;
+    }
+    return theron_v1_startup_runtime_load_initial_level(
+        world, hucard_rom, hucard_rom_size, md5_hex, dungeon_id,
+        receipt, receipt_cap);
 }
 
 /* Receipt collection may load only into a caller-owned staging world. It does

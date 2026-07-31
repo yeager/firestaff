@@ -19878,7 +19878,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         TrAssetBundle *assets = (TrAssetBundle *)state->theronAssets;
         char level_receipt[256];
         if (world && assets && assets->hucard_rom && assets->hucard_rom_size > 0u &&
-            theron_v1_startup_runtime_load_initial_level(
+            theron_v1_startup_runtime_load_initial_level_verified_only(
                 world,
                 assets->hucard_rom,
                 assets->hucard_rom_size,

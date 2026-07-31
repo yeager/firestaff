@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 Theron M11 startup admission: lade till en separat
+  `verified_only`-runtimeväg som M11 använder för raw Track 02-bypass.
+  Den vägen vägrar syntetiskt fallback-rum utan verifierad Track 02-handoff;
+  äldre fixture-kompatibla API:er är kvar avgränsade till probe-kontrakt.
+  Startup-flow passerar `653/653`.
+
 - ✅ 2026-07-31 Theron viewport-level admission: renderaren kräver nu både
   laddad tile-atlas och en faktiskt `level_loaded`-markerad dungeon/level.
   Den gamla `(0,0,north)`-fallbacken kan inte längre skapa en syntetisk

@@ -21,6 +21,18 @@ int theron_v1_startup_runtime_load_initial_level(
     Theron_DungeonID dungeon_id,
     char *receipt,
     size_t receipt_cap);
+
+/* Production runtime entry.  Unlike the legacy fixture-compatible helper
+ * above, this route refuses to synthesize a first room when Track 02 has not
+ * been hash-verified and semantically handed off. */
+int theron_v1_startup_runtime_load_initial_level_verified_only(
+    Theron_V1_World *world,
+    const uint8_t *hucard_rom,
+    size_t hucard_rom_size,
+    const char *md5_hex,
+    Theron_DungeonID dungeon_id,
+    char *receipt,
+    size_t receipt_cap);
 typedef struct {
     const uint8_t *hucard_rom;
     size_t hucard_rom_size;
