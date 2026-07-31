@@ -46231,3 +46231,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
    `m11_dm1_hoc_real_mirror_viewport_material`, side/depth material receipt,
    and champion-mirror contract tests pass; source reference ReDMCSB
    `DUNVIEW.C F0107` / Graphic558's 15 projection coordinates.
+
+- ✅ 2026-07-31 CSB V2 dead-hook cleanup: removed the two unreferenced Phase-0
+  headers that supplied only no-op viewport, lighting, chaos, minimap and asset
+  hooks. No M11/M12 or CSB runtime source included them, so they could not bind
+  original data and only preserved a false implementation surface. The active
+  V2 route remains the source-gated presentation and F0128 command path.
+   References: ReDMCSB `DUNVIEW.C F0111/F0128` and CSBWin `Viewport.cpp`.
+   Verification: whole-tree consumer audit, M11 build, real-data viewport test,
+   and `git diff --check`.
