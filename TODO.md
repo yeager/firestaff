@@ -279,7 +279,11 @@ diagnostic; it must not silently fall back to a generated visual.
   not generated diagnostic chrome. **2026-07-31 follow-up:** source-verified
   CSB sessions now also reject the shared geometry-only cyan F0113
   teleporter fill. Until the real field bitmap has a bound `GRAPHICS.DAT`
-  span, the field is no-draw rather than a generated rectangle.
+  span, the field is no-draw rather than a generated rectangle. **2026-07-31
+  follow-up:** entrance-plan metadata no longer carries generated grey door
+  fill or edge colours. ReDMCSB `ENTRANCE.C F0806` owns C002/C003, and a
+  missing raster remains an admitted draw failure rather than a plan-level
+  substitute.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

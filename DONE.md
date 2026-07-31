@@ -44538,3 +44538,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   29 records `00`--`1c` (cue 0 is raw entry 5595); the current HMP decoder
   rejects that real stream and
   therefore leaves playback fail-closed rather than borrowing sidecar audio.
+- ✅ 2026-07-31 CSB entrance fallback metadata removal: the closed-door
+  entrance plan no longer carries the old generated grey fill and edge
+  colours. `ENTRANCE.C F0806:721-778` owns source records C002/C003, so a
+  missing door raster remains a failed source draw instead of becoming plan
+  data that a renderer could promote. The source-page clear remains black,
+  matching the title/entrance composition boundary. The focused entrance
+  pointer and sequencing regression passes 139/139.

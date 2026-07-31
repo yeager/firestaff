@@ -32,10 +32,9 @@ enum {
     CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34 = 1,
     CSB_V1_RENDER_TEXT_STYLE_TITLE_PC34 = 2,
     CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34 = 3,
-    CSB_V1_FALLBACK_BLACK_PC34 = 0,
-    CSB_V1_FALLBACK_YELLOW_PC34 = 14,
-    CSB_V1_FALLBACK_LIGHT_GRAY_PC34 = 2,
-    CSB_V1_FALLBACK_DARK_GRAY_PC34 = 12,
+    /* The source page is cleared before TITLE/ENTRANCE assets are composed.
+     * This is not a substitute door or title surface. */
+    CSB_V1_SOURCE_PAGE_CLEAR_BLACK_PC34 = 0,
     CSB_V1_ENTRANCE_DOOR_STEP_COUNT_PC34 = 31
 };
 
@@ -784,7 +783,7 @@ static void csb_v1_startup_rebuild_primitive_commands_pc34(
         0,
         320,
         200,
-        CSB_V1_FALLBACK_BLACK_PC34,
+        CSB_V1_SOURCE_PAGE_CLEAR_BLACK_PC34,
         0,
         0,
         1);
@@ -887,11 +886,11 @@ static void csb_v1_startup_set_closed_door_rects_pc34(
     plan->closed_left_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
     plan->closed_left_w = 105;
     plan->closed_left_h = 161;
-    plan->closed_left_fallback_fill_color = CSB_V1_FALLBACK_DARK_GRAY_PC34;
-    plan->closed_left_fallback_light_edge_color =
-        CSB_V1_FALLBACK_LIGHT_GRAY_PC34;
-    plan->closed_left_fallback_dark_edge_color =
-        CSB_V1_FALLBACK_BLACK_PC34;
+    /* ReDMCSB ENTRANCE.C F0806 owns C002/C003.  Preserve these legacy plan
+     * fields as zero only; M11 admits no generated door fallback. */
+    plan->closed_left_fallback_fill_color = 0;
+    plan->closed_left_fallback_light_edge_color = 0;
+    plan->closed_left_fallback_dark_edge_color = 0;
     plan->closed_right_source_x = 0;
     plan->closed_right_source_y = 0;
     plan->closed_right_asset_id = CSB_V1_GRAPHIC_ENTRANCE_RIGHT_DOOR_PC34;
@@ -899,11 +898,9 @@ static void csb_v1_startup_set_closed_door_rects_pc34(
     plan->closed_right_dest_y = CSB_V1_ENTRANCE_DOOR_SCREEN_Y_PC34;
     plan->closed_right_w = 127;
     plan->closed_right_h = 161;
-    plan->closed_right_fallback_fill_color = CSB_V1_FALLBACK_DARK_GRAY_PC34;
-    plan->closed_right_fallback_light_edge_color =
-        CSB_V1_FALLBACK_LIGHT_GRAY_PC34;
-    plan->closed_right_fallback_dark_edge_color =
-        CSB_V1_FALLBACK_BLACK_PC34;
+    plan->closed_right_fallback_fill_color = 0;
+    plan->closed_right_fallback_light_edge_color = 0;
+    plan->closed_right_fallback_dark_edge_color = 0;
 }
 
 static void csb_v1_startup_set_opening_door_rects_pc34(
