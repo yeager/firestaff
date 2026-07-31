@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 CSB V2 lighting isolation: removed the hand-authored RGB
+  light map, point-light falloff, flimmer curves and DSA pulse effects from
+  the playable V2 archive. The product gate retains only PANEL.C's factual
+  palette-light receipt and otherwise returns transparent/no-event state; the
+  old simulation remains contract-probe-only. Verification: production
+  `firestaff` build, `csb_v2_lighting_runtime_gate`, the V2 HUD/shape/VFX
+  gates and the isolated phase-4 contract probe all pass.
+
 - ✅ 2026-07-31 CSB V2 particle isolation: removed the hand-authored RGB
   palettes, particle trajectories, field animation and projectile speeds from
   the playable V2 archive. The production API is now a source-cited no-draw

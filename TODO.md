@@ -1018,7 +1018,11 @@ diagnostic; it must not silently fall back to a generated visual.
   system's RGB ramps, trajectories, tile speeds and effect durations are now
   contract-only. The playable V2 API rejects emitter, projectile and field
   creation until a source-art receipt binds them, so a CSB spell or DSA event
-  cannot become host-generated pixels. **2026-07-31 follow-up:** the unconsumed
+  cannot become host-generated pixels. **2026-07-31 follow-up:** the V2
+  lighting simulation's RGB point lights, tile falloff, sinusoidal flicker
+  and DSA pulse curves are likewise contract-only. The playable API retains
+  PANEL.C's authenticated palette-light amount only; it cannot make a second
+  host lighting image. **2026-07-31 follow-up:** the unconsumed
   Hint Oracle layout/ASCII-sketch module is removed rather than becoming a
   generic panel placeholder; a visible Hint Oracle needs decoded source art
   and font material. **2026-07-31 follow-up:** the separately reintroduced

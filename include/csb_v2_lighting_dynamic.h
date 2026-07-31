@@ -39,8 +39,9 @@ typedef struct {
 } CSB_V2_LightMap;
 
 /* ReDMCSB PANEL.C:418-428 selects the canonical dungeon palette from torch
- * charges and magical light. CSB V2 mirrors that source palette first, then
- * adds presentation-only local light on top. */
+ * charges and magical light. Product CSB V2 retains that factual palette
+ * receipt but rejects host RGB lights, flicker and DSA pulses until their
+ * displayed material has an authenticated source binding. */
 typedef struct {
     uint8_t sourcePaletteIndex;
     uint8_t sourceLightAmountFloor;
