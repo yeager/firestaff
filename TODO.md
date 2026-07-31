@@ -69,6 +69,10 @@
   strips. Smooth input timing remains available, but every displayed frame is
   now the authenticated snapped V1 raster until an original intermediate DM2
   camera raster is recovered.
+  **2026-07-31 update:** the retired V2 sky-colour helpers no longer derive
+  RGB output from host time and weather values. The source ENVIRONMENT GDAT
+  route owns the image, palette and destination rectangle, so an unbound V2
+  caller now receives no colour instead of a procedural sky substitute.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

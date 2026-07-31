@@ -163,14 +163,15 @@ float dm2_v2_outdoor_fx_tree_sway(const DM2_V2_OutdoorFX *fx) {
     return fx ? fx->tree_sway_phase : 0.0f;
 }
 
-/* dm2_v2_outdoor_fx_sky_color_ex — returns the base sky color for outdoor.
- * Respects weather and time-of-day.  Delegates to dm2_v2_sky_color_for_time.
- * outdoor_tint: V2.2 ambient tint from weather (0..1). */
+/* dm2_v2_outdoor_fx_sky_color_ex — no-draw sky admission boundary.
+ * Animated state cannot replace the ENVIRONMENT GDAT picture/palette route. */
 uint32_t dm2_v2_outdoor_fx_sky_color_ex(const DM2_V2_OutdoorFX *fx,
                                           float time_fraction,
                                           int weather) {
     (void)fx;
-    return dm2_v2_sky_color_for_time(time_fraction, weather);
+    (void)time_fraction;
+    (void)weather;
+    return DM2_V2_SOURCE_COLOR_UNAVAILABLE;
 }
 
 /* ── Source evidence ─────────────────────────────────────────── */

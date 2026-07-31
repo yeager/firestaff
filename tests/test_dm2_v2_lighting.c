@@ -47,29 +47,36 @@ int main(void) {
 
     printf("── Sky Color ──\n");
     uint32_t sky = dm2_v2_sky_color_for_time(0.5f, W_CLEAR);
-    check("sky_color day: non-zero", sky != 0);
-    check("sky_color day: alpha=FF", (sky >> 24) == 0xFF);
+    check("sky_color day: no source material remains unavailable",
+          sky == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
 
     sky = dm2_v2_sky_color_for_time(0.1f, W_CLEAR); /* dawn */
-    check("sky_color dawn: non-zero", sky != 0);
+    check("sky_color dawn: no source material remains unavailable",
+          sky == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
 
     sky = dm2_v2_sky_color_for_time(0.9f, W_CLEAR); /* dusk */
-    check("sky_color dusk: non-zero", sky != 0);
+    check("sky_color dusk: no source material remains unavailable",
+          sky == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
 
     sky = dm2_v2_sky_color_for_time(0.5f, W_FOG);
-    check("sky_color fog: gray base", sky != 0);
+    check("sky_color fog: no source material remains unavailable",
+          sky == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
 
     sky = dm2_v2_sky_color_for_time(0.5f, W_STORM);
-    check("sky_color storm: gray base", sky != 0);
+    check("sky_color storm: no source material remains unavailable",
+          sky == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
 
     sky = dm2_v2_sky_color_for_time(0.5f, W_RAIN);
-    check("sky_color rain: desaturated", sky != 0);
+    check("sky_color rain: no source material remains unavailable",
+          sky == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
 
     /* Out-of-range time: must clamp, not crash */
     sky = dm2_v2_sky_color_for_time(-1.0f, W_CLEAR);
-    check("sky_color time<0: clamped, not crashed", sky != 0);
+    check("sky_color time<0: unavailable, not crashed",
+          sky == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
     sky = dm2_v2_sky_color_for_time(2.0f, W_CLEAR);
-    check("sky_color time>1: clamped, not crashed", sky != 0);
+    check("sky_color time>1: unavailable, not crashed",
+          sky == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
 
     /* From weather state */
     DM2_V1_WeatherState ws;
@@ -77,10 +84,12 @@ int main(void) {
     ws.time_fraction = 0.5f;
     ws.weather = W_CLEAR;
     sky = dm2_v2_sky_color_from_weather(&ws);
-    check("sky_color from weather: OK", sky != 0);
+    check("sky_color from weather: no source material remains unavailable",
+          sky == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
 
     sky = dm2_v2_sky_color_from_weather(NULL);
-    check("sky_color from NULL weather: fallback day blue", sky != 0);
+    check("sky_color from NULL weather: unavailable",
+          sky == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
 
     /* ══ Fog Map ═════════════════════════════════════════════════ */
 
@@ -268,9 +277,11 @@ int main(void) {
     printf("── Sky Color from FX ──\n");
     dm2_v2_outdoor_fx_init(&fx);
     uint32_t sc = dm2_v2_outdoor_fx_sky_color_ex(&fx, 0.5f, W_CLEAR);
-    check("outdoor sky_color: non-zero", sc != 0);
+    check("outdoor sky_color: no source material remains unavailable",
+          sc == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
     sc = dm2_v2_outdoor_fx_sky_color_ex(NULL, 0.5f, W_CLEAR);
-    check("outdoor sky_color NULL: non-zero fallback", sc != 0);
+    check("outdoor sky_color NULL: unavailable",
+          sc == DM2_V2_SOURCE_COLOR_UNAVAILABLE);
 
     /* ══ Source Evidence ══════════════════════════════════════════ */
 

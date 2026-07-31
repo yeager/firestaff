@@ -102,9 +102,11 @@ void dm2_v2_lighting_init(DM2_V2_LightingState *s);
 void dm2_v2_lighting_reset(DM2_V2_LightingState *s);
 
 /* ── Outdoor sky color query ───────────────────────────────────────
- * Returns DM2_V2 enhanced sky color rgba (0xAABGRRR packed or 0xRRGGBBAA).
- * Ignores NULL or out-of-range time; returns day-blue as fallback.
- * Delegates to dm2_v1_weather_sky_color for V1 sky gradient, adds V2 tint. */
+ * Outdoor sky pixels are owned by the selected ENVIRONMENT GDAT image,
+ * palette and destination rectangle. This V2 state helper has none of those
+ * receipts, so it deliberately returns SOURCE_COLOR_UNAVAILABLE rather than
+ * generating a colour gradient from time and weather alone. */
+#define DM2_V2_SOURCE_COLOR_UNAVAILABLE 0u
 uint32_t dm2_v2_sky_color_for_time(float time_fraction, int weather);
 uint32_t dm2_v2_sky_color_from_weather(const DM2_V1_WeatherState *ws);
 

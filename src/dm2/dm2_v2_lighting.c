@@ -40,12 +40,9 @@ void dm2_v2_lighting_init(DM2_V2_LightingState *s) {
     dm2_v2_fog_init(&s->fog);
     dm2_v2_ambient_init(&s->ambient);
 
-    /* Default sky-phase colors — mirroring dm2_v1_weather_sky_COLOR
-     * Source: docs/dm2_time.md §Sky color / time-of-day */
-    s->dawn_r    = 200; s->dawn_g    = 70;  s->dawn_b    = 180;
-    s->day_r     = 68;  s->day_g     = 136; s->day_b     = 204;
-    s->dusk_r    = 220; s->dusk_g    = 80;  s->dusk_b    = 50;
-    s->night_r   = 20;  s->night_g   = 20;  s->night_b   = 50;
+    /* Do not seed host-authored sky phase colours. SKProject resolves the
+     * current ENVIRONMENT GDAT picture, palette and rectangle before it
+     * draws outdoor pixels; time/weather alone is insufficient evidence. */
 }
 
 void dm2_v2_lighting_reset(DM2_V2_LightingState *s) {
@@ -58,47 +55,22 @@ void dm2_v2_lighting_reset(DM2_V2_LightingState *s) {
 
 /* ── Sky color query ───────────────────────────────────────────── */
 
-/* dm2_v2_sky_color_for_time — V2 enhanced sky color for outdoor.
- * time_fraction: 0..1 mapped over the 1440-minute day cycle.
- * weather: DM2_WEATHER_CLEAR/RAIN/FOG/STORM.
- * Returns 0xAABBGGRR packed ARGB.
+/* dm2_v2_sky_color_for_time — no-draw sky admission boundary.
  *
- * Source: dm2_v1_weather_sky_color() (V1 base), with V2.2 tweaks:
- *   - Storm/fog: override is handled by the weather system; V2
- *     provides the base RGBA for rendering to composite with fog overlays.
- *   - Lightning bloom is separate (triggered via bloom API).
- *
- * Reference: dm2_v1_outdoor_renderer.c dm2_v1_outdoor_sky_color()
- *           docs/dm2_time.md §Sky color gradient */
+ * SKProject's ENVIRONMENT_DRAW_DISTANT_ELEMENT obtains a real temporary
+ * GDAT picture and its palette before rasterisation. Neither this helper's
+ * time nor weather argument identifies that material, so no generated
+ * colour may stand in for it. */
 uint32_t dm2_v2_sky_color_for_time(float time_fraction, int weather) {
-    float t = clamp01(time_fraction);
-
-    /* Fog/storm: base sky is gray regardless of time */
-    if (weather == DM2_WEATHER_FOG || weather == DM2_WEATHER_STORM) {
-        /* Return neutral gray-blue as base; fog overlay handles visual depth */
-        return 0xFF666666u;
-    }
-
-    if (t < 0.25f) { /* dawn */
-        uint8_t r = (uint8_t)(60 + t * 4.0f * 140);
-        uint8_t b = (uint8_t)(180 + t * 4.0f * 20);
-        return (0xFF000000u) | ((uint32_t)r << 16) | ((uint32_t)(r / 2) << 8) | b;
-    }
-    if (t < 0.75f) { /* day */
-        if (weather == DM2_WEATHER_RAIN) return 0xFF667788u;
-        return 0xFF4488CCu;
-    }
-    /* dusk/night */
-    float nt = (t - 0.75f) * 4.0f;
-    uint8_t g = (uint8_t)(80 - nt * 70);
-    uint8_t r_out = (uint8_t)(220 - nt * 200);
-    return (0xFF000000u) | ((uint32_t)r_out << 16) | ((uint32_t)g << 8) | 200;
+    (void)time_fraction;
+    (void)weather;
+    return DM2_V2_SOURCE_COLOR_UNAVAILABLE;
 }
 
-/* dm2_v2_sky_color_from_weather — convenience wrapper using DM2_V1_WeatherState */
+/* dm2_v2_sky_color_from_weather — no source picture/palette receipt here. */
 uint32_t dm2_v2_sky_color_from_weather(const DM2_V1_WeatherState *ws) {
-    if (!ws) return dm2_v2_sky_color_for_time(0.5f, DM2_WEATHER_CLEAR);
-    return dm2_v2_sky_color_for_time(ws->time_fraction, ws->weather);
+    (void)ws;
+    return DM2_V2_SOURCE_COLOR_UNAVAILABLE;
 }
 
 /* ── Fog ──────────────────────────────────────────────────────── */
@@ -317,14 +289,14 @@ const char *dm2_v2_lighting_source_evidence(void) {
         "Source: SKULL.ASM T600              — outdoor viewport rendering\n"
         "Source: SKULL.ASM T560              — indoor dungeon viewport\n"
         "Source: docs/dm2_time.md §Weather   — fog/storm visibility reduction\n"
-        "Source: docs/dm2_time.md §Time-of-day sky color gradient\n"
+        "Source: SKWIN/c_bkgrnd.cpp ENVIRONMENT_DRAW_DISTANT_ELEMENT\n"
         "Reference: dm1_v2_lighting_dynamic_pc34.c §V2.2 Dynamic Lighting\n"
         "  v22_flicker_factor / v22_light_rebuild_map\n"
         "Reference: dm2_v1_weather.c dm2_v1_weather_sky_color\n"
         "Reference: dm1_v2_settings_impl.c dm1_v2_apply_torch_flicker\n"
         "Reference: dm2_v2_outdoor_enhanced.c lightning_trigger pattern\n"
         "DM2 V2.2: indoor fog overlay (per-tile density map)\n"
-        "DM2 V2.2: outdoor weather fog + sky-color ambient blend\n"
+        "DM2 V2.2: no generated outdoor sky colour without ENVIRONMENT GDAT\n"
         "DM2 V2.2: per-champion torch flicker (4-phase sine composite)\n"
         "DM2 V2.2: lightning bloom flash (multi-frame, fade-out)\n"
         "V1 invariant: torch charge consumption, palette index, weather enum,\n"

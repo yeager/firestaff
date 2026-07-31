@@ -46295,3 +46295,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   object, graphics, or save-format decoding.
   Verification: clean C11 syntax checks, clean CMake target build, and
   `firestaff_theron_v1_track02_bank_probe` against both local real BINs.
+- ✅ 2026-07-31 DM2 V2 unbound sky-colour closure: removed the procedural
+  RGB gradients and fixed weather colours from the V2 lighting/outdoor helper
+  APIs. ENVIRONMENT_DRAW_DISTANT_ELEMENT owns an outdoor image, palette and
+  destination rectangle; time and weather alone cannot select original
+  pixels. Unbound callers now receive DM2_V2_SOURCE_COLOR_UNAVAILABLE.
+  References: SKProject SKWIN/c_bkgrnd.cpp ENVIRONMENT_DRAW_DISTANT_ELEMENT
+  and skgdtqdb.cpp QUERY_TEMP_PICST/DRAW_TEMP_PICST. Verification:
+  test_dm2_v2_lighting 64/64 and DM2/M11 build pass.
