@@ -3,9 +3,8 @@
  *
  * CSB V2.2 GPU render path: V22 modern-art IN-PLACE bitmap cache.
  *
- * This is the foundation for switching the V22 render mode from
- * "overlay" (placeholder colored rectangle on top of V1) to
- * "in-place" (replace V1 sprite with V22 PBR PNG at the same cell).
+ * This is the guarded in-place path for a reviewed V2.2 artpack. It never
+ * paints a generated overlay or cache fixture over source-owned V1 pixels.
  *
  * Build-time pipeline:
  *   1. .openclaw/tools/png_to_rgba.py reads modern_asset_manifest.json
@@ -37,6 +36,7 @@
 
 #include "csb_v22_inplace_draw_pc34.h"
 #include "csb_v22_inplace_route_pc34.h"
+#include "csb_v22_finished_art_material_gate_pc34.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "dm1_v2_asset_pipeline_pc34.h"
 #include "fs_portable_compat.h"
@@ -368,7 +368,10 @@ int csb_v22_inplace_render_f0128_command(
     int height = 0;
 
     if (!source_command || !framebuffer || fbW <= 0 || fbH <= 0 ||
-        !csb_v22_inplace_draw_active() || !g_v22_palette_active) {
+        !csb_v22_inplace_draw_active() || !g_v22_palette_active ||
+        /* A readable cache is not proof that its RGBA pixels are authentic.
+         * The full pack must still satisfy every F0128 route/material gate. */
+        !csb_v22_famg_is_finished_real()) {
         return 0;
     }
 
@@ -473,9 +476,9 @@ const char* csb_v22_inplace_draw_source_evidence(void) {
            "dm1_v2_modern_assets_pc34.c (manifest path resolution); "
            "csb_v22_shape_cache_pc34.c (sibling cache + CSB_V22_CellRect coords); "
            "csb_v22_modern_assets_pc34.c (manifest path resolution); "
-           "csb_v22_shapes.c (CSB V22 shape book); "
+           "csb_v22_finished_art_material_gate_pc34.c (route admission); "
            "ReDMCSB DUNVIEW.C F0128 (CSB viewport routing); "
            "CSBWin/Viewport.cpp:7290 (9-square layout); "
            "include/dm1_v2_shape_runtime_pc34.h (shape variant enum pattern); "
-           "v22_inplace_cache.bin (build-time RGBA pack from PNG via PIL).";
+           "v22_inplace_cache.bin (admitted artpack cache only).";
 }

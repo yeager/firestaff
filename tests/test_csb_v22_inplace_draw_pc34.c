@@ -318,10 +318,10 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
     command.decoded_width = 96;
     command.decoded_height = 88;
     command.material_hash = fnv1a_bytes(d1_source, sizeof(d1_source));
-    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 1,
-          "admitted D1 door command consumes exact source route");
-    CHECK(framebuffer[33 * 320 + 48] == 0x30,
-          "opaque modern pixel replaces the left half of the F0128 clip");
+    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
+          "fixture cache without a finished source pack leaves D1 source-owned");
+    CHECK(framebuffer[33 * 320 + 48] == 0x5a,
+          "unadmitted cache pixel cannot replace the F0128 clip");
     CHECK(framebuffer[33 * 320 + 112] == 0x5a,
           "transparent modern pixel preserves the source framebuffer");
     CHECK(framebuffer[32 * 320 + 48] == 0x5a &&
@@ -344,10 +344,10 @@ static void test_f0128_door_command_consumes_admitted_source_material(void) {
     command.decoded_width = 64;
     command.decoded_height = 61;
     command.material_hash = fnv1a_bytes(d2_source, sizeof(d2_source));
-    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 1,
-          "admitted D2 door command consumes its distinct source route");
-    CHECK(framebuffer[47 * 320 + 76] == 0x03,
-          "D2 opaque pixel uses its own cache entry within the F0128 clip");
+    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
+          "fixture cache without a finished source pack leaves D2 source-owned");
+    CHECK(framebuffer[47 * 320 + 76] == 0x5a,
+          "unadmitted D2 cache pixel cannot replace the F0128 clip");
     CHECK(framebuffer[47 * 320 + 112] == 0x5a,
           "D2 transparent modern pixel preserves the source framebuffer");
     CHECK(framebuffer[46 * 320 + 76] == 0x5a &&
@@ -436,10 +436,10 @@ static void test_f0128_door_uses_bound_source_palette(void) {
           "palette-test command has exact source record identity");
     CHECK(csb_v22_inplace_draw_set_indexed_palette_rgb6(palette) == 1,
           "bind original indexed palette");
-    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 1,
-          "palette-bound source command paints");
-    CHECK(framebuffer[33 * 320 + 48] == 7,
-          "RGBA pixel maps to exact bound source palette index");
+    CHECK(csb_v22_inplace_render_f0128_command(&command, framebuffer, 320, 200) == 0,
+          "fixture cache remains blocked despite an original palette");
+    CHECK(framebuffer[33 * 320 + 48] == 0,
+          "blocked fixture cache leaves the source framebuffer untouched");
     csb_v22_inplace_draw_shutdown();
     (void)root;
 }

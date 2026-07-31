@@ -47395,3 +47395,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   provenance before it returns `V2_MODERN`; otherwise it keeps the V2.1/V2.0
   fallback. The focused asset-pipeline test covers the forged-installed/no-art
   case.
+
+- ✅ 2026-07-31 CSB V2.2 cache-admission hardening: a readable
+  `v22_inplace_cache.bin` is no longer enough to overwrite an F0128 source
+  command. The in-place blitter independently requires the finished-art
+  material/provenance gate; fixture cache pixels remain invisible even with a
+  matching source span and palette. The focused in-place test verifies the
+  framebuffer stays source-owned.
