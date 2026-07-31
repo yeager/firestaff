@@ -44190,6 +44190,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
 
 # CSBWin runtime diagnostic-chrome removal (2026-07-31)
 
+- ✅ 2026-07-31 CSB source-owned custom-background masks: verified runtime
+  sessions now ignore caller-provided fixture rectangles and use only the
+  selected CSBgraphics `BACKGROUND_MASK` decode. A missing or malformed source
+  mask leaves the layer unapplied rather than painting generated coverage.
+  ReDMCSB/CSBWin `Viewport.cpp` applies the room skin layers in source order;
+  `test_csb_v1_csbgraphics_runtime_plan` proves a poisoned fixture mask is
+  rejected in a real session (192 assertions).
+
 - ✅ The authentic Atari-ST runtime viewport and C232 HUD composition no
   longer emits the host-only `ATARI RUNTIME READY` or `CSBWIN SOURCE FRAME -
   EXTENDED CELLS REQUIRED` status strings. `ANIM.C` hands off directly to

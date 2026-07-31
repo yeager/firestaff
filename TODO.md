@@ -606,6 +606,9 @@ diagnostic; it must not silently fall back to a generated visual.
   metadata. ReDMCSB `DUNVIEW.C F0096:2651-2658` derives G0693/G0694/G0695
   from the active map's `DoorSet * 3 + offset`, so V2.2 remains V1 whenever
   the live command has not retained that selected source record.
+  The CSBgraphics custom-background pass now follows the same rule: a real
+  GRAPHICS.DAT session ignores caller-supplied test masks and decodes the
+  selected CSBWin BACKGROUND_MASK, otherwise it applies no layer.
   2026-07-30 defensive HUD follow-up: the legacy generic inventory-slot
   fallback now explicitly excludes CSB, including debug HUD mode. The live
   route continues to require C017/C040, and a future route regression cannot

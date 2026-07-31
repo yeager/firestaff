@@ -1176,6 +1176,20 @@ static void test_viewport_render_applies_configured_custom_background_layer(void
     check_int("viewport_custom_bg.sixteenth_pixel",
               framebuffer[33 * 320 + 15], 2);
 
+    /* A caller-provided rectangle is useful for isolated geometry tests,
+     * but may never replace CSBWin's source-owned BACKGROUND_MASK during a
+     * verified runtime session.  Deliberately poison that test rectangle:
+     * the real-session path must ignore it and decode the original mask. */
+    memset(framebuffer, 0x09, sizeof(framebuffer));
+    cfg.real_graphics_session = 1;
+    cfg.custom_background_layer_masks
+        [CSB_V1_CUSTOM_BACKGROUND_LAYER_NEAR].width = 15;
+    csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
+    check_int("viewport_custom_bg.real_session_rejects_fixture_mask",
+              cfg.custom_background_applied_count, 0);
+    check_int("viewport_custom_bg.real_session_no_fixture_pixel",
+              framebuffer[33 * 320 + 0], 0);
+
     cache.file_buffer = NULL;
     csb_v1_csbgraphics_dat_real_cache_free(&cache);
     free(bytes);

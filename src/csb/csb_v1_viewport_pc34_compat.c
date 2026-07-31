@@ -4957,12 +4957,15 @@ static int csb_v1_viewport_apply_configured_custom_backgrounds(
         }
 
         /* CSB-lineage Viewport.cpp:5367-5381 and 6599-6619 apply room
-         * pSkinDef layers in large, middle, then near order. Prefer caller-
-         * supplied geometry for synthetic gates; otherwise decode the CSBWin
-         * BACKGROUND_MASK for this room from the mask graphic entry itself. */
+         * pSkinDef layers in large, middle, then near order. Test fixtures
+         * may supply geometry, but a real GRAPHICS.DAT session must decode
+         * the CSBWin BACKGROUND_MASK from the selected source entry.  Never
+         * let a host-provided rectangle redefine authenticated viewport
+         * coverage. */
         for (layer = 0; layer < 3; ++layer) {
             int rc;
-            if (cfg->custom_background_layer_mask_valid[layer]) {
+            if (!cfg->real_graphics_session &&
+                cfg->custom_background_layer_mask_valid[layer]) {
                 rc = csb_v1_csbgraphics_runtime_plan_apply_custom_background_room_layer(
                     plan,
                     cache,
