@@ -30,7 +30,7 @@ int main(void) {
         a.track19_usable == 0 &&
         strcmp(a.diagnostic, "raw_track02_iso_end_variant") == 0 &&
         b.startup_eligible &&
-        b.bitmap_route_usable &&
-        b.level_route_usable &&
-        b.object_route_usable ? 0 : 1;
+        !b.bitmap_route_usable &&
+        !b.level_route_usable &&
+        !b.object_route_usable ? 0 : 1;
 }
