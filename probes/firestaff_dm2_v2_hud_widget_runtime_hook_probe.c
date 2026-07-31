@@ -667,19 +667,12 @@ static void test_source_evidence_citation(void) {
           "mentions OPEN-BOUNDED honesty for finished bitmap art");
 }
 
-/* ── Scenario: bounded blit path (Phase 3 follow-up) ──────────────
+/* ── Scenario: synthetic widget compatibility path is no-draw ────
  *
  * Drops the checked-in synthetic 1x1 RGBA PNG fixtures into the
- * scratch asset root and asserts the runtime hook routes the REAL
- * slot through dm2_v2_hud_widget_bitmap_blit_render_slot(). The
- * synthetic fixtures have distinct R values per slot, so the
- * framebuffer pixel at each anchor must equal that R value
- * (i.e. not the legacy stamp's opacity byte, but the actual
- * decoded PNG pixel).
- *
- * This is the runtime-side proof that the blit path is wired
- * end-to-end. The companion bitmap blit probe covers the lower
- * level (decode + bounded write + bounds + fallback). */
+ * scratch asset root and proves that their REAL tooling classification does
+ * not grant them framebuffer ownership. Original GDAT remains the sole HUD
+ * pixel source. */
 
 #include "dm2_v2_hud_widget_bitmap_blit.h"
 
@@ -725,8 +718,8 @@ static int copy_synthetic_fixture(const char* dst, const char* name) {
     return ok;
 }
 
-static void test_bounded_blit_end_to_end(void) {
-    printf("\n[ Scenario 10: bounded blit path end-to-end ]\n");
+static void test_synthetic_widget_no_draw(void) {
+    printf("\n[ Scenario 10: synthetic widget no-draw ]\n");
     clean_scratch();
     const char* dataDir = "/tmp/scratch/firestaff-data/dm2";
     char manifest_path[1024];
@@ -798,44 +791,20 @@ static void test_bounded_blit_end_to_end(void) {
     memset(fb, 0, sizeof(fb));
     dm2_v2_hud_runtime_render_with_assets(fb, 320, 200);
 
-    /* The blit path is preferred over the legacy stamp when the
-     * PNG is decodable. The framebuffer pixel at each REAL slot's
-     * anchor must equal the synthetic fixture's R value, NOT the
-     * legacy stamp's opacity byte. */
+    /* Classification remains diagnostic-only. */
     CHECK(dm2_v2_hud_runtime_last_path_mode(
               DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW) ==
               DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP,
-          "inventory_quick_view routed to REAL_BITMAP (blit path)");
+          "inventory_quick_view has REAL diagnostic classification");
     CHECK(dm2_v2_hud_runtime_last_path_mode(
               DM2_V2_HUD_WIDGET_ACTION_PROMPT) ==
               DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP,
-          "action_prompt routed to REAL_BITMAP (blit path)");
+          "action_prompt has REAL diagnostic classification");
 
-    /* Anchor (80, 4) for inventory_quick_view is inside the top
-     * status bar where the procedural champion-bar 0 is drawn.
-     * With default HP=0/stamina=0/mana=0, the bar segments are
-     * zero-width and only the leader star could touch that area.
-     * Since leader defaults to false, the procedural render does
-     * not write to (80, 4); the blit value is preserved. */
-    CHECK(fb[k_anchors[0].y * 320 + k_anchors[0].x] == px_iqv.r,
-          "inventory_quick_view anchor holds decoded R from synthetic PNG");
-
-    /* Anchor (220, 4) for action_prompt is inside the top status
-     * bar where the procedural champion-bar 3 is drawn. With all
-     * default values, the procedural render writes nothing to that
-     * pixel; the blit value is preserved. */
-    CHECK(fb[k_anchors[1].y * 320 + k_anchors[1].x] == px_ap.r,
-          "action_prompt anchor holds decoded R from synthetic PNG");
-
-    /* The action_prompt fixture's R value (0x33) is distinct from
-     * the legacy 1-pixel stamp's opacity byte (0xFF), which proves
-     * the blit path actually ran end-to-end through the runtime
-     * rather than the stamp fallback. The check is on px_ap.r
-     * itself, not on the framebuffer, so it holds even if the
-     * framebuffer pixel were ever overwritten by a future chrome
-     * change. */
-    CHECK(px_ap.r != 0xFF,
-          "action_prompt R is distinct from stamp opacity (blit ran, not stamp)");
+    CHECK(fb[k_anchors[0].y * 320 + k_anchors[0].x] == 0,
+          "inventory_quick_view fixture cannot write its anchor");
+    CHECK(fb[k_anchors[1].y * 320 + k_anchors[1].x] == 0,
+          "action_prompt fixture cannot write its anchor");
 
     /* All other slots are MISSING or PLACEHOLDER; path-mode is
      * procedural fallback for those. */
@@ -865,7 +834,7 @@ int main(void) {
     test_phase_gate_blocks_stamps();
     test_out_of_range_queries_are_safe();
     test_source_evidence_citation();
-    test_bounded_blit_end_to_end();
+    test_synthetic_widget_no_draw();
 
     clean_scratch();
 

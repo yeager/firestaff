@@ -232,9 +232,8 @@ const char *dm2_v2_hud_runtime_source_evidence(void)
         "CHAMPIONS image field 0: portrait pixels\n"
         "Each IMG3 draw maps logical pixels through its paired dtPalette16 table.\n"
         "Source: dm2_v2_hud_widget_assets     (per-slot REAL/PARTIAL/PLACEHOLDER gate, Phase 3 hook)\n"
-        "Source: dm2_v2_hud_widget_bitmap_blit (bounded real-bitmap blit path, Phase 3 follow-up)\n"
+        "Source: dm2_v2_hud_widget_bitmap_blit (fixture decoder; strict no-draw)\n"
         "V1 invariant: V1 command routes, inventory, dungeon state NEVER bypassed\n"
         "Rule: mounted original data draws decoded GDAT pixels only; missing pixels or palettes are not synthesized.\n"
-        "Finished bitmap art stays OPEN-BOUNDED honesty: operator-installed assets\n"
-        "are consumed through the blit path, never synthesized.\n";
+        "Manifest or fixture art is never a HUD pixel owner.\n";
 }

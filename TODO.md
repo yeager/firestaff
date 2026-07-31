@@ -313,7 +313,11 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 update:** the older direct V2 overlay entry point itself is
   now strict no-draw. Its hard-coded compass, glyph, status-bar and action
   strip renderer is compiled out, so callers without a mounted original GDAT
-  context cannot synthesize a DM2 HUD.
+  context cannot synthesize a DM2 HUD. **2026-07-31 update:** the remaining
+  public synthetic-PNG blit compatibility hooks now also return no-draw for
+  every input; fixture decoding remains probe-only and cannot write a game
+  framebuffer. Remaining work is source-verified coverage for undecoded
+  GDAT HUD surfaces.
 - **THERON-ORIGINAL-REPLACE-001:** Replace the coloured UI chrome, checkerboard
   palette and chapter-marker placeholders with real US/JP Track 02 bitmap,
   palette and loader-selected records.  The supplied `TQUS02.bin`, CUE and

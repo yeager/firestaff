@@ -44613,3 +44613,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   session. When C009/C010 material is unavailable, the source-owned CSB area
   remains black. Verification: CSB M11 startup/resume and Prison-runtime HUD
   regressions pass.
+- ✅ 2026-07-31 DM2 V2 HUD synthetic-PNG closure: the public one-pixel PNG
+  compatibility hooks now return strict no-draw even for a valid fixture.
+  SK-projects `c_gdatfile.cpp::DM2_LOAD_GDAT_INTERFACE_00_02` establishes
+  that original interface GDAT owns the HUD source bytes; only the mounted
+  `INTERFACE_GENERAL`/`CHAMPIONS` route can write runtime pixels. Fixture
+  decoding remains isolated to probes and cannot promote generated or
+  operator-provided art into the framebuffer.

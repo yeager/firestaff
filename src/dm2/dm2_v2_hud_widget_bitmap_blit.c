@@ -6,9 +6,8 @@
  * The blit path is intentionally tiny: it only handles the synthetic-
  * test PNG envelope that examples/dm2_hud_widget_synthetic/ already
  * ships (1x1, 8-bit, color type 6 RGBA, single IDAT, zlib deflate).
- * Anything outside that envelope returns 0 so the caller can fall
- * back to the legacy 1-pixel anchor stamp and the V1 chrome
- * fallback stays byte-identical to the no-gate baseline.
+ * The decoder is diagnostics-only. Both framebuffer-facing compatibility
+ * hooks below return no-draw for every input.
  *
  * Source:
  *   - SKULL.ASM T560 (DM2 HUD rendering pipeline)
@@ -275,53 +274,31 @@ int dm2_v2_hud_widget_bitmap_blit_read_pixel(
     return 1;
 }
 
-/* ── Bounded single-pixel blit ──────────────────────────────────── */
+/* ── Retired framebuffer compatibility hook ─────────────────────── */
 int dm2_v2_hud_widget_bitmap_blit_pixel_rgba(
     uint8_t* fb, int w, int h_res,
     int dst_x, int dst_y,
     uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    (void)g; (void)b; /* DM2 HUD writes palette-indexed bytes; we use R */
-    if (!fb || w <= 0 || h_res <= 0) return 0;
-    if (dst_x < 0 || dst_x >= w) return 0;
-    if (dst_y < 0 || dst_y >= h_res) return 0;
-
-    uint8_t* cell = fb + (size_t)dst_y * (size_t)w + (size_t)dst_x;
-    if (a >= 255) {
-        *cell = r;
-    } else {
-        /* "Src over Dst" integer alpha blend, clamped to byte range.
-         * The red channel is what we ultimately store (palette index),
-         * but we blend on R to keep the math symmetric. */
-        uint16_t dst = (uint16_t)*cell;
-        uint16_t src = (uint16_t)r;
-        uint16_t out = (uint16_t)(((uint32_t)src * a +
-                                   (uint32_t)dst * (255U - a)) / 255U);
-        if (out > 255U) out = 255U;
-        *cell = (uint8_t)out;
-    }
-    return 1;
+    /* SKWIN c_gdatfile.cpp::DM2_LOAD_GDAT_INTERFACE_00_02 owns the HUD
+     * source bytes. A PNG fixture has no authenticated GDAT owner, so even
+     * a direct public call must not turn it into a game pixel. */
+    (void)fb; (void)w; (void)h_res; (void)dst_x; (void)dst_y;
+    (void)r; (void)g; (void)b; (void)a;
+    return 0;
 }
 
-/* ── High-level: read PNG + bounded blit ────────────────────────── */
+/* ── Retired slot-render compatibility hook ─────────────────────── */
 int dm2_v2_hud_widget_bitmap_blit_render_slot(
     const DM2_V2_HudWidgetSlotInfo* info,
     uint8_t* fb, int w, int h_res,
     int dst_x, int dst_y)
 {
-    if (!info) return 0;
-    /* Guard against a REAL slot whose source_file did not actually
-     * resolve on disk (i.e. PARTIAL-classified). The gate already
-     * filters these, but the blit defends itself anyway. */
-    if (info->resolved_path[0] == '\0') return 0;
-    if (!info->file_exists) return 0;
-
-    DM2_V2_HudWidgetBlitPixel px;
-    if (!dm2_v2_hud_widget_bitmap_blit_read_pixel(info->resolved_path, &px)) {
-        return 0;
-    }
-    return dm2_v2_hud_widget_bitmap_blit_pixel_rgba(
-        fb, w, h_res, dst_x, dst_y, px.r, px.g, px.b, px.a);
+    /* Widget PNGs are diagnostic fixtures, not a source-art format. Keep
+     * the exported compatibility hook strict no-draw until it receives a
+     * decoded, hash-verified GDAT material receipt. */
+    (void)info; (void)fb; (void)w; (void)h_res; (void)dst_x; (void)dst_y;
+    return 0;
 }
 
 /* ── Source evidence ────────────────────────────────────────────── */
@@ -335,19 +312,9 @@ const char* dm2_v2_hud_widget_bitmap_blit_source_evidence(void) {
         "Source: examples/dm2_hud_widget_synthetic/ (synthetic 1x1 RGBA fixtures)\n"
         "Source: include/dm2_v2_hud_widget_assets.h (slot gate this module reads)\n"
         "Source: include/dm2_v2_hud_runtime.h (runtime hook this module extends)\n"
-        "Envelope: 1x1 8-bit RGBA color-type-6 single-IDAT PNGs only\n"
-        "Bounded: dst_x clamped to [0,w), dst_y clamped to [0,h_res);\n"
-        "         file size capped at DM2_V2_HUD_WIDGET_BLIT_MAX_FILE_BYTES (64KB)\n"
-        "         multi-pixel PNGs explicitly rejected (gate stays synthetic-only)\n"
-        "Fallback: 1-pixel anchor stamp via dm2_v2_hud_runtime_stamp_real_slot()\n"
-        "          when this module returns 0 (unsupported format, decompression\n"
-        "          failure, file missing, destination out of bounds)\n"
-        "Honest boundary: the bounded blit ONLY substitutes the procedural\n"
-        "                  fallback for synthetic 1x1 RGBA test fixtures. It is\n"
-        "                  NOT a finished-PBR real-art decoder. Real-art promotion\n"
-        "                  requires a multi-pixel decode path (OPEN-BOUNDED next\n"
-        "                  step) plus a sibling gap-list update.\n"
-        "V1 invariant: V1 framebuffer is only ever written inside [0,w) x [0,h_res)\n"
-        "V2 rule: the blit only runs for DM2_V2_HUD_WIDGET_CLASS_REAL slots whose\n"
-        "         manifest source_file resolves on disk; everything else falls back\n";
+        "Fixture decoder: 1x1 8-bit RGBA color-type-6 test PNGs only\n"
+        "Runtime rule: this module is strict no-draw; manifest PNGs cannot\n"
+        "              become indexed framebuffer pixels.\n"
+        "Source-owner rule: only the mounted GDAT INTERFACE_GENERAL and\n"
+        "                   CHAMPIONS command route may draw a DM2 HUD.\n";
 }

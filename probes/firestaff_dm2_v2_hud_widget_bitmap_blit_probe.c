@@ -330,26 +330,21 @@ static void test_non_rgba_rejected(void) {
           px.width == 0 && px.color_type == 0);
 }
 
-/* ── Scenario: bounded single-pixel blit writes the R channel ──── */
+/* ── Scenario: retired synthetic blit is strict no-draw ────────── */
 
-static void test_blit_pixel_rgba_writes(void) {
-    printf("\n[ Scenario 6: bounded single-pixel blit ]\n");
-    /* 16x8 framebuffer; blit a single pixel at (5, 3) with R=42.
-     * Every other byte must remain at the sentinel 0x33. */
+static void test_blit_pixel_rgba_no_draw(void) {
+    printf("\n[ Scenario 6: synthetic blit strict no-draw ]\n");
     uint8_t fb[16 * 8];
     memset(fb, 0x33, sizeof(fb));
     int ok = dm2_v2_hud_widget_bitmap_blit_pixel_rgba(
         fb, 16, 8, 5, 3,
         /*r=*/42, /*g=*/200, /*b=*/10, /*a=*/255);
-    check("blit returns 1 for in-bounds destination", ok == 1);
-    check("blit wrote the R channel at (5,3)",
-          fb[3 * 16 + 5] == 42);
-    int rest_intact = 1;
+    check("valid synthetic pixel returns no-draw", ok == 0);
+    int all_intact = 1;
     for (int i = 0; i < (int)sizeof(fb); ++i) {
-        if (i == 3 * 16 + 5) continue;
-        if (fb[i] != 0x33) { rest_intact = 0; break; }
+        if (fb[i] != 0x33) { all_intact = 0; break; }
     }
-    check("blit left every other byte at sentinel", rest_intact);
+    check("valid synthetic pixel leaves framebuffer unchanged", all_intact);
 }
 
 /* ── Scenario: out-of-bounds blit never writes ──────────────────── */
@@ -394,40 +389,23 @@ static void test_out_of_bounds_no_write(void) {
     check("h_res<=0 returns 0", ok == 0);
 }
 
-/* ── Scenario: alpha-blend does src-over-dst correctly ──────────── */
+/* ── Scenario: alpha input cannot bypass no-draw ───────────────── */
 
-static void test_alpha_blend(void) {
-    printf("\n[ Scenario 8: alpha-blend (a<255) src-over-dst ]\n");
-    /* dst=0x80 (128), src R=0xFF (255), a=128 (≈50%).
-     * Expected: (255*128 + 128*127) / 255 = 191. */
+static void test_alpha_no_draw(void) {
+    printf("\n[ Scenario 8: alpha cannot bypass no-draw ]\n");
     uint8_t fb[1] = { 0x80 };
     int ok = dm2_v2_hud_widget_bitmap_blit_pixel_rgba(
         fb, 1, 1, 0, 0, 0xFF, 0, 0, /*a=*/128);
-    check("alpha-blend returns 1", ok == 1);
-    int expected = (255 * 128 + 128 * 127) / 255;
-    check("alpha-blend result matches src-over-dst formula",
-          fb[0] == (uint8_t)expected);
-
-    /* a=0 → result equals dst (no contribution from src). */
-    fb[0] = 0x40;
-    ok = dm2_v2_hud_widget_bitmap_blit_pixel_rgba(
-        fb, 1, 1, 0, 0, 0xFF, 0, 0, /*a=*/0);
-    check("a=0 leaves dst byte unchanged (0x40)", ok == 1 && fb[0] == 0x40);
-
-    /* a=255 → exact src overwrite. */
-    fb[0] = 0x40;
-    ok = dm2_v2_hud_widget_bitmap_blit_pixel_rgba(
-        fb, 1, 1, 0, 0, 0xAB, 0, 0, /*a=*/255);
-    check("a=255 overwrites with src R", ok == 1 && fb[0] == 0xAB);
+    check("alpha input returns no-draw", ok == 0);
+    check("alpha input leaves framebuffer unchanged", fb[0] == 0x80);
 }
 
-/* ── Scenario: high-level render_slot reads PNG + blits ────────── */
+/* ── Scenario: high-level render_slot is strict no-draw ────────── */
 
 static void test_render_slot_end_to_end(void) {
-    printf("\n[ Scenario 9: render_slot reads PNG + bounded blit ]\n");
-    /* Build a fresh slot info pointing at each synthetic fixture and
-     * assert the blit writes the expected R at the slot's anchor
-     * (the same anchor the runtime's stamp fallback would use). */
+    printf("\n[ Scenario 9: render_slot strict no-draw ]\n");
+    /* A valid, manifest-shaped fixture must still be unable to write a
+     * framebuffer: only decoded, mounted GDAT owns DM2 HUD pixels. */
     int all_ok = 1;
     for (size_t i = 0; i < DM2_V2_HUD_WIDGET_COUNT; ++i) {
         DM2_V2_HudWidgetSlotInfo info;
@@ -443,8 +421,8 @@ static void test_render_slot_end_to_end(void) {
         snprintf(info.resolved_path, sizeof(info.resolved_path), "%s",
                  k_slot_fixtures[i].fixture_path);
 
-        /* Read the expected R value from the same fixture (so the
-         * probe is self-consistent if the fixture colour changes). */
+        /* The isolated decoder may inspect the fixture, but render_slot may
+         * never promote its bytes into game output. */
         DM2_V2_HudWidgetBlitPixel px;
         if (!dm2_v2_hud_widget_bitmap_blit_read_pixel(
                 k_slot_fixtures[i].fixture_path, &px)) {
@@ -455,25 +433,22 @@ static void test_render_slot_end_to_end(void) {
             all_ok = 0;
             continue;
         }
-        uint8_t expected_r = px.r;
-
-        /* 320x200 framebuffer zeroed; blit at the runtime anchor. */
+        /* 320x200 framebuffer uses a sentinel to prove no write. */
         uint8_t fb[320 * 200];
-        memset(fb, 0, sizeof(fb));
+        memset(fb, 0x6d, sizeof(fb));
         int ok = dm2_v2_hud_widget_bitmap_blit_render_slot(
             &info, fb, 320, 200,
             k_anchors[i].x, k_anchors[i].y);
         char name[160];
         snprintf(name, sizeof(name),
-                 "%s: render_slot returns 1", info.id);
-        check(name, ok == 1);
+                 "%s: render_slot returns strict no-draw", info.id);
+        check(name, ok == 0);
 
         snprintf(name, sizeof(name),
-                 "%s: blit wrote expected R=0x%02X at anchor (%d,%d)",
-                 info.id, expected_r,
+                 "%s: fixture cannot change anchor (%d,%d)", info.id,
                  k_anchors[i].x, k_anchors[i].y);
         check(name,
-              fb[k_anchors[i].y * 320 + k_anchors[i].x] == expected_r);
+              fb[k_anchors[i].y * 320 + k_anchors[i].x] == 0x6d);
     }
     check("end-to-end render_slot ran for all 7 slots", all_ok);
 
@@ -508,12 +483,8 @@ static void test_source_evidence(void) {
     check("cites ReDMCSB PANEL.C", strstr(ev, "ReDMCSB PANEL.C") != NULL);
     check("mentions synthetic 1x1 RGBA envelope",
           strstr(ev, "1x1") != NULL && strstr(ev, "RGBA") != NULL);
-    check("mentions Bounded destination clamp",
-          strstr(ev, "clamp") != NULL);
-    check("mentions OPEN-BOUNDED honesty for real art",
-          strstr(ev, "OPEN-BOUNDED") != NULL);
-    check("mentions V1 framebuffer invariant",
-          strstr(ev, "V1") != NULL);
+    check("states strict no-draw", strstr(ev, "strict no-draw") != NULL);
+    check("states GDAT source owner", strstr(ev, "GDAT") != NULL);
 }
 
 /* ── Main ──────────────────────────────────────────────────────── */
@@ -529,9 +500,9 @@ int main(void) {
     test_synthetic_fixtures_decode();
     test_multi_pixel_rejected();
     test_non_rgba_rejected();
-    test_blit_pixel_rgba_writes();
+    test_blit_pixel_rgba_no_draw();
     test_out_of_bounds_no_write();
-    test_alpha_blend();
+    test_alpha_no_draw();
     test_render_slot_end_to_end();
     test_source_evidence();
 

@@ -1,11 +1,8 @@
 /*
  * dm2_v2_hud_widget_bitmap_blit.h — DM2 V2 HUD Widget bounded bitmap blit
  *
- * Phase 3 follow-up: bounded real-bitmap blit path for the DM2 V2 HUD
- * widget runtime hook. Sits between dm2_v2_hud_widget_assets (the
- * manifest gate that classifies each slot) and
- * dm2_v2_hud_runtime_render_with_assets (the runtime entry that
- * currently emits a single-pixel anchor stamp for REAL slots).
+ * Fixture-only PNG reader retained for HUD-manifest diagnostics. It must
+ * never own runtime pixels: original DM2 HUD rendering is GDAT-only.
  *
  * The blit path is intentionally bounded to the synthetic-test
  * fixture format already shipped under examples/dm2_hud_widget_synthetic/:
@@ -14,24 +11,17 @@
  *   - Color type 6 (RGBA, non-interlaced)
  *   - Single IDAT chunk (typical for tiny fixtures)
  *
- * Anything outside that envelope (different dimensions, indexed color,
- * different bit depth, interlaced, missing IDAT, missing signature,
- * file missing, path outside the asset manifest's resolved_path,
- * decompression failure, ...) returns 0 and the caller is expected to
- * fall back to the legacy 1-pixel anchor stamp — never to crash, never
- * to write out of bounds, never to claim a finished bitmap decode for
- * anything beyond a synthetic-test fixture.
+ * Anything outside that envelope returns 0. The renderer-facing APIs below
+ * deliberately return 0 for every input, including a valid fixture, so a
+ * manifest cannot promote synthetic or operator-provided art into DM2.
  *
- * Honest boundary (mirrors examples/dm2_hud_widget_synthetic/README.md):
- *   - This module enables the manifest gate's REAL classification to
- *     actually substitute the procedural fallback for a small bounded
- *     blit, using the synthetic 1x1 RGBA PNG fixtures already on disk.
- *   - It does NOT decode multi-pixel PNGs, does NOT blit to arbitrary
- *     destinations, does NOT claim operator-installable finished art.
- *   - Real-art promotion requires a multi-pixel decode path (OPEN-
- *     BOUNDED next step) and a sibling gap-list update. This module
- *     is the seam that future real-art code lands behind — it proves
- *     the runtime hook is wired end-to-end with a synthetic-only blit.
+ * Source-owner boundary:
+ *   - Manifest classification is diagnostics only; it cannot grant a PNG
+ *     ownership of a DM2 HUD surface.
+ *   - The ordinary DM2 HUD path uses authenticated
+ *     INTERFACE_GENERAL/CHAMPIONS GDAT records and their paired palettes.
+ *   - Any future material path must carry that original-data provenance;
+ *     it must not repurpose this fixture decoder as a renderer.
  *
  * Source:
  *   - SKULL.ASM T560 (DM2 HUD rendering pipeline)
@@ -111,44 +101,18 @@ int dm2_v2_hud_widget_bitmap_blit_read_pixel(
     const char* path,
     DM2_V2_HudWidgetBlitPixel* out_pixel);
 
-/* Bounded single-pixel blit into a framebuffer.
+/* Retired single-pixel blit compatibility entry point.
  *
- * Writes the (r,g,b,a) pixel at (dst_x, dst_y) into fb, with the
- * following bounds guarantees:
- *   - If dst_x is outside [0, w), returns 0 without writing.
- *   - If dst_y is outside [0, h_res), returns 0 without writing.
- *   - If a == 255, overwrites fb[y*w+x] = r (red channel as the
- *     palette-index byte, matching the existing
- *     dm2_v2_hud_overlay drawing convention).
- *   - If a < 255, alpha-blends over fb[y*w+x] using the standard
- *     "src over dst" integer blend: out = (a*src + (255-a)*dst) / 255.
- *   - Any other fb parameter (NULL, w<=0, h_res<=0) returns 0.
- *
- * The red-channel-as-index convention keeps the synthetic blit
- * testable: each fixture has a distinct R value (see
- * examples/dm2_hud_widget_synthetic/) so a probe can read back the
- * blitted byte and assert it matches the expected R for that slot.
- *
- * Returns 1 on a successful in-bounds write, 0 on no-op (out of
- * bounds or invalid arguments). */
+ * Always returns 0 without changing fb. Kept only for API compatibility;
+ * use the mounted GDAT renderer for any real HUD surface. */
 int dm2_v2_hud_widget_bitmap_blit_pixel_rgba(
     uint8_t* fb, int w, int h_res,
     int dst_x, int dst_y,
     uint8_t r, uint8_t g, uint8_t b, uint8_t a);
 
-/* High-level: read a slot's PNG and bounded-blit its pixel.
+/* Retired high-level PNG compatibility entry point.
  *
- * Reads info->resolved_path through the synthetic envelope. Returns 1
- * on a successful in-bounds blit, 0 on any failure (file missing,
- * unsupported format, decompression error, destination outside
- * framebuffer). The runtime uses 0 as the signal to fall back to the
- * legacy 1-pixel anchor stamp, preserving the no-gate baseline byte
- * pattern for any slot whose blit cannot run.
- *
- * Defensive: refuses to run when info->resolved_path is empty (a
- * REAL-classified slot whose source_file did not resolve) — that is
- * a PARTIAL slot, not a REAL one, and the gate should never have
- * routed it here. */
+ * Always returns 0 without reading or writing a runtime framebuffer. */
 int dm2_v2_hud_widget_bitmap_blit_render_slot(
     const DM2_V2_HudWidgetSlotInfo* info,
     uint8_t* fb, int w, int h_res,

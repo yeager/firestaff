@@ -3921,10 +3921,9 @@ if(DM2_V2_SOURCES)
     # renderer. Link PUBLIC so HUD probes inherit the contract.
     # Source: src/dm2/dm2_v1_viewport_renderer.c.
     target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_dm2)
-    # dm2_v2_hud_widget_bitmap_blit.c decodes synthetic 1x1 PNG IDAT
-    # chunks via the bundled miniz. Linking PUBLIC so the standalone
-    # bitmap-blit probe (and any future real-art blit path) inherit
-    # FIRESTAFF_HAS_ZLIB without re-declaring the linkage contract.
+    # dm2_v2_hud_widget_bitmap_blit.c reads isolated synthetic fixtures for
+    # diagnostic probes only. Its public render hooks are strict no-draw.
+    # Linking PUBLIC lets the decoder probe inherit FIRESTAFF_HAS_ZLIB.
     # Source: src/dm2/dm2_v2_hud_widget_bitmap_blit.c
     firestaff_link_zlib(firestaff_dm2_v2 PUBLIC)
     if(NOT MSVC)
@@ -17460,15 +17459,9 @@ if(BUILD_TESTING)
         COMMAND firestaff_dm2_v2_hud_widget_real_slot_receipt_probe
     )
 
-    # Phase 3 widget bitmap follow-up: bounded bitmap blit probe.
-    # Verifies the dm2_v2_hud_widget_bitmap_blit module reads the
-    # synthetic 1x1 RGBA PNG fixtures from
-    # examples/dm2_hud_widget_synthetic/, bounded-blits the red
-    # channel at the slot's anchor, and falls back gracefully when
-    # the blit cannot run (unsupported PNG format, missing file, out-
-    # of-bounds destination, zlib disabled at build time). Companion
-    # to firestaff_dm2_v2_hud_widget_runtime_hook_probe (which now
-    # exercises the blit path end-to-end via the runtime stamp).
+    # Fixture-decoder/no-draw probe. It verifies that isolated synthetic
+    # 1x1 PNG fixtures can be inspected by diagnostics but cannot write a
+    # DM2 framebuffer through either public compatibility hook.
     add_executable(firestaff_dm2_v2_hud_widget_bitmap_blit_probe
         probes/firestaff_dm2_v2_hud_widget_bitmap_blit_probe.c
     )
