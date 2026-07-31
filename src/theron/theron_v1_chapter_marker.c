@@ -162,18 +162,16 @@ int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
 
     /* ── Chapter label ─────────────────────────────────── */
     if (!has_progression && marker->boot_assets_verified == 0) {
-        /* No real assets, no progression: synthetic fallback.
-         * Keep this clearly labelled so the launcher does not
-         * pretend the user is really at "Chapter 1" before any
-         * boot work happened. */
+        /* No verified assets and no progression: expose unavailable state.
+         * Never fabricate Chapter 1 or an empty quest counter for the user. */
         marker->verdict = THERON_MARKER_VERDICT_SKIP_NO_ASSET;
         copy_bounded(marker->chapter_label, sizeof(marker->chapter_label),
-                      "Chapter 1 (synthetic — no progression supplied)");
+                      "Chapter unavailable (no verified progression)");
         copy_bounded(marker->quest_summary, sizeof(marker->quest_summary),
-                      "0/7 items collected (synthetic)");
+                      "Quest progress unavailable");
         copy_bounded(marker->next_dungeon_hint,
                       sizeof(marker->next_dungeon_hint),
-                      "Next: Hall of Records (synthetic)");
+                      "Next dungeon unavailable");
     } else if (all_collected) {
         marker->verdict = THERON_MARKER_VERDICT_OK_QUEST_COMPLETE;
         copy_bounded(marker->chapter_label, sizeof(marker->chapter_label),

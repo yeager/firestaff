@@ -12,8 +12,8 @@
  * Design contract:
  *   - The marker is skip-safe: it never opens Track 02 and never
  *     stat()s a save file unless the caller asks for a real save
- *     lookup.  The default synthetic path (zeroed progression +
- *     boot_profile_init) is always usable, so CI is deterministic.
+ *     lookup.  A missing progression is reported as unavailable; no chapter
+ *     or quest count is fabricated for the launcher.
  *   - Real-asset path is opt-in: pass a non-NULL save_root to
  *     theron_v1_chapter_marker_compute_save() and the marker will
  *     enumerate saves/theron/ for the freshest slot.  If no save
@@ -48,9 +48,7 @@ typedef enum {
     THERON_MARKER_VERDICT_SKIP_NO_PROFILE     = 0,
 
     /* Boot profile present but assets_verified == 0 and no
-     * progression supplied.  Marker still produces a synthetic
-     * "Chapter 1: Hall of Records" label so the launcher has
-     * something to display. */
+     * progression supplied.  Marker reports unavailable state. */
     THERON_MARKER_VERDICT_SKIP_NO_ASSET       = 1,
 
     /* Boot profile + progression supplied.  No save enumeration
@@ -95,7 +93,7 @@ typedef struct {
     /* e.g. "Chapter 1: Hall of Records"
      *      "Chapter 7: Tower of Epilogue (final)"
      *      "Quest Complete (7/7 items)"
-     *      "Chapter ? (synthetic — no progression)"
+     *      "Chapter unavailable (no verified progression)"
      */
 
     /* ── Quest-item summary ─────────────────────────────── */
@@ -138,9 +136,8 @@ void theron_v1_chapter_marker_init(Theron_ChapterMarker *marker);
  * or request a save lookup via theron_v1_chapter_marker_compute_save.
  *
  * profile     - input, may be NULL (then marker is SKIP_NO_PROFILE)
- * progression - input, may be NULL (then marker uses synthetic
- *               "Chapter 1: Hall of Records" defaults from the boot
- *               profile)
+ * progression - input, may be NULL (then marker reports unavailable
+ *               progression rather than inventing a chapter)
  * save_slot   - input, may be NULL (then freshest_save is empty)
  *
  * All other marker fields are computed from these three inputs plus

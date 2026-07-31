@@ -213,10 +213,10 @@ static void check_no_asset_synthetic(void) {
           "no-asset: boot_profile_present == 1");
     CHECK(m.boot_assets_verified == 0,
           "no-asset: boot_assets_verified == 0");
-    CHECK(strstr(m.chapter_label, "synthetic") != NULL,
-          "no-asset: chapter label is clearly synthetic");
-    CHECK(strstr(m.quest_summary, "0/7") != NULL,
-          "no-asset: quest summary shows 0/7 collected");
+    CHECK(strstr(m.chapter_label, "unavailable") != NULL,
+          "no-asset: chapter label reports unavailable");
+    CHECK(strstr(m.quest_summary, "unavailable") != NULL,
+          "no-asset: quest summary reports unavailable");
 }
 
 static void check_fresh_profile(void) {

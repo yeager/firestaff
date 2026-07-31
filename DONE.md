@@ -4,6 +4,13 @@
   handoff as well. It cannot initialize a blank, diagnostic or filename-only
   DM2 runtime outside M11.
 
+- ✅ 2026-07-31 Theron unavailable chapter marker: tog bort den datalösa
+  markörens syntetiska `Chapter 1`, `0/7` och nästa-dungeon-etiketter. När
+  inga verifierade tillgångar eller progression finns rapporteras nu ett
+  tydligt unavailable-läge; verifierad progression använder fortfarande
+  DMWeb:s dungeon- och relicmetadata. Verifiering:
+  `firestaff_theron_v1_chapter_marker_probe` 65/65 samt `git diff --check`.
+
 - ✅ 2026-07-31 DM2 V2 HUD portrait ownership: removed the V2 compatibility
   overlay's ordinal `CHAMPIONS` portrait and portrait-panel redraw. SKProject
   `DRAW_CHAMPION_PICTURE` selects from the live hero type, not screen slot;
