@@ -3902,6 +3902,12 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_bpx_bpk\\.c$")
 # admission is handled by nexus_v1_rlowfix_text.c until full Saturn glyph and
 # layout evidence is available.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_text\\.c$")
+# The S2D ASCII/Shift-JIS layout and byte-window helpers are diagnostic
+# contracts only; no production caller has authenticated Saturn text
+# presentation semantics yet.  Keep them in their explicit probes.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_s2d_text_layout\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_s2d_glyph_decode\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_screen_text\\.c$")
 # M11 owns the shared host lifecycle and calls these four runtime adapters.
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
