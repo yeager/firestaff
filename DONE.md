@@ -45569,3 +45569,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Source: SKProject `SkWinCore.cpp` object-ID/GDAT dispatch. Verification:
   `test_dm2_v1_spell_pc34_compat` and real-data
   `test_dm2_v1_m11_startup_profile_gate`.
+- ✅ 2026-07-31 CSB duplicate D1L2/D1R2 wall-route removal: removed the
+  unconsumed contract-only duplicate of F0122/F0123, including its synthetic
+  source coordinates and test target. D1L/D1R now has one PC3.4
+  `GRAPHICS.DAT` material owner instead of competing models.

@@ -536,9 +536,9 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D3C backdrop follow-up:** retired the synthetic three-colour
   backdrop/ornament compositor. F0097/F0098/F0107/F0108/F0118 ordering,
   zones and C10 rules remain metadata-only until original material is bound.
-  **2026-07-31 D1L2/D1R2 wall follow-up:** retired the generic frame-clip
-  compositor and its synthetic raster runner. F0122/F0123 route geometry,
-  flip rules and C10 metadata remain unavailable for pixel output by design.
+  **2026-07-31 D1L2/D1R2 wall follow-up:** removed the duplicate synthetic
+  metadata/test route. It duplicated F0122/F0123 D1L/D1R ownership without a
+  consumer; the real PC3.4 material binding is now the sole owner.
   **2026-07-31 D3L2/D3R2 wall follow-up:** retired its generic C10 frame
   clipper; only source-locked zones, geometry and F0105 metadata remain.
   **2026-07-31 D1L/D1R declaration follow-up:** the stale, unimplemented
