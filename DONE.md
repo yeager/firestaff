@@ -45591,3 +45591,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-31 CSB fabricated D0L2/D0R2 wall removal: removed the unused
   wall contract module, CTest and synthetic parity manifest. ReDMCSB F0125/
   F0126 owns D0L/D0R; no D0L2/D0R2 PC3.4 view squares exist.
+- ✅ 2026-07-31 CSB duplicate D3L/D3R backdrop removal: removed the
+  contract-only backdrop trace and CTest. The M11 source-bound side-wall
+  handoff remains the only production owner of F0116/F0117 material.

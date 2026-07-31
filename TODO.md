@@ -502,6 +502,8 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D3L/D3R wall follow-up:** removed the unconsumed contract-only
   trace, including its synthetic transparency simulation. Runtime D3 side-wall
   ownership remains the existing source-bound wall-set handoff.
+  **2026-07-31 D3L/D3R backdrop follow-up:** removed the duplicate synthetic
+  backdrop trace; it had no production consumer or original material binding.
   **2026-07-31 D3L2/D3R2 thing follow-up:** the F0115 fixture blit is removed;
   source route, cell and dynamic-flip metadata remain available without pixels.
   **2026-07-31 D2L2/D2R2 wall follow-up:** the F0104/F0105 C10 fixture blit
