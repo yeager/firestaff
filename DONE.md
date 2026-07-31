@@ -46195,3 +46195,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   compositor remains the viewport owner. References reviewed: ReDMCSB
   `DUNVIEW.C F0111/F0115` and CSBWin `Viewport.cpp`. Verification: M11 build,
   local-PC34 first-frame material test 109/109, and `git diff --check`.
+- ✅ 2026-07-31 DM2 viewport GRAPHICSSET receipt closure: an invalid
+  `UPDATE_GFXSET` selector or missing command hash no longer becomes graphics
+  set zero. It clears the active material and recalculated-light receipts, so
+  a new scene cannot inherit pixels or light from the previous source
+  transaction. Source: SKProject `SKWIN/SkWinCore.cpp::UPDATE_GFXSET`
+  (14493-14525) and `RECALC_LIGHT_LEVEL` (5093-5131). Verification:
+  `test_dm2_v1_scene_light_control`, real-data scene/wall-plan viewport
+  probes, DM2 M11 viewport composition, `firestaff_dm2`, and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass.

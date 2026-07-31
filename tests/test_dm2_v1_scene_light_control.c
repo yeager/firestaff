@@ -63,6 +63,20 @@ int main(void)
               viewport.gdat_scene_light_consumed_count == 1,
           "active dungeon frame consumes the bounded source light plan");
 
+    /* skproject/SKWIN/SkWinCore.cpp UPDATE_GFXSET 14493-14525 owns one
+     * GRAPHICSSET command receipt; an invalid selector cannot inherit the
+     * previous scene's materials or recalculated light plan. */
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, -1, 0x53434e45u, 0u, 0u, 4u, 9u, 0u, 0u,
+        0u, 0u, 0u, 12u);
+    check(!viewport.gdat_scene_control_ready &&
+              viewport.gdat_scene_material_index == 0 &&
+              viewport.gdat_scene_control_hash == 0u &&
+              viewport.gdat_scene_light_floor == 0u &&
+              viewport.gdat_scene_light_search_depth == 0u &&
+              viewport.gdat_scene_light_recompute_enabled == 0,
+          "invalid GRAPHICSSET selector clears rather than falling back to set zero");
+
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 0, 3, 0x53434e45u, 0u, 0u, 4u, 9u, 0u, 0u,
         0u, 0u, 0u, 12u);

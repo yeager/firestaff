@@ -1587,25 +1587,29 @@ void dm2_v1_viewport_set_gdat_scene_control(
     uint16_t thunder_position,
     uint16_t ambient_darkness)
 {
+    int valid;
     if (!s) return;
-    s->gdat_scene_control_ready = ready ? 1 : 0;
-    s->gdat_scene_material_index = ready && graphicsset_index >= 0 &&
-        graphicsset_index <= 0xff ? graphicsset_index : 0;
-    s->gdat_scene_control_hash = ready ? hash : 0u;
-    s->gdat_scene_colorkey = ready ? scene_colorkey : 0u;
-    s->gdat_scene_flags = ready ? scene_flags : 0u;
-    s->gdat_ambient_light = ready ? ambient_light : 0u;
-    s->gdat_highest_light_level = ready ? highest_light_level : 0u;
-    s->gdat_void_random_fall = ready ? void_random_fall : 0u;
-    s->gdat_animated_floor = ready ? animated_floor : 0u;
-    s->gdat_scene_rain = ready ? scene_rain : 0u;
-    s->gdat_misty_map = ready ? misty_map : 0u;
-    s->gdat_thunder_position = ready ? thunder_position : 0u;
-    s->gdat_ambient_darkness = ready ? ambient_darkness : 0u;
+    /* UPDATE_GFXSET owns both the selected GRAPHICSSET and its command hash.
+     * A missing/invalid selector must not quietly become renderer set zero. */
+    valid = ready && graphicsset_index >= 0 && graphicsset_index <= 0xff &&
+        hash != 0u;
+    s->gdat_scene_control_ready = valid ? 1 : 0;
+    s->gdat_scene_material_index = valid ? graphicsset_index : 0;
+    s->gdat_scene_control_hash = valid ? hash : 0u;
+    s->gdat_scene_colorkey = valid ? scene_colorkey : 0u;
+    s->gdat_scene_flags = valid ? scene_flags : 0u;
+    s->gdat_ambient_light = valid ? ambient_light : 0u;
+    s->gdat_highest_light_level = valid ? highest_light_level : 0u;
+    s->gdat_void_random_fall = valid ? void_random_fall : 0u;
+    s->gdat_animated_floor = valid ? animated_floor : 0u;
+    s->gdat_scene_rain = valid ? scene_rain : 0u;
+    s->gdat_misty_map = valid ? misty_map : 0u;
+    s->gdat_thunder_position = valid ? thunder_position : 0u;
+    s->gdat_ambient_darkness = valid ? ambient_darkness : 0u;
     /* The live light plan is derived from this same UPDATE_GFXSET
      * transaction (RECALC_LIGHT_LEVEL).  When the receipt goes missing the
      * plan must not linger from the previous scene owner. */
-    if (!ready) {
+    if (!valid) {
         s->gdat_scene_light_floor = 0u;
         s->gdat_scene_light_search_depth = 0u;
         s->gdat_scene_light_recompute_enabled = 0;
