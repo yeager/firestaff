@@ -37,7 +37,7 @@ static int test_all_mns(void) {
     char dirpath[512];
     DIR *d;
     struct dirent *ent;
-    int decoded = 0, fail = 0;
+    int decoded = 0, rendered = 0, fail = 0;
 
     if (!home) { printf("  SKIP all_mns (no HOME)\n"); return 0; }
     snprintf(dirpath, sizeof(dirpath), "%s/.firestaff/data/nexus", home);
@@ -69,9 +69,21 @@ static int test_all_mns(void) {
                name, result.joint_count, result.total_vertices,
                result.total_faces, result.texture_count);
         if (result.texture_count > 0) {
+            uint32_t *pixels = (uint32_t *)malloc(
+                (size_t)result.textures[0].pixel_count * sizeof(*pixels));
             printf(" tex0=%dx%d hash=0x%08X",
                    result.textures[0].width, result.textures[0].height,
                    result.textures[0].pixel_hash);
+            if (!pixels || !nexus_v1_mns_render_texture(
+                    data, size, &result, 0, pixels,
+                    result.textures[0].pixel_count)) {
+                printf(" render=FAIL");
+                ++fail;
+            } else {
+                printf(" render=PASS");
+                ++rendered;
+            }
+            free(pixels);
         }
         printf("\n");
         decoded++;
@@ -79,7 +91,8 @@ static int test_all_mns(void) {
     }
     closedir(d);
 
-    printf("  decoded %d MNS files\n", decoded);
+    printf("  decoded %d MNS files, rendered %d first textures\n",
+           decoded, rendered);
     if (decoded == 0) printf("  SKIP (no MNS files found)\n");
     return fail;
 }
