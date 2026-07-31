@@ -8353,7 +8353,8 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     {
         CSB_V1_DungeonData *dungeon = (CSB_V1_DungeonData *)calloc(1, sizeof(CSB_V1_DungeonData));
         if (dungeon) {
-            if (csb_v1_dungeon_load_from_file(dungeon, profile->dungeon_path) == 0) {
+            if (csb_v1_dungeon_load_from_file(dungeon, profile->dungeon_path) == 0 &&
+                dungeon->square_bytes == 1) {
                 profile->runtime.dungeon_handle = dungeon;
                 csb_v1_dungeon_set_current(dungeon);
                 csb_v1_dungeon_set_current_level(0);
@@ -8381,6 +8382,12 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
                     profile->default_party_dir = (uint32_t)profile->runtime.party_dir;
                 }
             } else {
+                /* The loader retains its pre-source-lock 16-bit fixture
+                 * reader for isolated unit tests, but a booted CSB session
+                 * may own only the ReDMCSB DUNGEON_HEADER/MAP byte-map
+                 * format.  A verified path must never turn a test-shaped
+                 * buffer into live dungeon state. */
+                csb_v1_dungeon_free(dungeon);
                 free(dungeon);
                 profile->runtime.dungeon_handle = NULL;
             }

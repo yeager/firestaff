@@ -14,7 +14,8 @@
  * The handoff gap left the runtime in a TITLE state with no live
  * dungeon, forcing the game-view to do a second hash search via
  * csb_v1_runtime_boot(). This test exercises the in-place handoff with
- * a synthetic DUNGEON.DAT so we can prove the boundary works end-to-end.
+ * a source-layout DUNGEON.DAT fixture so we can prove the boundary works
+ * end-to-end without admitting the loader's legacy unit-test format.
  *
  * Source-locks (matches src/csb/csb_v1_boot.c citation block):
  *   ReDMCSB ENTRANCE.C F0806 lines 409-441 entrance micro-dungeon
@@ -533,52 +534,41 @@ static int write_synthetic_graphics_dat_with_m564(const char *path)
     return (n == header_size + compressed_size) ? 0 : -1;
 }
 
-/* Build a minimal valid CSB V1 DUNGEON.DAT buffer. Mirrors the
- * synthetic builder in test_csb_v1_phase7_verification.c so the
- * fixture shape matches the legacy loader (square_bytes == 2,
- * column-major 16-bit records, ReDMCSB DUNGEON.C F0151).
- *
- * Header layout (CSB V1 legacy synthetic fixture):
- *   0..1  : level_count (LE16) = 1
- *   2..3  : ignored by the legacy loader
- *   4     : level 0 width  (uint8)
- *   5     : level 0 height (uint8)
- *   6..9  : level 0 absolute byte offset to squares (LE32)
- *   10..  : squares, column-major, 2 bytes each (low byte = type)
- */
-static int build_synthetic_dungeon(uint8_t *buf, int buf_size,
-                                    uint8_t square_type_1_1)
+/* Build the smallest DUNGEON_HEADER/MAP byte-map that the source loader
+ * accepts. ReDMCSB DUNGEON.C F0151 indexes the raw map column-major; the
+ * six bytes between MAP and squares are G0284's three column starts. */
+static int build_source_layout_dungeon(uint8_t *buf, int buf_size,
+                                       uint8_t square_type_1_1)
 {
-    if (!buf || buf_size < 28) return -1;
+    enum { header = 44, map = 16, column_starts = 6, squares = 9 };
+    const int raw_map = header + map + column_starts;
+
+    if (!buf || buf_size < raw_map + squares) return -1;
     memset(buf, 0, (size_t)buf_size);
-    buf[0] = 1; buf[1] = 0;             /* level_count = 1 */
-    buf[2] = 16; buf[3] = 0;            /* ignored padding (matches existing fixture) */
-    buf[4] = 3; buf[5] = 3;             /* level 0 width=3, height=3 */
-    buf[6] = 10; buf[7] = 0;            /* level 0 absolute square offset = 10 */
-    buf[8] = 0; buf[9] = 0;
-    /* 3x3 squares, column-major, 2 bytes each.
-     * Cell (x,y) lives at offset 10 + (x*3 + y) * 2.
-     * Row 0: walls at (0,0),(1,0),(2,0) */
-    buf[10] = 1; buf[11] = 0;
-    buf[12] = 1; buf[13] = 0;
-    buf[14] = 1; buf[15] = 0;
-    /* Row 1: wall at (0,1), marker at (1,1), wall at (2,1) */
-    buf[16] = 1; buf[17] = 0;
-    buf[18] = square_type_1_1; buf[19] = 0;
-    buf[20] = 1; buf[21] = 0;
-    /* Row 2: walls */
-    buf[22] = 1; buf[23] = 0;
-    buf[24] = 1; buf[25] = 0;
-    buf[26] = 1; buf[27] = 0;
+    buf[4] = 1;                         /* DUNGEON_HEADER.MapCount */
+    buf[8] = 0x00;                      /* InitialPartyLocation: (0,0,N) */
+    /* MAP[0]: offset 0; bit A = map 0, width 3, height 3. */
+    buf[header + 8] = 0x80;
+    buf[header + 9] = 0x10;
+    /* 3x3 source byte-map, column-major. */
+    buf[raw_map + 0] = 1;
+    buf[raw_map + 1] = 1;
+    buf[raw_map + 2] = 1;
+    buf[raw_map + 3] = 1;
+    buf[raw_map + 4] = square_type_1_1;
+    buf[raw_map + 5] = 1;
+    buf[raw_map + 6] = 1;
+    buf[raw_map + 7] = 1;
+    buf[raw_map + 8] = 1;
     return 0;
 }
 
-static int write_synthetic_dungeon(const char *path, uint8_t square_type_1_1)
+static int write_source_layout_dungeon(const char *path, uint8_t square_type_1_1)
 {
-    uint8_t buf[32];
+    uint8_t buf[80];
     FILE *f;
     size_t n;
-    if (build_synthetic_dungeon(buf, (int)sizeof(buf), square_type_1_1) != 0) {
+    if (build_source_layout_dungeon(buf, (int)sizeof(buf), square_type_1_1) != 0) {
         return -1;
     }
     f = fopen(path, "wb");
@@ -586,6 +576,30 @@ static int write_synthetic_dungeon(const char *path, uint8_t square_type_1_1)
     n = fwrite(buf, 1, sizeof(buf), f);
     fclose(f);
     return (n == sizeof(buf)) ? 0 : -1;
+}
+
+/* Deliberately old Firestaff-only unit-fixture shape.  It remains useful to
+ * prove that boot never promotes a parser-compatible test buffer into a live
+ * CSB dungeon. */
+static int write_legacy_fixture_dungeon(const char *path)
+{
+    uint8_t buf[28] = { 0 };
+    FILE *f;
+
+    buf[0] = 1;
+    buf[2] = 16;
+    buf[4] = 3;
+    buf[5] = 3;
+    buf[6] = 10;
+    memset(buf + 10, 1, sizeof(buf) - 10);
+    f = fopen(path, "wb");
+    if (!f) return -1;
+    if (fwrite(buf, 1u, sizeof(buf), f) != sizeof(buf)) {
+        fclose(f);
+        return -1;
+    }
+    fclose(f);
+    return 0;
 }
 
 static int write_synthetic_dm1_save_for_utility_flow(const char *path)
@@ -962,8 +976,8 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
 
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
     snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
-    CHECK(write_synthetic_dungeon(dungeon_path, 2) == 0,
-          "synthetic DUNGEON.DAT written to temp path");
+    CHECK(write_source_layout_dungeon(dungeon_path, 2) == 0,
+          "source-layout DUNGEON.DAT written to temp path");
 
     /* Simulate a hash-verified boot scan by populating the fields the
      * scanner would normally set. The handoff logic only reads these
@@ -1282,8 +1296,8 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
 
     (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
-    CHECK(write_synthetic_dungeon(dungeon_path, 2) == 0,
-          "synthetic DUNGEON.DAT written for imported party handoff");
+    CHECK(write_source_layout_dungeon(dungeon_path, 2) == 0,
+          "source-layout DUNGEON.DAT written for imported party handoff");
     CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 2) == 0,
           "synthetic two-champion DM1 save buffer built");
     CHECK(csb_v1_character_import_dm1_buffer(&imported, save_buf,
@@ -1403,7 +1417,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
               &mirror_receipt) == 1 && mirror_receipt.valid,
           "CSB runtime owns combined M11 mirror receipt");
     CHECK(mirror_receipt.view.level_loaded == 1 &&
-              mirror_receipt.view.current_map_difficulty == -1 &&
+              mirror_receipt.view.current_map_difficulty == 0 &&
               mirror_receipt.view.party_x == p.runtime.party_x &&
               mirror_receipt.view.party_y == p.runtime.party_y &&
               mirror_receipt.party.party.championCount == 2 &&
@@ -1432,7 +1446,7 @@ static void test_enter_game_preserves_imported_party_and_switches_leader(void)
           "runtime party snapshot remains available after leader switch");
     CHECK(runtime_party.LeaderIndex == 1 && p.runtime.leader_index == 1,
           "runtime leader index changes to champion 1 after source-locked switch");
-    CHECK(runtime_party.Champions[1].Direction == CSB_V1_DIR_EAST,
+    CHECK(runtime_party.Champions[1].Direction == CSB_V1_DIR_NORTH,
           "selected leader direction aligns to party direction (CLIKCHAM.C F0368)");
     CHECK(runtime_party.Champions[1].CurrentHealth == 81 &&
               runtime_party.Champions[1].MaximumHealth == 101,
@@ -1583,8 +1597,8 @@ static void test_enter_game_loads_m564_object_names_from_graphics_dat(void)
     (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
     snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
-    CHECK(write_synthetic_dungeon(dungeon_path, 2) == 0,
-          "synthetic DUNGEON.DAT written for M564 boot handoff");
+    CHECK(write_source_layout_dungeon(dungeon_path, 2) == 0,
+          "source-layout DUNGEON.DAT written for M564 boot handoff");
     CHECK(write_synthetic_graphics_dat_with_m564(graphics_path) == 0,
           "synthetic GRAPHICS.DAT written with LZW-compressed M564 object names");
 
@@ -1702,8 +1716,8 @@ static void test_enter_game_rotate_party_aligns_champion_state(void)
 
     (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
-    CHECK(write_synthetic_dungeon(dungeon_path, 2) == 0,
-          "synthetic DUNGEON.DAT written for party rotation follow-up");
+    CHECK(write_source_layout_dungeon(dungeon_path, 2) == 0,
+          "source-layout DUNGEON.DAT written for party rotation follow-up");
     CHECK(build_synthetic_dm1_party_buffer(save_buf, sizeof(save_buf), 4) == 0,
           "synthetic four-champion DM1 save buffer built for rotation test");
     CHECK(csb_v1_character_import_dm1_buffer(&imported, save_buf,
@@ -1947,6 +1961,33 @@ static void test_enter_game_with_missing_dungeon_path_keeps_runtime_safe(void)
     csb_v1_dungeon_set_current(NULL);
 }
 
+static void test_enter_game_rejects_legacy_fixture_dungeon(void)
+{
+    CSB_V1_BootProfile p;
+    const char *tmp_dir = "/tmp/firestaff-csb-v1-handoff-legacy-dng";
+
+    (void)TEST_MKDIR(tmp_dir);
+    memset(&p, 0, sizeof(p));
+    csb_v1_boot_profile_init(&p);
+    snprintf(p.asset_root, sizeof(p.asset_root), "%s", tmp_dir);
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
+    CHECK(write_legacy_fixture_dungeon(p.dungeon_path) == 0,
+          "legacy unit-fixture dungeon written");
+    p.dungeon_verified = 1;
+    p.graphics_verified = 1;
+    p.assets_verified = 1;
+    p.variant_id = CSB_V1_VARIANT_PC34_EN;
+    p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
+
+    CHECK(csb_v1_boot_enter_game(&p) == 0,
+          "legacy fixture keeps the tolerant title handoff alive");
+    CHECK(p.runtime.dungeon_handle == NULL &&
+              csb_v1_dungeon_get_current() == NULL,
+          "boot rejects legacy fixture as a live CSB dungeon");
+    csb_v1_boot_cleanup(&p);
+}
+
 static void test_enter_game_runtime_handoff_is_idempotent(void)
 {
     CSB_V1_BootProfile p;
@@ -1955,8 +1996,8 @@ static void test_enter_game_runtime_handoff_is_idempotent(void)
 
     (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
-    CHECK(write_synthetic_dungeon(dungeon_path, 7) == 0,
-          "synthetic DUNGEON.DAT written for idempotence test");
+    CHECK(write_source_layout_dungeon(dungeon_path, 7) == 0,
+          "source-layout DUNGEON.DAT written for idempotence test");
 
     memset(&p, 0, sizeof(p));
     csb_v1_boot_profile_init(&p);
@@ -2046,10 +2087,10 @@ static void test_enter_game_v2_profile_labels_do_not_change_v1_handoff(void)
     (void)TEST_MKDIR(tmp_dir);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
     snprintf(bonus_dungeon_path, sizeof(bonus_dungeon_path), "%s/DUNGEONB.DAT", tmp_dir);
-    CHECK(write_synthetic_dungeon(dungeon_path, 2) == 0,
-          "synthetic DUNGEON.DAT written for CSB V2 profile fallback guard");
-    CHECK(write_synthetic_dungeon(bonus_dungeon_path, 7) == 0,
-          "synthetic DUNGEONB.DAT written for CSB bonus-dungeon handoff");
+    CHECK(write_source_layout_dungeon(dungeon_path, 2) == 0,
+          "source-layout DUNGEON.DAT written for CSB V2 profile fallback guard");
+    CHECK(write_source_layout_dungeon(bonus_dungeon_path, 7) == 0,
+          "source-layout DUNGEONB.DAT written for CSB bonus-dungeon handoff");
 
     memset(&p, 0, sizeof(p));
     csb_v1_boot_profile_init(&p);
@@ -2549,11 +2590,16 @@ static void test_door_opening_runtime_handoff_owns_hud_transition(void)
     csb_v1_boot_profile_init(&boot);
     memset(&snapshot, 0, sizeof(snapshot));
     memset(&dummy_dungeon, 0, sizeof(dummy_dungeon));
+    dummy_dungeon.level_count = 1;
+    dummy_dungeon.map_difficulty[0] = -1;
     boot.runtime.dungeon_handle = &dummy_dungeon;
     boot.runtime.current_level = 0;
     boot.runtime.party_x = 2;
     boot.runtime.party_y = 0;
     boot.runtime.party_dir = CSB_V1_DIR_SOUTH;
+    boot.runtime.party_state_valid = 1;
+    boot.runtime.party_state.ChampionCount = 1;
+    boot.runtime.party_state.LeaderIndex = 0;
     snprintf(boot.graphics_path, sizeof(boot.graphics_path),
              "/tmp/firestaff_csb_GRAPHICS.DAT");
     boot.assets_verified = 1;
@@ -2587,41 +2633,44 @@ static void test_door_opening_runtime_handoff_owns_hud_transition(void)
     session.surfaces.hud_surfaces_ready = 1;
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34] =
-        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &title, .width = 320,
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &title, .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34, .width = 320,
             .height = 153, .source_asset_id = 1, .transparent_color = -1,
             .valid = 1 };
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34] =
-        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &presents, .width = 320,
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &presents, .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34, .width = 320,
             .height = 16, .source_asset_id = 1, .source_y = 137,
             .transparent_color = -1, .valid = 1 };
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_CHAOS_PC34] =
-        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &chaos, .width = 320,
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &chaos, .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34, .width = 320,
             .height = 80, .source_asset_id = 1, .transparent_color = -1,
             .valid = 1 };
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_STRIKES_BACK_PC34] =
-        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &strikes, .width = 320,
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &strikes, .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34, .width = 320,
             .height = 57, .source_asset_id = 1, .source_y = 80,
             .transparent_color = 0, .valid = 1 };
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34] =
-        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &left_door, .width = 105,
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &left_door, .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34, .width = 105,
             .height = 161, .source_asset_id = 2, .transparent_color = -1,
             .valid = 1 };
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34] =
-        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &right_door, .width = 128,
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &right_door, .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34, .width = 128,
             .height = 161, .source_asset_id = 3, .transparent_color = -1,
             .valid = 1 };
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34] =
-        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &entrance, .width = 320,
+        (CSB_V1_StartupRuntimeSurface_PC34){ .pixels = &entrance, .source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34, .width = 320,
             .height = 200, .source_asset_id = 4, .transparent_color = -1,
             .valid = 1 };
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].valid = 1;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].pixels = inventory;
     session.surfaces.surfaces[
@@ -2634,6 +2683,9 @@ static void test_door_opening_runtime_handoff_owns_hud_transition(void)
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34].transparent_color = -1;
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].valid = 1;
+    session.surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
     session.surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34].pixels = resurrect;
     session.surfaces.surfaces[
@@ -5313,6 +5365,7 @@ int main(void)
     test_runtime_variant_hint_identity();
     test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
+    test_enter_game_rejects_legacy_fixture_dungeon();
     test_enter_game_runtime_handoff_is_idempotent();
     test_enter_game_rejects_partial_or_misrouted_profiles();
     test_enter_game_v2_profile_labels_do_not_change_v1_handoff();

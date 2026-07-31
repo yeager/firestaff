@@ -44197,6 +44197,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
 
 # CSBWin runtime diagnostic-chrome removal (2026-07-31)
 
+- ✅ 2026-07-31 CSB source-dungeon boot boundary: `csb_v1_boot_enter_game()`
+  now promotes only the ReDMCSB DUNGEON_HEADER/MAP byte-map (`square_bytes ==
+  1`) into live runtime state. The compatibility loader still accepts its old
+  16-bit shape for parser unit tests, but boot frees it and keeps the title
+  handoff dungeon-less. `test_csb_v1_boot_runtime_handoff` uses the real map
+  layout and proves the legacy fixture is rejected (501 assertions).
+
 - ✅ 2026-07-31 CSB source-owned custom-background masks: verified runtime
   sessions now ignore caller-provided fixture rectangles and use only the
   selected CSBgraphics `BACKGROUND_MASK` decode. A missing or malformed source

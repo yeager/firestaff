@@ -613,6 +613,9 @@ diagnostic; it must not silently fall back to a generated visual.
   The CSBgraphics custom-background pass now follows the same rule: a real
   GRAPHICS.DAT session ignores caller-supplied test masks and decodes the
   selected CSBWin BACKGROUND_MASK, otherwise it applies no layer.
+  CSB boot now likewise admits only the source DUNGEON_HEADER/MAP byte-map as
+  a live dungeon; the legacy 16-bit fixture parser remains test-only and a
+  parsed fixture leaves the runtime without a dungeon.
   2026-07-30 defensive HUD follow-up: the legacy generic inventory-slot
   fallback now explicitly excludes CSB, including debug HUD mode. The live
   route continues to require C017/C040, and a future route regression cannot
