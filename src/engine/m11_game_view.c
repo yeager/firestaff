@@ -51460,20 +51460,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 /* TITLE.CG remains a genuine drawable source while the next
                  * MENU.BPK route is rightly blocked on PRS3 evidence. */
             } else if (host_caller_ready) {
-                Nexus_V1_MenuBpkRendererHandoffReceipt menu_handoff;
-                const char *blocker = "MENU.BPK ASSET ROUTE BLOCKED";
-                if (state->nexusEngine &&
-                    nexus_v1_menu_bpk_renderer_handoff_receipt(
-                        state->nexusEngine, &menu_handoff) == 0) {
-                    blocker = nexus_v1_menu_bpk_prs3_prerequisite_message(
-                        menu_handoff.prs3_prerequisite_status);
-                }
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              18, 18, "NEXUS STARTUP ASSET BLOCKED",
-                              &g_text_title);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              18, 36, blocker,
-                              &g_text_shadow);
+                /* The startup receipt owns the blocked-route diagnostic;
+                 * this framebuffer remains source pixels or no-draw. */
             }
         } else if (state->nexusEngine) {
             directDraw = 1;
