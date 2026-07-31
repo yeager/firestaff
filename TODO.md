@@ -24581,3 +24581,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   PC 3.4 source-material/provenance gate passes. The remaining work is a
   reviewed original GRAPHICS.DAT extraction and pixel binding; no generated
   cache or PBR substitute may be admitted.
+
+- 🔧 CSB startup follow-up: M11's retired synthetic startup receipt probe is
+  contract-only. Real package-owned startup receipts remain the sole active
+  proof route; interactive app capture against the original corpus is still
+  needed.

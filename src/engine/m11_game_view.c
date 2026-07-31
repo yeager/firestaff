@@ -53353,6 +53353,11 @@ static int m11_dm1_center_content_visible_depth_mask(const M11_ViewportCell cell
     return m11_dm1_lane_visibility(cells).center_visible_depth_mask;
 }
 
+/* Retired M11-only CSB startup probe.  It manufactured a verified profile
+ * around /tmp paths and therefore could claim source ownership without the
+ * original package.  CSB boot receipt tests own this coverage from real
+ * media; keep the historical contract available only for forensic builds. */
+#ifdef FIRESTAFF_CSB_STARTUP_PROBE_CONTRACT_ONLY
 typedef struct M11_CSBStartupHostViewProbe {
     int clearBlackCount;
     int drawTitleCount;
@@ -53868,6 +53873,7 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
      * CSB startup host loop. This probe mirrors M11's draw call boundary. */
     return 1;
 }
+#endif /* FIRESTAFF_CSB_STARTUP_PROBE_CONTRACT_ONLY */
 int M11_GameView_ProbeViewportCellClass(const M11_GameViewState* state,
                                         int relForward,
                                         int relSide,
