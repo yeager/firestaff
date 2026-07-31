@@ -159,6 +159,9 @@
   - 2026-07-31: F1726–F1765 contains only local, platform and debug source
     labels. It is test-only; do not derive any CSB input or visual behavior
     from this blocked metadata.
+  - 2026-07-31: F1766–F1805 is a fail-closed media ownership inventory. It is
+    test-only; actual CSB palette and SWSH consumers stay source-bound and
+    must not be replaced with DM1 media labels.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.

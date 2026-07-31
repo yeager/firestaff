@@ -47253,3 +47253,31 @@ the supplied root and selected MD5 to prove this without shipping game data.
   receipts no longer copy the fixture mirror roster size or fallback-label
   count. Those values remain confined to the explicit no-data fixture receipt;
   real startup data cannot report synthetic roster metadata.
+
+- ✅ 2026-07-31 CSB F1526–F1565 platform-boundary isolation: this
+  workstation/mouse/AES table has no authenticated CSB PC 3.4 consumer and
+  blocks all routes. It now compiles only into its contract test, preventing a
+  foreign-platform receipt from standing in for CSB input or presentation.
+
+- ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
+  offsets and the 216-entry DMWeb TABL code table are parsed from the real
+  retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy
+  heuristic ASCII/Shift-JIS scraper plus unauthenticated S2D text/glyph
+  layout wrappers are excluded from `firestaff_nexus`; they remain available
+  only to explicit diagnostic probes. No glyph, palette, menu, HUD or Saturn
+  VDP1/VDP2 presentation is promoted by this change.
+
+- ✅ 2026-07-31 CSB F1646–F1685 platform-boundary isolation: the table only
+  records exclusive DM1 ownership or foreign platform routes and blocks every
+  CSB admission. It now compiles only into its contract test, so it cannot
+  synthesize CSB input, interrupt, vblank or presentation behavior.
+
+- ✅ 2026-07-31 CSB F1726–F1765 source-boundary isolation: this range only
+  maps local, platform and debug source state and blocks every CSB route. It
+  now compiles solely into its contract test, preventing metadata from
+  synthesizing CSB input, UI, graphics, audio or timing.
+
+- ✅ 2026-07-31 CSB F1766–F1805 media-boundary isolation: this table only
+  reports exclusive palette, DM1 sound/ANIM, debug and absent-source routes
+  before failing closed. It now compiles solely into its contract test; real
+  CSB media remains limited to its authenticated dedicated consumers.
