@@ -15731,6 +15731,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       F0128 receipt agree; later source-owned object passes are allowed to
       alter the final aperture. Remaining work is packaged `.app` capture and
       broader original-presentation comparison.
+    - 2026-07-31 current-app capture: a temporary local `.app` assembled from
+      the verified v3.0.197 binary passed the real-package title/Entrance
+      contract and produced the four presented source phases. Its deterministic
+      SDL route also saved the first F0807 opening-door frame. The direct
+      visible-window click was not delivered by macOS event injection, so it
+      records only the closed-door state; keep a physically interactive
+      app-window opening capture and the wider original comparison open.
     - 2026-07-15 HUD text ownership update: CSBWin `Timer.cpp::ProcessTT_OPENROOM` now admits its one source-defined party-square DB2 path. It records only a newly visible, sole `DUNGEON.DAT` TextString through ReDMCSB `DUNGEON.C F0168`; M11 clears C015 with `TEXT.C F0049` then draws that receipt with the loaded original font. Generic `messageLog`, cached host mirrors, wrapping, and missing/malformed source data remain no-draw. Remaining work is the wider authenticated QuePrintLines queue, multi-line/scroll ownership, and real CSB capture.
     - 2026-07-15 movement-arrow ownership update: CSB now consumes the verified C013 panel unchanged. M11's hatch/cyan keyboard feedback has no ReDMCSB/CSBWin framebuffer proof and is suppressed for CSB. A genuine source-owned pressed-arrow state is required before any CSB overlay may alter C013.
     - 2026-07-15 champion-icon ownership update: CSB C113..C116 now require the complete real C028 four-frame strip (76x14). Missing, malformed, or detached C028 clears the icon zones instead of retaining a host-generated color-only party marker. Further CSB HUD work still needs authenticated dynamic status/name/bar state.

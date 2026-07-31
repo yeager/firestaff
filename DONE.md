@@ -1,3 +1,16 @@
+- ✅ 2026-07-31 CSB current-app capture: assembled a temporary local macOS
+  app from the verified v3.0.197 build (no release artifact) and ran it with
+  the hash-recognised PC 3.4 `GRAPHICS.DAT` and `DUNGEON.DAT`. Its visible
+  presentation capture contains the four source-owned palette phases:
+  PRESENTS, CHAOS/FTL, STRIKES BACK and Entrance. The same app binary, through
+  the deterministic SDL input route, reaches `csb-entrance-opening-1` and
+  saves both the 320x200 source frame and its presented F0807 door frame.
+  The direct macOS event injection did not deliver the synthetic click, so
+  that visible-window run is retained only as the closed-door capture; it is
+  not claimed as opening-door evidence. Verification:
+  `csb_v1_title_entrance_visual_contract` passes against the app binary and
+  real PC package data; the V2 HUD state/no-draw suite passes 3/3.
+
 - ✅ 2026-07-31 CSB stale title-to-HUD probe retirement: removed an
   unregistered PC34 probe that duplicated the maintained real-asset launch
   gate but assumed the obsolete three-bit title mask and old terminal-HUD
