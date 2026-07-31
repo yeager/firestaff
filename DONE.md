@@ -45152,6 +45152,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm1_v1_viewport_3d_pc34_compat`,
   `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 DM1 original PC34 backed runtime roundtrip: native quicksave
+  now preserves an authenticated F0435 C03/C04 receipt and the unchanged
+  source dungeon tail where present, so F0433 re-emits source-owned bytes
+  instead of inventing a tail. Two operator-owned DOSBox saves pass
+  F0435 -> native quicksave -> F0433 -> F0435 against the real local
+  `DUNGEON.DAT`. Verification:
+  `dm1_v1_original_save_pc34_tail_less_backed_roundtrip`,
+  `dm1_v1_save_load`, `m11_quick_resume_roundtrip`, and V1/V2.0/V2.1/V2.2
+  boot probes. References: ReDMCSB `LOADSAVE.C` F0433/F0435 and DMweb
+  saved-game file-format documentation.
 - ✅ 2026-07-31 DM1 F0373 floor-pile pickup ownership: C080 floor clicks
   now take the rendered `G0292_aT_PileTopObject[viewCell]` equivalent and
   put it directly into the separate leader hand. Firestaff no longer rejects

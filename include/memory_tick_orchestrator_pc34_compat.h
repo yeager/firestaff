@@ -334,6 +334,7 @@ struct GameWorld_Compat {
     uint32_t                            pc34OriginalC4RawHeapFingerprint;
     uint32_t                            pc34OriginalC3C4RuntimeEventCount;
     uint32_t                            pc34OriginalTimelineFingerprint;
+    int32_t                             pc34OriginalFirstUnusedEventIndex;
     uint8_t                             pc34OriginalC3RawEventBytes[GAMEWORLD_PC34_ORIGINAL_C3_RECEIPT_BYTE_CAP];
     uint8_t                             pc34OriginalC4RawHeapBytes[GAMEWORLD_PC34_ORIGINAL_C4_RECEIPT_BYTE_CAP];
     int32_t                            candidateAttackInvulnerableEnabled;

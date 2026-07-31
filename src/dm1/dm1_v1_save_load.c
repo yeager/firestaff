@@ -369,9 +369,17 @@ int DM1_SaveGamePC34(const struct GameWorld_Compat* world,
     pc34 = (unsigned char*)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
     if (!pc34) return DM1_SAVE_ERROR_OUT_OF_MEMORY;
 
-    exportRc = F0803_SAVEGAME_ExportVanillaPC34FromWorld_Compat(
-        world, gameID, pc34, (int)SAVEGAME_PC34_MAX_FILE_SIZE,
-        &bytesWritten);
+    /* Original F0435 worlds carry authenticated C03/C04 source receipts and
+     * must use F0802. Ordinary Firestaff-native worlds retain the bounded
+     * F0803 route so their historic PC34 export contract is unchanged. */
+    exportRc = world->pc34OriginalC3C4ReceiptValid == 1 &&
+                   world->pc34OriginalC3RawEventByteCount > 0U
+        ? F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              world, gameID, pc34, (int)SAVEGAME_PC34_MAX_FILE_SIZE,
+              &bytesWritten)
+        : F0803_SAVEGAME_ExportVanillaPC34FromWorld_Compat(
+              world, gameID, pc34, (int)SAVEGAME_PC34_MAX_FILE_SIZE,
+              &bytesWritten);
     if (exportRc != SAVEGAME_PC34_OK || bytesWritten <= 0) {
         free(pc34);
         if (exportRc == SAVEGAME_PC34_ERROR_NULL_ARG) {

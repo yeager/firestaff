@@ -406,6 +406,7 @@ int F0897d_GameConfig_Deserialize_Compat(
 #define SEC_TAG_SENSOR_PENDING    0x20000019u
 #define SEC_TAG_SAVE_HEADER       0x2000001Au
 #define SEC_TAG_CHAMPION_COMBAT   0x2000001Bu
+#define SEC_TAG_PC34_EXPORT_RECEIPT 0x2000001Cu
 
 #define ORCH_SCALARS_PAYLOAD_SIZE 52  /* 13 × int32: gameTick, partyDead,
                                          gameWon, partyMapIndex,
@@ -418,6 +419,10 @@ int F0897d_GameConfig_Deserialize_Compat(
 
 #define ORCH_PENDING_DAMAGE_RECEIPT_VALID_PC34 0x100
 #define ORCH_PENDING_DAMAGE_RECEIPT_CHAMPION_MASK_PC34 0x003
+
+#define ORCH_PC34_EXPORT_RECEIPT_PAYLOAD_SIZE \
+    (52 + GAMEWORLD_PC34_ORIGINAL_C3_RECEIPT_BYTE_CAP + \
+     GAMEWORLD_PC34_ORIGINAL_C4_RECEIPT_BYTE_CAP)
 #define ORCH_PENDING_DAMAGE_RECEIPT_CELL_SHIFT_PC34 2
 #define ORCH_PENDING_DAMAGE_RECEIPT_CELL_MASK_PC34 0x00C
 
@@ -647,6 +652,7 @@ int F0899_WORLD_SerializedSize_Compat(const struct GameWorld_Compat* world) {
     total += 8 + lifecycle_size();
     total += 8 + sensor_size();
     total += 8 + save_hdr_size();
+    total += 8 + ORCH_PC34_EXPORT_RECEIPT_PAYLOAD_SIZE;
     return total;
 }
 
@@ -881,6 +887,37 @@ int F0897_WORLD_Serialize_Compat(
     }
     off += save_hdr_size();
 
+    /* An F0435-resumed tail-less PC34 save has authenticated C03/C04 bytes
+     * that F0433 must retain exactly while the live event heap is unchanged.
+     * A Firestaff quicksave is an intervening host format, so persist this
+     * source receipt instead of reconstructing its union payloads. */
+    if (off + 8 + ORCH_PC34_EXPORT_RECEIPT_PAYLOAD_SIZE > outBufSize) return 0;
+    w_u32(outBuf + off, SEC_TAG_PC34_EXPORT_RECEIPT); off += 4;
+    w_u32(outBuf + off, ORCH_PC34_EXPORT_RECEIPT_PAYLOAD_SIZE); off += 4;
+    w_i32(outBuf + off, world->pc34ActiveGroupSourceCount); off += 4;
+    w_i32(outBuf + off, world->pc34OriginalC3C4ReceiptValid); off += 4;
+    w_u32(outBuf + off, world->pc34OriginalC3RawEventByteCount); off += 4;
+    w_u32(outBuf + off, world->pc34OriginalC4RawHeapByteCount); off += 4;
+    w_u32(outBuf + off, world->pc34OriginalC3RawEventFingerprint); off += 4;
+    w_u32(outBuf + off, world->pc34OriginalC4RawHeapFingerprint); off += 4;
+    w_u32(outBuf + off, world->pc34OriginalC3C4RuntimeEventCount); off += 4;
+    w_u32(outBuf + off, world->pc34OriginalTimelineFingerprint); off += 4;
+    w_i32(outBuf + off, world->pc34OriginalFirstUnusedEventIndex); off += 4;
+    w_i32(outBuf + off, world->party.pc34PoisonEventCountReceiptValid); off += 4;
+    memcpy(outBuf + off, world->party.pc34OriginalPoisonEventCounts,
+           CHAMPION_MAX_PARTY);
+    off += CHAMPION_MAX_PARTY;
+    w_u32(outBuf + off, world->party.pc34PoisonEventCountRuntimeEventCount);
+    off += 4;
+    w_u32(outBuf + off, world->party.pc34PoisonEventCountTimelineFingerprint);
+    off += 4;
+    memcpy(outBuf + off, world->pc34OriginalC3RawEventBytes,
+           GAMEWORLD_PC34_ORIGINAL_C3_RECEIPT_BYTE_CAP);
+    off += GAMEWORLD_PC34_ORIGINAL_C3_RECEIPT_BYTE_CAP;
+    memcpy(outBuf + off, world->pc34OriginalC4RawHeapBytes,
+           GAMEWORLD_PC34_ORIGINAL_C4_RECEIPT_BYTE_CAP);
+    off += GAMEWORLD_PC34_ORIGINAL_C4_RECEIPT_BYTE_CAP;
+
     if (outBytesWritten) *outBytesWritten = off;
     return 1;
 }
@@ -1041,6 +1078,51 @@ int F0898_WORLD_Deserialize_Compat(
     world->saveHeader.bodyCRC32      = r_u32(p + 24);
     memcpy(world->saveHeader.reserved, p + 28, 36);
     off += sz;
+
+    /* Older native quicksaves predate this optional source receipt. They
+     * remain readable, but cannot claim PC34 C03/C04 byte preservation. */
+    if (off < bufSize) {
+        if (!read_section_hdr(buf, bufSize, &off,
+                              SEC_TAG_PC34_EXPORT_RECEIPT, &sz) ||
+            sz != ORCH_PC34_EXPORT_RECEIPT_PAYLOAD_SIZE) return 0;
+        world->pc34ActiveGroupSourceCount = r_i32(buf + off); off += 4;
+        world->pc34OriginalC3C4ReceiptValid = r_i32(buf + off); off += 4;
+        world->pc34OriginalC3RawEventByteCount = r_u32(buf + off); off += 4;
+        world->pc34OriginalC4RawHeapByteCount = r_u32(buf + off); off += 4;
+        world->pc34OriginalC3RawEventFingerprint = r_u32(buf + off); off += 4;
+        world->pc34OriginalC4RawHeapFingerprint = r_u32(buf + off); off += 4;
+        world->pc34OriginalC3C4RuntimeEventCount = r_u32(buf + off); off += 4;
+        world->pc34OriginalTimelineFingerprint = r_u32(buf + off); off += 4;
+        world->pc34OriginalFirstUnusedEventIndex = r_i32(buf + off); off += 4;
+        world->party.pc34PoisonEventCountReceiptValid = r_i32(buf + off);
+        off += 4;
+        memcpy(world->party.pc34OriginalPoisonEventCounts, buf + off,
+               CHAMPION_MAX_PARTY);
+        off += CHAMPION_MAX_PARTY;
+        world->party.pc34PoisonEventCountRuntimeEventCount = r_u32(buf + off);
+        off += 4;
+        world->party.pc34PoisonEventCountTimelineFingerprint = r_u32(buf + off);
+        off += 4;
+        if (world->pc34ActiveGroupSourceCount < 0 ||
+            world->pc34ActiveGroupSourceCount > GAMEWORLD_CREATURE_AI_CAPACITY ||
+            world->pc34OriginalC3C4ReceiptValid < 0 ||
+            world->pc34OriginalC3C4ReceiptValid > 1 ||
+            world->pc34OriginalFirstUnusedEventIndex < 0 ||
+            world->pc34OriginalFirstUnusedEventIndex >
+                GAMEWORLD_PC34_ORIGINAL_EVENT_RECEIPT_CAPACITY ||
+            world->party.pc34PoisonEventCountReceiptValid < 0 ||
+            world->party.pc34PoisonEventCountReceiptValid > 1 ||
+            world->pc34OriginalC3RawEventByteCount >
+                GAMEWORLD_PC34_ORIGINAL_C3_RECEIPT_BYTE_CAP ||
+            world->pc34OriginalC4RawHeapByteCount >
+                GAMEWORLD_PC34_ORIGINAL_C4_RECEIPT_BYTE_CAP) return 0;
+        memcpy(world->pc34OriginalC3RawEventBytes, buf + off,
+               GAMEWORLD_PC34_ORIGINAL_C3_RECEIPT_BYTE_CAP);
+        off += GAMEWORLD_PC34_ORIGINAL_C3_RECEIPT_BYTE_CAP;
+        memcpy(world->pc34OriginalC4RawHeapBytes, buf + off,
+               GAMEWORLD_PC34_ORIGINAL_C4_RECEIPT_BYTE_CAP);
+        off += GAMEWORLD_PC34_ORIGINAL_C4_RECEIPT_BYTE_CAP;
+    }
 
     /* Restore non-serialised pointer fields. */
     world->dungeon = keep_dungeon;

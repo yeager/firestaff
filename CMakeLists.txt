@@ -28394,6 +28394,25 @@ endif()
         LABELS "tier2;dm1;save;interop;external-corpus"
     )
 
+    # An original PC34 save may omit its dungeon tail. This opt-in real-data
+    # test verifies the production F0435 -> F0433 -> F0435 path against the
+    # hash-verified DUNGEON.DAT backing rather than inventing one.
+    add_executable(test_dm1_v1_original_save_pc34_tail_less_backed_roundtrip
+        tests/test_dm1_v1_original_save_pc34_tail_less_backed_roundtrip.c
+    )
+    target_link_libraries(test_dm1_v1_original_save_pc34_tail_less_backed_roundtrip
+        PRIVATE firestaff_m11 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_original_save_pc34_tail_less_backed_roundtrip PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_original_save_pc34_tail_less_backed_roundtrip
+        COMMAND test_dm1_v1_original_save_pc34_tail_less_backed_roundtrip
+    )
+    set_tests_properties(dm1_v1_original_save_pc34_tail_less_backed_roundtrip PROPERTIES
+        LABELS "tier2;dm1;save;interop;real_data;tail_less"
+    )
+
     add_executable(test_dm1_v1_original_save_pc34_portrait_receipt
         tests/test_dm1_v1_original_save_pc34_portrait_receipt.c
     )

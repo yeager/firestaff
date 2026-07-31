@@ -814,7 +814,15 @@ static int pack_active_groups_from_world(
          * int16 GroupThingIndex; uint8 Directions, Cells,
          * LastMoveTime, DelayFleeingFromTarget, TargetMapX/Y,
          * PriorMapX/Y, HomeMapX/Y, Aspect[4]. */
-        write_u16_le(rec + 0u, pc34_group_thing_from_ai(ai));
+        /* F0435 retains the original C04 GroupThingIndex spelling. Real
+         * PC34 saves may use a raw GROUP-table index instead of a packed
+         * type-4 Thing; re-packing it here changes C37/C38 ownership. */
+        if (world->pc34OriginalC3C4ReceiptValid == 1 &&
+            ai->reserved0 >= 0 && ai->reserved0 <= 0x03ff) {
+            write_u16_le(rec + 0u, (uint16_t)ai->reserved0);
+        } else {
+            write_u16_le(rec + 0u, pc34_group_thing_from_ai(ai));
+        }
         rec[2] = (uint8_t)(ai->groupDirection & 0x03);
         rec[3] = (uint8_t)(ai->groupCells & 0xff);
         rec[4] = (uint8_t)(ai->lastSeenPartyTick & 0xff);
@@ -2594,13 +2602,29 @@ static int export_pc34_core(
     prngSeed = gameID ^ 0xC0DECAFEu;
     if (prngSeed == 0) prngSeed = 0xDEADBEEFu;
 
-    if (!pack_events_and_timeline(state, sourceReceiptWorld, dungeon, things,
-                                  projectiles, explosions,
-                                  eventsPart, (int)sizeof(eventsPart),
-                                  timelinePart, (int)sizeof(timelinePart),
-                                  &eventsLen, &timelineLen,
-                                  &eventCount, &firstUnusedEventIndex,
-                                  &eventMaximumCount)) {
+    if (sourceReceiptWorld &&
+        sourceReceiptWorld->pc34OriginalC3C4ReceiptValid == 1) {
+        /* C03 is allocated to EventMaximumCount, while C04 contains the
+         * heap for only the live rows.  A tail-less F0435 save owns the
+         * opaque C03 union bytes, so do not discard it by first forcing the
+         * sparse live timeline through the generic event serializer. */
+        if (!state->timeline || state->timeline->count < 0 ||
+            state->timeline->count > TIMELINE_QUEUE_CAPACITY) {
+            return SAVEGAME_PC34_ERROR_INTERNAL;
+        }
+        eventCount = state->timeline->count;
+        eventsLen = eventCount * PC34_EVENT_BYTE_COUNT;
+        timelineLen = eventCount * 2;
+        firstUnusedEventIndex =
+            sourceReceiptWorld->pc34OriginalFirstUnusedEventIndex;
+    } else if (!pack_events_and_timeline(
+                   state, sourceReceiptWorld, dungeon, things,
+                   projectiles, explosions,
+                   eventsPart, (int)sizeof(eventsPart),
+                   timelinePart, (int)sizeof(timelinePart),
+                   &eventsLen, &timelineLen,
+                   &eventCount, &firstUnusedEventIndex,
+                   &eventMaximumCount)) {
         return SAVEGAME_PC34_ERROR_INTERNAL;
     }
     if (eventsLen < 0 || eventsLen > PC34_EXPORT_EVENTS_PART_CAP ||

@@ -23651,6 +23651,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     second save. The standalone corpus preflight remains open because this
     authentic save has no dungeon tail; it must be staged against its real
     DUNGEON.DAT before F0435 -> F0433 -> F0435 can certify the full route.
+  - 2026-07-31 backed-runtime update: both operator-owned DOSBox saves now
+    pass F0435 -> native quicksave -> F0433 -> F0435 while bound to the
+    authenticated local `DUNGEON.DAT`. Native quicksaves retain the exact
+    original C03/C04 receipt and, where present, the untouched F0435 dungeon
+    tail in a private sidecar; F0433 appends that source-owned tail rather
+    than reconstructing it. `dm1_v1_original_save_pc34_tail_less_backed_roundtrip`
+    exercises this route for each selected save. The unbacked corpus preflight
+    deliberately remains open: a live C03/C04 save must never be certified
+    without its matching dungeon backing. Reference: ReDMCSB `LOADSAVE.C`
+    F0433/F0435 and DMweb saved-game file-format documentation.
 
 ## CSB completed save-contract verification
 

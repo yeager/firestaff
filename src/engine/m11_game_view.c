@@ -3910,6 +3910,125 @@ static int m11_build_quicksave_sidecar_path(const char *path,
     return (rc > 0 && rc < (int)out_size) ? 1 : 0;
 }
 
+static const unsigned char g_m11_pc34_tail_sidecar_magic[8] = {
+    'F', 'S', 'M', '1', '1', 'T', 'L', '1'
+};
+
+static int m11_build_quicksave_pc34_tail_path(const char *path,
+                                              char *out,
+                                              size_t out_size)
+{
+    int rc;
+
+    if (!path || !path[0] || !out || out_size == 0U) {
+        return 0;
+    }
+    rc = snprintf(out, out_size, "%s.pc34tail", path);
+    return rc > 0 && (size_t)rc < out_size;
+}
+
+static uint32_t m11_pc34_tail_fingerprint(const unsigned char *bytes,
+                                          size_t byte_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t index;
+
+    for (index = 0U; index < byte_count; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int m11_write_quicksave_pc34_tail(const M11_GameViewState *state,
+                                         const char *path)
+{
+    const struct DungeonDatState_Compat *dungeon;
+    char sidecar_path[M11_GAME_VIEW_PATH_CAPACITY + 16];
+    unsigned char header[16];
+    FILE *file;
+
+    if (!state || !path || !m11_build_quicksave_pc34_tail_path(
+            path, sidecar_path, sizeof(sidecar_path))) {
+        return 0;
+    }
+    dungeon = state->world.dungeon;
+    if (state->world.pc34OriginalC3C4ReceiptValid != 1 ||
+        !dungeon || !dungeon->originalSaveTailPristine ||
+        !dungeon->originalSaveTailBytes ||
+        dungeon->originalSaveTailByteCount <= 2) {
+        (void)remove(sidecar_path);
+        return 1;
+    }
+    memcpy(header, g_m11_pc34_tail_sidecar_magic,
+           sizeof(g_m11_pc34_tail_sidecar_magic));
+    m11_write_u32_le(header + 8,
+                     (uint32_t)dungeon->originalSaveTailByteCount);
+    m11_write_u32_le(header + 12,
+                     m11_pc34_tail_fingerprint(dungeon->originalSaveTailBytes,
+                                              (size_t)dungeon->originalSaveTailByteCount));
+    file = fopen(sidecar_path, "wb");
+    if (!file) {
+        return 0;
+    }
+    if (fwrite(header, 1U, sizeof(header), file) != sizeof(header) ||
+        fwrite(dungeon->originalSaveTailBytes, 1U,
+               (size_t)dungeon->originalSaveTailByteCount, file) !=
+            (size_t)dungeon->originalSaveTailByteCount ||
+        fclose(file) != 0) {
+        (void)remove(sidecar_path);
+        return 0;
+    }
+    return 1;
+}
+
+static int m11_read_quicksave_pc34_tail(const char *path,
+                                        unsigned char **out_bytes,
+                                        size_t *out_size)
+{
+    char sidecar_path[M11_GAME_VIEW_PATH_CAPACITY + 16];
+    unsigned char header[16];
+    unsigned char *bytes;
+    FILE *file;
+    uint32_t byte_count;
+    uint32_t expected_fingerprint;
+
+    if (!out_bytes || !out_size || !path ||
+        !m11_build_quicksave_pc34_tail_path(path, sidecar_path,
+                                            sizeof(sidecar_path))) {
+        return 0;
+    }
+    *out_bytes = NULL;
+    *out_size = 0U;
+    file = fopen(sidecar_path, "rb");
+    if (!file) {
+        return 1;
+    }
+    if (fread(header, 1U, sizeof(header), file) != sizeof(header) ||
+        memcmp(header, g_m11_pc34_tail_sidecar_magic,
+               sizeof(g_m11_pc34_tail_sidecar_magic)) != 0) {
+        fclose(file);
+        return 0;
+    }
+    byte_count = m11_read_u32_le(header + 8);
+    expected_fingerprint = m11_read_u32_le(header + 12);
+    if (byte_count <= 2U || byte_count > (1U << 20)) {
+        fclose(file);
+        return 0;
+    }
+    bytes = (unsigned char *)malloc((size_t)byte_count);
+    if (!bytes || fread(bytes, 1U, (size_t)byte_count, file) != byte_count ||
+        fgetc(file) != EOF || fclose(file) != 0 ||
+        m11_pc34_tail_fingerprint(bytes, (size_t)byte_count) !=
+            expected_fingerprint) {
+        free(bytes);
+        return 0;
+    }
+    *out_bytes = bytes;
+    *out_size = (size_t)byte_count;
+    return 1;
+}
+
 static int m11_write_quicksave_explored_bits(const M11_GameViewState *state,
                                              const char *path)
 {
@@ -8501,6 +8620,26 @@ int M11_GameView_ExportQuickSaveAsDM1PC34(const char* quickSavePath,
         ok = (DM1_SaveGamePC34(&loadedWorld, exportPath,
                                expectedHash ? expectedHash : 0x4D313151u)
               == DM1_SAVE_OK);
+        if (ok) {
+            unsigned char *tail_bytes = NULL;
+            size_t tail_size = 0U;
+
+            if (!m11_read_quicksave_pc34_tail(quickSavePath, &tail_bytes,
+                                               &tail_size)) {
+                ok = 0;
+            } else if (tail_bytes) {
+                FILE *tail_file = fopen(exportPath, "ab");
+                int tail_write_ok = tail_file &&
+                    fwrite(tail_bytes, 1U, tail_size, tail_file) == tail_size;
+                if (tail_file && fclose(tail_file) != 0) {
+                    tail_write_ok = 0;
+                }
+                if (!tail_write_ok) {
+                    ok = 0;
+                }
+                free(tail_bytes);
+            }
+        }
     }
     F0883_WORLD_Free_Compat(&loadedWorld);
     free(blob);
@@ -19783,6 +19922,10 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
     }
     if (!m11_write_quicksave_v1_runtime(state, path)) {
         m11_set_status(state, "SAVE", "V1 RUNTIME STATE FAILED");
+        return 0;
+    }
+    if (!m11_write_quicksave_pc34_tail(state, path)) {
+        m11_set_status(state, "SAVE", "PC34 TAIL STATE FAILED");
         return 0;
     }
     m11_set_status(state, "SAVE", "QUICKSAVE WRITTEN");

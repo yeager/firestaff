@@ -8821,6 +8821,8 @@ static int publish_original_pc34_c3_c4_receipt(
         (uint32_t)world->timeline.count;
     world->pc34OriginalTimelineFingerprint =
         original_pc34_timeline_runtime_fingerprint(&world->timeline);
+    world->pc34OriginalFirstUnusedEventIndex =
+        report->original_first_unused_event_index;
     /* Retain the candidate receipt even when the final guard rejects it. */
     report->c3_c4_runtime_event_count =
         world->pc34OriginalC3C4RuntimeEventCount;
