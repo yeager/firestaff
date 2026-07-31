@@ -9,6 +9,10 @@
     attacks instead of substituting Fireball. Continue replacing only live
     placeholder behaviour; fixture builders and isolated no-draw contracts
     remain test support rather than production media.
+  - 2026-07-31: The CSBWin save-shape byte builder and its convenience runner
+    now compile only into tests and the verification probe. The M10 boundary
+    accepts caller-supplied save bytes only; continue auditing the remaining
+    CSB fixture-marked modules for the same production separation.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.

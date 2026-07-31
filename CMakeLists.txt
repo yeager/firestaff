@@ -7454,13 +7454,14 @@ endif()
 #         CSBCode.cpp:421-422 (csbgame.dat / csbgame.bak).
 add_executable(firestaff_csb_v1_csbwin_save_loader_boundary_probe
     probes/csb/firestaff_csb_v1_csbwin_save_loader_boundary_probe.c
+    tests/csb_v1_csbwin_save_loader_boundary_fixture.c
     src/csb/csb_v1_csbwin_save_loader_boundary_pc34_compat.c
     src/csb/csb_v1_csbwin_512_xor_pad_classify.c
     src/csb/csb_v1_save_import_path_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
 )
 target_include_directories(firestaff_csb_v1_csbwin_save_loader_boundary_probe
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(firestaff_csb_v1_csbwin_save_loader_boundary_probe
     PRIVATE firestaff_m10)
 if(NOT MSVC)
@@ -18367,6 +18368,7 @@ if(BUILD_TESTING)
     # one executable ReDMCSB/CSBwin handoff path.
     add_executable(test_csb_v1_boot_runtime_handoff
         tests/test_csb_v1_boot_runtime_handoff.c
+        tests/csb_v1_csbwin_save_loader_boundary_fixture.c
         src/csb/csb_v1_boot.c
         src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
@@ -18393,6 +18395,7 @@ if(BUILD_TESTING)
     )
     target_include_directories(test_csb_v1_boot_runtime_handoff PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests
     )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_boot_runtime_handoff
@@ -33061,6 +33064,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     # next to it.
     add_executable(test_csb_v1_csbwin_save_loader_boundary_pc34_compat
         tests/test_csb_v1_csbwin_save_loader_boundary_pc34_compat.c
+        tests/csb_v1_csbwin_save_loader_boundary_fixture.c
         src/csb/csb_v1_csbwin_save_loader_boundary_pc34_compat.c
         src/csb/csb_v1_csbwin_512_xor_pad_classify.c
         src/csb/csb_v1_save_import_path_pc34_compat.c

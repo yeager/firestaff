@@ -34,6 +34,7 @@
  */
 
 #include "csb_v1_csbwin_save_loader_boundary_pc34_compat.h"
+#include "csb_v1_csbwin_save_loader_boundary_fixture.h"
 #include "csb_v1_save_import_path_pc34_compat.h"
 
 #include <stdio.h>

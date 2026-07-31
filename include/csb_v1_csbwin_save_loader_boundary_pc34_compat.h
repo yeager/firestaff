@@ -230,19 +230,6 @@ typedef struct {
 
 /* ── Public API ──────────────────────────────────────────────────────── */
 
-/* Build a synthetic byte buffer for the given shape into `out_buf`
- * (capacity `buf_capacity` bytes). Returns the number of bytes
- * written, or 0 if the shape is unknown or the buffer is too
- * small. The returned bytes are deterministic — no randomness —
- * and form the exact fixture the per-shape evidence check feeds
- * into csb_v1_import_csb_save_buffer(). Exposed publicly so the
- * data-free unit test can reuse the builder without depending on
- * internal layout choices. */
-size_t csb_v1_csbwin_save_loader_boundary_build_fixture(
-    CSB_V1_CSBWinSaveShape shape,
-    uint8_t *out_buf,
-    size_t buf_capacity);
-
 /* Pure loader-boundary check. Caller hands `bytes`/`size` (the
  * first N bytes of a CSBWin / DM1 save file) and the shape under
  * test; the helper runs csb_v1_import_csb_save_buffer() against
@@ -263,13 +250,6 @@ size_t csb_v1_csbwin_save_loader_boundary_build_fixture(
 int csb_v1_csbwin_save_loader_boundary_check(
     const uint8_t *bytes,
     size_t         size,
-    CSB_V1_CSBWinSaveShape shape,
-    CSB_V1_CSBWinLoaderBoundaryResult *out);
-
-/* Convenience: build the synthetic fixture for `shape` and run
- * the loader-boundary check on it. Returns the loader result
- * code (see csb_v1_csbwin_save_loader_boundary_check). */
-int csb_v1_csbwin_save_loader_boundary_check_shape(
     CSB_V1_CSBWinSaveShape shape,
     CSB_V1_CSBWinLoaderBoundaryResult *out);
 

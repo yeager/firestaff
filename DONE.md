@@ -46883,3 +46883,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   tests, not `firestaff_m10`. Live viewport code retains only the source-bound
   room-slot/material path. Verification: focused regressions (74 + 563 + 86
   assertions) and complete `firestaff` link.
+
+- ✅ 2026-07-31 CSBWin save-fixture isolation: the synthetic 14-shape
+  CSBWin/DM1 save corpus and its convenience runner were removed from the M10
+  loader-boundary module and public production header. They are now test-only
+  support for the focused regression, boot-handoff regression and skip-safe
+  verification probe; the runtime boundary accepts only caller-supplied save
+  bytes. Verification: loader-boundary test 158/158, boot handoff 504/504,
+  real staged-save probe 22/22 and complete `firestaff` link.

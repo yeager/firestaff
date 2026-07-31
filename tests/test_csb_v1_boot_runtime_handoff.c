@@ -35,6 +35,7 @@
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 #include "asset_find_by_hash.h"
+#include "csb_v1_csbwin_save_loader_boundary_fixture.h"
 
 #include <stdio.h>
 #include <stdlib.h>
