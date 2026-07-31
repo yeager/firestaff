@@ -45705,10 +45705,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `SKWIN/SkWinCore.cpp:61120-61127`, `SKWIN/defines.h:656`. Verification:
   `test_dm2_v1_gdat_querydb_receipts` passes 118/118, including the local
   real-`GRAPHICS.DAT` querydb checks.
-
 - ✅ 2026-07-31 CSB D0C F0111 orphan-compositor closure: removed the public,
   test-only center-door compositor and its contract fixture. It had no M11
   runtime consumer, so supplied live-frame receipts could not make it a
   production material binding. The authenticated viewport materializer is
   unchanged and remains the sole production pixel owner. Verification:
   configure/build and PC3.4 real-asset viewport/startup regressions.
+- ✅ 2026-07-31 DM1 PC34 F0433 save-section correction: the source command
+  writer now emits the five F0420-obfuscated parts contiguously, with their
+  sizes owned by F0433/F0435 and decrypted GLOBAL_DATA rather than a private
+  Firestaff length prefix. The legacy fixture envelope remains explicitly
+  isolated. Verification: `dm1_v1_f0433_save_command_pc34_compat` passes.

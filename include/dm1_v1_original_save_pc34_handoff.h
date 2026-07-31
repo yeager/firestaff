@@ -1374,10 +1374,11 @@ int dm1_v1_original_save_pc34_handoff_resume_provenanced_file(
     struct DM1_EventQueue_V1 *runtime_queue,
     DM1OriginalSavePC34HandoffReport *out_report);
 
-/* ReDMCSB READWRIT.C F0420: prefix an even-byte save part with its original
- * 16-bit size, obfuscate it through F0417 exactly once, and return the
- * source checksum. The caller retains transaction ownership of the complete
- * F0433 save envelope; malformed spans are rejected before any write. */
+/* Historical Firestaff fixture-envelope helper. It prefixes an even-byte
+ * part with a private 16-bit size before F0417 obfuscation. Original PC34
+ * F0419/F0420 does not store this prefix: F0433 supplies the known part size
+ * and F0435 derives later sizes from GLOBAL_DATA. Production F0433 export
+ * must use its source-exact contiguous-part path instead. */
 int dm1_v1_original_save_pc34_write_part_f0420(
     uint8_t *dst,
     size_t dst_capacity,
@@ -1386,11 +1387,9 @@ int dm1_v1_original_save_pc34_write_part_f0420(
     uint16_t key,
     uint16_t *out_checksum);
 
-/* ReDMCSB READWRIT.C F0419: consume one F0420 length-prefixed save part and
- * apply F0417 exactly once to recover its source bytes and checksum. A bad
- * prefix or span is rejected before body access. The cursor advances across a
- * complete part even when its source checksum differs, matching the reader's
- * diagnostic contract; F0435 retains ownership of whole-save publication. */
+/* Historical Firestaff fixture-envelope reader matching the private prefix
+ * above. It is not an original-PC34 F0419 reader and must not be used by
+ * F0433/F0435 runtime interop. */
 int dm1_v1_original_save_pc34_read_part_f0419(
     const uint8_t *bytes,
     size_t size,

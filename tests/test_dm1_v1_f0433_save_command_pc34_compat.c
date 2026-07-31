@@ -65,10 +65,13 @@ int main(void)
     CHECK(strstr(dm1_v1_f0433_save_command_source_evidence_pc34(), "F0433") != NULL);
     CHECK(dm1_v1_f0433_save_command_write_pc34(&request, output, sizeof(output),
                                                 &receipt));
-    CHECK(receipt.accepted && receipt.bytesWritten == 726u &&
-          receipt.partOffsets[0] == 512u && receipt.partOffsets[1] == 642u &&
-          receipt.partOffsets[4] == 716u && receipt.headerFingerprint != 0u &&
+    CHECK(receipt.accepted && receipt.bytesWritten == 716u &&
+          receipt.partOffsets[0] == 512u && receipt.partOffsets[1] == 640u &&
+          receipt.partOffsets[4] == 708u && receipt.headerFingerprint != 0u &&
           receipt.partChecksums[0] != 0u && receipt.suppressSyntheticFallback);
+    /* The first encrypted source word starts at 512. 0x80 would be the
+     * obsolete private 128-byte prefix rather than PC34 save data. */
+    CHECK(output[512] == 0x00u && output[513] == 0x13u);
 
     request.parts[2].sourceReceiptValid = 0;
     CHECK(!dm1_v1_f0433_save_command_write_pc34(&request, output, sizeof(output),

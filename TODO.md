@@ -23688,6 +23688,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     F0435 corpus entries now publish a nonzero, stable FNV-1a fingerprint of
     their admitted source and transient export. The independent provenance
     fingerprint is retained instead of being overwritten by that receipt.
+  - 2026-07-31 F0433 section-layout correction: the public original-PC34
+    command export now writes the five authenticated parts contiguously, as
+    ReDMCSB F0419/F0420 and DMweb specify. Its historical length-prefixed
+    fixture helper is explicitly isolated and cannot produce a runtime export.
 
 ## DM1 F0134/F0135 production material follow-up
 
