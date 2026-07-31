@@ -23544,6 +23544,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     DOSBox rawshots are valid dungeon-movement evidence only; they do not
     cover the F0344/F0345 panel sequence. A raw DOSBox capture or an allowed
     macOS window-capture context remains required.
+  - 2026-07-31 rawshot recheck: the newer runbook driver completed the real
+    `1`/Return, `1`/Return, `4`/Return selector sequence, but this installed
+    DOSBox Staging process did not write an internal Alt+F5 image at all.
+    This independently rules out treating blank host-window frames as panel
+    evidence. Resolve the emulator capture binding before repeating the
+    operator capture route.
 
 ## DM1 C13 F0435 stale-fence follow-up
 
