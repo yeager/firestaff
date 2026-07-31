@@ -1166,7 +1166,7 @@ int theron_v1_startup_layout_build(
             &elements[count],
             elements[count].decoded_name[0]
                 ? elements[count].decoded_name
-                : (meta ? meta->name : "Hero Mirror"));
+                : "UNAVAILABLE");
         tqr_startup_layout_set_rect(
             &elements[count], 46, 78 + i * 11, 230, 10);
         ++count;

@@ -1,3 +1,8 @@
+- ✅ 2026-07-31 Theron Soul Room-meny: när en Track 02-rosteretikett inte
+  är dekoderad visas nu `UNAVAILABLE` i meny-layouten i stället för fasta
+  hjältenamn från en syntetisk fallback. Verifierade JP-rosteretiketter
+  används fortfarande normalt; urval/portrait/class-bindning ändras inte.
+
 - ✅ 2026-07-31 M12 settings mouse-catalogue capacity: the modern launcher
   now declares its 16-row/two-column settings-panel capacity. This covers the
   13-row Graphics tab introduced by renderer and brightness preferences, and
