@@ -1861,8 +1861,12 @@ static void test_hoc_floor_ornament_sources_follow_redmcsb(void)
     state.world.things = &things;
     ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 3,
               "HoC floor sensor keeps its source ornament ordinal");
-    squareFirstThings[0] = THING_ENDOFLIST;
+    sensors[0].ornamentOrdinal = 0;
     squareData[0] |= 0x08;
+    ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 0,
+              "HoC floor sensor ordinal zero suppresses random ornament");
+    sensors[0].ornamentOrdinal = 3;
+    squareFirstThings[0] = THING_ENDOFLIST;
     ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 3,
               "HoC random floor ornament follows F0172 map-zero stream");
 }

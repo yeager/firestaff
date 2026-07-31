@@ -9260,7 +9260,8 @@ struct M11_ViewportCell;
  * This mirrors F0172_DUNGEON_SetSquareAspect's floor ornament path.
  * Two sources of floor ornaments:
  *  1. Random floor ornaments based on MASK0x0008 bit in the square byte
- *  2. Sensor things with ornamentOrdinal > 0 (explicit placement)
+ *  2. Sensor things with ornamentOrdinal 0..15 (explicit placement or
+ *     explicit suppression of the random ornament)
  * Ref: ReDMCSB DUNGEON.C F0172 lines ~2189-2196. */
 static int m11_compute_floor_ornament_ordinal(
     const M11_GameViewState* state,
@@ -9313,9 +9314,10 @@ static int m11_compute_floor_ornament_ordinal(
             ordinal = idx + 1; /* 1-based */
         }
     }
-    /* Sensor-placed floor ornaments override random ones.
-     * Scan for sensor things with ornamentOrdinal on this square.
-     * Ref: ReDMCSB F0172 — C0_SENSOR_FLOOR_ORNAMENT_ORDINAL path. */
+    /* Sensors overwrite the random value, including ordinal zero.  F0172
+     * assigns Remote.OrnamentOrdinal unconditionally; zero is how original
+     * dungeon data suppresses a random grate/pressure plate on that square.
+     * Ref: ReDMCSB DUNGEON.C F0172 — C03_THING_TYPE_SENSOR path. */
     if (state->world.things && state->world.things->sensors) {
         unsigned short scanThing = m11_get_viewport_static_first_thing(
             &state->world, mapIndex, mapX, mapY);
@@ -9324,14 +9326,12 @@ static int m11_compute_floor_ornament_ordinal(
             if (THING_GET_TYPE(scanThing) == THING_TYPE_SENSOR) {
                 int sIdx = THING_GET_INDEX(scanThing);
                 if (sIdx >= 0 && sIdx < state->world.things->sensorCount) {
-                    /* Floor ornament sensor: ornamentOrdinal > 0 on
-                     * non-wall squares indicates a floor ornament.
-                     * Use the same field we use for wall ornaments. */
+                    /* Use the original 4-bit remote ornament field.  Do
+                     * not discard zero: it is an explicit source-owned
+                     * replacement for the calculated random ordinal. */
                     int sOrd = (int)state->world.things->sensors[sIdx].ornamentOrdinal;
-                    if (sOrd > 0) {
-                        ordinal = sOrd;
-                        break;
-                    }
+                    ordinal = sOrd;
+                    break;
                 }
             }
             scanThing = m11_raw_next_thing(state->world.things, scanThing);

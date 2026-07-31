@@ -46869,6 +46869,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_m11_overlay_command_queue_block` (192/192) and
   `test_m11_v22_shape_cache_pc34` (31/31).
 
+- ✅ 2026-07-31 DM1 HoC F0172 sensor-zero correction: floor sensors now
+  overwrite the random floor-ornament ordinal even when their source-owned
+  `Remote.OrnamentOrdinal` is zero. ReDMCSB assigns that field
+  unconditionally; zero suppresses a random grate or pressure plate instead
+  of allowing it to leak through. Verification:
+  `test_m11_overlay_command_queue_block` (193/193),
+  `test_m11_v22_shape_cache_pc34` (31/31), and the installed PC 3.4 HoC
+  runtime probe.
+
 - ✅ 2026-07-31 DM1 F0115 alcove-object input binding: C080 now accepts the
   actual current-frame C2548/F0791 destination rectangle for a front alcove
   item, in addition to the original C05 ornament zone. This preserves wall
