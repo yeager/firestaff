@@ -108,7 +108,7 @@ typedef struct Theron_V1_BootProfile {
 
     /* Deterministic RNG seed: from TQ dungeon header word at offset 8.
      * Mirrors DM2 structure so boot config builder reuses logic. */
-    uint32_t dungeon_seed;          /* default fallback: 313 */
+    uint32_t dungeon_seed;          /* 0 until a verified dungeon header is loaded */
 
     /* TQ-specific: quest goal item (7 dungeon → 7 quest items).
      * quest_items_collected ranges 0..7 in saves/theron/namespace. */

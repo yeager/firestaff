@@ -104,14 +104,12 @@ struct TQR_DungeonHeader {
 };
 ```
 
-Default dungeon seeds (placeholders, to be replaced from actual header):
-- Dungeon 1 (Hall of Records): 313
-- Dungeon 2 (Crypt of Shadows): 414
-- Dungeon 3 (Abyss of Flames): 527
-- Dungeon 4 (Tomb of Woe): 632
-- Dungeon 5 (Vault of Secrets): 749
-- Dungeon 6 (Castle of Fate): 856
-- Dungeon 7 (Tower of Epilogue): 967
+No dungeon-seed table is promoted from the current Track 02 evidence.
+The former values (313, 414, 527, 632, 749, 856, 967) were Firestaff
+working placeholders and must not be presented as original data. The
+verified raw US/JP Track 02 startup candidate instead carries the real
+32-bit initial-level seed `0x0108e938`; later dungeon headers remain
+unresolved until their records are decoded.
 
 Source: theron_v1_boot.c:318-345 · theron_v1_dungeon_progression.c:38-110
 
@@ -195,13 +193,13 @@ description and TQ game design:
 | Junk/Misc | ~100 | **STUB ~20** | Torches, ropes, poles, etc. |
 
 **Quest items (7 unique, not in DM1):**
-1. Sacred Amplifier (Hall of Records)
-2. Shadow Key (Crypt of Shadows)
-3. Flame Orbs (Abyss of Flames)
-4. Stone Sigil (Tomb of Woe)
-5. Wayward Ribbon (Vault of Secrets)
-6. Destiny's Thread (Castle of Fate)
-7. Cosmic Shard (Tower of Epilogue)
+1. Shield Defiant (Hall of Records)
+2. Taza Poleyn (Crypt of Shadows)
+3. Tazahelm (Abyss of Flames)
+4. Taza Boots (Tomb of Woe)
+5. Taza Armor (Vault of Secrets)
+6. Soulcage (Castle of Fate)
+7. The Retaliator (Tower of Epilogue)
 
 Source: theron_v1_dungeon_progression.c:103-114 · dmweb game description · STUB
 
@@ -275,13 +273,13 @@ Source: theron_v1_dungeon_progression.c:38-110 (dungeon names) · STUB
 ### 4.3 Seven Quest Item Names
 
 Confirmed from `theron_v1_dungeon_progression.c:103-114`:
-- "Sacred Amplifier" — Hall of Records
-- "Shadow Key" — Crypt of Shadows  
-- "Flame Orbs" — Abyss of Flames
-- "Stone Sigil" — Tomb of Woe
-- "Wayward Ribbon" — Vault of Secrets
-- "Destiny's Thread" — Castle of Fate
-- "Cosmic Shard" — Tower of Epilogue
+- "Shield Defiant" — Hall of Records
+- "Taza Poleyn" — Crypt of Shadows
+- "Tazahelm" — Abyss of Flames
+- "Taza Boots" — Tomb of Woe
+- "Taza Armor" — Vault of Secrets
+- "Soulcage" — Castle of Fate
+- "The Retaliator" — Tower of Epilogue
 
 Source: theron_v1_dungeon_progression.c:103-114
 
@@ -314,7 +312,7 @@ struct TQR_Champion {
     uint8_t  name[16];     // null-terminated string (up to 15 chars)
     uint8_t  class;        // 0=Fighter, 1=Ninja, 2=Priest, 3=Wizard (same as DM1)
     uint8_t  level;        // 1–99
-    
+
     // Stats (current / maximum pairs)
     uint8_t  health_cur;   // current health
     uint8_t  health_max;   // maximum health
@@ -322,7 +320,7 @@ struct TQR_Champion {
     uint8_t  mana_max;
     uint8_t  stamina_cur;
     uint8_t  stamina_max;
-    
+
     // Attributes (0–99, current and max)
     uint8_t  strength_cur,    strength_max;
     uint8_t  dexterity_cur,    dexterity_max;
@@ -330,17 +328,17 @@ struct TQR_Champion {
     uint8_t  anti_magic_cur,   anti_magic_max;
     uint8_t  anti_fire_cur,    anti_fire_max;
     uint8_t  luck_cur,         luck_max;
-    
+
     // Skills (4 per class = 16 total)
     uint8_t  skills[16];    // 0=NEOPHYTE..17=MASTER (same rank system as DM1)
-    
+
     // Condition flags
     uint16_t condition;    // poisoned, silent, etc. (same as DM1 bit flags)
-    
+
     // Inventory (STUB — size unknown)
     uint8_t  inventory[24];  // object IDs (TQ subset of DM1 objects)
     uint8_t  gold;           // gold carried
-    
+
     // Champion-specific (TQ adds Theron flag)
     uint8_t  is_theron;     // 1 if this slot is Theron
 };
@@ -678,13 +676,13 @@ Source: Phase 0 provenance gate §4.4 · STUB
 
 | # | Name | Levels | Quest Item | Dungeon Seed (STUB) |
 |---|------|--------|------------|---------------------|
-| 1 | Hall of Records | 2 | Sacred Amplifier | 313 |
-| 2 | Crypt of Shadows | 2 | Shadow Key | 414 |
-| 3 | Abyss of Flames | 3 | Flame Orbs | 527 |
-| 4 | Tomb of Woe | 3 | Stone Sigil | 632 |
-| 5 | Vault of Secrets | 2 | Wayward Ribbon | 749 |
-| 6 | Castle of Fate | 3 | Destiny's Thread | 856 |
-| 7 | Tower of Epilogue | 3 | Cosmic Shard | 967 |
+| 1 | Hall of Records | 2 | Shield Defiant | `0x0108e938` (verified initial level) |
+| 2 | Crypt of Shadows | 2 | Taza Poleyn | unresolved |
+| 3 | Abyss of Flames | 3 | Tazahelm | unresolved |
+| 4 | Tomb of Woe | 3 | Taza Boots | unresolved |
+| 5 | Vault of Secrets | 2 | Taza Armor | unresolved |
+| 6 | Castle of Fate | 3 | Soulcage | unresolved |
+| 7 | Tower of Epilogue | 3 | The Retaliator | unresolved |
 
 Source: theron_v1_dungeon_progression.c:38-110 · dmweb game description
 

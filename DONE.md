@@ -46408,3 +46408,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Källa: DMWeb `DecodeSTABGBIN` och lokal retail `STABG.BIN`.
   Verifiering: `test_nexus_v1_startup_media_gate` mot
   `/Users/bosse/.firestaff/data/nexus`.
+# 2026-07-31 Theron stale placeholder metadata removal
+
+- ✅ Removed the retired Theron dungeon-seed fallback `313` from the boot
+  profile; an unbound profile now starts at zero and only verified header or
+  Track 02 handoff data may populate the seed. Updated the Track 02 source-lock
+  table to mark dungeon 1 as `0x0108e938` (verified initial level) and dungeons
+  2–7 as unresolved. Corrected the source-lock quest-item names to the seven
+  DMWeb relics: Shield Defiant, Taza Poleyn, Tazahelm, Taza Boots, Taza Armor,
+  Soulcage and The Retaliator. Verification: `test_theron_v1_m11_direct_launch`
+  passes; `git diff --check` passes.

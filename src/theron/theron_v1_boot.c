@@ -564,7 +564,11 @@ void theron_v1_boot_profile_init(Theron_V1_BootProfile *profile) {
     profile->deterministic.max_levels         = 3;   /* ~3 levels per mini-dungeon */
     profile->dungeon_size = 0;
     profile->graphics_size = 0;
-    profile->deterministic.dungeon_seed       = 313; /* default fallback */
+    /* Do not seed runtime state with the retired placeholder value 313.
+     * T560 header parsing fills this only after a verified original header
+     * is supplied; the real Track 02 startup candidate carries its own
+     * 32-bit level seed and is bound by the Track 02 handoff path. */
+    profile->deterministic.dungeon_seed       = 0;
     profile->deterministic.quest_items_collected = 0;
 }
 
