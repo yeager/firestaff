@@ -46,78 +46,6 @@ extern "C" {
 #endif
 
 /* ════════════════════════════════════════════════════════════════
- * Champion class IDs (DM2 character classes)
- * Source: ReDMCSB CHAMPION.C G0417_apc_BaseSkillNames
- * ════════════════════════════════════════════════════════════════ */
-
-typedef enum {
-    DM2_CLASS_FIGHTER = 0,
-    DM2_CLASS_NINJA    = 1,
-    DM2_CLASS_PRIEST   = 2,
-    DM2_CLASS_WIZARD   = 3,
-} DM2_ChampionClass;
-
-/* Champion portrait indices (into GRAPHICS.DAT portrait strip).
- * These are the 8 portrait slots used by DM2 for character creation.
- * Source: ReDMCSB CHAMPION.C portrait index enumeration */
-typedef enum {
-    DM2_PORTRAIT_FIGHTER_MALE   = 0,
-    DM2_PORTRAIT_FIGHTER_FEMALE = 1,
-    DM2_PORTRAIT_NINJA_MALE     = 2,
-    DM2_PORTRAIT_NINJA_FEMALE   = 3,
-    DM2_PORTRAIT_PRIEST_MALE    = 4,
-    DM2_PORTRAIT_PRIEST_FEMALE  = 5,
-    DM2_PORTRAIT_WIZARD_MALE    = 6,
-    DM2_PORTRAIT_WIZARD_FEMALE  = 7,
-    DM2_PORTRAIT_COUNT          = 8,
-} DM2_PortraitIndex;
-
-/* Champion view-cell positions in party display.
- * Source: ReDMCSB CHAMPION.C F0280 — cell assignment by direction */
-typedef enum {
-    DM2_VIEW_CELL_FRONT_LEFT  = 0,
-    DM2_VIEW_CELL_FRONT_RIGHT = 1,
-    DM2_VIEW_CELL_BACK_LEFT   = 2,
-    DM2_VIEW_CELL_BACK_RIGHT  = 3,
-} DM2_ViewCell;
-
-/* ════════════════════════════════════════════════════════════════
- * Champion initial attribute tables
- * Source: ReDMCSB CHAMPION.C F0280 — base stat initialization
- *         docs/dm2_party_state.md — champion record initial values
- * ════════════════════════════════════════════════════════════════ */
-
-/* Initial HP by class (cur_hp = max_hp at creation) */
-#define DM2_INITIAL_HP_FIGHTER  60
-#define DM2_INITIAL_HP_NINJA    45
-#define DM2_INITIAL_HP_PRIEST   40
-#define DM2_INITIAL_HP_WIZARD   30
-
-/* Initial Stamina by class */
-#define DM2_INITIAL_STAMINA_FIGHTER  70
-#define DM2_INITIAL_STAMINA_NINJA    65
-#define DM2_INITIAL_STAMINA_PRIEST   55
-#define DM2_INITIAL_STAMINA_WIZARD   40
-
-/* Initial Mana by class (Priests/Wizards start with some mana) */
-#define DM2_INITIAL_MANA_FIGHTER  0
-#define DM2_INITIAL_MANA_NINJA    10
-#define DM2_INITIAL_MANA_PRIEST   30
-#define DM2_INITIAL_MANA_WIZARD   45
-
-/* Attribute index order (matching ReDMCSB C1_STATISTIC_STRENGTH et al.) */
-#define DM2_STAT_STRENGTH     0
-#define DM2_STAT_BRAVERY      1
-#define DM2_STAT_PIETY        2
-#define DM2_STAT_VIGOR        3
-#define DM2_STAT_DEXTERITY    4
-#define DM2_STAT_WISDOM       5
-#define DM2_STAT_ANTIFIRE     6
-
-/* Base attribute value at champion creation (minimum 30 per ReDMCSB) */
-#define DM2_BASE_ATTRIBUTE    30
-
-/* ════════════════════════════════════════════════════════════════
  * Session state — encapsulates all DM2 runtime state for save/load
  * This is what gets serialized to a save slot.
  * Source: docs/dm2_save_format.md — full save file layout
@@ -333,34 +261,6 @@ typedef struct {
 /* ════════════════════════════════════════════════════════════════
  * New game API
  * ════════════════════════════════════════════════════════════════ */
-
-/* Champion class from portrait index.
- * DM2 portrait ranges map to character classes:
- *   Portraits 0-1 → Fighter
- *   Portraits 2-3 → Ninja
- *   Portraits 4-5 → Priest
- *   Portraits 6-7 → Wizard
- * Source: ReDMCSB CHAMPION.C G0417_apc_BaseSkillNames */
-DM2_ChampionClass dm2_v1_portrait_to_class(uint8_t portrait_index);
-
-/* Build a single champion record from portrait + class.
- * Fills the 261-byte champion record using SUPPRESS encoding.
- * Source: ReDMCSB CHAMPION.C F0280 — champion data initialization */
-void dm2_v1_build_champion_record(DM2_ChampionRecord *record,
-                                   const char *first_name,
-                                   const char *last_name,
-                                   uint8_t portrait_index,
-                                   DM2_ChampionClass champ_class,
-                                   uint8_t view_cell,
-                                   uint8_t direction);
-
-/* Set initial attributes for a champion based on class.
- * Rolls 7 attributes (STR, BRV, PIY, VIG, DEX, WIS, ANF) each ≥ 30.
- * Class modifies the class-derived attributes (STR/BRV for Fighter,
- * DEX/VIG for Ninja, PIY/WIS for Priest, WIS/PIY for Wizard).
- * Source: ReDMCSB CHAMPION.C F0280 attribute assignment loop */
-void dm2_v1_set_initial_attributes(DM2_ChampionRecord *record,
-                                    DM2_ChampionClass champ_class);
 
 /* ════════════════════════════════════════════════════════════════
  * Session management API

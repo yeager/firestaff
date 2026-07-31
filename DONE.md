@@ -1,3 +1,12 @@
+- ✅ 2026-07-31 DM2 synthetic champion-builder removal: removed the remaining
+  production portrait-to-class switch, fixed class statistics and fabricated
+  champion-record builder. None had a production caller or original save
+  owner. Source champion data remains exclusively `GAME_LOAD`/SUPPRESS-owned;
+  the test fixture keeps only codec input under `tests/`. Verification: the
+  production archive has none of the three retired symbols;
+  `test_dm2_v1_utility_import` passes 110/110 and real-data
+  `test_dm2_v1_m11_startup_profile_gate` passes.
+
 - ✅ 2026-07-31 DM2 starter-party fixture isolation: removed the exported
   `dm2_v1_session_new()` and `dm2_v1_generate_starter_party()` production
   paths, including their fabricated names, gold, noon and entrance pose.

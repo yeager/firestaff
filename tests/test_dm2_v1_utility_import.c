@@ -81,93 +81,7 @@ static void cleanup_temp_dir(void)
     }
 }
 
-/* ── Test 1: Portrait → class mapping ── */
-static void test_portrait_to_class(void)
-{
-    printf("  Portrait→class mapping...\n");
-    CHECK(dm2_v1_portrait_to_class(DM2_PORTRAIT_FIGHTER_MALE) == DM2_CLASS_FIGHTER,
-          "Portrait 0 → Fighter");
-    CHECK(dm2_v1_portrait_to_class(DM2_PORTRAIT_FIGHTER_FEMALE) == DM2_CLASS_FIGHTER,
-          "Portrait 1 → Fighter");
-    CHECK(dm2_v1_portrait_to_class(DM2_PORTRAIT_NINJA_MALE) == DM2_CLASS_NINJA,
-          "Portrait 2 → Ninja");
-    CHECK(dm2_v1_portrait_to_class(DM2_PORTRAIT_NINJA_FEMALE) == DM2_CLASS_NINJA,
-          "Portrait 3 → Ninja");
-    CHECK(dm2_v1_portrait_to_class(DM2_PORTRAIT_PRIEST_MALE) == DM2_CLASS_PRIEST,
-          "Portrait 4 → Priest");
-    CHECK(dm2_v1_portrait_to_class(DM2_PORTRAIT_PRIEST_FEMALE) == DM2_CLASS_PRIEST,
-          "Portrait 5 → Priest");
-    CHECK(dm2_v1_portrait_to_class(DM2_PORTRAIT_WIZARD_MALE) == DM2_CLASS_WIZARD,
-          "Portrait 6 → Wizard");
-    CHECK(dm2_v1_portrait_to_class(DM2_PORTRAIT_WIZARD_FEMALE) == DM2_CLASS_WIZARD,
-          "Portrait 7 → Wizard");
-    CHECK(dm2_v1_portrait_to_class(99) == DM2_CLASS_FIGHTER,
-          "Unknown portrait defaults to Fighter");
-}
-
-/* ── Test 2: Champion record build ── */
-static void test_build_champion_record(void)
-{
-    printf("  Champion record build...\n");
-    DM2_ChampionRecord rec;
-    dm2_v1_build_champion_record(&rec,
-                                  "Testus",
-                                  "the Bold",
-                                  DM2_PORTRAIT_FIGHTER_MALE,
-                                  DM2_CLASS_FIGHTER,
-                                  DM2_VIEW_CELL_FRONT_LEFT,
-                                  0 /* North */);
-
-    CHECK(rec.first_name[0] != '\0', "First name is non-empty");
-    CHECK(strncmp(rec.first_name, "Testus", 7) == 0,
-          "First name matches input");
-    CHECK(rec.absolute_direction == 0, "Direction set to North");
-    CHECK(rec.squad_position == DM2_VIEW_CELL_FRONT_LEFT,
-          "View cell set correctly");
-    CHECK(rec.portrait_index == DM2_PORTRAIT_FIGHTER_MALE,
-          "Portrait index is stored in champion record tail metadata");
-    CHECK(rec.cur_hp == rec.max_hp, "HP cur == max at creation");
-    CHECK(rec.cur_hp == DM2_INITIAL_HP_FIGHTER,
-          "Fighter HP matches class default");
-
-    /* Check class-specific mana (Fighter should have 0) */
-    CHECK(rec.mana == 0, "Fighter starts with 0 mana");
-
-    /* Stamina */
-    CHECK(rec.stamina == DM2_INITIAL_STAMINA_FIGHTER,
-          "Fighter stamina matches class default");
-
-    /* Food and water at creation */
-    CHECK(rec.food == 100, "Food initialized to 100");
-    CHECK(rec.water == 100, "Water initialized to 100");
-
-    /* No poison or runes */
-    CHECK(rec.poison_value == 0, "No poison at creation");
-    CHECK(rec.runes_count == 0, "No runes at creation");
-
-    /* No inventory */
-    int has_item = 0;
-    for (int i = 0; i < DM2_CHAMPION_INVENTORY_SLOTS; i++) {
-        if (rec.inventory[i] != 0) { has_item = 1; break; }
-    }
-    CHECK(!has_item, "Inventory is empty at creation");
-
-    /* Test wizard has mana */
-    DM2_ChampionRecord wiz;
-    dm2_v1_build_champion_record(&wiz, "Merlin", "",
-                                  DM2_PORTRAIT_WIZARD_MALE,
-                                  DM2_CLASS_WIZARD,
-                                  DM2_VIEW_CELL_BACK_RIGHT,
-                                  2 /* South */);
-    CHECK(wiz.mana == DM2_INITIAL_HP_WIZARD + 15,  /* DM2_INITIAL_MANA_WIZARD */
-          "Wizard starts with non-zero mana");
-    CHECK(wiz.cur_hp == DM2_INITIAL_HP_WIZARD,
-          "Wizard HP is lower than Fighter");
-    CHECK(wiz.portrait_index == DM2_PORTRAIT_WIZARD_MALE,
-          "Wizard portrait index is stored");
-}
-
-/* ── Test 3: Test-fixture session ── */
+/* ── Test 1: Test-fixture session ── */
 static void test_session_fixture(void)
 {
     printf("  Test-fixture session...\n");
@@ -481,16 +395,8 @@ int main(void)
 
     setup_temp_dir();
 
-    /* ── Portrait → class mapping ── */
-    printf("--- Portrait→class mapping ---\n");
-    test_portrait_to_class();
-
-    /* ── Champion record build ── */
-    printf("\n--- Champion record build ---\n");
-    test_build_champion_record();
-
-    /* ── Session new ── */
-    printf("\n--- Session new ---\n");
+    /* ── Test session fixture ── */
+    printf("--- Test-fixture session ---\n");
     test_session_fixture();
 
     /* ── Session validation ── */

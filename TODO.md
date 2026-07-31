@@ -36,6 +36,9 @@
   The former exported `dm2_v1_session_new()`/starter-party route has been
   removed from the production library; its explicitly named fixture now lives
   under `tests/` only.
+  The associated hard-coded portrait-to-class mapping and initial-stat record
+  builder are removed too; real champion records remain owned by GAME_LOAD
+  and the original SUPPRESS payload.
   A verified New Game reload now also clears stale resume portraits,
   inventory and leader hand before source mirror selection; it still cannot
   create a replacement party or enter runtime.
