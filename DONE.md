@@ -46509,3 +46509,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   fönster och SAL-containerprofil, men markerar fortfarande codec och Saturn-
   eventdispatch som oprövade och blockerar playback. Kommentarerna använder
   därför `opaque/no-playback` i stället för den missvisande `STUB`-etiketten.
+- ✅ 2026-07-31 Nexus rörelseresultat för vatten/eld: standalone-rörelsevägen
+  returnerar nu `BLOCKED_WATER` respektive `BLOCKED_FIRE` i stället för att
+  felaktigt kollapsa båda till `BLOCKED_WALL`. Item-/runeägarskap förblir hos
+  mechanics-källan och aktiveras inte av denna korrigering.
+  Verifiering: C11-rörelsecheck mot `firestaff_nexus`.

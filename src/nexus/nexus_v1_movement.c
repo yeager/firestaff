@@ -119,14 +119,16 @@ int nexus_square_is_door(int sq) {
 
 int nexus_square_is_water(int sq) {
     /* Type 21 = water square (needs rope to cross).
-     * STUB: in V1, water blocks passage until rope item is used.
+     * The movement result remains source-specific; inventory ownership is
+     * resolved by the mechanics owner before this standalone route is used.
      * Source: DM1 water square behavior (NEXUS_SQUARE_WATER). */
     return sq == 21;
 }
 
 int nexus_square_is_fire(int sq) {
     /* Type 22 = fire square (needs protect-from-fire rune).
-     * STUB: in V1, fire blocks passage until PROTECT rune is cast.
+     * The movement result remains source-specific; rune ownership is
+     * resolved by the mechanics owner before this standalone route is used.
      * Source: DM1 fire square behavior (NEXUS_SQUARE_FIRE). */
     return sq == 22;
 }
@@ -255,13 +257,13 @@ int nexus_try_move(int dir, int forward,
      * until rope/protect-rune is used.
      * Source: nexus_squares.h NEXUS_SQUARE_WATER/FIRE stub. */
     if (sq == 21) {
-        if (out_result) *out_result = NEXUS_MOVE_BLOCKED_WALL;
+        if (out_result) *out_result = NEXUS_MOVE_BLOCKED_WATER;
         if (out_new_map_x) *out_new_map_x = *in_out_map_x;
         if (out_new_map_y) *out_new_map_y = *in_out_map_y;
         return 0;
     }
     if (sq == 22) {
-        if (out_result) *out_result = NEXUS_MOVE_BLOCKED_WALL;
+        if (out_result) *out_result = NEXUS_MOVE_BLOCKED_FIRE;
         if (out_new_map_x) *out_new_map_x = *in_out_map_x;
         if (out_new_map_y) *out_new_map_y = *in_out_map_y;
         return 0;
