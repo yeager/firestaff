@@ -44855,3 +44855,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm1_v1_viewport_3d_pc34_compat`,
   `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 DM1 F0373 floor-pile pickup ownership: C080 floor clicks
+  now take the rendered `G0292_aT_PileTopObject[viewCell]` equivalent and
+  put it directly into the separate leader hand. Firestaff no longer rejects
+  a floor pickup merely because the active champion inventory is full, and
+  it no longer removes an arbitrary first object from a multi-cell square
+  chain. Source anchors: ReDMCSB `CLIKVIEW.C F0373:94-128` and
+  `CHAMPION.C F0297:243-268`. Verification: `dm1_v1_viewport_click_source_lock`,
+  `m11_dm1_real_alcove_item_runtime_pc34`,
+  `dm1_v1_original_save_pc34_external_hoc_runtime`, and
+  `dm1_v1_viewport_floor_ceiling_items_pc34_compat` pass.

@@ -11489,6 +11489,31 @@ static unsigned short m11_find_first_item_on_square(
     return THING_NONE;
 }
 
+/* ReDMCSB CLIKVIEW.C F0373 takes G0292_aT_PileTopObject[viewCell], not an
+ * arbitrary object from the square's chain.  The packed THING cell is the
+ * source identity of that rendered pile. */
+static unsigned short m11_find_pile_top_item_on_square(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int viewCell,
+    int partyDirection) {
+    unsigned short thing = m11_square_chain_head(world, mapIndex, mapX, mapY);
+    int sourceCell = (partyDirection + viewCell) & 3;
+    int safety = 0;
+
+    while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
+        if (dm1_v1_thing_type_is_floor_item_pc34(THING_GET_TYPE(thing)) &&
+            (int)THING_GET_CELL(thing) == sourceCell) {
+            return thing;
+        }
+        thing = m11_raw_next_thing(world->things, thing);
+        ++safety;
+    }
+    return THING_NONE;
+}
+
 /* Find the first empty backpack/pouch slot for a champion. */
 static int m11_find_empty_slot(const struct ChampionState_Compat* champ) {
     int slot;
@@ -27581,29 +27606,11 @@ static int m11_c080_grab_leader_hand(M11_GameViewState* state,
     if (!state || !state->active) return 0;
     if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE) return 0;
 
-    /* Pre-flight: active champion must have a free inventory slot.
-     * Source: CHAMPION.C:694 F0302 empty-slot guard.
-     * CLIKVIEW.C F0373: grab only succeeds if leader hand is empty and
-     * a free slot exists in the active champion inventory. */
-    if (state->world.party.activeChampionIndex >= 0 &&
-        state->world.party.activeChampionIndex < CHAMPION_MAX_PARTY) {
-        struct ChampionState_Compat* champ =
-            &state->world.party.champions[state->world.party.activeChampionIndex];
-        if (champ->present) {
-            int slot;
-            int hasFree = 0;
-            for (slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
-                if (champ->inventory[slot] == THING_NONE) {
-                    hasFree = 1;
-                    break;
-                }
-            }
-            if (!hasFree) {
-                m11_set_status(state, "PICKUP", "INVENTORY FULL");
-                return 0;
-            }
-        }
-    }
+    /* ReDMCSB CLIKVIEW.C F0373:117-128 removes G0292's rendered pile-top
+     * object and calls F0297 directly.  F0297 owns the separate leader hand
+     * (G4055); it does not require a free inventory slot.  F0302's empty-slot
+     * branch applies only to a click on an inventory/chest slot, never to a
+     * dungeon-floor pickup. */
 
     memset(&cell, 0, sizeof(cell));
     if (viewCell >= 2) {
@@ -27616,10 +27623,12 @@ static int m11_c080_grab_leader_hand(M11_GameViewState* state,
     targetMapX = cell.mapX;
     targetMapY = cell.mapY;
 
-    item = m11_find_first_item_on_square(
+    item = m11_find_pile_top_item_on_square(
         &state->world,
         state->world.party.mapIndex,
-        targetMapX, targetMapY);
+        targetMapX, targetMapY,
+        viewCell,
+        state->world.party.direction);
     if (item == THING_NONE) return 0;
 
     if (!m11_unlink_thing_from_square(&state->world,
