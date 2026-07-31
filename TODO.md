@@ -21,6 +21,10 @@
     now compile only into tests and the verification probe. The M10 boundary
     accepts caller-supplied save bytes only; continue auditing the remaining
     CSB fixture-marked modules for the same production separation.
+  - 2026-07-31: The unbound D0L2/D0R2 partly-open-door and D1L/D1R
+    floor/ceiling-ornament contracts now compile only into their tests. Their
+    source metadata stays available for verification, but live pixels still
+    require authenticated `GRAPHICS.DAT` material.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.

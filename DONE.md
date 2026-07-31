@@ -46955,3 +46955,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Structure2 ABI, intake and PRS3/VDP1 consumer-evidence tests all pass;
   palette bytes remain source-bound but are not promoted to visible menu
   pixels until an authentic Saturn consumer trace is available.
+
+- ✅ 2026-07-31 CSB viewport contract isolation: the unbound D0L2/D0R2
+  F0111 partly-open-door and D1L/D1R F0108 floor/ceiling-ornament contract
+  modules now compile exclusively into their focused tests, not `firestaff_m10`.
+  They contain no authenticated bitmap decoder or runtime consumer, so keeping
+  them out of M10 prevents their source-locked metadata from masquerading as a
+  draw path. Verification: both focused tests and full `firestaff` link.
