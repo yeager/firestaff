@@ -18965,7 +18965,12 @@ static int csb_v1_runtime_replace_dungeon_handle(CSB_V1_RuntimeProfile *profile,
     if (!profile || !path || path[0] == '\0') return 0;
     dungeon = (CSB_V1_DungeonData *)calloc(1, sizeof(*dungeon));
     if (!dungeon) return 0;
-    if (csb_v1_dungeon_load_from_file(dungeon, path) != 0) {
+    if (csb_v1_dungeon_load_from_file(dungeon, path) != 0 ||
+        dungeon->square_bytes != 1) {
+        /* ReDMCSB DUNGEON.C F0148-F0151 consumes the byte-map layout after
+         * DECOMPDU.C F0455. The older 16-bit fixture parser is test-only and
+         * must never replace a live CSB dungeon. */
+        csb_v1_dungeon_free(dungeon);
         free(dungeon);
         return 0;
     }
@@ -30262,7 +30267,8 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
         CSB_V1_DungeonData *dungeon = calloc(1, sizeof(CSB_V1_DungeonData));
         if (!dungeon) {
             /* Fall through — dungeon-layer accessors return ENDOF */
-        } else if (csb_v1_dungeon_load_from_file(dungeon, dun_path) == 0) {
+        } else if (csb_v1_dungeon_load_from_file(dungeon, dun_path) == 0 &&
+                   dungeon->square_bytes == 1) {
             profile->dungeon_handle = dungeon;
             csb_v1_dungeon_set_current(dungeon); /* singleton now points to heap */
             csb_v1_dungeon_set_current_level(0);   /* start at level 0 */
@@ -30275,6 +30281,7 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
                 (void)csb_v1_runtime_recompute_party_loads_pc34_compat(profile);
             }
         } else {
+            csb_v1_dungeon_free(dungeon);
             free(dungeon);
             profile->dungeon_handle = NULL;
         }

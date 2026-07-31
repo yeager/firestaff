@@ -45608,6 +45608,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   compatibility module. The retained state API is strictly no-draw; original
   pixels remain owned by PC3.4 C017/C040 or Atari ST C232. This eliminates a
   dormant generated-overlay fallback without changing runtime state handling.
+- ✅ 2026-07-31 CSB dungeon-fixture runtime boundary: the two runtime dungeon
+  replacement paths now require the authentic post-decompression byte-map
+  layout (`square_bytes == 1`) before they can install a current dungeon.
+  The older 16-bit parser remains isolated to tests, while ReDMCSB
+  `DUNGEON.C F0148-F0151` and `DECOMPDU.C F0455` define every live path.
 - ✅ 2026-07-31 CSB active D1L/D1R viewport binding hardening: the live M11
   provider now requires the native 60x111 C03/C02 rasters before caching
   GRAPHICS.DAT records 96/95 (wall set 0) for C713/C714. It rejects a wrong
