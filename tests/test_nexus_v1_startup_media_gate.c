@@ -142,9 +142,12 @@ int main(void)
                     "local STABG.BIN proves its STMP container framing");
             expect_true(nexus_ui_load_stabg(&ui, local_stabg,
                                             (int)local_warning_size,
-                                            NULL) < 0 &&
-                        ui.surfaces[NEXUS_SURFACE_STABG].data == NULL,
-                    "framed STABG.BIN still blocks unproven pixel decode");
+                                            NULL) == 0 &&
+                        ui.surfaces[NEXUS_SURFACE_STABG].data != NULL &&
+                        ui.surfaces[NEXUS_SURFACE_STABG].w == 320 &&
+                        ui.surfaces[NEXUS_SURFACE_STABG].h == 168 &&
+                        ui.surfaces[NEXUS_SURFACE_STABG].source_palette_loaded,
+                    "framed STABG.BIN loads its verified first map and palette");
             free(local_stabg);
         }
     }

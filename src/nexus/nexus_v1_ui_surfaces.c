@@ -109,7 +109,7 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
     Nexus_UISurfaceType which,
     const uint8_t *data, int data_size,
     int w, int h,
-    uint8_t pal_start, uint8_t pal_count,
+    uint16_t pal_start, uint16_t pal_count,
     const char *source)
 {
     Nexus_UI_Surface *surf;
@@ -154,7 +154,7 @@ int nexus_ui_load_bpk_runtime_surface(Nexus_UI_Manager *mgr,
     Nexus_UISurfaceType which,
     const uint8_t *archive_data, size_t archive_size,
     const Nexus_V1_BpkRuntimeSurfaceHandoff *handoff,
-    uint8_t pal_start, uint8_t pal_count,
+    uint16_t pal_start, uint16_t pal_count,
     const char *source,
     Nexus_UI_BpkImportReceipt *out_receipt)
 {
@@ -725,17 +725,45 @@ int nexus_ui_stabg_decode_first_map(const uint8_t *data,
     return 0;
 }
 
-/* STABG.BIN has verified source identity and, since the STMP framing
- * receipt above, a proven container layout. The pixel-unit decode
- * semantics of the tile-map cells remain unproven, so no surface may be
- * materialized yet: file-size-derived dimensions were synthetic and are
- * forbidden. */
+/* STABG.BIN has verified source identity, STMP framing, and a DMWeb-derived
+ * first-map pixel decode. Materialize only that bounded source surface; the
+ * separate Saturn VDP placement/runtime binding remains unavailable. */
 int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette)
 {
-    (void)mgr; (void)data; (void)data_size; (void)palette;
-    return -1;
+    Nexus_UI_StabgPixelDecodeReceipt receipt;
+    Nexus_UI_Surface *surface;
+    uint8_t pixels[320U * 168U];
+    uint16_t palette_le[256];
+    size_t i;
+
+    (void)palette; /* Never substitute the host palette for retail STABG. */
+    if (!mgr || !data || data_size <= 0 ||
+        nexus_ui_stabg_decode_first_map(data, data_size, pixels,
+                                        sizeof(pixels), palette_le,
+                                        &receipt) != 0 ||
+        !receipt.valid || receipt.width != 320 || receipt.height != 168)
+        return -1;
+    if (nexus_ui_surface_load(mgr, NEXUS_SURFACE_STABG, pixels,
+                               (int)sizeof(pixels), receipt.width,
+                               receipt.height, 0, 256,
+                               "STABG.BIN/STMP#0") <= 0)
+        return -1;
+    surface = &mgr->surfaces[NEXUS_SURFACE_STABG];
+    for (i = 0U; i < 256U; ++i) {
+        uint16_t bgr555 = palette_le[i];
+        uint8_t red = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 10) & 0x1fU));
+        uint8_t green = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 5) & 0x1fU));
+        uint8_t blue = nexus_ui_expand_5bit((uint16_t)(bgr555 & 0x1fU));
+        surface->source_palette_bgr555[i] = bgr555;
+        surface->source_palette_rgba[i] = 0xff000000U |
+            ((uint32_t)red << 16) | ((uint32_t)green << 8) | blue;
+    }
+    surface->source_palette_fnv1a32 = nexus_ui_fnv1a32(
+        (const uint8_t *)palette_le, sizeof(palette_le));
+    surface->source_palette_loaded = 1;
+    return 0;
 }
 
 int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h) {

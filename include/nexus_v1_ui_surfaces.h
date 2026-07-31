@@ -37,14 +37,19 @@
 typedef struct {
     uint8_t  *data;       /* indexed pixels (320×200) or texture bitmap */
     int       w, h;        /* dimensions */
-    uint8_t   pal_start;  /* first palette slot for this surface */
-    uint8_t   pal_count;  /* number of palette entries */
+    uint16_t  pal_start;  /* first palette slot for this surface */
+    uint16_t  pal_count;  /* number of palette entries */
     int       owns_data;  /* 1=calloc'd, 0=borrowed ref */
     const char *source;   /* e.g. "TITLE.CG" */
     uint64_t  hash;       /* SHA-256 hash of source file (if known) */
-    /* DGT2 PP surfaces retain their source-owned 256-entry BGR555 CLUT as
-     * RGBA. Other formats leave this unavailable rather than borrowing a
-     * host or generated palette. */
+    /* Source-owned Saturn palettes are retained in their original words and
+     * expanded RGBA form. Other formats leave this unavailable rather than
+     * borrowing a host or generated palette. */
+    uint16_t source_palette_bgr555[256];
+    uint32_t source_palette_rgba[256];
+    uint32_t source_palette_fnv1a32;
+    int       source_palette_loaded;
+    /* Legacy DGT2 aliases retained for callers compiled against this ABI. */
     uint32_t  dgt2_palette_rgba[256];
     uint32_t  dgt2_palette_fnv1a32;
     int       dgt2_palette_loaded;
@@ -301,14 +306,14 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
     Nexus_UISurfaceType which,
     const uint8_t *data, int data_size,
     int w, int h,
-    uint8_t pal_start, uint8_t pal_count,
+    uint16_t pal_start, uint16_t pal_count,
     const char *source);
 
 int nexus_ui_load_bpk_runtime_surface(Nexus_UI_Manager *mgr,
     Nexus_UISurfaceType which,
     const uint8_t *archive_data, size_t archive_size,
     const Nexus_V1_BpkRuntimeSurfaceHandoff *handoff,
-    uint8_t pal_start, uint8_t pal_count,
+    uint16_t pal_start, uint16_t pal_count,
     const char *source,
     Nexus_UI_BpkImportReceipt *out_receipt);
 
