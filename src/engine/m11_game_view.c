@@ -349,7 +349,6 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 #include "csb_v2_presentation_mode_pc34.h"
 #include "csb_v2_settings_pc34.h"
 #include "csb_v22_inplace_draw_pc34.h"
-#include "csb_v22_shape_cache_pc34.h"
 #include "csb_v22_modern_assets_pc34.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
 #include "theron_v2_presentation_mode_pc34.h"
@@ -361,9 +360,6 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static void m11_csb_collect_v22_raw_cells(const M11_GameViewState* state,
-                                           unsigned char out_cells[3][3]);
 
 #ifndef DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL
 #define DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL \
@@ -2858,7 +2854,6 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     CSB_V1_ViewportRuntimeDrawCounts draw_counts;
     CSB_V1_FirstLiveDungeonFrameReceipt_PC34 live_receipt;
     M11_CSB_RuntimeSpriteContext runtime_sprite_context;
-    unsigned char v22_raw_cells[3][3];
     size_t framebuffer_bytes;
     unsigned char *candidate_page;
 
@@ -2932,14 +2927,6 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     drawer_binding.real_graphics_session = 1;
     drawer_binding.graphic_provider_callback = m11_csb_viewport_graphic_provider;
     drawer_binding.graphic_provider_user_data = state;
-
-    /* F0128 consumes the V2.2 shape cache while composing the source command
-     * stream, so populate it before (never after) the renderer starts. */
-    if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
-        m11_csb_collect_v22_raw_cells(state, v22_raw_cells);
-        csb_v22_shape_cache_update((int)state->world.party.direction,
-                                   v22_raw_cells);
-    }
 
     if (!csb_v1_boot_render_viewport_frame_pc34(
             state->csbBootProfile,
@@ -27981,27 +27968,6 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     return 1;
 }
 
-static void m11_csb_collect_v22_raw_cells(const M11_GameViewState* state,
-                                           unsigned char out_cells[3][3])
-{
-    int depth;
-
-    if (!out_cells) {
-        return;
-    }
-    for (depth = 0; depth < 3; ++depth) {
-        int lateral;
-        for (lateral = -1; lateral <= 1; ++lateral) {
-            M11_ViewportCell cell;
-            out_cells[depth][lateral + 1] = 0u;
-            if (m11_sample_viewport_cell(state, depth + 1, lateral, &cell) &&
-                cell.valid) {
-                out_cells[depth][lateral + 1] = cell.square;
-            }
-        }
-    }
-}
-
 int M11_GameView_ProbeViewportFloorItemCounts(
     const M11_GameViewState* state,
     int relativeForward,
@@ -45877,19 +45843,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     cells[0][1].dm1RuntimeRenderDecisionReady =
         m11_build_dm1_hoc_front_mirror_runtime_decision(
             state, &cells[0][1], &cells[0][1].dm1RuntimeRenderDecision);
-    /* V2.2 GPU render path integration: populate the per-frame
-     * V22 shape cache from the sampled cells. When V22 is not the
-     * active mode, the cache marks all cells active=0 (V1 path) and
-     * the per-cell m11_draw_dm1_* draw passes fall through to their
-     * existing V1 selection. When V22 is active, the cache holds
-     * the resolved V22 shape data (params, wall, floor, material)
-     * for each of the 9 sampled cells, ready for the renderer to
-     * consult via m11_v22_shape_cache_get(depth, lateral).
-     *
-     * Source-lock: include/dm1_v2_shape_runtime_pc34.h + ReDMCSB
-     * DUNVIEW.C:6697-6816 (composition draw order). The D0 front
-     * cell is not in the 3x3 sample (it is below the viewport) so
-     * the V22 cache only has D1..D3 populated; D0 remains V1. */
+    /* The DM1 V2.2 cache remains a DM1-owned presentation helper.  CSB's
+     * old 3x3 cache carried hard-coded material parameters and no original
+     * F0128 command, clip, palette or Thing-chain receipt.  The CSB live
+     * path therefore never populates it: CSB V2.2 may replace pixels only
+     * inside csb_v1_viewport_consume_first_frame_material_raster_pc34(),
+     * where each admitted source command owns those facts. */
     {
         unsigned char raw_squares[3][3];
         int d, s;
@@ -45898,11 +45857,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 raw_squares[d][s] = cells[d][s].square;
             }
         }
-        if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
-            state->presentationMode == M12_PRESENTATION_V22_MODERN) {
-            csb_v22_shape_cache_update((int)state->world.party.direction,
-                                       raw_squares);
-        } else {
+        if (state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
             m11_v22_shape_cache_update((int)state->world.party.direction,
                                        raw_squares);
         }

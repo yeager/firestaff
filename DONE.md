@@ -46460,3 +46460,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Unknown/quest object classes remain rejected rather than receiving guessed
   IDs until the real Track 02 object table is decoded. Verification:
   `test_theron_v1_m11_direct_launch` passes and `git diff --check` passes.
+
+- ✅ 2026-07-31 CSB V2.2 live-cache cleanup: M11 no longer populates the
+  retired 3x3 CSB V2.2 shape cache during either CSB viewport path. Its
+  hard-coded material parameters had no authenticated `DUNVIEW.C F0128`
+  command, palette, clip or Thing-chain receipt and no consumer in the
+  admitted compositor. Live CSB pixels can therefore reach V2.2 only through
+  the command-local source-material route, while unsupported families remain
+  V1. Verified with `test_csb_v1_viewport_phase3_rendering` (2655/2655),
+  `test_csb_v22_inplace_draw_pc34` (57/57), and
+  `test_csb_v22_shapes_pc34` (54/54).

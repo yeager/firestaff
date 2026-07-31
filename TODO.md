@@ -1046,6 +1046,11 @@ diagnostic; it must not silently fall back to a generated visual.
   `unbound` wall/floor/etc. routes therefore remain V1 at runtime, even when
   their decoded bitmap files exist; the focused regression proves that this
   cannot accidentally promote a source-derived artpack to finished V2.2.
+  **2026-07-31 audit:** M11 no longer populates CSB's retired 3x3 V2.2 shape
+  cache. That cache held hard-coded material parameters but no authenticated
+  F0128 command, palette, clip or Thing-chain receipt, and had no consumer in
+  the admitted compositor. Only the command-local source-material path may
+  now reach a CSB V2.2 replacement.
   2026-07-30: WallSet-0 centre-front D1C/D2C/D3C now each have a
   source-locked V2.2 admission receipt: PC/I34 catalog records 97/102/107,
   real decoded dimensions and SHA-256 provenance, exact F0124/F0121/F0118
