@@ -45981,3 +45981,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - 2026-07-31: Removed DM2's latent shop inventory/gold writeback bridge.
   Without the original `SHOP_GLASS` DB14/CCM/WALL_GFX ownership, no local
   shop state can write arbitrary ObjectIDs or gold values into a live session.
+- ✅ 2026-07-31 DM2 spell-timer no-fabrication boundary: the live runtime no
+  longer installs the provisional DM2-007 light, enchantment, poison, cloud,
+  missile and summon timer handlers. Their old cloud/missile/summon paths
+  could write DB14/DB4 records using replacement duration, energy and
+  creature-type values; the remaining timer bodies also lacked the complete
+  source-owned hero/session state. `DM2_PROCEED_TIMERS` now acknowledges such
+  unbound types without gameplay mutation until a full original timer, DB
+  record, hero and GDAT ownership handoff is present. Source reference:
+  SKProject `SKWIN/c_tim_proc.cpp::DM2_PROCEED_TIMERS`,
+  `DM2_PROCESS_TIMER_19`, `DM2_STEP_MISSILE`, and
+  `DM2_ALLOC_NEW_CREATURE`.

@@ -31,7 +31,6 @@
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
-#include "dm2_v1_spell_timer_handlers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -250,10 +249,6 @@ typedef struct {
     int actuator_tile_door_rejected;
     int actuator_tile_teleporter;    /* class 5 consumed */
     int actuator_tile_trickwall;     /* class 6 consumed */
-    /* DM2-007 cycle 12: live spell-effect timer handler context.  Wired into
-     * the DM2_PROCEED_TIMERS dispatcher every tick; fail-closed when the
-     * required DB/creature data is absent. */
-    DM2_V1_SpellTimerHandlerContext spell_handler_ctx;
     /* DM2-007 cycle 12: last spell-cast failure feedback for M11 status scope.
      * Cleared on init; populated when a spell cast reports failure_feedback. */
     const char *last_spell_status_scope;
@@ -2186,15 +2181,6 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     /* DM2-003: source-order timer queue (skproject c_timer.cpp heap). */
     dm2_v1_source_timer_queue_init(&g_dm2_runtime.timer_queue);
     g_dm2_runtime.boot = boot_profile;
-    /* DM2-007 cycle 12: live spell-effect timer handler context.  Champions are
-     * bound later when a save/new-game handoff publishes source-owned records;
-     * until then handlers reject mutations that need live champion data. */
-    dm2_v1_spell_timer_handler_context_init_ex(
-        &g_dm2_runtime.spell_handler_ctx,
-        NULL, 0, &g_dm2_runtime.timer_queue, 0u, 0,
-        &g_dm2_runtime.record_pools,
-        g_dm2_runtime.boot ? g_dm2_runtime.boot->dungeon_data : NULL,
-        g_dm2_runtime.caii_ready ? (void *)&g_dm2_runtime.caii : NULL);
     g_dm2_runtime.outdoor = 0;
     g_dm2_runtime.tick_count = 0;
     g_dm2_runtime.move_cooldown_ticks = 0;
@@ -4017,13 +4003,6 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
             return;
         }
         rt->record_pools_valid = 1;
-        /* DM2-007 cycle 12: spell-effect handlers now have real DB/creature
-         * data; refresh the context without clobbering live runtime state. */
-        dm2_v1_spell_timer_handler_context_init_ex(
-            &rt->spell_handler_ctx,
-            NULL, 0, &rt->timer_queue, (uint32_t)rt->tick_count, 0,
-            &rt->record_pools, (void *)dungeon,
-            rt->caii_ready ? (void *)&rt->caii : NULL);
     }
     dm2_v1_think_creature_binding_init(&rt->think_binding,
                                        &rt->record_pools, dungeon);
@@ -4885,21 +4864,6 @@ static int dm2_runtime_actuate_trickwall(void *user,
     return 1;
 }
 
-/* Lane B cycle 12: shared-dispatcher wrapper that forwards spell-effect
- * timers to the runtime's spell-handler context while keeping the
- * dispatcher's main context as DM2_V1_RuntimeState for door/actuator/weather
- * handlers. */
-static int dm2_runtime_spell_timer_wrapper(
-    void *user,
-    const DM2_V1_SourceTimer *timer,
-    uint16_t source_index,
-    DM2_V1_ProceedTimersReceipt *receipt)
-{
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    return dm2_v1_spell_timer_dispatch(
-        &rt->spell_handler_ctx, timer, source_index, receipt);
-}
-
 /*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
  *
@@ -5001,44 +4965,16 @@ void dm2_v1_runtime_tick(void) {
             dispatcher.handlers[DM2_V1_TIMER_5C_RECORD_SET] =
                 dm2_runtime_5c_record_set;
         }
-        /* Lane B cycle 12: wire the DM2-007 spell-effect timer handlers
-         * (light, aura/enchantment, poison, cloud, missile step, summon)
-         * into the live DM2_PROCEED_TIMERS dispatch.  The dispatcher context
-         * stays as the runtime state; a wrapper forwards spell timers to the
-         * runtime's spell-handler context.  Champion-mutating handlers need
-         * live champion records; without them they fail closed.  Cloud/missile/
-         * summon handlers need real DB/creature data and also fail closed when
-         * it is absent. */
-        {
-            DM2_V1_DungeonData *dungeon = NULL;
-            if (rt->boot != NULL) {
-                dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-            }
-            dm2_v1_spell_timer_handler_context_init_ex(
-                &rt->spell_handler_ctx,
-                NULL, /* live champion records not yet owned by runtime */
-                0,
-                &rt->timer_queue,
-                (uint32_t)rt->tick_count,
-                rt->dungeon_level,
-                rt->record_pools_valid ? &rt->record_pools : NULL,
-                dungeon,
-                rt->caii_ready ? (void *)&rt->caii : NULL);
-            dispatcher.handlers[DM2_V1_TIMER_LIGHT] =
-                dm2_runtime_spell_timer_wrapper;
-            dispatcher.handlers[DM2_V1_TIMER_HERO_ENCH_FLAG] =
-                dm2_runtime_spell_timer_wrapper;
-            dispatcher.handlers[DM2_V1_TIMER_ENCH_POWER] =
-                dm2_runtime_spell_timer_wrapper;
-            dispatcher.handlers[DM2_V1_TIMER_POISON] =
-                dm2_runtime_spell_timer_wrapper;
-            dispatcher.handlers[DM2_V1_TIMER_PROCESS_CLOUD] =
-                dm2_runtime_spell_timer_wrapper;
-            dispatcher.handlers[DM2_V1_TIMER_STEP_MISSILE] =
-                dm2_runtime_spell_timer_wrapper;
-            dispatcher.handlers[DM2_V1_TIMER_ALLOC_NEW_CREATURE] =
-                dm2_runtime_spell_timer_wrapper;
-        }
+        /* DM2_PROCESS_TIMER_LIGHT, enchantment, cloud, missile and summon
+         * all mutate source-owned session state.  SKProject's real path
+         * starts at c_tim_proc.cpp::DM2_PROCEED_TIMERS and follows the live
+         * hero/DB14/DB4 record, its timer payload and the relevant GDAT row.
+         * Firestaff has not imported that complete ownership chain.  In
+         * particular, the former helper used replacement duration, energy and
+         * creature-type values for DB14/DB4 writes.  Do not dispatch any of
+         * those timer types from a real session until that owner is bound:
+         * the source-order dispatcher acknowledges them fail-closed instead
+         * of fabricating a cloud, missile, summon, light or champion state. */
         (void)dm2_v1_proceed_timers(&rt->timer_queue,
                                     (uint32_t)rt->tick_count,
                                     &dispatcher,

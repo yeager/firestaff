@@ -39,6 +39,12 @@
   creature shortcut likewise cannot invent an `ALLOC_NEW_CREATURE` direction
   or health multiplier; it remains unavailable until a decoded DB14/CCM
   payload supplies them.
+  **2026-07-31 update:** the runtime no longer installs the temporary
+  spell-timer handlers. Their DB14/DB4 cloud, missile and summon bodies used
+  replacement duration, energy and creature-type fields; their light and hero
+  bodies likewise lacked a complete saved-session owner. These timer types
+  are now acknowledged without mutation until `DM2_PROCEED_TIMERS` can bind
+  the original hero records, timer payload, DB14/DB4 links and GDAT rows.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`
@@ -228,6 +234,10 @@
   update:** the unbound `AI_W30_TURNS_MISSILE` collision branch no longer
   substitutes an ordinary hit; it leaves projectile and creature untouched
   until the source target/timer handoff is available.
+  The timer handler is now disconnected from the live runtime too: its
+  previous DB14 creation used replacement energy/effect fields, so a real
+  timer is consumed without mutation until the complete DB14/timer owner
+  exists.
 
 - **DM2-SKSAVE-ORIGINAL-WRITER:** `dm2_v1_world_state_serialize()` is now
   deliberately fail-closed. Port SK-projects
