@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 V2.2 availability closure: a disk-resolvable modern
+  manifest can no longer set the V2.2 installed flag or select `V2_MODERN`.
+  The launcher/status path now falls through to V2.1/V2.0 just like the M11
+  renderer, preventing the menu from advertising unproven local art as
+  playable material. Focused modern-assets test and cache probe pass (32/32;
+  49/49).
+
 - ✅ 2026-07-31 DM2 V2.2 cache egress closure: retired the direct modern-cache
   bitmap lookup that could have handed local RGBA pixels to a future caller.
   The cache and swap APIs now preserve the V1 GDAT page for indoor, outdoor,

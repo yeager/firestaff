@@ -350,6 +350,11 @@ int dm2_v22_validate_manifest(const char* manifest_path) {
  *
  * Returns: 1 if available, 0 if not installed or partial */
 int dm2_v22_modern_assets_available(void) {
+    /* A local modern-art manifest has no original GRAPHICS.DAT receipt.
+     * M11 must not advertise it as a playable material source while the
+     * V2.2 compositor is deliberately no-draw. */
+    return 0;
+#if 0
     if (g_v22_manifest_path[0] == '\0') return 0;
     if (!dm2_v22_file_exists(g_v22_manifest_path)) return 0;
 
@@ -442,12 +447,15 @@ int dm2_v22_modern_assets_available(void) {
     fclose(fp);
 
     return (found_critical[0] && found_critical[1] && found_critical[2]) ? 1 : 0;
+#endif
 }
 
 /* dm2_v22_set_installed — called at startup by M12_AssetStatus_Scan()
  * after detecting whether the modern asset pack is present. */
 void dm2_v22_set_installed(int installed) {
-    g_v22_modern_assets_installed = installed ? 1 : 0;
+    (void)installed;
+    /* Reserved for the future GDAT-provenance bridge. */
+    g_v22_modern_assets_installed = 0;
 }
 
 /* dm2_v22_get_installed — returns whether V2.2 modern assets are installed */
@@ -489,12 +497,8 @@ int dm2_v22_get_epx_cache_warm(void) {
 DM2_V22_ShapeSource dm2_v22_best_available_shape_source(int presentation_mode_index) {
     switch (presentation_mode_index) {
         case 3: /* M12_PRESENTATION_V22_MODERN */
-            if (g_v22_modern_assets_installed) {
-                return DM2_V22_SHAPE_SOURCE_V2_MODERN;
-            }
-            /* Fall through: no modern assets, fall back to V2.1 */
-            fprintf(stderr, "[V2.2] V2.2 modern assets not available, "
-                            "falling back to V2.1 upscaled\n");
+            /* A local modern pack cannot select pixels without original GDAT
+             * provenance. Fall through to the source-preserving V2.1 path. */
             /* fall through */
         case 2: /* M12_PRESENTATION_V21_UPSCALED */
             if (g_epx_cache_warm) {

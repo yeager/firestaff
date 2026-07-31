@@ -480,8 +480,8 @@ int main(void) {
     dm2_v22_set_manifest_path(data_dir);
     probe_record(&stats, "DM2_V22_SYNTHETIC_MANIFEST_COMPLETE",
                  dm2_v22_validate_manifest(manifest_path) == 1 &&
-                 dm2_v22_modern_assets_available() == 1,
-                 "synthetic manifest validates complete and is available");
+                 dm2_v22_modern_assets_available() == 0,
+                 "synthetic manifest validates structurally but is not available");
     probe_record(&stats, "DM2_V22_MANIFEST_RESOLVES_T560",
                  dm2_v22_get_shape_path("floor_shapes", "floor_dm2_pit_01",
                                         resolved_path, sizeof(resolved_path)) &&
@@ -496,10 +496,10 @@ int main(void) {
     /* 2. Activate V22 presentation mode (so the swap is "active") */
     dm2_v22_set_installed(1);
     dm2_v22_set_epx_cache_warm(1);
-    probe_record(&stats, "DM2_V22_PRESENTATION_ACTIVE",
+    probe_record(&stats, "DM2_V22_PRESENTATION_BLOCKED",
                  dm2_v22_best_available_shape_source(3) ==
-                     DM2_V22_SHAPE_SOURCE_V2_MODERN,
-                 "presentation mode 3 (V22) resolves to V2_MODERN with pack");
+                     DM2_V22_SHAPE_SOURCE_V2_UPSCALED,
+                 "presentation mode 3 falls back to V2.1 despite local pack");
 
     /* 3. Init/shutdown lifecycle */
     dm2_v22_inplace_draw_shutdown();

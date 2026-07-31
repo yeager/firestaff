@@ -295,13 +295,13 @@ int main(void) {
                      "synthetic DM2 v22_inplace_cache.bin written under probe HOME");
     }
 
-    /* 2. Activate V22 presentation mode (so the swap is "active") */
+    /* 2. A local V22 pack must not activate presentation. */
     dm2_v22_set_installed(1);
     dm2_v22_set_epx_cache_warm(1);
-    probe_record(&stats, "DM2_V22_WIREUP_PRESENTATION_ACTIVE",
+    probe_record(&stats, "DM2_V22_WIREUP_PRESENTATION_BLOCKED",
                  dm2_v22_best_available_shape_source(3) ==
-                     DM2_V22_SHAPE_SOURCE_V2_MODERN,
-                 "presentation mode 3 (V22) resolves to V2_MODERN with pack");
+                     DM2_V22_SHAPE_SOURCE_V2_UPSCALED,
+                 "presentation mode 3 falls back to V2.1 despite local pack");
 
     /* 3. In-place cache loads + swap is initially unpopulated */
     dm2_v22_inplace_draw_shutdown();

@@ -108,9 +108,11 @@ static void test_installed_flag(void) {
     dm2_v22_set_installed(0);
     CHECK(dm2_v22_get_installed() == 0, "installed=0 round-trip");
     dm2_v22_set_installed(1);
-    CHECK(dm2_v22_get_installed() == 1, "installed=1 round-trip");
+    CHECK(dm2_v22_get_installed() == 0,
+          "local modern pack cannot become installed without GDAT provenance");
     dm2_v22_set_installed(42);  /* truthy */
-    CHECK(dm2_v22_get_installed() == 1, "installed=42 → 1 (clamped)");
+    CHECK(dm2_v22_get_installed() == 0,
+          "truthy local modern-pack flag remains blocked");
     dm2_v22_set_installed(0);
 }
 
@@ -148,8 +150,8 @@ static void test_best_available_shape_source(void) {
           "mode 3 (V2.2) no install, cold cache → V2_FILTERED (fallback)");
 
     dm2_v22_set_installed(1);
-    CHECK(dm2_v22_best_available_shape_source(3) == DM2_V22_SHAPE_SOURCE_V2_MODERN,
-          "mode 3 (V2.2) installed → V2_MODERN");
+    CHECK(dm2_v22_best_available_shape_source(3) == DM2_V22_SHAPE_SOURCE_V2_FILTERED,
+          "mode 3 ignores local pack and preserves V2.0 fallback when EPX is cold");
 
     /* Unknown mode → V1_ORIGINAL */
     CHECK(dm2_v22_best_available_shape_source(99) == DM2_V22_SHAPE_SOURCE_V1_ORIGINAL,
