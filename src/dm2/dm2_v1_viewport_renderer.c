@@ -842,7 +842,6 @@ int dm2_v1_viewport_build_hud_chrome_plan(
         icon->fill_rect =
             (DM2_V1_ViewportRect){ icon->frame_rect.x + 2,
                                    icon->frame_rect.y + 2, 16, 12 };
-        icon->fill_color = (uint8_t)(8 + i);
         icon->gdat_index = dm2_v1_viewport_hud_action_icon_graphic_index(i);
     }
     if (!out_plan->outdoor) {
@@ -875,7 +874,6 @@ int dm2_v1_viewport_build_hud_chrome_plan(
                 (DM2_V1_ViewportRect){ panel_x + 6, py + 2,
                                        DM2_VP_WIDTH - 6 - (panel_x + 6),
                                        22 };
-            champ->fill_color = (uint8_t)(8 + slot * 2);
         }
     }
     return 1;
@@ -957,11 +955,8 @@ int dm2_v1_viewport_build_hud_chrome_plan_for_party(
         dst->portrait_index = src->portrait_index;
         dst->portrait_type_source_bound = src->portrait_type_source_bound;
         dst->state_source_bound = src->state_source_bound;
-        dst->portrait_fill_color =
-            (uint8_t)(8u + (dst->portrait_index & 7u));
         memcpy(dst->name, src->name, sizeof(dst->name));
         dst->name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
-        dst->fill_color = dst->leader ? 9u : 8u;
         dst->leader_mark_rect =
             (DM2_V1_ViewportRect){ dst->frame_rect.x + 2, py + 3, 3, 3 };
         dst->portrait_rect =

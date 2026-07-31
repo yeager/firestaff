@@ -877,14 +877,12 @@ typedef struct {
 typedef struct {
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect fill_rect;
-    uint8_t fill_color;
     int gdat_index;
 } DM2_V1_HudIconRender;
 
 typedef struct {
     DM2_V1_ViewportRect frame_rect;
     DM2_V1_ViewportRect fill_rect;
-    uint8_t fill_color;
     int occupied;
     int leader;
     uint8_t hp_pct;
@@ -896,7 +894,6 @@ typedef struct {
     uint8_t portrait_index;
     int portrait_type_source_bound;
     int state_source_bound;
-    uint8_t portrait_fill_color;
     char name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
     DM2_V1_ViewportRect leader_mark_rect;
     DM2_V1_ViewportRect portrait_rect;

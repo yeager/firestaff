@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 HUD placeholder-plan closure: removed the deterministic
+  action-icon, champion-slot and portrait colour markers from the V1 HUD
+  render plan. They had no GDAT provenance and were not permitted to stand
+  in for original pixels; the plan now carries geometry and source graphic
+  identities only. Missing source HUD/portrait material remains blank.
+  Verification: `test_dm2_v1_lighting_falloff_boundary` 162/162 passes.
+
 - ✅ 2026-07-31 DM2 door-query field correction: `QUERY_DOOR_DAMAGE_RESIST`,
   `GET_DOOR_STAT_0X10` and `_0cee_3275` now read original DOORS GDAT fields
   `0x0e`, `0x10` and `0x0d` respectively, instead of the former rotated

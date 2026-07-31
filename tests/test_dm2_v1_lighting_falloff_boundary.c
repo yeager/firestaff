@@ -447,7 +447,6 @@ static void test_hud_chrome_render_plan(void)
               indoor.champion_slots[0].occupied == 1 &&
               indoor.champion_slots[0].hp_pct == 50 &&
               indoor.champion_slots[0].portrait_index == 3 &&
-              indoor.champion_slots[0].portrait_fill_color == 11 &&
               rect_equals(&indoor.champion_slots[0].hp_bar_rect,
                           270, 39, 34, 3) &&
               rect_equals(&indoor.champion_slots[0].hp_fill_rect,
@@ -1098,16 +1097,15 @@ static void test_sprite_asset_provider(void)
                   hud.action_strip_rect.y == 172 &&
                   hud.action_strip_rect.h == 28);
         CHECK("DM2 HUD chrome plan owns gold and action icon bounds",
-              hud.gold_box_rect.x == 280 &&
+                  hud.gold_box_rect.x == 280 &&
                   hud.gold_box_rect.y == 176 &&
                   hud.action_icon_count == DM2_V1_HUD_ACTION_ICON_COUNT &&
                   hud.action_icons[4].frame_rect.x == 220 &&
-                  hud.action_icons[4].fill_color == 12);
+                  hud.action_icons[4].gdat_index != 0);
         CHECK("DM2 indoor HUD chrome plan includes portrait panel slots",
               hud.champion_slot_count == DM2_V1_HUD_CHAMPION_SLOT_COUNT &&
                   hud.portrait_panel_rect.x == 242 &&
-                  hud.champion_slots[3].frame_rect.y == 138 &&
-                  hud.champion_slots[3].fill_color == 14);
+                  hud.champion_slots[3].frame_rect.y == 138);
         CHECK("DM2 outdoor HUD chrome plan omits portrait panel slots",
               dm2_v1_viewport_build_hud_chrome_plan(1, &hud) == 1 &&
                   hud.outdoor == 1 &&
