@@ -47174,3 +47174,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   every runtime route. With no product caller or decoder, it now compiles only
   into its contract test; live rendering continues through authenticated PC
   3.4 graphics material.
+
+- ✅ 2026-07-31 CSB F1006–F1025 source-boundary isolation: this table only
+  inventories local, existing-owner and foreign-platform symbols and blocks
+  execution for all of them. It now compiles solely into its focused contract
+  test; M10 retains only actual authenticated CSB consumers.
