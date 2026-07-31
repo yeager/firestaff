@@ -3316,6 +3316,16 @@ static void nexus_v1_launcher_fill_save_asset_blocked_route(
                 out_receipt->save_state_receipt.selected_row,
                 commands,
                 (int)(sizeof(commands) / sizeof(commands[0])));
+        {
+            int read_index, write_index;
+            for (read_index = 0, write_index = 0;
+                 read_index < out_receipt->draw_command_count;
+                 ++read_index) {
+                if (commands[read_index].kind != NEXUS_V1_STARTUP_DRAW_TEXT)
+                    commands[write_index++] = commands[read_index];
+            }
+            out_receipt->draw_command_count = write_index;
+        }
     }
 }
 
