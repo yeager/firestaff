@@ -22,7 +22,8 @@ typedef enum {
     NEXUS_ITEM_COUNT
 } Nexus_ItemCategory;
 
-/* Item definition — shared global catalog (Nexus uses same items as DM1) */
+/* Item definition boundary.  No unverified DM1 catalog is exposed as live
+ * Nexus data until Saturn item records are source-bound. */
 typedef struct {
     const char      *name;
     Nexus_ItemCategory category;

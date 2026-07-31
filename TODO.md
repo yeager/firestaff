@@ -24245,3 +24245,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   from production. Identify the actual Saturn creature/item drop records from
   DMWeb or an authenticated Nexus capture before re-enabling item or gold
   drops; no synthetic fallback is permitted.
+- 🔧 Nexus item provenance: identify and bind the Saturn item-definition
+  records before re-enabling inventory names, combat stats, or HUD item text;
+  the former DM1 catalog remains reference-only and no synthetic replacement
+  is permitted.

@@ -46792,3 +46792,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_m11_dm1_real_alcove_item_runtime_pc34` finds map 1 `(6,3,2)` in the
   installed PC34 corpus and successfully transfers the rendered object into
   the leader hand.
+- ✅ 2026-07-31 Nexus synthetic item-catalog gate: the unverified DM1 item
+  names/stats are no longer returned by the live Nexus item-definition API.
+  Inventory and combat cannot manufacture DM1 item semantics until actual
+  Saturn item records are identified and bound.

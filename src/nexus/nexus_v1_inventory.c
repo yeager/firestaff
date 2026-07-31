@@ -78,15 +78,16 @@ const Nexus_ItemDef g_nexus_items[] = {
 #define ITEM_COUNT ((int)(sizeof(g_nexus_items)/sizeof(g_nexus_items[0])))
 
 int nexus_itemdef_count(void) {
-    int count = 0;
-    for (int i = 0; i < ITEM_COUNT; i++)
-        if (g_nexus_items[i].name) count++;
-    return count;
+    /* The table above is retained as a fixture/reference only.  No Saturn
+     * item-definition source has been admitted, so it must not become live
+     * Nexus inventory or combat state. */
+    return 0;
 }
 
 const Nexus_ItemDef *nexus_itemdef_get(int id) {
-    if (id < 0 || id >= ITEM_COUNT) return NULL;
-    return g_nexus_items[id].name ? &g_nexus_items[id] : NULL;
+    (void)id;
+    /* DM1 item names/stats are not a substitute for Nexus retail records. */
+    return NULL;
 }
 
 const char *nexus_itemdef_category_name(Nexus_ItemCategory cat) {
