@@ -290,7 +290,9 @@ diagnostic; it must not silently fall back to a generated visual.
   substitute. **2026-07-31 audit:** every rejected CSBGRAPHICS override now
   has an explicit whole-frame no-draw regression; an empty, untrusted,
   malformed or unsupported original entry cannot mutate the 320x200 source
-  page or become generated chrome.
+  page or become generated chrome. Its runtime decision is explicitly named
+  `rejected-no-draw`; the former `fallback-original` spelling is retained
+  only as a source-compatible alias.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

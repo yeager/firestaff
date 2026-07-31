@@ -31,7 +31,7 @@ static void fallback(
     const char *reason)
 {
     memset(out_binding, 0, sizeof(*out_binding));
-    out_binding->decision = CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_FALLBACK_ORIGINAL;
+    out_binding->decision = CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_REJECTED_NO_DRAW;
     out_binding->route = CSB_V1_CSBGRAPHICS_RUNTIME_ROUTE_NONE;
     out_binding->entry_index = entry_index;
     out_binding->preserves_v1_palette_indices = 1;
@@ -355,8 +355,8 @@ const char *csb_v1_csbgraphics_runtime_decision_name(
     CSB_V1_CSBGraphicsRuntimeDecision decision)
 {
     switch (decision) {
-    case CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_FALLBACK_ORIGINAL:
-        return "fallback-original";
+    case CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_REJECTED_NO_DRAW:
+        return "rejected-no-draw";
     case CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_BIND_OVERRIDE:
         return "bind-override";
     default:

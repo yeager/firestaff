@@ -314,10 +314,10 @@ static void test_contract_constants_and_evidence(void)
               csb_v1_csbgraphics_runtime_decision_name(
                   CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_BIND_OVERRIDE),
               "bind-override");
-    check_str("decision.fallback",
+    check_str("decision.rejected_no_draw",
               csb_v1_csbgraphics_runtime_decision_name(
-                  CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_FALLBACK_ORIGINAL),
-              "fallback-original");
+                  CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_REJECTED_NO_DRAW),
+              "rejected-no-draw");
 }
 
 static void test_viewport_override_binding(void)
@@ -561,7 +561,7 @@ static void test_fallbacks_are_explicit(void)
               csb_v1_csbgraphics_runtime_prepare_binding(&span, &decoded, &binding),
               1, "empty CSBgraphics.dat span");
     check_int("empty.decision", binding.decision,
-              CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_FALLBACK_ORIGINAL,
+              CSB_V1_CSBGRAPHICS_RUNTIME_DECISION_REJECTED_NO_DRAW,
               binding.source_evidence);
     check_str("empty.reason", binding.reason, "empty-span");
 

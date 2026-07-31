@@ -44585,3 +44585,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `Graphics.cpp` `ReadGraphicsIndex`/`LocateNthGraphic`/`ReadGraphic` and
   ReDMCSB `PANEL.C F0346` / `PANEL.C F0347`. Verification:
   `test_csb_v1_csbgraphics_runtime_binding` passes 83/83.
+- ✅ 2026-07-31 CSBGRAPHICS decision-name hardening: the zero-valued runtime
+  decision is now explicitly `rejected-no-draw`, with the old
+  `fallback-original` identifier retained only as a source-compatible alias.
+  This preserves enum layout while making the fail-closed policy unambiguous
+  to future callers. Verification: `test_csb_v1_csbgraphics_runtime_binding`
+  passes 83/83.
