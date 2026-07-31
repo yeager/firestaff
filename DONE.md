@@ -46938,3 +46938,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   from the thing chain. Verification: the real PC34 non-HoC F0115 runtime
   test clicks the returned material rectangle and confirms that a leader-hand
   object is produced; `test_m11_overlay_command_queue_block` remains 193/193.
+- ✅ 2026-07-31 Nexus ITEM.IBS/viewport source chain recheck: the focused
+  Structure1F provenance and spatial receipts, all 16-level retail DGN
+  face/material admission, and runtime materialization pass against the real
+  European corpus. ITEM.IBS 4bpp/palette ownership remains source-bound and
+  no-draw; the only remaining viewport gate is authentic Saturn VDP1 capture.
