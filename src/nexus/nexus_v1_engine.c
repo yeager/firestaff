@@ -8,6 +8,7 @@
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_squares.h"
 #include "nexus_v1_movement.h"
+#include "nexus_v1_font_s2d.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -2668,7 +2669,19 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         int font_size = 0;
         uint8_t *font_data = nexus_v1_read_file(engine, "FONT256.S2D", &font_size);
         if (font_data) {
-            engine->font_loaded = (nexus_v1_font_load(&engine->font, font_data, font_size) > 0);
+            Nexus_V1_FontS2dDecodeResult font_regions;
+            /* DMWeb DecodeFONT256S2D identifies separate page, character
+             * generator, palette and attribute regions.  The legacy flat
+             * 1bpp loader cannot bind those regions to Saturn character
+             * codes, so it must not feed guessed glyphs into live Nexus UI. */
+            engine->font_loaded =
+                nexus_v1_font_s2d_decode(font_data, font_size, &font_regions) == 0;
+            if (engine->font_loaded) {
+                /* Region provenance is admitted; glyph rendering remains
+                 * gated until the retail page-to-character mapping is bound. */
+                engine->font_loaded = 0;
+                printf("Nexus font: FONT256.S2D regions admitted; glyph mapping pending\n");
+            }
             free(font_data);
         }
     }
