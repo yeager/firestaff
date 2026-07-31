@@ -3051,6 +3051,11 @@ static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
         nexus_itemdef_bind_ibs_declarations(
             engine->item_ibs_bank.item_category,
             engine->item_ibs_bank.item_weight,
+            engine->item_ibs_bank.item_name_string,
+            engine->item_ibs_bank.item_desc_string,
+            engine->item_ibs_bank.item_action1_string,
+            engine->item_ibs_bank.item_action2_string,
+            engine->item_ibs_bank.item_action3_string,
             NEXUS_V1_ITEM_IBS_DECLARATION_COUNT);
     }
 }

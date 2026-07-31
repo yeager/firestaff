@@ -41,6 +41,11 @@ int main(void) {
                                              &bank) != 0) return 1;
         nexus_itemdef_bind_ibs_declarations(bank.item_category,
                                              bank.item_weight,
+                                             bank.item_name_string,
+                                             bank.item_desc_string,
+                                             bank.item_action1_string,
+                                             bank.item_action2_string,
+                                             bank.item_action3_string,
                                              NEXUS_V1_ITEM_IBS_DECLARATION_COUNT);
         if (nexus_itemdef_count() != NEXUS_V1_ITEM_IBS_DECLARATION_COUNT ||
             !nexus_itemdef_get(0) ||

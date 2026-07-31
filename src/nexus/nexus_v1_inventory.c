@@ -78,11 +78,21 @@ const Nexus_ItemDef g_nexus_items[] = {
 
 static const uint8_t *g_ibs_category;
 static const uint8_t *g_ibs_weight;
+static uint16_t g_ibs_name_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+static uint16_t g_ibs_desc_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+static uint16_t g_ibs_action1_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+static uint16_t g_ibs_action2_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+static uint16_t g_ibs_action3_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
 static int g_ibs_count;
 static Nexus_ItemDef g_ibs_defs[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
 
 void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
                                          const uint8_t *weight,
+                                         const uint16_t *name_string,
+                                         const uint16_t *desc_string,
+                                         const uint16_t *action1_string,
+                                         const uint16_t *action2_string,
+                                         const uint16_t *action3_string,
                                          int count) {
     int i;
     g_ibs_category = category;
@@ -91,6 +101,11 @@ void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
         (count > NEXUS_V1_ITEM_IBS_DECLARATION_COUNT ?
             NEXUS_V1_ITEM_IBS_DECLARATION_COUNT : count) : 0;
     for (i = 0; i < g_ibs_count; ++i) {
+        g_ibs_name_string[i] = name_string ? name_string[i] : 0xffffU;
+        g_ibs_desc_string[i] = desc_string ? desc_string[i] : 0xffffU;
+        g_ibs_action1_string[i] = action1_string ? action1_string[i] : 0xffffU;
+        g_ibs_action2_string[i] = action2_string ? action2_string[i] : 0xffffU;
+        g_ibs_action3_string[i] = action3_string ? action3_string[i] : 0xffffU;
         g_ibs_defs[i].name = NULL;
         g_ibs_defs[i].category = g_ibs_category[i] < NEXUS_ITEM_COUNT ?
             (Nexus_ItemCategory)g_ibs_category[i] : NEXUS_ITEM_COUNT;

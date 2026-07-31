@@ -2026,6 +2026,13 @@ typedef struct {
     uint16_t floor_image[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
     uint8_t item_category[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
     uint8_t item_weight[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    /* DMWeb ITEM.IBS declaration references into RLOWFIX.BIN TEXT records.
+     * These are source IDs only; they are not display strings. */
+    uint16_t item_name_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint16_t item_desc_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint16_t item_action1_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint16_t item_action2_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint16_t item_action3_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
     uint16_t palette_bgr555[NEXUS_V1_ITEM_IBS_PALETTE_COUNT][16];
     uint8_t association_palette[256];
     uint8_t association_image[256];

@@ -6519,6 +6519,11 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
         out_bank->floor_image[i] = rb16(decl + 0x16);
         out_bank->item_category[i] = decl[1];
         out_bank->item_weight[i] = decl[8];
+        out_bank->item_name_string[i] = rb16(decl + 0x18);
+        out_bank->item_desc_string[i] = rb16(decl + 0x1a);
+        out_bank->item_action1_string[i] = rb16(decl + 0x1c);
+        out_bank->item_action2_string[i] = rb16(decl + 0x1e);
+        out_bank->item_action3_string[i] = rb16(decl + 0x20);
         /* DMWeb records 19 item declarations without an inventory image as
          * FFFF.  They are valid source records, but cannot become an icon
          * material or a substitute for a floor image. */

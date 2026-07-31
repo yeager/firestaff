@@ -91,6 +91,11 @@ const Nexus_ItemDef *nexus_itemdef_get(int id);
  * semantics remain unavailable until separately authenticated. */
 void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
                                          const uint8_t *weight,
+                                         const uint16_t *name_string,
+                                         const uint16_t *desc_string,
+                                         const uint16_t *action1_string,
+                                         const uint16_t *action2_string,
+                                         const uint16_t *action3_string,
                                          int count);
 const char *nexus_itemdef_category_name(Nexus_ItemCategory cat);
 
