@@ -47272,3 +47272,28 @@ the supplied root and selected MD5 to prove this without shipping game data.
   and returns no-draw until the source-owned `WALL_GFX`/DB actuator chain is
   decoded. Verification: production link, shop admission regression and an
   executable-string check for the retired panel text.
+
+- ✅ 2026-07-31 CSB F1646–F1685 platform-boundary isolation: the table only
+  records exclusive DM1 ownership or foreign platform routes and blocks every
+  CSB admission. It now compiles only into its contract test, so it cannot
+  synthesize CSB input, interrupt, vblank or presentation behavior.
+
+- ✅ 2026-07-31 CSB F1726–F1765 source-boundary isolation: this range only
+  maps local, platform and debug source state and blocks every CSB route. It
+  now compiles solely into its contract test, preventing metadata from
+  synthesizing CSB input, UI, graphics, audio or timing.
+
+- ✅ 2026-07-31 CSB F1766–F1805 media-boundary isolation: this table only
+  reports exclusive palette, DM1 sound/ANIM, debug and absent-source routes
+  before failing closed. It now compiles solely into its contract test; real
+  CSB media remains limited to its authenticated dedicated consumers.
+
+- ✅ 2026-07-31 CSB F1886–F1925 hintload-receipt isolation: the table only
+  inventories source disposition; its authenticated F1910/F1913/F1914 and
+  F1918/F1919 owners are separate implementations. It now compiles only into
+  its contract test, leaving those true save/import paths intact.
+
+- ✅ 2026-07-31 CSB F1966–F2005 hint-boundary isolation: this table contains
+  only fail-closed hint/debug and DM1-exclusive ownership facts. It now
+  compiles only into its contract test, preventing metadata from synthesizing
+  CSB input, UI, graphics, audio, timing or file behavior.

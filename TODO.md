@@ -169,6 +169,9 @@
   - 2026-07-31: F1886–F1925 is a source receipt inventory. It is test-only;
     its separately implemented save/import owners remain the only admissible
     CSB paths and no hint labels may synthesize presentation data.
+  - 2026-07-31: F1966–F2005 is a fail-closed hint/debug inventory. It is
+    test-only; no CSB input, display or file behavior may be inferred from its
+    unbound source labels.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
