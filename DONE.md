@@ -45623,7 +45623,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   state; and the F0351 empty-hand eye panel is correctly treated as in-panel
   UI rather than a generic dialog. Verification: the five focused DM1 tests
   pass from `/tmp/firestaff-system-build`.
-
 - ✅ 2026-07-31 DM2 exact fixed spell table: replaced the ordinal,
   compatibility-only 34-spell data with SKProject's exact
   `dSpellsTable` records from `SKWIN/SkGlobal.cpp:968-1007`. The runtime
@@ -45634,3 +45633,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm2_v1_spell_pc34_compat` checks all 34 records,
   `test_dm2_v1_spell_cast_player_pc34_compat` passes 151/151, and real-data
   `test_dm2_v1_m11_startup_profile_gate` passes.
+
+- ✅ 2026-07-31 DM1 V1 movement-capture verification repair: fixed pass207's
+  invalid Python f-strings, treated missing original-runner tools as an honest
+  blocked capture prerequisite rather than a source regression, and made the
+  movement closure materialize its deterministic pass608 blocker receipt.
+  The viewport golden gate now accepts that explicit prerequisite state while
+  retaining its no-pixel-parity boundary. Verification: DM1 V1 CTest passes
+  1,007/1,007; DM1 V2.x passes 87/87 with local original PC34 data.

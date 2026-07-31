@@ -9,6 +9,8 @@ transcript plus paired viewport captures required by pass564/pass608/pass609.
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -113,6 +115,23 @@ EXPECTED_ARTIFACTS = {
 }
 
 
+def ensure_artifact(path: str) -> None:
+    """Materialize a deterministic blocker receipt before reading it.
+
+    The pass608 CTest target is intentionally outside the `dm1_v1_` name
+    family, so a focused DM1 V1 lane would otherwise inspect a missing file.
+    Its blocked status is evidence, not a test failure.
+    """
+    if path != "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json":
+        return
+    full = ROOT / path
+    if full.exists():
+        return
+    tool = ROOT / "tools/verify_pass608_dm1_v1_same_viewport_capture_blocker.py"
+    subprocess.run([sys.executable, str(tool)], cwd=ROOT, check=True,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+
 def compact(text: str) -> str:
     return " ".join(text.split())
 
@@ -161,6 +180,7 @@ def artifact_status(path: str) -> str | None:
 def audit_artifacts() -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
     for path, expected in EXPECTED_ARTIFACTS.items():
+        ensure_artifact(path)
         observed = artifact_status(path)
         rows.append({"path": path, "expected": expected, "observed": observed, "ok": observed == expected})
     return rows

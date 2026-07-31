@@ -195,7 +195,11 @@ def artifact_status() -> dict[str, Any]:
         "viewport-draw-uses-direction-and-map-coordinates",
         "viewport-present-requests-vblank-blit",
     ]
-    pass207_status_ok = ("Status: `BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE`" in pass207) or ("Status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`" in pass207)
+    pass207_status_ok = any(marker in pass207 for marker in (
+        "Status: `BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE`",
+        "Status: `BLOCKED_ORIGINAL_RUNNER_PREREQUISITES`",
+        "Status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`",
+    ))
     p179_art = pass179.get("existing_artifacts", {})
     capture = p179_art.get("capture_overlay_recovery", {})
     pass175 = p179_art.get("pass175_status", {})
@@ -221,7 +225,7 @@ def artifact_status() -> dict[str, Any]:
             "debugger_boundary": dbg.get("required_boundary"),
             "movement_viewport_wall_status": mvw.get("status"),
         },
-        "pass207_original_route": {"ok": pass207_status_ok and not [n for n in pass207_required if n not in pass207], "missing": (["accepted BLOCKED or SUPERSEDED pass207 status"] if not pass207_status_ok else []) + [n for n in pass207_required if n not in pass207], "status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING" if "Status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`" in pass207 else "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE"},
+        "pass207_original_route": {"ok": pass207_status_ok and not [n for n in pass207_required if n not in pass207], "missing": (["accepted blocked or superseded pass207 status"] if not pass207_status_ok else []) + [n for n in pass207_required if n not in pass207], "status": "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING" if "Status: `SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING`" in pass207 else ("BLOCKED_ORIGINAL_RUNNER_PREREQUISITES" if "Status: `BLOCKED_ORIGINAL_RUNNER_PREREQUISITES`" in pass207 else "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE")},
     }
 
 

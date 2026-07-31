@@ -255,7 +255,7 @@ def audit_source() -> list[dict[str, Any]]:
         checks.append({
             "id": check["id"],
             "function": check["function"],
-            "citations": [f"{check["file"]}:{a}-{b}" for a, b in check["ranges"]],
+            "citations": [f"{check['file']}:{a}-{b}" for a, b in check["ranges"]],
             "claim": check["claim"],
             "ok": not missing,
             "missing": missing,
@@ -408,7 +408,7 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
     lines = [
         "# Pass207 — DM1 V1 original movement/viewport blocker gate",
         "",
-        f"Status: `{manifest["status"]}`",
+        f"Status: `{manifest['status']}`",
         "",
         "Scope: N2-only focused follow-up to pass206. This gate does **not** rerun DOSBox or salvage broad captures; it records the exact ReDMCSB movement→viewport seam and explains whether the current original-runner attempt can be promoted.",
         "",
@@ -433,16 +433,16 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
         "",
         "## Current N2 original-runner attempt",
         "",
-        f"- pass206 manifest: `{audit.get("path")}`",
-        f"- pass206 status: `{audit.get("pass206_status")}`",
-        f"- attempt status: `{audit.get("attempt_status")}`",
-        f"- attempt dir: `{audit.get("attempt_dir")}`",
-        f"- capture count / dimensions: `{audit.get("capture_count")}` / `{audit.get("dimensions_seen")}`",
-        f"- viewport crop PPM count: `{audit.get("viewport_crop_ppm_count")}`",
-        f"- class counts: `{audit.get("class_counts")}`",
-        f"- duplicate SHA counts >1: `{audit.get("duplicate_sha256_counts_gt1")}`",
-        f"- missing tools: `{audit.get("missing_tools")}`",
-        f"- canonical files ok: `{audit.get("canonical_files_ok")}`",
+        f"- pass206 manifest: `{audit.get('path')}`",
+        f"- pass206 status: `{audit.get('pass206_status')}`",
+        f"- attempt status: `{audit.get('attempt_status')}`",
+        f"- attempt dir: `{audit.get('attempt_dir')}`",
+        f"- capture count / dimensions: `{audit.get('capture_count')}` / `{audit.get('dimensions_seen')}`",
+        f"- viewport crop PPM count: `{audit.get('viewport_crop_ppm_count')}`",
+        f"- class counts: `{audit.get('class_counts')}`",
+        f"- duplicate SHA counts >1: `{audit.get('duplicate_sha256_counts_gt1')}`",
+        f"- missing tools: `{audit.get('missing_tools')}`",
+        f"- canonical files ok: `{audit.get('canonical_files_ok')}`",
         "",
         "## Blocker decision",
         "",
@@ -456,7 +456,7 @@ def write_report(manifest: dict[str, Any], report: Path) -> None:
         if mismatches:
             lines.append("Mismatches:")
             for m in mismatches:
-                lines.append(f"- shot {m.get("index")}: `{m.get("classification")}` expected `{m.get("expected")}` (`{m.get("file")}`)")
+                lines.append(f"- shot {m.get('index')}: `{m.get('classification')}` expected `{m.get('expected')}` (`{m.get('file')}`)")
         else:
             lines.append("Mismatches: none recorded, but pass206 did not report `PASS_SEMANTIC_ROUTE_READY`.")
         route_probe = (manifest.get("capture_asset_manifest_audit") or {}).get("route_probe") or {}
@@ -508,7 +508,16 @@ def main() -> int:
         "mismatch_count": len(attempt.get("mismatches") or []),
         "missing_tools": attempt.get("missing_tools"),
     }, indent=2, sort_keys=True))
-    return 0 if status in {"PASS_MOVEMENT_VIEWPORT_ROUTE_PROMOTABLE", "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE", "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING"} else 1
+    # A missing capture runner is an environmental prerequisite, not a
+    # Firestaff regression. Keep the blocker manifest/report visible to CTest
+    # callers while allowing macOS and minimal CI hosts to complete the source
+    # lane. Source-audit failures remain hard failures.
+    return 0 if status in {
+        "PASS_MOVEMENT_VIEWPORT_ROUTE_PROMOTABLE",
+        "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE",
+        "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING",
+        "BLOCKED_ORIGINAL_RUNNER_PREREQUISITES",
+    } else 1
 
 
 if __name__ == "__main__":

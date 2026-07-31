@@ -4918,10 +4918,12 @@ lane is carried forward in the sections below.
     viewport-local G0224-order anchors, so the raw multiset-subset lock
     is a provenance/structure lock until the G0224->viewport transform
     is derived and source-locked
-  STILL OPEN (round 24):
-  - dm1_v1_viewport_door_wall_ornament_source_lock (not yet diagnosed)
-  - dm1_v1_viewport_movement_completion_matrix (not yet diagnosed)
-  - dm1_v1_viewport_walls_golden_comparison (not yet diagnosed)
+  2026-07-31 verification refresh: the movement matrix now uses the active
+  CTest/Ninja build directory; pass207/pass608 blocker receipts are generated
+  deterministically and missing external capture tools remain explicitly
+  blocked rather than failing the source lane. The movement matrix and the
+  viewport-walls golden comparison pass locally. This does not close the
+  separate original-PC34 capture requirements below.
 
 - 2026-07-21 DM2/DM1 round-22 cross-cutting (job/w3) — consolidated
   ctest sweep over the round-21 change area (v1_viewport|dm2_v1_hud|
