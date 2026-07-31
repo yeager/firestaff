@@ -28,9 +28,10 @@
  *                   PoisonDamage, Defense, b9x, w10, w12, AttacksSpells,
  *                   w16, w18, w20, w22, w24, w26, b28, Weight, w30, w32, b34, b35
  *
- * Only AI index names are sourced; structure layout from DME.h:1505-1545.
- * Full AIDefinition table values are GDAT-loaded in extended mode.
- * Stub here uses zero-initialized table; real implementation reads GDAT.
+ * The structure layout is from DME.h:1505-1545.  The active table is reset
+ * for each graphics session and populated through the original GDAT
+ * EXTENDED_LOAD_AI_DEFINITION-compatible route below; absent rows remain
+ * unavailable rather than becoming zero-valued creature behaviour.
  *
  * Companion/minion AI indices (13-18) are DM2-specific — no DM1 equivalent.
  * Boss indices: 30 (Lord Dragoth), 55 (Vexirk King), 51 (Amplifier).
