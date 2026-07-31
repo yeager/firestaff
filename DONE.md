@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 DM2 legacy-loop data admission: the obsolete direct game loop
+  now rejects before `dm2_v1_boot_enter_game()` unless hash discovery has
+  admitted both original DM2 media files, and rejects a failed source boot
+  handoff as well. It cannot initialize a blank, diagnostic or filename-only
+  DM2 runtime outside M11.
+
 - ✅ 2026-07-31 DM2 V2 HUD portrait ownership: removed the V2 compatibility
   overlay's ordinal `CHAMPIONS` portrait and portrait-panel redraw. SKProject
   `DRAW_CHAMPION_PICTURE` selects from the live hero type, not screen slot;

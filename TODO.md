@@ -210,6 +210,10 @@
   update:** the separate legacy `dm2_v1_load_dungeon()` discovery shim is now
   fail-closed too: it cannot report a dungeon as loaded without publishing
   the parsed map and record ownership that `dm2_v1_boot_enter_game()` owns.
+  **2026-07-31 update:** the legacy direct loop now rejects before boot when
+  hash discovery has not admitted both `GRAPHICS.DAT` and `DUNGEON.DAT`; it
+  also stops if the verified source handoff fails. It cannot initialize a
+  diagnostic DM2 state or draw any substitute frame.
 
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   DB14/timer scheduling and record-owned projectile fields from SK-projects.

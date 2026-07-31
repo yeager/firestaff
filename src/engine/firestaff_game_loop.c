@@ -83,7 +83,7 @@ static uint32_t g_vga_palette[256];
 static int g_palette_loaded = 0;
 
 /* Default DM1 VGA palette (first 16 colors for testing) */
-static extern const uint32_t g_dm1_vga_palette[16];
+extern const uint32_t g_dm1_vga_palette[16];
 extern void fs_dm1_get_full_palette(uint32_t *out256);
 
 void fs_init_default_palette(void) {
@@ -317,9 +317,34 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
         } else {
             dm2_v1_boot_set_save_root(&s_dm2_boot, NULL);
         }
+        /* This legacy loop is not the M11 launch path, but it remains a
+         * public direct-start seam. SKProject INIT reaches GAME_LOAD only
+         * after both original media owners are available. Do not initialize
+         * a DM2 runtime from a missing, filename-shaped, or mixed corpus: a
+         * blank/diagnostic frame is not a playable substitute either. */
+        if (!s_dm2_boot.assets_verified || !s_dm2_boot.graphics_path[0] ||
+            !s_dm2_boot.dungeon_path[0]) {
+            fs_set_error(&state->last_error, -2,
+                         "DM2 original data required",
+                         "Hash-verified DM2 GRAPHICS.DAT and DUNGEON.DAT were not both found",
+                         "Install a supported original DM2 data set and select its data directory");
+            state->running = 0;
+            state->dm2_boot = NULL;
+            g_fs_state = NULL;
+            return -1;
+        }
         dm2_v1_boot_print_summary(&s_dm2_boot);
-        /* Enter game: allocate dungeon data and DM2 game state */
-        (void)dm2_v1_boot_enter_game(&s_dm2_boot);
+        /* Enter game only after the verified source pair has been admitted. */
+        if (dm2_v1_boot_enter_game(&s_dm2_boot) != 0) {
+            fs_set_error(&state->last_error, -2,
+                         "DM2 original game load failed",
+                         "The verified DM2 data could not complete the source boot handoff",
+                         "Check the original data set and restart from the launcher");
+            state->running = 0;
+            state->dm2_boot = NULL;
+            g_fs_state = NULL;
+            return -1;
+        }
         dm2_v1_runtime_init(&s_dm2_boot);
         /* Phase 5: init DM2 V2 runtime (smooth movement + V2 viewport).
          * Scale 2 = V2.0 EPX mode.  Source: dm2_v2_runtime.c */
@@ -418,8 +443,7 @@ int fs_game_load_assets(FS_GameState *state) {
                     state->party_x = fs_dungeon_get_start_x();
                     state->party_y = fs_dungeon_get_start_y();
                     state->party_direction = fs_dungeon_get_start_dir();
-                    printf("Firestaff: start (%d,%d) facing %d from DUNGEON.DAT
-",
+                    printf("Firestaff: start (%d,%d) facing %d from DUNGEON.DAT\n",
                         state->party_x, state->party_y, state->party_direction);
                 }
                 printf("Firestaff: %d graphics loaded from GRAPHICS.DAT\n",
