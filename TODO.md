@@ -577,6 +577,9 @@ diagnostic; it must not silently fall back to a generated visual.
   wall-text renderer, its made-up glyph pattern, hard-coded palette and
   verification fixture. The original F0107 inscription route must now remain
   no-draw until it receives its actual source bitmap and palette receipt.
+  **2026-07-31 wall-text oracle API follow-up:** removed the unimplemented
+  public synthetic-fixture declaration. It had no source, runtime or test
+  consumer and could not decode a user-supplied original dungeon.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
