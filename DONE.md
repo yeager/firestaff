@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 DM2 original map-music dispatch: every runtime map-context
+  refresh now resolves the verified PC `SONGLIST.DAT` selector and queues the
+  corresponding `GRAPHICS.DAT` GDAT HMP stream. The real-PC test proves map 0
+  -> track 02 and preserves `playback_started = 0` while the original-HMP
+  decoder/backend are unavailable; no sidecar MIDI or OGG substitute is used.
+
 - ✅ 2026-07-31 DM2 music-source documentation correction: removed the stale
   claim that skproject's converted loose `.hmp.mid` sidecars were original PC
   runtime data. `docs/dm2_sound_format.md` now identifies the 29 authentic

@@ -246,6 +246,21 @@ int  dm2_v1_runtime_turn(int delta);            /* -1=left, +1=right, returns 0=
 void dm2_v1_runtime_set_outdoor(int is_outdoor);/* 1=outdoor 0=dungeon */
 void dm2_v1_runtime_set_position(int level, int x, int y, int dir);
 
+typedef struct DM2_V1_RuntimeMusicMapReceipt {
+    int valid;
+    int map_index;
+    int selected_track;
+    int source_songlist_verified;
+    int queue_result;
+    int source_stream_resolved;
+    int playback_started;
+} DM2_V1_RuntimeMusicMapReceipt;
+
+/* Source: SKULLWIN/c_sound.cpp DM2_GET_MUSIC_INDEX_FROM_MODLIST and
+ * dm2data.cpp tblMusicsMap. A selected track is not audible playback. */
+int dm2_v1_runtime_last_music_map_receipt(
+    DM2_V1_RuntimeMusicMapReceipt *out_receipt);
+
 /* ── Projectile drain (Phase 5) ──────────────────────────────────────
  * dm2_v1_runtime_get_projectile_drain — returns the per-tick drain cache
  * populated by dm2_v1_runtime_tick().  M11 game view calls this each

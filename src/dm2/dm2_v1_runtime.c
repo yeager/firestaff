@@ -35,6 +35,7 @@
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
+#include "dm2_v1_sound.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_trigger.h"
 #include "dm2_v1_world_model.h"
@@ -174,6 +175,7 @@ typedef struct {
     DM2_V1_G1SceneRuntimeHandoffReceipt g1_scene_runtime_handoff;
     int g1_first_map_viewport_consumed;
     int g1_map0_teleporter_transition_viewport_consumed;
+    DM2_V1_RuntimeMusicMapReceipt music_map_receipt;
     DM2_V1_RuntimeTimerPostLoadReceipt timer_post_load;
     DM2_V1_RuntimeRawSaveHandoffReceipt raw_sksave_handoff;
     DM2_V1_WeatherTimerReceipt last_weather_timer_receipt;
@@ -1485,6 +1487,32 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
     }
 }
 
+static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
+{
+    DM2_V1_RuntimeMusicMapReceipt receipt;
+    DM2_V1_MusicQueueReceipt queue;
+    int track = -1;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.map_index = rt ? rt->dungeon_level : -1;
+    receipt.selected_track = -1;
+    if (!rt || !rt->boot) return;
+    receipt.source_songlist_verified = rt->boot->songlist_verified ? 1 : 0;
+    if (!dm2_v1_boot_songlist_track_for_map(rt->boot, rt->dungeon_level,
+                                             &track)) {
+        rt->music_map_receipt = receipt;
+        return;
+    }
+    receipt.valid = 1;
+    receipt.selected_track = track;
+    memset(&queue, 0, sizeof(queue));
+    receipt.queue_result = dm2_v1_sound_queue_music(track, 1, &queue);
+    receipt.source_stream_resolved = queue.asset_resolved ? 1 : 0;
+    /* A queue result establishes neither scheduling nor audible output. */
+    receipt.playback_started = 0;
+    rt->music_map_receipt = receipt;
+}
+
 /* UPDATE_GFXSET, CHECK_RECOMPUTE_LIGHT and c_weather all consume the active
  * map together.  A level handoff cannot retain any material from the prior
  * map: rebuild the map lists, bounded G1 record receipts and GDAT plans as
@@ -1492,6 +1520,7 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
 static void dm2_runtime_refresh_map_transition_context(DM2_V1_RuntimeState *rt)
 {
     if (!rt) return;
+    dm2_runtime_refresh_music_map_trigger(rt);
     dm2_runtime_refresh_map_wall_gfx_list(rt);
     dm2_runtime_refresh_g1_runtime_materials(rt);
     dm2_runtime_refresh_gdat_scene_control(rt);
@@ -7937,6 +7966,14 @@ void dm2_v1_runtime_set_position(int level, int x, int y, int dir) {
     rt->view_dir = gs->party_dir;
     dm2_runtime_refresh_g1_map0_teleporter_transition(rt, level, x, y);
     dm2_runtime_refresh_map_transition_context(rt);
+}
+
+int dm2_v1_runtime_last_music_map_receipt(
+    DM2_V1_RuntimeMusicMapReceipt *out_receipt)
+{
+    if (!out_receipt || !g_dm2_runtime.boot) return 0;
+    *out_receipt = g_dm2_runtime.music_map_receipt;
+    return out_receipt->valid;
 }
 
 /* ── Party position accessors ─────────────────────────────────────── */

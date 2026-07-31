@@ -250,6 +250,7 @@ static void test_songlist_real_data_routing(void)
 {
     const char *data_dir = getenv("FIRESTAFF_DM2_DATA_DIR");
     DM2_V1_BootProfile p;
+    DM2_V1_RuntimeMusicMapReceipt music;
     int track = -1;
 
     if (!data_dir || !data_dir[0]) {
@@ -272,6 +273,18 @@ static void test_songlist_real_data_routing(void)
     CHECK(dm2_v1_boot_songlist_track_for_map(&p, 44, &track) == 0 &&
               track == -1,
           "maps outside the source-owned 44-entry routing table reject");
+    CHECK(dm2_v1_boot_enter_game(&p) == 0,
+          "real PC assets enter before source music-map dispatch");
+    dm2_v1_runtime_init(&p);
+    memset(&music, 0, sizeof(music));
+    CHECK(dm2_v1_runtime_last_music_map_receipt(&music) == 1 &&
+              music.map_index == 0 && music.selected_track == 2 &&
+              music.source_songlist_verified == 1 &&
+              music.source_stream_resolved == 1 &&
+              music.queue_result == DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE &&
+              music.playback_started == 0,
+          "runtime map 0 dispatches original track 02 without claiming playback");
+    dm2_v1_boot_cleanup(&p);
 }
 
 static void test_save_root_default(void)

@@ -2404,10 +2404,12 @@ that its exact runtime path is not already source-locked and tested.
     PC `GRAPHICS.DAT` GDAT `MUSICS/<track>/dtHMP/0`; loose `.hmp.mid` files
     are rejected. The boot profile now discovers the authentic 63-byte PC
     `SONGLIST.DAT` by hash, exposes only its source-owned map 0--43 selectors,
-    and rejects absent, altered, sentinel and out-of-range routes. Remaining
-    work is to dispatch that verified selector on every live map transition
-    and decode the original HMP stream. Do not claim a cue played until that
-    source chain and backend have both succeeded.
+    and rejects absent, altered, sentinel and out-of-range routes. Runtime
+    map-context refresh now dispatches that verified selector and exposes a
+    receipt that remains `playback_started = 0` until real decoding succeeds.
+    Remaining work is original-HMP stream decoding and backend scheduling. Do
+    not claim a cue played until that source chain and backend have both
+    succeeded.
 47. **DM2-INPUT-CONTROLLER-TOUCH:** Complete mouse, keyboard, controller,
     Steam Deck, touch, focus, scaling, hit-testing, and command translation
     for the real DM2 menu/HUD/gameplay routes.
