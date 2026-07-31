@@ -24544,6 +24544,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     satisfy any Mac-window or release-app readiness gate. This prevents an
     internal framebuffer from standing in for the still-required external
     original-frame comparison.
+  - 2026-07-31 DOSBox-X Resume input recheck: the capture runner can now
+    mount an operator-owned `DMSAVE.DAT` as PC34 `A:` and records a visual
+    checkpoint after the documented option-4 `Alt`+numeric-keypad cursor
+    route. The real `C409_ZONE_ENTRANCE_RESUME` attempt remained on the
+    entrance wall for both System Events and `cliclick` keypad event paths;
+    no F0433/panel capture was promoted. This is a host DOSBox-X event-ingest
+    blocker, not a missing save, path, or Firestaff save-runtime fallback.
 
 ## DM1 C13 F0435 stale-fence follow-up
 

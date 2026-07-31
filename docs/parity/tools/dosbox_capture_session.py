@@ -179,6 +179,8 @@ KEY_MAP = {
     "Keypad-5": "keypad-5",
     "Keypad-6": "keypad-6",
     "Keypad-8": "keypad-8",
+    "Alt-Keypad-2": "alt+keypad-2",
+    "Alt-Keypad-Plus": "alt+keypad-plus",
 }
 
 # Pseudo-key for the one mouse click that crosses the DM entrance wall into
@@ -2146,6 +2148,17 @@ OSASCRIPT_KEY_CODES = {
     "5": 23, "6": 22, "7": 26, "8": 28, "9": 25,
 }
 
+CICLICK_MODIFIED_KEYPAD = {
+    # DMWeb documents this only for PC34 control option 4 (Keyboard
+    # Simulation of Digital Joystick): Alt+keypad moves the game's DOS
+    # cursor and Alt+'+' sends the left mouse button.  ``cliclick`` keeps
+    # the keypad flag on the Quartz event (System Events' key code path does
+    # not), which is required for DOSBox-X to distinguish numpad 2 from the
+    # regular 2 key.
+    "Alt-Keypad-2": "num-2",
+    "Alt-Keypad-Plus": "num-plus",
+}
+
 
 def _osascript_key_code(code: int, modifiers: tuple[str, ...] = ()) -> None:
     if modifiers:
@@ -2180,6 +2193,18 @@ def _press_key(key: str) -> None:
     code = OSASCRIPT_KEY_CODES.get(key)
     if code is not None:
         _osascript_key_code(code)
+        return
+    modified_keypad = CICLICK_MODIFIED_KEYPAD.get(key)
+    if modified_keypad is not None:
+        proc = _run_quiet(
+            ["cliclick", "kd:alt", f"kp:{modified_keypad}", "ku:alt"],
+            timeout=5.0,
+        )
+        if getattr(proc, "returncode", 1) != 0:
+            raise RuntimeError(
+                f"cliclick Alt+{modified_keypad} failed: "
+                f"{proc.stderr.strip() or proc.stdout.strip()}"
+            )
         return
     # Fallback for any single character not in the explicit key-code map.
     if len(key) == 1:
@@ -2352,19 +2377,26 @@ def _wait_for_state(capture_root: Path, target: str, timeout_s: float,
     return False, last_state
 
 
-def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
+def _write_live_conf(
+        conf: Path,
+        runtime_dir: Path,
+        capture_root: Path,
+        diskette_dir: Path | None = None) -> None:
     """Write the conf used for live automation.
 
     The preflight receipt proves the canonical hash root.  For actually
     launching DM.EXE, DOSBox needs the original runtime layout where
     DM.EXE and DATA/ live together.  The live command line passes DM.EXE
     as DOSBox's PATH argument, so this conf only owns render/capture/input
-    settings.
+    settings.  ``diskette_dir`` is intentionally an explicit, operator-owned
+    directory mounted as PC34's A: drive.  The original F0433 resume path
+    looks for ``A:\\DMSAVE.DAT``; keeping the save outside the immutable
+    extracted game runtime makes a real RESUME capture reproducible without
+    mutating original program or data files.
     """
     conf.parent.mkdir(parents=True, exist_ok=True)
     (capture_root / "dosbox-capture").mkdir(parents=True, exist_ok=True)
-    conf.write_text(
-        "\n".join([
+    lines = [
             "[sdl]",
             "output=opengl",
             "windowresolution=1024x768",
@@ -2408,9 +2440,14 @@ def _write_live_conf(conf: Path, runtime_dir: Path, capture_root: Path) -> None:
             "dos_mouse_driver=true",
             "dos_mouse_immediate=true",
             "",
-        ]),
-        encoding="utf-8",
-    )
+    ]
+    if diskette_dir is not None:
+        lines.extend([
+            "[autoexec]",
+            f'mount a "{diskette_dir}"',
+            "",
+        ])
+    conf.write_text("\n".join(lines), encoding="utf-8")
 
 
 def _sha256_file(path: Path) -> str:
@@ -2891,7 +2928,7 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
                 print(f"live input validation failed: {failure}", file=sys.stderr)
             return 2
         conf = capture_root / "dosbox_capture.live.conf"
-        _write_live_conf(conf, runtime_dir, capture_root)
+        _write_live_conf(conf, runtime_dir, capture_root, args.diskette_dir)
         receipt = _write_live_input_receipt(
             capture_root=capture_root,
             runtime_dir=runtime_dir,
@@ -3125,6 +3162,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--runtime-dir", type=Path, default=None,
                         help="DM1 DOS runtime dir containing DM.EXE and DATA/ "
                              "(default: local extracted PC 3.4 runtime when present)")
+    parser.add_argument("--diskette-dir", type=Path, default=None,
+                        help="operator-owned directory to mount as PC34 A: (must contain "
+                             "DMSAVE.DAT when used with --resume)")
+    parser.add_argument("--resume", action="store_true",
+                        help="attempt the original PC34 entrance RESUME mouse route instead of "
+                             "starting a new dungeon; requires --diskette-dir/DMSAVE.DAT")
+    parser.add_argument("--resume-down-steps", type=int, default=7,
+                        help="Alt-keypad-2 steps from ENTER toward RESUME (default: 7; "
+                             "capture records a checkpoint before the click)")
     parser.add_argument("--capture-root", type=Path,
                         default=Path.home() / "firestaff-captures",
                         help="where to write captured frames")
@@ -3151,7 +3197,37 @@ def main(argv: list[str] | None = None) -> int:
                         help="seconds to wait after each --post-dungeon-route key before capture")
     args = parser.parse_args(argv)
 
-    plan = DEFAULT_PLAN
+    if args.resume:
+        if args.diskette_dir is None:
+            parser.error("--resume requires --diskette-dir containing DMSAVE.DAT")
+        diskette_save = args.diskette_dir.expanduser() / "DMSAVE.DAT"
+        if not diskette_save.is_file():
+            parser.error(f"--resume requires {diskette_save}")
+        if not 1 <= args.resume_down_steps <= 24:
+            parser.error("--resume-down-steps must be between 1 and 24")
+        # ReDMCSB COMMAND.C maps I34E Resume to the source C409 mouse zone
+        # (x=244..298, y=76..93).  After selector option 4 the PC34 control
+        # table accepts DMWeb's Alt+keypad mouse simulation.  The cursor
+        # starts in the adjacent ENTER zone; seven down steps reach the
+        # centre of C409 without relying on macOS host click injection.
+        plan = [
+            *DEFAULT_PLAN[:4],
+            PlanStep(
+                "resume_cursor_position", "entrance_menu",
+                keys=["Alt-Keypad-2"] * args.resume_down_steps,
+                settle_only=True,
+                settle_s=1.0,
+            ),
+            PlanStep(
+                "resume_dungeon", "dungeon_gameplay",
+                keys=["Alt-Keypad-Plus"],
+                timeout_s=60.0,
+            ),
+            DEFAULT_PLAN[-1],
+        ]
+
+    if not args.resume:
+        plan = DEFAULT_PLAN
     if args.self_test_post_dungeon_route:
         return self_test_post_dungeon_route_parser()
     if args.plan or args.plan_out is not None:
