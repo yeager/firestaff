@@ -583,6 +583,11 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D0 F0115 fixture follow-up:** removed the standalone
   caller-pixel C10 blend helper. The retained D0L/D0R route can composite
   only an admitted `CSBgraphics.dat` raster with its source palette receipt.
+  **2026-07-31 F0134/F0135 orphan follow-up:** removed the public helper that
+  could overwrite an authenticated C017/C040 HUD or C002/C003 entrance raster
+  with caller-selected colours. It had no runtime consumer and no source
+  command/material receipt for those mutations; the real startup and
+  viewport routes remain the only pixel owners.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

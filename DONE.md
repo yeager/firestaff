@@ -45670,3 +45670,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   firestaff_m12_language_cycle_layout_probe --parallel 4` passed;
   `SDL_VIDEODRIVER=dummy ./build-dm2-main-verify/firestaff_m12_language_cycle_layout_probe`
   passed 63/63; `git diff --check` passed.
+
+- ✅ 2026-07-31 CSB F0134/F0135 arbitrary-fill closure: removed the unused
+  public helper and real-data fixture that copied authentic C017/C040 HUD or
+  C002/C003 entrance rasters before overwriting them with caller-selected
+  palette indices. No runtime consumer existed, and the helper had neither a
+  ReDMCSB command nor a material receipt authorizing those pixels. Original
+  startup and viewport paths remain the sole pixel owners. Verification:
+  configure/build and the PC3.4 real-asset startup and viewport regressions.
