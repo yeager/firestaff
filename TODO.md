@@ -23808,18 +23808,19 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-31 visual-resume gap: the second operator-owned DOSBox-X save
     (`a6fa347b`, map 1, party `(6,2,2)`) reaches the same runtime tuple in
     Firestaff, but its in-game viewport is materially darker than the paired
-    original DOSBox-X capture. The original frame contains the party's
-    equipped lit-torch state; the restored Firestaff frame selects the dark
-    F0337 dungeon-view light route. Do not compensate with a renderer-wide
-    palette override: it also corrupts the source HUD palette. Trace the
-    exact F0435 materialized hand/object identities and PARTY_INFO light
-    state into F0337 before changing its calculation; the PC3.4 importer
-    must be verified against the compact 319-byte record, not merely the
-    larger CSBuild CHARDESC layout. DMweb's saved-game format notes
-    corroborate that PC 3.4 champion data is a 1,404-byte, little-endian
-    block with the portraits held externally; its displayed CHARDESC field
-    offsets use a different packing and cannot be transplanted without a
-    matching compact-PC34 source receipt.
+    original DOSBox-X capture. The frame was captured seconds after, rather
+    than atomically with, the save, so its apparent torch state is not a
+    hand-inventory oracle. The restored frame selects the dark F0337 route.
+    Do not compensate with a renderer-wide palette override: it also corrupts
+    the source HUD palette. Capture a hash-bound save/frame pair and trace
+    the exact F0435 materialized hand/object identities and PARTY_INFO light
+    state into F0337 before changing its calculation. The PC3.4 importer must
+    be verified against the compact 319-byte record, not merely the larger
+    CSBuild CHARDESC layout. DMweb's saved-game format notes corroborate that
+    PC 3.4 champion data is a 1,404-byte, little-endian block with the
+    portraits held externally; its displayed CHARDESC field offsets use a
+    different packing and cannot be transplanted without a matching
+    compact-PC34 source receipt.
 ## DM1 C03/C04 runtime identity follow-up
 
 - [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
