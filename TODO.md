@@ -537,6 +537,15 @@ diagnostic; it must not silently fall back to a generated visual.
   renderer remains available only for non-source tooling. Verification:
   `firestaff_m11` and `test_m11_dm1_runtime_source_capture_receipt` pass.
 
+- **DM1-ORIGINAL-REPLACE-006:** Closed 2026-07-31. The production audio
+  resolver now checks the selected DM1 data directory for the authenticated
+  PC3.4 `SONG.DAT` before legacy locations. Real SND8 title music can no
+  longer be missed merely because `GRAPHICS.DAT` and `SONG.DAT` share
+  `~/.firestaff/data/dm1`. Verification:
+  `test_dm1_v1_swsh_psg_audio_pc34_compat` and
+  `test_dm1_v1_f0740_f0743_music_source_gate` pass against local original
+  PC3.4 data.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

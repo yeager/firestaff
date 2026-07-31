@@ -3,6 +3,7 @@
 #include "swsh_frontend_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int expect(int condition, const char* message) {
@@ -15,6 +16,9 @@ int main(void) {
     M11_AudioState state;
     const unsigned char* program;
     unsigned char altered[64];
+    char expectedSongPath[1024];
+    const char* home;
+    FILE* songFile;
     unsigned int bytes = 0u;
     int ok = 1;
 
@@ -27,6 +31,19 @@ int main(void) {
     ok &= expect(SWSH_Compat_GetPc34DosoundProgramFingerprint() != 0u,
                  "source program has a nonzero receipt fingerprint");
     ok &= expect(M11_Audio_Init(&state), "audio state initializes");
+    home = getenv("HOME");
+    songFile = NULL;
+    if (home && home[0] && !getenv("FIRESTAFF_SONG_DAT") &&
+        snprintf(expectedSongPath, sizeof(expectedSongPath),
+                 "%s/.firestaff/data/dm1/SONG.DAT", home) > 0) {
+        songFile = fopen(expectedSongPath, "rb");
+    }
+    if (songFile) {
+        fclose(songFile);
+        ok &= expect(M11_Audio_OriginalSongAvailable(&state) &&
+                     strcmp(state.originalSongDatPath, expectedSongPath) == 0,
+                     "DM1-local SONG.DAT is consumed before legacy locations");
+    }
     ok &= expect(M11_Audio_PlayDm1SwshDosoundProgram(&state, program,
                                                       (int)bytes, 20u),
                  "exact source program produces the PSG stream");
