@@ -451,6 +451,9 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D2L2/D2R2 door follow-up:** the remaining contract-only C10
   partly-open-door blit is removed. Its F0111 branch, zone, clip and
   transparency metadata remain, but unbound material cannot write a viewport.
+  **2026-07-31 D1L2/D1R2 door follow-up:** the D1 side-door C10 fixture blit
+  is removed as well. ReDMCSB F0111/F0122/F0123 routing and zone metadata
+  remain, while an unbound frame has no pixel writer.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

@@ -2,7 +2,6 @@
 #define FIRESTAFF_CSB_V1_VIEWPORT_D1L2_D1R2_F0111_PARTLY_OPEN_DOOR_PC34_COMPAT_H
 
 #include <stddef.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -137,19 +136,6 @@ int csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_second_half_zone_pc34(
     const CSB_V1_D1L2D1R2F0111PartlyOpenDoorSpecPc34 *spec,
     int door_state,
     int horizontal_door);
-
-int csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_synthetic_blit_pc34(
-    const CSB_V1_D1L2D1R2F0111PartlyOpenDoorSpecPc34 *spec,
-    int door_state,
-    const uint8_t *source,
-    int source_width,
-    int source_height,
-    int source_stride,
-    uint8_t *destination,
-    int destination_width,
-    int destination_height,
-    int destination_stride,
-    int *out_c10_skipped);
 
 int csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_probe_pc34_compat(
     CSB_V1_D1L2D1R2F0111PartlyOpenDoorProbePc34 *out_probe);

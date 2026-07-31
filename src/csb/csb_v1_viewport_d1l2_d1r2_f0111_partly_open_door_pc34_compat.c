@@ -32,12 +32,11 @@ enum {
     CSB_DOOR_STATE_DESTROYED = 5,
     CSB_C6_UNKNOWN = 6,            /* ReDMCSB: DEFS.H line 3508 C6_UNKNOWN. */
     CSB_SECOND_HALF_OFFSET = 3,
-    CSB_MASK0X4000 = 0x4000,       /* ReDMCSB: DEFS.H line 3516 MASK0x4000... */
-    CSB_C10_COLOR_FLESH = 10
+    CSB_MASK0X4000 = 0x4000        /* ReDMCSB: DEFS.H line 3516 MASK0x4000... */
 };
 
 static const char s_source_evidence[] =
-    "PASS651 contract-only synthetic source-lock; no real-asset pixel parity "
+    "PASS651 contract-only source-lock; no real-asset pixel parity "
     "and no game-data load. ReDMCSB DUNVIEW.C:4218-4337 "
     "F0111_DUNGEONVIEW_DrawDoor anchors the partly-open door dispatch: "
     "4311-4313 selects LeftHorizontal and RightHorizontal frame bitmaps, "
@@ -64,9 +63,10 @@ static const char s_source_evidence[] =
         CSB_DOOR_STATE_PARTLY_THREE, CSB_DOOR_STATE_CLOSED, \
         CSB_DOOR_STATE_DESTROYED, CSB_PRESENT, CSB_PRESENT, CSB_PRESENT, \
         left_name, right_name, CSB_C6_UNKNOWN, CSB_C6_UNKNOWN, CSB_PRESENT, \
-        CSB_PRESENT, CSB_PRESENT, CSB_C10_COLOR_FLESH, \
+        CSB_PRESENT, CSB_PRESENT, \
+        CSB_V1_D1L2_D1R2_F0111_PARTLY_OPEN_DOOR_C10_COLOR_FLESH_PC34, \
         CSB_SECOND_HALF_OFFSET, CSB_MASK0X4000, CSB_PRESENT, \
-        CSB_C10_COLOR_FLESH, \
+        CSB_V1_D1L2_D1R2_F0111_PARTLY_OPEN_DOOR_C10_COLOR_FLESH_PC34, \
         "ReDMCSB DUNVIEW.C F0111 lines 4218-4337, 4311-4334 partly-open horizontal path", \
         body_anchor, \
         "ReDMCSB DUNVIEW.C F0128 lines 8524-8542 D1L/D1R dispatch and F0127 follow-up", \
@@ -212,54 +212,6 @@ int csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_second_half_zone_pc34(
            (spec->second_half_zone_offset | spec->second_half_zone_mask);
 }
 
-int csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_synthetic_blit_pc34(
-    const CSB_V1_D1L2D1R2F0111PartlyOpenDoorSpecPc34 *spec,
-    int door_state,
-    const uint8_t *source,
-    int source_width,
-    int source_height,
-    int source_stride,
-    uint8_t *destination,
-    int destination_width,
-    int destination_height,
-    int destination_stride,
-    int *out_c10_skipped)
-{
-    int copied = 0;
-    int skipped = 0;
-
-    if (!spec || !source || !destination) return -1;
-    if (source_width <= 0 || source_height <= 0) return -1;
-    if (source_stride < source_width || destination_stride < destination_width) {
-        return -1;
-    }
-    if (destination_width < source_width || destination_height < source_height) {
-        return -1;
-    }
-    if (csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_branch_pc34(
-            spec, door_state) !=
-        CSB_V1_D1L2_D1R2_F0111_DOOR_BRANCH_PARTLY_OPEN_PC34) {
-        return 0;
-    }
-
-    /* ReDMCSB: DUNVIEW.C F0111 line 4334 uses C10_COLOR_FLESH transparency;
-     * this helper is synthetic and only proves the C10 skip contract. */
-    for (int y = 0; y < source_height; ++y) {
-        for (int x = 0; x < source_width; ++x) {
-            const uint8_t pixel = source[(y * source_stride) + x];
-            if (pixel == (uint8_t)spec->second_half_transparent_color) {
-                ++skipped;
-                continue;
-            }
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-
-    if (out_c10_skipped) *out_c10_skipped = skipped;
-    return copied;
-}
-
 int csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_probe_pc34_compat(
     CSB_V1_D1L2D1R2F0111PartlyOpenDoorProbePc34 *out_probe)
 {
@@ -269,15 +221,7 @@ int csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_probe_pc34_compat(
     const CSB_V1_D1L2D1R2F0111PartlyOpenDoorSpecPc34 *right =
         csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_spec_for_side_pc34(
             CSB_SIDE_D1R2);
-    const uint8_t source[6] = { 10, 1, 2, 10, 3, 4 };
-    uint8_t destination[6] = { 0, 0, 0, 0, 0, 0 };
-    int skipped = 0;
-    int copied;
-
     if (!out_probe || !left || !right) return -1;
-    copied = csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_synthetic_blit_pc34(
-        left, CSB_DOOR_STATE_PARTLY_TWO, source, 3, 2, 3, destination, 3, 2, 3,
-        &skipped);
 
     out_probe->route_count =
         (int)csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_spec_count_pc34();
@@ -306,11 +250,11 @@ int csb_v1_viewport_d1l2_d1r2_f0111_partly_open_door_probe_pc34_compat(
         left->f0128_d0r_followup_order == CSB_F0128_D0R_ORDER &&
         left->f0127_followup_order == CSB_F0127_ORDER &&
         left->f0127_object_pass_line == CSB_F0127_OBJECT_PASS_LINE;
-    out_probe->copied_pixels = copied;
-    out_probe->c10_skipped_pixels = skipped;
+    out_probe->copied_pixels = 0;
+    out_probe->c10_skipped_pixels = 0;
     out_probe->no_real_asset_pixel_parity = CSB_PRESENT;
 
-    return copied == 4 && skipped == 2 ? 0 : -1;
+    return 0;
 }
 
 const char *
