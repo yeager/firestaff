@@ -45187,6 +45187,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   decoded from the original game-state and SUPPRESS records, so a malformed
   later section cannot leave an invented party behind. Verification:
   `test_dm2_v1_utility_import` passes 136/136.
+- ✅ 2026-07-31 CSB D3L2 F0115 projectile no-fake closure: removed the
+  unbound C10 fixture blit. ReDMCSB scaling and dynamic-flip metadata remain
+  source-locked, but an unverified projectile raster cannot write pixels.
+
 - ✅ 2026-07-31 CSB D1L/D1R F0111 door no-fake closure: removed the
   procedural C10 fixture and synthetic render hash. dmweb's DMCSB data-file
   format reference, ReDMCSB routing and the PC3.4 `GRAPHICS.DAT` item-248

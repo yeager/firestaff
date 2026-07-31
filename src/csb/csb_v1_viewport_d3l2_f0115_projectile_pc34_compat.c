@@ -126,39 +126,6 @@ int csb_v1_viewport_d3l2_f0115_projectile_apply_kinetic_scale_pc34(
     return scaled < spec->projectile_kinetic_floor ? spec->projectile_kinetic_floor : scaled;
 }
 
-int csb_v1_viewport_d3l2_f0115_projectile_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD3L2F0115ProjectileRouteSpecPc34 *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height,
-    int flip_horizontal)
-{
-    int copied = 0;
-
-    if (!spec || !source || !destination ||
-        source_stride < width || destination_stride < width ||
-        width <= 0 || height <= 0) {
-        return -1;
-    }
-
-    /* ReDMCSB: DUNVIEW.C F0115 lines 5881-5882 routes the D3L2 projectile
-     * bitmap through F0791 using L2474_i_ZoneIndex, dynamic flip flags, and
-     * C10_COLOR_FLESH transparency. */
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const int sx = flip_horizontal ? width - 1 - x : x;
-            const uint8_t pixel = source[(y * source_stride) + sx];
-            if (pixel == (uint8_t)spec->transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-    return copied;
-}
-
 const char *csb_v1_viewport_d3l2_f0115_projectile_source_evidence_pc34(void)
 {
     return s_source_evidence;

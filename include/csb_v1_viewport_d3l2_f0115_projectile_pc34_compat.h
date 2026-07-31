@@ -55,16 +55,6 @@ int csb_v1_viewport_d3l2_f0115_projectile_apply_kinetic_scale_pc34(
     int kinetic_energy,
     int scales_with_kinetic_energy);
 
-int csb_v1_viewport_d3l2_f0115_projectile_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD3L2F0115ProjectileRouteSpecPc34 *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height,
-    int flip_horizontal);
-
 const char *csb_v1_viewport_d3l2_f0115_projectile_source_evidence_pc34(void);
 
 #endif

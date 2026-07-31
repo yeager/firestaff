@@ -122,8 +122,6 @@ static int test_scale_and_blit_contract(void)
     int ok = 1;
     const CSB_V1_ViewportD3L2F0115ProjectileRouteSpecPc34 *spec =
         csb_v1_viewport_d3l2_f0115_projectile_route_spec_pc34();
-    const uint8_t source[6] = { 1, 10, 2, 3, 10, 4 };
-    uint8_t destination[6] = { 77, 77, 77, 77, 77, 77 };
 
     /* ReDMCSB: F0115 lines 5710-5722 use (ViewDepth << 1) -
      * (ViewCell >> 1), then kinetic scaling.  Lines 5881-5882 preserve
@@ -165,27 +163,6 @@ static int test_scale_and_blit_contract(void)
     ok &= expect_int("transparent_color",
                      spec ? spec->transparent_color : -1, 10,
                      "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
-    ok &= expect_int("blit.flip_copied",
-                     csb_v1_viewport_d3l2_f0115_projectile_apply_c10_blit_pc34(
-                         spec, source, 3, destination, 3, 3, 2, 1), 4,
-                     "ReDMCSB DUNVIEW.C:5881-5882 F0791 C10");
-    ok &= expect_int("blit.flip_pixel0", destination[0], 2,
-                     "dynamic flip copies source x2 to destination x0");
-    ok &= expect_int("blit.flip_transparent1", destination[1], 77,
-                     "ReDMCSB DEFS.H:2088 C10 transparent");
-    ok &= expect_int("blit.flip_pixel2", destination[2], 1,
-                     "dynamic flip copies source x0 to destination x2");
-    ok &= expect_int("blit.flip_pixel3", destination[3], 4,
-                     "dynamic flip copies source x2 to row 1 x0");
-    ok &= expect_int("blit.flip_transparent4", destination[4], 77,
-                     "ReDMCSB DEFS.H:2088 C10 transparent");
-    ok &= expect_int("blit.flip_pixel5", destination[5], 3,
-                     "dynamic flip copies source x0 to row 1 x2");
-    ok &= expect_int("blit.reject_null",
-                     csb_v1_viewport_d3l2_f0115_projectile_apply_c10_blit_pc34(
-                         NULL, source, 3, destination, 3, 3, 2, 0), -1,
-                     "route helper rejects unresolved spec");
-
     return ok;
 }
 
