@@ -271,7 +271,7 @@ int csb_v1_runtime_write_original_atari_save_to_path(
     }
     memset(&patch, 0, sizeof(patch));
     patch.game_time = profile->game_time;
-    patch.random_seed = profile->csbwin_gameblock2_summary_valid
+    patch.random_seed = profile->csbwin_random_seed_valid
         ? profile->csbwin_random_seed : profile->dungeon_seed;
     patch.leader_hand_thing = (int16_t)profile->party_state.LeaderHandThing;
     patch.party_x = (int16_t)profile->party_x;
@@ -18759,6 +18759,10 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     profile->total_play_ms = 0;
     profile->tick_count    = 0;
     profile->csbwin_party_sleeping = 0;
+    /* ReDMCSB BASE.C:194-198 initializes PC/I34 G0349 to zero.  It is a
+     * real runtime state before a save GAMEBLOCK2 is ever loaded. */
+    profile->csbwin_random_seed_valid = 1;
+    profile->csbwin_random_seed = 0u;
     dm1v1_event_queue_init(&profile->timeline_queue, profile->game_time);
     csb_v1_audio_runtime_init(&profile->audio_runtime);
     memset(&profile->last_timeline_dispatch, 0,
@@ -19516,6 +19520,7 @@ int csb_v1_runtime_apply_csbwin_gameblock2_summary(
     }
 
     profile->csbwin_gameblock2_summary_valid = 1;
+    profile->csbwin_random_seed_valid = 1;
     profile->csbwin_random_seed = summary->random_seed;
     profile->csbwin_object_in_hand = summary->object_in_hand;
     if (profile->party_state_valid) {
@@ -21157,7 +21162,7 @@ static int csb_v1_runtime_build_csbwin_core_summary(
                summary->appended_preserved_size);
     }
     summary->game_time = profile->game_time;
-    summary->random_seed = profile->csbwin_gameblock2_summary_valid
+    summary->random_seed = profile->csbwin_random_seed_valid
         ? profile->csbwin_random_seed
         : profile->dungeon_seed;
     summary->object_in_hand = csb_v1_runtime_export_leader_hand_thing(profile);

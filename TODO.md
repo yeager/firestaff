@@ -296,8 +296,9 @@ diagnostic; it must not silently fall back to a generated visual.
   selected C070--C075 mask through the active hash-verified `GRAPHICS.DAT`
   decoder. **2026-07-31 follow-up:** F0113 now consumes
   `M005_RANDOM(2)` then `M003_RANDOM(32)` from the persisted ReDMCSB G349
-  stream once per visible field, in draw order. A verified session without
-  that state leaves the field untouched. Missing source remains no-draw rather than a
+  stream once per visible field, in draw order. PC/I34 new games begin from
+  ReDMCSB `BASE.C`'s documented G349 zero state, independently of a loaded
+  GAMEBLOCK2. Missing source remains no-draw rather than a
   generated rectangle. **2026-07-31 follow-up:**
   entrance-plan metadata no longer carries generated grey door
   fill or edge colours. ReDMCSB `ENTRANCE.C F0806` owns C002/C003, and a

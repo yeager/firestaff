@@ -91,6 +91,16 @@ static void test_f028_word_exact_stream(void)
           "F028 rejects a missing source state");
 }
 
+static void test_pc34_new_game_starts_with_base_g349(void)
+{
+    CSB_V1_RuntimeProfile profile;
+
+    csb_v1_runtime_init(&profile, NULL);
+    CHECK(profile.csbwin_random_seed_valid == 1 &&
+              profile.csbwin_random_seed == 0u,
+          "PC/I34 new game retains ReDMCSB BASE.C's initial G349 zero state");
+}
+
 static void test_c008_consumes_one_bit_only_after_cell_match(void)
 {
     CSB_V1_RuntimeProfile profile;
@@ -118,6 +128,7 @@ static void test_c008_consumes_one_bit_only_after_cell_match(void)
 int main(void)
 {
     test_f028_word_exact_stream();
+    test_pc34_new_game_starts_with_base_g349();
     test_c008_consumes_one_bit_only_after_cell_match();
     if (failures != 0) {
         printf("test_csb_v1_f0247_launcher_rng_pc34_compat: FAIL %d\\n", failures);

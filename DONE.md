@@ -239,6 +239,13 @@
   owner before its next event. F0733 expectations now include `CHAMPION.C
   F0313`'s mandatory final half-scale. Focused CTest passes 5/5.
 
+- ✅ 2026-07-31 CSB PC/I34 G349 new-game seed: CSB runtime now retains
+  ReDMCSB `BASE.C`'s initial zero-valued G349 stream before a GAMEBLOCK2 is
+  loaded. F0113 can therefore consume its authentic random state for a new
+  verified session, and save export preserves that state independently of a
+  CSBWin summary import. Focused F027/F028, viewport and M11-handoff CTests
+  pass 3/3.
+
 - ✅ 2026-07-31 CSB F0113 random-stream ownership: live CSB fields no longer
   derive C076 phase from a presentation tick. The F0128 bridge now consumes
   ReDMCSB `DUNVIEW.C F0113`'s `M005_RANDOM(2)` followed by

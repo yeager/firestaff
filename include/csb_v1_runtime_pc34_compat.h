@@ -622,6 +622,10 @@ typedef struct {
      * Code17818.cpp::DetermineMastery. It is deliberately not a save field. */
     int                     csbwin_party_sleeping;
     int                     csbwin_gameblock2_summary_valid;
+    /* ReDMCSB BASE.C initializes PC/I34 G0349 to zero before either a
+     * new-game frame or LOADSAVE.C can replace it.  This validity is thus
+     * independent from whether a CSBWin GAMEBLOCK2 summary was imported. */
+    int                     csbwin_random_seed_valid;
     uint32_t                csbwin_random_seed;
     uint16_t                csbwin_object_in_hand;
     uint16_t                csbwin_num_timer;

@@ -1637,7 +1637,7 @@ int csb_v1_boot_render_viewport_frame_pc34(
         profile->runtime.current_level];
     cfg.runtime_profile = &profile->runtime;
     cfg.field_animation_tick = profile->runtime.tick_count;
-    cfg.field_random_state = profile->runtime.csbwin_gameblock2_summary_valid
+    cfg.field_random_state = profile->runtime.csbwin_random_seed_valid
         ? &profile->runtime.csbwin_random_seed : NULL;
     cfg.runtime_projectiles = &profile->runtime.projectiles;
     cfg.runtime_explosions = &profile->runtime.explosions;
