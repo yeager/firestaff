@@ -839,7 +839,9 @@ int theron_v1_startup_runtime_load_initial_level(
      * bank offset is decoded, keep the bounded deterministic startup room
      * on the real theron_v1_level_load() path. */
     meta = theron_v1_dungeon_meta(dungeon_id);
-    seed = meta ? meta->dungeon_seed : 313u;
+    /* Unknown metadata must remain unknown; never invent a seed for the
+     * synthetic fixture room. */
+    seed = meta ? meta->dungeon_seed : 0u;
     memset(&preview, 0, sizeof(preview));
     level_size = theron_v1_startup_fallback_room_synthesize(
         level_data,

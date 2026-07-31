@@ -46800,3 +46800,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Direct topbar, right-panel, and champion-slot helpers no longer emit procedural blocks, icons, or name bars without a verified runtime chrome bank.
 - This closes the legacy low-level path as well as the master HUD compositor; the generic bar primitive remains available for source-backed callers.
 - Verification: `test_theron_rendering` 25/25.
+# ✅ 2026-07-31 — Theron startup fallback no longer invents unknown seeds
+
+- The legacy bounded fallback-room receipt now reports seed `0` when dungeon metadata is not verified instead of carrying the retired literal seed `313`.
+- Verified Track 02 startup remains authoritative; this change only removes misleading metadata from the compatibility fixture path.
+- Verification: `test_theron_rendering` 25/25.
