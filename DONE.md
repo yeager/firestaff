@@ -45536,7 +45536,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   actual weather drawing remains GDAT-backed. Source: SKProject
   `c_weather.cpp` ENVIRONMENT command path. Verification:
   `test_dm2_v1_weather_gdat_receipt`.
-
 - ✅ 2026-07-31 DM2 pressure-plate fixture closure: disabled the hard-coded
   five-plate catalog, including its representative coordinates, target doors,
   creature spawn and fabricated message. Runtime movement now cannot alter a
@@ -45594,3 +45593,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-31 CSB duplicate D3L/D3R backdrop removal: removed the
   contract-only backdrop trace and CTest. The M11 source-bound side-wall
   handoff remains the only production owner of F0116/F0117 material.
+
+- ✅ 2026-07-31 DM1 V1 verification-route repair: PC3.4 object-name
+  admission now uses the production GRAPHICS.DAT record constant (694 rather
+  than stale source symbol 564); teleporter source locks follow the owned
+  phase helper after its refactor; the movement matrix receives CTest's Ninja
+  build directory; the HoC boot fixture isolates configured real-save corpus
+  state; and the F0351 empty-hand eye panel is correctly treated as in-panel
+  UI rather than a generic dialog. Verification: the five focused DM1 tests
+  pass from `/tmp/firestaff-system-build`.

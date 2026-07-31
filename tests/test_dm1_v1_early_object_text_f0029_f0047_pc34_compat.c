@@ -29,7 +29,9 @@ int main(void)
     names_request.raw_names = names;
     names_request.raw_names_byte_count = sizeof(names);
     names_request.graphics_dat_fingerprint = 1u;
-    names_request.graphic_index = 564;
+    /* PC3.4 binds ReDMCSB M564 to GRAPHICS.DAT record 694. Keep this
+     * source-lock test coupled to the production media constant. */
+    names_request.graphic_index = DM1_V1_F0031_OBJECT_NAMES_GRAPHIC_PC34;
     names_request.decoded_from_original_graphics_dat = 1;
     names_request.raw_record_verified = 1;
     names_request.no_synthetic_names = 1;

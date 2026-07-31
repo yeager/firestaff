@@ -866,8 +866,10 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
               "eye press with empty leader hand leaves the leader hand empty");
     ASSERT_EQ(state.v1ChampionStatsPanelActive, 1,
               "eye press with empty leader hand activates champion stats panel state");
-    ASSERT_EQ(M11_GameView_DismissDialogOverlay(&state), 1,
-              "dismiss empty-hand eye stats overlay before the next inventory click");
+    /* F0351 paints this directly in the inventory panel. It deliberately is
+     * not a generic dialog overlay, otherwise the large overlay text covers
+     * the inventory chrome. */
+    state.v1ChampionStatsPanelActive = 0;
 
     /* Eye-clicking an object in the leader hand switches from the
      * food/water panel to the object-description panel.  ReDMCSB

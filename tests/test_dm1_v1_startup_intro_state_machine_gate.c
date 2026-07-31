@@ -3435,6 +3435,10 @@ static void check_dm1_launch_path_bypass_contract(void) {
         }
     }
     expect_i("DM1 test corpus fixture created", corpus_ready, 1);
+    /* This fixture verifies the unconfigured receipt route. A developer's
+     * real corpus must not leak into that assertion through the process env. */
+    unsetenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
+    unsetenv("FIRESTAFF_DM1_ORIGINAL_SAVE_DIR");
     hoc_boot_complete_facts.source_id = "dm1";
     hoc_boot_complete_facts.resume_path =
         corpus_ready ? corpus_save_path : "dm1-original-save";

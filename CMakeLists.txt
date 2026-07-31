@@ -27606,7 +27606,7 @@ endif()
         )
         add_test(
             NAME dm1_v1_viewport_movement_completion_matrix
-            COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_movement_completion_matrix.py
+            COMMAND ${CMAKE_COMMAND} -E env FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR} ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v1_viewport_movement_completion_matrix.py
         )
         add_test(
             NAME dm1_v1_viewport_walls_golden_comparison

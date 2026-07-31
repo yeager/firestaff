@@ -94,8 +94,15 @@ def main() -> int:
 
     _, field_bitmap = find_function(dm1_field, "dm1_v1_field_bitmap_sample_pc34")
     require_ordered(field_bitmap, [
-        "fieldStartUnit = plan->baseStartUnit + (int)((animTick >> 1) & 1u);",
-        "fieldYPhase = (int)((animTick * 7u) & 31u);",
+        "dm1_v1_field_bitmap_sample_with_phase_pc34(",
+        "plan, (int)((animTick >> 1) & 1u), (int)((animTick * 7u) & 31u),",
+    ], "DM1-owned source field animation phase")
+
+    _, field_bitmap_phase = find_function(
+        dm1_field, "dm1_v1_field_bitmap_sample_with_phase_pc34")
+    require_ordered(field_bitmap_phase, [
+        "fieldStartUnit = plan->baseStartUnit + (startUnitDelta & 1);",
+        "fieldYPhase = yPhase & 31;",
         "outSample->fieldX = (localX + (fieldStartUnit * 16)) % fieldWidth;",
         "outSample->fieldY = (localY + fieldYPhase) % fieldHeight;",
     ], "DM1-owned source field bitmap shimmer")

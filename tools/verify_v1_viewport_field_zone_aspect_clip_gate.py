@@ -189,8 +189,14 @@ def main() -> int:
     # The F0113 mask/phase animation itself is DM1-owned.
     _, sample_body = find_function(dm1, "dm1_v1_field_bitmap_sample_pc34")
     require_in_order(sample_body, [
-        "fieldStartUnit = plan->baseStartUnit + (int)((animTick >> 1) & 1u);",
-        "fieldYPhase = (int)((animTick * 7u) & 31u);",
+        "dm1_v1_field_bitmap_sample_with_phase_pc34(",
+        "plan, (int)((animTick >> 1) & 1u), (int)((animTick * 7u) & 31u),",
+    ], "DM1 field animation phase routing")
+    _, sample_phase_body = find_function(
+        dm1, "dm1_v1_field_bitmap_sample_with_phase_pc34")
+    require_in_order(sample_phase_body, [
+        "fieldStartUnit = plan->baseStartUnit + (startUnitDelta & 1);",
+        "fieldYPhase = yPhase & 31;",
         "outSample->fieldX = (localX + (fieldStartUnit * 16)) % fieldWidth;",
         "outSample->fieldY = (localY + fieldYPhase) % fieldHeight;",
     ], "DM1 field mask/phase animation")

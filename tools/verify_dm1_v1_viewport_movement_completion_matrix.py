@@ -26,7 +26,9 @@ DEFAULT_SOURCE = Path(os.environ.get(
 OUT_DIR = ROOT / "parity-evidence" / "verification" / "dm1_v1_viewport_movement_completion_matrix"
 MANIFEST = OUT_DIR / "manifest.json"
 REPORT = ROOT / "parity-evidence" / "dm1_v1_viewport_movement_completion_matrix.md"
-BUILD_DIR = ROOT / "build"
+# CTest supplies this for out-of-tree generators (including Ninja).  Keep the
+# in-tree fallback so the verifier also remains usable from a source checkout.
+BUILD_DIR = Path(os.environ.get("FIRESTAFF_BUILD_DIR", ROOT / "build"))
 
 SOURCE_ROWS: list[dict[str, Any]] = [
     {
