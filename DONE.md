@@ -110,6 +110,10 @@
   zone selection, including the source-required no-draw cases. Verification:
   `test_csb_v1_viewport_d2l2_f0115_projectile_pc34_compat`.
 
+- ✅ 2026-07-31 CSB D2C door synthetic-blit cleanup: removed the partly-open
+  door pixel helper and rewrote its probe as route and transparency metadata.
+  Verification: `test_csb_v1_viewport_d2c_f0111_partly_open_door_pc34_compat`.
+
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a
   successful transaction route from host gold alone. It remains closed until

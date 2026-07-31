@@ -375,47 +375,6 @@ static int test_defs_and_offset_contract(void)
     return ok;
 }
 
-static int test_synthetic_c10_blit(void)
-{
-    int ok = 1;
-    uint8_t source[6] = { 10, 1, 2, 10, 3, 4 };
-    uint8_t destination[6] = { 0, 0, 0, 0, 0, 0 };
-    int skipped = -1;
-    const CSB_V1_D2CF0111PartlyOpenDoorSpecPc34 *d2c =
-        csb_v1_viewport_d2c_f0111_partly_open_door_spec_for_square_pc34(6);
-
-    ok &= expect_int("blit.copied",
-                     csb_v1_viewport_d2c_f0111_partly_open_door_synthetic_blit_pc34(
-                         d2c, 2, source, 3, 2, 3, destination, 3, 2, 3, &skipped),
-                     4, A_F0111_SECOND);
-    ok &= expect_int("blit.skipped", skipped, 2,
-                     "ReDMCSB DEFS.H line 2088 C10_COLOR_FLESH transparency");
-    ok &= expect_int("blit.pixel1", destination[1], 1, A_F0111_SECOND);
-    ok &= expect_int("blit.pixel2", destination[2], 2, A_F0111_SECOND);
-    ok &= expect_int("blit.pixel4", destination[4], 3, A_F0111_SECOND);
-    ok &= expect_int("blit.pixel5", destination[5], 4, A_F0111_SECOND);
-    ok &= expect_int("blit.transparent0", destination[0], 0,
-                     "C10 transparent source preserved");
-    ok &= expect_int("blit.open.skip",
-                     csb_v1_viewport_d2c_f0111_partly_open_door_synthetic_blit_pc34(
-                         d2c, 0, source, 3, 2, 3, destination, 3, 2, 3, 0),
-                     0, "ReDMCSB DUNVIEW.C F0111 line 4248");
-    ok &= expect_int("blit.reject.bad_stride",
-                     csb_v1_viewport_d2c_f0111_partly_open_door_synthetic_blit_pc34(
-                         d2c, 2, source, 3, 2, 2, destination, 3, 2, 3, 0),
-                     -1, "synthetic source stride guard");
-    ok &= expect_int("blit.reject.too_small_dest",
-                     csb_v1_viewport_d2c_f0111_partly_open_door_synthetic_blit_pc34(
-                         d2c, 2, source, 3, 2, 3, destination, 2, 2, 2, 0),
-                     -1, "synthetic destination bounds guard");
-    ok &= expect_int("blit.reject.null_contract",
-                     csb_v1_viewport_d2c_f0111_partly_open_door_synthetic_blit_pc34(
-                         0, 2, source, 3, 2, 3, destination, 3, 2, 3, 0),
-                     -1, "null spec guard");
-
-    return ok;
-}
-
 static int test_probe_and_evidence(void)
 {
     int ok = 1;
@@ -436,8 +395,6 @@ static int test_probe_and_evidence(void)
     ok &= expect_int("probe.second_half", probe.second_half_zone, 20149, A_F0111_SECOND);
     ok &= expect_int("probe.horizontal_mask", probe.horizontal_mask_ok, 1, A_F0111_SECOND);
     ok &= expect_int("probe.c10_transparency", probe.c10_transparency_ok, 1, A_F0111_SECOND);
-    ok &= expect_int("probe.copied", probe.copied_pixels, 4, A_F0111_SECOND);
-    ok &= expect_int("probe.skipped", probe.c10_skipped_pixels, 2, A_DEFS);
     ok &= expect_int("probe.no_pixel", probe.no_real_asset_pixel_parity, 1,
                      A_NO_PIXEL);
     ok &= expect_contains("evidence.f0111", e, "DUNVIEW.C:4218-4337", A_F0111);
@@ -495,7 +452,6 @@ int main(void)
     ok &= test_f0111_frame_bitmap_selection();
     ok &= test_f0111_first_and_second_half_zone_math();
     ok &= test_defs_and_offset_contract();
-    ok &= test_synthetic_c10_blit();
     ok &= test_probe_and_evidence();
     ok &= expect_true("assertion_count_at_least_40", g_assertions >= 40,
                       "assigned PASS659 CSB V1 D2C F0111 partly-open door gate");

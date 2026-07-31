@@ -160,19 +160,6 @@ csb_v1_viewport_d2c_f0111_partly_open_door_frame_bitmap_pc34(
     int door_state,
     int right_half);
 
-int csb_v1_viewport_d2c_f0111_partly_open_door_synthetic_blit_pc34(
-    const CSB_V1_D2CF0111PartlyOpenDoorSpecPc34 *spec,
-    int door_state,
-    const uint8_t *source,
-    int source_width,
-    int source_height,
-    int source_stride,
-    uint8_t *destination,
-    int destination_width,
-    int destination_height,
-    int destination_stride,
-    int *out_c10_skipped);
-
 int csb_v1_viewport_d2c_f0111_partly_open_door_probe_pc34_compat(
     CSB_V1_D2CF0111PartlyOpenDoorProbePc34 *out_probe);
 

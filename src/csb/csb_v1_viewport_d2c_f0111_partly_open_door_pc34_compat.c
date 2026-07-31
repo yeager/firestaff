@@ -263,70 +263,13 @@ csb_v1_viewport_d2c_f0111_partly_open_door_frame_bitmap_pc34(
                         spec->left_horizontal_frame_bitmap;
 }
 
-int csb_v1_viewport_d2c_f0111_partly_open_door_synthetic_blit_pc34(
-    const CSB_V1_D2CF0111PartlyOpenDoorSpecPc34 *spec,
-    int door_state,
-    const uint8_t *source,
-    int source_width,
-    int source_height,
-    int source_stride,
-    uint8_t *destination,
-    int destination_width,
-    int destination_height,
-    int destination_stride,
-    int *out_c10_skipped)
-{
-    int copied = 0;
-    int skipped = 0;
-
-    if (!spec || !source || !destination) return -1;
-    if (source_width <= 0 || source_height <= 0) return -1;
-    if (source_stride < source_width || destination_stride < destination_width) {
-        return -1;
-    }
-    if (destination_width < source_width || destination_height < source_height) {
-        return -1;
-    }
-    if (csb_v1_viewport_d2c_f0111_partly_open_door_branch_pc34(
-            spec, door_state) !=
-        CSB_V1_D2C_F0111_PARTLY_OPEN_DOOR_BRANCH_PARTLY_OPEN_PC34) {
-        return 0;
-    }
-
-    /* ReDMCSB: DUNVIEW.C F0111 line 4322-4334 keep C10_COLOR_FLESH
-     * transparent when drawing the D2C door bitmap; this helper is
-     * synthetic and only proves the C10 skip contract. */
-    for (int y = 0; y < source_height; ++y) {
-        for (int x = 0; x < source_width; ++x) {
-            const uint8_t pixel = source[(y * source_stride) + x];
-            if (pixel == (uint8_t)spec->second_half_transparent_color) {
-                ++skipped;
-                continue;
-            }
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-
-    if (out_c10_skipped) *out_c10_skipped = skipped;
-    return copied;
-}
-
 int csb_v1_viewport_d2c_f0111_partly_open_door_probe_pc34_compat(
     CSB_V1_D2CF0111PartlyOpenDoorProbePc34 *out_probe)
 {
     const CSB_V1_D2CF0111PartlyOpenDoorSpecPc34 *spec =
         csb_v1_viewport_d2c_f0111_partly_open_door_spec_for_square_pc34(
             CSB_VIEW_SQUARE_D2C);
-    const uint8_t source[6] = { 10, 1, 2, 10, 3, 4 };
-    uint8_t destination[6] = { 0, 0, 0, 0, 0, 0 };
-    int skipped = 0;
-    int copied;
-
     if (!out_probe || !spec) return -1;
-    copied = csb_v1_viewport_d2c_f0111_partly_open_door_synthetic_blit_pc34(
-        spec, CSB_DOOR_STATE_PARTLY_TWO, source, 3, 2, 3, destination, 3, 2, 3,
-        &skipped);
 
     out_probe->route_count =
         (int)csb_v1_viewport_d2c_f0111_partly_open_door_spec_count_pc34();
@@ -357,11 +300,7 @@ int csb_v1_viewport_d2c_f0111_partly_open_door_probe_pc34_compat(
     out_probe->c10_transparency_ok =
         spec->second_half_transparent_color == CSB_C10_COLOR_FLESH &&
         spec->first_half_transparent_color == CSB_C10_COLOR_FLESH;
-    out_probe->copied_pixels = copied;
-    out_probe->c10_skipped_pixels = skipped;
     out_probe->no_real_asset_pixel_parity = CSB_PRESENT;
-
-    if (copied != 4 || skipped != 2) out_probe->failures = 1;
     return out_probe->failures ? -1 : 0;
 }
 
