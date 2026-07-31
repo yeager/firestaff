@@ -22,6 +22,13 @@
   reloads also refresh deterministic header fields from the same verified
   source bytes.
 
+- **DM2-CREDITS-EVENT-OWNER-HANDOFF:** DM2 startup now follows
+  `SHOW_MENU_SCREEN` directly to the original menu surface. Port the
+  title-menu event that selects `SHOW_CREDITS`, including the credits
+  picture's own palette handoff, before exposing credits as an interactive
+  route. Do not reuse the credits picture as a boot animation or display it
+  through the menu IRGB set.
+
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following
   sections, but Firestaff's session-only gold, reputation and time fields do

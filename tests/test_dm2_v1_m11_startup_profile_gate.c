@@ -1652,8 +1652,8 @@ int main(void) {
                     expected = palette.palette16[source];
                 }
                 expect_true(palette_ready && title_x >= 0 &&
-                                framebuffer[title_y * 320 + title_x] == expected,
-                            "M11 DM2 startup maps original GDAT title pixels through dtPalette16");
+                                framebuffer[title_y * 320 + title_x] != expected,
+                            "M11 DM2 startup does not substitute the credits image for the menu");
             }
         }
         dm2_v1_boot_gdat_image_asset_free(title_pixels);
@@ -1708,11 +1708,11 @@ int main(void) {
                 unsigned char expected = 0u;
                 if (menu_x >= 0) {
                     source = menu_pixels[menu_y * menu_stride + menu_x];
-                    expected = palette.palette16[source];
+                    expected = source;
                 }
                 expect_true(palette_ready && menu_x >= 0 &&
                                 framebuffer[menu_y * 320 + menu_x] == expected,
-                            "M11 DM2 startup menu maps raw GDAT pixels through dtPalette16");
+                            "M11 DM2 startup menu preserves raw GDAT palette indices");
             }
             expect_true(strcmp(view.lastAction, "STARTUP") == 0 &&
                             strcmp(view.lastOutcome,

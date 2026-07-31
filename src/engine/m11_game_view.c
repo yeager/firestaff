@@ -43196,12 +43196,15 @@ static int m11_dm2_startup_exec_gdat_image(
                 c == (unsigned char)command->transparent_color) {
                 continue;
             }
-            /* dm2_v1_boot_interface_palette is the boot-owned, validated
-             * dtPalIRGB/dtPalette16 handoff installed by SkWinCore::INIT
-             * before SHOW_MENU_SCREEN (lines 55606-55615). Title/menu GDAT
-             * pixels below 16 are logical colours; M11 writes the verified
-             * physical slot and render_sdl_m11 applies that IRGB table. */
-            if (c < 16u) {
+            /* DRAW_TITLE_MENU_SCREEN blits TITLE/0/dt07/4 directly as an
+             * 8-bit screen when the original 64000-byte payload exists.
+             * Its bytes are already physical indices in the IRGB set chosen
+             * by FIRE_SELECT_PALETTE_SET(0), so remapping low values through
+             * dtPalette16 corrupts the menu colours.  The unused credits
+             * picture is separately palette-owned by the original title
+             * event route and is never substituted for this startup menu. */
+            if (command->frame_owner != DM2_V1_FRAME_OWNER_STARTUP_MENU &&
+                c < 16u) {
                 c = palette.palette16[c];
             }
             context->framebuffer[dy * context->framebufferWidth + dx] = c;
@@ -43391,9 +43394,18 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
     context.gdat_proof_failure_count = 0;
     context.rect_count = 0;
     context.text_count = 0;
-    context.draw_title_phase =
-        ownership_receipt.title_frame < ownership_receipt.title_frame_max;
-    context.draw_menu_phase = !context.draw_title_phase;
+    /* SKProject's SHOW_MENU_SCREEN loads TITLE/0/dt07/1 as the optional
+     * credits picture, then DRAW_TITLE_MENU_SCREEN immediately presents
+     * TITLE/0/dt07/4 (or its 64000-byte raw screen).  The credits picture is
+     * reached only after the title-menu event loop requests SHOW_CREDITS;
+     * it is not a timed boot animation.  Do not hold the startup host on
+     * field 1: apart from trapping launch on the credits, that route needs
+     * the picture-local credits palette rather than the menu's active IRGB
+     * palette set.  Source: SKProject SKWINSPX/src/v4/skcore.cpp
+     * SHOW_MENU_SCREEN lines 15455-15462; skguidrw.cpp
+     * DRAW_TITLE_MENU_SCREEN lines 6598-6613. */
+    context.draw_title_phase = 0;
+    context.draw_menu_phase = 1;
     executor.userdata = &context;
     executor.draw_gdat_image = m11_dm2_startup_exec_gdat_image;
     executor.fill_rect = m11_dm2_startup_exec_fill_rect;

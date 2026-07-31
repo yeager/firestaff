@@ -1,3 +1,13 @@
+- ✅ 2026-07-31 DM2 startup menu and palette correction: M11 no longer
+  treats `TITLE/0/dt07/1` (the optional credits picture) as a 48-tick boot
+  animation. SKProject `SHOW_MENU_SCREEN` loads it only for the credits
+  event, while `DRAW_TITLE_MENU_SCREEN` immediately presents
+  `TITLE/0/dt07/4`. The original raw 8-bit menu indices now remain intact
+  for the verified interface IRGB table, rather than remapping low entries
+  through `dtPalette16`. The focused M11 startup/profile build completes;
+  its remaining integration failures require unavailable real-data fixtures
+  and are recorded separately.
+
 - ✅ 2026-07-31 DM2 generator-default closure: creature and item generator
   actuators now reject bare flags instead of spawning a default Dragoth or
   publishing a synthetic item ID. Source DB14/record ownership is required
