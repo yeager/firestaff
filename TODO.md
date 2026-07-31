@@ -81,7 +81,10 @@
   ceiling/floor and test-maze code. It must remain disconnected. Before any
   future repair or reactivation, remove those substitutes and route startup
   through `dm2_v1_boot_startup_launch_alloc()` so only hash-verified original
-  `GRAPHICS.DAT` plus `DUNGEON.DAT` can reach a runtime frame.
+  `GRAPHICS.DAT` plus `DUNGEON.DAT` can reach a runtime frame. **2026-07-31
+  update:** the separate legacy `dm2_v1_load_dungeon()` discovery shim is now
+  fail-closed too: it cannot report a dungeon as loaded without publishing
+  the parsed map and record ownership that `dm2_v1_boot_enter_game()` owns.
 
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   DB14/timer scheduling and record-owned projectile fields from SK-projects.

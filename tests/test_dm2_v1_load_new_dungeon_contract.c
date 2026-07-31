@@ -50,6 +50,26 @@ static size_t build_pc_g1_fixture(unsigned char *buf, size_t cap)
     return raw_map_base + 4u;
 }
 
+static int test_legacy_load_shim_cannot_claim_success(void)
+{
+    DM2_V1_GameState state;
+
+    dm2_v1_init(&state, "/tmp/firestaff-dm2-load-shim");
+    state.party_x = 17;
+    state.party_y = 23;
+    state.party_dir = 2;
+    state.current_level = 4;
+    state.outdoor = 1;
+    if (dm2_v1_load_dungeon(&state) != -1 ||
+        state.party_x != 17 || state.party_y != 23 ||
+        state.party_dir != 2 || state.current_level != 4 ||
+        state.outdoor != 1) {
+        fprintf(stderr, "FAIL: legacy load shim claimed or changed game state\n");
+        return 0;
+    }
+    return 1;
+}
+
 int main(void)
 {
     unsigned char dungeon[512];
@@ -60,6 +80,8 @@ int main(void)
     DM2_V1_DungeonData *active;
     DM2_V1_GameState *game;
     size_t dungeon_size;
+
+    if (!test_legacy_load_shim_cannot_claim_success()) return 1;
 
     dungeon_size = build_pc_g1_fixture(dungeon, sizeof(dungeon));
     if (dungeon_size == 0) return 1;

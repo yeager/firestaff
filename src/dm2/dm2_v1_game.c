@@ -1,24 +1,5 @@
 #include "dm2_v1_game.h"
-#include "asset_find_by_hash.h"
 #include <string.h>
-#include <stdio.h>
-
-/* Known DM2 DUNGEON.DAT MD5 hashes.
- * DM2 dungeon files are inside zip archives on disk — until extraction
- * is implemented, these hashes cover extracted variants. Add hashes as
- * verified versions are confirmed. */
-static const char *const dm2_dungeon_hashes[] = {
-    "6caccd7875009e82fe2e28e7f6d6adc0",  /* DM2 PC English DUNGEON.DAT */
-    NULL
-};
-
-/* Known DM2 GRAPHICS.DAT MD5 hashes (for fallback graphics search) */
-static const char *const dm2_graphics_hashes[] __attribute__((unused)) = {
-    "25247ede4dabb6a71e5dabdfbcd5907d",  /* PC English */
-    "b4d733576ea60c41737f79f212faf528",  /* PC French */
-    "e52ab5e01715042b16a4dcff02052e5d",  /* PC German/English JewelCase */
-    NULL
-};
 
 void dm2_v1_init(DM2_V1_GameState *state, const char *data_dir) {
     if (!state) return;
@@ -31,23 +12,12 @@ void dm2_v1_init(DM2_V1_GameState *state, const char *data_dir) {
 }
 
 int dm2_v1_load_dungeon(DM2_V1_GameState *state) {
-    char path[ASSET_PATH_MAX];
-    if (!state || !state->data_dir) return -1;
-
-    /* Hash-based search for dungeon data */
-    if (dm2_dungeon_hashes[0] != NULL &&
-        asset_find_by_md5_list(state->data_dir, dm2_dungeon_hashes,
-                               path, sizeof(path), NULL, 4)) {
-        printf("DM2: found dungeon at %s (hash-verified)\n", path);
-        /* DM2 dungeon format extends the DM1/CSB format with outdoor areas.
-     * The shared dungeon loader handles the base format; DM2-specific
-     * extensions (outdoor renderer, multi-level transitions) are loaded
-     * separately via dm2_v1_dungeon_loader_pc34_compat. */
-        return 0;
-    }
-
-    printf("DM2: no verified dungeon hash available yet — "
-           "dungeon files need to be extracted from zip archives first\n");
+    (void)state;
+    /* This compatibility shim has no destination for the parsed map and used
+     * to report success after discovery alone. SKProject GAME_LOAD reaches
+     * c_loadlevel's complete map/record handoff before publishing gameplay;
+     * Firestaff's equivalent is dm2_v1_boot_enter_game(). Never advertise a
+     * found DUNGEON.DAT as loaded when this API has not built that state. */
     return -1;
 }
 

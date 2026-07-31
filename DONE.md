@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 legacy dungeon-load closure: the unused
+  `dm2_v1_load_dungeon()` shim no longer reports success merely because it
+  discovers a hash-matched file. A success result without parsed map and
+  record ownership was a false game-load claim; only
+  `dm2_v1_boot_enter_game()` may publish that source-owned state. The
+  `dm2_v1_load_new_dungeon_contract` regression proves the shim leaves an
+  existing state untouched and returns failure.
+
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a
   successful transaction route from host gold alone. It remains closed until

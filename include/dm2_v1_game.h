@@ -19,6 +19,8 @@ typedef struct DM2_V1_GameState {
 } DM2_V1_GameState;
 
 void dm2_v1_init(DM2_V1_GameState *state, const char *data_dir);
+/* Legacy shim. Always fails: only dm2_v1_boot_enter_game() may publish a
+ * hash-verified, parsed DM2 dungeon and its record/map ownership. */
 int dm2_v1_load_dungeon(DM2_V1_GameState *state);
 /* Always fails until the caller supplies the original shop-glass actuator,
  * WALL_GFX/GDAT material and record-owned transaction state. */
