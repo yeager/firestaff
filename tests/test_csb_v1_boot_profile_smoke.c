@@ -150,10 +150,10 @@ static void test_enter_handoff_state(void)
     snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", "/tmp/firestaff-csb-v1-data/DUNGEON.DAT");
     csb_v1_boot_set_save_root(&p, "/tmp/firestaff-csb-v1-saves");
 
-    CHECK(csb_v1_boot_enter_game(&p) == 0,
-          "enter_game accepts a verified profile");
-    CHECK(p.state == CSB_V1_BOOT_STATE_RUNTIME_READY,
-          "enter_game advances boot profile to RUNTIME_READY");
+    CHECK(csb_v1_boot_enter_game(&p) == -1,
+          "enter_game rejects a verified profile whose dungeon is not materialized");
+    CHECK(p.state == CSB_V1_BOOT_STATE_ASSETS_READY,
+          "failed materialization leaves the boot profile at ASSETS_READY");
     CHECK(p.runtime.state == CSB_STATE_TITLE,
           "runtime starts at the CSB title/entrance state");
     CHECK(p.runtime.variant_id == CSB_V1_VARIANT_PC34_EN,
@@ -206,19 +206,13 @@ static void test_enter_loads_verified_dungeon_context(void)
     snprintf(p.graphics_path, sizeof(p.graphics_path), "%s", "GRAPHICS.DAT");
     snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", fixture_path);
 
-    CHECK(csb_v1_boot_enter_game(&p) == 0,
-          "enter_game accepts verified file-backed handoff");
+    CHECK(csb_v1_boot_enter_game(&p) == -1,
+          "enter_game rejects the legacy synthetic file-backed fixture");
     current = csb_v1_dungeon_get_current();
-    CHECK(p.runtime.dungeon_handle != NULL,
-          "runtime owns a loaded dungeon handle after handoff");
-    CHECK(current == p.runtime.dungeon_handle,
-          "current dungeon singleton points at the runtime-owned handle");
-    CHECK(csb_v1_dungeon_get_current_level() == 0,
-          "handoff selects new-game map 0 as the current dungeon level");
-    CHECK(current && current->level_count == 1,
-          "loaded fixture exposes one dungeon level");
-    CHECK(current && csb_v1_dungeon_get_square_type(current, 0, 1, 1) == 3,
-          "loaded dungeon data is readable through the current context");
+    CHECK(p.runtime.dungeon_handle == NULL && current == NULL,
+          "rejected fixture publishes no runtime-owned dungeon handle");
+    CHECK(p.state == CSB_V1_BOOT_STATE_ASSETS_READY,
+          "rejected fixture keeps the profile outside RUNTIME_READY");
 
     csb_v1_boot_cleanup(&p);
     CHECK(csb_v1_dungeon_get_current() == NULL,

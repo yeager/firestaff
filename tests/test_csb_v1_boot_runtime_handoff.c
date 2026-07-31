@@ -1900,18 +1900,16 @@ static void test_enter_game_with_missing_dungeon_path_keeps_runtime_safe(void)
     p.variant_id = CSB_V1_VARIANT_PC34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
 
-    CHECK(csb_v1_boot_enter_game(&p) == 0,
-          "enter_game still succeeds when the verified path is unreadable");
-    CHECK(p.state == CSB_V1_BOOT_STATE_RUNTIME_READY,
-          "boot state still advances to RUNTIME_READY");
+    CHECK(csb_v1_boot_enter_game(&p) == -1,
+          "enter_game rejects a verified profile when its dungeon cannot be materialized");
+    CHECK(p.state == CSB_V1_BOOT_STATE_ASSETS_READY,
+          "unreadable dungeon leaves the profile outside RUNTIME_READY");
     CHECK(p.runtime.dungeon_handle == NULL,
           "dungeon_handle stays NULL when the path cannot be opened");
     CHECK(p.runtime.dungeon_asset.path == p.dungeon_path,
           "dungeon_asset.path still points at the verified path even if load fails");
-    CHECK(p.runtime.state == CSB_STATE_TITLE,
-          "runtime state remains CSB_STATE_TITLE");
-    CHECK(p.runtime.chaos_magic.magic_initialized == 1,
-          "chaos magic is still initialized (handoff is tolerant)");
+    CHECK(p.engine_version_displayed == 0,
+          "unreadable dungeon does not advertise a CSB runtime");
 
     /* Free the global dungeon singleton if the loader left anything set. */
     csb_v1_dungeon_set_current(NULL);
@@ -1936,8 +1934,8 @@ static void test_enter_game_rejects_legacy_fixture_dungeon(void)
     p.variant_id = CSB_V1_VARIANT_PC34_EN;
     p.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
 
-    CHECK(csb_v1_boot_enter_game(&p) == 0,
-          "legacy fixture keeps the tolerant title handoff alive");
+    CHECK(csb_v1_boot_enter_game(&p) == -1,
+          "legacy fixture cannot enter a CSB runtime");
     CHECK(p.runtime.dungeon_handle == NULL &&
               csb_v1_dungeon_get_current() == NULL,
           "boot rejects legacy fixture as a live CSB dungeon");

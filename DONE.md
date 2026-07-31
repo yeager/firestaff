@@ -46514,3 +46514,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   felaktigt kollapsa båda till `BLOCKED_WALL`. Item-/runeägarskap förblir hos
   mechanics-källan och aktiveras inte av denna korrigering.
   Verifiering: C11-rörelsecheck mot `firestaff_nexus`.
+- ✅ 2026-07-31 CSB boot materialization gate: `csb_v1_boot_enter_game()`
+  now reaches `RUNTIME_READY` only after loading a ReDMCSB byte-map dungeon
+  and decoding its initial party pose. Missing materialized data and the
+  retired 16-bit parser fixture fail closed at `ASSETS_READY`, clear the
+  dungeon singleton and cannot bind M11's HUD or viewport. Verified with
+  `test_csb_v1_boot_viewport_render_gate`, `test_csb_v1_boot_profile_smoke`
+  and `test_csb_v1_boot_runtime_handoff`.

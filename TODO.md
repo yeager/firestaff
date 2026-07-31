@@ -12,6 +12,10 @@
   `GRAPHICS.DAT`/`DUNGEON.DAT` candidates. Renamed and archived data remains
   supported through the shared hash scanner. The remaining work is limited to
   format-specific decode gaps listed per game, not generic substitute loading.
+  **2026-07-31 update:** CSB's boot handoff now refuses both unreadable
+  verified paths and the retired 16-bit parser fixture. A session becomes
+  runtime-ready only after the ReDMCSB byte-map and its initial party pose are
+  materialized, so M11's HUD and viewport cannot bind an empty dungeon.
   Direct synthetic DM2 projectile construction is now isolated to explicit
   test and probe targets and is absent from the production library. The DM2
   champion-stat bridge also rejects a missing source GDAT/palette bar-colour

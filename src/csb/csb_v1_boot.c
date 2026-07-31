@@ -8357,56 +8357,53 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
      * (dungeon_handle).  csb_v1_runtime_cleanup() / csb_v1_boot_cleanup()
      * are responsible for releasing it.
      *
-     * Failure is non-fatal: if the verified path cannot be opened
-     * (e.g. archive-backed path not yet materialized by M12), the
-     * runtime continues with dungeon_handle == NULL and the dungeon
-     * accessors return ENDOF — matching csb_v1_runtime_boot()'s
-     * pre-existing tolerant behaviour.
+     * A profile reaches RUNTIME_READY only after this source-format dungeon
+     * is live.  Archive-backed data must have been materialized by M12 before
+     * launch; reporting a successful CSB session with no dungeon, or with a
+     * retired 16-bit test fixture, creates a synthetic gameplay route.
      *
      * Source: CSBWin/CSBCode.cpp:6800-6950 LoadDungeon
      * Source: ReDMCSB DUNGEON.C F0237 dungeon load entry
      * Source: ReDMCSB ENTRANCE.C F0806 lines 409-441 entrance micro-dungeon */
     {
-        CSB_V1_DungeonData *dungeon = (CSB_V1_DungeonData *)calloc(1, sizeof(CSB_V1_DungeonData));
-        if (dungeon) {
-            if (csb_v1_dungeon_load_from_file(dungeon, profile->dungeon_path) == 0 &&
-                dungeon->square_bytes == 1) {
-                profile->runtime.dungeon_handle = dungeon;
-                csb_v1_dungeon_set_current(dungeon);
-                csb_v1_dungeon_set_current_level(0);
-                /* LOADSAVE.C F0435 reads InitialPartyLocation after the
-                 * header is loaded. Do the same before M11 mirrors the
-                 * runtime pose; a fixed (5,5) is not source-authoritative. */
-                if (csb_v1_dungeon_initial_party_pose_pc34(
-                        dungeon, &profile->runtime.current_level,
-                        &profile->runtime.party_x,
-                        &profile->runtime.party_y,
-                        &profile->runtime.party_dir)) {
-                    /* LOADSAVE.C F0435 promotes the decoded dungeon-header
-                     * pose into both runtime views before M11 can draw the
-                     * first dungeon frame.  Leaving PartyMap* at the empty
-                     * roster sentinel made the HUD and viewport disagree
-                     * about the real CSB start square. */
-                    profile->runtime.party_state.PartyMapX =
-                        profile->runtime.party_x;
-                    profile->runtime.party_state.PartyMapY =
-                        profile->runtime.party_y;
-                    profile->runtime.party_state.PartyDirection =
-                        (uint8_t)(profile->runtime.party_dir & 3);
-                    profile->default_party_x = (uint32_t)profile->runtime.party_x;
-                    profile->default_party_y = (uint32_t)profile->runtime.party_y;
-                    profile->default_party_dir = (uint32_t)profile->runtime.party_dir;
-                }
-            } else {
-                /* The loader retains its pre-source-lock 16-bit fixture
-                 * reader for isolated unit tests, but a booted CSB session
-                 * may own only the ReDMCSB DUNGEON_HEADER/MAP byte-map
-                 * format.  A verified path must never turn a test-shaped
-                 * buffer into live dungeon state. */
+        CSB_V1_DungeonData *dungeon =
+            (CSB_V1_DungeonData *)calloc(1, sizeof(CSB_V1_DungeonData));
+        if (dungeon &&
+            csb_v1_dungeon_load_from_file(dungeon, profile->dungeon_path) == 0 &&
+            dungeon->square_bytes == 1 &&
+            csb_v1_dungeon_initial_party_pose_pc34(
+                dungeon, &profile->runtime.current_level,
+                &profile->runtime.party_x,
+                &profile->runtime.party_y,
+                &profile->runtime.party_dir)) {
+            profile->runtime.dungeon_handle = dungeon;
+            csb_v1_dungeon_set_current(dungeon);
+            csb_v1_dungeon_set_current_level(profile->runtime.current_level);
+            /* LOADSAVE.C F0435 promotes the decoded dungeon-header pose into
+             * both runtime views before M11 can draw the first dungeon frame.
+             * A fixed (5,5) would make the HUD and viewport disagree about
+             * the real CSB start square. */
+            profile->runtime.party_state.PartyMapX = profile->runtime.party_x;
+            profile->runtime.party_state.PartyMapY = profile->runtime.party_y;
+            profile->runtime.party_state.PartyDirection =
+                (uint8_t)(profile->runtime.party_dir & 3);
+            profile->default_party_x = (uint32_t)profile->runtime.party_x;
+            profile->default_party_y = (uint32_t)profile->runtime.party_y;
+            profile->default_party_dir = (uint32_t)profile->runtime.party_dir;
+        } else {
+            /* The loader retains its pre-source-lock 16-bit fixture reader
+             * for isolated parser tests.  A booted CSB session may own only
+             * a ReDMCSB DUNGEON_HEADER/MAP byte map with a decoded party
+             * pose.  Source: ReDMCSB DUNGEON.C F0237; LOADSAVE.C F0435. */
+            if (dungeon) {
                 csb_v1_dungeon_free(dungeon);
                 free(dungeon);
-                profile->runtime.dungeon_handle = NULL;
             }
+            csb_v1_runtime_cleanup(&profile->runtime);
+            profile->state = CSB_V1_BOOT_STATE_ASSETS_READY;
+            csb_v1_engine_version_display_set_csb(0);
+            profile->engine_version_displayed = 0;
+            return -1;
         }
     }
     profile->state = CSB_V1_BOOT_STATE_RUNTIME_READY;
