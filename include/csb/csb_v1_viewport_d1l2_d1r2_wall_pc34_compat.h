@@ -28,13 +28,6 @@ typedef enum {
 } CSB_V1_D1L2D1R2WallSidePc34;
 
 typedef struct {
-    int copied_pixels;
-    int transparent_pixels;
-    int clipped_pixels;
-    int rejected;
-} CSB_V1_D1L2D1R2WallBlitStatsPc34;
-
-typedef struct {
     int side;
     const char *route_name;
     int source_locked_contract_only;
@@ -83,22 +76,6 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_D1L2D1R2WallRouteSpecPc34;
 
-typedef struct {
-    int ok;
-    int route_count;
-    int dispatch_order_ok;
-    int wall_variant_binding_ok;
-    int c10_transparency_ok;
-    int clipped_edge_write_ok;
-    int f0128_followup_ok;
-    int f0115_keepout_ok;
-    int dungeon_metadata_binding_ok;
-    int d1l2_copied_pixels;
-    int d1r2_copied_pixels;
-    uint16_t first_thing_before;
-    uint16_t first_thing_after;
-} CSB_V1_D1L2D1R2WallRunResultPc34;
-
 size_t csb_v1_viewport_d1l2_d1r2_wall_route_spec_count_pc34(void);
 
 const CSB_V1_D1L2D1R2WallRouteSpecPc34 *
@@ -116,23 +93,9 @@ int csb_v1_viewport_d1l2_d1r2_wall_map_viewport_x_to_source_pc34(
     int flipped_variant,
     int *out_source_x);
 
-int csb_v1_viewport_d1l2_d1r2_wall_apply_frame_clip_pc34(
-    const CSB_V1_D1L2D1R2WallRouteSpecPc34 *spec,
-    const uint8_t *source,
-    int source_width,
-    int source_height,
-    uint8_t *viewport,
-    int viewport_width,
-    int viewport_height,
-    int flipped_variant,
-    CSB_V1_D1L2D1R2WallBlitStatsPc34 *stats);
-
 uint16_t csb_v1_viewport_d1l2_d1r2_wall_preserve_first_thing_pc34(
     const CSB_V1_D1L2D1R2WallRouteSpecPc34 *spec,
     uint16_t first_thing);
-
-int csb_v1_viewport_d1l2_d1r2_wall_pc34_compat_run(
-    CSB_V1_D1L2D1R2WallRunResultPc34 *out_result);
 
 const char *csb_v1_viewport_d1l2_d1r2_wall_source_evidence_pc34(void);
 

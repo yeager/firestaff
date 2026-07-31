@@ -45292,6 +45292,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   ReDMCSB and CSBWin ordering, windows, zone arithmetic and C10 transparency
   evidence remain available, but only verified original material can produce
   D3C backdrop or ornament pixels.
+- ✅ 2026-07-31 CSB D1L2/D1R2 wall no-fake closure: removed the generic
+  source-buffer frame-clip compositor and synthetic raster runner. ReDMCSB
+  F0122/F0123 routing, F0104/F0105 mirroring and C10 metadata remain
+  source-locked, but cannot convert caller-supplied bytes into viewport art.
 - ✅ 2026-07-31 CSB PC3.4 D1 side-door source binding: D1L/D1R now draw
   their original M659/G2112 top strips through G0176/G0178 instead of a
   legacy atlas crop. Both G2111 and G2110 are source aliases of G2112.
