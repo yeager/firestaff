@@ -41650,6 +41650,42 @@ static void m11_format_v1_champion_stats_panel_pc34(
     }
 }
 
+/* PANEL.C F0351 writes through TEXT2.C F0644.  M653 cells are visibly six
+ * pixels wide even though their backing bitmap has an eight-pixel stride.
+ * The generic inscription path advances by that stride, which made the
+ * inventory skill and statistic rows overflow C101. */
+static void m11_draw_v1_m653_text_top(
+    const M11_FontState* font,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int x,
+    int y,
+    const char* text,
+    unsigned char foreground)
+{
+    int index;
+
+    if (!font || !M11_Font_IsLoaded(font) || !framebuffer || !text) return;
+    for (index = 0; text[index] != '\0'; ++index) {
+        const int fontX = ((unsigned char)text[index] * M11_FONT_CHAR_CELL_WIDTH) +
+                          M11_FONT_X_OFFSET;
+        int row;
+        for (row = 0; row < M11_FONT_CHAR_VISIBLE_H; ++row) {
+            int column;
+            for (column = 0; column < M11_FONT_CHAR_VISIBLE_W; ++column) {
+                const int dstX = x + index * DM1_PANEL_TEXT_CHAR_WIDTH + column;
+                const int dstY = y + row;
+                if (dstX >= 0 && dstX < framebufferWidth &&
+                    dstY >= 0 && dstY < framebufferHeight &&
+                    M11_Font_GetPixel(font, fontX + column, row)) {
+                    framebuffer[dstY * framebufferWidth + dstX] = foreground;
+                }
+            }
+        }
+    }
+}
+
 /* ReDMCSB PANEL.C F0351 blits C020 to C101, prints skill rows from
  * C557, then prints statistic names plus split current/max value runs
  * through C557/C559 with red/green/gray current-value coloring. */
@@ -41744,11 +41780,11 @@ static int m11_draw_v1_inventory_champion_stats_panel(
         char line[32];
         if (!levelName) continue;
         snprintf(line, sizeof(line), "%s %s", levelName, skillNames[i]);
-        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
-                            framebufferWidth, framebufferHeight,
-                            M11_VIEWPORT_X + panelX + 28,
-                            M11_VIEWPORT_Y + skillY,
-                            line, M11_COLOR_SILVER, -1, 1);
+        m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + panelX + 28,
+                                  M11_VIEWPORT_Y + skillY,
+                                  line, M11_COLOR_SILVER);
         skillY += DM1_PANEL_TEXT_LINE_HEIGHT;
     }
 
@@ -41763,21 +41799,21 @@ static int m11_draw_v1_inventory_champion_stats_panel(
             continue;
         }
 
-        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
-                            framebufferWidth, framebufferHeight,
-                            M11_VIEWPORT_X + panelX + row.nameX,
-                            M11_VIEWPORT_Y + panelY + row.y,
-                            statNames[i], (unsigned char)row.nameColor, -1, 1);
-        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
-                            framebufferWidth, framebufferHeight,
-                            M11_VIEWPORT_X + panelX + row.currentX,
-                            M11_VIEWPORT_Y + panelY + row.y,
-                            row.currentText, (unsigned char)row.currentColor, -1, 1);
-        M11_Font_DrawString(g_activeOriginalFont, framebuffer,
-                            framebufferWidth, framebufferHeight,
-                            M11_VIEWPORT_X + panelX + row.maximumX,
-                            M11_VIEWPORT_Y + panelY + row.y,
-                            row.maximumText, (unsigned char)row.maximumColor, -1, 1);
+        m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + panelX + row.nameX,
+                                  M11_VIEWPORT_Y + panelY + row.y,
+                                  statNames[i], (unsigned char)row.nameColor);
+        m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + panelX + row.currentX,
+                                  M11_VIEWPORT_Y + panelY + row.y,
+                                  row.currentText, (unsigned char)row.currentColor);
+        m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
+                                  framebufferWidth, framebufferHeight,
+                                  M11_VIEWPORT_X + panelX + row.maximumX,
+                                  M11_VIEWPORT_Y + panelY + row.y,
+                                  row.maximumText, (unsigned char)row.maximumColor);
     }
     return 1;
 }
@@ -41815,7 +41851,9 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         snprintf(state->inspectTitle, sizeof(state->inspectTitle),
                  "%s STATS", champName);
         m11_format_v1_champion_stats_panel_pc34(champ, state->inspectDetail, sizeof(state->inspectDetail));
-        M11_GameView_ShowDialogOverlay(state, state->inspectDetail);
+        /* F0351 owns the C101 panel directly.  It is not a dialog route:
+         * publishing inspectDetail through the generic dialog overlay made
+         * the source text far too large and covered the inventory panel. */
         m11_set_status(state, "INSPECT", champName);
         return 1;
     } else {

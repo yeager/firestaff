@@ -2952,6 +2952,8 @@ static void test_eye_panel_champion_stats_and_skills(void) {
               "inventory eye click with empty leader hand opens champion stats");
     ASSERT_EQ(state.v1ChampionStatsPanelActive, 1,
               "empty-hand eye click marks the drawn champion stats panel active");
+    ASSERT_EQ(M11_GameView_IsDialogOverlayActive(&state), 0,
+              "F0351 statistics remain in the source-owned inventory panel");
     ASSERT_TRUE(strstr(state.inspectDetail, "MANA 12/33") != NULL,
                 "champion stats panel reports mana");
     ASSERT_TRUE(strstr(state.inspectDetail, "STR  41/ 50") != NULL &&
