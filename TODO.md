@@ -147,6 +147,9 @@
   - 2026-07-31: F1526–F1565 is a fail-closed workstation/AES inventory and
     is test-only. CSB PC 3.4 input, graphics and timing need real dedicated
     consumers, never a foreign platform receipt.
+  - 2026-07-31: F1646–F1685 is a fail-closed platform inventory. It is
+    test-only; DM1-owned mouse state and foreign interrupt/vblank paths must
+    not be promoted to CSB runtime behavior.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.

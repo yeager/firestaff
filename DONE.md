@@ -47269,3 +47269,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   layout wrappers are excluded from `firestaff_nexus`; they remain available
   only to explicit diagnostic probes. No glyph, palette, menu, HUD or Saturn
   VDP1/VDP2 presentation is promoted by this change.
+
+- ✅ 2026-07-31 CSB F1646–F1685 platform-boundary isolation: the table only
+  records exclusive DM1 ownership or foreign platform routes and blocks every
+  CSB admission. It now compiles only into its contract test, so it cannot
+  synthesize CSB input, interrupt, vblank or presentation behavior.
