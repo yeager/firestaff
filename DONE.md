@@ -46319,6 +46319,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `TITLE.C F0437`, `ENTRANCE.C F0438/F0441/F0806`; CSBWin
   `Viewport.cpp`. Verifiering: startup-plan 139/139, boot-handoff 501/501,
   realdata-sekvensen C001–C005/C017/C040 och titelkadensproben passerar.
+- ✅ 2026-07-31 CSB startup-rendercallbackar: tog bort den återstående
+  executor-API-ytan för dörr- och textfallback. ReDMCSB `TITLE.C F0437` och
+  `ENTRANCE.C F0441/F0806` når nu bara konkreta originalytor via title-,
+  dörr-, opening-frame- och utility-callbackarna; värden kan inte längre
+  ansluta en lokal ersättningsritning. Verifiering:
+  `test_csb_v1_boot_runtime_handoff` 501/501 passerar.
 - ✅ 2026-07-31 DM2 inventory substitute closure: removed the reachable M11
   renderer that put authentic DM2 ObjectID icons into DM1 `GRAPHICS.DAT` slot
   rectangles and removed its matching DM1 click route. Keyboard and direct

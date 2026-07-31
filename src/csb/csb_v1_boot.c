@@ -4027,13 +4027,8 @@ int csb_v1_boot_startup_execute_host_view_receipt_pc34(
     render_executor = *executor;
     hud_executor = *executor;
     /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0441/F0806 render CSB startup
-     * from concrete title/HUD/door surfaces. Host-view receipts are the M11
-     * runtime boundary, so strip legacy fallback callbacks before any lower
-     * startup renderer can observe them. */
-    render_executor.draw_door_fallback = NULL;
-    render_executor.draw_fallback_text = NULL;
-    hud_executor.draw_door_fallback = NULL;
-    hud_executor.draw_fallback_text = NULL;
+     * from concrete title/HUD/door surfaces. The executor deliberately has
+     * no text or door-fallback callback surface. */
     if (host_view->hud_menu_draw_valid && host_view->hud_menu_draw.valid) {
         render_executor.draw_closed_doors = NULL;
         render_executor.draw_utility_panel = NULL;

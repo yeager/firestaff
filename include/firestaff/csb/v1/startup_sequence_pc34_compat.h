@@ -392,10 +392,6 @@ typedef struct CSB_V1_StartupRenderExecutor_PC34 {
                               const CSB_V1_StartupRenderPlan_PC34 *plan);
     void (*draw_closed_doors)(void *user,
                               const CSB_V1_StartupRenderPlan_PC34 *plan);
-    void (*draw_door_fallback)(void *user,
-                               const CSB_V1_StartupRenderPlan_PC34 *plan);
-    void (*draw_fallback_text)(void *user,
-                               const CSB_V1_StartupRenderPlan_PC34 *plan);
     void (*draw_utility_panel)(void *user,
                                const CSB_V1_StartupRenderPlan_PC34 *plan,
                                const struct CSB_V1_UtilRenderPlan *utility_plan);

@@ -111,7 +111,6 @@ typedef struct {
 typedef struct {
     int utility_panel_count;
     int closed_doors_count;
-    int fallback_text_count;
     int last_waiting_for_input;
     int last_menu_option_count;
     int last_surface;
@@ -126,8 +125,6 @@ typedef struct {
     int draw_opening_frame_count;
     int draw_opening_frame_result;
     int draw_closed_doors_count;
-    int draw_door_fallback_count;
-    int draw_fallback_text_count;
     int draw_utility_panel_count;
     int last_surface;
 } TestStartupRenderProbe;
@@ -169,20 +166,6 @@ static void hud_probe_draw_closed_doors(
     probe->last_surface = (int)plan->surface;
 }
 
-static void hud_probe_draw_fallback_text(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    TestHudMenuDrawProbe *probe = (TestHudMenuDrawProbe *)user;
-    if (!probe || !plan) {
-        return;
-    }
-    ++probe->fallback_text_count;
-    probe->last_waiting_for_input = plan->waiting_for_input;
-    probe->last_menu_option_count = plan->menu_option_count;
-    probe->last_surface = (int)plan->surface;
-}
-
 static void hud_probe_executor_init(
     CSB_V1_StartupRenderExecutor_PC34 *executor,
     TestHudMenuDrawProbe *probe)
@@ -191,7 +174,6 @@ static void hud_probe_executor_init(
     executor->user = probe;
     executor->draw_utility_panel = hud_probe_draw_utility_panel;
     executor->draw_closed_doors = hud_probe_draw_closed_doors;
-    executor->draw_fallback_text = hud_probe_draw_fallback_text;
 }
 
 static int render_probe_draw_title(
@@ -257,30 +239,6 @@ static void render_probe_draw_closed_doors(
     probe->last_surface = (int)plan->surface;
 }
 
-static void render_probe_draw_door_fallback(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
-    if (!probe || !plan) {
-        return;
-    }
-    ++probe->draw_door_fallback_count;
-    probe->last_surface = (int)plan->surface;
-}
-
-static void render_probe_draw_fallback_text(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    TestStartupRenderProbe *probe = (TestStartupRenderProbe *)user;
-    if (!probe || !plan) {
-        return;
-    }
-    ++probe->draw_fallback_text_count;
-    probe->last_surface = (int)plan->surface;
-}
-
 static void render_probe_draw_utility_panel(
     void *user,
     const CSB_V1_StartupRenderPlan_PC34 *plan,
@@ -307,8 +265,6 @@ static void render_probe_executor_init(
     executor->draw_full_surface = render_probe_draw_full_surface;
     executor->draw_opening_frame = render_probe_draw_opening_frame;
     executor->draw_closed_doors = render_probe_draw_closed_doors;
-    executor->draw_door_fallback = render_probe_draw_door_fallback;
-    executor->draw_fallback_text = render_probe_draw_fallback_text;
     executor->draw_utility_panel = render_probe_draw_utility_panel;
     probe->draw_full_surface_result = 1;
     probe->draw_opening_frame_result = 1;
@@ -2961,8 +2917,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               capture_render_probe.draw_title_count >= 1 &&
               capture_render_probe.draw_full_surface_count >= 4 &&
               capture_render_probe.draw_opening_frame_count >= 1 &&
-              capture_render_probe.draw_fallback_text_count == 0 &&
-              capture_render_probe.draw_door_fallback_count == 0,
+              capture_render_probe.draw_opening_frame_count >= 1,
           "boot startup runtime host gate binds full visual capture to route hardening without wrapper fallbacks");
     csb_v1_boot_startup_runtime_asset_session_init_pc34(&full_session);
     full_session.valid = 1;
@@ -4144,7 +4099,6 @@ static void test_runtime_utility_startup_receipt_facades(void)
               host_view_receipt.capture_proof.utility_menu_route &&
               hud_draw_probe.utility_panel_count == 1 &&
               hud_draw_probe.closed_doors_count == 0 &&
-              hud_draw_probe.fallback_text_count == 0 &&
               hud_draw_probe.last_waiting_for_input &&
               hud_draw_probe.last_utility_selected_action_index ==
                   host_view_receipt.selected_utility_action_index &&
@@ -4262,7 +4216,6 @@ static void test_runtime_utility_startup_receipt_facades(void)
               &hud_draw_executor) == 1 &&
               hud_draw_probe.utility_panel_count == 1 &&
               hud_draw_probe.closed_doors_count == 0 &&
-              hud_draw_probe.fallback_text_count == 0 &&
               hud_draw_probe.last_waiting_for_input &&
               hud_draw_probe.last_utility_selected_action_index ==
                   hud_draw_receipt.selected_utility_action_index &&
@@ -4533,7 +4486,6 @@ static void test_runtime_utility_startup_receipt_facades(void)
               &hud_draw_executor) == 1 &&
               hud_draw_probe.utility_panel_count == 0 &&
               hud_draw_probe.closed_doors_count == 1 &&
-              hud_draw_probe.fallback_text_count == 0 &&
               hud_draw_probe.last_waiting_for_input &&
               hud_draw_probe.last_menu_option_count == 4 &&
               hud_draw_probe.last_surface ==
@@ -4557,7 +4509,6 @@ static void test_runtime_utility_startup_receipt_facades(void)
                   &hud_draw_executor) == 1 &&
               hud_draw_probe.utility_panel_count == 0 &&
               hud_draw_probe.closed_doors_count == 1 &&
-              hud_draw_probe.fallback_text_count == 0 &&
               hud_draw_probe.last_waiting_for_input &&
               hud_draw_probe.last_menu_option_count == 4 &&
               hud_draw_probe.last_surface ==
@@ -4646,8 +4597,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               host_view_draw_receipt.consumed_host_view_only &&
               host_view_draw_receipt.fallback_callbacks_stripped &&
               capture_render_probe.draw_full_surface_count == 1 &&
-              capture_render_probe.draw_closed_doors_count == 1 &&
-              capture_render_probe.draw_fallback_text_count == 0,
+              capture_render_probe.draw_closed_doors_count == 1,
           "boot startup host-view draw receipt consumes closed-door render plus HUD without fallback text");
     poisoned_host_view_receipt = host_view_receipt;
     poisoned_host_view_receipt.render_draw.valid = 0;
@@ -4687,9 +4637,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               host_view_draw_receipt.valid &&
               capture_render_probe.draw_full_surface_count == 1 &&
               host_view_draw_receipt.fallback_callbacks_stripped &&
-              capture_render_probe.draw_closed_doors_count == 1 &&
-              capture_render_probe.draw_door_fallback_count == 0 &&
-              capture_render_probe.draw_fallback_text_count == 0,
+              capture_render_probe.draw_closed_doors_count == 1,
           "boot startup closed-door host-view receipt refuses fallback when surface assets fail");
     CHECK(host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.render_plan_valid &&
@@ -4798,9 +4746,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               host_view_draw_receipt.fallback_callbacks_stripped &&
               capture_render_probe.draw_full_surface_count == 1 &&
               capture_render_probe.draw_opening_frame_count == 0 &&
-              capture_render_probe.draw_closed_doors_count == 0 &&
-              capture_render_probe.draw_door_fallback_count == 0 &&
-              capture_render_probe.draw_fallback_text_count == 0,
+              capture_render_probe.draw_closed_doors_count == 0,
           "boot startup door-opening capture plan refuses fallback when surface assets fail");
     CHECK(csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
               &snapshot,
@@ -4889,8 +4835,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
               &host_view_draw_receipt) == 1 &&
               host_view_draw_receipt.render_executed &&
               host_view_draw_receipt.fallback_callbacks_stripped &&
-              capture_render_probe.draw_full_surface_count == 1 &&
-              capture_render_probe.draw_fallback_text_count == 0,
+              capture_render_probe.draw_full_surface_count == 1,
           "boot startup credits capture plan refuses text fallback when surface assets fail");
     CHECK(csb_v1_boot_startup_packaged_capture_proof_from_capture_pc34(
               &capture_receipt,

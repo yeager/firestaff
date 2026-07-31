@@ -53355,8 +53355,6 @@ typedef struct M11_CSBStartupHostViewProbe {
     int drawFullSurfaceCount;
     int drawOpeningFrameCount;
     int drawClosedDoorsCount;
-    int drawDoorFallbackCount;
-    int drawFallbackTextCount;
     int drawUtilityPanelCount;
 } M11_CSBStartupHostViewProbe;
 
@@ -53423,30 +53421,6 @@ static void m11_csb_startup_probe_draw_closed_doors(
     }
 }
 
-static void m11_csb_startup_probe_draw_door_fallback(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    M11_CSBStartupHostViewProbe *probe =
-        (M11_CSBStartupHostViewProbe *)user;
-    (void)plan;
-    if (probe) {
-        ++probe->drawDoorFallbackCount;
-    }
-}
-
-static void m11_csb_startup_probe_draw_fallback_text(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    M11_CSBStartupHostViewProbe *probe =
-        (M11_CSBStartupHostViewProbe *)user;
-    (void)plan;
-    if (probe) {
-        ++probe->drawFallbackTextCount;
-    }
-}
-
 static void m11_csb_startup_probe_draw_utility_panel(
     void *user,
     const CSB_V1_StartupRenderPlan_PC34 *plan,
@@ -53473,8 +53447,6 @@ static void m11_csb_startup_probe_executor_init(
     executor->draw_full_surface = m11_csb_startup_probe_draw_full_surface;
     executor->draw_opening_frame = m11_csb_startup_probe_draw_opening_frame;
     executor->draw_closed_doors = m11_csb_startup_probe_draw_closed_doors;
-    executor->draw_door_fallback = m11_csb_startup_probe_draw_door_fallback;
-    executor->draw_fallback_text = m11_csb_startup_probe_draw_fallback_text;
     executor->draw_utility_panel = m11_csb_startup_probe_draw_utility_panel;
 }
 
@@ -53790,21 +53762,16 @@ int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     }
     if (outTitleAssetDrawReady) {
         *outTitleAssetDrawReady =
-            title_ownership.host_draw.title_asset_draw_ready &&
-            title_probe.drawFallbackTextCount == 0;
+            title_ownership.host_draw.title_asset_draw_ready;
     }
     if (outClosedDoorFallbackSuppressed) {
         *outClosedDoorFallbackSuppressed =
             closed_ownership.host_draw.closed_door_asset_draw_ready &&
-            closed_ownership.host_draw.fallback_text_suppressed &&
-            closed_probe.drawFallbackTextCount == 0 &&
-            utility_probe.drawFallbackTextCount == 0;
+            closed_ownership.host_draw.fallback_text_suppressed;
     }
     if (outOpeningFrameDrawReady) {
         *outOpeningFrameDrawReady =
-            opening_ownership.host_draw.opening_frame_draw_ready &&
-            opening_probe.drawFallbackTextCount == 0 &&
-            opening_probe.drawDoorFallbackCount == 0;
+            opening_ownership.host_draw.opening_frame_draw_ready;
     }
     if (outFullVisualSequenceConsumed) {
         *outFullVisualSequenceConsumed =
