@@ -89,6 +89,42 @@ Create the capture tools directory:
 mkdir -p ~/firestaff-captures/tools
 ```
 
+### DOSBox-X route for PC34 evidence
+
+Use DOSBox-X when Staging has an old window, cannot receive input, or cannot
+produce a usable macOS capture. The runner supports both emulators, but it
+must capture the same emulator that it launches. This prevents a stale
+Staging window from being recorded as DOSBox-X evidence.
+
+1. Use a disposable external copy of the original PC34 runtime. It must keep
+   `DM.EXE` and its original `DATA/GRAPHICS.DAT` and `DATA/DUNGEON.DAT` layout.
+   Do not add proprietary files or original captures to the repository.
+2. Close all older DOSBox windows before starting. A clean route reports
+   `capture_source=peekaboo:window:dosbox-x` and
+   `host_active_app=dosbox-x` in its receipt. Any `DOSBox Staging` source in
+   a DOSBox-X receipt is invalid evidence and must be discarded.
+3. Preflight and run the source session:
+
+```bash
+python3 docs/parity/tools/dosbox_capture_session.py --validate-live-inputs \
+  --game-dir /Volumes/Extern-disk/firestaff-dm1-pc34/DungeonMasterPC34 \
+  --runtime-dir /Volumes/Extern-disk/firestaff-dm1-pc34/DungeonMasterPC34 \
+  --capture-root /Volumes/Extern-disk/firestaff-dm1-dosbox-x-capture \
+  --dosbox-bin /opt/homebrew/bin/dosbox-x
+
+python3 docs/parity/tools/dosbox_capture_session.py --live \
+  --game-dir /Volumes/Extern-disk/firestaff-dm1-pc34/DungeonMasterPC34 \
+  --runtime-dir /Volumes/Extern-disk/firestaff-dm1-pc34/DungeonMasterPC34 \
+  --capture-root /Volumes/Extern-disk/firestaff-dm1-dosbox-x-capture \
+  --dosbox-bin /opt/homebrew/bin/dosbox-x
+```
+
+The successful route proves the real PC34 selector, Entrance, first dungeon
+frame, and a source-bound `Keypad-5` forward movement. The runner preserves
+the failed C070 mouse attempt separately when macOS does not deliver it; this
+is diagnostic information, not permission to substitute generated input or
+frames.
+
 ---
 
 ## Step 3: Screen-Detect Automation
