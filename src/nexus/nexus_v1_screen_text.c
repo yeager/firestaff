@@ -1,4 +1,5 @@
 #include "nexus_v1_screen_text.h"
+#include "nexus_v1_font_s2d.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -165,6 +166,17 @@ int nexus_v1_screen_text_draw_s2d_bytes(
     clear_receipt(receipt, NEXUS_V1_SCREEN_TEXT_ERR_INVALID_ARG);
     if (!s2d_data || s2d_size <= 0) {
         return NEXUS_V1_SCREEN_TEXT_ERR_INVALID_ARG;
+    }
+
+    /* The retail Saturn SCR is a multi-region FONT256 asset.  Until DMWeb's
+     * page-to-character mapping is bound, refuse to route it through the old
+     * flat 1bpp helper, which would render guessed glyphs. */
+    {
+        Nexus_V1_FontS2dDecodeResult retail_regions;
+        if (nexus_v1_font_s2d_decode(s2d_data, s2d_size, &retail_regions) == 0) {
+            clear_receipt(receipt, NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP);
+            return NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP;
+        }
     }
 
     memset(&font, 0, sizeof(font));
