@@ -45748,6 +45748,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   and `test_dm2_v1_trigger_pc34_compat` pass; both focused admission probes
   pass; `test_dm2_v1_door_button_toggle_pc34_compat` passes 12/12.
 
+- ✅ 2026-07-31 DM2 merchant identity closure: an unbound runtime now starts
+  with `DM2_NPC_NONE` rather than a fabricated friendly merchant. The blocked
+  coordinate-only NPC route therefore exposes neither a local identity nor a
+  dialogue selection before a real AI-33 DB creature and its CCM/UI chain are
+  admitted. Verification: `test_dm2_v1_shop_pc34_compat` 6/6,
+  `test_dm2_v1_runtime_shop_pc34_compat` 11/11, and the hash-verified
+  `test_dm2_v1_m11_startup_profile_gate` pass with local DM2 data.
+
 - ✅ 2026-07-31 CSB F0115 orphan group/projectile blit closure: removed two
   unused public pixel writers and their isolated test targets. They accepted
   caller-owned sprite buffers with no M11 runtime consumer or material

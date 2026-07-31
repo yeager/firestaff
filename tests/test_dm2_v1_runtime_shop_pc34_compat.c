@@ -68,8 +68,9 @@ int main(void)
           "sell and leave also reject without source shop ownership");
     CHECK(dm2_v1_runtime_npc_interact(0, 10, 5) < 0 &&
               state->reputation == 0 &&
+              dm2_v1_runtime_get_last_npc_id() == DM2_NPC_NONE &&
               dm2_v1_runtime_get_last_npc_dialog_line() < 0,
-          "coordinate-only NPC interaction cannot invent merchant dialog or reputation");
+          "coordinate-only NPC interaction cannot invent merchant identity, dialog or reputation");
     CHECK(dm2_v1_runtime_invoke_actuator(
               0, 10, 5, DM2_ACTUATOR_PUSH_BUTTON_WALL_SWITCH, 0u) < 0 &&
               dm2_v1_runtime_get_actuator_count() == 0,

@@ -2243,7 +2243,10 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.last_npc_level = -1;
     g_dm2_runtime.last_npc_x = -1;
     g_dm2_runtime.last_npc_y = -1;
-    g_dm2_runtime.last_npc_id = DM2_NPC_MERCHANT_FRIENDLY;
+    /* No merchant/NPC identity exists until an admitted AI-33 DB creature
+     * and its source-owned CCM/UI chain have supplied one.  Do not expose a
+     * friendly-merchant fixture through the runtime accessor. */
+    g_dm2_runtime.last_npc_id = DM2_NPC_NONE;
     g_dm2_runtime.last_npc_dialog_line = -1;
     g_dm2_runtime.last_target_message[0] = '\0';
     g_dm2_runtime.last_spawn_instance_id = -1;
