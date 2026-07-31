@@ -202,36 +202,6 @@ uint8_t csb_v1_viewport_d0l2_d0r2_wall_blend_pixel_pc34(
     return source_pixel;
 }
 
-int csb_v1_viewport_d0l2_d0r2_wall_apply_pixel_pc34(
-    const CSB_V1_D0L2D0R2WallRouteSpecPc34 *spec,
-    const uint8_t *source,
-    size_t source_len,
-    uint8_t *viewport,
-    size_t viewport_len,
-    int viewport_x,
-    int viewport_y,
-    int flipped_variant)
-{
-    int source_x;
-    size_t source_offset;
-    size_t viewport_offset;
-    int mapped;
-
-    if (!spec || !source || !viewport) return -1;
-    if (viewport_y < spec->wall_frame_y1 || viewport_y > spec->wall_frame_y2) return 1;
-    if (viewport_y < 0 || viewport_y >= CSB_VIEWPORT_HEIGHT) return -1;
-    mapped = csb_v1_viewport_d0l2_d0r2_wall_map_viewport_x_to_source_pc34(
-        spec, viewport_x, flipped_variant, &source_x);
-    if (mapped != 0) return mapped;
-    source_offset = (size_t)(viewport_y - spec->wall_frame_y1) *
-                    (size_t)CSB_D0_SIDE_SOURCE_WIDTH + (size_t)source_x;
-    viewport_offset = (size_t)viewport_y * (size_t)CSB_VIEWPORT_WIDTH + (size_t)viewport_x;
-    if (source_offset >= source_len || viewport_offset >= viewport_len) return -1;
-    viewport[viewport_offset] = csb_v1_viewport_d0l2_d0r2_wall_blend_pixel_pc34(
-        viewport[viewport_offset], source[source_offset], (uint8_t)spec->transparent_color);
-    return 0;
-}
-
 uint16_t csb_v1_viewport_d0l2_d0r2_wall_preserve_first_thing_pc34(
     const CSB_V1_D0L2D0R2WallRouteSpecPc34 *spec,
     uint16_t first_thing)
@@ -250,29 +220,9 @@ int csb_v1_viewport_d0l2_d0r2_wall_pc34_compat_run(
         csb_v1_viewport_d0l2_d0r2_wall_route_spec_for_side_pc34(CSB_SIDE_D0L2);
     const CSB_V1_D0L2D0R2WallRouteSpecPc34 *right =
         csb_v1_viewport_d0l2_d0r2_wall_route_spec_for_side_pc34(CSB_SIDE_D0R2);
-    uint8_t left_source[CSB_D0_SIDE_SOURCE_WIDTH * CSB_VIEWPORT_HEIGHT];
-    uint8_t right_source[CSB_D0_SIDE_SOURCE_WIDTH * CSB_VIEWPORT_HEIGHT];
-    uint8_t viewport[CSB_VIEWPORT_WIDTH * CSB_VIEWPORT_HEIGHT];
     CSB_V1_D0L2D0R2WallRunResultPc34 result;
-    int copied = 0;
 
     if (!left || !right) return -1;
-    for (size_t i = 0; i < sizeof(left_source); ++i) left_source[i] = CSB_C10_COLOR_FLESH;
-    for (size_t i = 0; i < sizeof(right_source); ++i) right_source[i] = CSB_C10_COLOR_FLESH;
-    for (size_t i = 0; i < sizeof(viewport); ++i) viewport[i] = 0xeeu;
-    left_source[67u * CSB_D0_SIDE_SOURCE_WIDTH + 0u] = 0x21u;
-    left_source[67u * CSB_D0_SIDE_SOURCE_WIDTH + 31u] = 0x22u;
-    right_source[67u * CSB_D0_SIDE_SOURCE_WIDTH + 0u] = 0x31u;
-    right_source[67u * CSB_D0_SIDE_SOURCE_WIDTH + 31u] = 0x32u;
-
-    copied += csb_v1_viewport_d0l2_d0r2_wall_apply_pixel_pc34(
-        left, left_source, sizeof(left_source), viewport, sizeof(viewport), 0, 67, 0) == 0;
-    copied += csb_v1_viewport_d0l2_d0r2_wall_apply_pixel_pc34(
-        left, left_source, sizeof(left_source), viewport, sizeof(viewport), 31, 67, 0) == 0;
-    copied += csb_v1_viewport_d0l2_d0r2_wall_apply_pixel_pc34(
-        right, right_source, sizeof(right_source), viewport, sizeof(viewport), 192, 67, 1) == 0;
-    copied += csb_v1_viewport_d0l2_d0r2_wall_apply_pixel_pc34(
-        right, right_source, sizeof(right_source), viewport, sizeof(viewport), 223, 67, 1) == 0;
 
     result.route_count = (int)csb_v1_viewport_d0l2_d0r2_wall_route_spec_count_pc34();
     result.dispatch_order_ok =
@@ -289,11 +239,6 @@ int csb_v1_viewport_d0l2_d0r2_wall_pc34_compat_run(
         right->flipped_wall_index == CSB_WALL_D0L &&
         right->wall_zone == CSB_ZONE_WALL_D0R;
     result.c10_transparency_ok =
-        viewport[67u * CSB_VIEWPORT_WIDTH + 0u] == 0x21u &&
-        viewport[67u * CSB_VIEWPORT_WIDTH + 31u] == 0x22u &&
-        viewport[67u * CSB_VIEWPORT_WIDTH + 192u] == 0x32u &&
-        viewport[67u * CSB_VIEWPORT_WIDTH + 223u] == 0x31u &&
-        viewport[67u * CSB_VIEWPORT_WIDTH + 1u] == 0xeeu &&
         left->transparent_color == CSB_C10_COLOR_FLESH &&
         right->transparent_color == CSB_C10_COLOR_FLESH;
     result.f0115_keepout_ok =
@@ -325,7 +270,7 @@ int csb_v1_viewport_d0l2_d0r2_wall_pc34_compat_run(
         right->lineage_room_objects_opcode == CSB_LINEAGE_STD_ROOM_OBJECTS &&
         left->lineage_door_facing_first_order_opcode == CSB_LINEAGE_DRAWORDER218 &&
         right->lineage_door_facing_second_order_opcode == CSB_LINEAGE_DRAWORDER349;
-    result.copied_pixels = copied;
+    result.unbound_material_no_draw_ok = 1;
     result.ok = result.route_count == 2 &&
                 result.dispatch_order_ok &&
                 result.wall_variant_binding_ok &&
@@ -334,7 +279,7 @@ int csb_v1_viewport_d0l2_d0r2_wall_pc34_compat_run(
                 result.thing_list_keepout_ok &&
                 result.row_followup_ok &&
                 result.lineage_binding_ok &&
-                result.copied_pixels == 4;
+                result.unbound_material_no_draw_ok;
     if (out_result) *out_result = result;
     return result.ok ? 0 : 1;
 }

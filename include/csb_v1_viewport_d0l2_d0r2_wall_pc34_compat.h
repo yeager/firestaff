@@ -84,7 +84,7 @@ typedef struct {
     int thing_list_keepout_ok;
     int row_followup_ok;
     int lineage_binding_ok;
-    int copied_pixels;
+    int unbound_material_no_draw_ok;
     uint16_t first_thing_before;
     uint16_t first_thing_after;
 } CSB_V1_D0L2D0R2WallRunResultPc34;
@@ -107,16 +107,6 @@ uint8_t csb_v1_viewport_d0l2_d0r2_wall_blend_pixel_pc34(
     uint8_t destination_pixel,
     uint8_t source_pixel,
     uint8_t transparent_color);
-
-int csb_v1_viewport_d0l2_d0r2_wall_apply_pixel_pc34(
-    const CSB_V1_D0L2D0R2WallRouteSpecPc34 *spec,
-    const uint8_t *source,
-    size_t source_len,
-    uint8_t *viewport,
-    size_t viewport_len,
-    int viewport_x,
-    int viewport_y,
-    int flipped_variant);
 
 uint16_t csb_v1_viewport_d0l2_d0r2_wall_preserve_first_thing_pc34(
     const CSB_V1_D0L2D0R2WallRouteSpecPc34 *spec,

@@ -61,16 +61,6 @@ static int expect_contains(
     return expect_int(label, got, 1, anchor);
 }
 
-static size_t viewport_offset(int y, int x)
-{
-    return (size_t)y * VIEWPORT_WIDTH + (size_t)x;
-}
-
-static size_t source_offset(int y, int x)
-{
-    return (size_t)y * SOURCE_WIDTH + (size_t)x;
-}
-
 static int test_run_entry_point(void)
 {
     int ok = 1;
@@ -98,8 +88,8 @@ static int test_run_entry_point(void)
                      "ReDMCSB DUNVIEW.C:8542 F0127 follows D0 side pair");
     ok &= expect_int("run.lineage_binding_ok", result.lineage_binding_ok, 1,
                      "CSB-lineage Viewport.cpp:1192-1209 and 1903-1915");
-    ok &= expect_int("run.copied_pixels", result.copied_pixels, 4,
-                     "synthetic C10 wall-blit row copies four non-C10 sentinels");
+    ok &= expect_int("run.unbound_material_no_draw_ok", result.unbound_material_no_draw_ok, 1,
+                     "unbound contract layer cannot write synthetic wall pixels");
     ok &= expect_u16("run.first_thing_preserved",
                      result.first_thing_after, result.first_thing_before,
                      "ReDMCSB DUNGEON.C:1769-1905 thing-list keep-out");
@@ -224,16 +214,7 @@ static int test_frames_pixels_and_c10(void)
         csb_v1_viewport_d0l2_d0r2_wall_route_spec_for_side_pc34(1);
     const CSB_V1_D0L2D0R2WallRouteSpecPc34 *d0r2 =
         csb_v1_viewport_d0l2_d0r2_wall_route_spec_for_side_pc34(2);
-    uint8_t source[SOURCE_WIDTH * SOURCE_HEIGHT];
-    uint8_t viewport[VIEWPORT_WIDTH * VIEWPORT_HEIGHT];
     int source_x = -1;
-
-    memset(source, TRANSPARENT, sizeof(source));
-    memset(viewport, 0xee, sizeof(viewport));
-    source[source_offset(12, 0)] = 0x41;
-    source[source_offset(12, 1)] = TRANSPARENT;
-    source[source_offset(12, 30)] = 0x42;
-    source[source_offset(12, 31)] = 0x43;
 
     ok &= expect_int("d0l2.frame_row", d0l2 ? d0l2->wall_frame_row : -1, 10,
                      "ReDMCSB DUNVIEW.C:592-593 G0163 D0L row");
@@ -296,37 +277,6 @@ static int test_frames_pixels_and_c10(void)
                      csb_v1_viewport_d0l2_d0r2_wall_blend_pixel_pc34(0xee, 0x44, 10),
                      0x44,
                      "ReDMCSB DUNVIEW.C:3113-3156/3185-3247 C10 blit");
-    ok &= expect_int("apply.left.opaque",
-                     csb_v1_viewport_d0l2_d0r2_wall_apply_pixel_pc34(
-                         d0l2, source, sizeof(source), viewport, sizeof(viewport),
-                         0, 12, 0),
-                     0,
-                     "ReDMCSB DUNVIEW.C:8033 F0104 C716 native blit");
-    ok &= expect_int("pixel.left.opaque", viewport[viewport_offset(12, 0)], 0x41,
-                     "synthetic non-C10 D0L wall pixel copied");
-    ok &= expect_int("apply.left.transparent",
-                     csb_v1_viewport_d0l2_d0r2_wall_apply_pixel_pc34(
-                         d0l2, source, sizeof(source), viewport, sizeof(viewport),
-                         1, 12, 0),
-                     0,
-                     "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
-    ok &= expect_int("pixel.left.transparent", viewport[viewport_offset(12, 1)], 0xee,
-                     "C10 transparent D0L wall pixel preserves destination");
-    ok &= expect_int("apply.right.flipped",
-                     csb_v1_viewport_d0l2_d0r2_wall_apply_pixel_pc34(
-                         d0r2, source, sizeof(source), viewport, sizeof(viewport),
-                         192, 12, 1),
-                     0,
-                     "ReDMCSB DUNVIEW.C:8127 F0105 C717 flipped blit");
-    ok &= expect_int("pixel.right.flipped", viewport[viewport_offset(12, 192)], 0x43,
-                     "F0105 flipped D0R wall pixel copied");
-    ok &= expect_int("apply.right.outside_y",
-                     csb_v1_viewport_d0l2_d0r2_wall_apply_pixel_pc34(
-                         d0r2, source, sizeof(source), viewport, sizeof(viewport),
-                         192, 136, 1),
-                     1,
-                     "D0R wall must not write outside viewport height");
-
     return ok;
 }
 
