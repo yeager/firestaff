@@ -27,6 +27,13 @@
   GDAT/record handoff exists. Verification: full `firestaff` link, both HUD
   helper tests, and archive-symbol check.
 
+- ✅ 2026-07-31 DM2 weather fixture API isolation: removed the deterministic
+  weather-chain setter from the production runtime header and executable. A
+  private runtime object with that setter is linked only by the weather-frame
+  fixture test; the normal M11 path cannot replace c_weather state. Verification:
+  full `firestaff` link, real-data weather-slot test 20/20, and production/test
+  symbol checks.
+
 - ✅ 2026-07-31 CSB synthetic viewport-fixture isolation: removed the
   room-slot backdrop1 contract trace from the production `firestaff_m10`
   archive. Its 10×10 synthetic skin/dungeon arrangement is now compiled only

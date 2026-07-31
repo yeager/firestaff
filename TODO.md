@@ -113,6 +113,10 @@
   modules now compile only in their focused tests. M11 and the production DM2
   archive contain no accidental HUD route for those standalone receipts; a
   future runtime integration must bind their exact GDAT/record owners first.
+  **2026-07-31 update:** the deterministic c_weather setter is now compiled
+  only into its weather-frame fixture executable. The normal runtime header
+  and `firestaff` executable expose no API for replacing a live weather chain;
+  authentic session/save ownership remains mandatory in production.
   **2026-07-31 update:** DM2 boot now rejects the generic loader's retired
   16-bit fixture layout and an unreadable/absent dungeon payload. Only the
   verified PC G1 byte-square route can cross from the startup menu into a

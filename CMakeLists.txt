@@ -3849,6 +3849,20 @@ if(DM2_SOURCES)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2 PRIVATE -Wall -Wextra -O2)
     endif()
+
+    # The weather-frame unit test needs a deterministic c_weather chain, but
+    # that setter must never be exported by the normal runtime. Compile a
+    # private copy of the runtime solely for that test with its fixture API.
+    add_library(firestaff_dm2_runtime_weather_fixture OBJECT
+        src/dm2/dm2_v1_runtime.c)
+    target_include_directories(firestaff_dm2_runtime_weather_fixture PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_compile_definitions(firestaff_dm2_runtime_weather_fixture PRIVATE
+        FIRESTAFF_DM2_RUNTIME_TESTING=1)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_runtime_weather_fixture PRIVATE
+            -Wall -Wextra -O2)
+    endif()
 endif()
 
 
@@ -13182,12 +13196,15 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_runtime_weather_frame_slot
         tests/test_dm2_v1_runtime_weather_frame_slot.c
+        $<TARGET_OBJECTS:firestaff_dm2_runtime_weather_fixture>
     )
     target_include_directories(test_dm2_v1_runtime_weather_frame_slot PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm2_v1_runtime_weather_frame_slot
         PRIVATE firestaff_dm2 firestaff_m10 m)
+    target_compile_definitions(test_dm2_v1_runtime_weather_frame_slot PRIVATE
+        FIRESTAFF_DM2_RUNTIME_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_runtime_weather_frame_slot
             PRIVATE -Wall -Wextra -Werror -O2)

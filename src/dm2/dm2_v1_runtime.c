@@ -5185,10 +5185,11 @@ static int dm2_runtime_build_weather_slot_raw(
  *
  * Source: skproject/SKULLWIN/c_weather.cpp:91-506 (arg == 0 frame update). */
 /* Test-only helper: replace the session-owned weather chain state.  This
- * lets CTests drive deterministic DM2_UPDATE_WEATHER(0) outputs without
- * waiting for the stochastic 0x54 timer queue.
+ * lives only in the fixture-specific compilation of this translation unit;
+ * a production executable has no setter for c_weather's live v1e14xx chain.
  *
  * Source: skproject/SKULLWIN/c_weather.cpp v1e14xx globals. */
+#if defined(FIRESTAFF_DM2_RUNTIME_TESTING)
 int dm2_v1_runtime_set_weather_chain_state_for_test(
     const DM2_V1_UpdateWeatherState *state)
 {
@@ -5199,6 +5200,7 @@ int dm2_v1_runtime_set_weather_chain_state_for_test(
     rt->weather_chain_started = 1;
     return 1;
 }
+#endif
 
 int dm2_v1_runtime_update_weather_frame(
     DM2_V1_DistantEnvironmentReceipt *out_slots,

@@ -990,10 +990,14 @@ int dm2_v1_runtime_update_weather_frame(
     DM2_V1_DistantEnvironmentReceipt *out_slots,
     unsigned int *out_slot_count);
 /* Test-only helper: replace the session-owned weather chain state so tests
- * can drive deterministic DM2_UPDATE_WEATHER(0) outputs. */
+ * can drive deterministic DM2_UPDATE_WEATHER(0) outputs. This declaration is
+ * intentionally absent from production builds; the fixture runtime variant is
+ * linked only by test_dm2_v1_runtime_weather_frame_slot. */
+#if defined(FIRESTAFF_DM2_RUNTIME_TESTING)
 struct DM2_V1_UpdateWeatherState;
 int dm2_v1_runtime_set_weather_chain_state_for_test(
     const struct DM2_V1_UpdateWeatherState *state);
+#endif
 /* DM2-003/005 follow-up: 1 once the session-owned DM2-002 record pools
  * validated from the boot dungeon data (lazy, on the first tick). */
 int dm2_v1_runtime_record_pools_valid(void);
