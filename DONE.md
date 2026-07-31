@@ -47077,3 +47077,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   receipt accepts metadata only and has no runtime caller or SWSH command
   decoder. It now compiles only into its focused test, rather than M10;
   production cannot turn receipt facts into synthetic palette animation.
+- ✅ 2026-07-31 Theron verified champion handoff: authenticated JP/US Track
+  02 startup sessions now clear fixture-only 10-point stats, inventory and
+  equipment defaults before runtime entry. Source-roster identity metadata is
+  retained; undecoded numeric champion records fail closed instead of being
+  presented as real data.

@@ -90,6 +90,41 @@ void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index) {
     party->gold           = 0;
 }
 
+void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party) {
+    if (!party) return;
+    for (int i = 0; i < THERON_MAX_CHAMPIONS; ++i) {
+        Theron_V1_Champion *c = &party->champions[i];
+        c->health = 0;
+        c->max_health = 0;
+        c->stamina = 0;
+        c->max_stamina = 0;
+        c->mana = 0;
+        c->max_mana = 0;
+        c->strength = 0;
+        c->dexterity = 0;
+        c->wisdom = 0;
+        c->vitality = 0;
+        c->anti_magic = 0;
+        c->anti_fire = 0;
+        c->fighter_level = 0;
+        c->ninja_level = 0;
+        c->priest_level = 0;
+        c->wizard_level = 0;
+        c->wounds = 0;
+        c->attributes = 0;
+        memset(c->inventory, 0, sizeof(c->inventory));
+        for (int slot = 0; slot < THERON_EQUIP_SLOT_COUNT; ++slot) {
+            c->slots[slot] = -1;
+        }
+        c->load = 0;
+        c->max_load = 0;
+        c->food = 0;
+        c->water = 0;
+        c->alive = 0;
+    }
+    party->gold = 0;
+}
+
 /* ── Dungeon entry/exit reset ─────────────────────────────────────────── */
 
 void theron_v1_party_dungeon_entry_reset(Theron_V1_Party *party) {
