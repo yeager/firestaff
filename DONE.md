@@ -47309,3 +47309,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   diagnostic targets only; live DM2 presentation stays on the authenticated
   V1 viewport and GDAT HUD path. Verification: production link, V2 probes,
   real-data DM2 startup gate and production-symbol check.
+
+- ✅ 2026-07-31 Nexus real viewport gate rechecked: the Track 1 readiness
+  probe drives the local English CUE/DM.BIN, real `LEV00.DGN`, `FONT256.S2D`
+  and `SCORPION.MNS` handoff through `nexus_viewport_render`; 29/29 pass.
+  The real viewport capture remains deterministic black until authenticated
+  Saturn DGN/VDP1 material is admitted, with no procedural fallback pixels.
