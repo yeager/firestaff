@@ -1451,7 +1451,7 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         int level_ok;
         int object_ok;
 
-        theron_v1_world_init(&world);
+        theron_v1_world_init_runtime(&world);
         receipt[0] = '\0';
         if (!theron_v1_startup_media_bind_runtime_receipt(
                 &world, media_receipt) ||

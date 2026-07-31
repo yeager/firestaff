@@ -348,6 +348,11 @@ struct Theron_V1_World {
 
 /* ── Initialization ───────────────────────────────────────────────── */
 void theron_v1_world_init(Theron_V1_World *world);
+
+/* Production startup initialization.  Unlike the legacy fixture-oriented
+ * initializer, this never invents a champion roster or default stats before
+ * source records have been admitted. */
+void theron_v1_world_init_runtime(Theron_V1_World *world);
 void theron_v1_world_reset_for_dungeon(Theron_V1_World *world,
                                          Theron_DungeonID dungeon_id);
 

@@ -6397,7 +6397,7 @@ int theron_v1_boot_startup_launch_alloc(
         return 0;
     }
 
-    theron_v1_world_init(out_launch->world);
+    theron_v1_world_init_runtime(out_launch->world);
     if (!theron_vp_init(out_launch->viewport)) {
         Theron_StartupHostReceipt receipt;
         out_launch->prepare_result = THERON_V1_BOOT_STARTUP_PREPARE_BAD_INPUT;

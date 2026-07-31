@@ -142,7 +142,7 @@ int _tqw_party_unpack(Theron_V1_Party *p, const void *buf, size_t bufsize) {
  * World initialization & reset
  * ══════════════════════════════════════════════════════════════════════ */
 
-void theron_v1_world_init(Theron_V1_World *world) {
+static void theron_v1_world_init_base(Theron_V1_World *world) {
     if (!world) return;
     memset(world, 0, sizeof(*world));
     world->current_dungeon    = THERON_DUNGEON_1_HALL_OF_RECORDS;
@@ -151,7 +151,16 @@ void theron_v1_world_init(Theron_V1_World *world) {
     world->transition_pending = 0;
     world->state_hash        = THERON_HASH_FNV_OFFSET;
     theron_v1_dungeon_progression_init(&world->progression);
+}
+
+void theron_v1_world_init(Theron_V1_World *world) {
+    theron_v1_world_init_base(world);
+    if (!world) return;
     theron_v1_party_init(&world->party, world->current_dungeon);
+}
+
+void theron_v1_world_init_runtime(Theron_V1_World *world) {
+    theron_v1_world_init_base(world);
 }
 
 void theron_v1_world_reset_for_dungeon(Theron_V1_World *world,

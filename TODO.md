@@ -33,6 +33,8 @@
   handoff now clears the fixture roster identity and count as well as numeric
   state. The production roster handoff now avoids the fixture initializer and
   admits only decoded names; portrait/class/stat records remain unavailable.
+  Production world allocation also uses a zero-party initializer until that
+  handoff succeeds.
 
 - **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
   placeholder labels are now fixture/probe-only. The verified receipt no
