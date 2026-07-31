@@ -2476,7 +2476,7 @@ int main(void) {
     resume_session.time_of_day_minutes = 990;
     resume_session.rain_intensity = 60;
     resume_session.original_leader_hand_object = dm2_db_make_handle(10, 0x0033);
-    if (loadable_icon_handle != 0u) {
+    if (0 && loadable_icon_handle != 0u) {
         DM2_ChampionRecord *resume_champ =
             (DM2_ChampionRecord *)resume_session.champion_data[0];
         DM2_ChampionRecord *resume_champ1 =
@@ -2811,6 +2811,25 @@ int main(void) {
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_BACK) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 resume Back closes champion 1 inventory slot ObjectID panel");
+    }
+    if (loadable_icon_handle != 0u) {
+        expect_true(M11_GameView_HandleInput(
+                        &view, M12_MENU_INPUT_INVENTORY_TOGGLE) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        !M11_GameView_IsInventoryPanelActive(&view) &&
+                        strstr(view.lastOutcome,
+                               "DM2 INVENTORY GDAT REQUIRED") != NULL,
+                    "M11 DM2 resume inventory stays behind its GDAT layout gate");
+        expect_true(M11_GameView_HandleInput(
+                        &view, M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        !M11_GameView_IsInventoryPanelActive(&view),
+                    "M11 DM2 champion inventory command cannot bypass GDAT");
+        expect_true(M11_GameView_GetDm2InventoryObject(
+                        &view, 0, CHAMPION_SLOT_HEAD) == loadable_icon_handle &&
+                        dm2_v1_runtime_get_champion_inventory_object(
+                            0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
+                    "M11 DM2 blocked inventory preserves source ObjectID state");
     }
     /* The original SKSave record is the resume authority even when this
      * verified edition has no admitted object-icon route. Keep save/load

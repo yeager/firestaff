@@ -46319,3 +46319,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `TITLE.C F0437`, `ENTRANCE.C F0438/F0441/F0806`; CSBWin
   `Viewport.cpp`. Verifiering: startup-plan 139/139, boot-handoff 501/501,
   realdata-sekvensen C001–C005/C017/C040 och titelkadensproben passerar.
+- ✅ 2026-07-31 DM2 inventory substitute closure: removed the reachable M11
+  renderer that put authentic DM2 ObjectID icons into DM1 `GRAPHICS.DAT` slot
+  rectangles and removed its matching DM1 click route. Keyboard and direct
+  champion inventory commands now fail closed as well, leaving SKSave/DB
+  ObjectID ownership untouched until the real DM2 inventory surface is
+  bound. Source: SKProject `CHANGE_VIEWPORT_TO_INVENTORY`, with its
+  `CHAMPIONS`/`INTERFACE_GENERAL` GDAT layout and event table. Verification:
+  real-data `test_dm2_v1_m11_startup_profile_gate`.

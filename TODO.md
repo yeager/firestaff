@@ -73,6 +73,12 @@
   RGB output from host time and weather values. The source ENVIRONMENT GDAT
   route owns the image, palette and destination rectangle, so an unbound V2
   caller now receives no colour instead of a procedural sky substitute.
+  **2026-07-31 update:** the remaining DM2 ObjectID inventory bridge no
+  longer reuses DM1 `GRAPHICS.DAT` slot coordinates, panel pixels, or click
+  routes. SKProject `CHANGE_VIEWPORT_TO_INVENTORY` owns a distinct
+  `CHAMPIONS`/`INTERFACE_GENERAL` GDAT layout and event table; the M11 route
+  now preserves the source session but stays unavailable until those assets
+  and events are bound.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

@@ -24497,8 +24497,6 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state);
 static int m11_process_v1_eye_click(M11_GameViewState* state);
 static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
                                                    int sourceSlotBoxIndex);
-static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
-                                                    int sourceSlotBoxIndex);
 static int m11_v1_open_chest_valid(const M11_GameViewState* state);
 static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
                                                      int slotBoxIndex);
@@ -25324,10 +25322,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
         if (command >= 28 && command <= 57 && zoneId >= 507 && zoneId <= 536) {
             if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-                if (m11_process_dm2_inventory_slot_box_click(state,
-                                                             command - 20)) {
-                    return M11_GAME_INPUT_REDRAW;
-                }
+                /* SKProject CHANGE_VIEWPORT_TO_INVENTORY has a distinct
+                 * GDAT/CHAMPIONS layout and event table. These are DM1
+                 * GRAPHICS.DAT slots, so no DM2 ObjectID may pass through
+                 * this substitute click route. */
+                state->inventoryPanelActive = 0;
                 return M11_GAME_INPUT_IGNORED;
             }
             if (m11_process_v1_inventory_pointer_target(
@@ -42804,45 +42803,6 @@ static int m11_process_v1_inventory_pointer_target(M11_GameViewState* state,
     return 1;
 }
 
-static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
-                                                    int sourceSlotBoxIndex) {
-    int championIndex;
-    int championSlot;
-    DM2_V1_BootRuntimeInventoryReceipt receipt;
-
-    if (!state || !state->inventoryPanelActive ||
-        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT) {
-        return 0;
-    }
-    championIndex = state->world.party.activeChampionIndex;
-    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
-    championSlot = dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
-        sourceSlotBoxIndex);
-    if (championSlot < 0 || championSlot >= CHAMPION_SLOT_COUNT) return 0;
-
-    /* DM2 startup inventory uses full ObjectID values from SKSave/DB,
-     * not DM1/CSB THING cells.  Source analogue: SKULL.ASM keeps the
-     * leader hand as the DB object handle while inventory clicks swap
-     * handles between the champion slot and hand. */
-    if (!dm2_v1_boot_runtime_swap_inventory_slot(
-            (DM2_V1_BootProfile *)state->dm2BootProfile,
-            championIndex,
-            championSlot,
-            &receipt)) {
-        return 0;
-    }
-    state->dm2State.champion_inventory_objects[championIndex][championSlot] =
-        receipt.slot_object_after;
-    state->dm2State.leader_hand_object = receipt.leader_hand_after;
-    m11_sync_dm2_state_from_runtime(state);
-    state->dm2State.champion_inventory_objects[championIndex][championSlot] =
-        receipt.slot_object_after;
-    if (receipt.status_scope && receipt.status) {
-        m11_set_status(state, receipt.status_scope, receipt.status);
-    }
-    return 1;
-}
-
 static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                                    unsigned char* framebuffer,
                                    int framebufferWidth,
@@ -43458,113 +43418,6 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
                             framebufferWidth, framebufferHeight,
                             nameX, nameY, objectName,
                             M11_COLOR_CYAN, -1, 1);
-    }
-}
-
-static int m11_draw_dm2_object_icon_at(const M11_GameViewState* state,
-                                       uint32_t object,
-                                       unsigned char* framebuffer,
-                                       int framebufferWidth,
-                                       int framebufferHeight,
-                                       int dstX,
-                                       int dstY,
-                                       int dstW,
-                                       int dstH,
-                                       int fillBackground) {
-    DM2_V1_BootProfile *profile;
-    uint8_t *pixels = NULL;
-    int srcW = 0;
-    int srcH = 0;
-    int srcStride = 0;
-    int y;
-
-    if (!state || !framebuffer ||
-        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
-        object == 0u || dstW <= 0 || dstH <= 0) {
-        return 0;
-    }
-    profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
-    if (dm2_v1_boot_object_icon_asset_fetch(profile,
-                                            object,
-                                            &pixels,
-                                            &srcW,
-                                            &srcH,
-                                            &srcStride) != 0) {
-        return 0;
-    }
-    if (!pixels || srcW <= 0 || srcH <= 0 || srcStride <= 0) {
-        dm2_v1_boot_object_icon_asset_free(pixels);
-        return 0;
-    }
-    if (fillBackground) {
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      dstX, dstY, dstW, dstH, M11_COLOR_BLACK);
-    }
-    for (y = 0; y < dstH; ++y) {
-        int x;
-        int sy = (y * srcH) / dstH;
-        for (x = 0; x < dstW; ++x) {
-            int sx = (x * srcW) / dstW;
-            uint8_t color = pixels[sy * srcStride + sx];
-            if (color == 0u) continue;
-            if ((unsigned)(dstX + x) < (unsigned)framebufferWidth &&
-                (unsigned)(dstY + y) < (unsigned)framebufferHeight) {
-                framebuffer[(dstY + y) * framebufferWidth + dstX + x] = color;
-            }
-        }
-    }
-    dm2_v1_boot_object_icon_asset_free(pixels);
-    return 1;
-}
-
-static void m11_draw_dm2_inventory_object_icons(const M11_GameViewState* state,
-                                                unsigned char* framebuffer,
-                                                int framebufferWidth,
-                                                int framebufferHeight) {
-    int championIndex;
-
-    if (!state || !framebuffer ||
-        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
-        !state->dm2BootProfile ||
-        !state->inventoryPanelActive) {
-        return;
-    }
-    championIndex = state->world.party.activeChampionIndex;
-    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) {
-        return;
-    }
-    for (int slot = 0; slot < CHAMPION_SLOT_COUNT; ++slot) {
-        uint32_t object =
-            state->dm2State.champion_inventory_objects[championIndex][slot];
-        int sourceSlotBox;
-        DM1_V1_InventorySlotBoxZonePc34 zone;
-        int zx = 0, zy = 0, zw = 0, zh = 0;
-        int drawW, drawH;
-        if (object == 0u) continue;
-        sourceSlotBox =
-            dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(slot);
-        if (!sourceSlotBox ||
-            !dm1_v1_inventory_source_slot_box_zone_pc34(
-                sourceSlotBox, &zone)) {
-            continue;
-        }
-        zx = zone.x;
-        zy = zone.y;
-        zw = zone.w;
-        zh = zone.h;
-        drawW = zw > 2 ? zw - 2 : zw;
-        drawH = zh > 2 ? zh - 2 : zh;
-        (void)m11_draw_dm2_object_icon_at(
-            state,
-            object,
-            framebuffer,
-            framebufferWidth,
-            framebufferHeight,
-            M11_VIEWPORT_X + zx + 1,
-            M11_VIEWPORT_Y + zy + 1,
-            drawW,
-            drawH,
-            0);
     }
 }
 
@@ -46663,6 +46516,18 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
         championIndex >= state->world.party.championCount ||
         !state->world.party.champions[championIndex].present) {
         m11_set_status(state, "INVENTORY", "NO CHAMPION");
+        return M11_GAME_INPUT_REDRAW;
+    }
+
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        /* SKProject CHANGE_VIEWPORT_TO_INVENTORY owns the CHAMPIONS and
+         * INTERFACE_GENERAL GDAT surfaces plus the matching click table.
+         * M11's champion boxes are DM1 geometry, so retain DM2 ObjectIDs in
+         * the source session but never expose or mutate them through that
+         * substitute panel. */
+        state->inventoryPanelActive = 0;
+        state->inventorySelectedSlot = -1;
+        m11_set_status(state, "INVENTORY", "DM2 INVENTORY GDAT REQUIRED");
         return M11_GAME_INPUT_REDRAW;
     }
 
@@ -50015,9 +49880,6 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         (void)m11_draw_saved_champion_portrait_pc34(
             champ, framebuffer, framebufferWidth, framebufferHeight,
             M11_VIEWPORT_X + 5, M11_VIEWPORT_Y + 4);
-        m11_draw_dm2_inventory_object_icons(state, framebuffer,
-                                            framebufferWidth,
-                                            framebufferHeight);
         if (DM1_V1_M11Runtime_GetOpenChestThingPc34Compat(state) != THING_NONE) {
             unsigned short chestSlots[8];
             int chestOrdinal;
