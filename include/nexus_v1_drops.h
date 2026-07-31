@@ -3,10 +3,9 @@
 
 #include <stdint.h>
 
-/* Nexus V1 creature drops — gold and item drops on creature death.
- * DM1-compatible drop tables per creature type.
- * Source: DM1 creature drop tables, nexus_v1_combat.c,
- * docs/nexus_combat_creatures.md (gold/XP on kill). */
+/* Nexus V1 creature drops — source-bound API boundary.
+ * No Nexus drop table is currently admitted; callers fail closed until the
+ * Saturn item/drop records are identified from DMWeb or retail captures. */
 
 #define NEXUS_MAX_DROPS 256
 

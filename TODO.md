@@ -24232,3 +24232,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   absent record remains valid and malformed/truncated EXPOOL data fails
   closed. The remaining CSBWin save task is a positive operator-owned corpus,
   not this previously disconnected authenticated field.
+- 🔧 Nexus loot provenance: the former inferred DM1 drop tables were removed
+  from production. Identify the actual Saturn creature/item drop records from
+  DMWeb or an authenticated Nexus capture before re-enabling item or gold
+  drops; no synthetic fallback is permitted.
