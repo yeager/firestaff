@@ -45682,3 +45682,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   initialization, before title or entrance audio can open an SDL stream; game
   reinitialisation retains the same preference through the existing launch
   handoff.
+
+- ✅ 2026-07-31 CSB F0115 orphan group/projectile blit closure: removed two
+  unused public pixel writers and their isolated test targets. They accepted
+  caller-owned sprite buffers with no M11 runtime consumer or material
+  receipt, despite source-index checks. The active F0115 object, group and
+  projectile runtime drawers still require decoded original graphics and
+  remain no-draw on a missing material. Verification: configure/build and
+  PC3.4 real-asset viewport/startup regressions.

@@ -4030,8 +4030,6 @@ set(M11_SOURCES
     src/engine/runtime_gesture_navigation_gate.c
     src/engine/m11_dm2_runtime_frame_receipt_gate.c
     src/csb/csb_v1_viewport_f0115_first_object_pc34_compat.c
-    src/csb/csb_v1_viewport_f0115_first_group_pc34_compat.c
-    src/csb/csb_v1_viewport_f0115_first_projectile_pc34_compat.c
 )
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
@@ -17857,40 +17855,6 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_f0115_first_object_real_asset_pc34_compat
         COMMAND test_csb_v1_f0115_first_object_real_asset_pc34_compat
-    )
-
-    add_executable(test_csb_v1_f0115_first_group_real_asset_pc34_compat
-        tests/test_csb_v1_f0115_first_group_real_asset_pc34_compat.c
-        src/csb/csb_v1_viewport_f0115_first_group_pc34_compat.c
-        tests/stub_asset_loader_m11.c
-    )
-    target_include_directories(test_csb_v1_f0115_first_group_real_asset_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_f0115_first_group_real_asset_pc34_compat
-            PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME csb_v1_f0115_first_group_real_asset_pc34_compat
-        COMMAND test_csb_v1_f0115_first_group_real_asset_pc34_compat
-    )
-
-    add_executable(test_csb_v1_f0115_first_projectile_real_asset_pc34_compat
-        tests/test_csb_v1_f0115_first_projectile_real_asset_pc34_compat.c
-        src/csb/csb_v1_viewport_f0115_first_projectile_pc34_compat.c
-        tests/stub_asset_loader_m11.c
-    )
-    target_include_directories(test_csb_v1_f0115_first_projectile_real_asset_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_f0115_first_projectile_real_asset_pc34_compat
-            PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME csb_v1_f0115_first_projectile_real_asset_pc34_compat
-        COMMAND test_csb_v1_f0115_first_projectile_real_asset_pc34_compat
     )
 
     add_executable(test_csb_v1_chaos_cast_targeting_pc34_compat

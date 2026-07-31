@@ -588,6 +588,11 @@ diagnostic; it must not silently fall back to a generated visual.
   with caller-selected colours. It had no runtime consumer and no source
   command/material receipt for those mutations; the real startup and
   viewport routes remain the only pixel owners.
+  **2026-07-31 F0115 orphan group/projectile follow-up:** removed two public
+  direct-blit families that accepted caller-owned group or projectile buffers.
+  They had no M11 runtime consumer, so their source-index checks could not
+  prove pixel provenance. Active source-bound F0115 sprite drawers remain
+  unchanged and suppress drawing when the required original sprite is absent.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
