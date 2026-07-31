@@ -223,7 +223,15 @@ DUNGEON_MOVE_FORWARD_KEYBOARD_SOURCE = (
     "Up Arrow (<CSI>A / <CSI>T) in the PC movement keyboard table"
 )
 
-DOSBOX_PROCESS_NAMES = ("dosbox", "dosbox-staging", "DOSBox Staging", "DOSBox")
+DOSBOX_STAGING_PROCESS_NAMES = (
+    "dosbox", "dosbox-staging", "DOSBox Staging", "DOSBox",
+)
+DOSBOX_X_PROCESS_NAMES = ("dosbox-x", "DOSBox-X")
+# The runner is also used with DOSBox-X for source capture.  Keep its host
+# window selection separate from Staging: accepting an already-open Staging
+# window after a requested DOSBox-X launch produces a false original-capture
+# receipt for the wrong emulator session.
+ACTIVE_DOSBOX_PROCESS_NAMES = DOSBOX_STAGING_PROCESS_NAMES
 DOSBOX_BIN_CANDIDATES = ("dosbox-staging", "dosbox")
 MACOS_DOSBOX_STAGING_APP_BIN = Path("/Applications/DOSBox Staging.app/Contents/MacOS/dosbox")
 # macOS application-bundle names that ``open -a NAME`` can activate to raise
@@ -236,6 +244,7 @@ MACOS_DOSBOX_STAGING_APP_BIN = Path("/Applications/DOSBox Staging.app/Contents/M
 # reliably activate the running instance without spawning a duplicate, which is
 # the focus half of the original-capture blocker.
 MACOS_DOSBOX_OPEN_APP_NAMES = ("DOSBox Staging",)
+ACTIVE_DOSBOX_OPEN_APP_NAMES = MACOS_DOSBOX_OPEN_APP_NAMES
 BLACKOUT_NONBLACK_THRESH = 0.005
 RUNTIME_DATA_REQUIRED_FILES = ("GRAPHICS.DAT", "DUNGEON.DAT")
 LIVE_INPUT_RECEIPT_SCHEMA = "firestaff.dosbox_capture_session.live_inputs.v1"
@@ -856,6 +865,14 @@ def dry_run(plan: list[PlanStep],
         staging_launch = _dosbox_conf_command(str(fake_bin), fake_staging_conf, good)
         if staging_launch[-1] != str(good / "DM.EXE"):
             failures.append("dosbox launch argv: did not append runtime DM.EXE path")
+        _set_active_dosbox_identity("/opt/homebrew/bin/dosbox-x")
+        if (ACTIVE_DOSBOX_PROCESS_NAMES != DOSBOX_X_PROCESS_NAMES or
+                ACTIVE_DOSBOX_OPEN_APP_NAMES):
+            failures.append("dosbox identity: DOSBox-X selected a Staging host window")
+        _set_active_dosbox_identity(str(fake_bin))
+        if (ACTIVE_DOSBOX_PROCESS_NAMES != DOSBOX_STAGING_PROCESS_NAMES or
+                ACTIVE_DOSBOX_OPEN_APP_NAMES != MACOS_DOSBOX_OPEN_APP_NAMES):
+            failures.append("dosbox identity: Staging host selection did not restore")
         capture_root = tmp_root / "capture-root"
         conf = capture_root / "dosbox_capture.live.conf"
         _write_live_conf(conf, good, capture_root)
@@ -1353,6 +1370,20 @@ def _run_quiet(argv: list[str], timeout: float = 10.0) -> subprocess.CompletedPr
         return QuietRunTimeout()  # type: ignore[return-value]
 
 
+def _set_active_dosbox_identity(dosbox_bin: str) -> None:
+    """Select only windows belonging to the emulator requested by --dosbox-bin."""
+    global ACTIVE_DOSBOX_PROCESS_NAMES, ACTIVE_DOSBOX_OPEN_APP_NAMES
+    bin_name = Path(dosbox_bin).name.casefold()
+    if bin_name == "dosbox-x" or "dosbox-x" in bin_name:
+        ACTIVE_DOSBOX_PROCESS_NAMES = DOSBOX_X_PROCESS_NAMES
+        # Homebrew's DOSBox-X executable has no matching macOS app bundle.
+        # Do not wake an unrelated Staging bundle in its place.
+        ACTIVE_DOSBOX_OPEN_APP_NAMES = ()
+    else:
+        ACTIVE_DOSBOX_PROCESS_NAMES = DOSBOX_STAGING_PROCESS_NAMES
+        ACTIVE_DOSBOX_OPEN_APP_NAMES = MACOS_DOSBOX_OPEN_APP_NAMES
+
+
 def _open_activate_dosbox() -> bool:
     """Raise an already-running DOSBox window via ``open -a`` (macOS).
 
@@ -1366,7 +1397,7 @@ def _open_activate_dosbox() -> bool:
     """
     if shutil.which("open") is None:
         return False
-    for app_name in MACOS_DOSBOX_OPEN_APP_NAMES:
+    for app_name in ACTIVE_DOSBOX_OPEN_APP_NAMES:
         proc = _run_quiet(["open", "-a", app_name], timeout=5.0)
         if getattr(proc, "returncode", 1) == 0:
             return True
@@ -1382,7 +1413,7 @@ def _activate_dosbox() -> None:
     so non-bundle DOSBox builds and headless self-tests still work.
     """
     _open_activate_dosbox()
-    names = ", ".join(f'"{name}"' for name in DOSBOX_PROCESS_NAMES)
+    names = ", ".join(f'"{name}"' for name in ACTIVE_DOSBOX_PROCESS_NAMES)
     script = r'''
 tell application "System Events"
   repeat with appName in {%s}
@@ -1403,7 +1434,7 @@ end tell
 
 def _dosbox_window_bounds() -> tuple[int, int, int, int] | None:
     """Return the front DOSBox window bounds as x, y, w, h when available."""
-    names = ", ".join(f'"{name}"' for name in DOSBOX_PROCESS_NAMES)
+    names = ", ".join(f'"{name}"' for name in ACTIVE_DOSBOX_PROCESS_NAMES)
     script = r'''
 tell application "System Events"
   repeat with appName in {%s}
@@ -1480,7 +1511,7 @@ def _capture_with_peekaboo(raw: Path) -> tuple[dict[str, str], bool]:
         }, False
     _activate_dosbox()
     bounds = _dosbox_window_bounds()
-    for app_name in ("DOSBox Staging", "DOSBox"):
+    for app_name in ACTIVE_DOSBOX_PROCESS_NAMES:
         cmd = [
             "peekaboo", "image",
             "--app", app_name,
@@ -1860,7 +1891,8 @@ def _should_abort_for_blackout(
 
 def _is_dosbox_process_name(name: str) -> bool:
     folded = name.casefold()
-    return any(candidate.casefold() in folded for candidate in DOSBOX_PROCESS_NAMES)
+    return any(candidate.casefold() in folded
+               for candidate in ACTIVE_DOSBOX_PROCESS_NAMES)
 
 
 def _is_focus_mismatch(quality: FrameQuality) -> bool:
@@ -2835,6 +2867,7 @@ def live_run(plan: list[PlanStep], args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 2
+    _set_active_dosbox_identity(dosbox_bin)
 
     capture_root = args.capture_root.expanduser()
     game_dir = (
