@@ -45779,3 +45779,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   F0108:3940-4011. Verification: configured build of `firestaff` and both
   PC3.4 real-asset probes, focused CTest 3/3, ornament 29/29 and
   startup/title/entrance/HUD 75/75 with `/Users/bosse/.firestaff/data/csb`.
+
+- ✅ 2026-07-31 CSB D2C partly-open-door contract removal: removed the
+  redundant public F0111 metadata/probe module and its data-free CTest. It
+  had no M11 consumer and no original bitmap, palette or mask decoder. The
+  active D2C F0111 source-material route remains unchanged. Reference:
+  ReDMCSB `DUNVIEW.C` F0111:4218-4337 and F0121:7244-7389. Verification:
+  configured `firestaff` plus both PC3.4 real-asset probes, focused CTest
+  3/3, ornament 29/29 and startup/title/entrance/HUD 75/75 with
+  `/Users/bosse/.firestaff/data/csb`.
