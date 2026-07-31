@@ -44880,3 +44880,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   it. Verification: `test_dm1_v1_viewport_3d_pc34_compat`,
   `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 CSB PC3.4 D2C door-frame source binding: the central D2
+  frame now requires both active wall-set source records before it draws:
+  M660/G2115 through G0174 for the 96×3 top bar and M656/G2118 through
+  G0168/G0169 for the native/mirrored 48×65 side pair. A verified CSB
+  session therefore cannot fall back to the legacy atlas or leave a partial
+  frame if either original record is unavailable. ReDMCSB `DUNVIEW.C
+  F0121:7317-7330` is the source reference. Verification:
+  `test_dm1_v1_viewport_3d_pc34_compat`,
+  `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
+  launcher handoff boundary (567/0, one expected Atari skip) pass.

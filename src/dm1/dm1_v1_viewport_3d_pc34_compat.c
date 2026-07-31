@@ -16,6 +16,9 @@
 #include "firestaff/dm1/v1/G0165_pc34_compat.h"
 #include "firestaff/dm1/v1/G0166_pc34_compat.h"
 #include "firestaff/dm1/v1/G0167_pc34_compat.h"
+#include "firestaff/dm1/v1/G0168_pc34_compat.h"
+#include "firestaff/dm1/v1/G0169_pc34_compat.h"
+#include "firestaff/dm1/v1/G0174_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
@@ -1258,6 +1261,24 @@ static int dm1_viewport_3d_draw_source_door_frame(
     return 1;
 }
 
+static int dm1_viewport_3d_has_source_door_frame(
+    DM1_Viewport3DState *state, int graphic_index, const int *frame)
+{
+    const uint8_t *pixels = NULL;
+    int width = 0, height = 0;
+    int draw_width, draw_height;
+
+    if (!state || !frame || !state->graphic_provider_callback ||
+        !state->graphic_provider_callback(state->graphic_provider_user_data,
+                                          graphic_index, &pixels,
+                                          &width, &height) ||
+        !pixels) return 0;
+    draw_width = frame[1] - frame[0] + 1;
+    draw_height = frame[3] - frame[2] + 1;
+    return draw_width > 0 && draw_height > 0 && width >= draw_width &&
+           height >= draw_height;
+}
+
 static int dm1_viewport_3d_classify_grid_cell(int cell)
 {
     /* ReDMCSB: DEFS.H M034_SQUARE_TYPE is square >> 5; DUNGEON.C F0172
@@ -1981,14 +2002,34 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
             state, DM1_VIEW_SQUARE_D2C, 2, 0);
         if (!dm1_viewport_3d_draw_center_wall_element(
                 state, DM1_VIEW_SQUARE_D2C, (int)d2c_x, (int)d2c_y)) {
+            const int *top_frame = dm1_v1_g0174_table_pc34();
+            const int *left_frame = dm1_v1_g0168_table_pc34();
+            const int *right_frame = dm1_v1_g0169_table_pc34();
             const DM1_WallFrame *fr_top  = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2C);
             const DM1_WallFrame *fr_side = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L);
-            if (fr_top && bm_base) {
-                dm1_viewport_3d_draw_wall(state, bm_base + 19 * BMP_STRIDE, fr_top);
-            }
-            if (fr_side && bm_base) {
-                dm1_viewport_3d_draw_wall(state, bm_base + 22 * BMP_STRIDE, fr_side);
-                dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 22 * BMP_STRIDE, fr_side);
+
+            /* F0121 takes M660/G2115 for the 96x3 top bar, then M656/G2118
+             * for the 48x65 side pair.  G2113/G2114 are aliases of G2115
+             * (STARTUP2.C:646-648).  Verify both source records before any
+             * blit so a verified CSB session never leaves a partial frame.
+             * ReDMCSB DUNVIEW.C:599-600,7317-7330. */
+            if (dm1_viewport_3d_has_source_door_frame(state, 92, top_frame) &&
+                dm1_viewport_3d_has_source_door_frame(state, 88, left_frame) &&
+                dm1_viewport_3d_has_source_door_frame(state, 88, right_frame)) {
+                (void)dm1_viewport_3d_draw_source_door_frame(
+                    state, 92, top_frame, 0);
+                (void)dm1_viewport_3d_draw_source_door_frame(
+                    state, 88, left_frame, 0);
+                (void)dm1_viewport_3d_draw_source_door_frame(
+                    state, 88, right_frame, 1);
+            } else if (!state->source_graphics_required) {
+                if (fr_top && bm_base) {
+                    dm1_viewport_3d_draw_wall(state, bm_base + 19 * BMP_STRIDE, fr_top);
+                }
+                if (fr_side && bm_base) {
+                    dm1_viewport_3d_draw_wall(state, bm_base + 22 * BMP_STRIDE, fr_side);
+                    dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 22 * BMP_STRIDE, fr_side);
+                }
             }
         }
     }

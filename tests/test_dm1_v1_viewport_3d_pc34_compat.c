@@ -44,6 +44,11 @@ typedef struct IndexedGraphicProviderFixture {
     int height;
 } IndexedGraphicProviderFixture;
 
+typedef struct DoorFrameGraphicProviderFixture {
+    const uint8_t *side_pixels;
+    const uint8_t *top_pixels;
+} DoorFrameGraphicProviderFixture;
+
 static int indexed_graphic_provider(
     void *user_data, int graphic_index, const uint8_t **out_pixels,
     int *out_width, int *out_height)
@@ -59,6 +64,29 @@ static int indexed_graphic_provider(
     *out_width = fixture->width;
     *out_height = fixture->height;
     return 1;
+}
+
+static int door_frame_graphic_provider(
+    void *user_data, int graphic_index, const uint8_t **out_pixels,
+    int *out_width, int *out_height)
+{
+    const DoorFrameGraphicProviderFixture *fixture =
+        (const DoorFrameGraphicProviderFixture *)user_data;
+
+    if (!fixture || !out_pixels || !out_width || !out_height) return 0;
+    if (graphic_index == 88 && fixture->side_pixels) {
+        *out_pixels = fixture->side_pixels;
+        *out_width = 48;
+        *out_height = 65;
+        return 1;
+    }
+    if (graphic_index == 92 && fixture->top_pixels) {
+        *out_pixels = fixture->top_pixels;
+        *out_width = 96;
+        *out_height = 3;
+        return 1;
+    }
+    return 0;
 }
 
 static int floor_ceiling_graphic_provider(
@@ -1024,6 +1052,49 @@ static void test_d3_side_door_frame_uses_source_graphic558_geometry(void)
               viewport[28 * DM1_VIEWPORT_WIDTH + 192], 0x42);
     check_int("d3_side_door_frame.source_c10_transparent",
               viewport[28 * DM1_VIEWPORT_WIDTH + 1], 0x5a);
+}
+
+static void test_d2c_door_frame_uses_source_graphic558_geometry(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t side_pixels[48 * 65];
+    uint8_t top_pixels[96 * 3];
+    uint8_t grid[8 * 8];
+    DoorFrameGraphicProviderFixture provider;
+    DM1_Viewport3DState state;
+
+    /* G0174 is the 96x3 M660/G2115 top bar.  G0168/G0169 are the
+     * native/mirrored 48x65 M656/G2118 sides. */
+    memset(viewport, 0x5a, sizeof(viewport));
+    memset(side_pixels, 10, sizeof(side_pixels));
+    memset(top_pixels, 10, sizeof(top_pixels));
+    memset(grid, DM1_VP_ELEMENT_DOOR_FRONT, sizeof(grid));
+    side_pixels[0] = 0x31;
+    side_pixels[47] = 0x42;
+    top_pixels[0] = 0x53;
+    provider.side_pixels = side_pixels;
+    provider.top_pixels = top_pixels;
+    dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_load_wall_set(&state, 0, 0);
+    state.floor_ceiling_dirty = false;
+    state.dungeon_grid = grid;
+    state.dungeon_aspect_grid = grid;
+    state.dungeon_width = 8;
+    state.dungeon_height = 8;
+    state.source_graphics_required = true;
+    state.graphic_provider_callback = door_frame_graphic_provider;
+    state.graphic_provider_user_data = &provider;
+
+    dm1_viewport_3d_draw_frame(&state, 0, 4, 4);
+    check_int("d2c_door_frame.source_top_native",
+              viewport[22 * DM1_VIEWPORT_WIDTH + 64], 0x53);
+    check_int("d2c_door_frame.source_left_native",
+              viewport[22 * DM1_VIEWPORT_WIDTH + 48], 0x31);
+    check_int("d2c_door_frame.source_right_flipped",
+              viewport[22 * DM1_VIEWPORT_WIDTH + 128], 0x42);
+    check_int("d2c_door_frame.source_c10_transparent",
+              viewport[22 * DM1_VIEWPORT_WIDTH + 49], 0x5a);
 }
 
 static void test_floor_ceiling_bands_and_zones(void)
@@ -4835,6 +4906,7 @@ int main(void)
     test_d3_side_door_frame_requires_bound_source_atlas();
     test_d3c_door_frame_uses_source_graphic558_geometry();
     test_d3_side_door_frame_uses_source_graphic558_geometry();
+    test_d2c_door_frame_uses_source_graphic558_geometry();
     test_floor_ceiling_bands_and_zones();
     test_floor_ceiling_uses_real_provider_pixels();
     test_floor_ceiling_uses_complete_pc34_provider_pair();
