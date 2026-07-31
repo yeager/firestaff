@@ -22,7 +22,8 @@ int dm2_v1_champion_stat_bridge_compute(
     memset(out, 0, sizeof(*out));
 
     if (!inputs || champion_count <= 0 ||
-        champion_count > DM2_V1_CHAMPION_STAT_BRIDGE_MAX_HEROES) {
+        champion_count > DM2_V1_CHAMPION_STAT_BRIDGE_MAX_HEROES ||
+        gdat_bar_color_override < 0) {
         return 0;
     }
 
@@ -49,10 +50,12 @@ int dm2_v1_champion_stat_bridge_compute(
             effective_max_mp = in->cur_mp;
         c->mana_pct = compute_bar_pct(in->cur_mp, effective_max_mp);
 
-        int16_t default_color = (i < DM2_V1_CHAMPION_HUD_HERO_COUNT)
-            ? dm2_v1_default_hero_bar_color[i] : 7;
+        /* SK project SkWinCore.cpp QUERY_3STAT_BAR_COLOR resolves its
+         * fallback through the active source palette.  This bridge has no
+         * palette owner, so an absent GDAT receipt must block instead of
+         * inventing one of the old host colour constants. */
         int16_t bar_color = dm2_v1_QUERY_3STAT_BAR_COLOR(
-            gdat_bar_color_override, default_color, NULL);
+            gdat_bar_color_override, 0, NULL);
         c->hp_bar_color = bar_color;
         c->stamina_bar_color = bar_color;
         c->mana_bar_color = bar_color;

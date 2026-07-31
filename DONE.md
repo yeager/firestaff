@@ -45301,3 +45301,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `DM2_READ_DUNGEON_STRUCTURE(1)`. Verification: real-data
   `test_dm2_v1_m11_startup_profile_gate` proves stale hand/inventory removal
   at New Game, and `test_dm2_v1_load_new_dungeon_contract` passes.
+- ✅ 2026-07-31 DM2 champion HUD colour fallback removal: removed the fixed
+  host per-hero bar-colour table from production. The champion-stat bridge
+  now requires a non-negative colour receipt supplied by the original
+  GDAT/palette route and returns no HUD receipt when that owner is absent.
+  Source: SKProject `SKWINSPX/src/v4/skguidrw.cpp::DM2_DRAW_PLAYER_3STAT_HEALTH_BAR`
+  and `SKWIN/SkWinCore.cpp::QUERY_3STAT_BAR_COLOR`. Verification:
+  `test_dm2_v1_champion_stat_bridge`,
+  `test_dm2_v1_champion_hud_helpers` and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass against
+  `~/.firestaff/data/dm2`.

@@ -153,10 +153,6 @@ int dm2_v1_REFRESH_PLAYER_STAT_DISP(
     return 1;
 }
 
-const int16_t dm2_v1_default_hero_bar_color[DM2_V1_CHAMPION_HUD_HERO_COUNT] = {
-    7, 11, 8, 14
-};
-
 int16_t dm2_v1_QUERY_FOOD_WATER_BAR_COLOR(
     int16_t gdat_value,
     int16_t default_color,

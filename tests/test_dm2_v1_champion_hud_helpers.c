@@ -132,25 +132,12 @@ static void test_bar_color_queries(void)
                 "3stat bar color works with NULL receipt");
 }
 
-static void test_hero_bar_color_table(void)
-{
-    expect_true(dm2_v1_default_hero_bar_color[0] == 7,
-                "hero 0 bar color is 7");
-    expect_true(dm2_v1_default_hero_bar_color[1] == 11,
-                "hero 1 bar color is 11");
-    expect_true(dm2_v1_default_hero_bar_color[2] == 8,
-                "hero 2 bar color is 8");
-    expect_true(dm2_v1_default_hero_bar_color[3] == 14,
-                "hero 3 bar color is 14");
-}
-
 int main(void)
 {
     test_process_item_bonus();
     test_query_player_skill_lv();
     test_refresh_player_stat_disp();
     test_bar_color_queries();
-    test_hero_bar_color_table();
     expect_true(strstr(dm2_v1_champion_hud_helpers_source_evidence(),
                        "PROCESS_ITEM_BONUS:5277") != 0,
                 "source evidence includes item bonus symbol");

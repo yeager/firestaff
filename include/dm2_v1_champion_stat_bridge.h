@@ -5,8 +5,8 @@
  * DM2 Champion Stat Bridge — connects V1 hero stat data to V2 HUD runtime.
  *
  * Takes raw hero stats (curHP/maxHP/curStamina/maxStamina/curMP/maxMP),
- * computes bar percentages via REFRESH_PLAYER_STAT_DISP, resolves bar
- * colors via QUERY_3STAT_BAR_COLOR/default_hero_bar_color, and packages
+ * computes bar percentages via REFRESH_PLAYER_STAT_DISP, requires the
+ * source GDAT/palette-owned bar colour, and packages
  * the result for dm2_v2_hud_runtime_set_champion().
  *
  * Source: skproject SKULLWIN/c_gui_draw.cpp:167 DM2_DRAW_PLAYER_3STAT_HEALTH_BAR
@@ -71,6 +71,7 @@ int dm2_v1_champion_stat_bridge_compute(
     const DM2_V1_ChampionStatInput *inputs,
     const DM2_V1_ChampionStatPrev *prev,
     int champion_count,
+    /* Required source GDAT colour; a negative value blocks the HUD receipt. */
     int16_t gdat_bar_color_override,
     DM2_V1_ChampionStatBridgeReceipt *out);
 

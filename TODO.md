@@ -13,7 +13,9 @@
   supported through the shared hash scanner. The remaining work is limited to
   format-specific decode gaps listed per game, not generic substitute loading.
   Direct synthetic DM2 projectile construction is now isolated to explicit
-  test and probe targets and is absent from the production library.
+  test and probe targets and is absent from the production library. The DM2
+  champion-stat bridge also rejects a missing source GDAT/palette bar-colour
+  receipt rather than using the retired host colour table.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`
@@ -510,7 +512,10 @@ diagnostic; it must not silently fall back to a generated visual.
   `PARTIAL` until a future bridge carries original GDAT category/index/field
   and raw-byte provenance. The synthetic promotion probe was removed rather
   than preserving a false data-admission contract. Remaining work is
-  source-verified coverage for undecoded GDAT HUD surfaces.
+  source-verified coverage for undecoded GDAT HUD surfaces. **2026-07-31
+  update:** the V1 champion-stat bridge no longer supplies the former fixed
+  per-hero bar colours; absent source GDAT/palette ownership now blocks its
+  HUD receipt.
 - **THERON-ORIGINAL-REPLACE-001:** Replace the coloured UI chrome, checkerboard
   palette and chapter-marker placeholders with real US/JP Track 02 bitmap,
   palette and loader-selected records.  The supplied `TQUS02.bin`, CUE and

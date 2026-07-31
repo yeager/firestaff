@@ -97,11 +97,6 @@ int16_t dm2_v1_QUERY_3STAT_BAR_COLOR(
     int16_t default_color,
     DM2_V1_BarColorReceipt *out_receipt);
 
-/* Default per-hero 3-stat bar colors (table1d69d0).
- * Index 0..3 → hero 0..3. */
-#define DM2_V1_CHAMPION_HUD_HERO_COUNT 4
-extern const int16_t dm2_v1_default_hero_bar_color[DM2_V1_CHAMPION_HUD_HERO_COUNT];
-
 const char *dm2_v1_champion_hud_helpers_source_evidence(void);
 
 #ifdef __cplusplus
