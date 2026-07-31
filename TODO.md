@@ -537,6 +537,10 @@
   expose stock, prices, names, dialog or mutate party state. The latent
   inventory/gold writeback bridge is removed as well: an unadmitted shop
   state cannot copy arbitrary ObjectIDs into a session.
+  **2026-07-31 follow-up:** the last host-panel rectangle, English footer and
+  empty-pack fallback are now no-draw as well. The exposed render contract
+  clears its receipt and returns unavailable until the source-owned
+  `SHOP_GLASS` chain is decoded.
 
 - **DM2-OBJECT-TEXT-OWNER-HANDOFF:** Bind leader-hand/item text only through
   the decoded DB object and its original GDAT text/metadata route. The HUD

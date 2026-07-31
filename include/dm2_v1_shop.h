@@ -197,7 +197,9 @@ const char *dm2_v1_npc_get_name(int npc_id);
 const char *dm2_v1_npc_get_dialog(int npc_id, int line_idx);  /* 0..5 */
 int  dm2_v1_npc_get_count(void);
 
-/* ── Render contract ───────────────────────────────────────────── */
+/* ── Render contract ─────────────────────────────────────────────
+ * Returns no draw until SHOP_GLASS has supplied a decoded WALL_GFX/DB owner.
+ */
 int dm2_v1_shop_build_panel_render(int selected_stock_idx,
                                    int selected_pack_idx,
                                    DM2_V1_ShopPanelRender *out);

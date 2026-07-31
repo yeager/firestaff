@@ -38,9 +38,6 @@
 
 #include "dm2_v1_shop.h"
 #include "dm2_v1_game.h"
-#include "dm2_v1_tech_magic.h"
-
-#include <stdio.h>
 #include <string.h>
 
 /* Shop stock, prices, NPC names and dialogue are original record/GDAT data.
@@ -59,32 +56,6 @@ static void ensure_init(void) {
     /* Gold, negotiator state and party identity belong to the loaded DM2
      * session. Do not populate an unavailable shop path with host defaults. */
     s_initialized = 1;
-}
-
-static void dm2_shop_copy_text(char *dst, size_t dst_size, const char *src) {
-    if (!dst || dst_size == 0) {
-        return;
-    }
-    if (!src) {
-        dst[0] = '\0';
-        return;
-    }
-    snprintf(dst, dst_size, "%s", src);
-}
-
-static void dm2_shop_format_item_name(int item_id, char *out, size_t out_size) {
-    const char *known_name;
-
-    if (!out || out_size == 0) {
-        return;
-    }
-    known_name = dm2_v1_tech_magic_item_name(item_id);
-    if (known_name && known_name[0] != '\0') {
-        dm2_shop_copy_text(out, out_size, known_name);
-        return;
-    }
-    (void)item_id;
-    out[0] = '\0';
 }
 
 /* party_state_hash is captured by dm2_v1_shop_enter() and preserved
@@ -453,107 +424,16 @@ int dm2_v1_npc_get_count(void) {
 int dm2_v1_shop_build_panel_render(int selected_stock_idx,
                                    int selected_pack_idx,
                                    DM2_V1_ShopPanelRender *out) {
-    const int panel_x = 16;
-    const int panel_y = 24;
-    const int panel_w = 288;
-    const int panel_h = 142;
-    const int stock_x = 26;
-    const int pack_x = 166;
-    int shop_id;
-    const DM2_V1_ShopDescriptor *shop;
-    const DM2_V1_ShopState *shop_state;
-    const char *npc_name;
-
-    ensure_init();
-    if (!out) {
-        return 0;
+    (void)selected_stock_idx;
+    (void)selected_pack_idx;
+    /* SKProject: _32cb_0f82_SHOP_GLASS obtains both the wall artwork and
+     * transaction rows from the active WALL_GFX/DB record chain.  That owner
+     * is not decoded, so a host-sized panel or English fallback text would be
+     * synthetic output. */
+    if (out) {
+        memset(out, 0, sizeof(*out));
     }
-    memset(out, 0, sizeof(*out));
-    if (!dm2_v1_shop_is_active()) {
-        return 0;
-    }
-
-    shop_id = dm2_v1_shop_get_active_shop();
-    shop = dm2_v1_shop_get_builtin(shop_id);
-    shop_state = dm2_v1_shop_get_state();
-    if (!shop || !shop_state) {
-        return 0;
-    }
-    npc_name = dm2_v1_npc_get_name(shop->npc_id);
-
-    out->active = 1;
-    out->panel_x = panel_x;
-    out->panel_y = panel_y;
-    out->panel_w = panel_w;
-    out->panel_h = panel_h;
-    out->header_x = panel_x + 2;
-    out->header_y = panel_y + 2;
-    out->header_w = panel_w - 4;
-    out->header_h = 12;
-    out->title_x = panel_x + 8;
-    out->title_y = panel_y + 4;
-    dm2_shop_copy_text(out->title, sizeof(out->title),
-                       npc_name ? npc_name : "DM2 SHOP");
-    out->stock_label_x = stock_x;
-    out->stock_label_y = panel_y + 20;
-    out->pack_label_x = pack_x;
-    out->pack_label_y = panel_y + 20;
-    out->footer_x = panel_x + 8;
-    out->footer_y = panel_y + panel_h - 12;
-    dm2_shop_copy_text(out->footer, sizeof(out->footer),
-                       "UP/DOWN STOCK  LEFT/RIGHT PACK  ACTION BUY  DROP SELL");
-
-    for (int i = 0;
-         i < shop->stock_count && i < DM2_SHOP_RENDER_MAX_ROWS;
-         ++i) {
-        DM2_V1_ShopRenderRow *row = &out->stock_rows[out->stock_row_count++];
-        char item_name[32];
-        int price = dm2_v1_shop_get_effective_price(shop_id, i);
-
-        dm2_shop_format_item_name(shop->stock[i].item_id,
-                                  item_name, sizeof(item_name));
-        row->kind = DM2_SHOP_RENDER_ROW_STOCK;
-        row->x = stock_x;
-        row->y = panel_y + 34 + i * 11;
-        row->highlight_x = stock_x - 3;
-        row->highlight_y = row->y - 1;
-        row->highlight_w = 126;
-        row->highlight_h = 10;
-        row->highlighted = (i == selected_stock_idx) ? 1 : 0;
-        snprintf(row->text, sizeof(row->text), "%c %-16s %3d",
-                 row->highlighted ? '>' : ' ', item_name, price);
-    }
-
-    if (shop_state->inventory_count <= 0) {
-        DM2_V1_ShopRenderRow *row = &out->pack_rows[out->pack_row_count++];
-        row->kind = DM2_SHOP_RENDER_ROW_EMPTY_PACK;
-        row->x = pack_x;
-        row->y = panel_y + 34;
-        dm2_shop_copy_text(row->text, sizeof(row->text), "EMPTY");
-    } else {
-        int rows = shop_state->inventory_count < DM2_SHOP_RENDER_MAX_ROWS
-            ? shop_state->inventory_count
-            : DM2_SHOP_RENDER_MAX_ROWS;
-        for (int i = 0; i < rows; ++i) {
-            DM2_V1_ShopRenderRow *row = &out->pack_rows[out->pack_row_count++];
-            char item_name[32];
-            int price = dm2_v1_shop_get_sell_price(shop_id, i);
-
-            dm2_shop_format_item_name((int)shop_state->inventory_item[i],
-                                      item_name, sizeof(item_name));
-            row->kind = DM2_SHOP_RENDER_ROW_PACK;
-            row->x = pack_x;
-            row->y = panel_y + 34 + i * 11;
-            row->highlight_x = pack_x - 3;
-            row->highlight_y = row->y - 1;
-            row->highlight_w = 126;
-            row->highlight_h = 10;
-            row->highlighted = (i == selected_pack_idx) ? 1 : 0;
-            snprintf(row->text, sizeof(row->text), "%c %-16s %3d",
-                     row->highlighted ? '>' : ' ', item_name, price);
-        }
-    }
-    return 1;
+    return 0;
 }
 
 /* ── State accessor (read-only) ─────────────────────────────────── */

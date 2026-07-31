@@ -47258,3 +47258,17 @@ the supplied root and selected MD5 to prove this without shipping game data.
   target now compiles its fixture-only structured fallback entry explicitly,
   while production still links the no-fallback runtime archive. The focused
   suite is green at `325/325`.
+
+- ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
+  offsets and the 216-entry DMWeb TABL code table are parsed from the real
+  retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy
+  heuristic ASCII/Shift-JIS scraper plus unauthenticated S2D text/glyph
+  layout wrappers are excluded from `firestaff_nexus`; they remain available
+  only to explicit diagnostic probes. No glyph, palette, menu, HUD or Saturn
+  VDP1/VDP2 presentation is promoted by this change.
+- ✅ 2026-07-31 DM2 SHOP_GLASS panel isolation: removed the remaining
+  host-authored shop rectangle, English labels and empty-inventory fallback
+  from the production shop module. Its render contract now clears the output
+  and returns no-draw until the source-owned `WALL_GFX`/DB actuator chain is
+  decoded. Verification: production link, shop admission regression and an
+  executable-string check for the retired panel text.
