@@ -46327,3 +46327,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   bound. Source: SKProject `CHANGE_VIEWPORT_TO_INVENTORY`, with its
   `CHAMPIONS`/`INTERFACE_GENERAL` GDAT layout and event table. Verification:
   real-data `test_dm2_v1_m11_startup_profile_gate`.
+# 2026-07-31 Theron alarm spawn fallback removal
+
+- ✅ Removed the production alarm-trigger path that fabricated a Goblin for
+  every creature spawner. The alarm still activates source spawners and emits
+  its alarm event, but creature materialization now stays fail-closed until
+  the real Track 02 object-tail/spawn table is decoded. Regression coverage
+  verifies activation and no fabricated object (`52/52` mechanics checks).

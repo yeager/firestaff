@@ -302,7 +302,14 @@ static void test_altar_resurrection(void) {
     a.x     = 6; a.y = 6;
     a.level = 0;
     w.objects[0] = a;
-    w.object_count = 1;
+    Theron_V1_Object spawner;
+    memset(&spawner, 0, sizeof(spawner));
+    spawner.id = 2;
+    spawner.type = THERON_OBJTYPE_CREATURE_SPAWNER;
+    spawner.x = 5; spawner.y = 5;
+    spawner.level = 0;
+    w.objects[1] = spawner;
+    w.object_count = 2;
 
     uint32_t gold_before = w.party.gold;
     int r = theron_v1_altar_of_vi_resurrect(&w, 6, 6);
@@ -429,11 +436,22 @@ static void test_alarm_trigger(void) {
     a.x     = 3; a.y = 3;
     a.level = 0;
     w.objects[0] = a;
-    w.object_count = 1;
+    Theron_V1_Object spawner;
+    memset(&spawner, 0, sizeof(spawner));
+    spawner.id = 2;
+    spawner.type = THERON_OBJTYPE_CREATURE_SPAWNER;
+    spawner.x = 5; spawner.y = 5;
+    spawner.level = 0;
+    w.objects[1] = spawner;
+    w.object_count = 2;
 
     CHECK_INT("alarm_trigger returns 0",
               theron_v1_alarm_trigger(&w, 3, 3),
               0);
+    CHECK((w.objects[1].flags & THERON_OBJ_F_ACTIVATED) != 0,
+          "alarm activates source spawner");
+    CHECK_INT("alarm does not fabricate creature without Track 02 spawn table",
+              w.object_count, 2);
 }
 
 /* ═══════════════════════════════════════════════════════════════
