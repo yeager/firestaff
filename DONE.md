@@ -47124,3 +47124,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   byte-count and FTL-logo fact helpers have no runtime caller or decoder and
   now compile only into their focused tests. M10 can no longer substitute
   caller metadata for a verified decompressed member, logo bitmap or palette.
+
+- ✅ 2026-07-31 CSB startup-boundary/ownership isolation: the F0474–F0490
+  blocked-graphics receipt and F0886–F0905 ownership table have no runtime
+  consumer and now compile only into their focused tests. Production continues
+  through the verified archive/decoder path rather than treating a blocked
+  receipt or an ownership string as graphics material.

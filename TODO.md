@@ -92,6 +92,9 @@
   - 2026-07-31: F0440/F0902 startup facts are test-only. The live title path
     must obtain decompressed member sizes, FTL pixels and palette from its
     authenticated source binding rather than receipt metadata.
+  - 2026-07-31: F0474–F0490 and F0886–F0905 source tables are test-only;
+    runtime retains only the real graphics archive route, never blocked-receipt
+    bits or ownership strings as a substitute for source material.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
