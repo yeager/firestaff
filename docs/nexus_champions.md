@@ -1,5 +1,20 @@
 # Dungeon Master Nexus V1 — Champion System vs DM1/DM2/CSB
 
+## Source-status boundary
+
+The current `src/nexus/nexus_v1_champions.c` roster is not an authenticated
+Nexus data source. Its names, classes, and statistics are a development
+fixture (the first eight use observed Japanese labels; the remaining entries
+reuse Dungeon Master-era names and inferred values). The supplied European
+Saturn corpus contains `FACE.BIN`, but no admitted champion-record decoder or
+authenticated card/save record that binds those fields.
+
+The 24-slot array is therefore storage capacity, not a verified retail
+roster. Live champion selection, stats, inventory text, and HUD item text
+remain source-blocked until DMWeb format evidence or an authenticated Saturn
+memory-card/runtime capture supplies the record layout and values. Portraits
+alone do not authenticate the corresponding names or statistics.
+
 ## Sources
 - `src/nexus/nexus_v1_champions.c` (full roster + stat definitions)
 - `docs/NEXUS_PLAN.md`
@@ -11,17 +26,17 @@
 
 ## Overview
 
-Nexus's champion system is DM1-based (same classes, same advancement, same
-inventory/spell system) but with **Japanese names and a Japanese-specific
-roster**. It introduces no new classes vs DM1 — the roster is 8 champions
-(active selection from a pool of 24, mirroring DM1's structure).
+The intended Nexus champion system appears DM1-shaped, but the supplied
+corpus does not yet authenticate its champion record layout. The current
+fixture must therefore be treated as implementation scaffolding only; no
+Japanese roster, class/stat table, or 24-entry live pool is source-verified.
 
 | Aspect | DM1 | CSB | DM2 | Nexus |
 |--------|-----|-----|-----|-------|
 | Classes | 3 (Fighter, Wizard, Priest) | 4 (+ Ninja unlockable) | 4 (formalized) | **4 (same as DM2)** |
-| Roster size | 24 | 24 | 24+ | **24** |
+| Roster size | 24 | 24 | 24+ | **Not admitted** |
 | Party size | 4 | 4 | 4 + companions | **4** |
-| Names | Western (Thor, Sara...) | Western | Western | **Japanese (Syra, Leyla...)** |
+| Names | Western (Thor, Sara...) | Western | Western | **Not admitted** |
 | Food/Water | 1500 each | 1500 | 1500 | **1500 each** |
 | Anti-Magic default | 0 | 0 | 0 | **5** |
 | Anti-Fire default | 0 | 0 | 0 | **5** |
@@ -261,8 +276,8 @@ expected of a Saturn title and the Japanese art style. Portraits are used at:
 
 ## Status: SOURCE-LOCKED (Champion Roster)
 
-Champion roster, stats, classes, and init values are from `nexus_v1_champions.c`
-which explicitly lists all 8 champions with their base stats. The DM1 inheritance
-(exact stat formulas, advancement, spell system) is inferred from engine comments
-and DM1 source structure. No byte verification of FACE.BIN portraits or actual
-game data.
+The current roster, stats, classes, and init values in
+`nexus_v1_champions.c` are fixture values and are not source-verified. DM1
+inheritance is a code-structure comparison, not proof of Nexus runtime
+semantics. `FACE.BIN` portrait bytes are authenticated separately, but no
+champion names or statistics are inferred from them.

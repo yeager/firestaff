@@ -24374,4 +24374,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Nexus FONT256 text binding: retail DMWeb map/page header facts are now
   exposed. The remaining gap is proving how page tilemap entries become
   runtime character codes before enabling text rendering.
+- 🔧 Nexus champion roster provenance: `nexus_v1_champions.c` still contains a
+  24-entry development fixture, including DM1-derived/inferred rows. Bind
+  actual Saturn champion records from an authenticated memory-card/runtime
+  capture or a DMWeb format reference, then replace the fixture and update
+  the startup menu, FACE mapping, save schema and HUD text together. Until
+  then, do not present the fixture as a verified retail roster.
 # Theron V2 HUD widget pixels remain blocked in production: the manifest parser is fixture-only and the runtime now fails closed until all seven slots resolve to decoded Track 02 source assets.
