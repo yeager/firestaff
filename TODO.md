@@ -20,6 +20,10 @@
   colour into a source-bound value; only the source INIT/runtime bridge may
   supply the logical colour, and the active original interface palette remains
   mandatory before bars draw.
+  **2026-07-31 update:** the obsolete caller-authored DM2 companion API now
+  rejects rather than fabricating a name, health, combat values, loyalty or
+  AI behaviour. A future companion route must bind the live DB creature,
+  CAII/CCM, inventory and dialogue records before it can populate state.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

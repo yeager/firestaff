@@ -15985,6 +15985,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_shop_pc34_compat
     )
 
+    add_executable(test_dm2_v1_companion_source_gate
+        tests/test_dm2_v1_companion_source_gate.c
+        src/dm2/dm2_v1_companion.c
+    )
+    target_include_directories(test_dm2_v1_companion_source_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_companion_source_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_companion_source_gate
+        COMMAND test_dm2_v1_companion_source_gate
+    )
+
     add_executable(firestaff_dm2_v1_shop_probe
         probes/dm2/firestaff_dm2_v1_shop_probe.c
         src/dm2/dm2_v1_shop.c

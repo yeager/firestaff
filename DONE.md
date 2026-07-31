@@ -45835,3 +45835,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   is an advertised no-op anymore. Verification: `firestaff --menu --duration
   0 --no-vsync --fullscreen` exits successfully with SDL's dummy driver, and
   the direct-launch default-options gate covers the unset override state.
+- ✅ 2026-07-31 DM2 companion fixture closure: `dm2_v1_companion_add()` no
+  longer constructs an NPC from caller-provided name and combat values or
+  seeds loyalty/AI defaults. The compatibility API now rejects without
+  changing state until a live DB creature plus CAII/CCM, inventory and
+  dialogue ownership is imported. Verification:
+  `test_dm2_v1_companion_source_gate` 6/6 passes.
