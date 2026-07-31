@@ -46483,3 +46483,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   public wrapper path for unpaletted/synthetic HUD pixels; Saturn VDP
   placement remains a separate no-draw gate. Verification: Nexus startup-media
   and FACE real-data tests pass against `/Users/bosse/.firestaff/data/nexus`.
+
+- ✅ 2026-07-31 DM1 timeline-dispatch stability re-verification: the former
+  F0242/F0248/F0190/F0249 assert-crash cluster is stable on current main.
+  The seven documented CTests pass once and in ten consecutive repetitions
+  each (70/70): square-state dispatch, three F0248 launchers, fake-wall
+  group deferral, and both F0190 killed-all handoffs. This closes only the
+  stale crash report, not the broader original-runtime or pixel-parity work.
