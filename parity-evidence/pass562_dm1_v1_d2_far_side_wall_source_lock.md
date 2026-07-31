@@ -1,6 +1,6 @@
 # Pass562 DM1 V1 D2 far-side wall source lock
 
-Status: passed
+Status: failed
 
 Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cases draw the paired native/parity wallset into C707/C708 and return, while teleporter cases draw only the matching field zone.
 
@@ -50,8 +50,8 @@ Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cas
   - line 755: DM1_PC34_ZONE_WALL_D2R2
   - line 755: "6893"
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4213-4213)
-  - line 4213: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
+- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4213-4213)
+  - missing: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
 
 ## Verification
 
@@ -73,7 +73,7 @@ PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_ga
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py --check-only: rc=1
 ~~~
-PASS pass562 check-only
+FAIL pass562 check-only: firestaff-source-evidence-string
 ~~~

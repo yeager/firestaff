@@ -37,8 +37,8 @@ Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front 
   - line 1355: door_front_occlusion.d1l_side_door_front_spec
 
 - PASS firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 4204: DUNVIEW.C:7493-7536
-  - line 4205: DUNVIEW.C:7661-7704
+  - line 4218: DUNVIEW.C:7493-7536
+  - line 4219: DUNVIEW.C:7661-7704
 
 ## Verification
 

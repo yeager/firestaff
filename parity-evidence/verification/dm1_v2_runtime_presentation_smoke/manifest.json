@@ -1,7 +1,7 @@
 {
   "data_dir": "/Users/bosse/.firestaff/data/dm1",
   "firestaff": "/Volumes/Extern-disk/firestaff-claude/build/firestaff",
-  "generated_at": "2026-07-28T12:24:07.137736+00:00",
+  "generated_at": "2026-07-30T09:01:15.330075+00:00",
   "modes": [
     {
       "command": {
@@ -16,7 +16,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260728-142412.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v20_filtered_presented/firestaff-presented-20260728-142412.bmp",
+        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260730-110122.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v20_filtered_presented/firestaff-presented-20260730-110122.bmp",
         "stdout": ""
       },
       "mode": {
@@ -28,7 +28,7 @@
       "presented_screenshots": [
         {
           "height": 540,
-          "name": "firestaff-presented-20260728-142412.bmp",
+          "name": "firestaff-presented-20260730-110122.bmp",
           "sha256": "90b6913fa6d9db1182a0032148cfb7d7950e96b151bfa0b0e9270e474035e080",
           "size": 1555254,
           "width": 960
@@ -36,7 +36,7 @@
       ],
       "probe": {
         "active": 1,
-        "gameTick": 25,
+        "gameTick": 26,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -74,7 +74,7 @@
       "screenshots": [
         {
           "height": 200,
-          "name": "firestaff-20260728-142412.bmp",
+          "name": "firestaff-20260730-110122.bmp",
           "sha256": "ae91d17be47ba204a17a8a2cb8b0caf59a8cadbdccde5603f0757b800f7e68bb",
           "size": 192054,
           "width": 320
@@ -94,7 +94,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260728-142417.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v21_upscaled_presented/firestaff-presented-20260728-142417.bmp",
+        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260730-110128.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v21_upscaled_presented/firestaff-presented-20260730-110128.bmp",
         "stdout": ""
       },
       "mode": {
@@ -106,7 +106,7 @@
       "presented_screenshots": [
         {
           "height": 540,
-          "name": "firestaff-presented-20260728-142417.bmp",
+          "name": "firestaff-presented-20260730-110128.bmp",
           "sha256": "76ad5b308143a138ee0b5162ac7070f840f16a9dda3c0dd0e7f616e1066461b3",
           "size": 1555254,
           "width": 960
@@ -114,7 +114,7 @@
       ],
       "probe": {
         "active": 1,
-        "gameTick": 26,
+        "gameTick": 27,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -152,7 +152,7 @@
       "screenshots": [
         {
           "height": 200,
-          "name": "firestaff-20260728-142417.bmp",
+          "name": "firestaff-20260730-110128.bmp",
           "sha256": "ae91d17be47ba204a17a8a2cb8b0caf59a8cadbdccde5603f0757b800f7e68bb",
           "size": 192054,
           "width": 320

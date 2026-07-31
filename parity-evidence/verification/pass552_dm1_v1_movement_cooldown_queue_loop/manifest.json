@@ -1,9 +1,9 @@
 {
   "schema": "firestaff.parity.pass552_dm1_v1_movement_cooldown_queue_loop.v1",
   "status": "PASS552_DM1_V1_MOVEMENT_COOLDOWN_QUEUE_LOOP_LOCKED",
-  "timestampUtc": "2026-07-28T12:28:28.098910+00:00",
+  "timestampUtc": "2026-07-30T09:09:51.456352+00:00",
   "branch": "main",
-  "head": "42c5ad775e9be8cd780a0c0cbd2c4e7d989b17ba",
+  "head": "48fcbc1dec0b944a8df004b523f3a2b52117036b",
   "worktree": "/Volumes/Extern-disk/firestaff-claude",
   "scope": "DM1 V1 PC-34 movement cooldown tick order and queued-step release",
   "primarySourceAudit": {

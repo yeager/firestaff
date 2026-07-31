@@ -17,26 +17,29 @@
     },
     {
       "marker": "m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
-      "offset": 1443
+      "offset": -1
     },
     {
       "marker": "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 3790
+      "offset": 4118
     },
     {
       "marker": "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 21395
+      "offset": 21723
     },
     {
       "marker": "if (state->presentationMode == M12_PRESENTATION_V22_MODERN)",
-      "offset": 21954
+      "offset": 22282
     },
     {
       "marker": "(void)m11_v22_inplace_render_pass(framebuffer,",
-      "offset": 22228
+      "offset": 22648
     }
   ],
-  "errors": [],
+  "errors": [
+    "m11_game_view.c missing marker: m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);",
+    "missing ordered marker: m11_v22_shape_cache_update((int)state->world.party.direction, raw_squares);"
+  ],
   "firestaffAnchors": {
     "boot": "src/dm1v2/dm1_v2_boot_pc34.c",
     "cellRects": "src/dm1v2/m11_v22_cell_rects_pc34.c",
@@ -52,5 +55,5 @@
   ],
   "redmcsbAnchor": "~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
   "scope": "DM1 V2.2 M11 in-place modern-art handoff source-lock",
-  "status": "passed"
+  "status": "failed"
 }

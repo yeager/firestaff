@@ -1,9 +1,9 @@
 {
   "schema": "firestaff.parity.pass423_dm1_v1_input_command_movement_pipeline_source_lock.v1",
-  "timestampUtc": "2026-07-28T12:27:16.939086+00:00",
+  "timestampUtc": "2026-07-30T09:05:25.509707+00:00",
   "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED",
   "branch": "main",
-  "head": "42c5ad775e9be8cd780a0c0cbd2c4e7d989b17ba",
+  "head": "48fcbc1dec0b944a8df004b523f3a2b52117036b",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "PC-34 raw input -> command enqueue -> F0380 gate/dequeue -> F0365/F0366 turn/move dispatch",
   "sourceAudit": [
@@ -117,7 +117,7 @@
         "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat"
       ],
       "returncode": 0,
-      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1275: dm1_v1_input_command_queue_pc34_compat\n1/3 Test #1275: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.01 sec\n    Start 1284: dm1_v1_movement_command_core_pc34_compat\n2/3 Test #1284: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.01 sec\n    Start 1427: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/3 Test #1427: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.01 sec\n\n100% tests passed out of 3\n\nTotal Test time (real) =   0.08 sec\n"
+      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1283: dm1_v1_input_command_queue_pc34_compat\n1/3 Test #1283: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.00 sec\n    Start 1292: dm1_v1_movement_command_core_pc34_compat\n2/3 Test #1292: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.00 sec\n    Start 1435: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/3 Test #1435: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n\n100% tests passed out of 3\n\nTotal Test time (real) =   0.05 sec\n"
     },
     {
       "command": [

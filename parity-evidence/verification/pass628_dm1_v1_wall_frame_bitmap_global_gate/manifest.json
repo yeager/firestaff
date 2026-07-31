@@ -30,7 +30,7 @@
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "csb-back-null-guard",
       "needle": "if (!bm_base) return;",
-      "status": "PASS"
+      "status": "FAIL"
     },
     {
       "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
@@ -213,8 +213,8 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass628_dm1_v1_wall_frame_bitmap_global_gate.v1",
-  "status": "passed",
-  "statusToken": "PASS628_DM1_V1_WALL_FRAME_BITMAP_GLOBAL_GUARDED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS628_DM1_V1_WALL_FRAME_BITMAP_GLOBAL_GATE",
   "verificationRuns": [
     {
       "command": [
@@ -230,9 +230,9 @@
         "/Volumes/Extern-disk/firestaff-claude/tools/verify_pass628_dm1_v1_wall_frame_bitmap_global_gate.py",
         "--check-only"
       ],
-      "outputTail": "PASS pass628 check-only",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL pass628 check-only: csb-back-null-guard",
+      "passed": false,
+      "returncode": 1
     }
   ]
 }

@@ -1,6 +1,6 @@
 # Pass561 DM1 V1 far door-front source lock
 
-Status: passed
+Status: failed
 
 Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far door-front order: rear F0115 pass, far F0111 door, then front F0115 pass.
 
@@ -35,9 +35,7 @@ Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far doo
   - line 1305: DM1_VIEW_SQUARE_D3R2, "6337"
   - line 1317: door_front_occlusion_spec_count(), 11
 
-- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4197-4198)
-  - line 4197: DUNVIEW.C:6270-6286 D3L2 far door-front occlusion
-  - line 4198: DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion
+- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4197-4198)
 
 ## Verification
 
@@ -59,7 +57,7 @@ PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_ga
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=1
 ~~~
-PASS pass561 check-only
+FAIL pass561 check-only: firestaff-source-evidence-string
 ~~~

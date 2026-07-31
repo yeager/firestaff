@@ -17,14 +17,14 @@
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_count",
-      "line": 2508,
+      "line": 2524,
       "needle": "dm1_viewport_3d_wall_draw_spec_count",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_by_square",
-      "line": 2033,
+      "line": 2049,
       "needle": "dm1_viewport_3d_get_wall_draw_spec_for_square",
       "ok": true
     },
@@ -93,7 +93,7 @@
     ],
     "ok": true,
     "returncode": 0,
-    "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1448: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1448: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.00 sec\n    Start 2136: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2136: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.05 sec\n    Start 2154: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2154: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.07 sec\n    Start 2171: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2171: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.04 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   0.20 sec\n"
+    "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1456: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1456: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    1.45 sec\n    Start 2148: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2148: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.04 sec\n    Start 2166: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2166: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.06 sec\n    Start 2183: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2183: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.03 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   1.62 sec\n"
   },
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
   "problems": [],
@@ -169,5 +169,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
-  "timestampUtc": "2026-07-28T12:28:15.513759+00:00"
+  "timestampUtc": "2026-07-30T09:08:24.338811+00:00"
 }

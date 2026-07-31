@@ -47,21 +47,15 @@
       "status": "PASS"
     },
     {
-      "hits": [
-        {
-          "line": 4197,
-          "needle": "DUNVIEW.C:6270-6286 D3L2 far door-front occlusion"
-        },
-        {
-          "line": 4198,
-          "needle": "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"
-        }
-      ],
+      "hits": [],
       "id": "firestaff-source-evidence-string",
       "lines": "4197-4198",
-      "missing": [],
+      "missing": [
+        "DUNVIEW.C:6270-6286 D3L2 far door-front occlusion",
+        "DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion"
+      ],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "PASS"
+      "status": "FAIL"
     }
   ],
   "nonClaims": [
@@ -140,8 +134,8 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass561_dm1_v1_far_door_front_source_lock.v1",
-  "status": "passed",
-  "statusToken": "PASS561_DM1_V1_FAR_DOOR_FRONT_SOURCE_LOCKED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS561_DM1_V1_FAR_DOOR_FRONT_SOURCE_LOCK",
   "verificationRuns": [
     {
       "command": [
@@ -157,9 +151,9 @@
         "/Volumes/Extern-disk/firestaff-claude/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "PASS pass561 check-only",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "FAIL pass561 check-only: firestaff-source-evidence-string",
+      "passed": false,
+      "returncode": 1
     }
   ]
 }

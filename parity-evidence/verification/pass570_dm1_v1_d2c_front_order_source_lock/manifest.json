@@ -152,19 +152,19 @@
     {
       "hits": [
         {
-          "line": 4203,
+          "line": 4217,
           "needle": "DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass"
         },
         {
-          "line": 4206,
+          "line": 4220,
           "needle": "DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730"
         },
         {
-          "line": 4207,
+          "line": 4221,
           "needle": "DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw"
         },
         {
-          "line": 4208,
+          "line": 4222,
           "needle": "DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay"
         }
       ],
