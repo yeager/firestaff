@@ -1,4 +1,5 @@
 #include "nexus_v1_face_bin.h"
+#include "nexus_v1_ui_surfaces.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -82,6 +83,36 @@ static int test_real_decode(void) {
     if (result.failed_count != 0) {
         printf("  FAIL real_decode: %d failures\n", result.failed_count);
         free(data); return 1;
+    }
+
+    {
+        Nexus_UI_Manager ui;
+        nexus_ui_manager_init(&ui);
+        for (i = 0; i < 20; ++i) {
+            Nexus_UI_FaceCompactRecordDescriptor descriptor;
+            Nexus_UI_Surface *surface;
+            if (!nexus_ui_face_compact_record_descriptor(data, size, i,
+                                                         &descriptor) ||
+                nexus_ui_load_face_record(
+                    &ui, data + descriptor.prefix_offset,
+                    (int)descriptor.prefix_size + (int)descriptor.prs3_size,
+                    i, 56, 56, NULL) <= 0) {
+                printf("  FAIL startup_loader portrait %d\n", i);
+                nexus_ui_manager_free(&ui);
+                free(data);
+                return 1;
+            }
+            surface = &ui.surfaces[NEXUS_SURFACE_FACE0 + i];
+            if (!surface->data || !surface->source_palette_loaded ||
+                surface->pal_count != 64) {
+                printf("  FAIL startup_loader palette %d\n", i);
+                nexus_ui_manager_free(&ui);
+                free(data);
+                return 1;
+            }
+        }
+        printf("  PASS startup_loader: 20 retail palettes retained\n");
+        nexus_ui_manager_free(&ui);
     }
 
     printf("  PASS real_decode: all 20 portraits decoded\n");

@@ -1140,11 +1140,17 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     /* DMWeb DecodeFACEBIN: each 56x56 frame owns 64 big-endian BGR555
      * words (128 bytes), followed by an aligned PRS3 record. Older callers
      * may still provide the PRS3 span alone, so retain that bounded form. */
-    if (record_size >= 128 + NEXUS_UI_FACE_PRS3_HEADER_BYTES &&
-        memcmp(record_data + 128, "PRS3", 4) == 0) {
-        prs3_data = record_data + 128;
-        prs3_size = record_size - 128;
-        has_source_palette = 1;
+    if (record_size >= 128 + NEXUS_UI_FACE_PRS3_HEADER_BYTES) {
+        int candidate;
+        for (candidate = 128; candidate <= 136; ++candidate) {
+            if (candidate + NEXUS_UI_FACE_PRS3_HEADER_BYTES <= record_size &&
+                memcmp(record_data + candidate, "PRS3", 4) == 0) {
+                prs3_data = record_data + candidate;
+                prs3_size = record_size - candidate;
+                has_source_palette = 1;
+                break;
+            }
+        }
     }
     expand_result = nexus_ui_expand_face_record_48x48(prs3_data,
                                                       prs3_size,
