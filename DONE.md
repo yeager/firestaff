@@ -45405,3 +45405,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm2_v1_hud_hero_type_gdat_route`,
   `test_dm2_v1_lighting_falloff_boundary`, and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass.
+
+- ✅ 2026-07-31 DM1 original PC34 backed corpus roundtrip: added the
+  fixture-free `dm1_v1_original_save_pc34_backed_corpus_roundtrip` target.
+  It enumerates only classifier-qualified operator-staged PC34 saves and
+  drives each through real `DUNGEON.DAT` backing, F0435 import, native
+  quicksave, F0433 PC34 export, and a second F0435 import. It verifies party
+  pose, game tick, C03/C04 timeline count, and active-group ownership without
+  generating or promoting test saves. Verification: the two current DOSBox
+  saves in the configured corpus pass against the installed original DM1
+  data. Source: ReDMCSB `LOADSAVE.C F0433/F0435` and DMweb Saved Game Files.

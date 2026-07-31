@@ -23694,11 +23694,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     authenticated local `DUNGEON.DAT`. Native quicksaves retain the exact
     original C03/C04 receipt and, where present, the untouched F0435 dungeon
     tail in a private sidecar; F0433 appends that source-owned tail rather
-    than reconstructing it. `dm1_v1_original_save_pc34_tail_less_backed_roundtrip`
-    exercises this route for each selected save. The unbacked corpus preflight
-    deliberately remains open: a live C03/C04 save must never be certified
-    without its matching dungeon backing. Reference: ReDMCSB `LOADSAVE.C`
-    F0433/F0435 and DMweb saved-game file-format documentation.
+    than reconstructing it. The fixture-free
+    `dm1_v1_original_save_pc34_backed_corpus_roundtrip` now drives every
+    explicitly staged PC34 candidate through this route against the matching
+    original `DUNGEON.DAT`; the current operator-owned corpus passes both
+    saves. The unbacked corpus preflight deliberately remains diagnostic-only:
+    a live C03/C04 save must never be certified without its matching dungeon
+    backing. Reference: ReDMCSB `LOADSAVE.C` F0433/F0435 and DMweb
+    saved-game file-format documentation.
   - 2026-07-31 startup-census update: when an operator explicitly configures
     `FIRESTAFF_DM1_PC34_SAVE_CORPUS` or
     `FIRESTAFF_DM1_ORIGINAL_SAVE_DIR`, startup now publishes its classified
