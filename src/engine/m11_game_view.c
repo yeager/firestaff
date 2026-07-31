@@ -46091,13 +46091,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_d0c_deferred_explosion_pass(state, framebuffer,
                                              framebufferWidth, framebufferHeight);
 
-    /* The Firestaff procedural corridor/trapezoid renderer is not DM1
-     * DRAWVIEW output.  It stays available for non-CSB diagnostics, but a
-     * CSB source session must never draw these invented wall panels over
-     * source-owned material, even when the debug HUD is enabled.  The
-     * remaining DM1 diagnostic route is to be replaced with DUNVIEW.C wall
-     * zones C702..C717 and wall-set entries 93..107. */
-    if (state->showDebugHUD && !m11_source_is_csb(state)) {
+    /* The Firestaff procedural corridor/trapezoid renderer is not source
+     * DRAWVIEW output.  DM1 and CSB already composed their original material
+     * above, so debug HUD must add diagnostics without repainting invented
+     * wall panels over that frame. */
+    if (state->showDebugHUD && !m11_source_is_csb(state) &&
+        !m11_is_dm1_source_kind(state->sourceKind)) {
         for (depth = 0; depth < 3; ++depth) {
             m11_draw_corridor_frame(framebuffer, framebufferWidth, framebufferHeight,
                                     &frames[depth], &frames[depth + 1], depth);
@@ -46163,11 +46162,12 @@ static void m11_draw_viewport(const M11_GameViewState* state,
 
     /* Debug/prototype only: the old Firestaff path tiled GRAPHICS.DAT
      * wall/floor strips across procedural trapezoids.  That creates the
-     * noisy, speckled "not DM1" viewport Daniel called out.  CSB stays
-     * source-owned even in debug mode; non-CSB V1 must wait for
-     * source-bound DRAWVIEW-style wall/floor placement instead. */
+     * noisy, speckled "not DM1" viewport Daniel called out. Both DM1 and CSB
+     * stay source-owned even in debug mode; non-source diagnostics alone may
+     * use this visual aid. */
     if (state->assetsAvailable && state->showDebugHUD &&
-        !m11_source_is_csb(state)) {
+        !m11_source_is_csb(state) &&
+        !m11_is_dm1_source_kind(state->sourceKind)) {
         int d;
         int mapWallSet;
         int mapFloorSet;

@@ -526,6 +526,13 @@ diagnostic; it must not silently fall back to a generated visual.
   V2.1 -> V2.0 -> V1 presentation chain. Focused V2.2 material, runtime and
   source-owned screenshot gates pass.
 
+- **DM1-ORIGINAL-REPLACE-005:** Closed 2026-07-31. The diagnostic HUD no
+  longer repaints a real DM1 V1 `GRAPHICS.DAT`/`DUNGEON.DAT` viewport with the
+  old procedural corridor, trapezoid, or tiled-strip renderer. DM1 and CSB
+  source sessions retain their composed source-owned frame; the diagnostic
+  renderer remains available only for non-source tooling. Verification:
+  `firestaff_m11` and `test_m11_dm1_runtime_source_capture_receipt` pass.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less
