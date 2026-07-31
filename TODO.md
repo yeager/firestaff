@@ -941,13 +941,16 @@ diagnostic; it must not silently fall back to a generated visual.
 - **THERON-ORIGINAL-REPLACE-002:** Replace item-as-creature and direction-bar
   viewport placeholders only after the HuC6280 CD-read table binds their
   exact Track 02 records.  No inferred object graphics or palette may ship.
-- **NEXUS-ORIGINAL-REPLACE-001:** Replace the procedural DGN dungeon fallback
-  with Structure1C/Structure1F face/mesh data from the supplied `LEV*.DGN`
-  corpus.  Keep the route fail-closed until real geometry, face order and
-  texture references are decoded.
-- **NEXUS-ORIGINAL-REPLACE-002:** Replace the synthetic BPX3/PRS3 MENU.BPK
-  layout with a verified decoder for the supplied Saturn `MENU.BPK` package
-  and its real palette/pixel records.  Do not display a guessed title surface.
+- **NEXUS-ORIGINAL-REPLACE-001:** The supplied `LEV*.DGN` Structure1B/3
+  geometry, face order and texture selectors are now parser-verified across
+  all 16 levels.  The remaining gap is the authenticated Saturn VDP1/VDP2
+  textured submission and palette ownership; until those are decoded the
+  runtime viewport remains fail-closed and never uses the procedural fallback.
+- **NEXUS-ORIGINAL-REPLACE-002:** DMWeb's LSB-first PRS3 decoder is now
+  verified against all 162 PRS3-bearing entries in the supplied `MENU.BPK`.
+  The remaining gap is Saturn pixel/mode interpretation plus authenticated
+  palette/VDP1 placement; the renderer therefore does not display guessed
+  menu pixels.
 - **ALL-ORIGINAL-REPLACE-001:** Audit startup, title, entrance, HUD and
   dungeon runtime paths for placeholder pixels on every supported game before
   release.  Where matching original data exists under `.firestaff/data`, bind
