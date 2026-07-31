@@ -45584,3 +45584,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-31 CSB fabricated D1L2/D1R2 F0115 removal: removed the
   contract-only thing-pass fixture and CTest. Its “D1L2/D1R2” names were not
   ReDMCSB PC3.4 squares and it had no production consumer or real-data route.
+- ✅ 2026-07-31 CSB fabricated D2L2/D2R2 partly-open door removal: removed
+  the unconsumed F0111 contract route. ReDMCSB F0678/F0679 supplies D2L2/D2R2
+  wall/teleporter handling, whose wall cases return before F0111; the removed
+  route had neither a source material record nor a production consumer.

@@ -492,6 +492,8 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D2L2/D2R2 partly-open follow-up:** the remaining C10 fixture
   writer is removed. The D2 panel clip and ReDMCSB transparency metadata stay
   available, but no unbound input can write a viewport.
+  **2026-07-31 D2L2/D2R2 F0111 door follow-up:** removed the fabricated
+  partly-open door route. ReDMCSB's D2L2/D2R2 wall cases return before F0111.
   **2026-07-31 D2L/D2R wall follow-up:** the C10 wall-frame fixture writer is
   removed. ReDMCSB frame dimensions, source placement and transparency
   metadata remain available without a synthetic viewport surface.
