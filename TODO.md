@@ -324,6 +324,9 @@
   spell/skill-namnuppslagen är också test-skopade. Inga texter får nå
   produktion från lokala konstanttabeller innan DM2:s riktiga text- eller
   GDAT-källa är kopplad.
+  **2026-07-31 follow-up:** den oanslutna champion-statbryggan är test-skopad.
+  Den ska inte omvandla generiska värden till HUD-data förrän en levande
+  champion/session- och palettkvitto-kedja äger hela vägen.
   **2026-07-31 update:** the unconnected HUD panel-routing and survey helper
   modules now compile only in their focused tests. M11 and the production DM2
   archive contain no accidental HUD route for those standalone receipts; a

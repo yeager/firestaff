@@ -47474,3 +47474,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   remain available, while champion metadata stays empty until source records
   are decoded. Verification: real-asset receipt 311 passed with 2 expected
   ISO skips; startup-flow and save/resume probes passed.
+- ✅ 2026-07-31 DM2 champion-stat bridge isolation: removed the unattached
+  generic V1-to-V2 champion percentage bridge from the production V1 archive.
+  It had no M11 consumer or authenticated session/palette handoff. Its focused
+  regression remains explicit; live HUD stays on the source-owned GDAT route.
+  Verification: production link, champion-bridge regression, real-data M11
+  startup gate and archive/executable-symbol checks.
