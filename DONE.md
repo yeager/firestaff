@@ -46002,3 +46002,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   SKProject `SKWIN/c_tim_proc.cpp::DM2_PROCEED_TIMERS`,
   `DM2_PROCESS_TIMER_19`, `DM2_STEP_MISSILE`, and
   `DM2_ALLOC_NEW_CREATURE`.
+- ✅ 2026-07-31 DM2 CAII mode-owner boundary: the compatibility setter for
+  CAII byte `0x1a` now always rejects caller-authored slot/mode values. It had
+  existed solely to manufacture the source's `0x13` delete branch in a test;
+  runtime mode writes must instead come from the original CCM/record owner.
+  The CAII free regression now proves that an arbitrary mode cannot trigger
+  deletion or an invoke-message side effect. Source: SKProject
+  `SKWIN/c_1c9a.cpp:5921-5929`.

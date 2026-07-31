@@ -45,6 +45,8 @@
   bodies likewise lacked a complete saved-session owner. These timer types
   are now acknowledged without mutation until `DM2_PROCEED_TIMERS` can bind
   the original hero records, timer payload, DB14/DB4 links and GDAT rows.
+  The arbitrary public CAII mode-byte setter is closed as well: only the
+  original CCM/record writer may select a delete mode for a live creature.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

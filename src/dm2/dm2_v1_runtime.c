@@ -5439,15 +5439,13 @@ int dm2_v1_runtime_caii_alloc_count(void)
 
 int dm2_v1_runtime_caii_set_slot_mode_byte(int slot_index, int value)
 {
-    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-
-    if (!rt->caii_ready || slot_index < 0 ||
-        slot_index >= rt->caii.capacity || value < 0 || value > 0xff) {
-        return 0;
-    }
-    rt->caii.slots[(size_t)slot_index * DM2_V1_CAII_SLOT_SIZE + 0x1a] =
-        (uint8_t)value;
-    return 1;
+    (void)slot_index;
+    (void)value;
+    /* The source writes CAII byte@1a only from named CCM/record owners
+     * (SKProject c_1c9a.cpp:5921-5929).  This old public setter accepted an
+     * arbitrary slot and mode solely to manufacture the 0x13 delete branch
+     * in a fixture.  A real session must never mutate CAII that way. */
+    return 0;
 }
 
 int dm2_v1_runtime_last_delete_full_receipt(

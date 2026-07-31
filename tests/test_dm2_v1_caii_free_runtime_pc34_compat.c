@@ -220,40 +220,22 @@ static void test_runtime_caii_free_wired_full_composition(void)
     CHECK(dm2_v1_runtime_alloc_caii_at(0, 0, &alloc) == 1 &&
               alloc.slot_index == 0,
           "activation allocates slot 0 + first timer");
-    CHECK(dm2_v1_runtime_caii_set_slot_mode_byte(0, 0x13) == 1,
-          "slot mode byte set to the 0x13 dying mode");
+    CHECK(dm2_v1_runtime_caii_set_slot_mode_byte(0, 0x13) == 0,
+          "arbitrary CAII mode mutation is rejected without a CCM owner");
 
     memset(&free_rc, 0, sizeof(free_rc));
     CHECK(dm2_v1_runtime_free_caii_slot(0, &free_rc) == 1 &&
-              free_rc.record_delete_flag == 1 &&
-              free_rc.record_delete_branch == 1,
-          "flag + pending timer takes the 0fcb branch data-backed");
-    CHECK(free_rc.record_delete_full_ran == 1 &&
-              free_rc.record_delete_full_completed == 1 &&
-              free_rc.record_delete_head_resolved == 0,
-          "the production-wired COMPLETE composition ran (no head)");
+              free_rc.record_delete_flag == 0 &&
+              free_rc.record_delete_branch == 0,
+          "unowned 0x13 delete branch cannot be manufactured by a fixture");
     memset(&full, 0, sizeof(full));
-    CHECK(dm2_v1_runtime_last_delete_full_receipt(&full) == 1 &&
-              full.completed == 1 &&
-              full.creature_type == 0x0C &&
-              full.ai_bit0_clear == 1,
-          "composition resolved the creature and opened the gate");
-    CHECK(full.invoke_message_queued == 1 &&
-              full.invoke_ticket > 0u,
-          "map-swap/DM2_INVOKE_MESSAGE queued through the boundary");
-    CHECK(full.cut_performed == 1 &&
-              full.cut_head_rewritten == 1 &&
-              full.drop_ran == 1 &&
-              full.dballoc_cleanup_unbound == 1 &&
-              full.dealloc_performed == 1,
-          "cut + drop + dealloc bound end-to-end, 0247 receipted");
+    CHECK(dm2_v1_runtime_last_delete_full_receipt(&full) == 0,
+          "no full-delete composition runs without a source-owned mode write");
 
-    /* The freed slot leaves only the queued invoke timer; the next tick
-     * dispatches no think timer for the deleted creature. */
     dm2_v1_runtime_tick();
     CHECK(dm2_v1_runtime_think_creature_receipt(&think) == 1 &&
               think.think_timers == 0,
-          "no think timer dispatches after the full delete");
+          "no think timer dispatches after the source-owned slot release");
 
     dm2_v1_creature_reset_ai_table();
 }
