@@ -15,6 +15,7 @@ int main(void) {
     Nexus_V1_ChampionPool pool;
     Nexus_V1_ItemIbsBank bank;
     Nexus_V1_RlowfixText text;
+    Nexus_V1_RlowfixTabl tabl;
     if (!f) { puts("SKIP: local Nexus RLOWFIX.BIN not present"); return 0; }
     if (fseek(f, 0, SEEK_END) != 0) return 1;
     size = ftell(f);
@@ -25,6 +26,9 @@ int main(void) {
     if (!nexus_v1_champions_init_from_rlowfix(&pool, bytes, (size_t)size)) return 1;
     if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size, 0xa374, &text) ||
         text.resource_index != 0 || text.string_count != 449) return 1;
+    if (!nexus_v1_rlowfix_tabl_parse(bytes, (size_t)size, 0x118d4, &tabl) ||
+        tabl.entry_count != 216 || tabl.code[0] != 0x05 ||
+        tabl.code[1] != 0xe16e) return 1;
     {
         const uint8_t *span;
         size_t span_size;
