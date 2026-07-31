@@ -1200,34 +1200,19 @@ int main(void) {
                 "M11 DM2 no-save startup menu blocks idle runtime tick");
     expect_true(view.dm2State.startup_menu_active == 1 &&
                 view.dm2State.tick_count == 0 &&
-                view.dm2State.startup_title_animation_tick == 1 &&
+                view.dm2State.startup_title_animation_tick == 0 &&
                 dm2_v1_runtime_get_tick_count() == 0,
-                "M11 DM2 no-save startup menu advances title animation but keeps runtime tick frozen");
+                "M11 DM2 static startup menu keeps runtime tick frozen");
     memset(&boot_receipt, 0, sizeof(boot_receipt));
     expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
                     boot_receipt.startupActive == 1 &&
                     boot_receipt.startupTitleFrame == 0 &&
-                    boot_receipt.startupTitleFrameMax == 7,
-                "M11 DM2 startup title animation remains on frame 0 before frame-duration boundary");
-    while (view.dm2State.startup_title_animation_tick < 6) {
-        (void)M11_GameView_AdvanceIdleTick(&view);
-    }
-    memset(&boot_receipt, 0, sizeof(boot_receipt));
-    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
-                    boot_receipt.startupActive == 1 &&
-                    boot_receipt.startupTitleFrame == 1 &&
-                    boot_receipt.startupTitleFrameMax == 7,
-                "M11 DM2 startup title animation advances to frame 1 at the source duration boundary");
-    while (view.dm2State.startup_title_animation_tick < 47) {
-        (void)M11_GameView_AdvanceIdleTick(&view);
-    }
-    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
-                    boot_receipt.startupTitleFrame == 7 &&
-                    boot_receipt.startupTitleReady == 0,
-                "M11 DM2 startup settles on the original GDAT menu frame");
+                    boot_receipt.startupTitleFrameMax == 0 &&
+                    boot_receipt.startupTitleReady == 1,
+                "M11 DM2 startup menu is immediately static and ready");
     (void)M11_GameView_AdvanceIdleTick(&view);
-    expect_true(view.dm2State.startup_title_animation_tick == 47,
-                "M11 DM2 startup keeps the menu frame instead of invalid tick 48");
+    expect_true(view.dm2State.startup_title_animation_tick == 0,
+                "M11 DM2 startup never manufactures a title tick");
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     if (profile && profile->graphics_dat) {
         DM2_V1_BootRuntimeStartupSnapshot startup_snapshot;
