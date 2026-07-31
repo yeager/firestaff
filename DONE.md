@@ -6,6 +6,22 @@
   `dm1_v2_source_owned_screenshot_probe` and
   `dm1_v2_actual_render_screenshot_probe` pass.
 
+- ✅ 2026-07-31 DM2 M11 SKSave hand ownership: after a decoded session is
+  admitted, M11 explicitly mirrors its original ObjectID hand field into both
+  the runtime and view. This prevents a process-local live-state sidecar from
+  changing the source save's hand identity while retaining that sidecar's
+  verified live dungeon/CCM state. Verification: real-data
+  `test_dm2_v1_m11_startup_profile_gate` passes; `test_dm2_v1_save_load`
+  retains its 25 passing save-codec cases (two existing live-runtime fixture
+  failures remain outside this M11 hand-off change).
+
+- ✅ 2026-07-31 DM2 M11 synthetic-lookalike startup gate: the launcher
+  handoff regression now asserts the scanner's real contract. Filename-only
+  test files may be reported as missing or unverified, but neither result may
+  enter DM2 or allocate a fallback world. Verification:
+  `test_dm2_v1_m11_launcher_handoff_boundary` passes with both the synthetic
+  rejection path and the local hash-verified PC data route.
+
 - ✅ 2026-07-31 DM2 startup credits-owner correction: both logical boot
   title/menu draws now bind the original `TITLE/0/dt07/4` menu surface.
   `TITLE/0/dt07/1` remains metadata for the separate, still-unported

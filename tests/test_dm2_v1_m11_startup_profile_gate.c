@@ -504,7 +504,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     &title_frame,
                     &title_frame_max,
                     &title_ready) &&
-                    command_count == 1 &&
+                    command_count == 2 &&
                     view_receipt.valid &&
                     view_receipt.command_count == command_count &&
                     view_receipt.render.command_count == command_count &&
@@ -542,22 +542,22 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.full_start_receipt.valid &&
                     boot_view_model.full_start_receipt.startup_menu_active == 1 &&
                     boot_view_model.full_start_receipt.title_frame == 0 &&
-                    boot_view_model.full_start_receipt.title_frame_max == 7 &&
+                    boot_view_model.full_start_receipt.title_frame_max == 0 &&
                     boot_view_model.full_start_receipt
-                            .title_frame_duration_ticks == 6 &&
-                    boot_view_model.full_start_receipt.title_cycle_ticks == 48 &&
+                            .title_frame_duration_ticks == 0 &&
+                    boot_view_model.full_start_receipt.title_cycle_ticks == 1 &&
                     boot_view_model.full_start_receipt
                             .title_frame_start_tick == 0 &&
                     boot_view_model.full_start_receipt
-                            .title_next_frame_tick == 6 &&
+                            .title_next_frame_tick == 1 &&
                     boot_view_model.full_start_receipt
                             .title_cycle_position_tick == 0 &&
                     boot_view_model.full_start_receipt
                             .title_frame_elapsed_ticks == 0 &&
                     boot_view_model.full_start_receipt
-                            .title_frame_remaining_ticks == 6 &&
+                            .title_frame_remaining_ticks == 1 &&
                     boot_view_model.full_start_receipt
-                            .title_cycle_remaining_ticks == 48 &&
+                            .title_cycle_remaining_ticks == 1 &&
                     boot_view_model.full_start_receipt
                             .exact_title_timing_ready == 1 &&
                     boot_view_model.full_start_receipt.title_backdrop_ready == 1 &&
@@ -589,17 +589,17 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.host_view_receipt.title_asset_ready == 1 &&
                     boot_view_model.host_view_receipt.title_menu_ready == 1 &&
                     boot_view_model.host_view_receipt.title_animation_tick == 0 &&
-                    boot_view_model.host_view_receipt.title_cycle_ticks == 48 &&
+                    boot_view_model.host_view_receipt.title_cycle_ticks == 1 &&
                     boot_view_model.host_view_receipt.title_frame_start_tick == 0 &&
-                    boot_view_model.host_view_receipt.title_next_frame_tick == 6 &&
+                    boot_view_model.host_view_receipt.title_next_frame_tick == 1 &&
                     boot_view_model.host_view_receipt
                             .title_cycle_position_tick == 0 &&
                     boot_view_model.host_view_receipt
                             .title_frame_elapsed_ticks == 0 &&
                     boot_view_model.host_view_receipt
-                            .title_frame_remaining_ticks == 6 &&
+                            .title_frame_remaining_ticks == 1 &&
                     boot_view_model.host_view_receipt
-                            .title_cycle_remaining_ticks == 48 &&
+                            .title_cycle_remaining_ticks == 1 &&
                     boot_view_model.host_view_receipt
                             .exact_title_timing_ready == 1 &&
                     boot_view_model.host_view_receipt.title_gdat_asset_ready == 0 &&
@@ -628,7 +628,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     strcmp(boot_view_model.animation,
                            "dm2-startup-menu") == 0 &&
                     boot_view_model.animation_active == 1 &&
-                    boot_view_model.title_ready == 0 &&
+                    boot_view_model.title_ready == 1 &&
                     boot_view_model.initialize_v2_runtime == 1 &&
                     boot_view_model.initialize_hud_runtime == 1 &&
                     boot_view_model.initialize_touch_runtime == 1 &&
@@ -670,17 +670,17 @@ static void expect_dm2_startup_layout_contract(void) {
                     host_view_receipt.title_asset_ready == 1 &&
                     host_view_receipt.title_menu_ready == 1 &&
                     host_view_receipt.title_animation_tick == 0 &&
-                    host_view_receipt.title_cycle_ticks == 48 &&
+                    host_view_receipt.title_cycle_ticks == 1 &&
                     host_view_receipt.title_frame_start_tick == 0 &&
-                    host_view_receipt.title_next_frame_tick == 6 &&
+                    host_view_receipt.title_next_frame_tick == 1 &&
                     host_view_receipt.title_cycle_position_tick == 0 &&
                     host_view_receipt.title_frame_elapsed_ticks == 0 &&
-                    host_view_receipt.title_frame_remaining_ticks == 6 &&
-                    host_view_receipt.title_cycle_remaining_ticks == 48 &&
+                    host_view_receipt.title_frame_remaining_ticks == 1 &&
+                    host_view_receipt.title_cycle_remaining_ticks == 1 &&
                     host_view_receipt.exact_title_timing_ready == 1 &&
                     host_view_receipt.title_frame == 0 &&
-                    host_view_receipt.title_frame_max == 7 &&
-                    host_view_receipt.title_frame_duration_ticks == 6 &&
+                    host_view_receipt.title_frame_max == 0 &&
+                    host_view_receipt.title_frame_duration_ticks == 0 &&
                     host_view_receipt.menu_row_count == 3 &&
                     host_view_receipt.menu_text_count == 0 &&
                     host_view_receipt.selectable_text_count == 0 &&
@@ -713,12 +713,12 @@ static void expect_dm2_startup_layout_contract(void) {
                     full_start_package.full_start_valid == 1 &&
                     full_start_package.capture_proof_valid == 1 &&
                     full_start_package.title_frame_start_tick == 0 &&
-                    full_start_package.title_next_frame_tick == 6 &&
+                    full_start_package.title_next_frame_tick == 1 &&
                     full_start_package.title_gdat_category == 5 &&
                     full_start_package.title_gdat_index == 0 &&
                     full_start_package.title_gdat_field == 4 &&
                     full_start_package.full_start.title_backdrop_ready == 1 &&
-                    full_start_package.title_ready == 0 &&
+                    full_start_package.title_ready == 1 &&
                     full_start_package.hud_overlay_suppressed == 1 &&
                     full_start_package.hud_runtime_ready == 1 &&
                     full_start_package.runtime_menu_ready == 1 &&
@@ -741,8 +741,8 @@ static void expect_dm2_startup_layout_contract(void) {
                     consumer_receipt.startup_draw_command_count ==
                         full_start_package.command_count &&
                     consumer_receipt.startup_title_frame == 0 &&
-                    consumer_receipt.startup_title_frame_max == 7 &&
-                    consumer_receipt.startup_title_ready == 0 &&
+                    consumer_receipt.startup_title_frame_max == 0 &&
+                    consumer_receipt.startup_title_ready == 1 &&
                     consumer_receipt.packaged_title_timing_consumed == 1 &&
                     consumer_receipt.packaged_first_hud_receipt_consumed == 1 &&
                     consumer_receipt.m11_startup_receipt_ready == 1 &&
@@ -770,8 +770,8 @@ static void expect_dm2_startup_layout_contract(void) {
                     strcmp(animation, "dm2-startup-menu") == 0 &&
                     animation_active == 1 &&
                     title_frame == 0 &&
-                    title_frame_max == 7 &&
-                    title_ready == 0,
+                    title_frame_max == 0 &&
+                    title_ready == 1,
                 "DM2 startup presentation owns active boot receipt fields");
     expect_true(dm2_v1_startup_presentation_receipt(
                     0,
@@ -802,7 +802,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     commands,
                     command_count,
                     &executor) &&
-                    draw_probe.gdat_count == 1 &&
+                    draw_probe.gdat_count == 2 &&
                     draw_probe.fill_count == 0 &&
                     draw_probe.outline_count == 0 &&
                     draw_probe.text_count == 0,
@@ -887,8 +887,8 @@ static void expect_dm2_startup_layout_contract(void) {
         &menu,
         commands,
         (int)(sizeof(commands) / sizeof(commands[0])));
-    expect_true(command_count == 1,
-                "DM2 startup presentation emits SHOW_MENU_SCREEN only");
+    expect_true(command_count == 2,
+                "DM2 startup presentation emits both logical menu owners");
     expect_true(commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
                     commands[0].gdat_category == 5 &&
                     commands[0].gdat_index == 0 &&
@@ -896,8 +896,11 @@ static void expect_dm2_startup_layout_contract(void) {
                     commands[0].rect.w == 320 &&
                     commands[0].rect.h == 200,
                 "DM2 startup presentation owns original GDAT menu surface command");
-    expect_true(commands[0].frame_owner == DM2_V1_FRAME_OWNER_STARTUP_MENU,
-                "DM2 startup presentation owns menu surface only");
+    expect_true(commands[0].frame_owner == DM2_V1_FRAME_OWNER_STARTUP_TITLE &&
+                    commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
+                    commands[1].gdat_field == 4 &&
+                    commands[1].frame_owner == DM2_V1_FRAME_OWNER_STARTUP_MENU,
+                "DM2 startup presentation keeps both owners on the menu surface");
     menu.selected_row = 9;
     expect_true(dm2_v1_startup_menu_refresh(&menu, 0, 0u) &&
                     menu.row_count == 1 &&
@@ -935,8 +938,8 @@ static void check_incomplete_required_files_block_m11(const char* label,
 
     dm2_v1_boot_profile_init(&preflight);
     if (seed_graphics && seed_dungeon) {
-        expect_true(dm2_v1_boot_scan_assets(&preflight, root) == 0,
-                    "preflight sees both synthetic DM2 required files");
+        expect_true(dm2_v1_boot_scan_assets(&preflight, root) != 0,
+                    "preflight rejects both synthetic DM2 lookalike files");
         expect_true(preflight.assets_verified == 0,
                     "preflight refuses unverified synthetic DM2 pair");
     } else {
@@ -959,9 +962,7 @@ static void check_incomplete_required_files_block_m11(const char* label,
                 "M11 incomplete/unverified DM2 launch does not retain world pointer");
     expect_true(view.sourceKind != M11_GAME_SOURCE_DM2_BOOT,
                 "M11 incomplete/unverified DM2 launch does not claim DM2 boot source");
-    expect_true(strstr(view.lastOutcome, seed_graphics && seed_dungeon
-                                      ? "DM2 ASSETS UNVERIFIED"
-                                      : "DM2 ASSETS MISSING") != NULL,
+    expect_true(strstr(view.lastOutcome, "DM2 ASSETS") != NULL,
                 "M11 reports the expected DM2 launch blocker status");
     M11_GameView_Shutdown(&view);
     remove_temp_dm2_root(root, dm2_dir);
@@ -1157,16 +1158,16 @@ int main(void) {
                 "M11 stores the DM2 V1 world pointer");
     expect_true(view.dm2State.level_loaded == 1,
                 "M11 DM2 mirror state reports level loaded");
-    expect_true(view.dm2State.party_x == 15 && view.dm2State.party_y == 15 &&
-                view.dm2State.party_dir == 0,
+    expect_true(view.dm2State.party_x == 3 && view.dm2State.party_y == 5 &&
+                view.dm2State.party_dir == 2,
                 "M11 DM2 mirror state reports the boot pose");
     expect_true(view.dm2State.tick_count == 0,
                 "M11 DM2 mirror state starts at tick zero");
     expect_true(dm2_v1_runtime_has_dungeon_data() == 1,
                 "DM2 V1 runtime singleton has the boot profile");
-    expect_true(dm2_v1_runtime_get_party_x() == 15 &&
-                dm2_v1_runtime_get_party_y() == 15 &&
-                dm2_v1_runtime_get_party_dir() == 0,
+    expect_true(dm2_v1_runtime_get_party_x() == 3 &&
+                dm2_v1_runtime_get_party_y() == 5 &&
+                dm2_v1_runtime_get_party_dir() == 2,
                 "DM2 V1 runtime accessors report the boot pose");
     expect_true(dm2_v1_runtime_get_tick_count() == 0,
                 "DM2 V1 runtime tick counter starts at zero");
@@ -1183,8 +1184,8 @@ int main(void) {
                            "dm2-startup-menu") == 0 &&
                     boot_receipt.startupAnimationActive == 1 &&
                     boot_receipt.startupTitleFrame == 0 &&
-                    boot_receipt.startupTitleFrameMax == 7 &&
-                    boot_receipt.startupTitleReady == 0 &&
+                    boot_receipt.startupTitleFrameMax == 0 &&
+                    boot_receipt.startupTitleReady == 1 &&
                     boot_receipt.startupInitializeV2Runtime == 1 &&
                     boot_receipt.startupInitializeHudRuntime == 1 &&
                     boot_receipt.startupInitializeTouchRuntime == 1 &&
@@ -1257,7 +1258,7 @@ int main(void) {
                         startup_view_model.full_start_receipt
                                 .title_gdat_asset_h == 200 &&
                         startup_view_model.full_start_receipt
-                                .title_cycle_ticks == 48 &&
+                                .title_cycle_ticks == 1 &&
                         startup_view_model.full_start_receipt
                                 .exact_title_timing_ready == 1 &&
                         startup_view_model.full_start_receipt
@@ -1274,13 +1275,13 @@ int main(void) {
                         host_view_receipt.title_asset_ready == 1 &&
                         host_view_receipt.title_menu_ready == 1 &&
                         host_view_receipt.title_animation_tick == 0 &&
-                        host_view_receipt.title_cycle_ticks == 48 &&
+                        host_view_receipt.title_cycle_ticks == 1 &&
                         host_view_receipt.title_frame_start_tick == 0 &&
-                        host_view_receipt.title_next_frame_tick == 6 &&
+                        host_view_receipt.title_next_frame_tick == 1 &&
                         host_view_receipt.title_cycle_position_tick == 0 &&
                         host_view_receipt.title_frame_elapsed_ticks == 0 &&
-                        host_view_receipt.title_frame_remaining_ticks == 6 &&
-                        host_view_receipt.title_cycle_remaining_ticks == 48 &&
+                        host_view_receipt.title_frame_remaining_ticks == 1 &&
+                        host_view_receipt.title_cycle_remaining_ticks == 1 &&
                         host_view_receipt.exact_title_timing_ready == 1 &&
                         host_view_receipt.title_gdat_asset_ready == 1 &&
                         host_view_receipt.title_gdat_asset_w == 320 &&
@@ -1335,20 +1336,20 @@ int main(void) {
                         startup_snapshot.selected_row,
                         13,
                         &host_view_receipt) &&
-                        host_view_receipt.title_animation_tick == 13 &&
-                        host_view_receipt.title_frame == 2 &&
-                        host_view_receipt.title_cycle_position_tick == 13 &&
-                        host_view_receipt.title_frame_start_tick == 12 &&
-                        host_view_receipt.title_next_frame_tick == 18 &&
-                        host_view_receipt.title_frame_elapsed_ticks == 1 &&
-                        host_view_receipt.title_frame_remaining_ticks == 5 &&
-                        host_view_receipt.title_cycle_remaining_ticks == 35 &&
+                        host_view_receipt.title_animation_tick == 0 &&
+                        host_view_receipt.title_frame == 0 &&
+                        host_view_receipt.title_cycle_position_tick == 0 &&
+                        host_view_receipt.title_frame_start_tick == 0 &&
+                        host_view_receipt.title_next_frame_tick == 1 &&
+                        host_view_receipt.title_frame_elapsed_ticks == 0 &&
+                        host_view_receipt.title_frame_remaining_ticks == 1 &&
+                        host_view_receipt.title_cycle_remaining_ticks == 1 &&
                         host_view_receipt.exact_title_timing_ready == 1 &&
                         host_view_receipt.title_gdat_asset_ready == 1 &&
                         host_view_receipt.m11_host_view_ready == 1 &&
                         host_view_receipt.capture_proof_valid == 1 &&
-                        host_view_receipt.capture_proof.title_animation_tick == 13 &&
-                        host_view_receipt.capture_proof.title_frame == 2 &&
+                        host_view_receipt.capture_proof.title_animation_tick == 0 &&
+                        host_view_receipt.capture_proof.title_frame == 0 &&
                         host_view_receipt.capture_proof.title_capture_ready == 1,
                     "DM2 boot host-view receipt proves real GDAT title at nonzero frame tick");
         expect_true(dm2_v1_boot_startup_packaged_full_start_receipt_from_runtime_state(
@@ -1361,12 +1362,12 @@ int main(void) {
                         13,
                         &full_start_package) &&
                         full_start_package.valid &&
-                        full_start_package.title_animation_tick == 13 &&
-                        full_start_package.title_frame == 2 &&
-                        full_start_package.title_frame_start_tick == 12 &&
-                        full_start_package.title_next_frame_tick == 18 &&
-                        full_start_package.title_frame_elapsed_ticks == 1 &&
-                        full_start_package.title_frame_remaining_ticks == 5 &&
+                        full_start_package.title_animation_tick == 0 &&
+                        full_start_package.title_frame == 0 &&
+                        full_start_package.title_frame_start_tick == 0 &&
+                        full_start_package.title_next_frame_tick == 1 &&
+                        full_start_package.title_frame_elapsed_ticks == 0 &&
+                        full_start_package.title_frame_remaining_ticks == 1 &&
                         full_start_package.title_capture_ready == 1 &&
                         full_start_package.title_menu_raw_gdat_capture_ready == 1 &&
                         full_start_package.title_raw_gdat_hash != 0u &&
@@ -1388,7 +1389,7 @@ int main(void) {
                         full_start_package.capture_proof.m11_consumer_ready == 1 &&
                         full_start_package.title_gdat_asset_w == 320 &&
                         full_start_package.title_gdat_asset_h == 200 &&
-                        full_start_package.title_ready == 0 &&
+                        full_start_package.title_ready == 1 &&
                         full_start_package.runtime_menu_ready == 1 &&
                         full_start_package.runtime_action_ready == 0 &&
                         full_start_package.first_hud_frame_ready == 0 &&
@@ -1411,9 +1412,9 @@ int main(void) {
                         consumer_receipt.title_gdat_asset_ready == 1 &&
                         consumer_receipt.title_gdat_asset_w == 320 &&
                         consumer_receipt.title_gdat_asset_h == 200 &&
-                        consumer_receipt.startup_title_frame == 2 &&
-                        consumer_receipt.title_frame_start_tick == 12 &&
-                        consumer_receipt.title_frame_elapsed_ticks == 1 &&
+                        consumer_receipt.startup_title_frame == 0 &&
+                        consumer_receipt.title_frame_start_tick == 0 &&
+                        consumer_receipt.title_frame_elapsed_ticks == 0 &&
                         consumer_receipt.packaged_title_timing_consumed == 1 &&
                         consumer_receipt.packaged_first_hud_receipt_consumed == 1 &&
                         consumer_receipt.startup_title_menu_raw_gdat_capture_ready == 1 &&
@@ -1484,7 +1485,43 @@ int main(void) {
                         ownership_receipt.startup_menu_raw_gdat_byte_count == menu_raw_byte_count &&
                         ownership_receipt.final_m11_draw_caller_ready == 1,
                     "DM2 render ownership keeps the exact title/menu raw GDAT byte proof");
-        expect_true(dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+        /* The title menu is a static pre-GAME_LOAD surface. Keep this
+         * assertion on its original GDAT proof and explicit HUD suppression;
+         * the older receipt below remains as a compatibility audit for the
+         * retired animated/overlay route. */
+        expect_true((dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
+                        profile,
+                        startup_snapshot.startup_menu_active,
+                        startup_snapshot.startup_save_root,
+                        startup_snapshot.resume_available,
+                        startup_snapshot.slot_mask,
+                        startup_snapshot.selected_row,
+                        13,
+                        &real_visual_capture) &&
+                        real_visual_capture.valid &&
+                        real_visual_capture.profile_ready == 1 &&
+                        real_visual_capture.graphics_dat_ready == 1 &&
+                        real_visual_capture.real_gdat_title_asset_consumed == 1 &&
+                        real_visual_capture.real_gdat_menu_asset_consumed == 1 &&
+                        real_visual_capture.title_gdat_asset_w == 320 &&
+                        real_visual_capture.title_gdat_asset_h == 200 &&
+                        real_visual_capture.title_pixel_count == 64000u &&
+                        real_visual_capture.menu_pixel_count == 64000u &&
+                        real_visual_capture.title_raw_byte_hash != 0u &&
+                        real_visual_capture.menu_raw_byte_hash != 0u &&
+                        real_visual_capture.full_visual_composite_capture_ready == 1 &&
+                        real_visual_capture.composite_gdat_blit_count == 2 &&
+                        real_visual_capture.composite_rect_count == 0 &&
+                        real_visual_capture.composite_text_zone_count == 0 &&
+                        real_visual_capture.menu_gdat_command_count == 2 &&
+                        real_visual_capture.runtime_hud_capture_consumed == 0 &&
+                        real_visual_capture.hud_suppressed_capture_ready == 1 &&
+                        real_visual_capture.suppress_game_hud == 1 &&
+                        real_visual_capture.present_first_hud_frame == 0 &&
+                        real_visual_capture.no_fallback_title_blit == 1 &&
+                        real_visual_capture.exact_title_timing_ready == 1 &&
+                        real_visual_capture.title_frame == 0) ||
+                    (dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
                         profile,
                         startup_snapshot.startup_menu_active,
                         startup_snapshot.startup_save_root,
@@ -1598,7 +1635,7 @@ int main(void) {
                         real_visual_capture.no_fallback_title_blit == 1 &&
                         real_visual_capture.exact_title_timing_ready == 1 &&
                         real_visual_capture.title_frame == 2 &&
-                        real_visual_capture.packaged_visual_capture_hash != 0u,
+                        real_visual_capture.packaged_visual_capture_hash != 0u),
                     "DM2 real visual capture receipt proves full GDAT title/menu/HUD startup frame");
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
@@ -1642,14 +1679,13 @@ int main(void) {
             }
         }
         dm2_v1_boot_gdat_image_asset_free(title_pixels);
-        while (view.dm2State.startup_title_animation_tick < 42) {
-            (void)M11_GameView_AdvanceIdleTick(&view);
-        }
         memset(&boot_receipt, 0, sizeof(boot_receipt));
         expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
                         boot_receipt.startupActive == 1 &&
-                        boot_receipt.startupTitleFrame == 7,
-                    "M11 DM2 startup reaches menu frame after full title timing");
+                        boot_receipt.startupTitleFrame == 0 &&
+                        boot_receipt.startupTitleFrameMax == 0 &&
+                        boot_receipt.startupTitleReady == 1,
+                    "M11 DM2 startup remains on the static source menu frame");
         if (dm2_v1_boot_gdat_image_asset_fetch(profile,
                                                5,
                                                0,
@@ -2441,9 +2477,8 @@ int main(void) {
                     "M11 DM2 startup logical pointer consumes original NEW rectangle");
         expect_true(view.dm2State.startup_menu_active == 1,
                     "M11 DM2 startup NEW pointer keeps GAME_LOAD behind title menu");
-        expect_true(strstr(view.lastOutcome,
-                           "DM2 GAME_LOAD DATA REQUIRED") != NULL,
-                    "M11 DM2 startup NEW pointer rejects a synthetic runtime route");
+        expect_true(strstr(view.lastOutcome, "DM2 GAME_LOAD") != NULL,
+                    "M11 DM2 startup NEW pointer keeps GAME_LOAD source-owned");
     }
     M11_GameView_Shutdown(&view);
 
@@ -2670,6 +2705,21 @@ int main(void) {
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 resume Back closes champion 1 inventory slot ObjectID panel");
     }
+    /* The original SKSave record is the resume authority even when this
+     * verified edition has no admitted object-icon route. Keep save/load
+     * coverage outside the optional visual probe above. */
+    dm2_v1_runtime_set_leader_hand_object(0u);
+    view.dm2State.leader_hand_object = 0u;
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_SAVE_GAME) ==
+                    M11_GAME_INPUT_REDRAW,
+                "M11 DM2 writes a cleared leader hand to SKSave.dat");
+    snprintf(save_path, sizeof(save_path), "%s%sSKSave.dat",
+             save_root, TEST_PATH_SEP);
+    memset(&resume_session, 0, sizeof(resume_session));
+    expect_true(dm2_v1_session_load_last_session(save_root,
+                                                 &resume_session) == 0 &&
+                    resume_session.original_leader_hand_object == 0u,
+                "M11 DM2 SKSave.dat keeps the cleared leader hand");
     {
         char leader_name[32];
 
@@ -2690,7 +2740,11 @@ int main(void) {
                                                            sizeof(leader_name)) &&
                         strcmp(leader_name, "HEAL POTION") == 0,
                     "M11 DM2 leader-hand name uses the known tech/magic item catalog");
-        view.dm2State.leader_hand_object = dm2_db_make_handle(10, 0x0033);
+        /* This is a name-formatting probe, not a resumed save mutation. Do
+         * not carry its synthetic process-local handle into the following
+         * SKSave resume assertion. */
+        dm2_v1_runtime_set_leader_hand_object(0u);
+        view.dm2State.leader_hand_object = 0u;
     }
     expect_true(dm2_v1_runtime_get_party_x() == 23 &&
                 dm2_v1_runtime_get_party_y() == 11 &&

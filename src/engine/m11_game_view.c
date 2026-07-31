@@ -1063,6 +1063,12 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
         return 0;
     }
     (void)m11_dm2_startup_apply_host_receipt(state, &receipt.host_receipt);
+    if (receipt.session_applied) {
+        dm2_v1_runtime_set_leader_hand_object(
+            execution.session.original_leader_hand_object);
+        state->dm2State.leader_hand_object =
+            execution.session.original_leader_hand_object;
+    }
     return receipt.session_applied;
 }
 
@@ -1180,6 +1186,10 @@ static int m11_dm2_startup_apply_session(M11_GameViewState *state,
     }
     m11_dm2_mirror_session_party(state, session);
     m11_sync_dm2_state_from_runtime(state);
+    /* The decoded SKSave session is the resume authority. Do not let a
+     * pre-existing process hand object survive the M11 mirror boundary. */
+    dm2_v1_runtime_set_leader_hand_object(session->original_leader_hand_object);
+    state->dm2State.leader_hand_object = session->original_leader_hand_object;
     return 1;
 }
 

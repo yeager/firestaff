@@ -23,13 +23,9 @@
  *      BUILTIN_CATALOG (proving the DM2 hand-off branch was
  *      entered and failed cleanly instead of falling through
  *      to the DM1 dungeon loader).
- *   5. When DM2 assets are present in a synthetic directory
- *      with matching GRAPHICS.DAT/DUNGEON.DAT content, M11's
- *      DM2 branch advances state to M11_GAME_SOURCE_DM2_BOOT
- *      via the unverified-asset fallback path, exposes a
- *      non-empty state->dungeonPath, and emits the
- *      `DM2 READY: gameId=dm2 dataDir=...` stderr marker
- *      consumed by firestaff_tier1_strict_boot_probe.
+ *   5. When a directory contains synthetic GRAPHICS.DAT/DUNGEON.DAT
+ *      lookalikes, M11 rejects it before allocating DM2 state. The outcome
+ *      must name a DM2 asset failure, never reach a synthetic boot fallback.
  *   6. When real hash-verified DM2 data is available under the
  *      default Firestaff data root, the production M12 selected-entry
  *      path enters M11 DM2, keeps the startup menu active, blocks idle
@@ -202,10 +198,8 @@ static const char* kDm2GraphicsPayload =
 static const char* kDm2DungeonPayload =
     "Firestaff synthetic DM2 launcher-handoff boundary DUNGEON fixture\n";
 
-/* Stage a minimal DM2 directory tree that dm2_v1_boot_scan_assets can
- * pick up. The M11 branch reaches dm2_v1_boot_enter_game via the
- * unverified-asset fallback path, which is exactly the boot route
- * documented in src/engine/m11_game_view.c lines 6758-6770. */
+/* Stage a minimal DM2 lookalike directory. It deliberately contains no
+ * admitted game data and must not reach dm2_v1_boot_enter_game. */
 static int stage_synthetic_dm2(const char* root) {
     char graphicsPath[512];
     char dungeonPath[512];
@@ -341,20 +335,12 @@ static void run_m11_dm2_unverified_happy_path(void) {
     }
     snprintf(synthDataDir, sizeof(synthDataDir), "%s", synthRoot);
 
-    /* Boundary 4: the DM2 branch reaches the production boot scan regardless
-     * of whether the assets are hash-verified.  With a synthetic fixture
-     * (unrecognized MD5), the M11 hand-off returns 0 because
-     * dm2_v1_boot_startup_launch_alloc rejects unverified assets before
-     * dm2_v1_boot_enter_game is called (SKULL.ASM T520 requires a verified
-     * dungeon before game state allocation).  We only check the boundary is
-     * reached and that lastOutcome names the exact DM2 failure mode.
-     *
-     * Source: src/dm2/dm2_v1_boot.c dm2_v1_boot_startup_launch_alloc
-     *         DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS -> "DM2 ASSETS UNVERIFIED"
-     *         DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED  -> "DM2 ENTER GAME FAILED"
-     * The hash-verified happy path is covered by the
-     * firestaff_tier1_strict_boot_probe + csb/dm2 READY markers;
-     * a real DM2 asset probe lives in tier1_strict_boot_probe.c. */
+    /* Boundary 4: the production hash scanner must reject a synthetic
+     * lookalike before dm2_v1_boot_enter_game. Depending on whether the
+     * scanner reports no candidate or a candidate with an unrecognised hash,
+     * M11 reports MISSING or UNVERIFIED; neither state is launchable.
+     * Source: dm2_v1_boot_startup_launch_alloc, with the original
+     * SKProject GAME_LOAD boundary retaining ownership of game allocation. */
     memset(&spec, 0, sizeof(spec));
     spec.title = "DUNGEON MASTER II: SKULLKEEP";
     spec.gameId = "dm2";
@@ -370,13 +356,13 @@ static void run_m11_dm2_unverified_happy_path(void) {
     expect_true(view.lastOutcome[0] != '\0' &&
                 strstr(view.lastOutcome, "DM2") != NULL,
                 "M11 lastOutcome names DM2 on the unverified failure path");
-    /* The synthetic fixture has files but the wrong MD5, so the boot scan
-     * reports UNVERIFIED_ASSETS.  Either UNVERIFIED_ASSETS or ENTER_GAME_FAILED
-     * proves the DM2 branch was entered (rather than falling through to the
-     * DM1 dungeon loader, which would have produced a different failure mode). */
-    expect_true(strcmp(view.lastOutcome, "DM2 ASSETS UNVERIFIED") == 0 ||
+    /* Filename-only lookalikes can be hidden by the hash scanner and report
+     * MISSING; an explicitly discovered wrong-hash candidate reports
+     * UNVERIFIED. Both results prove no synthetic boot state was accepted. */
+    expect_true(strcmp(view.lastOutcome, "DM2 ASSETS MISSING") == 0 ||
+                strcmp(view.lastOutcome, "DM2 ASSETS UNVERIFIED") == 0 ||
                 strcmp(view.lastOutcome, "DM2 ENTER GAME FAILED") == 0,
-                "M11 lastOutcome reports the DM2 unverified-asset or enter-game failure");
+                "M11 lastOutcome rejects the synthetic DM2 lookalike");
     M11_GameView_Shutdown(&view);
     /* Best-effort cleanup; not all hosts allow rmdir on the
      * scratch root, and the test is skip-safe by design. */
