@@ -46991,6 +46991,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   DMDF/DGN and existing behavioral references remain cited; all production V2
   gates stay closed. Focused lighting 79/79, phase gate 240/240, smooth
   movement 27/27 and touch affordance 0 failures pass.
+- ✅ 2026-07-31 Nexus launcher card audit: the modern M12 card renderer no
+  longer permits any generated game-card motif branch to paint the Nexus card,
+  even if a layout slot index is reused. Nexus startup/menu art therefore stays
+  source-bound/no-draw until real Saturn placement is admitted; other game-card
+  routes are unchanged. `firestaff_m11` rebuild passes.
 - ✅ 2026-07-31 Theron production combat boundary: removed the inferred
   creature/combat template table from `firestaff_theron`. Production now
   links explicit fail-closed symbols from

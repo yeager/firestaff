@@ -1060,7 +1060,7 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
             ? NULL : M12_GeneratedCardArt_Find(gameId);
     if (generated) {
         draw_generated_card_art(c, generated, x + 8, y + 12, w - 16, h - 20, disabled);
-    } else if (slotIdx == 0) {
+    } else if (!(gameId && strcmp(gameId, "nexus") == 0) && slotIdx == 0) {
         /* Dungeon arch + Firestaff silhouette. */
         fill_rect(c, x + w/2 - 34, y + 42, 68, h - 72, ink);
         fill_rect(c, x + w/2 - 24, y + 32, 48, 18, ink);
@@ -1070,20 +1070,20 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
         fill_rect(c, x + w/2 - 3, y + 30, 6, 82, accent);
         fill_rect(c, x + w/2 - 20, y + 70, 40, 7, accent);
         fill_rect(c, x + w/2 - 10, y + 22, 20, 12, COLOR_ACCENT_HI());
-    } else if (slotIdx == 1) {
+    } else if (!(gameId && strcmp(gameId, "nexus") == 0) && slotIdx == 1) {
         /* Chaos eye. */
         fill_rect(c, x + 24, y + 46, w - 48, 56, rgb(210, 188, 150));
         fill_rect(c, x + 34, y + 56, w - 68, 36, accent);
         fill_rect(c, x + w/2 - 16, y + 60, 32, 28, ink);
         fill_rect(c, x + 20, y + 68, w - 40, 10, top);
-    } else if (slotIdx == 2) {
+    } else if (!(gameId && strcmp(gameId, "nexus") == 0) && slotIdx == 2) {
         /* Skullkeep towers. */
         fill_rect(c, x + 24, y + 50, w - 48, h - 78, rgb(88, 92, 104));
         fill_rect(c, x + 34, y + 34, 28, h - 62, rgb(104, 110, 124));
         fill_rect(c, x + w - 62, y + 34, 28, h - 62, rgb(104, 110, 124));
         fill_rect(c, x + w/2 - 16, y + h - 54, 32, 42, ink);
         fill_rect(c, x + w - 44, y + 22, 18, 18, accent);
-    } else if (slotIdx == 4) {
+    } else if (!(gameId && strcmp(gameId, "nexus") == 0) && slotIdx == 4) {
         /* Theron's Quest: handheld-era dungeon gate and moonlit tower. */
         for (int gy = y + 12; gy < y + h - 16; gy++) {
             int t = (gy - y) * 255 / h;
