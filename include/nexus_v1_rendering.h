@@ -45,7 +45,7 @@ void nexus_render_square_walls(Nexus_Framebuffer *fb,
 
 /* ── Creature rendering ──────────────────────────────────────── */
 
-/* Render a creature using its DMDF model or billboard fallback.
+/* Render a creature using a verified DMDF model or source-bound billboard.
  * world_x, world_y: map position
  * anim_frame: current animation frame index
  * facing: 0=N, 1=E, 2=S, 3=W
@@ -60,7 +60,7 @@ void nexus_render_creature(Nexus_Framebuffer *fb,
 
 /* ── Object / item rendering ─────────────────────────────────── */
 
-/* Item categories for fallback sprite selection */
+/* Item categories for source-bound sprite selection. */
 typedef enum {
     NEXUS_ITEM_WEAPON,
     NEXUS_ITEM_ARMOR,
@@ -110,14 +110,9 @@ void nexus_render_projectiles(Nexus_Framebuffer *fb,
 
 /* ── UI / HUD rendering ─────────────────────────────────────── */
 
-/* Champion portrait indices (FACE.BIN 24 entries) */
-#define NEXUS_FACE_WARRIOR   0
-#define NEXUS_FACE_WIZARD    1
-#define NEXUS_FACE_VALKYRIE  2
-#define NEXUS_FACE_SAMURAI   3
-#define NEXUS_FACE_NINJA     4
-#define NEXUS_FACE_PRIEST    5
-#define NEXUS_FACE_COUNT     24
+/* FACE.BIN record indices.  The retail layout proves 20 records, but does
+ * not by itself prove class/name ownership for any record. */
+#define NEXUS_FACE_COUNT     20
 
 /* Render HUD: portraits, health bars, minimap, compass, messages */
 void nexus_render_hud(Nexus_Framebuffer *fb,
@@ -150,7 +145,6 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine);
 void nexus_title_free(Nexus_TitleScreen *title);
 void nexus_render_title(const Nexus_TitleScreen *title,
     Nexus_Framebuffer *fb, int frame);
-void nexus_render_title_fallback(Nexus_Framebuffer *fb, int frame);
 
 /* ── Main render frame ─────────────────────────────────────── */
 

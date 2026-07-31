@@ -19,7 +19,7 @@
  *   - Door animation states (open/closed/locked visual variants)
  *   - Creature model projection (DMDF billboard -> rasterizer vertices)
  *   - Projectile rendering (fireball/lightning/poison/bolt paths)
- *   - Deterministic fallback for unsupported 3D assets
+ *   - No visual fallback for unsupported or unverified 3D assets
  *
  * Source-lock references:
  *   ReDMCSB DRAWVIEW.C   -- viewport blit to screen memory (F2172)
