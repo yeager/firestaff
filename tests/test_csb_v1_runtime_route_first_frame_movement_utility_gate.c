@@ -8,6 +8,7 @@
  */
 
 #include "csb_v1_boot.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 
 #include <stdint.h>
@@ -60,6 +61,13 @@ int main(void)
           "legacy dungeon fixture written");
     CHECK(write_fixture(graphics_path, marker_graphics, sizeof(marker_graphics)),
           "marker graphics fixture written");
+    {
+        CSB_V1_DungeonData dungeon;
+        memset(&dungeon, 0, sizeof(dungeon));
+        CHECK(csb_v1_dungeon_load_from_file(&dungeon, dungeon_path) == -2 &&
+                  dungeon.raw_data == NULL,
+              "file loader rejects legacy dungeon fixture");
+    }
 
     csb_v1_boot_profile_init(&boot);
     snprintf(boot.asset_root, sizeof(boot.asset_root), "%s", tmp_dir);

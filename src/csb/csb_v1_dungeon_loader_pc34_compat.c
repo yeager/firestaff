@@ -354,6 +354,15 @@ int csb_v1_dungeon_load_from_file(CSB_V1_DungeonData *out, const char *path) {
     if (nread != (size_t)filesize) goto done;
 
     ret = csb_v1_dungeon_load(out, buf, (int)filesize);
+    /* The in-memory parser retains the retired 16-bit layout only for
+     * isolated compatibility fixtures. A file path is source media: per
+     * ReDMCSB DUNGEON.C F0237/LOADSAVE.C F0435 it must materialize the
+     * original one-byte square map and its DUNGEON_HEADER. Never publish a
+     * filename-backed fixture as a dungeon to external/runtime callers. */
+    if (ret == 0 && out->square_bytes != 1) {
+        csb_v1_dungeon_free(out);
+        ret = -2;
+    }
 
 done:
     free(buf);

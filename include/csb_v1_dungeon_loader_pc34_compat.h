@@ -106,6 +106,8 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
 
 /* Load dungeon from a file path.
  * Reads the entire file into memory, then delegates to csb_v1_dungeon_load().
+ * File-backed loading accepts only the original one-byte-square CSB format;
+ * retired 16-bit test fixtures are rejected at this boundary.
  * Returns 0 on success, -1 on file open error, -2 on parse error.
  * Caller must call csb_v1_dungeon_free() to release memory.
  *

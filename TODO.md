@@ -18,6 +18,9 @@
   - 2026-07-31: Utility handoff now requires its full imported party receipt,
     not compatibility metadata. Continue auditing ownership fields that could
     describe source state without carrying its real payload.
+  - 2026-07-31: File-backed CSB dungeon loading now rejects the retired
+    16-bit fixture layout. Continue limiting fixture-only parsers to memory
+    tests and keeping every runtime file boundary source-material-only.
   Production rendering must fail closed for a missing or unbound original
   asset. Procedural mazes, generic walls, coloured creature blocks, substitute
   palettes, and synthetic HUD art are not acceptable when authentic game data

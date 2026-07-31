@@ -46714,3 +46714,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `reserved[]` metadata when the imported champion body is missing. The
   runtime receives only the full validated Utility party; the regression
   proves stale metadata cannot manufacture a launchable party.
+- ✅ 2026-07-31 CSB file-dungeon fixture closure:
+  `csb_v1_dungeon_load_from_file()` now rejects the retired 16-bit
+  column-major fixture layout after parsing, clears its temporary ownership,
+  and publishes only ReDMCSB-compatible one-byte square maps from a path.
+  The explicit fixture regression proves the file boundary fails closed.
