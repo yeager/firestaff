@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 DM2 unattached stairs-front fallback removal: removed the
+  public no-draw receipt helper, its hard-coded substitute field/rectangle
+  tables, and its isolated test target. No M11 production caller existed; a
+  future `DM2_DRAW_STAIRS_FRONT` implementation must bind the live GDAT and
+  B073 palette transaction before it may draw.
+
 - ✅ 2026-07-31 DM2 legacy-loop data admission: the obsolete direct game loop
   now rejects before `dm2_v1_boot_enter_game()` unless hash discovery has
   admitted both original DM2 media files, and rejects a failed source boot

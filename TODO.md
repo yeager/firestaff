@@ -27,6 +27,10 @@
   **2026-07-31 update:** the retired DM2 shop stack-size switch and its fixed
   item-ID constants are gone; every unbound object is unstackable until its
   DB/GDAT record supplies a real quantity rule.
+  **2026-07-31 update:** removed the unattached `DM2_DRAW_STAIRS_FRONT`
+  fallback-receipt API and its hard-coded GRAPHICSSET/Rect14 tables. It had no
+  M11 caller and could not prove SKProject's B073 palette transaction, so it
+  was a false source-data surface rather than a renderable original-data path.
   **2026-07-31 update:** the obsolete caller-authored DM2 companion API now
   rejects rather than fabricating a name, health, combat values, loyalty or
   AI behaviour. A future companion route must bind the live DB creature,

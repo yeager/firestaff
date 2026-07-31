@@ -229,21 +229,6 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_pit_m11_receipt.c"
              COMMAND test_dm2_v1_gdat_pit_m11_receipt)
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_front_m11_receipt.c")
-    add_executable(test_dm2_v1_gdat_stairs_front_m11_receipt
-        tests/test_dm2_v1_gdat_stairs_front_m11_receipt.c)
-    target_include_directories(test_dm2_v1_gdat_stairs_front_m11_receipt PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(test_dm2_v1_gdat_stairs_front_m11_receipt PRIVATE
-        firestaff_dm2 firestaff_m10 m)
-    if(NOT MSVC)
-        target_compile_options(test_dm2_v1_gdat_stairs_front_m11_receipt PRIVATE
-            -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(NAME dm2_v1_gdat_stairs_front_m11_receipt
-             COMMAND test_dm2_v1_gdat_stairs_front_m11_receipt)
-endif()
-
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_side_m11_receipt.c")
     add_executable(test_dm2_v1_gdat_stairs_side_m11_receipt tests/test_dm2_v1_gdat_stairs_side_m11_receipt.c)
     target_include_directories(test_dm2_v1_gdat_stairs_side_m11_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
