@@ -89,6 +89,9 @@
   - 2026-07-31: The F0797 5×5 entrance-layout receipt is test-only. The
     source-owned micro-dungeon remains an explicit startup rendering task, not
     a generic world or viewport substitute.
+  - 2026-07-31: F0440/F0902 startup facts are test-only. The live title path
+    must obtain decompressed member sizes, FTL pixels and palette from its
+    authenticated source binding rather than receipt metadata.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.

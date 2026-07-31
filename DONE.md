@@ -47112,3 +47112,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   no-data placeholder receipt implementation from the production archive.
   The real-asset receipt probe and save/resume fixture compile it explicitly;
   `firestaff` cannot link placeholder startup labels or tokens.
+- ✅ 2026-07-31 CSB F0440/F0902 startup receipt isolation: temporary-graphic
+  byte-count and FTL-logo fact helpers have no runtime caller or decoder and
+  now compile only into their focused tests. M10 can no longer substitute
+  caller metadata for a verified decompressed member, logo bitmap or palette.
