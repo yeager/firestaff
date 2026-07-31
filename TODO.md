@@ -405,6 +405,9 @@
   candidate and publishes only after every supplied source section validates;
   this prevents a malformed trailing section from leaking its partial state
   while the remaining field-owner investigation stays open.
+  **2026-07-31 update:** the fixed-byte SUPPRESS codec self-check is now
+  test-only. Production retains the source-bit receipt and concrete
+  candidate validation, but cannot run a diagnostic vector as a save route.
   The unused one-hop inventory-chain trace shim is removed rather than being
   exposed as a successful traversal; inventory paths remain closed until the
   real `c_record` link owner is recovered.

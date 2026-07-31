@@ -14425,11 +14425,14 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_save_load
         tests/test_dm2_v1_save_load.c
+        tests/dm2_v1_save_suppress_self_test.c
     )
     target_include_directories(test_dm2_v1_save_load PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm2_v1_save_load PRIVATE firestaff_dm2 firestaff_m10 m)
+    target_compile_definitions(test_dm2_v1_save_load PRIVATE
+        FIRESTAFF_DM2_SAVE_LOAD_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_save_load PRIVATE -Wall -Wextra -O2)
     endif()

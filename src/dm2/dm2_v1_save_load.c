@@ -317,25 +317,6 @@ int dm2_v1_save_suppress_symbol_receipt(
     return out_receipt->valid;
 }
 
-int dm2_suppress_self_verification(void)
-{
-    /* SKProject c_savegame.cpp DM2_SUPPRESS_WRITER: masks select source
-     * bit positions, scanning 7 -> 0 and emitting MSB-first. */
-    uint8_t data[3] = { 0x81, 0x00, 0xD2 };
-    uint8_t mask[3] = { 0x81, 0x42, 0xFF };
-    uint8_t enc[64];
-    uint8_t dec[3];
-
-    int enc_sz = dm2_suppress_encode(data, mask, 3, enc, sizeof(enc));
-    if (enc_sz < 0) return 0;
-
-    int dec_sz = dm2_suppress_decode(enc, (size_t)enc_sz, mask, 3, dec, 0);
-    if (dec_sz < 0) return 0;
-
-    if (memcmp(data, dec, 3) != 0) return 0;
-    return 1;
-}
-
 /* ════════════════════════════════════════════════════════════════
  * Slot manager
  * ════════════════════════════════════════════════════════════════ */
@@ -1563,11 +1544,6 @@ bool dm2_v1_sksave_corpus_load_receipted_candidate(
     }
     *out_payload_size = payload_size;
     return true;
-}
-
-bool dm2_v1_save_suppress_self_test(void)
-{
-    return dm2_suppress_self_verification() != 0;
 }
 
 int dm2_v1_save_version_diagnostics(const uint8_t *data, size_t size)

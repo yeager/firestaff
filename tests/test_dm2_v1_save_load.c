@@ -54,7 +54,6 @@
 #define FS_GETPID() getpid()
 #endif
 
-extern int dm2_suppress_self_verification(void);
 extern bool dm2_v1_original_timer_format_corpus_probe(
     const char *save_base,
     DM2_OriginalTimerFormatCorpusReceipt *out_receipt);

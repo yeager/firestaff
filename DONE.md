@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 save-codec fixture isolation: removed the fixed-byte
+  SUPPRESS self-verification routine from the production save archive. Its
+  explicit codec check now compiles only into the save-load test; live save
+  admission remains candidate- and receipt-based. Verification: complete
+  `firestaff` link, save-load test build/self-check, and an executable-symbol
+  check for both retired self-test hooks.
+
 - ✅ 2026-07-31 M12 data-scanner fixture isolation: removed
   `FIRESTAFF_ASSET_STATUS_TESTING` from the production M12 archive. The DM2
   missing-graphics and M12 popup regressions now compile their own

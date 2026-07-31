@@ -110,9 +110,6 @@ typedef struct {
 int dm2_v1_save_suppress_symbol_receipt(
     DM2_V1_SaveSuppressSymbolReceipt *out_receipt);
 
-/* Self-test: encode + decode a known vector; verify round-trip. */
-int dm2_suppress_self_verification(void);
-
 /* ════════════════════════════════════════════════════════════════
  * Slot manager — 10-slot system matching SKSave%02u.dat layout
  * Slot is valid when header w38==0xBEEF && w40==0xDEAD
@@ -337,8 +334,12 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base);
 bool dm2_v1_sksave_corpus_scan(const char *save_base,
                                DM2_SKSaveCorpusReceipt *out_receipt);
 
-/* Run dm2_suppress_self_verification; returns true on success. */
+/* Diagnostic-only wrapper for the isolated save-load test.  A live DM2
+ * session must validate an actual save candidate; it must not expose a
+ * synthetic self-verification entry point. */
+#ifdef FIRESTAFF_DM2_SAVE_LOAD_TESTING
 bool dm2_v1_save_suppress_self_test(void);
+#endif
 
 bool dm2_v1_sksave_corpus_load_receipted_candidate(
     const DM2_SKSaveCandidateReceipt *candidate_receipt,
