@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 CSB legacy dungeon-world isolation: removed the data-free
+  in-memory tile-grid implementation from the production M10 archive. It is
+  now linked only by the historical unit and phase-7 fixtures, while live CSB
+  continues to resolve squares and Thing chains from loaded `DUNGEON.DAT`.
+  Verification: production `firestaff` link plus
+  `test_csb_v1_dungeon_world_pc34_compat` and
+  `test_csb_v1_phase7_verification` pass.
+
 - ✅ 2026-07-31 CSB real-package first-door-frame correction: the 20-VBlank
   ENTRANCE.C pre-open delay now advances directly into legal F0807 step 1,
   rather than publishing a zero-step gap that retained the closed Entrance

@@ -19502,6 +19502,7 @@ if(BUILD_TESTING)
 
     add_executable(test_csb_v1_phase7_verification
         tests/test_csb_v1_phase7_verification.c
+        tests/csb_v1_dungeon_world_legacy_fixture.c
         src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
@@ -48946,7 +48947,9 @@ target_link_libraries(test_csb_v1_dungeon_loader_pc34_compat PRIVATE firestaff_m
 add_test(NAME test_csb_v1_dungeon_loader_pc34_compat COMMAND test_csb_v1_dungeon_loader_pc34_compat)
 set_tests_properties(test_csb_v1_dungeon_loader_pc34_compat PROPERTIES LABELS "csb")
 
-add_executable(test_csb_v1_dungeon_world_pc34_compat tests/test_csb_v1_dungeon_world_pc34_compat.c)
+add_executable(test_csb_v1_dungeon_world_pc34_compat
+    tests/test_csb_v1_dungeon_world_pc34_compat.c
+    tests/csb_v1_dungeon_world_legacy_fixture.c)
 target_include_directories(test_csb_v1_dungeon_world_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_dungeon_world_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_csb_v1_dungeon_world_pc34_compat COMMAND test_csb_v1_dungeon_world_pc34_compat)

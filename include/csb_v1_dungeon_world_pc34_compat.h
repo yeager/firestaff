@@ -471,7 +471,10 @@ int csb_bugfix_lord_chaos_teleport_dirs(int (*random4)(void),
                                         int *secondaryDir);
 
 /* ================================================================
- *  Core dungeon world API
+ *  Legacy in-memory dungeon-world fixture API
+ *
+ *  Implemented only by explicit data-free test fixtures. Live CSB reads
+ *  DUNGEON.DAT square and Thing records through the real loader.
  * ================================================================ */
 
 void         csb_world_init(CSB_DungeonWorld* w);
