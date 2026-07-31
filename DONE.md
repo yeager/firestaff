@@ -47551,3 +47551,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Those historical test contracts require an explicit build flag; live DSA
   remains on the imported-program runner and live creature drops stay blocked
   until original dungeon placement is bound.
+- ✅ 2026-07-31 DM2 champion HUD helper isolation: removed the unattached
+  generic champion-HUD and food/water bridges from the production V1 archive.
+  They had no live M11 caller or complete session/GDAT handoff. Focused tests
+  remain explicit, while production HUD stays source-owned. Verification:
+  production link, champion-HUD and food/water regressions, real-data M11
+  startup gate and archive/executable-symbol checks.

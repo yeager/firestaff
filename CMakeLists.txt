@@ -3875,7 +3875,9 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_record_name_helper.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_source_name_helpers.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_ui_event_name_helper.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_champion_stat_bridge.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_champion_stat_bridge.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_champion_hud_helpers.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_food_water_bridge.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
