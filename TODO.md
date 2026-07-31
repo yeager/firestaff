@@ -24784,3 +24784,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   pointer-driven V1 captures prove that both indexed and presented opening
   frames differ from the preceding closed-door frames. The older installed
   app still needs its own current-build comparison for the red strip.
+  **2026-07-31 installed-app recheck:** `/Applications/Firestaff.app` is
+  v3.0.195. With the real hash-recognised PC3.4 package it captures the four
+  title/Entrance palette phases, but its `--boot-probe` route reports
+  `startupActive=0` before the scripted Prison click and never reaches
+  `csb-entrance-opening-1`. It therefore cannot be used as a positive F0807
+  opening-door capture; compare a rebuilt installed app against v3.0.197
+  before diagnosing or masking the old red-strip report.
