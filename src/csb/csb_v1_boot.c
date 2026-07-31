@@ -8595,6 +8595,9 @@ int csb_v1_boot_profile_m11_entry_gate(const CSB_V1_BootProfile *profile,
                                        char *reason,
                                        size_t reason_size)
 {
+    char current_graphics_md5[33];
+    char current_dungeon_md5[33];
+
     if (!profile) {
         csb_v1_boot_gate_set_reason(reason, reason_size,
             "CSB M11 entry guard: NULL boot profile "
@@ -8634,6 +8637,24 @@ int csb_v1_boot_profile_m11_entry_gate(const CSB_V1_BootProfile *profile,
             "(graphics_path=%s dungeon_path=%s)",
             profile->graphics_path[0] ? profile->graphics_path : "(empty)",
             profile->dungeon_path[0] ? profile->dungeon_path : "(empty)");
+        return 0;
+    }
+    /* The scanner's receipt is only valid for the bytes it inspected.
+     * ReDMCSB ENTRANCE.C F0806 selects original media before rendering; do
+     * the same at the M11 handoff so an in-place replacement cannot inherit
+     * an earlier hash verdict and feed substitute pixels to the viewport. */
+    current_graphics_md5[0] = '\0';
+    current_dungeon_md5[0] = '\0';
+    if (!asset_file_md5_hex(profile->graphics_path, current_graphics_md5) ||
+        strcmp(current_graphics_md5, profile->graphics_md5) != 0) {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: GRAPHICS bytes changed after scan");
+        return 0;
+    }
+    if (!asset_file_md5_hex(profile->dungeon_path, current_dungeon_md5) ||
+        strcmp(current_dungeon_md5, profile->dungeon_md5) != 0) {
+        csb_v1_boot_gate_set_reason(reason, reason_size,
+            "CSB M11 entry guard: DUNGEON bytes changed after scan");
         return 0;
     }
     return csb_v1_boot_graphics_dungeon_m11_entry_gate(

@@ -134,6 +134,51 @@ static void test_enter_requires_assets(void)
           "failed enter_game leaves state unchanged");
 }
 
+static void test_m11_entry_rehash_rejects_changed_media(void)
+{
+    CSB_V1_BootProfile p;
+    const char *graphics_path = "/tmp/firestaff-csb-m11-rehash-graphics.dat";
+    const char *dungeon_path = "/tmp/firestaff-csb-m11-rehash-dungeon.dat";
+    char reason[256];
+    FILE *graphics;
+    FILE *dungeon;
+
+    remove(graphics_path);
+    remove(dungeon_path);
+    graphics = fopen(graphics_path, "wb");
+    dungeon = fopen(dungeon_path, "wb");
+    CHECK(graphics != NULL && dungeon != NULL,
+          "M11 entry rehash fixtures open");
+    if (!graphics || !dungeon) {
+        if (graphics) fclose(graphics);
+        if (dungeon) fclose(dungeon);
+        remove(graphics_path);
+        remove(dungeon_path);
+        return;
+    }
+    (void)fputc(0x47, graphics);
+    (void)fputc(0x44, dungeon);
+    fclose(graphics);
+    fclose(dungeon);
+
+    csb_v1_boot_profile_init(&p);
+    p.assets_verified = 1;
+    p.graphics_verified = 1;
+    p.dungeon_verified = 1;
+    p.state = CSB_V1_BOOT_STATE_ASSETS_READY;
+    snprintf(p.graphics_path, sizeof(p.graphics_path), "%s", graphics_path);
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", dungeon_path);
+    snprintf(p.graphics_md5, sizeof(p.graphics_md5), "%s",
+             "61fbfd56887c94adc26888a9491c6611");
+    snprintf(p.dungeon_md5, sizeof(p.dungeon_md5), "%s",
+             "6695d2acebce49f95db1d8f3a5c733de");
+    CHECK(csb_v1_boot_profile_m11_entry_gate(&p, reason, sizeof(reason)) == 0 &&
+              strstr(reason, "GRAPHICS bytes changed after scan") != NULL,
+          "M11 entry rehash rejects a stale graphics receipt");
+    remove(graphics_path);
+    remove(dungeon_path);
+}
+
 static void test_enter_handoff_state(void)
 {
     CSB_V1_BootProfile p;
@@ -239,6 +284,7 @@ int main(void)
     test_rescan_missing_data_clears_stale_handoff();
     test_save_root_override();
     test_enter_requires_assets();
+    test_m11_entry_rehash_rejects_changed_media();
     test_enter_handoff_state();
     test_enter_loads_verified_dungeon_context();
     test_source_evidence();

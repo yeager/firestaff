@@ -46627,3 +46627,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   16-byte prefix och avvisar index/filgränsöverskridanden. Tileindexen hålls
   uttryckligen separata från glyph-/menysemantik. Verifiering:
   `test_nexus_v1_font_s2d` passerar mot lokal retailfil.
+- ✅ 2026-07-31 CSB M11 media-rehash gate: the M11 entry boundary now hashes
+  the selected `GRAPHICS.DAT` and `DUNGEON.DAT` again and requires exact
+  agreement with the boot profile's scanned receipt before any CSB pixels can
+  be decoded. A file replaced after scan fails closed instead of inheriting a
+  stale verified flag; the focused boot-profile test covers this regression.

@@ -9,6 +9,9 @@
     attacks instead of substituting Fireball. Continue replacing only live
     placeholder behaviour; fixture builders and isolated no-draw contracts
     remain test support rather than production media.
+  - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
+    changed file from inheriting scan-time admission. Continue auditing
+    long-lived runtime caches for the same source-receipt lifetime rule.
   Production rendering must fail closed for a missing or unbound original
   asset. Procedural mazes, generic walls, coloured creature blocks, substitute
   palettes, and synthetic HUD art are not acceptable when authentic game data
