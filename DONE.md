@@ -44600,3 +44600,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   malformed or ambiguous material from becoming V2.2 pixels; the unresolved
   F0128 material routes remain fail-closed. Verification:
   `test_csb_v22_inplace_draw_pc34` passes 66/66.
+- ✅ 2026-07-31 CSB V2.2 public-contract audit: corrected the stale public
+  header that still described the retired generic rectangle/PNG route. The
+  interface now documents the actual FSV22C cache boundary and the required
+  command-level F0128 raster, palette, clip and projection receipts. This is
+  documentation of the existing fail-closed implementation, not a claim that
+  unbound viewport families are rendered. Verification:
+  `test_csb_v22_inplace_draw_pc34` passes 66/66.

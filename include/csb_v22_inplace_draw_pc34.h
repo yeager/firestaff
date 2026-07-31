@@ -1,34 +1,29 @@
 /*
  * csb_v22_inplace_draw_pc34.h
  *
- * CSB V2.2 GPU render path: V22 modern-art IN-PLACE bitmap lookup.
+ * CSB V2.2 source-bound in-place bitmap lookup.
  *
- * This is the foundation for switching the V22 render mode from
- * "overlay" (placeholder colored rectangle on top of V1) to
- * "in-place" (replace V1 sprite with V22 PBR PNG at the same cell).
+ * This module never draws a generic cell overlay. It can replace only an
+ * already-composed F0128 command that has an authenticated source raster,
+ * source palette and route-specific projection receipt. Everything else
+ * remains on the original V1 path.
  *
  * Architecture:
- *   csb_v22_shape_cache_update -> per-cell V22 shape (params, variant)
- *     -> csb_v22_inplace_get_cell_bitmap(depth, lateral, &w, &h)
- *        -> variant -> asset_id in modern_asset_manifest.json
- *        -> asset_id -> file path (via csb_v22_get_shape_path)
- *        -> PNG decode to RGBA buffer (cached at init)
- *        -> return RGBA* + width + height
- *   csb_draw_* (9-square viewport) passes consult the bitmap and blit it instead of
- *   the V1 sprite when V22 is active.
+ *   authenticated F0128 command -> route-specific admission receipt
+ *     -> (category, asset_id) -> FSV22C source-derived cache entry
+ *     -> source palette quantization -> original command clip
+ *     -> return replacement count only for the admitted command
  *
- * When V22 is NOT active (modern assets not installed or
- * presentation_mode != V22), every cell returns NULL and the
- * V1 draw path is used unchanged. This is the migration safety
- * path: in-place is opt-in.
+ * When V22 is not active, or its selected material lacks a complete source
+ * receipt, lookup returns NULL and the V1 draw path is unchanged.
  *
  * Source-lock: csb_v22_shape_cache_pc34.h (the cache),
  * csb_v22_modern_assets_pc34.c (manifest lookup),
- * csb_v22_render_overlay_pc34.c (sibling overlay path),
- * include/dm1_v2_shape_runtime_pc34.h (shape variant enum),
- * ReDMCSB DUNVIEW.C:6697-6816 (composition order).
+ * ReDMCSB DUNVIEW.C F0111/F0115/F0128 (composition order and clips),
+ * CSBWin Viewport.cpp (command ownership), and
+ * scripts/firestaff_artpack_studio.py (little-endian FSV22C writer).
  *
- * Module: src/dm1v2/csb_v22_inplace_draw_pc34.c
+ * Module: src/csb/csb_v22_inplace_draw_pc34.c
  * Test:   tests/test_csb_v22_inplace_draw_pc34.c
  */
 
@@ -42,10 +37,9 @@
 extern "C" {
 #endif
 
-/* Initialize the in-place bitmap cache. Loads every PNG referenced
- * by ~/.firestaff/assets/csb/modern/modern_asset_manifest.json into
- * RGBA buffers keyed by (category, asset_id). Call once at startup
- * after csb_v22_set_manifest_path() and csb_v22_validate_manifest().
+/* Initialize the in-place bitmap cache. Loads the selected pack's bounded
+ * FSV22C cache, whose entries are keyed by (category, asset_id). Call once
+ * at startup after csb_v22_set_manifest_path() and the finished-art gate.
  *
  * Returns 1 on success (at least one bitmap cached), 0 if no assets
  * are available (V22 not installed — fallback to V1). */
@@ -69,27 +63,19 @@ int csb_v22_inplace_draw_set_indexed_palette_rgb6(
  * data-free tests; production CSB frames provide the live palette above. */
 void csb_v22_inplace_draw_clear_indexed_palette(void);
 
-/* Get the cached RGBA bitmap for a V22 cell. depth in {0,1,2},
- * lateral in {-1,0,1}. Sets *out_w, *out_h to the bitmap dimensions.
- * Returns NULL if the cell has no V22 shape, the shape has no
- * mapped asset_id, or in-place has not been initialized.
+/* Get a cached RGBA bitmap by a routing candidate. This is a lookup-only
+ * helper: it does not admit a replacement or paint a cell. Sets *out_w and
+ * *out_h to the bitmap dimensions. It returns NULL when the candidate has
+ * no mapped asset, the cache is inactive, or its material remains unbound.
  *
  * The returned pointer is owned by the in-place cache and remains
  * valid until csb_v22_inplace_draw_shutdown(). */
 const uint32_t* csb_v22_inplace_get_cell_bitmap(int depth, int lateral,
                                                  int* out_w, int* out_h);
 
-/* Lookup the asset_id (in modern_asset_manifest.json) that the
- * current V22 cell at (depth, lateral) maps to. Returns NULL if
- * the cell has no mapping. The returned string is owned by the
- * static mapping table and remains valid for the program lifetime.
- *
- * This is the seam between the shape variant enum and the asset
- * pack. The mapping is intentionally conservative in this first
- * cut: walls all map to wall_dungeon_01 (the most common carved
- * stone), floors map by tile pattern, creatures map by silhouette
- * tag. Per-cell refinement (e.g., mossy walls for slime zones) is
- * a follow-up. */
+/* Lookup a route candidate's asset id. This is not a finished-art or F0128
+ * admission decision; callers must use the command-level draw entry point.
+ * The returned string is owned by the static mapping table. */
 const char* csb_v22_inplace_get_cell_asset_id(int depth, int lateral);
 
 /* Direct manifest category + asset_id lookup against the loaded RGBA cache.
