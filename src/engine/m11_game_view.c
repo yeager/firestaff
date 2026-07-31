@@ -44295,7 +44295,13 @@ static int m11_draw_nexus_dgn_host_plan(
     nexus_v2_hud_runtime_set_direction(state->nexusEngine->game.party_dir);
     nexus_v2_hud_runtime_set_level(
         state->nexusEngine->game.current_level, 15);
-    nexus_v2_hud_runtime_set_party_gold(0);
+    /* The mechanics state owns the live party purse.  Do not seed the HUD
+     * with a synthetic zero: ReDMCSB's gold-pile pickup updates this field
+     * before the viewport/HUD handoff. */
+    nexus_v2_hud_runtime_set_party_gold(
+        state->nexusEngine->mechanics
+            ? state->nexusEngine->mechanics->gold_pieces
+            : 0);
     {
         const Nexus_V1_ChampionPool *pool = &state->nexusEngine->champions;
         int ci;

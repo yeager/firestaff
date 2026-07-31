@@ -46552,3 +46552,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   to a CSB session. Verification: direct launch against
   `/Users/bosse/.firestaff/data/csb`, `test_csb_v1_boot_viewport_render_gate`
   and `test_csb_v1_boot_runtime_handoff`.
+- ✅ 2026-07-31 Nexus HUD-guld: M11 skickar nu mechanics-statens verkliga
+  `gold_pieces` till HUD:n i stället för att alltid mata in syntetiskt noll.
+  Fältet uppdateras av den källbundna gold-pile-pickup-vägen; fallback till
+  noll används endast när mechanics-pekaren saknas. Verifiering:
+  full `firestaff`-build och `test_nexus_v1_dgn_runtime_materialization`.
