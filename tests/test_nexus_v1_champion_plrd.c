@@ -53,7 +53,8 @@ int main(void) {
             span_size == 0) { fprintf(stderr,"span\\n"); return 1; }
     }
     if (pool.champion_count != NEXUS_NEXUS_PLRD_CHAMPION_COUNT) return 1;
-    if (strcmp(pool.champions[0].name_jp, "アレックス") != 0 ||
+    if (pool.champions[0].name_jp[0] != '\0' ||
+        pool.champions[0].name_ascii[0] != '\0' ||
         pool.champions[0].health != 50 || pool.champions[0].stamina != 57 ||
         pool.champions[0].mana != 13 || pool.champions[19].health != 125 ||
         pool.champions[19].wizard_level != 2 ||

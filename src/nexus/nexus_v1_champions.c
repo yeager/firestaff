@@ -257,11 +257,15 @@ void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool) {
 int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
                                          const uint8_t *source,
                                          size_t source_size) {
+    /* Historical labels are retained below only as an audit reference. */
+#if 0
     static const char *const ascii[NEXUS_NEXUS_PLRD_CHAMPION_COUNT] = {
         "Alex", "Azizi", "Tika", "Daroou", "Elija", "Gando", "Gothmog",
         "Halk", "Hissssa", "Muramasa", "Leyla", "Sedi", "Godo", "Sonja",
         "Elsia", "Tiggy", "Wu Tse", "Wuuf", "Shadow", "Lord Chaos"
     };
+#endif
+#if 0
     static const char *const japanese[NEXUS_NEXUS_PLRD_CHAMPION_COUNT] = {
         "\xe3\x82\xa2\xe3\x83\xac\xe3\x83\x83\xe3\x82\xaf\xe3\x82\xb9",
         "\xe3\x82\xa2\xe3\x82\xb8\xe3\x82\xb8", "\xe3\x83\x86\xe3\x82\xa3\xe3\x82\xab",
@@ -275,6 +279,7 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
         "\xe3\x82\xa6\xe3\x83\xbc\xe3\x83\x95", "\xe3\x82\xb7\xe3\x83\xa3\xe3\x83\x89\xe3\x82\xa5",
         "\xe3\x83\xad\xe3\x83\xbc"
     };
+#endif
     size_t plrd = 0U;
     size_t tabl = 0U;
     int tabl_found = 0;
@@ -318,8 +323,8 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
             c->name_tabl_code[j] = entry[0] == 0 ? entry[1] :
                 (uint16_t)(((uint16_t)entry[0] << 8) | entry[1]);
         }
-        strncpy(c->name_ascii, ascii[i], sizeof(c->name_ascii) - 1U);
-        strncpy(c->name_jp, japanese[i], sizeof(c->name_jp) - 1U);
+        /* Keep names empty until the authenticated TEXT/TABL/FONT256
+         * presentation route is bound; PLRD retains the raw TABL codes. */
         c->health = c->max_health = ((int)r[6] << 8) | r[7];
         c->stamina = c->max_stamina = ((int)r[8] << 8) | r[9];
         c->mana = c->max_mana = ((int)r[10] << 8) | r[11];

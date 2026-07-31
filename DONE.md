@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 Nexus PLRD label provenance cleanup: removed the hardcoded
+  English/Japanese champion labels from the real `RLOWFIX.BIN` parser. PLRD
+  now retains only its source TABL indices/codes and leaves display names
+  empty until TEXT/TABL/FONT256 presentation is authenticated. Verification:
+  production archive builds without warnings in the touched target and
+  `test_nexus_v1_champion_plrd` passes against the real RLOWFIX corpus.
+
 - ✅ 2026-07-31 Nexus creature-stat fixture isolation: production engine
   startup no longer seeds the legacy eight-entry hardcoded creature table
   (HP/attack/defense/speed/XP). The table remains available only to explicit
