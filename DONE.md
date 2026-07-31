@@ -47899,3 +47899,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   ceiling/wall host coverage, and no authenticated MNS/BPK host route.
 - Kept the viewport fail-closed; no procedural or fixture material was
   promoted. The remaining owner is authenticated Saturn VDP1/VDP2 submission.
+
+# 2026-07-31 Nexus item-mechanics provenance audit
+
+- Audited the real `ITEM.IBS` binding against the live movement/item paths.
+- `ITEM.IBS` proves declaration category, weight, image and string ordinals;
+  it does not prove action, equipment, protection or creature-drop semantics.
+- Recorded the remaining raw-ordinal `65/80` water/fire gate and dormant gold
+  helper as explicit gaps in `TODO.md`. No guessed item meaning or synthetic
+  loot/HUD label was promoted.

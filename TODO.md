@@ -1344,6 +1344,14 @@ diagnostic; it must not silently fall back to a generated visual.
   metadata are retained in the runtime receipt. The route remains blocked for
   playback until Saturn event→selector ownership and the SDDRVS.TSK call ABI
   are proven; no host or synthetic audio is admitted.
+- **NEXUS-ITEM-MECHANICS-PROVENANCE:** `ITEM.IBS` now supplies real declaration
+  category/weight and string ordinals, but it does not yet prove action,
+  equipment, protection or loot semantics. The movement path must not treat
+  raw ordinals 65/80 as authenticated Rope/Rune-of-Fire records, and the
+  dormant gold-pickup helper must not be mistaken for Saturn loot support.
+  Bind these meanings from the DMWeb Nexus item interpretation or an
+  authenticated Saturn capture before enabling water/fire traversal, item
+  use, creature drops or HUD item labels.
 - **ALL-ORIGINAL-REPLACE-001:** Audit startup, title, entrance, HUD and
   dungeon runtime paths for placeholder pixels on every supported game before
   release.  Where matching original data exists under `.firestaff/data`, bind
