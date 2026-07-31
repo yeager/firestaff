@@ -193,6 +193,13 @@
   lookup at all. It returns no leader-hand name until the complete decoded
   DB-record to GDAT `dtText/0x18` and `FORMAT_SKSTR` ownership route exists.
 
+- **DM2-DIALOGUE-TEXT-OWNER-HANDOFF:** Save/load-dialogue labels require the
+  original `GDAT 0/0/dtWordValue/0` transform owner as well as their
+  `DIALOG_BOXES/0x81/dtText` records. **2026-07-31 update:** the former
+  fixture-only “missing means unencrypted” branch is closed; an incomplete
+  GDAT transaction now blocks the dialogue rather than displaying guessed
+  text.
+
 - **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
   Bind any future enhanced art only through verified original V1 GDAT material
   and a complete, provenance-checked V2.2 pack; never reintroduce diagnostic

@@ -36,12 +36,13 @@ static int dm2_dialogue_open_panel_text_decode(
     if (!loader || !out_text || !out_size) {
         return 0;
     }
-    /* c_gdatfile.cpp records GDAT 0/0/dtWordValue/0 in ddat.v1e0ad0.  The bit-8
-     * transform is enabled only when that entry is present; a missing entry is
-     * treated as unencrypted, matching the source bootstrap before the word is
-     * proven and matching minimal test fixtures that omit category 0/0/0. */
+    /* c_gdatfile.cpp records GDAT 0/0/dtWordValue/0 in ddat.v1e0ad0 before
+     * QUERY_GDAT_TEXT selects its bytewise transform.  The flag belongs to
+     * the original GRAPHICS.DAT transaction: treating an absent entry as
+     * "unencrypted" would turn arbitrary fixture bytes into dialogue text.
+     * A missing owner therefore blocks the panel rather than guessing. */
     if (!dm2_v1_asset_load_word_value(loader, 0, 0, 0, &gdat_flags)) {
-        gdat_flags = 0u;
+        return 0;
     }
     raw = dm2_v1_asset_load_text_sized(loader, DM2_GDAT_CATEGORY_DIALOG_BOXES,
                                         index, field, &raw_size);

@@ -20,7 +20,7 @@ int main(void)
     uint8_t raw[240];
     uint32_t offsets[5] = { 0u, 40u, 80u, 120u, 160u };
     uint32_t sizes[5] = { 40u, 40u, 40u, 40u, 40u };
-    DM2_V1_GdatEntry entries[5];
+    DM2_V1_GdatEntry entries[6];
     DM2_V1_AssetLoader loader;
     DM2_V1_DialogueGdatReceipt receipt;
     DM2_V1_DialogueBoxGdatReceipt box_receipt;
@@ -65,9 +65,17 @@ int main(void)
     entries[4].cls3 = DM2_GDAT_ENTRY_TYPE_TEXT;
     entries[4].cls4 = 1u;
     entries[4].data_index = 4u;
+    /* c_gdatfile.cpp captures this source word before QUERY_GDAT_TEXT.
+     * The value zero deliberately selects the unencrypted form of the two
+     * literal labels above; absence of this entry must block the panel. */
+    entries[5].cls1 = 0u;
+    entries[5].cls2 = 0u;
+    entries[5].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[5].cls4 = 0u;
+    entries[5].data_index = 0u;
     loader.loaded = 1;
     loader.entries = entries;
-    loader.entry_count = 5u;
+    loader.entry_count = 6u;
     loader.raw_offsets = offsets;
     loader.raw_sizes = sizes;
     loader.raw_data_count = 5u;
@@ -153,6 +161,10 @@ int main(void)
         check(!dm2_v1_dialogue_open_panel_receipt(&loader, &open_panel),
               "open panel rejects an empty original secondary label");
         raw[offsets[4]] = 'C';
+        entries[5].cls3 = DM2_GDAT_ENTRY_TYPE_TEXT;
+        check(!dm2_v1_dialogue_open_panel_receipt(&loader, &open_panel),
+              "open panel rejects labels without the source text-transform word");
+        entries[5].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
     }
     entries[2].cls2 = 0x80u;
     check(!dm2_v1_dialogue_box_gdat_receipt(&loader, &box_receipt),

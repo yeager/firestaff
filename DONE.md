@@ -45936,3 +45936,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   A DM2 ObjectID can no longer be rendered as a retired catalog label or a
   diagnostic handle; name output remains blocked pending the original decoded
   DB-record → GDAT `dtText/0x18` → `FORMAT_SKSTR` route.
+
+- 2026-07-31: Closed the DM2 save/load dialogue's fixture-only missing
+  encryption-flag fallback. Its labels are now admitted only with the
+  original `GDAT 0/0/dtWordValue/0` transform owner and the matching
+  `DIALOG_BOXES/0x81/dtText` payloads.
