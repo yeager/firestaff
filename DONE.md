@@ -6,7 +6,9 @@
   `SKWINSPX/src/v5/startend.cpp::SHOW_MENU_SCREEN` and
   `DRAW_TITLE_MENU_SCREEN`. Verification:
   `test_dm2_v1_startup_audio_menu` and
-  `test_dm2_v1_startup_menu_action_contract` (100/100) pass.
+  `test_dm2_v1_startup_menu_action_contract` pass. The latter passes 104/104
+  when supplied the local, hash-verified PC `GRAPHICS.DAT`, including the
+  original title/menu decode and full compositing receipt.
 
 - ✅ 2026-07-31 DM2 viewport fallback-receipt correction: item and
   projectile receipts no longer claim that a fallback was drawn when the

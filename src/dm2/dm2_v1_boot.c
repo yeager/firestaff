@@ -3667,10 +3667,10 @@ static int dm2_v1_boot_startup_composite_capture(
         return 0;
     }
 
-    /* skproject/SKWIN/SkWinCore.cpp SHOW_MENU_SCREEN first consumes TITLE
-     * GDAT fields 1 and 4. When dt07/4 provides the complete raw menu
-     * screen, Firestaff must not redraw the old synthetic panel/text overlay
-     * on top of it. */
+    /* SKProject SHOW_MENU_SCREEN's boot menu uses TITLE/0/dt07/4.
+     * TITLE/0/dt07/1 belongs to the separate SHOW_CREDITS event. When dt07/4
+     * provides the complete raw menu screen, Firestaff must not redraw the
+     * old synthetic panel/text overlay on top of it. */
     suppress_synthetic_menu_overlay =
         out_receipt->menu_raw_screen_route_ready &&
         out_receipt->menu_raw_screen_consumed;
