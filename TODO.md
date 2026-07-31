@@ -155,6 +155,9 @@
   - 2026-07-31: F1646–F1685 is a fail-closed platform inventory. It is
     test-only; DM1-owned mouse state and foreign interrupt/vblank paths must
     not be promoted to CSB runtime behavior.
+  - 2026-07-31: F1726–F1765 contains only local, platform and debug source
+    labels. It is test-only; do not derive any CSB input or visual behavior
+    from this blocked metadata.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
