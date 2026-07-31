@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 PC SONGLIST.DAT provenance gate: the verified boot profile
+  now finds the real 63-byte music map by its canonical MD5, rather than by
+  filename, and admits only source map selectors 0--43. Its map 0 -> track 02
+  and map 39 -> track 16 routes are proven against the external PC data set;
+  missing, altered, sentinel (`ff`) and out-of-range values fail closed. This
+  supplies authentic map-routing data but deliberately does not pretend that
+  the still-unimplemented HMP decoder has played it.
+
 - ✅ 2026-07-30 CSB PC3.4 GRAPHICS.DAT new-header marker correction: the raw
   C564 object-name reader now reads ReDMCSB F0479's literal big-endian `80 01`
   (`0x8001`) marker before decoding the big-endian PC count and size/dimension

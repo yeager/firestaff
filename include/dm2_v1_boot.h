@@ -108,6 +108,7 @@ typedef struct {
     char    asset_root[512];   /* parent dir of resolved dungeon/graphics data */
     char    graphics_path[512]; /* resolved by known MD5 hash, filename fallback */
     char    dungeon_path[512]; /* resolved by known MD5 hash, filename fallback */
+    char    songlist_path[512]; /* optional PC SONGLIST.DAT, resolved by hash */
     int     use_dm2_filenames;  /* 1 if legacy DM2* filenames were used */
     int     assets_verified;    /* 1 if MD5 hash matched a known version */
 
@@ -119,6 +120,10 @@ typedef struct {
     size_t  dungeon_size;
     char    graphics_md5[33];
     char    dungeon_md5[33];
+    char    songlist_md5[33];
+    size_t  songlist_size;
+    uint8_t songlist_map[44]; /* original PC map 0..43 music selectors */
+    int     songlist_verified;
 
     /* ── Deterministic config ──────────────────────────────── */
     DM2_V1_DeterministicConfig deterministic;
@@ -1221,6 +1226,12 @@ void dm2_v1_boot_profile_init(DM2_V1_BootProfile *profile);
  * Returns 0 on success, -1 if no valid DM2 assets found. */
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                             const char *data_dir);
+
+/* Source: skproject/SKULLWIN/dm2data.cpp tblMusicsMap and
+ * SKULLWIN/c_sound.cpp DM2_GET_MUSIC_INDEX_FROM_MODLIST. Returns 1 only
+ * for a hash-verified original PC SONGLIST.DAT selector. */
+int dm2_v1_boot_songlist_track_for_map(const DM2_V1_BootProfile *profile,
+                                       int map_index, int *out_track);
 
 /* Probe a data_dir for DM2 assets without full verification.
  * Used by the launcher menu to determine DM2 availability.

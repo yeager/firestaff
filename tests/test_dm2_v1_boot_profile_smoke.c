@@ -246,6 +246,34 @@ static void test_scan_real_assets_by_hash_when_renamed(void)
     (void)TEST_RMDIR(root);
 }
 
+static void test_songlist_real_data_routing(void)
+{
+    const char *data_dir = getenv("FIRESTAFF_DM2_DATA_DIR");
+    DM2_V1_BootProfile p;
+    int track = -1;
+
+    if (!data_dir || !data_dir[0]) {
+        printf("  SKIP: FIRESTAFF_DM2_DATA_DIR not set for real SONGLIST.DAT\n");
+        return;
+    }
+    dm2_v1_boot_profile_init(&p);
+    CHECK(dm2_v1_boot_scan_assets(&p, data_dir) == 0 &&
+              p.assets_verified == 1,
+          "real PC data root admits boot assets before songlist routing");
+    CHECK(p.songlist_verified == 1 && p.songlist_size == 63u &&
+              strcmp(p.songlist_md5, "bd11f8ded337c4aea978d1304b91b8eb") == 0,
+          "PC SONGLIST.DAT is hash-verified rather than filename-admitted");
+    CHECK(dm2_v1_boot_songlist_track_for_map(&p, 0, &track) == 1 &&
+              track == 2,
+          "SONGLIST.DAT maps dungeon map 0 to original music track 02");
+    CHECK(dm2_v1_boot_songlist_track_for_map(&p, 39, &track) == 1 &&
+              track == 22,
+          "SONGLIST.DAT maps dungeon map 39 to original music track 16");
+    CHECK(dm2_v1_boot_songlist_track_for_map(&p, 44, &track) == 0 &&
+              track == -1,
+          "maps outside the source-owned 44-entry routing table reject");
+}
+
 static void test_save_root_default(void)
 {
     DM2_V1_BootProfile p;
@@ -966,6 +994,8 @@ int main(void)
 /* ── hash-first renamed real assets --─ */
     printf("\n--- test_scan_real_assets_by_hash_when_renamed ---\n");
     test_scan_real_assets_by_hash_when_renamed();
+    printf("\n--- test_songlist_real_data_routing ---\n");
+    test_songlist_real_data_routing();
 /* ── save root --─ */
     printf("\n--- test_save_root_default ---\n");
     test_save_root_default();

@@ -598,6 +598,14 @@ static const char *const g_dm2_dungeon_hashes [] = {
     NULL
 };
 
+/* PC SONGLIST.DAT, 63 bytes. SHA-256:
+ * 401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72
+ * The MD5 is used solely for the existing recursive asset-discovery API. */
+static const char *const g_dm2_songlist_hashes[] = {
+    "bd11f8ded337c4aea978d1304b91b8eb",
+    NULL
+};
+
 /* ── Platform label table ────────────────────────────────────────────── */
 
 static const char *const g_platform_labels[DM2_PLATFORM_COUNT] = {
@@ -784,10 +792,15 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     if (!profile) return -1;
     profile->graphics_path[0] = '\0';
     profile->dungeon_path[0] = '\0';
+    profile->songlist_path[0] = '\0';
     profile->graphics_md5[0] = '\0';
     profile->dungeon_md5[0] = '\0';
+    profile->songlist_md5[0] = '\0';
     profile->graphics_size = 0U;
     profile->dungeon_size = 0U;
+    profile->songlist_size = 0U;
+    memset(profile->songlist_map, 0, sizeof(profile->songlist_map));
+    profile->songlist_verified = 0;
     profile->assets_verified = 0;
     profile->use_dm2_filenames = 0;
 
@@ -863,11 +876,61 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                  "%s%cdm2", base, DM2_PATH_SEP);
     }
 
+    /* PC music routing is an optional extra for launch, but it must never
+     * borrow a filename-matched or generated table.  c_sound.cpp consumes
+     * SONGLIST.DAT's first 44 map selectors; leave routing unavailable when
+     * the authentic 63-byte file is absent or cannot be hash-admitted. */
+    if (profile->assets_verified &&
+        asset_find_by_md5(profile->asset_root, g_dm2_songlist_hashes[0],
+                          profile->songlist_path,
+                          (int)sizeof(profile->songlist_path), 4) &&
+        path_md5_hex(profile->songlist_path, profile->songlist_md5) &&
+        md5_matches(profile->songlist_md5, g_dm2_songlist_hashes[0])) {
+        uint8_t *songlist_bytes = NULL;
+        size_t songlist_size = 0u;
+        if (dm2_v1_boot_read_asset_bytes(profile->songlist_path, 63L,
+                                         &songlist_bytes, &songlist_size) &&
+            songlist_size == 63u) {
+            size_t i;
+            int valid = 1;
+            for (i = 0u; i < sizeof(profile->songlist_map); ++i) {
+                uint8_t track = songlist_bytes[i];
+                if (track != 0xffu && track >= 29u) {
+                    valid = 0;
+                    break;
+                }
+                profile->songlist_map[i] = track;
+            }
+            if (valid) {
+                profile->songlist_size = songlist_size;
+                profile->songlist_verified = 1;
+            } else {
+                memset(profile->songlist_map, 0,
+                       sizeof(profile->songlist_map));
+                profile->songlist_path[0] = '\0';
+                profile->songlist_md5[0] = '\0';
+            }
+            free(songlist_bytes);
+        }
+    }
+
     /* Determine if we found both required files */
     if (profile->graphics_path[0] && profile->dungeon_path[0]) {
         return 0;  /* success */
     }
     return -1;  /* missing assets */
+}
+
+int dm2_v1_boot_songlist_track_for_map(const DM2_V1_BootProfile *profile,
+                                       int map_index, int *out_track) {
+    uint8_t track;
+    if (out_track) *out_track = -1;
+    if (!profile || !profile->songlist_verified || map_index < 0 ||
+        map_index >= (int)sizeof(profile->songlist_map)) return 0;
+    track = profile->songlist_map[map_index];
+    if (track == 0xffu || track >= 29u) return 0;
+    if (out_track) *out_track = (int)track;
+    return 1;
 }
 
 /* ── Init defaults ────────────────────────────────────────────────────── */
