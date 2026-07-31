@@ -46204,3 +46204,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm2_v1_scene_light_control`, real-data scene/wall-plan viewport
   probes, DM2 M11 viewport composition, `firestaff_dm2`, and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass.
+
+- ✅ 2026-07-31 CSB V2.2 generic-painter cleanup: removed the obsolete 3×3
+  `csb_v22_inplace_render_pass()` API and its synthetic-cache probes. That
+  path could never identify the original raster, clipping or draw order, so
+  it was not a valid material binding. V2.2 replacement is now exclusively
+  command-bound: the F0128 command must carry the decoded original span,
+  its material hash, live source palette and a provenance-verified route;
+  otherwise V1 pixels remain untouched. References: ReDMCSB `DUNVIEW.C F0111`
+  / `F0128` and CSBWin `Viewport.cpp`. Verification: focused V2.2 command
+  tests, M11 build, real-data first-frame material test, and `git diff --check`.

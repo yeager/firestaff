@@ -454,19 +454,6 @@ static void blit_bitmap_to_cell(const uint32_t* rgba, int src_w, int src_h,
     }
 }
 
-int csb_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH) {
-    /* This old grid painter has no ReDMCSB F0128 command, clipping or
-     * draw-order receipt.  It used to replace arbitrary 3x3 cells with a
-     * stretched pack bitmap, which can hide source walls, ornaments and
-     * Things.  Keep the ABI while failing closed: the only admitted V2.2
-     * compositor is csb_v22_inplace_render_f0128_command(), called directly
-     * from the authenticated source command stream. */
-    (void)framebuffer;
-    (void)fbW;
-    (void)fbH;
-    return 0;
-}
-
 int csb_v22_inplace_render_f0128_command(
     const CSB_V1_ViewportRuntimeDrawCommandPc34* source_command,
     unsigned char* framebuffer, int fbW, int fbH)

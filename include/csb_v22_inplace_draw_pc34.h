@@ -84,13 +84,6 @@ const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,
                                                   const char* asset_id,
                                                   int* out_w, int* out_h);
 
-/* Legacy 3x3-cell painter retained for ABI compatibility. It always returns
- * zero: arbitrary cell rectangles are not ReDMCSB F0128 projections. CSB
- * V2.2 replacements are instead admitted command-by-command through
- * csb_v22_inplace_render_f0128_command(), preserving native clipping,
- * palette and later F0115 overlays. */
-int csb_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH);
-
 /* Replace one already-composed, source-owned F0128 command in place. Only
  * commands admitted by csb_v22_admit_f0128_door_projection_pc34() can paint;
  * this currently means the proven D1/D2 door routes. The caller invokes this

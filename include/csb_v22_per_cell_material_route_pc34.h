@@ -43,7 +43,7 @@
  *
  * This module is intentionally narrow:
  *   - It does NOT touch V1 state.
- *   - It does NOT paint pixels (use csb_v22_inplace_render_pass).
+ *   - It does NOT paint pixels; only source-bound F0128 commands may do so.
  *   - It does NOT decide presentation mode (use csb_v2_presentation_mode_is_v22).
  *
  * Source-lock:

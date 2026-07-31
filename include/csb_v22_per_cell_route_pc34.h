@@ -46,7 +46,6 @@
  *
  * Module: src/csb/csb_v22_per_cell_route_pc34.c
  * Test:   tests/test_csb_v22_per_cell_route_pc34.c
- * Probe:  probes/firestaff_csb_v22_per_cell_route_probe.c
  */
 
 #ifndef FIRESTAFF_CSB_V22_PER_CELL_ROUTE_PC34_H
