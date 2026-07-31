@@ -19,6 +19,20 @@
   äldre fixture-kompatibla API:er är kvar avgränsade till probe-kontrakt.
   Startup-flow passerar `653/653`.
 
+- ✅ 2026-07-31 CSB real first-frame verification: the local hash-verified
+  PC DOS 3.4 corpus passes `firestaff_csb_v1_first_viewport_frame_probe`
+  30/30 through boot, source dungeon pose, first viewport materialization,
+  floor band and deterministic render. This is a real-asset run with
+  `FIRESTAFF_CSB_PC_DATA=/Users/bosse/.firestaff/data/csb`, not its
+  data-free negative path.
+
+- ✅ 2026-07-31 CSB dungeon-loader boundary audit: confirmed that no
+  production runtime caller invokes the generic in-memory dungeon parser.
+  The integration plan now directs `DUNGEON.DAT` through
+  `csb_v1_dungeon_load_from_file()`, which rejects the retired 16-bit
+  fixture format; the in-memory parser is documented only for authenticated
+  save images and isolated tests.
+
 - ✅ 2026-07-31 Theron viewport-level admission: renderaren kräver nu både
   laddad tile-atlas och en faktiskt `level_loaded`-markerad dungeon/level.
   Den gamla `(0,0,north)`-fallbacken kan inte längre skapa en syntetisk

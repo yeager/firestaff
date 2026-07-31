@@ -31,6 +31,10 @@
     `csb_v1_dungeon_load_from_file()` as the runtime file boundary. Continue
     checking newly added callers so the generic in-memory parser remains
     limited to authenticated save images and isolated tests.
+  - 2026-07-31: The local hash-verified PC 3.4 corpus now passes the first
+    viewport-frame probe end-to-end (30/30) with a source dungeon, start pose,
+    floor band and deterministic frame. Continue requiring this real-data
+    route for any new CSB viewport/HUD material consumer.
   Production rendering must fail closed for a missing or unbound original
   asset. Procedural mazes, generic walls, coloured creature blocks, substitute
   palettes, and synthetic HUD art are not acceptable when authentic game data
