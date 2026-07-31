@@ -45606,6 +45606,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   nor a `CSBgraphics.dat` material receipt. The remaining CSBWin
   CustomBackgrounds source-lock metadata is non-drawing until its original
   masked-composite material path is bound.
+- ✅ 2026-07-31 CSB fabricated D1L2/D1R2 F0108 removal: removed the
+  unconsumed floor/ceiling/ornament trace, its generated-pixel hash and CTest.
+  ReDMCSB `DUNVIEW.C` F0122/F0123 exposes D1L/D1R, not D1L2/D1R2; the live
+  PC3.4 material routes remain the only pixel owner for the actual pair.
 
 - ✅ 2026-07-31 DM1 V1 verification-route repair: PC3.4 object-name
   admission now uses the production GRAPHICS.DAT record constant (694 rather

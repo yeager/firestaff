@@ -569,6 +569,10 @@ diagnostic; it must not silently fall back to a generated visual.
   pixels, had no viewport consumer and no `CSBgraphics.dat` material receipt;
   the separate CSBWin source-lock metadata remains until the real masked
   composite is admitted.
+  **2026-07-31 D1L2/D1R2 F0108 follow-up:** removed the fabricated
+  floor/ceiling/ornament trace and its generated-pixel hash. ReDMCSB's
+  F0122/F0123 name only D1L/D1R; the real PC3.4 material routes remain the
+  sole source of viewport pixels for that pair.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
