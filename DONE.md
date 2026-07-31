@@ -44900,3 +44900,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm1_v1_viewport_3d_pc34_compat`,
   `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 CSB PC3.4 D2 side-door source binding: D2L/D2R now draw
+  their original M660/G2115 top strip through G0173/G0175 rather than the
+  legacy wall-frame atlas. The route also requires an F0172 front-door
+  element, so a `DOOR_SIDE` cell cannot receive a fabricated front-door
+  strip merely because it shares the coarse door type. ReDMCSB
+  `DUNVIEW.C F0119:6991-6998` and `F0120:7184-7191` are the source
+  references. Verification: `test_dm1_v1_viewport_3d_pc34_compat`,
+  `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
+  launcher handoff boundary (567/0, one expected Atari skip) pass.

@@ -18,7 +18,9 @@
 #include "firestaff/dm1/v1/G0167_pc34_compat.h"
 #include "firestaff/dm1/v1/G0168_pc34_compat.h"
 #include "firestaff/dm1/v1/G0169_pc34_compat.h"
+#include "firestaff/dm1/v1/G0173_pc34_compat.h"
 #include "firestaff/dm1/v1/G0174_pc34_compat.h"
+#include "firestaff/dm1/v1/G0175_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
@@ -1960,14 +1962,26 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      * DUNVIEW.C:6991-6998 door-front case draws top frame via G2114. */
     {
         int16_t d2l_x = 0, d2l_y = 0;
+        int d2l_cell, d2l_element;
         dm1_viewport_3d_resolve_relative_map_xy(direction, 2, -1, map_x, map_y,
                                                  &d2l_x, &d2l_y);
+        d2l_cell = dm1_viewport_3d_get_dungeon_element(state, d2l_x, d2l_y);
+        d2l_element = state->dungeon_aspect_grid ? d2l_cell :
+            dm1_viewport_3d_classify_grid_cell(d2l_cell);
         dm1_viewport_3d_notify_pre_square_draw(
             state, DM1_VIEW_SQUARE_D2L, 2, -1);
         if (!dm1_viewport_3d_draw_side_wall_element(
-                state, DM1_VIEW_SQUARE_D2L, (int)d2l_x, (int)d2l_y)) {
+                state, DM1_VIEW_SQUARE_D2L, (int)d2l_x, (int)d2l_y) &&
+            d2l_element == DM1_VP_ELEMENT_DOOR_FRONT) {
             const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2L);
-            if (fr && bm_base) {
+            /* G2114 is an F0753 alias of M660/G2115.  F0121 writes its
+             * source pixels through the G0173 D2L top zone.  Do not revive
+             * the legacy atlas in a source-verified CSB session if M660 is
+             * absent.  ReDMCSB DUNVIEW.C:604,6991-6998; STARTUP2.C:646-648. */
+            if (dm1_viewport_3d_draw_source_door_frame(
+                    state, 92, dm1_v1_g0173_table_pc34(), 0)) {
+                /* Exact source frame was drawn. */
+            } else if (!state->source_graphics_required && fr && bm_base) {
                 dm1_viewport_3d_draw_wall(state, bm_base + 18 * BMP_STRIDE, fr);
             }
         }
@@ -1978,14 +1992,26 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
      * DUNVIEW.C:7184-7191 door-front case draws top frame via G2113. */
     {
         int16_t d2r_x = 0, d2r_y = 0;
+        int d2r_cell, d2r_element;
         dm1_viewport_3d_resolve_relative_map_xy(direction, 2, 1, map_x, map_y,
                                                  &d2r_x, &d2r_y);
+        d2r_cell = dm1_viewport_3d_get_dungeon_element(state, d2r_x, d2r_y);
+        d2r_element = state->dungeon_aspect_grid ? d2r_cell :
+            dm1_viewport_3d_classify_grid_cell(d2r_cell);
         dm1_viewport_3d_notify_pre_square_draw(
             state, DM1_VIEW_SQUARE_D2R, 2, 1);
         if (!dm1_viewport_3d_draw_side_wall_element(
-                state, DM1_VIEW_SQUARE_D2R, (int)d2r_x, (int)d2r_y)) {
+               state, DM1_VIEW_SQUARE_D2R, (int)d2r_x, (int)d2r_y) &&
+            d2r_element == DM1_VP_ELEMENT_DOOR_FRONT) {
             const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D2R);
-            if (fr && bm_base) {
+            /* G2113 aliases M660/G2115 and F0120 uses G0175's D2R zone.
+             * The decoded source is native in both cases; G0175 owns its
+             * horizontal viewport placement.  ReDMCSB DUNVIEW.C:606,
+             * 7184-7191; STARTUP2.C:646-648. */
+            if (dm1_viewport_3d_draw_source_door_frame(
+                    state, 92, dm1_v1_g0175_table_pc34(), 0)) {
+                /* Exact source frame was drawn. */
+            } else if (!state->source_graphics_required && fr && bm_base) {
                 dm1_viewport_3d_draw_wall(state, bm_base + 17 * BMP_STRIDE, fr);
             }
         }
