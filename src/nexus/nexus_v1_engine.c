@@ -2391,8 +2391,9 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
                 load_result = -1;
             } else {
             load_result = nexus_ui_load_face_record(&engine->ui,
-                                                    face_data + descriptor.prs3_offset,
-                                                    (int)descriptor.prs3_size,
+                                                    face_data + descriptor.prefix_offset,
+                                                    descriptor.prefix_size +
+                                                        (int)descriptor.prs3_size,
                                                     portrait_index,
                                                     face_layout.portrait_w,
                                                     face_layout.portrait_h,

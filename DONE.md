@@ -46434,3 +46434,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Saturn-palette-/VDP1-/menysemantik fortfarande krävs innan render-gaten kan
   öppnas.
   Verifiering: `test_nexus_v1_bpk_surface_class` med lokal retailfil.
+# 2026-07-31 Nexus FACE.BIN retailpalette till uppstart
+
+- ✅ Uppstartens FACE-loader skickar nu hela DMWeb-frameprefixet till
+  porträttytan i stället för att kasta bort de första 128 bytesen. De 64
+  källägda big-endian BGR555-orden per porträtt sparas och expanderas till
+  RGBA; den tidigare hårdkodade `192..207`-palette-lanen används inte längre.
+  PRS3-pixlarna är fortfarande no-draw tills champion-index och Saturn
+  VDP-placering är bevisade.
+  Verifiering: `test_nexus_v1_face_bin` avkodar alla 20 retailporträtt.

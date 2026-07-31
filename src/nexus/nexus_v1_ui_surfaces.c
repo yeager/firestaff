@@ -1113,6 +1113,10 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     int entry_size;
     int expand_result;
     Nexus_UI_Surface *surf;
+    const uint8_t *prs3_data = record_data;
+    int prs3_size = record_size;
+    int has_source_palette = 0;
+    int i;
     (void)palette;
     if (!mgr) return -1;
     if (face_index < 0 || face_index >= 20) return -1;
@@ -1133,8 +1137,17 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
         return -1;
     }
     surf->owns_data = 1;
-    expand_result = nexus_ui_expand_face_record_48x48(record_data,
-                                                      record_size,
+    /* DMWeb DecodeFACEBIN: each 56x56 frame owns 64 big-endian BGR555
+     * words (128 bytes), followed by an aligned PRS3 record. Older callers
+     * may still provide the PRS3 span alone, so retain that bounded form. */
+    if (record_size >= 128 + NEXUS_UI_FACE_PRS3_HEADER_BYTES &&
+        memcmp(record_data + 128, "PRS3", 4) == 0) {
+        prs3_data = record_data + 128;
+        prs3_size = record_size - 128;
+        has_source_palette = 1;
+    }
+    expand_result = nexus_ui_expand_face_record_48x48(prs3_data,
+                                                      prs3_size,
                                                       surf->data,
                                                       entry_size,
                                                       NULL);
@@ -1145,10 +1158,23 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     }
     surf->w = portrait_w;
     surf->h = portrait_h;
-    surf->pal_start = 192;
-    surf->pal_count = 16;
+    surf->pal_start = 0;
+    surf->pal_count = has_source_palette ? 64 : 16;
     surf->source = "FACE.BIN";
     surf->owns_data = 1;
+    if (has_source_palette) {
+        for (i = 0; i < 64; ++i) {
+            uint16_t word = nexus_ui_read_be16(record_data + i * 2);
+            uint8_t red = nexus_ui_expand_5bit((uint16_t)((word >> 10) & 0x1fU));
+            uint8_t green = nexus_ui_expand_5bit((uint16_t)((word >> 5) & 0x1fU));
+            uint8_t blue = nexus_ui_expand_5bit((uint16_t)(word & 0x1fU));
+            surf->source_palette_bgr555[i] = word;
+            surf->source_palette_rgba[i] = 0xff000000U |
+                ((uint32_t)red << 16) | ((uint32_t)green << 8) | blue;
+        }
+        surf->source_palette_fnv1a32 = nexus_ui_fnv1a32(record_data, 128U);
+        surf->source_palette_loaded = 1;
+    }
     return 1;
 }
 
