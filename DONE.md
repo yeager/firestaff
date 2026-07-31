@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 shop-state default closure: the unavailable shop module
+  no longer seeds host gold, negotiator skill or a diagnostic party hash, and
+  unknown objects no longer receive an `ITEM…` label. Those values require a
+  loaded original session and shop record chain. Verification:
+  `test_dm2_v1_shop_pc34_compat` 6/6 and
+  `test_dm2_v1_runtime_shop_pc34_compat` 11/11 pass.
+
 - ✅ 2026-07-31 DM2 shop-fixture data removal: deleted the retired local shop
   stock/price table and all host-authored NPC names and dialogue from the
   production module. Shop and NPC catalog lookups now return unavailable

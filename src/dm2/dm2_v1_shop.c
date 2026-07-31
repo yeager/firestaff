@@ -56,9 +56,8 @@ static void ensure_init(void) {
     if (s_initialized) return;
     memset(&s_state, 0, sizeof(s_state));
     s_state.active_shop_id = DM2_SHOP_ID_NONE;
-    s_state.party_negotiator_skill = 50;  /* default = neutral negotiator */
-    s_state.party_gold = 100;
-    s_state.party_state_hash = 0xCAFEBABEu;
+    /* Gold, negotiator state and party identity belong to the loaded DM2
+     * session. Do not populate an unavailable shop path with host defaults. */
     s_initialized = 1;
 }
 
@@ -84,7 +83,8 @@ static void dm2_shop_format_item_name(int item_id, char *out, size_t out_size) {
         dm2_shop_copy_text(out, out_size, known_name);
         return;
     }
-    snprintf(out, out_size, "ITEM%d", item_id);
+    (void)item_id;
+    out[0] = '\0';
 }
 
 /* party_state_hash is captured by dm2_v1_shop_enter() and preserved
@@ -139,9 +139,6 @@ int dm2_v1_shop_item_is_container(int item_id) {
 void dm2_v1_shop_reset_state(void) {
     memset(&s_state, 0, sizeof(s_state));
     s_state.active_shop_id = DM2_SHOP_ID_NONE;
-    s_state.party_negotiator_skill = 50;
-    s_state.party_gold = 100;
-    s_state.party_state_hash = 0xCAFEBABEu;
     s_state.active_stock_count = 0;
     s_initialized = 1;
 }
