@@ -46761,3 +46761,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Removed the synthetic default stone-gradient palette from the V1 palette state.
 - An unbound palette now remains empty, so HUD/viewport code cannot receive manufactured colors before verified Track 02 data is loaded.
 - Updated the rendering test to assert the fail-closed palette contract; focused suite passes 25/25.
+# ✅ 2026-07-31 — Theron V2 HUD production path is asset-gated
+
+- The boot/runtime path no longer draws the procedural V2 HUD overlay when the HUD widget manifest is missing, partial, or placeholder-only.
+- Rendering now requires a complete manifest with real assets for every HUD slot; the local Track 02 BINs remain correctly limited to verified startup surfaces.
+- Verification: `test_theron_rendering` 25/25 and `test_theron_v2_hud_overlay_pc34` 58/58.

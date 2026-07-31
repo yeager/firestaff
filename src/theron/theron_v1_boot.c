@@ -42,6 +42,7 @@
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
+#include "theron_v2_hud_widget_assets_pc34.h"
 #include "menu_input_m12.h"
 #include <stdio.h>
 #include <string.h>
@@ -5795,6 +5796,15 @@ static void theron_v1_boot_runtime_render_v2_hud(
     }
     if (!presentation_is_v2 ||
         hud_launch_mode == THERON_V2_HUD_LAUNCH_MODE_OFF) {
+        return;
+    }
+    /* The overlay implementation is procedural presentation scaffolding.
+     * Do not expose it in the production boot path until every HUD widget is
+     * backed by a real, non-placeholder asset manifest.  The native Track 02
+     * data currently proves startup surfaces only; it does not bind a HUD
+     * chrome/font/portrait bank. */
+    if (theron_v2_hud_widget_assets_gate() !=
+        THERON_V2_HUD_WIDGET_GATE_COMPLETE) {
         return;
     }
     gate = theron_v2_hud_seed_from_v1_world(&hud, world, 1);
