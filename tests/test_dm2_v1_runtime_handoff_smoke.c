@@ -888,39 +888,21 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   dm2_v1_runtime_get_party_x(),
                   dm2_v1_runtime_get_party_y(),
                   framebuffer, 320, 320, 200) == 0,
-              "runtime renders a leader-hand carried item through the viewport");
-        CHECK(fetch_count == 26,
-              "runtime carried item adds one item-map-chip fetch to the viewport pass");
-        CHECK(dm2_v1_runtime_last_asset_carried_item_count() == 1 &&
+              "runtime keeps the fixture provider viewport renderable");
+        CHECK(fetch_count == 25,
+              "runtime does not fetch an invented leader-hand map-chip frame");
+        CHECK(dm2_v1_runtime_last_asset_carried_item_count() == 0 &&
               dm2_v1_runtime_last_fallback_carried_item_count() == 0,
-              "runtime records asset-backed carried leader-hand item draw");
-        CHECK(dm2_v1_runtime_last_item_render_receipt(&item_receipt) == 1 &&
-              item_receipt.source_kind == 3 &&
-              item_receipt.item_category == 0x15 &&
-              item_receipt.item_type == 0x55 &&
-              item_receipt.gdat_index ==
-                  dm2_v1_viewport_item_graphic_index(0x15, 0x55, 0) &&
-              item_receipt.draw_order == 0 &&
-              item_receipt.asset_blit_ready == 1 &&
-              item_receipt.fallback_drawn == 0 &&
-              item_receipt.asset_src_w == 16 &&
-              item_receipt.asset_src_h == 8 &&
-              item_receipt.asset_frame_count == 2 &&
-              item_receipt.render_frame == 0 &&
-              item_receipt.atlas_frame_w == 8 &&
-              item_receipt.atlas_frame_h == 8 &&
-              item_receipt.asset_dst_rect.x == 296 &&
-              item_receipt.asset_dst_rect.y == 180 &&
-              item_receipt.asset_dst_rect.w == 8 &&
-              item_receipt.asset_dst_rect.h == 8,
-              "runtime carried-item receipt exposes GDAT item map-chip blit");
+              "runtime blocks the carried item without its exact source field");
+        CHECK(dm2_v1_runtime_last_item_render_receipt(&item_receipt) == 0,
+              "runtime publishes no carried-item receipt from fixture pixels");
         memset(&m11_receipt, 0, sizeof(m11_receipt));
         (void)dm2_v1_runtime_last_m11_frame_receipt(&m11_receipt);
-        CHECK(m11_receipt.item_material_plan_required == 1 &&
-                  m11_receipt.item_material_plan_consumed == 1 &&
-                  m11_receipt.item_material_plan_command_count == 1 &&
-                  m11_receipt.item_material_plan_hash != 0u,
-              "runtime carries the real leader-hand GDAT receipt into M11");
+        CHECK(m11_receipt.item_material_plan_required == 0 &&
+                  m11_receipt.item_material_plan_consumed == 0 &&
+                  m11_receipt.item_material_plan_command_count == 0 &&
+                  m11_receipt.item_material_plan_hash == 0u,
+              "runtime gives M11 no carried-item plan from fixture pixels");
         dm2_v1_runtime_set_leader_hand_object(0u);
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
     }

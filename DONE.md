@@ -1,3 +1,13 @@
+- ✅ 2026-07-31 DM2 leader-hand fixture-pixel closure: the runtime no longer
+  turns an injected viewport provider's field-zero map-chip into a visible
+  held item. SKProject `DM2_DRAW_ITEM_IN_HAND` (`skguidr5.cpp:1517`) first
+  selects the exact item field through `_2405_014a` and then consumes that
+  GDAT image with its local palette, so an absent boot-owned selection now
+  produces no carried-item draw or M11 material receipt. The focused
+  carried-item assertions in `test_dm2_v1_runtime_handoff_smoke` confirm no
+  invented fetch, draw, receipt, or material plan; the test's unrelated
+  legacy fixture failures remain outside this change.
+
 - ✅ 2026-07-31 DM2 startup menu and palette correction: M11 no longer
   treats `TITLE/0/dt07/1` (the optional credits picture) as a 48-tick boot
   animation. SKProject `SHOW_MENU_SCREEN` loads it only for the credits

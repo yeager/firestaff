@@ -5648,18 +5648,12 @@ static void dm2_runtime_populate_carried_item(const DM2_V1_RuntimeState *rt,
         !dm2_v1_boot_leader_hand_image_field(
             rt->boot, category, (int)index, index,
             (uint32_t)rt->tick_count, rt->view_dir, &image_field)) {
-        if (!rt->viewport_asset_fetch ||
-            rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch) {
-            /* DRAW_ITEM_IN_HAND needs its selected source dtImage and local
-             * palette. The former map-chip field-0 route is not a substitute
-             * for source-required boot GDAT frames. */
-            return;
-        }
-        /* Synthetic provider smoke frames have no boot-owned GDAT parser to
-         * read dtWordValue(6). Keep the injected material path bounded to the
-         * neutral map-chip field so it can still prove the leader-hand item
-         * blit/receipt route without claiming source dtImage selection. */
-        image_field = 0u;
+        /* SKProject DM2_DRAW_ITEM_IN_HAND (skguidr5.cpp:1517) first derives
+         * the item frame through _2405_014a, then queries that exact GDAT
+         * image and its local palette. A generic provider and its field zero
+         * cannot establish either source value, so no carried-item pixel is
+         * admitted until the boot-owned transaction resolves. */
+        return;
     }
 
     dst = &viewport->carried_item;
