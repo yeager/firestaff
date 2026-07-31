@@ -4480,6 +4480,11 @@ lane is carried forward in the sections below.
   against the session-bound M653 font and admitted C020 panel. Keep original
   pixel capture of the complete inventory-stat panel open; missing or host
   font material must leave the source panel without generated text.
+  - 2026-07-31 F0351 layout repair: empty-hand eye inspection now remains in
+    C101 rather than opening the generic M11 dialog. Skill and statistic rows
+    use M653's visible six-pixel cell advance, so their source C557/C559
+    coordinates fit the 144-pixel panel. The remaining work is an original
+    pixel capture comparison, not host-font layout recovery.
 - 2026-07-23 F0344/F0658 HUD material follow-up: a DM1-only receipt now
   requires real C010 action pixels for C079/C077/C011 crop ownership,
   C009/C011 spell rows, C020, C030/C031/C032 F0658 label surfaces, and raw

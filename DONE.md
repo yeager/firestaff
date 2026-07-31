@@ -44776,3 +44776,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   M11 source decoder before the existing F0111 panel blit. No default DoorSet,
   replacement pixels or partial-door geometry is used. Viewport and M12→M11
   handoff regressions pass (2 675/2 675 and 567/567).
+- ✅ 2026-07-31 DM1 F0351 champion-stat panel geometry: an empty-hand eye
+  inspection no longer opens the generic M11 dialog over C101. The live panel
+  now draws F0351's skill and statistic rows with M653's visible six-pixel
+  advance rather than the eight-pixel inscription stride, preserving the
+  ReDMCSB `PANEL.C F0351` C557/C559 layout inside the original 144-pixel
+  panel. Verification: `m11_inventory_full_panel_runtime_source_lock` passes
+  and explicitly rejects dialog-overlay activation for this route.
