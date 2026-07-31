@@ -133,8 +133,8 @@ typedef struct {
 } Nexus_V1_ChampionPool;
 ```
 
-- Hall of Champions portrait bytes are available, but the champion count and
-  record semantics are not yet admitted from the Nexus corpus.
+- Hall of Champions portrait bytes and the 20 PLRD champion records are
+  source-bound; the remaining four array slots are storage capacity only.
 - Active party: 4 champions maximum (same as DM1)
 - leader_index — which champion is currently leading
 

@@ -83,8 +83,8 @@ Nexus is a **3D remake of DM1**, not a sequel. The core dungeon, creatures, and 
 
 ### 3.1 Core Mechanics
 - Same 4 champion classes: Fighter, Wizard, Priest, Ninja
-- Champion roster records are not yet admitted from the Nexus corpus; the
-  current 24-slot table is fixture data only.
+- 20 champion roster records are admitted from the real PLRD/TABL resource;
+  the current 24-slot array retains four reserved capacity slots.
 - Same spell system: 16 spells from DM1
 - Same food/water (1500 each), same consumption model
 - Same champion advancement (experience → stat increases)

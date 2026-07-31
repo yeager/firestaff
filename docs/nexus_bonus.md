@@ -101,8 +101,8 @@ Firestaff's reimplementation (the `firestaff_nexus` library) is itself a form of
 - No other game in the DM series has FMV — this is unique to Nexus
 
 ### Japanese-Only Champion Names
-- Japanese champion labels are not yet source-admitted; the current roster
-  table must not be presented as retail bonus content.
+- Japanese champion labels are source-admitted from PLRD/TABL; the live
+  corpus contains 20 records, not an authenticated 24-record roster.
 - Champion portraits in `FACE.BIN` (44 KB) are unique art
 
 ---

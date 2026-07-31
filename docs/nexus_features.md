@@ -123,8 +123,8 @@ Source: `nexus_v1_champions.c` (roster), `nexus_v1_saturn_font.c`.
 
 ## 7. Champion Identity and Progression
 
-- **FACE.BIN portrait corpus** is admitted separately; champion names/stats
-  and a 24-member live roster remain source-blocked.
+- **20-record PLRD roster** with FACE.BIN portrait ordinals; the 24-slot
+  array is storage capacity only.
 - **Alignment system** — Fighter/Neutral, Priest/Good, Wizard/Chaos, Ninja/Neutral
 - **Food/water** — 1500 units each at creation; starvation triggers death
 - **Anti-magic / Anti-fire** — initially 5 each (Nexus sets defaults vs DM1's 0)

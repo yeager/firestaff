@@ -56,9 +56,9 @@ rendered in katakana (e.g., "シラ" = Syra, "レイラ" = Leyla, "ナビ" = Nab
 
 ## 3. Champion Roster: Japanese Names
 
-The current `src/nexus/nexus_v1_champions.c` table is fixture data. It must
-not be used as proof that a 24-champion Japanese roster or its display text
-has been authenticated:
+The live champion labels are read from the DMWeb-defined `RLOWFIX.BIN`
+`PLRD`/`TABL` records. The source contains 20 records; the 24-slot array is
+not evidence of four additional retail records:
 
 | # | ASCII Name | Japanese | Class |
 |---|-----------|---------|-------|

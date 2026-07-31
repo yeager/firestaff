@@ -8966,7 +8966,17 @@ int nexus_v1_launcher_boot_level0_startup(
     nexus_v1_game_init(&engine->game, engine->data_dir);
     nexus_v1_sync_dgn_runtime_pose(engine, 0, engine->game.party_x,
                                    engine->game.party_y, engine->game.party_dir);
-    nexus_v1_champions_init(&engine->champions);
+    {
+        int rlowfix_size = 0;
+        uint8_t *rlowfix = nexus_v1_read_file(engine, "RLOWFIX.BIN",
+                                              &rlowfix_size);
+        if (!rlowfix || !nexus_v1_champions_init_from_rlowfix(
+                &engine->champions, rlowfix, (size_t)rlowfix_size)) {
+            memset(&engine->champions, 0, sizeof(engine->champions));
+            engine->champions.leader_index = -1;
+        }
+        free(rlowfix);
+    }
     if (engine->mechanics) {
         nexus_mechanics_init(engine->mechanics,
                              engine->game.party_x,

@@ -13,6 +13,13 @@ target_link_libraries(test_csb_v1_startup_package_identity_pc34 PRIVATE firestaf
 add_test(NAME csb_v1_startup_package_identity_pc34
          COMMAND test_csb_v1_startup_package_identity_pc34)
 
+add_executable(test_nexus_v1_champion_plrd
+    tests/test_nexus_v1_champion_plrd.c)
+target_include_directories(test_nexus_v1_champion_plrd PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_champion_plrd PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_champion_plrd COMMAND test_nexus_v1_champion_plrd)
+
 add_executable(test_nexus_v1_multi_level_capture_campaign_launcher
     tests/test_nexus_v1_multi_level_capture_campaign_launcher.c
     src/nexus/nexus_v1_multi_level_capture_campaign_launcher.c

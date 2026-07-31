@@ -2639,8 +2639,20 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
             &engine->wall_bpk_container);
     }
 
-    /* Init champion pool */
-    nexus_v1_champions_init(&engine->champions);
+    /* Init champion pool from DMWeb's real RLOWFIX.BIN/PLRD records.  The
+     * old hardcoded roster remains fixture-only; production fails closed if
+     * the retail descriptor resource is absent or malformed. */
+    {
+        int rlowfix_size = 0;
+        uint8_t *rlowfix = nexus_v1_read_file(engine, "RLOWFIX.BIN",
+                                              &rlowfix_size);
+        if (!rlowfix || !nexus_v1_champions_init_from_rlowfix(
+                &engine->champions, rlowfix, (size_t)rlowfix_size)) {
+            memset(&engine->champions, 0, sizeof(engine->champions));
+            engine->champions.leader_index = -1;
+        }
+        free(rlowfix);
+    }
 
     /* Init startup UI surfaces after source selection and champion roster. */
     nexus_ui_manager_init(&engine->ui);

@@ -2,18 +2,13 @@
 
 ## Source-status boundary
 
-The current `src/nexus/nexus_v1_champions.c` roster is not an authenticated
-Nexus data source. Its names, classes, and statistics are a development
-fixture (the first eight use observed Japanese labels; the remaining entries
-reuse Dungeon Master-era names and inferred values). The supplied European
-Saturn corpus contains `FACE.BIN`, but no admitted champion-record decoder or
-authenticated card/save record that binds those fields.
-
-The 24-slot array is therefore storage capacity, not a verified retail
-roster. Live champion selection, stats, inventory text, and HUD item text
-remain source-blocked until DMWeb format evidence or an authenticated Saturn
-memory-card/runtime capture supplies the record layout and values. Portraits
-alone do not authenticate the corresponding names or statistics.
+DMWeb's `DMNDataFileDecoder.vbs` identifies the `RLOWFIX.BIN` `RES*`/`PLRD`
+resource as 20 records of 64 bytes: six `TABL` name indices, three big-endian
+health/stamina/mana words, twelve attribute bytes, and twenty equipment words.
+Firestaff now parses that exact structure from the real European
+`RLOWFIX.BIN`; the live pool contains 20 source records. The 24-element array
+is retained only as save/storage capacity. `FACE.BIN` portraits remain a
+separate source-bound asset and are indexed by the PLRD ordinal.
 
 ## Sources
 - `src/nexus/nexus_v1_champions.c` (full roster + stat definitions)
@@ -26,17 +21,17 @@ alone do not authenticate the corresponding names or statistics.
 
 ## Overview
 
-The intended Nexus champion system appears DM1-shaped, but the supplied
-corpus does not yet authenticate its champion record layout. The current
-fixture must therefore be treated as implementation scaffolding only; no
-Japanese roster, class/stat table, or 24-entry live pool is source-verified.
+The intended Nexus champion system appears DM1-shaped. The live names,
+Japanese labels, base stats, levels, and equipment defaults now come from the
+retail PLRD records; fields not represented by PLRD remain explicitly
+initialised by the runtime contract rather than inferred from DM1.
 
 | Aspect | DM1 | CSB | DM2 | Nexus |
 |--------|-----|-----|-----|-------|
 | Classes | 3 (Fighter, Wizard, Priest) | 4 (+ Ninja unlockable) | 4 (formalized) | **4 (same as DM2)** |
-| Roster size | 24 | 24 | 24+ | **Not admitted** |
+| Roster size | 24 | 24 | 24+ | **20 PLRD records; 24-slot capacity** |
 | Party size | 4 | 4 | 4 + companions | **4** |
-| Names | Western (Thor, Sara...) | Western | Western | **Not admitted** |
+| Names | Western (Thor, Sara...) | Western | Western | **Japanese PLRD/TABL labels** |
 | Food/Water | 1500 each | 1500 | 1500 | **1500 each** |
 | Anti-Magic default | 0 | 0 | 0 | **5** |
 | Anti-Fire default | 0 | 0 | 0 | **5** |
@@ -276,8 +271,8 @@ expected of a Saturn title and the Japanese art style. Portraits are used at:
 
 ## Status: SOURCE-LOCKED (Champion Roster)
 
-The current roster, stats, classes, and init values in
-`nexus_v1_champions.c` are fixture values and are not source-verified. DM1
+The former hardcoded roster remains only as fixture compatibility for isolated
+unit tests. Production uses `nexus_v1_champions_init_from_rlowfix()` and
+fails closed if the real descriptor resource is missing or malformed. DM1
 inheritance is a code-structure comparison, not proof of Nexus runtime
-semantics. `FACE.BIN` portrait bytes are authenticated separately, but no
-champion names or statistics are inferred from them.
+semantics.

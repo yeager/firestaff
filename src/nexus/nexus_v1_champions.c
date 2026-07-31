@@ -208,6 +208,8 @@ static const struct { const char *ascii; const char *jp; int cls; int hp; int st
 };
 
 void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool) {
+    /* Compatibility fixture for isolated legacy tests only. Production
+     * callers must use nexus_v1_champions_init_from_rlowfix(). */
     int i, j;
     if (!pool) return;
     memset(pool, 0, sizeof(*pool));
@@ -247,6 +249,98 @@ void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool) {
     for (i = 0; i < NEXUS_MAX_PARTY; i++)
         pool->party[i] = -1;
     pool->leader_index = 0;
+}
+
+/* DMWeb DMNDataFileDecoder.vbs: DecodeRES/PLRD reads 20 records.  Each
+ * record is 6 TABL character indices, three BE16 values (health, stamina,
+ * mana), twelve attribute bytes, and twenty BE16 equipment values. */
+int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
+                                         const uint8_t *source,
+                                         size_t source_size) {
+    static const char *const ascii[NEXUS_NEXUS_PLRD_CHAMPION_COUNT] = {
+        "Alex", "Azizi", "Tika", "Daroou", "Elija", "Gando", "Gothmog",
+        "Halk", "Hissssa", "Muramasa", "Leyla", "Sedi", "Godo", "Sonja",
+        "Elsia", "Tiggy", "Wu Tse", "Wuuf", "Shadow", "Lord Chaos"
+    };
+    static const char *const japanese[NEXUS_NEXUS_PLRD_CHAMPION_COUNT] = {
+        "\xe3\x82\xa2\xe3\x83\xac\xe3\x83\x83\xe3\x82\xaf\xe3\x82\xb9",
+        "\xe3\x82\xa2\xe3\x82\xb8\xe3\x82\xb8", "\xe3\x83\x86\xe3\x82\xa3\xe3\x82\xab",
+        "\xe3\x83\x80\xe3\x83\xab\xe3\x83\xbc", "\xe3\x82\xa4\xe3\x83\xa9\xe3\x82\xa4\xe3\x82\xb8\xe3\x83\xa3",
+        "\xe3\x82\xac\xe3\x83\xb3\xe3\x83\x89\xe3\x82\xa5", "\xe3\x82\xb4\xe3\x82\xba\xe3\x83\xa2\xe3\x82\xb0",
+        "\xe3\x83\x8f\xe3\x83\xab\xe3\x82\xaf", "\xe3\x83\x92\xe3\x83\x83\xe3\x82\xb5\xe3\x83\xbc",
+        "\xe3\x83\xa0\xe3\x83\xa9\xe3\x83\x9e\xe3\x82\xb5", "\xe3\x83\xac\xe3\x82\xa4\xe3\x83\xa9",
+        "\xe3\x82\xbb\xe3\x83\x87\xe3\x82\xa3\xe3\x83\xbc", "\xe3\x82\xb4\xe3\x83\x89\xe3\x83\xbc",
+        "\xe3\x82\xbd\xe3\x83\xb3\xe3\x83\xa4", "\xe3\x82\xa8\xe3\x83\xab\xe3\x82\xb7\xe3\x82\xa2",
+        "\xe3\x83\x86\xe3\x82\xa3\xe3\x82\xae\xe3\x83\xbc", "\xe3\x82\xa6\xe3\x83\xbc\xe3\x83\x84\xe3\x82\xa7",
+        "\xe3\x82\xa6\xe3\x83\xbc\xe3\x83\x95", "\xe3\x82\xb7\xe3\x83\xa3\xe3\x83\x89\xe3\x82\xa5",
+        "\xe3\x83\xad\xe3\x83\xbc"
+    };
+    size_t plrd = 0U;
+    int tabl_found = 0;
+    int i;
+    if (!pool || !source || source_size < 8U ||
+        memcmp(source, "RES*", 4U) != 0) return 0;
+    for (i = 0; (size_t)i + 4U <= source_size; ++i) {
+        if (memcmp(source + i, "TABL", 4U) == 0) {
+            tabl_found = 1;
+            break;
+        }
+    }
+    if (!tabl_found) return 0;
+    for (i = 0; (size_t)i + 8U + NEXUS_NEXUS_PLRD_CHAMPION_COUNT * 64U + 4U <=
+                source_size; ++i) {
+        if (memcmp(source + i, "PLRD", 4U) == 0 &&
+            memcmp(source + i + 8U + NEXUS_NEXUS_PLRD_CHAMPION_COUNT * 64U,
+                   "CRET", 4U) == 0) {
+            plrd = (size_t)i + 8U;
+            break;
+        }
+    }
+    if (!plrd) return 0;
+    memset(pool, 0, sizeof(*pool));
+    for (i = 0; i < NEXUS_NEXUS_PLRD_CHAMPION_COUNT; ++i) {
+        const uint8_t *r = source + plrd + (size_t)i * 64U;
+        Nexus_V1_Champion *c = &pool->champions[i];
+        int fighter = r[19], ninja = r[20], priest = r[21], wizard = r[22];
+        int j;
+        strncpy(c->name_ascii, ascii[i], sizeof(c->name_ascii) - 1U);
+        strncpy(c->name_jp, japanese[i], sizeof(c->name_jp) - 1U);
+        c->health = c->max_health = ((int)r[6] << 8) | r[7];
+        c->stamina = c->max_stamina = ((int)r[8] << 8) | r[9];
+        c->mana = c->max_mana = ((int)r[10] << 8) | r[11];
+        c->strength = r[13]; c->dexterity = r[14]; c->wisdom = r[15];
+        c->vitality = r[16]; c->anti_magic = r[17]; c->anti_fire = r[18];
+        c->fighter_level = fighter; c->ninja_level = ninja;
+        c->priest_level = priest; c->wizard_level = wizard;
+        c->primary_class = NEXUS_CLASS_FIGHTER;
+        if (ninja > fighter && ninja >= priest && ninja >= wizard)
+            c->primary_class = NEXUS_CLASS_NINJA;
+        else if (priest > fighter && priest >= wizard)
+            c->primary_class = NEXUS_CLASS_PRIEST;
+        else if (wizard > fighter)
+            c->primary_class = NEXUS_CLASS_WIZARD;
+        c->food = c->water = 1500; c->alive = 1; c->portrait_index = i;
+        for (j = 0; j < 30; ++j) c->inventory[j] = 0xffU;
+        for (j = 0; j < NEXUS_SLOT_COUNT; ++j) {
+            uint16_t item = (uint16_t)(((uint16_t)r[24U + 4U * (unsigned)j] << 8) |
+                                       r[25U + 4U * (unsigned)j]);
+            c->slots[j] = item == 0xffffU ? -1 : (int)item;
+        }
+        /* DMWeb's final three PLRD equipment words are backpack entries;
+         * retain their real item ordinals without inventing item metadata. */
+        for (j = 0; j < 3 && NEXUS_SLOT_COUNT + j < 30; ++j) {
+            uint16_t item = (uint16_t)(((uint16_t)r[24U + 4U *
+                                       (unsigned)(NEXUS_SLOT_COUNT + j)] << 8) |
+                                       r[25U + 4U *
+                                       (unsigned)(NEXUS_SLOT_COUNT + j)]);
+            c->inventory[j] = item == 0xffffU ? 0xffU : (uint8_t)item;
+        }
+        c->load = 0; c->max_load = nexus_champion_get_maximum_load(c);
+        c->attributes = NEXUS_ATTR_STATISTICS;
+    }
+    pool->champion_count = NEXUS_NEXUS_PLRD_CHAMPION_COUNT;
+    pool->party_count = 0; pool->leader_index = -1;
+    return 1;
 }
 
 int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index) {

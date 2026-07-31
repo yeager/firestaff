@@ -6,13 +6,14 @@
 #include <stddef.h>
 #include "nexus_v1_inventory.h"
 
-/* DM Nexus has the same champion system as DM1 but with Japanese names.
- * 24 champions in the Hall of Champions, 4 active in party.
- * Stats, skills, spells identical to DM1 engine.
+/* DM Nexus uses a DM-family champion model with 4 active party slots.
+ * DMWeb's RLOWFIX.BIN PLRD resource currently admits 20 retail records;
+ * NEXUS_MAX_CHAMPIONS is retained at 24 for storage compatibility.
  * Source: ReDMCSB CHAMPION.C F0309 (max load), F0310 (movement ticks),
  * F0306 (stamina adjustment), F0325 (stamina decrement). */
 
 #define NEXUS_MAX_CHAMPIONS 24
+#define NEXUS_NEXUS_PLRD_CHAMPION_COUNT 20
 #define NEXUS_MAX_PARTY 4
 
 /* NEXUS_SLOT_* slot indices are defined in nexus_v1_inventory.h
@@ -108,6 +109,10 @@ void nexus_champion_decrement_stamina(Nexus_V1_Champion *c, int cost);
 void nexus_champion_recalc_load(Nexus_V1_Champion *c);
 
 void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool);
+/* Populate the live pool from DMWeb's RLOWFIX.BIN resource PLRD records. */
+int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
+                                         const uint8_t *source,
+                                         size_t source_size);
 int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index);
 int nexus_v1_champion_unrecruit_last(Nexus_V1_ChampionPool *pool);
 int nexus_v1_champion_resurrect(Nexus_V1_ChampionPool *pool, int party_slot);
@@ -130,7 +135,7 @@ int nexus_v1_champion_on_death_update_leader(Nexus_V1_ChampionPool *pool,
 
 /* ── Champion pool binary serialization (Phase 6 save/load) ────────────────
  *
- * Serializes the entire champion pool (24 champions + party + leader state)
+ * Serializes the champion pool (up to 24 storage slots + party + leader state)
  * into a flat binary buffer. Unpacked from buffer on load.
  *
  * Layout (little-endian):
