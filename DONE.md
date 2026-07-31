@@ -46622,3 +46622,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `DecodeFONT256S2D`. Retailkontroll mot `FONT256.S2D` verifierar de fem
   offset/size-paren; ingen glyph- eller menysemantik påstås ännu.
   Verifiering: `test_nexus_v1_font_s2d` passerar.
+- ✅ 2026-07-31 Nexus FONT256 Character Generator: en bounded API kopierar
+  nu DMWeb:s 242 verkliga 8x8/8-bit tiles från CG-regionen efter dess
+  16-byte prefix och avvisar index/filgränsöverskridanden. Tileindexen hålls
+  uttryckligen separata från glyph-/menysemantik. Verifiering:
+  `test_nexus_v1_font_s2d` passerar mot lokal retailfil.

@@ -14,6 +14,31 @@ static const uint8_t scr_magic[16] = {
     'S','E','G','A',' ','S','A','T','U','R','N',' ','S','C','R','\0'
 };
 
+int nexus_v1_font_s2d_copy_character_generator_tile(
+    const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded,
+    int tile_index, uint8_t out_tile[64])
+{
+    uint32_t offset;
+
+    if (!data || data_size <= 0 || !decoded || !out_tile ||
+        !decoded->valid || tile_index < 0 || tile_index >= 242 ||
+        decoded->character_generator_size < 16U + 242U * 64U) {
+        return -1;
+    }
+    offset = decoded->character_generator_offset + 16U +
+        (uint32_t)tile_index * 64U;
+    if (offset > (uint32_t)data_size ||
+        64U > (uint32_t)data_size - offset ||
+        offset < decoded->character_generator_offset ||
+        offset + 64U > decoded->character_generator_offset +
+            decoded->character_generator_size) {
+        return -1;
+    }
+    memcpy(out_tile, data + offset, 64U);
+    return 0;
+}
+
 int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
                               Nexus_V1_FontS2dDecodeResult *out) {
     int i;

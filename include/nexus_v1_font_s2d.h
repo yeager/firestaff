@@ -36,6 +36,14 @@ typedef struct {
     uint32_t data_hash;
 } Nexus_V1_FontS2dDecodeResult;
 
+/* DMWeb DecodeFONT256S2D: the Character Generator region contains a
+ * 16-byte prefix followed by 242 raw 8x8, 8-bit tile images. This copies one
+ * source tile only; it does not infer a character/glyph mapping. */
+int nexus_v1_font_s2d_copy_character_generator_tile(
+    const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded,
+    int tile_index, uint8_t out_tile[64]);
+
 int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
                               Nexus_V1_FontS2dDecodeResult *out);
 

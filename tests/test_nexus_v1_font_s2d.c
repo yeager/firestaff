@@ -66,6 +66,20 @@ static int test_font256(void) {
         return 1;
     }
     printf("  PASS DMWeb named regions: map/page/CG/palette/attributes\n");
+    {
+        uint8_t tile[64];
+        if (nexus_v1_font_s2d_copy_character_generator_tile(
+                data, size, &r, 0, tile) != 0 ||
+            nexus_v1_font_s2d_copy_character_generator_tile(
+                data, size, &r, 241, tile) != 0 ||
+            nexus_v1_font_s2d_copy_character_generator_tile(
+                data, size, &r, 242, tile) == 0) {
+            printf("  FAIL DMWeb Character Generator tile bounds\n");
+            free(data);
+            return 1;
+        }
+        printf("  PASS DMWeb Character Generator: 242 bounded 8x8 tiles\n");
+    }
 
     for (i = 0; i < r.section_count; i++) {
         printf("    section %d: offset=0x%X size=0x%X\n",
