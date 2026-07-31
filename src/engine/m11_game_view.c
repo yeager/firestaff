@@ -34318,6 +34318,44 @@ static void m11_draw_dm1_d0c_projectile_pass(const M11_GameViewState* state,
     }
 }
 
+static void m11_draw_dm1_d0c_floor_item_pass(const M11_GameViewState* state,
+                                              unsigned char* framebuffer,
+                                              int framebufferWidth,
+                                              int framebufferHeight)
+{
+    M11_ViewportCell cell;
+    int sourceZoneRow;
+    int itemIndex;
+
+    if (!state || !framebuffer || !state->assetsAvailable ||
+        !m11_sample_viewport_cell(state, 0, 0, &cell) || !cell.valid ||
+        !cell.dm1MaterializationDecisionReady ||
+        !cell.dm1MaterializationDecision.drawFloorItems ||
+        !m11_dm1_floor_item_material_allowed(&cell, 0)) {
+        return;
+    }
+    sourceZoneRow = dm1_viewport_3d_f0115_c2500_c2900_row(0, 0);
+    if (sourceZoneRow < 0) {
+        return;
+    }
+    /* F0127 calls F0115 for D0C with C0x0021 (DUNVIEW.C:8294). F0115
+     * normalizes the two one-based cell ordinals, so the zero-based payload
+     * consumes cells 0 then 1 through G2028[M609], C2500 row 1. */
+    for (itemIndex = 0; itemIndex < cell.floorItemCount; ++itemIndex) {
+        if (cell.floorItemTypes[itemIndex] < 0 ||
+            (cell.floorItemCells[itemIndex] != 0 &&
+             cell.floorItemCells[itemIndex] != 1)) {
+            continue;
+        }
+        (void)m11_draw_dm1_f0115_floor_item_sprite(
+            state, framebuffer, framebufferWidth, framebufferHeight,
+            M11_VIEWPORT_X, M11_VIEWPORT_Y, M11_VIEWPORT_W, M11_VIEWPORT_H,
+            cell.floorItemTypes[itemIndex], cell.floorItemSubtypes[itemIndex],
+            cell.floorItemCells[itemIndex], itemIndex, 0, sourceZoneRow,
+            cell.floorItemThings[itemIndex], cell.mapX, cell.mapY);
+    }
+}
+
 static void m11_draw_dm1_deferred_center_explosion(unsigned char* framebuffer,
                                                    int framebufferWidth,
                                                    int framebufferHeight,
@@ -46161,6 +46199,9 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                              0, 0, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
                         0, 0, cells);
+    /* F0127's D0C F0115 object pass precedes its F0113 field overlay. */
+    m11_draw_dm1_d0c_floor_item_pass(state, framebuffer,
+                                     framebufferWidth, framebufferHeight);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
                                   0, 0, cells);
     m11_draw_dm1_d0c_projectile_pass(state, framebuffer,

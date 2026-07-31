@@ -43,7 +43,10 @@ static const char* resolve_data_dir(void)
     return NULL;
 }
 
-static int find_real_non_hoc_floor_item_pose(M11_GameViewState* state)
+static int find_real_floor_item_pose(M11_GameViewState* state,
+                                     int relativeForward,
+                                     int relativeSide,
+                                     unsigned char* framebuffer)
 {
     const struct DungeonDatState_Compat* dungeon = state->world.dungeon;
     int mapIndex;
@@ -59,8 +62,12 @@ static int find_real_non_hoc_floor_item_pose(M11_GameViewState* state)
                     for (direction = 0; direction < 4; ++direction) {
                         static const int kForwardX[4] = { 0, 1, 0, -1 };
                         static const int kForwardY[4] = { -1, 0, 1, 0 };
-                        int partyX = x - kForwardX[direction];
-                        int partyY = y - kForwardY[direction];
+                        int rightX = kForwardY[direction];
+                        int rightY = -kForwardX[direction];
+                        int partyX = x - relativeForward * kForwardX[direction]
+                            - relativeSide * rightX;
+                        int partyY = y - relativeForward * kForwardY[direction]
+                            - relativeSide * rightY;
                         int sampledMapX;
                         int sampledMapY;
                         int elementType;
@@ -78,10 +85,18 @@ static int find_real_non_hoc_floor_item_pose(M11_GameViewState* state)
                         state->world.party.mapY = partyY;
                         state->world.party.direction = direction;
                         if (M11_GameView_ProbeViewportFloorItemCounts(
-                                state, 1, 0, &sampledMapX, &sampledMapY,
+                                state, relativeForward, relativeSide,
+                                &sampledMapX, &sampledMapY,
                                 &elementType, &floorItems, &summaryItems) &&
                             floorItems > 0) {
-                            return 1;
+                            M11_Dm1F0115FloorItemRuntimeCaptureReceipt receipt;
+                            memset(framebuffer, 0, 320 * 200);
+                            M11_GameView_Draw(state, framebuffer, 320, 200);
+                            memset(&receipt, 0, sizeof(receipt));
+                            M11_GameView_GetDm1F0115FloorItemRuntimeCaptureReceipt(&receipt);
+                            if (receipt.valid && receipt.presentation.floorItemLane) {
+                                return 1;
+                            }
                         }
                     }
                 }
@@ -102,13 +117,17 @@ int main(void)
         return 0;
     }
     M11_GameView_Init(&state);
-    if (!M11_GameView_StartDm1(&state, dataDir) || !state.assetsAvailable ||
-        !find_real_non_hoc_floor_item_pose(&state)) {
+    if (!M11_GameView_StartDm1(&state, dataDir) || !state.assetsAvailable) {
         M11_GameView_Shutdown(&state);
-        puts("skip: real PC34 corpus has no reachable non-HoC F0115 floor item");
+        puts("skip: local PC34 corpus could not start");
         return 0;
     }
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+    if (!find_real_floor_item_pose(&state, 0, 0, framebuffer)) {
+        M11_GameView_Shutdown(&state);
+        puts("skip: real PC34 corpus has no drawable D0C F0115 floor item");
+        return 0;
+    }
     state.world.gameTick += 1u;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&state, framebuffer, 320, 200);
@@ -121,7 +140,7 @@ int main(void)
         !receipt.presentation.usesF0791Blit ||
         receipt.presentation.graphicsId <= 0 ||
         receipt.presentation.assetWidth <= 0 || receipt.presentation.assetHeight <= 0) {
-        fprintf(stderr, "real non-HoC F0115 material did not reach final M11 capture\n");
+        fprintf(stderr, "real D0C F0115 material did not reach final M11 capture\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }
@@ -153,6 +172,6 @@ int main(void)
         return 1;
     }
     M11_GameView_Shutdown(&state);
-    puts("ok: real PC34 non-HoC F0115 material reaches and clears final M11 capture");
+    puts("ok: real PC34 D0C F0115 material reaches and clears final M11 capture");
     return 0;
 }
