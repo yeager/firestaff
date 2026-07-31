@@ -47191,3 +47191,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Amiga fake-code no-ops, with no production caller. It is excluded from M10;
   source-faithful shared fail-closed boundaries remain available for their
   separate focused tests.
+
+- ✅ 2026-07-31 CSB F1066–F1085 Amiga-boundary isolation: the table has no
+  PC 3.4 product consumer and explicitly blocks every route. It now compiles
+  only into its contract test; the separately owned, source-faithful Intuition
+  vector boundary remains independent of this inventory.

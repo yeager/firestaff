@@ -119,6 +119,9 @@
   - 2026-07-31: The combined F1048/F1049/F1053/F1055/F1061 compatibility
     wrapper contains only non-PC aliases and explicit no-ops. Keep it out of
     M10; use the shared source-faithful fail-closed boundaries if needed.
+  - 2026-07-31: F1066–F1085 is a fail-closed Amiga inventory with no CSB
+    PC 3.4 consumer. It is test-only; retain separate source-owned helpers
+    only where a genuine runtime path needs them.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
