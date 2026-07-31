@@ -23558,6 +23558,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     captured abort receipt is operator-local under
     `/tmp/dm1-screencapture-route.fDed0F`; do not retry until a capture
     context can make DOSBox frontmost and expose real pixels.
+  - 2026-07-31 direct-window recheck: Quartz found the live `DM.EXE` DOSBox
+    window (`1024x796`), but `screencapture -l <window-id>` returned `could
+    not create image from window`. This confirms the fault is a host capture
+    entitlement/context issue, not the PC34 selector sequence.
 
 ## DM1 C13 F0435 stale-fence follow-up
 
