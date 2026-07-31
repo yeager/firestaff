@@ -334,6 +334,9 @@
   **2026-07-31 follow-up:** fristående champion-HUD- och food/water-bryggor
   är test-skopade. De har ingen levande M11-konsument och får inte ersätta
   en komplett original session- och GDAT-handoff.
+  **2026-07-31 follow-up:** den gamla utomhusfasaden är test-skopad. Den
+  kunde bara returnera no-draw och hade ingen levande konsument; väder och
+  himmel måste fortsatt komma från den autentiserade GDAT-rutten.
   **2026-07-31 update:** the unconnected HUD panel-routing and survey helper
   modules now compile only in their focused tests. M11 and the production DM2
   archive contain no accidental HUD route for those standalone receipts; a

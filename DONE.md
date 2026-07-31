@@ -47566,3 +47566,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   module retains only its safe loader for real GRAPHICS.DAT bytes. Its
   synthetic-record self-test is now compiled solely by the explicit contract
   target and cannot enter the product archive.
+- ✅ 2026-07-31 DM2 outdoor facade isolation: removed the unattached no-draw
+  outdoor facade from the production V1 archive. It had no live caller and no
+  selected GDAT image/palette receipt; production weather and sky remain on
+  the authenticated GDAT route. Verification: production link, outdoor
+  material-gate regression, real-data M11 startup gate and symbol checks.
