@@ -23587,7 +23587,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     requirements below.
 ## DM1 C03/C04 runtime identity follow-up
 
-- [x] Run the fixture-free PC34 corpus target with operator-owned saves that
+- [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
   contain different C03 timer/event and C04 heap layouts. Stage/adopt now
   preserve their raw identities; generated saves remain invalid as positive
   corpus evidence.
@@ -23600,7 +23600,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     shared F0435/F0145/F0146/F0147/F0196 handoff now admits both original
     raw and legacy encoded forms while resolving only the loaded GROUP table.
     V1/V2.0/V2.1/V2.2 --game dm1 --save boot probes passed against the
-    second save.
+    second save. The standalone corpus preflight remains open because this
+    authentic save has no dungeon tail; it must be staged against its real
+    DUNGEON.DAT before F0435 -> F0433 -> F0435 can certify the full route.
 
 ## CSB completed save-contract verification
 
