@@ -45581,3 +45581,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   “closest analogue” module, its synthetic frame compositor and its test.
   ReDMCSB has no named D1L2 PC3.4 viewport square; retaining a D1L substitute
   would falsely claim a source route.
+- ✅ 2026-07-31 CSB fabricated D1L2/D1R2 F0115 removal: removed the
+  contract-only thing-pass fixture and CTest. Its “D1L2/D1R2” names were not
+  ReDMCSB PC3.4 squares and it had no production consumer or real-data route.
