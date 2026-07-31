@@ -536,8 +536,8 @@ static int dm2_v1_creature_attack_flags_are_ranged(uint16_t flags) {
  * Melee range: distance == 1 tile. Ranged: AI_ATTACK_FLAGS__SHOOT.
  * GDAT path: use AIDefinition.AttacksSpells loaded by
  * EXTENDED_LOAD_AI_DEFINITION (SkWinCore.cpp:233-400), with static
- * objects suppressed by w0AIFlags. Data-free fallback preserves the
- * original no-assets probe behavior for rows not yet imported. */
+ * objects suppressed by w0AIFlags. An unimported row is rejected; it never
+ * receives a data-free attack classification. */
 int dm2_v1_creature_attacks_party(int ai_index, int distance) {
     const DM2_AIDefinition *spec;
     uint16_t attacks;
@@ -555,8 +555,8 @@ int dm2_v1_creature_attacks_party(int ai_index, int distance) {
  * Source: SkWinCore.cpp:27038-27096 (OBJECT_EFFECT_* mapping)
  * Returns non-zero if creature has the requested spell-flag set.
  * GDAT path intersects the requested flags with the imported
- * AIDefinition.AttacksSpells. Data-free fallback preserves the old
- * flag-only classification for rows not yet imported. */
+ * AIDefinition.AttacksSpells. An unimported row is rejected rather than
+ * receiving a flag-only spell classification. */
 int dm2_v1_creature_resolves_spell(int ai_index, uint16_t attack_flags) {
     const DM2_AIDefinition *spec;
 
