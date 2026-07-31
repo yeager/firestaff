@@ -47045,3 +47045,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   stale claim that facing could come from a world-tick surrogate. The
   viewport continues to accept only the authenticated party pose and blocks
   pixels until a source tile bank is bound.
+
+- ✅ 2026-07-31 Theron tile-renderer isolation: removed the inferred
+  square/depth tile table and rasterizer from the production archive. The
+  diagnostic tile-renderer probe still compiles the implementation explicitly;
+  production now returns no tile and preserves the framebuffer until a real
+  Track 02 tile-bank handoff exists.

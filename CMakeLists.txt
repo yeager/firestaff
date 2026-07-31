@@ -3900,12 +3900,14 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shape_cache_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shapes\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_widget_assets_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_ui_chrome\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_tile_renderer\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
         src/theron/theron_v1_combat_runtime_noop.c
         src/theron/theron_v22_shapes_runtime_noop.c
         src/theron/theron_v2_hud_widget_assets_runtime_noop.c
-        src/theron/theron_v1_ui_chrome_runtime_noop.c)
+        src/theron/theron_v1_ui_chrome_runtime_noop.c
+        src/theron/theron_v1_tile_renderer_runtime_noop.c)
     target_include_directories(firestaff_theron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     # Theron's Track 01 CDDA bridge includes SDL3 directly.  Keep that
     # dependency on the owning target so standalone test targets configured
@@ -36774,6 +36776,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
 
     add_executable(firestaff_theron_v1_tile_renderer_probe
         probes/theron/firestaff_theron_v1_tile_renderer_probe.c
+        src/theron/theron_v1_tile_renderer.c
     )
     target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE
         firestaff_theron
