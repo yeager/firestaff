@@ -70,9 +70,11 @@
   until its source owner is imported.
   The live V1 runtime and weather helper now likewise start with an explicit
   unknown environment time, refuse the former fixed 1,092-tick minute and
-  cannot emit a procedural sky colour without recovered time. A validated
-  resumed session may retain its supplied time, but source `timdat` plus the
-  environment globals still need to replace that compatibility handoff.
+  cannot emit a procedural sky colour. The legacy colour-only helper is now
+  unavailable even for a restored clock because it carries no GDAT material
+  receipt. A validated resumed session may retain its supplied time, but
+  source `timdat` plus the environment globals still need to replace that
+  compatibility handoff.
   Boot's former 1,440-minute/day-cycle configuration is also unavailable;
   it must be populated only by the same recovered source owner.
   **2026-07-31 update:** fresh weather state now has neither a clear-weather

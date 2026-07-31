@@ -356,6 +356,8 @@ int main(void)
               restored_state.weather_seed == 0x4a3d7f01u &&
               restored_state.state_hash != 0u,
           "restored weather state carries only validated runtime fields");
+    check(dm2_v1_weather_sky_color(&restored_weather) == -1,
+          "a restored clock cannot replace GDAT-backed outdoor material");
     {
         /* c_weather.cpp:441-474 — the bolt slot's byte 1 is the live
          * RANDDIR value the source writes after a successful retrieve,

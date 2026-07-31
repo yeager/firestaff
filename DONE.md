@@ -45423,3 +45423,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   RGB6 table installed. Source: SKProject `DM2_INIT`,
   `DRAW_TITLE_MENU_SCREEN`, and `DM2_SHOW_CREDITS`. Verification:
   real-data `test_dm2_v1_m11_startup_profile_gate`.
+
+- ✅ 2026-07-31 DM2 legacy sky-gradient closure: removed the procedural RGB
+  output from `dm2_v1_weather_sky_color()`. That API cannot carry the original
+  GDAT image, palette or destination receipt, so it now reports unavailable;
+  outdoor pixels remain exclusive to the verified
+  `QUERY_TEMP_PICST`/`DRAW_TEMP_PICST` transaction. Source: SKProject
+  `SKWIN/c_bkgrnd.cpp` and `skgdtqdb.cpp`. Verification:
+  `test_dm2_v1_weather_gdat_receipt`.

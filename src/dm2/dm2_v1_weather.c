@@ -8,7 +8,6 @@
  */
 
 #include "dm2_v1_weather.h"
-#include <math.h>
 #include <string.h>
 
 /* ReDMCSB/Baseline deterministic RNG for seeded transitions:
@@ -220,36 +219,14 @@ void dm2_v1_weather_advance_time(DM2_V1_WeatherState *state, int minutes) {
     state->time_fraction = (float)state->time_of_day / (float)DM2_TIME_MINUTES_MAX;
 }
 
-/* This legacy helper is kept only for callers that have a recovered
- * source-owned time. It must never manufacture a sky colour for unknown
- * environment state. Actual outdoor pixels remain GDAT-gated elsewhere. */
+/* This legacy helper has no GDAT image/palette receipt in its API. A
+ * recovered clock alone cannot identify the original outdoor art, so it must
+ * not manufacture an RGB gradient. SKProject's c_bkgrnd.cpp resolves the
+ * ENVIRONMENT material through QUERY_TEMP_PICST/DRAW_TEMP_PICST; the M11
+ * renderer follows that GDAT-backed route in dm2_v1_weather_gdat.c. */
 int dm2_v1_weather_sky_color(const DM2_V1_WeatherState *state) {
-    if (!state || state->time_of_day < 0 ||
-        state->time_of_day >= DM2_TIME_MINUTES_MAX) return -1;
-    float t = state->time_fraction;
-    /* Weather override: fog/storm always gray */
-    if (state->weather >= DM2_WEATHER_FOG) {
-        return 0xFF666666;
-    }
-    /* Rain: desaturated blue-gray */
-    if (state->weather == DM2_WEATHER_RAIN) {
-        if (t < 0.25f) return 0xFF887788;
-        if (t < 0.75f) return 0xFF667788;
-        return 0xFF333344;
-    }
-    /* Clear sky: full color gradient */
-    if (t < 0.25f) {  /* dawn: red-orange gradient */
-        uint8_t r = (uint8_t)(60 + t * 4.0f * 140);
-        uint8_t b = (uint8_t)(180 + t * 4.0f * 20);
-        return (0xFF000000u) | ((uint32_t)r << 16) | ((uint32_t)(r / 2) << 8) | b;
-    }
-    if (t < 0.75f) {  /* day: normal blue */
-        return 0xFF4488CC;
-    }
-    /* dusk: orange-red */
-    float nt = (t - 0.75f) * 4.0f;
-    uint8_t g = (uint8_t)(80 - nt * 70);
-    return (0xFF000000u) | ((uint32_t)(220 - nt * 200) << 16) | ((uint32_t)g << 8) | 200;
+    (void)state;
+    return -1;
 }
 
 int dm2_v1_weather_particle_count(const DM2_V1_WeatherState *state) {
