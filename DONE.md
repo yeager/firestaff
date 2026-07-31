@@ -14,6 +14,16 @@
   hjältenamn från en syntetisk fallback. Verifierade JP-rosteretiketter
   används fortfarande normalt; urval/portrait/class-bindning ändras inte.
 
+- ✅ 2026-07-31 M12 mouse-accessible launcher: removed the legacy 480×270
+  launcher selection and its allocation-failure fallback. That path visibly
+  drew a menu but intentionally discarded all pointer events. M11 now always
+  uses the modern launcher hit map, including when `FIRESTAFF_LEGACY_MENU` was
+  previously set, and returns an explicit renderer error if its RGBA surface
+  cannot be allocated. Verification: `firestaff_m12_menu_mouse_probe` 14/14,
+  `test_menu_hit_launch_direct_click_m12`,
+  `test_menu_hit_settings_tab_m12` 135/135, and
+  `test_dm2_v1_m11_startup_profile_gate` against verified DM2 data.
+
 - ✅ 2026-07-31 M12 settings mouse-catalogue capacity: the modern launcher
   now declares its 16-row/two-column settings-panel capacity. This covers the
   13-row Graphics tab introduced by renderer and brightness preferences, and

@@ -84,17 +84,6 @@ enum {
     M11_LAUNCHER_MODERN_HEIGHT = M12_MODERN_MENU_NATIVE_HEIGHT
 };
 
-/* Runtime switch: when the environment variable FIRESTAFF_LEGACY_MENU
- * is set to a non-zero value we fall back to the original
- * palette-indexed startup menu renderer. This keeps a safe escape hatch
- * for anyone who depends on the legacy 480x270 output. */
-static int m11_legacy_menu_requested(void) {
-    const char* val = getenv("FIRESTAFF_LEGACY_MENU");
-    if (!val || val[0] == '\0') return 0;
-    if (val[0] == '0' && val[1] == '\0') return 0;
-    return 1;
-}
-
 uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
                                          int speedMultiplier) {
     if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
@@ -135,14 +124,12 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
 }
 
 static int m11_should_use_modern_launcher(const M12_StartupMenuState* menuState) {
-    if (m11_legacy_menu_requested()) {
-        return 0;
-    }
     /* The startup menu is Firestaff's shared product front door for every
      * presentation mode, including V1 original.  V1 parity begins after the
      * user launches a game: TITLE/entrance/Hall-of-Champions sequencing must
      * not force the launcher itself back to the old sparse indexed renderer.
-     * FIRESTAFF_LEGACY_MENU remains the explicit escape hatch. */
+     * The old 480x270 path has no corresponding pointer hit map, so allowing
+     * it here made a visible launcher wholly inaccessible by mouse. */
     return menuState != NULL;
 }
 
@@ -5060,9 +5047,12 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                                 (size_t)M11_LAUNCHER_MODERN_HEIGHT,
                                             4U);
         if (!modernRgba) {
-            /* Fall back to legacy renderer on allocation failure rather
-             * than aborting the launcher. */
-            useModern = 0;
+            /* Do not fall back to the legacy indexed launcher: it has no
+             * mouse hit routing, which leaves the application visibly alive
+             * but impossible to operate with a pointer. */
+            free(launcherFramebuffer);
+            M11_Render_Shutdown();
+            return M11_RENDER_ERR_TEXTURE;
         }
     }
     /* Boot probes exercise the launch/runtime contract and emit a

@@ -30,6 +30,10 @@
   sixteen-row two-column capacity shared by the renderer, hit-test contract
   and regression suite; the renderer/brightness additions no longer leave a
   stale twelve-row menu assertion behind.
+  **2026-07-31 update:** M11 no longer selects the legacy indexed launcher,
+  whose renderer had no pointer hit map. The launcher now either presents the
+  clickable M12 surface or reports a renderer allocation error; it never shows
+  a menu that cannot be operated by mouse.
   **2026-07-31 update:** CSB's boot handoff now refuses both unreadable
   verified paths and the retired 16-bit parser fixture. A session becomes
   runtime-ready only after the ReDMCSB byte-map and its initial party pose are
