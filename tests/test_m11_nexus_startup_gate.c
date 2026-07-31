@@ -566,8 +566,8 @@ static void expect_face_loader_counts_real_vs_fallback(void) {
                                     0,
                                     48,
                                     48,
-                                    NULL) > 0,
-                "Nexus FACE loader reports real portrait copy");
+                                    NULL) < 0,
+                "Nexus FACE loader rejects raw pixels without DMWeb palette+PRS3 framing");
     expect_true(nexus_ui_load_faces(&ui,
                                     short_bytes,
                                     0,
