@@ -23814,9 +23814,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     palette override: it also corrupts the source HUD palette. Trace the
     exact F0435 materialized hand/object identities and PARTY_INFO light
     state into F0337 before changing its calculation; the PC3.4 importer
-    already restores the complete champion slot stream. DMweb's saved-game
-    format notes corroborate that PC 3.4 champion data is a 1,404-byte,
-    little-endian block with the portraits held externally.
+    must be verified against the compact 319-byte record, not merely the
+    larger CSBuild CHARDESC layout. DMweb's saved-game format notes
+    corroborate that PC 3.4 champion data is a 1,404-byte, little-endian
+    block with the portraits held externally; its displayed CHARDESC field
+    offsets use a different packing and cannot be transplanted without a
+    matching compact-PC34 source receipt.
 ## DM1 C03/C04 runtime identity follow-up
 
 - [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
