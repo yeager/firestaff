@@ -22582,6 +22582,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     cannot be accepted as HUD or F0807 door-opening evidence. Re-run the
     bundle-bound capture against a package built from the current source;
     do not treat the older app as proof of the corrected door frame.
+  - 2026-07-31 cleanup: the unregistered title-to-HUD probe was retired. It
+    duplicated the maintained PC34 real-asset launch gate while assuming an
+    obsolete three-bit title mask and pre-runtime HUD handoff. The maintained
+    gate remains the authoritative fixture-free route.
 
 - 🔧 2026-07-14 CSBWin real-package resume follow-up: the opt-in package
   handoff probe now fingerprints the supplied decoded `Dungeon.dat` before

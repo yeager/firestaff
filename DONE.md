@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 CSB stale title-to-HUD probe retirement: removed an
+  unregistered PC34 probe that duplicated the maintained real-asset launch
+  gate but assumed the obsolete three-bit title mask and old terminal-HUD
+  sequencing. The authoritative `csb_v1_pc_real_asset_launch` CTest uses the
+  real package through title, all F0807 door frames and C017/C040 instead.
+
 - ✅ 2026-07-31 CSBWin incomplete-corpus handling: the real-package DSA
   handoff probe now reports an incomplete explicitly supplied CSBWin save as
   a skip, consistently with the extended-DSA probe, rather than failing as if
