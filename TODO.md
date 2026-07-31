@@ -124,6 +124,9 @@
   - 2026-07-31: F1066–F1085 is a fail-closed Amiga inventory with no CSB
     PC 3.4 consumer. It is test-only; retain separate source-owned helpers
     only where a genuine runtime path needs them.
+  - 2026-07-31: F1126–F1145 is a fail-closed mixed source inventory, not an
+    input, palette or viewport implementation. It is test-only; live paths
+    require their own authenticated CSB material and event consumers.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.

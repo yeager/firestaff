@@ -47201,3 +47201,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   entry now clears fixture champion names, portraits, classes and party count
   in addition to default stats/inventory. Production cannot present the
   inferred roster until original champion records are decoded.
+
+- ✅ 2026-07-31 CSB F1126–F1145 source-boundary isolation: this catalog only
+  records local, foreign-platform and unbound symbols before failing closed.
+  It now compiles solely into its contract test, so M10 cannot treat source
+  labels as a substitute for an authenticated CSB input or graphics route.
