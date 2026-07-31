@@ -6399,6 +6399,12 @@
   secondary investigation reference only; no converted CSBWin data is treated
   as original Firestaff media.
 
+- ✅ 2026-07-31 Theron real-CUE handoff fix: the USA CUE validator no longer
+  truncates its read at the first dynamic CD-read record. It now reads the
+  complete hash-verified Track 02 payload, allowing later descriptor sectors
+  required by the already-proven stage-three boundary to validate. Real USA
+  BIN/CUE handoff regression passes; level/object semantics remain blocked.
+
 - ✅ 2026-07-31 Theron V1 viewport production isolation: removed the
   procedural dungeon, UI chrome, tile selector, and indexed-to-M11 presenter
   from the production archive. Production now owns a lifecycle-preserving

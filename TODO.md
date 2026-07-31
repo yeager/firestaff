@@ -24,6 +24,11 @@
   the real loader/System Card trace; do not import the converted CSBWin
   dungeon as original data.
 
+- **THERON-CUE-FULL-PAYLOAD-VALIDATION:** The USA CUE handoff now reads the
+  complete hash-verified Track 02 payload before validating descriptor
+  sectors. Extend the same real-CUE regression to the authenticated JP CUE
+  path; no semantic level/object promotion is implied by this transport fix.
+
 - **THERON-V1-UI-CHROME-REAL-DATA:** The inferred bar/text/champion-slot
   implementation is now fixture-only. Production exposes a no-op API until
   the original Track 02 UI chrome bank and font records are decoded. The

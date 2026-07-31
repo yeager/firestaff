@@ -1110,6 +1110,7 @@ int theron_v1_boot_validate_track02_loader_receipt(
     Theron_Track02IplLoaderReceipt observed;
     Theron_Track02Stage2DynamicPayloadReceipt dynamic_observed;
     Theron_V1Stage2RuntimeHandoff stage2_handoff;
+    long file_size;
 
     if (!receipt || !receipt->valid || !receipt->cue_backed ||
         !receipt->track02_md5_verified || !receipt->mode1_2352 ||
@@ -1140,7 +1141,15 @@ int theron_v1_boot_validate_track02_loader_receipt(
         THERON_TRACK02_RAW_SECTOR_BYTES;
     if (stage2_required > required) required = stage2_required;
     file = fopen(payload, "rb");
-    if (!file) return 0;
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (file_size = ftell(file)) < 0 || (size_t)file_size < required ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    /* The descriptor table resolves records beyond the dynamic read itself.
+     * Validate the complete authenticated Track 02 payload, not a prefix. */
+    required = (size_t)file_size;
     bytes = (unsigned char*)malloc(required);
     if (!bytes || fread(bytes, 1u, required, file) != required) {
         free(bytes);
