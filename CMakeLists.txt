@@ -3877,13 +3877,14 @@ endif()
 
 # ── DM2 V2 static library ──────────────────────────────────────────
 file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c" "src/dm2/dm2_v22_*.c")
-# The bounded PNG reader exists solely to inspect checked-in synthetic test
-# fixtures and all of its framebuffer hooks are no-draw.  Keep it out of the
-# production DM2 V2 archive: a broad glob must not make fixture parsing part
-# of a game-data runtime.  Its dedicated probe compiles the source explicitly
-# below.
+# The bounded PNG reader and the finished-art manifest classifier exist only
+# to inspect synthetic/local test fixtures; neither has a source-bound pixel
+# consumer. Keep both out of the production DM2 V2 archive: a broad glob must
+# not make fixture parsing part of a game-data runtime. Their dedicated tests
+# and probes compile each source explicitly below.
 list(REMOVE_ITEM DM2_V2_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_bitmap_blit.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_bitmap_blit.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_finished_art_material_gate_pc34.c")
 if(DM2_V2_SOURCES)
     add_library(firestaff_dm2_v2 STATIC ${DM2_V2_SOURCES})
     target_include_directories(firestaff_dm2_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

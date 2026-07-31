@@ -47,6 +47,10 @@
   into its isolated synthetic-fixture probe, not the production DM2 V2
   archive. Its strict no-draw test remains available, while a real game can
   only reach the GDAT-backed HUD renderer.
+  **2026-07-31 update:** the V2.2 finished-art manifest classifier is also
+  test-only now. It classifies local/synthetic metadata but has no
+  source-owned pixel consumer, so the production archive cannot link it or
+  promote a local modern-art manifest into a DM2 render path.
   **2026-07-31 update:** CSB's boot handoff now refuses both unreadable
   verified paths and the retired 16-bit parser fixture. A session becomes
   runtime-ready only after the ReDMCSB byte-map and its initial party pose are

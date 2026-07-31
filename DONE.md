@@ -4,6 +4,14 @@
   syntetisk yta vid felaktig host-state. Rendering `25/25`, startup-flow
   `653/653`.
 
+- ✅ 2026-07-31 DM2 V2.2 finished-art classifier isolation: removed
+  `dm2_v22_finished_art_material_gate_pc34.c` from the production V2 source
+  glob. It only classifies local/synthetic modern-art manifests and has no
+  source-proven pixel route, so it is now compiled exclusively by its focused
+  test/probe targets. Verification: material-gate probe 92/92,
+  `test_dm2_v22_finished_art_material_gate_pc34` 321/321, and the real-data
+  M11 DM2 startup-profile gate.
+
 - ✅ 2026-07-31 Theron metadata-inventering: tog bort de döda short-code-
   och kommentarstabeller som återgav opromoterade dungeon-namn. Enum-ID:n och
   verklig progression är kvar; inga nya namn eller data har gissats in.
