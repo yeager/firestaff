@@ -15594,12 +15594,32 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm2_v1_spell_cast_player_pc34_compat PRIVATE firestaff_m10)
+    target_compile_definitions(test_dm2_v1_spell_cast_player_pc34_compat PRIVATE
+        FIRESTAFF_DM2_SPELL_CAST_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_spell_cast_player_pc34_compat PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
         NAME dm2_v1_spell_cast_player_pc34_compat
         COMMAND test_dm2_v1_spell_cast_player_pc34_compat
+    )
+
+    add_executable(test_dm2_v1_spell_cast_production_timer_gate
+        tests/test_dm2_v1_spell_cast_production_timer_gate.c
+        src/dm2/dm2_v1_spell_cast_player.c
+        src/dm2/dm2_v1_spell.c
+        src/dm2/dm2_v1_timeline.c
+    )
+    target_include_directories(test_dm2_v1_spell_cast_production_timer_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_spell_cast_production_timer_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_spell_cast_production_timer_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_spell_cast_production_timer_gate
+        COMMAND test_dm2_v1_spell_cast_production_timer_gate
     )
 
     # ── DM2 V1 Phase 5: Projectile routing (creature/combat parity) ──

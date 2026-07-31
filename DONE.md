@@ -46122,3 +46122,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   ReDMCSB `DUNVIEW.C F0115/F0124/F0125/F0126/F0128` and CSBWin
   `Viewport.cpp`. Verification: focused first-frame material test 109/109,
   realdata ornament probe 29/29, build, and `git diff --check`.
+- ✅ 2026-07-31 DM2 spell-cast timer fixture isolation: a successful cast
+  receipt can no longer enqueue a reduced `0x46`/`0x47`/`0x19`/`0x1e`/`0x5e`
+  timer in a normal build. Such a timer lacks the original DB14/DB4 owner,
+  actor state, direction and source timing required by SKProject
+  `SKULLWIN/c_events.cpp` and `c_tim_proc.cpp`; the enqueue envelope is now
+  available only to the focused source-shape test target. Verification:
+  spell-cast source test 143/143, production timer gate pass, and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass.

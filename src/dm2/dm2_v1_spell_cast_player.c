@@ -378,6 +378,7 @@ DM2_V1_SpellCastPlayerReceipt dm2_v1_spell_cast_player(
 /* Build a DM2-owned source timer from a successful cast receipt.
  * This is a bounded request payload: the actual handler bodies
  * (light/aura/cloud/summon/projectile) remain host-owned until proven. */
+#ifdef FIRESTAFF_DM2_SPELL_CAST_TESTING
 static DM2_V1_SourceTimer dm2_cast_player_build_timer(
     const DM2_V1_SpellCastPlayerReceipt *cast,
     int champion_index,
@@ -441,6 +442,7 @@ static DM2_V1_SourceTimer dm2_cast_player_build_timer(
     }
     return t;
 }
+#endif
 
 DM2_V1_SpellCastApplyReceipt dm2_v1_spell_cast_player_apply(
     const DM2_V1_SpellCastPlayerReceipt *cast,
@@ -516,9 +518,13 @@ DM2_V1_SpellCastApplyReceipt dm2_v1_spell_cast_player_apply(
         a.runes_cleared = 1;
         a.applied = 1;
 
-        /* Optional timer-effect enqueue.  The queue is owned by the caller;
-         * no timer is created when the queue is NULL or the spell carries no
-         * bounded timer kind. */
+        /* A complete source timer owns more than the reduced cast receipt:
+         * DB14/DB4 record identity, actor state, direction and source timing.
+         * Do not let a caller-provided queue promote our reduced payload into
+         * a live timer.  Focused source-shape tests compile this legacy
+         * envelope explicitly; ordinary Firestaff builds retain the cast
+         * receipt but perform no timer mutation. */
+#ifdef FIRESTAFF_DM2_SPELL_CAST_TESTING
         if (queue && cast->timer_kind != DM2_V1_SPELL_TIMER_NONE) {
             DM2_V1_SourceTimer t = dm2_cast_player_build_timer(
                 cast, champion_index, game_tick, map_id, party_x, party_y);
@@ -532,6 +538,14 @@ DM2_V1_SpellCastApplyReceipt dm2_v1_spell_cast_player_apply(
                 }
             }
         }
+#else
+        (void)queue;
+        (void)game_tick;
+        (void)map_id;
+        (void)party_x;
+        (void)party_y;
+        (void)champion_index;
+#endif
     } else {
         /* Failure path: DM2_TRY_CAST_SPELL clears the rune tail for every
          * failure class except 0x30 (no empty flask), which keeps the runes
