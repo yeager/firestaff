@@ -44871,3 +44871,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   decoded from the original game-state and SUPPRESS records, so a malformed
   later section cannot leave an invented party behind. Verification:
   `test_dm2_v1_utility_import` passes 136/136.
+- ✅ 2026-07-31 CSB PC3.4 D3 side-door source binding: D3L and D3R now
+  fetch the active wall-set's M658/G2120 record through the CSB
+  `GRAPHICS.DAT` provider and apply the original G0164/G0165 32×43 source
+  rectangles for F0104/F0105's native and mirrored frame blits. G2121 and
+  G2122 are the source aliases of that record. A source-verified session
+  remains no-draw when it is unavailable; the legacy atlas cannot replace
+  it. Verification: `test_dm1_v1_viewport_3d_pc34_compat`,
+  `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
+  launcher handoff boundary (567/0, one expected Atari skip) pass.

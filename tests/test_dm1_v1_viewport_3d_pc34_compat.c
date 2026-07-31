@@ -986,6 +986,46 @@ static void test_d3c_door_frame_uses_source_graphic558_geometry(void)
               viewport[27 * DM1_VIEWPORT_WIDTH + 65], 0x5a);
 }
 
+static void test_d3_side_door_frame_uses_source_graphic558_geometry(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t pixels[32 * 43];
+    uint8_t grid[8 * 8];
+    IndexedGraphicProviderFixture provider;
+    DM1_Viewport3DState state;
+
+    /* G0164/G0165: {0,31,28,70,16,43,0,0} / {192,223,28,70,16,43,0,0}.
+     * F0104/F0105 consume M658 (record 90) at D3L/D3R; the latter is
+     * horizontally mirrored. */
+    memset(viewport, 0x5a, sizeof(viewport));
+    memset(pixels, 10, sizeof(pixels));
+    memset(grid, DM1_VP_ELEMENT_DOOR_FRONT, sizeof(grid));
+    pixels[0] = 0x31;
+    pixels[31] = 0x42;
+    provider.graphic_index = 90;
+    provider.pixels = pixels;
+    provider.width = 32;
+    provider.height = 43;
+    dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_load_wall_set(&state, 0, 0);
+    state.floor_ceiling_dirty = false;
+    state.dungeon_grid = grid;
+    state.dungeon_aspect_grid = grid;
+    state.dungeon_width = 8;
+    state.dungeon_height = 8;
+    state.graphic_provider_callback = indexed_graphic_provider;
+    state.graphic_provider_user_data = &provider;
+
+    dm1_viewport_3d_draw_frame(&state, 0, 4, 4);
+    check_int("d3_side_door_frame.source_left_native",
+              viewport[28 * DM1_VIEWPORT_WIDTH], 0x31);
+    check_int("d3_side_door_frame.source_right_flipped",
+              viewport[28 * DM1_VIEWPORT_WIDTH + 192], 0x42);
+    check_int("d3_side_door_frame.source_c10_transparent",
+              viewport[28 * DM1_VIEWPORT_WIDTH + 1], 0x5a);
+}
+
 static void test_floor_ceiling_bands_and_zones(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -4794,6 +4834,7 @@ int main(void)
     test_wall_frame_bitmap_global_null_guard();
     test_d3_side_door_frame_requires_bound_source_atlas();
     test_d3c_door_frame_uses_source_graphic558_geometry();
+    test_d3_side_door_frame_uses_source_graphic558_geometry();
     test_floor_ceiling_bands_and_zones();
     test_floor_ceiling_uses_real_provider_pixels();
     test_floor_ceiling_uses_complete_pc34_provider_pair();

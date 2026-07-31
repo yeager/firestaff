@@ -12,6 +12,8 @@
  */
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "firestaff/dm1/v1/G0164_pc34_compat.h"
+#include "firestaff/dm1/v1/G0165_pc34_compat.h"
 #include "firestaff/dm1/v1/G0166_pc34_compat.h"
 #include "firestaff/dm1/v1/G0167_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
@@ -3724,12 +3726,19 @@ static void dm1_viewport_3d_draw_d3_side_square(
     if (element == DM1_VP_ELEMENT_DOOR_FRONT) {
         /* ReDMCSB F0116:6446-6454 and F0117:6582-6590 place these frames
          * between F0115's rear and front thing passes. */
-        /* The legacy contiguous wall-frame atlas is not populated by a
-         * verified CSB session.  Until this route consumes the active
-         * G2120 source bitmap and its PC3.4 zones directly, fail closed;
-         * do not perform pointer arithmetic on a NULL atlas or substitute
-         * a host/diagnostic frame.  ReDMCSB DUNVIEW.C:6453,6590. */
-        if (!wall_base) return;
+        /* M658/G2120 is the source frame for both sides.  G0164 consumes
+         * it natively at D3L; G0165 mirrors it at D3R.  G2121/G2122 are
+         * F0753 aliases of G2120 (STARTUP2.C:646-648), so one decoded
+         * source record is sufficient.  The legacy contiguous wall-frame
+         * atlas is not populated by a verified CSB session: fail closed
+         * rather than using NULL-atlas pointer arithmetic or substituting
+         * a host/diagnostic frame.  ReDMCSB DUNVIEW.C:595-596,6453,6590. */
+        if (dm1_viewport_3d_draw_source_door_frame(
+                state, 90, right ? dm1_v1_g0165_table_pc34()
+                                : dm1_v1_g0164_table_pc34(), right)) {
+            return;
+        }
+        if (state->source_graphics_required || !wall_base) return;
         if (right) {
             dm1_viewport_3d_draw_door_frame_flipped(state,
                                                      wall_base + 20 * DM1_VIEWPORT_BYTE_WIDTH,
