@@ -47101,3 +47101,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   no product caller or original-pixel decoder. They now compile only into
   their focused tests; M10 cannot treat caller facts as title or entrance
   material. Live startup remains guarded by the authenticated runtime route.
+
+- ✅ 2026-07-31 CSB F0797 entrance-layout receipt isolation: the 5×5
+  micro-dungeon layout metadata had no product caller and now compiles only
+  into its focused test. It cannot become a generic loaded-dungeon or viewport
+  substitute; an actual entrance frame must still use its source-owned draw
+  route and verified graphics material.

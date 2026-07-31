@@ -82,6 +82,9 @@
   - 2026-07-31: The F0436/F0579/F0807 title/entrance receipt helpers are
     test-only. Live startup remains routed through the authenticated title and
     entrance material path, not caller-invented palette or bitplane facts.
+  - 2026-07-31: The F0797 5×5 entrance-layout receipt is test-only. The
+    source-owned micro-dungeon remains an explicit startup rendering task, not
+    a generic world or viewport substitute.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.

@@ -3737,7 +3737,8 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0436_startend_fade_palette_runtime_coupling_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0579_entrance_bitplanes_runtime_coupling_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat.c")
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
