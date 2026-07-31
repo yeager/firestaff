@@ -1030,27 +1030,6 @@ static void m11_sync_and_save_window_size(M12_StartupMenuState* menuState) {
 }
 
 
-static void m11_fill_rect_indexed(unsigned char* framebuffer,
-                                  int framebufferWidth,
-                                  int framebufferHeight,
-                                  int x,
-                                  int y,
-                                  int w,
-                                  int h,
-                                  unsigned char color) {
-    int yy;
-    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0 || w <= 0 || h <= 0) return;
-    if (x < 0) { w += x; x = 0; }
-    if (y < 0) { h += y; y = 0; }
-    if (x + w > framebufferWidth) w = framebufferWidth - x;
-    if (y + h > framebufferHeight) h = framebufferHeight - y;
-    if (w <= 0 || h <= 0) return;
-    for (yy = 0; yy < h; ++yy) {
-        memset(framebuffer + (size_t)(y + yy) * (size_t)framebufferWidth + (size_t)x, color, (size_t)w);
-    }
-}
-
-
 static int m11_draw_entrance_screen_asset(M11_GameViewState* gameView,
                                           unsigned char* framebuffer) {
     const M11_AssetSlot* entranceScreen;
@@ -1337,8 +1316,8 @@ static int m11_play_redmcsb_entrance_transition(
      * - ENTRANCE.C:149-231 moves the left/right door boxes by 4px/step
      *   from DATA.C source boxes left {0,100,0,160}, right {109,231,0,160}.
      * This runtime transition uses the source schedule/boxes here; C004 and
-     * C002/C003 are blitted from GRAPHICS.DAT when available, with palette-fill
-     * fallback preserving timing/geometry if assets are missing. */
+     * C002/C003 are blitted from GRAPHICS.DAT. Missing source material aborts
+     * the presentation rather than substituting generated pixels. */
     for (sourceStep = 1U; sourceStep <= ENTRANCE_Compat_GetSourceAnimationStepCount(); ++sourceStep) {
         EntranceCompatSourceAnimationStep step;
         DM1_V1_StartupEntranceRenderAudioCommand_PC34 command;
