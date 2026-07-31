@@ -325,9 +325,11 @@ diagnostic; it must not silently fall back to a generated visual.
   context cannot synthesize a DM2 HUD. **2026-07-31 update:** the remaining
   public synthetic-PNG blit compatibility hooks now also return no-draw for
   every input; fixture decoding remains probe-only and cannot write a game
-  framebuffer. **2026-07-31 update:** even a legacy widget manifest entry
-  classified as `REAL` is now a diagnostic only; its arbitrary local file
-  cannot select `REAL_BITMAP` or write a framebuffer. Remaining work is
+  framebuffer. **2026-07-31 update:** the retired local-file manifest cannot
+  classify any slot as `REAL`; even a structurally valid local image is
+  `PARTIAL` until a future bridge carries original GDAT category/index/field
+  and raw-byte provenance. The synthetic promotion probe was removed rather
+  than preserving a false data-admission contract. Remaining work is
   source-verified coverage for undecoded GDAT HUD surfaces.
 - **THERON-ORIGINAL-REPLACE-001:** Replace the coloured UI chrome, checkerboard
   palette and chapter-marker placeholders with real US/JP Track 02 bitmap,

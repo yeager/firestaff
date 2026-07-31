@@ -9,12 +9,12 @@
  *   3. Empty manifest → PLACEHOLDER gate
  *   4. Manifest with one valid placeholder slot → PLACEHOLDER gate
  *   5. Manifest with placeholder + missing source_file → PARTIAL
- *   6. Manifest with all slots fully REAL → COMPLETE gate
- *   7. Mixed manifest → PARTIAL gate
+ *   6. Local manifest files remain PARTIAL without original GDAT provenance
+ *   7. Mixed manifest remains PLACEHOLDER-gated
  *   8. Manifest with malformed entries (missing fields) → PARTIAL gate
  *   9. validate_manifest() returns -1/0/1 as documented
  *  10. Slot names, class names, gate names are stable and non-empty
- *  11. uses_placeholder() returns 1 for non-REAL, 0 for REAL
+ *  11. uses_placeholder() remains 1 for local-manifest entries
  *  12. get_slot_info() populates inline fields when slot is present
  *  13. real_count() returns slot counts correctly
  *  14. installed flag mirrors gate state
@@ -233,7 +233,7 @@ static void test_placeholder_slot_classifies_as_placeholder(void) {
           "installed=0 when gate=PLACEHOLDER");
 }
 
-static void test_real_slot_classifies_as_real(void) {
+static void test_local_files_never_classify_as_real(void) {
     clean_scratch();
     const char* dataDir = "/tmp/scratch/firestaff-data/dm2";
     char manifest_path[1024];
@@ -257,7 +257,7 @@ static void test_real_slot_classifies_as_real(void) {
     snprintf(real_file, sizeof(real_file), "%s/inventory_quick_view.png", widgets_dir);
     CHECK(write_file(real_file, "fake-png-bytes-for-test"), "wrote real asset file");
 
-    /* All seven slots fully REAL */
+    /* All seven slots have local files, but no GDAT receipt. */
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm2-hwa-test\","
         "\"hud_widgets\":["
@@ -276,7 +276,7 @@ static void test_real_slot_classifies_as_real(void) {
         "{\"id\":\"action_strip_frame\",\"generator\":\"pbr_hero\","
         "\"source_file\":\"action_strip_frame.png\",\"width\":28,\"height\":28}"
         "]}";
-    CHECK(write_file(manifest_path, content), "wrote all-real manifest");
+    CHECK(write_file(manifest_path, content), "wrote local-file manifest");
 
     /* Create each slot's source file in its declared category dir.
      * Slot 0/1 live in hud_widgets/, slots 2..6 in hud_chrome/. */
@@ -300,32 +300,31 @@ static void test_real_slot_classifies_as_real(void) {
 
     dm2_v2_hud_widget_assets_set_manifest_path(dataDir);
     DM2_V2_HudWidgetGate gate = dm2_v2_hud_widget_assets_gate();
-    CHECK(gate == DM2_V2_HUD_WIDGET_GATE_COMPLETE,
-          "all slots REAL → COMPLETE gate");
+    CHECK(gate == DM2_V2_HUD_WIDGET_GATE_PLACEHOLDER,
+          "local files without GDAT receipts → PLACEHOLDER gate");
 
-    CHECK(dm2_v2_hud_widget_assets_get_installed() == 1,
-          "installed=1 when gate=COMPLETE");
+    CHECK(dm2_v2_hud_widget_assets_get_installed() == 0,
+          "installed=0 when no slot has GDAT provenance");
 
     int total = 0;
     int real = dm2_v2_hud_widget_assets_real_count(&total);
-    CHECK(real == (int)DM2_V2_HUD_WIDGET_COUNT,
-          "real_count=DM2_V2_HUD_WIDGET_COUNT");
+    CHECK(real == 0, "local manifest real_count=0");
     CHECK(total == (int)DM2_V2_HUD_WIDGET_COUNT,
           "total=DM2_V2_HUD_WIDGET_COUNT");
 
-    /* Each slot should classify as REAL */
+    /* Each slot remains PARTIAL despite its local source file. */
     for (size_t i = 0; i < DM2_V2_HUD_WIDGET_COUNT; ++i) {
         DM2_V2_HudWidgetClass cls =
             dm2_v2_hud_widget_assets_classify_slot((DM2_V2_HudWidgetSlot)i);
-        CHECK(cls == DM2_V2_HUD_WIDGET_CLASS_REAL,
-              "all slots REAL with disk-resolvable source_file");
+        CHECK(cls == DM2_V2_HUD_WIDGET_CLASS_PARTIAL,
+              "local source_file without GDAT receipt is PARTIAL");
         CHECK(dm2_v2_hud_widget_assets_uses_placeholder(
-                (DM2_V2_HudWidgetSlot)i) == 0,
-              "uses_placeholder=0 for REAL slot");
+                (DM2_V2_HudWidgetSlot)i) == 1,
+              "uses_placeholder=1 without GDAT receipt");
     }
 }
 
-static void test_partial_when_some_real(void) {
+static void test_local_file_plus_placeholder_stays_placeholder_gated(void) {
     clean_scratch();
     const char* dataDir = "/tmp/scratch/firestaff-data/dm2";
     char manifest_path[1024];
@@ -336,7 +335,7 @@ static void test_partial_when_some_real(void) {
     snprintf(mkdir_cmd, sizeof(mkdir_cmd), "mkdir -p '%s'", pdir);
     system(mkdir_cmd);
 
-    /* Only inventory_quick_view is REAL; action_prompt placeholder;
+    /* inventory_quick_view is merely a local file; action_prompt is placeholder;
      * remaining absent (MISSING). */
     char real_file[1024];
     snprintf(real_file, sizeof(real_file), "%s/inventory_quick_view.png", pdir);
@@ -354,16 +353,16 @@ static void test_partial_when_some_real(void) {
 
     dm2_v2_hud_widget_assets_set_manifest_path(dataDir);
     DM2_V2_HudWidgetGate gate = dm2_v2_hud_widget_assets_gate();
-    CHECK(gate == DM2_V2_HUD_WIDGET_GATE_PARTIAL,
-          "mixed manifest → PARTIAL gate");
+    CHECK(gate == DM2_V2_HUD_WIDGET_GATE_PLACEHOLDER,
+          "mixed local manifest → PLACEHOLDER gate");
 
-    CHECK(dm2_v2_hud_widget_assets_get_installed() == 1,
-          "installed=1 when gate=PARTIAL");
+    CHECK(dm2_v2_hud_widget_assets_get_installed() == 0,
+          "installed=0 when no slot has GDAT provenance");
 
-    /* First slot REAL */
+    /* First slot is PARTIAL, never REAL. */
     DM2_V2_HudWidgetClass cls = dm2_v2_hud_widget_assets_classify_slot(
         DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW);
-    CHECK(cls == DM2_V2_HUD_WIDGET_CLASS_REAL, "inventory_quick_view=REAL");
+    CHECK(cls == DM2_V2_HUD_WIDGET_CLASS_PARTIAL, "inventory_quick_view=PARTIAL");
     /* Second slot PLACEHOLDER */
     cls = dm2_v2_hud_widget_assets_classify_slot(
         DM2_V2_HUD_WIDGET_ACTION_PROMPT);
@@ -371,7 +370,7 @@ static void test_partial_when_some_real(void) {
 
     int total = 0;
     int real = dm2_v2_hud_widget_assets_real_count(&total);
-    CHECK(real == 1, "real_count=1 with one REAL slot");
+    CHECK(real == 0, "real_count=0 without a GDAT receipt");
     CHECK(total == 2, "total=2 with two declared slots");
 }
 
@@ -482,8 +481,8 @@ static void test_get_slot_info_populates_fields(void) {
     CHECK(info.width == 64, "slot info width=64");
     CHECK(info.height == 32, "slot info height=32");
     CHECK(info.file_exists == 1, "slot info file_exists=1");
-    CHECK(info.classification == DM2_V2_HUD_WIDGET_CLASS_REAL,
-          "slot info classification=REAL");
+    CHECK(info.classification == DM2_V2_HUD_WIDGET_CLASS_PARTIAL,
+          "slot info classification=PARTIAL without GDAT receipt");
     CHECK(info.resolved_path[0] != '\0', "resolved_path populated");
 
     /* NULL out is safe */
@@ -642,8 +641,8 @@ int main(void) {
     test_missing_manifest_file_yields_no_manifest();
     test_empty_manifest_yields_placeholder_gate();
     test_placeholder_slot_classifies_as_placeholder();
-    test_real_slot_classifies_as_real();
-    test_partial_when_some_real();
+    test_local_files_never_classify_as_real();
+    test_local_file_plus_placeholder_stays_placeholder_gated();
     test_partial_when_real_but_missing_source_file();
     test_partial_when_fields_missing();
     test_get_slot_info_populates_fields();

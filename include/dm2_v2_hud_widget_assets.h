@@ -156,7 +156,9 @@ const char* dm2_v2_hud_widget_assets_class_name(DM2_V2_HudWidgetClass cls);
 /* Returns the human-readable name of a gate state. */
 const char* dm2_v2_hud_widget_assets_gate_name(DM2_V2_HudWidgetGate gate);
 
-/* Counts slots classified as REAL across the stored manifest. Returns
+/* Counts slots classified as REAL across the stored manifest. The retired
+ * local-file manifest has no original-GDAT provenance and therefore cannot
+ * produce a REAL slot. Returns
  * the count and (optionally) the total declared slot count via out_total.
  * If the manifest is missing or invalid, returns 0 and sets *out_total
  * to 0. */
@@ -170,9 +172,8 @@ void dm2_v2_hud_widget_assets_set_installed(int installed);
 int  dm2_v2_hud_widget_assets_get_installed(void);
 
 /* Convenience: should the runtime use placeholder rendering for the
- * requested slot? Returns 1 if the slot classification is
- * DM2_V2_HUD_WIDGET_CLASS_PLACEHOLDER, MISSING, UNKNOWN, or PARTIAL,
- * 0 only if the slot is fully REAL. */
+ * requested slot? Returns 1 unless a future source-provenance bridge has
+ * classified the slot REAL. The retired local-file manifest never does. */
 int dm2_v2_hud_widget_assets_uses_placeholder(DM2_V2_HudWidgetSlot slot);
 
 /* Source evidence citation for source-lock tests. */

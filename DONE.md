@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 V2 HUD manifest provenance closure: retired the
+  local-file manifest's former `REAL` classification. A present PNG, even a
+  non-placeholder 32×32 receipt, is now `PARTIAL` and leaves the HUD
+  placeholder-gated until a future owner supplies original `GRAPHICS.DAT`
+  GDAT category/index/field plus raw-byte provenance. The synthetic promotion
+  probe and its CMake target were removed; focused manifest, runtime and
+  local-receipt probes pass (115/115, 27/27, 22/22).
+
 - ✅ 2026-07-31 DM2 V2 HUD manifest diagnostic closure: a legacy widget
   manifest may still report a locally present file as `REAL` for diagnostics,
   but the V2 runtime now records `NO_DRAW` for every manifest class. It never

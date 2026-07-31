@@ -5,7 +5,7 @@
  * than the checked-in synthetic 1x1 fixtures. The probe writes a valid
  * 32x32 RGBA PNG for compass_rose, installs a manifest whose other
  * slots are still placeholders, and proves the asset gate promotes that
- * one chrome slot to REAL while the overall pack remains PARTIAL.
+ * one chrome slot remains PARTIAL without a GRAPHICS.DAT GDAT receipt.
  *
  * Source:
  *   - SKULL.ASM T560 (DM2 HUD rendering pipeline)
@@ -314,21 +314,21 @@ int main(void) {
 
     check("manifest validates structurally",
           dm2_v2_hud_widget_assets_validate_manifest(NULL) == 1);
-    check("receipt pack -> PARTIAL gate",
-          dm2_v2_hud_widget_assets_gate() == DM2_V2_HUD_WIDGET_GATE_PARTIAL);
-    check("PARTIAL receipt -> installed=1",
-          dm2_v2_hud_widget_assets_get_installed() == 1);
+    check("receipt pack remains PLACEHOLDER-gated",
+          dm2_v2_hud_widget_assets_gate() == DM2_V2_HUD_WIDGET_GATE_PLACEHOLDER);
+    check("local receipt -> installed=0",
+          dm2_v2_hud_widget_assets_get_installed() == 0);
     real = dm2_v2_hud_widget_assets_real_count(&total);
-    check("receipt pack real_count=1", real == 1);
+    check("local receipt real_count=0", real == 0);
     check("receipt pack declares all 7 slots", total == 7);
 
-    check("compass_rose slot -> REAL",
+    check("compass_rose slot -> PARTIAL without GDAT receipt",
           dm2_v2_hud_widget_assets_classify_slot(
               DM2_V2_HUD_WIDGET_COMPASS_ROSE) ==
-              DM2_V2_HUD_WIDGET_CLASS_REAL);
-    check("compass_rose disables procedural placeholder",
+              DM2_V2_HUD_WIDGET_CLASS_PARTIAL);
+    check("compass_rose keeps procedural placeholder",
           dm2_v2_hud_widget_assets_uses_placeholder(
-              DM2_V2_HUD_WIDGET_COMPASS_ROSE) == 0);
+              DM2_V2_HUD_WIDGET_COMPASS_ROSE) == 1);
     check("inventory_quick_view remains PLACEHOLDER",
           dm2_v2_hud_widget_assets_classify_slot(
               DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW) ==

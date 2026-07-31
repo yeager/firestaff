@@ -430,15 +430,18 @@ DM2_V2_HudWidgetClass dm2_v2_hud_widget_assets_classify_slot(
         return DM2_V2_HUD_WIDGET_CLASS_PLACEHOLDER;
     }
 
-    /* Real asset: required fields + non-placeholder generator */
+    /* A locally resolvable file is not original-data provenance.  The DM2
+     * runtime owns HUD pixels through GRAPHICS.DAT GDAT only; this legacy
+     * manifest has no GDAT category/index/field or raw-byte receipt, so it
+     * cannot promote arbitrary operator art to REAL. */
     char resolved_path[FSP_PATH_MAX];
     int exists = dm2_v2_hwa_resolve_source_file(g_manifest_path,
                                                   k_slot_table[slot].category,
                                                   raw.source_file,
                                                   resolved_path,
                                                   sizeof(resolved_path));
-    return exists ? DM2_V2_HUD_WIDGET_CLASS_REAL
-                  : DM2_V2_HUD_WIDGET_CLASS_PARTIAL;
+    (void)exists;
+    return DM2_V2_HUD_WIDGET_CLASS_PARTIAL;
 }
 
 int dm2_v2_hud_widget_assets_get_slot_info(DM2_V2_HudWidgetSlot slot,
@@ -610,16 +613,16 @@ const char* dm2_v2_hud_widget_assets_source_evidence(void) {
         "Manifest path: ~/.firestaff/assets/dm2/hud/hud_widget_manifest.json\n"
         "Schema: { id, generator, source_file, width, height } per slot entry\n"
         "Generator 'placeholder' is the procedural fallback marker\n"
-        "Non-placeholder generator + source_file resolves on disk = REAL\n"
+        "A non-placeholder local file is PARTIAL, never REAL: this manifest\n"
+        "does not carry original GDAT provenance or a raw-byte receipt.\n"
         "Synthetic-test example: examples/dm2_hud_widget_synthetic/ uses\n"
         "generator 'synthetic_test' + 1x1 procedural PNG fixtures only to\n"
-        "exercise PARTIAL/COMPLETE gates in scratch directories; it is NOT\n"
+        "exercise PARTIAL diagnostics in scratch directories; it is NOT\n"
         "operator-installable finished art and must not be used for public\n"
         "visual claims.\n"
         "V1 invariant: V1 command routes, inventory, dungeon state NEVER bypassed\n"
         "V2 rule: HUD widget assets only activate when V2 launch+profile enabled\n"
         "Honest boundary: this gate tracks asset classification; it does NOT\n"
-        "claim finished PBR widget art. Real-art promotion requires\n"
-        "operator-installed source_file entries with generator != 'placeholder'\n"
-        "and disk-resolvable paths, and a sibling gap-list update.\n";
+        "claim finished PBR widget art. Real-art promotion requires a future\n"
+        "original-GDAT provenance bridge and a sibling gap-list update.\n";
 }

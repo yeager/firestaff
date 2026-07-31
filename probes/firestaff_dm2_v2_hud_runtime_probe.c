@@ -293,9 +293,9 @@ int main(void) {
               write_text_file(manifest, json));
         dm2_v2_hud_widget_assets_set_manifest_path(
             "/tmp/firestaff-dm2-v2-hud-runtime-probe/data/dm2");
-        CHECK(dm2_v2_hud_widget_assets_classify_slot(
-                  DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW) ==
-              DM2_V2_HUD_WIDGET_CLASS_REAL);
+    CHECK(dm2_v2_hud_widget_assets_classify_slot(
+              DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW) ==
+              DM2_V2_HUD_WIDGET_CLASS_PARTIAL);
         dm2_v2_hud_runtime_init();
         dm2_v2_hud_runtime_force_active_for_test(1);
         memset(fb_zero, 0x42, sizeof(fb_zero));
