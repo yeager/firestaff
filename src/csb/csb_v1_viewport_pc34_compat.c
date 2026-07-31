@@ -25,6 +25,7 @@
 #include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
 #include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
 #include "csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.h"
+#include "csb_v1_f0247_launcher_rng_pc34_compat.h"
 #include "csb_v22_inplace_draw_pc34.h"
 #include "csb_v2_presentation_mode_pc34.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
@@ -33,6 +34,21 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+static int csb_v1_viewport_f0113_next_field_phase(
+    void *user_data,
+    int *out_start_unit_delta,
+    int *out_y_phase)
+{
+    uint32_t *random_state = (uint32_t *)user_data;
+
+    /* ReDMCSB DUNVIEW.C F0113:4461 consumes M005_RANDOM(2), then
+     * M003_RANDOM(32), from the shared persisted G0349 stream per field. */
+    return csb_v1_f0247_launcher_next_random_bit_pc34_compat(
+               random_state, out_start_unit_delta) &&
+           csb_v1_f0247_launcher_next_random_masked_pc34_compat(
+               random_state, UINT16_C(31), out_y_phase);
+}
 
 /* The source-owned V1 viewport library is deliberately usable by small
  * loader/save/audio probes. M11 supplies the strong V2.2 implementation for
@@ -5124,6 +5140,9 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     vp.graphic_provider_callback = cfg->graphic_provider_callback;
     vp.graphic_provider_user_data = cfg->graphic_provider_user_data;
     vp.field_animation_tick = cfg->field_animation_tick;
+    vp.field_phase_callback = cfg->field_random_state
+        ? csb_v1_viewport_f0113_next_field_phase : NULL;
+    vp.field_phase_user_data = cfg->field_random_state;
     /* F0113 owns native field pixels.  Unlike a geometry probe, a verified
      * CSB GRAPHICS.DAT session must fail closed while that bitmap family has
      * no bound source span. */

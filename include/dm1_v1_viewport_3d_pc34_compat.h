@@ -193,6 +193,14 @@ typedef int (*DM1_ViewportGraphicProviderCallback)(
     int *out_width,
     int *out_height);
 
+/* ReDMCSB DUNVIEW.C F0113 obtains two values from the owning game's random
+ * stream for each visible field: M005_RANDOM(2) selects the 16-pixel source
+ * unit and M003_RANDOM(32) selects the vertical source offset. */
+typedef int (*DM1_ViewportFieldPhaseCallback)(
+    void *user_data,
+    int *out_start_unit_delta,
+    int *out_y_phase);
+
 /* F0107 wall ornament ordinal provider.  Returns the wall ornament ordinal
  * (1-based) for the cell at (map_x, map_y), or -1 if no ornament. */
 typedef int (*DM1_ViewportWallOrnamentOrdinalCallback)(
@@ -974,6 +982,8 @@ typedef struct {
      * tick. The owning game supplies this counter; it is never a host pixel
      * generator. */
     uint32_t field_animation_tick;
+    DM1_ViewportFieldPhaseCallback field_phase_callback;
+    void *field_phase_user_data;
     /* A source-verified caller may forbid geometry-only visual fallbacks.
      * ReDMCSB F0113 obtains a native field bitmap; a live CSB session without
      * that span must leave the source page untouched. */

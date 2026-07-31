@@ -123,6 +123,24 @@ int dm1_v1_field_bitmap_sample_pc34(
     int maskHeight,
     DM1_FieldBitmapSamplePc34* outSample)
 {
+    return dm1_v1_field_bitmap_sample_with_phase_pc34(
+        plan, (int)((animTick >> 1) & 1u), (int)((animTick * 7u) & 31u),
+        localX, localY, fieldWidth, fieldHeight, maskWidth, maskHeight,
+        outSample);
+}
+
+int dm1_v1_field_bitmap_sample_with_phase_pc34(
+    const DM1_FieldRenderPlanPc34* plan,
+    int startUnitDelta,
+    int yPhase,
+    int localX,
+    int localY,
+    int fieldWidth,
+    int fieldHeight,
+    int maskWidth,
+    int maskHeight,
+    DM1_FieldBitmapSamplePc34* outSample)
+{
     int fieldStartUnit;
     int fieldYPhase;
 
@@ -134,8 +152,8 @@ int dm1_v1_field_bitmap_sample_pc34(
     }
 
     memset(outSample, 0, sizeof(*outSample));
-    fieldStartUnit = plan->baseStartUnit + (int)((animTick >> 1) & 1u);
-    fieldYPhase = (int)((animTick * 7u) & 31u);
+    fieldStartUnit = plan->baseStartUnit + (startUnitDelta & 1);
+    fieldYPhase = yPhase & 31;
     outSample->fieldX = (localX + (fieldStartUnit * 16)) % fieldWidth;
     outSample->fieldY = (localY + fieldYPhase) % fieldHeight;
     outSample->transparentColor = plan->transparentColor;
@@ -167,6 +185,28 @@ int dm1_v1_field_bitmap_pixel_pc34(
     int maskStride,
     uint8_t* outPixel)
 {
+    return dm1_v1_field_bitmap_pixel_with_phase_pc34(
+        plan, (int)((animTick >> 1) & 1u), (int)((animTick * 7u) & 31u),
+        localX, localY, fieldPixels, fieldWidth, fieldHeight, fieldStride,
+        maskPixels, maskWidth, maskHeight, maskStride, outPixel);
+}
+
+int dm1_v1_field_bitmap_pixel_with_phase_pc34(
+    const DM1_FieldRenderPlanPc34* plan,
+    int startUnitDelta,
+    int yPhase,
+    int localX,
+    int localY,
+    const uint8_t* fieldPixels,
+    int fieldWidth,
+    int fieldHeight,
+    int fieldStride,
+    const uint8_t* maskPixels,
+    int maskWidth,
+    int maskHeight,
+    int maskStride,
+    uint8_t* outPixel)
+{
     DM1_FieldBitmapSamplePc34 sample;
     uint8_t pixel;
 
@@ -175,11 +215,10 @@ int dm1_v1_field_bitmap_pixel_pc34(
         fieldStride < fieldWidth) {
         return 0;
     }
-    if (!dm1_v1_field_bitmap_sample_pc34(plan, animTick, localX, localY,
-                                         fieldWidth, fieldHeight,
-                                         maskPixels ? maskWidth : 0,
-                                         maskPixels ? maskHeight : 0,
-                                         &sample)) {
+    if (!dm1_v1_field_bitmap_sample_with_phase_pc34(
+            plan, startUnitDelta, yPhase, localX, localY,
+            fieldWidth, fieldHeight, maskPixels ? maskWidth : 0,
+            maskPixels ? maskHeight : 0, &sample)) {
         return 0;
     }
 

@@ -604,8 +604,10 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
      * falls through to a host-generated floor or ceiling surface. */
     DM1_ViewportGraphicProviderCallback graphic_provider_callback;
     void *graphic_provider_user_data;
-    /* Live CSB V1 tick used by the ReDMCSB F0113 field phase sampler. */
+    /* Legacy data-free field phase only. Live F0113 consumes the persisted
+     * ReDMCSB G349 stream through field_random_state. */
     uint32_t field_animation_tick;
+    uint32_t *field_random_state;
 
     DM1_ViewportWallOrnamentOrdinalCallback wall_ornament_ordinal_callback;
     void *wall_ornament_ordinal_user_data;

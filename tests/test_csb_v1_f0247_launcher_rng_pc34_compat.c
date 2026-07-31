@@ -76,11 +76,17 @@ static void test_f028_word_exact_stream(void)
 {
     uint32_t state = UINT32_C(0x12345678);
     int bit = -1;
+    int masked = -1;
 
     CHECK(csb_v1_f0247_launcher_next_random_bit_pc34_compat(&state, &bit),
           "F028 accepts a source random-state word");
     CHECK(state == UINT32_C(0x7ee30323) && bit == 1,
           "F028 advances G349 with the ReDMCSB multiplier and extracts bit zero");
+    CHECK(csb_v1_f0247_launcher_next_random_masked_pc34_compat(
+              &state, 31u, &masked),
+          "F027 accepts the same persisted source random state");
+    CHECK(state == UINT32_C(0x9c78ff32) && masked == 31,
+          "F027 advances G349 once and applies the F0113 M003_RANDOM(32) mask");
     CHECK(!csb_v1_f0247_launcher_next_random_bit_pc34_compat(NULL, &bit),
           "F028 rejects a missing source state");
 }

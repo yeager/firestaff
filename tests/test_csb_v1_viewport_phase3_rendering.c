@@ -519,6 +519,7 @@ static void test_real_session_draws_source_teleporter_field(void)
     CSB_V1_ViewportRuntimeDrawerBinding binding;
     uint8_t screen[320 * 200];
     uint8_t teleporter_grid[49];
+    uint32_t field_random_state = UINT32_C(0x12345678);
     size_t i;
     int source_pixels = 0;
 
@@ -530,6 +531,7 @@ static void test_real_session_draws_source_teleporter_field(void)
     cfg.viewport_pixels = screen;
     cfg.viewport_stride = 320;
     cfg.field_animation_tick = 7u;
+    cfg.field_random_state = &field_random_state;
     csb_v1_viewport_set_dungeon_grid(&cfg, teleporter_grid, 7, 7);
     binding.real_graphics_session = 1;
     binding.graphic_provider_callback = test_real_field_graphic_provider;
@@ -537,6 +539,8 @@ static void test_real_session_draws_source_teleporter_field(void)
     csb_v1_viewport_render_frame(&cfg, 0, 3, 3);
     check_true("real.teleporter.source.provider_called",
                s_test_real_field_provider_calls > 0);
+    check_true("real.teleporter.source.f0113_random_stream_consumed",
+               field_random_state != UINT32_C(0x12345678));
     for (i = 0u; i < sizeof(screen); ++i) {
         if (screen[i] == 0x2bu) ++source_pixels;
         if (screen[i] == 0x1cu) {

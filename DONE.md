@@ -239,6 +239,13 @@
   owner before its next event. F0733 expectations now include `CHAMPION.C
   F0313`'s mandatory final half-scale. Focused CTest passes 5/5.
 
+- ✅ 2026-07-31 CSB F0113 random-stream ownership: live CSB fields no longer
+  derive C076 phase from a presentation tick. The F0128 bridge now consumes
+  ReDMCSB `DUNVIEW.C F0113`'s `M005_RANDOM(2)` followed by
+  `M003_RANDOM(32)` from the persisted G349-compatible state for every
+  visible field. Missing G349 state fails closed. The focused CSB viewport,
+  F027/F028 stream, and field-material CTests pass 3/3.
+
 - ✅ 2026-07-30 DM1 F0172 teleporter aspect: M11 now requires both
   `MASK0x0004_TELEPORTER_VISIBLE` and `MASK0x0008_TELEPORTER_OPEN` before
   drawing the F0113 teleporter field, matching ReDMCSB `DUNGEON.C F0172`.

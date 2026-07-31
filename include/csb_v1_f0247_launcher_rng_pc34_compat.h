@@ -13,4 +13,9 @@ int csb_v1_f0247_launcher_next_random_bit_pc34_compat(
     uint32_t *io_random_state,
     int *out_bit);
 
+int csb_v1_f0247_launcher_next_random_masked_pc34_compat(
+    uint32_t *io_random_state,
+    uint16_t mask,
+    int *out_value);
+
 #endif

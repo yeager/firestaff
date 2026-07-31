@@ -3257,9 +3257,23 @@ static void dm1_viewport_3d_draw_field(DM1_Viewport3DState *state,
     int field_height = 0;
     int mask_width = 0;
     int mask_height = 0;
+    int field_start_unit_delta;
+    int field_y_phase;
     if (!state || !state->viewport_pixels) return;
 
     if (!dm1_v1_field_render_plan_for_relative_pc34(rel_forward, rel_side, &plan)) {
+        return;
+    }
+
+    field_start_unit_delta = (int)((state->field_animation_tick >> 1) & 1u);
+    field_y_phase = (int)((state->field_animation_tick * 7u) & 31u);
+    if (state->field_phase_callback &&
+        !state->field_phase_callback(state->field_phase_user_data,
+                                     &field_start_unit_delta,
+                                     &field_y_phase)) {
+        return;
+    }
+    if (state->source_graphics_required && !state->field_phase_callback) {
         return;
     }
 
@@ -3289,8 +3303,8 @@ static void dm1_viewport_3d_draw_field(DM1_Viewport3DState *state,
                 int dst_x = plan.dstX + x;
                 uint8_t pixel;
                 if (dst_x < 0 || dst_x >= DM1_VIEWPORT_WIDTH ||
-                    !dm1_v1_field_bitmap_pixel_pc34(
-                        &plan, state->field_animation_tick, x, y,
+                    !dm1_v1_field_bitmap_pixel_with_phase_pc34(
+                        &plan, field_start_unit_delta, field_y_phase, x, y,
                         field_pixels, field_width, field_height, field_width,
                         mask_pixels, mask_width, mask_height, mask_width,
                         &pixel)) {
