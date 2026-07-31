@@ -101,10 +101,10 @@ void dm2_v2_runtime_v1_tick(uint32_t now_ms);
  * fb_stride: bytes per row in framebuffer
  * view_w, view_h: viewport dimensions (≤ FS_FB_W × FS_FB_H)
  *
- * Renders at display rate using smooth-interpolated camera offset.
- * When smooth animation is active the camera offset is interpolated
- * between the previous and current V1-snapped position, giving
- * smooth visual motion that preserves exact V1 game-state semantics.
+ * Advances smooth timing at display rate, but presents only the source-owned
+ * V1 raster at the snapped position. No original intermediate DM2 camera
+ * raster has been recovered, so a smooth state never shifts source pixels or
+ * fills newly exposed viewport areas with generated colours.
  *
  * Returns 0 on success. */
 int dm2_v2_runtime_render_frame(int party_dir,

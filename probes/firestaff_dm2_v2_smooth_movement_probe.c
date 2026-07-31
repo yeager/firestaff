@@ -355,10 +355,10 @@ static void test_deterministic_coverage(void) {
  *   2. V2 smooth mid-tick: animation active, render completes
  *   3. V2 smooth tick-end: animation done, render completes
  *
- * With dungeon data, actual pixel comparison would be enabled:
- *   V2 idle: should match V1 discrete render
- *   V2 smooth mid-tick: should differ from V1 (animation offset applied)
- *   V2 smooth tick-end: should match V1 (animation complete)
+ * With dungeon data, the V2 presentation must match the V1 source raster at
+ * every point of the smooth timing state. There is no authenticated
+ * intermediate camera frame, so an active animation cannot shift pixels or
+ * create a black fill strip between two original frames.
  */
 static void test_pixel_gate(void) {
     printf("--- Pixel/presentation gates (headless) ---\n");

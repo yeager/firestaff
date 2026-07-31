@@ -64,6 +64,11 @@
   fields looking for decodable CCM bytes, and creature ticks no longer rebuild
   missing operands from reduced local instance fields. The CCM route remains
   unavailable until the source's live record/field owner is recovered.
+  **2026-07-31 update:** DM2 V2 smooth movement no longer post-processes a
+  completed source viewport into a panned image with host-generated black
+  strips. Smooth input timing remains available, but every displayed frame is
+  now the authenticated snapped V1 raster until an original intermediate DM2
+  camera raster is recovered.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

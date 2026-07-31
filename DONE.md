@@ -46256,3 +46256,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   verified. This is real-data byte extraction only; it does not claim dungeon
   record, object-table, palette, bitmap, or runtime-render semantics.
   Verification: `theron_v1_track02_bank` and the clean-branch C11 syntax checks.
+- ✅ 2026-07-31 DM2 V2 smooth viewport no-fabrication closure: removed the
+  host-side pan and black-strip fill that ran after the real V1 viewport
+  renderer. Smooth timing state remains available to input consumers, but no
+  intermediate DM2 camera raster is known, so every presented frame remains
+  the source-owned snapped V1 raster. References: SKProject
+  `SKWIN/SkWinCore.cpp::DRAW_DUNGEON` and `DRAW_OUTDOOR_VIEWPORT`.
+  Verification: V2 smooth movement 79/79, runtime binding 43/43, smooth
+  probe 54/54, plus a byte-identical V1/V2 framebuffer comparison during an
+  active smooth state in the hash-verified real-data DM2 M11 startup test.

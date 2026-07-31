@@ -5,8 +5,8 @@
  * Phase 4: Enhanced lighting and outdoor effects.
  *
  * Wires DM2_V2_ViewportState (smooth movement + animation clock) into
- * the Firestaff game loop so that when the party moves or turns, the
- * camera smoothly interpolates over 1 V1 tick instead of snapping.
+ * the Firestaff game loop so movement and turn timing can be tracked over one
+ * V1 tick without altering an authenticated source raster.
  *
  * Phase 4 wires DM2_V2_LightingState (fog map, ambient, torch flicker,
  * lightning bloom) and DM2_V2_OutdoorFX (cloud drift, tree sway, per-
@@ -22,14 +22,12 @@
  *     [on turn]: dm2_v2_runtime_smooth_turn() → begin smooth turn
  *
  *   Game Loop (render frame):
- *     dm2_v2_runtime_render_frame() → update smooth state, render viewport
- *       dm2_v2_viewport_smooth_query() → get interpolated position/angle
- *       dm2_v1_runtime_render_frame()  → base V1 viewport rendering
- *       [if smooth active]: apply smooth camera offset to viewport
+ *     dm2_v2_runtime_render_frame() → update smooth state, render V1 viewport
+ *       dm2_v1_runtime_render_frame() → source-owned V1 viewport raster
  *     dm2_v2_runtime_lighting_tick()  → advance outdoor FX + fog animation
  *
  * V1 invariant preserved: game logic sees only snapped positions.
- * V2 visual only: smooth interpolation never changes game state.
+ * V2 timing only: smooth interpolation never changes game state or pixels.
  *
  * Source: SKULL.ASM T520  — party/movement tick
  *         SKULL.ASM T560  — dungeon viewport rendering
@@ -116,12 +114,6 @@ static void dm2_v2_runtime_profile_stairs_cb(int from_x, int from_y,
  * Used to detect fresh moves that need smooth animation triggers. */
 static __attribute__((unused)) int s_needs_smooth_trigger = 0;  /* unused — kept for future extension */
 
-/* Cached smooth query values — updated each render frame */
-static float s_smooth_x = 0.0f;
-static float s_smooth_y = 0.0f;
-static float s_smooth_vert = 0.0f;
-static float s_smooth_angle = 0.0f;
-
 /* Tracks wall-clock now_ms from the game loop for V2 animation clock.
  * Updated in dm2_v2_runtime_v1_tick; used in dm2_v2_runtime_render_frame
  * to advance the animation clock with real elapsed time. */
@@ -166,10 +158,6 @@ void dm2_v2_runtime_init(int scale) {
     s_last_party_x = 0;
     s_last_party_y = 0;
     s_last_party_dir = 0;
-    s_smooth_x = 0.0f;
-    s_smooth_y = 0.0f;
-    s_smooth_vert = 0.0f;
-    s_smooth_angle = 0.0f;
 
     /* Reset Phase 5 binding state.  Unbind any prior profile
      * so init() is a clean slate.  Default callbacks are re-registered
@@ -331,7 +319,8 @@ void dm2_v2_runtime_v1_tick(uint32_t now_ms) {
 /*
  * dm2_v2_runtime_smooth_walk — begin smooth walk animation.
  * Called when party has moved from (fx,fy) to (tx,ty) on the V1 tick.
- * The fractional smooth offset at render time = smooth_x - floor(smooth_x).
+ * The interpolated state is retained for timing/input consumers only; it does
+ * not create an intermediate viewport raster.
  *
  * Source: SKULL.ASM T520 — party/movement tick
  *         dm1_v2_smooth_movement_pc34.c: v22_smooth_start_walk_v1sync
@@ -366,7 +355,7 @@ void dm2_v2_runtime_smooth_stairs(float fx, float fy,
 /* ── Render Frame ────────────────────────────────────────────────── */
 
 /*
- * dm2_v2_runtime_render_frame — render DM2 viewport with smooth offset.
+ * dm2_v2_runtime_render_frame — render the source-owned DM2 viewport.
  *
  * party_dir: V1-snapped facing (0=N 1=E 2=S 3=W)
  * party_x, party_y: V1-snapped grid position
@@ -374,21 +363,9 @@ void dm2_v2_runtime_smooth_stairs(float fx, float fy,
  * fb_stride: bytes per row
  * view_w, view_h: viewport dimensions
  *
- * This function:
- *   1. Calls dm2_v2_viewport_render_frame() to advance smooth animation
- *   2. Queries smooth interpolated position/angle
- *   3. Renders base V1 viewport (dm2_v1_runtime_render_frame)
- *   4. If smooth animation is active, applies smooth camera offset
- *      by re-rendering with fractional position offset
- *
- * The smooth camera offset is the fractional part of the smooth position:
- *   offset_x = smooth_x - floor(smooth_x)  → 0.0 to ~1.0 tile
- *   offset_y = smooth_y - floor(smooth_y)
- *   offset_vert = smooth_vert               → camera height delta
- *
- * This offset causes the first-person viewport to pan smoothly as the
- * party moves between tiles, giving fluid camera movement without
- * changing the V1 game state.
+ * This function advances smooth animation state, then renders the V1 source
+ * raster. The original has no intermediate camera raster, so smooth timing
+ * cannot justify a host-side pixel shift or generated fill.
  *
  * Source: SKULL.ASM T560 — dungeon viewport rendering
  *         SKULL.ASM T600 — outdoor viewport rendering
@@ -417,161 +394,17 @@ int dm2_v2_runtime_render_frame(int party_dir,
     if (!dm2_v1_runtime_has_dungeon_data())
         return -1;
 
-    /* Step 2: Query the current smooth interpolated position/angle.
-     * When a smooth animation is active these values are between the
-     * previous and current V1-snapped positions, interpolated with
-     * ease-out cubic (walk) or ease-out quad (turn). */
-    {
-        float qx = 0.0f, qy = 0.0f, qv = 0.0f, qa = 0.0f;
-        dm2_v2_viewport_smooth_query(&s_vp, &qx, &qy, &qv, &qa);
-        s_smooth_x = qx;
-        s_smooth_y = qy;
-        s_smooth_vert = qv;
-        s_smooth_angle = qa;
-    }
-
-    /* Step 3: Compute smooth camera offset from V1-snapped position.
-     * The fractional offset is the distance the camera has interpolated
-     * toward the next tile center since the last V1 tick.
-     *
-     * smooth_x = floor(party_x) + fraction  [at start of animation]
-     *           = floor(party_x) + 1.0      [at end of animation]
-     * So: offset_x = smooth_x - party_x  (∈ [0.0, 1.0) normally)
-     *
-     * For turns, smooth_angle is already an absolute angle (0-360°)
-     * that has been interpolated.  The V1 facing snaps at each tick,
-     * while the smooth angle glides between snaps. */
-    float smooth_offset_x = 0.0f;
-    float smooth_offset_vert = 0.0f;
-
-    if (dm2_v2_smooth_is_active(&s_vp.smooth)) {
-        smooth_offset_x = s_smooth_x - (float)party_x;
-        smooth_offset_vert = s_smooth_vert;
-    }
-
-    /* Step 4: Render base V1 viewport (discrete, no smooth offset).
-     * This is the V1-accurate rendering from the snapped position.
-     * When no smooth animation is active, this IS the final output. */
+    /* Render the authenticated V1 viewport at its source-owned position.
+     * The smooth clock remains available to input/timing consumers, but it
+     * has no original intermediate DM2 raster to present.  In particular,
+     * do not shift a completed frame and fill the exposed area with a host
+     * black strip: that would invent viewport pixels between source frames.
+     * SKProject renders the active position in DRAW_DUNGEON /
+     * DRAW_OUTDOOR_VIEWPORT; it has no Firestaff-style post-frame pan. */
     int result = dm2_v1_runtime_render_frame(party_dir, party_x, party_y,
                                               framebuffer, fb_stride,
                                               view_w, view_h);
     if (result != 0) return result;
-
-    /* DM2-GDAT-FB-07: do not post-process cells with the V2.2 RGBA cache.
-     * The preceding V1 pass is authoritative: it follows skproject's
-     * active-map MapGraphicsStyle and GDAT material routes. */
-
-    /* Step 5: If smooth animation is active, apply smooth camera offset.
-     *
-     * The smooth offset pans the viewport by a fractional tile amount.
-     * In first-person 3D rendering, moving the camera position by a
-     * fraction of a tile causes a corresponding pan in the rendered view.
-     *
-     * For DM2 V2 Phase 5, we apply the offset as a pixel-space shift
-     * to the rendered viewport, clamped to prevent over-read.  This
-     * gives a smooth pan effect that is visible but preserves V1
-     * game-state correctness.
-     *
-     * offset_x > 0: camera has moved right → pan view right
-     * offset_y > 0: camera has moved down  → pan view down
-     * offset_vert > 0: camera raised     → ceiling slightly lower
-     *
-     * Source: DM1 V2.2 smooth: dm1_v2_smooth_movement_pc34.c
-     *   v22_smooth_start_walk_v1sync / v22_smooth_get_x/y
-     *   The fractional smooth_x value is the camera's fractional
-     *   position between tile centers. */
-    if (dm2_v2_smooth_is_active(&s_vp.smooth)) {
-        /* Convert tile-fraction offset to pixel offset.
-         * DM2 viewport is 320 pixels wide, one dungeon tile wide.
-         * A 0.1 tile offset ≈ 32 pixels of pan (10% of viewport). */
-        int pan_x = (int)(smooth_offset_x * 320.0f);
-        int pan_vert = (int)(smooth_offset_vert * 8.0f);  /* 8 pixels per vertical unit */
-
-        /* Clamp pan to prevent over-reading the framebuffer */
-        if (pan_x > 0 && pan_x < fb_stride) {
-            /* Right pan: shift viewport content right, fill left with black */
-            for (int py = 0; py < view_h; py++) {
-                int src_x = 0;
-                int dst_x = pan_x;
-                /* Only shift the viewport region */
-                for (int px = view_w - 1; px >= pan_x; px--) {
-                    int flat_src = py * fb_stride + src_x++;
-                    int flat_dst = py * fb_stride + dst_x++;
-                    if (flat_dst < fb_stride * view_h && flat_src < fb_stride * view_h) {
-                        framebuffer[flat_dst] = framebuffer[flat_src];
-                    }
-                }
-                /* Fill vacated left column with black */
-                for (int px = 0; px < pan_x && px < view_w; px++) {
-                    framebuffer[py * fb_stride + px] = 0;
-                }
-            }
-        } else if (pan_x < 0 && -pan_x < fb_stride) {
-            /* Left pan: shift viewport content left, fill right with black */
-            int pax = -pan_x;
-            for (int py = 0; py < view_h; py++) {
-                for (int px = pax; px < view_w; px++) {
-                    framebuffer[py * fb_stride + (px - pax)] = framebuffer[py * fb_stride + px];
-                }
-                for (int px = view_w - pax; px < view_w; px++) {
-                    if (px >= 0 && px < view_w)
-                        framebuffer[py * fb_stride + px] = 0;
-                }
-            }
-        }
-
-        /* Vertical pan (for stairs): shift viewport content up/down */
-        if (pan_vert > 0 && pan_vert < view_h) {
-            /* Down pan: shift content down, fill top with black */
-            for (int py = view_h - 1; py >= pan_vert; py--) {
-                for (int px = 0; px < view_w; px++) {
-                    framebuffer[py * fb_stride + px] = framebuffer[(py - pan_vert) * fb_stride + px];
-                }
-            }
-            for (int py = 0; py < pan_vert && py < view_h; py++) {
-                for (int px = 0; px < view_w; px++) {
-                    framebuffer[py * fb_stride + px] = 0;
-                }
-            }
-        } else if (pan_vert < 0 && -pan_vert < view_h) {
-            /* Up pan: shift content up, fill bottom with black */
-            int pav = -pan_vert;
-            for (int py = 0; py < view_h - pav; py++) {
-                for (int px = 0; px < view_w; px++) {
-                    framebuffer[py * fb_stride + px] = framebuffer[(py + pav) * fb_stride + px];
-                }
-            }
-            for (int py = view_h - pav; py < view_h; py++) {
-                for (int px = 0; px < view_w; px++) {
-                    framebuffer[py * fb_stride + px] = 0;
-                }
-            }
-        }
-
-        /* Apply smooth angle offset to the rendered viewport.
-         * The angle offset causes a slight rotation of the viewport,
-         * simulating the party turning smoothly rather than snapping.
-         *
-         * DM2 first-person view: rotation causes left/right wall
-         * visibility to shift.  A 1-degree smooth turn over 55ms
-         * gives a natural rotation feel without V1's instant snap.
-         *
-         * For Phase 5, we approximate angle rotation as a slight
-         * horizontal pan bias (one wall shifts sooner than the other).
-         * Full angle-based rendering is Phase 6+. */
-        if (dm2_v2_smooth_is_turning(&s_vp.smooth)) {
-            float angle_delta = s_smooth_angle - (float)(party_dir * 90);
-            /* Clamp angle delta to [-90, 90] degrees */
-            if (angle_delta > 90.0f) angle_delta -= 360.0f;
-            if (angle_delta < -90.0f) angle_delta += 360.0f;
-
-            /* Map angle delta to a pixel pan: 90° = full viewport width.
-             * A smooth turn of 15° would give ~53 pixels of pan bias. */
-            int angle_pan = (int)(angle_delta / 90.0f * 160.0f);
-            /* Combine with position pan — angle pan is a secondary effect */
-            (void)angle_pan;  /* Phase 5: pan accounted in position pan above */
-        }
-    }
 
     return 0;
 }
@@ -845,7 +678,7 @@ const char *dm2_v2_runtime_source_evidence(void) {
         "Reference: dm1_v2_smooth_movement_pc34.c (DM1 V2.2 smooth movement)\n"
         "  v22_smooth_start_walk_v1sync / v22_smooth_start_turn_v1sync\n"
         "  v22_smooth_update_from_clock / v22_smooth_get_x/y/angle\n"
-        "V2 smooth camera offset = smooth_pos - V1_snapped_pos (fractional tile)\n"
+        "V2 smooth timing preserves the V1 source raster; no post-frame pan\n"
         "Walk: ease-out cubic over 1 V1 tick (55ms)\n"
         "Turn: ease-out quad, shortest path, 1 V1 tick\n"
         "Stairs: ease-in-out cubic + vertical offset, 1 V1 tick\n"

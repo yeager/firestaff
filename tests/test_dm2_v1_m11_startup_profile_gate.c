@@ -28,6 +28,7 @@
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v1_trigger.h"
+#include "dm2_v2_runtime.h"
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 
@@ -2203,6 +2204,30 @@ int main(void) {
         view.dm2State.party_y = draw_party_y;
         view.dm2State.party_dir = 0;
         dm2_v1_runtime_set_outdoor(0);
+
+        /* SKProject's DRAW_DUNGEON draws a complete source frame at the
+         * committed party pose. It supplies no intermediate camera raster.
+         * V2 may track smooth input timing, but it must present the exact V1
+         * frame instead of shifting it and manufacturing an exposed strip. */
+        memset(framebuffer_without_hand, 0, sizeof(framebuffer_without_hand));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v2_runtime_v1_tick(0);
+        dm2_v2_runtime_smooth_walk((float)draw_party_x,
+                                   (float)draw_party_y,
+                                   (float)(draw_party_x + 1),
+                                   (float)draw_party_y);
+        expect_true(dm2_v2_smooth_is_active(
+                        &dm2_v2_runtime_get_viewport()->smooth),
+                    "DM2 V2 smooth timing is active for source-raster comparison");
+        expect_true(dm2_v1_runtime_render_frame(0, draw_party_x, draw_party_y,
+                                                 framebuffer_without_hand,
+                                                 320, 320, 200) == 0 &&
+                        dm2_v2_runtime_render_frame(0, draw_party_x, draw_party_y,
+                                                    framebuffer,
+                                                    320, 320, 200) == 0 &&
+                        memcmp(framebuffer_without_hand, framebuffer,
+                               sizeof(framebuffer)) == 0,
+                    "DM2 V2 smooth timing preserves the real V1 viewport raster");
     }
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
