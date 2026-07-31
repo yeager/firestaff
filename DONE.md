@@ -47507,3 +47507,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   gameplay can no longer derive item mechanics from its host fields.
   Verification: production link, spell/tech regression, real-data M11 startup
   gate and archive/executable-symbol checks.
+- ✅ 2026-07-31 DM2 static-name helper isolation: removed the unattached
+  record, UI-event and spell/skill name tables from the production V1 archive.
+  They were local English constants with no text/GDAT owner or live caller.
+  Their receipt tests remain explicit, while production cannot present them as
+  original DM2 text. Verification: production link, all three helper tests,
+  real-data M11 startup gate and archive/executable-symbol checks.

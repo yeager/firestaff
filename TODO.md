@@ -318,6 +318,10 @@
   **2026-07-31 follow-up:** tech/magic-hjälparen är test-skopad. Den har ingen
   M11-konsument och dess enda uppslag är explicit no-data; den får inte
   auktorisera mekanik eller etiketter utan en importerad DB/GDAT-definition.
+  **2026-07-31 follow-up:** de oanslutna engelska record-, UI- och
+  spell/skill-namnuppslagen är också test-skopade. Inga texter får nå
+  produktion från lokala konstanttabeller innan DM2:s riktiga text- eller
+  GDAT-källa är kopplad.
   **2026-07-31 update:** the unconnected HUD panel-routing and survey helper
   modules now compile only in their focused tests. M11 and the production DM2
   archive contain no accidental HUD route for those standalone receipts; a
