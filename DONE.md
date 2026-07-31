@@ -45838,6 +45838,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   separately and does not claim unobserved coverage. Reference: ReDMCSB
   `LOADSAVE.C F0419/F0420/F0433/F0435` and DMweb Saved Game Files.
 
+- ✅ 2026-07-31 CSB first-backdrop synthetic-pixel contract removal: removed
+  the unconsumed custom-background fixture that claimed F0098/F0107 ordering
+  through fixed generated colours and a synthetic MASK 0x8000 sample. It had
+  no M11 consumer and no decoded `GRAPHICS.DAT` bitmap/mask pair. Source
+  ordering remains documented in ReDMCSB `DUNVIEW.C F0098/F0107`; a future
+  visible backdrop must bind original material before drawing.
+
 - ✅ 2026-07-31 CSB Hint Oracle layout-placeholder removal: removed the
   isolated shape/ASCII-sketch API, its synthetic layout test and its
   real-data probe. It was not consumed by M11 and explicitly admitted an

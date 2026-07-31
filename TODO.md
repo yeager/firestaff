@@ -455,7 +455,9 @@ diagnostic; it must not silently fall back to a generated visual.
   not generated diagnostic chrome. **2026-07-31 follow-up:** the unconsumed
   Hint Oracle layout/ASCII-sketch module is removed rather than becoming a
   generic panel placeholder; a visible Hint Oracle needs decoded source art
-  and font material. **2026-07-31 follow-up:** source-verified
+  and font material. **2026-07-31 follow-up:** the isolated first-backdrop
+  fixture, which asserted fixed synthetic colours instead of decoding a
+  source bitmap/mask pair, is removed. **2026-07-31 follow-up:** source-verified
   CSB sessions now also reject the shared geometry-only cyan F0113
   teleporter fill. **2026-07-31 update:** live F0113 now binds C076 and its
   selected C070--C075 mask through the active hash-verified `GRAPHICS.DAT`
