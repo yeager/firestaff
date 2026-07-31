@@ -830,9 +830,9 @@ int M11_Audio_Init(M11_AudioState* state) {
     /* Pass 53: opportunistically replace event-index playback with decoded
      * GRAPHICS.DAT SND3 buffers.  Source samples are unsigned 8-bit mono at
      * 6000 Hz; they are linearly resampled once at init to the fixed SDL
-     * stream rate of 22050 Hz and queued as float mono.  If the original
-     * asset is missing or any mapping/decode fails, procedural marker
-     * playback remains the runtime fallback. */
+     * stream rate of 22050 Hz and queued as float mono.  A malformed source
+     * item must not discard other authenticated items from the same bank:
+     * each event decides from its own decoded buffer at playback time. */
     m11_try_load_original_snd3(state);
 
     /* Sound-pack support is source-index locked to the same ReDMCSB DM PC 3.4
@@ -1065,8 +1065,13 @@ int M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMar
         state->lastMarker = fallbackMarker;
     }
 
+    /* A source sample is admissible per event, rather than only when the
+     * complete 35-entry bank decoded.  Real PC34 GRAPHICS.DAT data can have
+     * a single damaged or unavailable SND3 record; discarding every other
+     * decoded source sample would wrongly replace it with a generated marker.
+     * The buffer exists only after the source decoder (or an explicit pack)
+     * accepted that exact event. */
     if (state->backend == M11_AUDIO_BACKEND_SDL3 &&
-        (state->originalSnd3Available || state->soundPackAvailable) &&
         state->originalSounds[soundIndex].sampleCount > 0) {
 #if M11_HAVE_SDL_AUDIO
         const M11_SoundBuffer* snd = &state->originalSounds[soundIndex];

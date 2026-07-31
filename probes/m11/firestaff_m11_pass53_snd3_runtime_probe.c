@@ -129,10 +129,26 @@ int main(void) {
                              state.queuedSampleCount == beforeQueued + actualDoorSamples,
                          "SDL3 runtime queues the decoded/resampled SND3 buffer for a mapped sound event");
         } else {
+        probe_record(&tally,
+                     "P53_SND3_RUNTIME_05",
+                     emitResult == 0 && state.lastMarker == M11_AUDIO_MARKER_DOOR,
+                     "no-audio backend preserves procedural fallback while original SND3 buffers remain loaded");
+        }
+        /* A single unavailable bank entry must not demote the remaining
+         * authenticated source buffers to generated marker sounds.  Mimic
+         * that partial-bank state while retaining the verified door sample. */
+        if (state.backend == M11_AUDIO_BACKEND_SDL3) {
+            state.originalSnd3Available = 0;
+            state.soundPackAvailable = 0;
+            beforeQueued = state.queuedSampleCount;
+            emitResult = M11_Audio_EmitSoundIndex(&state, 2,
+                                                   M11_AUDIO_MARKER_DOOR);
             probe_record(&tally,
-                         "P53_SND3_RUNTIME_05",
-                         emitResult == 0 && state.lastMarker == M11_AUDIO_MARKER_DOOR,
-                         "no-audio backend preserves procedural fallback while original SND3 buffers remain loaded");
+                         "P53_SND3_RUNTIME_06",
+                         emitResult == 1 && state.lastSoundIndex == 2 &&
+                             state.queuedSampleCount ==
+                                 beforeQueued + actualDoorSamples,
+                         "a verified per-event SND3 buffer remains source-playable when the complete-bank flag is false");
         }
         M11_Audio_Shutdown(&state);
     }

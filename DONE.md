@@ -47494,3 +47494,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   CSB boot profile around `/tmp` paths. The diagnostic is now contract-only
   and no longer has a production symbol; real package-owned CSB boot and
   startup receipts remain the active route.
+- ✅ 2026-07-31 DM1 per-event SND3 source playback: corrected the M11 audio
+  admission gate so a verified `GRAPHICS.DAT` SND3 buffer plays for its own
+  event even when another one of the 35 source entries is unavailable. The
+  old all-or-nothing bank flag silently replaced every remaining real sample
+  with a generated marker. Verification: production Ninja build and the
+  real-PC34 `firestaff_m11_pass53_snd3_runtime_probe` (6/6), including a
+  forced partial-bank state that still queues the original door sample.
