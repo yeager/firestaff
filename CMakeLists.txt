@@ -12793,6 +12793,8 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm2_v1_skproject_core PRIVATE firestaff_dm2 m)
+    target_compile_definitions(test_dm2_v1_skproject_core PRIVATE
+        FIRESTAFF_DM2_SKPROJECT_CORE_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_skproject_core PRIVATE -Wall -Wextra -O2)
     endif()

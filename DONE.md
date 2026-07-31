@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 DM2 SKProject diagnostic-probe isolation: made the unused
+  `TEST_MEMENT` heap predicate test-only. Its source-lock unit test compiles
+  the helper locally, while the production DM2 archive exports no unattached
+  diagnostic heap probe. Verification: production `firestaff` link,
+  SKProject-core test, and archive-symbol check.
+
 - ✅ 2026-07-31 DM2 V2 host-pipeline isolation: removed the unused
   `dm2_v2_asset_pipeline.c` from the production DM2 V2 archive. It contains
   an unimplemented palette-correction LUT and only remains compiled by its

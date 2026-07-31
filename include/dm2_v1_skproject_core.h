@@ -3709,7 +3709,9 @@ uint32_t dm2_v1_skproject_get_temp_cache_hash(
     const DM2_V1_SkprojectCacheState *state);
 uint16_t dm2_v1_skproject_alloc_temp_cache_index(
     DM2_V1_SkprojectCacheState *state);
+#if defined(FIRESTAFF_DM2_SKPROJECT_CORE_TESTING)
 int dm2_v1_skproject_test_mement(int32_t dw0, int32_t stored_len);
+#endif
 int dm2_v1_skproject_recycle_mementi(
     DM2_V1_SkprojectCacheState *state,
     uint16_t mementi,

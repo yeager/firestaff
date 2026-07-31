@@ -6463,6 +6463,10 @@ uint16_t dm2_v1_skproject_alloc_temp_cache_index(
     return cache_index;
 }
 
+/* SKProject's TEST_MEMENT predicate is retained for its isolated source-lock
+ * test. The live DM2 runtime has no caller for this diagnostic heap probe, so
+ * it must not become a production entry point. */
+#if defined(FIRESTAFF_DM2_SKPROJECT_CORE_TESTING)
 int dm2_v1_skproject_test_mement(int32_t dw0, int32_t stored_len)
 {
     int32_t probe_offset;
@@ -6472,6 +6476,7 @@ int dm2_v1_skproject_test_mement(int32_t dw0, int32_t stored_len)
         return 0;
     return dw0 == stored_len;
 }
+#endif
 
 int dm2_v1_skproject_recycle_mementi(
     DM2_V1_SkprojectCacheState *state,
