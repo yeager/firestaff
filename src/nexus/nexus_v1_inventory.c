@@ -4,10 +4,9 @@
 #include <stdio.h>
 
 /* ═══════════════════════════════════════════════════════════════════
- * Global item catalog — Nexus uses DM1 item roster (source-locked
- * via firestaff_item_encyclopedia.c, cross-referenced with
- * nexus_v1_creatures.c weapon_power/defense in combat formula).
- * All stats match DM1. No Saturn-specific items confirmed.
+ * Historical DM1 item catalog — retained as reference/fixture bytes only.
+ * It is not exposed by nexus_itemdef_get() until Saturn-specific item
+ * records are source-bound.
  * ═══════════════════════════════════════════════════════════════════ */
 
 /* clang-format off */

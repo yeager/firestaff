@@ -81,8 +81,8 @@ typedef struct {
 } Nexus_CursorItem;
 
 /* ═══════════════════════════════════════════════════════════════════
- * Global item catalog — mirrors DM1 item system.
- * Source: firestaff_item_encyclopedia.c (shared), nexus_items.md
+ * Historical item catalog storage; live Nexus lookup remains source-gated.
+ * The shared DM1 encyclopedia is not a substitute for Saturn records.
  * ═══════════════════════════════════════════════════════════════════ */
 extern const Nexus_ItemDef g_nexus_items[];
 int nexus_itemdef_count(void);
