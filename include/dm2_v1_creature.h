@@ -356,9 +356,11 @@ int dm2_v1_creature_door_open_pct_from_state(int door_state);
 
 /* ── Creature instance API ───────────────────────────────────────────────── */
 
-/* dm2_v1_creature_spawn — spawn a creature instance.
- * healthMultiplier scales HP: hp = BaseHP * healthMultiplier / 8.
- * Source: SkWinCore.cpp:16815 — ALLOC_NEW_CREATURE */
+/* Test-only creature fixture setup. Production always returns -1 until the
+ * source ALLOC_NEW_CREATURE owner is bound: it requires a live DB4 record,
+ * current map, loaded record chain, AI row, and RNG rather than host-supplied
+ * type/position/direction/health values. Source: SKProject
+ * skcrture.cpp:6380-6430, ALLOC_NEW_CREATURE. */
 int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
                           int map_index, int direction, int health_multiplier);
 

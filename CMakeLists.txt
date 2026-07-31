@@ -5891,6 +5891,8 @@ target_include_directories(firestaff_dm2_v1_creature_combat_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(firestaff_dm2_v1_creature_combat_probe
     PRIVATE firestaff_dm2 firestaff_m10 m)
+target_compile_definitions(firestaff_dm2_v1_creature_combat_probe PRIVATE
+    FIRESTAFF_DM2_CREATURE_TESTING=1)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v1_creature_combat_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -15734,6 +15736,8 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_dm2_v1_creature_death_drop_pc34_compat
         PRIVATE firestaff_m10 m)
+    target_compile_definitions(test_dm2_v1_creature_death_drop_pc34_compat PRIVATE
+        FIRESTAFF_DM2_CREATURE_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_creature_death_drop_pc34_compat
             PRIVATE -Wall -Wextra -O2)
@@ -15814,6 +15818,8 @@ if(BUILD_TESTING)
     )
     target_link_libraries(test_dm2_v1_creature_gdat_ai_table
         PRIVATE firestaff_m10 m)
+    target_compile_definitions(test_dm2_v1_creature_gdat_ai_table PRIVATE
+        FIRESTAFF_DM2_CREATURE_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_creature_gdat_ai_table
             PRIVATE -Wall -Wextra -O2)
@@ -15821,6 +15827,25 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_creature_gdat_ai_table
         COMMAND test_dm2_v1_creature_gdat_ai_table
+    )
+
+    # Production must not expose the standalone creature fixture as a live
+    # DB4/record-chain allocation route.
+    add_executable(test_dm2_v1_creature_spawn_production_gate
+        tests/test_dm2_v1_creature_spawn_production_gate.c
+    )
+    target_include_directories(test_dm2_v1_creature_spawn_production_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_spawn_production_gate PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_spawn_production_gate PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_spawn_production_gate
+        COMMAND test_dm2_v1_creature_spawn_production_gate
     )
 
     # ── DM2 V1 Phase 5: Creature death/drop headless probe ──
@@ -15839,6 +15864,8 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(firestaff_dm2_v1_creature_death_drop_probe
         PRIVATE firestaff_dm2 firestaff_m10 m)
+    target_compile_definitions(firestaff_dm2_v1_creature_death_drop_probe PRIVATE
+        FIRESTAFF_DM2_CREATURE_TESTING=1)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v1_creature_death_drop_probe
             PRIVATE -Wall -Wextra -O2)

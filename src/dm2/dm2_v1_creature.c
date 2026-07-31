@@ -613,6 +613,20 @@ static void dm2_v1_creature_write_render_state(DM2_V1_CreatureInstance *c,
  * healthMultiplier: 0=default (8), 1–16 scale HP. DM2_CREATURE_SPAWN_MAX=64. */
 int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
                           int map_index, int direction, int health_multiplier) {
+#ifndef FIRESTAFF_DM2_CREATURE_TESTING
+    (void)ai_index;
+    (void)world_x;
+    (void)world_y;
+    (void)map_index;
+    (void)direction;
+    (void)health_multiplier;
+    /* SKProject ALLOC_NEW_CREATURE (skcrture.cpp:6380-6430) allocates a
+     * DB4 record, applies the current map index, links it into the loaded
+     * record chain, and derives health from the source AI record plus RNG.
+     * This standalone helper owns none of those inputs; accepting host
+     * coordinates and multiplier would manufacture a live creature. */
+    return -1;
+#else
     const DM2_AIDefinition *spec;
     int slot = -1;
     int mult;
@@ -653,6 +667,7 @@ int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
     ++c->render_revision;
 
     return slot;
+#endif
 }
 
 int dm2_v1_creature_count(void) {

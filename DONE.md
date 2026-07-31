@@ -46044,3 +46044,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   binds the original `ddat.v1e08a0` session/save owner. This prevents a
   host-selected pool size from creating a live creature simulation. Source:
   SKProject `startend.cpp:467-494`, `DM2_1c9a_3c30`.
+- ✅ 2026-07-31 DM2 creature-spawn fixture isolation: the exported helper no
+  longer turns caller-authored creature type, map, coordinates, direction and
+  health multiplier into a live production creature. It returns failure in
+  normal builds; focused tests and probes compile it explicitly with
+  `FIRESTAFF_DM2_CREATURE_TESTING`. Original creation remains pending the
+  DB4/current-map/record-chain/RNG binding required by SKProject
+  `skcrture.cpp:6380-6430`, `ALLOC_NEW_CREATURE`.

@@ -60,17 +60,35 @@ static int tests_passed = 0;
     } \
 } while (0)
 
+/* This test deliberately has no game data. Keep its two AI rows explicit and
+ * test-only instead of relying on a latent hard-coded creature table. */
+static void reset_fixture(void) {
+    DM2_AIDefinition thorn;
+    DM2_AIDefinition bat;
+
+    memset(&thorn, 0, sizeof(thorn));
+    memset(&bat, 0, sizeof(bat));
+    thorn.BaseHP = 16;
+    bat.BaseHP = 8;
+    dm2_v1_creature_test_reset_instances();
+    dm2_v1_creature_test_clear_ai_overrides();
+    dm2_v1_creature_test_set_ai_spec(DM2_AI_THORN_DEMON, &thorn);
+    dm2_v1_creature_test_set_ai_spec(DM2_AI_CAVE_BAT, &bat);
+    dm2_v1_creature_reset_death_observer();
+}
+
 /* ── Unbound creature data → no generated drop ────────────────────── */
 
 static int test_unbound_creature_has_no_generated_drop(void) {
-    dm2_v1_creature_reset_death_observer();
+    reset_fixture();
 
     int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 5, 10, 0, 1, 0);
     if (slot < 0) return 0;
 
-    /* Deal enough damage to kill, then tick → death_check fires. */
+    /* This fixture owns no CCM program; dispatch death directly so the test
+     * observes the drop boundary without an invented walk step. */
     dm2_v1_creature_deal_damage(slot, 9999);
-    dm2_v1_creature_tick();
+    dm2_v1_creature_death_check(slot);
 
     DM2_V1_CreatureDeathDropObserver obs;
     int rc = dm2_v1_creature_last_death_drop(&obs);
@@ -89,13 +107,13 @@ static int test_unbound_creature_has_no_generated_drop(void) {
 /* ── Cavern Bat kill → no generated drop ──────────────────────────── */
 
 static int test_non_thorn_demon_no_drop(void) {
-    dm2_v1_creature_reset_death_observer();
+    reset_fixture();
 
     int slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 3, 4, 1, 2, 0);
     if (slot < 0) return 0;
 
     dm2_v1_creature_deal_damage(slot, 9999);
-    dm2_v1_creature_tick();
+    dm2_v1_creature_death_check(slot);
 
     DM2_V1_CreatureDeathDropObserver obs;
     int rc = dm2_v1_creature_last_death_drop(&obs);
@@ -114,7 +132,7 @@ static int test_non_thorn_demon_no_drop(void) {
 /* ── Out-of-range instance_id is rejected ─────────────────────────── */
 
 static int test_out_of_range_instance_id_rejected(void) {
-    dm2_v1_creature_reset_death_observer();
+    reset_fixture();
 
     dm2_v1_creature_death_check(-1);
     dm2_v1_creature_death_check(DM2_MAX_CREATURE_INSTANCES);
@@ -131,14 +149,14 @@ static int test_out_of_range_instance_id_rejected(void) {
 /* ── Dead creature death_check is a no-op ─────────────────────────── */
 
 static int test_dead_creature_death_check_is_noop(void) {
-    dm2_v1_creature_reset_death_observer();
+    reset_fixture();
 
     int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 0, 0, 0, 0, 0);
     if (slot < 0) return 0;
 
-    /* Kill via tick → death_check fires once. */
+    /* Direct death keeps the test fixture outside the unbound CCM route. */
     dm2_v1_creature_deal_damage(slot, 9999);
-    dm2_v1_creature_tick();
+    dm2_v1_creature_death_check(slot);
 
     int after_first = dm2_v1_creature_death_observer_count();
     if (after_first != 1) return 0;
@@ -153,7 +171,7 @@ static int test_dead_creature_death_check_is_noop(void) {
 /* ── HP > 0 death_check is a no-op ────────────────────────────────── */
 
 static int test_alive_hp_positive_death_check_is_noop(void) {
-    dm2_v1_creature_reset_death_observer();
+    reset_fixture();
 
     int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 0, 0, 0, 0, 0);
     if (slot < 0) return 0;
@@ -167,7 +185,7 @@ static int test_alive_hp_positive_death_check_is_noop(void) {
 /* ── Monotonic death_observer_count ───────────────────────────────── */
 
 static int test_monotonic_death_observer_count(void) {
-    dm2_v1_creature_reset_death_observer();
+    reset_fixture();
 
     int s1 = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 1, 1, 0, 0, 0);
     int s2 = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT,    2, 2, 0, 1, 0);
@@ -176,12 +194,12 @@ static int test_monotonic_death_observer_count(void) {
     if (dm2_v1_creature_death_observer_count() != 0) return 0;
 
     dm2_v1_creature_deal_damage(s1, 9999);
-    dm2_v1_creature_tick();
+    dm2_v1_creature_death_check(s1);
     int after_one = dm2_v1_creature_death_observer_count();
     if (after_one != 1) return 0;
 
     dm2_v1_creature_deal_damage(s2, 9999);
-    dm2_v1_creature_tick();
+    dm2_v1_creature_death_check(s2);
     int after_two = dm2_v1_creature_death_observer_count();
 
     return after_two == 2;
@@ -190,10 +208,11 @@ static int test_monotonic_death_observer_count(void) {
 /* ── Reset clears observer + count ────────────────────────────────── */
 
 static int test_reset_clears_observer_and_count(void) {
+    reset_fixture();
     int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 7, 8, 0, 0, 0);
     if (slot < 0) return 0;
     dm2_v1_creature_deal_damage(slot, 9999);
-    dm2_v1_creature_tick();
+    dm2_v1_creature_death_check(slot);
 
     if (dm2_v1_creature_death_observer_count() == 0) return 0;
 
@@ -211,7 +230,7 @@ static int test_reset_clears_observer_and_count(void) {
 /* ── Empty observer returns 0 + zero-init struct ───────────────────── */
 
 static int test_empty_observer_returns_zero_init(void) {
-    dm2_v1_creature_reset_death_observer();
+    reset_fixture();
 
     DM2_V1_CreatureDeathDropObserver obs;
     /* Pre-fill the struct with garbage so we can verify zero-init. */
@@ -233,11 +252,11 @@ static int test_empty_observer_returns_zero_init(void) {
 /* ── last_death_drop with NULL out is rejected ─────────────────────── */
 
 static int test_last_death_drop_null_out_rejected(void) {
-    dm2_v1_creature_reset_death_observer();
+    reset_fixture();
     int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 0, 0, 0, 0, 0);
     if (slot < 0) return 0;
     dm2_v1_creature_deal_damage(slot, 9999);
-    dm2_v1_creature_tick();
+    dm2_v1_creature_death_check(slot);
 
     /* NULL out pointer must not crash.  Return value is intentionally
      * allowed to be 0 here — the spec only requires non-NULL observation,
@@ -265,13 +284,13 @@ static int test_source_evidence_nonempty(void) {
 /* ── Observer snapshot fields ─────────────────────────────────────── */
 
 static int test_observer_snapshot_fields(void) {
-    dm2_v1_creature_reset_death_observer();
+    reset_fixture();
 
     int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 11, 22, 3, 2, 0);
     if (slot < 0) return 0;
 
     dm2_v1_creature_deal_damage(slot, 9999);
-    dm2_v1_creature_tick();
+    dm2_v1_creature_death_check(slot);
 
     DM2_V1_CreatureDeathDropObserver obs;
     if (dm2_v1_creature_last_death_drop(&obs) != 1) return 0;

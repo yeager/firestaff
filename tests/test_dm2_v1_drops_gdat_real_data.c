@@ -5,9 +5,9 @@
  * GRAPHICS.DAT: CREATURES word fields 0x0A..0x14 carry the source drop words
  * (skproject/SKWINSPX/src/v4/skcrture.cpp:2092-2100
  * DROP_CREATURE_POSSESSION), resolved in source order through
- * dm2_v1_drops_resolve_gdat_creature_drops and through the live
- * creature death path (dm2_v1_creature_load_ai_table_from_gdat →
- * dm2_v1_creature_death_check observer).
+ * dm2_v1_drops_resolve_gdat_creature_drops. The canonical PC-English data
+ * has no CREATURE_AI row, so it must not be promoted into a live creature
+ * death path merely to exercise the otherwise genuine drop words.
  *
  * Proven local GDAT facts (PC English canonical GRAPHICS.DAT):
  *   type 24 (GLOP):        [0x0A]=0x8E10  [0x0B]=0x9D10
@@ -207,7 +207,9 @@ int main(void)
               "THORN DEMON has no GDAT drop words (fallback path intact)");
     }
 
-    /* ── Live chain: real GDAT session drives the death-drop observer ── */
+    /* ── Live creation gate: no CREATURE_AI row means no creature ───────
+     * The loaded PC-English file has real drop words but no AI definition.
+     * ALLOC_NEW_CREATURE cannot own a DB4 creature from those words alone. */
     CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) >= 0,
           "AI table loader accepts the real GDAT session");
     CHECK(dm2_v1_creature_drop_slots_loaded(TEST_AI_GLOP) == 1,
@@ -217,31 +219,17 @@ int main(void)
     CHECK(dm2_v1_creature_drop_slot_word(TEST_AI_GLOP, 1) == 0x9D10u,
           "GLOP slot word 1 matches GDAT");
     {
-        int roll_a;
-        int roll_b;
         int slot;
         DM2_V1_CreatureDeathDropObserver obs;
-
-        g_rep_state = 0;
-        roll_a = replica_rand16(2);
-        roll_b = replica_rand16(2);
 
         dm2_v1_creature_test_reset_instances();
         dm2_v1_creature_reset_death_observer();
         dm2_v1_creature_drop_rng_reset();
 
         slot = dm2_v1_creature_spawn(TEST_AI_GLOP, 3, 4, 0, 1, 0);
-        CHECK(slot >= 0, "GLOP spawn");
-        dm2_v1_creature_deal_damage(slot, 9999);
-        dm2_v1_creature_tick();
-
-        CHECK(dm2_v1_creature_last_death_drop(&obs) == 1, "death observed");
-        CHECK(obs.source_ordered == 1, "death drop is source-ordered");
-        CHECK(obs.source_slots_admitted == 2, "observer admits two slots");
-        CHECK(obs.dropped == 1 && obs.item_id == 284,
-              "observer drops real GDAT item 284");
-        CHECK(obs.count == (1 + roll_a) + (1 + roll_b),
-              "observer count matches replica rolls");
+        CHECK(slot == -1, "GLOP creation rejects missing real AI row");
+        CHECK(dm2_v1_creature_last_death_drop(&obs) == 0,
+              "no synthetic death observer is created from drop words");
     }
 
     /* ── Combat defense route stays fail-closed against this GDAT ──

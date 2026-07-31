@@ -50,6 +50,10 @@
   **2026-07-31 update:** caller-selected CAII capacity is now test-only too.
   Production refuses it until `DM2_INIT` imports the original
   `ddat.v1e08a0` save/session owner.
+  **2026-07-31 update:** standalone creature creation is now test-only.
+  Production rejects caller-authored type, map, position, direction and
+  health multiplier until `ALLOC_NEW_CREATURE` has its DB4/current-map/
+  record-chain/RNG owner.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`
