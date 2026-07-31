@@ -24643,3 +24643,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   only user-supplied Atari ST data. Bind verified original animation/image
   records to the startup presentation before promoting this container reader
   beyond its current source-data loading role.
+
+- 🔧 CSB Mac app-capture follow-up: an interactive capture of the installed
+  PC 3.4 package reached real PRESENTS and closed Entrance, but its
+  door-opening frame showed an opaque red centre strip. Treat that as a
+  material/compositing regression in the older installed app until the current
+  production build reproduces it and the C004/C002/C003 source ownership can
+  be traced; do not hide it with a generated fill.
