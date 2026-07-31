@@ -911,9 +911,10 @@ int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
     if (track_number < 2 || track_number > 9) return -1;
 
     eng->current_cd_track = track_number;
-    printf("Nexus music: CD track %d (%s)\n",
-        track_number,
-        eng->music_enabled ? "playing" : "muted");
+    /* The Saturn track mapping is known, but CD-DA playback is not wired to
+     * a host backend yet.  Do not report a logical enable flag as playback. */
+    printf("Nexus music: CD track %d selected (opaque/no-playback)\n",
+        track_number);
     return 0;
 }
 
