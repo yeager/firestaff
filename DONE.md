@@ -3,6 +3,14 @@
   Den gamla `(0,0,north)`-fallbacken kan inte längre skapa en syntetisk
   viewport när world-handoff saknas. Renderingstest `25/25`.
 
+- ✅ 2026-07-31 DM2 V2.2 local-art cache isolation: removed the V2.2 modern
+  manifest, RGBA in-place cache, shape cache and viewport-swap sources from
+  `firestaff_dm2_v2`; their focused probes/tests compile them explicitly.
+  M11 already routes V2.2 to verified V2.1 because the cache has no
+  source-owned pixel consumer, and it no longer parses/classifies the local
+  pack before that route. Verification: complete `firestaff` link, focused
+  V2.2 cache/wire-up tests, and the real-data M11 DM2 startup-profile gate.
+
 - ✅ 2026-07-31 Theron viewport admission: viewport-rendering vägrar nu skriva
   även när spärrflaggan saknas om ingen faktisk tile-atlas är laddad
   (`tile_count <= 0`). Hårdkodade tile-index kan därmed inte skapa en

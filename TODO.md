@@ -51,6 +51,11 @@
   test-only now. It classifies local/synthetic metadata but has no
   source-owned pixel consumer, so the production archive cannot link it or
   promote a local modern-art manifest into a DM2 render path.
+  **2026-07-31 update:** the remaining V2.2 local modern-art cache chain
+  (manifest, RGBA cache, shape cache and viewport swap) is now test-only as
+  well. M11 no longer parses or classifies that data before routing V2.2 to
+  the authenticated V2.1 presentation; the complete production executable
+  links without the local-art chain.
   **2026-07-31 update:** CSB's boot handoff now refuses both unreadable
   verified paths and the retired 16-bit parser fixture. A session becomes
   runtime-ready only after the ReDMCSB byte-map and its initial party pose are

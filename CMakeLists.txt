@@ -3877,14 +3877,19 @@ endif()
 
 # ── DM2 V2 static library ──────────────────────────────────────────
 file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c" "src/dm2/dm2_v22_*.c")
-# The bounded PNG reader and the finished-art manifest classifier exist only
-# to inspect synthetic/local test fixtures; neither has a source-bound pixel
-# consumer. Keep both out of the production DM2 V2 archive: a broad glob must
-# not make fixture parsing part of a game-data runtime. Their dedicated tests
-# and probes compile each source explicitly below.
+# The bounded PNG reader, finished-art classifier, and the legacy V2.2
+# modern-art cache chain exist only to inspect synthetic/local test fixtures.
+# None has a source-bound pixel consumer: V2.2 is routed to V2.1 at the M11
+# launch boundary. Keep them out of the production DM2 V2 archive so a broad
+# glob cannot make fixture parsing part of a game-data runtime. Their dedicated
+# tests and probes compile each source explicitly below.
 list(REMOVE_ITEM DM2_V2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_bitmap_blit.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_finished_art_material_gate_pc34.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_finished_art_material_gate_pc34.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_inplace_draw_pc34.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_modern_assets_pc34.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_shape_cache_pc34.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_viewport_swap_pc34.c")
 if(DM2_V2_SOURCES)
     add_library(firestaff_dm2_v2 STATIC ${DM2_V2_SOURCES})
     target_include_directories(firestaff_dm2_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -17232,6 +17237,10 @@ if(BUILD_TESTING)
     # firestaff_dm2_v22_viewport_swap_wireup_probe.
     add_executable(test_dm2_v22_viewport_swap_wireup_pc34
         tests/test_dm2_v22_viewport_swap_wireup_pc34.c
+        src/dm2/dm2_v22_viewport_swap_pc34.c
+        src/dm2/dm2_v22_inplace_draw_pc34.c
+        src/dm2/dm2_v22_shape_cache_pc34.c
+        src/dm2/dm2_v22_modern_assets_pc34.c
     )
     target_include_directories(test_dm2_v22_viewport_swap_wireup_pc34 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
