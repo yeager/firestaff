@@ -46443,3 +46443,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   PRS3-pixlarna är fortfarande no-draw tills champion-index och Saturn
   VDP-placering är bevisade.
   Verifiering: `test_nexus_v1_face_bin` avkodar alla 20 retailporträtt.
+# 2026-07-31 Theron real door-state query
+
+- ✅ Removed the remaining party-level door-state placeholder from
+  `theron_v1_get_move_result()`. Hypothetical movement now reads the matching
+  level door object's actual state, just like the committed movement path;
+  missing door objects remain blocked rather than inheriting fixture state.
+  Verification: `test_theron_v1_m11_direct_launch` passes and
+  `git diff --check` passes.

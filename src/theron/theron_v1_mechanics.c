@@ -127,9 +127,20 @@ Theron_MoveResult theron_v1_get_move_result(const Theron_V1_World *world, int di
         return THERON_MOVE_BLOCKED;
     }
     if (tile == THERON_SQUARE_DOOR) {
-        /* Doors are solid unless open/quarter-open */
-        int state = world->party.door_state_override; /* placeholder */
-        if (state < THERON_DOOR_STATE_QUARTER_OPEN) {
+        /* ReDMCSB THQUEST.ASM T560/T600 keeps door state with the level
+         * object.  Read the actual object here; the party-level override is
+         * a legacy fixture field and must not decide a real-data query. */
+        const Theron_V1_Object *door = NULL;
+        for (int i = 0; i < world->object_count; ++i) {
+            const Theron_V1_Object *candidate = &world->objects[i];
+            if (candidate->level == world->current_level &&
+                candidate->x == nx && candidate->y == ny &&
+                candidate->type == THERON_OBJTYPE_DOOR) {
+                door = candidate;
+                break;
+            }
+        }
+        if (!door || door->state < THERON_DOOR_STATE_QUARTER_OPEN) {
             return THERON_MOVE_BLOCKED;
         }
         return THERON_MOVE_SPECIAL;
