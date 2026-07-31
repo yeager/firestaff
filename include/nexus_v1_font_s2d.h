@@ -56,6 +56,10 @@ int nexus_v1_font_s2d_palette_word(
     const uint8_t *data, int data_size,
     const Nexus_V1_FontS2dDecodeResult *decoded,
     int palette_index, uint16_t *out_word);
+int nexus_v1_font_s2d_attribute_word(
+    const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded,
+    int tile_index, uint16_t *out_word);
 
 int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
                               Nexus_V1_FontS2dDecodeResult *out);

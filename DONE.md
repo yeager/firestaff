@@ -46643,3 +46643,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   paletteord från de verkliga regionerna. Retailtestet verifierar tilemapord
   1 = `0x0002`, paletteord 0 = `0x8000` samt indexgränser; ingen glyph- eller
   menybetydelse härleds ännu. Verifiering: `test_nexus_v1_font_s2d`.
+- ✅ 2026-07-31 Nexus FONT256 attributes: bounded API för de 242 verkliga
+  big-endian attribute-orden är tillagd från DMWeb:s Attributes-region.
+  Tile-attributen hålls separata från ännu obevisad glyph- och menysemantik.
+  Verifiering: `test_nexus_v1_font_s2d` passerar mot retailfilen.

@@ -80,6 +80,17 @@ int nexus_v1_font_s2d_palette_word(
                             out_word);
 }
 
+int nexus_v1_font_s2d_attribute_word(
+    const uint8_t *data, int data_size,
+    const Nexus_V1_FontS2dDecodeResult *decoded,
+    int tile_index, uint16_t *out_word)
+{
+    if (!decoded) return -1;
+    return copy_region_be16(data, data_size, decoded->attribute_offset,
+                            decoded->attribute_size, 0, tile_index, 242,
+                            out_word);
+}
+
 int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
                               Nexus_V1_FontS2dDecodeResult *out) {
     int i;
