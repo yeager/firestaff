@@ -5817,7 +5817,7 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
                                         int framebuffer_width,
                                         int framebuffer_height)
 {
-    if (!world || !viewport || !framebuffer ||
+    if (!world || !viewport || !assets || !framebuffer ||
         framebuffer_width <= 0 || framebuffer_height <= 0) {
         return 0;
     }
@@ -5826,13 +5826,11 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
      * original-data backed before its palette/tile path is consumed. The
      * render gate requires both a decoded tile bank and a verified HuC6260
      * palette route; a default deterministic palette is not source-locked. */
-    if (assets) {
-        theron_vp_set_synthetic_rendering_blocked(
-            viewport,
-            assets->synthetic_rendering_blocked &&
-                !tr_asset_generated_v1_rendering_allowed(assets));
-    }
-    if (assets && !theron_v1_boot_asset_bundle_allows_v1_rendering(assets)) {
+    theron_vp_set_synthetic_rendering_blocked(
+        viewport,
+        assets->synthetic_rendering_blocked &&
+            !tr_asset_generated_v1_rendering_allowed(assets));
+    if (!theron_v1_boot_asset_bundle_allows_v1_rendering(assets)) {
         return 0;
     }
     /* When the runtime owns an asset bundle with decoded tiles, make the
@@ -5840,9 +5838,7 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
      * copy of tile metadata; the asset bundle retains ownership of the
      * underlying Track 02/03 bytes. Source: THQUEST.ASM T400 tile bank load
      * followed by T520 viewport tile selection. */
-    if (assets) {
-        theron_vp_set_palette(viewport, &assets->palette);
-    }
+    theron_vp_set_palette(viewport, &assets->palette);
     /* THQUEST.ASM T560/T600/T800 runtime owns dungeon draw, UI draw, and
      * optional V2 HUD overlay before M11 presents the indexed viewport. */
     theron_vp_render_dungeon(viewport, world);
@@ -5852,7 +5848,7 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
                                          presentation_is_v2,
                                          hud_launch_mode);
     theron_vp_present(viewport,
-                      assets ? &assets->palette : NULL,
+                      &assets->palette,
                       framebuffer,
                       framebuffer_width,
                       framebuffer_height);

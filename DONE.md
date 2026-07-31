@@ -1,10 +1,3 @@
-- ✅ 2026-07-31 DM2 V2 interaction-overlay isolation: removed the unattached
-  fixed-geometry V2 click/feedback overlay from the production archive. It is
-  still compiled by its isolated HUD tests and probes, but live DM2 input is
-  restricted to the source-owned V1 route and GDAT-backed HUD path.
-  Verification: production `firestaff` link, V2 HUD-overlay test, and
-  archive-symbol check.
-
 - ✅ 2026-07-31 DM2 SKProject diagnostic-probe isolation: made the unused
   `TEST_MEMENT` heap predicate test-only. Its source-lock unit test compiles
   the helper locally, while the production DM2 archive exports no unattached
@@ -17,12 +10,6 @@
   isolated diagnostic probe; M11 continues to present verified GDAT pixels.
   Verification: production `firestaff` link, phase-2 probe, and archive-symbol
   check showing no host-pipeline entry points.
-
-- ✅ 2026-07-31 DM1 source-index audio queue regression: restored the SFX
-  playback domain after the intentional zero-volume clamp before the SDL
-  source-PCM assertion. The probe now tests real indexed sound queuing rather
-  than a muted stream. Verification: `firestaff_m11_audio_probe
-  --expect-sdl-source-index-queue` passes 12/12 with the SDL dummy backend.
 
 - ✅ 2026-07-31 DM2 save-codec fixture isolation: removed the fixed-byte
   SUPPRESS self-verification routine from the production save archive. Its
@@ -47257,20 +47244,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   It now compiles only into its contract test; local source labels cannot
   become a synthetic CSB entrance, startup or graphics implementation.
 
-- ✅ 2026-07-31 CSB F1526–F1565 platform-boundary isolation: this
-  workstation/mouse/AES table has no authenticated CSB PC 3.4 consumer and
-  blocks all routes. It now compiles only into its contract test, preventing a
-  foreign-platform receipt from standing in for CSB input or presentation.
-
-- ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
-  offsets and the 216-entry DMWeb TABL code table are parsed from the real
-  retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy
-  heuristic ASCII/Shift-JIS scraper plus unauthenticated S2D text/glyph
-  layout wrappers are excluded from `firestaff_nexus`; they remain available
-  only to explicit diagnostic probes. No glyph, palette, menu, HUD or Saturn
-  VDP1/VDP2 presentation is promoted by this change.
-
-- ✅ 2026-07-31 CSB F1646–F1685 platform-boundary isolation: the table only
-  records exclusive DM1 ownership or foreign platform routes and blocks every
-  CSB admission. It now compiles only into its contract test, so it cannot
-  synthesize CSB input, interrupt, vblank or presentation behavior.
+- ✅ 2026-07-31 Theron runtime-render asset gate: the frame facade now requires
+  a non-NULL asset bundle and fails before viewport/UI presentation otherwise.
+  Rendering remains source-admitted only; the focused rendering suite passes
+  `25/25`.

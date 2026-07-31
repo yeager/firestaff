@@ -6096,8 +6096,8 @@ static void test_boot_runtime_render_frame_facade(void) {
                                                     0,
                                                     framebuffer,
                                                     320,
-                                                    240) == 1,
-                "boot render facade completes source-only no-draw sequence");
+                                                    240) == 0,
+                "boot render facade rejects missing asset bundle");
     for (i = 0; i < sizeof(framebuffer); ++i) {
         if (framebuffer[i] != 0) {
             nonzero = 1;

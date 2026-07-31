@@ -58,6 +58,11 @@
   longer revives the world's fixture Theron slot. A party is admitted only
   when the SRM contains decodable champion records.
 
+- **THERON-RUNTIME-RENDER-ASSET-BUNDLE:** The runtime frame facade now rejects
+  a NULL asset bundle before rendering or presenting a frame. This closes the
+  source-less facade path; the remaining save-resume suite has one unrelated
+  pre-existing structured-receipt failure to investigate separately.
+
 - **THERON-CREATURE-COMBAT-REAL-DATA:** `theron_v1_compat.c` still contains
   inferred creature stats, attack values and drops. It is now excluded from
   the production archive; production symbols fail closed until Track 02
