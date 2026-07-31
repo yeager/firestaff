@@ -102,8 +102,8 @@ typedef struct {
     uint8_t  quest_items_collected;       /* 7-bit bitmask */
     uint8_t  quest_item_total;            /* 7              */
     char     quest_summary[THERON_CHAPTER_MARKER_LABEL_MAX];
-    /* e.g. "1/7 items collected — Sacred Amplifier"
-     *      "3/7 items collected — next: Stone Sigil"
+    /* e.g. "1/7 items collected — Shield Defiant"
+     *      "3/7 items collected — next: Taza Boots"
      *      "7/7 items collected — quest complete"
      */
 

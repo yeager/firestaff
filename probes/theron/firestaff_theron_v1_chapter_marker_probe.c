@@ -19,7 +19,7 @@
  *       progression at dungeon 1 produces OK_PROGRESSION_ONLY
  *       with the canonical "Chapter 1: Hall of Records" label.
  *   5.  Mid-progression (3 items collected) projects the right
- *       "next: Stone Sigil" hint and chapter 4 label.
+ *       "next: Taza Boots" hint and chapter 4 label.
  *   6.  Quest complete (7/7) flips verdict to OK_QUEST_COMPLETE.
  *   7.  In-memory save slot promotes verdict to OK_WITH_SAVE and
  *       surfaces the slot label + dungeon name.
@@ -255,7 +255,7 @@ static void check_mid_progression(void) {
 
     /* Collect dungeon 1, 2, 3 items (bits 0, 1, 2) and set the
      * current dungeon to 4 (Tomb of Woe) so the "next" hint is
-     * Stone Sigil. */
+     * Taza Boots. */
     prog.quest_items_collected = (uint8_t)((1u << 0) | (1u << 1) | (1u << 2));
     prog.current_dungeon = THERON_DUNGEON_4_TOMB_OF_WOE;
 
@@ -268,11 +268,11 @@ static void check_mid_progression(void) {
           "mid: chapter label == Chapter 4: Tomb of Woe");
     CHECK(strstr(m.quest_summary, "3/7") != NULL,
           "mid: quest summary shows 3/7 collected");
-    /* Dungeon 4's item is bit 3 (Stone Sigil) which is NOT yet
+    /* Dungeon 4's item is bit 3 (Taza Boots) which is NOT yet
      * collected, so the summary should highlight it as the next
      * item, not the last one. */
-    CHECK(strstr(m.quest_summary, "next: Stone Sigil") != NULL,
-          "mid: quest summary names Stone Sigil as next");
+    CHECK(strstr(m.quest_summary, "next: Taza Boots") != NULL,
+          "mid: quest summary names Taza Boots as next");
     CHECK(m.quest_items_collected == 0x07,
           "mid: marker stores the 3-bit bitmask (0x07)");
 }
