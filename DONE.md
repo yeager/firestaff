@@ -1,3 +1,14 @@
+- ✅ 2026-07-31 CSB PC3.4 F0489-dörrindexbindning: den kontrollerade
+  `GRAPHICS.DAT`-katalogen kan nu koppla de inhemska F0489-indextalen till
+  rätt post enbart via ReDMCSB:s aktiva DoorSet-formel
+  `M633 + DoorSet × C003 + djup` (`DUNVIEW.C:2651–2658`). D3, D2 och D1
+  motsvarar djup 0, 1 respektive 2; index utanför katalogen eller utanför de
+  fyra PC3.4-dörrseten avvisas. Därmed är den tidigare påhittade
+  indexsammanblandningen borta och D2/D3:s 4bpp-källraster kan avkodas först
+  efter denna bindning. Verifiering:
+  `test_csb_v1_viewport_first_frame_materialization_pc34_compat` passerar
+  mot den lokala, hash-verifierade CSB `GRAPHICS.DAT`.
+
 - ✅ 2026-07-31 CSB Atari F0128-kvittohash: materialplanens hash kodar nu
   varje källfält i fast little-endian ordning i stället för att hasha en
   C-struktur med värdberoende layout. Grafikindex, väggbana, spegling och

@@ -1014,6 +1014,13 @@ diagnostic; it must not silently fall back to a generated visual.
   exact compressed selected record, verified against the real D1C/D2C/D3C
   catalog posts. The remaining live handoff must attach that receipt, the
   decoded span and active palette to the actual F0128 command before F0115.
+  2026-07-31 follow-up: the former native-index ambiguity is closed. The
+  material boundary now binds F0489's D3/D2/D1 native index to its checked
+  PC3.4 catalog record exclusively through `DUNVIEW.C:2651-2658`'s
+  `M633 + DoorSet * C003 + depth` rule, and the focused real-data test
+  decodes mapped D2/D3 spans. Remaining: retain those selected spans,
+  together with the active palette and D0/D1 F0115 materials, in the live
+  F0128 command stream before allowing a V2.2 replacement.
   The MAP.D/DB0 selector is now separately source-locked and fail-closed;
   the remaining work is to invoke it from each live F0111 route rather than
   use a fixed door-set array.

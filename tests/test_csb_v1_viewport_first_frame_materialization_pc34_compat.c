@@ -686,11 +686,7 @@ static void test_real_d3_pair_extends_material_plan(void)
 static void test_d2_d3_capture_span_handoff_and_raster(void)
 {
     static const unsigned char palette[] = { 2u, 3u, 5u, 7u, 11u, 13u };
-    static const unsigned char graphics_table[] = {
-        0x80u, 0x01u, 0x00u, 0x02u,
-        0x00u, 0x10u, 0x00u, 0x00u,
-        0x00u, 0x10u, 0x00u, 0x00u
-    };
+    static unsigned char graphics_table[4u + 249u * 4u];
     static unsigned char d2_packed[32u * 61u];
     static unsigned char d3_packed[22u * 38u];
     static unsigned char d2_pixels[64u * 61u];
@@ -717,6 +713,11 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
 
     memset(d2_packed, 0xa5, sizeof(d2_packed));
     memset(d3_packed, 0x9a, sizeof(d3_packed));
+    memset(graphics_table, 0, sizeof(graphics_table));
+    graphics_table[0] = 0x80u;
+    graphics_table[1] = 0x01u;
+    graphics_table[2] = 0x00u;
+    graphics_table[3] = 249u;
     memset(&proof, 0, sizeof(proof));
     proof.valid = 1;
     proof.route_mask = CSB_V1_VIEWPORT_FIRST_FRAME_REQUIRED_ROUTES |
@@ -796,17 +797,39 @@ static void test_d2_d3_capture_span_handoff_and_raster(void)
                d2_table.raster_blocked_without_mapping == 1 &&
                d3_table.native_bitmap_mapping_proven == 0 &&
                d3_table.raster_blocked_without_mapping == 1, 1);
+    expect_int("table.bind.d2.pc34.doorset0",
+               csb_v1_viewport_bind_pc34_front_door_native_mapping(
+                   &d2_table, 0, 1), 1);
+    expect_int("table.bind.d3.pc34.doorset0",
+               csb_v1_viewport_bind_pc34_front_door_native_mapping(
+                   &d3_table, 0, 0), 1);
+    expect_int("table.bind.reject.depth",
+               csb_v1_viewport_bind_pc34_front_door_native_mapping(
+                   &d3_table, 0, 3), 0);
+    expect_int("table.bind.receipt",
+               d2_table.graphics_entry_index == 247u &&
+               d2_table.native_bitmap_mapping_proven == 1 &&
+               d2_table.raster_blocked_without_mapping == 0 &&
+               d3_table.graphics_entry_index == 246u &&
+               d3_table.native_bitmap_mapping_proven == 1 &&
+               d3_table.raster_blocked_without_mapping == 0, 1);
     packed_capture.d2_table_provenance = &d2_table;
     packed_capture.d3_table_provenance = &d3_table;
-    expect_int("capture.decode.reject.unmapped.native.indices",
+    expect_int("capture.decode.pc34.mapped.native.indices",
                csb_v1_viewport_decode_d2_d3_native_packed_capture_pc34(
                    &proof,
                    &(CSB_V1_ViewportFirstFramePaletteSpanPc34){
                        palette, sizeof(palette), proof.shared_palette_hash },
                    &packed_capture, d2_pixels, sizeof(d2_pixels), d3_pixels,
-                   sizeof(d3_pixels), &decoded_capture), 0);
-    expect_int("capture.decode.reject.no.receipt.publish",
-               decoded_capture.valid == 0, 1);
+                   sizeof(d3_pixels), &decoded_capture), 1);
+    expect_int("capture.decode.mapped.receipt",
+               decoded_capture.valid == 1 &&
+               decoded_capture.d2_item_index == 247 &&
+               decoded_capture.d2_width == 64 &&
+               decoded_capture.d2_height == 61 &&
+               decoded_capture.d3_item_index == 246 &&
+               decoded_capture.d3_width == 44 &&
+               decoded_capture.d3_height == 38, 1);
     memset(d2_pixels, 0x0au, sizeof(d2_pixels));
     memset(d3_pixels, 0x09u, sizeof(d3_pixels));
     memset(&decoded_capture, 0, sizeof(decoded_capture));

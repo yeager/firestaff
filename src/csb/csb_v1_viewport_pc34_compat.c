@@ -634,6 +634,40 @@ int csb_v1_viewport_admit_graphics_table_provenance_pc34(
     return out_receipt->table_span_fnv1a != 0u;
 }
 
+int csb_v1_viewport_bind_pc34_front_door_native_mapping(
+    CSB_V1_ViewportGraphicsTableProvenancePc34 *receipt,
+    int door_set,
+    int depth)
+{
+    enum {
+        CSB_PC34_FIRST_DOOR_GRAPHIC = 246,
+        CSB_PC34_DOOR_SET_GRAPHIC_COUNT = 3,
+        CSB_PC34_DOOR_SET_COUNT = 4
+    };
+    uint32_t expected_entry;
+
+    /* ReDMCSB DUNVIEW.C F0096:2651-2658: G0693/G0694/G0695 are assigned
+     * in this order for every PC/I34 DoorSet.  This is source ownership,
+     * not an inference from a similarly shaped GRAPHICS.DAT record. */
+    if (!receipt || !receipt->valid || !receipt->original_graphics_dat_table ||
+        !receipt->source_path || !receipt->source_path[0] ||
+        !csb_v1_viewport_md5_text_pc34(receipt->source_md5) ||
+        door_set < 0 || door_set >= CSB_PC34_DOOR_SET_COUNT ||
+        depth < 0 || depth >= CSB_PC34_DOOR_SET_GRAPHIC_COUNT) {
+        return 0;
+    }
+    expected_entry = (uint32_t)(CSB_PC34_FIRST_DOOR_GRAPHIC +
+        door_set * CSB_PC34_DOOR_SET_GRAPHIC_COUNT + depth);
+    if (receipt->native_bitmap_index != expected_entry ||
+        expected_entry >= receipt->graphics_entry_count) {
+        return 0;
+    }
+    receipt->graphics_entry_index = expected_entry;
+    receipt->native_bitmap_mapping_proven = 1;
+    receipt->raster_blocked_without_mapping = 0;
+    return 1;
+}
+
 static uint32_t csb_v1_viewport_proof_hash_for_route_pc34(
     const CSB_V1_ViewportFirstFrameMaterialProof *proof, unsigned int route_bit)
 {

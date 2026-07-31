@@ -253,6 +253,17 @@ int csb_v1_viewport_admit_graphics_table_provenance_pc34(
     uint32_t native_bitmap_index,
     CSB_V1_ViewportGraphicsTableProvenancePc34 *out_receipt);
 
+/* ReDMCSB DUNVIEW.C:2651-2658 assigns the PC/I34 native front-door index
+ * directly from the active DoorSet: M633 + DoorSet * C003 + depth, where
+ * depth is 0=D3, 1=D2 or 2=D1.  The GRAPHICS.DAT table receipt alone cannot
+ * infer that ownership, so bind it only through this exact source formula.
+ * This mutates a previously admitted table receipt and fails closed for an
+ * unknown door set, depth, index, or catalog entry. */
+int csb_v1_viewport_bind_pc34_front_door_native_mapping(
+    CSB_V1_ViewportGraphicsTableProvenancePc34 *receipt,
+    int door_set,
+    int depth);
+
 typedef struct {
     int valid;
     int consumed_by_raster;
