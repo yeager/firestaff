@@ -7121,6 +7121,10 @@ add_executable(firestaff_csb_v1_real_asset_launch_probe
 )
 target_include_directories(firestaff_csb_v1_real_asset_launch_probe
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_definitions(firestaff_csb_v1_real_asset_launch_probe PRIVATE
+    CSB_V1_ATARI_ST_GRAPHICS_LOADER_CONTRACT_ONLY=1
+    CSB_V1_HIDDEN_ITEM_SKIP_CONTRACT_ONLY=1
+    CSB_V1_CMP_IMPORT_CONTRACT_ONLY=1)
 target_link_libraries(firestaff_csb_v1_real_asset_launch_probe PRIVATE firestaff_m10)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_real_asset_launch_probe PRIVATE -Wall -Wextra -O2)
@@ -32915,6 +32919,8 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_v1_atari_st_dat_layout PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_compile_definitions(test_csb_v1_atari_st_dat_layout PRIVATE
+        CSB_V1_ATARI_ST_GRAPHICS_LOADER_CONTRACT_ONLY=1)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_atari_st_dat_layout PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)

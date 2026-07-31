@@ -47571,3 +47571,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   selected GDAT image/palette receipt; production weather and sky remain on
   the authenticated GDAT route. Verification: production link, outdoor
   material-gate regression, real-data M11 startup gate and symbol checks.
+
+- ✅ 2026-07-31 CSB Atari ST DMCSB1 self-test isolation: the M11 archive now
+  retains only the loader for original Atari ST `GRAPHICS.DAT`/animation
+  containers. The `/tmp` synthetic DMCSB1 generator and its round-trip API
+  are compiled exclusively by explicit contract targets, including the
+  multi-variant asset probe. Verification: production `firestaff`, focused
+  data-layout binary and CTest target all passed.

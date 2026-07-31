@@ -24630,3 +24630,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 CSB hidden-graphics follow-up: only the real source-loader is available
   in production. Bind a verified original GRAPHICS.DAT hidden-item corpus to
   a visible owner before promoting those records into a runtime presentation.
+
+- 🔧 CSB Atari ST graphics follow-up: the production DMCSB1 reader accepts
+  only user-supplied Atari ST data. Bind verified original animation/image
+  records to the startup presentation before promoting this container reader
+  beyond its current source-data loading role.

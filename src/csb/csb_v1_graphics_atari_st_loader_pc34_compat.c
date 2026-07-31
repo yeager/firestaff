@@ -146,6 +146,7 @@ void csb_atari_st_graphics_loader_close(CSB_AtariStLoader* state)
     state->item_count = 0;
 }
 
+#ifdef CSB_V1_ATARI_ST_GRAPHICS_LOADER_CONTRACT_ONLY
 /* Self-test: build a tiny synthetic DMCSB1 file with one item
  * containing a known LZW payload, open + read it back, and
  * verify the round-trip. */
@@ -218,3 +219,4 @@ int csb_atari_st_graphics_loader_self_test(void)
     csb_atari_st_graphics_loader_close(&state);
     return 0;
 }
+#endif /* CSB_V1_ATARI_ST_GRAPHICS_LOADER_CONTRACT_ONLY */
