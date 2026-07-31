@@ -23552,6 +23552,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     This independently rules out treating blank host-window frames as panel
     evidence. Resolve the emulator capture binding before repeating the
     operator capture route.
+  - 2026-07-31 screencapture recheck: the same route reported `Claude` as
+    the active macOS app after every reactivation attempt, while its complete
+    `320x200` image was black and rawshot recovery remained unavailable. The
+    captured abort receipt is operator-local under
+    `/tmp/dm1-screencapture-route.fDed0F`; do not retry until a capture
+    context can make DOSBox frontmost and expose real pixels.
 
 ## DM1 C13 F0435 stale-fence follow-up
 
