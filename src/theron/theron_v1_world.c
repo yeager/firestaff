@@ -205,14 +205,16 @@ Theron_MapLoadResult theron_v1_level_load(Theron_V1_Level *level,
     uint16_t w    = rb16(data + 0);
     uint16_t h    = rb16(data + 2);
     uint32_t seed = rb32(data + 4);
-    (void)seed; /* Phase 2: wire dungeon_seed into progression table */
 
     if (w == 0 || w > THERON_MAX_MAP_SIZE || h == 0 || h > THERON_MAX_MAP_SIZE) {
         return THERON_MAP_ERR_INVALID_GRID;
     }
     level->width  = w;
     level->height = h;
-    level->start_dir = 0; /* default north; THQUEST.ASM T520 overrides */
+    level->dungeon_seed = seed;
+    /* Track 02's bounded level envelope does not carry a start direction;
+     * the verified runtime receipt admits its documented North pose. */
+    level->start_dir = 0;
 
     /* Guard: minimum size for header + at least one row */
     size_t grid_bytes = (size_t)w * h;

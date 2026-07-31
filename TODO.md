@@ -10,7 +10,8 @@
   byte-faithful but its square values have no proven tile/material meaning.
   Keep the inferred depth tile table and VGA index reduction behind the
   existing no-draw gate until original loader/VRAM evidence identifies the
-  dungeon tile bank and palette mapping.
+  dungeon tile bank and palette mapping. The verified level header seed is
+  now retained in the level record; tile semantics remain unresolved.
 
 - **THERON-V1-TILE-RENDERER-REAL-DATA:** The inferred square/depth tile
   table is now fixture-only. Production exposes no tile selection, decode or

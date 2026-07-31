@@ -47308,6 +47308,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   fixture initializer remains available to tests, but no default champion
   roster exists before verified source handoff.
 
+- ✅ 2026-07-31 Theron level-header seed binding: `theron_v1_level_load()` now
+  retains the authenticated Track 02 header seed in `Theron_V1_Level` instead
+  of discarding it. No tile/object meaning is inferred from the seed; the
+  viewport mapping gate remains closed.
+
 - ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
   offsets and the 216-entry DMWeb TABL code table are parsed from the real
   retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy
