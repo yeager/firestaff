@@ -22,4 +22,11 @@ int nexus_v1_font012_parse(const uint8_t *data, size_t size,
                            uint32_t resource_index,
                            Nexus_V1_Font012Receipt *out);
 
+/* DMWeb DMNDataFileDecoder.vbs FONT branch: decode one bounded 2bpp glyph
+ * into palette indices. This does not assign a character code or draw it. */
+int nexus_v1_font012_decode_glyph(const uint8_t *data, size_t size,
+                                  uint32_t resource_index,
+                                  uint16_t glyph_index,
+                                  uint8_t *pixels, size_t pixel_capacity);
+
 #endif

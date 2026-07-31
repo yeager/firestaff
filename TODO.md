@@ -1253,7 +1253,8 @@ diagnostic; it must not silently fall back to a generated visual.
   the 15-entry menu-options resource, and PLRD/ITEM text references are
   retained. The launcher filters legacy hardcoded English labels from
   production presentation. Bind TEXT4 control bytes through the real TABL /
-  RLOWFIX `FONT#0/#1/#2` (FONT012) / Saturn VDP2 display-layer path before
+  RLOWFIX `FONT#0/#1/#2` (FONT012; DMWeb 2bpp glyph decoder now admitted) /
+  Saturn VDP2 display-layer path before
   allowing visible menu text; Copetti's hardware reference supports the
   VDP2-layer ownership, while the Translation Kit identifies FONT012 as the
   font for TEXT resources and FONT256.S2D as a separate champion/spell/UI

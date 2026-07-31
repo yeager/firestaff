@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 Nexus FONT012 glyph decoding: implemented the DMWeb
+  `DMNDataFileDecoder.vbs` FONT branch for one bounded glyph at a time
+  (big-endian 2bpp rows, `ceil(width/4)` bytes per line, palette indices
+  `3 - ((packed >> shift) & 3)`). The API emits pixels only; it does not infer
+  character codes or grant VDP2 drawing permission. `test_nexus_v1_title_res`
+  passes against all three retail FONT resources.
+
 - ✅ 2026-07-31 Nexus FONT012 usage inventory: the DMWeb Translation Kit
   confirms FONT012 `FONT#0/#1/#2` is the text path for menu, item, dialog,
   inscription and save/message strings, with 291 half-width Kana/Romaji,

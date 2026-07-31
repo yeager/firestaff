@@ -47,3 +47,38 @@ int nexus_v1_font012_parse(const uint8_t *data, size_t size,
     out->valid = 1;
     return 1;
 }
+
+int nexus_v1_font012_decode_glyph(const uint8_t *data, size_t size,
+                                  uint32_t resource_index,
+                                  uint16_t glyph_index,
+                                  uint8_t *pixels, size_t pixel_capacity)
+{
+    Nexus_V1_Font012Receipt receipt;
+    size_t bytes_per_line;
+    size_t glyph_bytes;
+    size_t glyph_offset;
+    size_t y;
+    if (!pixels || !nexus_v1_font012_parse(data, size, resource_index,
+                                            &receipt)) return 0;
+    if (glyph_index >= receipt.character_count) return 0;
+    bytes_per_line = ((size_t)receipt.character_width + 3U) / 4U;
+    glyph_bytes = bytes_per_line * (size_t)receipt.character_height;
+    glyph_offset = 36U + (size_t)glyph_index * glyph_bytes;
+    if ((size_t)receipt.character_width * receipt.character_height >
+            pixel_capacity || glyph_offset > size ||
+        glyph_bytes > size - glyph_offset) return 0;
+
+    for (y = 0; y < receipt.character_height; ++y) {
+        uint32_t packed_row = 0U;
+        size_t x;
+        for (x = 0; x < bytes_per_line; ++x)
+            packed_row = (packed_row << 8) |
+                         data[glyph_offset + y * bytes_per_line + x];
+        for (x = 0; x < receipt.character_width; ++x) {
+            size_t bit_shift = (bytes_per_line * 8U) - 2U - 2U * x;
+            pixels[y * receipt.character_width + x] =
+                (uint8_t)(3U - ((packed_row >> bit_shift) & 3U));
+        }
+    }
+    return 1;
+}

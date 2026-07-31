@@ -91,6 +91,7 @@ static int test_font012_headers(void) {
     int size = 0;
     Nexus_V1_ResDecodeResult res;
     Nexus_V1_Font012Receipt receipt;
+    uint8_t glyph[12 * 12];
     const uint32_t indices[] = {0U, 1U, 2U};
     const uint32_t counts[] = {291U, 250U, 710U};
     const uint32_t widths[] = {6U, 12U, 12U};
@@ -111,6 +112,12 @@ static int test_font012_headers(void) {
             receipt.character_count != counts[i] ||
             receipt.character_width != widths[i] ||
             receipt.character_height != 12U) {
+            free(data);
+            return 1;
+        }
+        if (!nexus_v1_font012_decode_glyph(data + entry->offset, entry->size,
+                                           indices[i], 0U, glyph,
+                                           sizeof(glyph))) {
             free(data);
             return 1;
         }
