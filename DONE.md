@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 V2 HUD portrait ownership: removed the V2 compatibility
+  overlay's ordinal `CHAMPIONS` portrait and portrait-panel redraw. SKProject
+  `DRAW_CHAMPION_PICTURE` selects from the live hero type, not screen slot;
+  V2 has no such save/session receipt. The authenticated V1 HUD remains the
+  sole portrait owner while V2 may still present source-bound static interface
+  art outside that panel.
+
 - ✅ 2026-07-31 DM2 viewport HUD receipt gate: `render_ui_chrome` now requires
   the same source-owned champion state, dt04 layout, dt07 font and interface
   palette receipt for every caller, not just M11 source-only frames. Missing

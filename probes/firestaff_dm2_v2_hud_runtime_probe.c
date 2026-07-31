@@ -48,6 +48,7 @@
 #include "dm2_v2_hud_overlay.h"
 #include "dm2_v2_phase_gate.h"
 #include "dm2_v2_hud_widget_assets.h"
+#include "dm2_v1_viewport_renderer.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
@@ -65,6 +66,33 @@ static int g_failures   = 0;
 
 /* Helper: zero a framebuffer and return pointer */
 static uint8_t fb_zero[320 * 200];
+
+/* Explicit probe-only GDAT fixture. It proves that the production V2 overlay
+ * can consume authenticated-looking static interface material without using a
+ * slot ordinal as a CHAMPIONS portrait identity. */
+static int probe_gdat_fetch(void *user, int key, const uint8_t **pixels,
+                            int *width, int *height, int *stride)
+{
+    static const uint8_t pixel[] = { 1u };
+    (void)user;
+    if (key == 0 || !pixels || !width || !height || !stride) return -1;
+    *pixels = pixel;
+    *width = 1;
+    *height = 1;
+    *stride = 1;
+    return 0;
+}
+
+static int probe_gdat_palette(void *user, int key, uint8_t palette[16],
+                              uint32_t *hash)
+{
+    (void)user;
+    if (key == 0 || !palette || !hash) return -1;
+    memset(palette, 0, 16u);
+    palette[1] = 0x6du;
+    *hash = 0x56324850u;
+    return 0;
+}
 
 static void clear_fb(uint8_t *fb, int size) {
     memset(fb, 0, size);
@@ -219,7 +247,35 @@ int main(void) {
         clear_fb(fb_zero, sizeof(fb_zero));
     }
 
-    /* 19. Champion state cannot create a bar without original GDAT material.
+    /* 19. Static V2 interface art may consume its GDAT source, but the
+     * portrait panel stays byte-for-byte V1-owned until a live hero-type
+     * receipt is present. A slot ordinal is not a CHAMPIONS selector. */
+    {
+        DM2_V2_PhaseGateConfig gate = { 1, 1 };
+        DM2_V1_HudChromeRenderPlan plan;
+        int portrait_unchanged = 1;
+        dm2_v2_hud_runtime_set_gate_config(&gate);
+        dm2_v2_hud_runtime_set_gdat_source(probe_gdat_fetch,
+                                            probe_gdat_palette, NULL, 1);
+        memset(fb_zero, 0x42, sizeof(fb_zero));
+        dm2_v2_hud_runtime_render(fb_zero, 320, 200);
+        CHECK(dm2_v1_viewport_build_hud_chrome_plan(0, &plan) &&
+              fb_zero[plan.top_bar_rect.y * 320 + plan.top_bar_rect.x] == 0x6du);
+        for (int y = plan.portrait_panel_rect.y;
+             y < plan.portrait_panel_rect.y + plan.portrait_panel_rect.h;
+             ++y) {
+            for (int x = plan.portrait_panel_rect.x;
+                 x < plan.portrait_panel_rect.x + plan.portrait_panel_rect.w;
+                 ++x) {
+                if (fb_zero[y * 320 + x] != 0x42u) portrait_unchanged = 0;
+            }
+        }
+        CHECK(portrait_unchanged);
+        dm2_v2_hud_runtime_set_gdat_source(NULL, NULL, NULL, 0);
+        clear_fb(fb_zero, sizeof(fb_zero));
+    }
+
+    /* 20. Champion state cannot create a bar without original GDAT material.
      * Champion bars are at y=4..12, x=4..67,4..67+66,4..67+132,4..67+198
      * (4 bars at DM2_CHAMP_BAR_X_START=4, width=64, spacing=2) */
     {
@@ -238,7 +294,7 @@ int main(void) {
         CHECK(nonzero == 0);
     }
 
-    /* 20. Action state cannot create an icon without original GDAT material.
+    /* 21. Action state cannot create an icon without original GDAT material.
      * Action strip is at y=172, x=16..156 (5 icons * 28 wide) */
     {
         DM2_V2_PhaseGateConfig gate = { 1, 1 };
@@ -255,13 +311,13 @@ int main(void) {
         CHECK(nonzero == 0);
     }
 
-    /* 21. source_evidence returns the citation string */
+    /* 22. source_evidence returns the citation string */
     {
         const char *ev = dm2_v2_hud_runtime_source_evidence();
         CHECK(ev != NULL && ev[0] != '\0' && strstr(ev, "SKULL.ASM T560") != NULL);
     }
 
-    /* 22. Render against null fb is safe (no crash) — only when V2 disabled */
+    /* 23. Render against null fb is safe (no crash) — only when V2 disabled */
     {
         DM2_V2_PhaseGateConfig gate = { 0, 0 };
         dm2_v2_hud_runtime_set_gate_config(&gate);
@@ -270,7 +326,7 @@ int main(void) {
         CHECK(1);
     }
 
-    /* 23. An operator-supplied manifest can still classify a file as REAL
+    /* 24. An operator-supplied manifest can still classify a file as REAL
      * for diagnostics, but it cannot become a V2 bitmap render path. */
     {
         const char *root = "/tmp/firestaff-dm2-v2-hud-runtime-probe";

@@ -84,6 +84,11 @@
   receipt even when a caller has not set its source-only flag. Missing proof
   leaves HP/stamina/mana and leader pixels untouched; raw logical palette
   indices can no longer become a compatibility HUD substitute.
+  **2026-07-31 update:** the V2 compatibility HUD no longer overwrites the
+  V1 portrait panel with `CHAMPIONS` images selected from slot ordinals. The
+  original `DRAW_CHAMPION_PICTURE` route requires a save/session hero type,
+  so portraits remain solely V1 source-state material until V2 carries that
+  same receipt.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

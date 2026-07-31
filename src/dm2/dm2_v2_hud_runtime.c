@@ -103,20 +103,17 @@ static void render_original_hud(uint8_t *fb, int w, int h)
     (void)render_gdat_image(fb, w, h, plan.gold_box_rect.x, plan.gold_box_rect.y,
                             plan.gold_box_rect.w, plan.gold_box_rect.h,
                             plan.gold_box_gdat_index);
-    (void)render_gdat_image(fb, w, h, plan.portrait_panel_rect.x,
-                            plan.portrait_panel_rect.y, plan.portrait_panel_rect.w,
-                            plan.portrait_panel_rect.h, plan.portrait_panel_gdat_index);
     for (int i = 0; i < plan.action_icon_count; ++i) {
         (void)render_gdat_image(fb, w, h, plan.action_icons[i].fill_rect.x,
             plan.action_icons[i].fill_rect.y, plan.action_icons[i].fill_rect.w,
             plan.action_icons[i].fill_rect.h, plan.action_icons[i].gdat_index);
     }
-    for (int i = 0; i < plan.champion_slot_count; ++i) {
-        (void)render_gdat_image(fb, w, h, plan.champion_slots[i].portrait_rect.x,
-            plan.champion_slots[i].portrait_rect.y, plan.champion_slots[i].portrait_rect.w,
-            plan.champion_slots[i].portrait_rect.h,
-            dm2_v1_viewport_hud_portrait_graphic_index(i));
-    }
+    /* DRAW_CHAMPION_PICTURE selects CHAMPIONS from the source hero type, not
+     * from the visual slot number. This V2 compatibility overlay has neither
+     * the save/session hero-type receipt nor the V1 HUD material command, so
+     * it must preserve the V1-owned portrait panel rather than overwrite it
+     * with four ordinal portraits. Source: SKProject SkWinCore.cpp
+     * DRAW_CHAMPION_PICTURE (12866-12880). */
 }
 
 void dm2_v2_hud_runtime_init(void) { ensure_init(); s_force_active = 0; reset_path_record(); }
@@ -228,7 +225,8 @@ const char *dm2_v2_hud_runtime_source_evidence(void)
         "Source: skproject/SKULLWIN/c_gui_vp.cpp DRAW_CHAMPION_PICTURE and UI chrome\n"
         "Source: ReDMCSB PANEL.C F0354        (champion status-box drawing)\n"
         "INTERFACE_GENERAL image fields: top bar, action strip, gold, panel, icons\n"
-        "CHAMPIONS image field 0: portrait pixels\n"
+        "CHAMPIONS portrait pixels remain owned by the V1 source-state route;\n"
+        "the V2 compatibility overlay has no hero-type receipt and leaves them intact.\n"
         "Each IMG3 draw maps logical pixels through its paired dtPalette16 table.\n"
         "Source: dm2_v2_hud_widget_assets     (per-slot REAL/PARTIAL/PLACEHOLDER gate, Phase 3 hook)\n"
         "Source: dm2_v2_hud_widget_bitmap_blit (fixture decoder; strict no-draw)\n"

@@ -3901,10 +3901,10 @@ if(DM2_V2_SOURCES)
     # Without this link, Linux/Windows release builds fail with
     # undefined reference errors. Source: dm1v2/dm1_v2_movement_command_adapter_pc34.c.
     target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_m10 firestaff_v2 m)
-    # dm2_v2_hud_runtime.c (GDAT-backed HUD, post-a192cb2b0) calls
-    # dm2_v1_viewport_build_hud_chrome_plan() and
-    # dm2_v1_viewport_hud_portrait_graphic_index() from the V1 viewport
-    # renderer. Link PUBLIC so HUD probes inherit the contract.
+    # dm2_v2_hud_runtime.c (GDAT-backed static HUD, post-a192cb2b0) calls
+    # dm2_v1_viewport_build_hud_chrome_plan() from the V1 viewport renderer.
+    # Portraits remain V1-owned because V2 has no source hero-type receipt.
+    # Link PUBLIC so HUD probes inherit the contract.
     # Source: src/dm2/dm2_v1_viewport_renderer.c.
     target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_dm2)
     # dm2_v2_hud_widget_bitmap_blit.c reads isolated synthetic fixtures for
