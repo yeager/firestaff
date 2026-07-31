@@ -45577,3 +45577,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   F0116/F0117 contract-only wall trace and its artificial C10 blend helper.
   The production source-bound wall-set handoff remains the sole D3 side-wall
   material route.
+- ✅ 2026-07-31 CSB fabricated D1L2 wall removal: removed the D1L2
+  “closest analogue” module, its synthetic frame compositor and its test.
+  ReDMCSB has no named D1L2 PC3.4 viewport square; retaining a D1L substitute
+  would falsely claim a source route.

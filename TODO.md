@@ -549,6 +549,8 @@ diagnostic; it must not silently fall back to a generated visual.
   for wall set 0) with the compressed-record receipt. Its prior synthetic
   frame compositor and synthetic raster runner are gone. The remaining
   viewport-material inventory stays open for routes not yet bound this way.
+  **2026-07-31 D1L2 wall follow-up:** removed the fabricated D1L2 analogue.
+  ReDMCSB exposes D1C/D1L/D1R only, so no source-owned D1L2 material exists.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
