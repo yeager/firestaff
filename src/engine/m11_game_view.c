@@ -31840,28 +31840,13 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             continue;
         }
         mapIdx = state->world.party.mapIndex;
-        if (cell.wallOrnamentOrdinal <= 0) {
-            continue;
-        }
-        /* Wires the F0174 current-map alcove list (G0267 equivalent) from
-         * the same DUNGEON.DAT table the global-index lookup below uses,
-         * so the render plan's F0149 isAlcove classifies from map data. */
-        m11_dm1_wire_current_map_alcove_list((M11_GameViewState*)state,
-                                             mapIdx);
-        if (mapIdx < 0 || mapIdx >= 32 ||
-            !dm1_v1_ornament_cache_global_index_pc34(
-                state->ornamentCacheLoaded[mapIdx] ? 1 : 0,
-                state->wallOrnamentIndices[mapIdx], 16,
-                cell.wallOrnamentOrdinal, &ornGlobalIdx)) {
-            continue;
-        }
         if (cell.championPortraitOrdinal >= 0) {
             /* DUNVIEW.C F0107 projects a live C127 one-tile side wall with
              * the dedicated C346 mirror backing. Its map-local wall-ornament
              * ordinal is not the selector for that C127 route, unlike an
              * ordinary F0107 ornament. */
-            if (spec.relForward == 1 &&
-                (spec.relSide == -1 || spec.relSide == 1)) {
+            if (!(spec.relForward == 1 && spec.relSide == 0 &&
+                  spec.viewWallIndex == 12)) {
                 ornGlobalIdx =
                     DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT;
             }
@@ -31894,6 +31879,23 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                     spec.viewWallIndex, ornGlobalIdx, 0, -1, -1,
                     mirrorProjection.suppressChampionPortrait,
                     mirrorProjection.suppressHostFallbackVisuals);
+                continue;
+            }
+        } else {
+            if (cell.wallOrnamentOrdinal <= 0) {
+                continue;
+            }
+            /* Wires the F0174 current-map alcove list (G0267 equivalent)
+             * from the same DUNGEON.DAT table the normal F0107 ornament
+             * lookup uses. C127 is intentionally outside this map-local
+             * table: DUNVIEW selects C346 directly from the sensor route. */
+            m11_dm1_wire_current_map_alcove_list((M11_GameViewState*)state,
+                                                 mapIdx);
+            if (mapIdx < 0 || mapIdx >= 32 ||
+                !dm1_v1_ornament_cache_global_index_pc34(
+                    state->ornamentCacheLoaded[mapIdx] ? 1 : 0,
+                    state->wallOrnamentIndices[mapIdx], 16,
+                    cell.wallOrnamentOrdinal, &ornGlobalIdx)) {
                 continue;
             }
         }
@@ -53414,8 +53416,9 @@ int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
         state, framebuffer, framebufferWidth, framebufferHeight, &material);
 }
 
-int M11_GameView_ProbeDrawDm1ChampionMirrorSideBackingHostReceipt(
+int M11_GameView_ProbeDrawDm1ChampionMirrorBackingHostReceipt(
     M11_GameViewState* state,
+    int relForward,
     int relSide,
     unsigned char* framebuffer,
     int framebufferWidth,
@@ -53423,11 +53426,23 @@ int M11_GameView_ProbeDrawDm1ChampionMirrorSideBackingHostReceipt(
 {
     DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 projection;
     DM1_WallOrnamentHostMaterialReceiptPc34 material;
-    const int viewWallIndex = relSide < 0 ? 10 : 11;
+    int viewWallIndex;
 
-    if (!state || (relSide != -1 && relSide != 1) ||
+    if (relForward == 1 && relSide == -1) viewWallIndex = 10;
+    else if (relForward == 1 && relSide == 1) viewWallIndex = 11;
+    else if (relForward == 2 && relSide == -1) viewWallIndex = 5;
+    else if (relForward == 2 && relSide == 1) viewWallIndex = 9;
+    else if (relForward == 2 && relSide == 0) viewWallIndex = 8;
+    else if (relForward == 3 && relSide == -2) viewWallIndex = 0;
+    else if (relForward == 3 && relSide == 2) viewWallIndex = 1;
+    else if (relForward == 3 && relSide == -1) viewWallIndex = 2;
+    else if (relForward == 3 && relSide == 1) viewWallIndex = 4;
+    else if (relForward == 3 && relSide == 0) viewWallIndex = 3;
+    else return 0;
+
+    if (!state ||
         !DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
-            1, relSide, viewWallIndex, 0,
+            relForward, relSide, viewWallIndex, 0,
             DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT,
             &projection) ||
         !projection.valid || !projection.consumedC127WallFact ||
@@ -53440,10 +53455,21 @@ int M11_GameView_ProbeDrawDm1ChampionMirrorSideBackingHostReceipt(
             &material)) {
         return 0;
     }
-    /* ReDMCSB DUNVIEW.C F0107 projects C346 at D1L/D1R. C026 is a D1C
-     * only operation at 3913-3928 and is deliberately absent here. */
+    /* F0107 projects C346 through the selected side/depth coordinate slot;
+     * C026 remains the separate D1C-only operation at 3913-3928. */
     return m11_draw_dm1_wall_ornament_host_material_receipt(
         state, framebuffer, framebufferWidth, framebufferHeight, &material);
+}
+
+int M11_GameView_ProbeDrawDm1ChampionMirrorSideBackingHostReceipt(
+    M11_GameViewState* state,
+    int relSide,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    return M11_GameView_ProbeDrawDm1ChampionMirrorBackingHostReceipt(
+        state, 1, relSide, framebuffer, framebufferWidth, framebufferHeight);
 }
 
 /* -------------------------------------------------------------------------

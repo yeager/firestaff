@@ -637,9 +637,9 @@ static void test_f0172_front_wall_sensor_receipt(void)
             projection.consumedC127WallFact == 1 &&
             projection.drawChampionPortrait == 0 &&
             projection.suppressChampionPortrait == 1 &&
-            projection.drawWallOrnamentBacking == 0 &&
-            projection.suppressGenericWallOrnament == 1,
-        "D2 C127 projection cannot synthesize distant C346 mirror art",
+            projection.drawWallOrnamentBacking == 1 &&
+            projection.suppressGenericWallOrnament == 0,
+        "D2 C127 projection keeps the original C346 mirror frame",
         "DUNVIEW.C F0107:3502-3938; DUNVIEW.C:3913-3928");
 
     CHECK_ANCHOR(

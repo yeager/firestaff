@@ -46222,3 +46222,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   live F0128 command/provenance gate. References: ReDMCSB `DUNVIEW.C F0111/F0128`
   and CSBWin `Viewport.cpp`. Verification: source-consumer audit, M11 build,
   real-data first-frame material test, and `git diff --check`.
+
+- ✅ 2026-07-31 DM1 HoC C127 side/depth mirror-frame rendering: the F0107
+  C127 path now selects its original C345/C346 backing before the ordinary
+  map-local ornament lookup across all source-defined D1-D3 slots. C026
+  remains limited to the D1C portrait overlay, so distant/side mirror frames
+  appear without a floating champion portrait. Verification: real PC34
+   `m11_dm1_hoc_real_mirror_viewport_material`, side/depth material receipt,
+   and champion-mirror contract tests pass; source reference ReDMCSB
+   `DUNVIEW.C F0107` / Graphic558's 15 projection coordinates.

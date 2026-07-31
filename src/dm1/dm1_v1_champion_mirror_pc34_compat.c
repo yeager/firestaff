@@ -677,6 +677,36 @@ int DM1_V1_ChampionMirror_ValidateHostMaterialReceiptPc34(
         backingAssetHeight >= receipt->backingSourceY + receipt->backingSourceHeight;
 }
 
+static int dm1_v1_champion_mirror_is_f0107_wall_projection_pc34(
+    int relForward,
+    int relSide,
+    int viewWallIndex)
+{
+    /* DUNVIEW.C walks one 15-entry Graphic558 coordinate set for every
+     * F0107 wall-ornament projection.  C127 changes the ornament source to
+     * C346, not the perspective slot itself. */
+    static const struct {
+        int relForward;
+        int relSide;
+        int viewWallIndex;
+    } projections[] = {
+        {3, -2, 0}, {3,  2, 1}, {3, -1, 2}, {3, 0, 3},
+        {3,  1, 4}, {2, -1, 5}, {2,  1, 6}, {2, -1, 7},
+        {2,  0, 8}, {2,  1, 9}, {1, -1,10}, {1, 1,11}
+    };
+    size_t index;
+
+    for (index = 0; index < sizeof(projections) / sizeof(projections[0]);
+         ++index) {
+        if (projections[index].relForward == relForward &&
+            projections[index].relSide == relSide &&
+            projections[index].viewWallIndex == viewWallIndex) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
     int relForward,
     int relSide,
@@ -718,13 +748,12 @@ int DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
         return 1;
     }
 
-    /* The C127 mirror's remaining F0107 projections are only the one-tile
-     * side-wall cases.  DUNVIEW.C reaches D1L/D1R before the D1C C346/C026
-     * overlay; a C127 fact sampled at another depth or view-wall index must
-     * not turn the same C346 source bytes into a distant mirror substitute. */
-    if (relForward == 1 &&
-        ((relSide == -1 && viewWallIndex == 10) ||
-         (relSide == 1 && viewWallIndex == 11)) &&
+    /* C026 is a D1C-only portrait overlay, but C346 remains a normal wall
+     * ornament in every other real F0107 perspective slot.  Suppressing it
+     * at D2/D3 made a Hall mirror frame disappear until the player stood
+     * immediately in front of it. */
+    if (dm1_v1_champion_mirror_is_f0107_wall_projection_pc34(
+            relForward, relSide, viewWallIndex) &&
         globalOrnamentIndex ==
             DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT) {
         receipt.drawWallOrnamentBacking = 1;

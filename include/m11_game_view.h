@@ -3100,8 +3100,17 @@ int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
     int framebufferWidth,
     int framebufferHeight);
 
-/* Test-only F0107 consumer for a C127 mirror one tile away in D1L/D1R.
- * It admits only the authenticated C346 backing and never draws C026. */
+/* Test-only F0107 consumer for a C127 mirror frame in a source-defined
+ * side/depth slot. It admits C346 only and never draws the D1C C026 portrait. */
+int M11_GameView_ProbeDrawDm1ChampionMirrorBackingHostReceipt(
+    M11_GameViewState* state,
+    int relForward,
+    int relSide,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight);
+
+/* Compatibility wrapper for the D1L/D1R test route. */
 int M11_GameView_ProbeDrawDm1ChampionMirrorSideBackingHostReceipt(
     M11_GameViewState* state,
     int relSide,

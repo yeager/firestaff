@@ -9772,6 +9772,14 @@ lane is carried forward in the sections below.
     D2/D3 or mismatched-view C127 facts suppress generic ornament material and
     cannot synthesize C346/C026. Focused DM1 and M11 HoC receipt tests and the
     full app build pass.
+  - 2026-07-31 F0107 side/depth correction: C127 selects the original
+    C345/C346 mirror-frame pair in every source-defined D1-D3 F0107 ornament
+    projection, not just D1L/D1R. C026 remains strictly D1C-only. The live
+    renderer now routes C127 before map-local ornament lookup, because the
+    sensor owns C346 directly. Real PC34 material tests cover D1 side plus D2
+    and D3 backing, while the separate D1C suite retains C346/C026 ownership.
+    Remaining work is Mac/release-frame capture, not a missing side/depth
+    mirror-frame route.
 
 - 2026-07-15 DM1 spell-HUD source-surface follow-up: normal DM1 spell
   presentation accepts only C009/C011 pixels and verified PC34 M653 font
