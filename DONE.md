@@ -47591,6 +47591,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `GRAPHICS.DAT`; no replacement title frame is used by these checks.
 # 2026-07-31 DM1 archive-backed startup media
 
+- ✅ 2026-07-31 Theron fixture-level helper isolation. The synthetic
+  `theron_v1_first_room_*` and startup fallback-room constructors are now
+  compiled only for fixture/probe targets. The production `firestaff_theron`
+  archive no longer exports generated level-buffer symbols, while the startup
+  flow, save/resume fixture, and first-room probe retain explicit coverage.
+  Verification: production archive symbol check, six Theron startup/real-media
+  CTest rows, all passed.
+
 - ✅ 2026-07-31 Theron full-payload CUE regression corrected for JP media.
   The real Japanese MODE1/2352 BIN/CUE now verifies its authenticated Track 02
   identity (`b7afb338ad31be1025b53f9aff12d73a`) and reaches

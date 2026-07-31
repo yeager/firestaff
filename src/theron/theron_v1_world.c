@@ -1177,6 +1177,9 @@ const char *theron_v1_world_source_evidence(void) {
  * is ever synthesized by these helpers.
  * ══════════════════════════════════════════════════════════════════════ */
 
+#if defined(THERON_WORLD_FIXTURE_HELPERS)
+
+/* Fixture/CI constructors are not part of the production Theron archive. */
 size_t theron_v1_first_room_buffer_size(int width, int height) {
     if (width <= 0 || height <= 0) return 0;
     if (width > THERON_MAX_MAP_SIZE || height > THERON_MAX_MAP_SIZE) return 0;
@@ -1344,6 +1347,8 @@ size_t theron_v1_startup_fallback_room_synthesize(uint8_t *out_buf,
 
     return needed;
 }
+
+#endif /* THERON_WORLD_FIXTURE_HELPERS */
 
 /* ── libcs-only MD5 (RFC 1321) ──────────────────────────────────────
  * We bundle a tiny MD5 implementation here so the readiness gate can

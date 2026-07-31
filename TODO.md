@@ -12,6 +12,10 @@
   Keep BIN/CUE/ISO receipt normalization and later object/level records on
   the same verified-media path.
 
+- **THERON-FIXTURE-HELPER-ARCHIVE:** Closed 2026-07-31. Synthetic first-room
+  constructors are now compiled only into explicit fixture targets; the
+  production Theron archive exports no generated level-buffer helpers.
+
 - **THERON-TRACK19-RECORD-INTAKE:** Verified US/JP Track 19 ISO identities
   are now recognized as MODE1/2048 sector media with exact sector counts;
   raw MODE1/2352 remains explicitly distinguished. This proves container
