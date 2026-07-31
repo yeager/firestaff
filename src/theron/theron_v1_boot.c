@@ -10,11 +10,10 @@
  *   - Deterministic config (PC Engine fixed-tick, no chivalry)
  *   - No in-dungeon saves (TQ design restriction — save at dungeon entrance only)
  *
- * Provenance gate (Phase 0 — PASSED):
- *   No hash-verified asset set yet. This module probes for assets
- *   but marks them unverified (assets_verified=0) until Phase 2
- *   locks the exact THQUEST.GFX / THQUEST.DUN hashes from a known
- *   good PC Engine HuCard image.
+ * Provenance gate:
+ *   The supported launch source is the hash-verified Track 02 BIN
+ *   route. Generic legacy asset probing remains diagnostic only and
+ *   must not authorize production rendering.
  *
  * Platform reference:
  *   PC Engine HuCard — Hudson Soft, 1992 (JP) / 1993 (US)
@@ -1015,8 +1014,9 @@ int theron_v1_boot_prepare_startup_profile(
 
     /* Verified JP/US Track 02 bytes are authoritative original media.
      * Block generated palette/tile/UI rendering when no source-locked
-     * graphics bank has been decoded. No-media tests and unverified
-     * containers retain deterministic fallback rendering.
+     * graphics bank has been decoded. Legacy no-media tests may still
+     * exercise their deterministic fixture path, but that path is not
+     * a production launch permission.
      * Source: THQUEST.ASM T400/T410 boundary. */
     if (profile->assets_verified) {
         tr_asset_block_synthetic_rendering_for_verified_media(
@@ -6622,8 +6622,8 @@ size_t theron_v1_diagnostic_report(const Theron_V1_BootProfile *profile,
         "Reference:      docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md\n"
         "JP MD5:         b7afb338ad31be1025b53f9aff12d73a\n"
         "US MD5:         f23601102138f87c33025877767ebf76\n"
-        "Next step:       Phase 2 — source-lock TQ dungeon/graphics data formats\n"
-        "                 from extracted Track 02 BIN (CDRomance JP/US images)\n"
+        "Next step:       bind source-locked TQ dungeon/graphics semantics\n"
+        "                 to the verified Track 02 BIN route\n"
         "Asset verdict:   %s\n",
         profile->game_id,
         profile->platform_label,
@@ -6633,14 +6633,14 @@ size_t theron_v1_diagnostic_report(const Theron_V1_BootProfile *profile,
         profile->graphics_path[0] ? profile->graphics_path : "(none)",
         profile->graphics_size,
         profile->graphics_md5[0] ? profile->graphics_md5 : "????????",
-        profile->graphics_md5[0] ? "" : " [Phase 2 extraction pending]",
+        profile->graphics_md5[0] ? "" : " [no verified Track 02 source]",
 
         profile->dungeon_path[0] ? profile->dungeon_path : "(none)",
         profile->dungeon_size,
         profile->dungeon_md5[0] ? profile->dungeon_md5 : "????????",
-        profile->dungeon_md5[0] ? "" : " [Phase 2 extraction pending]",
+        profile->dungeon_md5[0] ? "" : " [no verified Track 02 source]",
 
-        profile->assets_verified ? "YES" : "NO (Phase 2 extraction pending)",
+        profile->assets_verified ? "YES" : "NO (verified Track 02 source required)",
 
         profile->save_root[0] ? profile->save_root : "(none)",
         profile->in_dungeon_save_allowed ? "ALLOWED" : "BLOCKED",
@@ -6656,7 +6656,7 @@ size_t theron_v1_diagnostic_report(const Theron_V1_BootProfile *profile,
         profile->deterministic.dungeon_seed,
         profile->deterministic.quest_items_collected,
 
-        profile->assets_verified ? "PASSED" : "pending (awaiting Phase 2 asset extraction)"
+        profile->assets_verified ? "PASSED" : "blocked (verified Track 02 source required)"
     );
 
     /* Truncate to buf_size */
@@ -6679,13 +6679,13 @@ void theron_v1_boot_print_summary(const Theron_V1_BootProfile *profile) {
 
 const char *theron_v1_boot_source_evidence(void) {
     /* Source evidence citation string — used in assert comments and debug output.
-     * Phase 1: locks to THQUEST.ASM structure; Phase 2 will add hashes.
-     * Phase 1 placeholder citing the reference roadmap. */
+     * The runtime now locks identity to the verified Track 02 route;
+     * remaining work is semantic dungeon/graphics binding. */
     return "theron_v1_boot.c: "
            "THQUEST.ASM T000 (startup), T080 (save ns), "
            "T200 (platform diag), T400 (bank load), "
            "T520 (party placement), T560 (dungeon load), "
            "T800 (champion persistence) — "
-           "Phase 1 COMPLETE; awaiting Phase 2 dungeon format lock (TQR "
-           "data extracted from Track 02 BIN, cdromance.org JP/US)";
+           "verified Track 02 identity locked; awaiting semantic dungeon "
+           "format binding (TQR data extracted from Track 02 BIN)";
 }

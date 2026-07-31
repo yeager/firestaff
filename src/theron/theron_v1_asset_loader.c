@@ -435,17 +435,16 @@ TrAssetResult tr_asset_verify(const TrAssetBundle *bundle,
     (void)bundle; (void)expected_sha256;
     if (!bundle) return TR_ASSET_ERR_HASH;
 
-    /* Phase 0: full SHA256 verification comes in Phase 2 when
-     * THERO.DAT SHA256 is locked in the asset catalog.
-     * For Phase 4, we mark the bundle as unverified but allow
-     * deterministic fallback rendering. */
+    /* This legacy generic loader has no authoritative SHA256 catalog.
+     * Production startup uses the separate hash-verified Track 02
+     * loader and its strict render admission gates. */
     if (!expected_sha256) {
         /* Verification skipped */
         return TR_ASSET_OK;
     }
 
-    /* Stub: full SHA256 verification in Phase 2 */
-    printf("[TQR] Hash verification skipped (Phase 2 feature)\n");
+    /* Legacy compatibility path: do not mistake this for launch proof. */
+    printf("[TQR] Legacy asset verification is non-authoritative\n");
     return TR_ASSET_OK;
 }
 
