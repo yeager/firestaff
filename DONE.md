@@ -24,6 +24,15 @@
   alcove regression requires the complete M564 table before rendering an
   object and passes; CSB boot handoff regression passes.
 
+- ✅ 2026-07-31 DM1 F0115 side-lane object occlusion: the live renderer now
+  replays only original GRAPHICS.DAT-bound side-wall and closed-side-door
+  material after F0115's deferred object pass, in the far-to-near order of
+  ReDMCSB `DUNVIEW.C F0128`. This restores the required nearer-panel
+  overpaint boundary, so floor objects cannot render through a nearer stone
+  wall or closed door. Verification: `dm1_v1_viewport_3d_pc34_compat`,
+  `m11_dm1_real_alcove_item_runtime_pc34`, floor-item/click source-lock
+  regressions, and real DM1 V1/V2.0/V2.1/V2.2 boot probes pass.
+
 - ✅ 2026-07-31 DM2 leader-hand fixture-pixel closure: the runtime no longer
   turns an injected viewport provider's field-zero map-chip into a visible
   held item. SKProject `DM2_DRAW_ITEM_IN_HAND` (`skguidr5.cpp:1517`) first

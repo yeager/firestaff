@@ -45776,6 +45776,25 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 .f0115ContentSquareCount = f0115SquareCount;
         }
     }
+    /* F0128 visits each side square far-to-near.  In the original, a nearer
+     * closed side wall or door therefore overpaints F0115 material from the
+     * farther side lane.  M11 batches all structural panels before its
+     * deferred F0115 loop, so restore that source-owned occlusion boundary
+     * after the loop rather than letting a floor object bleed through stone. */
+    m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth,
+                            framebufferHeight, maxVisibleForward, &visibility);
+    m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
+                                 framebufferHeight, maxVisibleForward, cells);
+    m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
+        state, framebuffer, framebufferWidth, framebufferHeight,
+        maxVisibleForward, cells);
+    m11_draw_dm1_side_doors(state, framebuffer, framebufferWidth,
+                            framebufferHeight, maxVisibleForward, cells);
+    m11_draw_dm1_side_door_ornaments(state, framebuffer, framebufferWidth,
+                                     framebufferHeight, maxVisibleForward, cells);
+    m11_draw_dm1_side_destroyed_door_masks(state, framebuffer,
+                                           framebufferWidth, framebufferHeight,
+                                           maxVisibleForward, cells);
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);
