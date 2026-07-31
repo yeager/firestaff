@@ -16536,6 +16536,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-09 update: startup media receipts now expose per-route Track02 bitmap decode proof for title, stage, Soul Room, and forcefield samples. Remaining work is replacing final M11 call sites and broadening real bitmap decode beyond sampled startup tiles.
 
 - 🔧 2026-07-10 DM2 runtime/render follow-up: complete-support and full GDAT HUD/dungeon runtime gates are verified in DONE.md. The interface palette is now strictly decoded and carried into runtime scene/frame receipts; remaining work is applying that palette at the M11 display target, broader Mac packaged capture, broader typed GDAT data/image parser coverage beyond the verified interface `dt09`, `dtPalette16`, `dt07/0x00`, `dt07/0x02`, `dt06` no-alias gate, remaining advanced interface placement/semantics, remaining advanced CCM opcodes, and broader real save corpus import.
+  - 2026-07-31 verification: a current-source M11/SDL presented-frame capture
+    against the hash-verified PC English `GRAPHICS.DAT` and `DUNGEON.DAT`
+    shows the original GDAT DM2 start menu with its decoded interface palette.
+    The separately observed gray, HUD-less macOS window had a different
+    executable SHA-256, so it is not evidence about this source revision.
+    This validates startup presentation only: a real original `SKSave` corpus
+    is still required before a live champion HUD or playable dungeon session
+    may be accepted.
   - 2026-07-15 update: creature, possession, floor-item, leader-hand, and
     projectile/cloud viewport draws now require their source GDAT map-chip
     bitmap. On a source-material route, missing material is recorded as blocked
