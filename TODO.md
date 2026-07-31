@@ -44,6 +44,9 @@
   A verified New Game reload now also clears stale resume portraits,
   inventory and leader hand before source mirror selection; it still cannot
   create a replacement party or enter runtime.
+  **2026-07-31 update:** the boot profile no longer preloads the PC-English
+  G1 seed (`257`). It remains zero until the hash-verified `DUNGEON.DAT`
+  header supplies the real value.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its

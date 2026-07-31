@@ -45360,3 +45360,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm2_v1_weather_gdat_receipt`, and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass against
   `~/.firestaff/data/dm2`.
+- ✅ 2026-07-31 DM2 boot dungeon-seed fixture removal: an unverified boot
+  profile no longer starts with the PC-English G1 seed (`257`). The seed is
+  unavailable until `DUNGEON_Load` reads it from hash-verified original
+  `DUNGEON.DAT` offset 8. Source: SKProject `DUNGEON_Load` G1-header route.
+  Verification: `test_dm2_v1_boot_profile_smoke` and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass against
+  `~/.firestaff/data/dm2`.

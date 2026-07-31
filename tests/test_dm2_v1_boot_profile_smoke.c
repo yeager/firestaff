@@ -119,7 +119,8 @@ static void test_defaults(void)
     CHECK(p.deterministic.day_cycle_ticks == 0u,
           "boot profile does not fabricate an environment clock cadence");
     CHECK(p.deterministic.max_levels == 28, "max levels is 28 (PC English)");
-    CHECK(p.deterministic.dungeon_seed == 257, "default dungeon seed is 257");
+    CHECK(p.deterministic.dungeon_seed == 0u,
+          "dungeon seed remains unavailable before DUNGEON.DAT is verified");
 }
 
 static void test_scan_missing_data(void)

@@ -957,7 +957,9 @@ void dm2_v1_boot_profile_init(DM2_V1_BootProfile *profile) {
     profile->deterministic.day_cycle_minutes  = 0u;
     profile->deterministic.day_cycle_ticks    = 0u;
     profile->deterministic.max_levels         = 28;  /* PC English */
-    profile->deterministic.dungeon_seed       = 257; /* default fallback */
+    /* DUNGEON_Load obtains this from the verified G1 header.  A boot profile
+     * without that file must not impersonate the PC-English seed. */
+    profile->deterministic.dungeon_seed       = 0u;
 }
 
 /* ── Probe availability ───────────────────────────────────────────────── */
