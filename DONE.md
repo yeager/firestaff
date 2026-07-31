@@ -46112,3 +46112,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   table rather than extrapolating a host curve. Verification:
   `test_dm2_v1_spell_cast_player_pc34_compat` 143/143 and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass.
+
+- ✅ 2026-07-31 CSB detached D0/D1 viewport-contract cleanup: removed the
+  non-M11 D0L2/D0R2 F0111/F0115 receipt, D1C F0111 receipt, their private
+  test-only pixel simulations and CTest targets. The first-frame check now
+  obtains its retained provenance hashes directly from the verified local PC
+  3.4 `GRAPHICS.DAT`. The D1C F0115 order decoder remains because the
+  realdata ornament probe consumes its ReDMCSB F0115/C10 logic. References:
+  ReDMCSB `DUNVIEW.C F0115/F0124/F0125/F0126/F0128` and CSBWin
+  `Viewport.cpp`. Verification: focused first-frame material test 109/109,
+  realdata ornament probe 29/29, build, and `git diff --check`.

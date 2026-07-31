@@ -17550,10 +17550,6 @@ if(BUILD_TESTING)
         tests/test_csb_v1_viewport_first_frame_materialization_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
         src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
-        src/csb/csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat.c
-        src/csb/csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
-        src/csb/csb_v1_viewport_d1c_f0111_door_pc34_compat.c
-        src/csb/csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -17593,39 +17589,6 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat
     )
 
-    add_executable(test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat
-        tests/test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c
-        src/csb/csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat.c
-    )
-    target_include_directories(test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat
-            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(
-        NAME csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat
-        COMMAND test_csb_v1_viewport_d1c_f0115_thing_pass_pc34_compat
-    )
-
-    add_executable(test_csb_v1_viewport_d1c_f0111_door_pc34_compat
-        tests/test_csb_v1_viewport_d1c_f0111_door_pc34_compat.c
-        src/csb/csb_v1_viewport_d1c_f0111_door_pc34_compat.c
-    )
-    target_include_directories(test_csb_v1_viewport_d1c_f0111_door_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_viewport_d1c_f0111_door_pc34_compat
-            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(
-        NAME csb_v1_viewport_d1c_f0111_door_pc34_compat
-        COMMAND test_csb_v1_viewport_d1c_f0111_door_pc34_compat
-    )
-
     add_executable(test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat
         tests/test_csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat.c
         src/csb/csb_v1_viewport_d1l_d1r_f0111_door_pc34_compat.c
@@ -17658,41 +17621,6 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat
         COMMAND test_csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat
-    )
-
-    add_executable(test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
-        tests/test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
-        src/csb/csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
-        src/csb/csb_v1_csbgraphics_dat_classify.c
-        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
-    )
-    target_include_directories(test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
-            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(
-        NAME csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
-        COMMAND test_csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat
-    )
-
-    add_executable(test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat
-        tests/test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat.c
-        src/csb/csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat.c
-    )
-    target_include_directories(test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/csb
-    )
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat
-            PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
-    endif()
-    add_test(
-        NAME csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat
-        COMMAND test_csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat
     )
 
     add_executable(test_csb_v1_viewport_d2l2_f0115_projectile_pc34_compat
@@ -46963,10 +46891,6 @@ target_include_directories(test_csb_v1_viewport_d3c_f0107_f0108_first_backdrop_p
 target_link_libraries(test_csb_v1_viewport_d3c_f0107_f0108_first_backdrop_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_viewport_d3c_f0107_f0108_first_backdrop_pc34_compat COMMAND test_csb_v1_viewport_d3c_f0107_f0108_first_backdrop_pc34_compat)
 
-add_executable(test_csb_v1_viewport_d0l2_d0r2_f0111_f0115_route_receipt_pc34_compat tests/test_csb_v1_viewport_d0l2_d0r2_f0111_f0115_route_receipt_pc34_compat.c)
-target_include_directories(test_csb_v1_viewport_d0l2_d0r2_f0111_f0115_route_receipt_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_link_libraries(test_csb_v1_viewport_d0l2_d0r2_f0111_f0115_route_receipt_pc34_compat PRIVATE firestaff_m10)
-add_test(NAME csb_v1_viewport_d0l2_d0r2_f0111_f0115_route_receipt_pc34_compat COMMAND test_csb_v1_viewport_d0l2_d0r2_f0111_f0115_route_receipt_pc34_compat)
 
 add_executable(test_csb_v2_hud_runtime tests/test_csb_v2_hud_runtime.c)
 target_include_directories(test_csb_v2_hud_runtime PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

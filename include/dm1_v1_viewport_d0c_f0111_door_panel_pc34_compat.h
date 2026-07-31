@@ -31,10 +31,8 @@
  *   - test_dm1_v1_ceiling_pit_f0108_f0111_dispatch_source_lock_pc34_compat.c
  *     (which locks the F0108 floor-ornament and F0111 dispatch in the
  *     F0119/F0120/F0124 D2L/D2R/D1C stairs-and-pit routes);
- *   - test_csb_v1_viewport_d1c_f0111_door_pc34_compat.c and the other
- *     csb_v1_viewport_*_f0111_door_pc34_compat tests (which cover the
- *     CSB-lineage center-door dispatch for D1C/D2C/D0L/D0R/D1L/D1R/
- *     D1L2/D1R2/D2L2/D2R2/D3L2/D3R2).
+ *   - the active CSB source-command compositor (which owns CSB-lineage
+ *     center-door routing directly; detached receipt-only probes are retired).
  */
 #ifndef FIRESTAFF_DM1_V1_VIEWPORT_D0C_F0111_DOOR_PANEL_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_VIEWPORT_D0C_F0111_DOOR_PANEL_PC34_COMPAT_H
