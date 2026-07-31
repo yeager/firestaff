@@ -31,7 +31,7 @@ int main(void)
           !dm2_v1_trigger_copy_last_event(&event),
           "fixture trigger cannot create an event receipt");
     check(strstr(dm2_v1_trigger_source_evidence(),
-                 "legacy fixture triggers and targets are no-op") != NULL,
-          "source evidence declares closed trigger admission");
+                 "no fixture trigger, message, coordinate or target is retained") != NULL,
+          "source evidence declares that fixture data is removed");
     return failures ? 1 : 0;
 }

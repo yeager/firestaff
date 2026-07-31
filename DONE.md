@@ -45724,6 +45724,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   propagates to all five game launch slots. Verification:
   `test_m12_launcher_options_runtime_handoff` passes.
 
+- ✅ 2026-07-31 DM2 sensor fixture removal: removed the dormant five-entry
+  pressure-plate and eight-entry trigger catalogs, including their invented
+  coordinates, item IDs, timer periods, messages, door targets and creature
+  spawns. Both public adapters now return no records and reject all mutation
+  attempts until the original SKProject dungeon record-chain and actuator
+  owners are decoded. Verification: `test_dm2_v1_pressure_plate_pc34_compat`
+  and `test_dm2_v1_trigger_pc34_compat` pass; both focused admission probes
+  pass; `test_dm2_v1_door_button_toggle_pc34_compat` passes 12/12.
+
 - ✅ 2026-07-31 CSB F0115 orphan group/projectile blit closure: removed two
   unused public pixel writers and their isolated test targets. They accepted
   caller-owned sprite buffers with no M11 runtime consumer or material

@@ -41,8 +41,8 @@ int main(void)
           !dm2_v1_plate_copy_last_event(&event),
           "fixture message and door targets remain unavailable");
     check(strstr(dm2_v1_pressure_plate_source_evidence(),
-                 "legacy fixture plates, messages and targets are no-op") != NULL,
-          "source evidence declares the closed admission boundary");
+                 "no fixture plate, message, coordinate or target is retained") != NULL,
+          "source evidence declares that fixture data is removed");
 
     return failures ? 1 : 0;
 }
