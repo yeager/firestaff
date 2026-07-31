@@ -54,6 +54,8 @@
   Production rejects caller-authored type, map, position, direction and
   health multiplier until `ALLOC_NEW_CREATURE` has its DB4/current-map/
   record-chain/RNG owner.
+  The standalone animation-word writer is likewise test-only until the
+  CCM/GDAT frame receipt owns both values.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

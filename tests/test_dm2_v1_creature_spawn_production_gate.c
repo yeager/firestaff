@@ -11,6 +11,10 @@ int main(void)
         fputs("FAIL production accepted caller-authored creature state\n", stderr);
         return 1;
     }
+    if (dm2_v1_creature_set_gdat_animation_state(0, 0x1234u, 0x5678u) != -1) {
+        fputs("FAIL production accepted caller-authored animation state\n", stderr);
+        return 1;
+    }
     puts("PASS DM2 production creature-spawn gate");
     return 0;
 }

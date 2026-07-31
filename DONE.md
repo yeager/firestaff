@@ -46066,3 +46066,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `FIRESTAFF_DM2_CREATURE_TESTING`. Original creation remains pending the
   DB4/current-map/record-chain/RNG binding required by SKProject
   `skcrture.cpp:6380-6430`, `ALLOC_NEW_CREATURE`.
+- ✅ 2026-07-31 DM2 creature-animation fixture isolation: arbitrary sequence
+  and frame-info words no longer mutate a production creature. Only test
+  targets may use the helper; a live route remains pending the complete
+  CCM/GDAT animation receipt from SKProject `skcrture.cpp:1595-1658`.

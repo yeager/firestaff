@@ -401,8 +401,9 @@ int dm2_v1_creature_instance_ai(int instance_id);
  * dispatch (Phase 5 wire-up) to read AI attack flags + position. */
 const DM2_V1_CreatureInstance *dm2_v1_creature_get_instance(int instance_id);
 
-/* Commits the source-selected V5 animation state after a complete FB/FC/FD
- * receipt has resolved. Invalid indices are rejected. */
+/* Test-only animation fixture write. Production always returns -1: source
+ * CCM/GDAT animation processing owns sequence and frame info together
+ * (SKProject skcrture.cpp:1595-1658). */
 int dm2_v1_creature_set_gdat_animation_state(int instance_id,
                                               uint16_t sequence,
                                               uint16_t info);

@@ -718,6 +718,15 @@ int dm2_v1_creature_set_gdat_animation_state(int instance_id,
                                               uint16_t sequence,
                                               uint16_t info)
 {
+#ifndef FIRESTAFF_DM2_CREATURE_TESTING
+    (void)instance_id;
+    (void)sequence;
+    (void)info;
+    /* SKProject skcrture.cpp:1595-1658 derives both words while processing
+     * the current creature's CCM/GDAT animation frame. A standalone caller
+     * has neither owner nor receipt and therefore cannot alter live state. */
+    return -1;
+#else
     DM2_V1_CreatureInstance *instance;
 
     if (instance_id < 0 || instance_id >= DM2_MAX_CREATURE_INSTANCES) {
@@ -729,6 +738,7 @@ int dm2_v1_creature_set_gdat_animation_state(int instance_id,
     instance->gdat_animation_info = info;
     ++instance->render_revision;
     return 0;
+#endif
 }
 
 int dm2_v1_creature_export_live_state(DM2_V1_CreatureLiveState *out_state) {
