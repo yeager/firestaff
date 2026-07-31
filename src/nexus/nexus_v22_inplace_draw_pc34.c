@@ -3,9 +3,8 @@
  *
  * Nexus V2.2 GPU render path: V22 modern-art IN-PLACE bitmap cache.
  *
- * This is the foundation for switching the V22 render mode from
- * "overlay" (placeholder colored rectangle on top of V1) to
- * "in-place" (replace V1 sprite with V22 PBR PNG at the same cell).
+ * This module is an isolated, source-blocked in-place route. It does not
+ * substitute a colored overlay or otherwise claim Saturn pixel parity.
  *
  * Build-time pipeline:
  *   1. .openclaw/tools/png_to_rgba.py reads modern_asset_manifest.json
@@ -77,36 +76,13 @@ static int              g_v22_cache_mapped = 0;    /* 1 if mmap, 0 if malloc */
 static FsV22CachedBitmap g_v22_bitmaps[FSV22C_MAX_ENT];
 static int              g_v22_bitmap_count = 0;
 
-/* ── Variant -> asset_id mapping ───────────────────────────────── */
-
-/* For first cut, all walls use wall_saturn_tech_01 (the most common
- * carved stone). All creatures use creature_saturn_brigand_01. Floors use
- * the tile pattern. */
-static const char* v22_wall_asset_id  = "wall_saturn_tech_01";
-static const char* v22_floor_plain_id = "floor_saturn_metal_01";
-static const char* v22_floor_cracked_id = "floor_saturn_metal_01";
-static const char* v22_creature_asset_id = "creature_saturn_brigand_01";
-
+/* No V2.2 cell-to-asset mapping is admitted. Raw cell-type ranges do not
+ * identify a Saturn material or creature, so this route stays blocked until
+ * a real manifest binding is proven. */
 static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
-    if (!nexus_v22_shape_cache_active(depth, lateral)) return NULL;
-    const Nexus_V22_ShapeRuntimeResult* r = nexus_v22_shape_cache_get(depth, lateral);
-    if (!r || !r->active) return NULL;
-
-    /* Nexus minimal cache: raw_cell_type (0..255). Use a coarse
-     * range-based mapping (no full shape enum yet):
-     *   0..15   -> wall (corridor/wall cells)
-     *   16..31  -> floor (corridor cells)
-     *   32..63  -> floor cracked/mossy (damaged floor cells)
-     *   64..127 -> creature (any monster)
-     *   128..191 -> floor pit (open pit cells)
-     *   else    -> wall (default) */
-    uint8_t t = r->raw_cell_type;
-    if (t < 16) return v22_wall_asset_id;
-    if (t < 32) return v22_floor_plain_id;
-    if (t < 64) return v22_floor_cracked_id;
-    if (t < 128) return v22_creature_asset_id;
-    if (t < 192) return v22_floor_cracked_id;  /* pit tiles use cracked palette */
-    return v22_wall_asset_id;
+    (void)depth;
+    (void)lateral;
+    return NULL;
 }
 
 /* ── Hash helpers ──────────────────────────────────────────────── */
@@ -195,7 +171,7 @@ int nexus_v22_inplace_draw_init(void) {
         const char* home = getenv("HOME");
         if (!home) home = ".";
         snprintf(manifest_path, sizeof(manifest_path),
-                 "%s/.firestaff/assets/dm1/modern/modern_asset_manifest.json", home);
+                 "%s/.firestaff/assets/nexus/modern/modern_asset_manifest.json", home);
         char* last_slash = strrchr(manifest_path, '/');
         if (last_slash) *last_slash = '\0';
         snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", manifest_path);

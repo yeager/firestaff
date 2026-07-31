@@ -76,8 +76,8 @@ int  nexus_v22_get_epx_cache_warm(void);
  * Fallback chain: MODERN → UPSCALED (V2.1) → FILTERED (V2.0) → ORIGINAL (V1). */
 NEXUS_V22_ShapeSource nexus_v22_best_available_shape_source(int presentation_mode_index);
 
-/* nexus_v22_get_missing_placeholder — 16x16 RGBA magenta checkerboard. */
-const uint32_t* nexus_v22_get_missing_placeholder(int* out_w, int* out_h);
+/* Missing modern assets have no substitute surface; callers must handle the
+ * source-blocked route explicitly. */
 
 /* nexus_v22_get_shape_path — resolves (category, asset_id) from manifest
  * to a full filesystem path. Returns 1 on success, 0 if not found. */

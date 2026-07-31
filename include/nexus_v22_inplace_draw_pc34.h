@@ -3,9 +3,8 @@
  *
  * Nexus V2.2 GPU render path: V22 modern-art IN-PLACE bitmap lookup.
  *
- * This is the foundation for switching the V22 render mode from
- * "overlay" (placeholder colored rectangle on top of V1) to
- * "in-place" (replace V1 sprite with V22 PBR PNG at the same cell).
+ * This is an explicitly source-blocked in-place route. No V22 material
+ * mapping is admitted without a verified Saturn/manifest binding.
  *
  * Architecture:
  *   nexus_v22_shape_cache_update -> per-cell V22 shape (params, variant)
@@ -71,12 +70,8 @@ const uint32_t* nexus_v22_inplace_get_cell_bitmap(int depth, int lateral,
  * the cell has no mapping. The returned string is owned by the
  * static mapping table and remains valid for the program lifetime.
  *
- * This is the seam between the shape variant enum and the asset
- * pack. The mapping is intentionally conservative in this first
- * cut: walls all map to wall_saturn_tech_01 (the most common carved
- * stone), floors map by tile pattern, creatures map by silhouette
- * tag. Per-cell refinement (e.g., mossy walls for slime zones) is
- * a follow-up. */
+ * This is the seam between the shape variant enum and the asset pack.
+ * It currently returns NULL because no source-authenticated mapping exists. */
 const char* nexus_v22_inplace_get_cell_asset_id(int depth, int lateral);
 
 /* nexus_v22_inplace_render_pass — paints the cached V22 bitmaps into
