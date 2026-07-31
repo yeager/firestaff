@@ -24556,6 +24556,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   key flags; the compatibility fixture still belongs only to isolated tests.
 # Theron V2 HUD widget pixels remain blocked in production: the manifest parser is fixture-only and the runtime now fails closed until all seven slots resolve to decoded Track 02 source assets.
 
+- 🔧 CSB V2.2 artpack follow-up: the hand-authored per-cell asset-id catalog is
+  contract-test-only; production retains just the F0128 source-provenance
+  admissions. A reviewed PC 3.4 GRAPHICS.DAT pixel binding is still required
+  before any modern art is admitted.
+
 - 🔧 CSB V2.2 artpack follow-up: both mode selection and F0128 cache blits now
   reject a launcher flag or readable RGBA cache until the complete
   PC 3.4 source-material/provenance gate passes. The remaining work is a

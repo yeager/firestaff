@@ -64,6 +64,9 @@
 #define CAT_CHAOS "chaos_runes"
 #define CAT_DSA   "dsa_scrolls"
 
+/* This hand-authored asset-id catalog is test/probe-only. Production keeps
+ * the source-provenance F0128 admissions below. */
+#ifdef CSB_V22_ROUTE_CONTRACT_ONLY
 /* (asset_id, category) pair table used by pair_recognized. Keep
  * the literal pool tiny so pair_count is well-bounded. */
 typedef struct {
@@ -113,6 +116,7 @@ static const RoutePair kRoutePairs[] = {
 
 #define ROUTE_PAIR_COUNT \
     (int)(sizeof(kRoutePairs) / sizeof(kRoutePairs[0]))
+#endif
 
 /* ── Helpers ────────────────────────────────────────────────────── */
 
@@ -126,12 +130,15 @@ static int copy_str(char* dst, size_t dst_size, const char* src) {
     return 1;
 }
 
+#ifdef CSB_V22_ROUTE_CONTRACT_ONLY
 static int clamp_int(int v, int lo, int hi) {
     if (v < lo) return lo;
     if (v > hi) return hi;
     return v;
 }
+#endif
 
+#ifdef CSB_V22_ROUTE_CONTRACT_ONLY
 static int shape_type_for_cell_type(int cell_type) {
     /* Mirror the decode in csb_v22_shapes.c (csb_v22_shape_type_for_cell)
      * so callers can pass the raw M034 cell type without first
@@ -163,13 +170,17 @@ static int shape_type_for_cell_type(int cell_type) {
     }
 }
 
+#endif
+
 /* ── Public API ─────────────────────────────────────────────────── */
 
+#ifdef CSB_V22_ROUTE_CONTRACT_ONLY
 void csb_v22_inplace_route_reset(void) {
     /* The gate is stateless; this hook exists so a future readiness
      * probe can call it before/after a reload and assert no
      * observable state change. No-op for now. */
 }
+#endif
 
 typedef struct {
     int depth;
@@ -389,6 +400,7 @@ int csb_v22_admit_f0128_door_projection_pc34(
     return 1;
 }
 
+#ifdef CSB_V22_ROUTE_CONTRACT_ONLY
 int csb_v22_inplace_route_for_shape(int shape_type,
                                       int v22_local,
                                       char* out_asset_id,
@@ -914,3 +926,4 @@ const char* csb_v22_inplace_route_source_evidence(void) {
         "  wall_shapes, floor_shapes, creature_shapes, door_shapes,\n"
         "  chaos_runes, dsa_scrolls (all optional for graceful degradation)";
 }
+#endif /* CSB_V22_ROUTE_CONTRACT_ONLY */

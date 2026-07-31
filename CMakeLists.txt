@@ -23683,6 +23683,7 @@ if(BUILD_TESTING)
         src/csb/csb_v22_shapes.c
     )
     target_link_libraries(test_csb_v22_inplace_route_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
+    target_compile_definitions(test_csb_v22_inplace_route_pc34 PRIVATE CSB_V22_ROUTE_CONTRACT_ONLY=1)
     add_executable(test_csb_v22_f0128_front_wall_projection_pc34
         tests/test_csb_v22_f0128_front_wall_projection_pc34.c
     )
