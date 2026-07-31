@@ -608,6 +608,10 @@ diagnostic; it must not silently fall back to a generated visual.
   CTest target. The retained C10 and `C1500 + CoordinateSet * 11 + ViewFloor`
   helpers are exercised only against decoded, hash-verified PC3.4
   `GRAPHICS.DAT` bytes by the real-asset ornament probe.
+  **2026-07-31 F0108 footprints follow-up:** removed the orphaned,
+  contract-only footprints plan and its data-free CTest. It had no M11 or
+  real-data consumer and could not decode or bind an original ornament
+  raster; active source-bound F0108 paths remain the only CSB pixel owners.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

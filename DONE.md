@@ -45770,3 +45770,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `firestaff_csb_v1_pc_real_asset_launch_probe`; focused CTest 3/3 passes;
   real ornament probe 29/29 and real startup/title/entrance/HUD probe 75/75
   pass with `/Users/bosse/.firestaff/data/csb`.
+
+- ✅ 2026-07-31 CSB F0108 footprints-contract removal: removed the orphaned
+  public plan, its synthetic-contract CTest and stale audit references. The
+  module had no M11 or real-data consumer and never decoded an original
+  ornament bitmap, palette or mask. Source facts remain covered by the
+  source-bound F0108 paths; ReDMCSB reference is `DUNVIEW.C`
+  F0108:3940-4011. Verification: configured build of `firestaff` and both
+  PC3.4 real-asset probes, focused CTest 3/3, ornament 29/29 and
+  startup/title/entrance/HUD 75/75 with `/Users/bosse/.firestaff/data/csb`.
