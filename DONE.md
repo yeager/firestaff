@@ -46594,3 +46594,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   sammanfattningens dungeon-seed till den verifierade initiala Track 02-
   levelheadern (`0x0108e938`) i stället för att lämna no-header-värdet `0`.
   Real-asset-proben verifierar seed, roster och startup-handoff.
+- ✅ 2026-07-31 CSB graphics filename-fallback removal: runtime graphics
+  discovery now requires a known CSB graphics MD5 for every version hint,
+  including unknown/custom hints. A random `GRAPHICS.DAT`, `CSB.DAT` or
+  `CSBGRAPH.DAT` can no longer become a live graphics binding merely because
+  of its filename. The regression covers both selected and unknown hints;
+  renamed authentic media remains discoverable through recursive hash search.

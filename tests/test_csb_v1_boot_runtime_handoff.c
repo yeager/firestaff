@@ -5275,9 +5275,8 @@ static void test_runtime_variant_hint_identity(void)
         CHECK(csb_v1_runtime_find_graphics(tmp_dir, "pc34_en", &result) == NULL,
               "CSB selected PC3.4 variant rejects filename-only graphics substitute");
         memset(&result, 0, sizeof(result));
-        CHECK(csb_v1_runtime_find_graphics(tmp_dir, "custom_dungeon", &result) != NULL &&
-                  result.kind == CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS,
-              "CSB unknown variant retains legacy filename fallback");
+        CHECK(csb_v1_runtime_find_graphics(tmp_dir, "custom_dungeon", &result) == NULL,
+              "CSB unknown variant rejects filename-only graphics substitute");
     }
     remove(graphics_path);
 }

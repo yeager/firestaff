@@ -2733,8 +2733,8 @@ const char *csb_v1_runtime_find_dungeon(const char *data_dir,
 
 /* Find CSB graphics archive.
  * A recognised version_hint restricts hash discovery to that original
- * variant and refuses a filename-only substitute. Unknown hints search
- * csb.dat / CSBGRAPH.DAT / GRAPHICS.DAT in the legacy hash-first order.
+ * variant. Unknown hints search all known CSB graphics hashes. Every result
+ * is hash-verified; a filename alone is never source-media proof.
  * Returns absolute path, or NULL if none found. */
 const char *csb_v1_runtime_find_graphics(const char *data_dir,
                                            const char *version_hint,

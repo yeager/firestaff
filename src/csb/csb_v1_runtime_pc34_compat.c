@@ -1378,10 +1378,11 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
         }
     }
 
-    /* Prefer MD5-hash search so files in arbitrary subdirs and renamed
-     * user layouts are discovered before any legacy filename fallback. A
-     * recognised launcher variant is a media identity, not a presentation
-     * preference: it must not silently consume another platform's archive. */
+    /* Hash search accepts renamed files in arbitrary user layouts. A launcher
+     * variant is a media identity, not a presentation preference: neither a
+     * selected nor an unknown variant may silently consume a filename-only
+     * substitute. ReDMCSB DUNGEON.C F0237 opens original media, while the
+     * Firestaff launch contract attests that media by its known hash. */
     int matchIndex = -1;
     if (asset_find_by_md5_list(data_dir, accepted_hashes,
                                  found_path, sizeof(found_path),
@@ -1402,38 +1403,6 @@ const char *csb_v1_runtime_find_graphics(const char *data_dir,
         return found_path;
     }
 
-    /* Filename fallback cannot prove the selected original variant. Keep it
-     * only for legacy/unknown callers, where the existing broad search is the
-     * documented behaviour. */
-    if (requested_info) {
-        return NULL;
-    }
-
-    for (names = g_csb_gfx_search; *names != NULL; names++) {
-        char tmp[ASSET_PATH_MAX];
-        struct stat st;
-        CSB_V1_AssetGfxArchiveType kind;
-
-        snprintf(tmp, sizeof(tmp), "%s/%s", data_dir, *names);
-        if (stat(tmp, &st) != 0) continue;
-        if (!S_ISREG(st.st_mode)) continue;
-
-        strncpy(found_path, tmp, sizeof(found_path) - 1);
-        found_path[sizeof(found_path) - 1] = '\0';
-        out_result->path = found_path;
-
-        if (strcasecmp(*names, "CSB.DAT") == 0 ||
-            strcasecmp(*names, "csb.dat") == 0) {
-            kind = CSB_V1_ASSET_GFX_ARCHIVE_CSB;
-        } else if (strcasecmp(*names, "CSBGRAPH.DAT") == 0 ||
-                   strcasecmp(*names, "csbgraph.dat") == 0) {
-            kind = CSB_V1_ASSET_GFX_ARCHIVE_CSBGRAF;
-        } else {
-            kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
-        }
-        out_result->kind = kind;
-        return found_path;
-    }
     return NULL;
 }
 
