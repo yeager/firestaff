@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 music-source documentation correction: removed the stale
+  claim that skproject's converted loose `.hmp.mid` sidecars were original PC
+  runtime data. `docs/dm2_sound_format.md` now identifies the 29 authentic
+  `HMIMIDIP013195` streams in `GRAPHICS.DAT` GDAT and the original 63-byte
+  `SONGLIST.DAT` map selector. It records the deliberate fail-closed HMP
+  decoder boundary, preventing a future OGG/MIDI sidecar fallback from being
+  presented as source-faithful playback.
+
 - ✅ 2026-07-31 DM2 PC SONGLIST.DAT provenance gate: the verified boot profile
   now finds the real 63-byte music map by its canonical MD5, rather than by
   filename, and admits only source map selectors 0--43. Its map 0 -> track 02

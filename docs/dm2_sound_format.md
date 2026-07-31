@@ -8,24 +8,35 @@ VOC/WAV/MP2/OGG files — audio samples are packed inside the GDAT container.
 
 ## Music Format — HMP/MIDI
 
-### HMP (HMIDI Playlist)
-- Format: Custom tracker MIDI, .hmp.mid extension
-- Container: Standard MIDI file structure with MThd/MTrk chunks
-- Storage: SKWIN/data/00.hmp.mid — SKWIN/data/1c.hmp.mid (28 files)
-- Channels: Standard General MIDI 16-channel
-- Resolution: Variable ticks per quarter note (from file header)
+### HMP (HMI MIDI Playlist)
+
+- Format: HMI's `HMIMIDIP013195` MIDI-like stream, not a Standard MIDI file.
+- Storage: PC DM2 keeps 29 streams (`00`--`1c`) in verified
+  `GRAPHICS.DAT` GDAT `MUSICS/<track>/dtHMP/0` records.  The first stream is
+  raw GDAT entry 5595.
+- Routing: the first 44 bytes of the original, 63-byte `SONGLIST.DAT` select
+  one of those streams for each dungeon map.  The canonical PC file's
+  SHA-256 is
+  `401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72`.
+- Channels: MIDI-style channel events; the exact HMI timing and track layout
+  still needs direct decoder support.
+
+`SKWIN/data/*.hmp.mid` and `SKULLWIN/Data/*.hmp.mid` are pre-converted
+Standard MIDI developer/port assets. They are useful as behavioural reference,
+but are not original PC runtime inputs and Firestaff must not open them when
+playing DM2.
 
 ### HMP vs Standard MIDI
-HMP uses the same underlying MIDI events but with a custom timing encoding.
-The parser in SkWinMIDI.cpp handles:
-- Variable-length delta times (standard MIDI)
-- Running status mode
-- Tempo meta-events (0x51) for BPM setting
-- End-of-track meta-events (0x2F)
+HMP uses MIDI-like events but has its own header, track directory and timing
+encoding. `SkWinMIDI.cpp` consumes only the converted Standard MIDI sidecars;
+it is not a decoder for the original GDAT HMP streams. Firestaff currently
+binds the real bytes and intentionally rejects playback until a complete
+original-HMP decoder can prove a valid scheduler/backend handoff.
 
-### Files in SKWIN/data/
-00.hmp.mid through 1c.hmp.mid (28 tracks total)
-Hexadecimal numbering, 2 digits, .hmp.mid extension.
+### Converted SKWIN sidecars
+
+`00.hmp.mid` through `1c.hmp.mid` are 29 converted Standard MIDI files with
+two-digit hexadecimal names. They are not an installation requirement.
 
 ## Sound Effect Format — GDAT2 V5
 
@@ -95,24 +106,18 @@ The dist field = abs(dX) + abs(dY) for simple attenuation.
 3. SDL_OpenAudio(&as, &asavail) — get actual format
 4. sbs array zeroed, ready for SndPlayHi/SndPlayLo
 
-## Firestaff SDL Port — WAV/OGG Music
+## Port-side WAV/OGG alternatives
 
-### c_music_wav
-Alternative to HMP music for the Firestaff SDL builds:
-- File: ./DATA/sk%02d.ogg (e.g., sk00.ogg, sk01.ogg)
-- Format: OGG Vorbis (lossy compressed)
-- Playback: Allegro5 audio playback (al_play_sample equivalent)
-- Loop: ALLEGRO_PLAYMODE_LOOP
-
-### File Naming Convention
-skNN.ogg where NN = same hex track number as HMP files (00–1c).
+skproject's `c_music_wav` can select operator-provided `skNN.ogg` alternatives
+in its port. They are not original DM2 game data and are not a Firestaff
+fallback: a verified original stream that cannot yet be decoded remains silent.
 
 ## Original DM2 DOS Audio
 
 ### DOSBox Compatibility
-The DOS release (DOS_EN zip) includes hmidet.386 and hmidrv.386 —
-these are HIMEM.SYS-style extended MIDI drivers for DOS.
-The game uses the Allegro4 MIDI API which wraps these drivers.
+The DOS release includes HMI driver components. skproject's Allegro calls are
+port implementation details, not evidence that the PC game shipped the
+converted `.hmp.mid` files.
 
 ### No Standalone Audio Files
 The original DM2 DOS release does not contain standalone audio files
@@ -124,7 +129,7 @@ This differs from DM1 which had some standalone sample files.
 | Aspect | DM1 CSB | DM2 |
 |--------|---------|-----|
 | Music | AdLib FM OPL2 | HMP/MIDI (GM) |
-| Music container | Embedded in EXE | Standalone .hmp.mid files |
+| Music container | Embedded in EXE | GRAPHICS.DAT GDAT `MUSICS/dtHMP` |
 | SFX format | Packed DAT | GDAT2 V5 |
 | SFX sample rate | 11025 Hz | 5500 Hz (DOS), 6000 Hz (SKWin) |
 | SFX bit depth | 8-bit | 8-bit |
