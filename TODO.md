@@ -38,6 +38,11 @@
   Track 02 level is bound. The standalone room generator remains a legacy
   fixture API and must not be used for launch.
 
+- **THERON-LEGACY-ASSET-VERIFY:** The generic asset loader has no authoritative
+  SHA256 catalog. Its verification API now rejects supplied digests instead of
+  returning a false success; callers must use the hash-bound Track 02 boot
+  path.
+
 - **THERON-CREATURE-COMBAT-REAL-DATA:** `theron_v1_compat.c` still contains
   inferred creature stats, attack values and drops. It is now excluded from
   the production archive; production symbols fail closed until Track 02

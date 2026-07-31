@@ -47146,3 +47146,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   function-number metadata table only reports dependencies and explicitly
   blocks execution. It now compiles solely into its inventory test, leaving
   M10 to the dedicated authenticated SWSH and Utility implementations.
+
+- ✅ 2026-07-31 Theron legacy asset verification: the generic loader no longer
+  reports success for an expected digest it cannot compare against an
+  authoritative catalog. Hash-bound Track 02 boot remains the only admission
+  route; the legacy API now fails with `TR_ASSET_ERR_HASH`.

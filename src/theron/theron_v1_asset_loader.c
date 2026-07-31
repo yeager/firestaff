@@ -432,7 +432,6 @@ void tr_asset_mark_palette_route_verified(TrAssetBundle *bundle) {
 
 TrAssetResult tr_asset_verify(const TrAssetBundle *bundle,
                               const char *expected_sha256) {
-    (void)bundle; (void)expected_sha256;
     if (!bundle) return TR_ASSET_ERR_HASH;
 
     /* This legacy generic loader has no authoritative SHA256 catalog.
@@ -443,9 +442,10 @@ TrAssetResult tr_asset_verify(const TrAssetBundle *bundle,
         return TR_ASSET_OK;
     }
 
-    /* Legacy compatibility path: do not mistake this for launch proof. */
-    printf("[TQR] Legacy asset verification is non-authoritative\n");
-    return TR_ASSET_OK;
+    /* Never claim verification without a catalog and a comparison. A caller
+     * that supplies an expected digest must use the hash-bound Track 02 boot
+     * path; this legacy API cannot authenticate the bundle. */
+    return TR_ASSET_ERR_HASH;
 }
 
 void tr_asset_free(TrAssetBundle *bundle) {
