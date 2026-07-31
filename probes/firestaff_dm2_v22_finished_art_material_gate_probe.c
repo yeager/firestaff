@@ -6,9 +6,8 @@
  * under /tmp/scratch and verifies the CI-runnable distinction between:
  *
  *   SYNTHETIC_PLACEHOLDER - procedural placeholder manifest entries
- *   PARTIAL               - at least one real file, not all required slots
- *   FINISHED_REAL         - all tracked slots have non-placeholder
- *                           generator metadata and source_file on disk
+ *   PARTIAL               - local non-placeholder metadata without GDAT receipt
+ *   SYNTHETIC_PLACEHOLDER - every local manifest remains render-gated
  *
  * Source:
  *   - SKULL.ASM T520/T560/T600 (DM2 viewport ticks)
@@ -207,37 +206,36 @@ int main(void) {
     check("placeholder -> synthetic helper",
           dm2_v22_famg_is_synthetic_or_partial() == 1);
 
-    printf("\n[ Scenario 5: partial manifest ]\n");
+    printf("\n[ Scenario 5: local file remains unproven ]\n");
     create_source(modern, &k_slots[0]);
     check("wrote one-real manifest",
           write_manifest(manifest, 1, 0, 0, 0));
-    check("one real -> PARTIAL",
-          dm2_v22_famg_gate() == DM2_V22_FAMG_GATE_PARTIAL);
+    check("one local file -> SYNTHETIC_PLACEHOLDER",
+          dm2_v22_famg_gate() == DM2_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER);
     real = dm2_v22_famg_real_count(&total);
-    check("partial -> real_count=1", real == 1);
+    check("local file -> real_count=0", real == 0);
     check("partial -> total=11", total == (int)DM2_V22_FAMG_MATERIAL_COUNT);
-    check("partial -> real slot no placeholder",
-          dm2_v22_famg_uses_placeholder(DM2_V22_FAMG_WALL_DUNGEON) == 0);
+    check("local file -> slot keeps placeholder",
+          dm2_v22_famg_uses_placeholder(DM2_V22_FAMG_WALL_DUNGEON) == 1);
     check("partial -> placeholder slot uses placeholder",
           dm2_v22_famg_uses_placeholder(DM2_V22_FAMG_WALL_OUTDOOR) == 1);
 
-    printf("\n[ Scenario 6: finished-real manifest ]\n");
+    printf("\n[ Scenario 6: complete local manifest remains unproven ]\n");
     for (size_t i = 0; i < DM2_V22_FAMG_MATERIAL_COUNT; ++i) {
         create_source(modern, &k_slots[i]);
     }
     check("wrote all-real manifest",
           write_manifest(manifest, (1 << DM2_V22_FAMG_MATERIAL_COUNT) - 1, 0, 0, 0));
-    check("all real -> FINISHED_REAL",
-          dm2_v22_famg_gate() == DM2_V22_FAMG_GATE_FINISHED_REAL);
+    check("all local files -> SYNTHETIC_PLACEHOLDER",
+          dm2_v22_famg_gate() == DM2_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER);
     real = dm2_v22_famg_real_count(&total);
-    check("finished-real -> real_count=11",
-          real == (int)DM2_V22_FAMG_MATERIAL_COUNT);
+    check("complete local manifest -> real_count=0", real == 0);
     check("finished-real -> total=11",
           total == (int)DM2_V22_FAMG_MATERIAL_COUNT);
     for (size_t i = 0; i < DM2_V22_FAMG_MATERIAL_COUNT; ++i) {
-        check("finished-real -> slot REAL",
+        check("complete local manifest -> slot PARTIAL",
               dm2_v22_famg_classify_slot(k_slots[i].slot) ==
-              DM2_V22_FAMG_CLASS_REAL);
+              DM2_V22_FAMG_CLASS_PARTIAL);
     }
 
     printf("\n[ Scenario 7: non-placeholder metadata missing file ]\n");

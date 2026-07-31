@@ -490,16 +490,20 @@ DM2_V22_FamgClass dm2_v22_famg_classify_slot(DM2_V22_FamgSlot slot) {
         return DM2_V22_FAMG_CLASS_PLACEHOLDER;
     }
 
-    /* Real asset: required fields + non-placeholder generator +
-     * source_file resolves on disk. */
+    /* A disk-resolvable modern-pack file is not original game-data
+     * provenance.  T560/T600 own their material through GRAPHICS.DAT GDAT;
+     * this legacy manifest carries neither a GDAT category/index/field nor a
+     * raw-byte receipt, so it cannot promote arbitrary local art to REAL.
+     * ReDMCSB DUNVIEW.C's source-owned command path remains the required
+     * future bridge. */
     char resolved_path[FSP_PATH_MAX];
     int exists = dm2_v22_famg_resolve_source_file(g_manifest_path,
                                                   k_slot_table[slot].category,
                                                   raw.source_file,
                                                   resolved_path,
                                                   sizeof(resolved_path));
-    return exists ? DM2_V22_FAMG_CLASS_REAL
-                  : DM2_V22_FAMG_CLASS_PARTIAL;
+    (void)exists;
+    return DM2_V22_FAMG_CLASS_PARTIAL;
 }
 
 int dm2_v22_famg_get_slot_info(DM2_V22_FamgSlot slot,
@@ -692,15 +696,14 @@ const char* dm2_v22_famg_source_evidence(void) {
         "tree_dm2_outdoor_01, door_dm2_wood_01\n"
         "Schema: { id, generator, source_file, width, height } per slot entry\n"
         "Generator 'placeholder' is the procedural fallback marker (synthetic)\n"
-        "Non-placeholder generator + source_file resolves on disk = REAL\n"
+        "A non-placeholder local file is PARTIAL, never REAL: this manifest\n"
+        "does not carry original GDAT provenance or a raw-byte receipt.\n"
         "Gate states: NOT_PROBED / NO_MANIFEST / SYNTHETIC_PLACEHOLDER / PARTIAL / FINISHED_REAL\n"
-        "FINISHED_REAL requires all eleven tracked slots to be REAL with non-placeholder generator\n"
+        "The retired local-file manifest cannot reach FINISHED_REAL.\n"
         "V1 invariant: V1 command routes, dungeon state, save/restore NEVER bypassed\n"
         "V2 rule: finished-art material only activates when V2 launch+profile enabled\n"
         "Honest boundary: this gate tracks manifest classification only.\n"
         "It does NOT claim finished PBR art has been reviewed or shipped.\n"
-        "FINISHED_REAL promotion requires operator-installed hero PNGs at\n"
-        "~/.firestaff/assets/dm2/modern/<category>/<source_file> with\n"
-        "generator != 'placeholder' and a non-zero width/height, plus a\n"
-        "sibling gap-list update to mark the real-asset promotion gate green.\n";
+        "FINISHED_REAL promotion requires a future original-GDAT provenance\n"
+        "bridge, then a sibling gap-list update to mark that bridge green.\n";
 }

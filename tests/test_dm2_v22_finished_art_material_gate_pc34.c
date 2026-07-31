@@ -254,7 +254,7 @@ static void test_placeholder_manifest(void) {
     }
 }
 
-static void test_all_real_manifest(void) {
+static void test_local_files_never_promote_manifest(void) {
     const char* dataDir = "/tmp/scratch/dm2-v22-famg-test/data/dm2";
     char manifest[FSP_PATH_MAX];
     char modern[FSP_PATH_MAX];
@@ -265,42 +265,41 @@ static void test_all_real_manifest(void) {
         create_real_file(modern, &k_slots[i]);
     }
     CHECK(write_manifest(manifest, "placeholder", allMask, 0, 0, 0),
-          "wrote all-real manifest");
+          "wrote local-file manifest");
     dm2_v22_famg_set_manifest_path(dataDir);
-    CHECK(dm2_v22_famg_gate() == DM2_V22_FAMG_GATE_FINISHED_REAL,
-          "all eleven slots REAL -> FINISHED_REAL");
-    CHECK(dm2_v22_famg_get_installed() == 1,
-          "finished real gate is installed");
-    CHECK(dm2_v22_famg_is_finished_real() == 1,
-          "finished real helper is true");
-    CHECK(dm2_v22_famg_is_synthetic_or_partial() == 0,
-          "finished real is not synthetic/partial");
+    CHECK(dm2_v22_famg_gate() == DM2_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER,
+          "local files without GDAT provenance stay placeholder-gated");
+    CHECK(dm2_v22_famg_get_installed() == 0,
+          "local files do not install finished material");
+    CHECK(dm2_v22_famg_is_finished_real() == 0,
+          "local files do not finish the material gate");
+    CHECK(dm2_v22_famg_is_synthetic_or_partial() == 1,
+          "local file manifest remains synthetic/partial");
 
     int total = 0;
     int real = dm2_v22_famg_real_count(&total);
-    CHECK(real == (int)DM2_V22_FAMG_MATERIAL_COUNT,
-          "real_count equals material count");
+    CHECK(real == 0, "local manifest real_count=0");
     CHECK(total == (int)DM2_V22_FAMG_MATERIAL_COUNT,
           "total equals material count");
     for (size_t i = 0; i < DM2_V22_FAMG_MATERIAL_COUNT; ++i) {
         DM2_V22_FamgSlotInfo info;
         CHECK(dm2_v22_famg_classify_slot(k_slots[i].slot) ==
-              DM2_V22_FAMG_CLASS_REAL,
-              "all-real manifest classifies every slot as REAL");
-        CHECK(dm2_v22_famg_uses_placeholder(k_slots[i].slot) == 0,
-              "real slot does not use placeholder");
+              DM2_V22_FAMG_CLASS_PARTIAL,
+              "local file without GDAT receipt is PARTIAL");
+        CHECK(dm2_v22_famg_uses_placeholder(k_slots[i].slot) == 1,
+              "local file keeps placeholder gate");
         CHECK(dm2_v22_famg_get_slot_info(k_slots[i].slot, &info) == 1,
               "get_slot_info succeeds for real slot");
         CHECK(strcmp(info.id, k_slots[i].id) == 0, "slot info id matches");
         CHECK(strcmp(info.category, k_slots[i].category) == 0,
               "slot info category matches");
         CHECK(info.file_exists == 1, "slot info file_exists=1");
-        CHECK(info.classification == DM2_V22_FAMG_CLASS_REAL,
-              "slot info classification REAL");
+        CHECK(info.classification == DM2_V22_FAMG_CLASS_PARTIAL,
+              "slot info is PARTIAL without GDAT receipt");
     }
 }
 
-static void test_partial_manifest(void) {
+static void test_local_file_plus_placeholder_stays_gated(void) {
     const char* dataDir = "/tmp/scratch/dm2-v22-famg-test/data/dm2";
     char manifest[FSP_PATH_MAX];
     char modern[FSP_PATH_MAX];
@@ -310,19 +309,19 @@ static void test_partial_manifest(void) {
     CHECK(write_manifest(manifest, "placeholder", 1, 0, 0, 0),
           "wrote one-real manifest");
     dm2_v22_famg_set_manifest_path(dataDir);
-    CHECK(dm2_v22_famg_gate() == DM2_V22_FAMG_GATE_PARTIAL,
-          "one real plus placeholders -> PARTIAL");
-    CHECK(dm2_v22_famg_get_installed() == 1, "partial gate is installed");
+    CHECK(dm2_v22_famg_gate() == DM2_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER,
+          "one local file plus placeholders stays gated");
+    CHECK(dm2_v22_famg_get_installed() == 0, "local file gate is not installed");
     CHECK(dm2_v22_famg_is_finished_real() == 0, "partial is not finished");
     CHECK(dm2_v22_famg_is_synthetic_or_partial() == 1,
           "partial is synthetic/partial");
     CHECK(dm2_v22_famg_classify_slot(DM2_V22_FAMG_WALL_DUNGEON) ==
-          DM2_V22_FAMG_CLASS_REAL, "first slot REAL");
+          DM2_V22_FAMG_CLASS_PARTIAL, "first local slot PARTIAL");
     CHECK(dm2_v22_famg_classify_slot(DM2_V22_FAMG_WALL_OUTDOOR) ==
           DM2_V22_FAMG_CLASS_PLACEHOLDER, "second slot PLACEHOLDER");
     int total = 0;
     int real = dm2_v22_famg_real_count(&total);
-    CHECK(real == 1, "partial real_count=1");
+    CHECK(real == 0, "local file real_count=0");
     CHECK(total == (int)DM2_V22_FAMG_MATERIAL_COUNT,
           "partial total includes all declared slots");
 }
@@ -440,8 +439,8 @@ int main(void) {
     test_path_resolution_and_missing_manifest();
     test_empty_manifest();
     test_placeholder_manifest();
-    test_all_real_manifest();
-    test_partial_manifest();
+    test_local_files_never_promote_manifest();
+    test_local_file_plus_placeholder_stays_gated();
     test_partial_only_does_not_promote_to_finished();
     test_missing_fields_and_garbage_manifest();
     test_names_inputs_and_evidence();

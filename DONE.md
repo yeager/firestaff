@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 V2.2 local-manifest provenance closure: the retired
+  modern-art manifest can no longer turn operator-provided files into `REAL`
+  or `FINISHED_REAL`. Non-placeholder local files stay `PARTIAL` and the
+  presentation remains placeholder-gated until a future bridge supplies
+  original `GRAPHICS.DAT` GDAT category/index/field and raw-byte provenance.
+  Focused V2.2 gate tests pass (321/321; 92/92).
+
 - ✅ 2026-07-31 DM2 V2 HUD manifest provenance closure: retired the
   local-file manifest's former `REAL` classification. A present PNG, even a
   non-placeholder 32×32 receipt, is now `PARTIAL` and leaves the HUD

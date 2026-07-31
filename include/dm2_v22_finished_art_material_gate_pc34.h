@@ -8,11 +8,11 @@
  * creatures, sky/ground bands, trees, and doors). When the
  * pack is shipped it is procedurally generated (placeholder colors) - the
  * honest baseline for this pass. When a reviewer has signed off on real
- * finished art, the manifest entries for those slots carry:
+ * finished art, it must be bound through verified original GDAT material;
+ * a local modern-art manifest alone is not a provenance record.
  *
- *   generator    != "placeholder"  (e.g. "pbr_hero" | "ai_upscale")
- *   source_file  resolves on disk under the modern asset root
- *   width,height match the on-disk PNG header
+ *   GDAT category/index/field and raw-byte provenance must be retained by
+ *   the runtime bridge before any derived presentation material can draw.
  *
  * This module is the CI-runnable distinction. It reads the manifest,
  * classifies each material slot into one of:
@@ -21,11 +21,8 @@
  *   NO_MANIFEST        - manifest missing / unreadable
  *   SYNTHETIC_PLACEHOLDER - manifest valid, all declared slots use
  *                          generator == "placeholder" (the CI default)
- *   PARTIAL            - at least one slot is REAL, at least one is
- *                          PLACEHOLDER / MISSING / UNKNOWN
- *   FINISHED_REAL      - every required material slot is REAL with
- *                          generator != "placeholder" and source_file
- *                          resolving on disk
+ *   PARTIAL            - non-placeholder metadata without source provenance
+ *   FINISHED_REAL      - reserved for a future GDAT-provenance bridge
  *
  * Source-lock:
  *   - SKULL.ASM T520/T560/T600 (DM2 viewport ticks)
@@ -38,10 +35,8 @@
  *
  * Honest boundary: this gate reports the manifest state. It does NOT
  * claim any finished PBR art has been reviewed or shipped. The
- * FINISHED_REAL state is reachable only when an operator has dropped a
- * non-placeholder manifest with source_file paths that resolve on disk;
- * until then the gate stays in SYNTHETIC_PLACEHOLDER, which matches the
- * honest current default.
+ * A disk-resolvable manifest file remains PARTIAL. Until a GDAT provenance
+ * bridge exists, the gate cannot reach FINISHED_REAL.
  */
 
 #ifndef FIRESTAFF_DM2_V22_FINISHED_ART_MATERIAL_GATE_PC34_H
@@ -97,9 +92,8 @@ typedef enum {
                                           "placeholder" (procedural) */
     DM2_V22_FAMG_CLASS_PARTIAL     = 3, /* real asset metadata but some
                                           required fields missing */
-    DM2_V22_FAMG_CLASS_REAL        = 4  /* real PBR/PNG asset, all
-                                          required fields present, source
-                                          file resolves on disk */
+    DM2_V22_FAMG_CLASS_REAL        = 4  /* reserved for a future
+                                          source-provenance bridge */
 } DM2_V22_FamgClass;
 
 /* -- Overall manifest gate ---------------------------------------
@@ -110,14 +104,11 @@ typedef enum {
  *   NO_MANIFEST           -> manifest missing / unreadable
  *   SYNTHETIC_PLACEHOLDER -> every declared slot is PLACEHOLDER
  *                            (matches current runtime default)
- *   PARTIAL               -> at least one REAL, at least one non-REAL
- *   FINISHED_REAL         -> every required slot is REAL
+ *   PARTIAL               -> reserved for a future mixed provenance bridge
+ *   FINISHED_REAL         -> reserved for a complete provenance bridge
  *
- * FINISHED_REAL is reachable only when an operator has dropped the
- * full hero manifest under ~/.firestaff/assets/dm2/modern/ with
- * source_file paths that resolve on disk. Until that happens the
- * gate stays in SYNTHETIC_PLACEHOLDER, which is the honest current
- * default and the value CI should expect. */
+ * The local manifest has no GDAT provenance and cannot reach either
+ * promotion state. */
 typedef enum {
     DM2_V22_FAMG_GATE_NOT_PROBED            = 0,
     DM2_V22_FAMG_GATE_NO_MANIFEST           = 1,
