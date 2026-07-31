@@ -88,15 +88,6 @@ int csb_v1_viewport_d2l2_f0115_projectile_explosion_side_zone_pc34_compat(
     unsigned char view_cell);
 int csb_v1_viewport_d2l2_f0115_projectile_teleporter_field_zone_pc34_compat(
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec);
-int csb_v1_viewport_d2l2_f0115_projectile_apply_synthetic_c10_blit_pc34_compat(
-    const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height);
-
 const char *csb_v1_viewport_d2l2_f0115_projectile_source_evidence_pc34_compat(void);
 
 #ifdef __cplusplus

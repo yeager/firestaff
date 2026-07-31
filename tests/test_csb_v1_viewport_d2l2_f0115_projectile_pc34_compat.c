@@ -193,8 +193,6 @@ static int test_door_order_absence_and_synthetic_blit(void)
     int ok = 1;
     const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *d2l2 =
         csb_v1_viewport_d2l2_f0115_projectile_route_spec_at_pc34_compat(0);
-    uint8_t source[6] = { 1, 10, 2, 10, 3, 4 };
-    uint8_t destination[6] = { 77, 77, 77, 77, 77, 77 };
 
     /* ReDMCSB: F0678/F0679 lines 6847-6896 have no C17 door-front case,
      * unlike F0676/F0677 lines 6271-6273/6338-6340 where F0115 brackets
@@ -211,30 +209,6 @@ static int test_door_order_absence_and_synthetic_blit(void)
     ok &= expect_int("d2.no_front_pass",
                      d2l2 ? d2l2->door_front_front_f0115_order : -99, 0,
                      "ReDMCSB DUNVIEW.C:6847-6896 no F0115 pass2");
-
-    /* ReDMCSB: F0115 lines 5881-5882 dispatch projectile bitmaps via F0791
-     * with C10 transparency when a visible row exists; the D2 route gate keeps
-     * the missing-row block separate from this synthetic C10 copy contract. */
-    ok &= expect_int("blit.copied",
-                     csb_v1_viewport_d2l2_f0115_projectile_apply_synthetic_c10_blit_pc34_compat(
-                         d2l2, source, 3, destination, 3, 3, 2),
-                     4,
-                     "ReDMCSB DUNVIEW.C:5881-5882 F0791 C10");
-    ok &= expect_int("blit.pixel0", destination[0], 1,
-                     "synthetic F0791 pixel copy");
-    ok &= expect_int("blit.transparent1", destination[1], 77,
-                     "ReDMCSB DEFS.H:2088 C10 transparent");
-    ok &= expect_int("blit.pixel2", destination[2], 2,
-                     "synthetic F0791 pixel copy");
-    ok &= expect_int("blit.transparent3", destination[3], 77,
-                     "ReDMCSB DEFS.H:2088 C10 transparent");
-    ok &= expect_int("blit.pixel4", destination[4], 3,
-                     "synthetic F0791 pixel copy");
-    ok &= expect_int("blit.reject_null",
-                     csb_v1_viewport_d2l2_f0115_projectile_apply_synthetic_c10_blit_pc34_compat(
-                         NULL, source, 3, destination, 3, 3, 2),
-                     -1,
-                     "route helper rejects unresolved spec");
 
     return ok;
 }

@@ -105,6 +105,11 @@
   only the source-owned F0128/F0113 route, zones and transparency rule.
   Verification: `test_csb_v1_viewport_d2c_center_field_pc34_compat`.
 
+- ✅ 2026-07-31 CSB D2L2 synthetic-blit cleanup: removed the test-only C10
+  projectile pixel helper. The retained contract checks real F0115 row and
+  zone selection, including the source-required no-draw cases. Verification:
+  `test_csb_v1_viewport_d2l2_f0115_projectile_pc34_compat`.
+
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a
   successful transaction route from host gold alone. It remains closed until

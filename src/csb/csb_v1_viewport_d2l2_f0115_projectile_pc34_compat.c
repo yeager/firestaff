@@ -254,37 +254,6 @@ int csb_v1_viewport_d2l2_f0115_projectile_teleporter_field_zone_pc34_compat(
     return spec->field_zone;
 }
 
-int csb_v1_viewport_d2l2_f0115_projectile_apply_synthetic_c10_blit_pc34_compat(
-    const CSB_V1_ViewportD2L2F0115ProjectileRouteSpec *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height)
-{
-    int copied = 0;
-    if (!spec || !source || !destination ||
-        source_stride < width || destination_stride < width ||
-        width <= 0 || height <= 0) {
-        return -1;
-    }
-
-    /* ReDMCSB: DUNVIEW.C F0115 lines 5881-5882 and 6192-6193 dispatch
-     * MEDIA709 bitmap routes through F0791 with C10_COLOR_FLESH transparency.
-     * D2L2/D2R2 compute no live zone because G2028/G2034 rows are -1; this
-     * helper isolates only the C10 synthetic blit contract for the gate test. */
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const uint8_t pixel = source[(y * source_stride) + x];
-            if (pixel == (uint8_t)spec->projectile_transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-    return copied;
-}
-
 const char *csb_v1_viewport_d2l2_f0115_projectile_source_evidence_pc34_compat(void)
 {
     return s_source_evidence;

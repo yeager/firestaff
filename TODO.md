@@ -429,6 +429,8 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D2C follow-up:** the contract-only synthetic C10 field blit
   has been removed from the product API. The remaining D2C record describes
   ReDMCSB routing and zones only; real F0113 pixels still require source data.
+  **2026-07-31 D2L2 follow-up:** the matching synthetic C10 projectile blit
+  is also removed. Its F0115 row, zone and no-draw contracts remain intact.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
