@@ -47008,3 +47008,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   3×3 cell-rectangle cache from the production Theron archive. Focused V2.2
   tests may still compile it explicitly, but live rendering cannot consume
   guessed viewport coordinates.
+- ✅ 2026-07-31 Theron V2.2 material boundary: removed the inferred modern
+  shape/material book from the production archive and replaced its init seam
+  with an explicit blocked route. Focused V2.2 fixture targets retain the
+  original shape implementation; live production cannot promote its guessed
+  tints or geometry.

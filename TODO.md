@@ -24,6 +24,11 @@
   production archive; keep the cache available only to its focused fixture
   targets until an original viewport coordinate/material handoff exists.
 
+- **THERON-V22-SHAPE-BOOK:** The inferred V2.2 material/shape book remains
+  fixture-only. Production now exposes only a no-op initialization seam;
+  bind real Track 02 tile/material records before enabling any modern shape
+  consumer.
+
 - **ALL-GAMES-NO-PLACEHOLDER-WHEN-SOURCE-EXISTS:** Active 2026-07-30.
   - 2026-07-31: CSB graphics discovery is now hash-only for both recognised
     and unknown launcher hints. Continue auditing remaining CSB import and
