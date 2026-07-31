@@ -46104,3 +46104,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `Viewport.cpp` door routing. Verification: focused first-frame material
   test against the local PC 3.4 `GRAPHICS.DAT`, CSB boot/viewport CTests,
   and `git diff --check`.
+- ✅ 2026-07-31 DM2 light-timer table binding: replaced the provisional
+  one-step light ramp with the exact 16-byte `table1d6702` from SKProject
+  `SKULLWIN/dm2data.cpp:60-64`. `DM2_PROCESS_TIMER_LIGHT` now applies the
+  original adjacent-table delta and positive doubling from
+  `c_tim_proc.cpp:918-959`, and rejects timer values outside that source
+  table rather than extrapolating a host curve. Verification:
+  `test_dm2_v1_spell_cast_player_pc34_compat` 143/143 and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass.

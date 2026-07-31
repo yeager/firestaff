@@ -25,6 +25,13 @@ static int dm2_v1_spell_timer_handler_index_valid(
            idx < DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS;
 }
 
+/* SKProject SKULLWIN/dm2data.cpp:60-64, table1d6702.  This is original
+ * executable data, not a host-selected light curve. */
+static const int8_t g_dm2_light_steps[16] = {
+    0x00, 0x05, 0x0c, 0x18, 0x21, 0x28, 0x2e, 0x33,
+    0x3b, 0x44, 0x4c, 0x52, 0x59, 0x5e, 0x61, 0x64
+};
+
 /* 0x46 DM2_PROCESS_TIMER_LIGHT (c_tim_proc.cpp:918-959).
  *
  * The original reads timer A as a signed word, looks up two entries in
@@ -32,10 +39,7 @@ static int dm2_v1_spell_timer_handler_index_valid(
  * light word ddat.savegames1.w_00.  If the decremented duration word (RG4W)
  * is non-zero it requeues type 0x46 with A=RG4W, actor=0, due tick +8.
  *
- * This bounded slice does not materialise table1d6702; it applies a unit
- * light adjustment per pop and requeues with value_a decremented by one,
- * which is the same recurrence shape that the source table implements for
- * a linear ramp. */
+ * The source table is reproduced exactly from SKProject dm2data.cpp. */
 static int dm2_v1_spell_timer_handle_light(
     void *context,
     const DM2_V1_SourceTimer *timer,
@@ -46,7 +50,8 @@ static int dm2_v1_spell_timer_handle_light(
         (DM2_V1_SpellTimerHandlerContext *)context;
     int16_t a;
     int16_t rg4;
-    int sign;
+    int abs_a;
+    int delta;
 
     (void)source_index;
     (void)receipt;
@@ -60,12 +65,24 @@ static int dm2_v1_spell_timer_handle_light(
         return 1;
     }
 
-    sign = (a < 0) ? -1 : 1;
-    /* Bounded approximation of table1d6702[|a|] - table1d6702[|a|-1]. */
-    ctx->light_level = (int16_t)(ctx->light_level + sign);
+    abs_a = a < 0 ? -(int)a : (int)a;
+    /* c_tim_proc.cpp:932-949 indexes table1d6702 with |A| and |A|-1.
+     * A value outside the 16-entry original table has no valid binding. */
+    if (abs_a >= (int)(sizeof(g_dm2_light_steps) /
+                       sizeof(g_dm2_light_steps[0]))) {
+        return 0;
+    }
+    delta = (int)g_dm2_light_steps[abs_a] -
+            (int)g_dm2_light_steps[abs_a - 1];
+    if (a > 0) {
+        delta *= 2;
+    } else {
+        delta = -delta;
+    }
+    ctx->light_level = (int16_t)(ctx->light_level + delta);
     ctx->receipt.light_adjustments++;
 
-    rg4 = (int16_t)((a < 0) ? a + 1 : a - 1);
+    rg4 = (int16_t)(a < 0 ? -(abs_a - 1) : abs_a - 1);
     ctx->light_remaining = rg4;
     if (rg4 != 0 && ctx->queue != NULL) {
         DM2_V1_SourceTimer next;

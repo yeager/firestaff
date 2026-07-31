@@ -538,6 +538,8 @@ static void test_spell_timer_light_requeue(void)
                 "light handler dispatch ran");
     expect_true(receipt.dispatched_count == 1, "light timer consumed");
     expect_true(ctx.receipt.light_dispatched == 1, "light receipt flagged");
+    expect_true(ctx.light_level == 24,
+                "light uses SKProject table1d6702 delta for A=3");
     expect_true(ctx.light_remaining == 2, "light duration decremented to 2");
     expect_true(queue.count == 1, "light requeued one step");
     requeue_ticket = queue.tickets[0];
