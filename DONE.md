@@ -14,6 +14,14 @@
   startup-bitmap-rutterna dokumenteras som reala bevis; senare dungeonblock,
   paletteägarskap och object-tabeller är fortsatt explicit opromoterade.
 
+- ✅ 2026-07-31 DM2 V2 synthetic HUD-fixture isolation: removed
+  `dm2_v2_hud_widget_bitmap_blit.c` from the production V2 source glob and
+  compile it only into its no-draw diagnostic probe. Thus production DM2 no
+  longer links the synthetic PNG fixture decoder; visible HUD pixels remain
+  restricted to the existing verified GDAT route. Verification:
+  `firestaff_dm2_v2_hud_widget_bitmap_blit_probe` 96/96 and
+  `test_dm2_v1_m11_startup_profile_gate` with verified local DM2 data.
+
 - ✅ 2026-07-31 Theron HUD-katalog: tog bort den döda UI-chrome-hjälparen
   som innehöll overifierade dungeonetiketter (`Catacombs`, `Caverns`,
   `Castle`, `Tower`, `Temple`, `Final Dungeon`). HUD-kompositorn fortsätter

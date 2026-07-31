@@ -3877,6 +3877,13 @@ endif()
 
 # ── DM2 V2 static library ──────────────────────────────────────────
 file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c" "src/dm2/dm2_v22_*.c")
+# The bounded PNG reader exists solely to inspect checked-in synthetic test
+# fixtures and all of its framebuffer hooks are no-draw.  Keep it out of the
+# production DM2 V2 archive: a broad glob must not make fixture parsing part
+# of a game-data runtime.  Its dedicated probe compiles the source explicitly
+# below.
+list(REMOVE_ITEM DM2_V2_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_bitmap_blit.c")
 if(DM2_V2_SOURCES)
     add_library(firestaff_dm2_v2 STATIC ${DM2_V2_SOURCES})
     target_include_directories(firestaff_dm2_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -3892,10 +3899,6 @@ if(DM2_V2_SOURCES)
     # Link PUBLIC so HUD probes inherit the contract.
     # Source: src/dm2/dm2_v1_viewport_renderer.c.
     target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_dm2)
-    # dm2_v2_hud_widget_bitmap_blit.c reads isolated synthetic fixtures for
-    # diagnostic probes only. Its public render hooks are strict no-draw.
-    # Linking PUBLIC lets the decoder probe inherit FIRESTAFF_HAS_ZLIB.
-    # Source: src/dm2/dm2_v2_hud_widget_bitmap_blit.c
     firestaff_link_zlib(firestaff_dm2_v2 PUBLIC)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v2 PRIVATE -Wall -Wextra -O2)
@@ -17301,6 +17304,7 @@ if(BUILD_TESTING)
     # DM2 framebuffer through either public compatibility hook.
     add_executable(firestaff_dm2_v2_hud_widget_bitmap_blit_probe
         probes/firestaff_dm2_v2_hud_widget_bitmap_blit_probe.c
+        src/dm2/dm2_v2_hud_widget_bitmap_blit.c
     )
     target_link_libraries(firestaff_dm2_v2_hud_widget_bitmap_blit_probe
         PRIVATE firestaff_dm2_v2 firestaff_m10 m)
