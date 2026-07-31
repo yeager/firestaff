@@ -47227,3 +47227,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   fixture world party when an SRM contains progression but no champion body.
   It no longer invents a one-member Theron party from unrelated initialized
   state.
+
+- ✅ 2026-07-31 CSB F1206–F1225 ownership isolation: the table only records
+  ANIM platform/local status and admits no route. It now compiles solely into
+  its contract test, keeping metadata from standing in for CSB palette, sound
+  or allocation behavior.
