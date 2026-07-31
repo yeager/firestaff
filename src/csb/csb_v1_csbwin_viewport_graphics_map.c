@@ -239,6 +239,67 @@ int csb_v1_csbwin_viewport_build_wall_plan(
     return out_plan->valid;
 }
 
+static uint32_t csb_v1_csbwin_viewport_material_hash_bytes(uint32_t hash,
+                                                            const void *bytes,
+                                                            size_t size)
+{
+    const uint8_t *cursor = (const uint8_t *)bytes;
+    size_t index;
+
+    for (index = 0u; index < size; ++index) {
+        hash ^= cursor[index];
+        hash *= UINT32_C(16777619);
+    }
+    return hash;
+}
+
+int csb_v1_csbwin_viewport_build_f0128_material_plan(
+    uint16_t floor_set, uint16_t wall_set,
+    const CSB_V1_CSBWinViewportLayout022e *layout,
+    CSB_V1_CSBWinViewportMaterialPlan *out_plan)
+{
+    CSB_V1_CSBWinViewportWallPlan wall_plan;
+    size_t index;
+    uint32_t hash = UINT32_C(2166136261);
+
+    if (!out_plan) return 0;
+    memset(out_plan, 0, sizeof(*out_plan));
+    if (!layout || !layout->valid ||
+        !csb_v1_csbwin_floor_ceiling_graphic_index(
+            floor_set, 0, &out_plan->floor_graphic_index) ||
+        !csb_v1_csbwin_floor_ceiling_graphic_index(
+            floor_set, 1, &out_plan->ceiling_graphic_index) ||
+        !csb_v1_csbwin_viewport_build_wall_plan(wall_set, layout, &wall_plan)) {
+        memset(out_plan, 0, sizeof(*out_plan));
+        return 0;
+    }
+    out_plan->palette_graphic_index = 0x232u; /* CSBWin ReadTablesFromGraphicsFile */
+    out_plan->wall_command_count = wall_plan.count;
+    for (index = 0u; index < wall_plan.count; ++index) {
+        out_plan->wall_commands[index].wall = wall_plan.draws[index].wall;
+        out_plan->wall_commands[index].graphic_index =
+            wall_plan.draws[index].graphic_index;
+        out_plan->wall_commands[index].mirrored = wall_plan.draws[index].mirrored;
+        out_plan->wall_commands[index].projection = wall_plan.draws[index].projection;
+    }
+    hash = csb_v1_csbwin_viewport_material_hash_bytes(
+        hash, &out_plan->floor_graphic_index, sizeof(out_plan->floor_graphic_index));
+    hash = csb_v1_csbwin_viewport_material_hash_bytes(
+        hash, &out_plan->ceiling_graphic_index, sizeof(out_plan->ceiling_graphic_index));
+    hash = csb_v1_csbwin_viewport_material_hash_bytes(
+        hash, &out_plan->palette_graphic_index, sizeof(out_plan->palette_graphic_index));
+    for (index = 0u; index < out_plan->wall_command_count; ++index) {
+        hash = csb_v1_csbwin_viewport_material_hash_bytes(
+            hash, &out_plan->wall_commands[index],
+            sizeof(out_plan->wall_commands[index]));
+    }
+    out_plan->plan_hash = hash;
+    out_plan->valid = out_plan->wall_command_count ==
+        CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT && hash != 0u;
+    if (!out_plan->valid) memset(out_plan, 0, sizeof(*out_plan));
+    return out_plan->valid;
+}
+
 int csb_v1_csbwin_viewport_door_panel_projections(
     const CSB_V1_CSBWinViewportLayout022e *layout,
     CSB_V1_CSBWinDoorPanelFamily family, uint8_t door_state,

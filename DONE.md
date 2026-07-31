@@ -1,3 +1,15 @@
+- ✅ 2026-07-31 CSB Atari F0128-materialplan: valet av Atari/CSBWin-sidans
+  golv, tak och 13 `pWallBitmaps` ligger nu i den källägda
+  `CSB_V1_CSBWinViewportMaterialPlan`, inte i M11:s värdkod. Planen binder
+  de ursprungliga `GRAPHICS.DAT`-indexen, TAG0088b2-projektionerna, spegling
+  och C232-palettelementet till en stabil källhash innan M11 får avkoda
+  pixlar. F0 förblir utan påhittat väggmaterial och dörrar behåller sina
+  egna CSBWin-kommandon. Källa: ReDMCSB `DUNVIEW.C F0128` (rad 2962–3020)
+  och CSBWin `Viewport.cpp::FloorAndCeilingOnly`/`DrawCellF*`.
+  Verifiering: `test_csb_v1_csbwin_layout_0232`,
+  `csb_v1_boot_runtime_handoff` och `csb_v2_entrance_pointer_boot_probe`
+  passerar.
+
 - ✅ 2026-07-31 CSB C407 boot-probe pointer mapping: dummy SDL kunde behålla
   1024×768 efter en begärd 320×200-yta och förvandla C407-klicket `(250,50)`
   till `(78,13)`. Proben håller nu sin begärda logiska yta och dummy-mappning

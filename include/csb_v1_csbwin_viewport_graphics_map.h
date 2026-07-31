@@ -105,6 +105,39 @@ typedef struct {
         CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT];
 } CSB_V1_CSBWinViewportWallPlan;
 
+/* One original Atari/CSBWin F0128 input.  Unlike the PC3.4 runtime command
+ * it retains the native GRAPHICS.DAT item number and TAG0088b2 destination
+ * record.  The host may decode the item, but it must not select a PC graphic
+ * or infer a replacement rectangle. */
+typedef struct {
+    CSB_V1_CSBWinViewportWall wall;
+    uint16_t graphic_index;
+    int mirrored;
+    CSB_V1_CSBWinViewportProjectionRectangle projection;
+} CSB_V1_CSBWinViewportMaterialCommand;
+
+enum {
+    CSB_V1_CSBWIN_VIEWPORT_F0128_MATERIAL_FLOOR = 0,
+    CSB_V1_CSBWIN_VIEWPORT_F0128_MATERIAL_CEILING,
+    CSB_V1_CSBWIN_VIEWPORT_F0128_MATERIAL_WALL_FIRST
+};
+
+/* The source-owned first-page material receipt.  Floor and ceiling are
+ * direct F0128 inputs; wall commands are the thirteen pWallBitmaps/TAG0088b2
+ * operations. F0 has no wall material command because CSBWin composes that
+ * local cell elsewhere. `plan_hash` is over only source selection and native
+ * projection facts, never host pixels or a presentation cache. */
+typedef struct {
+    int valid;
+    uint16_t floor_graphic_index;
+    uint16_t ceiling_graphic_index;
+    uint16_t palette_graphic_index;
+    uint32_t plan_hash;
+    CSB_V1_CSBWinViewportMaterialCommand wall_commands[
+        CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT];
+    size_t wall_command_count;
+} CSB_V1_CSBWinViewportMaterialPlan;
+
 /* Data.h's nine DoorRects families, in native memory and Viewport.cpp order. */
 typedef enum {
     CSB_V1_CSBWIN_DOOR_PANEL_F1R1 = 0,
@@ -184,6 +217,15 @@ int csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(
 int csb_v1_csbwin_viewport_build_wall_plan(
     uint16_t wall_set, const CSB_V1_CSBWinViewportLayout022e *layout,
     CSB_V1_CSBWinViewportWallPlan *out_plan);
+
+/* ReDMCSB DUNVIEW.C F0128 / CSBWin Viewport.cpp material selection for one
+ * unmodified Atari/CSBWin page. This intentionally binds only source-known
+ * floor, ceiling and stone-wall inputs. Doors and all other room kinds keep
+ * their own source-owned commands and cannot be invented by this plan. */
+int csb_v1_csbwin_viewport_build_f0128_material_plan(
+    uint16_t floor_set, uint16_t wall_set,
+    const CSB_V1_CSBWinViewportLayout022e *layout,
+    CSB_V1_CSBWinViewportMaterialPlan *out_plan);
 
 /* CSBCode.cpp:4199-4235's exact DrawDoor panel selection. A closed door
  * (state 0) produces no panel. State 4/5 uses rect 0; partial states use

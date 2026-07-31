@@ -468,8 +468,11 @@ diagnostic; it must not silently fall back to a generated visual.
   replacements only inside `csb_v1_viewport_rasterize_first_frame_material`
   at the source `CSB_V1_ViewportRuntimeDrawCommandPc34` boundary. Atari ST /
   CSBWin instead uses `m11_csb_present_atari_st_runtime_viewport`, which
-  consumes `CSB_V1_CSBWinViewportWallPlan` and `TAG0088b2`-decoded records
-  directly. The remaining bridge must translate that Atari plan into the same
+  consumes `CSB_V1_CSBWinViewportMaterialPlan` and TAG0088b2-decoded records
+  directly. **2026-07-31 material-plan follow-up:** this plan now binds the
+  selected floor, ceiling, C232 palette item and all thirteen source-backed
+  wall commands before M11 decodes any pixel; F0 remains deliberately absent.
+  The remaining bridge must translate that Atari plan into the same
   source-owned F0128 command contract with its own graphic index, projection
   and palette receipt; it must not reuse PC3.4 indices or add a post-draw
   rectangle/overlay.

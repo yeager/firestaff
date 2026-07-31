@@ -551,6 +551,7 @@ int main(void)
     {
         uint8_t viewport_layout[CSB_V1_CSBWIN_LAYOUT_022E_DECODED_SIZE];
         CSB_V1_CSBWinViewportLayout022e decoded_layout;
+        CSB_V1_CSBWinViewportMaterialPlan material_plan;
         memset(viewport_layout, 0, sizeof(viewport_layout));
         for (index = 0; index < CSB_V1_CSBWIN_VIEWPORT_WALL_COUNT; ++index) {
             uint8_t *rect = viewport_layout +
@@ -571,6 +572,23 @@ int main(void)
               decoded_layout.rectangles[13].x2 == 33u &&
               decoded_layout.rectangles[6].source_stride == 24u);
         check_viewport_wall_plan(&decoded_layout, 2u);
+        memset(&material_plan, 0, sizeof(material_plan));
+        CHECK(csb_v1_csbwin_viewport_build_f0128_material_plan(
+            2u, 2u, &decoded_layout, &material_plan));
+        CHECK(material_plan.valid && material_plan.floor_graphic_index == 79u &&
+              material_plan.ceiling_graphic_index == 80u &&
+              material_plan.palette_graphic_index == 0x232u &&
+              material_plan.wall_command_count ==
+                  CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT &&
+              material_plan.wall_commands[0].wall ==
+                  CSB_V1_CSBWIN_VIEWPORT_WALL_F3L2 &&
+              material_plan.wall_commands[0].graphic_index == 115u &&
+              material_plan.wall_commands[12].wall ==
+                  CSB_V1_CSBWIN_VIEWPORT_WALL_F0R1 &&
+              material_plan.wall_commands[12].graphic_index == 110u &&
+              material_plan.plan_hash != 0u);
+        CHECK(!csb_v1_csbwin_viewport_build_f0128_material_plan(
+            16u, 2u, &decoded_layout, &material_plan));
         check_viewport_door_plans(&decoded_layout);
         check_wall_projection_blit(&decoded_layout);
         viewport_layout[CSB_V1_CSBWIN_LAYOUT_022E_WALL_RECTANGLE_OFFSET + 4u] = 0u;

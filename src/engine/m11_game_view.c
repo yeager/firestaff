@@ -2679,7 +2679,7 @@ static int m11_csb_present_atari_st_runtime_viewport(
     const CSB_V1_BootProfile *profile;
     const CSB_V1_DungeonData *dungeon;
     CSB_V1_CSBWinViewportLayout022e layout;
-    CSB_V1_CSBWinViewportWallPlan wall_plan;
+    CSB_V1_CSBWinViewportMaterialPlan material_plan;
     const M11_AssetSlot *ceiling;
     const M11_AssetSlot *floor;
     unsigned char viewport[VIEWPORT_WIDTH * VIEWPORT_HEIGHT];
@@ -2709,23 +2709,24 @@ static int m11_csb_present_atari_st_runtime_viewport(
     floor_set = dungeon->map_floor_set[profile->runtime.current_level];
     wall_set = dungeon->map_wall_set[profile->runtime.current_level];
     if (floor_set < 0 || floor_set > 15 || wall_set < 0 || wall_set > 15 ||
-        !csb_v1_csbwin_floor_ceiling_graphic_index((uint16_t)floor_set, 1,
-                                                    &ceiling_graphic) ||
-        !csb_v1_csbwin_floor_ceiling_graphic_index((uint16_t)floor_set, 0,
-                                                    &floor_graphic) ||
-        !m11_csb_install_runtime_source_graphic(state, ceiling_graphic) ||
-        !m11_csb_install_runtime_source_graphic(state, floor_graphic)) {
+        !csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(
+            profile->graphics_path, &layout) ||
+        !csb_v1_csbwin_viewport_build_f0128_material_plan(
+            (uint16_t)floor_set, (uint16_t)wall_set, &layout,
+            &material_plan) || !material_plan.valid ||
+        !m11_csb_install_runtime_source_graphic(
+            state, material_plan.ceiling_graphic_index) ||
+        !m11_csb_install_runtime_source_graphic(
+            state, material_plan.floor_graphic_index)) {
         return 0;
     }
+    ceiling_graphic = material_plan.ceiling_graphic_index;
+    floor_graphic = material_plan.floor_graphic_index;
     ceiling = M11_AssetLoader_Load(&state->assetLoader, ceiling_graphic);
     floor = M11_AssetLoader_Load(&state->assetLoader, floor_graphic);
     if (!ceiling || !floor || !ceiling->pixels || !floor->pixels ||
         ceiling->width != VIEWPORT_WIDTH || ceiling->height != CEILING_HEIGHT ||
-        floor->width != VIEWPORT_WIDTH || floor->height != FLOOR_HEIGHT ||
-        !csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(
-            profile->graphics_path, &layout) ||
-        !csb_v1_csbwin_viewport_build_wall_plan((uint16_t)wall_set, &layout,
-                                                &wall_plan)) {
+        floor->width != VIEWPORT_WIDTH || floor->height != FLOOR_HEIGHT) {
         return 0;
     }
     /* ReDMCSB/CSBWin Viewport.cpp::FloorAndCeilingOnly and TAG0088b2 own
@@ -2737,8 +2738,10 @@ static int m11_csb_present_atari_st_runtime_viewport(
     memcpy(viewport, ceiling->pixels, (size_t)VIEWPORT_WIDTH * CEILING_HEIGHT);
     memcpy(viewport + (size_t)(CEILING_HEIGHT + BLACK_HEIGHT) * VIEWPORT_WIDTH,
            floor->pixels, (size_t)VIEWPORT_WIDTH * FLOOR_HEIGHT);
-    for (draw_index = 0u; draw_index < wall_plan.count; ++draw_index) {
-        const CSB_V1_CSBWinViewportWallDraw *draw = &wall_plan.draws[draw_index];
+    for (draw_index = 0u; draw_index < material_plan.wall_command_count;
+         ++draw_index) {
+        const CSB_V1_CSBWinViewportMaterialCommand *draw =
+            &material_plan.wall_commands[draw_index];
         const M11_AssetSlot *wall;
         uint8_t *packed = NULL;
         size_t packed_size = 0u;
