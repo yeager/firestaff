@@ -8579,15 +8579,29 @@ int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands)
 {
+    int count;
     if (!state) {
         return 0;
     }
-    return nexus_v1_startup_presentation_build_save_from_facts(
+    count = nexus_v1_startup_presentation_build_save_from_facts(
         state->save_dir,
         state->slot_mask,
         state->save_selected_row,
         out_commands,
         max_commands);
+    /* TEXT4 is identified in RLOWFIX.BIN, but its FONT256/Saturn placement
+     * is not yet authenticated.  Do not let the legacy English labels reach
+     * the production launcher; state/navigation remain available. */
+    if (out_commands && count > 0) {
+        int read_index, write_index;
+        for (read_index = 0, write_index = 0; read_index < count;
+             ++read_index) {
+            if (out_commands[read_index].kind != NEXUS_V1_STARTUP_DRAW_TEXT)
+                out_commands[write_index++] = out_commands[read_index];
+        }
+        count = write_index;
+    }
+    return count;
 }
 
 int nexus_v1_launcher_startup_presentation_build_save_from_snapshot(
@@ -8724,16 +8738,27 @@ int nexus_v1_launcher_startup_presentation_build_champion_from_runtime_state(
     Nexus_V1_StartupDrawCommand *out_commands,
     int max_commands)
 {
+    int count;
     if (!state) {
         return 0;
     }
-    return nexus_v1_startup_presentation_build_champion_from_facts(
+    count = nexus_v1_startup_presentation_build_champion_from_facts(
         state->engine ? &state->engine->champions : NULL,
         state->slot_mask,
         state->champion_cursor,
         state->champion_frame,
         out_commands,
         max_commands);
+    if (out_commands && count > 0) {
+        int read_index, write_index;
+        for (read_index = 0, write_index = 0; read_index < count;
+             ++read_index) {
+            if (out_commands[read_index].kind != NEXUS_V1_STARTUP_DRAW_TEXT)
+                out_commands[write_index++] = out_commands[read_index];
+        }
+        count = write_index;
+    }
+    return count;
 }
 
 int nexus_v1_launcher_startup_presentation_build_champion_from_snapshot(
