@@ -377,13 +377,15 @@ int dm2_v1_ccm_step(DM2_V1_CCMState *state, int opcode,
 int dm2_v1_ccm_run(DM2_V1_CCMState *state, int now_ms) {
     if (!state) return (int)DM2_CCM_RESULT_BAD_ARG;
     if (state->halted) return (int)DM2_CCM_RESULT_HALTED;
-    /* Simple "run" loop: dispatch next opcode at state->pc.
-     * In a real implementation, the program would live in a per-creature
-     * bytecode buffer.  Here we just step through known opcodes. */
-    int opcode = state->pc;  /* pc acts as last-opcode for now */
-    int rc = dispatch_opcode(state, opcode, NULL, 0, now_ms);
-    state->last_result = rc;
-    return rc;
+    /* SKProject/SKULLWIN/c_creature.cpp:2930-3212 DM2_PROCEED_CCM dispatches
+     * the live creature record's b_1a byte.  `pc` indexes a decoded program;
+     * it is not a source opcode and must never be reinterpreted as one.
+     * Without the authenticated stream/operand owner, reject rather than
+     * manufacture a command from a host counter. */
+    (void)now_ms;
+    ++s_total_unknown;
+    state->last_result = (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
+    return state->last_result;
 }
 
 int dm2_v1_ccm_decode_program(const uint8_t *bytes, size_t byte_count,

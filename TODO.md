@@ -56,6 +56,10 @@
   record-chain/RNG owner.
   The standalone animation-word writer is likewise test-only until the
   CCM/GDAT frame receipt owns both values.
+  **2026-07-31 update:** the legacy no-stream CCM runner no longer treats a
+  host program counter as a creature command byte. It rejects without
+  mutation; only an authenticated decoded command stream may enter
+  `DM2_PROCEED_CCM` compatibility execution.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

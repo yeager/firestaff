@@ -46139,3 +46139,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   F0115/F0678/F0679` and CSBWin `Viewport.cpp`. Verification: focused
   first-frame material test 109/109, realdata viewport CTests 4/4, build, and
   `git diff --check`.
+
+- ✅ 2026-07-31 DM2 CCM no-stream execution closure: the legacy
+  `dm2_v1_ccm_run()` entry point no longer interprets its host program counter
+  as a source `b_1a` creature command and can therefore no longer manufacture
+  a movement/action from no imported CCM data. It now fails closed without
+  state mutation; executable CCM input must use the decoded source stream
+  route. Source: SKProject `SKULLWIN/c_creature.cpp:2930-3212`
+  (`DM2_PROCEED_CCM`). Verification: CCM regression 51/51, source-matrix
+  alignment 7/7, `firestaff_dm2` build, and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass.

@@ -195,6 +195,16 @@ int  dm2_v1_ccm_stack_size(const DM2_V1_CCMState *state);
 /* ── Step / run ─────────────────────────────────────────────────── */
 int  dm2_v1_ccm_step(DM2_V1_CCMState *state, int opcode,
                      const int *args, int arg_count, int now_ms);
+/*
+ * Compatibility entry point with no source command stream argument.
+ *
+ * SKProject's DM2_PROCEED_CCM obtains b_1a plus its operand ownership from
+ * the live creature/CCM record; a program counter is never an opcode.
+ * Consequently this entry point always fails closed with UNKNOWN_OPCODE and
+ * leaves the CCM state untouched apart from last_result.  Production callers
+ * must first import the authenticated command stream and use
+ * dm2_v1_ccm_run_program().
+ */
 int  dm2_v1_ccm_run(DM2_V1_CCMState *state, int now_ms);
 int  dm2_v1_ccm_decode_program(const uint8_t *bytes, size_t byte_count,
                                DM2_V1_CCMProgram *out_program);

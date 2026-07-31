@@ -514,6 +514,20 @@ static int test_decode_program_walk_shoot_spell_halt(void) {
         && program.ops[3].opcode == 0xFF;
 }
 
+static int test_run_without_source_program_fails_closed(void) {
+    DM2_V1_CCMState s;
+    int unknown_before;
+    dm2_v1_ccm_init_state(&s);
+    s.pc = DM2_CCM_OP_WALK_NOW;
+    unknown_before = dm2_v1_ccm_total_unknown();
+    return dm2_v1_ccm_run(&s, 1234) == (int)DM2_CCM_RESULT_UNKNOWN_OPCODE &&
+           s.pc == DM2_CCM_OP_WALK_NOW &&
+           s.step_count == 0 &&
+           s.flags[0] == 0 &&
+           s.last_result == (int)DM2_CCM_RESULT_UNKNOWN_OPCODE &&
+           dm2_v1_ccm_total_unknown() == unknown_before + 1;
+}
+
 static int test_run_program_walk_shoot_spell_halt(void) {
     const uint8_t bytes[] = {
         0x01,
@@ -676,6 +690,7 @@ int main(void) {
 
     /* Program decode/run */
     TEST(decode_program_walk_shoot_spell_halt);
+    TEST(run_without_source_program_fails_closed);
     TEST(run_program_walk_shoot_spell_halt);
     TEST(decode_program_rejects_truncated_args);
     TEST(decode_program_rejects_stubbed_opcode);
