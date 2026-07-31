@@ -1492,7 +1492,7 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
                         &level->structure2_textures[descriptor_index];
                     uint32_t image_bytes;
                     if (tex->encoding == 0x0008U)
-                        image_bytes = (uint32_t)tex->width * tex->height / 2U;
+                        image_bytes = ((uint32_t)tex->width * tex->height + 1U) / 2U;
                     else if (tex->encoding == 0x0028U)
                         image_bytes = (uint32_t)tex->width * tex->height * 2U;
                     else { proven = 0; break; }
@@ -6811,7 +6811,7 @@ int nexus_v1_dgn_consume_structure1f_item_floor_materials(
             ++receipt.blocked_invalid_binding_count;
             continue;
         }
-        expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height) / 2U;
+        expected_bytes = ((uint32_t)floor->width * (uint32_t)floor->height + 1U) / 2U;
         if (!floor->palette_bound || !floor->packed_4bpp_valid ||
             floor->encoding != 8U || !floor->width || !floor->height ||
             expected_bytes == 0U || floor->packed_4bpp_bytes != expected_bytes ||

@@ -47755,3 +47755,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   bytes and the exact texel count, preserving odd-sized surfaces while keeping
   the original VDP1-command gate closed. Verification: real ITEM.IBS decoder,
   DGN geometry readiness, and production Nexus library build pass.
+- ✅ 2026-07-31 Nexus Structure2 admission/material binding fidelity: the
+  remaining Structure2 0008 payload-envelope and special-floor material checks
+  now use the same ceil-half-byte rule as the DMWeb decoder. Verification:
+  real ITEM.IBS decoder and `test_nexus_v1_dgn_geometry_readiness` pass.
