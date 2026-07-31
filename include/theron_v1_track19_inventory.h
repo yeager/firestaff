@@ -10,7 +10,11 @@ typedef struct {
     int startup_usable;
     int level_usable;
     int bitmap_usable;
+    int mode1_2048;
+    int mode1_2352;
+    size_t sector_count;
     size_t bytes;
+    const char *source_format;
     const char *variant;
 } Theron_V1Track19InventoryReceipt;
 

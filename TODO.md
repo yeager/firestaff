@@ -6,6 +6,12 @@
   Keep BIN/CUE/ISO receipt normalization and later object/level records on
   the same verified-media path.
 
+- **THERON-TRACK19-RECORD-INTAKE:** Verified US/JP Track 19 ISO identities
+  are now recognized as MODE1/2048 sector media with exact sector counts;
+  raw MODE1/2352 remains explicitly distinguished. This proves container
+  intake only. Later-level and object semantics remain blocked until a
+  source-backed CD-read/record trace binds them.
+
 - **THERON-V1-UI-CHROME-REAL-DATA:** The inferred bar/text/champion-slot
   implementation is now fixture-only. Production exposes a no-op API until
   the original Track 02 UI chrome bank and font records are decoded. The

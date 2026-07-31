@@ -6367,6 +6367,15 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-31 Theron Track 19 media intake: the real verified US
+  `TQUS19.iso` (5984256 bytes, 2922 MODE1/2048 sectors) and JP
+  `TQJP19.iso` (6291456 bytes, 3072 MODE1/2048 sectors) are now classified
+  explicitly as ISO sector media. The legacy raw 2352-byte route remains
+  separately identified. No level, object, bitmap, or palette route is
+  opened by container recognition alone. Verification: Track 19 inventory
+  probe passes for both real ISO identities, raw alignment, sector counts,
+  and unknown-hash rejection.
+
 - ✅ 2026-07-31 Theron V1 viewport production isolation: removed the
   procedural dungeon, UI chrome, tile selector, and indexed-to-M11 presenter
   from the production archive. Production now owns a lifecycle-preserving
