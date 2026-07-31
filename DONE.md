@@ -46303,3 +46303,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   References: SKProject SKWIN/c_bkgrnd.cpp ENVIRONMENT_DRAW_DISTANT_ELEMENT
   and skgdtqdb.cpp QUERY_TEMP_PICST/DRAW_TEMP_PICST. Verification:
   test_dm2_v2_lighting 64/64 and DM2/M11 build pass.
+# 2026-07-31 Theron media-inventory false-promotion removal
+
+- ✅ Raw Track 02 now proves startup/media ownership only. Removed the
+  incorrect bitmap-, level-, and object-route promotion that treated an
+  authenticated bank as if its dungeon decoder were already implemented.
+  Downstream routes remain fail-closed until real consumer/decoder evidence
+  exists, matching the bounded Theron status in `docs/DMWEB_REFERENCE.md` and
+  TODO.md. Verification: `theron_v1_media_inventory_probe` passes.
