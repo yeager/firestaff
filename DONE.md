@@ -47022,3 +47022,4 @@ the supplied root and selected MD5 to prove this without shipping game data.
   with an explicit blocked route. Focused V2.2 fixture targets retain the
   original shape implementation; live production cannot promote its guessed
   tints or geometry.
+# Isolated the inferred Theron V2 HUD widget manifest/parser from production and added a no-op gate seam; procedural HUD pixels can no longer render in the verified runtime without a complete real asset manifest.

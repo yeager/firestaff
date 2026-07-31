@@ -41,6 +41,7 @@
  */
 
 #include "theron_v2_hud_overlay_pc34.h"
+#include "theron_v2_hud_widget_assets_pc34.h"
 #include "theron_v1_viewport.h"     /* TQR_FB_W, TQR_FB_H */
 
 #include <stdio.h>
@@ -644,6 +645,15 @@ void theron_v2_hud_render(Theron_V2_HudOverlay *h, uint8_t *fb, int w, int h_res
     if (!h || !fb || w <= 0 || h_res <= 0) return;
     if (!h->visible) return;
     if (h->opacity == 0) return;
+    /*
+     * The bitmap/font primitives below are retained for the focused HUD
+     * fixture tests, but are not a verified production art source.  Keep
+     * the runtime fail-closed until all seven widget slots resolve to real
+     * source assets through the manifest gate.
+     */
+    if (theron_v2_hud_widget_assets_gate() != THERON_V2_HUD_WIDGET_GATE_COMPLETE) {
+        return;
+    }
 
     uint8_t base = (uint8_t)(h->opacity / 2);
     uint8_t high = h->opacity;

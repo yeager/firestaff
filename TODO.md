@@ -24346,3 +24346,4 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Nexus FONT256 text binding: retail DMWeb map/page header facts are now
   exposed. The remaining gap is proving how page tilemap entries become
   runtime character codes before enabling text rendering.
+# Theron V2 HUD widget pixels remain blocked in production: the manifest parser is fixture-only and the runtime now fails closed until all seven slots resolve to decoded Track 02 source assets.
