@@ -46580,3 +46580,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   råa Track 02-filnamnen `TQJP02.bin` och `TQUS02.bin` som används i
   `~/.firestaff/data/theron`. De hashverifieras genom samma befintliga
   kataloggate; inga nya datafiler eller fallbackvärden läggs till.
+- ✅ 2026-07-31 Nexus V2-produktionsgate: launcher-start och save-resume
+  kringgår inte längre presentationsgaten för lighting, smooth movement eller
+  touch-runtime med test-only `force_active_for_test(1)`-anrop. V2-proberna
+  aktiverar fortsatt läget explicit. Verifiering: `firestaff`-build,
+  smooth-movement-probe 33/33 och touch-runtime-probe 57/57.
