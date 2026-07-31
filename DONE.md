@@ -45214,3 +45214,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm1_v1_viewport_3d_pc34_compat`,
   `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 DM2 projectile synthetic-fixture isolation: the direct
+  synthetic projectile builder is now compiled and declared only for explicit
+  test and probe targets. It is absent from `firestaff_dm2`; production
+  projectiles must enter through the source-derived creature, spell or bomb
+  routes and retain a real owner. The data-free runtime smoke no longer
+  injects projectiles through the production library. Verification:
+  `test_dm2_v1_projectile_creature_collision_pc34_compat` (18/18),
+  `test_dm2_v1_projectile_step_pc34_compat` (16/16),
+  `firestaff_dm2_v1_projectile_drain_probe` (12/12),
+  `firestaff_dm2_v1_projectile_step_probe` (21/21), and `nm` confirms the
+  production archive excludes `dm2_v1_projectile_dispatch_synthetic`.

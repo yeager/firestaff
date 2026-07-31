@@ -15352,9 +15352,6 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     target_link_libraries(test_dm2_v1_runtime_handoff_smoke PRIVATE firestaff_dm2 firestaff_m10)
-    target_compile_definitions(test_dm2_v1_runtime_handoff_smoke PRIVATE
-        FIRESTAFF_DM2_PROJECTILE_TESTING=1
-    )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_runtime_handoff_smoke PRIVATE -Wall -Wextra -O2)
     endif()
@@ -15810,6 +15807,7 @@ if(BUILD_TESTING)
     # the real GDAT-loaded AI table.
     target_compile_definitions(test_dm2_v1_projectile_creature_collision_pc34_compat PRIVATE
         FIRESTAFF_DM2_CREATURE_TESTING=1
+        FIRESTAFF_DM2_PROJECTILE_TESTING=1
     )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_projectile_creature_collision_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -15846,6 +15844,7 @@ if(BUILD_TESTING)
     target_link_libraries(firestaff_dm2_v1_projectile_creature_collision_probe PRIVATE firestaff_m10 m)
     target_compile_definitions(firestaff_dm2_v1_projectile_creature_collision_probe PRIVATE
         FIRESTAFF_DM2_CREATURE_TESTING=1
+        FIRESTAFF_DM2_PROJECTILE_TESTING=1
     )
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v1_projectile_creature_collision_probe PRIVATE -Wall -Wextra -O2)
@@ -16868,6 +16867,9 @@ if(BUILD_TESTING)
         ${CMAKE_CURRENT_SOURCE_DIR}/src/memory
     )
     target_link_libraries(firestaff_dm2_v1_projectile_drain_probe PRIVATE firestaff_m10 m)
+    target_compile_definitions(firestaff_dm2_v1_projectile_drain_probe PRIVATE
+        FIRESTAFF_DM2_PROJECTILE_TESTING=1
+    )
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v1_projectile_drain_probe PRIVATE -Wall -Wextra -O2)
     endif()

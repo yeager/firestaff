@@ -166,12 +166,14 @@ typedef struct {
 int dm2_v1_projectile_drain_to_m11(DM2_V1_DrainedProjectile *out_list,
                                     int max_count);
 
-/* ── Phase 5 expansion: synthetic dispatch for tests ─────────────
- * Allows tests/probes to inject projectiles directly without going
- * through the creature attack pipeline.  Returns the slot index or -1. */
+/* Test-only fixture dispatch.  It deliberately has no production
+ * declaration: gameplay projectiles must retain their real owner and
+ * enter through the source-derived creature, spell, or bomb routes. */
+#ifdef FIRESTAFF_DM2_PROJECTILE_TESTING
 int dm2_v1_projectile_dispatch_synthetic(int category, int subtype,
                                           int map_x, int map_y,
                                           int map_index, int direction);
+#endif
 
 /* ── Phase 5 expansion: count active projectiles ───────────────── */
 int dm2_v1_projectile_active_count(void);

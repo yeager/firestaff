@@ -12,6 +12,8 @@
   `GRAPHICS.DAT`/`DUNGEON.DAT` candidates. Renamed and archived data remains
   supported through the shared hash scanner. The remaining work is limited to
   format-specific decode gaps listed per game, not generic substitute loading.
+  Direct synthetic DM2 projectile construction is now isolated to explicit
+  test and probe targets and is absent from the production library.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

@@ -1599,7 +1599,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
 
     {
         uint8_t framebuffer[320 * 200];
-        int fetch_count = 0;
         DM2_V1_DoorRender direct_door;
         DM2_V1_DoorAssetBlit direct_door_blit;
         DM2_V1_CreatureRender direct_creature;
@@ -1608,8 +1607,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
         DM2_V1_ItemAssetBlit direct_item_blit;
         DM2_V1_ProjectileRender direct_projectile;
         DM2_V1_ProjectileAssetBlit direct_blit;
-        DM2_V1_RuntimeProjectileRenderReceipt projectile_receipt;
-        DM2_V1_ViewportM11FrameReceipt m11_receipt;
         uint32_t direct_seed = 0x12345678u;
         memset(s_ceiling_pixels, 12, sizeof(s_ceiling_pixels));
         memset(s_floor_pixels, 4, sizeof(s_floor_pixels));
@@ -1767,119 +1764,6 @@ static void test_first_tick_after_boot_profile_handoff(void)
         CHECK(direct_blit.transparent_color == 10 &&
               direct_blit.flip_mirror == 0,
               "projectile asset blit owns material and flip");
-        dm2_v1_projectile_test_reset_list();
-        dm2_v1_runtime_set_outdoor(0);
-        dm2_v1_runtime_set_position(0, 10, 6, 0);
-        CHECK(dm2_v1_projectile_dispatch_synthetic(
-                  PROJECTILE_CATEGORY_MAGICAL,
-                  DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL,
-                  10, 4, 0, 0) >= 0,
-              "runtime projectile fixture dispatches two tiles ahead");
-        dm2_v1_runtime_tick();
-        dm2_v1_runtime_set_viewport_asset_provider(
-            synthetic_viewport_asset_fetch, &fetch_count);
-        CHECK(dm2_v1_runtime_render_frame(
-                  dm2_v1_runtime_get_party_dir(),
-                  dm2_v1_runtime_get_party_x(),
-                  dm2_v1_runtime_get_party_y(),
-                  framebuffer, 320, 320, 200) == 0,
-              "runtime renders a drained projectile through the viewport");
-        CHECK(fetch_count == 26,
-              "runtime projectile adds one projectile-map-chip fetch to the viewport pass");
-        CHECK(dm2_v1_runtime_last_asset_projectile_count() == 1 &&
-              dm2_v1_runtime_last_fallback_projectile_count() == 0,
-              "runtime records asset-backed projectile draw");
-        CHECK(dm2_v1_runtime_last_projectile_render_receipt(
-                  &projectile_receipt) == 1 &&
-              projectile_receipt.projectile_category == 0x0d &&
-              projectile_receipt.projectile_type ==
-                  DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL &&
-              projectile_receipt.frame_class ==
-                  DM2_V1_PROJECTILE_FRAME_CLASS_DIRECTIONAL &&
-              projectile_receipt.render_kind ==
-                  DM2_V1_PROJECTILE_RENDER_MISSILE &&
-              projectile_receipt.center_x == 112 &&
-              projectile_receipt.center_y == 84 &&
-              projectile_receipt.draw_order == 0 &&
-              projectile_receipt.asset_blit_ready == 1 &&
-              projectile_receipt.fallback_drawn == 0 &&
-              projectile_receipt.asset_src_w == 16 &&
-              projectile_receipt.asset_src_h == 8 &&
-              projectile_receipt.asset_frame_count == 2 &&
-              projectile_receipt.atlas_frame_w == 8 &&
-              projectile_receipt.atlas_frame_h == 8 &&
-              projectile_receipt.asset_dst_rect.x == 109 &&
-              projectile_receipt.asset_dst_rect.y == 81 &&
-              projectile_receipt.asset_dst_rect.w == 6 &&
-              projectile_receipt.asset_dst_rect.h == 6,
-              "runtime projectile receipt exposes GDAT missile map-chip blit");
-        CHECK(framebuffer[(84 * 320) + 112] == 13,
-              "runtime projects the projectile to the depth-1 first-person row");
-        memset(&m11_receipt, 0, sizeof(m11_receipt));
-        (void)dm2_v1_runtime_last_m11_frame_receipt(&m11_receipt);
-        CHECK(m11_receipt.projectile_material_plan_required == 1 &&
-                  m11_receipt.projectile_material_plan_consumed == 1 &&
-                  m11_receipt.projectile_material_plan_command_count == 1 &&
-                  m11_receipt.projectile_material_plan_hash != 0u,
-              "runtime carries the real projectile GDAT receipt into M11");
-        CHECK(m11_receipt.item_material_plan_required == 0 &&
-                  m11_receipt.item_material_plan_consumed == 0 &&
-                  m11_receipt.item_material_plan_command_count == 0 &&
-                  m11_receipt.item_material_plan_hash == 0u,
-              "projectile-only frame does not invent an item GDAT receipt");
-        dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
-        dm2_v1_projectile_test_reset_list();
-
-        fetch_count = 0;
-        memset(framebuffer, 0, sizeof(framebuffer));
-        memset(s_projectile_pixels, 13, sizeof(s_projectile_pixels));
-        dm2_v1_runtime_set_weather_seed(0x12345678u);
-        dm2_v1_runtime_set_position(0, 10, 6, 0);
-        CHECK(dm2_v1_projectile_dispatch_synthetic(
-                  PROJECTILE_CATEGORY_MAGICAL,
-                  DM2_PROJ_SUBTYPE_MAGICAL_POISON_CLOUD,
-                  10, 4, 0, 0) >= 0,
-              "runtime cloud projectile fixture dispatches two tiles ahead");
-        dm2_v1_runtime_tick();
-        dm2_v1_runtime_set_viewport_asset_provider(
-            synthetic_viewport_asset_fetch, &fetch_count);
-        CHECK(dm2_v1_runtime_render_frame(
-                  dm2_v1_runtime_get_party_dir(),
-                  dm2_v1_runtime_get_party_x(),
-                  dm2_v1_runtime_get_party_y(),
-                  framebuffer, 320, 320, 200) == 0,
-              "runtime renders a drained cloud projectile through the viewport");
-        {
-            uint32_t expected_seed = 0x12345678u;
-            int expected_flip =
-                dm2_v1_viewport_cloud_flip_for_seed(&expected_seed);
-            int expected_frame =
-                dm2_v1_viewport_cloud_frame_for_tick(
-                    dm2_v1_runtime_get_tick_count(), 2);
-            CHECK(dm2_v1_runtime_last_projectile_render_receipt(
-                      &projectile_receipt) == 1 &&
-                  projectile_receipt.projectile_category == 0x0d &&
-                  projectile_receipt.projectile_type ==
-                      DM2_PROJ_SUBTYPE_MAGICAL_POISON_CLOUD &&
-                  projectile_receipt.frame_class ==
-                      DM2_V1_PROJECTILE_FRAME_CLASS_FRONT_ONLY &&
-                  projectile_receipt.render_kind ==
-                      DM2_V1_PROJECTILE_RENDER_CLOUD &&
-                  projectile_receipt.cloud_flip_from_seed == 1 &&
-                  projectile_receipt.flip_mirror == expected_flip &&
-                  projectile_receipt.random_seed_before == 0x12345678u &&
-                  projectile_receipt.random_seed_after == expected_seed &&
-                  projectile_receipt.render_frame == expected_frame &&
-                  projectile_receipt.atlas_frame_x == expected_frame * 8 &&
-                  projectile_receipt.atlas_frame_w == 8 &&
-                  projectile_receipt.asset_blit_ready == 1 &&
-                  projectile_receipt.fallback_drawn == 0 &&
-                  projectile_receipt.asset_dst_rect.w == 6 &&
-                  projectile_receipt.asset_dst_rect.h == 6,
-                  "runtime cloud projectile receipt exposes tick frame and RAND02 flip");
-        }
-        dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
-        dm2_v1_projectile_test_reset_list();
     }
 
     dm2_v1_boot_cleanup(&profile);

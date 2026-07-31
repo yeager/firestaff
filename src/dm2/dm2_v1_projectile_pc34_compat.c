@@ -360,7 +360,9 @@ int dm2_v1_projectile_drain_to_m11(DM2_V1_DrainedProjectile *out_list,
     return drained;
 }
 
-/* ── Phase 5 expansion: synthetic dispatch for tests ─────────────── */
+/* Test-only fixture.  Production builds must create projectiles only
+ * through the source-derived owner routes above. */
+#ifdef FIRESTAFF_DM2_PROJECTILE_TESTING
 int dm2_v1_projectile_dispatch_synthetic(int category, int subtype,
                                           int map_x, int map_y,
                                           int map_index, int direction)
@@ -392,6 +394,7 @@ int dm2_v1_projectile_dispatch_synthetic(int category, int subtype,
     s_dispatch_count++;
     return slot;
 }
+#endif
 
 int dm2_v1_projectile_active_count(void) {
     ensure_init();
