@@ -27,6 +27,10 @@
   Track 02 champion records and the real startup-selected party must be
   decoded before these defaults can populate a production session.
 
+- **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
+  placeholder labels are now fixture/probe-only. Runtime must consume the
+  verified startup media receipt or remain unavailable.
+
 - **THERON-STARTUP-LEGACY-FALLBACK-ROOM:** The M11 production path uses
   `verified_only` Track 02 admission and the authenticated startup bitmap
   atlas. The older public compatibility API still synthesizes the

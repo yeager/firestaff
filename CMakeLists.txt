@@ -3909,6 +3909,7 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_ui_chrome\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_tile_renderer\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_inplace_draw_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_modern_assets_pc34\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_startup_receipt\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
         src/theron/theron_v1_combat_runtime_noop.c
@@ -4580,6 +4581,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/theron/firestaff_theron_v1_startup
    AND NOT TARGET firestaff_theron_v1_startup_real_asset_receipt_probe)
     add_executable(firestaff_theron_v1_startup_real_asset_receipt_probe
         probes/theron/firestaff_theron_v1_startup_real_asset_receipt_probe.c
+        src/theron/theron_v1_startup_receipt.c
     )
     target_include_directories(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -4621,6 +4623,7 @@ set_tests_properties(theron_v1_startup_save_resume_probe PROPERTIES
 
 add_executable(test_theron_v1_startup_save_resume_pc34
     tests/test_theron_v1_startup_save_resume_pc34.c
+    src/theron/theron_v1_startup_receipt.c
 )
 target_include_directories(test_theron_v1_startup_save_resume_pc34 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include

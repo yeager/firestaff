@@ -47107,3 +47107,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   into its focused test. It cannot become a generic loaded-dungeon or viewport
   substitute; an actual entrance frame must still use its source-owned draw
   route and verified graphics material.
+
+- ✅ 2026-07-31 Theron startup-receipt isolation: removed the explicit
+  no-data placeholder receipt implementation from the production archive.
+  The real-asset receipt probe and save/resume fixture compile it explicitly;
+  `firestaff` cannot link placeholder startup labels or tokens.
