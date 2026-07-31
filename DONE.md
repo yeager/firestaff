@@ -45380,3 +45380,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Verification: `test_dm2_v1_boot_profile_smoke` and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass against
   `~/.firestaff/data/dm2`.
+- ✅ 2026-07-31 DM2 credits palette regression gate: the real-data M11
+  startup test now selects a TITLE/0/dt07/1 BPP8 pixel whose `dtPalette16`
+  mapping differs, then proves the framebuffer retains that original physical
+  index. This specifically rejects the palette remap that produced corrupted
+  credits colours. Source: SKProject `startend.cpp::DM2_SHOW_CREDITS` and
+  `DM2_INIT` palette route. Verification:
+  `test_dm2_v1_m11_startup_profile_gate` passes against
+  `~/.firestaff/data/dm2`.

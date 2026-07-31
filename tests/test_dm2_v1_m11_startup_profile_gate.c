@@ -1751,8 +1751,8 @@ int main(void) {
         int credits_w = 0;
         int credits_h = 0;
         int credits_stride = 0;
-        int sample_x = 0;
-        int sample_y = 0;
+        int sample_x = -1;
+        int sample_y = -1;
         expect_true(M11_GameView_HandlePointer(&view, 90, 165, 1) ==
                         M11_GAME_INPUT_REDRAW &&
                         view.dm2State.startup_credits_active == 1 &&
@@ -1764,24 +1764,33 @@ int main(void) {
                                                &credits_stride) == 0 &&
             credits_pixels && credits_w == 320 && credits_h == 200 &&
             credits_stride >= credits_w) {
+            DM2_V1_InterfacePalette palette;
+            int palette_ready = dm2_v1_boot_interface_palette(profile,
+                                                                &palette);
             int y;
-            for (y = 0; y < credits_h; ++y) {
+            /* A nonzero high palette index cannot detect the old bug: only
+             * BPP4 credits are remapped through dtPalette16.  Find a BPP8
+             * source index whose interface-table mapping differs and prove
+             * M11 keeps the original physical index. */
+            for (y = 0; y < credits_h && sample_x < 0; ++y) {
                 int x;
                 for (x = 0; x < credits_w; ++x) {
-                    if (credits_pixels[y * credits_stride + x] != 0u) {
+                    unsigned char source =
+                        credits_pixels[y * credits_stride + x];
+                    if (palette_ready && source > 0u && source < 16u &&
+                        palette.palette16[source] != source) {
                         sample_x = x;
                         sample_y = y;
                         break;
                     }
                 }
-                if (sample_x || sample_y) break;
             }
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
-            expect_true((sample_x || sample_y) &&
+            expect_true(palette_ready && sample_x >= 0 && sample_y >= 0 &&
                             framebuffer[sample_y * 320 + sample_x] ==
                                 credits_pixels[sample_y * credits_stride + sample_x],
-                        "M11 DM2 credits preserve BPP8 source palette indices");
+                        "M11 DM2 credits preserve palette-sensitive BPP8 source indices");
         } else {
             expect_true(0, "M11 DM2 credits fetches original TITLE dt07/1");
         }
