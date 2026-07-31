@@ -432,8 +432,13 @@ int main(void)
                 "M11 Nexus idle champion route does not mutate selection");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(count_nonzero_pixels(framebuffer, (int)sizeof(framebuffer)) > 0,
-                "M11 Nexus champion draw consumes real startup presentation");
+    /* This fixture deliberately has no FACE.BIN surfaces.  A champion route
+       must therefore remain pixel-silent; accepting the old non-zero
+       assertion would bless synthetic portrait pixels and bypass the
+       source-authenticated FACE gate.  Real portrait consumption is covered
+       by test_nexus_v1_face_bin with the retail data root. */
+    expect_true(count_nonzero_pixels(framebuffer, (int)sizeof(framebuffer)) == 0,
+                "M11 Nexus champion draw stays fail-closed without FACE.BIN");
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
