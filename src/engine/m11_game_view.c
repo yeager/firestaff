@@ -819,6 +819,24 @@ static M11_Dm1FloorItemHostPresentationReceipt
     s_m11_dm1_floor_item_host_presentation_receipt;
 static M11_Dm1FloorItemHostPresentationReceipt
     s_m11_dm1_alcove_item_host_presentation_receipt;
+/* ReDMCSB DUNVIEW.C F0115 publishes a click rectangle and pile-top THING
+ * from the actual rendered object. C080 consumes this frame-local host
+ * equivalent instead of a broad, fixed viewport pane. */
+typedef struct M11_Dm1RenderedPileTarget {
+    int valid;
+    unsigned short thing;
+    int mapX;
+    int mapY;
+    int x;
+    int y;
+    int w;
+    int h;
+} M11_Dm1RenderedPileTarget;
+
+#define M11_DM1_RENDERED_PILE_TARGET_MAX 16
+static M11_Dm1RenderedPileTarget
+    s_m11_dm1_rendered_pile_targets[M11_DM1_RENDERED_PILE_TARGET_MAX];
+static int s_m11_dm1_rendered_pile_target_count;
 enum {
     M11_F0115_PRESENTATION_NONE = 0,
     M11_F0115_PRESENTATION_FLOOR = 1,
@@ -25669,6 +25687,7 @@ typedef struct M11_ViewportCell {
     int floorItemTypes[M11_MAX_CELL_ITEMS];    /* THING_TYPE_*, -1 sentinel */
     int floorItemSubtypes[M11_MAX_CELL_ITEMS]; /* subtype per item, -1 sentinel */
     int floorItemCells[M11_MAX_CELL_ITEMS];    /* relative cell 0..3 */
+    unsigned short floorItemThings[M11_MAX_CELL_ITEMS]; /* source THING */
     int floorItemCount; /* number of valid entries in floorItem arrays */
     /* Wall/door ornament ordinal from thing data (0-15, -1 if none) */
     int wallOrnamentOrdinal;
@@ -27435,7 +27454,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     cell.creatureGroupCount = 0;
     cell.firstItemThingType = -1;
     cell.firstItemSubtype = -1;
-    { int fi; for (fi = 0; fi < M11_MAX_CELL_ITEMS; ++fi) { cell.floorItemTypes[fi] = -1; cell.floorItemSubtypes[fi] = -1; cell.floorItemCells[fi] = 0; } }
+    { int fi; for (fi = 0; fi < M11_MAX_CELL_ITEMS; ++fi) { cell.floorItemTypes[fi] = -1; cell.floorItemSubtypes[fi] = -1; cell.floorItemCells[fi] = 0; cell.floorItemThings[fi] = THING_NONE; } }
     cell.floorItemCount = 0;
     cell.wallOrnamentOrdinal = -1;
     cell.inscriptionTextIndex = -1;
@@ -27615,6 +27634,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
             cell.floorItemSubtypes[cell.floorItemCount] = item->subtype;
             cell.floorItemCells[cell.floorItemCount] =
                 (item->cell - state->world.party.direction) & 3;
+            cell.floorItemThings[cell.floorItemCount] = item->thing;
             ++cell.floorItemCount;
         }
         cell.summary.items = cell.floorItemCount;
@@ -28107,6 +28127,54 @@ static int m11_c080_grab_leader_hand(M11_GameViewState* state,
     return 1;
 }
 
+/* ReDMCSB CLIKVIEW.C F0373 tests the G2210 rectangle assembled by F0115,
+ * then moves that rectangle's G0292 pile-top object into G4055.  Targets are
+ * stored in paint order, so scan backwards to match the visible top object. */
+static int m11_c080_grab_rendered_pile_target(M11_GameViewState* state,
+                                              int localX,
+                                              int localY) {
+    int i;
+    int screenX;
+    int screenY;
+
+    if (!state || !state->active ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE) {
+        return 0;
+    }
+    screenX = localX + M11_VIEWPORT_X;
+    screenY = localY + M11_VIEWPORT_Y;
+    for (i = s_m11_dm1_rendered_pile_target_count - 1; i >= 0; --i) {
+        const M11_Dm1RenderedPileTarget* target =
+            &s_m11_dm1_rendered_pile_targets[i];
+        char itemName[48];
+        if (!target->valid || screenX < target->x ||
+            screenX >= target->x + target->w || screenY < target->y ||
+            screenY >= target->y + target->h) {
+            continue;
+        }
+        if (!m11_unlink_thing_from_square(&state->world,
+                                          state->world.party.mapIndex,
+                                          target->mapX, target->mapY,
+                                          target->thing)) {
+            return 0;
+        }
+        if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state,
+                                                              target->thing)) {
+            m11_prepend_thing_to_square(&state->world,
+                                        state->world.party.mapIndex,
+                                        target->mapX, target->mapY,
+                                        target->thing);
+            return 0;
+        }
+        m11_get_source_item_name(state, state->world.things, target->thing,
+                                 itemName, sizeof(itemName));
+        m11_set_status(state, "PICKUP", itemName);
+        m11_refresh_hash(state);
+        return 1;
+    }
+    return 0;
+}
+
 /* Drop the leader hand object onto a floor cell or alcove.
  * Mirrors ReDMCSB CLIKVIEW.C F0374. */
 static int m11_c080_drop_leader_hand(M11_GameViewState* state,
@@ -28367,13 +28435,21 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
          * F0377 iterates view cells 0..5 and grabs from the first
          * matching pile box.  Cell 5 = wall ornament/door button
          * (alcove or wall sensor). */
-        int vc;
-        for (vc = 0; vc < 4; ++vc) {
-            if (m11_point_in_source_box(localX, localY, g_objectPileBoxes[vc])) {
-                if (m11_c080_grab_leader_hand(state, vc)) {
-                    return M11_GAME_INPUT_REDRAW;
+        if (m11_c080_grab_rendered_pile_target(state, localX, localY)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+        /* DM1 production has real F0115 rectangles above. Retain the
+         * historical fixed boxes only for non-source diagnostic sessions;
+         * otherwise an unavailable/occluded bitmap could still be picked. */
+        if (!m11_is_dm1_source_kind(state->sourceKind)) {
+            int vc;
+            for (vc = 0; vc < 4; ++vc) {
+                if (m11_point_in_source_box(localX, localY, g_objectPileBoxes[vc])) {
+                    if (m11_c080_grab_leader_hand(state, vc)) {
+                        return M11_GAME_INPUT_REDRAW;
+                    }
+                    break; /* No item to grab at this cell */
                 }
-                break; /* No item to grab at this cell */
             }
         }
         /* Wall ornament zone: alcove grab or wall sensor trigger */
@@ -29112,7 +29188,10 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
     int relativeCell,
     int pileIndex,
     int depthIndex,
-    int sourceZoneRow);
+    int sourceZoneRow,
+    unsigned short thing,
+    int mapX,
+    int mapY);
 static int m11_draw_wall_ornament(const M11_GameViewState* state,
                                   unsigned char* framebuffer,
                                   int fbW, int fbH,
@@ -29337,7 +29416,8 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
                     g_drawState, framebuffer, framebufferWidth, framebufferHeight,
                     faceX + 2, faceY + 2, faceW - 4, faceH - 4,
                     cell->floorItemTypes[ii], cell->floorItemSubtypes[ii],
-                    cell->floorItemCells[ii], ii, depthIndex, sourceZoneRow);
+                    cell->floorItemCells[ii], ii, depthIndex, sourceZoneRow,
+                    cell->floorItemThings[ii], cell->mapX, cell->mapY);
             }
         }
     }
@@ -33076,7 +33156,11 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
     int relativeCell,
     int pileIndex,
     int depthIndex,
-    int sourceZoneRow) {
+    int sourceZoneRow,
+    unsigned short thing,
+    int mapX,
+    int mapY) {
+    int drawn;
     if (state && m11_is_dm1_source_kind(state->sourceKind) &&
         s_m11_dm1_f0115_floor_item_capture_request.owner == state &&
         s_m11_dm1_f0115_floor_item_capture_request.runtimeTick ==
@@ -33086,10 +33170,30 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
          * surface can only clear the final capture route. */
         s_m11_dm1_f0115_floor_item_capture_request.requested = 1;
     }
-    return m11_draw_item_sprite_material(
+    drawn = m11_draw_item_sprite_material(
         state, framebuffer, fbW, fbH, x, y, w, h,
         thingType, subtype, relativeCell, pileIndex, depthIndex,
         -1, sourceZoneRow, 10, 1, 1);
+    /* DUNVIEW.C F0115 updates G0292 and G2210 after each successful object
+     * blit. Keep the exact final F0791 destination and its source THING so
+     * C080 cannot pick an unseen neighbour from the compact chain. */
+    if (drawn && thing != THING_NONE && thing != THING_ENDOFLIST &&
+        s_m11_dm1_rendered_pile_target_count < M11_DM1_RENDERED_PILE_TARGET_MAX) {
+        const M11_Dm1FloorItemHostPresentationReceipt* presentation =
+            &s_m11_dm1_floor_item_host_presentation_receipt;
+        M11_Dm1RenderedPileTarget* target =
+            &s_m11_dm1_rendered_pile_targets[s_m11_dm1_rendered_pile_target_count++];
+        target->valid = presentation->valid && presentation->floorItemLane &&
+                        presentation->destinationW > 0 && presentation->destinationH > 0;
+        target->thing = thing;
+        target->mapX = mapX;
+        target->mapY = mapY;
+        target->x = presentation->destinationX;
+        target->y = presentation->destinationY;
+        target->w = presentation->destinationW;
+        target->h = presentation->destinationH;
+    }
+    return drawn;
 }
 
 /* Draw a wall ornament from GRAPHICS.DAT on the wall face.
@@ -33902,7 +34006,8 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                         paneX + 1, itemBaseY, paneW - 2, itemArea,
                         cell->floorItemTypes[ii], cell->floorItemSubtypes[ii],
                         cell->floorItemCells[ii], ii, depthIndex + 1,
-                        sourceZoneRow);
+                        sourceZoneRow, cell->floorItemThings[ii],
+                        cell->mapX, cell->mapY);
                 }
             }
         }
@@ -34068,7 +34173,8 @@ static void m11_draw_dm1_side_contents_at_depth(
                             framebufferHeight, paneX + 1, itemBaseY,
                             paneW - 2, itemArea, cell->floorItemTypes[ii],
                             cell->floorItemSubtypes[ii], cell->floorItemCells[ii],
-                            ii, depth + 1, sourceZoneRow);
+                            ii, depth + 1, sourceZoneRow,
+                            cell->floorItemThings[ii], cell->mapX, cell->mapY);
                     }
                 }
             }
@@ -50941,6 +51047,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * blit. Do not let a prior frame authorize a later projectile-only view. */
     memset(&s_m11_dm1_floor_item_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_floor_item_host_presentation_receipt));
+    memset(s_m11_dm1_rendered_pile_targets, 0,
+           sizeof(s_m11_dm1_rendered_pile_targets));
+    s_m11_dm1_rendered_pile_target_count = 0;
     memset(&s_m11_dm1_alcove_item_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_alcove_item_host_presentation_receipt));
     memset(&s_m11_dm1_creature_host_presentation_receipt, 0,

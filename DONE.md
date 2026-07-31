@@ -46904,3 +46904,37 @@ the supplied root and selected MD5 to prove this without shipping game data.
   verification probe; the runtime boundary accepts only caller-supplied save
   bytes. Verification: loader-boundary test 158/158, boot handoff 504/504,
   real staged-save probe 22/22 and complete `firestaff` link.
+- ✅ 2026-07-31 DM1 HoC F0172 ornament correction: removed the
+  Firestaff-only map-zero random-floor-ornament suppression. ReDMCSB
+  `DUNGEON.C F0172` applies this path to every corridor map, and sensors then
+  override its ordinal. The regression covers both a map-zero sensor ornament
+  and a deterministic map-zero random ornament. Verification:
+  `test_m11_overlay_command_queue_block` (192/192) and
+  `test_m11_v22_shape_cache_pc34` (31/31).
+
+- ✅ 2026-07-31 DM1 HoC F0172 sensor-zero correction: floor sensors now
+  overwrite the random floor-ornament ordinal even when their source-owned
+  `Remote.OrnamentOrdinal` is zero. ReDMCSB assigns that field
+  unconditionally; zero suppresses a random grate or pressure plate instead
+  of allowing it to leak through. Verification:
+  `test_m11_overlay_command_queue_block` (193/193),
+  `test_m11_v22_shape_cache_pc34` (31/31), and the installed PC 3.4 HoC
+  runtime probe.
+
+- ✅ 2026-07-31 DM1 F0115 alcove-object input binding: C080 now accepts the
+  actual current-frame C2548/F0791 destination rectangle for a front alcove
+  item, in addition to the original C05 ornament zone. This preserves wall
+  sensor input while making a real rendered torch/object pickable. Verification:
+  `test_m11_dm1_real_alcove_item_runtime_pc34` finds map 1 `(6,3,2)` in the
+  installed PC34 corpus and successfully transfers the rendered object into
+  the leader hand.
+
+- ✅ 2026-07-31 DM1 F0115/C080 rendered floor-pile input: normal DM1 no
+  longer uses four fixed, approximate floor-item click panes. Each successful
+  PC34 F0115/F0791 object blit now publishes its exact final rectangle,
+  source `THING`, and map square for the current frame; C080 takes the
+  topmost clicked rendered object directly into the leader hand. Missing or
+  occluded source material therefore cannot select an arbitrary neighbour
+  from the thing chain. Verification: the real PC34 non-HoC F0115 runtime
+  test clicks the returned material rectangle and confirms that a leader-hand
+  object is produced; `test_m11_overlay_command_queue_block` remains 193/193.

@@ -126,6 +126,19 @@ int main(void)
         return 1;
     }
 
+    /* F0115's real blit rectangle is C080's pickup target. This must not
+     * fall back to an approximate pane hit-box or a different chain item. */
+    if (M11_GameView_HandlePointer(
+            &state,
+            receipt.presentation.destinationX + receipt.presentation.destinationW / 2,
+            receipt.presentation.destinationY + receipt.presentation.destinationH / 2,
+            1) != M11_GAME_INPUT_REDRAW ||
+        M11_GameView_GetV1LeaderHandThing(&state) == THING_NONE) {
+        fprintf(stderr, "real F0115 floor-item rectangle did not pick up its rendered pile top\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+
     /* Keep the real DUNGEON.DAT pose but withdraw the decoded GRAPHICS.DAT
      * binding. The next frame must clear this consumer rather than retain it. */
     state.world.gameTick += 1u;
