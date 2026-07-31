@@ -8,6 +8,14 @@
   its remaining integration failures require unavailable real-data fixtures
   and are recorded separately.
 
+- ✅ 2026-07-31 CSB CHAOS title visible-frame cadence: M11 now holds each of
+  the 20 real C425 CHAOS zoom rasters for two PC3.4 cadence slots, matching
+  DM1's C001 visible-frame policy without adding source frames. PRESENTS,
+  TITLE.C's full-CHAOS `Delay(20)`, and the two-tick STRIKES BACK hold remain
+  unchanged. Verification: `test_csb_v1_m11_startup_vblank_cadence` and
+  `test_csb_v1_m11_launcher_handoff_boundary` pass (567 passed, 0 failed,
+  1 Atari skip).
+
 - ✅ 2026-07-31 DM2 generator-default closure: creature and item generator
   actuators now reject bare flags instead of spawning a default Dragoth or
   publishing a synthetic item ID. Source DB14/record ownership is required

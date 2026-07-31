@@ -2288,6 +2288,11 @@ that its exact runtime path is not already source-locked and tested.
     SDL/CoreAudio playback is now enabled by default for decoded original
     media; complete authenticated CSB SWSH/entrance-music admission and live
     M11 playback without generated replacements.
+    2026-07-31: M11 now holds each of the 20 already source-rendered C425
+    CHAOS zoom rasters for two PC3.4 cadence slots, matching the visible-frame
+    treatment used by the DM1 C001 route. It does not add a source frame or
+    change TITLE.C's 60/20/20/2 sequence: PRESENTS, the full-CHAOS Delay(20)
+    and STRIKES BACK retain their original cadence.
     2026-07-29: archive-backed PC3.4 packages now materialize every accepted
     `SWSHSND.C` and extension-renamed source filenames beside `GRAPHICS.DAT`,
     and the strict 9,078-byte loader admits each of those original package

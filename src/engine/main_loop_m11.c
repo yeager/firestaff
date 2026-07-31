@@ -102,14 +102,27 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
          gameView->csbState.startup_entrance_active)) {
         const CSB_V1_BootProfile* profile =
             (const CSB_V1_BootProfile*)gameView->csbBootProfile;
+        uint32_t tick_ms;
         /* TITLE.C F0437's waits are source VBlank waits.  The CSB runtime
          * profile owns the corresponding PC cadence (55 ms); using the host
          * display's 20 ms cadence made PRESENTS/CHAOS/STRIKES race through
-         * in roughly two seconds on modern Macs. */
-        if (profile && profile->tick_ms != 0u) {
-            return profile->tick_ms;
+         * in roughly two seconds on modern Macs.
+         *
+         * The 20 generated C425 CHAOS rasters are the only rapidly changing
+         * title frames.  Like DM1's C001 zoom route, keep each source raster
+         * on the host surface for two PC cadence slots.  This does not add a
+         * source blit or alter TITLE.C's subsequent Delay(20): it only keeps
+         * the already source-rendered frame observable before advancing the
+         * M11 receipt to the next raster. */
+        tick_ms = profile && profile->tick_ms != 0u
+                      ? profile->tick_ms
+                      : CSB_V1_TICK_MS_NOMINAL;
+        if (gameView->csbState.startup_title_active &&
+            gameView->csbState.startup_title_source_step >= 2 &&
+            gameView->csbState.startup_title_source_step <= 21) {
+            return tick_ms > UINT32_MAX / 2u ? UINT32_MAX : tick_ms * 2u;
         }
-        return CSB_V1_TICK_MS_NOMINAL;
+        return tick_ms;
     }
 
     if (speedMultiplier < 50) speedMultiplier = 50;

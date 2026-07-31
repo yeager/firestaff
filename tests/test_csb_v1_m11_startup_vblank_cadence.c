@@ -1,4 +1,4 @@
-/* CSB startup must consume one source VBlank per host idle tick. */
+/* CSB preserves source cadence, with an explicit visible hold for CHAOS zoom. */
 
 #include "m11_game_view.h"
 #include "csb_v1_boot.h"
@@ -40,8 +40,21 @@ int main(void) {
 
     view.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
     view.csbState.startup_title_active = 1;
+    view.csbState.startup_title_source_step = 1;
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
-                    "CSB title startup receives one PC34 source VBlank per 55 ms");
+                    "CSB PRESENTS keeps its PC34 source cadence");
+
+    view.csbState.startup_title_source_step = 2;
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 110u,
+                    "CSB first CHAOS zoom raster remains visible for two PC34 slots");
+
+    view.csbState.startup_title_source_step = 21;
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 110u,
+                    "CSB full CHAOS raster retains the visible zoom hold");
+
+    view.csbState.startup_title_source_step = 22;
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
+                    "CSB STRIKES BACK keeps TITLE.C's two-tick source hold");
 
     view.csbState.startup_title_active = 0;
     view.csbState.startup_entrance_active = 1;
@@ -53,6 +66,14 @@ int main(void) {
         memset(&profile, 0, sizeof(profile));
         profile.tick_ms = 61u;
         view.csbBootProfile = &profile;
+        view.csbState.startup_title_active = 1;
+        view.csbState.startup_entrance_active = 0;
+        view.csbState.startup_title_source_step = 2;
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 122u,
+                        "CSB CHAOS hold scales from the authenticated profile cadence");
+        view.csbState.startup_title_active = 0;
+        view.csbState.startup_entrance_active = 1;
+        view.csbState.startup_title_source_step = 0;
         expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 61u,
                         "CSB startup consumes the authenticated profile cadence");
         view.csbBootProfile = NULL;
