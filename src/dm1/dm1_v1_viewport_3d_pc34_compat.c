@@ -3252,6 +3252,11 @@ static void dm1_viewport_3d_draw_field(DM1_Viewport3DState *state,
     DM1_FieldRenderPlanPc34 plan;
     if (!state || !state->viewport_pixels) return;
 
+    /* ReDMCSB DUNVIEW.C F0113 selects and draws the native field bitmap;
+     * the solid fill below is geometry-only coverage for data-free tests.
+     * A live source session must never promote it into a teleporter visual. */
+    if (state->source_graphics_required) return;
+
     if (!dm1_v1_field_render_plan_for_relative_pc34(rel_forward, rel_side, &plan)) {
         return;
     }

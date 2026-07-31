@@ -5120,6 +5120,10 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
                          cfg->viewport_stride > 0 ? cfg->viewport_stride : 320);
     vp.graphic_provider_callback = cfg->graphic_provider_callback;
     vp.graphic_provider_user_data = cfg->graphic_provider_user_data;
+    /* F0113 owns native field pixels.  Unlike a geometry probe, a verified
+     * CSB GRAPHICS.DAT session must fail closed while that bitmap family has
+     * no bound source span. */
+    vp.source_graphics_required = cfg->real_graphics_session ? true : false;
     vp.wall_ornament_ordinal_callback = cfg->wall_ornament_ordinal_callback;
     vp.wall_ornament_ordinal_user_data = cfg->wall_ornament_ordinal_user_data;
 

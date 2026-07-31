@@ -44152,6 +44152,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   PC3.4 lane passes, while the test retains its explicit skip until the local
   Atari-ST package is supplied through `FIRESTAFF_CSB_ATARI_ST_ROOT`.
 
+# CSB F0113 generated-field containment (2026-07-31)
+
+- ✅ A live, source-verified CSB viewport now refuses the shared
+  geometry-only cyan teleporter fill. ReDMCSB `DUNVIEW.C F0113` owns a native
+  field bitmap, so a session without a checked source span leaves that area
+  no-draw. Data-free geometry tests retain their fill helper. Verification:
+  `test_csb_v1_viewport_phase3_rendering` passes 2,655 checks, including the
+  real-session no-cyan regression.
+
 # CSB V2 HUD generated-chrome containment (2026-07-30)
 
 - ✅ Retired the procedural compass, numeric font, champion bars, action

@@ -456,6 +456,34 @@ static void test_null_framebuffer_render_is_noop(void)
     check_true("noop.viewport_pixels_still_null", cfg.viewport_pixels == NULL);
 }
 
+static void test_real_session_blocks_synthetic_teleporter_field(void)
+{
+    CSB_V1_ViewportConfig cfg;
+    CSB_V1_ViewportRuntimeDrawerBinding binding;
+    uint8_t screen[320 * 200];
+    /* M034_SQUARE_TYPE(C05_ELEMENT_TELEPORTER) == 5. */
+    uint8_t teleporter_grid[25];
+    size_t i;
+
+    memset(&binding, 0, sizeof(binding));
+    memset(screen, 0, sizeof(screen));
+    memset(teleporter_grid, 0xa0, sizeof(teleporter_grid));
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = screen;
+    cfg.viewport_stride = 320;
+    csb_v1_viewport_set_dungeon_grid(&cfg, teleporter_grid, 5, 5);
+    binding.real_graphics_session = 1;
+    csb_v1_viewport_apply_runtime_drawer_binding(&cfg, &binding);
+    csb_v1_viewport_render_frame(&cfg, 0, 2, 2);
+    for (i = 0u; i < sizeof(screen); ++i) {
+        if (screen[i] == 0x1cu) {
+            check_true("real.teleporter.no_synthetic_cyan", 0);
+            return;
+        }
+    }
+    check_true("real.teleporter.no_synthetic_cyan", 1);
+}
+
 static void test_runtime_projectile_and_explosion_overlays(void)
 {
     CSB_V1_ViewportConfig cfg;
@@ -4062,6 +4090,7 @@ int main(void)
     test_config_defaults_and_setters();
     test_runtime_drawer_binding_and_count_helpers();
     test_pc34_f0098_aperture_provider_binding();
+    test_real_session_blocks_synthetic_teleporter_field();
     test_null_framebuffer_render_is_noop();
     test_runtime_projectile_and_explosion_overlays();
     test_dsa_runtime_overlay_material_lifecycle();

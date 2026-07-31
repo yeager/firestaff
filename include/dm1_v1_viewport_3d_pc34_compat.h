@@ -970,6 +970,10 @@ typedef struct {
      * one byte per pixel, as M11_AssetLoader_Load does after IMG3 expansion. */
     DM1_ViewportGraphicProviderCallback graphic_provider_callback;
     void *graphic_provider_user_data;
+    /* A source-verified caller may forbid geometry-only visual fallbacks.
+     * ReDMCSB F0113 obtains a native field bitmap; a live CSB session without
+     * that span must leave the source page untouched. */
+    bool source_graphics_required;
 
     /* F0107 wall ornament ordinal provider and render plan callback.
      * When set, the viewport calls this to obtain the wall ornament ordinal
