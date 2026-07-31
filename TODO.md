@@ -1251,9 +1251,12 @@ diagnostic; it must not silently fall back to a generated visual.
   the 15-entry menu-options resource, and PLRD/ITEM text references are
   retained. The launcher filters legacy hardcoded English labels from
   production presentation. Bind TEXT4 control bytes through the real TABL /
-  FONT256.S2D / Saturn VDP2 display-layer path before allowing visible menu
-  text; Copetti's hardware reference supports the VDP2-layer ownership, but
-  not the missing Nexus-specific register/VRAM trace.
+  RLOWFIX `FONT#0/#1/#2` (FONT012) / Saturn VDP2 display-layer path before
+  allowing visible menu text; Copetti's hardware reference supports the
+  VDP2-layer ownership, while the Translation Kit identifies FONT012 as the
+  font for TEXT resources and FONT256.S2D as a separate champion/spell/UI
+  font. Neither reference supplies the missing Nexus-specific register/VRAM
+  trace.
 - **ALL-ORIGINAL-REPLACE-001:** Audit startup, title, entrance, HUD and
   dungeon runtime paths for placeholder pixels on every supported game before
   release.  Where matching original data exists under `.firestaff/data`, bind

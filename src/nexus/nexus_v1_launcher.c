@@ -8599,7 +8599,7 @@ int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
         state->save_selected_row,
         out_commands,
         max_commands);
-    /* TEXT4 is identified in RLOWFIX.BIN, but its FONT256/Saturn placement
+    /* TEXT4 is identified in RLOWFIX.BIN, but its FONT012/Saturn placement
      * is not yet authenticated.  Do not let the legacy English labels reach
      * the production launcher; state/navigation remain available. */
     if (out_commands && count > 0) {

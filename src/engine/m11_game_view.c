@@ -44238,7 +44238,7 @@ static void m11_nexus_startup_exec_text(
         (M11_NexusStartupDrawContext*)userdata;
     (void)context;
     (void)command;
-    /* TEXT4/TABL/FONT256.S2D → Saturn VDP2 glyph ownership is not yet
+    /* TEXT4/TABL/RLOWFIX FONT012 → Saturn VDP2 glyph ownership is not yet
      * authenticated.  Keep this final executor boundary no-draw even if a
      * stale or synthetic startup command bypasses the launcher filter. */
 }
