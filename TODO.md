@@ -303,7 +303,8 @@ diagnostic; it must not silently fall back to a generated visual.
   span must also be unique, matching the source-pack cache writer; ambiguous
   material is rejected as a whole. The public V2.2 cache contract now states
   the same runtime truth: it is command-level F0128 replacement only, never
-  a generic cell overlay or a PNG-on-demand route.
+  a generic cell overlay or a PNG-on-demand route. Its FSV22C wire integers
+  are decoded explicitly as Artpack Studio's little-endian format.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

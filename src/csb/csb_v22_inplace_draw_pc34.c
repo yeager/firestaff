@@ -160,6 +160,17 @@ static uint32_t fnv1a_hash(const char* s) {
     return h;
 }
 
+/* FSV22C is written with Python's struct '<6I8x' by Artpack Studio. Decode
+ * its wire integers explicitly so cache admission never depends on host byte
+ * order. */
+static uint32_t v22_read_u32le(const unsigned char *bytes)
+{
+    return (uint32_t)bytes[0] |
+           ((uint32_t)bytes[1] << 8) |
+           ((uint32_t)bytes[2] << 16) |
+           ((uint32_t)bytes[3] << 24);
+}
+
 static uint32_t fnv1a_bytes(const uint8_t *bytes, size_t size)
 {
     uint32_t hash = 2166136261u;
@@ -210,9 +221,8 @@ static int v22_load_cache_file(const char* path) {
     /* Parse header */
     if (g_v22_cache_size < FSV22C_HDR_SIZE) goto reject;
     if (memcmp(g_v22_cache_buf, FSV22C_MAGIC, 8) != 0) goto reject;
-    uint32_t version = 0, count = 0;
-    memcpy(&version, g_v22_cache_buf + 8, 4);
-    memcpy(&count, g_v22_cache_buf + 12, 4);
+    uint32_t version = v22_read_u32le(g_v22_cache_buf + 8);
+    uint32_t count = v22_read_u32le(g_v22_cache_buf + 12);
     if (version != FSV22C_VERSION || count == 0u || count > FSV22C_MAX_ENT) goto reject;
 
     /* Parse entries + index RGBA pointers */
@@ -224,12 +234,12 @@ static int v22_load_cache_file(const char* path) {
     for (uint32_t i = 0; i < count; ++i) {
         const unsigned char* ep = g_v22_cache_buf + entries_off + i * FSV22C_ENT_SIZE;
         FsV22CacheEntry e;
-        memcpy(&e.category_hash, ep + 0,  4);
-        memcpy(&e.asset_id_hash, ep + 4,  4);
-        memcpy(&e.width,         ep + 8,  4);
-        memcpy(&e.height,        ep + 12, 4);
-        memcpy(&e.rgba_size,      ep + 16, 4);
-        memcpy(&e.rgba_offset,    ep + 20, 4);
+        e.category_hash = v22_read_u32le(ep + 0);
+        e.asset_id_hash = v22_read_u32le(ep + 4);
+        e.width = v22_read_u32le(ep + 8);
+        e.height = v22_read_u32le(ep + 12);
+        e.rgba_size = v22_read_u32le(ep + 16);
+        e.rgba_offset = v22_read_u32le(ep + 20);
         size_t expected_rgba_size;
         if (e.width == 0u || e.height == 0u ||
             (size_t)e.width > SIZE_MAX / (size_t)e.height ||

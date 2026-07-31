@@ -44600,6 +44600,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   malformed or ambiguous material from becoming V2.2 pixels; the unresolved
   F0128 material routes remain fail-closed. Verification:
   `test_csb_v22_inplace_draw_pc34` passes 66/66.
+- ✅ 2026-07-31 CSB V2.2 cache wire-format ownership: FSV22C header and entry
+  integers are now decoded explicitly as little-endian, matching Artpack
+  Studio's `struct '<6I8x'` writer instead of relying on the host's native
+  byte order. Verification: `test_csb_v22_inplace_draw_pc34` passes 66/66.
 - ✅ 2026-07-31 CSB V2.2 public-contract audit: corrected the stale public
   header that still described the retired generic rectangle/PNG route. The
   interface now documents the actual FSV22C cache boundary and the required
