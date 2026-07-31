@@ -1805,6 +1805,56 @@ static void test_m11_runtime_draws_far_side_wall_with_center_blocker(void)
 
 #endif
 
+static void test_hoc_floor_sensor_ornament_survives_random_suppression(void)
+{
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonThings_Compat things;
+    struct DungeonSensor_Compat sensors[1];
+    unsigned char squareData[1];
+    unsigned short squareFirstThings[1];
+    unsigned char sensorRaw[8];
+
+    seed_active_view(&state);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&things, 0, sizeof(things));
+    memset(sensors, 0, sizeof(sensors));
+    memset(sensorRaw, 0, sizeof(sensorRaw));
+
+    /* Map zero is HoC. Its explicit floor sensor must reach F0108 even
+     * though random floor ornaments are suppressed for that special map. */
+    squareData[0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    squareFirstThings[0] = make_thing(THING_TYPE_SENSOR, 0);
+    sensorRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    sensorRaw[1] = (unsigned char)((THING_ENDOFLIST >> 8) & 0xffu);
+    sensors[0].ornamentOrdinal = 3;
+
+    map.width = 1;
+    map.height = 1;
+    map.randomFloorOrnamentCount = 8;
+    tiles.squareData = squareData;
+    tiles.squareCount = 1;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    dungeon.tilesLoaded = 1;
+    things.squareFirstThings = squareFirstThings;
+    things.squareFirstThingCount = 1;
+    things.rawThingData[THING_TYPE_SENSOR] = sensorRaw;
+    things.thingCounts[THING_TYPE_SENSOR] = 1;
+    things.sensors = sensors;
+    things.sensorCount = 1;
+    state.world.dungeon = &dungeon;
+    state.world.things = &things;
+
+    ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 3,
+              "HoC floor sensor keeps its source ornament ordinal");
+}
+
 static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
 {
     M11_GameViewState state;
@@ -1917,6 +1967,7 @@ int main(void)
     test_candidate_panel_blocks_direct_quickload_only();
     test_candidate_panel_blocks_rest_and_source_save_commands();
     test_candidate_panel_hides_stale_action_rows();
+    test_hoc_floor_sensor_ornament_survives_random_suppression();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();

@@ -9331,18 +9331,14 @@ static int m11_compute_floor_ornament_ordinal(
     ornSeed = state->world.dungeon->header.ornamentRandomSeed;
     randomFloorOrnCount = (int)map->randomFloorOrnamentCount;
 
-    if (mapIndex == 0) {
-        /* ReDMCSB REVIVE.C F0280 owns Hall of Champions candidate/mirror
-         * control data.  The stock HoC runtime should not surface floor
-         * ornaments in quiet non-wall cells; random/sensor floor ornament
-         * ordinals here select unrelated GRAPHICS.DAT art such as
-         * fireball-looking floor blobs. */
-        return 0;
-    }
-
     /* Random floor ornament from square byte bit 3 (MASK0x0008) */
     randomAllowed = (square & 0x08) != 0;
-    if (randomAllowed && randomFloorOrnCount > 0) {
+    /* Hall of Champions has control sensors on its otherwise quiet floor.
+     * ReDMCSB REVIVE.C F0280 owns those records, so its map-zero random
+     * floor-ornament stream must not select unrelated GRAPHICS.DAT art.
+     * This must not suppress explicit sensor ornaments: pressure plates are
+     * source data and are resolved below through the map's real floor list. */
+    if (mapIndex != 0 && randomAllowed && randomFloorOrnCount > 0) {
         /* value2 = 3000 + (mapIndex << 6) + mapWidth + mapHeight
          * Ref: ReDMCSB F0170 call from F0172 */
         value2 = (unsigned int)(3000 + (mapIndex << 6) +
