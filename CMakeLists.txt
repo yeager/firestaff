@@ -4698,12 +4698,16 @@ add_executable(test_theron_v1_startup_save_resume_pc34
     tests/test_theron_v1_startup_save_resume_pc34.c
     src/theron/theron_v1_startup_receipt.c
     src/theron/theron_v1_startup_runtime_entry.c
+    src/theron/theron_v2_hud_overlay_pc34.c
+    src/theron/theron_v2_hud_widget_assets_pc34.c
+    src/shared/fs_portable_compat.c
 )
 target_include_directories(test_theron_v1_startup_save_resume_pc34 PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
 target_compile_definitions(test_theron_v1_startup_save_resume_pc34 PRIVATE
-    THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK=1)
+    THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK=1
+    THERON_V2_HUD_FIXTURE_RENDER=1)
 target_link_libraries(test_theron_v1_startup_save_resume_pc34
     PRIVATE firestaff_theron firestaff_m12 firestaff_m10 m)
 if(NOT MSVC)
