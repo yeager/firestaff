@@ -189,6 +189,9 @@
   the decoded DB object and its original GDAT text/metadata route. The HUD
   must stay unnamed when that owner is absent; do not restore fixture IDs,
   English names, affinity/charge values, or diagnostic pool/index labels.
+  **2026-07-31 update:** M11 now has no residual DM2 ObjectID-to-local-name
+  lookup at all. It returns no leader-hand name until the complete decoded
+  DB-record to GDAT `dtText/0x18` and `FORMAT_SKSTR` ownership route exists.
 
 - **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
   Bind any future enhanced art only through verified original V1 GDAT material

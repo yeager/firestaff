@@ -41734,31 +41734,6 @@ int DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(const M11_GameViewStat
     return m11_v1_inventory_slot_icon_index_for_thing(state, championSlot, thing);
 }
 
-static int m11_dm2_leader_hand_object_name(const M11_GameViewState* state,
-                                           char* out,
-                                           int outSize) {
-    uint8_t pool = 0;
-    uint32_t idx = 0u;
-    const char *knownName;
-
-    if (!state || !out || outSize <= 0 ||
-        !dm2_db_decode_handle(state->dm2State.leader_hand_object,
-                              &pool,
-                              &idx)) {
-        return 0;
-    }
-    /* SKProject keeps DM2 item identity as ObjectID pool + index.  Do not
-     * show either Firestaff's retired item-name catalog or a diagnostic
-     * pool/index string in the HUD: both are host text, not source data. */
-    (void)pool;
-    knownName = dm2_v1_tech_magic_item_name((int)idx);
-    if (knownName && knownName[0] != '\0') {
-        snprintf(out, (size_t)outSize, "%s", knownName);
-        return out[0] != '\0';
-    }
-    return 0;
-}
-
 int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(const M11_GameViewState* state,
                                            char* out,
                                            int outSize) {
@@ -41766,7 +41741,13 @@ int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(const M11_GameViewState*
     if (!out || outSize <= 0) return 0;
     out[0] = '\0';
     if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-        return m11_dm2_leader_hand_object_name(state, out, outSize);
+        /* SKProject GET_ITEM_NAME resolves the decoded DB record through
+         * its GDAT category/class dtText/0x18 entry and FORMAT_SKSTR.
+         * An ObjectID pool/index alone is not that record ownership, so it
+         * must never fall through to a retired Firestaff item-name catalog
+         * or diagnostic text.  Keep the DM2 HUD unnamed until that full
+         * DB-to-GDAT route is available. */
+        return 0;
     }
     thing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
