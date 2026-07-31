@@ -443,6 +443,8 @@ diagnostic; it must not silently fall back to a generated visual.
   metadata remain available without a synthetic viewport surface.
   **2026-07-31 D3L/D3R wall follow-up:** the corresponding C10 fixture writer
   is removed. D3 wall geometry and transparency evidence remain metadata-only.
+  **2026-07-31 D3L2/D3R2 thing follow-up:** the F0115 fixture blit is removed;
+  source route, cell and dynamic-flip metadata remain available without pixels.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

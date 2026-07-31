@@ -65,19 +65,6 @@ static const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *spec_for(int side, int route
         route);
 }
 
-static int expected_source_pixel(int index)
-{
-    return (index % 4) == 0 ? 10 : 20 + index;
-}
-
-static void seed_pixels(uint8_t *source, uint8_t *destination)
-{
-    for (int i = 0; i < 32; ++i) {
-        source[i] = (uint8_t)expected_source_pixel(i);
-        destination[i] = 77;
-    }
-}
-
 static void test_anchor_table_and_evidence(void)
 {
     const char *e =
@@ -394,11 +381,8 @@ static void test_pixel_run_contract(void)
          ++i) {
         const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *s =
             csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_at_pc34(i);
-        uint8_t source[32];
-        uint8_t destination[32];
         char label[96];
 
-        seed_pixels(source, destination);
         snprintf(label, sizeof(label), "pixel%zu.transparent_color", i);
         expect_int(label, s ? s->transparent_color : -1, 10, A_DEFS);
         snprintf(label, sizeof(label), "pixel%zu.c10_skip_flag", i);
@@ -408,35 +392,6 @@ static void test_pixel_run_contract(void)
         snprintf(label, sizeof(label), "pixel%zu.scaled_path_none", i);
         expect_int(label, s ? s->scaled_path_uses_cm1_derived_bitmap_none : 0,
                    1, A_PROJECTILE);
-        snprintf(label, sizeof(label), "pixel%zu.blit_copied", i);
-        expect_int(label,
-                   csb_v1_viewport_d3l2_d3r2_f0115_apply_c10_blit_pc34(
-                       s, source, 8, destination, 8, 8, 4,
-                       s ? s->dynamic_horizontal_flip_flag : 0,
-                       s ? s->dynamic_vertical_flip_flag : 0),
-                   24, "synthetic 8-wide x 4-tall F0791 C10 pixel run");
-
-        for (int y = 0; y < 4; ++y) {
-            for (int x = 0; x < 8; ++x) {
-                const int sx = (s && s->dynamic_horizontal_flip_flag) ? 7 - x : x;
-                const int sy = (s && s->dynamic_vertical_flip_flag) ? 3 - y : y;
-                const int src_index = sy * 8 + sx;
-                const int dst_index = y * 8 + x;
-                const int source_pixel = expected_source_pixel(src_index);
-                if (x == 0 && y < 2) {
-                    snprintf(label, sizeof(label), "pixel%zu.sample%d%d", i, y, x);
-                    expect_int(label, destination[dst_index],
-                               source_pixel == 10 ? 77 : source_pixel,
-                               "dynamic horizontal/vertical flip plus C10 skip");
-                }
-            }
-        }
-
-        snprintf(label, sizeof(label), "pixel%zu.reject_null", i);
-        expect_int(label,
-                   csb_v1_viewport_d3l2_d3r2_f0115_apply_c10_blit_pc34(
-                       NULL, source, 8, destination, 8, 8, 4, 0, 0),
-                   -1, "invalid input guard");
     }
 }
 

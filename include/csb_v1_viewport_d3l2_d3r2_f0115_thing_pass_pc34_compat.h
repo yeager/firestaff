@@ -203,17 +203,6 @@ int csb_v1_viewport_d3l2_d3r2_f0115_explosion_side_zone_pc34(
     const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *spec,
     int view_cell);
 
-int csb_v1_viewport_d3l2_d3r2_f0115_apply_c10_blit_pc34(
-    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height,
-    int flip_horizontal,
-    int flip_vertical);
-
 int csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
     const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *spec,
     int source_graphics_dat_bound,

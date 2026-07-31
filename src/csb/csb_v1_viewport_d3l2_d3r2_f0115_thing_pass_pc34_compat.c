@@ -402,39 +402,6 @@ int csb_v1_viewport_d3l2_d3r2_f0115_explosion_side_zone_pc34(
            view_cell;
 }
 
-int csb_v1_viewport_d3l2_d3r2_f0115_apply_c10_blit_pc34(
-    const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height,
-    int flip_horizontal,
-    int flip_vertical)
-{
-    int copied = 0;
-    if (!spec || !source || !destination ||
-        width <= 0 || height <= 0 ||
-        source_stride < width || destination_stride < width) {
-        return -1;
-    }
-
-    /* ReDMCSB: DUNVIEW.C:5881-5882 and 6192-6193 pass dynamic flip flags
-     * to F0791 with C10_COLOR_FLESH transparency. */
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const int sx = flip_horizontal ? (width - 1 - x) : x;
-            const int sy = flip_vertical ? (height - 1 - y) : y;
-            const uint8_t pixel = source[(sy * source_stride) + sx];
-            if (pixel == (uint8_t)spec->transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-    return copied;
-}
-
 int csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_real_asset_receipt_pc34(
     const CSB_V1_D3L2D3R2F0115ThingPassSpecPc34 *spec,
     int source_graphics_dat_bound,

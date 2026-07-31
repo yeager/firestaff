@@ -44649,6 +44649,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-31 CSB D3L/D3R wall fixture removal: removed the matching C10
   frame-copy helper and retained ReDMCSB D3 wall geometry metadata only.
 
+- ✅ 2026-07-31 CSB D3L2/D3R2 F0115 fixture removal: removed the
+  unauthenticated C10 writer while keeping ReDMCSB routing, cells and flip
+  metadata in the source-lock test.
+
 - ✅ Rechecked the production order start, menu boundary, Entrance, HUD and
   viewport against the local hash-verified CSB packages. The PC3.4 real-data
   launch probe passed 75 checks: C001 title phases, C002/C003/C004 entrance
