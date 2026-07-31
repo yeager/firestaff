@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 Nexus FONT012 usage inventory: the DMWeb Translation Kit
+  confirms FONT012 `FONT#0/#1/#2` is the text path for menu, item, dialog,
+  inscription and save/message strings, with 291 half-width Kana/Romaji,
+  250 full-width and 710 Kanji glyph records; FONT256.S2D is the separate
+  242-character spell/champion font. TODO provenance now records this split.
+
 - ✅ 2026-07-31 Nexus FONT012 retail admission: added a bounded `FONT#0/#1/#2`
   header receipt for the real `RLOWFIX.BIN` resources. It verifies the retail
   resource tags/indices and the documented 291×6×12, 250×12×12 and 710×12×12

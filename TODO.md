@@ -1257,8 +1257,10 @@ diagnostic; it must not silently fall back to a generated visual.
   allowing visible menu text; Copetti's hardware reference supports the
   VDP2-layer ownership, while the Translation Kit identifies FONT012 as the
   font for TEXT resources and FONT256.S2D as a separate champion/spell/UI
-  font. Neither reference supplies the missing Nexus-specific register/VRAM
-  trace.
+  font. The kit further bounds FONT012 to 291 half-width Kana/Romaji glyphs,
+  250 full-width glyphs and 710 Kanji glyphs, and identifies its menu/item/
+  dialog/save usages; neither reference supplies the missing Nexus-specific
+  glyph-code, register or VRAM trace.
 - **ALL-ORIGINAL-REPLACE-001:** Audit startup, title, entrance, HUD and
   dungeon runtime paths for placeholder pixels on every supported game before
   release.  Where matching original data exists under `.firestaff/data`, bind
