@@ -4911,20 +4911,11 @@ lane is carried forward in the sections below.
   (class a: stale line windows), v1_viewport_source_zone_tables
   (class a: tables live in dm1_v1_viewport_3d_pc34_compat.c as
   k_c2500_raw/k_c2900_raw/k_c3200_center; C2500/C2900 now strictly match
-  layout-696). DIAGNOSED in round 23, not yet fixed:
-  - pass582_dm1_v1_explosion_viewport_clip_source_lock — missing
-    'int M11_GameView_GetV1ExplosionPatternD0CZoneId(void)' in
-    m11_game_view.c (likely moved to a DM1 owner module; re-anchor)
-  - pass576_dm1_v1_side_wall_occlusion_source_row_clipping — only the
-    'firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows'
-    window fails (tests/test_dm1_v1_viewport_3d_pc34_compat.c:276-330
-    stale; other two windows PASS — refresh window)
-  - v1_viewport_source_zone_tables C3200 SIDE anchors stay class b:
-    pass811 (b553ccdc6) deliberately re-derived the side table into
-    viewport-local G0224-order anchors, so the raw multiset-subset lock
-    is a provenance/structure lock until the G0224->viewport transform
-    is derived and source-locked
-  2026-07-31 verification refresh: the movement matrix now uses the active
+  layout-696). 2026-07-31 source-lock refresh: pass582 is anchored to its
+  current DM1 owner, pass576 scans the current D3--D0 side-wall pixel and
+  source-row clip tests instead of a stale line window, and the viewport zone
+  table gate passes. These source gates do not replace the real-capture work
+  listed above. The movement matrix now uses the active
   CTest/Ninja build directory; pass207/pass608 blocker receipts are generated
   deterministically and missing external capture tools remain explicitly
   blocked rather than failing the source lane. The movement matrix and the

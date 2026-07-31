@@ -45649,3 +45649,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   The viewport golden gate now accepts that explicit prerequisite state while
   retaining its no-pixel-parity boundary. Verification: DM1 V1 CTest passes
   1,007/1,007; DM1 V2.x passes 87/87 with local original PC34 data.
+- ✅ 2026-07-31 DM1 V1 side-wall source-row audit refresh: pass576 now
+  scans the current D3--D0 runtime pixel and source-row clip tests instead of
+  a stale line window. Targeted verification passes pass576, pass582 and the
+  viewport source-zone table gate; this remains a source lock, not a capture
+  parity claim.
