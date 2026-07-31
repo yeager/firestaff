@@ -77,9 +77,9 @@ extern "C" {
  *   3. REFLECTOR → projectile despawned, no damage (DM2 doesn't
  *                  reflect back; REFLECTOR creatures reflect spells,
  *                  see c_creature.cpp:401-420).
- *   4. TURNS_MISSILE → creature re-targets projectile (placeholder for
- *                      future routing); for now treated as HIT (same
- *                      damage path).
+ *   4. TURNS_MISSILE → requires the source DB14/timer target handoff.
+ *                      Until that route is bound, Firestaff admits no
+ *                      collision mutation for this branch.
  *   5. Default → HIT: damage applied, projectile despawned, optional
  *                  kill event. */
 typedef enum {
@@ -88,7 +88,7 @@ typedef enum {
     DM2_PROJ_CREATURE_OUTCOME_NONMATERIAL    = 2, /* projectile passes through */
     DM2_PROJ_CREATURE_OUTCOME_ABSORBED       = 3, /* projectile despawned, no damage */
     DM2_PROJ_CREATURE_OUTCOME_REFLECTED      = 4, /* projectile despawned (DM2 spell-reflector) */
-    DM2_PROJ_CREATURE_OUTCOME_REDIRECTED     = 5, /* projectile would be turned (placeholder HIT path) */
+    DM2_PROJ_CREATURE_OUTCOME_REDIRECTED     = 5, /* source turn route not yet admitted */
 } DM2_ProjectileCreatureOutcome;
 
 /* ── Result struct ─────────────────────────────────────────────────

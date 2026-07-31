@@ -203,11 +203,15 @@ dm2_v1_projectile_creature_collision_resolve(int projectile_slot,
             return r;
 
         case DM2_PROJ_CREATURE_OUTCOME_REDIRECTED:
-            /* TURNS_MISSILE: creature re-targets the projectile.
-             * DM2 placeholder: same damage path as HIT, projectile is
-             * still consumed (the redirect would happen on the next
-             * F0811 tick using the new target). */
-            /* fallthrough */
+            /* SKProject's TURNS_MISSILE branch owns a DB14 projectile and
+             * its next timer/target handoff. Firestaff has not recovered
+             * that record chain, so treating it as HIT would fabricate a
+             * damage result. Leave both source objects untouched instead. */
+            r.accepted = 0;
+            r.damage_dealt = 0;
+            r.hp_after = r.hp_before;
+            r.impact_attack_effective = 0;
+            return r;
 
         case DM2_PROJ_CREATURE_OUTCOME_HIT:
         default: {

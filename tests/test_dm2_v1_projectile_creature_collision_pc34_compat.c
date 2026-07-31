@@ -10,7 +10,7 @@
  *   4. NONMATERIAL                   — projectile passes through, no damage
  *   5. ABSORBS_MISSILE               — projectile despawned, no damage
  *   6. REFLECTOR                     — projectile despawned, no damage
- *   7. REDIRECTED (TURNS_MISSILE)    — same damage path as HIT
+ *   7. REDIRECTED (TURNS_MISSILE)    — blocked without source DB14/timer data
  *   8. INVALID projectile slot       — rejected
  *   9. Damage formula pinning        — exact damage values for fixed inputs
  *
@@ -358,12 +358,11 @@ static int test_reflector(void) {
  *
  * Source: skproject/SKWIN/SkWinCore.cpp:10479-10561 (AI_W30_TURNS_MISSILE
  * check).  Behavior in DM2: creature re-targets the projectile.  This
- * module treats REDIRECTED as the same damage path as HIT (the actual
- * redirect routing is owned by the AI module, not this gate).
+ * branch requires a live DB14 projectile and timer/target ownership.
+ * Firestaff must not substitute a hit until that route is recovered.
  *
- * Verifies that the collision still applies damage + despawns the
- * projectile, marking the slot for the next F0811 advance tick to
- * pick up the redirect target. */
+ * Verifies that no collision state is fabricated: the creature and
+ * projectile remain unchanged. */
 
 static int test_redirected_turns_missile(void) {
     dm2_v1_projectile_reset_counters();
@@ -382,15 +381,19 @@ static int test_redirected_turns_missile(void) {
 
     DM2_V1_ProjectileCreatureCollisionResult r =
         dm2_v1_projectile_creature_collision_resolve(proj_slot, 12);
+    DM2_V1_ProjectileSlotSnapshot projectile_after;
+    int projectile_retained =
+        dm2_v1_projectile_get_slot(proj_slot, &projectile_after);
 
-    /* damage = max(1, 12 - 4/2) = max(1, 10) = 10
-     * HP = 60 - 10 = 50 */
     int ok = r.outcome == DM2_PROJ_CREATURE_OUTCOME_REDIRECTED
-        && r.accepted == 1
-        && r.damage_dealt == 10
-        && r.hp_after == 50
+        && r.accepted == 0
+        && r.damage_dealt == 0
+        && r.hp_after == 60
         && r.kill_event_emitted == 0
-        && r.projectile_despawned == 1;
+        && r.projectile_despawned == 0
+        && projectile_retained
+        && projectile_after.slotIndex == proj_slot
+        && dm2_v1_creature_instance_hp(cid) == 60;
     return ok;
 }
 

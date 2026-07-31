@@ -118,7 +118,10 @@
   projectile handoff from `c_tim_proc.cpp::DM2_STEP_MISSILE` with its record
   owner, facing, energy, attack and map state. The current bounded timer path
   allocates a verified DB14 record where possible but deliberately does not
-  invent a cache projectile from an incomplete timer payload.
+  invent a cache projectile from an incomplete timer payload. **2026-07-31
+  update:** the unbound `AI_W30_TURNS_MISSILE` collision branch no longer
+  substitutes an ordinary hit; it leaves projectile and creature untouched
+  until the source target/timer handoff is available.
 
 - **DM2-SKSAVE-ORIGINAL-WRITER:** `dm2_v1_world_state_serialize()` is now
   deliberately fail-closed. Port SK-projects

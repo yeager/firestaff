@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 TURNS_MISSILE placeholder closure: the projectile versus
+  creature collision resolver no longer turns an unbound
+  `AI_W30_TURNS_MISSILE` redirect into invented damage and a despawn.
+  Original DM2 needs its DB14 projectile plus timer/target handoff, so this
+  branch now leaves both objects unchanged until that source route exists.
+  Verification: `test_dm2_v1_projectile_creature_collision_pc34_compat`
+  covers the no-mutation branch.
+
 - ✅ 2026-07-31 DM2 original-envelope transactional import: a malformed
   trailing optional section in a D2RS save can no longer partially overwrite
   the active session. The importer now decodes to a local candidate and
