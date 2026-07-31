@@ -46776,3 +46776,19 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `nexus_drops_for_type()`/`nexus_drops_roll()` now return no drop until the
   Saturn item/drop source is identified. This prevents fabricated inventory
   and HUD gold state.
+
+- ✅ 2026-07-31 DM1 HoC floor-sensor and center-wall presentation repair:
+  explicit source floor-sensor ornaments remain eligible on map 0 while the
+  random HoC ornament stream stays suppressed. The V2.2 source-shape cache
+  also marks every center/side cell behind the nearest closed center wall as
+  inactive, preventing its post-V1 presentation pass from reopening a blocked
+  corridor. Verification: `test_m11_overlay_command_queue_block` (191/191)
+  and `test_m11_v22_shape_cache_pc34` (31/31).
+
+- ✅ 2026-07-31 DM1 F0115 alcove-object input binding: C080 now accepts the
+  actual current-frame C2548/F0791 destination rectangle for a front alcove
+  item, in addition to the original C05 ornament zone. This preserves wall
+  sensor input while making a real rendered torch/object pickable. Verification:
+  `test_m11_dm1_real_alcove_item_runtime_pc34` finds map 1 `(6,3,2)` in the
+  installed PC34 corpus and successfully transfers the rendered object into
+  the leader hand.
