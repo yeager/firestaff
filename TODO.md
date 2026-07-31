@@ -56,6 +56,13 @@
   Shooter records currently reject until their owner, facing, energy and
   attack can be traced from original data.
 
+- **DM2-SHOP-GLASS-OWNER-HANDOFF:** The fixed-coordinate catalog path is
+  closed. SKProject `DRAW_WALL_ORNATE` passes the live wall actuator into
+  `_32cb_0f82_SHOP_GLASS`, which resolves the shop through the active
+  `WALL_GFX` GDAT image/overlay chain. Bind those record and asset owners,
+  then port its transaction state; do not reopen a general-store catalog,
+  NPC text, stock or price table from coordinates.
+
 - **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
   Bind any future enhanced art only through verified original V1 GDAT material
   and a complete, provenance-checked V2.2 pack; never reintroduce diagnostic

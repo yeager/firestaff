@@ -9156,26 +9156,18 @@ int dm2_v1_shop_commit_inventory_to_runtime(uint8_t champion) {
 
 int dm2_v1_runtime_enter_shop(int level, int x, int y) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    DM2_V1_GameState *gs;
-    int shop_id = DM2_SHOP_ID_NONE;
 
+    (void)level;
+    (void)x;
+    (void)y;
+    /* SKProject's shop glass is not selected by a fixed map coordinate or
+     * catalog. _32cb_0f82_SHOP_GLASS receives the live wall actuator while
+     * DRAW_WALL_ORNATE resolves its WALL_GFX GDAT image/overlay chain
+     * (SKWINSPX/src/v4/skguidrw.cpp:3551-3640, 4042-4049). Until Firestaff
+     * carries that complete record and GDAT ownership, opening a fixed shop
+     * would invent stock, price, NPC and transaction state. */
     if (!rt->boot || !rt->boot->dm2_state) return -1;
-    gs = (DM2_V1_GameState *)rt->boot->dm2_state;
-    if (!rt->outdoor && !gs->outdoor) return -1;
-    for (int i = 1; i <= DM2_NUM_BUILTIN_SHOPS; i++) {
-        const DM2_V1_ShopDescriptor *shop = dm2_v1_shop_get_builtin(i);
-        if (shop && shop->map_level == level &&
-            shop->map_x == x && shop->map_y == y) {
-            shop_id = shop->shop_id;
-            break;
-        }
-    }
-    if (shop_id == DM2_SHOP_ID_NONE) return -1;
-    dm2_v1_shop_set_party_gold((uint32_t)(gs->gold < 0 ? 0 : gs->gold));
-    if (!dm2_v1_shop_enter(shop_id)) return -1;
-    dm2_v1_shop_load_inventory_from_runtime(0); /* leader = champion 0 */
-    gs->time_of_day = rt->time_of_day_minutes;
-    return 0;
+    return -1;
 }
 
 int dm2_v1_runtime_leave_shop(void) {

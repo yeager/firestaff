@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 coordinate-shop catalog closure: runtime no longer opens
+  a fixed-coordinate shop or creates catalog transaction state. SKProject
+  `DRAW_WALL_ORNATE` → `_32cb_0f82_SHOP_GLASS` requires the live wall
+  actuator and `WALL_GFX` GDAT image/overlay chain, which remains the only
+  future admission route. Verification:
+  `test_dm2_v1_runtime_shop_pc34_compat` passes 7/7.
+
 - ✅ 2026-07-31 DM2 packed-AI fixture closure: removed the production
   `CREATURE_AI` raw-36-byte fallback. SKProject's
   `EXTENDED_LOAD_AI_DEFINITION` requires a source-owned
