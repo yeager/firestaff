@@ -6376,6 +6376,13 @@
   probe passes for both real ISO identities, raw alignment, sector counts,
   and unknown-hash rejection.
 
+- ✅ 2026-07-31 Theron asset-loader cleanup: removed the unreachable
+  Firestaff-only THG3 tile parser body that followed an unconditional
+  rejection. The production loader now has no dead synthetic tile-decoding
+  path; real graphics remain blocked until an authenticated Track 02 bank
+  route is available. Verification: rendering, startup/save-resume, and
+  Track 19 inventory tests pass.
+
 - ✅ 2026-07-31 Theron V1 viewport production isolation: removed the
   procedural dungeon, UI chrome, tile selector, and indexed-to-M11 presenter
   from the production archive. Production now owns a lifecycle-preserving

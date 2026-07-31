@@ -12,6 +12,11 @@
   intake only. Later-level and object semantics remain blocked until a
   source-backed CD-read/record trace binds them.
 
+- **THERON-LEGACY-ASSET-PARSER-CLEANUP:** The unreachable THG3/THS4 tile
+  parser body has been removed. These Firestaff-only marker formats remain
+  rejected; future real bitmap/palette work must enter through an
+  authenticated Track 02 loader route.
+
 - **THERON-V1-UI-CHROME-REAL-DATA:** The inferred bar/text/champion-slot
   implementation is now fixture-only. Production exposes a no-op API until
   the original Track 02 UI chrome bank and font records are decoded. The
