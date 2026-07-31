@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 Theron viewport-topprad: tog bort overifierade hårdkodade
+  dungeonetiketter för dungeon 2–7 (`Catacombs`, `Caverns`, `Castle`,
+  `Tower`, `Temple`, `Final Dungeon`). När motsvarande Track 02-header ännu
+  inte finns i den lokala verkliga datan visas `UNAVAILABLE`; den verifierade
+  startdungeonen behåller `Hall of Records`. Renderingstestet passerar 25/25.
+
 - ✅ 2026-07-31 Theron Soul Room-meny: när en Track 02-rosteretikett inte
   är dekoderad visas nu `UNAVAILABLE` i meny-layouten i stället för fasta
   hjältenamn från en syntetisk fallback. Verifierade JP-rosteretiketter
