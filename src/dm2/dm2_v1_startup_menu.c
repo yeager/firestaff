@@ -975,7 +975,7 @@ int dm2_v1_startup_execute_plan(
          * maps UI_EVENTCODE_START_NEW_GAME to glbSpecialScreen = 1. Its
          * SHOW_MENU_SCREEN loop then returns and INIT calls GAME_LOAD(),
          * which invokes LOAD_NEW_DUNGEON(). Do not replace that original
-         * DUNGEON.DAT path with dm2_v1_session_new() or a synthetic party. */
+         * DUNGEON.DAT path with a test fixture or a synthetic party. */
         out_execution->kind = DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED;
         out_execution->status = "DM2 GAME_LOAD DATA REQUIRED";
         return 1;

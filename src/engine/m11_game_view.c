@@ -1299,8 +1299,8 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
                 ? route->status : "DM2 GAME_LOAD DATA REQUIRED";
             /* SKWINSPX SkWinCore.cpp::SHOW_MENU_SCREEN returns to INIT,
              * which calls GAME_LOAD()/LOAD_NEW_DUNGEON.  Do not replace that
-             * source-owned load with dm2_v1_session_new(): its canned party,
-             * gold and map pose are a save-fixture helper, not DM2 data.
+             * source-owned load with a test fixture: its canned party, gold
+             * and map pose are not DM2 data.
              * Reload the verified original DUNGEON.DAT portion first, then
              * retain the title-menu boundary until GAME_LOAD can hand off its
              * actuator initialization and champion-selection UI. The source

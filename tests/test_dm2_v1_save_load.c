@@ -30,6 +30,7 @@
 
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_session_fixture.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_game.h"
@@ -739,7 +740,7 @@ static int test_stale_fixture_metadata_guard(void)
     int sz;
     int r;
 
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     sz = dm2_v1_session_serialize(&session, buf, sizeof(buf));
     if (sz <= 0) {
         printf("    FAIL: serialize base fixture failed\n");
@@ -1903,7 +1904,7 @@ static int test_sksave_corpus_scan_receipt(void)
     raw_timer.interval_ticks = 0x0005u;
     raw_timer.flags = 0x0001u;
     raw_timer.user_data = 0x0022u;
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.game_tick = 0x1234u;
     payload_c_size = dm2_v1_session_serialize(&session, payload_c,
                                               sizeof(payload_c));
@@ -2504,7 +2505,7 @@ static int test_champion_death_permanence_source_lock(void)
         return 0;
     }
 
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.champion_count = 1;
     session.leader_index = 0;
     memset(session.champion_data[0], 0, sizeof(session.champion_data[0]));
@@ -2944,7 +2945,7 @@ static int test_sksave_corpus_runtime_import(void)
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_corpus_import_%d",
              FS_GETPID());
     FS_MKDIR(tmpdir);
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.game_tick = 0x7788u;
     session.party_x = 6;
     session.party_y = 7;
@@ -3075,7 +3076,7 @@ static int test_original_sksave_corpus_runtime_import(void)
     }
     /* A valid Firestaff slot must not become an implicit substitute when the
      * explicitly selected original corpus row later goes stale. */
-    dm2_v1_session_new(&fallback_session);
+    dm2_v1_test_session_fixture_new(&fallback_session);
     fallback_session.party_x = 9u;
     fallback_session.party_y = 9u;
     fallback_payload_size = dm2_v1_session_serialize(

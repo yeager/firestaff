@@ -8,6 +8,7 @@
 #include "dm1_v1_save_load.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_session_fixture.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 #include "nexus_v1_champions.h"
@@ -275,7 +276,7 @@ static int write_dm2_slot_save(const char* root,
     if (!root || !outPath || outPathSize == 0u) {
         return 0;
     }
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.game_tick = 77u;
     session.party_x = 22u;
     session.party_y = 13u;
@@ -301,7 +302,7 @@ static int write_dm2_last_session_save(const char* root,
     if (!root || !outPath || outPathSize == 0u) {
         return 0;
     }
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.game_tick = 91u;
     session.party_x = 17u;
     session.party_y = 8u;

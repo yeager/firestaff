@@ -63,6 +63,7 @@
 #include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_session_fixture.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -176,7 +177,7 @@ static int write_dm2_resume_slot(const char* root,
         fclose(probe);
         remove(probePath);
     }
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.game_tick = 88u;
     session.party_x = 24u;
     session.party_y = 12u;

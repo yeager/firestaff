@@ -22,6 +22,7 @@
  */
 
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_session_fixture.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_save_load.h"
 #include <stdio.h>
@@ -166,12 +167,12 @@ static void test_build_champion_record(void)
           "Wizard portrait index is stored");
 }
 
-/* ── Test 3: Session new (new game state) ── */
-static void test_session_new(void)
+/* ── Test 3: Test-fixture session ── */
+static void test_session_fixture(void)
 {
-    printf("  Session new (new game)...\n");
+    printf("  Test-fixture session...\n");
     DM2_V1_SessionState session;
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
 
     CHECK(session.game_tick == 0, "game_tick starts at 0");
     CHECK(session.rng_seed == 257, "rng_seed defaults to dungeon seed 257");
@@ -185,7 +186,7 @@ static void test_session_new(void)
     CHECK(session.time_of_day_minutes == 720, "Time = noon (720 min)");
     CHECK(session.rain_intensity == 0, "No rain at start");
     CHECK(session.champion_count == 4, "4 starter champions");
-    CHECK(session.leader_index == 0, "Leader is champion 0 (Theron)");
+    CHECK(session.leader_index == 0, "fixture leader is champion 0");
 }
 
 /* ── Test 4: Session validation ── */
@@ -195,23 +196,23 @@ static void test_session_validate(void)
     DM2_V1_SessionState session;
 
     /* Valid session */
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     CHECK(dm2_v1_session_validate(&session), "Fresh session is valid");
 
     /* Corrupt: champion_count > 4 */
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.champion_count = 5;
     CHECK(!dm2_v1_session_validate(&session),
           "champion_count > 4 is invalid");
 
     /* Corrupt: leader_index >= 4 */
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.leader_index = 4;
     CHECK(!dm2_v1_session_validate(&session),
           "leader_index >= 4 is invalid");
 
     /* Corrupt: party position out of range */
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.party_x = 100;
     CHECK(!dm2_v1_session_validate(&session),
           "party_x > 63 is invalid");
@@ -220,7 +221,7 @@ static void test_session_validate(void)
      * truncation semantics; validator checks > 4 billion. */
 
     /* Corrupt: time of day out of range */
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.time_of_day_minutes = 2000;
     CHECK(!dm2_v1_session_validate(&session),
           "time_of_day >= 1440 is invalid");
@@ -274,7 +275,7 @@ static void test_serialize_roundtrip(void)
 {
     printf("  Serialize→deserialize round-trip...\n");
     DM2_V1_SessionState orig, loaded;
-    dm2_v1_session_new(&orig);
+    dm2_v1_test_session_fixture_new(&orig);
 
     /* Verify the starter party has names */
     DM2_ChampionRecord *r0 = (DM2_ChampionRecord *)orig.champion_data[0];
@@ -352,7 +353,7 @@ static void test_slot_roundtrip(void)
     DM2_V1_SessionState orig, loaded;
 
     /* Modify session for this test */
-    dm2_v1_session_new(&orig);
+    dm2_v1_test_session_fixture_new(&orig);
     /* ReDMCSB LOADSAVE.C:1941-1947 and 2731-2742 restore the party map,
      * coordinates, and direction from save state; keep the DM2 session
      * transition fields round-tripping so map continuity does not drift. */
@@ -490,7 +491,7 @@ int main(void)
 
     /* ── Session new ── */
     printf("\n--- Session new ---\n");
-    test_session_new();
+    test_session_fixture();
 
     /* ── Session validation ── */
     printf("\n--- Session validation ---\n");

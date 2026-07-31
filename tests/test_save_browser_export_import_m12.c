@@ -3,6 +3,7 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_save_load.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_session_fixture.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -672,7 +673,7 @@ int main(void) {
         DM2_V1_SessionState dm2ImportSession;
         const M12_SaveBrowserEntry* importedDm2;
 
-        dm2_v1_session_new(&dm2ImportSession);
+        dm2_v1_test_session_fixture_new(&dm2ImportSession);
         dm2ImportSession.party_level = 9u;
         dm2ImportSession.party_x = 11u;
         dm2ImportSession.party_y = 13u;
@@ -1001,7 +1002,7 @@ int main(void) {
                  "%s/firestaff-csb-sibling.sav", nestedCsbSaves);
         check(write_bytes(nestedSavePath, "CSB-SIBLING-SAVE"),
               "wrote sibling CSB save fixture");
-        dm2_v1_session_new(&dm2Session);
+        dm2_v1_test_session_fixture_new(&dm2Session);
         dm2Session.party_level = 5u;
         dm2Session.party_x = 19u;
         dm2Session.party_y = 12u;

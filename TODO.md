@@ -33,6 +33,9 @@
   reloads also refresh deterministic header fields from the same verified
   source bytes. Original SKSave import no longer seeds this route from the
   legacy fixture party before decoding its own SUPPRESS champion records.
+  The former exported `dm2_v1_session_new()`/starter-party route has been
+  removed from the production library; its explicitly named fixture now lives
+  under `tests/` only.
   A verified New Game reload now also clears stale resume portraits,
   inventory and leader hand before source mirror selection; it still cannot
   create a replacement party or enter runtime.

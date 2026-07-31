@@ -1,4 +1,5 @@
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_session_fixture.h"
 #include <stdio.h>
 #include <string.h>
 int main(void) {
@@ -49,7 +50,7 @@ int main(void) {
     material.raw4_receipt_hash = 25;
     material.source.identity_hash ^= 1;
     ok &= !dm2_v1_runtime_flying_item_material_receipt(&r,&material,&r);
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.original_timer_count = 8;
     memcpy(&session.original_timers[7], timer_raw + 70, DM2_TIMER_ENTRY_SIZE);
     ok &= dm2_v1_runtime_flying_item_timer_from_session(&session,&m,&s,&r) &&

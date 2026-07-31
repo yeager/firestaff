@@ -24,6 +24,7 @@
 #include "dm2_v1_world_model.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_session_fixture.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_viewport_renderer.h"
 
@@ -675,7 +676,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
     }
 
     memset(&session, 0, sizeof(session));
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.game_tick = 77;
     session.party_level = 2;
     session.party_x = 19;

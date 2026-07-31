@@ -1,4 +1,5 @@
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_session_fixture.h"
 #include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
@@ -66,7 +67,7 @@ int main(void)
     uint32_t session_identity;
     int ok;
 
-    dm2_v1_session_new(&session);
+    dm2_v1_test_session_fixture_new(&session);
     session.party_level = 1; session.party_dir = 2;
     dm2_v1_viewport_init(&owner, framebuffer, 320);
     session_identity = dm2_v1_runtime_dm2_viewport_session_identity(&session);

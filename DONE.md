@@ -1,3 +1,14 @@
+- ✅ 2026-07-31 DM2 starter-party fixture isolation: removed the exported
+  `dm2_v1_session_new()` and `dm2_v1_generate_starter_party()` production
+  paths, including their fabricated names, gold, noon and entrance pose.
+  The fixture now exists solely in `tests/dm2_v1_session_fixture.h`; the
+  source route remains `SHOW_MENU_SCREEN` → `GAME_LOAD` →
+  `LOAD_NEW_DUNGEON`, which creates no party. Verification: the production
+  archive has neither retired symbol; `test_dm2_v1_utility_import` passes
+  136/136, and `test_dm2_v1_m11_startup_profile_gate` plus
+  `test_dm2_v1_m11_launcher_handoff_boundary` pass against
+  `~/.firestaff/data/dm2`.
+
 - ✅ 2026-07-31 DM2 boot day-cycle fixture removal: the boot profile no
   longer publishes a guessed 1,440-minute / 1,092-tick environment cycle.
   Both fields remain explicitly unavailable until original `timdat` and

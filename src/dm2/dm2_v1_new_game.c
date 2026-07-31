@@ -3,10 +3,7 @@
  *
  * Phase 6: Utility/import flow — DM2-specific load/start flow.
  *
- * Implements:
- *   1. Starter party generation (4 champions at game start)
- *   2. New game flow (boot→game→dungeon→party pipeline)
- *   3. Session save/load round-trip with slot manager
+ * Implements source-owned new-game/load boundaries and session save/load.
  *
  * Source locks (ReDMCSB WIP20210206):
  *   CHAMPION.C F0280  — CHAMPION_AddCandidateChampionToParty:
@@ -44,28 +41,6 @@ enum {
 static const int s_dm2_raw_db_record_size[DM2_RAW_THING_TYPE_COUNT] = {
     0x04, 0x06, 0x04, 0x08, 0x10, 0x04, 0x04, 0x04,
     0x04, 0x08, 0x04, 0x00, 0x00, 0x00, 0x08, 0x04
-};
-
-/* ════════════════════════════════════════════════════════════════
- * Starter party tables
- * Source: docs/dm2_party_state.md § Starter party
- *         DM2 default Hall of Champions party
- * ════════════════════════════════════════════════════════════════ */
-
-typedef struct {
-    const char *first_name;
-    const char *last_name;
-    uint8_t     portrait;
-    DM2_ChampionClass champ_class;
-    uint8_t     view_cell;   /* TL=0, TR=1, BL=2, BR=3 */
-    uint8_t     direction;   /* party facing: 0=N 1=E 2=S 3=W */
-} DM2_StarterChampion;
-
-static const DM2_StarterChampion s_starter_party[4] = {
-    { "Theron",   "", DM2_PORTRAIT_FIGHTER_MALE,   DM2_CLASS_FIGHTER, DM2_VIEW_CELL_FRONT_LEFT,  0 },
-    { "Karla",   "", DM2_PORTRAIT_NINJA_FEMALE,   DM2_CLASS_NINJA,    DM2_VIEW_CELL_FRONT_RIGHT, 0 },
-    { "Aldric",  "", DM2_PORTRAIT_PRIEST_MALE,    DM2_CLASS_PRIEST,   DM2_VIEW_CELL_BACK_LEFT,   0 },
-    { "Seraphina","",DM2_PORTRAIT_WIZARD_FEMALE,   DM2_CLASS_WIZARD,   DM2_VIEW_CELL_BACK_RIGHT,  0 },
 };
 
 /* ── Initial stats by class ──────────────────────────────────── */
@@ -249,76 +224,6 @@ void dm2_v1_build_champion_record(DM2_ChampionRecord *record,
 
     /* Class-based attributes */
     dm2_v1_set_initial_attributes(record, champ_class);
-}
-
-/* ════════════════════════════════════════════════════════════════
- * Generate starter party (4 champions)
- * Source: ReDMCSB CHAMPION.C F0280 — FILL-CHAMPION-DATA
- *         docs/dm2_party_state.md § Starter party (Hall of Champions)
- * ════════════════════════════════════════════════════════════════ */
-
-void dm2_v1_generate_starter_party(DM2_V1_SessionState *session)
-{
-    if (!session) return;
-
-    for (int i = 0; i < 4; i++) {
-        const DM2_StarterChampion *ch = &s_starter_party[i];
-        DM2_ChampionRecord *rec = (DM2_ChampionRecord *)session->champion_data[i];
-
-        dm2_v1_build_champion_record(rec,
-                                     ch->first_name,
-                                     ch->last_name,
-                                     ch->portrait,
-                                     ch->champ_class,
-                                     ch->view_cell,
-                                     ch->direction);
-    }
-
-    session->champion_count = 4;
-    session->leader_index   = 0; /* first champion (Theron) is leader */
-}
-
-/* ════════════════════════════════════════════════════════════════
- * Session initialization (new game)
- * Source: CHAMPRST.C F0278 — CHAMPION_ResetDataToStartGame
- *         SKULL.ASM T520 — party_placement
- * ════════════════════════════════════════════════════════════════ */
-
-void dm2_v1_session_new(DM2_V1_SessionState *session)
-{
-    if (!session) return;
-    memset(session, 0, sizeof(*session));
-
-    /* Game tick starts at 0 */
-    session->game_tick = 0;
-
-    /* RNG seed derived from dungeon seed (set by caller if available) */
-    session->rng_seed = 257; /* default DM2 dungeon seed */
-
-    /* Party: Hall of Champions (mapX=15, mapY=15, North-facing)
-     * Source: SKULL.ASM T520 party_placement */
-    session->party_x  = 15;
-    session->party_y  = 15;
-    session->party_dir = 0; /* North */
-    session->party_level = 0; /* Level 0 = Hall of Champions / Entrance */
-
-    /* Start in dungeon mode (Hall of Champions is indoor) */
-    session->outdoor_mode = 0;
-
-    /* Resources */
-    session->gold        = 100;
-    session->reputation  = 0;
-
-    /* Time: 720 minutes = 12:00 noon */
-    session->time_of_day_minutes = 720;
-
-    /* No weather at start */
-    session->rain_intensity = 0;
-
-    /* This legacy session helper is retained for save-format fixtures. The
-     * M11 new-game route follows skproject LOAD_NEW_DUNGEON and does not
-     * apply this helper before source GAME_LOAD/revival records arrive. */
-    dm2_v1_generate_starter_party(session);
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -866,8 +771,8 @@ static void dm2_v1_apply_original_gamestate(DM2_V1_SessionState *session,
 
     /* GAME_LOAD/SKLOAD restores the saved game-state and its following
      * SUPPRESS champion records.  Do not seed that import with
-     * dm2_v1_session_new(): its fixed party, gold and entrance pose are a
-     * save-fixture convenience, not values owned by this original payload.
+     * The test-only session fixture's fixed party, gold and entrance pose are
+     * not values owned by this original payload.
      * A later malformed champion section must therefore leave no invented
      * party behind. Source: SKWINSPX/src/v4/skcore.cpp GAME_LOAD/SKLOAD
      * reads the game-state block and saved records as one transaction. */
@@ -1643,8 +1548,8 @@ DM2_FlowResult dm2_v1_new_game_flow(DM2_V1_SessionState *session,
 
     /* SKWINSPX SkWinCore.cpp::SHOW_MENU_SCREEN returns to INIT, then
      * GAME_LOAD()/LOAD_NEW_DUNGEON owns the original records, party choice,
-     * random seed and entrance pose. dm2_v1_session_new() contains explicit
-     * save-fixture defaults and must never substitute for that transaction. */
+     * random seed and entrance pose. Test fixtures must never substitute for
+     * that transaction. */
     return DM2_FLOW_GAME_LOAD_REQUIRED;
 }
 

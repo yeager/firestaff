@@ -22,13 +22,9 @@
  *   docs/dm2_save_format.md — slot header layout (42 bytes), SUPPRESS
  *     game-state block (56 bytes), party state encoding.
  *
- * DM2 starter party conventions:
- *   - 4 champions, positions TL/TR/BL/BR in party view
- *   - Portrait index selects portrait from GRAPHICS.DAT portrait strip
- *   - Class is derived from portrait (portrait range → class)
- *   - Initial HP = 50, Stamina = 50, Mana = 20 (varies by class)
- *   - All champions start in the Hall of Champions (mapX=15,mapY=15,N)
- *   - Gold = 100, Time = 720 (noon), no outdoor mode at start
+ * Production new-game state is not constructed from fixed party defaults.
+ * It is admitted only through the source-owned GAME_LOAD/LOAD_NEW_DUNGEON
+ * boundary; any test session belongs under tests/.
  */
 
 #ifndef FIRESTAFF_DM2_V1_NEW_GAME_H
@@ -338,21 +334,6 @@ typedef struct {
  * New game API
  * ════════════════════════════════════════════════════════════════ */
 
-/* Generate a starter party of 4 champions.
- * Populates the 4 champion records in session with predefined
- * names, portraits, classes, and initial stats.
- *
- * Starter party (DM2 default, Hall of Champions):
- *   Champion 0: "Theron"  — Fighter, Portrait 0, TL position
- *   Champion 1: "Karla"   — Ninja,   Portrait 3, TR position
- *   Champion 2: "Aldric"  — Priest,  Portrait 4, BL position
- *   Champion 3: "Seraphina" — Wizard, Portrait 7, BR position
- *
- * Source: ReDMCSB F0280 FILL-CHAMPION-DATA (portrait→class assignment)
- *         docs/dm2_party_state.md § Starter party definition
- */
-void dm2_v1_generate_starter_party(DM2_V1_SessionState *session);
-
 /* Champion class from portrait index.
  * DM2 portrait ranges map to character classes:
  *   Portraits 0-1 → Fighter
@@ -384,11 +365,6 @@ void dm2_v1_set_initial_attributes(DM2_ChampionRecord *record,
 /* ════════════════════════════════════════════════════════════════
  * Session management API
  * ════════════════════════════════════════════════════════════════ */
-
-/* Initialize a session state with a new game.
- * Sets game_tick=0, party to Hall of Champions, generates starter party.
- * Does NOT load dungeon data — caller must do that separately. */
-void dm2_v1_session_new(DM2_V1_SessionState *session);
 
 /* Serialize session state to a flat byte buffer.
  * Returns bytes written, or -1 on error (buffer too small).

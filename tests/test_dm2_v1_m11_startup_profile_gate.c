@@ -18,6 +18,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_session_fixture.h"
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_sound.h"
@@ -2437,7 +2438,7 @@ int main(void) {
     expect_true(make_temp_save_root(save_root),
                 "created isolated DM2 resume save root");
     memset(&resume_session, 0, sizeof(resume_session));
-    dm2_v1_session_new(&resume_session);
+    dm2_v1_test_session_fixture_new(&resume_session);
     resume_session.game_tick = 42;
     resume_session.party_x = 23;
     resume_session.party_y = 11;
