@@ -1,3 +1,8 @@
+- ✅ 2026-07-31 Nexus world-init fixture removal: replaced the leftover DM1
+  entrance literals in `nexus_v1_world_init()` with the Nexus-owned initial
+  level/position/direction constants from `nexus_v1_game.h`. Verification:
+  Nexus save-slot roundtrip and M11 startup-gate tests pass.
+
 - ✅ 2026-07-31 Nexus production synthetic-state audit: rechecked the
   startup/menu handoff after the real PLRD bridge landed. `RLOWFIX.BIN` is
   now the only production champion source; missing or malformed PLRD data
