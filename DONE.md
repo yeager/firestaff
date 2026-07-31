@@ -6420,6 +6420,13 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-31 DM2 unbound progression-state isolation: removed
+  `dm2_v1_progression.c` from the production M10 archive. Its hard-coded
+  time-cycle, weather and level metadata had no M11 consumer or decoded
+  session/GDAT owner, so it could not safely be a live-data source. The
+  source remains available for isolated reference work only; active weather
+  and scene rendering retain their G1/GDAT/timer receipts.
+
 - ✅ 2026-07-31 DM2 external SDL startup/menu capture: the current
   Extern-disk `firestaff` binary reached the original PC-English
   `GRAPHICS.DAT` TITLE/0 main-menu raster in a 960×600 SDL window, with the

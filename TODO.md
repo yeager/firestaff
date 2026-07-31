@@ -580,6 +580,10 @@
   production archive. The active viewport's outdoor route requires G1 map,
   GDAT/local-palette, c_light and source timer-slot receipts together; seven
   focused scene/light/weather gates pass without a fallback draw.
+  **2026-07-31 follow-up:** the unattached progression-constant table is no
+  longer linked into the production archive. It carried a host-side 1,440
+  minute day and named weather states without a session/GDAT owner; only a
+  decoded `timdat`/environment chain may supply those facts to a live route.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following

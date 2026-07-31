@@ -3822,7 +3822,6 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_party.c
     src/dm2/dm2_v1_companion.c
     src/dm2/dm2_v1_hand_action_gdat.c
-    src/dm2/dm2_v1_progression.c
     src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_sound.c
     src/dm2/dm2_v1_sound_queue_pc34_compat.c
