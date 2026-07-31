@@ -271,16 +271,17 @@
   This prevents C509 from overwriting the lower portrait edge in resumed
   original PC34 saves. The fixture-free external-corpus runtime test passes.
 
-- **DM1-PC34-A6FA-F0337-NATIVE-PALETTE:** The externally owned PC3.4 save
+- **DM1-PC34-A6FA-F0337-NATIVE-PALETTE:** Closed 2026-07-31. The externally owned PC3.4 save
   `DMSAVE-dosboxx-runtime.DAT` (FNV-1a `a6fa347b`, SHA-256
   `ab7bb4a34b77bba033d7b6c31db32e7198a962b0e55c0644c0486f50bb361ecb`) has
   been copied byte-for-byte into an original `DM.EXE` DOSBox session. The
   native resumed frame is visibly lit while Firestaff's admitted F0435 frame
-  remains dark. The C2 M516 slot-order defect is now fixed, and the save
-  contains no equipped torch or magical light; do not compensate with a
-  synthetic torch/light value. Capture the original current-map identity and
-  palette write path, then bind Firestaff's F0337 palette selection to that
-  real owner. References: ReDMCSB `LOADSAVE.C F0435`, `PANEL.C F0337`,
+  was previously dark. The C2 M516 slot-order defect is now fixed; a fresh
+  Firestaff frame is visibly lit and follows the same resumed runtime route
+  as the original. The save contains no equipped torch or magical light, so
+  no synthetic torch/light value was introduced. V1, V2.0, V2.1 and V2.2 all
+  start the exact save; the V2 suite passes 87/87. References: ReDMCSB
+  `LOADSAVE.C F0435`, `PANEL.C F0337`,
   `DEFS.H CHAMPION_EXCLUDING_PORTRAIT`; DMweb PC saved-game format:
   `http://dmweb.free.fr/community/documentation/file-formats/saved-game-files/`.
 

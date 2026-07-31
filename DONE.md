@@ -45999,6 +45999,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   a6fa347b palette discrepancy remains explicitly open in TODO.md; this entry
   makes no F0337 parity claim.
 
+- ✅ 2026-07-31 DM1 PC3.4 a6fa347b resumed-light verification: reran the
+  exact externally owned DOSBox save after the M516 slot mapping repair. The
+  Firestaff V1 capture is now visibly lit and resumes the same map/runtime
+  route as the original DOSBox frame; no artificial torch or magical-light
+  value was added. Direct headless startup with the exact save also produced
+  frames for V1, V2.0, V2.1 and V2.2, and the full DM1 V2 family passes 87/87.
+  References: ReDMCSB `LOADSAVE.C F0435`, `PANEL.C F0337`, and DMweb's PC
+  saved-game format documentation. Scope: runtime/save-light regression;
+  this is not a pixel-by-pixel original capture claim.
+
 - 2026-07-31: Closed M11's remaining DM2 leader-hand local-name lookup.
   A DM2 ObjectID can no longer be rendered as a retired catalog label or a
   diagnostic handle; name output remains blocked pending the original decoded
