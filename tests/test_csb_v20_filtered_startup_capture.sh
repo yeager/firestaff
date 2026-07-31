@@ -37,7 +37,7 @@ HOME="$test_home" \
 FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$capture_dir" \
 SDL_VIDEODRIVER=dummy \
 "$firestaff_bin" \
-    --game csb --data-dir "$data_dir" --presentation-mode v20 --duration 7000 \
+    --game csb --data-dir "$data_dir" --presentation-mode v20 --duration 14000 \
     >"$capture_dir/firestaff.log" 2>&1
 
 capture_count="$(find "$capture_dir" -maxdepth 1 -type f -name '*.bmp' | wc -l | tr -d ' ')"

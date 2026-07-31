@@ -21,7 +21,7 @@ HOME="$test_home" \
 FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$capture_dir" \
 SDL_VIDEODRIVER=dummy \
 "$firestaff_bin" --game csb --data-dir "$data_dir" --presentation-mode v1 \
-    --duration 7000 >"$capture_dir/firestaff.log" 2>&1
+    --duration 14000 >"$capture_dir/firestaff.log" 2>&1
 
 python3 - "$capture_dir/firestaff.log" <<'PY'
 from collections import Counter

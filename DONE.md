@@ -46359,6 +46359,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   placeholder, även om originaldungeonerna saknar sådana grupper. Uppdaterade
   även TODO:s inaktuella uppgift om det borttagna `fallback-original`-aliaset.
   Verifiering: `test_csb_v1_monster_generator_gate_pc34_compat` passerar.
+- ✅ 2026-07-31 CSB title-capturekadens: realdatafångsterna för V1, V2.0 och
+  V2.1 väntar nu 14 sekunder i stället för 7, så att de observerar alla fyra
+  originalpalettfaser efter den PC3.4-bundna CHAOS-zoomen. Speltempot är
+  oförändrat. Verifiering: V1:s title/entrance-kontrakt samt V2.0- och
+  V2.1-capturetester passerar mot lokal PC3.4-data.
 
 - ✅ 2026-07-31 DM1 HoC candidate time-effects and endgame fallback gates:
   the live M11 idle route now proves ReDMCSB `CHAMPION.C F0331` excludes the
