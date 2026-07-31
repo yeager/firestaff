@@ -256,6 +256,11 @@
   probe-only as well. Its fixed host click zones and HUD feedback animations
   have no authenticated GDAT input owner and no M11 caller; the production
   archive retains the source-gated V1 input route only.
+  **2026-07-31 follow-up:** V2's local smooth-camera, bloom and animated
+  outdoor state are probe-only as well. They inferred movement timing,
+  weather and lightning without a decoded original timer/image owner. M11
+  and the game loop now retain the authenticated V1 viewport and GDAT HUD
+  routes; the V2 diagnostic sources remain available only to focused tests.
   **2026-07-31 update:** Greatstone's DM2 version catalogue now explicitly
   bounds the PC startup audit: PC 0.9/1.0/demo list `GRAPHICS.DAT`, whereas
   title/swoosh/ending media belong to other platform families. Continue to

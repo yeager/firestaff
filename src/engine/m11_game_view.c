@@ -59,9 +59,7 @@
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_touch_click_zone_matrix_pc34_compat.h"
 #include "dm2_v1_tech_magic.h"
-#include "dm2_v2_runtime.h"
 #include "dm2_v2_hud_runtime.h"
-#include "dm2_v2_lighting_runtime.h"
 #include "dm2_v2_phase_gate.h"
 #include "dm2_v2_touch_runtime.h"
 #include "theron/theron_v1_asset_loader.h"
@@ -937,14 +935,6 @@ static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
  * decoded GDAT UI images after the game profile is mounted; no M11 artwork
  * is substituted when that original source is unavailable. */
 static DM2_V2_PhaseGateConfig g_m11_dm2_v2_gate;
-/* V2 lighting is deliberately separate from the general presentation gate.
- * A presentation-mode selection proves neither the live ENVIRONMENT timer
- * state nor the decoded ENVIRONMENT GDAT image/palette chain.  The V1 DM2
- * runtime owns that evidence (weather_gdat_outdoor_m11_receipt); until its
- * receipt is handed to this V2 layer, procedural sky/fog/lightning state
- * must stay dormant. */
-static DM2_V2_PhaseGateConfig g_m11_dm2_v2_lighting_gate;
-
 static void m11_dm2_configure_v2_presentation(
     const M11_GameViewState *state,
     DM2_V1_BootProfile *profile)
@@ -958,10 +948,7 @@ static void m11_dm2_configure_v2_presentation(
     dm2_v2_phase_gate_defaults(&g_m11_dm2_v2_gate);
     g_m11_dm2_v2_gate.v2LaunchEnabled = v2_active;
     g_m11_dm2_v2_gate.v2ProfileEnabled = v2_active;
-    dm2_v2_phase_gate_defaults(&g_m11_dm2_v2_lighting_gate);
-
     dm2_v2_hud_runtime_set_gate_config(&g_m11_dm2_v2_gate);
-    dm2_v2_lighting_runtime_set_gate_config(&g_m11_dm2_v2_lighting_gate);
     dm2_v2_touch_runtime_set_gate_config(&g_m11_dm2_v2_gate);
     dm2_v2_hud_runtime_set_gdat_source(
         dm2_v1_boot_viewport_asset_fetch,
@@ -1399,10 +1386,9 @@ static int m11_dm2_apply_boot_runtime_receipt(
         !receipt->dm2_state) {
         return 0;
     }
-    /* Scale 2 = V2.0 EPX mode. Source: dm2_v2_runtime.c. */
-    if (receipt->initialize_v2_runtime) {
-        dm2_v2_runtime_init(2);
-    }
+    /* The legacy V2 runtime inferred camera/effect state from host ticks.
+     * Its production path is removed until source-owned timing is decoded. */
+    (void)receipt->initialize_v2_runtime;
     if (receipt->initialize_hud_runtime) {
         dm2_v2_hud_runtime_init();
     }
@@ -51550,11 +51536,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         return;
     }
 
-    /* DM2 V1/V2 M11 render hand-off.  The DM2 runtime renders into the
+    /* DM2 M11 render hand-off.  The DM2 runtime renders into the
      * same indexed framebuffer layout M11 presents for DM1/CSB, so direct
      * launcher starts can show the actual DM2 viewport boundary instead of
-     * a text placeholder.  Source: dm2_v1_runtime_render_frame(),
-     * dm2_v2_runtime_render_frame(), SKULL.ASM T560/T600 render split. */
+     * a text placeholder. Source: dm2_v1_runtime_render_frame(),
+     * SKULL.ASM T560/T600 render split. */
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         int rendered = -1;
         int runtime_frame_accepted = 0;

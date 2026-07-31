@@ -21,11 +21,9 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.h"
 #include "dm2_v1_boot.h"
-#include "dm2_v2_runtime.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v2_touch_runtime.h"
-#include "dm2_v2_lighting_runtime.h"
 #include "dm2_v2_phase_gate.h"
 #include "nexus_v2_hud_runtime.h"
 #include <string.h>
@@ -172,27 +170,14 @@ static void fs_game_render_viewport(FS_GameState *state) {
         csb_v1_viewport_render_frame(cv, dir, px, py);
 
     } else if (state->config.game == FS_GAME_DM2) {
-        /* ── DM2 V2 path: smooth movement + viewport renderer ── */
+        /* DM2 presentation is owned by the M11 GDAT route. */
         DM2_V1_BootProfile *boot = (DM2_V1_BootProfile *)state->dm2_boot;
         if (boot && boot->dm2_state) {
-            /* Phase 5: V2 smooth movement viewport rendering.
-             * dm2_v2_runtime_render_frame updates smooth animation state
-             * and renders with smooth-interpolated camera offset.
-             * Source: Phase 5 runtime binding, dm2_v2_runtime.c */
-            (void)dm2_v2_runtime_render_frame(state->party_direction,
-                                               state->party_x, state->party_y,
-                                               g_framebuffer, FS_FB_W,
-                                               FS_VP_W, FS_VP_H);
             /* Phase 3: V2 HUD overlay (gated on phase gate).
              * Renders compass, depth, gold, champion bars, action strip
              * on top of the V1 viewport.  No-op when V1 is active
              * (framebuffer preserved for V1 chrome). */
             dm2_v2_hud_runtime_render(g_framebuffer, FS_FB_W, FS_FB_H);
-            /* Phase 4: V2 lighting tick (gated on phase gate).
-             * Advances lighting.bloom_timer + outdoor FX state.
-             * Per V1 tick cadence (55ms).  No-op when V1 is active
-             * (lighting state preserved for V1 palette). */
-            dm2_v2_lighting_runtime_tick(0.055f /* V1 tick = 55ms */, 0);
         }
     } else {
         /* A game without a live, source-backed renderer remains blank here.
@@ -375,9 +360,6 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
             return -1;
         }
         dm2_v1_runtime_init(&s_dm2_boot);
-        /* Phase 5: init DM2 V2 runtime (smooth movement + V2 viewport).
-         * Scale 2 = V2.0 EPX mode.  Source: dm2_v2_runtime.c */
-        dm2_v2_runtime_init(2);
         if (s_dm2_boot.graphics_dat) {
             dm2_v1_runtime_set_viewport_asset_provider(
                 dm2_v1_boot_viewport_asset_fetch, &s_dm2_boot);
@@ -391,11 +373,6 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
          * V1 command-queue entries.  Gated on phase gate.
          * Source: dm2_v2_touch_runtime.c */
         dm2_v2_touch_runtime_init();
-        /* Phase 4: init DM2 V2 lighting runtime.
-         * Per-frame tick of lighting.bloom_timer + outdoor FX state.
-         * Gated on phase gate (V1 chrome preserved when V1 active).
-         * Source: dm2_v2_lighting_runtime.c */
-        dm2_v2_lighting_runtime_init();
         /* Store in state */
         state->dm2_boot = (void *)&s_dm2_boot;
         /* Print diagnostics */
@@ -547,13 +524,6 @@ void fs_game_tick_v1(FS_GameState *state, uint32_t now_ms) {
     /* DM2 V1: delegate to DM2 runtime tick if DM2 boot profile is active */
     if (state->config.game == FS_GAME_DM2 && state->dm2_boot) {
         dm2_v1_runtime_tick();
-        /* Phase 5: advance V2 smooth animation clock on V1 boundary.
-         * Source: dm2_v2_runtime.c */
-        dm2_v2_runtime_v1_tick(now_ms);
-        /* Phase 4: advance lighting + outdoor FX state per V1 tick (55ms).
-         * Phase-gated: no-op when V1 is active.  Source:
-         * dm2_v2_lighting_runtime.c */
-        dm2_v2_lighting_runtime_tick(0.055f, 0);
     }
 
     state->frame_count++;

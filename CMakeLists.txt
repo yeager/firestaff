@@ -3980,6 +3980,10 @@ list(REMOVE_ITEM DM2_V2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_assets.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_asset_pipeline.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_interaction_feedback.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_lighting.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_lighting_runtime.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_outdoor_enhanced.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_runtime.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_finished_art_material_gate_pc34.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_inplace_draw_pc34.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_modern_assets_pc34.c"
@@ -13236,6 +13240,11 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_m11_startup_profile_gate
         tests/test_dm2_v1_m11_startup_profile_gate.c
+        # The retired V2 runtime remains available to this diagnostic-only
+        # regression target. It is deliberately absent from firestaff_dm2_v2.
+        src/dm2/dm2_v2_runtime.c
+        src/dm2/dm2_v2_lighting.c
+        src/dm2/dm2_v2_outdoor_enhanced.c
     )
     target_include_directories(test_dm2_v1_m11_startup_profile_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
