@@ -14,6 +14,11 @@
   creature records are decoded. Keep replacing the fixture implementation
   only after matching source records, not by promoting its estimates.
 
+- **THERON-SHOP-REAL-DATA:** The shop price-table helper has no identified
+  THQUEST.ASM price-table source and remains a fixture contract. It is now
+  excluded from the production archive; do not promote its inferred item
+  range or prices until Track 02 object/shop records are bound.
+
 - **ALL-GAMES-NO-PLACEHOLDER-WHEN-SOURCE-EXISTS:** Active 2026-07-30.
   - 2026-07-31: CSB graphics discovery is now hash-only for both recognised
     and unknown launcher hints. Continue auditing remaining CSB import and

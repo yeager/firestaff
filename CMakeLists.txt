@@ -3895,6 +3895,7 @@ endif()
 file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/theron/theron_v2_*.c" "src/theron/theron_v22_*.c")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_compat\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_combat_runtime_noop\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_shop\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
         src/theron/theron_v1_combat_runtime_noop.c)
@@ -37023,6 +37024,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_shop_price_table
         tests/test_theron_v1_shop_price_table.c
+        src/theron/theron_v1_shop.c
     )
     target_link_libraries(test_theron_v1_shop_price_table PRIVATE
         firestaff_theron

@@ -47000,3 +47000,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-31 Theron dörrregression: uppdaterade combat-fixturen så den
   placerar en riktig `THERON_ITEM_KEY` innan den försöker öppna en låst dörr.
   Testet följer nu den källbundna nyckelgrinden och passerar 66/66.
+- ✅ 2026-07-31 Theron shop-data boundary: removed the fixture-driven,
+  source-unverified shop price-table helper from the production archive.
+  Its focused test and purchase-gate probe still compile it explicitly;
+  production cannot expose inferred shop prices or item ranges.
