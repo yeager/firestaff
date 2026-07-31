@@ -37,6 +37,7 @@ static uint32_t align2k(uint32_t v) {
 int nexus_v1_item_ibs_parse_header(const uint8_t *data, int data_size,
                                     Nexus_V1_ItemIbsHeader *out) {
     uint32_t decl_data_size, img_data_size, floor_data_size;
+    uint64_t images_end, floor_end, floor_desc_end;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!data || data_size < NEXUS_ITEM_IBS_HEADER_SIZE) return 0;
@@ -63,6 +64,12 @@ int nexus_v1_item_ibs_parse_header(const uint8_t *data, int data_size,
 
     if ((int)out->images_section_offset > data_size) return 0;
     if ((int)out->floor_section_offset > data_size) return 0;
+    images_end = (uint64_t)out->images_section_offset + img_data_size;
+    floor_end = (uint64_t)out->floor_section_offset + floor_data_size;
+    floor_desc_end = (uint64_t)out->floor_section_offset +
+        (uint64_t)out->floor_image_count * NEXUS_ITEM_IBS_FLOOR_DESC_SIZE;
+    if (images_end > (uint64_t)data_size || floor_end > (uint64_t)data_size ||
+        floor_desc_end > (uint64_t)data_size) return 0;
 
     out->valid = 1;
     return 1;

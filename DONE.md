@@ -47809,3 +47809,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   span rejects short useful blocks safely, and pixel indexing cannot overflow
   signed intermediate arithmetic. Real LEV00 indexed/direct texture decode
   passes.
+- ✅ 2026-07-31 Nexus ITEM.IBS header span admission: palette, association,
+  regular-image, floor-descriptor, and declared floor-data ranges are now
+  checked in full with 64-bit end arithmetic before any decoder can read them.
+  Synthetic and real ITEM.IBS plus PLRD/RLOWFIX regressions pass.
