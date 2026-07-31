@@ -3723,6 +3723,11 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
+# This contract probe seeds a 10x10 synthetic room-skin fixture and is used
+# exclusively by its unit test.  Keep it out of the production M10 archive:
+# the live CSB viewport must consume only source-bound dungeon/material data.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat.c")
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
@@ -46826,7 +46831,9 @@ target_include_directories(test_csb_v1_viewport_custom_backgrounds_room_pass_ord
 target_link_libraries(test_csb_v1_viewport_custom_backgrounds_room_pass_order_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_viewport_custom_backgrounds_room_pass_order_pc34_compat COMMAND test_csb_v1_viewport_custom_backgrounds_room_pass_order_pc34_compat)
 
-add_executable(test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat tests/test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat.c)
+add_executable(test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat
+    tests/test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat.c
+    src/csb/csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat.c)
 target_include_directories(test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat COMMAND test_csb_v1_viewport_custom_backgrounds_room_slot_backdrop1_pc34_compat)

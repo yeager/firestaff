@@ -191,6 +191,9 @@
   **2026-07-31 update:** The presentation-receipt contract now independently
   locks the full source timeline to 60 + 20 + 20 + 2 = 102 ticks; it may not
   promote an old 101-tick/two-tick-CHAOS-hold claim.
+  **2026-07-31 update:** the room-slot backdrop1 trace fixture is no longer
+  linked into production M10. It remains available only to its contract test;
+  live CSB viewport paths must bind authentic dungeon and graphics material.
   **2026-07-31 update:** C407-regressionen mappar nu probernas 320×200- och
   960×600-koordinater mot den begärda logiska ytan i stället för dummy-SDL:s
   gamla 1024×768-fönster.

@@ -1,3 +1,36 @@
+- ✅ 2026-07-31 DM2 PC startup-media provenance: corrected the DM2 intro
+  reference so it no longer invents external PC `title.anim` media. The
+  source-owned PC menu and credits are `GRAPHICS.DAT` TITLE fields 4 and 1;
+  Greatstone's per-version catalogue keeps platform-specific movie/container
+  files out of the PC route. Verification: source/menu contract and the
+  real-data M11 startup-profile gate.
+
+- ✅ 2026-07-31 CSB synthetic viewport-fixture isolation: removed the
+  room-slot backdrop1 contract trace from the production `firestaff_m10`
+  archive. Its 10×10 synthetic skin/dungeon arrangement is now compiled only
+  into the corresponding unit test; M11 cannot link or invoke it. Verification:
+  focused contract test and complete `firestaff` link.
+
+- ✅ 2026-07-31 CSB title zoom cadence: M11 now keeps each decoded original
+  C425 CHAOS zoom raster visible for four authenticated PC3.4 cadence slots
+  (220 ms at the 55 ms profile cadence). The source's C001 material binding,
+  palette sequence and TITLE.C F0437 `Delay(20)`/`Delay(2)` phases remain
+  separate and unchanged. Verification: focused CSB startup VBlank cadence
+  regression.
+- ✅ 2026-07-31 DM2 V2 HUD widget-manifest isolation: removed the local
+  placeholder/partial/real classifier from the production V2 archive and
+  guarded its only HUD-runtime call behind the focused diagnostic probe.
+  The normal HUD records no operator-supplied manifest state and still draws
+  only authenticated GDAT. Verification: complete `firestaff` link, runtime
+  probe 29/29, real-data M11 startup/profile gate, and no widget-manifest
+  symbol in the final executable.
+
+- ✅ 2026-07-31 DM2 optional music-data verification: the real-data boot
+  smoke test now skips music routing when the hash-verified optional
+  `SONGLIST.DAT` is absent. It continues to reject filename-only substitutes
+  and exercises the original selector table when that genuine file is
+  available. The mandatory graphics/dungeon boot proof remains required.
+
 - ✅ 2026-07-31 DM2 boot media revalidation: entering a game now rehashes
   both graphics and dungeon media against the profile's scan-time hashes.
   This closes the stale-receipt gap between the launcher scan and INIT; a
