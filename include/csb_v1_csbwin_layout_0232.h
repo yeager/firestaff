@@ -52,6 +52,8 @@ typedef struct {
     uint16_t viewport_palettes[
         CSB_V1_CSBWIN_LAYOUT_0232_VIEWPORT_PALETTE_COUNT][
         CSB_V1_CSBWIN_LAYOUT_0232_PALETTE_COLOR_COUNT];
+    int16_t palette_brightness[CSB_V1_CSBWIN_LAYOUT_0232_VIEWPORT_PALETTE_COUNT];
+    int16_t torch_light_power[16];
 } CSB_V1_CSBWinLayout0232;
 
 typedef enum {
@@ -104,6 +106,13 @@ int csb_v1_csbwin_layout_0232_decode(
  * DMCSB1 index and item 0x232 must expand to exactly 0x722 bytes. */
 int csb_v1_csbwin_layout_0232_read_graphics_dat(
     const char *graphics_dat_path, CSB_V1_CSBWinLayout0232 *out_layout);
+
+/* CSBWin::SelectPaletteForLightLevel. The caller supplies only source-owned
+ * light facts: the map multiplier, saved Brightness and the two hand slots of
+ * each champion (four brightest torch charges are consumed). */
+int csb_v1_csbwin_layout_0232_select_light_palette(
+    const CSB_V1_CSBWinLayout0232 *layout, int experience_multiplier,
+    int brightness, const uint8_t torch_charges[8], uint8_t *out_palette_index);
 
 /* Rectangles use inclusive CSBWin screen coordinates. */
 int csb_v1_csbwin_layout_0232_rect_is_screen_valid(

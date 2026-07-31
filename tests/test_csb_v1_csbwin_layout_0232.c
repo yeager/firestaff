@@ -672,6 +672,24 @@ int main(void)
           layout.default_graphic_list[69] == 562);
     CHECK(layout.viewport_palettes[0][0] == 0x0123u &&
           layout.viewport_palettes[1][15] == 0x0765u);
+    {
+        uint8_t charges[8] = { 10u, 0u, 0u, 0u, 0u, 0u, 0u, 0u };
+        uint8_t palette_index = UINT8_MAX;
+        layout.palette_brightness[0] = 100;
+        layout.palette_brightness[1] = 80;
+        layout.palette_brightness[2] = 60;
+        layout.palette_brightness[3] = 40;
+        layout.palette_brightness[4] = 20;
+        layout.palette_brightness[5] = 0;
+        layout.torch_light_power[10] = 64;
+        CHECK(csb_v1_csbwin_layout_0232_select_light_palette(
+            &layout, 0, 0, charges, &palette_index) && palette_index == 0u);
+        CHECK(csb_v1_csbwin_layout_0232_select_light_palette(
+            &layout, 1, 0, charges, &palette_index) && palette_index == 2u);
+        memset(charges, 0, sizeof(charges));
+        CHECK(csb_v1_csbwin_layout_0232_select_light_palette(
+            &layout, 1, 0, charges, &palette_index) && palette_index == 5u);
+    }
     CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.movement_box));
     CHECK(!csb_v1_csbwin_layout_0232_rect_is_screen_valid(NULL));
     CHECK(csb_v1_csbwin_layout_0232_build_hud_material_plan(&layout, &plan));

@@ -14,6 +14,8 @@ enum {
     CSBWIN_0232_FOOD_WATER_BOX_OFFSET = 904,
     CSBWIN_0232_ICON_DISPLAY_OFFSET = 914,
     CSBWIN_0232_OBJECT_GRAPHIC_FIRST_OFFSET = 1218,
+    CSBWIN_0232_PALETTE_BRIGHTNESS_OFFSET = 748,
+    CSBWIN_0232_TORCH_LIGHT_POWER_OFFSET = 760,
     CSBWIN_0232_VIEWPORT_PALETTE_OFFSET = 1280,
     CSBWIN_0232_DEFAULT_GRAPHIC_LIST_OFFSET = 1534,
     CSBWIN_0232_MOVEMENT_BOX_OFFSET = 1802,
@@ -111,6 +113,16 @@ int csb_v1_csbwin_layout_0232_decode(
             csb_v1_csbwin_layout_0232_read_u16be(decoded_graphic +
                 CSBWIN_0232_VIEWPORT_PALETTE_OFFSET + index * 2u);
     }
+    for (index = 0u; index < 6u; ++index) {
+        out_layout->palette_brightness[index] =
+            csb_v1_csbwin_layout_0232_read_be16(decoded_graphic +
+                CSBWIN_0232_PALETTE_BRIGHTNESS_OFFSET + index * 2u);
+    }
+    for (index = 0u; index < 16u; ++index) {
+        out_layout->torch_light_power[index] =
+            csb_v1_csbwin_layout_0232_read_be16(decoded_graphic +
+                CSBWIN_0232_TORCH_LIGHT_POWER_OFFSET + index * 2u);
+    }
     for (index = 0; index < CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT;
          ++index) {
         out_layout->default_graphic_list[index] =
@@ -118,6 +130,39 @@ int csb_v1_csbwin_layout_0232_decode(
                 CSBWIN_0232_DEFAULT_GRAPHIC_LIST_OFFSET + index * 2u);
     }
     out_layout->valid = 1;
+    return 1;
+}
+
+int csb_v1_csbwin_layout_0232_select_light_palette(
+    const CSB_V1_CSBWinLayout0232 *layout, int experience_multiplier,
+    int brightness, const uint8_t torch_charges[8], uint8_t *out_palette_index)
+{
+    uint8_t sorted[8];
+    int total_light = 0;
+    int index;
+    int i;
+
+    if (out_palette_index) *out_palette_index = 0u;
+    if (!layout || !layout->valid || !torch_charges || !out_palette_index ||
+        experience_multiplier < 0) return 0;
+    if (experience_multiplier == 0) return 1;
+    memcpy(sorted, torch_charges, sizeof(sorted));
+    for (i = 0; i < 4; ++i) {
+        int j;
+        for (j = i + 1; j < 8; ++j) {
+            if (sorted[j] > sorted[i]) {
+                uint8_t temp = sorted[i]; sorted[i] = sorted[j]; sorted[j] = temp;
+            }
+        }
+        if (sorted[i] != 0u) {
+            const unsigned shift = (unsigned)(6 - i);
+            total_light += (int)(((uint16_t)(layout->torch_light_power[sorted[i] & 15u] << shift)) >> 6);
+        }
+    }
+    total_light += brightness;
+    index = total_light > 0 ? 0 : 5;
+    while (index < 5 && layout->palette_brightness[index] > total_light) ++index;
+    *out_palette_index = (uint8_t)index;
     return 1;
 }
 
