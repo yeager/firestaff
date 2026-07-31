@@ -24,10 +24,12 @@ creatures, and spells. The exact subset is documented per category below. Where
 the subset boundary is unknown, the full DM1 superset is listed as a working
 hypothesis, explicitly marked `STUB / LIKELY SUBSET`.
 
-**Source-lock rule:** Every format claim cites a source reference. Where the
-original TQ binary format is unknown (no Track 02 image extracted yet), the
-Firestaff working hypothesis is marked `STUB / INFERRED` and cross-referenced
-to the DM1 source it derives from.
+**Source-lock rule:** Every format claim cites a source reference. The JP and
+US Track 02 images are now present as hash-verified local inputs
+(`TQJP02.bin`, `TQUS02.bin`) and the initial Hall of Records candidate plus
+startup bitmap atlas are decoded from those files. Any format or record not
+covered by that evidence remains explicitly marked `STUB / INFERRED` and is
+not promoted to runtime data.
 
 ---
 
@@ -71,9 +73,11 @@ Offset ???:    ADPCM audio data (non-CD-DA SFX)
 Dungeon loading: `THQUEST.ASM T560` — header parsing, `dungeon_seed` extraction.
 Bank loading: `THQUEST.ASM T400` — HuCard ROM mapping.
 
-**Critical gap:** Exact byte offsets for each block are unknown (no Track 02
-image extracted yet). The dungeon data block offsets will be identified by
-searching Track 02 for 7 distinct dungeon headers (magic "T1" at offset 2).
+**Critical gap:** The verified images now identify the initial Hall of Records
+candidate and the four startup bitmap routes, but exact byte offsets for the
+remaining six dungeon blocks are still unknown. Those blocks must be promoted
+only after their headers, level records, object tables, palette ownership and
+loader handoff agree. Do not infer them from the startup candidate.
 
 Source: Phase 0 provenance gate §2.3 · theron_v1_boot.c:24-33
 

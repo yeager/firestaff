@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 Theron source-lock-korrigering: uppdaterade
+  `tqr_v1_phase2_data_formats_H2339.md` så den inte längre påstår att Track 02
+  saknas. JP/US BIN, den verifierade Hall of Records-starten och de fyra
+  startup-bitmap-rutterna dokumenteras som reala bevis; senare dungeonblock,
+  paletteägarskap och object-tabeller är fortsatt explicit opromoterade.
+
 - ✅ 2026-07-31 Theron HUD-katalog: tog bort den döda UI-chrome-hjälparen
   som innehöll overifierade dungeonetiketter (`Catacombs`, `Caverns`,
   `Castle`, `Tower`, `Temple`, `Final Dungeon`). HUD-kompositorn fortsätter
