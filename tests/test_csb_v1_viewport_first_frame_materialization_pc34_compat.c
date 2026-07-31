@@ -3,7 +3,6 @@
 #include "csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.h"
 #include "csb_v1_viewport_d1c_f0111_door_pc34_compat.h"
 #include "firestaff/csb/v1/viewport/d1c_f0115_thing_pass_pc34_compat.h"
-#include "csb_v1_viewport_d2c_f0111_door_front_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -532,12 +531,10 @@ static int build_route_receipts_and_proof(
     const CSB_V1_D0L2D0R2F0115ThingPassPc34 *d0_thing_spec;
     const CSB_V1_ViewportD1CF0111DoorPc34Contract *d1_door_contract;
     const CSB_V1_D1CF0115ThingPassPc34 *d1_thing_pass;
-    const CSB_V1_D2CF0111DoorFrontSpecPc34 *d2_door_spec;
     CSB_V1_D0L2D0R2F0111DoorFrontRealAssetReceiptPc34 d0_door;
     CSB_V1_D0L2D0R2F0115ThingPassRealAssetReceiptPc34 d0_thing;
     CSB_V1_ViewportD1CF0111DoorRealAssetReceiptPc34 d1_door;
     CSB_V1_D1CF0115ThingPassRealAssetReceiptPc34 d1_thing;
-    CSB_V1_D2CF0111DoorFrontRealAssetReceiptPc34 d2_door;
     size_t d0_door_size = 0u;
     size_t d0_thing_size = 0u;
     size_t d1_door_size = 0u;
@@ -564,10 +561,8 @@ static int build_route_receipts_and_proof(
     d1_door_contract = csb_v1_viewport_d1c_f0111_door_pc34_contract();
     d1_thing_pass = csb_v1_viewport_d1c_f0115_thing_pass_for_pass_pc34(
         CSB_V1_D1C_F0115_PASS_BACK_PC34);
-    d2_door_spec = csb_v1_viewport_d2c_f0111_door_front_spec_pc34();
-
     if (!d0_door_spec || !d0_thing_spec || !d1_door_contract ||
-        !d1_thing_pass || !d2_door_spec) {
+        !d1_thing_pass) {
         return 0;
     }
     /* ReDMCSB G0693 names the D3-door source variable.  Its PC3.4
@@ -598,13 +593,8 @@ static int build_route_receipts_and_proof(
                csb_v1_viewport_d1c_f0115_thing_pass_real_asset_receipt_pc34(
                    d1_thing_pass, 1, 1, 1, 1, 498, d1_thing_size,
                    d1_thing_hash, &d1_thing), 1);
-    expect_int("route.d2.door.receipt",
-               csb_v1_viewport_d2c_f0111_door_front_real_asset_receipt_pc34(
-                   d2_door_spec, 1, 1, 1, 247, d2_door_size,
-                   d2_door_hash, &d2_door), 1);
-
     proof->valid = d0_door.valid && d0_thing.valid && d1_door.valid &&
-                   d1_thing.valid && d2_door.valid;
+                   d1_thing.valid;
     proof->route_mask = CSB_V1_VIEWPORT_FIRST_FRAME_REQUIRED_ROUTES;
     proof->source_graphics_dat_bound = 1;
     proof->no_synthetic_pixels = 1;
@@ -615,9 +605,8 @@ static int build_route_receipts_and_proof(
     proof->d0_thing_hash = d0_thing.source_payload_hash;
     proof->d1_door_hash = d1_door.source_payload_hash;
     proof->d1_thing_hash = d1_thing.source_payload_hash;
-    proof->d2_door_hash = d2_door.source_payload_hash;
-    set_d2_door_capture(proof, d2_door.source_byte_count,
-                        d2_door.source_payload_hash);
+    proof->d2_door_hash = d2_door_hash;
+    set_d2_door_capture(proof, d2_door_size, d2_door_hash);
     proof->source_item_count = item_count;
     proof->source_evidence =
         "ReDMCSB DUNVIEW.C F0128 first-frame D0/D1/D2 F0111/F0115 routes; "

@@ -46093,3 +46093,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   (`DM2_STEP_MISSILE`) and `4268-4280` (`DM2_ALLOC_NEW_CREATURE`).
   Verification: `test_dm2_v1_spell_cast_player_pc34_compat` 142/142 and
   real-data `test_dm2_v1_m11_startup_profile_gate` pass.
+
+- ✅ 2026-07-31 CSB D2C synthetic door-composition removal: removed the
+  detached D2C F0111 contract module, its simulated one-pixel composition,
+  its receipt-only test target, and obsolete audit references. It had no M11
+  consumer and selected a purported door asset only through an isolated test
+  receipt. The active CSB viewport continues to bind and blit the verified
+  PC 3.4 door raster through the source-command compositor instead.
+  References: ReDMCSB `DUNVIEW.C F0121/F0111/F0115` and CSBWin
+  `Viewport.cpp` door routing. Verification: focused first-frame material
+  test against the local PC 3.4 `GRAPHICS.DAT`, CSB boot/viewport CTests,
+  and `git diff --check`.

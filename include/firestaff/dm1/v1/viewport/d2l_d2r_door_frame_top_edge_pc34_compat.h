@@ -75,7 +75,8 @@ extern "C" {
  *   both functions and is distinct from the C16_ELEMENT_DOOR_SIDE
  *   branch which is the side-wall F0128 MEDIA720 D2L2/D2R2 row guard.
  *
- * - CSB counterpart: test_csb_v1_viewport_d2c_f0111_door_front_pc34_compat
+ * - CSB uses the source-command viewport compositor directly; the retired
+ *   D2C contract-only test route had no M11 consumer.
  *   (D2C door-front layering), test_csb_v1_viewport_d2l2_d2r2_f0111_door_
  *   pc34_compat (CSB D2L2/D2R2 door-side F0111 dispatch). Non-overlap
  *   DM1 siblings: dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_

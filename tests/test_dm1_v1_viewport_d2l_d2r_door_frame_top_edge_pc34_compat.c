@@ -29,7 +29,8 @@
  *   C725/C726/C727; DEFS.H:4087-4089 (MEDIA720 block) C729/C730/C731;
  *   DEFS.H:2088 C10_COLOR_FLESH; DEFS.H:5457 G0694; DEFS.H:5539 G0182;
  *   DEFS.H:5541 G0184; DEFS.H:2790 C1_VIEW_DOOR_ORNAMENT_D2LCR.
- * - CSB counterpart: csb_v1_viewport_d2c_f0111_door_front_pc34_compat
+ * - CSB uses the source-command viewport compositor directly; the retired
+ *   D2C contract-only route had no M11 consumer.
  *   (D2C door-front layering) and csb_v1_viewport_d2l2_d2r2_f0111_door_
  *   pc34_compat (CSB D2L2/D2R2 door-side F0111 dispatch).
  *
