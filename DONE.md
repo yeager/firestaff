@@ -46139,7 +46139,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   F0115/F0678/F0679` and CSBWin `Viewport.cpp`. Verification: focused
   first-frame material test 109/109, realdata viewport CTests 4/4, build, and
   `git diff --check`.
-
 - ✅ 2026-07-31 DM2 CCM no-stream execution closure: the legacy
   `dm2_v1_ccm_run()` entry point no longer interprets its host program counter
   as a source `b_1a` creature command and can therefore no longer manufacture
@@ -46149,3 +46148,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   (`DM2_PROCEED_CCM`). Verification: CCM regression 51/51, source-matrix
   alignment 7/7, `firestaff_dm2` build, and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass.
+
+- ✅ 2026-07-31 CSB no-raster overlay cleanup: removed the final synthetic
+  icon-to-palette-colour helper and updated the data-free CSB viewport
+  regression to require no draw when no verified object/creature raster is
+  bound. This keeps compact dungeon decoding coverage without presenting
+  coloured markers as game material. References: ReDMCSB `DUNVIEW.C F0115`
+  and CSBWin `Viewport.cpp`. Verification: `test_m11_csb_leader_hand_no_dm1_fallback`,
+  real-data first-frame material test 109/109, M11 build, and `git diff --check`.

@@ -67,8 +67,9 @@ static void add_object_pile_shift(int depth_index,
 /* The live M11_GameView_Draw CSB route is intentionally fail-closed without
  * a hash-verified startup session (post-2026-07-13 terminal-session gates):
  * it cannot render this data-free harness.  Draw through the same CSB-owned
- * viewport runtime path M11 binds its drawers into, so the overlay marker
- * fallback is still proven against production code without DM1 world.things. */
+ * viewport runtime path M11 binds its drawers into.  Without a verified
+ * source raster drawer, the path must preserve the page rather than invent
+ * diagnostic markers. */
 static void draw_csb_runtime_overlay_frame(CSB_V1_BootProfile *profile,
                                            unsigned char *framebuffer,
                                            CSB_V1_ViewportConfig *cfg)
@@ -253,7 +254,6 @@ int main(void)
         int d3_object_marker_y = 0;
         int d3_group_marker_x = 0;
         int d3_group_marker_y = 0;
-        int d3_bow_icon = -1;
         int object_sprite_count = -1;
         int object_icon_count = -1;
         int object_marker_count = -1;
@@ -598,8 +598,7 @@ int main(void)
                   "CSB runtime overlay draw stats stay empty for blocking wall square");
             check(framebuffer[group_marker_y * 320 + group_marker_x] != 0x0D,
                   "CSB runtime overlay draw hides runtime groups on blocking wall squares");
-            check(framebuffer[object_marker_y * 320 + object_marker_x] !=
-                      (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
+            check(framebuffer[object_marker_y * 320 + object_marker_x] == 0,
                   "CSB runtime overlay draw hides runtime floor objects on blocking wall squares");
             raw[69] = (unsigned char)((1u << 5) | 0x10u);
             memset(framebuffer, 0, sizeof(framebuffer));
@@ -617,24 +616,21 @@ int main(void)
                       &projectile_marker_count,
                       &explosion_sprite_count,
                       &explosion_marker_count),
-                  "CSB runtime overlay draw exposes fallback runtime overlay draw stats");
+                  "CSB runtime overlay draw exposes fail-closed overlay draw stats");
             check(object_sprite_count == 0 && object_icon_count == 0 &&
-                      object_marker_count == 1 && group_sprite_count == 0 &&
-                      group_marker_count == 1 &&
+                      object_marker_count == 0 && group_sprite_count == 0 &&
+                      group_marker_count == 0 &&
                       projectile_sprite_count == 0 &&
                       projectile_material_count == 0 &&
                       projectile_marker_count == 0 &&
                       explosion_sprite_count == 0 &&
                       explosion_marker_count == 0,
-                  "CSB runtime overlay draw stats prove data-free runtime group/object marker fallback paths");
-            check(framebuffer[group_marker_y * 320 + group_marker_x] == 0x0D,
-                  "CSB runtime overlay draw marks a runtime group from CSB square thing chain without DM1 world.things");
-            check(framebuffer[object_marker_y * 320 + object_marker_x] ==
-                      (unsigned char)csb_v1_viewport_projectile_material_overlay_color(32),
-                  "CSB runtime overlay draw marks a runtime floor object from CSB square thing chain without DM1 world.things");
+                  "CSB runtime overlay draw remains blank without source-owned object and creature rasters");
+            check(framebuffer[group_marker_y * 320 + group_marker_x] == 0,
+                  "CSB runtime overlay draw does not invent a group marker without a creature raster");
+            check(framebuffer[object_marker_y * 320 + object_marker_x] == 0,
+                  "CSB runtime overlay draw does not invent a floor-object marker without a raster");
             write_u16(raw + 0, bow);
-            d3_bow_icon = csb_v1_runtime_object_icon_index(
-                &profile.runtime, bow);
             memset(framebuffer, 0, sizeof(framebuffer));
             draw_csb_runtime_overlay_frame(&profile, framebuffer,
                                            &overlay_cfg);
@@ -652,13 +648,12 @@ int main(void)
                       &explosion_marker_count),
                   "CSB runtime overlay draw exposes multi-object runtime overlay draw stats");
             check(object_sprite_count == 0 && object_icon_count == 0 &&
-                      object_marker_count == 2 && group_sprite_count == 0 &&
-                      group_marker_count == 1,
-                  "CSB runtime overlay draw stats prove multiple floor objects in one square chain");
+                      object_marker_count == 0 && group_sprite_count == 0 &&
+                      group_marker_count == 0,
+                  "CSB runtime overlay draw keeps multi-object data blank without source rasters");
             check(framebuffer[object_marker_pile1_y * 320 +
-                              object_marker_pile1_x] ==
-                      (unsigned char)csb_v1_viewport_projectile_material_overlay_color(d3_bow_icon),
-                  "CSB runtime overlay draw applies source pile shift to the second floor object marker");
+                              object_marker_pile1_x] == 0,
+                  "CSB runtime overlay draw leaves the shifted object position unchanged without a source raster");
             raw[101] = 0x08u; /* creature 0 cell 0, creature 1 cell 2. */
             write_u16(raw + 110, (1u << 5));
             memset(framebuffer, 0, sizeof(framebuffer));
@@ -677,11 +672,11 @@ int main(void)
                       &explosion_sprite_count,
                       &explosion_marker_count),
                   "CSB runtime overlay draw exposes multi-creature runtime group overlay stats");
-            check(group_sprite_count == 0 && group_marker_count == 2,
-                  "CSB runtime overlay draw stats prove a two-creature runtime group draws two markers");
+            check(group_sprite_count == 0 && group_marker_count == 0,
+                  "CSB runtime overlay draw keeps a two-creature group blank without source rasters");
             check(framebuffer[group_marker_count2_y * 320 +
-                              group_marker_count2_x] == 0x0D,
-                  "CSB runtime overlay draw marks the second runtime creature at its packed GROUP.Cells location");
+                              group_marker_count2_x] == 0,
+                  "CSB runtime overlay draw leaves the second creature position unchanged without a source raster");
             raw[101] = 0xFFu;
             write_u16(raw + 110, 0u);
             write_u16(raw + 0, THING_ENDOFLIST);
@@ -690,8 +685,6 @@ int main(void)
             write_u16(raw + 80, (unsigned short)((THING_TYPE_GROUP << 10) | 0));
             write_u16(raw + 82, THING_ENDOFLIST);
             write_u16(raw + 96, bow);
-            d3_bow_icon = csb_v1_runtime_object_icon_index(
-                &profile.runtime, bow);
             memset(framebuffer, 0, sizeof(framebuffer));
             draw_csb_runtime_overlay_frame(&profile, framebuffer,
                                            &overlay_cfg);
@@ -709,15 +702,15 @@ int main(void)
                       &explosion_marker_count),
                   "CSB runtime overlay draw exposes D3R2 runtime overlay draw stats");
             check(object_sprite_count == 0 && object_icon_count == 0 &&
-                      object_marker_count == 1 && group_sprite_count == 0 &&
-                      group_marker_count == 1,
-                  "CSB runtime overlay draw stats prove D3R2 group/object marker fallback paths");
+                      object_marker_count == 0 && group_sprite_count == 0 &&
+                      group_marker_count == 0,
+                  "CSB runtime overlay draw keeps D3R2 group/object data blank without source rasters");
             check(framebuffer[d3_group_marker_y * 320 + d3_group_marker_x] ==
-                      0x0D,
-                  "CSB runtime overlay draw scans D3R2 runtime groups through C3200");
+                      0,
+                  "CSB runtime overlay draw leaves D3R2 creature geometry blank without a source raster");
             check(framebuffer[d3_object_marker_y * 320 + d3_object_marker_x] ==
-                      (unsigned char)csb_v1_viewport_projectile_material_overlay_color(d3_bow_icon),
-                  "CSB runtime overlay draw scans D3R2 runtime floor objects through C2500");
+                      0,
+                  "CSB runtime overlay draw leaves D3R2 object geometry blank without a source raster");
             raw[69] = (unsigned char)((1u << 5) | 0x10u);
             raw[77] = (unsigned char)(1u << 5);
             write_u16(raw + 80, (unsigned short)((THING_TYPE_GROUP << 10) | 0));

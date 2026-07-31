@@ -1772,12 +1772,6 @@ size_t csb_v1_viewport_runtime_collect_thing_overlays(
     return count;
 }
 
-int csb_v1_viewport_projectile_material_overlay_color(int material_icon_index)
-{
-    if (material_icon_index < 0) return 0x0E;
-    return 0x06 + (material_icon_index & 0x07);
-}
-
 static int csb_v1_viewport_runtime_overlay_position(
     int party_dir,
     int party_x,
