@@ -35,6 +35,32 @@ static int square_is_walkable(const M11_GameViewState *state,
         DUNGEON_ELEMENT_CORRIDOR;
 }
 
+static int front_square_is_wall(const M11_GameViewState *state,
+                                int mapIndex, int x, int y, int direction)
+{
+    static const int dx[4] = { 0, 1, 0, -1 };
+    static const int dy[4] = { -1, 0, 1, 0 };
+    const struct DungeonMapDesc_Compat *map;
+    int frontX;
+    int frontY;
+    int index;
+
+    if (!state || !state->world.dungeon || !state->world.dungeon->tiles ||
+        mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[mapIndex];
+    frontX = x + dx[direction & 3];
+    frontY = y + dy[direction & 3];
+    if (frontX < 0 || frontY < 0 || frontX >= (int)map->width ||
+        frontY >= (int)map->height || !state->world.dungeon->tiles[mapIndex].squareData) {
+        return 0;
+    }
+    index = frontX * (int)map->height + frontY;
+    return ((state->world.dungeon->tiles[mapIndex].squareData[index] &
+             DUNGEON_SQUARE_MASK_TYPE) >> 5) == DUNGEON_ELEMENT_WALL;
+}
+
 int main(void)
 {
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -66,7 +92,11 @@ int main(void)
         return 1;
     }
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
-    state.world.party.championCount = 0;
+    state.world.party.championCount = 1;
+    state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].hp.maximum = 100;
 
     for (mapIndex = 0;
          mapIndex < (int)state.world.dungeon->header.mapCount;
@@ -93,7 +123,24 @@ int main(void)
                     if (receipt.valid && !receipt.floorItemLane &&
                         receipt.usesF0791Blit && receipt.transparentColor == 10 &&
                         receipt.sourceZone >= 2548 && receipt.destinationW > 0 &&
-                        receipt.destinationH > 0 && receipt.graphicsId > 0) {
+                        receipt.destinationH > 0 && receipt.graphicsId > 0 &&
+                        front_square_is_wall(&state, mapIndex, x, y, direction)) {
+                        int clickX = receipt.destinationX + receipt.destinationW / 2;
+                        int clickY = receipt.destinationY + receipt.destinationH / 2;
+                        M11_GameInputResult clickResult =
+                            M11_GameView_HandlePointer(&state, clickX, clickY, 1);
+                        if (clickResult != M11_GAME_INPUT_REDRAW ||
+                            DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) ==
+                                THING_NONE) {
+                            fprintf(stderr,
+                                    "real alcove item was not pickable at (%d,%d) size=%dx%d result=%d hand=%u inventory=%d\\n",
+                                    clickX, clickY, receipt.destinationW, receipt.destinationH,
+                                    clickResult,
+                                    (unsigned int)DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state),
+                                    state.inventoryPanelActive);
+                            M11_GameView_Shutdown(&state);
+                            return 1;
+                        }
                         printf("ok: real PC34 alcove item map=%d party=(%d,%d,%d) graphic=%d zone=%d\n",
                                mapIndex, x, y, direction, receipt.graphicsId,
                                receipt.sourceZone);

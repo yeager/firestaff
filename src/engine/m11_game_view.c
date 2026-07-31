@@ -28055,6 +28055,23 @@ static const int g_objectPileBoxes[4][4] = {
 /* ReDMCSB CLIKVIEW.C C05 door button / wall ornament clickable zone. */
 static const int g_wallOrnamentBox[4] = { 96, 127, 35, 63 };
 
+/* F0115's C2548 alcove-object pass may place the real object's clickable
+ * material below C05's generic wall-ornament rectangle.  Keep the C05 box
+ * for bare ornaments and sensors, but let the rendered original material
+ * own the object interaction zone. */
+static int m11_dm1_alcove_item_hit_test(int x, int y) {
+    const M11_Dm1FloorItemHostPresentationReceipt *receipt =
+        &s_m11_dm1_alcove_item_host_presentation_receipt;
+
+    return receipt->valid && !receipt->floorItemLane &&
+           receipt->usesF0791Blit && receipt->destinationW > 0 &&
+           receipt->destinationH > 0 &&
+           x >= receipt->destinationX &&
+           x < receipt->destinationX + receipt->destinationW &&
+           y >= receipt->destinationY &&
+           y < receipt->destinationY + receipt->destinationH;
+}
+
 /* (declared in m11_game_view.h so tests can pin the F0376 contract) */
 int m11_point_in_source_box(int px, int py, const int box[4]) {
     return px >= box[0] && px <= box[1] && py >= box[2] && py <= box[3];
@@ -28235,6 +28252,7 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     int localY;
     int facingAlcove;
     int facingWall;
+    int alcoveItemHit;
 
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
@@ -28263,6 +28281,7 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                        frontCell.wallOrnamentOrdinal);
     facingWall = frontCell.valid &&
                  frontCell.elementType == DUNGEON_ELEMENT_WALL;
+    alcoveItemHit = facingAlcove && m11_dm1_alcove_item_hit_test(x, y);
 
     /* ── Door button (CLIKVIEW.C:356-390) ── */
     if (frontCell.valid && frontCell.elementType == DUNGEON_ELEMENT_DOOR &&
@@ -28392,7 +28411,8 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
             }
         }
         /* Wall ornament zone: alcove grab or wall sensor trigger */
-        if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+        if (alcoveItemHit ||
+            m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
             if (facingAlcove) {
                 /* Grab from alcove (front cell, view cell 2 = back-right
                  * for front square in DM1's cell numbering) */
@@ -28518,7 +28538,8 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
                 }
             }
             /* Wall ornament zone → wall sensor touch */
-            if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+            if (alcoveItemHit ||
+                m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
                 /* Sensor click pass-through handled by existing system */
             }
         } else if (facingWall && frontCell.wallOrnamentOrdinal >= 0 &&
@@ -28553,7 +28574,8 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
             }
         } else if (facingWall && facingAlcove) {
             /* F0377: Alcove ahead → drop into alcove */
-            if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
+            if (alcoveItemHit ||
+                m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
                 /* Check if we're dropping champion bones at Vi Altar.
                  * ReDMCSB: G0287_B_FacingViAltar + icon == C147_ICON_JUNK_CHAMPION_BONES
                  * triggers C13_EVENT_VI_ALTAR_REBIRTH.  Vi Altar is a specific
