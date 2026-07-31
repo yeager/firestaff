@@ -38,9 +38,12 @@
 
 #include <string.h>
 
-/* ── Built-in plate catalog (5 plates) ─────────────────────────────
- * Source: skproject/SKWIN/SkGlobal.cpp:1112-1170 (dPressurePlatesTable).
- * Coordinates are relative to a representative dungeon map.
+/* ── Retired fixture catalog ────────────────────────────────────────
+ * These entries predate the decoded DM2 record/actuator handoff and contain
+ * representative, not original, coordinates and targets.  Retain the bytes
+ * privately while compatibility tests migrate, but never expose or execute
+ * them. SKProject resolves sensors from the loaded dungeon records and gets
+ * text through QUERY_MESSAGE_TEXT / GDAT_CATEGORY_MESSAGES.
  */
 static const DM2_V1_PressurePlate g_builtin_plates[DM2_PLATE_NUM_BUILTIN] = {
     /* Plate 1: Weight plate - heavy party opens iron door (test 1: 3+ weight) */
@@ -109,13 +112,19 @@ typedef struct {
 static DM2_V1_PlateRuntime s_runtime;
 static int s_initialized = 0;
 
+static int dm2_v1_plate_source_catalog_available(void)
+{
+    /* No original dungeon-record/actuator owner is bound to this legacy API. */
+    return 0;
+}
+
 static void ensure_init(void) {
     if (s_initialized) return;
     memset(&s_runtime, 0, sizeof(s_runtime));
     s_runtime.party_x = -1;
     s_runtime.party_y = -1;
     s_runtime.party_level = -1;
-    s_runtime.party_weight = 100;
+    s_runtime.party_weight = 0;
     s_initialized = 1;
 }
 
@@ -125,7 +134,7 @@ void dm2_v1_plate_reset_state(void) {
     s_runtime.party_x = -1;
     s_runtime.party_y = -1;
     s_runtime.party_level = -1;
-    s_runtime.party_weight = 100;
+    s_runtime.party_weight = 0;
     s_initialized = 1;
 }
 
@@ -163,10 +172,11 @@ void dm2_v1_plate_set_item_on_floor(int item_id, int x, int y, int level) {
 
 /* ── Catalog ────────────────────────────────────────────────────── */
 int dm2_v1_plate_get_builtin_count(void) {
-    return DM2_PLATE_NUM_BUILTIN;
+    return 0;
 }
 
 const DM2_V1_PressurePlate *dm2_v1_plate_get_builtin(int plate_id) {
+    if (!dm2_v1_plate_source_catalog_available()) return NULL;
     for (int i = 0; i < DM2_PLATE_NUM_BUILTIN; i++) {
         if (g_builtin_plates[i].plate_id == plate_id) {
             return &g_builtin_plates[i];
@@ -176,6 +186,7 @@ const DM2_V1_PressurePlate *dm2_v1_plate_get_builtin(int plate_id) {
 }
 
 int dm2_v1_plate_lookup_index(int plate_id) {
+    if (!dm2_v1_plate_source_catalog_available()) return -1;
     for (int i = 0; i < DM2_PLATE_NUM_BUILTIN; i++) {
         if (g_builtin_plates[i].plate_id == plate_id) return i;
     }
@@ -352,7 +363,7 @@ int dm2_v1_plate_get_fire_count(int plate_id) {
 
 int dm2_v1_plate_get_door_state_after_fire(int plate_id) {
     const DM2_V1_PressurePlate *p = dm2_v1_plate_get_builtin(plate_id);
-    if (!p) return DM2_DOOR_STATE_CLOSED;
+    if (!p) return -1;
     return compute_door_state_after_fire(p);
 }
 
@@ -364,6 +375,7 @@ const DM2_V1_PlateState *dm2_v1_plate_get_state(int plate_id) {
 }
 
 const char *dm2_v1_plate_get_target_message(int plate_id) {
+    if (!dm2_v1_plate_source_catalog_available()) return NULL;
     int idx = dm2_v1_plate_lookup_index(plate_id);
     if (idx < 0 || idx >= DM2_PLATE_NUM_BUILTIN) return NULL;
     return g_builtin_messages[idx];
@@ -405,9 +417,6 @@ const char *dm2_v1_pressure_plate_source_evidence(void) {
         "Source: skproject/SKWIN/DME.h:1456-1504       (pressure_plate_descriptor_t)\n"
         "Source: ReDMCSB MOVESENS.C:1000-1100          (F0268_SENSOR_AddEvent DM1 parity)\n"
         "Source: ReDMCSB docs/dm2_sensors.md           (DM2 sensor types)\n"
-        "Plate kinds: WEIGHT (party weight threshold) / ITEM (specific item) /\n"
-        "             TIME (periodic timer) / PARTY (any party member) / CREATURE\n"
-        "Targets: door toggle/open/close / pit toggle / message display / creature spawn\n"
-        "V1 invariant: pressure plate fire mutates door state only,\n"
-        "              never touches viewport rendering state.\n";
+        "Admission: no source dungeon-record/actuator owner is imported yet;\n"
+        "           legacy fixture plates, messages and targets are no-op.\n";
 }

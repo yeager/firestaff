@@ -45452,3 +45452,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   actual weather drawing remains GDAT-backed. Source: SKProject
   `c_weather.cpp` ENVIRONMENT command path. Verification:
   `test_dm2_v1_weather_gdat_receipt`.
+
+- ✅ 2026-07-31 DM2 pressure-plate fixture closure: disabled the hard-coded
+  five-plate catalog, including its representative coordinates, target doors,
+  creature spawn and fabricated message. Runtime movement now cannot alter a
+  source dungeon tile through that catalog; real plate work remains gated on
+  imported dungeon sensor/actuator records and GDAT message lookup. Source:
+  SKProject `c_sensor.cpp`, `c_actuator.cpp` and `QUERY_MESSAGE_TEXT`.
+  Verification: `test_dm2_v1_pressure_plate_pc34_compat` and real-data
+  `test_dm2_v1_m11_startup_profile_gate`.

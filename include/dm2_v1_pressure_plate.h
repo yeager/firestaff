@@ -43,7 +43,7 @@ extern "C" {
 /* ── Constants ───────────────────────────────────────────────────── */
 #define DM2_PLATE_MAX_PLATES         16     /* max active plates tracked */
 #define DM2_PLATE_MAX_TRIGGERED      64     /* max history entries */
-#define DM2_PLATE_NUM_BUILTIN         5     /* built-in plate catalog */
+#define DM2_PLATE_NUM_BUILTIN         5     /* retired fixture capacity; never live */
 
 /* Plate kinds */
 typedef enum {
@@ -129,6 +129,7 @@ void dm2_v1_plate_set_party_position(int x, int y, int level);
 void dm2_v1_plate_set_item_on_floor(int item_id, int x, int y, int level);
 
 /* ── Catalog ────────────────────────────────────────────────────── */
+/* Returns zero until original dungeon sensor/actuator records are bound. */
 int  dm2_v1_plate_get_builtin_count(void);
 const DM2_V1_PressurePlate *dm2_v1_plate_get_builtin(int plate_id);
 int  dm2_v1_plate_lookup_index(int plate_id);
@@ -143,7 +144,7 @@ int  dm2_v1_plate_reset_fire_count(int plate_id);     /* re-arm fire_once */
 /* ── State / door state mutators ────────────────────────────────── */
 int  dm2_v1_plate_get_state_for(int plate_id);        /* 0=inactive, 1=active */
 int  dm2_v1_plate_get_fire_count(int plate_id);
-int  dm2_v1_plate_get_door_state_after_fire(int plate_id); /* 0..5 */
+int  dm2_v1_plate_get_door_state_after_fire(int plate_id); /* -1 without source target */
 const DM2_V1_PlateState *dm2_v1_plate_get_state(int plate_id);
 const char *dm2_v1_plate_get_target_message(int plate_id);
 const DM2_V1_PlateEvent *dm2_v1_plate_last_event(void);

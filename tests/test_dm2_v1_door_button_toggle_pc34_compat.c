@@ -231,16 +231,13 @@ static int test_half_state_steps_in_each_direction(void)
 
 /* ── Test 10: Pressure-plate DOOR_TOGGLE returns sensible door state */
 
-static int test_pressure_plate_toggle_returns_door_state(void)
+static int test_pressure_plate_toggle_requires_source_target(void)
 {
-    /* Plate 1 has target DOOR_TOGGLE (per pressure plate catalog).
-     * The post-fire door state should be a valid non-destroyed state
-     * (either fully OPEN or one step toward OPEN).  The important
-     * property for this boundary is: the value is in {0..4}, NOT 5
-     * (DESTROYED) and NOT -1 (invalid). */
+    /* The old fixture catalog supplied a fake DOOR_TOGGLE target.  Until a
+     * decoded dungeon actuator owns the target, no door state is available. */
     int ds = dm2_v1_plate_get_door_state_after_fire(1);
-    if (ds < 0 || ds > 4) {
-        printf("\n    plate 1 DOOR_TOGGLE → %s, expected 0..4",
+    if (ds != -1) {
+        printf("\n    unavailable fixture plate → %s, expected INVALID",
                state_label(ds));
         return 0;
     }
@@ -295,7 +292,7 @@ int main(void)
     TEST(round_trip_closed_returns_closed);
 
     /* Pressure plate integration. */
-    TEST(pressure_plate_toggle_returns_door_state);
+    TEST(pressure_plate_toggle_requires_source_target);
 
     /* Source evidence. */
     TEST(source_evidence_cites_timeline_and_defs);
