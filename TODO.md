@@ -26,8 +26,9 @@
   `SHOW_MENU_SCREEN` directly to the original menu surface. Port the
   title-menu event that selects `SHOW_CREDITS`, including the credits
   picture's own palette handoff, before exposing credits as an interactive
-  route. Do not reuse the credits picture as a boot animation or display it
-  through the menu IRGB set.
+  route. **2026-07-31 update:** the fabricated 48-tick title/credits gate is
+  removed; do not reuse the credits picture as a boot animation or display
+  it through the menu IRGB set.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its

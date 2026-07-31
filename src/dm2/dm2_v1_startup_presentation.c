@@ -85,10 +85,10 @@ int dm2_v1_startup_presentation_build(
     for (i = 0; i < max_commands; ++i) {
         dm2_v1_startup_draw_clear(&out_commands[i]);
     }
-    /* skproject/SKWIN/SkWinCore.cpp::INIT presents TITLE/0 dt07/1 before
-     * SHOW_MENU_SCREEN switches to TITLE/0 dt07/4. Keep both source GDAT
-     * draw commands in the startup package; the host chooses which phase
-     * to execute from the title timing receipt. */
+    /* SHOW_MENU_SCREEN loads TITLE/0/dt07/1 for a later SHOW_CREDITS event,
+     * but its menu loop draws only TITLE/0/dt07/4. Retain both original GDAT
+     * owners in the package; the host executes only the menu owner while the
+     * startup menu is active. Source: SKWINSPX/src/v5/startend.cpp. */
     rect.x = 0;
     rect.y = 0;
     rect.w = 320;

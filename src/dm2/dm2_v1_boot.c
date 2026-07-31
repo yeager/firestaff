@@ -1847,18 +1847,17 @@ static int dm2_v1_boot_startup_static_menu_timing_ready(
     const DM2_V1_BootStartupFullStartReceipt *receipt)
 {
     return receipt &&
-           receipt->title_frame_max == 7 &&
-           receipt->title_frame_duration_ticks == 6 &&
-           receipt->title_cycle_ticks == 48 &&
-           receipt->title_cycle_position_tick >= 0 &&
-           receipt->title_cycle_position_tick < receipt->title_cycle_ticks &&
-           receipt->title_frame >= 0 &&
-           receipt->title_frame <= receipt->title_frame_max &&
-           receipt->title_frame_start_tick <= receipt->title_animation_tick &&
-           receipt->title_next_frame_tick > receipt->title_animation_tick &&
-           receipt->title_frame_elapsed_ticks >= 0 &&
-           receipt->title_frame_remaining_ticks > 0 &&
-           receipt->title_cycle_remaining_ticks > 0;
+           receipt->title_animation_tick == 0 &&
+           receipt->title_frame == 0 &&
+           receipt->title_frame_max == 0 &&
+           receipt->title_frame_duration_ticks == 0 &&
+           receipt->title_cycle_ticks == 1 &&
+           receipt->title_cycle_position_tick == 0 &&
+           receipt->title_frame_start_tick == 0 &&
+           receipt->title_next_frame_tick == 1 &&
+           receipt->title_frame_elapsed_ticks == 0 &&
+           receipt->title_frame_remaining_ticks == 1 &&
+           receipt->title_cycle_remaining_ticks == 1;
 }
 
 static uint32_t dm2_v1_boot_packaged_capture_hash_step(uint32_t hash,
@@ -2004,6 +2003,14 @@ static int dm2_v1_boot_startup_fill_full_start_receipt(
         receipt->title_cycle_remaining_ticks =
             receipt->title_cycle_ticks -
             receipt->title_cycle_position_tick;
+    } else if (receipt->startup_menu_active) {
+        receipt->title_cycle_ticks = 1;
+        receipt->title_cycle_position_tick = 0;
+        receipt->title_frame_start_tick = 0;
+        receipt->title_next_frame_tick = 1;
+        receipt->title_frame_elapsed_ticks = 0;
+        receipt->title_frame_remaining_ticks = 1;
+        receipt->title_cycle_remaining_ticks = 1;
     }
     receipt->exact_title_timing_ready =
         dm2_v1_boot_startup_static_menu_timing_ready(receipt);
@@ -2981,8 +2988,10 @@ int dm2_v1_boot_startup_packaged_consumer_receipt_from_full_start(
           package->menu_raw_gdat_byte_count > 0u &&
           package->title_menu_decoded_gdat_capture_ready)) &&
         package->exact_title_timing_ready &&
-        package->title_frame_duration_ticks == 6 &&
-        package->title_cycle_ticks == 48;
+        package->title_animation_tick == 0 &&
+        package->title_frame_duration_ticks == 0 &&
+        package->title_frame_max == 0 &&
+        package->title_cycle_ticks == 1;
     out_receipt->packaged_first_hud_receipt_consumed =
         (package->hud_handoff_capture_ready &&
          (!package->full_start_real_asset_ready ||
@@ -3418,8 +3427,9 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
         out_receipt->executed_command_count ==
             out_receipt->draw_command_count;
     out_receipt->title_timing_receipt_consumed =
-        out_receipt->title_frame_duration_ticks == 6 &&
-        out_receipt->title_frame_max == 7 &&
+        out_receipt->title_animation_tick == 0 &&
+        out_receipt->title_frame_duration_ticks == 0 &&
+        out_receipt->title_frame_max == 0 &&
         out_receipt->title_next_frame_tick >
             out_receipt->title_animation_tick &&
         out_receipt->title_frame_remaining_ticks > 0;

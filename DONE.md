@@ -44839,3 +44839,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   pixels. ReDMCSB `DUNVIEW.C:6453,6590` is the source reference. Verification:
   `test_dm1_v1_viewport_3d_pc34_compat` passes with an explicit unbound-D3
   side-door regression.
+
+- ✅ 2026-07-31 DM2 static startup-menu timing: removed the fabricated
+  48-tick title/credits sequence from M11 and the DM2 startup handoff.
+  SKProject `DM2_SHOW_MENU_SCREEN` repeatedly calls
+  `DM2_DRAW_TITLE_MENU_SCREEN` for `TITLE/0/dt07/4`; `dt07/1` is loaded
+  solely for the separately selected `DM2_SHOW_CREDITS` event. The menu now
+  has a static timing receipt and accepts input immediately. Verification:
+  `test_dm2_v1_startup_audio_menu` passes.

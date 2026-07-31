@@ -1350,22 +1350,18 @@ int dm2_v1_startup_runtime_handoff_receipt_from_tick(
              sizeof(out_receipt->animation),
              "%s",
              active ? "dm2-startup-menu" : "dm2-runtime");
-    /* skproject/SKWIN SHOW_MENU_SCREEN owns the real TITLE/0/dt07 startup
-     * surfaces. Firestaff keeps a short host-side title gate so M11 presents
-     * dt07/1 before handing input to the dt07/4 menu surface. */
-    out_receipt->title_animation_tick = active && animation_tick > 0
-                                            ? animation_tick
-                                            : 0;
-    out_receipt->title_frame_duration_ticks = active ? 6 : 0;
-    out_receipt->title_frame_max = active ? 7 : 0;
-    out_receipt->title_frame =
-        active ? (out_receipt->title_animation_tick /
-                  out_receipt->title_frame_duration_ticks)
-               : 0;
-    if (active && out_receipt->title_frame > out_receipt->title_frame_max) {
-        out_receipt->title_frame = out_receipt->title_frame_max;
-    }
-    out_receipt->title_ready = active ? 0 : 1;
+    /* SHOW_MENU_SCREEN loads TITLE/0/dt07/1 for the separate credits event,
+     * then repeatedly calls DRAW_TITLE_MENU_SCREEN for TITLE/0/dt07/4.
+     * There is no title-film or tick gate between those calls. Keep the
+     * startup receipt static so M11 cannot invent frames or delay input.
+     * Source: SKWINSPX/src/v5/startend.cpp::DM2_SHOW_MENU_SCREEN and
+     * ::DM2_DRAW_TITLE_MENU_SCREEN. */
+    (void)animation_tick;
+    out_receipt->title_animation_tick = 0;
+    out_receipt->title_frame_duration_ticks = 0;
+    out_receipt->title_frame_max = 0;
+    out_receipt->title_frame = 0;
+    out_receipt->title_ready = 1;
     out_receipt->music_cue = active ? 0 : -1;
     out_receipt->music_loop = active;
     /* SKWIN startend.cpp calls DM2_PLAY_MUSIC(0, true) immediately before
