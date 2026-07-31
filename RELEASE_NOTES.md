@@ -1,6 +1,14 @@
 
 # Unreleased
 
+# Firestaff v3.0.197
+
+- DM1: preserve ReDMCSB M516 champion inventory slot order through original
+  PC3.4 F0435/F0433 save import and export, including ready/action hands,
+  equipment, pouches, and backpack slots.
+- DM1: verify the complete V1 suite and real original PC34 corpus roundtrip
+  after the save-order repair.
+
 # Firestaff v3.0.196
 
 - DM2: bind startup music to verified original GDAT song-list data and retain
