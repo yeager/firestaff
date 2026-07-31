@@ -280,8 +280,10 @@ diagnostic; it must not silently fall back to a generated visual.
   CSB sessions now also reject the shared geometry-only cyan F0113
   teleporter fill. **2026-07-31 update:** live F0113 now binds C076 and its
   selected C070--C075 mask through the active hash-verified `GRAPHICS.DAT`
-  decoder, using the source tick for the G0188 phase. Missing source remains
-  no-draw rather than a generated rectangle. **2026-07-31 follow-up:**
+  decoder. The existing compatibility sampler derives its phase from the live
+  tick; exact F0113 `M005_RANDOM(2)`/`M003_RANDOM(32)` stream ownership
+  remains separate work. Missing source remains no-draw rather than a
+  generated rectangle. **2026-07-31 follow-up:**
   entrance-plan metadata no longer carries generated grey door
   fill or edge colours. ReDMCSB `ENTRANCE.C F0806` owns C002/C003, and a
   missing raster remains an admitted draw failure rather than a plan-level
