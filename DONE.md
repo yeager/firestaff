@@ -44607,3 +44607,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   documentation of the existing fail-closed implementation, not a claim that
   unbound viewport families are rendered. Verification:
   `test_csb_v22_inplace_draw_pc34` passes 66/66.
+- ✅ 2026-07-31 CSB HUD fallback containment: `FIRESTAFF_V1_CHROME=0` is now
+  explicitly a DM1 compatibility option, not permission to draw Firestaff's
+  generic cyan utility frame, champion/status text or light bar in a CSB
+  session. When C009/C010 material is unavailable, the source-owned CSB area
+  remains black. Verification: CSB M11 startup/resume and Prison-runtime HUD
+  regressions pass.

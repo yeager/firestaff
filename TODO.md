@@ -2272,7 +2272,10 @@ that its exact runtime path is not already source-locked and tested.
     `Magic.cpp::SelectMagicCaster` and keeps the persisted CSB runtime state
     distinct from the party leader. Rune-cost entry and `CastMagic` still
     need their source-owned CSBWin transaction; this does not enable DM1
-    F0750--F0754 for CSB.
+    F0750--F0754 for CSB. **2026-07-31 HUD containment:** disabling the
+    optional DM1 V1-chrome switch can no longer make a CSB session draw the
+    generic cyan utility frame, champion/status text or light bar when
+    C009/C010 source material is absent; that CSB region remains source black.
 28. **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,
    pits, floor/ceiling ornaments, creatures, items, projectiles, explosions,
    and custom backgrounds through real PC34 asset ownership.

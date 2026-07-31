@@ -43972,7 +43972,11 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     /* C010/C011 are source-owned V1 surfaces. A failed GRAPHICS.DAT
      * validation has already cleared their strip; never replace that result
      * with Firestaff's procedural utility frame in V1 chrome. */
-    if (!drewAuthenticFrames && !m11_v1_chrome_mode_enabled(state)) {
+    /* FIRESTAFF_V1_CHROME=0 is a DM1 compatibility switch, not authority to
+     * manufacture CSB chrome. ReDMCSB's C009/C010 route stays black when its
+     * verified GRAPHICS.DAT material is absent. */
+    if (!drewAuthenticFrames && !m11_v1_chrome_mode_enabled(state) &&
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
                       M11_UTILITY_PANEL_W, M11_UTILITY_PANEL_H, M11_COLOR_BLACK);
@@ -43991,7 +43995,8 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       250, 34, line, &g_text_small);
     } else if (activeChampion && !drewAuthenticFrames &&
-               !m11_v1_chrome_mode_enabled(state)) {
+               !m11_v1_chrome_mode_enabled(state) &&
+               state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         /* Legacy/procedural fallback only.  In normal V1 chrome mode,
          * C017 is reserved for the source leader-hand object name and
          * must not be repurposed as a champion-name/status label.  When
@@ -44008,7 +44013,8 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     if (activeChampion &&
         (state->showDebugHUD ||
          (!(drewAuthenticFrames && !state->showDebugHUD) &&
-          !m11_v1_chrome_mode_enabled(state)))) {
+          !m11_v1_chrome_mode_enabled(state) &&
+          state->sourceKind != M11_GAME_SOURCE_CSB_BOOT))) {
         if (state->showDebugHUD) {
             snprintf(line, sizeof(line), "L%d HP%u ST%u",
                      mapDesc ? (int)mapDesc->level : 0,
@@ -44055,7 +44061,8 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     /* Light level indicator: debug/procedural fallback only.  The
      * normal V1 action/spell strip is source-owned; invented light
      * bars make the DM1 action area look like a debug utility panel. */
-    if (!drewAuthenticFrames || state->showDebugHUD) {
+    if ((!drewAuthenticFrames &&
+         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) || state->showDebugHUD) {
         int lightLevel = m11_compute_light_level(state);
         unsigned char lightColor;
         const char* lightLabel;
