@@ -25,7 +25,7 @@ extern "C" {
  *   byte  14   : reserved (always 0x00 in observed MENU.BPK)
  *   byte  15   : height (BE uint8) - confirmed against PRS3+8 pixel count
  *   bytes 16..19: reserved/zero in observed MENU.BPK (byte 19 is the
- *                 bpp/mode tag: 6 / 14 / 22 / 30 are the four observed
+ *                 opaque mode flags: 6 / 14 / 22 / 30 are the four observed
  *                 pixel-mode tags; the entry[0] directory trailer carries
  *                 the unique tag 10).
  *
@@ -40,12 +40,10 @@ extern "C" {
 #define NEXUS_V1_BPK_PRS3_HEADER_BYTES 12U
 #define NEXUS_V1_BPK_PRS3_VERSION 0x00000001U
 
-/* Observed PRS3 pixel-mode tags (byte 19 of the 20-byte prefix).
- * The numeric ordering matches: tag = (bytes_per_pixel * 8) - 2.
- *   6  -> 1 byte/pixel  (8 bpp Saturn palette/indexed mode)
- *  14  -> 2 bytes/pixel (16 bpp RGB565 Saturn mode)
- *  22  -> 3 bytes/pixel (24 bpp RGB888 mode)
- *  30  -> 4 bytes/pixel (32 bpp RGBA mode)
+/* Observed PRS3 mode flags (byte 19 of the 20-byte prefix). DMWeb's
+ * Translation Kit states that every PRS3 bitmap decodes to 256-colour,
+ * 8-bit indexed output. These values are not host pixel widths; the
+ * mode-to-bpp helper is only for stored/non-PRS3 surface analysis.
  *  10  -> entry[0] directory-trailer tag (unique to the trailer entry)
  */
 #define NEXUS_V1_BPK_MODE_8BPP  6U
@@ -118,8 +116,9 @@ typedef struct {
 } Nexus_V1_BpkPaletteTrailerReceipt;
 
 /* Per-entry surface layout (pass1083). For every entry whose 20-byte
- * prefix is complete AND whose prefix mode is one of the four PRS3
- * pixel-mode tags (6/14/22/30), the surface-class helpers below compute
+ * prefix is complete AND whose entry is PRS3, the surface-class helpers
+ * below compute indexed 8bpp output. For stored/non-PRS3 entries, mode
+ * tags retain their separate mode-derived layout until source-bound.
  * the bytes-per-pixel, rowstride (no alignment padding), and expected
  * unpacked surface byte count. For the unique directory trailer (mode
  * 10) and any unknown mode, the helpers return 0 and the surface_estimate

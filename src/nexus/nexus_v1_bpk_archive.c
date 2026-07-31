@@ -32,6 +32,25 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size) {
     return hash;
 }
 
+/* DMWeb Translation Kit: every PRS3 bitmap is 256-colour indexed output.
+ * The prefix mode byte is retained as opaque source flags for PRS3; it must
+ * not be promoted to a host RGB byte width. Stored/non-PRS3 surfaces retain
+ * the mode-derived layout until their own format is source-bound. */
+static uint32_t bpk_surface_bpp(const Nexus_V1_BpkEntry *entry,
+                                const Nexus_V1_BpkEntryPrefix *prefix)
+{
+    if (entry && entry->has_prs3) return 1U;
+    return prefix ? nexus_v1_bpk_mode_to_bpp(prefix->mode) : 0U;
+}
+
+static Nexus_V1_BpkSurfaceClass bpk_surface_class(
+    const Nexus_V1_BpkEntry *entry, const Nexus_V1_BpkEntryPrefix *prefix)
+{
+    if (entry && entry->has_prs3) return NEXUS_V1_BPK_SURFACE_INDEXED_8BPP;
+    return prefix ? nexus_v1_bpk_mode_to_surface_class(prefix->mode) :
+                    NEXUS_V1_BPK_SURFACE_UNKNOWN;
+}
+
 static int read_header(const uint8_t *data,
                        size_t data_size,
                        uint32_t *out_count) {
@@ -345,8 +364,10 @@ int nexus_v1_bpk_archive_mode_distribution(
     if (read_header(data, data_size, &count) != 0) return -1;
 
     for (uint32_t i = 0; i < count; ++i) {
+        Nexus_V1_BpkEntry entry;
         Nexus_V1_BpkEntryPrefix prefix;
-        if (nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
+        if (nexus_v1_bpk_archive_get_entry(data, data_size, i, &entry) != 0 ||
+            nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
                                                   &prefix) != 0) {
             return -1;
         }
@@ -410,12 +431,14 @@ int nexus_v1_bpk_archive_surface_estimate(
     if (read_header(data, data_size, &count) != 0) return -1;
 
     for (uint32_t i = 0; i < count; ++i) {
+        Nexus_V1_BpkEntry entry;
         Nexus_V1_BpkEntryPrefix prefix;
         uint32_t bpp;
         uint32_t rowstride;
         uint32_t surface_bytes;
 
-        if (nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
+        if (nexus_v1_bpk_archive_get_entry(data, data_size, i, &entry) != 0 ||
+            nexus_v1_bpk_archive_get_entry_prefix(data, data_size, i,
                                                   &prefix) != 0) {
             return -1;
         }
@@ -427,7 +450,7 @@ int nexus_v1_bpk_archive_surface_estimate(
             ++trailer_skip;
             continue;
         }
-        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        bpp = bpk_surface_bpp(&entry, &prefix);
         if (bpp == 0U) {
             ++unknown_skip;
             continue;
@@ -446,8 +469,7 @@ int nexus_v1_bpk_archive_surface_estimate(
             row->layout.bpp = bpp;
             row->layout.rowstride = rowstride;
             row->layout.surface_bytes = surface_bytes;
-            row->layout.surface_class =
-                nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+            row->layout.surface_class = bpk_surface_class(&entry, &prefix);
             ++written;
         } else if (out_entries && written >= entry_capacity) {
             truncated = 1U;
@@ -532,7 +554,7 @@ int nexus_v1_bpk_archive_runtime_render_receipt(
             continue;
         }
 
-        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        bpp = bpk_surface_bpp(&entry, &prefix);
         if (bpp == 0U) {
             ++unknown_mode_entries;
             continue;
@@ -641,7 +663,7 @@ int nexus_v1_bpk_archive_extract_stored_surface(
         return NEXUS_V1_BPK_EXTRACT_ERR_NOT_SURFACE;
     }
 
-    bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+    bpp = bpk_surface_bpp(&entry, &prefix);
     if (bpp == 0U) {
         return NEXUS_V1_BPK_EXTRACT_ERR_NOT_SURFACE;
     }
@@ -780,7 +802,7 @@ int nexus_v1_bpk_archive_decode_surface(
     if (nexus_v1_bpk_archive_get_entry(data, data_size, index, &entry) != 0 ||
         nexus_v1_bpk_archive_get_entry_prefix(data, data_size, index, &prefix) != 0)
         return NEXUS_V1_BPK_DECODE_ERR_ARCHIVE;
-    bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+    bpp = bpk_surface_bpp(&entry, &prefix);
     if (!prefix.prefix_complete || bpp == 0U) return NEXUS_V1_BPK_DECODE_ERR_NOT_SURFACE;
 
     if (!entry.has_prs3) {
@@ -819,7 +841,7 @@ int nexus_v1_bpk_archive_decode_surface(
             out_surface->layout.rowstride = prefix.width * bpp;
             out_surface->layout.surface_bytes = (uint32_t)dr.bytes_produced;
             out_surface->layout.surface_class =
-                nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+                bpk_surface_class(&entry, &prefix);
         }
         return NEXUS_V1_BPK_DECODE_OK;
     }
@@ -949,7 +971,7 @@ int nexus_v1_dmdf_import_bpk_material_bank(const uint8_t *data,
             nexus_v1_bpk_archive_get_entry(data, data_size, index, &entry) != 0 ||
             nexus_v1_bpk_archive_get_entry_prefix(data, data_size, index, &prefix) != 0 ||
             prefix.width == 0U || prefix.height == 0U) continue;
-        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        bpp = bpk_surface_bpp(&entry, &prefix);
         if (bpp == 0U) continue;
         bytes = (size_t)prefix.width * (size_t)prefix.height *
                 (entry.has_prs3 ? 1U : (size_t)bpp);
@@ -1232,7 +1254,7 @@ int nexus_v1_bpk_archive_runtime_surface_handoff(
             continue;
         }
 
-        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        bpp = bpk_surface_bpp(&entry, &prefix);
         if (bpp == 0U) {
             ++unknown_skipped;
             continue;
@@ -1257,8 +1279,7 @@ int nexus_v1_bpk_archive_runtime_surface_handoff(
         row.surface.layout.bpp = bpp;
         row.surface.layout.rowstride = (uint32_t)rowstride64;
         row.surface.layout.surface_bytes = (uint32_t)surface64;
-        row.surface.layout.surface_class =
-            nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+        row.surface.layout.surface_class = bpk_surface_class(&entry, &prefix);
 
         ++surface_entries;
         expected_surface_bytes += surface64;
@@ -1344,7 +1365,7 @@ int nexus_v1_bpk_archive_prs3_stream_plan(
     if (!entry.has_prs3 || !prs3.has_prs3) {
         return NEXUS_V1_BPK_PRS3_STREAM_ERR_NOT_PRS3;
     }
-    bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+    bpp = bpk_surface_bpp(&entry, &prefix);
     if (bpp == 0U) {
         return NEXUS_V1_BPK_PRS3_STREAM_ERR_UNSUPPORTED_MODE;
     }
@@ -2121,7 +2142,7 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
             if (i == 0U) directory_trailer_at_entry_zero = 1;
             continue;
         }
-        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        bpp = bpk_surface_bpp(&entry, &prefix);
         if (bpp == 0U) {
             if (entry.has_prs3) ++out_receipt->unknown_prs3_mode_entries;
             continue;
@@ -2130,7 +2151,7 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
 
         memset(&row, 0, sizeof(row));
         row.entry_index = i;
-        row.surface_class = nexus_v1_bpk_mode_to_surface_class(prefix.mode);
+        row.surface_class = bpk_surface_class(&entry, &prefix);
         row.mode = prefix.mode;
         row.width = prefix.width;
         row.height = prefix.height;
@@ -2402,7 +2423,7 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
             return -1;
         }
         if (!entry.has_prs3 || !prefix.prefix_complete) continue;
-        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        bpp = bpk_surface_bpp(&entry, &prefix);
         if (bpp == 0U) continue;
 
         {
@@ -2640,15 +2661,14 @@ int nexus_v1_bpk_archive_prs3_payload_evidence(
             ++trailer_skip;
             continue;
         }
-        bpp = nexus_v1_bpk_mode_to_bpp(prefix.mode);
+        if (nexus_v1_bpk_archive_get_entry(data, data_size, i, &entry) != 0) {
+            return -1;
+        }
+        bpp = bpk_surface_bpp(&entry, &prefix);
         if (bpp == 0U) {
             ++unknown_skip;
             continue;
         }
-        if (nexus_v1_bpk_archive_get_entry(data, data_size, i, &entry) != 0) {
-            return -1;
-        }
-
         /* Pass1084 evidence uses the inspect_prs3 `compressed_size`
          * boundary: payload is bytes from (entry.offset + 32) until the
          * next entry's start. If the entry doesn't span past the full
