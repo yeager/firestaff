@@ -186,7 +186,9 @@
   **2026-07-31 update:** the remaining five-shop fixture catalog and all
   four host-authored NPC dialog tables are disabled too. Until the original
   actuator, `WALL_GFX` and `dt08` ownership is decoded, no shop API can
-  expose stock, prices, names, dialog or mutate party state.
+  expose stock, prices, names, dialog or mutate party state. The latent
+  inventory/gold writeback bridge is removed as well: an unadmitted shop
+  state cannot copy arbitrary ObjectIDs into a session.
 
 - **DM2-OBJECT-TEXT-OWNER-HANDOFF:** Bind leader-hand/item text only through
   the decoded DB object and its original GDAT text/metadata route. The HUD

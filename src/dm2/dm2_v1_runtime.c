@@ -9062,42 +9062,6 @@ int dm2_v1_runtime_get_door_state(int level, int x, int y) {
     return dm2_runtime_door_state((uint16_t)raw);
 }
 
-/* Load a champion's runtime inventory into the shop-local inventory when the
- * party enters a shop.  Source: docs/dm2_inventory.md §8 — the shop interface
- * uses the standard item display system, so it must reflect the live party
- * inventory rather than a stale stub. */
-int dm2_v1_shop_load_inventory_from_runtime(uint8_t champion) {
-    int loaded = 0;
-    dm2_v1_shop_clear_inventory();
-    for (uint8_t slot = 0; slot < 30; slot++) {
-        uint32_t object = dm2_v1_runtime_get_champion_inventory_object(champion, slot);
-        if (object != 0) {
-            if (dm2_v1_shop_add_inventory((int)object, 1)) {
-                loaded++;
-            }
-        }
-    }
-    return loaded;
-}
-
-/* Commit the shop-local inventory back to the selected champion's runtime
- * inventory after every transaction and on leave.  This is the broader live
- * runtime field writeback beyond gold that DM2-012 requires. */
-int dm2_v1_shop_commit_inventory_to_runtime(uint8_t champion) {
-    const DM2_V1_ShopState *st = dm2_v1_shop_get_state();
-    int committed = 0;
-    for (uint8_t slot = 0; slot < 30; slot++) {
-        uint32_t object = 0;
-        if (slot < (uint8_t)st->inventory_count) {
-            object = (uint32_t)st->inventory_item[slot];
-        }
-        if (dm2_v1_runtime_set_champion_inventory_object(champion, slot, object) == 0) {
-            committed++;
-        }
-    }
-    return committed;
-}
-
 int dm2_v1_runtime_enter_shop(int level, int x, int y) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
 
@@ -9116,56 +9080,28 @@ int dm2_v1_runtime_enter_shop(int level, int x, int y) {
 
 int dm2_v1_runtime_leave_shop(void) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    DM2_V1_GameState *gs;
-    int shop_id;
 
     if (!rt->boot || !rt->boot->dm2_state) return -1;
-    shop_id = dm2_v1_shop_get_active_shop();
-    if (shop_id == DM2_SHOP_ID_NONE) return -1;
-    gs = (DM2_V1_GameState *)rt->boot->dm2_state;
-    dm2_v1_shop_commit_inventory_to_runtime(0); /* leader = champion 0 */
-    dm2_v1_shop_commit_gold_to_game_state(gs);
-    return dm2_v1_shop_leave(shop_id) ? 0 : -1;
+    /* SHOP_GLASS has no decoded DB14/CCM/WALL_GFX ownership yet.  Do not
+     * let an otherwise unreachable local shop state write arbitrary ObjectID
+     * or gold values back into the live session. */
+    return -1;
 }
 
 int dm2_v1_runtime_buy_from_shop(int stock_idx) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    DM2_V1_GameState *gs;
-    int shop_id;
-    int rc;
 
+    (void)stock_idx;
     if (!rt->boot || !rt->boot->dm2_state) return -1;
-    shop_id = dm2_v1_shop_get_active_shop();
-    if (shop_id == DM2_SHOP_ID_NONE) {
-        return (int)DM2_SHOP_RESULT_NO_ACTIVE_SHOP;
-    }
-    rc = dm2_v1_shop_buy(shop_id, stock_idx);
-    if (rc == 1) {
-        dm2_v1_shop_commit_inventory_to_runtime(0);
-        gs = (DM2_V1_GameState *)rt->boot->dm2_state;
-        dm2_v1_shop_commit_gold_to_game_state(gs);
-    }
-    return rc;
+    return (int)DM2_SHOP_RESULT_NO_ACTIVE_SHOP;
 }
 
 int dm2_v1_runtime_sell_to_shop(int inv_idx) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    DM2_V1_GameState *gs;
-    int shop_id;
-    int rc;
 
+    (void)inv_idx;
     if (!rt->boot || !rt->boot->dm2_state) return -1;
-    shop_id = dm2_v1_shop_get_active_shop();
-    if (shop_id == DM2_SHOP_ID_NONE) {
-        return (int)DM2_SHOP_RESULT_NO_ACTIVE_SHOP;
-    }
-    rc = dm2_v1_shop_sell(shop_id, inv_idx);
-    if (rc == 1) {
-        dm2_v1_shop_commit_inventory_to_runtime(0);
-        gs = (DM2_V1_GameState *)rt->boot->dm2_state;
-        dm2_v1_shop_commit_gold_to_game_state(gs);
-    }
-    return rc;
+    return (int)DM2_SHOP_RESULT_NO_ACTIVE_SHOP;
 }
 
 int dm2_v1_runtime_npc_interact(int level, int x, int y) {

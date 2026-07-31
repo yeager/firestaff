@@ -216,14 +216,6 @@ uint32_t dm2_v1_shop_party_state_hash(void);
 struct DM2_V1_GameState;
 void dm2_v1_shop_commit_gold_to_game_state(struct DM2_V1_GameState *gs);
 
-/* ── Runtime inventory handoff ──────────────────────────────────── */
-/* Load the selected champion's runtime inventory into the shop-local
- * inventory when entering a shop; commit it back after every transaction
- * and on leave.  This is the broader live runtime field writeback beyond
- * gold that DM2-012's shop route requires. */
-int dm2_v1_shop_load_inventory_from_runtime(uint8_t champion);
-int dm2_v1_shop_commit_inventory_to_runtime(uint8_t champion);
-
 /* Container-aware inventory helper (for tests / synthetic fixtures). */
 int dm2_v1_shop_add_container(int item_id, int qty, int contents_count);
 

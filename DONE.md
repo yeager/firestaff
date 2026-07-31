@@ -45955,3 +45955,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   capture for an internal test framebuffer. A real macOS window still needs
   an external original-frame comparison; this change prevents synthetic
   readiness from obscuring that open requirement.
+
+- 2026-07-31: Removed DM2's latent shop inventory/gold writeback bridge.
+  Without the original `SHOP_GLASS` DB14/CCM/WALL_GFX ownership, no local
+  shop state can write arbitrary ObjectIDs or gold values into a live session.
