@@ -1,3 +1,15 @@
+- ✅ 2026-07-31 DM2 M11 source credits event: the original main-menu event
+  218 now opens `TITLE/0/dt07/1` only after its bounded GDAT image and raw
+  payload proof pass. BPP8 credits retain their physical indices and use
+  `DM2_INIT`'s verified `INTERFACE_GENERAL/0/dtPalIRGB/0xFE`; BPP4 variants
+  use only the embedded source palette. Event 239 or exactly 1,800 source
+  loop steps returns to the original menu surface. No credits page can be
+  synthesized or borrow a 16-colour menu remap. Source: SKProject
+  `SKWINSPX/src/v5/startend.cpp::DM2_SHOW_MENU_SCREEN`, `DM2_SHOW_CREDITS`
+  and `DM2_INIT`; source click matrix event 218/239. Verification: real-data
+  `test_dm2_v1_m11_startup_profile_gate` enters, renders, times out, reopens
+  and dismisses the PC English source credits page.
+
 - ✅ 2026-07-31 DM2 M11 verified-audio handoff: M11 now binds the SDL
   playback device only after DM2's hash-verified boot profile has bound the
   same GDAT loader, and releases it with the DM2 view. Thus no filename-only

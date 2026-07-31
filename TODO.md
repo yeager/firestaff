@@ -32,28 +32,6 @@
   source bytes. Original SKSave import no longer seeds this route from the
   legacy fixture party before decoding its own SUPPRESS champion records.
 
-- **DM2-CREDITS-EVENT-OWNER-HANDOFF:** DM2 startup now follows
-  `SHOW_MENU_SCREEN` directly to the original menu surface. Port the
-  title-menu event that selects `SHOW_CREDITS`, including its source-owned
-  palette transaction, before exposing credits as an interactive
-  route. **2026-07-31 update:** the fabricated 48-tick title/credits gate is
-  removed; do not reuse the credits picture as a boot animation or display
-  it through the menu IRGB set. Both logical boot title/menu owners now name
-  `TITLE/0/dt07/4`; `dt07/1` remains reserved for the unported
-  `SHOW_CREDITS` event.
-  **2026-07-31 source audit:** SKProject
-  `SKWINSPX/src/v5/startend.cpp::DM2_SHOW_MENU_SCREEN` lines 259--298 loads
-  `TITLE/0/dt07/1`.  For non-BPP8 variants it retains the IMG3 local palette;
-  for the verified PC English BPP8 image `glbl_pal2` is null and the image
-  uses the global `INTERFACE_GENERAL/0/dtPalIRGB/0xFE` selected in `DM2_INIT`
-  (lines 554--565). `DM2_SHOW_CREDITS` lines 1381--1402 selects palette set
-  0, blits that field with this conditional palette, restores set 1, then
-  waits for event 239 or exactly 1,800 event-loop steps before returning
-  0xDA to the menu loop. `uiinput.cpp` lines 511--515 maps event 218 to this
-  routine; the source-derived MOUSE_INPUT matrix pins its screen rectangles
-  to 86,161,14,17 and the full-screen event-239 dismissal. Implement all of
-  those facts as one atomic route, or keep credits unavailable.
-
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its
   `PLACE_MERCHANDISE`/`TAKE_MERCHANDISE` CCM records, including source-owned

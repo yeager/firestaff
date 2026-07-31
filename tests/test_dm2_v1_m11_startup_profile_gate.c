@@ -1745,6 +1745,62 @@ int main(void) {
         }
         dm2_v1_boot_gdat_image_asset_free(menu_pixels);
     }
+    {
+        uint8_t *credits_pixels = NULL;
+        int credits_w = 0;
+        int credits_h = 0;
+        int credits_stride = 0;
+        int sample_x = 0;
+        int sample_y = 0;
+        expect_true(M11_GameView_HandlePointer(&view, 90, 165, 1) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.dm2State.startup_credits_active == 1 &&
+                        view.dm2State.startup_credits_remaining_ticks == 1800,
+                    "M11 DM2 credits enter only through source event 218");
+        if (dm2_v1_boot_gdat_image_asset_fetch(profile, 5, 0, 1,
+                                               &credits_pixels, &credits_w,
+                                               &credits_h,
+                                               &credits_stride) == 0 &&
+            credits_pixels && credits_w == 320 && credits_h == 200 &&
+            credits_stride >= credits_w) {
+            int y;
+            for (y = 0; y < credits_h; ++y) {
+                int x;
+                for (x = 0; x < credits_w; ++x) {
+                    if (credits_pixels[y * credits_stride + x] != 0u) {
+                        sample_x = x;
+                        sample_y = y;
+                        break;
+                    }
+                }
+                if (sample_x || sample_y) break;
+            }
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            expect_true((sample_x || sample_y) &&
+                            framebuffer[sample_y * 320 + sample_x] ==
+                                credits_pixels[sample_y * credits_stride + sample_x],
+                        "M11 DM2 credits preserve BPP8 source palette indices");
+        } else {
+            expect_true(0, "M11 DM2 credits fetches original TITLE dt07/1");
+        }
+        dm2_v1_boot_gdat_image_asset_free(credits_pixels);
+        view.dm2State.startup_credits_remaining_ticks = 1;
+        expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.dm2State.startup_credits_active == 0 &&
+                        view.dm2State.startup_credits_remaining_ticks == 0,
+                    "M11 DM2 credits return after the source 1,800-step countdown");
+        expect_true(M11_GameView_HandlePointer(&view, 90, 165, 1) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.dm2State.startup_credits_active == 1,
+                    "M11 DM2 credits may re-enter from the source menu event");
+        expect_true(M11_GameView_HandlePointer(&view, 0, 0, 1) ==
+                        M11_GAME_INPUT_REDRAW &&
+                        view.dm2State.startup_credits_active == 0 &&
+                        view.dm2State.startup_credits_remaining_ticks == 0,
+                    "M11 DM2 credits leave only through source event 239");
+    }
     while (view.dm2State.startup_menu_selected_row + 1 <
            view.dm2State.startup_menu_row_count) {
         expect_true(M11_GameView_HandleInput(&view,

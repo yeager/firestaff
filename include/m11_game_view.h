@@ -1628,6 +1628,8 @@ typedef struct {
         int startup_menu_selected_row;
         int startup_menu_row_count;
         int startup_title_animation_tick;
+        int startup_credits_active;
+        int startup_credits_remaining_ticks;
         uint32_t music_elapsed_us;
         uint32_t music_loop_duration_us;
         uint32_t music_loop_count;

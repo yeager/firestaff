@@ -57,6 +57,7 @@
 #include "dm2_v1_startup_layout.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
+#include "dm2_touch_click_zone_matrix_pc34_compat.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v2_runtime.h"
 #include "dm2_v2_asset_pipeline.h"
@@ -1657,6 +1658,12 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     DM2_V1_StartupHostActionReceipt action_receipt;
 
     if (!state || !state->dm2State.startup_menu_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    /* DM2_SHOW_CREDITS accepts only the source mouse event 0xEF.  Keyboard
+     * navigation must not leak into SHOW_MENU_SCREEN while its 1,800-step
+     * event loop owns the screen. */
+    if (state->dm2State.startup_credits_active) {
         return M11_GAME_INPUT_IGNORED;
     }
     if (!m11_dm2_boot_runtime_startup_input(
@@ -20292,6 +20299,18 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (state->dm2State.startup_menu_active) {
             DM2_V1_StartupIdleReceipt receipt;
             DM2_V1_MusicScheduleReceipt music_schedule;
+            if (state->dm2State.startup_credits_active) {
+                /* SKProject startend.cpp::DM2_SHOW_CREDITS decrements n once
+                 * after each event-loop/SLEEP_SEVERAL_TIME(1) iteration. */
+                if (state->dm2State.startup_credits_remaining_ticks > 0) {
+                    --state->dm2State.startup_credits_remaining_ticks;
+                }
+                if (state->dm2State.startup_credits_remaining_ticks == 0) {
+                    state->dm2State.startup_credits_active = 0;
+                    m11_set_status(state, "STARTUP", "DM2 STARTUP GDAT");
+                }
+                return M11_GAME_INPUT_REDRAW;
+            }
             /* SKProject's SHOW_MENU_SCREEN redraws the static dt07/4 menu
              * while it waits for input. dt07/1 belongs only to SHOW_CREDITS;
              * do not manufacture a title/credits tick sequence here. */
@@ -24324,6 +24343,70 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
         !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    if (state->dm2State.startup_credits_active) {
+        Dm2TouchClickZonePc34Compat zone;
+        if (DM2_TOUCHCLICK_Compat_HitTestInView(
+                DM2_TOUCH_CLICK_VIEW_CREDITS_PC34_COMPAT, x, y,
+                TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &zone) &&
+            zone.commandId == 239u) {
+            /* SKProject startend.cpp::DM2_SHOW_CREDITS lines 1390-1401:
+             * event 0xEF exits credits and returns 0xDA to the title-menu
+             * loop.  M11 retains the original menu owner throughout. */
+            state->dm2State.startup_credits_active = 0;
+            state->dm2State.startup_credits_remaining_ticks = 0;
+            m11_set_status(state, "STARTUP", "DM2 STARTUP GDAT");
+            return M11_GAME_INPUT_REDRAW;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+    {
+        Dm2TouchClickZonePc34Compat zone;
+        const DM2_V1_AssetLoader *loader;
+        DM2_V1_QueryGdatSummaryImageReceipt image;
+        DM2_V1_InterfacePalette palette;
+        uint32_t raw_hash = 0u;
+        uint32_t raw_bytes = 0u;
+        int credits_material_ready = 0;
+
+        if (DM2_TOUCHCLICK_Compat_HitTestInView(
+                DM2_TOUCH_CLICK_VIEW_MAIN_MENU_PC34_COMPAT, x, y,
+                TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &zone) &&
+            zone.commandId == 218u) {
+            loader = dm2_v1_boot_asset_loader(
+                (const DM2_V1_BootProfile *)state->dm2BootProfile);
+            memset(&image, 0, sizeof(image));
+            if (loader &&
+                dm2_v1_query_gdat_summary_image_receipt(
+                    loader, DM2_GDAT_CATEGORY_TITLE, 0, 1, &image) &&
+                image.accepted && image.metadata.width == 320u &&
+                image.metadata.height == 200u &&
+                ((image.metadata.bits_per_pixel == 8u &&
+                  dm2_v1_boot_interface_palette(
+                      (DM2_V1_BootProfile *)state->dm2BootProfile,
+                      &palette)) ||
+                 (image.metadata.bits_per_pixel == 4u &&
+                  image.colors == 16u && image.palette_hash != 0u)) &&
+                dm2_v1_boot_gdat_raw_asset_proof(
+                    (DM2_V1_BootProfile *)state->dm2BootProfile,
+                    DM2_GDAT_CATEGORY_TITLE, 0, 1, 0x32435244u,
+                    &raw_hash, &raw_bytes) && raw_hash != 0u &&
+                raw_bytes > 0u) {
+                credits_material_ready = 1;
+            }
+            if (!credits_material_ready) {
+                m11_set_status(state, "STARTUP",
+                               "DM2 CREDITS GDAT REQUIRED");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            /* SKProject startend.cpp::DM2_SHOW_CREDITS lines 1381-1397.
+             * The countdown is an event-loop step count, not a fabricated
+             * title animation. */
+            state->dm2State.startup_credits_active = 1;
+            state->dm2State.startup_credits_remaining_ticks = 1800;
+            m11_set_status(state, "STARTUP", "DM2 CREDITS GDAT");
+            return M11_GAME_INPUT_REDRAW;
+        }
     }
     if (!m11_dm2_boot_runtime_startup_pointer(
             state,
@@ -43453,6 +43536,64 @@ static void m11_dm2_startup_exec_text(
     ++context->text_count;
 }
 
+static int m11_draw_dm2_startup_credits(const M11_GameViewState *state,
+                                        unsigned char *framebuffer,
+                                        int framebufferWidth,
+                                        int framebufferHeight)
+{
+    DM2_V1_BootProfile *profile;
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_QueryGdatSummaryImageReceipt image;
+    uint8_t *pixels = NULL;
+    uint32_t raw_hash = 0u;
+    uint32_t raw_bytes = 0u;
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    int y;
+
+    if (!state || !framebuffer || !state->dm2State.startup_credits_active ||
+        state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
+        !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !(loader = dm2_v1_boot_asset_loader(profile))) {
+        return 0;
+    }
+    memset(&image, 0, sizeof(image));
+    if (!dm2_v1_query_gdat_summary_image_receipt(
+            loader, DM2_GDAT_CATEGORY_TITLE, 0, 1, &image) ||
+        !image.accepted || image.metadata.width != 320u ||
+        image.metadata.height != 200u ||
+        !((image.metadata.bits_per_pixel == 8u) ||
+          (image.metadata.bits_per_pixel == 4u && image.colors == 16u &&
+           image.palette_hash != 0u)) ||
+        !dm2_v1_boot_gdat_raw_asset_proof(
+            profile, DM2_GDAT_CATEGORY_TITLE, 0, 1, 0x32435244u,
+            &raw_hash, &raw_bytes) || raw_hash == 0u || raw_bytes == 0u ||
+        dm2_v1_boot_gdat_image_asset_fetch(
+            profile, DM2_GDAT_CATEGORY_TITLE, 0, 1, &pixels, &width, &height,
+            &stride) != 0 || !pixels || width != 320 || height != 200 ||
+        stride < width) {
+        dm2_v1_boot_gdat_image_asset_free(pixels);
+        return 0;
+    }
+    /* ReDMCSB/SKProject SHOW_CREDITS passes glbl_pal2 only for non-BPP8
+     * IMG3 images.  The PC English BPP8 page keeps its physical source
+     * indices and is presented through DM2_INIT's dtPalIRGB table. */
+    for (y = 0; y < framebufferHeight; ++y) {
+        int x;
+        int sy = y * height / framebufferHeight;
+        for (x = 0; x < framebufferWidth; ++x) {
+            uint8_t pixel = pixels[sy * stride + x * width / framebufferWidth];
+            if (image.metadata.bits_per_pixel == 4u) {
+                pixel = image.palette16[pixel & 0x0fu];
+            }
+            framebuffer[y * framebufferWidth + x] = pixel;
+        }
+    }
+    dm2_v1_boot_gdat_image_asset_free(pixels);
+    return 1;
+}
+
 static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
                                      unsigned char *framebuffer,
                                      int framebufferWidth,
@@ -51159,18 +51300,29 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
-            startup_menu_drawn = m11_draw_dm2_startup_menu(
-                state,
-                framebuffer,
-                framebufferWidth,
-                framebufferHeight,
-                &startup_host_receipt,
-                &startup_ownership_receipt,
-                &startup_visual_receipt);
-            if (startup_menu_drawn) {
+            if (state->dm2State.startup_credits_active) {
+                startup_menu_drawn = m11_draw_dm2_startup_credits(
+                    state, framebuffer, framebufferWidth, framebufferHeight);
+                m11_set_status((M11_GameViewState *)state,
+                               "STARTUP", startup_menu_drawn
+                                   ? "DM2 CREDITS GDAT"
+                                   : "DM2 CREDITS GDAT REQUIRED");
+            } else {
+                startup_menu_drawn = m11_draw_dm2_startup_menu(
+                    state,
+                    framebuffer,
+                    framebufferWidth,
+                    framebufferHeight,
+                    &startup_host_receipt,
+                    &startup_ownership_receipt,
+                    &startup_visual_receipt);
+            }
+            if (startup_menu_drawn &&
+                !state->dm2State.startup_credits_active) {
                 m11_set_status((M11_GameViewState *)state,
                                "STARTUP", "DM2 STARTUP GDAT");
-            } else {
+            } else if (!startup_menu_drawn &&
+                       !state->dm2State.startup_credits_active) {
                 m11_set_status((M11_GameViewState *)state,
                                "STARTUP", "DM2 STARTUP GDAT REQUIRED");
             }
