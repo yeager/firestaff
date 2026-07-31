@@ -82,6 +82,11 @@ typedef struct {
 } Nexus_V1_CreatureManager;
 
 void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr);
+
+/* Production Nexus init.  The legacy type table contains fixture-only
+ * combat values; live Nexus must not promote those values without a
+ * Saturn-owned stat source. */
+void nexus_v1_creatures_init_production(Nexus_V1_CreatureManager *mgr);
 int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir);
 int nexus_v1_creature_spawn_on_level(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir, int level);
 void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int party_y,

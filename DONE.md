@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 Nexus creature-stat fixture isolation: production engine
+  startup no longer seeds the legacy eight-entry hardcoded creature table
+  (HP/attack/defense/speed/XP). The table remains available only to explicit
+  fixture callers; live Nexus now requires a future Saturn-owned stat binding
+  before creature combat state is created. Verification: production
+  `firestaff_nexus` archive build, champion/startup gates, and the real Track
+  1 readiness probe (29/29).
+
 - ✅ 2026-07-31 Nexus world-init fixture removal: replaced the leftover DM1
   entrance literals in `nexus_v1_world_init()` with the Nexus-owned initial
   level/position/direction constants from `nexus_v1_game.h`. Verification:

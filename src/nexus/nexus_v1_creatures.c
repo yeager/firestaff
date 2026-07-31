@@ -53,6 +53,16 @@ void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
     }
 }
 
+void nexus_v1_creatures_init_production(Nexus_V1_CreatureManager *mgr) {
+    if (!mgr) return;
+    /* MNS admission proves model-container identity only.  It does not
+     * prove the combat-stat owner, so do not seed g_creature_defs into a
+     * live Nexus session.  Explicit fixture tests retain the initializer
+     * above; authenticated actor/stat binding can populate this manager
+     * when its Saturn source is recovered. */
+    memset(mgr, 0, sizeof(*mgr));
+}
+
 int nexus_v1_creature_spawn_on_level(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir, int level) {
     Nexus_Creature *c;
     if (!mgr || type_idx < 0 || type_idx >= mgr->type_count) return -1;
