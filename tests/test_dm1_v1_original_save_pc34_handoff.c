@@ -6859,6 +6859,12 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
         puts("SKIP real PC34 corpus: no provenance-attested original PC34 save");
         return;
     }
+    if (rc != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+        report.runtime_stage_unavailable_count > 0 &&
+        report.runtime_stage_failed_count == 0) {
+        puts("SKIP real PC34 corpus: candidate requires DUNGEON.DAT backing; covered by dm1_v1_original_save_pc34_backed_corpus_roundtrip");
+        return;
+    }
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
           "real PC34 corpus scan completes");
     if (report.pc34_candidate_count == 0 && (!root || !root[0])) {

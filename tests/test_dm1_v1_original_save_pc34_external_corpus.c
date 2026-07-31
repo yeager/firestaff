@@ -238,6 +238,16 @@ int main(void)
 
     memset(&report, 0, sizeof(report));
     result = dm1_v1_original_save_pc34_roundtrip_provenanced_corpus_root(root, &report);
+    /* This target proves the historical self-contained F0435 route. Some
+     * original PC34 saves omit an embedded dungeon tail and must be restored
+     * against DUNGEON.DAT, as ReDMCSB LOADSAVE.C does. Those saves are covered
+     * by the backing-aware corpus target. */
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+        report.runtime_stage_unavailable_count > 0 &&
+        report.runtime_stage_failed_count == 0) {
+        puts("SKIP external PC34 corpus admission: candidate requires DUNGEON.DAT backing; covered by dm1_v1_original_save_pc34_backed_corpus_roundtrip");
+        return 0;
+    }
     CHECK(result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
           "external corpus scan completes");
     CHECK(report.scan_succeeded && !report.discovery_root_error,

@@ -23708,6 +23708,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     a live C03/C04 save must never be certified without its matching dungeon
     backing. Reference: ReDMCSB `LOADSAVE.C` F0433/F0435 and DMweb
     saved-game file-format documentation.
+  - 2026-07-31 test-route update: legacy self-contained corpus probes now
+    explicitly skip a provenance-attested save whose runtime stage is not
+    self-contained. The backing-aware M11 corpus target is mandatory for
+    that media and passes both current DOSBox saves. The split prevents a
+    valid original save from being mislabeled as malformed while retaining
+    the older no-backing proof for saves that own their dungeon tail.
   - 2026-07-31 startup-census update: when an operator explicitly configures
     `FIRESTAFF_DM1_PC34_SAVE_CORPUS` or
     `FIRESTAFF_DM1_ORIGINAL_SAVE_DIR`, startup now publishes its classified

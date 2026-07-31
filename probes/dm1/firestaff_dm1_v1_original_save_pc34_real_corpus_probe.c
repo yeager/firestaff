@@ -65,6 +65,16 @@ int main(void)
         print_receipt_coverage(&report.receipts[i]);
     }
 
+    /* Tail-less original saves are valid media, but this legacy probe owns
+     * only the self-contained F0435 route. The backed corpus test loads them
+     * against the real DUNGEON.DAT and is the runtime proof for those bytes. */
+    for (i = 0; i < report.receipt_count; ++i) {
+        if (!report.receipts[i].source_runtime_stage_committed) {
+            puts("SKIP DM1 original-save real corpus: candidate requires DUNGEON.DAT backing; run dm1_v1_original_save_pc34_backed_corpus_roundtrip");
+            return 0;
+        }
+    }
+
     passed &= check_int("corpus scan result",
                         result, DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK);
     passed &= check_int("corpus scan receipt", report.scan_succeeded, 1);

@@ -694,6 +694,13 @@
   each provenance-attested PC34 save. This is diagnostic evidence only and
   does not treat a C13-free save as proof of C13 lifecycle support.
 
+- ✅ 2026-07-31 DM1 PC34 backing-aware corpus test routing: legacy F0435
+  probes now retain their self-contained-save contract and report a clear
+  skip for original saves that require `DUNGEON.DAT`. The M11-backed corpus
+  route is authoritative for those saves and passes both operator-owned
+  DOSBox PC34 files against authenticated local game data. This follows
+  ReDMCSB `LOADSAVE.C` F0435 ownership and DMweb's saved-game format notes.
+
 - ✅ 2026-07-30 DM1 V2.2 original-material fallback: unreviewed or missing
   V2.2 shapes return no replacement bitmap, so the already-rendered original
   `GRAPHICS.DAT` pixels remain visible. They cannot become a generated wall,
