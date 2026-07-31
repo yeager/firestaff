@@ -12,6 +12,26 @@ Master* and *Chaos Strikes Back* is **ReDMCSB**, hosted at:
 - Forum discussion:
   <https://www.dungeon-master.com/forum/viewtopic.php?t=29805>
 
+## DMweb companion reference
+
+ReDMCSB is the primary source for original control flow and named symbols.
+Use the Dungeon Master Encyclopaedia (DMweb) alongside it for independently
+documented file layouts and animation semantics:
+
+- Animation script instructions and vertical-blank waits:
+  <http://dmweb.free.fr/community/documentation/file-formats/animation-script/>
+- Animation containers and frame data:
+  <http://dmweb.free.fr/community/documentation/file-formats/animations/>
+- `GRAPHICS.DAT`, dungeon and related data files:
+  <http://dmweb.free.fr/community/documentation/file-formats/data-files/>
+- Original saved-game formats:
+  <http://dmweb.free.fr/community/documentation/file-formats/saved-game-files/>
+
+For DM1 and CSB, Firestaff must not replace a ReDMCSB source-owned visual or
+state transition with a synthetic equivalent when the corresponding original
+data can be decoded. DMweb is used to cross-check byte layout, palette/frame
+ownership, and wait units; it is not a substitute for ReDMCSB control flow.
+
 ## Identifier convention
 
 Each entry has a unique name: `BUG0_NN` for bugs,
