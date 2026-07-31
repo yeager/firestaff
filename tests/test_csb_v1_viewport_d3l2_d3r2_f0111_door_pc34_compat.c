@@ -302,8 +302,6 @@ static int test_pass2_c10_frame_and_no_f0107(void)
 static int test_lineage_pixel_and_evidence(void)
 {
     int ok = 1;
-    uint8_t source[44 * 2];
-    uint8_t destination[44 * 2];
     CSB_V1_ViewportD3L2D3R2F0111DoorResultPc34 result;
     const char *e =
         csb_v1_viewport_d3l2_d3r2_f0111_door_source_evidence_pc34();
@@ -311,12 +309,6 @@ static int test_lineage_pixel_and_evidence(void)
         csb_v1_viewport_d3l2_d3r2_f0111_door_for_side_pc34(
             CSB_V1_VIEWPORT_D3L2_D3R2_F0111_DOOR_SIDE_D3L2_PC34);
 
-    memset(source, 10, sizeof(source));
-    memset(destination, 0xee, sizeof(destination));
-    source[0] = 1;
-    source[47] = 2;
-    source[44] = 3;
-    source[87] = 4;
 
     ok &= expect_int("lineage.trace",
                      csb_v1_viewport_d3l2_d3r2_f0111_door_trace_pc34(
@@ -330,17 +322,6 @@ static int test_lineage_pixel_and_evidence(void)
                      result.lineage_pwall_right_index, 6, A_BOTH);
     ok &= expect_int("pixel.anchor.ready", result.pixel_anchor_ready, 1,
                      A_F0111);
-    ok &= expect_int("pixel.blit.copied",
-                     csb_v1_viewport_d3l2_d3r2_f0111_door_apply_c10_blit_pc34(
-                         d3l2, source, 44, destination, 44, 44, 2),
-                     4, A_F0111);
-    ok &= expect_int("pixel.blit.first", destination[0], 1, A_F0111);
-    ok &= expect_int("pixel.blit.transparent", destination[1], 0xee, A_F0111);
-    ok &= expect_int("pixel.blit.last", destination[87], 4, A_F0111);
-    ok &= expect_int("pixel.blit.reject.width",
-                     csb_v1_viewport_d3l2_d3r2_f0111_door_apply_c10_blit_pc34(
-                         d3l2, source, 44, destination, 44, 45, 1),
-                     -1, A_F0111);
     ok &= expect_contains("evidence.path", result.source_lock_evidence,
                           "DUNVIEW.C F0676/F0677 C17_ELEMENT_DOOR_FRONT path",
                           A_BOTH);

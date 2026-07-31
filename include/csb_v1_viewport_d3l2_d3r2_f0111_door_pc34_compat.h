@@ -121,15 +121,6 @@ int csb_v1_viewport_d3l2_d3r2_f0111_door_trace_pc34(
     int door_type,
     CSB_V1_ViewportD3L2D3R2F0111DoorResultPc34 *out_result);
 
-int csb_v1_viewport_d3l2_d3r2_f0111_door_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height);
-
 int csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
     const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *d3l2,
     const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *d3r2,

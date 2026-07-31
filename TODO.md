@@ -475,6 +475,9 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D2C door follow-up:** the unbound F0111 C10 fixture blit is
   removed. State, half-zone and transparency metadata remain source-locked;
   the local PC3.4 material provider is required for an actual draw.
+  **2026-07-31 D3L2/D3R2 door follow-up:** the fixture C10 blit is removed.
+  The existing real `GRAPHICS.DAT` receipt remains the material admission
+  path; metadata alone cannot emit pixels.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

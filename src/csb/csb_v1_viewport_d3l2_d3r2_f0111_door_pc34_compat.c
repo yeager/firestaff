@@ -221,37 +221,6 @@ int csb_v1_viewport_d3l2_d3r2_f0111_door_trace_pc34(
     return result.ok ? 0 : 1;
 }
 
-int csb_v1_viewport_d3l2_d3r2_f0111_door_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height)
-{
-    int copied = 0;
-
-    if (!spec || !source || !destination) return -1;
-    if (width <= 0 || height <= 0) return -1;
-    if (source_stride < width || destination_stride < width) return -1;
-    if (width > spec->native_bitmap_byte_width ||
-        height > spec->native_bitmap_height) {
-        return -1;
-    }
-
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const uint8_t pixel = source[(y * source_stride) + x];
-            if (pixel == (uint8_t)spec->transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-
-    return copied;
-}
-
 int csb_v1_viewport_d3l2_d3r2_f0111_door_real_asset_receipt_pc34(
     const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *d3l2,
     const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *d3r2,
