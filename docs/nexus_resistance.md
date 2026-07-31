@@ -89,7 +89,8 @@ Source: `grep -r 'anti_magic\|anti_fire' src/nexus/`
 The `nexus_v1_champions.h` comment notes:
 ```
 /* DM Nexus has the same champion system as DM1 but with Japanese names.
- * 24 champions in the Hall of Champions, 4 active in party.
+ * Legacy 24-slot capacity; the retail Nexus champion records remain
+ * source-blocked, with up to 4 active only after record admission.
  * Stats, skills, spells identical to DM1 engine. */
 ```
 

@@ -53,7 +53,8 @@ front-end — a Nexus menu layer must bridge front-end (menu/UI) with the
 Nexus engine (3D viewport + logic).
 
 ### Champion Roster (nexus_v1_champions.c)
-Nexus has 24-champion roster with Japanese names and Shift-JIS text.
+Nexus champion roster names, count, and Shift-JIS record binding remain
+source-blocked; the current table is fixture data only.
 No champion selection UI exists in the codebase.
 
 ## What Exists vs Whats Missing
@@ -80,7 +81,7 @@ Not Yet Implemented:
 |---------|-----|----------|
 | Title screen | 2D bitmap logo | 3D animated (not impl) |
 | Start menu options | New Game / Continue | TBD |
-| Champion roster | Western names (24) | Japanese names (24) |
+| Champion roster | Western names (24) | Not admitted |
 | Champion select UI | Sprite-based | Not impl |
 | In-game menu | ESC key, 2D panel | Not impl |
 | Save/load | Binary slot files | Saturn SRAM |

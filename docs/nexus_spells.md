@@ -157,7 +157,7 @@ Source: `docs/spells_system.md`, `include/spell_reference_m12.h`
 |---|---|---|
 | Champion names | Western (Jason, Andre...) | Japanese (Syra, Leyla, Nabi...) |
 | Language | English | Japanese |
-| Champion count | 24 | 24 (same roster) |
+| Champion count | 24 | Not admitted (24-slot capacity only) |
 | Spell count | 25 + 10 flask | 25 + 10 flask (identical) |
 | Mana formula | (p+1)²×elem_mult | Identical |
 | Rune parsing | Hard-coded in MENU.C | Stubbed (form/align = noop) |

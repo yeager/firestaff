@@ -56,7 +56,9 @@ rendered in katakana (e.g., "シラ" = Syra, "レイラ" = Leyla, "ナビ" = Nab
 
 ## 3. Champion Roster: Japanese Names
 
-From `src/nexus/nexus_v1_champions.c`, the 24-champion roster uses Japanese names exclusively for the in-game display:
+The current `src/nexus/nexus_v1_champions.c` table is fixture data. It must
+not be used as proof that a 24-champion Japanese roster or its display text
+has been authenticated:
 
 | # | ASCII Name | Japanese | Class |
 |---|-----------|---------|-------|

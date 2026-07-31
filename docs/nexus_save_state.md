@@ -15,7 +15,8 @@ but no save/load mechanism exists to persist them.
 - `data_dir` — path to game data
 
 ### Champion State (`Nexus_V1_Champion`)
-Per champion, 24 exist in roster:
+The save container has capacity for the legacy 24-slot model, but the retail
+Nexus champion records are not yet admitted:
 - Identity: `name_ascii`, `name_jp`, `primary_class`, `portrait_index`
 - Vital stats: `health/max_health`, `stamina/max_stamina`, `mana/max_mana`
 - Attributes: `strength`, `dexterity`, `wisdom`, `vitality`
@@ -26,7 +27,7 @@ Per champion, 24 exist in roster:
 - Inventory: `inventory[30]` — array of item indices
 
 ### Champion Pool (`Nexus_V1_ChampionPool`)
-- `champions[24]` — full roster
+- `champions[24]` — storage capacity only; live roster semantics are blocked
 - `party[4]` — active party champion indices
 - `party_count`, `leader_index`
 
@@ -40,7 +41,8 @@ Per champion, 24 exist in roster:
 
 A complete save would need to persist:
 1. **Game progress**: current level, party position/direction
-2. **Champions**: all 24 champions (alive status, HP/stamina/mana, class levels,
+2. **Champions**: champion records only after the retail record source is
+   authenticated (alive status, HP/stamina/mana, class levels,
    food/water, inventory)
 3. **Party composition**: which 4 champions are active, leader
 4. **Dungeon state**: current level grid (potentially with dynamic changes)
@@ -55,6 +57,8 @@ A complete save would need to persist:
 
 ## Notes
 
-The 8 champion characters have Japanese names (UTF-8) and are mirrored from
+The current 8 fixture characters have Japanese labels (UTF-8), but are not
+authenticated retail records and must not be treated as such. They are
+mirrored from
 DM1's system (same stats, classes, mechanics). The 30-slot champion inventory
 matches DM1's item capacity.

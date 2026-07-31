@@ -116,7 +116,7 @@ No nexus_v1_menu.c or equivalent exists yet.
 |---------|-----|----------|
 | Title screen | 2D bitmap logo | 3D animated (not impl) |
 | Start menu options | New Game / Continue | TBD |
-| Champion roster | Western names (24) | Japanese names (24) |
+| Champion roster | Western names (24) | Not admitted |
 | Champion select UI | Sprite-based | Not impl |
 | In-game menu | ESC key, 2D panel | Not impl |
 | Save/load | Binary slot files | Saturn SRAM |
