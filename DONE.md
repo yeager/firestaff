@@ -5,6 +5,14 @@
   files out of the PC route. Verification: source/menu contract and the
   real-data M11 startup-profile gate.
 
+- ✅ 2026-07-31 DM2 outdoor weather source gate: corrected the canonical-data
+  frame verifier so it no longer injects a deterministic fixture chain and
+  calls the result a real session. With only authentic `GRAPHICS.DAT` and
+  `DUNGEON.DAT`, the viewport renders its GDAT sky, ground and HUD while
+  weather stays no-draw until a source-owned c_weather/session chain exists.
+  Verification: 21/21 real-data frame checks, GDAT material receipt test and
+  M11 frame-receipt gate.
+
 - ✅ 2026-07-31 CSB synthetic viewport-fixture isolation: removed the
   room-slot backdrop1 contract trace from the production `firestaff_m10`
   archive. Its 10×10 synthetic skin/dungeon arrangement is now compiled only

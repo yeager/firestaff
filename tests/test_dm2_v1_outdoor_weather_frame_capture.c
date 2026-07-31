@@ -1,9 +1,11 @@
-/* Real-data outdoor frame capture for DM2 V1 weather overlays.
+/* Canonical-data outdoor frame capture for DM2 V1's weather source gate.
  *
- * Proves that the renderer consumes the live DistantEnvironment slots produced
- * by the runtime weather tick and that M11 accepts the resulting frame.  This
- * closes the DM2-011 cycle-6 gap: slot production was wired, but no test had
- * shown real GDAT weather pixels reaching the framebuffer and the M11 gate.
+ * A GRAPHICS.DAT/DUNGEON.DAT pair supplies authentic GDAT material, but it
+ * does not contain the live c_weather v1e14xx chain that belongs to a running
+ * game or imported save.  Therefore this test proves the production contract:
+ * the outdoor frame is drawable from canonical data, while weather pixels are
+ * deliberately no-draw until that source-owned session state is available.
+ * It must not inject a fixture weather chain and call the result game data.
  *
  * Source-locks:
  *   skproject/SKULLWIN/c_weather.cpp DM2_UPDATE_WEATHER (0x54 timer + arg==0)
@@ -15,7 +17,6 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
-#include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_weather_gdat.h"
 #include "m11_dm2_runtime_frame_receipt_gate.h"
 
@@ -103,23 +104,6 @@ static int find_weather_level(const DM2_V1_AssetLoader *loader,
     return -1;
 }
 
-static DM2_V1_UpdateWeatherState make_storm_state(void)
-{
-    DM2_V1_UpdateWeatherState s;
-    memset(&s, 0, sizeof(s));
-    s.zone_index = 1;         /* table1d6b76[4*1+0x70] == 1: weather allowed */
-    s.retry = 0;
-    s.pattern_row = 1;
-    s.step = 4;
-    s.intensity = 0x90;       /* cloud_state = 0x90 -> cloud cmd 0x69 */
-    s.rain_counter = (int8_t)0xd0; /* rain cmd 0x6c */
-    s.day_tick = 0x70000000;  /* no rollover */
-    s.clouds_enabled = 1;
-    s.rain_enabled = 1;
-    s.lightning_enabled = 0;  /* keep the test deterministic: no bolt path */
-    return s;
-}
-
 int main(void)
 {
     uint8_t *graphics = NULL;
@@ -188,27 +172,19 @@ int main(void)
     dm2_v1_runtime_set_outdoor(1);
     dm2_v1_runtime_set_position(weather_level, 0, 0, 0);
 
-    /* Install deterministic storm state so the frame update selects cloud
-     * (0x69) and rain (0x6c) without stochastic 0x54 timer waits. */
-    {
-        DM2_V1_UpdateWeatherState storm = make_storm_state();
-        CHECK(dm2_v1_runtime_set_weather_chain_state_for_test(&storm) == 1,
-              "test helper installs deterministic storm chain state");
-    }
-
-    /* Produce and bind live DistantEnvironment slots for this frame. */
+    /* Static installation files do not prove a live c_weather chain.  The
+     * runtime must reject weather slots rather than manufacture a cloud/rain
+     * choice from generic presentation state. */
     {
         DM2_V1_DistantEnvironmentReceipt slots[3];
         unsigned int slot_count = 0u;
         memset(slots, 0, sizeof(slots));
-        CHECK(dm2_v1_runtime_update_weather_frame(slots, &slot_count) == 1 &&
-                  slot_count > 0u,
-              "runtime weather frame update binds live DistantEnvironment slots");
+        CHECK(dm2_v1_runtime_update_weather_frame(slots, &slot_count) == 0 &&
+                  slot_count == 0u,
+              "weather frame stays no-draw without source-owned session state");
     }
 
-    /* Advance the runtime tick so the source 0x54 weather timer owner is
-     * receipted; this is the same owner the renderer/M11 gate binds to the
-     * DistantEnvironment slots produced above. */
+    /* The normal tick must preserve that fail-closed decision. */
     dm2_v1_runtime_tick();
 
     /* Render the outdoor frame through the boot/runtime path. */
@@ -239,8 +215,8 @@ int main(void)
               "outdoor ground plane consumed real GDAT material");
         CHECK(ownership.hud_gdat_blits > 0,
               "HUD consumed real GDAT material");
-        CHECK(ownership.gdat_scene_weather_consumed > 0,
-              "weather overlay consumed real GDAT ENVIRONMENT pixels");
+        CHECK(ownership.gdat_scene_weather_consumed == 0,
+              "weather overlay stays absent without a source session receipt");
         CHECK(ownership.total_runtime_fallback_draws == 0,
               "no synthetic fallback draws were produced");
         CHECK(ownership.blocked_material_draws == 0,
@@ -261,14 +237,14 @@ int main(void)
     if (m11_receipt.valid) {
         CHECK(m11_receipt.m11_consume_frame,
               "M11 frame receipt requests frame consumption");
-        CHECK(m11_receipt.weather_material_plan_required,
-              "weather material plan was required");
-        CHECK(m11_receipt.weather_material_plan_consumed,
-              "weather material plan was consumed");
-        CHECK(m11_receipt.weather_material_plan_command_count > 0,
-              "weather material plan has commands");
-        CHECK(m11_receipt.weather_graphicsset_bound,
-              "weather GRAPHICSSET receipt is bound");
+        CHECK(!m11_receipt.weather_material_plan_required,
+              "M11 does not require a weather plan without source state");
+        CHECK(!m11_receipt.weather_material_plan_consumed,
+              "M11 records no synthetic weather-plan consumption");
+        CHECK(m11_receipt.weather_material_plan_command_count == 0,
+              "M11 records no invented weather commands");
+        CHECK(!m11_receipt.weather_graphicsset_bound,
+              "M11 has no weather GRAPHICSSET binding without source state");
     }
 
     CHECK(M11_Dm2RuntimeFrameReceipt_ShouldPresent(
@@ -280,7 +256,7 @@ int main(void)
     free(graphics);
     free(dungeon_bytes);
 
-    printf("DM2 V1 outdoor weather frame capture: %d passed, %d failed\n",
+    printf("DM2 V1 outdoor weather source gate: %d passed, %d failed\n",
            passed, failed);
     return failed ? 1 : 0;
 }
