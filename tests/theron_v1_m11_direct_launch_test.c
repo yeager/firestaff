@@ -883,8 +883,8 @@ int main(void) {
                 world->levels[
                     THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0].height == 8 &&
                 world->progression.dungeon_seeds[
-                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1] == 313,
-                "M11 Theron stage 1 fallback room keeps the legacy 8x8 seed-313 contract");
+                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1] == 0x0108e938u,
+                "M11 Theron stage 1 fallback room carries the verified initial seed");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
                 M11_GAME_INPUT_REDRAW,
@@ -997,9 +997,9 @@ int main(void) {
                 world->levels[
                     THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][0].height == 8 &&
                 world->progression.dungeon_seeds[
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] == 414 &&
+                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] == 0u &&
                 theron_v1_world_get_square(world, 6, 4) == THERON_SQUARE_POOL,
-                "M11 Theron stage 2 fallback room carries stage-specific seed and marker");
+                "M11 Theron stage 2 keeps unresolved seed closed and marker");
     expect_true(theron_v1_world_get_square(world,
                                            world->party.leader_x,
                                            world->party.leader_y - 1) ==
