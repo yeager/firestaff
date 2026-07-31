@@ -344,15 +344,7 @@ static void test_frames_flip_cells_and_keepouts(void)
 
 static void test_custom_depth_and_blit_guards(void)
 {
-    const CSB_V1_D0L2D0R2F0111PartlyOpenDoorSpecPc34 *left =
-        csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_spec_for_side_pc34(1);
-    const CSB_V1_D0L2D0R2F0111PartlyOpenDoorSpecPc34 *right =
-        csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_spec_for_side_pc34(2);
     CSB_V1_D0L2D0R2F0111PartlyOpenDoorStepPc34 order[6];
-    uint8_t source[8] = { 1, 10, 2, 3, 4, 5, 10, 6 };
-    uint8_t dest[8] = { 99, 99, 99, 99, 99, 99, 99, 99 };
-    uint8_t before[8];
-    CSB_V1_D0L2D0R2F0111PartlyOpenDoorBlitResultPc34 result;
 
     CHECK_EQ("order.count",
              csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_order_pc34(order, 6),
@@ -394,49 +386,6 @@ static void test_custom_depth_and_blit_guards(void)
              CSB_V1_D0L2_D0R2_F0111_PARTLY_OPEN_DOOR_MASK0X8000_PC34,
              0x8000, A_F0108);
 
-    CHECK_EQ("blit.left.copied",
-             csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_synthetic_blit_pc34(
-                 left, 2, source, 4, 2, 4, dest, 4, 2, 4, &result),
-             6, A_F0111);
-    CHECK_EQ("blit.left.ok", result.ok, 1, A_F0111);
-    CHECK_EQ("blit.left.skipped", result.c10_skipped_pixels, 2, A_DEFS);
-    CHECK_EQ("blit.left.pixel0", dest[0], 1, A_F0104);
-    CHECK_EQ("blit.left.transparent", dest[1], 99, A_DEFS);
-    CHECK_EQ("blit.left.pixel2", dest[2], 2, A_F0104);
-    CHECK_EQ("blit.left.edge_left", result.left_edge_writes, 2, A_F0111);
-    CHECK_EQ("blit.left.edge_right", result.right_edge_writes, 2, A_F0111);
-    CHECK_TRUE("blit.left.hash_present", result.deterministic_hash != 0,
-               "deterministic_hash present");
-
-    for (int i = 0; i < 8; ++i) dest[i] = 99;
-    CHECK_EQ("blit.right.copied",
-             csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_synthetic_blit_pc34(
-                 right, 2, source, 4, 2, 4, dest, 4, 2, 4, &result),
-             6, A_F0105);
-    CHECK_EQ("blit.right.flip.pixel0", dest[0], 3, A_F0105);
-    CHECK_EQ("blit.right.flip.pixel1", dest[1], 2, A_F0105);
-    CHECK_EQ("blit.right.flip.transparent", dest[2], 99, A_DEFS);
-    CHECK_EQ("blit.right.flip.pixel3", dest[3], 1, A_F0105);
-
-    memcpy(before, dest, sizeof(dest));
-    CHECK_EQ("blit.open.skip",
-             csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_synthetic_blit_pc34(
-                 right, 0, source, 4, 2, 4, dest, 4, 2, 4, &result),
-             0, A_F0111);
-    CHECK_EQ("blit.open.no_mutation", memcmp(dest, before, sizeof(dest)), 0,
-             "caller-owned surface unchanged on open skip");
-
-    memcpy(before, dest, sizeof(dest));
-    CHECK_EQ("blit.reject.row_guard",
-             csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_synthetic_blit_pc34(
-                 right, 2, source, 4, 2, 3, dest, 4, 2, 4, &result),
-             -1, "row-guard rejection");
-    CHECK_EQ("blit.reject.row_count", result.row_guard_rejections, 1,
-             "row-guard rejections >=1");
-    CHECK_EQ("blit.reject.mutation_count", result.mutation_rejections, 1,
-             "mutation rejections >=1");
-    CHECK_EQ("blit.reject.unchanged", memcmp(dest, before, sizeof(dest)), 0,
-             "caller-owned surface bytes unchanged after guarded rejection");
 }
 
 static void test_probe_hash_and_evidence(void)
@@ -460,8 +409,10 @@ static void test_probe_hash_and_evidence(void)
     CHECK_EQ("probe.floor_keepout", probe.floor_keepout_ok, 1, A_F0108);
     CHECK_EQ("probe.first_half", probe.first_half_zone, 3728, A_F0111);
     CHECK_EQ("probe.second_half", probe.second_half_zone, 20109, A_F0111);
-    CHECK_EQ("probe.copied", probe.copied_pixels, 6, A_F0111);
-    CHECK_EQ("probe.skipped", probe.c10_skipped_pixels, 2, A_DEFS);
+    CHECK_EQ("probe.copied", probe.copied_pixels, 0,
+             "unbound F0111 material stays no-draw");
+    CHECK_EQ("probe.skipped", probe.c10_skipped_pixels, 0,
+             "no synthetic C10 fixture");
     CHECK_TRUE("probe.hash_present", probe.deterministic_hash != 0,
                "deterministic_hash present");
     CHECK_EQ("hash.stable", hash1 == hash2, 1, "deterministic_hash stable");

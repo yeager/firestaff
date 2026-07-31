@@ -44622,6 +44622,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   retains F0111/F0122/F0123 dispatch, frame and zone evidence, but cannot
   create a viewport pixel without authenticated source material.
 
+- ✅ 2026-07-31 CSB D0L2/D0R2 F0111 partly-open-door synthetic blit removal:
+  removed the mirrored C10 fixture writer. ReDMCSB cell order, mirror setup,
+  zone and ornament-keepout evidence remain in the metadata-only probe.
+
 - ✅ Rechecked the production order start, menu boundary, Entrance, HUD and
   viewport against the local hash-verified CSB packages. The PC3.4 real-data
   launch probe passed 75 checks: C001 title phases, C002/C003/C004 entrance

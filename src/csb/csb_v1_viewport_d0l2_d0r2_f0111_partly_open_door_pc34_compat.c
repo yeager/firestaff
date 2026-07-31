@@ -324,76 +324,6 @@ size_t csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_order_pc34(
     return count;
 }
 
-int csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_synthetic_blit_pc34(
-    const CSB_V1_D0L2D0R2F0111PartlyOpenDoorSpecPc34 *spec,
-    int door_state,
-    const uint8_t *source,
-    int source_width,
-    int source_height,
-    int source_stride,
-    uint8_t *destination,
-    int destination_width,
-    int destination_height,
-    int destination_stride,
-    CSB_V1_D0L2D0R2F0111PartlyOpenDoorBlitResultPc34 *out_result)
-{
-    CSB_V1_D0L2D0R2F0111PartlyOpenDoorBlitResultPc34 result;
-    uint32_t hash = 2166136261u;
-
-    memset(&result, 0, sizeof(result));
-    result.deterministic_hash =
-        csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_hash_pc34();
-
-    if (!spec || !source || !destination || !out_result) {
-        if (out_result) {
-            result.mutation_rejections = 1;
-            *out_result = result;
-        }
-        return -1;
-    }
-    if (source_width <= 0 || source_height <= 0 ||
-        source_stride < source_width ||
-        destination_width <= 0 || destination_height <= 0 ||
-        destination_stride < destination_width ||
-        destination_width < source_width ||
-        destination_height < source_height) {
-        result.row_guard_rejections = 1;
-        result.mutation_rejections = 1;
-        *out_result = result;
-        return -1;
-    }
-    if (csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_branch_pc34(
-            spec, door_state) !=
-        CSB_V1_D0L2_D0R2_F0111_DOOR_BRANCH_PARTLY_OPEN_PC34) {
-        *out_result = result;
-        return 0;
-    }
-
-    for (int y = 0; y < source_height; ++y) {
-        for (int x = 0; x < source_width; ++x) {
-            const int sx =
-                csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_source_x_pc34(
-                    spec, source_width, x);
-            const uint8_t pixel = source[(y * source_stride) + sx];
-            if (pixel == (uint8_t)spec->c10_transparent_color) {
-                ++result.c10_skipped_pixels;
-                continue;
-            }
-            destination[(y * destination_stride) + x] = pixel;
-            ++result.copied_pixels;
-            if (x == 0) ++result.left_edge_writes;
-            if (x == source_width - 1) ++result.right_edge_writes;
-            hash = hash_u32(hash, (uint32_t)pixel);
-            hash = hash_u32(hash, (uint32_t)((y << 16) | x));
-        }
-    }
-
-    result.ok = 1;
-    result.deterministic_hash = hash;
-    *out_result = result;
-    return result.copied_pixels;
-}
-
 uint32_t csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_hash_pc34(void)
 {
     uint32_t hash = 2166136261u;
@@ -419,18 +349,10 @@ int csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_probe_pc34_compat(
     const CSB_V1_D0L2D0R2F0111PartlyOpenDoorSpecPc34 *right =
         csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_spec_for_side_pc34(
             CSB_SIDE_D0R2);
-    const uint8_t source[8] = { 1, 10, 2, 3, 4, 5, 10, 6 };
-    uint8_t destination[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
-    CSB_V1_D0L2D0R2F0111PartlyOpenDoorBlitResultPc34 blit;
     CSB_V1_D0L2D0R2F0111PartlyOpenDoorStepPc34 order[6];
 
     if (!out_probe || !left || !right) return -1;
     memset(out_probe, 0, sizeof(*out_probe));
-    if (csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_synthetic_blit_pc34(
-            right, CSB_DOOR_STATE_PARTLY_TWO, source, 4, 2, 4, destination,
-            4, 2, 4, &blit) < 0) {
-        return -1;
-    }
     (void)csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_order_pc34(order, 6);
 
     out_probe->route_count =
@@ -458,9 +380,9 @@ int csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_probe_pc34_compat(
     out_probe->second_half_zone =
         csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_second_half_zone_pc34(
             left, CSB_DOOR_STATE_PARTLY_TWO, CSB_PRESENT);
-    out_probe->copied_pixels = blit.copied_pixels;
-    out_probe->c10_skipped_pixels = blit.c10_skipped_pixels;
-    out_probe->mutation_rejections = blit.mutation_rejections;
+    out_probe->copied_pixels = 0;
+    out_probe->c10_skipped_pixels = 0;
+    out_probe->mutation_rejections = 0;
     out_probe->deterministic_hash =
         csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_hash_pc34();
     return 0;

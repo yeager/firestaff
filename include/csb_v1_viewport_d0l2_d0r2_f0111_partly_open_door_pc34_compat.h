@@ -83,18 +83,6 @@ typedef struct {
 } CSB_V1_D0L2D0R2F0111PartlyOpenDoorSpecPc34;
 
 typedef struct {
-    int ok;
-    int copied_pixels;
-    int c10_skipped_pixels;
-    int row_guard_rejections;
-    int mutation_rejections;
-    int footprint_recursions;
-    int left_edge_writes;
-    int right_edge_writes;
-    uint32_t deterministic_hash;
-} CSB_V1_D0L2D0R2F0111PartlyOpenDoorBlitResultPc34;
-
-typedef struct {
     int route_count;
     int d0r_flip_ok;
     int partly_open_gate_ok;
@@ -169,19 +157,6 @@ int csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_floor_keepout_pc34(
 size_t csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_order_pc34(
     CSB_V1_D0L2D0R2F0111PartlyOpenDoorStepPc34 *out_steps,
     size_t out_capacity);
-
-int csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_synthetic_blit_pc34(
-    const CSB_V1_D0L2D0R2F0111PartlyOpenDoorSpecPc34 *spec,
-    int door_state,
-    const uint8_t *source,
-    int source_width,
-    int source_height,
-    int source_stride,
-    uint8_t *destination,
-    int destination_width,
-    int destination_height,
-    int destination_stride,
-    CSB_V1_D0L2D0R2F0111PartlyOpenDoorBlitResultPc34 *out_result);
 
 uint32_t csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_hash_pc34(void);
 
