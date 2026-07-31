@@ -45838,6 +45838,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   separately and does not claim unobserved coverage. Reference: ReDMCSB
   `LOADSAVE.C F0419/F0420/F0433/F0435` and DMweb Saved Game Files.
 
+- ✅ 2026-07-31 CSB projectile-marker fallback removal: removed the
+  coloured cross emitted for an unbound F0115 projectile. The original route
+  needs its perspective-selected native bitmap, so all missing projectile
+  material now remains no-draw, including data-free configurations.
+
 - ✅ 2026-07-31 CSB object-marker fallback removal: removed the public
   object-colour cross renderer and all unbound object fallback branches.
   ReDMCSB `DUNVIEW.C F0115` projects native object material; a missing sprite

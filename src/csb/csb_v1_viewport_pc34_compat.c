@@ -1738,50 +1738,6 @@ size_t csb_v1_viewport_runtime_collect_thing_overlays(
     return count;
 }
 
-static void csb_v1_viewport_plot_runtime_overlay_pixel(
-    CSB_V1_ViewportConfig *cfg,
-    int viewport_x,
-    int viewport_y,
-    uint8_t color)
-{
-    int screen_x;
-    int screen_y;
-    int stride;
-
-    if (!cfg || !cfg->viewport_pixels) return;
-    if (viewport_x < 0 || viewport_x >= DM1_VIEWPORT_WIDTH ||
-        viewport_y < 0 || viewport_y >= DM1_VIEWPORT_HEIGHT) {
-        return;
-    }
-    stride = cfg->viewport_stride > 0 ? cfg->viewport_stride : 320;
-    screen_x = DM1_VIEWPORT_SCREEN_X + viewport_x;
-    screen_y = DM1_VIEWPORT_SCREEN_Y + viewport_y;
-    cfg->viewport_pixels[screen_y * stride + screen_x] = color;
-}
-
-static void csb_v1_viewport_draw_runtime_overlay_cross(
-    CSB_V1_ViewportConfig *cfg,
-    int viewport_x,
-    int viewport_y,
-    uint8_t color,
-    int radius)
-{
-    int d;
-
-    csb_v1_viewport_plot_runtime_overlay_pixel(
-        cfg, viewport_x, viewport_y, color);
-    for (d = 1; d <= radius; ++d) {
-        csb_v1_viewport_plot_runtime_overlay_pixel(
-            cfg, viewport_x - d, viewport_y, color);
-        csb_v1_viewport_plot_runtime_overlay_pixel(
-            cfg, viewport_x + d, viewport_y, color);
-        csb_v1_viewport_plot_runtime_overlay_pixel(
-            cfg, viewport_x, viewport_y - d, color);
-        csb_v1_viewport_plot_runtime_overlay_pixel(
-            cfg, viewport_x, viewport_y + d, color);
-    }
-}
-
 int csb_v1_viewport_projectile_material_overlay_color(int material_icon_index)
 {
     if (material_icon_index < 0) return 0x0E;
@@ -3033,7 +2989,6 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
         const struct ProjectileInstance_Compat *projectile =
             &cfg->runtime_projectiles->entries[i];
         CSB_V1_ViewportRuntimeProjectileOverlayPlacement placement;
-        uint8_t color = 0x0Eu;
         size_t handoff_index;
         int source_handoff_owns_projectile = 0;
 
@@ -3132,22 +3087,10 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
                 }
             }
         }
-        /* The M11 PC3.4 route has authenticated source graphics.  If its
-         * F0115 projectile decoder cannot provide a bitmap, preserve the
-         * source page rather than drawing the former diagnostic cross.  That
-         * cross had no ReDMCSB owner and could leak into live V1/V2 captures.
-         * Data-free geometry probes retain their explicit marker behaviour. */
-        if (!cfg->projectile_sprite_drawer_source_bound) {
-            color = (uint8_t)csb_v1_viewport_projectile_material_overlay_color(
-                placement.material_icon_index);
-            csb_v1_viewport_draw_runtime_overlay_cross(
-                cfg,
-                placement.viewport_x,
-                placement.viewport_y,
-                color,
-                placement.source_zone >= 0 ? 2 : 1);
-            ++cfg->runtime_projectile_marker_drawn_count;
-        }
+        /* ReDMCSB DUNVIEW.C F0115 selects a native perspective bitmap.
+         * Without that material, preserving the source page is the only
+         * valid result; the old coloured diagnostic cross had no source
+         * owner and is deliberately not retained for test configurations. */
     }
 }
 

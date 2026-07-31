@@ -470,7 +470,7 @@ diagnostic; it must not silently fall back to a generated visual.
   source bitmap/mask pair, is removed. **2026-07-31 follow-up:** unbound
   runtime creature groups now leave the source page unchanged; the retired
   coloured-cross diagnostic was not a creature sprite. Unbound objects now
-  likewise remain no-draw. **2026-07-31 follow-up:** source-verified
+  likewise remain no-draw, as do unbound projectiles. **2026-07-31 follow-up:** source-verified
   CSB sessions now also reject the shared geometry-only cyan F0113
   teleporter fill. **2026-07-31 update:** live F0113 now binds C076 and its
   selected C070--C075 mask through the active hash-verified `GRAPHICS.DAT`

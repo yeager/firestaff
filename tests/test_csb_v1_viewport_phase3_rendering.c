@@ -582,12 +582,12 @@ static void test_runtime_projectile_and_explosion_overlays(void)
 
     csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
     center_offset = (DM1_VIEWPORT_SCREEN_Y + 88) * 320 + 112;
-    check_int("runtime.projectile_overlay.center",
-              framebuffer[center_offset], 0x0E);
+    check_int("runtime.projectile_overlay.unbound_no_draw",
+              framebuffer[center_offset], 0);
     check_int("runtime.projectile_overlay.default_material_count",
               cfg.runtime_projectile_material_resolved_count, 0);
-    check_int("runtime.projectile_overlay.default_marker_count",
-              cfg.runtime_projectile_marker_drawn_count, 1);
+    check_int("runtime.projectile_overlay.default_no_draw_count",
+              cfg.runtime_projectile_marker_drawn_count, 0);
 
     /* A live PC3.4 M11 session must not replace a missing F0115 projectile
      * bitmap with this data-free diagnostic marker. */
