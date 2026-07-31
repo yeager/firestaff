@@ -46240,6 +46240,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
    References: ReDMCSB `DUNVIEW.C F0111/F0128` and CSBWin `Viewport.cpp`.
    Verification: whole-tree consumer audit, M11 build, real-data viewport test,
    and `git diff --check`.
+
+- ✅ 2026-07-31 CSB V2.2 generic cell-cache API cleanup: removed the public
+  3×3 cell bitmap and asset-id lookups. They had no M11 caller and could not
+  carry F0128 source identity, clip, palette or draw order. The remaining cache
+  lookup is internal to the admitted, source-bound F0128 command path.
+  Verification: `test_csb_v22_inplace_draw_pc34` 57/57 and `git diff --check`.
 # 2026-07-31 Theron Track 02 quest-block extraction
 
 - ✅ Added a source-data extractor for the seven 256 KiB quest blocks present
