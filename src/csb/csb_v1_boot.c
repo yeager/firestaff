@@ -4750,8 +4750,11 @@ static void csb_v1_boot_startup_visual_base_snapshot_pc34(
     snapshot->entrance_active = 1;
     snapshot->entrance_source_step = csb_v1_startup_entrance_wait_stage_pc34();
     snapshot->pending_command = CSB_V1_STARTUP_ENTRANCE_COMMAND_NONE_PC34;
-    snapshot->resume_available = 1;
-    snapshot->resume_path = "/tmp/firestaff-csb-resume.dat";
+    /* This visual receipt has no authenticated save intake.  ReDMCSB's
+     * ENTRANCE.C F0441/F0806 gates Resume on a supplied loadable save; do not
+     * manufacture a /tmp path merely to exercise the closed-door HUD. */
+    snapshot->resume_available = 0;
+    snapshot->resume_path = NULL;
 }
 
 static int csb_v1_boot_startup_visual_title_sample_pc34(

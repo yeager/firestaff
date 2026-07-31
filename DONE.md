@@ -47591,3 +47591,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   are compiled exclusively by explicit contract targets, including the
   multi-variant asset probe. Verification: production `firestaff`, focused
   data-layout binary and CTest target all passed.
+
+- ✅ 2026-07-31 CSB startup Resume admission: the M11-consumed visual startup
+  receipt no longer invents a loadable `/tmp` save to make the closed-door HUD
+  expose Resume. It now keeps Resume unavailable until the real save intake
+  supplies an authenticated path, as required by ReDMCSB `ENTRANCE.C`
+  F0441/F0806. Verification: production `firestaff` and the 504-assertion
+  CSB boot-to-runtime handoff regression passed.
