@@ -864,7 +864,14 @@ static void dm2_v1_apply_original_gamestate(DM2_V1_SessionState *session,
 {
     if (!session || !gs) return;
 
-    dm2_v1_session_new(session);
+    /* GAME_LOAD/SKLOAD restores the saved game-state and its following
+     * SUPPRESS champion records.  Do not seed that import with
+     * dm2_v1_session_new(): its fixed party, gold and entrance pose are a
+     * save-fixture convenience, not values owned by this original payload.
+     * A later malformed champion section must therefore leave no invented
+     * party behind. Source: SKWINSPX/src/v4/skcore.cpp GAME_LOAD/SKLOAD
+     * reads the game-state block and saved records as one transaction. */
+    memset(session, 0, sizeof(*session));
     session->game_tick = gs->dwGameTick;
     session->rng_seed = gs->dwRandomSeed;
     session->party_x = gs->wPlayerPosX;

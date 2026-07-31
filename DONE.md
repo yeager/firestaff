@@ -44865,3 +44865,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `m11_dm1_real_alcove_item_runtime_pc34`,
   `dm1_v1_original_save_pc34_external_hoc_runtime`, and
   `dm1_v1_viewport_floor_ceiling_items_pc34_compat` pass.
+- ✅ 2026-07-31 DM2 original-SKSave import closure: importing an original
+  game-state no longer begins with Firestaff's fixed four-champion party,
+  gold or entrance pose. The candidate is zeroed and receives only fields
+  decoded from the original game-state and SUPPRESS records, so a malformed
+  later section cannot leave an invented party behind. Verification:
+  `test_dm2_v1_utility_import` passes 136/136.

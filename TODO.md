@@ -20,7 +20,8 @@
   malformed G1 candidate without a valid source start pose now rejects
   atomically; it cannot retain an earlier world's entrance position. Accepted
   reloads also refresh deterministic header fields from the same verified
-  source bytes.
+  source bytes. Original SKSave import no longer seeds this route from the
+  legacy fixture party before decoding its own SUPPRESS champion records.
 
 - **DM2-CREDITS-EVENT-OWNER-HANDOFF:** DM2 startup now follows
   `SHOW_MENU_SCREEN` directly to the original menu surface. Port the
