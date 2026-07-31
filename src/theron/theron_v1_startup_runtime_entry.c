@@ -834,10 +834,10 @@ int theron_v1_startup_runtime_load_initial_level(
         receipt[0] = '\0';
     }
 
-    /* THQUEST.ASM T400/T520/T560: runtime entry owns dungeon bank load,
-     * party start position, and initial map handoff. Until every Track 02
-     * bank offset is decoded, keep the bounded deterministic startup room
-     * on the real theron_v1_level_load() path. */
+    /* Legacy fixture-compatible entry only: production M11 never reaches
+     * this branch because it calls the verified-only wrapper above. Keep
+     * the bounded source-locked candidate available for data-free probes,
+     * but do not treat it as a decoded Track 02 dungeon bank. */
     meta = theron_v1_dungeon_meta(dungeon_id);
     /* Unknown metadata must remain unknown; never invent a seed for the
      * synthetic fixture room. */

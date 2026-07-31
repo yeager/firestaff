@@ -46962,3 +46962,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   They contain no authenticated bitmap decoder or runtime consumer, so keeping
   them out of M10 prevents their source-locked metadata from masquerading as a
   draw path. Verification: both focused tests and full `firestaff` link.
+- ✅ 2026-07-31 Theron startup fallback boundary: confirmed M11 has no caller
+  for the legacy synthetic-room API and uses only
+  `theron_v1_startup_runtime_load_initial_level_verified_only()`. The helper
+  and legacy loader are now explicitly documented as data-free fixture
+  compatibility only; verified Track 02 with no semantic handoff remains
+  blocked. Startup-flow `653/653` and rendering `25/25` remain green.
