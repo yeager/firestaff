@@ -46991,3 +46991,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `theron_v1_combat_runtime_noop.c`; the full inferred implementation is
   available only to the dedicated combat fixture target. Rendering `25/25`
   and startup-flow `653/653` remain green.
+- ✅ 2026-07-31 Theron dörrregression: uppdaterade combat-fixturen så den
+  placerar en riktig `THERON_ITEM_KEY` innan den försöker öppna en låst dörr.
+  Testet följer nu den källbundna nyckelgrinden och passerar 66/66.

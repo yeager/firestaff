@@ -273,6 +273,8 @@ static void test_door_mechanics(void) {
     w.party.leader_x = 8;
     w.party.leader_y = 8;
     w.party.leader_dir = THERON_DIR_EAST;
+    /* Locked doors require the active champion's source-owned key item. */
+    w.party.champions[w.party.active_slot].inventory[0] = THERON_ITEM_KEY;
 
     moved = theron_v1_move_party(&w, THERON_DIR_EAST);
     CHECK_INT("closed door blocks movement", moved, THERON_MOVE_BLOCKED);
