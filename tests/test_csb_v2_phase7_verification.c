@@ -110,15 +110,15 @@ static void test_chaos_lighting_verification(void) {
 
     csb_v2_viewport_set_ambient_light(0.0f);
     csb_v2_viewport_set_dungeon_light(&state, 0);
-    CHECK(csb_v2_viewport_add_torch(10.0f, 10.0f, 255, 120, 80, 40, 1) == 0);
+    CHECK(csb_v2_viewport_add_torch(10.0f, 10.0f, 255, 120, 80, 40, 1) == -1);
     csb_v2_viewport_compute_light_map();
     csb_v2_viewport_get_tile_light(10, 10, &r0, &g0, &b0);
-    CHECK(r0 == 120 && g0 == 80 && b0 == 40);
+    CHECK(r0 == 0 && g0 == 0 && b0 == 0);
 
     csb_v2_viewport_render_frame(&state, 1016u);
     csb_v2_viewport_compute_light_map();
     csb_v2_viewport_get_tile_light(10, 10, &r1, &g1, &b1);
-    CHECK(r1 <= r0 && g1 <= g0 && b1 <= b0);
+    CHECK(r1 == 0 && g1 == 0 && b1 == 0);
 
     csb_v2_chaos_on_trigger(0x80, 0);
     CHECK(csb_v2_chaos_active_count() == 0);

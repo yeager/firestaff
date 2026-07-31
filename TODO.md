@@ -423,6 +423,9 @@ diagnostic; it must not silently fall back to a generated visual.
   rejects every projectile, field, chaos and torch request. Its former RGB
   fackelfärger, radier, emitterkurvor och effektider var host-skapade, inte
   källdata.
+  **2026-07-31 viewport-light follow-up:** the public V2 viewport lighting
+  bridge now also rejects arbitrary RGB torches and DSA pulses. ReDMCSB light
+  tables stay available as data, but cannot become host-rendered effects.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

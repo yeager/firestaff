@@ -156,12 +156,12 @@ static void test_events_and_viewport_wrappers(void) {
     csb_v2_viewport_init(&viewport, 4);
     csb_v2_viewport_set_ambient_light(0.0f);
     csb_v2_viewport_set_dungeon_light(&viewport, 0);
-    CHECK(csb_v2_viewport_add_torch(12.0f, 12.0f, 255, 80, 40, 20, 0) == 0);
+    CHECK(csb_v2_viewport_add_torch(12.0f, 12.0f, 255, 80, 40, 20, 0) == -1);
     csb_v2_viewport_compute_light_map();
     csb_v2_viewport_get_tile_light(12, 12, &r0, &g0, &b0);
-    CHECK(r0 == 80 && g0 == 40 && b0 == 20);
+    CHECK(r0 == 0 && g0 == 0 && b0 == 0);
     csb_v2_viewport_trigger_dsa_light_event(CSB_V2_LIGHT_EVENT_MAGICAL_PULSE, 0.8f, 0.5f);
-    CHECK(csb_v2_viewport_light_event_type() == CSB_V2_LIGHT_EVENT_MAGICAL_PULSE);
+    CHECK(csb_v2_viewport_light_event_type() == CSB_V2_LIGHT_EVENT_NORMAL);
 
     csb_v2_chaos_on_trigger(0x80, 0);
     CHECK(csb_v2_viewport_chaos_active_count() == 0);

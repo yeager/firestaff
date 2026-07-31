@@ -77,11 +77,11 @@ float csb_v2_viewport_sub_tick(const CSB_V2_ViewportState *s) {
 
 void csb_v2_viewport_set_dungeon_light(CSB_V2_ViewportState *s, int dungeonLevel) {
     (void)s;
-    csb_v2_light_set_dungeon_level(dungeonLevel);
+    (void)dungeonLevel;
 }
 
 void csb_v2_viewport_set_ambient_light(float ambient) {
-    csb_v2_light_set_ambient(ambient);
+    (void)ambient;
 }
 
 int csb_v2_viewport_add_torch(float x,
@@ -92,15 +92,16 @@ int csb_v2_viewport_add_torch(float x,
                               uint8_t b,
                               int flicker)
 {
-    return csb_v2_light_add_source(x, y, 4.0f, intensity, r, g, b, flicker);
+    (void)x; (void)y; (void)intensity; (void)r; (void)g; (void)b;
+    (void)flicker;
+    return -1;
 }
 
 void csb_v2_viewport_remove_torch(int lightIndex) {
-    csb_v2_light_remove_source(lightIndex);
+    (void)lightIndex;
 }
 
 void csb_v2_viewport_compute_light_map(void) {
-    csb_v2_light_compute_map();
 }
 
 void csb_v2_viewport_get_tile_light(int tileX,
@@ -109,22 +110,25 @@ void csb_v2_viewport_get_tile_light(int tileX,
                                     uint8_t *g,
                                     uint8_t *b)
 {
-    csb_v2_light_get_tile(tileX, tileY, r, g, b);
+    (void)tileX; (void)tileY;
+    if (r) *r = 0;
+    if (g) *g = 0;
+    if (b) *b = 0;
 }
 
 void csb_v2_viewport_trigger_dsa_light_event(CSB_V2_LightEventType type,
                                              float durationSeconds,
                                              float intensity)
 {
-    csb_v2_light_event_trigger(type, durationSeconds, intensity);
+    (void)type; (void)durationSeconds; (void)intensity;
 }
 
 CSB_V2_LightEventType csb_v2_viewport_light_event_type(void) {
-    return csb_v2_light_event_current_type();
+    return CSB_V2_LIGHT_EVENT_NORMAL;
 }
 
 void csb_v2_viewport_advance_chaos(float dtSeconds) {
-    csb_v2_chaos_tick(dtSeconds);
+    (void)dtSeconds;
 }
 
 int csb_v2_viewport_chaos_active_count(void) {
@@ -143,5 +147,6 @@ const char *csb_v2_viewport_source_evidence(void) {
     return "CSB V2: shared DM1 V2.1 EPX pipeline + CSB custom backgrounds\n"
            "V2_AnimClock: V1 tick rate preserved, sub-tick interpolation\n"
            "CSBWin/Viewport.cpp: base rendering, CSBWin/Graphics.cpp: assets\n"
-           "ReDMCSB PANEL.C:367-428 remains the dungeon light baseline\n";
+           "ReDMCSB PANEL.C:367-428 remains the dungeon light baseline\n"
+           "Unbound host RGB lights, DSA pulses and chaos overlays are no-draw\n";
 }

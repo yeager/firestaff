@@ -95,6 +95,11 @@
   now fails closed instead of retaining fabricated RGB values, radii, speeds
   and particle curves. Verification: `test_csb_p4_lighting`.
 
+- ✅ 2026-07-31 CSB V2 viewport-light closure: retired the public arbitrary
+  RGB torch and DSA-pulse bridge. It now returns no light and no active event
+  until original material and command ownership are available. Verification:
+  `test_csb_v2_lighting_dynamic`, `test_csb_v2_phase7_verification`.
+
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a
   successful transaction route from host gold alone. It remains closed until

@@ -31,6 +31,8 @@ void csb_v2_viewport_v1_tick(CSB_V2_ViewportState *s, uint32_t now_ms);
 void csb_v2_viewport_render_frame(CSB_V2_ViewportState *s, uint32_t now_ms);
 float csb_v2_viewport_sub_tick(const CSB_V2_ViewportState *s);
 
+/* Retired host-lighting compatibility surface. These entry points are no-op
+ * or transparent until source-owned CSB light material is bound. */
 void csb_v2_viewport_set_dungeon_light(CSB_V2_ViewportState *s, int dungeonLevel);
 void csb_v2_viewport_set_ambient_light(float ambient);
 int csb_v2_viewport_add_torch(float x,
