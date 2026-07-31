@@ -46130,3 +46130,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   available only to the focused source-shape test target. Verification:
   spell-cast source test 143/143, production timer gate pass, and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass.
+
+- ✅ 2026-07-31 CSB detached D2L2/D2R2 overlay cleanup: removed the isolated
+  F0115 item/explosion metadata compositor and its duplicate test targets.
+  It had no M11 or runtime consumer and could only compose caller-supplied
+  pixels inside its own tests. The active viewport remains limited to its
+  verified source-data routes. References reviewed: ReDMCSB `DUNVIEW.C
+  F0115/F0678/F0679` and CSBWin `Viewport.cpp`. Verification: focused
+  first-frame material test 109/109, realdata viewport CTests 4/4, build, and
+  `git diff --check`.
