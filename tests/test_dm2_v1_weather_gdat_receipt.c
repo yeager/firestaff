@@ -68,21 +68,20 @@ int main(void)
         entries[i].data_index = (uint16_t)i;
     }
     for (i = 0; i < 9; ++i) {
-        /* Minimal source-shaped uncompressed IMG3: 2x1 four-bit payload,
-         * followed by its QUERY_GDAT_IMAGE_LOCALPAL tail. The -32 IMG3
-         * offset selects the real U4 extraction path. */
+        /* Minimal source-shaped IMG9 mode-2: 2x1, one literal flag byte and
+         * two indexed pixels. The verified PC weather command family uses
+         * this global-palette format. */
         offsets[9 + i] = (uint32_t)cursor;
-        sizes[9 + i] = 27u;
+        sizes[9 + i] = 11u;
         raw[cursor + 0u] = 2u;
         raw[cursor + 2u] = 1u;
-        raw[cursor + 3u] = 0x80u;
-        raw[cursor + 4u] = 4u;
-        raw[cursor + 10u] = (uint8_t)(0x12u + (unsigned int)i);
-        for (int palette = 0; palette < 16; ++palette) {
-            raw[cursor + 11u + (size_t)palette] =
-                (uint8_t)(0x20u + (unsigned int)i + (unsigned int)palette);
-        }
-        cursor += 27u;
+        raw[cursor + 3u] = 0x7cu;
+        raw[cursor + 4u] = 8u;
+        raw[cursor + 6u] = 2u;
+        raw[cursor + 8u] = 0xffu;
+        raw[cursor + 9u] = (uint8_t)(0x12u + (unsigned int)i);
+        raw[cursor + 10u] = (uint8_t)(0x22u + (unsigned int)i);
+        cursor += 11u;
         entries[9 + i].cls1 = DM2_GDAT_CATEGORY_ENVIRONMENT;
         entries[9 + i].cls2 = 3u;
         entries[9 + i].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;
@@ -124,8 +123,9 @@ int main(void)
           "weather receipt binds all nine source dtText commands");
     check(receipt.graphicsset == 3u && receipt.receipt_hash != 0u &&
               receipt.material_mask == 0x1ffu &&
-              receipt.commands[0].local_palette_valid &&
-              receipt.commands[8].local_palette_valid,
+              !receipt.commands[0].local_palette_valid &&
+              receipt.commands[0].global_palette_identity_valid &&
+              receipt.commands[8].global_palette_identity_valid,
           "weather receipt exposes the bounded live-handoff identity");
     check(receipt.commands[6].command == 0x6au &&
               receipt.commands[6].raw_text == raw + offsets[6] &&
@@ -143,17 +143,17 @@ int main(void)
               receipt.commands[6].query_metadata.image_offset_present &&
               receipt.commands[6].query_metadata.query_offset_x == 1 &&
               receipt.commands[6].query_metadata.query_offset_y == 3 &&
-              receipt.commands[6].local_palette_valid &&
-              receipt.commands[6].local_palette16[0] == 0x26u &&
-              receipt.commands[6].local_palette16[15] == 0x35u &&
-              receipt.commands[6].local_palette_hash != 0u &&
+              !receipt.commands[6].local_palette_valid &&
+              receipt.commands[6].global_palette_identity_valid &&
+              receipt.commands[6].palette_translation_count == 256u &&
+              receipt.commands[6].global_palette_identity_hash != 0u &&
               receipt.commands[6].decoded_pixels_valid &&
               receipt.commands[6].decoded_width == 2u &&
               receipt.commands[6].decoded_height == 1u &&
-              receipt.commands[6].decoded_format == DM2_IMG_FMT_U4 &&
+              receipt.commands[6].decoded_format == DM2_IMG_FMT_IMG9 &&
               receipt.commands[6].decoded_pixel_count == 2u &&
               receipt.commands[6].decoded_pixels_hash != 0u,
-          "weather receipt binds CMDSTR, decoded IMG3 pixels, and local palette");
+          "weather receipt binds CMDSTR, decoded IMG9 pixels, and global palette");
     check(receipt.commands[0].command == 0x64u &&
               receipt.commands[0].material_valid &&
               receipt.commands[0].rect_number == 6002u &&
@@ -295,7 +295,7 @@ int main(void)
               draw_plan.source_left == 1 && draw_plan.source_top == 1 &&
               draw_plan.source_right == 3 && draw_plan.source_bottom == 2 &&
               draw_plan.material_hash == receipt.commands[4].material_hash,
-          "weather draw plan retains source IMG3 bounds and moving horizon transform");
+          "weather draw plan retains source IMG9 bounds and moving horizon transform");
     draw_context.map_x = 2;
     check(dm2_v1_weather_gdat_draw_plan(&receipt.commands[4], &draw_context,
                                         &draw_plan) && draw_plan.mirror_flip,
@@ -437,15 +437,17 @@ int main(void)
         for (k = 0u; k < plain_size; ++k) {
             enc_raw[k] = (uint8_t)(((uint8_t)plain[k] + (uint8_t)k) ^ 0xFFu);
         }
-        /* Minimal IMG3 + local palette tail, same shape as above. */
+        /* Minimal IMG9 mode-2 record, same source format as above. */
         enc_offsets[1] = 32u;
-        enc_sizes[1] = 27u;
+        enc_sizes[1] = 11u;
         enc_raw[32u] = 2u;
         enc_raw[34u] = 1u;
-        enc_raw[35u] = 0x80u;
-        enc_raw[36u] = 4u;
-        enc_raw[42u] = 0x55u;
-        for (k = 0u; k < 16u; ++k) enc_raw[43u + k] = (uint8_t)(0x30u + k);
+        enc_raw[35u] = 0x7cu;
+        enc_raw[36u] = 8u;
+        enc_raw[38u] = 2u;
+        enc_raw[40u] = 0xffu;
+        enc_raw[41u] = 0x55u;
+        enc_raw[42u] = 0x65u;
         enc_offsets[0] = 0u;
         enc_sizes[0] = (uint32_t)plain_size;
         memset(enc_entries, 0, sizeof(enc_entries));
@@ -486,13 +488,13 @@ int main(void)
               "encoded GDAT command text decodes to its cd6002 material");
     }
 
-    sizes[15] = 25u;
+    sizes[15] = 10u;
     check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6au,
                                                &command) &&
               command.image_present && command.query_metadata_valid &&
-              !command.local_palette_valid && !command.material_valid,
-          "weather command rejects an IMG3 without its local palette tail");
-    sizes[15] = 27u;
+              !command.global_palette_identity_valid && !command.material_valid,
+          "weather command rejects a truncated IMG9 payload");
+    sizes[15] = 11u;
 
     raw[offsets[15] + 0u] = 100u;
     check(dm2_v1_weather_gdat_command_receipt(&loader, 3u, 0x6au,
@@ -500,7 +502,7 @@ int main(void)
               command.image_present && command.query_metadata_valid &&
               !command.decoded_pixels_valid &&
               !command.material_valid,
-          "weather command rejects an image whose IMG3 pixels cannot decode");
+          "weather command rejects an image whose IMG9 pixels cannot decode");
     raw[offsets[15] + 0u] = 2u;
 
     entries[7].cls3 = DM2_GDAT_ENTRY_TYPE_IMAGE;

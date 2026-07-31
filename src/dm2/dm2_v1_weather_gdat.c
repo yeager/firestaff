@@ -471,22 +471,18 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
         out->image_field, &out->query_metadata);
     if (!out->query_metadata_valid) return 0;
     /* c_bkgrnd.cpp passes this exact ENVIRONMENT dtImage into
-     * QUERY_TEMP_PICST.  The real DM2 GRAPHICS.DAT carries the nine
-     * 0x64..0x6c command images as 8bpp IMG9 (global-palette pictures);
-     * the synthetic 4bpp IMG3/U4 local-palette form is also admitted.
-     * Keep the bounded decoded-pixel receipt first so the real-data
-     * evidence is recorded ahead of the palette-translation binding
-     * below. */
+     * QUERY_TEMP_PICST. The verified DM2 PC GRAPHICS.DAT has the nine
+     * 0x64..0x6c command images as 8bpp IMG9 global-palette pictures.
+     * A local-palette IMG3/U4 test shape has no source identity for this
+     * command family and must not become weather material. */
     pixels = dm2_v1_asset_load_image_field(
         loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset, out->image_field,
         &width, &height, &format);
     if (!pixels || width <= 0 || height <= 0 ||
         width != (int)out->query_metadata.width ||
         height != (int)out->query_metadata.height ||
-        !((out->query_metadata.bits_per_pixel == 4u &&
-           (format == DM2_IMG_FMT_IMG3 || format == DM2_IMG_FMT_U4)) ||
-          (out->query_metadata.bits_per_pixel == 8u &&
-           format == DM2_IMG_FMT_IMG9))) {
+        out->query_metadata.bits_per_pixel != 8u ||
+        format != DM2_IMG_FMT_IMG9) {
         dm2_v1_asset_free_pixels(pixels);
         return 0;
     }
@@ -503,30 +499,10 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     out->decoded_height = (uint16_t)height;
     out->decoded_format = format;
     out->decoded_pixel_count = (uint32_t)pixel_count;
-    /* skproject QUERY_TEMP_PICST realizes the 4bpp ENVIRONMENT IMG3 through
-     * QUERY_GDAT_IMAGE_LOCALPAL.  A valid command text and dimensions are
-     * not enough to authorize that weather material without this per-image
-     * palette receipt.  QUERY_GDAT_IMAGE_LOCALPAL (SkWinCore.cpp 3e74:521A,
-     * DM2_EXTENDED_MODE==1) returns NULL whenever the realized image is not
-     * 4bpp, so the real 8bpp IMG9 command images carry no 16-color local
-     * palette; QUERY_GDAT_SUMMARY_IMAGE (0B36:0520) then installs the
-     * 256-entry identity translation (ref->b58[i] = i, ref->w56 = 256) and
-     * every decoded pixel byte indexes the global screen palette directly.
-     * Bind exactly that source translation for each admitted format. */
-    if (out->query_metadata.bits_per_pixel == 4u) {
-        out->local_palette_valid = dm2_v1_asset_load_image_local_palette(
-            loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
-            out->image_field, out->local_palette16, &out->local_palette_hash);
-        if (!out->local_palette_valid || out->local_palette_hash == 0u) {
-            return 0;
-        }
-        out->palette_translation_count = 16u;
-        out->palette_translation_hash = out->local_palette_hash;
-    } else {
-        /* 8bpp IMG9: the local-palette query is NULL by source rule, so
-         * SUMMARY_IMAGE's identity table is the palette material.  Hash the
-         * exact 256-byte identity map; its value fully determines the
-         * translation. */
+    /* IMG9 has no local palette by source rule. QUERY_GDAT_SUMMARY_IMAGE
+     * instead installs its 256-entry identity translation, so each decoded
+     * pixel indexes the active global screen palette directly. */
+    {
         uint32_t identity_hash =
             dm2_v1_weather_environment_identity_palette_hash();
         if (identity_hash == 0u) return 0;

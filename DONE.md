@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 weather IMG9 source admission: ENVIRONMENT weather
+  commands `0x64..0x6c` now accept only the original PC IMG9 global-palette
+  format. The former local-palette IMG3/U4 test shape cannot authorise an
+  outdoor weather blit. Verification: `test_dm2_v1_weather_gdat_receipt`
+  passes all checks with source-shaped IMG9 material; the real-data IMG9
+  identity test remains the corpus proof for the canonical graphics file.
+
 - ✅ 2026-07-31 DM2 TURNS_MISSILE placeholder closure: the projectile versus
   creature collision resolver no longer turns an unbound
   `AI_W30_TURNS_MISSILE` redirect into invented damage and a despawn.
