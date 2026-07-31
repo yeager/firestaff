@@ -46418,3 +46418,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   DMWeb relics: Shield Defiant, Taza Poleyn, Tazahelm, Taza Boots, Taza Armor,
   Soulcage and The Retaliator. Verification: `test_theron_v1_m11_direct_launch`
   passes; `git diff --check` passes.
+# 2026-07-31 Nexus PRS3-headergräns
+
+- ✅ PRS3-headerns komprimerade storlek kontrolleras nu utan signerad
+  heltalsaddition som kan wrap:a vid korrupta eller mycket stora fält.
+  DMWebs little-endian-bitflöde och offsetregler är oförändrade. Den riktiga
+  `MENU.BPK`-proben fortsätter att avkoda alla 162 PRS3-ytor, medan separat
+  Saturn-palette-/VDP1-/menysemantik fortfarande krävs innan render-gaten kan
+  öppnas.
+  Verifiering: `test_nexus_v1_bpk_surface_class` med lokal retailfil.
