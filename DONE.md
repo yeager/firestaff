@@ -1,10 +1,14 @@
-- ✅ 2026-07-31 CSB Atari-startpalett: M11 använder inte längre PC3.4:s
+- ✅ 2026-07-31 CSB Atari-ljuspalett: M11 använder inte längre PC3.4:s
   `G9010`-VGA-tabell för Atari ST:s TAG0088b2/C232-sidor. I stället avkodas
   de sex ursprungliga `Palette552`-raderna ur CSBWin `GRAPHICS.DAT` item
-  `0x232` och den källaägda startvägen använder rad 0, som
-  `ReadTablesFromGraphicsFile()` och `setpalette(&d.Palette552[0])` gör.
-  Senare `SelectPaletteForLightLevel`-växlingar är fortsatt öppna och får
-  inte approximeras med PC3.4-data. Verification:
+  `0x232`. Vid uppstart används rad 0 som `ReadTablesFromGraphicsFile()` och
+  `setpalette(&d.Palette552[0])` gör. En autentiserad CSBWin-runtime väljer
+  därefter rätt rad med originalets `SelectPaletteForLightLevel`: nivåns
+  multiplikator, sparad `Brightness` och de fyra starkaste facklorna från
+  hjältarnas två handplatser. Saknas någon verklig runtime-fakta stannar
+  presentationen på startpaletten; ingen PC3.4-approximation används.
+  Källa: CSBWin `CSBCode.cpp::SelectPaletteForLightLevel` (rad 7233–7311).
+  Verification:
   `csb_v1_csbwin_layout_0232_unit`, handoff-regressionen och fokuserade
   PC3.4-realdataregressioner passerar.
 

@@ -467,10 +467,11 @@ diagnostic; it must not silently fall back to a generated visual.
   required owner for later light-level palette transitions; no PC3.4
   approximation is admitted. **2026-07-31 light-selection follow-up:** item
   `0x232` now also decodes CSBWin's six `PaletteBrightness` thresholds and
-  sixteen `Word1074` torch powers, with the exact four-brightest-torches
-  selector available as a source-only helper. Its M11 consumer remains gated
-  on one complete runtime receipt for map multiplier, Brightness and both
-  hand slots per champion. **2026-07-31 follow-up:** the retired raw-cell V2.2
+  sixteen `Word1074` torch powers. M11 consumes the exact four-brightest-
+  torches selector only from an authenticated CSBWin saved runtime body,
+  loaded original dungeon, current map multiplier, saved `Brightness` and
+  both source hand records for each champion; otherwise it retains the real
+  `Palette552[0]` boot row. **2026-07-31 follow-up:** the retired raw-cell V2.2
   classifier now returns no shape, category or asset for every input, and its
   legacy 3x3 renderer is permanently no-draw. A populated cache or installed
   artpack cannot activate this compatibility route; only the source-command

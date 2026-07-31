@@ -2343,29 +2343,118 @@ static int m11_csb_install_runtime_source_graphic(
  * 0x232 into Data::Palette552, then its boot path calls
  * setpalette(&d.Palette552[0]). Keep this separate from the PC3.4 VGA table:
  * TAG0088b2's low four-bit indices name Atari ST 0x0RGB registers here. */
-static int m11_csb_atari_st_initial_palette_rgb6(
-    const CSB_V1_BootProfile *profile, uint8_t out_rgb6[256][3])
+static int m11_csb_atari_st_palette_rgb6_from_layout(
+    const CSB_V1_CSBWinLayout0232 *layout, uint8_t palette_index,
+    uint8_t out_rgb6[256][3])
 {
-    CSB_V1_CSBWinLayout0232 layout;
     int color;
 
-    if (!profile || !out_rgb6 ||
-        (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
-         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
-        !profile->graphics_verified || !profile->graphics_path[0] ||
-        !csb_v1_csbwin_layout_0232_read_graphics_dat(profile->graphics_path,
-                                                      &layout) ||
-        !layout.valid) {
+    if (!layout || !layout->valid || !out_rgb6 ||
+        palette_index >= CSB_V1_CSBWIN_LAYOUT_0232_VIEWPORT_PALETTE_COUNT) {
         return 0;
     }
     for (color = 0; color < 256; ++color) {
-        const uint16_t source = layout.viewport_palettes[0][color & 0x0f];
+        const uint16_t source = layout->viewport_palettes[palette_index][
+            color & 0x0f];
         if ((source & 0xf888u) != 0u) return 0;
         out_rgb6[color][0] = (uint8_t)(((source >> 8) & 0x07u) * 9u);
         out_rgb6[color][1] = (uint8_t)(((source >> 4) & 0x07u) * 9u);
         out_rgb6[color][2] = (uint8_t)((source & 0x07u) * 9u);
     }
     return 1;
+}
+
+/* CSBWin CSBCode.cpp::SelectPaletteForLightLevel reads only the two hand
+ * possessions of each current champion.  Keep the data boundary strict:
+ * a decoded saved-game body, a loaded original dungeon and every non-empty
+ * hand record are required before this replaces the source boot palette. */
+static int m11_csb_atari_st_runtime_palette_rgb6(
+    const CSB_V1_BootProfile *profile, uint8_t out_rgb6[256][3])
+{
+    const CSB_V1_RuntimeProfile *runtime;
+    const CSB_V1_DungeonData *dungeon;
+    CSB_V1_CSBWinLayout0232 layout;
+    uint8_t torch_charges[8] = { 0 };
+    uint8_t palette_index;
+    int champion_index;
+
+    if (!profile || !out_rgb6 ||
+        (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !profile->graphics_verified || !profile->graphics_path[0]) {
+        return 0;
+    }
+    runtime = &profile->runtime;
+    dungeon = runtime->dungeon_handle;
+    if (!runtime->csbwin_body_runtime_summary_valid ||
+        !runtime->party_state_valid || !dungeon ||
+        runtime->current_level < 0 || runtime->current_level >= dungeon->level_count ||
+        runtime->party_state.ChampionCount < 0 ||
+        runtime->party_state.ChampionCount > CSB_V1_MAX_CHAMPIONS ||
+        !csb_v1_csbwin_layout_0232_read_graphics_dat(profile->graphics_path,
+                                                      &layout) ||
+        !layout.valid) {
+        return 0;
+    }
+    for (champion_index = 0; champion_index < CSB_V1_MAX_CHAMPIONS;
+         ++champion_index) {
+        int slot;
+        for (slot = 1; slot >= 0; --slot) {
+            const uint16_t thing = runtime->party_state.Champions[
+                champion_index].Slots[slot];
+            const int charge_index = champion_index * 2 + (1 - slot);
+            const uint8_t *record;
+            int thing_type;
+            int record_size;
+            int icon_index;
+
+            if (champion_index >= runtime->party_state.ChampionCount ||
+                thing == THING_NONE || thing == THING_ENDOFLIST) {
+                continue;
+            }
+            record = csb_v1_dungeon_get_thing_record(dungeon, thing,
+                                                      &thing_type, NULL,
+                                                      &record_size);
+            if (!record || record_size < 4) return 0;
+            icon_index = csb_v1_boot_runtime_object_icon_index_pc34(
+                profile, thing);
+            /* ReDMCSB's GetBasicObjectType admits Torch_a through Torch_d.
+             * F0033 makes those the sole base icon 4 family in the actual
+             * object table, including its lit charge variants 5..7. */
+            if (thing_type == THING_TYPE_WEAPON && icon_index >= 4 &&
+                icon_index <= 7) {
+                const uint16_t word = (uint16_t)record[2] |
+                    ((uint16_t)record[3] << 8);
+                torch_charges[charge_index] =
+                    (uint8_t)((word >> 10) & 0x0fu);
+            }
+        }
+    }
+    if (!csb_v1_csbwin_layout_0232_select_light_palette(
+            &layout,
+            dungeon->map_experience_multiplier[runtime->current_level],
+            runtime->csbwin_character_tail_brightness, torch_charges,
+            &palette_index)) {
+        return 0;
+    }
+    return m11_csb_atari_st_palette_rgb6_from_layout(&layout, palette_index,
+                                                      out_rgb6);
+}
+
+static int m11_csb_atari_st_initial_palette_rgb6(
+    const CSB_V1_BootProfile *profile, uint8_t out_rgb6[256][3])
+{
+    CSB_V1_CSBWinLayout0232 layout;
+
+    if (!profile || !out_rgb6 ||
+        (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !profile->graphics_verified || !profile->graphics_path[0] ||
+        !csb_v1_csbwin_layout_0232_read_graphics_dat(profile->graphics_path,
+                                                      &layout)) {
+        return 0;
+    }
+    return m11_csb_atari_st_palette_rgb6_from_layout(&layout, 0u, out_rgb6);
 }
 
 /* CSBWin's item C232 is not a bitmap: it is the original 0x722-byte HUD
@@ -51121,11 +51210,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         int color;
         if (csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
             csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
-            /* CSBWin's initial active palette is the first real 0x232
-             * Palette552 row. Later SelectPaletteForLightLevel transitions
-             * need their own source-state port; never approximate them with
-             * a PC3.4 brightness row. */
-            if (m11_csb_atari_st_initial_palette_rgb6(csb_profile, rgb6)) {
+            /* CSBWin starts from Palette552[0], then
+             * SelectPaletteForLightLevel chooses a source row whenever the
+             * loaded save/runtime supplies its exact light facts. A missing
+             * receipt remains on the documented boot palette, never a PC3.4
+             * brightness approximation. */
+            if (m11_csb_atari_st_runtime_palette_rgb6(csb_profile, rgb6) ||
+                m11_csb_atari_st_initial_palette_rgb6(csb_profile, rgb6)) {
                 (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
             } else {
                 M11_Render_ClearIndexedPaletteRgb6();
