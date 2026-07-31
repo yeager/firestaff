@@ -276,6 +276,7 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
         "\xe3\x83\xad\xe3\x83\xbc"
     };
     size_t plrd = 0U;
+    size_t tabl = 0U;
     int tabl_found = 0;
     int i;
     if (!pool || !source || source_size < 8U ||
@@ -283,6 +284,7 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
     for (i = 0; (size_t)i + 4U <= source_size; ++i) {
         if (memcmp(source + i, "TABL", 4U) == 0) {
             tabl_found = 1;
+            tabl = (size_t)i;
             break;
         }
     }
@@ -303,6 +305,15 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
         Nexus_V1_Champion *c = &pool->champions[i];
         int fighter = r[19], ninja = r[20], priest = r[21], wizard = r[22];
         int j;
+        for (j = 0; j < 6; ++j) {
+            uint8_t index = r[j];
+            const uint8_t *entry;
+            if (index >= 216U) return 0;
+            entry = source + tabl + 8U + (size_t)index * 2U;
+            c->name_tabl_index[j] = index;
+            c->name_tabl_code[j] = entry[0] == 0 ? entry[1] :
+                (uint16_t)(((uint16_t)entry[0] << 8) | entry[1]);
+        }
         strncpy(c->name_ascii, ascii[i], sizeof(c->name_ascii) - 1U);
         strncpy(c->name_jp, japanese[i], sizeof(c->name_jp) - 1U);
         c->health = c->max_health = ((int)r[6] << 8) | r[7];

@@ -45,6 +45,10 @@ typedef enum {
 typedef struct Nexus_V1_Champion {
     char name_ascii[32];      /* ASCII romanized name */
     char name_jp[64];         /* UTF-8 Japanese name */
+    /* Six PLRD name indices and their source TABL code values.  These are
+     * retained as retail references; no host glyph encoding is implied. */
+    uint8_t name_tabl_index[6];
+    uint16_t name_tabl_code[6];
     Nexus_ChampionClass primary_class;
     int health, max_health;
     int stamina, max_stamina;

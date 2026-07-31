@@ -40,7 +40,9 @@ int main(void) {
     if (strcmp(pool.champions[0].name_jp, "アレックス") != 0 ||
         pool.champions[0].health != 50 || pool.champions[0].stamina != 57 ||
         pool.champions[0].mana != 13 || pool.champions[19].health != 125 ||
-        pool.champions[19].wizard_level != 2) return 1;
+        pool.champions[19].wizard_level != 2 ||
+        pool.champions[0].name_tabl_index[0] != 0x91 ||
+        pool.champions[0].name_tabl_code[0] != 0x0064) return 1;
     {
         FILE *item_file = fopen("/Users/bosse/.firestaff/data/nexus/ITEM.IBS", "rb");
         long item_size;
