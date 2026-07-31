@@ -444,14 +444,6 @@ static void test_clip_no_write_and_blend_contract(void)
         snprintf(label, sizeof(label), "side%d.no_write_source_y_flag", i + 1);
         expect_int(label, f ? f->no_write_outside_source_y_clip : 0, 1,
                    A_FRAMES);
-        snprintf(label, sizeof(label), "side%d.blend.transparent", i + 1);
-        expect_int(label,
-                   csb_v1_viewport_d0l2_d0r2_f0115_blend_pixel_pc34(f, 77, 10),
-                   77, A_DEFS);
-        snprintf(label, sizeof(label), "side%d.blend.opaque", i + 1);
-        expect_int(label,
-                   csb_v1_viewport_d0l2_d0r2_f0115_blend_pixel_pc34(f, 77, 42),
-                   42, A_DEFS);
     }
 
     expect_int("null.clip",
@@ -461,9 +453,6 @@ static void test_clip_no_write_and_blend_contract(void)
     expect_int("null.source_y",
                csb_v1_viewport_d0l2_d0r2_f0115_source_y_visible_pc34(NULL, 0),
                0, "invalid input guard");
-    expect_int("null.blend",
-               csb_v1_viewport_d0l2_d0r2_f0115_blend_pixel_pc34(NULL, 77, 42),
-               77, "invalid input guard");
 }
 
 static void test_zone_bindings_and_draw_order(void)

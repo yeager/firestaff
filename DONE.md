@@ -45618,6 +45618,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   public header that advertised synthetic-fixture decoding without an
   implementation or production consumer. Real original-dungeon text decoding
   remains the required path before inscription pixels can be admitted.
+- ✅ 2026-07-31 CSB D0 F0115 fixture-blend removal: removed the isolated
+  caller-pixel C10 blend API and its data-free assertions. The retained D0
+  teleporter renderer accepts only hash-admitted `CSBgraphics.dat` bytes and
+  a matching original palette receipt.
 
 - ✅ 2026-07-31 DM1 V1 verification-route repair: PC3.4 object-name
   admission now uses the production GRAPHICS.DAT record constant (694 rather

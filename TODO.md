@@ -580,6 +580,9 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 wall-text oracle API follow-up:** removed the unimplemented
   public synthetic-fixture declaration. It had no source, runtime or test
   consumer and could not decode a user-supplied original dungeon.
+  **2026-07-31 D0 F0115 fixture follow-up:** removed the standalone
+  caller-pixel C10 blend helper. The retained D0L/D0R route can composite
+  only an admitted `CSBgraphics.dat` raster with its source palette receipt.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

@@ -206,11 +206,6 @@ int csb_v1_viewport_d0l2_d0r2_f0115_source_y_visible_pc34(
     const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
     int source_y);
 
-unsigned char csb_v1_viewport_d0l2_d0r2_f0115_blend_pixel_pc34(
-    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
-    unsigned char destination,
-    unsigned char source);
-
 int csb_v1_viewport_d0l2_d0r2_f0115_item_zone_pc34(
     const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
     int view_cell);
