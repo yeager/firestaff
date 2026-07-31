@@ -9297,12 +9297,12 @@ static int m11_compute_floor_ornament_ordinal(
 
     /* Random floor ornament from square byte bit 3 (MASK0x0008) */
     randomAllowed = (square & 0x08) != 0;
-    /* Hall of Champions has control sensors on its otherwise quiet floor.
-     * ReDMCSB REVIVE.C F0280 owns those records, so its map-zero random
-     * floor-ornament stream must not select unrelated GRAPHICS.DAT art.
-     * This must not suppress explicit sensor ornaments: pressure plates are
-     * source data and are resolved below through the map's real floor list. */
-    if (mapIndex != 0 && randomAllowed && randomFloorOrnCount > 0) {
+    /* ReDMCSB DUNGEON.C F0172 applies the map's random-floor-ornament
+     * stream to every corridor map, including map zero (Hall of Champions).
+     * The map's real metadata and seed decide whether a tile is decorated;
+     * a Firestaff-specific HoC suppression would hide legitimate plates,
+     * grates, and other floor ornaments. */
+    if (randomAllowed && randomFloorOrnCount > 0) {
         /* value2 = 3000 + (mapIndex << 6) + mapWidth + mapHeight
          * Ref: ReDMCSB F0170 call from F0172 */
         value2 = (unsigned int)(3000 + (mapIndex << 6) +

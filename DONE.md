@@ -46845,3 +46845,28 @@ the supplied root and selected MD5 to prove this without shipping game data.
   now exposes and verifies retail map horizontal/vertical page, map page
   number, page character-control dword, and pattern-name auxiliary word.
   These remain metadata only; no character-code mapping is inferred.
+
+
+- ✅ 2026-07-31 DM1 HoC floor-sensor and center-wall presentation repair:
+  explicit source floor-sensor ornaments remain eligible on map 0. The
+  V2.2 source-shape cache
+  also marks every center/side cell behind the nearest closed center wall as
+  inactive, preventing its post-V1 presentation pass from reopening a blocked
+  corridor. Verification: `test_m11_overlay_command_queue_block` (191/191)
+  and `test_m11_v22_shape_cache_pc34` (31/31).
+
+- ✅ 2026-07-31 DM1 HoC F0172 ornament correction: removed the
+  Firestaff-only map-zero random-floor-ornament suppression. ReDMCSB
+  `DUNGEON.C F0172` applies this path to every corridor map, and sensors then
+  override its ordinal. The regression covers both a map-zero sensor ornament
+  and a deterministic map-zero random ornament. Verification:
+  `test_m11_overlay_command_queue_block` (192/192) and
+  `test_m11_v22_shape_cache_pc34` (31/31).
+
+- ✅ 2026-07-31 DM1 F0115 alcove-object input binding: C080 now accepts the
+  actual current-frame C2548/F0791 destination rectangle for a front alcove
+  item, in addition to the original C05 ornament zone. This preserves wall
+  sensor input while making a real rendered torch/object pickable. Verification:
+  `test_m11_dm1_real_alcove_item_runtime_pc34` finds map 1 `(6,3,2)` in the
+  installed PC34 corpus and successfully transfers the rendered object into
+  the leader hand.
