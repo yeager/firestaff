@@ -22571,9 +22571,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-14 update: the same real-package M12-to-M11 route now records its actual 320x200 indexed presentation boundary for C001 PRESENTS, CHAOS, STRIKES BACK, the closed and first-opening C002/C003 door frames, and terminal C017 HUD. The production receipt admits every phase from one fully verified C001-C005/C017/C040 session, rather than incorrectly waiting for terminal HUD state before title or door capture. Each capture retains the post-draw framebuffer FNV receipt, with no synthetic surface route. Remaining work is still manual Mac/app evidence and original-capture comparison.
   - 2026-07-17 update: M11 release capture now derives its four title-phase witnesses from the active verified C001 session at PRESENTS frame 0, CHAOS zoom frame 60, CHAOS hold frame 79, and STRIKES frame 80. The prior route-derived phase-hash wrapper is retired; missing, duplicate, legacy, non-title, palette-drift, or raster-drift witnesses reject before release presentation. Remaining work is manual Mac/app evidence and broader original-presentation comparison.
   - 2026-07-31 update: the local real-data capture contract passes title,
-    Entrance and first-opening-door checks. No packaged macOS `.app` exists
-    in the current workspace or installed app locations, so a bundle-bound
-    capture remains pending until a current package is supplied.
+    Entrance and first-opening-door checks. The active translocated macOS
+    `Firestaff.app` v3.0.195 independently captured the four real-data
+    PRESENTS/FTL/STRIKES/Entrance palette phases, but its boot-probe bypassed
+    Entrance and entered runtime before the Prison pointer. It therefore
+    cannot be accepted as HUD or F0807 door-opening evidence. Re-run the
+    bundle-bound capture against a package built from the current source;
+    do not treat the older app as proof of the corrected door frame.
 
 - 🔧 2026-07-14 CSBWin real-package resume follow-up: the opt-in package
   handoff probe now fingerprints the supplied decoded `Dungeon.dat` before
