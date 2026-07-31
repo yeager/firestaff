@@ -6443,6 +6443,15 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-31 DM2 original-save admission: closed the remaining D2RS
+  runtime-read path. Public slot/last-session loaders, corpus runtime import
+  and runtime restore now admit only original-envelope or raw SKSave
+  candidates; Firestaff-private D2RS blobs remain diagnostic rejections.
+  Retired active M11 resume fixtures that fabricated D2RS state, while keeping
+  the original-envelope resume gate. Verification with local real DM2 data:
+  `dm2_v1_m11_startup_profile_gate`, `dm2_v1_gdat_hud_m11_command_real_data`,
+  `dm2_v1_save_load` and `dm2_v1_quicksave_original_writer_gate` pass (4/4).
+
 - ✅ 2026-07-31 DM2 companion no-op isolation: removed the unattached
   `dm2_v1_companion.c` boundary from the production M10 archive. Its only
   behavior is to reject caller-authored companion data and it has no live

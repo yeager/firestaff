@@ -4,7 +4,9 @@
   deliberately outside the active test suite because it fabricated dungeon,
   actor, weather, trigger and shop state. Extend the real-data M11/GDAT gates
   only with authenticated G1/GDAT/SKSave material; missing source owners must
-  continue to block the corresponding runtime path.
+  continue to block the corresponding runtime path. D2RS is now retained only
+  as a decoder diagnostic and is rejected by slot, corpus and runtime resume;
+  obtain an authentic original SKSave corpus before expanding resume coverage.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   structural no-op seam. Reconnect the real Track 02 level handoff only after

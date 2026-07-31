@@ -7905,8 +7905,9 @@ int dm2_v1_runtime_import_sksave_receipted_candidate(
         candidate_receipt->payload_size == 0u ||
         candidate_receipt->payload_hash == 0u ||
         candidate_receipt->source_file_hash == 0u ||
-        candidate_receipt->kind < DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION ||
-        candidate_receipt->kind > DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+        (candidate_receipt->kind !=
+             DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
+         candidate_receipt->kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)) {
         out->result = DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED;
         return 0;
     }
@@ -8547,6 +8548,10 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     if (!data || !g_dm2_runtime.boot || !g_dm2_runtime.boot->dm2_state ||
         !g_dm2_runtime.boot->dungeon_data ||
         dm2_v1_session_parse_save_candidate(&candidate, data, data_size) != 0) {
+        return -1;
+    }
+    if (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
+        candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
         return -1;
     }
     dungeon = (DM2_V1_DungeonData *)g_dm2_runtime.boot->dungeon_data;

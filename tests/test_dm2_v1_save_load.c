@@ -1988,19 +1988,17 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.valid_slot_count != 1 ||
         receipt.valid_slot_mask != (uint16_t)(1u << 3) ||
         receipt.invalid_candidate_count != 1 ||
-        receipt.importable_candidate_count != 2 ||
-        receipt.import_rejected_candidate_count != 0 ||
+        receipt.importable_candidate_count != 1 ||
+        receipt.import_rejected_candidate_count != 1 ||
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 1 ||
         receipt.original_raw_candidate_count != 0 ||
         receipt.first_importable_kind != DM2_SK_SAVE_KIND_ORIGINAL_ENVELOPE ||
         receipt.first_importable_payload_size != payload_b_size ||
         receipt.importable_kind_mask !=
-            ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) |
-             (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE)) ||
+            (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE) ||
         receipt.importable_payload_hash == 0u ||
-        receipt.total_importable_payload_size !=
-            payload_b_size + (size_t)payload_c_size ||
+        receipt.total_importable_payload_size != payload_b_size ||
         receipt.largest_payload_size != largest_payload_size ||
         receipt.total_payload_size !=
             payload_b_size + (size_t)payload_c_size ||
@@ -2126,16 +2124,15 @@ static int test_sksave_corpus_scan_receipt(void)
         !receipt.last_session_uses_backup ||
         receipt.valid_slot_count != 1 ||
         receipt.invalid_candidate_count != 2 ||
-        receipt.importable_candidate_count != 2 ||
-        receipt.import_rejected_candidate_count != 0 ||
+        receipt.importable_candidate_count != 1 ||
+        receipt.import_rejected_candidate_count != 1 ||
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 1 ||
         receipt.original_raw_candidate_count != 0 ||
         receipt.first_importable_kind != DM2_SK_SAVE_KIND_ORIGINAL_ENVELOPE ||
         receipt.first_importable_payload_size != payload_b_size ||
         receipt.importable_kind_mask !=
-            ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) |
-             (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE)) ||
+            (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE) ||
         receipt.importable_payload_hash == 0u ||
         strstr(receipt.first_importable_path, "SKSave.bak") == NULL ||
         strstr(receipt.first_valid_path, "SKSave.bak") == NULL) {
@@ -2190,7 +2187,8 @@ static int test_sksave_corpus_scan_receipt(void)
     memset(&receipt, 0, sizeof(receipt));
     if (!dm2_v1_sksave_corpus_scan(tmpdir, &receipt) ||
         receipt.valid_slot_count != 1 ||
-        receipt.importable_candidate_count != 4 ||
+        receipt.importable_candidate_count != 3 ||
+        receipt.import_rejected_candidate_count != 1 ||
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 2 ||
         receipt.original_raw_candidate_count != 1 ||
@@ -2202,8 +2200,7 @@ static int test_sksave_corpus_scan_receipt(void)
         receipt.header_discovered_candidate_count != 1 ||
         receipt.extra_valid_candidate_count != 2 ||
         receipt.importable_kind_mask !=
-            ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION) |
-             (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE) |
+            ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE) |
              (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)) ||
         receipt.importable_payload_hash == 0u ||
         receipt.recursive_scan_depth_limit != 4 ||
@@ -2939,13 +2936,9 @@ static int test_sksave_corpus_runtime_import(void)
     DM2_V1_SessionState session;
     DM2_V1_RuntimeCorpusImportReceipt receipt;
     DM2_SKSaveCorpusReceipt corpus;
-    DM2_V1_BootProfile boot;
-    DM2_V1_GameState game;
-    DM2_V1_DungeonData dungeon;
-    FILE *file;
     int result = 0;
 
-    printf("  Selected SKSave corpus receipt restores runtime...\n");
+    printf("  Firestaff-private corpus receipt is rejected by runtime...\n");
     snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_corpus_import_%d",
              FS_GETPID());
     FS_MKDIR(tmpdir);
@@ -2964,64 +2957,26 @@ static int test_sksave_corpus_runtime_import(void)
         goto done;
     }
 
-    memset(&boot, 0, sizeof(boot));
-    memset(&game, 0, sizeof(game));
-    memset(&dungeon, 0, sizeof(dungeon));
-    dungeon.raw_data = (uint8_t *)calloc(32u, 1u);
-    if (!dungeon.raw_data) goto done;
-    dungeon.raw_size = 32;
-    dungeon.level_count = 1;
-    dungeon.level_widths[0] = 2;
-    dungeon.level_heights[0] = 2;
-    dungeon.square_bytes = 1;
-    boot.dm2_state = &game;
-    boot.dungeon_data = &dungeon;
-    snprintf(boot.graphics_md5, sizeof(boot.graphics_md5), "corpus-gdat");
-    dm2_v1_runtime_init(&boot);
-
     memset(&receipt, 0xCC, sizeof(receipt));
     if (!dm2_v1_sksave_corpus_scan(tmpdir, &corpus) ||
-        corpus.candidate_receipt_count != 1u ||
-        !dm2_v1_runtime_import_sksave_receipted_candidate(
-            &corpus.candidate_receipts[0], &receipt) ||
-        receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_OK ||
-        !receipt.restored ||
-        receipt.candidate_kind != DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION ||
-        receipt.selected_payload_size != (size_t)payload_size ||
-        receipt.selected_source_file_hash !=
-            corpus.candidate_receipts[0].source_file_hash ||
-        strstr(receipt.selected_path, "SKSave.dat") == NULL ||
-        game.party_x != 6 ||
-        game.party_y != 7 ||
-        game.party_dir != 2 ||
-        dm2_v1_runtime_get_tick_count() != 0x7788) {
-        goto done;
-    }
-    file = fopen(corpus.candidate_receipts[0].path, "ab");
-    if (!file) {
-        goto done;
-    }
-    if (fputc(0xa5, file) == EOF || fclose(file) != 0) {
-        goto done;
-    }
-    memset(&receipt, 0, sizeof(receipt));
-        if (dm2_v1_runtime_import_sksave_receipted_candidate(
-            &corpus.candidate_receipts[0], &receipt) ||
-        receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_REJECTED ||
-        game.party_x != 6 || game.party_y != 7 || game.party_dir != 2 ||
-        dm2_v1_runtime_get_tick_count() != 0x7788) {
+        corpus.candidate_receipt_count != 0u ||
+        corpus.importable_candidate_count != 0u ||
+        corpus.import_rejected_candidate_count != 1u ||
+        corpus.firestaff_session_candidate_count != 1u ||
+        dm2_v1_runtime_import_sksave_corpus(tmpdir, &receipt) ||
+        receipt.result != DM2_V1_RUNTIME_CORPUS_IMPORT_UNAVAILABLE ||
+        receipt.restored) {
         goto done;
     }
     result = 1;
 
 done:
-    if (dungeon.raw_data) free(dungeon.raw_data);
     cleanup_slot_dir(tmpdir);
     if (!result) {
-        printf("    FAIL: corpus import did not restore selected runtime session\n");
+        printf("    FAIL: Firestaff-private corpus entry reached runtime\n");
         return 0;
     }
-    printf("    PASS: selected receipt restores once and changed bytes cannot mutate runtime\n");
+    printf("    PASS: D2RS remains diagnostic and cannot become a runtime save\n");
     return 1;
 }
 

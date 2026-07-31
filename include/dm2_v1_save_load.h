@@ -329,8 +329,9 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base);
 /* Scan a directory containing original-style SKSave.dat/SKSave.bak and
  * SKSave%02u.dat files. This is a lightweight real-save corpus hook: it
  * validates the DM2 42-byte slot header, classifies payloads through the
- * same Firestaff/original/raw importer used by runtime resume, and reports
- * byte totals without mutating live runtime state. */
+ * original-format importer used by runtime resume, and reports byte totals
+ * without mutating live runtime state. Firestaff-private D2RS blobs remain
+ * diagnostic rejections and are never loadable corpus entries. */
 bool dm2_v1_sksave_corpus_scan(const char *save_base,
                                DM2_SKSaveCorpusReceipt *out_receipt);
 

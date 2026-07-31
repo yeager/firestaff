@@ -1297,6 +1297,13 @@ int dm2_v1_session_load_slot(const char *save_base, uint8_t slot,
         DM2_V1_SaveCandidate candidate;
         if (dm2_v1_session_parse_save_candidate(&candidate, buf, out_size) != 0)
             return -1;
+        /* SKProject's DM2_GAME_LOAD consumes an original SKSave stream.  A
+         * D2RS blob is only retained for decoder diagnostics; accepting it
+         * through a public slot loader would make a Firestaff-private
+         * fixture look like a playable save. */
+        if (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
+            candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)
+            return -1;
         *session = candidate.session;
     }
 
@@ -1316,6 +1323,9 @@ int dm2_v1_session_load_last_session(const char *save_base,
     {
         DM2_V1_SaveCandidate candidate;
         if (dm2_v1_session_parse_save_candidate(&candidate, buf, out_size) != 0)
+            return -1;
+        if (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
+            candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)
             return -1;
         *session = candidate.session;
     }

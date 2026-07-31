@@ -3,6 +3,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_save_load.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -25,6 +26,8 @@ int main(void)
     DM2_V1_BootProfile profile;
     DM2_V1_QuicksaveReceipt receipt;
     DM2_V1_SessionState session;
+    uint8_t payload[DM2_SESSION_MAX_SIZE];
+    size_t payload_size;
     char parent[256];
     char absent_root[320];
     FILE *file;
@@ -44,6 +47,20 @@ int main(void)
         (void)DM2_TEST_RMDIR(parent);
         return 4;
     }
+
+    /* A historic D2RS fixture may still be decoded for diagnostics, but it
+     * must never re-enter the playable slot/resume path. */
+    memset(&session, 0, sizeof(session));
+    payload_size = (size_t)dm2_v1_session_serialize(&session, payload,
+                                                      sizeof(payload));
+    if (payload_size == 0u ||
+        dm2_sl_save(parent, 0u, "D2RS fixture", payload, payload_size) != 0 ||
+        dm2_v1_session_load_slot(parent, 0u, &session) == 0) {
+        (void)dm2_sl_delete(parent, 0u);
+        (void)DM2_TEST_RMDIR(parent);
+        return 5;
+    }
+    (void)dm2_sl_delete(parent, 0u);
 
     dm2_v1_boot_profile_init(&profile);
     snprintf(profile.save_root, sizeof(profile.save_root), "%s", absent_root);

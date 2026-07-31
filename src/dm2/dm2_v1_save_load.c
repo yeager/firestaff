@@ -578,20 +578,13 @@ static void dm2_sksave_corpus_classify_payload(
         receipt->import_rejected_candidate_count++;
         return;
     }
-    receipt->importable_candidate_count++;
-    receipt->total_importable_payload_size += payload_size;
-    if (payload_size > receipt->largest_importable_payload_size) {
-        receipt->largest_importable_payload_size = payload_size;
-    }
-    if (receipt->first_importable_path[0] == '\0') {
-        snprintf(receipt->first_importable_path,
-                 sizeof(receipt->first_importable_path), "%s", path);
-    }
     switch (candidate.kind) {
         case DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION:
             receipt->firestaff_session_candidate_count++;
-            save_kind = DM2_SK_SAVE_KIND_FIRESTAFF_SESSION;
-            importable_kind_ok = 1;
+            /* D2RS is a Firestaff decoder fixture, not SKProject's
+             * DM2_GAME_LOAD corpus format.  Keep its presence observable,
+             * but never publish it as a loadable save candidate. */
+            receipt->import_rejected_candidate_count++;
             break;
         case DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE:
             receipt->original_envelope_candidate_count++;
@@ -609,6 +602,15 @@ static void dm2_sksave_corpus_classify_payload(
             break;
     }
     if (importable_kind_ok) {
+        receipt->importable_candidate_count++;
+        receipt->total_importable_payload_size += payload_size;
+        if (payload_size > receipt->largest_importable_payload_size) {
+            receipt->largest_importable_payload_size = payload_size;
+        }
+        if (receipt->first_importable_path[0] == '\0') {
+            snprintf(receipt->first_importable_path,
+                     sizeof(receipt->first_importable_path), "%s", path);
+        }
         if (receipt->first_importable_kind == DM2_SK_SAVE_KIND_NONE) {
             receipt->first_importable_kind = save_kind;
             receipt->first_importable_payload_size = payload_size;
@@ -617,8 +619,7 @@ static void dm2_sksave_corpus_classify_payload(
             DM2_SKSaveCandidateReceipt *entry =
                 &receipt->candidate_receipts[receipt->candidate_receipt_count++];
             entry->kind = candidate.kind;
-            entry->import_rejected =
-                candidate.kind != DM2_V1_SAVE_CANDIDATE_FIRESTAFF_SESSION;
+            entry->import_rejected = 0;
             entry->payload_size = payload_size;
             entry->payload_hash = dm2_sksave_corpus_payload_hash(
                 payload, payload_size, 2166136261u);
