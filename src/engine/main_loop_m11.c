@@ -100,7 +100,7 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
          * The 20 generated C425 CHAOS rasters are the only rapidly changing
          * title frames. DM1's C001 zoom already keeps a decoded raster on
          * the host surface for two cadence slots. CSB's larger 20-step zoom
-         * needs a third slot to remain legible at the M11 presentation
+         * needs four slots to remain legible at the M11 presentation
          * boundary. This does not add a source blit or alter TITLE.C's
          * subsequent Delay(20): it only keeps the already source-rendered
          * zoom raster observable before advancing the M11 receipt. */
@@ -113,7 +113,7 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
             gameView->csbState.startup_title_frame <
                 csb_v1_startup_title_presents_ticks_pc34() +
                 csb_v1_startup_title_chaos_zoom_ticks_pc34()) {
-            return tick_ms > UINT32_MAX / 3u ? UINT32_MAX : tick_ms * 3u;
+            return tick_ms > UINT32_MAX / 4u ? UINT32_MAX : tick_ms * 4u;
         }
         return tick_ms;
     }

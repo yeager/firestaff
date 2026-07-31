@@ -47,13 +47,13 @@ int main(void) {
 
     view.csbState.startup_title_source_step = 2;
     view.csbState.startup_title_frame = 60;
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 165u,
-                    "CSB first CHAOS zoom raster remains visible for three PC34 slots");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 220u,
+                    "CSB first CHAOS zoom raster remains visible for four PC34 slots");
 
     view.csbState.startup_title_source_step = 21;
     view.csbState.startup_title_frame = 79;
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 165u,
-                    "CSB final CHAOS zoom raster retains the visible three-slot hold");
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 220u,
+                    "CSB final CHAOS zoom raster retains the visible four-slot hold");
 
     view.csbState.startup_title_frame = 80;
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
@@ -78,7 +78,7 @@ int main(void) {
         view.csbState.startup_entrance_active = 0;
         view.csbState.startup_title_source_step = 2;
         view.csbState.startup_title_frame = 60;
-        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 183u,
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 244u,
                         "CSB CHAOS hold scales from the authenticated profile cadence");
         view.csbState.startup_title_active = 0;
         view.csbState.startup_entrance_active = 1;

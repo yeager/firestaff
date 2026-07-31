@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 CSB title zoom cadence: M11 now keeps each decoded original
+  C425 CHAOS zoom raster visible for four authenticated PC3.4 cadence slots
+  (220 ms at the 55 ms profile cadence). The source's C001 material binding,
+  palette sequence and TITLE.C F0437 `Delay(20)`/`Delay(2)` phases remain
+  separate and unchanged. Verification: focused CSB startup VBlank cadence
+  regression.
+
 - ✅ 2026-07-31 DM2 boot media revalidation: entering a game now rehashes
   both graphics and dungeon media against the profile's scan-time hashes.
   This closes the stale-receipt gap between the launcher scan and INIT; a

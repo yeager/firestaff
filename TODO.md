@@ -177,7 +177,7 @@
   same receipt.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
-  three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`
+  four PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`
   phase on its own cadence and independent of gameplay speed multipliers.
   **2026-07-31 update:** The presentation-receipt contract now independently
   locks the full source timeline to 60 + 20 + 20 + 2 = 102 ticks; it may not
