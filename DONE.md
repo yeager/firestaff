@@ -47072,3 +47072,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   initializer and recorded its default names/classes/stats as an explicit
   unresolved real-data gap. Existing save/fixture tests still depend on it;
   no production claim now treats those defaults as decoded Track 02 records.
+
+- ✅ 2026-07-31 CSB SWSH F0904 receipt isolation: the palette-animation
+  receipt accepts metadata only and has no runtime caller or SWSH command
+  decoder. It now compiles only into its focused test, rather than M10;
+  production cannot turn receipt facts into synthetic palette animation.

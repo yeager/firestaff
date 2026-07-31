@@ -73,6 +73,9 @@
     floor/ceiling-ornament contracts now compile only into their tests. Their
     source metadata stays available for verification, but live pixels still
     require authenticated `GRAPHICS.DAT` material.
+  - 2026-07-31: The SWSH F0904 palette-animation receipt is test-only; its
+    inputs have no product caller or decoder yet. Production remains blocked
+    on authentic SWSH palette commands rather than admitting receipt facts.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.

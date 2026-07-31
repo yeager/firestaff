@@ -3732,7 +3732,8 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_custom_backgrounds_mask_after_floor_ceiling_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_custom_backgrounds_room_pass_order_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_f0904_swsh_palette_animation_pc34_compat.c")
 
 add_library(firestaff_m10 STATIC
     ${M10_SOURCES}
@@ -47076,7 +47077,9 @@ target_include_directories(test_csb_v1_csbwin_extended_dsa_admission_pc34_compat
 target_link_libraries(test_csb_v1_csbwin_extended_dsa_admission_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_csbwin_extended_dsa_admission_pc34_compat COMMAND test_csb_v1_csbwin_extended_dsa_admission_pc34_compat)
 
-add_executable(test_csb_v1_f0904_swsh_palette_animation_pc34_compat tests/test_csb_v1_f0904_swsh_palette_animation_pc34_compat.c)
+add_executable(test_csb_v1_f0904_swsh_palette_animation_pc34_compat
+    tests/test_csb_v1_f0904_swsh_palette_animation_pc34_compat.c
+    src/csb/csb_v1_f0904_swsh_palette_animation_pc34_compat.c)
 target_include_directories(test_csb_v1_f0904_swsh_palette_animation_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_f0904_swsh_palette_animation_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_f0904_swsh_palette_animation_pc34_compat COMMAND test_csb_v1_f0904_swsh_palette_animation_pc34_compat)
