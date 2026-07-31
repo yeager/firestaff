@@ -47318,6 +47318,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   of discarding it. No tile/object meaning is inferred from the seed; the
   viewport mapping gate remains closed.
 
+- ✅ 2026-07-31 Theron seed regression proof: the real Track 02 level-handoff
+  probe now asserts the retained `0x0108e938` seed directly on the loaded
+  level, alongside the existing raw candidate checks.
+
 - ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
   offsets and the 216-entry DMWeb TABL code table are parsed from the real
   retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy
