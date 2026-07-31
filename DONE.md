@@ -45415,3 +45415,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   generating or promoting test saves. Verification: the two current DOSBox
   saves in the configured corpus pass against the installed original DM1
   data. Source: ReDMCSB `LOADSAVE.C F0433/F0435` and DMweb Saved Game Files.
+
+- ✅ 2026-07-31 DM2 startup palette presentation regression: the real-data
+  M11 startup gate now proves that both `TITLE/0/dt07/4` menu and
+  `TITLE/0/dt07/1` credits retain their original pixel indices *and* that
+  SDL presentation has the matching `INTERFACE_GENERAL/0/dtPalIRGB/0xFE`
+  RGB6 table installed. Source: SKProject `DM2_INIT`,
+  `DRAW_TITLE_MENU_SCREEN`, and `DM2_SHOW_CREDITS`. Verification:
+  real-data `test_dm2_v1_m11_startup_profile_gate`.

@@ -1731,6 +1731,7 @@ int main(void) {
             {
                 unsigned char source = 0u;
                 unsigned char expected = 0u;
+                uint8_t presented_palette[256][3];
                 if (menu_x >= 0) {
                     source = menu_pixels[menu_y * menu_stride + menu_x];
                     expected = source;
@@ -1738,6 +1739,12 @@ int main(void) {
                 expect_true(palette_ready && menu_x >= 0 &&
                                 framebuffer[menu_y * 320 + menu_x] == expected,
                             "M11 DM2 startup menu preserves raw GDAT palette indices");
+                expect_true(palette_ready &&
+                                M11_Render_CopyIndexedPaletteRgb6(
+                                    presented_palette) &&
+                                memcmp(palette.rgb6, presented_palette,
+                                       sizeof(palette.rgb6)) == 0,
+                            "M11 DM2 startup menu presents the verified dtPalIRGB palette");
             }
             expect_true(strcmp(view.lastAction, "STARTUP") == 0 &&
                             strcmp(view.lastOutcome,
@@ -1791,6 +1798,14 @@ int main(void) {
                             framebuffer[sample_y * 320 + sample_x] ==
                                 credits_pixels[sample_y * credits_stride + sample_x],
                         "M11 DM2 credits preserve palette-sensitive BPP8 source indices");
+            {
+                uint8_t presented_palette[256][3];
+                expect_true(M11_Render_CopyIndexedPaletteRgb6(
+                                    presented_palette) &&
+                                memcmp(palette.rgb6, presented_palette,
+                                       sizeof(palette.rgb6)) == 0,
+                            "M11 DM2 credits present the verified dtPalIRGB palette");
+            }
         } else {
             expect_true(0, "M11 DM2 credits fetches original TITLE dt07/1");
         }
