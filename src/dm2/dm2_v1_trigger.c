@@ -37,7 +37,10 @@
 
 #include <string.h>
 
-/* ── Built-in trigger catalog (8 triggers) ────────────────────────── */
+/* ── Retired fixture catalog ────────────────────────────────────────
+ * These representative events are not decoded dungeon actuator records.
+ * Keep them private only while callers migrate; never expose or execute
+ * their coordinates, targets, creature IDs or host-authored messages. */
 static const DM2_V1_Trigger g_builtin_triggers[DM2_TRIGGER_NUM_BUILTIN] = {
     /* 1: SQUARE_ENTERED - party enters throne room, opens main gate */
     {
@@ -111,6 +114,12 @@ static int s_initialized = 0;
 static int s_recursion_depth = 0;
 #define DM2_TRIGGER_MAX_RECURSION 4
 
+static int dm2_v1_trigger_source_catalog_available(void)
+{
+    /* Actual DM2 triggers are owned by loaded record chains/actuators. */
+    return 0;
+}
+
 static void ensure_init(void) {
     if (s_initialized) return;
     memset(&s_runtime, 0, sizeof(s_runtime));
@@ -144,10 +153,11 @@ int dm2_v1_trigger_get_now_ms(void) {
 
 /* ── Catalog ────────────────────────────────────────────────────── */
 int dm2_v1_trigger_get_builtin_count(void) {
-    return DM2_TRIGGER_NUM_BUILTIN;
+    return 0;
 }
 
 const DM2_V1_Trigger *dm2_v1_trigger_get_builtin(int trigger_id) {
+    if (!dm2_v1_trigger_source_catalog_available()) return NULL;
     for (int i = 0; i < DM2_TRIGGER_NUM_BUILTIN; i++) {
         if (g_builtin_triggers[i].trigger_id == trigger_id) {
             return &g_builtin_triggers[i];
@@ -157,6 +167,7 @@ const DM2_V1_Trigger *dm2_v1_trigger_get_builtin(int trigger_id) {
 }
 
 int dm2_v1_trigger_lookup_index(int trigger_id) {
+    if (!dm2_v1_trigger_source_catalog_available()) return -1;
     for (int i = 0; i < DM2_TRIGGER_NUM_BUILTIN; i++) {
         if (g_builtin_triggers[i].trigger_id == trigger_id) return i;
     }
@@ -342,9 +353,6 @@ const char *dm2_v1_trigger_source_evidence(void) {
         "Source: ReDMCSB TIMELINE.C:43-220                (F0256/F0261 timeline events)\n"
         "Source: ReDMCSB GAMELOOP.C:69                    (F0261_TIMELINE_Process_CPSEF)\n"
         "Source: ReDMCSB MOVESENS.C:1000-1100             (F0268_SENSOR_AddEvent)\n"
-        "Trigger kinds: SQUARE_ENTERED / ITEM_USED / TIME_ELAPSED / COMBAT_ENDED\n"
-        "Targets: DOOR_TOGGLE/OPEN/CLOSE / SPAWN_CREATURE / DISPLAY_MSG /\n"
-        "         TELEPORT_PARTY\n"
-        "Recursive guard: depth limit DM2_TRIGGER_MAX_RECURSION=4\n"
-        "V1 invariant: trigger fires never mutate viewport state directly.\n";
+        "Admission: original record-chain/actuator ownership is not imported;\n"
+        "           legacy fixture triggers and targets are no-op.\n";
 }

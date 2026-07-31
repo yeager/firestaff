@@ -46,7 +46,7 @@ extern "C" {
 
 /* ── Constants ───────────────────────────────────────────────────── */
 #define DM2_TRIGGER_MAX_TRIGGERS     16
-#define DM2_TRIGGER_NUM_BUILTIN       8
+#define DM2_TRIGGER_NUM_BUILTIN       8 /* retired fixture capacity; never live */
 
 /* Trigger kinds */
 typedef enum {
@@ -129,6 +129,7 @@ void dm2_v1_trigger_set_now_ms(int now_ms);
 int  dm2_v1_trigger_get_now_ms(void);
 
 /* ── Catalog ────────────────────────────────────────────────────── */
+/* Returns zero until source record-chain/actuator ownership is bound. */
 int  dm2_v1_trigger_get_builtin_count(void);
 const DM2_V1_Trigger *dm2_v1_trigger_get_builtin(int trigger_id);
 int  dm2_v1_trigger_lookup_index(int trigger_id);

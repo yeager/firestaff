@@ -2142,36 +2142,24 @@ int main(void) {
     if (world) {
         DM2_V1_DungeonData *dd =
             profile ? (DM2_V1_DungeonData *)profile->dungeon_data : NULL;
-        int trigger_targets_valid = 0;
         dm2_v1_trigger_reset_state();
         dm2_v1_plate_reset_state();
         dm2_v1_plate_set_party_weight(500);
-        if (dd) {
-            trigger_targets_valid =
-                dm2_v1_dungeon_set_tile_raw(dd, 0, 16, 8, 4) == 0 &&
-                dm2_v1_dungeon_set_tile_raw(dd, 0, 13, 8, 4) == 0;
-        }
-        if (trigger_targets_valid) {
-            DM2_V1_TriggerEvent trigger_event;
+        if (dd && dm2_v1_dungeon_set_tile_raw(dd, 0, 16, 8, 4) == 0 &&
+            dm2_v1_dungeon_set_tile_raw(dd, 0, 13, 8, 4) == 0) {
             dm2_v1_runtime_set_position(0, 15, 9, 0);
             dm2_v1_runtime_set_outdoor(1);
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                             M11_GAME_INPUT_REDRAW,
                         "M11 DM2 forward move reaches square-trigger route");
-            expect_true(dm2_v1_trigger_get_fire_count(1) == 1,
-                        "DM2 runtime movement signals square-entered trigger");
-            expect_true(dm2_v1_trigger_copy_last_event(&trigger_event) &&
-                            trigger_event.trigger_id == 1 &&
-                            trigger_event.target == DM2_TRIGGER_TARGET_DOOR_OPEN &&
-                            trigger_event.target_x == 16 &&
-                            trigger_event.target_y == 8 &&
-                            trigger_event.target_level == 0,
-                        "DM2 runtime movement exposes square-trigger target receipt");
+            expect_true(dm2_v1_trigger_get_builtin_count() == 0 &&
+                            dm2_v1_trigger_total_fires() == 0,
+                        "DM2 runtime refuses the retired fixture trigger catalog");
             expect_true(view.dm2State.party_x == 15 &&
                         view.dm2State.party_y == 8,
                         "M11 DM2 mirror follows trigger-square movement");
-            expect_true(dm2_v1_dungeon_get_tile_raw(dd, 0, 16, 8) == 0,
-                        "DM2 square-entered trigger applies door-open target");
+            expect_true(dm2_v1_dungeon_get_tile_raw(dd, 0, 16, 8) == 4,
+                        "DM2 fixture trigger cannot alter a source dungeon tile");
             dm2_v1_runtime_set_position(0, 12, 9, 0);
             expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                             M11_GAME_INPUT_REDRAW,

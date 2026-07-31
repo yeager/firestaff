@@ -81,6 +81,8 @@
   ENVIRONMENT command/image receipt and cannot promote enum-derived particles.
   The former five-entry pressure-plate catalog is now closed as well; import
   original dungeon sensor/actuator records before permitting plate effects.
+  The former eight-entry trigger catalog is likewise closed; only decoded
+  source actuator/timeline records may create doors, messages or spawns.
   Boot's former 1,440-minute/day-cycle configuration is also unavailable;
   it must be populated only by the same recovered source owner.
   **2026-07-31 update:** fresh weather state now has neither a clear-weather

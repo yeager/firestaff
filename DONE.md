@@ -45461,3 +45461,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   SKProject `c_sensor.cpp`, `c_actuator.cpp` and `QUERY_MESSAGE_TEXT`.
   Verification: `test_dm2_v1_pressure_plate_pc34_compat` and real-data
   `test_dm2_v1_m11_startup_profile_gate`.
+
+- ✅ 2026-07-31 DM2 trigger-fixture closure: disabled the eight hard-coded
+  trigger records and their host-authored door, teleport, creature and text
+  targets. Runtime input and time ticks now produce no event until original
+  dungeon record-chain/actuator ownership is imported. Source: SKProject
+  `skevent.cpp::INVOKE_ACTUATOR` / `INVOKE_MESSAGE`. Verification:
+  `test_dm2_v1_trigger_pc34_compat` and real-data
+  `test_dm2_v1_m11_startup_profile_gate`.
