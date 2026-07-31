@@ -385,14 +385,15 @@ int theron_vp_init(Theron_V1_Viewport *vp) {
         return 0;
     }
 
-    /* Init palette state with defaults */
+    /* Start with an explicitly unbound palette.  Track 02 source data must
+     * populate it before any viewport pixel can be admitted. */
     tqr_palette_init_defaults(&vp->palette);
 
     vp->viewport_x = 0;
     vp->viewport_y = 0;
     vp->initialized = 1;
 
-    printf("[TQR] viewport initialized: %dx%d planar fb, palette ready\n",
+    printf("[TQR] viewport initialized: %dx%d planar fb, palette unbound\n",
            TQR_FB_W, TQR_FB_H);
     return 1;
 }
@@ -454,11 +455,9 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
     const Theron_V1_Champion *theron = theron_v1_party_leader_c(&world->party);
     if (!theron) return;
 
-    /* Party direction from world state (world tracks dungeon position).
-     * Theron: position stored in world->levels[dungeon-1][level].start_x/y
-     * and facing direction (default north = 0).  For Phase 4 we use
-     * a simple placeholder: direction encoded in world.world_tick LSB.
-     * Real direction tracking comes in Phase 5 mechanics. */
+    /* Party direction comes only from the admitted level header or the
+     * mutable party pose.  Do not derive a facing direction from a tick or
+     * another presentation surrogate. */
     int party_x = 0, party_y = 0;
     int party_dir = 0;
 

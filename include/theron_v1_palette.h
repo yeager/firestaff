@@ -144,8 +144,8 @@ static inline uint32_t tqr_bgr444_to_rgba(uint16_t bgr444) {
     return 0xFF000000U | (r << 16) | (g << 8) | b;
 }
 
-/* Initialize palette with PC Engine dungeon default tones.
- * Fills all 512 entries with deterministic dungeon stone palette. */
+/* Initialize an unbound palette.  All entries remain zero until verified
+ * Track 02 source bytes are decoded through a real handoff. */
 void tqr_palette_init_defaults(TQR_PaletteState *pal);
 
 /* Load palette data from a packed BGR444 buffer.

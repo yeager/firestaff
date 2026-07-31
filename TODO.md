@@ -4,6 +4,12 @@
   implementation is now fixture-only. Production exposes a no-op API until
   the original Track 02 UI chrome bank and font records are decoded.
 
+- **THERON-V1-VIEWPORT-REAL-DATA:** The initial 32×27 Track 02 grid is now
+  byte-faithful but its square values have no proven tile/material meaning.
+  Keep the inferred depth tile table and VGA index reduction behind the
+  existing no-draw gate until original loader/VRAM evidence identifies the
+  dungeon tile bank and palette mapping.
+
 - **THERON-STARTUP-LEGACY-FALLBACK-ROOM:** The M11 production path uses
   `verified_only` Track 02 admission and the authenticated startup bitmap
   atlas. The older public compatibility API still synthesizes the

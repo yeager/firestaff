@@ -47033,3 +47033,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   labels and champion-slot pixels from the production archive. The public
   chrome API now fails closed through a no-op seam until the original Track
   02 UI bank is decoded; the old implementation remains fixture-only.
+- ✅ 2026-07-31 Theron viewport admission wording: corrected the lifecycle
+  and source comments to describe the palette as unbound, and removed the
+  stale claim that facing could come from a world-tick surrogate. The
+  viewport continues to accept only the authenticated party pose and blocks
+  pixels until a source tile bank is bound.
