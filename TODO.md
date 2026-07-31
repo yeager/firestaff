@@ -16,7 +16,11 @@
   now restores before entrance, and dungeon
   mirrors later create champions through `SELECT_CHAMPION`. Bind the remaining
   `GAME_LOAD` actuator/timer initialization plus source-owned mirror-selection
-  UI before allowing the menu to enter runtime.
+  UI before allowing the menu to enter runtime. **2026-07-31 update:** a
+  malformed G1 candidate without a valid source start pose now rejects
+  atomically; it cannot retain an earlier world's entrance position. Accepted
+  reloads also refresh deterministic header fields from the same verified
+  source bytes.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following

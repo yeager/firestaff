@@ -44628,3 +44628,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `INTERFACE_GENERAL`/`CHAMPIONS` route can write runtime pixels. Fixture
   decoding remains isolated to probes and cannot promote generated or
   operator-provided art into the framebuffer.
+- ✅ 2026-07-31 DM2 `LOAD_NEW_DUNGEON` entrance atomicity: a parsed G1 file
+  without an in-map original start pose now rejects before mutating the live
+  dungeon or party position. Accepted reloads restore the source header's
+  deterministic configuration together with the G1 pose. This follows
+  SK-projects `GAME_LOAD`/`LOAD_NEW_DUNGEON` ordering and prevents an old
+  world position from becoming a synthetic entrance for newly loaded data.

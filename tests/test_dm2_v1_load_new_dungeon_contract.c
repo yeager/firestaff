@@ -86,13 +86,15 @@ int main(void)
     game->party_dir = 3;
     game->current_level = 9;
     game->outdoor = 1;
+    profile.deterministic.dungeon_seed = 0;
     if (
         dm2_v1_boot_load_new_dungeon(&profile, &receipt) != 1 ||
         !receipt.valid || !receipt.reloaded ||
         !receipt.source_party_reset_required ||
         !receipt.source_leader_hand_reset_required ||
         receipt.synthetic_party_created || receipt.map_count != 1 ||
-        receipt.raw_byte_count != dungeon_size || receipt.raw_hash == 0u) {
+        receipt.raw_byte_count != dungeon_size || receipt.raw_hash == 0u ||
+        profile.deterministic.dungeon_seed != 1) {
         fprintf(stderr,
                 "FAIL: LOAD_NEW_DUNGEON source transaction changed "
                 "valid=%d reloaded=%d party=%d leader=%d synthetic=%d "
@@ -123,6 +125,45 @@ int main(void)
         remove(path);
         return 1;
     }
+
+    /* The G1 start word at offset 10 is part of the source-owned entrance
+     * transaction. An out-of-map start must reject rather than carrying the
+     * old game's pose into a newly accepted dungeon. */
+    put16le(dungeon + 10, (unsigned short)((31u << 5) | 31u));
+    file = fopen(path, "wb");
+    if (!file || fwrite(dungeon, 1, dungeon_size, file) != dungeon_size) {
+        if (file) fclose(file);
+        dm2_v1_boot_cleanup(&profile);
+        remove(path);
+        return 1;
+    }
+    fclose(file);
+    profile.dungeon_md5[0] = '\0';
+    game->party_x = 7;
+    game->party_y = 8;
+    game->party_dir = 1;
+    game->current_level = 6;
+    game->outdoor = 1;
+    if (dm2_v1_boot_load_new_dungeon(&profile, &receipt) != 0 ||
+        receipt.valid != 0 || game->party_x != 7 || game->party_y != 8 ||
+        game->party_dir != 1 || game->current_level != 6 ||
+        game->outdoor != 1) {
+        fprintf(stderr, "FAIL: invalid source entrance pose mutated live state\n");
+        dm2_v1_boot_cleanup(&profile);
+        remove(path);
+        return 1;
+    }
+
+    /* Restore the accepted fixture before hash and malformed-file checks. */
+    put16le(dungeon + 10, 0);
+    file = fopen(path, "wb");
+    if (!file || fwrite(dungeon, 1, dungeon_size, file) != dungeon_size) {
+        if (file) fclose(file);
+        dm2_v1_boot_cleanup(&profile);
+        remove(path);
+        return 1;
+    }
+    fclose(file);
 
     memset(profile.dungeon_md5, '0', 32);
     profile.dungeon_md5[32] = '\0';

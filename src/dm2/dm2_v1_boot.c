@@ -1165,7 +1165,8 @@ int dm2_v1_boot_load_new_dungeon(
     }
     memset(&candidate, 0, sizeof(candidate));
     if (dm2_v1_dungeon_load(&candidate, bytes, (int)file_size) != 0 ||
-        candidate.square_bytes != 1 || candidate.level_count <= 0) {
+        candidate.square_bytes != 1 || candidate.level_count <= 0 ||
+        !candidate.initial_party_pose_valid) {
         dm2_v1_dungeon_free(&candidate);
         free(bytes);
         return 0;
@@ -1196,16 +1197,18 @@ int dm2_v1_boot_load_new_dungeon(
     /* SKWINSPX skcore.cpp::GAME_LOAD reaches LOAD_NEW_DUNGEON before the
      * mirror-selection flow creates any champion. LOAD_NEW_DUNGEON still
      * replaces the source-owned G1 start pose: retaining an earlier world's
-     * pose would make the eventual entrance synthetic. Update only this
-     * header-owned state; party, hand, gold and timers remain untouched. */
+     * pose would make the eventual entrance synthetic. c_loadlevel.cpp's G1
+     * header start word is therefore part of this atomic admission, not an
+     * optional presentation hint. Party, hand, gold and timers remain
+     * untouched. */
     game = (DM2_V1_GameState *)profile->dm2_state;
-    if (candidate.initial_party_pose_valid) {
-        game->party_x = candidate.initial_party_x;
-        game->party_y = candidate.initial_party_y;
-        game->party_dir = candidate.initial_party_dir & 3;
-        game->current_level = 0;
-        game->outdoor = 0;
-    }
+    game->party_x = candidate.initial_party_x;
+    game->party_y = candidate.initial_party_y;
+    game->party_dir = candidate.initial_party_dir & 3;
+    game->current_level = 0;
+    game->outdoor = 0;
+    dm2_v1_boot_build_deterministic_config(
+        profile, candidate.raw_data, candidate.raw_size);
 
     /* c_savegame.cpp reloads the structure before later GAME_LOAD party and
      * timer work. Swap only a complete candidate; a failed parse leaves the
