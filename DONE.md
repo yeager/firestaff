@@ -46980,3 +46980,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   the V2 HUD gate all pass their focused tests. The HUD integration's 9/9
   render assertions are test-only; production keeps the procedural overlay
   closed until a retail widget/VDP placement receipt exists.
+- ✅ 2026-07-31 Nexus HUD provenance correction: removed the false claim that
+  the procedural V2 overlay was sourced from retail `NEXUS.BIN`. The supplied
+  corpus has no authenticated HUD widget surface; the module is explicitly
+  diagnostic/test-only and production remains gated. HUD overlay 46/46,
+  runtime integration 9/9 and `firestaff_m11` build pass.

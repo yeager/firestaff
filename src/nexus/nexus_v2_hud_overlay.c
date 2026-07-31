@@ -23,11 +23,12 @@
  *   - Low-health pulse (champion HP bar ~2 Hz)
  *   - Smooth compass needle interpolation
  *
- * Source: Saturn NEXUS.BIN HUD surface data
- *         DMDF parser documentation (DMDF/DGN level format)
- *         Saturn SDK VDP1 bitmap surfaces, VDP2 background layers
- *         ReDMCSB PANEL.C F0354 champion status box drawing
- *         ReDMCSB DUNGEON.C stat-bar refresh timing
+ * This file is a procedural diagnostic/test overlay only.  The supplied
+ * European retail corpus has no authenticated NEXUS.BIN HUD surface or
+ * Saturn widget-placement receipt, so this module is never a production
+ * pixel owner.  Production M11 keeps it gated until such evidence exists.
+ * ReDMCSB PANEL.C/DUNGEON.C remains a behavioural reference for isolated
+ * state tests, not provenance for these pixels.
  *
  * This module is deliberately presentation-only: it draws optional
  * overlay elements into the supplied framebuffer and does NOT mutate
@@ -432,13 +433,8 @@ void nexus_v2_hud_render(Nexus_V2_HudOverlay *h, uint8_t *fb, int stride, int h_
 
 const char *nexus_v2_hud_source_evidence(void) {
     return
-        "Nexus V2.0/V2.1: compass, depth, gold, champion bars, action strip\n"
-        "  Source: Saturn NEXUS.BIN HUD surface data\n"
-        "  Source: DMDF parser documentation (DMDF/DGN level format)\n"
-        "  Source: Saturn SDK VDP1 bitmap surfaces, VDP2 background layers\n"
-        "  Source: ReDMCSB PANEL.C F0354 (champion status-box rendering)\n"
-        "  Source: ReDMCSB DUNGEON.C (stat-bar refresh, F0260)\n"
-        "Nexus V2.2: hit flash, low-HP pulse, smooth compass interpolation\n"
-        "  Source: ReDMCSB COMMAND.C action feedback gates\n"
-        "  Source: ReDMCSB DISPLAY.C pulse animation timing (2 Hz)\n";
+        "Nexus V2 HUD: procedural diagnostic/test overlay only\n"
+        "  No authenticated retail NEXUS.BIN/widget surface in supplied corpus\n"
+        "  No Saturn VDP1/VDP2 placement receipt; production pixels forbidden\n"
+        "  ReDMCSB PANEL.C/DUNGEON.C are behavioural test references only\n";
 }
