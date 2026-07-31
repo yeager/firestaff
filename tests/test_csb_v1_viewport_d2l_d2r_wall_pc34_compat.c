@@ -360,7 +360,7 @@ static int test_trace_and_transparency(void)
     return ok;
 }
 
-static int test_synthetic_blit(void)
+static int test_frame_metadata(void)
 {
     int ok = 1;
     const CSB_V1_D2LD2RWallSpecPc34 *d2l =
@@ -369,64 +369,14 @@ static int test_synthetic_blit(void)
     const CSB_V1_D2LD2RWallSpecPc34 *d2r =
         csb_v1_viewport_d2l_d2r_wall_spec_for_side_pc34(
             CSB_V1_D2L_D2R_WALL_SIDE_D2R_PC34);
-    uint8_t source[SOURCE_WIDTH * SOURCE_HEIGHT];
-    uint8_t viewport[VIEWPORT_WIDTH * VIEWPORT_HEIGHT];
-    CSB_V1_D2LD2RWallBlitStatsPc34 stats;
-
-    memset(source, TRANSPARENT, sizeof(source));
-    memset(viewport, 0xee, sizeof(viewport));
-    source[source_offset(0, 61)] = 0x21u;
-    source[source_offset(0, 62)] = 0x22u;
-    source[source_offset(70, 132)] = 0x23u;
-    ok &= expect_int("blit.d2l.native",
-                     csb_v1_viewport_d2l_d2r_wall_apply_c10_frame_clip_pc34(
-                         d2l, source, SOURCE_WIDTH, SOURCE_HEIGHT, viewport,
-                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 0, &stats),
-                     3, A_F0104);
-    ok &= expect_int("blit.d2l.transparent", stats.transparent_pixels,
-                     (72 * 71) - 3, A_DEFS_C10);
-    ok &= expect_int("blit.d2l.clipped", stats.clipped_pixels, 0, A_F0104);
-    ok &= expect_int("blit.d2l.top_left", viewport[viewport_offset(20, 0)],
-                     0x21, A_F0104);
-    ok &= expect_int("blit.d2l.top_next", viewport[viewport_offset(20, 1)],
-                     0x22, A_F0104);
-    ok &= expect_int("blit.d2l.bottom_right", viewport[viewport_offset(90, 71)],
-                     0x23, A_F0104);
-    ok &= expect_int("blit.d2l.transparent_pixel",
-                     viewport[viewport_offset(20, 2)], 0xee, A_DEFS_C10);
-    ok &= expect_int("blit.d2l.d3_band_empty",
-                     viewport[viewport_offset(25, 74)], 0xee,
-                     "ReDMCSB DUNVIEW.C:584-588 D2 not D3 row width");
-    ok &= expect_int("blit.d2l.after_band", viewport[viewport_offset(91, 0)],
-                     0xee, "ReDMCSB DUNVIEW.C:587 D2L frame bottom");
-
-    memset(source, TRANSPARENT, sizeof(source));
-    memset(viewport, 0xee, sizeof(viewport));
-    source[source_offset(0, 0)] = 0x31u;
-    source[source_offset(0, 1)] = 0x32u;
-    source[source_offset(70, 71)] = 0x33u;
-    ok &= expect_int("blit.d2r.flip",
-                     csb_v1_viewport_d2l_d2r_wall_apply_c10_frame_clip_pc34(
-                         d2r, source, SOURCE_WIDTH, SOURCE_HEIGHT, viewport,
-                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 1, &stats),
-                     3, A_F0105);
-    ok &= expect_int("blit.d2r.transparent", stats.transparent_pixels,
-                     (72 * 71) - 3, A_DEFS_C10);
-    ok &= expect_int("blit.d2r.flipped_left",
-                     viewport[viewport_offset(20, 220)], 0x31, A_F0105);
-    ok &= expect_int("blit.d2r.flipped_next",
-                     viewport[viewport_offset(20, 219)], 0x32, A_F0105);
-    ok &= expect_int("blit.d2r.flipped_bottom",
-                     viewport[viewport_offset(90, 149)], 0x33, A_F0105);
-    ok &= expect_int("blit.d2r.left_neighbor",
-                     viewport[viewport_offset(20, 148)], 0xee,
-                     "ReDMCSB DUNVIEW.C:588 D2R frame left");
-    ok &= expect_int("blit.reject",
-                     csb_v1_viewport_d2l_d2r_wall_apply_c10_frame_clip_pc34(
-                         d2l, source, 132, SOURCE_HEIGHT, viewport,
-                         VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 0, &stats),
-                     -1, A_F0104);
-    ok &= expect_int("blit.reject.flag", stats.rejected, 1, A_F0104);
+    ok &= expect_int("frame.d2l.width", d2l ? d2l->wall_frame_byte_width : -1,
+                     72, A_F0104);
+    ok &= expect_int("frame.d2l.height", d2l ? d2l->wall_frame_height : -1,
+                     71, A_F0104);
+    ok &= expect_int("frame.d2r.width", d2r ? d2r->wall_frame_byte_width : -1,
+                     72, A_F0105);
+    ok &= expect_int("frame.d2r.height", d2r ? d2r->wall_frame_height : -1,
+                     71, A_F0105);
 
     return ok;
 }
@@ -472,7 +422,7 @@ int main(void)
     ok &= test_specs();
     ok &= test_frames_and_ornaments();
     ok &= test_trace_and_transparency();
-    ok &= test_synthetic_blit();
+    ok &= test_frame_metadata();
     ok &= test_run_and_evidence();
 
     printf("assertions=%d failures=%d\n", g_assertions, g_failures);

@@ -117,17 +117,6 @@ int csb_v1_viewport_d2l_d2r_wall_trace_pair_pc34(
     int front_wall_ornament_is_alcove,
     CSB_V1_D2LD2RWallTracePc34 *out_trace);
 
-int csb_v1_viewport_d2l_d2r_wall_apply_c10_frame_clip_pc34(
-    const CSB_V1_D2LD2RWallSpecPc34 *spec,
-    const uint8_t *source,
-    int source_width,
-    int source_height,
-    uint8_t *viewport,
-    int viewport_width,
-    int viewport_height,
-    int flipped_variant,
-    CSB_V1_D2LD2RWallBlitStatsPc34 *stats);
-
 uint8_t csb_v1_viewport_d2l_d2r_wall_blend_c10_pc34(
     uint8_t destination_pixel,
     uint8_t source_pixel);

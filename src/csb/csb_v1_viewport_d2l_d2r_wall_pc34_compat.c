@@ -265,64 +265,6 @@ int csb_v1_viewport_d2l_d2r_wall_trace_pair_pc34(
     return trace.ok ? 0 : 1;
 }
 
-int csb_v1_viewport_d2l_d2r_wall_apply_c10_frame_clip_pc34(
-    const CSB_V1_D2LD2RWallSpecPc34 *spec,
-    const uint8_t *source,
-    int source_width,
-    int source_height,
-    uint8_t *viewport,
-    int viewport_width,
-    int viewport_height,
-    int flipped_variant,
-    CSB_V1_D2LD2RWallBlitStatsPc34 *stats)
-{
-    CSB_V1_D2LD2RWallBlitStatsPc34 local = { 0, 0, 0, 0 };
-
-    if (stats) *stats = local;
-    if (!spec || !source || !viewport ||
-        source_width < spec->wall_frame_source_x + spec->wall_frame_byte_width ||
-        source_height < spec->wall_frame_source_y + spec->wall_frame_height ||
-        viewport_width <= 0 || viewport_height <= 0) {
-        local.rejected = 1;
-        if (stats) *stats = local;
-        return -1;
-    }
-
-    /* ReDMCSB DUNVIEW.C:581-588 supplies the D2L/D2R frame metadata;
-     * DUNVIEW.C:3113-3156 F0104 and 3185-3247 F0105 apply C10 transparency
-     * while the flipped variant mirrors each D2 row before the same blit. */
-    for (int y = 0; y < spec->wall_frame_height; ++y) {
-        const int dst_y = spec->wall_frame_y1 + y;
-        const int src_y = spec->wall_frame_source_y + y;
-
-        for (int x = 0; x < spec->wall_frame_byte_width; ++x) {
-            int src_x = spec->wall_frame_source_x + x;
-            const int dst_x = spec->wall_frame_x1 + x;
-            uint8_t pixel;
-
-            if (flipped_variant) {
-                src_x = spec->wall_frame_source_x +
-                        (spec->wall_frame_byte_width - 1 - x);
-            }
-            pixel = source[(src_y * source_width) + src_x];
-            if (dst_x < 0 || dst_x >= viewport_width ||
-                dst_y < 0 || dst_y >= viewport_height) {
-                ++local.clipped_pixels;
-                continue;
-            }
-            if (pixel == (uint8_t)spec->c10_transparent_color) {
-                ++local.transparent_pixels;
-                continue;
-            }
-            viewport[(dst_y * viewport_width) + dst_x] = pixel;
-            ++local.copied_pixels;
-        }
-    }
-
-    if (stats) *stats = local;
-    return local.copied_pixels;
-}
-
 int csb_v1_viewport_d2l_d2r_wall_pc34_compat_run(
     CSB_V1_D2LD2RWallTracePc34 *out_trace)
 {

@@ -44642,6 +44642,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   unauthenticated C10 writer and retained the source-bound clip, zone and
   transparency metadata only.
 
+- ✅ 2026-07-31 CSB D2L/D2R wall fixture removal: removed the C10 frame-copy
+  helper. The source-lock test retains ReDMCSB D2 wall dimensions and routing
+  metadata without generating viewport pixels.
+
 - ✅ Rechecked the production order start, menu boundary, Entrance, HUD and
   viewport against the local hash-verified CSB packages. The PC3.4 real-data
   launch probe passed 75 checks: C001 title phases, C002/C003/C004 entrance

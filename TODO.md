@@ -438,6 +438,9 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D2L2/D2R2 partly-open follow-up:** the remaining C10 fixture
   writer is removed. The D2 panel clip and ReDMCSB transparency metadata stay
   available, but no unbound input can write a viewport.
+  **2026-07-31 D2L/D2R wall follow-up:** the C10 wall-frame fixture writer is
+  removed. ReDMCSB frame dimensions, source placement and transparency
+  metadata remain available without a synthetic viewport surface.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
