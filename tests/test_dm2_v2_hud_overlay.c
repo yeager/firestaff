@@ -1,8 +1,5 @@
-/* DM2 V2 Phase 3 HUD Overlay — smoke test
- * Tests that the HUD overlay module initialises, sets parameters,
- * renders into a framebuffer, and produces deterministic output
- * without any game data or SDL.
- */
+/* DM2 V2 HUD compatibility-state smoke test.  Direct rendering has no
+ * original GDAT context and must therefore leave the framebuffer untouched. */
 
 #include "dm2_v2_hud_overlay.h"
 #include "dm2_v2_interaction_feedback.h"
@@ -106,32 +103,11 @@ int main(void) {
     dm2_v2_hud_render(&h, fb, FB_W, FB_H);
     check("render: no crash", 1);
 
-    /* Check that some pixels were written (compass area: x=8..24, y=8..24) */
-    int compass_pixels = 0;
-    for (int y = 8; y < 24; y++) {
-        for (int x = 8; x < 24; x++) {
-            if (fb[y * FB_W + x] != 0) compass_pixels++;
-        }
+    int direct_pixels = 0;
+    for (int i = 0; i < (int)(sizeof(fb) / sizeof(fb[0])); ++i) {
+        if (fb[i] != 0) direct_pixels++;
     }
-    check("compass: some pixels written", compass_pixels > 0);
-
-    /* Check gold counter area (bottom-right) was written */
-    int gold_pixels = 0;
-    for (int y = DM2_ACTION_STRIP_Y; y < 200; y++) {
-        for (int x = FB_W - 60; x < FB_W; x++) {
-            if (fb[y * FB_W + x] != 0) gold_pixels++;
-        }
-    }
-    check("gold counter: some pixels written", gold_pixels > 0);
-
-    /* Check depth indicator (top-right corner) was written */
-    int depth_pixels = 0;
-    for (int y = 4; y < 16; y++) {
-        for (int x = FB_W - 60; x < FB_W; x++) {
-            if (fb[y * FB_W + x] != 0) depth_pixels++;
-        }
-    }
-    check("depth: some pixels written", depth_pixels > 0);
+    check("direct renderer: no generated pixels", direct_pixels == 0);
 
     /* Hidden render (opacity=0) → no pixels */
     memset(fb, 0, sizeof(fb));
@@ -154,17 +130,17 @@ int main(void) {
     }
     check("invisible render: no pixels", zero_pixels == 0);
 
-    /* ── Hit flash decay ─────────────────────────────────────────── */
+    /* ── Direct renderer must not advance presentation timing ────── */
     h.visible = true;
     h.opacity = 255;
     h.hit_flash_active = true;
     h.hit_flash_timer = 3;
     dm2_v2_hud_render(&h, fb, FB_W, FB_H);
-    check("hit_flash_timer decrements on render", h.hit_flash_timer == 2);
+    check("hit_flash_timer preserved without source renderer", h.hit_flash_timer == 3);
     dm2_v2_hud_render(&h, fb, FB_W, FB_H);
-    check("hit_flash_timer 1 after 2nd render", h.hit_flash_timer == 1);
+    check("hit_flash_timer remains preserved after 2nd render", h.hit_flash_timer == 3);
     dm2_v2_hud_render(&h, fb, FB_W, FB_H);
-    check("hit_flash_timer 0 after 3rd render → inactive", h.hit_flash_timer == 0 && h.hit_flash_active == false);
+    check("hit_flash remains state-only after 3rd render", h.hit_flash_timer == 3 && h.hit_flash_active == true);
 
     /* ── Interaction feedback ────────────────────────────────────── */
     dm2_v2_interaction_set_hud_instance(&h);

@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 V2 HUD direct-overlay closure: retired the callable
+  hard-coded compass/glyph/status/action-strip renderer in
+  `dm2_v2_hud_overlay.c`. `dm2_v2_hud_render()` now deliberately emits no
+  pixels because it cannot receive the hash-verified GDAT source context.
+  The only production HUD pixel path is `dm2_v2_hud_runtime_render()` with
+  mounted `INTERFACE_GENERAL`/`CHAMPIONS` data. Focused HUD state, runtime,
+  and phase-gate probes pass.
+
 - ✅ 2026-07-31 DM2 original map-music dispatch: every runtime map-context
   refresh now resolves the verified PC `SONGLIST.DAT` selector and queues the
   corresponding `GRAPHICS.DAT` GDAT HMP stream. The real-PC test proves map 0

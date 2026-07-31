@@ -175,7 +175,7 @@ int main(void) {
     for (int i = 0; i < (int)(sizeof(fb)/sizeof(fb[0])); i++) {
         if (fb[i] != 0) pixels++;
     }
-    check("hud_render: some pixels written", pixels > 0);
+    check("hud_render: direct path emits no generated pixels", pixels == 0);
 
     /* Hidden HUD: opacity=0 → no pixels */
     memset(fb, 0, sizeof(fb));

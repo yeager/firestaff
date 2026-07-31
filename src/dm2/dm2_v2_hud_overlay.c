@@ -32,7 +32,15 @@
  * dungeon, champion, companion, or command runtime state.
  * ══════════════════════════════════════════════════════════════════════ */
 
-/* ── Pixel helpers ──────────────────────────────────────────────── */
+/* ── Retired procedural renderer ──────────────────────────────────
+ *
+ * These helpers are retained temporarily as source notes for the old Phase 3
+ * experiment, but are not compiled or callable.  SKULLWIN's HUD owns pixels
+ * through INTERFACE_GENERAL and CHAMPIONS GDAT records; generated compass,
+ * digit, label, bar, and action-strip pixels are not an admissible fallback.
+ * ReDMCSB: SKULL.ASM T560; SKWIN/c_gui_vp.cpp UI image fetches.
+ */
+#if 0
 static void hud_plot(uint8_t *fb, int stride, int x, int y, uint8_t val) {
     if (x >= 0 && x < (int)(unsigned)stride && y >= 0 && y < 200) {
         fb[y * stride + x] = val;
@@ -256,6 +264,7 @@ static void hud_draw_champion_bar(uint8_t *fb, int stride, int x, int y,
         hud_plot(fb, stride, x + bar_w - 5, y, high);
     }
 }
+#endif
 
 /* ── Lifecycle ──────────────────────────────────────────────────── */
 void dm2_v2_hud_init(DM2_V2_HudOverlay *h) {
@@ -341,65 +350,19 @@ void dm2_v2_hud_set_opacity(DM2_V2_HudOverlay *h, uint8_t val) {
 
 /* ── Main render entry ──────────────────────────────────────────── */
 void dm2_v2_hud_render(DM2_V2_HudOverlay *h, uint8_t *fb, int stride, int h_res) {
-    if (!h || !fb || stride <= 0 || h_res <= 0) return;
-    if (!h->visible) return;
-    if (h->opacity == 0) return;
-
-    uint8_t base = (uint8_t)(h->opacity / 2);
-    uint8_t high = h->opacity;
-
-    /* ── Top-left: Compass ─────────────────────────────────────── */
-    hud_compass_draw(fb, stride, 16, 16, h->compass.direction, base, high);
-
-    /* ── Top-right: Depth "cur/max" ─────────────────────────────── */
-    int dx = stride - 56;
-    hud_draw_number(fb, stride, dx, 8, h->depth.current_level, high);
-    hud_plot(fb, stride, dx + 16, 10, high);
-    hud_draw_number(fb, stride, dx + 24, 8, h->depth.max_level, high);
-
-    /* ── Top status bar: 4 champion mini-bars ────────────────────── */
-    if (h->stats_bar_visible) {
-        for (int i = 0; i < 4; i++) {
-            DM2_V2_HudChampionBar *cb = &h->champion_bars[i];
-            int bx = DM2_CHAMP_BAR_X_START + i * (DM2_CHAMP_BAR_W + DM2_CHAMP_BAR_SPACING);
-            hud_draw_champion_bar(fb, stride, bx, DM2_CHAMP_BAR_Y, i,
-                cb->hp_pct, cb->stamina_pct, cb->mana_pct,
-                cb->leader, cb->spell_ready, high);
-        }
-    }
-
-    /* ── Bottom action strip ───────────────────────────────────── */
-    if (h->action_strip.visible) {
-        for (int i = 0; i < DM2_V2_ACTION_COUNT; i++) {
-            int ax = DM2_ACTION_ICONS_X_START + i * (DM2_ACTION_ICON_W + 4);
-            DM2_V2_ActionIconState *st = &h->action_strip.icons[i];
-            bool flash = h->hit_flash_active && st->active;
-            hud_draw_action_icon(fb, stride, ax, DM2_ACTION_STRIP_Y,
-                (DM2_V2_ActionIcon)i, st->active, flash, base, high);
-        }
-        /* Decrement flash timer */
-        if (h->hit_flash_timer > 0) {
-            h->hit_flash_timer--;
-            if (h->hit_flash_timer == 0) {
-                h->hit_flash_active = false;
-            }
-        }
-    }
-
-    /* ── Bottom-right: gold counter (DM2-specific) ──────────────── */
-    if (h->gold.visible) {
-        int gx = stride - 60;
-        int gy = DM2_ACTION_STRIP_Y + 4;
-        hud_draw_letter(fb, stride, gx, gy, 'G', high);
-        hud_draw_letter(fb, stride, gx + 4, gy, 'p', base);
-        gx += 14;
-        hud_draw_number(fb, stride, gx, gy, h->gold.party_gold, high);
-    }
+    /* No generated HUD pixels.  This former direct overlay has no original
+     * GDAT loader/context argument, therefore it must remain no-draw.  The
+     * production route is dm2_v2_hud_runtime_render(), which requires the
+     * mounted, hash-verified INTERFACE_GENERAL/CHAMPIONS data source. */
+    (void)h;
+    (void)fb;
+    (void)stride;
+    (void)h_res;
 }
 
 const char *dm2_v2_hud_source_evidence(void) {
     return
-        "DM2 V2.0/V2.1: compass, depth, gold, champion bars, action strip\n"
+        "DM2 V2 direct overlay: retired; no generated pixels are admitted\n"
         "  Source: SKULL.ASM T560 (DM2 HUD rendering)\n"
         "  Source: SKULLWIN/SKWIN/c_gui_vp.cpp (DM2 UI chrome layout)\n"
         "  Source: ReDMCSB PANEL.C F0354 (champion status-box rendering)\n"

@@ -14,9 +14,11 @@ extern "C" {
  * and interaction feedback.
  *
  * Architecture:
- *   This module is deliberately presentation-only: it draws optional
- *   overlay elements into the supplied framebuffer and does NOT mutate
- *   dungeon, champion, companion, or command runtime state.
+ *   This module carries presentation state only and does NOT mutate dungeon,
+ *   champion, companion, or command runtime state.  It does not own pixels:
+ *   the former procedural renderer is intentionally no-draw.  Production HUD
+ *   pixels must be fetched from hash-verified original GDAT by
+ *   dm2_v2_hud_runtime.
  *
  * V2.0/V2.1 overlay elements:
  *   - Compass rose (4-way directional indicator)
@@ -126,8 +128,8 @@ void dm2_v2_hud_set_opacity(DM2_V2_HudOverlay *h, uint8_t val);
 #define DM2_ACTION_ICONS_X_START 16
 
 /* ── Rendering ───────────────────────────────────────────────────── */
-/* dm2_v2_hud_render — draw V2 overlay into 320×200 VGA framebuffer.
- * x200 resolution (VGA 13h modenum).  Opacity 0 = no-op. */
+/* Compatibility state seam.  Always no-draw: it has no verified GDAT source
+ * context and may not synthesize a DM2 HUD. */
 void dm2_v2_hud_render(DM2_V2_HudOverlay *h, uint8_t *fb, int w, int h_res);
 
 /* ── V1 compatibility seam ─────────────────────────────────────── */
