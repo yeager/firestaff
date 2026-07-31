@@ -68,30 +68,25 @@ static uint32_t dm2_cast_player_pack_key(const uint8_t *runes, int count)
 static void dm2_cast_player_pack_fixed_record(DM2_V1_RuntimeSpellRecord *out,
                                               int index)
 {
-    const DM2_SpellDefinition *def = dm2_v1_spell_get(index);
+    const DM2_V1_SpellRecord *def = dm2_v1_spell_source_record(index);
 
     memset(out, 0, sizeof(*out));
     if (!def) return;
 
     out->index = index;
     out->source = 0;
-    out->difficulty = (uint8_t)def->difficulty;
-    out->skill = (uint8_t)def->required_skill;
-    /* Phase 4 table stores mana_per_rune; map it to the source w6 layout:
-     *   spell_type = type low 4 bits
-     *   spell_value = object-effect-ish result (upper bits, kept verbatim)
-     * The existing fixed table does not encode the full w6 result field, so
-     * we keep type from spell_type and spell_value from the OBJECT_EFFECT
-     * mapping. */
-    out->spell_type = (uint8_t)def->spell_type;
-    out->spell_value = 0;
-    out->w6 = (uint16_t)(out->spell_type & 0x0fu);
-
-    out->rune_count = def->rune_count;
-    if (def->rune_count > 0 && def->rune_count <= 4) {
-        memcpy(out->runes, def->rune_symbols, def->rune_count);
-    }
-    out->key = dm2_cast_player_pack_key(out->runes, out->rune_count);
+    out->key = def->key;
+    out->difficulty = def->difficulty;
+    out->skill = def->skill;
+    out->w6 = def->w6;
+    out->spell_value = (uint8_t)((def->w6 >> 4) & 0x3fu);
+    out->spell_type = (uint8_t)(def->w6 & 0x0fu);
+    /* The source record stores only tail runes. The live power rune belongs
+     * to the hero input, so this field is deliberately zero here. */
+    out->rune_count = 4;
+    out->runes[1] = (uint8_t)(def->key >> 16);
+    out->runes[2] = (uint8_t)(def->key >> 8);
+    out->runes[3] = (uint8_t)def->key;
 }
 
 static void dm2_cast_player_pack_extended_record(DM2_V1_RuntimeSpellRecord *out,
@@ -284,15 +279,15 @@ DM2_V1_SpellCastPlayerReceipt dm2_v1_spell_cast_player(
 
     /* Cast power is the POWER rune (first symbol).  The source uses the power
      * rune index directly; this bounded slice clamps it to a positive scalar. */
-    cast_power = rec->runes[0];
-    if (cast_power < 1) cast_power = 1;
+    cast_power = (int)runes[0] - 0x5f;
+    if (cast_power < 1) {
+        r.failure_class = 0x20;
+        dm2_v1_spell_proceed_failure(0x20, &r.failure);
+        return r;
+    }
     r.cast_power = cast_power;
 
-    /* Source mana cost (c_events.cpp:2282-2289).
-     * For fixed-table records the w6 field was reconstructed from spell_type
-     * only, so the factor ((w6 >> 10) & 0x3f) is zero.  Fall back to the Phase 4
-     * per-rune mana cost from the fixed table so potion/missile casts still
-     * carry a realistic resource receipt. */
+    /* Source mana cost (c_events.cpp:2282-2289). */
     {
         DM2_V1_SpellRecord tmp;
         tmp.key = rec->key;
@@ -300,10 +295,6 @@ DM2_V1_SpellCastPlayerReceipt dm2_v1_spell_cast_player(
         tmp.skill = rec->skill;
         tmp.w6 = rec->w6;
         r.mana_cost = dm2_v1_spell_record_mana_cost(&tmp, cast_power);
-    }
-    if (r.mana_cost < 0 || (rec->source == 0 && r.mana_cost == 0)) {
-        int fallback = dm2_v1_spell_mana_cost(rec->index);
-        if (fallback > 0) r.mana_cost = fallback;
     }
     r.mana_sufficient = (current_mana >= r.mana_cost) ? 1 : 0;
 

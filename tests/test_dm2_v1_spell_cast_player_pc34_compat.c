@@ -62,9 +62,9 @@ static void build_extended_receipt(DM2_V1_ExtendedSpellsReceipt *receipt)
     /* Custom spell index 7: FUL BRO NETA (unique extended GENERAL spell).
      * rune1=7 (FUL), rune2=8 (BRO), rune3=9 (NETA), difficulty=5,
      * skill=0x0F, type=GENERAL (3), result=0x0B. */
-    set_word(&entries[0], 7, 0x01, 7u);
-    set_word(&entries[1], 7, 0x02, 8u);
-    set_word(&entries[2], 7, 0x03, 9u);
+    set_word(&entries[0], 7, 0x01, DM2_RUNE_FUL);
+    set_word(&entries[1], 7, 0x02, DM2_RUNE_BRO);
+    set_word(&entries[2], 7, 0x03, DM2_RUNE_NETA);
     set_word(&entries[3], 7, 0x04, 5u);
     set_word(&entries[4], 7, 0x05, 0x0Fu);
     set_word(&entries[5], 7, 0x06, 3u);
@@ -72,9 +72,9 @@ static void build_extended_receipt(DM2_V1_ExtendedSpellsReceipt *receipt)
 
     /* Custom spell index 9: ZO KATH RA (ZoKathRa extended-only summon).
      * rune1=14 (ZO), rune2=10 (KATH), rune3=2 (RA), type=SUMMON (4). */
-    set_word(&entries[7], 9, 0x01, 14u);
-    set_word(&entries[8], 9, 0x02, 10u);
-    set_word(&entries[9], 9, 0x03, 2u);
+    set_word(&entries[7], 9, 0x01, DM2_RUNE_ZO);
+    set_word(&entries[8], 9, 0x02, DM2_RUNE_KATH);
+    set_word(&entries[9], 9, 0x03, DM2_RUNE_RA);
     set_word(&entries[10], 9, 0x04, 8u);
     set_word(&entries[11], 9, 0x05, 0x0Fu);
     set_word(&entries[12], 9, 0x06, 4u);
@@ -122,11 +122,11 @@ static void test_lookup_fixed_and_extended(void)
 {
     DM2_V1_RuntimeSpellTable table;
     DM2_V1_ExtendedSpellsReceipt ext;
-    const uint8_t light[] = {DM2_RUNE_FUL, 0};
-    const uint8_t fireball[] = {DM2_RUNE_FUL, DM2_RUNE_IR, 0};
+    const uint8_t light[] = {DM2_RUNE_YA, DM2_RUNE_FUL, 0};
+    const uint8_t fireball[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR, 0};
     const uint8_t extended_custom[] = {DM2_RUNE_FUL, DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_NETA, 0};
     const uint8_t extended_zok[] = {DM2_RUNE_FUL, DM2_RUNE_ZO, DM2_RUNE_KATH, DM2_RUNE_RA, 0};
-    const uint8_t unknown[] = {DM2_RUNE_OH, DM2_RUNE_OH, DM2_RUNE_OH, 0};
+    const uint8_t unknown[] = {DM2_RUNE_YA, DM2_RUNE_OH, DM2_RUNE_OH, DM2_RUNE_OH, 0};
     int idx;
 
     build_extended_receipt(&ext);
@@ -159,10 +159,10 @@ static void test_cast_success_branches(void)
     DM2_V1_RuntimeSpellTable table;
     DM2_V1_ExtendedSpellsReceipt ext;
     DM2_V1_SpellCastPlayerReceipt r;
-    const uint8_t light[] = {DM2_RUNE_FUL, 0};
-    const uint8_t fireball[] = {DM2_RUNE_FUL, DM2_RUNE_IR, 0};
-    const uint8_t str_potion[] = {DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
-    const uint8_t attack_minion[] = {DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_KU, 0};
+    const uint8_t light[] = {DM2_RUNE_YA, DM2_RUNE_FUL, 0};
+    const uint8_t fireball[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR, 0};
+    const uint8_t str_potion[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
+    const uint8_t attack_minion[] = {DM2_RUNE_YA, DM2_RUNE_ZO, DM2_RUNE_EW, DM2_RUNE_KU, 0};
 
     memset(&ext, 0, sizeof(ext));
     dm2_v1_spell_cast_player_build_table(&ext, &table);
@@ -185,8 +185,8 @@ static void test_cast_success_branches(void)
                 "Fireball is MISSILE branch");
     expect_true(r.timer_kind == DM2_V1_SPELL_TIMER_PROJECTILE,
                 "Fireball requests projectile");
-    expect_true(r.object_effect == DM2_OBJECT_EFFECT_FIREBALL,
-                "Fireball carries FIREBALL object effect");
+    expect_true(r.object_effect == DM2_OBJECT_EFFECT_NONE,
+                "Fireball does not invent a DB object-effect identifier");
 
     /* STR Potion (POTION) with flask */
     r = dm2_v1_spell_cast_player(&table, str_potion, 30, 100, 1);
@@ -211,8 +211,8 @@ static void test_cast_failure_paths(void)
     DM2_V1_RuntimeSpellTable table;
     DM2_V1_ExtendedSpellsReceipt ext;
     DM2_V1_SpellCastPlayerReceipt r;
-    const uint8_t fireball[] = {DM2_RUNE_FUL, DM2_RUNE_IR, 0};
-    const uint8_t str_potion[] = {DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
+    const uint8_t fireball[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR, 0};
+    const uint8_t str_potion[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
 
     memset(&ext, 0, sizeof(ext));
     dm2_v1_spell_cast_player_build_table(&ext, &table);
@@ -246,15 +246,15 @@ static void test_resource_spending(void)
     DM2_V1_RuntimeSpellTable table;
     DM2_V1_ExtendedSpellsReceipt ext;
     DM2_V1_SpellCastPlayerReceipt r;
-    const uint8_t fireball[] = {DM2_RUNE_FUL, DM2_RUNE_IR, 0};
-    const uint8_t light[] = {DM2_RUNE_FUL, 0};
+    const uint8_t fireball[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR, 0};
+    const uint8_t light[] = {DM2_RUNE_YA, DM2_RUNE_FUL, 0};
 
     memset(&ext, 0, sizeof(ext));
     dm2_v1_spell_cast_player_build_table(&ext, &table);
 
     r = dm2_v1_spell_cast_player(&table, light, 30, 0, 0);
-    expect_true(r.mana_cost == 0, "Light (1 rune) costs 0 mana");
-    expect_true(r.mana_sufficient, "Light mana sufficient even at 0");
+    expect_true(r.mana_cost == 7, "Light uses source w6 power factor");
+    expect_true(!r.mana_sufficient, "Light rejects insufficient source mana");
 
     r = dm2_v1_spell_cast_player(&table, fireball, 30, 100, 0);
     expect_true(r.mana_cost > 0, "Fireball has positive mana cost");
@@ -307,7 +307,7 @@ static void test_apply_success_light(void)
     DM2_ChampionRecord champ;
     DM2_V1_SourceTimerQueue queue;
     DM2_V1_SourceTimer t;
-    const uint8_t light[] = {DM2_RUNE_FUL, 0};
+    const uint8_t light[] = {DM2_RUNE_YA, DM2_RUNE_FUL, 0};
 
     memset(&ext, 0, sizeof(ext));
     dm2_v1_spell_cast_player_build_table(&ext, &table);
@@ -320,7 +320,7 @@ static void test_apply_success_light(void)
 
     expect_true(a.valid, "apply receipt valid for Light");
     expect_true(a.applied, "Light apply mutated state");
-    expect_true(a.mana_after == 100, "Light mana unchanged (cost 0)");
+    expect_true(a.mana_after == 93, "Light spends source-record mana");
     expect_true(champ.hand_cooldown[0] == (uint16_t)r.cooldown_ticks,
                 "Light sets hand cooldown");
     expect_true(champ.runes_count == 0 && champ.spelled_runes[0] == 0,
@@ -347,7 +347,7 @@ static void test_apply_success_fireball(void)
     DM2_ChampionRecord champ;
     DM2_V1_SourceTimerQueue queue;
     DM2_V1_SourceTimer t;
-    const uint8_t fireball[] = {DM2_RUNE_FUL, DM2_RUNE_IR, 0};
+    const uint8_t fireball[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR, 0};
 
     memset(&ext, 0, sizeof(ext));
     dm2_v1_spell_cast_player_build_table(&ext, &table);
@@ -368,8 +368,8 @@ static void test_apply_success_fireball(void)
     expect_true(dm2_v1_source_timer_peek_ticket(&queue, a.timer_ticket, &t),
                 "Fireball timer ticket live");
     expect_true(t.type == 0x1e, "Fireball timer type is 0x1e");
-    expect_true(t.reserved == DM2_OBJECT_EFFECT_FIREBALL,
-                "Fireball timer carries FIREBALL object effect");
+    expect_true(t.reserved == DM2_OBJECT_EFFECT_NONE,
+                "Fireball timer keeps unbound object effect unavailable");
     expect_true((t.ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) == 201u,
                 "Fireball timer due on next tick (duration 0)");
 }
@@ -383,7 +383,7 @@ static void test_apply_success_potion(void)
     DM2_ChampionRecord champ;
     DM2_LeaderPossession flask;
     DM2_V1_SourceTimerQueue queue;
-    const uint8_t str_potion[] = {DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
+    const uint8_t str_potion[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
 
     memset(&ext, 0, sizeof(ext));
     dm2_v1_spell_cast_player_build_table(&ext, &table);
@@ -411,7 +411,7 @@ static void test_apply_failure_skill(void)
     DM2_V1_SpellCastApplyReceipt a;
     DM2_ChampionRecord champ;
     DM2_V1_SourceTimerQueue queue;
-    const uint8_t fireball[] = {DM2_RUNE_FUL, DM2_RUNE_IR, 0};
+    const uint8_t fireball[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_IR, 0};
 
     memset(&ext, 0, sizeof(ext));
     dm2_v1_spell_cast_player_build_table(&ext, &table);
@@ -440,7 +440,7 @@ static void test_apply_failure_flask(void)
     DM2_V1_SpellCastPlayerReceipt r;
     DM2_V1_SpellCastApplyReceipt a;
     DM2_ChampionRecord champ;
-    const uint8_t str_potion[] = {DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
+    const uint8_t str_potion[] = {DM2_RUNE_YA, DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
 
     memset(&ext, 0, sizeof(ext));
     dm2_v1_spell_cast_player_build_table(&ext, &table);
@@ -466,7 +466,7 @@ static void test_apply_no_queue(void)
     DM2_V1_SpellCastPlayerReceipt r;
     DM2_V1_SpellCastApplyReceipt a;
     DM2_ChampionRecord champ;
-    const uint8_t light[] = {DM2_RUNE_FUL, 0};
+    const uint8_t light[] = {DM2_RUNE_YA, DM2_RUNE_FUL, 0};
 
     memset(&ext, 0, sizeof(ext));
     dm2_v1_spell_cast_player_build_table(&ext, &table);

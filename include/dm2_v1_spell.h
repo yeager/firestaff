@@ -26,25 +26,26 @@
 /* ── Rune symbol constants (for spell construction) ───────────────────────
  * Source: SKULL.ASM rune data, SkWinCore.cpp:18159-18174
  * Rune order matters: first rune = POWER rune (no mana cost)
- * 17 rune symbols (0-16) in DM2's rune alphabet */
+ * These are the source byte codes, not Firestaff-local ordinals.
+ * Source: skproject/SKWIN/DME.h:2145-2162. */
 
-#define DM2_RUNE_OH    0
-#define DM2_RUNE_IR    1
-#define DM2_RUNE_RA    2
-#define DM2_RUNE_DES   3
-#define DM2_RUNE_SAR   4
-#define DM2_RUNE_YA    5
-#define DM2_RUNE_EW    6
-#define DM2_RUNE_FUL   7
-#define DM2_RUNE_BRO   8
-#define DM2_RUNE_NETA  9
-#define DM2_RUNE_KATH 10
-#define DM2_RUNE_KU   11
-#define DM2_RUNE_ROS  12
-#define DM2_RUNE_VEN  13
-#define DM2_RUNE_ZO   14
-#define DM2_RUNE_DAIN 15
-#define DM2_RUNE_VI   16
+#define DM2_RUNE_YA    0x66
+#define DM2_RUNE_VI    0x67
+#define DM2_RUNE_OH    0x68
+#define DM2_RUNE_FUL   0x69
+#define DM2_RUNE_DES   0x6A
+#define DM2_RUNE_ZO    0x6B
+#define DM2_RUNE_VEN   0x6C
+#define DM2_RUNE_EW    0x6D
+#define DM2_RUNE_KATH  0x6E
+#define DM2_RUNE_IR    0x6F
+#define DM2_RUNE_BRO   0x70
+#define DM2_RUNE_KU    0x72
+#define DM2_RUNE_ROS   0x73
+#define DM2_RUNE_DAIN  0x74
+#define DM2_RUNE_NETA  0x75
+#define DM2_RUNE_RA    0x76
+#define DM2_RUNE_SAR   0x77
 #define DM2_RUNE_COUNT 17
 
 /* ── Spell count constants ──────────────────────────────────────────────
@@ -237,6 +238,10 @@ typedef struct {
     uint8_t skill;       /* record byte 5 */
     uint16_t w6;         /* record word 6 */
 } DM2_V1_SpellRecord;
+
+/* Exact fixed-mode source record. The key contains only the spell tail;
+ * the live first rune is a variable power selection. */
+const DM2_V1_SpellRecord *dm2_v1_spell_source_record(int spell_index);
 
 /* Source key packing: rune[0]<<24 | rune[1]<<16 | rune[2]<<8 | rune[3],
  * stopping at the first zero byte (c_events.cpp:2220-2234). */
