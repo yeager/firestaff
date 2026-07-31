@@ -46816,3 +46816,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Removed the production branch that enabled command-drawn synthetic title, stage, Soul Room, and forcefield graphics when Track 02 was absent.
 - Startup now reports `NO VERIFIED TRACK02 GRAPHICS` and remains blocked until the real atlas route is present.
 - Verification: `test_theron_rendering` 25/25 and `firestaff_theron_v1_startup_flow_probe` 653/653.
+- ✅ 2026-07-31 Nexus TODO consistency audit: stale PRS3/S2D entries now
+  distinguish the verified DMWeb-compatible decompression and FONT256 region
+  parsing from the still-open Saturn pixel/mode, palette/VDP1 placement and
+  page-to-character mapping work.

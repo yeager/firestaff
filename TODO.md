@@ -8110,10 +8110,10 @@ lane is carried forward in the sections below.
     zero compare, and repeat registers around `85450`/`85460`/`85464`.
     The receipt binds the nonzero source-byte-to-output-store path and the
     zero-side two-source-byte merge/indexed-output-window corridor to the real
-    162-stream `MENU.BPK` plan. It still blocks decoder implementation because
-    the zero-side copy semantics, expected output vectors, authenticated
-    Saturn execution provenance, and reviewed opcode grammar are not yet
-    proven from real bytes.
+    162-stream `MENU.BPK` plan. DMWeb-compatible bounded decompression now
+    covers the zero-side copy semantics and expected output lengths; remaining
+    gaps are authenticated Saturn execution provenance, pixel/mode meaning,
+    palette and VDP1 placement.
   - 2026-07-16 Nexus PRS3 SH-2 subset-trace update: a strict, retail-byte
     subset executor now runs the bound `DM.BIN` V1 loader control corridor
     over real `MENU.BPK` entry 1 body bytes and records dynamic R12/R13/R6/
@@ -21761,11 +21761,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     it does not relax canonical MENU.BPK/DM.BIN checks or PRS3 gating.
     A level error is now retained only after an actual DM.BIN/SEGADATA.BIN or
     CD image was observed; an empty directory correctly remains a data error.
-  - 2026-07-15 safety update: missing, invalid, stored, or PRS3-blocked MENU.BPK handoffs never permit generated replacement visuals. Launcher main-menu readiness now also requires a valid, actually renderable BPK receipt rather than treating an absent receipt as success. The real retail archive remains blocked pending authenticated PRS3 decoder and Saturn palette/VDP1 evidence.
+  - 2026-07-15 safety update: missing, invalid, stored, or PRS3-blocked MENU.BPK handoffs never permit generated replacement visuals. Launcher main-menu readiness now also requires a valid, actually renderable BPK receipt rather than treating an absent receipt as success. The real retail archive remains blocked pending authenticated Saturn palette/VDP1 evidence and pixel/mode interpretation.
 
 - 🔧 2026-06-28 Nexus BPX/BPK surface-class + BPX3 directory-trailer boundary (pass1083) follow-up: `nexus_v1_bpk_archive` adds `nexus_v1_bpk_mode_to_surface_class()` (UNKNOWN / INDEXED_8BPP / RGB565 / RGB888 / RGBA8888 / DIRECTORY_TRAILER) and `nexus_v1_bpk_mode_to_bpp()` (1/2/3/4 for the four pixel-mode tags, 0 for the trailer / unknown) lookup APIs plus `nexus_v1_bpk_archive_surface_estimate()` which walks every entry whose 20-byte prefix is complete and reports (entry_index, mode, width, height, pixel_count, surface layout: bpp / rowstride / surface_bytes / surface_class) per PRS3-bearing entry, skipping the directory trailer and unknown modes. `nexus_v1_bpx_bpk` extends the synthetic BPX3 contract to recognize a directory-trailer entry (mode tag 10, zero width/height/payload_offset, no PRS3 magic) and tag it with `NEXUS_V1_BPX_BPK_METHOD_DIRECTORY_TRAILER`. New CTest `nexus_v1_bpk_surface_class` (38 PASS) covers the lookup APIs, a 4-entry synthetic BPK with one trailer + one of each pixel mode (16 / 64 / 18 = 98 unpacked bytes total), the BPX3 trailer-entry shape and rejection cases (nonzero width / nonzero reserved bytes), and an optional local MENU.BPK receipt that cross-checks 14 indexed / 62 RGB565 / 39 RGB888 / 47 RGBA8888 entries with every rowstride == width * bpp and every surface_bytes == width * height * bpp. New skip-safe CTest `nexus_v1_bpk_surface_class_probe` (525 PASS after the 2026-06-29 span checks) exercises the same contract through the probe path. **2026-06-29 PRS3 packed-span synthetic contract tightened:** `nexus_v1_bpx_prs3_parse()` now requires an explicit packed payload size for every synthetic PRS3-bearing entry, rejects zero/out-of-bounds/overlapping spans in table order, and reports bpp-derived `unpacked_size` (mode 6/14/22/30 -> 1/2/3/4 bytes per pixel) instead of multiplying by the raw mode tag. Local MENU.BPK byte scan for this pass confirmed 162 bounded PRS3 compressed payload spans (min 16 / max 9,980 / total 83,000 bytes) but still did not identify the bitstream algorithm. PRS3 decompression still intentionally unsupported: the surface estimate reports what shape each entry WOULD decode to once a real PRS3 implementation lands. The directory-trailer receipt now reaches launcher metadata. Remaining work: identify the PRS3 compression algorithm from real MENU.BPK bytes / executable disassembly and hand the decoded payloads into a renderable Nexus menu graphics pipeline (atmospheric HUD/textures + first Nexus screen capture with the real MENU.BPK).
 
-- 🔧 Nexus S2D real-font parity: `nexus_v1_saturn_font` now expands parser-exposed 1bpp glyphs and draws them into indexed framebuffers with synthetic + optional local `FONT256.S2D` proof. Remaining work is the real Saturn SCR section-table/glyph-layout decode, runtime text-layout binding, and an actual Nexus screen capture using the real font before the S2D gap can move from PARTIAL to FIXED.
+- 🔧 Nexus S2D real-font parity: the DMWeb FONT256 region decoder now exposes the real page, character-generator, palette and attribute regions with bounded retail tests. Remaining work is page-to-character mapping, runtime text-layout binding, and an authentic screen capture; no flat 1bpp glyph guess may be promoted.
 
 ### Launcher and Settings
 
@@ -22203,7 +22203,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the native mapping and fails closed for unmapped aspects. The remaining
   CSB rendering work is broader original-capture/pixel evidence, not another
   object-family mapper.
-- 🔧 2026-07-10 Nexus follow-up: remaining real-asset promotion is fixing/promoting the real MENU.BPK PRS3 opcode/stream decode against the optional corpus checks, plus real Saturn capture comparison beyond the DGN material block. 2026-07-11 update: BPK material host-route receipts and per-category floor/ceiling/wall material-coverage receipts are now covered by Nexus-owned BPK/DMDF tests; truecolor/decoded PRS3 synthetic material import also stays verified there.
+- 🔧 2026-07-10 Nexus follow-up: remaining real-asset promotion is authentic Saturn palette/VDP1 capture comparison beyond the DGN material block. DMWeb-compatible MENU.BPK PRS3 decode and BPK/DMDF host-route receipts are verified; pixel-mode interpretation and presentation handoff remain gated.
   - 2026-07-15 MENU.BPK source-admission update: startup now binds the archive to the canonical retail Track 1 hash before it can produce a decode/upload receipt or reach the launcher. A parseable same-named archive remains blocked; the still-required work is an authentic PRS3 decoder/capture, not a substitute menu surface.
   - 2026-07-15 PRS3 promotion update: generic `ready-decoded` receipts are
     explicitly blocked on the retail menu route until authentic opcode and
