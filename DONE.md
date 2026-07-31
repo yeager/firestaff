@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 CSB Hint Oracle: tog bort den fristående, påhittade
+  framebufferpanelen med hårdkodad ram, färgpalett och 5×7-font. Den hade
+  ingen källa i Utility Diskens grafik och var inte ansluten till M11. Den
+  verkliga HCSB.HTC-läsaren och dess hash-kontrollerade textbindning finns
+  kvar, men lämnar visningen till en framtida originalkällbunden UI-väg.
+
 - ✅ 2026-07-31 CSB PC3.4 F0489-dörrindexbindning: den kontrollerade
   `GRAPHICS.DAT`-katalogen kan nu koppla de inhemska F0489-indextalen till
   rätt post enbart via ReDMCSB:s aktiva DoorSet-formel

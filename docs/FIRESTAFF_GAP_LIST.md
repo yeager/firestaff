@@ -9,6 +9,11 @@ gap docs, and the stale `docs/parity/COMPLETION_MATRIX.md`.
 This doc does NOT replace the per-game FINAL_GAPS files. It
 sits above them as a cross-game index, prioritized for action.
 
+2026-07-31 correction: the isolated `csb_hint_oracle_graphical_overlay`
+module, which drew a hardcoded frame and 5×7 font rather than original Utility
+Disk pixels, was removed. HCSB.HTC parsing and source-verified text binding
+remain; a graphical Hint Oracle is open only with a source-owned UI route.
+
 Classification:
 - **FIXED** — exists in main HEAD, source-locked.
 - **PARTIAL** — partially implemented; some sub-items in main, others not.

@@ -470,7 +470,11 @@ diagnostic; it must not silently fall back to a generated visual.
   not generated diagnostic chrome. **2026-07-31 follow-up:** the unconsumed
   Hint Oracle layout/ASCII-sketch module is removed rather than becoming a
   generic panel placeholder; a visible Hint Oracle needs decoded source art
-  and font material. **2026-07-31 follow-up:** the isolated first-backdrop
+  and font material. **2026-07-31 follow-up:** the separately reintroduced
+  graphical Hint Oracle renderer, with its invented 5×7 font, fixed palette
+  and frame, is also removed together with its test/probe targets. The
+  HCSB.HTC parser remains text-only until a source-owned screen route exists.
+  **2026-07-31 follow-up:** the isolated first-backdrop
   fixture, which asserted fixed synthetic colours instead of decoding a
   source bitmap/mask pair, is removed. **2026-07-31 follow-up:** unbound
   runtime creature groups now leave the source page unchanged; the retired
