@@ -1195,6 +1195,45 @@ static void test_d1c_door_frame_uses_source_graphic558_geometry(void)
               viewport[14 * DM1_VIEWPORT_WIDTH + 44], 0x5a);
 }
 
+static void test_d1_side_door_frame_uses_source_graphic558_geometry(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t pixels[128 * 4];
+    uint8_t grid[8 * 8];
+    IndexedGraphicProviderFixture provider;
+    DM1_Viewport3DState state;
+
+    /* G0176/G0178 crop the shared M659/G2112 source into the D1L/D1R
+     * 32x4 top strips at x=0 and x=192. */
+    memset(viewport, 0x5a, sizeof(viewport));
+    memset(pixels, 10, sizeof(pixels));
+    memset(grid, DM1_VP_ELEMENT_DOOR_FRONT, sizeof(grid));
+    pixels[0] = 0x31;
+    provider.graphic_index = 91;
+    provider.pixels = pixels;
+    provider.width = 128;
+    provider.height = 4;
+    dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_load_wall_set(&state, 0, 0);
+    state.floor_ceiling_dirty = false;
+    state.dungeon_grid = grid;
+    state.dungeon_aspect_grid = grid;
+    state.dungeon_width = 8;
+    state.dungeon_height = 8;
+    state.source_graphics_required = true;
+    state.graphic_provider_callback = indexed_graphic_provider;
+    state.graphic_provider_user_data = &provider;
+
+    dm1_viewport_3d_draw_frame(&state, 0, 4, 4);
+    check_int("d1_side_door_frame.source_left_native",
+              viewport[14 * DM1_VIEWPORT_WIDTH], 0x31);
+    check_int("d1_side_door_frame.source_right_native",
+              viewport[14 * DM1_VIEWPORT_WIDTH + 192], 0x31);
+    check_int("d1_side_door_frame.source_c10_transparent",
+              viewport[14 * DM1_VIEWPORT_WIDTH + 1], 0x5a);
+}
+
 static void test_floor_ceiling_bands_and_zones(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -5007,6 +5046,7 @@ int main(void)
     test_d2c_door_frame_uses_source_graphic558_geometry();
     test_d2_side_door_frame_uses_source_graphic558_geometry();
     test_d1c_door_frame_uses_source_graphic558_geometry();
+    test_d1_side_door_frame_uses_source_graphic558_geometry();
     test_floor_ceiling_bands_and_zones();
     test_floor_ceiling_uses_real_provider_pixels();
     test_floor_ceiling_uses_complete_pc34_provider_pair();

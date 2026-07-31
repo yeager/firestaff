@@ -44927,3 +44927,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   reference. Verification: `test_dm1_v1_viewport_3d_pc34_compat`,
   `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 CSB PC3.4 D1 side-door source binding: D1L/D1R now draw
+  their original M659/G2112 top strips through G0176/G0178 instead of a
+  legacy atlas crop. Both G2111 and G2110 are source aliases of G2112.
+  The F0172 front-door check also prevents the strip from appearing on a
+  `DOOR_SIDE` cell. ReDMCSB `DUNVIEW.C F0122:7496-7504` and
+  `F0123:7664-7672` are the source references. Verification:
+  `test_dm1_v1_viewport_3d_pc34_compat`,
+  `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
+  launcher handoff boundary (567/0, one expected Atari skip) pass.
