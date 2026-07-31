@@ -47727,3 +47727,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   every 15-bit direct-colour value, instead of treating bit 15 clear as
   transparency. Verification: production Nexus archive and
   `test_nexus_v1_dgn_geometry_readiness` pass.
+- ✅ 2026-07-31 Nexus Structure2 raster bounds hardening: image and palette
+  regions are validated against the actual DGN size before pointer formation;
+  packed 4bpp data now uses DMWeb's ceil-half-byte rule so odd-width textures
+  retain their final pixel. Verification: `firestaff_nexus` and
+  `test_nexus_v1_dgn_geometry_readiness` pass.

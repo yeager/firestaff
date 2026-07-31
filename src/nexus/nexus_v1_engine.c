@@ -4713,6 +4713,7 @@ int nexus_v1_current_level_decode_structure2_textures(
     const Nexus_V1_Level *level;
     const uint8_t *payload;
     uint32_t structure2_offset;
+    uint32_t dgn_size;
     int descriptor_index;
 
     memset(&receipt, 0, sizeof(receipt));
@@ -4728,6 +4729,9 @@ int nexus_v1_current_level_decode_structure2_textures(
         level->structure2_texture_count > max_surfaces ||
         !engine->current_level_dgn_data ||
         engine->current_level_dgn_size <= 0) return 0;
+    if ((uint64_t)engine->current_level_dgn_size > UINT32_MAX) return 0;
+    dgn_size = (uint32_t)engine->current_level_dgn_size;
+    if (dgn_size < 0x16U) return 0;
 
     structure2_offset = ((uint32_t)engine->current_level_dgn_data[0x14] << 8 |
         engine->current_level_dgn_data[0x15]) * NEXUS_DGN_BLOCK_SIZE;
@@ -4742,7 +4746,6 @@ int nexus_v1_current_level_decode_structure2_textures(
             &level->structure2_textures[descriptor_index];
         Nexus_DMDFTextureSurface *surface = &out_surfaces[descriptor_index];
         uint32_t pixel_count = (uint32_t)tex->width * tex->height;
-        uint32_t image_abs = structure2_offset + tex->image_relative_offset;
         uint8_t *indices;
         uint32_t i;
 
@@ -4752,12 +4755,30 @@ int nexus_v1_current_level_decode_structure2_textures(
         if (!indices) continue;
 
         if (tex->encoding == 0x0008U) {
-            uint32_t palette_abs = structure2_offset +
-                tex->palette_relative_offset;
-            uint32_t image_bytes = pixel_count / 2U;
-            const uint8_t *src = payload + image_abs;
-            const uint8_t *pal_src = payload + palette_abs;
+            uint32_t palette_bytes = 16U * 2U;
+            uint32_t image_bytes = (pixel_count + 1U) / 2U;
+            uint32_t image_abs;
+            uint32_t palette_abs;
+            const uint8_t *src;
+            const uint8_t *pal_src;
             int c;
+
+            /* DMWeb DMNDataFileDecoder.vbs reads both regions from the
+             * Structure2 block. Validate them before forming pointers. */
+            if (structure2_offset > dgn_size ||
+                tex->palette_relative_offset > dgn_size - structure2_offset ||
+                tex->image_relative_offset > dgn_size - structure2_offset ||
+                palette_bytes > dgn_size - structure2_offset -
+                    tex->palette_relative_offset ||
+                image_bytes > dgn_size - structure2_offset -
+                    tex->image_relative_offset) {
+                free(indices);
+                continue;
+            }
+            palette_abs = structure2_offset + tex->palette_relative_offset;
+            image_abs = structure2_offset + tex->image_relative_offset;
+            src = payload + image_abs;
+            pal_src = payload + palette_abs;
 
             for (c = 0; c < 16; ++c) {
                 uint16_t raw = (uint16_t)(pal_src[c * 2] << 8 |
@@ -4776,8 +4797,20 @@ int nexus_v1_current_level_decode_structure2_textures(
             ++receipt.decoded_count;
         } else if (tex->encoding == 0x0028U) {
             uint32_t palette_count = 1U;
-            const uint8_t *src = payload + image_abs;
+            uint32_t image_bytes = pixel_count * 2U;
+            uint32_t image_abs;
+            const uint8_t *src;
             int overflow = 0;
+
+            if (structure2_offset > dgn_size ||
+                tex->image_relative_offset > dgn_size - structure2_offset ||
+                image_bytes > dgn_size - structure2_offset -
+                    tex->image_relative_offset) {
+                free(indices);
+                continue;
+            }
+            image_abs = structure2_offset + tex->image_relative_offset;
+            src = payload + image_abs;
 
             memset(surface->palette, 0, sizeof(surface->palette));
             for (i = 0; i < pixel_count; ++i) {
