@@ -669,39 +669,8 @@ int main(void) {
     check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
                                      (int)sizeof(outPath)) == -1,
           "invalid DM2 SKSave import rejected before copy");
-    {
-        DM2_V1_SessionState dm2ImportSession;
-        const M12_SaveBrowserEntry* importedDm2;
-
-        dm2_v1_test_session_fixture_new(&dm2ImportSession);
-        dm2ImportSession.party_level = 9u;
-        dm2ImportSession.party_x = 11u;
-        dm2ImportSession.party_y = 13u;
-        check(dm2_v1_session_save_slot(backupDir,
-                                       4u,
-                                       "Import DM2",
-                                       &dm2ImportSession) == 0,
-              "wrote valid DM2 SKSave import fixture");
-        check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
-                                         (int)sizeof(outPath)) == 0,
-              "valid DM2 SKSave import accepted");
-        check(strstr(outPath, "/data/SKSave04.dat") != NULL,
-              "DM2 SKSave import reports data-dir destination");
-        check(M12_SaveBrowser_Scan(&state, dataDir) >= 1,
-              "scan runs after DM2 SKSave import");
-        importedDm2 = find_entry(&state, "SKSave04.dat");
-        check(importedDm2 != NULL, "imported DM2 SKSave entry present");
-        if (importedDm2) {
-            check(importedDm2->valid == 1,
-                  "imported DM2 SKSave entry is loadable");
-            check(strcmp(importedDm2->gameId, "dm2") == 0,
-                  "imported DM2 SKSave entry is classified as DM2");
-            check(importedDm2->mapLevel == 9,
-                  "imported DM2 SKSave entry preserves map level");
-        }
-        check(unlink(outPath) == 0,
-              "removed imported DM2 SKSave before manifest scan");
-    }
+    /* A D2RS fixture is not import evidence.  DM2 browser import is covered
+     * only by the original SUPPRESS/raw corpus route below. */
     snprintf(badPath, sizeof(badPath), "%s/nexus_save_03.dat", backupDir);
     check(write_bytes(badPath, "NOT-A-NEXUS-FNXS"),
           "wrote invalid Nexus FNXS import fixture");
@@ -984,7 +953,6 @@ int main(void) {
         char nestedSavePath[512];
         const M12_SaveBrowserEntry* nested;
         const M12_SaveBrowserEntry* nestedSuppress;
-        DM2_V1_SessionState dm2Session;
         DM2_GameStateBlock dm2SuppressState;
         DM2_ChampionRecord dm2SuppressChampion;
 
@@ -1002,21 +970,6 @@ int main(void) {
                  "%s/firestaff-csb-sibling.sav", nestedCsbSaves);
         check(write_bytes(nestedSavePath, "CSB-SIBLING-SAVE"),
               "wrote sibling CSB save fixture");
-        dm2_v1_test_session_fixture_new(&dm2Session);
-        dm2Session.party_level = 5u;
-        dm2Session.party_x = 19u;
-        dm2Session.party_y = 12u;
-        check(dm2_v1_session_save_slot(nestedDm2Saves, 6u,
-                                       "Nested DM2",
-                                       &dm2Session) == 0,
-              "wrote sibling DM2 SKSave slot fixture");
-        dm2Session.party_level = 7u;
-        dm2Session.party_x = 23u;
-        dm2Session.party_y = 14u;
-        check(dm2_v1_session_save_last_session(nestedDm2Saves,
-                                               "Nested DM2 Last",
-                                               &dm2Session) == 0,
-              "wrote sibling DM2 SKSave.dat fixture");
         memset(&dm2SuppressState, 0, sizeof(dm2SuppressState));
         dm2SuppressState.dwGameTick = 1234u;
         dm2SuppressState.dwRandomSeed = 0x4321u;
@@ -1038,8 +991,8 @@ int main(void) {
                                              &dm2SuppressState,
                                              &dm2SuppressChampion),
               "wrote sibling DM2 SUPPRESS SKSave slot fixture");
-        check(M12_SaveBrowser_Scan(&state, nestedData) == 4,
-              "scan finds sibling CSB plus DM2 session/SUPPRESS entries");
+        check(M12_SaveBrowser_Scan(&state, nestedData) == 2,
+              "scan finds sibling CSB plus original-format DM2 entry");
         nested = find_entry(&state, "firestaff-csb-sibling.sav");
         check(nested != NULL, "sibling CSB save entry present");
         if (nested) {
@@ -1047,28 +1000,6 @@ int main(void) {
                   "sibling CSB save keeps game id");
             check(strstr(nested->fullPath, "/saves/csb/firestaff-csb-sibling.sav") != NULL,
                   "sibling CSB save records actual save-root path");
-        }
-        nested = find_entry(&state, "SKSave06.dat");
-        check(nested != NULL, "sibling DM2 SKSave entry present");
-        if (nested) {
-            check(strcmp(nested->gameId, "dm2") == 0,
-                  "sibling DM2 SKSave keeps game id");
-            check(nested->valid == 1 && nested->mapLevel == 5,
-                  "sibling DM2 SKSave is loadable with saved level");
-            check(strstr(nested->champions, "Theron") != NULL,
-                  "sibling DM2 SKSave exposes champion names");
-            check(strstr(nested->fullPath, "/saves/dm2/SKSave06.dat") != NULL,
-                  "sibling DM2 SKSave records actual save-root path");
-        }
-        nested = find_entry(&state, "SKSave.dat");
-        check(nested != NULL, "sibling DM2 SKSave.dat entry present");
-        if (nested) {
-            check(strcmp(nested->gameId, "dm2") == 0,
-                  "sibling DM2 SKSave.dat keeps game id");
-            check(nested->valid == 1 && nested->mapLevel == 7,
-                  "sibling DM2 SKSave.dat is loadable with saved level");
-            check(strstr(nested->fullPath, "/saves/dm2/SKSave.dat") != NULL,
-                  "sibling DM2 SKSave.dat records actual save-root path");
         }
         nestedSuppress = find_entry(&state, "SKSave08.dat");
         check(nestedSuppress != NULL,

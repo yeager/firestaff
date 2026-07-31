@@ -1,6 +1,7 @@
 /* Production gate: DM2 must not write a Firestaff-private session as an
  * original SKSave.dat before SKProject's DM2_GAME_SAVE writer is ported. */
 #include "dm2_v1_boot.h"
+#include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
 #include <stdio.h>
 #include <string.h>
@@ -23,6 +24,7 @@ int main(void)
 {
     DM2_V1_BootProfile profile;
     DM2_V1_QuicksaveReceipt receipt;
+    DM2_V1_SessionState session;
     char parent[256];
     char absent_root[320];
     FILE *file;
@@ -33,6 +35,15 @@ int main(void)
     if (DM2_TEST_MKDIR(parent) != 0) return 1;
     snprintf(absent_root, sizeof(absent_root), "%s/no-original-writer",
              parent);
+
+    memset(&session, 0, sizeof(session));
+    if (dm2_v1_session_save_slot(absent_root, 0u, "fixture", &session) !=
+            DM2_V1_SESSION_WRITE_ORIGINAL_WRITER_REQUIRED ||
+        dm2_v1_session_save_last_session(absent_root, "fixture", &session) !=
+            DM2_V1_SESSION_WRITE_ORIGINAL_WRITER_REQUIRED) {
+        (void)DM2_TEST_RMDIR(parent);
+        return 4;
+    }
 
     dm2_v1_boot_profile_init(&profile);
     snprintf(profile.save_root, sizeof(profile.save_root), "%s", absent_root);

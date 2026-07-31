@@ -6401,6 +6401,15 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-31 DM2 public session-writer closure: the remaining
+  `dm2_v1_session_save_slot()` and `dm2_v1_session_save_last_session()`
+  compatibility APIs now return `DM2_V1_SESSION_WRITE_ORIGINAL_WRITER_REQUIRED`
+  before serializing or touching an `SKSave` path. M12/browser and utility
+  tests no longer manufacture D2RS session saves as proof of DM2 resume;
+  they retain only original-format SUPPRESS/raw import fixtures. Verification:
+  save/load, utility/import, M12 quick-resume and save-browser CTests pass,
+  and the production-linked no-writer gate passes.
+
 - ✅ 2026-07-31 DM2 synthetic runtime-smoke isolation: removed the
   `dm2_v1_runtime_handoff_smoke` CTest registration because it constructs a
   fabricated world, actor, weather, trigger and shop state. Production now

@@ -360,16 +360,17 @@ int dm2_v1_session_parse_save_candidate(DM2_V1_SaveCandidate *out_candidate,
                                          const uint8_t *buf,
                                          size_t buf_size);
 
-/* Save session to slot N using the slot manager.
- * Combines serialize + dm2_sl_save.
- * Returns 0 on success.
- * Source: dm2_v1_save_load.h dm2_sl_save() */
+/* A Firestaff session is not an original DM2 save graph.  Until
+ * SKProject's DM2_GAME_SAVE/DM2_SUPPRESS_WRITER path is implemented, these
+ * public compatibility entry points must not create SKSave files. */
+#define DM2_V1_SESSION_WRITE_ORIGINAL_WRITER_REQUIRED (-5)
+
+/* Refuses with DM2_V1_SESSION_WRITE_ORIGINAL_WRITER_REQUIRED. */
 int dm2_v1_session_save_slot(const char *save_base, uint8_t slot,
                                const char *name,
                                const DM2_V1_SessionState *session);
 
-/* Save session to original-style last-session SKSave.dat.
- * Rotates any existing SKSave.dat to SKSave.bak. */
+/* Refuses with DM2_V1_SESSION_WRITE_ORIGINAL_WRITER_REQUIRED. */
 int dm2_v1_session_save_last_session(const char *save_base,
                                       const char *name,
                                       const DM2_V1_SessionState *session);

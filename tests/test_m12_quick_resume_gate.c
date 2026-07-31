@@ -112,6 +112,8 @@ static void force_csb_available(M12_StartupMenuState* state) {
     state->messageLine3 = "";
 }
 
+/* Fixture availability is not a DM2 source-data admission route. */
+#if 0
 static void force_dm2_available(M12_StartupMenuState* state) {
     state->entries[2].title = "DUNGEON MASTER II";
     state->entries[2].gameId = "dm2";
@@ -146,6 +148,7 @@ static void force_dm2_available(M12_StartupMenuState* state) {
     state->messageLine2 = "";
     state->messageLine3 = "";
 }
+#endif
 
 static void force_nexus_available(M12_StartupMenuState* state) {
     state->entries[3].title = "DUNGEON MASTER NEXUS";
@@ -1354,65 +1357,15 @@ int main(void) {
                 strcmp(intent.savePath, originalDmSaveBrowserSavePath) == 0,
                 "save browser DMSAVE.DAT launch intent should carry exact path")) return 1;
 
-    if (!expect(write_dm2_slot_save(tmpTemplate, 4u,
-                                    dm2SlotSavePath,
-                                    sizeof(dm2SlotSavePath)),
-                "should write DM2 SKSave browser slot")) return 1;
-    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
-    force_dm2_available(&state);
-    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
-                "startup should open save browser for DM2 SKSave slots")) return 1;
-    if (!expect(select_save_entry(&state, "SKSave04.dat"),
-                "save browser should list DM2 SKSave04.dat")) return 1;
-    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
-                "save browser should mark DM2 SKSave slot loadable")) return 1;
-    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
-                       "dm2") == 0,
-                "save browser should classify SKSave slot as dm2")) return 1;
-    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].mapLevel == 3,
-                "save browser should expose DM2 saved level")) return 1;
-    if (!expect(strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
-                       "Theron") != NULL,
-                "save browser should expose DM2 champion names")) return 1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(state.launchRequested == 1 &&
-                state.quickResumeLaunchRequested == 1,
-                "save browser DM2 accept should request save-path launch")) return 1;
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "dm2") == 0,
-                "save browser DM2 launch intent should identify DM2")) return 1;
-    if (!expect(intent.savePath &&
-                strcmp(intent.savePath, dm2SlotSavePath) == 0,
-                "save browser DM2 launch intent should carry exact SKSave path")) return 1;
-
-    if (!expect(write_dm2_last_session_save(tmpTemplate,
-                                            dm2LastSessionSavePath,
-                                            sizeof(dm2LastSessionSavePath)),
-                "should write DM2 SKSave.dat browser last-session")) return 1;
-    M12_StartupMenu_InitWithDataDir(&state, tmpTemplate, NULL);
-    force_dm2_available(&state);
-    if (!expect(M12_StartupMenu_OpenSaveBrowser(&state) == 0,
-                "startup should open save browser for DM2 SKSave.dat")) return 1;
-    if (!expect(select_save_entry(&state, "SKSave.dat"),
-                "save browser should list DM2 SKSave.dat")) return 1;
-    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
-                "save browser should mark DM2 SKSave.dat loadable")) return 1;
-    if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
-                       "dm2") == 0,
-                "save browser should classify SKSave.dat as dm2")) return 1;
-    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].mapLevel == 6,
-                "save browser should expose DM2 last-session level")) return 1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "dm2") == 0,
-                "save browser DM2 SKSave.dat launch intent should identify DM2")) return 1;
-    if (!expect(intent.savePath &&
-                strcmp(intent.savePath, dm2LastSessionSavePath) == 0,
-                "save browser DM2 SKSave.dat launch intent should carry exact path")) return 1;
+    /* DM2 fixture sessions are no longer permitted to create SKSave files.
+     * The save browser remains covered by separately supplied original
+     * SKSave corpus entries; this cross-game quick-resume test must not
+     * manufacture a substitute corpus. */
+    if (!expect(!write_dm2_slot_save(tmpTemplate, 4u, dm2SlotSavePath,
+                                     sizeof(dm2SlotSavePath)) &&
+                !write_dm2_last_session_save(tmpTemplate, dm2LastSessionSavePath,
+                                              sizeof(dm2LastSessionSavePath)),
+                "DM2 fixture writers require the original writer")) return 1;
 
     snprintf(nexusSavePath, sizeof(nexusSavePath),
              "%s/firestaff-nexus-quicksave.sav", tmpTemplate);

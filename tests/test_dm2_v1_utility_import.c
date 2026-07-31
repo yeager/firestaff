@@ -264,7 +264,7 @@ static void test_serialize_roundtrip(void)
 static void test_slot_roundtrip(void)
 {
     printf("  Slot save→load round-trip...\n");
-    DM2_V1_SessionState orig, loaded;
+    DM2_V1_SessionState orig;
 
     /* Modify session for this test */
     dm2_v1_test_session_fixture_new(&orig);
@@ -280,49 +280,13 @@ static void test_slot_roundtrip(void)
     orig.time_of_day_minutes = 900; /* 3 PM */
     orig.rain_intensity = 50;
 
-    /* Save to slot 3 */
+    /* A compact Firestaff session must never be written as SKSave03.dat.
+     * The source-owned DM2_GAME_SAVE graph is still required. */
     int r = dm2_v1_session_save_slot(g_save_dir, 3, "Test Save", &orig);
-    CHECK(r == 0, "save_slot returns 0 (success)");
-
-    /* Verify slot is reported as occupied */
-    CHECK(dm2_v1_save_has_valid_slot(g_save_dir, 3),
-          "Slot 3 is occupied after save");
-
-    /* Load from slot 3 */
-    r = dm2_v1_session_load_slot(g_save_dir, 3, &loaded);
-    CHECK(r == 0, "load_slot returns 0 (success)");
-
-    /* Verify loaded values */
-    CHECK(loaded.party_level == 2,
-          "party_level preserved through slot round-trip");
-    CHECK(loaded.outdoor_mode == 1,
-          "outdoor_mode preserved through slot round-trip");
-    CHECK(loaded.party_x == 23, "party_x preserved through slot round-trip");
-    CHECK(loaded.party_y == 11, "party_y preserved through slot round-trip");
-    CHECK(loaded.party_dir == 3, "party_dir preserved through slot round-trip");
-    CHECK(loaded.gold == 500, "gold preserved through slot round-trip");
-    CHECK(loaded.time_of_day_minutes == 900,
-          "time_of_day preserved through slot round-trip");
-    CHECK(loaded.rain_intensity == 50,
-          "rain_intensity preserved through slot round-trip");
-    CHECK(loaded.champion_count == 4,
-          "champion_count preserved through slot round-trip");
-
-    /* Validate */
-    CHECK(dm2_v1_session_validate(&loaded),
-          "Loaded session is valid after slot round-trip");
-
-    /* Delete slot */
-    r = dm2_v1_session_delete_slot(g_save_dir, 3);
-    CHECK(r == 0, "delete_slot returns 0");
-
-    /* Verify slot is now empty */
+    CHECK(r == DM2_V1_SESSION_WRITE_ORIGINAL_WRITER_REQUIRED,
+          "session slot writer refuses an unproven SKSave graph");
     CHECK(!dm2_v1_save_has_valid_slot(g_save_dir, 3),
-          "Slot 3 is empty after delete");
-
-    /* Load from deleted slot should fail */
-    r = dm2_v1_session_load_slot(g_save_dir, 3, &loaded);
-    CHECK(r != 0, "load from deleted slot returns non-zero");
+          "refused writer creates no slot");
 }
 
 /* ── Test 7: New game flow ── */

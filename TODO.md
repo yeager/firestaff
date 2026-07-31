@@ -713,6 +713,10 @@
   sidecar are now removed from production. A save command returns the explicit
   `DM2 ORIGINAL SAVE WRITER REQUIRED` result before creating a save directory,
   exporting a session, or changing an existing original resume payload.
+  **2026-07-31 follow-up:** the remaining public compact-session writer APIs
+  now return `DM2_V1_SESSION_WRITE_ORIGINAL_WRITER_REQUIRED` too. Test/browser
+  fixtures no longer create D2RS saves; only source-format import material is
+  admitted while the original writer remains incomplete.
 
 ## Active DM1/CSB Symbol Queue
 

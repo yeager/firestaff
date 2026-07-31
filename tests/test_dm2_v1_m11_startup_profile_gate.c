@@ -18,6 +18,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_save_load.h"
 #include "dm2_v1_session_fixture.h"
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
@@ -122,6 +123,35 @@ static int write_tiny_file(const char* path, const char* bytes) {
     fputs(bytes, f);
     fclose(f);
     return 1;
+}
+
+/* Test-only corpus construction.  Production session writers are deliberately
+ * blocked until DM2_GAME_SAVE is ported; this helper makes each artificial
+ * D2RS fixture explicit rather than exercising that public production API. */
+static int write_fixture_d2rs_slot(const char *root, uint8_t slot,
+                                   const char *name,
+                                   const DM2_V1_SessionState *session)
+{
+    uint8_t payload[DM2_SESSION_MAX_SIZE];
+    int payload_size;
+    if (!root || !session) return 0;
+    payload_size = dm2_v1_session_serialize(session, payload,
+                                             sizeof(payload));
+    return payload_size > 0 &&
+           dm2_sl_save(root, slot, name, payload, (size_t)payload_size) == 0;
+}
+
+static int write_fixture_d2rs_last_session(const char *root, const char *name,
+                                           const DM2_V1_SessionState *session)
+{
+    uint8_t payload[DM2_SESSION_MAX_SIZE];
+    int payload_size;
+    if (!root || !session) return 0;
+    payload_size = dm2_v1_session_serialize(session, payload,
+                                             sizeof(payload));
+    return payload_size > 0 &&
+           dm2_sl_save_last_session(root, name, payload,
+                                    (size_t)payload_size) == 0;
 }
 
 static int framebuffer_zone_differs(const unsigned char *a,
@@ -2494,14 +2524,11 @@ int main(void) {
         resume_champ->inventory[CHAMPION_SLOT_HEAD] = loadable_icon_handle;
         resume_champ1->inventory[CHAMPION_SLOT_HEAD] = loadable_icon_handle;
     }
-    expect_true(dm2_v1_session_save_slot(save_root,
-                                         3,
-                                         "M11 Resume",
-                                         &resume_session) == 0,
+    expect_true(write_fixture_d2rs_slot(save_root, 3, "M11 Resume",
+                                         &resume_session),
                 "wrote DM2 SKSave03.dat resume fixture");
-    expect_true(dm2_v1_session_save_last_session(save_root,
-                                                 "M11 Resume",
-                                                 &resume_session) == 0,
+    expect_true(write_fixture_d2rs_last_session(save_root, "M11 Resume",
+                                                 &resume_session),
                 "wrote DM2 SKSave.dat source-resume fixture");
     snprintf(save_path, sizeof(save_path), "%s%sSKSave03.dat",
              save_root, TEST_PATH_SEP);
@@ -2929,9 +2956,8 @@ int main(void) {
     resume_session.outdoor_mode = 0;
     resume_session.time_of_day_minutes = 450;
     resume_session.rain_intensity = 0;
-    expect_true(dm2_v1_session_save_last_session(save_root,
-                                                 "M11 Last",
-                                                 &resume_session) == 0,
+    expect_true(write_fixture_d2rs_last_session(save_root, "M11 Last",
+                                                 &resume_session),
                 "wrote DM2 SKSave.dat last-session fixture");
     snprintf(save_path, sizeof(save_path), "%s%sSKSave.dat",
              save_root, TEST_PATH_SEP);

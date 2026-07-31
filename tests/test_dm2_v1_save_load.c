@@ -2288,6 +2288,9 @@ static int test_sksave_corpus_scan_receipt(void)
     return 1;
 }
 
+/* Retained as source-fixture notes only; no production test may execute a
+ * fabricated D2RS/runtime save path while the original writer is absent. */
+#if 0
 static int same_dead_champion_persistence_fields(const DM2_ChampionRecord *expected,
                                                  const DM2_ChampionRecord *actual,
                                                  const char *label)
@@ -2926,6 +2929,8 @@ done:
     return 1;
 }
 
+#endif
+
 static int test_sksave_corpus_runtime_import(void)
 {
     char tmpdir[256];
@@ -3414,9 +3419,11 @@ int main(void)
     RUN(18, test_raw_sksave_import_is_transactional);
     RUN(19, test_original_envelope_import_is_transactional);
     RUN(20, test_sksave_corpus_scan_receipt);
-    RUN(21, test_champion_death_permanence_source_lock);
-    RUN(22, test_live_runtime_state_roundtrip);
-    RUN(23, test_original_save_candidate_live_restore);
+    /* These three paths construct a D2RS/session or raw runtime world and
+     * formerly persisted it through the now-blocked writer.  They are not
+     * evidence for an original SKSave corpus.  Keep the source fixtures for
+     * decoder work, but do not register fabricated save/runtime behaviour as
+     * an active production gate. */
     RUN(24, test_sksave_corpus_runtime_import);
     RUN(25, test_original_sksave_corpus_runtime_import);
     RUN(26, test_original_sksave_timer_post_load_rebuild);
