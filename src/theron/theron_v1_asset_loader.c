@@ -291,10 +291,12 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
 
     FILE *fp = fopen(file_path, "rb");
     if (!fp) {
-        printf("[TQR] Could not open %s: no asset file (using defaults)\n",
+        printf("[TQR] Could not open %s: no verified asset data\n",
                file_path);
-        /* Phase 0: not an error — fall back to deterministic defaults */
-        return TR_ASSET_OK;
+        /* An empty palette/tile state is not a usable asset load.  Do not
+         * report success merely because the old procedural defaults were
+         * removed; callers must take the explicit no-data route. */
+        return TR_ASSET_ERR_NO_DATA;
     }
 
     /* Get file size */

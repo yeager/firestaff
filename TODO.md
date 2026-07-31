@@ -53,7 +53,8 @@
 - **THERON-LEGACY-ASSET-VERIFY:** The generic asset loader has no authoritative
   SHA256 catalog. Its verification API now rejects supplied digests instead of
   returning a false success; callers must use the hash-bound Track 02 boot
-  path.
+  path. A missing legacy asset path now also returns explicit `NO_DATA`
+  instead of reporting success with removed procedural defaults.
 
 - **THERON-CHAPTER-MARKER-REAL-PROGRESSION:** A verified Track 02 identity is
   no longer enough to fabricate chapter/quest progress. Production requires a

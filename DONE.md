@@ -47284,6 +47284,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   production. Those fields remain unavailable until their source records are
   decoded; fixture metadata is compile-scoped to the startup probe.
 
+- ✅ 2026-07-31 Theron legacy asset no-data gate: `tr_asset_load()` no longer
+  returns success or claims “using defaults” when the requested file is
+  missing. It returns `TR_ASSET_ERR_NO_DATA`; rendering remains source-gated.
+  Focused rendering passes `25/25`, startup/save-resume `325/325`.
+
 - ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
   offsets and the 216-entry DMWeb TABL code table are parsed from the real
   retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy
