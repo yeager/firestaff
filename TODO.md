@@ -698,7 +698,11 @@
   `DM2_SUPPRESS_WRITER` graph before enabling save output: the source writes
   the 0x3c save block, global state, heroes, timers and dungeon sections in
   source order. Do not introduce a Firestaff-private envelope or minimap
-  extension as a substitute for an original `SKSave.dat`.
+  extension as a substitute for an original `SKSave.dat`. **2026-07-31
+  update:** the M11/runtime quick-save route and its `SKSave.runtime`
+  sidecar are now removed from production. A save command returns the explicit
+  `DM2 ORIGINAL SAVE WRITER REQUIRED` result before creating a save directory,
+  exporting a session, or changing an existing original resume payload.
 
 ## Active DM1/CSB Symbol Queue
 

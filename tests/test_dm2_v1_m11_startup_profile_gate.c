@@ -2803,15 +2803,16 @@ int main(void) {
         expect_true(M11_GameView_HandleInput(&view,
                                              M12_MENU_INPUT_SAVE_GAME) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 resume save command writes runtime inventory session");
+                    "M11 DM2 resume save command redraws after original-writer refusal");
         snprintf(save_path, sizeof(save_path), "%s%sSKSave.dat",
                  save_root, TEST_PATH_SEP);
         memset(&resume_session, 0, sizeof(resume_session));
         expect_true(dm2_v1_session_load_last_session(save_root,
                                                      &resume_session) == 0,
-                    "M11 DM2 resume save command writes loadable SKSave.dat");
-        expect_true(resume_session.original_leader_hand_object == 0u,
-                    "M11 DM2 saved session preserves cleared leader hand");
+                    "M11 DM2 keeps the pre-existing resume fixture readable");
+        expect_true(resume_session.original_leader_hand_object ==
+                        dm2_db_make_handle(10, 0x0033),
+                    "M11 DM2 cannot replace a source resume with a fixture session");
         expect_true(((DM2_ChampionRecord *)resume_session.champion_data[0])
                         ->inventory[CHAMPION_SLOT_HEAD] ==
                         loadable_icon_handle,
@@ -2850,14 +2851,15 @@ int main(void) {
     view.dm2State.leader_hand_object = 0u;
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_SAVE_GAME) ==
                     M11_GAME_INPUT_REDRAW,
-                "M11 DM2 writes a cleared leader hand to SKSave.dat");
+                "M11 DM2 redraws after blocking the unproven save writer");
     snprintf(save_path, sizeof(save_path), "%s%sSKSave.dat",
              save_root, TEST_PATH_SEP);
     memset(&resume_session, 0, sizeof(resume_session));
     expect_true(dm2_v1_session_load_last_session(save_root,
                                                  &resume_session) == 0 &&
-                    resume_session.original_leader_hand_object == 0u,
-                "M11 DM2 SKSave.dat keeps the cleared leader hand");
+                    resume_session.original_leader_hand_object ==
+                        dm2_db_make_handle(10, 0x0033),
+                "M11 DM2 leaves the original resume payload unchanged");
     {
         char leader_name[32];
 
@@ -2875,9 +2877,7 @@ int main(void) {
                                                             leader_name,
                                                             sizeof(leader_name)),
                     "M11 DM2 leader-hand rejects the fixture item-name catalog");
-        /* This is a name-formatting probe, not a resumed save mutation. Do
-         * not carry its synthetic process-local handle into the following
-         * SKSave resume assertion. */
+        /* This is a name-formatting probe, not a persisted mutation. */
         dm2_v1_runtime_set_leader_hand_object(0u);
         view.dm2State.leader_hand_object = 0u;
     }
@@ -2907,16 +2907,18 @@ int main(void) {
     expect_true(M11_GameView_GetDm2InventoryObject(
                     &view, 1, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
                 "M11 DM2 saved SKSave.dat restores champion 1 slot ObjectID into view state");
-    expect_true(M11_GameView_GetDm2LeaderHandObject(&view) == 0u,
-                "M11 DM2 saved SKSave.dat restores cleared leader hand into view state");
+    expect_true(M11_GameView_GetDm2LeaderHandObject(&view) ==
+                    dm2_db_make_handle(10, 0x0033),
+                "M11 DM2 resumes the unchanged source leader-hand ObjectID into view state");
     expect_true(dm2_v1_runtime_get_champion_inventory_object(
                     0, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
                 "M11 DM2 saved SKSave.dat restores slot ObjectID into runtime");
     expect_true(dm2_v1_runtime_get_champion_inventory_object(
                     1, CHAMPION_SLOT_HEAD) == loadable_icon_handle,
                 "M11 DM2 saved SKSave.dat restores champion 1 slot ObjectID into runtime");
-    expect_true(dm2_v1_runtime_get_leader_hand_object() == 0u,
-                "M11 DM2 saved SKSave.dat restores cleared runtime leader hand");
+    expect_true(dm2_v1_runtime_get_leader_hand_object() ==
+                    dm2_db_make_handle(10, 0x0033),
+                "M11 DM2 resumes the unchanged source leader-hand ObjectID into runtime");
     M11_GameView_Shutdown(&view);
 
     resume_session.game_tick = 70;

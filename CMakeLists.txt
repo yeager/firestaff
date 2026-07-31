@@ -26746,6 +26746,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_hoc_candidate_runtime_r
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_quicksave_original_writer_gate.c")
+    add_executable(test_dm2_v1_quicksave_original_writer_gate
+        tests/test_dm2_v1_quicksave_original_writer_gate.c)
+    target_link_libraries(test_dm2_v1_quicksave_original_writer_gate PRIVATE
+        firestaff_dm2)
+    target_include_directories(test_dm2_v1_quicksave_original_writer_gate PRIVATE
+        ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_quicksave_original_writer_gate PRIVATE
+            -Wall -Wextra -Werror)
+    endif()
+    add_test(NAME dm2_v1_quicksave_original_writer_gate
+        COMMAND test_dm2_v1_quicksave_original_writer_gate)
+endif()
+
     add_executable(test_dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat
         tests/test_dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat.c
         src/dm1/dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat.c

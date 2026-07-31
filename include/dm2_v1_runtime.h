@@ -1195,6 +1195,10 @@ int dm2_v1_runtime_load_last_session(const char *save_base);
 typedef enum DM2_V1_QuicksaveResult {
     DM2_V1_QUICKSAVE_OK = 0,
     DM2_V1_QUICKSAVE_PROFILE_MISSING,
+    /* SKProject DM2_GAME_SAVE / DM2_SUPPRESS_WRITER has not yet been
+     * recovered.  Do not write a Firestaff-private session under an original
+     * SKSave filename. */
+    DM2_V1_QUICKSAVE_ORIGINAL_WRITER_REQUIRED,
     DM2_V1_QUICKSAVE_SAVE_DIR_FAILED,
     DM2_V1_QUICKSAVE_EXPORT_FAILED,
     DM2_V1_QUICKSAVE_WRITE_FAILED

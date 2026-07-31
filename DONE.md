@@ -47664,3 +47664,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `SDDRVS.TSK` files. Firestaff already retains bounded MAP/SAL provenance;
   playback remains blocked because the SAL codec and SDDRVS event ABI are not
   source- or capture-proven. No SAL bytes are promoted to guessed PCM.
+
+- ✅ 2026-07-31 DM2 synthetic save-writer removal: production quick-save no
+  longer serializes Firestaff's private session envelope or writes the
+  `SKSave.runtime` sidecar as `SKSave.dat`. The M11/runtime boundary now
+  rejects saving with `DM2 ORIGINAL SAVE WRITER REQUIRED` before any directory
+  or file write, and no sidecar can later mutate an admitted original resume.
+  Original-save import remains available. Verification: real-data
+  `test_dm2_v1_m11_startup_profile_gate` and the production-linked
+  `test_dm2_v1_quicksave_original_writer_gate` pass, including the explicit
+  no-output save regression.

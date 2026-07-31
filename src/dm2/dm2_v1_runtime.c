@@ -821,10 +821,6 @@ static int dm2_runtime_live_header_valid(const DM2_V1_RuntimeSaveHeader *header,
                    sizeof(header->graphics_md5)) == 0;
 }
 
-static int dm2_runtime_write_live_sidecar(const char *save_root);
-static void dm2_runtime_restore_live_sidecar(const char *save_root,
-                                             const DM2_V1_SessionState *session);
-
 static void dm2_runtime_add_viewport_asset_evidence(
     DM2_V1_RuntimeFrameOwnershipReceipt *receipt, int gdat_index)
 {
@@ -2453,9 +2449,6 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->weather.weather = DM2_WEATHER_UNKNOWN;
     rt->weather.weather_intensity = 0;
     rt->weather.weather_seed = 0u;
-    if (!g_dm2_runtime_restore_in_progress && rt->boot->save_root[0]) {
-        dm2_runtime_restore_live_sidecar(rt->boot->save_root, session);
-    }
     return 0;
 }
 
@@ -8665,74 +8658,6 @@ int dm2_v1_runtime_load_last_session(const char *save_base)
     return dm2_v1_runtime_restore_save_candidate(data, data_size);
 }
 
-static int dm2_runtime_write_live_sidecar(const char *save_root)
-{
-    char path[512];
-    uint8_t *data;
-    size_t size;
-    FILE *file;
-
-    if (!save_root || !FSP_JoinPath(path, sizeof(path), save_root,
-                                    "SKSave.runtime")) return -1;
-    size = dm2_v1_runtime_live_save_size();
-    if (size == 0) return -1;
-    data = (uint8_t *)malloc(size);
-    if (!data) return -1;
-    if (dm2_v1_runtime_serialize_live_save(data, size) < 0) {
-        free(data);
-        return -1;
-    }
-    file = fopen(path, "wb");
-    if (!file || fwrite(data, 1, size, file) != size) {
-        if (file) fclose(file);
-        free(data);
-        return -1;
-    }
-    fclose(file);
-    free(data);
-    return 0;
-}
-
-static void dm2_runtime_restore_live_sidecar(const char *save_root,
-                                             const DM2_V1_SessionState *session)
-{
-    char path[512];
-    FILE *file;
-    long length;
-    uint8_t *data;
-    DM2_V1_SessionState saved;
-
-    if (!save_root || !session || !FSP_JoinPath(path, sizeof(path), save_root,
-                                    "SKSave.runtime")) return;
-    file = fopen(path, "rb");
-    if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (length = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
-        if (file) fclose(file);
-        return;
-    }
-    data = (uint8_t *)malloc((size_t)length);
-    if (!data || fread(data, 1, (size_t)length, file) != (size_t)length) {
-        fclose(file);
-        free(data);
-        return;
-    }
-    fclose(file);
-    if ((size_t)length <= sizeof(DM2_V1_RuntimeSaveHeader)) {
-        free(data);
-        return;
-    }
-    if (dm2_v1_session_deserialize(&saved, data + sizeof(DM2_V1_RuntimeSaveHeader),
-                                   (size_t)length - sizeof(DM2_V1_RuntimeSaveHeader)) != 0 ||
-        saved.game_tick != session->game_tick || saved.rng_seed != session->rng_seed ||
-        saved.party_x != session->party_x || saved.party_y != session->party_y ||
-        saved.party_level != session->party_level || saved.party_dir != session->party_dir) {
-        free(data);
-        return;
-    }
-    (void)dm2_v1_runtime_restore_live_save(data, (size_t)length);
-    free(data);
-}
-
 static void dm2_v1_quicksave_receipt_init(
     DM2_V1_QuicksaveReceipt *receipt,
     DM2_V1_QuicksaveResult result,
@@ -8758,60 +8683,20 @@ int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
     if (!profile) {
         return 0;
     }
-    if (!profile->save_root[0]) {
-        dm2_v1_boot_set_save_root(profile, NULL);
-    }
-    snprintf(receipt->save_root, sizeof(receipt->save_root),
-             "%s", profile->save_root);
-    if (!FSP_CreateDirectoryRecursive(profile->save_root)) {
-        dm2_v1_quicksave_receipt_init(receipt,
-                                      DM2_V1_QUICKSAVE_SAVE_DIR_FAILED,
-                                      "DM2 SAVE DIR FAILED");
-        snprintf(receipt->save_root, sizeof(receipt->save_root),
-                 "%s", profile->save_root);
-        return 0;
-    }
-    memset(&receipt->session, 0, sizeof(receipt->session));
-    (void)dm2_v1_runtime_graphicsset_scene_receipt(
-        &receipt->graphicsset_scene);
-    if (dm2_v1_runtime_export_session(&receipt->session) != 0) {
-        dm2_v1_quicksave_receipt_init(receipt,
-                                      DM2_V1_QUICKSAVE_EXPORT_FAILED,
-                                      "DM2 EXPORT FAILED");
-        snprintf(receipt->save_root, sizeof(receipt->save_root),
-                 "%s", profile->save_root);
-        return 0;
-    }
-    /* skproject/SkWin save flow writes the current live runtime session to
-     * SKSave.dat as the direct resume target. Firestaff keeps M11 outside
-     * the SKSave write path; runtime owns export + last-session rotation. */
-    if (dm2_v1_session_save_last_session(profile->save_root,
-                                         "Firestaff DM2",
-                                         &receipt->session) != 0) {
-        dm2_v1_quicksave_receipt_init(receipt,
-                                      DM2_V1_QUICKSAVE_WRITE_FAILED,
-                                      "DM2 WRITE FAILED");
-        snprintf(receipt->save_root, sizeof(receipt->save_root),
-                 "%s", profile->save_root);
-        return 0;
-    }
-    if (dm2_runtime_write_live_sidecar(profile->save_root) != 0) {
-        dm2_v1_quicksave_receipt_init(receipt,
-                                      DM2_V1_QUICKSAVE_WRITE_FAILED,
-                                      "DM2 RUNTIME WRITE FAILED");
+    /* SKProject SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_SAVE writes the
+     * complete original save graph (globals, heroes, timers and dungeon) in
+     * source order.  Firestaff has only an import-side session envelope, so
+     * exporting it as SKSave.dat would create a plausible-looking but
+     * non-original save.  Refuse before creating a directory, exporting a
+     * session or writing the former SKSave.runtime sidecar. */
+    dm2_v1_quicksave_receipt_init(
+        receipt, DM2_V1_QUICKSAVE_ORIGINAL_WRITER_REQUIRED,
+        "DM2 ORIGINAL SAVE WRITER REQUIRED");
+    if (profile->save_root[0]) {
         snprintf(receipt->save_root, sizeof(receipt->save_root), "%s",
                  profile->save_root);
-        return 0;
     }
-    if (!FSP_JoinPath(receipt->save_path, sizeof(receipt->save_path),
-                      profile->save_root, "SKSave.dat")) {
-        receipt->save_path[0] = '\0';
-    }
-    receipt->result = DM2_V1_QUICKSAVE_OK;
-    receipt->status_scope = "SAVE";
-    receipt->status = "DM2 SKSAVE WRITTEN";
-    receipt->session_valid = 1;
-    return 1;
+    return 0;
 }
 
 uint8_t dm2_v1_runtime_get_minion_count(void) {

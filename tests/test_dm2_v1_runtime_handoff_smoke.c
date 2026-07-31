@@ -746,16 +746,18 @@ static void test_first_tick_after_boot_profile_handoff(void)
         memset(&quicksave, 0, sizeof(quicksave));
         CHECK(dm2_v1_runtime_quicksave_boot_profile_with_receipt(
                   &profile,
-                  &quicksave) == 1,
-              "runtime quicksave receipt writes DM2 last-session save");
-        CHECK(quicksave.result == DM2_V1_QUICKSAVE_OK &&
-              quicksave.session_valid &&
-              strstr(quicksave.save_path, "SKSave.dat") != NULL,
-              "runtime quicksave receipt reports SKSave.dat path and exported session");
-        memset(&restored, 0, sizeof(restored));
-        CHECK(dm2_v1_session_load_last_session(tmpdir, &restored) == 0 &&
-              restored.original_leader_hand_object == 0x0A000055u,
-              "runtime quicksave SKSave.dat reloads through DM2 last-session loader");
+                  &quicksave) == 0,
+              "runtime quicksave refuses the unproven original writer");
+        CHECK(quicksave.result == DM2_V1_QUICKSAVE_ORIGINAL_WRITER_REQUIRED &&
+              !quicksave.session_valid && quicksave.save_path[0] == '\0',
+              "runtime quicksave receipt exposes no Firestaff SKSave substitute");
+        snprintf(slot_path, sizeof(slot_path), "%s/SKSave.dat", tmpdir);
+        {
+            FILE *blocked_save = fopen(slot_path, "rb");
+            CHECK(blocked_save == NULL,
+                  "runtime quicksave cannot create an unproven SKSave.dat");
+            if (blocked_save) fclose(blocked_save);
+        }
         snprintf(slot_path, sizeof(slot_path), "%s/SKSave.dat", tmpdir);
         (void)remove(slot_path);
         snprintf(slot_path, sizeof(slot_path), "%s/SKSave06.dat", tmpdir);
