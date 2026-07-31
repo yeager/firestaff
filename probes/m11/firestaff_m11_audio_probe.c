@@ -278,6 +278,11 @@ int main(int argc, char** argv) {
         int beforePlayed = state.playedMarkerCount;
         int sourceResult;
 
+        /* INV_M11_AUDIO_05 intentionally clamps SFX to zero. Restore the
+         * source playback domain before asserting that the SDL stream queues
+         * real indexed PCM; zero volume correctly has no queued payload. */
+        M11_Audio_SetVolumes(&state, master, 128, music, ui);
+
         probe_record(&tally,
                      "INV_M11_AUDIO_06B",
                      state.backend == M11_AUDIO_BACKEND_SDL3 &&

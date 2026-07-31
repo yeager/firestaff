@@ -11,6 +11,12 @@
   Verification: production `firestaff` link, phase-2 probe, and archive-symbol
   check showing no host-pipeline entry points.
 
+- ✅ 2026-07-31 DM1 source-index audio queue regression: restored the SFX
+  playback domain after the intentional zero-volume clamp before the SDL
+  source-PCM assertion. The probe now tests real indexed sound queuing rather
+  than a muted stream. Verification: `firestaff_m11_audio_probe
+  --expect-sdl-source-index-queue` passes 12/12 with the SDL dummy backend.
+
 - ✅ 2026-07-31 DM2 save-codec fixture isolation: removed the fixed-byte
   SUPPRESS self-verification routine from the production save archive. Its
   explicit codec check now compiles only into the save-load test; live save
