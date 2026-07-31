@@ -46606,3 +46606,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `CSBGRAPH.DAT` can no longer become a live graphics binding merely because
   of its filename. The regression covers both selected and unknown hints;
   renamed authentic media remains discoverable through recursive hash search.
+- ✅ 2026-07-31 CSB undefined monster-projectile gate: Grey Lord/Lord Order's
+  documented ReDMCSB `GROUP.C` BUG0_13 path, and a missing RNG context, no
+  longer create a synthetic Fireball. They return no source projectile, which
+  the live runtime rejects before projectile creation. Normal authenticated
+  creature attacks keep their original projectile selection.

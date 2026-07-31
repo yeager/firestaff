@@ -179,16 +179,16 @@ void csb_v1_attack_parameters_build(
  *    Wizard Eye:        CSB uses 1/8 ZoSpell; DM1 uses 1/8 OpenDoor
  *    Zytaz:             CSB uses 50% PoisonCloud; DM1 uses Fireball only
  *
- *  Grey Lord / Lord Order BUG0_13: both CSB and DM1 fall through to
- *  uninitialized projectile thing. Not reachable in original dungeons;
- *  FIREBALL is the deterministic fallback.
+ *  Grey Lord / Lord Order BUG0_13: both CSB and DM1 fall through to an
+ *  uninitialized projectile thing. It is unreachable in the original
+ *  dungeons, so Firestaff fails closed rather than inventing a Fireball.
  * ============================================================ */
 
 int csb_v1_projectile_type_for_creature(int creatureType,
                                          struct RngState_Compat *rng) {
     int r;
 
-    if (!rng) return CSB_PROJECTILE_FIREBALL;
+    if (!rng) return CSB_PROJECTILE_NONE;
 
     switch (creatureType) {
 
@@ -251,9 +251,12 @@ int csb_v1_projectile_type_for_creature(int creatureType,
          *   "BUG0_13 The game may crash when 'Lord Order' or 'Grey Lord' cast
          *    spells. This cannot happen with the original dungeons as they do
          *    not contain any groups of these types."
-         * SAFE_FALLBACK: FIREBALL matches MEDIA529 PC34 default behavior.
+         * ReDMCSB preserves the original undefined path; it does not select
+         * an RN value. Do not manufacture a Fireball for malformed/custom
+         * data: the runtime's projectile admission then leaves this attack
+         * unexecuted.
          */
-        return CSB_PROJECTILE_FIREBALL;
+        return CSB_PROJECTILE_NONE;
     }
 }
 

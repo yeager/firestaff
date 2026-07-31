@@ -211,6 +211,9 @@ typedef struct {
 #define CSB_PROJECTILE_POISON_CLOUD      0x05  /* RNPoisonCloud */
 #define CSB_PROJECTILE_POISON_BOLT       0x06  /* RNPoisonBolt — shared */
 #define CSB_PROJECTILE_OPEN_DOOR         0x07  /* RNOpenDoor */
+/* No original projectile was selected.  This is intentionally outside the
+ * ReDMCSB RN value range so callers cannot fabricate a substitute attack. */
+#define CSB_PROJECTILE_NONE              (-1)
 
 /* ============================================================
  *  Attack Type Constants (DEFS.H:1673-1681 — all 8 types)
@@ -377,7 +380,8 @@ void csb_v1_attack_parameters_build(
  *
  * @param creatureType   CSB_CREATURE_TYPE_*
  * @param rng_state      RNG state for random selection
- * @return               CSB_PROJECTILE_* RNVAL
+ * @return               CSB_PROJECTILE_* RNVAL, or CSB_PROJECTILE_NONE when
+ *                       the source path has no executable projectile
  */
 int csb_v1_projectile_type_for_creature(int creatureType,
                                        struct RngState_Compat *rng);

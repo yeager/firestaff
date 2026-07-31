@@ -4,6 +4,7 @@
 
 #include "memory_combat_pc34_compat.h"
 #include "memory_runtime_dynamics_pc34_compat.h"
+#include "csb_v1_monster_pc34_compat.h"
 
 static int expect_int(const char* label, int actual, int expected)
 {
@@ -98,9 +99,35 @@ static int test_deterministic_csb_generator_state(void)
     return ok ? 0 : 1;
 }
 
+static int test_unreachable_monster_projectiles_fail_closed(void)
+{
+    struct RngState_Compat rng;
+    int ok = 1;
+
+    ok &= expect_int("rng init for projectile rejection",
+                     F0730_COMBAT_RngInit_Compat(&rng, 0x0BADF00Du), 1);
+    /* ReDMCSB GROUP.C BUG0_13 documents Lord Order/Grey Lord's
+     * uninitialized projectile path as unreachable in original dungeons.
+     * No source projectile means no synthetic Fireball replacement. */
+    ok &= expect_int("Grey Lord projectile fails closed",
+                     csb_v1_projectile_type_for_creature(
+                         CSB_CREATURE_TYPE_GREY_LORD, &rng),
+                     CSB_PROJECTILE_NONE);
+    ok &= expect_int("Lord Order projectile fails closed",
+                     csb_v1_projectile_type_for_creature(
+                         CSB_CREATURE_TYPE_LORD_ORDER, &rng),
+                     CSB_PROJECTILE_NONE);
+    ok &= expect_int("missing RNG cannot fabricate Fireball",
+                     csb_v1_projectile_type_for_creature(
+                         CSB_CREATURE_TYPE_DEMON, NULL),
+                     CSB_PROJECTILE_NONE);
+    return ok ? 0 : 1;
+}
+
 int main(void)
 {
     int rc = test_deterministic_csb_generator_state();
+    rc |= test_unreachable_monster_projectiles_fail_closed();
     if (rc == 0) {
         printf("CSB V1 monster generator deterministic gate passed\n");
     }
