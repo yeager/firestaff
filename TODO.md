@@ -54,7 +54,8 @@
   SHA256 catalog. Its verification API now rejects supplied digests instead of
   returning a false success; callers must use the hash-bound Track 02 boot
   path. A missing legacy asset path now also returns explicit `NO_DATA`
-  instead of reporting success with removed procedural defaults.
+  instead of reporting success with removed procedural defaults. A discovered
+  but unparsable legacy Track 03/04 payload now fails explicitly as well.
 
 - **THERON-CHAPTER-MARKER-REAL-PROGRESSION:** A verified Track 02 identity is
   no longer enough to fabricate chapter/quest progress. Production requires a

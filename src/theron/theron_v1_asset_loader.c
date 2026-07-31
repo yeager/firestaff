@@ -352,7 +352,9 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
                                             bundle->track03_size);
         if (tiles < 0) {
             printf("[TQR] Track 03 parse error: %d\n", tiles);
-            /* Non-fatal: continue with default palette */
+            free(data);
+            memset(bundle, 0, sizeof(*bundle));
+            return TR_ASSET_ERR_TR03;
         }
     }
 
@@ -363,6 +365,9 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
                                     bundle->track04_size);
         if (r < 0) {
             printf("[TQR] Track 04 parse error: %d\n", r);
+            free(data);
+            memset(bundle, 0, sizeof(*bundle));
+            return TR_ASSET_ERR_TR04;
         }
     }
 

@@ -47289,6 +47289,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   missing. It returns `TR_ASSET_ERR_NO_DATA`; rendering remains source-gated.
   Focused rendering passes `25/25`, startup/save-resume `325/325`.
 
+- ✅ 2026-07-31 Theron legacy parse-error gate: discovered Track 03/04 data
+  that fails its parser now returns `TR_ASSET_ERR_TR03`/`TR_ASSET_ERR_TR04`
+  and releases the partially loaded bundle instead of reporting a successful
+  asset load with fallback state.
+
 - ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
   offsets and the 216-entry DMWeb TABL code table are parsed from the real
   retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy
