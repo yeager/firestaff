@@ -47095,3 +47095,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   keeps using the real-byte `RedmcsbF0908_InitSoundPc34` path, while the
   receipt chain compiles solely into its focused test and cannot authenticate
   host audio as original SWSH data.
+
+- ✅ 2026-07-31 CSB startup receipt isolation: F0436 palette fade, F0579
+  entrance bitplanes and F0807 door-step helpers are metadata contracts with
+  no product caller or original-pixel decoder. They now compile only into
+  their focused tests; M10 cannot treat caller facts as title or entrance
+  material. Live startup remains guarded by the authenticated runtime route.

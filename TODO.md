@@ -79,6 +79,9 @@
   - 2026-07-31: The F0908/F0909/F0910 SWSH sound receipt chain is also
     test-only. M11 uses the real-byte decoder directly; no metadata chain may
     claim that host audio or a synthetic buffer is source sound.
+  - 2026-07-31: The F0436/F0579/F0807 title/entrance receipt helpers are
+    test-only. Live startup remains routed through the authenticated title and
+    entrance material path, not caller-invented palette or bitplane facts.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
