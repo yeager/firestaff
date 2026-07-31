@@ -71,23 +71,23 @@ typedef enum {
     /* Dungeon 1 — Hall of Records */
     THERON_QUEST_ITEM_1_SACRED_AMPLIFIER = (1 << 0), /* Bit 0 */
 
-    /* Dungeon 2 — Crypt of Shadows */
+    /* Dungeon 2 — name unbound until the real Track 02 header is decoded */
     THERON_QUEST_ITEM_2_SHADOW_KEY = (1 << 1),        /* Bit 1 */
 
 
-    /* Dungeon 3 — Abyss of Flames */
+    /* Dungeon 3 — name unbound until the real Track 02 header is decoded */
     THERON_QUEST_ITEM_3_FLAME_ORBS = (1 << 2),       /* Bit 2 */
 
-    /* Dungeon 4 — Tomb of Woe */
+    /* Dungeon 4 — name unbound until the real Track 02 header is decoded */
     THERON_QUEST_ITEM_4_STONE_SIGIL = (1 << 3),      /* Bit 3 */
 
-    /* Dungeon 5 — Vault of Secrets */
+    /* Dungeon 5 — name unbound until the real Track 02 header is decoded */
     THERON_QUEST_ITEM_5_WAYWARD_RIBBON = (1 << 4),    /* Bit 4 */
 
-    /* Dungeon 6 — Castle of Fate */
+    /* Dungeon 6 — name unbound until the real Track 02 header is decoded */
     THERON_QUEST_ITEM_6_DESTINYS_THREAD = (1 << 5),   /* Bit 5 */
 
-    /* Dungeon 7 — Tower of Epilogue */
+    /* Dungeon 7 — name unbound until the real Track 02 header is decoded */
     THERON_QUEST_ITEM_7_COSMIC_SHARD = (1 << 6),      /* Bit 6 */
 
     /* All 7 collected — quest complete */

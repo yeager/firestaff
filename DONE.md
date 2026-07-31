@@ -1,3 +1,7 @@
+- ✅ 2026-07-31 Theron metadata-inventering: tog bort de döda short-code-
+  och kommentarstabeller som återgav opromoterade dungeon-namn. Enum-ID:n och
+  verklig progression är kvar; inga nya namn eller data har gissats in.
+
 - ✅ 2026-07-31 Theron stage-metadata: dungeon 2–7 visar nu `UNAVAILABLE`
   i progression/stage-menyn tills deras riktiga Track 02-header och namn är
   bundna. De sju dungeon-ID:na, progressionstillstånd och DMWeb-verifierade

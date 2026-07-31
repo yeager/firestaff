@@ -124,17 +124,6 @@ static const char *const g_quest_item_names[THERON_DUNGEON_COUNT] = {
     "The Retaliator",
 };
 
-/* Dungeon short codes (for UI/diagnostics) */
-static const char *const __attribute__((unused)) g_dungeon_short [THERON_DUNGEON_COUNT] = {
-    "HoR",  /* Hall of Records */
-    "CoS",  /* Crypt of Shadows */
-    "AoF",  /* Abyss of Flames */
-    "ToW",  /* Tomb of Woe */
-    "VoS",  /* Vault of Secrets */
-    "CoF",  /* Castle of Fate */
-    "ToE",  /* Tower of Epilogue */
-};
-
 /* ── API implementation ─────────────────────────────────────────── */
 
 void theron_v1_dungeon_progression_init(Theron_DungeonProgression *prog) {
