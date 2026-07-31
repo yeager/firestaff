@@ -30,7 +30,7 @@ static void reset_path_record(void)
 {
     int i;
     for (i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
-        s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+        s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_NO_DRAW;
         s_last_slot_class[i] = DM2_V2_HUD_WIDGET_CLASS_UNKNOWN;
     }
     s_last_path_real = 0;
@@ -180,7 +180,7 @@ void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res) {
             s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP;
             ++s_last_path_real;
         } else {
-            s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+            s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_NO_DRAW;
             ++s_last_path_fallback;
         }
     }
@@ -202,7 +202,7 @@ DM2_V2_HudRuntimePathMode dm2_v2_hud_runtime_last_path_mode(
     DM2_V2_HudWidgetSlot slot)
 {
     if ((unsigned)slot >= (unsigned)DM2_V2_HUD_WIDGET_COUNT) {
-        return DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK;
+        return DM2_V2_HUD_RUNTIME_PATH_NO_DRAW;
     }
     return s_last_path_mode[slot];
 }

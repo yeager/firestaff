@@ -95,15 +95,15 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h_res);
  *
  * The mapping is:
  *   REAL classification  → DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP
- *   PLACEHOLDER          → DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK
- *   PARTIAL              → DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK
- *   MISSING              → DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK
- *   UNKNOWN              → DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK
+ *   PLACEHOLDER/PARTIAL/MISSING/UNKNOWN → DM2_V2_HUD_RUNTIME_PATH_NO_DRAW
  *
  * A manifest classification is retained for tooling only; it cannot promote
  * generated, operator-provided, or placeholder pixels into the game. */
 typedef enum {
-    DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK = 0,
+    DM2_V2_HUD_RUNTIME_PATH_NO_DRAW             = 0,
+    /* Compatibility spelling; no procedural renderer exists. */
+    DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK =
+        DM2_V2_HUD_RUNTIME_PATH_NO_DRAW,
     DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP         = 1
 } DM2_V2_HudRuntimePathMode;
 
@@ -127,7 +127,7 @@ void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res);
 
 /* Returns the path-mode the runtime recorded for slot S during the most
  * recent dm2_v2_hud_runtime_render_with_assets() call. Returns
- * DM2_V2_HUD_RUNTIME_PATH_PROCEDURAL_FALLBACK if no render has run yet,
+ * DM2_V2_HUD_RUNTIME_PATH_NO_DRAW if no render has run yet,
  * or if S is out of range. */
 DM2_V2_HudRuntimePathMode dm2_v2_hud_runtime_last_path_mode(
     DM2_V2_HudWidgetSlot slot);
