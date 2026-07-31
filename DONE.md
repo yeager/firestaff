@@ -45001,3 +45001,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   geometry or tiles over source-owned viewport material. Verification:
   `test_csb_v1_viewport_phase3_rendering` (2 677/0) and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 CSB PC3.4 D0C Thieves Eye source composition: F0127 now
+  carries the authenticated CSBWin character-tail Event73 counter into the
+  shared viewport and, when active, copies M654/G2116 into a local temporary
+  frame before applying the original C041 subspan with C09 transparency and
+  finally writing G0172 with C10 transparency. C041 is decoded through the
+  active CSB `GRAPHICS.DAT` provider; absent, malformed or undersized frame
+  or hole material leaves the D0C frame no-draw instead of exposing a direct
+  G2116 substitute. ReDMCSB `DUNVIEW.C F0127:8185-8236` and `COORD.C
+  F0630:1939-1995` are the source references. Verification:
+  `test_dm1_v1_viewport_3d_pc34_compat`,
+  `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
+  launcher handoff boundary (567/0, one expected Atari skip) pass.

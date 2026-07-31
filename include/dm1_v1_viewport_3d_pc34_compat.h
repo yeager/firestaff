@@ -989,6 +989,11 @@ typedef struct {
      * that span must leave the source page untouched. */
     bool source_graphics_required;
 
+    /* ReDMCSB G0407_s_Party.Event73Count_ThievesEye.  The owning game
+     * supplies the persisted source counter; the viewport never infers it
+     * from a host spell or an ornament. */
+    int event73_count_thieves_eye;
+
     /* F0107 wall ornament ordinal provider and render plan callback.
      * When set, the viewport calls this to obtain the wall ornament ordinal
      * for a given map cell and draws the ornament via the graphic provider. */

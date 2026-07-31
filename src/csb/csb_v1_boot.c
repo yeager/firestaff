@@ -1666,6 +1666,11 @@ int csb_v1_boot_render_viewport_frame_pc34(
     cfg.wall_set_index = profile->runtime.dungeon_handle->map_wall_set[
         profile->runtime.current_level];
     cfg.runtime_profile = &profile->runtime;
+    /* ReDMCSB DUNVIEW.C F0127:8185-8216 gates the D0C temporary-frame
+     * composition on G0407.Event73Count_ThievesEye. CSBWin's authenticated
+     * character tail owns that same persisted counter. */
+    cfg.event73_count_thieves_eye =
+        (int)profile->runtime.csbwin_character_tail_see_thru_walls;
     cfg.field_animation_tick = profile->runtime.tick_count;
     cfg.field_random_state = profile->runtime.csbwin_random_seed_valid
         ? &profile->runtime.csbwin_random_seed : NULL;

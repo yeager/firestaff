@@ -2089,11 +2089,12 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         *out_width = (int)door_frame_asset->width;
         *out_height = (int)door_frame_asset->height;
         return 1;
-    } else if (graphic_index >= 70 && graphic_index <= 76) {
+    } else if (graphic_index == 41 ||
+               (graphic_index >= 70 && graphic_index <= 76)) {
         const M11_AssetSlot *field_asset;
-        /* ReDMCSB DEFS.H C070--C076 and DUNVIEW.C F0113:4417-4461: fields
-         * are ordinary, decoded source graphics. Install them through the
-         * CSB decoder, not the generic DM1 loader. */
+        /* ReDMCSB DEFS.H C041 and C070--C076: the Thieves Eye hole and
+         * fields are ordinary decoded source graphics. Install them through
+         * the CSB decoder, not the generic DM1 loader. */
         if (!m11_csb_install_runtime_source_graphic(state,
                                                     (unsigned int)graphic_index)) {
             return 0;

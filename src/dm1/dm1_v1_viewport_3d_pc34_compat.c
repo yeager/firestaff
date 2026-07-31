@@ -1269,6 +1269,57 @@ static int dm1_viewport_3d_draw_source_door_frame(
     return 1;
 }
 
+/* ReDMCSB DUNVIEW.C F0127:8199-8216 copies M654/G2116 into G0074, then
+ * F0630 resolves M711/C041 with source offset (32,0), width 32 and native
+ * height 95 (COORD.C:158,1939-1995). F0654 applies it at C736's D0C-frame
+ * zone with C09 transparency before F0656 writes G0172 with C10
+ * transparency. Keep the whole composition local and source-owned: a
+ * missing or undersized C041 leaves the destination untouched. */
+static int dm1_viewport_3d_draw_source_d0c_thieves_eye_door_frame(
+    DM1_Viewport3DState *state)
+{
+    enum { FRAME_WIDTH = 32, FRAME_HEIGHT = 123, HOLE_SRC_X = 32,
+           HOLE_WIDTH = 32, HOLE_HEIGHT = 95, HOLE_DST_Y = 19,
+           GOLD_TRANSPARENT = 9 };
+    const int *frame = dm1_v1_g0172_table_pc34();
+    const uint8_t *door_pixels = NULL;
+    const uint8_t *hole_pixels = NULL;
+    uint8_t temporary[FRAME_WIDTH * FRAME_HEIGHT];
+    int door_width = 0, door_height = 0;
+    int hole_width = 0, hole_height = 0;
+    int x, y;
+
+    if (!state || !state->viewport_pixels || !state->graphic_provider_callback ||
+        state->event73_count_thieves_eye <= 0 ||
+        !state->graphic_provider_callback(state->graphic_provider_user_data, 86,
+                                          &door_pixels, &door_width, &door_height) ||
+        !state->graphic_provider_callback(state->graphic_provider_user_data, 41,
+                                          &hole_pixels, &hole_width, &hole_height) ||
+        !door_pixels || !hole_pixels || door_width < FRAME_WIDTH ||
+        door_height < FRAME_HEIGHT || hole_width < HOLE_SRC_X + HOLE_WIDTH ||
+        hole_height < HOLE_HEIGHT) {
+        return 0;
+    }
+    memcpy(temporary, door_pixels, sizeof(temporary));
+    for (y = 0; y < HOLE_HEIGHT; ++y) {
+        for (x = 0; x < HOLE_WIDTH; ++x) {
+            uint8_t pixel = hole_pixels[y * hole_width + HOLE_SRC_X + x];
+            if (pixel != GOLD_TRANSPARENT) {
+                temporary[(HOLE_DST_Y + y) * FRAME_WIDTH + x] = pixel;
+            }
+        }
+    }
+    for (y = 0; y < FRAME_HEIGHT; ++y) {
+        uint8_t *dst = state->viewport_pixels +
+            (frame[2] + y) * state->viewport_stride + frame[0];
+        for (x = 0; x < FRAME_WIDTH; ++x) {
+            uint8_t pixel = temporary[y * FRAME_WIDTH + x];
+            if (pixel != COLOR_TRANSPARENT) dst[x] = pixel;
+        }
+    }
+    return 1;
+}
+
 static int dm1_viewport_3d_has_source_door_frame(
     DM1_Viewport3DState *state, int graphic_index, const int *frame)
 {
@@ -2171,20 +2222,21 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
     }
 
     /* D0C is the party square.  Unlike the D1-D3 front-door routes it
-     * accepts only F0172's C16_DOOR_SIDE frame path, not F0111.  The ordinary
-     * PC3.4 case consumes M654/G2116 through G0172.  The Thieves Eye variant
-     * must first copy this source into a temporary bitmap and composite the
-     * separately owned hole graphic, so it is deliberately not approximated
-     * here. ReDMCSB DUNVIEW.C:8185-8236. */
+     * accepts only F0172's C16_DOOR_SIDE frame path, not F0111. ReDMCSB
+     * DUNVIEW.C:8185-8236 either draws M654/G2116 directly or, under Event73,
+     * copies it to a temporary buffer and composites C041 before the final
+     * G0172 C10-transparent blit. */
     {
         int d0c_cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
         int d0c_element = state->dungeon_aspect_grid ? d0c_cell :
             dm1_viewport_3d_classify_grid_cell(d0c_cell);
 
         if (d0c_element == DM1_VP_ELEMENT_DOOR_SIDE) {
-            if (dm1_viewport_3d_draw_source_door_frame(
-                    state, 86, dm1_v1_g0172_table_pc34(), 0)) {
-                /* M654/G2116 source frame drawn at G0172's D0C zone. */
+            if (state->event73_count_thieves_eye > 0) {
+                (void)dm1_viewport_3d_draw_source_d0c_thieves_eye_door_frame(state);
+            } else {
+                (void)dm1_viewport_3d_draw_source_door_frame(
+                    state, 86, dm1_v1_g0172_table_pc34(), 0);
             }
         }
     }

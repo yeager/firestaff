@@ -51,6 +51,12 @@ typedef struct DoorFrameGraphicProviderFixture {
     const uint8_t *d1_top_pixels;
 } DoorFrameGraphicProviderFixture;
 
+typedef struct D0CThievesEyeGraphicProviderFixture {
+    const uint8_t *door_pixels;
+    const uint8_t *hole_pixels;
+    int provide_hole;
+} D0CThievesEyeGraphicProviderFixture;
+
 static int indexed_graphic_provider(
     void *user_data, int graphic_index, const uint8_t **out_pixels,
     int *out_width, int *out_height)
@@ -98,6 +104,29 @@ static int door_frame_graphic_provider(
         *out_pixels = fixture->d1_top_pixels;
         *out_width = 128;
         *out_height = 4;
+        return 1;
+    }
+    return 0;
+}
+
+static int d0c_thieves_eye_graphic_provider(
+    void *user_data, int graphic_index, const uint8_t **out_pixels,
+    int *out_width, int *out_height)
+{
+    const D0CThievesEyeGraphicProviderFixture *fixture =
+        (const D0CThievesEyeGraphicProviderFixture *)user_data;
+
+    if (!fixture || !out_pixels || !out_width || !out_height) return 0;
+    if (graphic_index == 86 && fixture->door_pixels) {
+        *out_pixels = fixture->door_pixels;
+        *out_width = 32;
+        *out_height = 123;
+        return 1;
+    }
+    if (graphic_index == 41 && fixture->provide_hole && fixture->hole_pixels) {
+        *out_pixels = fixture->hole_pixels;
+        *out_width = 64;
+        *out_height = 95;
         return 1;
     }
     return 0;
@@ -1269,6 +1298,54 @@ static void test_d0c_door_frame_uses_source_graphic558_geometry(void)
               viewport[96], 0x31);
     check_int("d0c_door_frame.source_c10_transparent",
               viewport[97], 0x5a);
+}
+
+static void test_d0c_thieves_eye_uses_source_temporary_composition(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t door_pixels[32 * 123];
+    uint8_t hole_pixels[64 * 95];
+    uint8_t grid[8 * 8];
+    D0CThievesEyeGraphicProviderFixture provider;
+    DM1_Viewport3DState state;
+
+    /* ReDMCSB DUNVIEW.C F0127:8199-8216 copies G2116, takes C041's
+     * (32,0) 32x95 subspan, applies C09 transparency at rows 19..113,
+     * then blits the completed 32x123 frame through G0172/C10. */
+    memset(viewport, 0x5a, sizeof(viewport));
+    memset(door_pixels, 10, sizeof(door_pixels));
+    memset(hole_pixels, 9, sizeof(hole_pixels));
+    memset(grid, DM1_VP_ELEMENT_DOOR_SIDE, sizeof(grid));
+    door_pixels[0] = 0x31;
+    hole_pixels[32] = 0x42;
+    provider.door_pixels = door_pixels;
+    provider.hole_pixels = hole_pixels;
+    provider.provide_hole = 1;
+    dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_load_wall_set(&state, 0, 0);
+    state.floor_ceiling_dirty = false;
+    state.dungeon_grid = grid;
+    state.dungeon_aspect_grid = grid;
+    state.dungeon_width = 8;
+    state.dungeon_height = 8;
+    state.source_graphics_required = true;
+    state.event73_count_thieves_eye = 1;
+    state.graphic_provider_callback = d0c_thieves_eye_graphic_provider;
+    state.graphic_provider_user_data = &provider;
+
+    dm1_viewport_3d_draw_frame(&state, 0, 4, 4);
+    check_int("d0c_thieves_eye.source_frame", viewport[96], 0x31);
+    check_int("d0c_thieves_eye.source_hole", viewport[19 * DM1_VIEWPORT_WIDTH + 96], 0x42);
+    check_int("d0c_thieves_eye.c09_transparent", viewport[19 * DM1_VIEWPORT_WIDTH + 97], 0x5a);
+
+    memset(viewport, 0x5a, sizeof(viewport));
+    provider.provide_hole = 0;
+    dm1_viewport_3d_draw_frame(&state, 0, 4, 4);
+    /* The following F0128 passes may clear this aperture, but a missing
+     * C041 must never expose G2116's direct 0x31 frame as a substitute. */
+    check_int("d0c_thieves_eye.missing_hole_no_direct_frame",
+              viewport[96] != 0x31, 1);
 }
 
 static void test_floor_ceiling_bands_and_zones(void)
@@ -5085,6 +5162,7 @@ int main(void)
     test_d1c_door_frame_uses_source_graphic558_geometry();
     test_d1_side_door_frame_uses_source_graphic558_geometry();
     test_d0c_door_frame_uses_source_graphic558_geometry();
+    test_d0c_thieves_eye_uses_source_temporary_composition();
     test_floor_ceiling_bands_and_zones();
     test_floor_ceiling_uses_real_provider_pixels();
     test_floor_ceiling_uses_complete_pc34_provider_pair();

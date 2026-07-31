@@ -5263,6 +5263,7 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
      * CSB GRAPHICS.DAT session must fail closed while that bitmap family has
      * no bound source span. */
     vp.source_graphics_required = cfg->real_graphics_session ? true : false;
+    vp.event73_count_thieves_eye = cfg->event73_count_thieves_eye;
     vp.wall_ornament_ordinal_callback = cfg->wall_ornament_ordinal_callback;
     vp.wall_ornament_ordinal_user_data = cfg->wall_ornament_ordinal_user_data;
 

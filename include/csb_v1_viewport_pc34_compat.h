@@ -587,6 +587,9 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     int runtime_overlay_source_admitted;
     uint32_t runtime_overlay_source_hash;
     int real_graphics_session;
+    /* Persisted CSBWin/ReDMCSB Event73Count_ThievesEye. F0127 consumes this
+     * exact source counter before composing C041 into G2116's D0C frame. */
+    int event73_count_thieves_eye;
     const CSB_V1_ViewportFirstFrameMaterialProof *first_frame_material_proof;
     const CSB_V1_ViewportFirstFrameMaterialBytesPc34 *first_frame_material_bytes;
     const char *first_frame_material_source_path;
