@@ -476,7 +476,8 @@ diagnostic; it must not silently fall back to a generated visual.
   selected floor, ceiling, C232 palette item and all thirteen source-backed
   wall commands before M11 decodes any pixel; F0 remains deliberately absent.
   The optional Atari real-data regression covers all 16 floor-set × 16
-  wall-set selections and rejects a PC-index substitution.
+  wall-set selections and rejects a PC-index substitution. Its material hash
+  now serializes source fields canonically, independent of host struct layout.
   The remaining bridge must translate that Atari plan into the same
   source-owned F0128 command contract with its own graphic index, projection
   and palette receipt; it must not reuse PC3.4 indices or add a post-draw

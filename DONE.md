@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 CSB Atari F0128-kvittohash: materialplanens hash kodar nu
+  varje källfält i fast little-endian ordning i stället för att hasha en
+  C-struktur med värdberoende layout. Grafikindex, väggbana, spegling och
+  TAG0088b2-projektion blir därmed samma kvitto på macOS, Windows och Linux.
+  Verifiering: `test_csb_v1_csbwin_layout_0232` passerar.
+
 - ✅ 2026-07-31 CSB Atari F0128-materialplans breddtest: den valfria
   realdatavägen för ett användarägt Atari/CSBWin-`GRAPHICS.DAT` kontrollerar
   nu samtliga 16 golvset och 16 väggset. Varje plan måste behålla sina

@@ -253,6 +253,25 @@ static uint32_t csb_v1_csbwin_viewport_material_hash_bytes(uint32_t hash,
     return hash;
 }
 
+static uint32_t csb_v1_csbwin_viewport_material_hash_u16(uint32_t hash,
+                                                          uint16_t value)
+{
+    const uint8_t bytes[2] = {
+        (uint8_t)(value & 0xffu), (uint8_t)(value >> 8)
+    };
+
+    return csb_v1_csbwin_viewport_material_hash_bytes(hash, bytes,
+                                                        sizeof(bytes));
+}
+
+static uint32_t csb_v1_csbwin_viewport_material_hash_projection(
+    uint32_t hash, const CSB_V1_CSBWinViewportProjectionRectangle *projection)
+{
+    if (!projection) return 0u;
+    return csb_v1_csbwin_viewport_material_hash_bytes(
+        hash, projection, sizeof(*projection));
+}
+
 int csb_v1_csbwin_viewport_build_f0128_material_plan(
     uint16_t floor_set, uint16_t wall_set,
     const CSB_V1_CSBWinViewportLayout022e *layout,
@@ -282,16 +301,26 @@ int csb_v1_csbwin_viewport_build_f0128_material_plan(
         out_plan->wall_commands[index].mirrored = wall_plan.draws[index].mirrored;
         out_plan->wall_commands[index].projection = wall_plan.draws[index].projection;
     }
-    hash = csb_v1_csbwin_viewport_material_hash_bytes(
-        hash, &out_plan->floor_graphic_index, sizeof(out_plan->floor_graphic_index));
-    hash = csb_v1_csbwin_viewport_material_hash_bytes(
-        hash, &out_plan->ceiling_graphic_index, sizeof(out_plan->ceiling_graphic_index));
-    hash = csb_v1_csbwin_viewport_material_hash_bytes(
-        hash, &out_plan->palette_graphic_index, sizeof(out_plan->palette_graphic_index));
+    hash = csb_v1_csbwin_viewport_material_hash_u16(
+        hash, out_plan->floor_graphic_index);
+    hash = csb_v1_csbwin_viewport_material_hash_u16(
+        hash, out_plan->ceiling_graphic_index);
+    hash = csb_v1_csbwin_viewport_material_hash_u16(
+        hash, out_plan->palette_graphic_index);
     for (index = 0u; index < out_plan->wall_command_count; ++index) {
-        hash = csb_v1_csbwin_viewport_material_hash_bytes(
-            hash, &out_plan->wall_commands[index],
-            sizeof(out_plan->wall_commands[index]));
+        const CSB_V1_CSBWinViewportMaterialCommand *command =
+            &out_plan->wall_commands[index];
+        const uint8_t wall = (uint8_t)command->wall;
+        const uint8_t mirrored = command->mirrored ? 1u : 0u;
+
+        hash = csb_v1_csbwin_viewport_material_hash_bytes(hash, &wall,
+                                                            sizeof(wall));
+        hash = csb_v1_csbwin_viewport_material_hash_u16(
+            hash, command->graphic_index);
+        hash = csb_v1_csbwin_viewport_material_hash_bytes(hash, &mirrored,
+                                                            sizeof(mirrored));
+        hash = csb_v1_csbwin_viewport_material_hash_projection(
+            hash, &command->projection);
     }
     out_plan->plan_hash = hash;
     out_plan->valid = out_plan->wall_command_count ==
