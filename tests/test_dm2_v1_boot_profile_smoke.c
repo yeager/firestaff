@@ -118,7 +118,8 @@ static void test_defaults(void)
           "environment clock remains unavailable without source ownership");
     CHECK(p.deterministic.day_cycle_ticks == 0u,
           "boot profile does not fabricate an environment clock cadence");
-    CHECK(p.deterministic.max_levels == 28, "max levels is 28 (PC English)");
+    CHECK(p.deterministic.max_levels == 0u,
+          "level count remains unavailable before DUNGEON.DAT is verified");
     CHECK(p.deterministic.dungeon_seed == 0u,
           "dungeon seed remains unavailable before DUNGEON.DAT is verified");
 }

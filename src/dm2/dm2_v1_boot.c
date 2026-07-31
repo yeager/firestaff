@@ -956,7 +956,9 @@ void dm2_v1_boot_profile_init(DM2_V1_BootProfile *profile) {
      * globals. Do not publish a guessed 24-hour day-cycle configuration. */
     profile->deterministic.day_cycle_minutes  = 0u;
     profile->deterministic.day_cycle_ticks    = 0u;
-    profile->deterministic.max_levels         = 28;  /* PC English */
+    /* The G1 header names the actual level count.  Keep it unavailable until
+     * that original DUNGEON.DAT payload has been admitted. */
+    profile->deterministic.max_levels         = 0u;
     /* DUNGEON_Load obtains this from the verified G1 header.  A boot profile
      * without that file must not impersonate the PC-English seed. */
     profile->deterministic.dungeon_seed       = 0u;
