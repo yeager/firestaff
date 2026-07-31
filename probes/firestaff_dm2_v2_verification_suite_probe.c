@@ -180,12 +180,13 @@ int main(void) {
         dm2_v2_hud_runtime_init();
         dm2_v2_hud_runtime_set_gate_config(&gate);
 
-        /* V2 enabled + visible: should paint */
+        /* A presentation gate alone cannot authorize pixels. Without an
+         * authenticated GDAT source, V2 must leave the V1 framebuffer intact. */
         memset(fb, 0x42, sizeof(fb));
         dm2_v2_hud_runtime_render(fb, 320, 200);
         int nonzero = 0;
         for (size_t i = 0; i < sizeof(fb); i++) if (fb[i] != 0x42) { nonzero++; break; }
-        CHECK(nonzero > 0);
+        CHECK(nonzero == 0);
 
         /* V2 disabled: V1 framebuffer preserved byte-for-byte */
         DM2_V2_PhaseGateConfig off_gate = { 0, 0 };
@@ -198,10 +199,7 @@ int main(void) {
         }
         CHECK(preserved == 1);
 
-        /* Force active for test bypasses gate */
-        dm2_v2_hud_runtime_force_active_for_test(1);
-        CHECK(dm2_v2_hud_runtime_is_active() == 1);
-        dm2_v2_hud_runtime_force_active_for_test(0);
+        CHECK(dm2_v2_hud_runtime_is_active() == 0);
 
         dm2_v2_hud_runtime_shutdown();
     }
@@ -300,8 +298,9 @@ int main(void) {
         dm2_v2_touch_runtime_init();
         dm2_v2_touch_runtime_set_gate_config(&gate);
 
-        /* Both runtimes active */
-        CHECK(dm2_v2_hud_runtime_is_active() == 1);
+        /* The input route is phase-gated. The HUD remains no-draw until it
+         * also has real GDAT pixels and palettes. */
+        CHECK(dm2_v2_hud_runtime_is_active() == 0);
         CHECK(dm2_v2_touch_runtime_is_active() == 1);
 
         /* Phase gate config drives both consistently: turning V2 off
@@ -312,10 +311,11 @@ int main(void) {
         CHECK(dm2_v2_hud_runtime_is_active() == 0);
         CHECK(dm2_v2_touch_runtime_is_active() == 0);
 
-        /* Turning V2 back on re-enables both */
+        /* Turning V2 back on re-enables the input route only; it must not
+         * invent a HUD when no source material is mounted. */
         dm2_v2_hud_runtime_set_gate_config(&gate);
         dm2_v2_touch_runtime_set_gate_config(&gate);
-        CHECK(dm2_v2_hud_runtime_is_active() == 1);
+        CHECK(dm2_v2_hud_runtime_is_active() == 0);
         CHECK(dm2_v2_touch_runtime_is_active() == 1);
 
         dm2_v2_hud_runtime_shutdown();

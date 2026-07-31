@@ -152,11 +152,12 @@ DM2_V2_HudWidgetClass dm2_v2_hud_runtime_last_slot_class(
  * if the HUD is hidden. */
 int dm2_v2_hud_runtime_is_active(void);
 
-/* ── HUD V1 compatibility helper (for tests + wire-up probes) ──── */
-/* Force-activates the HUD regardless of phase gate (used by the
- * wire-up probe to verify the HUD data flow).  Not called by
- * production code. */
+/* ── HUD fixture helper (for tests + wire-up probes) ───────────── */
+/* This setter is compiled only for diagnostic targets. Production never
+ * bypasses the V2 phase gate. */
+#if defined(FIRESTAFF_DM2_V2_TESTING)
 void dm2_v2_hud_runtime_force_active_for_test(int active);
+#endif
 
 /* Source evidence citation */
 const char *dm2_v2_hud_runtime_source_evidence(void);

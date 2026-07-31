@@ -96,10 +96,12 @@ const DM2_V2_OutdoorFX *dm2_v2_lighting_runtime_get_outdoor_fx(void) {
     return &s_outdoor_fx;
 }
 
-/* ── V1 compatibility helper ──────────────────────────────────── */
+/* ── Fixture helper ───────────────────────────────────────────── */
+#if defined(FIRESTAFF_DM2_V2_TESTING)
 void dm2_v2_lighting_runtime_force_active_for_test(int active) {
     s_force_active = active ? 1 : 0;
 }
+#endif
 
 int dm2_v2_lighting_runtime_tick_count(void) {
     return s_tick_count;

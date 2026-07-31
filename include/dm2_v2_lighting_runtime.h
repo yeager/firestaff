@@ -73,11 +73,12 @@ int dm2_v2_lighting_runtime_is_active(void);
 const DM2_V2_LightingState *dm2_v2_lighting_runtime_get_state(void);
 const DM2_V2_OutdoorFX *dm2_v2_lighting_runtime_get_outdoor_fx(void);
 
-/* ── V1 compatibility helper (for tests + wire-up probes) ──── */
-/* Force-activates the lighting runtime regardless of phase gate
- * (used by wire-up probes to verify the tick path).  Not called by
- * production code. */
+/* ── Lighting fixture helper (for tests + wire-up probes) ─────── */
+/* This setter is compiled only for diagnostic targets. Production never
+ * bypasses the V2 phase gate. */
+#if defined(FIRESTAFF_DM2_V2_TESTING)
 void dm2_v2_lighting_runtime_force_active_for_test(int active);
+#endif
 
 /* Observability: total ticks executed (monotonic, reset by init). */
 int dm2_v2_lighting_runtime_tick_count(void);

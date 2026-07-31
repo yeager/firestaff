@@ -41,6 +41,13 @@
   full `firestaff` link, real-data weather-slot test 20/20, and production/test
   symbol checks.
 
+- ✅ 2026-07-31 DM2 V2 fixture-gate isolation: HUD, lighting and touch
+  force-active setters now compile only in their diagnostic probes. The normal
+  executable has no V2 gate-bypass symbol, and the aggregate V2 probe now
+  proves that a no-data HUD preserves the framebuffer rather than drawing
+  synthetic pixels. Verification: full `firestaff` link; HUD 29/29, touch
+  62/62, lighting 38/38 and aggregate V2 44/44 probes; executable-symbol check.
+
 - ✅ 2026-07-31 CSB synthetic viewport-fixture isolation: removed the
   room-slot backdrop1 contract trace from the production `firestaff_m10`
   archive. Its 10×10 synthetic skin/dungeon arrangement is now compiled only

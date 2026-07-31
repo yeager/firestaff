@@ -5017,7 +5017,8 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
 target_link_libraries(firestaff_dm2_v2_hud_runtime_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
 target_compile_definitions(firestaff_dm2_v2_hud_runtime_probe PRIVATE
-    FIRESTAFF_DM2_V2_HUD_WIDGET_DIAGNOSTIC=1)
+    FIRESTAFF_DM2_V2_HUD_WIDGET_DIAGNOSTIC=1
+    FIRESTAFF_DM2_V2_TESTING=1)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_hud_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -5085,6 +5086,8 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_touch_runtime_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m10 m)
+target_compile_definitions(firestaff_dm2_v2_touch_runtime_probe PRIVATE
+    FIRESTAFF_DM2_V2_TESTING=1)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_touch_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()
@@ -5153,6 +5156,8 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_lighting_runtime_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
+target_compile_definitions(firestaff_dm2_v2_lighting_runtime_probe PRIVATE
+    FIRESTAFF_DM2_V2_TESTING=1)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_lighting_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()

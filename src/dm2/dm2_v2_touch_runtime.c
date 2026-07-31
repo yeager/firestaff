@@ -147,10 +147,12 @@ int dm2_v2_touch_runtime_is_active(void) {
     return 1;
 }
 
-/* ── V1 compatibility helper (for tests + wire-up probes) ──── */
+/* ── Fixture helper (for tests + wire-up probes) ───────────── */
+#if defined(FIRESTAFF_DM2_V2_TESTING)
 void dm2_v2_touch_runtime_force_active_for_test(int active) {
     s_force_active = active ? 1 : 0;
 }
+#endif
 
 /* Observability helper for the wire-up probe */
 int dm2_v2_touch_runtime_translation_count(void) {

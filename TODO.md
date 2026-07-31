@@ -168,6 +168,10 @@
   only into its weather-frame fixture executable. The normal runtime header
   and `firestaff` executable expose no API for replacing a live weather chain;
   authentic session/save ownership remains mandatory in production.
+  **2026-07-31 update:** V2 HUD, lighting and touch force-active setters are
+  now diagnostic-only APIs. The production executable cannot bypass a V2
+  phase gate; the aggregate V2 probe also now expects a no-data HUD to leave
+  the framebuffer untouched rather than paint synthetic pixels.
   **2026-07-31 update:** DM2 boot now rejects the generic loader's retired
   16-bit fixture layout and an unreadable/absent dungeon payload. Only the
   verified PC G1 byte-square route can cross from the startup menu into a

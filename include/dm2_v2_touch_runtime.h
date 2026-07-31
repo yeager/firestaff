@@ -94,11 +94,12 @@ int dm2_v2_touch_runtime_point_in_hud_chrome(int x, int y);
  * 0 if V1 is the active presentation. */
 int dm2_v2_touch_runtime_is_active(void);
 
-/* ── V1 compatibility helper (for tests + wire-up probes) ──── */
-/* Force-activates the touch runtime regardless of phase gate
- * (used by wire-up probes to verify the input flow).  Not called
- * by production code. */
+/* ── Touch fixture helper (for tests + wire-up probes) ────────── */
+/* This setter is compiled only for diagnostic targets. Production never
+ * bypasses the V2 phase gate. */
+#if defined(FIRESTAFF_DM2_V2_TESTING)
 void dm2_v2_touch_runtime_force_active_for_test(int active);
+#endif
 
 /* Observability helper: returns the count of accepted translations
  * since the last init.  Used by the wire-up probe to verify that

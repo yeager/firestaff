@@ -145,7 +145,9 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h)
     if (s_original_data_mounted && s_gdat_fetch && s_gdat_palette_fetch) render_original_hud(fb, w, h);
 }
 int dm2_v2_hud_runtime_is_active(void) { return render_allowed() && s_original_data_mounted && s_gdat_fetch && s_gdat_palette_fetch; }
+#if defined(FIRESTAFF_DM2_V2_TESTING)
 void dm2_v2_hud_runtime_force_active_for_test(int active) { s_force_active = active ? 1 : 0; }
+#endif
 
 void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res) {
     int i;
