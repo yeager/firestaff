@@ -46679,3 +46679,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   verified `CSB_V1_RuntimeProfile`/dungeon/Utility ownership documented by
   the integration and source-lock references; no production caller used the
   retired API.
+- ✅ 2026-07-31 Nexus viewport animated-material gate: Structure3-material
+  med `0x08xx` behåller retail descriptor-proveniens men använder inte längre
+  första Structure2-bilden som en obevisad statisk frame-substitution.
+  Pixelrutten förblir no-draw tills Saturn frame-selector/VDP1-bindningen är
+  verifierad. Verifiering: `test_nexus_v1_dgn_runtime_materialization`;
+  source-receipt-testet skippar korrekt utan staged Nexus-dir.
