@@ -77,6 +77,8 @@
   compatibility handoff.
   **2026-07-31 update:** 4bpp cursor expansion now likewise requires the
   active original palette; the previous identity-table substitute is closed.
+  The legacy weather particle-count helper is also closed: it has no source
+  ENVIRONMENT command/image receipt and cannot promote enum-derived particles.
   Boot's former 1,440-minute/day-cycle configuration is also unavailable;
   it must be populated only by the same recovered source owner.
   **2026-07-31 update:** fresh weather state now has neither a clear-weather

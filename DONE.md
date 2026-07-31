@@ -45438,3 +45438,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   SKProject `skmcursr.cpp::DM2_INITBASICCURSORS` / `generate_cursor` and
   `SkWinCore.cpp::IBMIO_SET_CURSOR_PATTERN`; 8bpp item cursors remain
   physical-index copies. Verification: `test_dm2_v1_mouse_cursor`.
+
+- ✅ 2026-07-31 DM2 legacy weather-particle closure: removed enum/intensity
+  arithmetic that fabricated rain and storm particle counts without a source
+  ENVIRONMENT command/image receipt. The helper now reports no particles;
+  actual weather drawing remains GDAT-backed. Source: SKProject
+  `c_weather.cpp` ENVIRONMENT command path. Verification:
+  `test_dm2_v1_weather_gdat_receipt`.

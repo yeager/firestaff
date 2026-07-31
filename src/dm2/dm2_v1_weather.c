@@ -230,17 +230,11 @@ int dm2_v1_weather_sky_color(const DM2_V1_WeatherState *state) {
 }
 
 int dm2_v1_weather_particle_count(const DM2_V1_WeatherState *state) {
-    if (!state) return 0;
-    if (state->weather == DM2_WEATHER_CLEAR) return 0;
-    /* Particle count proportional to weather intensity and rain density.
-     * Rain: blitline_48 16→8-bit overlay sprites from GDAT.
-     * Storm: more particles than rain. Fog: no particles (just overlay). */
-    switch (state->weather) {
-        case DM2_WEATHER_RAIN:  return state->weather_intensity * 2;
-        case DM2_WEATHER_FOG:   return 0;  /* fog is overlay, no particles */
-        case DM2_WEATHER_STORM: return state->weather_intensity * 3;
-        default: return 0;
-    }
+    (void)state;
+    /* Particle multiplicity is owned by the source-selected ENVIRONMENT
+     * command/image records, not by the weather enum. The actual M11 route
+     * retains those GDAT receipts in dm2_v1_weather_gdat.c. */
+    return 0;
 }
 
 int dm2_v1_weather_restored_state_receipt(

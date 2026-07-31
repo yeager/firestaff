@@ -358,6 +358,8 @@ int main(void)
           "restored weather state carries only validated runtime fields");
     check(dm2_v1_weather_sky_color(&restored_weather) == -1,
           "a restored clock cannot replace GDAT-backed outdoor material");
+    check(dm2_v1_weather_particle_count(&restored_weather) == 0,
+          "a restored weather enum cannot manufacture particle multiplicity");
     {
         /* c_weather.cpp:441-474 — the bolt slot's byte 1 is the live
          * RANDDIR value the source writes after a successful retrieve,

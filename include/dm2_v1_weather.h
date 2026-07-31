@@ -154,6 +154,8 @@ int dm2_v1_weather_timer_receipt_from_source_receipts(
 /* Legacy API deliberately unavailable: it has no original GDAT material
  * receipt. Use dm2_v1_weather_gdat.c's M11 transaction for outdoor pixels. */
 int  dm2_v1_weather_sky_color(const DM2_V1_WeatherState *state);
+/* Legacy API deliberately reports no particles: it cannot carry source
+ * ENVIRONMENT/GDAT command material. */
 int  dm2_v1_weather_particle_count(const DM2_V1_WeatherState *state);
 const char *dm2_v1_weather_name(int weather);
 const char *dm2_v1_weather_source_evidence(void);
