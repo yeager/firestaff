@@ -24603,3 +24603,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   portrait/name/title overlay for an already authenticated champion. A
   positive original CMP-plus-save corpus is still needed before exposing that
   combined import route in the launcher.
+
+- 🔧 CSB creature-drop follow-up: the old no-op fixed-possession API and
+  no-context DSA stubs are contract-only. Bind original dungeon placement and
+  the imported DSA interpreter before enabling either live creature drops or
+  DSA filters.

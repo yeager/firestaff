@@ -19484,6 +19484,8 @@ if(BUILD_TESTING)
     target_include_directories(test_csb_v1_phase7_verification PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_compile_definitions(test_csb_v1_phase7_verification PRIVATE
+        CSB_V1_MONSTER_STUB_CONTRACT_ONLY=1)
     target_link_libraries(test_csb_v1_phase7_verification PRIVATE firestaff_m10)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_phase7_verification PRIVATE -Wall -Wextra -O2)

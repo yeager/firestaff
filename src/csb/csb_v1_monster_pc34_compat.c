@@ -358,6 +358,7 @@ int csb_v1_drop_sound_for_item(int itemType) {
  *  These stubs return 0 (no filter found) until DSA engine is available.
  * ============================================================ */
 
+#ifdef CSB_V1_MONSTER_STUB_CONTRACT_ONLY
 int csb_v1_dsa_filter_attack_preprocess(
     CSB_V1_AttackParameters *params,
     const struct CSB_V1_DungeonData_Compat *dungeon)
@@ -411,6 +412,7 @@ int csb_v1_dsa_filter_movement_preprocess(
     }
     return 0;
 }
+#endif /* CSB_V1_MONSTER_STUB_CONTRACT_ONLY */
 
 static int csb_v1_dsa_filter_run(CSB_V1_DSAFilterRuntime *runtime,
     int dsa_id, uint32_t state, int action_ordinal, int *parameters,
@@ -524,6 +526,7 @@ int csb_v1_dsa_filter_movement_preprocess_live(
  *    - Animated Armour drops are CURSED (L0361_B_Cursed = true)
  * ============================================================ */
 
+#ifdef CSB_V1_MONSTER_STUB_CONTRACT_ONLY
 void csb_v1_drop_fixed_possessions(int creatureType,
                                    int mapX,
                                    int mapY,
@@ -545,6 +548,7 @@ void csb_v1_drop_fixed_possessions(int creatureType,
     (void)cell;
     (void)mode;
 }
+#endif /* CSB_V1_MONSTER_STUB_CONTRACT_ONLY */
 
 /* ============================================================
  *  Source Evidence

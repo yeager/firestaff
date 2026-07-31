@@ -396,6 +396,9 @@ int csb_v1_projectile_type_for_creature(int creatureType,
  */
 int csb_v1_missile_range_compute(int attack_power, struct RngState_Compat *rng);
 
+/* Historical no-context stubs are contract-only. Production uses the live
+ * DSA boundaries below, which require imported CSBWin/ReDMCSB program data. */
+#ifdef CSB_V1_MONSTER_STUB_CONTRACT_ONLY
 /* ============================================================
  *  API — DSA Filter Support
  * ============================================================ */
@@ -447,6 +450,7 @@ int csb_v1_dsa_filter_movement_preprocess(
     int partyY,
     int flgs_inout[2],
     const struct CSB_V1_DungeonData_Compat *dungeon);
+#endif /* CSB_V1_MONSTER_STUB_CONTRACT_ONLY */
 
 /* Live CSBWin filter boundaries.  These APIs are intentionally separate from
  * the legacy no-context stubs: a filter can execute only when its program
@@ -476,6 +480,9 @@ int csb_v1_dsa_filter_movement_preprocess_live(
  */
 int csb_v1_drop_sound_for_item(int itemType);
 
+/* This old no-op drop surface has no dungeon placement owner and is only
+ * retained for its isolated legacy contract test. */
+#ifdef CSB_V1_MONSTER_STUB_CONTRACT_ONLY
 /* ============================================================
  *  API — Fixed Possessions Drop
  * ============================================================ */
@@ -500,6 +507,7 @@ void csb_v1_drop_fixed_possessions(int creatureType,
                                    int mapY,
                                    int cell,
                                    int mode);
+#endif /* CSB_V1_MONSTER_STUB_CONTRACT_ONLY */
 
 /* ============================================================
  *  API — Source Evidence
