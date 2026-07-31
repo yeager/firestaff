@@ -193,26 +193,17 @@ const char *dm2_v1_spell_source_evidence(void);
 int dm2_v1_spell_validate_runes(int spell_index,
     const uint8_t *rune_sequence, int rune_count);
 
-/* ── Compute total mana cost (excludes the POWER rune at index 0) ──
- * Source: SkWinCore.cpp:18159-18174 (per-rune deduction) */
+/* Legacy index-only helpers cannot receive the live power rune required by
+ * CAST_SPELL_PLAYER. They are retained for ABI compatibility but fail closed
+ * (`mana_cost`/`compute_chance` return -1, `can_cast` returns 0). Use
+ * dm2_v1_spell_cast_player() with a source-format rune string instead. */
 int dm2_v1_spell_mana_cost(int spell_index);
 
-/* ── Compute cast chance for one champion ────────────────────────
- * Returns bp0c = (wizard_ability + 15) - (difficulty + power).
- * Positive value = cast succeeds; negative or zero = cast fails.
- * Source: SkWinCore.cpp:17521-17670 (CAST_SPELL_PLAYER). */
 int dm2_v1_spell_compute_chance(int spell_index, int wizard_ability);
 
-/* ── Check if champion can cast a spell at all ─────────────────
- * Returns 1 if the champion meets the required_skill threshold
- * AND has enough mana for the spell (excluding POWER rune). */
 int dm2_v1_spell_can_cast(int spell_index,
     int wizard_ability, int current_mana);
 
-/* ── Attempt to cast a spell ────────────────────────────────────
- * Computes cast chance, deducts mana, applies cooldown on success,
- * applies skill decay on failure.  Returns a DM2_SpellCastResult with
- * all the per-cast metrics for the wire-up probe. */
 DM2_SpellCastResult dm2_v1_spell_cast_attempt(int spell_index,
     int wizard_ability, int current_mana);
 
