@@ -378,7 +378,6 @@ static void test_light_flicker(void) {
     PROBE_ASSERT(lid >= 0, "flicker torch added");
 
     /* Tick with flicker — intensity should vary */
-    float i0, i1;
     csb_v2_light_update_flicker(0.016f); /* 16ms frame */
     /* intensity values are clamped, just verify no crash */
     csb_v2_light_update_flicker(0.016f);
@@ -416,10 +415,10 @@ static void test_chaos_trigger(void) {
 
     /* Trigger a DSA script (family 0 = fire) */
     csb_v2_chaos_on_trigger(0, -1);
-    PROBE_ASSERT(csb_v2_chaos_active_count() >= 0,
-                 "chaos trigger does not crash");
-    PROBE_ASSERT(csb_v2_vfx_active_particle_count() >= 0,
-                 "chaos trigger produces VFX particles");
+    PROBE_ASSERT(csb_v2_chaos_active_count() == 0,
+                 "chaos trigger has no unbound modern visual");
+    PROBE_ASSERT(csb_v2_vfx_active_particle_count() == 0,
+                 "chaos trigger cannot create particles");
 
     /* Trigger family 3 = chaos warp */
     csb_v2_chaos_on_trigger((3 << 5) | 1, -1);
@@ -436,14 +435,12 @@ static void test_chaos_trigger(void) {
     /* Glow overlay should be queryable */
     float r, g, b, a;
     csb_v2_chaos_render_overlay(&r, &g, &b, &a);
-    PROBE_ASSERT(r >= 0.0f && r <= 1.0f, "overlay R in [0,1]");
-    PROBE_ASSERT(g >= 0.0f && g <= 1.0f, "overlay G in [0,1]");
-    PROBE_ASSERT(b >= 0.0f && b <= 1.0f, "overlay B in [0,1]");
-    PROBE_ASSERT(a >= 0.0f && a <= 1.0f, "overlay A in [0,1]");
+    PROBE_ASSERT(r == 0.0f && g == 0.0f && b == 0.0f && a == 0.0f,
+                 "unbound chaos overlay is transparent");
 
     /* Particle count query */
     int pc = csb_v2_chaos_particle_count();
-    PROBE_ASSERT(pc >= 0, "particle count >= 0, got %d", pc);
+    PROBE_ASSERT(pc == 0, "particle count is zero without source receipt");
 
     /* Decay to zero */
     csb_v2_chaos_tick(5.0f);
@@ -464,16 +461,7 @@ static void test_chaos_projectile(void) {
         12.0f, 7.5f,
         3.0f,
         CSB_V2_VFX_FIRE);
-    PROBE_ASSERT(pid >= 0, "chaos fire_projectile returns valid id %d", pid);
-
-    /* Tick and verify movement */
-    csb_v2_vfx_tick(0.1f);
-    float px, py;
-    int ptype;
-    uint8_t palpha;
-    int active = csb_v2_vfx_get_projectile(pid, &px, &py, &ptype, &palpha);
-    PROBE_ASSERT(active == 1, "chaos projectile active after tick");
-    PROBE_ASSERT(px > 7.5f, "chaos projectile moved east (x=%.3f)", px);
+    PROBE_ASSERT(pid == -1, "chaos fire_projectile is source-receipt gated");
 
     csb_v2_vfx_init();
 }
@@ -497,18 +485,13 @@ static void test_chaos_vfx_integration(void) {
     csb_v2_chaos_tick(0.016f);
     csb_v2_vfx_tick(0.016f);
 
-    /* Verify light event was triggered */
-    PROBE_ASSERT(csb_v2_light_event_is_active() == 1,
-                 "chaos warp triggers light event");
-
-    CSB_V2_LightEventType t = csb_v2_light_event_current_type();
-    PROBE_ASSERT(t == CSB_V2_LIGHT_EVENT_MAGICAL_PULSE ||
-                 t == CSB_V2_LIGHT_EVENT_CHAOS_SURGE,
-                 "light event type is MAGICAL_PULSE or CHAOS_SURGE");
+    /* An unbound DSA id cannot invent a lighting event. */
+    PROBE_ASSERT(csb_v2_light_event_is_active() == 0,
+                 "chaos warp cannot trigger host lighting");
 
     /* Verify VFX particles exist */
-    PROBE_ASSERT(csb_v2_vfx_active_particle_count() >= 0,
-                 "chaos warp produces VFX particles");
+    PROBE_ASSERT(csb_v2_vfx_active_particle_count() == 0,
+                 "chaos warp cannot produce particles");
 
     /* All systems should be stable under repeated ticking */
     for (int i = 0; i < 10; i++) {
@@ -564,9 +547,8 @@ static void test_source_evidence(void) {
 
     const char *chaos_ev = csb_v2_chaos_source_evidence();
     PROBE_ASSERT(chaos_ev != NULL, "chaos source_evidence is non-null");
-    PROBE_ASSERT(strstr(chaos_ev, "PANEL.C") != NULL ||
-                 strstr(chaos_ev, "Graphics.cpp") != NULL,
-                 "chaos evidence cites PANEL.C or Graphics.cpp");
+    PROBE_ASSERT(strstr(chaos_ev, "no source receipt") != NULL,
+                 "chaos evidence records the no-draw boundary");
 
     const char *vfx_ev = csb_v2_vfx_source_evidence();
     PROBE_ASSERT(vfx_ev != NULL, "vfx source_evidence is non-null");

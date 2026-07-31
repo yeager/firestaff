@@ -66,6 +66,15 @@
   Verification: `test_csb_p4_lighting` compiles and passes as a focused
   source-boundary test.
 
+- ✅ 2026-07-31 CSB V2 chaos-overlay placeholder closure: the live V2
+  runtime's former DSA-id-derived glow, particle, projectile and light-event
+  path is now transparent/no-draw. ReDMCSB and CSBWin identify original DSA
+  execution but do not provide the required modern-material mapping, so the
+  compatibility API cannot manufacture one. Verification:
+  `test_csb_v2_lighting_dynamic`, `test_csb_v2_phase7_verification`,
+  `firestaff_csb_v2_phase4_enhanced_lighting_probe` and
+  `firestaff_csb_v2_phase7_verification_probe`.
+
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a
   successful transaction route from host gold alone. It remains closed until

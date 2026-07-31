@@ -9,9 +9,9 @@
  * V1 DSA script dispatch (CSBWin/DSA.cpp) is unaffected.
  * See csb_v2_phase_gate_pc34.h Phase 0 rules.
  *
- * CSB V2.2 Enhanced Chaos — visual DSA script feedback
- * V1: DSA scripts run silently.
- * V2.2: visual cues when scripts trigger (glow, sound, particles). */
+ * Retired CSB V2.2 chaos feedback boundary. The former glow, particle and
+ * projectile effects were not source-material-backed. Every entry point now
+ * preserves V1 ownership and produces no modern visual. */
 
 typedef struct {
     int script_id;

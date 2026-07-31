@@ -126,11 +126,10 @@ static void test_chaos_lighting_verification(void) {
     CHECK(r1 <= r0 && g1 <= g0 && b1 <= b0);
 
     csb_v2_chaos_on_trigger(0x80, 0);
-    CHECK(csb_v2_chaos_active_count() == 1);
-    CHECK(csb_v2_light_event_current_type() == CSB_V2_LIGHT_EVENT_CHAOS_SURGE);
+    CHECK(csb_v2_chaos_active_count() == 0);
+    CHECK(csb_v2_light_event_current_type() == CSB_V2_LIGHT_EVENT_NORMAL);
     csb_v2_chaos_render_overlay(&glowR, &glowG, &glowB, &glowA);
-    CHECK(glowA > 0.0f);
-    CHECK(glowR > 0.0f || glowG > 0.0f || glowB > 0.0f);
+    CHECK(glowR == 0.0f && glowG == 0.0f && glowB == 0.0f && glowA == 0.0f);
 
     csb_v2_chaos_tick(3.0f);
     CHECK(csb_v2_chaos_active_count() == 0);
@@ -146,7 +145,7 @@ static void test_evidence_summary(void) {
     CHECK(strstr(light, "PANEL.C:370-405") != NULL);
     CHECK(strstr(light, "DATA.C:359-360") != NULL);
     CHECK(strstr(chaos, "DSA") != NULL);
-    CHECK(strstr(chaos, "PANEL.C:367-428") != NULL);
+    CHECK(strstr(chaos, "no source receipt") != NULL);
 }
 
 int main(void) {

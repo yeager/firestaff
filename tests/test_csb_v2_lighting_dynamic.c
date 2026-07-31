@@ -164,10 +164,9 @@ static void test_events_and_viewport_wrappers(void) {
     CHECK(csb_v2_viewport_light_event_type() == CSB_V2_LIGHT_EVENT_MAGICAL_PULSE);
 
     csb_v2_chaos_on_trigger(0x80, 0);
-    CHECK(csb_v2_viewport_chaos_active_count() == 1);
+    CHECK(csb_v2_viewport_chaos_active_count() == 0);
     csb_v2_viewport_get_chaos_overlay(&glowR, &glowG, &glowB, &glowA);
-    CHECK(glowR > 0.0f || glowG > 0.0f || glowB > 0.0f);
-    CHECK(glowA > 0.0f);
+    CHECK(glowR == 0.0f && glowG == 0.0f && glowB == 0.0f && glowA == 0.0f);
 
     evidence = csb_v2_light_source_evidence();
     CHECK(strstr(evidence, "PANEL.C:367-428") != NULL);

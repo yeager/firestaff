@@ -405,6 +405,10 @@ diagnostic; it must not silently fall back to a generated visual.
   speeds and particle families. It is now no-admission; ReDMCSB's real DATA.C
   torch and palette tables remain available, but may not be expanded into a
   modern effect until a source command and material receipt binds every value.
+  **2026-07-31 Chaos follow-up:** the V2 runtime still advances its chaos
+  compatibility hook, but trigger, projectile and overlay entry points are
+  now permanently transparent/no-draw. A DSA script id alone cannot select a
+  purple glow, particle family, host speed or lighting curve.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

@@ -548,8 +548,8 @@ static void test_chaos_dsa_trigger_state_free(void) {
 
     /* Trigger a DSA script */
     csb_v2_chaos_on_trigger(0x80, 0);
-    PROBE_ASSERT(csb_v2_chaos_active_count() == 1,
-                 "chaos: after trigger, active_count=1");
+    PROBE_ASSERT(csb_v2_chaos_active_count() == 0,
+                 "chaos: unbound trigger produces no host visual");
 
     /* Tick the chaos system */
     csb_v2_chaos_tick(3.0f);
@@ -560,8 +560,8 @@ static void test_chaos_dsa_trigger_state_free(void) {
     const char *ev = csb_v2_chaos_source_evidence();
     PROBE_ASSERT(ev != NULL && strlen(ev) > 10,
                  "chaos source_evidence non-empty (len=%zu)", strlen(ev));
-    PROBE_ASSERT(strstr(ev, "DSA") != NULL || strstr(ev, "Chaos") != NULL,
-                 "chaos source_evidence references DSA or Chaos");
+    PROBE_ASSERT(strstr(ev, "no source receipt") != NULL,
+                 "chaos source evidence records the no-draw boundary");
 }
 
 /* ── Test 10: Phase gate domain coverage ──────────────────────────── */
