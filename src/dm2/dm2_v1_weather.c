@@ -38,8 +38,11 @@ static uint32_t dm2_weather_state_hash_step(uint32_t hash, uint32_t value)
 void dm2_v1_weather_init(DM2_V1_WeatherState *state) {
     if (!state) return;
     state->weather = DM2_WEATHER_CLEAR;
-    state->time_of_day = DM2_TIME_START;  /* noon */
-    state->time_fraction = 0.5f;
+    /* skweathr.cpp::DM2_UPDATE_WEATHER obtains the environment clock from
+     * timdat.gametick plus source globals.  Do not substitute a noon clock
+     * while that save/runtime owner is unavailable. */
+    state->time_of_day = DM2_TIME_UNKNOWN;
+    state->time_fraction = 0.0f;
     state->weather_intensity = 0;
     state->weather_seed = 0x0100u;
 }
@@ -207,17 +210,20 @@ int dm2_v1_weather_timer_receipt_from_source_receipts(
 void dm2_v1_weather_advance_time(DM2_V1_WeatherState *state, int minutes) {
     if (!state) return;
     if (minutes < 0) return;
+    if (state->time_of_day < 0 ||
+        state->time_of_day >= DM2_TIME_MINUTES_MAX) {
+        return;
+    }
     state->time_of_day = (state->time_of_day + minutes) % DM2_TIME_MINUTES_MAX;
     state->time_fraction = (float)state->time_of_day / (float)DM2_TIME_MINUTES_MAX;
 }
 
-/* dm2_v1_weather_sky_color — derive sky color from weather + time-of-day
- * Source: docs/dm2_time.md (sky gradient derivation), existing dm2_v1_outdoor_renderer.c
- * Matches: dm2_v1_outdoor_sky_color() — kept for API parity.
- * DM2 outdoor sky: dawn gradient → day blue → dusk red/orange → night dark.
- * Weather overrides: fog/storm → gray. Rain → desaturated. */
+/* This legacy helper is kept only for callers that have a recovered
+ * source-owned time. It must never manufacture a sky colour for unknown
+ * environment state. Actual outdoor pixels remain GDAT-gated elsewhere. */
 int dm2_v1_weather_sky_color(const DM2_V1_WeatherState *state) {
-    if (!state) return 0xFF4488CC;
+    if (!state || state->time_of_day < 0 ||
+        state->time_of_day >= DM2_TIME_MINUTES_MAX) return -1;
     float t = state->time_fraction;
     /* Weather override: fog/storm always gray */
     if (state->weather >= DM2_WEATHER_FOG) {

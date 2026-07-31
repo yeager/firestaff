@@ -1,3 +1,13 @@
+- ✅ 2026-07-31 DM2 runtime environment-clock fixture removal: a fresh V1
+  runtime and weather state no longer begin at fabricated noon, and the
+  former fixed 1,092-tick minute is gone. Unknown source time cannot advance,
+  reach the weather restored-state receipt or return a procedural sky colour;
+  a validated resumed session retains its supplied value. Source: SKProject
+  `SKWINSPX/src/v5/skweathr.cpp::DM2_UPDATE_WEATHER` and
+  `DM2_weather_3df7_0037`, which derive environment state from `timdat` and
+  source globals. Verification: `test_dm2_v1_weather_gdat_receipt` and the
+  real-data `test_dm2_v1_m11_startup_profile_gate` pass.
+
 - ✅ 2026-07-31 DM2 M11 source credits event: the original main-menu event
   218 now opens `TITLE/0/dt07/1` only after its bounded GDAT image and raw
   payload proof pass. BPP8 credits retain their physical indices and use

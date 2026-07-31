@@ -336,6 +336,14 @@ int main(void)
     receipt.commands[6].material_valid = 1;
 
     dm2_v1_weather_init(&restored_weather);
+    check(!dm2_v1_weather_restored_state_receipt(&restored_weather,
+                                                 &restored_state),
+          "fresh weather state rejects an invented environment clock");
+    check(dm2_v1_weather_sky_color(&restored_weather) == -1,
+          "fresh weather state cannot manufacture a sky colour");
+    dm2_v1_weather_advance_time(&restored_weather, 1);
+    check(restored_weather.time_of_day == DM2_TIME_UNKNOWN,
+          "unknown environment clock cannot advance from a fixture value");
     restored_weather.weather = DM2_WEATHER_RAIN;
     restored_weather.weather_intensity = 128;
     restored_weather.weather_seed = 0x4a3d7f01u;

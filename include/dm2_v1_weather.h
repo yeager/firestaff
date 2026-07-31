@@ -27,12 +27,15 @@
 #define DM2_WEATHER_COUNT   4
 
 /* ── Time-of-day constants ────────────────────────────────────────────
- * Source: include/dm2_v1_game.h, docs/dm2_time.md
- * Minutes from midnight: 0-1439. Starting time: 720 (noon).
- * Sky color interpolates based on time. */
+ * Source: skproject SKWINSPX/src/v5/skweathr.cpp::DM2_UPDATE_WEATHER
+ *
+ * The original runtime derives environment state from its game clock and
+ * environment globals.  Its serialized owner has not yet been recovered, so
+ * a fresh Firestaff runtime must carry an explicit unknown value rather than
+ * inventing a midday start. */
 
 #define DM2_TIME_MINUTES_MAX   1440  /* minutes per day (24h * 60) */
-#define DM2_TIME_START         720  /* noon in minutes */
+#define DM2_TIME_UNKNOWN         (-1)
 #define DM2_TIME_DAWN_START    360  /* 6:00 AM */
 #define DM2_TIME_DUSK_START   1080  /* 6:00 PM */
 #define DM2_TIME_NIGHT_START  1200  /* 8:00 PM */

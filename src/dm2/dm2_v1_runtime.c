@@ -2223,7 +2223,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
            sizeof(g_dm2_runtime.weather_chain));
     g_dm2_runtime.weather_rng.random = 0u;
     g_dm2_runtime.weather_chain_started = 0;
-    g_dm2_runtime.time_of_day_minutes = 720;  /* noon */
+    /* skweathr.cpp::DM2_UPDATE_WEATHER derives this from source-owned clock
+     * state.  Leave it unknown until an accepted session supplies a value. */
+    g_dm2_runtime.time_of_day_minutes = DM2_TIME_UNKNOWN;
     g_dm2_runtime.dungeon_level = 0;
     g_dm2_runtime.view_dir = 0;  /* North */
     g_dm2_runtime.leader_hand_object = 0u;
@@ -2455,6 +2457,9 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     rt->tick_count = (int)session->game_tick;
     rt->outdoor = gs->outdoor;
     rt->time_of_day_minutes = gs->time_of_day;
+    rt->weather.time_of_day = gs->time_of_day;
+    rt->weather.time_fraction =
+        (float)gs->time_of_day / (float)DM2_TIME_MINUTES_MAX;
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
     dm2_runtime_refresh_map_transition_context(rt);
@@ -4928,10 +4933,9 @@ void dm2_v1_runtime_tick(void) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     rt->tick_count++;
 
-    /* Advance time-of-day (1440 min per day) */
-    if (rt->tick_count % 1092 == 0) {  /* ~1092 ticks = 1 minute */
-        rt->time_of_day_minutes = (rt->time_of_day_minutes + 1) % 1440;
-    }
+    /* skweathr.cpp derives environmental time from its source globals and
+     * tick schedule. The former fixed 1,092-tick minute was invented, so do
+     * not advance a recovered value until that owner is imported. */
 
     /* Movement cooldown counts down */
     if (rt->move_cooldown_ticks > 0) {
@@ -5856,9 +5860,13 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_weather(&viewport,
                                 rt->outdoor ? 1 : 0,
                                 rt->weather.weather_intensity);
-    dm2_v1_viewport_set_time(
-        &viewport,
-        (float)(rt->time_of_day_minutes % 1440) / 1440.0f);
+    if (rt->time_of_day_minutes >= 0 &&
+        rt->time_of_day_minutes < DM2_TIME_MINUTES_MAX) {
+        dm2_v1_viewport_set_time(
+            &viewport,
+            (float)rt->time_of_day_minutes /
+                (float)DM2_TIME_MINUTES_MAX);
+    }
     viewport.random_seed = rt->weather.weather_seed;
     dm2_runtime_populate_visible_terrain(rt, &viewport, party_dir, party_x, party_y);
     dm2_runtime_populate_projectiles(&viewport, party_dir, party_x, party_y);

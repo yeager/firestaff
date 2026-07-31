@@ -53,6 +53,11 @@
   **2026-07-31 update:** the disconnected outdoor facade also no longer
   seeds a noon value; temporal ENVIRONMENT selection remains unavailable
   until its source owner is imported.
+  The live V1 runtime and weather helper now likewise start with an explicit
+  unknown environment time, refuse the former fixed 1,092-tick minute and
+  cannot emit a procedural sky colour without recovered time. A validated
+  resumed session may retain its supplied time, but source `timdat` plus the
+  environment globals still need to replace that compatibility handoff.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following
