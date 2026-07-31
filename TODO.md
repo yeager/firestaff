@@ -19309,6 +19309,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     tile-rooted ground-stack mutation, runtime death-pool wiring,
     source cooldown/eligibility ordering.
 - DM2-007 — `skproject/SKULLWIN/c_events.cpp` `DM2_TRY_CAST_SPELL`, `DM2_FIND_SPELL_BY_RUNES`, `DM2_CAST_SPELL_PLAYER`, and `DM2_PROCEED_SPELL_FAILURE`: `src/dm2/dm2_v1_spell.c` retains a hard-coded spell/effect mapping. `EXTENDED_LOAD_SPELLS_DEFINITION` is now a bounded GDAT `SPELL_DEF` receipt over exact dtWordValue fields 1-7 plus dtText field `0x18`; it covers load-time spell definitions, original spell-value adaptation, sparse custom rows, and fail-closed malformed fields, but it does not yet bind live rune lookup, resource spending, failure handling, projectile creation, timer effects, or spell execution. Replace the remaining runtime spell path with validated original spell records, rune/UI state, failure handling, resource consumption, projectile creation, and timer effects.
+  - 2026-07-31 audit: the fixed-table compatibility representation is not an
+    exact `dSpellsTable` port. In particular it uses ordinal runes where
+    SKProject uses the source byte codes (`0x66..0x77`), and several rows
+    differ in rune tail, difficulty, skill and packed `w6`. Replace the
+    whole fixed-table/input contract together from `SKWIN/SkGlobal.cpp:966-1007`
+    and `SkWinCore.cpp::FIND_SPELL_BY_RUNES`; do not patch individual
+    estimated mana/cooldown values.
   - 2026-07-18 update: the DM2_FIND_SPELL_BY_RUNES contract
     (c_events.cpp:2211-2264) is now bound in `dm2_v1_spell.c`: source
     query-key packing (rune[0]<<24...rune[3], zero-terminated, max four
