@@ -45838,6 +45838,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   separately and does not claim unobserved coverage. Reference: ReDMCSB
   `LOADSAVE.C F0419/F0420/F0433/F0435` and DMweb Saved Game Files.
 
+- ✅ 2026-07-31 CSB C001 presentation-cadence contract: corrected the stale
+  receipt constants from 101 ticks and a two-tick CHAOS hold to the real
+  `TITLE.C F0437:455-463` sequence: 60 PRESENTS ticks, 20 zoom blits,
+  `F0022_MAIN_Delay(20)` on full CHAOS, then `Delay(2)` on STRIKES BACK.
+  The focused receipt test asserts the independent 102-tick/20-hold values,
+  so a later presentation gate cannot silently reintroduce the old cadence.
+
 - ✅ 2026-07-31 CSB D1C F0108 real-material boundary: removed the isolated
   seed-driven floor/ceiling/ornament trace, its generated-pixel hash, public
   self-test contract and data-free CTest target. The remaining F0108 helpers

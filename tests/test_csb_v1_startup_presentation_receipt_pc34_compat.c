@@ -121,6 +121,10 @@ int main(void)
     CSB_V1_StartupEntranceAudioFacts_PC34 entrance_audio;
     CSB_V1_StartupPackagePresentationReceipt_PC34 receipt;
 
+    check(CSB_V1_STARTUP_PRESENTATION_TITLE_TOTAL_TICKS_PC34 == 102u &&
+              CSB_V1_STARTUP_PRESENTATION_CHAOS_HOLD_VBLANKS_PC34 == 20u,
+          "presentation cadence preserves TITLE.C's 60 + 20 + Delay(20) + Delay(2) timeline");
+
     make_package(&package); make_title(&title); make_hud(&hud);
     make_cadence(&cadence); make_swoosh(&init, &play, &release);
     make_entrance_audio(&entrance_audio);
