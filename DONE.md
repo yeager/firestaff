@@ -46774,3 +46774,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - The boot/runtime path no longer draws the procedural V2 HUD overlay when the HUD widget manifest is missing, partial, or placeholder-only.
 - Rendering now requires a complete manifest with real assets for every HUD slot; the local Track 02 BINs remain correctly limited to verified startup surfaces.
 - Verification: `test_theron_rendering` 25/25 and `test_theron_v2_hud_overlay_pc34` 58/58.
+# ✅ 2026-07-31 — Theron V1 chrome helpers fail closed
+
+- Direct topbar, right-panel, and champion-slot helpers no longer emit procedural blocks, icons, or name bars without a verified runtime chrome bank.
+- This closes the legacy low-level path as well as the master HUD compositor; the generic bar primitive remains available for source-backed callers.
+- Verification: `test_theron_rendering` 25/25.

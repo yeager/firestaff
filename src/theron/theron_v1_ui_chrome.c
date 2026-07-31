@@ -20,6 +20,13 @@ _Static_assert(TR_UI_TOPBAR_H  == 24,  "Topbar height mismatch");
 _Static_assert(TR_CHAMP_SLOT_W == 80,  "Champion slot width mismatch");
 _Static_assert(TR_CHAMP_SLOT_H == 56,  "Champion slot height mismatch");
 
+/* No verified runtime chrome bank is present in the local Track 02 corpus.
+ * Keep legacy procedural chrome helpers inert until one is bound. */
+static int tr_ui_source_bank_ready(const Theron_V1_World *world) {
+    (void)world;
+    return 0;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Bar drawing
  * ══════════════════════════════════════════════════════════════════════ */
@@ -60,6 +67,7 @@ void tr_ui_render_topbar(TQR_PlanarFramebuffer *fb,
                          const Theron_V1_World *world,
                          int y_offset) {
     if (!fb || !world) return;
+    if (!tr_ui_source_bank_ready(world)) return;
 
     int y = y_offset;
     uint8_t dark_gray  = TR_CHROME_BG;
@@ -119,6 +127,7 @@ void tr_ui_render_right_panel(TQR_PlanarFramebuffer *fb,
                                const Theron_V1_World *world,
                                int x_offset) {
     if (!fb || !world) return;
+    if (!tr_ui_source_bank_ready(world)) return;
 
     int x = x_offset;
     uint8_t dark_gray = TR_CHROME_BG;
@@ -215,6 +224,8 @@ void tr_ui_draw_champion_slot(TQR_PlanarFramebuffer *fb,
                                const Theron_V1_Champion *champion) {
     if (!fb || !fb->data) return;
     if (slot_idx < 0 || slot_idx >= THERON_MAX_CHAMPIONS) return;
+    /* No authenticated chrome bank is available yet. */
+    return;
 
     uint8_t bg         = TR_CHROME_BG;
     uint8_t frame      = TR_CHROME_FRAME;
@@ -321,22 +332,14 @@ void tr_ui_draw_champion_slot(TQR_PlanarFramebuffer *fb,
  * tr_ui_render — composite all enabled UI chrome zones onto the planar fb.
  * Source: THQUEST.ASM T600 (UI overlay zones).
  */
-static int tr_ui_source_bank_ready(const Theron_V1_World *world) {
-    (void)world;
-    /* The authenticated startup atlas is not a runtime chrome bank. Do not
-     * infer bars, glyphs, portraits, or compass pixels from its existence. */
-    return 0;
-}
-
 void tr_ui_render(TQR_PlanarFramebuffer *fb,
                    const Theron_V1_World *world,
                    uint32_t ui_flags) {
     if (!fb || !fb->data || !world) return;
 
     /* Track 02's complete title/stage/Soul Room/forcefield atlas owns the
-     * startup frame. This older chrome compositor has only generated bars,
-     * blocks, and glyph stand-ins, so it must not alter an authenticated
-     * original-media surface until a loader/CD capture binds its UI art. */
+     * startup frame. This older chrome compositor has no bound runtime UI
+     * bank, so it must not alter an authenticated original-media surface. */
     if (!tr_ui_source_bank_ready(world)) {
         return;
     }
