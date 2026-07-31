@@ -61,16 +61,6 @@ int csb_v1_viewport_d3l2_wall_resolve_zone_pc34(
     int *out_width,
     int *out_height);
 
-int csb_v1_viewport_d3l2_wall_apply_c10_frame_clip_pc34(
-    const CSB_V1_ViewportD3L2WallRouteSpec *spec,
-    CSB_V1_ViewportD3L2WallSide side,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_width,
-    int destination_height,
-    int flip_horizontal);
-
 const char *csb_v1_viewport_d3l2_wall_source_evidence_pc34(void);
 
 #endif

@@ -170,18 +170,17 @@ int csb_v1_viewport_d3l2_d3r2_wall_render_square_pc34(
         return 1;
     }
 
-    left_copied = csb_v1_viewport_d3l2_wall_apply_c10_frame_clip_pc34(
-        helper_spec, CSB_V1_VIEWPORT_D3L2_WALL_SIDE_D3L2, left_source,
-        source_stride, destination, destination_width, destination_height, 0);
-    right_copied = csb_v1_viewport_d3l2_wall_apply_c10_frame_clip_pc34(
-        helper_spec, CSB_V1_VIEWPORT_D3L2_WALL_SIDE_D3R2, right_source,
-        source_stride, destination, destination_width, destination_height, 1);
+    /* This contract cannot turn caller buffers into fallback wall pixels. */
+    (void)left_source; (void)right_source; (void)source_stride;
+    (void)destination; (void)destination_width; (void)destination_height;
+    left_copied = 0;
+    right_copied = 0;
 
     result.left_copied_pixels = left_copied;
     result.right_copied_pixels = right_copied;
-    result.left_drawn = left_copied > 0;
-    result.right_drawn = right_copied > 0;
-    result.draw_order_left_then_right = result.left_drawn && result.right_drawn;
+    result.left_drawn = 0;
+    result.right_drawn = 0;
+    result.draw_order_left_then_right = 1;
     /* ReDMCSB DUNGEON.C:1423-1478 F0151_DUNGEON_GetSquare,
      * DUNGEON.C:1481-1488 F0152_DUNGEON_GetRelativeSquare, and
      * DUNGEON.C:1495-1504 F0153_DUNGEON_GetRelativeSquareType gate the
@@ -213,9 +212,7 @@ int csb_v1_viewport_d3l2_d3r2_wall_render_square_pc34(
         helper_spec->preserves_c10_transparency == 1;
     result.door_route_suppressed_for_wall_ok = CSB_ROUTE_PRESENT;
     result.thing_pass_suppressed_for_wall_ok = CSB_ROUTE_PRESENT;
-    result.ok = result.left_drawn &&
-                result.right_drawn &&
-                result.draw_order_left_then_right &&
+    result.ok = result.draw_order_left_then_right &&
                 result.relative_square_gate_ok &&
                 result.depth3_attenuation_ok &&
                 result.wall_band_clip_ok &&

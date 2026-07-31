@@ -146,46 +146,6 @@ int csb_v1_viewport_d3l2_wall_resolve_zone_pc34(
     return 0;
 }
 
-int csb_v1_viewport_d3l2_wall_apply_c10_frame_clip_pc34(
-    const CSB_V1_ViewportD3L2WallRouteSpec *spec,
-    CSB_V1_ViewportD3L2WallSide side,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_width,
-    int destination_height,
-    int flip_horizontal)
-{
-    int copied = 0;
-    const CSB_V1_ViewportD3L2WallSideSpec *side_spec =
-        csb_v1_viewport_d3l2_wall_side_spec_pc34(spec, side);
-
-    if (!side_spec || !source || !destination) return -1;
-    if (source_stride < side_spec->source_x + side_spec->byte_width) return -1;
-    if (destination_width <= 0 || destination_height <= 0) return -1;
-
-    for (int y = 0; y < side_spec->height; ++y) {
-        const int dst_y = side_spec->frame_y1 + y;
-        if (dst_y < 0 || dst_y >= destination_height) continue;
-
-        for (int x = 0; x < side_spec->byte_width; ++x) {
-            const int src_x = flip_horizontal
-                ? side_spec->source_x + side_spec->byte_width - 1 - x
-                : side_spec->source_x + x;
-            const int src_y = side_spec->source_y + y;
-            const int dst_x = side_spec->frame_x1 + x;
-            const uint8_t pixel = source[(src_y * source_stride) + src_x];
-
-            if (dst_x < 0 || dst_x >= destination_width) continue;
-            if (pixel == (uint8_t)spec->transparent_color) continue;
-            destination[(dst_y * destination_width) + dst_x] = pixel;
-            ++copied;
-        }
-    }
-
-    return copied;
-}
-
 const char *csb_v1_viewport_d3l2_wall_source_evidence_pc34(void)
 {
     return s_source_evidence;

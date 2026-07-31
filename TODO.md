@@ -516,6 +516,8 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D1L2/D1R2 wall follow-up:** retired the generic frame-clip
   compositor and its synthetic raster runner. F0122/F0123 route geometry,
   flip rules and C10 metadata remain unavailable for pixel output by design.
+  **2026-07-31 D3L2/D3R2 wall follow-up:** retired its generic C10 frame
+  clipper; only source-locked zones, geometry and F0105 metadata remain.
   **2026-07-31 D1L/D1R declaration follow-up:** the stale, unimplemented
   C10 pixel-writer declaration is removed from the public contract.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
