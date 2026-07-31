@@ -52,6 +52,7 @@
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_sound.h"
+#include "dm2_v1_sound_sdl_backend.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_startup_layout.h"
 #include "dm2_v1_startup_menu.h"
@@ -958,6 +959,18 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->dm2State.party_dir = receipt.party_dir;
     state->dm2State.tick_count = receipt.tick_count;
     state->dm2State.leader_hand_object = receipt.leader_hand_object;
+}
+
+static void m11_dm2_bind_verified_sound_playback(void)
+{
+    static DM2_V1_SoundPlaybackBackend backend;
+
+    /* SKProject SKWIN/SkwinSDL.cpp::OpenAudio owns the SDL playback device;
+     * c_sound.cpp owns the GDAT sample lookup already bound by the verified
+     * boot profile.  Do not create or bind a backend before that profile is
+     * admitted, because an unverified file must never yield audible output. */
+    dm2_v1_sound_sdl_backend_describe(&backend);
+    dm2_v1_sound_bind_playback_backend(&backend);
 }
 
 static void m11_dm2_copy_printable(unsigned char *dst,
@@ -15147,6 +15160,11 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         csb_v2_runtime_cleanup();
     }
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        /* The SDL device is a host resource, while decoded PCM remains
+         * owned by the verified GDAT loader in the DM2 boot profile. */
+        dm2_v1_sound_bind_playback_backend(NULL);
+    }
     theron_v1_track01_cdda_stream_stop(&state->theronTrack01CddaStream);
     m11_nexus_release_title(state);
     {
@@ -16263,6 +16281,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                           failureReceipt.status);
             return 0;
         }
+        m11_dm2_bind_verified_sound_playback();
         if (spec->savePath && spec->savePath[0] != '\0') {
             if (!m11_dm2_resume_from_save_path(state, &launch, spec->savePath)) {
                 m11_log_event(state, M11_COLOR_RED,

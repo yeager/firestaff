@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 M11 verified-audio handoff: M11 now binds the SDL
+  playback device only after DM2's hash-verified boot profile has bound the
+  same GDAT loader, and releases it with the DM2 view. Thus no filename-only
+  or synthetic PCM can become audible. Source: SKProject
+  `SKWIN/SkwinSDL.cpp::OpenAudio` and `c_sound.cpp`. Verification:
+  `test_dm2_v1_sound_playback_sdl` plays original `GRAPHICS.DAT` PCM through
+  SDL's dummy device; `test_dm2_v1_m11_startup_profile_gate` passes.
+
 - ✅ 2026-07-31 DM1 V2.2 missing-shape placeholder removal: removed the
   unused magenta/black checkerboard surface and public accessor from the
   production V2.2 library. An incomplete custom pack now uses only the
