@@ -1416,6 +1416,13 @@ int csb_v1_viewport_build_dungeon_aspect_grids_pc34(
     uint8_t out_stairs_up_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE],
     uint8_t out_pit_invisible_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE]);
 
+/* Resolve one D3L2/D3R2 F0111 closed-door source record from the live PC3.4
+ * map. It rejects open, partial and destroyed doors because their original
+ * F0111 clipping is not a full-panel blit. */
+int csb_v1_viewport_resolve_closed_d3_door_graphic_pc34(
+    const CSB_V1_DungeonData *dungeon, int level, int party_dir,
+    int party_x, int party_y, int side, int *out_graphic_index);
+
 /* Bind one M11 viewport config to a live, loader-owned CSB dungeon grid.
  * A missing or invalid dungeon clears the grid binding and rejects the
  * frame; callers must not substitute procedural map data. */

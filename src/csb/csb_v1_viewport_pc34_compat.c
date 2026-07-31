@@ -23,6 +23,7 @@
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
+#include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
 #include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
 #include "csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.h"
 #include "csb_v1_f0247_launcher_rng_pc34_compat.h"
@@ -4862,6 +4863,45 @@ int csb_v1_viewport_build_dungeon_aspect_grids_pc34(
         }
     }
     return 1;
+}
+
+int csb_v1_viewport_resolve_closed_d3_door_graphic_pc34(
+    const CSB_V1_DungeonData *dungeon, int level, int party_dir,
+    int party_x, int party_y, int side, int *out_graphic_index)
+{
+    const uint8_t *record;
+    int map_x;
+    int map_y;
+    int raw;
+    int thing;
+    int thing_type;
+    int thing_size;
+    uint16_t door_word;
+
+    if (out_graphic_index) *out_graphic_index = 0;
+    if (!dungeon || !out_graphic_index || dungeon->square_bytes != 1 ||
+        level < 0 || level >= dungeon->level_count || (side != -2 && side != 2)) {
+        return 0;
+    }
+    csb_v1_viewport_runtime_map_from_relative(
+        party_dir, party_x, party_y, 3, side, &map_x, &map_y);
+    raw = csb_v1_dungeon_get_raw_square(dungeon, level, map_x, map_y);
+    /* ReDMCSB DUNGEON.C F0172: a D3 F0111 panel is only the front-facing
+     * C04 door. DEFS.H C4 is the sole state represented by the full panel. */
+    if (raw < 0 || ((raw >> 5) & 0x07) != 4 || (raw & 0x07) != 4 ||
+        (((raw >> 3) & 1) == (party_dir & 1)) ||
+        (thing = csb_v1_dungeon_get_first_thing(
+            dungeon, level, map_x, map_y)) < 0 ||
+        !(record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)thing, &thing_type, NULL, &thing_size)) ||
+        thing_type != 0 || thing_size < 4) {
+        return 0;
+    }
+    door_word = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+    *out_graphic_index = csb_v1_viewport_door_graphic_index_from_map_pc34(
+        dungeon->map_door_set0[level], dungeon->map_door_set1[level],
+        door_word, 0);
+    return *out_graphic_index > 0;
 }
 
 int csb_v1_viewport_bind_live_dungeon_grid(

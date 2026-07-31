@@ -4142,6 +4142,45 @@ static void test_live_f0172_aspect_materialization(void)
     check_int("csb.f0172.live_aspects.fixture_grid_unextended", aspects[0], 6);
 }
 
+static void test_live_closed_d3_door_resolution(void)
+{
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[256];
+    int graphic = 0;
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 6;
+    dungeon.level_heights[0] = 4;
+    dungeon.level_offsets[0] = 100;
+    dungeon.square_bytes = 1;
+    dungeon.square_first_thing_base = 72; /* 44-byte header + MAP.D + columns */
+    dungeon.square_first_thing_count = 1;
+    dungeon.thing_type_counts[0] = 1;
+    dungeon.thing_data_bases[0] = 180;
+    dungeon.map_door_set0[0] = 1;
+    dungeon.map_door_set1[0] = 3;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+
+    /* Facing east from (1,2), D3L2 is map (4,0).  C4 closed, bit 3 clear
+     * means F0172 classifies it as a front door for eastward viewing. */
+    raw[100 + 4 * 4] = (uint8_t)((4u << 5) | 0x10u | 4u);
+    raw[72] = 0u;
+    raw[73] = 0u;
+    raw[182] = 1u; /* DB0 bit chooses MAP.D DoorSet1 = 3. */
+    check_int("csb.live_d3_door.resolve.closed_db0",
+              csb_v1_viewport_resolve_closed_d3_door_graphic_pc34(
+                  &dungeon, 0, 1, 1, 2, -2, &graphic), 1);
+    check_int("csb.live_d3_door.resolve.closed_db0_graphic", graphic, 255);
+    raw[100 + 4 * 4] = (uint8_t)((4u << 5) | 0x10u | 3u);
+    check_int("csb.live_d3_door.reject.partial",
+              csb_v1_viewport_resolve_closed_d3_door_graphic_pc34(
+                  &dungeon, 0, 1, 1, 2, -2, &graphic), 0);
+    check_int("csb.live_d3_door.reject.partial_graphic", graphic, 0);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_viewport_source_evidence();
@@ -4237,6 +4276,7 @@ int main(void)
     test_csb_creature_visibility_zone_contracts();
     test_csb_runtime_overlay_placement_contracts();
     test_live_f0172_aspect_materialization();
+    test_live_closed_d3_door_resolution();
     test_csb_runtime_thing_pass_render_config();
     test_csb_d3l2_d3r2_thing_pass_route_binding_contracts();
     test_csb_f0115_explosion_blit_contracts();
