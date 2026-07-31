@@ -45838,6 +45838,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   separately and does not claim unobserved coverage. Reference: ReDMCSB
   `LOADSAVE.C F0419/F0420/F0433/F0435` and DMweb Saved Game Files.
 
+- ✅ 2026-07-31 CSB group-marker fallback removal: removed the public
+  creature-colour cross renderer and its data-free fallback branch. ReDMCSB
+  `DUNVIEW.C F0115` requires the perspective-selected creature graphic; if
+  the native sprite cannot be supplied, the group is now no-draw rather than
+  a coloured diagnostic symbol. The existing real sprite callback remains
+  unchanged.
+
 - ✅ 2026-07-31 CSB first-backdrop synthetic-pixel contract removal: removed
   the unconsumed custom-background fixture that claimed F0098/F0107 ordering
   through fixed generated colours and a synthetic MASK 0x8000 sample. It had

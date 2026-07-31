@@ -3642,33 +3642,6 @@ static void test_csb_runtime_overlay_placement_contracts(void)
               csb_v1_viewport_runtime_creature_coordinate_set(3), 2);
     check_int("csb.runtime_group_overlay.coord.invalid",
               csb_v1_viewport_runtime_creature_coordinate_set(99), 0);
-    {
-        uint8_t screen[320 * 200];
-        int group_marker_color =
-            csb_v1_viewport_creature_marker_overlay_color(6);
-        check_int("csb.runtime_group_overlay.marker_color.type6",
-                  group_marker_color, 0x0D);
-        check_int("csb.runtime_group_overlay.marker_color.type0",
-                  csb_v1_viewport_creature_marker_overlay_color(0), 0x07);
-        check_int("csb.runtime_group_overlay.marker_color.invalid",
-                  csb_v1_viewport_creature_marker_overlay_color(-1), 0x0D);
-        memset(screen, 0, sizeof(screen));
-        check_int("csb.runtime_group_overlay.marker.draw",
-                  csb_v1_viewport_draw_runtime_group_marker(
-                      screen, 320, 200, &group_place, 6), 1);
-        check_int("csb.runtime_group_overlay.marker.center",
-                  screen[group_place.marker_screen_y * 320 +
-                         group_place.marker_screen_x], group_marker_color);
-        check_int("csb.runtime_group_overlay.marker.down2",
-                  screen[(group_place.marker_screen_y + 2) * 320 +
-                         group_place.marker_screen_x], group_marker_color);
-        check_int("csb.runtime_group_overlay.marker.left2",
-                  screen[group_place.marker_screen_y * 320 +
-                         group_place.marker_screen_x - 2], group_marker_color);
-        check_int("csb.runtime_group_overlay.marker.bad_height",
-                  csb_v1_viewport_draw_runtime_group_marker(
-                      screen, 320, 0, &group_place, 6), 0);
-    }
     memset(&group_place, 0, sizeof(group_place));
     check_true("csb.runtime_group_overlay.creature_wrapper.type0",
                csb_v1_viewport_runtime_group_overlay_creature_placement(
@@ -3979,8 +3952,8 @@ static void test_csb_runtime_thing_pass_render_config(void)
               cfg.runtime_object_marker_drawn_count, 2);
     check_int("csb.runtime_thing_pass.render.fallback_group_sprites",
               cfg.runtime_group_sprite_drawn_count, 0);
-    check_int("csb.runtime_thing_pass.render.fallback_group_markers",
-              cfg.runtime_group_marker_drawn_count, 2);
+    check_int("csb.runtime_thing_pass.render.unbound_group_no_draw",
+              cfg.runtime_group_marker_drawn_count, 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     cfg.group_sprite_drawer = test_group_sprite_reject_drawer;
