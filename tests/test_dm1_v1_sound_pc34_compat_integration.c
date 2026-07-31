@@ -222,34 +222,28 @@ static void test_tick_emission_audio_plan(void) {
 
     memset(&emission, 0, sizeof(emission));
     emission.kind = EMIT_PARTY_MOVED;
-    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
-          "party move has an audio plan");
-    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_FOOTSTEP,
-          "party move uses footstep route");
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 0,
+          "party move without F0064 sound index is source-silent");
+    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_NONE,
+          "party move cannot select a synthetic footstep");
 
     emission.kind = EMIT_DOOR_STATE;
-    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
-          "door state has an audio plan");
-    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_DOOR,
-          "door state uses door route");
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 0,
+          "door state without F0064 sound index is source-silent");
+    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_NONE,
+          "door state cannot select a synthetic door cue");
 
     emission.kind = EMIT_KILL_NOTIFY;
-    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
-          "kill notification has an audio plan");
-    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_COMBAT,
-          "kill notification uses combat route");
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 0,
+          "kill notification without F0064 sound index is source-silent");
 
     emission.kind = EMIT_CHAMPION_DOWN;
-    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
-          "champion down has an audio plan");
-    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_COMBAT,
-          "champion down uses combat route");
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 0,
+          "champion down without F0064 sound index is source-silent");
 
     emission.kind = EMIT_SPELL_EFFECT;
-    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 1,
-          "spell effect has an audio plan");
-    CHECK(plan.route == DM1_V1_AUDIO_EMISSION_ROUTE_SPELL,
-          "spell effect uses spell route");
+    CHECK(DM1_V1_BuildAudioEmissionPlanPc34(&emission, &plan) == 0,
+          "spell effect without F0064 sound index is source-silent");
 
     emission.kind = EMIT_SOUND_REQUEST;
     emission.payload[0] = DM1_SND_BUZZ;

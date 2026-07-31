@@ -564,6 +564,14 @@ diagnostic; it must not silently fall back to a generated visual.
   non-V1 chrome. Verification: `firestaff_m11` and
   `test_m11_dm1_runtime_source_capture_receipt` pass.
 
+- **DM1-ORIGINAL-REPLACE-008:** Closed 2026-07-31. Removed the generic
+  footstep, door, combat and spell marker sounds from DM1 tick emissions.
+  ReDMCSB routes audible DM1 effects through
+  `F0064_SOUND_RequestPlay_CPSD` with a concrete SND3 index; emissions without
+  that index are now source-silent rather than generating a substitute cue.
+  Verification: `test_dm1_v1_sound_pc34_compat_integration` (283/283) and
+  `test_dm1_v1_swsh_psg_audio_pc34_compat` pass.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

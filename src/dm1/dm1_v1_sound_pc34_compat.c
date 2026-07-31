@@ -364,15 +364,15 @@ int DM1_V1_BuildAudioEmissionPlanPc34(const struct TickEmission_Compat* emission
 
     switch (emission->kind) {
         case EMIT_PARTY_MOVED:
-            outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_FOOTSTEP;
-            break;
         case EMIT_DOOR_STATE:
-            outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_DOOR;
-            break;
         case EMIT_KILL_NOTIFY:
         case EMIT_CHAMPION_DOWN:
-            outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_COMBAT;
-            break;
+        case EMIT_SPELL_EFFECT:
+            /* These host tick emissions do not carry a ReDMCSB
+             * F0064_SOUND_RequestPlay sound index.  A generic footstep,
+             * door, combat or spell marker would invent an unrelated SFX;
+             * wait for the concrete EMIT_SOUND_REQUEST instead. */
+            return 0;
         case EMIT_CHAMPION_DAMAGED:
             if (emission->payload[0] < 0 ||
                 emission->payload[0] >= CHAMPION_MAX_PARTY) {
@@ -383,9 +383,6 @@ int DM1_V1_BuildAudioEmissionPlanPc34(const struct TickEmission_Compat* emission
             outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND;
             outPlan->sourceSoundIndex = (int16_t)(
                 DM1_SND_CHAMPION_0_DAMAGED + emission->payload[0]);
-            break;
-        case EMIT_SPELL_EFFECT:
-            outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_SPELL;
             break;
         case EMIT_SOUND_REQUEST:
             outPlan->route = DM1_V1_AUDIO_EMISSION_ROUTE_SOURCE_SOUND;

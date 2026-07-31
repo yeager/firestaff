@@ -8264,24 +8264,6 @@ static const char* m11_source_name(M11_GameSourceKind sourceKind) {
     }
 }
 
-static M11_AudioMarker m11_audio_marker_from_dm1_route(
-    DM1_V1_AudioEmissionRoutePc34 route) {
-    switch (route) {
-        case DM1_V1_AUDIO_EMISSION_ROUTE_FOOTSTEP:
-            return M11_AUDIO_MARKER_FOOTSTEP;
-        case DM1_V1_AUDIO_EMISSION_ROUTE_DOOR:
-            return M11_AUDIO_MARKER_DOOR;
-        case DM1_V1_AUDIO_EMISSION_ROUTE_COMBAT:
-            return M11_AUDIO_MARKER_COMBAT;
-        case DM1_V1_AUDIO_EMISSION_ROUTE_CREATURE:
-            return M11_AUDIO_MARKER_CREATURE;
-        case DM1_V1_AUDIO_EMISSION_ROUTE_SPELL:
-            return M11_AUDIO_MARKER_SPELL;
-        default:
-            return M11_AUDIO_MARKER_NONE;
-    }
-}
-
 static unsigned int m11_audio_source_fnv1a(const uint8_t *bytes, size_t count) {
     unsigned int hash = 2166136261u;
     size_t index;
@@ -8381,7 +8363,6 @@ static void m11_audio_emit_creature_movement_sound(M11_GameViewState* state,
 static void m11_audio_emit_for_emission(M11_GameViewState* state,
                                         const struct TickEmission_Compat* emission) {
     DM1_V1_AudioEmissionPlanPc34 plan;
-    M11_AudioMarker marker;
     if (!state || !emission) {
         return;
     }
@@ -8392,14 +8373,7 @@ static void m11_audio_emit_for_emission(M11_GameViewState* state,
         (void)M11_Audio_EmitSourceSoundIndex(&state->audioState,
                                                plan.sourceSoundIndex);
         state->audioEventCount += 1;
-        return;
     }
-    marker = m11_audio_marker_from_dm1_route(plan.route);
-    if (marker == M11_AUDIO_MARKER_NONE) {
-        return;
-    }
-    (void)M11_Audio_EmitMarker(&state->audioState, marker);
-    state->audioEventCount += 1;
 }
 
 /* m11_join_path replaced by FSP_JoinPath from fs_portable_compat. */
