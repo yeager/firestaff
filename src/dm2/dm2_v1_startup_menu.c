@@ -1368,16 +1368,16 @@ int dm2_v1_startup_runtime_handoff_receipt_from_tick(
     out_receipt->title_ready = active ? 0 : 1;
     out_receipt->music_cue = active ? 0 : -1;
     out_receipt->music_loop = active;
-    /* DM2-008: DM2_PLAY_MUSIC is fail-closed without a verified asset root
-     * and proven backend.  skproject/SKWIN SHOW_MENU_SCREEN fires the title
-     * music cue fire-and-forget, so the handoff records cue dispatch while
-     * audible playback availability stays explicit in the sound module. */
+    /* SKWIN startend.cpp calls DM2_PLAY_MUSIC(0, true) immediately before
+     * SHOW_MENU_SCREEN.  Preserve that order, but do not claim that a cue
+     * played unless the verified original music path and backend accepted it.
+     * SHOW_MENU_SCREEN itself is independent of playback, so missing HMP
+     * material leaves the menu visible and audio silent. */
     if (active) {
-        (void)dm2_v1_sound_play_music(0);
+        out_receipt->music_cue_played =
+            dm2_v1_sound_play_music(0) == 0 ? 1 : 0;
     }
-    out_receipt->music_cue_played = active;
-    out_receipt->show_menu_screen_after_music =
-        active ? out_receipt->music_cue_played : 0;
+    out_receipt->show_menu_screen_after_music = active;
     /* skproject/SKWIN SkWinCore startup keeps title/menu presentation and
      * HUD/game runtime as one boot handoff; Firestaff records the same
      * boundary here so M11 does not infer HUD/runtime init from text status. */

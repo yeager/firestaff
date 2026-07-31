@@ -2372,6 +2372,10 @@ that its exact runtime path is not already source-locked and tested.
 46. **DM2-SOUND-MUSIC-CUTSCENES:** Complete real SND/music/cutscene startup,
     menu, dungeon, combat, weather, and transition playback with skproject
     timing and no placeholder audio.
+    2026-07-31: the startup handoff now distinguishes an attempted menu cue
+    from successful verified playback. Remaining work is the PC SONGLIST.DAT
+    to GRAPHICS.DAT HMP ownership path and its real-data regression; do not
+    claim a cue played when that source chain or its backend is unavailable.
 47. **DM2-INPUT-CONTROLLER-TOUCH:** Complete mouse, keyboard, controller,
     Steam Deck, touch, focus, scaling, hit-testing, and command translation
     for the real DM2 menu/HUD/gameplay routes.

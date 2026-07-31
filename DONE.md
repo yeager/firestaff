@@ -44498,3 +44498,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   fields from the bound runtime/G1 session before any source-GDAT draw. This
   leaves an unbound viewport with no implicit playable world state; the
   hash-verified boot profile smoke remains 87/87.
+- ✅ 2026-07-31 DM2 startup music truthfulness: the `SHOW_MENU_SCREEN` menu
+  still follows SKWIN's `DM2_PLAY_MUSIC(0, true)` order, but its handoff no
+  longer reports that cue 0 played when the verified original HMP/GDAT path
+  or backend rejected it. The title/menu remains visible, while missing
+  source audio is honestly silent. The focused startup-audio regression
+  covers the unbound no-playback case.
