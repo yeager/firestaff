@@ -46214,3 +46214,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   otherwise V1 pixels remain untouched. References: ReDMCSB `DUNVIEW.C F0111`
   / `F0128` and CSBWin `Viewport.cpp`. Verification: focused V2.2 command
   tests, M11 build, real-data first-frame material test, and `git diff --check`.
+
+- ✅ 2026-07-31 CSB V2.2 dead material-route API cleanup: removed the orphaned
+  per-cell PBR routing declaration. Its stated implementation, tests and probe
+  did not exist, it had no runtime consumer, and it described synthetic channel
+  completion rather than original CSB material. The remaining V2.2 route is the
+  live F0128 command/provenance gate. References: ReDMCSB `DUNVIEW.C F0111/F0128`
+  and CSBWin `Viewport.cpp`. Verification: source-consumer audit, M11 build,
+  real-data first-frame material test, and `git diff --check`.
