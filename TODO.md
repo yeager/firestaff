@@ -41,6 +41,10 @@
   Track 02 level is bound. The standalone room generator remains a legacy
   fixture API and must not be used for launch.
 
+  The save/resume contract test now links that fixture-scoped runtime entry
+  explicitly, so its structured fallback assertion cannot accidentally test
+  the production no-fallback object from the static archive.
+
 - **THERON-LEGACY-ASSET-VERIFY:** The generic asset loader has no authoritative
   SHA256 catalog. Its verification API now rejects supplied digests instead of
   returning a false success; callers must use the hash-bound Track 02 boot
