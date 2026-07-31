@@ -5351,7 +5351,8 @@ void theron_v1_track02_object_table_route_receipt_init(
     memset(receipt, 0, sizeof(*receipt));
     receipt->signal_status = THERON_TRACK02_SIGNAL_BAD_INPUT;
     receipt->variant = THERON_TRACK02_VARIANT_UNKNOWN;
-    receipt->fallback_visuals_allowed = 1;
+    /* Unknown/bad input is not permission to render invented visuals. */
+    receipt->fallback_visuals_allowed = 0;
 }
 
 static size_t tqr_count_nonzero_bytes(const uint8_t *bytes, size_t byte_count) {
@@ -6046,7 +6047,8 @@ void theron_v1_track02_level_route_receipt_init(
     memset(receipt, 0, sizeof(*receipt));
     receipt->signal_status = THERON_TRACK02_SIGNAL_BAD_INPUT;
     receipt->variant = THERON_TRACK02_VARIANT_UNKNOWN;
-    receipt->fallback_visuals_allowed = 1;
+    /* Unknown/bad input is not permission to render invented visuals. */
+    receipt->fallback_visuals_allowed = 0;
 }
 
 int theron_v1_track02_capture_level_route_receipt(
