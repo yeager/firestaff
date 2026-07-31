@@ -11,6 +11,7 @@
  */
 
 #include "csb_v1_dungeon_loader_pc34_compat.h"
+#include "csb_v1_csbwin_save_loader_boundary_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 
 #include <stdio.h>
@@ -467,6 +468,7 @@ int main(int argc, char **argv)
     const CSB_V1_DSAImportedAction **actions_before_tick = NULL;
     unsigned long *action_hashes_before_tick = NULL;
     CSB_V1_RuntimeDSAFilterBinding source_binding;
+    CSB_V1_CSBWinDSASaveCorpusReceipt dsa_corpus;
     SourceFileReceipt dungeon_receipt;
     SourceFileReceipt save_receipt;
     int mapped_entries = 0;
@@ -498,6 +500,22 @@ int main(int argc, char **argv)
               source_file_receipt(save_path, &save_receipt),
           "snapshot supplied Dungeon.dat and csbgame bytes before admission");
     if (failures != 0) return 1;
+
+    /* CSBWin SaveGame.cpp only publishes the DSA runtime graph after a
+     * complete Extended Features/DSA/core corpus has authenticated. A file
+     * with an Extended Features preamble alone is not a DSA save, even if a
+     * permissive compatibility decoder can read some of its body. Keep this
+     * opt-in probe observational until the caller supplies that full corpus. */
+    memset(&dsa_corpus, 0, sizeof(dsa_corpus));
+    (void)csb_v1_csbwin_save_loader_boundary_dsa_corpus_receipt_file(
+        save_path, 4u * 1024u * 1024u, &dsa_corpus);
+    if (!dsa_corpus.runtime_handoff_ready) {
+        printf("SKIP: supplied save is not a complete CSBWin DSA corpus "
+               "(%s).\n",
+               dsa_corpus.decision_label ? dsa_corpus.decision_label :
+                                           "unclassified");
+        return 0;
+    }
 
     dungeon = (CSB_V1_DungeonData *)calloc(1u, sizeof(*dungeon));
     CHECK(dungeon != NULL, "allocate runtime-owned dungeon handle");

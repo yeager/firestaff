@@ -1,3 +1,12 @@
+- ✅ 2026-07-31 CSBWin DSA-corpus admission correction: the opt-in extended
+  DSA handoff probe now preflights the same strict loader-boundary corpus
+  receipt as production. The locally supplied `csbgame3.dat` has a valid
+  Extended Features tail but no DSA section and a rejected CSBWin core, so it
+  skips rather than being mistaken for positive DSA/runtime evidence.
+  Verification: the real-file DSA probe reports the expected skip;
+  `firestaff_csb_v1_csbwin_package_runtime_handoff_probe` independently
+  rejects the same corpus for `reject_dsa_corpus_no_dsa_section`.
+
 - ✅ 2026-07-31 Nexus FONT012 glyph decoding: implemented the DMWeb
   `DMNDataFileDecoder.vbs` FONT branch for one bounded glyph at a time
   (big-endian 2bpp rows, `ceil(width/4)` bytes per line, palette indices
