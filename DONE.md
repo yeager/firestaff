@@ -47141,3 +47141,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   longer synthesizes a fallback room in the production build. That branch is
   compile-defined only for the startup-flow fixture probe; production remains
   unavailable until a decoded Track 02 level is bound.
+
+- ✅ 2026-07-31 CSB F0906–F0925 primitive-inventory isolation: the raw
+  function-number metadata table only reports dependencies and explicitly
+  blocks execution. It now compiles solely into its inventory test, leaving
+  M10 to the dedicated authenticated SWSH and Utility implementations.

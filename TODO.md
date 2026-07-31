@@ -94,6 +94,9 @@
   - 2026-07-31: F0474–F0490 and F0886–F0905 source tables are test-only;
     runtime retains only the real graphics archive route, never blocked-receipt
     bits or ownership strings as a substitute for source material.
+  - 2026-07-31: F0906–F0925 is a read-only primitive inventory and is
+    test-only. The live SWSH and Utility paths retain their dedicated
+    authenticated byte consumers.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
