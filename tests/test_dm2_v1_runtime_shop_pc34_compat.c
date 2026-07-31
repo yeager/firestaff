@@ -66,6 +66,15 @@ int main(void)
               (int)DM2_SHOP_RESULT_NO_ACTIVE_SHOP &&
               dm2_v1_runtime_leave_shop() < 0,
           "sell and leave also reject without source shop ownership");
+    CHECK(dm2_v1_runtime_invoke_actuator(
+              0, 10, 5, DM2_ACTUATOR_CREATURE_GENERATOR,
+              DM2_AI_DRAGOTH_MINION) < 0 &&
+              dm2_v1_runtime_get_spawn_count() == 0,
+          "unowned creature-generator flag cannot create a creature");
+    CHECK(dm2_v1_runtime_invoke_actuator(
+              0, 10, 5, DM2_ACTUATOR_ITEM_GENERATOR, 0x1234u) < 0 &&
+              dm2_v1_runtime_get_last_generated_object() == 0u,
+          "unowned item-generator flag cannot create an object");
 
     printf("\n%d/%d checks passed\n", passed, passed + failed);
     return failed ? 1 : 0;

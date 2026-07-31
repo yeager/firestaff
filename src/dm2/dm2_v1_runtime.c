@@ -9420,17 +9420,23 @@ int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
         return 0;
     }
     if (type == DM2_ACTUATOR_CREATURE_GENERATOR) {
-        int ai = flag ? (int)flag : DM2_AI_DRAGOTH_MINION;
-        dm2_runtime_record_spawn(rt, ai, level, x, y);
-        return rt->last_spawn_instance_id >= 0 ? 0 : -1;
+        /* DM2_INVOKE_ACTUATOR/ALLOC_NEW_CREATURE consumes the DB14 record
+         * that owns creature type, multiplier, direction and timer state.
+         * A decoded type flag (and especially a Dragoth default) is not that
+         * record, so it must not manufacture a live creature. */
+        (void)flag;
+        return -1;
     }
     if (type == DM2_ACTUATOR_ITEM_GENERATOR ||
         type == DM2_ACTUATOR_ITEM_CAPTURE ||
         type == DM2_ACTUATOR_ITEM_RECYCLER ||
         type == DM2_ACTUATOR_FLYING_ITEM_CATCHER ||
         type == DM2_ACTUATOR_FLYING_ITEM_TELEPORTER) {
-        rt->last_generated_object = flag ? (uint32_t)flag : 0x0A000001u;
-        return 0;
+        /* Source item generators allocate a concrete DB record and carry its
+         * ownership through the target/timer chain. A bare flag cannot stand
+         * in for that record; reject rather than publishing a synthetic ID. */
+        (void)flag;
+        return -1;
     }
     if (type == DM2_ACTUATOR_MISSILE_SHOOTER ||
         type == DM2_ACTUATOR_WEAPON_SHOOTER ||

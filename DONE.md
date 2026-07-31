@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 DM2 generator-default closure: creature and item generator
+  actuators now reject bare flags instead of spawning a default Dragoth or
+  publishing a synthetic item ID. Source DB14/record ownership is required
+  before the respective creation routes can return. Verification:
+  `test_dm2_v1_runtime_shop_pc34_compat` passes 9/9.
+
 - ✅ 2026-07-31 DM2 coordinate-shop catalog closure: runtime no longer opens
   a fixed-coordinate shop or creates catalog transaction state. SKProject
   `DRAW_WALL_ORNATE` → `_32cb_0f82_SHOP_GLASS` requires the live wall

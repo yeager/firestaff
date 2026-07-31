@@ -56,6 +56,11 @@
   Shooter records currently reject until their owner, facing, energy and
   attack can be traced from original data.
 
+- **DM2-ACTUATOR-GENERATOR-OWNER-HANDOFF:** Creature and item generator
+  defaults are closed. Port the DB14/DB-record allocation, payload and timer
+  ownership from `DM2_INVOKE_ACTUATOR` before any generator can create an
+  object or creature from original records.
+
 - **DM2-SHOP-GLASS-OWNER-HANDOFF:** The fixed-coordinate catalog path is
   closed. SKProject `DRAW_WALL_ORNATE` passes the live wall actuator into
   `_32cb_0f82_SHOP_GLASS`, which resolves the shop through the active
