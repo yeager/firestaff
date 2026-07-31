@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 V2 interaction-overlay isolation: removed the unattached
+  fixed-geometry V2 click/feedback overlay from the production archive. It is
+  still compiled by its isolated HUD tests and probes, but live DM2 input is
+  restricted to the source-owned V1 route and GDAT-backed HUD path.
+  Verification: production `firestaff` link, V2 HUD-overlay test, and
+  archive-symbol check.
+
 - ✅ 2026-07-31 DM2 SKProject diagnostic-probe isolation: made the unused
   `TEST_MEMENT` heap predicate test-only. Its source-lock unit test compiles
   the helper locally, while the production DM2 archive exports no unattached
