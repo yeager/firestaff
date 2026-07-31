@@ -43,10 +43,12 @@ int nexus_v1_dgn_texture_decode(const uint8_t *dgn, int dgn_size,
     image_abs = block * NEXUS_DGN_BLOCK_SIZE + image_rel;
     if (image_rel < descriptor_bytes + 2U || image_rel > useful || image_bytes > useful - image_rel || image_abs > (uint32_t)dgn_size || image_bytes > (uint32_t)dgn_size - image_abs)
         return NEXUS_V1_DGN_TEXTURE_DECODE_BLOCKED_BOUNDS;
-    if ((uint32_t)(encoding == 0x0008U ? width * height : width * height * 2U) > (uint32_t)pixel_capacity)
+    if ((encoding == 0x0008U ? (uint32_t)width * height :
+         (uint32_t)width * height * 2U) > (uint32_t)pixel_capacity)
         return NEXUS_V1_DGN_TEXTURE_DECODE_OUTPUT_TOO_SMALL;
     if (encoding == 0x0008U) {
-        if (!palette || palette_capacity < 16 || !palette_rel || palette_rel > useful - 32U)
+        if (!palette || palette_capacity < 16 || !palette_rel || useful < 32U ||
+            palette_rel > useful - 32U)
             return NEXUS_V1_DGN_TEXTURE_DECODE_BLOCKED_BOUNDS;
         palette_abs = block * NEXUS_DGN_BLOCK_SIZE + palette_rel;
         if (palette_abs > (uint32_t)dgn_size || 32U > (uint32_t)dgn_size - palette_abs)
@@ -54,12 +56,13 @@ int nexus_v1_dgn_texture_decode(const uint8_t *dgn, int dgn_size,
         for (x = 0; x < 16; ++x) palette[x] = rd16(dgn + palette_abs + (uint32_t)x * 2U);
         for (y = 0; y < height; ++y) for (x = 0; x < width; ++x) {
             uint8_t v = dgn[image_abs + (uint32_t)y * ((width + 1U) / 2U) + (uint32_t)x / 2U];
-            pixels[(uint32_t)y * width + x] = (uint8_t)((x & 1) ? (v & 0x0fU) : (v >> 4));
+            pixels[(size_t)y * width + (size_t)x] =
+                (uint8_t)((x & 1) ? (v & 0x0fU) : (v >> 4));
         }
         out->indexed4 = out->palette_decoded = 1; out->palette_entries = 16;
     } else {
         for (y = 0; y < height; ++y) for (x = 0; x < width; ++x) {
-            uint32_t o = (uint32_t)(y * width + x) * 2U;
+            uint32_t o = ((uint32_t)y * width + (uint32_t)x) * 2U;
             pixels[o] = dgn[image_abs + o]; pixels[o + 1U] = dgn[image_abs + o + 1U];
         }
         out->direct_color_555 = 1;

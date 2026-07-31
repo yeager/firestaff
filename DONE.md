@@ -47804,3 +47804,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   16x16 image renderer now validates the complete selected image span with
   64-bit end arithmetic before forming its source pointer. Real ITEM.IBS and
   PLRD/RLOWFIX regressions pass.
+- ✅ 2026-07-31 Nexus standalone DGN texture decoder hardening: Structure2
+  capacity arithmetic now uses explicit unsigned widths, the 16-word palette
+  span rejects short useful blocks safely, and pixel indexing cannot overflow
+  signed intermediate arithmetic. Real LEV00 indexed/direct texture decode
+  passes.
