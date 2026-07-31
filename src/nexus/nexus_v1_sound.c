@@ -242,7 +242,19 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
     {
         const int retail_dmweb_map = eng->map_data[0] == 0x20U;
         off = retail_dmweb_map ? 0 : NEXUS_SFX_MAP_HEADER_BYTES;
-        while (off + 2 <= eng->map_size) {
+        while (off < eng->map_size) {
+            if (eng->map_data[off] == 0xffU) {
+                eng->map_record_terminator_offset = off;
+                eng->map_record_table_supported =
+                    eng->map_record_count > 0 ? 1 : 0;
+                return;
+            }
+            if (retail_dmweb_map) {
+                if (off > eng->map_size - 8)
+                    return;
+            } else if (off > eng->map_size - 2) {
+                return;
+            }
             const uint8_t *r = eng->map_data + off;
             int retail_data_id = retail_dmweb_map ? ((r[0] >> 4) & 0x07) : 0;
             int retail_start = retail_dmweb_map ? read_u24_be(r + 1) : read_u32_be(r + 4);
@@ -255,12 +267,7 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
                 sal_offset + size : INT_MAX;
             int checksum16 = 0, nonzero = 0, high = 0, first_nonzero = -1;
             int last_nonzero = -1, distinct = 0, transitions = 0;
-            if (r[0] == 0xffU) {
-                eng->map_record_terminator_offset = off;
-                eng->map_record_table_supported = eng->map_record_count > 0 ? 1 : 0;
-                return;
-            }
-            if (off + 8 > eng->map_size || eng->map_record_count >= NEXUS_SFX_MAP_MAX_RECORDS) return;
+            if (eng->map_record_count >= NEXUS_SFX_MAP_MAX_RECORDS) return;
             eng->map_records[eng->map_record_count].selector = event_id;
             eng->map_records[eng->map_record_count].data_id = retail_data_id;
             eng->map_records[eng->map_record_count].id_number = r[0] & 0x0f;

@@ -47782,3 +47782,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   calculations now saturate on integer overflow instead of wrapping before
   the bounded-window checks. Real SNDLEV00-15 SAL/MAP corpus and sound-runtime
   receipt tests pass; playback remains blocked pending the proven codec/ABI.
+- ✅ 2026-07-31 Nexus retail MAP truncation guard: the parser now checks the
+  single-byte `FF` terminator before requiring a complete eight-byte record,
+  while all non-terminator records are length-checked before field reads.
+  Real SAL/MAP corpus and sound-runtime receipt tests pass.
