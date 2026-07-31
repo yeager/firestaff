@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.196
+
+- DM2: bind startup music to verified original GDAT song-list data and retain
+  the truthful silent path when that data is unavailable.
+- CSB: remove remaining Entrance door fallback metadata and preserve the
+  source-owned runtime composition path.
+- DM1: retain the source-owned HoC viewport handoff boundary used by the
+  latest real-data rendering verification.
+
 # Firestaff v3.0.195
 
 - CSBWin: verify the original floor, ceiling, wall, and door graphic catalog
