@@ -21,6 +21,11 @@
   - 2026-07-31: File-backed CSB dungeon loading now rejects the retired
     16-bit fixture layout. Continue limiting fixture-only parsers to memory
     tests and keeping every runtime file boundary source-material-only.
+  - 2026-07-31: The F0435 package-identity regression no longer constructs a
+    32-byte stand-in `DUNGEON.DAT`. Its save/load provenance assertion now
+    requires the hash-verified PC 3.4 `GRAPHICS.DAT` and `DUNGEON.DAT` pair.
+    Continue converting any remaining production-adjacent CSB media fixture
+    into an explicit no-data rejection or an external-corpus test.
   Production rendering must fail closed for a missing or unbound original
   asset. Procedural mazes, generic walls, coloured creature blocks, substitute
   palettes, and synthetic HUD art are not acceptable when authentic game data

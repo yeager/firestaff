@@ -11,6 +11,15 @@
   pack before that route. Verification: complete `firestaff` link, focused
   V2.2 cache/wire-up tests, and the real-data M11 DM2 startup-profile gate.
 
+- ✅ 2026-07-31 CSB F0435 package identity: replaced the test's generated
+  32-byte `DUNGEON.DAT` and `/tmp` title-media claims with the explicitly
+  supplied, hash-verified PC 3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` pair. The
+  save/load provenance and title-capture receipts are now exercised only
+  after the real ReDMCSB F0435 boot materialization path; missing real media
+  is an explicit skip, never a fixture fallback.
+  Verification: `test_csb_v1_startup_package_identity_pc34` with
+  `/Users/bosse/.firestaff/data/csb`.
+
 - ✅ 2026-07-31 Theron viewport admission: viewport-rendering vägrar nu skriva
   även när spärrflaggan saknas om ingen faktisk tile-atlas är laddad
   (`tile_count <= 0`). Hårdkodade tile-index kan därmed inte skapa en

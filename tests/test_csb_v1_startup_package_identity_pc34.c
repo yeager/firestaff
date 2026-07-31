@@ -3,61 +3,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <unistd.h>
-
-#ifdef _WIN32
-#include <direct.h>
-#define FS_TEST_MKDIR(path) _mkdir(path)
-#else
-#define FS_TEST_MKDIR(path) mkdir((path), 0700)
-#endif
 
 static int failures;
 #define CHECK(x) do { if (!(x)) { fprintf(stderr, "FAIL: %s\n", #x); ++failures; } } while (0)
-
-static int write_native_dungeon(const char *path)
-{
-    unsigned char bytes[32] = {0};
-    FILE *file;
-
-    bytes[0] = 1; bytes[1] = 0;
-    bytes[2] = 16; bytes[3] = 0;
-    bytes[4] = 3; bytes[5] = 3;
-    bytes[6] = 10; bytes[7] = 0;
-    bytes[10] = 1; bytes[12] = 1; bytes[14] = 1;
-    bytes[16] = 1; bytes[18] = 2; bytes[20] = 1;
-    bytes[22] = 1; bytes[24] = 1; bytes[26] = 1;
-    file = fopen(path, "wb");
-    if (!file) return 0;
-    if (fwrite(bytes, 1u, sizeof(bytes), file) != sizeof(bytes)) {
-        fclose(file);
-        return 0;
-    }
-    return fclose(file) == 0;
-}
 
 static void test_native_f0435_provenance(void)
 {
     CSB_V1_BootProfile profile;
     CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 receipt;
-    char directory[128];
-    char dungeon_path[ASSET_PATH_MAX];
-    char graphics_path[ASSET_PATH_MAX];
     char save_path[ASSET_PATH_MAX];
+    const char *graphics_path = getenv("FIRESTAFF_CSB_GRAPHICS_DAT");
+    const char *dungeon_path = getenv("FIRESTAFF_CSB_DUNGEON_DAT");
     uint32_t game_time = 0u;
 
-    snprintf(directory, sizeof(directory), "/tmp/firestaff-csb-f0435-%ld",
+    if (!graphics_path || !graphics_path[0] ||
+        !dungeon_path || !dungeon_path[0]) {
+        puts("SKIP: F0435 provenance requires real CSB media paths");
+        return;
+    }
+    snprintf(save_path, sizeof(save_path), "/tmp/firestaff-csb-f0435-%ld.fsav",
              (long)getpid());
-    (void)FS_TEST_MKDIR(directory);
-    snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", directory);
-    snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", directory);
-    snprintf(save_path, sizeof(save_path), "%s/native.fsav", directory);
-    CHECK(write_native_dungeon(dungeon_path));
     csb_v1_boot_profile_init(&profile);
-    snprintf(profile.asset_root, sizeof(profile.asset_root), "%s", directory);
+    snprintf(profile.asset_root, sizeof(profile.asset_root), "%s", "/");
     snprintf(profile.dungeon_path, sizeof(profile.dungeon_path), "%s", dungeon_path);
     snprintf(profile.graphics_path, sizeof(profile.graphics_path), "%s", graphics_path);
+    snprintf(profile.graphics_md5, sizeof(profile.graphics_md5),
+             "%s", "61fbfd56887c94adc26888a9491c6611");
     snprintf(profile.dungeon_md5, sizeof(profile.dungeon_md5),
              "%s", "6695d2acebce49f95db1d8f3a5c733de");
     profile.assets_verified = 1;
@@ -89,8 +61,6 @@ static void test_native_f0435_provenance(void)
               &profile, &receipt));
     csb_v1_boot_cleanup(&profile);
     (void)remove(save_path);
-    (void)remove(dungeon_path);
-    (void)rmdir(directory);
 }
 
 static void test_title_capture_uses_source_owned_chaos_step(void)
@@ -99,16 +69,23 @@ static void test_title_capture_uses_source_owned_chaos_step(void)
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 capture;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupRenderViewReceipt_PC34 view;
+    const char *graphics_path = getenv("FIRESTAFF_CSB_GRAPHICS_DAT");
+    const char *dungeon_path = getenv("FIRESTAFF_CSB_DUNGEON_DAT");
     int capture_ok;
 
+    if (!graphics_path || !graphics_path[0] ||
+        !dungeon_path || !dungeon_path[0]) {
+        puts("SKIP: title capture requires real CSB media paths");
+        return;
+    }
     csb_v1_boot_profile_init(&profile);
-    snprintf(profile.asset_root, sizeof(profile.asset_root), "%s", "/tmp");
+    snprintf(profile.asset_root, sizeof(profile.asset_root), "%s", "/");
     snprintf(profile.graphics_path, sizeof(profile.graphics_path), "%s",
-             "/tmp/firestaff_csb_GRAPHICS.DAT");
+             graphics_path);
     snprintf(profile.dungeon_path, sizeof(profile.dungeon_path), "%s",
-             "/tmp/firestaff_csb_DUNGEON.DAT");
+             dungeon_path);
     snprintf(profile.graphics_md5, sizeof(profile.graphics_md5), "%s",
-             "61fbfd56887c8bfe85ba4fb306fc2861");
+             "61fbfd56887c94adc26888a9491c6611");
     snprintf(profile.dungeon_md5, sizeof(profile.dungeon_md5), "%s",
              "6695d2acebce49f95db1d8f3a5c733de");
     profile.assets_verified = 1;
