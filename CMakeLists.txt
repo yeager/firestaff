@@ -3844,8 +3844,21 @@ endif()
 # ── Nexus V1 static library ────────────────────────────────────────
 file(GLOB NEXUS_SOURCES CONFIGURE_DEPENDS "src/nexus/nexus_v1_*.c")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_bpx_bpk\\.c$")
+# M11 owns the shared host lifecycle and calls these four runtime adapters.
+# Keep the procedural V2 renderer modules out of the production library, but
+# retain the explicit lifecycle implementations needed to satisfy M11.
+set(NEXUS_M11_RUNTIME_SOURCES
+    src/nexus/nexus_v2_hud_overlay.c
+    src/nexus/nexus_v2_hud_runtime.c
+    src/nexus/nexus_v2_lighting.c
+    src/nexus/nexus_v2_lighting_runtime.c
+    src/nexus/nexus_v2_smooth_movement.c
+    src/nexus/nexus_v2_smooth_movement_runtime.c
+    src/nexus/nexus_v2_touch_controller_affordance.c
+    src/nexus/nexus_v2_touch_runtime.c
+)
 if(NEXUS_SOURCES)
-    add_library(firestaff_nexus STATIC ${NEXUS_SOURCES})
+    add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES})
     target_include_directories(firestaff_nexus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(firestaff_nexus PUBLIC m)
     if(NOT MSVC)
