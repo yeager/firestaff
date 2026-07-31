@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 CSBWin incomplete-corpus handling: the real-package DSA
+  handoff probe now reports an incomplete explicitly supplied CSBWin save as
+  a skip, consistently with the extended-DSA probe, rather than failing as if
+  it were a positive runtime corpus. The local `csbgame3.dat` has an extended
+  tail but no DSA section; no DSA, timer or substitute state is created.
+  Verification: loader-boundary probe 22/22 and both DSA/package probes
+  report the expected non-positive corpus decision against the real file.
+
 - ✅ 2026-07-31 CSB legacy dungeon-world isolation: removed the data-free
   in-memory tile-grid implementation from the production M10 archive. It is
   now linked only by the historical unit and phase-7 fixtures, while live CSB

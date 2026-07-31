@@ -7632,8 +7632,9 @@ if(NOT MSVC)
 endif()
 
 # Opt-in CSBWin package handoff: original Dungeon.dat plus an original
-# csbgame*.dat are attached to the runtime and resumed through the production
-# path. It has no synthetic fallback and skips when no explicit paths are set.
+# DSA-bearing csbgame*.dat are attached to the runtime and resumed through
+# the production path. It has no synthetic fallback and skips when the
+# supplied corpus is incomplete or no explicit paths are set.
 add_executable(firestaff_csb_v1_csbwin_package_runtime_handoff_probe
     probes/csb/firestaff_csb_v1_csbwin_package_runtime_handoff_probe.c
 )

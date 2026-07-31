@@ -398,7 +398,13 @@ int main(int argc, char **argv)
     if (save_path && explicit_save &&
         !select_dsa_ready_save(save_paths, save_count, 1, save_path,
                                &dsa_receipt)) {
-        CHECK(0, "explicit CSBWin save carries DSA runtime handoff receipt");
+        /* An explicitly supplied CSBWin-named file is evidence to classify,
+         * not permission to synthesize missing DSA state. Keep this opt-in
+         * probe skip-safe when it has no complete corpus. */
+        printf("DSA_CORPUS_UNAVAILABLE=%s\n",
+               dsa_receipt.decision_label ? dsa_receipt.decision_label :
+                                            "unclassified");
+        save_path = NULL;
     } else if (save_path && !dsa_receipt.runtime_handoff_ready) {
         (void)select_dsa_ready_save(save_paths, save_count, 1, save_path,
                                     &dsa_receipt);
