@@ -6568,19 +6568,17 @@ void theron_v1_boot_build_deterministic_config(
  * This is the lowest-level entry point — the caller (M12 game dispatch)
  * holds the boot profile until this call completes.
  *
- * Phase 2 will wire the dungeon loader; Phase 1 is purely structural.
+ * A verified Track 02 runtime handoff owns the actual transition.  This
+ * legacy low-level entry point must not report success while its state is
+ * still unbound.
  */
 int theron_v1_boot_enter_game(Theron_V1_BootProfile *profile) {
     if (!profile) return -1;
 
-    /* Placeholder: allocate structs once Phase 2 dungeon format is known.
-     * For Phase 1, theron_state and dungeon_data remain NULL.
-     * The menu card can still be displayed via status strings
-     * using the boot profile alone (no game state needed). */
+    /* No source-locked state owner is wired to this legacy API. */
     profile->theron_state = NULL;
     profile->dungeon_data = NULL;
-
-    return 0;
+    return -1;
 }
 
 /* ── Cleanup ──────────────────────────────────────────────────────── */

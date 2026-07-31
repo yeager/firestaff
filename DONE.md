@@ -1,30 +1,3 @@
-- ✅ 2026-07-31 DM2 PC startup-media provenance: corrected the DM2 intro
-  reference so it no longer invents external PC `title.anim` media. The
-  source-owned PC menu and credits are `GRAPHICS.DAT` TITLE fields 4 and 1;
-  Greatstone's per-version catalogue keeps platform-specific movie/container
-  files out of the PC route. Verification: source/menu contract and the
-  real-data M11 startup-profile gate.
-
-- ✅ 2026-07-31 CSB title zoom cadence: M11 now keeps each decoded original
-  C425 CHAOS zoom raster visible for four authenticated PC3.4 cadence slots
-  (220 ms at the 55 ms profile cadence). The source's C001 material binding,
-  palette sequence and TITLE.C F0437 `Delay(20)`/`Delay(2)` phases remain
-  separate and unchanged. Verification: focused CSB startup VBlank cadence
-  regression.
-- ✅ 2026-07-31 DM2 V2 HUD widget-manifest isolation: removed the local
-  placeholder/partial/real classifier from the production V2 archive and
-  guarded its only HUD-runtime call behind the focused diagnostic probe.
-  The normal HUD records no operator-supplied manifest state and still draws
-  only authenticated GDAT. Verification: complete `firestaff` link, runtime
-  probe 29/29, real-data M11 startup/profile gate, and no widget-manifest
-  symbol in the final executable.
-
-- ✅ 2026-07-31 DM2 optional music-data verification: the real-data boot
-  smoke test now skips music routing when the hash-verified optional
-  `SONGLIST.DAT` is absent. It continues to reject filename-only substitutes
-  and exercises the original selector table when that genuine file is
-  available. The mandatory graphics/dungeon boot proof remains required.
-
 - ✅ 2026-07-31 DM2 boot media revalidation: entering a game now rehashes
   both graphics and dungeon media against the profile's scan-time hashes.
   This closes the stale-receipt gap between the launcher scan and INIT; a
@@ -46847,41 +46820,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Removed the `GRAPHICS.DAT`/`DUNGEON.DAT` fallback search from the Theron boot scanner.
 - Theron launch discovery now accepts only the hash-verified Track 02 media routes present in the real data corpus; unverified extracted files cannot become a launch source.
 - Verification: `test_theron_rendering` 25/25 and `firestaff_theron_v1_startup_flow_probe` 653/653.
-- ✅ 2026-07-31 Nexus FONT256 DMWeb header facts: the bounded S2D decoder
-  now exposes and verifies retail map horizontal/vertical page, map page
-  number, page character-control dword, and pattern-name auxiliary word.
-  These remain metadata only; no character-code mapping is inferred.
+# ✅ 2026-07-31 — Theron legacy enter-game stub fails closed
 
-
-- ✅ 2026-07-31 DM1 HoC floor-sensor and center-wall presentation repair:
-  explicit source floor-sensor ornaments remain eligible on map 0. The
-  V2.2 source-shape cache
-  also marks every center/side cell behind the nearest closed center wall as
-  inactive, preventing its post-V1 presentation pass from reopening a blocked
-  corridor. Verification: `test_m11_overlay_command_queue_block` (191/191)
-  and `test_m11_v22_shape_cache_pc34` (31/31).
-
-- ✅ 2026-07-31 DM1 HoC F0172 ornament correction: removed the
-  Firestaff-only map-zero random-floor-ornament suppression. ReDMCSB
-  `DUNGEON.C F0172` applies this path to every corridor map, and sensors then
-  override its ordinal. The regression covers both a map-zero sensor ornament
-  and a deterministic map-zero random ornament. Verification:
-  `test_m11_overlay_command_queue_block` (192/192) and
-  `test_m11_v22_shape_cache_pc34` (31/31).
-
-- ✅ 2026-07-31 DM1 HoC F0172 sensor-zero correction: floor sensors now
-  overwrite the random floor-ornament ordinal even when their source-owned
-  `Remote.OrnamentOrdinal` is zero. ReDMCSB assigns that field
-  unconditionally; zero suppresses a random grate or pressure plate instead
-  of allowing it to leak through. Verification:
-  `test_m11_overlay_command_queue_block` (193/193),
-  `test_m11_v22_shape_cache_pc34` (31/31), and the installed PC 3.4 HoC
-  runtime probe.
-
-- ✅ 2026-07-31 DM1 F0115 alcove-object input binding: C080 now accepts the
-  actual current-frame C2548/F0791 destination rectangle for a front alcove
-  item, in addition to the original C05 ornament zone. This preserves wall
-  sensor input while making a real rendered torch/object pickable. Verification:
-  `test_m11_dm1_real_alcove_item_runtime_pc34` finds map 1 `(6,3,2)` in the
-  installed PC34 corpus and successfully transfers the rendered object into
-  the leader hand.
+- `theron_v1_boot_enter_game()` no longer reports success while leaving `theron_state` and `dungeon_data` unbound.
+- The real Track 02 runtime handoff remains the only valid game-state transition.
+- Verification: `test_theron_rendering` 25/25 and `firestaff_theron_v1_startup_flow_probe` 653/653.
