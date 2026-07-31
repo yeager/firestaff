@@ -46188,3 +46188,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   on the original V1 page. References: ReDMCSB `DUNVIEW.C F0128` and CSBWin
   `Viewport.cpp`. Verification: M11 build, V2.2 in-place route 145/145,
   front-wall projection 82/82, in-place draw 66/66, and `git diff --check`.
+- ✅ 2026-07-31 CSB detached backdrop/frame cleanup: removed orphaned D1L/D1R
+  receipt declarations plus the unconsumed dual/second custom-backdrop, D1C
+  F0115 frame, and D2L2/D2R2 door contract modules and their tests. None
+  decoded source raster bytes or had an M11 consumer; the source-command
+  compositor remains the viewport owner. References reviewed: ReDMCSB
+  `DUNVIEW.C F0111/F0115` and CSBWin `Viewport.cpp`. Verification: M11 build,
+  local-PC34 first-frame material test 109/109, and `git diff --check`.
