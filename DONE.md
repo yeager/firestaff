@@ -46815,3 +46815,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Removed the runtime checkerboard placeholder contract from `theron_v22_get_missing_placeholder()`; missing modern assets now return `NULL` with 0×0 dimensions.
 - Updated the public contract and regression test. No production caller can receive invented missing-texture pixels.
 - Verification: `test_theron_v22_modern_assets_pc34` 32 checks, 0 failures.
+# ✅ 2026-07-31 — Theron boot scanner rejects unverified legacy files
+
+- Removed the `GRAPHICS.DAT`/`DUNGEON.DAT` fallback search from the Theron boot scanner.
+- Theron launch discovery now accepts only the hash-verified Track 02 media routes present in the real data corpus; unverified extracted files cannot become a launch source.
+- Verification: `test_theron_rendering` 25/25 and `firestaff_theron_v1_startup_flow_probe` 653/653.

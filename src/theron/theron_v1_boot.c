@@ -314,7 +314,8 @@ int theron_v1_boot_track02_capture_admission_allows_initial_level(
  *   TQJP02.iso / TQJP02End.iso     — MyAbandonware JP Rev 1 Track 02
  *   TQUS02.iso / TQUS02End.iso     — MyAbandonware US Track 02
  *   THQUEST.BIN
- *   GRAPHICS.DAT / DUNGEON.DAT   — legacy fallback (extracted from Track 02)
+ *   No legacy GRAPHICS.DAT / DUNGEON.DAT fallback is accepted here; only
+ *   hash-verified Track 02 media is a launchable Theron source.
  */
 static const char *const g_theron_track02_candidates[] = {
     "track02.bin",
@@ -330,18 +331,6 @@ static const char *const g_theron_track02_candidates[] = {
     "TQUS02.iso",
     "TQUS02End.iso",
     "THQUEST.BIN",
-    NULL
-};
-
-static const char *const g_theron_graphics_fallback[] = {
-    "GRAPHICS.DAT",
-    "graphics.dat",
-    NULL
-};
-
-static const char *const g_theron_dungeon_fallback[] = {
-    "DUNGEON.DAT",
-    "dungeon.dat",
     NULL
 };
 
@@ -582,7 +571,7 @@ void theron_v1_boot_profile_init(Theron_V1_BootProfile *profile) {
  *
  * Searches data_dir/theron/ for Track 02 BIN (CD-ROM data track).
  * Phase 0: verifies Track 02 against known JP/US MD5 hashes.
- * Fallback: extracted GRAPHICS.DAT / DUNGEON.DAT (no hash verification).
+ * Unverified extracted GRAPHICS.DAT / DUNGEON.DAT files are not launchable.
  *
  * Returns 0 on success (assets found), -1 if none detected.
  */
@@ -649,24 +638,6 @@ int theron_v1_boot_scan_assets(Theron_V1_BootProfile *profile,
         strncpy(profile->dungeon_path, profile->graphics_path,
                 sizeof(profile->dungeon_path) - 1);
         profile->dungeon_size = profile->graphics_size;
-    } else {
-        /* Second fallback: extracted GRAPHICS.DAT / DUNGEON.DAT */
-        resolve_asset(base, "theron", g_theron_graphics_fallback,
-                       profile->graphics_path,
-                       &profile->graphics_size);
-        resolve_asset(base, "theron", g_theron_dungeon_fallback,
-                       profile->dungeon_path,
-                       &profile->dungeon_size);
-        if (!profile->graphics_path[0]) {
-            resolve_asset(base, "", g_theron_graphics_fallback,
-                           profile->graphics_path,
-                           &profile->graphics_size);
-        }
-        if (!profile->dungeon_path[0]) {
-            resolve_asset(base, "", g_theron_dungeon_fallback,
-                           profile->dungeon_path,
-                           &profile->dungeon_size);
-        }
     }
 
     /* Build asset root */
