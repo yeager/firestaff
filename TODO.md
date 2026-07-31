@@ -20,6 +20,10 @@
   boundary. It rejects missing or unmaterialized CSB data and consumes the
   boot-owned party pose instead of re-entering the generic DM1 parser and its
   fixed Hall-of-Champions fallback coordinate.
+  **2026-07-31 update:** the public `csb_v1_runtime_boot()` seam now has the
+  same rule. It clears any prior singleton and rejects missing graphics,
+  unreadable/non-byte-map dungeons or a missing source start pose instead of
+  reporting a title runtime with ENDOF accessors.
   Direct synthetic DM2 projectile construction is now isolated to explicit
   test and probe targets and is absent from the production library. The DM2
   champion-stat bridge also rejects a missing source GDAT/palette bar-colour

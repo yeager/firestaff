@@ -16562,6 +16562,17 @@ static int csb_v1_runtime_append_unmerged_map_timer(
     const struct DM1_Event_V1 *event)
 {
     if (!profile) return -1;
+
+    /* A runtime boot replaces any previous live CSB context.  ReDMCSB's
+     * LOADSAVE.C F0435 enters only after both original media owners and the
+     * dungeon header are available; retaining a previous singleton after a
+     * failed replacement would instead fabricate a new session from stale
+     * state. */
+    csb_v1_runtime_cleanup(profile);
+    profile->dungeon_path = NULL;
+    profile->graphics_path = NULL;
+    memset(&profile->dungeon_asset, 0, sizeof(profile->dungeon_asset));
+    memset(&profile->graphics_asset, 0, sizeof(profile->graphics_asset));
     return csb_v1_runtime_append_unmerged_map_timer_to_queue(
         &profile->timeline_queue, event);
 }
@@ -30240,6 +30251,8 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
     graphics_md5[0] = '\0';
 
     /* Step 1: Find dungeon by CSB hash (ReDMCSB DUNGEON.C F0237) */
+    memset(&dun_result, 0, sizeof(dun_result));
+    memset(&gfx_result, 0, sizeof(gfx_result));
     dun_path = csb_v1_runtime_find_dungeon(search_dir, &dun_result);
     if (!dun_path) return -1;
     profile->dungeon_path = dun_path;
@@ -30263,35 +30276,41 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
      *
      * Source: CSBWin/CSBCode.cpp LoadDungeon lines 6800-6950 */
     {
-        /* Heap-allocate to avoid dangling pointer in s_current_dungeon */
+        /* Heap-allocate to avoid dangling pointer in s_current_dungeon. */
         CSB_V1_DungeonData *dungeon = calloc(1, sizeof(CSB_V1_DungeonData));
-        if (!dungeon) {
-            /* Fall through — dungeon-layer accessors return ENDOF */
-        } else if (csb_v1_dungeon_load_from_file(dungeon, dun_path) == 0 &&
-                   dungeon->square_bytes == 1) {
+        if (dungeon &&
+            csb_v1_dungeon_load_from_file(dungeon, dun_path) == 0 &&
+            dungeon->square_bytes == 1 &&
+            csb_v1_dungeon_initial_party_pose_pc34(
+                dungeon, &profile->current_level, &profile->party_x,
+                &profile->party_y, &profile->party_dir)) {
             profile->dungeon_handle = dungeon;
             csb_v1_dungeon_set_current(dungeon); /* singleton now points to heap */
-            csb_v1_dungeon_set_current_level(0);   /* start at level 0 */
+            csb_v1_dungeon_set_current_level(profile->current_level);
             /* ReDMCSB LOADSAVE.C F0435 derives a new game's pose from the
              * loaded DUNGEON_HEADER, never from a fixed host coordinate. */
-            (void)csb_v1_dungeon_initial_party_pose_pc34(
-                dungeon, &profile->current_level, &profile->party_x,
-                &profile->party_y, &profile->party_dir);
             if (profile->party_state_valid) {
                 (void)csb_v1_runtime_recompute_party_loads_pc34_compat(profile);
             }
         } else {
-            csb_v1_dungeon_free(dungeon);
-            free(dungeon);
-            profile->dungeon_handle = NULL;
+            if (dungeon) {
+                csb_v1_dungeon_free(dungeon);
+                free(dungeon);
+            }
+            /* No header/pose means no original game state.  Do not expose
+             * the old ENDOF-tolerant title route to callers. */
+            return -1;
         }
-        /* If load fails (corrupt/missing file), boot continues without dungeon.
-         * Dungeon-layer accessors will return ENDOF until a dungeon is loaded. */
     }
 
     /* Step 2: Find graphics (ReDMCSB DISK.C / CSBWin AssetCache) */
     gfx_path = csb_v1_runtime_find_graphics(search_dir, version_hint, &gfx_result);
-    profile->graphics_path = gfx_path ? gfx_path : "";
+    if (!gfx_path) {
+        csb_v1_runtime_cleanup(profile);
+        profile->dungeon_path = NULL;
+        return -1;
+    }
+    profile->graphics_path = gfx_path;
     profile->graphics_asset = gfx_result;
 
     /* Step 3: Detect the selected original variant from the actual file

@@ -46563,3 +46563,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   finns kvar endast för explicita integrationstester. Verifiering:
   `test_nexus_v2_hud_runtime_integration` passerar 9/9 och full `firestaff`
   build passerar.
+
+- ✅ 2026-07-31 CSB runtime boot materialization gate:
+  `csb_v1_runtime_boot()` no longer reports success with absent graphics, an
+  unreadable/legacy dungeon or no decoded initial party pose. A failed retry
+  clears the prior dungeon singleton and source paths before it returns.
+  Verification: `test_csb_v1_boot_runtime_handoff`, including its missing
+  source-media regression, plus boot-profile and viewport gate tests.

@@ -5282,6 +5282,23 @@ static void test_runtime_variant_hint_identity(void)
     remove(graphics_path);
 }
 
+static void test_runtime_boot_rejects_unmaterialized_media(void)
+{
+    CSB_V1_RuntimeProfile runtime;
+
+    csb_v1_runtime_init(&runtime, "/tmp/firestaff-csb-runtime-no-media");
+    CHECK(csb_v1_runtime_boot(&runtime,
+                              "/tmp/firestaff-csb-runtime-no-media",
+                              "pc34_en") == -1,
+          "runtime_boot rejects a missing CSB source-media pair");
+    CHECK(runtime.dungeon_handle == NULL &&
+              csb_v1_dungeon_get_current() == NULL,
+          "failed runtime_boot publishes no stale dungeon singleton");
+    CHECK(runtime.graphics_path == NULL && runtime.dungeon_path == NULL,
+          "failed runtime_boot clears source paths rather than retaining a prior session");
+    csb_v1_runtime_cleanup(&runtime);
+}
+
 int main(void)
 {
     const char *focus_dsa_save_handoff =
@@ -5303,6 +5320,7 @@ int main(void)
     test_startup_real_asset_receipt_is_skip_safe_and_deterministic();
     test_startup_full_runtime_receipt_requires_complete_real_session();
     test_runtime_variant_hint_identity();
+    test_runtime_boot_rejects_unmaterialized_media();
     test_enter_game_rotate_party_aligns_champion_state();
     test_enter_game_with_missing_dungeon_path_keeps_runtime_safe();
     test_enter_game_rejects_legacy_fixture_dungeon();
