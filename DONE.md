@@ -46585,3 +46585,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   touch-runtime med test-only `force_active_for_test(1)`-anrop. V2-proberna
   aktiverar fortsatt läget explicit. Verifiering: `firestaff`-build,
   smooth-movement-probe 33/33 och touch-runtime-probe 57/57.
+- ✅ 2026-07-31 Nexus ljuddiagnostik: kvarvarande `(stub)`-etiketter för
+  CDDA stop/pause/resume/fade är ersatta med `opaque/no-playback`. Verkliga
+  SAL/MAP- och CD-spår förblir källbundna, men codec/driver och uppspelning
+  markeras fortsatt som blockerade. Verifiering:
+  `test_nexus_v1_sound_runtime_receipt` passerar.

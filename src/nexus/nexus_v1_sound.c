@@ -919,25 +919,26 @@ int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
 
 int nexus_sound_cd_stop(Nexus_SoundEngine *eng) {
     if (!eng) return -1;
-    printf("Nexus music: stopped (stub)\n");
+    printf("Nexus music: stop requested (opaque/no-playback)\n");
     return 0;
 }
 
 int nexus_sound_cd_pause(Nexus_SoundEngine *eng) {
     if (!eng) return -1;
-    printf("Nexus music: paused (stub)\n");
+    printf("Nexus music: pause requested (opaque/no-playback)\n");
     return 0;
 }
 
 int nexus_sound_cd_resume(Nexus_SoundEngine *eng) {
     if (!eng) return -1;
-    printf("Nexus music: resumed (stub)\n");
+    printf("Nexus music: resume requested (opaque/no-playback)\n");
     return 0;
 }
 
 void nexus_sound_music_fade(Nexus_SoundEngine *eng, int fade_out_ms) {
     if (!eng) return;
-    printf("Nexus music: fade out %d ms → new track (stub)\n", fade_out_ms);
+    printf("Nexus music: fade request %d ms (opaque/no-playback)\n",
+           fade_out_ms);
     (void)eng;
 }
 
