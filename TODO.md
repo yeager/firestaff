@@ -398,7 +398,11 @@ diagnostic; it must not silently fall back to a generated visual.
   classifier now returns no shape, category or asset for every input, and its
   legacy 3x3 renderer is permanently no-draw. A populated cache or installed
   artpack cannot activate this compatibility route; only the source-command
-  compositor may admit a replacement.
+  compositor may admit a replacement. **2026-07-31 Phase 4 follow-up:** the
+  former modern spell-VFX table had host-invented spell ids, colours, radii,
+  speeds and particle families. It is now no-admission; ReDMCSB's real DATA.C
+  torch and palette tables remain available, but may not be expanded into a
+  modern effect until a source command and material receipt binds every value.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

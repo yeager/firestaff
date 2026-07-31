@@ -49,6 +49,13 @@
   `test_csb_v22_viewport_swap_pc34` and
   `firestaff_csb_v22_viewport_swap_probe`.
 
+- ✅ 2026-07-31 CSB Phase 4 spell-VFX placeholder closure: removed the
+  invented spell-id, particle-family, colour, radius, speed and torch-
+  intensity mappings. The original ReDMCSB `DATA.C` torch/light tables remain
+  intact, while all unproven modern VFX metadata and gates now fail closed.
+  Verification: `test_csb_p4_lighting` compiles and passes as a focused
+  source-boundary test.
+
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a
   successful transaction route from host gold alone. It remains closed until

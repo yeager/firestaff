@@ -34,8 +34,9 @@ extern "C" {
  *
  * What this module provides:
  * 1. Canonical torch/magical-light metadata mirrors ReDMCSB DATA.C.
- * 2. Projectile spell metadata: which VFX type maps to each spell id.
- * 3. VFX binding gates for field/projectile enhanced effects.
+ * 2. A fail-closed boundary for spell-to-modern-VFX metadata. ReDMCSB does
+ *    not provide the former host-invented spell ids, RGB colours, radii or
+ *    speeds, so no particle effect is admitted until those facts are bound.
  *
  * See also: csb_v2_lighting_dynamic.h, csb_v2_vfx_particles.h.
  * ================================================================ */
@@ -68,8 +69,8 @@ extern const uint8_t  csb_p4_k_palette_index_to_light_percent[6];
  * Mirrors ReDMCSB DATA.C:263 inline lookup. */
 int csb_p4_charge_count_to_torch_type(int charge_count);
 
-/* Maps torch type id to light intensity 0-255 for the VFX system.
- * Torch type 0 → 0, type 1 → 140, type 2 → 200, type 3 → 255. */
+/* Legacy VFX intensity query. It returns zero because the original torch
+ * table names a type but does not define a modern 0..255 light intensity. */
 uint8_t csb_p4_torch_type_to_intensity(int torch_type);
 
 /* ---- Chaos magic / spell projectile metadata ---- */
@@ -105,19 +106,19 @@ typedef struct {
     int field_vfx_type;        /* CSB_V2_VFXType for field on-hit effect */
 } CSB_P4_SpellProjectileMetadata;
 
-/* Number of known spell projectile metadata records. */
-#define CSB_P4_SPELL_PROJECTILE_METADATA_COUNT 12
+/* No modern spell projectile records are admitted without original command
+ * and material provenance. */
+#define CSB_P4_SPELL_PROJECTILE_METADATA_COUNT 0
 
 /* Returns the spell projectile metadata for a given spell id.
  * Returns NULL if the spell id is unknown. */
 const CSB_P4_SpellProjectileMetadata *
 csb_p4_get_spell_projectile_metadata(int spell_id);
 
-/* Returns the VFX type (CSB_V2_VFXType) for a spell category.
- * Used by the VFX binding layer. */
+/* Returns VFX_NONE until a source-owned mapping is available. */
 int csb_p4_spell_category_to_vfx_type(CSB_P4_SpellCategory cat);
 
-/* Returns 1 if the spell category produces a light effect. */
+/* Returns 0 until a source-owned mapping is available. */
 int csb_p4_spell_category_has_light(CSB_P4_SpellCategory cat);
 
 /* ---- VFX binding layer ---- */
@@ -168,9 +169,8 @@ int csb_p4_binding_any_active(void);
 
 /* ---- VFX binding gates ---- */
 
-/* Phase gate for field VFX.
- * Returns 1 if enhanced field VFX (fire, smoke, magical glow on dungeon
- * tiles) is allowed given the current phase config. */
+/* Phase-4 gates are closed. A V2 setting cannot authorise invented spell
+ * visuals when the original material transaction is absent. */
 int csb_p4_vfx_gate_field_enabled(const CSB_V2_PhaseGateConfig *cfg);
 
 /* Phase gate for projectile VFX.

@@ -1,5 +1,7 @@
 #include "csb_p4_lighting_metadata.h"
 
+#include <stddef.h>
+
 /* ================================================================
  * CSB Phase 4 — Enhanced Lighting: Palette & Projectile Metadata
  * ================================================================
@@ -64,114 +66,50 @@ int csb_p4_charge_count_to_torch_type(int charge_count) {
 }
 
 uint8_t csb_p4_torch_type_to_intensity(int torch_type) {
-    /* Torch type → VFX light intensity 0-255 */
-    switch (torch_type) {
-        case CSB_P4_TORCH_TYPE_NONE:    return 0;
-        case CSB_P4_TORCH_TYPE_NORMAL:  return 140;
-        case CSB_P4_TORCH_TYPE_BRIGHT:  return 200;
-        case CSB_P4_TORCH_TYPE_MAGICAL: return 255;
-        default:                        return 0;
-    }
+    (void)torch_type;
+    return 0;
 }
 
 /* ---- Chaos magic / spell projectile metadata ---- */
 
-/* Spell projectile metadata table.
- * Maps DSA spell ids to VFX type, colour, and behaviour.
- * Source: CSBWin/Graphics.cpp (fireball, lightning, arcane bolt),
- * CSBWin/Chaos.cpp (chaos visual triggers), and ReDMCSB ANIM.C:20
- * (G3567_as_AnimationItems[200] animation indices).
- *
- * spell_id values correspond to DSA script identifiers in CSB.
- * Unknown spell ids fall through to the generic arcane entry.
- */
-
-static const CSB_P4_SpellProjectileMetadata s_spell_metadata[] = {
-    /* spell_id,   category,       VFX type,         R    G    B  rad spd trail field */
-    { 0,  CSB_P4_SPELL_CAT_NONE,      CSB_V2_VFX_NONE,        0,   0,   0,  0,  0, 0, 0, CSB_V2_VFX_NONE },
-    /* Fire spells */
-    { 1,  CSB_P4_SPELL_CAT_FIRE,      CSB_V2_VFX_FIRE,      255, 180,   0,  6,  4, 1, 1, CSB_V2_VFX_EXPLOSION },
-    { 2,  CSB_P4_SPELL_CAT_FIRE,      CSB_V2_VFX_FIRE,      255, 120,   0,  7,  5, 1, 1, CSB_V2_VFX_EXPLOSION },
-    { 3,  CSB_P4_SPELL_CAT_FIRE,      CSB_V2_VFX_EXPLOSION, 255, 200,  50,  8,  6, 1, 1, CSB_V2_VFX_FIRE },
-    /* Ice / frost spells */
-    { 4,  CSB_P4_SPELL_CAT_ICE,       CSB_V2_VFX_SPARK,     200, 240, 255,  5,  4, 1, 0, CSB_V2_VFX_SMOKE },
-    { 5,  CSB_P4_SPELL_CAT_ICE,       CSB_V2_VFX_SPARK,     150, 220, 255,  6,  5, 1, 1, CSB_V2_VFX_SMOKE },
-    /* Lightning spells */
-    { 6,  CSB_P4_SPELL_CAT_LIGHTNING, CSB_V2_VFX_LIGHTNING, 255, 255, 200,  5,  8, 1, 1, CSB_V2_VFX_SPARK },
-    { 7,  CSB_P4_SPELL_CAT_LIGHTNING, CSB_V2_VFX_LIGHTNING, 200, 255, 255,  6, 10, 1, 1, CSB_V2_VFX_LIGHTNING },
-    /* Magical / arcane spells */
-    { 8,  CSB_P4_SPELL_CAT_MAGICAL,   CSB_V2_VFX_MAGICAL_GLOW, 180, 100, 255,  4,  3, 1, 0, CSB_V2_VFX_NONE },
-    { 9,  CSB_P4_SPELL_CAT_MAGICAL,   CSB_V2_VFX_MAGICAL_GLOW, 200, 150, 255,  5,  4, 1, 0, CSB_V2_VFX_NONE },
-    /* Darkness / shadow spells */
-    { 10, CSB_P4_SPELL_CAT_DARKNESS,  CSB_V2_VFX_SMOKE,      50,  50,  80,  5,  3, 0, 1, CSB_V2_VFX_CHAOS_MIST },
-    /* Chaos magic spells */
-    { 11, CSB_P4_SPELL_CAT_CHAOS,     CSB_V2_VFX_CHAOS_MIST, 200,  50, 255,  6,  4, 1, 1, CSB_V2_VFX_CHAOS_MIST },
-    { 12, CSB_P4_SPELL_CAT_CHAOS,     CSB_V2_VFX_CHAOS_MIST, 150, 100, 255,  7,  5, 1, 1, CSB_V2_VFX_FIRE },
-};
-
-/* Binary search would be ideal; linear scan is fine for small N */
 const CSB_P4_SpellProjectileMetadata *
 csb_p4_get_spell_projectile_metadata(int spell_id) {
-    int i;
-    for (i = 0; i < (int)(sizeof(s_spell_metadata) /
-                          sizeof(s_spell_metadata[0])); i++) {
-        if (s_spell_metadata[i].spell_id == spell_id) {
-            return &s_spell_metadata[i];
-        }
-    }
-    /* Unknown spell id — return generic arcane */
-    static const CSB_P4_SpellProjectileMetadata s_fallback = {
-        0, CSB_P4_SPELL_CAT_ARCANE,
-        CSB_V2_VFX_MAGICAL_GLOW,
-        150, 100, 255, 4, 3, 1, 0, CSB_V2_VFX_NONE
-    };
-    (void)spell_id; /* suppress unused warning */
-    return &s_fallback;
+    /* ReDMCSB ANIM.C identifies animation entries but does not define a
+     * spell-id-to-modern-particle mapping, RGB values, speed or radius.
+     * CSBWin's host renderer cannot fill that provenance gap. */
+    (void)spell_id;
+    return NULL;
 }
 
 int csb_p4_spell_category_to_vfx_type(CSB_P4_SpellCategory cat) {
-    switch (cat) {
-        case CSB_P4_SPELL_CAT_FIRE:      return CSB_V2_VFX_FIRE;
-        case CSB_P4_SPELL_CAT_ICE:       return CSB_V2_VFX_SPARK;
-        case CSB_P4_SPELL_CAT_LIGHTNING: return CSB_V2_VFX_LIGHTNING;
-        case CSB_P4_SPELL_CAT_MAGICAL:   return CSB_V2_VFX_MAGICAL_GLOW;
-        case CSB_P4_SPELL_CAT_DARKNESS:  return CSB_V2_VFX_SMOKE;
-        case CSB_P4_SPELL_CAT_CHAOS:     return CSB_V2_VFX_CHAOS_MIST;
-        case CSB_P4_SPELL_CAT_HEALING:   return CSB_V2_VFX_MAGICAL_GLOW;
-        default:                         return CSB_V2_VFX_NONE;
-    }
+    (void)cat;
+    return CSB_V2_VFX_NONE;
 }
 
 int csb_p4_spell_category_has_light(CSB_P4_SpellCategory cat) {
-    return cat != CSB_P4_SPELL_CAT_NONE &&
-           cat != CSB_P4_SPELL_CAT_HEALING;
+    (void)cat;
+    return 0;
 }
 
 /* ---- VFX binding gates ---- */
 
 /* Phase gate: field VFX enabled when V2 presentation is active. */
 int csb_p4_vfx_gate_field_enabled(const CSB_V2_PhaseGateConfig *cfg) {
-    if (!cfg || !cfg->v2PresentationEnabled) {
-        return 0;
-    }
-    return 1;
+    (void)cfg;
+    return 0;
 }
 
 /* Phase gate: projectile VFX enabled when V2 presentation is active. */
 int csb_p4_vfx_gate_projectile_enabled(const CSB_V2_PhaseGateConfig *cfg) {
-    if (!cfg || !cfg->v2PresentationEnabled) {
-        return 0;
-    }
-    return 1;
+    (void)cfg;
+    return 0;
 }
 
 /* Phase gate: chaos magic visual enhancement enabled when V2
  * presentation is active. V1 DSA script execution is unaffected. */
 int csb_p4_vfx_gate_chaos_enabled(const CSB_V2_PhaseGateConfig *cfg) {
-    if (!cfg || !cfg->v2PresentationEnabled) {
-        return 0;
-    }
-    return 1;
+    (void)cfg;
+    return 0;
 }
 
 int csb_p4_vfx_gate_any_enabled(const CSB_V2_PhaseGateConfig *cfg) {
