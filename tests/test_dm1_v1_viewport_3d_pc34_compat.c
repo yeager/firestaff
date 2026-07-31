@@ -919,6 +919,34 @@ static void test_wall_frame_bitmap_global_null_guard(void)
     check_int("g_dm1_wall_frame_bitmaps.null_guard_parity_still_updates", state.parity_flip, 0);
 }
 
+static void test_d3_side_door_frame_requires_bound_source_atlas(void)
+{
+    unsigned char viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    unsigned char expected[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    unsigned char grid[8 * 8];
+    DM1_Viewport3DState state;
+
+    /* ReDMCSB DUNVIEW.C F0116:6446-6454 and F0117:6582-6590 place the
+     * D3 side-door frame between the two F0115 passes.  No atlas is bound
+     * in a source-verified CSB session yet, so this must be a no-op rather
+     * than NULL-atlas pointer arithmetic or a fabricated frame. */
+    memset(viewport, 0x5a, sizeof(viewport));
+    memset(expected, 0x5a, sizeof(expected));
+    memset(grid, DM1_VP_ELEMENT_DOOR_FRONT, sizeof(grid));
+    dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_load_wall_set(&state, 0, 0);
+    state.floor_ceiling_dirty = false;
+    state.dungeon_grid = grid;
+    state.dungeon_aspect_grid = grid;
+    state.dungeon_width = 8;
+    state.dungeon_height = 8;
+
+    dm1_viewport_3d_draw_frame(&state, 0, 4, 4);
+    check_int("d3_side_door.null_atlas_fails_closed",
+              memcmp(viewport, expected, sizeof(viewport)) == 0, 1);
+}
+
 static void test_floor_ceiling_bands_and_zones(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -4725,6 +4753,7 @@ int main(void)
     test_d0c_thieves_eye_door_frame_occlusion_order();
     test_parity_flip_restore();
     test_wall_frame_bitmap_global_null_guard();
+    test_d3_side_door_frame_requires_bound_source_atlas();
     test_floor_ceiling_bands_and_zones();
     test_floor_ceiling_uses_real_provider_pixels();
     test_floor_ceiling_uses_complete_pc34_provider_pair();

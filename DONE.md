@@ -44831,3 +44831,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   inspection state, so untrained champions no longer fill the panel with
   `NOVICE` rows. Verification: the source-panel runtime test exercises all
   four level-one skills and confirms that no base-skill row is published.
+- ✅ 2026-07-31 CSB PC3.4 D3 side-door atlas containment: F0116/F0117 no
+  longer perform pointer arithmetic on the unpopulated legacy wall-frame
+  atlas when a D3L/D3R front door is reached. The route now leaves the frame
+  untouched until its real G2120 source bitmap and PC3.4 zone geometry are
+  bound, rather than risking a host frame, invalid memory read or fabricated
+  pixels. ReDMCSB `DUNVIEW.C:6453,6590` is the source reference. Verification:
+  `test_dm1_v1_viewport_3d_pc34_compat` passes with an explicit unbound-D3
+  side-door regression.

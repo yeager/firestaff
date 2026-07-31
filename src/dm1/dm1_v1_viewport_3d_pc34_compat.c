@@ -3672,6 +3672,12 @@ static void dm1_viewport_3d_draw_d3_side_square(
     if (element == DM1_VP_ELEMENT_DOOR_FRONT) {
         /* ReDMCSB F0116:6446-6454 and F0117:6582-6590 place these frames
          * between F0115's rear and front thing passes. */
+        /* The legacy contiguous wall-frame atlas is not populated by a
+         * verified CSB session.  Until this route consumes the active
+         * G2120 source bitmap and its PC3.4 zones directly, fail closed;
+         * do not perform pointer arithmetic on a NULL atlas or substitute
+         * a host/diagnostic frame.  ReDMCSB DUNVIEW.C:6453,6590. */
+        if (!wall_base) return;
         if (right) {
             dm1_viewport_3d_draw_door_frame_flipped(state,
                                                      wall_base + 20 * DM1_VIEWPORT_BYTE_WIDTH,
