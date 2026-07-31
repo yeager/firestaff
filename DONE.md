@@ -46968,3 +46968,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   and legacy loader are now explicitly documented as data-free fixture
   compatibility only; verified Track 02 with no semantic handoff remains
   blocked. Startup-flow `653/653` and rendering `25/25` remain green.
+- ✅ 2026-07-31 Nexus startup/menu/HUD audit: real `TITLE.CG`, warning/gameover
+  media, champion startup menu, `FONT256.S2D`, MENU.BPK no-draw handoff and
+  the V2 HUD gate all pass their focused tests. The HUD integration's 9/9
+  render assertions are test-only; production keeps the procedural overlay
+  closed until a retail widget/VDP placement receipt exists.
