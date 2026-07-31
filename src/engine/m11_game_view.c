@@ -3703,6 +3703,8 @@ static int m11_apply_dm1_startup_runtime_start_receipt(
     return 1;
 }
 
+static int m11_dm1_load_object_names_m564(M11_GameViewState* state);
+
 static int m11_apply_dm1_startup_graphics_bind_receipt(
     M11_GameViewState* state,
     const DM1_V1_StartupGraphicsBindReceipt_PC34* receipt) {
@@ -3720,6 +3722,7 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
         return 0;
     }
     state->assetsAvailable = 1;
+    (void)m11_dm1_load_object_names_m564(state);
     M11_Font_Init(&state->originalFont);
     if (M11_Font_LoadFromGraphicsDat(
             &state->originalFont,
@@ -10550,6 +10553,111 @@ static void m11_get_item_name(const struct DungeonThings_Compat* things,
     }
 }
 
+/* ReDMCSB OBJECT.C F0031 reads the non-raster M564 record before F0034 asks
+ * for a leader-hand label.  M11's normal bitmap loader intentionally expands
+ * raster entries only, so read this raw F0490 member separately. */
+static int m11_dm1_load_object_names_m564(M11_GameViewState* state) {
+    enum { M11_DM1_M564_PC34 = 694, M11_DM1_M564_LEGACY = 556,
+           M11_DM1_OBJECT_NAME_COUNT = 199 };
+    FILE* file;
+    long fileLength;
+    unsigned char* fileBytes = NULL;
+    unsigned char* decoded = NULL;
+    size_t decodedSize = 0u;
+    size_t offset = 0u;
+    int nameIndex;
+    int highBitTerminated = 0;
+
+    if (!state || !state->assetLoader.graphicsDatPath[0]) return 0;
+    state->dm1ObjectNameTableValid = 0;
+    memset(state->dm1ObjectNames, 0, sizeof(state->dm1ObjectNames));
+    file = fopen(state->assetLoader.graphicsDatPath, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (fileLength = ftell(file)) <= 0 || fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    fileBytes = (unsigned char*)malloc((size_t)fileLength);
+    decoded = (unsigned char*)malloc(65535u);
+    if (!fileBytes || !decoded ||
+        fread(fileBytes, 1u, (size_t)fileLength, file) != (size_t)fileLength) {
+        fclose(file);
+        free(decoded);
+        free(fileBytes);
+        return 0;
+    }
+    fclose(file);
+    /* ReDMCSB's M564 number is media-dependent: current PC3.4 data uses
+     * record 694, while older DM1 layouts use 556.  Admit only a complete
+     * C199 stream, never a raster record that happens to decode. */
+    if (csb_v1_graphics_decode_raw_entry_pc34(fileBytes, (size_t)fileLength,
+                                               M11_DM1_M564_PC34, decoded, 65535u,
+                                               &decodedSize) != 0) {
+        if (csb_v1_graphics_decode_raw_entry_pc34(fileBytes, (size_t)fileLength,
+                                                   M11_DM1_M564_LEGACY, decoded, 65535u,
+                                                   &decodedSize) != 0) {
+            free(decoded);
+            free(fileBytes);
+            return 0;
+        }
+    }
+    for (offset = 0u; offset < decodedSize; ++offset) {
+        if ((decoded[offset] & 0x80u) != 0u) {
+            highBitTerminated = 1;
+            break;
+        }
+    }
+    offset = 0u;
+    for (nameIndex = 0; nameIndex < M11_DM1_OBJECT_NAME_COUNT; ++nameIndex) {
+        size_t written = 0u;
+        int terminated = 0;
+        while (offset < decodedSize) {
+            unsigned char ch = decoded[offset++];
+            if (highBitTerminated) {
+                if (written + 1u < sizeof(state->dm1ObjectNames[nameIndex])) {
+                    state->dm1ObjectNames[nameIndex][written++] = (char)(ch & 0x7fu);
+                }
+            } else if (ch != 0u &&
+                       written + 1u < sizeof(state->dm1ObjectNames[nameIndex])) {
+                state->dm1ObjectNames[nameIndex][written++] = (char)ch;
+            }
+            if ((highBitTerminated && (ch & 0x80u) != 0u) ||
+                (!highBitTerminated && ch == 0u)) {
+                terminated = 1;
+                break;
+            }
+        }
+        if (!terminated) {
+            memset(state->dm1ObjectNames, 0, sizeof(state->dm1ObjectNames));
+            free(decoded);
+            free(fileBytes);
+            return 0;
+        }
+    }
+    free(decoded);
+    free(fileBytes);
+    state->dm1ObjectNameTableValid = 1;
+    return 1;
+}
+
+static void m11_get_source_item_name(const M11_GameViewState* state,
+                                     const struct DungeonThings_Compat* things,
+                                     unsigned short thingId,
+                                     char* out,
+                                     size_t outSize) {
+    int icon;
+    if (state && state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
+        state->dm1ObjectNameTableValid) {
+        icon = dm1_v1_dungeon_get_object_icon_index_pc34(
+            things, thingId, state->world.party.direction);
+        if (icon >= 0 && icon < 199 && state->dm1ObjectNames[icon][0]) {
+            snprintf(out, outSize, "%s", state->dm1ObjectNames[icon]);
+            return;
+        }
+    }
+    m11_get_item_name(things, thingId, out, outSize);
+}
+
 /* ================================================================
  * Thing chain manipulation: remove an item from a square,
  * prepend an item to a square
@@ -11725,7 +11833,7 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
     }
 
     champ->inventory[targetSlot] = item;
-    m11_get_item_name(state->world.things, item, itemName, sizeof(itemName));
+    m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
     m11_format_champion_name(champ->name, champName, sizeof(champName));
 
     m11_log_event(state, M11_COLOR_LIGHT_GREEN, "T%u: %s TOOK %s",
@@ -11815,7 +11923,7 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
         return 0;
     }
 
-    m11_get_item_name(state->world.things, item, itemName, sizeof(itemName));
+    m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
     m11_format_champion_name(champ->name, champName, sizeof(champName));
 
     m11_log_event(state, M11_COLOR_YELLOW, "T%u: %s DROPPED %s",
@@ -14517,7 +14625,7 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
     item = champ->inventory[useSlot];
     thingType = THING_GET_TYPE(item);
     thingIndex = THING_GET_INDEX(item);
-    m11_get_item_name(state->world.things, item, itemName, sizeof(itemName));
+    m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
     m11_format_champion_name(champ->name, champName, sizeof(champName));
 
     if (thingType == THING_TYPE_POTION) {
@@ -27647,7 +27755,7 @@ static int m11_c080_grab_leader_hand(M11_GameViewState* state,
 
     {
         char itemName[48];
-        m11_get_item_name(state->world.things, item, itemName, sizeof(itemName));
+        m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
         m11_set_status(state, "PICKUP", itemName);
     }
     m11_refresh_hash(state);
@@ -27688,7 +27796,7 @@ static int m11_c080_drop_leader_hand(M11_GameViewState* state,
 
     {
         char itemName[48];
-        m11_get_item_name(state->world.things, item, itemName, sizeof(itemName));
+        m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
         m11_set_status(state, "DROP", itemName);
     }
     m11_refresh_hash(state);
@@ -35574,7 +35682,7 @@ static int m11_build_v1_object_panel_source_material(
     if (icon < 0 || !dm1_v1_object_icon_source_zone_pc34(icon, &zone) ||
         zone.graphic_index < 0 || zone.w != 16 || zone.h != 16) return 0;
 
-    m11_get_item_name(things, thing, out_name, out_name_size);
+    m11_get_source_item_name(state, things, thing, out_name, out_name_size);
     if (!out_name[0]) return 0;
     out_body[0] = '\0';
     if (type == THING_TYPE_WEAPON && things->weapons &&
@@ -41102,6 +41210,10 @@ int DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(M11_GameViewState* state,
             thing,
             state->leaderHandObjectName,
             sizeof(state->leaderHandObjectName));
+    } else {
+        m11_get_source_item_name(state, state->world.things, thing,
+                                 state->leaderHandObjectName,
+                                 sizeof(state->leaderHandObjectName));
     }
     state->v1ChampionStatsPanelActive = 0;
     state->v1FoodWaterPanelActive = 0;
@@ -41237,7 +41349,7 @@ int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(const M11_GameViewState*
         snprintf(out, (size_t)outSize, "%s", state->leaderHandObjectName);
         return out[0] != '\0';
     }
-    m11_get_item_name(state ? state->world.things : NULL, thing, out, (size_t)outSize);
+    m11_get_source_item_name(state, state ? state->world.things : NULL, thing, out, (size_t)outSize);
     return out[0] != '\0';
 }
 
@@ -41901,7 +42013,7 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
         const struct DungeonPotion_Compat* potion = NULL;
         const char* typeName = "OBJECT";
 
-        m11_get_item_name(state->world.things, thing, itemName, sizeof(itemName));
+        m11_get_source_item_name(state, state->world.things, thing, itemName, sizeof(itemName));
 
         switch (itemType) {
         case 5: typeName = "WEAPON"; break;

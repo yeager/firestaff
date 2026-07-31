@@ -678,6 +678,11 @@ static uint16_t csb_v1_graphics_read_be16(const uint8_t *bytes)
     return (uint16_t)(((uint16_t)bytes[0] << 8) | (uint16_t)bytes[1]);
 }
 
+static uint16_t csb_v1_graphics_read_le16(const uint8_t *bytes)
+{
+    return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
 static int csb_v1_graphics_read_bits(CSB_V1_GraphicsBitReader *br,
                                      int bit_count,
                                      uint16_t *out_code)
@@ -860,12 +865,12 @@ static int csb_v1_graphics_lzw_decode(const uint8_t *input,
     }
 }
 
-static int csb_v1_graphics_decode_raw_entry(const uint8_t *file_bytes,
-                                            size_t file_size,
-                                            unsigned int entry_index,
-                                            uint8_t *out,
-                                            size_t out_capacity,
-                                            size_t *out_size)
+int csb_v1_graphics_decode_raw_entry_pc34(const uint8_t *file_bytes,
+                                          size_t file_size,
+                                          unsigned int entry_index,
+                                          uint8_t *out,
+                                          size_t out_capacity,
+                                          size_t *out_size)
 {
     uint16_t signature;
     uint16_t count;
@@ -878,19 +883,20 @@ static int csb_v1_graphics_decode_raw_entry(const uint8_t *file_bytes,
     uint16_t compressed_size;
     uint16_t decompressed_size;
     size_t decoded_size = 0u;
+    int little_endian;
 
     if (!file_bytes || !out || !out_size || file_size < 4u) {
         return -1;
     }
     *out_size = 0u;
-    /* ReDMCSB MEMORY.C F0479 reads the new-file marker as the literal
-     * 0x8001 before its count/size-table path. The admitted PC3.4 bytes are
-     * big-endian throughout: marker 80 01, count 02 ED and size/dimension
-     * words (for example C560's 00 25 size). Keeping that file order explicit
-     * prevents 0x0180 / 0xED02 / 0x2500 from rejecting real C560/C564
-     * material. */
-    signature = csb_v1_graphics_read_be16(file_bytes);
-    count = csb_v1_graphics_read_be16(file_bytes + 2u);
+    /* MEMORY.C F0479 accepts the 0x8001 new-file marker.  PC3.4 data is
+     * little-endian on disk (01 80, count C9 02); imported big-endian media
+     * also exists, so preserve both byte orders at this raw-member boundary. */
+    little_endian = file_bytes[0] == 0x01u && file_bytes[1] == 0x80u;
+    signature = little_endian ? csb_v1_graphics_read_le16(file_bytes)
+                              : csb_v1_graphics_read_be16(file_bytes);
+    count = little_endian ? csb_v1_graphics_read_le16(file_bytes + 2u)
+                          : csb_v1_graphics_read_be16(file_bytes + 2u);
     if ((signature & 0x8000u) == 0u ||
         count <= entry_index) {
         return -1;
@@ -905,16 +911,19 @@ static int csb_v1_graphics_decode_raw_entry(const uint8_t *file_bytes,
 
     entry_offset = payload_offset;
     for (i = 0u; i < entry_index; i++) {
-        entry_offset +=
-            (size_t)csb_v1_graphics_read_be16(file_bytes + compressed_table + i * 2u);
+        entry_offset += (size_t)(little_endian
+            ? csb_v1_graphics_read_le16(file_bytes + compressed_table + i * 2u)
+            : csb_v1_graphics_read_be16(file_bytes + compressed_table + i * 2u));
         if (entry_offset > file_size) {
             return -1;
         }
     }
-    compressed_size = csb_v1_graphics_read_be16(
-        file_bytes + compressed_table + entry_index * 2u);
-    decompressed_size = csb_v1_graphics_read_be16(
-        file_bytes + decompressed_table + entry_index * 2u);
+    compressed_size = little_endian
+        ? csb_v1_graphics_read_le16(file_bytes + compressed_table + entry_index * 2u)
+        : csb_v1_graphics_read_be16(file_bytes + compressed_table + entry_index * 2u);
+    decompressed_size = little_endian
+        ? csb_v1_graphics_read_le16(file_bytes + decompressed_table + entry_index * 2u)
+        : csb_v1_graphics_read_be16(file_bytes + decompressed_table + entry_index * 2u);
     if (compressed_size == 0u || decompressed_size == 0u ||
         decompressed_size > out_capacity ||
         entry_offset + (size_t)compressed_size > file_size) {
@@ -977,7 +986,7 @@ static int csb_v1_boot_load_object_names_m564(CSB_V1_BootProfile *profile)
     read_count = fread(file_bytes, 1u, (size_t)file_len, file);
     fclose(file);
     if (read_count == (size_t)file_len &&
-        csb_v1_graphics_decode_raw_entry(
+        csb_v1_graphics_decode_raw_entry_pc34(
             file_bytes,
             (size_t)file_len,
             CSB_V1_GRAPHICS_OBJECT_NAMES_INDEX,
@@ -1026,7 +1035,7 @@ static int csb_v1_boot_load_action_names_c699(CSB_V1_BootProfile *profile)
     read_count = fread(file_bytes, 1u, (size_t)file_len, file);
     fclose(file);
     if (read_count == (size_t)file_len &&
-        csb_v1_graphics_decode_raw_entry(
+        csb_v1_graphics_decode_raw_entry_pc34(
             file_bytes, (size_t)file_len, CSB_V1_GRAPHICS_ACTION_NAMES_INDEX,
             decoded, CSB_V1_GRAPHICS_OBJECT_NAMES_MAX_BYTES, &decoded_size) == 0) {
         ok = csb_v1_runtime_load_action_names_c699(&profile->runtime,

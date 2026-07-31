@@ -56,6 +56,15 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return getenv("FIRESTAFF_DM1_DATA_DIR") ? 1 : 0;
     }
+    /* OBJECT.C F0031 resolves display names from M564 by icon index.  A
+     * verified PC34 launch must therefore own the decoded original table,
+     * rather than falling back to the legacy subtype-name bridge. */
+    if (!state.dm1ObjectNameTableValid ||
+        state.dm1ObjectNames[0][0] == '\0') {
+        fprintf(stderr, "DM1 M564 object-name table was not loaded\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     state.world.party.championCount = 0;
 

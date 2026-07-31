@@ -1610,6 +1610,11 @@ int csb_v1_boot_decode_graphics_dat_asset_pc34(
     const char *path, unsigned int graphic_index,
     unsigned char **out_pixels, int *out_width, int *out_height,
     CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_decode_receipt);
+/* Decode the raw PC3.4 GRAPHICS.DAT member selected by F0490.  This is for
+ * non-raster records such as ReDMCSB OBJECT.C F0031's M564 name stream. */
+int csb_v1_graphics_decode_raw_entry_pc34(
+    const uint8_t *file_bytes, size_t file_size, unsigned int entry_index,
+    uint8_t *out, size_t out_capacity, size_t *out_size);
 /* Decode an original Atari ST DMCSB1 GRAPHICS.DAT item through the same
  * CSBWin ExpandGraphic-compatible source decoder used for PC startup
  * records.  This is for standard CSBWin packages which retain the original

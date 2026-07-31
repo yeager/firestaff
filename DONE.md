@@ -7,6 +7,15 @@
   the save/load target builds, with its two pre-existing live-runtime restore
   failures unchanged (25/27 overall).
 
+- ✅ 2026-07-31 DM1 OBJECT.C F0031 source-owned object names: DM1 now reads
+  the real PC3.4 `GRAPHICS.DAT` M564 C199 object-name stream and resolves
+  visible floor, hand, inventory and object-panel names through ReDMCSB's
+  F0033 icon index. The raw decoder accepts the PC little-endian `0x8001`
+  header and the existing big-endian form; M564's record number is selected
+  per data layout (PC3.4 694, legacy 556). Verification: the real-data M11
+  alcove regression requires the complete M564 table before rendering an
+  object and passes; CSB boot handoff regression passes.
+
 - ✅ 2026-07-31 DM2 leader-hand fixture-pixel closure: the runtime no longer
   turns an injected viewport provider's field-zero map-chip into a visible
   held item. SKProject `DM2_DRAW_ITEM_IN_HAND` (`skguidr5.cpp:1517`) first

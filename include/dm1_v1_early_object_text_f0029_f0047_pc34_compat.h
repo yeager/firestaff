@@ -9,7 +9,9 @@ extern "C" {
 #endif
 
 enum {
-    DM1_V1_F0031_OBJECT_NAMES_GRAPHIC_PC34 = 564,
+    /* PC3.4's multilingual GRAPHICS.DAT stores OBJECT.C's M564 stream at
+     * record 694.  Earlier media use the legacy 556 layout. */
+    DM1_V1_F0031_OBJECT_NAMES_GRAPHIC_PC34 = 694,
     DM1_V1_F0031_OBJECT_NAME_COUNT_PC34 = 199,
     DM1_V1_F0036_ICON_SHEET_COUNT_PC34 = 7
 };
