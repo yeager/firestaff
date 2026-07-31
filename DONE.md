@@ -1,3 +1,12 @@
+- ✅ 2026-07-31 Nexus production synthetic-state audit: rechecked the
+  startup/menu handoff after the real PLRD bridge landed. `RLOWFIX.BIN` is
+  now the only production champion source; missing or malformed PLRD data
+  clears the roster and leader index instead of invoking the legacy fixed
+  roster. The hardcoded Syra roster remains reachable only from explicit
+  fixture/test callers. Verification: `test_nexus_v1_champion_plrd` and
+  `test_m11_nexus_startup_gate` pass; production callers contain no
+  `nexus_v1_champions_init()` path.
+
 - ✅ 2026-07-31 DM2 SKProject diagnostic-probe isolation: made the unused
   `TEST_MEMENT` heap predicate test-only. Its source-lock unit test compiles
   the helper locally, while the production DM2 archive exports no unattached
