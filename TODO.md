@@ -24530,6 +24530,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     successful roundtrips and never treats a resume-parent directory or a
     synthetic fixture as external corpus evidence. The actual M11 selected-
     save path remains the backing-aware authority.
+  - 2026-07-31 local recheck: the two operator-owned `Downloads/DMSAVE*.DAT`
+    files completed `dm1_v1_original_save_pc34_backed_corpus_roundtrip` when
+    explicitly bound to the installed original `DUNGEON.DAT`. This confirms
+    the backing-aware route for the currently available real saves only; it
+    does not replace the required broader, provenance-attested corpus.
 
 ## CSB completed save-contract verification
 
