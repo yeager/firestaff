@@ -15,7 +15,9 @@ fi
 
 test_home="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-title-home-XXXXXX")"
 capture_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-title-capture-XXXXXX")"
-trap 'rm -rf "$test_home" "$capture_dir"' EXIT HUP INT TERM
+closed_door_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-closed-door-XXXXXX")"
+opening_door_dir="$(mktemp -d "${TMPDIR:-/tmp}/firestaff-csb-opening-door-XXXXXX")"
+trap 'rm -rf "$test_home" "$capture_dir" "$closed_door_dir" "$opening_door_dir"' EXIT HUP INT TERM
 
 HOME="$test_home" \
 FIRESTAFF_CSB_PRESENTED_CAPTURE_DIR="$capture_dir" \
@@ -122,4 +124,54 @@ if not (ex0 == 0 and ey0 == 0 and ex1 == entrance_w - 1 and
     raise SystemExit("FAIL: CSB Entrance did not consume the complete C002-C005 page")
 
 print("PASS: CSB PC3.4 title/PRESENTS/FTL/Entrance source palettes remain visible")
+PY
+
+# ReDMCSB ENTRANCE.C F0806 waits before F0807's first moving door frame.
+# Capture both source states through the actual M11 pointer mapper.  The
+# opening screenshot must not reuse the preceding C004/C002/C003 closed page:
+# that exact stale-page regression was visible in the packaged CSB app.
+FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$closed_door_dir" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$closed_door_dir/presented" \
+SDL_VIDEODRIVER=dummy \
+"$firestaff_bin" --game csb --data-dir "$data_dir" --presentation-mode v1 \
+    --boot-probe --boot-probe-frames 0 --width 320 --height 200 --scale-mode 4 \
+    --script 'wait120' >"$closed_door_dir/firestaff.log" 2>&1
+
+FIRESTAFF_AUTOTEST_SCREENSHOT_DIR="$opening_door_dir" \
+FIRESTAFF_AUTOTEST_PRESENTED_SCREENSHOT_DIR="$opening_door_dir/presented" \
+SDL_VIDEODRIVER=dummy \
+"$firestaff_bin" --game csb --data-dir "$data_dir" --presentation-mode v1 \
+    --boot-probe --boot-probe-frames 0 --width 320 --height 200 --scale-mode 4 \
+    --script 'wait120,click:250:50,wait20' >"$opening_door_dir/firestaff.log" 2>&1
+
+python3 - "$closed_door_dir" "$opening_door_dir" <<'PY'
+from pathlib import Path
+import sys
+
+closed_root = Path(sys.argv[1])
+opening_root = Path(sys.argv[2])
+
+def one(root, pattern):
+    paths = list(root.glob(pattern))
+    if len(paths) != 1:
+        raise SystemExit(f"FAIL: expected one {pattern} in {root}, found {len(paths)}")
+    return paths[0]
+
+closed_log = (closed_root / "firestaff.log").read_text(encoding="utf-8", errors="replace")
+opening_log = (opening_root / "firestaff.log").read_text(encoding="utf-8", errors="replace")
+if "phase=csb-entrance-4 startupActive=1" not in closed_log:
+    raise SystemExit("FAIL: CSB closed-door source capture did not reach Entrance wait state")
+if "phase=csb-entrance-opening-1 startupActive=1" not in opening_log:
+    raise SystemExit("FAIL: CSB Prison pointer did not reach first F0807 opening frame")
+
+closed = one(closed_root, "*.bmp")
+opening = one(opening_root, "*.bmp")
+closed_presented = one(closed_root, "presented/*.bmp")
+opening_presented = one(opening_root, "presented/*.bmp")
+if closed.read_bytes() == opening.read_bytes():
+    raise SystemExit("FAIL: CSB opening door retained the closed Entrance framebuffer")
+if closed_presented.read_bytes() == opening_presented.read_bytes():
+    raise SystemExit("FAIL: CSB opening door retained the closed presented framebuffer")
+
+print("PASS: CSB real Prison pointer changes closed C002/C003 door frame at F0807 step 1")
 PY

@@ -1169,6 +1169,15 @@ int csb_v1_startup_advance_tick_pc34(
             : 0;
         if (state->opening_delay_ticks > 0) {
             state->opening_delay_ticks--;
+            /* ReDMCSB ENTRANCE.C F0806 waits before F0438/F0807 draws the
+             * first moving C002/C003 strips.  Do not publish the
+             * delay-expired, step-zero gap: it has no legal opening
+             * composition and used to let M11 retain the closed C004 page
+             * until the handoff raced straight to the dungeon. */
+            if (state->opening_delay_ticks == 0 &&
+                state->opening_step < door_step_count) {
+                state->opening_step++;
+            }
         } else if (state->opening_step < door_step_count) {
             state->opening_step++;
         } else if (out_result) {

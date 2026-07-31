@@ -451,11 +451,11 @@ int main(void)
         (void)csb_v1_startup_advance_tick_pc34(&tick, &result);
     }
     check(tick.opening_delay_ticks == 0 &&
-              tick.opening_step == 1 &&
+              tick.opening_step == 2 &&
               !result.door_opening_finished,
-          "startup tick consumes pre-open delay before door steps");
+          "startup tick enters the first legal F0807 door step as pre-open delay ends");
     (void)csb_v1_startup_advance_tick_pc34(&tick, &result);
-    check(tick.opening_step == 2 && !result.door_opening_finished,
+    check(tick.opening_step == 3 && !result.door_opening_finished,
           "startup tick advances door opening steps");
     (void)csb_v1_startup_advance_tick_pc34(&tick, &result);
     (void)csb_v1_startup_advance_tick_pc34(&tick, &result);

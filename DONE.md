@@ -1,3 +1,12 @@
+- ✅ 2026-07-31 CSB real-package first-door-frame correction: the 20-VBlank
+  ENTRANCE.C pre-open delay now advances directly into legal F0807 step 1,
+  rather than publishing a zero-step gap that retained the closed Entrance
+  framebuffer. The V1 real-package capture drives the C407 Prison pointer,
+  verifies `csb-entrance-opening-1`, and proves that both the 320×200 indexed
+  and presented frames differ from the preceding closed C002/C003 doors.
+  Verification: `test_csb_v1_startup_entrance_pointer_pc34_compat` 139/139
+  and real-data CTest `csb_v1_title_entrance_visual_contract` pass.
+
 - ✅ 2026-07-31 CSBWin DSA-corpus admission correction: the opt-in extended
   DSA handoff probe now preflights the same strict loader-boundary corpus
   receipt as production. The locally supplied `csbgame3.dat` has a valid

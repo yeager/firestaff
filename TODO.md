@@ -24685,4 +24685,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   door-opening frame showed an opaque red centre strip. Treat that as a
   material/compositing regression in the older installed app until the current
   production build reproduces it and the C004/C002/C003 source ownership can
-  be traced; do not hide it with a generated fill.
+  be traced; do not hide it with a generated fill. 2026-07-31 current-build
+  follow-up: the real PC3.4 package capture exposed a separate stale-frame
+  defect at the end of the 20-VBlank pre-open wait. The source state reached
+  an invalid step-zero gap and retained the closed C004/C002/C003 page. The
+  sequence now enters F0807 step 1 atomically as that wait ends; real
+  pointer-driven V1 captures prove that both indexed and presented opening
+  frames differ from the preceding closed-door frames. The older installed
+  app still needs its own current-build comparison for the red strip.
