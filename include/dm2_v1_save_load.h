@@ -644,13 +644,6 @@ bool dm2_db_write_record(uint8_t pool, uint32_t index,
                           FILE *f,
                           const DM2_DB_State *db);
 
-/* Trace an inventory slot's object chain for max_depth hops.
- * Returns the starting handle (caller walks the chain). */
-uint32_t dm2_db_trace_inventory_slot(const uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS],
-                                     uint8_t slot,
-                                     uint8_t max_depth,
-                                     const DM2_DB_State *db);
-
 #ifdef __cplusplus
 }
 #endif

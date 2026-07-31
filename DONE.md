@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 inventory-trace placeholder removal: deleted the unused
+  `dm2_db_trace_inventory_slot()` API. It returned the starting handle after
+  at most one reachability check, without following the source `c_record`
+  link chain, and could therefore misrepresent a partial check as traversal.
+  No production or test caller used it; real inventory ownership remains at
+  the SKSave/c_record handoff boundary.
+
 - ✅ 2026-07-31 DM2 legacy dungeon-load closure: the unused
   `dm2_v1_load_dungeon()` shim no longer reports success merely because it
   discovers a hash-matched file. A success result without parsed map and

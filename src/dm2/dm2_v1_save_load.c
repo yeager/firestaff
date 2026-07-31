@@ -1789,31 +1789,6 @@ bool dm2_db_write_record(uint8_t pool, uint32_t index,
     return fwrite(p->data + offset, p->rec_size, 1, f) == 1;
 }
 
-uint32_t dm2_db_trace_inventory_slot(const uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS],
-                                      uint8_t slot,
-                                      uint8_t max_depth,
-                                      const DM2_DB_State *db)
-{
-    if (!inventory || slot >= DM2_CHAMPION_INVENTORY_SLOTS) return 0;
-    uint32_t h = inventory[slot];
-    if (h == 0) return 0;
-
-    uint8_t pool; uint32_t idx;
-    uint8_t depth = 0;
-
-    while (h != 0 && depth < max_depth) {
-        if (!dm2_db_resolve(h, db, &pool, &idx)) break;
-        if (!db->pools[pool].data) break;
-        /* Simple chain-walk: advance one hop and stop */
-        (void)pool; (void)idx;
-        depth++;
-        /* Chain is a placeholder: next iteration would follow the
-         * record's link field; for now just confirm reachability. */
-        break;
-    }
-    return inventory[slot];
-}
-
 /* ════════════════════════════════════════════════════════════════════════
  * Game state block (56 bytes, SUPPRESS-encoded)
  * Source: docs/dm2_save_format.md § Game state block (skload_table_60)
