@@ -1313,6 +1313,10 @@ diagnostic; it must not silently fall back to a generated visual.
   VDP1 produces the framebuffer while VDP2 displays/composes it, but does not
   provide Nexus-specific register traces.  Until those traces are decoded the
   runtime viewport remains fail-closed and never uses the procedural fallback.
+  The real-data material-corpus probe confirms this boundary: all 16 levels
+  parse, but `geometry_ready_level_count=0`, ceiling/wall host coverage is
+  incomplete, and no authenticated MNS/BPK host route is present. The
+  multi-level parser test must not be read as viewport-playability proof.
 - **NEXUS-ORIGINAL-REPLACE-002:** DMWeb's LSB-first PRS3 decoder is now
   verified against all 162 PRS3-bearing entries in the supplied `MENU.BPK`.
   The remaining gap is Saturn pixel/mode interpretation plus authenticated

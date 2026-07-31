@@ -47883,3 +47883,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Verification: `test_nexus_v1_sal_map_corpus` and
   `test_nexus_v1_sound_runtime_receipt` pass against
   `/Users/bosse/.firestaff/data/nexus`.
+# 2026-07-31 Nexus real-data viewport boundary audit
+
+- Ran the DGN multi-level parser, material-raster, material-corpus and launch
+  probes against `/Users/bosse/.firestaff/data/nexus`.
+- All 16 `LEV*.DGN` files parse and the launch smoke reaches level 0, but the
+  real material corpus reports `geometry_ready_level_count=0`, incomplete
+  ceiling/wall host coverage, and no authenticated MNS/BPK host route.
+- Kept the viewport fail-closed; no procedural or fixture material was
+  promoted. The remaining owner is authenticated Saturn VDP1/VDP2 submission.
