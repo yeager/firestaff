@@ -47254,3 +47254,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   workstation/mouse/AES table has no authenticated CSB PC 3.4 consumer and
   blocks all routes. It now compiles only into its contract test, preventing a
   foreign-platform receipt from standing in for CSB input or presentation.
+
+- ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
+  offsets and the 216-entry DMWeb TABL code table are parsed from the real
+  retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy
+  heuristic ASCII/Shift-JIS scraper plus unauthenticated S2D text/glyph
+  layout wrappers are excluded from `firestaff_nexus`; they remain available
+  only to explicit diagnostic probes. No glyph, palette, menu, HUD or Saturn
+  VDP1/VDP2 presentation is promoted by this change.
