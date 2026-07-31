@@ -47714,3 +47714,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   interpretation is retained only in synthetic fixtures. Verification:
   all 16 real SNDLEV pairs (154 records) and the sound-runtime receipt suite
   pass; playback remains blocked pending the SDDRVS event handoff.
+- ✅ 2026-07-31 Nexus Structure2 encoding 28h fidelity correction: the
+  runtime decoder now ignores Saturn word bit 15 as DMWeb does and retains
+  every 15-bit direct-colour value, instead of treating bit 15 clear as
+  transparency. Verification: production Nexus archive and
+  `test_nexus_v1_dgn_geometry_readiness` pass.

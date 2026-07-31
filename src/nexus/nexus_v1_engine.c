@@ -4786,10 +4786,9 @@ int nexus_v1_current_level_decode_structure2_textures(
                 uint32_t slot;
                 int found = 0;
 
-                if ((raw & 0x8000U) == 0U) {
-                    indices[i] = 0U;
-                    continue;
-                }
+                /* DMWeb DMNDataFileDecoder.vbs Structure2 encoding 28h:
+                 * every word is a direct 15-bit colour. Bit 15 is ignored;
+                 * it is not a transparency flag for this resource. */
                 for (slot = 1U; slot < palette_count; ++slot) {
                     if (surface->palette[slot] == rgba) {
                         indices[i] = (uint8_t)slot;
