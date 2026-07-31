@@ -45838,6 +45838,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   separately and does not claim unobserved coverage. Reference: ReDMCSB
   `LOADSAVE.C F0419/F0420/F0433/F0435` and DMweb Saved Game Files.
 
+- ✅ 2026-07-31 CSB Hint Oracle layout-placeholder removal: removed the
+  isolated shape/ASCII-sketch API, its synthetic layout test and its
+  real-data probe. It was not consumed by M11 and explicitly admitted an
+  empty hint title as a placeholder, while neither ReDMCSB nor CSBWin
+  provides a corresponding generic panel raster. The existing HCSB.HTC
+  parser and source-bound UI routes remain; a future visible Hint Oracle must
+  bind the actual decoded source graphics and font before it can draw.
+
 - ✅ 2026-07-31 CSB C001 presentation-cadence contract: corrected the stale
   receipt constants from 101 ticks and a two-tick CHAOS hold to the real
   `TITLE.C F0437:455-463` sequence: 60 PRESENTS ticks, 20 zoom blits,
