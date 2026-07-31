@@ -18,8 +18,8 @@ int main(void)
     int failures = 0;
 
     dm2_v1_outdoor_init(&cfg);
-    failures += check(cfg.time_of_day == 0.5f,
-                      "outdoor state still has a deterministic default time");
+    failures += check(cfg.time_of_day == 0.0f && cfg.weather == 0,
+                      "outdoor facade seeds no synthetic time or weather state");
     failures += check(dm2_v1_outdoor_sky_color(NULL) ==
                           DM2_V1_OUTDOOR_SOURCE_COLOR_UNAVAILABLE,
                       "missing outdoor state cannot select a substitute sky");

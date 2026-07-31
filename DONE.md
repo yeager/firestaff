@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 outdoor default-state closure: the legacy no-draw
+  outdoor facade no longer seeds a fabricated noon time. It remains zeroed
+  until source-owned ENVIRONMENT state is supplied, and its sky-colour API
+  continues to return unavailable rather than generating a substitute scene.
+  Verification: `test_dm2_v1_outdoor_renderer_material_gate` proves init,
+  clear, rain and storm states all remain no-draw.
+
 - ✅ 2026-07-31 DM2 inventory-trace placeholder removal: deleted the unused
   `dm2_db_trace_inventory_slot()` API. It returned the starting handle after
   at most one reachability check, without following the source `c_record`

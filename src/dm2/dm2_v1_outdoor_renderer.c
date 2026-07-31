@@ -11,7 +11,9 @@
 void dm2_v1_outdoor_init(DM2_V1_OutdoorConfig *cfg) {
     if (!cfg) return;
     memset(cfg, 0, sizeof(*cfg));
-    cfg->time_of_day = 0.5f; /* noon */
+    /* No default sky/time state: ENVIRONMENT owns both its selected image
+     * and the temporal state that selects it. This legacy no-draw facade
+     * must not seed an apparently playable noon scene. */
 }
 
 void dm2_v1_outdoor_set_weather(DM2_V1_OutdoorConfig *cfg, int weather) {

@@ -49,6 +49,9 @@
   champion light possessions, `v1e0974`, spell effects, rain modifiers and
   the source light modifier. Dynamic-map viewport frames must remain blocked
   until that state is recovered from original runtime/save records.
+  **2026-07-31 update:** the disconnected outdoor facade also no longer
+  seeds a noon value; temporal ENVIRONMENT selection remains unavailable
+  until its source owner is imported.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following
