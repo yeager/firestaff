@@ -1794,6 +1794,55 @@ static int test_raw_sksave_import_is_transactional(void)
     return 1;
 }
 
+static int test_original_envelope_import_is_transactional(void)
+{
+    uint8_t payload[2048];
+    size_t payload_size = 0u;
+    size_t enc_gs_size = 0u;
+    size_t enc_champ_size = 0u;
+    DM2_TestGameStateStorage gs_store;
+    DM2_GameStateBlock *gs = &gs_store.block;
+    DM2_ChampionRecord champion;
+    DM2_V1_SessionState session;
+    DM2_V1_SessionState before;
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE] = { 0 };
+
+    printf("  Original D2RS malformed tail keeps prior session intact...\n");
+    memset(&gs_store, 0, sizeof(gs_store));
+    memset(&champion, 0, sizeof(champion));
+    gs->dwGameTick = 0x12345678u;
+    gs->dwRandomSeed = 0x00002211u;
+    gs->wChampionsCount = 1u;
+    gs->wPlayerPosX = 3u;
+    gs->wPlayerPosY = 2u;
+    gs->wPlayerDir = 1u;
+    gs->wPlayerMap = 0u;
+    memcpy(champion.first_name, "ZED", 3u);
+    champion.cur_hp = 20;
+    champion.max_hp = 25;
+
+    if (!build_resume_payload(gs, &champion, global_flags, NULL, NULL, NULL,
+                              NULL, 0, payload, sizeof(payload),
+                              &payload_size, &enc_gs_size, &enc_champ_size) ||
+        payload_size < 2u || enc_gs_size == 0u || enc_champ_size == 0u) {
+        printf("    FAIL: could not build original D2RS fixture\n");
+        return 0;
+    }
+
+    memset(&session, 0xA5, sizeof(session));
+    before = session;
+    /* The game state and champion are valid. Truncate the tagged optional
+     * section so failure happens only after the candidate has been decoded. */
+    if (dm2_v1_session_import_original_payload(&session, payload,
+                                               payload_size - 2u) == 0 ||
+        memcmp(&session, &before, sizeof(session)) != 0) {
+        printf("    FAIL: malformed original D2RS partially changed session\n");
+        return 0;
+    }
+    printf("    PASS: malformed original D2RS had no partial session publish\n");
+    return 1;
+}
+
 static int test_sksave_corpus_scan_receipt(void)
 {
     printf("  Real SKSave corpus scan receipt...\n");
@@ -3363,14 +3412,15 @@ int main(void)
     RUN(16, test_raw_sksave_resume_import);
     RUN(17, test_raw_sksave_scene_root_addressing);
     RUN(18, test_raw_sksave_import_is_transactional);
-    RUN(19, test_sksave_corpus_scan_receipt);
-    RUN(20, test_champion_death_permanence_source_lock);
-    RUN(21, test_live_runtime_state_roundtrip);
-    RUN(22, test_original_save_candidate_live_restore);
-    RUN(23, test_sksave_corpus_runtime_import);
-    RUN(24, test_original_sksave_corpus_runtime_import);
-    RUN(25, test_original_sksave_timer_post_load_rebuild);
-    RUN(26, test_external_original_sksave_corpus_census);
+    RUN(19, test_original_envelope_import_is_transactional);
+    RUN(20, test_sksave_corpus_scan_receipt);
+    RUN(21, test_champion_death_permanence_source_lock);
+    RUN(22, test_live_runtime_state_roundtrip);
+    RUN(23, test_original_save_candidate_live_restore);
+    RUN(24, test_sksave_corpus_runtime_import);
+    RUN(25, test_original_sksave_corpus_runtime_import);
+    RUN(26, test_original_sksave_timer_post_load_rebuild);
+    RUN(27, test_external_original_sksave_corpus_census);
 #undef RUN
 
     printf("\n  DM2 V1 Save/Load: %d/%d tests passed\n", pass, total);

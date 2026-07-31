@@ -1,3 +1,12 @@
+- ✅ 2026-07-31 DM2 original-envelope transactional import: a malformed
+  trailing optional section in a D2RS save can no longer partially overwrite
+  the active session. The importer now decodes to a local candidate and
+  publishes it only after full validation, following the ordered source load
+  sequence in SKProject `SKWINSPX/src/v4/skcore.cpp::GAME_LOAD` (lines
+  9823-9970). Verification: the focused D2RS truncation regression passes;
+  the save/load target builds, with its two pre-existing live-runtime restore
+  failures unchanged (25/27 overall).
+
 - ✅ 2026-07-31 DM2 leader-hand fixture-pixel closure: the runtime no longer
   turns an injected viewport provider's field-zero map-chip into a visible
   held item. SKProject `DM2_DRAW_ITEM_IN_HAND` (`skguidr5.cpp:1517`) first

@@ -50,6 +50,10 @@
   guessed zeroes or seed them from the fixture-session defaults. Trace the
   owning `GAME_LOAD`/global-state records in SK-projects, then replace the
   fixture initialization in the importer atomically with those exact values.
+  **2026-07-31 update:** the compact D2RS envelope now decodes into a local
+  candidate and publishes only after every supplied source section validates;
+  this prevents a malformed trailing section from leaking its partial state
+  while the remaining field-owner investigation stays open.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

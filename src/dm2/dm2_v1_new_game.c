@@ -1466,6 +1466,7 @@ int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
                                            const uint8_t *buf,
                                            size_t buf_size)
 {
+    DM2_V1_SessionState candidate;
     DM2_GameStateBlock gs;
     size_t pos = 0u;
     int gs_size;
@@ -1492,23 +1493,30 @@ int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
     }
     pos += (size_t)gs_size;
 
-    dm2_v1_apply_original_gamestate(session, &gs);
+    /* SKProject SKWINSPX/src/v4/skcore.cpp::GAME_LOAD (lines 9823-9970)
+     * reads the state, global rows, champions, effects and timers as one
+     * ordered save sequence. Keep the Firestaff envelope atomic so an
+     * optional malformed SUPPRESS section cannot replace only part of a
+     * live party. */
+    memset(&candidate, 0, sizeof(candidate));
+    dm2_v1_apply_original_gamestate(&candidate, &gs);
     requested_champions = (int)gs.wChampionsCount;
-    if (dm2_v1_decode_original_champions(session, buf, buf_size, &pos, 1,
+    if (dm2_v1_decode_original_champions(&candidate, buf, buf_size, &pos, 1,
                                          requested_champions) != 0) {
         return -1;
     }
     if (pos < buf_size &&
-        dm2_v1_import_original_optional_sections(session, buf,
+        dm2_v1_import_original_optional_sections(&candidate, buf,
                                                  buf_size, &pos) != 0) {
         return -1;
     }
     if (pos != buf_size) {
         return -1;
     }
-    if (!dm2_v1_session_validate(session)) {
+    if (!dm2_v1_session_validate(&candidate)) {
         return -1;
     }
+    *session = candidate;
     return 0;
 }
 
