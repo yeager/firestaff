@@ -142,7 +142,7 @@ int main(void)
                     "local STABG.BIN proves its STMP container framing");
             expect_true(nexus_ui_load_stabg(&ui, local_stabg,
                                             (int)local_warning_size,
-                                            NULL) == 0 &&
+                                            NULL) > 0 &&
                         ui.surfaces[NEXUS_SURFACE_STABG].data != NULL &&
                         ui.surfaces[NEXUS_SURFACE_STABG].w == 320 &&
                         ui.surfaces[NEXUS_SURFACE_STABG].h == 168 &&

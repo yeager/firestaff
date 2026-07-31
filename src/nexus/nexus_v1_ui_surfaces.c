@@ -763,7 +763,7 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
     surface->source_palette_fnv1a32 = nexus_ui_fnv1a32(
         (const uint8_t *)palette_le, sizeof(palette_le));
     surface->source_palette_loaded = 1;
-    return 0;
+    return 1;
 }
 
 int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h) {
