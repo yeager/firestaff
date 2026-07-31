@@ -35,7 +35,10 @@
   spell and bomb projectile dispatchers now also fail closed: creature id and
   host target coordinates cannot invent the CCM/timer-owned cell, direction,
   energy, step cost or tick needed by F0810. Test-only projectile construction
-  remains isolated behind its compile-time test gate.
+  remains isolated behind its compile-time test gate. The trigger-target
+  creature shortcut likewise cannot invent an `ALLOC_NEW_CREATURE` direction
+  or health multiplier; it remains unavailable until a decoded DB14/CCM
+  payload supplies them.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

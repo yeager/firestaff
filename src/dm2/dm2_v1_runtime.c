@@ -1895,16 +1895,16 @@ static void dm2_runtime_record_spawn(DM2_V1_RuntimeState *rt,
                                      int level,
                                      int x,
                                      int y) {
-    int instance_id;
-
-    if (!rt) return;
-    instance_id = dm2_v1_creature_spawn(ai_index, x, y, level, 0, 8);
-    rt->last_spawn_instance_id = instance_id;
-    rt->last_spawn_ai = ai_index;
-    rt->last_spawn_x = x;
-    rt->last_spawn_y = y;
-    rt->last_spawn_level = level;
-    if (instance_id >= 0) rt->spawn_count++;
+    (void)rt;
+    (void)ai_index;
+    (void)level;
+    (void)x;
+    (void)y;
+    /* The former trigger shortcut supplied only an AI type and square, then
+     * invented direction 0 and health multiplier 8 for ALLOC_NEW_CREATURE.
+     * SKProject DM2_INVOKE_ACTUATOR / CREATE_MINION obtains those values from
+     * the live DB14 record and its timer/CCM payload.  Do not turn a generic
+     * trigger target into a real creature until that record handoff exists. */
 }
 
 static int dm2_runtime_event_from_trigger(

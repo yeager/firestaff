@@ -45879,3 +45879,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm2_v1_projectile_pc34_compat` 24/24,
   `test_dm2_v1_projectile_step_pc34_compat` 16/16, and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass.
+
+- ✅ 2026-07-31 DM2 trigger-spawn ownership closure: removed the private
+  trigger-target shortcut that called `ALLOC_NEW_CREATURE` with fabricated
+  direction `0` and health multiplier `8`. No trigger can now create a
+  creature until the original DB14/CCM/timer payload is decoded. Source:
+  SKProject `SKULLWIN/c_creature.cpp::DM2_INVOKE_ACTUATOR` and
+  `CREATE_MINION`. Verification: `test_dm2_v1_runtime_shop_pc34_compat`
+  11/11 and real-data `test_dm2_v1_m11_startup_profile_gate` pass.
