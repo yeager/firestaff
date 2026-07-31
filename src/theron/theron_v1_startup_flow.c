@@ -27,6 +27,7 @@ int theron_v1_startup_stage_available(
     return tqr_stage_is_available(progression, dungeon_id);
 }
 
+#if defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
 static const Theron_StartupMirrorMeta g_tqr_mirror_meta[THERON_STARTUP_HERO_MIRROR_COUNT] = {
     { "Hakar",  THERON_CLASS_FIGHTER, 1 },
     { "Mara",   THERON_CLASS_PRIEST,  2 },
@@ -36,6 +37,7 @@ static const Theron_StartupMirrorMeta g_tqr_mirror_meta[THERON_STARTUP_HERO_MIRR
     { "Hexa",   THERON_CLASS_FIGHTER, 6 },
     { "Pental", THERON_CLASS_FIGHTER, 7 }
 };
+#endif
 
 static const int g_tqr_mirror_to_track02_roster_index[THERON_STARTUP_HERO_MIRROR_COUNT] = {
     4, /* Hakar -> HAKAR */
@@ -48,10 +50,17 @@ static const int g_tqr_mirror_to_track02_roster_index[THERON_STARTUP_HERO_MIRROR
 };
 
 const Theron_StartupMirrorMeta *theron_v1_startup_mirror_meta(int mirror_index) {
+#if !defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
+    /* Track 02 champion metadata has not been decoded.  Keep the production
+     * menu from exposing the retired fixture names/classes/portraits. */
+    (void)mirror_index;
+    return NULL;
+#else
     if (mirror_index < 0 || mirror_index >= THERON_STARTUP_HERO_MIRROR_COUNT) {
         return NULL;
     }
     return &g_tqr_mirror_meta[mirror_index];
+#endif
 }
 
 void theron_v1_startup_session_facts_init(

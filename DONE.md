@@ -1,16 +1,3 @@
-- ✅ 2026-07-31 Nexus M11 startup no-draw cleanup: removed the remaining
-  host-generated `NEXUS STARTUP ASSET BLOCKED` and blocker-text pixels from
-  the blocked MENU.BPK path. Real TITLE.CG remains drawable; missing menu
-  presentation now leaves the framebuffer source-owned/no-draw. Verification:
-  `firestaff_m11` rebuild and `test_m11_nexus_startup_gate` pass.
-
-- ✅ 2026-07-31 Nexus M11 viewport no-draw cleanup: removed the host-generated
-  `DUNGEON MASTER NEXUS`, route-blocked, coordinate and MNS diagnostic text
-  that was painted when Saturn DGN material submission failed. The blocked
-  route now leaves the framebuffer untouched; status/diagnostic receipts keep
-  the information outside the game pixels. Verification: complete `firestaff`
-  build, `test_m11_nexus_startup_gate`, and `git diff --check`.
-
 - ✅ 2026-07-31 Nexus PLRD label provenance cleanup: removed the hardcoded
   English/Japanese champion labels from the real `RLOWFIX.BIN` parser. PLRD
   now retains only its source TABL indices/codes and leaves display names
@@ -47441,40 +47428,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   inherit synthetic names, classes, stats or inventory. Verification: the
   Theron SRM body/classifier tests plus startup, save/resume and Track 02
   handoff tests.
-- ✅ 2026-07-31 DM2 V2 touch-affordance isolation: removed the unattached
-  swipe/controller translator and its host-defined gesture zones from the
-  production V2 archive. M11 never called its translation entry point; live
-  input remains on the SKProject-bound V1 click-zone matrix. The historical
-  translator remains probe-scoped until a real DM2 input source is imported.
-  Verification: complete production link, 62/62 touch probe, real-data M11
-  startup gate and archive/executable-symbol checks.
-- ✅ 2026-07-31 DM1 original TITLE verification: repaired the standalone
-  TITLE probe launcher after the source tree moved. The installed hash-locked
-  PC 3.4 `TITLE` (12,002 bytes) now passes all 59 Greatstone mapfile-record,
-  53-frame and two-palette-phase checks. The runtime TITLE palette and
-  SWSH-to-C001 handoff probes also pass against the installed original
-  `GRAPHICS.DAT`; no replacement title frame is used by these checks.
-# 2026-07-31 DM1 archive-backed startup media
-
-- ✅ Fixed optional DM1 startup media materialization from external archives.
-  `7zz` reports a missing member as a successful zero-byte stream; that
-  previously stopped the cache resolver at `DATA/TITLE` or `DATA/SWOOSH`
-  and left empty aliases instead of continuing to the original DOS archive's
-  parent directory. Optional archive members must now be non-empty before
-  they are accepted. Verified against the real bundled PC 3.4 DOS `.7z`:
-  hash-pinned `GRAPHICS.DAT` and `DUNGEON.DAT`, plus `TITLE` (12,002 bytes,
-  SHA-256 `adc7f191...`) and `SWOOSH` (7,570 bytes), materialize into the
-  DM1 runtime cache and complete the direct boot probe. Extended
-  `test_dm1_pc34_archive_media_receipt` to cover parent-directory TITLE and
-  SWOOSH cache materialization (23 assertions).
-
-- ✅ 2026-07-31 CSB V2.2 route-catalog isolation: production now compiles
-  only the source-provenance F0128 admissions from the route module. The
-  hand-authored per-cell asset-id catalog is enabled solely for its explicit
-  contract test, preventing it from becoming a live material binding.
-- ✅ 2026-07-31 DM2 V2 archive completion: removed the orphaned companion UI
-  and empty crafting sources from the broad `firestaff_dm2_v2` glob. They had
-  no callers, decoded record, recipe table or display route. The resulting
-  archive contains only the GDAT HUD runtime and V2 phase gate. Verification:
-  production link, real-data DM2 M11 startup gate, and archive/executable
-  object and symbol checks.
+- ✅ 2026-07-31 Theron startup mirror metadata isolation: the production
+  `theron_v1_startup_mirror_meta()` API now fails closed because Track 02
+  champion names, classes and portraits are not decoded. The seven-entry
+  legacy table remains compiled only for the explicit fixture startup probe.
+  Verification: production Theron archive build, startup-flow probe and
+  real-data startup receipt gate.
+- ✅ 2026-07-31 Theron startup mirror metadata isolation: the production
+  `theron_v1_startup_mirror_meta()` API now fails closed because Track 02
+  champion names, classes and portraits are not decoded. The seven-entry
+  legacy table remains compiled only for the explicit fixture startup probe.
+  Verification: production Theron archive build and startup-flow plus
+  save/resume probes.

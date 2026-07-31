@@ -38,6 +38,10 @@
   Production world allocation also uses a zero-party initializer until that
   handoff succeeds.
 
+  The production startup API now returns no mirror portrait/class/name
+  metadata at all; the seven-entry table is compiled only for the explicit
+  fixture startup probe.
+
 - **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
   placeholder labels are now fixture/probe-only. The verified receipt no
   longer projects fixture mirror counts or fallback-label counts; runtime
