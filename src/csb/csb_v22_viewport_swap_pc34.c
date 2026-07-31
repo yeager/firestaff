@@ -1,22 +1,16 @@
 /*
  * csb_v22_viewport_swap_pc34.c
  *
- * Bounded CSB V2.2 per-cell modern-art swap. Pairs the per-cell V22
- * cache (raw_cell_type + direction) with the CSB 9-square viewport
- * state and exposes a single render-pass seam.
+ * Retired CSB V2.2 per-cell modern-art swap compatibility surface.
  *
  * V1 source ownership: this module never touches V1 state. When V22
  * is not the active presentation mode (modern pack missing, cache
  * not loaded, or presentation_mode != V22_MODERN), the render pass
  * is a no-op and the V1 draw pipeline stays in charge.
  *
- * The per-cell asset_id resolution goes through the new
- * csb_v22_inplace_get_bitmap_by_id(category, asset_id) helper
- * (sibling to dm2_v22_inplace_get_bitmap_by_id) so the per-cell
- * swap table can drive both the wall/floor/creature discriminator
- * AND the CSB-only narrative shapes (prison door, DSA scroll,
- * Lord Order statue, chaos rune marker) without touching the
- * sibling shape cache.
+ * A raw square byte is insufficient to identify a source raster, palette,
+ * projection, clip or draw order. The public compatibility queries therefore
+ * fail closed until a complete F0128 command receipt owns a replacement.
  *
  * Source-lock:
  *   CSBWin/Viewport.cpp:7290   (9-square viewport layout)
@@ -39,76 +33,10 @@
 
 #include <string.h>
 
-/* ── Per-cell asset_id + category table ──────────────────────────── */
-
-/* Maps a CSB_V22_SwapShapeType to (manifest_category, asset_id).
- * The category strings match the manifest categories documented in
- * include/csb_v22_modern_assets_pc34.h. The asset_id strings are
- * the manifest entry keys consumed by the cache builder.
- *
- * CSB-only narrative shapes (PRISON_DOOR, DSA_SCROLL, LORD_ORDER,
- * CHAOS_RUNE) and CSB-only UI shapes (DSA_RUNE) are routed to
- * dedicated CSB-only categories ("chaos_runes", "dsa_scrolls",
- * "door_shapes", "champion_portraits") — the same categories the
- * csb_v22_modern_assets_pc34.{c,h} manifest documents. */
-typedef struct {
-    CSB_V22_SwapShapeType shape;
-    const char*          category;
-    const char*          asset_id;
-} CSB_V22_SwapShapeMapping;
-
-static const CSB_V22_SwapShapeMapping kCSBV22SwapMappingTable[] = {
-    /* Walls (CSB 9-square) */
-    { CSB_V22_SWAP_SHAPE_WALL_STRAIGHT,     "wall_shapes",  "wall_dungeon_01" },
-    { CSB_V22_SWAP_SHAPE_WALL_CORNER_INNER, "wall_shapes",  "wall_dungeon_01" },
-    { CSB_V22_SWAP_SHAPE_WALL_CORNER_OUTER, "wall_shapes",  "wall_dungeon_01" },
-    { CSB_V22_SWAP_SHAPE_WALL_DOORWAY,      "wall_shapes",  "wall_dungeon_doorway_01" },
-    { CSB_V22_SWAP_SHAPE_WALL_ALCOVE,       "wall_shapes",  "wall_dungeon_alcove_01" },
-    { CSB_V22_SWAP_SHAPE_WALL_INSCRIPTION,  "wall_shapes",  "wall_dungeon_inscription_01" },
-
-    /* Floors */
-    { CSB_V22_SWAP_SHAPE_FLOOR_PLAIN,       "floor_shapes", "floor_plain_01" },
-    { CSB_V22_SWAP_SHAPE_FLOOR_CRACKED,     "floor_shapes", "floor_cracked_01" },
-    { CSB_V22_SWAP_SHAPE_FLOOR_PIT,         "floor_shapes", "floor_pit_01" },
-    { CSB_V22_SWAP_SHAPE_FLOOR_DOOR,        "door_shapes",  "door_iron_portcullis_01" },
-
-    /* Ceilings */
-    { CSB_V22_SWAP_SHAPE_CEILING_PLAIN,     "floor_shapes", "ceiling_plain_01" },
-    /* A vaulted ceiling is not the plain-ceiling source route.  Keep its
-     * original F0128 pixels until a separately reviewed projection exists. */
-
-    /* Creatures. Item variants intentionally have no mapping: V1 owns their
-     * pixels until a reviewed CSB item-art family is available. */
-    { CSB_V22_SWAP_SHAPE_CREATURE,             "creature_shapes", "creature_chaos_fiend_01" },
-
-    /* Fields (CSB-only routing) */
-    { CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER,     "floor_shapes", "field_teleporter_01" },
-    /* Fluxcage and chaos rift have different source semantics and timing. */
-    { CSB_V22_SWAP_SHAPE_FIELD_EXPLOSION,      "floor_shapes", "field_explosion_01" },
-    { CSB_V22_SWAP_SHAPE_FIELD_CHAOS_RIFT,     "floor_shapes", "field_chaos_rift_01" },
-
-    /* UI chrome */
-    { CSB_V22_SWAP_SHAPE_UI_CHROME,            "ui_chrome",         "ui_panel_01" },
-    { CSB_V22_SWAP_SHAPE_UI_PORTRAIT,          "champion_portraits","champion_warrior_csb" },
-    { CSB_V22_SWAP_SHAPE_UI_MESSAGE_LOG,       "ui_chrome",         "ui_message_log_01" },
-    { CSB_V22_SWAP_SHAPE_UI_INVENTORY_GRID,    "ui_chrome",         "ui_inventory_01" },
-    { CSB_V22_SWAP_SHAPE_UI_DSA_RUNE,          "chaos_runes",       "chaos_rune_01" }, /* CSB-only */
-
-    /* Narrative (CSB-only) */
-    { CSB_V22_SWAP_SHAPE_PRISON_DOOR,          "door_shapes",       "door_prison_01" },
-    { CSB_V22_SWAP_SHAPE_DSA_SCROLL,           "dsa_scrolls",       "dsa_scroll_01" },
-    { CSB_V22_SWAP_SHAPE_LORD_ORDER,           "champion_portraits","statue_lord_order_01" },
-    { CSB_V22_SWAP_SHAPE_CHAOS_RUNE,           "chaos_runes",       "chaos_rune_marker_01" },
-
-    /* Sentinel — must remain last. */
-    { CSB_V22_SWAP_SHAPE_NONE,                 NULL,               NULL }
-};
-
 /* ── Module state ────────────────────────────────────────────────── */
 
-/* Records the per-cell ShapeType so the asset_id lookup can stay
- * a tight O(N) table scan instead of recomputing the discriminator
- * every render pass. Repopulated by csb_v22_viewport_swap_update(). */
+/* Retains raw-cell observations for the sibling inspector only. The shape
+ * slots stay NONE: this module is not allowed to invent an art mapping. */
 typedef struct {
     CSB_V22_SwapShapeType shapes[3][3];   /* D0..D2 x L/C/R */
     unsigned char          raw_cells[3][3];
@@ -124,95 +52,21 @@ static int g_csb_cells_painted = 0;
 
 /* ── Discriminator ───────────────────────────────────────────────── */
 
-/* csb_v22_swap_shape_for_cell — bounded CSB V1 square-type -> V22
- * swap-shape discriminator.
- *
- * The CSB V1 square type is an 8-bit field whose high bits carry
- * creature-vs-floor-vs-wall flags and low bits carry variant data.
- * The mapping below mirrors the CSB V1 square type documentation
- * (ReDMCSB DUNGEON.C:35-44 direction step tables + the CSBWin
- * Viewport.cpp:7290 grid mapping) and stays conservative in this
- * first cut. Sub-cell variant decoding (e.g. corner vs straight
- * wall) is a follow-up once real CSB V22 shape book art lands.
- *
- * Direction parameter is preserved in the API even though the first
- * cut does not consume it (per-direction shape variants are a
- * follow-up). */
+/* A byte-sized square code does not identify an F0128 raster, palette,
+ * projection, or draw order. Until a caller supplies that complete original
+ * command receipt, this retired per-cell route must name no V2.2 shape. */
 CSB_V22_SwapShapeType csb_v22_swap_shape_for_cell(uint8_t raw_cell_type,
                                                     uint8_t direction) {
+    (void)raw_cell_type;
     (void)direction;
-
-    /* High-bit discriminator: top bit set -> creature */
-    if (raw_cell_type & 0x80) {
-        /* Projectile creatures use a separate tag (top bit + 0x40). */
-        if (raw_cell_type & 0x40) return CSB_V22_SWAP_SHAPE_CREATURE_PROJECTILE;
-        return CSB_V22_SWAP_SHAPE_CREATURE;
-    }
-
-    /* Items: 0x40 + low nibble 0x01..0x0F (CSB V1 item flag) */
-    if (raw_cell_type & 0x40) {
-        uint8_t low = raw_cell_type & 0x0F;
-        if (low == 0x00) return CSB_V22_SWAP_SHAPE_ITEM_FLOOR;
-        if (low <= 0x04) return CSB_V22_SWAP_SHAPE_ITEM;
-        return CSB_V22_SWAP_SHAPE_ITEM_PROJECTILE;
-    }
-
-    /* Door (0x20 bit + 0x10 bit off) */
-    if (raw_cell_type & 0x20) return CSB_V22_SWAP_SHAPE_FLOOR_DOOR;
-
-    /* Pit cells (0x10 bit + low nibble 0x00) */
-    if ((raw_cell_type & 0x10) && (raw_cell_type & 0x0F) == 0x00) {
-        return CSB_V22_SWAP_SHAPE_FLOOR_PIT;
-    }
-
-    /* Stairs: 0x10 + bit 0 (up vs down) */
-    if (raw_cell_type & 0x10) {
-        return (raw_cell_type & 0x01) ? CSB_V22_SWAP_SHAPE_FLOOR_STAIRS_DOWN
-                                     : CSB_V22_SWAP_SHAPE_FLOOR_STAIRS_UP;
-    }
-
-    /* Otherwise: walls, plain/cracked/mossy floors, fields.
-     * Distinguish by the low nibble (0..15). The first cut maps:
-     *   0..3   -> wall variants
-     *   4      -> floor plain
-     *   5      -> floor cracked
-     *   6      -> floor mossy
-     *   7..11  -> walls (corner/alcove/inscription)
-     *   12..14 -> fields / ceiling
-     *   15     -> wall (default)
-     */
-    switch (raw_cell_type & 0x0F) {
-        case 0:  return CSB_V22_SWAP_SHAPE_WALL_STRAIGHT;
-        case 1:  return CSB_V22_SWAP_SHAPE_WALL_CORNER_INNER;
-        case 2:  return CSB_V22_SWAP_SHAPE_WALL_CORNER_OUTER;
-        case 3:  return CSB_V22_SWAP_SHAPE_WALL_DOORWAY;
-        case 4:  return CSB_V22_SWAP_SHAPE_FLOOR_PLAIN;
-        case 5:  return CSB_V22_SWAP_SHAPE_FLOOR_CRACKED;
-        case 6:  return CSB_V22_SWAP_SHAPE_FLOOR_MOSSY;
-        case 7:  return CSB_V22_SWAP_SHAPE_WALL_ALCOVE;
-        case 8:  return CSB_V22_SWAP_SHAPE_WALL_INSCRIPTION;
-        case 9:  return CSB_V22_SWAP_SHAPE_WALL_STRAIGHT;
-        case 10: return CSB_V22_SWAP_SHAPE_WALL_STRAIGHT;
-        case 11: return CSB_V22_SWAP_SHAPE_WALL_STRAIGHT;
-        case 12: return CSB_V22_SWAP_SHAPE_FIELD_TELEPORTER;
-        case 13: return CSB_V22_SWAP_SHAPE_FIELD_FLUXCAGE;
-        case 14: return CSB_V22_SWAP_SHAPE_CEILING_PLAIN;
-        case 15: return CSB_V22_SWAP_SHAPE_WALL_STRAIGHT;
-        default: return CSB_V22_SWAP_SHAPE_FLOOR_PLAIN;        /* safe default */
-    }
+    return CSB_V22_SWAP_SHAPE_NONE;
 }
 
 /* csb_v22_swap_asset_id_for_shape — single-row lookup over the
  * mapping table. Returns NULL when the shape has no mapping. The
  * returned string is owned by the static mapping table. */
 const char* csb_v22_swap_asset_id_for_shape(CSB_V22_SwapShapeType shape) {
-    int i;
-    if (shape == CSB_V22_SWAP_SHAPE_NONE) return NULL;
-    for (i = 0; kCSBV22SwapMappingTable[i].asset_id != NULL; ++i) {
-        if (kCSBV22SwapMappingTable[i].shape == shape) {
-            return kCSBV22SwapMappingTable[i].asset_id;
-        }
-    }
+    (void)shape;
     return NULL;
 }
 
@@ -220,13 +74,7 @@ const char* csb_v22_swap_asset_id_for_shape(CSB_V22_SwapShapeType shape) {
  * mapping table. Returns NULL when the shape has no mapping. The
  * returned string is owned by the static mapping table. */
 const char* csb_v22_swap_category_for_shape(CSB_V22_SwapShapeType shape) {
-    int i;
-    if (shape == CSB_V22_SWAP_SHAPE_NONE) return NULL;
-    for (i = 0; kCSBV22SwapMappingTable[i].category != NULL; ++i) {
-        if (kCSBV22SwapMappingTable[i].shape == shape) {
-            return kCSBV22SwapMappingTable[i].category;
-        }
-    }
+    (void)shape;
     return NULL;
 }
 
@@ -238,7 +86,7 @@ void csb_v22_viewport_swap_update(int direction,
     g_csb_swap_cache.direction = direction;
 
     if (raw_cells) {
-        /* Per-cell discriminator. */
+        /* Deliberately produces no modern shape without an F0128 receipt. */
         for (d = 0; d < 3; ++d) {
             for (l = 0; l < 3; ++l) {
                 g_csb_swap_cache.shapes[d][l] =
@@ -267,9 +115,8 @@ void csb_v22_viewport_swap_update(int direction,
      * see csb_v22_shape_cache_update() in csb_v22_shape_cache_pc34.c.
      *
      * We deliberately call the sibling only when our own
-     * presentation_mode is V22 so the swap module remains the
-     * source of truth for the per-cell discriminator and the
-     * sibling cache is treated as a parallel viewer. */
+     * presentation_mode is V22. This compatibility layer never becomes a
+     * renderer; the sibling cache is a parallel viewer only. */
     if (raw_cells && csb_v2_presentation_mode_is_v22()) {
         csb_v22_shape_cache_update(direction, raw_cells);
     }
@@ -280,13 +127,8 @@ int csb_v22_viewport_swap_populated(void) {
 }
 
 int csb_v22_viewport_swap_active(void) {
-    if (!g_csb_swap_cache.populated) return 0;
-    if (!csb_v22_inplace_draw_active()) return 0;
-    if (!csb_v22_get_installed()) return 0;
-    if (csb_v22_best_available_shape_source(3) != CSB_V22_SHAPE_SOURCE_V2_MODERN) {
-        return 0;
-    }
-    return 1;
+    /* Cache presence and a modern pack do not authenticate an F0128 command. */
+    return 0;
 }
 
 int csb_v22_viewport_swap_cells_painted(void) {
@@ -319,10 +161,6 @@ const char* csb_v22_viewport_swap_source_evidence(void) {
            "ReDMCSB CLIKMENU.C:142/180 (input click routing); "
            "include/csb_v22_shapes.h (parallel CSB_V22_ShapeType enum); "
            "include/csb_v22_modern_assets_pc34.h (asset pack paths + flags); "
-           "include/csb_v22_inplace_draw_pc34.h (cache bitmap lookup); "
            "include/csb_v22_shape_cache_pc34.h (raw cell type store); "
-           "csb_v22_inplace_draw_pc34.c (cache file format + bitmap blit); "
-           "csb_v22_modern_assets_pc34.c (manifest path resolution); "
-           "include/dm2_v22_viewport_swap_pc34.h (parallel DM2 swap module — same per-cell contract); "
-           "v22_inplace_cache.bin (build-time RGBA pack from PNG via PIL).";
+           "csb_v1_viewport_pc34_compat.c (authenticated F0128 command compositor).";
 }

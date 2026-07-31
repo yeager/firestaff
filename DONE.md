@@ -40,6 +40,15 @@
   and retains its native cadence, so the change slows only the animation.
   Verification: `test_csb_v1_m11_startup_vblank_cadence`.
 
+- ✅ 2026-07-31 CSB V2.2 raw-cell placeholder closure: retired the legacy
+  raw-byte-to-modern-art classifier and generic 3x3 viewport painter. The
+  compatibility API now returns no shape, category or asset, never becomes
+  active, and preserves the source framebuffer. Real replacements remain at
+  the authenticated ReDMCSB `DUNVIEW.C F0128` command compositor, with
+  CSBWin's viewport plan as its Atari reference. Verification:
+  `test_csb_v22_viewport_swap_pc34` and
+  `firestaff_csb_v22_viewport_swap_probe`.
+
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a
   successful transaction route from host gold alone. It remains closed until

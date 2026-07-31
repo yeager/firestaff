@@ -394,7 +394,11 @@ diagnostic; it must not silently fall back to a generated visual.
   directly. The remaining bridge must translate that Atari plan into the same
   source-owned F0128 command contract with its own graphic index, projection
   and palette receipt; it must not reuse PC3.4 indices or add a post-draw
-  rectangle/overlay.
+  rectangle/overlay. **2026-07-31 follow-up:** the retired raw-cell V2.2
+  classifier now returns no shape, category or asset for every input, and its
+  legacy 3x3 renderer is permanently no-draw. A populated cache or installed
+  artpack cannot activate this compatibility route; only the source-command
+  compositor may admit a replacement.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
