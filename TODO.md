@@ -24249,3 +24249,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   records before re-enabling inventory names, combat stats, or HUD item text;
   the former DM1 catalog remains reference-only and no synthetic replacement
   is permitted.
+- 🔧 Nexus door-state provenance: bind SDDRVS.TSK/retail door state and its
+  open transition before allowing movement through type-8 squares; the
+  standalone route now fails closed instead of assuming open.

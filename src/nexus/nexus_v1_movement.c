@@ -225,13 +225,14 @@ int nexus_try_move(int dir, int forward,
         return 0;
     }
 
-    /* Check door — all doors treated as open in V1 movement
-     * (door state managed at higher level via SDDRVS.TSK) */
+    /* Check door.  This standalone movement API has no authenticated Nexus
+     * door-state input, so do not assume an open door.  The higher-level
+     * scripted door route must explicitly admit the transition. */
     if (sq == 8) {
-        /* Door square (type 8) — passable when open.
-         * Door state (open/closed/locked) tracked in door registry.
-         * V1 movement treats all doors as open by default.
-         * Source: nexus_v1_squares.c nexus_doors_register(), SDDRVS.TSK. */
+        if (out_result) *out_result = NEXUS_MOVE_BLOCKED_DOOR;
+        if (out_new_map_x) *out_new_map_x = *in_out_map_x;
+        if (out_new_map_y) *out_new_map_y = *in_out_map_y;
+        return 0;
     }
 
     /* Check special squares */
