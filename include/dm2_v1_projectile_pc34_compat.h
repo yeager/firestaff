@@ -15,9 +15,9 @@ extern "C" {
  *
  * DM2's creature attack projectiles are routed through the DM1
  * projectile engine (memory_projectile_pc34_compat.c F0810-F0820).
- * This module is the DM2->DM1 bridge: it maps DM2 creature AI attack
- * flags + world coordinates to a DM1 ProjectileCreateInput_Compat and
- * invokes F0810_PROJECTILE_Create_Compat.
+ * This module retains the source-derived DM2 attack-flag decoder and a
+ * test-only F0810 fixture. Production construction remains closed until the
+ * original CCM/timer payload is imported.
  *
  * Why reuse DM1's engine?  SKULL.ASM projectile routing is byte-for-byte
  * compatible with DM1's PROJECT.C / PROJEXPL.C routines; the only
@@ -33,8 +33,8 @@ extern "C" {
  *     -> looks up AI attack flags
  *     -> picks PROJECTILE_CATEGORY_KINETIC (bow/gun) or
  *        PROJECTILE_CATEGORY_MAGICAL (spell)
- *     -> picks projectile subtype from attack_flags
- *     -> calls F0810_PROJECTILE_Create_Compat via dm2_v1_projectile_dispatch()
+ *     -> waits for the DB creature + CCM/timer handoff before it may create
+ *        an F0810 projectile
  *
  * Source-lock anchors:
  *   SKULL.ASM:10620-10710  (SKULL_COMBAT_ResolveRanged)
@@ -102,18 +102,18 @@ int dm2_v1_projectile_pick_category(uint16_t attack_flags,
     int *out_category, int *out_subtype);
 
 /* ── Phase 5 expansion: dispatch one creature attack ──────────────
- * Maps creature instance_id + target coords to a ProjectileCreateInput
- * and calls F0810_PROJECTILE_Create_Compat.  The result struct
- * describes what happened (slot index, category, subtype). */
+ * This compatibility entry point currently fails closed.  SKProject owns
+ * direction, cell, energy and timing in the live creature CCM/timer payload;
+ * a creature id plus host coordinates must not manufacture F0810 input.
+ * The result retains a source-decoded category/subtype where available, but
+ * accepted is always zero until that owner handoff is implemented. */
 DM2_V1_ProjectileDispatchResult dm2_v1_projectile_dispatch(
     int creature_instance_id,
     int target_world_x, int target_world_y,
     int target_map_index);
 
 /* ── Phase 5 expansion: dispatch a creature spell (CCM 0x15) ─────
- * Source: skproject/SKULLWIN/c_creature.cpp CAST_SPELL dispatch.
- * Spells are MAGICAL projectiles routed through
- * F0812_PROJECTILE_CreateFromSpellEffect_Compat. */
+ * Fails closed pending the original CCM/timer payload handoff. */
 DM2_V1_ProjectileDispatchResult dm2_v1_projectile_dispatch_spell(
     int creature_instance_id,
     int spell_subtype,  /* DM2_PROJ_SUBTYPE_MAGICAL_* */
@@ -121,8 +121,7 @@ DM2_V1_ProjectileDispatchResult dm2_v1_projectile_dispatch_spell(
     int target_map_index);
 
 /* ── Phase 5 expansion: dispatch a creature bomb throw (DM2 new) ─
- * Source: skproject/SKULLWIN/c_creature.cpp 0x0d SHOOT_ITEM for bombs.
- * Bombs are area-effect KINETIC projectiles. */
+ * Fails closed pending the original CCM/timer payload handoff. */
 DM2_V1_ProjectileDispatchResult dm2_v1_projectile_dispatch_bomb(
     int creature_instance_id,
     int target_world_x, int target_world_y,

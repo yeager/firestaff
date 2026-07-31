@@ -18,11 +18,11 @@
  *  11.  Attack-flag pick_category: NULL out pointers → rejected
  *  12.  Dispatch: invalid creature instance id → rejected (slot=-1)
  *  13.  Dispatch: dead creature → rejected
- *  14.  Dispatch: Archer Guard (AI 36, SHOOT flag) → projectile created
- *  15.  Dispatch: Amplifier (AI 51, FIREBALL flag) → projectile created
+ *  14.  Dispatch: Archer Guard decodes a projectile kind but remains closed
+ *  15.  Dispatch: Amplifier decodes a projectile kind but remains closed
  *  16.  Dispatch: melee-only creature (no ranged flags) → rejected
- *  17.  Dispatch: spell dispatch with explicit subtype → projectile created
- *  18.  Dispatch: bomb dispatch → projectile created
+ *  17.  Dispatch: spell dispatch with explicit subtype remains closed
+ *  18.  Dispatch: bomb dispatch remains closed
  *  19.  Dispatch counter increments on accepted dispatch
  *  20.  Spell dispatch counter increments separately
  *  21.  Bomb dispatch counter increments separately
@@ -171,9 +171,9 @@ static int test_dispatch_archer_guard(void) {
     DM2_V1_ProjectileDispatchResult r =
         dm2_v1_projectile_dispatch(id, 15, 10, 0);
     int after = dm2_v1_projectile_dispatch_count();
-    /* Even if dispatch fails (slot full), the counter only increments on success */
-    return (after == before + 1 && r.accepted == 1 && r.slot_index >= 0)
-        || (after == before && r.accepted == 0);  /* accept either */
+    return after == before && r.accepted == 0 && r.slot_index == -1 &&
+        r.category == PROJECTILE_CATEGORY_KINETIC &&
+        r.subtype == PROJECTILE_SUBTYPE_KINETIC_ARROW;
 }
 
 static int test_dispatch_amplifier_fireball(void) {
@@ -182,7 +182,9 @@ static int test_dispatch_amplifier_fireball(void) {
     if (id < 0) return 0;
     DM2_V1_ProjectileDispatchResult r =
         dm2_v1_projectile_dispatch(id, 10, 15, 0);
-    return r.accepted == 1 || r.accepted == 0;  /* just exercise the path */
+    return r.accepted == 0 && r.slot_index == -1 &&
+        r.category == PROJECTILE_CATEGORY_MAGICAL &&
+        r.subtype == PROJECTILE_SUBTYPE_FIREBALL;
 }
 
 static int test_dispatch_melee_only_rejected(void) {
@@ -216,8 +218,7 @@ static int test_dispatch_spell(void) {
     DM2_V1_ProjectileDispatchResult r = dm2_v1_projectile_dispatch_spell(
         id, PROJECTILE_SUBTYPE_FIREBALL, 15, 10, 0);
     int after = dm2_v1_projectile_spell_dispatch_count();
-    return (after == before + 1 && r.accepted == 1)
-        || (after == before && r.accepted == 0);
+    return after == before && r.accepted == 0 && r.slot_index == -1;
 }
 
 static int test_dispatch_bomb(void) {
@@ -227,8 +228,7 @@ static int test_dispatch_bomb(void) {
     DM2_V1_ProjectileDispatchResult r = dm2_v1_projectile_dispatch_bomb(
         id, 15, 10, 0);
     int after = dm2_v1_projectile_bomb_dispatch_count();
-    return (after == before + 1 && r.accepted == 1)
-        || (after == before && r.accepted == 0);
+    return after == before && r.accepted == 0 && r.slot_index == -1;
 }
 
 /* ── Observability counters ───────────────────────────────────────── */

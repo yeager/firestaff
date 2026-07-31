@@ -45860,3 +45860,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   a real DB/GDAT record must provide any quantity rule. Verification:
   `test_dm2_v1_shop_pc34_compat`, `test_dm2_v1_spell_pc34_compat`, and
   `test_dm2_v1_m11_startup_profile_gate` pass.
+- ✅ 2026-07-31 DM2 projectile-payload ownership closure: removed the live
+  dispatcher’s fabricated centre cell, target-derived direction, fixed
+  kinetic/step energy and zero tick. Creature, spell and bomb entry points
+  now fail closed until the original DB creature + CCM/timer event payload is
+  imported; only explicitly compiled test fixtures can construct a projectile.
+  Source: SKProject `SKULLWIN/c_creature.cpp::DM2_PROCEED_CCM` and
+  `c_tim_proc.cpp::DM2_STEP_MISSILE`. Verification:
+  `test_dm2_v1_projectile_pc34_compat` 24/24,
+  `test_dm2_v1_projectile_step_pc34_compat` 16/16, and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass.

@@ -4,9 +4,9 @@
  *
  * DM2's creature attack projectiles are routed through the DM1
  * projectile engine (memory_projectile_pc34_compat.c F0810-F0820).
- * This module is the DM2->DM1 bridge: it maps DM2 creature AI attack
- * flags + world coordinates to a DM1 ProjectileCreateInput_Compat and
- * invokes F0810_PROJECTILE_Create_Compat.
+ * This module retains the source-derived DM2 attack-flag decoder and the
+ * test-only F0810 fixture. Production projectile construction is closed
+ * until the original CCM/timer payload is imported.
  *
  * Source-lock anchors:
  *   SKULL.ASM:10620-10710  (SKULL_COMBAT_ResolveRanged)
@@ -25,7 +25,6 @@
 #include "memory_projectile_pc34_compat.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 /* ── Module state ──────────────────────────────────────────────────── */
@@ -126,95 +125,21 @@ int dm2_v1_projectile_pick_category(uint16_t attack_flags,
     return 0;
 }
 
-/* ── Internal: compute direction from creature → target ─────────────
- * DM2 creature directions are V1 cardinals (0=N, 1=E, 2=S, 3=W).
- * The original projectile event owns a concrete direction and the viewport
- * consumes that event field directly (ReDMCSB DUNVIEW.C:5741-5781).  A
- * zero-length target vector cannot prove one, so it must not become a host
- * default direction or create a projectile.
- * Source: skproject/SKWIN/DME.h:1505-1560, ReDMCSB GROUP.C:1695-1770. */
-static int compute_direction(int from_x, int from_y, int to_x, int to_y) {
-    int dx = to_x - from_x;
-    int dy = to_y - from_y;
-    if (dx == 0 && dy == 0) return -1;
-    /* Use the dominant axis. */
-    if (abs(dx) >= abs(dy)) {
-        return (dx > 0) ? 1 : 3; /* E or W */
-    } else {
-        return (dy > 0) ? 2 : 0; /* S or N */
-    }
-}
-
-/* ── Internal: create a projectile via F0810 ─────────────────────── */
-static DM2_V1_ProjectileDispatchResult create_projectile(
-    int creature_instance_id,
-    int category, int subtype,
-    int target_world_x, int target_world_y,
-    int target_map_index)
+/* The former public bridge invented missing CCM/timer payload fields:
+ * target-derived direction, centre cell, kinetic energy, step energy and
+ * tick zero.  SKProject's DM2_PROCEED_CCM / STEP_MISSILE path owns those
+ * values in the live creature DB record and timer event, so a creature type
+ * and host target coordinate are not enough evidence to call F0810.  Keep
+ * the public entry points fail-closed until that owner handoff is imported.
+ * Explicit synthetic construction remains confined to the test-only API. */
+static DM2_V1_ProjectileDispatchResult projectile_dispatch_unavailable(
+    int category, int subtype)
 {
     DM2_V1_ProjectileDispatchResult r;
     memset(&r, 0, sizeof(r));
     r.slot_index = -1;
     r.category = category;
     r.subtype = subtype;
-
-    if (creature_instance_id < 0
-        || creature_instance_id >= DM2_MAX_CREATURE_INSTANCES) {
-        return r;
-    }
-    const DM2_V1_CreatureInstance *c =
-        dm2_v1_creature_get_instance(creature_instance_id);
-    if (!c) return r;
-    if (!c->alive) return r;
-
-    ensure_init();
-
-    /* Look up AI spec for AttackStrength. */
-    const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(c->ai_index);
-    if (spec == NULL) return r;
-
-    /* Build F0810 input.  Source: skproject/SKWIN/SkWinCore.cpp:27038-27096,
-     * memory_projectile_pc34_compat.h ProjectileCreateInput_Compat. */
-    struct ProjectileCreateInput_Compat input;
-    memset(&input, 0, sizeof(input));
-    input.category = category;
-    input.subtype = subtype;
-    input.ownerKind = PROJECTILE_OWNER_CREATURE;
-    input.ownerIndex = creature_instance_id;
-    input.mapIndex = target_map_index;
-    input.mapX = target_world_x;
-    input.mapY = target_world_y;
-    input.cell = 0;  /* center cell by default */
-    input.direction = compute_direction(
-        c->world_x, c->world_y, target_world_x, target_world_y);
-    if (input.direction < 0) {
-        return r;
-    }
-    input.kineticEnergy = 100;  /* DM1 default for creature-launched */
-    input.attack = (int)spec->AttackStrength;
-    if (input.attack < 1) return r;
-    input.stepEnergy = 8;  /* ReDMCSB GROUP.C:1695-1770 step energy */
-    input.currentTick = 0;  /* DM2 V1 runtime uses game_tick */
-    input.poisonAttack = (subtype == PROJECTILE_SUBTYPE_POISON_CLOUD)
-                         ? input.attack : 0;
-    input.attackTypeCode = 0;
-    input.potionPower = 0;
-    input.firstMoveGraceFlag = 1;  /* ReDMCSB PROJEXPL.C:689-690 (C48) */
-
-    struct TimelineEvent_Compat firstMove;
-    memset(&firstMove, 0, sizeof(firstMove));
-    int slot = -1;
-    if (!F0810_PROJECTILE_Create_Compat(&input, &s_projectile_list,
-                                         &slot, &firstMove)) {
-        return r;  /* rejected (list full, invalid input) */
-    }
-    r.accepted = 1;
-    r.slot_index = slot;
-    r.owner_kind = PROJECTILE_OWNER_CREATURE;
-    r.owner_index = creature_instance_id;
-    r.first_move_event_type = (int)firstMove.kind;
-    r.first_move_event_tick = (int)firstMove.fireAtTick;
-    s_dispatch_count++;
     return r;
 }
 
@@ -225,18 +150,19 @@ DM2_V1_ProjectileDispatchResult dm2_v1_projectile_dispatch(
     int target_map_index)
 {
     DM2_V1_ProjectileDispatchResult r;
-    memset(&r, 0, sizeof(r));
-    r.slot_index = -1;
-    if (creature_instance_id < 0
-        || creature_instance_id >= DM2_MAX_CREATURE_INSTANCES) {
-        return r;
+    if (creature_instance_id < 0 ||
+        creature_instance_id >= DM2_MAX_CREATURE_INSTANCES) {
+        return projectile_dispatch_unavailable(-1, -1);
     }
+    r = projectile_dispatch_unavailable(-1, -1);
+    /* This preserves the source-derived, data-free decoder without making it
+     * authority to create a missile. */
     const DM2_V1_CreatureInstance *c =
         dm2_v1_creature_get_instance(creature_instance_id);
-    if (!c) return r;
-    if (!c->alive) return r;
-    const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(c->ai_index);
-    if (spec == NULL) return r;
+    const DM2_AIDefinition *spec;
+    if (!c || !c->alive) return r;
+    spec = dm2_v1_creature_ai_spec(c->ai_index);
+    if (!spec) return r;
     int category = 0, subtype = 0;
     if (!dm2_v1_projectile_pick_category(spec->AttacksSpells,
                                           &category, &subtype)) {
@@ -245,8 +171,10 @@ DM2_V1_ProjectileDispatchResult dm2_v1_projectile_dispatch(
         r.subtype = -1;
         return r;
     }
-    return create_projectile(creature_instance_id, category, subtype,
-                             target_world_x, target_world_y, target_map_index);
+    (void)target_world_x;
+    (void)target_world_y;
+    (void)target_map_index;
+    return projectile_dispatch_unavailable(category, subtype);
 }
 
 /* ── Public API: dispatch creature spell (CCM 0x15) ─────────────── */
@@ -256,22 +184,12 @@ DM2_V1_ProjectileDispatchResult dm2_v1_projectile_dispatch_spell(
     int target_world_x, int target_world_y,
     int target_map_index)
 {
-    DM2_V1_ProjectileDispatchResult r;
-    memset(&r, 0, sizeof(r));
-    r.slot_index = -1;
-    if (creature_instance_id < 0
-        || creature_instance_id >= DM2_MAX_CREATURE_INSTANCES) {
-        return r;
-    }
-    const DM2_V1_CreatureInstance *c =
-        dm2_v1_creature_get_instance(creature_instance_id);
-    if (!c) return r;
-    if (!c->alive) return r;
-    r = create_projectile(creature_instance_id,
-                           PROJECTILE_CATEGORY_MAGICAL, spell_subtype,
-                           target_world_x, target_world_y, target_map_index);
-    if (r.accepted) s_spell_count++;
-    return r;
+    (void)creature_instance_id;
+    (void)target_world_x;
+    (void)target_world_y;
+    (void)target_map_index;
+    return projectile_dispatch_unavailable(PROJECTILE_CATEGORY_MAGICAL,
+                                           spell_subtype);
 }
 
 /* ── Public API: dispatch bomb (DM2 new, area-effect) ────────────── */
@@ -280,23 +198,12 @@ DM2_V1_ProjectileDispatchResult dm2_v1_projectile_dispatch_bomb(
     int target_world_x, int target_world_y,
     int target_map_index)
 {
-    DM2_V1_ProjectileDispatchResult r;
-    memset(&r, 0, sizeof(r));
-    r.slot_index = -1;
-    if (creature_instance_id < 0
-        || creature_instance_id >= DM2_MAX_CREATURE_INSTANCES) {
-        return r;
-    }
-    const DM2_V1_CreatureInstance *c =
-        dm2_v1_creature_get_instance(creature_instance_id);
-    if (!c) return r;
-    if (!c->alive) return r;
-    r = create_projectile(creature_instance_id,
-                           PROJECTILE_CATEGORY_KINETIC,
-                           DM2_PROJ_SUBTYPE_BOMB,
-                           target_world_x, target_world_y, target_map_index);
-    if (r.accepted) s_bomb_count++;
-    return r;
+    (void)creature_instance_id;
+    (void)target_world_x;
+    (void)target_world_y;
+    (void)target_map_index;
+    return projectile_dispatch_unavailable(PROJECTILE_CATEGORY_KINETIC,
+                                           DM2_PROJ_SUBTYPE_BOMB);
 }
 
 /* ── Public API: observability ────────────────────────────────────── */

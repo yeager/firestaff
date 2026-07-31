@@ -31,7 +31,11 @@
   outdoor-FX state merely because V2 presentation is selected. That runtime
   remains dormant until it receives the live V1 ENVIRONMENT-GDAT weather
   receipt (timer, images and palette); the existing source-backed V1 weather
-  renderer remains the only active owner meanwhile.
+  renderer remains the only active owner meanwhile. The public DM2 creature,
+  spell and bomb projectile dispatchers now also fail closed: creature id and
+  host target coordinates cannot invent the CCM/timer-owned cell, direction,
+  energy, step cost or tick needed by F0810. Test-only projectile construction
+  remains isolated behind its compile-time test gate.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`
