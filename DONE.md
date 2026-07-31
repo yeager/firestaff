@@ -46985,6 +46985,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   corpus has no authenticated HUD widget surface; the module is explicitly
   diagnostic/test-only and production remains gated. HUD overlay 46/46,
   runtime integration 9/9 and `firestaff_m11` build pass.
+- ✅ 2026-07-31 Nexus V2 provenance audit: corrected remaining lighting, touch,
+  smooth-movement, phase-gate and title comments so absent `NEXUS.BIN` data is
+  recorded as unavailable rather than presented as a retail source. ReDMCSB,
+  DMDF/DGN and existing behavioral references remain cited; all production V2
+  gates stay closed. Focused lighting 79/79, phase gate 240/240, smooth
+  movement 27/27 and touch affordance 0 failures pass.
 - ✅ 2026-07-31 Theron production combat boundary: removed the inferred
   creature/combat template table from `firestaff_theron`. Production now
   links explicit fail-closed symbols from
