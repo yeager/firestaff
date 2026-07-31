@@ -4,7 +4,6 @@
 #include "csb_v1_viewport_pc34_compat.h"
 
 #include <stddef.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,7 +45,7 @@ typedef struct {
     int final_half_mask;
     int transparent_color;
     int c10_skip_enabled;
-    int synthetic_blit_uses_d2_panel_clip;
+    int d2_panel_clip_required;
     int lineage_f3l1_binding_present;
     int lineage_frame_before_door;
     int lineage_draw_order_rear;
@@ -92,16 +91,6 @@ int csb_v1_viewport_d2l2_d2r2_f0111_partly_open_resolve_clip_pc34(
     int zone,
     int *out_x,
     int *out_y);
-
-int csb_v1_viewport_d2l2_d2r2_f0111_partly_open_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD2L2D2R2F0111PartlyOpenSpecPc34 *spec,
-    int door_state,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height);
 
 const char *csb_v1_viewport_d2l2_d2r2_f0111_partly_open_source_evidence_pc34(void);
 

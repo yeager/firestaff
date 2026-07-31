@@ -306,14 +306,11 @@ static int test_coord_clip_path(void)
     return ok;
 }
 
-static int test_c10_transparent_synthetic_blit(void)
+static int test_c10_transparency_metadata(void)
 {
     int ok = 1;
     const CSB_V1_ViewportD2L2D2R2F0111PartlyOpenSpecPc34 *spec =
         csb_v1_viewport_d2l2_d2r2_f0111_partly_open_for_square_pc34(9);
-    uint8_t source[12] = { 10, 1, 10, 2, 3, 10, 4, 10, 5, 6, 10, 7 };
-    uint8_t destination[12] = { 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77 };
-    uint8_t open_destination[4] = { 88, 88, 88, 88 };
 
     ok &= expect_int("transparent.macro",
                      CSB_V1_D2L2_D2R2_F0111_PARTLY_OPEN_C10_COLOR_FLESH,
@@ -325,38 +322,9 @@ static int test_c10_transparent_synthetic_blit(void)
                      10, A_C10);
     ok &= expect_int("transparent.c10_skip", spec ? spec->c10_skip_enabled : -1,
                      1, A_C10);
-    ok &= expect_int("blit.uses_clip",
-                     spec ? spec->synthetic_blit_uses_d2_panel_clip : -1, 1,
+    ok &= expect_int("clip.required",
+                     spec ? spec->d2_panel_clip_required : -1, 1,
                      A_COORD_CLIP);
-    ok &= expect_int("blit.copied",
-                     csb_v1_viewport_d2l2_d2r2_f0111_partly_open_apply_c10_blit_pc34(
-                         spec, 2, source, 4, destination, 4, 4, 3),
-                     7, A_C10);
-    ok &= expect_int("blit.transparent0", destination[0], 77, A_C10);
-    ok &= expect_int("blit.pixel1", destination[1], 1, A_C10);
-    ok &= expect_int("blit.transparent2", destination[2], 77, A_C10);
-    ok &= expect_int("blit.pixel3", destination[3], 2, A_C10);
-    ok &= expect_int("blit.pixel4", destination[4], 3, A_C10);
-    ok &= expect_int("blit.transparent5", destination[5], 77, A_C10);
-    ok &= expect_int("blit.pixel11", destination[11], 7, A_C10);
-    ok &= expect_int("blit.open_skips",
-                     csb_v1_viewport_d2l2_d2r2_f0111_partly_open_apply_c10_blit_pc34(
-                         spec, 0, source, 2, open_destination, 2, 2, 2),
-                     0, "ReDMCSB DUNVIEW.C:4248 F0111 skips C0 open");
-    ok &= expect_int("blit.open_preserves", open_destination[0], 88,
-                     "ReDMCSB DUNVIEW.C:4248 F0111 skips C0 open");
-    ok &= expect_int("blit.reject_oversize",
-                     csb_v1_viewport_d2l2_d2r2_f0111_partly_open_apply_c10_blit_pc34(
-                         spec, 2, source, 49, destination, 49, 49, 1),
-                     -1, A_COORD_CLIP);
-    ok &= expect_int("blit.reject_bad_stride",
-                     csb_v1_viewport_d2l2_d2r2_f0111_partly_open_apply_c10_blit_pc34(
-                         spec, 2, source, 3, destination, 4, 4, 3),
-                     -1, A_COORD_CLIP);
-    ok &= expect_int("blit.reject_null",
-                     csb_v1_viewport_d2l2_d2r2_f0111_partly_open_apply_c10_blit_pc34(
-                         NULL, 2, source, 4, destination, 4, 4, 3),
-                     -1, A_F0111);
 
     return ok;
 }
@@ -419,7 +387,7 @@ int main(void)
     ok &= test_non_routes_and_lineage_contract();
     ok &= test_partly_open_zone_math();
     ok &= test_coord_clip_path();
-    ok &= test_c10_transparent_synthetic_blit();
+    ok &= test_c10_transparency_metadata();
     ok &= test_evidence_strings();
 
     printf("assertions=%d\n", g_assertions);

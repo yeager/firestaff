@@ -256,39 +256,6 @@ int csb_v1_viewport_d2l2_d2r2_f0111_partly_open_resolve_clip_pc34(
     return 0;
 }
 
-int csb_v1_viewport_d2l2_d2r2_f0111_partly_open_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD2L2D2R2F0111PartlyOpenSpecPc34 *spec,
-    int door_state,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height)
-{
-    int copied = 0;
-
-    if (!spec || !source || !destination) return -1;
-    if (width <= 0 || height <= 0) return -1;
-    if (width > spec->clipped_width || height > spec->clipped_height) return -1;
-    if (source_stride < width || destination_stride < width) return -1;
-    if (door_state == spec->open_state) return 0;
-
-    /* ReDMCSB: DUNVIEW.C:4334 F0111 passes C10_COLOR_FLESH to the final
-     * blit; COORD.C:1556-1559 constrains this synthetic gate to the 48x40
-     * panel clip inherited through record 129. */
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const uint8_t pixel = source[(y * source_stride) + x];
-            if (pixel == (uint8_t)spec->transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-
-    return copied;
-}
-
 const char *csb_v1_viewport_d2l2_d2r2_f0111_partly_open_source_evidence_pc34(void)
 {
     return s_source_evidence;
