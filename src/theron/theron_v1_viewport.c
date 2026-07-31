@@ -936,9 +936,18 @@ void theron_vp_present(const Theron_V1_Viewport *vp,
  * ══════════════════════════════════════════════════════════════════════ */
 
 int theron_vp_tile_for_square(int square_type, int depth, int is_wall) {
+#ifndef THERON_VIEWPORT_FIXTURE_RENDER
+    /* The table below is an inferred fixture mapping.  A production caller
+     * must wait for an authenticated Track 02 tile/material binding. */
+    (void)square_type;
+    (void)depth;
+    (void)is_wall;
+    return TILE_FALLBACK;
+#else
     if (depth < 0 || depth >= TQR_VP_DEPTH) return TILE_FALLBACK;
     int st = square_type & 0xF;
     return g_tile_table[st][depth][is_wall ? 1 : 0];
+#endif
 }
 
 void theron_vp_clear(Theron_V1_Viewport *vp, uint8_t color_index) {

@@ -14,7 +14,9 @@
 
 - **THERON-V1-TILE-RENDERER-REAL-DATA:** The inferred square/depth tile
   table is now fixture-only. Production exposes no tile selection, decode or
-  raster pixels until Track 02 tile-bank semantics are decoded.
+  raster pixels until Track 02 tile-bank semantics are decoded. The viewport
+  helper now also returns no tile in production instead of exposing the
+  inferred table through a public utility call.
 
 - **THERON-V22-LOCAL-ART-REAL-DATA:** The local modern-art manifest/cache
   and inplace rectangle renderer are now fixture-only. Do not reconnect them

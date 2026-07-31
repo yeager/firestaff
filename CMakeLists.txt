@@ -36832,6 +36832,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_viewport_renderer_probe
         probes/theron/firestaff_theron_v1_viewport_renderer_probe.c
+        src/theron/theron_v1_viewport.c
     )
     target_link_libraries(firestaff_theron_v1_viewport_renderer_probe PRIVATE
         firestaff_theron
@@ -36840,6 +36841,8 @@ if(BUILD_TESTING AND THERON_SOURCES)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
     )
+    target_compile_definitions(firestaff_theron_v1_viewport_renderer_probe PRIVATE
+        THERON_VIEWPORT_FIXTURE_RENDER=1)
     if(NOT MSVC)
         target_compile_options(firestaff_theron_v1_viewport_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
     endif()
