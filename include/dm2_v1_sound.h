@@ -14,7 +14,7 @@
  * DM2 audio:
  *   - 16-slot SFX ring buffer (SKWin) vs 3-4 in DM1
  *   - SoundBlaster-compatible vs AdLib FM in DM1
- *   - 28 HMP/MIDI music tracks (00-1c.hex)
+ *   - 29 HMP/MIDI music tracks (00-1c.hex)
  *   - World-coordinate spatial queue with distance attenuation
  *   - SOUND_STD_EXPLOSION (0x81) for bombs — DM1 had no bombs
  */
@@ -81,10 +81,10 @@
 
 /* ── Music track count ─────────────────────────────────────────────────
  * Source: docs/dm2_audio.md
- * 28 HMP tracks (DATA/00.hmp.mid through DATA/1c.hmp.mid)
- * tMusicMaps[64] maps dungeon map to track number */
+ * PC release: 29 HMP records are stored in GRAPHICS.DAT GDAT category 4,
+ * type 3 (dtHMP). SONGLIST.DAT maps dungeon maps to track numbers. */
 
-#define DM2_MUSIC_TRACK_COUNT          28  /* 00-1c = 28 tracks */
+#define DM2_MUSIC_TRACK_COUNT          29  /* 00-1c inclusive */
 #define DM2_MUSIC_MAP_COUNT             64  /* tMusicMaps[64] lookup table */
 
 typedef enum {
@@ -476,6 +476,8 @@ int dm2_v1_skproject_sound_destruct(
 int dm2_v1_skproject_sound6_sndptr6_allocation(
     uint32_t v1e0ad4,
     DM2_V1_SkprojectSoundReceipt *out_receipt);
+/* Compatibility reset for the retired loose-sidecar path. Runtime music is
+ * bound exclusively with dm2_v1_sound_bind_gdat_loader(). */
 void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
                                              int primary_assets_verified);
 int  dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,

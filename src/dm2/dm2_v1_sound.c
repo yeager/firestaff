@@ -86,8 +86,6 @@ static const uint16_t g_skproject_sound_bearing_table[24] = {
     0xad00u, 0xbc00u, 0xcb00u, 0xda00u, 0xe900u, 0xf800u
 };
 
-static char g_dm2_music_asset_root[256];
-static int g_dm2_music_asset_root_verified;
 static DM2_V1_MusicScheduledEvent g_dm2_music_events[64];
 static uint16_t g_dm2_music_event_count;
 static uint32_t g_dm2_music_loop_duration_us;
@@ -1418,18 +1416,17 @@ int dm2_v1_sound_play_positional(int sound_id,
 void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
                                              int primary_assets_verified)
 {
-    memset(g_dm2_music_asset_root, 0, sizeof(g_dm2_music_asset_root));
-    g_dm2_music_asset_root_verified = 0;
+    /* Compatibility entry point for callers predating the direct GDAT path.
+     * Do not retain a host directory: the PC release's music ownership is
+     * GRAPHICS.DAT MUSICS/<track>/dtHMP/0, bound through
+     * sound_bind_gdat_loader(). */
+    (void)asset_root;
+    (void)primary_assets_verified;
     g_dm2_music_event_count = 0;
     g_dm2_music_loop_duration_us = 0;
     g_dm2_music_loop_enabled = 0;
     g_dm2_music_backend_proven = 0;
     g_dm2_music_ticks_per_quarter = 96u;
-    if (asset_root && asset_root[0] && primary_assets_verified) {
-        snprintf(g_dm2_music_asset_root, sizeof(g_dm2_music_asset_root),
-                 "%s", asset_root);
-        g_dm2_music_asset_root_verified = 1;
-    }
 }
 
 int dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,
@@ -1458,51 +1455,29 @@ int dm2_v1_sound_queue_music(int track, int loop,
                              DM2_V1_MusicQueueReceipt *out_receipt)
 {
     DM2_V1_MusicStreamReceipt stream;
-    unsigned char *data = NULL;
+    const uint8_t *data;
     size_t size;
-    FILE *file;
     int inspect_result;
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (track < 0 || track >= DM2_MUSIC_TRACK_COUNT)
         return DM2_V1_MUSIC_QUEUE_TRACK_OUT_OF_RANGE;
-    if (!g_dm2_music_asset_root_verified)
+    if (!g_dm2_sound_gdat_verified || !g_dm2_sound_gdat_loader)
         return DM2_V1_MUSIC_QUEUE_ASSET_ROOT_UNVERIFIED;
+    /* SKWIN c_sound.cpp::DM2_PLAY_MUSIC probes exactly
+     * GDAT_CATEGORY_MUSICS / track / dtHMP / field 0.  The PC release keeps
+     * those 29 HMP payloads in the admitted GRAPHICS.DAT; never replace them
+     * with a same-named host file beside an otherwise verified install. */
+    data = dm2_v1_query_gdat_entry_data_ptr(
+        g_dm2_sound_gdat_loader, DM2_GDAT_CATEGORY_MUSICS, track,
+        DM2_GDAT_ENTRY_TYPE_HMP, 0, &size);
     if (out_receipt) {
         snprintf(out_receipt->asset_path, sizeof(out_receipt->asset_path),
-                 "%s/%02x.hmp.mid", g_dm2_music_asset_root, track);
+                 "GRAPHICS.DAT::GDAT(04,%02x,03,00)", track);
     }
-    file = fopen(out_receipt ? out_receipt->asset_path : "", "rb");
-    if (!file) return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
-    if (fseek(file, 0, SEEK_END) != 0) {
-        fclose(file);
+    if (!data || size == 0u)
         return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
-    }
-    {
-        long end = ftell(file);
-        if (end <= 0) {
-            fclose(file);
-            return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
-        }
-        size = (size_t)end;
-    }
-    if (fseek(file, 0, SEEK_SET) != 0 || size == 0u) {
-        fclose(file);
-        return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
-    }
-    data = (unsigned char *)malloc(size);
-    if (!data) {
-        fclose(file);
-        return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
-    }
-    if (fread(data, 1u, size, file) != size) {
-        free(data);
-        fclose(file);
-        return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
-    }
-    fclose(file);
-
+    if (out_receipt) out_receipt->asset_resolved = 1;
     inspect_result = dm2_v1_sound_inspect_music_data(data, size, &stream);
-    free(data);
     if (inspect_result != DM2_V1_MUSIC_INSPECT_OK)
         return DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE;
 
@@ -1511,7 +1486,6 @@ int dm2_v1_sound_queue_music(int track, int loop,
     g_dm2_music_backend_proven =
         dm2_v1_midi_backend_open() == DM2_V1_MIDI_BACKEND_READY;
     if (out_receipt) {
-        out_receipt->asset_resolved = 1;
         out_receipt->decoder_proven = 1;
         out_receipt->backend_proven = g_dm2_music_backend_proven;
         out_receipt->schedule_handoff_ready = stream.schedule_handoff_ready;
@@ -1563,18 +1537,20 @@ int dm2_v1_sound_schedule_music(uint32_t elapsed_us,
 
 /* dm2_v1_sound_play_music — DM2_PLAY_MUSIC
  * Source: docs/dm2_audio.md (do_music_wav, tMusicMaps[64])
- * Original: HMP format (DATA/00.hmp.mid through 1c.hmp.mid)
- * Firestaff SDL: OGG format (DATA/sk%02d.ogg looped)
- * Track selection: tMusicMaps[dungeon_map_index] → track number
+ * Original: HMP format in GRAPHICS.DAT GDAT MUSICS/<track>/dtHMP/0.
+ * Track selection: SONGLIST.DAT[tMusicMaps[dungeon_map_index]] → track number.
  *
  * Source-locked: successful playback requires both verified music assets and a
  * proven backend.  Without either the call is rejected explicitly. */
 int dm2_v1_sound_play_music(int track) {
-    if (track < 0 || track >= DM2_MUSIC_TRACK_COUNT) return -1;
-    if (!g_dm2_music_asset_root_verified) return -1;
-    if (!g_dm2_music_backend_proven) return -1;
-    /* The verified asset root and decoder backend are present; the track
-     * number is returned so callers can observe change-detection state. */
+    DM2_V1_MusicQueueReceipt queue;
+    DM2_V1_MusicScheduleReceipt schedule;
+    if (dm2_v1_sound_queue_music(track, 1, &queue) !=
+        DM2_V1_MUSIC_QUEUE_READY)
+        return -1;
+    if (!dm2_v1_sound_schedule_music(0u, &schedule) ||
+        !schedule.backend_proven || schedule.event_count_due == 0u)
+        return -1;
     return track;
 }
 
@@ -1618,11 +1594,11 @@ const char *dm2_v1_sound_source_evidence(void) {
         "Source: skproject/SKULLWIN/c_sound.h/cpp (c_sound master audio class)\n"
         "Source: skproject/SKULLWIN/c_sfx.cpp (16-slot ring buffer SFX)\n"
         "Source: skproject/SKWIN/defines.h (SOUND_STD_*, SOUND_CHAMPION_*, SOUND_CREATURE_*)\n"
-        "Source: docs/dm2_audio.md (music 28 HMP tracks, tMusicMaps[64], do_music_wav)\n"
+        "Source: DMWeb music-trigger notes (29 HMP tracks, SONGLIST.DAT, do_music_wav)\n"
         "Source: docs/dm2_sound_system.md (c_sound init, PLAYBACK_FREQUENCY=5500/6000 Hz)\n"
         "Source: docs/dm2_sound_combat.md (all combat sound triggers 0x00-0x92)\n"
         "DM1 comparison: AdLib FM, 3-4 voices, ~10 tracks, no positional audio\n"
-        "DM2 comparison: SoundBlaster, 16-slot buffer, 28 tracks, world-coordinate spatial queue\n"
+        "DM2 comparison: SoundBlaster, 16-slot buffer, 29 tracks, world-coordinate spatial queue\n"
         "DM2 new: SOUND_STD_EXPLOSION (0x81), glbXAmbientSoundActivated, DM2_QUEUE_NOISE_GEN1/GEN2\n";
 }
 /* Suppress unused variable warning for g_music_track_names */

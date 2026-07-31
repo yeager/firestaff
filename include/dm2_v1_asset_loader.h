@@ -78,6 +78,9 @@ typedef enum {
 typedef enum {
     DM2_GDAT_ENTRY_TYPE_IMAGE        = 0x01,
     DM2_GDAT_ENTRY_TYPE_SOUND        = 0x02,
+    /* skproject SKWIN/defines.h: dtHMP.  PC music is an original GDAT
+     * payload in GRAPHICS.DAT, not a host-side replacement file. */
+    DM2_GDAT_ENTRY_TYPE_HMP          = 0x03,
     DM2_GDAT_ENTRY_TYPE_RAW4         = 0x04,
     /* skproject SKWIN/DME.h dtText.  QUERY_GDAT_TEXT selects this exact
      * type; it must not be confused with a drawable environment image. */

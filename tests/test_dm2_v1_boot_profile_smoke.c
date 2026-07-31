@@ -1,6 +1,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_sound.h"
 #include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
@@ -448,6 +449,15 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
           "startup launch binds the V1 runtime singleton");
     CHECK(launch.profile != NULL && launch.profile->graphics_dat != NULL,
           "startup launch loads DM2 graphics handle");
+    {
+        DM2_V1_MusicQueueReceipt music;
+        CHECK(dm2_v1_sound_queue_music(0, 1, &music) ==
+                  DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE &&
+                  music.asset_resolved == 1 && music.decoder_proven == 0 &&
+                  strcmp(music.asset_path,
+                         "GRAPHICS.DAT::GDAT(04,00,03,00)") == 0,
+              "startup boot binds the original GDAT title-music owner");
+    }
     CHECK(dm2_v1_boot_gdat_typed_raw_asset_proof(
               launch.profile,
               DM2_GDAT_CATEGORY_INTERFACE_GENERAL,

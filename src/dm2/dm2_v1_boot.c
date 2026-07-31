@@ -32,6 +32,7 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_shop.h"
+#include "dm2_v1_sound.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -1037,6 +1038,16 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
     if (profile->graphics_path[0] != '\0') {
         profile->graphics_dat =
             dm2_v1_boot_graphics_load(profile->graphics_path);
+    }
+    if (profile->graphics_dat) {
+        DM2_V1_BootGraphicsDat *gfx =
+            (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+        /* c_sound.cpp consumes music through the already hash-admitted GDAT
+         * handle.  Bind the same owner used by the title/HUD/viewport rather
+         * than accepting loose HMP filenames from the data directory. */
+        dm2_v1_sound_bind_gdat_loader(&gfx->loader, profile->assets_verified);
+    } else {
+        dm2_v1_sound_bind_gdat_loader(NULL, 0);
     }
 
     /* skproject/SKWIN DME.h File_header stores the new-game party pose in
@@ -10558,6 +10569,8 @@ void dm2_v1_boot_gdat_image_asset_free(uint8_t *pixels)
 
 void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     if (!profile) return;
+    /* The sound singleton borrows the loader stored in graphics_dat. */
+    dm2_v1_sound_bind_gdat_loader(NULL, 0);
     if (profile->graphics_dat) {
         dm2_v1_boot_graphics_free(
             (DM2_V1_BootGraphicsDat *)profile->graphics_dat);

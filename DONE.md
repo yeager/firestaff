@@ -44514,3 +44514,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   or backend rejected it. The title/menu remains visible, while missing
   source audio is honestly silent. The focused startup-audio regression
   covers the unbound no-playback case.
+- ✅ 2026-07-31 DM2 PC music source ownership: menu cue lookup now binds the
+  hash-admitted boot GDAT loader and reads `MUSICS/<track>/dtHMP/0`, matching
+  `SKWIN/c_sound.cpp::DM2_PLAY_MUSIC`. The old loose `00.hmp.mid` path and
+  synthetic `/tmp` music fixture are retired. Canonical PC data proves all
+  29 records `00`--`1c` (cue 0 is raw entry 5595); the current HMP decoder
+  rejects that real stream and
+  therefore leaves playback fail-closed rather than borrowing sidecar audio.

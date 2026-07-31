@@ -130,6 +130,35 @@ int main(void)
     /* ── Bind verified GDAT loader ── */
     dm2_v1_sound_bind_gdat_loader(&loader, 1);
 
+    /* The PC corpus owns 29 HMP records: index 00 through 1c inclusive.
+     * Keep the final source track admitted; an old 28-entry limit silently
+     * discarded index 1c despite the real GDAT entry being present. */
+    {
+        int track;
+        for (track = 0; track < DM2_MUSIC_TRACK_COUNT; ++track) {
+            DM2_V1_GdatEntryQueryReceipt entry;
+            assert(dm2_v1_query_gdat_entry(
+                &loader, DM2_GDAT_CATEGORY_MUSICS, track,
+                DM2_GDAT_ENTRY_TYPE_HMP, 0, &entry) == 1);
+            assert(entry.loadable_raw && entry.raw_length > 0u);
+        }
+    }
+
+    /* SKWIN c_sound.cpp::DM2_PLAY_MUSIC(0, true) probes the title cue at
+     * MUSICS/0/dtHMP/0.  It must come from the admitted PC GRAPHICS.DAT,
+     * never a loose 00.hmp.mid sidecar.  A platform without a native MIDI
+     * backend remains honestly silent after proving this source payload. */
+    {
+        DM2_V1_MusicQueueReceipt music;
+        int queue_result = dm2_v1_sound_queue_music(0, 1, &music);
+        assert(queue_result == DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE);
+        assert(music.asset_resolved && !music.decoder_proven);
+        assert(!music.schedule_handoff_ready);
+        assert(music.schedule_event_count == 0u);
+        assert(strcmp(music.asset_path,
+                      "GRAPHICS.DAT::GDAT(04,00,03,00)") == 0);
+    }
+
     /* ── DM2_SOUND9 populates the seven-byte xsndptr2 runtime queue ── */
     dm2_v1_sound_queue_state_init(&state, 8);
     assert(dm2_v1_sound9(&state, 1, 2, 3, 7, &index) == 1);
