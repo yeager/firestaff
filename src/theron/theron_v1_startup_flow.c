@@ -1148,13 +1148,18 @@ int theron_v1_startup_layout_build(
         elements[count].mirror_index = i;
         elements[count].selected_order =
             tqr_startup_layout_selected_order(state, i);
-        elements[count].portrait_index = meta ? meta->portrait_index : -1;
-        elements[count].primary_class = meta ? (int)meta->primary_class : -1;
+        /* The mirror table is fixture metadata, not a decoded Track 02
+         * champion record.  Do not expose its portrait/class in the live
+         * menu unless the corresponding source roster name is present. */
+        elements[count].portrait_index = -1;
+        elements[count].primary_class = -1;
         if (decoded_name && decoded_name[0]) {
             snprintf(elements[count].decoded_name,
                      sizeof(elements[count].decoded_name),
                      "%s",
                      decoded_name);
+            elements[count].portrait_index = meta ? meta->portrait_index : -1;
+            elements[count].primary_class = meta ? (int)meta->primary_class : -1;
         }
         if (decoded_title && decoded_title[0]) {
             snprintf(elements[count].decoded_title,
