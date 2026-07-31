@@ -52,7 +52,10 @@ void csb_v2_presentation_mode_set(CSB_V2_PresentationModeKind kind) {
      * pipeline and initialise the CSB V2.2 shape book on V22 entry.
      * Mirror of dm1_v2_presentation_mode_set() in DM1 V2. */
     csb_v2_upscale_set_scale(g_csb_pm_state.upscaleScale);
-    if (g_csb_pm_state.v22ModernActive) {
+    /* The V2.2 shape book is only meaningful after the same finished-art
+     * gate that admits the mode.  Do not initialise its inferred material
+     * parameters merely because a caller requested V2.2. */
+    if (g_csb_pm_state.v22ModernActive && g_csb_pm_state.modernPackAvailable) {
         csb_v22_shapes_init();
     }
 }
