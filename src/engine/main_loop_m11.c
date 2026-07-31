@@ -5225,6 +5225,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             DM1_V1_StartupSelectedBootProbeSourceKindFacts_PC34 selectedKindFacts;
             DM1_V1_StartupSelectedBootProbeSourceKindReceipt_PC34 selectedKindReceipt;
             M11_GameSourceKind expectedSourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
+            /* SDL's dummy driver retains its implementation default window
+             * size even when the probe asked for a specific logical window.
+             * The probe's click tokens are host-window coordinates, so keep
+             * its mapper on the requested surface rather than letting a
+             * 1024x768 dummy window turn C407's (250,50) into (78,13).
+             * Production event handling continues to use the live SDL size.
+             * ReDMCSB COMMAND.C F0358 consumes the resulting 320x200 point. */
+            if (SDL_GetCurrentVideoDriver() != NULL &&
+                strcmp(SDL_GetCurrentVideoDriver(), "dummy") == 0) {
+                (void)M11_Render_HandleResize(o->windowWidth, o->windowHeight);
+            }
             m11_phase_a_advance_boot_probe_frames(&gameView, frames);
             scriptInputs = m11_phase_a_apply_boot_probe_script(&gameView,
                                                                o->script,

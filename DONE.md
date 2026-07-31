@@ -1,3 +1,12 @@
+- ✅ 2026-07-31 CSB C407 boot-probe pointer mapping: dummy SDL kunde behålla
+  1024×768 efter en begärd 320×200-yta och förvandla C407-klicket `(250,50)`
+  till `(78,13)`. Proben håller nu sin begärda logiska yta och dummy-mappning
+  respekterar den; vanliga SDL-fönster använder fortsatt aktuell fönsterstorlek.
+  Alla V1/V2-prober når nu C200/F0806-handoff. Källa: ReDMCSB `COMMAND.C
+  F0358` (rad 1379–1449) och `ENTRANCE.C F0806` (rad 850–883). Verifiering:
+  `csb_v2_entrance_pointer_boot_probe` och `csb_v1_boot_runtime_handoff`
+  passerar med verifierad CSB PC3.4-data.
+
 - ✅ 2026-07-31 CSB Atari-ljuspalett: M11 använder inte längre PC3.4:s
   `G9010`-VGA-tabell för Atari ST:s TAG0088b2/C232-sidor. I stället avkodas
   de sex ursprungliga `Palette552`-raderna ur CSBWin `GRAPHICS.DAT` item

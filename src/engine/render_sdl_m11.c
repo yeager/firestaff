@@ -2550,10 +2550,6 @@ int M11_Render_MapWindowToFramebuffer(int windowX,
             strcmp(videoDriver, "dummy") != 0) {
             mapWindowW = ww;
             mapWindowH = wh;
-        } else if (ww >= mapWindowW && wh >= mapWindowH &&
-                   (ww > mapWindowW || wh > mapWindowH)) {
-            mapWindowW = ww;
-            mapWindowH = wh;
         }
     }
 

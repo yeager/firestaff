@@ -40,6 +40,9 @@
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`
   phase on its own cadence and independent of gameplay speed multipliers.
+  **2026-07-31 update:** C407-regressionen mappar nu probernas 320×200- och
+  960×600-koordinater mot den begärda logiska ytan i stället för dummy-SDL:s
+  gamla 1024×768-fönster.
 
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing
