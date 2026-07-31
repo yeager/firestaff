@@ -7849,13 +7849,7 @@ int dm2_v1_boot_runtime_action_front_cell(
             out_receipt->inspect_title = dm2_v1_npc_get_name(npc_id);
             out_receipt->inspect_text =
                 dm2_v1_npc_get_dialog(npc_id, npc_line_index);
-        } else if (dm2_v1_runtime_invoke_square_actuators(level, fx, fy) > 0 ||
-                   dm2_v1_runtime_invoke_actuator(
-                       level,
-                       fx,
-                       fy,
-                       DM2_ACTUATOR_PUSH_BUTTON_WALL_SWITCH,
-                       0u) == 0) {
+        } else if (dm2_v1_runtime_invoke_square_actuators(level, fx, fy) > 0) {
             out_receipt->action_kind = DM2_V1_BOOT_ACTION_ACTUATOR;
             out_receipt->status = "DM2 ACTUATOR";
         } else {

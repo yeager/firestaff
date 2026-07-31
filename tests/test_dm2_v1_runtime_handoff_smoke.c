@@ -617,26 +617,16 @@ static void test_first_tick_after_boot_profile_handoff(void)
           "runtime combat-ended trigger applies creature-spawn target");
     CHECK(dm2_v1_runtime_invoke_actuator(
               0, 0, 0, DM2_ACTUATOR_CREATURE_GENERATOR,
-              DM2_AI_DRAGOTH_MINION) == 0 &&
-          dm2_v1_runtime_get_last_actuator_type() ==
-              DM2_ACTUATOR_CREATURE_GENERATOR &&
-          dm2_v1_runtime_get_last_actuator_x() == 0 &&
-          dm2_v1_runtime_get_last_actuator_y() == 0 &&
-          dm2_v1_runtime_get_last_actuator_level() == 0 &&
-          dm2_v1_runtime_get_spawn_count() == 2 &&
-          dm2_v1_runtime_get_last_spawn_ai() == DM2_AI_DRAGOTH_MINION,
-          "runtime creature-generator actuator applies spawn target");
+              DM2_AI_DRAGOTH_MINION) < 0 &&
+          dm2_v1_runtime_get_spawn_count() == 0,
+          "runtime creature-generator rejects an unowned actuator payload");
     CHECK(dm2_v1_runtime_invoke_actuator(
-              0, 0, 0, DM2_ACTUATOR_ITEM_GENERATOR, 0x1234u) == 0 &&
-          dm2_v1_runtime_get_last_actuator_type() ==
-              DM2_ACTUATOR_ITEM_GENERATOR &&
-          dm2_v1_runtime_get_last_generated_object() == 0x1234u,
-          "runtime item-generator actuator records generated object target");
+              0, 0, 0, DM2_ACTUATOR_ITEM_GENERATOR, 0x1234u) < 0 &&
+          dm2_v1_runtime_get_last_generated_object() == 0u,
+          "runtime item-generator rejects an unowned actuator payload");
     CHECK(dm2_v1_runtime_invoke_actuator(
               0, 0, 0, DM2_ACTUATOR_MISSILE_SHOOTER,
               DM2_PROJ_SUBTYPE_MAGICAL_FIREBALL) == -1 &&
-          dm2_v1_runtime_get_last_actuator_type() ==
-              DM2_ACTUATOR_MISSILE_SHOOTER &&
           dm2_v1_runtime_get_last_projectile_slot() < 0 &&
           dm2_v1_runtime_get_projectile_actuator_count() == 0,
           "runtime missile-shooter rejects synthetic projectile state");
@@ -659,14 +649,10 @@ static void test_first_tick_after_boot_profile_handoff(void)
             profile.dungeon_data = replacement;
             replacement = NULL;
             dm2_v1_runtime_init(&profile);
-            CHECK(dm2_v1_runtime_invoke_square_actuators(0, 0, 0) == 1 &&
-                  dm2_v1_runtime_get_last_actuator_type() ==
-                      DM2_ACTUATOR_ITEM_GENERATOR &&
-                  dm2_v1_runtime_get_last_actuator_level() == 0 &&
-                  dm2_v1_runtime_get_last_actuator_x() == 1 &&
-                  dm2_v1_runtime_get_last_actuator_y() == 1 &&
-                  dm2_v1_runtime_get_last_generated_object() == 0x4567u,
-                  "runtime square-first DB3 actuator invokes decoded generated-object target");
+            CHECK(dm2_v1_runtime_invoke_square_actuators(0, 0, 0) == 0 &&
+                  dm2_v1_runtime_get_actuator_count() == 0 &&
+                  dm2_v1_runtime_get_last_generated_object() == 0u,
+                  "runtime square-local DB3 fixture cannot infer an actuator transition");
             {
                 int before_actuators = dm2_v1_runtime_get_actuator_count();
                 dm2_v1_runtime_set_position(0, 0, 1, 0);
@@ -675,12 +661,9 @@ static void test_first_tick_after_boot_profile_handoff(void)
                       dm2_v1_runtime_get_party_x() == 0 &&
                       dm2_v1_runtime_get_party_y() == 0 &&
                       dm2_v1_runtime_get_actuator_count() ==
-                          before_actuators + 1 &&
-                      dm2_v1_runtime_get_last_actuator_level() == 0 &&
-                      dm2_v1_runtime_get_last_actuator_x() == 1 &&
-                      dm2_v1_runtime_get_last_actuator_y() == 1 &&
-                      dm2_v1_runtime_get_last_generated_object() == 0x4567u,
-                      "runtime arrival on square-first DB3 actuator invokes decoded generated-object target");
+                          before_actuators &&
+                      dm2_v1_runtime_get_last_generated_object() == 0u,
+                      "runtime arrival cannot infer an actuator transition from a DB3 fixture");
             }
         } else {
             CHECK(0, "runtime square-actuator fixture loads");

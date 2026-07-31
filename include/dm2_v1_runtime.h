@@ -1371,9 +1371,10 @@ typedef enum {
     DM2_ACTUATOR_RESURECTOR            = 0x7E,
 } DM2_ActuatorType;
 
-/* Activate an actuator by type+position. Returns 0 on success. */
+/* Generic actuator calls reject until a live DB3/DB14 record owner exists. */
 int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
                                      DM2_ActuatorType type, uint16_t flag);
+/* Square-local DB3 traversal is inactive until the record owner is ported. */
 int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y);
 
 /* ── Shops / NPCs ──────────────────────────────────────────────────── */

@@ -9326,39 +9326,6 @@ int dm2_v1_runtime_get_projectile_actuator_count(void) {
     return g_dm2_runtime.projectile_actuator_count;
 }
 
-typedef struct {
-    int actuator_type;
-    uint16_t flag;
-    int target_level;
-    int target_x;
-    int target_y;
-} DM2_RuntimeSquareActuator;
-
-static int dm2_runtime_decode_square_actuator(
-    const uint8_t *record,
-    int size,
-    int current_level,
-    int current_x,
-    int current_y,
-    DM2_RuntimeSquareActuator *out) {
-    if (!record || size < 8 || !out) return 0;
-    memset(out, 0, sizeof(*out));
-    /* Bounded DB3 handoff:
-     *   w0      next thing link, owned by GET_NEXT_RECORD_LINK
-     *   byte 2  actuator/effect type
-     *   byte 3  target level, or 0xff for current level
-     *   w4      target flag/object id/payload
-     *   byte 6  target x, or 0xff for current x
-     *   byte 7  target y, or 0xff for current y
-     * This preserves coordinate zero as a real target coordinate. */
-    out->actuator_type = (int)record[2];
-    out->target_level = (record[3] == 0xffu) ? current_level : (int)record[3];
-    out->flag = (uint16_t)record[4] | ((uint16_t)record[5] << 8);
-    out->target_x = (record[6] == 0xffu) ? current_x : (int)record[6];
-    out->target_y = (record[7] == 0xffu) ? current_y : (int)record[7];
-    return out->actuator_type != 0;
-}
-
 int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
                                    DM2_ActuatorType type, uint16_t flag) {
     (void)level;
@@ -9379,39 +9346,17 @@ int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
 
 int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    DM2_V1_DungeonData *dd;
-    int thing;
-    int invoked = 0;
-    int guard = 0;
 
     if (!rt->boot || !rt->boot->dungeon_data) return -1;
-    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
-    if (thing < 0 || thing == 0xfffe) return 0;
-
-    while (thing >= 0 && thing != 0xfffe && guard++ < 64) {
-        int type = -1;
-        int size = 0;
-        int next;
-        const uint8_t *record = dm2_v1_dungeon_get_thing_record(
-            dd, (uint16_t)thing, &type, NULL, &size);
-        if (!record || size < 2) break;
-        if (type == 3 && size >= 8) {
-            DM2_RuntimeSquareActuator decoded;
-            if (dm2_runtime_decode_square_actuator(
-                    record, size, level, x, y, &decoded) &&
-                dm2_v1_runtime_invoke_actuator(
-                    decoded.target_level, decoded.target_x, decoded.target_y,
-                    (DM2_ActuatorType)decoded.actuator_type,
-                    decoded.flag) == 0) {
-                invoked++;
-            }
-        }
-        next = dm2_v1_dungeon_get_next_thing(dd, (uint16_t)thing);
-        if (next < 0 || next == thing) break;
-        thing = next;
-    }
-    return invoked;
+    (void)level;
+    (void)x;
+    (void)y;
+    /* A DB3 link alone is not an actuator command. SKProject resolves the
+     * complete live record graph, DB14 payload and timer context in
+     * DM2_INVOKE_ACTUATOR. Do not infer a byte layout or transition from a
+     * square-local fixture before that owner is ported.
+     * Source: SKWINSPX/src/v5/c_tim_proc.cpp::DM2_INVOKE_ACTUATOR. */
+    return 0;
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */

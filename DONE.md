@@ -33,8 +33,12 @@
 - ✅ 2026-07-31 DM2 generic-actuator closure: an actuator taxonomy byte,
   coordinate and flag can no longer create a wall-switch, relay, counter or
   other state transition. Original `DM2_INVOKE_ACTUATOR` requires the live
-  DB3/DB14 record and timer chain. Verification:
-  `test_dm2_v1_runtime_shop_pc34_compat` passes 11/11.
+  DB3/DB14 record and timer chain. M11 also no longer tries an implicit
+  default wall switch, and square-local DB3 fixtures cannot infer a record
+  layout or transition. Verification:
+  `test_dm2_v1_runtime_shop_pc34_compat` passes 11/11;
+  `test_dm2_v1_runtime_handoff_smoke` rejects generic and square-local
+  actuator payloads without mutation.
 
 - ✅ 2026-07-31 DM2 generator-default closure: creature and item generator
   actuators now reject bare flags instead of spawning a default Dragoth or
