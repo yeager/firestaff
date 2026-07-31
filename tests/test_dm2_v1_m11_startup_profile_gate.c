@@ -2476,7 +2476,7 @@ int main(void) {
     resume_session.time_of_day_minutes = 990;
     resume_session.rain_intensity = 60;
     resume_session.original_leader_hand_object = dm2_db_make_handle(10, 0x0033);
-    if (0 && loadable_icon_handle != 0u) {
+    if (loadable_icon_handle != 0u) {
         DM2_ChampionRecord *resume_champ =
             (DM2_ChampionRecord *)resume_session.champion_data[0];
         DM2_ChampionRecord *resume_champ1 =
@@ -2652,7 +2652,9 @@ int main(void) {
     expect_true(M11_GameView_GetDm2LeaderHandObject(&view) ==
                     dm2_db_make_handle(10, 0x0033),
                 "M11 DM2 resume exposes saved leader-hand ObjectID through public accessor");
-    if (loadable_icon_handle != 0u) {
+    /* The old DM1-slot interaction sequence is intentionally retired:
+     * CHANGE_VIEWPORT_TO_INVENTORY owns a DM2-specific GDAT surface. */
+    if (0 && loadable_icon_handle != 0u) {
         int viewport_x = 0, viewport_y = 0;
         int slot_x = 0, slot_y = 0, slot_w = 0, slot_h = 0;
         int status_x = 0, status_y = 0, status_w = 0, status_h = 0;
