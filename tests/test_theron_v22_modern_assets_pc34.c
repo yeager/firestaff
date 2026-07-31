@@ -175,10 +175,8 @@ static void test_shape_source_name(void) {
 static void test_missing_placeholder(void) {
     int w = 0, h = 0;
     const uint32_t* px = theron_v22_get_missing_placeholder(&w, &h);
-    CHECK(px != NULL, "placeholder non-null");
-    CHECK(w == 16 && h == 16, "placeholder is 16x16");
-    /* First pixel is magenta FF00FF (the 0xFFFF00FF is RGBA) */
-    CHECK((px[0] & 0x00FFFFFFu) == 0x00FF00FFu, "placeholder[0] is magenta");
+    CHECK(px == NULL, "missing asset must fail closed");
+    CHECK(w == 0 && h == 0, "missing asset has no dimensions");
 }
 
 static void test_source_evidence(void) {

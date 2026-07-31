@@ -76,7 +76,7 @@ int  theron_v22_get_epx_cache_warm(void);
  * Fallback chain: MODERN → UPSCALED (V2.1) → FILTERED (V2.0) → ORIGINAL (V1). */
 THERON_V22_ShapeSource theron_v22_best_available_shape_source(int presentation_mode_index);
 
-/* theron_v22_get_missing_placeholder — 16x16 RGBA magenta checkerboard. */
+/* Missing modern assets fail closed: returns NULL and 0x0 dimensions. */
 const uint32_t* theron_v22_get_missing_placeholder(int* out_w, int* out_h);
 
 /* theron_v22_get_shape_path — resolves (category, asset_id) from manifest
