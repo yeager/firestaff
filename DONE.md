@@ -47156,3 +47156,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   reports success for an expected digest it cannot compare against an
   authoritative catalog. Hash-bound Track 02 boot remains the only admission
   route; the legacy API now fails with `TR_ASSET_ERR_HASH`.
+
+- ✅ 2026-07-31 CSB F0846–F0865 unmapped-boundary isolation: this range has
+  no ReDMCSB callable and only reports a fail-closed admission receipt. It
+  now compiles solely into its focused contract test, so M10 cannot mistake
+  source-absence metadata for an executable runtime implementation.

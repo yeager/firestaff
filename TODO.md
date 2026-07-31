@@ -102,6 +102,9 @@
   - 2026-07-31: F0906–F0925 is a read-only primitive inventory and is
     test-only. The live SWSH and Utility paths retain their dedicated
     authenticated byte consumers.
+  - 2026-07-31: F0846–F0865 has no corresponding ReDMCSB callable and is
+    test-only. Keep its fail-closed admission receipt out of M10; source
+    material must be bound by an actual CSB runtime consumer.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
