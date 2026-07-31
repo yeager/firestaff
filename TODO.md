@@ -640,6 +640,10 @@ diagnostic; it must not silently fall back to a generated visual.
   retains door side/front, stairs side/front + up and open-pit invisibility
   bits through F0128; it still does not attach the selected decoded door
   span and palette to the subsequent F0111 command.
+  2026-07-31 D3 follow-up: fully closed C4 D3L2/D3R2 doors now resolve their
+  live MAP.D/DB0-selected G0693 record and present it through the source
+  GRAPHICS.DAT provider. Open, partial and destroyed states remain blocked
+  until their F0111 clipping and ornament masks are bound.
   The CSBgraphics custom-background pass now follows the same rule: a real
   GRAPHICS.DAT session ignores caller-supplied test masks and decodes the
   selected CSBWin BACKGROUND_MASK, otherwise it applies no layer.

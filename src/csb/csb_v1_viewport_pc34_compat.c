@@ -4363,6 +4363,8 @@ void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg) {
     cfg->dungeon_aspect_grid = NULL;
     cfg->dungeon_stairs_up_grid = NULL;
     cfg->dungeon_pit_invisible_grid = NULL;
+    cfg->dungeon_d3_closed_door_graphic[0] = 0;
+    cfg->dungeon_d3_closed_door_graphic[1] = 0;
     cfg->dungeon_width = 0;
     cfg->dungeon_height = 0;
     cfg->custom_background_loaded_level = -1;
@@ -5279,6 +5281,8 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     vp.dungeon_aspect_grid = cfg->dungeon_aspect_grid;
     vp.dungeon_stairs_up_grid = cfg->dungeon_stairs_up_grid;
     vp.dungeon_pit_invisible_grid = cfg->dungeon_pit_invisible_grid;
+    vp.door_front_d3[0] = (int16_t)cfg->dungeon_d3_closed_door_graphic[0];
+    vp.door_front_d3[1] = (int16_t)cfg->dungeon_d3_closed_door_graphic[1];
     vp.dungeon_width  = cfg->dungeon_width;
     vp.dungeon_height = cfg->dungeon_height;
 

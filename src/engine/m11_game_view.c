@@ -2084,6 +2084,24 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         *out_width = (int)field_asset->width;
         *out_height = (int)field_asset->height;
         return 1;
+    } else if (graphic_index >= 246 && graphic_index <= 257) {
+        const M11_AssetSlot *door_asset;
+        /* ReDMCSB DUNVIEW.C F0096 selects G0693 through MAP.D/DB0. The
+         * viewport resolver has already retained that exact item identity. */
+        if (!m11_csb_install_runtime_source_graphic(
+                state, (unsigned int)graphic_index)) {
+            return 0;
+        }
+        door_asset = M11_AssetLoader_Load(&state->assetLoader,
+                                          (unsigned int)graphic_index);
+        if (!door_asset || !door_asset->loaded || !door_asset->pixels ||
+            door_asset->width == 0u || door_asset->height == 0u) {
+            return 0;
+        }
+        *out_pixels = door_asset->pixels;
+        *out_width = (int)door_asset->width;
+        *out_height = (int)door_asset->height;
+        return 1;
     } else {
         return 0;
     }

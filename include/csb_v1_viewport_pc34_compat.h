@@ -532,6 +532,9 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     const uint8_t *dungeon_aspect_grid;
     const uint8_t *dungeon_stairs_up_grid;
     const uint8_t *dungeon_pit_invisible_grid;
+    /* Live F0111 D3L2/D3R2 G0693 record indices, or zero when the original
+     * state needs partial/destroyed clipping that is not yet bound. */
+    int dungeon_d3_closed_door_graphic[2];
     int dungeon_width;
     int dungeon_height;
 
