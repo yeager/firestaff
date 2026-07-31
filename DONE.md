@@ -45690,3 +45690,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   projectile runtime drawers still require decoded original graphics and
   remain no-draw on a missing material. Verification: configure/build and
   PC3.4 real-asset viewport/startup regressions.
+- ✅ 2026-07-31 DM2 door-strength source correction: replaced the unrelated
+  0x10/0x11 lookup and fabricated 6-or-1 fallback in
+  `dm2_v1_query_door_strength_receipt()` with SKProject's exact
+  `QUERY_DOOR_STRENGTH`: `DOORS/dtWordValue/GDAT_DOOR_STRENGTH` (`0x0f`).
+  Missing source field now rejects rather than inventing a value. Source:
+  `SKWIN/SkWinCore.cpp:61120-61127`, `SKWIN/defines.h:656`. Verification:
+  `test_dm2_v1_gdat_querydb_receipts` passes 118/118, including the local
+  real-`GRAPHICS.DAT` querydb checks.

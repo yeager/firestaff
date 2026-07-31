@@ -2931,34 +2931,29 @@ int dm2_v1_query_door_strength_receipt(
     int door_index,
     DM2_V1_DoorStrengthReceipt *out_receipt)
 {
-    uint16_t explicit_strength = 0u;
-    uint16_t resistance = 0u;
+    uint16_t strength = 0u;
 
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
     if (door_index < 0 || door_index > 0xff) return 0;
     out_receipt->door_index = (uint8_t)door_index;
 
-    if (dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
-                                     door_index, 0x11, &explicit_strength) &&
-        explicit_strength != 0u) {
-        out_receipt->accepted = 1u;
-        out_receipt->used_explicit_strength = 1u;
-        out_receipt->strength = explicit_strength;
-    } else if (dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
-                                            door_index, 0x10, &resistance)) {
-        out_receipt->accepted = 1u;
-        out_receipt->used_resistance_fallback = 1u;
-        out_receipt->resistance_field_value = resistance;
-        out_receipt->strength = resistance == 0u ? 6u : 1u;
-    } else {
+    /* SKProject: SkWinCore.cpp::QUERY_DOOR_STRENGTH is a direct GDAT
+     * lookup: DOORS / dtWordValue / GDAT_DOOR_STRENGTH (0x0f).  Earlier
+     * Firestaff code looked at unrelated 0x10/0x11 fields and manufactured
+     * a 6-or-1 strength fallback.  Never infer gameplay values where the
+     * original record has an exact field. */
+    if (!dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
+                                      door_index, 0x0f, &strength)) {
         return 0;
     }
+    out_receipt->accepted = 1u;
+    out_receipt->used_explicit_strength = 1u;
+    out_receipt->strength = strength;
 
     out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
         0x44535452u, (uint32_t)door_index,
-        ((uint32_t)out_receipt->strength << 16) |
-            out_receipt->resistance_field_value,
+        ((uint32_t)out_receipt->strength << 16) | 0x000fu,
         out_receipt->used_explicit_strength);
     return 1;
 }

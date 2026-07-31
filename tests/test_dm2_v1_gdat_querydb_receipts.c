@@ -911,18 +911,14 @@ static void test_querydb_word_and_ornate_receipts(void)
           "DM2_QUERY_DOOR_DAMAGE_RESIST binds DOORS dtWordValue field 0x0f");
     CHECK(dm2_v1_query_door_strength_receipt(&loader, 2, &strength) &&
               strength.accepted && strength.used_explicit_strength &&
-              strength.strength == 0x0033u,
-          "DM2_QUERY_DOOR_STRENGTH uses explicit DOORS field 0x11");
-    CHECK(dm2_v1_query_door_strength_receipt(&loader, 3, &strength) &&
-              strength.accepted && strength.used_resistance_fallback &&
-              strength.strength == 6u,
-          "DM2_QUERY_DOOR_STRENGTH maps zero field 0x10 fallback to six");
-    CHECK(dm2_v1_query_door_strength_receipt(&loader, 4, &strength) &&
-              strength.accepted && strength.used_resistance_fallback &&
-              strength.strength == 1u,
-          "DM2_QUERY_DOOR_STRENGTH maps nonzero field 0x10 fallback to one");
+              !strength.used_resistance_fallback &&
+              strength.strength == 0x002au,
+          "DM2_QUERY_DOOR_STRENGTH reads DOORS GDAT_DOOR_STRENGTH field 0x0f");
+    CHECK(!dm2_v1_query_door_strength_receipt(&loader, 3, &strength) &&
+              !dm2_v1_query_door_strength_receipt(&loader, 4, &strength),
+          "DM2_QUERY_DOOR_STRENGTH rejects entries missing source field 0x0f");
     CHECK(!dm2_v1_query_door_strength_receipt(&loader, 5, &strength),
-          "DM2_QUERY_DOOR_STRENGTH rejects zero explicit strength without source fallback");
+          "DM2_QUERY_DOOR_STRENGTH rejects a missing source strength field");
     CHECK(dm2_v1_get_graphics_for_door_receipt(&loader, 6, &word) &&
               word.accepted && word.field == 0x0du && word.value == 0x0007u,
           "DM2_GET_GRAPHICS_FOR_DOOR binds DOORS dtWordValue field 0x0d");
