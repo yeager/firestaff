@@ -46483,7 +46483,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   public wrapper path for unpaletted/synthetic HUD pixels; Saturn VDP
   placement remains a separate no-draw gate. Verification: Nexus startup-media
   and FACE real-data tests pass against `/Users/bosse/.firestaff/data/nexus`.
-
 - ✅ 2026-07-31 DM1 timeline-dispatch stability re-verification: the former
   F0242/F0248/F0190/F0249 assert-crash cluster is stable on current main.
   The seven documented CTests pass once and in ten consecutive repetitions
@@ -46499,3 +46498,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   for callers without party context. Verification:
   `test_theron_v1_save_progress_roundtrip_pc34` and
   `test_theron_v1_m11_direct_launch` pass; `git diff --check` passes.
+- ✅ 2026-07-31 Nexus SAL/MAP statuskorrigering: ljudvägen är inte en tom
+  placeholder längre. Den behåller verifierad källidentitet, bounded MAP-
+  fönster och SAL-containerprofil, men markerar fortfarande codec och Saturn-
+  eventdispatch som oprövade och blockerar playback. Kommentarerna använder
+  därför `opaque/no-playback` i stället för den missvisande `STUB`-etiketten.

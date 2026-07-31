@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 
-/* Nexus V1 sound system — STUB implementation.
+/* Nexus V1 sound system — source-bound opaque implementation.
  * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
  * docs/nexus_music.md, nexus_v1_engine.c CD track switching.
  *
@@ -12,8 +12,9 @@
  * CD audio: 8 tracks (2-9) mapped to level pairs.
  * Sound driver: SDDRVS.TSK (26 KB Saturn sound driver task).
  *
- * Status: STUB. SAL/MAP format unknown; no actual audio playback.
- * Provides API surface and logs play calls for future SDL_mixer integration.
+ * SAL/MAP sample codec and Saturn event dispatch remain unproven; no actual
+ * SFX playback is admitted. The implementation retains bounded source
+ * receipts and logs blocked playback attempts.
  * Source: docs/nexus_sfx.md (no SFX implementation found in current source). */
 
 /* Event name table */
@@ -421,7 +422,7 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     eng->current_level = -1;
     clear_map_route(eng);
     clear_sal_profile(eng);
-    printf("Nexus sound: initialized (stub — no actual audio playback)\n");
+    printf("Nexus sound: initialized (opaque source receipts; playback blocked)\n");
     return 0;
 }
 

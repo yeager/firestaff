@@ -12,8 +12,9 @@
  * CD audio: 8 tracks (2-9) mapped to level pairs, Red Book Audio.
  * Sound driver: SDDRVS.TSK (26 KB Saturn sound driver task).
  *
- * Status: STUB. SAL/MAP format unknown, no actual SFX playback.
- * Stub provides API surface and future hook points. */
+ * Status: source-bound opaque ingestion only. SAL/MAP sample codec and
+ * Saturn event dispatch remain unproven, so actual SFX playback is blocked.
+ * The API exposes receipts and bounded windows, never substitute audio. */
 
 /* Sound event types (matching SNDLEV*.MAP event IDs) */
 typedef enum {
