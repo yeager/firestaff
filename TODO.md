@@ -538,6 +538,11 @@ diagnostic; it must not silently fall back to a generated visual.
   clipper; only source-locked zones, geometry and F0105 metadata remain.
   **2026-07-31 D1L/D1R declaration follow-up:** the stale, unimplemented
   C10 pixel-writer declaration is removed from the public contract.
+  **2026-07-31 D1L/D1R material-binding follow-up:** this pair now decodes
+  its current PC3.4 `GRAPHICS.DAT` wall-set records (C03/C02: entries 96/95
+  for wall set 0) with the compressed-record receipt. Its prior synthetic
+  frame compositor and synthetic raster runner are gone. The remaining
+  viewport-material inventory stays open for routes not yet bound this way.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

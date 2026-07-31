@@ -4,12 +4,14 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "csb_v1_startup_img3_decode_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /*
- * Contract-only CSB V1 D1L/D1R wall source-lock, synthetic only.
+ * CSB V1 D1L/D1R wall source-lock and PC3.4 GRAPHICS.DAT binding.
  * Required source anchors: ReDMCSB DUNVIEW.C:7391-7560 F0122 D1L body,
  * DUNVIEW.C:7559-7725 F0123 D1R body, DUNVIEW.C:3113-3156 F0104 native
  * blit, DUNVIEW.C:3185-3247 F0105 scratch flip, DUNVIEW.C:4547-4581 and
@@ -25,13 +27,6 @@ typedef enum {
     CSB_V1_D1L_D1R_WALL_SIDE_D1L_PC34 = 1,
     CSB_V1_D1L_D1R_WALL_SIDE_D1R_PC34 = 2
 } CSB_V1_D1LD1RWallSidePc34;
-
-typedef struct {
-    int copied_pixels;
-    int transparent_pixels;
-    int clipped_pixels;
-    int rejected;
-} CSB_V1_D1LD1RWallBlitStatsPc34;
 
 typedef struct {
     int source_locked_contract_only;
@@ -90,26 +85,21 @@ typedef struct {
     const char *source_lines;
 } CSB_V1_D1LD1RWallSpecPc34;
 
+/* One material selected by PC/I34 F0095 and consumed by F0122/F0123.
+ * `pixels` returned by the loader belongs to the caller; its receipt ties it
+ * to one compressed original GRAPHICS.DAT record rather than a look-alike
+ * host buffer. */
 typedef struct {
-    int ok;
-    int route_count;
-    int identities_ok;
-    int coordinates_ok;
-    int c10_transparency_ok;
-    int row_local_flip_ok;
-    int edge_clip_ok;
-    int f0128_followup_ok;
-    int dungeon_identity_ok;
-    int scope_keepout_ok;
-    int d1l_copied_pixels;
-    int d1r_copied_pixels;
-    uint16_t first_thing_before;
-    uint16_t first_thing_after;
-    int map_x_before;
-    int map_y_before;
-    int map_x_after;
-    int map_y_after;
-} CSB_V1_D1LD1RWallRunResultPc34;
+    int valid;
+    int wall_set;
+    int side;
+    uint32_t graphics_entry_index;
+    int width;
+    int height;
+    int transparent_color;
+    int flip_horizontally;
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 decode_receipt;
+} CSB_V1_D1LD1RWallMaterialPc34;
 
 size_t csb_v1_viewport_d1l_d1r_wall_spec_count_pc34(void);
 
@@ -127,16 +117,16 @@ int csb_v1_viewport_d1l_d1r_wall_map_viewport_x_to_source_pc34(
     int flipped_variant,
     int *out_source_x);
 
-int csb_v1_viewport_d1l_d1r_wall_apply_c10_frame_clip_pc34(
-    const CSB_V1_D1LD1RWallSpecPc34 *spec,
-    const uint8_t *source,
-    int source_width,
-    int source_height,
-    uint8_t *viewport,
-    int viewport_width,
-    int viewport_height,
-    int flipped_variant,
-    CSB_V1_D1LD1RWallBlitStatsPc34 *stats);
+/* Loads only the mapped PC3.4 source record for this side wall. The call
+ * fails closed for an unknown side, invalid wall set/catalog, a decoder
+ * mismatch, or a non-60x111 source raster. */
+int csb_v1_viewport_d1l_d1r_wall_load_graphics_dat_material_pc34(
+    const char *graphics_dat_path,
+    int wall_set,
+    int side,
+    uint32_t graphics_entry_count,
+    unsigned char **out_pixels,
+    CSB_V1_D1LD1RWallMaterialPc34 *out_material);
 
 uint16_t csb_v1_viewport_d1l_d1r_wall_preserve_first_thing_pc34(
     const CSB_V1_D1LD1RWallSpecPc34 *spec,
@@ -148,9 +138,6 @@ int csb_v1_viewport_d1l_d1r_wall_preserve_map_identity_pc34(
     int in_map_y,
     int *out_map_x,
     int *out_map_y);
-
-int csb_v1_viewport_d1l_d1r_wall_pc34_compat_run(
-    CSB_V1_D1LD1RWallRunResultPc34 *out_result);
 
 const char *csb_v1_viewport_d1l_d1r_wall_source_evidence_pc34(void);
 

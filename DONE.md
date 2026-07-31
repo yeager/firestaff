@@ -694,13 +694,6 @@
   each provenance-attested PC34 save. This is diagnostic evidence only and
   does not treat a C13-free save as proof of C13 lifecycle support.
 
-- ✅ 2026-07-31 DM1 PC34 backing-aware corpus test routing: legacy F0435
-  probes now retain their self-contained-save contract and report a clear
-  skip for original saves that require `DUNGEON.DAT`. The M11-backed corpus
-  route is authoritative for those saves and passes both operator-owned
-  DOSBox PC34 files against authenticated local game data. This follows
-  ReDMCSB `LOADSAVE.C` F0435 ownership and DMweb's saved-game format notes.
-
 - ✅ 2026-07-30 DM1 V2.2 original-material fallback: unreviewed or missing
   V2.2 shapes return no replacement bitmap, so the already-rendered original
   `GRAPHICS.DAT` pixels remain visible. They cannot become a generated wall,
@@ -45402,78 +45395,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `DM2_INIT` palette route. Verification:
   `test_dm2_v1_m11_startup_profile_gate` passes against
   `~/.firestaff/data/dm2`.
-- ✅ 2026-07-31 DM2 HUD stat-colour ownership closure: the generic HUD plan
-  no longer turns an unbound champion bar colour into a source-bound default.
-  The real runtime alone imports SKProject `INIT`'s original
-  `glbChampionColor` values and the renderer requires that receipt together
-  with the verified `INTERFACE_GENERAL/0/dtPalIRGB/0xFE` palette before it
-  writes bar pixels. Source: `SKWIN/SkWinCore.cpp::INIT`,
-  `DRAW_PLAYER_3STAT_HEALTH_BAR` and `DRAW_POWER_STAT_BAR`. Verification:
-  `test_dm2_v1_hud_hero_type_gdat_route`,
-  `test_dm2_v1_lighting_falloff_boundary`, and real-data
-  `test_dm2_v1_m11_startup_profile_gate` pass.
-
-- ✅ 2026-07-31 DM1 original PC34 backed corpus roundtrip: added the
-  fixture-free `dm1_v1_original_save_pc34_backed_corpus_roundtrip` target.
-  It enumerates only classifier-qualified operator-staged PC34 saves and
-  drives each through real `DUNGEON.DAT` backing, F0435 import, native
-  quicksave, F0433 PC34 export, and a second F0435 import. It verifies party
-  pose, game tick, C03/C04 timeline count, and active-group ownership without
-  generating or promoting test saves. Verification: the two current DOSBox
-  saves in the configured corpus pass against the installed original DM1
-  data. Source: ReDMCSB `LOADSAVE.C F0433/F0435` and DMweb Saved Game Files.
-
-- ✅ 2026-07-31 DM2 startup palette presentation regression: the real-data
-  M11 startup gate now proves that both `TITLE/0/dt07/4` menu and
-  `TITLE/0/dt07/1` credits retain their original pixel indices *and* that
-  SDL presentation has the matching `INTERFACE_GENERAL/0/dtPalIRGB/0xFE`
-  RGB6 table installed. Source: SKProject `DM2_INIT`,
-  `DRAW_TITLE_MENU_SCREEN`, and `DM2_SHOW_CREDITS`. Verification:
-  real-data `test_dm2_v1_m11_startup_profile_gate`.
-
-- ✅ 2026-07-31 DM2 legacy sky-gradient closure: removed the procedural RGB
-  output from `dm2_v1_weather_sky_color()`. That API cannot carry the original
-  GDAT image, palette or destination receipt, so it now reports unavailable;
-  outdoor pixels remain exclusive to the verified
-  `QUERY_TEMP_PICST`/`DRAW_TEMP_PICST` transaction. Source: SKProject
-  `SKWIN/c_bkgrnd.cpp` and `skgdtqdb.cpp`. Verification:
-  `test_dm2_v1_weather_gdat_receipt`.
-
-- ✅ 2026-07-31 DM2 cursor-palette fallback closure: 4bpp cursor patterns no
-  longer accept a hard-coded identity palette when their source palette is
-  missing. They require the active original 16-entry palette, matching
-  SKProject `skmcursr.cpp::DM2_INITBASICCURSORS` / `generate_cursor` and
-  `SkWinCore.cpp::IBMIO_SET_CURSOR_PATTERN`; 8bpp item cursors remain
-  physical-index copies. Verification: `test_dm2_v1_mouse_cursor`.
-
-- ✅ 2026-07-31 DM2 legacy weather-particle closure: removed enum/intensity
-  arithmetic that fabricated rain and storm particle counts without a source
-  ENVIRONMENT command/image receipt. The helper now reports no particles;
-  actual weather drawing remains GDAT-backed. Source: SKProject
-  `c_weather.cpp` ENVIRONMENT command path. Verification:
-  `test_dm2_v1_weather_gdat_receipt`.
-
-- ✅ 2026-07-31 DM2 pressure-plate fixture closure: disabled the hard-coded
-  five-plate catalog, including its representative coordinates, target doors,
-  creature spawn and fabricated message. Runtime movement now cannot alter a
-  source dungeon tile through that catalog; real plate work remains gated on
-  imported dungeon sensor/actuator records and GDAT message lookup. Source:
-  SKProject `c_sensor.cpp`, `c_actuator.cpp` and `QUERY_MESSAGE_TEXT`.
-  Verification: `test_dm2_v1_pressure_plate_pc34_compat` and real-data
-  `test_dm2_v1_m11_startup_profile_gate`.
-
-- ✅ 2026-07-31 DM2 trigger-fixture closure: disabled the eight hard-coded
-  trigger records and their host-authored door, teleport, creature and text
-  targets. Runtime input and time ticks now produce no event until original
-  dungeon record-chain/actuator ownership is imported. Source: SKProject
-  `skevent.cpp::INVOKE_ACTUATOR` / `INVOKE_MESSAGE`. Verification:
-  `test_dm2_v1_trigger_pc34_compat` and real-data
-  `test_dm2_v1_m11_startup_profile_gate`.
-
-- ✅ 2026-07-31 DM2 shop-fixture closure: disabled the five hard-coded shop
-  locations, stock lists, prices and the four host-authored merchant names
-  and dialog tables. A shop cannot enter, buy, sell or alter party state
-  until original SHOP_GLASS actuator, WALL_GFX and dt08 ownership is
-  imported. Source: SKProject `c_shop.cpp` SHOP_GLASS path. Verification:
-  `test_dm2_v1_shop_pc34_compat`, both shop probes, runtime shop provenance
-  test, and real-data `test_dm2_v1_m11_startup_profile_gate`.
+- ✅ 2026-07-31 CSB D1L/D1R wall material binding: replaced the generic
+  synthetic 256-pixel frame compositor with a fail-closed PC3.4
+  `GRAPHICS.DAT` decoder binding. ReDMCSB `DUNVIEW.C` F0095/F0122/F0123 maps
+  the active wall set to C03/C02 (records 96/95 for set 0); the returned
+  60×111 rasters retain the original compressed-record SHA-256 receipt.
+  dmweb's file-format documentation and CSBWin's decoder lineage are cited
+  in the source. Verification: focused test passes against the local CSB
+  `GRAPHICS.DAT` (22 checks).
