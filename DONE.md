@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 DM2 optional music-data verification: the real-data boot
+  smoke test now skips music routing when the hash-verified optional
+  `SONGLIST.DAT` is absent. It continues to reject filename-only substitutes
+  and exercises the original selector table when that genuine file is
+  available. The mandatory graphics/dungeon boot proof remains required.
+
 - ✅ 2026-07-31 DM2 boot media revalidation: entering a game now rehashes
   both graphics and dungeon media against the profile's scan-time hashes.
   This closes the stale-receipt gap between the launcher scan and INIT; a
