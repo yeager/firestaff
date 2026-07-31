@@ -75,6 +75,9 @@
   16-bit fixture layout and an unreadable/absent dungeon payload. Only the
   verified PC G1 byte-square route can cross from the startup menu into a
   live game; fixture parsing remains available only to isolated diagnostics.
+  **2026-07-31 update:** the boot boundary now rehashes both admitted media
+  files immediately before entering the game. A path cannot inherit a stale
+  scan receipt after its `GRAPHICS.DAT` or `DUNGEON.DAT` content changes.
   **2026-07-31 update:** CSB's boot handoff now refuses both unreadable
   verified paths and the retired 16-bit parser fixture. A session becomes
   runtime-ready only after the ReDMCSB byte-map and its initial party pose are

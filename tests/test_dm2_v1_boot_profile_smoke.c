@@ -345,7 +345,7 @@ static void test_enter_rejects_legacy_fixture_layout(void)
     remove(path);
 }
 
-static void test_enter_admits_map_without_complete_record_graph(void)
+static void test_enter_rejects_unhashed_g1_fixture(void)
 {
     DM2_V1_BootProfile p;
     uint8_t dungeon[512];
@@ -370,16 +370,9 @@ static void test_enter_admits_map_without_complete_record_graph(void)
     dm2_v1_boot_profile_init(&p);
     p.assets_verified = 1;
     snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", path);
-    CHECK(dm2_v1_boot_enter_game(&p) == 0 &&
-              p.dm2_state != NULL && p.dungeon_data != NULL,
-          "boot admits a real-format map before record graph promotion");
-    CHECK(p.dungeon_data != NULL &&
-              dm2_v1_dungeon_get_tile_raw(
-                  (const DM2_V1_DungeonData *)p.dungeon_data,
-                  0, 0, 0) == 0x20 &&
-              !dm2_v1_dungeon_validate_record_graph(
-                  (const DM2_V1_DungeonData *)p.dungeon_data),
-          "record graph remains a separate runtime capability");
+    CHECK(dm2_v1_boot_enter_game(&p) == -1 &&
+              p.dm2_state == NULL && p.dungeon_data == NULL,
+          "boot rejects an unhashed G1 fixture despite its byte layout");
     dm2_v1_boot_cleanup(&p);
     remove(path);
 }
@@ -1051,8 +1044,8 @@ int main(void)
     test_enter_requires_assets();
     printf("\n--- test_enter_rejects_legacy_fixture_layout ---\n");
     test_enter_rejects_legacy_fixture_layout();
-    printf("\n--- test_enter_admits_map_without_complete_record_graph ---\n");
-    test_enter_admits_map_without_complete_record_graph();
+    printf("\n--- test_enter_rejects_unhashed_g1_fixture ---\n");
+    test_enter_rejects_unhashed_g1_fixture();
 /* ── startup launch helper --─ */
     printf("\n--- test_startup_launch_alloc_missing_data ---\n");
     test_startup_launch_alloc_missing_data();

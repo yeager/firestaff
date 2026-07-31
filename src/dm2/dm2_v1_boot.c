@@ -1054,7 +1054,23 @@ void dm2_v1_boot_build_deterministic_config(DM2_V1_BootProfile *profile,
  */
 
 int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
+    char current_graphics_md5[33];
+    char current_dungeon_md5[33];
+
     if (!profile || !profile->assets_verified) return -1;
+
+    /* Scanning admits a hash pair, not a pair of pathnames. Recheck both
+     * members at the point INIT leaves the title/menu: an altered file must
+     * not inherit the scan-time receipt. SKProject's INIT proceeds to
+     * READ_DUNGEON_STRUCTURE only with the mounted original media. */
+    if (profile->graphics_path[0] == '\0' || profile->dungeon_path[0] == '\0' ||
+        profile->graphics_md5[0] == '\0' || profile->dungeon_md5[0] == '\0' ||
+        !path_md5_hex(profile->graphics_path, current_graphics_md5) ||
+        !path_md5_hex(profile->dungeon_path, current_dungeon_md5) ||
+        !md5_matches(current_graphics_md5, profile->graphics_md5) ||
+        !md5_matches(current_dungeon_md5, profile->dungeon_md5)) {
+        return -1;
+    }
 
     /* Allocate DM2 game state */
     DM2_V1_GameState *gs = (DM2_V1_GameState *)

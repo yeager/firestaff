@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 boot media revalidation: entering a game now rehashes
+  both graphics and dungeon media against the profile's scan-time hashes.
+  This closes the stale-receipt gap between the launcher scan and INIT; a
+  manually marked or replaced G1 fixture cannot start a game. Verification:
+  G1-fixture regression, complete executable link and real-data M11
+  startup/profile gate.
+
 - ✅ 2026-07-31 DM2 boot G1-only admission: `dm2_v1_boot_enter_game()` now
   rejects unreadable or absent dungeon payloads and the generic loader's
   retired 16-bit fixture layout. A marked profile can enter only with the
