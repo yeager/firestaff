@@ -46749,3 +46749,4 @@ the supplied root and selected MD5 to prove this without shipping game data.
   column-major fixture layout after parsing, clears its temporary ownership,
   and publishes only ReDMCSB-compatible one-byte square maps from a path.
   The explicit fixture regression proves the file boundary fails closed.
+- ✅ 2026-07-31 Nexus MENU.BPK PRS3 source-lock correction: the runtime decoder is now documented against DMWeb `DMNDataFileDecoder.vbs::DecodePRS3`, including its LSB-first control bytes, literal/back-reference commands, 12-bit window, and `+18`/negative-window rule. The real local `MENU.BPK` corpus decodes all 162 PRS3 surfaces with zero failures. Remaining MENU work is pixel-mode/palette interpretation and authenticated Saturn VDP1 placement, not an undocumented compression algorithm.

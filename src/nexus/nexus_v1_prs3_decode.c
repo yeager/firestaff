@@ -1,6 +1,12 @@
 #include "nexus_v1_prs3_decode.h"
 #include <string.h>
 
+/* DMWeb DMNDataFileDecoder.vbs DecodePRS3 (the MENU.BPK decoder) defines
+ * this exact stream grammar: LSB-first control bits, literal bytes for a 1
+ * bit, and 12-bit window offsets plus a 4-bit length for a 0 bit.  The
+ * negative-window adjustment is the VBScript's >= &H FDC rule followed by
+ * the +18 bias; keep this implementation bounded by the declared output. */
+
 static uint32_t read_be32(const uint8_t *p) {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
            ((uint32_t)p[2] << 8) | (uint32_t)p[3];
