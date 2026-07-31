@@ -265,6 +265,10 @@
   weather and lightning without a decoded original timer/image owner. M11
   and the game loop now retain the authenticated V1 viewport and GDAT HUD
   routes; the V2 diagnostic sources remain available only to focused tests.
+  **2026-07-31 follow-up:** the remaining V2 companion UI, empty crafting
+  table and smooth viewport interpolator are also excluded. None has a
+  decoded DM2 record, item recipe, display route or original timing owner;
+  they remain diagnostic source only until such data is imported.
   **2026-07-31 update:** Greatstone's DM2 version catalogue now explicitly
   bounds the PC startup audit: PC 0.9/1.0/demo list `GRAPHICS.DAT`, whereas
   title/swoosh/ending media belong to other platform families. Continue to

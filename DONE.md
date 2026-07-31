@@ -47333,7 +47333,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   diagnostic targets only; live DM2 presentation stays on the authenticated
   V1 viewport and GDAT HUD path. Verification: production link, V2 probes,
   real-data DM2 startup gate and production-symbol check.
-
 - ✅ 2026-07-31 Nexus real viewport gate rechecked: the Track 1 readiness
   probe drives the local English CUE/DM.BIN, real `LEV00.DGN`, `FONT256.S2D`
   and `SCORPION.MNS` handoff through `nexus_viewport_render`; 29/29 pass.
@@ -47349,3 +47348,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   cell, so it retains source-owned V1/V2.1 pixels rather than inventing a
   fallback. Verified with the new `csb_v22_shapes_runtime_gate_pc34` test,
   the historical shape-book contract test, and a `firestaff` build.
+
+- ✅ 2026-07-31 DM2 V2 companion/crafting/viewport isolation: removed the
+  orphaned companion display, empty crafting catalog and host-timed smooth
+  viewport helpers from production M10/V2 archives. The focused startup
+  diagnostic retains its local copy, while the game executable contains no
+  V2 companion, crafting or smooth-viewport symbols. Verification: complete
+  production link, real-data DM2 startup gate and archive/executable-symbol
+  checks.

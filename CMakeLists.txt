@@ -3812,8 +3812,6 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_companion.c
     src/dm2/dm2_v1_hand_action_gdat.c
     src/dm2/dm2_v1_progression.c
-    src/dm2/dm2_v2_companion_ui.c
-    src/dm2/dm2_v2_tech_crafting.c
     src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_sound.c
     src/dm2/dm2_v1_sound_queue_pc34_compat.c
@@ -3990,6 +3988,8 @@ list(REMOVE_ITEM DM2_V2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_lighting_runtime.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_outdoor_enhanced.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_runtime.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_smooth_movement.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_viewport_renderer.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_finished_art_material_gate_pc34.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_inplace_draw_pc34.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_modern_assets_pc34.c"
@@ -13251,6 +13251,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v2_runtime.c
         src/dm2/dm2_v2_lighting.c
         src/dm2/dm2_v2_outdoor_enhanced.c
+        src/dm2/dm2_v2_smooth_movement.c
+        src/dm2/dm2_v2_viewport_renderer.c
     )
     target_include_directories(test_dm2_v1_m11_startup_profile_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
