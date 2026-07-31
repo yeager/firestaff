@@ -471,6 +471,8 @@ typedef struct DM2_V1_RuntimeItemRenderReceipt {
     int draw_order;
     int flip_mirror;
     int asset_blit_ready;
+    /* Source-required DM2 paths fail closed, so this is zero when the map
+     * chip is missing as well as when an original GDAT chip was drawn. */
     int fallback_drawn;
     int asset_src_w;
     int asset_src_h;
@@ -550,6 +552,8 @@ typedef struct DM2_V1_RuntimeProjectileRenderReceipt {
     int flip_mirror;
     int cloud_flip_from_seed;
     int asset_blit_ready;
+    /* Source-required DM2 paths fail closed, so this is zero when the map
+     * chip is missing as well as when an original GDAT chip was drawn. */
     int fallback_drawn;
     int asset_src_w;
     int asset_src_h;

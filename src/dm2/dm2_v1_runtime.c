@@ -3119,9 +3119,9 @@ static void dm2_runtime_finish_item_render_receipt(
             viewport->last_item_draw_order) {
         /* skproject SKWIN/SkWinCore.cpp DRAW_MAP_CHIP consumes item,
          * carried-item and creature-possession map chips through the same
-         * QUERY_DUNGEON_MAP_CHIP_PICT path. This receipt keeps that final
-         * renderer decision DM2-owned, including fallback. */
-        g_dm2_last_item_render.fallback_drawn = 1;
+         * QUERY_DUNGEON_MAP_CHIP_PICT path. Missing material is blocked by
+         * the viewport; it must not be reported as a rendered fallback. */
+        g_dm2_last_item_render.fallback_drawn = 0;
         return;
     }
 
@@ -3184,9 +3184,9 @@ static void dm2_runtime_finish_projectile_render_receipt(
             viewport->last_projectile_draw_order) {
         /* skproject SKWIN/SkWinCore.cpp lines 10672-10750 route missiles
          * and clouds through QUERY_DUNGEON_MAP_CHIP_PICT then
-         * DRAW_CHIP_OF_MAGIC_MAP. Keep the final asset/fallback decision
-         * in this DM2-owned receipt instead of host-side counter inference. */
-        g_dm2_last_projectile_render.fallback_drawn = 1;
+         * DRAW_CHIP_OF_MAGIC_MAP. A missing source chip produces no draw,
+         * never a fallback image or a false-positive render receipt. */
+        g_dm2_last_projectile_render.fallback_drawn = 0;
         return;
     }
 

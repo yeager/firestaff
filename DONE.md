@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 viewport fallback-receipt correction: item and
+  projectile receipts no longer claim that a fallback was drawn when the
+  GDAT map chip is absent. SKProject `DRAW_MAP_CHIP` and
+  `DRAW_CHIP_OF_MAGIC_MAP` have no generic visual substitute; the viewport
+  already blocks those pixels, and the runtime status now states the same.
+  Verification: `test_dm2_v1_item_local_palette_gate` and
+  `test_dm2_v1_projectile_local_palette_gate` prove the no-draw boundary.
+
 - ✅ 2026-07-31 DM2 music-stop stub replacement: `dm2_v1_sound_stop_music()`
   now closes MIDI output and clears the admitted GDAT music schedule, loop and
   backend state. It can no longer report a successful stop while a stale

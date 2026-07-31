@@ -399,6 +399,10 @@ diagnostic; it must not silently fall back to a generated visual.
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
   must remain no-draw until their original decoder is implemented.
+  **2026-07-31 update:** item and projectile receipts now agree with that
+  no-draw rule: a missing map chip is reported as unrendered, not as a
+  fallback draw. Remaining viewport families still require their live GDAT
+  owners and decoders.
   **2026-07-31 update:** a wall-ornament placement plan must now name the
   exact WALL_GFX GDAT row derived from its live G1 square. A mismatched plan
   blocks the frame rather than borrowing a same-square bitmap at an unowned
