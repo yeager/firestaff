@@ -74,67 +74,6 @@ static uint32_t dm2_rd32be(const uint8_t *p) {
  *
  * Source: include/dm2_v1_dungeon_loader.h PROBE_NOTES, SKULL.ASM T560 */
 
-/* ── Tile parsing ──────────────────────────────────────────────────── */
-
-/*
- * dm2_parse_tile — unpack a 16-bit DM2 tile value into dm2_tile_t.
- *
- * Lower 5 bits: square type (DM2_SQUARE_*)
- * bit 5 (0x0020): wall blocks movement
- * bit 6 (0x0040): corrupted tile
- * bit 7 (0x0080): above-tile connection
- *
- * Source: ReDMCSB HASHBUCKET.C, DEFS.H:385-390
- */
-static dm2_tile_t dm2_parse_tile(uint16_t raw) {
-    dm2_tile_t t;
-    t.raw   = raw;
-    t.type  = (uint8_t)(raw & DM2_SQUARE_TYPE_MASK);
-    t.flags = (uint8_t)((raw & ~DM2_SQUARE_TYPE_MASK) >> 5);
-    return t;
-}
-
-/* ── World model builder ────────────────────────────────────────────── */
-
-/*
- * dm2_build_world_from_decompressed —
- *   Build world model from a post-FTL-decompression buffer.
- *
- * The decompressed buffer layout:
- *   [20 bytes lookup table] + [FTL bitstream output] +
- *   [12 bytes padding] + [Dungeon Header 44 bytes] + [Map Descriptors] +
- *   [Tile data] + [Thing data] + [Text data]
- *
- * But the actual FTLDecompress output places the LOOKUP table at the
- * START of the output buffer. So:
- *   offset 0..19:  lookup table (DM1 legacy — not used after decomp)
- *   offset 20..63: 44 bytes of padding / metadata
- *   offset 44+:    DUNGEON_HEADER + map descriptors + map data + ...
- *
- * DM2 DM1 compatibility: the DUNGEON_HEADER starts at offset 44
- * in the decompressed buffer (since FTLDecompress writes 20 bytes of
- * lookup table first, then game data).
- *
- * For pre-decompressed files (no FTL wrapper), the layout is:
- *   offset 0: DUNGEON_HEADER (44 bytes)
- *   offset 44+: MAP descriptors + tile data
- *
- * We detect which layout we have by checking for the DM1/DM2 magic.
- * If decompressed_bytes == file_size with no FTL sig → pre-decompressed.
- *
- * Source: SKULL.ASM T560 DUNGEON_Load, ReDMCSB FTL.H
- */
-static void dm2_parse_header(const dm2_dungeon_header_t *hdr,
-                               dm2_dungeon_world_t      *world) {
-    world->header          = *hdr;
-    world->map_count       = hdr->map_count;
-    world->text_word_count = dm2_rd16le((const uint8_t *)&hdr->text_data_word_count);
-    /* Things: copy counts */
-    for (int i = 0; i < DM2_MAX_THING_TYPES; i++) {
-        world->thing_pool_counts[i] = dm2_rd16le((const uint8_t *)&hdr->thing_count[i]);
-    }
-}
-
 /* ── Public API implementation ──────────────────────────────────────── */
 
 dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
@@ -206,7 +145,8 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
 
     {
         DM2_V1_DungeonData loaded;
-        if (dm2_v1_dungeon_load(&loaded, decoded, (int)decoded_size) == 0) {
+        if (dm2_v1_dungeon_load(&loaded, decoded, (int)decoded_size) == 0 &&
+            loaded.square_bytes == 1) {
             int mc = loaded.level_count;
             int tiles_complete = 1;
             if (mc > DM2_MAX_LEVELS) mc = DM2_MAX_LEVELS;
@@ -294,6 +234,18 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
         }
     }
 
+    /* SKProject READ_DUNGEON_STRUCTURE owns the PC G1 byte-square layout.
+     * The code below used to infer a 16-bit map descriptor/pool layout after
+     * the source loader rejected the input.  That can turn arbitrary bytes
+     * into a playable-looking world, so it is not a legitimate fallback.
+     * Retain only the decoded G1 route above. */
+    if (world->raw_decompressed) {
+        free(world->raw_decompressed);
+    }
+    free(world);
+    return NULL;
+
+#if 0
     dm2_parse_header((const dm2_dungeon_header_t *)decoded, world);
     decoded      += DM2_DUNGEON_HEADER_SIZE;
     decoded_size -= DM2_DUNGEON_HEADER_SIZE;
@@ -384,6 +336,7 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
     }
 
     return world;
+#endif
 }
 
 dm2_dungeon_world_t *dm2_world_from_file(const char *path) {

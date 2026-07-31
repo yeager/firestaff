@@ -47267,3 +47267,23 @@ the supplied root and selected MD5 to prove this without shipping game data.
   structured save/resume receipt test had an unrelated failure. The corrected
   fixture-scoped linkage now passes `325/325`; HUD rendering remains blocked
   until a real Track 02 widget bank is decoded.
+
+- ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
+  offsets and the 216-entry DMWeb TABL code table are parsed from the real
+  retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy
+  heuristic ASCII/Shift-JIS scraper plus unauthenticated S2D text/glyph
+  layout wrappers are excluded from `firestaff_nexus`; they remain available
+  only to explicit diagnostic probes. No glyph, palette, menu, HUD or Saturn
+  VDP1/VDP2 presentation is promoted by this change.
+- ✅ 2026-07-31 DM2 SHOP_GLASS panel isolation: removed the remaining
+  host-authored shop rectangle, English labels and empty-inventory fallback
+  from the production shop module. Its render contract now clears the output
+  and returns no-draw until the source-owned `WALL_GFX`/DB actuator chain is
+  decoded. Verification: production link, shop admission regression and an
+  executable-string check for the retired panel text.
+- ✅ 2026-07-31 DM2 world/object fallback isolation: removed the inferred
+  16-bit world builder and sequential thing-pool parser from the live path.
+  `dm2_world_from_mem()` now requires the PC G1 byte-square loader, and the
+  object model returns no records when the validated c_record chain is not
+  available. Verification: complete production `firestaff` link and no
+  compiler warnings in either changed DM2 source.

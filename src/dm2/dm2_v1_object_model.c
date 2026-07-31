@@ -348,13 +348,7 @@ int dm2_v1_object_model_load(DM2_ObjectModel *model,
                              const uint8_t *dungeon_raw,
                              int dungeon_size,
                              int level) {
-    dm2_dungeon_world_t *world;
     int loader_result;
-    int total_things = 0;  /* aggregate count; rec_count is the canonical return value */
-    DM2_ObjectRecord *recs;
-    int rec_cap = 256;
-    int rec_count = 0;
-    (void)total_things;
 
     if (!model || !dungeon_raw || dungeon_size <= 0) return -1;
     memset(model, 0, sizeof(*model));
@@ -368,6 +362,19 @@ int dm2_v1_object_model_load(DM2_ObjectModel *model,
     if (loader_result <= 0)
         return loader_result;
 
+    /* The remaining code is an older inferred sequential-pool parser.  DM2
+     * records are owned by SKProject's G1 c_record links, not by a guessed
+     * post-tile byte range.  Do not promote legacy fixtures or arbitrary data
+     * to object records when the source-shaped loader has no complete owner. */
+    return 0;
+
+#if 0
+    dm2_dungeon_world_t *world;
+    int total_things = 0;  /* aggregate count; rec_count is the canonical return value */
+    DM2_ObjectRecord *recs;
+    int rec_cap = 256;
+    int rec_count = 0;
+    (void)total_things;
     /* Build a temporary world model to get thing pool locations */
     world = dm2_world_from_mem(dungeon_raw, (size_t) dungeon_size);
     if (!world) return -1;
@@ -457,6 +464,7 @@ int dm2_v1_object_model_load(DM2_ObjectModel *model,
     model->objects = recs;
     model->object_count = rec_count;
     return 0;
+#endif
 }
 
 /*
