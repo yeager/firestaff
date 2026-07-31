@@ -47278,3 +47278,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `theron_vp_tile_for_square()` now returns no tile until a real Track 02
   mapping is bound. The inferred table is compiled only into the explicit
   viewport fixture probe; verification passes `50/50` and rendering `25/25`.
+
+- ✅ 2026-07-31 Nexus startup text fail-closed gate: the real RLOWFIX.BIN
+  TEXT index 4 (15 menu records) is admitted as raw bounded data, while
+  production launcher wrappers remove legacy hardcoded English `DRAW_TEXT`
+  commands from normal and asset-blocked presentation. Navigation, portraits
+  and authenticated startup surfaces remain available; visible text waits for
+  a verified TEXT4/TABL/FONT256/VDP2 handoff.

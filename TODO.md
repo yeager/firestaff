@@ -1180,6 +1180,11 @@ diagnostic; it must not silently fall back to a generated visual.
   The remaining gap is Saturn pixel/mode interpretation plus authenticated
   palette/VDP1 placement; the renderer therefore does not display guessed
   menu pixels.
+- **NEXUS-STARTUP-TEXT-REAL-DATA:** RLOWFIX.BIN TEXT index 4 is verified as
+  the 15-entry menu-options resource, and PLRD/ITEM text references are
+  retained. The launcher filters legacy hardcoded English labels from
+  production presentation. Bind TEXT4 control bytes through the real TABL /
+  FONT256.S2D / Saturn VDP2 path before allowing visible menu text.
 - **ALL-ORIGINAL-REPLACE-001:** Audit startup, title, entrance, HUD and
   dungeon runtime paths for placeholder pixels on every supported game before
   release.  Where matching original data exists under `.firestaff/data`, bind
