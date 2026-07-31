@@ -1,3 +1,8 @@
+- ✅ 2026-07-31 Theron HUD-katalog: tog bort den döda UI-chrome-hjälparen
+  som innehöll overifierade dungeonetiketter (`Catacombs`, `Caverns`,
+  `Castle`, `Tower`, `Temple`, `Final Dungeon`). HUD-kompositorn fortsätter
+  att vara no-draw tills en original Track 02/GDAT-bank är bunden.
+
 - ✅ 2026-07-31 Theron viewport-topprad: tog bort overifierade hårdkodade
   dungeonetiketter för dungeon 2–7 (`Catacombs`, `Caverns`, `Castle`,
   `Tower`, `Temple`, `Final Dungeon`). När motsvarande Track 02-header ännu

@@ -49,24 +49,6 @@ void tr_ui_draw_bar(TQR_PlanarFramebuffer *fb,
 }
 
 /* ══════════════════════════════════════════════════════════════════════
- * Dungeon name helper
- * ══════════════════════════════════════════════════════════════════════ */
-
-static __attribute__((unused)) const char *dungeon_name(int dungeon_id) {
-    static const char *const names[THERON_DUNGEON_COUNT + 1] = {
-        [1] = "Hall of Records",
-        [2] = "Catacombs",
-        [3] = "Caverns",
-        [4] = "Castle",
-        [5] = "Tower",
-        [6] = "Temple",
-        [7] = "Final Dungeon",
-    };
-    if (dungeon_id < 1 || dungeon_id > THERON_DUNGEON_COUNT) return "Unknown";
-    return names[dungeon_id] ? names[dungeon_id] : "Unknown";
-}
-
-/* ══════════════════════════════════════════════════════════════════════
  * Top bar rendering
  * ══════════════════════════════════════════════════════════════════════ */
 
