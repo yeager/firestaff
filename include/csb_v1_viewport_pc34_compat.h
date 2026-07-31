@@ -1517,12 +1517,6 @@ const CSB_V1_ViewportProjectileBlitSpec *csb_v1_viewport_get_projectile_blit_spe
 int csb_v1_viewport_projectile_blit_zone(const CSB_V1_ViewportProjectileBlitSpec *spec,
                                          unsigned char view_cell);
 int csb_v1_viewport_projectile_material_overlay_color(int material_icon_index);
-int csb_v1_viewport_draw_runtime_object_marker(
-    uint8_t *screen_pixels,
-    int screen_stride,
-    int screen_height,
-    const CSB_V1_ViewportRuntimeObjectOverlayPlacement *placement,
-    int material_icon_index);
 int csb_v1_viewport_runtime_projectile_overlay_placement(
     int party_dir,
     int party_x,

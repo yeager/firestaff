@@ -3470,29 +3470,6 @@ static void test_csb_runtime_overlay_placement_contracts(void)
     check_int("csb.runtime_object_overlay.material_row_non_c2500",
               csb_v1_viewport_runtime_object_source_zone_row(2914, 7), 7);
     memset(&object_place, 0, sizeof(object_place));
-    (void)csb_v1_viewport_runtime_object_overlay_placement(
-        1, 0, 0, &object_place);
-    {
-        uint8_t screen[320 * 200];
-        memset(screen, 0, sizeof(screen));
-        check_int("csb.runtime_object_overlay.marker.draw",
-                  csb_v1_viewport_draw_runtime_object_marker(
-                      screen, 320, 200, &object_place, 3), 1);
-        check_int("csb.runtime_object_overlay.marker.center",
-                  screen[object_place.marker_screen_y * 320 +
-                         object_place.marker_screen_x], 0x09);
-        check_int("csb.runtime_object_overlay.marker.left",
-                  screen[object_place.marker_screen_y * 320 +
-                         object_place.marker_screen_x - 1], 0x09);
-        check_int("csb.runtime_object_overlay.marker.up",
-                  screen[(object_place.marker_screen_y - 1) * 320 +
-                         object_place.marker_screen_x], 0x09);
-        check_int("csb.runtime_object_overlay.marker.bad_height",
-                  csb_v1_viewport_draw_runtime_object_marker(
-                      screen, 320, 0, &object_place, 3), 0);
-    }
-
-    memset(&object_place, 0, sizeof(object_place));
     check_true("csb.runtime_object_overlay.d2c.pile1.visible",
                csb_v1_viewport_runtime_object_overlay_pile_placement(
                    2, 0, 0, 1, &object_place) == 1);
@@ -3948,8 +3925,8 @@ static void test_csb_runtime_thing_pass_render_config(void)
     csb_v1_viewport_render_frame(&cfg, 1, 0, 0);
     check_int("csb.runtime_thing_pass.render.fallback_object_sprites",
               cfg.runtime_object_sprite_drawn_count, 0);
-    check_int("csb.runtime_thing_pass.render.fallback_object_markers",
-              cfg.runtime_object_marker_drawn_count, 2);
+    check_int("csb.runtime_thing_pass.render.unbound_object_no_draw",
+              cfg.runtime_object_marker_drawn_count, 0);
     check_int("csb.runtime_thing_pass.render.fallback_group_sprites",
               cfg.runtime_group_sprite_drawn_count, 0);
     check_int("csb.runtime_thing_pass.render.unbound_group_no_draw",

@@ -45838,6 +45838,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   separately and does not claim unobserved coverage. Reference: ReDMCSB
   `LOADSAVE.C F0419/F0420/F0433/F0435` and DMweb Saved Game Files.
 
+- ✅ 2026-07-31 CSB object-marker fallback removal: removed the public
+  object-colour cross renderer and all unbound object fallback branches.
+  ReDMCSB `DUNVIEW.C F0115` projects native object material; a missing sprite
+  or icon callback now leaves the source page intact.
+
 - ✅ 2026-07-31 CSB group-marker fallback removal: removed the public
   creature-colour cross renderer and its data-free fallback branch. ReDMCSB
   `DUNVIEW.C F0115` requires the perspective-selected creature graphic; if
