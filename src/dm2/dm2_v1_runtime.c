@@ -9326,19 +9326,6 @@ int dm2_v1_runtime_get_projectile_actuator_count(void) {
     return g_dm2_runtime.projectile_actuator_count;
 }
 
-static void dm2_runtime_record_actuator(DM2_V1_RuntimeState *rt,
-                                        int level,
-                                        int x,
-                                        int y,
-                                        DM2_ActuatorType type) {
-    if (!rt) return;
-    rt->last_actuator_type = (int)type;
-    rt->last_actuator_x = x;
-    rt->last_actuator_y = y;
-    rt->last_actuator_level = level;
-    rt->actuator_count++;
-}
-
 typedef struct {
     int actuator_type;
     uint16_t flag;
@@ -9374,63 +9361,20 @@ static int dm2_runtime_decode_square_actuator(
 
 int dm2_v1_runtime_invoke_actuator(int level, int x, int y,
                                    DM2_ActuatorType type, uint16_t flag) {
-    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-
-    if (dm2_v1_runtime_get_square_type(level, x, y) < 0) return -1;
-    dm2_runtime_record_actuator(rt, level, x, y, type);
-    if (type == DM2_ACTUATOR_SHOP_PANEL) {
-        return dm2_v1_runtime_enter_shop(level, x, y);
-    }
-    if (type == DM2_ACTUATOR_PUSH_BUTTON_WALL_SWITCH ||
-        type == DM2_ACTUATOR_WALL_SWITCH ||
-        type == DM2_ACTUATOR_2_STATE_WALL_SWITCH ||
-        type == DM2_ACTUATOR_DM1_WALL_SWITCH) {
-        return 0;
-    }
-    if (type == DM2_ACTUATOR_CREATURE_GENERATOR) {
-        /* DM2_INVOKE_ACTUATOR/ALLOC_NEW_CREATURE consumes the DB14 record
-         * that owns creature type, multiplier, direction and timer state.
-         * A decoded type flag (and especially a Dragoth default) is not that
-         * record, so it must not manufacture a live creature. */
-        (void)flag;
-        return -1;
-    }
-    if (type == DM2_ACTUATOR_ITEM_GENERATOR ||
-        type == DM2_ACTUATOR_ITEM_CAPTURE ||
-        type == DM2_ACTUATOR_ITEM_RECYCLER ||
-        type == DM2_ACTUATOR_FLYING_ITEM_CATCHER ||
-        type == DM2_ACTUATOR_FLYING_ITEM_TELEPORTER) {
-        /* Source item generators allocate a concrete DB record and carry its
-         * ownership through the target/timer chain. A bare flag cannot stand
-         * in for that record; reject rather than publishing a synthetic ID. */
-        (void)flag;
-        return -1;
-    }
-    if (type == DM2_ACTUATOR_MISSILE_SHOOTER ||
-        type == DM2_ACTUATOR_WEAPON_SHOOTER ||
-        type == DM2_ACTUATOR_ITEM_SHOOTER) {
-        /* The decoded actuator exposes neither the source DB14 owner nor its
-         * direction, attack and energy fields.  Do not replace those bytes
-         * with an arrow/fireball/bomb default or the party view direction.
-         *
-         * Source: SKWINSPX/src/v5/c_tim_proc.cpp::DM2_INVOKE_ACTUATOR and
-         *         ::DM2_STEP_MISSILE consume the record-owned projectile
-         *         state after the timer has been scheduled. */
-        (void)flag;
-        rt->last_projectile_slot = -1;
-        return -1;
-    }
-    if (type == DM2_ACTUATOR_CROSS_MAP ||
-        type == DM2_ACTUATOR_RELAY_1 ||
-        type == DM2_ACTUATOR_RELAY_2 ||
-        type == DM2_ACTUATOR_WORK_TIMER ||
-        type == DM2_ACTUATOR_TICK_GENERATOR ||
-        type == DM2_ACTUATOR_COUNTER ||
-        type == DM2_ACTUATOR_ARRIVAL_DEPARTURE ||
-        type == DM2_ACTUATOR_SWITCH_SIGN_FOR_CREATURE) {
-        return 0;
-    }
-    return 0;
+    (void)level;
+    (void)x;
+    (void)y;
+    (void)type;
+    (void)flag;
+    /* DM2_INVOKE_ACTUATOR reads the live DB3/DB14 record and passes its
+     * links, payload, direction and timer state to the particular effect.
+     * This compatibility entry receives only a coordinate, taxonomy byte and
+     * flag, so even a seemingly harmless wall switch or relay would be a
+     * Firestaff-created state transition. Reject every generic call until a
+     * record-specific source handoff reaches the runtime.
+     * Source: SKWINSPX/src/v5/c_tim_proc.cpp::DM2_INVOKE_ACTUATOR;
+     * src/v4/skcrture.cpp::PLACE_MERCHANDISE/TAKE_MERCHANDISE. */
+    return -1;
 }
 
 int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y) {

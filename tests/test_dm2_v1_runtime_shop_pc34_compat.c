@@ -71,6 +71,10 @@ int main(void)
               dm2_v1_runtime_get_last_npc_dialog_line() < 0,
           "coordinate-only NPC interaction cannot invent merchant dialog or reputation");
     CHECK(dm2_v1_runtime_invoke_actuator(
+              0, 10, 5, DM2_ACTUATOR_PUSH_BUTTON_WALL_SWITCH, 0u) < 0 &&
+              dm2_v1_runtime_get_actuator_count() == 0,
+          "generic wall-switch input cannot invent a DB3 actuator transition");
+    CHECK(dm2_v1_runtime_invoke_actuator(
               0, 10, 5, DM2_ACTUATOR_CREATURE_GENERATOR,
               DM2_AI_DRAGOTH_MINION) < 0 &&
               dm2_v1_runtime_get_spawn_count() == 0,

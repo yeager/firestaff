@@ -80,6 +80,11 @@
   ownership from `DM2_INVOKE_ACTUATOR` before any generator can create an
   object or creature from original records.
 
+- **DM2-ACTUATOR-RECORD-HANDOFF:** The generic type/coordinate/flag actuator
+  entry is closed. Port `DM2_INVOKE_ACTUATOR` with the live DB3/DB14 record,
+  its links, target, direction, payload and timer handoff before enabling
+  switches, relays, counters, teleports, shooters or resurrection.
+
 - **DM2-SHOP-GLASS-OWNER-HANDOFF:** The fixed-coordinate catalog path is
   closed. SKProject `DRAW_WALL_ORNATE` passes the live wall actuator into
   `_32cb_0f82_SHOP_GLASS`, which resolves the shop through the active

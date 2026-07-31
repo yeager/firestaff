@@ -30,6 +30,12 @@
   produce a source-owned viewport. Verification: `test_dm2_v1_c_light_receipt`
   passes 26/26 and `test_dm2_v1_lighting_falloff_boundary` passes 162/162.
 
+- ✅ 2026-07-31 DM2 generic-actuator closure: an actuator taxonomy byte,
+  coordinate and flag can no longer create a wall-switch, relay, counter or
+  other state transition. Original `DM2_INVOKE_ACTUATOR` requires the live
+  DB3/DB14 record and timer chain. Verification:
+  `test_dm2_v1_runtime_shop_pc34_compat` passes 11/11.
+
 - ✅ 2026-07-31 DM2 generator-default closure: creature and item generator
   actuators now reject bare flags instead of spawning a default Dragoth or
   publishing a synthetic item ID. Source DB14/record ownership is required
