@@ -170,7 +170,7 @@ Alla primära Nexus-assets finns i `/Users/bosse/.firestaff/data/nexus`.
 Återstående gap gäller alltså inte assetförekomst utan byte-/pixelsemantik och
 verifierad runtime-bindning.
 
-1. Bind de fem verifierade `TITLE.BIN`/`TITLE.CG`-bilderna till korrekt uppstartsroute utan obevisad 320×200-cropping.
+1. Bind de fem verifierade `TITLE.BIN`/`TITLE.CG`-bilderna till korrekt uppstartsroute utan obevisad 320×200-cropping. `test_nexus_v1_title_mapd_real` verifierar nu retailens fem MAPD/TIBG-kartor, tilepixlar och paletteord; endast displayplaceringen återstår.
 2. Bevisa `MENU.BPK`-ytornas Saturn-placering, palettbindning och betydelse i menyn.
 3. Bevisa Saturns VDP1/VDP2-placering för den nu verifierade `STABG.BIN`-dekodningen och bind HUD-ytan till verifierat runtime-state.
 
