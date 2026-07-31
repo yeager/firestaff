@@ -475,6 +475,8 @@ diagnostic; it must not silently fall back to a generated visual.
   directly. **2026-07-31 material-plan follow-up:** this plan now binds the
   selected floor, ceiling, C232 palette item and all thirteen source-backed
   wall commands before M11 decodes any pixel; F0 remains deliberately absent.
+  The optional Atari real-data regression covers all 16 floor-set × 16
+  wall-set selections and rejects a PC-index substitution.
   The remaining bridge must translate that Atari plan into the same
   source-owned F0128 command contract with its own graphic index, projection
   and palette receipt; it must not reuse PC3.4 indices or add a post-draw

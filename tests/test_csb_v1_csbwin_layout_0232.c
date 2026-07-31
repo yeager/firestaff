@@ -447,13 +447,49 @@ static void check_wall_projection_blit(
 static void check_real_viewport_wall_plan(const char *path)
 {
     CSB_V1_CSBWinViewportLayout022e layout;
+    CSB_V1_CSBWinViewportMaterialPlan material_plan;
+    unsigned int floor_set;
     unsigned int wall_set;
 
     if (!path || !path[0]) return;
     CHECK(csb_v1_csbwin_viewport_layout_022e_read_graphics_dat(path, &layout));
     if (!layout.valid) return;
-    for (wall_set = 0u; wall_set < 4u; ++wall_set) {
+    /* ReadGraphicsForLevel accepts all sixteen native set selectors. Test the
+     * receipt at that breadth against an operator-owned 563-entry archive so
+     * M11 can never quietly fall back to the old PC3.4 wall-index domain. */
+    for (wall_set = 0u; wall_set < 16u; ++wall_set) {
         check_viewport_wall_plan(&layout, (uint16_t)wall_set);
+        for (floor_set = 0u; floor_set < 16u; ++floor_set) {
+            size_t command_index;
+
+            memset(&material_plan, 0, sizeof(material_plan));
+            CHECK(csb_v1_csbwin_viewport_build_f0128_material_plan(
+                (uint16_t)floor_set, (uint16_t)wall_set, &layout,
+                &material_plan));
+            CHECK(material_plan.valid &&
+                  material_plan.floor_graphic_index == 75u + floor_set * 2u &&
+                  material_plan.ceiling_graphic_index == 76u + floor_set * 2u &&
+                  material_plan.palette_graphic_index == 0x232u &&
+                  material_plan.wall_command_count ==
+                      CSB_V1_CSBWIN_VIEWPORT_WALL_DRAW_COUNT &&
+                  material_plan.plan_hash != 0u);
+            for (command_index = 0u;
+                 command_index < material_plan.wall_command_count;
+                 ++command_index) {
+                const CSB_V1_CSBWinViewportMaterialCommand *command =
+                    &material_plan.wall_commands[command_index];
+                uint16_t graphic_index = 0u;
+                int mirrored = 0;
+
+                CHECK(command->wall != CSB_V1_CSBWIN_VIEWPORT_WALL_F0 &&
+                      csb_v1_csbwin_viewport_wall_source(
+                          (uint16_t)wall_set, command->wall, &graphic_index,
+                          &mirrored) && command->graphic_index == graphic_index &&
+                      command->mirrored == mirrored &&
+                      csb_v1_csbwin_viewport_projection_rectangle_is_valid(
+                          &command->projection));
+            }
+        }
     }
 }
 

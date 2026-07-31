@@ -1,3 +1,12 @@
+- ✅ 2026-07-31 CSB Atari F0128-materialplans breddtest: den valfria
+  realdatavägen för ett användarägt Atari/CSBWin-`GRAPHICS.DAT` kontrollerar
+  nu samtliga 16 golvset och 16 väggset. Varje plan måste behålla sina
+  ursprungliga golv-, tak- och C232-index samt alla 13 TAG0088b2-väggkällor,
+  speglingar och projektioner. Därmed kan ingen PC3.4-indexdomän bli en
+  tyst ersättning i Atari-vägen. Verifiering:
+  `test_csb_v1_csbwin_layout_0232` passerar, och kör samma kontroll när
+  `FIRESTAFF_CSBWIN_GRAPHICS_DAT` pekar på en verifierad 563-posters fil.
+
 - ✅ 2026-07-31 CSB Atari F0128-materialplan: valet av Atari/CSBWin-sidans
   golv, tak och 13 `pWallBitmaps` ligger nu i den källägda
   `CSB_V1_CSBWinViewportMaterialPlan`, inte i M11:s värdkod. Planen binder
