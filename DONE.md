@@ -47279,9 +47279,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   mapping is bound. The inferred table is compiled only into the explicit
   viewport fixture probe; verification passes `50/50` and rendering `25/25`.
 
-- ✅ 2026-07-31 Nexus startup text fail-closed gate: the real RLOWFIX.BIN
-  TEXT index 4 (15 menu records) is admitted as raw bounded data, while
-  production launcher wrappers remove legacy hardcoded English `DRAW_TEXT`
-  commands from normal and asset-blocked presentation. Navigation, portraits
-  and authenticated startup surfaces remain available; visible text waits for
-  a verified TEXT4/TABL/FONT256/VDP2 handoff.
+- ✅ 2026-07-31 Theron menu portrait/class gate: decoded roster names no
+  longer authorize inferred mirror-table portrait indices or classes in
+  production. Those fields remain unavailable until their source records are
+  decoded; fixture metadata is compile-scoped to the startup probe.

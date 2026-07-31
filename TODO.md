@@ -3,8 +3,8 @@
 - **THERON-V1-UI-CHROME-REAL-DATA:** The inferred bar/text/champion-slot
   implementation is now fixture-only. Production exposes a no-op API until
   the original Track 02 UI chrome bank and font records are decoded. The
-  startup menu also withholds fixture portrait/class metadata when no decoded
-  roster name is present.
+  startup menu also withholds fixture portrait/class metadata; decoded names
+  alone do not authorize inferred portraits or classes.
 
 - **THERON-V1-VIEWPORT-REAL-DATA:** The initial 32×27 Track 02 grid is now
   byte-faithful but its square values have no proven tile/material meaning.

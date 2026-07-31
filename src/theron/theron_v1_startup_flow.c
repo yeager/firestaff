@@ -1132,8 +1132,6 @@ int theron_v1_startup_layout_build(
     for (i = 0;
          i < THERON_STARTUP_HERO_MIRROR_COUNT && count < max_elements;
          ++i) {
-        const Theron_StartupMirrorMeta *meta =
-            theron_v1_startup_mirror_meta(i);
         const char *decoded_name =
             tqr_startup_layout_roster_name(state, i);
         const char *decoded_title =
@@ -1158,8 +1156,12 @@ int theron_v1_startup_layout_build(
                      sizeof(elements[count].decoded_name),
                      "%s",
                      decoded_name);
-            elements[count].portrait_index = meta ? meta->portrait_index : -1;
+#if defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
+        const Theron_StartupMirrorMeta *meta =
+            theron_v1_startup_mirror_meta(i);
+        elements[count].portrait_index = meta ? meta->portrait_index : -1;
             elements[count].primary_class = meta ? (int)meta->primary_class : -1;
+#endif
         }
         if (decoded_title && decoded_title[0]) {
             snprintf(elements[count].decoded_title,
