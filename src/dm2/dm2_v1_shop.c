@@ -47,6 +47,11 @@
  * Source: skproject/SKULLWIN/c_shop.cpp shop_descriptor_table.
  * Prices are base gold values; effective price is scaled by negotiator.
  */
+/* Retired fixture catalog: its locations, stock, prices and dialog were
+ * authored by Firestaff rather than decoded from the original record chain.
+ * Keep it private only so older ABI-facing structs retain their layout; it
+ * must never be exposed or drive a transaction.  SKProject's SHOP_GLASS
+ * actuator consumes live WALL_GFX/dt08 ownership instead. */
 static const DM2_V1_ShopDescriptor g_builtin_shops[DM2_NUM_BUILTIN_SHOPS] = {
     /* Shop 1: General Store (Friendly merchant, food + torches + basic) */
     {
@@ -167,6 +172,11 @@ static const struct {
 /* ── Module state ─────────────────────────────────────────────────── */
 static DM2_V1_ShopState s_state;
 static int s_initialized = 0;
+
+static int dm2_v1_shop_source_catalog_available(void) {
+    /* No original shop actuator/stock chain has been imported yet. */
+    return 0;
+}
 
 static void ensure_init(void) {
     if (s_initialized) return;
@@ -362,10 +372,11 @@ int dm2_v1_shop_add_container(int item_id, int qty, int contents_count) {
 
 /* ── Catalog ────────────────────────────────────────────────────── */
 int dm2_v1_shop_get_builtin_count(void) {
-    return DM2_NUM_BUILTIN_SHOPS;
+    return 0;
 }
 
 const DM2_V1_ShopDescriptor *dm2_v1_shop_get_builtin(int shop_id) {
+    if (!dm2_v1_shop_source_catalog_available()) return NULL;
     for (int i = 0; i < DM2_NUM_BUILTIN_SHOPS; i++) {
         if (g_builtin_shops[i].shop_id == shop_id) {
             return &g_builtin_shops[i];
@@ -375,6 +386,7 @@ const DM2_V1_ShopDescriptor *dm2_v1_shop_get_builtin(int shop_id) {
 }
 
 int dm2_v1_shop_lookup_index(int shop_id) {
+    if (!dm2_v1_shop_source_catalog_available()) return -1;
     for (int i = 0; i < DM2_NUM_BUILTIN_SHOPS; i++) {
         if (g_builtin_shops[i].shop_id == shop_id) return i;
     }
@@ -580,18 +592,20 @@ int dm2_v1_shop_get_sell_price(int shop_id, int inv_idx) {
 
 /* ── NPC dialog ─────────────────────────────────────────────────── */
 const char *dm2_v1_npc_get_name(int npc_id) {
+    if (!dm2_v1_shop_source_catalog_available()) return NULL;
     if (npc_id < 1 || npc_id > DM2_NUM_NPCS) return NULL;
     return g_npc_table[npc_id - 1].name;
 }
 
 const char *dm2_v1_npc_get_dialog(int npc_id, int line_idx) {
+    if (!dm2_v1_shop_source_catalog_available()) return NULL;
     if (npc_id < 1 || npc_id > DM2_NUM_NPCS) return NULL;
     if (line_idx < 0 || line_idx >= DM2_NPC_DIALOG_LINES) return NULL;
     return g_npc_table[npc_id - 1].lines[line_idx];
 }
 
 int dm2_v1_npc_get_count(void) {
-    return DM2_NUM_NPCS;
+    return 0;
 }
 
 int dm2_v1_shop_build_panel_render(int selected_stock_idx,
@@ -722,22 +736,7 @@ int dm2_v1_shop_leave_count(void) { ensure_init(); return s_state.leave_count; }
 
 const char *dm2_v1_shop_source_evidence(void) {
     return
-        "DM2 V1 Shop + NPC parity - Phase 4 source-lock\n"
-        "Source: skproject/SKULLWIN/c_shop.cpp           (shop panel + transactions)\n"
-        "Source: skproject/SKULLWIN/c_npc.cpp            (NPC dialog + personality)\n"
-        "Source: skproject/SKULLWIN/SKWinGlobal.h:42     (NUM_NPCS=4)\n"
-        "Source: skproject/SKWIN/DME.h:1505-1560         (shop_descriptor_t)\n"
-        "Source: skproject/SKWIN/SkGlobal.cpp:966-1011   (dSpellsTable + shop tables)\n"
-        "Source: ReDMCSB docs/dm2_sensors.md             (SHOP sensor 0x30)\n"
-        "Source: ReDMCSB docs/dm2_actuators.md           (SHOP_PANEL actuator 0x3F)\n"
-        "Source: docs/dm2_inventory.md                   (shop inventory + stacking)\n"
-        "Source: docs/dm2_inventory.md §5                (container restrictions)\n"
-        "Source: docs/dm2_inventory.md §10               (sell price = 50% buy price)\n"
-        "DM2 difference: DM2 has in-dungeon shops + 4 NPCs; DM1 has none.\n"
-        "Price formula: buy = base * (100 - negotiator) / 100; sell = base / 2.\n"
-        "V1 invariant: shop leave preserves inventory + gold state (party_state_hash).\n"
-        "V1 mutable stock: active stock copied from catalog on enter; buy decrements\n"
-        "finite stock, sell adds a buy-back stack.\n"
-        "V1 stack limits: potions/flasks 12, food/light 20, ammo 12, equipment 1.\n"
-        "V1 container rule: non-empty containers cannot be sold.\n";
+        "Source: SKProject SKULLWIN/c_shop.cpp SHOP_GLASS actuator path\n"
+        "Admission: original actuator, WALL_GFX and dt08 stock ownership is not imported;\n"
+        "           legacy fixture shops, prices, NPC names and dialog are unavailable.\n";
 }

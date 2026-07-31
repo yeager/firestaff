@@ -155,6 +155,10 @@
   `WALL_GFX` GDAT image/overlay chain. Bind those record and asset owners,
   then port its transaction state; do not reopen a general-store catalog,
   NPC text, stock or price table from coordinates.
+  **2026-07-31 update:** the remaining five-shop fixture catalog and all
+  four host-authored NPC dialog tables are disabled too. Until the original
+  actuator, `WALL_GFX` and `dt08` ownership is decoded, no shop API can
+  expose stock, prices, names, dialog or mutate party state.
 
 - **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
   Bind any future enhanced art only through verified original V1 GDAT material

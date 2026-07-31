@@ -45469,3 +45469,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `skevent.cpp::INVOKE_ACTUATOR` / `INVOKE_MESSAGE`. Verification:
   `test_dm2_v1_trigger_pc34_compat` and real-data
   `test_dm2_v1_m11_startup_profile_gate`.
+
+- ✅ 2026-07-31 DM2 shop-fixture closure: disabled the five hard-coded shop
+  locations, stock lists, prices and the four host-authored merchant names
+  and dialog tables. A shop cannot enter, buy, sell or alter party state
+  until original SHOP_GLASS actuator, WALL_GFX and dt08 ownership is
+  imported. Source: SKProject `c_shop.cpp` SHOP_GLASS path. Verification:
+  `test_dm2_v1_shop_pc34_compat`, both shop probes, runtime shop provenance
+  test, and real-data `test_dm2_v1_m11_startup_profile_gate`.

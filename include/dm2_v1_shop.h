@@ -46,12 +46,12 @@ extern "C" {
 /* ── Constants ───────────────────────────────────────────────────── */
 #define DM2_SHOP_MAX_STOCK        8     /* items per shop */
 #define DM2_NUM_NPCS              4     /* DM2 has 4 NPC personalities */
-#define DM2_NUM_BUILTIN_SHOPS     5     /* built-in shop count */
+#define DM2_NUM_BUILTIN_SHOPS     5     /* retired fixture capacity; never live */
 #define DM2_NPC_DIALOG_LINES      6     /* dialog lines per NPC */
 #define DM2_SHOP_RENDER_MAX_ROWS  8
 #define DM2_SHOP_RENDER_TEXT_MAX  72
 
-/* Shop IDs (built-in catalog) */
+/* Legacy fixture IDs.  Real shops are identified by decoded actuator data. */
 #define DM2_SHOP_ID_NONE          0
 #define DM2_SHOP_ID_GENERAL       1     /* Town General Store */
 #define DM2_SHOP_ID_WEAPONS       2     /* Weapons Master */
