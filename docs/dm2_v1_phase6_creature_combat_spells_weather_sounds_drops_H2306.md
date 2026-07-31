@@ -622,7 +622,10 @@ Sound resolution: `DM2_QUERY_SND_ENTRY_INDEX(cat, idx, sfx)` → entry index →
 
 ### 7.4 Music System
 
-Music: 28 HMP tracks (`DATA/00.hmp.mid` through `DATA/1c.hmp.mid`). Track selection: `tMusicMaps[64]` maps dungeon map to track. Music folders match dungeon variants (DATA_DM2_DM, DATA_DM2_SK, etc.).
+Music: 29 original HMP streams (`00`--`1c`) in `GRAPHICS.DAT` GDAT
+`MUSICS/<track>/dtHMP/0`. The first 44 bytes of the original 63-byte
+`SONGLIST.DAT` map dungeon maps to tracks. `DATA/*.hmp.mid` folders are
+SKWIN converted-MIDI references, not Firestaff runtime material.
 
 ### 7.5 Comparison: DM1 vs DM2 Sound
 
@@ -631,7 +634,7 @@ Music: 28 HMP tracks (`DATA/00.hmp.mid` through `DATA/1c.hmp.mid`). Track select
 | Audio API | AdLib FM + PC Speaker | SoundBlaster-compatible |
 | Music format | AdLib instruments | HMP/MIDI (Windows) |
 | SFX channels | 3–4 voices | 16-slot ring buffer (SKWin) |
-| Music tracks | ~10 | 28 tracks (00–1c) |
+| Music tracks | ~10 | 29 tracks (00–1c) |
 | 3D positioning | None | World-coordinate queue with distance attenuation |
 | Bomb explosion | None | Yes (SOUND_STD_EXPLOSION 0x81) |
 | Weather ambient | None | Yes (glbXAmbientSoundActivated) |

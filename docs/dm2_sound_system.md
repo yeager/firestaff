@@ -24,7 +24,7 @@ SKULLWIN/c_sfx.h/cpp    — Sound effect management
 SKWIN/SkWinMIDI.h/cpp   — Windows MIDI stream renderer
 SKWIN/SkwinSDL.h/cpp    — SDL audio backend for SKWin
 SKWIN/defines.h         — SOUND_* constants
-SKWIN/data/             — Music files 00.hmp.mid through 1c.hmp.mid
+SKWIN/data/             — port-side converted MIDI reference files
 
 ## Audio Backend — DOS vs SKWin
 
@@ -64,11 +64,11 @@ DM2_QUERY_SND_ENTRY_INDEX(cat, idx, sfx) — resolve GDAT sound entry to index
 
 ## Music System
 
-### HMP Format
-- Files: DATA/00.hmp.mid through DATA/1c.hmp.mid (28 tracks)
-- HMP = HMIDI playlist format, parsed by SkWinMIDI.cpp
-- Windows MIDI stream API (midiStreamOpen, midiStreamOut)
-- Track selection table: tMusicMaps[64] — maps dungeon map to track
+### Original HMP format
+- 29 `HMIMIDIP013195` streams: `GRAPHICS.DAT` GDAT `MUSICS/<track>/dtHMP/0`
+- PC `SONGLIST.DAT` supplies the first 44 map-to-track selectors
+- `SkWinMIDI.cpp` parses converted Standard MIDI sidecars, not original HMP
+- Firestaff rejects playback until a direct original-HMP decoder is ready
 
 ### Music Folder per Variant
 SkWinMIDI_MIDI_LOOP() branches on dungeon variant:
@@ -102,5 +102,5 @@ Audio API       | AdLib FM + PC Spk | SoundBlaster-compatible
 Music format    | AdLib instruments | HMP/MIDI (Windows)
 Sound IDs       | Limited fixed set | 64-entry GDAT lookup
 SFX channels    | 3-4 voices        | 16-slot ring buffer (SKWin)
-Music tracks    | ~10               | 28 tracks (00-1c)
+Music tracks    | ~10               | 29 tracks (00-1c)
 3D positioning  | None              | Distance-based attenuation

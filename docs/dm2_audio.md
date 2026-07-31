@@ -2,7 +2,7 @@
 
 ## Overview
 
-DM2's audio system handles both music and sound effects through an abstracted layer (`c_sound` / `c_midi` / `c_sfx`) that supports multiple backends. Music was originally HMP/MIDI format; the Firestaff SDL port adds WAV/OGG playback as a replacement. Sound effects use a GDAT-based lookup system with per-category sound IDs.
+DM2's audio system handles both music and sound effects through an abstracted layer (`c_sound` / `c_midi` / `c_sfx`). Original PC music is HMI HMP data embedded in `GRAPHICS.DAT`; Firestaff does not replace it with port-side WAV/OGG files. Sound effects use a GDAT-based lookup system with per-category sound IDs.
 
 ## Architecture
 
@@ -15,7 +15,7 @@ DM2's audio system handles both music and sound effects through an abstracted la
   - `stop_music()` — stop current music
   - `set_midi_volume(i16 wv)` — volume control
 - `c_sfx` — sound effect system
-- `c_music_wav` — WAV/OGG music loader (Firestaff SDL addition)
+- `c_music_wav` — WAV/OGG music loader in the SKULLWIN port only
   - `do_music_wav(i16 nr)` — play `./DATA/sk%02d.ogg` looped
   - `do_music_stop()` — stop all samples via `al_stop_samples()`
 
@@ -33,17 +33,17 @@ DM2's audio system handles both music and sound effects through an abstracted la
 - Music stored as HMP (HMIDI) format, played via `do_music(songnr)`
 - `dm2sound.v1dd1d1` — master volume (default 90)
 
-### Firestaff SDL Port (WAV/OGG)
+### SKULLWIN port-side WAV/OGG alternative
 - `do_music_wav(i16 nr)` loads `DATA/sk%02d.ogg` (e.g., sk00.ogg, sk01.ogg)
 - Looped via `ALLEGRO_PLAYMODE_LOOP`
 - `do_music_stop()` stops all samples
-- Files expected in `DATA/` directory relative to executable
+- These files are not original PC inputs and are not a Firestaff fallback.
 
 ### Music vs DM1
 - DM1: simple PC speaker / AdLib music
 - DM2: MIDI/HMP with track numbers, separate GDAT music category
 - DM2 supports force-play flag (`bForceMusic`)
-- Firestaff SDL port replaces MIDI with OGG (same track numbering)
+- Firestaff binds original GDAT HMP; unavailable decoding remains fail-closed.
 
 ## Sound Effects
 

@@ -53,9 +53,9 @@ static const char *const g_creature_sound_names[] = {
 };
 
 /* ── Music track names ─────────────────────────────────────────────────────
- * Source: docs/dm2_audio.md (tMusicMaps[64], 28 HMP tracks 00-1c.hex)
- * Track names are dungeon-theme based. Firestaff SDL port uses sk%02d.ogg.
- * DM2 PC English music folders: DATA_DM2_DM, DATA_DM2_SK, etc. */
+ * Source: original PC GRAPHICS.DAT GDAT MUSICS/dtHMP (29 tracks 00-1c.hex)
+ * and SONGLIST.DAT map selectors.  Port-side converted MIDI/OGG files are
+ * reference material only and must not become a Firestaff runtime source. */
 
 static const char *const g_music_track_names[DM2_MUSIC_TRACK_COUNT] = {
     /* clang-format off */

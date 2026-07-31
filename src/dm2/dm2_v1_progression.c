@@ -51,7 +51,7 @@ const DM2_ProgressionConstant g_progression_constants[] = {
     { "MAX_ATTACK_RANGE",       255, 255, "Both: same max" },
 
     /* Sound */
-    { "MUSIC_TRACK_COUNT",      28,  10,  "DM2: 28 HMP tracks, DM1: ~10" },
+    { "MUSIC_TRACK_COUNT",      29,  10,  "DM2: 29 original GDAT HMP tracks, DM1: ~10" },
     { "SFX_VOICES",             16,  4,   "DM2: 16-slot ring buffer, DM1: 3-4" },
 };
 

@@ -5,8 +5,9 @@
 DM2 uses MIDI/HMP music playback, a significant step up from DM1 CSB's
 AdLib FM synthesis approach. The original DOS version uses Allegro4's
 MIDI subsystem; the SKWin Windows port uses the native Windows MIDI API
-via midiStreamOpen/midiStreamOut. The Firestaff SDL port adds WAV/OGG
-playback as a replacement.
+via midiStreamOpen/midiStreamOut. Those port paths use converted reference
+files; Firestaff binds the original PC HMP streams in `GRAPHICS.DAT` and does
+not substitute WAV/OGG playback.
 
 ## HMP/MIDI Music Format
 
@@ -15,21 +16,20 @@ HMP (HMIDI Playlist) is a tracker-style MIDI format that stores sequences
 of MIDI events with precise timing. Unlike standard MIDI files, HMP uses
 a custom header and tick-based scheduling.
 
-### File Locations
-- SKWIN/data/00.hmp.mid through SKWIN/data/1c.hmp.mid (28 tracks)
-- Files named as 2 hex digits + .hmp.mid extension
-- Each track corresponds to a dungeon area/map
+### Original file locations
+- `GRAPHICS.DAT` GDAT `MUSICS/<track>/dtHMP/0`, 29 tracks `00`--`1c`
+- PC `SONGLIST.DAT` (63 bytes) supplies map 0--43 selectors
+- `SKWIN/data/*.hmp.mid` are converted Standard MIDI reference files, not
+  original runtime data
 
-### HMP Parsing (SkWinMIDI.cpp)
-The MIDI loop reads the HMP format manually:
-- Header: MThd identifier, format, tracks, ticks per quarter note
-- Track chunks: MTrk header + events packed in sequence
-- Events parsed: Note On/Off, Control Change, Program Change, Tempo meta-events
-- Tempo events (0x51) are extracted and used to set playback speed
-- Uses Windows midiStream API for output
+### Converted MIDI parsing (SkWinMIDI.cpp)
+`SkWinMIDI.cpp` reads `MThd`/`MTrk` converted sidecars and streams them to
+Windows MIDI. It is not an original-HMP decoder. Firestaff keeps original
+HMP playback unavailable until its `HMIMIDIP013195` directory, timing and
+event semantics are implemented directly against GDAT bytes.
 
-### HMP Processing Pipeline
-1. load_file() — reads entire .hmp.mid into memory
+### SKWIN converted-MIDI pipeline
+1. load_file() — reads a converted `.hmp.mid` reference file
 2. Parse _mid_header to get track count and time division
 3. Build trk[] array with per-track read pointers
 4. get_buffer() merges events from all tracks in time order
@@ -49,7 +49,7 @@ Map indices: 0x00=0x02, 0x01=0x11, 0x02=0x0e, 0x03=0x1b
 Upper maps (0x30–0x3F): all 0xFF (no music).
 
 ### Track Count
-28 distinct tracks (0x00–0x1b). No track 0x1d–0x1f in the data folder.
+29 original tracks (0x00–0x1c), all present as GDAT `dtHMP` entries.
 
 ## Variant Folders
 
@@ -78,7 +78,7 @@ Controlled by bMIDIMusicEnabled (SkCodeParam).
 midiOutSetVolume((HMIDIOUT)out, 0x0000) — currently hardcoded to 0 in the loop.
 The master volume (v1dd1d1) is set separately in c_sound.
 
-## Firestaff SDL Port — WAV/OGG Alternative
+## SKULLWIN WAV/OGG Alternative
 
 ### c_music_wav Class
 - do_music_wav(i16 nr) — plays ./DATA/sk%02d.ogg looped
@@ -94,7 +94,7 @@ sk00.ogg, sk01.ogg, ... sk1c.ogg — same numbering as HMP tracks.
 |--------|----------|-----|
 | Format | AdLib FM synthesis | HMP/MIDI |
 | Synthesis | Yamaha YM3812 (OPL2) | General MIDI |
-| Track count | ~10 | 28 |
+| Track count | ~10 | 29 |
 | Channel count | Limited to OPL2 channels | Standard GM 16-channel |
 | Integration | Simple trigger | Per-map track selection |
 | Volume control | Single global | Per-track velocity |

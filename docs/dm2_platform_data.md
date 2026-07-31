@@ -9,7 +9,7 @@ skproject/SKULLWIN/Data/          — Windows build data (Allegro)
   DUNGEON.DAT                      — DM2 dungeon (39 KB)
   GRAPHICS.DAT                     — DM2 graphics (~8.6 MB)
   MODLIST.DAT, SONGLIST.DAT        — music track lists
-  *.hmp.mid                        — MIDI tracks (00.hmp.mid .. 1c.hmp.mid)
+  *.hmp.mid                        — SKULLWIN converted-MIDI reference files
   music.bin                        — embedded music data
 
 skproject/SKWIN/data/              — SKWIN variant data
@@ -114,9 +114,11 @@ Load code in `dm2_v1_save_load.c` (SKULL.ASM sourced).
 
 ### Music Data
 
-- HMP format (Herbert's MIDI Packed) — used by both Allegro and MCI
-- Music path: `./DATA/%02x.hmp.mid` (compiled into SKULLWIN as `00.hmp.mid`..`1c.hmp.mid`)
-- `music.bin` — compiled track list for SKULLWIN
+- Original PC music: 29 HMI HMP streams in `GRAPHICS.DAT` GDAT
+  `MUSICS/<track>/dtHMP/0`.
+- Original PC routing: first 44 bytes of the 63-byte `SONGLIST.DAT`.
+- `./DATA/%02x.hmp.mid` and `music.bin` describe the SKULLWIN port's
+  converted/reference route, not Firestaff's source-data admission path.
 
 ### GDAT System
 
