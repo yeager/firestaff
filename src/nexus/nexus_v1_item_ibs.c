@@ -251,7 +251,8 @@ int nexus_v1_item_ibs_render_floor_image(const uint8_t *data, int data_size,
     int px_count, byte_count, j;
     const uint8_t *src;
 
-    if (!rgba_out || !result || !result->valid) return 0;
+    if (!data || data_size <= 0 || !rgba_out || !result || !result->valid)
+        return 0;
     if (floor_index < 0 || floor_index >= result->floor_images_decoded) return 0;
 
     fd = &result->floor_descs[floor_index];
@@ -261,17 +262,23 @@ int nexus_v1_item_ibs_render_floor_image(const uint8_t *data, int data_size,
     if (rgba_capacity < px_count) return 0;
 
     floor_base = result->header.floor_section_offset;
+    if (floor_base > (uint32_t)data_size ||
+        fd->image_offset > (uint32_t)data_size - floor_base ||
+        (fd->palette_offset != 0U &&
+         fd->palette_offset > (uint32_t)data_size - floor_base)) return 0;
     abs_img = floor_base + fd->image_offset;
     abs_pal = fd->palette_offset ? (floor_base + fd->palette_offset) : 0;
 
     if (!abs_pal) return 0;
-    if ((int)(abs_pal + 32) > data_size) return 0;
+    if (abs_pal > (uint32_t)data_size ||
+        32U > (uint32_t)data_size - abs_pal) return 0;
 
     for (j = 0; j < 16; ++j)
         pal_rgba[j] = bgr555_to_rgba(read_be16(data + abs_pal + j * 2));
 
     byte_count = (px_count + 1) / 2;
-    if ((int)(abs_img + byte_count) > data_size) return 0;
+    if (abs_img > (uint32_t)data_size ||
+        (uint32_t)byte_count > (uint32_t)data_size - abs_img) return 0;
 
     src = data + abs_img;
     for (j = 0; j < byte_count; ++j) {

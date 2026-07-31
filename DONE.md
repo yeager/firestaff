@@ -47786,3 +47786,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   single-byte `FF` terminator before requiring a complete eight-byte record,
   while all non-terminator records are length-checked before field reads.
   Real SAL/MAP corpus and sound-runtime receipt tests pass.
+- ✅ 2026-07-31 Nexus ITEM.IBS floor-render bounds hardening: the generic
+  source decoder now validates the data pointer, base-plus-offset arithmetic,
+  palette span, and packed image span before forming reads. Real ITEM.IBS
+  decoder and PLRD/RLOWFIX regression tests pass.
