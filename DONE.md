@@ -45595,6 +45595,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   dmweb's file-format documentation and CSBWin's decoder lineage are cited
   in the source. Verification: focused test passes against the local CSB
   `GRAPHICS.DAT` (22 checks).
+- ✅ 2026-07-31 CSB D2C F0107/F0111 synthetic-probe removal: deleted the
+  isolated test-only painter, its hard-coded colours and geometry, and the
+  associated “real-asset” probe. The probe chose arbitrary first-by-size
+  `GRAPHICS.DAT` records then composed an invented grayscale frame, so it did
+  not prove original material binding and was not reachable from M11. The live
+  viewport remains fail-closed on the active verified source graphics chain;
+  future D2C work must bind the actual ReDMCSB F0121/F0107/F0111 command and
+  native record identities rather than manufacture a capture.
 - ✅ 2026-07-31 CSB active D1L/D1R viewport binding hardening: the live M11
   provider now requires the native 60x111 C03/C02 rasters before caching
   GRAPHICS.DAT records 96/95 (wall set 0) for C713/C714. It rejects a wrong
