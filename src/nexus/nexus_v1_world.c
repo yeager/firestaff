@@ -1,5 +1,6 @@
 #include "nexus_v1_world.h"
 #include "nexus_v1_squares.h"
+#include "nexus_v1_game.h"
 #include <string.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -108,10 +109,12 @@ void nexus_v1_world_hash_inject(Nexus_V1_World *world, uint64_t seed) {
 void nexus_v1_world_init(Nexus_V1_World *world) {
     if (!world) return;
     memset(world, 0, sizeof(*world));
-    world->party_level = 0;
-    world->party_x = 11;
-    world->party_y = 29;   /* DM1 entrance spawn */
-    world->party_dir = 0;  /* North */
+    /* Nexus startup coordinates are owned by the game-state contract, not
+     * the historical DM1 compatibility fixture. */
+    world->party_level = NEXUS_V1_INITIAL_PARTY_LEVEL;
+    world->party_x = NEXUS_V1_INITIAL_PARTY_X;
+    world->party_y = NEXUS_V1_INITIAL_PARTY_Y;
+    world->party_dir = NEXUS_V1_INITIAL_PARTY_DIR;
     world->world_tick = 0;
     world->state_hash = FNV64_OFFSET;
     printf("Nexus V1 world initialized (%dx%d DMWeb grid, %d levels)\n",
