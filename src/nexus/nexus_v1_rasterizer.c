@@ -356,13 +356,11 @@ void nexus_draw_wall(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
      * Source-lock: DUNGEON.C F0108 wall face selection.
      * wall_dir 0=North(z=facing_z), 1=East(x=facing_x+1),
      *           2=South(z=facing_z+1), 3=West(x=facing_x)            */
-    if (!fb || !cam) return;
+    if (!fb || !cam || !tex_data || !tex_palette || tex_w <= 0 || tex_h <= 0)
+        return;
     wall_quad_verts(wall_dir & 3, x, z, rv, color, texture_id);
-    if (tex_data && tex_palette && tex_w > 0 && tex_h > 0)
-        nexus_raster_quad_tex(fb, rv[0], rv[1], rv[2], rv[3], cam,
-            tex_data, tex_w, tex_h, tex_palette);
-    else
-        nexus_raster_quad(fb, rv[0], rv[1], rv[2], rv[3], cam);
+    nexus_raster_quad_tex(fb, rv[0], rv[1], rv[2], rv[3], cam,
+        tex_data, tex_w, tex_h, tex_palette);
 }
 
 /* ── Floor / Ceiling ──────────────────────────────────────────────── */
@@ -370,24 +368,11 @@ void nexus_draw_floor(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z,
     uint8_t floor_color, uint8_t ceil_color)
 {
-    Nexus_RasterVertex fv[4], cv[4];
+    (void)x; (void)z; (void)floor_color; (void)ceil_color;
     if (!fb || !cam) return;
-    /* Floor: Y=0 square at grid (x,z) */
-    fv[0].position = (Vec3){x,   0, z  };  fv[0].color = floor_color;
-    fv[1].position = (Vec3){x+1, 0, z  };  fv[1].color = floor_color;
-    fv[2].position = (Vec3){x+1, 0, z+1};  fv[2].color = floor_color;
-    fv[3].position = (Vec3){x,   0, z+1};  fv[3].color = floor_color;
-    fv[0].uv = (Vec2){0,1}; fv[1].uv = (Vec2){1,1};
-    fv[2].uv = (Vec2){1,0}; fv[3].uv = (Vec2){0,0};
-    /* Ceiling: Y=1 square, same XZ */
-    cv[0].position = (Vec3){x,   1, z+1};  cv[0].color = ceil_color;
-    cv[1].position = (Vec3){x+1, 1, z+1};  cv[1].color = ceil_color;
-    cv[2].position = (Vec3){x+1, 1, z  };  cv[2].color = ceil_color;
-    cv[3].position = (Vec3){x,   1, z  };  cv[3].color = ceil_color;
-    cv[0].uv = (Vec2){0,0}; cv[1].uv = (Vec2){1,0};
-    cv[2].uv =  (Vec2){1,1}; cv[3].uv = (Vec2){0,1};
-    nexus_raster_quad(fb, fv[0], fv[1], fv[2], fv[3], cam);
-    nexus_raster_quad(fb, cv[0], cv[1], cv[2], cv[3], cam);
+    /* Legacy floor/ceiling calls have no verified Saturn surface argument;
+     * do not turn their colour indices into invented geometry pixels. */
+    return;
 }
 
 void nexus_draw_floor_tex(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
