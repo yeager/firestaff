@@ -55,13 +55,13 @@ extern "C" {
 #define THERON_ITEM_GAUNTLETS    15
 #define THERON_ITEM_GOLD        127 /* pseudo-item for gold tracking */
 #define THERON_ITEM_QUEST_BASE   128 /* quest items start here */
-#define THERON_ITEM_QUEST_1      129 /* Sacred Amplifier  — Hall of Records */
-#define THERON_ITEM_QUEST_2      130 /* Shadow Key        — Crypt of Shadows */
-#define THERON_ITEM_QUEST_3      131 /* Flame Orbs        — Abyss of Flames */
-#define THERON_ITEM_QUEST_4      132 /* Stone Sigil       — Tomb of Woe */
-#define THERON_ITEM_QUEST_5      133 /* Wayward Ribbon    — Vault of Secrets */
-#define THERON_ITEM_QUEST_6      134 /* Destiny's Thread  — Castle of Fate */
-#define THERON_ITEM_QUEST_7      135 /* Cosmic Shard      — Tower of Epilogue */
+#define THERON_ITEM_QUEST_1      129 /* Shield Defiant */
+#define THERON_ITEM_QUEST_2      130 /* Taza Poleyn */
+#define THERON_ITEM_QUEST_3      131 /* Tazahelm */
+#define THERON_ITEM_QUEST_4      132 /* Taza Boots */
+#define THERON_ITEM_QUEST_5      133 /* Taza Armor */
+#define THERON_ITEM_QUEST_6      134 /* Soulcage */
+#define THERON_ITEM_QUEST_7      135 /* The Retaliator */
 
 #define THERON_IS_QUEST_ITEM(id) ((id) >= THERON_ITEM_QUEST_BASE)
 #define THERON_INVENTORY_SLOTS   30   /* same as DM1 champion inventory */

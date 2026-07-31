@@ -46353,3 +46353,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `m11_action_stamina_runtime_source_lock`,
   `dm1_v1_hall_of_champions_pc34_compat`, and the real backed PC34 corpus
   roundtrip all pass.
+# 2026-07-31 Theron relic-name correction
+
+- ✅ Replaced the invented quest-item labels in progression, chapter-marker,
+  and champion-item comments with the seven real Theron's Quest relic names
+  documented by DMWeb: Shield Defiant, Taza Poleyn, Tazahelm, Taza Boots, Taza
+  Armor, Soulcage, and The Retaliator. This changes presentation metadata only;
+  item ordinals and the unresolved Track 02 placement/decode remain bounded.
+  Verification: `firestaff_theron_v1_chapter_marker_probe` passes `65/65`.

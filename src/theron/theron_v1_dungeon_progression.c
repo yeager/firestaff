@@ -114,13 +114,13 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
 
 /* Quest item names (indexed by dungeon_id - 1) */
 static const char *const g_quest_item_names[THERON_DUNGEON_COUNT] = {
-    "Sacred Amplifier",
-    "Shadow Key",
-    "Flame Orbs",
-    "Stone Sigil",
-    "Wayward Ribbon",
-    "Destiny's Thread",
-    "Cosmic Shard",
+    "Shield Defiant",
+    "Taza Poleyn",
+    "Tazahelm",
+    "Taza Boots",
+    "Taza Armor",
+    "Soulcage",
+    "The Retaliator",
 };
 
 /* Dungeon short codes (for UI/diagnostics) */

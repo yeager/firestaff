@@ -30,13 +30,13 @@
  * Source: Theron's Quest data analysis (TQR 7-dungeon sequence).
  * The naming mirrors the items required to clear each chapter. */
 static const char *const trv_marker_quest_item_names[THERON_DUNGEON_COUNT] = {
-    "Sacred Amplifier",  /* dungeon 1 — Hall of Records  */
-    "Shadow Key",        /* dungeon 2 — Crypt of Shadows */
-    "Flame Orbs",        /* dungeon 3 — Abyss of Flames  */
-    "Stone Sigil",       /* dungeon 4 — Tomb of Woe      */
-    "Wayward Ribbon",    /* dungeon 5 — Vault of Secrets */
-    "Destiny's Thread",  /* dungeon 6 — Castle of Fate   */
-    "Cosmic Shard",      /* dungeon 7 — Tower of Epilogue */
+    "Shield Defiant",    /* dungeon 1 */
+    "Taza Poleyn",       /* dungeon 2 */
+    "Tazahelm",          /* dungeon 3 */
+    "Taza Boots",        /* dungeon 4 */
+    "Taza Armor",        /* dungeon 5 */
+    "Soulcage",          /* dungeon 6 */
+    "The Retaliator",    /* dungeon 7 */
 };
 
 /* ── Local helpers ──────────────────────────────────────────────── */
