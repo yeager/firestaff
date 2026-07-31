@@ -30,8 +30,9 @@
 
 /* Each entry maps one dungeon ID to its metadata.
  * name, level_count, quest_item_bit are from TQR data analysis.
- * dungeon_seed is set from dungeon header on load (Phase 2).
- * For Phase 6, default seeds are placeholders to be replaced in Phase 2. */
+ * dungeon_seed is set from dungeon header on load. Only dungeon 1's initial
+ * value is currently bound to real US/JP Track 02 bytes; unknown dungeons stay
+ * zero rather than carrying invented seed values. */
 static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
     /* Dungeon 1 — Hall of Records (tutorial) */
     [THERON_DUNGEON_1_HALL_OF_RECORDS - 1] = {
@@ -41,7 +42,7 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 0),  /* Bit 0 */
         .champion_reset    = 1,
-        .dungeon_seed      = 313,       /* default; Phase 2 replaces from header */
+        .dungeon_seed      = 0x0108e938u, /* verified initial Track 02 seed */
         .size_bytes        = 0,         /* set at load time */
     },
     /* Dungeon 2 — Crypt of Shadows */
@@ -52,7 +53,7 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 1),  /* Bit 1 */
         .champion_reset    = 1,
-        .dungeon_seed      = 414,
+        .dungeon_seed      = 0u,         /* unresolved Track 02 header */
         .size_bytes        = 0,
     },
     /* Dungeon 3 — Abyss of Flames */
@@ -63,7 +64,7 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 2),  /* Bit 2 */
         .champion_reset    = 1,
-        .dungeon_seed      = 527,
+        .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
     /* Dungeon 4 — Tomb of Woe */
@@ -74,7 +75,7 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 3),  /* Bit 3 */
         .champion_reset    = 1,
-        .dungeon_seed      = 632,
+        .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
     /* Dungeon 5 — Vault of Secrets */
@@ -85,7 +86,7 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 4),  /* Bit 4 */
         .champion_reset    = 1,
-        .dungeon_seed      = 749,
+        .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
     /* Dungeon 6 — Castle of Fate */
@@ -96,7 +97,7 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 5),  /* Bit 5 */
         .champion_reset    = 1,
-        .dungeon_seed      = 856,
+        .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
     /* Dungeon 7 — Tower of Epilogue (final) */
@@ -107,7 +108,7 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 6),  /* Bit 6 */
         .champion_reset    = 1,
-        .dungeon_seed      = 967,
+        .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
 };
@@ -157,7 +158,7 @@ void theron_v1_dungeon_progression_init(Theron_DungeonProgression *prog) {
     prog->dungeon_playtime_seconds     = 0;
     prog->quest_complete               = 0;
 
-    /* Default dungeon seeds (replaced in Phase 2 from header) */
+    /* Only the verified initial seed is available; unresolved dungeons stay 0. */
     for (int i = 0; i < THERON_DUNGEON_COUNT; i++) {
         prog->dungeon_seeds[i] = g_dungeon_table[i].dungeon_seed;
     }

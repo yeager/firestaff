@@ -46379,3 +46379,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Armor, Soulcage, and The Retaliator. This changes presentation metadata only;
   item ordinals and the unresolved Track 02 placement/decode remain bounded.
   Verification: `firestaff_theron_v1_chapter_marker_probe` passes `65/65`.
+# 2026-07-31 Theron seed-placeholder reduction
+
+- ✅ Replaced the dungeon-1 progression fallback seed `313` with the real
+  US/JP Track 02 initial-level seed `0x0108e938`. The unresolved dungeon 2–7
+  fallback seeds are now zero rather than fabricated ascending values, so
+  progression/save state cannot present guessed seeds as original data.
+  Verification: `test_theron_v1_m11_direct_launch` passes; real US/JP Track 02
+  probes bind the same initial seed at their verified raw offsets.
