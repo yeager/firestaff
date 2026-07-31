@@ -364,7 +364,21 @@ int theron_v1_door_open(Theron_V1_World *world, int x, int y) {
     if (d->flags & THERON_DOOR_F_BROKEN) return -1;
 
     if (d->flags & THERON_DOOR_F_LOCKED) {
-        /* Need a key in inventory — Phase 5 inventory check */
+        Theron_V1_Champion *champion =
+            theron_v1_party_getChampion(&world->party,
+                                        world->party.active_slot);
+        int has_key = 0;
+        if (champion) {
+            for (int i = 0; i < THERON_INVENTORY_SLOTS; ++i) {
+                if (champion->inventory[i] == THERON_ITEM_KEY) {
+                    has_key = 1;
+                    break;
+                }
+            }
+        }
+        /* T900's locked-door path requires the active champion's key
+         * inventory; do not silently unlock a real level object. */
+        if (!has_key) return -1;
         d->flags &= ~THERON_DOOR_F_LOCKED;
     }
     d->state = THERON_DOOR_STATE_OPEN;

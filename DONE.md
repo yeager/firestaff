@@ -46470,3 +46470,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   V1. Verified with `test_csb_v1_viewport_phase3_rendering` (2655/2655),
   `test_csb_v22_inplace_draw_pc34` (57/57), and
   `test_csb_v22_shapes_pc34` (54/54).
+# 2026-07-31 Theron locked-door inventory gate
+
+- ✅ Removed the locked-door auto-unlock placeholder. `theron_v1_door_open()`
+  now requires the active champion to carry the source-locked key item before
+  clearing a real door's locked flag; absent keys leave the door closed.
+  Verification: `test_theron_v1_m11_direct_launch` passes and
+  `git diff --check` passes.
