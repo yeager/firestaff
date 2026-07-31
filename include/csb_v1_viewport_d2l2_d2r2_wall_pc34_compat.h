@@ -2,7 +2,6 @@
 #define FIRESTAFF_CSB_V1_VIEWPORT_D2L2_D2R2_WALL_PC34_COMPAT_H
 
 #include <stddef.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,8 +45,7 @@ typedef struct {
     int palette_indices_ok;
     int lineage_frame_bindings_ok;
     int symmetry_ok;
-    int d2l2_copied_pixels;
-    int d2r2_copied_pixels;
+    int unbound_material_no_draw_ok;
 } CSB_V1_ViewportD2L2D2R2WallRunResult;
 
 size_t csb_v1_viewport_d2l2_d2r2_wall_route_spec_count_pc34(void);
@@ -57,16 +55,6 @@ csb_v1_viewport_d2l2_d2r2_wall_route_spec_at_pc34(size_t index);
 
 const CSB_V1_ViewportD2L2D2R2WallRouteSpec *
 csb_v1_viewport_d2l2_d2r2_wall_route_spec_for_square_pc34(int view_square);
-
-int csb_v1_viewport_d2l2_d2r2_wall_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD2L2D2R2WallRouteSpec *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height,
-    int flip_horizontal);
 
 int csb_v1_viewport_d2l2_d2r2_wall_pc34_compat_run(
     CSB_V1_ViewportD2L2D2R2WallRunResult *out_result);

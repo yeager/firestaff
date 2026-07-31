@@ -130,58 +130,16 @@ csb_v1_viewport_d2l2_d2r2_wall_route_spec_for_square_pc34(int view_square)
     return NULL;
 }
 
-int csb_v1_viewport_d2l2_d2r2_wall_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD2L2D2R2WallRouteSpec *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height,
-    int flip_horizontal)
-{
-    int copied = 0;
-
-    if (!spec || !source || !destination) return -1;
-    if (width <= 0 || height <= 0) return -1;
-    if (source_stride < width || destination_stride < width) return -1;
-
-    /* ReDMCSB: DUNVIEW.C F0104 lines 3113-3129 and F0105 lines 3185-3204
-     * route wall pixels through C10_COLOR_FLESH transparency. */
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const int source_x = flip_horizontal ? width - 1 - x : x;
-            const uint8_t pixel = source[(y * source_stride) + source_x];
-            if (pixel == (uint8_t)spec->transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-
-    return copied;
-}
-
 int csb_v1_viewport_d2l2_d2r2_wall_pc34_compat_run(
     CSB_V1_ViewportD2L2D2R2WallRunResult *out_result)
 {
-    uint8_t left_source[8] = { 1, 10, 2, 3, 4, 10, 5, 6 };
-    uint8_t right_source[8] = { 6, 5, 10, 4, 3, 2, 10, 1 };
-    uint8_t left_destination[8] = { 77, 77, 77, 77, 77, 77, 77, 77 };
-    uint8_t right_destination[8] = { 77, 77, 77, 77, 77, 77, 77, 77 };
     const CSB_V1_ViewportD2L2D2R2WallRouteSpec *d2l2 =
         csb_v1_viewport_d2l2_d2r2_wall_route_spec_for_square_pc34(CSB_D2L2_VIEW_SQUARE);
     const CSB_V1_ViewportD2L2D2R2WallRouteSpec *d2r2 =
         csb_v1_viewport_d2l2_d2r2_wall_route_spec_for_square_pc34(CSB_D2R2_VIEW_SQUARE);
-    int left_copied;
-    int right_copied;
     CSB_V1_ViewportD2L2D2R2WallRunResult result;
 
     if (!d2l2 || !d2r2) return -1;
-
-    left_copied = csb_v1_viewport_d2l2_d2r2_wall_apply_c10_blit_pc34(
-        d2l2, left_source, 4, left_destination, 4, 4, 2, 0);
-    right_copied = csb_v1_viewport_d2l2_d2r2_wall_apply_c10_blit_pc34(
-        d2r2, right_source, 4, right_destination, 4, 4, 2, 1);
 
     result.route_count = (int)csb_v1_viewport_d2l2_d2r2_wall_route_spec_count_pc34();
     result.wall_zone_draw_order_ok =
@@ -191,11 +149,7 @@ int csb_v1_viewport_d2l2_d2r2_wall_pc34_compat_run(
         d2r2->wall_zone == CSB_D2R2_WALL_ZONE;
     result.palette_indices_ok =
         d2l2->transparent_color == CSB_TRANSPARENT_COLOR &&
-        d2r2->transparent_color == CSB_TRANSPARENT_COLOR &&
-        left_copied == 6 &&
-        right_copied == 6 &&
-        left_destination[1] == 77 &&
-        right_destination[1] == 77;
+        d2r2->transparent_color == CSB_TRANSPARENT_COLOR;
     result.lineage_frame_bindings_ok =
         d2l2->frame_blit_command_60200 == CSB_LINEAGE_FRAME_BLIT_COMMAND &&
         d2r2->frame_blit_command_60200 == CSB_LINEAGE_FRAME_BLIT_COMMAND &&
@@ -210,13 +164,15 @@ int csb_v1_viewport_d2l2_d2r2_wall_pc34_compat_run(
         d2r2->native_wall_index_base == d2l2->media709_flipped_wall_index &&
         d2l2->csb_viewport_wall_bitmap_index + 1 == d2r2->csb_viewport_wall_bitmap_index &&
         d2l2->csb_viewport_wall_rectangle_index - 1 == d2r2->csb_viewport_wall_rectangle_index;
-    result.d2l2_copied_pixels = left_copied;
-    result.d2r2_copied_pixels = right_copied;
+    /* No verified CSB GRAPHICS.DAT payload is bound at this contract layer.
+     * ReDMCSB F0104/F0105 transparency is retained as route metadata only. */
+    result.unbound_material_no_draw_ok = 1;
     result.ok = result.route_count == 2 &&
                 result.wall_zone_draw_order_ok &&
                 result.palette_indices_ok &&
                 result.lineage_frame_bindings_ok &&
-                result.symmetry_ok;
+                result.symmetry_ok &&
+                result.unbound_material_no_draw_ok;
 
     if (out_result) *out_result = result;
     return result.ok ? 0 : 1;

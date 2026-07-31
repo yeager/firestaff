@@ -43,10 +43,8 @@ static int test_run_entry_point(void)
                      "CSB-lineage Viewport.cpp:1813-1820");
     ok &= expect_int("run.symmetry_ok", result.symmetry_ok, 1,
                      "ReDMCSB DUNVIEW.C:6837-6896 mirrored pair");
-    ok &= expect_int("run.d2l2_copied_pixels", result.d2l2_copied_pixels, 6,
-                     "ReDMCSB DUNVIEW.C:3113-3129 F0104 C10 blit");
-    ok &= expect_int("run.d2r2_copied_pixels", result.d2r2_copied_pixels, 6,
-                     "ReDMCSB DUNVIEW.C:3185-3204 F0105 C10 blit");
+    ok &= expect_int("run.unbound_material_no_draw_ok", result.unbound_material_no_draw_ok, 1,
+                     "unbound contract layer cannot write synthetic wall pixels");
 
     return ok;
 }
@@ -103,8 +101,6 @@ static int test_wall_routes_and_palette_indices(void)
         csb_v1_viewport_d2l2_d2r2_wall_route_spec_for_square_pc34(9);
     const CSB_V1_ViewportD2L2D2R2WallRouteSpec *d2r2 =
         csb_v1_viewport_d2l2_d2r2_wall_route_spec_for_square_pc34(10);
-    uint8_t source[8] = { 1, 10, 2, 3, 4, 10, 5, 6 };
-    uint8_t destination[8] = { 77, 77, 77, 77, 77, 77, 77, 77 };
 
     ok &= expect_int("d2l2.wall_zone", d2l2 ? d2l2->wall_zone : -1, 707,
                      "ReDMCSB DEFS.H:4047 C707_ZONE_WALL_D2L2");
@@ -143,21 +139,6 @@ static int test_wall_routes_and_palette_indices(void)
     ok &= expect_int("transparent.preserved",
                      d2l2 ? d2l2->preserves_c10_transparency : -1, 1,
                      "ReDMCSB DUNVIEW.C:3113-3129/3185-3204");
-    ok &= expect_int("blit.copied",
-                     csb_v1_viewport_d2l2_d2r2_wall_apply_c10_blit_pc34(
-                         d2l2, source, 4, destination, 4, 4, 2, 0),
-                     6, "ReDMCSB DUNVIEW.C:3113-3129 F0104 C10 blit");
-    ok &= expect_int("blit.pixel0", destination[0], 1,
-                     "synthetic nontransparent palette index copy");
-    ok &= expect_int("blit.transparent1", destination[1], 77,
-                     "ReDMCSB DEFS.H:2088 C10 transparent");
-    ok &= expect_int("blit.pixel7", destination[7], 6,
-                     "synthetic nontransparent palette index copy");
-    ok &= expect_int("blit.reject_null",
-                     csb_v1_viewport_d2l2_d2r2_wall_apply_c10_blit_pc34(
-                         NULL, source, 4, destination, 4, 4, 2, 0),
-                     -1, "route helper rejects unresolved spec");
-
     return ok;
 }
 

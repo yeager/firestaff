@@ -45157,6 +45157,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   decoded from the original game-state and SUPPRESS records, so a malformed
   later section cannot leave an invented party behind. Verification:
   `test_dm2_v1_utility_import` passes 136/136.
+- ✅ 2026-07-31 CSB D2L2/D2R2 wall no-fake closure: removed the unbound
+  F0104/F0105 C10 fixture writer from the public contract. The remaining
+  source-locked route table retains ReDMCSB DUNVIEW.C F0678/F0679/F0128
+  ordering, C707/C708 zones, C05/C06 wall routing and C10 transparency as
+  metadata only; without verified CSB GRAPHICS.DAT material it cannot draw.
+
 - ✅ 2026-07-31 CSB PC3.4 D3 side-door source binding: D3L and D3R now
   fetch the active wall-set's M658/G2120 record through the CSB
   `GRAPHICS.DAT` provider and apply the original G0164/G0165 32×43 source
