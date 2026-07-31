@@ -75,6 +75,10 @@
   conversion or stub palette-LUT path; a live DM2 image must stay on the
   existing GDAT-backed renderer until a source-bound enhancement consumer is
   implemented.
+  **2026-07-31 update:** the local V2 HUD widget-manifest classifier is now
+  compiled only by its diagnostic HUD probe. Production HUD code never scans
+  local widget metadata and the final executable has no widget-manifest
+  symbol; visible HUD pixels remain restricted to GDAT.
   **2026-07-31 update:** DM2 boot now rejects the generic loader's retired
   16-bit fixture layout and an unreadable/absent dungeon payload. Only the
   verified PC G1 byte-square route can cross from the startup menu into a

@@ -3884,6 +3884,7 @@ file(GLOB DM2_V2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v2_*.c" "src/dm2/dm2_v22
 # tests and probes compile each source explicitly below.
 list(REMOVE_ITEM DM2_V2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_bitmap_blit.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_widget_assets.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_finished_art_material_gate_pc34.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_inplace_draw_pc34.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v22_modern_assets_pc34.c"
@@ -4916,6 +4917,7 @@ set_tests_properties(dm2_v2_phase3_hud_overlay_probe PROPERTIES
 add_executable(firestaff_dm2_v2_hud_runtime_probe
     probes/firestaff_dm2_v2_hud_runtime_probe.c
     src/dm2/dm2_v2_hud_runtime.c
+    src/dm2/dm2_v2_hud_widget_assets.c
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_phase_gate.c
@@ -4966,6 +4968,8 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_hud_runtime_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
+target_compile_definitions(firestaff_dm2_v2_hud_runtime_probe PRIVATE
+    FIRESTAFF_DM2_V2_HUD_WIDGET_DIAGNOSTIC=1)
 if(NOT MSVC)
     target_compile_options(firestaff_dm2_v2_hud_runtime_probe PRIVATE -Wall -Wextra -O2)
 endif()

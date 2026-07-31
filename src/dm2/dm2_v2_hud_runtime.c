@@ -169,9 +169,14 @@ void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res) {
     /* Classify every slot up-front so probe code can read the gate's
      * verdict regardless of whether we actually rendered. */
     for (i = 0; i < (int)DM2_V2_HUD_WIDGET_COUNT; ++i) {
-        DM2_V2_HudWidgetClass cls =
-            dm2_v2_hud_widget_assets_classify_slot(
-                (DM2_V2_HudWidgetSlot)i);
+        DM2_V2_HudWidgetClass cls = DM2_V2_HUD_WIDGET_CLASS_UNKNOWN;
+#if defined(FIRESTAFF_DM2_V2_HUD_WIDGET_DIAGNOSTIC)
+        /* The local manifest classifier is a diagnostic fixture tool.  It
+         * has no GDAT receipt and therefore exists only in the focused probe
+         * build, never in a shipped HUD path. */
+        cls = dm2_v2_hud_widget_assets_classify_slot(
+            (DM2_V2_HudWidgetSlot)i);
+#endif
         s_last_slot_class[i] = cls;
         /* A manifest's "REAL" label proves only that a local path exists;
          * it does not prove GRAPHICS.DAT provenance. Do not expose that

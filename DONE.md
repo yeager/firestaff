@@ -4,6 +4,20 @@
   palette sequence and TITLE.C F0437 `Delay(20)`/`Delay(2)` phases remain
   separate and unchanged. Verification: focused CSB startup VBlank cadence
   regression.
+=======
+- ✅ 2026-07-31 DM2 V2 HUD widget-manifest isolation: removed the local
+  placeholder/partial/real classifier from the production V2 archive and
+  guarded its only HUD-runtime call behind the focused diagnostic probe.
+  The normal HUD records no operator-supplied manifest state and still draws
+  only authenticated GDAT. Verification: complete `firestaff` link, runtime
+  probe 29/29, real-data M11 startup/profile gate, and no widget-manifest
+  symbol in the final executable.
+
+- ✅ 2026-07-31 DM2 optional music-data verification: the real-data boot
+  smoke test now skips music routing when the hash-verified optional
+  `SONGLIST.DAT` is absent. It continues to reject filename-only substitutes
+  and exercises the original selector table when that genuine file is
+  available. The mandatory graphics/dungeon boot proof remains required.
 
 - ✅ 2026-07-31 DM2 boot media revalidation: entering a game now rehashes
   both graphics and dungeon media against the profile's scan-time hashes.
