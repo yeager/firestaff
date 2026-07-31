@@ -16705,6 +16705,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         return 0;
     }
     memset(&spec, 0, sizeof(spec));
+    M11_Audio_SetPreferredPlaybackDeviceName(menuState->settings.audioDeviceName);
     spec.rendererBackend = rendererBackend;
     spec.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     spec.title = entry->title;

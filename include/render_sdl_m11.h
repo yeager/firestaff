@@ -288,6 +288,13 @@ int  M11_Render_GetScaleFilter(void);
 void M11_Render_SetV2PresentationActive(int active);
 int  M11_Render_SetVSync(int vsyncIndex);
 int  M11_Render_GetVSync(void);
+/* Host-wide presentation brightness.  It affects launcher and every game
+ * after source pixels/palettes have been decoded, never the source data. */
+int  M11_Render_SetGlobalBrightness(int percent);
+int  M11_Render_GetGlobalBrightness(void);
+/* Must be called before M11_Render_Init.  0/2 select SDL's normal renderer;
+ * 1 requests SDL's real software renderer. */
+void M11_Render_SetBackendPreference(int backend);
 void M11_Render_RaiseWindow(void);
 
 /* Return the most recent RGBA presentation buffer written by one of the

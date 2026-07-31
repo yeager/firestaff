@@ -1,4 +1,5 @@
 #include "menu_startup_m12.h"
+#include <SDL3/SDL.h>
 #include "firestaff_l10n.h"
 #include "artpack_admission_m12.h"
 #include "firestaff_po_loader.h"
@@ -150,6 +151,8 @@ enum {
     M12_SETTINGS_ROW_ARTPACK_PATH,
     /* Kept at the end so old persisted row identities stay stable. */
     M12_SETTINGS_ROW_FPS_OVERLAY,
+    M12_SETTINGS_ROW_AUDIO_DEVICE,
+    M12_SETTINGS_ROW_DISPLAY_BRIGHTNESS,
     M12_SETTINGS_ROW_COUNT
 };
 
@@ -1098,6 +1101,7 @@ const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount) {
         M12_SETTINGS_ROW_INTEGER_SCALING,
         M12_SETTINGS_ROW_SCALING_FILTER,
         M12_SETTINGS_ROW_VSYNC,
+        M12_SETTINGS_ROW_DISPLAY_BRIGHTNESS,
         M12_SETTINGS_ROW_FPS_OVERLAY,
         M12_SETTINGS_ROW_VIEWPORT_STYLE,
         M12_SETTINGS_ROW_SMOOTH_TURN_PAN
@@ -1112,6 +1116,7 @@ const int* M12_StartupMenu_GetSettingsRowsForTab(int tab, int* outCount) {
         M12_SETTINGS_ROW_UNICODE_FONT_PATH
     };
     static const int audioRows[] = {
+        M12_SETTINGS_ROW_AUDIO_DEVICE,
         M12_SETTINGS_ROW_AUDIO_MASTER,
         M12_SETTINGS_ROW_AUDIO_MUSIC,
         M12_SETTINGS_ROW_AUDIO_SFX,
@@ -1294,6 +1299,10 @@ void M12_StartupMenu_ExportLauncherRuntimeOptions(
     out->audioMusicVolume = s->audioMusicVolume;
     out->audioSfxVolume = s->audioSfxVolume;
     out->audioMuted = s->audioMuted ? 1 : 0;
+    out->displayBrightness = s->displayBrightness < 50 ? 50 :
+        (s->displayBrightness > 150 ? 150 : s->displayBrightness);
+    snprintf(out->audioDeviceName, sizeof(out->audioDeviceName), "%s",
+             s->audioDeviceName);
     out->wasdMovementEnabled = s->wasdMovementEnabled ? 1 : 0;
     out->controlSchemeIndex = s->controlSchemeIndex;
     out->gameSpeedMultiplier = s->gameSpeedMultiplier;
@@ -3268,6 +3277,9 @@ static void m12_save_config(M12_StartupMenuState* state) {
     config.audioMusicVolume = state->settings.audioMusicVolume;
     config.audioSfxVolume = state->settings.audioSfxVolume;
     config.audioMuted = state->settings.audioMuted;
+    config.displayBrightness = state->settings.displayBrightness;
+    snprintf(config.audioDeviceName, sizeof(config.audioDeviceName), "%s",
+             state->settings.audioDeviceName);
     config.fontScale = state->settings.fontScale;
     snprintf(config.unicodeFontPath, sizeof(config.unicodeFontPath), "%s", state->settings.unicodeFontPath);
     config.highContrast = state->settings.highContrast;
@@ -3583,6 +3595,10 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
     state->settings.audioMusicVolume = m12_clamp_index(config.audioMusicVolume, 129);
     state->settings.audioSfxVolume = m12_clamp_index(config.audioSfxVolume, 129);
     state->settings.audioMuted = config.audioMuted ? 1 : 0;
+    state->settings.displayBrightness = config.displayBrightness < 50 ? 50 :
+        (config.displayBrightness > 150 ? 150 : config.displayBrightness);
+    snprintf(state->settings.audioDeviceName, sizeof(state->settings.audioDeviceName),
+             "%s", config.audioDeviceName);
     state->settings.fontScale = config.fontScale < 1 ? 1 : (config.fontScale > 3 ? 3 : config.fontScale);
     snprintf(state->settings.unicodeFontPath,
              sizeof(state->settings.unicodeFontPath),
@@ -4194,6 +4210,20 @@ static const char* m12_settings_value_audio_muted(const M12_StartupMenuState* st
     return m12_tr(state, g_toggleModes[state && state->settings.audioMuted ? 1 : 0]);
 }
 
+static const char* m12_settings_value_audio_device(const M12_StartupMenuState* state) {
+    return (state && state->settings.audioDeviceName[0]) ?
+        state->settings.audioDeviceName : m12_tr(state, "SYSTEM DEFAULT");
+}
+
+static const char* m12_settings_value_display_brightness(const M12_StartupMenuState* state) {
+    static char text[8];
+    int value = state ? state->settings.displayBrightness : 100;
+    if (value < 50) value = 50;
+    if (value > 150) value = 150;
+    snprintf(text, sizeof(text), "%d%%", value);
+    return text;
+}
+
 static const char* m12_settings_value_font_scale(const M12_StartupMenuState* state) {
     static char text[8];
     int value = state ? state->settings.fontScale : 1;
@@ -4437,6 +4467,8 @@ const char* M12_StartupMenu_GetSettingsLabel(const M12_StartupMenuState* state,
         case M12_SETTINGS_ROW_AUDIO_MUSIC: return m12_tr(state, "MUSIC VOLUME");
         case M12_SETTINGS_ROW_AUDIO_SFX: return m12_tr(state, "SFX VOLUME");
         case M12_SETTINGS_ROW_AUDIO_MUTED: return m12_tr(state, "MUTE AUDIO");
+        case M12_SETTINGS_ROW_AUDIO_DEVICE: return m12_tr(state, "AUDIO DEVICE");
+        case M12_SETTINGS_ROW_DISPLAY_BRIGHTNESS: return m12_tr(state, "BRIGHTNESS");
         case M12_SETTINGS_ROW_FONT_SCALE: return m12_tr(state, "FONT SCALE");
         case M12_SETTINGS_ROW_UNICODE_FONT_PATH: return m12_tr(state, "UNICODE FONT");
         case M12_SETTINGS_ROW_HIGH_CONTRAST: return m12_tr(state, "HIGH CONTRAST");
@@ -4505,6 +4537,8 @@ const char* M12_StartupMenu_GetSettingsValue(const M12_StartupMenuState* state,
         case M12_SETTINGS_ROW_AUDIO_MUSIC: return m12_settings_value_audio_music(state);
         case M12_SETTINGS_ROW_AUDIO_SFX: return m12_settings_value_audio_sfx(state);
         case M12_SETTINGS_ROW_AUDIO_MUTED: return m12_settings_value_audio_muted(state);
+        case M12_SETTINGS_ROW_AUDIO_DEVICE: return m12_settings_value_audio_device(state);
+        case M12_SETTINGS_ROW_DISPLAY_BRIGHTNESS: return m12_settings_value_display_brightness(state);
         case M12_SETTINGS_ROW_FONT_SCALE: return m12_settings_value_font_scale(state);
         case M12_SETTINGS_ROW_UNICODE_FONT_PATH: return m12_settings_value_path_status(state, state ? state->settings.unicodeFontPath : NULL);
         case M12_SETTINGS_ROW_HIGH_CONTRAST: return m12_settings_value_high_contrast(state);
@@ -4583,7 +4617,7 @@ static const char* m12_settings_group_label(const M12_StartupMenuState* state, i
     if (row <= M12_SETTINGS_ROW_DEVELOPER_GATES) {
         return m12_tr(state, "DEBUG");
     }
-    if (row <= M12_SETTINGS_ROW_AUDIO_MUTED) {
+    if (row <= M12_SETTINGS_ROW_DISPLAY_BRIGHTNESS) {
         return m12_tr(state, "AUDIO");
     }
     if (row <= M12_SETTINGS_ROW_AUTO_PAUSE) {
@@ -4933,6 +4967,12 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 M12_UI_LANGUAGE_COUNT);
             m12_sync_l10n_language(state);
             state->languageExplicit = 1;
+            {
+                int gi;
+                for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
+                    state->gameOptions[gi].languageIndex = state->settings.languageIndex;
+                }
+            }
             break;
         case M12_SETTINGS_ROW_GRAPHICS:
                 state->settings.graphicsIndex = m12_cycle_index(
@@ -5075,6 +5115,43 @@ static void m12_cycle_setting(M12_StartupMenuState* state, int delta) {
                 state->settings.audioMuted,
                 delta,
                 (int)(sizeof(g_toggleModes) / sizeof(g_toggleModes[0])));
+            break;
+        case M12_SETTINGS_ROW_DISPLAY_BRIGHTNESS:
+            state->settings.displayBrightness += delta * 10;
+            if (state->settings.displayBrightness < 50) state->settings.displayBrightness = 150;
+            if (state->settings.displayBrightness > 150) state->settings.displayBrightness = 50;
+            break;
+        case M12_SETTINGS_ROW_AUDIO_DEVICE:
+            {
+                SDL_AudioDeviceID* devices;
+                int count = 0;
+                int index = -1;
+                int i;
+                if (!SDL_WasInit(SDL_INIT_AUDIO) && !SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+                    break;
+                }
+                devices = SDL_GetAudioPlaybackDevices(&count);
+                if (!devices || count <= 0) {
+                    if (devices) SDL_free(devices);
+                    state->settings.audioDeviceName[0] = '\0';
+                    break;
+                }
+                for (i = 0; i < count; ++i) {
+                    const char* name = SDL_GetAudioDeviceName(devices[i]);
+                    if (name && strcmp(name, state->settings.audioDeviceName) == 0) {
+                        index = i;
+                        break;
+                    }
+                }
+                index = m12_cycle_index(index + 1, delta, count + 1) - 1;
+                if (index < 0) state->settings.audioDeviceName[0] = '\0';
+                else {
+                    const char* name = SDL_GetAudioDeviceName(devices[index]);
+                    snprintf(state->settings.audioDeviceName,
+                             sizeof(state->settings.audioDeviceName), "%s", name ? name : "");
+                }
+                SDL_free(devices);
+            }
             break;
         case M12_SETTINGS_ROW_FONT_SCALE:
             state->settings.fontScale = 1 + m12_cycle_index(

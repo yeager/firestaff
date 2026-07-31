@@ -41,6 +41,8 @@ typedef struct {
     int audioMusicVolume;
     int audioSfxVolume;
     int audioMuted;
+    int displayBrightness; /* 50..150 percent, applied to launcher and every game */
+    char audioDeviceName[128]; /* Empty = SDL system-default playback device. */
     char dataDir[M12_CONFIG_DATA_DIR_CAPACITY];
     char path[M12_CONFIG_PATH_CAPACITY];
 

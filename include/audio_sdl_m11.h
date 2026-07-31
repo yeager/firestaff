@@ -89,6 +89,10 @@ typedef struct {
 } M11_AudioState;
 
 int M11_Audio_Init(M11_AudioState* state);
+/* Empty selects SDL's system default.  The name is matched against the live
+ * SDL playback-device list at each game start, so disconnected devices fail
+ * safely back to the system default instead of inventing an output. */
+void M11_Audio_SetPreferredPlaybackDeviceName(const char* name);
 void M11_Audio_Shutdown(M11_AudioState* state);
 int M11_Audio_IsAvailable(const M11_AudioState* state);
 int M11_Audio_SetVolumes(M11_AudioState* state,

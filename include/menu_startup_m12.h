@@ -115,6 +115,8 @@ typedef struct {
     int audioMusicVolume;
     int audioSfxVolume;
     int audioMuted;
+    int displayBrightness;
+    char audioDeviceName[128];
     int fontScale;
     char unicodeFontPath[M12_CONFIG_DATA_DIR_CAPACITY];
     int highContrast;
@@ -314,6 +316,8 @@ typedef struct {
     int audioMusicVolume;
     int audioSfxVolume;
     int audioMuted;
+    int displayBrightness;
+    char audioDeviceName[128];
     int wasdMovementEnabled;
     int controlSchemeIndex;      /* 0 = original, 1 = hybrid */
     int gameSpeedMultiplier;     /* 50/100/150/200 */

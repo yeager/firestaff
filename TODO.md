@@ -23870,3 +23870,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   absent record remains valid and malformed/truncated EXPOOL data fails
   closed. The remaining CSBWin save task is a positive operator-owned corpus,
   not this previously disconnected authenticated field.
+# 2026-07-31 — Global launcher settings follow-up
+
+- Add a focused M12 regression probe for persistence and launch handoff of
+  selected SDL playback device and global brightness.  The runtime wiring is
+  implemented; the current generic M12 language-layout probe verifies the
+  launcher language cycle, but not those two device-dependent values.

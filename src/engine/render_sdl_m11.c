@@ -56,6 +56,8 @@ typedef struct {
     int integerScaling;
     int scaleFilter;
     int vsync;
+    int globalBrightness;
+    int backendPreference;
     int quitRequested;
     int contentW;
     int contentH;
@@ -768,6 +770,16 @@ static void m11_apply_v2_filters_rgba_post(int w, int h) {
     if (!rgba) {
         return;
     }
+    if (g_state.globalBrightness != 100) {
+        int i;
+        for (i = 0; i < w * h * 4; i += 4) {
+            int c;
+            for (c = 0; c < 3; ++c) {
+                int value = (rgba[i + c] * g_state.globalBrightness) / 100;
+                rgba[i + c] = (unsigned char)(value > 255 ? 255 : value);
+            }
+        }
+    }
     if (g_state.v2_sharpen_enabled && g_state.v2_sharpen_strength > 0) {
         (void)dm1_v2_filter_sharpen_rgba(rgba, w, h, g_state.v2_sharpen_strength);
     }
@@ -1007,6 +1019,7 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
     if (!m11_validate_scale(scaleMode)) {
         return M11_RENDER_ERR_INVALID_ARG;
     }
+    if (g_state.globalBrightness == 0) g_state.globalBrightness = 100;
 
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
@@ -1056,7 +1069,8 @@ int M11_Render_Init(int windowWidth, int windowHeight, int scaleMode) {
 #if SDL_VERSION_ATLEAST(3, 0, 0)
     /* SDL3 picks the best renderer when name is NULL. The software
        renderer is always available as a fallback. */
-    g_state.renderer = SDL_CreateRenderer(g_state.window, NULL);
+    g_state.renderer = SDL_CreateRenderer(g_state.window,
+        g_state.backendPreference == 1 ? "software" : NULL);
 #else
     g_state.renderer = SDL_CreateRenderer(g_state.window, -1, 0);
 #endif
@@ -2141,6 +2155,16 @@ int M11_Render_PresentRGBA(const unsigned char* rgba,
     if (g_state.presentBuffer) {
         memcpy(g_state.presentBuffer, rgba,
                (size_t)logicalWidth * (size_t)logicalHeight * 4U);
+        if (g_state.globalBrightness != 100) {
+            int i;
+            for (i = 0; i < logicalWidth * logicalHeight * 4; i += 4) {
+                int c;
+                for (c = 0; c < 3; ++c) {
+                    int value = (g_state.presentBuffer[i + c] * g_state.globalBrightness) / 100;
+                    g_state.presentBuffer[i + c] = (unsigned char)(value > 255 ? 255 : value);
+                }
+            }
+        }
     }
     m11_compute_present_rect(&destX, &destY, &destW, &destH);
 
@@ -2676,6 +2700,18 @@ int M11_Render_SetVSync(int vsyncIndex) {
 
 int M11_Render_GetVSync(void) {
     return g_state.vsync;
+}
+
+int M11_Render_SetGlobalBrightness(int percent) {
+    if (percent < 50 || percent > 150) return M11_RENDER_ERR_INVALID_ARG;
+    g_state.globalBrightness = percent;
+    return M11_RENDER_OK;
+}
+
+int M11_Render_GetGlobalBrightness(void) { return g_state.globalBrightness ? g_state.globalBrightness : 100; }
+
+void M11_Render_SetBackendPreference(int backend) {
+    if (!g_state.initialised) g_state.backendPreference = backend == 1 ? 1 : 0;
 }
 
 void M11_Render_RaiseWindow(void) {

@@ -22,6 +22,7 @@
 #define M11_AUDIO_SOUND_PACK_MAX_BYTES (64u * 1024u * 1024u)
 #define M11_AUDIO_CSB_SWSH_BYTES 9078
 #define M11_AUDIO_CSB_SWSH_PERIOD 334
+#define M11_AUDIO_DEVICE_NAME_CAPACITY 128
 
 /*
  * Guard: SDL3 headers are only included when we actually attempt real audio.
@@ -41,6 +42,34 @@ static int m11_clamp_volume(int value) {
     if (value > M11_AUDIO_VOLUME_MAX) return M11_AUDIO_VOLUME_MAX;
     return value;
 }
+
+static char g_m11_preferred_audio_device[M11_AUDIO_DEVICE_NAME_CAPACITY];
+
+void M11_Audio_SetPreferredPlaybackDeviceName(const char* name) {
+    snprintf(g_m11_preferred_audio_device, sizeof(g_m11_preferred_audio_device),
+             "%s", name ? name : "");
+}
+
+#if M11_HAVE_SDL_AUDIO
+static SDL_AudioDeviceID m11_preferred_playback_device(void) {
+    SDL_AudioDeviceID* devices;
+    SDL_AudioDeviceID result = SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK;
+    int count = 0;
+    int i;
+    if (!g_m11_preferred_audio_device[0]) return result;
+    devices = SDL_GetAudioPlaybackDevices(&count);
+    if (!devices) return result;
+    for (i = 0; i < count; ++i) {
+        const char* name = SDL_GetAudioDeviceName(devices[i]);
+        if (name && strcmp(name, g_m11_preferred_audio_device) == 0) {
+            result = devices[i];
+            break;
+        }
+    }
+    SDL_free(devices);
+    return result;
+}
+#endif
 
 static void m11_sound_free(M11_SoundBuffer* buf) {
     if (!buf) return;
@@ -835,7 +864,7 @@ int M11_Audio_Init(M11_AudioState* state) {
         spec.freq     = M11_AUDIO_SAMPLE_RATE;
 
         stream = SDL_OpenAudioDeviceStream(
-            SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
+            m11_preferred_playback_device(),
             &spec,
             NULL,  /* no callback — we push data */
             NULL

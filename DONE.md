@@ -45641,7 +45641,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm2_v1_spell_pc34_compat` checks all 34 records,
   `test_dm2_v1_spell_cast_player_pc34_compat` passes 151/151, and real-data
   `test_dm2_v1_m11_startup_profile_gate` passes.
-
 - ✅ 2026-07-31 DM1 V1 movement-capture verification repair: fixed pass207's
   invalid Python f-strings, treated missing original-runner tools as an honest
   blocked capture prerequisite rather than a source regression, and made the
@@ -45654,3 +45653,20 @@ the supplied root and selected MD5 to prove this without shipping game data.
   a stale line window. Targeted verification passes pass576, pass582 and the
   viewport source-zone table gate; this remains a source lock, not a capture
   parity claim.
+# 2026-07-31 — M12 global launcher preferences
+
+- The start menu now owns and persists a real global renderer preference,
+  SDL playback-device name, master/music/SFX volume, display brightness, and
+  launcher language.  Changing the global language synchronizes all five
+  game launch profiles, so the same language is handed to DM1, CSB, DM2,
+  Nexus, and Theron's Quest rather than only changing launcher text.
+- Playback-device choices are enumerated from SDL at runtime and a vanished
+  saved device falls back to SDL's real system-default output.  Brightness is
+  a host presentation adjustment applied after source pixels are decoded; it
+  never changes original palettes or game data.  Renderer selection is read
+  before renderer creation, with the SDL software renderer selected only on
+  explicit request.
+- Verification: `cmake --build build-dm2-main-verify --target firestaff
+  firestaff_m12_language_cycle_layout_probe --parallel 4` passed;
+  `SDL_VIDEODRIVER=dummy ./build-dm2-main-verify/firestaff_m12_language_cycle_layout_probe`
+  passed 63/63; `git diff --check` passed.

@@ -348,6 +348,8 @@ void M12_Config_SetDefaults(M12_Config* config) {
     config->audioMusicVolume = 128;
     config->audioSfxVolume = 128;
     config->audioMuted = 0;
+    config->displayBrightness = 100;
+    config->audioDeviceName[0] = '\0';
     config->fontScale = 1;
     config->unicodeFontPath[0] = '\0';
     config->highContrast = 0;
@@ -557,6 +559,15 @@ static void m12_parse_line(M12_Config* config, char* line) {
     }
     if (m12_string_equals(key, "audio_muted")) {
         config->audioMuted = m12_parse_int(value, config->audioMuted);
+        return;
+    }
+    if (m12_string_equals(key, "display_brightness")) {
+        int brightness = m12_parse_int(value, config->displayBrightness);
+        config->displayBrightness = brightness < 50 ? 50 : (brightness > 150 ? 150 : brightness);
+        return;
+    }
+    if (m12_string_equals(key, "audio_device_name")) {
+        snprintf(config->audioDeviceName, sizeof(config->audioDeviceName), "%s", value);
         return;
     }
     if (m12_string_equals(key, "game_speed_multiplier")) {
@@ -1101,6 +1112,10 @@ int M12_Config_Save(const M12_Config* config) {
     fprintf(fp, "audio_music_volume = %d\n", config->audioMusicVolume);
     fprintf(fp, "audio_sfx_volume = %d\n", config->audioSfxVolume);
     fprintf(fp, "audio_muted = %d\n", config->audioMuted ? 1 : 0);
+    fprintf(fp, "display_brightness = %d\n", config->displayBrightness);
+    fputs("audio_device_name = ", fp);
+    m12_escape_and_write(fp, config->audioDeviceName);
+    fputc('\n', fp);
     fprintf(fp, "game_speed_multiplier = %d\n", config->gameSpeedMultiplier);
     fprintf(fp, "minimap_enabled = %d\n", config->minimapEnabled ? 1 : 0);
     fprintf(fp, "minimap_size = %d\n", config->minimapSize);
@@ -1440,6 +1455,10 @@ int M12_Config_ExportJSON(const M12_Config* config, const char* exportPath) {
     fprintf(fp, "  \"audio_music_volume\": %d,\n", config->audioMusicVolume);
     fprintf(fp, "  \"audio_sfx_volume\": %d,\n", config->audioSfxVolume);
     fprintf(fp, "  \"audio_muted\": %d,\n", config->audioMuted ? 1 : 0);
+    fprintf(fp, "  \"display_brightness\": %d,\n", config->displayBrightness);
+    fputs("  \"audio_device_name\": ", fp);
+    m12_json_write_string(fp, config->audioDeviceName);
+    fputs(",\n", fp);
     fprintf(fp, "  \"font_scale\": %d,\n", config->fontScale);
     fprintf(fp, "  \"high_contrast\": %d,\n", config->highContrast ? 1 : 0);
     fprintf(fp, "  \"colorblind_mode\": %d,\n", config->colorblindMode);
@@ -1781,6 +1800,7 @@ int M12_Config_ImportJSON(M12_Config* config, const char* importPath) {
         SET_INT("audio_music_volume", audioMusicVolume)
         SET_INT("audio_sfx_volume", audioSfxVolume)
         SET_BOOL("audio_muted", audioMuted)
+        SET_INT("display_brightness", displayBrightness)
         SET_INT("font_scale", fontScale)
         SET_BOOL("high_contrast", highContrast)
         SET_INT("colorblind_mode", colorblindMode)

@@ -899,6 +899,9 @@ void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
     if (M11_Render_GetVSync() != menuState->settings.vsyncIndex) {
         M11_Render_SetVSync(menuState->settings.vsyncIndex);
     }
+    if (M11_Render_GetGlobalBrightness() != menuState->settings.displayBrightness) {
+        M11_Render_SetGlobalBrightness(menuState->settings.displayBrightness);
+    }
 }
 
 static void m11_sync_runtime_graphics_popup_to_menu(
@@ -4990,6 +4993,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     struct Dm1V1PendingMotionQueuePc34Compat pendingDm1V1MotionQueue;
     Firestaff_RA_Runtime raRuntime;
 
+    {
+        M12_Config startupConfig;
+        M12_Config_Load(&startupConfig, o->dataDir);
+        M11_Render_SetBackendPreference(startupConfig.rendererBackendIndex);
+    }
     int rc = M11_Render_Init(o->windowWidth, o->windowHeight, o->scaleMode);
     if (rc != M11_RENDER_OK) {
         return rc;
