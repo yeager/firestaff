@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 Theron stage-metadata: dungeon 2–7 visar nu `UNAVAILABLE`
+  i progression/stage-menyn tills deras riktiga Track 02-header och namn är
+  bundna. De sju dungeon-ID:na, progressionstillstånd och DMWeb-verifierade
+  relic-namn är oförändrade. Startup-flow `653/653` och M11 direct-launch
+  passerar.
+
 - ✅ 2026-07-31 Theron source-lock-korrigering: uppdaterade
   `tqr_v1_phase2_data_formats_H2339.md` så den inte längre påstår att Track 02
   saknas. JP/US BIN, den verifierade Hall of Records-starten och de fyra

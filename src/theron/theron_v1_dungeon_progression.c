@@ -45,10 +45,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0x0108e938u, /* verified initial Track 02 seed */
         .size_bytes        = 0,         /* set at load time */
     },
-    /* Dungeon 2 — Crypt of Shadows */
+    /* Dungeon 2 — header/name not yet bound to a real Track 02 record. */
     [THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] = {
         .id                = THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
-        .name              = "Crypt of Shadows",
+        .name              = "UNAVAILABLE",
         .level_count       = 2,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 1),  /* Bit 1 */
@@ -56,10 +56,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,         /* unresolved Track 02 header */
         .size_bytes        = 0,
     },
-    /* Dungeon 3 — Abyss of Flames */
+    /* Dungeon 3 — header/name not yet bound to a real Track 02 record. */
     [THERON_DUNGEON_3_ABYSS_OF_FLAMES - 1] = {
         .id                = THERON_DUNGEON_3_ABYSS_OF_FLAMES,
-        .name              = "Abyss of Flames",
+        .name              = "UNAVAILABLE",
         .level_count       = 3,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 2),  /* Bit 2 */
@@ -67,10 +67,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 4 — Tomb of Woe */
+    /* Dungeon 4 — header/name not yet bound to a real Track 02 record. */
     [THERON_DUNGEON_4_TOMB_OF_WOE - 1] = {
         .id                = THERON_DUNGEON_4_TOMB_OF_WOE,
-        .name              = "Tomb of Woe",
+        .name              = "UNAVAILABLE",
         .level_count       = 3,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 3),  /* Bit 3 */
@@ -78,10 +78,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 5 — Vault of Secrets */
+    /* Dungeon 5 — header/name not yet bound to a real Track 02 record. */
     [THERON_DUNGEON_5_VAULT_OF_SECRETS - 1] = {
         .id                = THERON_DUNGEON_5_VAULT_OF_SECRETS,
-        .name              = "Vault of Secrets",
+        .name              = "UNAVAILABLE",
         .level_count       = 2,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 4),  /* Bit 4 */
@@ -89,10 +89,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 6 — Castle of Fate */
+    /* Dungeon 6 — header/name not yet bound to a real Track 02 record. */
     [THERON_DUNGEON_6_CASTLE_OF_FATE - 1] = {
         .id                = THERON_DUNGEON_6_CASTLE_OF_FATE,
-        .name              = "Castle of Fate",
+        .name              = "UNAVAILABLE",
         .level_count       = 3,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 5),  /* Bit 5 */
@@ -100,10 +100,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 7 — Tower of Epilogue (final) */
+    /* Dungeon 7 — header/name not yet bound to a real Track 02 record. */
     [THERON_DUNGEON_7_TOWER_OF_EPILOGUE - 1] = {
         .id                = THERON_DUNGEON_7_TOWER_OF_EPILOGUE,
-        .name              = "Tower of Epilogue",
+        .name              = "UNAVAILABLE",
         .level_count       = 3,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 6),  /* Bit 6 */
