@@ -47215,3 +47215,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   DM1-owned ANIM inventory without an authenticated CSB stream or runtime
   consumer, and already blocks execution. It now compiles only into its
   contract test, preventing metadata from creating CSB UI or timing behavior.
+
+- ✅ 2026-07-31 Theron SRM progression-only handoff: Continue now clears the
+  fixture world party when an SRM contains progression but no champion body.
+  It no longer invents a one-member Theron party from unrelated initialized
+  state.

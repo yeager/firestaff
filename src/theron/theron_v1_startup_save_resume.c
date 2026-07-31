@@ -808,8 +808,9 @@ static int theron_v1_startup_continue_srm_envelope_apply(
             world->party = decoded_party;
         }
     } else {
-        world->party.champion_count = 1;
-        world->party.active_slot = THERON_CHAMPION_SLOT_THERON;
+        /* Progression-only SRM data does not contain a champion record. Do
+         * not revive the world's fixture party as an inferred Theron slot. */
+        memset(&world->party, 0, sizeof(world->party));
     }
     theron_v1_startup_continue_reset_world_runtime(world);
 
