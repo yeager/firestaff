@@ -1,3 +1,23 @@
+- ✅ 2026-07-31 Nexus M11 startup text executor gate: made the final
+  `STARTUP_DRAW_TEXT` executor no-draw, closing the remaining bypass around
+  launcher-side label filtering. TITLE.CG, backgrounds and authenticated
+  portraits remain eligible; TEXT4/TABL/FONT256 text stays blocked until its
+  Saturn glyph route is proven. Verification: rebuilt `firestaff_m11`, rebuilt
+  `test_m11_nexus_startup_gate`, and runtime handoff probe pass.
+
+- ✅ 2026-07-31 Nexus M11 startup no-draw cleanup: removed the remaining
+  host-generated `NEXUS STARTUP ASSET BLOCKED` and blocker-text pixels from
+  the blocked MENU.BPK path. Real TITLE.CG remains drawable; missing menu
+  presentation now leaves the framebuffer source-owned/no-draw. Verification:
+  `firestaff_m11` rebuild and `test_m11_nexus_startup_gate` pass.
+
+- ✅ 2026-07-31 Nexus M11 viewport no-draw cleanup: removed the host-generated
+  `DUNGEON MASTER NEXUS`, route-blocked, coordinate and MNS diagnostic text
+  that was painted when Saturn DGN material submission failed. The blocked
+  route now leaves the framebuffer untouched; status/diagnostic receipts keep
+  the information outside the game pixels. Verification: complete `firestaff`
+  build, `test_m11_nexus_startup_gate`, and `git diff --check`.
+
 - ✅ 2026-07-31 Nexus PLRD label provenance cleanup: removed the hardcoded
   English/Japanese champion labels from the real `RLOWFIX.BIN` parser. PLRD
   now retains only its source TABL indices/codes and leaves display names

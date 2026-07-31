@@ -44236,28 +44236,11 @@ static void m11_nexus_startup_exec_text(
 {
     M11_NexusStartupDrawContext *context =
         (M11_NexusStartupDrawContext*)userdata;
-    M11_TextStyle style;
-    if (!context || !command) {
-        return;
-    }
-    if (command->text_style == NEXUS_V1_STARTUP_TEXT_TITLE) {
-        style = g_text_title;
-    } else if (command->text_style == NEXUS_V1_STARTUP_TEXT_SHADOW) {
-        style = g_text_shadow;
-    } else {
-        style = g_text_small;
-    }
-    if (command->text_color > 0) {
-        style.color = (unsigned char)command->text_color;
-    }
-    style.shadowColor = (unsigned char)command->shadow_color;
-    m11_draw_text(context->framebuffer,
-                  context->framebufferWidth,
-                  context->framebufferHeight,
-                  command->x,
-                  command->y,
-                  command->label,
-                  &style);
+    (void)context;
+    (void)command;
+    /* TEXT4/TABL/FONT256.S2D → Saturn VDP2 glyph ownership is not yet
+     * authenticated.  Keep this final executor boundary no-draw even if a
+     * stale or synthetic startup command bypasses the launcher filter. */
 }
 
 static void m11_nexus_startup_exec_portrait(
