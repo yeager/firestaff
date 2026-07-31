@@ -25,6 +25,7 @@
 #define DM2_WEATHER_FOG     2
 #define DM2_WEATHER_STORM   3
 #define DM2_WEATHER_COUNT   4
+#define DM2_WEATHER_UNKNOWN (-1)
 
 /* ── Time-of-day constants ────────────────────────────────────────────
  * Source: skproject SKWINSPX/src/v5/skweathr.cpp::DM2_UPDATE_WEATHER
@@ -48,7 +49,7 @@
 /* ── Outdoor config struct (mirrors existing DM2_V1_OutdoorConfig) ────── */
 
 typedef struct {
-    int weather;          /* DM2_WEATHER_* */
+    int weather;          /* DM2_WEATHER_* or DM2_WEATHER_UNKNOWN */
     int time_of_day;      /* minutes from midnight (0-1439) */
     float time_fraction;  /* 0.0-1.0, derived from time_of_day */
     uint32_t weather_seed;/* deterministic weather state */

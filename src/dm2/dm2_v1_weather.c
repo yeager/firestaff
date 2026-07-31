@@ -37,14 +37,16 @@ static uint32_t dm2_weather_state_hash_step(uint32_t hash, uint32_t value)
 
 void dm2_v1_weather_init(DM2_V1_WeatherState *state) {
     if (!state) return;
-    state->weather = DM2_WEATHER_CLEAR;
+    /* c_weather.cpp obtains the live weather selector and its RNG from
+     * session-owned v1e14xx state.  A fresh runtime has neither owner. */
+    state->weather = DM2_WEATHER_UNKNOWN;
     /* skweathr.cpp::DM2_UPDATE_WEATHER obtains the environment clock from
      * timdat.gametick plus source globals.  Do not substitute a noon clock
      * while that save/runtime owner is unavailable. */
     state->time_of_day = DM2_TIME_UNKNOWN;
     state->time_fraction = 0.0f;
     state->weather_intensity = 0;
-    state->weather_seed = 0x0100u;
+    state->weather_seed = 0u;
 }
 
 void dm2_v1_weather_set(DM2_V1_WeatherState *state, int weather) {
@@ -69,7 +71,7 @@ uint32_t dm2_v1_weather_advance_seed(uint32_t seed) {
 int dm2_v1_weather_next_state(DM2_V1_WeatherState *state) {
     uint32_t next_seed;
     int next_weather;
-    if (!state) return DM2_WEATHER_CLEAR;
+    if (!state || state->weather_seed == 0u) return DM2_WEATHER_UNKNOWN;
     next_seed = dm2_v1_weather_advance_seed(state->weather_seed);
     state->weather_seed = next_seed;
     next_weather = (int)((next_seed >> 8) & 0x3u);
@@ -379,7 +381,7 @@ const char *dm2_v1_weather_source_evidence(void) {
         "Source: docs/dm2_time.md (time-of-day 0-1439 min, per-champion torch)\n"
         "Source: docs/dm2_creatures_gfx.md (rain drop sprites from GDAT blitline_48)\n"
         "Source: include/dm2_v1_outdoor_renderer.h (4 weather states, time_fraction)\n"
-        "Source: include/dm2_v1_game.h (time_of_day=720 noon start, 1440 min/day)\n"
+        "Source: source-owned timdat/environment globals (required before weather-chain admission)\n"
         "DM1 comparison: NO weather system, NO outdoor, single torch (global)\n"
         "DM2 comparison: 4 weather states, outdoor areas, per-champion torch, event queue\n";
 }

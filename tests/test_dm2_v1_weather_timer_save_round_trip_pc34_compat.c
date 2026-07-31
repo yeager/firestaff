@@ -396,9 +396,9 @@ static void test_gamestate_timer_stream_fixture_round_trip(void)
 
 static void test_weather_seed_persists_via_gamestate_round_trip(void)
 {
-    /* Default DM2 outdoor seed per dm2_v1_weather_init: 0x0100.
-     * Folding it into dwRandomSeed lets the next outdoor tick re-derive
-     * the same weather state after load. */
+    /* This is a decoded source-state fixture, not a startup default.
+     * Folding its supplied seed into dwRandomSeed lets the next outdoor tick
+     * re-derive the same weather state after load. */
     const uint32_t seed_in = 0x00000100u;
     DM2_V1_WeatherState state_pre;
     DM2_V1_WeatherState state_post;
@@ -414,6 +414,7 @@ static void test_weather_seed_persists_via_gamestate_round_trip(void)
     /* Build a state pre-save */
     dm2_v1_weather_init(&state_pre);
     dm2_v1_weather_set_seed(&state_pre, seed_in);
+    dm2_v1_weather_set(&state_pre, DM2_WEATHER_CLEAR);
     expected_pre = dm2_v1_weather_advance_seed(seed_in);
     w_pre = (int)((expected_pre >> 8) & 0x3u);
 
@@ -458,6 +459,8 @@ static void test_set_timer_weather_source_transaction(void)
 
     dm2_v1_weather_init(&state);
     dm2_v1_weather_set_seed(&state, seed);
+    /* A source-loaded chain has both the saved selector and its seed. */
+    dm2_v1_weather_set(&state, DM2_WEATHER_CLEAR);
 
     CHECK(dm2_v1_weather_set_timer_weather(&state, 0,
                                             DM2_WEATHER_TIMER_INTERVAL_TICKS,

@@ -68,6 +68,11 @@
   environment globals still need to replace that compatibility handoff.
   Boot's former 1,440-minute/day-cycle configuration is also unavailable;
   it must be populated only by the same recovered source owner.
+  **2026-07-31 update:** fresh weather state now has neither a clear-weather
+  selector nor a default RNG seed. An outdoor flag, host seed, or the
+  unowned bounded session-rain field cannot fabricate the `0x54` weather
+  timer chain or enable clouds, rain, or lightning. Import the exact
+  `v1e14xx`/savegame owner before admitting that chain.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following
@@ -83,6 +88,9 @@
   The unused one-hop inventory-chain trace shim is removed rather than being
   exposed as a successful traversal; inventory paths remain closed until the
   real `c_record` link owner is recovered.
+  Session rain intensity and weather-chain seed/state are also unproven in
+  this envelope, so they remain unavailable rather than being promoted into
+  the live environment.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

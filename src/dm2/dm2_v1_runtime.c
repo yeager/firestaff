@@ -2477,10 +2477,13 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
     if (rt->minions.count > DM2_MAX_MINIONS) {
         rt->minions.count = DM2_MAX_MINIONS;
     }
-    dm2_v1_weather_set(&rt->weather, session->rain_intensity > 0
-                                      ? DM2_WEATHER_RAIN
-                                      : DM2_WEATHER_CLEAR);
-    rt->weather.weather_intensity = (int)session->rain_intensity;
+    /* The bounded session model has no proven source owner for its
+     * rain_intensity field.  Do not promote it into c_weather's selector or
+     * synthesize a clear-weather state on zero; the recovered v1e14xx
+     * environment block must bind this later. */
+    rt->weather.weather = DM2_WEATHER_UNKNOWN;
+    rt->weather.weather_intensity = 0;
+    rt->weather.weather_seed = 0u;
     if (!g_dm2_runtime_restore_in_progress && rt->boot->save_root[0]) {
         dm2_runtime_restore_live_sidecar(rt->boot->save_root, session);
     }
@@ -4942,52 +4945,12 @@ void dm2_v1_runtime_tick(void) {
         rt->move_cooldown_ticks--;
     }
 
-    /* DM2-003 follow-up: the source 0x54 weather chain replaces the
-     * former synthetic 182-tick cadence.  skproject has no fixed
-     * interval: DM2_weather_3df7_0037 (c_weather.cpp:509-567) queues
-     * the next type-0x54 c_tim with RAND16(8000)+500 (or RAND16(500)
-     * when storm-forced), and each DM2_UPDATE_WEATHER(1) pop re-queues
-     * RAND16(256)+50 (c_weather.cpp:87-89).  Chain start mirrors the
-     * c_savegame.cpp:546 session-start call with arg=0 (reseed +
-     * queue): the v1d652d saved-weather flag that selects the arg
-     * there is unproven, so the bounded session-start choice is the
-     * reseeding path.  The chain LCG is seeded from the session
-     * weather seed. */
-    if (rt->outdoor) {
-        if (!rt->weather_chain_started) {
-            DM2_V1_WeatherTransitionReceipt start_rc;
-            memset(&start_rc, 0, sizeof(start_rc));
-            rt->weather_rng.random = rt->weather.weather_seed;
-            /* The return value is days elapsed (0 at session start);
-             * gate on the receipt, not the return. */
-            (void)dm2_v1_weather_transition(&rt->weather_chain,
-                                            rt->tick_count, 0,
-                                            &rt->weather_rng,
-                                            &start_rc);
-            if (start_rc.valid && start_rc.queue_delay >= 0) {
-                DM2_V1_SourceTimer weather_timer;
-                memset(&weather_timer, 0, sizeof(weather_timer));
-                weather_timer.ticks_and_map =
-                    (uint32_t)(rt->tick_count + start_rc.queue_delay) &
-                    DM2_V1_SOURCE_TIMER_TICK_MASK; /* map 0: outdoor */
-                weather_timer.type = DM2_V1_TIMER_UPDATE_WEATHER; /* 0x54 */
-                weather_timer.actor = 0; /* c_weather.cpp:28 setactor(0) */
-                if (dm2_v1_runtime_enqueue_source_timer(&weather_timer,
-                                                        0) ==
-                    DM2_V1_SOURCE_TIMER_OK) {
-                    rt->weather_chain_started = 1;
-                    rt->weather_source_timer_pending = 1;
-                    /* The source enables cloud/rain/lightning command
-                     * selection for outdoor maps once the chain is running.
-                     * These globals are otherwise session/map-owned; default
-                     * them to enabled for a live outdoor runtime. */
-                    rt->weather_chain.clouds_enabled = 1;
-                    rt->weather_chain.rain_enabled = 1;
-                    rt->weather_chain.lightning_enabled = 1;
-                }
-            }
-        }
-    } else {
+    /* SKProject c_savegame.cpp starts c_weather only from the recovered
+     * v1e14xx environment globals.  Firestaff has not yet imported those
+     * globals, so merely entering an outdoor map must not invent a chain,
+     * RNG seed, timers, clouds, rain or lightning.  A future source importer
+     * may set weather_chain_started with its complete record receipt. */
+    if (!rt->outdoor) {
         rt->weather_chain_started = 0;
         rt->weather_source_timer_pending = 0;
     }

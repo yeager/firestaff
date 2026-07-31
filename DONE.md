@@ -45344,3 +45344,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm2_v1_champion_hud_helpers` and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass against
   `~/.firestaff/data/dm2`.
+- ✅ 2026-07-31 DM2 automatic weather-fixture removal: fresh weather state
+  no longer invents clear weather or the `0x0100` RNG seed. The runtime does
+  not promote the unowned bounded session-rain field, and an outdoor flag or
+  host seed cannot create a `0x54` weather timer or auto-enable clouds, rain,
+  or lightning. Source: SKProject `SKWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER`
+  and `DM2_weather_3df7_0037`, with save-state ownership still pending.
+  Verification: `test_dm2_v1_weather_seed_regression` (621 assertions),
+  `test_dm2_v1_weather_timer_producer_pc34_compat`,
+  `test_dm2_v1_weather_gdat_receipt`, and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass against
+  `~/.firestaff/data/dm2`.

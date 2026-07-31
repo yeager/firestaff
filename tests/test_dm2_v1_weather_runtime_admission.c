@@ -138,8 +138,10 @@ int main(void)
                   admission.weather_receipt_hash == weather.receipt_hash,
               "weather runtime admission consumes GRAPHICS_DATA_OPEN and text");
         CHECK(admission.no_fallback_blit && !admission.blit_authorized &&
-                  !admission.renderer_ready && admission.material_mask == 0u,
-              "real text-only weather stays no-draw without material renderer");
+                  !admission.renderer_ready &&
+                  admission.material_mask == weather.material_mask &&
+                  admission.material_ready == (weather.material_mask != 0u),
+              "real weather remains no-draw until its material renderer exists");
 
         memset(&open_receipt, 0, sizeof(open_receipt));
         CHECK(dm2_v1_weather_runtime_admission_receipt(

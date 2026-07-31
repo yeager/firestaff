@@ -22,6 +22,9 @@ int main(void)
 
     dm2_v1_weather_init(&state);
     dm2_v1_weather_set_seed(&state, seed);
+    /* A timer receipt is only meaningful for an already source-restored
+     * weather chain; startup itself intentionally has no selector. */
+    dm2_v1_weather_set(&state, DM2_WEATHER_CLEAR);
 
     CHECK(dm2_v1_weather_set_timer_weather_receipt(0, 182u, &timer));
     CHECK(timer.valid);

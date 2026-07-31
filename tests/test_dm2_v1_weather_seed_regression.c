@@ -3,10 +3,8 @@
  * Verifies a narrow deterministic state transition:
  * - LCG weather seed advance is deterministic and consistent with API
  *   (module-level receipt functions).
- * - The runtime runs the source 0x54 weather chain
- *   (skproject/SKULLWIN/c_weather.cpp DM2_weather_3df7_0037 +
- *   DM2_UPDATE_WEATHER(1)) instead of the retired synthetic 182-tick
- *   cadence; the session seed is only read at chain start.
+ * - The runtime refuses to create the source 0x54 weather chain from only
+ *   an outdoor flag and a host-provided seed.
  *
  * No game data required; test uses synthetic state only.
  */
@@ -29,13 +27,6 @@ static int failed;
         printf("  FAIL: %s\n", msg); \
     } \
 } while (0)
-
-/* Reference copy of the source LCG (c_random.cpp:13-31). */
-static uint32_t ref_rand(uint32_t *state)
-{
-    *state = *state * 0xbb40e62du + 11u;
-    return *state >> 8;
-}
 
 static void test_weather_seed_advances_with_reproducible_lcg(void)
 {
@@ -102,23 +93,10 @@ static void test_weather_seed_advances_with_reproducible_lcg(void)
           "DM2_weather_3df7_0037 binds timer receipt hash");
 }
 
-static void test_weather_ticks_run_the_source_0x54_chain(void)
+static void test_weather_ticks_require_source_chain_state(void)
 {
     DM2_V1_BootProfile boot = {0};
-    DM2_V1_UpdateWeatherState snap;
     const uint32_t seed = 0x2D2Du;
-    uint32_t rs = seed;
-    int delay0, row, step, intensity1;
-
-    /* Expected chain-start transition (c_weather.cpp:518-567 draw
-     * order): RAND16(8000) -> RANDDIR -> RAND16(3) -> RANDDIR ->
-     * RAND16(4). */
-    delay0 = (int)((ref_rand(&rs) & 0xffffu) % 8000u) + 500;
-    row = (int)(ref_rand(&rs) & 0x3u);
-    step = (int)((ref_rand(&rs) & 0xffffu) % 3u) + 1;
-    intensity1 = step * (int)dm2_v1_update_weather_pattern[(row << 5) + 1];
-    if (intensity1 < 0) intensity1 = 0;
-    if (intensity1 > 0xff) intensity1 = 0xff;
 
     dm2_v1_runtime_init(&boot);
     dm2_v1_runtime_set_weather_seed(seed);
@@ -128,8 +106,8 @@ static void test_weather_ticks_run_the_source_0x54_chain(void)
         dm2_v1_runtime_tick();
         CHECK(dm2_v1_runtime_get_weather_seed() == seed,
               "indoor mode never advances weather seed");
-        CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_CLEAR,
-              "indoor mode keeps clear weather");
+        CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_UNKNOWN,
+              "indoor mode keeps weather unavailable");
         CHECK(dm2_v1_runtime_weather_chain_started() == 0,
               "indoor mode never starts the 0x54 weather chain");
     }
@@ -138,27 +116,14 @@ static void test_weather_ticks_run_the_source_0x54_chain(void)
     dm2_v1_runtime_set_weather_seed(seed);
     dm2_v1_runtime_set_outdoor(1);
 
-    dm2_v1_runtime_tick();  /* tick 1: chain start */
-    CHECK(dm2_v1_runtime_weather_chain_started() == 1,
-          "outdoor first tick starts the source 0x54 chain");
-    CHECK(dm2_v1_runtime_get_weather_seed() == seed,
-          "session seed is only read, never advanced by the chain");
-    CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_CLEAR,
-          "weather enum stays a host presentation selector");
-
-    for (int tick = 0; tick < delay0 - 1; tick++) {
+    for (int tick = 0; tick < 200; tick++) {
         dm2_v1_runtime_tick();
-        CHECK(dm2_v1_runtime_get_weather_seed() == seed,
-              "seed unchanged before the source boundary");
     }
-
-    dm2_v1_runtime_tick();  /* tick 1 + delay0: first pop */
-    CHECK(dm2_v1_runtime_weather_chain_snapshot(&snap) == 1 &&
-              snap.retry == 1 && snap.intensity == (int16_t)intensity1 &&
-              snap.pattern_row == (int8_t)row && snap.step == (int8_t)step,
-          "first pop steps the v1e14xx chain in source order");
-    CHECK(dm2_v1_runtime_weather_source_timer_pending() == 1,
-          "chain re-queues RAND16(256)+50 after the pop");
+    CHECK(dm2_v1_runtime_weather_chain_started() == 0 &&
+              dm2_v1_runtime_weather_source_timer_pending() == 0 &&
+              dm2_v1_runtime_get_weather_seed() == seed &&
+              dm2_v1_runtime_get_weather() == DM2_WEATHER_UNKNOWN,
+          "outdoor flag and host seed cannot construct a weather chain");
 }
 
 int main(void)
@@ -168,8 +133,8 @@ int main(void)
     printf("--- test_weather_seed_advances_with_reproducible_lcg ---\n");
     test_weather_seed_advances_with_reproducible_lcg();
 
-    printf("\n--- test_weather_ticks_run_the_source_0x54_chain ---\n");
-    test_weather_ticks_run_the_source_0x54_chain();
+    printf("\n--- test_weather_ticks_require_source_chain_state ---\n");
+    test_weather_ticks_require_source_chain_state();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
