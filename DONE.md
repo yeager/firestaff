@@ -6420,6 +6420,13 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-31 DM2 companion no-op isolation: removed the unattached
+  `dm2_v1_companion.c` boundary from the production M10 archive. Its only
+  behavior is to reject caller-authored companion data and it has no live
+  DB4/CAII/CCM caller; the explicit rejection test retains a private copy.
+  No companion state can therefore become part of the executable before the
+  original creature, inventory and dialogue ownership chain is decoded.
+
 - ✅ 2026-07-31 DM2 unbound progression-state isolation: removed
   `dm2_v1_progression.c` from the production M10 archive. Its hard-coded
   time-cycle, weather and level metadata had no M11 consumer or decoded

@@ -666,6 +666,10 @@
   empty-pack fallback are now no-draw as well. The exposed render contract
   clears its receipt and returns unavailable until the source-owned
   `SHOP_GLASS` chain is decoded.
+  **2026-07-31 follow-up:** the standalone companion no-op boundary is also
+  outside the production archive. It has no live DB4/CAII/CCM caller and must
+  remain an isolated rejection contract until that complete source route is
+  imported.
 
 - **DM2-OBJECT-TEXT-OWNER-HANDOFF:** Bind leader-hand/item text only through
   the decoded DB object and its original GDAT text/metadata route. The HUD
