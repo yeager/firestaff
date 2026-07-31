@@ -1,10 +1,3 @@
-- ✅ 2026-07-31 Nexus M11 viewport no-draw cleanup: removed the host-generated
-  `DUNGEON MASTER NEXUS`, route-blocked, coordinate and MNS diagnostic text
-  that was painted when Saturn DGN material submission failed. The blocked
-  route now leaves the framebuffer untouched; status/diagnostic receipts keep
-  the information outside the game pixels. Verification: complete `firestaff`
-  build, `test_m11_nexus_startup_gate`, and `git diff --check`.
-
 - ✅ 2026-07-31 Nexus PLRD label provenance cleanup: removed the hardcoded
   English/Japanese champion labels from the real `RLOWFIX.BIN` parser. PLRD
   now retains only its source TABL indices/codes and leaves display names
@@ -47423,29 +47416,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   authenticated `INTERFACE_GENERAL` records. Historical overlay code remains
   explicitly test-scoped. Verification: production link, 74/74 direct-overlay
   regression, real-data DM2 M11 startup gate and archive/executable symbols.
-- ✅ 2026-07-31 DM2 V2 touch-affordance isolation: removed the unattached
-  swipe/controller translator and its host-defined gesture zones from the
-  production V2 archive. M11 never called its translation entry point; live
-  input remains on the SKProject-bound V1 click-zone matrix. The historical
-  translator remains probe-scoped until a real DM2 input source is imported.
-  Verification: complete production link, 62/62 touch probe, real-data M11
-  startup gate and archive/executable-symbol checks.
-- ✅ 2026-07-31 DM1 original TITLE verification: repaired the standalone
-  TITLE probe launcher after the source tree moved. The installed hash-locked
-  PC 3.4 `TITLE` (12,002 bytes) now passes all 59 Greatstone mapfile-record,
-  53-frame and two-palette-phase checks. The runtime TITLE palette and
-  SWSH-to-C001 handoff probes also pass against the installed original
-  `GRAPHICS.DAT`; no replacement title frame is used by these checks.
-# 2026-07-31 DM1 archive-backed startup media
-
-- ✅ Fixed optional DM1 startup media materialization from external archives.
-  `7zz` reports a missing member as a successful zero-byte stream; that
-  previously stopped the cache resolver at `DATA/TITLE` or `DATA/SWOOSH`
-  and left empty aliases instead of continuing to the original DOS archive's
-  parent directory. Optional archive members must now be non-empty before
-  they are accepted. Verified against the real bundled PC 3.4 DOS `.7z`:
-  hash-pinned `GRAPHICS.DAT` and `DUNGEON.DAT`, plus `TITLE` (12,002 bytes,
-  SHA-256 `adc7f191...`) and `SWOOSH` (7,570 bytes), materialize into the
-  DM1 runtime cache and complete the direct boot probe. Extended
-  `test_dm1_pc34_archive_media_receipt` to cover parent-directory TITLE and
-  SWOOSH cache materialization (23 assertions).
+- ✅ 2026-07-31 Theron SRM production import no longer calls the fixture
+  `theron_v1_party_init()` before decoding champion records. The importer now
+  starts from an empty party, so a malformed or partial source body cannot
+  inherit synthetic names, classes, stats or inventory. Verification: the
+  Theron SRM body/classifier tests plus startup, save/resume and Track 02
+  handoff tests.
+- ✅ 2026-07-31 Theron SRM production import no longer calls the fixture
+  `theron_v1_party_init()` before decoding champion records. The importer now
+  starts from an empty party, so a malformed or partial source body cannot
+  inherit synthetic names, classes, stats or inventory. Verification: the
+  Theron SRM body/classifier tests plus startup, save/resume and Track 02
+  handoff tests.

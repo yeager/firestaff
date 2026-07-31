@@ -74,6 +74,10 @@
   longer revives the world's fixture Theron slot. A party is admitted only
   when the SRM contains decodable champion records.
 
+  The decoded-party importer also no longer seeds the legacy fixture roster
+  before reading source champion records; malformed or partial records cannot
+  inherit synthetic names, classes, stats or inventory.
+
 - **THERON-RUNTIME-RENDER-ASSET-BUNDLE:** The runtime frame facade now rejects
   a NULL asset bundle before rendering or presenting a frame. This closes the
   source-less facade path; the save-resume structured-receipt contract is now

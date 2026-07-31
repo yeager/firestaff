@@ -778,7 +778,11 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_party_payload(
         return status;
     }
 
-    theron_v1_party_init(&party, (int)progression.current_dungeon);
+    /* A decoded SRM party must be built solely from its source records.
+     * Do not seed the import with the legacy fixture roster: malformed or
+     * partially decoded records must never inherit synthetic names, classes,
+     * stats or inventory from party_init(). */
+    memset(&party, 0, sizeof(party));
     party.gold = rd32le(payload + TSRM_PROGRESS_PAYLOAD_BYTES);
     party.champion_count = THERON_MAX_CHAMPIONS;
     party.active_slot = THERON_CHAMPION_SLOT_THERON;
