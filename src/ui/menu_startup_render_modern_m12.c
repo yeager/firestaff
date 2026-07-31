@@ -1051,7 +1051,13 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
     stroke_rounded_rect(c, x, y, w, h, 10, disabled ? rgb(118, 118, 126) : accent);
     fill_rect(c, x + 12, y + 12, w - 24, 3, disabled ? rgb(116, 116, 116) : COLOR_ACCENT_HI());
 
-    const M12_GeneratedCardArt* generated = M12_GeneratedCardArt_Find(gameId);
+    /* Nexus has authenticated Saturn startup/menu assets in the data root,
+     * but their M12 card placement is not yet source-proven.  Do not use the
+     * checked-in generated card or the procedural stairway below as a visual
+     * substitute. */
+    const M12_GeneratedCardArt* generated =
+        (gameId && strcmp(gameId, "nexus") == 0)
+            ? NULL : M12_GeneratedCardArt_Find(gameId);
     if (generated) {
         draw_generated_card_art(c, generated, x + 8, y + 12, w - 16, h - 20, disabled);
     } else if (slotIdx == 0) {
@@ -1098,7 +1104,7 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
             fill_rect(c, x + w / 2 - 54 + step * 12, y + h - 108 + step * 10,
                       108 - step * 24, 5, rgb(76, 60, 42));
         }
-    } else {
+    } else if (!(gameId && strcmp(gameId, "nexus") == 0)) {
         /* Saturn/Nexus — 3D dungeon stairway descending into darkness. */
         /* Background: deep space gradient */
         for (int gy = y + 12; gy < y + h - 16; gy++) {
@@ -1147,7 +1153,7 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
         }
     }
 
-    if (!generated) {
+    if (!generated && !(gameId && strcmp(gameId, "nexus") == 0)) {
         ModernTextStyle lbl = text_style_make(2, disabled ? rgb(176,176,180) : COLOR_TEXT(), 1);
         const char* text = slotIdx == 0 ? "BOX ART" : (slotIdx == 1 ? "CSB BOX ART" : (slotIdx == 2 ? "DM2 BOX ART" : "NEXUS ART"));
         draw_text_centered(c, x + w / 2, y + h - 28, text, &lbl);
