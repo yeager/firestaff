@@ -45941,3 +45941,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   encryption-flag fallback. Its labels are now admitted only with the
   original `GDAT 0/0/dtWordValue/0` transform owner and the matching
   `DIALOG_BOXES/0x81/dtText` payloads.
+
+- ✅ 2026-07-31 DM1 host-capture receipt integrity: `render_sdl_m11` now
+  distinguishes a real SDL presentation window from the headless `dummy`
+  driver. The HoC boot receipt cannot report macOS-window or release-app
+  capture for an internal test framebuffer. A real macOS window still needs
+  an external original-frame comparison; this change prevents synthetic
+  readiness from obscuring that open requirement.

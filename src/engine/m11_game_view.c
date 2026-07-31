@@ -17118,7 +17118,7 @@ static int m11_dm1_hoc_full_graphics_host_probe_facts(
             backing->width > 0 && backing->height > 0;
     }
 #ifdef __APPLE__
-    host_window_present = M11_Render_GetWindow() != NULL;
+    host_window_present = M11_Render_HasHostPresentationWindow();
 #else
     host_window_present = 0;
 #endif
@@ -31434,7 +31434,7 @@ static int m11_build_dm1_hoc_full_graphics_ownership_receipt(
             backing && backing->loaded && backing->pixels;
     }
 #ifdef __APPLE__
-    host_window_present = M11_Render_GetWindow() != NULL;
+    host_window_present = M11_Render_HasHostPresentationWindow();
 #else
     host_window_present = 0;
 #endif

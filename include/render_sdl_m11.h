@@ -214,6 +214,9 @@ struct SDL_Window;
 struct SDL_Renderer;
 struct SDL_Window*   M11_Render_GetWindow(void);
 struct SDL_Renderer* M11_Render_GetRenderer(void);
+/* True only when SDL owns a real presentation window.  A non-NULL dummy
+ * driver window supports deterministic tests but is not a host-app capture. */
+int  M11_Render_HasHostPresentationWindow(void);
 int  M11_Render_SetWindowSize(int width, int height);
 int  M11_Render_SetScaleMode(int scaleMode);
 int  M11_Render_GetScaleMode(void);

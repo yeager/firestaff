@@ -23807,6 +23807,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     window (`1024x796`), but `screencapture -l <window-id>` returned `could
     not create image from window`. This confirms the fault is a host capture
     entitlement/context issue, not the PC34 selector sequence.
+  - 2026-07-31 receipt-integrity repair: M11 now rejects an SDL `dummy`
+    window as macOS/release-app capture evidence. Headless runs retain their
+    internal presented-frame receipt for deterministic tests, but cannot
+    satisfy any Mac-window or release-app readiness gate. This prevents an
+    internal framebuffer from standing in for the still-required external
+    original-frame comparison.
 
 ## DM1 C13 F0435 stale-fence follow-up
 

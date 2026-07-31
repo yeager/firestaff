@@ -420,7 +420,7 @@ static void run_real_data_handoff_if_available(void) {
                         receipt.startupTitleReady == 1,
                     "direct launch boot receipt exports title readiness as a boolean");
         if (strcmp(kCases[i].gameId, "dm1") == 0) {
-            int hostWindowAvailable = M11_Render_GetWindow() != NULL;
+            int hostWindowAvailable = M11_Render_HasHostPresentationWindow();
             expect_true(receipt.startupTitleFrame == receipt.startupTitleFrameMax &&
                             receipt.startupTitleFrameMax == 53,
                         "DM1 receipt exposes the source TITLE frame-bank completion boundary");
