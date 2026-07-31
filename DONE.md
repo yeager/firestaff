@@ -45168,6 +45168,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   decoded from the original game-state and SUPPRESS records, so a malformed
   later section cannot leave an invented party behind. Verification:
   `test_dm2_v1_utility_import` passes 136/136.
+- ✅ 2026-07-31 CSB D2C F0111 door no-fake closure: removed the public,
+  unbound C10 fixture blit. ReDMCSB door-state and half-zone routing remains
+  intact, while a contract without verified PC3.4 graphics cannot write pixels.
+
 - ✅ 2026-07-31 CSB D0L2/D0R2 wall no-fake closure: removed the unbound
   F0104/F0105 wall pixel writer and its synthetic source/viewport buffers.
   C716/C717 routing, native/mirrored geometry and C10 transparency remain

@@ -91,15 +91,6 @@ int csb_v1_viewport_d2c_f0111_door_horizontal_half_zone_pc34(
     int door_state,
     int right_half);
 
-int csb_v1_viewport_d2c_f0111_door_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD2CF0111DoorPc34Contract *contract,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height);
-
 const char *csb_v1_viewport_d2c_f0111_door_source_evidence_pc34(void);
 
 #ifdef __cplusplus

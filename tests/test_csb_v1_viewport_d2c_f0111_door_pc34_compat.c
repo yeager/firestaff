@@ -202,8 +202,6 @@ static int test_horizontal_half_and_c10_blit(void)
     int ok = 1;
     const CSB_V1_ViewportD2CF0111DoorPc34Contract *c =
         csb_v1_viewport_d2c_f0111_door_pc34_contract();
-    uint8_t source[12] = { 10, 1, 2, 10, 3, 4, 10, 5, 6, 7, 10, 8 };
-    uint8_t destination[12] = { 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77, 77 };
 
     ok &= expect_int("partial.shifts.flag", c ? c->partial_state_shifts_zone : 0,
                      1, A_F0111);
@@ -226,27 +224,6 @@ static int test_horizontal_half_and_c10_blit(void)
                      A_DEFS);
     ok &= expect_int("transparent.color", c ? c->transparent_color : -1, 10,
                      A_DEFS);
-    ok &= expect_int("blit.copied",
-                     csb_v1_viewport_d2c_f0111_door_apply_c10_blit_pc34(
-                         c, source, 4, destination, 4, 4, 3),
-                     8, A_F0111);
-    ok &= expect_int("blit.transparent0", destination[0], 77, A_DEFS);
-    ok &= expect_int("blit.pixel1", destination[1], 1, A_DEFS);
-    ok &= expect_int("blit.pixel2", destination[2], 2, A_DEFS);
-    ok &= expect_int("blit.transparent3", destination[3], 77, A_DEFS);
-    ok &= expect_int("blit.pixel4", destination[4], 3, A_DEFS);
-    ok &= expect_int("blit.pixel7", destination[7], 5, A_DEFS);
-    ok &= expect_int("blit.transparent10", destination[10], 77, A_DEFS);
-    ok &= expect_int("blit.pixel11", destination[11], 8, A_DEFS);
-    ok &= expect_int("blit.reject.null.contract",
-                     csb_v1_viewport_d2c_f0111_door_apply_c10_blit_pc34(
-                         NULL, source, 4, destination, 4, 4, 3),
-                     -1, A_F0111);
-    ok &= expect_int("blit.reject.bad.stride",
-                     csb_v1_viewport_d2c_f0111_door_apply_c10_blit_pc34(
-                         c, source, 3, destination, 4, 4, 3),
-                     -1, A_F0111);
-
     return ok;
 }
 

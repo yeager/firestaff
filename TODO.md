@@ -469,6 +469,9 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D0L2/D0R2 wall follow-up:** the F0104/F0105 synthetic wall
   pixel writer is removed. The contract retains C716/C717 geometry, mirroring
   and C10 metadata but cannot write without verified source material.
+  **2026-07-31 D2C door follow-up:** the unbound F0111 C10 fixture blit is
+  removed. State, half-zone and transparency metadata remain source-locked;
+  the local PC3.4 material provider is required for an actual draw.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

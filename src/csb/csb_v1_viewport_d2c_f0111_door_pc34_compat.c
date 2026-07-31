@@ -154,35 +154,6 @@ int csb_v1_viewport_d2c_f0111_door_horizontal_half_zone_pc34(
     return shifted + (3 | contract->horizontal_second_half_mask);
 }
 
-int csb_v1_viewport_d2c_f0111_door_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD2CF0111DoorPc34Contract *contract,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height)
-{
-    int copied = 0;
-
-    if (!contract || !source || !destination) return -1;
-    if (width <= 0 || height <= 0) return -1;
-    if (source_stride < width || destination_stride < width) return -1;
-
-    /* ReDMCSB: DUNVIEW.C F0111 lines 4322-4334 and DEFS.H line 2088
-     * keep C10_COLOR_FLESH transparent when drawing the D2C door bitmap. */
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const uint8_t pixel = source[(y * source_stride) + x];
-            if (pixel == (uint8_t)contract->transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-
-    return copied;
-}
-
 const char *csb_v1_viewport_d2c_f0111_door_source_evidence_pc34(void)
 {
     return s_source_evidence;
