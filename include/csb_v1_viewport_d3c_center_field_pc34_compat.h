@@ -133,15 +133,6 @@ CSB_V1_D3CCenterFieldPlanPc34
 csb_v1_viewport_d3c_center_field_plan_pc34(
     CSB_V1_D3CCenterFieldInputPc34 input);
 
-int csb_v1_viewport_d3c_center_field_apply_synthetic_c10_field_pc34(
-    const CSB_V1_D3CCenterFieldContractPc34 *contract,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height);
-
 const char *
 csb_v1_viewport_d3c_center_field_route_name_pc34(
     CSB_V1_D3CCenterFieldRoutePc34 route);

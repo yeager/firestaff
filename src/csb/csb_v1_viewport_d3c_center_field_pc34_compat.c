@@ -210,36 +210,6 @@ csb_v1_viewport_d3c_center_field_plan_pc34(
     return plan;
 }
 
-int csb_v1_viewport_d3c_center_field_apply_synthetic_c10_field_pc34(
-    const CSB_V1_D3CCenterFieldContractPc34 *contract,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height)
-{
-    int copied = 0;
-    if (!contract || !source || !destination ||
-        source_stride < width || destination_stride < width ||
-        width <= 0 || height <= 0) {
-        return -1;
-    }
-
-    /* ReDMCSB: DUNVIEW.C:6818-6833 reaches F0113 for D3C teleporter fields;
-     * DEFS.H:2088 C10_COLOR_FLESH remains transparent in the synthetic gate. */
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const uint8_t pixel = source[(y * source_stride) + x];
-            if (pixel == (uint8_t)contract->transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-
-    return copied;
-}
-
 const char *
 csb_v1_viewport_d3c_center_field_route_name_pc34(
     CSB_V1_D3CCenterFieldRoutePc34 route)

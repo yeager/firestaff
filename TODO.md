@@ -434,6 +434,8 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D2C door follow-up:** the partly-open-door C10 test blit is
   removed. Its probe now checks only source route, frame selection, zones and
   transparency metadata; no synthetic door page can be produced.
+  **2026-07-31 D3C follow-up:** the contract-only C10 teleporter-field blit
+  is removed. D3C retains its source route and zone metadata only.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

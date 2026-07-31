@@ -365,38 +365,10 @@ static void test_synthetic_c10_and_route_names(void)
 {
     const CSB_V1_D3CCenterFieldContractPc34 *c =
         csb_v1_viewport_d3c_center_field_contract_pc34();
-    uint8_t source[10] = { 10, 1, 2, 10, 3, 4, 10, 5, 6, 10 };
-    uint8_t dest[10] = { 77, 77, 77, 77, 77, 77, 77, 77, 77, 77 };
 
     expect_nonnull("d3c.c10.contract", c, "ReDMCSB DEFS.H:2088");
     if (!c) return;
 
-    expect_int("d3c.c10.copied",
-               csb_v1_viewport_d3c_center_field_apply_synthetic_c10_field_pc34(
-                   c, source, 5, dest, 5, 5, 2),
-               6, "synthetic C10 F0113 field contract");
-    expect_int("d3c.c10.transparent0", dest[0], 77,
-               "ReDMCSB DEFS.H:2088 C10 transparent");
-    expect_int("d3c.c10.pixel1", dest[1], 1, "synthetic field copy");
-    expect_int("d3c.c10.pixel2", dest[2], 2, "synthetic field copy");
-    expect_int("d3c.c10.transparent3", dest[3], 77,
-               "ReDMCSB DEFS.H:2088 C10 transparent");
-    expect_int("d3c.c10.pixel4", dest[4], 3, "synthetic field copy");
-    expect_int("d3c.c10.pixel5", dest[5], 4, "synthetic field copy");
-    expect_int("d3c.c10.transparent6", dest[6], 77,
-               "ReDMCSB DEFS.H:2088 C10 transparent");
-    expect_int("d3c.c10.pixel7", dest[7], 5, "synthetic field copy");
-    expect_int("d3c.c10.pixel8", dest[8], 6, "synthetic field copy");
-    expect_int("d3c.c10.transparent9", dest[9], 77,
-               "ReDMCSB DEFS.H:2088 C10 transparent");
-    expect_int("d3c.c10.reject_null",
-               csb_v1_viewport_d3c_center_field_apply_synthetic_c10_field_pc34(
-                   NULL, source, 5, dest, 5, 5, 2),
-               -1, "synthetic helper rejects missing contract");
-    expect_int("d3c.c10.reject_stride",
-               csb_v1_viewport_d3c_center_field_apply_synthetic_c10_field_pc34(
-                   c, source, 4, dest, 5, 5, 2),
-               -1, "synthetic helper rejects narrow source stride");
     expect_contains("d3c.route_name.teleporter",
                     csb_v1_viewport_d3c_center_field_route_name_pc34(
                         CSB_V1_D3C_CENTER_FIELD_ROUTE_TELEPORTER_FIELD),
