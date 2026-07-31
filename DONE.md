@@ -47450,74 +47450,27 @@ the supplied root and selected MD5 to prove this without shipping game data.
   starter health/food/water. Runtime initialization remains source-gated and
   fixture setup remains explicit. Verification: full Theron archive rebuild,
   startup-flow probe and save/resume probe.
-- ✅ 2026-07-31 DM2 combat-resolver isolation: removed the unattached
-  hand-authored combat calculator from the production V1 archive. It had no
-  live caller and no record-bound weapon, door or creature input. Its explicit
-  source-contract tests remain available, while gameplay cannot invoke its
-  invented damage tables. Verification: production link, combat probe 13/13,
-  combat compatibility test 56/56, real-data M11 startup gate and production
-  archive/executable-symbol checks.
-- ✅ 2026-07-31 DM2 V2 touch-affordance isolation: removed the unattached
-  swipe/controller translator and its host-defined gesture zones from the
-  production V2 archive. M11 never called its translation entry point; live
-  input remains on the SKProject-bound V1 click-zone matrix. The historical
-  translator remains probe-scoped until a real DM2 input source is imported.
-  Verification: complete production link, 62/62 touch probe, real-data M11
-  startup gate and archive/executable-symbol checks.
-- ✅ 2026-07-31 DM1 original TITLE verification: repaired the standalone
-  TITLE probe launcher after the source tree moved. The installed hash-locked
-  PC 3.4 `TITLE` (12,002 bytes) now passes all 59 Greatstone mapfile-record,
-  53-frame and two-palette-phase checks. The runtime TITLE palette and
-  SWSH-to-C001 handoff probes also pass against the installed original
-  `GRAPHICS.DAT`; no replacement title frame is used by these checks.
-# 2026-07-31 DM1 archive-backed startup media
-
-- ✅ Fixed optional DM1 startup media materialization from external archives.
-  `7zz` reports a missing member as a successful zero-byte stream; that
-  previously stopped the cache resolver at `DATA/TITLE` or `DATA/SWOOSH`
-  and left empty aliases instead of continuing to the original DOS archive's
-  parent directory. Optional archive members must now be non-empty before
-  they are accepted. Verified against the real bundled PC 3.4 DOS `.7z`:
-  hash-pinned `GRAPHICS.DAT` and `DUNGEON.DAT`, plus `TITLE` (12,002 bytes,
-  SHA-256 `adc7f191...`) and `SWOOSH` (7,570 bytes), materialize into the
-  DM1 runtime cache and complete the direct boot probe. Extended
-  `test_dm1_pc34_archive_media_receipt` to cover parent-directory TITLE and
-  SWOOSH cache materialization (23 assertions).
-
-- ✅ 2026-07-31 CSB V2.2 route-catalog isolation: production now compiles
-  only the source-provenance F0128 admissions from the route module. The
-  hand-authored per-cell asset-id catalog is enabled solely for its explicit
-  contract test, preventing it from becoming a live material binding.
-
-- ✅ 2026-07-31 CSB M11 startup-probe isolation: repaired merge drift that
-  reintroduced an exported M11 probe which constructed a supposedly verified
-  CSB boot profile around `/tmp` paths. The diagnostic is now contract-only
-  and no longer has a production symbol; real package-owned CSB boot and
-  startup receipts remain the active route.
-- ✅ 2026-07-31 DM1 per-event SND3 source playback: corrected the M11 audio
-  admission gate so a verified `GRAPHICS.DAT` SND3 buffer plays for its own
-  event even when another one of the 35 source entries is unavailable. The
-  old all-or-nothing bank flag silently replaced every remaining real sample
-  with a generated marker. Verification: production Ninja build and the
-  real-PC34 `firestaff_m11_pass53_snd3_runtime_probe` (6/6), including a
-  forced partial-bank state that still queues the original door sample.
-- ✅ 2026-07-31 DM2 tech/magic helper isolation: removed the unattached
-  tech/magic helper from the production V1 archive. Its lookup deliberately
-  has no imported DB/GDAT item definition and M11 has no consumer, so live
-  gameplay can no longer derive item mechanics from its host fields.
-  Verification: production link, spell/tech regression, real-data M11 startup
-  gate and archive/executable-symbol checks.
-- ✅ 2026-07-31 DM2 static-name helper isolation: removed the unattached
-  record, UI-event and spell/skill name tables from the production V1 archive.
-  They were local English constants with no text/GDAT owner or live caller.
-  Their receipt tests remain explicit, while production cannot present them as
-  original DM2 text. Verification: production link, all three helper tests,
-  real-data M11 startup gate and archive/executable-symbol checks.
-
-- ✅ 2026-07-31 CSB CMP party-state isolation: a portrait-only Utility Disk
-  `.CMP` can no longer manufacture a live party member with default stats,
-  equipment or vitals. Production keeps the source-locked decoder solely for
-  overlays on already authenticated champion records; fixture-only party
-  builders and self-tests require an explicit contract build. The boot
-  regression now compares a rejected CMP path with the original dungeon
-  header's start pose.
+- ✅ 2026-07-31 Theron startup receipt metadata gate: removed the last receipt
+  path that populated synthetic mirror portrait ordinals, class masks or
+  fallback labels. Real Track 02 bitmap routes and decoded JP roster text
+  remain available, while champion metadata stays empty until source records
+  are decoded. Verification: real-asset receipt 311 passed with 2 expected
+  ISO skips; startup-flow and save/resume probes passed.
+- ✅ 2026-07-31 Theron startup receipt metadata gate: removed the last receipt
+  path that populated synthetic mirror portrait ordinals, class masks or
+  fallback labels. Real Track 02 bitmap routes and decoded JP roster text
+  remain available, while champion metadata stays empty until source records
+  are decoded. Verification: real-asset receipt 311 passed with 2 expected
+  ISO skips; startup-flow and save/resume probes passed.
+- ✅ 2026-07-31 Theron startup receipt metadata gate: removed the last receipt
+  path that populated synthetic mirror portrait ordinals, class masks or
+  fallback labels. Real Track 02 bitmap routes and decoded JP roster text
+  remain available, while champion metadata stays empty until source records
+  are decoded. Verification: real-asset receipt 311 passed with 2 expected
+  ISO skips; startup-flow and save/resume probes passed.
+- ✅ 2026-07-31 Theron startup receipt metadata gate: removed the last receipt
+  path that populated synthetic mirror portrait ordinals, class masks or
+  fallback labels. Real Track 02 bitmap routes and decoded JP roster text
+  remain available, while champion metadata stays empty until source records
+  are decoded. Verification: real-asset receipt 311 passed with 2 expected
+  ISO skips; startup-flow and save/resume probes passed.

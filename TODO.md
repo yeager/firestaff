@@ -49,6 +49,8 @@
   placeholder labels are now fixture/probe-only. The verified receipt no
   longer projects fixture mirror counts or fallback-label counts; runtime
   must consume the verified startup media receipt or remain unavailable.
+  Receipt summaries keep mirror portrait/class/fallback-label fields empty;
+  decoded Track 02 text names do not authorize inferred champion metadata.
 
 - **THERON-STARTUP-LEGACY-FALLBACK-ROOM:** The M11 production path uses
   `verified_only` Track 02 admission and the authenticated startup bitmap

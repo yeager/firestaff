@@ -50,9 +50,9 @@
  *  10. Variant / version id selection: JP BIN -> pce-jp, US BIN ->
  *      pce-en, JP Rev 1 ISO -> pce-jp-rev1-iso, US ISO -> pce-en-iso.
  *
- *  11. Startup Soul Room mirror contract is present even on no-data
- *      hosts: seven mirrors, three-companion cap, portrait ordinals 1..7,
- *      and class mask covering Fighter/Ninja/Priest/Wizard.
+ *  11. Startup Soul Room champion metadata remains empty until real Track 02
+ *      champion records are decoded.  The menu geometry is not a roster
+ *      receipt and must not populate portrait ordinals or class bits.
  *
  *  12. Startup chapter/progression contract is present in the receipt:
  *      placeholder rows are clearly no-profile/no-progression, while
@@ -141,31 +141,24 @@ static void check_str_contains(const char *got,
 
 static void check_startup_mirror_summary(const Theron_V1_StartupReceipt *r,
                                          const char *prefix) {
-    uint32_t expected_class_mask =
-        (uint32_t)((1u << THERON_CLASS_FIGHTER) |
-                   (1u << THERON_CLASS_NINJA) |
-                   (1u << THERON_CLASS_PRIEST) |
-                   (1u << THERON_CLASS_WIZARD));
     char name[160];
 
-    snprintf(name, sizeof(name), "%s mirror count == 7", prefix);
-    check(r->startup_mirror_count == THERON_STARTUP_HERO_MIRROR_COUNT,
+    snprintf(name, sizeof(name), "%s mirror metadata count == 0", prefix);
+    check(r->startup_mirror_count == 0u,
           name);
-    snprintf(name, sizeof(name), "%s companion limit == 3", prefix);
-    check(r->startup_companion_limit == THERON_STARTUP_MAX_COMPANIONS,
+    snprintf(name, sizeof(name), "%s companion metadata limit == 0", prefix);
+    check(r->startup_companion_limit == 0u,
           name);
-    snprintf(name, sizeof(name), "%s portrait range is 1..7", prefix);
-    check(r->startup_portrait_min == 1u &&
-          r->startup_portrait_max == 7u,
+    snprintf(name, sizeof(name), "%s portrait range is empty", prefix);
+    check(r->startup_portrait_min == 0u &&
+          r->startup_portrait_max == 0u,
           name);
-    snprintf(name, sizeof(name), "%s class mask covers all four classes",
-             prefix);
-    check(r->startup_class_mask == expected_class_mask, name);
-    snprintf(name, sizeof(name), "%s mirror labels cover all seven slots",
-             prefix);
-    check(r->startup_fallback_label_count +
-              r->startup_decoded_label_count ==
-          THERON_STARTUP_HERO_MIRROR_COUNT,
+    snprintf(name, sizeof(name), "%s class metadata mask is empty", prefix);
+    check(r->startup_class_mask == 0u, name);
+    snprintf(name, sizeof(name), "%s mirror labels have no fallback metadata", prefix);
+    check(r->startup_fallback_label_count == 0u &&
+              r->startup_decoded_label_count <=
+                  THERON_STARTUP_HERO_MIRROR_COUNT,
           name);
     snprintf(name, sizeof(name), "%s decoded mirror labels stay bounded",
              prefix);
@@ -667,11 +660,11 @@ static void check_placeholder_fields(void) {
                        "rendered line contains verdict marker");
     check_str_contains(line, "session_tick=0x",
                        "rendered line contains session tick marker");
-    check_str_contains(line, "mirrors=7",
+    check_str_contains(line, "mirrors=0",
                        "rendered line contains startup mirror count");
-    check_str_contains(line, "portrait_range=1..7",
-                       "rendered line contains portrait range");
-    check_str_contains(line, "mirror_fallback_labels=7",
+    check_str_contains(line, "portrait_range=0..0",
+                       "rendered line contains empty portrait range");
+    check_str_contains(line, "mirror_fallback_labels=0",
                        "rendered line contains fallback mirror art count");
     check_str_contains(line, "mirror_decoded_labels=0",
                        "rendered line contains decoded mirror label count");
@@ -1079,11 +1072,11 @@ static void check_real_asset_path(void) {
                           r.startup_roster_title_count == 0u &&
                           r.startup_roster_overflow_count == 0u,
                           "US raw Track 02 receipt has no decoded roster yet");
-                    check(r.startup_fallback_label_count == 7u &&
+                    check(r.startup_fallback_label_count == 0u &&
                           r.startup_decoded_label_count == 0u &&
                           r.startup_decoded_art_count ==
                               THERON_STARTUP_HERO_MIRROR_COUNT,
-                          "US raw Track 02 receipt keeps label fallback but consumes decoded bitmap art");
+                          "US raw Track 02 receipt keeps labels unavailable but consumes decoded bitmap art");
                 } else {
                     check(r.startup_text_us_prompt_count == 0u,
                           "JP raw Track 02 receipt has no US prompt markers");

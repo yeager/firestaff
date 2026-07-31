@@ -126,37 +126,16 @@ static void set_variant(Theron_V1_StartupReceipt *receipt,
 }
 
 static void populate_startup_mirror_summary(Theron_V1_StartupReceipt *receipt) {
-    uint32_t portrait_min = 0u;
-    uint32_t portrait_max = 0u;
-    uint32_t class_mask = 0u;
-    int i;
-
     if (!receipt) return;
-    receipt->startup_mirror_count = THERON_STARTUP_HERO_MIRROR_COUNT;
-    receipt->startup_companion_limit = THERON_STARTUP_MAX_COMPANIONS;
-
-    for (i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
-        const Theron_StartupMirrorMeta *meta =
-            theron_v1_startup_mirror_meta(i);
-        uint32_t portrait;
-        if (!meta) continue;
-        portrait = (uint32_t)meta->portrait_index;
-        if (portrait_min == 0u || portrait < portrait_min) {
-            portrait_min = portrait;
-        }
-        if (portrait > portrait_max) {
-            portrait_max = portrait;
-        }
-        if (meta->primary_class >= 0 &&
-            meta->primary_class < THERON_CLASS_COUNT) {
-            class_mask |= (uint32_t)(1u << (uint32_t)meta->primary_class);
-        }
-    }
-
-    receipt->startup_portrait_min = portrait_min;
-    receipt->startup_portrait_max = portrait_max;
-    receipt->startup_class_mask = class_mask;
-    receipt->startup_fallback_label_count = THERON_STARTUP_HERO_MIRROR_COUNT;
+    /* The mirror table is fixture-only and Track 02 champion records are not
+     * decoded here.  Keep the summary empty instead of turning a menu shape
+     * into invented names, classes or portrait ordinals. */
+    receipt->startup_mirror_count = 0u;
+    receipt->startup_companion_limit = 0u;
+    receipt->startup_portrait_min = 0u;
+    receipt->startup_portrait_max = 0u;
+    receipt->startup_class_mask = 0u;
+    receipt->startup_fallback_label_count = 0u;
     receipt->startup_decoded_label_count = 0u;
     receipt->startup_decoded_art_count = 0u;
 }
