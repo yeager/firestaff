@@ -100,6 +100,11 @@
   until original material and command ownership are available. Verification:
   `test_csb_v2_lighting_dynamic`, `test_csb_v2_phase7_verification`.
 
+- ✅ 2026-07-31 CSB D2C synthetic-blit cleanup: removed the contract test's
+  C10 pixel-writing helper from the product API. The retained contract covers
+  only the source-owned F0128/F0113 route, zones and transparency rule.
+  Verification: `test_csb_v1_viewport_d2c_center_field_pc34_compat`.
+
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a
   successful transaction route from host gold alone. It remains closed until

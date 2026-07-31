@@ -118,36 +118,6 @@ int csb_v1_viewport_d2c_center_field_zone_from_c702_base_pc34_compat(
     return spec->media720_base_zone_c702 + spec->field_aspect_index;
 }
 
-int csb_v1_viewport_d2c_center_field_apply_synthetic_c10_field_blit_pc34_compat(
-    const CSB_V1_D2CCenterFieldSpecPc34 *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height)
-{
-    int copied = 0;
-    if (!spec || !source || !destination ||
-        source_stride < width || destination_stride < width ||
-        width <= 0 || height <= 0) {
-        return -1;
-    }
-
-    /* ReDMCSB: DEFS.H:2088 C10_COLOR_FLESH is the transparent color used by
-     * field-style viewport blits. This helper is a synthetic contract probe,
-     * not a real-asset D2C teleporter-field renderer. */
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const uint8_t pixel = source[(y * source_stride) + x];
-            if (pixel == (uint8_t)spec->transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-    return copied;
-}
-
 const char *csb_v1_viewport_d2c_center_field_source_evidence_pc34_compat(void)
 {
     return s_source_evidence;

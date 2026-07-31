@@ -69,15 +69,6 @@ csb_v1_viewport_d2c_center_field_spec_pc34_compat(void);
 int csb_v1_viewport_d2c_center_field_zone_from_c702_base_pc34_compat(
     const CSB_V1_D2CCenterFieldSpecPc34 *spec);
 
-int csb_v1_viewport_d2c_center_field_apply_synthetic_c10_field_blit_pc34_compat(
-    const CSB_V1_D2CCenterFieldSpecPc34 *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height);
-
 const char *csb_v1_viewport_d2c_center_field_source_evidence_pc34_compat(void);
 
 #ifdef __cplusplus

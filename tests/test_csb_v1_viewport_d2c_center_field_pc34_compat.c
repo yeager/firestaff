@@ -158,8 +158,6 @@ static void test_d2c_c10_transparency_contract(void)
 {
     const CSB_V1_D2CCenterFieldSpecPc34 *spec =
         csb_v1_viewport_d2c_center_field_spec_pc34_compat();
-    uint8_t source[8] = { 10, 1, 2, 10, 3, 4, 10, 5 };
-    uint8_t destination[8] = { 77, 77, 77, 77, 77, 77, 77, 77 };
 
     expect_nonnull("d2c.c10.spec", spec, "ReDMCSB DEFS.H:2088");
     if (!spec) return;
@@ -172,25 +170,6 @@ static void test_d2c_c10_transparency_contract(void)
     expect_bool("d2c.field_blit_preserves_c10",
                 spec->field_blit_preserves_c10_transparency, true,
                 "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
-    expect_int("d2c.blit.copied",
-               csb_v1_viewport_d2c_center_field_apply_synthetic_c10_field_blit_pc34_compat(
-                   spec, source, 4, destination, 4, 4, 2),
-               5, "synthetic F0113 C10 field contract");
-    expect_int("d2c.blit.transparent0", destination[0], 77,
-               "ReDMCSB DEFS.H:2088 C10 transparent");
-    expect_int("d2c.blit.pixel1", destination[1], 1, "synthetic field copy");
-    expect_int("d2c.blit.pixel2", destination[2], 2, "synthetic field copy");
-    expect_int("d2c.blit.transparent3", destination[3], 77,
-               "ReDMCSB DEFS.H:2088 C10 transparent");
-    expect_int("d2c.blit.pixel4", destination[4], 3, "synthetic field copy");
-    expect_int("d2c.blit.pixel5", destination[5], 4, "synthetic field copy");
-    expect_int("d2c.blit.transparent6", destination[6], 77,
-               "ReDMCSB DEFS.H:2088 C10 transparent");
-    expect_int("d2c.blit.pixel7", destination[7], 5, "synthetic field copy");
-    expect_int("d2c.blit.reject_null",
-               csb_v1_viewport_d2c_center_field_apply_synthetic_c10_field_blit_pc34_compat(
-                   NULL, source, 4, destination, 4, 4, 2),
-               -1, "route helper rejects unresolved spec");
     expect_bool("d2c.contract_only_marker", spec->contract_only, true,
                 "Source-locked contract gate only");
 }
