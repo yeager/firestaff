@@ -1262,7 +1262,9 @@ diagnostic; it must not silently fall back to a generated visual.
   exact Track 02 records.  No inferred object graphics or palette may ship.
 - **NEXUS-ORIGINAL-REPLACE-001:** The supplied `LEV*.DGN` Structure1B/3
   geometry, face order and texture selectors are now parser-verified across
-  all 16 levels.  The remaining gap is the authenticated Saturn VDP1 command
+  all 16 levels.  Structure2 texture payloads are now decoded source-faithfully
+  for DMWeb encodings 08h (4bpp + Saturn 16-entry palette) and 28h (direct
+  16-bit colour). The remaining gap is the authenticated Saturn VDP1 command
   and framebuffer submission, followed by VDP2 display-layer composition and
   palette ownership; Copetti's Saturn architecture reference confirms that
   VDP1 produces the framebuffer while VDP2 displays/composes it, but does not

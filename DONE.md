@@ -47645,3 +47645,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   supplies an authenticated path, as required by ReDMCSB `ENTRANCE.C`
   F0441/F0806. Verification: production `firestaff` and the 504-assertion
   CSB boot-to-runtime handoff regression passed.
+- ✅ 2026-07-31 Nexus Structure2 texture decoding: added a bounded decoder
+  from the DMWeb `DMNDataFileDecoder.vbs` grammar. Encoding 08h expands packed
+  nibbles to indexed pixels and decodes the 16 big-endian Saturn palette words;
+  encoding 28h preserves direct big-endian 16-bit colour words. Descriptor and
+  payload offsets are checked against the real Structure2 block, with no
+  inferred VDP1 command or fallback raster route. Verification:
+  `test_nexus_v1_dgn_texture_decode` passes against real `LEV00.DGN` texture
+  entries (both encodings), and the production Nexus archive builds.

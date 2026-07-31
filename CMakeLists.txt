@@ -5,6 +5,16 @@ if(POLICY CMP0156)
     # those libraries are split into acyclic units.
     cmake_policy(SET CMP0156 OLD)
 endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_texture_decode.c")
+    add_executable(test_nexus_v1_dgn_texture_decode
+        tests/test_nexus_v1_dgn_texture_decode.c
+        src/nexus/nexus_v1_dgn_texture_decode.c)
+    target_include_directories(test_nexus_v1_dgn_texture_decode PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    add_test(NAME nexus_v1_dgn_texture_decode
+        COMMAND test_nexus_v1_dgn_texture_decode)
+endif()
 add_executable(test_csb_v1_startup_package_identity_pc34
     tests/test_csb_v1_startup_package_identity_pc34.c)
 target_include_directories(test_csb_v1_startup_package_identity_pc34 PRIVATE
@@ -2759,6 +2769,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_ret
         tests/test_nexus_v1_dgn_face_material_retail_corpus.c
         src/nexus/nexus_v1_dgn_face_material_provenance.c
         src/nexus/nexus_v1_dgn_mesh.c
+        src/nexus/nexus_v1_dgn_texture_decode.c
         src/nexus/nexus_v1_dungeon.c
         src/nexus/nexus_v1_prs3_vdp1_consumer_evidence.c
         src/shared/asset_find_by_hash.c
