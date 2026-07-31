@@ -69,21 +69,25 @@ static int test_all_mns(void) {
                name, result.joint_count, result.total_vertices,
                result.total_faces, result.texture_count);
         if (result.texture_count > 0) {
-            uint32_t *pixels = (uint32_t *)malloc(
-                (size_t)result.textures[0].pixel_count * sizeof(*pixels));
+            int texture_index;
             printf(" tex0=%dx%d hash=0x%08X",
                    result.textures[0].width, result.textures[0].height,
                    result.textures[0].pixel_hash);
-            if (!pixels || !nexus_v1_mns_render_texture(
-                    data, size, &result, 0, pixels,
-                    result.textures[0].pixel_count)) {
-                printf(" render=FAIL");
-                ++fail;
-            } else {
-                printf(" render=PASS");
-                ++rendered;
+            for (texture_index = 0; texture_index < result.texture_count;
+                 ++texture_index) {
+                uint32_t *pixels = (uint32_t *)malloc(
+                    (size_t)result.textures[texture_index].pixel_count *
+                    sizeof(*pixels));
+                if (!pixels || !nexus_v1_mns_render_texture(
+                        data, size, &result, texture_index, pixels,
+                        result.textures[texture_index].pixel_count)) {
+                    ++fail;
+                } else {
+                    ++rendered;
+                }
+                free(pixels);
             }
-            free(pixels);
+            printf(" render=%s", fail ? "CHECKED" : "PASS");
         }
         printf("\n");
         decoded++;
@@ -91,7 +95,7 @@ static int test_all_mns(void) {
     }
     closedir(d);
 
-    printf("  decoded %d MNS files, rendered %d first textures\n",
+    printf("  decoded %d MNS files, rendered %d source textures\n",
            decoded, rendered);
     if (decoded == 0) printf("  SKIP (no MNS files found)\n");
     return fail;
