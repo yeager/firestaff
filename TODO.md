@@ -1232,8 +1232,11 @@ diagnostic; it must not silently fall back to a generated visual.
   exact Track 02 records.  No inferred object graphics or palette may ship.
 - **NEXUS-ORIGINAL-REPLACE-001:** The supplied `LEV*.DGN` Structure1B/3
   geometry, face order and texture selectors are now parser-verified across
-  all 16 levels.  The remaining gap is the authenticated Saturn VDP1/VDP2
-  textured submission and palette ownership; until those are decoded the
+  all 16 levels.  The remaining gap is the authenticated Saturn VDP1 command
+  and framebuffer submission, followed by VDP2 display-layer composition and
+  palette ownership; Copetti's Saturn architecture reference confirms that
+  VDP1 produces the framebuffer while VDP2 displays/composes it, but does not
+  provide Nexus-specific register traces.  Until those traces are decoded the
   runtime viewport remains fail-closed and never uses the procedural fallback.
 - **NEXUS-ORIGINAL-REPLACE-002:** DMWeb's LSB-first PRS3 decoder is now
   verified against all 162 PRS3-bearing entries in the supplied `MENU.BPK`.
@@ -1244,7 +1247,9 @@ diagnostic; it must not silently fall back to a generated visual.
   the 15-entry menu-options resource, and PLRD/ITEM text references are
   retained. The launcher filters legacy hardcoded English labels from
   production presentation. Bind TEXT4 control bytes through the real TABL /
-  FONT256.S2D / Saturn VDP2 path before allowing visible menu text.
+  FONT256.S2D / Saturn VDP2 display-layer path before allowing visible menu
+  text; Copetti's hardware reference supports the VDP2-layer ownership, but
+  not the missing Nexus-specific register/VRAM trace.
 - **ALL-ORIGINAL-REPLACE-001:** Audit startup, title, entrance, HUD and
   dungeon runtime paths for placeholder pixels on every supported game before
   release.  Where matching original data exists under `.firestaff/data`, bind
