@@ -34128,10 +34128,15 @@ static void m11_draw_dm1_side_contents_at_depth(
             if (!cell->valid || !m11_viewport_cell_is_open(cell)) {
                 continue;
             }
-            /* DUNVIEW.C F0128 invokes each DnL/DnR square explicitly before
-             * DnC.  Do not apply Firestaff's later lane-visibility heuristic
-             * to the source F0115 call: a nearer side panel is an overpaint,
-             * not permission to omit the farther side square's own material. */
+            /* F0128 invokes the square routes far-to-near.  M11 batches the
+             * F0115 content pass after its structural passes, so an otherwise
+             * valid D2/D3 side sprite would be emitted after a closed D1/D2
+             * side wall and remain visible through it.  The source's later
+             * side-wall route is the occluder; consume the equivalent
+             * side-lane receipt here before emitting deferred content. */
+            if (!m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)) {
+                continue;
+            }
             if (side < 0) {
                 paneX = outer->x + 4;
                 paneW = (inner->x - outer->x) - 8;
