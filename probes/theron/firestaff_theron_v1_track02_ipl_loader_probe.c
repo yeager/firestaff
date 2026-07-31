@@ -1176,7 +1176,8 @@ static void check_real_media(const char *path, const char *md5,
     free(data);
 }
 
-static void check_real_cue_boot_handoff(const char *cue_path, const char *md5) {
+static void check_real_cue_boot_handoff(const char *cue_path, const char *md5,
+                                        size_t index01_raw_sector) {
     char payload[THERON_TRACK02_MOUNT_PATH_CAPACITY];
     FILE *file;
     long length;
@@ -1194,7 +1195,7 @@ static void check_real_cue_boot_handoff(const char *cue_path, const char *md5) {
         printf("FAIL real CUE payload resolve\n");
         return;
     }
-    required = ((size_t)THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR +
+    required = (index01_raw_sector +
                 (size_t)THERON_TRACK02_IPL_STAGE2_RECORD +
                 (size_t)THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT) *
         RAW_SECTOR_BYTES;
@@ -2272,8 +2273,12 @@ int main(void) {
                      THERON_TRACK02_MD5_JP_BIN, THERON_TRACK02_VARIANT_JP_BIN);
     check_real_media(getenv("FIRESTAFF_THERON_TRACK02_US_BIN"),
                      THERON_TRACK02_MD5_US_BIN, THERON_TRACK02_VARIANT_US_BIN);
+    check_real_cue_boot_handoff(getenv("FIRESTAFF_THERON_TRACK02_JP_CUE"),
+                                THERON_TRACK02_MD5_JP_BIN,
+                                THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR);
     check_real_cue_boot_handoff(getenv("FIRESTAFF_THERON_TRACK02_US_CUE"),
-                                THERON_TRACK02_MD5_US_BIN);
+                                THERON_TRACK02_MD5_US_BIN,
+                                THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR);
     printf("summary: fail=%d\n", g_failures);
     return g_failures ? 1 : 0;
 }
