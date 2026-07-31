@@ -483,6 +483,9 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D2L2/D2R2 F0115 follow-up:** the generic C10 fixture blit is
   removed. Items and explosions draw only through the hash-bound real overlay
   compositor; F0115 row metadata remains available without pixels.
+  **2026-07-31 D1L/D1R door follow-up:** the procedural fixture blit and its
+  synthetic render hash are removed. The hash-verified `GRAPHICS.DAT` item
+  248 receipt remains the sole material gate for a D1 side-door draw.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

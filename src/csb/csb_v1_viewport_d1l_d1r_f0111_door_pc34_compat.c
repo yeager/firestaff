@@ -173,19 +173,6 @@ static const char s_source_lock_header[] =
     "the real-asset receipt binds F0111 G0695 to the active map DoorSet "
     "(DoorSet 0: DMCSB1 GRAPHICS.DAT item 248), not Graphic558 frame data.";
 
-static uint32_t fnv1a(uint32_t hash, uint32_t value)
-{
-    hash ^= value & 0xffu;
-    hash *= 16777619u;
-    hash ^= (value >> 8) & 0xffu;
-    hash *= 16777619u;
-    hash ^= (value >> 16) & 0xffu;
-    hash *= 16777619u;
-    hash ^= (value >> 24) & 0xffu;
-    hash *= 16777619u;
-    return hash;
-}
-
 size_t csb_v1_viewport_d1l_d1r_f0111_door_pc34_route_count(void)
 {
     return sizeof(s_routes) / sizeof(s_routes[0]);
@@ -265,82 +252,6 @@ int csb_v1_viewport_d1l_d1r_f0111_door_pc34_horizontal_zone(
     if (zone < 0 || door_state >= CSB_DOOR_STATE_CLOSED) return -1;
     if (right_half) return zone + (3 | CSB_MASK_4000_SHIFT);
     return zone + CSB_C6_UNKNOWN;
-}
-
-int csb_v1_viewport_d1l_d1r_f0111_door_pc34_apply_c10_blit(
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height)
-{
-    int copied = 0;
-
-    if (!source || !destination) return -1;
-    if (width <= 0 || height <= 0) return -1;
-    if (source_stride < width || destination_stride < width) return -1;
-
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const uint8_t pixel = source[y * source_stride + x];
-            if (pixel == (uint8_t)CSB_C10_COLOR_FLESH) continue;
-            destination[y * destination_stride + x] = pixel;
-            ++copied;
-        }
-    }
-    return copied;
-}
-
-uint32_t csb_v1_viewport_d1l_d1r_f0111_door_pc34_render_hash(
-    const CSB_V1_ViewportD1LD1RF0111Route *route,
-    int door_state)
-{
-    uint8_t viewport[CSB_RENDER_WIDTH * CSB_RENDER_HEIGHT];
-    uint8_t door[6 * 6] = {
-        10, 1, 1, 1, 1, 10,
-        2, 2, 2, 2, 2, 2,
-        3, 3, 10, 10, 3, 3,
-        4, 4, 4, 4, 4, 4,
-        5, 5, 10, 10, 5, 5,
-        10, 6, 6, 6, 6, 10
-    };
-    int door_x;
-    int door_y;
-    uint32_t hash = 2166136261u;
-
-    if (!route) return 0;
-    for (int i = 0; i < (int)sizeof(viewport); ++i) viewport[i] = 0;
-
-    for (int x = 0; x < CSB_RENDER_WIDTH; ++x) viewport[x] = 20;
-    for (int x = 0; x < CSB_RENDER_WIDTH; ++x) {
-        viewport[(CSB_RENDER_HEIGHT - 1) * CSB_RENDER_WIDTH + x] = 21;
-    }
-    viewport[1 * CSB_RENDER_WIDTH + (route->lane < 0 ? 2 : 12)] = 30;
-    viewport[7 * CSB_RENDER_WIDTH + (route->lane < 0 ? 3 : 11)] =
-        (uint8_t)(route->rear_order & 0xff);
-    viewport[2 * CSB_RENDER_WIDTH + (route->lane < 0 ? 4 : 10)] =
-        (uint8_t)(route->top_track_zone & 0xff);
-
-    door_x = route->lane < 0 ? 2 : 8;
-    door_y = 3;
-    if (door_state != CSB_DOOR_STATE_OPEN) {
-        (void)csb_v1_viewport_d1l_d1r_f0111_door_pc34_apply_c10_blit(
-            door, 6, viewport + door_y * CSB_RENDER_WIDTH + door_x,
-            CSB_RENDER_WIDTH, 6, 6);
-    }
-    viewport[8 * CSB_RENDER_WIDTH + (route->lane < 0 ? 6 : 9)] =
-        (uint8_t)(route->front_order & 0xff);
-
-    hash = fnv1a(hash, (uint32_t)route->view_square);
-    hash = fnv1a(hash, (uint32_t)door_state);
-    hash = fnv1a(hash, (uint32_t)route->rear_order);
-    hash = fnv1a(hash, (uint32_t)route->front_order);
-    hash = fnv1a(hash, (uint32_t)route->door_zone);
-    for (int i = 0; i < (int)sizeof(viewport); ++i) {
-        hash = fnv1a(hash, viewport[i]);
-    }
-    return hash;
 }
 
 int csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(

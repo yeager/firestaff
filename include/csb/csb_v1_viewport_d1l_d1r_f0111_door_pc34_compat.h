@@ -112,17 +112,6 @@ int csb_v1_viewport_d1l_d1r_f0111_door_pc34_horizontal_zone(
     const CSB_V1_ViewportD1LD1RF0111Route *route,
     int door_state,
     int right_half);
-int csb_v1_viewport_d1l_d1r_f0111_door_pc34_apply_c10_blit(
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height);
-uint32_t csb_v1_viewport_d1l_d1r_f0111_door_pc34_render_hash(
-    const CSB_V1_ViewportD1LD1RF0111Route *route,
-    int door_state);
-
 int csb_v1_viewport_d1l_d1r_f0111_door_real_asset_receipt_pc34(
     const CSB_V1_ViewportD1LD1RF0111Route *d1l_route,
     const CSB_V1_ViewportD1LD1RF0111Route *d1r_route,

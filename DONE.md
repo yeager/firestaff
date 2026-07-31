@@ -45177,6 +45177,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   decoded from the original game-state and SUPPRESS records, so a malformed
   later section cannot leave an invented party behind. Verification:
   `test_dm2_v1_utility_import` passes 136/136.
+- ✅ 2026-07-31 CSB D1L/D1R F0111 door no-fake closure: removed the
+  procedural C10 fixture and synthetic render hash. dmweb's DMCSB data-file
+  format reference, ReDMCSB routing and the PC3.4 `GRAPHICS.DAT` item-248
+  receipt remain the material proof; no unbound door pixels can be emitted.
+
 - ✅ 2026-07-31 CSB D2L2/D2R2 F0115 no-fake closure: removed the generic
   C10 fixture blit. Item and explosion pixels now require the existing
   hash-bound real-overlay compositor; F0115 metadata alone remains no-draw.

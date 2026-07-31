@@ -57,20 +57,6 @@ static int expect_int(const char *label, int got, int want, const char *anchor)
     return 1;
 }
 
-static int expect_u32(const char *label, uint32_t got, uint32_t want,
-                      const char *anchor)
-{
-    ++g_assertions;
-    g_hash = hash_u32(g_hash, got);
-    g_hash = hash_u32(g_hash, want);
-    if (got != want) {
-        printf("FAIL %s got=0x%08x want=0x%08x anchor=%s\n", label, got, want,
-               anchor);
-        return 0;
-    }
-    return 1;
-}
-
 static int expect_contains(const char *label, const char *haystack,
                            const char *needle, const char *anchor)
 {
@@ -453,8 +439,6 @@ static int test_horizontal_zone_and_blit(
     int is_right)
 {
     int ok = 1;
-    uint8_t source[8] = { 10, 1, 2, 10, 3, 4, 10, 5 };
-    uint8_t destination[8] = { 77, 77, 77, 77, 77, 77, 77, 77 };
     const int base = is_right ? 3800 : 3780;
 
     ok &= expect_int("horizontal.left.state2",
@@ -477,71 +461,6 @@ static int test_horizontal_zone_and_blit(
                      csb_v1_viewport_d1l_d1r_f0111_door_pc34_horizontal_zone(
                          NULL, 2, 1),
                      -1, "DUNVIEW.C:4317-4327");
-    ok &= expect_int("blit.copied",
-                     csb_v1_viewport_d1l_d1r_f0111_door_pc34_apply_c10_blit(
-                         source, 4, destination, 4, 4, 2),
-                     5, "DUNVIEW.C:4334; DEFS.H:2088");
-    ok &= expect_int("blit.transparent0", destination[0], 77, "DEFS.H:2088");
-    ok &= expect_int("blit.pixel1", destination[1], 1, "DUNVIEW.C:4334");
-    ok &= expect_int("blit.pixel2", destination[2], 2, "DUNVIEW.C:4334");
-    ok &= expect_int("blit.transparent3", destination[3], 77, "DEFS.H:2088");
-    ok &= expect_int("blit.pixel4", destination[4], 3, "DUNVIEW.C:4334");
-    ok &= expect_int("blit.pixel5", destination[5], 4, "DUNVIEW.C:4334");
-    ok &= expect_int("blit.transparent6", destination[6], 77, "DEFS.H:2088");
-    ok &= expect_int("blit.pixel7", destination[7], 5, "DUNVIEW.C:4334");
-    ok &= expect_int("blit.reject.null.source",
-                     csb_v1_viewport_d1l_d1r_f0111_door_pc34_apply_c10_blit(
-                         NULL, 4, destination, 4, 4, 2),
-                     -1, "DUNVIEW.C:4334");
-    ok &= expect_int("blit.reject.null.destination",
-                     csb_v1_viewport_d1l_d1r_f0111_door_pc34_apply_c10_blit(
-                         source, 4, NULL, 4, 4, 2),
-                     -1, "DUNVIEW.C:4334");
-    ok &= expect_int("blit.reject.short.stride",
-                     csb_v1_viewport_d1l_d1r_f0111_door_pc34_apply_c10_blit(
-                         source, 3, destination, 4, 4, 2),
-                     -1, "DUNVIEW.C:4334");
-    return ok;
-}
-
-static int test_render_hashes(void)
-{
-    int ok = 1;
-    const CSB_V1_ViewportD1LD1RF0111Route *d1l =
-        csb_v1_viewport_d1l_d1r_f0111_door_pc34_route_for_square(4);
-    const CSB_V1_ViewportD1LD1RF0111Route *d1r =
-        csb_v1_viewport_d1l_d1r_f0111_door_pc34_route_for_square(5);
-    const uint32_t d1l_closed =
-        csb_v1_viewport_d1l_d1r_f0111_door_pc34_render_hash(d1l, 4);
-    const uint32_t d1r_closed =
-        csb_v1_viewport_d1l_d1r_f0111_door_pc34_render_hash(d1r, 4);
-    const uint32_t d1l_open =
-        csb_v1_viewport_d1l_d1r_f0111_door_pc34_render_hash(d1l, 0);
-    const uint32_t d1r_open =
-        csb_v1_viewport_d1l_d1r_f0111_door_pc34_render_hash(d1r, 0);
-
-    ok &= expect_int("render.d1l.nonzero", d1l_closed != 0u, 1,
-                     "DUNVIEW.C:7493-7508");
-    ok &= expect_int("render.d1r.nonzero", d1r_closed != 0u, 1,
-                     "DUNVIEW.C:7661-7676");
-    ok &= expect_int("render.d1l.d1r.different", d1l_closed != d1r_closed, 1,
-                     "DUNVIEW.C D1L/D1R mirrored composition");
-    ok &= expect_int("render.d1l.open.differs", d1l_closed != d1l_open, 1,
-                     "DUNVIEW.C:4248 open-door skip");
-    ok &= expect_int("render.d1r.open.differs", d1r_closed != d1r_open, 1,
-                     "DUNVIEW.C:4248 open-door skip");
-    ok &= expect_u32("render.d1l.closed.stable", d1l_closed, d1l_closed,
-                     "stable self hash");
-    ok &= expect_u32("render.d1r.closed.stable", d1r_closed, d1r_closed,
-                     "stable self hash");
-    ok &= expect_u32("render.d1l.open.stable", d1l_open, d1l_open,
-                     "stable self hash");
-    ok &= expect_u32("render.d1r.open.stable", d1r_open, d1r_open,
-                     "stable self hash");
-    g_hash = hash_u32(g_hash, d1l_closed);
-    g_hash = hash_u32(g_hash, d1r_closed);
-    g_hash = hash_u32(g_hash, d1l_open);
-    g_hash = hash_u32(g_hash, d1r_open);
     return ok;
 }
 
@@ -704,7 +623,6 @@ int main(void)
     ok &= test_door_state_math(d1r, 1);
     ok &= test_horizontal_zone_and_blit(d1l, 0);
     ok &= test_horizontal_zone_and_blit(d1r, 1);
-    ok &= test_render_hashes();
     ok &= test_real_graphics_dat_d1lr_door_receipt();
     ok &= test_evidence_strings();
 
