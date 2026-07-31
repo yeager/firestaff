@@ -44945,3 +44945,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm1_v1_viewport_3d_pc34_compat`,
   `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 CSB PC3.4 D0C door-frame source binding: the ordinary
+  F0127 `C16_DOOR_SIDE` route now draws M654/G2116 directly through the
+  original G0172 32×123 frame. It has no atlas substitute when original
+  pixels are absent. The distinct Thieves Eye branch remains no-draw until
+  its required temporary-frame copy and original hole composition are bound
+  together, rather than being approximated with a host mask. ReDMCSB
+  `DUNVIEW.C F0127:8185-8236` is the source reference. Verification:
+  `test_dm1_v1_viewport_3d_pc34_compat`,
+  `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
+  launcher handoff boundary (567/0, one expected Atari skip) pass.

@@ -1234,6 +1234,43 @@ static void test_d1_side_door_frame_uses_source_graphic558_geometry(void)
               viewport[14 * DM1_VIEWPORT_WIDTH + 1], 0x5a);
 }
 
+static void test_d0c_door_frame_uses_source_graphic558_geometry(void)
+{
+    uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
+    uint8_t pixels[32 * 123];
+    uint8_t grid[8 * 8];
+    IndexedGraphicProviderFixture provider;
+    DM1_Viewport3DState state;
+
+    /* G0172: {96,127,0,122,16,123,0,0}; F0127's ordinary C16_DOOR_SIDE
+     * route draws M654/G2116 natively, before the common F0115 pass. */
+    memset(viewport, 0x5a, sizeof(viewport));
+    memset(pixels, 10, sizeof(pixels));
+    memset(grid, DM1_VP_ELEMENT_DOOR_SIDE, sizeof(grid));
+    pixels[0] = 0x31;
+    provider.graphic_index = 86;
+    provider.pixels = pixels;
+    provider.width = 32;
+    provider.height = 123;
+    dm1_viewport_3d_set_wall_frame_bitmaps(NULL);
+    dm1_viewport_3d_init(&state, viewport, DM1_VIEWPORT_WIDTH);
+    dm1_viewport_3d_load_wall_set(&state, 0, 0);
+    state.floor_ceiling_dirty = false;
+    state.dungeon_grid = grid;
+    state.dungeon_aspect_grid = grid;
+    state.dungeon_width = 8;
+    state.dungeon_height = 8;
+    state.source_graphics_required = true;
+    state.graphic_provider_callback = indexed_graphic_provider;
+    state.graphic_provider_user_data = &provider;
+
+    dm1_viewport_3d_draw_frame(&state, 0, 4, 4);
+    check_int("d0c_door_frame.source_native",
+              viewport[96], 0x31);
+    check_int("d0c_door_frame.source_c10_transparent",
+              viewport[97], 0x5a);
+}
+
 static void test_floor_ceiling_bands_and_zones(void)
 {
     uint8_t viewport[DM1_VIEWPORT_WIDTH * DM1_VIEWPORT_HEIGHT];
@@ -5047,6 +5084,7 @@ int main(void)
     test_d2_side_door_frame_uses_source_graphic558_geometry();
     test_d1c_door_frame_uses_source_graphic558_geometry();
     test_d1_side_door_frame_uses_source_graphic558_geometry();
+    test_d0c_door_frame_uses_source_graphic558_geometry();
     test_floor_ceiling_bands_and_zones();
     test_floor_ceiling_uses_real_provider_pixels();
     test_floor_ceiling_uses_complete_pc34_provider_pair();

@@ -20,6 +20,7 @@
 #include "firestaff/dm1/v1/G0169_pc34_compat.h"
 #include "firestaff/dm1/v1/G0170_pc34_compat.h"
 #include "firestaff/dm1/v1/G0171_pc34_compat.h"
+#include "firestaff/dm1/v1/G0172_pc34_compat.h"
 #include "firestaff/dm1/v1/G0173_pc34_compat.h"
 #include "firestaff/dm1/v1/G0174_pc34_compat.h"
 #include "firestaff/dm1/v1/G0175_pc34_compat.h"
@@ -2165,6 +2166,25 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
                     dm1_viewport_3d_draw_wall(state, bm_base + 21 * BMP_STRIDE, fr_side);
                     dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 21 * BMP_STRIDE, fr_side);
                 }
+            }
+        }
+    }
+
+    /* D0C is the party square.  Unlike the D1-D3 front-door routes it
+     * accepts only F0172's C16_DOOR_SIDE frame path, not F0111.  The ordinary
+     * PC3.4 case consumes M654/G2116 through G0172.  The Thieves Eye variant
+     * must first copy this source into a temporary bitmap and composite the
+     * separately owned hole graphic, so it is deliberately not approximated
+     * here. ReDMCSB DUNVIEW.C:8185-8236. */
+    {
+        int d0c_cell = dm1_viewport_3d_get_dungeon_element(state, map_x, map_y);
+        int d0c_element = state->dungeon_aspect_grid ? d0c_cell :
+            dm1_viewport_3d_classify_grid_cell(d0c_cell);
+
+        if (d0c_element == DM1_VP_ELEMENT_DOOR_SIDE) {
+            if (dm1_viewport_3d_draw_source_door_frame(
+                    state, 86, dm1_v1_g0172_table_pc34(), 0)) {
+                /* M654/G2116 source frame drawn at G0172's D0C zone. */
             }
         }
     }
