@@ -23,6 +23,13 @@
   now rejects. Verification: `test_dm2_v1_runtime_shop_pc34_compat` passes
   10/10 and the focused startup-audio/menu test passes.
 
+- ✅ 2026-07-31 DM2 dynamic-light fallback closure: the runtime no longer
+  assigns a fabricated zero-light state to a dynamic map. Difficulty-0 maps
+  retain SKProject `RECALC_LIGHT_LEVEL`'s source-defined fixed level one;
+  dynamic maps require their complete live light state and otherwise cannot
+  produce a source-owned viewport. Verification: `test_dm2_v1_c_light_receipt`
+  passes 26/26 and `test_dm2_v1_lighting_falloff_boundary` passes 162/162.
+
 - ✅ 2026-07-31 DM2 generator-default closure: creature and item generator
   actuators now reject bare flags instead of spawning a default Dragoth or
   publishing a synthetic item ID. Source DB14/record ownership is required

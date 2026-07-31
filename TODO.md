@@ -35,6 +35,12 @@
   merchandise data and UI text, before enabling merchant interaction. Do not
   restore a fixed merchant identity, dialog table or reputation counter.
 
+- **DM2-DYNAMIC-CLIGHT-OWNER-HANDOFF:** The map-only dynamic-light fallback
+  is closed. Port the complete `DM2_RECALC_LIGHT_LEVEL` inputs: leader and
+  champion light possessions, `v1e0974`, spell effects, rain modifiers and
+  the source light modifier. Dynamic-map viewport frames must remain blocked
+  until that state is recovered from original runtime/save records.
+
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following
   sections, but Firestaff's session-only gold, reputation and time fields do

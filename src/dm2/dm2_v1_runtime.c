@@ -302,18 +302,6 @@ enum {
 static uint32_t dm2_v1_runtime_raw_sksave_hash(const uint8_t *data,
                                                 size_t size);
 
-static uint32_t dm2_runtime_hash_bytes(uint32_t hash,
-                                       const uint8_t *bytes,
-                                       size_t size)
-{
-    size_t i;
-    for (i = 0u; i < size; ++i) {
-        hash ^= bytes[i];
-        hash *= 16777619u;
-    }
-    return hash;
-}
-
 static int dm2_runtime_door_state(uint16_t square_raw);
 static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
                                   int level,
@@ -1370,29 +1358,23 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
         return;
     }
-    {
-        /* SKProject c_light.cpp::DM2_RECALC_LIGHT_LEVEL needs a terminal light
-         * source state to publish the palette darkness used by text/menu draws.
-         * Build a deterministic default from the map descriptor; a live party
-         * route can replace this with observed torch/spell state later. */
+    if (!rt->c_light_map_descriptor.dynamic_light) {
+        /* SKProject c_light.cpp::DM2_RECALC_LIGHT_LEVEL sets a difficulty-0
+         * map to level one before the final modifier/clamp.  That fixed branch
+         * is owned by the admitted map descriptor.  Dynamic maps instead
+         * combine v1e0974, light-producing possessions, spell effects, rain
+         * and the source modifiers; no map-only default may stand in for that
+         * live state.  Leave such a viewport unpresentable until the complete
+         * source state is handed off.
+         * Source: SKWINSPX/src/v4/skgame.cpp::RECALC_LIGHT_LEVEL lines
+         * 283-362; src/v5/sklight.cpp::DM2_RECALC_LIGHT_LEVEL. */
         DM2_V1_CLightSourceState source;
         memset(&source, 0, sizeof(source));
         source.valid = 1;
-        source.dynamic_map = rt->c_light_map_descriptor.dynamic_light;
-        source.base_light = source.dynamic_map ? 0u : 1u;
+        source.dynamic_map = 0u;
+        source.base_light = 1u;
         source.darkness_offset = 0u;
-        source.source_state_hash = dm2_runtime_hash_bytes(
-            2166136261u, (const uint8_t *)&source.dynamic_map,
-            sizeof(source.dynamic_map));
-        source.source_state_hash = dm2_runtime_hash_bytes(
-            source.source_state_hash, (const uint8_t *)&source.base_light,
-            sizeof(source.base_light));
-        source.source_state_hash = dm2_runtime_hash_bytes(
-            source.source_state_hash, (const uint8_t *)&source.darkness_offset,
-            sizeof(source.darkness_offset));
-        if (source.source_state_hash == 0u) {
-            source.source_state_hash = 1u;
-        }
+        source.source_state_hash = rt->c_light_map_descriptor.descriptor_hash;
         if (!dm2_v1_c_light_m11_receipt_build_for_map(
                 &rt->gdat_scene_light_receipt,
                 &rt->c_light_map_descriptor,
