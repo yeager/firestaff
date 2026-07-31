@@ -3047,6 +3047,12 @@ static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
     engine->item_ibs_runtime_source.source_bound =
         engine->item_ibs_runtime_source.parsed_bank_valid &&
         engine->item_ibs_runtime_source.source.canonical_hash_verified;
+    if (engine->item_ibs_runtime_source.source_bound) {
+        nexus_itemdef_bind_ibs_declarations(
+            engine->item_ibs_bank.item_category,
+            engine->item_ibs_bank.item_weight,
+            NEXUS_V1_ITEM_IBS_DECLARATION_COUNT);
+    }
 }
 
 static void nexus_v1_clear_structure3_runtime_source(Nexus_V1_Engine *engine)

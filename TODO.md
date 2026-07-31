@@ -24424,9 +24424,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Nexus FONT256 text binding: retail DMWeb map/page header facts are now
   exposed. The remaining gap is proving how page tilemap entries become
   runtime character codes before enabling text rendering.
-- 🔧 Nexus champion follow-up: the real 20-record `RLOWFIX.BIN`/`PLRD`
-  parser is now live. Bind the remaining PLRD equipment words to the real
-  `ITEM.IBS` item definitions and replace the compatibility fixture in
-  isolated unit tests; retain 24 only as storage capacity until an original
-  save/card format proves otherwise.
+- 🔧 Nexus champion follow-up: PLRD equipment ordinals now bind to the real
+  `ITEM.IBS` declaration category/weight lane. Bind the remaining ITEM.IBS
+  text/action/combat semantics before exposing item names, attack, defense or
+  key flags; the compatibility fixture still belongs only to isolated tests.
 # Theron V2 HUD widget pixels remain blocked in production: the manifest parser is fixture-only and the runtime now fails closed until all seven slots resolve to decoded Track 02 source assets.

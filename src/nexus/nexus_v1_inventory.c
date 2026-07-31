@@ -76,17 +76,41 @@ const Nexus_ItemDef g_nexus_items[] = {
 
 #define ITEM_COUNT ((int)(sizeof(g_nexus_items)/sizeof(g_nexus_items[0])))
 
+static const uint8_t *g_ibs_category;
+static const uint8_t *g_ibs_weight;
+static int g_ibs_count;
+static Nexus_ItemDef g_ibs_defs[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+
+void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
+                                         const uint8_t *weight,
+                                         int count) {
+    int i;
+    g_ibs_category = category;
+    g_ibs_weight = weight;
+    g_ibs_count = (category && weight && count > 0) ?
+        (count > NEXUS_V1_ITEM_IBS_DECLARATION_COUNT ?
+            NEXUS_V1_ITEM_IBS_DECLARATION_COUNT : count) : 0;
+    for (i = 0; i < g_ibs_count; ++i) {
+        g_ibs_defs[i].name = NULL;
+        g_ibs_defs[i].category = g_ibs_category[i] < NEXUS_ITEM_COUNT ?
+            (Nexus_ItemCategory)g_ibs_category[i] : NEXUS_ITEM_COUNT;
+        g_ibs_defs[i].weight = g_ibs_weight[i];
+        g_ibs_defs[i].attack = 0;
+        g_ibs_defs[i].defense = 0;
+        g_ibs_defs[i].flags = 0;
+    }
+}
+
 int nexus_itemdef_count(void) {
     /* The table above is retained as a fixture/reference only.  No Saturn
      * item-definition source has been admitted, so it must not become live
      * Nexus inventory or combat state. */
-    return 0;
+    return g_ibs_count;
 }
 
 const Nexus_ItemDef *nexus_itemdef_get(int id) {
-    (void)id;
-    /* DM1 item names/stats are not a substitute for Nexus retail records. */
-    return NULL;
+    if (id < 0 || id >= g_ibs_count) return NULL;
+    return &g_ibs_defs[id];
 }
 
 const char *nexus_itemdef_category_name(Nexus_ItemCategory cat) {

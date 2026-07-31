@@ -87,6 +87,11 @@ typedef struct {
 extern const Nexus_ItemDef g_nexus_items[];
 int nexus_itemdef_count(void);
 const Nexus_ItemDef *nexus_itemdef_get(int id);
+/* Bind only source-owned ITEM.IBS declaration fields.  Text and combat
+ * semantics remain unavailable until separately authenticated. */
+void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
+                                         const uint8_t *weight,
+                                         int count);
 const char *nexus_itemdef_category_name(Nexus_ItemCategory cat);
 
 /* ═══════════════════════════════════════════════════════════════════

@@ -47063,6 +47063,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   HP/stamina/mana, attributes, levels, and source ordinals; the 24-element
   array remains storage capacity only. `test_nexus_v1_champion_plrd` passes
   against the local real file, and malformed/missing PLRD input fails closed.
+- ✅ 2026-07-31 Nexus ITEM.IBS ordinal handoff: the source-owned category and
+  weight bytes for all 243 real ITEM.IBS declarations now form the live item
+  lookup boundary. PLRD equipment/backpack ordinals retain real declaration
+  identity without reviving the old DM1 catalog; names, attack/defense and
+  key/action semantics remain explicitly unavailable.
 - ✅ 2026-07-31 Theron V1 UI chrome isolation: removed the inferred bars,
   labels and champion-slot pixels from the production archive. The public
   chrome API now fails closed through a no-op seam until the original Track

@@ -6517,6 +6517,8 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
         if (decl[0] != (uint8_t)i) return -1;
         out_bank->inventory_association[i] = rb16(decl + 0x14);
         out_bank->floor_image[i] = rb16(decl + 0x16);
+        out_bank->item_category[i] = decl[1];
+        out_bank->item_weight[i] = decl[8];
         /* DMWeb records 19 item declarations without an inventory image as
          * FFFF.  They are valid source records, but cannot become an icon
          * material or a substitute for a floor image. */

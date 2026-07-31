@@ -2024,6 +2024,8 @@ typedef struct {
     int source_hash_verified;
     uint16_t inventory_association[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
     uint16_t floor_image[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint8_t item_category[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint8_t item_weight[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
     uint16_t palette_bgr555[NEXUS_V1_ITEM_IBS_PALETTE_COUNT][16];
     uint8_t association_palette[256];
     uint8_t association_image[256];
