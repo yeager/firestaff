@@ -1297,7 +1297,13 @@ void nexus_ui_render_gameover(const Nexus_UI_Manager *mgr,
 void nexus_ui_render_stabg(const Nexus_UI_Manager *mgr,
     uint8_t *fb, int fb_w, int fb_h, int dest_x, int dest_y)
 {
-    if (!mgr || !fb) return;
+    /* STABG pixels are source palette indices. Do not let a test/host-built
+     * surface reach an indexed framebuffer without the retail palette that
+     * gives those indices meaning. Saturn VDP placement remains owned by a
+     * separate, still-blocked handoff. */
+    if (!mgr || !fb || !mgr->surfaces[NEXUS_SURFACE_STABG].data ||
+        !mgr->surfaces[NEXUS_SURFACE_STABG].source_palette_loaded)
+        return;
     nexus_ui_blit_surface(&mgr->surfaces[NEXUS_SURFACE_STABG],
         fb, fb_w, fb_h, dest_x, dest_y);
 }
