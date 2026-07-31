@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
 
 /* Nexus V1 sound system — source-bound opaque implementation.
  * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
@@ -249,7 +250,9 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
             int event_id = r[0];
             int size = retail_size;
             int sal_offset = retail_start;
-            int end = sal_offset >= 0 ? sal_offset + size : 0;
+            int end = (sal_offset >= 0 && size > 0 &&
+                       sal_offset <= INT_MAX - size) ?
+                sal_offset + size : INT_MAX;
             int checksum16 = 0, nonzero = 0, high = 0, first_nonzero = -1;
             int last_nonzero = -1, distinct = 0, transitions = 0;
             if (r[0] == 0xffU) {
@@ -338,7 +341,8 @@ legacy_map_parser:
         event_id = r[0];
         size = read_u16_be(r + 2);
         sal_offset = read_u32_be(r + 4);
-        end = sal_offset + size;
+        end = (sal_offset >= 0 && size > 0 && sal_offset <= INT_MAX - size)
+            ? sal_offset + size : INT_MAX;
         eng->map_records[eng->map_record_count].selector = event_id;
         eng->map_records[eng->map_record_count].attribute = r[1];
         eng->map_records[eng->map_record_count].sal_offset = sal_offset;

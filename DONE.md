@@ -47763,3 +47763,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   range checks now use subtraction-based limits, preventing offset-addition
   overflow before a descriptor can be admitted. Verification: real ITEM.IBS
   decode and DGN geometry readiness pass.
+- ✅ 2026-07-31 Nexus SAL/MAP bounds hardening: legacy and retail parser end
+  calculations now saturate on integer overflow instead of wrapping before
+  the bounded-window checks. Real SNDLEV00-15 SAL/MAP corpus and sound-runtime
+  receipt tests pass; playback remains blocked pending the proven codec/ABI.
