@@ -43,6 +43,20 @@ int csb_v1_viewport_door_graphic_index_pc34(int door_set, int depth)
         door_set * CSB_DOOR_SET_GRAPHIC_COUNT + depth;
 }
 
+int csb_v1_viewport_door_graphic_index_from_map_pc34(int door_set0,
+                                                      int door_set1,
+                                                      uint16_t door_word,
+                                                      int depth)
+{
+    const int door_set = (door_word & UINT16_C(0x0001)) ? door_set1 : door_set0;
+
+    /* ReDMCSB DUNGEON.C F0174 copies MAP.D DoorSet0/1 to the current-map
+     * door info. DUNVIEW.C F0096 then builds G0693/G0694/G0695 as M633 +
+     * selected DoorSet * C003 + depth. CSBWin Viewport.cpp selects the same
+     * map member from DB0's low door-type bit. */
+    return csb_v1_viewport_door_graphic_index_pc34(door_set, depth);
+}
+
 int csb_v1_viewport_door_graphic_index_valid_pc34(int graphic_index, int depth)
 {
     int door_set;

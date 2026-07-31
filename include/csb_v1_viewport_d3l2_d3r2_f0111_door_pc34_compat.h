@@ -96,6 +96,13 @@ typedef struct {
  * each map DoorSet: D3, D2 and D1.  These helpers keep the GRAPHICS.DAT
  * identity tied to that source formula instead of a captured cache index. */
 int csb_v1_viewport_door_graphic_index_pc34(int door_set, int depth);
+/* Select G0693/G0694/G0695 from the two active MAP.D DoorSet selectors and
+ * the DB0 door-type bit.  A malformed map selector or a non-PC34 depth is
+ * unavailable, never coerced to DoorSet 0. */
+int csb_v1_viewport_door_graphic_index_from_map_pc34(int door_set0,
+                                                      int door_set1,
+                                                      uint16_t door_word,
+                                                      int depth);
 int csb_v1_viewport_door_graphic_index_valid_pc34(int graphic_index,
                                                    int depth);
 int csb_v1_viewport_d3_door_graphic_index_valid_pc34(int graphic_index);

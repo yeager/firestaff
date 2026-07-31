@@ -44736,3 +44736,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   V2.2 provenance, without accepting a same-looking decoded raster as a
   substitute. The real-PC3.4 D1C/D2C/D3C record regression and focused
   launcher/viewport tests pass.
+- ✅ 2026-07-31 CSB F0096 per-door DoorSet selector: MAP.D:s två verifierade
+  DoorSet-nibblar och DB0-dörrens lågbit väljer nu exakt G0693/G0694/G0695
+  enligt `246 + DoorSet * 3 + depth`. Ogiltiga PC34-val blir no-draw och
+  kan inte tyst lånas från DoorSet 0. Den fokuserade F0111-dörrtesten och
+  F0128-provenanstesten passerar.

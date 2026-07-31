@@ -622,6 +622,9 @@ diagnostic; it must not silently fall back to a generated visual.
   exact compressed selected record, verified against the real D1C/D2C/D3C
   catalog posts. The remaining live handoff must attach that receipt, the
   decoded span and active palette to the actual F0128 command before F0115.
+  The MAP.D/DB0 selector is now separately source-locked and fail-closed;
+  the remaining work is to invoke it from each live F0111 route rather than
+  use a fixed door-set array.
   The CSBgraphics custom-background pass now follows the same rule: a real
   GRAPHICS.DAT session ignores caller-supplied test masks and decodes the
   selected CSBWin BACKGROUND_MASK, otherwise it applies no layer.

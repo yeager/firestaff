@@ -166,6 +166,29 @@ static int test_specs_and_f0108_routes(void)
     return ok;
 }
 
+static int test_map_door_set_selection(void)
+{
+    int ok = 1;
+
+    ok &= expect_int("map_door_set.db0_type0_d3",
+                     csb_v1_viewport_door_graphic_index_from_map_pc34(
+                         1, 3, 0x0000u, 0), 249,
+                     "DUNGEON.C F0174; DUNVIEW.C F0096:2651-2658");
+    ok &= expect_int("map_door_set.db0_type1_d2",
+                     csb_v1_viewport_door_graphic_index_from_map_pc34(
+                         1, 3, 0x0001u, 1), 256,
+                     "DUNGEON.C F0174; CSBWin Viewport.cpp DB0 door type");
+    ok &= expect_int("map_door_set.bad_selected_set",
+                     csb_v1_viewport_door_graphic_index_from_map_pc34(
+                         1, 4, 0x0001u, 2), -1,
+                     "PC3.4 DoorSet range 0..3 fails closed");
+    ok &= expect_int("map_door_set.bad_depth",
+                     csb_v1_viewport_door_graphic_index_from_map_pc34(
+                         1, 3, 0x0000u, 3), -1,
+                     "G0693/G0694/G0695 only");
+    return ok;
+}
+
 static int test_f0115_and_f0111_dispatch(void)
 {
     int ok = 1;
@@ -440,6 +463,7 @@ int main(void)
            csb_v1_viewport_d3l2_d3r2_f0111_door_source_evidence_pc34());
 
     ok &= test_specs_and_f0108_routes();
+    ok &= test_map_door_set_selection();
     ok &= test_f0115_and_f0111_dispatch();
     ok &= test_pass2_c10_frame_and_no_f0107();
     ok &= test_lineage_pixel_and_evidence();
