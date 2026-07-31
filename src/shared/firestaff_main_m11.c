@@ -405,11 +405,11 @@ int main(int argc, char** argv) {
             continue;
         }
         if (strcmp(a, "--fullscreen") == 0) {
-            /* not yet wired */
+            opts.windowModeOverride = M11_WINDOW_MODE_FULLSCREEN;
             continue;
         }
         if (strcmp(a, "--no-vsync") == 0) {
-            /* not yet wired */
+            opts.vsyncOverride = 0;
             continue;
         }
         if (strcmp(a, "--fps") == 0) {

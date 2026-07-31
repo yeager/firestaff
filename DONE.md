@@ -45794,3 +45794,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   configured `firestaff` plus both PC3.4 real-asset probes, focused CTest
   3/3, ornament 29/29 and startup/title/entrance/HUD 75/75 with
   `/Users/bosse/.firestaff/data/csb`.
+
+- ✅ 2026-07-31 M11 CLI presentation overrides: `--fullscreen` and
+  `--no-vsync` now update the same M11 window-mode and VSync settings that
+  the startup menu applies before any DM1 frame is presented; neither option
+  is an advertised no-op anymore. Verification: `firestaff --menu --duration
+  0 --no-vsync --fullscreen` exits successfully with SDL's dummy driver, and
+  the direct-launch default-options gate covers the unset override state.

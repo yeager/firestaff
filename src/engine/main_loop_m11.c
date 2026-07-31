@@ -2775,6 +2775,8 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->scaleMode      = M11_SCALE_FIT;
     opts->scaleModeOverride = 0;
     opts->presentationModeOverride = -1;
+    opts->windowModeOverride = -1;
+    opts->vsyncOverride = -1;
     opts->durationMs     = -1;
     opts->presentEveryMs = 16;
     opts->script         = NULL;
@@ -5033,6 +5035,13 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     menuState.settings.windowHeight = M11_Render_GetWindowHeight();
     if (o->scaleModeOverride) {
         menuState.settings.scaleModeIndex = o->scaleMode;
+    }
+    if (o->windowModeOverride >= M11_WINDOW_MODE_WINDOWED &&
+        o->windowModeOverride <= M11_WINDOW_MODE_FULLSCREEN) {
+        menuState.settings.windowModeIndex = o->windowModeOverride;
+    }
+    if (o->vsyncOverride == 0 || o->vsyncOverride == 1) {
+        menuState.settings.vsyncIndex = o->vsyncOverride;
     }
     if (o->presentationModeOverride >= M12_PRESENTATION_V1_ORIGINAL &&
         o->presentationModeOverride < M12_PRESENTATION_MODE_COUNT) {

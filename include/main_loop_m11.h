@@ -27,6 +27,8 @@ typedef struct {
     int scaleMode;         /* M11_SCALE_* */
     int scaleModeOverride; /* Non-zero when --scale-mode was supplied. */
     int presentationModeOverride; /* M12_PRESENTATION_V*, -1 keeps config. */
+    int windowModeOverride; /* M11_WINDOW_MODE_*, -1 keeps config. */
+    int vsyncOverride;      /* 0/1, -1 keeps config. */
     int durationMs;        /* <0 = run until exit, 0 = close
                               immediately after one present. */
     int presentEveryMs;    /* How often to present during the loop.

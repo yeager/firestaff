@@ -236,6 +236,10 @@ static void run_boot_probe_empty_data_rejection(void) {
                 "phase-a default leaves optional save path unset");
     expect_true(opts.retroAchievementsEndpoint == NULL,
                 "phase-a default leaves optional RA endpoint unset");
+    expect_true(opts.windowModeOverride == -1,
+                "phase-a default leaves window-mode override unset");
+    expect_true(opts.vsyncOverride == -1,
+                "phase-a default leaves vsync override unset");
     expect_true(opts.bootProbeFrames == 0,
                 "boot-probe default advances zero startup frames");
     expect_true(opts.bootProbeExpectRuntime == 0,
