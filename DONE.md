@@ -45894,3 +45894,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   only a future decoded DB14/CCM/timer route may allocate one. Verification:
   `test_dm2_v1_runtime_shop_pc34_compat` 11/11 and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass.
+
+- ✅ 2026-07-31 DM1 F0337 original-save light disposition: verified the
+  operator-owned DOSBox-X PC3.4 save (`a6fa347b`) restores no hand torches
+  and `MagicalLightAmount = 0`. ReDMCSB `PANEL.C F0337` selects palette 5,
+  the darkest row, for that exact state; Firestaff's restored frame therefore
+  follows the source light rule. The nearby DOSBox screenshot has no
+  hash-bound relationship to the save and is not parity evidence. ReDMCSB
+  `DEFS.H` also confirms the compact x86 319-byte champion layout, with
+  `Skills/Slots/Load` at `91/211/271`; DMweb corroborates PC3.4's 1,404-byte
+  little-endian champion block and external portraits. Verification: the
+  real-data backed PC34 corpus roundtrip and tail-less backing tests pass.

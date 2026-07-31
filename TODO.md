@@ -23815,20 +23815,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the installed original `DUNGEON.DAT`. Like the earlier first save, it has
     zero C13 and active-group entries, so it adds real interop coverage but
     does not close the C13 requirement.
-  - 2026-07-31 visual-resume gap: the second operator-owned DOSBox-X save
-    (`a6fa347b`, map 1, party `(6,2,2)`) reaches the same runtime tuple in
-    Firestaff, but its in-game viewport is materially darker than the paired
-    original DOSBox-X capture. The frame was captured seconds after, rather
-    than atomically with, the save, so its apparent torch state is not a
-    hand-inventory oracle. The restored frame selects the dark F0337 route.
-    Do not compensate with a renderer-wide palette override: it also corrupts
-    the source HUD palette. Capture a hash-bound save/frame pair and trace
-    the exact F0435 materialized hand/object identities and PARTY_INFO light
-    state into F0337 before changing its calculation. ReDMCSB `DEFS.H`
-    confirms the compact PC3.4 record: x86 omits the post-Statistics padding,
-    so the 319-byte record has Skills/Slots/Load at `91/211/271`; do not use
-    DMweb's larger padded CHARDESC offsets. DMweb corroborates the PC 3.4
-    1,404-byte, little-endian champion block with external portraits.
 ## DM1 C03/C04 runtime identity follow-up
 
 - [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
