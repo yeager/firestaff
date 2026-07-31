@@ -11,7 +11,7 @@
  * Source: SKULL.ASM tech/magic item routines
  *
  * Phase 4 expansion (2026-06-17):
- *   - In-memory item catalog with known DM2 tech/magic items
+ *   - No item catalog is admitted until object definitions are decoded
  *   - Charge-consumption helpers
  *   - Hybrid power calculation
  *   - Source-lock citations for SKULL.ASM tech/magic item table */
@@ -28,7 +28,7 @@ typedef enum {
 #define DM2_POWER_MANA    2   /* mana-powered, magic_level*2/use */
 #define DM2_POWER_HYBRID  3   /* hybrid power, tech+magic levels/use */
 
-/* ── Known item IDs (well-known DM2 tech/magic items) ──────────── */
+/* Retired fixture IDs. Real object IDs come from decoded DB/GDAT data. */
 #define DM2_ITEM_CROSSBOW      101   /* ranged, tech_level=0 */
 #define DM2_ITEM_PISTOL        102   /* ranged, tech_level=1 */
 #define DM2_ITEM_RIFLE         103   /* ranged, tech_level=2 */
@@ -55,8 +55,8 @@ int dm2_v1_item_power_cost(const DM2_V1_TechMagicItem *item);
 
 /* ── Phase 4 expansion: known-item lookup ────────────────────────────
  * Returns 1 if the item_id is recognized as a tech/magic/hybrid item
- * and out is populated; 0 otherwise.  Source: SKULL.ASM tech/magic
- * item table (built-in DM2 item catalog). */
+ * and out is populated; 0 otherwise. Returns 0 until decoded DB/GDAT item
+ * ownership is bound. */
 int dm2_v1_tech_magic_lookup(int item_id, DM2_V1_TechMagicItem *out);
 const char *dm2_v1_tech_magic_item_name(int item_id);
 

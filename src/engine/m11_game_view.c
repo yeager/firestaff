@@ -41560,20 +41560,16 @@ static int m11_dm2_leader_hand_object_name(const M11_GameViewState* state,
                               &idx)) {
         return 0;
     }
-    /* skproject/SKWIN/SkWinCore.cpp keeps DM2 item identity as ObjectID
-     * pool + index.  Firestaff's current startup catalog can name a bounded
-     * set of known tech/magic item indexes; unknown indexes must keep the
-     * lossless pool/index fallback instead of being guessed. */
+    /* SKProject keeps DM2 item identity as ObjectID pool + index.  Do not
+     * show either Firestaff's retired item-name catalog or a diagnostic
+     * pool/index string in the HUD: both are host text, not source data. */
     (void)pool;
     knownName = dm2_v1_tech_magic_item_name((int)idx);
     if (knownName && knownName[0] != '\0') {
         snprintf(out, (size_t)outSize, "%s", knownName);
         return out[0] != '\0';
     }
-    return dm2_db_format_handle_name(
-        state->dm2State.leader_hand_object,
-        out,
-        (size_t)outSize) ? 1 : 0;
+    return 0;
 }
 
 int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(const M11_GameViewState* state,

@@ -160,6 +160,11 @@
   actuator, `WALL_GFX` and `dt08` ownership is decoded, no shop API can
   expose stock, prices, names, dialog or mutate party state.
 
+- **DM2-OBJECT-TEXT-OWNER-HANDOFF:** Bind leader-hand/item text only through
+  the decoded DB object and its original GDAT text/metadata route. The HUD
+  must stay unnamed when that owner is absent; do not restore fixture IDs,
+  English names, affinity/charge values, or diagnostic pool/index labels.
+
 - **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
   Bind any future enhanced art only through verified original V1 GDAT material
   and a complete, provenance-checked V2.2 pack; never reintroduce diagnostic

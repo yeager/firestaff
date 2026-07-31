@@ -2810,18 +2810,16 @@ int main(void) {
             dm2_v1_runtime_get_leader_hand_object();
         expect_true(DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(&view) == -1,
                     "M11 DM2 leader-hand does not fake a V1 object icon");
-        expect_true(DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&view,
-                                                           leader_name,
-                                                           sizeof(leader_name)) &&
-                        strcmp(leader_name, "DM2 MISC 51") == 0,
-                    "M11 DM2 leader-hand name preserves DB handle identity");
+        expect_true(!DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&view,
+                                                            leader_name,
+                                                            sizeof(leader_name)),
+                    "M11 DM2 leader-hand rejects diagnostic DB-handle text");
         view.dm2State.leader_hand_object =
             dm2_db_make_handle(10, DM2_ITEM_HEAL_POTION);
-        expect_true(DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&view,
-                                                           leader_name,
-                                                           sizeof(leader_name)) &&
-                        strcmp(leader_name, "HEAL POTION") == 0,
-                    "M11 DM2 leader-hand name uses the known tech/magic item catalog");
+        expect_true(!DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&view,
+                                                            leader_name,
+                                                            sizeof(leader_name)),
+                    "M11 DM2 leader-hand rejects the fixture item-name catalog");
         /* This is a name-formatting probe, not a resumed save mutation. Do
          * not carry its synthetic process-local handle into the following
          * SKSave resume assertion. */
