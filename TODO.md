@@ -23603,10 +23603,20 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     requirements below.
 ## DM1 C03/C04 runtime identity follow-up
 
-- [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
+- [x] Run the fixture-free PC34 corpus target with operator-owned saves that
   contain different C03 timer/event and C04 heap layouts. Stage/adopt now
   preserve their raw identities; generated saves remain invalid as positive
   corpus evidence.
+  - 2026-07-31 DOSBox-X corpus follow-up: a second operator-owned PC34
+    DMSAVE.DAT (48,561 bytes) restored map 1, party (6,2,2), tick 1664,
+    15 active groups, and 15 live C03 records (types C32, C37 and C38),
+    versus the first corpus save's map 0, party (4,11,2), tick 1487, and
+    empty C03/C04 live set. Authentic ACTIVE_GROUP.GroupThingIndex values
+    are raw GROUP-table indexes, not always type-4 packed THING values; the
+    shared F0435/F0145/F0146/F0147/F0196 handoff now admits both original
+    raw and legacy encoded forms while resolving only the loaded GROUP table.
+    V1/V2.0/V2.1/V2.2 --game dm1 --save boot probes passed against the
+    second save.
 
 ## CSB completed save-contract verification
 

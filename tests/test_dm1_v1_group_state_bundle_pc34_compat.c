@@ -83,6 +83,21 @@ int main(void)
               world.creatureAI[1].reserved0 == 1,
           "F0435 retains cells, packed directions, owner, and home coordinates");
 
+    /* Operator-owned DOSBox-X PC34 saves contain raw GROUP-table indexes in
+     * ACTIVE_GROUP.GroupThingIndex. The historical encoded-THING fixture
+     * above remains useful, but must not be the only accepted wire form. */
+    rows[0].groupThing = 0;
+    rows[1].groupThing = 1;
+    CHECK(dm1_v1_group_state_apply_save_handoff_pc34(
+              &world, rows, 2, 4, &receipt),
+          "F0435 accepts authentic raw ACTIVE_GROUP group indexes");
+    CHECK(world.creatureAI[0].reserved0 == 0 &&
+              world.creatureAI[1].reserved0 == 1,
+          "raw PC34 active-group indexes resolve against the real GROUP table");
+
+    rows[0].groupThing = make_group_thing(0);
+    rows[1].groupThing = make_group_thing(1);
+
     raw[5] = 0x33u;
     raw[15] = 0x02u;
     CHECK(dm1_v1_group_state_write_f0146_f0148_pc34(

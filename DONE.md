@@ -44766,8 +44766,20 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `dm1_v1_original_save_pc34_external_corpus` passed against the provenance-
   bound local original corpus (`groups=110/110`), and
   `dm1_v1_original_save_pc34_external_hoc_runtime` passed from the same save.
-  This closes the live-group requirement only; the separate C13 and varied
-  C03/C04-layout corpus requirements remain open.
+  This closes the live-group requirement only; the separate C13 corpus
+  requirement remains open.
+
+# DM1 original PC34 changed C03/C04 corpus verification (2026-07-31)
+
+- ✅ A second operator-owned DOSBox-X PC34 DMSAVE.DAT now exercises the real
+  changed-state resume route: map 1, party (6,2,2), tick 1664, 15 active
+  groups, and 15 live C03 events (C32/C37/C38), unlike the earlier
+  empty-event corpus save. Its ACTIVE_GROUP.GroupThingIndex records use raw
+  GROUP-table indexes. dm1_v1_group_state_apply_save_handoff_pc34() now
+  accepts this authentic PC34 representation alongside the pre-existing
+  packed-THING compatibility form and resolves both through the loaded GROUP
+  table. Regression: test_dm1_v1_group_state_bundle_pc34_compat; direct
+  original-save boot probes pass in V1, V2.0, V2.1 and V2.2.
 - ✅ 2026-07-30 CSB F0142/G0209 thrown-object viewport binding: a live C14
   projectile now reads its associated original C05--C0B record, preserves
   M066 weapon projectile-aspect selection, and routes a positive F0142

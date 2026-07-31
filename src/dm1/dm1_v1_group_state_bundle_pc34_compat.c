@@ -147,8 +147,17 @@ static int dm1_v1_group_state_validate_owner_pc34(
 
     if (outGroupIndex) *outGroupIndex = -1;
     if (!world || !world->things || !world->things->groups ||
-        world->things->groupCount <= 0 || type != DM1_V1_GROUP_TYPE_PC34 ||
-        index < 0 || index >= world->things->groupCount ||
+        world->things->groupCount <= 0) {
+        return 0;
+    }
+    /* LOADSAVE.C's ACTIVE_GROUP.GroupThingIndex is a raw GROUP-table index
+     * in authentic PC 3.4 save parts. Older Firestaff fixtures used an
+     * encoded THING_TYPE_GROUP value instead. Admit both wire forms, but
+     * always resolve against the loaded, real GROUP table. */
+    if (type != DM1_V1_GROUP_TYPE_PC34) {
+        index = (int)(uint16_t)groupThing;
+    }
+    if (index < 0 || index >= world->things->groupCount ||
         world->things->groups[index].next == THING_NONE) {
         return 0;
     }
