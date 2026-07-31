@@ -46156,3 +46156,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   coloured markers as game material. References: ReDMCSB `DUNVIEW.C F0115`
   and CSBWin `Viewport.cpp`. Verification: `test_m11_csb_leader_hand_no_dm1_fallback`,
   real-data first-frame material test 109/109, M11 build, and `git diff --check`.
+- ✅ 2026-07-31 CSB detached viewport-spec cleanup: removed the unconsumed
+  D0L/D0R F0111, D2C F0111, and D3C wall contract modules plus their private
+  tests and audit rows. They decoded no original bytes and had no M11 caller;
+  real door and wall material remains owned by the source-command compositor.
+  References reviewed: ReDMCSB `DUNVIEW.C F0111/F0118/F0121/F0125/F0126/F0128`
+  and CSBWin `Viewport.cpp`. Verification: M11 build, local-PC34 first-frame
+  material test 109/109, and `git diff --check`.
