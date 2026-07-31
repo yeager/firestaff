@@ -79,6 +79,11 @@
   compiled only by its diagnostic HUD probe. Production HUD code never scans
   local widget metadata and the final executable has no widget-manifest
   symbol; visible HUD pixels remain restricted to GDAT.
+  **2026-07-31 update:** Greatstone's DM2 version catalogue now explicitly
+  bounds the PC startup audit: PC 0.9/1.0/demo list `GRAPHICS.DAT`, whereas
+  title/swoosh/ending media belong to other platform families. Continue to
+  admit such media only through a hash-verified, platform-specific decoder;
+  no generic external animation fallback may enter the PC route.
   **2026-07-31 update:** DM2 boot now rejects the generic loader's retired
   16-bit fixture layout and an unreadable/absent dungeon payload. Only the
   verified PC G1 byte-square route can cross from the startup menu into a

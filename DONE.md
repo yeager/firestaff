@@ -1,10 +1,16 @@
+- ✅ 2026-07-31 DM2 PC startup-media provenance: corrected the DM2 intro
+  reference so it no longer invents external PC `title.anim` media. The
+  source-owned PC menu and credits are `GRAPHICS.DAT` TITLE fields 4 and 1;
+  Greatstone's per-version catalogue keeps platform-specific movie/container
+  files out of the PC route. Verification: source/menu contract and the
+  real-data M11 startup-profile gate.
+
 - ✅ 2026-07-31 CSB title zoom cadence: M11 now keeps each decoded original
   C425 CHAOS zoom raster visible for four authenticated PC3.4 cadence slots
   (220 ms at the 55 ms profile cadence). The source's C001 material binding,
   palette sequence and TITLE.C F0437 `Delay(20)`/`Delay(2)` phases remain
   separate and unchanged. Verification: focused CSB startup VBlank cadence
   regression.
-=======
 - ✅ 2026-07-31 DM2 V2 HUD widget-manifest isolation: removed the local
   placeholder/partial/real classifier from the production V2 archive and
   guarded its only HUD-runtime call behind the focused diagnostic probe.
