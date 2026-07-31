@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 door-query field correction: `QUERY_DOOR_DAMAGE_RESIST`,
+  `GET_DOOR_STAT_0X10` and `_0cee_3275` now read original DOORS GDAT fields
+  `0x0e`, `0x10` and `0x0d` respectively, instead of the former rotated
+  mapping. Source: `SKWIN/SkWinCore.cpp:42335-42341`, `:51759-51767` and
+  `:28859-28866`. Verification: `test_dm2_v1_gdat_querydb_receipts` passes
+  118/118, including real local `GRAPHICS.DAT` material.
+
 - ✅ 2026-07-31 DM1 PC34 backing-aware corpus test routing: legacy F0435
   probes now retain their self-contained-save contract and report a clear
   skip for original saves that require `DUNGEON.DAT`. The M11-backed corpus

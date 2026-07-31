@@ -905,10 +905,10 @@ static void test_querydb_word_and_ornate_receipts(void)
               len.accepted && len.decoration_absent && len.length == 1u,
           "DM2_GET_ORNATE_ANIM_LEN preserves decoration-absent length one");
 
-    CHECK(dm2_v1_query_door_damage_resist_receipt(&loader, 2, &word) &&
+    CHECK(dm2_v1_query_door_damage_resist_receipt(&loader, 6, &word) &&
               word.accepted && word.category == DM2_GDAT_CATEGORY_DOORS &&
-              word.field == 0x0fu && word.value == 0x002au,
-          "DM2_QUERY_DOOR_DAMAGE_RESIST binds DOORS dtWordValue field 0x0f");
+              word.field == 0x0eu && word.value == 0x0008u,
+          "DM2_QUERY_DOOR_DAMAGE_RESIST binds DOORS GDAT_DOOR_DEFENSE field 0x0e");
     CHECK(dm2_v1_query_door_strength_receipt(&loader, 2, &strength) &&
               strength.accepted && strength.used_explicit_strength &&
               !strength.used_resistance_fallback &&
@@ -923,11 +923,11 @@ static void test_querydb_word_and_ornate_receipts(void)
               word.accepted && word.field == 0x0du && word.value == 0x0007u,
           "DM2_GET_GRAPHICS_FOR_DOOR binds DOORS dtWordValue field 0x0d");
     CHECK(dm2_v1_get_door_stat_0x10_receipt(&loader, 6, &word) &&
-              word.accepted && word.field == 0x0eu && word.value == 0x0008u,
-          "DM2_GET_DOOR_STAT_0X10 binds DOORS dtWordValue field 0x0e");
-    CHECK(dm2_v1_query_0cee_3275_receipt(&loader, 6, &word) &&
               word.accepted && word.field == 0x10u && word.value == 0x0009u,
-          "DM2_query_0cee_3275 binds DOORS dtWordValue field 0x10");
+          "DM2_GET_DOOR_STAT_0X10 binds DOORS GDAT_DOOR_X10 field 0x10");
+    CHECK(dm2_v1_query_0cee_3275_receipt(&loader, 6, &word) &&
+              word.accepted && word.field == 0x0du && word.value == 0x0007u,
+          "DM2_query_0cee_3275 binds DOORS graphics field 0x0d");
     CHECK(!dm2_v1_get_graphics_for_door_receipt(&loader, 99, &word),
           "DM2_GET_GRAPHICS_FOR_DOOR rejects absent door rows without fallback");
     CHECK(dm2_v1_query_gdat_item_name_receipt(
