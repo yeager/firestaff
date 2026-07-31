@@ -3803,8 +3803,9 @@ static int dm1_original_save_corpus_admit_discovered_bytes(
 #define DM1_PC34_CHAMPION_FOOD_OFFSET 66u
 #define DM1_PC34_CHAMPION_WATER_OFFSET 68u
 #define DM1_PC34_CHAMPION_STATISTICS_OFFSET 70u
-/* The compact PC3.4 record is 319 bytes. Do not substitute the larger
- * DMweb/CSBuild CHARDESC offsets here: its packing differs. */
+/* ReDMCSB DEFS.H's CHAMPION_EXCLUDING_PORTRAIT explicitly records that x86
+ * omits the byte after Statistics[7][3]. The compact PC3.4 record is thus
+ * 319 bytes: Skills, Slots, and Load begin at 91, 211, and 271. */
 #define DM1_PC34_CHAMPION_SKILLS_OFFSET 91u
 #define DM1_PC34_CHAMPION_SLOTS_OFFSET 211u
 #define DM1_PC34_CHAMPION_LOAD_OFFSET 271u

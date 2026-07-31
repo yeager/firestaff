@@ -23818,13 +23818,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     Do not compensate with a renderer-wide palette override: it also corrupts
     the source HUD palette. Capture a hash-bound save/frame pair and trace
     the exact F0435 materialized hand/object identities and PARTY_INFO light
-    state into F0337 before changing its calculation. The PC3.4 importer must
-    be verified against the compact 319-byte record, not merely the larger
-    CSBuild CHARDESC layout. DMweb's saved-game format notes corroborate that
-    PC 3.4 champion data is a 1,404-byte, little-endian block with the
-    portraits held externally; its displayed CHARDESC field offsets use a
-    different packing and cannot be transplanted without a matching
-    compact-PC34 source receipt.
+    state into F0337 before changing its calculation. ReDMCSB `DEFS.H`
+    confirms the compact PC3.4 record: x86 omits the post-Statistics padding,
+    so the 319-byte record has Skills/Slots/Load at `91/211/271`; do not use
+    DMweb's larger padded CHARDESC offsets. DMweb corroborates the PC 3.4
+    1,404-byte, little-endian champion block with external portraits.
 ## DM1 C03/C04 runtime identity follow-up
 
 - [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
