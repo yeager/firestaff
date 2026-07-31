@@ -46284,3 +46284,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Verification: V2 smooth movement 79/79, runtime binding 43/43, smooth
   probe 54/54, plus a byte-identical V1/V2 framebuffer comparison during an
   active smooth state in the hash-verified real-data DM2 M11 startup test.
+# 2026-07-31 Theron JP Track 02 quest-block extraction
+
+- ✅ Extended the real Track 02 quest-block extractor to the hash-verified JP
+  BIN. The JP bank begins one raw MODE1/2352 sector before the US bank; all
+  seven 256 KiB blocks are reconstructed from contiguous 2048-byte user data
+  and independently checked against FNV-1a receipts from `TQJP02.bin`.
+  The US receipts remain covered as well. This follows DMWeb's JP/USA
+  PC-Engine CD split and seven-dungeon scope; it does not claim dungeon-record,
+  object, graphics, or save-format decoding.
+  Verification: clean C11 syntax checks, clean CMake target build, and
+  `firestaff_theron_v1_track02_bank_probe` against both local real BINs.
