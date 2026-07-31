@@ -270,7 +270,6 @@ const char* m11_v22_shape_source_name(DM1_V22_ShapeSource src);
 
 /* Legacy diagnostic placeholder. Runtime V2.2 admission must not use this
  * as material; use m11_v22_get_shape_path() plus the finished-pack gates. */
-const uint32_t* m11_v22_get_missing_placeholder(int* out_w, int* out_h);
 
 /* Look up a modern asset file path from the manifest.
  * category: e.g. "wall_shapes", "creature_shapes"

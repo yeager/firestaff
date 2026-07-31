@@ -349,6 +349,13 @@ diagnostic; it must not silently fall back to a generated visual.
   unavailable. The affected source rectangle remains blank until the real
   material is decoded; diagnostic and non-DM1 routes retain their tooling.
 
+- **DM1-ORIGINAL-REPLACE-004:** Closed 2026-07-31. Removed the unused V2.2
+  magenta/black missing-shape bitmap and its public accessor. V2.2 now has
+  no generated replacement surface in the production asset library: an
+  unadmitted or incomplete custom pack follows the existing source-backed
+  V2.1 -> V2.0 -> V1 presentation chain. Focused V2.2 material, runtime and
+  source-owned screenshot gates pass.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

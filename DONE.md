@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM1 V2.2 missing-shape placeholder removal: removed the
+  unused magenta/black checkerboard surface and public accessor from the
+  production V2.2 library. An incomplete custom pack now uses only the
+  existing source-backed V2.1 -> V2.0 -> V1 presentation chain. Verification:
+  `dm1_v22_finished_art_material_gate_pc34`, `dm1_v2_shape_runtime_probe`,
+  `dm1_v2_source_owned_screenshot_probe` and
+  `dm1_v2_actual_render_screenshot_probe` pass.
+
 - ✅ 2026-07-31 DM2 startup credits-owner correction: both logical boot
   title/menu draws now bind the original `TITLE/0/dt07/4` menu surface.
   `TITLE/0/dt07/1` remains metadata for the separate, still-unported
