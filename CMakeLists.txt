@@ -3985,6 +3985,8 @@ list(REMOVE_ITEM DM2_V2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_hud_overlay.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_touch_runtime.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_touch_controller_affordance.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_companion_ui.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_tech_crafting.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_asset_pipeline.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_interaction_feedback.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v2_lighting.c"

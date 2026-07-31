@@ -275,6 +275,10 @@
   table and smooth viewport interpolator are also excluded. None has a
   decoded DM2 record, item recipe, display route or original timing owner;
   they remain diagnostic source only until such data is imported.
+  **2026-07-31 correction:** companion UI and empty crafting were absent from
+  the executable but still leaked into the broad V2 static archive. They are
+  now removed from that production archive too; only explicit diagnostics may
+  compile the historical source.
   **2026-07-31 update:** Greatstone's DM2 version catalogue now explicitly
   bounds the PC startup audit: PC 0.9/1.0/demo list `GRAPHICS.DAT`, whereas
   title/swoosh/ending media belong to other platform families. Continue to

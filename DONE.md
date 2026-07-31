@@ -47472,3 +47472,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   only the source-provenance F0128 admissions from the route module. The
   hand-authored per-cell asset-id catalog is enabled solely for its explicit
   contract test, preventing it from becoming a live material binding.
+- ✅ 2026-07-31 DM2 V2 archive completion: removed the orphaned companion UI
+  and empty crafting sources from the broad `firestaff_dm2_v2` glob. They had
+  no callers, decoded record, recipe table or display route. The resulting
+  archive contains only the GDAT HUD runtime and V2 phase gate. Verification:
+  production link, real-data DM2 M11 startup gate, and archive/executable
+  object and symbol checks.
