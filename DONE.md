@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 music-stop stub replacement: `dm2_v1_sound_stop_music()`
+  now closes MIDI output and clears the admitted GDAT music schedule, loop and
+  backend state. It can no longer report a successful stop while a stale
+  source stream remains schedulable. Verification:
+  `test_dm2_v1_startup_music_queue` parses a bounded MIDI stream, proves it
+  schedules, stops it, then proves scheduling is unavailable.
+
 - ✅ 2026-07-31 DM2 outdoor default-state closure: the legacy no-draw
   outdoor facade no longer seeds a fabricated noon time. It remains zeroed
   until source-owned ENVIRONMENT state is supplied, and its sky-colour API

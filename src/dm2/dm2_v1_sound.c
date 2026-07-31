@@ -1558,7 +1558,17 @@ int dm2_v1_sound_play_music(int track) {
  * Source: docs/dm2_audio.md (do_music_stop)
  * Calls al_stop_samples() via c_midi / c_music_wav. */
 int dm2_v1_sound_stop_music(void) {
-    /* Stub: would call al_stop_samples() */
+    /* c_music_wav stops the active sequence before a later title/menu cue
+     * can schedule it again. Clear the decoded source stream as well as the
+     * backend: retaining its events after reporting success would let a
+     * stale, previously admitted GDAT track continue to drive playback. */
+    dm2_v1_midi_backend_close();
+    memset(g_dm2_music_events, 0, sizeof(g_dm2_music_events));
+    g_dm2_music_event_count = 0;
+    g_dm2_music_loop_duration_us = 0;
+    g_dm2_music_loop_enabled = 0;
+    g_dm2_music_backend_proven = 0;
+    g_dm2_music_ticks_per_quarter = 96u;
     return 0;
 }
 
