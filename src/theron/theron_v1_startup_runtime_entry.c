@@ -778,6 +778,7 @@ int theron_v1_startup_runtime_load_initial_level(
     Theron_DungeonID dungeon_id,
     char *receipt,
     size_t receipt_cap) {
+#if defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
     uint8_t level_data[THERON_V1_FIRST_ROOM_HEADER_BYTES + 32 * 27];
     const Theron_DungeonMeta *meta;
     Theron_V1_Level preview;
@@ -785,6 +786,7 @@ int theron_v1_startup_runtime_load_initial_level(
     int dungeon_index;
     uint32_t seed;
     Theron_MapLoadResult r;
+#endif
     int verified_track02_request;
 
     if (!world) {
@@ -794,7 +796,6 @@ int theron_v1_startup_runtime_load_initial_level(
         dungeon_id > THERON_DUNGEON_COUNT) {
         dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
     }
-    dungeon_index = (int)dungeon_id - 1;
     verified_track02_request =
         theron_v1_startup_runtime_has_verified_track02_request(
             hucard_rom, hucard_rom_size, md5_hex);
@@ -834,34 +835,22 @@ int theron_v1_startup_runtime_load_initial_level(
         receipt[0] = '\0';
     }
 
-    /* Legacy fixture-compatible entry only: production M11 never reaches
-     * this branch because it calls the verified-only wrapper above. Keep
-     * the bounded source-locked candidate available for data-free probes,
-     * but do not treat it as a decoded Track 02 dungeon bank. */
+#if defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
+    dungeon_index = (int)dungeon_id - 1;
+    /* Explicit fixture-only entry: production must not synthesize a level. */
     meta = theron_v1_dungeon_meta(dungeon_id);
-    /* Unknown metadata must remain unknown; never invent a seed for the
-     * synthetic fixture room. */
     seed = meta ? meta->dungeon_seed : 0u;
     memset(&preview, 0, sizeof(preview));
     level_size = theron_v1_startup_fallback_room_synthesize(
-        level_data,
-        sizeof(level_data),
-        dungeon_id,
-        &preview);
-    if (level_size == 0u) {
-        return 0;
-    }
-
+        level_data, sizeof(level_data), dungeon_id, &preview);
+    if (level_size == 0u) return 0;
     world->current_dungeon = dungeon_id;
     world->current_level = 0;
     r = theron_v1_level_load(&world->levels[dungeon_index][0],
-                             level_data,
-                             (int)level_size,
+                             level_data, (int)level_size,
                              (int)world->current_dungeon,
                              world->current_level);
-    if (r != THERON_MAP_OK) {
-        return 0;
-    }
+    if (r != THERON_MAP_OK) return 0;
     world->levels[dungeon_index][0].start_x = preview.start_x;
     world->levels[dungeon_index][0].start_y = preview.start_y;
     world->levels[dungeon_index][0].start_dir = preview.start_dir;
@@ -871,18 +860,18 @@ int theron_v1_startup_runtime_load_initial_level(
                           world->levels[dungeon_index][0].start_y,
                           world->levels[dungeon_index][0].start_dir);
     if (receipt && receipt_cap > 0u && receipt[0] == '\0') {
-        snprintf(receipt,
-                 receipt_cap,
+        snprintf(receipt, receipt_cap,
                  "Track 02 descriptor scan unavailable; fallback room stage=%d size=%dx%d seed=%u start=(%d,%d,%d)",
-                 (int)dungeon_id,
-                 preview.width,
-                 preview.height,
-                 (unsigned)seed,
-                 (int)preview.start_x,
-                 (int)preview.start_y,
-                 (int)preview.start_dir);
+                 (int)dungeon_id, preview.width, preview.height,
+                 (unsigned)seed, (int)preview.start_x,
+                 (int)preview.start_y, (int)preview.start_dir);
     }
     return 1;
+#else
+    /* No verified Track 02 level and no source-owned semantic decoder means
+     * no runtime level. Production must remain unavailable. */
+    return 0;
+#endif
 }
 
 void theron_v1_startup_runtime_entry_request_init(

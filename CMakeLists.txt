@@ -4575,6 +4575,8 @@ add_executable(firestaff_theron_v1_startup_flow_probe
 target_include_directories(firestaff_theron_v1_startup_flow_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src)
+target_compile_definitions(firestaff_theron_v1_startup_flow_probe PRIVATE
+    THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK=1)
 target_link_libraries(firestaff_theron_v1_startup_flow_probe
     PRIVATE firestaff_theron firestaff_m12 firestaff_m10 m)
 if(NOT MSVC)

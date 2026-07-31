@@ -33,11 +33,10 @@
 
 - **THERON-STARTUP-LEGACY-FALLBACK-ROOM:** The M11 production path uses
   `verified_only` Track 02 admission and the authenticated startup bitmap
-  atlas. The older public compatibility API still synthesizes the
-  source-locked Hall-of-Records candidate for data-free probes and is now
-  explicitly documented as test/legacy-only. Keep it out of production
-  launch paths; a future build-boundary cleanup may remove its 37 fixture
-  assertions entirely.
+  atlas. The runtime-entry fallback-room branch is now compiled only for the
+  startup-flow fixture probe; production returns unavailable until a decoded
+  Track 02 level is bound. The standalone room generator remains a legacy
+  fixture API and must not be used for launch.
 
 - **THERON-CREATURE-COMBAT-REAL-DATA:** `theron_v1_compat.c` still contains
   inferred creature stats, attack values and drops. It is now excluded from

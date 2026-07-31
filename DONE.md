@@ -47136,3 +47136,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   consumer and now compile only into their focused tests. Production continues
   through the verified archive/decoder path rather than treating a blocked
   receipt or an ownership string as graphics material.
+
+- ✅ 2026-07-31 Theron runtime fallback isolation: the startup runtime no
+  longer synthesizes a fallback room in the production build. That branch is
+  compile-defined only for the startup-flow fixture probe; production remains
+  unavailable until a decoded Track 02 level is bound.
