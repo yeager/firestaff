@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 boot day-cycle fixture removal: the boot profile no
+  longer publishes a guessed 1,440-minute / 1,092-tick environment cycle.
+  Both fields remain explicitly unavailable until original `timdat` and
+  environment-global ownership is recovered. Source: SKProject
+  `SKWINSPX/src/v5/skweathr.cpp::DM2_UPDATE_WEATHER`. Verification:
+  `test_dm2_v1_boot_profile_smoke` (90 checks) and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass.
+
 - ✅ 2026-07-31 DM2 runtime environment-clock fixture removal: a fresh V1
   runtime and weather state no longer begin at fabricated noon, and the
   former fixed 1,092-tick minute is gone. Unknown source time cannot advance,

@@ -952,8 +952,10 @@ void dm2_v1_boot_profile_init(DM2_V1_BootProfile *profile) {
     profile->deterministic.outdoor_move_speed = 0x0100;  /* Q8: 1.0 squares/tick */
     profile->deterministic.max_champions      = 4;
     profile->deterministic.max_party_members  = 5;
-    profile->deterministic.day_cycle_minutes  = 1440;
-    profile->deterministic.day_cycle_ticks    = (1440u * 60u * 18u) / (60u * 60u * 1000u / 1000u);
+    /* skweathr.cpp derives the environment clock from timdat plus runtime
+     * globals. Do not publish a guessed 24-hour day-cycle configuration. */
+    profile->deterministic.day_cycle_minutes  = 0u;
+    profile->deterministic.day_cycle_ticks    = 0u;
     profile->deterministic.max_levels         = 28;  /* PC English */
     profile->deterministic.dungeon_seed       = 257; /* default fallback */
 }
@@ -1026,12 +1028,9 @@ void dm2_v1_boot_build_deterministic_config(DM2_V1_BootProfile *profile,
     /* Outdoor movement is 2x dungeon speed in DM2 */
     profile->deterministic.outdoor_move_speed = 0x0200;  /* Q8: 2.0 squares/tick */
 
-    /* Derive day cycle tick rate from VBlank tick */
-    /* DM2 day/night cycle: full rotation in day_cycle_minutes minutes.
-     * Each minute = 60 seconds = 18.2 ticks ≈ 1092 ticks.
-     * 1440 minutes = 1440 * 1092 ≈ 1,572,480 ticks. */
-    profile->deterministic.day_cycle_ticks =
-        (profile->deterministic.day_cycle_minutes * 60u * 18u) / 60u;
+    /* skweathr.cpp::DM2_UPDATE_WEATHER schedules its environment clock from
+     * source globals. Its saved owner is not known, so retain the explicit
+     * unavailable values set by profile_init instead of deriving a cadence. */
 }
 
 /* ── Enter game ──────────────────────────────────────────────────────── */

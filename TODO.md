@@ -58,6 +58,8 @@
   cannot emit a procedural sky colour without recovered time. A validated
   resumed session may retain its supplied time, but source `timdat` plus the
   environment globals still need to replace that compatibility handoff.
+  Boot's former 1,440-minute/day-cycle configuration is also unavailable;
+  it must be populated only by the same recovered source owner.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following

@@ -114,6 +114,10 @@ static void test_defaults(void)
     CHECK(p.deterministic.dungeon_move_speed == 0x0080, "dungeon move speed Q8=0.5 sq/tick");
     CHECK(p.deterministic.max_champions == 4, "max champions is 4");
     CHECK(p.deterministic.max_party_members == 5, "max party members is 5");
+    CHECK(p.deterministic.day_cycle_minutes == 0u,
+          "environment clock remains unavailable without source ownership");
+    CHECK(p.deterministic.day_cycle_ticks == 0u,
+          "boot profile does not fabricate an environment clock cadence");
     CHECK(p.deterministic.max_levels == 28, "max levels is 28 (PC English)");
     CHECK(p.deterministic.dungeon_seed == 257, "default dungeon seed is 257");
 }

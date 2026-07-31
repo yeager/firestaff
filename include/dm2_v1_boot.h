@@ -77,10 +77,10 @@ typedef struct {
     uint32_t max_champions;        /* 4 */
     uint32_t max_party_members;   /* 5 incl. leader */
 
-    /* Time-of-day cycle: DM2 outdoor areas have day/night.
-     * Full cycle in 1440 minutes (24 hours). */
-    uint32_t day_cycle_minutes;    /* 1440 */
-    uint32_t day_cycle_ticks;      /* derived from tick_rate */
+    /* Source environment-clock owner is not yet imported. These fields stay
+     * zero rather than claiming a fabricated 24-hour cycle. */
+    uint32_t day_cycle_minutes;    /* 0 = unavailable */
+    uint32_t day_cycle_ticks;      /* 0 = unavailable */
 
     /* Dungeon: DM2 has 28 levels in PC English version.
      * Level 0 = Entrance / Hall of Champions.
