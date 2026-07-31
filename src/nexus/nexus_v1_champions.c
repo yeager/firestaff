@@ -281,11 +281,15 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
     int i;
     if (!pool || !source || source_size < 8U ||
         memcmp(source, "RES*", 4U) != 0) return 0;
-    for (i = 0; (size_t)i + 4U <= source_size; ++i) {
+    for (i = 0; (size_t)i + 8U + 216U * 2U <= source_size; ++i) {
         if (memcmp(source + i, "TABL", 4U) == 0) {
             tabl_found = 1;
             tabl = (size_t)i;
-            break;
+            /* The first literal can occur in the RES directory.  Accept
+             * only the complete DMWeb 216-entry table. */
+            /* Keep scanning: the RES directory may contain a short literal
+             * before the actual TABL payload; the later complete resource is
+             * the source table used by PLRD. */
         }
     }
     if (!tabl_found) return 0;
