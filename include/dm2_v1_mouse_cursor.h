@@ -63,6 +63,9 @@ int dm2_v1_FIRE_QUEUE_MOUSE_EVENT(
     uint16_t button,
     DM2_V1_MouseCursorReceipt* out_receipt);
 
+/* 4bpp cursor patterns require the active original 16-entry palette. The
+ * function rejects a missing or short palette rather than inventing an index
+ * mapping; 8bpp cursor images carry their own physical indices. */
 int dm2_v1_IBMIO_SET_CURSOR_PATTERN(
     DM2_V1_MouseCursorState* state,
     int index,

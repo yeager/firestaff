@@ -3,10 +3,6 @@
 #include <limits.h>
 #include <string.h>
 
-static const uint8_t dm2_default_cursor_palette[16] = {
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
-};
-
 void dm2_v1_mouse_cursor_receipt_clear(DM2_V1_MouseCursorReceipt* receipt)
 {
     if (!receipt) return;
@@ -154,20 +150,20 @@ int dm2_v1_IBMIO_SET_CURSOR_PATTERN(
     if (src_bits == 4U) {
         uint16_t even_width = (uint16_t)((src_width + 1U) & 0xfffeU);
         size_t required = ((size_t)even_width * src_height + 1U) >> 1;
-        const uint8_t* pal = local_pal;
-        if (!pal || local_pal_size < 16U) {
-            pal = dm2_default_cursor_palette;
-        }
-        if (src_size < required) {
+        /* DM2_INITBASICCURSORS passes its active original palette
+         * (SKProject skmcursr.cpp::generate_cursor).  An identity palette
+         * would turn the source nibbles into fabricated display indices. */
+        if (!local_pal || local_pal_size < 16U || src_size < required) {
             out_receipt->blocked = 1;
             return 0;
         }
         for (i = 0; i < pixels; ++i) {
             uint16_t x = (uint16_t)(i % src_width);
             uint16_t y = (uint16_t)(i / src_width);
-            pattern->pixels[i] = pal[dm2_cursor_get_4bpp(src, even_width, x, y)];
+            pattern->pixels[i] =
+                local_pal[dm2_cursor_get_4bpp(src, even_width, x, y)];
         }
-        pattern->transparent_color = pal[colorkey & 0x0fU];
+        pattern->transparent_color = local_pal[colorkey & 0x0fU];
     } else {
         if (src_size < pixels) {
             out_receipt->blocked = 1;

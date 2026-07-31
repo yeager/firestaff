@@ -45431,3 +45431,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `QUERY_TEMP_PICST`/`DRAW_TEMP_PICST` transaction. Source: SKProject
   `SKWIN/c_bkgrnd.cpp` and `skgdtqdb.cpp`. Verification:
   `test_dm2_v1_weather_gdat_receipt`.
+
+- ✅ 2026-07-31 DM2 cursor-palette fallback closure: 4bpp cursor patterns no
+  longer accept a hard-coded identity palette when their source palette is
+  missing. They require the active original 16-entry palette, matching
+  SKProject `skmcursr.cpp::DM2_INITBASICCURSORS` / `generate_cursor` and
+  `SkWinCore.cpp::IBMIO_SET_CURSOR_PATTERN`; 8bpp item cursors remain
+  physical-index copies. Verification: `test_dm2_v1_mouse_cursor`.

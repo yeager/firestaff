@@ -146,6 +146,11 @@ static void test_cursor_pattern_4bpp_and_8bpp(void)
                     strcmp(receipt.symbol, "IBMIO_SET_CURSOR_PATTERN") == 0,
                 "cursor pattern receipt names source symbol");
 
+    expect_true(!dm2_v1_IBMIO_SET_CURSOR_PATTERN(
+                    &state, 0, src4, sizeof(src4), 0, 0, 3, 2, 4,
+                    NULL, 0, 3, &receipt) && receipt.blocked,
+                "4bpp cursor rejects a fabricated identity palette");
+
     expect_true(dm2_v1_IBMIO_SET_CURSOR_PATTERN(
                     &state, 1, src8, sizeof(src8), 0, 0, 2, 2, 8,
                     NULL, 0, 8, &receipt),

@@ -75,6 +75,8 @@
   receipt. A validated resumed session may retain its supplied time, but
   source `timdat` plus the environment globals still need to replace that
   compatibility handoff.
+  **2026-07-31 update:** 4bpp cursor expansion now likewise requires the
+  active original palette; the previous identity-table substitute is closed.
   Boot's former 1,440-minute/day-cycle configuration is also unavailable;
   it must be populated only by the same recovered source owner.
   **2026-07-31 update:** fresh weather state now has neither a clear-weather
