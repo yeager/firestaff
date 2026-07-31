@@ -1361,10 +1361,10 @@ typedef struct {
     int mesh_ready;
 } Nexus_V1_DgnGeometryInfo;
 
-/* One bounded Structure1C record placeholder. The table proof establishes
- * only the count and four-byte record form; individual byte semantics are
- * not inferred. These fields deliberately stay clear for retail DGN data
- * until a Saturn executable or capture proves their geometry grammar. */
+/* One bounded opaque Structure1C record. The table proof establishes only
+ * the count and four-byte record form; individual byte semantics are not
+ * inferred. These fields deliberately stay clear for retail DGN data until
+ * a Saturn executable or capture proves their geometry grammar. */
 typedef struct {
     int valid;
     int circle;

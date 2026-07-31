@@ -209,9 +209,11 @@ typedef enum {
 } Nexus_V1_BpkSurfaceExtractStatus;
 
 /* Decode a single renderable BPK entry to its declared unpacked surface.
- * Stored entries are supported. The PRS3 branch exists only for synthetic
- * regression fixtures; real MENU.BPK routing remains blocked until an
- * independently evidenced opcode format is available. */
+ * Stored entries and the bounded PRS3 candidate decoder are supported for
+ * format analysis, including the supplied retail MENU.BPK.  Decode success
+ * alone does not authenticate Saturn opcode, palette, or VDP1 semantics;
+ * the launcher therefore keeps the live MENU.BPK draw route blocked until
+ * those independent provenance requirements are met. */
 typedef enum {
     NEXUS_V1_BPK_DECODE_OK = 0,
     NEXUS_V1_BPK_DECODE_ERR_NULL = -1,
