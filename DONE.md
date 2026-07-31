@@ -45573,3 +45573,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   unconsumed contract-only duplicate of F0122/F0123, including its synthetic
   source coordinates and test target. D1L/D1R now has one PC3.4
   `GRAPHICS.DAT` material owner instead of competing models.
+- ✅ 2026-07-31 CSB D3L/D3R synthetic trace removal: removed the unconsumed
+  F0116/F0117 contract-only wall trace and its artificial C10 blend helper.
+  The production source-bound wall-set handoff remains the sole D3 side-wall
+  material route.
