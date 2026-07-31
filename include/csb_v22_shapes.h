@@ -41,8 +41,10 @@
  *   - ReDMCSB GAMELOOP.C:150-155 V1 tick cadence (CSB shares)
  *   - dm1_v22_shapes.h           mirror reference
  *
- * Module: src/csb/csb_v22_shapes.c
- * Test:   tests/test_csb_v22_shapes_pc34.c
+ * Product module: src/csb/csb_v22_shapes_runtime_gate.c
+ * Historical contract book: src/csb/csb_v22_shapes.c (probe/test only)
+ * Tests: tests/test_csb_v22_shapes_pc34.c,
+ *        tests/test_csb_v22_shapes_runtime_gate_pc34.c
  * Probe:  probes/firestaff_csb_v22_shapes_probe.c
  */
 
@@ -203,9 +205,8 @@ typedef struct {
 
 /* ── Bridge functions (mirror of DM1 V2.2 API) ──────────────────── */
 
-/* The 9-square bridge: given a CSB square type + view position
- * (depth 0..2, lateral -1/0/+1) + view direction (0..3 N/E/S/W),
- * returns the shape parameters the renderer should batch-draw. */
+/* The 9-square bridge. The product implementation returns a zeroed result
+ * until source-derived CSB V2.2 material binding has been admitted. */
 CSB_V22_ShapeParams csb_v22_shape_for_cell(int csb_cell_type,
                                             int view_direction,
                                             int depth,
@@ -218,6 +219,8 @@ CSB_V22_ShapeParams csb_v22_shape_for_view_square(int view_square,
 
 CSB_V22_WallShape  csb_v22_wall_shape_get(CSB_V22_WallVariant variant);
 CSB_V22_FloorShape csb_v22_floor_shape_get(int csb_cell_type, int view_direction);
+/* NULL means no admitted V2.2 material; callers must keep source-owned
+ * V1/V2.1 pixels rather than substitute a default material. */
 const CSB_V22_Material* csb_v22_material_get(int material_id);
 int csb_v22_material_count(void);
 

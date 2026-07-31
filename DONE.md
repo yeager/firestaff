@@ -47325,3 +47325,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   and `SCORPION.MNS` handoff through `nexus_viewport_render`; 29/29 pass.
   The real viewport capture remains deterministic black until authenticated
   Saturn DGN/VDP1 material is admitted, with no procedural fallback pixels.
+
+- ✅ 2026-07-31 CSB V2.2 synthetic shape-book isolation: removed the
+  hand-authored material/PBR/geometry book from `firestaff_csb_v2`; its
+  historical expectations remain explicitly test/probe scoped. Production now
+  links `csb_v22_shapes_runtime_gate.c`, whose API reports zero materials and
+  no shape parameters until a reviewed original-data binding exists. The
+  runtime cache requires a non-NULL admitted material before activating a V2.2
+  cell, so it retains source-owned V1/V2.1 pixels rather than inventing a
+  fallback. Verified with the new `csb_v22_shapes_runtime_gate_pc34` test,
+  the historical shape-book contract test, and a `firestaff` build.

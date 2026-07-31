@@ -50,11 +50,15 @@ void csb_v22_shape_cache_update(int direction,
             }
             CSB_V22_ShapeParams p = csb_v22_shape_for_cell(
                 (int)raw_cells[d][idx], direction, d, l);
-            g_csb_cache[d][idx].active = 1;
             g_csb_cache[d][idx].params = p;
             g_csb_cache[d][idx].wall = csb_v22_wall_shape_get(CSB_V22_WALL_VARIANT_D0_LEFT);
             g_csb_cache[d][idx].floor = csb_v22_floor_shape_get((int)raw_cells[d][idx], direction);
             g_csb_cache[d][idx].material = csb_v22_material_get(p.material_id);
+            /* No product V2.2 cell may become drawable merely because a
+             * synthetic shape book assigned it a material id.  The runtime
+             * implementation returns NULL until source-derived material
+             * binding has been reviewed. */
+            g_csb_cache[d][idx].active = (g_csb_cache[d][idx].material != NULL);
         }
     }
     g_csb_cache_populated = 1;
