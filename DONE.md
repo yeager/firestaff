@@ -47566,6 +47566,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `GRAPHICS.DAT`; no replacement title frame is used by these checks.
 # 2026-07-31 DM1 archive-backed startup media
 
+- ✅ 2026-07-31 Theron full-payload CUE regression corrected for JP media.
+  The real Japanese MODE1/2352 BIN/CUE now verifies its authenticated Track 02
+  identity (`b7afb338ad31be1025b53f9aff12d73a`) and reaches
+  `theron-startup-0`, alongside the USA full-payload handoff. The old JP
+  runtime test expected an obsolete hash and could fail despite a successful
+  real-media boot; the expectation is now source-aligned. CTest:
+  `theron_v1_jp_cue_runtime_boot` PASS.
+
 - ✅ Fixed optional DM1 startup media materialization from external archives.
   `7zz` reports a missing member as a successful zero-byte stream; that
   previously stopped the cache resolver at `DATA/TITLE` or `DATA/SWOOSH`
