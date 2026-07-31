@@ -4,6 +4,13 @@
   äldre fixture-kompatibla API:er är kvar avgränsade till probe-kontrakt.
   Startup-flow passerar `653/653`.
 
+- ✅ 2026-07-31 CSB dungeon-loader boundary audit: confirmed that no
+  production runtime caller invokes the generic in-memory dungeon parser.
+  The integration plan now directs `DUNGEON.DAT` through
+  `csb_v1_dungeon_load_from_file()`, which rejects the retired 16-bit
+  fixture format; the in-memory parser is documented only for authenticated
+  save images and isolated tests.
+
 - ✅ 2026-07-31 Theron viewport-level admission: renderaren kräver nu både
   laddad tile-atlas och en faktiskt `level_loaded`-markerad dungeon/level.
   Den gamla `(0,0,north)`-fallbacken kan inte längre skapa en syntetisk

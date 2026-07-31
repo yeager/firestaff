@@ -149,7 +149,12 @@ static const char *const csb_dungeon_hashes[] = {
 
 **GRAPHICS.DAT** loading: Extend `dm1_v1_graphics_pc34_compat` to handle CSB wall set indices. 4-bit packed pixels, 16-color palette.
 
-**DUNGEON.DAT** loading: Use `csb_v1_dungeon_load()` from `csb_v1_dungeon_loader_pc34_compat.c`. Column-major squares, FTL compression, DSA thing type 15.
+**DUNGEON.DAT** loading: Runtime files enter through
+`csb_v1_dungeon_load_from_file()` in `csb_v1_dungeon_loader_pc34_compat.c`.
+That boundary accepts only the original one-byte-square format; the
+in-memory `csb_v1_dungeon_load()` parser is retained for authenticated save
+images and isolated tests, never as a filename-fixture substitute. Column-
+major squares, FTL compression, DSA thing type 15.
 
 ### 2.4 Memory / State
 
@@ -288,7 +293,8 @@ CSB command dispatch system needs source-lock validation against ReDMCSB COMMAND
 
 **Phase 1: Foundation**
 - source-locked CSB Utility import route
-- `csb_v1_dungeon_load()` — already implemented
+- `csb_v1_dungeon_load_from_file()` — source-file boundary implemented;
+  `csb_v1_dungeon_load()` remains the authenticated in-memory decoder
 - CSB title screen with "Import DM1" option
 
 **Phase 2: Dungeon Rendering**

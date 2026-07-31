@@ -27,6 +27,10 @@
     `GRAPHICS.DAT` and `DUNGEON.DAT` pair.
     Continue converting any remaining production-adjacent CSB media fixture
     into an explicit no-data rejection or an external-corpus test.
+  - 2026-07-31: The integration plan now names
+    `csb_v1_dungeon_load_from_file()` as the runtime file boundary. Continue
+    checking newly added callers so the generic in-memory parser remains
+    limited to authenticated save images and isolated tests.
   Production rendering must fail closed for a missing or unbound original
   asset. Procedural mazes, generic walls, coloured creature blocks, substitute
   palettes, and synthetic HUD art are not acceptable when authentic game data
