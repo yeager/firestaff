@@ -45287,6 +45287,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   surface. Missing V2.2 material is represented only by failed lookup and
   the established source-owned V1/V2 selection path; no generated art can
   be requested by a caller.
+- ✅ 2026-07-31 CSB D3C backdrop no-fake closure: removed the synthetic
+  three-colour framebuffer compositor for the F0097/F0098/F0107/F0108 route.
+  ReDMCSB and CSBWin ordering, windows, zone arithmetic and C10 transparency
+  evidence remain available, but only verified original material can produce
+  D3C backdrop or ornament pixels.
 - ✅ 2026-07-31 CSB PC3.4 D1 side-door source binding: D1L/D1R now draw
   their original M659/G2112 top strips through G0176/G0178 instead of a
   legacy atlas crop. Both G2111 and G2110 are source aliases of G2112.

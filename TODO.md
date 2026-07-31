@@ -510,6 +510,9 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 V2.2 modern-assets follow-up:** retired the missing-art
   placeholder API. A missing V2.2 asset now remains an ordinary failed
   material lookup; fallback selection stays with verified V1/V2 source paths.
+  **2026-07-31 D3C backdrop follow-up:** retired the synthetic three-colour
+  backdrop/ornament compositor. F0097/F0098/F0107/F0108/F0118 ordering,
+  zones and C10 rules remain metadata-only until original material is bound.
   **2026-07-31 D1L/D1R declaration follow-up:** the stale, unimplemented
   C10 pixel-writer declaration is removed from the public contract.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
