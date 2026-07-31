@@ -165,8 +165,8 @@ CSB_V2_PhaseGateDecision csb_v2_phase_gate_pc34_decide(
             return make_decision(
                 0, v2Active,
                 "ReDMCSB PANEL.C:418-428 canonical palette; csb_v2_lighting_dynamic.h",
-                "V2 dynamic lighting adds local light sources on top of the V1 canonical "
-                "palette. Source palette stays V1; V2 light map is presentation-only");
+                "Source palette selection remains V1-owned. The product lighting boundary "
+                "does not admit a host RGB light map, flicker, or DSA light pulses");
 
         case CSB_V2_PHASE_DOMAIN_MINIMAP_PRESENTATION:
             return make_decision(

@@ -13,9 +13,10 @@ extern "C" {
  * V1→V2 lighting bridge for Chaos Strikes Back.
  * Mirrors nexus_v2_lighting_runtime.c pattern (sibling wire-up).
  *
- * Phase-gated tick wrapper around the CSB V2 lighting module's global
- * state. When V1 is the active presentation, the per-frame tick is a
- * no-op (V1 light state preserved).
+ * Phase-gated observability wrapper around the CSB V2 lighting boundary.
+ * The product boundary preserves source-palette receipts and rejects host
+ * RGB maps, flicker, and DSA light pulses. Ticks never alter a visible
+ * lighting image.
  *
  * Source-lock anchors:
  *   ReDMCSB LIGHT.C F0380 (light radius + flicker timing)

@@ -5,9 +5,10 @@
  *
  * V1→V2 lighting bridge for Chaos Strikes Back.
  *
- * Phase-gated tick wrapper around the CSB V2 lighting module's global
- * state. When V1 is the active presentation, the per-frame tick is a
- * no-op (V1 light state preserved).
+ * Phase-gated observability wrapper around the CSB V2 lighting boundary.
+ * The product boundary preserves source-palette receipts and rejects host
+ * RGB maps, flicker, and DSA light pulses. Ticks therefore never alter a
+ * visible lighting image.
  *
  * Source: ReDMCSB LIGHT.C F0380 (light radius + flicker timing)
  *         ReDMCSB LIGHT.C F0381 (torch source)
@@ -93,6 +94,7 @@ const char *csb_v2_lighting_runtime_source_evidence(void) {
         "Source: dm2_v2_lighting_runtime.c (sibling DM2 V2 wire-up pattern)\n"
         "Source: nexus_v2_lighting_runtime.c (sibling Nexus V2 wire-up pattern)\n"
         "V1 invariant: lighting tick is no-op when V1 is active\n"
-        "V2 invariant: csb_v2_light_tick + flicker advance only when V2 enabled\n"
+        "V2 invariant: enabled ticks reach only the no-draw source-palette "
+        "boundary\n"
         "V2 invariant: tick_count is monotonic and resets only on init()\n";
 }
