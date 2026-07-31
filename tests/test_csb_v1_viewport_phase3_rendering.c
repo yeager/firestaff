@@ -4169,11 +4169,19 @@ static void test_live_closed_d3_door_resolution(void)
     raw[100 + 4 * 4] = (uint8_t)((4u << 5) | 0x10u | 4u);
     raw[72] = 0u;
     raw[73] = 0u;
-    raw[182] = 1u; /* DB0 bit chooses MAP.D DoorSet1 = 3. */
-    check_int("csb.live_d3_door.resolve.closed_db0",
+    /* ReDMCSB DEFS.H DOOR.Type is DB0 bit 0: type 0 selects DoorSet0. */
+    raw[182] = 0u;
+    check_int("csb.live_d3_door.resolve.closed_type0",
               csb_v1_viewport_resolve_closed_d3_door_graphic_pc34(
                   &dungeon, 0, 1, 1, 2, -2, &graphic), 1);
-    check_int("csb.live_d3_door.resolve.closed_db0_graphic", graphic, 255);
+    check_int("csb.live_d3_door.resolve.closed_type0_graphic", graphic, 249);
+
+    /* DB0 bit 0 set selects MAP.D DoorSet1 = 3. */
+    raw[182] = 1u;
+    check_int("csb.live_d3_door.resolve.closed_type1",
+              csb_v1_viewport_resolve_closed_d3_door_graphic_pc34(
+                  &dungeon, 0, 1, 1, 2, -2, &graphic), 1);
+    check_int("csb.live_d3_door.resolve.closed_type1_graphic", graphic, 255);
     raw[100 + 4 * 4] = (uint8_t)((4u << 5) | 0x10u | 3u);
     check_int("csb.live_d3_door.reject.partial",
               csb_v1_viewport_resolve_closed_d3_door_graphic_pc34(
