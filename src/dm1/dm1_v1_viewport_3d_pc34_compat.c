@@ -12,6 +12,8 @@
  */
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "firestaff/dm1/v1/G0166_pc34_compat.h"
+#include "firestaff/dm1/v1/G0167_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
@@ -1220,6 +1222,40 @@ static const uint8_t *dm1_viewport_3d_selected_wall_bitmap(const DM1_Viewport3DS
     return bm_base + (int)state->wall_set_native[selected_wall] * DM1_VIEWPORT_BYTE_WIDTH;
 }
 
+/* F0104/F0105 use the Graphic558 door-frame coordinates themselves, not a
+ * wall frame with a guessed crop.  Keep this source route callback-owned so
+ * CSB can only draw pixels decoded from its active GRAPHICS.DAT package.
+ * ReDMCSB DUNVIEW.C:598-599,6734-6735. */
+static int dm1_viewport_3d_draw_source_door_frame(
+    DM1_Viewport3DState *state, int graphic_index, const int *frame, int flipped)
+{
+    const uint8_t *pixels = NULL;
+    int width = 0, height = 0;
+    int draw_width, draw_height;
+    int x, y;
+
+    if (!state || !frame || !state->viewport_pixels ||
+        !state->graphic_provider_callback ||
+        !state->graphic_provider_callback(state->graphic_provider_user_data,
+                                          graphic_index, &pixels,
+                                          &width, &height) ||
+        !pixels) return 0;
+    draw_width = frame[1] - frame[0] + 1;
+    draw_height = frame[3] - frame[2] + 1;
+    if (draw_width <= 0 || draw_height <= 0 || width < draw_width ||
+        height < draw_height) return 0;
+    for (y = 0; y < draw_height; ++y) {
+        uint8_t *dst = state->viewport_pixels +
+            (frame[2] + y) * state->viewport_stride + frame[0];
+        const uint8_t *src = pixels + y * width;
+        for (x = 0; x < draw_width; ++x) {
+            uint8_t pixel = src[flipped ? draw_width - 1 - x : x];
+            if (pixel != COLOR_TRANSPARENT) dst[x] = pixel;
+        }
+    }
+    return 1;
+}
+
 static int dm1_viewport_3d_classify_grid_cell(int cell)
 {
     /* ReDMCSB: DEFS.H M034_SQUARE_TYPE is square >> 5; DUNGEON.C F0172
@@ -1870,10 +1906,26 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
             state, DM1_VIEW_SQUARE_D3C, 3, 0);
         if (!dm1_viewport_3d_draw_center_wall_element(
                 state, DM1_VIEW_SQUARE_D3C, (int)d3c_x, (int)d3c_y)) {
-            const DM1_WallFrame *fr = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3C);
-            if (fr && bm_base) {
-                dm1_viewport_3d_draw_wall(state, bm_base + 19 * BMP_STRIDE, fr);
-                dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 19 * BMP_STRIDE, fr);
+            const int *left_frame = dm1_v1_g0166_table_pc34();
+            const int *right_frame = dm1_v1_g0167_table_pc34();
+            /* M657_GRAPHIC_WALLSET_0_DOOR_FRAME_LEFT_D3C is record 89;
+             * F0096 advances it by the active wall-set's 40-record span.
+             * The provider owns that mapping and rejects missing source. */
+            if (!dm1_viewport_3d_draw_source_door_frame(
+                    state, 89, left_frame, 0)) {
+                const DM1_WallFrame *fr =
+                    dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D3C);
+                /* A source-verified CSB session must not revive this legacy
+                 * atlas path when the exact G2119 record is absent. */
+                if (!state->source_graphics_required && fr && bm_base) {
+                    dm1_viewport_3d_draw_wall(state,
+                                              bm_base + 19 * BMP_STRIDE, fr);
+                    dm1_viewport_3d_draw_door_frame_flipped(
+                        state, bm_base + 19 * BMP_STRIDE, fr);
+                }
+            } else {
+                (void)dm1_viewport_3d_draw_source_door_frame(
+                    state, 89, right_frame, 1);
             }
         }
     }

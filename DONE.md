@@ -44839,7 +44839,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   pixels. ReDMCSB `DUNVIEW.C:6453,6590` is the source reference. Verification:
   `test_dm1_v1_viewport_3d_pc34_compat` passes with an explicit unbound-D3
   side-door regression.
-
 - ✅ 2026-07-31 DM2 static startup-menu timing: removed the fabricated
   48-tick title/credits sequence from M11 and the DM2 startup handoff.
   SKProject `DM2_SHOW_MENU_SCREEN` repeatedly calls
@@ -44847,3 +44846,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   solely for the separately selected `DM2_SHOW_CREDITS` event. The menu now
   has a static timing receipt and accepts input immediately. Verification:
   `test_dm2_v1_startup_audio_menu` passes.
+- ✅ 2026-07-31 CSB PC3.4 D3C door-frame source binding: the central D3
+  frame now fetches the active wall-set's M657/G2119 record through the
+  CSB GRAPHICS.DAT provider and uses the original G0166/G0167 32×44 source
+  rectangles for F0104/F0105's native and mirrored C722/C723 blits. A
+  source-verified session remains no-draw if that record is missing; the
+  legacy atlas is not allowed to substitute it. Verification:
+  `test_dm1_v1_viewport_3d_pc34_compat`,
+  `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
+  launcher handoff boundary (567/0, one expected Atari skip) pass.

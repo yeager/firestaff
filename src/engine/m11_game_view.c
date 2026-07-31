@@ -2065,6 +2065,30 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         cached_pixels = &state->csbViewportWallPixels[wall_slot];
         cached_width = &state->csbViewportWallWidths[wall_slot];
         cached_height = &state->csbViewportWallHeights[wall_slot];
+    } else if (graphic_index >= 86 && graphic_index <= 92) {
+        const M11_AssetSlot *door_frame_asset;
+        /* ReDMCSB DEFS.H M654--M660 and DUNVIEW.C F0096:2196-2202:
+         * seven PC3.4 door-frame source records precede the 15 wall
+         * surfaces in each 40-record wall-set family.  Do not borrow the
+         * legacy global frame atlas when the active CSB package can provide
+         * this exact record. */
+        source_graphic = M11_CSB_PC34_GRAPHIC_FIRST_WALL_SET +
+            (unsigned int)wall_set * M11_CSB_PC34_WALL_SET_GRAPHIC_COUNT +
+            (unsigned int)(graphic_index - 86);
+        if (!m11_csb_install_runtime_source_graphic(state, source_graphic)) {
+            return 0;
+        }
+        door_frame_asset = M11_AssetLoader_Load(
+            &state->assetLoader, source_graphic);
+        if (!door_frame_asset || !door_frame_asset->loaded ||
+            !door_frame_asset->pixels || door_frame_asset->width == 0u ||
+            door_frame_asset->height == 0u) {
+            return 0;
+        }
+        *out_pixels = door_frame_asset->pixels;
+        *out_width = (int)door_frame_asset->width;
+        *out_height = (int)door_frame_asset->height;
+        return 1;
     } else if (graphic_index >= 70 && graphic_index <= 76) {
         const M11_AssetSlot *field_asset;
         /* ReDMCSB DEFS.H C070--C076 and DUNVIEW.C F0113:4417-4461: fields
