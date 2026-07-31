@@ -5,6 +5,76 @@
 #include <stdlib.h>
 #include <string.h>
 
+static uint16_t nexus_title_be16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
+}
+
+/* DMWeb, Dungeon Master Nexus Data File Decoder: MAPD contains five
+ * 64x28 tilemaps; TITLE.CG supplies the 5249 contiguous 8x8 4bpp tiles. */
+static int nexus_title_decode_mapd(const uint8_t *mapd,
+                                   size_t mapd_size,
+                                   const uint8_t *title_cg,
+                                   size_t title_cg_bytes,
+                                   Nexus_TitleScreen *title)
+{
+    int map;
+    if (!mapd || mapd_size < 0x8c70U || !title_cg || !title ||
+        title_cg_bytes < (size_t)5249U * 32U ||
+        memcmp(mapd, "MAPD", 4) != 0 ||
+        memcmp(mapd + 8U, "TIBG", 4) != 0) {
+        return 0;
+    }
+    for (map = 0; map < NEXUS_V1_TITLE_MAP_COUNT; ++map) {
+        size_t map_offset = 0x40U + (size_t)map * 0x1c04U;
+        uint8_t *out = (uint8_t *)calloc(
+            (size_t)NEXUS_V1_TITLE_MAP_WIDTH * NEXUS_V1_TITLE_MAP_HEIGHT,
+            1U);
+        int cell;
+        if (!out || map_offset + 4U + 0x1c00U > mapd_size) {
+            free(out);
+            return 0;
+        }
+        if (nexus_title_be16(mapd + map_offset) != 0x0040U ||
+            nexus_title_be16(mapd + map_offset + 2U) != 0x001cU) {
+            free(out);
+            return 0;
+        }
+        for (cell = 0; cell < 64 * 28; ++cell) {
+            size_t cell_offset = map_offset + 4U + (size_t)cell * 4U;
+            int tile_index = (int)(nexus_title_be16(mapd + cell_offset + 2U) &
+                                   0x7fffU) - 4608;
+            int x = (cell % 64) * 8;
+            int y = (cell / 64) * 8;
+            int py;
+            if (tile_index < 0 || tile_index >= 5249 ||
+                (size_t)tile_index * 32U + 32U > title_cg_bytes) {
+                free(out);
+                return 0;
+            }
+            for (py = 0; py < 8; ++py) {
+                int px;
+                for (px = 0; px < 4; ++px) {
+                    uint8_t packed = title_cg[(size_t)tile_index * 32U +
+                                              (size_t)py * 4U + px];
+                    out[(size_t)(y + py) * NEXUS_V1_TITLE_MAP_WIDTH + x +
+                        px * 2] = (uint8_t)(packed >> 4);
+                    out[(size_t)(y + py) * NEXUS_V1_TITLE_MAP_WIDTH + x +
+                        px * 2 + 1] = (uint8_t)(packed & 0x0fU);
+                }
+            }
+        }
+        title->decoded_map_pixels[map] = out;
+    }
+    for (map = 0; map < 16; ++map) {
+        title->decoded_map_palette[map] = nexus_title_be16(
+            mapd + 0x8c54U + (size_t)map * 2U);
+    }
+    title->decoded_map_count = NEXUS_V1_TITLE_MAP_COUNT;
+    title->decoded_map_source_bound = 1;
+    return 1;
+}
+
 static void nexus_title_draw_rect(Nexus_Framebuffer *fb,
                                   int x, int y, int w, int h,
                                   uint8_t color) {
@@ -140,6 +210,18 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
                                  &title->height,
                                  surface) == 0) {
         title->loaded = 1;
+        data = nexus_v1_read_file(engine, "TITLE.BIN", &size);
+        if (data && size > 0) {
+            int cg_size = 0;
+            uint8_t *cg = nexus_v1_read_file(engine, "TITLE.CG", &cg_size);
+            (void)nexus_title_decode_mapd(
+                                          data + 0x0e278U,
+                                          (size_t)size - 0x0e278U, cg,
+                                          cg_size > 0 ? (size_t)cg_size : 0U,
+                                          title);
+            free(cg);
+            free(data);
+        }
         return 0;
     }
 
@@ -175,14 +257,31 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
     }
     title->loaded = 1;
 
+    {
+        uint8_t *mapd = nexus_v1_read_file(engine, "TITLE.BIN", &size);
+        (void)nexus_title_decode_mapd(
+                                      mapd && size > (int)0x0e278U
+                                          ? mapd + 0x0e278U : NULL,
+                                      size > (int)0x0e278U
+                                          ? (size_t)size - 0x0e278U : 0U,
+                                      data, (size_t)size,
+                                      title);
+        free(mapd);
+    }
+
     nexus_ui_manager_free(&mgr);
     free(data);
     return 0;
 }
 
 void nexus_title_free(Nexus_TitleScreen *title) {
+    int map;
     if (!title) {
         return;
+    }
+    for (map = 0; map < NEXUS_V1_TITLE_MAP_COUNT; ++map) {
+        free(title->decoded_map_pixels[map]);
+        title->decoded_map_pixels[map] = NULL;
     }
     free(title->pixels);
     free(title->warning_pixels);
@@ -229,55 +328,20 @@ int nexus_title_start_ready(int frame) {
     return title_frame.start_ready;
 }
 
-static void nexus_title_plan_add_rect(Nexus_V1_TitleRenderPlan *plan,
-                                      int x,
-                                      int y,
-                                      int w,
-                                      int h,
-                                      uint8_t color)
-{
-    Nexus_V1_TitleRenderRect *rect;
-    if (!plan || plan->rect_count >= NEXUS_V1_TITLE_RENDER_MAX_RECTS) {
-        return;
-    }
-    rect = &plan->rects[plan->rect_count++];
-    rect->x = x;
-    rect->y = y;
-    rect->w = w;
-    rect->h = h;
-    rect->color = color;
-}
-
-static void nexus_title_plan_add_prompt(Nexus_V1_TitleRenderPlan *plan,
-                                        const Nexus_V1_TitleFrame *title_frame)
-{
-    int x;
-    int y;
-    uint8_t base;
-    if (!plan || !title_frame || !title_frame->prompt_visible) {
-        return;
-    }
-    base = (uint8_t)(18 + ((title_frame->hold_frame / 6) & 3));
-    plan->prompt_visible = 1;
-    plan->prompt_base_color = base;
-    y = NEXUS_FB_H - 18;
-    for (x = 86; x < 234; x += 18) {
-        nexus_title_plan_add_rect(plan, x, y, 12, 2, base);
-        nexus_title_plan_add_rect(plan, x, y + 4, 10, 2,
-                                  (uint8_t)(base - 2));
-        nexus_title_plan_add_rect(plan, x, y + 8, 12, 2, base);
-    }
-    nexus_title_plan_add_rect(plan, 74, y - 6, 172, 1,
-                              (uint8_t)(base - 4));
-    nexus_title_plan_add_rect(plan, 74, y + 14, 172, 1,
-                              (uint8_t)(base - 4));
-}
-
 static void nexus_title_plan_reset(Nexus_V1_TitleRenderPlan *plan)
 {
     if (plan) {
         memset(plan, 0, sizeof(*plan));
     }
+}
+
+static int nexus_title_screen_surface_ready(const Nexus_TitleScreen *title)
+{
+    /* DMWeb documents TITLE.CG plus TITLE.BIN MAPD tilemaps, not a ready
+     * screen. The current 328x1024 atlas has no verified host presentation
+     * binding to the 320x200 Firestaff framebuffer. */
+    return title && title->loaded && title->pixels &&
+           title->width == NEXUS_FB_W && title->height == NEXUS_FB_H;
 }
 
 int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
@@ -297,8 +361,7 @@ int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
             title->warning_width <= 0 || title->warning_height <= 0) {
             /* This direct renderer may be used outside the launcher gate.
              * Preserve real title art rather than drawing a fake warning. */
-            if (!title || !title->loaded || !title->pixels ||
-                title->width <= 0 || title->height <= 0) {
+            if (!nexus_title_screen_surface_ready(title)) {
                 nexus_title_plan_reset(out_plan);
                 return 0;
             }
@@ -334,8 +397,7 @@ int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
                                     : NEXUS_FB_H;
         return 1;
     }
-    if (!title || !title->loaded || !title->pixels ||
-        title->width <= 0 || title->height <= 0) {
+    if (!nexus_title_screen_surface_ready(title)) {
         nexus_title_plan_reset(out_plan);
         return 0;
     }
@@ -354,11 +416,8 @@ int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
     out_plan->copy_height = title->height < NEXUS_FB_H
                                 ? title->height
                                 : NEXUS_FB_H;
-    nexus_title_plan_add_rect(out_plan, 0, boot_frame.title.reveal_y0 - 1,
-                              NEXUS_FB_W, 1, boot_frame.title.edge_color);
-    nexus_title_plan_add_rect(out_plan, 0, boot_frame.title.reveal_y1,
-                              NEXUS_FB_W, 1, boot_frame.title.edge_color);
-    nexus_title_plan_add_prompt(out_plan, &boot_frame.title);
+    /* The real TITLE.CG pixels are the only startup surface. Do not add
+     * code-built edge lines, prompts, or other substitute artwork. */
     return 1;
 }
 
@@ -401,16 +460,8 @@ static void nexus_render_title_plan(const Nexus_TitleScreen *title,
             }
         }
     } else {
-        for (y = 0; y < NEXUS_FB_H; ++y) {
-            int band = plan->gradient_step_y > 0
-                           ? y / plan->gradient_step_y
-                           : 0;
-            uint8_t shade = (uint8_t)(plan->gradient_base +
-                                      (plan->gradient_mod_mask >= 0
-                                           ? (band & plan->gradient_mod_mask)
-                                           : band));
-            memset(&fb->color_buffer[y * NEXUS_FB_W], shade, NEXUS_FB_W);
-        }
+        /* Invalid/unknown plans remain blank. Never synthesize a gradient
+         * when the authenticated title or warning surface is unavailable. */
     }
     for (i = 0; i < plan->rect_count; ++i) {
         const Nexus_V1_TitleRenderRect *rect = &plan->rects[i];

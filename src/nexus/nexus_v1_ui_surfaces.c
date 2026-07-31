@@ -187,7 +187,8 @@ int nexus_ui_load_bpk_runtime_surface(Nexus_UI_Manager *mgr,
         if (out_receipt) *out_receipt = receipt;
         return NEXUS_UI_BPK_IMPORT_ERR_NOT_READY;
     }
-    if (handoff->status != NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED ||
+    if ((handoff->status != NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED &&
+         handoff->status != NEXUS_V1_BPK_SURFACE_HANDOFF_READY_DECODED) ||
         !handoff->extractable ||
         handoff->surface.layout.surface_bytes == 0U) {
         receipt.blocked_not_ready = 1;
@@ -201,15 +202,27 @@ int nexus_ui_load_bpk_runtime_surface(Nexus_UI_Manager *mgr,
         return NEXUS_UI_BPK_IMPORT_ERR_LOAD;
     }
     memset(&extracted_surface, 0, sizeof(extracted_surface));
-    extract_status = nexus_v1_bpk_archive_extract_stored_surface(
-        archive_data,
-        archive_size,
-        handoff->entry_index,
-        pixels,
-        handoff->surface.layout.surface_bytes,
-        &extracted_surface,
-        &written);
-    if (extract_status != NEXUS_V1_BPK_EXTRACT_OK ||
+    if (handoff->status == NEXUS_V1_BPK_SURFACE_HANDOFF_READY_DECODED) {
+        /* DMWeb, Dungeon Master Nexus > File formats > PRS3 compression. */
+        extract_status = nexus_v1_bpk_archive_decode_surface(
+            archive_data, archive_size, handoff->entry_index, pixels,
+            handoff->surface.layout.surface_bytes, &extracted_surface,
+            &written);
+        if (extract_status != NEXUS_V1_BPK_DECODE_OK) {
+            free(pixels);
+            if (out_receipt) *out_receipt = receipt;
+            return NEXUS_UI_BPK_IMPORT_ERR_EXTRACT;
+        }
+    } else {
+        extract_status = nexus_v1_bpk_archive_extract_stored_surface(
+            archive_data, archive_size, handoff->entry_index, pixels,
+            handoff->surface.layout.surface_bytes, &extracted_surface,
+            &written);
+    }
+    if ((handoff->status == NEXUS_V1_BPK_SURFACE_HANDOFF_READY_STORED &&
+         extract_status != NEXUS_V1_BPK_EXTRACT_OK) ||
+        (handoff->status == NEXUS_V1_BPK_SURFACE_HANDOFF_READY_DECODED &&
+         extract_status != NEXUS_V1_BPK_DECODE_OK) ||
         written != handoff->surface.layout.surface_bytes) {
         free(pixels);
         if (out_receipt) *out_receipt = receipt;
@@ -556,6 +569,162 @@ int nexus_ui_stabg_stmp_framing_receipt(const uint8_t *data,
     return 0;
 }
 
+int nexus_ui_stabg_dmweb_decode_receipt(const uint8_t *data,
+                                        int data_size,
+                                        Nexus_UI_StabgDmwebReceipt *out)
+{
+    uint32_t part1_off, part1_size, part2_off, part2_size;
+    uint32_t part3_off, part3_size, cursor;
+    uint32_t map_offsets[NEXUS_UI_STABG_DMWEB_MAX_MAPS];
+    int map_count = 0;
+    int i;
+
+    if (!out) return -1;
+    memset(out, 0, sizeof(*out));
+    if (!data || data_size < 0x20 || memcmp(data, "STMP", 4) != 0)
+        return -1;
+
+    /* DMWeb: DecodeSTABGBIN reads these seven values with its file
+     * reader.  The retail STMP header is big-endian, as established by
+     * the existing framing receipt. */
+    if (nexus_ui_read_be32_u(data + 4) != (uint32_t)data_size)
+        return -1;
+    part1_off = nexus_ui_read_be32_u(data + 8);
+    part1_size = nexus_ui_read_be32_u(data + 12);
+    part2_off = nexus_ui_read_be32_u(data + 16);
+    part2_size = nexus_ui_read_be32_u(data + 20);
+    part3_off = nexus_ui_read_be32_u(data + 24);
+    part3_size = nexus_ui_read_be32_u(data + 28);
+    if (part1_off < 0x20U || part2_off != part1_off + part1_size ||
+        part3_off != part2_off + part2_size || part2_size != 0x200U ||
+        part3_off + part3_size != (uint32_t)data_size ||
+        part1_size < 8U || (part1_size & 1U) != 0U ||
+        part3_size != 791U * 64U)
+        return -1;
+
+    /* DMWeb reads a zero-terminated dword offset table before Part 1.
+     * Offsets are consumed as file-relative values; its tile dimensions
+     * use (TilemapOffset - 48) / 2 as a Part-1 word index. */
+    cursor = part1_off;
+    while (cursor + 4U <= part2_off && map_count < NEXUS_UI_STABG_DMWEB_MAX_MAPS) {
+        uint32_t offset = nexus_ui_read_be32_u(data + cursor);
+        cursor += 4U;
+        if (offset == 0U) break;
+        map_offsets[map_count++] = offset;
+    }
+    if (map_count == 0 || cursor > part2_off ||
+        cursor + 2U > part2_off)
+        return -1;
+
+    for (i = 0; i < map_count; ++i) {
+        uint32_t word_index;
+        uint32_t word_addr;
+        uint16_t width, height;
+        uint32_t cells, j;
+        if (map_offsets[i] < 48U ||
+            (map_offsets[i] - 48U) & 1U)
+            return -1;
+        word_index = (map_offsets[i] - 48U) / 2U;
+        word_addr = cursor + word_index * 2U;
+        if (word_addr + 4U > part2_off)
+            return -1;
+        width = nexus_ui_read_be16(data + word_addr);
+        height = nexus_ui_read_be16(data + word_addr + 2U);
+        cells = (uint32_t)width * (uint32_t)height;
+        if (width == 0U || height == 0U ||
+            word_addr + 4U + cells * 2U > part2_off)
+            return -1;
+        if (i == 0) {
+            out->first_map_width = width;
+            out->first_map_height = height;
+        }
+        for (j = 0; j < cells; ++j) {
+            uint16_t cell = nexus_ui_read_be16(data + word_addr + 4U + j * 2U);
+            uint16_t tile = (uint16_t)((cell / 2U) & 0x07ffU);
+            if (tile >= 791U) return -1;
+            if (tile > out->max_tile_index) out->max_tile_index = tile;
+            if (((cell / (1U << 14)) & 1U) != 0U)
+                ++out->horizontal_flip_count;
+            if ((cell & 0x8000U) != 0U) ++out->vertical_flip_bits_seen;
+        }
+    }
+    out->valid = 1;
+    out->file_size = (uint32_t)data_size;
+    out->part1_offset = part1_off;
+    out->part1_size = part1_size;
+    out->part2_offset = part2_off;
+    out->part2_size = part2_size;
+    out->part3_offset = part3_off;
+    out->part3_size = part3_size;
+    out->map_count = map_count;
+    out->tile_count = 791;
+    /* DMWeb passes LITTLE_ENDIAN only for LoadSaturnPalette. */
+    out->palette_is_little_endian = 1;
+    return 0;
+}
+
+int nexus_ui_stabg_decode_first_map(const uint8_t *data,
+                                    int data_size,
+                                    uint8_t *out_pixels,
+                                    size_t out_pixel_capacity,
+                                    uint16_t *out_palette_le,
+                                    Nexus_UI_StabgPixelDecodeReceipt *out)
+{
+    Nexus_UI_StabgDmwebReceipt receipt;
+    uint32_t cursor, map_offset, word_addr, cells;
+    uint16_t width, height;
+    uint32_t y, x, tile, tile_x, tile_y;
+
+    if (!out) return -1;
+    memset(out, 0, sizeof(*out));
+    if (!out_pixels || !out_palette_le ||
+        nexus_ui_stabg_dmweb_decode_receipt(data, data_size, &receipt) != 0)
+        return -1;
+    if (receipt.vertical_flip_bits_seen != 0 || receipt.first_map_width <= 0 ||
+        receipt.first_map_height <= 0)
+        return -1;
+    width = (uint16_t)receipt.first_map_width;
+    height = (uint16_t)receipt.first_map_height;
+    cells = (uint32_t)width * (uint32_t)height;
+    if ((size_t)width * 8U * (size_t)height * 8U > out_pixel_capacity)
+        return -1;
+
+    memcpy(out_palette_le, data + receipt.part2_offset, 256U * sizeof(uint16_t));
+    cursor = receipt.part1_offset;
+    while (cursor + 4U <= receipt.part2_offset &&
+           nexus_ui_read_be32_u(data + cursor) != 0U)
+        cursor += 4U;
+    if (cursor + 2U > receipt.part2_offset) return -1;
+    map_offset = nexus_ui_read_be32_u(data + receipt.part1_offset);
+    if (map_offset < 48U || ((map_offset - 48U) & 1U) != 0U) return -1;
+    word_addr = cursor + ((map_offset - 48U) / 2U) * 2U;
+    if (word_addr + 4U + cells * 2U > receipt.part2_offset) return -1;
+
+    for (y = 0; y < height; ++y) {
+        for (x = 0; x < width; ++x) {
+            uint16_t cell = nexus_ui_read_be16(data + word_addr + 4U +
+                                                (y * width + x) * 2U);
+            int hflip = (cell & 0x4000U) != 0;
+            tile = (cell / 2U) & 0x07ffU;
+            for (tile_y = 0; tile_y < 8U; ++tile_y) {
+                for (tile_x = 0; tile_x < 8U; ++tile_x) {
+                    uint32_t source_x = hflip ? 7U - tile_x : tile_x;
+                    size_t dst = ((size_t)y * 8U + tile_y) * width * 8U +
+                                 (size_t)x * 8U + tile_x;
+                    out_pixels[dst] = data[receipt.part3_offset + tile * 64U +
+                                           tile_y * 8U + source_x];
+                }
+            }
+            if (hflip) ++out->horizontal_flip_count;
+        }
+    }
+    out->valid = 1;
+    out->width = width * 8;
+    out->height = height * 8;
+    out->vertical_flip_bits_seen = receipt.vertical_flip_bits_seen;
+    return 0;
+}
+
 /* STABG.BIN has verified source identity and, since the STMP framing
  * receipt above, a proven container layout. The pixel-unit decode
  * semantics of the tile-map cells remain unproven, so no surface may be
@@ -756,7 +925,7 @@ int nexus_ui_face_prs3_capture_target(const uint8_t *data,
                                                  &target.descriptor) ||
         !target.descriptor.valid ||
         target.descriptor.prefix_offset > (size_t)data_size ||
-        target.descriptor.prefix_size >
+        (size_t)target.descriptor.prefix_size >
             (size_t)data_size - target.descriptor.prefix_offset ||
         target.descriptor.prs3_offset > (size_t)data_size ||
         target.descriptor.prs3_size >
@@ -913,7 +1082,7 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     Nexus_UI_Surface *surf;
     (void)palette;
     if (!mgr) return -1;
-    if (face_index < 0 || face_index >= 24) return -1;
+    if (face_index < 0 || face_index >= 20) return -1;
     if (portrait_w <= 0 || portrait_h <= 0) {
         portrait_w = 48; portrait_h = 48;
     }
@@ -950,53 +1119,25 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     return 1;
 }
 
-/* Generic raw-face helper. Real FACE.BIN records must be complete: a short
- * record is a decode failure, never a gray/prefix-filled portrait. */
+/* Legacy raw-face helper. DMWeb's retail FACE.BIN is a compact PRS3
+ * container; no raw portrait geometry or palette lane is authenticated.
+ * Keep this API fail-closed rather than copying arbitrary bytes into a UI
+ * surface. */
 int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_of_face,
     int data_size, int face_index,
     int portrait_w, int portrait_h,
     const uint32_t *palette)
 {
-    int entry_size;
-    int copied_real = 0;
-    Nexus_UI_Surface *surf;
+    (void)mgr;
+    (void)data;
+    (void)data_of_face;
+    (void)data_size;
+    (void)face_index;
+    (void)portrait_w;
+    (void)portrait_h;
     (void)palette;
-
-    if (!mgr) return -1;
-    if (face_index < 0 || face_index >= 24) return -1;
-    /* Canonical FACE.BIN is a compact PRS3 container, never a raw portrait
-     * atlas. Its undecoded bytes must not enter this legacy raw helper. */
-    if (data && data_size >= 4 && memcmp(data, "FACE", 4) == 0) return -1;
-    if (portrait_w <= 0 || portrait_h <= 0) {
-        portrait_w = 48; portrait_h = 48;  /* default assumed size */
-    }
-    entry_size = portrait_w * portrait_h;
-
-    surf = &mgr->surfaces[NEXUS_SURFACE_FACE0 + face_index];
-    if (surf->owns_data && surf->data) free(surf->data);
-    memset(surf, 0, sizeof(*surf));
-
-    surf->w = portrait_w;
-    surf->h = portrait_h;
-    surf->pal_start = 192;  /* UI palette block for faces */
-    surf->pal_count = 16;
-    surf->source = "FACE.BIN";
-    surf->owns_data = 1;
-
-    if (data && data_size >= data_of_face + entry_size) {
-        surf->data = (uint8_t *)malloc(entry_size);
-        if (surf->data) {
-            memcpy(surf->data, data + data_of_face, entry_size);
-            copied_real = 1;
-        } else {
-            surf->data = (uint8_t *)calloc(entry_size, 1);
-        }
-    } else {
-        return -1;
-    }
-    /* Face surfaces are stored individually in the manager */
-    return copied_real ? 1 : -1;
+    return -1;
 }
 
 void nexus_ui_surface_free(Nexus_UI_Manager *mgr,
@@ -1102,7 +1243,7 @@ void nexus_ui_render_portrait(const Nexus_UI_Manager *mgr,
 {
     Nexus_UISurfaceType which;
     if (!mgr || !fb) return;
-    if (portrait_index < 0 || portrait_index >= 24) return;
+    if (portrait_index < 0 || portrait_index >= 20) return;
     which = NEXUS_SURFACE_FACE0 + portrait_index;
     nexus_ui_blit_surface_flip(&mgr->surfaces[which],
         fb, fb_w, fb_h, dest_x, dest_y, flip_h);

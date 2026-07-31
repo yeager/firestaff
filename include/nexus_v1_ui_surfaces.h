@@ -10,7 +10,7 @@
  *   TITLE.CG   — title screen color graphics (164 KB)
  *   WARNING.BIN — warning/disclaimer screen  (99 KB)
  *   GAMEOVER.BIN — game over screen         (101 KB)
- *   FACE.BIN    — champion portrait sprites (44 KB, 24 entries)
+ *   FACE.BIN    — champion portrait sprites (retail layout: 20 entries)
  *   STABG.BIN   — status-area background  (52 KB)
  *   FONT256.S2D — Saturn SCR font           (already nexus_v1_saturn_font.c)
  *
@@ -55,8 +55,8 @@ typedef enum {
     NEXUS_SURFACE_TITLE = 0,
     NEXUS_SURFACE_WARNING,
     NEXUS_SURFACE_GAMEOVER,
-    NEXUS_SURFACE_FACE0,    /* portrait 0-23 */
-    NEXUS_SURFACE_FACE23 = NEXUS_SURFACE_FACE0 + 23,
+    NEXUS_SURFACE_FACE0,    /* portrait 0-19 */
+    NEXUS_SURFACE_FACE19 = NEXUS_SURFACE_FACE0 + 19,
     NEXUS_SURFACE_STABG,    /* status area background */
     NEXUS_SURFACE_COUNT
 } Nexus_UISurfaceType;
@@ -105,8 +105,8 @@ typedef struct {
  * contiguous run of (u16 w, u16 h, w*h BE u16 cells) maps whose cells
  * are word offsets (×2 bytes) into the pixel region. The first map is
  * the 40x21-cell status-area background (320x168 at 8px cells).
- * Pixel-unit decode semantics are NOT proven; this receipt proves the
- * container framing and bounded cell references only. */
+ * DMWeb's first-map pixel-unit decode is available as a caller-owned
+ * indexed-pixel receipt below; Saturn VDP placement remains separate. */
 #define NEXUS_UI_STABG_STMP_MAX_MAPS 64
 typedef struct {
     int valid;
@@ -123,6 +123,51 @@ typedef struct {
     uint32_t max_cell_word_offset;
     int cell_offsets_bounded;
 } Nexus_UI_StabgStmpFraming;
+
+/* DMWeb's DMNDataFileDecoder.vbs DecodeSTABGBIN contract.  This is a
+ * structural decode receipt only; it does not claim Saturn VDP placement. */
+#define NEXUS_UI_STABG_DMWEB_MAX_MAPS 64
+typedef struct {
+    int valid;
+    uint32_t file_size;
+    uint32_t part1_offset;
+    uint32_t part1_size;
+    uint32_t part2_offset;
+    uint32_t part2_size;
+    uint32_t part3_offset;
+    uint32_t part3_size;
+    int map_count;
+    int first_map_width;
+    int first_map_height;
+    int tile_count;
+    uint16_t max_tile_index;
+    int horizontal_flip_count;
+    int vertical_flip_bits_seen;
+    int palette_is_little_endian;
+} Nexus_UI_StabgDmwebReceipt;
+
+/* DMWeb DecodeSTABGBIN first-map pixel decode. The output buffers are
+ * caller-owned: palette entries retain the Saturn words exactly as read
+ * by DMWeb (little-endian BGR555), and pixels are 8-bit palette indices.
+ * This is a data decode receipt only; it does not claim VDP placement. */
+typedef struct {
+    int valid;
+    int width;
+    int height;
+    int horizontal_flip_count;
+    int vertical_flip_bits_seen;
+} Nexus_UI_StabgPixelDecodeReceipt;
+
+int nexus_ui_stabg_dmweb_decode_receipt(const uint8_t *data,
+                                        int data_size,
+                                        Nexus_UI_StabgDmwebReceipt *out);
+
+int nexus_ui_stabg_decode_first_map(const uint8_t *data,
+                                    int data_size,
+                                    uint8_t *out_pixels,
+                                    size_t out_pixel_capacity,
+                                    uint16_t *out_palette_le,
+                                    Nexus_UI_StabgPixelDecodeReceipt *out);
 
 /* Parse and bound-check the STABG.BIN STMP framing. Returns 0 and fills
  * out_framing (valid=1) only when every structural invariant holds. */
@@ -308,10 +353,10 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette);
 
-/* Load FACE.BIN (44 KB) as champion portraits.
- * Layout: 24 portraits laid out in a horizontal strip.
- * Each portrait: 48×48 pixels (or closest power-of-2).
- * face_index: 0..23 → portrait number. */
+/* Load FACE.BIN as champion portraits.
+ * Layout: 20 variable-length PRS3 records; no raw horizontal strip is
+ * authenticated. The bounded decoded geometry is 56×56.
+ * face_index: 0..19 → portrait number. */
 int nexus_ui_load_faces(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_of_face,
     int data_size, int face_index,
@@ -360,9 +405,6 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     int portrait_w,
     int portrait_h,
     const uint32_t *palette);
-int nexus_ui_load_face_placeholder(Nexus_UI_Manager *mgr,
-    int face_index, int portrait_w, int portrait_h);
-
 /* Free a specific surface */
 void nexus_ui_surface_free(Nexus_UI_Manager *mgr, Nexus_UISurfaceType which);
 
@@ -388,7 +430,7 @@ void nexus_ui_render_gameover(const Nexus_UI_Manager *mgr,
 void nexus_ui_render_stabg(const Nexus_UI_Manager *mgr,
     uint8_t *fb, int fb_w, int fb_h,
     int dest_x, int dest_y);
-/* portrait_index 0..23 → blit FACE.BIN entry at that index */
+/* portrait_index 0..19 → blit FACE.BIN entry at that index */
 void nexus_ui_render_portrait(const Nexus_UI_Manager *mgr,
     int portrait_index,
     uint8_t *fb, int fb_w, int fb_h,
