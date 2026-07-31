@@ -6,6 +6,10 @@
   startup menu also withholds fixture portrait/class metadata; decoded names
   alone do not authorize inferred portraits or classes.
 
+  The V2 procedural overlay is now likewise excluded from the production
+  archive; production exposes only a no-op seam until the real HUD bank is
+  decoded. Its pixel implementation remains fixture-only.
+
 - **THERON-V1-VIEWPORT-REAL-DATA:** The initial 32×27 Track 02 grid is now
   byte-faithful but its square values have no proven tile/material meaning.
   Keep the inferred depth tile table and VGA index reduction behind the

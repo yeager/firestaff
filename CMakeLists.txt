@@ -3961,13 +3961,15 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_tile_renderer\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_inplace_draw_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_modern_assets_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_startup_receipt\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_overlay_pc34\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
         src/theron/theron_v1_combat_runtime_noop.c
         src/theron/theron_v22_shapes_runtime_noop.c
         src/theron/theron_v2_hud_widget_assets_runtime_noop.c
         src/theron/theron_v1_ui_chrome_runtime_noop.c
-        src/theron/theron_v1_tile_renderer_runtime_noop.c)
+        src/theron/theron_v1_tile_renderer_runtime_noop.c
+        src/theron/theron_v2_hud_overlay_runtime_noop.c)
     target_include_directories(firestaff_theron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     # Theron's Track 01 CDDA bridge includes SDL3 directly.  Keep that
     # dependency on the owning target so standalone test targets configured
@@ -6653,6 +6655,7 @@ set_tests_properties(theron_v2_touch_runtime_probe PROPERTIES
 add_executable(firestaff_theron_v2_phase3_hud_overlay_probe
     probes/firestaff_theron_v2_phase3_hud_overlay_probe.c
     src/theron/theron_v2_hud_overlay_pc34.c
+    src/theron/theron_v2_hud_widget_assets_pc34.c
     src/theron/theron_v2_phase_gate_pc34.c
     src/theron/theron_v2_presentation_mode_pc34.c
     src/theron/theron_v1_viewport.c
@@ -10905,6 +10908,8 @@ if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_screensh
         src/engine/screenshot_m11.c)
     target_include_directories(test_m11_screenshot_capture_delivery PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_definitions(firestaff_theron_v2_phase3_hud_overlay_probe PRIVATE
+    THERON_V2_HUD_FIXTURE_RENDER=1)
     if(NOT MSVC)
         target_compile_options(test_m11_screenshot_capture_delivery PRIVATE -Wall -Wextra -O2)
     endif()
@@ -23504,13 +23509,17 @@ if(BUILD_TESTING)
     add_executable(test_theron_v2_hud_overlay_pc34
         tests/test_theron_v2_hud_overlay_pc34.c
         src/theron/theron_v2_hud_overlay_pc34.c
+        src/theron/theron_v2_hud_widget_assets_pc34.c
         src/theron/theron_v1_viewport.c
         src/theron/theron_v1_palette.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_theron_v2_hud_overlay_pc34 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
     )
+    target_compile_definitions(test_theron_v2_hud_overlay_pc34 PRIVATE
+        THERON_V2_HUD_FIXTURE_RENDER=1)
     target_link_libraries(test_theron_v2_hud_overlay_pc34 PRIVATE firestaff_theron m)
     if(NOT MSVC)
         target_compile_options(test_theron_v2_hud_overlay_pc34 PRIVATE -Wall -Wextra -O2)
