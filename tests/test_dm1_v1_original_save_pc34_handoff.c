@@ -786,7 +786,9 @@ static void write_original_champion(unsigned char *dst,
     for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
         wr16le(dst + 211 + (size_t)i * 2u, 0xffffu);
     }
-    wr16le(dst + 211 + (size_t)CHAMPION_SLOT_HAND_RIGHT * 2u, hand_item);
+    /* PC3.4 M516 stores C01_ACTION_HAND at persisted ordinal 1.  The
+     * Firestaff live-panel index is deliberately different. */
+    wr16le(dst + 211 + 1u * 2u, hand_item);
     wr16le(dst + 271, 345u);
 }
 

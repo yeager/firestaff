@@ -1,6 +1,7 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_group_state_bundle_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 
 #include "dm1_v1_c15_layout_pc34_compat.h"
 
@@ -3821,6 +3822,20 @@ static int dm1_original_save_corpus_admit_discovered_bytes(
 #define DM1_PC34_THING_TYPE_SHIFT 10u
 #define DM1_PC34_THING_TYPE_MASK 0x000fu
 
+/* PC3.4 persists CHAMPION::Slots in the C00_READY_HAND .. C29_BACKPACK
+ * order from ReDMCSB DEFS.H.  Firestaff deliberately keeps its live inventory
+ * in the panel/layout order used by COMMAND.C C507..C536, where the hands are
+ * slots 19 and 20.  Never memcpy the persisted ordinal into that live array:
+ * doing so moves a saved torch away from F0337 and draws the wrong hand item. */
+static int dm1_pc34_runtime_slot_for_source_slot(unsigned int source_slot)
+{
+    if (source_slot >= CHAMPION_SLOT_COUNT) {
+        return -1;
+    }
+    return dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(
+        (int)source_slot + 8);
+}
+
 static uint16_t read_u16_le(const uint8_t *p)
 {
     return (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
@@ -4059,7 +4074,7 @@ static void write_original_pc34_fixture_champion(uint8_t *dst,
                      (size_t)i * 2u, 0xffffu);
     }
     write_u16_le(dst + DM1_PC34_CHAMPION_SLOTS_OFFSET +
-                 (size_t)CHAMPION_SLOT_HAND_RIGHT * 2u, hand_item);
+                 1u * 2u, hand_item);
     write_u16_le(dst + DM1_PC34_CHAMPION_LOAD_OFFSET, 345u);
 }
 
@@ -4241,8 +4256,13 @@ static void import_original_pc34_champion(const uint8_t *src,
             skill_level_from_base_experience((uint32_t)champ->skillExperience[i]);
     }
     for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
-        champ->inventory[i] = read_u16_le(src + DM1_PC34_CHAMPION_SLOTS_OFFSET +
-                                          (size_t)i * 2u);
+        int runtime_slot = dm1_pc34_runtime_slot_for_source_slot((unsigned int)i);
+
+        if (runtime_slot < 0 || runtime_slot >= CHAMPION_SLOT_COUNT) {
+            return;
+        }
+        champ->inventory[runtime_slot] = read_u16_le(
+            src + DM1_PC34_CHAMPION_SLOTS_OFFSET + (size_t)i * 2u);
     }
     champ->load = read_u16_le(src + DM1_PC34_CHAMPION_LOAD_OFFSET);
 }
@@ -4378,8 +4398,14 @@ static uint32_t original_pc34_runtime_party_metadata_fingerprint(
         fingerprint = original_pc34_party_metadata_hash_step(
             fingerprint, (uint32_t)champion->direction);
         for (slot_index = 0; slot_index < CHAMPION_SLOT_COUNT; ++slot_index) {
+            int runtime_slot = dm1_pc34_runtime_slot_for_source_slot(
+                (unsigned int)slot_index);
+
+            if (runtime_slot < 0 || runtime_slot >= CHAMPION_SLOT_COUNT) {
+                return 0u;
+            }
             fingerprint = original_pc34_party_metadata_hash_step(
-                fingerprint, champion->inventory[slot_index]);
+                fingerprint, champion->inventory[runtime_slot]);
         }
     }
     return fingerprint ? fingerprint : 1u;
@@ -4391,11 +4417,7 @@ static uint32_t original_pc34_runtime_party_metadata_fingerprint(
 static uint32_t original_pc34_source_party_inventory_active_fingerprint(
     const uint8_t *part, int champion_count, int active_champion_index)
 {
-    static const int slots[] = {
-        CHAMPION_SLOT_HAND_LEFT, CHAMPION_SLOT_HAND_RIGHT,
-        CHAMPION_SLOT_HEAD, CHAMPION_SLOT_TORSO,
-        CHAMPION_SLOT_LEGS, CHAMPION_SLOT_FEET
-    };
+    static const int slots[] = { 0, 1, 2, 3, 4, 5 };
     uint32_t fingerprint = 2166136261u;
     int champion_index;
 
@@ -9880,11 +9902,7 @@ static int dm1_original_save_party_inventory_active_slots_match(
     const DM1OriginalSavePC34HandoffReport *exported_report,
     DM1OriginalSavePC34RoundtripReport *out_report)
 {
-    static const int slots[] = {
-        CHAMPION_SLOT_HAND_LEFT, CHAMPION_SLOT_HAND_RIGHT,
-        CHAMPION_SLOT_HEAD, CHAMPION_SLOT_TORSO,
-        CHAMPION_SLOT_LEGS, CHAMPION_SLOT_FEET
-    };
+    static const int slots[] = { 0, 1, 2, 3, 4, 5 };
     uint8_t source_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
     uint8_t exported_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
     int count;

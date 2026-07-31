@@ -45977,16 +45977,19 @@ the supplied root and selected MD5 to prove this without shipping game data.
   only a future decoded DB14/CCM/timer route may allocate one. Verification:
   `test_dm2_v1_runtime_shop_pc34_compat` 11/11 and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass.
-- ✅ 2026-07-31 DM1 F0337 original-save light disposition: verified the
-  operator-owned DOSBox-X PC3.4 save (`a6fa347b`) restores no hand torches
-  and `MagicalLightAmount = 0`. ReDMCSB `PANEL.C F0337` selects palette 5,
-  the darkest row, for that exact state; Firestaff's restored frame therefore
-  follows the source light rule. The nearby DOSBox screenshot has no
-  hash-bound relationship to the save and is not parity evidence. ReDMCSB
-  `DEFS.H` also confirms the compact x86 319-byte champion layout, with
-  `Skills/Slots/Load` at `91/211/271`; DMweb corroborates PC3.4's 1,404-byte
-  little-endian champion block and external portraits. Verification: the
-  real-data backed PC34 corpus roundtrip and tail-less backing tests pass.
+- ✅ 2026-07-31 DM1 PC3.4 M516 source-slot handoff: corrected F0435's
+  champion-inventory import to translate ReDMCSB `DEFS.H` persisted
+  `C00_READY_HAND..C29_BACKPACK` ordinals into Firestaff's source-layout
+  inventory indices. The former direct copy put saved hand/equipment objects
+  in unrelated panel slots, producing wrong item placement and misleading
+  F0337 torch input. The same mapping now protects runtime fingerprints and
+  source-byte receipts; the PC3.4 fixture writes its action hand at persisted
+  ordinal `1`. References: ReDMCSB `LOADSAVE.C F0435`, `DEFS.H`,
+  `COMMAND.C C507..C536`, and DMweb's PC saved-game format page. Verification:
+  `dm1_v1_original_save_pc34_handoff` and the real-data
+  `dm1_v1_original_save_pc34_backed_corpus_roundtrip` pass. The native
+  a6fa347b palette discrepancy remains explicitly open in TODO.md; this entry
+  makes no F0337 parity claim.
 
 - 2026-07-31: Closed M11's remaining DM2 leader-hand local-name lookup.
   A DM2 ObjectID can no longer be rendered as a retired catalog label or a
