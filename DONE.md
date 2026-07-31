@@ -44923,6 +44923,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `m11_dm1_real_alcove_item_runtime_pc34`,
   `dm1_v1_original_save_pc34_external_hoc_runtime`, and
   `dm1_v1_viewport_floor_ceiling_items_pc34_compat` pass.
+- ✅ 2026-07-31 Source-data admission hardening: production asset loading no
+  longer accepts arbitrary files merely because they are named
+  `GRAPHICS.DAT` or `DUNGEON.DAT`. The shared generic and DM1 multilingual
+  asset pipelines, plus M11's builtin dungeon resolver, require a known
+  content hash. Renamed files and supported archive members remain discoverable
+  through the existing hash/materialization path. Verification:
+  `test_firestaff_asset_pipeline_hash_scan` proves hash-matched renamed data
+  loads for DM1/CSB/DM2 while canonical-name junk is rejected by both generic
+  and multilingual DM1 loaders.
 - ✅ 2026-07-31 DM2 original-SKSave import closure: importing an original
   game-state no longer begins with Firestaff's fixed four-champion party,
   gold or entrance pose. The candidate is zeroed and receives only fields

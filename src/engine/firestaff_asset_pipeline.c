@@ -21,20 +21,6 @@ static int load_file(const char *path, uint8_t **out, int *out_size) {
     return 0;
 }
 
-static int try_load_dat(const char *dir, const char *subdir, const char *name,
-    unsigned char **out_data, int *out_size) {
-    char path[512];
-    /* Try dir/subdir/NAME first */
-    if (subdir && subdir[0]) {
-        snprintf(path, sizeof(path), "%s/%s/%s", dir, subdir, name);
-        if (load_file(path, out_data, out_size) == 0) return 0;
-    }
-    /* Try dir/NAME */
-    snprintf(path, sizeof(path), "%s/%s", dir, name);
-    if (load_file(path, out_data, out_size) == 0) return 0;
-    return -1;
-}
-
 static const char *asset_pipeline_game_id(const char *game_subdir) {
     if (!game_subdir) return NULL;
     if (strcmp(game_subdir, "dm1") == 0 ||
@@ -108,19 +94,13 @@ int fs_assets_load_game(FS_AssetBundle *bundle, const char *data_dir, const char
         return 0;
     }
 
-    /* Legacy fallback for old tests and custom development folders that are
-     * not in the hash catalog. Normal DM1/CSB/DM2 launch data is resolved by
-     * M12_AssetStatus above, independent of filenames or layout. */
-    if (try_load_dat(data_dir, game_subdir, "GRAPHICS.DAT", &bundle->graphics_data, &bundle->graphics_size) < 0) {
-        try_load_dat(data_dir, game_subdir, "graphics.dat", &bundle->graphics_data, &bundle->graphics_size);
-    }
-
-    if (try_load_dat(data_dir, game_subdir, "DUNGEON.DAT", &bundle->dungeon_data, &bundle->dungeon_size) < 0) {
-        try_load_dat(data_dir, game_subdir, "dungeon.dat", &bundle->dungeon_data, &bundle->dungeon_size);
-    }
-
-    bundle->loaded = (bundle->graphics_data != NULL);
-    return bundle->loaded ? 0 : -1;
+    /* Game data is always source-identified by hash.  A file merely named
+     * GRAPHICS.DAT or DUNGEON.DAT can be a different port, a corrupt dump,
+     * or a test fixture; accepting it here used to turn such bytes into a
+     * plausible-looking synthetic runtime.  M12 already supports arbitrary
+     * layouts and archive materialization, so there is no production reason
+     * to retain filename-only admission. */
+    return -1;
 }
 
 int fs_assets_load_dm1(FS_AssetBundle *bundle, const char *data_dir) {
@@ -179,20 +159,6 @@ void fs_assets_expand_vga_palette(const uint8_t *vga_6bit, uint32_t *rgba_out, i
 
 
 
-static const char *g_dungeon_dat_names[FS_ASSET_LANG_COUNT] = {
-    "DUNGEON.DAT",   /* English */
-    "DUNGEONF.DAT",  /* French */
-    "DUNGEONG.DAT",  /* German */
-    "DUNGEON.DAT",   /* Swedish (uses EN dungeon + SV runtime strings) */
-};
-
-static const char *g_dungeon_dat_names_lower[FS_ASSET_LANG_COUNT] = {
-    "dungeon.dat",
-    "dungeonf.dat",
-    "dungeong.dat",
-    "dungeon.dat",   /* Swedish: EN dungeon data */
-};
-
 static const char *fs_assets_dm1_multilang_dungeon_hash(FS_AssetLanguage lang) {
     switch (lang) {
         case FS_ASSET_LANG_FR:
@@ -210,7 +176,6 @@ int fs_assets_load_dm1_multilang(FS_AssetBundle *bundle,
     const char *data_dir, FS_AssetLanguage lang)
 {
     char path[512];
-    const char *dat_name;
     if (!bundle || !data_dir) return -1;
     if (lang < 0 || lang >= FS_ASSET_LANG_COUNT) lang = FS_ASSET_LANG_EN;
 
@@ -238,35 +203,11 @@ int fs_assets_load_dm1_multilang(FS_AssetBundle *bundle,
         bundle->graphics_size = 0;
     }
 
-    /* GRAPHICS.DAT is shared across all languages */
-    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", data_dir);
-    if (load_file(path, &bundle->graphics_data, &bundle->graphics_size) < 0) {
-        snprintf(path, sizeof(path), "%s/graphics.dat", data_dir);
-        if (load_file(path, &bundle->graphics_data, &bundle->graphics_size) < 0)
-            return -1;
-    }
-
-    /* Load language-specific DUNGEON.DAT */
-    dat_name = g_dungeon_dat_names[lang];
-    snprintf(path, sizeof(path), "%s/%s", data_dir, dat_name);
-    if (load_file(path, &bundle->dungeon_data, &bundle->dungeon_size) < 0) {
-        /* Try lowercase */
-        dat_name = g_dungeon_dat_names_lower[lang];
-        snprintf(path, sizeof(path), "%s/%s", data_dir, dat_name);
-        if (load_file(path, &bundle->dungeon_data, &bundle->dungeon_size) < 0) {
-            /* Fall back to English */
-            if (lang != FS_ASSET_LANG_EN) {
-                printf("Firestaff: %s not found, falling back to English\\n", dat_name);
-                return fs_assets_load_dm1_multilang(bundle, data_dir, FS_ASSET_LANG_EN);
-            }
-            return -1;
-        }
-    }
-
-    bundle->loaded = 1;
-    printf("Firestaff: loaded %s + %s\\n",
-        "GRAPHICS.DAT", g_dungeon_dat_names[lang]);
-    return 0;
+    /* Do not fall through to filename-based language media.  The two hash
+     * lookups above cover renamed loose files and supported containers; a
+     * missing exact-language pair must be reported rather than silently
+     * borrowing an English or unrelated data file. */
+    return -1;
 }
 
 /* Map Firestaff UI language to asset language */

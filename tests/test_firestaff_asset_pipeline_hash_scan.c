@@ -122,6 +122,36 @@ static void check_loaded_game(const char* root,
     fs_assets_free(&bundle);
 }
 
+static void check_named_unverified_pair_is_rejected(const char* root) {
+    char dir[FSP_PATH_MAX];
+    char graphics[FSP_PATH_MAX];
+    char dungeon[FSP_PATH_MAX];
+    FS_AssetBundle bundle;
+
+    check_int(FSP_JoinPath(dir, sizeof(dir), root, "dm1-named-invalid") &&
+              FSP_CreateDirectoryRecursive(dir) &&
+              FSP_JoinPath(graphics, sizeof(graphics), dir, "GRAPHICS.DAT") &&
+              FSP_JoinPath(dungeon, sizeof(dungeon), dir, "DUNGEON.DAT") &&
+              write_payload(graphics, "not original graphics") &&
+              write_payload(dungeon, "not original dungeon"),
+              "named unverified DM1 pair written");
+    memset(&bundle, 0, sizeof(bundle));
+    check_int(fs_assets_load_game(&bundle, dir, "dm1") != 0,
+              "filename-only DM1 pair is rejected");
+    check_int(bundle.loaded == 0 && bundle.graphics_data == NULL &&
+              bundle.dungeon_data == NULL,
+              "rejected pair leaves no synthetic asset bundle");
+    fs_assets_free(&bundle);
+
+    memset(&bundle, 0, sizeof(bundle));
+    check_int(fs_assets_load_dm1_multilang(&bundle, dir, FS_ASSET_LANG_EN) != 0,
+              "filename-only multilingual DM1 pair is rejected");
+    check_int(bundle.loaded == 0 && bundle.graphics_data == NULL &&
+              bundle.dungeon_data == NULL,
+              "rejected multilingual pair leaves no synthetic asset bundle");
+    fs_assets_free(&bundle);
+}
+
 static void check_optional_real_multilang_renamed_hash(const char* root,
                                                        const char* originalHome) {
     char graphicsSrc[FSP_PATH_MAX];
@@ -233,6 +263,11 @@ int main(void) {
     M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetDm2SyntheticHashes(dm2GraphicsMd5, dm2DungeonMd5);
     check_loaded_game(root, "dm2", "dm2 graphics bytes", "dm2 dungeon bytes");
+
+    M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
+    M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);
+    M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
+    check_named_unverified_pair_is_rejected(root);
 
     check_optional_real_multilang_renamed_hash(root, originalHome);
 

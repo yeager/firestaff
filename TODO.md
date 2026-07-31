@@ -7,6 +7,11 @@
   exists. Asset admission must likewise use verified hashes, never filename
   guesses. Each remaining renderer is to bind the real format or present no
   game pixel; test fixtures remain explicitly isolated from production paths.
+  **2026-07-31 update:** the legacy generic and multilingual asset pipelines
+  plus M11's builtin dungeon resolver no longer accept filename-only
+  `GRAPHICS.DAT`/`DUNGEON.DAT` candidates. Renamed and archived data remains
+  supported through the shared hash scanner. The remaining work is limited to
+  format-specific decode gaps listed per game, not generic substitute loading.
 
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing

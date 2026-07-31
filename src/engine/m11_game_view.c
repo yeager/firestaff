@@ -8656,30 +8656,9 @@ static int m11_resolve_builtin_dungeon_path(char* out,
             }
         }
     }
-    /* Legacy fallback for synthetic/custom development folders not in the
-     * hash catalog. Normal shipped game data must be found by hash above. */
-    {
-        char subpath[1024];
-        const char *subdir = NULL;
-        const char *filename = "DUNGEON.DAT";
-        if (strcmp(gameId, "dm1") == 0) subdir = "dm1";
-        else if (strcmp(gameId, "csb") == 0) subdir = "csb";
-        else if (strcmp(gameId, "dm2") == 0) subdir = "dm2";
-        else if (strcmp(gameId, "nexus") == 0) { subdir = "nexus"; filename = "DM.BIN"; }
-
-        if (subdir) {
-            FILE *test;
-            snprintf(subpath, sizeof(subpath), "%s/%s", subdir, filename);
-            if (FSP_JoinPath(out, outSize, dataDir, subpath)) {
-                test = fopen(out, "rb");
-                if (test) { fclose(test); return 1; }
-            }
-        }
-        if (FSP_JoinPath(out, outSize, dataDir, filename)) {
-            FILE *test = fopen(out, "rb");
-            if (test) { fclose(test); return 1; }
-        }
-    }
+    /* Never admit a dungeon by filename alone.  The hash scanner above
+     * supports renamed files and containers, while a loose DUNGEON.DAT may
+     * belong to another release or be incomplete data. */
     return 0;
 }
 
