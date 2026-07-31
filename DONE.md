@@ -46590,3 +46590,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   SAL/MAP- och CD-spår förblir källbundna, men codec/driver och uppspelning
   markeras fortsatt som blockerade. Verifiering:
   `test_nexus_v1_sound_runtime_receipt` passerar.
+- ✅ 2026-07-31 Theron uppstart-seed: startup-receipt kopplar nu boot-
+  sammanfattningens dungeon-seed till den verifierade initiala Track 02-
+  levelheadern (`0x0108e938`) i stället för att lämna no-header-värdet `0`.
+  Real-asset-proben verifierar seed, roster och startup-handoff.

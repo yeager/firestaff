@@ -905,6 +905,12 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
             receipt->initial_candidate_height =
                 (uint32_t)initial_handoff.header_height;
             receipt->initial_candidate_seed = initial_handoff.header_seed;
+            /* The initial level header is the first verified dungeon
+             * seed available on the real Track 02 startup path.  Keep the
+             * boot receipt bound to that source-owned value instead of
+             * leaving the profile's no-header zero in the startup summary. */
+            profile.deterministic.dungeon_seed = initial_handoff.header_seed;
+            receipt->boot_profile_dungeon_seed = initial_handoff.header_seed;
             receipt->initial_candidate_level_index =
                 (uint32_t)initial_handoff.header_level_index;
             receipt->initial_candidate_start_x = initial_level.start_x;
