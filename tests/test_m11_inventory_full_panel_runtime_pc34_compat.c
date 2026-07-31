@@ -3056,6 +3056,23 @@ static void test_eye_panel_champion_stats_and_skills(void) {
                           (panelX + DM1_STATISTIC_NAME_REL_X + 1)],
               DM1_COLOR_LIGHTEST_GRAY,
               "drawn statistic name pixel is source gray");
+
+    /* PANEL.C F0351:2026-2029 skips the base level before it formats a
+     * skill.  Default party skills therefore leave the skill area clear,
+     * rather than filling the panel with four NOVICE rows. */
+    champ->skillLevels[CHAMPION_SKILL_FIGHTER] = 1;
+    champ->skillLevels[CHAMPION_SKILL_NINJA] = 1;
+    champ->skillLevels[CHAMPION_SKILL_PRIEST] = 1;
+    champ->skillLevels[CHAMPION_SKILL_WIZARD] = 1;
+    ASSERT_EQ(M11_GameView_HandlePointer(&state, 12 + 8, 33 + 13 + 8, 1),
+              M11_GAME_INPUT_REDRAW,
+              "second empty-hand eye click refreshes the source stats panel");
+    ASSERT_TRUE(strstr(state.inspectDetail, "FTR 1") == NULL &&
+                strstr(state.inspectDetail, "NIN 1") == NULL &&
+                strstr(state.inspectDetail, "PRI 1") == NULL &&
+                strstr(state.inspectDetail, "WIZ 1") == NULL &&
+                strstr(state.inspectDetail, "NOVICE") == NULL,
+                "F0351 omits default-level skill rows");
     M11_AssetLoader_Shutdown(&state.assetLoader);
 }
 

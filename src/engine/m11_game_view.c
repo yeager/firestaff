@@ -41624,6 +41624,10 @@ static void m11_format_v1_champion_stats_panel_pc34(
     for (i = 0; i < CHAMPION_SKILL_COUNT; ++i) {
         const unsigned int level = (unsigned int)champ->skillLevels[i];
         const char* levelName = m11_dm1_v1_skill_level_name_pc34(level);
+        /* PANEL.C F0351:2026-2029 deliberately omits the base level.
+         * A level of one is the untrained/default state, not a visible
+         * "NOVICE" line. */
+        if (level == 1U) continue;
         m11_appendf_pc34(out, outSize, "  %s %u", skillAbbrev[i], level);
         if (levelName) {
             m11_appendf_pc34(out, outSize, " %s %s", levelName, skillNames[i]);
@@ -41778,7 +41782,10 @@ static int m11_draw_v1_inventory_champion_stats_panel(
         unsigned int level = (unsigned int)champ->skillLevels[i];
         const char* levelName = m11_dm1_v1_skill_level_name_pc34(level);
         char line[32];
-        if (!levelName) continue;
+        /* ReDMCSB PANEL.C F0351:2026-2029 skips base level one before
+         * resolving the rank name.  Rendering NOVICE for every untrained
+         * skill filled the panel and did not match the original UI. */
+        if (level == 1U || !levelName) continue;
         snprintf(line, sizeof(line), "%s %s", levelName, skillNames[i]);
         m11_draw_v1_m653_text_top(g_activeOriginalFont, framebuffer,
                                   framebufferWidth, framebufferHeight,

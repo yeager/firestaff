@@ -44821,3 +44821,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   ReDMCSB `PANEL.C F0351` C557/C559 layout inside the original 144-pixel
   panel. Verification: `m11_inventory_full_panel_runtime_source_lock` passes
   and explicitly rejects dialog-overlay activation for this route.
+- ✅ 2026-07-31 DM1 F0351 base-skill visibility: the original skips a skill
+  whose computed level is one before looking up `G0428_apc_SkillLevelNames`.
+  Firestaff now does the same for both the rendered C101 panel and its
+  inspection state, so untrained champions no longer fill the panel with
+  `NOVICE` rows. Verification: the source-panel runtime test exercises all
+  four level-one skills and confirms that no base-skill row is published.
