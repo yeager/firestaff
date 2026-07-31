@@ -46521,3 +46521,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   dungeon singleton and cannot bind M11's HUD or viewport. Verified with
   `test_csb_v1_boot_viewport_render_gate`, `test_csb_v1_boot_profile_smoke`
   and `test_csb_v1_boot_runtime_handoff`.
+- ✅ 2026-07-31 Nexus trapp-/trappstegslänk: oregistrerade trappor återanvänder
+  inte längre koordinater eller antyder en implicit angränsande nivå.
+  `nexus_stairs_resolve()` returnerar explicit unresolved-sentineller tills en
+  källbunden länk registrerats; registrerade länkar är oförändrade.
+  Verifiering: C11-check för både unresolved och registrerad länk.

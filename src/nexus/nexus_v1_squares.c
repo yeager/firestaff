@@ -329,9 +329,12 @@ int nexus_stairs_resolve(int x, int y, int *out_target_level, int *out_target_x,
             return 0;
         }
     }
-    /* Fallback: same coords, +1/-1 level */
-    if (out_target_x) *out_target_x = x;
-    if (out_target_y) *out_target_y = y;
+    /* An unregistered stair has no source-owned destination. Do not invent
+     * an adjacent level or reuse the source coordinates as a fake link. */
+    if (out_target_level) *out_target_level = -1;
+    if (out_target_x) *out_target_x = -1;
+    if (out_target_y) *out_target_y = -1;
+    if (out_target_dir) *out_target_dir = -1;
     return -1;
 }
 
