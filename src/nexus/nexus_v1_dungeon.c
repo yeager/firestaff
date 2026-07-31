@@ -1498,11 +1498,15 @@ static int nexus_v1_level_copy_structure2_textures(Nexus_V1_Level *level,
                     else { proven = 0; break; }
                     if (image_bytes == 0U ||
                         tex->image_relative_offset < (uint32_t)opaque_offset ||
-                        tex->image_relative_offset + image_bytes > structure2_useful)
+                        tex->image_relative_offset > structure2_useful ||
+                        image_bytes > structure2_useful -
+                            tex->image_relative_offset)
                     { proven = 0; break; }
                     if (tex->palette_relative_offset != 0U &&
                         (tex->palette_relative_offset < (uint32_t)opaque_offset ||
-                         tex->palette_relative_offset + 32U > structure2_useful))
+                         tex->palette_relative_offset > structure2_useful ||
+                         32U > structure2_useful -
+                            tex->palette_relative_offset))
                     { proven = 0; break; }
                 }
                 level->structure2_payload.material_or_image_data_proven = proven;

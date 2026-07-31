@@ -47759,3 +47759,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   remaining Structure2 0008 payload-envelope and special-floor material checks
   now use the same ceil-half-byte rule as the DMWeb decoder. Verification:
   real ITEM.IBS decoder and `test_nexus_v1_dgn_geometry_readiness` pass.
+- ✅ 2026-07-31 Nexus Structure2 payload bounds hardening: image and palette
+  range checks now use subtraction-based limits, preventing offset-addition
+  overflow before a descriptor can be admitted. Verification: real ITEM.IBS
+  decode and DGN geometry readiness pass.
