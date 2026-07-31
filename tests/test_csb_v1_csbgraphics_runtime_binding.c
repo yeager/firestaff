@@ -542,13 +542,15 @@ static void test_fallbacks_are_explicit(void)
     uint8_t pixels[32 * 32];
     uint8_t framebuffer[CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W *
                         CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H];
+    uint8_t framebuffer_before[CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W *
+                               CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H];
     CSB_V1_CSBGraphicsEntrySpan span = span_for(40u);
     CSB_V1_CSBGraphicsDecodedBitmap decoded =
         decoded_for(40u, 32u, 32u, 15u, pixels, sizeof(pixels));
     CSB_V1_CSBGraphicsRuntimeBinding binding;
 
     memset(pixels, 7, sizeof(pixels));
-    memset(framebuffer, 0, sizeof(framebuffer));
+    memset(framebuffer, 0x5au, sizeof(framebuffer));
 
     check_int("missing.out",
               csb_v1_csbgraphics_runtime_prepare_binding(&span, &decoded, NULL),
@@ -601,21 +603,32 @@ static void test_fallbacks_are_explicit(void)
               csb_v1_csbgraphics_runtime_prepare_binding(&span, &decoded, &binding),
               1, "unsupported route stays fallback");
     check_str("unsupported.reason", binding.reason, "unsupported-entry-route");
+    memcpy(framebuffer_before, framebuffer, sizeof(framebuffer));
     check_int("fallback.apply.rejected",
               csb_v1_csbgraphics_runtime_apply_binding(
                   &binding, &decoded, framebuffer,
                   CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W,
                   CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H,
-                  CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W),
+              CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W),
               0, "fallback bindings do not mutate runtime framebuffer");
+    /* ReDMCSB/CSBWin accepts no host substitute when ReadGraphic has no
+     * verified source route. Check the full page, not a single sentinel:
+     * an untrusted/unsupported CSBGRAPHICS entry must be strict no-draw. */
+    check_int("fallback.apply.framebuffer_unchanged",
+              memcmp(framebuffer, framebuffer_before, sizeof(framebuffer)), 0,
+              "fallback bindings preserve every source-page pixel");
+    memcpy(framebuffer_before, framebuffer, sizeof(framebuffer));
     check_int("fallback.prepare_apply.rejected",
               csb_v1_csbgraphics_runtime_prepare_and_apply(
                   &span, &decoded, framebuffer,
                   CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W,
                   CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_H,
-                  CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W,
-                  &binding),
+              CSB_V1_CSBGRAPHICS_RUNTIME_SOURCE_W,
+              &binding),
               0, "single-call handoff rejects fallback bindings");
+    check_int("fallback.prepare_apply.framebuffer_unchanged",
+              memcmp(framebuffer, framebuffer_before, sizeof(framebuffer)), 0,
+              "rejected handoff cannot create fallback pixels");
 }
 
 int main(void)

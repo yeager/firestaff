@@ -44576,3 +44576,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `M005_RANDOM(2)`/`M003_RANDOM(32)` stream. An absent or malformed source
   span is still strict no-draw. The focused CSB viewport regression passes
   2,658/2,658 and the full `firestaff` target builds.
+- ✅ 2026-07-31 CSBGRAPHICS rejected-override containment: the source-page
+  binding regression now snapshots all 320×200 indexed pixels before every
+  rejected override application and verifies byte-for-byte preservation after
+  both direct and combined prepare/apply calls. Empty, untrusted, malformed
+  and unsupported original entries therefore remain no-draw rather than
+  becoming generated HUD or viewport chrome. Source references: CSBWin
+  `Graphics.cpp` `ReadGraphicsIndex`/`LocateNthGraphic`/`ReadGraphic` and
+  ReDMCSB `PANEL.C F0346` / `PANEL.C F0347`. Verification:
+  `test_csb_v1_csbgraphics_runtime_binding` passes 83/83.

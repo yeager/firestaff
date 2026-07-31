@@ -287,7 +287,10 @@ diagnostic; it must not silently fall back to a generated visual.
   entrance-plan metadata no longer carries generated grey door
   fill or edge colours. ReDMCSB `ENTRANCE.C F0806` owns C002/C003, and a
   missing raster remains an admitted draw failure rather than a plan-level
-  substitute.
+  substitute. **2026-07-31 audit:** every rejected CSBGRAPHICS override now
+  has an explicit whole-frame no-draw regression; an empty, untrusted,
+  malformed or unsupported original entry cannot mutate the 320x200 source
+  page or become generated chrome.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
