@@ -726,6 +726,12 @@ diagnostic; it must not silently fall back to a generated visual.
   Verification: `test_dm1_v1_sound_pc34_compat_integration` (283/283) and
   `test_dm1_v1_swsh_psg_audio_pc34_compat` pass.
 
+- **DM1-ORIGINAL-REPLACE-009:** Closed 2026-07-31. Retired the unused V2
+  floor-item placeholder identity and synthetic rarity/glow helpers. The
+  remaining item metadata is source-contract only: no drawable fallback is
+  admitted before authentic PC34 material or a user-selected artpack asset is
+  available. Verification: `test_dm1_v2_item_render_pc34`.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

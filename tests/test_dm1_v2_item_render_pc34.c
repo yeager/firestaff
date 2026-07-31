@@ -54,7 +54,7 @@ static void test_item_surface_bindings(void) {
     CHECK(hand->surface == DM1_V2_ITEM_SURFACE_ACTION_HAND);
     CHECK(hand->supportsSubcellOffset == 0);
 
-    CHECK(strcmp(floor->assetId, "fs.v2.item.starter.floor-item-placeholder") == 0);
+    CHECK(strcmp(floor->assetId, "fs.v2.item.source-contract.floor-item") == 0);
     CHECK(floor->surface == DM1_V2_ITEM_SURFACE_FLOOR);
     CHECK(floor->drawLayer == DM1_V2_CELL_LAYER_FLOOR_ITEM);
     CHECK(floor->sourceCellOrdinal == 1);
@@ -65,7 +65,7 @@ static void test_manifest_and_source_evidence(void) {
     CHECK(strstr(dm1_v2_item_render_source_evidence(), "DUNVIEW.C") != NULL);
     CHECK(strstr(dm1_v2_item_render_source_evidence(), "F0115") != NULL);
     CHECK(file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "fs.v2.item.starter.empty-hand"));
-    CHECK(file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "fs.v2.item.starter.floor-item-placeholder"));
+    CHECK(file_contains("assets-v2/manifests/firestaff-v2-wave1-items-starter.manifest.json", "fs.v2.item.source-contract.floor-item"));
     CHECK(file_contains("assets-v2/items/wave1/specs/starter-icons.md", "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"));
     CHECK(file_contains("assets-v2/items/wave1/specs/starter-icons.md", "G0219"));
 }

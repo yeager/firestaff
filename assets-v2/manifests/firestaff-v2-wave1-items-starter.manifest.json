@@ -43,10 +43,10 @@
       ]
     },
     {
-      "id": "fs.v2.item.starter.floor-item-placeholder",
+      "id": "fs.v2.item.source-contract.floor-item",
       "family": "starter_item_icons",
-      "role": "floor item/object aspect placeholder",
-      "productionClass": "redraw-native",
+      "role": "floor item/object aspect source contract",
+      "productionClass": "source-contract-only",
       "sourceReference": {
         "origin": "ReDMCSB DUNVIEW.C F0115 object pass and G0219 floor-object coordinate sets",
         "originalSize": {
@@ -71,7 +71,7 @@
       },
       "status": "planned",
       "notes": [
-        "Manifest-only gate for V2 floor-item render binding; no V1 object/render behavior changes."
+        "No drawable fallback is admitted. Until an authenticated original source binding or a user-selected artpack asset is available, the runtime retains its existing source-backed V2.1 -> V2.0 -> V1 chain."
       ]
     }
   ]
