@@ -47206,3 +47206,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   records local, foreign-platform and unbound symbols before failing closed.
   It now compiles solely into its contract test, so M10 cannot treat source
   labels as a substitute for an authenticated CSB input or graphics route.
+
+- ✅ 2026-07-31 Theron SRM champion-name gate: real SRM body import no longer
+  substitutes `Theron` or `Companion` when a champion name field is empty. The
+  record is rejected until source name bytes are present.

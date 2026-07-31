@@ -685,10 +685,11 @@ static int import_body_record(Theron_V1_Champion *champion,
 
     copy_fixed_name(champion->name, record, 16u);
     if (champion->name[0] == '\0') {
-        const char *fallback = slot == THERON_CHAMPION_SLOT_THERON
-            ? "Theron"
-            : "Companion";
-        copy_fixed_name(champion->name, (const uint8_t *)fallback, strlen(fallback));
+        /* An empty source name is not evidence for a roster identity. Never
+         * synthesize Theron/Companion here; reject the body record until the
+         * original name bytes are present. */
+        (void)slot;
+        return 0;
     }
 
     champion->portrait_index = (uint8_t)slot;

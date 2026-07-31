@@ -50,6 +50,10 @@
   decoded progression or save record; unresolved later dungeon names remain
   `UNAVAILABLE`.
 
+- **THERON-SRM-CHAMPION-NAMES:** SRM body import now rejects an empty source
+  name instead of synthesizing `Theron`/`Companion`; valid real champion name
+  bytes are still required for party admission.
+
 - **THERON-CREATURE-COMBAT-REAL-DATA:** `theron_v1_compat.c` still contains
   inferred creature stats, attack values and drops. It is now excluded from
   the production archive; production symbols fail closed until Track 02
