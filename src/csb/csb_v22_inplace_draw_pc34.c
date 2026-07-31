@@ -37,9 +37,7 @@
 
 #include "csb_v22_inplace_draw_pc34.h"
 #include "csb_v22_inplace_route_pc34.h"
-#include "csb_v22_shape_cache_pc34.h"
 #include "csb_v22_modern_assets_pc34.h"
-#include "csb_v2_presentation_mode_pc34.h"
 #include "dm1_v2_asset_pipeline_pc34.h"
 #include "fs_portable_compat.h"
 
@@ -115,6 +113,7 @@ static void v22_discard_cache(void)
  * the bitmap cache lookup in csb_v22_inplace_get_cell_bitmap, treat
  * the returned pointer as a key, not as a temporary). The mirror is
  * process-singleton; the in-place draw is single-threaded. */
+#if 0 /* Removed generic 3x3 lookup: no source-command binding. */
 
 /* Lookup table from (depth 0..2, lateral -1..+1) to the
  * per-cell asset_id the route gate picked last. Used only to
@@ -151,6 +150,7 @@ static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
         return g_csb_v22_inplace_asset_mirror[depth][li];
     }
 }
+#endif
 
 /* ── Hash helpers ──────────────────────────────────────────────── */
 
@@ -302,8 +302,6 @@ int csb_v22_inplace_draw_init(void) {
 void csb_v22_inplace_draw_shutdown(void) {
     v22_discard_cache();
     g_v22_inplace_active = 0;
-    memset(g_csb_v22_inplace_asset_mirror_valid, 0,
-           sizeof(g_csb_v22_inplace_asset_mirror_valid));
     csb_v22_inplace_draw_clear_indexed_palette();
 }
 
@@ -328,6 +326,9 @@ void csb_v22_inplace_draw_clear_indexed_palette(void)
     memset(g_v22_palette_rgb6, 0, sizeof(g_v22_palette_rgb6));
 }
 
+/* These legacy generic-cell entry points deliberately remain uncompiled:
+ * V2.2 may only reach the cache through an admitted F0128 command. */
+#if 0
 const uint32_t* csb_v22_inplace_get_cell_bitmap(int depth, int lateral,
                                                  int* out_w, int* out_h) {
     if (out_w) *out_w = 0;
@@ -365,6 +366,7 @@ const uint32_t* csb_v22_inplace_get_cell_bitmap(int depth, int lateral,
 const char* csb_v22_inplace_get_cell_asset_id(int depth, int lateral) {
     return v22_inplace_get_cell_asset_id(depth, lateral);
 }
+#endif
 
 const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,
                                                   const char* asset_id,

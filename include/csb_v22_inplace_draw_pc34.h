@@ -63,21 +63,6 @@ int csb_v22_inplace_draw_set_indexed_palette_rgb6(
  * data-free tests; production CSB frames provide the live palette above. */
 void csb_v22_inplace_draw_clear_indexed_palette(void);
 
-/* Get a cached RGBA bitmap by a routing candidate. This is a lookup-only
- * helper: it does not admit a replacement or paint a cell. Sets *out_w and
- * *out_h to the bitmap dimensions. It returns NULL when the candidate has
- * no mapped asset, the cache is inactive, or its material remains unbound.
- *
- * The returned pointer is owned by the in-place cache and remains
- * valid until csb_v22_inplace_draw_shutdown(). */
-const uint32_t* csb_v22_inplace_get_cell_bitmap(int depth, int lateral,
-                                                 int* out_w, int* out_h);
-
-/* Lookup a route candidate's asset id. This is not a finished-art or F0128
- * admission decision; callers must use the command-level draw entry point.
- * The returned string is owned by the static mapping table. */
-const char* csb_v22_inplace_get_cell_asset_id(int depth, int lateral);
-
 /* Direct manifest category + asset_id lookup against the loaded RGBA cache.
  * Returns NULL if the in-place cache is inactive or the tuple is unknown. */
 const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,

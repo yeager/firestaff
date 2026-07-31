@@ -82,20 +82,6 @@ static void test_init_shutdown(void) {
     csb_v22_inplace_draw_shutdown();
 }
 
-static void test_get_cell_bitmap_no_cache(void) {
-    csb_v22_inplace_draw_shutdown();
-    int w = -1, h = -1;
-    const uint32_t* p = csb_v22_inplace_get_cell_bitmap(1, 0, &w, &h);
-    CHECK(p == NULL, "no cache -> bitmap NULL");
-    CHECK(w == 0 && h == 0, "no cache -> dims 0");
-}
-
-static void test_get_cell_asset_id_no_cache(void) {
-    csb_v22_inplace_draw_shutdown();
-    const char* aid = csb_v22_inplace_get_cell_asset_id(1, 0);
-    CHECK(aid == NULL, "no cache -> asset_id NULL");
-}
-
 static void test_source_evidence(void) {
     const char* ev = csb_v22_inplace_draw_source_evidence();
     CHECK(ev != NULL, "evidence non-null");
@@ -467,8 +453,6 @@ static void test_double_shutdown_safe(void) {
 
 int main(void) {
     test_init_shutdown();
-    test_get_cell_bitmap_no_cache();
-    test_get_cell_asset_id_no_cache();
     test_source_evidence();
     test_cache_load_path();
     test_cache_uses_configured_manifest_root();
