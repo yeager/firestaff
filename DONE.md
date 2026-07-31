@@ -46392,3 +46392,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   progression/save state cannot present guessed seeds as original data.
   Verification: `test_theron_v1_m11_direct_launch` passes; real US/JP Track 02
   probes bind the same initial seed at their verified raw offsets.
+# 2026-07-31 Nexus STABG retail-yta till startup-media
+
+- ✅ `nexus_ui_load_stabg()` materialiserar DMWeb:s verifierade första STMP-karta
+  från den riktiga `STABG.BIN`-filen som 320×168 indexyta och sparar filens 256
+  Saturn-paletteord samt deterministisk RGBA-expansion. Startup räknar därmed
+  ytan som laddad i stället för fallback; ingen host-palette eller syntetisk
+  HUD-grafik används. VDP1/VDP2-placering och runtime-state-bindning är fortsatt
+  blockerade tills de kan bevisas från Saturn-källan.
+  Källa: DMWeb `DecodeSTABGBIN` och lokal retail `STABG.BIN`.
+  Verifiering: `test_nexus_v1_startup_media_gate` mot
+  `/Users/bosse/.firestaff/data/nexus`.
