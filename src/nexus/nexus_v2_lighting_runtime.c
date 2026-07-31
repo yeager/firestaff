@@ -7,7 +7,8 @@
  * runtime. When V1 is the active presentation, the per-frame tick is
  * a no-op (V1 light state preserved).
  *
- * Source: Saturn NEXUS.BIN VDP1 polygon lighting / VDP2 shadow layer
+ * Saturn VDP1/VDP2 lighting receipt: not admitted; NEXUS.BIN is absent from
+ * the supplied European corpus. The runtime remains phase-gated.
  *         DMDF level data (per-tile light emission values)
  *         ReDMCSB LIGHT.C F0380 (light radius + flicker timing)
  *         ReDMCSB COMMAND.C F0209 (spell-light colour binding)
@@ -91,8 +92,7 @@ int nexus_v2_lighting_runtime_tick_count(void) {
 const char *nexus_v2_lighting_runtime_source_evidence(void) {
     return
         "Nexus V2 Lighting Runtime — Phase 4 source-lock\n"
-        "Source: Saturn NEXUS.BIN VDP1 polygon lighting\n"
-        "Source: Saturn NEXUS.BIN VDP2 shadow layer\n"
+        "Saturn NEXUS.BIN VDP1/VDP2 lighting receipt: absent from supplied corpus; not admitted\n"
         "Source: DMDF level data (per-tile light emission values, DGN format)\n"
         "Source: ReDMCSB LIGHT.C F0380 (light radius + flicker timing)\n"
         "Source: ReDMCSB COMMAND.C F0209 (spell-light colour binding)\n"

@@ -147,7 +147,7 @@ const char *nexus_v2_phase_gate_source_evidence(void)
         "COMMAND.C:2045-2155 F0380 input wait loop; "
         "MOVESENS.C:316-345 F0267 move-result side effects; "
         "NEXUS.C / NEXUS2.C (Saturn DM Nexus engine lifecycle); "
-        "NEXUS.BIN (Saturn game binary); "
+        "NEXUS.BIN (Saturn game binary) absent from supplied corpus; not admitted; "
         "HuC6260/HuC6270 VDC/VCE datasheet; "
         "THQUEST.ASM T400/T520/T560/T600/T700/T800/T900 (Theron's Quest parallels).";
 }

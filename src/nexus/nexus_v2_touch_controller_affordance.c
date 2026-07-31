@@ -5,7 +5,8 @@
  *
  * Source-lock anchors:
  *   DMDF/DGN level format — Nexus movement grid
- *   Saturn NEXUS.BIN input surface data
+ *   No authenticated Saturn NEXUS.BIN input-surface data is present in the
+ *   supplied corpus; controller labels therefore remain behavioral metadata.
  *   Saturn SDK joystick mapping (D-pad, analog sticks)
  *   DM1 CLIKMENU.C:224-233 arrow deltas / blocked movement
  *   DM1 CLIKMENU.C:237-255 F0325 stamina cost before movement
@@ -229,7 +230,7 @@ nexus_v2_touch_controller_affordance_source_evidence(void) {
     return
         "Nexus V2 Touch/Controller Affordance — Phase 6\n"
         "Source: DMDF/DGN level format — Nexus movement grid\n"
-        "Source: Saturn NEXUS.BIN input surface data\n"
+        "Saturn NEXUS.BIN input-surface data: absent from supplied corpus; not admitted\n"
         "Source: Saturn SDK joystick mapping (D-pad, analog sticks)\n"
         "Source: DM1 CLIKMENU.C:224-233 arrow deltas / blocked movement\n"
         "Source: DM1 CLIKMENU.C:237-255 F0325 stamina cost before movement\n"

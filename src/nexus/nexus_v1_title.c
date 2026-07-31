@@ -437,7 +437,9 @@ static void nexus_render_title_plan(const Nexus_TitleScreen *title,
     if (plan->kind == NEXUS_V1_TITLE_RENDER_PLAN_TITLE_ART) {
         /* Nexus boot presentation: keep the real TITLE.CG artwork, but make
          * startup title presentation frame-owned by Nexus title code until the
-         * original VDP1/VDP2 title program is decoded from NEXUS.BIN. */
+         * original VDP1/VDP2 title program is separately authenticated. The
+         * supplied corpus has no NEXUS.BIN, so TITLE.CG remains the only
+         * admitted title pixel source. */
         if (title && title->pixels && title->width > 0 && title->height > 0) {
             for (y = plan->reveal_y0;
                  y < plan->reveal_y1 && y < plan->copy_height &&

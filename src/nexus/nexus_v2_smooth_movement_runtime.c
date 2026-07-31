@@ -10,7 +10,8 @@
  * Source: ReDMCSB GROUP.C:1695-1770 (F0207 creature attack projectile payload)
  *         skproject/SKWIN/SkWinCore.cpp (ease-out cubic / ease-in-out cubic)
  *         ReDMCSB GAMELOOP.C:47-50 (V1 tick cadence 55ms)
- *         Saturn NEXUS.BIN (Saturn-specific interpolation timing)
+ *         Saturn-specific interpolation timing: not admitted; supplied
+ *         corpus contains no NEXUS.BIN timing receipt
  */
 
 #include "nexus_v2_smooth_movement_runtime.h"
@@ -116,7 +117,7 @@ const char *nexus_v2_smooth_movement_runtime_source_evidence(void) {
         "Source: ReDMCSB GROUP.C:1695-1770 (F0207 creature attack)\n"
         "Source: skproject/SKWIN/SkWinCore.cpp (ease-out/in-out cubic)\n"
         "Source: ReDMCSB GAMELOOP.C:47-50 (V1 tick cadence 55ms)\n"
-        "Source: Saturn NEXUS.BIN (Saturn-specific interpolation timing)\n"
+        "Saturn NEXUS.BIN interpolation timing: absent from supplied corpus; not admitted\n"
         "Source: dm2_v2_smooth_movement_runtime.c (sibling DM2 V2 wire-up pattern)\n"
         "V1 invariant: smooth tick is no-op when V1 is active\n"
         "V2 invariant: walk/turn/stairs triggers only when V2 enabled\n"
