@@ -628,6 +628,11 @@ diagnostic; it must not silently fall back to a generated visual.
   The MAP.D/DB0 selector is now separately source-locked and fail-closed;
   the remaining work is to invoke it from each live F0111 route rather than
   use a fixed door-set array.
+  2026-07-31 follow-up: production boot now materializes ReDMCSB F0172
+  aspects from the live PC3.4 byte map for the current party direction. This
+  retains door side/front, stairs side/front + up and open-pit invisibility
+  bits through F0128; it still does not attach the selected decoded door
+  span and palette to the subsequent F0111 command.
   The CSBgraphics custom-background pass now follows the same rule: a real
   GRAPHICS.DAT session ignores caller-supplied test masks and decodes the
   selected CSBWin BACKGROUND_MASK, otherwise it applies no layer.

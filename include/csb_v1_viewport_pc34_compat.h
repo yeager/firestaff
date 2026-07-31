@@ -527,6 +527,11 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     /* Dungeon data for rendering decisions.
      * When viewport_pixels is NULL, render calls are no-ops. */
     const uint8_t *dungeon_grid;
+    /* F0172 derives direction-sensitive element aspects and flags from the
+     * source byte map immediately before DUNVIEW.C F0128. */
+    const uint8_t *dungeon_aspect_grid;
+    const uint8_t *dungeon_stairs_up_grid;
+    const uint8_t *dungeon_pit_invisible_grid;
     int dungeon_width;
     int dungeon_height;
 
@@ -1399,6 +1404,17 @@ int csb_v1_viewport_build_dungeon_grid(
     const CSB_V1_DungeonData *dungeon,
     int level,
     uint8_t out_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE]);
+
+/* Materialize the F0172 aspects needed by F0128 from a real PC 3.4 byte
+ * map.  Door/stairs side-vs-front and stairs/pit flags must retain the raw
+ * bit 3/2 state; callers must not infer them from the reduced type grid. */
+int csb_v1_viewport_build_dungeon_aspect_grids_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int direction,
+    uint8_t out_aspect_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE],
+    uint8_t out_stairs_up_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE],
+    uint8_t out_pit_invisible_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE]);
 
 /* Bind one M11 viewport config to a live, loader-owned CSB dungeon grid.
  * A missing or invalid dungeon clears the grid binding and rejects the

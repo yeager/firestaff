@@ -4086,6 +4086,62 @@ static void test_csb_d3l2_d3r2_thing_pass_route_binding_contracts(void)
     }
 }
 
+static void test_live_f0172_aspect_materialization(void)
+{
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[4 * 3];
+    uint8_t aspects[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE];
+    uint8_t stairs_up[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE];
+    uint8_t pit_invisible[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE];
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(raw, 0, sizeof(raw));
+    dungeon.level_count = 1;
+    dungeon.level_widths[0] = 4;
+    dungeon.level_heights[0] = 3;
+    dungeon.square_bytes = 1;
+    dungeon.raw_data = raw;
+    dungeon.raw_size = (int)sizeof(raw);
+
+    /* PC 3.4 byte-map cells, stored column-major by F0151. */
+    raw[1 * 3 + 1] = (uint8_t)((4u << 5) | 0x08u); /* north/south door */
+    raw[2 * 3 + 1] = (uint8_t)((3u << 5) | 0x0cu); /* north/south stairs up */
+    raw[3 * 3 + 1] = (uint8_t)((2u << 5) | 0x0cu); /* open, invisible pit */
+    raw[0 * 3 + 2] = (uint8_t)(2u << 5);            /* closed pit */
+
+    check_int("csb.f0172.live_aspects.east",
+              csb_v1_viewport_build_dungeon_aspect_grids_pc34(
+                  &dungeon, 0, 1, aspects, stairs_up, pit_invisible), 1);
+    check_int("csb.f0172.live_aspects.door_side",
+              aspects[1 * 32 + 1], 16);
+    check_int("csb.f0172.live_aspects.stairs_side",
+              aspects[1 * 32 + 2], 18);
+    check_int("csb.f0172.live_aspects.stairs_up",
+              stairs_up[1 * 32 + 2], 1);
+    check_int("csb.f0172.live_aspects.open_pit",
+              aspects[1 * 32 + 3], 2);
+    check_int("csb.f0172.live_aspects.invisible_pit",
+              pit_invisible[1 * 32 + 3], 1);
+    check_int("csb.f0172.live_aspects.closed_pit_corridor",
+              aspects[2 * 32], 1);
+    check_int("csb.f0172.live_aspects.north",
+              csb_v1_viewport_build_dungeon_aspect_grids_pc34(
+                  &dungeon, 0, 0, aspects, stairs_up, pit_invisible), 1);
+    check_int("csb.f0172.live_aspects.door_front",
+              aspects[1 * 32 + 1], 17);
+    check_int("csb.f0172.live_aspects.stairs_front",
+              aspects[1 * 32 + 2], 19);
+
+    dungeon.square_bytes = 2;
+    raw[0] = 6;
+    raw[1] = 0;
+    memset(aspects, 0x55, sizeof(aspects));
+    check_int("csb.f0172.live_aspects.fixture_grid_compat",
+              csb_v1_viewport_build_dungeon_aspect_grids_pc34(
+                  &dungeon, 0, 0, aspects, stairs_up, pit_invisible), 1);
+    check_int("csb.f0172.live_aspects.fixture_grid_unextended", aspects[0], 6);
+}
+
 static void test_source_evidence(void)
 {
     const char *e = csb_v1_viewport_source_evidence();
@@ -4180,6 +4236,7 @@ int main(void)
     test_csb_f0115_projectile_blit_contracts();
     test_csb_creature_visibility_zone_contracts();
     test_csb_runtime_overlay_placement_contracts();
+    test_live_f0172_aspect_materialization();
     test_csb_runtime_thing_pass_render_config();
     test_csb_d3l2_d3r2_thing_pass_route_binding_contracts();
     test_csb_f0115_explosion_blit_contracts();

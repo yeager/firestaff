@@ -6,6 +6,14 @@
   attack, or resolve spells. Verification:
   `test_dm2_v1_creature_gdat_ai_table` passes 6/6.
 
+- ✅ 2026-07-31 CSB live F0172 aspect binding: the M11 boot viewport now
+  preserves the source PC3.4 byte-map orientation and state flags until
+  F0128. ReDMCSB `DUNGEON.C F0172` determines real doors and stairs as
+  side/front from bit 3 and party direction; bit 2 now also supplies stairs-up
+  and open-pit invisibility. The focused CSB viewport test passes 2 671/2 671
+  checks, including real byte-map aspect cases, and the PC3.4 F0128 front-wall
+  projection test passes 82/82.
+
 - ✅ 2026-07-31 DM2 V2.2 availability closure: a disk-resolvable modern
   manifest can no longer set the V2.2 installed flag or select `V2_MODERN`.
   The launcher/status path now falls through to V2.1/V2.0 just like the M11

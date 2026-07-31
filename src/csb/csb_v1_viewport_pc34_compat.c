@@ -4359,6 +4359,9 @@ void csb_v1_viewport_init(CSB_V1_ViewportConfig *cfg) {
     cfg->viewport_pixels = NULL;
     cfg->viewport_stride = 320;
     cfg->dungeon_grid = NULL;
+    cfg->dungeon_aspect_grid = NULL;
+    cfg->dungeon_stairs_up_grid = NULL;
+    cfg->dungeon_pit_invisible_grid = NULL;
     cfg->dungeon_width = 0;
     cfg->dungeon_height = 0;
     cfg->custom_background_loaded_level = -1;
@@ -4790,6 +4793,77 @@ int csb_v1_viewport_build_dungeon_grid(
     return 1;
 }
 
+int csb_v1_viewport_build_dungeon_aspect_grids_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int direction,
+    uint8_t out_aspect_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE],
+    uint8_t out_stairs_up_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE],
+    uint8_t out_pit_invisible_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE])
+{
+    int width;
+    int height;
+    int max_w;
+    int max_h;
+    int x;
+    int y;
+
+    if (!out_aspect_grid || !out_stairs_up_grid || !out_pit_invisible_grid) {
+        return 0;
+    }
+    memset(out_aspect_grid, 0,
+           CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE);
+    memset(out_stairs_up_grid, 0,
+           CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE);
+    memset(out_pit_invisible_grid, 0,
+           CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE);
+    if (!dungeon || !dungeon->raw_data || dungeon->level_count <= 0) {
+        return 0;
+    }
+    if (level < 0 || level >= dungeon->level_count) {
+        level = 0;
+    }
+    width = dungeon->level_widths[level];
+    height = dungeon->level_heights[level];
+    if (width <= 0 || height <= 0) {
+        return 0;
+    }
+    max_w = width < CSB_V1_MAX_SQUARE_SIZE ? width : CSB_V1_MAX_SQUARE_SIZE;
+    max_h = height < CSB_V1_MAX_SQUARE_SIZE ? height : CSB_V1_MAX_SQUARE_SIZE;
+
+    /* ReDMCSB DUNGEON.C F0172 lines 2628-2648 and 2693-2707.  The PC 3.4
+     * dungeon map is byte-based: bits 3/2 are orientation/open/up flags and
+     * direction bit 0 is M016_IS_ORIENTED_WEST_EAST(direction). */
+    for (y = 0; y < max_h; ++y) {
+        for (x = 0; x < max_w; ++x) {
+            const size_t cell = (size_t)y * CSB_V1_MAX_SQUARE_SIZE + (size_t)x;
+            const int raw = csb_v1_dungeon_get_raw_square(dungeon, level, x, y);
+            const int type = raw < 0 ? 0 :
+                csb_v1_dungeon_get_square_type(dungeon, level, x, y);
+
+            out_aspect_grid[cell] = (uint8_t)type;
+            if (raw < 0 || dungeon->square_bytes != 1) {
+                continue;
+            }
+            if (type == 2) {
+                if ((raw & 0x08) == 0) {
+                    out_aspect_grid[cell] = 1; /* closed pit becomes corridor */
+                } else {
+                    out_pit_invisible_grid[cell] = (raw & 0x04) != 0;
+                }
+            } else if (type == 3) {
+                out_aspect_grid[cell] =
+                    (((raw >> 3) & 1) == (direction & 1)) ? 18 : 19;
+                out_stairs_up_grid[cell] = (raw & 0x04) != 0;
+            } else if (type == 4) {
+                out_aspect_grid[cell] =
+                    (((raw >> 3) & 1) == (direction & 1)) ? 16 : 17;
+            }
+        }
+    }
+    return 1;
+}
+
 int csb_v1_viewport_bind_live_dungeon_grid(
     CSB_V1_ViewportConfig *cfg,
     const CSB_V1_DungeonData *dungeon,
@@ -5162,6 +5236,9 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
      *
      * Source: ReDMCSB DUNVIEW.C:6226-6353 F0676/F0677; 6837-6896 F0678/F0679 */
     vp.dungeon_grid   = cfg->dungeon_grid;
+    vp.dungeon_aspect_grid = cfg->dungeon_aspect_grid;
+    vp.dungeon_stairs_up_grid = cfg->dungeon_stairs_up_grid;
+    vp.dungeon_pit_invisible_grid = cfg->dungeon_pit_invisible_grid;
     vp.dungeon_width  = cfg->dungeon_width;
     vp.dungeon_height = cfg->dungeon_height;
 

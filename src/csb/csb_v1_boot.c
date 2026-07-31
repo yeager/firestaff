@@ -1599,6 +1599,9 @@ int csb_v1_boot_render_viewport_frame_pc34(
     CSB_V1_BootProfile *profile = (CSB_V1_BootProfile *)boot_profile;
     CSB_V1_ViewportConfig cfg;
     uint8_t dungeon_grid[32 * 32];
+    uint8_t dungeon_aspect_grid[32 * 32];
+    uint8_t dungeon_stairs_up_grid[32 * 32];
+    uint8_t dungeon_pit_invisible_grid[32 * 32];
     uint8_t custom_background_cell_skins[32 * 32];
 
     if (out_counts) {
@@ -1626,6 +1629,16 @@ int csb_v1_boot_render_viewport_frame_pc34(
             profile->runtime.current_level, dungeon_grid)) {
         return 0;
     }
+    if (!csb_v1_viewport_build_dungeon_aspect_grids_pc34(
+            profile->runtime.dungeon_handle,
+            profile->runtime.current_level, profile->runtime.party_dir,
+            dungeon_aspect_grid, dungeon_stairs_up_grid,
+            dungeon_pit_invisible_grid)) {
+        return 0;
+    }
+    cfg.dungeon_aspect_grid = dungeon_aspect_grid;
+    cfg.dungeon_stairs_up_grid = dungeon_stairs_up_grid;
+    cfg.dungeon_pit_invisible_grid = dungeon_pit_invisible_grid;
     /* F0094/F0095 load the current MAP.C FloorSet/WallSet before F0128.
      * A fixed zero here makes every later level borrow Prison's surfaces. */
     if (profile->runtime.current_level < 0 ||
