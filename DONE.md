@@ -44595,6 +44595,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   entry now rejects and discards the entire package. The loader validates
   nonzero dimensions, the exact `width * height * 4` RGBA size and bounded,
   non-wrapping offsets beyond the entry table before exposing any bitmap.
-  This keeps malformed material from becoming V2.2 pixels; the unresolved
+  It also rejects duplicate asset keys and overlapping RGBA spans, matching
+  Artpack Studio's one-key/one-contiguous-span package writer. This keeps
+  malformed or ambiguous material from becoming V2.2 pixels; the unresolved
   F0128 material routes remain fail-closed. Verification:
-  `test_csb_v22_inplace_draw_pc34` passes 58/58.
+  `test_csb_v22_inplace_draw_pc34` passes 66/66.

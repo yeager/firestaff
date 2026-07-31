@@ -239,6 +239,22 @@ static int v22_load_cache_file(const char* path) {
             (size_t)e.rgba_offset < data_off ||
             (size_t)e.rgba_offset > g_v22_cache_size ||
             (size_t)e.rgba_size > g_v22_cache_size - (size_t)e.rgba_offset) goto reject;
+        for (int previous = 0; previous < g_v22_bitmap_count; ++previous) {
+            const FsV22CacheEntry *old = &g_v22_bitmaps[previous].entry;
+            const size_t old_offset = (size_t)old->rgba_offset;
+            const size_t old_size = (size_t)old->rgba_size;
+            const size_t new_offset = (size_t)e.rgba_offset;
+            const size_t new_size = (size_t)e.rgba_size;
+
+            /* The source cache writer emits one distinct, contiguous RGBA
+             * span per manifest asset.  A duplicate key would make lookup
+             * order decide pixels; an overlap would let one asset alias
+             * another's material.  Neither has original-pack provenance. */
+            if ((old->category_hash == e.category_hash &&
+                 old->asset_id_hash == e.asset_id_hash) ||
+                (new_offset < old_offset + old_size &&
+                 old_offset < new_offset + new_size)) goto reject;
+        }
         g_v22_bitmaps[g_v22_bitmap_count].entry = e;
         g_v22_bitmaps[g_v22_bitmap_count].rgba = g_v22_cache_buf + e.rgba_offset;
         g_v22_bitmap_count++;

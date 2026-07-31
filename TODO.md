@@ -295,7 +295,9 @@ diagnostic; it must not silently fall back to a generated visual.
   only as a source-compatible alias. **2026-07-31 V2.2 cache audit:** a
   malformed source-derived cache entry now rejects and discards the complete
   package: dimensions, exact RGBA byte count and non-wrapping data offsets
-  must all validate before any bitmap can become available.
+  must all validate before any bitmap can become available. Each key and RGBA
+  span must also be unique, matching the source-pack cache writer; ambiguous
+  material is rejected as a whole.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

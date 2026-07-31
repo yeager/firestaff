@@ -189,6 +189,53 @@ static void test_cache_rejects_malformed_entries_atomically(void) {
     (void)root;
 }
 
+static void test_cache_rejects_ambiguous_entries_atomically(void) {
+    const char* root = "/tmp/scratch/csb-v22-ambiguous-cache";
+    const char* data_dir = "/tmp/scratch/csb-v22-ambiguous-cache/data/csb";
+    const char* modern_dir = "/tmp/scratch/csb-v22-ambiguous-cache/assets/csb/modern";
+    char cache_path[512];
+    unsigned char cache[104];
+
+    CHECK(mkdir_p(data_dir), "create ambiguous-cache data directory");
+    CHECK(mkdir_p(modern_dir), "create ambiguous-cache modern directory");
+    snprintf(cache_path, sizeof(cache_path), "%s/v22_inplace_cache.bin", modern_dir);
+    memset(cache, 0, sizeof(cache));
+    memcpy(cache, "FSV22C\0\0", 8);
+    put_u32(cache + 8, 1);
+    put_u32(cache + 12, 2);
+    put_u32(cache + 32, fnv1a32("wall_shapes"));
+    put_u32(cache + 36, fnv1a32("wall_dungeon_d0_01"));
+    put_u32(cache + 40, 1);
+    put_u32(cache + 44, 1);
+    put_u32(cache + 48, 4);
+    put_u32(cache + 52, 96);
+    put_u32(cache + 64, fnv1a32("wall_shapes"));
+    put_u32(cache + 68, fnv1a32("wall_dungeon_d0_02"));
+    put_u32(cache + 72, 1);
+    put_u32(cache + 76, 1);
+    put_u32(cache + 80, 4);
+    put_u32(cache + 84, 96); /* Distinct keys must not alias the same RGBA. */
+    CHECK(write_file(cache_path, cache, sizeof(cache)), "write overlapping cache");
+
+    csb_v22_inplace_draw_shutdown();
+    csb_v22_set_manifest_path(data_dir);
+    CHECK(csb_v22_inplace_draw_init() == 0,
+          "overlapping RGBA spans reject the complete cache");
+    CHECK(csb_v22_inplace_draw_active() == 0,
+          "overlapping cache never becomes an active V2.2 source");
+
+    put_u32(cache + 84, 100);
+    put_u32(cache + 68, fnv1a32("wall_dungeon_d0_01"));
+    CHECK(write_file(cache_path, cache, sizeof(cache)), "write duplicate-key cache");
+    CHECK(csb_v22_inplace_draw_init() == 0,
+          "duplicate cache key rejects the complete cache");
+    CHECK(csb_v22_inplace_get_bitmap_by_id("wall_shapes", "wall_dungeon_d0_01",
+                                           NULL, NULL) == NULL,
+          "duplicate cache exposes no retained bitmap pointer");
+    csb_v22_inplace_draw_shutdown();
+    (void)root;
+}
+
 static void test_f0128_door_command_consumes_admitted_source_material(void) {
     const char* root = "/tmp/scratch/csb-v22-command-root";
     const char* data_dir = "/tmp/scratch/csb-v22-command-root/data/csb";
@@ -468,6 +515,7 @@ int main(void) {
     test_cache_load_path();
     test_cache_uses_configured_manifest_root();
     test_cache_rejects_malformed_entries_atomically();
+    test_cache_rejects_ambiguous_entries_atomically();
     test_f0128_door_command_consumes_admitted_source_material();
     test_f0128_door_uses_bound_source_palette();
     test_double_shutdown_safe();
