@@ -91,7 +91,9 @@ int csb_v22_validate_manifest(const char* manifest_path);
  * categories (wall_shapes, floor_shapes, creature_shapes), 0 otherwise. */
 int csb_v22_modern_assets_available(void);
 
-/* Installed flag — set by M12_AssetStatus_Scan at startup. */
+/* Installed flag — launcher state set by M12_AssetStatus_Scan at startup.
+ * It is never sufficient to admit V2.2 by itself; the finished-art gate and
+ * per-route source provenance remain mandatory. */
 void csb_v22_set_installed(int installed);
 int  csb_v22_get_installed(void);
 

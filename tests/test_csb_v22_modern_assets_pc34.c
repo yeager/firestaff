@@ -148,8 +148,8 @@ static void test_best_available_shape_source(void) {
           "mode 3 (V2.2) no install, cold cache → V2_FILTERED (fallback)");
 
     csb_v22_set_installed(1);
-    CHECK(csb_v22_best_available_shape_source(3) == CSB_V22_SHAPE_SOURCE_V2_MODERN,
-          "mode 3 (V2.2) installed → V2_MODERN");
+    CHECK(csb_v22_best_available_shape_source(3) == CSB_V22_SHAPE_SOURCE_V2_FILTERED,
+          "mode 3 (V2.2) installed flag without admitted source art → V2_FILTERED");
 
     /* Unknown mode → V1_ORIGINAL */
     CHECK(csb_v22_best_available_shape_source(99) == CSB_V22_SHAPE_SOURCE_V1_ORIGINAL,

@@ -682,7 +682,8 @@ int csb_v22_get_epx_cache_warm(void) {
  * Fallback chain: MODERN → UPSCALED (V2.1) → FILTERED (V2.0) → ORIGINAL (V1)
  *
  * Logic:
- *   - If V2.2 (MODERN) selected AND modern assets installed → V2_MODERN
+ *   - If V2.2 (MODERN) selected AND every routed asset has passed the
+ *     finished-art/source-provenance gate → V2_MODERN
  *   - If V2.2 selected BUT modern assets NOT installed → V2_UPSCALED (warn)
  *   - If V2.1 (UPSCALED) selected AND EPX cache warm → V2_UPSCALED
  *   - If V2.1 selected BUT EPX cache cold → V2_FILTERED (fallback)
@@ -699,7 +700,11 @@ int csb_v22_get_epx_cache_warm(void) {
 CSB_V22_ShapeSource csb_v22_best_available_shape_source(int presentation_mode_index) {
     switch (presentation_mode_index) {
         case 3: /* M12_PRESENTATION_V22_MODERN */
-            if (g_v22_modern_assets_installed) {
+            /* `set_installed()` is launcher state, not evidence. A caller
+             * can set it before the manifest is scanned, so it must not
+             * admit an unreviewed or generated pack into a draw route. */
+            if (g_v22_modern_assets_installed &&
+                csb_v22_modern_assets_available()) {
                 return CSB_V22_SHAPE_SOURCE_V2_MODERN;
             }
             /* Fall through: no modern assets, fall back to V2.1 */

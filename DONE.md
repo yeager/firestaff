@@ -47361,3 +47361,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   V2 companion, crafting or smooth-viewport symbols. Verification: complete
   production link, real-data DM2 startup gate and archive/executable-symbol
   checks.
+
+- ✅ 2026-07-31 CSB V2.2 installed-state hardening: a launcher-set
+  `installed` flag can no longer select modern art on its own. The V2.2
+  source selector now rechecks the finished-art gate and every route's
+  provenance before it returns `V2_MODERN`; otherwise it keeps the V2.1/V2.0
+  fallback. The focused asset-pipeline test covers the forged-installed/no-art
+  case.
