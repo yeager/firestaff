@@ -1636,6 +1636,7 @@ int csb_v1_boot_render_viewport_frame_pc34(
     cfg.wall_set_index = profile->runtime.dungeon_handle->map_wall_set[
         profile->runtime.current_level];
     cfg.runtime_profile = &profile->runtime;
+    cfg.field_animation_tick = profile->runtime.tick_count;
     cfg.runtime_projectiles = &profile->runtime.projectiles;
     cfg.runtime_explosions = &profile->runtime.explosions;
     cfg.post_teleport_projectile_handoffs =

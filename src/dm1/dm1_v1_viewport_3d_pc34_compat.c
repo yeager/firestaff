@@ -3236,9 +3236,9 @@ int dm1_viewport_3d_get_dungeon_element(const DM1_Viewport3DState *state,
  * Draw a field effect (teleporter/fluxcage) at the viewport position
  * corresponding to the relative view square.
  *
- * This still fills with one color until the field bitmap decoder is wired,
- * but the destination rectangle comes from the shared F0113 source-locked
- * render plan rather than an ad hoc wall-frame rectangle.
+ * A source-bound caller samples the C076 field bitmap and the required
+ * C070--C075 mask through the shared F0113 plan. Data-free geometry probes
+ * retain the solid-colour branch below.
  *
  * field_color: VGA palette index for the field effect (default 0x1C=cyan).
  *
@@ -3250,16 +3250,60 @@ static void dm1_viewport_3d_draw_field(DM1_Viewport3DState *state,
                                         int field_color)
 {
     DM1_FieldRenderPlanPc34 plan;
+    DM1_FieldAssetBindingPc34 binding;
+    const uint8_t *field_pixels = NULL;
+    const uint8_t *mask_pixels = NULL;
+    int field_width = 0;
+    int field_height = 0;
+    int mask_width = 0;
+    int mask_height = 0;
     if (!state || !state->viewport_pixels) return;
-
-    /* ReDMCSB DUNVIEW.C F0113 selects and draws the native field bitmap;
-     * the solid fill below is geometry-only coverage for data-free tests.
-     * A live source session must never promote it into a teleporter visual. */
-    if (state->source_graphics_required) return;
 
     if (!dm1_v1_field_render_plan_for_relative_pc34(rel_forward, rel_side, &plan)) {
         return;
     }
+
+    /* ReDMCSB DUNVIEW.C F0113:4417-4461 obtains C076 plus its C070--C075
+     * mask, then blits the source pixels through G0188's aspect geometry.
+     * A live source session is all-or-nothing: no field or mask means no
+     * draw, never the geometry-only cyan substitute. */
+    if (state->graphic_provider_callback &&
+        dm1_v1_field_asset_binding_pc34(&plan, &binding) &&
+        state->graphic_provider_callback(state->graphic_provider_user_data,
+                                         binding.fieldGraphicIndex,
+                                         &field_pixels, &field_width,
+                                         &field_height) &&
+        field_pixels && field_width > 0 && field_height > 0 &&
+        (!binding.maskRequired ||
+         (state->graphic_provider_callback(state->graphic_provider_user_data,
+                                           binding.maskGraphicIndex,
+                                           &mask_pixels, &mask_width,
+                                           &mask_height) &&
+          mask_pixels && mask_width > 0 && mask_height > 0))) {
+        int y;
+        for (y = 0; y < plan.dstH; ++y) {
+            int x;
+            int dst_y = plan.dstY + y;
+            if (dst_y < 0 || dst_y >= DM1_VIEWPORT_HEIGHT) continue;
+            for (x = 0; x < plan.dstW; ++x) {
+                int dst_x = plan.dstX + x;
+                uint8_t pixel;
+                if (dst_x < 0 || dst_x >= DM1_VIEWPORT_WIDTH ||
+                    !dm1_v1_field_bitmap_pixel_pc34(
+                        &plan, state->field_animation_tick, x, y,
+                        field_pixels, field_width, field_height, field_width,
+                        mask_pixels, mask_width, mask_height, mask_width,
+                        &pixel)) {
+                    continue;
+                }
+                state->viewport_pixels[dst_y * state->viewport_stride + dst_x] =
+                    pixel;
+            }
+        }
+        return;
+    }
+
+    if (state->source_graphics_required) return;
 
     int dst_x = plan.dstX;
     int dst_y = plan.dstY;

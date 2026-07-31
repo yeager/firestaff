@@ -2061,6 +2061,25 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         cached_pixels = &state->csbViewportWallPixels[wall_slot];
         cached_width = &state->csbViewportWallWidths[wall_slot];
         cached_height = &state->csbViewportWallHeights[wall_slot];
+    } else if (graphic_index >= 70 && graphic_index <= 76) {
+        const M11_AssetSlot *field_asset;
+        /* ReDMCSB DEFS.H C070--C076 and DUNVIEW.C F0113:4417-4461: fields
+         * are ordinary, decoded source graphics. Install them through the
+         * CSB decoder, not the generic DM1 loader. */
+        if (!m11_csb_install_runtime_source_graphic(state,
+                                                    (unsigned int)graphic_index)) {
+            return 0;
+        }
+        field_asset = M11_AssetLoader_Load(&state->assetLoader,
+                                           (unsigned int)graphic_index);
+        if (!field_asset || !field_asset->loaded || !field_asset->pixels ||
+            field_asset->width == 0u || field_asset->height == 0u) {
+            return 0;
+        }
+        *out_pixels = field_asset->pixels;
+        *out_width = (int)field_asset->width;
+        *out_height = (int)field_asset->height;
+        return 1;
     } else {
         return 0;
     }

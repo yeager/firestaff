@@ -462,19 +462,20 @@ static void test_real_session_blocks_synthetic_teleporter_field(void)
     CSB_V1_ViewportRuntimeDrawerBinding binding;
     uint8_t screen[320 * 200];
     /* M034_SQUARE_TYPE(C05_ELEMENT_TELEPORTER) == 5. */
-    uint8_t teleporter_grid[25];
+    uint8_t teleporter_grid[49];
     size_t i;
 
     memset(&binding, 0, sizeof(binding));
     memset(screen, 0, sizeof(screen));
-    memset(teleporter_grid, 0xa0, sizeof(teleporter_grid));
+    /* C05 type (0xa0) plus ReDMCSB M554 visible/open bits 0x04/0x08. */
+    memset(teleporter_grid, 0xacu, sizeof(teleporter_grid));
     csb_v1_viewport_init(&cfg);
     cfg.viewport_pixels = screen;
     cfg.viewport_stride = 320;
-    csb_v1_viewport_set_dungeon_grid(&cfg, teleporter_grid, 5, 5);
+    csb_v1_viewport_set_dungeon_grid(&cfg, teleporter_grid, 7, 7);
     binding.real_graphics_session = 1;
     csb_v1_viewport_apply_runtime_drawer_binding(&cfg, &binding);
-    csb_v1_viewport_render_frame(&cfg, 0, 2, 2);
+    csb_v1_viewport_render_frame(&cfg, 0, 3, 3);
     for (i = 0u; i < sizeof(screen); ++i) {
         if (screen[i] == 0x1cu) {
             check_true("real.teleporter.no_synthetic_cyan", 0);
@@ -482,6 +483,69 @@ static void test_real_session_blocks_synthetic_teleporter_field(void)
         }
     }
     check_true("real.teleporter.no_synthetic_cyan", 1);
+}
+
+static int s_test_real_field_provider_calls;
+
+static int test_real_field_graphic_provider(void *user_data,
+                                            int graphic_index,
+                                            const uint8_t **out_pixels,
+                                            int *out_width,
+                                            int *out_height)
+{
+    static uint8_t field[32 * 32];
+    static uint8_t mask[32 * 32];
+    static int initialized;
+    (void)user_data;
+    if (!out_pixels || !out_width || !out_height ||
+        graphic_index < 70 || graphic_index > 76) {
+        return 0;
+    }
+    ++s_test_real_field_provider_calls;
+    if (!initialized) {
+        memset(field, 0x2bu, sizeof(field));
+        memset(mask, 1, sizeof(mask));
+        initialized = 1;
+    }
+    *out_pixels = graphic_index == 76 ? field : mask;
+    *out_width = 32;
+    *out_height = 32;
+    return 1;
+}
+
+static void test_real_session_draws_source_teleporter_field(void)
+{
+    CSB_V1_ViewportConfig cfg;
+    CSB_V1_ViewportRuntimeDrawerBinding binding;
+    uint8_t screen[320 * 200];
+    uint8_t teleporter_grid[49];
+    size_t i;
+    int source_pixels = 0;
+
+    memset(&binding, 0, sizeof(binding));
+    memset(screen, 0, sizeof(screen));
+    memset(teleporter_grid, 0xacu, sizeof(teleporter_grid));
+    s_test_real_field_provider_calls = 0;
+    csb_v1_viewport_init(&cfg);
+    cfg.viewport_pixels = screen;
+    cfg.viewport_stride = 320;
+    cfg.field_animation_tick = 7u;
+    csb_v1_viewport_set_dungeon_grid(&cfg, teleporter_grid, 7, 7);
+    binding.real_graphics_session = 1;
+    binding.graphic_provider_callback = test_real_field_graphic_provider;
+    csb_v1_viewport_apply_runtime_drawer_binding(&cfg, &binding);
+    csb_v1_viewport_render_frame(&cfg, 0, 3, 3);
+    check_true("real.teleporter.source.provider_called",
+               s_test_real_field_provider_calls > 0);
+    for (i = 0u; i < sizeof(screen); ++i) {
+        if (screen[i] == 0x2bu) ++source_pixels;
+        if (screen[i] == 0x1cu) {
+            check_true("real.teleporter.source.no_synthetic_cyan", 0);
+            return;
+        }
+    }
+    check_true("real.teleporter.source.pixels_drawn", source_pixels > 0);
+    check_true("real.teleporter.source.no_synthetic_cyan", 1);
 }
 
 static void test_runtime_projectile_and_explosion_overlays(void)
@@ -4091,6 +4155,7 @@ int main(void)
     test_runtime_drawer_binding_and_count_helpers();
     test_pc34_f0098_aperture_provider_binding();
     test_real_session_blocks_synthetic_teleporter_field();
+    test_real_session_draws_source_teleporter_field();
     test_null_framebuffer_render_is_noop();
     test_runtime_projectile_and_explosion_overlays();
     test_dsa_runtime_overlay_material_lifecycle();

@@ -5120,6 +5120,7 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
                          cfg->viewport_stride > 0 ? cfg->viewport_stride : 320);
     vp.graphic_provider_callback = cfg->graphic_provider_callback;
     vp.graphic_provider_user_data = cfg->graphic_provider_user_data;
+    vp.field_animation_tick = cfg->field_animation_tick;
     /* F0113 owns native field pixels.  Unlike a geometry probe, a verified
      * CSB GRAPHICS.DAT session must fail closed while that bitmap family has
      * no bound source span. */

@@ -278,9 +278,11 @@ diagnostic; it must not silently fall back to a generated visual.
   its source-owned page. The remaining work is real F0128 material binding,
   not generated diagnostic chrome. **2026-07-31 follow-up:** source-verified
   CSB sessions now also reject the shared geometry-only cyan F0113
-  teleporter fill. Until the real field bitmap has a bound `GRAPHICS.DAT`
-  span, the field is no-draw rather than a generated rectangle. **2026-07-31
-  follow-up:** entrance-plan metadata no longer carries generated grey door
+  teleporter fill. **2026-07-31 update:** live F0113 now binds C076 and its
+  selected C070--C075 mask through the active hash-verified `GRAPHICS.DAT`
+  decoder, using the source tick for the G0188 phase. Missing source remains
+  no-draw rather than a generated rectangle. **2026-07-31 follow-up:**
+  entrance-plan metadata no longer carries generated grey door
   fill or edge colours. ReDMCSB `ENTRANCE.C F0806` owns C002/C003, and a
   missing raster remains an admitted draw failure rather than a plan-level
   substitute.

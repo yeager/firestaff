@@ -970,6 +970,10 @@ typedef struct {
      * one byte per pixel, as M11_AssetLoader_Load does after IMG3 expansion. */
     DM1_ViewportGraphicProviderCallback graphic_provider_callback;
     void *graphic_provider_user_data;
+    /* ReDMCSB F0113 offsets the native field bitmap for each presentation
+     * tick. The owning game supplies this counter; it is never a host pixel
+     * generator. */
+    uint32_t field_animation_tick;
     /* A source-verified caller may forbid geometry-only visual fallbacks.
      * ReDMCSB F0113 obtains a native field bitmap; a live CSB session without
      * that span must leave the source page untouched. */

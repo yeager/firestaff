@@ -44553,3 +44553,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   data that a renderer could promote. The source-page clear remains black,
   matching the title/entrance composition boundary. The focused entrance
   pointer and sequencing regression passes 139/139.
+- ✅ 2026-07-31 CSB F0113 source-field binding: live CSB viewport rendering
+  now obtains the teleporter's C076 raster and the G0188-selected C070--C075
+  mask from the active hash-verified `GRAPHICS.DAT` decoder. The sampler uses
+  the live CSB tick and preserves the source mask/transparency path from
+  ReDMCSB `DUNVIEW.C F0113:4417-4461`; an absent or malformed source span is
+  still strict no-draw. The focused CSB viewport regression passes 2,658/2,658
+  and the full `firestaff` target builds.
