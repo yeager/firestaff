@@ -44640,3 +44640,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   deterministic configuration together with the G1 pose. This follows
   SK-projects `GAME_LOAD`/`LOAD_NEW_DUNGEON` ordering and prevents an old
   world position from becoming a synthetic entrance for newly loaded data.
+- ✅ 2026-07-31 DM2 wall-ornament material-owner gate: the V1 viewport now
+  rejects a placement plan whose named WALL_GFX GDAT row differs from the
+  live G1 square's derived map-chip row. This prevents a coincidental
+  same-square bitmap from being displayed at a placement owned by another
+  source record; the mismatch is strict no-draw.

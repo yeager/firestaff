@@ -6334,6 +6334,14 @@ void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
 
         gdat_index = dm2_v1_viewport_wall_gfx_map_chip_graphic_index(
             sq->wall_ornate_gfx_index);
+        /* The runtime plan identifies both the source WALL_GFX material and
+         * its source-owned placement. Do not let a plan for a different GDAT
+         * image borrow this square's derived map-chip pixels. */
+        if (ornament && ornament->gdat_index != gdat_index) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+            continue;
+        }
         if (gdat_index == 0 ||
             dm2_v1_fetch_viewport_local_material(
                 s, gdat_index, &pixels, &width, &height, &stride) != 0 ||

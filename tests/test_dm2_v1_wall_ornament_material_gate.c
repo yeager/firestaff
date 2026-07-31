@@ -103,6 +103,26 @@ int main(void)
         return 1;
     }
 
+    /* A placement receipt for another WALL_GFX row must not borrow this
+     * square's derived pixels. It is an unowned source-material mismatch,
+     * not permission to draw at the supplied destination. */
+    plan.ornaments[0].gdat_index =
+        dm2_v1_viewport_wall_gfx_map_chip_graphic_index(8);
+    memset(framebuffer, 0, sizeof(framebuffer));
+    viewport.blocked_material_mask = 0u;
+    viewport.asset_wall_ornament_drawn_count = 0;
+    dm2_v1_render_wall_ornaments(&viewport);
+    if ((viewport.blocked_material_mask &
+         DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT) == 0u ||
+        viewport.asset_wall_ornament_drawn_count != 0 ||
+        framebuffer[68 * DM2_VP_WIDTH + 108] != 0u) {
+        fputs("FAIL: mismatched wall ornament plan borrowed source pixels\n",
+              stderr);
+        return 1;
+    }
+    plan.ornaments[0].gdat_index =
+        dm2_v1_viewport_wall_gfx_map_chip_graphic_index(7);
+
     /* Withholding the asset must block even when the plan is present. */
     withhold_material = 1;
     memset(framebuffer, 0, sizeof(framebuffer));
