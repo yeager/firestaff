@@ -47210,3 +47210,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-31 Theron SRM champion-name gate: real SRM body import no longer
   substitutes `Theron` or `Companion` when a champion name field is empty. The
   record is rejected until source name bytes are present.
+
+- ✅ 2026-07-31 CSB F1186–F1205 ANIM-boundary isolation: the table is a
+  DM1-owned ANIM inventory without an authenticated CSB stream or runtime
+  consumer, and already blocks execution. It now compiles only into its
+  contract test, preventing metadata from creating CSB UI or timing behavior.

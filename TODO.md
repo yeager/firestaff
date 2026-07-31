@@ -131,6 +131,9 @@
   - 2026-07-31: F1126–F1145 is a fail-closed mixed source inventory, not an
     input, palette or viewport implementation. It is test-only; live paths
     require their own authenticated CSB material and event consumers.
+  - 2026-07-31: F1186–F1205 documents DM1-owned ANIM routines but has no
+    authenticated CSB ANIM stream or runtime consumer. It is test-only; do
+    not use the inventory to synthesize CSB title, entrance or UI timing.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
