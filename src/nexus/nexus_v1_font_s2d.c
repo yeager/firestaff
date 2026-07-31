@@ -41,6 +41,23 @@ int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
 
     if (out->section_count < 3) return 0;
 
+    /* DMWeb DecodeFONT256S2D names the first five 32-bit offset/size
+     * pairs Map, Page, Character Generator, Palette and Attributes.  Keep
+     * those source windows explicit so later tilemap/CG work cannot mistake
+     * a raw section ordinal for a glyph table. */
+    if (out->section_count >= 5) {
+        out->map_offset = out->sections[0].offset;
+        out->map_size = out->sections[0].size;
+        out->page_offset = out->sections[1].offset;
+        out->page_size = out->sections[1].size;
+        out->character_generator_offset = out->sections[2].offset;
+        out->character_generator_size = out->sections[2].size;
+        out->palette_offset = out->sections[3].offset;
+        out->palette_size = out->sections[3].size;
+        out->attribute_offset = out->sections[4].offset;
+        out->attribute_size = out->sections[4].size;
+    }
+
     /* Section 1: tilemap — 16-byte header + W*H*2 tile references */
     if (out->sections[1].size >= 16) {
         int map_off = (int)out->sections[1].offset;

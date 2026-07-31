@@ -46611,3 +46611,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   longer create a synthetic Fireball. They return no source projectile, which
   the live runtime rejects before projectile creation. Normal authenticated
   creature attacks keep their original projectile selection.
+- ✅ 2026-07-31 Nexus FONT256 DMWeb-regioner: den verkliga S2D-decodern
+  exponerar nu namngivna, bounds-verifierade bytefönster för Map, Page/
+  tilemap, Character Generator, Palette och Attributes enligt DMWeb:s
+  `DecodeFONT256S2D`. Retailkontroll mot `FONT256.S2D` verifierar de fem
+  offset/size-paren; ingen glyph- eller menysemantik påstås ännu.
+  Verifiering: `test_nexus_v1_font_s2d` passerar.

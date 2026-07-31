@@ -55,6 +55,18 @@ static int test_font256(void) {
            r.section_count, r.tilemap_width, r.tilemap_height,
            r.tile_count, r.palette_color_count, r.data_hash);
 
+    if (r.map_offset != 0x100U || r.map_size != 0x12U ||
+        r.page_offset != 0x120U || r.page_size != 0x2010U ||
+        r.character_generator_offset != 0x2130U ||
+        r.character_generator_size != 0x3c90U ||
+        r.palette_offset != 0x5dc0U || r.palette_size != 0x210U ||
+        r.attribute_offset != 0x5fd0U || r.attribute_size != 0x1e4U) {
+        printf("  FAIL DMWeb FONT256 named regions\n");
+        free(data);
+        return 1;
+    }
+    printf("  PASS DMWeb named regions: map/page/CG/palette/attributes\n");
+
     for (i = 0; i < r.section_count; i++) {
         printf("    section %d: offset=0x%X size=0x%X\n",
                i, r.sections[i].offset, r.sections[i].size);
