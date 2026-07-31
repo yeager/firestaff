@@ -6385,6 +6385,14 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-31 DM2 synthetic runtime-smoke isolation: removed the
+  `dm2_v1_runtime_handoff_smoke` CTest registration because it constructs a
+  fabricated world, actor, weather, trigger and shop state. Production now
+  correctly refuses those paths without original G1/GDAT/SKSave owners; the
+  real-data M11 startup and GDAT HUD command gates cover the supported path.
+  Verification: the retired test is absent from CTest; the original-writer,
+  real-data startup and real-data GDAT HUD gates pass.
+
 - ✅ 2026-07-31 Theron Track 19 media intake: the real verified US
   `TQUS19.iso` (5984256 bytes, 2922 MODE1/2048 sectors) and JP
   `TQJP19.iso` (6291456 bytes, 3072 MODE1/2048 sectors) are now classified

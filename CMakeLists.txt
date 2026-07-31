@@ -15250,6 +15250,11 @@ if(BUILD_TESTING)
     # Data-free gate: dm2_v1_boot_enter_game() -> dm2_v1_runtime_init()
     # -> one dm2_v1_runtime_tick(), proving a concrete runtime state
     # without claiming full real-asset playability.
+    # Retired from active CTest: it constructs a synthetic world, actor,
+    # weather, trigger and shop state and asserts their former fixture
+    # behaviour. Production DM2 now correctly rejects those paths without
+    # original G1/GDAT/SKSave owners; the real-data M11/GDAT gates replace it.
+    if(FALSE)
     add_executable(test_dm2_v1_runtime_handoff_smoke
         tests/test_dm2_v1_runtime_handoff_smoke.c
         src/dm2/dm2_v1_new_game.c
@@ -15320,6 +15325,7 @@ if(BUILD_TESTING)
         NAME dm2_v1_runtime_handoff_smoke
         COMMAND test_dm2_v1_runtime_handoff_smoke
     )
+    endif()
 
     # -- DM1 V1 M12/M11 Launcher Handoff Boundary ------------------
     # Skip-safe gate: M12 launch intent routes the DM1 catalog entry,

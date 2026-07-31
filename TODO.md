@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM2-REAL-RUNTIME-CORPUS:** The former runtime-handoff smoke fixture is
+  deliberately outside the active test suite because it fabricated dungeon,
+  actor, weather, trigger and shop state. Extend the real-data M11/GDAT gates
+  only with authenticated G1/GDAT/SKSave material; missing source owners must
+  continue to block the corresponding runtime path.
+
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   structural no-op seam. Reconnect the real Track 02 level handoff only after
   the authenticated tile/material/UI banks and square mapping are decoded.
