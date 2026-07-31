@@ -47232,3 +47232,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   ANIM platform/local status and admits no route. It now compiles solely into
   its contract test, keeping metadata from standing in for CSB palette, sound
   or allocation behavior.
+
+- ✅ 2026-07-31 CSB F1406–F1445 unmapped-boundary isolation: ReDMCSB has no
+  callable symbol in this range, and the table only reports a blocked receipt.
+  It now compiles only into its contract test; local source labels cannot
+  become a synthetic CSB entrance, startup or graphics implementation.

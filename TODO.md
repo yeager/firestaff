@@ -141,6 +141,9 @@
   - 2026-07-31: F1206–F1225 is an ANIM ownership inventory which admits no
     route. It is test-only; palette, sound and allocation behavior must come
     from a separately authenticated CSB runtime consumer.
+  - 2026-07-31: F1406–F1445 has no ReDMCSB callable symbol and is test-only.
+    Local-source labels must never be used as a portable CSB startup or
+    entrance implementation.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
