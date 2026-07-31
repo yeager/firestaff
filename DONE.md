@@ -44611,8 +44611,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   explicitly a DM1 compatibility option, not permission to draw Firestaff's
   generic cyan utility frame, champion/status text or light bar in a CSB
   session. When C009/C010 material is unavailable, the source-owned CSB area
-  remains black. Verification: CSB M11 startup/resume and Prison-runtime HUD
-  regressions pass.
+  remains black. It also excludes the legacy rune workbench from CSB, so an
+  open spell state cannot paint host controls over F0128. Verification: the
+  CSB M11 startup/resume regression compares the complete 224×136 source
+  viewport with chrome disabled and passes; Prison-runtime HUD also passes.
 - ✅ 2026-07-31 DM2 V2 HUD synthetic-PNG closure: the public one-pixel PNG
   compatibility hooks now return strict no-draw even for a valid fixture.
   SK-projects `c_gdatfile.cpp::DM2_LOAD_GDAT_INTERFACE_00_02` establishes

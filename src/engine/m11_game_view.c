@@ -51227,8 +51227,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     /* DM1 owns spell presentation through CASTER.C/MENUDRAW.C's late
      * C009/C011 route. The older workbench below is a host UI for other
      * sessions and is never a DM1 missing-asset fallback. */
+    /* The legacy workbench belongs only to non-DM1, non-CSB tooling. CSB
+     * spell presentation is CASTER.C/CSBWin-owned; when that material is not
+     * admitted, disabling the DM1 chrome option must not paint a host panel
+     * across the F0128 viewport. */
     if (state->spellPanelOpen && !m11_v1_chrome_mode_enabled(state) &&
-        !m11_is_dm1_source_kind(state->sourceKind)) {
+        !m11_is_dm1_source_kind(state->sourceKind) &&
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         /* ── P4+P6 V1 Presentation: DM1-style rune-dominant spell panel
          * with GRAPHICS.DAT-backed spell area grid ── */
         int spI;

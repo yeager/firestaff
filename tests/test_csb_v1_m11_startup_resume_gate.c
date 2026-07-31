@@ -2208,6 +2208,17 @@ int main(void) {
             expect_true(fb[32 * 320] == 0,
                         "M11 CSB custom-background draw preserves pixels outside viewport");
         }
+        expect_true(test_setenv("FIRESTAFF_V1_CHROME", "0") == 0,
+                    "disable DM1 chrome for the CSB no-workbench regression");
+        view.spellPanelOpen = 1;
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(&view, fb, 320, 200);
+        expect_true(count_diff_rect(expected_fb, fb, 320,
+                                    0, 33, 224, 136) == 0,
+                    "CSB chrome-off spell state does not paint the legacy workbench over F0128");
+        view.spellPanelOpen = 0;
+        expect_true(test_setenv("FIRESTAFF_V1_CHROME", "1") == 0,
+                    "restore V1 chrome after the CSB no-workbench regression");
     }
 
     if (profile) {
