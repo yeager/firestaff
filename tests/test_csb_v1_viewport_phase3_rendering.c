@@ -355,7 +355,6 @@ static void test_runtime_drawer_binding_and_count_helpers(void)
     cfg.runtime_group_marker_drawn_count = 15;
     cfg.runtime_projectile_sprite_drawn_count = 16;
     cfg.runtime_projectile_material_resolved_count = 17;
-    cfg.runtime_projectile_material_icon_drawn_count = 181;
     cfg.runtime_projectile_marker_drawn_count = 18;
     cfg.runtime_explosion_sprite_drawn_count = 19;
     cfg.runtime_explosion_marker_drawn_count = 20;
@@ -375,8 +374,6 @@ static void test_runtime_drawer_binding_and_count_helpers(void)
               counts.projectile_sprite_drawn_count, 16);
     check_int("runtime.counts.projectile_material",
               counts.projectile_material_resolved_count, 17);
-    check_int("runtime.counts.projectile_material_icon",
-              counts.projectile_material_icon_drawn_count, 181);
     check_int("runtime.counts.projectile_marker",
               counts.projectile_marker_drawn_count, 18);
     check_int("runtime.counts.explosion_sprite",
@@ -624,22 +621,15 @@ static void test_runtime_projectile_and_explosion_overlays(void)
 
         memset(framebuffer, 0, sizeof(framebuffer));
         cfg.runtime_profile = &runtime;
-        cfg.object_icon_drawer = test_object_icon_drawer;
-        cfg.object_icon_user = &icon_capture;
         cfg.runtime_projectile_material_resolved_count = 0;
-        cfg.runtime_projectile_material_icon_drawn_count = 0;
         cfg.runtime_projectile_marker_drawn_count = 0;
         csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
-        check_int("runtime.projectile_overlay.runtime_material_icon_pixel",
-                  framebuffer[icon_offset], 0x22);
-        check_int("runtime.projectile_overlay.runtime_material_icon_calls",
-                  icon_capture.object_icon_calls, 1);
-        check_int("runtime.projectile_overlay.runtime_material_icon_index",
-                  icon_capture.last_object_icon, 32);
+        check_int("runtime.projectile_overlay.runtime_material_no_icon_pixel",
+                  framebuffer[icon_offset], 0);
+        check_int("runtime.projectile_overlay.runtime_material_no_icon_calls",
+                  icon_capture.object_icon_calls, 0);
         check_int("runtime.projectile_overlay.runtime_material_count",
-                  cfg.runtime_projectile_material_resolved_count, 1);
-        check_int("runtime.projectile_overlay.runtime_material_icon_count",
-                  cfg.runtime_projectile_material_icon_drawn_count, 1);
+                  cfg.runtime_projectile_material_resolved_count, 0);
         check_int("runtime.projectile_overlay.runtime_material_marker_count",
                   cfg.runtime_projectile_marker_drawn_count, 0);
         /* ReDMCSB DUNVIEW.C F0115 routes a positive projectile aspect through
@@ -647,23 +637,16 @@ static void test_runtime_projectile_and_explosion_overlays(void)
          * atlas. A source-bound M11 route must therefore no-draw while that
          * object projection is unbound. */
         memset(framebuffer, 0, sizeof(framebuffer));
-        cfg.projectile_sprite_drawer_source_bound = 1;
         icon_capture.object_icon_calls = 0;
         cfg.runtime_projectile_material_resolved_count = 0;
-        cfg.runtime_projectile_material_icon_drawn_count = 0;
         cfg.runtime_projectile_marker_drawn_count = 0;
         csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
         check_int("runtime.projectile_overlay.source_bound_object_no_icon_pixel",
                   framebuffer[icon_offset], 0);
         check_int("runtime.projectile_overlay.source_bound_object_no_icon_calls",
                   icon_capture.object_icon_calls, 0);
-        check_int("runtime.projectile_overlay.source_bound_object_no_icon_count",
-                  cfg.runtime_projectile_material_icon_drawn_count, 0);
         check_int("runtime.projectile_overlay.source_bound_object_no_marker_count",
                   cfg.runtime_projectile_marker_drawn_count, 0);
-        cfg.projectile_sprite_drawer_source_bound = 0;
-        cfg.object_icon_drawer = NULL;
-        cfg.object_icon_user = NULL;
         cfg.runtime_profile = NULL;
         projectiles.entries[0].reserved1 = 0x1400;
     }
@@ -676,7 +659,6 @@ static void test_runtime_projectile_and_explosion_overlays(void)
         cfg.projectile_sprite_user = &sprite_capture;
         cfg.runtime_projectile_sprite_drawn_count = 0;
         cfg.runtime_projectile_material_resolved_count = 0;
-        cfg.runtime_projectile_material_icon_drawn_count = 0;
         cfg.runtime_projectile_marker_drawn_count = 0;
         csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
         check_int("runtime.projectile_sprite.center",
@@ -735,11 +717,10 @@ static void test_runtime_projectile_and_explosion_overlays(void)
 
     csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
     /* A missing authenticated C15 explosion frame must not turn into a
-     * host-coloured marker.  The earlier projectile pixel remains intact and
-     * the surrounding viewport is left untouched until source material is
-     * available. */
-    check_int("runtime.explosion_overlay.missing_source_preserves_projectile",
-              framebuffer[center_offset], 14);
+     * host-coloured marker. The missing F0115 projectile perspective bitmap
+     * is likewise no-draw, so the source page remains unchanged. */
+    check_int("runtime.explosion_overlay.missing_source_preserves_page",
+              framebuffer[center_offset], 0);
     check_int("runtime.explosion_overlay.missing_source_leaves_radius",
               framebuffer[center_offset - 2], 0);
     check_int("runtime.explosion_overlay.default_sprite_count",
@@ -2537,22 +2518,6 @@ static void test_csb_f0115_projectile_blit_contracts(void)
                           object_blit.source_zone_row,
                           3);
             }
-            {
-                CSB_V1_ViewportRuntimeObjectIconBlit icon_blit;
-                check_int("csb.projectile_overlay.material_icon_blit",
-                          csb_v1_viewport_runtime_projectile_material_icon_blit(
-                              &placement, &icon_blit),
-                          1);
-                check_int("csb.projectile_overlay.material_icon_blit.icon",
-                          icon_blit.icon_index, 84);
-                check_int("csb.projectile_overlay.material_icon_blit.x",
-                          icon_blit.draw_x, 104);
-                check_int("csb.projectile_overlay.material_icon_blit.y",
-                          icon_blit.draw_y, 95);
-                check_int("csb.projectile_overlay.material_icon_blit.transparent",
-                          icon_blit.transparent_color, 0);
-            }
-
             placement.material_thing = -1;
             placement.material_icon_index = -1;
             check_int("csb.projectile_overlay.material_bind_no_runtime",

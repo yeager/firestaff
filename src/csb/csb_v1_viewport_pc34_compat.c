@@ -2738,31 +2738,6 @@ int csb_v1_viewport_runtime_projectile_sprite_blit(
     return 1;
 }
 
-int csb_v1_viewport_runtime_projectile_material_icon_blit(
-    const CSB_V1_ViewportRuntimeProjectileOverlayPlacement *placement,
-    CSB_V1_ViewportRuntimeObjectIconBlit *out_blit)
-{
-    CSB_V1_ViewportRuntimeObjectIconBlit blit;
-
-    memset(&blit, 0, sizeof(blit));
-    blit.icon_index = -1;
-    if (!placement || !out_blit || !placement->visible ||
-        placement->material_icon_index < 0) {
-        if (out_blit) *out_blit = blit;
-        return 0;
-    }
-
-    /* ReDMCSB DUNVIEW.C F0115 draws visible thrown-object material at the
-     * projectile C2900 point when no spell projectile bitmap is bound.
-     * Keep the centered icon fallback in the CSB viewport contract. */
-    blit.icon_index = placement->material_icon_index;
-    blit.draw_x = DM1_VIEWPORT_SCREEN_X + placement->viewport_x - 8;
-    blit.draw_y = DM1_VIEWPORT_SCREEN_Y + placement->viewport_y - 8;
-    blit.transparent_color = 0;
-    *out_blit = blit;
-    return 1;
-}
-
 int csb_v1_viewport_runtime_explosion_sprite_rect(
     int forward,
     int source_zone,
@@ -3006,7 +2981,6 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
     if (!cfg || !cfg->runtime_projectiles) return;
     cfg->runtime_projectile_sprite_drawn_count = 0;
     cfg->runtime_projectile_material_resolved_count = 0;
-    cfg->runtime_projectile_material_icon_drawn_count = 0;
     cfg->runtime_projectile_marker_drawn_count = 0;
     if (cfg->runtime_overlay_source_required &&
         (!cfg->runtime_overlay_source_admitted ||
@@ -3098,23 +3072,6 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
          * source-bound M11 frame.  Leave the cell unchanged until the native
          * object-projection route is bound.  Data-free geometry callers keep
          * their explicit icon/marker diagnostics below. */
-        if (!cfg->projectile_sprite_drawer_source_bound &&
-            placement.material_icon_index >= 0) {
-            ++cfg->runtime_projectile_material_resolved_count;
-            if (cfg->object_icon_drawer) {
-                CSB_V1_ViewportRuntimeObjectIconBlit icon_blit;
-                if (csb_v1_viewport_runtime_projectile_material_icon_blit(
-                        &placement, &icon_blit) &&
-                    cfg->object_icon_drawer(
-                        cfg->object_icon_user,
-                        &icon_blit,
-                        cfg->viewport_pixels,
-                        cfg->viewport_stride)) {
-                    ++cfg->runtime_projectile_material_icon_drawn_count;
-                    continue;
-                }
-            }
-        }
         /* ReDMCSB DUNVIEW.C F0115 selects a native perspective bitmap.
          * Without that material, preserving the source page is the only
          * valid result; the old coloured diagnostic cross had no source
@@ -4319,8 +4276,6 @@ void csb_v1_viewport_runtime_draw_counts_from_config(
         cfg->runtime_projectile_sprite_drawn_count;
     counts->projectile_material_resolved_count =
         cfg->runtime_projectile_material_resolved_count;
-    counts->projectile_material_icon_drawn_count =
-        cfg->runtime_projectile_material_icon_drawn_count;
     counts->projectile_marker_drawn_count =
         cfg->runtime_projectile_marker_drawn_count;
     counts->post_teleport_projectile_handoff_drawn_count =

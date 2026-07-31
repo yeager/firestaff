@@ -46364,6 +46364,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   originalpalettfaser efter den PC3.4-bundna CHAOS-zoomen. Speltempot är
   oförändrat. Verifiering: V1:s title/entrance-kontrakt samt V2.0- och
   V2.1-capturetester passerar mot lokal PC3.4-data.
+- ✅ 2026-07-31 CSB F0115-projektiler: tog bort den gamla 16×16-ikonritningen
+  som kunde ersätta ReDMCSB:s perspektivbitmap för kastade objekt. En saknad
+  källbunden F0115-bitmap blir nu no-draw; bara den verifierade perspektiv-
+  rutten kan skriva projektilpixlar. Verifiering:
+  `test_csb_v1_viewport_phase3_rendering` 2655/2655 passerar.
 
 - ✅ 2026-07-31 DM1 HoC candidate time-effects and endgame fallback gates:
   the live M11 idle route now proves ReDMCSB `CHAMPION.C F0331` excludes the

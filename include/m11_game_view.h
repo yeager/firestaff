@@ -1553,7 +1553,6 @@ typedef struct {
         int runtime_group_marker_drawn_count;
         int runtime_projectile_sprite_drawn_count;
         int runtime_projectile_material_resolved_count;
-        int runtime_projectile_material_icon_drawn_count;
         int runtime_projectile_marker_drawn_count;
         int runtime_post_teleport_projectile_handoff_drawn_count;
         int runtime_post_teleport_projectile_handoff_blocked_count;
