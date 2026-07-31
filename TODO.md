@@ -19,6 +19,11 @@
   excluded from the production archive; do not promote its inferred item
   range or prices until Track 02 object/shop records are bound.
 
+- **THERON-V22-CELL-RECTS:** The V2.2 shape-cache rectangle table still uses
+  placeholder 1920×1080 cell coordinates. It is now excluded from the
+  production archive; keep the cache available only to its focused fixture
+  targets until an original viewport coordinate/material handoff exists.
+
 - **ALL-GAMES-NO-PLACEHOLDER-WHEN-SOURCE-EXISTS:** Active 2026-07-30.
   - 2026-07-31: CSB graphics discovery is now hash-only for both recognised
     and unknown launcher hints. Continue auditing remaining CSB import and

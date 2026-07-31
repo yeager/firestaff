@@ -47004,3 +47004,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   source-unverified shop price-table helper from the production archive.
   Its focused test and purchase-gate probe still compile it explicitly;
   production cannot expose inferred shop prices or item ranges.
+- ✅ 2026-07-31 Theron V2.2 viewport boundary: removed the placeholder
+  3×3 cell-rectangle cache from the production Theron archive. Focused V2.2
+  tests may still compile it explicitly, but live rendering cannot consume
+  guessed viewport coordinates.
