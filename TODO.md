@@ -18,6 +18,10 @@
   and inplace rectangle renderer are now fixture-only. Do not reconnect them
   until source-owned Track 02 V2.2 records and pixel assets are decoded.
 
+- **THERON-V1-VIEWPORT-MAPPING-REAL-DATA:** The viewport's duplicate inferred
+  tile table is now behind an unconditional source-mapping gate. Bind the
+  real square-value/depth/material mapping before enabling it.
+
 - **THERON-STARTUP-LEGACY-FALLBACK-ROOM:** The M11 production path uses
   `verified_only` Track 02 admission and the authenticated startup bitmap
   atlas. The older public compatibility API still synthesizes the

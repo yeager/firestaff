@@ -36801,6 +36801,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_rendering
         tests/test_theron_rendering.c
         src/theron/theron_v1_ui_chrome.c
+        src/theron/theron_v1_viewport.c
     )
     target_link_libraries(test_theron_rendering PRIVATE
         firestaff_theron firestaff_m12 firestaff_m10 m
@@ -36812,6 +36813,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     if(NOT MSVC)
         target_compile_options(test_theron_rendering PRIVATE -Wall -Wextra -O2 -fcommon)
     endif()
+    target_compile_definitions(test_theron_rendering PRIVATE THERON_VIEWPORT_FIXTURE_RENDER=1)
     add_test(
         NAME theron_v1_rendering
         COMMAND test_theron_rendering

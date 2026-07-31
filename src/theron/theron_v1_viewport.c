@@ -419,6 +419,16 @@ void theron_vp_set_synthetic_rendering_blocked(Theron_V1_Viewport *vp,
     vp->synthetic_rendering_blocked = blocked ? 1 : 0;
 }
 
+#ifndef THERON_VIEWPORT_FIXTURE_RENDER
+static int theron_vp_source_tile_mapping_ready(const TQR_PaletteState *palette) {
+    (void)palette;
+    /* Track 02 currently proves neither the square-value meaning nor the
+     * depth/material tile mapping. A non-empty caller-supplied atlas is not
+     * sufficient evidence to admit the inferred table below. */
+    return 0;
+}
+#endif
+
 /* ══════════════════════════════════════════════════════════════════════
  * Dungeon rendering
  * ══════════════════════════════════════════════════════════════════════ */
@@ -434,6 +444,11 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
     if (vp->synthetic_rendering_blocked || vp->palette.tile_count <= 0) {
         return;
     }
+#ifndef THERON_VIEWPORT_FIXTURE_RENDER
+    if (!theron_vp_source_tile_mapping_ready(&vp->palette)) {
+        return;
+    }
+#endif
 
     /* A tile bank alone is not a level handoff.  Do not fall back to the
      * historical (0,0,north) pose when the real dungeon record has not been

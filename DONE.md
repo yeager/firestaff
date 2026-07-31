@@ -47056,3 +47056,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   manifest/cache and inplace rectangle renderer from the production archive.
   Their focused V2.2 tests retain explicit source compilation, but `firestaff`
   cannot promote local cache/manifest pixels into the runtime.
+
+- ✅ 2026-07-31 Theron viewport mapping gate: blocked the duplicate viewport
+  tile table even when a caller supplies an unverified atlas. The legacy
+  fixture renderer is compiled explicitly by the rendering test; production
+  now requires a decoded Track 02 square/depth/material mapping.
