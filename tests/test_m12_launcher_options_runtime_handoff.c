@@ -4,8 +4,8 @@
  * Jobb F2: verifies the M12 launcher hands its options (game selection
  * context, language, cheats, speed, minimap/automap/combat log,
  * soundtrack/ambient audio, UI scale, streamer mode, custom music /
- * custom dungeon / screenshot paths, session timer, audio volumes,
- * font scale) over to the runtime at game start.
+ * custom dungeon / screenshot paths, session timer, audio device and volumes,
+ * display brightness, font scale) over to the runtime at game start.
  *
  * Covers the M12 side of the boundary:
  *   M12_StartupMenu_ExportLauncherRuntimeOptions() extraction + clamps
@@ -87,6 +87,9 @@ static void seed_distinctive_settings(M12_StartupMenuState* state) {
     state->settings.audioMusicVolume = 60;
     state->settings.audioSfxVolume = 90;
     state->settings.audioMuted = 0;
+    state->settings.displayBrightness = 130;
+    snprintf(state->settings.audioDeviceName,
+             sizeof(state->settings.audioDeviceName), "%s", "Verified SDL device");
     state->settings.wasdMovementEnabled = 1;
     state->settings.controlSchemeIndex = 1;
     state->settings.gameSpeedMultiplier = 150;
@@ -141,6 +144,9 @@ static void test_export_field_mapping(void) {
     check(opts.audioMusicVolume == 60, "export audioMusicVolume");
     check(opts.audioSfxVolume == 90, "export audioSfxVolume");
     check(opts.audioMuted == 0, "export audioMuted");
+    check(opts.displayBrightness == 130, "export displayBrightness");
+    check(strcmp(opts.audioDeviceName, "Verified SDL device") == 0,
+          "export audioDeviceName");
     check(opts.wasdMovementEnabled == 1, "export wasdMovementEnabled");
     check(opts.controlSchemeIndex == 1, "export controlSchemeIndex");
     check(opts.gameSpeedMultiplier == 150, "export gameSpeedMultiplier");
@@ -153,6 +159,50 @@ static void test_export_field_mapping(void) {
           "export customDungeonPath");
     check(strcmp(opts.screenshotPath, "/shots/out") == 0,
           "export screenshotPath");
+}
+
+static void test_global_language_and_preference_rows(void) {
+    M12_StartupMenuState state;
+    const int* rows;
+    int count = 0;
+    int i;
+    int audioDeviceFound = 0;
+    int brightnessFound = 0;
+    int expectedLanguage;
+
+    memset(&state, 0, sizeof(state));
+    seed_dm1_state(&state);
+    state.view = M12_MENU_VIEW_SETTINGS;
+    state.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_LANGUAGE;
+    expectedLanguage = (state.settings.languageIndex + 1) %
+                       M12_StartupMenu_GetLanguageCount();
+
+    /* LANGUAGE opens the picker; select its next concrete language and
+     * confirm.  The global setting must update every launch slot. */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    check(state.settings.languageIndex == expectedLanguage,
+          "global language advances in picker");
+    for (i = 0; i < M12_CONFIG_GAME_COUNT; ++i) {
+        check(state.gameOptions[i].languageIndex == state.settings.languageIndex,
+              "global language propagates to game slot");
+    }
+
+    rows = M12_StartupMenu_GetSettingsRowsForTab(1, &count);
+    for (i = 0; rows && i < count; ++i) {
+        if (rows[i] == M12_STARTUP_SETTINGS_ROW_DISPLAY_BRIGHTNESS) {
+            brightnessFound = 1;
+        }
+    }
+    rows = M12_StartupMenu_GetSettingsRowsForTab(3, &count);
+    for (i = 0; rows && i < count; ++i) {
+        if (rows[i] == M12_STARTUP_SETTINGS_ROW_AUDIO_DEVICE) {
+            audioDeviceFound = 1;
+        }
+    }
+    check(brightnessFound, "brightness is listed on graphics settings tab");
+    check(audioDeviceFound, "audio device is listed on audio settings tab");
 }
 
 static void test_export_clamps(void) {
@@ -265,6 +315,7 @@ int main(void) {
     test_launch_intent_carries_options();
     test_launch_intent_options_follow_constraints();
     test_invalid_intent_leaves_options_unbound();
+    test_global_language_and_preference_rows();
 
     if (failures) {
         printf("test_m12_launcher_options_runtime_handoff: FAIL %d\n",

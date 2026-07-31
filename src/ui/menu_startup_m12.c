@@ -188,6 +188,10 @@ _Static_assert(M12_STARTUP_SETTINGS_ROW_UNICODE_FONT == M12_SETTINGS_ROW_UNICODE
                "settings row contract: unicode font");
 _Static_assert(M12_STARTUP_SETTINGS_ROW_ARTPACK == M12_SETTINGS_ROW_ARTPACK,
                "settings row contract: artpack");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_AUDIO_DEVICE == M12_SETTINGS_ROW_AUDIO_DEVICE,
+               "settings row contract: audio device");
+_Static_assert(M12_STARTUP_SETTINGS_ROW_DISPLAY_BRIGHTNESS == M12_SETTINGS_ROW_DISPLAY_BRIGHTNESS,
+               "settings row contract: display brightness");
 _Static_assert(M12_STARTUP_SETTINGS_ROW_FPS_OVERLAY == M12_SETTINGS_ROW_FPS_OVERLAY,
                "settings row contract: fps overlay");
 

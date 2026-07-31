@@ -45717,6 +45717,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   initialization, before title or entrance audio can open an SDL stream; game
   reinitialisation retains the same preference through the existing launch
   handoff.
+- ✅ 2026-07-31 M12 global-preference contract verification: the public
+  settings-row API now identifies the playback-device and display-brightness
+  rows, and the launcher handoff regression covers their exact values. It
+  also drives the global language picker and proves that the chosen language
+  propagates to all five game launch slots. Verification:
+  `test_m12_launcher_options_runtime_handoff` passes.
 
 - ✅ 2026-07-31 CSB F0115 orphan group/projectile blit closure: removed two
   unused public pixel writers and their isolated test targets. They accepted

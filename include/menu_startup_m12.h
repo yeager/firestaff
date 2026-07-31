@@ -81,7 +81,12 @@ typedef enum {
     M12_STARTUP_SETTINGS_ROW_IMPORT = 49,
     M12_STARTUP_SETTINGS_ROW_UNICODE_FONT = 52,
     M12_STARTUP_SETTINGS_ROW_ARTPACK = 53,
-    M12_STARTUP_SETTINGS_ROW_FPS_OVERLAY = 56
+    M12_STARTUP_SETTINGS_ROW_FPS_OVERLAY = 56,
+    /* Global host preferences added after the original public row contract.
+     * Keep their numeric identities explicit so UI, accessibility clients and
+     * settings probes can address the same rows as the launcher. */
+    M12_STARTUP_SETTINGS_ROW_AUDIO_DEVICE = 57,
+    M12_STARTUP_SETTINGS_ROW_DISPLAY_BRIGHTNESS = 58
 } M12_StartupSettingsRow;
 
 typedef struct {
