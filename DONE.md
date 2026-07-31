@@ -45600,6 +45600,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - ✅ 2026-07-31 CSB duplicate D3L/D3R backdrop removal: removed the
   contract-only backdrop trace and CTest. The M11 source-bound side-wall
   handoff remains the only production owner of F0116/F0117 material.
+- ✅ 2026-07-31 CSB CustomBackgrounds synthetic first-backdrop removal:
+  removed the unconsumed C10 copy helper, public header and CTest. It could
+  only composite caller-supplied pixels and had neither a runtime consumer
+  nor a `CSBgraphics.dat` material receipt. The remaining CSBWin
+  CustomBackgrounds source-lock metadata is non-drawing until its original
+  masked-composite material path is bound.
 
 - ✅ 2026-07-31 DM1 V1 verification-route repair: PC3.4 object-name
   admission now uses the production GRAPHICS.DAT record constant (694 rather
