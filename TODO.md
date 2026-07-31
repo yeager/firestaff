@@ -2287,7 +2287,9 @@ that its exact runtime path is not already source-locked and tested.
     The same switch no longer lets the legacy non-game rune workbench paint
     over CSB's F0128 viewport while a CSB spell state is open. An unavailable
     source dialog backdrop is likewise strict no-draw; only an explicit host
-    return-confirmation flow may use host UI.
+    return-confirmation flow may use host UI. Source C068--C073 movement hits
+    remain active for CSB under that switch rather than being routed to the
+    generic focus-card shortcut.
 28. **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,
    pits, floor/ceiling ornaments, creatures, items, projectiles, explosions,
    and custom backgrounds through real PC34 asset ownership.

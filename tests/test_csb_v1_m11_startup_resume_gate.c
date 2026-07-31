@@ -2227,6 +2227,17 @@ int main(void) {
                     "CSB chrome-off dialog does not paint a host plaque over F0128");
         view.dialogOverlayActive = 0;
         view.dialogOverlayText[0] = '\0';
+        if (profile) {
+            int before_turn = view.csbState.party_dir & 3;
+            expect_true(M11_GameView_HandlePointerButton(
+                            &view, 240, 130, M11_DM1_MOUSE_MASK_LEFT) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "CSB chrome-off C068 click reaches the source movement route");
+            expect_true((view.csbState.party_dir & 3) ==
+                            ((before_turn + 3) & 3) &&
+                        profile->runtime.party_dir == view.csbState.party_dir,
+                        "CSB chrome-off C068 click turns through the runtime bridge");
+        }
         expect_true(test_setenv("FIRESTAFF_V1_CHROME", "1") == 0,
                     "restore V1 chrome after the CSB no-workbench regression");
     }

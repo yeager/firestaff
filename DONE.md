@@ -44621,6 +44621,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   untouched; the distinct return-to-menu confirmation remains explicit host
   UI. Verification: the CSB M11 startup/resume source-viewport comparison
   covers the chrome-off dialog state and passes.
+- ✅ 2026-07-31 CSB chrome-off input containment: the generic focus-card
+  shortcut no longer captures CSB's C068--C073 movement region when the DM1
+  chrome switch is off. CSB continues through `COMMAND.C G0448` and the
+  runtime movement bridge. Verification: the startup/resume regression
+  exercises a chrome-off C068 click and confirms the source turn and runtime
+  party-direction update.
 - ✅ 2026-07-31 DM2 V2 HUD synthetic-PNG closure: the public one-pixel PNG
   compatibility hooks now return strict no-draw even for a valid fixture.
   SK-projects `c_gdatfile.cpp::DM2_LOAD_GDAT_INTERFACE_00_02` establishes

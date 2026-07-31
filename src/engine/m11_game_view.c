@@ -24913,7 +24913,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
      * movement-arrow rectangles (C068..C073) below; the old focus-card box
      * at x=218..303/y=106..139 overlaps the top arrow row and must not
      * preempt C001/C002/C003. */
-    if ((state->showDebugHUD || !m11_v1_chrome_mode_enabled(state)) &&
+    if ((state->showDebugHUD ||
+         (!m11_v1_chrome_mode_enabled(state) &&
+          state->sourceKind != M11_GAME_SOURCE_CSB_BOOT)) &&
         (m11_point_in_rect(x, y,
                            M11_PROMPT_STRIP_X,
                            M11_PROMPT_STRIP_Y,
@@ -24926,7 +24928,12 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     /* ReDMCSB COMMAND.C G0448 maps the source movement-arrow zones
      * (C068/C070/C069/C073/C072/C071) to commands 1/3/2/6/5/4;
      * CLIKMENU.C F0366 then treats C004 as relative right movement. */
-    if (m11_v1_chrome_mode_enabled(state) && !state->showDebugHUD) {
+    /* CSB retains COMMAND.C G0448's source hit zones even if the optional
+     * DM1 chrome switch is off. Otherwise the same clicks would reach the
+     * host focus-card shortcut above instead of C068..C073. */
+    if ((m11_v1_chrome_mode_enabled(state) ||
+         state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) &&
+        !state->showDebugHUD) {
         int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
         int zoneId = 0;
         int command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
