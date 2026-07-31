@@ -43,140 +43,14 @@
 #include <stdio.h>
 #include <string.h>
 
-/* ── Built-in shop catalog (5 shops) ─────────────────────────────────
- * Source: skproject/SKULLWIN/c_shop.cpp shop_descriptor_table.
- * Prices are base gold values; effective price is scaled by negotiator.
- */
-/* Retired fixture catalog: its locations, stock, prices and dialog were
- * authored by Firestaff rather than decoded from the original record chain.
- * Keep it private only so older ABI-facing structs retain their layout; it
- * must never be exposed or drive a transaction.  SKProject's SHOP_GLASS
- * actuator consumes live WALL_GFX/dt08 ownership instead. */
-static const DM2_V1_ShopDescriptor g_builtin_shops[DM2_NUM_BUILTIN_SHOPS] = {
-    /* Shop 1: General Store (Friendly merchant, food + torches + basic) */
-    {
-        DM2_SHOP_ID_GENERAL, DM2_NPC_MERCHANT_FRIENDLY,
-        10, 5, 0,                   /* map 0, pos (10,5) - town square */
-        5, {                        /* 5 stock slots */
-            { 110,   30, -1 },      /* Lantern - unlimited */
-            { 200,   25, -1 },      /* Heal Potion */
-            { 201,   50, -1 },      /* Mana Potion */
-            { 1001,  15, -1 },      /* Torch */
-            { 1002,  10, 10 },      /* Bread (10 in stock) */
-        }
-    },
-    /* Shop 2: Weapons Master (Greedy merchant, ranged weapons) */
-    {
-        DM2_SHOP_ID_WEAPONS, DM2_NPC_MERCHANT_GREEDY,
-        15, 8, 0,                   /* map 0, pos (15,8) */
-        4, {
-            { 101,   50, -1 },      /* Crossbow */
-            { 102,  250, -1 },      /* Pistol */
-            { 103,  500, -1 },      /* Rifle */
-            { 104,  150, 8 },       /* Throwing Bomb (8 in stock) */
-        }
-    },
-    /* Shop 3: Magic Emporium (Wizard, scrolls + potions) */
-    {
-        DM2_SHOP_ID_MAGIC, DM2_NPC_WIZARD,
-        8, 3, 1,                    /* map 1, pos (8,3) - magic quarter */
-        4, {
-            { 111,  300, -1 },      /* Magic Battery */
-            { 120,  400, -1 },      /* Flame Orb */
-            { 200,   25, -1 },      /* Heal Potion */
-            { 201,   50, -1 },      /* Mana Potion */
-        }
-    },
-    /* Shop 4: Tavern (Friendly merchant, food + drink only) */
-    {
-        DM2_SHOP_ID_TAVERN, DM2_NPC_MERCHANT_FRIENDLY,
-        12, 6, 0,                   /* map 0, pos (12,6) */
-        3, {
-            { 1002,  10, -1 },      /* Bread */
-            { 1003,   5, -1 },      /* Water */
-            { 1004,  20, -1 },      /* Cheese */
-        }
-    },
-    /* Shop 5: Blacksmith (Blacksmith NPC, armour + repair) */
-    {
-        DM2_SHOP_ID_BLACKSMITH, DM2_NPC_BLACKSMITH,
-        5, 10, 0,                   /* map 0, pos (5,10) */
-        4, {
-            { 105,  200, -1 },      /* Remote Bomb (hybrid) */
-            { 110,   30, -1 },      /* Lantern (again, for repair) */
-            { 1005, 100, -1 },      /* Foot Plate */
-            { 1006, 200, -1 },      /* Leg Plate */
-        }
-    },
-};
-
-/* ── NPC names + dialog table ────────────────────────────────────────
- * Source: skproject/SKULLWIN/c_npc.cpp NPCDialogTable[NUM_NPCS].
- * Each NPC has 6 lines: greeting, buy intro, sell intro, low-gold
- * comment, farewell, and a personality-specific taunt.
- */
-static const struct {
-    const char *name;
-    const char *lines[DM2_NPC_DIALOG_LINES];
-} g_npc_table[DM2_NUM_NPCS] = {
-    /* NPC 1: Friendly Merchant */
-    {
-        "Bromad the Trader",
-        {
-            "Welcome, traveler! Care to browse my wares?",
-            "Ah, a fine choice! That'll serve you well.",
-            "I'll give you a fair price for that, friend.",
-            "Times are tough... but for you, a small discount.",
-            "Safe travels, and come again!",
-            "May the Lords of Chaos spare you, customer."
-        }
-    },
-    /* NPC 2: Greedy Merchant */
-    {
-        "Slink the Pawnbroker",
-        {
-            "Heh heh... got coin, I hope.",
-            "Best price in town - and my last!",
-            "What're ya sellin'? Don't waste my time.",
-            "Bah! You call THAT gold?",
-            "Get out. And don't come back without money.",
-            "I see through your kind. Sharper than you look."
-        }
-    },
-    /* NPC 3: Wizard */
-    {
-        "Magus Veneficus",
-        {
-            "The threads of magic bind us, seeker.",
-            "Choose wisely - magic is not to be trifled with.",
-            "Your offering is... acceptable.",
-            "Your reserves of mana are... concerning.",
-            "Walk in balance with the arcane.",
-            "Power without wisdom is a candle in the wind."
-        }
-    },
-    /* NPC 4: Blacksmith */
-    {
-        "Grimdal Ironhand",
-        {
-            "Aye, what needs fixing?",
-            "Sturdy work, that. It'll hold.",
-            "I'll take it off yer hands.",
-            "Can't work for free, ye know.",
-            "Mind the forge on yer way out.",
-            "Steel sings true - and so should ye."
-        }
-    },
-};
+/* Shop stock, prices, NPC names and dialogue are original record/GDAT data.
+ * Firestaff has not imported the SHOP_GLASS actuator chain yet, so no local
+ * catalog is retained in production code.  All shop access remains
+ * unavailable until that source owner is present. */
 
 /* ── Module state ─────────────────────────────────────────────────── */
 static DM2_V1_ShopState s_state;
 static int s_initialized = 0;
-
-static int dm2_v1_shop_source_catalog_available(void) {
-    /* No original shop actuator/stock chain has been imported yet. */
-    return 0;
-}
 
 static void ensure_init(void) {
     if (s_initialized) return;
@@ -376,20 +250,12 @@ int dm2_v1_shop_get_builtin_count(void) {
 }
 
 const DM2_V1_ShopDescriptor *dm2_v1_shop_get_builtin(int shop_id) {
-    if (!dm2_v1_shop_source_catalog_available()) return NULL;
-    for (int i = 0; i < DM2_NUM_BUILTIN_SHOPS; i++) {
-        if (g_builtin_shops[i].shop_id == shop_id) {
-            return &g_builtin_shops[i];
-        }
-    }
+    (void)shop_id;
     return NULL;
 }
 
 int dm2_v1_shop_lookup_index(int shop_id) {
-    if (!dm2_v1_shop_source_catalog_available()) return -1;
-    for (int i = 0; i < DM2_NUM_BUILTIN_SHOPS; i++) {
-        if (g_builtin_shops[i].shop_id == shop_id) return i;
-    }
+    (void)shop_id;
     return -1;
 }
 
@@ -592,16 +458,14 @@ int dm2_v1_shop_get_sell_price(int shop_id, int inv_idx) {
 
 /* ── NPC dialog ─────────────────────────────────────────────────── */
 const char *dm2_v1_npc_get_name(int npc_id) {
-    if (!dm2_v1_shop_source_catalog_available()) return NULL;
-    if (npc_id < 1 || npc_id > DM2_NUM_NPCS) return NULL;
-    return g_npc_table[npc_id - 1].name;
+    (void)npc_id;
+    return NULL;
 }
 
 const char *dm2_v1_npc_get_dialog(int npc_id, int line_idx) {
-    if (!dm2_v1_shop_source_catalog_available()) return NULL;
-    if (npc_id < 1 || npc_id > DM2_NUM_NPCS) return NULL;
-    if (line_idx < 0 || line_idx >= DM2_NPC_DIALOG_LINES) return NULL;
-    return g_npc_table[npc_id - 1].lines[line_idx];
+    (void)npc_id;
+    (void)line_idx;
+    return NULL;
 }
 
 int dm2_v1_npc_get_count(void) {

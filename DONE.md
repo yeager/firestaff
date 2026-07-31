@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 shop-fixture data removal: deleted the retired local shop
+  stock/price table and all host-authored NPC names and dialogue from the
+  production module. Shop and NPC catalog lookups now return unavailable
+  until the original SHOP_GLASS actuator, WALL_GFX and dt08 ownership is
+  imported. Verification: `test_dm2_v1_shop_pc34_compat` 6/6 and
+  `test_dm2_v1_runtime_shop_pc34_compat` 11/11 pass.
+
 - ✅ 2026-07-31 DM2 projectile direction closure: a creature projectile with
   identical source and target coordinates is now rejected before event
   creation. Firestaff no longer invents a north direction for a zero-length
