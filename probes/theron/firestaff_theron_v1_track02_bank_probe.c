@@ -163,6 +163,13 @@ static const uint32_t g_jp_audio_bank_ids[THERON_TRACK02_MAX_BANK_ANCHORS] = {
     0x01530301u, 0x01411301u, 0x01682801u
 };
 
+static const uint64_t g_us_quest_block_hashes[THERON_TRACK02_QUEST_BLOCK_COUNT] = {
+    UINT64_C(0xbb870873932df5f0), UINT64_C(0x72a6f3b06430c112),
+    UINT64_C(0xc35bfafca2c7e341), UINT64_C(0xd3972e47a6a51d7d),
+    UINT64_C(0xb441eb40724628cb), UINT64_C(0x98022bb2c44de80e),
+    UINT64_C(0x2927a930313f2746)
+};
+
 static void check_int(const char *label, int got, int want) {
     if (got != want) {
         printf("FAIL %s: got %d want %d\n", label, got, want);
@@ -191,6 +198,36 @@ static void check_u32(const char *label, uint32_t got, uint32_t want) {
                label, (unsigned)got, (unsigned)want);
         ++g_fail;
     }
+}
+
+static uint64_t fnv1a64(const uint8_t *data, size_t size) {
+    uint64_t h = UINT64_C(0xcbf29ce484222325);
+    size_t i;
+    for (i = 0; i < size; ++i) { h ^= data[i]; h *= UINT64_C(0x100000001b3); }
+    return h;
+}
+
+static void probe_us_quest_blocks(const uint8_t *data, size_t size) {
+    static uint8_t block[THERON_TRACK02_QUEST_BLOCK_BYTES];
+    size_t i;
+    for (i = 0; i < THERON_TRACK02_QUEST_BLOCK_COUNT; ++i) {
+        char label[96];
+        Theron_Track02BlockStatus status = theron_v1_track02_extract_quest_block(
+            data, size, THERON_TRACK02_VARIANT_US_BIN, i,
+            block, sizeof(block));
+        snprintf(label, sizeof(label), "US quest block %zu status", i);
+        check_int(label, status, THERON_TRACK02_BLOCK_OK);
+        snprintf(label, sizeof(label), "US quest block %zu hash", i);
+        if (fnv1a64(block, sizeof(block)) != g_us_quest_block_hashes[i]) {
+            printf("FAIL %s: extracted FNV-1a mismatch\n", label);
+            ++g_fail;
+        }
+    }
+    check_int("JP quest extraction remains explicitly unsupported",
+              theron_v1_track02_extract_quest_block(
+                  data, size, THERON_TRACK02_VARIANT_JP_BIN, 0u,
+                  block, sizeof(block)),
+              THERON_TRACK02_BLOCK_UNSUPPORTED_VARIANT);
 }
 
 static void check_gt_size(const char *label, size_t got, size_t floor) {
@@ -1121,6 +1158,7 @@ static void probe_track(const char *label,
                              g_us_audio_bank_ids,
                              3141u,
                              1263u);
+            probe_us_quest_blocks(data, size);
             check_raw_user_data_contract("US raw",
                                          data,
                                          size,

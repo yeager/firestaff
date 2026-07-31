@@ -26,6 +26,7 @@
 #define TQR_US_ISO_BANK_BOUNDARY_OFFSET 0x3000u
 #define TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES 16u
 #define TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES 44u
+#define TQR_US_BIN_FIRST_QUEST_BLOCK_OFFSET 0xa9f90u
 #define TQR_RAW_SECTOR_BYTES THERON_TRACK02_RAW_SECTOR_BYTES
 #define TQR_RAW_SECTOR_USER_DATA_OFFSET THERON_TRACK02_RAW_USER_DATA_OFFSET
 #define TQR_RAW_SECTOR_USER_DATA_BYTES THERON_TRACK02_RAW_USER_DATA_BYTES
@@ -115,6 +116,47 @@ static uint32_t rd32le(const uint8_t *p) {
            ((uint32_t)p[1] << 8) |
            ((uint32_t)p[2] << 16) |
            ((uint32_t)p[3] << 24);
+}
+
+Theron_Track02BlockStatus theron_v1_track02_extract_quest_block(
+    const uint8_t *track02_data, size_t track02_size,
+    Theron_Track02Variant variant, size_t dungeon_index,
+    uint8_t *out_block, size_t out_size) {
+    size_t raw_offset, copied = 0u;
+    if (out_block && out_size > 0u) memset(out_block, 0, out_size);
+    if (!track02_data || !out_block || out_size < THERON_TRACK02_QUEST_BLOCK_BYTES ||
+        dungeon_index >= THERON_TRACK02_QUEST_BLOCK_COUNT)
+        return THERON_TRACK02_BLOCK_BAD_INPUT;
+    if (variant != THERON_TRACK02_VARIANT_US_BIN)
+        return THERON_TRACK02_BLOCK_UNSUPPORTED_VARIANT;
+    raw_offset = TQR_US_BIN_FIRST_QUEST_BLOCK_OFFSET +
+        (dungeon_index * THERON_TRACK02_QUEST_BLOCK_BYTES /
+         THERON_TRACK02_RAW_USER_DATA_BYTES) * THERON_TRACK02_RAW_SECTOR_BYTES;
+    while (copied < THERON_TRACK02_QUEST_BLOCK_BYTES) {
+        size_t sector = raw_offset +
+            (copied / THERON_TRACK02_RAW_USER_DATA_BYTES) * THERON_TRACK02_RAW_SECTOR_BYTES;
+        size_t chunk = THERON_TRACK02_RAW_USER_DATA_BYTES;
+        if (chunk > THERON_TRACK02_QUEST_BLOCK_BYTES - copied)
+            chunk = THERON_TRACK02_QUEST_BLOCK_BYTES - copied;
+        if (sector > track02_size || chunk > track02_size - sector) {
+            memset(out_block, 0, out_size);
+            return THERON_TRACK02_BLOCK_OUT_OF_RANGE;
+        }
+        memcpy(out_block + copied, track02_data + sector, chunk);
+        copied += chunk;
+    }
+    return THERON_TRACK02_BLOCK_OK;
+}
+
+const char *theron_v1_track02_block_status_name(
+    Theron_Track02BlockStatus status) {
+    switch (status) {
+    case THERON_TRACK02_BLOCK_OK: return "OK";
+    case THERON_TRACK02_BLOCK_BAD_INPUT: return "BAD_INPUT";
+    case THERON_TRACK02_BLOCK_UNSUPPORTED_VARIANT: return "UNSUPPORTED_VARIANT";
+    case THERON_TRACK02_BLOCK_OUT_OF_RANGE: return "OUT_OF_RANGE";
+    default: return "UNKNOWN";
+    }
 }
 
 static uint32_t tqr_hash_bytes(const uint8_t *bytes, size_t byte_count);
