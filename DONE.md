@@ -19,7 +19,7 @@
 
 - ✅ 2026-07-31 CSB F0435 package identity: replaced the test's generated
   32-byte `DUNGEON.DAT` and `/tmp` title-media claims with the explicitly
-  supplied, hash-verified PC 3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` pair. The
+  supplied, scanner-issued PC 3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` receipt. The
   save/load provenance and title-capture receipts are now exercised only
   after the real ReDMCSB F0435 boot materialization path; missing real media
   is an explicit skip, never a fixture fallback.

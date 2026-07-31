@@ -23,7 +23,8 @@
     tests and keeping every runtime file boundary source-material-only.
   - 2026-07-31: The F0435 package-identity regression no longer constructs a
     32-byte stand-in `DUNGEON.DAT`. Its save/load provenance assertion now
-    requires the hash-verified PC 3.4 `GRAPHICS.DAT` and `DUNGEON.DAT` pair.
+    requires the scanner-issued receipt for the hash-verified PC 3.4
+    `GRAPHICS.DAT` and `DUNGEON.DAT` pair.
     Continue converting any remaining production-adjacent CSB media fixture
     into an explicit no-data rejection or an external-corpus test.
   Production rendering must fail closed for a missing or unbound original

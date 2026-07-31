@@ -8,36 +8,33 @@
 static int failures;
 #define CHECK(x) do { if (!(x)) { fprintf(stderr, "FAIL: %s\n", #x); ++failures; } } while (0)
 
+static int csb_v1_test_real_pc34_profile(CSB_V1_BootProfile *profile)
+{
+    CSB_V1_StartupRealReceipt receipt;
+    const char *root = getenv("FIRESTAFF_CSB_DATA_DIR");
+
+    if (!profile || !root || !root[0]) return 0;
+    csb_v1_startup_real_receipt_init(&receipt);
+    return csb_v1_startup_real_scan_and_receipt(root, 4, &receipt) ==
+               CSB_V1_STARTUP_REAL_OK &&
+           receipt.matched &&
+           csb_v1_boot_profile_from_startup_real_receipt_pc34(&receipt,
+                                                               profile);
+}
+
 static void test_native_f0435_provenance(void)
 {
     CSB_V1_BootProfile profile;
     CSB_V1_BootOriginalSaveRuntimeReceipt_PC34 receipt;
     char save_path[ASSET_PATH_MAX];
-    const char *graphics_path = getenv("FIRESTAFF_CSB_GRAPHICS_DAT");
-    const char *dungeon_path = getenv("FIRESTAFF_CSB_DUNGEON_DAT");
     uint32_t game_time = 0u;
 
-    if (!graphics_path || !graphics_path[0] ||
-        !dungeon_path || !dungeon_path[0]) {
-        puts("SKIP: F0435 provenance requires real CSB media paths");
+    if (!csb_v1_test_real_pc34_profile(&profile)) {
+        puts("SKIP: F0435 provenance requires a scanned real CSB PC 3.4 pair");
         return;
     }
     snprintf(save_path, sizeof(save_path), "/tmp/firestaff-csb-f0435-%ld.fsav",
              (long)getpid());
-    csb_v1_boot_profile_init(&profile);
-    snprintf(profile.asset_root, sizeof(profile.asset_root), "%s", "/");
-    snprintf(profile.dungeon_path, sizeof(profile.dungeon_path), "%s", dungeon_path);
-    snprintf(profile.graphics_path, sizeof(profile.graphics_path), "%s", graphics_path);
-    snprintf(profile.graphics_md5, sizeof(profile.graphics_md5),
-             "%s", "61fbfd56887c94adc26888a9491c6611");
-    snprintf(profile.dungeon_md5, sizeof(profile.dungeon_md5),
-             "%s", "6695d2acebce49f95db1d8f3a5c733de");
-    profile.assets_verified = 1;
-    profile.graphics_verified = 1;
-    profile.dungeon_verified = 1;
-    profile.variant_id = CSB_V1_VARIANT_PC34_EN;
-    profile.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
-    profile.entrance_map_index = 255u;
     CHECK(csb_v1_boot_enter_game(&profile) == 0);
     CHECK(csb_v1_boot_runtime_save_game_to_path_pc34(
               &profile, save_path, &game_time) == CSB_V1_SAVE_OK);
@@ -69,30 +66,12 @@ static void test_title_capture_uses_source_owned_chaos_step(void)
     CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 capture;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupRenderViewReceipt_PC34 view;
-    const char *graphics_path = getenv("FIRESTAFF_CSB_GRAPHICS_DAT");
-    const char *dungeon_path = getenv("FIRESTAFF_CSB_DUNGEON_DAT");
     int capture_ok;
 
-    if (!graphics_path || !graphics_path[0] ||
-        !dungeon_path || !dungeon_path[0]) {
-        puts("SKIP: title capture requires real CSB media paths");
+    if (!csb_v1_test_real_pc34_profile(&profile)) {
+        puts("SKIP: title capture requires a scanned real CSB PC 3.4 pair");
         return;
     }
-    csb_v1_boot_profile_init(&profile);
-    snprintf(profile.asset_root, sizeof(profile.asset_root), "%s", "/");
-    snprintf(profile.graphics_path, sizeof(profile.graphics_path), "%s",
-             graphics_path);
-    snprintf(profile.dungeon_path, sizeof(profile.dungeon_path), "%s",
-             dungeon_path);
-    snprintf(profile.graphics_md5, sizeof(profile.graphics_md5), "%s",
-             "61fbfd56887c94adc26888a9491c6611");
-    snprintf(profile.dungeon_md5, sizeof(profile.dungeon_md5), "%s",
-             "6695d2acebce49f95db1d8f3a5c733de");
-    profile.assets_verified = 1;
-    profile.graphics_verified = 1;
-    profile.dungeon_verified = 1;
-    profile.variant_id = CSB_V1_VARIANT_PC34_EN;
-    profile.graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
 
     CHECK(csb_v1_startup_title_source_step_for_frame_pc34(59) == 1u);
     CHECK(csb_v1_startup_title_source_step_for_frame_pc34(60) == 2u);
