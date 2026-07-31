@@ -43552,11 +43552,12 @@ static int m11_draw_dm2_startup_menu(const M11_GameViewState *state,
      * TITLE/0/dt07/4 (or its 64000-byte raw screen).  The credits picture is
      * reached only after the title-menu event loop requests SHOW_CREDITS;
      * it is not a timed boot animation.  Do not hold the startup host on
-     * field 1: apart from trapping launch on the credits, that route needs
-     * the picture-local credits palette rather than the menu's active IRGB
-     * palette set.  Source: SKProject SKWINSPX/src/v4/skcore.cpp
-     * SHOW_MENU_SCREEN lines 15455-15462; skguidrw.cpp
-     * DRAW_TITLE_MENU_SCREEN lines 6598-6613. */
+     * field 1: apart from trapping launch on the credits, SHOW_CREDITS owns
+     * its palette transaction.  startend.cpp lines 285-298 retain a local
+     * palette only for non-BPP8 credits; the verified PC English BPP8 image
+     * instead keeps the global dtPalIRGB selected by DM2_INIT.  Source:
+     * SKProject SKWINSPX/src/v5/startend.cpp::DM2_SHOW_MENU_SCREEN,
+     * DM2_SHOW_CREDITS and DM2_INIT. */
     context.draw_title_phase = 0;
     context.draw_menu_phase = 1;
     executor.userdata = &context;
