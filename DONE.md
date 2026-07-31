@@ -45603,6 +45603,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   viewport remains fail-closed on the active verified source graphics chain;
   future D2C work must bind the actual ReDMCSB F0121/F0107/F0111 command and
   native record identities rather than manufacture a capture.
+- ✅ 2026-07-31 CSB V2 HUD synthetic-painter removal: removed the disabled
+  hand-drawn compass, fonts, bars, action icons and magic indicator from the
+  compatibility module. The retained state API is strictly no-draw; original
+  pixels remain owned by PC3.4 C017/C040 or Atari ST C232. This eliminates a
+  dormant generated-overlay fallback without changing runtime state handling.
 - ✅ 2026-07-31 CSB active D1L/D1R viewport binding hardening: the live M11
   provider now requires the native 60x111 C03/C02 rasters before caching
   GRAPHICS.DAT records 96/95 (wall set 0) for C713/C714. It rejects a wrong

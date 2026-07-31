@@ -7,38 +7,10 @@
 extern "C" {
 #endif
 
-/* ══════════════════════════════════════════════════════════════════════
- * CSB V2 HUD Overlay — presentation-only enhanced UI chrome
- *
- * Phase 3: CSB V2 enhanced in-game overlay presentation, UI chrome,
- * and interaction feedback.
- *
- * Architecture:
- *   This module is deliberately presentation-only: it draws optional
- *   overlay elements into the supplied framebuffer and does NOT mutate
- *   dungeon, champion, or command runtime state.
- *
- * V2.0/V2.1 overlay elements:
- *   - Compass rose (4-way directional indicator, top-left)
- *   - Dungeon depth counter  (e.g. "4/10")
- *   - Party gold counter    (CSB party gold)
- *   - Health/stamina/mana mini-bars for 4 party champions
- *   - Action strip icons    (Attack/Cast/Use/Drop/Move)
- *   - Chaos magic indicator (CSB-specific: active DSA/Power runes)
- *
- * V2.2 interaction feedback:
- *   - Hit flash on action icons
- *   - Low-health pulse on champion bars
- *   - Compass smooth rotation between cardinal directions
- *   - Chaos magic glow on active spell
- *
- * Source: CSBWin/Viewport.cpp (CSB HUD layout, 7290 lines)
- *         CSBWin/Graphics.cpp (CSB graphics, 3186 lines)
- *         ReDMCSB PANEL.C F0354 champion status box drawing
- *         ReDMCSB DUNGEON.C stat-bar refresh timing
- *         ReDMCSB COMMAND.C action feedback gates
- *         ReDMCSB DISPLAY.C pulse animation timing (2 Hz)
- * ══════════════════════════════════════════════════════════════════════ */
+/* CSB V2 HUD compatibility state. It does not draw pixels: PC3.4 C017/C040
+ * and Atari ST C232 own the authentic HUD surfaces. The values below are
+ * retained for input/runtime compatibility only and cannot authorise a
+ * generated overlay. ReDMCSB: PANEL.C F0354, DUNGEON.C F0260, COMMAND.C. */
 
 /* ── Compass ─────────────────────────────────────────────────────── */
 typedef struct {
