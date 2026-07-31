@@ -3358,9 +3358,9 @@ static int m11_csb_complete_atari_st_runtime_handoff(M11_GameViewState *state)
     state->csbState.startup_entrance_dismissed = 1;
     state->csbAtariStRuntimeHandoffComplete = 1;
     m11_sync_csb_state_from_boot_profile(state, profile);
-    /* ANIM.C transfers directly to FTLCODE.  This boundary has no source
-     * message, so retain the source-owned page rather than publishing a
-     * host-generated readiness notification. */
+    /* ReDMCSB ANIM.C main lines 2100-2130 finishes its palette curtain and
+     * exits without a runtime status message.  Retain the source-owned page
+     * rather than publishing a host-generated readiness notification. */
     return 1;
 }
 
