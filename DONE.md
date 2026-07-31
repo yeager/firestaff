@@ -46652,3 +46652,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   big-endian attribute-orden är tillagd från DMWeb:s Attributes-region.
   Tile-attributen hålls separata från ännu obevisad glyph- och menysemantik.
   Verifiering: `test_nexus_v1_font_s2d` passerar mot retailfilen.
+- ✅ 2026-07-31 Nexus HUD no-fake gate: live DGN-vägen sätter inte längre
+  V2-presentationsflaggor hårdkodat för att öppna den procedurala HUD:n.
+  Utan en autentiserad retail-widget/VDP-placement receipt förblir overlayn
+  stängd; explicit V2-integrationstest kan fortfarande aktivera den.
+  Verifiering: full `firestaff`-build, HUD 9/9 och DGN materialization-test.
