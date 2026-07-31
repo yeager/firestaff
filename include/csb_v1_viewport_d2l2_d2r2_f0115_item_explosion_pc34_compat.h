@@ -132,15 +132,6 @@ int csb_v1_viewport_d2l2_d2r2_f0115_explosion_side_zone_pc34(
     const CSB_V1_ViewportD2L2D2R2F0115ItemExplosionSpec *spec,
     unsigned char view_cell);
 
-int csb_v1_viewport_d2l2_d2r2_f0115_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD2L2D2R2F0115ItemExplosionSpec *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height);
-
 /* Compose a source-owned item or explosion bitmap through F0791/C10. This
  * rejects stale hashes, non-package sources, invalid palettes and clipping
  * without touching the target framebuffer. */

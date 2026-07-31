@@ -45177,6 +45177,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   decoded from the original game-state and SUPPRESS records, so a malformed
   later section cannot leave an invented party behind. Verification:
   `test_dm2_v1_utility_import` passes 136/136.
+- ✅ 2026-07-31 CSB D2L2/D2R2 F0115 no-fake closure: removed the generic
+  C10 fixture blit. Item and explosion pixels now require the existing
+  hash-bound real-overlay compositor; F0115 metadata alone remains no-draw.
+
 - ✅ 2026-07-31 CSB D3L2/D3R2 F0111 door no-fake closure: removed the
   unbound C10 fixture blit while retaining the existing real `GRAPHICS.DAT`
   receipt. Source routing remains intact and unadmitted material cannot draw.

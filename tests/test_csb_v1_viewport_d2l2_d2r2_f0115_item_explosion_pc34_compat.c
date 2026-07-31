@@ -305,36 +305,11 @@ static int test_c10_blit_and_lineage(void)
         csb_v1_viewport_d2l2_d2r2_f0115_item_explosion_spec_for_square_pc34(9);
     const CSB_V1_ViewportD2L2D2R2F0115ItemExplosionSpec *d2r2 =
         csb_v1_viewport_d2l2_d2r2_f0115_item_explosion_spec_for_square_pc34(10);
-    uint8_t source[8] = { 1, 10, 2, 10, 3, 4, 10, 5 };
-    uint8_t destination[8] = { 77, 77, 77, 77, 77, 77, 77, 77 };
 
     /* ReDMCSB: DEFS.H:2088 C10_COLOR_FLESH is the F0791 transparent color
      * used by DUNVIEW.C:5109 for items and 6192-6193 for explosions. */
     ok &= expect_int("c10.value", d2l2 ? d2l2->transparent_color : -1, 10,
                      "ReDMCSB DEFS.H:2088 C10_COLOR_FLESH");
-    ok &= expect_int("c10.blit_copied",
-                     csb_v1_viewport_d2l2_d2r2_f0115_apply_c10_blit_pc34(
-                         d2l2, source, 4, destination, 4, 4, 2),
-                     5,
-                     "ReDMCSB DUNVIEW.C:5109/6192-6193 F0791 C10 blit");
-    ok &= expect_int("c10.pixel0", destination[0], 1,
-                     "ReDMCSB DUNVIEW.C:5109 item F0791 pixel copy");
-    ok &= expect_int("c10.transparent1", destination[1], 77,
-                     "ReDMCSB DEFS.H:2088 C10 transparent preservation");
-    ok &= expect_int("c10.pixel2", destination[2], 2,
-                     "ReDMCSB DUNVIEW.C:6192-6193 explosion F0791 pixel copy");
-    ok &= expect_int("c10.transparent3", destination[3], 77,
-                     "ReDMCSB DEFS.H:2088 C10 transparent preservation");
-    ok &= expect_int("c10.pixel5", destination[5], 4,
-                     "ReDMCSB DUNVIEW.C:5109/6192-6193 F0791 pixel copy");
-    ok &= expect_int("c10.transparent6", destination[6], 77,
-                     "ReDMCSB DEFS.H:2088 C10 transparent preservation");
-    ok &= expect_int("c10.reject_null",
-                     csb_v1_viewport_d2l2_d2r2_f0115_apply_c10_blit_pc34(
-                         NULL, source, 4, destination, 4, 4, 2),
-                     -1,
-                     "ReDMCSB DUNVIEW.C:5109 requires resolved F0115 metadata");
-
     /* CSB-lineage bindings are recorded alongside the ReDMCSB dispatch they
      * represent, not used as a replacement for the source-lock constants. */
     ok &= expect_int("lineage.rf2l2", d2l2 ? d2l2->csb_lineage_relative_cell : -1, 3,

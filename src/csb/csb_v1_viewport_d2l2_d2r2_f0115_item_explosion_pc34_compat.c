@@ -214,35 +214,6 @@ int csb_v1_viewport_d2l2_d2r2_f0115_explosion_side_zone_pc34(
            view_cell;
 }
 
-int csb_v1_viewport_d2l2_d2r2_f0115_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD2L2D2R2F0115ItemExplosionSpec *spec,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height)
-{
-    int copied = 0;
-    if (!spec || !source || !destination ||
-        source_stride < width || destination_stride < width ||
-        width <= 0 || height <= 0) {
-        return -1;
-    }
-
-    /* ReDMCSB: DUNVIEW.C F0115 lines 5109 and 6192-6193 send item and
-     * explosion bitmaps through F0791 with C10_COLOR_FLESH transparency. */
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const uint8_t pixel = source[(y * source_stride) + x];
-            if (pixel == (uint8_t)spec->transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-    return copied;
-}
-
 static uint32_t csb_v1_f0115_fnv1a_bytes_pc34(const uint8_t *bytes, size_t size)
 {
     uint32_t hash = 2166136261u;
