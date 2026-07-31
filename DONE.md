@@ -47501,3 +47501,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   with a generated marker. Verification: production Ninja build and the
   real-PC34 `firestaff_m11_pass53_snd3_runtime_probe` (6/6), including a
   forced partial-bank state that still queues the original door sample.
+- ✅ 2026-07-31 DM2 tech/magic helper isolation: removed the unattached
+  tech/magic helper from the production V1 archive. Its lookup deliberately
+  has no imported DB/GDAT item definition and M11 has no consumer, so live
+  gameplay can no longer derive item mechanics from its host fields.
+  Verification: production link, spell/tech regression, real-data M11 startup
+  gate and archive/executable-symbol checks.

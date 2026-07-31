@@ -3870,7 +3870,8 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_panel_routing.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_survey_helpers.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_combat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_combat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_tech_magic.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
