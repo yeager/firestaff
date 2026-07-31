@@ -6392,6 +6392,13 @@
   route is available. Verification: rendering, startup/save-resume, and
   Track 19 inventory tests pass.
 
+- ✅ 2026-07-31 Theron record-gap reference audit: recorded the public
+  community extraction report that identifies seven 256 KiB TQ02 quest-blocks
+  and item/map candidates, while explicitly preserving its warning that level
+  headers and read-control data sit outside those blocks. The report is now a
+  secondary investigation reference only; no converted CSBWin data is treated
+  as original Firestaff media.
+
 - ✅ 2026-07-31 Theron V1 viewport production isolation: removed the
   procedural dungeon, UI chrome, tile selector, and indexed-to-M11 presenter
   from the production archive. Production now owns a lifecycle-preserving

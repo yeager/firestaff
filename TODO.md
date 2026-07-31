@@ -17,6 +17,13 @@
   rejected; future real bitmap/palette work must enter through an
   authenticated Track 02 loader route.
 
+- **THERON-QUEST-BLOCK-RECORDS:** A community extraction report identifies
+  seven 256 KiB TQ02 quest-blocks and item/map candidates, but also states
+  that level headers and read-control data live outside the blocks. Compare
+  those opaque spans against the local original BIN/ISO only after obtaining
+  the real loader/System Card trace; do not import the converted CSBWin
+  dungeon as original data.
+
 - **THERON-V1-UI-CHROME-REAL-DATA:** The inferred bar/text/champion-slot
   implementation is now fixture-only. Production exposes a no-op API until
   the original Track 02 UI chrome bank and font records are decoded. The
