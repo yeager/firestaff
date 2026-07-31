@@ -3933,14 +3933,15 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status = "TRACK02 ATLAS ROUTE MISSING";
         return 0;
     } else {
-        /* No verified Track 02 media is present; this is the explicit
-         * no-data fallback path, so command-drawn synthetic shapes are
-         * permitted. */
-        plan.synthetic_graphics_allowed = 1;
-        out_receipt->graphics_executed =
-            theron_v1_boot_startup_execute_graphics_plan(&plan, executor)
-                ? 1
-                : 0;
+        /* No verified Track 02 media is present.  Do not manufacture a
+         * title/stage/Soul Room/forcefield surface; startup is unavailable
+         * until the real atlas route is bound. */
+        out_receipt->graphics_blocked = 1;
+        out_receipt->no_fallback_startup_graphics_proof = 1;
+        out_receipt->fallback_visuals_allowed = 0;
+        out_receipt->status_scope = "STARTUP";
+        out_receipt->status = "NO VERIFIED TRACK02 GRAPHICS";
+        return 0;
     }
     out_receipt->track02_startup_graphics_executed =
         out_receipt->graphics_executed &&

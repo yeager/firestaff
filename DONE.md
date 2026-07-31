@@ -46805,3 +46805,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - The legacy bounded fallback-room receipt now reports seed `0` when dungeon metadata is not verified instead of carrying the retired literal seed `313`.
 - Verified Track 02 startup remains authoritative; this change only removes misleading metadata from the compatibility fixture path.
 - Verification: `test_theron_rendering` 25/25.
+# ✅ 2026-07-31 — Theron startup no longer paints no-data placeholders
+
+- Removed the production branch that enabled command-drawn synthetic title, stage, Soul Room, and forcefield graphics when Track 02 was absent.
+- Startup now reports `NO VERIFIED TRACK02 GRAPHICS` and remains blocked until the real atlas route is present.
+- Verification: `test_theron_rendering` 25/25 and `firestaff_theron_v1_startup_flow_probe` 653/653.
