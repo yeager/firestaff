@@ -47273,3 +47273,18 @@ the supplied root and selected MD5 to prove this without shipping game data.
   or inherits its synthetic stats, classes, and portraits. It admits only
   source roster names; the full mirror-table initializer is fixture-scoped.
   Startup flow remains `653/653`, save/resume `325/325`.
+
+- ✅ 2026-07-31 DM1 original SND3 runtime verification: repaired the two
+  standalone SND3 probe launchers after the source tree moved under
+  `src/shared`, and isolated unrelated CSB/DM1 swoosh link dependencies from
+  the DM1-only runtime harness. Against the installed original
+  `GRAPHICS.DAT`, all 33 SND3 records decode (114157 source samples), all 35
+  event-index runtime buffers load, and the decoded Door event queues through
+  SDL at 22050 Hz. No generated sound data is used by this verification.
+
+- ✅ 2026-07-31 DM1 original TITLE verification: repaired the standalone
+  TITLE probe launcher after the source tree moved. The installed hash-locked
+  PC 3.4 `TITLE` (12,002 bytes) now passes all 59 Greatstone mapfile-record,
+  53-frame and two-palette-phase checks. The runtime TITLE palette and
+  SWSH-to-C001 handoff probes also pass against the installed original
+  `GRAPHICS.DAT`; no replacement title frame is used by these checks.
