@@ -44591,3 +44591,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   This preserves enum layout while making the fail-closed policy unambiguous
   to future callers. Verification: `test_csb_v1_csbgraphics_runtime_binding`
   passes 83/83.
+- ✅ 2026-07-31 CSB V2.2 cache containment: an invalid source-derived cache
+  entry now rejects and discards the entire package. The loader validates
+  nonzero dimensions, the exact `width * height * 4` RGBA size and bounded,
+  non-wrapping offsets beyond the entry table before exposing any bitmap.
+  This keeps malformed material from becoming V2.2 pixels; the unresolved
+  F0128 material routes remain fail-closed. Verification:
+  `test_csb_v22_inplace_draw_pc34` passes 58/58.

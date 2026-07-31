@@ -84,6 +84,17 @@ static int              g_v22_bitmap_count = 0;
 static uint8_t          g_v22_palette_rgb6[256][3];
 static int              g_v22_palette_active = 0;
 
+static void v22_discard_cache(void)
+{
+    if (g_v22_cache_buf && !g_v22_cache_mapped) {
+        free(g_v22_cache_buf);
+    }
+    g_v22_cache_buf = NULL;
+    g_v22_cache_size = 0u;
+    g_v22_cache_mapped = 0;
+    g_v22_bitmap_count = 0;
+}
+
 /* ── Variant -> asset_id mapping ───────────────────────────────── */
 
 /* The asset_id for a cell is decided by csb_v22_inplace_route_cell,
@@ -178,6 +189,7 @@ static int v22_find_bitmap(uint32_t category_hash, uint32_t asset_id_hash) {
 
 static int v22_load_cache_file(const char* path) {
     FILE* fp = fopen(path, "rb");
+    v22_discard_cache();
     if (!fp) return 0;
     fseek(fp, 0, SEEK_END);
     long sz = ftell(fp);
@@ -187,7 +199,7 @@ static int v22_load_cache_file(const char* path) {
     fseek(fp, 0, SEEK_SET);
     g_v22_cache_size = (size_t)sz;
     g_v22_cache_buf = (unsigned char*)malloc(g_v22_cache_size);
-    if (!g_v22_cache_buf) { fclose(fp); return 0; }
+    if (!g_v22_cache_buf) { fclose(fp); g_v22_cache_size = 0u; return 0; }
     if (fread(g_v22_cache_buf, 1, g_v22_cache_size, fp) != g_v22_cache_size) {
         free(g_v22_cache_buf); g_v22_cache_buf = NULL; g_v22_cache_size = 0;
         fclose(fp); return 0;
@@ -196,18 +208,17 @@ static int v22_load_cache_file(const char* path) {
     g_v22_cache_mapped = 0;
 
     /* Parse header */
-    if (g_v22_cache_size < FSV22C_HDR_SIZE) return 0;
-    if (memcmp(g_v22_cache_buf, FSV22C_MAGIC, 8) != 0) return 0;
+    if (g_v22_cache_size < FSV22C_HDR_SIZE) goto reject;
+    if (memcmp(g_v22_cache_buf, FSV22C_MAGIC, 8) != 0) goto reject;
     uint32_t version = 0, count = 0;
     memcpy(&version, g_v22_cache_buf + 8, 4);
     memcpy(&count, g_v22_cache_buf + 12, 4);
-    if (version != FSV22C_VERSION) return 0;
-    if (count > FSV22C_MAX_ENT) return 0;
+    if (version != FSV22C_VERSION || count == 0u || count > FSV22C_MAX_ENT) goto reject;
 
     /* Parse entries + index RGBA pointers */
     size_t entries_off = FSV22C_HDR_SIZE;
     size_t data_off    = FSV22C_HDR_SIZE + (size_t)count * FSV22C_ENT_SIZE;
-    if (data_off >= g_v22_cache_size) return 0;
+    if (data_off > g_v22_cache_size) goto reject;
 
     g_v22_bitmap_count = 0;
     for (uint32_t i = 0; i < count; ++i) {
@@ -219,12 +230,23 @@ static int v22_load_cache_file(const char* path) {
         memcpy(&e.height,        ep + 12, 4);
         memcpy(&e.rgba_size,      ep + 16, 4);
         memcpy(&e.rgba_offset,    ep + 20, 4);
-        if (e.rgba_offset + e.rgba_size > g_v22_cache_size) continue;
+        size_t expected_rgba_size;
+        if (e.width == 0u || e.height == 0u ||
+            (size_t)e.width > SIZE_MAX / (size_t)e.height ||
+            (size_t)e.width * (size_t)e.height > SIZE_MAX / 4u) goto reject;
+        expected_rgba_size = (size_t)e.width * (size_t)e.height * 4u;
+        if ((size_t)e.rgba_size != expected_rgba_size ||
+            (size_t)e.rgba_offset < data_off ||
+            (size_t)e.rgba_offset > g_v22_cache_size ||
+            (size_t)e.rgba_size > g_v22_cache_size - (size_t)e.rgba_offset) goto reject;
         g_v22_bitmaps[g_v22_bitmap_count].entry = e;
         g_v22_bitmaps[g_v22_bitmap_count].rgba = g_v22_cache_buf + e.rgba_offset;
         g_v22_bitmap_count++;
     }
-    return g_v22_bitmap_count > 0 ? 1 : 0;
+    return g_v22_bitmap_count == (int)count ? 1 : 0;
+reject:
+    v22_discard_cache();
+    return 0;
 }
 
 int csb_v22_inplace_draw_init(void) {
@@ -252,11 +274,7 @@ int csb_v22_inplace_draw_init(void) {
 }
 
 void csb_v22_inplace_draw_shutdown(void) {
-    if (g_v22_cache_buf && !g_v22_cache_mapped) free(g_v22_cache_buf);
-    g_v22_cache_buf = NULL;
-    g_v22_cache_size = 0;
-    g_v22_cache_mapped = 0;
-    g_v22_bitmap_count = 0;
+    v22_discard_cache();
     g_v22_inplace_active = 0;
     memset(g_csb_v22_inplace_asset_mirror_valid, 0,
            sizeof(g_csb_v22_inplace_asset_mirror_valid));

@@ -292,7 +292,10 @@ diagnostic; it must not silently fall back to a generated visual.
   malformed or unsupported original entry cannot mutate the 320x200 source
   page or become generated chrome. Its runtime decision is explicitly named
   `rejected-no-draw`; the former `fallback-original` spelling is retained
-  only as a source-compatible alias.
+  only as a source-compatible alias. **2026-07-31 V2.2 cache audit:** a
+  malformed source-derived cache entry now rejects and discards the complete
+  package: dimensions, exact RGBA byte count and non-wrapping data offsets
+  must all validate before any bitmap can become available.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
