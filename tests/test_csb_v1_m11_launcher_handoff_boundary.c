@@ -1749,8 +1749,9 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                     "Atari ST TAG0088b2 page bypasses the PC3.4 V2.2 compositor");
         {
             uint8_t palette[256][3];
-            expect_true(!M11_Render_CopyIndexedPaletteRgb6(palette),
-                        "Atari ST page does not receive the PC3.4 VGA palette");
+            expect_true(M11_Render_CopyIndexedPaletteRgb6(palette) &&
+                            !memcmp(palette[0], palette[16], sizeof(palette[0])),
+                        "Atari ST page receives its source 0x232 Palette552 palette");
         }
         expect_true(strcmp(view.lastOutcome,
                            "CSBWIN SOURCE FRAME - EXTENDED CELLS REQUIRED") != 0,

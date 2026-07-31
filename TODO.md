@@ -456,10 +456,12 @@ diagnostic; it must not silently fall back to a generated visual.
   plan have verified, and the real Atari-ST handoff regression asserts that
   boundary. This prevents stale PC compositor telemetry from being attributed
   to an Atari source page. **2026-07-31 palette follow-up:** Atari ST runtime
-  pages now explicitly reject the PC3.4 VGA palette. ReDMCSB `PALETTE.C`
-  F1125/F0436 and CSBWin `SelectPaletteForLightLevel` remain the required
-  source owner; runtime pixels stay uncoloured until their active original
-  palette bytes can be admitted. **2026-07-31 follow-up:** the retired raw-cell V2.2
+  pages now explicitly reject the PC3.4 VGA palette and consume
+  `GRAPHICS.DAT` item `0x232`'s source `Palette552[0]`, following CSBWin
+  `ReadTablesFromGraphicsFile()` and its initial `setpalette` call. ReDMCSB
+  `PALETTE.C F1125/F0436` and CSBWin `SelectPaletteForLightLevel` remain the
+  required owner for later light-level palette transitions; no PC3.4
+  approximation is admitted. **2026-07-31 follow-up:** the retired raw-cell V2.2
   classifier now returns no shape, category or asset for every input, and its
   legacy 3x3 renderer is permanently no-draw. A populated cache or installed
   artpack cannot activate this compatibility route; only the source-command

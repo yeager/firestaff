@@ -1,10 +1,12 @@
-- ✅ 2026-07-31 CSB Atari-palettisolering: M11 använder inte längre PC3.4:s
-  `G9010`-VGA-tabell för Atari ST:s TAG0088b2/C232-sidor. Atari-pixlar kräver
-  fortsatt ReDMCSB `PALETTE.C F1125/F0436` eller CSBWin
-  `SelectPaletteForLightLevel` som autentiserad palettägarväg; tills dess
-  rensas den felaktiga PC-paletten. Handoff-regressionen låser gränsen.
-  Verification: `test_csb_v1_m11_launcher_handoff_boundary` och de fokuserade
-  PC3.4-realdataregressionerna passerar.
+- ✅ 2026-07-31 CSB Atari-startpalett: M11 använder inte längre PC3.4:s
+  `G9010`-VGA-tabell för Atari ST:s TAG0088b2/C232-sidor. I stället avkodas
+  de sex ursprungliga `Palette552`-raderna ur CSBWin `GRAPHICS.DAT` item
+  `0x232` och den källaägda startvägen använder rad 0, som
+  `ReadTablesFromGraphicsFile()` och `setpalette(&d.Palette552[0])` gör.
+  Senare `SelectPaletteForLightLevel`-växlingar är fortsatt öppna och får
+  inte approximeras med PC3.4-data. Verification:
+  `csb_v1_csbwin_layout_0232_unit`, handoff-regressionen och fokuserade
+  PC3.4-realdataregressioner passerar.
 
 - ✅ 2026-07-31 CSB Atari V2.2 accounting boundary: the direct Atari ST
   `FloorAndCeilingOnly`/TAG0088b2 page now clears the PC3.4 F0128 V2.2 paint

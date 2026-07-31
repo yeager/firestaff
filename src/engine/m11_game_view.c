@@ -2339,6 +2339,35 @@ static int m11_csb_install_runtime_source_graphic(
     return installed;
 }
 
+/* CSBWin CSBCode.cpp::ReadTablesFromGraphicsFile expands GRAPHICS.DAT item
+ * 0x232 into Data::Palette552, then its boot path calls
+ * setpalette(&d.Palette552[0]). Keep this separate from the PC3.4 VGA table:
+ * TAG0088b2's low four-bit indices name Atari ST 0x0RGB registers here. */
+static int m11_csb_atari_st_initial_palette_rgb6(
+    const CSB_V1_BootProfile *profile, uint8_t out_rgb6[256][3])
+{
+    CSB_V1_CSBWinLayout0232 layout;
+    int color;
+
+    if (!profile || !out_rgb6 ||
+        (profile->variant_id != CSB_V1_VARIANT_ST20_EN &&
+         profile->variant_id != CSB_V1_VARIANT_ST21_EN) ||
+        !profile->graphics_verified || !profile->graphics_path[0] ||
+        !csb_v1_csbwin_layout_0232_read_graphics_dat(profile->graphics_path,
+                                                      &layout) ||
+        !layout.valid) {
+        return 0;
+    }
+    for (color = 0; color < 256; ++color) {
+        const uint16_t source = layout.viewport_palettes[0][color & 0x0f];
+        if ((source & 0xf888u) != 0u) return 0;
+        out_rgb6[color][0] = (uint8_t)(((source >> 8) & 0x07u) * 9u);
+        out_rgb6[color][1] = (uint8_t)(((source >> 4) & 0x07u) * 9u);
+        out_rgb6[color][2] = (uint8_t)((source & 0x07u) * 9u);
+    }
+    return 1;
+}
+
 /* CSBWin's item C232 is not a bitmap: it is the original 0x722-byte HUD
  * layout record used by CSBCode.cpp.  It names the exact GRAPHICS.DAT images
  * and their destination rectangles.  Keep this resolver on the active
@@ -51092,13 +51121,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         int color;
         if (csb_profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
             csb_profile->variant_id == CSB_V1_VARIANT_ST21_EN) {
-            /* ReDMCSB PALETTE.C F1125/F0436 and CSBWin's
-             * SelectPaletteForLightLevel own the Atari runtime palette.
-             * GRAPHICS.DAT supplies indexed TAG0088b2 material but not an
-             * interchangeable PC3.4 VGA table. Until that active Atari
-             * palette is admitted as source bytes, never colour its page
-             * with G9010's PC table. */
-            M11_Render_ClearIndexedPaletteRgb6();
+            /* CSBWin's initial active palette is the first real 0x232
+             * Palette552 row. Later SelectPaletteForLightLevel transitions
+             * need their own source-state port; never approximate them with
+             * a PC3.4 brightness row. */
+            if (m11_csb_atari_st_initial_palette_rgb6(csb_profile, rgb6)) {
+                (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
+            } else {
+                M11_Render_ClearIndexedPaletteRgb6();
+            }
             csb_v22_inplace_draw_clear_indexed_palette();
         } else {
         /* CSB's PC3.4 IMG3 decoder emits original four-bit VGA indices.

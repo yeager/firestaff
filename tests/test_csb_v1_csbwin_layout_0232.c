@@ -601,6 +601,8 @@ int main(void)
     put_be16(graphic, 914u + 45u * 6u + 4u, 179);
     put_be16(graphic, 1218u, 0);
     put_be16(graphic, 1218u + 12u, 96);
+    put_be16(graphic, 1280u, 0x0123);
+    put_be16(graphic, 1280u + 2u * 16u + 30u, 0x0765);
     put_be16(graphic, 1534u, 1);
     put_be16(graphic, 1534u + 138u, 562);
 
@@ -668,6 +670,8 @@ int main(void)
           layout.object_graphic_first[6] == 96);
     CHECK(layout.default_graphic_list[0] == 1 &&
           layout.default_graphic_list[69] == 562);
+    CHECK(layout.viewport_palettes[0][0] == 0x0123u &&
+          layout.viewport_palettes[1][15] == 0x0765u);
     CHECK(csb_v1_csbwin_layout_0232_rect_is_screen_valid(&layout.movement_box));
     CHECK(!csb_v1_csbwin_layout_0232_rect_is_screen_valid(NULL));
     CHECK(csb_v1_csbwin_layout_0232_build_hud_material_plan(&layout, &plan));

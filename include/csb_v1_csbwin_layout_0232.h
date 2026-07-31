@@ -20,6 +20,8 @@ typedef struct {
 #define CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_GROUPS 7u
 #define CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT 70u
 #define CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT 10u
+#define CSB_V1_CSBWIN_LAYOUT_0232_VIEWPORT_PALETTE_COUNT 6u
+#define CSB_V1_CSBWIN_LAYOUT_0232_PALETTE_COLOR_COUNT 16u
 
 typedef struct {
     int16_t pixel_x;
@@ -44,6 +46,12 @@ typedef struct {
         CSB_V1_CSBWIN_LAYOUT_0232_OBJECT_GRAPHIC_GROUPS];
     uint16_t default_graphic_list[
         CSB_V1_CSBWIN_LAYOUT_0232_DEFAULT_GRAPHIC_COUNT];
+    /* CSBWin Data.h::Palette552. ReadTablesFromGraphicsFile() byte-swaps
+     * these six native ST RGB palettes after expanding item 0x232, then the
+     * boot path installs Palette552[0]. Values are 0x0RGB ST words. */
+    uint16_t viewport_palettes[
+        CSB_V1_CSBWIN_LAYOUT_0232_VIEWPORT_PALETTE_COUNT][
+        CSB_V1_CSBWIN_LAYOUT_0232_PALETTE_COLOR_COUNT];
 } CSB_V1_CSBWinLayout0232;
 
 typedef enum {
