@@ -49,6 +49,23 @@ static int normalize_dir(int dir) {
     return ((dir % THERON_DIR_COUNT) + THERON_DIR_COUNT) % THERON_DIR_COUNT;
 }
 
+/* T800 stores carried items as the compact item id, while the level object
+ * record stores the source object class.  Keep this mapping limited to the
+ * item classes whose ids are source-locked in theron_v1_champions.h; quest
+ * object ids remain unclaimed until the Track 02 object table is decoded. */
+static int object_item_id(const Theron_V1_Object *object) {
+    if (!object) return THERON_ITEM_NONE;
+    switch (object->type) {
+    case THERON_OBJTYPE_POTION: return THERON_ITEM_POTION;
+    case THERON_OBJTYPE_SCROLL: return THERON_ITEM_SCROLL;
+    case THERON_OBJTYPE_FOOD:   return THERON_ITEM_FOOD;
+    case THERON_OBJTYPE_KEY:    return THERON_ITEM_KEY;
+    case THERON_OBJTYPE_WEAPON: return THERON_ITEM_WEAPON;
+    case THERON_OBJTYPE_ARMOR:  return THERON_ITEM_ARMOR;
+    default:                    return THERON_ITEM_NONE;
+    }
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Command / click routing
  * ══════════════════════════════════════════════════════════════════════ */
@@ -89,8 +106,25 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
     case THERON_CMD_TAKE: {
         Theron_V1_Object *o = theron_v1_object_at(world,
                                 world->current_level, x, y);
-        if (!o) return -1;
-        /* Place into party inventory — Phase 5 inventory logic */
+        Theron_V1_Champion *champion;
+        int item_id;
+        int inventory_slot = -1;
+        if (!o || (o->flags & THERON_OBJ_F_PICKED_UP)) return -1;
+        item_id = object_item_id(o);
+        if (item_id == THERON_ITEM_NONE) return -1;
+        champion = theron_v1_party_getChampion(&world->party,
+                                                world->party.active_slot);
+        if (!champion) return -1;
+        for (int i = 0; i < THERON_INVENTORY_SLOTS; ++i) {
+            if (champion->inventory[i] == THERON_ITEM_NONE) {
+                inventory_slot = i;
+                break;
+            }
+        }
+        if (inventory_slot < 0) return -1;
+        champion->inventory[inventory_slot] = (uint8_t)item_id;
+        o->flags |= THERON_OBJ_F_PICKED_UP;
+        theron_v1_party_recalculate_loads(&world->party);
         return 0;
     }
     case THERON_CMD_ATTACK:

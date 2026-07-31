@@ -46451,3 +46451,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   missing door objects remain blocked rather than inheriting fixture state.
   Verification: `test_theron_v1_m11_direct_launch` passes and
   `git diff --check` passes.
+# 2026-07-31 Theron real item pickup state
+
+- ✅ Replaced the `THERON_CMD_TAKE` success-without-state placeholder. Known
+  Track 02-independent object classes (potion, scroll, food, key, weapon and
+  armor) now bind to the source-locked compact item IDs, enter the active
+  champion's inventory, mark the level object picked up and recalculate load.
+  Unknown/quest object classes remain rejected rather than receiving guessed
+  IDs until the real Track 02 object table is decoded. Verification:
+  `test_theron_v1_m11_direct_launch` passes and `git diff --check` passes.
