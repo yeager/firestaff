@@ -123,39 +123,34 @@ int csb_p4_spell_category_has_light(CSB_P4_SpellCategory cat);
 
 /* ---- VFX binding layer ---- */
 
-/* Initialise the VFX binding layer and underlying VFX particle system. */
+/* Retired Phase-4 presentation boundary. Initialisation is a no-op until a
+ * source-owned command and material transaction is available. */
 void csb_p4_binding_init(void);
 
 /* Reset all active bindings (does not reset the VFX particle system). */
 void csb_p4_binding_reset(void);
 
-/* Fire a spell projectile VFX from (sx,sy) to (tx,ty).
- * Looks up spell metadata and delegates to csb_v2_vfx_fire_projectile.
- * Returns binding index (>= 0) or -1 on failure / gate closed. */
+/* Returns -1. No host projectile visual may stand in for absent source art. */
 int csb_p4_binding_fire_projectile(const CSB_V2_PhaseGateConfig *cfg,
                                     int spell_id,
                                     float sx, float sy,
                                     float tx, float ty);
 
-/* Place a field VFX on dungeon tile (tx,ty) triggered by spell_id.
- * Also spawns a looping emitter for area-effect spells.
- * Returns binding index (>= 0) or -1 on failure / gate closed. */
+/* Returns -1. No host field visual may stand in for absent source art. */
 int csb_p4_binding_add_field(const CSB_V2_PhaseGateConfig *cfg,
                               int spell_id,
                               int tile_x, int tile_y);
 
-/* Trigger chaos magic visual enhancement (light event).
- * Mirrors csb_v2_chaos_on_trigger but gated on phase config. */
+/* No-op. Gameplay and DSA state stay owned by the V1 route. */
 void csb_p4_binding_trigger_chaos(const CSB_V2_PhaseGateConfig *cfg,
                                    int spell_id);
 
-/* Add a torch light source to the dynamic lighting system.
- * Returns light source index or -1. */
+/* Returns -1. Torch RGB/radius data was host-authored and is retired. */
 int csb_p4_binding_add_torch_light(const CSB_V2_PhaseGateConfig *cfg,
                                     float x, float y,
                                     int torch_type);
 
-/* Tick all active bindings and expire done VFX entries. */
+/* No-op; no Phase-4 presentation binding can become active. */
 void csb_p4_binding_tick(float dt_seconds);
 
 /* Count of active bound projectiles. */

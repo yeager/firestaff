@@ -90,6 +90,11 @@
   returns transparent until a real source-owned surface and palette receipt
   exists. Verification: `test_csb_v2_phase7_verification`.
 
+- ✅ 2026-07-31 CSB Phase 4 binding closure: retired the unreachable host
+  projectile, field, chaos and torch binding implementation. The stable API
+  now fails closed instead of retaining fabricated RGB values, radii, speeds
+  and particle curves. Verification: `test_csb_p4_lighting`.
+
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a
   successful transaction route from host gold alone. It remains closed until

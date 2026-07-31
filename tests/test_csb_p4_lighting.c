@@ -37,6 +37,20 @@ int main(void) {
     CHECK(!csb_p4_vfx_gate_any_enabled(&cfg));
     CHECK(!csb_p4_vfx_gate_field_enabled(NULL));
 
+    /* The retired binding must stay inert even if an accidental caller passes
+     * a permissive-looking phase config. */
+    csb_p4_binding_init();
+    CHECK(csb_p4_binding_fire_projectile(&cfg, 1, 0.0f, 0.0f,
+                                         1.0f, 1.0f) == -1);
+    CHECK(csb_p4_binding_add_field(&cfg, 1, 0, 0) == -1);
+    csb_p4_binding_trigger_chaos(&cfg, 1);
+    CHECK(csb_p4_binding_add_torch_light(&cfg, 0.0f, 0.0f,
+                                         CSB_P4_TORCH_TYPE_NORMAL) == -1);
+    csb_p4_binding_tick(1.0f);
+    CHECK(csb_p4_binding_active_projectile_count() == 0);
+    CHECK(csb_p4_binding_active_field_count() == 0);
+    CHECK(!csb_p4_binding_any_active());
+
     CHECK(strstr(csb_p4_lighting_metadata_source_evidence(), "DATA.C:263") != NULL);
     CHECK(strstr(csb_p4_lighting_metadata_source_evidence(), "DATA.C:359") != NULL);
     if (failures) return 1;
