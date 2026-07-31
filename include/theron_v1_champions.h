@@ -198,9 +198,9 @@ typedef enum {
  * dungeon_index = 1..7 (THERON_DUNGEON_1..THERON_DUNGEON_7). */
 void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index);
 
-/* Remove fixture-only stats/inventory from a verified Track 02 handoff.
- * Names, portrait indices and source-roster class labels remain; numeric
- * champion records stay zero until their original records are decoded. */
+/* Remove all fixture-only champion state from a verified Track 02 handoff.
+ * Names, portraits, classes and numeric records stay unavailable until the
+ * original champion records are decoded. */
 void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party);
 
 /* Dungeon entry: apply per-dungeon inventory reset for companions.

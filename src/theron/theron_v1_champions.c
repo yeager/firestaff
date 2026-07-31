@@ -94,6 +94,9 @@ void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party) {
     if (!party) return;
     for (int i = 0; i < THERON_MAX_CHAMPIONS; ++i) {
         Theron_V1_Champion *c = &party->champions[i];
+        memset(c->name, 0, sizeof(c->name));
+        c->portrait_index = 0;
+        c->primary_class = THERON_CLASS_FIGHTER;
         c->health = 0;
         c->max_health = 0;
         c->stamina = 0;
@@ -122,6 +125,8 @@ void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party) {
         c->water = 0;
         c->alive = 0;
     }
+    party->champion_count = 0;
+    party->active_slot = 0;
     party->gold = 0;
 }
 

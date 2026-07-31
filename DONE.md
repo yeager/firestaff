@@ -47196,3 +47196,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   PC 3.4 product consumer and explicitly blocks every route. It now compiles
   only into its contract test; the separately owned, source-faithful Intuition
   vector boundary remains independent of this inventory.
+
+- ✅ 2026-07-31 Theron champion handoff hardening: verified Track 02 runtime
+  entry now clears fixture champion names, portraits, classes and party count
+  in addition to default stats/inventory. Production cannot present the
+  inferred roster until original champion records are decoded.

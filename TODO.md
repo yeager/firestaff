@@ -25,7 +25,9 @@
 - **THERON-V1-CHAMPION-STATE-REAL-DATA:** `theron_v1_party_init()` still
   seeds default names, classes and 10-point stats for fixture/save flows.
   Track 02 champion records and the real startup-selected party must be
-  decoded before these defaults can populate a production session.
+  decoded before these defaults can populate a production session. Verified
+  handoff now clears the fixture roster identity and count as well as numeric
+  state.
 
 - **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
   placeholder labels are now fixture/probe-only. Runtime must consume the
