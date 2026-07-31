@@ -183,80 +183,6 @@ static int test_frame_zones_and_bitmaps(void)
     return ok;
 }
 
-static int test_frame_blit_contract(void)
-{
-    int ok = 1;
-    const CSB_V1_ViewportD1CF0115DoorFramePc34Contract *c =
-        csb_v1_viewport_d1c_f0115_door_frame_pc34_contract();
-    const uint8_t source[6] = { 1, 10, 2, 3, 4, 10 };
-    uint8_t top_dest[6] = { 9, 9, 9, 9, 9, 9 };
-    uint8_t right_dest[6] = { 9, 9, 9, 9, 9, 9 };
-
-    ok &= expect_int("top.blit.copied",
-                     csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-                         c, CSB_V1_D1C_DOOR_FRAME_PART_TOP,
-                         source, 3, top_dest, 3, 3, 2),
-                     4, A_F0104);
-    ok &= expect_int("top.blit.0", top_dest[0], 1, A_F0104);
-    ok &= expect_int("top.blit.transparent.1", top_dest[1], 9, A_F0104);
-    ok &= expect_int("top.blit.2", top_dest[2], 2, A_F0104);
-    ok &= expect_int("top.blit.3", top_dest[3], 3, A_F0104);
-    ok &= expect_int("top.blit.4", top_dest[4], 4, A_F0104);
-    ok &= expect_int("top.blit.transparent.5", top_dest[5], 9, A_F0104);
-    ok &= expect_int("right.blit.copied",
-                     csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-                         c, CSB_V1_D1C_DOOR_FRAME_PART_RIGHT,
-                         source, 3, right_dest, 3, 3, 2),
-                     4, A_F0105);
-    ok &= expect_int("right.blit.0", right_dest[0], 2, A_F0105);
-    ok &= expect_int("right.blit.transparent.1", right_dest[1], 9, A_F0105);
-    ok &= expect_int("right.blit.2", right_dest[2], 1, A_F0105);
-    ok &= expect_int("right.blit.transparent.3", right_dest[3], 9, A_F0105);
-    ok &= expect_int("right.blit.4", right_dest[4], 4, A_F0105);
-    ok &= expect_int("right.blit.5", right_dest[5], 3, A_F0105);
-    ok &= expect_int("blit.invalid.part",
-                     csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-                         c, 99, source, 3, right_dest, 3, 3, 2),
-                     -1, A_F0105);
-    ok &= expect_int("blit.null.contract",
-                     csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-                         NULL, CSB_V1_D1C_DOOR_FRAME_PART_TOP,
-                         source, 3, top_dest, 3, 3, 2),
-                     -1, A_F0104);
-    ok &= expect_int("blit.null.source",
-                     csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-                         c, CSB_V1_D1C_DOOR_FRAME_PART_TOP,
-                         NULL, 3, top_dest, 3, 3, 2),
-                     -1, A_F0104);
-    ok &= expect_int("blit.null.dest",
-                     csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-                         c, CSB_V1_D1C_DOOR_FRAME_PART_TOP,
-                         source, 3, NULL, 3, 3, 2),
-                     -1, A_F0104);
-    ok &= expect_int("blit.bad.width",
-                     csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-                         c, CSB_V1_D1C_DOOR_FRAME_PART_TOP,
-                         source, 3, top_dest, 3, 0, 2),
-                     -1, A_F0104);
-    ok &= expect_int("blit.bad.height",
-                     csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-                         c, CSB_V1_D1C_DOOR_FRAME_PART_TOP,
-                         source, 3, top_dest, 3, 3, 0),
-                     -1, A_F0104);
-    ok &= expect_int("blit.short.source_stride",
-                     csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-                         c, CSB_V1_D1C_DOOR_FRAME_PART_TOP,
-                         source, 2, top_dest, 3, 3, 2),
-                     -1, A_F0104);
-    ok &= expect_int("blit.short.dest_stride",
-                     csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-                         c, CSB_V1_D1C_DOOR_FRAME_PART_TOP,
-                         source, 3, top_dest, 2, 3, 2),
-                     -1, A_F0104);
-
-    return ok;
-}
-
 static int test_evidence_strings(void)
 {
     int ok = 1;
@@ -318,7 +244,6 @@ int main(void)
     ok &= test_contract_identity();
     ok &= test_f0115_order_pairing();
     ok &= test_frame_zones_and_bitmaps();
-    ok &= test_frame_blit_contract();
     ok &= test_evidence_strings();
     ok &= expect_int("assertion_count_at_least_50", g_assertions >= 50, 1,
                      A_F0124);

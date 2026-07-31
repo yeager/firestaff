@@ -135,37 +135,3 @@ csb_v1_viewport_d1c_f0115_door_frame_bitmap_for_part_pc34(
     }
     return 0;
 }
-
-int csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-    const CSB_V1_ViewportD1CF0115DoorFramePc34Contract *contract,
-    int part,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height)
-{
-    int copied = 0;
-    const int flip = csb_v1_viewport_d1c_f0115_door_frame_flip_for_part_pc34(
-        contract, part);
-
-    if (!contract || !source || !destination) return -1;
-    if (width <= 0 || height <= 0) return -1;
-    if (source_stride < width || destination_stride < width) return -1;
-    if (flip < 0) return -1;
-
-    /* ReDMCSB DUNVIEW.C:F0104:3141-3148 and F0105:3214-3219 route the
-     * PC34/I34 D1C frame bitmaps through C10 transparent blits; F0105 adds
-     * MASK0x0001_FLIP_HORIZONTAL for the right frame. */
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            const int sx = flip ? (width - 1 - x) : x;
-            const uint8_t pixel = source[(y * source_stride) + sx];
-            if (pixel == (uint8_t)contract->transparent_color) continue;
-            destination[(y * destination_stride) + x] = pixel;
-            ++copied;
-        }
-    }
-    return copied;
-}

@@ -45270,6 +45270,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   reference. Verification: `test_dm1_v1_viewport_3d_pc34_compat`,
   `test_csb_v1_viewport_phase3_rendering` (2 677/0), and the CSB M12/M11
   launcher handoff boundary (567/0, one expected Atari skip) pass.
+- ✅ 2026-07-31 CSB D1C door-frame no-fake closure: removed the orphaned
+  generic C10 framebuffer helper from the contract API. The real M659/G2112
+  and M655/G2117 source-bound renderer remains the only D1C material route;
+  ReDMCSB F0124/F0104/F0105 metadata remains cross-checked with CSBWin and
+  dmweb without enabling caller-supplied pixels.
 - ✅ 2026-07-31 CSB PC3.4 D1 side-door source binding: D1L/D1R now draw
   their original M659/G2112 top strips through G0176/G0178 instead of a
   legacy atlas crop. Both G2111 and G2110 are source aliases of G2112.

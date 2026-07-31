@@ -493,6 +493,9 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D3L2 F0115 projectile follow-up:** the unbound C10 fixture
   blit is removed; source routing, kinetic scaling and flip metadata remain
   available without a fabricated projectile raster.
+  **2026-07-31 D1C door-frame follow-up:** removed the orphaned generic C10
+  frame blit. The already-bound M659/G2112 and M655/G2117 production route
+  is unchanged; contract metadata cannot accept caller-supplied pixels.
   **2026-07-31 D1L/D1R declaration follow-up:** the stale, unimplemented
   C10 pixel-writer declaration is removed from the public contract.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall

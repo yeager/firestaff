@@ -72,16 +72,6 @@ csb_v1_viewport_d1c_f0115_door_frame_bitmap_for_part_pc34(
     const CSB_V1_ViewportD1CF0115DoorFramePc34Contract *contract,
     int part);
 
-int csb_v1_viewport_d1c_f0115_door_frame_apply_blit_pc34(
-    const CSB_V1_ViewportD1CF0115DoorFramePc34Contract *contract,
-    int part,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height);
-
 #ifdef __cplusplus
 }
 #endif
