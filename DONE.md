@@ -399,6 +399,12 @@
   boot-handoff fixture now writes the real mixed-endian header shape; the
   original-data Prison HUD regression passes.
 
+- ✅ 2026-07-31 CSB D3C wall no-fake closure: removed the public arbitrary
+  source-pixel writer from the contract-only D3C wall slice. ReDMCSB's
+  F0118/F0100/F0101/G0163/G0698 routing and geometry metadata, cross-checked
+  with CSBWin and dmweb's file-format references, remain available but cannot
+  manufacture viewport pixels before verified GRAPHICS.DAT material is bound.
+
 - ✅ 2026-07-30 CSB generic-inventory fallback isolation: CSB now rejects the
   legacy M11 inventory-slot box, label and substitute-icon branches even in
   diagnostic HUD mode. Normal CSB already consumes the verified C017/C040

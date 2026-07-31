@@ -1,7 +1,5 @@
 #include "csb_v1_viewport_d3c_wall_pc34_compat.h"
 
-#include <string.h>
-
 enum {
     CSB_PRESENT = 1,
     CSB_ABSENT = 0,
@@ -93,82 +91,10 @@ static const CSB_V1_D3CWallSpecPc34 s_spec = {
     s_source_evidence
 };
 
-static bool element_draws_d3c_wall_pixels(CSB_V1_D3CWallElementPc34 element)
-{
-    return element == CSB_V1_D3C_WALL_ELEMENT_WALL_PC34;
-}
-
-static bool in_effective_clip(const CSB_V1_D3CWallSpecPc34 *spec,
-                              int row,
-                              int viewport_x)
-{
-    return row >= spec->frame.y1 &&
-        row <= spec->frame.y2 &&
-        viewport_x >= spec->effective_viewport_x1 &&
-        viewport_x <= spec->effective_viewport_x2;
-}
-
 const CSB_V1_D3CWallSpecPc34 *
 csb_v1_viewport_d3c_wall_spec_pc34(void)
 {
     return &s_spec;
-}
-
-bool csb_v1_viewport_d3c_wall_apply_pixel_pc34(
-    const CSB_V1_D3CWallPixelInputPc34 *input,
-    const uint8_t *source,
-    size_t source_len,
-    uint8_t *viewport,
-    size_t viewport_len,
-    CSB_V1_D3CWallPixelResultPc34 *out)
-{
-    const CSB_V1_D3CWallSpecPc34 *spec = csb_v1_viewport_d3c_wall_spec_pc34();
-
-    if (!out) return false;
-    memset(out, 0, sizeof(*out));
-    out->spec = *spec;
-    out->source_evidence = spec->source_evidence;
-    if (!input) return false;
-
-    out->row = input->row;
-    out->viewport_x = input->viewport_x;
-    out->element_is_wall = element_draws_d3c_wall_pixels(input->element);
-    out->draws_d3c_wall_pixels = out->element_is_wall;
-    if (!out->element_is_wall) {
-        out->no_write_metadata = true;
-        return true;
-    }
-
-    if (!in_effective_clip(spec, input->row, input->viewport_x)) {
-        out->no_write_metadata = true;
-        return true;
-    }
-    if (!source || !viewport) return false;
-
-    out->in_clip = true;
-    out->source_x = spec->effective_source_x1 +
-        (input->viewport_x - spec->effective_viewport_x1);
-    out->source_y = spec->frame.source_y + (input->row - spec->frame.y1);
-    out->source_offset = (size_t)out->source_y *
-        (size_t)CSB_V1_D3C_WALL_SOURCE_WIDTH_PC34 + (size_t)out->source_x;
-    out->viewport_offset = (size_t)input->row *
-        (size_t)CSB_V1_D3C_WALL_VIEWPORT_WIDTH_PC34 +
-        (size_t)input->viewport_x;
-    if (out->source_offset >= source_len || out->viewport_offset >= viewport_len) {
-        return false;
-    }
-
-    out->pixel_before = viewport[out->viewport_offset];
-    out->source_pixel = source[out->source_offset];
-    out->f0100_transparent_reference_skip =
-        out->source_pixel == (uint8_t)spec->transparent_color;
-    out->f0101_no_transparency_write = true;
-    out->writes_pixel = true;
-    viewport[out->viewport_offset] =
-        csb_v1_viewport_d3c_wall_blend_f0101_no_transparency_pc34(
-            viewport[out->viewport_offset], out->source_pixel);
-    out->pixel_after = viewport[out->viewport_offset];
-    return true;
 }
 
 uint8_t csb_v1_viewport_d3c_wall_blend_f0100_transparent_pc34(

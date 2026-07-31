@@ -88,43 +88,8 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_D3CWallSpecPc34;
 
-typedef struct {
-    CSB_V1_D3CWallElementPc34 element;
-    int row;
-    int viewport_x;
-} CSB_V1_D3CWallPixelInputPc34;
-
-typedef struct {
-    CSB_V1_D3CWallSpecPc34 spec;
-    bool element_is_wall;
-    bool draws_d3c_wall_pixels;
-    bool in_clip;
-    bool writes_pixel;
-    bool no_write_metadata;
-    bool f0101_no_transparency_write;
-    bool f0100_transparent_reference_skip;
-    int row;
-    int viewport_x;
-    int source_x;
-    int source_y;
-    size_t source_offset;
-    size_t viewport_offset;
-    uint8_t pixel_before;
-    uint8_t source_pixel;
-    uint8_t pixel_after;
-    const char *source_evidence;
-} CSB_V1_D3CWallPixelResultPc34;
-
 const CSB_V1_D3CWallSpecPc34 *
 csb_v1_viewport_d3c_wall_spec_pc34(void);
-
-bool csb_v1_viewport_d3c_wall_apply_pixel_pc34(
-    const CSB_V1_D3CWallPixelInputPc34 *input,
-    const uint8_t *source,
-    size_t source_len,
-    uint8_t *viewport,
-    size_t viewport_len,
-    CSB_V1_D3CWallPixelResultPc34 *out);
 
 uint8_t csb_v1_viewport_d3c_wall_blend_f0100_transparent_pc34(
     uint8_t destination_pixel,

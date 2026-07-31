@@ -477,6 +477,10 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D2C door follow-up:** the unbound F0111 C10 fixture blit is
   removed. State, half-zone and transparency metadata remain source-locked;
   the local PC3.4 material provider is required for an actual draw.
+  **2026-07-31 D3C wall follow-up:** removed the contract-only F0101 pixel
+  writer. ReDMCSB F0118/G0163/G0698 geometry and blend metadata remain
+  source-locked; drawing resumes only when a verified GRAPHICS.DAT binding
+  supplies the original wall-set material.
   **2026-07-31 D3L2/D3R2 door follow-up:** the fixture C10 blit is removed.
   The existing real `GRAPHICS.DAT` receipt remains the material admission
   path; metadata alone cannot emit pixels.
