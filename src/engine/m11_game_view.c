@@ -44578,8 +44578,9 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
     /* Light level indicator: debug/procedural fallback only.  The
      * normal V1 action/spell strip is source-owned; invented light
      * bars make the DM1 action area look like a debug utility panel. */
-    if ((!drewAuthenticFrames &&
-         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) || state->showDebugHUD) {
+    if (state->showDebugHUD ||
+        (!drewAuthenticFrames && !m11_v1_chrome_mode_enabled(state) &&
+         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT)) {
         int lightLevel = m11_compute_light_level(state);
         unsigned char lightColor;
         const char* lightLabel;

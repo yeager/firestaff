@@ -550,6 +550,13 @@ diagnostic; it must not silently fall back to a generated visual.
   `test_dm1_v1_f0740_f0743_music_source_gate` pass against local original
   PC3.4 data.
 
+- **DM1-ORIGINAL-REPLACE-007:** Closed 2026-07-31. The source-owned V1
+  action/spell strip no longer substitutes a host-drawn light meter when its
+  `GRAPHICS.DAT` material is unavailable. The original route now keeps the
+  strip blank, while the meter remains only for explicit debug or legacy
+  non-V1 chrome. Verification: `firestaff_m11` and
+  `test_m11_dm1_runtime_source_capture_receipt` pass.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less
