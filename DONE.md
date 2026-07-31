@@ -45887,3 +45887,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   SKProject `SKULLWIN/c_creature.cpp::DM2_INVOKE_ACTUATOR` and
   `CREATE_MINION`. Verification: `test_dm2_v1_runtime_shop_pc34_compat`
   11/11 and real-data `test_dm2_v1_m11_startup_profile_gate` pass.
+
+- ✅ 2026-07-31 DM2 trigger/plate spawn cleanup: removed the remaining
+  no-op spawn dispatcher and its fixed Dragoth-minion argument. Generic
+  trigger and pressure-plate targets now contain no latent creature payload;
+  only a future decoded DB14/CCM/timer route may allocate one. Verification:
+  `test_dm2_v1_runtime_shop_pc34_compat` 11/11 and real-data
+  `test_dm2_v1_m11_startup_profile_gate` pass.

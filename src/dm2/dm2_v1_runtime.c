@@ -1890,23 +1890,6 @@ static void dm2_runtime_record_message(DM2_V1_RuntimeState *rt,
              "%s", message);
 }
 
-static void dm2_runtime_record_spawn(DM2_V1_RuntimeState *rt,
-                                     int ai_index,
-                                     int level,
-                                     int x,
-                                     int y) {
-    (void)rt;
-    (void)ai_index;
-    (void)level;
-    (void)x;
-    (void)y;
-    /* The former trigger shortcut supplied only an AI type and square, then
-     * invented direction 0 and health multiplier 8 for ALLOC_NEW_CREATURE.
-     * SKProject DM2_INVOKE_ACTUATOR / CREATE_MINION obtains those values from
-     * the live DB14 record and its timer/CCM payload.  Do not turn a generic
-     * trigger target into a real creature until that record handoff exists. */
-}
-
 static int dm2_runtime_event_from_trigger(
     const DM2_V1_Trigger *trigger,
     const DM2_V1_TriggerState *state,
@@ -1982,10 +1965,9 @@ static void dm2_runtime_apply_trigger_event(DM2_V1_RuntimeState *rt,
             dm2_runtime_refresh_map_transition_context(rt);
             break;
         case DM2_TRIGGER_TARGET_SPAWN_CREATURE:
-            dm2_runtime_record_spawn(rt, event->arg_creature_id,
-                                     event->target_level,
-                                     event->target_x,
-                                     event->target_y);
+            /* A generic trigger target has no DB14/CCM/timer payload.  The
+             * original allocator owns direction, multiplier and record links,
+             * so this source-less event cannot create a creature. */
             break;
         case DM2_TRIGGER_TARGET_DISPLAY_MSG:
             dm2_runtime_record_message(rt, event->message);
@@ -2040,10 +2022,8 @@ static void dm2_runtime_apply_plate_event(DM2_V1_RuntimeState *rt,
             dm2_runtime_record_message(rt, event->message);
             break;
         case DM2_PLATE_TARGET_CREATURE_SPAWN:
-            dm2_runtime_record_spawn(rt, DM2_AI_DRAGOTH_MINION,
-                                     event->target_level,
-                                     event->target_x,
-                                     event->target_y);
+            /* Never substitute a fixed creature type for a decoded actuator
+             * record.  See DM2_INVOKE_ACTUATOR / CREATE_MINION. */
             break;
         default:
             break;
