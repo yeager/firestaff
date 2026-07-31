@@ -94,32 +94,13 @@ static void dm2_shop_format_item_name(int item_id, char *out, size_t out_size) {
  * mutate party state.
  */
 
-/* Source: docs/dm2_inventory.md §11 — DM2 item records support a quantity
- * field per slot; stack limit depends on item type and the GDAT entry.
- * Firestaff uses a bounded, fail-closed lookup: unknown items are treated
- * as unstackable until a source GDAT entry proves otherwise. */
+/* Stack limits belong to a decoded source object/GDAT record. The former
+ * local switch assigned limits to fabricated item IDs, even though the shop
+ * catalog itself was unavailable. Until the record owner is imported every
+ * externally supplied ID is conservatively a single, unstackable object. */
 static int dm2_shop_item_max_stack(int item_id) {
-    switch (item_id) {
-        case DM2_ITEM_HEAL_POTION:
-        case DM2_ITEM_MANA_POTION:
-            return 12; /* potions/flasks */
-        case 1001:     /* Torch */
-        case 1002:     /* Bread */
-        case 1003:     /* Water */
-        case 1004:     /* Cheese */
-            return 20; /* food / light consumables */
-        case DM2_ITEM_BOMB_THROW:
-            return 12; /* ammo / bomb charges */
-        case DM2_ITEM_LANTERN:
-        case DM2_ITEM_CROSSBOW:
-        case DM2_ITEM_PISTOL:
-        case DM2_ITEM_RIFLE:
-        case DM2_ITEM_MAGIC_BATTERY:
-        case DM2_ITEM_FLAME_ORB:
-        case DM2_ITEM_BOMB_REMOTE:
-        default:
-            return 1;  /* weapons, armour, scrolls, containers, unknown */
-    }
+    (void)item_id;
+    return 1;
 }
 
 int dm2_v1_shop_item_max_stack(int item_id) {

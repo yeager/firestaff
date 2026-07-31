@@ -45854,3 +45854,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   SKProject `SKWIN/SkWinCore.cpp::ENVIRONMENT_DRAW_DISTANT_ELEMENT` and
   `SKULLWIN/c_weather.cpp`. Verification:
   `test_dm2_v1_m11_startup_profile_gate` passes with real DM2 data.
+- ✅ 2026-07-31 DM2 shop item-ID fixture closure: removed the final fixed
+  potion, weapon, food and light item IDs plus their fabricated stack limits.
+  The unavailable shop API now treats every unbound object as a single item;
+  a real DB/GDAT record must provide any quantity rule. Verification:
+  `test_dm2_v1_shop_pc34_compat`, `test_dm2_v1_spell_pc34_compat`, and
+  `test_dm2_v1_m11_startup_profile_gate` pass.

@@ -37,11 +37,11 @@ int main(void)
         CHECK(record && memcmp(record, &expected[i], sizeof(*record)) == 0,
               "fixed spell record matches SKProject dSpellsTable");
     }
-    CHECK(dm2_v1_tech_magic_lookup(DM2_ITEM_CROSSBOW, &item) == 0 &&
-              dm2_v1_tech_magic_item_name(DM2_ITEM_HEAL_POTION) == NULL,
+    CHECK(dm2_v1_tech_magic_lookup(101, &item) == 0 &&
+              dm2_v1_tech_magic_item_name(200) == NULL,
           "fixture item IDs and names are unavailable");
     CHECK(item.item_id == 0 && item.name == NULL &&
-              dm2_v1_tech_magic_lookup(DM2_ITEM_PISTOL, NULL) == 0,
+              dm2_v1_tech_magic_lookup(102, NULL) == 0,
           "rejected lookup clears the result and handles null output");
     e = dm2_v1_tech_magic_source_evidence();
     CHECK(e && strstr(e, "legacy fixture item IDs") != NULL,

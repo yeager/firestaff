@@ -2814,8 +2814,7 @@ int main(void) {
                                                             leader_name,
                                                             sizeof(leader_name)),
                     "M11 DM2 leader-hand rejects diagnostic DB-handle text");
-        view.dm2State.leader_hand_object =
-            dm2_db_make_handle(10, DM2_ITEM_HEAL_POTION);
+        view.dm2State.leader_hand_object = dm2_db_make_handle(10, 0x0033);
         expect_true(!DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(&view,
                                                             leader_name,
                                                             sizeof(leader_name)),

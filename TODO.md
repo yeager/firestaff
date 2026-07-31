@@ -20,6 +20,9 @@
   colour into a source-bound value; only the source INIT/runtime bridge may
   supply the logical colour, and the active original interface palette remains
   mandatory before bars draw.
+  **2026-07-31 update:** the retired DM2 shop stack-size switch and its fixed
+  item-ID constants are gone; every unbound object is unstackable until its
+  DB/GDAT record supplies a real quantity rule.
   **2026-07-31 update:** the obsolete caller-authored DM2 companion API now
   rejects rather than fabricating a name, health, combat values, loyalty or
   AI behaviour. A future companion route must bind the live DB creature,

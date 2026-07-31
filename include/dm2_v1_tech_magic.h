@@ -28,17 +28,8 @@ typedef enum {
 #define DM2_POWER_MANA    2   /* mana-powered, magic_level*2/use */
 #define DM2_POWER_HYBRID  3   /* hybrid power, tech+magic levels/use */
 
-/* Retired fixture IDs. Real object IDs come from decoded DB/GDAT data. */
-#define DM2_ITEM_CROSSBOW      101   /* ranged, tech_level=0 */
-#define DM2_ITEM_PISTOL        102   /* ranged, tech_level=1 */
-#define DM2_ITEM_RIFLE         103   /* ranged, tech_level=2 */
-#define DM2_ITEM_BOMB_THROW    104   /* area, tech_level=1 */
-#define DM2_ITEM_BOMB_REMOTE   105   /* area, tech_level=2 (hybrid w/ mana trigger) */
-#define DM2_ITEM_LANTERN       110   /* tech_level=0, magic battery */
-#define DM2_ITEM_MAGIC_BATTERY 111   /* hybrid, charges mana+tech */
-#define DM2_ITEM_FLAME_ORB     120   /* magic_item, mana-powered */
-#define DM2_ITEM_HEAL_POTION   200   /* potion, magic_level=1 */
-#define DM2_ITEM_MANA_POTION   201   /* potion, magic_level=2 */
+/* No fixed object IDs are exported here. Real DM2 object identity comes from
+ * a decoded DB record and its GDAT metadata, not a Firestaff catalog. */
 
 typedef struct {
     int item_id;
