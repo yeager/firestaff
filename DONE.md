@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 V2 HUD manifest diagnostic closure: a legacy widget
+  manifest may still report a locally present file as `REAL` for diagnostics,
+  but the V2 runtime now records `NO_DRAW` for every manifest class. It never
+  exposes that label as a bitmap path, so an operator-provided file without
+  original `GRAPHICS.DAT`/GDAT provenance cannot become a HUD pixel owner.
+  The focused runtime probe creates such a local file and verifies its class
+  stays diagnostic while all seven render paths remain no-draw (27/27).
+
 - ✅ 2026-07-31 DM2 V2 HUD direct-overlay closure: retired the callable
   hard-coded compass/glyph/status/action-strip renderer in
   `dm2_v2_hud_overlay.c`. `dm2_v2_hud_render()` now deliberately emits no

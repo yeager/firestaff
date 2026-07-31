@@ -12,12 +12,12 @@ static DM2_V2_HudGdatPaletteFetch s_gdat_palette_fetch;
 static void *s_gdat_user;
 static int s_original_data_mounted;
 
-/* Per-slot path-mode record updated by
- * dm2_v2_hud_runtime_render_with_assets(). Restored after the a192cb2b0
- * worktree merge kept the public header contract and the runtime-hook
- * probe but dropped the definitions. Initialised to PROCEDURAL_FALLBACK
- * so callers observing the array before any asset-aware render still see
- * the documented default. */
+/* Per-slot diagnostic record updated by
+ * dm2_v2_hud_runtime_render_with_assets(). Widget manifests are not an
+ * original-data source: even an entry which their old diagnostic classifier
+ * calls REAL may only describe an operator-supplied file. Keep every path at
+ * NO_DRAW and retain the class separately for tooling. SKProject
+ * c_gui_vp.cpp owns visible HUD pixels through GDAT only. */
 static DM2_V2_HudRuntimePathMode
     s_last_path_mode[DM2_V2_HUD_WIDGET_COUNT];
 static DM2_V2_HudWidgetClass
@@ -176,13 +176,12 @@ void dm2_v2_hud_runtime_render_with_assets(uint8_t *fb, int w, int h_res) {
             dm2_v2_hud_widget_assets_classify_slot(
                 (DM2_V2_HudWidgetSlot)i);
         s_last_slot_class[i] = cls;
-        if (cls == DM2_V2_HUD_WIDGET_CLASS_REAL) {
-            s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP;
-            ++s_last_path_real;
-        } else {
-            s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_NO_DRAW;
-            ++s_last_path_fallback;
-        }
+        /* A manifest's "REAL" label proves only that a local path exists;
+         * it does not prove GRAPHICS.DAT provenance. Do not expose that
+         * label as a bitmap render path, since callers could mistake the
+         * diagnostic state for permission to draw it. */
+        s_last_path_mode[i] = DM2_V2_HUD_RUNTIME_PATH_NO_DRAW;
+        ++s_last_path_fallback;
     }
 
     if (!render_will_run) {

@@ -93,9 +93,9 @@ void dm2_v2_hud_runtime_render(uint8_t *fb, int w, int h_res);
  * vocabulary. It is diagnostic-only: widget manifests do not own runtime
  * pixels. The runtime always draws authenticated original GDAT or no-draw.
  *
- * The mapping is:
- *   REAL classification  → DM2_V2_HUD_RUNTIME_PATH_REAL_BITMAP
- *   PLACEHOLDER/PARTIAL/MISSING/UNKNOWN → DM2_V2_HUD_RUNTIME_PATH_NO_DRAW
+ * Every manifest classification maps to DM2_V2_HUD_RUNTIME_PATH_NO_DRAW.
+ * A manifest's REAL label is not original-GDAT provenance and therefore
+ * never authorizes a bitmap render path.
  *
  * A manifest classification is retained for tooling only; it cannot promote
  * generated, operator-provided, or placeholder pixels into the game. */
@@ -138,8 +138,9 @@ DM2_V2_HudRuntimePathMode dm2_v2_hud_runtime_last_path_mode(
  * run yet, both are 0 and the return is 0. */
 int dm2_v2_hud_runtime_last_path_counts(int* out_real, int* out_fallback);
 
-/* Returns the gate classification (REAL vs not-REAL) the runtime
- * observed for slot S during the most recent render_with_assets() call.
+/* Returns the manifest classification the runtime observed for slot S during
+ * the most recent render_with_assets() call. It is diagnostic only and does
+ * not authorize a bitmap path.
  * Returns DM2_V2_HUD_WIDGET_CLASS_UNKNOWN if no render has run yet or
  * S is out of range. */
 DM2_V2_HudWidgetClass dm2_v2_hud_runtime_last_slot_class(

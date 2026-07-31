@@ -47,8 +47,10 @@
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v2_hud_overlay.h"
 #include "dm2_v2_phase_gate.h"
+#include "dm2_v2_hud_widget_assets.h"
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 static int g_assertions = 0;
 static int g_failures   = 0;
@@ -66,6 +68,19 @@ static uint8_t fb_zero[320 * 200];
 
 static void clear_fb(uint8_t *fb, int size) {
     memset(fb, 0, size);
+}
+
+/* A local manifest can call a file REAL, but it has no GRAPHICS.DAT hash or
+ * GDAT-row receipt. It must remain diagnostic-only in the runtime. */
+static int write_text_file(const char *path, const char *text)
+{
+    FILE *fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fputs(text, fp) == EOF) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
 }
 
 int main(void) {
@@ -255,7 +270,48 @@ int main(void) {
         CHECK(1);
     }
 
-    dm2_v2_hud_runtime_shutdown();
+    /* 23. An operator-supplied manifest can still classify a file as REAL
+     * for diagnostics, but it cannot become a V2 bitmap render path. */
+    {
+        const char *root = "/tmp/firestaff-dm2-v2-hud-runtime-probe";
+        const char *manifest =
+            "/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2/hud/"
+            "hud_widget_manifest.json";
+        const char *bitmap =
+            "/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2/hud/"
+            "hud_widgets/unproven.bin";
+        const char *json =
+            "{\"hud_widgets\":[{\"id\":\"inventory_quick_view\","
+            "\"generator\":\"external\",\"source_file\":\"unproven.bin\","
+            "\"width\":1,\"height\":1}]}";
+        (void)mkdir(root, 0700);
+        (void)mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets", 0700);
+        (void)mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2", 0700);
+        (void)mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2/hud", 0700);
+        (void)mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2/hud/hud_widgets", 0700);
+        CHECK(write_text_file(bitmap, "not original GDAT") &&
+              write_text_file(manifest, json));
+        dm2_v2_hud_widget_assets_set_manifest_path(
+            "/tmp/firestaff-dm2-v2-hud-runtime-probe/data/dm2");
+        CHECK(dm2_v2_hud_widget_assets_classify_slot(
+                  DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW) ==
+              DM2_V2_HUD_WIDGET_CLASS_REAL);
+        dm2_v2_hud_runtime_init();
+        dm2_v2_hud_runtime_force_active_for_test(1);
+        memset(fb_zero, 0x42, sizeof(fb_zero));
+        dm2_v2_hud_runtime_render_with_assets(fb_zero, 320, 200);
+        CHECK(dm2_v2_hud_runtime_last_path_mode(
+                  DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW) ==
+              DM2_V2_HUD_RUNTIME_PATH_NO_DRAW);
+        {
+            int real = -1;
+            int no_draw = -1;
+            CHECK(dm2_v2_hud_runtime_last_path_counts(&real, &no_draw) ==
+                      (int)DM2_V2_HUD_WIDGET_COUNT &&
+                  real == 0 && no_draw == (int)DM2_V2_HUD_WIDGET_COUNT);
+        }
+        dm2_v2_hud_runtime_shutdown();
+    }
 
     printf("\n%d/%d assertions passed\n", g_assertions - g_failures, g_assertions);
     if (g_failures == 0) {
