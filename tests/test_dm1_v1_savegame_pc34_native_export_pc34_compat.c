@@ -111,6 +111,9 @@ static void fill_pc34_export_test_champion(struct ChampionState_Compat* champ)
         champ->inventory[i] = 0xffffu;
     }
     champ->inventory[CHAMPION_SLOT_HAND_RIGHT] = 0x1555u;
+    champ->inventory[CHAMPION_SLOT_HEAD] = 0x1666u;
+    champ->inventory[CHAMPION_SLOT_POUCH_1] = 0x1777u;
+    champ->inventory[CHAMPION_SLOT_BACKPACK_9] = 0x1888u;
     champ->load = 345u;
     for (i = 0; i < CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT; ++i) {
         champ->portraitBitmap[i] = (unsigned char)((i * 13 + 7) & 0xff);
@@ -147,6 +150,10 @@ static void expect_pc34_export_test_champion(
           "pc34 champion: skill experience preserved");
     CHECK(got->inventory[CHAMPION_SLOT_HAND_RIGHT] == 0x1555u,
           "pc34 champion: inventory slot preserved");
+    CHECK(got->inventory[CHAMPION_SLOT_HEAD] == 0x1666u &&
+          got->inventory[CHAMPION_SLOT_POUCH_1] == 0x1777u &&
+          got->inventory[CHAMPION_SLOT_BACKPACK_9] == 0x1888u,
+          "pc34 champion: M516 equipment/backpack order preserved");
     CHECK(got->load == 345u,
           "pc34 champion: load preserved");
     if (expected->portraitBitmapValid) {

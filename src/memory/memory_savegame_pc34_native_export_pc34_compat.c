@@ -66,6 +66,7 @@
 #include <string.h>
 
 #include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "memory_magic_pc34_compat.h"
 #include "memory_savegame_pc34_native_export_pc34_compat.h"
 #include "dm1_v1_c15_layout_pc34_compat.h"
@@ -907,8 +908,17 @@ static void pack_champion_excluding_portrait(
         write_u32_le(skill + 2, (uint32_t)champion->skillExperience[i]);
     }
     for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
+        int runtime_slot =
+            dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(i + 8);
+
+        if (runtime_slot < 0 || runtime_slot >= CHAMPION_SLOT_COUNT) {
+            return;
+        }
+        /* DEFS.H M516_CHAMPION::Slots is C00-ready, C01-action and then
+         * source equipment/backpack order.  Firestaff stores those same
+         * places in layout order, so F0433 must undo the M516 import map. */
         write_u16_le(dst + 211 + (size_t)i * 2u,
-                     champion->inventory[i]);
+                     champion->inventory[runtime_slot]);
     }
     write_u16_le(dst + 271, champion->load);
 }
@@ -1064,7 +1074,15 @@ static void unpack_champion_excluding_portrait(
         champion->skillExperience[i] = read_u32_le(skill + 2u);
     }
     for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
-        champion->inventory[i] = read_u16_le(src + 211u + (size_t)i * 2u);
+        int runtime_slot =
+            dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(i + 8);
+
+        if (runtime_slot < 0 || runtime_slot >= CHAMPION_SLOT_COUNT) {
+            F0600_CHAMPION_InitEmpty_Compat(champion);
+            return;
+        }
+        champion->inventory[runtime_slot] =
+            read_u16_le(src + 211u + (size_t)i * 2u);
     }
     champion->load = read_u16_le(src + 271u);
 }

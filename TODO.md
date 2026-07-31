@@ -273,6 +273,16 @@
   This prevents C509 from overwriting the lower portrait edge in resumed
   original PC34 saves. The fixture-free external-corpus runtime test passes.
 
+- **DM1-PC34-M516-SLOT-ROUNDTRIP:** Closed 2026-07-31. F0433 now writes
+  `CHAMPION_EXCLUDING_PORTRAIT::Slots` in ReDMCSB's persisted M516 order,
+  rather than Firestaff's panel-layout order. The reciprocal F0796 importer
+  uses the same map. Thus a changed ready/action hand or equipment slot stays
+  in its original PC3.4 ordinal through export and re-import. Verification:
+  native exporter/importer, F0435/F0433 handoff, tail-less backed corpus, and
+  real backed-corpus roundtrip tests pass. References: ReDMCSB `DEFS.H`,
+  `LOADSAVE.C F0433/F0435`; DMweb saved-game format:
+  `http://dmweb.free.fr/community/documentation/file-formats/saved-game-files/`.
+
 - **DM1-PC34-A6FA-F0337-NATIVE-PALETTE:** Closed 2026-07-31. The externally owned PC3.4 save
   `DMSAVE-dosboxx-runtime.DAT` (FNV-1a `a6fa347b`, SHA-256
   `ab7bb4a34b77bba033d7b6c31db32e7198a962b0e55c0644c0486f50bb361ecb`) has

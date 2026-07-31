@@ -46005,9 +46005,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   ordinal `1`. References: ReDMCSB `LOADSAVE.C F0435`, `DEFS.H`,
   `COMMAND.C C507..C536`, and DMweb's PC saved-game format page. Verification:
   `dm1_v1_original_save_pc34_handoff` and the real-data
-  `dm1_v1_original_save_pc34_backed_corpus_roundtrip` pass. The native
-  a6fa347b palette discrepancy remains explicitly open in TODO.md; this entry
-  makes no F0337 parity claim.
+  `dm1_v1_original_save_pc34_backed_corpus_roundtrip` pass.
+
+- ✅ 2026-07-31 DM1 PC3.4 M516 export/import symmetry: F0433 now reverses
+  the Firestaff panel-layout mapping before serializing `M516_CHAMPION::Slots`;
+  F0796 applies the same persisted-order translation on direct import. A
+  live changed ready/action hand or equipment slot therefore retains its
+  original PC34 ordinal across F0435 -> F0433 -> F0435. References: ReDMCSB
+  `DEFS.H`, `LOADSAVE.C F0433/F0435`; DMweb saved-game format documentation.
+  Verification: native exporter/importer, handoff, tail-less backed and
+  real backed-corpus PC34 roundtrip tests pass.
 
 - ✅ 2026-07-31 DM1 PC3.4 a6fa347b resumed-light verification: reran the
   exact externally owned DOSBox save after the M516 slot mapping repair. The
