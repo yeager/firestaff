@@ -24263,3 +24263,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Nexus door-state provenance: bind SDDRVS.TSK/retail door state and its
   open transition before allowing movement through type-8 squares; the
   standalone route now fails closed instead of assuming open.
+- 🔧 Nexus FONT256 text binding: retail DMWeb map/page header facts are now
+  exposed. The remaining gap is proving how page tilemap entries become
+  runtime character codes before enabling text rendering.

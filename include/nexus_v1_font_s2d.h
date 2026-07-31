@@ -29,6 +29,13 @@ typedef struct {
     uint32_t palette_size;
     uint32_t attribute_offset;
     uint32_t attribute_size;
+    /* DMWeb DecodeFONT256S2D header facts; these are VDP2/SCR metadata only,
+     * not a character-code mapping. */
+    uint16_t map_horizontal_page;
+    uint16_t map_vertical_page;
+    uint16_t map_page_number;
+    uint32_t page_character_control_data;
+    uint16_t page_pattern_name_auxiliary_data;
     int tilemap_width;
     int tilemap_height;
     int tile_count;

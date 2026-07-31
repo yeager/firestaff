@@ -46820,3 +46820,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Removed the `GRAPHICS.DAT`/`DUNGEON.DAT` fallback search from the Theron boot scanner.
 - Theron launch discovery now accepts only the hash-verified Track 02 media routes present in the real data corpus; unverified extracted files cannot become a launch source.
 - Verification: `test_theron_rendering` 25/25 and `firestaff_theron_v1_startup_flow_probe` 653/653.
+- ✅ 2026-07-31 Nexus FONT256 DMWeb header facts: the bounded S2D decoder
+  now exposes and verifies retail map horizontal/vertical page, map page
+  number, page character-control dword, and pattern-name auxiliary word.
+  These remain metadata only; no character-code mapping is inferred.

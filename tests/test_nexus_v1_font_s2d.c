@@ -66,6 +66,15 @@ static int test_font256(void) {
         return 1;
     }
     printf("  PASS DMWeb named regions: map/page/CG/palette/attributes\n");
+    if (r.map_horizontal_page != 1U || r.map_vertical_page != 1U ||
+        r.map_page_number != 0U ||
+        r.page_character_control_data != 0x00100000U ||
+        r.page_pattern_name_auxiliary_data != 0x4000U) {
+        printf("  FAIL DMWeb FONT256 header facts\n");
+        free(data);
+        return 1;
+    }
+    printf("  PASS DMWeb FONT256 map/page header facts\n");
     {
         uint8_t tile[64];
         if (nexus_v1_font_s2d_copy_character_generator_tile(

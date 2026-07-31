@@ -133,6 +133,22 @@ int nexus_v1_font_s2d_decode(const uint8_t *data, int data_size,
         out->palette_size = out->sections[3].size;
         out->attribute_offset = out->sections[4].offset;
         out->attribute_size = out->sections[4].size;
+
+        /* DMWeb reads the map's first two words as horizontal/vertical page,
+         * skips the 12-byte FF padding, then reads the page number.  Its page
+         * decoder reads the control dword and auxiliary word before the
+         * 4096-word tilemap. */
+        if (out->map_size >= 18U) {
+            out->map_horizontal_page = read_be16(data + out->map_offset);
+            out->map_vertical_page = read_be16(data + out->map_offset + 2U);
+            out->map_page_number = read_be16(data + out->map_offset + 16U);
+        }
+        if (out->page_size >= 6U) {
+            out->page_character_control_data =
+                read_be32(data + out->page_offset);
+            out->page_pattern_name_auxiliary_data =
+                read_be16(data + out->page_offset + 4U);
+        }
     }
 
     /* Section 1: tilemap — 16-byte header + W*H*2 tile references */
