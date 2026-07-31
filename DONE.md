@@ -46163,3 +46163,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   References reviewed: ReDMCSB `DUNVIEW.C F0111/F0118/F0121/F0125/F0126/F0128`
   and CSBWin `Viewport.cpp`. Verification: M11 build, local-PC34 first-frame
   material test 109/109, and `git diff --check`.
+- ✅ 2026-07-31 CSB detached side/depth viewport cleanup: removed the
+  non-M11 D1L/D1R F0111 receipt, D2L2/D2R2 clipped-front receipt, and D3L2
+  F0115 projectile contract, together with their isolated test targets. The
+  active source-command compositor retains its own D3 door and real-data
+  material routes. References reviewed: ReDMCSB `DUNVIEW.C F0111/F0115/F0122/F0123`
+  and CSBWin `Viewport.cpp`. Verification: M11 build, local-PC34 first-frame
+  material test 109/109, and `git diff --check`.
