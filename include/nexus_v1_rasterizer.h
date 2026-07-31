@@ -10,7 +10,7 @@
  *
  * Features:
  *   - Z-buffer (per-pixel depth test)
- *   - Flat shading via per-vertex color
+ *   - Indexed texturing via verified source surfaces
  *   - Affine texture mapping (UV -> screen-space, Saturn-style, no
  *     perspective correction -- appropriate for flat dungeon surfaces)
  *   - Back-face culling (CCW winding)
@@ -65,7 +65,8 @@ void nexus_camera_init(Nexus_Camera *cam, Vec3 pos, int facing_dir);
 void nexus_camera_update(Nexus_Camera *cam);
 
 /* ── Primitives ──────────────────────────────────────────────────── */
-/* Flat shaded triangle */
+/* Legacy flat triangle entry point; intentionally no-draw without a verified
+ * Saturn material. */
 void nexus_raster_triangle(Nexus_Framebuffer *fb,
     Nexus_RasterVertex v0, Nexus_RasterVertex v1, Nexus_RasterVertex v2,
     const Nexus_Camera *cam);
@@ -77,7 +78,8 @@ void nexus_raster_triangle_tex(Nexus_Framebuffer *fb,
     const uint8_t *tex_data, int tex_w, int tex_h,
     const uint32_t *tex_palette);
 
-/* Flat quad */
+/* Legacy flat quad entry point; intentionally no-draw without a verified
+ * Saturn material. */
 void nexus_raster_quad(Nexus_Framebuffer *fb,
     Nexus_RasterVertex v0, Nexus_RasterVertex v1,
     Nexus_RasterVertex v2, Nexus_RasterVertex v3,
@@ -103,13 +105,13 @@ void nexus_raster_quad_tex_mapped(Nexus_Framebuffer *fb,
 
 /* ── Dungeon geometry ────────────────────────────────────────────── */
 /* wall_dir: 0=North(z-), 1=East(x+), 2=South(z+), 3=West(x-)
- * tex_data optional (NULL -> flat shaded, texture_id ignored)      */
+ * tex_data and tex_palette are required; unbound surfaces are no-draw. */
 void nexus_draw_wall(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z, int wall_dir, uint8_t color,
     int texture_id, const uint8_t *tex_data, int tex_w, int tex_h,
     const uint32_t *tex_palette);
 
-/* convenience overloads with no texture — flat-shaded wall */
+/* Legacy convenience overload; no-draw because it has no source surface. */
 void nexus_draw_wall_simple(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z, int wall_dir, uint8_t color);
 
@@ -170,9 +172,9 @@ void nexus_raster_billboard(Nexus_RasterVertex quad[4],
     Vec3 world_pos, float width, float height,
     const Nexus_Camera *cam);
 
-/* Render creature billboard (textured or flat-shaded).
+/* Render creature billboard from a verified texture surface.
  *LEVITATION: hovers 0.2 above floor.
- * FIRE_RESIST: red-tinted flat shade.                            */
+ * FIRE_RESIST: source-bound material flag; no flat-color substitute. */
 void nexus_raster_creature_billboard(Nexus_Framebuffer *fb,
     const Nexus_Camera *cam,
     Vec3 world_pos, float height,

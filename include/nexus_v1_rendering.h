@@ -11,7 +11,7 @@
 /* Render a textured wall quad.
  * world_x, world_z: dungeon square origin
  * wall_dir: 0=N, 1=E, 2=S, 3=W
- * tex_page: VDP1 texture page index (or -1 for fallback)
+ * tex_page: verified VDP1 texture page index
  * u0/v0/u1/v1: UV coordinates (0..255)
  * light_level: 0=full dark, 15=full bright */
 void nexus_render_wall_quad(Nexus_Framebuffer *fb,
@@ -72,7 +72,7 @@ typedef enum {
     NEXUS_ITEM_OTHER
 } Nexus_ItemCategory;
 
-/* Render an item on the dungeon floor as a billboard sprite */
+/* Render an item only when a verified source-bound sprite exists. */
 void nexus_render_item(Nexus_Framebuffer *fb,
     const Nexus_Camera *cam,
     float world_x, float world_y,
