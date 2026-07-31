@@ -1808,6 +1808,16 @@ int main(void) {
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 startup menu moves toward NEW GAME");
     }
+    view.world.party.championCount = 1;
+    view.world.party.activeChampionIndex = 0;
+    view.dm2State.leader_hand_object = dm2_db_make_handle(10, 0x0033);
+    view.dm2State.champion_inventory_objects[0][CHAMPION_SLOT_HEAD] =
+        dm2_db_make_handle(10, 0x0034);
+    dm2_v1_runtime_set_leader_hand_object(
+        view.dm2State.leader_hand_object);
+    (void)dm2_v1_runtime_set_champion_inventory_object(
+        0, CHAMPION_SLOT_HEAD,
+        view.dm2State.champion_inventory_objects[0][CHAMPION_SLOT_HEAD]);
     expect_true(M11_GameView_HandleInput(&view,
                                          M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
@@ -1816,6 +1826,15 @@ int main(void) {
                     strstr(view.lastOutcome,
                            "DM2 GAME_LOAD DUNGEON READY: INITIALIZATION REQUIRED") != NULL,
                 "M11 DM2 startup reloads the original dungeon but keeps missing source initialization gated");
+    expect_true(view.world.party.championCount == 0 &&
+                    view.world.party.activeChampionIndex == -1 &&
+                    view.dm2State.leader_hand_object == 0u &&
+                    view.dm2State.champion_inventory_objects[0]
+                        [CHAMPION_SLOT_HEAD] == 0u &&
+                    dm2_v1_runtime_get_leader_hand_object() == 0u &&
+                    dm2_v1_runtime_get_champion_inventory_object(
+                        0, CHAMPION_SLOT_HEAD) == 0u,
+                "M11 DM2 new game clears stale save party ownership before source mirror selection");
     /* The following runtime/save assertions exercise resume separately. A
      * New Game may not create the former fixture party merely to enter this
      * block; GAME_LOAD owns that source transition. */

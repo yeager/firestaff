@@ -8203,6 +8203,20 @@ void dm2_v1_runtime_set_leader_hand_object(uint32_t object) {
     g_dm2_runtime.leader_hand_object = object;
 }
 
+void dm2_v1_runtime_clear_new_game_party_state(void) {
+    /* SKWINSPX/src/v5/sksvgame.cpp::DM2_LOAD_NEW_DUNGEON clears
+     * party.heros_in_party and ddat.savegamewpc.w_00 before
+     * DM2_READ_DUNGEON_STRUCTURE(1). A stale decoded SKSave must therefore
+     * not keep portraits, inventory, or a leader hand alive on the new-game
+     * title boundary. */
+    g_dm2_runtime.leader_hand_object = 0u;
+    memset(g_dm2_runtime.champion_inventory_objects, 0,
+           sizeof(g_dm2_runtime.champion_inventory_objects));
+    memset(&g_dm2_runtime.session_snapshot, 0,
+           sizeof(g_dm2_runtime.session_snapshot));
+    g_dm2_runtime.session_snapshot_valid = 0;
+}
+
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
                                                       uint8_t slot) {
     if (champion >= 4u || slot >= 30u) {

@@ -45225,3 +45225,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `firestaff_dm2_v1_projectile_drain_probe` (12/12),
   `firestaff_dm2_v1_projectile_step_probe` (21/21), and `nm` confirms the
   production archive excludes `dm2_v1_projectile_dispatch_synthetic`.
+- ✅ 2026-07-31 DM2 GAME_LOAD stale-party reset: after the hash-verified G1
+  candidate has parsed, `LOAD_NEW_DUNGEON` now clears Firestaff's cached
+  resume party, leader hand and inventory before exposing the source entrance
+  pose. It does not create replacement champions; the existing source mirror
+  selection and actuator/timer handoff remains required. Source: SKProject
+  `SKWINSPX/src/v5/sksvgame.cpp::DM2_LOAD_NEW_DUNGEON`, which clears
+  `party.heros_in_party` and `ddat.savegamewpc.w_00` before
+  `DM2_READ_DUNGEON_STRUCTURE(1)`. Verification: real-data
+  `test_dm2_v1_m11_startup_profile_gate` proves stale hand/inventory removal
+  at New Game, and `test_dm2_v1_load_new_dungeon_contract` passes.

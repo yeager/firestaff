@@ -204,9 +204,9 @@ typedef struct {
 } DM2_V1_BootRuntimeReceipt;
 
 /* skproject c_savegame.cpp::DM2_LOAD_NEW_DUNGEON opens the selected original
- * dungeon, resets the party/leader ownership, then calls
- * DM2_READ_DUNGEON_STRUCTURE(1). Firestaff may atomically reload the proven
- * G1 structure, but must not manufacture the still-unmodeled party reset. */
+ * dungeon, clears the prior party/leader ownership, then calls
+ * DM2_READ_DUNGEON_STRUCTURE(1). Firestaff mirrors that clear but does not
+ * manufacture a replacement party before source mirror selection. */
 typedef struct {
     int valid;
     int reloaded;

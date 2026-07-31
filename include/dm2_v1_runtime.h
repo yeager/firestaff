@@ -1164,6 +1164,10 @@ int dm2_v1_runtime_import_original_sksave_state_entry(
     DM2_V1_RuntimeOriginalCorpusImportReceipt *out);
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
+/* DM2_LOAD_NEW_DUNGEON clears the old party before it admits the new G1
+ * structure. This clears only Firestaff's cached representation of that
+ * source-owned party/hand state; it does not construct a replacement party. */
+void dm2_v1_runtime_clear_new_game_party_state(void);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
                                                       uint8_t slot);
 int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,

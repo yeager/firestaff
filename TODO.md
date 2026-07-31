@@ -33,6 +33,9 @@
   reloads also refresh deterministic header fields from the same verified
   source bytes. Original SKSave import no longer seeds this route from the
   legacy fixture party before decoding its own SUPPRESS champion records.
+  A verified New Game reload now also clears stale resume portraits,
+  inventory and leader hand before source mirror selection; it still cannot
+  create a replacement party or enter runtime.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its

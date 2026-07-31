@@ -1047,6 +1047,16 @@ static void m11_dm2_mirror_session_party(M11_GameViewState *state,
 
 }
 
+static void m11_dm2_clear_new_game_party_state(M11_GameViewState *state)
+{
+    if (!state) return;
+    memset(&state->world.party, 0, sizeof(state->world.party));
+    state->world.party.activeChampionIndex = -1;
+    memset(state->dm2State.champion_inventory_objects, 0,
+           sizeof(state->dm2State.champion_inventory_objects));
+    state->dm2State.leader_hand_object = 0u;
+}
+
 static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
                                          DM2_V1_BootStartupLaunch *launch,
                                          const char *save_path);
@@ -1301,6 +1311,7 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
             if (dm2_v1_boot_load_new_dungeon(profile, &new_dungeon) &&
                 new_dungeon.valid && new_dungeon.reloaded &&
                 !new_dungeon.synthetic_party_created) {
+                m11_dm2_clear_new_game_party_state(state);
                 status = "DM2 GAME_LOAD DUNGEON READY: INITIALIZATION REQUIRED";
             }
             state->dm2State.startup_menu_active = 1;

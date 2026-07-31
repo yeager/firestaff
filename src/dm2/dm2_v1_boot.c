@@ -1199,9 +1199,12 @@ int dm2_v1_boot_load_new_dungeon(
      * replaces the source-owned G1 start pose: retaining an earlier world's
      * pose would make the eventual entrance synthetic. c_loadlevel.cpp's G1
      * header start word is therefore part of this atomic admission, not an
-     * optional presentation hint. Party, hand, gold and timers remain
-     * untouched. */
+     * optional presentation hint. DM2_LOAD_NEW_DUNGEON explicitly clears
+     * party.heros_in_party and ddat.savegamewpc.w_00 before the G1 read, so
+     * discard any prior source-save party cache too. Gold and timers remain
+     * owned by the still-unported GAME_LOAD records. */
     game = (DM2_V1_GameState *)profile->dm2_state;
+    dm2_v1_runtime_clear_new_game_party_state();
     game->party_x = candidate.initial_party_x;
     game->party_y = candidate.initial_party_y;
     game->party_dir = candidate.initial_party_dir & 3;
