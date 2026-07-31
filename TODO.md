@@ -30,8 +30,9 @@
   state.
 
 - **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
-  placeholder labels are now fixture/probe-only. Runtime must consume the
-  verified startup media receipt or remain unavailable.
+  placeholder labels are now fixture/probe-only. The verified receipt no
+  longer projects fixture mirror counts or fallback-label counts; runtime
+  must consume the verified startup media receipt or remain unavailable.
 
 - **THERON-STARTUP-LEGACY-FALLBACK-ROOM:** The M11 production path uses
   `verified_only` Track 02 admission and the authenticated startup bitmap

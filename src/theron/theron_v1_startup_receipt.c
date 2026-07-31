@@ -436,7 +436,6 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
 
     if (!receipt) return 0;
     theron_v1_startup_receipt_reset(receipt);
-    populate_startup_mirror_summary(receipt);
     populate_startup_chapter_summary(receipt, NULL);
 
     /* Empty / NULL inputs downgrade to a placeholder with a clear note.
