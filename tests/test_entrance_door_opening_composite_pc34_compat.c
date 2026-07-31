@@ -110,32 +110,6 @@ int main(void) {
         ok = 0;
     }
 
-    memset(framebuffer, 0, sizeof(framebuffer));
-    ok &= ENTRANCE_Compat_DrawFallbackClosedDoors(framebuffer, FB_W, FB_H);
-    if (pixel_at(framebuffer, FB_W, 0u, 30u) != 13u ||
-        pixel_at(framebuffer, FB_W, 100u, 190u) != 0u ||
-        pixel_at(framebuffer, FB_W, 110u, 31u) != 5u ||
-        pixel_at(framebuffer, FB_W, 231u, 190u) != 0u) {
-        fprintf(stderr, "fallback closed-door pixels mismatch\n");
-        ok = 0;
-    }
-
-    memset(framebuffer, 0, sizeof(framebuffer));
-    ok &= ENTRANCE_Compat_DrawFallbackOpeningDoorFrame(framebuffer,
-                                                       FB_W,
-                                                       FB_H,
-                                                       &door);
-    if (door.leftBoxW > 0u &&
-        pixel_at(framebuffer, FB_W, door.leftBoxX, 30u + door.leftBoxY) != 13u) {
-        fprintf(stderr, "fallback opening left edge mismatch\n");
-        ok = 0;
-    }
-    if (door.rightBoxW > 0u &&
-        pixel_at(framebuffer, FB_W, door.rightBoxX, 30u + door.rightBoxY) != 13u) {
-        fprintf(stderr, "fallback opening right edge mismatch\n");
-        ok = 0;
-    }
-
     printf("entranceDoorOpeningCompositeOk=%d\n", ok);
     return ok ? 0 : 1;
 }

@@ -138,12 +138,5 @@ int ENTRANCE_Compat_CompositeDoorOpeningFrame(unsigned char* framebuffer,
                                               unsigned int framebufferHeight,
                                               const EntranceCompatCompositePixels* pixels,
                                               const EntranceCompatDoorStep* door);
-int ENTRANCE_Compat_DrawFallbackClosedDoors(unsigned char* framebuffer,
-                                            unsigned int framebufferWidth,
-                                            unsigned int framebufferHeight);
-int ENTRANCE_Compat_DrawFallbackOpeningDoorFrame(unsigned char* framebuffer,
-                                                 unsigned int framebufferWidth,
-                                                 unsigned int framebufferHeight,
-                                                 const EntranceCompatDoorStep* door);
 
 #endif

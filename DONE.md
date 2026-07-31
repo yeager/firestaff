@@ -46252,6 +46252,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   retired. No disabled synthetic cache logic remains in the compositor source;
   cache access is exclusively command-bound F0128 material replacement.
   Verification: `test_csb_v22_inplace_draw_pc34` 57/57 and `git diff --check`.
+
+- ✅ 2026-07-31 CSB entrance synthetic-door cleanup: removed the isolated
+  palette-filled closed/opening-door fallback API and its pixel assertions.
+  Entrance frames now require the decoded original C002/C003 door surfaces.
+  Reference: ReDMCSB `ENTRANCE.C`; verification: entrance composite test and
+  `git diff --check`.
 # 2026-07-31 Theron Track 02 quest-block extraction
 
 - ✅ Added a source-data extractor for the seven 256 KiB quest blocks present
