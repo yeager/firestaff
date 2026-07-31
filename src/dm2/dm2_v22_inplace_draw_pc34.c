@@ -77,24 +77,6 @@ static int              g_v22_cache_mapped = 0;    /* 1 if mmap, 0 if malloc */
 static FsV22CachedBitmap g_v22_bitmaps[FSV22C_MAX_ENT];
 static int              g_v22_bitmap_count = 0;
 
-/* ── Hash helpers ──────────────────────────────────────────────── */
-
-static uint32_t fnv1a_hash(const char* s) {
-    uint32_t h = 2166136261u;
-    while (*s) { h = (h ^ (uint8_t)*s++) * 16777619u; }
-    return h;
-}
-
-static int v22_find_bitmap(uint32_t category_hash, uint32_t asset_id_hash) {
-    for (int i = 0; i < g_v22_bitmap_count; ++i) {
-        if (g_v22_bitmaps[i].entry.category_hash == category_hash &&
-            g_v22_bitmaps[i].entry.asset_id_hash == asset_id_hash) {
-            return i;
-        }
-    }
-    return -1;
-}
-
 /* ── Cache load ─────────────────────────────────────────────────── */
 
 static int v22_load_cache_file(const char* path) {
@@ -226,17 +208,14 @@ const uint32_t* dm2_v22_inplace_get_bitmap_by_id(const char* category,
                                                   int* out_w, int* out_h) {
     if (out_w) *out_w = 0;
     if (out_h) *out_h = 0;
-    if (!g_v22_inplace_active) return NULL;
-    if (!category || !asset_id || !asset_id[0]) return NULL;
-    {
-        uint32_t cat_hash = fnv1a_hash(category);
-        uint32_t aid_hash = fnv1a_hash(asset_id);
-        int idx = v22_find_bitmap(cat_hash, aid_hash);
-        if (idx < 0) return NULL;
-        if (out_w) *out_w = (int)g_v22_bitmaps[idx].entry.width;
-        if (out_h) *out_h = (int)g_v22_bitmaps[idx].entry.height;
-        return (const uint32_t*)g_v22_bitmaps[idx].rgba;
-    }
+    (void)category;
+    (void)asset_id;
+    /* DM2-GDAT-FB-07: keeping this lookup live would let a later caller
+     * bypass the no-draw swap pass and install local cache pixels directly.
+     * SKProject selects live viewport material from GRAPHICS.DAT GDAT; this
+     * cache has no category/index/field or raw-byte receipt and is therefore
+     * diagnostic storage only. */
+    return NULL;
 }
 
 int dm2_v22_inplace_render_pass(unsigned char* framebuffer, int fbW, int fbH) {

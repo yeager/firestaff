@@ -59,8 +59,9 @@
   substitute pixels. **2026-07-31 update:** the retired local modern-art
   manifest no longer promotes disk-resolvable PNGs to `REAL` or
   `FINISHED_REAL`; it has no GDAT category/index/field or raw-byte receipt.
-  A future bridge must carry those exact original-data facts before enabling
-  any V2.2 replacement.
+  The cache lookup is now no-draw as well, so no caller can bypass the V2.2
+  swap pass with local RGBA data. A future bridge must carry those exact
+  original-data facts before enabling any V2.2 replacement.
 
 - **DM2-STEP-MISSILE-OWNER-HANDOFF:** Port the source-owned DB14/timer
   projectile handoff from `c_tim_proc.cpp::DM2_STEP_MISSILE` with its record

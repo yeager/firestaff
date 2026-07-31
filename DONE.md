@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 DM2 V2.2 cache egress closure: retired the direct modern-cache
+  bitmap lookup that could have handed local RGBA pixels to a future caller.
+  The cache and swap APIs now preserve the V1 GDAT page for indoor, outdoor,
+  complete and partial-cache cases. Focused in-place test and no-draw probe
+  pass (18/18; 49/49).
+
 - ✅ 2026-07-31 DM2 V2.2 local-manifest provenance closure: the retired
   modern-art manifest can no longer turn operator-provided files into `REAL`
   or `FINISHED_REAL`. Non-placeholder local files stay `PARTIAL` and the

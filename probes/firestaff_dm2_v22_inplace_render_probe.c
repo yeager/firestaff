@@ -370,52 +370,6 @@ static int count_changed_pixels(const unsigned char* fb, size_t len) {
     return changed;
 }
 
-/* True when every cell-center pixel inside the indoor 4x3 layout is
- * non-zero. Each cell is 640x360 at 1920x1080 so the center pixel
- * is at (rect.x + rect.w/2, rect.y + rect.h/2). The right column's
- * cell rect extends past the framebuffer (x+w=2240 > fbW=1920) so
- * the visible center is shifted left to stay inside the painted
- * region. */
-static int dm2_all_cell_centers_nonzero(const unsigned char* fb, int fbW) {
-    static const int centers[3][3][2] = {
-        /* depth 0 (D0, closest) */ {
-            { 640,  900 },   /* L  (320, 720, 640, 360) center (640,900) */
-            {1280,  900 },   /* C  (960, 720, 640, 360) center (1280,900) */
-            {1760,  900 }    /* R  (1600, 720, 640, 360) clipped, visible center */
-        },
-        /* depth 1 (D1, middle) */ {
-            { 640,  540 },
-            {1280,  540 },
-            {1760,  540 }
-        },
-        /* depth 2 (D2, farthest) */ {
-            { 640,  180 },
-            {1280,  180 },
-            {1760,  180 }
-        }
-    };
-    int d, l;
-    for (d = 0; d < 3; ++d) {
-        for (l = 0; l < 3; ++l) {
-            int cx = centers[d][l][0];
-            int cy = centers[d][l][1];
-            if (fb[cy * fbW + cx] == 0x00) return 0;
-        }
-    }
-    return 1;
-}
-
-/* True when every outdoor cell-center pixel is non-zero. */
-static int dm2_outdoor_cell_centers_nonzero(const unsigned char* fb, int fbW) {
-    /* sky band: center at (960, 270) */
-    /* horizon strip: center at (960, 541) */
-    /* ground band: center at (960, 811) */
-    if (fb[270 * fbW + 960] == 0x00) return 0;
-    if (fb[541 * fbW + 960] == 0x00) return 0;
-    if (fb[811 * fbW + 960] == 0x00) return 0;
-    return 1;
-}
-
 static int dm2_check_t560_route_table(const unsigned char raw_cells[3][3]) {
     static const char* const kExpectedNames[3][3] = {
         { "T560_D0_L", "T560_D0_C", "T560_D0_R" },
@@ -667,8 +621,8 @@ int main(void) {
                      DM2_V22_SHAPE_FLOOR_MOSSY,
                  "floor at depth=99 clamps to 2 -> FLOOR_MOSSY");
 
-    /* 7. Indoor T560 path — populate per-cell cache with mixed shapes
-     *    and verify the swap renders up to 9 cells. */
+    /* 7. Indoor T560 cache — it remains diagnostic only until original
+     *    GRAPHICS.DAT material is bound, so no cache route may activate. */
     memset(raw_cells, 0x00, sizeof(raw_cells));
     raw_cells[0][0] = 0x00;   /* D0 L: WALL_STRAIGHT */
     raw_cells[0][1] = 0x04;   /* D0 C: FLOOR_PLAIN */
@@ -680,14 +634,13 @@ int main(void) {
     raw_cells[2][1] = 0x01;   /* D2 C: WALL_CORNER_INNER */
     raw_cells[2][2] = 0x11;   /* D2 R: STAIRS_DOWN */
     dm2_v22_viewport_swap_update(0, (const unsigned char (*)[3])raw_cells, 0);
-    probe_record(&stats, "DM2_V22_INDOOR_POPULATED",
-                 dm2_v22_viewport_swap_populated() &&
-                 dm2_v22_viewport_swap_active(),
-                 "indoor T560 cache populated + swap active");
+    probe_record(&stats, "DM2_V22_INDOOR_NO_DRAW",
+                 !dm2_v22_viewport_swap_active(),
+                 "indoor T560 cache stays no-draw without GDAT provenance");
 
-    probe_record(&stats, "DM2_V22_T560_ROUTE_TABLE",
-                 dm2_check_t560_route_table((const unsigned char (*)[3])raw_cells),
-                 "all 9 indoor T560 cells expose bounded route/category/asset descriptors");
+    probe_record(&stats, "DM2_V22_T560_ROUTE_BLOCKED",
+                 !dm2_check_t560_route_table((const unsigned char (*)[3])raw_cells),
+                 "T560 cache routes remain blocked without GDAT provenance");
 
     {
         DM2_V22_T560IndoorRoute invalid_route;
@@ -713,26 +666,24 @@ int main(void) {
     memset(fb, 0x00, sizeof(fb));
     painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);
     changed = count_changed_pixels(fb, sizeof(fb));
-    probe_record(&stats, "DM2_V22_INDOOR_RENDER_9_CELLS",
-                 painted == 9 && changed > 0 &&
-                 dm2_all_cell_centers_nonzero(fb, 1920),
-                 "indoor render pass paints 9 cells + non-zero centers");
+    probe_record(&stats, "DM2_V22_INDOOR_RENDER_NO_DRAW",
+                 painted == 0 && changed == 0,
+                 "indoor cache render preserves the V1 page");
 
     /* Capture the indoor counter IMMEDIATELY after the indoor render,
      * before the outdoor update() resets both counters to 0. */
     {
         int indoor_after_indoor = dm2_v22_viewport_swap_cells_painted_indoor();
-        probe_record(&stats, "DM2_V22_INDOOR_COUNTER_NONZERO",
-                     indoor_after_indoor == 9,
-                     "indoor painted-cell counter == 9 after indoor render");
+        probe_record(&stats, "DM2_V22_INDOOR_COUNTER_ZERO",
+                     indoor_after_indoor == 0,
+                     "indoor cache counter remains zero on no-draw path");
     }
 
     /* 8. Outdoor T600 path — sky/horizon/ground */
     dm2_v22_viewport_swap_update(0, NULL, 1);
-    probe_record(&stats, "DM2_V22_OUTDOOR_POPULATED",
-                 dm2_v22_viewport_swap_populated() &&
-                 dm2_v22_viewport_swap_active(),
-                 "outdoor T600 cache populated + swap active");
+    probe_record(&stats, "DM2_V22_OUTDOOR_NO_DRAW",
+                 !dm2_v22_viewport_swap_active(),
+                 "outdoor T600 cache stays no-draw without GDAT provenance");
 
     {
         DM2_V22_T560IndoorRoute stale_indoor_route;
@@ -746,19 +697,18 @@ int main(void) {
     memset(fb, 0x00, sizeof(fb));
     painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 1);
     changed = count_changed_pixels(fb, sizeof(fb));
-    probe_record(&stats, "DM2_V22_OUTDOOR_RENDER_3_CELLS",
-                 painted == 3 && changed > 0 &&
-                 dm2_outdoor_cell_centers_nonzero(fb, 1920),
-                 "outdoor render pass paints sky/horizon/ground + non-zero centers");
+    probe_record(&stats, "DM2_V22_OUTDOOR_RENDER_NO_DRAW",
+                 painted == 0 && changed == 0,
+                 "outdoor cache render preserves the V1 page");
 
     /* 9. Per-viewport counters — capture BEFORE the sweep resets them.
      *    Each update() call resets both counters to 0; the sweep that
      *    follows would wipe the outdoor count to 0. */
     {
         int outdoor_before = dm2_v22_viewport_swap_cells_painted_outdoor();
-        probe_record(&stats, "DM2_V22_COUNTERS_INDOOR_OUTDOOR",
-                     outdoor_before > 0,
-                     "outdoor painted-cell counter > 0 after outdoor render");
+        probe_record(&stats, "DM2_V22_COUNTERS_INDOOR_OUTDOOR_ZERO",
+                     outdoor_before == 0,
+                     "outdoor cache counter remains zero on no-draw path");
     }
 
     /* 10. 4-direction sweep (indoor) */
@@ -769,9 +719,9 @@ int main(void) {
         memset(fb, 0x00, sizeof(fb));
         sweep_painted += dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);
     }
-    probe_record(&stats, "DM2_V22_DIRECTION_SWEEP_4X9",
-                 sweep_painted == 36,
-                 "all 4 directions paint 4x9 DM2 V22 indoor cells");
+    probe_record(&stats, "DM2_V22_DIRECTION_SWEEP_NO_DRAW",
+                 sweep_painted == 0,
+                 "all four directions preserve the V1 page");
 
     /* 11. Missing one synthetic cache bitmap: the renderer must skip
      * only that cell and leave the already-drawn V1 framebuffer byte
@@ -785,11 +735,11 @@ int main(void) {
     dm2_v22_viewport_swap_update(0, (const unsigned char (*)[3])raw_cells, 0);
     memset(fb, 0xA5, sizeof(fb));
     painted = dm2_v22_viewport_swap_render(fb, 1920, 1080, 0);
-    probe_record(&stats, "DM2_V22_MISSING_CELL_PRESERVES_V1",
-                 painted == 8 &&
+    probe_record(&stats, "DM2_V22_PARTIAL_CACHE_PRESERVES_V1",
+                 painted == 0 &&
                  fb[540 * 1920 + 1280] == 0xA5 &&
-                 fb[900 * 1920 + 640] != 0xA5,
-                 "missing T560 pit bitmap skips that cell and preserves V1 pixels");
+                 fb[900 * 1920 + 640] == 0xA5,
+                 "partial cache preserves every V1 pixel");
 
     /* 12. Idempotent shutdown */
     dm2_v22_inplace_draw_shutdown();
