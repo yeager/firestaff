@@ -383,7 +383,6 @@ static void test_clip_no_write_and_blend_contract(void)
 
     for (int i = 0; i < 2; ++i) {
         const CSB_V1_D0L2D0R2F0115ThingPassPc34 *f = fixture_for_index(i);
-        unsigned char dst;
         char label[96];
 
         snprintf(label, sizeof(label), "side%d.viewport_clip_x1", i + 1);
@@ -453,38 +452,6 @@ static void test_clip_no_write_and_blend_contract(void)
         expect_int(label,
                    csb_v1_viewport_d0l2_d0r2_f0115_blend_pixel_pc34(f, 77, 42),
                    42, A_DEFS);
-        dst = 77;
-        snprintf(label, sizeof(label), "side%d.apply.opaque.wrote", i + 1);
-        expect_int(label,
-                   csb_v1_viewport_d0l2_d0r2_f0115_apply_pixel_pc34(
-                       f, inside_x[i], 64, 64, 42, &dst),
-                   1, A_DEFS);
-        snprintf(label, sizeof(label), "side%d.apply.opaque.value", i + 1);
-        expect_int(label, dst, 42, A_DEFS);
-        dst = 77;
-        snprintf(label, sizeof(label), "side%d.apply.transparent.no_write", i + 1);
-        expect_int(label,
-                   csb_v1_viewport_d0l2_d0r2_f0115_apply_pixel_pc34(
-                       f, inside_x[i], 64, 64, 10, &dst),
-                   0, A_DEFS);
-        snprintf(label, sizeof(label), "side%d.apply.transparent.value", i + 1);
-        expect_int(label, dst, 77, A_DEFS);
-        dst = 77;
-        snprintf(label, sizeof(label), "side%d.apply.outside_view.no_write", i + 1);
-        expect_int(label,
-                   csb_v1_viewport_d0l2_d0r2_f0115_apply_pixel_pc34(
-                       f, outside_right_x[i], 64, 64, 42, &dst),
-                   0, A_FRAMES);
-        snprintf(label, sizeof(label), "side%d.apply.outside_view.value", i + 1);
-        expect_int(label, dst, 77, A_FRAMES);
-        dst = 77;
-        snprintf(label, sizeof(label), "side%d.apply.outside_source.no_write", i + 1);
-        expect_int(label,
-                   csb_v1_viewport_d0l2_d0r2_f0115_apply_pixel_pc34(
-                       f, inside_x[i], 64, 136, 42, &dst),
-                   0, A_FRAMES);
-        snprintf(label, sizeof(label), "side%d.apply.outside_source.value", i + 1);
-        expect_int(label, dst, 77, A_FRAMES);
     }
 
     expect_int("null.clip",
@@ -497,10 +464,6 @@ static void test_clip_no_write_and_blend_contract(void)
     expect_int("null.blend",
                csb_v1_viewport_d0l2_d0r2_f0115_blend_pixel_pc34(NULL, 77, 42),
                77, "invalid input guard");
-    expect_int("null.apply",
-               csb_v1_viewport_d0l2_d0r2_f0115_apply_pixel_pc34(
-                   NULL, 0, 0, 0, 42, NULL),
-               0, "invalid input guard");
 }
 
 static void test_zone_bindings_and_draw_order(void)

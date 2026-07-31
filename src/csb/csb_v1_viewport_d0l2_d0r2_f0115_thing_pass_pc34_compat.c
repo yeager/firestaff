@@ -305,29 +305,6 @@ unsigned char csb_v1_viewport_d0l2_d0r2_f0115_blend_pixel_pc34(
     return source;
 }
 
-int csb_v1_viewport_d0l2_d0r2_f0115_apply_pixel_pc34(
-    const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
-    int x,
-    int y,
-    int source_y,
-    unsigned char source,
-    unsigned char *destination)
-{
-    if (!fixture || !destination) return 0;
-    if (!csb_v1_viewport_d0l2_d0r2_f0115_viewport_clip_contains_pc34(
-            fixture, x, y)) {
-        return 0;
-    }
-    if (!csb_v1_viewport_d0l2_d0r2_f0115_source_y_visible_pc34(
-            fixture, source_y)) {
-        return 0;
-    }
-    if (source == (unsigned char)fixture->transparent_color) return 0;
-    *destination = csb_v1_viewport_d0l2_d0r2_f0115_blend_pixel_pc34(
-        fixture, *destination, source);
-    return 1;
-}
-
 int csb_v1_viewport_d0l2_d0r2_f0115_item_zone_pc34(
     const CSB_V1_D0L2D0R2F0115ThingPassPc34 *fixture,
     int view_cell)

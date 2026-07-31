@@ -460,6 +460,9 @@ diagnostic; it must not silently fall back to a generated visual.
   **2026-07-31 D2L2/D2R2 wall follow-up:** the F0104/F0105 C10 fixture blit
   is removed. Wall routes, zones and C10 transparency remain metadata-only;
   unbound CSB material cannot write viewport pixels.
+  **2026-07-31 D0L2/D0R2 F0115 follow-up:** the single-pixel fixture writer
+  is removed. Real `CSBgraphics.dat` teleporter-field composition remains the
+  only drawing route; contract helpers retain geometry and C10 metadata.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

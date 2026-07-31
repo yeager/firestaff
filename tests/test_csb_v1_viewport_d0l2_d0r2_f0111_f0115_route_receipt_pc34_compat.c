@@ -80,7 +80,6 @@ static void test_underlying_contracts_remain_source_bounded(void)
     const CSB_V1_D0L2D0R2F0111DoorFrontSpecPc34 *left_door =
         csb_v1_viewport_d0l2_d0r2_f0111_door_front_spec_for_side_pc34(
             CSB_V1_D0L2_D0R2_F0111_SIDE_D0L2_PC34);
-    unsigned char pixel = 3u;
 
     CHECK(left_thing != NULL);
     CHECK(left_door != NULL);
@@ -91,22 +90,9 @@ static void test_underlying_contracts_remain_source_bounded(void)
     CHECK(csb_v1_viewport_d0l2_d0r2_f0111_door_front_is_draw_mutating_pc34(
               left_door) == 0);
 
-    CHECK(csb_v1_viewport_d0l2_d0r2_f0115_apply_pixel_pc34(
-              left_thing,
-              left_thing->viewport_clip_x1,
-              left_thing->viewport_clip_y1,
-              left_thing->source_clip_y1,
-              (unsigned char)left_thing->transparent_color,
-              &pixel) == 0);
-    CHECK(pixel == 3u);
-    CHECK(csb_v1_viewport_d0l2_d0r2_f0115_apply_pixel_pc34(
-              left_thing,
-              left_thing->viewport_clip_x1,
-              left_thing->viewport_clip_y1,
-              left_thing->source_clip_y1,
-              4u,
-              &pixel) == 1);
-    CHECK(pixel == 4u);
+    CHECK(left_thing->source_locked_contract_only == 1);
+    CHECK(left_thing->no_real_asset_bitmap_parity == 1);
+    CHECK(left_thing->no_game_data_load == 1);
 }
 
 static void test_evidence_string(void)
