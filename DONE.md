@@ -47067,3 +47067,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   tile table even when a caller supplies an unverified atlas. The legacy
   fixture renderer is compiled explicitly by the rendering test; production
   now requires a decoded Track 02 square/depth/material mapping.
+
+- ✅ 2026-07-31 Theron placeholder inventory: audited the champion-state
+  initializer and recorded its default names/classes/stats as an explicit
+  unresolved real-data gap. Existing save/fixture tests still depend on it;
+  no production claim now treats those defaults as decoded Track 02 records.

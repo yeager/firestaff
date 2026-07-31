@@ -22,6 +22,11 @@
   tile table is now behind an unconditional source-mapping gate. Bind the
   real square-value/depth/material mapping before enabling it.
 
+- **THERON-V1-CHAMPION-STATE-REAL-DATA:** `theron_v1_party_init()` still
+  seeds default names, classes and 10-point stats for fixture/save flows.
+  Track 02 champion records and the real startup-selected party must be
+  decoded before these defaults can populate a production session.
+
 - **THERON-STARTUP-LEGACY-FALLBACK-ROOM:** The M11 production path uses
   `verified_only` Track 02 admission and the authenticated startup bitmap
   atlas. The older public compatibility API still synthesizes the
