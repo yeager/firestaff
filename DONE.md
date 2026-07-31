@@ -20,6 +20,13 @@
   Verification: real-data `test_dm2_v1_m11_startup_profile_gate` with
   `SDL_AUDIODRIVER=dummy`.
 
+- ✅ 2026-07-31 DM2 HUD receipt isolation: removed the unconnected
+  panel-routing and survey helper modules from the broad production DM2 V1
+  source glob. Their focused tests still compile them explicitly, while the
+  production archive cannot expose an unaffiliated HUD route before a real
+  GDAT/record handoff exists. Verification: full `firestaff` link, both HUD
+  helper tests, and archive-symbol check.
+
 - ✅ 2026-07-31 CSB synthetic viewport-fixture isolation: removed the
   room-slot backdrop1 contract trace from the production `firestaff_m10`
   archive. Its 10×10 synthetic skin/dungeon arrangement is now compiled only

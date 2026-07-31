@@ -105,6 +105,10 @@
   no-draw until an imported runtime/save owner supplies the real chain. Keep
   weather fixtures confined to their unit tests; do not present them as a
   playable-session capture.
+  **2026-07-31 update:** the unconnected HUD panel-routing and survey helper
+  modules now compile only in their focused tests. M11 and the production DM2
+  archive contain no accidental HUD route for those standalone receipts; a
+  future runtime integration must bind their exact GDAT/record owners first.
   **2026-07-31 update:** DM2 boot now rejects the generic loader's retired
   16-bit fixture layout and an unreadable/absent dungeon payload. Only the
   verified PC G1 byte-square route can cross from the startup menu into a

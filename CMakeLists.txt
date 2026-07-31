@@ -3822,6 +3822,14 @@ endif()
 
 # ── DM2 V1 static library ──────────────────────────────────────────
 file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
+# These are bounded symbol-receipt exercises with dedicated test executables.
+# M11 and the DM2 runtime have no caller for either module, so keeping them in
+# the broad V1 archive would make an unaffiliated HUD route look production
+# available. Compile them only in their focused tests until a source-owned
+# runtime handoff consumes their receipts.
+list(REMOVE_ITEM DM2_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_panel_routing.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_survey_helpers.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
