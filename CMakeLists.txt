@@ -3854,12 +3854,14 @@ endif()
 
 # ── CSB V2 static library ──────────────────────────────────────────
 file(GLOB CSB_V2_SOURCES CONFIGURE_DEPENDS "src/csb/csb_v2_*.c" "src/csb/csb_v22_*.c")
-# `csb_v22_shapes.c` is a historical, hand-authored parameter book used by
-# focused contract probes.  It is not source-derived CSB material data and
-# must never be linked into the playable product route.  The runtime gate
-# keeps V2.2 fail-closed until a reviewed source-art binding exists.
+# `csb_v22_shapes.c` and `csb_v2_vfx_particles.c` are historical,
+# hand-authored presentation books used by focused contract probes. They are
+# not source-derived CSB material data and must never be linked into the
+# playable product route. Runtime gates keep V2.2 fail-closed until reviewed
+# source-art bindings exist.
 list(REMOVE_ITEM CSB_V2_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v22_shapes.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v22_shapes.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v2_vfx_particles.c")
 if(CSB_V2_SOURCES)
     add_library(firestaff_csb_v2 STATIC ${CSB_V2_SOURCES})
     target_include_directories(firestaff_csb_v2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -23727,6 +23729,11 @@ if(BUILD_TESTING)
         src/csb/csb_v22_shapes_runtime_gate.c
     )
     target_link_libraries(test_csb_v22_shapes_runtime_gate_pc34 PRIVATE firestaff_m12 firestaff_csb_v2)
+    add_executable(test_csb_v2_vfx_runtime_gate
+        tests/test_csb_v2_vfx_runtime_gate.c
+        src/csb/csb_v2_vfx_particles_runtime_gate.c
+    )
+    target_link_libraries(test_csb_v2_vfx_runtime_gate PRIVATE firestaff_m12 firestaff_csb_v2)
     add_executable(test_csb_v22_inplace_draw_pc34
         tests/test_csb_v22_inplace_draw_pc34.c
         src/csb/csb_v22_inplace_draw_pc34.c
@@ -24462,6 +24469,10 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v22_shapes_runtime_gate_pc34
         COMMAND test_csb_v22_shapes_runtime_gate_pc34
+    )
+    add_test(
+        NAME csb_v2_vfx_runtime_gate
+        COMMAND test_csb_v2_vfx_runtime_gate
     )
     add_test(
         NAME csb_v22_modern_assets_pc34

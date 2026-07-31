@@ -7,12 +7,11 @@
  * V1 projectile/chaos logic is unaffected.
  * See csb_v2_phase_gate_pc34.h Phase 0 rules.
  *
- * CSB V2.2 Particle VFX System
- * ============================
- * Presentation-only particle effects for CSB chaos magic.
- * Field effects: fire, smoke, spark, magical glow.
- * Projectile effects: fireball, lightning bolt.
- * Source-lock: CSBWin/Graphics.cpp explosion/projectile rendering.
+ * CSB V2.2 particle API. The playable implementation is a strict no-draw
+ * boundary: ReDMCSB/CSBWin own the original projectile and field bitmaps, and
+ * no reviewed source-art binding currently admits a host particle system.
+ * The historical particle simulation is compiled only by explicit contract
+ * probes; product callers receive empty state and cannot create an effect.
  */
 
 #ifdef __cplusplus

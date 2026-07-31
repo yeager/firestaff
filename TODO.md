@@ -1014,7 +1014,11 @@ diagnostic; it must not silently fall back to a generated visual.
   Atari-ST C232/TAG0088b2 route no longer appends the host-only status texts
   `ATARI RUNTIME READY` or `CSBWIN SOURCE FRAME - EXTENDED CELLS REQUIRED` to
   its source-owned page. The remaining work is real F0128 material binding,
-  not generated diagnostic chrome. **2026-07-31 follow-up:** the unconsumed
+  not generated diagnostic chrome. **2026-07-31 follow-up:** the V2 particle
+  system's RGB ramps, trajectories, tile speeds and effect durations are now
+  contract-only. The playable V2 API rejects emitter, projectile and field
+  creation until a source-art receipt binds them, so a CSB spell or DSA event
+  cannot become host-generated pixels. **2026-07-31 follow-up:** the unconsumed
   Hint Oracle layout/ASCII-sketch module is removed rather than becoming a
   generic panel placeholder; a visible Hint Oracle needs decoded source art
   and font material. **2026-07-31 follow-up:** the separately reintroduced

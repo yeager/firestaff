@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 CSB V2 particle isolation: removed the hand-authored RGB
+  palettes, particle trajectories, field animation and projectile speeds from
+  the playable V2 archive. The production API is now a source-cited no-draw
+  gate that rejects emitter, projectile and field creation; the old simulation
+  remains available only to its explicit historical contract probe. Verification:
+  production `firestaff` build, `csb_v2_vfx_runtime_gate`, the V2 HUD/shape
+  gates and the isolated phase-4 contract probe all pass.
+
 - ✅ 2026-07-31 CSB current-app capture: assembled a temporary local macOS
   app from the verified v3.0.197 build (no release artifact) and ran it with
   the hash-recognised PC 3.4 `GRAPHICS.DAT` and `DUNGEON.DAT`. Its visible
