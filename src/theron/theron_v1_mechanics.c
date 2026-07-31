@@ -655,24 +655,14 @@ int theron_v1_alarm_trigger(Theron_V1_World *world, int x, int y) {
     Theron_V1_Object *a = theron_v1_object_at(world, world->current_level, x, y);
     if (!a || a->type != THERON_OBJTYPE_ALARM) return -1;
 
-    /* Activate every creature spawner on the current level and spawn one
-     * creature adjacent to each spawner.  Source: THQUEST.ASM T500 alarm
-     * wave trigger; exact spawn table is blocked until real object-tail
-     * semantics are proven, so we use a bounded fallback goblin. */
+    /* Activate every creature spawner on the current level.  Source:
+     * THQUEST.ASM T500 alarm wave trigger.  The real creature/object-tail
+     * spawn table is not decoded from Track 02 yet, so do not fabricate a
+     * Goblin or any other creature here; leave materialization fail-closed. */
     for (int i = 0; i < world->object_count; i++) {
         Theron_V1_Object *o = &world->objects[i];
         if (o->type == THERON_OBJTYPE_CREATURE_SPAWNER) {
             o->flags |= THERON_OBJ_F_ACTIVATED;
-            /* Spawn on the spawner square if passable, otherwise skip
-             * placement for this cycle. */
-            if (theron_v1_world_get_square(world, o->x, o->y) !=
-                    THERON_SQUARE_WALL) {
-                theron_v1_creature_spawn(world,
-                                         THERON_CREATURE_GOBLIN,
-                                         world->current_dungeon,
-                                         world->current_level,
-                                         o->x, o->y);
-            }
         }
     }
     theron_v1_play_sound(THERON_SOUND_ALARM_TRIG);
