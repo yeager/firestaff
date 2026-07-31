@@ -6,7 +6,12 @@ Sound effects (SFX) in Nexus V1 are **not currently implemented** in the engine 
 
 ## Current Implementation Status
 
-### Confirmed Absent
+### Confirmed source data
+
+The supplied retail corpus contains `SNDLEV00.SAL` through `SNDLEV15.SAL`,
+their matching `.MAP` files, and `SDDRVS.TSK`. Firestaff retains bounded
+source provenance and MAP record tables for these files. That is structural
+evidence only; it does not identify a playable PCM codec.
 
 The following DM1 SFX infrastructure has **no equivalent** in Nexus V1:
 
@@ -39,7 +44,7 @@ cfg->footstep_audio = 1;
 
 These are V2 config flags and do not have V1 runtime implementation.
 
-## Potential Implementation Path
+## Remaining implementation boundary
 
 The Saturn version of Dungeon Master Nexus would likely have SFX data on the CD, possibly as:
 
@@ -47,7 +52,10 @@ The Saturn version of Dungeon Master Nexus would likely have SFX data on the CD,
 2. ** interleaved with game data** — SFX samples embedded in data files
 3. **Resource fork or auxiliary data track** — separate data track for PCM samples
 
-Without the actual CD image or extracted data, the SFX format and playback mechanism are **unknown and not implemented**.
+The actual CD image and extracted SAL/MAP data are present. The remaining
+unknown is the SAL sample codec and the SDDRVS task ABI/event dispatch. Until
+those are decoded from source or an authenticated Saturn trace, playback stays
+blocked and SAL bytes are not reinterpreted as PCM.
 
 ## Comparison with DM1
 
@@ -70,9 +78,9 @@ Without the actual CD image or extracted data, the SFX format and playback mecha
 
 ## Status
 
-- [ ] SFX data files — **Not located**
+- [x] SFX data files — **located and provenance-bound**
 - [ ] SFX playback — **Not implemented**
 - [ ] Combat SFX — **Not implemented**
-- [ ] Footstep SFX — **Not implemented**
+- [ ] Footstep SFX — **MAP event binding and SAL codec remain unknown**
 - [ ] UI SFX — **Not implemented**
 - [ ] Creature SFX — **Not implemented**

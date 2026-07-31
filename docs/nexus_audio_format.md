@@ -112,8 +112,8 @@ Current state: track number is computed and stored, but actual audio playback is
 | Audio Type | Format | Location | Status |
 |-----------|--------|----------|--------|
 | Music tracks | CD-DA (Red Book) | CD tracks 2-9 | Track switching implemented; playback TODO |
-| SFX banks | SAL format (unknown) | ISO Track 1 (SNDLEV*.SAL) | Parsing TODO |
-| SFX mapping | MAP format (66-90 B) | ISO Track 1 (SNDLEV*.MAP) | Parsing TODO |
+| SFX banks | SAL format (unknown codec) | ISO Track 1 (SNDLEV*.SAL) | Real files loaded/provenance-bound; playback blocked |
+| SFX mapping | MAP format (66-90 B) | ISO Track 1 (SNDLEV*.MAP) | Bounded record parsing; event semantics unproven |
 | Sound driver | SH-2 binary | SDDRVS.TSK | Not reverse-engineered |
 | FMV audio | Saturn AVI codec | DMV*.AVI | Not implemented |
 

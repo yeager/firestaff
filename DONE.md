@@ -47659,3 +47659,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   inferred VDP1 command or fallback raster route. Verification:
   `test_nexus_v1_dgn_texture_decode` passes against real `LEV00.DGN` texture
   entries (both encodings), and the production Nexus archive builds.
+- ✅ 2026-07-31 Nexus SAL/MAP inventory correction: updated the audio
+  references to reflect the supplied retail `SNDLEV00-15.SAL/.MAP` and
+  `SDDRVS.TSK` files. Firestaff already retains bounded MAP/SAL provenance;
+  playback remains blocked because the SAL codec and SDDRVS event ABI are not
+  source- or capture-proven. No SAL bytes are promoted to guessed PCM.
