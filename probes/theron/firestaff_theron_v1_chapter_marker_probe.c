@@ -238,8 +238,8 @@ static void check_fresh_profile(void) {
           "fresh: chapter label == Chapter 1: Hall of Records");
     CHECK(strstr(m.quest_summary, "0/7") != NULL,
           "fresh: quest summary shows 0/7 collected");
-    CHECK(strstr(m.next_dungeon_hint, "Crypt of Shadows") != NULL,
-          "fresh: next hint names Crypt of Shadows");
+    CHECK(strstr(m.next_dungeon_hint, "UNAVAILABLE") != NULL,
+          "fresh: next hint remains UNAVAILABLE");
     CHECK(m.freshest_save_present == 0,
           "fresh: freshest_save_present == 0 without save input");
 }
@@ -264,8 +264,8 @@ static void check_mid_progression(void) {
     CHECK(m.verdict == THERON_MARKER_VERDICT_OK_PROGRESSION_ONLY,
           "mid: verdict == OK_PROGRESSION_ONLY");
     CHECK(strstr(m.chapter_label, "Chapter 4") != NULL &&
-          strstr(m.chapter_label, "Tomb of Woe") != NULL,
-          "mid: chapter label == Chapter 4: Tomb of Woe");
+          strstr(m.chapter_label, "UNAVAILABLE") != NULL,
+          "mid: chapter label == Chapter 4: UNAVAILABLE");
     CHECK(strstr(m.quest_summary, "3/7") != NULL,
           "mid: quest summary shows 3/7 collected");
     /* Dungeon 4's item is bit 3 (Taza Boots) which is NOT yet

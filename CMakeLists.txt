@@ -4600,10 +4600,13 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/theron/firestaff_theron_v1_startup
     add_executable(firestaff_theron_v1_startup_real_asset_receipt_probe
         probes/theron/firestaff_theron_v1_startup_real_asset_receipt_probe.c
         src/theron/theron_v1_startup_receipt.c
+        src/theron/theron_v1_chapter_marker.c
     )
     target_include_directories(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src)
+    target_compile_definitions(firestaff_theron_v1_startup_real_asset_receipt_probe PRIVATE
+        THERON_STARTUP_RECEIPT_FIXTURE_PROFILE_ONLY=1)
     target_link_libraries(firestaff_theron_v1_startup_real_asset_receipt_probe
         PRIVATE firestaff_theron firestaff_m12 firestaff_v2 firestaff_m10 m)
     if(NOT MSVC)

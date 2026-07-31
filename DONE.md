@@ -47164,6 +47164,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   authoritative catalog. Hash-bound Track 02 boot remains the only admission
   route; the legacy API now fails with `TR_ASSET_ERR_HASH`.
 
+- ✅ 2026-07-31 Theron chapter-marker gate: a verified media identity without
+  decoded progression/save state now reports unavailable instead of fabricating
+  Chapter 1 and `0/7` quest progress. Later dungeon hints remain unavailable
+  until their real headers/names are bound; fixture-only profile projection is
+  explicitly compile-scoped.
+
 - ✅ 2026-07-31 CSB F0846–F0865 unmapped-boundary isolation: this range has
   no ReDMCSB callable and only reports a fail-closed admission receipt. It
   now compiles solely into its focused contract test, so M10 cannot mistake

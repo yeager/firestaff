@@ -43,6 +43,11 @@
   returning a false success; callers must use the hash-bound Track 02 boot
   path.
 
+- **THERON-CHAPTER-MARKER-REAL-PROGRESSION:** A verified Track 02 identity is
+  no longer enough to fabricate chapter/quest progress. Production requires a
+  decoded progression or save record; unresolved later dungeon names remain
+  `UNAVAILABLE`.
+
 - **THERON-CREATURE-COMBAT-REAL-DATA:** `theron_v1_compat.c` still contains
   inferred creature stats, attack values and drops. It is now excluded from
   the production archive; production symbols fail closed until Track 02

@@ -161,9 +161,14 @@ int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
     int all_collected   = (items == THERON_QUEST_ALL_ITEMS);
 
     /* ── Chapter label ─────────────────────────────────── */
+#if defined(THERON_STARTUP_RECEIPT_FIXTURE_PROFILE_ONLY)
     if (!has_progression && marker->boot_assets_verified == 0) {
-        /* No verified assets and no progression: expose unavailable state.
-         * Never fabricate Chapter 1 or an empty quest counter for the user. */
+#else
+    if (!has_progression) {
+#endif
+        /* A verified media identity is not progression evidence. Without a
+         * decoded progression/save record, never fabricate Chapter 1 or an
+         * empty quest counter for the user. */
         marker->verdict = THERON_MARKER_VERDICT_SKIP_NO_ASSET;
         copy_bounded(marker->chapter_label, sizeof(marker->chapter_label),
                       "Chapter unavailable (no verified progression)");
