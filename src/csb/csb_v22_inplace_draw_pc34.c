@@ -93,65 +93,6 @@ static void v22_discard_cache(void)
     g_v22_bitmap_count = 0;
 }
 
-/* ── Variant -> asset_id mapping ───────────────────────────────── */
-
-/* The asset_id for a cell is decided by csb_v22_inplace_route_cell,
- * the per-cell material-routing gate. The gate is the single source
- * of truth for which (category, asset_id) the in-place draw should
- * consult for a given (depth, lateral, cell_type). Per-cell routing
- * gives the 9-square CSB viewport distinct per-depth wall art,
- * distinct per-depth floor art, distinct pit/stairs art, and a
- * lateral-driven chaos-rune index. Fields (teleporter / fluxcage /
- * explosion / chaos_rift) deliberately return no asset so they
- * fall back to V1 instead of being painted with the wrong wall art.
- *
- * The route gate returns the asset_id by value (a copy of a static
- * literal into the caller's CSB_V22_AssetRouteDecision). This module
- * keeps a static mirror of the last routed asset_id so its
- * csb_v22_inplace_get_cell_asset_id contract can keep returning
- * a pointer that lives for the program lifetime (callers, including
- * the bitmap cache lookup in csb_v22_inplace_get_cell_bitmap, treat
- * the returned pointer as a key, not as a temporary). The mirror is
- * process-singleton; the in-place draw is single-threaded. */
-#if 0 /* Removed generic 3x3 lookup: no source-command binding. */
-
-/* Lookup table from (depth 0..2, lateral -1..+1) to the
- * per-cell asset_id the route gate picked last. Used only to
- * publish a stable pointer for csb_v22_inplace_get_cell_asset_id.
- * The cell-bitmap lookup consults the route gate directly and
- * does not read this table. */
-static char g_csb_v22_inplace_asset_mirror[3][3][CSB_V22_ASSET_ID_MAX];
-static int  g_csb_v22_inplace_asset_mirror_valid[3][3];
-
-static const char* v22_inplace_get_cell_asset_id(int depth, int lateral) {
-    if (!csb_v22_shape_cache_active(depth, lateral)) return NULL;
-    const CSB_V22_ShapeRuntimeResult* r = csb_v22_shape_cache_get(depth, lateral);
-    if (!r || !r->active) return NULL;
-
-    /* Drive the per-cell route gate. The gate consumes the cached
-     * raw M034 cell type (stored by csb_v22_shape_cache_update) so
-     * callers do not have to consult the shape book first. */
-    int raw = csb_v22_shape_cache_get_raw_cell(depth, lateral);
-    if (raw < 0) return NULL;
-    CSB_V22_AssetRouteDecision d;
-    csb_v22_inplace_route_cell(depth, lateral, raw,
-                                csb_v2_presentation_mode_is_v22(), &d);
-    if (!d.use_v22 || d.asset_id[0] == '\0') return NULL;
-    if (depth < 0 || depth > 2) return NULL;
-    if (lateral < -1 || lateral > 1) return NULL;
-    {
-        int li = lateral + 1;
-        size_t n = strlen(d.asset_id);
-        if (n + 1U > CSB_V22_ASSET_ID_MAX) n = CSB_V22_ASSET_ID_MAX - 1U;
-        memcpy(g_csb_v22_inplace_asset_mirror[depth][li],
-               d.asset_id, n);
-        g_csb_v22_inplace_asset_mirror[depth][li][n] = '\0';
-        g_csb_v22_inplace_asset_mirror_valid[depth][li] = 1;
-        return g_csb_v22_inplace_asset_mirror[depth][li];
-    }
-}
-#endif
-
 /* ── Hash helpers ──────────────────────────────────────────────── */
 
 static uint32_t fnv1a_hash(const char* s) {
@@ -325,48 +266,6 @@ void csb_v22_inplace_draw_clear_indexed_palette(void)
     g_v22_palette_active = 0;
     memset(g_v22_palette_rgb6, 0, sizeof(g_v22_palette_rgb6));
 }
-
-/* These legacy generic-cell entry points deliberately remain uncompiled:
- * V2.2 may only reach the cache through an admitted F0128 command. */
-#if 0
-const uint32_t* csb_v22_inplace_get_cell_bitmap(int depth, int lateral,
-                                                 int* out_w, int* out_h) {
-    if (out_w) *out_w = 0;
-    if (out_h) *out_h = 0;
-    if (!g_v22_inplace_active) return NULL;
-    if (!csb_v22_shape_cache_active(depth, lateral)) return NULL;
-    {
-        const CSB_V22_ShapeRuntimeResult* r =
-            csb_v22_shape_cache_get(depth, lateral);
-        if (!r || !r->active) return NULL;
-    }
-    /* Drive the per-cell route gate directly. The category and
-     * asset_id are both taken from the gate, so per-cell routing
-     * (e.g. chaos_runes vs wall_shapes) is honored by the bitmap
-     * lookup. The category string is only consumed for hashing
-     * (uint32_t), so a stack-local copy is fine here. */
-    int raw = csb_v22_shape_cache_get_raw_cell(depth, lateral);
-    if (raw < 0) return NULL;
-    CSB_V22_AssetRouteDecision d;
-    csb_v22_inplace_route_cell(depth, lateral, raw,
-                                csb_v2_presentation_mode_is_v22(), &d);
-    if (!d.use_v22 || d.asset_id[0] == '\0' || d.category[0] == '\0') {
-        return NULL;
-    }
-
-    uint32_t cat_hash = fnv1a_hash(d.category);
-    uint32_t aid_hash = fnv1a_hash(d.asset_id);
-    int idx = v22_find_bitmap(cat_hash, aid_hash);
-    if (idx < 0) return NULL;
-    if (out_w) *out_w = (int)g_v22_bitmaps[idx].entry.width;
-    if (out_h) *out_h = (int)g_v22_bitmaps[idx].entry.height;
-    return (const uint32_t*)g_v22_bitmaps[idx].rgba;
-}
-
-const char* csb_v22_inplace_get_cell_asset_id(int depth, int lateral) {
-    return v22_inplace_get_cell_asset_id(depth, lateral);
-}
-#endif
 
 const uint32_t* csb_v22_inplace_get_bitmap_by_id(const char* category,
                                                   const char* asset_id,

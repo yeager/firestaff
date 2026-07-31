@@ -46246,6 +46246,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   carry F0128 source identity, clip, palette or draw order. The remaining cache
   lookup is internal to the admitted, source-bound F0128 command path.
   Verification: `test_csb_v22_inplace_draw_pc34` 57/57 and `git diff --check`.
+
+- ✅ 2026-07-31 CSB V2.2 generic-cell implementation cleanup: removed the
+  retired 3×3 route-table implementation itself after its public API was
+  retired. No disabled synthetic cache logic remains in the compositor source;
+  cache access is exclusively command-bound F0128 material replacement.
+  Verification: `test_csb_v22_inplace_draw_pc34` 57/57 and `git diff --check`.
 # 2026-07-31 Theron Track 02 quest-block extraction
 
 - ✅ Added a source-data extractor for the seven 256 KiB quest blocks present
