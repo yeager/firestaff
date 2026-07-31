@@ -31,6 +31,23 @@ int main(void) {
     ok &= expect(SWSH_Compat_GetPc34DosoundProgramFingerprint() != 0u,
                  "source program has a nonzero receipt fingerprint");
     ok &= expect(M11_Audio_Init(&state), "audio state initializes");
+    /* DM1 source effects are SND3-owned. A missing record must not revive
+     * the legacy procedural door/combat/spell marker path. */
+    state.originalSounds[0].sampleCount = 0;
+    state.lastMarker = M11_AUDIO_MARKER_DOOR;
+    {
+        int markerCount = state.playedMarkerCount;
+        ok &= expect(!M11_Audio_EmitSourceSoundIndex(&state, 0),
+                     "missing source SND3 event is silent");
+        ok &= expect(state.lastSoundIndex == 0 &&
+                         state.lastMarker == M11_AUDIO_MARKER_NONE &&
+                         state.playedMarkerCount == markerCount,
+                     "missing source event cannot emit a procedural marker");
+        ok &= expect(!M11_Audio_EmitSourceSoundIndex(&state, -1) &&
+                         state.lastSoundIndex == -1 &&
+                         state.lastMarker == M11_AUDIO_MARKER_NONE,
+                     "invalid source event is silent without stale identity");
+    }
     home = getenv("HOME");
     songFile = NULL;
     if (home && home[0] && !getenv("FIRESTAFF_SONG_DAT") &&

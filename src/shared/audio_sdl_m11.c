@@ -1101,9 +1101,24 @@ int M11_Audio_EmitSoundIndex(M11_AudioState* state, int soundIndex, M11_AudioMar
 }
 
 int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex) {
-    return M11_Audio_EmitSoundIndex(state,
-                                    soundIndex,
-                                    M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
+    /* A DM1 event index names one authenticated SND3 entry.  Do not turn a
+     * missing, malformed, or unavailable source sample into a generated
+     * marker: that produces a plausible but wrong game sound.  Explicit host
+     * UI marker calls retain their separate API; source-owned playback is
+     * source-only and therefore silent on a source miss. */
+    int emitted;
+    if (!state || !state->initialized) {
+        return 0;
+    }
+    if (soundIndex < 0 || soundIndex >= M11_AUDIO_ORIGINAL_SOUND_COUNT) {
+        state->lastSoundIndex = -1;
+        state->lastMarker = M11_AUDIO_MARKER_NONE;
+        return 0;
+    }
+    emitted = M11_Audio_EmitSoundIndex(state, soundIndex,
+                                       M11_AUDIO_MARKER_NONE);
+    state->lastMarker = M11_AUDIO_MARKER_NONE;
+    return emitted;
 }
 
 int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
