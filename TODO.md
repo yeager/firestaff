@@ -490,7 +490,21 @@ diagnostic; it must not silently fall back to a generated visual.
   populate `CSB_V1_ViewportFirstFrameMaterialBytesPc34`, so V2.2 paints zero
   replacements. The unbound candidate API has been removed rather than leave
   an apparently source-owned plan that cannot carry authenticated decoded
-  pixels or palette bytes into the compositor.
+  pixels or palette bytes into the compositor. **2026-07-31 format audit:**
+  do not repair this by filling the aggregate
+  `CSB_V1_ViewportFirstFrameMaterialProof` wholesale. Its mandatory D0/D1
+  F0115 entries are not fixed GRAPHICS.DAT assets: ReDMCSB `DUNVIEW.C F0115`
+  selects an object, group, projectile or explosion from the current Thing
+  chain. The local verified PC3.4 archive confirms the fixed closed-door
+  records separately: G0693/G0694/G0695 DoorSet 0 are catalog records
+  246/247/248 with native dimensions 44x38, 64x61 and 96x88. A production
+  owner must therefore issue one receipt per actual F0128 command, retain the
+  decoded source span through that command and bind a source-owned video
+  palette row. It must not label graphic 498 or another convenient decoded
+  record as a generic Thing surface merely to satisfy a five-route fixture
+  contract. Rework the material API around the live command list before
+  enabling any replacement; the aggregate first-frame model remains
+  test-only/fail-closed in production.
   This is fail-closed, not live V2.2 material consumption. Bind the selected
   authenticated record bytes and palette to the plan before claiming a live
   door or wall replacement; preserve F0115 ordering when doing so. Every
