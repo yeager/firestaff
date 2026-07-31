@@ -291,6 +291,11 @@
   GDAT runtime now retains only its visibility gate and draws only decoded
   `INTERFACE_GENERAL` records; historical overlay experiments compile only in
   their focused tests.
+  **2026-07-31 follow-up:** V2:s svep- och controller-affordance-brygga är
+  nu också probe-skopad. Den hade ingen M11-händelsekonsument och använde
+  egna host-definierade gester/zoner, medan den levande vägen använder den
+  SKProject-bundna V1-klickmatrisen. Ingen oansluten V2-rörelsemappning får
+  längre ingå i spelet innan en verklig DM2-inputkälla är importerad.
   **2026-07-31 update:** the unconnected HUD panel-routing and survey helper
   modules now compile only in their focused tests. M11 and the production DM2
   archive contain no accidental HUD route for those standalone receipts; a

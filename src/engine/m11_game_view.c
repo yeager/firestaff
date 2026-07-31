@@ -61,7 +61,6 @@
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v2_phase_gate.h"
-#include "dm2_v2_touch_runtime.h"
 #include "theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
@@ -949,7 +948,6 @@ static void m11_dm2_configure_v2_presentation(
     g_m11_dm2_v2_gate.v2LaunchEnabled = v2_active;
     g_m11_dm2_v2_gate.v2ProfileEnabled = v2_active;
     dm2_v2_hud_runtime_set_gate_config(&g_m11_dm2_v2_gate);
-    dm2_v2_touch_runtime_set_gate_config(&g_m11_dm2_v2_gate);
     dm2_v2_hud_runtime_set_gdat_source(
         dm2_v1_boot_viewport_asset_fetch,
         dm2_v1_boot_viewport_asset_palette_fetch,
@@ -1391,9 +1389,6 @@ static int m11_dm2_apply_boot_runtime_receipt(
     (void)receipt->initialize_v2_runtime;
     if (receipt->initialize_hud_runtime) {
         dm2_v2_hud_runtime_init();
-    }
-    if (receipt->initialize_touch_runtime) {
-        dm2_v2_touch_runtime_init();
     }
     state->active = 1;
     state->startedFromLauncher = 1;

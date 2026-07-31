@@ -47416,3 +47416,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   authenticated `INTERFACE_GENERAL` records. Historical overlay code remains
   explicitly test-scoped. Verification: production link, 74/74 direct-overlay
   regression, real-data DM2 M11 startup gate and archive/executable symbols.
+- ✅ 2026-07-31 DM2 V2 touch-affordance isolation: removed the unattached
+  swipe/controller translator and its host-defined gesture zones from the
+  production V2 archive. M11 never called its translation entry point; live
+  input remains on the SKProject-bound V1 click-zone matrix. The historical
+  translator remains probe-scoped until a real DM2 input source is imported.
+  Verification: complete production link, 62/62 touch probe, real-data M11
+  startup gate and archive/executable-symbol checks.
