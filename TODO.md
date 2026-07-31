@@ -3045,7 +3045,7 @@ that its exact runtime path is not already source-locked and tested.
     GAMEBLOCK1/2 decoding, runtime Resume, atomic write-back, canonical-slot
     backup recovery, and champion mutation without creating substitute bytes.
     2026-07-30: the currently staged real CSBWin `csbgame3.dat` corpus save
-    (61,465 bytes; SHA-256 `7becf812492ca16f085215963c0ce8d4ef8c78dd`)
+    (61,465 bytes; SHA-256 `b3a8d7fb920346835c48c86a945d90d565b6bc5c250f83b5a56c1b0d8b95ec70`)
     now completes the production resume handoff. Its authenticated Extended
     Features preamble selects the 12-byte sequenced TIMER layout, its C29
     GAMEBLOCK1 uses big-endian stream authentication, and all 436 timer slots
@@ -3055,7 +3055,7 @@ that its exact runtime path is not already source-locked and tested.
     multi-version corpus with DSA-bearing saves.
     2026-07-30 current-host verification: the staged file completes the
     production resume handoff and byte-identical provenance export through
-    `test_csb_v1_csbwin_save_provenance_pc34_compat` (14/14 with
+    `test_csb_v1_csbwin_save_provenance_pc34_compat` (16/16 with
     `FIRESTAFF_CSBWIN_REAL_SAVE` set). This verifies the accepted core and
     preserved tail only; it does not promote the opaque dungeon tail to a
     mutable runtime owner.
