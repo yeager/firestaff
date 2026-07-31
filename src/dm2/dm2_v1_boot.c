@@ -3306,7 +3306,7 @@ static int dm2_v1_boot_startup_render_ownership_from_view_model(
     out_receipt->draw_command_count = view_model->command_count;
     out_receipt->title_gdat_command_count =
         package.title_gdat_category == DM2_GDAT_CATEGORY_TITLE &&
-        package.title_gdat_field == 1 ? 1 : 0;
+        package.title_gdat_field == DM2_GDAT_TITLE_MENU_SCREEN_FIELD ? 1 : 0;
     out_receipt->suppress_game_hud = host_frame.suppress_game_hud;
     out_receipt->startup_hud_raw_gdat_receipt_consumed =
         host_frame.startup_hud_raw_gdat_capture_ready;
@@ -7480,8 +7480,9 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     (void)dm2_v1_boot_startup_real_visual_breadth_probe(profile,
                                                         &snapshot,
                                                         out_receipt);
-    /* SKWINSPX skcore.cpp::SHOW_MENU_SCREEN presents TITLE/0/1 and
-     * TITLE/0/4 before GAME_LOAD. There is no source party at this point,
+    /* SKWINSPX skcore.cpp::SHOW_MENU_SCREEN presents TITLE/0/4 before
+     * GAME_LOAD; TITLE/0/1 belongs only to SHOW_CREDITS. There is no source
+     * party at this point,
      * so startup proves the HUD handoff/suppression only. Runtime HUD pixels
      * are verified by the post-GAME_LOAD capture path; do not fabricate a
      * four-portrait frame merely to satisfy this title-menu receipt. */

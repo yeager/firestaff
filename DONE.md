@@ -1,3 +1,13 @@
+- ✅ 2026-07-31 DM2 startup credits-owner correction: both logical boot
+  title/menu draws now bind the original `TITLE/0/dt07/4` menu surface.
+  `TITLE/0/dt07/1` remains metadata for the separate, still-unported
+  `SHOW_CREDITS` event and can no longer be decoded or presented at boot with
+  the menu palette. Source: SKProject
+  `SKWINSPX/src/v5/startend.cpp::SHOW_MENU_SCREEN` and
+  `DRAW_TITLE_MENU_SCREEN`. Verification:
+  `test_dm2_v1_startup_audio_menu` and
+  `test_dm2_v1_startup_menu_action_contract` (100/100) pass.
+
 - ✅ 2026-07-31 DM2 viewport fallback-receipt correction: item and
   projectile receipts no longer claim that a fallback was drawn when the
   GDAT map chip is absent. SKProject `DRAW_MAP_CHIP` and

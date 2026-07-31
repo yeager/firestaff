@@ -39,7 +39,7 @@ int main(void)
     if (count != 2 || commands[0].kind != DM2_V1_STARTUP_DRAW_GDAT_IMAGE ||
         commands[0].gdat_category != DM2_GDAT_CATEGORY_TITLE ||
         commands[0].gdat_index != 0 ||
-        commands[0].gdat_field != 1 ||
+        commands[0].gdat_field != 4 ||
         commands[0].rect.x != 0 || commands[0].rect.y != 0 ||
         commands[0].rect.w != 320 || commands[0].rect.h != 200 ||
         commands[0].frame_owner != DM2_V1_FRAME_OWNER_STARTUP_TITLE ||

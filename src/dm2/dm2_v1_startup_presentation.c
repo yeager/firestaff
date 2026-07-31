@@ -85,10 +85,12 @@ int dm2_v1_startup_presentation_build(
     for (i = 0; i < max_commands; ++i) {
         dm2_v1_startup_draw_clear(&out_commands[i]);
     }
-    /* SHOW_MENU_SCREEN loads TITLE/0/dt07/1 for a later SHOW_CREDITS event,
-     * but its menu loop draws only TITLE/0/dt07/4. Retain both original GDAT
-     * owners in the package; the host executes only the menu owner while the
-     * startup menu is active. Source: SKWINSPX/src/v5/startend.cpp. */
+    /* SHOW_MENU_SCREEN loads TITLE/0/dt07/1 only for the separate credits
+     * event. Its menu loop calls DRAW_TITLE_MENU_SCREEN with dt07/4. Both
+     * logical startup owners therefore resolve to that same original menu
+     * surface; exposing field 1 here could make a host present credits at
+     * boot. Source: SKWINSPX/src/v5/startend.cpp::SHOW_MENU_SCREEN and
+     * DRAW_TITLE_MENU_SCREEN. */
     rect.x = 0;
     rect.y = 0;
     rect.w = 320;
@@ -98,7 +100,7 @@ int dm2_v1_startup_presentation_build(
                                         &count,
                                         DM2_GDAT_CATEGORY_TITLE,
                                         0,
-                                        1,
+                                        4,
                                         &rect,
                                         -1,
                                         DM2_V1_FRAME_OWNER_STARTUP_TITLE)) {
@@ -206,13 +208,13 @@ int dm2_v1_startup_presentation_render_receipt(
     out_receipt->skproject_title_index = 0;
     out_receipt->skproject_credit_screen_field = 1;
     out_receipt->skproject_menu_screen_field = 4;
-    /* Keep the title/credit source query visible to downstream boot receipts
-     * even though SHOW_MENU_SCREEN contributes only the menu draw command. */
+    /* Both startup owners draw the menu surface. The credits query remains
+     * metadata for the future SHOW_CREDITS event, never a boot draw target. */
     out_receipt->title_gdat_found = 1;
     out_receipt->title_gdat_category = out_receipt->skproject_title_category;
     out_receipt->title_gdat_index = out_receipt->skproject_title_index;
     out_receipt->title_gdat_field =
-        out_receipt->skproject_credit_screen_field;
+        out_receipt->skproject_menu_screen_field;
     out_receipt->title_rect.x = 0;
     out_receipt->title_rect.y = 0;
     out_receipt->title_rect.w = 320;
@@ -222,7 +224,7 @@ int dm2_v1_startup_presentation_render_receipt(
         const DM2_V1_StartupDrawCommand *command = &commands[i];
         if (command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
             command->gdat_category == DM2_GDAT_CATEGORY_TITLE &&
-            command->gdat_field == out_receipt->skproject_credit_screen_field &&
+            command->gdat_field == out_receipt->skproject_menu_screen_field &&
             command->frame_owner == DM2_V1_FRAME_OWNER_STARTUP_TITLE &&
             !out_receipt->title_gdat_found) {
             out_receipt->title_gdat_found = 1;
@@ -264,7 +266,7 @@ int dm2_v1_startup_presentation_render_receipt(
             out_receipt->skproject_title_category &&
         out_receipt->title_gdat_index == out_receipt->skproject_title_index &&
         out_receipt->title_gdat_field ==
-            out_receipt->skproject_credit_screen_field &&
+            out_receipt->skproject_menu_screen_field &&
         out_receipt->title_rect.x == 0 &&
         out_receipt->title_rect.y == 0 &&
         out_receipt->title_rect.w == 320 &&

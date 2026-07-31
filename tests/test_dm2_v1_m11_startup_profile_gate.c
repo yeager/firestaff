@@ -435,7 +435,7 @@ static void expect_dm2_startup_layout_contract(void) {
         (int)(sizeof(commands) / sizeof(commands[0])));
     expect_true(command_count == 2 &&
                     commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[0].gdat_field == 1 &&
+                    commands[0].gdat_field == 4 &&
                     commands[0].frame_owner ==
                         DM2_V1_FRAME_OWNER_STARTUP_TITLE &&
                     commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
@@ -453,7 +453,7 @@ static void expect_dm2_startup_layout_contract(void) {
         (int)(sizeof(commands) / sizeof(commands[0])));
     expect_true(command_count == 2 &&
                     commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[0].gdat_field == 1 &&
+                    commands[0].gdat_field == 4 &&
                     commands[0].frame_owner ==
                         DM2_V1_FRAME_OWNER_STARTUP_TITLE &&
                     commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
@@ -473,7 +473,7 @@ static void expect_dm2_startup_layout_contract(void) {
         (int)(sizeof(commands) / sizeof(commands[0])));
     expect_true(command_count == 2 &&
                     commands[0].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
-                    commands[0].gdat_field == 1 &&
+                    commands[0].gdat_field == 4 &&
                     commands[0].frame_owner ==
                         DM2_V1_FRAME_OWNER_STARTUP_TITLE &&
                     commands[1].kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE &&
@@ -716,7 +716,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     full_start_package.title_next_frame_tick == 6 &&
                     full_start_package.title_gdat_category == 5 &&
                     full_start_package.title_gdat_index == 0 &&
-                    full_start_package.title_gdat_field == 1 &&
+                    full_start_package.title_gdat_field == 4 &&
                     full_start_package.full_start.title_backdrop_ready == 1 &&
                     full_start_package.title_ready == 0 &&
                     full_start_package.hud_overlay_suppressed == 1 &&

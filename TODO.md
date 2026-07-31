@@ -38,7 +38,9 @@
   picture's own palette handoff, before exposing credits as an interactive
   route. **2026-07-31 update:** the fabricated 48-tick title/credits gate is
   removed; do not reuse the credits picture as a boot animation or display
-  it through the menu IRGB set.
+  it through the menu IRGB set. Both logical boot title/menu owners now name
+  `TITLE/0/dt07/4`; `dt07/1` remains reserved for the unported, separately
+  palette-owned `SHOW_CREDITS` event.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its
