@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **THERON-STARTUP-LEGACY-FALLBACK-ROOM:** The M11 production path already
+  uses `verified_only` Track 02 admission and the authenticated startup
+  bitmap atlas. The older public compatibility API still synthesizes the
+  source-locked Hall-of-Records candidate for data-free probes. Decide
+  whether to remove that compatibility contract and rewrite its 37 fixture
+  assertions, or keep it explicitly test-only behind a build boundary. Do
+  not expose it as a production launch route.
+
 - **ALL-GAMES-NO-PLACEHOLDER-WHEN-SOURCE-EXISTS:** Active 2026-07-30.
   - 2026-07-31: CSB graphics discovery is now hash-only for both recognised
     and unknown launcher hints. Continue auditing remaining CSB import and

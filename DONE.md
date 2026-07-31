@@ -6255,6 +6255,12 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-31 Theron HUD placeholder cleanup: removed the dead procedural
+  champion-slot renderer from the production compilation path. The legacy
+  V1 chrome compositor remains fail-closed until a verified original UI bank
+  is bound; rendering `25/25` and startup-flow `653/653` still pass.
+
+
 - ✅ 2026-07-23 CSB C001-to-C005 terminal receipt: C005 credits now records
   its real GRAPHICS.DAT host presentation in the owning startup session,
   including source tick and exact frame/raster hashes. ReDMCSB ENTRANCE.C
