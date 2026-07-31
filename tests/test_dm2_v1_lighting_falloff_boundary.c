@@ -1201,6 +1201,7 @@ static void test_sprite_asset_provider(void)
     {
         DM2_V1_HudPartyState party;
         DM2_V1_HudChromeRenderPlan hud;
+        DM2_V1_InterfaceHudLayout layout;
         uint8_t palette16[16];
 
         for (int i = 0; i < 16; ++i) palette16[i] = (uint8_t)(0xa0 + i);
@@ -1214,25 +1215,17 @@ static void test_sprite_asset_provider(void)
         party.champions[0].mana_pct = 10;
         party.champions[0].stat_bar_color = 7;
         party.champions[0].stat_bar_color_source_bound = 1;
+        party.champions[0].state_source_bound = 1;
         party.champions[0].portrait_index = 3;
         memcpy(party.champions[0].name, "Theron", 6);
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_viewport_init(&viewport, framebuffer, 320);
         dm2_v1_viewport_set_hud_party(&viewport, &party);
         dm2_v1_render_ui_chrome(&viewport);
-        /* skproject SkWinCore.cpp::INIT fills glbChampionColor in player
-         * order and DRAW_PLAYER_3STAT_HEALTH_BAR indexes that single source
-         * table for HP, stamina and mana alike — slot 0 draws all three
-         * bars in color 7, never one invented color per resource.  The
-         * sampled x pairs still discriminate each bar's fill width
-         * (50%→17px, 70%→23px, 10%→3px of the 34px bar at x=270). */
-        CHECK("DM2 UI chrome renders bound champion HUD bars",
-              framebuffer[39 * 320 + 270] == 7 &&
-                  framebuffer[39 * 320 + 287] == 0 &&
-                  framebuffer[44 * 320 + 292] == 7 &&
-                  framebuffer[44 * 320 + 294] == 0 &&
-                  framebuffer[49 * 320 + 272] == 7 &&
-                  framebuffer[49 * 320 + 274] == 0);
+        CHECK("DM2 UI chrome blocks HUD bars without every GDAT receipt",
+              framebuffer[39 * 320 + 270] == 0 &&
+                  framebuffer[44 * 320 + 292] == 0 &&
+                  framebuffer[49 * 320 + 272] == 0);
         CHECK("DM2 UI chrome leaves a missing portrait unpainted",
               viewport.asset_hud_portrait_drawn_count == 0 &&
                   viewport.fallback_hud_portrait_drawn_count == 0);
@@ -1245,20 +1238,14 @@ static void test_sprite_asset_provider(void)
                                            test_dm2_asset_fetch,
                                            NULL);
         dm2_v1_render_ui_chrome(&viewport);
-        CHECK("DM2 UI chrome fetches and scales HUD portrait assets",
-              s_asset_fetch_calls == 10 &&
+        CHECK("DM2 UI chrome leaves an unproven portrait route unpainted",
+              s_asset_fetch_calls == 9 &&
                   viewport.asset_hud_core_drawn_count == 9 &&
                   viewport.fallback_hud_core_drawn_count == 0 &&
                   viewport.last_hud_core_gdat_hash != 2166136261u &&
                   viewport.last_hud_core_pixel_count > 0u &&
-                  viewport.asset_hud_portrait_drawn_count == 1 &&
-                  viewport.fallback_hud_portrait_drawn_count == 0 &&
-                  s_last_asset_index ==
-                      dm2_v1_viewport_hud_portrait_graphic_index(3) &&
-                  framebuffer[34 * 320 + 250] == 3 &&
-                  framebuffer[34 * 320 + 262] == 4 &&
-                  framebuffer[44 * 320 + 250] == 5 &&
-                  framebuffer[44 * 320 + 262] == 6);
+                  viewport.asset_hud_portrait_drawn_count == 0 &&
+                  viewport.fallback_hud_portrait_drawn_count == 0);
 
         memset(framebuffer, 0, sizeof(framebuffer));
         dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -1273,14 +1260,26 @@ static void test_sprite_asset_provider(void)
                   framebuffer[44 * 320 + 292] == 0 &&
                   framebuffer[49 * 320 + 272] == 0);
 
-        party.champions[0].state_source_bound = 1;
         dm2_v1_viewport_set_hud_party(&viewport, &party);
         CHECK("DM2 dynamic HUD proof requires source state and all GDAT owners",
               dm2_v1_viewport_build_hud_chrome_plan_for_party(0, &party,
                                                                &hud) == 1 &&
                   !dm2_v1_viewport_hud_dynamic_overlay_ready(&viewport,
                                                               &hud.champion_slots[0]));
-        viewport.gdat_interface_hud_layout = (const void *)(uintptr_t)1;
+        party.champions[0].state_source_bound = 1;
+        dm2_v1_viewport_set_hud_party(&viewport, &party);
+        CHECK("DM2 dynamic HUD source state becomes eligible only with GDAT owners",
+              dm2_v1_viewport_build_hud_chrome_plan_for_party(0, &party,
+                                                               &hud) == 1 &&
+                  !dm2_v1_viewport_hud_dynamic_overlay_ready(&viewport,
+                                                              &hud.champion_slots[0]));
+        memset(&layout, 0, sizeof(layout));
+        layout.valid = 1;
+        layout.table_hash = 0x8d2f51c4u;
+        layout.status[0][0] = (DM2_V1_InterfaceRect){ 540, 78, 68, 8 };
+        layout.status[0][1] = (DM2_V1_InterfaceRect){ 540, 88, 68, 8 };
+        layout.status[0][2] = (DM2_V1_InterfaceRect){ 540, 98, 68, 8 };
+        dm2_v1_viewport_set_gdat_interface_hud_layout(&viewport, &layout);
         dm2_v1_viewport_set_gdat_interface_palette(
             &viewport, 1, 0x51a7c0deu, palette16);
         dm2_v1_viewport_set_gdat_interface_font(
@@ -1288,6 +1287,17 @@ static void test_sprite_asset_provider(void)
         CHECK("DM2 dynamic HUD accepts only the complete real-data receipt",
               dm2_v1_viewport_hud_dynamic_overlay_ready(&viewport,
                                                          &hud.champion_slots[0]));
+        dm2_v1_render_ui_chrome(&viewport);
+        /* SkWinCore.cpp::DRAW_PLAYER_3STAT_HEALTH_BAR selects one source
+         * champion colour for all three bars. The renderer must consume the
+         * admitted interface palette, never write logical colour 7 directly. */
+        CHECK("DM2 UI chrome maps admitted HUD bars through GDAT palette",
+              framebuffer[39 * 320 + 270] == palette16[7] &&
+                  framebuffer[39 * 320 + 287] == palette16[0] &&
+                  framebuffer[44 * 320 + 292] == palette16[7] &&
+                  framebuffer[44 * 320 + 294] == palette16[0] &&
+                  framebuffer[49 * 320 + 272] == palette16[7] &&
+                  framebuffer[49 * 320 + 274] == palette16[0]);
     }
 
     memset(framebuffer, 0, sizeof(framebuffer));

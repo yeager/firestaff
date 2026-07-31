@@ -79,6 +79,11 @@
   `CHAMPIONS`/`INTERFACE_GENERAL` GDAT layout and event table; the M11 route
   now preserves the source session but stays unavailable until those assets
   and events are bound.
+  **2026-07-31 update:** the public DM2 viewport HUD renderer now applies the
+  dt04 layout, dt07 font, interface palette and source-owned champion state
+  receipt even when a caller has not set its source-only flag. Missing proof
+  leaves HP/stamina/mana and leader pixels untouched; raw logical palette
+  indices can no longer become a compatibility HUD substitute.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

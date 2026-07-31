@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 viewport HUD receipt gate: `render_ui_chrome` now requires
+  the same source-owned champion state, dt04 layout, dt07 font and interface
+  palette receipt for every caller, not just M11 source-only frames. Missing
+  receipts leave the dynamic bars and leader marker blank instead of writing
+  raw logical colours. The focused viewport boundary test verifies both the
+  no-draw case and palette-mapped rendering after all receipts are admitted.
+
 - ✅ 2026-07-31 CSB Hint Oracle: tog bort den fristående, påhittade
   framebufferpanelen med hårdkodad ram, färgpalett och 5×7-font. Den hade
   ingen källa i Utility Diskens grafik och var inte ansluten till M11. Den

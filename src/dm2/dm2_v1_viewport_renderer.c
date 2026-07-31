@@ -8562,12 +8562,14 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         }
         for (int slot = 0; slot < plan.champion_slot_count; ++slot) {
             if (plan.champion_slots[slot].occupied) {
-                if (s->source_materials_required &&
-                    !dm2_v1_viewport_hud_dynamic_overlay_ready(
+                if (!dm2_v1_viewport_hud_dynamic_overlay_ready(
                         s, &plan.champion_slots[slot])) {
                     /* A live state value without its source dt04/dt07/palette
                      * contract is not drawable HUD material.  In particular,
-                     * do not turn health percentages into host-colour bars. */
+                     * do not turn health percentages into host-colour bars.
+                     * This applies to every caller: the public renderer must
+                     * not make a data-free test or compatibility route into a
+                     * production substitute. */
                     dm2_v1_block_source_material(
                         s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
                     continue;
