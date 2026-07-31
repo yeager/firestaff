@@ -6420,6 +6420,15 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-31 DM2 external SDL startup/menu capture: the current
+  Extern-disk `firestaff` binary reached the original PC-English
+  `GRAPHICS.DAT` TITLE/0 main-menu raster in a 960×600 SDL window, with the
+  correct night palette and no credits-only/grey palette frame. The
+  boot-probe then applied the source menu-to-credits click followed by the
+  common 0xEF dismissal click and returned to `dm2-startup-menu` using the
+  hash-verified data pair. This is an unbundled source-binary capture only;
+  it does not claim a packaged-app capture or gameplay/HUD completion.
+
 - ✅ 2026-07-31 DM2 G1 scene/light/weather production audit: confirmed that
   the legacy outdoor colour facade is excluded from `firestaff_dm2` and can
   return only no-draw. The active viewport accepts outdoor pixels only after

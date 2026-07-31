@@ -3472,6 +3472,11 @@ that its exact runtime path is not already source-locked and tested.
 48. **DM2-MAC-RELEASE-CAPTURE:** Complete packaged macOS/app captures and
     source-data visual evidence for title, menu, HUD, dungeon, doors,
     creatures, weather, saves, and input.
+    2026-07-31: the current unbundled Extern-disk binary has a real SDL
+    title/menu capture using the hash-verified PC-English data, including the
+    source click sequence menu → credits → menu. Packaged-app evidence and
+    every gameplay surface remain open; do not treat this source-binary
+    result as a release capture.
 49. **DM2-REAL-DATA-REGRESSION-CORPUS:** Build hash/provenance-verified DM2
     GRAPHICS/DUNGEON/SKSAVE/SND test corpus and end-to-end runtime regressions
     that exercise the authentic production paths.
