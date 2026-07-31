@@ -1072,7 +1072,11 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
     /* Init game state with boot profile data_dir */
     dm2_v1_init(gs, profile->asset_root);
 
-    /* Load dungeon */
+    /* Load the hash-admitted PC G1 dungeon.  The generic loader retains a
+     * legacy 16-bit layout solely for isolated fixtures; it is not an
+     * original DM2 runtime format and must never cross this boot boundary.
+     * SKProject/SKWIN/DME.h File_header and SkWinCore.cpp::READ_DUNGEON_STRUCTURE
+     * consume the byte-square G1 payload before INIT can place the party. */
     if (profile->dungeon_path[0]) {
         uint8_t *dat = NULL;
         size_t dat_size = 0u;
@@ -1086,7 +1090,8 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
                 dm2_v1_boot_build_deterministic_config(
                     profile, dat, (int)n);
             }
-            if (dm2_v1_dungeon_load(dd, dat, (int)dat_size) != 0) {
+            if (dm2_v1_dungeon_load(dd, dat, (int)dat_size) != 0 ||
+                dd->square_bytes != 1) {
                 /* The real game may only leave the title/menu after
                  * its GDAT startup surface is ready. A malformed map is
                  * fatal, but record-graph completeness is a later world
@@ -1098,7 +1103,17 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
                 return -1;
             }
             free(dat);
+        } else {
+            dm2_v1_dungeon_free(dd);
+            free(dd);
+            free(gs);
+            return -1;
         }
+    } else {
+        dm2_v1_dungeon_free(dd);
+        free(dd);
+        free(gs);
+        return -1;
     }
 
     if (profile->graphics_path[0] != '\0') {

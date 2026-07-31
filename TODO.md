@@ -71,6 +71,10 @@
   conversion or stub palette-LUT path; a live DM2 image must stay on the
   existing GDAT-backed renderer until a source-bound enhancement consumer is
   implemented.
+  **2026-07-31 update:** DM2 boot now rejects the generic loader's retired
+  16-bit fixture layout and an unreadable/absent dungeon payload. Only the
+  verified PC G1 byte-square route can cross from the startup menu into a
+  live game; fixture parsing remains available only to isolated diagnostics.
   **2026-07-31 update:** CSB's boot handoff now refuses both unreadable
   verified paths and the retired 16-bit parser fixture. A session becomes
   runtime-ready only after the ReDMCSB byte-map and its initial party pose are

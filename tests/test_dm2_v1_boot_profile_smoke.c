@@ -319,6 +319,32 @@ static void test_enter_requires_assets(void)
           "enter_game rejects unverified profile (no files found)");
 }
 
+static void test_enter_rejects_legacy_fixture_layout(void)
+{
+    DM2_V1_BootProfile p;
+    uint8_t dungeon[512];
+    char path[256];
+
+    memset(dungeon, 0, sizeof(dungeon));
+    /* This bounded 16-bit layout is accepted only by the generic fixture
+     * parser. It deliberately lacks the PC G1 marker at bytes 2-3. */
+    dungeon[6] = 1;
+    snprintf(path, sizeof(path), "/tmp/firestaff-dm2-legacy-boot-%ld.dat",
+             (long)TEST_GETPID());
+    remove(path);
+    CHECK(write_bytes(path, dungeon, sizeof(dungeon)) == 1,
+          "writes legacy dungeon fixture");
+
+    dm2_v1_boot_profile_init(&p);
+    p.assets_verified = 1;
+    snprintf(p.dungeon_path, sizeof(p.dungeon_path), "%s", path);
+    CHECK(dm2_v1_boot_enter_game(&p) == -1 &&
+              p.dm2_state == NULL && p.dungeon_data == NULL,
+          "boot rejects legacy fixture layout despite an admitted profile");
+    dm2_v1_boot_cleanup(&p);
+    remove(path);
+}
+
 static void test_enter_admits_map_without_complete_record_graph(void)
 {
     DM2_V1_BootProfile p;
@@ -1023,6 +1049,8 @@ int main(void)
 /* ── enter game guard --─ */
     printf("\n--- test_enter_requires_assets ---\n");
     test_enter_requires_assets();
+    printf("\n--- test_enter_rejects_legacy_fixture_layout ---\n");
+    test_enter_rejects_legacy_fixture_layout();
     printf("\n--- test_enter_admits_map_without_complete_record_graph ---\n");
     test_enter_admits_map_without_complete_record_graph();
 /* ── startup launch helper --─ */

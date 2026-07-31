@@ -1,3 +1,11 @@
+- ✅ 2026-07-31 DM2 boot G1-only admission: `dm2_v1_boot_enter_game()` now
+  rejects unreadable or absent dungeon payloads and the generic loader's
+  retired 16-bit fixture layout. A marked profile can enter only with the
+  source-format PC G1 byte-square dungeon; the fixture parser remains outside
+  the boot boundary for isolated tests. Verification: new legacy-layout
+  regression, complete executable link and real-data M11 startup/profile
+  gate.
+
 - ✅ 2026-07-31 Theron M11 startup admission: lade till en separat
   `verified_only`-runtimeväg som M11 använder för raw Track 02-bypass.
   Den vägen vägrar syntetiskt fallback-rum utan verifierad Track 02-handoff;
