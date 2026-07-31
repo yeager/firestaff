@@ -105,6 +105,9 @@
   - 2026-07-31: F0846–F0865 has no corresponding ReDMCSB callable and is
     test-only. Keep its fail-closed admission receipt out of M10; source
     material must be bound by an actual CSB runtime consumer.
+  - 2026-07-31: F0986–F1005 is a source-boundary inventory, not a graphics
+    decoder. It is test-only; live PC 3.4 rendering must use the authenticated
+    graphics archive route.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.

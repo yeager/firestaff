@@ -47161,3 +47161,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   no ReDMCSB callable and only reports a fail-closed admission receipt. It
   now compiles solely into its focused contract test, so M10 cannot mistake
   source-absence metadata for an executable runtime implementation.
+
+- ✅ 2026-07-31 CSB F0986–F1005 graphics-boundary isolation: the function
+  table documents local, foreign-platform and unbound helpers, then blocks
+  every runtime route. With no product caller or decoder, it now compiles only
+  into its contract test; live rendering continues through authenticated PC
+  3.4 graphics material.
