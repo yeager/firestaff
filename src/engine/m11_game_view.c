@@ -690,6 +690,46 @@ static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 int pileIndex,
                                 int depthIndex,
                                 int sourceZoneRow);
+/* ReDMCSB DUNVIEW.C F0115 uses C10 transparency for the native G0209
+ * object family. Keep this copy loop at the M11 asset boundary: `slot` has
+ * already been installed from the verified CSB GRAPHICS.DAT session and is
+ * not caller-provided pixel data. */
+static int m11_csb_blit_verified_native_object_slot(
+    const M11_AssetSlot *slot, int native_graphic,
+    unsigned char *framebuffer, int framebuffer_width, int framebuffer_height,
+    int draw_x, int draw_y, int draw_w, int draw_h, int mirror)
+{
+    int flip;
+    int drawn = 0;
+    int y;
+
+    if (!slot || !slot->loaded || !slot->pixels ||
+        native_graphic < 498 || native_graphic > 583 ||
+        slot->width == 0u || slot->height == 0u || !framebuffer ||
+        draw_w < (int)slot->width || draw_h < (int)slot->height ||
+        draw_x < 0 || draw_y < 0 ||
+        draw_x + (int)slot->width > framebuffer_width ||
+        draw_y + (int)slot->height > framebuffer_height) {
+        return 0;
+    }
+    flip = mirror && (native_graphic == 498 || native_graphic == 563 ||
+                      native_graphic == 578 || native_graphic == 580);
+    for (y = 0; y < (int)slot->height; ++y) {
+        int x;
+        for (x = 0; x < (int)slot->width; ++x) {
+            const unsigned char pixel =
+                slot->pixels[(size_t)y * slot->width + (size_t)x];
+            const int destination_x = flip
+                ? draw_x + (int)slot->width - 1 - x : draw_x + x;
+            if (pixel == 10u) continue;
+            framebuffer[(size_t)(draw_y + y) * framebuffer_width +
+                        (size_t)destination_x] = pixel;
+            ++drawn;
+        }
+    }
+    return drawn;
+}
+
 static int m11_draw_item_sprite_material(const M11_GameViewState* state,
                                          unsigned char* framebuffer,
                                          int fbW,
@@ -32879,11 +32919,10 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
         /* CSB F0115's G0209 -> M612 object route is source-owned. Do not
          * substitute DM1 object art when its mapping is present; unsupported
          * CSB aspects still fail closed at the native mapping boundary. */
-        return csb_v1_viewport_f0115_blit_first_object_native_family_pc34(
-            csb_native_graphic, slot->pixels, (int)slot->width,
-            (int)slot->height, framebuffer, fbW, fbH, fbW,
+        return m11_csb_blit_verified_native_object_slot(
+            slot, csb_native_graphic, framebuffer, fbW, fbH,
             plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
-            depthIndex + 1, plan.use_mirror ? 1 : 0) > 0;
+            plan.use_mirror ? 1 : 0) > 0;
     }
     if (publishFloorItemHostReceipt) {
         presentation =

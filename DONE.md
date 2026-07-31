@@ -45716,3 +45716,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   sizes owned by F0433/F0435 and decrypted GLOBAL_DATA rather than a private
   Firestaff length prefix. The legacy fixture envelope remains explicitly
   isolated. Verification: `dm1_v1_f0433_save_command_pc34_compat` passes.
+
+- ✅ 2026-07-31 CSB F0115 native-object material-boundary closure: moved the
+  direct object blit behind M11's verified `M11_AssetSlot` boundary and
+  removed its public caller-buffer API and isolated test target. The source
+  mapping remains ReDMCSB-owned; an object draws only after M11 installs and
+  decodes its original PC3.4 graphics record. Verification: configure/build
+  and PC3.4 real-asset viewport/startup regressions.

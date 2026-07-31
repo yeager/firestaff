@@ -598,6 +598,11 @@ diagnostic; it must not silently fall back to a generated visual.
   receipt, no M11 route invoked it; it therefore could not establish a real
   D0C drawing path. The authenticated viewport materialization remains the
   only owner of production pixels.
+  **2026-07-31 F0115 native-object boundary follow-up:** moved the remaining
+  native-object pixel loop behind M11's verified asset-slot boundary and
+  removed its public caller-buffer API. A CSB object now reaches that loop
+  only after the live PC3.4 graphics record has been installed and decoded;
+  an unbound caller can no longer supply an arbitrary object raster.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

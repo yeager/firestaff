@@ -1719,20 +1719,4 @@ int csb_v1_viewport_f0115_object_native_graphic_pc34(
 int csb_v1_viewport_f0115_first_object_native_graphic_pc34(
     int thingType, int subtype);
 
-int csb_v1_viewport_f0115_blit_first_object_native_family_pc34(
-    int nativeGraphic,
-    const uint8_t *sourcePixels,
-    int sourceWidth,
-    int sourceHeight,
-    uint8_t *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    int framebufferStride,
-    int drawX,
-    int drawY,
-    int drawW,
-    int drawH,
-    int depthOrdinal,
-    int mirror);
-
 #endif
