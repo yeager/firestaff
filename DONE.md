@@ -77,6 +77,11 @@
   `firestaff_csb_v2_phase4_enhanced_lighting_probe` and
   `firestaff_csb_v2_phase7_verification_probe`.
 
+- ✅ 2026-07-31 CSB V2 minimap placeholder closure: removed the dormant
+  host-coloured room legend and magenta DSA marker. The minimap API now
+  returns transparent until a real source-owned surface and palette receipt
+  exists. Verification: `test_csb_v2_phase7_verification`.
+
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a
   successful transaction route from host gold alone. It remains closed until

@@ -82,19 +82,14 @@ static void test_smooth_movement_verification(void) {
 static void test_minimap_verification(void) {
     const char *evidence;
 
-    CHECK(csb_v2_minimap_square_color(0, 0, 0) == 0xFF000000u);
-    CHECK(csb_v2_minimap_square_color(0, 1, 0) == 0xFF000000u);
-    CHECK(csb_v2_minimap_square_color(0, 1, 1) == 0xFFFF00FFu);
-    CHECK(csb_v2_minimap_square_color(0, 0, 1) == 0xFF404040u);
-    CHECK(csb_v2_minimap_square_color(1, 0, 1) == 0xFFA0A0A0u);
-    CHECK(csb_v2_minimap_square_color(2, 0, 1) == 0xFF0000FFu);
-    CHECK(csb_v2_minimap_square_color(3, 0, 1) == 0xFF0000CCu);
-    CHECK(csb_v2_minimap_square_color(4, 0, 1) == 0xFFCC0000u);
-    CHECK(csb_v2_minimap_square_color(16, 0, 1) == 0xFF806030u);
-    CHECK(csb_v2_minimap_square_color(-1, 0, 1) == 0xFF606060u);
+    CHECK(csb_v2_minimap_square_color(0, 0, 0) == 0u);
+    CHECK(csb_v2_minimap_square_color(0, 1, 0) == 0u);
+    CHECK(csb_v2_minimap_square_color(0, 1, 1) == 0u);
+    CHECK(csb_v2_minimap_square_color(4, 0, 1) == 0u);
+    CHECK(csb_v2_minimap_square_color(-1, 0, 1) == 0u);
 
     evidence = csb_v2_minimap_source_evidence();
-    CHECK(strstr(evidence, "DSA") != NULL);
+    CHECK(strstr(evidence, "no source receipt") != NULL);
 }
 
 static void test_chaos_lighting_verification(void) {

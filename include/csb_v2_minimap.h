@@ -9,11 +9,10 @@
  * V1 dungeon state is not modified by minimap rendering.
  * See csb_v2_phase_gate_pc34.h Phase 0 rules.
  *
- * CSB V2.2 Minimap — CSB dungeon overview.
- * Same system as DM1 V2.2 minimap but with CSB-specific
- * square colors (custom backgrounds = special markers). */
+ * Retired CSB V2 minimap colour boundary. The former square colours and DSA
+ * marker were host artwork, not an original CSB surface. The query returns
+ * transparent until a source-owned minimap transaction is bound. */
 
 uint32_t csb_v2_minimap_square_color(int square_type, int has_dsa, int explored);
 const char *csb_v2_minimap_source_evidence(void);
 #endif
-

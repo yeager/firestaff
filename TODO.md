@@ -409,6 +409,9 @@ diagnostic; it must not silently fall back to a generated visual.
   compatibility hook, but trigger, projectile and overlay entry points are
   now permanently transparent/no-draw. A DSA script id alone cannot select a
   purple glow, particle family, host speed or lighting curve.
+  **2026-07-31 minimap follow-up:** the dormant CSB V2 minimap's hard-coded
+  room colours and magenta DSA marker now return transparent. Map semantics
+  alone are not an original UI surface or palette transaction.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms
