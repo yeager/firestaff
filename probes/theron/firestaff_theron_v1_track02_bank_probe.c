@@ -1077,6 +1077,11 @@ static void probe_track(const char *label,
         return;
     }
     if (strcmp(md5_hex, expected_md5) != 0) {
+        if (strcmp(md5_hex, THERON_TRACK02_MD5_US_ISO_TAIL) == 0) {
+            printf("SKIP %s: tail-only US ISO (need concatenated TQUS19+TQUS02End)\n", label);
+            ++g_skip;
+            return;
+        }
         printf("FAIL %s: MD5 %s does not match expected %s\n",
                label, md5_hex, expected_md5);
         ++g_fail;

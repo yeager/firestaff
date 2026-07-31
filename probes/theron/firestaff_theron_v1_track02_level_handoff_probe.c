@@ -1133,6 +1133,11 @@ static void probe_real_data_initial_candidate(const char *label,
         return;
     }
     if (strcmp(local_md5, md5_hex) != 0) {
+        if (strcmp(local_md5, THERON_TRACK02_MD5_US_ISO_TAIL) == 0) {
+            printf("SKIP %s initial candidate: tail-only US ISO (need concatenated TQUS19+TQUS02End)\n", label);
+            ++g_skip;
+            return;
+        }
         printf("FAIL %s initial candidate: MD5 %s does not match expected %s\n",
                label, local_md5, md5_hex);
         ++g_fail;
@@ -1429,6 +1434,11 @@ static void probe_real_data_handoff(const char *label,
         return;
     }
     if (strcmp(local_md5, md5_hex) != 0) {
+        if (strcmp(local_md5, THERON_TRACK02_MD5_US_ISO_TAIL) == 0) {
+            printf("SKIP %s: tail-only US ISO (need concatenated TQUS19+TQUS02End)\n", label);
+            ++g_skip;
+            return;
+        }
         printf("FAIL %s: MD5 %s does not match expected %s\n",
                label, local_md5, md5_hex);
         ++g_fail;

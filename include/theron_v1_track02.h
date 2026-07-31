@@ -20,8 +20,11 @@
 #define THERON_TRACK02_MD5_US_BIN      "f23601102138f87c33025877767ebf76"
 #define THERON_TRACK02_MD5_JP_REV1_ISO "397039af02d50d15c70b74088eb8a1cb"
 /* MyAbandonware's US dump splits this exact ISO into TQUS19.iso followed by
- * TQUS02End.iso.  The latter is only the tail, never a standalone Track 02. */
+ * TQUS02End.iso.  The latter is only the tail, never a standalone Track 02.
+ * TQUS02End.iso alone has MD5 THERON_TRACK02_MD5_US_ISO_TAIL; the full
+ * concatenation (TQUS19 + TQUS02End) has THERON_TRACK02_MD5_US_ISO. */
 #define THERON_TRACK02_MD5_US_ISO      "ceb02343868f80cec899e9b239aff2da"
+#define THERON_TRACK02_MD5_US_ISO_TAIL "3d8b78571dcd0e6eb8eb4b01eeb7fbba"
 
 #define THERON_TRACK02_MAX_LEVEL_CANDIDATES 32u
 #define THERON_TRACK02_MAX_NONSTARTUP_LEVEL_RECEIPT_CANDIDATES 3u
