@@ -16,7 +16,9 @@ int nexus_v1_prs3_parse_header(const uint8_t *data, int data_size,
     out->uncompressed_size = read_be32(data + 8);
     out->compressed_size = read_be32(data + 12);
     if (out->version != 1) return 0;
-    if ((int)(16 + out->compressed_size) > data_size) return 0;
+    /* Keep the source-bound check in unsigned space; a malformed retail
+     * header must not wrap the old int addition on large inputs. */
+    if (out->compressed_size > (uint32_t)(data_size - 16)) return 0;
     out->stream = data + 16;
     out->valid = 1;
     return 1;
