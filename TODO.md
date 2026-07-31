@@ -13,6 +13,10 @@
   supported through the shared hash scanner. The remaining work is limited to
   format-specific decode gaps listed per game, not generic substitute loading.
 
+- **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
+  three PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`
+  phase on its own cadence and independent of gameplay speed multipliers.
+
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing
   a fixture party. New Game now reloads the hash-verified original

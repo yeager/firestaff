@@ -26,6 +26,11 @@
   `dm2_v1_boot_enter_game()` may publish that source-owned state. The
   `dm2_v1_load_new_dungeon_contract` regression proves the shim leaves an
   existing state untouched and returns failure.
+- ✅ 2026-07-31 CSB title zoom cadence: TITLE.C F0437's 20 CHAOS zoom
+  rasters now remain visible for three authenticated PC3.4 cadence slots in
+  M11. The separate source `Delay(20)` hold begins after the final zoom frame
+  and retains its native cadence, so the change slows only the animation.
+  Verification: `test_csb_v1_m11_startup_vblank_cadence`.
 
 - ✅ 2026-07-31 DM2 legacy shop-entry closure: `dm2_v1_enter_shop()` no
   longer treats an outdoor flag as evidence for a shop and cannot report a

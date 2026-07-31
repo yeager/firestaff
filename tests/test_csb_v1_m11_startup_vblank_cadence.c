@@ -41,18 +41,26 @@ int main(void) {
     view.sourceKind = M11_GAME_SOURCE_CSB_BOOT;
     view.csbState.startup_title_active = 1;
     view.csbState.startup_title_source_step = 1;
+    view.csbState.startup_title_frame = 0;
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
                     "CSB PRESENTS keeps its PC34 source cadence");
 
     view.csbState.startup_title_source_step = 2;
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 110u,
-                    "CSB first CHAOS zoom raster remains visible for two PC34 slots");
+    view.csbState.startup_title_frame = 60;
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 165u,
+                    "CSB first CHAOS zoom raster remains visible for three PC34 slots");
 
     view.csbState.startup_title_source_step = 21;
-    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 110u,
-                    "CSB full CHAOS raster retains the visible zoom hold");
+    view.csbState.startup_title_frame = 79;
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 165u,
+                    "CSB final CHAOS zoom raster retains the visible three-slot hold");
+
+    view.csbState.startup_title_frame = 80;
+    expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
+                    "CSB source Delay(20) keeps its own cadence after the zoom");
 
     view.csbState.startup_title_source_step = 22;
+    view.csbState.startup_title_frame = 100;
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
                     "CSB STRIKES BACK keeps TITLE.C's two-tick source hold");
 
@@ -69,7 +77,8 @@ int main(void) {
         view.csbState.startup_title_active = 1;
         view.csbState.startup_entrance_active = 0;
         view.csbState.startup_title_source_step = 2;
-        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 122u,
+        view.csbState.startup_title_frame = 60;
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 183u,
                         "CSB CHAOS hold scales from the authenticated profile cadence");
         view.csbState.startup_title_active = 0;
         view.csbState.startup_entrance_active = 1;
