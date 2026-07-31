@@ -6621,9 +6621,9 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
                 next - out_bank->floor_images[i].image_offset;
             expected_packed_bytes =
                 ((uint32_t)out_bank->floor_images[i].width *
-                 (uint32_t)out_bank->floor_images[i].height) / 2U;
+                 (uint32_t)out_bank->floor_images[i].height + 1U) / 2U;
             /* The verified retail corpus establishes encoding 0008 as a
-             * packed 4bpp payload: every descriptor has at least WxH/2
+             * packed 4bpp payload: every descriptor has at least ceil(WxH/2)
              * bytes before the next image, with any remaining bytes being a
              * following 32-byte palette record.  Do not promote a different
              * encoding or a truncated surface. */
