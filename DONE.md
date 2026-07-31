@@ -46570,3 +46570,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   clears the prior dungeon singleton and source paths before it returns.
   Verification: `test_csb_v1_boot_runtime_handoff`, including its missing
   source-media regression, plus boot-profile and viewport gate tests.
+- ✅ 2026-07-31 Theron uppstart: boot-scannern känner nu igen de faktiska
+  råa Track 02-filnamnen `TQJP02.bin` och `TQUS02.bin` som används i
+  `~/.firestaff/data/theron`. De hashverifieras genom samma befintliga
+  kataloggate; inga nya datafiler eller fallbackvärden läggs till.

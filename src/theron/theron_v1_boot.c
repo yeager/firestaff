@@ -322,6 +322,8 @@ static const char *const g_theron_track02_candidates[] = {
     "Theron's Quest (US) (Track 02).bin",
     "Theron's Quest (Japan) (Track 02).iso",
     "Theron's Quest (US) (Track 02).iso",
+    "TQJP02.bin",
+    "TQUS02.bin",
     "TQJP02.iso",
     "TQJP02End.iso",
     "TQUS02.iso",
