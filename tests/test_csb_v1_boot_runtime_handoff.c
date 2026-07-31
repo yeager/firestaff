@@ -743,6 +743,17 @@ static void test_utility_flow_new_game_handoff_preserves_leader_index(void)
           "ImportedFromDM1 is preserved through utility flow handoff");
     CHECK(memcmp(party.Champions[0].Name, "ALPHA   ", 8u) == 0,
           "full champion name is preserved through utility flow handoff");
+
+    /* ReDMCSB Utility hands over full champion records, not a count-only
+     * surrogate. Stale extension fields cannot fabricate a launchable party. */
+    memset(&ctx.imported_party, 0, sizeof(ctx.imported_party));
+    ctx.reserved[0] = 4;
+    ctx.reserved[1] = 0;
+    ctx.reserved[2] = 1;
+    memset(&party, 0, sizeof(party));
+    CHECK(csb_v1_util_flow_get_party(&ctx, &party) == 0 &&
+              party.ChampionCount == 0,
+          "utility flow rejects metadata-only synthetic party handoff");
 }
 
 static void test_utility_import_confirmation_is_transactional(void)

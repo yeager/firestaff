@@ -46691,3 +46691,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Pixelrutten förblir no-draw tills Saturn frame-selector/VDP1-bindningen är
   verifierad. Verifiering: `test_nexus_v1_dgn_runtime_materialization`;
   source-receipt-testet skippar korrekt utan staged Nexus-dir.
+- ✅ 2026-07-31 CSB Utility metadata-party removal: `get_party()` no longer
+  reconstructs champion count, leader, and import provenance from free
+  `reserved[]` metadata when the imported champion body is missing. The
+  runtime receives only the full validated Utility party; the regression
+  proves stale metadata cannot manufacture a launchable party.

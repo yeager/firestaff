@@ -1677,14 +1677,9 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
          *
          * In Firestaff: this signals that the game is ready to start.
          * The UI transitions to the game view. */
-        /* Store party metadata in ctx->reserved for get_party().
-         * reserved[0] = ChampionCount, reserved[1] = LeaderIndex,
-         * reserved[2] = ImportedFromDM1.
-         * The full party body is kept in ctx->imported_party so M11 can
-         * hand the exact utility-import result to the CSB runtime. */
-        ctx->reserved[0] = ctx->imported_party.ChampionCount;
-        ctx->reserved[1] = ctx->imported_party.LeaderIndex;
-        ctx->reserved[2] = ctx->imported_party.ImportedFromDM1;
+        /* ReDMCSB's Utility path hands the selected champion records to the
+         * game. Keep that complete party receipt; metadata-only values must
+         * never fabricate champions when a load/import body is absent. */
         ctx->state = CSB_V1_UTIL_FLOW_DONE;
         return 1;  /* done */
 
@@ -1711,11 +1706,8 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
  *   Call this after flow is done (returns 1) to get the party for the game.
  *
  *   Implementation: step() keeps the full imported party body in
- *   ctx->imported_party before transitioning to DONE.  The reserved[]
- *   metadata remains as a compatibility fallback for older callers:
- *     reserved[0] = ChampionCount
- *     reserved[1] = LeaderIndex
- *     reserved[2] = ImportedFromDM1
+ *   ctx->imported_party before transitioning to DONE.  The caller receives
+ *   no party when that authenticated body is absent.
  *
  *   Returns: champion count (>= 0) on success, -1 on error.
  *   On success, out_party receives the imported champion records plus
@@ -1735,11 +1727,6 @@ int csb_v1_util_flow_get_party(CSB_V1_UtilFlowContext *ctx,
     }
 
     *out_party = ctx->imported_party;
-    if (out_party->ChampionCount == 0 && ctx->reserved[0] > 0) {
-        out_party->ChampionCount = ctx->reserved[0];
-        out_party->LeaderIndex = ctx->reserved[1];
-        out_party->ImportedFromDM1 = ctx->reserved[2];
-    }
 
     return out_party->ChampionCount;
 }
