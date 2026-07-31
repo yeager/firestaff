@@ -45187,6 +45187,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   decoded from the original game-state and SUPPRESS records, so a malformed
   later section cannot leave an invented party behind. Verification:
   `test_dm2_v1_utility_import` passes 136/136.
+- ✅ 2026-07-31 CSB D1L/D1R stale pixel API closure: removed the orphaned
+  C10 blit declaration that had neither a source implementation nor callers.
+
 - ✅ 2026-07-31 CSB D3L2 F0115 projectile no-fake closure: removed the
   unbound C10 fixture blit. ReDMCSB scaling and dynamic-flip metadata remain
   source-locked, but an unverified projectile raster cannot write pixels.

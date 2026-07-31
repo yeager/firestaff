@@ -71,15 +71,6 @@ int csb_v1_viewport_d1l_d1r_f0111_door_horizontal_half_zone_pc34(
     const CSB_V1_ViewportD1LD1RF0111DoorPc34CompatInvariant *invariant,
     int door_state,
     int right_half);
-int csb_v1_viewport_d1l_d1r_f0111_door_apply_c10_blit_pc34(
-    const CSB_V1_ViewportD1LD1RF0111DoorPc34CompatInvariant *invariant,
-    const uint8_t *source,
-    int source_stride,
-    uint8_t *destination,
-    int destination_stride,
-    int width,
-    int height);
-
 const CSB_V1_ViewportD1LD1RF0111DoorPc34CompatEvidence *
 csb_v1_viewport_d1l_d1r_f0111_door_evidence_pc34(void);
 const char *csb_v1_viewport_d1l_d1r_f0111_door_source_evidence_pc34(void);
