@@ -23754,6 +23754,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     zero C13 events and zero active groups. It remains valid original-save
     interop evidence only; it does not close the C13 or changed-layout corpus
     requirements below.
+  - 2026-07-31 corpus expansion: a third operator-supplied DOSBox PC3.4
+    save (`5bcee58c`, 48,561 bytes) is provenance-attested and passes the
+    backing-aware F0435 -> native quicksave -> F0433 -> F0435 route against
+    the installed original `DUNGEON.DAT`. Like the earlier first save, it has
+    zero C13 and active-group entries, so it adds real interop coverage but
+    does not close the C13 requirement.
 ## DM1 C03/C04 runtime identity follow-up
 
 - [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
@@ -23785,6 +23791,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     a live C03/C04 save must never be certified without its matching dungeon
     backing. Reference: ReDMCSB `LOADSAVE.C` F0433/F0435 and DMweb
     saved-game file-format documentation.
+  - 2026-07-31 corpus expansion: all three provenance-attested DOSBox saves
+    now pass the backing-aware corpus target. The additional save has the
+    same empty C03/C04 runtime layout as the first one, so the existing
+    non-empty DOSBox-X save remains the sole current real-data proof for
+    active-group and live C03 coverage.
   - 2026-07-31 test-route update: legacy self-contained corpus probes now
     explicitly skip a provenance-attested save whose runtime stage is not
     self-contained. The backing-aware M11 corpus target is mandatory for

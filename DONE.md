@@ -45730,10 +45730,17 @@ the supplied root and selected MD5 to prove this without shipping game data.
   sizes owned by F0433/F0435 and decrypted GLOBAL_DATA rather than a private
   Firestaff length prefix. The legacy fixture envelope remains explicitly
   isolated. Verification: `dm1_v1_f0433_save_command_pc34_compat` passes.
-
 - ✅ 2026-07-31 CSB F0115 native-object material-boundary closure: moved the
   direct object blit behind M11's verified `M11_AssetSlot` boundary and
   removed its public caller-buffer API and isolated test target. The source
   mapping remains ReDMCSB-owned; an object draws only after M11 installs and
   decodes its original PC3.4 graphics record. Verification: configure/build
   and PC3.4 real-asset viewport/startup regressions.
+
+- ✅ 2026-07-31 DM1 PC34 corpus expansion: provenance-attested the third
+  operator-supplied DOSBox `DMSAVE.DAT` (`5bcee58c`, 48,561 bytes) and added
+  it to the external corpus. It passes the real `DUNGEON.DAT`-backed F0435 ->
+  native quicksave -> F0433 -> F0435 roundtrip, raising the verified corpus
+  to three original saves. Its empty C13/C03/C04 runtime state is documented
+  separately and does not claim unobserved coverage. Reference: ReDMCSB
+  `LOADSAVE.C F0419/F0420/F0433/F0435` and DMweb Saved Game Files.
