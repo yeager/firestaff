@@ -18,9 +18,12 @@
 #include "firestaff/dm1/v1/G0167_pc34_compat.h"
 #include "firestaff/dm1/v1/G0168_pc34_compat.h"
 #include "firestaff/dm1/v1/G0169_pc34_compat.h"
+#include "firestaff/dm1/v1/G0170_pc34_compat.h"
+#include "firestaff/dm1/v1/G0171_pc34_compat.h"
 #include "firestaff/dm1/v1/G0173_pc34_compat.h"
 #include "firestaff/dm1/v1/G0174_pc34_compat.h"
 #include "firestaff/dm1/v1/G0175_pc34_compat.h"
+#include "firestaff/dm1/v1/G0177_pc34_compat.h"
 #include "dm1_v1_floor_ornament_pc34_compat.h"
 #include "dm1_v1_field_teleporter_effect_pc34_compat.h"
 #include "dm1_v1_viewport_d3l2_d3r2_f0111_door_front_pair_pc34_compat.h"
@@ -2109,14 +2112,34 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
             state, DM1_VIEW_SQUARE_D1C, 1, 0);
         if (!dm1_viewport_3d_draw_center_wall_element(
                 state, DM1_VIEW_SQUARE_D1C, (int)d1c_x, (int)d1c_y)) {
+            const int *top_frame = dm1_v1_g0177_table_pc34();
+            const int *left_frame = dm1_v1_g0170_table_pc34();
+            const int *right_frame = dm1_v1_g0171_table_pc34();
             const DM1_WallFrame *fr_top   = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1C);
             const DM1_WallFrame *fr_side = dm1_viewport_3d_get_wall_frame(DM1_VIEW_SQUARE_D1L);
-            if (fr_top && bm_base) {
-                dm1_viewport_3d_draw_wall(state, bm_base + 16 * BMP_STRIDE, fr_top);
-            }
-            if (fr_side && bm_base) {
-                dm1_viewport_3d_draw_wall(state, bm_base + 21 * BMP_STRIDE, fr_side);
-                dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 21 * BMP_STRIDE, fr_side);
+
+            /* F0124 takes M659/G2112 for the 128x4 top bar, then
+             * M655/G2117 for the native/mirrored 32x94 side pair.  Require
+             * both source records before drawing, otherwise a verified CSB
+             * session must leave the entire frame untouched. ReDMCSB
+             * DUNVIEW.C:601-602,7877-7892. */
+            if (dm1_viewport_3d_has_source_door_frame(state, 91, top_frame) &&
+                dm1_viewport_3d_has_source_door_frame(state, 87, left_frame) &&
+                dm1_viewport_3d_has_source_door_frame(state, 87, right_frame)) {
+                (void)dm1_viewport_3d_draw_source_door_frame(
+                    state, 91, top_frame, 0);
+                (void)dm1_viewport_3d_draw_source_door_frame(
+                    state, 87, left_frame, 0);
+                (void)dm1_viewport_3d_draw_source_door_frame(
+                    state, 87, right_frame, 1);
+            } else if (!state->source_graphics_required) {
+                if (fr_top && bm_base) {
+                    dm1_viewport_3d_draw_wall(state, bm_base + 16 * BMP_STRIDE, fr_top);
+                }
+                if (fr_side && bm_base) {
+                    dm1_viewport_3d_draw_wall(state, bm_base + 21 * BMP_STRIDE, fr_side);
+                    dm1_viewport_3d_draw_door_frame_flipped(state, bm_base + 21 * BMP_STRIDE, fr_side);
+                }
             }
         }
     }
