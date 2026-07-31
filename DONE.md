@@ -47281,3 +47281,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   reports exclusive palette, DM1 sound/ANIM, debug and absent-source routes
   before failing closed. It now compiles solely into its contract test; real
   CSB media remains limited to its authenticated dedicated consumers.
+
+- ✅ 2026-07-31 CSB F1886–F1925 hintload-receipt isolation: the table only
+  inventories source disposition; its authenticated F1910/F1913/F1914 and
+  F1918/F1919 owners are separate implementations. It now compiles only into
+  its contract test, leaving those true save/import paths intact.

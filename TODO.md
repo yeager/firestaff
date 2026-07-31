@@ -162,6 +162,9 @@
   - 2026-07-31: F1766–F1805 is a fail-closed media ownership inventory. It is
     test-only; actual CSB palette and SWSH consumers stay source-bound and
     must not be replaced with DM1 media labels.
+  - 2026-07-31: F1886–F1925 is a source receipt inventory. It is test-only;
+    its separately implemented save/import owners remain the only admissible
+    CSB paths and no hint labels may synthesize presentation data.
   - 2026-07-31: M11 rehashes the selected CSB pair at entry, preventing a
     changed file from inheriting scan-time admission. Continue auditing
     long-lived runtime caches for the same source-receipt lifetime rule.
