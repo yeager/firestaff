@@ -430,7 +430,7 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
      * tile bank is bound, block generated dungeon tiles/fallback font.
      * The boot path already refuses to reach this function in that state;
      * this is a viewport-level defense-in-depth guard. */
-    if (vp->synthetic_rendering_blocked) {
+    if (vp->synthetic_rendering_blocked || vp->palette.tile_count <= 0) {
         return;
     }
 

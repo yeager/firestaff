@@ -1,3 +1,9 @@
+- ✅ 2026-07-31 Theron viewport admission: viewport-rendering vägrar nu skriva
+  även när spärrflaggan saknas om ingen faktisk tile-atlas är laddad
+  (`tile_count <= 0`). Hårdkodade tile-index kan därmed inte skapa en
+  syntetisk yta vid felaktig host-state. Rendering `25/25`, startup-flow
+  `653/653`.
+
 - ✅ 2026-07-31 Theron metadata-inventering: tog bort de döda short-code-
   och kommentarstabeller som återgav opromoterade dungeon-namn. Enum-ID:n och
   verklig progression är kvar; inga nya namn eller data har gissats in.
