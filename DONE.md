@@ -46082,3 +46082,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   and frame-info words no longer mutate a production creature. Only test
   targets may use the helper; a live route remains pending the complete
   CCM/GDAT animation receipt from SKProject `skcrture.cpp:1595-1658`.
+
+- ✅ 2026-07-31 DM2 spell-timer record-fabrication closure: removed the
+  remaining cloud, missile and summon timer bodies that constructed DB14,
+  DB10 and DB4 records from reduced timer coordinates/effect words and
+  guessed duration, energy or owner fields. Those timer types now acknowledge
+  the event without a gameplay mutation until their original DB14/DB4 record,
+  actor, direction and timer ownership are decoded. Source: SKProject
+  `SKULLWIN/c_tim_proc.cpp:4195-4213` (`DM2_PROCESS_TIMER_19`), `442-563`
+  (`DM2_STEP_MISSILE`) and `4268-4280` (`DM2_ALLOC_NEW_CREATURE`).
+  Verification: `test_dm2_v1_spell_cast_player_pc34_compat` 142/142 and
+  real-data `test_dm2_v1_m11_startup_profile_gate` pass.

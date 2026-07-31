@@ -51,18 +51,13 @@ enum {
      * The Firestaff DM2_ChampionRecord hero_flag is currently uint8_t, so
      * this bounded slice proxies the low byte of that source bitfield. */
     DM2_V1_SPELL_TIMER_HEROFLAG_AURA_BIT = 0x40,
-    /* DM2-007 cycle 13: bounded defaults for cloud/missile DB14 records.
-     * These stand in for source fields until the exact byte semantics are
-     * proven; they are exposed as constants so tests can assert them. */
-    DM2_V1_SPELL_TIMER_CLOUD_INITIAL_DURATION = 8,
-    DM2_V1_SPELL_TIMER_CLOUD_REQUEUE_DELAY = 4,
-    DM2_V1_SPELL_TIMER_MISSILE_ENERGY = 100,
-    DM2_V1_SPELL_TIMER_MISSILE_STEP_ENERGY = 8
+    /* No guessed DB14/DB4 field constants: cloud, missile and summon timers
+     * reject reduced payloads until their original record handoff is bound. */
 };
 
 /* Per-handler observability receipt.  It records what the bounded bodies
  * actually mutated so callers can gate M11 feedback on source-named state
- * changes rather than on synthetic simulation. */
+ * changes rather than on fabricated simulation. */
 typedef struct {
     int valid;
 
@@ -85,7 +80,7 @@ typedef struct {
     int poison_value_decays[DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS];
     int poison_strength_decays[DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS];
 
-    /* 0x19 cloud — bounded cycle-13 real-data slice */
+    /* 0x19 cloud — rejected without the source DB14 record handoff */
     int cloud_dispatched;
     int cloud_origin_x;
     int cloud_origin_y;
@@ -96,7 +91,7 @@ typedef struct {
     int cloud_duration_remaining;     /* DB14 byte@4 after decrement */
     int cloud_requeued;               /* 1 when the timer was requeued */
 
-    /* 0x1e missile — bounded cycle-13 real-data slice */
+    /* 0x1e missile — rejected without the source DB14 record handoff */
     int missile_dispatched;
     int missile_projectile_accepted;
     int missile_projectile_slot;
@@ -107,7 +102,7 @@ typedef struct {
     int16_t missile_record_handle;    /* DB14 handle */
     int16_t missile_object_handle;    /* DB item record referenced by DB14::w2 */
 
-    /* 0x5e summon — bounded cycle-13 real-data slice */
+    /* 0x5e summon — rejected without the source allocation handoff */
     int summon_dispatched;
     int summon_record_created;        /* 1 when a fresh DB4 creature record was allocated */
     int16_t summon_record_handle;     /* DB4 handle */

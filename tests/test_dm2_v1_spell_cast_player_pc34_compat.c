@@ -887,17 +887,11 @@ static void test_spell_timer_cloud_real_data(void)
 
     expect_true(ctx.receipt.cloud_dispatched == 1,
                 "cloud real-data handler dispatched");
-    expect_true(ctx.receipt.cloud_record_created == 1,
-                "cloud allocated a DB14 record");
-    expect_true(ctx.receipt.cloud_record_handle != DM2_V1_RECORD_HANDLE_NULL,
-                "cloud DB14 handle is valid");
-    expect_true(ctx.receipt.cloud_duration_remaining ==
-                    DM2_V1_SPELL_TIMER_CLOUD_INITIAL_DURATION - 1,
-                "cloud duration decremented after first pop");
-    expect_true(ctx.receipt.cloud_requeued == 1,
-                "cloud requeued while alive");
-    expect_true(queue.count == 1,
-                "cloud requeued one timer");
+    expect_true(ctx.receipt.cloud_record_created == 0 &&
+                    ctx.receipt.cloud_record_creation_failed == 1,
+                "cloud rejects an incomplete timer instead of inventing DB14 bytes");
+    expect_true(queue.count == 0,
+                "cloud does not synthesize a follow-up timer");
 
     /* Step the requeued timer until the cloud expires. */
     while (queue.count > 0) {
@@ -911,7 +905,7 @@ static void test_spell_timer_cloud_real_data(void)
         dm2_v1_proceed_timers(&queue, tick, &dispatcher, &receipt);
     }
     expect_true(ctx.receipt.cloud_duration_remaining == 0,
-                "cloud duration reached zero");
+                "cloud leaves no synthetic duration state");
 
     free_test_record_pool(&pool_set);
     free_test_dungeon(&dungeon);
@@ -944,13 +938,10 @@ static void test_spell_timer_projectile_real_data(void)
 
     expect_true(ctx.receipt.missile_dispatched == 1,
                 "missile real-data handler dispatched");
-    expect_true(ctx.receipt.missile_record_created == 1,
-                "missile allocated a DB14 flying-item record");
-    expect_true(ctx.receipt.missile_object_handle != DM2_V1_RECORD_HANDLE_NULL,
-                "missile DB10 object handle is valid");
-    expect_true(ctx.receipt.missile_projectile_accepted == 0 &&
+    expect_true(ctx.receipt.missile_record_created == 0 &&
+                ctx.receipt.missile_projectile_accepted == 0 &&
                 ctx.receipt.missile_projectile_slot < 0,
-                "DB14 record does not fabricate a cache projectile");
+                "missile rejects a timer that lacks its source DB14 owner");
 
     free_test_record_pool(&pool_set);
     free_test_dungeon(&dungeon);
@@ -986,16 +977,11 @@ static void test_spell_timer_summon_real_data(void)
 
     expect_true(ctx.receipt.summon_dispatched == 1,
                 "summon real-data handler dispatched");
-    expect_true(ctx.receipt.summon_record_created == 1,
-                "summon allocated a DB4 creature record");
-    expect_true(ctx.receipt.summon_creature_type == 14,
-                "attack minion maps to creature type 14");
-    expect_true(ctx.receipt.summon_caii_allocated == 1,
-                "summon activated a CAII slot");
-    expect_true(ctx.receipt.summon_timer_scheduled == 1,
-                "summon scheduled a think timer");
-    expect_true(queue.count == 1,
-                "summon left the creature think timer in the queue");
+    expect_true(ctx.receipt.summon_record_created == 0 &&
+                ctx.receipt.summon_failed_no_data == 1,
+                "summon rejects a timer that lacks a source allocation context");
+    expect_true(queue.count == 0,
+                "summon does not synthesize a creature think timer");
 
     dm2_v1_caii_array_free(&caii);
     free_test_record_pool(&pool_set);
