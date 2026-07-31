@@ -29,7 +29,8 @@
   Track 02 champion records and the real startup-selected party must be
   decoded before these defaults can populate a production session. Verified
   handoff now clears the fixture roster identity and count as well as numeric
-  state.
+  state. The production roster handoff now avoids the fixture initializer and
+  admits only decoded names; portrait/class/stat records remain unavailable.
 
 - **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
   placeholder labels are now fixture/probe-only. The verified receipt no

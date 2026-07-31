@@ -4057,13 +4057,9 @@ Theron_StartupResult theron_v1_startup_toggle_mirror(
     return result;
 }
 
-Theron_StartupResult theron_v1_startup_enter_forcefield(
+static Theron_StartupResult startup_enter_forcefield_base(
     Theron_StartupFlow *flow,
     Theron_V1_Party *party) {
-
-    int slot = 1;
-    int mirror;
-
     if (!flow || !party) {
         return THERON_STARTUP_ERR_NULL;
     }
@@ -4075,6 +4071,35 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
     if (!flow->theron_present) {
         return THERON_STARTUP_ERR_NOT_READY;
     }
+
+    memset(party, 0, sizeof(*party));
+    party->champion_count = 1;
+    party->active_slot = THERON_CHAMPION_SLOT_THERON;
+    flow->forcefield_entered = 1;
+    flow->phase = THERON_STARTUP_PHASE_IN_DUNGEON;
+    return THERON_STARTUP_OK;
+}
+
+Theron_StartupResult theron_v1_startup_enter_forcefield(
+    Theron_StartupFlow *flow,
+    Theron_V1_Party *party) {
+
+    Theron_StartupResult result = startup_enter_forcefield_base(flow, party);
+
+    if (result != THERON_STARTUP_OK) {
+        return result;
+    }
+
+#if !defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
+    /* The public no-roster entry has no source champion records.  Keep the
+     * fixture-only mirror table out of a production session. */
+    memset(party, 0, sizeof(*party));
+    flow->forcefield_entered = 0;
+    flow->phase = THERON_STARTUP_PHASE_READY;
+    return THERON_STARTUP_ERR_NOT_READY;
+#else
+    int slot = 1;
+    int mirror;
 
     theron_v1_party_init(party, (int)flow->selected_dungeon);
     for (int order = 0;
@@ -4101,6 +4126,7 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
     flow->forcefield_entered = 1;
     flow->phase = THERON_STARTUP_PHASE_IN_DUNGEON;
     return THERON_STARTUP_OK;
+#endif
 }
 
 Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
@@ -4120,7 +4146,7 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
     memset(&persisted_theron, 0, sizeof(persisted_theron));
     persisted_theron = party->champions[THERON_CHAMPION_SLOT_THERON];
 
-    result = theron_v1_startup_enter_forcefield(flow, party);
+    result = startup_enter_forcefield_base(flow, party);
     if (result != THERON_STARTUP_OK) {
         return result;
     }
