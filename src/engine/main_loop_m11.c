@@ -5019,11 +5019,16 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
          * fall back to a different installed release. */
         menuInitOptions.looseFilesOnlyAssetScan =
             (o->bootProbe && (!o->dataDir || !o->dataDir[0])) ? 1 : 0;
-        M12_StartupMenu_InitWithOptions(&menuState,
+    M12_StartupMenu_InitWithOptions(&menuState,
                                         o->dataDir,
                                         o->gameId,
                                         &menuInitOptions);
     }
+    /* The playback device is a launcher-wide host preference, not a
+     * per-game effect.  Bind it before title/entrance audio can create a
+     * stream, then M11_GameView repeats the same handoff at game start after
+     * each game-owned audio reinitialisation. */
+    M11_Audio_SetPreferredPlaybackDeviceName(menuState.settings.audioDeviceName);
     menuState.settings.windowWidth = M11_Render_GetWindowWidth();
     menuState.settings.windowHeight = M11_Render_GetWindowHeight();
     if (o->scaleModeOverride) {

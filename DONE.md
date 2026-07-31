@@ -45678,3 +45678,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   ReDMCSB command nor a material receipt authorizing those pixels. Original
   startup and viewport paths remain the sole pixel owners. Verification:
   configure/build and the PC3.4 real-asset startup and viewport regressions.
+- Follow-up: the selected playback device is now bound immediately after M12
+  initialization, before title or entrance audio can open an SDL stream; game
+  reinitialisation retains the same preference through the existing launch
+  handoff.
