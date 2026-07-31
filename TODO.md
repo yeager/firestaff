@@ -3081,7 +3081,7 @@ that its exact runtime path is not already source-locked and tested.
     and inspected as a valid 720 KiB FAT disk. It is blank: there is no
     `CSBGAME.DAT` or other saved position on it. Treat it as Utility Disk
     media only; it must not satisfy this corpus gate. The local CSBWin binary
-    and installed archives likewise contain no user-created save.
+    and installed archives likewise contain no user-created DSA-bearing save.
     2026-07-29: re-scanned all local CSB `.7z`/`.zip`/`.rar` packages for
     `CSBGAME`, CSBWin and save-disk payload names. The only hits remain the
     blank Atari ST Save Disk and Utility Disk `DungeonSave` directories; there
@@ -3105,6 +3105,13 @@ that its exact runtime path is not already source-locked and tested.
     must not be read as CSBWin loader admission or a production resume. The
     loader-boundary and DSA corpus receipts above are authoritative for this
     file; neither admits a live save or DSA runtime state.
+    2026-07-31 inventory follow-up: the locally available CSBWin source tree
+    contains `Game/CSB/csbgame2.dat` (42 KiB; SHA-256
+    `105104b30dde164e7000d388f251f3d6d3f83a56959f28f56220711d1e9f3a9e`).
+    It is a real CSBWin sample save, but its DSA receipt is
+    `reject_dsa_corpus_no_extended_features` when paired with the tree's
+    `Game/CSB/Dungeon.dat`; it cannot stand in for the required authentic
+    Extended Features/DSA corpus.
     2026-07-30 CSBWin source audit: `SaveGame.cpp::_ReadEntireGame` calls
     `ReadDatabases` immediately after the verified GAMEBLOCK1/2, ITEM16,
     CHARDESC, TIMER and queue streams. For a resumed save, the trailing
