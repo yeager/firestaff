@@ -9225,32 +9225,18 @@ int dm2_v1_runtime_sell_to_shop(int inv_idx) {
 }
 
 int dm2_v1_runtime_npc_interact(int level, int x, int y) {
-    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    DM2_V1_GameState *gs;
-    int same_npc_square;
-
-    if (!rt->boot || !rt->boot->dm2_state) return -1;
-    if (dm2_v1_runtime_get_square_type(level, x, y) < 0) return -1;
-    gs = (DM2_V1_GameState *)rt->boot->dm2_state;
-    if (!rt->outdoor && !gs->outdoor) return -1;
-
-    same_npc_square = rt->last_npc_level == level &&
-                      rt->last_npc_x == x &&
-                      rt->last_npc_y == y;
-    rt->last_npc_id = DM2_NPC_MERCHANT_FRIENDLY;
-    rt->last_npc_level = level;
-    rt->last_npc_x = x;
-    rt->last_npc_y = y;
-    if (same_npc_square && rt->last_npc_dialog_line >= 0) {
-        rt->last_npc_dialog_line =
-            (rt->last_npc_dialog_line + 1) % DM2_NPC_DIALOG_LINES;
-    } else {
-        rt->last_npc_dialog_line = 0;
-    }
-    if (gs->reputation < 9999) {
-        gs->reputation++;
-    }
-    return 0;
+    (void)level;
+    (void)x;
+    (void)y;
+    /* A merchant is a live AI-33 creature with a DB record and its CCM
+     * PLACE_MERCHANDISE/TAKE_MERCHANDISE state.  The original does not turn
+     * an arbitrary outdoor square into a fixed "friendly merchant", nor
+     * does it own Firestaff's local names, dialog strings, or reputation
+     * counter.  Reject until the active DB creature, GDAT merchandise fields
+     * and source-owned UI route are handed through together.
+     * Source: SKProject SKWINSPX/src/v4/skcrture.cpp lines 5368-5444,
+     * 5697-5700; src/v5/skai.cpp::DM2_THINK_CREATURE. */
+    return -1;
 }
 
 int dm2_v1_runtime_get_last_npc_id(void) {

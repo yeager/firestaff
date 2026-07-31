@@ -7849,12 +7849,6 @@ int dm2_v1_boot_runtime_action_front_cell(
             out_receipt->inspect_title = dm2_v1_npc_get_name(npc_id);
             out_receipt->inspect_text =
                 dm2_v1_npc_get_dialog(npc_id, npc_line_index);
-            if (!out_receipt->inspect_title) {
-                out_receipt->inspect_title = "DM2 NPC";
-            }
-            if (!out_receipt->inspect_text) {
-                out_receipt->inspect_text = "WELCOME, TRAVELER.";
-            }
         } else if (dm2_v1_runtime_invoke_square_actuators(level, fx, fy) > 0 ||
                    dm2_v1_runtime_invoke_actuator(
                        level,

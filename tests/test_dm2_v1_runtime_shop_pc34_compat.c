@@ -66,6 +66,10 @@ int main(void)
               (int)DM2_SHOP_RESULT_NO_ACTIVE_SHOP &&
               dm2_v1_runtime_leave_shop() < 0,
           "sell and leave also reject without source shop ownership");
+    CHECK(dm2_v1_runtime_npc_interact(0, 10, 5) < 0 &&
+              state->reputation == 0 &&
+              dm2_v1_runtime_get_last_npc_dialog_line() < 0,
+          "coordinate-only NPC interaction cannot invent merchant dialog or reputation");
     CHECK(dm2_v1_runtime_invoke_actuator(
               0, 10, 5, DM2_ACTUATOR_CREATURE_GENERATOR,
               DM2_AI_DRAGOTH_MINION) < 0 &&

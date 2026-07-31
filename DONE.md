@@ -16,6 +16,13 @@
   `test_csb_v1_m11_launcher_handoff_boundary` pass (567 passed, 0 failed,
   1 Atari skip).
 
+- ✅ 2026-07-31 DM2 coordinate-NPC closure: an arbitrary outdoor square can
+  no longer create Firestaff's fixed friendly merchant, dialog sequence or
+  reputation gain. SKProject drives merchant behavior from a live AI-33 DB
+  creature through `PLACE_MERCHANDISE`/`TAKE_MERCHANDISE`; the missing owner
+  now rejects. Verification: `test_dm2_v1_runtime_shop_pc34_compat` passes
+  10/10 and the focused startup-audio/menu test passes.
+
 - ✅ 2026-07-31 DM2 generator-default closure: creature and item generator
   actuators now reject bare flags instead of spawning a default Dragoth or
   publishing a synthetic item ID. Source DB14/record ownership is required

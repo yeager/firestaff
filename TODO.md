@@ -29,6 +29,12 @@
   route. Do not reuse the credits picture as a boot animation or display it
   through the menu IRGB set.
 
+- **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
+  closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its
+  `PLACE_MERCHANDISE`/`TAKE_MERCHANDISE` CCM records, including source-owned
+  merchandise data and UI text, before enabling merchant interaction. Do not
+  restore a fixed merchant identity, dialog table or reputation counter.
+
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following
   sections, but Firestaff's session-only gold, reputation and time fields do
