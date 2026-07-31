@@ -28,10 +28,9 @@
  *  21.  Bomb dispatch counter increments separately
  *  22.  Reset counters clears all three
  *  23.  Source evidence returns citation string
- *  24.  Direction is computed correctly for cardinal targets
- *  25.  Direction defaults to N for same-position target
- *  26.  Projectile data path: from DM2 creature → DM1 projectile list
- *  27.  Magic-number fix: creature death sound uses DM2_SOUND_CREATURE_DEATH
+ *  24.  Same-position target is rejected; no host direction is invented
+ *  25.  Projectile data path: from DM2 creature → DM1 projectile list
+ *  26.  Magic-number fix: creature death sound uses DM2_SOUND_CREATURE_DEATH
  *
  * Source: dm2_v1_projectile_pc34_compat.c (Phase 5 source-lock)
  *   SKULL.ASM:10620-10710 (SKULL_COMBAT_ResolveRanged)
@@ -196,6 +195,18 @@ static int test_dispatch_melee_only_rejected(void) {
         && r.category == -1 && r.subtype == -1;
 }
 
+static int test_dispatch_same_position_rejected(void) {
+    int id = dm2_v1_creature_spawn(36, 10, 10, 0, 0, 1);
+    DM2_V1_ProjectileDispatchResult r;
+    int before;
+
+    if (id < 0) return 0;
+    before = dm2_v1_projectile_dispatch_count();
+    r = dm2_v1_projectile_dispatch(id, 10, 10, 0);
+    return r.accepted == 0 && r.slot_index == -1 &&
+        dm2_v1_projectile_dispatch_count() == before;
+}
+
 /* ── Spell/bomb dispatch ──────────────────────────────────────────── */
 
 static int test_dispatch_spell(void) {
@@ -307,6 +318,7 @@ int main(void) {
     TEST(dispatch_archer_guard);
     TEST(dispatch_amplifier_fireball);
     TEST(dispatch_melee_only_rejected);
+    TEST(dispatch_same_position_rejected);
 
     /* Spell/bomb dispatch */
     TEST(dispatch_spell);

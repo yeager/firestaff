@@ -128,11 +128,15 @@ int dm2_v1_projectile_pick_category(uint16_t attack_flags,
 
 /* ── Internal: compute direction from creature → target ─────────────
  * DM2 creature directions are V1 cardinals (0=N, 1=E, 2=S, 3=W).
+ * The original projectile event owns a concrete direction and the viewport
+ * consumes that event field directly (ReDMCSB DUNVIEW.C:5741-5781).  A
+ * zero-length target vector cannot prove one, so it must not become a host
+ * default direction or create a projectile.
  * Source: skproject/SKWIN/DME.h:1505-1560, ReDMCSB GROUP.C:1695-1770. */
 static int compute_direction(int from_x, int from_y, int to_x, int to_y) {
     int dx = to_x - from_x;
     int dy = to_y - from_y;
-    if (dx == 0 && dy == 0) return 0; /* fallback: N */
+    if (dx == 0 && dy == 0) return -1;
     /* Use the dominant axis. */
     if (abs(dx) >= abs(dy)) {
         return (dx > 0) ? 1 : 3; /* E or W */
@@ -183,6 +187,9 @@ static DM2_V1_ProjectileDispatchResult create_projectile(
     input.cell = 0;  /* center cell by default */
     input.direction = compute_direction(
         c->world_x, c->world_y, target_world_x, target_world_y);
+    if (input.direction < 0) {
+        return r;
+    }
     input.kineticEnergy = 100;  /* DM1 default for creature-launched */
     input.attack = (int)spec->AttackStrength;
     if (input.attack < 1) return r;

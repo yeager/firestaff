@@ -1,3 +1,10 @@
+- ✅ 2026-07-31 DM2 projectile direction closure: a creature projectile with
+  identical source and target coordinates is now rejected before event
+  creation. Firestaff no longer invents a north direction for a zero-length
+  vector; original projectile events own a concrete direction. Source:
+  ReDMCSB `DUNVIEW.C:5741-5781` and SKProject creature-direction records.
+  Verification: `test_dm2_v1_projectile_pc34_compat` 24/24 passes.
+
 - ✅ 2026-07-31 DM2 HUD placeholder-plan closure: removed the deterministic
   action-icon, champion-slot and portrait colour markers from the V1 HUD
   render plan. They had no GDAT provenance and were not permitted to stand
