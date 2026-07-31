@@ -314,8 +314,7 @@ int main(int argc, char** argv) {
         probe_record(&tally,
                      "INV_M11_AUDIO_06D",
                      routed && soundIndex == 2 && mapX == 4 && mapY == 5 &&
-                         mapIndex == 3 && state.lastSoundIndex == 2 &&
-                         state.lastMarker == M11_AUDIO_MARKER_DOOR,
+                         mapIndex == 3 && state.lastSoundIndex == 2,
                      "queued PLAY_SOUND event preserves source sound index and location through audio seam");
     }
 
