@@ -23502,6 +23502,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     opens C017, sends the real C545 mouth click at `(64,54)`, and verifies the
     resulting F0345 C020/C030/C031 food-water pixels. This closes neither an
     original-frame comparison nor the broader F0344 interaction sweep.
+  - 2026-07-31 capture recheck: the original PC3.4 `DM.EXE` selector ran in
+    DOSBox Staging and reached the automation route, but the current macOS
+    `CGWindowListCreateImage` permission context returned all-black frames.
+    Those images are rejected as invalid evidence. Earlier operator-local
+    DOSBox rawshots are valid dungeon-movement evidence only; they do not
+    cover the F0344/F0345 panel sequence. A raw DOSBox capture or an allowed
+    macOS window-capture context remains required.
 
 ## DM1 C13 F0435 stale-fence follow-up
 
