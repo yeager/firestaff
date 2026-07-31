@@ -312,7 +312,7 @@ static void check_track02_hashes(void)
     check_true("track02.jp_rev1_last",      jp[31] == 'b');
     check_true("track02.jp_rev1_nulterm",   jp[32] == 0);
     check_true("track02.us_iso_length",     strlen(us) == 32);
-    check_true("track02.us_iso_first",      us[0] == '3');
+    check_true("track02.us_iso_first",      us[0] == 'c');
     check_true("track02.us_iso_last",       us[31] == 'a');
     check_true("track02.us_iso_nulterm",    us[32] == 0);
     check_true("track02.hashes_distinct",

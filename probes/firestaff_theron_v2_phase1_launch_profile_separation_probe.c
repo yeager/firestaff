@@ -161,8 +161,8 @@ static void check_theron_asset_hashes(void)
           "JP Rev 1 != US ISO");
     check(THERON_TRACK02_MD5_JP_REV1_ISO[0] == '3',
           "JP Rev 1 starts with '3' (prefix pinned)");
-    check(THERON_TRACK02_MD5_US_ISO[0] == '3',
-          "US ISO starts with '3' (prefix pinned)");
+    check(THERON_TRACK02_MD5_US_ISO[0] == 'c',
+          "US ISO starts with 'c' (prefix pinned)");
 }
 
 static void check_cross_game_hash_separation(void)
@@ -244,7 +244,7 @@ static void check_headless_safe(void)
      * constants are pure string literals. */
     check(THERON_TRACK02_MD5_JP_REV1_ISO[0] == '3',
           "headless: JP Rev 1 constant pinned (no I/O)");
-    check(THERON_TRACK02_MD5_US_ISO[0] == '3',
+    check(THERON_TRACK02_MD5_US_ISO[0] == 'c',
           "headless: US ISO constant pinned (no I/O)");
 }
 
