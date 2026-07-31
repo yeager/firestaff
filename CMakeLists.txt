@@ -3896,6 +3896,11 @@ endif()
 # ── Nexus V1 static library ────────────────────────────────────────
 file(GLOB NEXUS_SOURCES CONFIGURE_DEPENDS "src/nexus/nexus_v1_*.c")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_bpx_bpk\\.c$")
+# The legacy heuristic string scraper guesses ASCII/Shift-JIS runs and is not
+# a source-owned Nexus consumer.  Keep it out of production; RLOWFIX TEXT/TABL
+# admission is handled by nexus_v1_rlowfix_text.c until full Saturn glyph and
+# layout evidence is available.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_text\\.c$")
 # M11 owns the shared host lifecycle and calls these four runtime adapters.
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
