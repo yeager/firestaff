@@ -46996,6 +46996,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   even if a layout slot index is reused. Nexus startup/menu art therefore stays
   source-bound/no-draw until real Saturn placement is admitted; other game-card
   routes are unchanged. `firestaff_m11` rebuild passes.
+- ✅ 2026-07-31 Nexus launcher status audit: removed the hardcoded `AVAILABLE`
+  label from the legacy M12 card path. Nexus now reports readiness only from
+  the verified asset-version match, like the other games; `firestaff_m12`
+  rebuild and diff check pass.
 - ✅ 2026-07-31 Theron production combat boundary: removed the inferred
   creature/combat template table from `firestaff_theron`. Production now
   links explicit fail-closed symbols from

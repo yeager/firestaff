@@ -6903,9 +6903,6 @@ static const char* m12_game_card_line3(const M12_StartupMenuState* state,
         return _("SETTINGS");
     }
     version = m12_selected_version_status(state, gameIndex);
-    if (entry->gameId && strcmp(entry->gameId, "nexus") == 0) {
-        return _("AVAILABLE");
-    }
     if (entry->gameId && strcmp(entry->gameId, "theron") == 0) {
         return _("NO SOURCE");
     }
