@@ -46950,3 +46950,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   face/material admission, and runtime materialization pass against the real
   European corpus. ITEM.IBS 4bpp/palette ownership remains source-bound and
   no-draw; the only remaining viewport gate is authentic Saturn VDP1 capture.
+- ✅ 2026-07-31 Nexus MENU.BPK palette boundary: DMWeb's 256-entry
+  big-endian PALT trailer is now revalidated from the real `MENU.BPK`.
+  Structure2 ABI, intake and PRS3/VDP1 consumer-evidence tests all pass;
+  palette bytes remain source-bound but are not promoted to visible menu
+  pixels until an authentic Saturn consumer trace is available.
