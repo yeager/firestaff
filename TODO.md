@@ -24620,3 +24620,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   no-context DSA stubs are contract-only. Bind original dungeon placement and
   the imported DSA interpreter before enabling either live creature drops or
   DSA filters.
+
+- 🔧 CSB hidden-graphics follow-up: only the real source-loader is available
+  in production. Bind a verified original GRAPHICS.DAT hidden-item corpus to
+  a visible owner before promoting those records into a runtime presentation.

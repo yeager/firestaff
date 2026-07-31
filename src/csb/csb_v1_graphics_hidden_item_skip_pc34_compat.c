@@ -125,6 +125,7 @@ int csb_v1_graphics_hidden_item_load_safe(DM1_V1_GFX_LoaderStatePc34* state,
  * test in tests/test_csb_v1_graphics_hidden_item_skip.c opens
  * a synthetic .DAT to verify the full safe-load path.
  */
+#ifdef CSB_V1_HIDDEN_ITEM_SKIP_CONTRACT_ONLY
 int csb_v1_graphics_hidden_item_skip_self_test(void)
 {
     /* 1. platform mapping */
@@ -217,3 +218,4 @@ int csb_v1_graphics_hidden_item_skip_self_test(void)
 
     return 0;
 }
+#endif /* CSB_V1_HIDDEN_ITEM_SKIP_CONTRACT_ONLY */

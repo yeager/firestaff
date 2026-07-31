@@ -159,7 +159,11 @@ int csb_v1_graphics_hidden_item_load_safe(DM1_V1_GFX_LoaderStatePc34* state,
  *     is not opened -- this is expected and matches the
  *     "treat as error" branch in callers).
  */
+/* The self-test constructs synthetic records and is deliberately unavailable
+ * in production; only the safe loader above may consume real source bytes. */
+#ifdef CSB_V1_HIDDEN_ITEM_SKIP_CONTRACT_ONLY
 int csb_v1_graphics_hidden_item_skip_self_test(void);
+#endif
 
 #ifdef __cplusplus
 }

@@ -33565,6 +33565,8 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_v1_graphics_hidden_item_skip PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_compile_definitions(test_csb_v1_graphics_hidden_item_skip PRIVATE
+        CSB_V1_HIDDEN_ITEM_SKIP_CONTRACT_ONLY=1)
     if(NOT MSVC)
         target_compile_options(test_csb_v1_graphics_hidden_item_skip PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
