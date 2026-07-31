@@ -47263,24 +47263,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   roster names no longer expose fixture portrait indices or classes in menu
   elements. The startup-flow probe remains green at `653/653`.
 
-- ✅ 2026-07-31 Nexus TEXT/TABL source-boundary cleanup: RLOWFIX.BIN TEXT
-  offsets and the 216-entry DMWeb TABL code table are parsed from the real
-  retail resource and exercised by `test_nexus_v1_champion_plrd`. The legacy
-  heuristic ASCII/Shift-JIS scraper plus unauthenticated S2D text/glyph
-  layout wrappers are excluded from `firestaff_nexus`; they remain available
-  only to explicit diagnostic probes. No glyph, palette, menu, HUD or Saturn
-  VDP1/VDP2 presentation is promoted by this change.
-- ✅ 2026-07-31 DM2 SHOP_GLASS panel isolation: removed the remaining
-  host-authored shop rectangle, English labels and empty-inventory fallback
-  from the production shop module. Its render contract now clears the output
-  and returns no-draw until the source-owned `WALL_GFX`/DB actuator chain is
-  decoded. Verification: production link, shop admission regression and an
-  executable-string check for the retired panel text.
-
-- ✅ 2026-07-31 DM1 original SND3 runtime verification: repaired the two
-  standalone SND3 probe launchers after the source tree moved under
-  `src/shared`, and isolated unrelated CSB/DM1 swoosh link dependencies from
-  the DM1-only runtime harness. Against the installed original
-  `GRAPHICS.DAT`, all 33 SND3 records decode (114157 source samples), all 35
-  event-index runtime buffers load, and the decoded Door event queues through
-  SDL at 22050 Hz. No generated sound data is used by this verification.
+- ✅ 2026-07-31 Theron startup TODO audit: removed the stale claim that the
+  structured save/resume receipt test had an unrelated failure. The corrected
+  fixture-scoped linkage now passes `325/325`; HUD rendering remains blocked
+  until a real Track 02 widget bank is decoded.

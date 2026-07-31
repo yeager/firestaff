@@ -67,8 +67,8 @@
 
 - **THERON-RUNTIME-RENDER-ASSET-BUNDLE:** The runtime frame facade now rejects
   a NULL asset bundle before rendering or presenting a frame. This closes the
-  source-less facade path; the remaining save-resume suite has one unrelated
-  pre-existing structured-receipt failure to investigate separately.
+  source-less facade path; the save-resume structured-receipt contract is now
+  green at `325/325`.
 
 - **THERON-CREATURE-COMBAT-REAL-DATA:** `theron_v1_compat.c` still contains
   inferred creature stats, attack values and drops. It is now excluded from
