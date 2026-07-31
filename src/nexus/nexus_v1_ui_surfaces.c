@@ -733,6 +733,7 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
     const uint32_t *palette)
 {
     Nexus_UI_StabgPixelDecodeReceipt receipt;
+    Nexus_UI_StabgDmwebReceipt dmweb_receipt;
     Nexus_UI_Surface *surface;
     uint8_t pixels[320U * 168U];
     uint16_t palette_le[256];
@@ -743,7 +744,10 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
         nexus_ui_stabg_decode_first_map(data, data_size, pixels,
                                         sizeof(pixels), palette_le,
                                         &receipt) != 0 ||
-        !receipt.valid || receipt.width != 320 || receipt.height != 168)
+        !receipt.valid || receipt.width != 320 || receipt.height != 168 ||
+        nexus_ui_stabg_dmweb_decode_receipt(data, data_size,
+                                            &dmweb_receipt) != 0 ||
+        !dmweb_receipt.valid || dmweb_receipt.part2_size != 512U)
         return -1;
     if (nexus_ui_surface_load(mgr, NEXUS_SURFACE_STABG, pixels,
                                (int)sizeof(pixels), receipt.width,
@@ -760,8 +764,9 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
         surface->source_palette_rgba[i] = 0xff000000U |
             ((uint32_t)red << 16) | ((uint32_t)green << 8) | blue;
     }
+    /* Hash source bytes, not the host representation of the decoded words. */
     surface->source_palette_fnv1a32 = nexus_ui_fnv1a32(
-        (const uint8_t *)palette_le, sizeof(palette_le));
+        data + dmweb_receipt.part2_offset, dmweb_receipt.part2_size);
     surface->source_palette_loaded = 1;
     return 1;
 }
