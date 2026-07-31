@@ -1732,6 +1732,8 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                         view.csbState.level_loaded &&
                         view.csbAtariStRuntimeHandoffComplete,
                     "Atari ST ANIMATE.SCR reaches its source-owned FTLCODE handoff");
+        expect_true(strcmp(view.lastOutcome, "ATARI RUNTIME READY") != 0,
+                    "Atari ST handoff does not publish a host readiness message");
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         runtime_hud_pixels_visible =
@@ -1742,6 +1744,9 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                     "Atari ST C232 HUD material reaches the first FTLCODE frame");
         expect_true(runtime_viewport_pixels_visible,
                     "Atari ST floor/ceiling and wall source pixels reach the FTLCODE aperture");
+        expect_true(strcmp(view.lastOutcome,
+                           "CSBWIN SOURCE FRAME - EXTENDED CELLS REQUIRED") != 0,
+                    "Atari ST source frame does not publish diagnostic chrome");
         expect_true(view.presentationMode == requested,
                     "Atari ST runtime retains the requested presentation mode");
         M11_GameView_Shutdown(&view);

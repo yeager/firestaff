@@ -2257,7 +2257,9 @@ static int m11_csb_present_atari_st_runtime_hud(
         memcpy(framebuffer + (size_t)y * (size_t)framebuffer_width,
                candidate + (size_t)y * 320u, 320u);
     }
-    m11_set_status(state, "CSB", "CSBWIN SOURCE FRAME - EXTENDED CELLS REQUIRED");
+    /* C232 owns the completed CSBWin HUD page.  Do not add a host-side
+     * progress/diagnostic message here: it would be visible chrome with no
+     * CSBWin pixel or text owner. */
     return 1;
 }
 
@@ -3356,7 +3358,9 @@ static int m11_csb_complete_atari_st_runtime_handoff(M11_GameViewState *state)
     state->csbState.startup_entrance_dismissed = 1;
     state->csbAtariStRuntimeHandoffComplete = 1;
     m11_sync_csb_state_from_boot_profile(state, profile);
-    m11_set_status(state, "CSB", "ATARI RUNTIME READY");
+    /* ANIM.C transfers directly to FTLCODE.  This boundary has no source
+     * message, so retain the source-owned page rather than publishing a
+     * host-generated readiness notification. */
     return 1;
 }
 

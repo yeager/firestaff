@@ -272,7 +272,11 @@ diagnostic; it must not silently fall back to a generated visual.
   it cannot substitute generated pixels while the remaining original-material
   bindings are recovered. **2026-07-30 update:** the retired V2 HUD bitmap
   renderer is likewise strict no-draw; PC3.4 C017/C040 and Atari ST C232 are
-  the only admitted HUD pixel owners.
+  the only admitted HUD pixel owners. **2026-07-31 update:** the live
+  Atari-ST C232/TAG0088b2 route no longer appends the host-only status texts
+  `ATARI RUNTIME READY` or `CSBWIN SOURCE FRAME - EXTENDED CELLS REQUIRED` to
+  its source-owned page. The remaining work is real F0128 material binding,
+  not generated diagnostic chrome.
 - **DM2-ORIGINAL-REPLACE-001:** Replace the V1 viewport's placeholder wall
   and door passes with decoded `dm2/GRAPHICS.DAT` GDAT records selected by
   the live `DUNGEON.DAT` graphics set.  Missing/unsupported GDAT image forms

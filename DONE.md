@@ -44142,6 +44142,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   fail-closed contract. This does not claim completion of the still-open
   source-material bindings in `CSB-ORIGINAL-REPLACE-001`.
 
+# CSBWin runtime diagnostic-chrome removal (2026-07-31)
+
+- ✅ The authentic Atari-ST runtime viewport and C232 HUD composition no
+  longer emits the host-only `ATARI RUNTIME READY` or `CSBWIN SOURCE FRAME -
+  EXTENDED CELLS REQUIRED` status strings. `ANIM.C` hands off directly to
+  FTLCODE, and the completed C232/TAG0088b2 page remains its only pixel/text
+  owner. The M12/M11 handoff regression includes both absence checks; its
+  PC3.4 lane passes, while the test retains its explicit skip until the local
+  Atari-ST package is supplied through `FIRESTAFF_CSB_ATARI_ST_ROOT`.
+
 # CSB V2 HUD generated-chrome containment (2026-07-30)
 
 - ✅ Retired the procedural compass, numeric font, champion bars, action
