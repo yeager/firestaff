@@ -1,3 +1,11 @@
+- ✅ 2026-08-01 v3.0.208 Multi-game bug fix batch (DM1, CSB, DM2, Nexus):
+  DM2 actuator gap closure (shooter, item teleport, push-button switch,
+  creature generator), Nexus card art restored on startup menu, DM2 menu
+  click fallback when GDAT rect resolution fails, CSB viewport preservation
+  during HUD overlay (save/restore 224x136 pixels), TEXT PLAQUE restricted
+  to debug-only, V2 HUD red rectangles fixed (palette index 8→12 in slice
+  assets), DM1 corridor depth fail-closed (black-fill when front wall bitmap
+  missing), DM2 HUD widget GDAT provenance gate (REAL requires GDAT receipt).
 - ✅ 2026-08-01 Fix 7 failing DM2 tests: HUD portrait local palette gate
   (missing stat_bar_color_source_bound), drops source order and creature
   death drop probe (missing AI spec setup before spawn), HUD widget

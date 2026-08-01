@@ -1,6 +1,17 @@
 
 # Unreleased
 
+# Firestaff v3.0.208
+
+- DM2: actuator gap closure — shooter, item teleport, push-button switch, creature generator
+- DM2: menu click fallback when GDAT rect resolution fails (row-based pointer handler)
+- DM2: HUD widget asset classification requires GDAT provenance for REAL
+- DM1: V2 HUD red rectangles fixed — palette index 8 (red) replaced with 12 (dark gray) in slice assets
+- DM1: corridor depth fail-closed — black-fill when front wall bitmap missing
+- DM1: TEXT PLAQUE restricted to showDebugHUD only
+- CSB: viewport preservation during HUD overlay (save/restore 224x136 pixels)
+- Nexus: card art restored on startup menu
+
 # Firestaff v3.0.207
 
 - DM2 gap analysis closure: 5 new modules ported from skproject reference.
