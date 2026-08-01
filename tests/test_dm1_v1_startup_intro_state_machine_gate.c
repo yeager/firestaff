@@ -6,13 +6,23 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "fs_portable_compat.h"
 
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <io.h>
+#include <direct.h>
+#include <process.h>
+#define getpid _getpid
+#define unlink _unlink
+#define rmdir _rmdir
+#else
 #include <unistd.h>
+#endif
 
 /* IMG3 globals are required by firestaff_m10 when this focused gate links
  * the full M11 runtime libraries through main_loop_m11.c. */
@@ -3437,8 +3447,8 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 test corpus fixture created", corpus_ready, 1);
     /* This fixture verifies the unconfigured receipt route. A developer's
      * real corpus must not leak into that assertion through the process env. */
-    unsetenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
-    unsetenv("FIRESTAFF_DM1_ORIGINAL_SAVE_DIR");
+    FSP_UnsetEnv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
+    FSP_UnsetEnv("FIRESTAFF_DM1_ORIGINAL_SAVE_DIR");
     hoc_boot_complete_facts.source_id = "dm1";
     hoc_boot_complete_facts.resume_path =
         corpus_ready ? corpus_save_path : "dm1-original-save";

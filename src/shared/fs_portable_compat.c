@@ -430,3 +430,17 @@ int FSP_SetEnv(const char* name, const char* value, int overwrite) {
     return setenv(name, value, overwrite);
 #endif
 }
+
+int FSP_UnsetEnv(const char* name) {
+    if (!name) return -1;
+#if defined(_WIN32)
+    {
+        char buf[2048];
+        int n = snprintf(buf, sizeof(buf), "%s=", name);
+        if (n <= 0 || (size_t)n >= sizeof(buf)) return -1;
+        return (_putenv(buf) == 0) ? 0 : -1;
+    }
+#else
+    return unsetenv(name);
+#endif
+}

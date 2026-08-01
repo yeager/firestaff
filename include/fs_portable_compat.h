@@ -131,6 +131,12 @@ int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir);
  */
 int FSP_SetEnv(const char* name, const char* value, int overwrite);
 
+/*
+ * Portable unsetenv wrapper. On POSIX, wraps unsetenv(). On Windows,
+ * uses _putenv_s(name, "") or _putenv("name="). Returns 0 on success.
+ */
+int FSP_UnsetEnv(const char* name);
+
 #ifdef __cplusplus
 }
 #endif
