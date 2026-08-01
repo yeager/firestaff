@@ -3914,7 +3914,10 @@ if(DM2_SOURCES)
     # that setter must never be exported by the normal runtime. Compile a
     # private copy of the runtime solely for that test with its fixture API.
     add_library(firestaff_dm2_runtime_weather_fixture OBJECT
-        src/dm2/dm2_v1_runtime.c)
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c)
     target_include_directories(firestaff_dm2_runtime_weather_fixture PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_compile_definitions(firestaff_dm2_runtime_weather_fixture PRIVATE
@@ -5010,6 +5013,8 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v2_outdoor_enhanced.c
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -5082,6 +5087,8 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -5152,6 +5159,8 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v2_touch_controller_affordance.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -5222,6 +5231,8 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v2_outdoor_enhanced.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -5421,6 +5432,8 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -5498,6 +5511,8 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm2/dm2_v2_lighting_runtime.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -5570,6 +5585,8 @@ add_executable(firestaff_dm2_v2_smooth_movement_probe
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -6315,6 +6332,8 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -13908,6 +13927,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -13980,6 +14001,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -14052,6 +14075,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -14643,6 +14668,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -14708,6 +14735,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_world_model.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -14772,6 +14801,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_weather_seed_regression.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -14844,6 +14875,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_weather_timer_producer_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -14916,6 +14949,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_think_creature_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -14988,6 +15023,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_creature_schedule_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -15060,6 +15097,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_caii_alloc_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -15134,6 +15173,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_caii_reschedule_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -15208,6 +15249,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_caii_free_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
@@ -15293,6 +15336,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -16660,6 +16705,45 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_tile_record_walk_pc34_compat
     )
 
+    # ── DM2 actuator event dispatch (ACTUATE_WALL_MECHA / FLOOR_MECHA) ──
+    add_executable(test_dm2_v1_actuator_event_pc34_compat
+        tests/test_dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_creature_tables.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_actuator_event_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_actuator_event_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_actuator_event_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_actuator_event_pc34_compat
+        COMMAND test_dm2_v1_actuator_event_pc34_compat
+    )
+
     # ── DM2-002: DELETE_CREATURE_RECORD mutating tail ──
     add_executable(test_dm2_v1_delete_creature_tail_pc34_compat
         tests/test_dm2_v1_delete_creature_tail_pc34_compat.c
@@ -17108,6 +17192,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -17633,6 +17719,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_phase_gate.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
@@ -44852,6 +44940,8 @@ if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_runtime_stati
     add_executable(test_dm2_v1_runtime_static_scene_receipt
         tests/test_dm2_v1_runtime_static_scene_receipt.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_runtime_static_scene_receipt PRIVATE ${CMAKE_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
@@ -45055,6 +45145,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c

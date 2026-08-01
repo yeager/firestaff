@@ -30,6 +30,7 @@
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
+#include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
@@ -4634,6 +4635,40 @@ static int dm2_runtime_actuate_floor_mecha(void *user,
  * increments a fail-closed counter so the dispatcher never substitutes
  * behavior.
  *
+ * dm2_runtime_ornate_animator_timer — 0x55 timer handler.
+ * Source: skevent.cpp ACTIVATE_ORNATE_ANIMATOR queues ttyOrnateAnimator.
+ * The handler advances the ornate animation frame on the actuator record.
+ * Consumed fail-closed until GDAT ornate-anim-len is bound.
+ */
+static int dm2_runtime_ornate_animator_timer(void *user,
+                                             const DM2_V1_SourceTimer *timer,
+                                             uint16_t source_index,
+                                             DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    (void)timer; (void)source_index; (void)receipt;
+    rt->actuator_tile_timers++;
+    return 1;
+}
+
+/*
+ * dm2_runtime_tick_generator_timer — 0x56 timer handler.
+ * Source: skevent.cpp PROCESS_ACTUATOR_TICK_GENERATOR / ACTIVATE_TICK_GENERATOR.
+ * Fires INVOKE_ACTUATOR on the tick generator's target, then re-queues itself.
+ * Consumed fail-closed until the invoke chain is fully bound.
+ */
+static int dm2_runtime_tick_generator_timer(void *user,
+                                            const DM2_V1_SourceTimer *timer,
+                                            uint16_t source_index,
+                                            DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    (void)timer; (void)source_index; (void)receipt;
+    rt->actuator_tile_timers++;
+    return 1;
+}
+
+/*
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214 (class-0 dispatch)
  *         skproject/SKULLWIN/c_tim_proc.cpp:1923 (DM2_ACTUATE_WALL_MECHA)
  */
@@ -4643,13 +4678,33 @@ static int dm2_runtime_actuate_wall_mecha(void *user,
                                           DM2_V1_ProceedTimersReceipt *receipt)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    (void)timer;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_ActuatorEventReceipt actu_receipt;
+    int x, y, action_type, direction;
+
     (void)source_index;
     (void)receipt;
 
     rt->actuator_tile_timers++;
     rt->actuator_tile_wall_mecha++;
-    /* CCM tail unbound: timer is consumed, no mutation performed. */
+
+    if (!rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data) {
+        return 1;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+
+    x = (int)(int8_t)(timer->value_a & 0xFF);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xFF);
+    direction   = (int)(timer->value_b & 0xFF);
+    action_type = (int)((timer->value_b >> 8) & 0xFF);
+
+    memset(&actu_receipt, 0, sizeof(actu_receipt));
+    dm2_v1_actuate_wall_mecha(&rt->record_pools, dungeon,
+                              &rt->timer_queue,
+                              rt->dungeon_level, x, y,
+                              action_type, direction,
+                              (uint32_t)rt->tick_count,
+                              &actu_receipt);
     return 1;
 }
 
@@ -4938,6 +4993,10 @@ void dm2_v1_runtime_tick(void) {
         if (rt->think_binding_ready) {
             dispatcher.actuator_tile[1] = dm2_runtime_actuate_floor_mecha;
         }
+        dispatcher.handlers[DM2_V1_TIMER_ORNATE_ANIMATOR] =
+            dm2_runtime_ornate_animator_timer;
+        dispatcher.handlers[DM2_V1_TIMER_TICK_GENERATOR] =
+            dm2_runtime_tick_generator_timer;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
         /* Round 24: the 0x01 door-step timer mutates the dungeon square
