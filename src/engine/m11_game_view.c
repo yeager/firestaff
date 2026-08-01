@@ -24702,6 +24702,21 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
                 fbY,
                 &execution,
                 &action_receipt)) {
+            /* GDAT rect path failed — fall back to row-based pointer handler
+             * which supports New, Resume/Continue, and Quit via fixed geometry. */
+            DM2_V1_BootRuntimeStartupSnapshot snapshot;
+            DM2_V1_StartupHostFacts facts;
+            m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+            if (dm2_v1_boot_startup_host_facts_from_runtime_state(
+                    snapshot.profile, snapshot.startup_menu_active,
+                    snapshot.startup_save_root, snapshot.resume_available,
+                    snapshot.slot_mask, snapshot.selected_row, &facts) &&
+                dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
+                    &facts, fbX != x ? fbX : x, fbY != y ? fbY : y,
+                    m11_dm2_startup_apply_session_callback, state,
+                    &execution, &action_receipt)) {
+                return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
+            }
             return M11_GAME_INPUT_IGNORED;
         }
     }
