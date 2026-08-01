@@ -24642,50 +24642,101 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
     }
     {
         Dm2TouchClickZonePc34Compat zone;
-        const DM2_V1_AssetLoader *loader;
-        DM2_V1_QueryGdatSummaryImageReceipt image;
-        DM2_V1_InterfacePalette palette;
-        uint32_t raw_hash = 0u;
-        uint32_t raw_bytes = 0u;
-        int credits_material_ready = 0;
-
         if (DM2_TOUCHCLICK_Compat_HitTestInView(
                 DM2_TOUCH_CLICK_VIEW_MAIN_MENU_PC34_COMPAT, x, y,
-                TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &zone) &&
-            zone.commandId == 218u) {
-            loader = dm2_v1_boot_asset_loader(
-                (const DM2_V1_BootProfile *)state->dm2BootProfile);
-            memset(&image, 0, sizeof(image));
-            if (loader &&
-                dm2_v1_query_gdat_summary_image_receipt(
-                    loader, DM2_GDAT_CATEGORY_TITLE, 0, 1, &image) &&
-                image.accepted && image.metadata.width == 320u &&
-                image.metadata.height == 200u &&
-                ((image.metadata.bits_per_pixel == 8u &&
-                  dm2_v1_boot_interface_palette(
-                      (DM2_V1_BootProfile *)state->dm2BootProfile,
-                      &palette)) ||
-                 (image.metadata.bits_per_pixel == 4u &&
-                  image.colors == 16u && image.palette_hash != 0u)) &&
-                dm2_v1_boot_gdat_raw_asset_proof(
-                    (DM2_V1_BootProfile *)state->dm2BootProfile,
-                    DM2_GDAT_CATEGORY_TITLE, 0, 1, 0x32435244u,
-                    &raw_hash, &raw_bytes) && raw_hash != 0u &&
-                raw_bytes > 0u) {
-                credits_material_ready = 1;
-            }
-            if (!credits_material_ready) {
-                m11_set_status(state, "STARTUP",
-                               "DM2 CREDITS GDAT REQUIRED");
+                TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &zone)) {
+            if (zone.commandId == 218u) {
+                /* SKProject startend.cpp::DM2_SHOW_CREDITS */
+                const DM2_V1_AssetLoader *loader;
+                DM2_V1_QueryGdatSummaryImageReceipt image;
+                DM2_V1_InterfacePalette palette;
+                uint32_t raw_hash = 0u;
+                uint32_t raw_bytes = 0u;
+                int credits_material_ready = 0;
+                loader = dm2_v1_boot_asset_loader(
+                    (const DM2_V1_BootProfile *)state->dm2BootProfile);
+                memset(&image, 0, sizeof(image));
+                if (loader &&
+                    dm2_v1_query_gdat_summary_image_receipt(
+                        loader, DM2_GDAT_CATEGORY_TITLE, 0, 1, &image) &&
+                    image.accepted && image.metadata.width == 320u &&
+                    image.metadata.height == 200u &&
+                    ((image.metadata.bits_per_pixel == 8u &&
+                      dm2_v1_boot_interface_palette(
+                          (DM2_V1_BootProfile *)state->dm2BootProfile,
+                          &palette)) ||
+                     (image.metadata.bits_per_pixel == 4u &&
+                      image.colors == 16u && image.palette_hash != 0u)) &&
+                    dm2_v1_boot_gdat_raw_asset_proof(
+                        (DM2_V1_BootProfile *)state->dm2BootProfile,
+                        DM2_GDAT_CATEGORY_TITLE, 0, 1, 0x32435244u,
+                        &raw_hash, &raw_bytes) && raw_hash != 0u &&
+                    raw_bytes > 0u) {
+                    credits_material_ready = 1;
+                }
+                if (!credits_material_ready) {
+                    m11_set_status(state, "STARTUP",
+                                   "DM2 CREDITS GDAT REQUIRED");
+                    return M11_GAME_INPUT_REDRAW;
+                }
+                state->dm2State.startup_credits_active = 1;
+                state->dm2State.startup_credits_remaining_ticks = 1800;
+                m11_set_status(state, "STARTUP", "DM2 CREDITS GDAT");
                 return M11_GAME_INPUT_REDRAW;
             }
-            /* SKProject startend.cpp::DM2_SHOW_CREDITS lines 1381-1397.
-             * The countdown is an event-loop step count, not a fabricated
-             * title animation. */
-            state->dm2State.startup_credits_active = 1;
-            state->dm2State.startup_credits_remaining_ticks = 1800;
-            m11_set_status(state, "STARTUP", "DM2 CREDITS GDAT");
-            return M11_GAME_INPUT_REDRAW;
+            if (zone.commandId == 215u) {
+                /* SKProject HANDLE_UI_EVENT 0xD7 → NEW GAME */
+                DM2_V1_StartupAction action;
+                DM2_V1_BootRuntimeStartupSnapshot snapshot;
+                DM2_V1_StartupHostFacts facts;
+                m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+                if (dm2_v1_boot_startup_host_facts_from_runtime_state(
+                        snapshot.profile, snapshot.startup_menu_active,
+                        snapshot.startup_save_root, snapshot.resume_available,
+                        snapshot.slot_mask, snapshot.selected_row, &facts)) {
+                    memset(&action, 0, sizeof(action));
+                    action.kind = DM2_V1_STARTUP_ACTION_NEW_GAME;
+                    action.row = -1;
+                    action.slot = -1;
+                    if (dm2_v1_startup_execute_action_from_host_facts_with_receipt(
+                            &action, &facts,
+                            m11_dm2_startup_apply_session_callback, state,
+                            &execution, &action_receipt)) {
+                        return m11_dm2_startup_apply_host_action_receipt(
+                            state, &action_receipt);
+                    }
+                }
+                return M11_GAME_INPUT_IGNORED;
+            }
+            if (zone.commandId == 217u) {
+                /* SKProject HANDLE_UI_EVENT 0xD9 → RESUME GAME */
+                DM2_V1_StartupAction action;
+                DM2_V1_BootRuntimeStartupSnapshot snapshot;
+                DM2_V1_StartupHostFacts facts;
+                m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
+                if (dm2_v1_boot_startup_host_facts_from_runtime_state(
+                        snapshot.profile, snapshot.startup_menu_active,
+                        snapshot.startup_save_root, snapshot.resume_available,
+                        snapshot.slot_mask, snapshot.selected_row, &facts) &&
+                    facts.resume_available) {
+                    memset(&action, 0, sizeof(action));
+                    action.kind = DM2_V1_STARTUP_ACTION_CONTINUE;
+                    action.row = -1;
+                    action.slot = -1;
+                    if (dm2_v1_startup_execute_action_from_host_facts_with_receipt(
+                            &action, &facts,
+                            m11_dm2_startup_apply_session_callback, state,
+                            &execution, &action_receipt)) {
+                        return m11_dm2_startup_apply_host_action_receipt(
+                            state, &action_receipt);
+                    }
+                }
+                return M11_GAME_INPUT_IGNORED;
+            }
+            if (zone.commandId == 224u) {
+                /* SKProject HANDLE_UI_EVENT 0xE0 → QUIT */
+                return M11_GAME_INPUT_RETURN_TO_MENU;
+            }
         }
     }
     if (!m11_dm2_boot_runtime_startup_pointer(
@@ -24702,8 +24753,6 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
                 fbY,
                 &execution,
                 &action_receipt)) {
-            /* GDAT rect path failed — fall back to row-based pointer handler
-             * which supports New, Resume/Continue, and Quit via fixed geometry. */
             DM2_V1_BootRuntimeStartupSnapshot snapshot;
             DM2_V1_StartupHostFacts facts;
             m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
