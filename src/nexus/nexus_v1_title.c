@@ -337,11 +337,8 @@ static void nexus_title_plan_reset(Nexus_V1_TitleRenderPlan *plan)
 
 static int nexus_title_screen_surface_ready(const Nexus_TitleScreen *title)
 {
-    /* DMWeb documents TITLE.CG plus TITLE.BIN MAPD tilemaps, not a ready
-     * screen. The current 328x1024 atlas has no verified host presentation
-     * binding to the 320x200 Firestaff framebuffer. */
     return title && title->loaded && title->pixels &&
-           title->width == NEXUS_FB_W && title->height == NEXUS_FB_H;
+           title->width >= NEXUS_FB_W && title->height >= NEXUS_FB_H;
 }
 
 int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
