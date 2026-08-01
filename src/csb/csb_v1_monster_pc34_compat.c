@@ -345,7 +345,7 @@ int csb_v1_drop_sound_for_item(int itemType) {
 }
 
 /* ============================================================
- *  DSA Filter Support (skeleton — full DSA engine out of scope)
+ *  DSA Filter Support — Legacy contract stubs
  *
  *  Source: Monster.cpp:1116-1180 (attack filter)
  *          Monster.cpp:3079-3176 (movement filter loading per level)
@@ -353,9 +353,13 @@ int csb_v1_drop_sound_for_item(int itemType) {
  *          BugsAndChanges.htm:CHANGE7_23 DSA filter additions
  *          BugsAndChanges.htm:CHANGE8_06 version 21 CSB 2.1
  *
- *  DSA filter invocation requires the full DSA script engine
- *  (ProcessDSAFilter, LoadLevel context restore, etc.).
- *  These stubs return 0 (no filter found) until DSA engine is available.
+ *  Production DSA filter invocation is implemented by:
+ *    csb_v1_dsa_filter_attack_preprocess_live()
+ *    csb_v1_dsa_filter_movement_preprocess_live()
+ *  which call csb_v1_dsa_filter_run() (lines 417-440 below).
+ *  These stubs are retained only for the isolated legacy contract test
+ *  (test_csb_v1_phase7_verification) and are never compiled into the
+ *  production runtime.
  * ============================================================ */
 
 #ifdef CSB_V1_MONSTER_STUB_CONTRACT_ONLY
@@ -499,31 +503,18 @@ int csb_v1_dsa_filter_movement_preprocess_live(
 }
 
 /* ============================================================
- *  Fixed Possessions Drop
+ *  Fixed Possessions Drop — Legacy contract stub
  *
  *  Source: GROUP.C:550-648 F0186_GROUP_DropCreatureFixedPossessions
  *          DEFS.H:5618-5626 G0245-G0253 drop table declarations
- *          GROUP.C:644-648 weapon/armour/junk type resolution
  *
- *  CSB drop tables are identical to DM1 (same G0245-G0253 globals,
- *  same F0186 implementation). Creature types that drop possessions:
- *    Skeleton (C12):      G0245[3] — weapon or armour
- *    Stone Golem (C09):   G0246[2] — weapon or armour
- *    Trolin/AntMan (C16): G0247[2] — weapon or armour
- *    Animated Armour (C18): G0248[7] — full loadout (cursed)
- *    Rock/RockPile (C07): G0249[5] — junk
- *    Pain Rat (C04):      G0250[3] — junk
- *    Screamer (C06):      G0251[3] — junk
- *    Magenta Worm (C15):  G0252[4] — junk
- *    Red Dragon (C24):    G0253[11] — full loadout
- *
- *  Drop logic (GROUP.C:618-643):
- *    - Random drop flag (0x8000): 50% chance to skip entry
- *    - Object info index >= 127: type=junk, index -= 127
- *    - Object info index >= 69:  type=armour, index -= 69
- *    - Otherwise: type=weapon, index -= 23, weaponDropped=true
- *    - Cell: single-centered (0xFF) or random or P0358_ui_Cell
- *    - Animated Armour drops are CURSED (L0361_B_Cursed = true)
+ *  Production drop logic is implemented by:
+ *    F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat()
+ *      in dm1_v1_creature_ai_behavior_pc34_compat.c
+ *    orch_drop_creature_fixed_possessions_compat()
+ *      in memory_tick_orchestrator_pc34_compat.c
+ *  CSB and DM1 share identical G0245-G0253 drop tables via F0824.
+ *  This stub is retained only for the isolated legacy contract test.
  * ============================================================ */
 
 #ifdef CSB_V1_MONSTER_STUB_CONTRACT_ONLY
@@ -533,15 +524,6 @@ void csb_v1_drop_fixed_possessions(int creatureType,
                                    int cell,
                                    int mode)
 {
-    /* Stub: full drop implementation requires dungeon object placement.
-     * GROUP.C F0186 handles:
-     *   - Creature type switch → pointer to appropriate G0245-G0253 table
-     *   - Animated Armour: cursed flag set
-     *   - Each entry: random drop check, type resolution, thing allocation,
-     *     cell assignment, F0267_MOVE_GetMoveResult_CPSCE placement
-     *   - Sound trigger (C00_SOUND_METALLIC_THUD or C04_SOUND_WOODEN_THUD)
-     * Currently returns without action until dungeon object system is wired.
-     */
     (void)creatureType;
     (void)mapX;
     (void)mapY;

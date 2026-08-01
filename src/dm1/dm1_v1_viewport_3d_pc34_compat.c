@@ -4338,9 +4338,10 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
      * Source: DUNVIEW.C:6282-6289 (F0676 corridor/teleporter) ·
      *         DUNVIEW.C:6349-6356 (F0677 corridor/teleporter) */
     {
-        /* Floor ornament drawing via F0108 — placeholder diamond.
+        /* Floor ornament drawing via F0108.
          * F0108_DUNGEONVIEW_DrawFloorOrnament composites the floor
-         * ornament bitmap at the D3L2/D3R2 position.
+         * ornament bitmap at the D3L2/D3R2 position.  Draws nothing when
+         * floor_ornament_indices[] is zero (no ornament for this square).
          * Source: DUNVIEW.C:6282-6284 (F0676) · DUNVIEW.C:6349-6351 (F0677) */
         int fo_idx = 0;
         switch (square) {
@@ -4350,9 +4351,11 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
         }
         (void)dm1_viewport_3d_draw_floor_ornament(state, square, fo_idx);
 
-        /* F0115 creature/item/projectile/explosion pass receipt.
+        /* F0115 creature/item/projectile/explosion pass.
          * ReDMCSB calls F0115 here with 0x3421/0x4312 for open cells, 0x0321/
          * 0x0412 for side-door/stairs-side cells, or the door-front split below.
+         * Firestaff handles this in csb_v1_viewport_draw_runtime_thing_overlays
+         * after dm1_viewport_3d_draw_frame completes — not inline here.
          * Source: DUNVIEW.C:6286 (F0676) · DUNVIEW.C:6353 (F0677). */
 
         /* Teleporter field effect — only for TELEPORTER element.
@@ -4382,7 +4385,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
                 state, square, state->door_front_d3[slot]);
         }
     }
-    (void)direction; /* unused in current stub */
+    (void)direction;
     (void)fr;
 }
 

@@ -1,3 +1,12 @@
+- ✅ 2026-08-01 DM1/CSB gap analysis closure: verified that all reported
+  gaps (DSA engine, F0115 thing pass, F0186 drop possessions) are already
+  implemented in production code. DSA filters use csb_v1_dsa_filter_run +
+  _live functions. F0115 thing rendering handled by
+  csb_v1_viewport_draw_runtime_thing_overlays. F0186 drops implemented via
+  F0824 + orch_drop_creature_fixed_possessions_compat. Updated misleading
+  stub/TODO comments to reflect production status. Remaining infrastructure
+  gap: CSB floor ornament indices not populated (dungeon loader lacks
+  floor ornament metadata extraction). v3.0.203
 - ✅ 2026-08-01 DM1/CSB gap analysis: F0308 IsLucky (unsigned char)
   truncation + MEDIA722 <<1 doubling in both combat resolvers. Confirmed
   party shield defense (per-attack snapshot selection already correct),

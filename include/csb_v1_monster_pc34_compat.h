@@ -480,28 +480,8 @@ int csb_v1_dsa_filter_movement_preprocess_live(
  */
 int csb_v1_drop_sound_for_item(int itemType);
 
-/* This old no-op drop surface has no dungeon placement owner and is only
- * retained for its isolated legacy contract test. */
+/* Legacy contract stub — production drops use F0824 + tick orchestrator. */
 #ifdef CSB_V1_MONSTER_STUB_CONTRACT_ONLY
-/* ============================================================
- *  API — Fixed Possessions Drop
- * ============================================================ */
-
-/*
- * csb_v1_drop_fixed_possessions — Drop creature's fixed possessions
- *
- * Mirrors GROUP.C F0186_GROUP_DropCreatureFixedPossessions.
- * Drop table for creature type indexed by G0245-G0253.
- *
- * Source: GROUP.C:550-648 F0186_GROUP_DropCreatureFixedPossessions
- *         DEFS.H:5618-5626 (drop table globals)
- *
- * @param creatureType   CSB_CREATURE_TYPE_*
- * @param mapX           Drop location X
- * @param mapY           Drop location Y
- * @param cell           Cell within square (0-3 or 0xFF for single)
- * @param mode           Play mode (IMMEDIATELY, ONE_TICK_LATER, etc.)
- */
 void csb_v1_drop_fixed_possessions(int creatureType,
                                    int mapX,
                                    int mapY,

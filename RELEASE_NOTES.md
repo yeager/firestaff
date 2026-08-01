@@ -1,6 +1,20 @@
 
 # Unreleased
 
+# Firestaff v3.0.203
+
+- DM1/CSB: gap analysis closure — verified that DSA scripting engine,
+  F0115 thing pass, and F0186 drop possessions are all production-
+  implemented. Updated stub comments to reference production code paths.
+- CSB: clarify DSA filter stubs as legacy contract test code — production
+  uses csb_v1_dsa_filter_run / _live functions (lines 417-499).
+- CSB: clarify F0186 drop stub — production uses F0824 +
+  orch_drop_creature_fixed_possessions_compat in tick orchestrator.
+- Viewport: update F0115 TODO labels to "runtime overlay" — thing
+  rendering handled by csb_v1_viewport_draw_runtime_thing_overlays.
+- Viewport: fix misleading "placeholder diamond" comment for F0108 floor
+  ornament call (draws nothing when index is zero, no diamond drawn).
+
 # Firestaff v3.0.202
 
 - DM1/CSB: fix F0308 IsLucky to match ReDMCSB CHAMPION.C:1123-1155 —

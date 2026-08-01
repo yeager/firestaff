@@ -1449,9 +1449,9 @@ int dm1_viewport_3d_get_dungeon_element(const DM1_Viewport3DState *state, int ma
  *   - WALL: draw wall bitmap (parity-aware) + wall ornament → return
  *   - STAIRS_FRONT: draw stairs up/down bitmap → return
  *   - PIT: draw pit bitmap if not visible
- *   - TELEPORTER/CORRIDOR: draw floor ornament + F0115 (TODO) + field
- *   - DOOR_SIDE/STAIRS_SIDE: floor ornament + F0115 (TODO)
- *   - DOOR_FRONT: floor ornament + F0115 (TODO, pass1) + door panel + F0115 (TODO, pass2)
+ *   - TELEPORTER/CORRIDOR: draw floor ornament + F0115 (runtime overlay) + field
+ *   - DOOR_SIDE/STAIRS_SIDE: floor ornament + F0115 (runtime overlay)
+ *   - DOOR_FRONT: floor ornament + F0115 (runtime overlay, pass1) + door panel + F0115 (runtime overlay, pass2)
  *
  * Source: ReDMCSB DUNVIEW.C F0676 (line 6226) · F0677 (line 6293)
  */
