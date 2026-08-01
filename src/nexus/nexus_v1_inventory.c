@@ -10,92 +10,103 @@
  * ═══════════════════════════════════════════════════════════════════ */
 
 /* clang-format off */
+/* Static fallback table — only used when IBS has never been bound.
+ * Uses simplified initializers; new IBS fields default to zero. */
+#define SITEM(n, cat, w, a, d, f) \
+    {(n), (cat), 0, 0, (w), (a), (d), (f), {0,0,0}, 0xffff, 0xffff, 0xffff, 0xffff, {0xffff,0xffff,0xffff}, 0}
 const Nexus_ItemDef g_nexus_items[] = {
-    /* Weapons (attack > 0, defense = 0) */
-    [0]  = {"Falchion",      NEXUS_ITEM_WEAPON,    18, 30, 0,  NEXUS_ITEMF_EQUIPPABLE},
-    [1]  = {"Rapier",        NEXUS_ITEM_WEAPON,    14, 24, 4,  NEXUS_ITEMF_EQUIPPABLE},
-    [2]  = {"Mace",          NEXUS_ITEM_WEAPON,    30, 32, 0,  NEXUS_ITEMF_EQUIPPABLE},
-    [3]  = {"Club",          NEXUS_ITEM_WEAPON,    20, 16, 0,  NEXUS_ITEMF_EQUIPPABLE},
-    [4]  = {"Staff",         NEXUS_ITEM_WEAPON,    12, 10, 2,  NEXUS_ITEMF_EQUIPPABLE},
-    [5]  = {"Sword",         NEXUS_ITEM_WEAPON,    22, 34, 2,  NEXUS_ITEMF_EQUIPPABLE},
-    [6]  = {"Axe",           NEXUS_ITEM_WEAPON,    26, 36, 0,  NEXUS_ITEMF_EQUIPPABLE},
-    [7]  = {"Dagger",        NEXUS_ITEM_WEAPON,     6, 14, 0,  NEXUS_ITEMF_EQUIPPABLE},
-    [8]  = {"Arrow",         NEXUS_ITEM_WEAPON,     1, 10, 0,  NEXUS_ITEMF_STACKABLE},
-    [9]  = {"Slayer",        NEXUS_ITEM_WEAPON,    28, 50, 6,  NEXUS_ITEMF_EQUIPPABLE},
-    [10] = {"Vorpal Blade",  NEXUS_ITEM_WEAPON,    20, 48, 4,  NEXUS_ITEMF_EQUIPPABLE},
-    [11] = {"Firestaff",     NEXUS_ITEM_WEAPON,    16, 40, 10, NEXUS_ITEMF_EQUIPPABLE},
-
-    /* Armor (attack = 0, defense > 0) */
-    [20] = {"Leather Jerkin", NEXUS_ITEM_ARMOR,     8,  0, 8,  NEXUS_ITEMF_EQUIPPABLE},
-    [21] = {"Mail Aketon",   NEXUS_ITEM_ARMOR,    24,  0, 14, NEXUS_ITEMF_EQUIPPABLE},
-    [22] = {"Plate Armor",   NEXUS_ITEM_ARMOR,    40,  0, 22, NEXUS_ITEMF_EQUIPPABLE},
-    [23] = {"Shield",         NEXUS_ITEM_ARMOR,    16,  0, 12, NEXUS_ITEMF_EQUIPPABLE},
-    [24] = {"Helmet",         NEXUS_ITEM_ARMOR,    10,  0, 6,  NEXUS_ITEMF_EQUIPPABLE},
-    [25] = {"Boots",          NEXUS_ITEM_ARMOR,     6,  0, 4,  NEXUS_ITEMF_EQUIPPABLE},
-    [26] = {"Gauntlets",      NEXUS_ITEM_ARMOR,     8,  0, 5,  NEXUS_ITEMF_EQUIPPABLE},
-
-    /* Potions (consumable) */
-    [30] = {"Health Potion",  NEXUS_ITEM_POTION,    2,  0, 0,  NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE},
-    [31] = {"Mana Potion",    NEXUS_ITEM_POTION,    2,  0, 0,  NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE},
-    [32] = {"Stamina Potion", NEXUS_ITEM_POTION,    2,  0, 0,  NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE},
-    [33] = {"Antidote",       NEXUS_ITEM_POTION,    2,  0, 0,  NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE},
-
-    /* Scrolls (consumable spell container — from CSB) */
-    [40] = {"Scroll",         NEXUS_ITEM_SCROLL,    1,  0, 0,  NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE},
-
-    /* Containers */
-    [50] = {"Chest",          NEXUS_ITEM_CONTAINER, 10, 0, 0,  NEXUS_ITEMF_NO_DROP},
-    [51] = {"Sack",           NEXUS_ITEM_CONTAINER,  2, 0, 0,  NEXUS_ITEMF_STACKABLE},
-
-    /* Misc */
-    [60] = {"Torch",          NEXUS_ITEM_MISC,      6,  8, 0,  NEXUS_ITEMF_STACKABLE},
-    [61] = {"Compass",        NEXUS_ITEM_MISC,       2,  0, 0,  0},
-    [62] = {"Rabbit Foot",    NEXUS_ITEM_MISC,       1,  0, 0,  0},
-    [63] = {"Corn",           NEXUS_ITEM_MISC,       3,  0, 0,  NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE},
-    [64] = {"Water Flask",    NEXUS_ITEM_MISC,       4,  0, 0,  NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE},
-    [65] = {"Rope",           NEXUS_ITEM_MISC,       8,  0, 0,  0},
-    [66] = {"Key",            NEXUS_ITEM_MISC,       1,  0, 0,  NEXUS_ITEMF_KEY},
-
-    /* Keys (specific types) */
-    [70] = {"Gold Key",       NEXUS_ITEM_KEY,        1,  0, 0,  NEXUS_ITEMF_KEY},
-    [71] = {"Silver Key",     NEXUS_ITEM_KEY,        1,  0, 0,  NEXUS_ITEMF_KEY},
-    [72] = {"Skeleton Key",   NEXUS_ITEM_KEY,        1,  0, 0,  NEXUS_ITEMF_KEY},
-
-    /* Spell Runes (alignment-coded, used to cast spells) */
-    [80] = {"Rune of Fire",   NEXUS_ITEM_SPELL_RUNE, 2, 0, 0, 0},
-    [81] = {"Rune of Ice",    NEXUS_ITEM_SPELL_RUNE, 2, 0, 0, 0},
-    [82] = {"Rune of Light",  NEXUS_ITEM_SPELL_RUNE, 2, 0, 0, 0},
-    [83] = {"Rune of Dark",   NEXUS_ITEM_SPELL_RUNE, 2, 0, 0, 0},
-    [84] = {"Rune of Earth",  NEXUS_ITEM_SPELL_RUNE, 2, 0, 0, 0},
-    [85] = {"Rune of Wind",   NEXUS_ITEM_SPELL_RUNE, 2, 0, 0, 0},
-
-    /* Sentinel */
-    [255] = {NULL, NEXUS_ITEM_COUNT, 0, 0, 0, 0}
+    [0]  = SITEM("Falchion",      NEXUS_ITEM_WEAPON,  18, 30,  0, NEXUS_ITEMF_EQUIPPABLE),
+    [1]  = SITEM("Rapier",        NEXUS_ITEM_WEAPON,  14, 24,  4, NEXUS_ITEMF_EQUIPPABLE),
+    [2]  = SITEM("Mace",          NEXUS_ITEM_WEAPON,  30, 32,  0, NEXUS_ITEMF_EQUIPPABLE),
+    [3]  = SITEM("Club",          NEXUS_ITEM_WEAPON,  20, 16,  0, NEXUS_ITEMF_EQUIPPABLE),
+    [4]  = SITEM("Staff",         NEXUS_ITEM_WEAPON,  12, 10,  2, NEXUS_ITEMF_EQUIPPABLE),
+    [5]  = SITEM("Sword",         NEXUS_ITEM_WEAPON,  22, 34,  2, NEXUS_ITEMF_EQUIPPABLE),
+    [6]  = SITEM("Axe",           NEXUS_ITEM_WEAPON,  26, 36,  0, NEXUS_ITEMF_EQUIPPABLE),
+    [7]  = SITEM("Dagger",        NEXUS_ITEM_WEAPON,   6, 14,  0, NEXUS_ITEMF_EQUIPPABLE),
+    [8]  = SITEM("Arrow",         NEXUS_ITEM_WEAPON,   1, 10,  0, NEXUS_ITEMF_STACKABLE),
+    [9]  = SITEM("Slayer",        NEXUS_ITEM_WEAPON,  28, 50,  6, NEXUS_ITEMF_EQUIPPABLE),
+    [10] = SITEM("Vorpal Blade",  NEXUS_ITEM_WEAPON,  20, 48,  4, NEXUS_ITEMF_EQUIPPABLE),
+    [11] = SITEM("Firestaff",     NEXUS_ITEM_WEAPON,  16, 40, 10, NEXUS_ITEMF_EQUIPPABLE),
+    [20] = SITEM("Leather Jerkin",NEXUS_ITEM_ARMOUR,   8,  0,  8, NEXUS_ITEMF_EQUIPPABLE),
+    [21] = SITEM("Mail Aketon",   NEXUS_ITEM_ARMOUR,  24,  0, 14, NEXUS_ITEMF_EQUIPPABLE),
+    [22] = SITEM("Plate Armor",   NEXUS_ITEM_ARMOUR,  40,  0, 22, NEXUS_ITEMF_EQUIPPABLE),
+    [23] = SITEM("Shield",        NEXUS_ITEM_ARMOUR,  16,  0, 12, NEXUS_ITEMF_EQUIPPABLE),
+    [24] = SITEM("Helmet",        NEXUS_ITEM_ARMOUR,  10,  0,  6, NEXUS_ITEMF_EQUIPPABLE),
+    [25] = SITEM("Boots",         NEXUS_ITEM_ARMOUR,   6,  0,  4, NEXUS_ITEMF_EQUIPPABLE),
+    [26] = SITEM("Gauntlets",     NEXUS_ITEM_ARMOUR,   8,  0,  5, NEXUS_ITEMF_EQUIPPABLE),
+    [30] = SITEM("Health Potion", NEXUS_ITEM_POTION,   2,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
+    [31] = SITEM("Mana Potion",   NEXUS_ITEM_POTION,   2,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
+    [32] = SITEM("Stamina Potion",NEXUS_ITEM_POTION,   2,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
+    [33] = SITEM("Antidote",      NEXUS_ITEM_POTION,   2,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
+    [40] = SITEM("Scroll",        NEXUS_ITEM_SCROLL,   1,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
+    [50] = SITEM("Chest",         NEXUS_ITEM_MISC,    10,  0,  0, NEXUS_ITEMF_NO_DROP),
+    [51] = SITEM("Sack",          NEXUS_ITEM_MISC,     2,  0,  0, NEXUS_ITEMF_STACKABLE),
+    [60] = SITEM("Torch",         NEXUS_ITEM_MISC,     6,  8,  0, NEXUS_ITEMF_STACKABLE),
+    [61] = SITEM("Compass",       NEXUS_ITEM_MISC,     2,  0,  0, 0),
+    [62] = SITEM("Rabbit Foot",   NEXUS_ITEM_MISC,     1,  0,  0, 0),
+    [63] = SITEM("Corn",          NEXUS_ITEM_FOOD,     3,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
+    [64] = SITEM("Water Flask",   NEXUS_ITEM_MISC,     4,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
+    [65] = SITEM("Rope",          NEXUS_ITEM_MISC,     8,  0,  0, 0),
+    [66] = SITEM("Key",           NEXUS_ITEM_MISC,     1,  0,  0, NEXUS_ITEMF_KEY),
+    [70] = SITEM("Gold Key",      NEXUS_ITEM_MISC,     1,  0,  0, NEXUS_ITEMF_KEY),
+    [71] = SITEM("Silver Key",    NEXUS_ITEM_MISC,     1,  0,  0, NEXUS_ITEMF_KEY),
+    [72] = SITEM("Skeleton Key",  NEXUS_ITEM_MISC,     1,  0,  0, NEXUS_ITEMF_KEY),
+    [80] = SITEM("Rune of Fire",  NEXUS_ITEM_MISC,     2,  0,  0, 0),
+    [81] = SITEM("Rune of Ice",   NEXUS_ITEM_MISC,     2,  0,  0, 0),
+    [82] = SITEM("Rune of Light", NEXUS_ITEM_MISC,     2,  0,  0, 0),
+    [83] = SITEM("Rune of Dark",  NEXUS_ITEM_MISC,     2,  0,  0, 0),
+    [84] = SITEM("Rune of Earth", NEXUS_ITEM_MISC,     2,  0,  0, 0),
+    [85] = SITEM("Rune of Wind",  NEXUS_ITEM_MISC,     2,  0,  0, 0),
+    [255] = {NULL, NEXUS_ITEM_CAT_MAX, 0, 0, 0, 0, 0, 0, {0,0,0}, 0, 0, 0, 0, {0,0,0}, 0}
 };
+#undef SITEM
 /* clang-format on */
 
 #define ITEM_COUNT ((int)(sizeof(g_nexus_items)/sizeof(g_nexus_items[0])))
 
-static const uint8_t *g_ibs_category;
-static const uint8_t *g_ibs_weight;
-static uint16_t g_ibs_name_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
-static uint16_t g_ibs_desc_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
-static uint16_t g_ibs_action1_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
-static uint16_t g_ibs_action2_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
-static uint16_t g_ibs_action3_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
 static int g_ibs_count;
+static int g_ibs_ever_bound;
 static Nexus_ItemDef g_ibs_defs[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
 
+static uint16_t ibs_read_be16(const uint8_t *p) {
+    return (uint16_t)((p[0] << 8) | p[1]);
+}
+
 void nexus_itemdef_clear_ibs_declarations(void) {
-    g_ibs_category = NULL;
-    g_ibs_weight = NULL;
     g_ibs_count = 0;
-    memset(g_ibs_name_string, 0, sizeof(g_ibs_name_string));
-    memset(g_ibs_desc_string, 0, sizeof(g_ibs_desc_string));
-    memset(g_ibs_action1_string, 0, sizeof(g_ibs_action1_string));
-    memset(g_ibs_action2_string, 0, sizeof(g_ibs_action2_string));
-    memset(g_ibs_action3_string, 0, sizeof(g_ibs_action3_string));
+    g_ibs_ever_bound = 1;
     memset(g_ibs_defs, 0, sizeof(g_ibs_defs));
+}
+
+void nexus_itemdef_bind_ibs_raw(const uint8_t *data, int count) {
+    int i;
+    const uint8_t *rec;
+    g_ibs_ever_bound = 1;
+    g_ibs_count = (!data || count <= 0) ? 0 :
+        (count > NEXUS_V1_ITEM_IBS_DECLARATION_COUNT ?
+            NEXUS_V1_ITEM_IBS_DECLARATION_COUNT : count);
+    for (i = 0; i < g_ibs_count; ++i) {
+        rec = data + i * 40;
+        g_ibs_defs[i].name = NULL;
+        g_ibs_defs[i].category = (Nexus_ItemCategory)rec[1];
+        g_ibs_defs[i].carry_locations = rec[2];
+        g_ibs_defs[i].ibs_flags = rec[3];
+        g_ibs_defs[i].weight = rec[8];
+        g_ibs_defs[i].attack = 0;
+        g_ibs_defs[i].defense = 0;
+        g_ibs_defs[i].flags = (rec[2] & 0x01) ? NEXUS_ITEMF_CONSUMABLE : 0;
+        g_ibs_defs[i].action_id[0] = rec[16];
+        g_ibs_defs[i].action_id[1] = rec[17];
+        g_ibs_defs[i].action_id[2] = rec[18];
+        g_ibs_defs[i].inv_image = ibs_read_be16(rec + 20);
+        g_ibs_defs[i].floor_image = ibs_read_be16(rec + 22);
+        g_ibs_defs[i].name_string = ibs_read_be16(rec + 24);
+        g_ibs_defs[i].desc_string = ibs_read_be16(rec + 26);
+        g_ibs_defs[i].action_string[0] = ibs_read_be16(rec + 28);
+        g_ibs_defs[i].action_string[1] = ibs_read_be16(rec + 30);
+        g_ibs_defs[i].action_string[2] = ibs_read_be16(rec + 32);
+        g_ibs_defs[i].attribute = ibs_read_be16(rec + 36);
+    }
 }
 
 void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
@@ -107,24 +118,22 @@ void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
                                          const uint16_t *action3_string,
                                          int count) {
     int i;
-    g_ibs_category = category;
-    g_ibs_weight = weight;
+    g_ibs_ever_bound = 1;
     g_ibs_count = (category && weight && count > 0) ?
         (count > NEXUS_V1_ITEM_IBS_DECLARATION_COUNT ?
             NEXUS_V1_ITEM_IBS_DECLARATION_COUNT : count) : 0;
     for (i = 0; i < g_ibs_count; ++i) {
-        g_ibs_name_string[i] = name_string ? name_string[i] : 0xffffU;
-        g_ibs_desc_string[i] = desc_string ? desc_string[i] : 0xffffU;
-        g_ibs_action1_string[i] = action1_string ? action1_string[i] : 0xffffU;
-        g_ibs_action2_string[i] = action2_string ? action2_string[i] : 0xffffU;
-        g_ibs_action3_string[i] = action3_string ? action3_string[i] : 0xffffU;
-        g_ibs_defs[i].name = NULL;
-        g_ibs_defs[i].category = g_ibs_category[i] < NEXUS_ITEM_COUNT ?
-            (Nexus_ItemCategory)g_ibs_category[i] : NEXUS_ITEM_COUNT;
-        g_ibs_defs[i].weight = g_ibs_weight[i];
-        g_ibs_defs[i].attack = 0;
-        g_ibs_defs[i].defense = 0;
-        g_ibs_defs[i].flags = 0;
+        memset(&g_ibs_defs[i], 0, sizeof(g_ibs_defs[i]));
+        g_ibs_defs[i].category = category[i] < NEXUS_ITEM_COUNT ?
+            (Nexus_ItemCategory)category[i] : NEXUS_ITEM_COUNT;
+        g_ibs_defs[i].weight = weight[i];
+        g_ibs_defs[i].name_string = name_string ? name_string[i] : 0xffffU;
+        g_ibs_defs[i].desc_string = desc_string ? desc_string[i] : 0xffffU;
+        g_ibs_defs[i].action_string[0] = action1_string ? action1_string[i] : 0xffffU;
+        g_ibs_defs[i].action_string[1] = action2_string ? action2_string[i] : 0xffffU;
+        g_ibs_defs[i].action_string[2] = action3_string ? action3_string[i] : 0xffffU;
+        g_ibs_defs[i].inv_image = 0xffffU;
+        g_ibs_defs[i].floor_image = 0xffffU;
     }
 }
 
@@ -136,16 +145,22 @@ int nexus_itemdef_count(void) {
 }
 
 const Nexus_ItemDef *nexus_itemdef_get(int id) {
-    if (id < 0 || id >= g_ibs_count) return NULL;
-    return &g_ibs_defs[id];
+    if (id >= 0 && id < g_ibs_count) return &g_ibs_defs[id];
+    if (!g_ibs_ever_bound && id >= 0 && id < ITEM_COUNT)
+        return &g_nexus_items[id];
+    return NULL;
 }
 
 const char *nexus_itemdef_category_name(Nexus_ItemCategory cat) {
-    static const char *names[] = {
-        "Weapon", "Armor", "Potion", "Scroll", "Container", "Misc", "Key", "Rune"
-    };
-    if (cat < 0 || cat >= NEXUS_ITEM_COUNT) return "Unknown";
-    return names[cat];
+    switch (cat) {
+    case NEXUS_ITEM_WEAPON: return "Weapon";
+    case NEXUS_ITEM_ARMOUR: return "Armour";
+    case NEXUS_ITEM_FOOD:   return "Food";
+    case NEXUS_ITEM_POTION: return "Potion";
+    case NEXUS_ITEM_SCROLL: return "Scroll";
+    case NEXUS_ITEM_MISC:   return "Misc";
+    default: return "Unknown";
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════

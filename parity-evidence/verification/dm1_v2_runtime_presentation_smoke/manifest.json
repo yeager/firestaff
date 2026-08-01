@@ -1,12 +1,12 @@
 {
   "data_dir": "/Users/bosse/.firestaff/data/dm1",
-  "firestaff": "/tmp/firestaff-system-build/firestaff",
-  "generated_at": "2026-07-31T13:50:52.042896+00:00",
+  "firestaff": "/Volumes/Extern-disk/firestaff-claude/build/firestaff",
+  "generated_at": "2026-08-01T16:29:24.116696+00:00",
   "modes": [
     {
       "command": {
         "cmd": [
-          "/tmp/firestaff-system-build/firestaff",
+          "/Volumes/Extern-disk/firestaff-claude/build/firestaff",
           "--game",
           "dm1",
           "--data-dir",
@@ -16,7 +16,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260731-155058.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v20_filtered_presented/firestaff-presented-20260731-155058.bmp",
+        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v20_filtered_screenshots/firestaff-20260801-182930.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v20_filtered_presented/firestaff-presented-20260801-182930.bmp",
         "stdout": ""
       },
       "mode": {
@@ -28,15 +28,15 @@
       "presented_screenshots": [
         {
           "height": 540,
-          "name": "firestaff-presented-20260731-155058.bmp",
-          "sha256": "90b6913fa6d9db1182a0032148cfb7d7950e96b151bfa0b0e9270e474035e080",
+          "name": "firestaff-presented-20260801-182930.bmp",
+          "sha256": "e2361626e1a42dbb5c520cca044e4634f986039b38858261ea61ab67f22a7481",
           "size": 1555254,
           "width": 960
         }
       ],
       "probe": {
         "active": 1,
-        "gameTick": 32,
+        "gameTick": 31,
         "lastAction": "WAIT",
         "lastOutcome": "IDLE TICK ADVANCED",
         "launchedEver": 1,
@@ -74,8 +74,8 @@
       "screenshots": [
         {
           "height": 200,
-          "name": "firestaff-20260731-155058.bmp",
-          "sha256": "ae91d17be47ba204a17a8a2cb8b0caf59a8cadbdccde5603f0757b800f7e68bb",
+          "name": "firestaff-20260801-182930.bmp",
+          "sha256": "c9afa40b66c6b38167274aa12de3ca952d7f49f2f0871ce7a6fa793e4db81a2f",
           "size": 192054,
           "width": 320
         }
@@ -84,7 +84,7 @@
     {
       "command": {
         "cmd": [
-          "/tmp/firestaff-system-build/firestaff",
+          "/Volumes/Extern-disk/firestaff-claude/build/firestaff",
           "--game",
           "dm1",
           "--data-dir",
@@ -94,7 +94,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260731-155105.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v21_upscaled_presented/firestaff-presented-20260731-155105.bmp",
+        "stderr": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1/DUNGEON.DAT]\nAUTOTEST SCREENSHOT: <temp>/v21_upscaled_screenshots/firestaff-20260801-182937.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/v21_upscaled_presented/firestaff-presented-20260801-182937.bmp",
         "stdout": ""
       },
       "mode": {
@@ -106,8 +106,8 @@
       "presented_screenshots": [
         {
           "height": 540,
-          "name": "firestaff-presented-20260731-155105.bmp",
-          "sha256": "76ad5b308143a138ee0b5162ac7070f840f16a9dda3c0dd0e7f616e1066461b3",
+          "name": "firestaff-presented-20260801-182937.bmp",
+          "sha256": "b096293a8b2eb07b33327a7dd76e9664aa74b54973aef9ab60e8952b5c5c9fc5",
           "size": 1555254,
           "width": 960
         }
@@ -152,8 +152,8 @@
       "screenshots": [
         {
           "height": 200,
-          "name": "firestaff-20260731-155105.bmp",
-          "sha256": "ae91d17be47ba204a17a8a2cb8b0caf59a8cadbdccde5603f0757b800f7e68bb",
+          "name": "firestaff-20260801-182937.bmp",
+          "sha256": "c9afa40b66c6b38167274aa12de3ca952d7f49f2f0871ce7a6fa793e4db81a2f",
           "size": 192054,
           "width": 320
         }

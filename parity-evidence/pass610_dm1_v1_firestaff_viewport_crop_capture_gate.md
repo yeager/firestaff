@@ -11,8 +11,8 @@ Source evidence:
 
 Runtime crops:
 - 01_start_south_1_3 map=0 x=1 y=3 dir=2 crop=01_start_south_1_3_viewport_224x136.ppm sha256=c4a2fd67d88aa5b7872da33af2e969670fd2082d1b8c3547d6295f583daae2c2
-- 02_turn_right_west_1_3 map=0 x=1 y=3 dir=3 crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5
-- 03_blocked_west_wall_1_3 map=0 x=1 y=3 dir=3 crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5
+- 02_turn_right_west_1_3 map=0 x=1 y=3 dir=3 crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208
+- 03_blocked_west_wall_1_3 map=0 x=1 y=3 dir=3 crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208
 - 04_forward_south_1_4 map=0 x=1 y=4 dir=2 crop=04_forward_south_1_4_viewport_224x136.ppm sha256=99f4f2903fcdb28c5375c3fbc2aaf4352aede055f194ecbde95192d367d5dd8e
 
 Non-claims:

@@ -1,9 +1,9 @@
 {
   "schema": "firestaff.parity.pass423_dm1_v1_input_command_movement_pipeline_source_lock.v1",
-  "timestampUtc": "2026-07-31T13:50:54.361929+00:00",
+  "timestampUtc": "2026-08-01T16:31:57.843741+00:00",
   "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED",
   "branch": "main",
-  "head": "ed6424cb14eedbb4aed0173e7e66f2dd7d40fbae",
+  "head": "db8901bf94b560662a22e7988747d919e0191e00",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "PC-34 raw input -> command enqueue -> F0380 gate/dequeue -> F0365/F0366 turn/move dispatch",
   "sourceAudit": [
@@ -97,7 +97,7 @@
       "command": [
         "cmake",
         "--build",
-        "/tmp/firestaff-system-build",
+        "/Volumes/Extern-disk/firestaff-claude/build",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -111,13 +111,13 @@
       "command": [
         "ctest",
         "--test-dir",
-        "/tmp/firestaff-system-build",
+        "/Volumes/Extern-disk/firestaff-claude/build",
         "--output-on-failure",
         "-R",
         "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat"
       ],
       "returncode": 0,
-      "tail": "Test project /tmp/firestaff-system-build\n    Start 1270: dm1_v1_input_command_queue_pc34_compat\n1/3 Test #1270: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.24 sec\n    Start 1279: dm1_v1_movement_command_core_pc34_compat\n2/3 Test #1279: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.25 sec\n    Start 1422: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/3 Test #1422: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.23 sec\n\n100% tests passed out of 3\n\nTotal Test time (real) =   0.77 sec\n"
+      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1278: dm1_v1_input_command_queue_pc34_compat\n1/3 Test #1278: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.00 sec\n    Start 1287: dm1_v1_movement_command_core_pc34_compat\n2/3 Test #1287: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.00 sec\n    Start 1430: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/3 Test #1430: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.01 sec\n\n100% tests passed out of 3\n\nTotal Test time (real) =   0.05 sec\n"
     },
     {
       "command": [

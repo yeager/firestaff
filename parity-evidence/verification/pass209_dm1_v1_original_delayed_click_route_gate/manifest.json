@@ -1,6 +1,6 @@
 {
   "attempt_audit": {
-    "attempt_dir": "/Users/bosse/Documents/Firestaff-system/verification-screens/pass209-delayed-click-zone-route",
+    "attempt_dir": "/Volumes/Extern-disk/firestaff-claude/verification-screens/pass209-delayed-click-zone-route",
     "classifier": {
       "attempt_dir": "verification-screens/pass209-delayed-click-zone-route",
       "capture_count": 6,
@@ -25,7 +25,7 @@
         }
       ],
       "pass": false,
-      "path": "/Users/bosse/Documents/Firestaff-system/verification-screens/pass209-delayed-click-zone-route/pass80_original_frame_classifier.json",
+      "path": "/Volumes/Extern-disk/firestaff-claude/verification-screens/pass209-delayed-click-zone-route/pass80_original_frame_classifier.json",
       "unique_raw_sha256": [
         "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
       ]
@@ -195,7 +195,7 @@
     }
   ],
   "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "repo": "/Users/bosse/Documents/Firestaff-system",
+  "repo": "/Volumes/Extern-disk/firestaff-claude",
   "schema": "pass209_dm1_v1_original_delayed_click_route_gate.v1",
   "status": "BLOCKED_STATIC_IDENTICAL_FRAMES_AFTER_DELAYED_ROUTE",
   "worker": "N2 / firestaff-worker / trv2@<n2-private-ip>"

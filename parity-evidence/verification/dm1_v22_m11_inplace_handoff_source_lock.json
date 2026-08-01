@@ -13,27 +13,27 @@
     },
     {
       "marker": "raw_squares[d][s] = cells[d][s].square;",
-      "offset": 1371
+      "offset": 1112
     },
     {
       "marker": "m11_v22_shape_cache_update((int)state->world.party.direction,\n                                       raw_squares);",
-      "offset": 1722
+      "offset": 2357
     },
     {
       "marker": "m11_draw_dm1_floor_pits(state, framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 4118
+      "offset": 4648
     },
     {
       "marker": "m11_apply_dungeon_palette_level(framebuffer, framebufferWidth, framebufferHeight,",
-      "offset": 23199
+      "offset": 23868
     },
     {
       "marker": "if (state->presentationMode == M12_PRESENTATION_V22_MODERN)",
-      "offset": 23758
+      "offset": 24427
     },
     {
       "marker": "(void)m11_v22_inplace_render_pass(framebuffer,",
-      "offset": 24124
+      "offset": 24793
     }
   ],
   "errors": [],

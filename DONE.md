@@ -1,3 +1,15 @@
+- ✅ 2026-08-01 v3.0.210 DM2/Nexus DMWeb gap closure:
+  DM2: Item shooter CUT_RECORD_FROM with tile-based record chain surgery,
+  recycler QUERY_CREATURES_ITEM_MASK with permissive mask path.
+  Nexus ITEM.IBS: category enum aligned to DMWeb (0=Weapon 1=Armour 2=Food
+  3=Potion 4=Scroll 7=Misc), struct expanded with carry_locations, action_ids,
+  image indices, string indices, attribute fields, raw 40-byte IBS binding.
+  Nexus DGN: floor item/decoration/sensor/alcove/wall structs from DMWeb.
+  Nexus MNS: MOTN keyframe decoder (per-joint rotation, duration, flags).
+  BPK surface: mode-derived bpp for PRS3 entries (not hardcoded 8bpp).
+  V2 lighting: NEXUS.BIN reference in evidence string.
+  Inventory: IBS fallback only when never bound (g_ibs_ever_bound flag).
+  DM2 309/309 pass, Nexus 208/217 pass (9 pre-existing).
 - ✅ 2026-08-01 v3.0.209 DM2 gap analysis closure:
   Timer dispatch: all 22 skproject timer types now have registered handlers
   (0x0C, 0x0D, 0x0E, 0x15, 0x19, 0x1E, 0x3D, 0x46, 0x47, 0x48, 0x4B, 0x5A,

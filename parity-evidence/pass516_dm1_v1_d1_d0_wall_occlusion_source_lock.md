@@ -1,6 +1,6 @@
 # Pass516 DM1 V1 D1/D0 wall occlusion source lock
 
-Status: passed
+Status: failed
 
 ## Claim
 
@@ -55,13 +55,13 @@ ReDMCSB composes D1 before D0, then D0C last. D1L/D1R and D0L/D0R side-wall case
 
 ## Firestaff Evidence
 
-- PASS local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:1185-1192)
+- FAIL local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:1185-1192)
   - Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.
 
-- PASS local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:206-212)
+- FAIL local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:206-212)
   - Open side branches keep their source cell-order contracts separate from wall-return blockers.
 
-- PASS local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:759-833)
+- FAIL local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:759-833)
   - The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.
 
 ## Verification
@@ -85,10 +85,10 @@ PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
 - command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
-  - returncode: 0
+  - returncode: 1
   - output tail:
 ~~~
-PASS pass516 check-only
+FAIL pass516 check-only: local-d1-d0-wall-specs-present,local-side-occlusion-d1-d0-cell-orders-present,local-runtime-test-covers-d1-d0-wall-occlusion
 ~~~
 
 ## Non-Claims

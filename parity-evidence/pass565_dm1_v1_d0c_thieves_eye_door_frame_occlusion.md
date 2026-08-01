@@ -27,24 +27,24 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
 ## Firestaff Evidence
 
 - PASS firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 974: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
-  - line 975: DUNVIEW.C:8185-8188
-  - line 976: DUNVIEW.C:8199-8201
-  - line 977: DUNVIEW.C:8206-8210
-  - line 978: DUNVIEW.C:8215-8216
-  - line 979: DUNVIEW.C:8240,8294
+  - line 995: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
+  - line 996: DUNVIEW.C:8185-8188
+  - line 997: DUNVIEW.C:8199-8201
+  - line 998: DUNVIEW.C:8206-8210
+  - line 999: DUNVIEW.C:8215-8216
+  - line 1000: DUNVIEW.C:8240,8294
 
 - PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 1410: test_d0c_thieves_eye_door_frame_occlusion_order
-  - line 1413: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
-  - line 1420: spec->door_frame_zone, 728
-  - line 1421: spec->hole_zone, 736
-  - line 1425: 8215-8216
-  - line 1426: 8294
+  - line 1840: test_d0c_thieves_eye_door_frame_occlusion_order
+  - line 1843: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
+  - line 1850: spec->door_frame_zone, 728
+  - line 1851: spec->hole_zone, 736
+  - line 1855: 8215-8216
+  - line 1856: 8294
 
 - PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 4224: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
-  - line 4224: copy front frame, composite hole, blit temporary frame before common F0115
+  - line 4550: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
+  - line 4550: copy front frame, composite hole, blit temporary frame before common F0115
 
 ## Verification
 

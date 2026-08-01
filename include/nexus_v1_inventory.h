@@ -9,28 +9,38 @@
  * Supports: pickup from floor, drop to floor, equip/unequip,
  * swap between slots, cursor-held item. */
 
-/* Item category enum — mirrors FS_ITEM_CAT_* but Nexus-specific */
+/* Item category enum — values from ITEM.IBS Byte1 (DMWeb documentation) */
 typedef enum {
-    NEXUS_ITEM_WEAPON = 0,
-    NEXUS_ITEM_ARMOR,
-    NEXUS_ITEM_POTION,
-    NEXUS_ITEM_SCROLL,
-    NEXUS_ITEM_CONTAINER,
-    NEXUS_ITEM_MISC,
-    NEXUS_ITEM_KEY,
-    NEXUS_ITEM_SPELL_RUNE,
-    NEXUS_ITEM_COUNT
+    NEXUS_ITEM_WEAPON  = 0,
+    NEXUS_ITEM_ARMOUR  = 1,
+    NEXUS_ITEM_FOOD    = 2,
+    NEXUS_ITEM_POTION  = 3,
+    NEXUS_ITEM_SCROLL  = 4,
+    NEXUS_ITEM_MISC    = 7,
+    NEXUS_ITEM_CAT_MAX = 8
 } Nexus_ItemCategory;
+/* Legacy alias */
+#define NEXUS_ITEM_ARMOR NEXUS_ITEM_ARMOUR
+#define NEXUS_ITEM_COUNT NEXUS_ITEM_CAT_MAX
 
-/* Item definition boundary.  No unverified DM1 catalog is exposed as live
- * Nexus data until Saturn item records are source-bound. */
+/* Item definition — ITEM.IBS 40-byte record (DMWeb documentation).
+ * Fields map to byte offsets in the IBS item declaration. */
 typedef struct {
     const char      *name;
-    Nexus_ItemCategory category;
-    int             weight;      /* encumbrance units */
-    int             attack;      /* weapon power (0 if not weapon) */
-    int             defense;     /* armor value (0 if not armor) */
-    int             flags;      /* NEXUS_ITEMF_* */
+    Nexus_ItemCategory category;  /* Byte1: 0=Weapon 1=Armour 2=Food 3=Potion 4=Scroll 7=Misc */
+    uint8_t          carry_locations; /* Byte2: bitfield (bit0=consumable..bit6=misc) */
+    uint8_t          ibs_flags;  /* Byte3: bit7=has floor image, bit1=unknown */
+    int              weight;     /* Byte8 */
+    int              attack;     /* derived / Byte14-15 area */
+    int              defense;    /* derived / Byte11 area */
+    int              flags;      /* NEXUS_ITEMF_* */
+    uint8_t          action_id[3]; /* Byte16-18: action IDs */
+    uint16_t         inv_image;  /* Word20: inventory image index */
+    uint16_t         floor_image; /* Word22: floor image index (0xFFFF=use inv) */
+    uint16_t         name_string; /* Word24 */
+    uint16_t         desc_string; /* Word26 */
+    uint16_t         action_string[3]; /* Word28-32 */
+    uint16_t         attribute;  /* Word36: distance(weapon)/armor-val/food-val */
 } Nexus_ItemDef;
 
 /* Equipment slot encoding */
@@ -87,8 +97,10 @@ typedef struct {
 extern const Nexus_ItemDef g_nexus_items[];
 int nexus_itemdef_count(void);
 const Nexus_ItemDef *nexus_itemdef_get(int id);
-/* Bind only source-owned ITEM.IBS declaration fields.  Text and combat
- * semantics remain unavailable until separately authenticated. */
+/* Bind raw 40-byte ITEM.IBS records (DMWeb format).
+ * data points to count * 40 bytes of item declarations. */
+void nexus_itemdef_bind_ibs_raw(const uint8_t *data, int count);
+/* Legacy field-split binding (kept for existing tests). */
 void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
                                          const uint8_t *weight,
                                          const uint16_t *name_string,
@@ -97,7 +109,6 @@ void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
                                          const uint16_t *action2_string,
                                          const uint16_t *action3_string,
                                          int count);
-/* Forget the previous source package before opening a new Nexus engine. */
 void nexus_itemdef_clear_ibs_declarations(void);
 const char *nexus_itemdef_category_name(Nexus_ItemCategory cat);
 

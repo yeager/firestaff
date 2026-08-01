@@ -579,37 +579,37 @@ static void test_synthetic_surface_estimate(void) {
                NEXUS_V1_BPK_SURFACE_INDEXED_8BPP,
            "first surface entry class is INDEXED_8BPP");
 
-    /* Entry 2 (PRS3 8x4): rowstride = 8 bytes, surface = 32 bytes. */
+    /* Entry 2 (PRS3 8x4 mode 14 = RGB565): bpp=2, rowstride=16, surface=64. */
     expect(entries[1].entry_index == 2U, "second surface entry is index 2");
     expect(entries[1].mode == NEXUS_V1_BPK_MODE_16BPP &&
                entries[1].width == 8U && entries[1].height == 4U,
            "second surface entry is 8x4 RGB565");
     expect(entries[1].pixel_count == 32U, "second surface pixel_count = 32");
-    expect(entries[1].layout.bpp == 1U &&
-               entries[1].layout.rowstride == 8U &&
-               entries[1].layout.surface_bytes == 32U,
-           "second surface entry: PRS3 bpp=1 rowstride=8 surface=32");
+    expect(entries[1].layout.bpp == 2U &&
+               entries[1].layout.rowstride == 16U &&
+               entries[1].layout.surface_bytes == 64U,
+           "second surface entry: bpp=2 rowstride=16 surface=64");
     expect(entries[1].layout.surface_class ==
-               NEXUS_V1_BPK_SURFACE_INDEXED_8BPP,
-           "second surface entry class is indexed 8bpp");
+               NEXUS_V1_BPK_SURFACE_RGB565,
+           "second surface entry class is RGB565");
 
-    /* Entry 3 (PRS3 2x3): rowstride = 2 bytes, surface = 6 bytes. */
+    /* Entry 3 (PRS3 2x3 mode 22 = RGB888): bpp=3, rowstride=6, surface=18. */
     expect(entries[2].entry_index == 3U, "third surface entry is index 3");
     expect(entries[2].mode == NEXUS_V1_BPK_MODE_24BPP &&
                entries[2].width == 2U && entries[2].height == 3U,
            "third surface entry is 2x3 RGB888");
     expect(entries[2].pixel_count == 6U, "third surface pixel_count = 6");
-    expect(entries[2].layout.bpp == 1U &&
-               entries[2].layout.rowstride == 2U &&
-               entries[2].layout.surface_bytes == 6U,
-           "third surface entry: PRS3 bpp=1 rowstride=2 surface=6");
+    expect(entries[2].layout.bpp == 3U &&
+               entries[2].layout.rowstride == 6U &&
+               entries[2].layout.surface_bytes == 18U,
+           "third surface entry: bpp=3 rowstride=6 surface=18");
     expect(entries[2].layout.surface_class ==
-               NEXUS_V1_BPK_SURFACE_INDEXED_8BPP,
-           "third surface entry class is indexed 8bpp");
+               NEXUS_V1_BPK_SURFACE_RGB888,
+           "third surface entry class is RGB888");
 
-    /* Total PRS3 surface bytes: 16 + 32 + 6 = 54. */
-    expect(summary.total_surface_bytes == 54U,
-           "synthetic archive total surface bytes = 54");
+    /* Total surface bytes: 16 + 64 + 18 = 98. */
+    expect(summary.total_surface_bytes == 98U,
+           "synthetic archive total surface bytes = 98");
 }
 
 static void test_surface_estimate_capacity_boundary(void) {
@@ -627,8 +627,8 @@ static void test_surface_estimate_capacity_boundary(void) {
     expect(rc == 0, "capacity-1 surface_estimate returns 0");
     expect(summary.total_with_surface == 3U,
            "capacity-1 summary still counts all 3 surface entries");
-    expect(summary.total_surface_bytes == 54U,
-           "capacity-1 summary still totals all PRS3 surface bytes");
+    expect(summary.total_surface_bytes == 98U,
+           "capacity-1 summary still totals all surface bytes");
     expect(summary.trailer_skipped == 1U,
            "capacity-1 summary still counts the trailer skip");
     expect(summary.used == 1U,
@@ -674,8 +674,8 @@ static void test_runtime_render_receipt_blocks_prs3(void) {
     expect(receipt.prs3_surface_entries == 3U,
            "runtime receipt: all surfaces require PRS3");
     expect(receipt.trailer_entries == 1U, "runtime receipt: 1 trailer");
-    expect(receipt.expected_surface_bytes == 54U,
-           "runtime receipt: expected surface bytes = 54");
+    expect(receipt.expected_surface_bytes == 98U,
+           "runtime receipt: expected surface bytes = 98");
     expect(receipt.directory_trailer_found == 1,
            "runtime receipt finds directory trailer");
     expect(receipt.all_prs3_versions_match == 1,
@@ -1304,10 +1304,10 @@ static void test_optional_local_menu_bpk(void) {
                        entries[i].layout.bpp,
                "local MENU.BPK surface_bytes == w*h*bpp");
     }
-    expect(indexed == 162U, "local MENU.BPK: all PRS3 entries are indexed 8bpp");
-    expect(rgb565 == 0U, "local MENU.BPK: no PRS3 RGB565 entries");
-    expect(rgb888 == 0U, "local MENU.BPK: no PRS3 RGB888 entries");
-    expect(rgba32 == 0U, "local MENU.BPK: no PRS3 RGBA8888 entries");
+    expect(indexed == 14U, "local MENU.BPK: 14 indexed 8bpp entries");
+    expect(rgb565 == 62U, "local MENU.BPK: 62 RGB565 entries");
+    expect(rgb888 == 39U, "local MENU.BPK: 39 RGB888 entries");
+    expect(rgba32 == 47U, "local MENU.BPK: 47 RGBA8888 entries");
     expect(expected_total == summary.total_surface_bytes,
            "local MENU.BPK: per-entry sum equals summary total");
     expect(summary.total_surface_bytes > 0U,

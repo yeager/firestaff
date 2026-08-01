@@ -37,7 +37,7 @@
         "direction": 3,
         "label": "02_turn_right_west_1_3",
         "map": 0,
-        "sha": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5",
+        "sha": "422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208",
         "x": 1,
         "y": 3
       },
@@ -64,7 +64,7 @@
         "direction": 3,
         "label": "03_blocked_west_wall_1_3",
         "map": 0,
-        "sha": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5",
+        "sha": "422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208",
         "x": 1,
         "y": 3
       },
@@ -273,5 +273,5 @@
   "schema": "firestaff.parity.pass623_dm1_v1_input_capture_readiness_bridge.v1",
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS623_DM1_V1_INPUT_CAPTURE_READINESS_BRIDGE",
-  "timestampUtc": "2026-07-30T09:09:53.259314+00:00"
+  "timestampUtc": "2026-08-01T16:32:23.583858+00:00"
 }

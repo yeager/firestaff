@@ -34,9 +34,9 @@
           "mapY": 3
         },
         "screenshot": "02_turn_right_west_1_3.ppm",
-        "screenshotSha256": "cb6f5a05a515e0d6847f2661c177ce1d650cae0e484b14eaddb184313d980982",
+        "screenshotSha256": "afd3a70f62fe06bbbd6223b6ebe83672684a072c360fb2e7fa27e6236b8a11ff",
         "viewportCrop": "02_turn_right_west_1_3_viewport_224x136.ppm",
-        "viewportCropSha256": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5"
+        "viewportCropSha256": "422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208"
       },
       {
         "label": "03_blocked_west_wall_1_3",
@@ -47,9 +47,9 @@
           "mapY": 3
         },
         "screenshot": "03_blocked_west_wall_1_3.ppm",
-        "screenshotSha256": "498e9c12ec0212b3ee0520ed0639a60cec8dc1889e660597275203f7bbb163e4",
+        "screenshotSha256": "88d9bdb79ee006bf8e84585929a7aabe730e47e83b66380980c85c52e7833586",
         "viewportCrop": "03_blocked_west_wall_1_3_viewport_224x136.ppm",
-        "viewportCropSha256": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5"
+        "viewportCropSha256": "422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208"
       },
       {
         "label": "04_forward_south_1_4",
@@ -60,7 +60,7 @@
           "mapY": 4
         },
         "screenshot": "04_forward_south_1_4.ppm",
-        "screenshotSha256": "4da8ae22c8e48ed0eb60ced5a8b1d042941091b87fc0ed160589fe97d4d3a41a",
+        "screenshotSha256": "1c5975b7b3947e4e58b89792757a8dc2f346bdc376cc5c72927ea29e45952e16",
         "viewportCrop": "04_forward_south_1_4_viewport_224x136.ppm",
         "viewportCropSha256": "99f4f2903fcdb28c5375c3fbc2aaf4352aede055f194ecbde95192d367d5dd8e"
       }

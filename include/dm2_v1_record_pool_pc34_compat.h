@@ -106,6 +106,14 @@ int dm2_v1_record_pool_relocate(DM2_V1_RecordPoolSet *set,
                                 int16_t *to_head_io,
                                 int16_t record);
 
+/* DM2_CUT_RECORD_FROM tile path (x >= 0): unlink `record` from the tile's
+ * thing chain at (map, x, y).  Uses dm2_v1_dungeon_get_first_thing /
+ * dm2_v1_dungeon_set_first_thing for head mutation.  Returns 1 on success. */
+int dm2_v1_record_pool_cut_from_tile(DM2_V1_RecordPoolSet *set,
+                                     DM2_V1_DungeonData *dungeon,
+                                     int map, int x, int y,
+                                     int16_t record);
+
 struct dm2_dungeon_world;
 /* Populate the pool set from a world whose G1 record pools validated
  * (dm2_world_has_verified_g1_record_pools).  Copies the exact source spans

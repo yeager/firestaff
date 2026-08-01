@@ -124,7 +124,8 @@
     }
   ],
   "problems": [
-    "gate status drifted: pass623_input_capture_bridge"
+    "gate status drifted: pass623_input_capture_bridge",
+    "target Firestaff viewport hash drifted"
   ],
   "schema": "firestaff.parity.pass625_dm1_v1_original_transcript_row_preflight.v1",
   "sourceAudit": [
@@ -204,7 +205,7 @@
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT",
   "targetRowAudit": {
-    "ok": true,
+    "ok": false,
     "pass623Row": {
       "claim": "right input resolves to C002 turn-right and changes facing only",
       "commandIds": [
@@ -219,7 +220,7 @@
         "direction": 3,
         "label": "02_turn_right_west_1_3",
         "map": 0,
-        "sha": "48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5",
+        "sha": "422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208",
         "x": 1,
         "y": 3
       },
@@ -232,7 +233,9 @@
       },
       "problems": []
     },
-    "problems": [],
+    "problems": [
+      "target Firestaff viewport hash drifted"
+    ],
     "target": {
       "f0128Tuple": {
         "direction": 3,
@@ -259,7 +262,7 @@
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     }
   },
-  "timestampUtc": "2026-07-30T09:09:52.892987+00:00",
+  "timestampUtc": "2026-08-01T16:32:23.205323+00:00",
   "transcriptTemplateAudit": {
     "missing": [],
     "ok": true,

@@ -32,23 +32,23 @@ Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cas
 
 ## Firestaff Evidence
 
-- PASS firestaff-d2-far-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:1180-1181)
-  - line 1180: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - line 1180: DM1_PC34_ZONE_WALL_D2L2
-  - line 1180: DUNVIEW.C:6849-6858
-  - line 1180: DUNVIEW.C:6848-6862 wall case returns
-  - line 1181: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - line 1181: DM1_PC34_ZONE_WALL_D2R2
-  - line 1181: DUNVIEW.C:6880-6889
-  - line 1181: DUNVIEW.C:6882-6893 wall case returns
+- FAIL firestaff-d2-far-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:1180-1181)
+  - missing: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - missing: DM1_PC34_ZONE_WALL_D2L2
+  - missing: DUNVIEW.C:6849-6858
+  - missing: DUNVIEW.C:6848-6862 wall case returns
+  - missing: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - missing: DM1_PC34_ZONE_WALL_D2R2
+  - missing: DUNVIEW.C:6880-6889
+  - missing: DUNVIEW.C:6882-6893 wall case returns
 
-- PASS firestaff-d2-far-side-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:754-755)
-  - line 754: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - line 754: DM1_PC34_ZONE_WALL_D2L2
-  - line 754: "6862"
-  - line 755: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - line 755: DM1_PC34_ZONE_WALL_D2R2
-  - line 755: "6893"
+- FAIL firestaff-d2-far-side-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:754-755)
+  - missing: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - missing: DM1_PC34_ZONE_WALL_D2L2
+  - missing: "6862"
+  - missing: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - missing: DM1_PC34_ZONE_WALL_D2R2
+  - missing: "6893"
 
 - FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4213-4213)
   - missing: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
@@ -75,5 +75,5 @@ PASS dm1_v1_viewport_3d_source_lock
 
 - /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py --check-only: rc=1
 ~~~
-FAIL pass562 check-only: firestaff-source-evidence-string
+FAIL pass562 check-only: firestaff-d2-far-side-wall-metadata,firestaff-d2-far-side-runtime-test,firestaff-source-evidence-string
 ~~~

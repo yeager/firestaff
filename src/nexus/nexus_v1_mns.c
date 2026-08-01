@@ -165,6 +165,71 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
         }
     }
 
+    /* MOTN section: animation keyframes (DMWeb StrucMotnHeader) */
+    if (out->motn_offset && (int)(out->motn_offset + 0x20) <= data_size) {
+        const uint8_t *motn = data + out->motn_offset;
+        if (read_be32(motn) == NEXUS_MNS_MOTN_MAGIC) {
+            int table_count = (int)read_be32(motn + 8);
+            int motn_joints = (int)read_be32(motn + 0x0C);
+            int t;
+            if (table_count > NEXUS_MNS_MAX_MOTN_TABLES)
+                table_count = NEXUS_MNS_MAX_MOTN_TABLES;
+            out->motn.joint_count_motn = motn_joints;
+            out->motn.table_count = table_count;
+            for (t = 0; t < table_count; ++t) {
+                uint32_t tbl_off_pos = out->motn_offset + 0x10 + (uint32_t)t * 4;
+                uint32_t tbl_rel;
+                int f_idx = 0;
+                if ((int)(tbl_off_pos + 4) > data_size) break;
+                tbl_rel = read_be32(data + tbl_off_pos);
+                if (tbl_rel == 0 || tbl_rel == 0xFFFFFFFF) break;
+                /* Walk frame table offsets */
+                {
+                    uint32_t idx_base = out->motn_offset + 0x10 + (uint32_t)table_count * 4 + 4;
+                    /* Table has N offsets + terminator (0 or 0xFFFFFFFF) */
+                    uint32_t entry_pos = out->motn_offset + tbl_rel;
+                    while (f_idx < NEXUS_MNS_MAX_MOTN_FRAMES) {
+                        uint32_t frame_off;
+                        const uint8_t *fp;
+                        int frame_size, j;
+                        Nexus_V1_MnsMotnFrame *frm;
+
+                        if ((int)(entry_pos + 4) > data_size) break;
+                        frame_off = read_be32(data + entry_pos);
+                        if (frame_off == 0xFFFFFFFF || frame_off == 0) break;
+
+                        /* Frame data is at idx_base + frame_off */
+                        {
+                            uint32_t abs_frame = idx_base + frame_off;
+                            uint16_t flags;
+                            if ((int)(abs_frame + 4) > data_size) break;
+                            fp = data + abs_frame;
+                            frm = &out->motn.tables[t].frames[f_idx];
+                            frm->duration = read_be16(fp);
+                            frm->flags = read_be16(fp + 2);
+                            flags = frm->flags;
+                            frame_size = 20 + motn_joints * 8;
+                            if (flags == 2) frame_size += 4;
+                            else if (flags == 3) frame_size += 8;
+                            else if (flags >= 4) frame_size += 12;
+                            if ((int)(abs_frame + frame_size) > data_size) break;
+                            for (j = 0; j < motn_joints && j < NEXUS_MNS_MAX_JOINTS; ++j) {
+                                int roff = 20 + j * 8;
+                                frm->rotation[j][0] = (int16_t)read_be16(fp + roff);
+                                frm->rotation[j][1] = (int16_t)read_be16(fp + roff + 2);
+                                frm->rotation[j][2] = (int16_t)read_be16(fp + roff + 4);
+                            }
+                        }
+                        f_idx++;
+                        entry_pos += 4;
+                    }
+                    out->motn.tables[t].frame_count = f_idx;
+                }
+            }
+            out->motn.valid = 1;
+        }
+    }
+
     out->valid = 1;
     return 1;
 }

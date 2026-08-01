@@ -76,8 +76,10 @@
     "does not promote compressed LZEXE loader offsets as runtime text addresses"
   ],
   "runtime_artifact_scan": {
-    "candidate_fires_runtime_dumps": [],
-    "has_runtime_address_inputs": false,
+    "candidate_fires_runtime_dumps": [
+      "/tmp/firestaff-archive-extract.Un1846.bin"
+    ],
+    "has_runtime_address_inputs": true,
     "inventory_conclusion": "only packed/original FIRES-like binaries and tooling are present; no TLINK .MAP or verified decompressed runtime dump was found",
     "original_fires_like_inventory": [
       {

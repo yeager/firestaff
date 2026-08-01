@@ -38,7 +38,7 @@ The DM1 V1 wall/door-frame bitmap base pointer is source-locked to the PC34 G210
 ## Firestaff evidence
 - PASS global-definition-null (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
 - PASS draw-frame-base-read (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
-- PASS door-frame-null-guard (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
+- FAIL door-frame-null-guard (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
 - PASS wall-loop-null-guard (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
 - FAIL csb-back-null-guard (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
 - PASS draw-wall-null-safe (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
@@ -70,7 +70,7 @@ PASS dm1_v1_viewport_3d_source_lock
 ~~~
 - /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass628_dm1_v1_wall_frame_bitmap_global_gate.py --check-only: rc=1
 ~~~
-FAIL pass628 check-only: csb-back-null-guard
+FAIL pass628 check-only: door-frame-null-guard,csb-back-null-guard
 ~~~
 
 ## Non-claims

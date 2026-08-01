@@ -1,6 +1,20 @@
 
 # Unreleased
 
+# Firestaff v3.0.210
+
+DM2/Nexus DMWeb-referenced gap closure:
+
+- DM2 item shooter: tile-based CUT_RECORD_FROM with record chain surgery
+- DM2 recycler: permissive mask path (QUERY_CREATURES_ITEM_MASK)
+- Nexus ITEM.IBS: category enum and struct aligned to DMWeb 40-byte format
+- Nexus ITEM.IBS: raw record binding (nexus_itemdef_bind_ibs_raw)
+- Nexus DGN: floor item, decoration, sensor, alcove, wall structs from DMWeb
+- Nexus MNS: MOTN keyframe decoder (per-joint rotation at 30fps)
+- BPK surface: mode-derived bpp for PRS3 entries
+- V2 lighting: NEXUS.BIN evidence reference
+- Inventory: IBS fallback guard (g_ibs_ever_bound)
+
 # Firestaff v3.0.209
 
 - DM2: all 22 skproject timer types registered — 14 new fail-closed handlers (light, cloud, missile, creature think, poison, enchantment, resurrection, sound, etc.)

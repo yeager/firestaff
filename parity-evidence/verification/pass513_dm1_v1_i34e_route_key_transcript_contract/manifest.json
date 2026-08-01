@@ -606,7 +606,7 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_REQUIRED",
-  "timestampUtc": "2026-07-30T09:09:47.146794+00:00",
+  "timestampUtc": "2026-08-01T16:32:14.275738+00:00",
   "transcriptValidation": {
     "counts": {
       "blockedOrNoopRows": 0,

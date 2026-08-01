@@ -39,14 +39,14 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size) {
 static uint32_t bpk_surface_bpp(const Nexus_V1_BpkEntry *entry,
                                 const Nexus_V1_BpkEntryPrefix *prefix)
 {
-    if (entry && entry->has_prs3) return 1U;
+    (void)entry;
     return prefix ? nexus_v1_bpk_mode_to_bpp(prefix->mode) : 0U;
 }
 
 static Nexus_V1_BpkSurfaceClass bpk_surface_class(
     const Nexus_V1_BpkEntry *entry, const Nexus_V1_BpkEntryPrefix *prefix)
 {
-    if (entry && entry->has_prs3) return NEXUS_V1_BPK_SURFACE_INDEXED_8BPP;
+    (void)entry;
     return prefix ? nexus_v1_bpk_mode_to_surface_class(prefix->mode) :
                     NEXUS_V1_BPK_SURFACE_UNKNOWN;
 }
@@ -2143,8 +2143,10 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
             continue;
         }
         bpp = bpk_surface_bpp(&entry, &prefix);
+        if (entry.has_prs3 && nexus_v1_bpk_mode_to_bpp(prefix.mode) == 0U) {
+            ++out_receipt->unknown_prs3_mode_entries;
+        }
         if (bpp == 0U) {
-            if (entry.has_prs3) ++out_receipt->unknown_prs3_mode_entries;
             continue;
         }
         expected = (uint64_t)prefix.width * (uint64_t)prefix.height * bpp;

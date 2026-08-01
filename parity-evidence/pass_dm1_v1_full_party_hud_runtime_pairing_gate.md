@@ -1,17 +1,17 @@
 # pass_dm1_v1_full_party_hud_runtime_pairing_gate
 
-Status: `FAIL_RUNTIME_PAIRING_ASSERTIONS`
+Status: `PASS_RUNTIME_PAIRING_EVIDENCE`
 
-Detail: Probe exit=1 passes=155 fails=1; see stderr for details.
+Detail: Probe exercised full4 HUD, single1 status panel, two-/three-champion intermediate cases, and all transitions against real Firestaff V1 assets.
 
 ## Probe
 
 - Source: `probes/m11/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe.c`
 - Binary: `/Volumes/Extern-disk/firestaff-claude/build/firestaff_dm1_v1_full_party_hud_runtime_pairing_probe`
 - Data dir: `/Users/bosse/.firestaff/data/dm1`
-- Return code: `1`
-- Pass count: `155`
-- Fail count: `1`
+- Return code: `0`
+- Pass count: `276`
+- Fail count: `0`
 
 ## Companion Pass
 
@@ -23,13 +23,13 @@ These 64-bit FNV-1a hashes cover the 274x29 party panel region (C151..C154 statu
 
 | Case | Panel-region FNV-1a64 |
 |---|---:|
-| `full4_panel_fnv1a64` | `0xaf0287ea6d8a3b8d` |
-| `single1_panel_fnv1a64` | `0xaf0287ea6d8a3b8d` |
-| `two2_panel_fnv1a64` | `0xaf0287ea6d8a3b8d` |
-| `three3_panel_fnv1a64` | `0xaf0287ea6d8a3b8d` |
-| `single1_to_full4_panel_fnv1a64` | `0xaf0287ea6d8a3b8d` |
-| `full4_to_single1_panel_fnv1a64` | `0xaf0287ea6d8a3b8d` |
-| `two2_to_full4_panel_fnv1a64` | `0xaf0287ea6d8a3b8d` |
+| `full4_panel_fnv1a64` | `0x2ec36530b8dabb7b` |
+| `single1_panel_fnv1a64` | `0xc186704df5a3913c` |
+| `two2_panel_fnv1a64` | `0x58e6d8f822e74aed` |
+| `three3_panel_fnv1a64` | `0xae5b820e71d84ec2` |
+| `single1_to_full4_panel_fnv1a64` | `0x2ec36530b8dabb7b` |
+| `full4_to_single1_panel_fnv1a64` | `0xc186704df5a3913c` |
+| `two2_to_full4_panel_fnv1a64` | `0x2ec36530b8dabb7b` |
 
 ## Honesty Boundary
 

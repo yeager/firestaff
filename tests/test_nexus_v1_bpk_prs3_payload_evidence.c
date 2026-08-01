@@ -167,9 +167,9 @@ static void test_evidence_walker(void) {
     expect(rows[0].entry_index == 1U, "row 0 entry_index == 1");
     expect(rows[0].mode == NEXUS_V1_BPK_MODE_16BPP,
            "row 0 mode == MODE_16BPP");
-    expect(rows[0].bpp == 1U, "row 0 PRS3 bpp == 1");
-    expect(rows[0].uncompressed_size == 240U,
-           "row 0 PRS3 uncompressed_size == 240");
+    expect(rows[0].bpp == 2U, "row 0 PRS3 bpp == 2");
+    expect(rows[0].uncompressed_size == 480U,
+           "row 0 PRS3 uncompressed_size == 480");
     expect(rows[0].payload_size == 32U, "row 0 payload_size == 32");
     expect(rows[0].header_first_readable == 1,
            "row 0 header_first_readable");
@@ -219,8 +219,8 @@ static void test_evidence_walker(void) {
     /* Aggregates. */
     expect(summary.smallest_payload == 4U, "summary.smallest_payload == 4");
     expect(summary.largest_payload == 32U, "summary.largest_payload == 32");
-    expect(summary.total_uncompressed == 272U,
-           "summary.total_uncompressed == 272 (240+32)");
+    expect(summary.total_uncompressed == 512U,
+           "summary.total_uncompressed == 512 (480+32)");
     expect(summary.total_payload == 36U,
            "summary.total_payload == 36 (32+4)");
     expect(summary.truncated == 0, "no truncation (capacity not hit)");
@@ -236,9 +236,9 @@ static void test_evidence_walker(void) {
                plan.mode == NEXUS_V1_BPK_MODE_16BPP &&
                plan.width == 16U &&
                plan.height == 15U &&
-               plan.bpp == 1U &&
+               plan.bpp == 2U &&
                plan.pixel_count == 240U &&
-               plan.expected_output_bytes == 240U,
+               plan.expected_output_bytes == 480U,
            "stream plan carries surface dimensions and output byte count");
     expect(plan.stream_size == 32U &&
                plan.body_size == 28U &&

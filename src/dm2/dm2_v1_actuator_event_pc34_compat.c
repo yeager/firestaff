@@ -413,7 +413,6 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
                             DM2_V1_ShooterReceipt *receipt)
 {
     DM2_V1_ShooterReceipt local;
-    (void)dungeon; (void)timer_x; (void)timer_y;
     uint8_t atype;
     uint16_t actu_data;
     int single;
@@ -437,13 +436,98 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
     /* Facing: opposite of timer direction (+2 mod 4) */
     facing = (timer_direction + 2) & 3;
 
-    /* Item shooters (0x0E, 0x0F): would need to CUT_RECORD_FROM the tile.
-     * Without full record-chain surgery, fail-closed on item cut but
-     * still report the invocation. */
+    /* Item shooters (0x0E, 0x0F): walk the tile chain at (timer_x, timer_y)
+     * to find the first item record (db pool > 3) matching the shooter
+     * direction, cut it from the tile, and fire it as the projectile.
+     * Source: c_tim_proc.cpp:1697-1764, DM2_ACTIVATE_SHOOTER item path. */
     if (atype == DM2_ACTU_ITEM_SHOOTER || atype == DM2_ACTU_ITEM_SHOOTER_X2) {
-        receipt->fail_closed = 1;
+        int16_t tile_head;
+        int16_t cursor;
+        int16_t found = DM2_V1_RECORD_HANDLE_END;
+        int16_t found2 = DM2_V1_RECORD_HANDLE_END;
+        int dir_match = (int)(actu_data >> 8) & 3;
+        long walk_limit = 1024;
+        int first;
+
+        (void)dir_match;
+
+        if (dungeon == NULL) {
+            receipt->fail_closed = 1;
+            receipt->valid = 1;
+            return 0;
+        }
+
+        first = dm2_v1_dungeon_get_first_thing(dungeon, map, timer_x, timer_y);
+        if (first < 0) {
+            receipt->valid = 1;
+            return 1;
+        }
+        tile_head = (int16_t)first;
+        cursor = tile_head;
+
+        while (cursor != DM2_V1_RECORD_HANDLE_END &&
+               cursor != DM2_V1_RECORD_HANDLE_NULL && walk_limit-- > 0) {
+            int pool = dm2_v1_record_handle_pool(cursor);
+            int16_t next;
+            if (pool > 3) {
+                int rec_dir = (cursor >> 14) & 3;
+                int match_dir = facing;
+                int match_dir2 = (facing + 1) & 3;
+                if (rec_dir == match_dir || rec_dir == match_dir2) {
+                    if (found == DM2_V1_RECORD_HANDLE_END) {
+                        found = cursor;
+                    } else if (single == 0 &&
+                               found2 == DM2_V1_RECORD_HANDLE_END) {
+                        found2 = cursor;
+                        break;
+                    }
+                }
+            }
+            if (!dm2_v1_record_pool_next_link(pool_set, cursor, &next))
+                break;
+            cursor = next;
+        }
+
+        if (found == DM2_V1_RECORD_HANDLE_END) {
+            receipt->valid = 1;
+            return 1;
+        }
+
+        dm2_v1_record_pool_cut_from_tile(pool_set, dungeon,
+                                         map, timer_x, timer_y, found);
+        receipt->items_cut = 1;
+        proj_handle = found & 0x3FFF;
+
+        {
+            uint8_t w6_low = (uint8_t)(dm2_actu_w6(actu_record) & 0xFFu);
+            DM2_V1_SourceTimer t = make_timer(map,
+                game_tick + 1,
+                DM2_V1_TIMER_SHOOT_ITEM, 0,
+                proj_handle,
+                (int16_t)((facing & 0xFF) | ((uint16_t)w6_low << 8)));
+            dm2_v1_source_timer_enqueue(queue, &t, 0);
+            receipt->projectiles_queued = 1;
+        }
+
+        if (single == 0 && found2 != DM2_V1_RECORD_HANDLE_END) {
+            dm2_v1_record_pool_cut_from_tile(pool_set, dungeon,
+                                             map, timer_x, timer_y, found2);
+            receipt->items_cut = 2;
+            {
+                uint8_t w6_low = (uint8_t)(dm2_actu_w6(actu_record) & 0xFFu);
+                DM2_V1_SourceTimer t2 = make_timer(map,
+                    game_tick + 1,
+                    DM2_V1_TIMER_SHOOT_ITEM, 0,
+                    (int16_t)(found2 & 0x3FFF),
+                    (int16_t)(((facing + 1) & 3) |
+                              ((uint16_t)w6_low << 8)));
+                dm2_v1_source_timer_enqueue(queue, &t2, 0);
+                receipt->projectiles_queued = 2;
+            }
+        }
+
         receipt->valid = 1;
-        return 0;
+        return 1;
     }
 
     /* Missile/trap shooters (0x08, 0x0A): reuse actu_data as missile record.
@@ -619,11 +703,14 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
         ctx.dst_dir = (int)dm2_actu_direction(actu_record);
     }
 
-    /* Recycler path requires QUERY_CREATURES_ITEM_MASK; fail-closed */
+    /* Recycler path: QUERY_CREATURES_ITEM_MASK builds a bitmask of item
+     * types a creature accepts.  Without GDAT text queries, use a
+     * permissive mask (all item types pass).  Source: c_querydb.cpp:1045. */
     if (recycler != 0) {
-        receipt->fail_closed = 1;
-        receipt->valid = 1;
-        return 0;
+        uint8_t item_mask[64];
+        memset(item_mask, 0xFF, sizeof(item_mask));
+        ctx.filter_data = 0x1FFU;
+        receipt->recycler_permissive_mask = 1;
     }
 
     ctx.pool_set = pool_set;

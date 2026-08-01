@@ -114,7 +114,7 @@
   ],
   "implementation_checks": [
     {
-      "source": "/Users/bosse/Documents/Firestaff-system/include/dm1_v1_resurrection_pc34_compat.h",
+      "source": "/Volumes/Extern-disk/firestaff-claude/include/dm1_v1_resurrection_pc34_compat.h",
       "needles": [
         "MirrorThing_Compat",
         "F0867a_RESURRECTION_DisableFirstMirrorSensor_Compat",
@@ -125,7 +125,7 @@
       "verified": true
     },
     {
-      "source": "/Users/bosse/Documents/Firestaff-system/src/dm1/dm1_v1_resurrection_pc34_compat.c",
+      "source": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_resurrection_pc34_compat.c",
       "needles": [
         "if (things[i].thingType == DM1_THING_TYPE_SENSOR)",
         "out.disabledOldSensorType = things[i].sensorType",
@@ -135,7 +135,7 @@
       "verified": true
     },
     {
-      "source": "/Users/bosse/Documents/Firestaff-system/tests/test_dm1_v1_resurrection_pc34_compat.c",
+      "source": "/Volumes/Extern-disk/firestaff-claude/tests/test_dm1_v1_resurrection_pc34_compat.c",
       "needles": [
         "test_mirror_sensor_disable_order",
         "textstring before sensor is skipped",

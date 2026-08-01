@@ -207,6 +207,31 @@ int dm2_v1_record_pool_cut_from_list(DM2_V1_RecordPoolSet *set,
     return 0;
 }
 
+int dm2_v1_record_pool_cut_from_tile(DM2_V1_RecordPoolSet *set,
+                                     DM2_V1_DungeonData *dungeon,
+                                     int map, int x, int y,
+                                     int16_t record)
+{
+    int first;
+    int16_t head;
+
+    if (set == NULL || dungeon == NULL ||
+        record == DM2_V1_RECORD_HANDLE_NULL ||
+        record == DM2_V1_RECORD_HANDLE_END) {
+        return 0;
+    }
+    first = dm2_v1_dungeon_get_first_thing(dungeon, map, x, y);
+    if (first < 0) {
+        return 0;
+    }
+    head = (int16_t)first;
+    if (!dm2_v1_record_pool_cut_from_list(set, &head, record)) {
+        return 0;
+    }
+    dm2_v1_dungeon_set_first_thing(dungeon, map, x, y, (uint16_t)head);
+    return 1;
+}
+
 int dm2_v1_record_pool_relocate(DM2_V1_RecordPoolSet *set,
                                 int16_t *from_head_io,
                                 int16_t *to_head_io,

@@ -3,35 +3,35 @@
     {
       "hits": [
         {
-          "line": 1185,
+          "line": 1206,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 1185,
+          "line": 1206,
           "needle": "DM1_PC34_ZONE_WALL_D1L"
         },
         {
-          "line": 1185,
+          "line": 1206,
           "needle": "DUNVIEW.C:7445-7455"
         },
         {
-          "line": 1185,
+          "line": 1206,
           "needle": "DUNVIEW.C:7459-7460 side ornament then return"
         },
         {
-          "line": 1186,
+          "line": 1207,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 1186,
+          "line": 1207,
           "needle": "DM1_PC34_ZONE_WALL_D1R"
         },
         {
-          "line": 1186,
+          "line": 1207,
           "needle": "DUNVIEW.C:7613-7623"
         },
         {
-          "line": 1186,
+          "line": 1207,
           "needle": "DUNVIEW.C:7627-7628 side ornament then return"
         }
       ],
@@ -44,27 +44,27 @@
     {
       "hits": [
         {
-          "line": 759,
+          "line": 831,
           "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
         },
         {
-          "line": 759,
+          "line": 831,
           "needle": "DM1_PC34_ZONE_WALL_D1L"
         },
         {
-          "line": 759,
+          "line": 831,
           "needle": "\"7460\""
         },
         {
-          "line": 760,
+          "line": 832,
           "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
         },
         {
-          "line": 760,
+          "line": 832,
           "needle": "DM1_PC34_ZONE_WALL_D1R"
         },
         {
-          "line": 760,
+          "line": 832,
           "needle": "\"7628\""
         }
       ],
@@ -77,11 +77,11 @@
     {
       "hits": [
         {
-          "line": 4205,
+          "line": 4531,
           "needle": "DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"
         },
         {
-          "line": 4206,
+          "line": 4532,
           "needle": "DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115"
         }
       ],

@@ -27,7 +27,7 @@ This gate narrows the pass622 blocker to one original runtime transcript row for
 ## Target transcript row
 - label=02_turn_right_west_1_3 input=M12_MENU_INPUT_RIGHT command=2 C002_COMMAND_TURN_RIGHT
 - partyAfter={'map': 0, 'x': 1, 'y': 3, 'direction': 3} firestaffViewportSha256=48ebb87dbc1ce98b6ea4e6156ed5aa2417a1457f801851e9c73676d02897cea5
-- pass623 row ok=True
+- pass623 row ok=False
 
 ## Consumed gates
 - PASS pass608_same_viewport_blocker observed=BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE
@@ -89,3 +89,4 @@ The next original capture attempt has a machine-checked, source-backed target ro
 
 ## Problems
 - gate status drifted: pass623_input_capture_bridge
+- target Firestaff viewport hash drifted

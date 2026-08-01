@@ -60,17 +60,11 @@ void nexus_render_creature(Nexus_Framebuffer *fb,
 
 /* ── Object / item rendering ─────────────────────────────────── */
 
-/* Item categories for source-bound sprite selection. */
-typedef enum {
-    NEXUS_ITEM_WEAPON,
-    NEXUS_ITEM_ARMOR,
-    NEXUS_ITEM_POTION,
-    NEXUS_ITEM_SCROLL,
-    NEXUS_ITEM_GOLD,
-    NEXUS_ITEM_KEY,
-    NEXUS_ITEM_TORCH,
-    NEXUS_ITEM_OTHER
-} Nexus_ItemCategory;
+/* Item categories — defined in nexus_v1_inventory.h (Nexus_ItemCategory).
+ * Rendering-only aliases for sprite selection: */
+#define NEXUS_RENDER_ITEM_GOLD   5
+#define NEXUS_RENDER_ITEM_TORCH  6
+#define NEXUS_RENDER_ITEM_OTHER  8
 
 /* Render an item only when a verified source-bound sprite exists. */
 void nexus_render_item(Nexus_Framebuffer *fb,

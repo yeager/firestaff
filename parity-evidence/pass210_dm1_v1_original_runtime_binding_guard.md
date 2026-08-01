@@ -8,7 +8,7 @@ Exact remaining blocker: No decompressed stock FIRES runtime image base, post-LZ
 - LZEXE signature at relocation table: `LZ91`.
 - Compressed loader entry: `1665:000e`; interpretation: `LZEXE loader entry only; not a decompressed FIRES runtime text address`.
 - ReDMCSB `*.MAP` artifacts found: `0`.
-- Candidate FIRES runtime dumps found: `0`.
+- Candidate FIRES runtime dumps found: `1`.
 - FIRES-like original binaries inventoried: `7`.
 - Unpack/link tools found: `4`.
 - Inventory conclusion: `only packed/original FIRES-like binaries and tooling are present; no TLINK .MAP or verified decompressed runtime dump was found`.
@@ -24,10 +24,10 @@ Exact remaining blocker: No decompressed stock FIRES runtime image base, post-LZ
 A debugger hit can be promoted only when the trace includes PSP/load segment, post-LZEXE transfer or map/decompressed-image evidence, symbol segment:offset, and observed hit CS:IP/context for each seam. Static compressed offsets and the MZ loader entry are explicitly rejected.
 
 ## Artifacts
-- Manifest: `/Users/bosse/Documents/Firestaff-system/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json`
-- Trace contract: `/Users/bosse/Documents/Firestaff-system/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/trace_binding_contract.json`
-- Runtime trace template: `/Users/bosse/Documents/Firestaff-system/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/runtime_trace_template.json`
-- Guarded runbook: `/Users/bosse/Documents/Firestaff-system/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/guarded_runtime_binding_runbook.md`
+- Manifest: `/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/manifest.json`
+- Trace contract: `/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/trace_binding_contract.json`
+- Runtime trace template: `/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/runtime_trace_template.json`
+- Guarded runbook: `/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass210_dm1_v1_original_runtime_binding_guard/guarded_runtime_binding_runbook.md`
 
 ## Non-claims
 - does not claim a loaded/decompressed FIRES runtime image base

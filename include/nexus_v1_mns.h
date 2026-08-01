@@ -59,6 +59,28 @@ typedef struct {
     int pixel_count;
 } Nexus_V1_MnsTextureDesc;
 
+/* MOTN keyframe: per-joint rotation for one frame (DMWeb StrucMotnFrame) */
+#define NEXUS_MNS_MAX_MOTN_TABLES   8
+#define NEXUS_MNS_MAX_MOTN_FRAMES  64
+
+typedef struct {
+    uint16_t duration;     /* frame duration (30fps units) */
+    uint16_t flags;
+    int16_t  rotation[NEXUS_MNS_MAX_JOINTS][3]; /* x,y,z per joint */
+} Nexus_V1_MnsMotnFrame;
+
+typedef struct {
+    int frame_count;
+    Nexus_V1_MnsMotnFrame frames[NEXUS_MNS_MAX_MOTN_FRAMES];
+} Nexus_V1_MnsMotnTable;
+
+typedef struct {
+    int valid;
+    int table_count;
+    int joint_count_motn;
+    Nexus_V1_MnsMotnTable tables[NEXUS_MNS_MAX_MOTN_TABLES];
+} Nexus_V1_MnsMotnResult;
+
 typedef struct {
     int valid;
     uint32_t file_size;
@@ -70,6 +92,7 @@ typedef struct {
     int total_faces;
     Nexus_V1_MnsJoint joints[NEXUS_MNS_MAX_JOINTS];
     Nexus_V1_MnsTextureDesc textures[NEXUS_MNS_MAX_TEXTURES];
+    Nexus_V1_MnsMotnResult motn;
 } Nexus_V1_MnsDecodeResult;
 
 int nexus_v1_mns_decode(const uint8_t *data, int data_size,

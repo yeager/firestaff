@@ -101,28 +101,28 @@
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "local-spec-table-present",
-      "line": 1174,
+      "line": 1195,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "local-d3l2-spec-lock",
-      "line": 1175,
+      "line": 1196,
       "needle": "DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "local-d3c-center-alcove-spec-lock",
-      "line": 1179,
+      "line": 1200,
       "needle": "DM1_VIEW_SQUARE_D3C,  DM1_WALL_D3C,  DM1_WALL_D3C",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "local-d1c-no-hard-return-spec-lock",
-      "line": 1187,
+      "line": 1208,
       "needle": "DM1_PC34_ZONE_WALL_D1C,  false, true",
       "ok": true
     },

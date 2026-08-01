@@ -10,28 +10,28 @@
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_table",
-      "line": 1174,
+      "line": 1195,
       "needle": "static const DM1_ViewportWallDrawSpec s_wall_draw_specs[]",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_count",
-      "line": 2524,
+      "line": 2771,
       "needle": "dm1_viewport_3d_wall_draw_spec_count",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "wall_spec_accessor_by_square",
-      "line": 2049,
+      "line": 2296,
       "needle": "dm1_viewport_3d_get_wall_draw_spec_for_square",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "id": "door_front_occlusion_specs",
-      "line": 948,
+      "line": 969,
       "needle": "s_door_front_occlusion_specs",
       "ok": true
     },
@@ -59,14 +59,14 @@
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/include/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_wall_spec_type",
-      "line": 707,
+      "line": 715,
       "needle": "DM1_ViewportWallDrawSpec",
       "ok": true
     },
     {
       "file": "/Volumes/Extern-disk/firestaff-claude/include/dm1_v1_viewport_3d_pc34_compat.h",
       "id": "public_door_front_spec_type",
-      "line": 349,
+      "line": 357,
       "needle": "DM1_ViewportDoorFrontOcclusionSpec",
       "ok": true
     }
@@ -76,7 +76,7 @@
     "no original-vs-Firestaff pixel parity",
     "no promotion of static repeated screenshots"
   ],
-  "ok": true,
+  "ok": false,
   "priorGates": [
     "pass496_dm1_v1_wall_occlusion_spec_matrix",
     "pass490_dm1_v1_wall_occlusion_merge_readiness",
@@ -91,12 +91,14 @@
       "^(firestaff_dm1_v1_wall_composition_contract_probe|pass496_dm1_v1_wall_occlusion_spec_matrix|pass490_dm1_v1_wall_occlusion_merge_readiness|dm1_v1_viewport_3d_occlusion_metadata_gate)$",
       "--output-on-failure"
     ],
-    "ok": true,
-    "returncode": 0,
-    "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1456: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1456: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    1.45 sec\n    Start 2148: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2148: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.04 sec\n    Start 2166: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2166: pass490_dm1_v1_wall_occlusion_merge_readiness ......   Passed    0.06 sec\n    Start 2183: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2183: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.03 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   1.62 sec\n"
+    "ok": false,
+    "returncode": 8,
+    "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1451: firestaff_dm1_v1_wall_composition_contract_probe\n1/4 Test #1451: firestaff_dm1_v1_wall_composition_contract_probe ...   Passed    0.01 sec\n    Start 2149: dm1_v1_viewport_3d_occlusion_metadata_gate\n2/4 Test #2149: dm1_v1_viewport_3d_occlusion_metadata_gate .........   Passed    0.04 sec\n    Start 2167: pass490_dm1_v1_wall_occlusion_merge_readiness\n3/4 Test #2167: pass490_dm1_v1_wall_occlusion_merge_readiness ......***Failed    0.08 sec\nFAIL pass490_dm1_v1_wall_occlusion_merge_readiness firestaff-side-lane-clear\n\n    Start 2184: pass496_dm1_v1_wall_occlusion_spec_matrix\n4/4 Test #2184: pass496_dm1_v1_wall_occlusion_spec_matrix ..........   Passed    0.05 sec\n\n75% tests passed, 1 tests failed out of 4\n\nTotal Test time (real) =   0.22 sec\n\nThe following tests FAILED:\n\t2167 - pass490_dm1_v1_wall_occlusion_merge_readiness (Failed)\nErrors while running CTest\n"
   },
   "probeTest": "firestaff_dm1_v1_wall_composition_contract_probe",
-  "problems": [],
+  "problems": [
+    "compiled probe/prior gates failed"
+  ],
   "promotionPredicate": "Promote wall-occlusion runtime evidence only when pass496 source/spec matrix is ok, the compiled Firestaff wall-composition probe passes, and a runtime/capture lane reaches the F0128 to F0097 present boundary for the same viewport. This gate is source/probe coverage only.",
   "schema": "firestaff.parity.pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.v1",
   "sourceLocks": [
@@ -168,6 +170,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE_LOCKED",
-  "timestampUtc": "2026-07-30T09:08:24.338811+00:00"
+  "status": "FAIL_PASS499_DM1_V1_WALL_OCCLUSION_RUNTIME_EVIDENCE_GATE",
+  "timestampUtc": "2026-08-01T16:32:05.340778+00:00"
 }
