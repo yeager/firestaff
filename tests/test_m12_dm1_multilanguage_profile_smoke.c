@@ -5,7 +5,9 @@
 #define _POSIX_C_SOURCE 200809L
 #endif
 
+#define FIRESTAFF_ASSET_STATUS_TESTING 1
 #include "menu_startup_m12.h"
+#include "asset_status_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -8269,8 +8269,8 @@ static void m11_audio_emit_source_sound_with_volume(
         csb_v1_audio_runtime_pc34_sound_payload_free(&payload);
         return;
     }
-    (void)fallbackMarker;
-    (void)M11_Audio_EmitSourceSoundIndex(&state->audioState, soundIndex);
+    (void)M11_Audio_EmitSoundIndex(&state->audioState, soundIndex,
+                                    fallbackMarker);
 }
 
 static void m11_audio_emit_source_sound(M11_GameViewState* state,
@@ -33151,6 +33151,7 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
          * surface can only clear the final capture route. */
         s_m11_dm1_f0115_floor_item_capture_request.requested = 1;
     }
+    s_m11_dm1_floor_item_host_presentation_receipt.floorItemLane = 1;
     drawn = m11_draw_item_sprite_material(
         state, framebuffer, fbW, fbH, x, y, w, h,
         thingType, subtype, relativeCell, pileIndex, depthIndex,
@@ -45940,6 +45941,17 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 if (visibility.nearest_blocking_center_depth_index >= 0 &&
                     d > visibility.nearest_blocking_center_depth_index) {
                     raw_squares[d][s] = M11_V22_SHAPE_CACHE_HIDDEN_SQUARE;
+                }
+                /* ReDMCSB DUNVIEW.C F0128 draws side squares far-to-near;
+                 * a nearer non-open side square occludes farther ones.
+                 * Hide side cells behind a nearer side-lane wall so the
+                 * V2.2 inplace pass cannot repaint corridor art over it. */
+                if (s != 1 && d > 0) {
+                    int rel_side = s == 0 ? -1 : 1;
+                    if (!dm1_viewport_3d_side_lane_clear_from_visibility_pc34(
+                            &visibility, d + 1, rel_side)) {
+                        raw_squares[d][s] = M11_V22_SHAPE_CACHE_HIDDEN_SQUARE;
+                    }
                 }
             }
         }
