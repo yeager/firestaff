@@ -138,12 +138,16 @@ Seven quest completion messages at UD 0x27713D:
 - "RESURRECTED" (UD 0x1C6E72)
 - "LOAD  KG" (UD 0x1CB3AC — weight display)
 
-### Action/Spell Names (UD 0x1DEEEA)
+### Hand-to-Hand/Movement Actions (UD 0x1DEEC1)
 
-30-entry table: LIFE, HIT, SWING, STAB, THRUST, JAB, PARRY, HACK, BERZERK,
-FIREBALL, DISPELL, CONFUSE, LIGHTNING, DISRUPT, MELEE, X, INVOKE, SLASH,
-CLEAVE, BASH, STUN, SHOOT, SPELLSHIELD, FIRESHIELD, HEAL, CALM, LIGHT,
-SPIT, BRANDISH, THROW.
+5-entry table: PUNCH, KICK, WAR CRY, STAB, CLIMB DOWN.
+
+### Combat/Spell Action Names (UD 0x1DEEE4)
+
+30-entry table: FREEZE LIFE, HIT, SWING, STAB, THRUST, JAB, PARRY, HACK,
+BERZERK, FIREBALL, DISPELL, CONFUSE, LIGHTNING, DISRUPT, MELEE, X, INVOKE,
+SLASH, CLEAVE, BASH, STUN, SHOOT, SPELLSHIELD, FIRESHIELD, HEAL, CALM,
+LIGHT, SPIT, BRANDISH, THROW.
 
 ### Champion Classes (UD 0x1C9A32)
 
@@ -167,6 +171,31 @@ HEALTH, STAMINA, MANA.
 
 "HEADS.", "TAILS." (Theron-unique coin flip mechanic), "CAN'T REACH",
 "NEED AMMO".
+
+### UI Interaction Messages (UD 0x1C9A4E)
+
+" NEEDS MORE PRACTICE WITH THIS ", " MUMBLES A MEANINGLESS SPELL.",
+" NEEDS AN EMPTY FLASK IN HAND FOR POTION.", " SPELL.",
+" JUST GAINED A ", " LEVEL!", "IT COMES UP " (coin flip prefix).
+
+### Container/Compass/Status UI Strings
+
+Flask states (UD 0x1C9C5B): "(EMPTY)", "(ALMOST EMPTY)", "(ALMOST FULL)",
+"(FULL)".
+
+Compass (UD 0x1C9C7F): "PARTY FACING", "NORTH", "EAST", "SOUTH", "WEST".
+
+Weight display (UD 0x1C9CA2): "WEIGHS", " KG.".
+
+Light source (UD 0x1C9CAE): "(BURNT OUT)".
+
+Item attributes (UD 0x1C65D4): "CONSUMABLE", "POISONED", "BROKEN", "CURSED",
+", ", " AND ".
+
+System messages: "WAKE UP" (UD 0x1C2E1D), "GAME FROZEN" (UD 0x1C2E25),
+"RESURRECTED." (UD 0x1C6E72).
+
+Hall of Champions (UD 0x1CBBBC): "GO AWAY AND RESURRECT THERON".
 
 ### System Card Credits (Block 1)
 

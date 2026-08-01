@@ -1,3 +1,10 @@
+- ✅ 2026-08-01 v3.0.219 Theron Track 02 UI strings and action table corrections:
+  Fixed action table (FREEZE LIFE not LIFE, 30 entries at UD 0x1DEEE4). Added 5
+  hand-to-hand actions (PUNCH/KICK/WAR CRY/STAB/CLIMB DOWN at UD 0x1DEEC1). Added
+  7 UI interaction messages (practice/meaningless spell/flask/level-up/coin flip).
+  New UI strings module: 4 flask states, 4 compass directions, item statuses
+  (POISONED/BROKEN/CURSED), weight display, system messages (WAKE UP/GAME
+  FROZEN/RESURRECTED), GO AWAY AND RESURRECT THERON. 14 tests pass.
 - ✅ 2026-08-01 v3.0.218 Theron DM1-compatible item name table and three-table
   analysis: 63-item DM1-compat table at UD 0x1D9737 (plate armor, TORCH, EYE
   OF TIME, FURY, GOLD COIN, RUBY KEY). Documented three distinct item ID

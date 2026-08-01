@@ -40,9 +40,18 @@ static const char *const g_skill_levels[THERON_TRACK02_SKILL_LEVEL_COUNT] = {
     "ARCHMASTER",  /* 15 — guard entry */
 };
 
-/* UD 0x1DEEEA: 30 action/spell names */
+/* UD 0x1DEEC1: 5 hand-to-hand/movement actions */
+static const char *const g_hand_actions[THERON_TRACK02_HAND_ACTION_COUNT] = {
+    "PUNCH",       /* 0 */
+    "KICK",        /* 1 */
+    "WAR CRY",     /* 2 */
+    "STAB",        /* 3 */
+    "CLIMB DOWN",  /* 4 */
+};
+
+/* UD 0x1DEEE4: 30 combat/spell action names */
 static const char *const g_actions[THERON_TRACK02_ACTION_COUNT] = {
-    "LIFE",        /*  0 — leading space in binary */
+    "FREEZE LIFE",  /*  0 — stored as single entry in binary */
     "HIT",         /*  1 */
     "SWING",       /*  2 */
     "STAB",        /*  3 */
@@ -94,6 +103,11 @@ const char *theron_v1_track02_us_skill_level_name(unsigned int index) {
     return g_skill_levels[index];
 }
 
+const char *theron_v1_track02_us_hand_action_name(unsigned int index) {
+    if (index >= THERON_TRACK02_HAND_ACTION_COUNT) return NULL;
+    return g_hand_actions[index];
+}
+
 const char *theron_v1_track02_us_action_name(unsigned int index) {
     if (index >= THERON_TRACK02_ACTION_COUNT) return NULL;
     return g_actions[index];
@@ -108,3 +122,24 @@ const char *theron_v1_track02_us_need_ammo(void)  { return "NEED AMMO"; }
 /* UD 0x1C9AE3 — Theron-unique coin flip mechanic */
 const char *theron_v1_track02_us_heads(void) { return "HEADS."; }
 const char *theron_v1_track02_us_tails(void) { return "TAILS."; }
+
+/* UD 0x1C9A4E: 7 UI interaction messages */
+static const char *const g_ui_messages[THERON_TRACK02_UI_MESSAGE_COUNT] = {
+    " NEEDS MORE PRACTICE WITH THIS ",   /* 0 — UD 0x1C9A4E */
+    " MUMBLES A MEANINGLESS SPELL.",     /* 1 — UD 0x1C9A6E */
+    " NEEDS AN EMPTY FLASK IN HAND FOR POTION.", /* 2 — UD 0x1C9A8C */
+    " SPELL.",                            /* 3 — UD 0x1C9AB6 */
+    " JUST GAINED A ",                   /* 4 — UD 0x1C9ABE */
+    " LEVEL!",                           /* 5 — UD 0x1C9ACE */
+    "IT COMES UP ",                      /* 6 — UD 0x1C9AD6 */
+};
+
+const char *theron_v1_track02_us_ui_message(unsigned int index) {
+    if (index >= THERON_TRACK02_UI_MESSAGE_COUNT) return NULL;
+    return g_ui_messages[index];
+}
+
+/* UD 0x1CBBBC */
+const char *theron_v1_track02_us_go_away_resurrect(void) {
+    return "GO AWAY AND RESURRECT THERON";
+}

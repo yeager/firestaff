@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.219
+- Fixed action table: first entry is "FREEZE LIFE" (not "LIFE"), correcting UD 0x1DEEE4 extraction
+- New hand-to-hand action table: PUNCH, KICK, WAR CRY, STAB, CLIMB DOWN (5 entries at UD 0x1DEEC1)
+- 7 UI interaction messages: practice/meaningless spell/flask potion/level-up/coin flip prefix
+- New UI strings module (`theron_v1_track02_ui_strings.{h,c}`): flask states, compass directions, item statuses, weight display, system messages, "GO AWAY AND RESURRECT THERON"
+- 14 tests pass (9 champion strings + 5 UI strings)
+
 # Firestaff v3.0.218
 - Theron DM1-compatible item name table (`theron_v1_track02_dm1_item_names.{h,c}`): 63-item table at UD 0x1D9737 with plate armor, TORCH, EYE OF TIME, FURY, GOLD COIN, RUBY KEY
 - Documented three distinct item ID namespaces in TQ binary (DM1-compat 63 items, TQ-unique 66 items, quest block superset ~80 items)
