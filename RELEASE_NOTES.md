@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.218
+- Theron DM1-compatible item name table (`theron_v1_track02_dm1_item_names.{h,c}`): 63-item table at UD 0x1D9737 with plate armor, TORCH, EYE OF TIME, FURY, GOLD COIN, RUBY KEY
+- Documented three distinct item ID namespaces in TQ binary (DM1-compat 63 items, TQ-unique 66 items, quest block superset ~80 items)
+- 4 tests covering count, boundaries, DM1-exclusive items, and completeness
+
 # Firestaff v3.0.217
 - Theron Track 02 text string module: 15 level names, 7 quest retrieval messages, save/load UI prompts, 5 status strings (5 tests)
 - Theron Track 02 champion string module: 4 classes, 6 stats, 3 resources, 16 skill levels, 30 action names, coin flip strings (6 tests)

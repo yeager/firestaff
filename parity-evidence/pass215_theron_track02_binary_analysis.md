@@ -79,6 +79,32 @@ Theron-unique items:
 | 62 | CORN | **Theron-unique** food item |
 | 63 | DRUMSTICK | **Theron-unique** food item |
 
+### DM1-Compatible Item Name Table (UD 0x1D9737)
+
+63-item table in the primary code area. Includes the full DM1 plate armor set
+(TORSO PLATE, LEG PLATE, ARMET, FOOT PLATE), TORCH, EYE OF TIME, FURY, GOLD
+COIN, and RUBY KEY. Does NOT include TQ-unique items (VORPAL BLADE, MITHRAL
+gear, etc.). This represents the DM1 item ID namespace used by the dungeon
+engine's internal object system.
+
+### Three Item Table Variants
+
+TQ contains three distinct item name tables representing different ID namespaces:
+
+1. **DM1-compatible** (63 items at UD 0x1D9737): DM1 PC 3.4 item set with plate
+   armor, TORCH, EYE OF TIME, FURY, GOLD COIN, RUBY KEY. Used by internal
+   dungeon object system.
+
+2. **TQ-unique** (66 items at UD 0x21A08E): Production item set with 11
+   Theron-unique items (VORPAL BLADE, STAFF OF MANAR, MITHRAL AKETON/MAIL,
+   EKKHARD CROSS, RABBIT'S FOOT, ROCK, CORN, DRUMSTICK, CHEST/OPEN CHEST).
+
+3. **Quest block copy** (~80 items at UD 0x099517): Superset combining DM1 full
+   item set (WATERSKIN, WATER, FLAMITT, FALCHION, SWORD, GHI, Lyte armor,
+   WOODEN SHIELD, SHIELD DEFIANT, BOULDER, BREAD, CHEESE, SCREAMER SLICE,
+   IRON/GOLD/RA KEY) with some TQ items. This appears to be the original DM1
+   PC 3.4 table carried over unchanged.
+
 ### Level Names
 
 15 level names (LEVEL 1 through LEVEL 15) at UD 0x27423B, each as fixed-width

@@ -1,3 +1,7 @@
+- ✅ 2026-08-01 v3.0.218 Theron DM1-compatible item name table and three-table
+  analysis: 63-item DM1-compat table at UD 0x1D9737 (plate armor, TORCH, EYE
+  OF TIME, FURY, GOLD COIN, RUBY KEY). Documented three distinct item ID
+  namespaces in TQ (DM1-compat 63, TQ-unique 66, quest block ~80). 4 tests.
 - ✅ 2026-08-01 v3.0.217 Theron Track 02 text and champion string modules:
   Text strings: 15 level names, 7 quest messages, save/load UI, status strings
   (5 tests). Champion strings: 4 classes, 6 stats, 3 resources, 16 skill
