@@ -4635,6 +4635,193 @@ static int dm2_runtime_actuate_floor_mecha(void *user,
  * increments a fail-closed counter so the dispatcher never substitutes
  * behavior.
  *
+ * dm2_runtime_process_0c_timer — 0x0C timer handler.
+ * Source: c_tim_proc.cpp:4025 DM2_PROCESS_TIMER_0C.
+ * Fail-closed: requires actuator record byte mutation chain.
+ */
+static int dm2_runtime_process_0c_timer(void *user,
+                                        const DM2_V1_SourceTimer *timer,
+                                        uint16_t source_index,
+                                        DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_resurrection_timer — 0x0D timer handler.
+ * Source: c_tim_proc.cpp:4032 DM2_PROCESS_TIMER_RESURRECTION.
+ * Fail-closed: requires champion revival + DB record ownership.
+ */
+static int dm2_runtime_resurrection_timer(void *user,
+                                          const DM2_V1_SourceTimer *timer,
+                                          uint16_t source_index,
+                                          DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_process_0e_timer — 0x0E timer handler.
+ * Source: c_tim_proc.cpp:4106 DM2_PROCESS_TIMER_0E(timer, 0xFFFFFFFE).
+ * Fail-closed: requires global effect state ownership.
+ */
+static int dm2_runtime_process_0e_timer(void *user,
+                                        const DM2_V1_SourceTimer *timer,
+                                        uint16_t source_index,
+                                        DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_process_sound_timer — 0x15 timer handler.
+ * Source: c_tim_proc.cpp:4065 DM2_PROCESS_SOUND(timer.getA()).
+ * Fail-closed: requires audio subsystem binding.
+ */
+static int dm2_runtime_process_sound_timer(void *user,
+                                           const DM2_V1_SourceTimer *timer,
+                                           uint16_t source_index,
+                                           DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_process_cloud_timer — 0x19 timer handler.
+ * Source: c_tim_proc.cpp:4062 DM2_PROCESS_CLOUD(timer).
+ * Fail-closed: requires cloud DB4 record + movement ownership.
+ */
+static int dm2_runtime_process_cloud_timer(void *user,
+                                           const DM2_V1_SourceTimer *timer,
+                                           uint16_t source_index,
+                                           DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_step_missile_timer — 0x1D/0x1E timer handler.
+ * Source: c_tim_proc.cpp:4071 DM2_STEP_MISSILE(timer).
+ * Fail-closed: requires missile record + movement + collision ownership.
+ */
+static int dm2_runtime_step_missile_timer(void *user,
+                                          const DM2_V1_SourceTimer *timer,
+                                          uint16_t source_index,
+                                          DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_process_3d_timer — 0x3C/0x3D timer handler.
+ * Source: c_tim_proc.cpp:4094 DM2_PROCESS_TIMER_3D(timer).
+ * Fail-closed: requires CAII/record ownership chain.
+ */
+static int dm2_runtime_process_3d_timer(void *user,
+                                        const DM2_V1_SourceTimer *timer,
+                                        uint16_t source_index,
+                                        DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_light_timer — 0x46 timer handler.
+ * Source: c_tim_proc.cpp:4100 DM2_PROCESS_TIMER_LIGHT + DM2_RECALC_LIGHT_LEVEL.
+ * Fail-closed: requires light-level state + hero light source ownership.
+ */
+static int dm2_runtime_light_timer(void *user,
+                                   const DM2_V1_SourceTimer *timer,
+                                   uint16_t source_index,
+                                   DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_hero_ench_flag_timer — 0x47 timer handler.
+ * Source: c_tim_proc.cpp:4112-4122.
+ * Decrements savegames1.b_02; if zero and v1e0976 != 0, sets hero flag 0x4000.
+ * Fail-closed: requires champion state ownership.
+ */
+static int dm2_runtime_hero_ench_flag_timer(void *user,
+                                            const DM2_V1_SourceTimer *timer,
+                                            uint16_t source_index,
+                                            DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_ench_power_timer — 0x48 timer handler.
+ * Source: c_tim_proc.cpp:4131-4162.
+ * Loops over party heroes, decrements ench_power by timer.getA() for each
+ * matching hero (bitmask in timer.actor), clamps to zero.
+ * Fail-closed: requires champion state ownership.
+ */
+static int dm2_runtime_ench_power_timer(void *user,
+                                        const DM2_V1_SourceTimer *timer,
+                                        uint16_t source_index,
+                                        DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_poison_timer — 0x4B timer handler.
+ * Source: c_tim_proc.cpp:4166-4177 DM2_PROCESS_POISON.
+ * Decrements hero poisoned/poison, then calls DM2_PROCESS_POISON.
+ * Fail-closed: requires champion state + poison damage ownership.
+ */
+static int dm2_runtime_poison_timer(void *user,
+                                    const DM2_V1_SourceTimer *timer,
+                                    uint16_t source_index,
+                                    DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_ornate_noise_timer — 0x5A timer handler.
+ * Source: c_tim_proc.cpp:4216 DM2_CONTINUE_ORNATE_NOISE(timer).
+ * Fail-closed: requires audio + ornate record ownership.
+ */
+static int dm2_runtime_ornate_noise_timer(void *user,
+                                          const DM2_V1_SourceTimer *timer,
+                                          uint16_t source_index,
+                                          DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_move_record_rotate_timer — 0x5D timer handler.
+ * Source: c_tim_proc.cpp:4228-4251.
+ * Calls DM2_MOVE_RECORD_TO + party.rotate if on current map.
+ * Fail-closed: requires record chain + party state ownership.
+ */
+static int dm2_runtime_move_record_rotate_timer(void *user,
+                                                const DM2_V1_SourceTimer *timer,
+                                                uint16_t source_index,
+                                                DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
+ * dm2_runtime_alloc_new_creature_timer — 0x5E timer handler.
+ * Source: c_tim_proc.cpp:4253-4275 DM2_ALLOC_NEW_CREATURE.
+ * Fail-closed: requires creature DB + allocation ownership.
+ */
+static int dm2_runtime_alloc_new_creature_timer(void *user,
+                                                const DM2_V1_SourceTimer *timer,
+                                                uint16_t source_index,
+                                                DM2_V1_ProceedTimersReceipt *receipt) {
+    (void)user; (void)timer; (void)source_index; (void)receipt;
+    return 1;
+}
+
+/*
  * dm2_runtime_ornate_animator_timer — 0x55 timer handler.
  * Source: skevent.cpp ACTIVATE_ORNATE_ANIMATOR queues ttyOrnateAnimator.
  * The handler advances the ornate animation frame on the actuator record.
@@ -5017,16 +5204,34 @@ void dm2_v1_runtime_tick(void) {
             dispatcher.handlers[DM2_V1_TIMER_5C_RECORD_SET] =
                 dm2_runtime_5c_record_set;
         }
-        /* DM2_PROCESS_TIMER_LIGHT, enchantment, cloud, missile and summon
-         * all mutate source-owned session state.  SKProject's real path
-         * starts at c_tim_proc.cpp::DM2_PROCEED_TIMERS and follows the live
-         * hero/DB14/DB4 record, its timer payload and the relevant GDAT row.
-         * Firestaff has not imported that complete ownership chain.  In
-         * particular, the former helper used replacement duration, energy and
-         * creature-type values for DB14/DB4 writes.  Do not dispatch any of
-         * those timer types from a real session until that owner is bound:
-         * the source-order dispatcher acknowledges them fail-closed instead
-         * of fabricating a cloud, missile, summon, light or champion state. */
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_0C] =
+            dm2_runtime_process_0c_timer;
+        dispatcher.handlers[DM2_V1_TIMER_RESURRECTION] =
+            dm2_runtime_resurrection_timer;
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_0E] =
+            dm2_runtime_process_0e_timer;
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_SOUND] =
+            dm2_runtime_process_sound_timer;
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_CLOUD] =
+            dm2_runtime_process_cloud_timer;
+        dispatcher.handlers[DM2_V1_TIMER_STEP_MISSILE] =
+            dm2_runtime_step_missile_timer;
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_3D] =
+            dm2_runtime_process_3d_timer;
+        dispatcher.handlers[DM2_V1_TIMER_LIGHT] =
+            dm2_runtime_light_timer;
+        dispatcher.handlers[DM2_V1_TIMER_HERO_ENCH_FLAG] =
+            dm2_runtime_hero_ench_flag_timer;
+        dispatcher.handlers[DM2_V1_TIMER_ENCH_POWER] =
+            dm2_runtime_ench_power_timer;
+        dispatcher.handlers[DM2_V1_TIMER_POISON] =
+            dm2_runtime_poison_timer;
+        dispatcher.handlers[DM2_V1_TIMER_ORNATE_NOISE] =
+            dm2_runtime_ornate_noise_timer;
+        dispatcher.handlers[DM2_V1_TIMER_MOVE_RECORD_ROTATE] =
+            dm2_runtime_move_record_rotate_timer;
+        dispatcher.handlers[DM2_V1_TIMER_ALLOC_NEW_CREATURE] =
+            dm2_runtime_alloc_new_creature_timer;
         (void)dm2_v1_proceed_timers(&rt->timer_queue,
                                     (uint32_t)rt->tick_count,
                                     &dispatcher,

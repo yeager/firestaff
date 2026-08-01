@@ -2175,6 +2175,135 @@ const char *dm2_pc_save_interoperability_report(const uint8_t *data, size_t size
 }
 
 /* ════════════════════════════════════════════════════════════════════════
+ * Save game writing — DM2_GAME_SAVE_MENU flow
+ * Source: skproject/SKULLWIN/c_savegame.cpp:2087 DM2_GAME_SAVE_MENU
+ *
+ * Layout:
+ *   42-byte slot header (0xBEEF/0xDEAD magic at bytes 38-41)
+ *   SUPPRESS-encoded game state block (56 bytes data, table1d631a mask)
+ *   SUPPRESS-encoded global flags (8 bytes)
+ *   SUPPRESS-encoded global bytes (64 bytes)
+ *   SUPPRESS-encoded global words (128 bytes = 64 words)
+ *   SUPPRESS-encoded champion records (261 bytes each)
+ *   SUPPRESS-encoded timer entries (10 bytes each)
+ *   SUPPRESS flush
+ * ════════════════════════════════════════════════════════════════════════ */
+
+int dm2_v1_save_game_write(const char *path,
+                           const DM2_GameStateBlock *gamestate,
+                           const uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE],
+                           const uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE],
+                           const uint16_t global_words[DM2_GLOBAL_WORDS_SIZE],
+                           const DM2_ChampionRecord *champions,
+                           uint8_t champion_count,
+                           const DM2_TimerEntry *timers,
+                           uint8_t timer_count,
+                           DM2_V1_SaveWriteReceipt *out_receipt)
+{
+    FILE *f;
+    DM2_SuppressWriter writer;
+    uint8_t hdr[42];
+    uint8_t suppress_buf[1024];
+    size_t written_total = 0;
+    int encoded;
+    uint8_t champion_mask[261];
+    uint32_t hash = 2166136261u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!path || !gamestate) {
+        if (out_receipt) out_receipt->fail_closed = 1;
+        return -1;
+    }
+
+    f = fopen(path, "wb");
+    if (!f) {
+        if (out_receipt) out_receipt->fail_closed = 1;
+        return -1;
+    }
+
+    /* Write 42-byte header with 0xBEEF/0xDEAD magic */
+    memset(hdr, 0, sizeof(hdr));
+    hdr[0] = 0x01; hdr[1] = 0x00; /* version = 1 */
+    hdr[38] = (uint8_t)(DM2_SLOT_MAGIC_1 & 0xFF);
+    hdr[39] = (uint8_t)(DM2_SLOT_MAGIC_1 >> 8);
+    hdr[40] = (uint8_t)(DM2_SLOT_MAGIC_2 & 0xFF);
+    hdr[41] = (uint8_t)(DM2_SLOT_MAGIC_2 >> 8);
+    if (fwrite(hdr, 42, 1, f) != 1) goto fail;
+    written_total += 42;
+    if (out_receipt) out_receipt->header_written = 1;
+
+    /* SUPPRESS-encode game state block */
+    dm2_suppress_writer_init(&writer);
+    encoded = dm2_suppress_encode_gamestate(gamestate, suppress_buf, sizeof(suppress_buf));
+    if (encoded < 0) goto fail;
+    if (fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
+    written_total += (size_t)encoded;
+    if (out_receipt) out_receipt->gamestate_written = 1;
+
+    /* SUPPRESS-encode global flags */
+    encoded = dm2_suppress_encode_global_flags(global_flags, suppress_buf, sizeof(suppress_buf));
+    if (encoded < 0) goto fail;
+    if (encoded > 0 && fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
+    written_total += (size_t)encoded;
+    if (out_receipt) out_receipt->global_flags_written = 1;
+
+    /* SUPPRESS-encode global bytes */
+    encoded = dm2_suppress_encode_global_bytes(global_bytes, suppress_buf, sizeof(suppress_buf));
+    if (encoded < 0) goto fail;
+    if (encoded > 0 && fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
+    written_total += (size_t)encoded;
+    if (out_receipt) out_receipt->global_bytes_written = 1;
+
+    /* SUPPRESS-encode global words */
+    encoded = dm2_suppress_encode_global_words(global_words, suppress_buf, sizeof(suppress_buf));
+    if (encoded < 0) goto fail;
+    if (encoded > 0 && fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
+    written_total += (size_t)encoded;
+    if (out_receipt) out_receipt->global_words_written = 1;
+
+    /* SUPPRESS-encode champion records */
+    dm2_suppress_champion_mask(champion_mask);
+    for (uint8_t i = 0; i < champion_count && champions; ++i) {
+        encoded = dm2_suppress_encode_champion(&champions[i], champion_mask,
+                                                suppress_buf, sizeof(suppress_buf));
+        if (encoded < 0) goto fail;
+        if (encoded > 0 && fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
+        written_total += (size_t)encoded;
+    }
+    if (out_receipt) out_receipt->champions_written = 1;
+
+    /* SUPPRESS-encode timer entries */
+    for (uint8_t i = 0; i < timer_count && timers; ++i) {
+        encoded = dm2_suppress_encode_timer(&timers[i], suppress_buf, sizeof(suppress_buf));
+        if (encoded < 0) goto fail;
+        if (encoded > 0 && fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
+        written_total += (size_t)encoded;
+    }
+    if (out_receipt) out_receipt->timers_written = 1;
+
+    /* Flush any remaining SUPPRESS bits — the streaming writer is used
+     * by the individual encode functions, each of which flushes internally,
+     * so this is a no-op in practice but keeps the contract explicit. */
+
+    fclose(f);
+
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->total_bytes_written = written_total;
+        hash = dm2_v1_save_hash_bytes(hash, hdr, sizeof(hdr));
+        hash = dm2_v1_save_hash_bytes(hash, (const uint8_t *)&written_total,
+                                       sizeof(written_total));
+        out_receipt->receipt_hash = hash ? hash : 1u;
+    }
+    return 0;
+
+fail:
+    fclose(f);
+    if (out_receipt) out_receipt->fail_closed = 1;
+    return -1;
+}
+
+/* ════════════════════════════════════════════════════════════════════════
  * Source evidence for Phase 7
  * ════════════════════════════════════════════════════════════════════════ */
 

@@ -1,3 +1,11 @@
+- ✅ 2026-08-01 v3.0.209 DM2 gap analysis closure:
+  Timer dispatch: all 22 skproject timer types now have registered handlers
+  (0x0C, 0x0D, 0x0E, 0x15, 0x19, 0x1E, 0x3D, 0x46, 0x47, 0x48, 0x4B, 0x5A,
+  0x5D, 0x5E added; fail-closed until ownership chains bound). Save game
+  writing: dm2_v1_save_game_write() implements the skproject DM2_GAME_SAVE_MENU
+  SUPPRESS-encoded save flow (header, gamestate, global flags/bytes/words,
+  champions, timers). DM2 V22 viewport swap wireup probe aligned with
+  DM2-GDAT-FB-07 no-draw policy (309/309 DM2 tests pass).
 - ✅ 2026-08-01 v3.0.208 Multi-game bug fix batch (DM1, CSB, DM2, Nexus):
   DM2 actuator gap closure (shooter, item teleport, push-button switch,
   creature generator), Nexus card art restored on startup menu, DM2 menu

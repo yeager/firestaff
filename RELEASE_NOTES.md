@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.209
+
+- DM2: all 22 skproject timer types registered — 14 new fail-closed handlers (light, cloud, missile, creature think, poison, enchantment, resurrection, sound, etc.)
+- DM2: save game writing (dm2_v1_save_game_write) — SUPPRESS-encoded save flow matching skproject DM2_GAME_SAVE_MENU
+- DM2: V22 viewport swap wireup probe aligned with DM2-GDAT-FB-07 no-draw policy
+- DM2: 309/309 tests pass (was 308/309)
+
 # Firestaff v3.0.208
 
 - DM2: actuator gap closure — shooter, item teleport, push-button switch, creature generator

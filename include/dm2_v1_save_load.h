@@ -646,6 +646,38 @@ bool dm2_db_write_record(uint8_t pool, uint32_t index,
                           FILE *f,
                           const DM2_DB_State *db);
 
+/* ════════════════════════════════════════════════════════════════
+ * Save game writing — DM2_GAME_SAVE_MENU flow
+ * Source: skproject/SKULLWIN/c_savegame.cpp:2087
+ * ════════════════════════════════════════════════════════════════ */
+
+typedef struct {
+    int valid;
+    int header_written;
+    int sgwords_written;
+    int gamestate_written;
+    int global_flags_written;
+    int global_bytes_written;
+    int global_words_written;
+    int champions_written;
+    int timers_written;
+    int inventories_written;
+    int fail_closed;
+    size_t total_bytes_written;
+    uint32_t receipt_hash;
+} DM2_V1_SaveWriteReceipt;
+
+int dm2_v1_save_game_write(const char *path,
+                           const DM2_GameStateBlock *gamestate,
+                           const uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE],
+                           const uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE],
+                           const uint16_t global_words[DM2_GLOBAL_WORDS_SIZE],
+                           const DM2_ChampionRecord *champions,
+                           uint8_t champion_count,
+                           const DM2_TimerEntry *timers,
+                           uint8_t timer_count,
+                           DM2_V1_SaveWriteReceipt *out_receipt);
+
 #ifdef __cplusplus
 }
 #endif
