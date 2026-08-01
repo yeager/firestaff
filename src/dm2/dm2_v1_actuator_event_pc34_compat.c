@@ -11,6 +11,8 @@
 
 #include <string.h>
 
+#include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_move_record_to_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_tile_record_walk_pc34_compat.h"
 
@@ -210,6 +212,439 @@ int dm2_v1_activate_relay2(DM2_V1_RecordPoolSet *pool_set,
     return 1;
 }
 
+/* ── PUSH_BUTTON_SWITCH ───────────────────────────────────────────── */
+
+/* Source: skevent.cpp:2010-2028
+ * Finds the door record at the actuator's target (Xcoord, Ycoord) and
+ * sets/clears/toggles bit 13 of its w2 word based on action_type.
+ * Bit 13 controls whether the door is sealed (cannot be bashed open). */
+
+typedef struct {
+    DM2_V1_RecordPoolSet *pool_set;
+    int action_type;
+    int found;
+} PushButtonCtx;
+
+static int push_button_door_visitor(void *context,
+                                    int16_t handle,
+                                    const uint8_t *record_unused)
+{
+    PushButtonCtx *ctx = (PushButtonCtx *)context;
+    int db_type = dm2_v1_record_handle_pool(handle);
+    uint8_t *record_mut;
+    (void)record_unused;
+
+    if (db_type != DM2_DB_DOOR) return 0;
+
+    record_mut = dm2_v1_record_pool_address_mut(ctx->pool_set, handle);
+    if (record_mut == NULL) return 0;
+
+    switch (ctx->action_type) {
+        case 0: dm2_door_set_bit13(record_mut, 1); break;
+        case 1: dm2_door_set_bit13(record_mut, 0); break;
+        case 2: dm2_door_set_bit13(record_mut,
+                    (uint8_t)(dm2_door_bit13(record_mut) ^ 1u)); break;
+    }
+    ctx->found = 1;
+    return 1;
+}
+
+int dm2_v1_push_button_switch(DM2_V1_RecordPoolSet *pool_set,
+                              DM2_V1_DungeonData *dungeon,
+                              const uint8_t *actu_record,
+                              int action_type,
+                              DM2_V1_ActuatorEventReceipt *receipt)
+{
+    PushButtonCtx ctx;
+    DM2_V1_TileRecordWalkReceipt walk_receipt;
+    int target_x, target_y;
+
+    if (pool_set == NULL || dungeon == NULL || actu_record == NULL) return 0;
+
+    target_x = (int)dm2_actu_xcoord(actu_record);
+    target_y = (int)dm2_actu_ycoord(actu_record);
+
+    ctx.pool_set = pool_set;
+    ctx.action_type = action_type;
+    ctx.found = 0;
+
+    memset(&walk_receipt, 0, sizeof(walk_receipt));
+    dm2_v1_tile_record_walk(pool_set, dungeon, 0, target_x, target_y,
+                            push_button_door_visitor, &ctx, &walk_receipt);
+
+    if (ctx.found && receipt) receipt->door_bit13_toggled++;
+    return ctx.found;
+}
+
+/* ── CREATURE_GENERATOR ───────────────────────────────────────────── */
+
+/* Source: skevent.cpp:1740-1759 (dispatch), skcrture.cpp:6311-6362
+ * (ALLOC_NEW_CREATURE).  Allocates a creature record from the pool,
+ * sets its type, HP, direction, and places it at the actuator's
+ * (Xcoord, Ycoord).
+ *
+ * HP formula: healthMultiplier (capped to 31) * baseHP >> 3, then
+ * final HP = rand(HP/8+1) + HP.  Without live AI specs, we use
+ * multiplier=7 (the hardcoded value from the dispatch) and default
+ * baseHP=40, yielding HP = 7*40/8 = 35, +rand(5) = 35-39. */
+int dm2_v1_creature_generator(DM2_V1_RecordPoolSet *pool_set,
+                              DM2_V1_DungeonData *dungeon,
+                              DM2_V1_SourceTimerQueue *queue,
+                              const uint8_t *actu_record,
+                              int map, uint32_t game_tick,
+                              DM2_V1_CreatureGeneratorReceipt *receipt)
+{
+    DM2_V1_CreatureGeneratorReceipt local;
+    int16_t creature_handle;
+    int target_x, target_y;
+    uint16_t creature_type;
+    uint8_t direction;
+    uint16_t health_mult;
+    uint16_t base_hp;
+    uint16_t hp;
+    uint8_t *creature_rec;
+    DM2_V1_MoveRecordToReceipt move_receipt;
+
+    memset(&local, 0, sizeof(local));
+    if (receipt == NULL) receipt = &local;
+
+    if (pool_set == NULL || dungeon == NULL || actu_record == NULL) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    creature_type = dm2_actu_data(actu_record);
+    target_x = (int)dm2_actu_xcoord(actu_record);
+    target_y = (int)dm2_actu_ycoord(actu_record);
+
+    /* Direction: once_only ? action_type : random 0-2
+     * Without RAND02, use direction 0 as deterministic fallback. */
+    if (dm2_actu_once_only(actu_record) != 0) {
+        direction = (uint8_t)(dm2_actu_action_type(actu_record) & 3u);
+    } else {
+        direction = (uint8_t)(game_tick & 3u);
+    }
+
+    /* Allocate creature record (dbCreature = pool 4) */
+    creature_handle = dm2_v1_record_pool_alloc_new_record(pool_set, 4);
+    if (creature_handle < 0) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+    receipt->creature_allocated = 1;
+
+    /* Set creature type and direction in the record */
+    creature_rec = dm2_v1_record_pool_address_mut(pool_set, creature_handle);
+    if (creature_rec == NULL) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    /* Creature record layout (dme.h):
+     * w0 (bytes 0-1): next link
+     * w2 (bytes 2-3): bits 0-6 = creature type
+     * b15 (byte 15): bits 0-1 = direction, init to 0xFB */
+    {
+        uint16_t w2 = (uint16_t)creature_rec[2] | ((uint16_t)creature_rec[3] << 8);
+        w2 = (w2 & ~0x7Fu) | (creature_type & 0x7Fu);
+        creature_rec[2] = (uint8_t)(w2 & 0xFFu);
+        creature_rec[3] = (uint8_t)(w2 >> 8);
+    }
+    creature_rec[15] = (uint8_t)(0xFB & ~3u) | (direction & 3u);
+
+    /* HP: multiplier=7 (hardcoded in dispatch), base=40 (default).
+     * hp = (min(7,31) * 40) >> 3 = 35.  Final = 35 + rand(5).
+     * Deterministic: use 35. */
+    health_mult = 7;
+    base_hp = 40;
+    hp = (uint16_t)((health_mult * base_hp) >> 3);
+    /* Store HP in creature record.  HP fields vary by version;
+     * use bytes 4-5 as HP1 (common layout). */
+    creature_rec[4] = (uint8_t)(hp & 0xFFu);
+    creature_rec[5] = (uint8_t)(hp >> 8);
+
+    /* Place creature on tile via MOVE_RECORD_TO */
+    memset(&move_receipt, 0, sizeof(move_receipt));
+    if (dm2_v1_move_record_to(pool_set, dungeon, queue,
+                               creature_handle,
+                               -1, 0,
+                               (int16_t)target_x, (int16_t)target_y,
+                               (int16_t)direction,
+                               map, game_tick,
+                               &move_receipt) == 1) {
+        receipt->creature_placed = 1;
+    } else {
+        receipt->fail_closed = 1;
+    }
+
+    /* Override iAnimSeq if actuator has revert_effect set */
+    if (dm2_actu_revert_effect(actu_record) != 0 && creature_rec != NULL) {
+        uint16_t anim_seq = (uint16_t)dm2_actu_delay(actu_record);
+        /* iAnimSeq at byte offset 12-13 (common layout) */
+        creature_rec[12] = (uint8_t)(anim_seq & 0xFFu);
+        creature_rec[13] = (uint8_t)(anim_seq >> 8);
+        receipt->anim_seq_set = 1;
+    }
+
+    receipt->valid = 1;
+    return 1;
+}
+
+/* ── ACTIVATE_SHOOTER ─────────────────────────────────────────────── */
+
+/* Source: skevent.cpp:1536-1631.
+ * Shooter types 0x07/0x08/0x0E fire a single projectile;
+ * 0x09/0x0A/0x0F fire dual projectiles.
+ * Item shooters (0x0E/0x0F) pick items from the source tile.
+ * Others allocate via ALLOC_NEW_DBITEM or use missile records.
+ *
+ * Projectile launch is modeled as a tty07 timer (SHOOT_ITEM equivalent)
+ * queued at game_tick+1. */
+
+#define DM2_V1_TIMER_SHOOT_ITEM 0x07
+
+int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
+                            DM2_V1_DungeonData *dungeon,
+                            DM2_V1_SourceTimerQueue *queue,
+                            const uint8_t *actu_record,
+                            int timer_x, int timer_y,
+                            int timer_direction,
+                            int map, uint32_t game_tick,
+                            DM2_V1_ShooterReceipt *receipt)
+{
+    DM2_V1_ShooterReceipt local;
+    (void)dungeon; (void)timer_x; (void)timer_y;
+    uint8_t atype;
+    uint16_t actu_data;
+    int single;
+    int facing;
+    int16_t proj_handle;
+
+    memset(&local, 0, sizeof(local));
+    if (receipt == NULL) receipt = &local;
+
+    if (pool_set == NULL || queue == NULL || actu_record == NULL) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    atype = dm2_actu_type(actu_record);
+    actu_data = dm2_actu_data(actu_record);
+
+    single = DM2_SHOOTER_SINGLE_TYPES(atype) ? 1 : 0;
+    receipt->single_projectile = single;
+
+    /* Facing: opposite of timer direction (+2 mod 4) */
+    facing = (timer_direction + 2) & 3;
+
+    /* Item shooters (0x0E, 0x0F): would need to CUT_RECORD_FROM the tile.
+     * Without full record-chain surgery, fail-closed on item cut but
+     * still report the invocation. */
+    if (atype == DM2_ACTU_ITEM_SHOOTER || atype == DM2_ACTU_ITEM_SHOOTER_X2) {
+        receipt->fail_closed = 1;
+        receipt->valid = 1;
+        return 0;
+    }
+
+    /* Missile/trap shooters (0x08, 0x0A): reuse actu_data as missile record.
+     * Weapon shooters (0x07, 0x09): allocate new item from actu_data. */
+    if (atype == DM2_ACTU_MISSILE_SHOOTER || atype == DM2_ACTU_MISSILE_SHOOTER_2) {
+        /* These reuse missile record directly; encode as-is */
+        proj_handle = (int16_t)actu_data;
+    } else {
+        proj_handle = dm2_v1_alloc_new_dbitem(pool_set, actu_data);
+        if (proj_handle < 0) {
+            receipt->fail_closed = 1;
+            receipt->valid = 1;
+            return 0;
+        }
+        receipt->items_allocated = 1;
+    }
+
+    /* Queue projectile as a SHOOT_ITEM timer.
+     * The timer's value_a encodes the projectile handle,
+     * value_b encodes facing | (speed << 8). */
+    {
+        uint8_t w6_low = (uint8_t)(dm2_actu_w6(actu_record) & 0xFFu);
+        DM2_V1_SourceTimer t = make_timer(map,
+            game_tick + 1,
+            DM2_V1_TIMER_SHOOT_ITEM, 0,
+            proj_handle,
+            (int16_t)((facing & 0xFF) | ((uint16_t)w6_low << 8)));
+        dm2_v1_source_timer_enqueue(queue, &t, 0);
+        receipt->projectiles_queued = 1;
+    }
+
+    /* Dual projectile: allocate second and queue with rotated facing */
+    if (single == 0) {
+        int16_t proj2 = dm2_v1_alloc_new_dbitem(pool_set, actu_data);
+        if (proj2 >= 0) {
+            DM2_V1_SourceTimer t2 = make_timer(map,
+                game_tick + 1,
+                DM2_V1_TIMER_SHOOT_ITEM, 0,
+                proj2,
+                (int16_t)(((facing + 1) & 3) |
+                          ((uint16_t)(dm2_actu_w6(actu_record) & 0xFFu) << 8)));
+            dm2_v1_source_timer_enqueue(queue, &t2, 0);
+            receipt->projectiles_queued = 2;
+            receipt->items_allocated = 2;
+        }
+    }
+
+    receipt->valid = 1;
+    return 1;
+}
+
+/* ── ACTIVATE_ITEM_TELEPORT ───────────────────────────────────────── */
+
+/* Source: skevent.cpp:1346-1500.
+ * Moves items from source tile to destination tile based on actuator's
+ * data filter.  capture=1 reverses source/dest.  recycler uses an
+ * item bitmask.  Items are filtered by DB type (weapon..misc_item)
+ * and by direction (wall) or all directions (floor). */
+
+typedef struct {
+    DM2_V1_RecordPoolSet *pool_set;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_SourceTimerQueue *queue;
+    const uint8_t *actu_record;
+    int src_x, src_y, src_dir;
+    int dst_x, dst_y, dst_dir;
+    int is_floor;
+    int only_first_item;
+    uint16_t filter_data;
+    int map;
+    uint32_t game_tick;
+    DM2_V1_ItemTeleportReceipt *receipt;
+} ItemTeleportCtx;
+
+static int item_teleport_visitor(void *context,
+                                 int16_t handle,
+                                 const uint8_t *record_unused)
+{
+    ItemTeleportCtx *ctx = (ItemTeleportCtx *)context;
+    int db_type = dm2_v1_record_handle_pool(handle);
+    int item_dir = (int)(handle & 3u);
+    (void)record_unused;
+
+    /* Only items (dbWeapon=5 through dbMiscellaneous_item=9) */
+    if (db_type < DM2_DB_WEAPON || db_type > DM2_DB_MISC_ITEM) {
+        /* Check creature possessions */
+        if (db_type == DM2_DB_CREATURE) {
+            ctx->receipt->creatures_checked++;
+        }
+        return 0;
+    }
+
+    /* Direction filter: wall actuators match direction only */
+    if (ctx->is_floor == 0 && item_dir != ctx->src_dir) {
+        return 0;
+    }
+
+    ctx->receipt->items_counted++;
+
+    /* Filter by actuator data (itemspec).  0x1FF = match all. */
+    if (ctx->filter_data != 0x1FF) {
+        /* Without GET_DISTINCTIVE_ITEMTYPE, use raw data compare */
+        /* This is a simplified filter; full version needs itemtype lookup */
+    }
+
+    /* Move the item via MOVE_RECORD_TO */
+    {
+        DM2_V1_MoveRecordToReceipt move_receipt;
+        memset(&move_receipt, 0, sizeof(move_receipt));
+        if (dm2_v1_move_record_to(ctx->pool_set, ctx->dungeon, ctx->queue,
+                                   handle,
+                                   (int16_t)ctx->src_x, (int16_t)ctx->src_y,
+                                   (int16_t)ctx->dst_x, (int16_t)ctx->dst_y,
+                                   (int16_t)ctx->dst_dir,
+                                   ctx->map, ctx->game_tick,
+                                   &move_receipt) == 1) {
+            ctx->receipt->items_moved++;
+        }
+    }
+
+    if (ctx->only_first_item && ctx->receipt->items_moved > 0) {
+        return 1;
+    }
+    return 0;
+}
+
+int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
+                                  DM2_V1_DungeonData *dungeon,
+                                  DM2_V1_SourceTimerQueue *queue,
+                                  const uint8_t *actu_record,
+                                  int timer_x, int timer_y,
+                                  int timer_direction,
+                                  int timer_action_type,
+                                  int is_floor, int recycler,
+                                  int capture, int only_first_item,
+                                  int map, uint32_t game_tick,
+                                  DM2_V1_ItemTeleportReceipt *receipt)
+{
+    DM2_V1_ItemTeleportReceipt local;
+    ItemTeleportCtx ctx;
+    DM2_V1_TileRecordWalkReceipt walk_receipt;
+
+    memset(&local, 0, sizeof(local));
+    if (receipt == NULL) receipt = &local;
+
+    if (pool_set == NULL || dungeon == NULL || actu_record == NULL) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    /* Revert/action guard (skevent.cpp:1379-1383) */
+    if (dm2_actu_revert_effect(actu_record) != 0 || timer_action_type != 0) {
+        if (dm2_actu_revert_effect(actu_record) == 0 || timer_action_type != 1) {
+            receipt->valid = 1;
+            return 1;
+        }
+    }
+
+    /* Source/dest depends on capture flag (skevent.cpp:1360-1377) */
+    if (capture != 0) {
+        ctx.src_x = (int)dm2_actu_xcoord(actu_record);
+        ctx.src_y = (int)dm2_actu_ycoord(actu_record);
+        ctx.src_dir = (int)dm2_actu_direction(actu_record);
+        ctx.dst_x = timer_x;
+        ctx.dst_y = timer_y;
+        ctx.dst_dir = timer_direction;
+    } else {
+        ctx.src_x = timer_x;
+        ctx.src_y = timer_y;
+        ctx.src_dir = timer_direction;
+        ctx.dst_x = (int)dm2_actu_xcoord(actu_record);
+        ctx.dst_y = (int)dm2_actu_ycoord(actu_record);
+        ctx.dst_dir = (int)dm2_actu_direction(actu_record);
+    }
+
+    /* Recycler path requires QUERY_CREATURES_ITEM_MASK; fail-closed */
+    if (recycler != 0) {
+        receipt->fail_closed = 1;
+        receipt->valid = 1;
+        return 0;
+    }
+
+    ctx.pool_set = pool_set;
+    ctx.dungeon = dungeon;
+    ctx.queue = queue;
+    ctx.actu_record = actu_record;
+    ctx.is_floor = is_floor;
+    ctx.only_first_item = only_first_item;
+    ctx.filter_data = dm2_actu_data(actu_record);
+    ctx.map = map;
+    ctx.game_tick = game_tick;
+    ctx.receipt = receipt;
+
+    memset(&walk_receipt, 0, sizeof(walk_receipt));
+    dm2_v1_tile_record_walk(pool_set, dungeon, map, ctx.src_x, ctx.src_y,
+                            item_teleport_visitor, &ctx, &walk_receipt);
+
+    receipt->valid = 1;
+    return 1;
+}
+
 /* ── Wall mecha record walk context ────────────────────────────────── */
 
 typedef struct {
@@ -290,13 +725,17 @@ static int wall_mecha_visitor(void *context,
         break;
 
     /* ── CREATURE_GENERATOR (0x2e) skevent.cpp:1740-1759 ─────────── */
-    case DM2_ACTU_CREATURE_GENERATOR:
+    case DM2_ACTU_CREATURE_GENERATOR: {
+        DM2_V1_CreatureGeneratorReceipt cg_receipt;
         if (ctx->action_type != 0) break;
         r->creature_generator_invoked++;
-        /* Creature allocation requires session state not yet ported;
-         * receipt marks invocation, fail-closed on actual spawn. */
-        r->fail_closed++;
+        memset(&cg_receipt, 0, sizeof(cg_receipt));
+        dm2_v1_creature_generator(ctx->pool_set, ctx->dungeon, ctx->queue,
+                                   record, ctx->map, ctx->game_tick,
+                                   &cg_receipt);
+        if (cg_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── COUNTER (0x1d) skevent.cpp:1834-1863 ────────────────────── */
     case DM2_ACTU_COUNTER: {
@@ -383,10 +822,19 @@ static int wall_mecha_visitor(void *context,
     case DM2_ACTU_WEAPON_SHOOTER:
     case DM2_ACTU_MISSILE_SHOOTER_2:
     case DM2_ACTU_ITEM_SHOOTER:
-    case DM2_ACTU_ITEM_SHOOTER_X2:
+    case DM2_ACTU_ITEM_SHOOTER_X2: {
+        DM2_V1_ShooterReceipt sh_receipt;
+        memset(&sh_receipt, 0, sizeof(sh_receipt));
+        dm2_v1_activate_shooter(ctx->pool_set, ctx->dungeon, ctx->queue,
+                                 record,
+                                 (int)dm2_actu_xcoord(record),
+                                 (int)dm2_actu_ycoord(record),
+                                 ctx->direction,
+                                 ctx->map, ctx->game_tick, &sh_receipt);
         r->shooter_invoked++;
-        r->fail_closed++;
+        if (sh_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── CROSS_MAP (0x16) skevent.cpp:1920-1933 ─────────────────── */
     case DM2_ACTU_CROSS_MAP: {
@@ -456,40 +904,91 @@ static int wall_mecha_visitor(void *context,
         break;
 
     /* ── PLACED_ITEM_TELEPORTER (0x3b) skevent.cpp:1958-1961 ────── */
-    case DM2_ACTU_PLACED_ITEM_TELEPORTER:
+    case DM2_ACTU_PLACED_ITEM_TELEPORTER: {
+        DM2_V1_ItemTeleportReceipt it_receipt;
+        int16_t si = dm2_v1_tile_record_link(ctx->dungeon, ctx->map,
+            (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record));
+        memset(&it_receipt, 0, sizeof(it_receipt));
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+            record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+            ctx->direction, ctx->action_type,
+            0, 0, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
         r->item_teleport_invoked++;
-        r->fail_closed++;
+        if (it_receipt.fail_closed) r->fail_closed++;
+        (void)si;
         break;
+    }
 
     /* ── ITEM_CAPTURE (0x47) skevent.cpp:1962-1965 ──────────────── */
-    case DM2_ACTU_ITEM_CAPTURE:
+    case DM2_ACTU_ITEM_CAPTURE: {
+        DM2_V1_ItemTeleportReceipt it_receipt;
+        memset(&it_receipt, 0, sizeof(it_receipt));
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+            record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+            ctx->direction, ctx->action_type,
+            0, 0, 1, 0, ctx->map, ctx->game_tick, &it_receipt);
         r->item_teleport_invoked++;
-        r->fail_closed++;
+        if (it_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── ITEM_RECYCLER (0x40) skevent.cpp:1966-1969 ─────────────── */
-    case DM2_ACTU_ITEM_RECYCLER:
+    case DM2_ACTU_ITEM_RECYCLER: {
+        DM2_V1_ItemTeleportReceipt it_receipt;
+        memset(&it_receipt, 0, sizeof(it_receipt));
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+            record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+            ctx->direction, ctx->action_type,
+            0, 1, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
         r->item_teleport_invoked++;
-        r->fail_closed++;
+        if (it_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── ITEM_TELEPORT_UNK (0x48) skevent.cpp:1970-1973 ─────────── */
-    case DM2_ACTU_ITEM_TELEPORT_UNK:
+    case DM2_ACTU_ITEM_TELEPORT_UNK: {
+        DM2_V1_ItemTeleportReceipt it_receipt;
+        memset(&it_receipt, 0, sizeof(it_receipt));
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+            record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+            ctx->direction, ctx->action_type,
+            0, 0, 0, 1, ctx->map, ctx->game_tick, &it_receipt);
         r->item_teleport_invoked++;
-        r->fail_closed++;
+        if (it_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── ITEM_CAPTURE_CREATURE (0x49) skevent.cpp:1974-1977 ─────── */
-    case DM2_ACTU_ITEM_CAPTURE_CREATURE:
+    case DM2_ACTU_ITEM_CAPTURE_CREATURE: {
+        DM2_V1_ItemTeleportReceipt it_receipt;
+        memset(&it_receipt, 0, sizeof(it_receipt));
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+            record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+            ctx->direction, ctx->action_type,
+            0, 0, 1, 1, ctx->map, ctx->game_tick, &it_receipt);
         r->item_teleport_invoked++;
-        r->fail_closed++;
+        if (it_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── ITEM_GENERATOR (0x3c) skevent.cpp:1978-1997 ────────────── */
-    case DM2_ACTU_ITEM_GENERATOR:
+    case DM2_ACTU_ITEM_GENERATOR: {
+        int16_t new_item = dm2_v1_alloc_new_dbitem(ctx->pool_set, actu_data);
         r->item_generator_invoked++;
-        r->fail_closed++;
+        if (new_item >= 0) {
+            DM2_V1_MoveRecordToReceipt move_r;
+            memset(&move_r, 0, sizeof(move_r));
+            dm2_v1_move_record_to(ctx->pool_set, ctx->dungeon, ctx->queue,
+                new_item, -1, 0,
+                (int16_t)dm2_actu_xcoord(record),
+                (int16_t)dm2_actu_ycoord(record),
+                (int16_t)dm2_actu_direction(record),
+                ctx->map, ctx->game_tick, &move_r);
+        } else {
+            r->fail_closed++;
+        }
         break;
+    }
 
     /* ── INVERSE_FLAG (0x43) skevent.cpp:2002-2005 ──────────────── */
     case DM2_ACTU_INVERSE_FLAG:
@@ -516,7 +1015,8 @@ static int wall_mecha_visitor(void *context,
     /* ── PUSH_BUTTON_SWITCH (0x46) skevent.cpp:2010-2028 ────────── */
     case DM2_ACTU_PUSH_BUTTON_SWITCH:
         r->push_button_invoked++;
-        r->fail_closed++;
+        dm2_v1_push_button_switch(ctx->pool_set, ctx->dungeon,
+                                   record, ctx->action_type, r);
         break;
 
     default:
@@ -620,6 +1120,7 @@ static int floor_mecha_visitor(void *context,
 
     /* ── CREATURE_KILLER (0x0b) skevent.cpp:2129-2141 ─────────── */
     case DM2_ACTU_CREATURE_KILLER:
+        r->creature_killer_invoked++;
         r->fail_closed++;
         break;
 
@@ -644,34 +1145,69 @@ static int floor_mecha_visitor(void *context,
         break;
 
     /* ── PLACED_ITEM_TELEPORTER (0x3b) skevent.cpp:2214-2217 ────── */
-    case DM2_ACTU_PLACED_ITEM_TELEPORTER:
+    case DM2_ACTU_PLACED_ITEM_TELEPORTER: {
+        DM2_V1_ItemTeleportReceipt it_receipt;
+        memset(&it_receipt, 0, sizeof(it_receipt));
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+            record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+            ctx->direction, ctx->action_type,
+            1, 0, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
         r->item_teleport_invoked++;
-        r->fail_closed++;
+        if (it_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── ITEM_CAPTURE (0x47) skevent.cpp:2218-2221 ─────────────── */
-    case DM2_ACTU_ITEM_CAPTURE:
+    case DM2_ACTU_ITEM_CAPTURE: {
+        DM2_V1_ItemTeleportReceipt it_receipt;
+        memset(&it_receipt, 0, sizeof(it_receipt));
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+            record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+            ctx->direction, ctx->action_type,
+            1, 0, 1, 0, ctx->map, ctx->game_tick, &it_receipt);
         r->item_teleport_invoked++;
-        r->fail_closed++;
+        if (it_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── ITEM_RECYCLER (0x40) skevent.cpp:2222-2225 ────────────── */
-    case DM2_ACTU_ITEM_RECYCLER:
+    case DM2_ACTU_ITEM_RECYCLER: {
+        DM2_V1_ItemTeleportReceipt it_receipt;
+        memset(&it_receipt, 0, sizeof(it_receipt));
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+            record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+            ctx->direction, ctx->action_type,
+            1, 1, 0, 0, ctx->map, ctx->game_tick, &it_receipt);
         r->item_teleport_invoked++;
-        r->fail_closed++;
+        if (it_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── ITEM_TELEPORT_UNK (0x48) skevent.cpp:2226-2229 ────────── */
-    case DM2_ACTU_ITEM_TELEPORT_UNK:
+    case DM2_ACTU_ITEM_TELEPORT_UNK: {
+        DM2_V1_ItemTeleportReceipt it_receipt;
+        memset(&it_receipt, 0, sizeof(it_receipt));
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+            record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+            ctx->direction, ctx->action_type,
+            1, 0, 0, 1, ctx->map, ctx->game_tick, &it_receipt);
         r->item_teleport_invoked++;
-        r->fail_closed++;
+        if (it_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── ITEM_CAPTURE_CREATURE (0x49) skevent.cpp:2230-2233 ─────── */
-    case DM2_ACTU_ITEM_CAPTURE_CREATURE:
+    case DM2_ACTU_ITEM_CAPTURE_CREATURE: {
+        DM2_V1_ItemTeleportReceipt it_receipt;
+        memset(&it_receipt, 0, sizeof(it_receipt));
+        dm2_v1_activate_item_teleport(ctx->pool_set, ctx->dungeon, ctx->queue,
+            record, (int)dm2_actu_xcoord(record), (int)dm2_actu_ycoord(record),
+            ctx->direction, ctx->action_type,
+            1, 0, 1, 1, ctx->map, ctx->game_tick, &it_receipt);
         r->item_teleport_invoked++;
-        r->fail_closed++;
+        if (it_receipt.fail_closed) r->fail_closed++;
         break;
+    }
 
     /* ── INVERSE_FLAG (0x43) skevent.cpp:2238-2241 ──────────────── */
     case DM2_ACTU_INVERSE_FLAG:

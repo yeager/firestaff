@@ -171,6 +171,38 @@ static inline uint8_t dm2_toggle_actuator_message(int action_type,
 #define DM2_ACTU_ITEM_CAPTURE_CREATURE 0x49
 #define DM2_ACTU_RESURECTOR          0x7E
 
+/* Door record w2 bit 13 accessor (dme.h DoorBit13/DoorBit13B).
+ * Used by PUSH_BUTTON_SWITCH (0x46) to seal/unseal doors. */
+static inline uint8_t dm2_door_bit13(const uint8_t *r) {
+    uint16_t w2 = (uint16_t)r[2] | ((uint16_t)r[3] << 8);
+    return (uint8_t)((w2 >> 13) & 1u);
+}
+static inline void dm2_door_set_bit13(uint8_t *r, uint8_t v) {
+    uint16_t w2 = (uint16_t)r[2] | ((uint16_t)r[3] << 8);
+    w2 = (w2 & ~(1u << 13)) | ((v & 1u) << 13);
+    r[2] = (uint8_t)(w2 & 0xFFu);
+    r[3] = (uint8_t)(w2 >> 8);
+}
+
+/* DB type constants for item/creature filtering */
+#define DM2_DB_DOOR      0
+#define DM2_DB_WEAPON    5
+#define DM2_DB_MISC_ITEM 9
+
+/* Shooter sub-types: single (bp0a=1) vs dual projectile */
+#define DM2_SHOOTER_SINGLE_TYPES(t) \
+    ((t) == 0x07 || (t) == 0x08 || (t) == 0x0E)
+
+/* Direction deltas (skproject glbXAxisDelta / glbYAxisDelta) */
+static inline int dm2_x_delta(int dir) {
+    static const int dx[4] = { 0, 1, 0, -1 };
+    return dx[dir & 3];
+}
+static inline int dm2_y_delta(int dir) {
+    static const int dy[4] = { -1, 0, 1, 0 };
+    return dy[dir & 3];
+}
+
 /* ── Receipt for wall/floor mecha dispatch ─────────────────────────── */
 
 typedef struct {
@@ -192,9 +224,43 @@ typedef struct {
     int inverse_flag_invoked;
     int test_flag_invoked;
     int push_button_invoked;
+    int creature_killer_invoked;
+    int door_bit13_toggled;
     int unknown_type_skipped;
     int fail_closed;
 } DM2_V1_ActuatorEventReceipt;
+
+/* ── Shooter receipt ──────────────────────────────────────────────── */
+
+typedef struct {
+    int valid;
+    int single_projectile;    /* 1 = single, 0 = dual */
+    int items_cut;            /* items cut from source tile (item shooter) */
+    int items_allocated;      /* items allocated (weapon/missile shooter) */
+    int projectiles_queued;   /* SHOOT_ITEM timer(s) enqueued */
+    int fail_closed;
+} DM2_V1_ShooterReceipt;
+
+/* ── Item teleport receipt ────────────────────────────────────────── */
+
+typedef struct {
+    int valid;
+    int items_counted;    /* matching items found on source tile */
+    int items_moved;      /* items successfully moved to destination */
+    int creatures_checked;/* creature possession chains walked */
+    int fail_closed;
+} DM2_V1_ItemTeleportReceipt;
+
+/* ── Creature generator receipt ───────────────────────────────────── */
+
+typedef struct {
+    int valid;
+    int creature_allocated;   /* record allocated from pool */
+    int creature_placed;      /* placed on destination tile */
+    int anim_seq_set;         /* iAnimSeq overridden by actuator delay */
+    int sound_queued;         /* teleport sound queued */
+    int fail_closed;
+} DM2_V1_CreatureGeneratorReceipt;
 
 /* ── Wall/floor mecha dispatch ─────────────────────────────────────── */
 
@@ -257,6 +323,48 @@ int dm2_v1_invoke_actuator(DM2_V1_SourceTimerQueue *queue,
                            const uint8_t *actu_record,
                            int action_type, int delay_add,
                            int map, uint32_t game_tick);
+
+/* ACTIVATE_SHOOTER — create projectile(s) and queue SHOOT_ITEM timer(s).
+ * Source: skevent.cpp:1536-1631 */
+int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
+                            DM2_V1_DungeonData *dungeon,
+                            DM2_V1_SourceTimerQueue *queue,
+                            const uint8_t *actu_record,
+                            int timer_x, int timer_y,
+                            int timer_direction,
+                            int map, uint32_t game_tick,
+                            DM2_V1_ShooterReceipt *receipt);
+
+/* ACTIVATE_ITEM_TELEPORT — move items between tiles.
+ * Source: skevent.cpp:1346-1500 */
+int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
+                                  DM2_V1_DungeonData *dungeon,
+                                  DM2_V1_SourceTimerQueue *queue,
+                                  const uint8_t *actu_record,
+                                  int timer_x, int timer_y,
+                                  int timer_direction,
+                                  int timer_action_type,
+                                  int is_floor, int recycler,
+                                  int capture, int only_first_item,
+                                  int map, uint32_t game_tick,
+                                  DM2_V1_ItemTeleportReceipt *receipt);
+
+/* PUSH_BUTTON_SWITCH — set/clear/toggle door bit 13.
+ * Source: skevent.cpp:2010-2028 */
+int dm2_v1_push_button_switch(DM2_V1_RecordPoolSet *pool_set,
+                              DM2_V1_DungeonData *dungeon,
+                              const uint8_t *actu_record,
+                              int action_type,
+                              DM2_V1_ActuatorEventReceipt *receipt);
+
+/* CREATURE_GENERATOR — allocate and place a new creature.
+ * Source: skevent.cpp:1740-1759, skcrture.cpp:6311-6362 */
+int dm2_v1_creature_generator(DM2_V1_RecordPoolSet *pool_set,
+                              DM2_V1_DungeonData *dungeon,
+                              DM2_V1_SourceTimerQueue *queue,
+                              const uint8_t *actu_record,
+                              int map, uint32_t game_tick,
+                              DM2_V1_CreatureGeneratorReceipt *receipt);
 
 #ifdef __cplusplus
 }
