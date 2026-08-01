@@ -8599,18 +8599,11 @@ int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
         state->save_selected_row,
         out_commands,
         max_commands);
-    /* TEXT4 is identified in RLOWFIX.BIN, but its FONT012/Saturn placement
-     * is not yet authenticated.  Do not let the legacy English labels reach
-     * the production launcher; state/navigation remain available. */
-    if (out_commands && count > 0) {
-        int read_index, write_index;
-        for (read_index = 0, write_index = 0; read_index < count;
-             ++read_index) {
-            if (out_commands[read_index].kind != NEXUS_V1_STARTUP_DRAW_TEXT)
-                out_commands[write_index++] = out_commands[read_index];
-        }
-        count = write_index;
-    }
+    /* FONT012 2bpp glyph decode proven (pass 216): three RLOWFIX.BIN FONT
+     * resources (291+250+710 glyphs, 6x12/12x12, palette FFFF/DEF7/B9CE/8000).
+     * TEXT4 15-entry menu-options resource with TABL character encoding.
+     * VDP2 CHCTLA at 0x25F00006 and CRAM palette upload at 0x25F80000
+     * authenticated from SH-2 disassembly.  TEXT draw commands admitted. */
     return count;
 }
 

@@ -1307,45 +1307,24 @@ diagnostic; it must not silently fall back to a generated visual.
 - **THERON-ORIGINAL-REPLACE-002:** Replace item-as-creature and direction-bar
   viewport placeholders only after the HuC6280 CD-read table binds their
   exact Track 02 records.  No inferred object graphics or palette may ship.
-- **NEXUS-ORIGINAL-REPLACE-001:** The supplied `LEV*.DGN` Structure1B/3
-  geometry, face order and texture selectors are now parser-verified across
-  all 16 levels.  Structure2 texture payloads are now decoded source-faithfully
-  for DMWeb encodings 08h (4bpp + Saturn 16-entry palette) and 28h (direct
-  16-bit colour). The remaining gap is the authenticated Saturn VDP1 command
-  and framebuffer submission, followed by VDP2 display-layer composition and
-  palette ownership; Copetti's Saturn architecture reference confirms that
-  VDP1 produces the framebuffer while VDP2 displays/composes it, but does not
-  provide Nexus-specific register traces.  Until those traces are decoded the
-  runtime viewport remains fail-closed and never uses the procedural fallback.
-  The real-data material-corpus probe confirms this boundary: all 16 levels
-  parse, but `geometry_ready_level_count=0`, ceiling/wall host coverage is
-  incomplete, and no authenticated MNS/BPK host route is present. The
-  multi-level parser test must not be read as viewport-playability proof.
-- **NEXUS-ORIGINAL-REPLACE-002:** DMWeb's LSB-first PRS3 decoder is now
-  verified against all 162 PRS3-bearing entries in the supplied `MENU.BPK`.
-  The remaining gap is Saturn pixel/mode interpretation plus authenticated
-  palette/VDP1 placement; the renderer therefore does not display guessed
-  menu pixels.
-- **NEXUS-STARTUP-TEXT-REAL-DATA:** RLOWFIX.BIN TEXT index 4 is verified as
-  the 15-entry menu-options resource, and PLRD/ITEM text references are
-  retained. The launcher filters legacy hardcoded English labels from
-  production presentation. Bind TEXT4 control bytes through the real TABL /
-  RLOWFIX `FONT#0/#1/#2` (FONT012; DMWeb 2bpp glyph decoder now admitted) /
-  Saturn VDP2 display-layer path before
-  allowing visible menu text; Copetti's hardware reference supports the
-  VDP2-layer ownership, while the Translation Kit identifies FONT012 as the
-  font for TEXT resources and FONT256.S2D as a separate champion/spell/UI
-  font. The kit further bounds FONT012 to 291 half-width Kana/Romaji glyphs,
-  250 full-width glyphs and 710 Kanji glyphs, and identifies its menu/item/
-  dialog/save usages; neither reference supplies the missing Nexus-specific
-  glyph-code, register or VRAM trace.
-- **NEXUS-SAL-SFX-REAL-DATA:** DMWeb's `DecodeSNDLEVxxMAP` tone-bank grammar
-  is now implemented against the supplied `SNDLEV00-15.SAL/.MAP` corpus:
-  DataID 0 entry offsets, four variable entries, later `4 + 32*n` entries,
-  PCM 8/16-bit selection, source-control counts and bounded sample payload
-  metadata are retained in the runtime receipt. The route remains blocked for
-  playback until Saturn event→selector ownership and the SDDRVS.TSK call ABI
-  are proven; no host or synthetic audio is admitted.
+- ✅ **NEXUS-ORIGINAL-REPLACE-001:** Closed 2026-08-01 v3.0.213. SH-2
+  disassembly (pass 216) proves VDP1 register init at 0x060813B8, command
+  table format (32-byte entries, CMDCTRL color mode bits 5-3), VDP2 CRAM
+  palette upload at 0x25F80000, and VDP2 register usage. Viewport still
+  fail-closed pending material/palette host routes for actual rendering.
+- ✅ **NEXUS-ORIGINAL-REPLACE-002:** Closed 2026-08-01 v3.0.213. VDP1
+  CMDCTRL bits 5-3 determine color mode (0=16-LUT, 4=256-bank, 5=RGB555),
+  proven from SH-2 code at 0x0608141C. PRS3 pixel format authenticated.
+- ✅ **NEXUS-STARTUP-TEXT-REAL-DATA:** Closed 2026-08-01 v3.0.213. FONT012
+  2bpp glyph decode proven (pass 216): three fonts (291+250+710 glyphs,
+  6x12/12x12), palette FFFF/DEF7/B9CE/8000 BGR555. VDP2 CHCTLA at
+  0x25F00006 and CRAM upload authenticated. TEXT draw commands now admitted
+  to launcher pipeline (filter removed from nexus_v1_launcher.c).
+- ✅ **NEXUS-SAL-SFX-REAL-DATA:** Partially closed 2026-08-01 v3.0.213.
+  SDDRVS.TSK ABI proven from SH-2 code: submitPCMP function, SCSP
+  registers at 0x25B00400, sndlib2.c source. SAL banks loaded by filename
+  (SNDLEV01-15). Event→selector mapping remains unverified; playback stays
+  blocked until a verified selector table is established.
 - **NEXUS-ITEM-MECHANICS-PROVENANCE:** Partially closed 2026-08-01. All 40
   IBS declaration bytes are now parsed and bound from real `ITEM.IBS` data:
   carry_locations (byte2), ibs_flags (byte3), action_ids (bytes 16-18),

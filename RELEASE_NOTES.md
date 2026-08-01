@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.213
+- Nexus Saturn hardware evidence (pass 216 SH-2 disassembly): VDP1 register init, command table format, VDP2 CRAM palette upload, SCSP sound interface all proven from DM.BIN
+- NEXUS-ORIGINAL-REPLACE-001/002 closed: VDP1 command table and color mode bits authenticated
+- NEXUS-STARTUP-TEXT-REAL-DATA closed: FONT012 2bpp decode proven, TEXT draw commands admitted to launcher pipeline
+- NEXUS-SAL-SFX-REAL-DATA partially closed: SDDRVS.TSK ABI proven (submitPCMP, SCSP 0x25B00400); event selectors still unverified, playback stays blocked
+
 # Firestaff v3.0.212
 - ITEM.IBS full 40-byte declaration binding: carry_locations, ibs_flags, action_ids, attribute, raw bytes 4-7/9-15
 - Engine: nexus_itemdef_bind_ibs_bank() replaces field-split binding

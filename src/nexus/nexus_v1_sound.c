@@ -623,7 +623,15 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     eng->current_level = -1;
     clear_map_route(eng);
     clear_sal_profile(eng);
-    printf("Nexus sound: initialized (source-bound SAL metadata; playback blocked)\n");
+    /* SH-2 binary analysis (pass 216) proves the SDDRVS.TSK ABI:
+     * - Sound CPU communicates via SCSP registers at 0x25B00400
+     * - sndlib2.c submitPCMP function submits PCM samples
+     * - SAL banks loaded by filename (SNDLEV01-15) via CD read
+     * - pcmtype field selects decode format
+     * Event→selector mapping remains unproven; playback stays blocked
+     * until a MAP record lookup succeeds with a verified selector. */
+    printf("Nexus sound: initialized (SAL metadata bound, SDDRVS ABI proven; "
+           "event selectors unverified)\n");
     return 0;
 }
 

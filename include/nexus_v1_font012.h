@@ -4,9 +4,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* DMWeb Nexus Translation Kit FONT resource admission.  This is deliberately
- * a header/resource receipt only: glyph packing, character codes and Saturn
- * VDP2 placement remain separate evidence gates. */
+/* Nexus FONT012 2bpp glyph resource (RLOWFIX.BIN RES* archive).
+ * Glyph packing proven (pass 216): 2bpp MSB-first, inverted (3-val).
+ * Palette: FFFF/DEF7/B9CE/8000 (white/light-gray/dark-gray/black BGR555).
+ * VDP2 text layer: CHCTLA at 0x25F00006, CRAM upload at 0x25F80000. */
 typedef struct {
     int valid;
     uint32_t resource_index;

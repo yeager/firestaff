@@ -12,9 +12,15 @@
  * CD audio: 8 tracks (2-9) mapped to level pairs, Red Book Audio.
  * Sound driver: SDDRVS.TSK (26 KB Saturn sound driver task).
  *
- * Status: source-bound opaque ingestion only. SAL/MAP sample codec and
- * Saturn event dispatch remain unproven, so actual SFX playback is blocked.
- * The API exposes receipts and bounded windows, never substitute audio. */
+ * Saturn hardware (pass 216 SH-2 disassembly):
+ * - SDDRVS.TSK loaded to MC68EC000 sound RAM
+ * - SH-2 communicates via SCSP registers at 0x25B00400
+ * - sndlib2.c submitPCMP function submits PCM playback commands
+ * - SAL banks loaded by filename via CD sector read
+ *
+ * Status: SDDRVS ABI and SCSP communication proven from SH-2 code.
+ * Event→MAP selector mapping remains unverified; actual SFX playback
+ * stays blocked until a verified selector table is established. */
 
 /* Sound event types (matching SNDLEV*.MAP event IDs) */
 typedef enum {

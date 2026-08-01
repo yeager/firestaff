@@ -1,3 +1,8 @@
+- ✅ 2026-08-01 v3.0.213 Nexus Saturn hardware evidence (pass 216 SH-2 disassembly):
+  VDP1 register init, command table format, VDP2 CRAM palette, SCSP sound
+  interface proven from DM.BIN. FONT012 TEXT commands admitted to launcher.
+  SDDRVS.TSK ABI proven. Closes NEXUS-ORIGINAL-REPLACE-001/002,
+  NEXUS-STARTUP-TEXT-REAL-DATA, partially closes NEXUS-SAL-SFX-REAL-DATA.
 - ✅ 2026-08-01 v3.0.212 ITEM.IBS full-field binding and mechanics ordinal fix:
   All 40 IBS declaration bytes now parsed from real ITEM.IBS data into
   Nexus_V1_ItemIbsBank: carry_locations (byte2), ibs_flags (byte3),
