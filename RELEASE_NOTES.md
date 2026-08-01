@@ -1,6 +1,10 @@
 
 # Unreleased
 
+# Firestaff v3.0.216
+- Theron Track 02 US item name module (`theron_v1_track02_item_names.{h,c}`): 66-entry lookup table extracted from binary evidence (UD 0x21A08E)
+- 6 tests covering count, boundary, Theron-unique items, and out-of-range safety
+
 # Firestaff v3.0.215
 - Theron's Quest Track 02 binary analysis (pass 215): complete region map of US Track 02 BIN (3,446 sectors, 7 quest blocks + code + dense graphics)
 - Extracted 66 US item names including 11 Theron-unique items (Vorpal Blade, Mithral Aketon, Ekkhard Cross, Rabbit's Foot, etc.)

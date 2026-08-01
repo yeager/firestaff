@@ -1,3 +1,6 @@
+- ✅ 2026-08-01 v3.0.216 Theron Track 02 item name module and test:
+  theron_v1_track02_item_names.{h,c} with 66-entry lookup table from binary
+  evidence. 6 tests wired into CMakeLists.txt (all pass).
 - ✅ 2026-08-01 v3.0.215 Theron Track 02 binary analysis and text extraction:
   Complete region map (7 quest blocks + code + dense graphics). 66 US item
   names extracted (11 Theron-unique). 15 level names, 7 quest retrieval
