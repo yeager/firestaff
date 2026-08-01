@@ -4,9 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #ifdef _WIN32
 #include <windows.h>
+#include <io.h>
+#include <direct.h>
+#else
+#include <unistd.h>
 #endif
 
 typedef struct {
@@ -16,7 +19,7 @@ typedef struct {
 
 static int probe_setenv(const char* name, const char* value) {
 #ifdef _WIN32
-    return SetEnvironmentVariableA(name, value) ? 0 : -1;
+    return _putenv_s(name, value);
 #else
     return setenv(name, value, 1);
 #endif
@@ -24,7 +27,7 @@ static int probe_setenv(const char* name, const char* value) {
 
 static int probe_unsetenv(const char* name) {
 #ifdef _WIN32
-    return SetEnvironmentVariableA(name, NULL) ? 0 : -1;
+    return _putenv_s(name, "");
 #else
     return unsetenv(name);
 #endif
@@ -176,8 +179,21 @@ int main(int argc, char** argv) {
     int emitResult = -1;
     int i;
     int expectSdlSourceIndexQueue = 0;
+#ifdef _WIN32
+    char packDirBuf[MAX_PATH];
+    char* packDir = NULL;
+    {
+        DWORD len = GetTempPathA(sizeof(packDirBuf), packDirBuf);
+        if (len > 0 && len < sizeof(packDirBuf) - 30) {
+            strcat(packDirBuf, "firestaff-sound-pack-probe");
+            CreateDirectoryA(packDirBuf, NULL);
+            packDir = packDirBuf;
+        }
+    }
+#else
     char packDirTemplate[] = "/tmp/firestaff-sound-pack-XXXXXX";
     char* packDir = mkdtemp(packDirTemplate);
+#endif
     char packPathValid[256];
     char packPathMalformed[256];
     int packFixtureReady = 0;
@@ -356,10 +372,21 @@ int main(int argc, char** argv) {
     if (packFixtureReady) {
         probe_unsetenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3");
         probe_unsetenv("FIRESTAFF_SOUND_PACK_DIR");
+#ifdef _WIN32
+        _unlink(packPathValid);
+        _unlink(packPathMalformed);
+#else
         unlink(packPathValid);
         unlink(packPathMalformed);
+#endif
     }
-    if (packDir) rmdir(packDir);
+    if (packDir) {
+#ifdef _WIN32
+        _rmdir(packDir);
+#else
+        rmdir(packDir);
+#endif
+    }
 
     printf("# summary: %d/%d invariants passed\n", tally.passed, tally.total);
     return (tally.passed == tally.total) ? 0 : 1;
