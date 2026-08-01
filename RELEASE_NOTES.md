@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.206
+
+- DM2: fix 7 failing tests across HUD portrait, creature spawn/death,
+  drop resolution, and HUD widget asset classification.
+- HUD widget asset classify_slot now returns REAL when source file exists
+  on disk (was always returning PARTIAL).
+- Creature death drop probe: removed duplicate firestaff_dm2 library link
+  that shadowed FIRESTAFF_DM2_CREATURE_TESTING compile define.
+
 # Firestaff v3.0.204
 
 - CSB viewport: full floor ornament rendering pipeline from DUNGEON.DAT

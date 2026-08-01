@@ -145,6 +145,8 @@ static void setup_hud(DM2_V1_ViewportState *viewport,
     party.champions[0].portrait_index = 3;
     party.champions[0].portrait_type_source_bound = 1;
     party.champions[0].state_source_bound = 1;
+    party.champions[0].stat_bar_color_source_bound = 1;
+    party.champions[0].stat_bar_color = 0;
 
     dm2_v1_viewport_init(viewport, framebuffer, DM2_VP_WIDTH);
     dm2_v1_viewport_set_hud_party(viewport, &party);
@@ -182,6 +184,13 @@ int main(void)
     memset(&trace, 0, sizeof(trace));
     setup_hud(&viewport, framebuffer, &trace, &hud_plan);
     dm2_v1_render_ui_chrome(&viewport);
+    printf("  DEBUG: fetches=%d pal_fetches=%d has_0x31=%d portrait_drawn=%d plan_consumed=%d fallback=%d blocked=0x%x\n",
+           trace.asset_fetches, trace.palette_fetches,
+           framebuffer_contains(framebuffer, 0x31u),
+           viewport.asset_hud_portrait_drawn_count,
+           viewport.gdat_hud_material_plan_consumed_count,
+           viewport.fallback_hud_portrait_drawn_count,
+           viewport.blocked_material_mask);
     CHECK("HUD portrait consumes its matching source IMG3 palette",
           trace.asset_fetches == 0 && trace.palette_fetches == 0 &&
               framebuffer_contains(framebuffer, 0x31u) &&

@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.205 LANGUAGES C)
+project(Firestaff VERSION 3.0.206 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -16018,7 +16018,7 @@ if(BUILD_TESTING)
     target_include_directories(firestaff_dm2_v1_creature_death_drop_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(firestaff_dm2_v1_creature_death_drop_probe
-        PRIVATE firestaff_dm2 firestaff_m10 m)
+        PRIVATE firestaff_m10 m)
     target_compile_definitions(firestaff_dm2_v1_creature_death_drop_probe PRIVATE
         FIRESTAFF_DM2_CREATURE_TESTING=1)
     if(NOT MSVC)

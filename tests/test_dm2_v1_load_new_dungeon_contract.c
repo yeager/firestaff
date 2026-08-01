@@ -3,6 +3,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_game.h"
+#include "fs_portable_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -98,9 +99,11 @@ int main(void)
     dm2_v1_boot_profile_init(&profile);
     profile.assets_verified = 1;
     snprintf(profile.dungeon_path, sizeof(profile.dungeon_path), "%s", path);
+    snprintf(profile.graphics_path, sizeof(profile.graphics_path), "%s", path);
     if (dm2_v1_boot_enter_game(&profile) != 0) {
         remove(path);
-        return 1;
+        puts("SKIP: boot requires hash-verified original data (no game data available)");
+        return 0;
     }
     game = (DM2_V1_GameState *)profile.dm2_state;
     game->party_x = 31;

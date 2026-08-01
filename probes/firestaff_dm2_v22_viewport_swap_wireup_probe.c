@@ -59,6 +59,7 @@
 #include "dm2_v2_viewport_renderer.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_game.h"
 #include "fs_portable_compat.h"
 
 #include <stdint.h>
@@ -315,8 +316,10 @@ int main(void) {
      *    path does NOT take the headless early exit (dm2_state must
      *    be non-NULL). The boot profile is stack-allocated + zeroed;
      *    any non-NULL dm2_state value lets V1 render_frame run. */
+    static DM2_V1_GameState fake_gs;
+    memset(&fake_gs, 0, sizeof(fake_gs));
     memset(&boot, 0, sizeof(boot));
-    boot.dm2_state = (void*)0x1;
+    boot.dm2_state = &fake_gs;
     dm2_v1_runtime_init(&boot);
     probe_record(&stats, "DM2_V22_WIREUP_V1_BOOT_PROFILE",
                  dm2_v1_runtime_has_dungeon_data() == 1,

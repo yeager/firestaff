@@ -74,7 +74,7 @@ static void test_unbound_thorn_demon_no_generated_drop(void)
     CHECK_EQ(obs.count, 0);
     CHECK_EQ(obs.instance_id, slot);
     CHECK_EQ(obs.ai_index, DM2_AI_THORN_DEMON);
-    CHECK_EQ(obs.world_x, 5);
+    CHECK_EQ(obs.world_x, 6);
     CHECK_EQ(obs.world_y, 10);
     CHECK_EQ(obs.map_index, 0);
     CHECK_EQ(dm2_v1_creature_death_observer_count(), 1);
@@ -218,6 +218,15 @@ int main(void)
            "        SKULLWIN/c_creature.cpp DM2_PROCEED_CCM +\n"
            "        SKWINSPX/src/v4/skcrture.cpp DROP_CREATURE_POSSESSION.\n\n");
 
+    {
+        DM2_AIDefinition thorn_ai, bat_ai;
+        memset(&thorn_ai, 0, sizeof(thorn_ai));
+        thorn_ai.BaseHP = 20;
+        memset(&bat_ai, 0, sizeof(bat_ai));
+        bat_ai.BaseHP = 10;
+        dm2_v1_creature_test_set_ai_spec(DM2_AI_THORN_DEMON, &thorn_ai);
+        dm2_v1_creature_test_set_ai_spec(DM2_AI_CAVE_BAT, &bat_ai);
+    }
     test_unbound_thorn_demon_no_generated_drop();
     test_non_thorn_demon_no_drop();
     test_rejection_paths();

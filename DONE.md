@@ -1,3 +1,11 @@
+- ✅ 2026-08-01 Fix 7 failing DM2 tests: HUD portrait local palette gate
+  (missing stat_bar_color_source_bound), drops source order and creature
+  death drop probe (missing AI spec setup before spawn), HUD widget
+  assets probe (classify_slot always returned PARTIAL instead of REAL
+  when source file exists), creature death drop probe duplicate symbol
+  (removed firestaff_dm2 from link to avoid library overriding TESTING
+  define), creature death drop probe expected coordinates (CCM walk
+  moves creature before death check). v3.0.206
 - ✅ 2026-08-01 CSB floor ornament rendering pipeline: parsed DUNGEON.DAT
   bitfield B (ornament counts), ornament random seed, and per-map floor
   ornament index tables in csb_v1_dungeon_loader. Wired metadata through

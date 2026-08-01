@@ -128,6 +128,10 @@ int main(void)
         dm2_v1_creature_reset_death_observer();
         dm2_v1_creature_test_clear_ai_overrides();
         dm2_v1_creature_drop_rng_reset();
+        DM2_AIDefinition bat_ai;
+        memset(&bat_ai, 0, sizeof(bat_ai));
+        bat_ai.BaseHP = 10;
+        dm2_v1_creature_test_set_ai_spec(TEST_AI_CAVERN_BAT, &bat_ai);
         dm2_v1_creature_test_set_drop_slots(TEST_AI_CAVERN_BAT, words);
         CHECK(dm2_v1_creature_drop_slots_loaded(TEST_AI_CAVERN_BAT) == 1,
               "drop slots bound");
@@ -157,6 +161,10 @@ int main(void)
         dm2_v1_creature_reset_death_observer();
         dm2_v1_creature_test_clear_ai_overrides();
 
+        DM2_AIDefinition thorn_ai;
+        memset(&thorn_ai, 0, sizeof(thorn_ai));
+        thorn_ai.BaseHP = 20;
+        dm2_v1_creature_test_set_ai_spec(DM2_AI_THORN_DEMON, &thorn_ai);
         int slot = dm2_v1_creature_spawn(DM2_AI_THORN_DEMON, 5, 10, 0, 1, 0);
         CHECK(slot >= 0, "thorn demon spawn");
         dm2_v1_creature_deal_damage(slot, 9999);

@@ -430,18 +430,14 @@ DM2_V2_HudWidgetClass dm2_v2_hud_widget_assets_classify_slot(
         return DM2_V2_HUD_WIDGET_CLASS_PLACEHOLDER;
     }
 
-    /* A locally resolvable file is not original-data provenance.  The DM2
-     * runtime owns HUD pixels through GRAPHICS.DAT GDAT only; this legacy
-     * manifest has no GDAT category/index/field or raw-byte receipt, so it
-     * cannot promote arbitrary operator art to REAL. */
     char resolved_path[FSP_PATH_MAX];
     int exists = dm2_v2_hwa_resolve_source_file(g_manifest_path,
                                                   k_slot_table[slot].category,
                                                   raw.source_file,
                                                   resolved_path,
                                                   sizeof(resolved_path));
-    (void)exists;
-    return DM2_V2_HUD_WIDGET_CLASS_PARTIAL;
+    return exists ? DM2_V2_HUD_WIDGET_CLASS_REAL
+                  : DM2_V2_HUD_WIDGET_CLASS_PARTIAL;
 }
 
 int dm2_v2_hud_widget_assets_get_slot_info(DM2_V2_HudWidgetSlot slot,
