@@ -20333,6 +20333,7 @@ static void m11_dm1_f0741_play_bridge(void *context, int sourceTrackId,
     M11_GameViewState *state = (M11_GameViewState *)context;
     (void)sequence;
     if (state) {
+        (void)M11_Audio_SetTitleMusicEnabled(&state->audioState, 1);
         (void)M11_Audio_RequestSourceMusicTrack(&state->audioState,
                                                 sourceTrackId);
     }

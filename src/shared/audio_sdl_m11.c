@@ -1403,13 +1403,11 @@ int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {
     if (!state || !state->initialized) return 0;
     state->lastMusicTrackId = musicTrackId;
-    /* ReDMCSB: ENDGAME.C F0446 lines 924-925 calls
-     * F0741_MUSIC_PlayGameMusic(C2_MUSIC_GAME_WON). DM1 PC34 stores
-     * the playable source music in SONG.DAT; Firestaff's currently
-     * decoded SONG.DAT route is the title-music phrase, so game-won
-     * music requests are handed through that playback path when the
-     * source track id matches C2. */
-    if (musicTrackId == M11_AUDIO_SOURCE_MUSIC_GAME_WON) {
+    /* ReDMCSB SOUND.C F0741: plays the SONG.DAT sequence regardless of
+     * trackId — the trackId is state for F0742/F0743 map-track routing,
+     * but the actual playback is always the full sequence loop.  Queue
+     * the decoded SONG.DAT music for any valid track request. */
+    if (musicTrackId >= 0) {
         (void)M11_Audio_PlayTitleMusic(state);
     }
     return 1;
