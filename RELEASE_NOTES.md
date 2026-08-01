@@ -1,6 +1,27 @@
 
 # Unreleased
 
+# Firestaff v3.0.207
+
+- DM2 gap analysis closure: 5 new modules ported from skproject reference.
+- ENGAGE_COMMAND: full 53-case hand action dispatcher from skengage.cpp.
+  Attack, cast, wield, confuse, light, cloud, heal, consume, equip,
+  missile, minion ops, and all no-op cases. Fail-closed for live data.
+- Combat damage pipeline: CALC_PLAYER_ATTACK_DAMAGE (hit/miss + strength),
+  WOUND_PLAYER (armor absorption + HP reduction + kill), ATTACK_PARTY
+  (per-hero randomized damage). Source: c_hero.cpp:232-3394.
+- Creature AI: THINK_CREATURE tick handler with XACT state machine
+  (30+ behavior opcodes), ROTATE_CREATURE direction + possession chain.
+  Source: c_ai.cpp:5649+, c_creature.cpp:58-101.
+- Champion lifecycle: SELECT_CHAMPION (mirror/alcove walk, REVIVE_PLAYER),
+  BRING_CHAMPION_TO_LIFE with HP penalty formula max(25, maxHP-maxHP/64-1).
+  Source: c_hero.cpp:916-1200.
+- Shop/NPC: actuator type classifier for shop panel (0x3F), shop floor
+  (0x30), merchant AI ref 13, guard AI ref 17. Source: skdefine.h, KSK37FC.h.
+- Movement execution (from prior session): PERFORM_MOVE_EXEC with walk
+  delay formula, MOVE_RECORD_TO record chain primitive.
+- 51 new DM2 tests across all modules. All pass.
+
 # Firestaff v3.0.206
 
 - DM2: fix 7 failing tests across HUD portrait, creature spawn/death,
