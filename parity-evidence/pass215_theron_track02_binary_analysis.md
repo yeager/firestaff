@@ -112,10 +112,35 @@ Seven quest completion messages at UD 0x27713D:
 - "RESURRECTED" (UD 0x1C6E72)
 - "LOAD  KG" (UD 0x1CB3AC — weight display)
 
-### Spell Names
+### Action/Spell Names (UD 0x1DEEEA)
 
-- "SPELLSHIELD", "FIRESHIELD", "HEAL", "CALM", "LIGHT" (UD 0x1DEF79)
-- "SPIT", "BRANDISH", "THROW" (UD 0x1DEF9C — combat actions)
+30-entry table: LIFE, HIT, SWING, STAB, THRUST, JAB, PARRY, HACK, BERZERK,
+FIREBALL, DISPELL, CONFUSE, LIGHTNING, DISRUPT, MELEE, X, INVOKE, SLASH,
+CLEAVE, BASH, STUN, SHOOT, SPELLSHIELD, FIRESHIELD, HEAL, CALM, LIGHT,
+SPIT, BRANDISH, THROW.
+
+### Champion Classes (UD 0x1C9A32)
+
+FIGHTER, NINJA, PRIEST, WIZARD.
+
+### Skill Level Names (UD 0x1C9B6B)
+
+NEOPHYTE, NOVICE, APPRENTICE, JOURNEYMAN, CRAFTSMAN, ARTISAN, ADEPT, EXPERT,
+then 6 MASTER variants with prefix glyphs 0x60-0x65 (custom font rank icons),
+then ARCHMASTER (16 entries total).
+
+### Stat Names (UD 0x1C9B15)
+
+STRENGTH, DEXTERITY, WISDOM, VITALITY, ANTI-MAGIC, ANTI-FIRE.
+
+### Resource Names (UD 0x1CFD85)
+
+HEALTH, STAMINA, MANA.
+
+### Combat Strings (UD 0x1C9AE3)
+
+"HEADS.", "TAILS." (Theron-unique coin flip mechanic), "CAN'T REACH",
+"NEED AMMO".
 
 ### System Card Credits (Block 1)
 

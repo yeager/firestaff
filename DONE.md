@@ -1,3 +1,9 @@
+- ✅ 2026-08-01 v3.0.217 Theron Track 02 text and champion string modules:
+  Text strings: 15 level names, 7 quest messages, save/load UI, status strings
+  (5 tests). Champion strings: 4 classes, 6 stats, 3 resources, 16 skill
+  levels (NEOPHYTE-ARCHMASTER), 30 action/spell names, coin flip strings
+  (6 tests). "HEADS."/"TAILS." confirm Theron-unique coin flip mechanic.
+  Parity evidence updated with complete string table offsets.
 - ✅ 2026-08-01 v3.0.216 Theron Track 02 item name module and test:
   theron_v1_track02_item_names.{h,c} with 66-entry lookup table from binary
   evidence. 6 tests wired into CMakeLists.txt (all pass).

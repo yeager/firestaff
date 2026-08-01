@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.217
+- Theron Track 02 text string module: 15 level names, 7 quest retrieval messages, save/load UI prompts, 5 status strings (5 tests)
+- Theron Track 02 champion string module: 4 classes, 6 stats, 3 resources, 16 skill levels, 30 action names, coin flip strings (6 tests)
+- "HEADS."/"TAILS." strings confirm Theron-unique coin flip combat mechanic
+- Parity evidence pass 215 updated with complete string table documentation (classes, stats, skill levels, actions, combat)
+
 # Firestaff v3.0.216
 - Theron Track 02 US item name module (`theron_v1_track02_item_names.{h,c}`): 66-entry lookup table extracted from binary evidence (UD 0x21A08E)
 - 6 tests covering count, boundary, Theron-unique items, and out-of-range safety
