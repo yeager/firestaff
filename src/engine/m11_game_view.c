@@ -52259,7 +52259,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX + 2, dlgY + 2, dlgW - 4, dlgH - 4, M11_COLOR_BROWN);
         }
-        if (state->showDebugHUD || !m11_v1_chrome_mode_enabled(state)) {
+        if (state->showDebugHUD) {
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           dlgX + 8, dlgY + 8, "TEXT PLAQUE", &g_text_title);
         }
