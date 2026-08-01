@@ -8,8 +8,8 @@ on:
     inputs:
       version:
         description: 'Release version, with or without v-prefix, e.g. 2.5.4'
-        required: true
-        default: '2.5.4'
+        required: false
+        default: ''
       draft:
         description: 'Create or update the release as a draft'
         required: true
@@ -54,6 +54,12 @@ jobs:
         run: |
           set -euo pipefail
 
+          cmake_version="$(sed -nE 's/^project[(]Firestaff VERSION ([^ ]+) LANGUAGES C[)]$/\\1/p' CMakeLists.txt)"
+          if [[ -z "${cmake_version}" ]]; then
+            echo "::error::Could not read Firestaff version from CMakeLists.txt"
+            exit 1
+          fi
+
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
             raw_version="${{ github.event.inputs.version }}"
             draft="${{ github.event.inputs.draft }}"
@@ -64,6 +70,10 @@ jobs:
             prerelease="false"
           fi
 
+          if [[ -z "${raw_version}" || "${raw_version}" == "null" ]]; then
+            raw_version="${cmake_version}"
+          fi
+
           version="${raw_version#v}"
           tag="v${version}"
 
@@ -72,11 +82,6 @@ jobs:
             exit 1
           fi
 
-          cmake_version="$(sed -nE 's/^project[(]Firestaff VERSION ([^ ]+) LANGUAGES C[)]$/\1/p' CMakeLists.txt)"
-          if [[ -z "$cmake_version" ]]; then
-            echo "::error::Could not read Firestaff version from CMakeLists.txt"
-            exit 1
-          fi
           if [[ "$cmake_version" != "$version" ]]; then
             echo "::error::Release version $version does not match CMakeLists.txt version $cmake_version"
             exit 1
