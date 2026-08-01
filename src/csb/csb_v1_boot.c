@@ -14,6 +14,7 @@
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
+#include "swsh_frontend_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdarg.h>
@@ -188,6 +189,57 @@ int csb_v1_boot_load_swoosh_source_pc34(CSB_V1_BootProfile *profile)
             return 1;
         }
     }
+    /* Fallback: extract SWSHSND from SWOOSH executable (LZEXE-compressed). */
+    {
+        static const char *const exe_names[] = {
+            "SWOOSH", "SWOOSH.DAT", NULL
+        };
+        unsigned int ed, en;
+        for (ed = 0u; dirs[ed]; ++ed) {
+            for (en = 0u; exe_names[en]; ++en) {
+                char path[sizeof(profile->swoosh_source_path)];
+                FILE *file;
+                long file_size;
+                unsigned char *exe_buf;
+                size_t read_count;
+                int written;
+
+                written = dirs[ed][0]
+                    ? snprintf(path, sizeof(path), "%s/%s/%s",
+                               profile->asset_root, dirs[ed], exe_names[en])
+                    : snprintf(path, sizeof(path), "%s/%s",
+                               profile->asset_root, exe_names[en]);
+                if (written <= 0 || (size_t)written >= sizeof(path)) continue;
+                file = fopen(path, "rb");
+                if (!file) continue;
+                if (fseek(file, 0, SEEK_END) != 0) { fclose(file); continue; }
+                file_size = ftell(file);
+                if (file_size <= 0 || file_size > 1024L * 1024L) {
+                    fclose(file); continue;
+                }
+                rewind(file);
+                exe_buf = (unsigned char *)malloc((size_t)file_size);
+                if (!exe_buf) { fclose(file); continue; }
+                read_count = fread(exe_buf, 1u, (size_t)file_size, file);
+                fclose(file);
+                if (read_count != (size_t)file_size) { free(exe_buf); continue; }
+
+                if (SWSH_Compat_ExtractSoundFromExe(
+                        exe_buf, (unsigned int)file_size,
+                        profile->swoosh_source_bytes,
+                        sizeof(profile->swoosh_source_bytes),
+                        &profile->swoosh_source_fnv1a)) {
+                    free(exe_buf);
+                    csb_v1_boot_copy(profile->swoosh_source_path,
+                                     sizeof(profile->swoosh_source_path), path);
+                    profile->swoosh_source_bound = 1;
+                    return 1;
+                }
+                free(exe_buf);
+            }
+        }
+    }
+
     memset(profile->swoosh_source_bytes, 0, sizeof(profile->swoosh_source_bytes));
     return 0;
 }

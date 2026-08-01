@@ -565,3 +565,98 @@ unsigned int SWSH_Compat_GetRuntimeFinalHoldMs(void) {
         return SWSH_Compat_GetRuntimeDelayMsForVblankCount(
                 SWSH_COMPAT_SOURCE_FINAL_HOLD_VBLANKS);
 }
+
+static unsigned int swsh_fnv1a(const unsigned char* bytes, unsigned int count) {
+        unsigned int hash = 2166136261u;
+        unsigned int i;
+        for (i = 0u; i < count; ++i) {
+                hash ^= bytes[i];
+                hash *= 16777619u;
+        }
+        return hash ? hash : 1u;
+}
+
+/* ReDMCSB SWSHSND.C is a char array compiled into SWOOSH.  After LZEXE
+ * unpacking, the 9078-byte PCM payload sits in the data segment.  It is
+ * signed 8-bit audio: values cluster around zero with non-trivial
+ * variance.  The logo graphic is also in the data segment but its bytes
+ * are unsigned pixel data that looks very different statistically.
+ *
+ * Heuristic: scan the unpacked image for a 9078-byte window whose
+ * signed-mean is near zero and whose variance exceeds a threshold that
+ * rejects flat/zero regions and unsigned pixel data. */
+static int swsh_find_pcm_in_unpacked(const unsigned char* data,
+                                     unsigned int dataBytes,
+                                     unsigned int* outOffset) {
+        unsigned int best_offset = 0u;
+        long best_variance = 0;
+        int found = 0;
+        unsigned int i;
+        const unsigned int pcm_len = SWSH_COMPAT_SWSHSND_BYTE_COUNT;
+
+        if (!data || dataBytes < pcm_len || !outOffset) return 0;
+
+        for (i = 0u; i + pcm_len <= dataBytes; i += 2u) {
+                long sum = 0;
+                long sum_sq = 0;
+                long mean, variance;
+                unsigned int j;
+                int zero_run = 0, max_zero_run = 0;
+
+                for (j = 0u; j < pcm_len; ++j) {
+                        int s = (int)(signed char)data[i + j];
+                        sum += s;
+                        sum_sq += (long)s * s;
+                        if (s == 0) { ++zero_run; if (zero_run > max_zero_run) max_zero_run = zero_run; }
+                        else zero_run = 0;
+                }
+                mean = sum / (long)pcm_len;
+                variance = sum_sq / (long)pcm_len - mean * mean;
+
+                /* Signed PCM centered near zero with audible content */
+                if (mean < -20 || mean > 20) continue;
+                /* Must have substantial variance (audio, not silence) */
+                if (variance < 100) continue;
+                /* Reject regions with long zero runs (code/padding) */
+                if (max_zero_run > 64) continue;
+
+                if (variance > best_variance) {
+                        best_variance = variance;
+                        best_offset = i;
+                        found = 1;
+                }
+        }
+        if (found) *outOffset = best_offset;
+        return found;
+}
+
+int SWSH_Compat_ExtractSoundFromExe(const unsigned char* exeData,
+                                    unsigned int exeDataBytes,
+                                    unsigned char* outBytes,
+                                    unsigned int outCapacity,
+                                    unsigned int* outFnv1a) {
+        unsigned char* unpacked = 0;
+        unsigned int unpackedBytes = 0u;
+        unsigned int pcmOffset = 0u;
+
+        if (outFnv1a) *outFnv1a = 0u;
+        if (!exeData || !outBytes || outCapacity < SWSH_COMPAT_SWSHSND_BYTE_COUNT)
+                return 0;
+
+        if (!swsh_lzexe_unpack_load_module(exeData, exeDataBytes,
+                                           &unpacked, &unpackedBytes)) {
+                return 0;
+        }
+
+        if (!swsh_find_pcm_in_unpacked(unpacked, unpackedBytes, &pcmOffset)) {
+                free(unpacked);
+                return 0;
+        }
+
+        memcpy(outBytes, unpacked + pcmOffset, SWSH_COMPAT_SWSHSND_BYTE_COUNT);
+        if (outFnv1a) {
+                *outFnv1a = swsh_fnv1a(outBytes, SWSH_COMPAT_SWSHSND_BYTE_COUNT);
+        }
+        free(unpacked);
+        return 1;
+}

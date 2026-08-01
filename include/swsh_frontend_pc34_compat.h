@@ -70,6 +70,16 @@ int SWSH_Compat_ValidatePc34DosoundProgram(const unsigned char* program,
 #define SWSH_COMPAT_SOURCE_SOUND_WAIT_COMMAND_COUNT 10u
 #define SWSH_COMPAT_SOURCE_SOUND_WAIT_VBLANK_COUNT 20u
 #define SWSH_COMPAT_RUNTIME_VBLANK_MS 20u
+/* Extract the 9078-byte SWSHSND PCM sound data from a SWOOSH executable.
+ * Returns 1 if found, with the data copied to outBytes (must be >= 9078).
+ * The hash is returned in outFnv1a for downstream validation. */
+int SWSH_Compat_ExtractSoundFromExe(const unsigned char* exeData,
+                                    unsigned int exeDataBytes,
+                                    unsigned char* outBytes,
+                                    unsigned int outCapacity,
+                                    unsigned int* outFnv1a);
+#define SWSH_COMPAT_SWSHSND_BYTE_COUNT 9078u
+
 #define SWSH_COMPAT_SOURCE_INITIAL_LOGO_HOLD_VBLANKS 20u
 /* ReDMCSB SWSH.C:3037: the PC 3.4 I34E branch waits 120 VBlanks after
  * sound completion before handing off to START.PRG.  The 20-VBlank branch

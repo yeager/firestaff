@@ -1,3 +1,8 @@
+- ✅ 2026-08-01 CSB SWSHSND extraction from SWOOSH exe: added
+  SWSH_Compat_ExtractSoundFromExe to LZEXE-unpack the SWOOSH executable
+  and extract the 9078-byte PCM audio payload. CSB boot loader now falls
+  back to this when pre-extracted SWSHSND files are not found. Deleted 8
+  stale agent branches from GitHub. v3.0.201
 - ✅ 2026-08-01 CSB entrance door palette fix: when the route receipt
   coherence check fails during transient door-opening states, fall back to
   the entrance special palette instead of returning -1 (which caused the

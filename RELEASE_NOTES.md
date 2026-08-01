@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.201
+
+- CSB: extract SWSHSND PCM audio from LZEXE-compressed SWOOSH executable when
+  pre-extracted sound files are not available. The boot loader now falls back to
+  LZEXE-unpacking SWOOSH and scanning for the 9078-byte signed 8-bit PCM payload.
+- Cleanup: delete 8 stale agent branches whose source changes were already in main.
+
 # Firestaff v3.0.200
 
 - CSB: fix entrance door animation showing only red by falling back to the
