@@ -1,6 +1,18 @@
 
 # Unreleased
 
+# Firestaff v3.0.202
+
+- DM1/CSB: fix F0308 IsLucky to match ReDMCSB CHAMPION.C:1123-1155 —
+  add (unsigned char) truncation before <<1 luck doubling in both the
+  memory-layer and DM1 runtime combat resolvers.
+- DM1: align dm1_v1_combat F0308 with MEDIA722 doubled-luck branch
+  (random((unsigned char)luck << 1) instead of random(luck)).
+- Docs: clarify F0840 light expiry stub — real light decay physics
+  (F0257/F0864) already runs via TIMELINE_EVENT_MAGIC_LIGHT_DECAY.
+- Audit: confirmed party shield defense, MOVE_TIMER event, and light
+  system are not genuine gaps (already correctly implemented).
+
 # Firestaff v3.0.201
 
 - CSB: extract SWSHSND PCM audio from LZEXE-compressed SWOOSH executable when

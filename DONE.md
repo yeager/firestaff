@@ -1,3 +1,8 @@
+- ✅ 2026-08-01 DM1/CSB gap analysis: F0308 IsLucky (unsigned char)
+  truncation + MEDIA722 <<1 doubling in both combat resolvers. Confirmed
+  party shield defense (per-attack snapshot selection already correct),
+  MOVE_TIMER (dead event, no producer), and F0840 light system (real
+  decay runs via TIMELINE_EVENT_MAGIC_LIGHT_DECAY) are not gaps. v3.0.202
 - ✅ 2026-08-01 CSB SWSHSND extraction from SWOOSH exe: added
   SWSH_Compat_ExtractSoundFromExe to LZEXE-unpack the SWOOSH executable
   and extract the 9078-byte PCM audio payload. CSB boot loader now falls

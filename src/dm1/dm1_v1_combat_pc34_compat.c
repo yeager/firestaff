@@ -241,11 +241,10 @@ int dm1_champion_is_lucky(DM1_ChampionCombat* ch, int percentage, int luckMaximu
         return 1;
     }
 
-    /* CHAMPION.C:1142 — random(Luck) > percentage => lucky. v1
-     * keeps the strict-greater-than form. The MEDIA722 <<1 doubling
-     * is not modelled here; PC 3.4 uses the random(Luck) form
-     * documented in BUG0_38. */
-    isLucky = (dm1_combat_random(current) > percentage) ? 1 : 0;
+    /* CHAMPION.C:1142 — random((unsigned char)Luck << 1) > percentage.
+     * PC 3.4 uses the MEDIA722 doubled-luck branch with (unsigned char)
+     * truncation before the shift. */
+    isLucky = (dm1_combat_random((unsigned char)current << 1) > percentage) ? 1 : 0;
 
     /* CHAMPION.C:1153 — bounded value update of Luck statistic. v1
      * uses luckMinimum=0 (PC 3.4 / DM1 minimum) since the snapshot

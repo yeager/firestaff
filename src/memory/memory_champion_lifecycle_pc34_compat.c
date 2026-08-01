@@ -356,8 +356,11 @@ int F0840_LIFECYCLE_HandleLightExpiry_Compat(
     struct LifecycleState_Compat* state)
 {
     if (state == 0) return 0;
-    /* v1 stub — light system is separate. We track a counter so the
-     * timeline can decrement it when light events expire. */
+    /* Status-expiry counter for C70 light events.  The real light decay
+     * physics (F0257/F0864 magicalLightAmount delta + followup scheduling)
+     * runs via TIMELINE_EVENT_MAGIC_LIGHT_DECAY in the tick orchestrator.
+     * This counter tracks how many C70 status receipts have been consumed
+     * by the lifecycle dispatcher. */
     if (state->status.lightEventCount > 0) state->status.lightEventCount--;
     return 1;
 }

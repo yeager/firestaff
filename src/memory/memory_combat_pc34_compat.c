@@ -14,14 +14,16 @@
  *     mutated except out-params.
  *   - MEDIA016 / PC LSB-first serialisation for every struct.
  *
- * Fontanel branches with no reachable runtime state (luck rolls,
- * skill-experience awards, party shields beyond partyShieldDefense,
- * magical resistances for fire/magic/psychic) are intentionally
- * simplified and flagged inline with the ReDMCSB source citation
- * at each site.  See CHAMPION.C:1123 (F0308 IsLucky), :1382
+ * F0308 IsLucky now matches ReDMCSB CHAMPION.C:1123-1155 including
+ * the (unsigned char) truncation before the <<1 luck doubling.
+ * Party shields use per-attack-type selection at snapshot time
+ * (spellShieldDefense for C5, fireShieldDefense for C1).
+ *
+ * Remaining fontanel branches (skill-experience awards) are
+ * intentionally simplified and flagged inline with the ReDMCSB
+ * source citation at each site.  See CHAMPION.C:1382
  * (F0314 WakeUp), :1803 (F0321 AddPendingDamageAndWounds),
- * :1926 (F0322 Poison) for the original behaviour and the
- * citation immediately above each v1 simplification site.
+ * :1926 (F0322 Poison) for the original behaviour.
  */
 
 #include <string.h>
@@ -348,7 +350,7 @@ static int combat_champion_is_lucky(
              * without drawing random(luck * 2). */
             isLucky = 0;
         } else {
-            unsigned int r = F0732_COMBAT_RngRandom_Compat(rng, luckCur << 1);
+            unsigned int r = F0732_COMBAT_RngRandom_Compat(rng, (unsigned char)luckCur << 1);
             if (outRngCalls) *outRngCalls += 1;
             isLucky = (r > (unsigned int)percentage) ? 1 : 0;
         }
