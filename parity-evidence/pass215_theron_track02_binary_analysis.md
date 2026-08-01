@@ -197,6 +197,37 @@ System messages: "WAKE UP" (UD 0x1C2E1D), "GAME FROZEN" (UD 0x1C2E25),
 
 Hall of Champions (UD 0x1CBBBC): "GO AWAY AND RESURRECT THERON".
 
+### Creature Type Names (UD 0x2741EF)
+
+7-entry creature name table in the second code area. Each entry is 7 bytes
+of fixed-width ASCII (space-padded), separated by 0x01, final entry
+terminated with 0x00. These are Theron-unique creature types, distinct from
+DM1/CSB creatures:
+
+| Index | Name | Notes |
+|-------|------|-------|
+| 0 | AKUTUBA | Theron-unique |
+| 1 | DRATOR | Theron-unique |
+| 2 | FORMIC | Theron-unique |
+| 3 | SARMON | Theron-unique |
+| 4 | SHADO | Theron-unique |
+| 5 | THIEF | Theron-unique |
+| 6 | DEMON | Shared with DM1 |
+
+Immediately after: "GAME SPEED" options menu label (UD 0x274228), followed
+by level names at UD 0x27423B.
+
+### Experience Threshold Table (UD 0x1DA890)
+
+64-entry word table (little-endian uint16). Monotonically increasing values
+from 0 to 214. Likely maps to 4 skill classes × 16 skill levels (matching
+the 16 skill level names at UD 0x1C9B6B and 4 champion classes at UD
+0x1C9A32).
+
+Preceded at UD 0x1DA870 by class base-stat parameters:
+- UD 0x1DA870: 0, 0, 60, 50, 256, 256, 256, 256 (words)
+- UD 0x1DA880: 3, 3, 3, 3, 0, 10, 54, 90 (words)
+
 ### System Card Credits (Block 1)
 
 Japanese Shift-JIS text at Block 1 offset +0x30800 identifies the Hudson Soft
@@ -223,5 +254,5 @@ This analysis does NOT establish:
 - Object table format or location
 - Champion stat record format
 - The relationship between the two item tables (DM1-compatible vs Theron-unique)
-- Creature definition records
+- Creature attribute records (HP, attack, defense, speed — names are proven)
 - Shop price table source offsets

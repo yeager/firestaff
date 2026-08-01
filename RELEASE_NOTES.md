@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.220
+- 7 real creature type names from Track 02 binary: AKUTUBA, DRATOR, FORMIC, SARMON, SHADO, THIEF, DEMON (UD 0x2741EF)
+- 64-entry experience threshold table (UD 0x1DA890): monotonic 0–214, likely 4 classes × 16 skill levels
+- GAME SPEED options menu label (UD 0x274228)
+- 9 new tests pass (4 creature names + 5 experience table)
+
 # Firestaff v3.0.219
 - Fixed action table: first entry is "FREEZE LIFE" (not "LIFE"), correcting UD 0x1DEEE4 extraction
 - New hand-to-hand action table: PUNCH, KICK, WAR CRY, STAB, CLIMB DOWN (5 entries at UD 0x1DEEC1)

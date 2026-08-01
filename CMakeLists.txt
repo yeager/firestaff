@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.219 LANGUAGES C)
+project(Firestaff VERSION 3.0.220 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -38696,6 +38696,32 @@ if(BUILD_TESTING AND THERON_SOURCES)
     endif()
     add_test(NAME theron_v1_track02_ui_strings
         COMMAND test_theron_v1_track02_ui_strings)
+
+    add_executable(test_theron_v1_track02_creature_names
+        tests/test_theron_v1_track02_creature_names.c
+        src/theron/theron_v1_track02_creature_names.c
+    )
+    target_include_directories(test_theron_v1_track02_creature_names PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_creature_names PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_track02_creature_names
+        COMMAND test_theron_v1_track02_creature_names)
+
+    add_executable(test_theron_v1_track02_experience_table
+        tests/test_theron_v1_track02_experience_table.c
+        src/theron/theron_v1_track02_experience_table.c
+    )
+    target_include_directories(test_theron_v1_track02_experience_table PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_experience_table PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME theron_v1_track02_experience_table
+        COMMAND test_theron_v1_track02_experience_table)
 
     add_executable(test_theron_v1_track02_loader_output_record_admission
         tests/test_theron_v1_track02_loader_output_record_admission.c

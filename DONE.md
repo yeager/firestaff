@@ -1,3 +1,8 @@
+- ✅ 2026-08-01 v3.0.220 Theron Track 02 creature names and experience table:
+  7 real creature type names from binary (AKUTUBA/DRATOR/FORMIC/SARMON/SHADO/
+  THIEF/DEMON at UD 0x2741EF) — replaces synthetic GOBLIN/ORC/SKELETON names.
+  64-entry experience threshold table at UD 0x1DA890 (monotonic 0–214, likely
+  4 classes × 16 skill levels). GAME SPEED menu label. 9 tests pass.
 - ✅ 2026-08-01 v3.0.219 Theron Track 02 UI strings and action table corrections:
   Fixed action table (FREEZE LIFE not LIFE, 30 entries at UD 0x1DEEE4). Added 5
   hand-to-hand actions (PUNCH/KICK/WAR CRY/STAB/CLIMB DOWN at UD 0x1DEEC1). Added
