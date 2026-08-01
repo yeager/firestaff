@@ -54,7 +54,16 @@ jobs:
         run: |
           set -euo pipefail
 
-          cmake_version="$(sed -nE 's/^project[(]Firestaff VERSION ([^ ]+) LANGUAGES C[)]$/\\1/p' CMakeLists.txt)"
+          cmake_version="$(python - "$PWD/CMakeLists.txt" <<'PY'
+import re
+import sys
+
+with open(sys.argv[1], "r", encoding="utf-8") as f:
+    text = f.read()
+
+match = re.search(r"^project\\(Firestaff VERSION ([^ ]+) LANGUAGES C\\)", text, re.M)
+print(match.group(1) if match else "")
+PY)"
           if [[ -z "${cmake_version}" ]]; then
             echo "::error::Could not read Firestaff version from CMakeLists.txt"
             exit 1
