@@ -5034,6 +5034,9 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_new_game.c
@@ -5108,6 +5111,9 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_new_game.c
@@ -5180,6 +5186,9 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_new_game.c
@@ -5252,6 +5261,9 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_new_game.c
@@ -5453,6 +5465,9 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_new_game.c
@@ -5533,6 +5548,9 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_new_game.c
@@ -5606,6 +5624,9 @@ add_executable(firestaff_dm2_v2_smooth_movement_probe
     src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_new_game.c
@@ -6351,6 +6372,9 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_weather.c
@@ -13948,6 +13972,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_save_timers_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_creature_tables.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -14022,6 +14049,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_save_timers_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_creature_tables.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -14096,6 +14126,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_save_timers_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_creature_tables.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -14686,6 +14719,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_viewport_renderer.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_frame_presentation_state.c
@@ -14758,6 +14794,9 @@ if(BUILD_TESTING)
         src/shared/dungeon_decompressor_ftl.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_new_game.c
@@ -14835,6 +14874,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_viewport_renderer.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_startup_layout.c
@@ -14909,6 +14951,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_viewport_renderer.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_startup_layout.c
@@ -14983,6 +15028,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_viewport_renderer.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_startup_layout.c
@@ -15057,6 +15105,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_viewport_renderer.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_startup_layout.c
@@ -15131,6 +15182,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_viewport_renderer.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_startup_layout.c
@@ -15207,6 +15261,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_viewport_renderer.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_startup_layout.c
@@ -15279,6 +15336,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_viewport_renderer.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_startup_layout.c
@@ -15370,6 +15430,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_viewport_renderer.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_startup_layout.c
@@ -16744,6 +16807,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_actuator_event_pc34_compat
     )
 
+    # ── DM2: MOVE_RECORD_TO + movement execution ──
+    add_executable(test_dm2_v1_move_record_to_pc34_compat
+        tests/test_dm2_v1_move_record_to_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_move_record_to_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_move_record_to_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_move_record_to_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_move_record_to_pc34_compat
+        COMMAND test_dm2_v1_move_record_to_pc34_compat
+    )
+
     # ── DM2-002: DELETE_CREATURE_RECORD mutating tail ──
     add_executable(test_dm2_v1_delete_creature_tail_pc34_compat
         tests/test_dm2_v1_delete_creature_tail_pc34_compat.c
@@ -17210,6 +17291,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_viewport_renderer.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_frame_presentation_state.c
@@ -17741,6 +17825,9 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
         src/dm2/dm2_v1_frame_presentation_state.c
         src/dm2/dm2_v1_new_game.c
@@ -20292,6 +20379,9 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_perform_move_receipt
         tests/test_dm2_v1_perform_move_receipt.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_perform_move_receipt PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -20340,6 +20430,9 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_move_075f_1bc2.c
         src/dm2/dm2_v1_move_075f_1bc2.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
     )
@@ -45166,6 +45259,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_save_timers_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
+        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_creature_tables.c
         src/dm2/dm2_v1_creature_animation_gdat.c

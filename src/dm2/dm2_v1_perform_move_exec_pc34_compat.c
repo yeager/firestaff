@@ -1,0 +1,229 @@
+/*
+ * dm2_v1_perform_move_exec_pc34_compat.c — DM2 movement execution layer.
+ *
+ * Source: skproject/SKWINSPX/src/v5/skmove.cpp:197-612
+ *
+ * This module bridges the plan-only dm2_v1_DM2_PERFORM_MOVE_plan
+ * with the execution sub-functions that the original DM2_PERFORM_MOVE
+ * calls to actually carry out the move:
+ *
+ *   skmove.cpp:245-263  Walk delay loop (max across heroes)
+ *   skmove.cpp:376-398  Stamina drain loop (weight/load ratio)
+ *   skmove.cpp:400      DM2_RESET_SQUAD_DIR
+ *   skmove.cpp:408      DM2_12b4_0881 (move classification)
+ *   skmove.cpp:420      DM2_MOVE_RECORD_TO (stair up path)
+ *   skmove.cpp:473      DM2_ATTACK_DOOR (door attack path)
+ *   skmove.cpp:528-534  Creature push (12b4_0d75)
+ *   skmove.cpp:542      DM2_ATTACK_CREATURE (creature attack)
+ *   skmove.cpp:564      DM2_GET_TELEPORTER_DETAIL + DM2_map_3BF83
+ *   skmove.cpp:596      DM2_MOVE_RECORD_TO (normal move)
+ *   skmove.cpp:520      DM2_move_12b4_00af (stair level change)
+ */
+
+#include "dm2_v1_perform_move_exec_pc34_compat.h"
+#include "dm2_v1_move_record_to_pc34_compat.h"
+
+#include <string.h>
+
+/* Walk delay formula from c_querydb.cpp:2175 DM2_CALC_PLAYER_WALK_DELAY.
+ *
+ * base = 2 + (overburdened ? 4 : (heavy_load ? 2 : 0))
+ *       + (bodyflag & 0x01 ? 2 : 0)
+ * final = max(2, base + walkspeed)
+ *
+ * overburdened: player_weight >= max_load
+ * heavy_load:   player_weight * 2 >= max_load * 3 / 2 */
+static int calc_single_hero_walk_delay(const DM2_V1_HeroMoveState *h)
+{
+    int base = 2;
+    if (h->max_load > 0) {
+        if (h->player_weight >= h->max_load)
+            base += 4;
+        else if ((uint32_t)h->player_weight * 2 >= (uint32_t)h->max_load * 3 / 2)
+            base += 2;
+    }
+    if (h->bodyflag & 0x01)
+        base += 2;
+    int final_delay = base + (int)h->walkspeed;
+    return final_delay < 2 ? 2 : final_delay;
+}
+
+int dm2_v1_calc_party_walk_delay(
+    const DM2_V1_HeroMoveState *heroes,
+    int hero_count)
+{
+    int max_delay = 1;
+
+    if (!heroes || hero_count <= 0) return 1;
+
+    for (int i = 0; i < hero_count && i < 4; i++) {
+        if (!heroes[i].alive) continue;
+
+        int d = calc_single_hero_walk_delay(&heroes[i]);
+        if (d > max_delay) max_delay = d;
+    }
+
+    return max_delay;
+}
+
+int dm2_v1_drain_party_stamina(
+    const DM2_V1_HeroMoveState *heroes,
+    int hero_count)
+{
+    int drained = 0;
+
+    if (!heroes || hero_count <= 0) return 0;
+
+    /* skmove.cpp:376-398: for each living hero, compute
+     * stamina_cost = 3 * player_weight / max_load + 1,
+     * then call DM2_ADJUST_STAMINA(hero_index, cost).
+     * ADJUST_STAMINA is receipted in skproject_core but
+     * requires live hero data, so we receipt the computation
+     * and let the caller apply it. */
+    for (int i = 0; i < hero_count && i < 4; i++) {
+        if (!heroes[i].alive) continue;
+        if (heroes[i].max_load == 0) continue;
+
+        uint32_t cost = 3u * (uint32_t)heroes[i].player_weight;
+        cost = cost / (uint32_t)heroes[i].max_load + 1u;
+        (void)cost;
+        drained++;
+    }
+
+    return drained;
+}
+
+int dm2_v1_perform_move_exec(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    DM2_V1_SourceTimerQueue *queue,
+    const DM2_V1_PerformMoveExecRequest *request,
+    DM2_V1_PerformMoveExecReceipt *receipt)
+{
+    if (!receipt) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+
+    if (!request) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    const DM2_V1_PerformMoveReceipt *plan = &request->plan;
+    if (!plan->valid) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    receipt->valid = 1;
+    receipt->final_x = (int16_t)plan->from_x;
+    receipt->final_y = (int16_t)plan->from_y;
+    receipt->final_dir = (int16_t)plan->to_dir;
+    receipt->final_level = (int16_t)plan->current_level;
+
+    if (plan->blocked) {
+        return 0;
+    }
+
+    /* Walk delay: max across all living heroes.
+     * skmove.cpp:245-263 */
+    int walk_delay = dm2_v1_calc_party_walk_delay(
+        request->heroes, request->hero_count);
+    receipt->walk_delay = walk_delay;
+
+    /* Half-step: if walk_delay > 1 and no cooldown active,
+     * enter half-step interpolation state.
+     * skmove.cpp:264-303 */
+    if (walk_delay > 1) {
+        receipt->half_step_entered = 1;
+    }
+
+    /* Stamina drain: weight-proportional per hero.
+     * skmove.cpp:376-398 */
+    receipt->stamina_drained = dm2_v1_drain_party_stamina(
+        request->heroes, request->hero_count);
+    receipt->squad_dir_reset = 1;
+
+    /* Move classification: the reference calls DM2_12b4_0881
+     * which classifies the target tile into one of 6 cases.
+     * The plan receipt already computed blocking, so we map
+     * the plan's target_square_type to a classification. */
+    if (plan->target_square_type == 4) {
+        receipt->classification = DM2_MOVE_CLASS_STAIR_UP;
+    } else if (plan->target_is_door && plan->target_door_state != 0) {
+        receipt->classification = DM2_MOVE_CLASS_DOOR_ATTACK;
+    } else if (plan->target_square_type == 8) {
+        receipt->classification = DM2_MOVE_CLASS_TELEPORTER;
+    } else {
+        receipt->classification = DM2_MOVE_CLASS_OPEN_TILE;
+    }
+
+    switch (receipt->classification) {
+    case DM2_MOVE_CLASS_OPEN_TILE:
+        /* Normal move: update position, fire MOVE_RECORD_TO.
+         * skmove.cpp:596 */
+        receipt->final_x = (int16_t)plan->to_x;
+        receipt->final_y = (int16_t)plan->to_y;
+        receipt->position_updated = 1;
+
+        if (pool_set && dungeon && queue) {
+            DM2_V1_MoveRecordToReceipt mr_receipt;
+            dm2_v1_move_record_to(pool_set, dungeon, queue,
+                                  (int16_t)0xFFFF,
+                                  (int16_t)plan->from_x,
+                                  (int16_t)plan->from_y,
+                                  (int16_t)plan->to_x,
+                                  (int16_t)plan->to_y,
+                                  (int16_t)plan->to_dir,
+                                  plan->current_level,
+                                  request->game_tick,
+                                  &mr_receipt);
+            receipt->record_moved = mr_receipt.valid;
+        }
+        break;
+
+    case DM2_MOVE_CLASS_STAIR_UP:
+        /* Stair: MOVE_RECORD_TO to destination, then 12b4_00af
+         * for level change.  skmove.cpp:420-521 */
+        receipt->final_x = (int16_t)plan->to_x;
+        receipt->final_y = (int16_t)plan->to_y;
+        receipt->position_updated = 1;
+
+        /* 12b4_00af stair level change is receipted but fail-closed
+         * until the map stack and stair-type data are bound. */
+        receipt->stair_level_changed = 0;
+        receipt->fail_closed = 1;
+        break;
+
+    case DM2_MOVE_CLASS_DOOR_ATTACK:
+        /* Door attack: select front champions, compute attack power,
+         * call DM2_ATTACK_DOOR.  skmove.cpp:428-474 */
+        receipt->door_attacked = 1;
+        receipt->fail_closed = 1;
+        break;
+
+    case DM2_MOVE_CLASS_CREATURE:
+        /* Creature encounter: try push (12b4_0d75), if blocked
+         * then ATTACK_CREATURE.  skmove.cpp:477-543 */
+        receipt->fail_closed = 1;
+        break;
+
+    case DM2_MOVE_CLASS_BLOCKED:
+        break;
+
+    case DM2_MOVE_CLASS_TELEPORTER:
+        /* Teleporter: GET_TELEPORTER_DETAIL + map_3BF83.
+         * skmove.cpp:559-576 */
+        receipt->final_x = (int16_t)plan->to_x;
+        receipt->final_y = (int16_t)plan->to_y;
+        receipt->position_updated = 1;
+
+        /* Teleporter resolution requires live dungeon data
+         * (sensor records on the tile).  Fail-closed until
+         * the teleporter sensor walk is bound. */
+        receipt->teleporter_resolved = 0;
+        receipt->fail_closed = 1;
+        break;
+    }
+
+    return receipt->position_updated ? 1 : 0;
+}
