@@ -30732,6 +30732,7 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
             break;
         }
         if (m11_viewport_cell_is_wall_like(&cells[depth][1])) {
+            int drawn;
             if (flipWalls) {
                 /* ReDMCSB DUNVIEW.C F0128: when G0076 is set, the center
                  * wall-set indices are swapped to pre-flipped versions
@@ -30739,14 +30740,22 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                  * MEDIA747).  Since Firestaff loads only native bitmaps
                  * from GRAPHICS.DAT, we achieve the same result by drawing
                  * the native center-wall graphic flipped horizontally. */
-                (void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,
-                                                     fbW, fbH,
-                                                     &kFrontBlits[depth],
-                                                     -1);
+                drawn = m11_draw_dm1_wall_blit_flipped(state, framebuffer,
+                                                       fbW, fbH,
+                                                       &kFrontBlits[depth],
+                                                       -1);
             } else {
-                (void)m11_draw_dm1_front_wall_blit(state, framebuffer,
-                                                   fbW, fbH,
-                                                   &kFrontBlits[depth]);
+                drawn = m11_draw_dm1_front_wall_blit(state, framebuffer,
+                                                     fbW, fbH,
+                                                     &kFrontBlits[depth]);
+            }
+            if (!drawn) {
+                m11_fill_rect(framebuffer, fbW, fbH,
+                              M11_VIEWPORT_X + kFrontBlits[depth].dstX,
+                              M11_VIEWPORT_Y + kFrontBlits[depth].dstY,
+                              kFrontBlits[depth].width,
+                              kFrontBlits[depth].height,
+                              M11_COLOR_BLACK);
             }
             occluded = 1;
         }
