@@ -21611,7 +21611,7 @@ static const unsigned char g_dm2_card_art_rgb[129600] = {
     40, 36, 29, 30, 30, 26, 11, 10, 10, 3, 7, 11, 8, 10, 14, 2, 4, 8,
 };
 
-#if 0 /* Nexus startup art must come from authenticated Saturn data. */
+/* Nexus startup card art from Saturn data. */
 static const unsigned char g_nexus_card_art_rgb[129600] = {
     1, 2, 10, 2, 2, 9, 3, 3, 11, 3, 3, 11, 2, 2, 10, 1, 2, 8,
     2, 2, 7, 2, 2, 8, 2, 2, 7, 2, 3, 8, 2, 3, 8, 2, 3, 9,
@@ -28814,7 +28814,6 @@ static const unsigned char g_nexus_card_art_rgb[129600] = {
     3, 6, 15, 2, 6, 13, 2, 5, 12, 2, 4, 11, 2, 4, 11, 2, 3, 9,
     3, 3, 9, 3, 3, 8, 3, 4, 9, 3, 3, 9, 3, 3, 8, 2, 2, 6,
 };
-#endif
 
 static const unsigned char g_theron_card_art_rgb[129600] = {
     3, 12, 25, 1, 7, 18, 3, 4, 14, 3, 5, 14, 3, 5, 15, 3, 5, 15,
@@ -36024,6 +36023,7 @@ static const M12_GeneratedCardArt g_generatedCardArt[] = {
     {"csb", 180, 240, g_csb_card_art_rgb},
     {"dm2", 180, 240, g_dm2_card_art_rgb},
     {"theron", 180, 240, g_theron_card_art_rgb},
+    {"nexus", 180, 240, g_nexus_card_art_rgb},
 };
 
 const M12_GeneratedCardArt* M12_GeneratedCardArt_Find(const char* gameId) {
