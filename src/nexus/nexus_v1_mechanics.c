@@ -576,20 +576,6 @@ static int mechanics_party_leader_index(const Nexus_V1_Engine *engine) {
     return idx;
 }
 
-/* Return 1 if the party leader has at least one of item_id in inventory. */
-static int mechanics_leader_has_item(const Nexus_V1_Engine *engine, int item_id) {
-    int leader_idx, slot;
-    const Nexus_V1_Champion *leader;
-    if (!engine || item_id < 0) return 0;
-    leader_idx = mechanics_party_leader_index(engine);
-    if (leader_idx < 0) return 0;
-    leader = &engine->champions.champions[leader_idx];
-    for (slot = 0; slot < NEXUS_INVENTORY_SLOTS; slot++) {
-        if (leader->inventory[slot] == (uint8_t)item_id) return 1;
-    }
-    return 0;
-}
-
 /* Attack an adjacent creature from the party leader's facing/front square.
  * Implements DM1 melee attack resolution (weapon power + champion attack roll
  * vs creature defense).  On kill, award fighter XP and roll creature drops.
@@ -841,19 +827,12 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 }
             }
 
-            /* Water square (type 21): blocked unless party leader carries a Rope.
-             * DM1 uses a rope item to bridge water squares; Nexus V1 approximates
-             * this with an inventory check. The rope is not consumed.
-             * Source: DM1 MOVESENS.C water square sensor, nexus_items.md Rope. */
-            if (sq == NEXUS_SQUARE_WATER && !mechanics_leader_has_item(engine, 65)) {
-                sq = 0; /* treat as wall */
-            }
-
-            /* Fire square (type 22): blocked unless party leader carries a
-             * Rune of Fire (approximates fire protection in V1).
-             * Source: DM1 MOVESENS.C fire square sensor, nexus_magic.md
-             * Ful/Fire rune association. */
-            if (sq == NEXUS_SQUARE_FIRE && !mechanics_leader_has_item(engine, 80)) {
+            /* Water/fire square traversal: the synthetic table used hardcoded
+             * ordinals 65/80 ("Rope"/"Rune of Fire"), but real ITEM.IBS maps
+             * those to a Weapon and a Potion respectively.  Until Saturn-
+             * specific traversal semantics are proven, these squares block
+             * unconditionally (fail closed). */
+            if (sq == NEXUS_SQUARE_WATER || sq == NEXUS_SQUARE_FIRE) {
                 sq = 0; /* treat as wall */
             }
 

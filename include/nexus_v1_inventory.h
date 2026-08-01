@@ -110,6 +110,11 @@ void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
                                          const uint16_t *action3_string,
                                          int count);
 void nexus_itemdef_clear_ibs_declarations(void);
+/* Forward-declared; defined in nexus_v1_dungeon.h */
+#ifndef NEXUS_V1_DUNGEON_H
+typedef struct { int valid; } Nexus_V1_ItemIbsBank_Fwd;
+#endif
+void nexus_itemdef_bind_ibs_bank(const void *bank, int count);
 const char *nexus_itemdef_category_name(Nexus_ItemCategory cat);
 
 /* ═══════════════════════════════════════════════════════════════════

@@ -2,6 +2,7 @@
 #include "nexus_v1_dungeon.h"
 #include <string.h>
 #include <stdio.h>
+#include <stddef.h>
 
 /* ═══════════════════════════════════════════════════════════════════
  * Historical DM1 item catalog — retained as reference/fixture bytes only.
@@ -134,6 +135,36 @@ void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
         g_ibs_defs[i].action_string[2] = action3_string ? action3_string[i] : 0xffffU;
         g_ibs_defs[i].inv_image = 0xffffU;
         g_ibs_defs[i].floor_image = 0xffffU;
+    }
+}
+
+void nexus_itemdef_bind_ibs_bank(const void *bank_ptr, int count) {
+    const Nexus_V1_ItemIbsBank *bank = (const Nexus_V1_ItemIbsBank *)bank_ptr;
+    int i;
+    if (!bank || count <= 0) return;
+    g_ibs_ever_bound = 1;
+    g_ibs_count = count > NEXUS_V1_ITEM_IBS_DECLARATION_COUNT ?
+        NEXUS_V1_ITEM_IBS_DECLARATION_COUNT : count;
+    for (i = 0; i < g_ibs_count; ++i) {
+        memset(&g_ibs_defs[i], 0, sizeof(g_ibs_defs[i]));
+        g_ibs_defs[i].category = bank->item_category[i] < NEXUS_ITEM_CAT_MAX ?
+            (Nexus_ItemCategory)bank->item_category[i] : NEXUS_ITEM_CAT_MAX;
+        g_ibs_defs[i].carry_locations = bank->item_carry_locations[i];
+        g_ibs_defs[i].ibs_flags = bank->item_ibs_flags[i];
+        g_ibs_defs[i].weight = bank->item_weight[i];
+        g_ibs_defs[i].flags =
+            (bank->item_carry_locations[i] & 0x01) ? NEXUS_ITEMF_CONSUMABLE : 0;
+        g_ibs_defs[i].action_id[0] = bank->item_action_id[i][0];
+        g_ibs_defs[i].action_id[1] = bank->item_action_id[i][1];
+        g_ibs_defs[i].action_id[2] = bank->item_action_id[i][2];
+        g_ibs_defs[i].inv_image = bank->inventory_association[i];
+        g_ibs_defs[i].floor_image = bank->floor_image[i];
+        g_ibs_defs[i].name_string = bank->item_name_string[i];
+        g_ibs_defs[i].desc_string = bank->item_desc_string[i];
+        g_ibs_defs[i].action_string[0] = bank->item_action1_string[i];
+        g_ibs_defs[i].action_string[1] = bank->item_action2_string[i];
+        g_ibs_defs[i].action_string[2] = bank->item_action3_string[i];
+        g_ibs_defs[i].attribute = bank->item_attribute[i];
     }
 }
 

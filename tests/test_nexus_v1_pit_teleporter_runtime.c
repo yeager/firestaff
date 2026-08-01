@@ -339,14 +339,17 @@ static void test_water_crossed_with_rope(void) {
     reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
     engine.current_level.squares[9][10] = NEXUS_SQUARE_WATER;
     engine.current_level.collision_refs[9][10] = 0;
-    give_leader_item(&engine, 65); /* Rope */
+    give_leader_item(&engine, 65);
 
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     int redraw = nexus_mechanics_tick(&st, &engine);
 
-    CHECK(redraw == 1, "water with rope requests redraw");
-    CHECK(st.party_x == 10 && st.party_y == 9,
-          "water with rope moves party onto water square");
+    /* Water/fire traversal is fail-closed: real ITEM.IBS ordinals 65/80
+     * are not Rope/Rune of Fire.  Block unconditionally until Saturn
+     * traversal semantics are proven. */
+    CHECK(redraw == 0, "water with item blocked (fail-closed)");
+    CHECK(st.party_x == 10 && st.party_y == 10,
+          "water with item keeps party on starting square (fail-closed)");
 }
 
 static void test_fire_blocked_without_rune(void) {
@@ -372,14 +375,14 @@ static void test_fire_crossed_with_rune(void) {
     reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
     engine.current_level.squares[9][10] = NEXUS_SQUARE_FIRE;
     engine.current_level.collision_refs[9][10] = 0;
-    give_leader_item(&engine, 80); /* Rune of Fire */
+    give_leader_item(&engine, 80);
 
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     int redraw = nexus_mechanics_tick(&st, &engine);
 
-    CHECK(redraw == 1, "fire with rune requests redraw");
-    CHECK(st.party_x == 10 && st.party_y == 9,
-          "fire with rune moves party onto fire square");
+    CHECK(redraw == 0, "fire with item blocked (fail-closed)");
+    CHECK(st.party_x == 10 && st.party_y == 10,
+          "fire with item keeps party on starting square (fail-closed)");
 }
 
 static void test_square_event_water_returns_cross_water(void) {

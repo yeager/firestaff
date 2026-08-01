@@ -1346,14 +1346,16 @@ diagnostic; it must not silently fall back to a generated visual.
   metadata are retained in the runtime receipt. The route remains blocked for
   playback until Saturn event→selector ownership and the SDDRVS.TSK call ABI
   are proven; no host or synthetic audio is admitted.
-- **NEXUS-ITEM-MECHANICS-PROVENANCE:** `ITEM.IBS` now supplies real declaration
-  category/weight and string ordinals, but it does not yet prove action,
-  equipment, protection or loot semantics. The movement path must not treat
-  raw ordinals 65/80 as authenticated Rope/Rune-of-Fire records, and the
-  dormant gold-pickup helper must not be mistaken for Saturn loot support.
-  Bind these meanings from the DMWeb Nexus item interpretation or an
-  authenticated Saturn capture before enabling water/fire traversal, item
-  use, creature drops or HUD item labels.
+- **NEXUS-ITEM-MECHANICS-PROVENANCE:** Partially closed 2026-08-01. All 40
+  IBS declaration bytes are now parsed and bound from real `ITEM.IBS` data:
+  carry_locations (byte2), ibs_flags (byte3), action_ids (bytes 16-18),
+  attribute (word36), plus raw preservation of unproven bytes 4-7 and 9-15.
+  Engine uses `nexus_itemdef_bind_ibs_bank()` for full-field binding.
+  Hardcoded ordinals 65/80 ("Rope"/"Rune of Fire") removed — real IBS maps
+  those to Weapon (cat=0) and Potion (cat=3) respectively.  Water/fire
+  squares now fail-closed unconditionally.  Remaining: bytes 4-7 and 9-15
+  semantics (possibly skill indices / combat stats) require Saturn disassembly;
+  creature drops and HUD item labels still gated on loot/label provenance.
 - **ALL-ORIGINAL-REPLACE-001:** Audit startup, title, entrance, HUD and
   dungeon runtime paths for placeholder pixels on every supported game before
   release.  Where matching original data exists under `.firestaff/data`, bind

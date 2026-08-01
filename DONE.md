@@ -1,3 +1,17 @@
+- ✅ 2026-08-01 v3.0.212 ITEM.IBS full-field binding and mechanics ordinal fix:
+  All 40 IBS declaration bytes now parsed from real ITEM.IBS data into
+  Nexus_V1_ItemIbsBank: carry_locations (byte2), ibs_flags (byte3),
+  action_ids (bytes 16-18), attribute (word36), plus raw preservation of
+  unproven bytes 4-7 and 9-15 (possibly skill indices / combat stats).
+  Engine switched from field-split nexus_itemdef_bind_ibs_declarations()
+  to comprehensive nexus_itemdef_bind_ibs_bank() for full-field binding.
+  Hardcoded ordinals 65/80 removed from mechanics water/fire traversal —
+  real ITEM.IBS maps index 65 to Weapon (cat=0) and index 80 to Potion
+  (cat=3), not "Rope"/"Rune of Fire". Water/fire squares now fail-closed
+  unconditionally until Saturn traversal semantics are proven.
+  Tests and parity probe updated (44/44 PASS, 301/301 PASS).
+  Remaining Nexus items (1,2,3,5) all blocked on Saturn VDP1/VDP2/SDDRVS
+  reverse engineering evidence — no code changes possible without captures.
 - ✅ 2026-08-01 v3.0.211 MNS MOTN animation playback:
   Full animation pipeline for creature MNS models (DMWeb reference).
   Keyframe decoder: MOTN table offset parsing fixed (relative to MOTN section

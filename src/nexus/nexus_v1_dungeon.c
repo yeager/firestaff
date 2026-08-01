@@ -6522,7 +6522,16 @@ int nexus_v1_item_ibs_parse_verified(const uint8_t *data, int size,
         out_bank->inventory_association[i] = rb16(decl + 0x14);
         out_bank->floor_image[i] = rb16(decl + 0x16);
         out_bank->item_category[i] = decl[1];
+        out_bank->item_carry_locations[i] = decl[2];
+        out_bank->item_ibs_flags[i] = decl[3];
+        memcpy(out_bank->item_raw_4_7[i], decl + 4, 4);
         out_bank->item_weight[i] = decl[8];
+        memcpy(out_bank->item_raw_9_15[i], decl + 9, 7);
+        out_bank->item_action_id[i][0] = decl[16];
+        out_bank->item_action_id[i][1] = decl[17];
+        out_bank->item_action_id[i][2] = decl[18];
+        out_bank->item_raw_19[i] = decl[19];
+        out_bank->item_attribute[i] = rb16(decl + 0x24);
         out_bank->item_name_string[i] = rb16(decl + 0x18);
         out_bank->item_desc_string[i] = rb16(decl + 0x1a);
         out_bank->item_action1_string[i] = rb16(decl + 0x1c);

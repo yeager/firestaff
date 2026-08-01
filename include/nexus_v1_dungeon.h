@@ -2025,7 +2025,16 @@ typedef struct {
     uint16_t inventory_association[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
     uint16_t floor_image[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
     uint8_t item_category[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint8_t item_carry_locations[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint8_t item_ibs_flags[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
     uint8_t item_weight[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    uint8_t item_action_id[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT][3];
+    uint16_t item_attribute[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
+    /* DMWeb ITEM.IBS bytes 4-7 and 9-15: semantics unproven (possibly
+     * skill indices, combat stats).  Stored verbatim from real data. */
+    uint8_t item_raw_4_7[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT][4];
+    uint8_t item_raw_9_15[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT][7];
+    uint8_t item_raw_19[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
     /* DMWeb ITEM.IBS declaration references into RLOWFIX.BIN TEXT records.
      * These are source IDs only; they are not display strings. */
     uint16_t item_name_string[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];

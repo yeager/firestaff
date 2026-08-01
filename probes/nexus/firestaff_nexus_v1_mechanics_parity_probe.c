@@ -1361,8 +1361,8 @@ static PROBE_NOINLINE void probe_mechanics_tick_teleporter(void)
 
         nexus_mechanics_tick(&st, &engine);
 
-        CHECK(st.party_x == 10 && st.party_y == 9,
-              "unregistered teleporter still allows movement onto square");
+        CHECK(st.party_x == 10 && st.party_y == 10,
+              "unregistered teleporter blocks movement (fail-closed)");
         CHECK(st.pending_teleport == 0,
               "unregistered teleporter leaves pending_teleport clear");
         CHECK(st.pending_level_change == -1,
@@ -1722,9 +1722,9 @@ static PROBE_NOINLINE void probe_water_fire_runtime(void)
 
         int redraw = nexus_mechanics_tick(&st, &engine);
 
-        CHECK(redraw == 1, "water with rope requests redraw");
-        CHECK(st.party_x == 10 && st.party_y == 9,
-              "water with rope moves party onto water square");
+        CHECK(redraw == 0, "water fail-closed (IBS ordinal 65 is Weapon, not Rope)");
+        CHECK(st.party_x == 10 && st.party_y == 10,
+              "water blocked unconditionally until traversal semantics proven");
     }
 
     /* Fire blocked without Rune of Fire. */
@@ -1813,9 +1813,9 @@ static PROBE_NOINLINE void probe_water_fire_runtime(void)
 
         int redraw = nexus_mechanics_tick(&st, &engine);
 
-        CHECK(redraw == 1, "fire with rune requests redraw");
-        CHECK(st.party_x == 10 && st.party_y == 9,
-              "fire with rune moves party onto fire square");
+        CHECK(redraw == 0, "fire fail-closed (IBS ordinal 80 is Potion, not Rune)");
+        CHECK(st.party_x == 10 && st.party_y == 10,
+              "fire blocked unconditionally until traversal semantics proven");
     }
 
     /* Square event codes for water/fire. */

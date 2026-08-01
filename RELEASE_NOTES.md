@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.212
+- ITEM.IBS full 40-byte declaration binding: carry_locations, ibs_flags, action_ids, attribute, raw bytes 4-7/9-15
+- Engine: nexus_itemdef_bind_ibs_bank() replaces field-split binding
+- Fixed: hardcoded ordinals 65/80 (Weapon/Potion, not Rope/Rune of Fire)
+- Water/fire squares fail-closed until traversal semantics proven
+
 # Firestaff v3.0.211
 
 MNS creature animation playback (DMWeb reference):
