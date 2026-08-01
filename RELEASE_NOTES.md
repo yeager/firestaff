@@ -1,6 +1,18 @@
 
 # Unreleased
 
+# Firestaff v3.0.211
+
+MNS creature animation playback (DMWeb reference):
+
+- MOTN keyframe decoder: fixed offset parsing (relative to MOTN section start)
+- Animation state machine: init/play/tick/sample with loop and one-shot modes
+- Frame interpolation: lerp between keyframes using frame duration
+- Vertex transform: joint-local to world-space via XYZ Euler rotation (Q15 fixed-point)
+- Rotation unit: DMWeb approximation (value / 150.0 → degrees)
+- All 30 creature MNS files decode with animation data (3-8 tables each)
+- TEXT section RGB555 extraction confirmed correct (MNS-specific layout, not block scanning)
+
 # Firestaff v3.0.210
 
 DM2/Nexus DMWeb-referenced gap closure:

@@ -183,42 +183,40 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                 if ((int)(tbl_off_pos + 4) > data_size) break;
                 tbl_rel = read_be32(data + tbl_off_pos);
                 if (tbl_rel == 0 || tbl_rel == 0xFFFFFFFF) break;
-                /* Walk frame table offsets */
+                /* Walk frame offset list (DMWeb: each table is N offsets
+                 * relative to MOTN section start, terminated by
+                 * 0xFFFFFFFF or 0x00000000) */
                 {
-                    uint32_t idx_base = out->motn_offset + 0x10 + (uint32_t)table_count * 4 + 4;
-                    /* Table has N offsets + terminator (0 or 0xFFFFFFFF) */
                     uint32_t entry_pos = out->motn_offset + tbl_rel;
                     while (f_idx < NEXUS_MNS_MAX_MOTN_FRAMES) {
-                        uint32_t frame_off;
+                        uint32_t frame_rel;
+                        uint32_t abs_frame;
                         const uint8_t *fp;
                         int frame_size, j;
                         Nexus_V1_MnsMotnFrame *frm;
+                        uint16_t flags;
 
                         if ((int)(entry_pos + 4) > data_size) break;
-                        frame_off = read_be32(data + entry_pos);
-                        if (frame_off == 0xFFFFFFFF || frame_off == 0) break;
+                        frame_rel = read_be32(data + entry_pos);
+                        if (frame_rel == 0xFFFFFFFF || frame_rel == 0) break;
 
-                        /* Frame data is at idx_base + frame_off */
-                        {
-                            uint32_t abs_frame = idx_base + frame_off;
-                            uint16_t flags;
-                            if ((int)(abs_frame + 4) > data_size) break;
-                            fp = data + abs_frame;
-                            frm = &out->motn.tables[t].frames[f_idx];
-                            frm->duration = read_be16(fp);
-                            frm->flags = read_be16(fp + 2);
-                            flags = frm->flags;
-                            frame_size = 20 + motn_joints * 8;
-                            if (flags == 2) frame_size += 4;
-                            else if (flags == 3) frame_size += 8;
-                            else if (flags >= 4) frame_size += 12;
-                            if ((int)(abs_frame + frame_size) > data_size) break;
-                            for (j = 0; j < motn_joints && j < NEXUS_MNS_MAX_JOINTS; ++j) {
-                                int roff = 20 + j * 8;
-                                frm->rotation[j][0] = (int16_t)read_be16(fp + roff);
-                                frm->rotation[j][1] = (int16_t)read_be16(fp + roff + 2);
-                                frm->rotation[j][2] = (int16_t)read_be16(fp + roff + 4);
-                            }
+                        abs_frame = out->motn_offset + frame_rel;
+                        if ((int)(abs_frame + 4) > data_size) break;
+                        fp = data + abs_frame;
+                        frm = &out->motn.tables[t].frames[f_idx];
+                        frm->duration = read_be16(fp);
+                        frm->flags = read_be16(fp + 2);
+                        flags = frm->flags;
+                        frame_size = 20 + motn_joints * 8;
+                        if (flags == 2) frame_size += 4;
+                        else if (flags == 3) frame_size += 8;
+                        else if (flags >= 4) frame_size += 12;
+                        if ((int)(abs_frame + frame_size) > data_size) break;
+                        for (j = 0; j < motn_joints && j < NEXUS_MNS_MAX_JOINTS; ++j) {
+                            int roff = 20 + j * 8;
+                            frm->rotation[j][0] = (int16_t)read_be16(fp + roff);
+                            frm->rotation[j][1] = (int16_t)read_be16(fp + roff + 2);
+                            frm->rotation[j][2] = (int16_t)read_be16(fp + roff + 4);
                         }
                         f_idx++;
                         entry_pos += 4;
@@ -232,6 +230,210 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
 
     out->valid = 1;
     return 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * Animation playback
+ * DMWeb: rotation unit ≈ value / 150.0 → degrees
+ * ═══════════════════════════════════════════════════════════════════ */
+
+void nexus_v1_mns_anim_init(Nexus_V1_MnsAnimState *state) {
+    if (!state) return;
+    state->table_index = -1;
+    state->frame_index = 0;
+    state->tick_accumulator = 0;
+    state->looping = 0;
+    state->finished = 0;
+}
+
+void nexus_v1_mns_anim_play(Nexus_V1_MnsAnimState *state,
+                             int table_index, int loop) {
+    if (!state) return;
+    state->table_index = table_index;
+    state->frame_index = 0;
+    state->tick_accumulator = 0;
+    state->looping = loop;
+    state->finished = 0;
+}
+
+int nexus_v1_mns_anim_tick(Nexus_V1_MnsAnimState *state,
+                            const Nexus_V1_MnsMotnResult *motn) {
+    const Nexus_V1_MnsMotnTable *tbl;
+    const Nexus_V1_MnsMotnFrame *frm;
+
+    if (!state || !motn || !motn->valid) return 0;
+    if (state->table_index < 0 || state->table_index >= motn->table_count)
+        return 0;
+    if (state->finished) return 0;
+
+    tbl = &motn->tables[state->table_index];
+    if (tbl->frame_count == 0) return 0;
+
+    frm = &tbl->frames[state->frame_index];
+    state->tick_accumulator++;
+
+    if (state->tick_accumulator >= (int)frm->duration) {
+        state->tick_accumulator = 0;
+        state->frame_index++;
+        if (state->frame_index >= tbl->frame_count) {
+            if (state->looping) {
+                state->frame_index = 0;
+            } else {
+                state->frame_index = tbl->frame_count - 1;
+                state->finished = 1;
+            }
+        }
+        return 1;
+    }
+    return 0;
+}
+
+static int16_t lerp_i16(int16_t a, int16_t b, int num, int den) {
+    if (den <= 0) return a;
+    return (int16_t)(a + ((int)(b - a) * num) / den);
+}
+
+int nexus_v1_mns_anim_sample(const Nexus_V1_MnsDecodeResult *result,
+                              const Nexus_V1_MnsAnimState *state,
+                              Nexus_V1_MnsPose *out) {
+    const Nexus_V1_MnsMotnTable *tbl;
+    const Nexus_V1_MnsMotnFrame *cur, *nxt;
+    int i, jcount, next_idx;
+
+    if (!result || !result->valid || !state || !out) return 0;
+    memset(out, 0, sizeof(*out));
+    out->joint_count = result->joint_count;
+
+    /* No animation: return rest pose (origins only, zero rotation) */
+    if (state->table_index < 0 || !result->motn.valid ||
+        state->table_index >= result->motn.table_count) {
+        for (i = 0; i < result->joint_count; ++i) {
+            out->joints[i].world_x = result->joints[i].origin_x;
+            out->joints[i].world_y = result->joints[i].origin_y;
+            out->joints[i].world_z = result->joints[i].origin_z;
+        }
+        return 1;
+    }
+
+    tbl = &result->motn.tables[state->table_index];
+    if (tbl->frame_count == 0) return 0;
+
+    cur = &tbl->frames[state->frame_index];
+    jcount = result->motn.joint_count_motn;
+    if (jcount > result->joint_count) jcount = result->joint_count;
+
+    /* Determine next frame for interpolation */
+    next_idx = state->frame_index + 1;
+    if (next_idx >= tbl->frame_count)
+        next_idx = state->looping ? 0 : tbl->frame_count - 1;
+    nxt = &tbl->frames[next_idx];
+
+    /* Interpolate rotations between current and next frame */
+    for (i = 0; i < result->joint_count; ++i) {
+        out->joints[i].world_x = result->joints[i].origin_x;
+        out->joints[i].world_y = result->joints[i].origin_y;
+        out->joints[i].world_z = result->joints[i].origin_z;
+        if (i < jcount) {
+            int dur = (int)cur->duration;
+            out->joints[i].rot_x = lerp_i16(cur->rotation[i][0],
+                nxt->rotation[i][0], state->tick_accumulator, dur);
+            out->joints[i].rot_y = lerp_i16(cur->rotation[i][1],
+                nxt->rotation[i][1], state->tick_accumulator, dur);
+            out->joints[i].rot_z = lerp_i16(cur->rotation[i][2],
+                nxt->rotation[i][2], state->tick_accumulator, dur);
+        }
+    }
+    return 1;
+}
+
+/* Fixed-point sine/cosine (Q15). Input: raw MOTN rotation unit.
+ * DMWeb: value / 150.0 ≈ degrees. We convert to a 16-bit angle
+ * and use a small lookup approximation. */
+static int32_t mns_sin_q15(int16_t motn_rot) {
+    /* Convert MOTN units to radians: motn_rot / 150.0 * PI / 180.0
+     * ≈ motn_rot * 0.000116355  (very small per unit)
+     * For fixed-point: multiply by (2^15 * sin_factor) */
+    /* Use Taylor approx for small-to-medium angles */
+    int32_t angle_q15;
+    int32_t x, x2, x3;
+    /* radians * 2^15 = motn_rot * (PI/180/150) * 32768
+     *                = motn_rot * 3.812  (approx) */
+    angle_q15 = (int32_t)motn_rot * 3812 / 1000;
+    x = angle_q15;
+    x2 = (x * x) >> 15;
+    x3 = (x2 * x) >> 15;
+    /* sin(x) ≈ x - x³/6 */
+    return x - x3 / 6;
+}
+
+static int32_t mns_cos_q15(int16_t motn_rot) {
+    int32_t angle_q15;
+    int32_t x2, x4;
+    angle_q15 = (int32_t)motn_rot * 3812 / 1000;
+    x2 = (angle_q15 * angle_q15) >> 15;
+    x4 = (x2 * x2) >> 15;
+    /* cos(x) ≈ 1 - x²/2 + x⁴/24 */
+    return 32768 - x2 / 2 + x4 / 24;
+}
+
+/* Rotate vertex (x,y,z) by Euler angles (rx,ry,rz) using XYZ order.
+ * All math in Q15 fixed-point. */
+static void rotate_vertex(int32_t *x, int32_t *y, int32_t *z,
+                           int16_t rx, int16_t ry, int16_t rz) {
+    int32_t cx, sx, cy, sy, cz, sz;
+    int32_t nx, ny, nz, tx, ty;
+
+    /* Rotate around X */
+    cx = mns_cos_q15(rx); sx = mns_sin_q15(rx);
+    ny = ((*y) * cx - (*z) * sx) >> 15;
+    nz = ((*y) * sx + (*z) * cx) >> 15;
+    *y = ny; *z = nz;
+
+    /* Rotate around Y */
+    cy = mns_cos_q15(ry); sy = mns_sin_q15(ry);
+    nx = ((*x) * cy + (*z) * sy) >> 15;
+    nz = (-(*x) * sy + (*z) * cy) >> 15;
+    *x = nx; *z = nz;
+
+    /* Rotate around Z */
+    cz = mns_cos_q15(rz); sz = mns_sin_q15(rz);
+    tx = ((*x) * cz - (*y) * sz) >> 15;
+    ty = ((*x) * sz + (*y) * cz) >> 15;
+    *x = tx; *y = ty;
+}
+
+int nexus_v1_mns_anim_transform_vertices(
+    const Nexus_V1_MnsDecodeResult *result,
+    const Nexus_V1_MnsPose *pose,
+    Nexus_V1_MnsVertex *verts_out, int capacity) {
+    int total = 0, ji;
+
+    if (!result || !result->valid || !pose || !verts_out) return 0;
+
+    for (ji = 0; ji < result->joint_count && ji < pose->joint_count; ++ji) {
+        const Nexus_V1_MnsJoint *jt = &result->joints[ji];
+        const Nexus_V1_MnsJointPose *jp = &pose->joints[ji];
+        int vi;
+
+        if (!jt->has_mesh) continue;
+
+        for (vi = 0; vi < jt->mesh.vertex_count; ++vi) {
+            int32_t vx, vy, vz;
+            if (total >= capacity) return total;
+
+            vx = jt->mesh.vertices[vi].x;
+            vy = jt->mesh.vertices[vi].y;
+            vz = jt->mesh.vertices[vi].z;
+
+            rotate_vertex(&vx, &vy, &vz, jp->rot_x, jp->rot_y, jp->rot_z);
+
+            verts_out[total].x = vx + jp->world_x;
+            verts_out[total].y = vy + jp->world_y;
+            verts_out[total].z = vz + jp->world_z;
+            total++;
+        }
+    }
+    return total;
 }
 
 int nexus_v1_mns_render_texture(const uint8_t *data, int data_size,

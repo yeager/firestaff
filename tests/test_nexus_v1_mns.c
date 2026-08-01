@@ -101,11 +101,221 @@ static int test_all_mns(void) {
     return fail;
 }
 
+static int test_anim_init(void) {
+    Nexus_V1_MnsAnimState state;
+    nexus_v1_mns_anim_init(&state);
+    if (state.table_index != -1) return 1;
+    if (state.finished != 0) return 1;
+    printf("  PASS anim_init\n");
+    return 0;
+}
+
+static int test_anim_synthetic(void) {
+    Nexus_V1_MnsAnimState state;
+    Nexus_V1_MnsMotnResult motn;
+    Nexus_V1_MnsMotnFrame frames[3];
+    int changed, i;
+
+    memset(&motn, 0, sizeof(motn));
+    memset(frames, 0, sizeof(frames));
+    motn.valid = 1;
+    motn.table_count = 1;
+    motn.joint_count_motn = 2;
+    motn.tables[0].frame_count = 3;
+    frames[0].duration = 5;
+    frames[0].rotation[0][0] = 0;
+    frames[0].rotation[0][1] = 0;
+    frames[0].rotation[0][2] = 0;
+    frames[1].duration = 5;
+    frames[1].rotation[0][0] = 150;
+    frames[1].rotation[0][1] = 0;
+    frames[1].rotation[0][2] = 0;
+    frames[2].duration = 5;
+    frames[2].rotation[0][0] = 300;
+    frames[2].rotation[0][1] = 0;
+    frames[2].rotation[0][2] = 0;
+    memcpy(motn.tables[0].frames, frames, sizeof(frames));
+
+    nexus_v1_mns_anim_init(&state);
+    nexus_v1_mns_anim_play(&state, 0, 0);
+    if (state.frame_index != 0) return 1;
+
+    /* Tick through frame 0 (duration=5) */
+    for (i = 0; i < 4; ++i) {
+        changed = nexus_v1_mns_anim_tick(&state, &motn);
+        if (changed) return 1;
+    }
+    changed = nexus_v1_mns_anim_tick(&state, &motn);
+    if (!changed) return 1;
+    if (state.frame_index != 1) return 1;
+
+    /* Tick through frame 1 */
+    for (i = 0; i < 5; ++i)
+        nexus_v1_mns_anim_tick(&state, &motn);
+    if (state.frame_index != 2) return 1;
+
+    /* Tick through frame 2 — should stop (non-looping) */
+    for (i = 0; i < 5; ++i)
+        nexus_v1_mns_anim_tick(&state, &motn);
+    if (!state.finished) return 1;
+
+    /* Test looping */
+    nexus_v1_mns_anim_play(&state, 0, 1);
+    for (i = 0; i < 15; ++i)
+        nexus_v1_mns_anim_tick(&state, &motn);
+    if (state.finished) return 1;
+    if (state.frame_index != 0) return 1;
+
+    printf("  PASS anim_synthetic\n");
+    return 0;
+}
+
+static int test_anim_sample_rest(void) {
+    Nexus_V1_MnsDecodeResult result;
+    Nexus_V1_MnsAnimState state;
+    Nexus_V1_MnsPose pose;
+
+    memset(&result, 0, sizeof(result));
+    result.valid = 1;
+    result.joint_count = 2;
+    result.joints[0].origin_x = 100;
+    result.joints[0].origin_y = 200;
+    result.joints[0].origin_z = 300;
+    result.joints[1].origin_x = 400;
+    result.joints[1].origin_y = 500;
+    result.joints[1].origin_z = 600;
+
+    nexus_v1_mns_anim_init(&state);
+    if (!nexus_v1_mns_anim_sample(&result, &state, &pose)) return 1;
+    if (pose.joint_count != 2) return 1;
+    if (pose.joints[0].world_x != 100) return 1;
+    if (pose.joints[1].world_z != 600) return 1;
+    if (pose.joints[0].rot_x != 0) return 1;
+
+    printf("  PASS anim_sample_rest\n");
+    return 0;
+}
+
+static int test_anim_transform(void) {
+    Nexus_V1_MnsDecodeResult result;
+    Nexus_V1_MnsPose pose;
+    Nexus_V1_MnsVertex verts[64];
+    int count;
+
+    memset(&result, 0, sizeof(result));
+    result.valid = 1;
+    result.joint_count = 1;
+    result.joints[0].has_mesh = 1;
+    result.joints[0].mesh.vertex_count = 3;
+    result.joints[0].mesh.vertices[0].x = 10;
+    result.joints[0].mesh.vertices[0].y = 20;
+    result.joints[0].mesh.vertices[0].z = 30;
+    result.joints[0].mesh.vertices[1].x = -10;
+    result.joints[0].mesh.vertices[1].y = -20;
+    result.joints[0].mesh.vertices[1].z = -30;
+    result.joints[0].mesh.vertices[2].x = 0;
+    result.joints[0].mesh.vertices[2].y = 0;
+    result.joints[0].mesh.vertices[2].z = 0;
+
+    memset(&pose, 0, sizeof(pose));
+    pose.joint_count = 1;
+    pose.joints[0].world_x = 1000;
+    pose.joints[0].world_y = 2000;
+    pose.joints[0].world_z = 3000;
+    /* Zero rotation = identity */
+
+    count = nexus_v1_mns_anim_transform_vertices(&result, &pose, verts, 64);
+    if (count != 3) return 1;
+    /* With zero rotation, output = local + world offset */
+    if (verts[0].x != 1010 || verts[0].y != 2020 || verts[0].z != 3030)
+        return 1;
+    if (verts[1].x != 990 || verts[1].y != 1980 || verts[1].z != 2970)
+        return 1;
+    if (verts[2].x != 1000 || verts[2].y != 2000 || verts[2].z != 3000)
+        return 1;
+
+    printf("  PASS anim_transform\n");
+    return 0;
+}
+
+static int test_anim_real_mns(void) {
+    const char *home = getenv("HOME");
+    char path[512];
+    uint8_t *data;
+    int size = 0;
+    Nexus_V1_MnsDecodeResult result;
+    Nexus_V1_MnsAnimState state;
+    Nexus_V1_MnsPose pose;
+    Nexus_V1_MnsVertex verts[2048];
+    int count, i;
+
+    if (!home) { printf("  SKIP anim_real (no HOME)\n"); return 0; }
+    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/OBAKE.MNS", home);
+    data = load_file(path, &size);
+    if (!data) { printf("  SKIP anim_real (no OBAKE.MNS)\n"); return 0; }
+
+    if (!nexus_v1_mns_decode(data, size, &result)) {
+        printf("  FAIL anim_real: decode failed\n");
+        free(data);
+        return 1;
+    }
+
+    printf("  OBAKE.MNS: joints=%d motn_valid=%d tables=%d motn_joints=%d\n",
+           result.joint_count, result.motn.valid,
+           result.motn.table_count, result.motn.joint_count_motn);
+
+    if (result.motn.valid && result.motn.table_count > 0) {
+        int t;
+        for (t = 0; t < result.motn.table_count; ++t) {
+            printf("    table[%d]: %d frames", t,
+                   result.motn.tables[t].frame_count);
+            if (result.motn.tables[t].frame_count > 0)
+                printf(" dur0=%d flags0=%d",
+                       result.motn.tables[t].frames[0].duration,
+                       result.motn.tables[t].frames[0].flags);
+            printf("\n");
+        }
+
+        /* Play table 0 and sample */
+        nexus_v1_mns_anim_init(&state);
+        nexus_v1_mns_anim_play(&state, 0, 1);
+
+        for (i = 0; i < 30; ++i)
+            nexus_v1_mns_anim_tick(&state, &result.motn);
+
+        if (!nexus_v1_mns_anim_sample(&result, &state, &pose)) {
+            printf("  FAIL anim_real: sample failed\n");
+            free(data);
+            return 1;
+        }
+
+        count = nexus_v1_mns_anim_transform_vertices(&result, &pose,
+                                                      verts, 2048);
+        printf("  anim_real: frame=%d tick=%d transformed=%d verts\n",
+               state.frame_index, state.tick_accumulator, count);
+
+        if (count <= 0) {
+            printf("  FAIL anim_real: no transformed vertices\n");
+            free(data);
+            return 1;
+        }
+    }
+
+    printf("  PASS anim_real\n");
+    free(data);
+    return 0;
+}
+
 int main(void) {
     int fail = 0;
     printf("=== Nexus V1 MNS Creature Model Decoder ===\n");
     fail += test_synthetic();
     fail += test_all_mns();
+    fail += test_anim_init();
+    fail += test_anim_synthetic();
+    fail += test_anim_sample_rest();
+    fail += test_anim_transform();
+    fail += test_anim_real_mns();
     printf("summary: fail=%d\n", fail);
     return fail ? 1 : 0;
 }

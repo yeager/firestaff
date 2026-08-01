@@ -95,6 +95,27 @@ typedef struct {
     Nexus_V1_MnsMotnResult motn;
 } Nexus_V1_MnsDecodeResult;
 
+/* Animation playback state for one MNS model instance */
+typedef struct {
+    int table_index;          /* which MOTN table is playing (-1 = none) */
+    int frame_index;          /* current keyframe index */
+    int tick_accumulator;     /* ticks elapsed within current frame */
+    int looping;              /* 1 = loop animation, 0 = stop at end */
+    int finished;             /* 1 = reached end of non-looping anim */
+} Nexus_V1_MnsAnimState;
+
+/* Transformed joint: origin + rotation applied from MOTN keyframe */
+typedef struct {
+    int32_t world_x, world_y, world_z;
+    int16_t rot_x, rot_y, rot_z;         /* current rotation (raw MOTN units) */
+} Nexus_V1_MnsJointPose;
+
+/* Full pose: all joints transformed for one animation frame */
+typedef struct {
+    int joint_count;
+    Nexus_V1_MnsJointPose joints[NEXUS_MNS_MAX_JOINTS];
+} Nexus_V1_MnsPose;
+
 int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                          Nexus_V1_MnsDecodeResult *out);
 
@@ -102,5 +123,35 @@ int nexus_v1_mns_render_texture(const uint8_t *data, int data_size,
                                  const Nexus_V1_MnsDecodeResult *result,
                                  int texture_index,
                                  uint32_t *rgba_out, int rgba_capacity);
+
+/* Initialize animation state (no animation playing) */
+void nexus_v1_mns_anim_init(Nexus_V1_MnsAnimState *state);
+
+/* Start playing a MOTN table animation */
+void nexus_v1_mns_anim_play(Nexus_V1_MnsAnimState *state,
+                             int table_index, int loop);
+
+/* Advance animation by one tick. Returns 1 if frame changed. */
+int nexus_v1_mns_anim_tick(Nexus_V1_MnsAnimState *state,
+                            const Nexus_V1_MnsMotnResult *motn);
+
+/* Sample the current pose from animation state.
+ * Interpolates between current and next keyframe.
+ * result: the decoded MNS model (for joint hierarchy)
+ * state: current animation state
+ * out: filled with joint world positions + rotations */
+int nexus_v1_mns_anim_sample(const Nexus_V1_MnsDecodeResult *result,
+                              const Nexus_V1_MnsAnimState *state,
+                              Nexus_V1_MnsPose *out);
+
+/* Apply a pose to mesh vertices: transform each joint's mesh vertices
+ * from local space to world space using the joint's pose.
+ * verts_out: output buffer for transformed vertices
+ * capacity: max vertices in output buffer
+ * Returns total number of vertices written. */
+int nexus_v1_mns_anim_transform_vertices(
+    const Nexus_V1_MnsDecodeResult *result,
+    const Nexus_V1_MnsPose *pose,
+    Nexus_V1_MnsVertex *verts_out, int capacity);
 
 #endif

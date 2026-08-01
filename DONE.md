@@ -1,3 +1,15 @@
+- ✅ 2026-08-01 v3.0.211 MNS MOTN animation playback:
+  Full animation pipeline for creature MNS models (DMWeb reference).
+  Keyframe decoder: MOTN table offset parsing fixed (relative to MOTN section
+  start per DMWeb StrucMotnHeader). All 30 creature MNS files decode with
+  3-8 animation tables, realistic frame counts and durations.
+  Playback: nexus_v1_mns_anim_init/play/tick/sample with looping and
+  non-looping modes. Frame interpolation via lerp_i16 between keyframes.
+  Vertex transform: joint-local to world-space with XYZ Euler rotation
+  (fixed-point Q15 trig, DMWeb rotation unit ≈ value/150 → degrees).
+  TEXT section RGB555 extraction: already correct (MNS-specific TEXT layout,
+  not DMDF block scanning — gap analysis was incorrect).
+  Tests: synthetic tick/sample/transform + real OBAKE.MNS playback verified.
 - ✅ 2026-08-01 v3.0.210 DM2/Nexus DMWeb gap closure:
   DM2: Item shooter CUT_RECORD_FROM with tile-based record chain surgery,
   recycler QUERY_CREATURES_ITEM_MASK with permissive mask path.
