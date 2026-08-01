@@ -51396,9 +51396,25 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                        (size_t)framebufferWidth *
                            (size_t)framebufferHeight);
             } else if (!state->inventoryPanelActive) {
+                /* CSB PC 3.4 viewport aperture sits at (48,33) in the 320x200
+                 * page. Draw the HUD first, then save and restore the viewport
+                 * rectangle so DM1-layout HUD panels (x=224+) that overlap the
+                 * CSB viewport area (x=48..271) do not corrupt it. */
+                unsigned char vp_save[224 * 136];
+                int vpy;
+                for (vpy = 0; vpy < 136; ++vpy) {
+                    memcpy(vp_save + vpy * 224,
+                           framebuffer + (33 + vpy) * framebufferWidth + 48,
+                           224);
+                }
                 m11_draw_csb_v1_runtime_hud(state, framebuffer,
                                             framebufferWidth,
                                             framebufferHeight);
+                for (vpy = 0; vpy < 136; ++vpy) {
+                    memcpy(framebuffer + (33 + vpy) * framebufferWidth + 48,
+                           vp_save + vpy * 224,
+                           224);
+                }
             }
         }
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
