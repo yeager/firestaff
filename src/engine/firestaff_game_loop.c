@@ -164,6 +164,25 @@ static void fs_game_render_viewport(FS_GameState *state) {
             csb_v1_viewport_wall_ornament_ordinal_resolve_pc34;
         cv->wall_ornament_ordinal_user_data = &s_csb_ornament_resolver;
 
+        /* Wire floor ornament metadata for F0108 rendering. */
+        {
+            int lvl = csb_v1_dungeon_get_current_level();
+            if (dun && lvl >= 0 && lvl < dun->level_count) {
+                cv->floor_ornament_random_count =
+                    dun->map_random_floor_ornament_count[lvl];
+                cv->floor_ornament_index_table =
+                    dun->map_floor_ornament_indices[lvl];
+                cv->floor_ornament_index_table_count =
+                    dun->map_floor_ornament_count[lvl];
+                cv->ornament_random_seed = dun->ornament_random_seed;
+            } else {
+                cv->floor_ornament_random_count = 0;
+                cv->floor_ornament_index_table = NULL;
+                cv->floor_ornament_index_table_count = 0;
+                cv->ornament_random_seed = 0;
+            }
+        }
+
         /* Delegate to the CSB viewport renderer (which calls
          * dm1_viewport_3d_draw_frame internally). */
         csb_v1_viewport_render_frame(cv, dir, px, py);

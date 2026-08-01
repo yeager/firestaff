@@ -548,6 +548,10 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     int dungeon_d3_closed_door_graphic[2];
     int dungeon_width;
     int dungeon_height;
+    int floor_ornament_random_count;
+    const uint8_t *floor_ornament_index_table;
+    int floor_ornament_index_table_count;
+    uint16_t ornament_random_seed;
 
     /* Optional live runtime overlays.  CSB V1 runtime owns these lists;
      * the viewport treats NULL as "no live projectile/explosion overlay". */

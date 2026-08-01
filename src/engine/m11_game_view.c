@@ -2184,6 +2184,24 @@ static int m11_csb_viewport_graphic_provider(void *user_data,
         *out_width = (int)door_asset->width;
         *out_height = (int)door_asset->height;
         return 1;
+    } else if (graphic_index >= 385) {
+        const M11_AssetSlot *fo_asset;
+        /* ReDMCSB DEFS.H M616: floor ornament source graphics start at 385,
+         * 6 variants per ornament.  Decode from GRAPHICS.DAT on demand. */
+        if (!m11_csb_install_runtime_source_graphic(
+                state, (unsigned int)graphic_index)) {
+            return 0;
+        }
+        fo_asset = M11_AssetLoader_Load(&state->assetLoader,
+                                        (unsigned int)graphic_index);
+        if (!fo_asset || !fo_asset->loaded || !fo_asset->pixels ||
+            fo_asset->width == 0u || fo_asset->height == 0u) {
+            return 0;
+        }
+        *out_pixels = fo_asset->pixels;
+        *out_width = (int)fo_asset->width;
+        *out_height = (int)fo_asset->height;
+        return 1;
     } else {
         return 0;
     }

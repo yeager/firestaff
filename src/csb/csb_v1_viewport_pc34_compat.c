@@ -5085,6 +5085,52 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
      * Here we accept the index from config; 0 = default CSB wall set. */
     dm1_viewport_3d_load_wall_set(&vp, cfg->wall_set_index, 0);
 
+    /* Populate floor ornament indices for D3L2/D3R2/D3L/D3R from dungeon data.
+     * ReDMCSB DUNGEON.C F0172 computes random floor ornament ordinals via
+     * F0170; the CSB and DM1 dungeon formats share the same bitfield B
+     * map descriptor and ornament seed.
+     * Ordinal 0 = no ornament.  Ordinal 1..N maps through the per-map
+     * floor ornament index table to a global ornament index, then to a
+     * GRAPHICS.DAT index (M616 = 385 + globalIndex * 6 + viewOffset).
+     * Source: ReDMCSB DUNGEON.C F0172, F0170; DEFS.H M616 */
+    if (cfg->dungeon_grid && cfg->floor_ornament_random_count > 0 &&
+        cfg->floor_ornament_index_table) {
+        enum { M616_FIRST_FLOOR_ORNAMENT = 385, VARIANTS_PER_ORNAMENT = 6 };
+        static const struct { int slot; int rel_depth; int rel_lateral; int view_offset; } fo_squares[] = {
+            {0, 3, -2, 0}, /* D3L2: G0206[2][0] */
+            {1, 3,  2, 1}, /* D3R2: G0206[2][1] */
+            {2, 3, -1, 2}, /* D3L:  G0206[2][2] */
+            {3, 3,  1, 3}, /* D3R:  G0206[2][3] */
+        };
+        for (int fi = 0; fi < 4; fi++) {
+            int16_t sq_x = 0, sq_y = 0;
+            dm1_viewport_3d_resolve_relative_map_xy(
+                party_dir, fo_squares[fi].rel_depth, fo_squares[fi].rel_lateral,
+                party_x, party_y, &sq_x, &sq_y);
+            if (sq_x >= 0 && sq_x < cfg->dungeon_width &&
+                sq_y >= 0 && sq_y < cfg->dungeon_height) {
+                uint8_t sq = cfg->dungeon_grid[sq_y * cfg->dungeon_width + sq_x];
+                int elem = (sq >> 5) & 0x07;
+                if ((elem == 1 || elem == 2 || elem == 5) && (sq & 0x08)) {
+                    unsigned int v2 = (unsigned int)(3000 +
+                        (0 << 6) + cfg->dungeon_width + cfg->dungeon_height);
+                    int idx = (int)((((((unsigned int)(2000 + ((int)sq_x << 5) +
+                        (int)sq_y)) * 31417u) >> 1) + (v2 * 11u) +
+                        cfg->ornament_random_seed) >> 2) % 30;
+                    if (idx < cfg->floor_ornament_random_count &&
+                        idx < cfg->floor_ornament_index_table_count) {
+                        int global_idx = (int)cfg->floor_ornament_index_table[idx];
+                        int gfx = M616_FIRST_FLOOR_ORNAMENT +
+                            global_idx * VARIANTS_PER_ORNAMENT +
+                            fo_squares[fi].view_offset;
+                        vp.floor_ornament_indices[fo_squares[fi].slot] =
+                            (int16_t)gfx;
+                    }
+                }
+            }
+        }
+    }
+
     /* Main draw call — mirrors ReDMCSB DUNVIEW.C F0128_DUNGEONVIEW_Draw_CPSF.
      * Draws wall frames for D4 far objects, then D3L/R/C → D2 → D1 → D0
      * back-to-front with correct depth occlusion and parity flip.

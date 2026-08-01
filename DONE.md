@@ -1,3 +1,11 @@
+- ✅ 2026-08-01 CSB floor ornament rendering pipeline: parsed DUNGEON.DAT
+  bitfield B (ornament counts), ornament random seed, and per-map floor
+  ornament index tables in csb_v1_dungeon_loader. Wired metadata through
+  CSB_V1_ViewportConfig. Implemented F0170 random ornament ordinal
+  computation in csb_v1_viewport_render_frame for D3L2/D3R2/D3L/D3R.
+  Added ordinal-to-GRAPHICS.DAT index mapping (M616 = 385 + globalIndex * 6
+  + viewOffset). Extended m11_csb_viewport_graphic_provider to decode and
+  serve floor ornament bitmaps (graphic_index >= 385). v3.0.204
 - ✅ 2026-08-01 DM1/CSB gap analysis closure: verified that all reported
   gaps (DSA engine, F0115 thing pass, F0186 drop possessions) are already
   implemented in production code. DSA filters use csb_v1_dsa_filter_run +

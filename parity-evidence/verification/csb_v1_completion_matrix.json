@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.csb_v1_completion_matrix.v1",
-  "pass": true,
+  "pass": false,
   "scope": "CSB V1 definition-of-done matrix; source/evidence boundary only, no full runtime parity claim.",
   "criteria": [
     {
@@ -63,11 +63,24 @@
       "tests/test_csb_v1_boot_runtime_handoff.c",
       "tests/test_csb_v1_runtime_route_first_frame_movement_utility_gate.c"
     ],
-    "pass": true,
+    "pass": false,
     "missing_cmake_needles": [],
     "forbidden_cmake_needles": [],
     "missing_test_needles": [],
-    "missing_route_test_needles": [],
+    "missing_route_test_needles": [
+      "Utility import -> NEW_GAME boundary",
+      "render_route_frame",
+      "DM1_V1_COMMAND_MOVE_FORWARD",
+      "csb_v1_movement_command_step_runtime_process_queue_pc34_compat",
+      "post-movement viewport frame renders without panel bleed",
+      "csb_v1_save_header_build",
+      "csb_v1_save_game",
+      "csb_v1_load_game",
+      "bounded save prefix reloads multi-step route state",
+      "not full CSB playability",
+      "full save compatibility",
+      "pixel parity"
+    ],
     "non_claim": "Fast PC/synthetic boot/runtime/viewport/bounded multi-step route gate plus save-prefix roundtrip only; not full CSB playability, original capture, full save compatibility, or pixel parity."
   },
   "source_anchors": [
@@ -384,5 +397,7 @@
     "No Firestaff runtime code is modified by this matrix.",
     "DM1 gates cannot be counted as CSB V1 completion without CSB-specific evidence."
   ],
-  "failures": []
+  "failures": [
+    "CSB runtime route test missing ['Utility import -> NEW_GAME boundary', 'render_route_frame', 'DM1_V1_COMMAND_MOVE_FORWARD', 'csb_v1_movement_command_step_runtime_process_queue_pc34_compat', 'post-movement viewport frame renders without panel bleed', 'csb_v1_save_header_build', 'csb_v1_save_game', 'csb_v1_load_game', 'bounded save prefix reloads multi-step route state', 'not full CSB playability', 'full save compatibility', 'pixel parity']"
+  ]
 }

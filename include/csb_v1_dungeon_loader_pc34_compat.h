@@ -76,6 +76,12 @@ typedef struct CSB_V1_DungeonData {
      * torches or magical light. */
     int map_difficulty[CSB_V1_MAX_LEVELS];
     int map_experience_multiplier[CSB_V1_MAX_LEVELS];
+    int map_wall_ornament_count[CSB_V1_MAX_LEVELS];
+    int map_floor_ornament_count[CSB_V1_MAX_LEVELS];
+    int map_random_floor_ornament_count[CSB_V1_MAX_LEVELS];
+    int map_creature_type_count[CSB_V1_MAX_LEVELS];
+    uint8_t map_floor_ornament_indices[CSB_V1_MAX_LEVELS][16];
+    uint16_t ornament_random_seed;
     int square_bytes;
     int raw_map_data_base;
     int square_first_thing_base;

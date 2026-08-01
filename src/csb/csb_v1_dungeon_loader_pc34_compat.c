@@ -181,6 +181,7 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
                         decoded[4] * CSB_DUNGEON_MAP_DESC_SIZE) {
         int total_columns = 0;
         long thing_data_total = 0;
+        uint16_t ornament_seed = rd16(decoded + 0);
         uint16_t text_word_count = rd16(decoded + 6);
         uint16_t initial_party_location = rd16(decoded + 8);
         uint16_t square_first_thing_count = rd16(decoded + 10);
@@ -192,12 +193,14 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
         out->initial_party_location = initial_party_location;
         out->square_bytes = 1;
         out->square_first_thing_count = (int)square_first_thing_count;
+        out->ornament_random_seed = ornament_seed;
 
         for (i = 0; i < levels; i++) {
             const uint8_t *map_desc = decoded + CSB_DUNGEON_HEADER_SIZE +
                                       i * CSB_DUNGEON_MAP_DESC_SIZE;
             int level_id = 0;
             uint16_t raw_bit_a = rd16(map_desc + 8);
+            uint16_t raw_bit_b = rd16(map_desc + 10);
             uint16_t raw_bit_c = rd16(map_desc + 12);
             uint16_t raw_bit_d = rd16(map_desc + 14);
             csb_decode_map_bitfield_a(raw_bit_a, &level_id,
@@ -217,6 +220,10 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
             /* ReDMCSB DEFS.H MAP.C stores DungeonView palette difficulty
              * in the high nibble. PANEL.C F0337 bypasses the normal light
              * calculation entirely for map difficulty zero. */
+            out->map_wall_ornament_count[i] = (int)(raw_bit_b & 0x0Fu);
+            out->map_floor_ornament_count[i] = (int)((raw_bit_b >> 8) & 0x0Fu);
+            out->map_random_floor_ornament_count[i] = (int)((raw_bit_b >> 12) & 0x0Fu);
+            out->map_creature_type_count[i] = (int)((raw_bit_c >> 4) & 0x0Fu);
             out->map_difficulty[i] = (int)((raw_bit_c >> 12) & 0x0Fu);
             out->map_experience_multiplier[i] =
                 (int)((raw_bit_c >> 12) & 0x0Fu);
@@ -276,6 +283,27 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
                 return -2;
             }
             out->level_offsets[i] = (int)abs_offset;
+        }
+
+        /* Extract per-map floor ornament index tables from the metadata
+         * bytes that follow each map's square data in DUNGEON.DAT.
+         * Layout: squares + creatureTypes + wallOrnaments + floorOrnaments.
+         * Source: ReDMCSB DUNGEON.C F0173 lines 2758-2762 */
+        for (i = 0; i < levels; i++) {
+            uint32_t sq_bytes = (uint32_t)out->level_widths[i] *
+                                (uint32_t)out->level_heights[i];
+            uint32_t meta_offset = (uint32_t)out->level_offsets[i] + sq_bytes +
+                (uint32_t)out->map_creature_type_count[i] +
+                (uint32_t)out->map_wall_ornament_count[i];
+            int fc = out->map_floor_ornament_count[i];
+            int j;
+            for (j = 0; j < 16; j++) {
+                if (j < fc && (meta_offset + (uint32_t)j) < (uint32_t)decoded_size) {
+                    out->map_floor_ornament_indices[i][j] = decoded[meta_offset + j];
+                } else {
+                    out->map_floor_ornament_indices[i][j] = 0;
+                }
+            }
         }
 
         out->raw_data = decoded;

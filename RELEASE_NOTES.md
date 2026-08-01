@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.204
+
+- CSB viewport: full floor ornament rendering pipeline from DUNGEON.DAT
+  to screen. Parses bitfield B ornament counts, random seed, and per-map
+  floor ornament index tables. Computes F0170 random ordinals for
+  D3L2/D3R2/D3L/D3R viewport squares. Maps ordinals through index table
+  to GRAPHICS.DAT indices (M616 base 385, 6 variants per ornament).
+  Extended graphic provider to decode and serve floor ornament bitmaps.
+
 # Firestaff v3.0.203
 
 - DM1/CSB: gap analysis closure — verified that DSA scripting engine,
