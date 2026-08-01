@@ -23,20 +23,16 @@
 #include <stdio.h>
 #include <string.h>
 
-/* Quest item display names — copied from theron_v1_dungeon_progression.c
- * (the static g_quest_item_names table there is internal, so we keep a
- * local copy here that is keyed by the 7-bit quest-item bitmask).
- *
- * Source: Theron's Quest data analysis (TQR 7-dungeon sequence).
- * The naming mirrors the items required to clear each chapter. */
+/* Quest item display names — copied from theron_v1_dungeon_progression.c.
+ * Spelling from US Track 02 BIN retrieval messages at UD 0x27713D. */
 static const char *const trv_marker_quest_item_names[THERON_DUNGEON_COUNT] = {
     "Shield Defiant",    /* dungeon 1 */
     "Taza Poleyn",       /* dungeon 2 */
     "Tazahelm",          /* dungeon 3 */
     "Taza Boots",        /* dungeon 4 */
-    "Taza Armor",        /* dungeon 5 */
+    "Taza Armour",       /* dungeon 5 */
     "Soulcage",          /* dungeon 6 */
-    "The Retaliator",    /* dungeon 7 */
+    "Retaliator",        /* dungeon 7 */
 };
 
 /* ── Local helpers ──────────────────────────────────────────────── */

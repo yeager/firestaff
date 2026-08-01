@@ -1,3 +1,9 @@
+- ✅ 2026-08-01 v3.0.215 Theron Track 02 binary analysis and text extraction:
+  Complete region map (7 quest blocks + code + dense graphics). 66 US item
+  names extracted (11 Theron-unique). 15 level names, 7 quest retrieval
+  messages, save/load/status/spell strings. Quest item spelling corrected.
+  Hudson Soft System Card credits identified. Wiki updated (13 pages).
+  README.md rewritten. Partially advances THERON-QUEST-BLOCK-RECORDS.
 - ✅ 2026-08-01 v3.0.214 Nexus IBS field analysis and sound architecture closure:
   19 IWA source filenames extracted from DM.BIN. ITEM.IBS 243-item field
   patterns characterized. sndlib2 code block and sound state struct mapped.

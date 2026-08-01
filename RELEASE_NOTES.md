@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.215
+- Theron's Quest Track 02 binary analysis (pass 215): complete region map of US Track 02 BIN (3,446 sectors, 7 quest blocks + code + dense graphics)
+- Extracted 66 US item names including 11 Theron-unique items (Vorpal Blade, Mithral Aketon, Ekkhard Cross, Rabbit's Foot, etc.)
+- Extracted 15 level names, 7 quest retrieval messages, save/load UI strings, status/spell strings
+- Quest item name spelling corrected from binary evidence ("Taza Armour", "Retaliator")
+- Hudson Soft System Card BIOS credits identified in Block 1 (PRODUCER: 中本伸一, GRAPHIC DRIVER: 岩崎啓真, etc.)
+- Wiki: 7 updated + 6 new pages (Architecture, Audio, FAQ, Glossary, Known-Issues, Nexus-Saturn-Hardware)
+- README.md rewritten with Original/Custom terminology and current status
+
 # Firestaff v3.0.214
 - Nexus SH-2 source file discovery: 19 original IWA module filenames extracted from DM.BIN debug strings (iwa\loader.c, iwa\dmsound.c, iwa\tlist.c, etc.)
 - ITEM.IBS 243-item field analysis: bytes 9-15 confirmed as weapon/armor combat stats, bytes 4-5/19/38-39 characterized by data patterns

@@ -113,15 +113,17 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
     },
 };
 
-/* Quest item names (indexed by dungeon_id - 1) */
+/* Quest item names (indexed by dungeon_id - 1).
+ * Spelling from US Track 02 BIN retrieval messages at UD 0x27713D.
+ * Dungeon-to-item assignment is not yet proven by loader evidence. */
 static const char *const g_quest_item_names[THERON_DUNGEON_COUNT] = {
     "Shield Defiant",
     "Taza Poleyn",
     "Tazahelm",
     "Taza Boots",
-    "Taza Armor",
+    "Taza Armour",
     "Soulcage",
-    "The Retaliator",
+    "Retaliator",
 };
 
 /* ── API implementation ─────────────────────────────────────────── */

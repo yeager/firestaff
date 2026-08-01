@@ -29,12 +29,13 @@
   rejected; future real bitmap/palette work must enter through an
   authenticated Track 02 loader route.
 
-- **THERON-QUEST-BLOCK-RECORDS:** A community extraction report identifies
-  seven 256 KiB TQ02 quest-blocks and item/map candidates, but also states
-  that level headers and read-control data live outside the blocks. Compare
-  those opaque spans against the local original BIN/ISO only after obtaining
-  the real loader/System Card trace; do not import the converted CSBWin
-  dungeon as original data.
+- **THERON-QUEST-BLOCK-RECORDS:** v3.0.215: Binary analysis proves blocks 2-5
+  contain graphics/tile data (225-227 KiB nonzero each), block 1 is System
+  Card BIOS + credits, block 6 is 0xFF padding, block 0 is empty. Level data
+  and descriptor tables are in the post-block code area (UD 0x1C0000+), not
+  in quest blocks. Block 3 has a compression signature (0x14 marker, C1/C5/C7
+  prefix bytes). Exact tile format and decompression algorithm require
+  HuC6280 disassembly of the graphics driver routine.
 
 - **THERON-CUE-FULL-PAYLOAD-VALIDATION:** Closed 2026-07-31. The USA and JP
   CUE handoff regressions now read the complete hash-verified Track 02
