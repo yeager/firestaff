@@ -217,28 +217,28 @@ int main(void) {
         "]}";
     check("wrote partial manifest",
           write_file(manifest_file, partial_content));
-    check("partial → PARTIAL gate",
+    check("partial → PLACEHOLDER gate (no GDAT provenance)",
           dm2_v2_hud_widget_assets_gate() ==
-              DM2_V2_HUD_WIDGET_GATE_PARTIAL);
-    check("partial → inventory_quick_view=REAL",
+              DM2_V2_HUD_WIDGET_GATE_PLACEHOLDER);
+    check("partial → inventory_quick_view=PARTIAL (no GDAT)",
           dm2_v2_hud_widget_assets_classify_slot(
               DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW) ==
-              DM2_V2_HUD_WIDGET_CLASS_REAL);
+              DM2_V2_HUD_WIDGET_CLASS_PARTIAL);
     check("partial → action_prompt=PLACEHOLDER",
           dm2_v2_hud_widget_assets_classify_slot(
               DM2_V2_HUD_WIDGET_ACTION_PROMPT) ==
               DM2_V2_HUD_WIDGET_CLASS_PLACEHOLDER);
-    check("partial → uses_placeholder(REAL)=0",
+    check("partial → uses_placeholder(PARTIAL)=1",
           dm2_v2_hud_widget_assets_uses_placeholder(
-              DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW) == 0);
+              DM2_V2_HUD_WIDGET_INVENTORY_QUICK_VIEW) == 1);
     check("partial → uses_placeholder(PLACEHOLDER)=1",
           dm2_v2_hud_widget_assets_uses_placeholder(
               DM2_V2_HUD_WIDGET_ACTION_PROMPT) == 1);
-    check("partial → installed=1",
-          dm2_v2_hud_widget_assets_get_installed() == 1);
+    check("partial → installed=0 (no GDAT provenance)",
+          dm2_v2_hud_widget_assets_get_installed() == 0);
     int total = 0;
     int real = dm2_v2_hud_widget_assets_real_count(&total);
-    check("partial → real_count=1", real == 1);
+    check("partial → real_count=0 (no GDAT)", real == 0);
     check("partial → total=2", total == 2);
 
     /* ── Scenario 6: COMPLETE gate (all 7 slots REAL) ─────────────── */
@@ -280,23 +280,23 @@ int main(void) {
         "]}";
     check("wrote complete manifest",
           write_file(manifest_file, complete_content));
-    check("complete → COMPLETE gate",
+    check("complete → PLACEHOLDER gate (no GDAT provenance)",
           dm2_v2_hud_widget_assets_gate() ==
-              DM2_V2_HUD_WIDGET_GATE_COMPLETE);
-    check("complete → installed=1",
-          dm2_v2_hud_widget_assets_get_installed() == 1);
+              DM2_V2_HUD_WIDGET_GATE_PLACEHOLDER);
+    check("complete → installed=0 (no GDAT provenance)",
+          dm2_v2_hud_widget_assets_get_installed() == 0);
     total = 0;
     real = dm2_v2_hud_widget_assets_real_count(&total);
-    check("complete → real_count=7", real == 7);
+    check("complete → real_count=0 (no GDAT)", real == 0);
     check("complete → total=7", total == 7);
     for (size_t i = 0; i < DM2_V2_HUD_WIDGET_COUNT; ++i) {
-        check("complete → all 7 slots REAL",
+        check("complete → all 7 slots PARTIAL (no GDAT)",
               dm2_v2_hud_widget_assets_classify_slot(
                   (DM2_V2_HudWidgetSlot)i) ==
-                  DM2_V2_HUD_WIDGET_CLASS_REAL);
-        check("complete → all 7 slots uses_placeholder=0",
+                  DM2_V2_HUD_WIDGET_CLASS_PARTIAL);
+        check("complete → all 7 slots uses_placeholder=1",
               dm2_v2_hud_widget_assets_uses_placeholder(
-                  (DM2_V2_HudWidgetSlot)i) == 0);
+                  (DM2_V2_HudWidgetSlot)i) == 1);
     }
 
     /* ── Scenario 7: PARTIAL when pbr_hero source_file missing ────── */
@@ -310,11 +310,9 @@ int main(void) {
     }
     /* Re-read manifest: still all 7 declared as pbr_hero, but compass_rose
      * file is missing */
-    check("manifest with missing source_file → PARTIAL gate",
+    check("manifest with missing source_file → PLACEHOLDER gate (no GDAT)",
           dm2_v2_hud_widget_assets_gate() ==
-              DM2_V2_HUD_WIDGET_GATE_PLACEHOLDER ||
-          dm2_v2_hud_widget_assets_gate() ==
-              DM2_V2_HUD_WIDGET_GATE_PARTIAL);
+              DM2_V2_HUD_WIDGET_GATE_PLACEHOLDER);
     check("missing source_file → compass_rose=PARTIAL",
           dm2_v2_hud_widget_assets_classify_slot(
               DM2_V2_HUD_WIDGET_COMPASS_ROSE) ==
