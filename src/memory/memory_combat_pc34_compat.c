@@ -19,11 +19,9 @@
  * Party shields use per-attack-type selection at snapshot time
  * (spellShieldDefense for C5, fireShieldDefense for C1).
  *
- * Remaining fontanel branches (skill-experience awards) are
- * intentionally simplified and flagged inline with the ReDMCSB
- * source citation at each site.  See CHAMPION.C:1382
- * (F0314 WakeUp), :1803 (F0321 AddPendingDamageAndWounds),
- * :1926 (F0322 Poison) for the original behaviour.
+ * Skill-experience awards (F0304) are handled by the tick
+ * orchestrator layer via F0849_LIFECYCLE_AddSkillExperience_Compat,
+ * not by the combat resolver itself.
  */
 
 #include <string.h>
