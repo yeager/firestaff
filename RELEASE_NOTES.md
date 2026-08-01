@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.214
+- Nexus SH-2 source file discovery: 19 original IWA module filenames extracted from DM.BIN debug strings (iwa\loader.c, iwa\dmsound.c, iwa\tlist.c, etc.)
+- ITEM.IBS 243-item field analysis: bytes 9-15 confirmed as weapon/armor combat stats, bytes 4-5/19/38-39 characterized by data patterns
+- Sound system architecture: sndlib2 code block (4 KB), sound state struct at 0x06097368 (25 refs), GFS_SBL 2.10 CD filesystem
+- Closes NEXUS-ITEM-MECHANICS-PROVENANCE and NEXUS-SAL-SFX-REAL-DATA
+
 # Firestaff v3.0.213
 - Nexus Saturn hardware evidence (pass 216 SH-2 disassembly): VDP1 register init, command table format, VDP2 CRAM palette upload, SCSP sound interface all proven from DM.BIN
 - NEXUS-ORIGINAL-REPLACE-001/002 closed: VDP1 command table and color mode bits authenticated

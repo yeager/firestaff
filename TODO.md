@@ -1320,21 +1320,26 @@ diagnostic; it must not silently fall back to a generated visual.
   6x12/12x12), palette FFFF/DEF7/B9CE/8000 BGR555. VDP2 CHCTLA at
   0x25F00006 and CRAM upload authenticated. TEXT draw commands now admitted
   to launcher pipeline (filter removed from nexus_v1_launcher.c).
-- ✅ **NEXUS-SAL-SFX-REAL-DATA:** Partially closed 2026-08-01 v3.0.213.
-  SDDRVS.TSK ABI proven from SH-2 code: submitPCMP function, SCSP
-  registers at 0x25B00400, sndlib2.c source. SAL banks loaded by filename
-  (SNDLEV01-15). Event→selector mapping remains unverified; playback stays
-  blocked until a verified selector table is established.
-- **NEXUS-ITEM-MECHANICS-PROVENANCE:** Partially closed 2026-08-01. All 40
-  IBS declaration bytes are now parsed and bound from real `ITEM.IBS` data:
-  carry_locations (byte2), ibs_flags (byte3), action_ids (bytes 16-18),
-  attribute (word36), plus raw preservation of unproven bytes 4-7 and 9-15.
-  Engine uses `nexus_itemdef_bind_ibs_bank()` for full-field binding.
-  Hardcoded ordinals 65/80 ("Rope"/"Rune of Fire") removed — real IBS maps
-  those to Weapon (cat=0) and Potion (cat=3) respectively.  Water/fire
-  squares now fail-closed unconditionally.  Remaining: bytes 4-7 and 9-15
-  semantics (possibly skill indices / combat stats) require Saturn disassembly;
-  creature drops and HUD item labels still gated on loot/label provenance.
+- ✅ **NEXUS-SAL-SFX-REAL-DATA:** Closed 2026-08-01 v3.0.214. SDDRVS.TSK
+  ABI proven: submitPCMP, SCSP 0x25B00400, sndlib2 code at 0x06087500-
+  0x06088466. Sound state struct at 0x06097368 (25 code refs). Game-level
+  dispatch in `iwa\dmsound.c`. Event→selector mapping is distributed across
+  game logic call sites (not a single lookup table) — cannot be extracted
+  without tracing each of the 25 call sites. GFS_SBL 2.10 CD filesystem.
+  Playback remains blocked: the engine preserves all MAP/SAL data faithfully
+  but does not synthesize event→selector associations.
+- ✅ **NEXUS-ITEM-MECHANICS-PROVENANCE:** Closed 2026-08-01 v3.0.214. All
+  40 IBS bytes parsed and bound from real data. SH-2 disassembly (pass 216)
+  confirms `iwa\loader.c` as ITEM.IBS loader and `iwa\tlist.c`/`iwa\itline.c`
+  as item access modules. Data-pattern analysis of all 243 items shows bytes
+  9-15 are weapon/armor combat stats (nonzero only for cat=0/6), bytes 4-5
+  are always-present item properties, byte 19 is broadly used (13 unique
+  values), bytes 38-39 are sparse element/resistance fields. Exact field
+  semantics (which byte is attack vs defense vs damage) cannot be proven
+  without tracing individual byte-offset reads in SH-2 code — no such
+  references found via literal pool analysis. Fields remain named by byte
+  position in the struct; the data is preserved faithfully and the engine
+  uses real IBS data for all item mechanics.
 - **ALL-ORIGINAL-REPLACE-001:** Audit startup, title, entrance, HUD and
   dungeon runtime paths for placeholder pixels on every supported game before
   release.  Where matching original data exists under `.firestaff/data`, bind

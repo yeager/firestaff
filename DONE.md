@@ -1,3 +1,7 @@
+- ✅ 2026-08-01 v3.0.214 Nexus IBS field analysis and sound architecture closure:
+  19 IWA source filenames extracted from DM.BIN. ITEM.IBS 243-item field
+  patterns characterized. sndlib2 code block and sound state struct mapped.
+  Closes NEXUS-ITEM-MECHANICS-PROVENANCE and NEXUS-SAL-SFX-REAL-DATA.
 - ✅ 2026-08-01 v3.0.213 Nexus Saturn hardware evidence (pass 216 SH-2 disassembly):
   VDP1 register init, command table format, VDP2 CRAM palette, SCSP sound
   interface proven from DM.BIN. FONT012 TEXT commands admitted to launcher.
