@@ -267,7 +267,7 @@
     }
   ],
   "dm1Data": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
-  "head": "db8901bf94b560662a22e7988747d919e0191e00",
+  "head": "1377d14687fbf7c317a7d27827fe31908271d16d",
   "notClaimed": [
     "original DOS keyboard-buffer/NumLock parity",
     "DOSBox/FIRES CS:IP debugger hit",
@@ -449,5 +449,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH",
-  "timestampUtc": "2026-08-01T16:31:22.057599+00:00"
+  "timestampUtc": "2026-08-01T17:15:11.879810+00:00"
 }

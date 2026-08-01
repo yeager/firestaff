@@ -170,6 +170,8 @@ typedef struct {
     Theron_RuntimeMediaIdentity identity;
     uint64_t cache_generation;
     Theron_RuntimeLevelBankSelection level_bank;
+    int startup_palette_valid;
+    uint8_t startup_palette_rgb8[16][3];
 } Theron_RuntimeLevelMedia;
 
 /* ── Square tile types ────────────────────────────────────────────── */

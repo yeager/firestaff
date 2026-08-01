@@ -760,6 +760,8 @@ int theron_v1_startup_runtime_bind_track02_soul_room_handoff(
             dungeon_id, 0)) {
         return 0;
     }
+    (void)theron_v1_startup_media_bind_runtime_palette(
+        &candidate_world, hucard_rom, hucard_rom_size, md5_hex);
     *world = candidate_world;
     if (out_media_receipt) {
         *out_media_receipt = media_receipt;

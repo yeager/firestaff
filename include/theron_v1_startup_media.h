@@ -212,6 +212,7 @@ typedef struct {
     int raw_source_verified;
     int palette_binding_verified;
     int rgba_output_allowed;
+    uint8_t palette_rgb8[16][3];
     uint8_t pixels[THERON_TRACK02_STARTUP_BITMAP_ATLAS_PIXELS];
 } Theron_StartupRawBitmapRouteReceipt;
 
@@ -230,6 +231,16 @@ int theron_v1_startup_media_consume_raw_bitmap_route(
 int theron_v1_startup_media_bind_runtime_receipt(
     Theron_V1_World *world,
     const Theron_StartupMediaStateReceipt *receipt);
+
+/* Bind the VCE title-screen palette from a known Track 02 offset into the
+ * world's runtime media.  Call after bind_runtime_receipt.  The palette is
+ * extracted from the raw Track 02 bytes using the hash-gated palette
+ * window inspector. */
+int theron_v1_startup_media_bind_runtime_palette(
+    Theron_V1_World *world,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex);
 
 #ifdef __cplusplus
 }

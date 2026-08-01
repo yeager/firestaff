@@ -50940,9 +50940,6 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
     Theron_V1_BootStartupUiCallerReceipt ui_caller;
     int i;
     const Theron_StartupRenderPlan *plan;
-
-    (void)world;
-
     if (!state || !framebuffer) {
         return;
     }
@@ -50956,6 +50953,17 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
     }
     host_render = ui_caller.host_render;
     plan = &host_render.render_plan;
+
+    if (world && world->runtime_media.startup_palette_valid) {
+        uint8_t rgb6[256][3];
+        memset(rgb6, 0, sizeof(rgb6));
+        for (i = 0; i < 16; ++i) {
+            rgb6[i][0] = world->runtime_media.startup_palette_rgb8[i][0] >> 2;
+            rgb6[i][1] = world->runtime_media.startup_palette_rgb8[i][1] >> 2;
+            rgb6[i][2] = world->runtime_media.startup_palette_rgb8[i][2] >> 2;
+        }
+        (void)M11_Render_SetIndexedPaletteRgb6(rgb6);
+    }
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight,

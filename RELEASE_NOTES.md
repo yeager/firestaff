@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.222
+- Theron title screen real VCE palette binding from Track 02 raw offset 0x2A06A0
+- Indexed 4bpp startup bitmap now renders with correct HuC6260 BGR333 colors
+- New theron_v1_startup_media_bind_runtime_palette() API
+- 1 new test
+
 # Firestaff v3.0.221
 - Complete dungeon lore/quest narrative for all 7 TQ dungeons (Ak-Tu-Ba, Drator's Tower, Formicia, Sarmon's Lair, Shadodan's Den, Village of Thieves, Demon's Gate)
 - Dungeon-to-creature-to-quest-item mapping established from narrative text

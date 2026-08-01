@@ -7,7 +7,7 @@
     "F0128 per-depth interleave: side contents dispatch precedes the same-depth center contents route in m11_draw_viewport (current m11_game_view.c:45912)",
     "side explosion gate before deferred side explosion draw: tokens=m11_draw_dm1_deferred_explosion_pass/m11_dm1_nearest_blocking_center_depth_index/blockingCenterDepth>=depth/m11_draw_dm1_deferred_side_explosion (current m11_game_view.c:34534)"
   ],
-  "head": "db8901bf94b560662a22e7988747d919e0191e00",
+  "head": "1377d14687fbf7c317a7d27827fe31908271d16d",
   "notClaimed": [
     "original pixel parity",
     "new original DOS runtime capture",
@@ -19,5 +19,5 @@
     "ReDMCSB": "DUNVIEW.C:8491-8533"
   },
   "status": "PASS404_DM1_V1_SIDE_CONTENTS_CENTER_BLOCKER_OCCLUSION_PROVEN",
-  "timestampUtc": "2026-08-01T16:32:15.321017+00:00"
+  "timestampUtc": "2026-08-01T17:20:03.494728+00:00"
 }

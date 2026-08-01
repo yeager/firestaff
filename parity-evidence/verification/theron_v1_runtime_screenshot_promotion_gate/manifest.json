@@ -12,8 +12,7 @@
         "note": "identical source BMP sha256 across multiple readiness rows is a strong indicator of a shared placeholder fixture rather than independent runtime captures",
         "rows": [
           "canonical_pcengine_root",
-          "jp_extras_track02_bin",
-          "us_extras_track02_bin"
+          "jp_extras_track02_bin"
         ],
         "sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131"
       }
@@ -39,7 +38,7 @@
     "source BMP sha256 unique across all rows",
     "presented BMP is valid 320x200 24-bit BMP with >200 non-black pixels"
   ],
-  "generated_at": "2026-08-01T16:32:21.255464+00:00",
+  "generated_at": "2026-08-01T21:16:32.521323+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this gate.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -56,7 +55,7 @@
       "label": "Theron canonical PC Engine root",
       "notes": [
         "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
-        "sha256 27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
+        "sha256 27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin']; ineligible"
       ],
       "presented_sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
       "probe_summary": {
@@ -75,7 +74,7 @@
       "label": "Theron JP extras Track 02",
       "notes": [
         "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
-        "sha256 27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
+        "sha256 27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin']; ineligible"
       ],
       "presented_sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
       "probe_summary": {
@@ -93,10 +92,9 @@
       "eligible": false,
       "label": "Theron US extras Track 02",
       "notes": [
-        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
-        "sha256 27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)"
       ],
-      "presented_sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
+      "presented_sha256": "bc79bb48c9735948835a7bab433e4a033bf7f3a4939f5e54550c5fe817621e1d",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON STARTUP",
@@ -104,7 +102,7 @@
         "party.mapIndex": 0,
         "sourceId": "theron"
       },
-      "source_sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131"
+      "source_sha256": "f89fcdc2d7c1406ef16678a8ece3a6a21a2ce205d8c2947e7ff06f032b843391"
     }
   ],
   "schema": "firestaff.parity.theron_v1_runtime_screenshot_promotion_gate.v1",

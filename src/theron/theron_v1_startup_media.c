@@ -670,6 +670,52 @@ int theron_v1_startup_media_consume_raw_bitmap_route(
     return 1;
 }
 
+int theron_v1_startup_media_bind_runtime_palette(
+    Theron_V1_World *world,
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex) {
+
+    enum {
+        PALETTE_RAW_OFFSET_BIN = 0x2a06a0u,
+        PALETTE_RAW_OFFSET_ISO = 0x249800u
+    };
+    Theron_Track02PaletteWindowEvidence evidence;
+    Theron_Track02Variant variant;
+    Theron_Track02SignalStatus status;
+    size_t offset;
+    size_t i;
+
+    if (!world || !track02_data || !md5_hex || track02_size == 0u) {
+        return 0;
+    }
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+        variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        offset = PALETTE_RAW_OFFSET_BIN;
+    } else if (variant == THERON_TRACK02_VARIANT_US_ISO) {
+        offset = PALETTE_RAW_OFFSET_ISO;
+    } else {
+        return 0;
+    }
+    status = theron_v1_track02_inspect_4bpp_palette_window(
+        track02_data, track02_size, md5_hex, offset, &evidence);
+    if (status != THERON_TRACK02_SIGNAL_OK || !evidence.format_valid ||
+        !evidence.palette.valid) {
+        return 0;
+    }
+    for (i = 0u; i < 16u; ++i) {
+        world->runtime_media.startup_palette_rgb8[i][0] =
+            evidence.palette.entries[i].red;
+        world->runtime_media.startup_palette_rgb8[i][1] =
+            evidence.palette.entries[i].green;
+        world->runtime_media.startup_palette_rgb8[i][2] =
+            evidence.palette.entries[i].blue;
+    }
+    world->runtime_media.startup_palette_valid = 1;
+    return 1;
+}
+
 int theron_v1_startup_media_bind_runtime_receipt(
     Theron_V1_World *world,
     const Theron_StartupMediaStateReceipt *receipt) {

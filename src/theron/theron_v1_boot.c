@@ -6465,6 +6465,11 @@ int theron_v1_boot_startup_launch_alloc(
         (void)theron_v1_startup_media_bind_runtime_receipt(
             out_launch->world,
             &out_launch->startup_media_state_receipt);
+        (void)theron_v1_startup_media_bind_runtime_palette(
+            out_launch->world,
+            out_launch->assets->hucard_rom,
+            out_launch->assets->hucard_rom_size,
+            out_launch->profile->graphics_md5);
     }
     theron_v1_boot_startup_launch_build_host_receipt(out_launch);
     return 1;

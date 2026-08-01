@@ -131,7 +131,7 @@
     ],
     "rows_all_224x136": true
   },
-  "head": "db8901bf94b560662a22e7988747d919e0191e00",
+  "head": "1377d14687fbf7c317a7d27827fe31908271d16d",
   "not_claimed": [
     "DOSBox/live original runtime capture",
     "semantic original route promotion",
@@ -201,7 +201,7 @@
   ],
   "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
-  "timestamp_utc": "2026-08-01T16:32:16.341285+00:00",
+  "timestamp_utc": "2026-08-01T17:20:32.935797+00:00",
   "tooling": {
     "capture_script_crop_lock": {
       "has_imagemagick_crop": true,

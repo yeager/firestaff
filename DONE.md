@@ -1,3 +1,9 @@
+- ✅ 2026-08-01 v3.0.222 Theron title screen VCE palette binding: Wire the
+  real HuC6260 BGR333 palette at raw offset 0x2A06A0 through the rendering
+  pipeline. New theron_v1_startup_media_bind_runtime_palette() extracts and
+  stores the 16-entry palette in the world runtime media. Renderer sets
+  indexed palette before framebuffer-to-RGBA conversion. Supports US BIN,
+  JP BIN, and US ISO variants. 1 new test.
 - ✅ 2026-08-01 v3.0.221 Theron Track 02 dungeon lore and save overwrite UI:
   Complete quest narrative for all 7 dungeons (UD 0x27613E–0x276CCB):
   Ak-Tu-Ba/Shield Defiant, Drator/Taza Boots, Formicia/Taza Poleyn,
