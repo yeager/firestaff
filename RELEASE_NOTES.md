@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.200
+
+- CSB: fix entrance door animation showing only red by falling back to the
+  entrance special palette when the route receipt coherence check fails during
+  transient door-opening states.
+
 # Firestaff v3.0.199
 
 - DM2: include DM2 V2 runtime sources when building the phase-3 HUD overlay

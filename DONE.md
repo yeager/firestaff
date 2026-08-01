@@ -1,3 +1,7 @@
+- ✅ 2026-08-01 CSB entrance door palette fix: when the route receipt
+  coherence check fails during transient door-opening states, fall back to
+  the entrance special palette instead of returning -1 (which caused the
+  renderer to show only red). v3.0.200
 - ✅ 2026-07-31 CSB V2 lighting runtime receipt correction: aligned the
   phase-gate and runtime evidence with the product boundary. Even when V2 is
   selected, its tick reaches only the no-draw source-palette receipt; no RGB

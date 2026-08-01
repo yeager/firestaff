@@ -6021,11 +6021,18 @@ int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
         !m11_csb_c001_palette_is_source_owned(&host_view)) {
         return -1;
     }
-    if (host_view.special_palette < 0 ||
-        host_view.special_palette >= VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT) {
-        return -1;
+    if (host_view.special_palette >= 0 &&
+        host_view.special_palette < VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT) {
+        return host_view.special_palette;
     }
-    return host_view.special_palette;
+    /* The route receipt may fail coherence during transient door-opening
+     * states, leaving special_palette at -1 even though the entrance
+     * surface is clearly active.  Fall back to the entrance palette when
+     * M11 state confirms entrance activity. */
+    if (state->csbState.startup_entrance_active) {
+        return VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE;
+    }
+    return -1;
 }
 
 /* TITLE.C and ENTRANCE.C share one package session, but the entrance-local
