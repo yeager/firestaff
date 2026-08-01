@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.221
+- Complete dungeon lore/quest narrative for all 7 TQ dungeons (Ak-Tu-Ba, Drator's Tower, Formicia, Sarmon's Lair, Shadodan's Den, Village of Thieves, Demon's Gate)
+- Dungeon-to-creature-to-quest-item mapping established from narrative text
+- Save overwrite confirmation strings: "THAT FILE ALREADY EXISTS!", "REPLACE", "NO"
+- 10 new tests pass
+
 # Firestaff v3.0.220
 - 7 real creature type names from Track 02 binary: AKUTUBA, DRATOR, FORMIC, SARMON, SHADO, THIEF, DEMON (UD 0x2741EF)
 - 64-entry experience threshold table (UD 0x1DA890): monotonic 0–214, likely 4 classes × 16 skill levels

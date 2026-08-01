@@ -1,3 +1,9 @@
+- ✅ 2026-08-01 v3.0.221 Theron Track 02 dungeon lore and save overwrite UI:
+  Complete quest narrative for all 7 dungeons (UD 0x27613E–0x276CCB):
+  Ak-Tu-Ba/Shield Defiant, Drator/Taza Boots, Formicia/Taza Poleyn,
+  Sarmon/Soulcage, Shadodan/Taza Armour, Village of Thieves/Tazahelm,
+  Demon's Gate/Retaliator. Save overwrite strings (THAT FILE ALREADY
+  EXISTS!, REPLACE, NO). 10 tests pass.
 - ✅ 2026-08-01 v3.0.220 Theron Track 02 creature names and experience table:
   7 real creature type names from binary (AKUTUBA/DRATOR/FORMIC/SARMON/SHADO/
   THIEF/DEMON at UD 0x2741EF) — replaces synthetic GOBLIN/ORC/SKELETON names.

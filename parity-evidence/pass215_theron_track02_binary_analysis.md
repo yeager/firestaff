@@ -228,6 +228,26 @@ Preceded at UD 0x1DA870 by class base-stat parameters:
 - UD 0x1DA870: 0, 0, 60, 50, 256, 256, 256, 256 (words)
 - UD 0x1DA880: 3, 3, 3, 3, 0, 10, 54, 90 (words)
 
+### Dungeon Lore / Quest Narrative (UD 0x27613E–0x276CCB)
+
+7 multi-line narrative blocks describing the backstory and quest objective
+for each dungeon.  Text lines are separated by 0x01, blocks terminated by
+0x00.  Each dungeon corresponds to one creature type and one quest item:
+
+| Dungeon | Creature | Quest Item | Key Locations/NPCs |
+|---------|----------|------------|---------------------|
+| 0 Ak-Tu-Ba | AKUTUBA | Shield Defiant | Floating fortress, Mummies, sorcerer Alaphalon |
+| 1 Drator's Tower | DRATOR | Taza Boots | Cult of Deaths, warrior/wizard |
+| 2 Formicia | FORMIC | Taza Poleyn | Underground, Trolins, Ya-Brodin monastery |
+| 3 Sarmon's Lair | SARMON | Soulcage | Evil wizard spirit, Brotherhood of Enlightenment |
+| 4 Shadodan's Den | SHADO | Taza Armour | Ancient dragon, witch curse |
+| 5 Village of Thieves | THIEF | Tazahelm | Swamps of Nordoor, Gigglers |
+| 6 Demon's Gate | DEMON | Retaliator | Demon Sargoth, the sword |
+
+### Save Overwrite UI (UD 0x2751D3)
+
+"THAT FILE ALREADY EXISTS!" warning, "REPLACE" / "NO" confirmation buttons.
+
 ### System Card Credits (Block 1)
 
 Japanese Shift-JIS text at Block 1 offset +0x30800 identifies the Hudson Soft
