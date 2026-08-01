@@ -65,8 +65,7 @@
     {
       "citation": "m11_game_view.c:stairs_up_bit",
       "needles": [
-        "cell->square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP",
-        "cell.square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP"
+        "cell->square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP"
       ],
       "verified": true,
       "why": "Stairs up/down rendering uses MASK0x0004_STAIRS_UP (not 0x01)."
@@ -74,8 +73,8 @@
     {
       "citation": "m11_game_view.c:pit_open_check",
       "needles": [
-        "!(cell.square & 0x08)) { /* not PIT_OPEN",
-        "cell->square & 0x08) { /* PIT_OPEN"
+        "Only open pits (MASK0x0008_PIT_OPEN) show the hole.",
+        "if (cell->square & 0x08) { /* PIT_OPEN */"
       ],
       "verified": true,
       "why": "Pit rendering checks MASK0x0008_PIT_OPEN before drawing the hole graphic."
@@ -83,8 +82,10 @@
     {
       "citation": "m11_game_view.c:teleporter_visible_check",
       "needles": [
-        "MASK0x0004_TELEPORTER_VISIBLE, MASK0x0008_TELEPORTER_OPEN",
-        "(cell.square & 0x04) == 0 || (cell.square & 0x08) == 0"
+        "DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34",
+        "DM1_FIELD_TELEPORTER_OPEN_MASK_PC34",
+        "(cell->square & DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34) != 0",
+        "(cell->square & DM1_FIELD_TELEPORTER_OPEN_MASK_PC34) != 0"
       ],
       "verified": true,
       "why": "Teleporter field rendering checks both VISIBLE and OPEN bits."

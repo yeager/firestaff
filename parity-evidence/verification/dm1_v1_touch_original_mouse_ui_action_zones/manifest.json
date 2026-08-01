@@ -6,7 +6,7 @@
     "runtime_probe_covers_touch_item_mouse_queue",
     "touch_pointer_uses_mouse_queue_not_keyboard"
   ],
-  "repo": "/Volumes/Extern-disk/firestaff-claude",
+  "repo": "/Users/bosse/Documents/Firestaff-system",
   "sourceAudits": [
     "action_child_mouse_rows_and_resolution",
     "primary_interface_mouse_rows",

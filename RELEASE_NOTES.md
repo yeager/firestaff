@@ -1,6 +1,15 @@
 
 # Unreleased
 
+# Firestaff v3.0.199
+
+- DM2: include DM2 V2 runtime sources when building the phase-3 HUD overlay
+  runtime probe, restoring complete runtime-link behavior on macOS arm64.
+- DM1: refresh real-data parity evidence captures and manifests for movement,
+  staircase/gate handling, item rendering, and title palette alignment.
+- CI/Release: keep release version source of truth in CMake and route all package
+  workflows through the standard versioned release path.
+
 # Firestaff v3.0.197
 
 - DM1: preserve ReDMCSB M516 champion inventory slot order through original

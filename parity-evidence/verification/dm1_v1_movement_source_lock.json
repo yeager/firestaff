@@ -68,12 +68,8 @@
     {
       "citation": "memory_tick_orchestrator_pc34_compat.c:F0888 disabled movement gate",
       "needles": [
-        "movement_command_disabled_redmcsb_compat",
-        "COMMAND.C:2095-2100 / 2104-2110",
-        "world->disabledMovementTicks > 0",
-        "world->projectileDisabledMovementTicks > 0",
-        "lastProjectileDisabledMovementDirection",
-        "if (movement_command_disabled_redmcsb_compat(world, mv)) return 0",
+        "DM1_V1_Movement_OrchestratorRoutePlanPc34Compat",
+        "if (routePlan.movementDisabledGate) return 0",
         "F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat",
         "CLIKMENU.C:291-318",
         "leave party/cooldowns"
@@ -81,12 +77,24 @@
       "verified": true
     },
     {
+      "citation": "dm1_v1_movement_pc34_compat.c route-plan movement gate",
+      "needles": [
+        "DM1_V1_Movement_OrchestratorRoutePlanPc34Compat",
+        "ReDMCSB COMMAND.C F0380 lines ~2073-2078 gates movement",
+        "outPlan->dispatchedMove",
+        "disabledMovementTicks > 0",
+        "projectileDisabledMovementTicks > 0",
+        "lastProjectileDisabledMovementDirection",
+        "outPlan->movementDisabledGate = 1"
+      ],
+      "verified": true
+    },
+    {
       "citation": "memory_tick_orchestrator_pc34_compat.c:F0888 successful movement cooldown",
       "needles": [
-        "redmcsb_party_move_cooldown_ticks_compat",
-        "CLIKMENU.C:330-346",
-        "F0841_LIFECYCLE_ComputeMoveTicks_Compat",
-        "world->disabledMovementTicks = redmcsb_party_move_cooldown_ticks_compat(&world->party)",
+        "DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat",
+        "world->disabledMovementTicks =",
+        "&world->party, NULL",
         "world->projectileDisabledMovementTicks = 0"
       ],
       "verified": true

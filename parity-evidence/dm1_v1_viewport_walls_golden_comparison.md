@@ -1,6 +1,6 @@
 # DM1 V1 viewport/walls golden comparison source lock
 
-Status: `FAIL_ORIGINAL_ROUTE_ARTIFACT`
+Status: `PASS_SOURCE_LOCKED_ORIGINAL_CAPTURE_BLOCKED`
 
 This is a focused golden-comparison lock for viewport/walls only. It verifies ReDMCSB source facts and current Firestaff evidence gates; it does **not** claim original pixel parity.
 
@@ -18,7 +18,7 @@ This is a focused golden-comparison lock for viewport/walls only. It verifies Re
 - Movement/viewport/wall golden: `PASS`; entry `{'direction': 2, 'mapIndex': 0, 'mapX': 1, 'mapY': 3}`; representative cases `5`.
 - Draw stack artifact: `PASS`.
 - Original capture integration: `PASS_SOURCE_LOCKED_ORIGINAL_RUNTIME_BLOCKED_ON_ADDRESS_MAP`; capture route `tooling-recovered-source-locked-not-overlay-ready`.
-- Original route follow-up: `BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE`.
+- Original route follow-up: `BLOCKED_ORIGINAL_RUNNER_PREREQUISITES`.
 
 ## Boundary
 

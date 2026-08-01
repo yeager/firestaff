@@ -5003,6 +5003,7 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     probes/firestaff_dm2_v2_phase3_hud_overlay_probe.c
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
+    src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c

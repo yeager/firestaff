@@ -13,10 +13,10 @@
   "driftProofLocalGuard": "Firestaff local checks are token/order guards over current function bodies; current line numbers are diagnostic only.",
   "firestaffGuards": {
     "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat": "tokens=MovementCommandCore/PostMoveEnvironment/ApplySuccessfulStep/viewportDirty/viewportPresentEvidence (current dm1_v1_movement_pipeline_pc34_compat.c:244-443)",
-    "m11_apply_dm1_v1_pipeline_tick": "tokens=EnqueueCommand/DecrementCooldowns/ProcessOneTick/world.gameTick++/viewportDirty-return (current m11_game_view.c:19784-19983)",
-    "main_loop_input_redraw_block": "tokens=redrawWasAfterViewportDirty/lastDm1V1MovementPipelineResult.viewportDirty/M11_GameView_Draw/inputRedrawAfterViewportDirtyCount (current main_loop_m11.c:5657-5674)"
+    "m11_apply_dm1_v1_pipeline_tick": "tokens=EnqueueCommand/DecrementCooldowns/ProcessOneTick/world.gameTick++/viewportDirty-return (current m11_game_view.c:20801-21000)",
+    "main_loop_input_redraw_block": "tokens=redrawWasAfterViewportDirty/lastDm1V1MovementPipelineResult.viewportDirty/M11_GameView_Draw/inputRedrawAfterViewportDirtyCount (current main_loop_m11.c:5762-5779)"
   },
-  "head": "48fcbc1dec0b944a8df004b523f3a2b52117036b",
+  "head": "ed6424cb14eedbb4aed0173e7e66f2dd7d40fbae",
   "notClaimed": [
     "original DOSBox/FIRES.EXE runtime breakpoint parity",
     "pixel-perfect viewport output parity",
@@ -30,5 +30,5 @@
     "GAMELOOP.F0002": "GAMELOOP.C:35-219"
   },
   "status": "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
-  "timestampUtc": "2026-07-30T09:01:35.430879+00:00"
+  "timestampUtc": "2026-07-31T13:50:55.432977+00:00"
 }

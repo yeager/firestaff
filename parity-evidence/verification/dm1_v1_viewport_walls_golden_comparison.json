@@ -3,19 +3,19 @@
     "files": {
       "movement_viewport_wall_golden": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
+        "path": "/Users/bosse/Documents/Firestaff-system/parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
       },
       "pass177_draw_stack_verify_out": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
+        "path": "/Users/bosse/Documents/Firestaff-system/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
       },
       "pass179_original_capture_manifest": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate/manifest.json"
+        "path": "/Users/bosse/Documents/Firestaff-system/parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate/manifest.json"
       },
       "pass207_original_movement_viewport_blocker_report": {
         "exists": true,
-        "path": "/Volumes/Extern-disk/firestaff-claude/parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md"
+        "path": "/Users/bosse/Documents/Firestaff-system/parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md"
       }
     },
     "movement_viewport_wall_golden": {
@@ -56,11 +56,9 @@
       "status": "PASS_SOURCE_LOCKED_ORIGINAL_RUNTIME_BLOCKED_ON_ADDRESS_MAP"
     },
     "pass207_original_route": {
-      "missing": [
-        "accepted BLOCKED or SUPERSEDED pass207 status"
-      ],
-      "ok": false,
-      "status": "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE"
+      "missing": [],
+      "ok": true,
+      "status": "BLOCKED_ORIGINAL_RUNNER_PREREQUISITES"
     }
   },
   "non_claims": [
@@ -142,5 +140,5 @@
   "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "dm1_v1_viewport_walls_golden_comparison.v1",
   "scope": "DM1 V1 viewport/walls golden comparison: side-door/detail layering, draw order, row clipping, original evidence status",
-  "status": "FAIL_ORIGINAL_ROUTE_ARTIFACT"
+  "status": "PASS_SOURCE_LOCKED_ORIGINAL_CAPTURE_BLOCKED"
 }
