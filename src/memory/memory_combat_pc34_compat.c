@@ -412,17 +412,23 @@ static int combat_apply_defender_statistic_adjustment(
             }
             break;
 
+        case COMBAT_ATTACK_PSYCHIC:
+            /* ReDMCSB CHAMPION.C:1893-1896 F0321 C6: invokes F0307 with
+             * C0_STATISTIC_WISDOM then goto T0321024 (skip armor scale).
+             * Screamer and Ghost/Rive use this attack type. */
+            if (F0734_COMBAT_GetStatisticAdjustedAttack_Compat(
+                    defender->statisticWisdom, 255, adjusted, &tmp)) {
+                adjusted = tmp;
+            }
+            break;
+
         case COMBAT_ATTACK_NORMAL:
         case COMBAT_ATTACK_SELF:
         case COMBAT_ATTACK_BLUNT:
         case COMBAT_ATTACK_SHARP:
-        case COMBAT_ATTACK_PSYCHIC:
         case COMBAT_ATTACK_LIGHTNING:
             /* F0321 source: C0 skips the F0321 body, C2/C3/C4/C7 fall
-             * through with `break;` (no F0307 call), C6 uses the wisdom
-             * factor and `goto T0321024`. The compat v1 does not model
-             * C2 (Ninja + half-defense) or C6 (wisdom factor); those
-             * stay out of scope and untouched here. */
+             * through with `break;` (no F0307 call). */
             break;
 
         default:
@@ -511,9 +517,11 @@ static int combat_apply_f0321_armor_defense_scale(
         return (attack * 130) >> 6;
     }
     avgDefense = defenseSum / defenseCount;
+    /* ReDMCSB CHAMPION.C:1888 F0321 C2: Impact defense is halved. */
+    if (attackType == COMBAT_ATTACK_SELF) {
+        avgDefense /= 2;
+    }
     if (avgDefense > 130) {
-        /* F0321 BUG0_44 path: 130 - defense would underflow; clamp
-         * to mirror the source's signed behaviour. */
         avgDefense = 130;
     }
     scaled = (attack * (130 - avgDefense)) >> 6;
@@ -572,6 +580,10 @@ static int combat_apply_f0321_armor_defense_scale_rng(
         return (attack * 130) >> 6;
     }
     avgDefense = defenseSum / defenseCount;
+    /* ReDMCSB CHAMPION.C:1888 F0321 C2: Impact defense is halved. */
+    if (attackType == COMBAT_ATTACK_SELF) {
+        avgDefense /= 2;
+    }
     if (avgDefense > 130) {
         avgDefense = 130;
     }
