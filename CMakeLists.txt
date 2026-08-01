@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.204 LANGUAGES C)
+project(Firestaff VERSION 3.0.205 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -5004,6 +5004,11 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_runtime.c
+    src/dm2/dm2_v2_viewport_renderer.c
+    src/dm2/dm2_v2_lighting.c
+    src/dm2/dm2_v2_lighting_runtime.c
+    src/dm2/dm2_v2_outdoor_enhanced.c
+    src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -5412,6 +5417,8 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v2_outdoor_enhanced.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v2_interaction_feedback.c
+    src/dm2/dm2_v2_viewport_renderer.c
+    src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
@@ -5487,6 +5494,8 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm2/dm2_v2_lighting.c
     src/dm2/dm2_v2_outdoor_enhanced.c
     src/dm2/dm2_v2_smooth_movement.c
+    src/dm2/dm2_v2_viewport_renderer.c
+    src/dm2/dm2_v2_lighting_runtime.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
@@ -5552,6 +5561,14 @@ add_test(
 # pixel gate (V2 smooth vs V1 discrete), presentation gates.
 add_executable(firestaff_dm2_v2_smooth_movement_probe
     probes/firestaff_dm2_v2_smooth_movement_probe.c
+    src/dm2/dm2_v2_runtime.c
+    src/dm2/dm2_v2_viewport_renderer.c
+    src/dm2/dm2_v2_smooth_movement.c
+    src/dm2/dm2_v2_lighting.c
+    src/dm2/dm2_v2_lighting_runtime.c
+    src/dm2/dm2_v2_outdoor_enhanced.c
+    src/dm2/dm2_v2_hud_overlay.c
+    src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -6292,6 +6309,11 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v2_viewport_renderer.c
     src/dm2/dm2_v2_smooth_movement.c
+    src/dm2/dm2_v2_lighting.c
+    src/dm2/dm2_v2_lighting_runtime.c
+    src/dm2/dm2_v2_outdoor_enhanced.c
+    src/dm2/dm2_v2_hud_overlay.c
+    src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -17447,6 +17469,14 @@ if(BUILD_TESTING)
         src/dm2/dm2_v22_inplace_draw_pc34.c
         src/dm2/dm2_v22_shape_cache_pc34.c
         src/dm2/dm2_v22_modern_assets_pc34.c
+        src/dm2/dm2_v2_runtime.c
+        src/dm2/dm2_v2_viewport_renderer.c
+        src/dm2/dm2_v2_smooth_movement.c
+        src/dm2/dm2_v2_lighting.c
+        src/dm2/dm2_v2_lighting_runtime.c
+        src/dm2/dm2_v2_outdoor_enhanced.c
+        src/dm2/dm2_v2_hud_overlay.c
+        src/dm2/dm2_v2_interaction_feedback.c
     )
     target_include_directories(test_dm2_v22_viewport_swap_wireup_pc34 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -17521,6 +17551,7 @@ if(BUILD_TESTING)
     add_executable(firestaff_dm2_v2_hud_widget_bitmap_blit_probe
         probes/firestaff_dm2_v2_hud_widget_bitmap_blit_probe.c
         src/dm2/dm2_v2_hud_widget_bitmap_blit.c
+        src/dm2/dm2_v2_hud_widget_assets.c
     )
     target_link_libraries(firestaff_dm2_v2_hud_widget_bitmap_blit_probe
         PRIVATE firestaff_dm2_v2 firestaff_m10 m)
@@ -19939,11 +19970,14 @@ if(BUILD_TESTING)
 
     add_executable(test_m12_dm1_multilanguage_profile_smoke
         tests/test_m12_dm1_multilanguage_profile_smoke.c
+        src/shared/asset_status_m12.c
     )
     target_link_libraries(test_m12_dm1_multilanguage_profile_smoke PRIVATE
         firestaff_m12
         SDL3::SDL3
     )
+    target_compile_definitions(test_m12_dm1_multilanguage_profile_smoke PRIVATE
+        FIRESTAFF_ASSET_STATUS_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_m12_dm1_multilanguage_profile_smoke PRIVATE -Wall -Wextra -O2)
     endif()
@@ -34998,6 +35032,7 @@ endif()
 # contract for bounds-safe future reverse engineering.
 add_executable(firestaff_nexus_v1_bpx_bpk_probe
     probes/nexus/firestaff_nexus_v1_bpx_bpk_probe.c
+    src/nexus/nexus_v1_bpx_bpk.c
 )
 target_link_libraries(firestaff_nexus_v1_bpx_bpk_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -35020,6 +35055,7 @@ endif()
 # assets while still exercising the structural invariants.
 add_executable(firestaff_nexus_v1_menumenu_bpk_inspect_probe
     probes/nexus/firestaff_nexus_v1_menumenu_bpk_inspect_probe.c
+    src/nexus/nexus_v1_bpx_bpk.c
 )
 target_link_libraries(firestaff_nexus_v1_menumenu_bpk_inspect_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -35865,6 +35901,7 @@ set_tests_properties(nexus_v1_face_media_probe PROPERTIES
 # unsupported.
 add_executable(firestaff_nexus_v1_bpk_surface_class_probe
     probes/nexus/firestaff_nexus_v1_bpk_surface_class_probe.c
+    src/nexus/nexus_v1_bpx_bpk.c
 )
 target_link_libraries(firestaff_nexus_v1_bpk_surface_class_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -36099,6 +36136,10 @@ endif()
 #   docs/FIRESTAFF_GAP_LIST.md           (S2D PARTIAL row, "bind text layout")
 add_executable(firestaff_nexus_v1_s2d_runtime_text_layout_probe
     probes/nexus/firestaff_nexus_v1_s2d_runtime_text_layout_probe.c
+    src/nexus/nexus_v1_s2d_text_layout.c
+    src/nexus/nexus_v1_s2d_glyph_decode.c
+    src/nexus/nexus_v1_screen_text.c
+    src/nexus/nexus_v1_text.c
 )
 target_link_libraries(firestaff_nexus_v1_s2d_runtime_text_layout_probe PRIVATE
     firestaff_nexus firestaff_m10 m
@@ -36126,6 +36167,10 @@ endif()
 #   src/nexus/nexus_v1_saturn_font.c     (load_sections + glyph draw)
 add_executable(firestaff_nexus_v1_screen_text_surface_probe
     probes/nexus/firestaff_nexus_v1_screen_text_surface_probe.c
+    src/nexus/nexus_v1_screen_text.c
+    src/nexus/nexus_v1_s2d_text_layout.c
+    src/nexus/nexus_v1_s2d_glyph_decode.c
+    src/nexus/nexus_v1_text.c
 )
 target_link_libraries(firestaff_nexus_v1_screen_text_surface_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -36146,6 +36191,9 @@ endif()
 # FONT256.S2D input is skip-safe.
 add_executable(firestaff_nexus_v1_s2d_glyph_decode_probe
     probes/nexus/firestaff_nexus_v1_s2d_glyph_decode_probe.c
+    src/nexus/nexus_v1_s2d_glyph_decode.c
+    src/nexus/nexus_v1_s2d_text_layout.c
+    src/nexus/nexus_v1_text.c
 )
 target_link_libraries(firestaff_nexus_v1_s2d_glyph_decode_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -44082,8 +44130,10 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_data_dir_cancel.c")
     add_executable(test_m12_data_dir_cancel
         tests/test_m12_data_dir_cancel.c
+        src/shared/asset_status_m12.c
     )
     target_link_libraries(test_m12_data_dir_cancel PRIVATE firestaff_m12 SDL3::SDL3)
+    target_compile_definitions(test_m12_data_dir_cancel PRIVATE FIRESTAFF_ASSET_STATUS_TESTING=1)
     if(NOT MSVC)
         target_compile_options(test_m12_data_dir_cancel PRIVATE -Wall -Wextra -O2)
     endif()
@@ -47227,6 +47277,7 @@ add_test(NAME csb_v1_viewport_f0115_projectile_metadata_pc34_compat COMMAND test
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0806_entrance_loop_runtime_handoff_pc34_compat.c")
     add_executable(test_csb_v1_f0806_entrance_loop_runtime_handoff_pc34_compat
         tests/test_csb_v1_f0806_entrance_loop_runtime_handoff_pc34_compat.c
+        src/csb/csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat.c
     )
     target_include_directories(test_csb_v1_f0806_entrance_loop_runtime_handoff_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -47294,7 +47345,8 @@ add_test(NAME csb_v1_csbwin_extended_dsa_admission_pc34_compat COMMAND test_csb_
 
 add_executable(test_csb_v1_f0904_swsh_palette_animation_pc34_compat
     tests/test_csb_v1_f0904_swsh_palette_animation_pc34_compat.c
-    src/csb/csb_v1_f0904_swsh_palette_animation_pc34_compat.c)
+    src/csb/csb_v1_f0904_swsh_palette_animation_pc34_compat.c
+    src/csb/csb_v1_f0908_f0909_f0910_swsh_sound_pc34_compat.c)
 target_include_directories(test_csb_v1_f0904_swsh_palette_animation_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_f0904_swsh_palette_animation_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_f0904_swsh_palette_animation_pc34_compat COMMAND test_csb_v1_f0904_swsh_palette_animation_pc34_compat)

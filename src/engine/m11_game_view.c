@@ -53543,6 +53543,7 @@ static int m11_csb_startup_probe_execute_snapshot(
         ownership_receipt);
 }
 
+#endif /* FIRESTAFF_CSB_STARTUP_PROBE_CONTRACT_ONLY */
 
 int M11_GameView_ProbeViewportArtifactCounts(const M11_GameViewState* state,
                                              int relForward,
@@ -53600,6 +53601,8 @@ int M11_GameView_ProbeViewportRenderMetadata(const M11_GameViewState* state,
     }
     return 1;
 }
+
+#ifdef FIRESTAFF_CSB_STARTUP_PROBE_CONTRACT_ONLY
 int M11_GameView_ProbeCsbStartupHostViewDrawConsumerReceipt(
     int* outTitleReceiptReady,
     int* outTitleDrawExecuted,

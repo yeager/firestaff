@@ -52,6 +52,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#define portable_mkdir(p) _mkdir(p)
+#else
+#define portable_mkdir(p) mkdir((p), 0700)
+#endif
 
 static int g_assertions = 0;
 static int g_failures   = 0;
@@ -340,11 +346,11 @@ int main(void) {
             "{\"hud_widgets\":[{\"id\":\"inventory_quick_view\","
             "\"generator\":\"external\",\"source_file\":\"unproven.bin\","
             "\"width\":1,\"height\":1}]}";
-        (void)mkdir(root, 0700);
-        (void)mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets", 0700);
-        (void)mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2", 0700);
-        (void)mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2/hud", 0700);
-        (void)mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2/hud/hud_widgets", 0700);
+        (void)portable_mkdir(root);
+        (void)portable_mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets");
+        (void)portable_mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2");
+        (void)portable_mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2/hud");
+        (void)portable_mkdir("/tmp/firestaff-dm2-v2-hud-runtime-probe/assets/dm2/hud/hud_widgets");
         CHECK(write_text_file(bitmap, "not original GDAT") &&
               write_text_file(manifest, json));
         dm2_v2_hud_widget_assets_set_manifest_path(

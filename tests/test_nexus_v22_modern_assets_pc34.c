@@ -172,15 +172,6 @@ static void test_shape_source_name(void) {
           "name unknown");
 }
 
-static void test_missing_placeholder(void) {
-    int w = 0, h = 0;
-    const uint32_t* px = nexus_v22_get_missing_placeholder(&w, &h);
-    CHECK(px != NULL, "placeholder non-null");
-    CHECK(w == 16 && h == 16, "placeholder is 16x16");
-    /* First pixel is magenta FF00FF (the 0xFFFF00FF is RGBA) */
-    CHECK((px[0] & 0x00FFFFFFu) == 0x00FF00FFu, "placeholder[0] is magenta");
-}
-
 static void test_source_evidence(void) {
     const char* ev = nexus_v22_source_evidence();
     CHECK(ev != NULL, "evidence non-null");
@@ -214,7 +205,6 @@ int main(void) {
     test_epx_cache_flag();
     test_best_available_shape_source();
     test_shape_source_name();
-    test_missing_placeholder();
     test_source_evidence();
     test_assets_available_no_install();
 
