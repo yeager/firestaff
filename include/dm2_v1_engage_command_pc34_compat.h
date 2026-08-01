@@ -1,0 +1,159 @@
+#ifndef FIRESTAFF_DM2_V1_ENGAGE_COMMAND_PC34_COMPAT_H
+#define FIRESTAFF_DM2_V1_ENGAGE_COMMAND_PC34_COMPAT_H
+
+/*
+ * dm2_v1_engage_command_pc34_compat.h — DM2 hand action dispatcher.
+ *
+ * Ports DM2_ENGAGE_COMMAND from skproject/SKWINSPX/src/v5/skengage.cpp.
+ * This is the 53-case switch that dispatches all hand actions: melee
+ * attack, spell cast, throw, consume, wield, heal, confuse, light,
+ * minion control, etc.
+ *
+ * Each case maps to a command string entry (CMDSTR) that encodes the
+ * action type, skill, power, delay, and sound effect.  The dispatcher
+ * resolves the hero, hand, item, target tile, and creature, then
+ * delegates to the appropriate sub-function.
+ *
+ * Source: skproject/SKWINSPX/src/v5/skengage.cpp DM2_ENGAGE_COMMAND
+ */
+
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Engage command types — the action_id values (vw_54 - 1 in reference).
+ * Each corresponds to a case in the ENGAGE_COMMAND switch.
+ * Source: skengage.cpp:178-657 */
+typedef enum {
+    DM2_ENGAGE_ATTACK           = 1,
+    DM2_ENGAGE_CAST_MISSILE     = 2,
+    DM2_ENGAGE_WIELD_WEAPON     = 3,
+    DM2_ENGAGE_CONFUSE          = 4,
+    DM2_ENGAGE_LIGHT_1          = 5,
+    DM2_ENGAGE_CREATE_CLOUD     = 6,
+    DM2_ENGAGE_WIELD_WEAPON_2   = 7,
+    DM2_ENGAGE_HEAL_PARTY       = 8,
+    DM2_ENGAGE_STEP_FORWARD     = 9,
+    DM2_ENGAGE_MANA_GAIN        = 10,
+    DM2_ENGAGE_ABILITY_5        = 11,
+    DM2_ENGAGE_ABILITY_4        = 12,
+    DM2_ENGAGE_ABILITY_6        = 13,
+    DM2_ENGAGE_ABILITY_3        = 14,
+    DM2_ENGAGE_CONSUME          = 15,
+    DM2_ENGAGE_EQUIP_HAND       = 16,
+    DM2_ENGAGE_SHOOT_MISSILE    = 31,
+    DM2_ENGAGE_HERO_ACT_1       = 32,
+    DM2_ENGAGE_HERO_ACT_0       = 33,
+    DM2_ENGAGE_HERO_ACT_2       = 34,
+    DM2_ENGAGE_HEAL_SELF        = 35,
+    DM2_ENGAGE_LIGHT_2          = 37,
+    DM2_ENGAGE_LIGHT_3          = 38,
+    DM2_ENGAGE_TURN_POSITION    = 41,
+    DM2_ENGAGE_SET_MINION_DEST  = 43,
+    DM2_ENGAGE_MINION_MISSILE   = 44,
+    DM2_ENGAGE_MINION_ATTACK    = 45,
+    DM2_ENGAGE_CREATE_MINION_0  = 46,
+    DM2_ENGAGE_RELEASE_MINION   = 47,
+    DM2_ENGAGE_CREATE_MINION_1  = 48,
+    DM2_ENGAGE_CREATE_MINION_2  = 49,
+    DM2_ENGAGE_CREATE_MINION_3  = 50,
+    DM2_ENGAGE_LOAD_INTERFACE   = 53
+} DM2_V1_EngageCommandType;
+
+/* Command string entry — the pre-resolved action parameters.
+ * In the reference these come from DM2_QUERY_CUR_CMDSTR_ENTRY(n)
+ * where n indexes fields of the current command definition.
+ *
+ * Source: skengage.cpp various QUERY_CUR_CMDSTR_ENTRY calls */
+typedef struct {
+    int16_t skill_type;       /* entry 0: primary skill */
+    int16_t action_id;        /* entry 2: action case id (vw_54) */
+    int16_t power_base;       /* entry 3: base power (vol_20) */
+    int16_t power_random;     /* entry 4: power + RANDBIT */
+    int16_t delay;            /* entry 5: action delay (vw_60) */
+    int16_t spell_param;      /* entry 6: spell parameter */
+    int16_t defense_class;    /* entry 7: hand defense class */
+    int16_t skill_exp;        /* entry 9: skill experience (vo_68) */
+    int16_t sound_effect;     /* entry 0xd: sound effect id */
+    int16_t cooldown_base;    /* entry 0xe: cooldown duration */
+    int16_t damage_type;      /* entry 0x10: damage type (vw_64) */
+} DM2_V1_EngageCmdStr;
+
+/* Engage command request — all inputs the dispatcher needs. */
+typedef struct {
+    int hero_index;
+    int hand;                 /* 0 = left, 1 = right (curactmode) */
+    int hero_alive;
+    int16_t hero_hp;
+    int16_t hero_max_hp;
+    int16_t hero_mp;
+    int16_t hero_abs_dir;
+    int16_t hero_party_pos;
+    int16_t item_handle;      /* item in hand, -1 if empty */
+    int16_t party_x;
+    int16_t party_y;
+    int16_t party_dir;
+    int16_t party_map;
+    int16_t creature_at_target; /* creature handle at target tile, -1 if none */
+    int16_t tile_value;       /* raw tile at target */
+    uint8_t cmd_flag_8000;    /* high bit of command word */
+    DM2_V1_EngageCmdStr cmd;
+    uint32_t game_tick;
+} DM2_V1_EngageCommandRequest;
+
+/* Engage command receipt — what the dispatcher did. */
+typedef struct {
+    int valid;
+    int fail_closed;
+    int hero_dead;
+    int action_dispatched;
+
+    DM2_V1_EngageCommandType action_type;
+    int success;
+
+    int attack_queued;
+    int spell_cast;
+    int weapon_wielded;
+    int creature_confused;
+    int light_toggled;
+    int cloud_created;
+    int consumed;
+    int equipped;
+    int missile_shot;
+    int healed_self;
+    int healed_party;
+    int mana_gained;
+    int stepped_forward;
+    int minion_created;
+    int minion_released;
+    int minion_dest_set;
+    int position_swapped;
+    int interface_loaded;
+
+    int16_t cooldown_applied;
+    int16_t stamina_cost;
+    int16_t skill_exp_gained;
+} DM2_V1_EngageCommandReceipt;
+
+/* DM2_ENGAGE_COMMAND — dispatch a hand action.
+ *
+ * Takes the hero index and the resolved command parameters.
+ * Returns 1 if the action succeeded, 0 if it failed or was
+ * blocked (hero dead, invalid action, etc.).
+ *
+ * Most sub-functions (WIELD_WEAPON, CAST_CHAMPION_MISSILE,
+ * CREATE_MINION, etc.) are fail-closed until their respective
+ * modules are bound to live game data.
+ *
+ * Source: skengage.cpp:23-869 DM2_ENGAGE_COMMAND */
+int dm2_v1_engage_command(
+    const DM2_V1_EngageCommandRequest *request,
+    DM2_V1_EngageCommandReceipt *receipt);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* FIRESTAFF_DM2_V1_ENGAGE_COMMAND_PC34_COMPAT_H */
