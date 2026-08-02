@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.223
+- Replace synthetic dungeon names with binary-verified creature names from Track 02 UD 0x2741EF
+- Fix quest item ordering to match retrieval message order (UD 0x27713D)
+- Wire viewport dungeon name display to progression module (removes hardcoded UNAVAILABLE)
+- Verify "X" action name is real binary value at UD 0x1DEF4E
+
 # Firestaff v3.0.222
 - Theron title screen real VCE palette binding from Track 02 raw offset 0x2A06A0
 - Indexed 4bpp startup bitmap now renders with correct HuC6260 BGR333 colors

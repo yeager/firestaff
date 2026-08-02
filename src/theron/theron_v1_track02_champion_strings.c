@@ -66,7 +66,7 @@ static const char *const g_actions[THERON_TRACK02_ACTION_COUNT] = {
     "LIGHTNING",   /* 12 */
     "DISRUPT",     /* 13 */
     "MELEE",       /* 14 */
-    "X",           /* 15 — placeholder */
+    "X",           /* 15 */
     "INVOKE",      /* 16 */
     "SLASH",       /* 17 */
     "CLEAVE",      /* 18 */

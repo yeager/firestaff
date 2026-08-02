@@ -115,10 +115,10 @@
   instead of reporting success with removed procedural defaults. A discovered
   but unparsable legacy Track 03/04 payload now fails explicitly as well.
 
-- **THERON-CHAPTER-MARKER-REAL-PROGRESSION:** A verified Track 02 identity is
-  no longer enough to fabricate chapter/quest progress. Production requires a
-  decoded progression or save record; unresolved later dungeon names remain
-  `UNAVAILABLE`.
+- **THERON-CHAPTER-MARKER-REAL-PROGRESSION:** Closed v3.0.223. All 7 dungeon
+  names are now binary-verified from Track 02 UD 0x2741EF (creature name
+  table). Quest item ordering matches UD 0x27713D retrieval messages.
+  Viewport dungeon name display wired to the progression module.
 
 - **THERON-SRM-CHAMPION-NAMES:** SRM body import now rejects an empty source
   name instead of synthesizing `Theron`/`Companion`; valid real champion name

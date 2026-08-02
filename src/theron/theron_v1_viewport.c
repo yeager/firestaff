@@ -22,6 +22,7 @@
  */
 
 #include "theron_v1_viewport.h"
+#include "theron_v1_dungeon_progression.h"
 #include "theron_v1_palette.h"
 #include <string.h>
 #include <stdio.h>
@@ -601,15 +602,10 @@ void theron_vp_draw_bar(TQR_PlanarFramebuffer *fb,
     }
 }
 
-/* Get dungeon display name */
+/* Get dungeon display name from the progression module's binary-verified table */
 static const char *theron_dungeon_name(int dungeon_id) {
-    /* Only dungeon 1's display name is bound by the authenticated Track 02
-     * handoff.  Later dungeon headers/names are not present in the local
-     * corpus yet; do not expose invented labels in the viewport. */
-    if (dungeon_id == THERON_DUNGEON_1_HALL_OF_RECORDS) {
-        return "Hall of Records";
-    }
-    return "UNAVAILABLE";
+    const char *name = theron_v1_dungeon_name((Theron_DungeonID)dungeon_id);
+    return name ? name : "UNAVAILABLE";
 }
 
 /* Render the top bar: dungeon name + quest item count */

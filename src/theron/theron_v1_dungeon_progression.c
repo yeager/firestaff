@@ -45,10 +45,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0x0108e938u, /* verified initial Track 02 seed */
         .size_bytes        = 0,         /* set at load time */
     },
-    /* Dungeon 2 — header/name not yet bound to a real Track 02 record. */
+    /* Dungeon 2 — AKUTUBA (Ak-Tu-Ba): Shield Defiant.  UD 0x2741EF. */
     [THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] = {
         .id                = THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
-        .name              = "UNAVAILABLE",
+        .name              = "AKUTUBA",
         .level_count       = 2,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 1),  /* Bit 1 */
@@ -56,10 +56,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,         /* unresolved Track 02 header */
         .size_bytes        = 0,
     },
-    /* Dungeon 3 — header/name not yet bound to a real Track 02 record. */
+    /* Dungeon 3 — DRATOR (Drator's Tower): Taza Boots.  UD 0x2741F7. */
     [THERON_DUNGEON_3_ABYSS_OF_FLAMES - 1] = {
         .id                = THERON_DUNGEON_3_ABYSS_OF_FLAMES,
-        .name              = "UNAVAILABLE",
+        .name              = "DRATOR",
         .level_count       = 3,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 2),  /* Bit 2 */
@@ -67,10 +67,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 4 — header/name not yet bound to a real Track 02 record. */
+    /* Dungeon 4 — FORMIC (Formicia): Taza Poleyn.  UD 0x2741FF. */
     [THERON_DUNGEON_4_TOMB_OF_WOE - 1] = {
         .id                = THERON_DUNGEON_4_TOMB_OF_WOE,
-        .name              = "UNAVAILABLE",
+        .name              = "FORMIC",
         .level_count       = 3,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 3),  /* Bit 3 */
@@ -78,10 +78,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 5 — header/name not yet bound to a real Track 02 record. */
+    /* Dungeon 5 — SARMON (Sarmon's Lair): Soulcage.  UD 0x274207. */
     [THERON_DUNGEON_5_VAULT_OF_SECRETS - 1] = {
         .id                = THERON_DUNGEON_5_VAULT_OF_SECRETS,
-        .name              = "UNAVAILABLE",
+        .name              = "SARMON",
         .level_count       = 2,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 4),  /* Bit 4 */
@@ -89,10 +89,10 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 6 — header/name not yet bound to a real Track 02 record. */
+    /* Dungeon 6 — SHADO (Shadodan's Den): Taza Armour.  UD 0x27420F. */
     [THERON_DUNGEON_6_CASTLE_OF_FATE - 1] = {
         .id                = THERON_DUNGEON_6_CASTLE_OF_FATE,
-        .name              = "UNAVAILABLE",
+        .name              = "SHADO",
         .level_count       = 3,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 5),  /* Bit 5 */
@@ -100,10 +100,13 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 7 — header/name not yet bound to a real Track 02 record. */
+    /* Dungeon 7 — THIEF (Village of Thieves): Tazahelm.  UD 0x274217.
+     * DEMON (Demon's Gate, Retaliator) is the final boss area at UD 0x27421F
+     * and does not correspond to a separate selectable dungeon in the
+     * stage-select menu. */
     [THERON_DUNGEON_7_TOWER_OF_EPILOGUE - 1] = {
         .id                = THERON_DUNGEON_7_TOWER_OF_EPILOGUE,
-        .name              = "UNAVAILABLE",
+        .name              = "THIEF",
         .level_count       = 3,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 6),  /* Bit 6 */
@@ -118,11 +121,11 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
  * Dungeon-to-item assignment is not yet proven by loader evidence. */
 static const char *const g_quest_item_names[THERON_DUNGEON_COUNT] = {
     "Shield Defiant",
-    "Taza Poleyn",
-    "Tazahelm",
     "Taza Boots",
-    "Taza Armour",
+    "Taza Poleyn",
     "Soulcage",
+    "Taza Armour",
+    "Tazahelm",
     "Retaliator",
 };
 

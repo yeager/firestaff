@@ -372,12 +372,12 @@ static int test_dungeon_names(void) {
 
     static const char *const expected_names[THERON_DUNGEON_COUNT] = {
         "Hall of Records",
-        "Crypt of Shadows",
-        "Abyss of Flames",
-        "Tomb of Woe",
-        "Vault of Secrets",
-        "Castle of Fate",
-        "Tower of Epilogue",
+        "AKUTUBA",
+        "DRATOR",
+        "FORMIC",
+        "SARMON",
+        "SHADO",
+        "THIEF",
     };
 
     for (int i = 1; i <= THERON_DUNGEON_COUNT; i++) {

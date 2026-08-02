@@ -1,3 +1,9 @@
+- ✅ 2026-08-02 v3.0.223 Theron dungeon name and quest item parity: Replace
+  synthetic dungeon names with binary-verified creature names from Track 02
+  UD 0x2741EF (AKUTUBA/DRATOR/FORMIC/SARMON/SHADO/THIEF). Fix quest item
+  ordering to match UD 0x27713D retrieval messages. Wire viewport dungeon
+  name display to progression module. Remove "X" placeholder comment (binary
+  verified at UD 0x1DEF4E).
 - ✅ 2026-08-01 v3.0.222 Theron title screen VCE palette binding: Wire the
   real HuC6260 BGR333 palette at raw offset 0x2A06A0 through the rendering
   pipeline. New theron_v1_startup_media_bind_runtime_palette() extracts and
