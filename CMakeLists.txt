@@ -50171,6 +50171,18 @@ target_link_libraries(test_csb_v1_dungeon_loader_pc34_compat PRIVATE firestaff_m
 add_test(NAME test_csb_v1_dungeon_loader_pc34_compat COMMAND test_csb_v1_dungeon_loader_pc34_compat)
 set_tests_properties(test_csb_v1_dungeon_loader_pc34_compat PROPERTIES LABELS "csb")
 
+add_executable(test_csb_v1_amiga_asset_probe tests/test_csb_v1_amiga_asset_probe.c)
+target_include_directories(test_csb_v1_amiga_asset_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_csb_v1_amiga_asset_probe PRIVATE firestaff_m10)
+add_test(NAME csb_v1_amiga_asset_probe COMMAND test_csb_v1_amiga_asset_probe)
+set_tests_properties(csb_v1_amiga_asset_probe PROPERTIES LABELS "csb;amiga")
+
+add_executable(test_csb_v1_amiga_dungeon_probe tests/test_csb_v1_amiga_dungeon_probe.c)
+target_include_directories(test_csb_v1_amiga_dungeon_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_csb_v1_amiga_dungeon_probe PRIVATE firestaff_m10)
+add_test(NAME csb_v1_amiga_dungeon_probe COMMAND test_csb_v1_amiga_dungeon_probe)
+set_tests_properties(csb_v1_amiga_dungeon_probe PROPERTIES LABELS "csb;amiga;real_data")
+
 add_executable(test_csb_v1_dungeon_world_pc34_compat
     tests/test_csb_v1_dungeon_world_pc34_compat.c
     tests/csb_v1_dungeon_world_legacy_fixture.c)

@@ -44,7 +44,6 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
     c->name[23] = '\0';
 
     c->portrait_index = (uint8_t)(slot);
-    c->primary_class  = THERON_CLASS_FIGHTER;
     c->alive          = 1;
 
     c->health      = (int16_t)rec->hp;
@@ -61,10 +60,25 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
     c->anti_magic  = (int16_t)rec->anti_magic;
     c->anti_fire   = (int16_t)rec->anti_fire;
 
-    c->fighter_level = 0;
-    c->ninja_level   = 0;
-    c->priest_level  = 0;
-    c->wizard_level  = 0;
+    /* Skill levels from Track 02 roster — highest sub-skill per class */
+    uint8_t fl = 0, nl = 0, pl = 0, wl = 0;
+    for (int i = 0; i < 4; i++) {
+        if (rec->fighter_skills[i] > fl) fl = rec->fighter_skills[i];
+        if (rec->ninja_skills[i]   > nl) nl = rec->ninja_skills[i];
+        if (rec->priest_skills[i]  > pl) pl = rec->priest_skills[i];
+        if (rec->wizard_skills[i]  > wl) wl = rec->wizard_skills[i];
+    }
+    c->fighter_level = fl;
+    c->ninja_level   = nl;
+    c->priest_level  = pl;
+    c->wizard_level  = wl;
+
+    /* Primary class = highest class level (Fighter wins ties) */
+    c->primary_class = THERON_CLASS_FIGHTER;
+    uint8_t best = fl;
+    if (nl > best) { c->primary_class = THERON_CLASS_NINJA;  best = nl; }
+    if (pl > best) { c->primary_class = THERON_CLASS_PRIEST; best = pl; }
+    if (wl > best) { c->primary_class = THERON_CLASS_WIZARD; }
 
     c->wounds     = 0;
     c->attributes = 0;

@@ -98,6 +98,12 @@ dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
 /* DUNGEON_HEADER size = 44 (ReDMCSB DEFS.H:985) */
 #define DM2_DUNGEON_HEADER_SIZE  44
 
+/* Dungeon magic identifiers at header offset 2.
+ * PC DOS/Mac: 0x3147 = 'G1' (ASCII little-endian)
+ * FM Towns:   0x3094 = different build, same header layout */
+#define DM2_DUNGEON_MAGIC_PC     0x3147u
+#define DM2_DUNGEON_MAGIC_FMTOWNS 0x3094u
+
 /* TILE DATA START = DUNGEON_HEADER(44) + MAP_DESCRIPTORS(28*16) = 492 */
 #define DM2_TILE_DATA_START       (DM2_DUNGEON_HEADER_SIZE + 28 * 16)
 #define DM2_MAP_DESC_SIZE 16
@@ -353,7 +359,12 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     long pool_bytes_total = 0;
 
     if (!out || !dat || size < DM2_DUNGEON_HEADER_SIZE) return 0;
-    if (RD16(dat + 2) != 0x3147u || RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
+    {
+        uint16_t magic = RD16(dat + 2);
+        if (magic != DM2_DUNGEON_MAGIC_PC && magic != DM2_DUNGEON_MAGIC_FMTOWNS)
+            return 0;
+    }
+    if (RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
         return 0;
 
     map_count = (int)dat[DM2_HDR_MAP_COUNT_OFFSET];

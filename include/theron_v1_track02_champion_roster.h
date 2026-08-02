@@ -6,6 +6,17 @@
 
 #define THERON_TRACK02_CHAMPION_COUNT 8u
 
+/* DM1 skill level tiers (Neophyte=0 .. Arch Master=15) */
+#define THERON_SKILL_NONE        0u
+#define THERON_SKILL_NEOPHYTE    0u
+#define THERON_SKILL_NOVICE      1u
+#define THERON_SKILL_APPRENTICE  2u
+#define THERON_SKILL_JOURNEYMAN  3u
+#define THERON_SKILL_ARTISAN     4u
+#define THERON_SKILL_ADEPT       5u
+#define THERON_SKILL_EXPERT      6u
+#define THERON_SKILL_MASTER      7u
+
 typedef struct {
     const char *name;
     const char *title;
@@ -19,6 +30,13 @@ typedef struct {
     uint8_t  vitality;
     uint8_t  anti_magic;
     uint8_t  anti_fire;
+    /* Skill sub-levels: Fighter(Swing,Thrust,Club,Parry),
+     * Ninja(Steal,Fight,Throw,Shoot), Priest(Identify,Heal,Influence,Defend),
+     * Wizard(Fire,Air,Earth,Water). Source: DMWeb encyclopaedia. */
+    uint8_t  fighter_skills[4]; /* Swing, Thrust, Club, Parry */
+    uint8_t  ninja_skills[4];  /* Steal, Fight, Throw, Shoot */
+    uint8_t  priest_skills[4]; /* Identify, Heal, Influence, Defend */
+    uint8_t  wizard_skills[4]; /* Fire, Air, Earth, Water */
 } Theron_ChampionRecord;
 
 const Theron_ChampionRecord *theron_v1_track02_us_champion(unsigned int index);
