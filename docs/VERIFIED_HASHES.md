@@ -23,8 +23,8 @@ SHA256 checksums for known-good original game data files.
 | dm1 | DUNGEON.DAT | `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85` | 33,357 |
 | dm1-atari-st-1.2-en | GRAPHICS.DAT | `8461648c1569539122182b731cb9a61f0610ec0534a3efb54cf98e9b4b14f015` | 322,861 |
 | dm1-atari-st-1.2-en | DUNGEON.DAT | `a26f0edc4fb13e3d38551d91ad7c24f517257cfc689affe72d657f4e423853b2` | 33,442 |
-| dm2 | GRAPHICS.DAT | `aa642a6e617b6fbf47ac0c9dde7aea3ef0fcfbded07c03c57c54c4f3fa5640b2` | 8,157,169 |
-| dm2 | DUNGEON.DAT | `68e51fddf4d6c664db172f7aa4c6ffacba936dcc6ccdd7f7c0a6167066613714` | 39,411 |
+| dm2 | GRAPHICS.DAT | `c387ee42ad1b340b8bf6287f6be0e611c8221d9cb97c1758e3404aaedc0c3346` | 8,639,757 |
+| dm2 | DUNGEON.DAT | `cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef` | 39,437 |
 | dm2-pc-fr | GRAPHICS.DAT | `7b8bbf6a843b01449c1cca20438c9e5c5a8c5ba8fddad761d3e2b64c5daf1a9b` | 8,717,101 |
 | dm2-pc-fr | DUNGEON.DAT | `cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef` | 39,437 |
 | dm2-pc-de | GRAPHICS.DAT | `627cee1960f0fad93697c4c73eaea9c137d4e1ff34b6c2e6c27ac0a6f1237e77` | 8,678,304 |
