@@ -66,14 +66,20 @@ fi
 # Build --add-data args for locale files and example dungeon
 ADD_DATA_ARGS=()
 case "$(uname -s)" in
-  MINGW*|MSYS*) _SEP=";" ;;
-  *)            _SEP=":" ;;
+  MINGW*|MSYS*)
+    _SEP=";"
+    _cvt() { cygpath -w "$1"; }
+    ;;
+  *)
+    _SEP=":"
+    _cvt() { echo "$1"; }
+    ;;
 esac
 if [[ -d "$LOCALE_DIR" ]]; then
-  ADD_DATA_ARGS+=(--add-data "$LOCALE_DIR${_SEP}po/locale")
+  ADD_DATA_ARGS+=(--add-data "$(_cvt "$LOCALE_DIR")${_SEP}po/locale")
 fi
 if [[ -f "$EXAMPLE_FILE" ]]; then
-  ADD_DATA_ARGS+=(--add-data "$EXAMPLE_FILE${_SEP}assets/examples")
+  ADD_DATA_ARGS+=(--add-data "$(_cvt "$EXAMPLE_FILE")${_SEP}assets/examples")
 fi
 
 case "$(uname -s)" in

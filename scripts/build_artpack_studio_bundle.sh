@@ -78,8 +78,11 @@ LOCALE_DIR="$ROOT/po/locale"
 ADD_DATA_ARGS=()
 if [[ -d "$LOCALE_DIR" ]]; then
   case "$(uname -s)" in
-    MINGW*|MSYS*) ADD_DATA_ARGS+=(--add-data "$LOCALE_DIR;po/locale") ;;
-    *)            ADD_DATA_ARGS+=(--add-data "$LOCALE_DIR:po/locale") ;;
+    MINGW*|MSYS*)
+      _WIN_LOCALE="$(cygpath -w "$LOCALE_DIR")"
+      ADD_DATA_ARGS+=(--add-data "$_WIN_LOCALE;po/locale")
+      ;;
+    *) ADD_DATA_ARGS+=(--add-data "$LOCALE_DIR:po/locale") ;;
   esac
 fi
 
