@@ -72,9 +72,9 @@ static const DM2_V1_CCMOpcodeDef g_opcode_table[DM2_CCM_MAX_OPCODES] = {
     { 0x08, "ATTACKS_PARTY",           0, 0, DM2_V1_CCM_SRC_ATTACKS_PARTY },
     { 0x09, "WALK_NOW",                0, 0, DM2_V1_CCM_SRC_WALK_NOW },
     { 0x0A, "STEAL_FROM_CHAMPION",     1, 0, DM2_V1_CCM_SRC_STEAL_FROM_CHAMPION },
-    { 0x0B, "CCM0B",                   0, 1, DM2_V1_CCM_SRC_CCM0B },
-    { 0x0C, "CCM0C",                   0, 1, DM2_V1_CCM_SRC_CCM0C },
-    { 0x0D, "CCM0C",                   0, 1, DM2_V1_CCM_SRC_CCM0C },
+    { 0x0B, "CCM0B",                   0, 0, DM2_V1_CCM_SRC_CCM0B },
+    { 0x0C, "CCM0C",                   0, 0, DM2_V1_CCM_SRC_CCM0C },
+    { 0x0D, "CCM0C",                   0, 0, DM2_V1_CCM_SRC_CCM0C },
     { 0x0E, "SHOOT_ITEM",              2, 0, DM2_V1_CCM_SRC_SHOOT_ITEM },
     { 0x0F, "SHOOT_ITEM",              2, 0, DM2_V1_CCM_SRC_SHOOT_ITEM },
     { 0x13, "KILL_ON_TIMER_POSITION",  1, 0, DM2_V1_CCM_SRC_KILL_ON_TIMER_POSITION },
@@ -93,22 +93,22 @@ static const DM2_V1_CCMOpcodeDef g_opcode_table[DM2_CCM_MAX_OPCODES] = {
     { 0x2C, "TAKES_ITEM",              0, 0, DM2_V1_CCM_SRC_TAKES_ITEM },
     { 0x2D, "PUTS_DOWN_ITEM",          0, 0, DM2_V1_CCM_SRC_PUTS_DOWN_ITEM },
     { 0x2E, "PUTS_DOWN_ITEM",          0, 0, DM2_V1_CCM_SRC_PUTS_DOWN_ITEM },
-    { 0x2F, "ACTIVATES_WALL",          0, 1, DM2_V1_CCM_SRC_ACTIVATES_WALL },
-    { 0x30, "ACTIVATES_WALL",          0, 1, DM2_V1_CCM_SRC_ACTIVATES_WALL },
-    { 0x31, "ACTIVATES_WALL",          0, 1, DM2_V1_CCM_SRC_ACTIVATES_WALL },
-    { 0x35, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
-    { 0x36, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
-    { 0x37, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
-    { 0x38, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
-    { 0x39, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
-    { 0x3A, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
-    { 0x3B, "TRANSFORM",               0, 1, DM2_V1_CCM_SRC_TRANSFORM },
-    { 0x3C, "TRANSFORM",               0, 1, DM2_V1_CCM_SRC_TRANSFORM },
+    { 0x2F, "ACTIVATES_WALL",          0, 0, DM2_V1_CCM_SRC_ACTIVATES_WALL },
+    { 0x30, "ACTIVATES_WALL",          0, 0, DM2_V1_CCM_SRC_ACTIVATES_WALL },
+    { 0x31, "ACTIVATES_WALL",          0, 0, DM2_V1_CCM_SRC_ACTIVATES_WALL },
+    { 0x35, "USES_LADDER_HOLE",        0, 0, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x36, "USES_LADDER_HOLE",        0, 0, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x37, "USES_LADDER_HOLE",        0, 0, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x38, "USES_LADDER_HOLE",        0, 0, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x39, "USES_LADDER_HOLE",        0, 0, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x3A, "USES_LADDER_HOLE",        0, 0, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x3B, "TRANSFORM",               0, 0, DM2_V1_CCM_SRC_TRANSFORM },
+    { 0x3C, "TRANSFORM",               0, 0, DM2_V1_CCM_SRC_TRANSFORM },
     { 0x3D, "EXPLODE_OR_SUMMON",       1, 0, DM2_V1_CCM_SRC_EXPLODE_OR_SUMMON },
     { 0x3E, "EXPLODE_OR_SUMMON",       1, 0, DM2_V1_CCM_SRC_EXPLODE_OR_SUMMON },
     { 0x3F, "EXPLODE_OR_SUMMON",       1, 0, DM2_V1_CCM_SRC_EXPLODE_OR_SUMMON },
     { 0x40, "EXPLODE_OR_SUMMON",       1, 0, DM2_V1_CCM_SRC_EXPLODE_OR_SUMMON },
-    { 0x55, "DM2_1B7D5",               0, 1, DM2_V1_CCM_SRC_1B7D5 },
+    { 0x55, "DM2_1B7D5",               0, 0, DM2_V1_CCM_SRC_1B7D5 },
     { 0xFF, "HALT",                    0, 0, -1 /* Firestaff-internal control */ },
 };
 
@@ -349,6 +349,48 @@ static int dispatch_opcode(DM2_V1_CCMState *state, int opcode,
              * covers b_1a 0x3D-0x40. */
             state->flags[10] = 1;
             break;
+        case DM2_CCM_OP_CCM0B:
+            /* c_creature.cpp:2993 DM2_CREATURE_CCM0B — line-of-sight
+             * check / per-creature counter. */
+            state->flags[16] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
+            break;
+        case DM2_CCM_OP_CCM0C:
+        case DM2_CCM_OP_CCM0C_ALT:
+            /* c_creature.cpp:2995-2997 DM2_CREATURE_CCM0C — per-creature
+             * counter dispatch, covers b_1a 0x0C and 0x0D. */
+            state->flags[17] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
+            break;
+        case DM2_CCM_OP_ACTIVATES_WALL:
+        case DM2_CCM_OP_ACTIVATES_WALL_30:
+        case DM2_CCM_OP_ACTIVATES_WALL_31:
+            /* c_creature.cpp:3069 DM2_CREATURE_ACTIVATES_WALL —
+             * creature triggers a wall mechanism (sensor/actuator). */
+            state->flags[18] = 1;
+            break;
+        case DM2_CCM_OP_USES_LADDER_HOLE:
+        case DM2_CCM_OP_USES_LADDER_HOLE_36:
+        case DM2_CCM_OP_USES_LADDER_HOLE_37:
+        case DM2_CCM_OP_USES_LADDER_HOLE_38:
+        case DM2_CCM_OP_USES_LADDER_HOLE_39:
+        case DM2_CCM_OP_USES_LADDER_HOLE_3A:
+            /* c_creature.cpp:3074 DM2_CREATURE_USES_LADDER_HOLE —
+             * creature moves between levels via ladder or pit. */
+            state->flags[19] = 1;
+            state->flags[20] = opcode - DM2_CCM_OP_USES_LADDER_HOLE;
+            break;
+        case DM2_CCM_OP_TRANSFORM:
+        case DM2_CCM_OP_TRANSFORM_3C:
+            /* c_creature.cpp:3079-3081 DM2_CREATURE_TRANSFORM —
+             * creature type mutation (e.g. cocoon hatching). */
+            state->flags[21] = 1;
+            state->flags[22] = (opcode == DM2_CCM_OP_TRANSFORM) ? 0 : 1;
+            break;
+        case DM2_CCM_OP_1B7D5:
+            /* c_creature.cpp:3204 DM2_1B7D5 — cloud spawn utility. */
+            state->flags[23] = 1;
+            break;
         case DM2_CCM_OP_HALT:
             state->halted = 1;
             s_total_halted++;
@@ -472,9 +514,9 @@ const char *dm2_v1_ccm_source_evidence(void) {
         "  0x17 PLACE_MERCHANDISE / 0x18 TAKE_MERCHANDISE\n"
         "  0x19/0x29/0x2A/0x2D/0x2E PUTS_DOWN_ITEM / 0x1A/0x2B/0x2C TAKES_ITEM\n"
         "  0x27/0x28 CAST_SPELL / 0x3D-0x40 EXPLODE_OR_SUMMON / 0xFF HALT (internal)\n"
-        "Stubbed source groups (return DM2_CCM_RESULT_UNKNOWN_OPCODE):\n"
         "  0x0B CCM0B / 0x0C/0x0D CCM0C / 0x2F-0x31 ACTIVATES_WALL\n"
         "  0x35-0x3A USES_LADDER_HOLE / 0x3B/0x3C TRANSFORM / 0x55 DM2_1B7D5\n"
+        "All 48 source opcodes now live (flags 16-23 for bridge dispatch)\n"
         "No-handler bytes (source 'no branch taken') return UNKNOWN_OPCODE:\n"
         "  0x00, 0x10-0x12, 0x14, 0x1B-0x25, 0x32-0x34, 0x41-0x54, 0x56-0xFE\n"
         "V1 invariant: CCM NEVER mutates party state directly.\n";

@@ -226,6 +226,7 @@ typedef struct {
     int push_button_invoked;
     int creature_killer_invoked;
     int door_bit13_toggled;
+    int the_end_triggered;
     int unknown_type_skipped;
     int fail_closed;
 } DM2_V1_ActuatorEventReceipt;
@@ -279,6 +280,8 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               int map, int x, int y,
                               int action_type, int direction,
                               uint32_t game_tick,
+                              uint16_t *global_words,
+                              uint16_t global_word_count,
                               DM2_V1_ActuatorEventReceipt *receipt);
 
 /* Full ACTUATE_FLOOR_MECHA dispatch.
@@ -289,6 +292,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                int map, int x, int y,
                                int action_type, int direction,
                                uint32_t game_tick,
+                               uint16_t *global_words,
+                               uint16_t global_word_count,
                                DM2_V1_ActuatorEventReceipt *receipt);
 
 /* ACTIVATE_TICK_GENERATOR — queue a tick generator timer.

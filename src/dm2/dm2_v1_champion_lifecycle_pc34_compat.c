@@ -99,9 +99,16 @@ int dm2_v1_bring_champion_to_life(
     receipt->new_cur_hp = new_max / 2;
     receipt->champion_revived = 1;
 
-    /* R_36EFE reset, item slot clearing, heroflag, enchantment clear
-     * require live hero struct. Fail-closed for state mutation. */
-    receipt->fail_closed = 1;
+    /* c_hero.cpp:924: weight = 0 */
+    receipt->clear_weight = 1;
+    /* c_hero.cpp:928-951: item[0..29] = -1 */
+    receipt->clear_item_slots = 1;
+    receipt->item_slot_count = 30;
+    /* c_hero.cpp:942: heroflag |= 0x4000 (alive) */
+    receipt->heroflag_set_bits = 0x4000;
+    /* c_hero.cpp:943-944: clear aura + power enchantments */
+    receipt->clear_ench_aura = 1;
+    receipt->clear_ench_power = 1;
 
     return 1;
 }

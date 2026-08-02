@@ -14,6 +14,7 @@
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
 #include "dm2_v1_move_record_to_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_skproject_core.h"
 #include "dm2_v1_tile_record_walk_pc34_compat.h"
 
 /* ── Timer construction helpers ─────────────────────────────────────── */
@@ -742,6 +743,8 @@ typedef struct {
     int action_type;   /* timer ActionType (from value_b high byte) */
     int direction;     /* timer Value2 (from value_b low byte) */
     uint32_t game_tick;
+    uint16_t *global_words;
+    uint16_t global_word_count;
     DM2_V1_ActuatorEventReceipt *receipt;
 } WallMechaCtx;
 
@@ -937,9 +940,11 @@ static int wall_mecha_visitor(void *context,
         break;
     }
 
-    /* ── THE_END (0x12) skevent.cpp:1934-1939 ────────────────────── */
+    /* ── THE_END (0x12) c_tim_proc.cpp:2212-2220 (switch case 11)
+     * Sets ddat.v1e0240 = 1 (game exit flag) and calls PREPARE_EXIT.
+     * Receipt: the_end_triggered = 1 signals the runtime to end the game. */
     case DM2_ACTU_THE_END:
-        r->fail_closed++;
+        r->the_end_triggered++;
         break;
 
     /* ── ORNATE_ANIMATOR_2 (0x32) skevent.cpp:1940-1943 ──────────── */
@@ -1078,26 +1083,43 @@ static int wall_mecha_visitor(void *context,
     }
 
     /* ── INVERSE_FLAG (0x43) skevent.cpp:2002-2005 ──────────────── */
-    case DM2_ACTU_INVERSE_FLAG:
-        /* Full path requires UPDATE_GLOB_VAR; forward the actuator chain. */
+    case DM2_ACTU_INVERSE_FLAG: {
+        int fwd_action = dm2_actu_once_only(record)
+            ? (int)dm2_actu_action_type(record) : ctx->action_type;
+        if (ctx->global_words && ctx->global_word_count > 0) {
+            DM2_V1_SkprojectUpdateGlobVarReceipt gv_receipt;
+            dm2_v1_skproject_update_glob_var(
+                dm2_actu_data(record), (uint16_t)fwd_action, 0,
+                ctx->global_words, ctx->global_word_count, &gv_receipt);
+        }
         dm2_v1_invoke_actuator(ctx->queue, record,
-            dm2_actu_once_only(record)
-                ? (int)dm2_actu_action_type(record)
-                : ctx->action_type,
-            0, ctx->map, ctx->game_tick);
+            fwd_action, 0, ctx->map, ctx->game_tick);
         r->inverse_flag_invoked++;
         break;
+    }
 
     /* ── TEST_FLAG (0x44) skevent.cpp:2006-2009 ─────────────────── */
-    case DM2_ACTU_TEST_FLAG:
-        /* Full path requires GET_GLOB_VAR; forward unconditionally. */
-        dm2_v1_invoke_actuator(ctx->queue, record,
-            dm2_actu_once_only(record)
-                ? (int)dm2_actu_action_type(record)
-                : ctx->action_type,
-            0, ctx->map, ctx->game_tick);
+    case DM2_ACTU_TEST_FLAG: {
+        int fwd_action = dm2_actu_once_only(record)
+            ? (int)dm2_actu_action_type(record) : ctx->action_type;
+        int should_forward = 1;
+        if (ctx->global_words && ctx->global_word_count > 0) {
+            uint16_t gv_val = 0;
+            DM2_V1_SkprojectGetGlobVarReceipt gv_receipt;
+            dm2_v1_skproject_get_glob_var(
+                dm2_actu_data(record),
+                ctx->global_words, ctx->global_word_count,
+                &gv_val, &gv_receipt);
+            if (gv_val == 0)
+                should_forward = 0;
+        }
+        if (should_forward) {
+            dm2_v1_invoke_actuator(ctx->queue, record,
+                fwd_action, 0, ctx->map, ctx->game_tick);
+        }
         r->test_flag_invoked++;
         break;
+    }
 
     /* ── PUSH_BUTTON_SWITCH (0x46) skevent.cpp:2010-2028 ────────── */
     case DM2_ACTU_PUSH_BUTTON_SWITCH:
@@ -1122,6 +1144,8 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               int map, int x, int y,
                               int action_type, int direction,
                               uint32_t game_tick,
+                              uint16_t *global_words,
+                              uint16_t global_word_count,
                               DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1142,6 +1166,8 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.action_type = action_type;
     ctx.direction   = direction;
     ctx.game_tick   = game_tick;
+    ctx.global_words      = global_words;
+    ctx.global_word_count = global_word_count;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -1297,24 +1323,43 @@ static int floor_mecha_visitor(void *context,
     }
 
     /* ── INVERSE_FLAG (0x43) skevent.cpp:2238-2241 ──────────────── */
-    case DM2_ACTU_INVERSE_FLAG:
+    case DM2_ACTU_INVERSE_FLAG: {
+        int fwd_action = dm2_actu_once_only(record)
+            ? (int)dm2_actu_action_type(record) : ctx->action_type;
+        if (ctx->global_words && ctx->global_word_count > 0) {
+            DM2_V1_SkprojectUpdateGlobVarReceipt gv_receipt;
+            dm2_v1_skproject_update_glob_var(
+                dm2_actu_data(record), (uint16_t)fwd_action, 0,
+                ctx->global_words, ctx->global_word_count, &gv_receipt);
+        }
         dm2_v1_invoke_actuator(ctx->queue, record,
-            dm2_actu_once_only(record)
-                ? (int)dm2_actu_action_type(record)
-                : ctx->action_type,
-            0, ctx->map, ctx->game_tick);
+            fwd_action, 0, ctx->map, ctx->game_tick);
         r->inverse_flag_invoked++;
         break;
+    }
 
     /* ── TEST_FLAG (0x44) skevent.cpp:2242-2245 ─────────────────── */
-    case DM2_ACTU_TEST_FLAG:
-        dm2_v1_invoke_actuator(ctx->queue, record,
-            dm2_actu_once_only(record)
-                ? (int)dm2_actu_action_type(record)
-                : ctx->action_type,
-            0, ctx->map, ctx->game_tick);
+    case DM2_ACTU_TEST_FLAG: {
+        int fwd_action = dm2_actu_once_only(record)
+            ? (int)dm2_actu_action_type(record) : ctx->action_type;
+        int should_forward = 1;
+        if (ctx->global_words && ctx->global_word_count > 0) {
+            uint16_t gv_val = 0;
+            DM2_V1_SkprojectGetGlobVarReceipt gv_receipt;
+            dm2_v1_skproject_get_glob_var(
+                dm2_actu_data(record),
+                ctx->global_words, ctx->global_word_count,
+                &gv_val, &gv_receipt);
+            if (gv_val == 0)
+                should_forward = 0;
+        }
+        if (should_forward) {
+            dm2_v1_invoke_actuator(ctx->queue, record,
+                fwd_action, 0, ctx->map, ctx->game_tick);
+        }
         r->test_flag_invoked++;
         break;
+    }
 
     default:
         r->unknown_type_skipped++;
@@ -1332,6 +1377,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                int map, int x, int y,
                                int action_type, int direction,
                                uint32_t game_tick,
+                               uint16_t *global_words,
+                               uint16_t global_word_count,
                                DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1352,6 +1399,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.action_type = action_type;
     ctx.direction   = direction;
     ctx.game_tick   = game_tick;
+    ctx.global_words      = global_words;
+    ctx.global_word_count = global_word_count;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));

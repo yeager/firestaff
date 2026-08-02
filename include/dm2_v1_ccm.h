@@ -67,7 +67,7 @@ extern "C" {
 /* ── Constants ───────────────────────────────────────────────────── */
 #define DM2_CCM_MAX_OPCODES        48    /* source-matrix table rows */
 #define DM2_CCM_STACK_SIZE         16    /* operand stack depth */
-#define DM2_CCM_FLAG_COUNT         16    /* flag registers */
+#define DM2_CCM_FLAG_COUNT         24    /* flag registers */
 #define DM2_CCM_MAX_PROGRAM_OPS    64    /* bounded imported CCM bytecode */
 #define DM2_CCM_MAX_PROGRAM_ARGS    3    /* current max operand width */
 

@@ -97,19 +97,45 @@ int dm2_v1_wound_player(
         return 0;
     }
 
-    /* Armor absorption loop and HP reduction require live hero data,
-     * hero_2c1d_135d (armor value query), QUERY_PLAYER_SKILL_LV,
-     * and KILL_CHAMPION. Fail-closed. */
-    receipt->fail_closed = 1;
-    receipt->hero_wounded = 1;
+    /* Armor absorption loop: c_hero.cpp:1496-1740.
+     * Each armor slot absorbs damage based on type:
+     *   physical/sharp: full armor value
+     *   fire/lightning/magic: armor_value / 2
+     *   poison: no absorption */
+    {
+        int16_t remaining = request->wound_amount;
+        int16_t total_absorbed = 0;
+        int i;
 
-    int16_t net_damage = request->wound_amount;
-    receipt->damage_dealt = net_damage;
-    receipt->hp_remaining = request->hero_hp - net_damage;
+        if (request->damage_type != DM2_DMG_POISON) {
+            for (i = 0; i < 6 && remaining > 0; i++) {
+                int16_t armor_val;
+                if (!(request->armor_mask & (1u << i)))
+                    continue;
+                armor_val = request->hero_armor_slots[i];
+                if (armor_val <= 0)
+                    continue;
+                if (request->damage_type == DM2_DMG_FIRE ||
+                    request->damage_type == DM2_DMG_LIGHTNING ||
+                    request->damage_type == DM2_DMG_MAGIC) {
+                    armor_val /= 2;
+                }
+                if (armor_val > remaining)
+                    armor_val = remaining;
+                remaining -= armor_val;
+                total_absorbed += armor_val;
+            }
+        }
 
-    if (receipt->hp_remaining <= 0) {
-        receipt->hp_remaining = 0;
-        receipt->hero_killed = 1;
+        receipt->damage_absorbed = total_absorbed;
+        receipt->damage_dealt = remaining;
+        receipt->hero_wounded = (remaining > 0) ? 1 : 0;
+        receipt->hp_remaining = request->hero_hp - remaining;
+
+        if (receipt->hp_remaining <= 0) {
+            receipt->hp_remaining = 0;
+            receipt->hero_killed = 1;
+        }
     }
 
     return 1;

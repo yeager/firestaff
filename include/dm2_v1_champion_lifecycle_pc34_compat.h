@@ -64,13 +64,20 @@ typedef struct {
     int16_t current_max_hp;
 } DM2_V1_BringChampionToLifeRequest;
 
-/* BRING_CHAMPION_TO_LIFE receipt */
+/* BRING_CHAMPION_TO_LIFE receipt.
+ * Source: c_hero.cpp:916-954 DM2_BRING_CHAMPION_TO_LIFE */
 typedef struct {
     int valid;
     int fail_closed;
     int champion_revived;
     int16_t new_max_hp;
     int16_t new_cur_hp;
+    uint16_t heroflag_set_bits;
+    uint8_t clear_weight;
+    uint8_t clear_ench_aura;
+    uint8_t clear_ench_power;
+    uint8_t clear_item_slots;
+    uint8_t item_slot_count;
 } DM2_V1_BringChampionToLifeReceipt;
 
 int dm2_v1_select_champion(

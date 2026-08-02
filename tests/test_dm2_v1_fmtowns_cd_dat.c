@@ -41,7 +41,9 @@ static void test_disc_track_mapping(void) {
     assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 0) == 2);
     assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 1) == 3);
     assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 6) == 8);
-    assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 7) == 0);
+    assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 7) == 9);
+    assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 8) == 10);
+    assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 9) == 0);
     assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, -1) == 0);
     assert(dm2_v1_fmtowns_cd_dat_disc_track(NULL, 0) == 0);
 }

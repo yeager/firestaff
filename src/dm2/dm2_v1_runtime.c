@@ -41,6 +41,8 @@
 #include "dm2_v1_trigger.h"
 #include "dm2_v1_world_model.h"
 #include "dm2_v1_i18n.h"
+#include "dm2_v1_champion_lifecycle_pc34_compat.h"
+#include "dm2_v1_save_load.h"
 #include "fs_portable_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -4725,9 +4727,29 @@ static int dm2_runtime_resurrection_timer(void *user,
     phase = (uint8_t)(timer->value_b & 0xff);
 
     if (phase == 0) {
-        /* TODO: wire dm2_v1_bring_champion_to_life once DM2_ChampionRecord
-           has weight/ench_aura/ench_power fields (Q-DM2 champion lifecycle) */
-        (void)ci;
+        DM2_V1_BringChampionToLifeRequest req;
+        DM2_V1_BringChampionToLifeReceipt res;
+        DM2_ChampionRecord *champ;
+
+        if (ci < 0 || ci >= 4)
+            return 1;
+        champ = (DM2_ChampionRecord *)rt->session_snapshot.champion_data[ci];
+        if (!champ)
+            return 1;
+
+        req.hero_index = (int16_t)ci;
+        req.current_max_hp = (int16_t)champ->max_hp;
+        if (dm2_v1_bring_champion_to_life(&req, &res) && res.champion_revived) {
+            champ->max_hp = (uint16_t)res.new_max_hp;
+            champ->cur_hp = (uint16_t)res.new_cur_hp;
+            if (res.heroflag_set_bits)
+                champ->hero_flag |= (uint8_t)(res.heroflag_set_bits >> 8);
+            if (res.clear_item_slots) {
+                int s;
+                for (s = 0; s < (int)res.item_slot_count && s < DM2_CHAMPION_INVENTORY_SLOTS; s++)
+                    champ->inventory[s] = 0xFFFFFFFF;
+            }
+        }
     }
     return 1;
 }
@@ -4895,6 +4917,7 @@ static int dm2_runtime_actuate_wall_mecha(void *user,
                               rt->dungeon_level, x, y,
                               action_type, direction,
                               (uint32_t)rt->tick_count,
+                              NULL, 0,
                               &actu_receipt);
     return 1;
 }

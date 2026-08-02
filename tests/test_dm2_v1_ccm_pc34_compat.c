@@ -338,7 +338,8 @@ static int test_step_unknown_opcode(void) {
 static int test_step_stubbed_opcode(void) {
     DM2_V1_CCMState s;
     dm2_v1_ccm_init_state(&s);
-    int rc = dm2_v1_ccm_step(&s, 0x0B, NULL, 0, 0);  /* CCM0B stubbed */
+    /* 0x0B is now live; use a "no branch taken" byte instead */
+    int rc = dm2_v1_ccm_step(&s, 0x10, NULL, 0, 0);
     return rc == (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
 }
 
@@ -470,14 +471,8 @@ static int test_stack_capacity(void) {
 /* ── Stubbed + no-handler opcodes return UNKNOWN (42) ─────────── */
 
 static int test_stubbed_opcodes_return_unknown(void) {
-    /* Stubbed source groups and source "no branch taken" bytes must all
-     * return UNKNOWN_OPCODE (fail-closed, never simulated). */
+    /* Source "no branch taken" bytes must return UNKNOWN_OPCODE. */
     int stub_ops[] = {
-        0x0B, 0x0C, 0x0D,              /* CCM0B/CCM0C stubs */
-        0x2F, 0x30, 0x31,              /* ACTIVATES_WALL stubs */
-        0x35, 0x3A,                    /* USES_LADDER_HOLE stubs */
-        0x3B, 0x3C,                    /* TRANSFORM stubs */
-        0x55,                          /* DM2_1B7D5 stub */
         0x00, 0x10, 0x12, 0x14,        /* source: no branch taken */
         0x1B, 0x20, 0x25, 0x32, 0x34,  /* source: no branch taken */
     };
@@ -559,7 +554,8 @@ static int test_decode_program_rejects_truncated_args(void) {
 }
 
 static int test_decode_program_rejects_stubbed_opcode(void) {
-    const uint8_t bytes[] = { 0x0B };
+    /* Use a "no branch taken" byte — these are never valid opcodes. */
+    const uint8_t bytes[] = { 0x10 };
     DM2_V1_CCMProgram program;
     return dm2_v1_ccm_decode_program(bytes, sizeof(bytes), &program) ==
            (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
@@ -606,6 +602,25 @@ static int test_decode_program_accepts_source_skip_aliases(void) {
            s.flags[14] == 1 &&
            s.flags[15] == 1 &&
            s.next_state == DM2_CCM_OP_WALK_NOW;
+}
+
+static int test_formerly_stubbed_opcodes_now_live(void) {
+    /* All 15 formerly-stubbed opcodes now set flags 16-23. */
+    struct { int op; int flag; } cases[] = {
+        { 0x0B, 16 }, { 0x0C, 17 }, { 0x0D, 17 },
+        { 0x2F, 18 }, { 0x30, 18 }, { 0x31, 18 },
+        { 0x35, 19 }, { 0x3A, 19 },
+        { 0x3B, 21 }, { 0x3C, 21 },
+        { 0x55, 23 },
+    };
+    for (size_t i = 0; i < sizeof(cases)/sizeof(cases[0]); i++) {
+        DM2_V1_CCMState s;
+        dm2_v1_ccm_init_state(&s);
+        int rc = dm2_v1_ccm_step(&s, cases[i].op, NULL, 0, 0);
+        if (rc != (int)DM2_CCM_RESULT_OK) return 0;
+        if (s.flags[cases[i].flag] != 1) return 0;
+    }
+    return 1;
 }
 
 /* ── Main ─────────────────────────────────────────────────────── */
@@ -696,6 +711,7 @@ int main(void) {
     TEST(decode_program_rejects_stubbed_opcode);
     TEST(decode_program_accepts_ccm06_family_and_walk09);
     TEST(decode_program_accepts_source_skip_aliases);
+    TEST(formerly_stubbed_opcodes_now_live);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;

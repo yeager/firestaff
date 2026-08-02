@@ -1446,6 +1446,14 @@ int dm2_v1_runtime_is_passable(int level, int x, int y);
  * Lower 5 bits of tile word — same encoding as DM1. */
 int dm2_v1_runtime_get_square_type(int level, int x, int y);
 
+/* ── i18n text overlay ────────────────────────────────────────────── */
+/* Query the i18n text overlay for a GDAT text key.
+ * Returns decoded English text when running FM Towns in non-JA locale.
+ * Returns NULL when no overlay is loaded or locale is JA. */
+const uint8_t *dm2_v1_runtime_i18n_text(int category, int index, int field,
+                                        size_t *out_size);
+int dm2_v1_runtime_i18n_ready(void);
+
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *dm2_v1_runtime_source_evidence(void);
 

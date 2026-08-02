@@ -36,7 +36,7 @@ extern "C" {
 #define DM2_FMTOWNS_CD_DAT_SIZE        40u
 #define DM2_FMTOWNS_CD_DAT_ENTRY_COUNT 10u
 #define DM2_FMTOWNS_CD_DAT_ENTRY_SIZE   4u
-#define DM2_FMTOWNS_CDDA_TRACK_COUNT    7u
+#define DM2_FMTOWNS_CDDA_TRACK_COUNT    9u  /* CD.DAT has 9 audio entries; disc tracks 2-10 */
 
 #define DM2_FMTOWNS_CD_TYPE_DATA  0x06
 #define DM2_FMTOWNS_CD_TYPE_AUDIO_FIRST 0x03
