@@ -25,6 +25,7 @@ typedef struct {
     int mns_bound;
     uint32_t mns_size;
     uint64_t mns_fnv1a64;
+    uint32_t ai_func_ptr;     /* SH-2 function pointer from DM.BIN 0x0383A8 */
 } Nexus_CreatureType;
 
 typedef struct {

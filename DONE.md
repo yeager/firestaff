@@ -1,3 +1,11 @@
+- ✅ 2026-08-02 v3.0.248 Nexus: creature AI dispatch table + DMWeb format integration
+  30 creature AI function pointers extracted from DM.BIN 0x0383A8 (yam\crenet.c).
+  Index 0 ANTMAN = 0xFFFFFFFF (default), index 27 LORD_RIB = 0x00000000 (null).
+  Shared handlers: D_GOLD/ROCKPILE share 0x060477C8, S_SHIELD/BIGWORM share
+  0x06047870. DMWeb DGN/ITEM.IBS/SMAP/FACE/PRS3 format docs integrated.
+  Full ITEM.IBS item declaration format (243 items, 6 categories, carry locations,
+  actions, floor/inventory image indices, string references) confirmed against
+  real 100352-byte file. OBAKE.MNS DMDF structure verified against user analysis.
 - ✅ 2026-08-02 v3.0.247 Nexus: DGN Structure1F parsing + PRS3 decompressor + format docs (v3.0.247)
   DGN level decoder now parses all Structure1F sub-structures: floor items, floor
   decorations, floor sensors, alcoves, wall decorations, wall sensors. All 16 DGN

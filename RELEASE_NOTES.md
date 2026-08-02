@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.248
+- Nexus: 30 creature AI function pointers from DM.BIN 0x0383A8 (yam\crenet.c dispatch table)
+- Nexus: CreatureType struct gains ai_func_ptr field for SH-2 behavior dispatch
+- Nexus: DMWeb format documentation integration (DGN, ITEM.IBS, SMAP, FACE, PRS3)
+
 # Firestaff v3.0.247
 - Nexus: DGN Structure1F full parsing — floor items, decorations, sensors, alcoves, wall decorations, wall sensors
 - Nexus: wall decoration/sensor structs corrected to face-relative layout per DMWeb docs

@@ -20,40 +20,41 @@ static uint64_t creatures_fnv1a64(const uint8_t *data, long size) {
 }
 
 /* Real Nexus creature roster — 30 MNS filenames from DM.BIN 0x0385F0.
- * Stats are placeholder; real stats come from MNS file headers and
- * DGN actor records. Source: yam\monsobj.c filename table. */
-static const struct { const char *name; const char *mns; } g_creature_defs[] = {
-    {"Ant Man",       "ANTMAN.MNS"},
-    {"Mummy",         "MUMMY.MNS"},
-    {"Ghost",         "GHOST.MNS"},
-    {"Vexirk",        "VEXIRK.MNS"},
-    {"Giggler",       "GIGGLER.MNS"},
-    {"Golem",         "GOLEM.MNS"},
-    {"Hell Hound",    "H_HOUND.MNS"},
-    {"Gold Dragon",   "D_GOLD.MNS"},
-    {"Silver Dragon", "D_SILVER.MNS"},
-    {"Red Dragon",    "D_RED.MNS"},
-    {"Last Monster",  "LAS_MON.MNS"},
-    {"Oitu",          "OITU.MNS"},
-    {"Rat",           "RAT.MNS"},
-    {"Rock Pile",     "ROCKPILE.MNS"},
-    {"Screamer",      "SCREAMER.MNS"},
-    {"Scorpion",      "SCORPION.MNS"},
-    {"Floor Snake",   "SN_FLOOR.MNS"},
-    {"Wall Snake",    "SN_WALL.MNS"},
-    {"Skeleton Sword","S_SWORD.MNS"},
-    {"Skeleton Shield","S_SHIELD.MNS"},
-    {"Worm",          "WORM.MNS"},
-    {"Green Dragon",  "GRN_DRA.MNS"},
-    {"Red Drake",     "RED_DRA.MNS"},
-    {"Dragon Zombie", "DRA_ZOM.MNS"},
-    {"Mini Dragon",   "MINI_DRA.MNS"},
-    {"Borketh",       "BORKETH.MNS"},
-    {"Chaos",         "CHAOS.MNS"},
-    {"Lord Rib",      "LORD_RIB.MNS"},
-    {"Big Worm",      "BIGWORM.MNS"},
-    {"Obake",         "OBAKE.MNS"},
-    {NULL, NULL}
+ * AI function pointers from DM.BIN 0x0383A8 (yam\crenet.c dispatch).
+ * Stats are not yet located in DM.BIN — they may be embedded as SH-2
+ * instruction immediates in the AI functions themselves. */
+static const struct { const char *name; const char *mns; uint32_t ai_func; } g_creature_defs[] = {
+    {"Ant Man",        "ANTMAN.MNS",   0xFFFFFFFF},
+    {"Mummy",          "MUMMY.MNS",   0x060478D0},
+    {"Ghost",          "GHOST.MNS",   0x06048374},
+    {"Vexirk",         "VEXIRK.MNS",  0x060479E0},
+    {"Giggler",        "GIGGLER.MNS", 0x06047B30},
+    {"Golem",          "GOLEM.MNS",   0x06048378},
+    {"Hell Hound",     "H_HOUND.MNS", 0x060479D0},
+    {"Gold Dragon",    "D_GOLD.MNS",  0x060477C8},
+    {"Silver Dragon",  "D_SILVER.MNS",0x06048388},
+    {"Red Dragon",     "D_RED.MNS",   0x060479C8},
+    {"Last Monster",   "LAS_MON.MNS", 0x06047C78},
+    {"Oitu",           "OITU.MNS",    0x0604837E},
+    {"Rat",            "RAT.MNS",     0x060479B8},
+    {"Rock Pile",      "ROCKPILE.MNS",0x060477C8},
+    {"Screamer",       "SCREAMER.MNS",0x06048388},
+    {"Scorpion",       "SCORPION.MNS",0x060479A8},
+    {"Floor Snake",    "SN_FLOOR.MNS",0x06047B90},
+    {"Wall Snake",     "SN_WALL.MNS", 0x0604838A},
+    {"Skeleton Sword", "S_SWORD.MNS", 0x060479B0},
+    {"Skeleton Shield","S_SHIELD.MNS",0x06047870},
+    {"Worm",           "WORM.MNS",    0x06048390},
+    {"Green Dragon",   "GRN_DRA.MNS", 0x060479C0},
+    {"Red Drake",      "RED_DRA.MNS", 0x06047928},
+    {"Dragon Zombie",  "DRA_ZOM.MNS", 0x0604839C},
+    {"Mini Dragon",    "MINI_DRA.MNS",0x060479D8},
+    {"Borketh",        "BORKETH.MNS", 0x06047BC0},
+    {"Chaos",          "CHAOS.MNS",   0x060483A0},
+    {"Lord Rib",       "LORD_RIB.MNS",0x00000000},
+    {"Big Worm",       "BIGWORM.MNS", 0x06047870},
+    {"Obake",          "OBAKE.MNS",   0x06047888},
+    {NULL, NULL, 0}
 };
 
 void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
@@ -65,6 +66,7 @@ void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
         strncpy(t->name, g_creature_defs[i].name, 31);
         strncpy(t->model_file, g_creature_defs[i].mns, 31);
         t->model_index = -1;
+        t->ai_func_ptr = g_creature_defs[i].ai_func;
         mgr->type_count++;
     }
 }

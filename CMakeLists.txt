@@ -3564,7 +3564,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.247 LANGUAGES C)
+project(Firestaff VERSION 3.0.248 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -13729,6 +13729,23 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_dungeon_loader_first_map_gate
         COMMAND test_dm2_v1_dungeon_loader_first_map_gate
+    )
+
+    add_executable(test_dm2_v1_dungeon_loader_fmtowns
+        tests/test_dm2_v1_dungeon_loader_fmtowns.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_dungeon_loader_fmtowns PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dungeon_loader_fmtowns PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_dungeon_loader_fmtowns
+        COMMAND test_dm2_v1_dungeon_loader_fmtowns
     )
 
     add_executable(test_dm2_v1_c_map_tile_access
