@@ -45067,6 +45067,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_desc
     )
 endif()
 
+# Theron Track 02 dungeon map loader (quest block format from dmbuilder)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_map.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_map.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_dungeon_map.h")
+    add_executable(test_theron_v1_track02_dungeon_map
+        tests/test_theron_v1_track02_dungeon_map.c
+        src/theron/theron_v1_track02_dungeon_map.c
+    )
+    target_include_directories(test_theron_v1_track02_dungeon_map PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_dungeon_map PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_dungeon_map
+        COMMAND test_theron_v1_track02_dungeon_map
+    )
+endif()
+
 # Theron Track 02 item categories (66-byte type table from UD 0x21A046)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_item_categories.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_item_categories.c"

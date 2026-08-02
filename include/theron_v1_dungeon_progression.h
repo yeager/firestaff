@@ -10,7 +10,7 @@
  * per-dungeon item reset semantics, and seven-quest-item retrieval goal.
  *
  * Key design constraints (from TQR provenance):
- *   - 7 mini-dungeons, 3 levels each (max).
+ *   - 7 mini-dungeons, 3-8 maps each (1 hub + 2-7 dungeon levels).
  *   - Dungeon 1 is available first; completing it unlocks dungeons 2..6;
  *     dungeon 7 unlocks after the first six are complete.
  *   - Between-dungeon saves only (no in-dungeon save).
@@ -48,7 +48,7 @@ typedef enum {
 typedef struct {
     Theron_DungeonID  id;
     char              name[32];             /* e.g. "AKUTUBA" */
-    uint8_t           level_count;          /* 1–3 levels */
+    uint8_t           level_count;          /* 3–8 maps (incl. hub) */
     uint8_t           quest_item_count;    /* 1 quest item per dungeon */
     uint8_t           quest_item_bit;       /* 1 << (id-1) — tracks collected */
     uint8_t           champion_reset;       /* 1 = reset inventory; 0 = keep */

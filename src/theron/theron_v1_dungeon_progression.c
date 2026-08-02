@@ -37,51 +37,51 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
      * map 1:1 to dungeons 1-7. DMWeb confirms Ak-Tu-Ba = Dungeon 1 with 3 levels.
      * Quest items from retrieval messages at UD 0x27715B-0x277272. */
 
-    /* Dungeon 1 — AKUTUBA (Ak-Tu-Ba): Shield Defiant. 3 levels (DMWeb). */
+    /* Dungeon 1 — AKUTUBA (Ak-Tu-Ba): Shield Defiant. 4 maps (1 hub + 3 levels). */
     [THERON_DUNGEON_1_AKUTUBA - 1] = {
         .id                = THERON_DUNGEON_1_AKUTUBA,
         .name              = "AKUTUBA",
-        .level_count       = 3,
+        .level_count       = 4,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 0),  /* Bit 0 */
         .champion_reset    = 1,
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 2 — DRATOR: Taza Boots. */
+    /* Dungeon 2 — DRATOR: Taza Boots. 8 maps (1 hub + 7 levels). */
     [THERON_DUNGEON_2_DRATOR - 1] = {
         .id                = THERON_DUNGEON_2_DRATOR,
         .name              = "DRATOR",
-        .level_count       = 3,
+        .level_count       = 8,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 1),  /* Bit 1 */
         .champion_reset    = 1,
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 3 — FORMIC: Taza Poleyn. */
+    /* Dungeon 3 — FORMIC: Taza Poleyn. 5 maps (1 hub + 4 levels). */
     [THERON_DUNGEON_3_FORMIC - 1] = {
         .id                = THERON_DUNGEON_3_FORMIC,
         .name              = "FORMIC",
-        .level_count       = 3,
+        .level_count       = 5,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 2),  /* Bit 2 */
         .champion_reset    = 1,
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 4 — SARMON: Soulcage. */
+    /* Dungeon 4 — SARMON: Soulcage. 6 maps (1 hub + 5 levels). */
     [THERON_DUNGEON_4_SARMON - 1] = {
         .id                = THERON_DUNGEON_4_SARMON,
         .name              = "SARMON",
-        .level_count       = 3,
+        .level_count       = 6,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 3),  /* Bit 3 */
         .champion_reset    = 1,
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 5 — SHADO: Taza Armour. */
+    /* Dungeon 5 — SHADO: Taza Armour. 3 maps (1 hub + 2 levels). */
     [THERON_DUNGEON_5_SHADO - 1] = {
         .id                = THERON_DUNGEON_5_SHADO,
         .name              = "SHADO",
@@ -92,22 +92,22 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 6 — THIEF: Tazahelm. */
+    /* Dungeon 6 — THIEF: Tazahelm. 4 maps (1 hub + 3 levels). */
     [THERON_DUNGEON_6_THIEF - 1] = {
         .id                = THERON_DUNGEON_6_THIEF,
         .name              = "THIEF",
-        .level_count       = 3,
+        .level_count       = 4,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 5),  /* Bit 5 */
         .champion_reset    = 1,
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-    /* Dungeon 7 — DEMON (Demon's Gate): Retaliator. Final dungeon. */
+    /* Dungeon 7 — DEMON (Demon's Gate): Retaliator. 4 maps (1 hub + 3 levels). */
     [THERON_DUNGEON_7_DEMON - 1] = {
         .id                = THERON_DUNGEON_7_DEMON,
         .name              = "DEMON",
-        .level_count       = 3,
+        .level_count       = 4,
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 6),  /* Bit 6 */
         .champion_reset    = 1,
