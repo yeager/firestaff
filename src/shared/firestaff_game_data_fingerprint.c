@@ -62,10 +62,12 @@ const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERP
     {MD5(CC,A4,12,90,E6,12,1F,BB,45,1E,E5,52,83,CE,4A,BB), G_CSB, P_AMI, L_EN, F_AMG, NULL, "CSB Amiga Utility Disk SWIPE.AMG"},
     {MD5(70,52,8F,71,43,BD,0A,3C,A7,BF,D3,98,87,22,A8,A8), G_CSB, P_AMI, L_EN, F_AMG, NULL, "CSB Amiga Utility Disk TELE2.AMG"},
     /* CSB Amiga Game Disk */
-    {MD5(66,95,D2,AC,EB,CE,49,F9,5D,B1,D8,F3,A5,C7,33,DE), G_CSB, P_AMI, L_FR, F_DNG, "3.3", "CSB Amiga 3.3 French Dungeon.DAT"},
-    {MD5(5B,59,0E,A3,A6,F5,EE,D5,13,B5,67,8B,01,46,8E,E4), G_CSB, P_AMI, L_FR, F_TITL, "3.3", "CSB Amiga 3.3 French TITL.DAT"},
-    {MD5(9F,2B,73,FF,73,AD,00,32,81,0D,79,02,1C,90,0C,A9), G_CSB, P_AMI, L_FR, F_ENDA, "3.3", "CSB Amiga 3.3 French ENDA.DAT"},
-    {MD5(FF,38,72,BA,AE,D8,EE,4E,83,EE,3C,06,84,B2,EE,EC), G_CSB, P_AMI, L_FR, F_SWSH, "3.3", "CSB Amiga 3.3 French SWSH.FTL"},
+    {MD5(66,95,D2,AC,EB,CE,49,F9,5D,B1,D8,F3,A5,C7,33,DE), G_CSB, P_AMI, L_EN, F_DNG, "3.3", "CSB Amiga 3.3 Dungeon.DAT (English default)"},
+    {MD5(5E,CE,62,70,66,96,93,F7,F4,8B,D2,E1,E3,50,CD,B6), G_CSB, P_AMI, L_FR, F_DNG, "3.3", "CSB Amiga 3.3 French DungeonF.DAT"},
+    {MD5(79,26,A4,14,66,C7,11,3C,08,2A,8D,76,6B,2E,5A,16), G_CSB, P_AMI, L_DE, F_DNG, "3.3", "CSB Amiga 3.3 German DungeonG.DAT"},
+    {MD5(5B,59,0E,A3,A6,F5,EE,D5,13,B5,67,8B,01,46,8E,E4), G_CSB, P_AMI, L_ML, F_TITL, "3.3", "CSB Amiga 3.3 TITL.DAT"},
+    {MD5(9F,2B,73,FF,73,AD,00,32,81,0D,79,02,1C,90,0C,A9), G_CSB, P_AMI, L_ML, F_ENDA, "3.3", "CSB Amiga 3.3 ENDA.DAT"},
+    {MD5(FF,38,72,BA,AE,D8,EE,4E,83,EE,3C,06,84,B2,EE,EC), G_CSB, P_AMI, L_ML, F_SWSH, "3.3", "CSB Amiga 3.3 SWSH.FTL"},
     /* CSB Atari ST */
     {MD5(EB,F6,A5,7A,F3,F2,77,82,E3,58,C0,49,0B,FD,2F,2E), G_CSB, P_ST, L_EN, F_GFX, "2.0/2.1", "CSB Atari ST 2.0 and 2.1 English GRAPHICS.DAT"},
     {MD5(9F,8F,EB,26,9C,95,9C,9F,E7,22,AC,08,F9,9D,9C,35), G_CSB, P_ST, L_EN, F_ANIM, NULL, "CSB Atari ST Utility Disk English ANIMATE.DAT"},

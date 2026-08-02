@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.251
+- DM2: Mac/Amiga 68k big-endian DUNGEON.DAT loader (magic 0x313b)
+- DM2: dm2_v1_source_timer_tick() accessor for timer queue
+- CSB: Amiga dungeon probe relaxed for v3.3 French 2-level variant
+- CSB: Amiga asset fingerprint hashes updated
+
 # Firestaff v3.0.250
 - Nexus: 30 creature stat records decoded from RLOWFIX.BIN CRET section (96 bytes each)
 - Nexus: HP, attack, defense, speed wired from real Saturn data into creature roster

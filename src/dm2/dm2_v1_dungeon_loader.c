@@ -99,10 +99,16 @@ dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
 #define DM2_DUNGEON_HEADER_SIZE  44
 
 /* Dungeon magic identifiers at header offset 2.
- * PC DOS/Mac: 0x3147 = 'G1' (ASCII little-endian)
- * FM Towns:   0x3094 = different build, same header layout */
-#define DM2_DUNGEON_MAGIC_PC     0x3147u
-#define DM2_DUNGEON_MAGIC_FMTOWNS 0x3094u
+ * PC DOS:     0x3147 = 'G1' (ASCII little-endian)
+ * FM Towns:   0x3094 = different build, same LE header layout
+ * Mac/Amiga:  0x313b = big-endian 68k build; reads as 0x3b31 via LE RD16 */
+#define DM2_DUNGEON_MAGIC_PC       0x3147u
+#define DM2_DUNGEON_MAGIC_FMTOWNS  0x3094u
+#define DM2_DUNGEON_MAGIC_BE_LE    0x3b31u
+
+static uint16_t rd16be(const uint8_t *p) {
+    return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+}
 
 /* TILE DATA START = DUNGEON_HEADER(44) + MAP_DESCRIPTORS(28*16) = 492 */
 #define DM2_TILE_DATA_START       (DM2_DUNGEON_HEADER_SIZE + 28 * 16)
@@ -521,6 +527,182 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     return 1;
 }
 
+/* ── Mac/Amiga big-endian G1 byte-square loader ──────────────────── */
+
+static int dm2_decode_map_dimensions_from_w8_be(const uint8_t *map_desc,
+                                                int *out_w,
+                                                int *out_h) {
+    uint16_t w8;
+    int w;
+    int h;
+
+    if (!map_desc || !out_w || !out_h) return 0;
+    w8 = rd16be(map_desc + 8);
+    w = (int)(((w8 >> 6) & 0x1Fu) + 1u);
+    h = (int)(((w8 >> 11) & 0x1Fu) + 1u);
+    if (w < 1 || w > DM2_V1_MAX_MAP_SIZE ||
+        h < 1 || h > DM2_V1_MAX_MAP_SIZE) {
+        return 0;
+    }
+    *out_w = w;
+    *out_h = h;
+    return 1;
+}
+
+/* Mac 68k and Amiga AGA DUNGEON.DAT: big-endian u16 fields throughout,
+ * except offset 4-5 (header_size) which is LE, and map descriptor byte
+ * fields at desc+6,desc+7 which are individual bytes unaffected by endian.
+ * Magic 0x313b at offset 2-3 (reads as 0x3b31 via LE RD16). */
+static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
+                                          const uint8_t *dat,
+                                          int size) {
+    int map_count;
+    int raw_map_bytes = 0;
+    int total_columns = 0;
+    int column_index_base;
+    int sft_base;
+    int text_base;
+    int thing_cursor;
+    long pool_bytes_total = 0;
+
+    if (!out || !dat || size < DM2_DUNGEON_HEADER_SIZE) return 0;
+    if (RD16(dat + 2) != DM2_DUNGEON_MAGIC_BE_LE)
+        return 0;
+    if (RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
+        return 0;
+
+    map_count = (int)rd16be(dat + 6);
+    if (map_count < 1 || map_count > DM2_V1_MAX_LEVELS) return 0;
+    if (size < DM2_DUNGEON_HEADER_SIZE + map_count * DM2_MAP_DESC_SIZE)
+        return 0;
+
+    memset(out, 0, sizeof(*out));
+    out->level_count = map_count;
+    out->square_bytes = 1;
+    out->raw_map_data_base = -1;
+    out->column_index_base = -1;
+    out->square_first_thing_base = -1;
+    out->text_data_base = -1;
+    out->g1_extension_base = -1;
+    out->g1_extension_size = 0;
+    out->square_first_thing_count =
+        (int)rd16be(dat + DM2_PC_G1_GROUND_STACK_COUNT_OFFSET);
+    out->text_word_count = (int)rd16be(dat + 8);
+    for (int i = 0; i < DM2_THING_TYPE_COUNT; ++i) {
+        out->thing_data_bases[i] = -1;
+        out->thing_type_counts[i] = (int)rd16be(dat + 14 + i * 2);
+    }
+
+    for (int i = 0; i < map_count; ++i) {
+        const uint8_t *map_desc =
+            dat + DM2_DUNGEON_HEADER_SIZE + i * DM2_MAP_DESC_SIZE;
+        int w = 0;
+        int h = 0;
+        int rel_offset = (int)rd16be(map_desc + 0);
+        int end;
+
+        if (!dm2_decode_map_dimensions_from_w8_be(map_desc, &w, &h))
+            return 0;
+        end = rel_offset + w * h;
+        if (end < rel_offset) return 0;
+        if (end > raw_map_bytes) raw_map_bytes = end;
+
+        out->level_widths[i] = w;
+        out->level_heights[i] = h;
+        out->level_offsets[i] = rel_offset;
+        out->map_offset_x[i] = (int)map_desc[6];
+        out->map_offset_y[i] = (int)map_desc[7];
+        out->map_door_set0[i] = (int)((rd16be(map_desc + 14) >> 8) & 0x0fu);
+        out->map_door_set1[i] = (int)((rd16be(map_desc + 14) >> 12) & 0x0fu);
+        out->map_use_door0[i] = (int)((rd16be(map_desc + 2) >> 7) & 1u);
+        out->map_use_door1[i] = (int)((rd16be(map_desc + 2) >> 8) & 1u);
+        out->map_door_ornate_count[i] = (int)(rd16be(map_desc + 12) & 0x0fu);
+        out->level_types[i] = (i == 0) ? DM2_LEVEL_OUTDOOR : DM2_LEVEL_INDOOR;
+        total_columns += w;
+    }
+
+    {
+        uint16_t start = rd16be(dat + 10);
+        int x = ((int)(start & 0x1fu) - (out->map_offset_x[0] & 0x1f)) & 0x1f;
+        int y = ((int)((start >> 5) & 0x1fu) -
+                 (out->map_offset_y[0] & 0x1f)) & 0x1f;
+        if (x < out->level_widths[0] && y < out->level_heights[0]) {
+            out->initial_party_pose_valid = 1;
+            out->initial_party_x = x;
+            out->initial_party_y = y;
+            out->initial_party_dir = (int)((start >> 10) & 0x03u);
+        }
+    }
+
+    column_index_base = DM2_DUNGEON_HEADER_SIZE +
+                        map_count * DM2_MAP_DESC_SIZE +
+                        DM2_PC_G1_MAP_EXTENSION_BYTES;
+    sft_base = column_index_base + total_columns * 2;
+    text_base = sft_base + out->square_first_thing_count * 2;
+    thing_cursor = text_base + out->text_word_count * 2;
+    if (total_columns <= 0 || column_index_base < 0 ||
+        sft_base < column_index_base || text_base < sft_base ||
+        thing_cursor < text_base || thing_cursor > size) {
+        return 0;
+    }
+
+    for (int type = 0; type < DM2_THING_TYPE_COUNT; ++type) {
+        int count = out->thing_type_counts[type];
+        int record_size = (int)s_dm2_db_record_size[type];
+        long pool_bytes;
+
+        if (count < 0 || record_size < 0) return 0;
+        pool_bytes = (long)count * (long)record_size;
+        if (pool_bytes < 0 || pool_bytes_total + pool_bytes > INT32_MAX ||
+            thing_cursor + pool_bytes > size) {
+            return 0;
+        }
+        out->thing_data_bases[type] =
+            (count > 0 && record_size > 0) ? thing_cursor : -1;
+        thing_cursor += (int)pool_bytes;
+        pool_bytes_total += pool_bytes;
+    }
+    if (raw_map_bytes <= 0 || thing_cursor < 0 ||
+        thing_cursor + raw_map_bytes > size) {
+        return 0;
+    }
+
+    out->g1_extension_base = thing_cursor;
+    out->g1_extension_size = (size - raw_map_bytes) - thing_cursor;
+    if (out->g1_extension_size <= 0) return 0;
+    out->raw_map_data_base = size - raw_map_bytes;
+    out->column_index_base = column_index_base;
+    out->square_first_thing_base = sft_base;
+    out->text_data_base = text_base;
+    out->raw_data = (uint8_t *)malloc((size_t)size);
+    if (!out->raw_data) return -1;
+    memcpy(out->raw_data, dat, (size_t)size);
+    out->raw_size = size;
+    out->record_graph_complete = 1;
+    out->g1_w0_chains_disabled = 1;
+    if (!dm2_v1_dungeon_validate_record_graph(out))
+        out->record_graph_complete = 0;
+    out->partial_map_boot.valid = 1;
+    out->partial_map_boot.committed = 1;
+    out->partial_map_boot.incomplete = out->record_graph_complete ? 0 : 1;
+    out->partial_map_boot.map_count = out->level_count;
+    out->partial_map_boot.square_bytes = out->square_bytes;
+    out->partial_map_boot.column_index_base = out->column_index_base;
+    out->partial_map_boot.ground_stack_base = out->square_first_thing_base;
+    out->partial_map_boot.ground_stack_count = out->square_first_thing_count;
+    out->partial_map_boot.text_data_base = out->text_data_base;
+    out->partial_map_boot.text_word_count = out->text_word_count;
+    out->partial_map_boot.candidate_pool_base =
+        out->text_data_base + out->text_word_count * 2;
+    out->partial_map_boot.candidate_pool_end = out->g1_extension_base;
+    out->partial_map_boot.g1_extension_base = out->g1_extension_base;
+    out->partial_map_boot.g1_extension_size = out->g1_extension_size;
+    out->partial_map_boot.raw_map_data_base = out->raw_map_data_base;
+    out->partial_map_boot.record_graph_complete =
+        out->record_graph_complete;
+    return 1;
+}
+
 /* ── Public API ───────────────────────────────────────────────────── */
 
 int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
@@ -538,6 +720,10 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
         return (skproject_layout > 0) ? 0 : -1;
 
     skproject_layout = dm2_v1_try_load_pc_g1_byte_layout(out, dat, size);
+    if (skproject_layout != 0)
+        return (skproject_layout > 0) ? 0 : -1;
+
+    skproject_layout = dm2_v1_try_load_be_byte_layout(out, dat, size);
     if (skproject_layout != 0)
         return (skproject_layout > 0) ? 0 : -1;
 

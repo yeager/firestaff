@@ -32,6 +32,10 @@ typedef struct {
     int16_t reserved;
 } DM2_V1_SourceTimer;
 
+static inline uint32_t dm2_v1_source_timer_tick(const DM2_V1_SourceTimer *t) {
+    return t->ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK;
+}
+
 typedef struct {
     DM2_V1_SourceTimer timers[DM2_V1_SOURCE_TIMER_MAX];
     uint16_t source_indices[DM2_V1_SOURCE_TIMER_MAX];

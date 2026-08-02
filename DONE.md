@@ -1,3 +1,8 @@
+- ✅ 2026-08-02 v3.0.251 DM2: Mac/Amiga big-endian dungeon loader
+  68k big-endian DUNGEON.DAT (magic 0x313b) now loads alongside PC (0x3147)
+  and FM Towns (0x3094). Mac EN and Amiga EN verified: 28 maps, 39411 bytes,
+  identical thing counts. CSB Amiga dungeon probe relaxed for v3.3 French
+  (2-level hack). Game data fingerprint updated with CSB Amiga hashes.
 - ✅ 2026-08-02 v3.0.250 Nexus: CRET creature stats from RLOWFIX.BIN
   30 creature stat records (96 bytes each) decoded from RLOWFIX.BIN CRET section.
   HP (byte 7), attack damage (byte 11), armor (byte 12), speed (byte 49) wired

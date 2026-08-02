@@ -72,7 +72,7 @@ typedef struct {
     const FirestaffGameDataFingerprint *entry;
 } FirestaffGameDataClassifyResult;
 
-#define FIRESTAFF_FINGERPRINT_COUNT 72
+#define FIRESTAFF_FINGERPRINT_COUNT 74
 
 extern const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERPRINT_COUNT];
 

@@ -1,9 +1,9 @@
 {
   "schema": "firestaff.parity.pass475_dm1_v1_f0365_f0366_runtime_followup.v1",
-  "timestampUtc": "2026-08-01T17:21:00.011524+00:00",
+  "timestampUtc": "2026-08-02T12:36:18.464697+00:00",
   "status": "PASS475_FIRESTAFF_DM1_V1_INPUT_TO_F0365_F0366_ROUTE_CLOSED",
   "branch": "main",
-  "head": "1377d14687fbf7c317a7d27827fe31908271d16d",
+  "head": "84d34a3b84ae96dd15330a22c509f0499edb696f",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "closedBlocker": "Firestaff live M11 movement input now has a source-locked and regression-tested route through command ids into the F0380 -> F0365/F0366 compat boundary; no direct-move bypass remains in this seam.",
   "sourceAudit": [
@@ -90,7 +90,7 @@
         "-j2"
       ],
       "returncode": 0,
-      "tail": "[0/2] Re-checking globbed directories...\nninja: no work to do.\n"
+      "tail": "include/menu_startup_state_access_m12.h:4:\nIn file included from /Volumes/Extern-disk/firestaff-claude/include/asset_status_m12.h:7:\n/Volumes/Extern-disk/firestaff-claude/include/theron_v1_track02.h:1368:3: warning: redefinition of typedef 'Theron_Track02ObjectTable' is a C11 feature [-Wtypedef-redefinition]\n 1368 | } Theron_Track02ObjectTable;\n      |   ^\n/Volumes/Extern-disk/firestaff-claude/include/theron_v1_world.h:14:42: note: previous definition is here\n   14 | typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;\n      |                                          ^\n1 warning generated.\n[20/27] Building C object CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/tests/test_dm1_v1_input_command_queue_pc34_compat.c.o\n[21/27] Building C object CMakeFiles/firestaff_m10.dir/src/csb/csb_v1_runtime_pc34_compat.c.o\n[22/27] Linking C static library libfirestaff_m10.a\n[23/27] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[24/27] Linking C executable test_dm1_v1_movement_command_core_pc34_compat\n[25/27] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat\n[26/27] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat\n"
     },
     {
       "command": [
@@ -102,7 +102,7 @@
         "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat"
       ],
       "returncode": 0,
-      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1278: dm1_v1_input_command_queue_pc34_compat\n1/4 Test #1278: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.00 sec\n    Start 1287: dm1_v1_movement_command_core_pc34_compat\n2/4 Test #1287: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.00 sec\n    Start 1430: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/4 Test #1430: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n    Start 1586: dm1_v1_movement_pipeline_pc34_compat\n4/4 Test #1586: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.01 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   0.05 sec\n"
+      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1286: dm1_v1_input_command_queue_pc34_compat\n1/4 Test #1286: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.25 sec\n    Start 1295: dm1_v1_movement_command_core_pc34_compat\n2/4 Test #1295: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.23 sec\n    Start 1438: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/4 Test #1438: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.24 sec\n    Start 1594: dm1_v1_movement_pipeline_pc34_compat\n4/4 Test #1594: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.31 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   1.30 sec\n"
     },
     {
       "command": [
