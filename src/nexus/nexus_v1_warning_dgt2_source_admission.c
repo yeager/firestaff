@@ -36,7 +36,9 @@ int nexus_v1_warning_dgt2_source_admit(
     }
     source_fnv = fnv1a64(source_bytes, source_size);
     if (source_fnv != identity->source_fnv1a64 ||
-        source_fnv != NEXUS_V1_WARNING_BIN_FNV1A64 ||
+        (source_fnv != NEXUS_V1_WARNING_BIN_FNV1A64_JA &&
+         source_fnv != NEXUS_V1_WARNING_BIN_FNV1A64_EN &&
+         source_fnv != NEXUS_V1_WARNING_BIN_FNV1A64_FR) ||
         nexus_ui_res_dgt2_pp_view(source_bytes, source_size, 0U, &view) != 0 ||
         !view.clut_bgr555_be || !view.pixels || view.pixel_bytes == 0U) {
         *out_receipt = receipt; return 0;

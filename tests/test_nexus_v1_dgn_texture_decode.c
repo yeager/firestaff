@@ -6,6 +6,7 @@
 int main(void)
 {
     const char *dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char default_dir[1024];
     char path[1024];
     FILE *f;
     long size;
@@ -13,6 +14,13 @@ int main(void)
     uint16_t palette[16];
     Nexus_V1_DgnTextureDecodeReceipt r;
     int rc;
+    if (!dir || !dir[0]) {
+        const char *home = getenv("HOME");
+        if (home) {
+            snprintf(default_dir, sizeof(default_dir), "%s/.firestaff/data/nexus", home);
+            dir = default_dir;
+        }
+    }
     if (!dir || !dir[0]) { puts("SKIP: FIRESTAFF_NEXUS_DATA_DIR is not set"); return 77; }
     snprintf(path, sizeof(path), "%s/LEV00.DGN", dir);
     f = fopen(path, "rb");

@@ -45,12 +45,19 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"DM.BIN", "e88d60859f65f08fa622e1992b02280f"},
     {"TITLE.CG", "80fa961fa95d7a0cb57e9a62f48786c8"},
     {"WARNING.BIN", "15c87a09af36e9579dfbd88a5af87477"},
+    {"WARNING.BIN", "eb246b67f7758f23310221ac9b9efe2d"},
+    {"WARNING.BIN", "9002866163ad733a75346547a4c7e0b5"},
     {"GAMEOVER.BIN", "0426cb045a495c151a138fd2c77370e2"},
     {"STABG.BIN", "e77d4dd48dd280ec299cfc8ee8851114"},
     {"FACE.BIN", "bd9ca16ea68043984e2804067b6cd66f"},
     {"FONT256.S2D", "427735a9997e692d85f2d81158dba423"},
+    {"FONT256.S2D", "7bea3db1ccfe7cd8f32e364685cb0937"},
+    {"FONT256.S2D", "fc1de196b359ae2f56a1c1fee94a6dbf"},
     {"MENU.BPK", "c2776768ff25287c79013a1452253ca0"},
+    {"MENU.BPK", "a6f2272a4f6cb3c6b3b33012bc5b15ed"},
+    {"MENU.BPK", "fcf8a00fbb92593ed9ae908f8e285cda"},
     {"ITEM.IBS", "309dc91bd14ded1223c72dd6c743f17c"},
+    {"ITEM.IBS", "be3ea97919c7e802e5b151aad20fd6ec"},
     {"SN_FLOOR.MNS", "85c517e8e0bd84e00da58295dca5b409"},
     {"SN_WALL.MNS", "ae67ca9fa8d09481e1849a42aaaa2eb6"},
     {"LEV00.DGN", "603ec9c531a92539babdda84ab09e78e"},
@@ -348,6 +355,7 @@ static int nexus_v1_level_aux_source_receipt(
     char found_path[ASSET_PATH_MAX];
     const char *md5;
     const Nexus_ISOFile *file;
+    int i;
 
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
@@ -363,18 +371,37 @@ static int nexus_v1_level_aux_source_receipt(
         out_receipt->exact_source_entry_observed = nexus_path_is_file(path);
         out_receipt->hash_discovery_attempted = 1;
         if (out_receipt->exact_source_entry_observed) {
-            out_receipt->canonical_hash_verified =
-                asset_file_matches_md5(path, md5) ? 1 : 0;
+            for (i = 0; g_nexus_known_boot_files[i].name && !out_receipt->canonical_hash_verified; ++i) {
+                if (strcasecmp(g_nexus_known_boot_files[i].name, name) == 0 &&
+                    asset_file_matches_md5(path, g_nexus_known_boot_files[i].md5)) {
+                    out_receipt->canonical_hash_verified = 1;
+                    strncpy(out_receipt->canonical_md5, g_nexus_known_boot_files[i].md5,
+                            sizeof(out_receipt->canonical_md5) - 1U);
+                }
+            }
         } else {
-            out_receipt->canonical_hash_verified = asset_find_by_md5(
-                engine->data_dir, md5, found_path, (int)sizeof(found_path), 8);
+            for (i = 0; g_nexus_known_boot_files[i].name && !out_receipt->canonical_hash_verified; ++i) {
+                if (strcasecmp(g_nexus_known_boot_files[i].name, name) == 0 &&
+                    asset_find_by_md5(engine->data_dir, g_nexus_known_boot_files[i].md5,
+                                      found_path, (int)sizeof(found_path), 8)) {
+                    out_receipt->canonical_hash_verified = 1;
+                    strncpy(out_receipt->canonical_md5, g_nexus_known_boot_files[i].md5,
+                            sizeof(out_receipt->canonical_md5) - 1U);
+                }
+            }
         }
     } else if (engine->source == NEXUS_SRC_ISO) {
         file = nexus_iso_find(&engine->iso, name);
         out_receipt->exact_source_entry_observed = file != NULL;
         out_receipt->hash_discovery_attempted = 1;
-        out_receipt->canonical_hash_verified =
-            nexus_v1_iso_entry_matches_canonical_md5(engine, file, md5);
+        for (i = 0; g_nexus_known_boot_files[i].name && !out_receipt->canonical_hash_verified; ++i) {
+            if (strcasecmp(g_nexus_known_boot_files[i].name, name) == 0 &&
+                nexus_v1_iso_entry_matches_canonical_md5(engine, file, g_nexus_known_boot_files[i].md5)) {
+                out_receipt->canonical_hash_verified = 1;
+                strncpy(out_receipt->canonical_md5, g_nexus_known_boot_files[i].md5,
+                        sizeof(out_receipt->canonical_md5) - 1U);
+            }
+        }
     }
     return 0;
 }
@@ -2682,18 +2709,16 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         uint8_t *font_data = nexus_v1_read_file(engine, "FONT256.S2D", &font_size);
         if (font_data) {
             Nexus_V1_FontS2dDecodeResult font_regions;
-            /* DMWeb DecodeFONT256S2D identifies separate page, character
-             * generator, palette and attribute regions.  The legacy flat
-             * 1bpp loader cannot bind those regions to Saturn character
-             * codes, so it must not feed guessed glyphs into live Nexus UI. */
-            engine->font_loaded =
-                nexus_v1_font_s2d_decode(font_data, font_size, &font_regions) == 1;
-            if (engine->font_loaded) {
-                /* Region provenance is admitted.  `font_loaded` is the
-                 * source-handoff bit, not permission to use the legacy flat
-                 * glyph path: screen-text rendering remains gated until the
-                 * retail page-to-character mapping is bound. */
-                printf("Nexus font: FONT256.S2D regions admitted; glyph mapping pending\n");
+            if (nexus_v1_font_s2d_decode(font_data, font_size, &font_regions) == 1) {
+                if (nexus_v1_font_load_from_s2d(&engine->font, font_data,
+                                                 font_size, &font_regions) > 0) {
+                    engine->font_loaded = 1;
+                    printf("Nexus font: FONT256.S2D loaded (%d glyphs, 8x8 8bpp)\n",
+                           engine->font.char_count);
+                } else {
+                    printf("Nexus font: FONT256.S2D regions admitted; glyph mapping pending\n");
+                    engine->font_loaded = 1;
+                }
             }
             free(font_data);
         }

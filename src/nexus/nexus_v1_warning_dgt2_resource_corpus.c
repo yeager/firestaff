@@ -61,7 +61,9 @@ static int identity_usable(const uint8_t *source_bytes, size_t source_size,
     }
     source_fnv = fnv1a64(source_bytes, source_size);
     if (source_fnv != identity->source_fnv1a64 ||
-        source_fnv != NEXUS_V1_WARNING_BIN_FNV1A64) {
+        (source_fnv != NEXUS_V1_WARNING_BIN_FNV1A64_JA &&
+         source_fnv != NEXUS_V1_WARNING_BIN_FNV1A64_EN &&
+         source_fnv != NEXUS_V1_WARNING_BIN_FNV1A64_FR)) {
         return 0;
     }
     if (out_source_fnv) *out_source_fnv = source_fnv;
