@@ -45067,6 +45067,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_desc
     )
 endif()
 
+# Theron Track 02 thing data loader (ground refs + items from quest blocks)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_thing_data.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_thing_data.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_thing_data.h")
+    add_executable(test_theron_v1_track02_thing_data
+        tests/test_theron_v1_track02_thing_data.c
+        src/theron/theron_v1_track02_thing_data.c
+        src/theron/theron_v1_track02_dungeon_map.c
+    )
+    target_include_directories(test_theron_v1_track02_thing_data PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_thing_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_thing_data
+        COMMAND test_theron_v1_track02_thing_data
+    )
+endif()
+
 # Theron Track 02 dungeon map loader (quest block format from dmbuilder)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_map.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_map.c"
