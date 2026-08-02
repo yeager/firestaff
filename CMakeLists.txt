@@ -214,6 +214,38 @@ target_link_libraries(test_nexus_v1_spell_effects PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_spell_effects COMMAND test_nexus_v1_spell_effects)
 set_tests_properties(nexus_v1_spell_effects PROPERTIES LABELS "nexus;spell_effects;tier4")
 
+add_executable(test_nexus_v1_action_timer
+    tests/test_nexus_v1_action_timer.c)
+target_include_directories(test_nexus_v1_action_timer PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_action_timer PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_action_timer COMMAND test_nexus_v1_action_timer)
+set_tests_properties(nexus_v1_action_timer PROPERTIES LABELS "nexus;action_timer;tier4")
+
+add_executable(test_nexus_v1_spawner
+    tests/test_nexus_v1_spawner.c)
+target_include_directories(test_nexus_v1_spawner PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_spawner PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_spawner COMMAND test_nexus_v1_spawner)
+set_tests_properties(nexus_v1_spawner PROPERTIES LABELS "nexus;spawner;tier4")
+
+add_executable(test_nexus_v1_damage_indicator
+    tests/test_nexus_v1_damage_indicator.c)
+target_include_directories(test_nexus_v1_damage_indicator PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_damage_indicator PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_damage_indicator COMMAND test_nexus_v1_damage_indicator)
+set_tests_properties(nexus_v1_damage_indicator PROPERTIES LABELS "nexus;damage_indicator;tier4")
+
+add_executable(test_nexus_v1_formation
+    tests/test_nexus_v1_formation.c)
+target_include_directories(test_nexus_v1_formation PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_formation PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_formation COMMAND test_nexus_v1_formation)
+set_tests_properties(nexus_v1_formation PROPERTIES LABELS "nexus;formation;tier4")
+
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
@@ -15080,6 +15112,78 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_save_write_record_checkcode
         COMMAND test_dm2_v1_save_write_record_checkcode
+    )
+
+    add_executable(test_dm2_v1_save_store_extra_dungeon_data
+        tests/test_dm2_v1_save_store_extra_dungeon_data.c
+        src/dm2/dm2_v1_save_store_extra_dungeon_data_pc34_compat.c
+        src/dm2/dm2_v1_save_write_record_checkcode_pc34_compat.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_save_store_extra_dungeon_data PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_save_store_extra_dungeon_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_store_extra_dungeon_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_store_extra_dungeon_data
+        COMMAND test_dm2_v1_save_store_extra_dungeon_data
+    )
+
+    add_executable(test_dm2_v1_save_write_possession_indices
+        tests/test_dm2_v1_save_write_possession_indices.c
+        src/dm2/dm2_v1_save_write_possession_indices_pc34_compat.c
+        src/dm2/dm2_v1_save_write_record_checkcode_pc34_compat.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_save_write_possession_indices PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_save_write_possession_indices PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_write_possession_indices PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_write_possession_indices
+        COMMAND test_dm2_v1_save_write_possession_indices
+    )
+
+    add_executable(test_dm2_v1_save_compact_timerlist
+        tests/test_dm2_v1_save_compact_timerlist.c
+        src/dm2/dm2_v1_save_compact_timerlist_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_save_compact_timerlist PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_compact_timerlist PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_compact_timerlist
+        COMMAND test_dm2_v1_save_compact_timerlist
+    )
+
+    add_executable(test_dm2_v1_save_suppress_masks
+        tests/test_dm2_v1_save_suppress_masks.c
+        src/dm2/dm2_v1_save_suppress_masks_pc34_compat.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_save_suppress_masks PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_save_suppress_masks PRIVATE firestaff_dm2 firestaff_m10 firestaff_zlib)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_suppress_masks PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_suppress_masks
+        COMMAND test_dm2_v1_save_suppress_masks
     )
 
     add_executable(test_dm2_v1_suppress_bit_ops
