@@ -151,32 +151,31 @@ static uint16_t mock_get_next(void *ctx, uint16_t link)
 
 /* Dungeon callbacks (minimal — 0 maps). */
 static int mock_get_map_count(void *ctx) { (void)ctx; return 0; }
-static void mock_get_map_dims(void *ctx, int m, int *w, int *h)
+static void mock_get_map_dims(void *ctx, int *w, int *h)
 {
-    (void)ctx; (void)m; *w = 0; *h = 0;
+    (void)ctx; *w = 0; *h = 0;
 }
-static int mock_change_map(void *ctx, int m) { (void)ctx; (void)m; return 0; }
-static int mock_get_tile(void *ctx, int x, int y) { (void)ctx; (void)x; (void)y; return 0; }
+static void mock_change_map(void *ctx, int m) { (void)ctx; (void)m; }
+static uint8_t mock_get_tile(void *ctx, int x, int y) { (void)ctx; (void)x; (void)y; return 0; }
 static uint16_t mock_get_rec_link(void *ctx, int x, int y)
 {
     (void)ctx; (void)x; (void)y;
     return DM2_RECORD_LINK_END;
 }
-static DM2_TeleporterDetail mock_get_tp(void *ctx, int x, int y)
+static int mock_get_tp(void *ctx, DM2_TeleporterDetail *out, int x, int y)
 {
     (void)ctx; (void)x; (void)y;
-    DM2_TeleporterDetail d;
-    memset(&d, 0, sizeof(d));
-    return d;
+    memset(out, 0, sizeof(*out));
+    return 0;
 }
-static int mock_init_suppress(void *ctx, int x, int y, int tile_type)
+static int mock_init_suppress(void *ctx)
 {
-    (void)ctx; (void)x; (void)y; (void)tile_type;
+    (void)ctx;
     return 0;
 }
 
 /* Possession callbacks (no-op). */
-static uint16_t mock_resolve_poss(void *ctx, uint16_t link)
+static int mock_resolve_poss(void *ctx, uint16_t link)
 {
     (void)ctx; (void)link;
     return 0;

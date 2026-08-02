@@ -15233,6 +15233,44 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_save_suppress_roundtrip
     )
 
+    add_executable(test_dm2_v1_save_orchestrator
+        tests/test_dm2_v1_save_orchestrator.c
+        src/dm2/dm2_v1_save_orchestrator_pc34_compat.c
+        src/dm2/dm2_v1_save_store_extra_dungeon_data_pc34_compat.c
+        src/dm2/dm2_v1_save_write_record_checkcode_pc34_compat.c
+        src/dm2/dm2_v1_save_write_possession_indices_pc34_compat.c
+        src/dm2/dm2_v1_save_suppress_masks_pc34_compat.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_save_orchestrator PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_save_orchestrator PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_orchestrator PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_orchestrator
+        COMMAND test_dm2_v1_save_orchestrator
+    )
+
+    add_executable(test_dm2_v1_creature_ai_spec
+        tests/test_dm2_v1_creature_ai_spec.c
+        src/dm2/dm2_v1_creature_ai_spec_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_creature_ai_spec PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_ai_spec PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_ai_spec
+        COMMAND test_dm2_v1_creature_ai_spec
+    )
+
     add_executable(test_dm2_v1_suppress_bit_ops
         tests/test_dm2_v1_suppress_bit_ops.c
     )
@@ -21359,9 +21397,9 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_perform_move.c
         src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
         src/dm2/dm2_v1_move_record_to_pc34_compat.c
-        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_skproject_core.c
     )
     target_include_directories(test_dm2_v1_move_075f_1bc2 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
