@@ -123,6 +123,22 @@ int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int element,
     return damage;
 }
 
+Nexus_SpellCategory nexus_v1_spell_category(int spell_type) {
+    switch (spell_type) {
+    case NEXUS_SPELL_EFFECT_HEAL:
+    case NEXUS_SPELL_EFFECT_SHIELD:
+    case NEXUS_SPELL_EFFECT_LIGHT:
+    case NEXUS_SPELL_EFFECT_STRENGTH:
+        return NEXUS_SPELL_CAT_PARTY;
+    case NEXUS_SPELL_EFFECT_FIREBALL:
+    case NEXUS_SPELL_EFFECT_LIGHTNING:
+    case NEXUS_SPELL_EFFECT_POISON:
+        return NEXUS_SPELL_CAT_ATTACK;
+    default:
+        return NEXUS_SPELL_CAT_DEBUFF;
+    }
+}
+
 int nexus_v1_spell_damage(int power, Nexus_SpellClass cls) {
     const int (*params)[2];
     if (power < 0 || power >= NEXUS_POWER_RUNE_COUNT) return 0;

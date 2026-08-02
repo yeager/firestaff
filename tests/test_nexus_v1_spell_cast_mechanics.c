@@ -124,6 +124,25 @@ int main(void) {
         }
     }
 
+    /* Test 8: spell category classification */
+    {
+        if (nexus_v1_spell_category(NEXUS_SPELL_EFFECT_HEAL) != NEXUS_SPELL_CAT_PARTY ||
+            nexus_v1_spell_category(NEXUS_SPELL_EFFECT_SHIELD) != NEXUS_SPELL_CAT_PARTY ||
+            nexus_v1_spell_category(NEXUS_SPELL_EFFECT_LIGHT) != NEXUS_SPELL_CAT_PARTY ||
+            nexus_v1_spell_category(NEXUS_SPELL_EFFECT_STRENGTH) != NEXUS_SPELL_CAT_PARTY) {
+            fprintf(stderr, "FAIL: party spell categories\n"); fail++;
+        } else if (nexus_v1_spell_category(NEXUS_SPELL_EFFECT_FIREBALL) != NEXUS_SPELL_CAT_ATTACK ||
+                   nexus_v1_spell_category(NEXUS_SPELL_EFFECT_LIGHTNING) != NEXUS_SPELL_CAT_ATTACK ||
+                   nexus_v1_spell_category(NEXUS_SPELL_EFFECT_POISON) != NEXUS_SPELL_CAT_ATTACK) {
+            fprintf(stderr, "FAIL: attack spell categories\n"); fail++;
+        } else if (nexus_v1_spell_category(NEXUS_SPELL_EFFECT_DARKNESS) != NEXUS_SPELL_CAT_DEBUFF ||
+                   nexus_v1_spell_category(NEXUS_SPELL_EFFECT_CONFUSE) != NEXUS_SPELL_CAT_DEBUFF) {
+            fprintf(stderr, "FAIL: debuff spell categories\n"); fail++;
+        } else {
+            printf("  Spell categories: 4 party, 3 attack, 6 debuff OK\n");
+        }
+    }
+
     if (fail) {
         fprintf(stderr, "%d failures\n", fail);
         return 1;

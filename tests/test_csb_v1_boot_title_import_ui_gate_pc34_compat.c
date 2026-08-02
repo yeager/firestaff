@@ -66,6 +66,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 
 static int passed;
 static int failed;
@@ -107,8 +108,35 @@ static int build_synthetic_cmp(uint8_t *buf, size_t buf_size,
     return 0;
 }
 
+static const char *s_gate_tmp = "/tmp/firestaff-csb-v1-title-import-gate";
+
+static int write_gate_dungeon(const char *path)
+{
+    uint8_t buf[80];
+    uint16_t bit_a;
+    FILE *f;
+    size_t n;
+    memset(buf, 0, sizeof(buf));
+    buf[4] = 1;                          /* level_count = 1 */
+    buf[8] = 0x21; buf[9] = 0x00;       /* party at (1,1) dir=0 */
+    bit_a = (uint16_t)((2u << 6) | (2u << 11));
+    buf[52] = (uint8_t)(bit_a & 0xFF);
+    buf[53] = (uint8_t)(bit_a >> 8);
+    memset(buf + 66, 1, 9);             /* 3x3 corridor squares */
+    f = fopen(path, "wb");
+    if (!f) return -1;
+    n = fwrite(buf, 1, 75, f);
+    fclose(f);
+    return (n == 75) ? 0 : -1;
+}
+
 static void prime_verified_profile(CSB_V1_BootProfile *p)
 {
+    char dungeon_path[256];
+    mkdir(s_gate_tmp, 0755);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", s_gate_tmp);
+    write_gate_dungeon(dungeon_path);
+
     csb_v1_boot_profile_init(p);
     p->assets_verified = 1;
     p->graphics_verified = 1;
@@ -116,10 +144,10 @@ static void prime_verified_profile(CSB_V1_BootProfile *p)
     p->state = CSB_V1_BOOT_STATE_ASSETS_READY;
     p->variant_id = CSB_V1_VARIANT_PC34_EN;
     p->graphics_kind = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
-    snprintf(p->asset_root, sizeof(p->asset_root), "%s", ".");
-    snprintf(p->graphics_path, sizeof(p->graphics_path), "%s", "GRAPHICS.DAT");
-    snprintf(p->dungeon_path, sizeof(p->dungeon_path), "%s", "DUNGEON.DAT");
-    csb_v1_boot_set_save_root(p, "/tmp/firestaff-csb-v1-title-import-gate");
+    snprintf(p->asset_root, sizeof(p->asset_root), "%s", s_gate_tmp);
+    snprintf(p->graphics_path, sizeof(p->graphics_path), "%s/GRAPHICS.DAT", s_gate_tmp);
+    snprintf(p->dungeon_path, sizeof(p->dungeon_path), "%s", dungeon_path);
+    csb_v1_boot_set_save_root(p, s_gate_tmp);
 }
 
 static void test_profile_init_resets_engine_version_to_dm1(void)
@@ -518,7 +546,7 @@ static void test_real_startup_asset_selection_rejects_generic_paths(void)
     CHECK(binding && binding->source == CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 &&
           binding->graphic_index == 1u && binding->verified == 1 &&
           binding->rejects_generic_or_test_asset == 1 &&
-          strcmp(binding->path, "GRAPHICS.DAT") == 0,
+          strstr(binding->path, "GRAPHICS.DAT") != NULL,
           "title CHAOS resolves to verified original GRAPHICS.DAT C001");
     binding = csb_v1_boot_startup_asset_binding_pc34(
         &p, CSB_V1_STARTUP_ASSET_ROLE_ENTRANCE_LEFT_DOOR_PC34);

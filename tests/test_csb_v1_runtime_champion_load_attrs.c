@@ -132,35 +132,46 @@ static void install_csbwin_chest_weight_record(CSB_V1_RuntimeProfile *profile,
 
 /* -- Helpers (mirrors test_csb_v1_boot_runtime_handoff.c shape) ------- */
 
-/* Build a minimal valid CSB V1 DUNGEON.DAT buffer. Mirrors the
- * synthetic builder in test_csb_v1_phase7_verification.c so the
- * fixture shape matches the legacy loader (square_bytes == 2,
- * column-major 16-bit records, ReDMCSB DUNGEON.C F0151). */
+/* Build a minimal valid CSB V1 DUNGEON.DAT buffer using the real
+ * ReDMCSB DUNGEON_HEADER (44 bytes) + MAP descriptor (16 bytes)
+ * layout so csb_v1_dungeon_load sets square_bytes == 1.
+ * 1 level, 3x3, party at (1,1) facing north. */
 static int build_synthetic_dungeon(uint8_t *buf, int buf_size,
                                     uint8_t square_type_1_1)
 {
-    if (!buf || buf_size < 28) return -1;
+    /* Layout: header(44) + map_desc(16) + col_offsets(6) + squares(9) = 75 */
+    const int total = 75;
+    uint16_t bit_a;
+    int sq_base, i;
+    if (!buf || buf_size < total) return -1;
     memset(buf, 0, (size_t)buf_size);
-    buf[0] = 1; buf[1] = 0;             /* level_count = 1 */
-    buf[2] = 16; buf[3] = 0;            /* ignored padding */
-    buf[4] = 3; buf[5] = 3;             /* level 0 width=3, height=3 */
-    buf[6] = 10; buf[7] = 0;            /* level 0 absolute square offset = 10 */
-    buf[8] = 0; buf[9] = 0;
-    buf[10] = 1; buf[11] = 0;
-    buf[12] = 1; buf[13] = 0;
-    buf[14] = 1; buf[15] = 0;
-    buf[16] = 1; buf[17] = 0;
-    buf[18] = square_type_1_1; buf[19] = 0;
-    buf[20] = 1; buf[21] = 0;
-    buf[22] = 1; buf[23] = 0;
-    buf[24] = 1; buf[25] = 0;
-    buf[26] = 1; buf[27] = 0;
+    /* DUNGEON_HEADER (44 bytes) */
+    buf[0] = 0; buf[1] = 0;             /* ornament_seed */
+    buf[4] = 1;                          /* level_count = 1 */
+    buf[6] = 0; buf[7] = 0;             /* text_word_count = 0 */
+    buf[8] = 0x21; buf[9] = 0x00;       /* initial_party_location: x=1,y=1,dir=0 */
+    buf[10] = 0; buf[11] = 0;           /* square_first_thing_count = 0 */
+    /* bytes 12-43: thing type counts (16 x uint16), all zero */
+    /* MAP descriptor at offset 44 (16 bytes) */
+    buf[44] = 0; buf[45] = 0;           /* relative offset = 0 */
+    /* bit_a: level_id=0, width-1=2, height-1=2 */
+    bit_a = (uint16_t)((2u << 6) | (2u << 11));
+    buf[52] = (uint8_t)(bit_a & 0xFF);
+    buf[53] = (uint8_t)(bit_a >> 8);
+    /* bits b,c,d at offsets 54-59: all zero (no ornaments/creatures) */
+    /* Column offsets at offset 60 (3 columns x 2 bytes) — all zero */
+    /* Square data at offset 66 (3x3 = 9 bytes, column-major x*h+y) */
+    sq_base = 66;
+    for (i = 0; i < 9; i++)
+        buf[sq_base + i] = 1;           /* type 1 = corridor */
+    /* square at (1,1): column-major index = 1*3 + 1 = 4 */
+    buf[sq_base + 4] = square_type_1_1;
     return 0;
 }
 
 static int write_synthetic_dungeon(const char *path, uint8_t square_type_1_1)
 {
-    uint8_t buf[32];
+    uint8_t buf[80];
     FILE *f;
     size_t n;
     if (build_synthetic_dungeon(buf, (int)sizeof(buf), square_type_1_1) != 0) {
@@ -168,9 +179,9 @@ static int write_synthetic_dungeon(const char *path, uint8_t square_type_1_1)
     }
     f = fopen(path, "wb");
     if (!f) return -1;
-    n = fwrite(buf, 1, sizeof(buf), f);
+    n = fwrite(buf, 1, 75, f);
     fclose(f);
-    return (n == sizeof(buf)) ? 0 : -1;
+    return (n == 75) ? 0 : -1;
 }
 
 /* Build a synthetic DM1 save buffer for n champions. Mirrors the

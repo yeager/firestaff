@@ -54,14 +54,37 @@ int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int element,
 /* Compute spell damage without casting (for display/preview). */
 int nexus_v1_spell_damage(int power, Nexus_SpellClass cls);
 
-/* Spell effect types (from spell_type in g_spell_table). */
+/* Spell effect types (from spell_type in g_spell_table).
+ * 13 types, each with a handler in the DM.BIN vtable at 0x0383AC.
+ * Types 6 and 12 share the same handler (darkness family). */
 #define NEXUS_SPELL_EFFECT_HEAL       0x0000
 #define NEXUS_SPELL_EFFECT_SHIELD     0x0001
 #define NEXUS_SPELL_EFFECT_LIGHT      0x0002
 #define NEXUS_SPELL_EFFECT_POISON     0x0003
+#define NEXUS_SPELL_EFFECT_WEAKEN     0x0004
 #define NEXUS_SPELL_EFFECT_FIREBALL   0x0005
+#define NEXUS_SPELL_EFFECT_DARKNESS_A 0x0006
 #define NEXUS_SPELL_EFFECT_LIGHTNING  0x0007
+#define NEXUS_SPELL_EFFECT_DISPEL     0x0008
+#define NEXUS_SPELL_EFFECT_CONFUSE    0x0009
 #define NEXUS_SPELL_EFFECT_STRENGTH   0x000A
+#define NEXUS_SPELL_EFFECT_SLOW       0x000B
 #define NEXUS_SPELL_EFFECT_DARKNESS   0x000C
+#define NEXUS_SPELL_EFFECT_COUNT         13
+
+/* Spell effect categories for the game loop. */
+typedef enum {
+    NEXUS_SPELL_CAT_PARTY,    /* heals, buffs, light — target is caster's party */
+    NEXUS_SPELL_CAT_ATTACK,   /* fireball, lightning, poison — target is creature */
+    NEXUS_SPELL_CAT_DEBUFF    /* confuse, slow, darkness — target is creature */
+} Nexus_SpellCategory;
+
+/* Classify a spell effect type.
+ * Source: DM.BIN 0x0383AC spell handler vtable — party-targeting handlers
+ * are at 0x06048xxx, attack handlers at 0x06047xxx. */
+Nexus_SpellCategory nexus_v1_spell_category(int spell_type);
+
+/* Number of unique SH-2 spell handlers (from vtable analysis). */
+#define NEXUS_SPELL_HANDLER_COUNT  12
 
 #endif

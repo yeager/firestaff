@@ -69,6 +69,7 @@ static int spawn_basic(Nexus_V1_CreatureManager* mgr, int cx, int cy) {
         mgr->types[0].speed = 3;
         mgr->types[0].experience_value = 10;
         mgr->types[0].model_index = 0;
+        mgr->types[0].detection_range = 30;
         mgr->type_count = 1;
     }
     return nexus_v1_creature_spawn(mgr, 0, cx, cy, /*dir=*/0);
