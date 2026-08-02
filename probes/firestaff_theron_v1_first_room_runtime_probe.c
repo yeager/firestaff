@@ -193,12 +193,12 @@ static void probe_startup_fallback_rooms(void) {
     CHECK(level.width == 32 && level.height == 27);
     CHECK(level.start_x == 2 && level.start_y == 1 && level.start_dir == 1);
     CHECK(level.squares[25][30] == THERON_SQUARE_EXIT);
-    /* Seed 0x0108e938 and level index 0x0026 in big-endian header bytes. */
+    /* Synthetic fallback: seed=0, level_index=0 in big-endian header bytes. */
     CHECK(buf[0] == 0x00 && buf[1] == 0x20); /* width 32 */
     CHECK(buf[2] == 0x00 && buf[3] == 0x1B); /* height 27 */
-    CHECK(buf[4] == 0x01 && buf[5] == 0x08 &&
-          buf[6] == 0xE9 && buf[7] == 0x38);
-    CHECK(buf[8] == 0x00 && buf[9] == 0x26); /* level index 0x0026 */
+    CHECK(buf[4] == 0x00 && buf[5] == 0x00 &&
+          buf[6] == 0x00 && buf[7] == 0x00); /* seed 0 */
+    CHECK(buf[8] == 0x00 && buf[9] == 0x00); /* level index 0 */
 
     memset(buf, 0xAA, sizeof(buf));
     memset(&level, 0xAA, sizeof(level));

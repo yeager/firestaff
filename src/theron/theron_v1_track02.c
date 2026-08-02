@@ -32,6 +32,9 @@
 #define TQR_RAW_SECTOR_USER_DATA_OFFSET THERON_TRACK02_RAW_USER_DATA_OFFSET
 #define TQR_RAW_SECTOR_USER_DATA_BYTES THERON_TRACK02_RAW_USER_DATA_BYTES
 #define TQR_RAW_BIN_BANK_ANCHOR_COUNT 3u
+/* FALSE POSITIVE: these "initial level" values were misread from the level
+ * descriptor table at UD 0x619900 with wrong alignment and endianness.
+ * Retained only for backward compatibility with existing binding gates. */
 #define TQR_RAW_INITIAL_LEVEL_WIDTH 32u
 #define TQR_RAW_INITIAL_LEVEL_HEIGHT 27u
 #define TQR_RAW_INITIAL_LEVEL_SEED 0x0108e938u

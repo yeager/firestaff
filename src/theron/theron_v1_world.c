@@ -1267,19 +1267,12 @@ size_t theron_v1_startup_fallback_room_synthesize(uint8_t *out_buf,
                                                    size_t buf_size,
                                                    Theron_DungeonID dungeon_id,
                                                    Theron_V1_Level *out_level) {
-    /* Source-locked to the hash-verified JP/US raw Track 02 initial-level
-     * candidate: 32x27 payload, seed 0x0108e938, level index 0x0026,
-     * interior start pose (2,1,EAST).  Real-data loader evidence is recorded
-     * in docs/source-lock/tqr_v1_track02_bank_signal_2026-06-03.md and the
-     * parity-evidence runtime screenshot manifest.
-     *
-     * This helper now produces exactly that bounded shape for every selected
-     * stage, because the authentic startup record is one Hall-of-Records
-     * candidate rather than seven invented rooms.  The dungeon_id argument is
-     * still validated and reflected in the per-dungeon meta seed when one is
-     * available, but the room geometry is no longer stage-specific. */
-    const uint32_t seed = 0x0108e938u;
-    const uint16_t level_index = 0x0026u;
+    /* Synthetic fallback room for no-media testing. The 32x27 dimensions
+     * and seed were previously derived from a false reading of the level
+     * descriptor table at UD 0x619900. The real dungeon map topology format
+     * remains unknown and requires HuC6280 code disassembly to discover. */
+    const uint32_t seed = 0u;
+    const uint16_t level_index = 0u;
     const int width = 32;
     const int height = 27;
     const int start_x = 2;
@@ -1334,7 +1327,7 @@ size_t theron_v1_startup_fallback_room_synthesize(uint8_t *out_buf,
     out_level->level_index = 0;
     out_level->width = width;
     out_level->height = height;
-    out_level->dungeon_seed = 0x0108e938u;
+    out_level->dungeon_seed = 0u;
     out_level->source_header_level_index = 0;
     out_level->start_x = (int16_t)start_x;
     out_level->start_y = (int16_t)start_y;

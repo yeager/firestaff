@@ -30,9 +30,8 @@
 
 /* Each entry maps one dungeon ID to its metadata.
  * name, level_count, quest_item_bit are from TQR data analysis.
- * dungeon_seed is set from dungeon header on load. Only dungeon 1's initial
- * value is currently bound to real US/JP Track 02 bytes; unknown dungeons stay
- * zero rather than carrying invented seed values. */
+ * dungeon_seed is set from dungeon header on load. All seeds start at zero;
+ * real values are populated at runtime from Track 02 data. */
 static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
     /* Creature-region names from Track 02 UD 0x2741EF (7 × 8-char, \x01-delimited)
      * map 1:1 to dungeons 1-7. DMWeb confirms Ak-Tu-Ba = Dungeon 1 with 3 levels.
@@ -46,7 +45,7 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .quest_item_count  = 1,
         .quest_item_bit    = (1 << 0),  /* Bit 0 */
         .champion_reset    = 1,
-        .dungeon_seed      = 0x0108e938u, /* verified initial Track 02 seed */
+        .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
     /* Dungeon 2 — DRATOR: Taza Boots. */
