@@ -67,7 +67,15 @@ The single-character action name "X" at index 15 in the combat action
 table is confirmed as a real binary value at UD 0x1DEF4E (byte 0x58),
 not a placeholder. Context: `MELEE\x00X\x00INVOKE`.
 
+## Track 19 Runtime Item Name Table (UD 0x0E9271)
+
+69 items in MODE1/2048 ISO user data. Includes 14 dungeon-specific items
+not present in Track 02's table: WATERSKIN, WATER, STORMRING, MACE,
+TORSO PLATE, LEG PLATE, ARMET, FOOT PLATE, SOUL CAGE, SARMON'S BONES,
+IRON KEY, SKELETON KEY, EMERALD KEY, LOCK PICKS.
+
 ## Versions
 
 - v3.0.223: Dungeon names, quest item ordering, viewport wiring
 - v3.0.224: Object action names, save/delete strings
+- v3.0.225: Track 19 runtime item name table (69 items)

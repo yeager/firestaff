@@ -1,3 +1,8 @@
+- ✅ 2026-08-02 v3.0.225 Theron Track 19 runtime item name table: Extract 69
+  item names from ISO offset 0x0E9271 including 14 dungeon-specific items not
+  on Track 02 (WATERSKIN, STORMRING, MACE, TORSO PLATE, LEG PLATE, ARMET,
+  FOOT PLATE, SOUL CAGE, SARMON'S BONES, IRON KEY, SKELETON KEY, EMERALD KEY,
+  LOCK PICKS, WATER).
 - ✅ 2026-08-02 v3.0.224 Theron Track 02 binary string extraction: Add 4
   object/shield action names (BLOCK/CHOP/BLOW HORN/FLIP) from UD 0x1DEEA5.
   Add 5 save/delete file cabinet strings from UD 0x243081 (FILE CABINET

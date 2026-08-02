@@ -1,6 +1,10 @@
 
 # Unreleased
 
+# Firestaff v3.0.225
+- Extract 69-item runtime item name table from Track 19 ISO offset 0x0E9271
+- Includes 14 dungeon-specific items not present in Track 02: WATERSKIN, STORMRING, MACE, TORSO PLATE, LEG PLATE, ARMET, FOOT PLATE, SOUL CAGE, SARMON'S BONES, IRON KEY, SKELETON KEY, EMERALD KEY, LOCK PICKS, WATER
+
 # Firestaff v3.0.224
 - Add 4 object/shield action names from Track 02 UD 0x1DEEA5: BLOCK, CHOP, BLOW HORN, FLIP
 - Add 5 save/delete file cabinet strings from Track 02 UD 0x243081
