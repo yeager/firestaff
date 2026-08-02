@@ -21393,17 +21393,14 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_move_075f_1bc2
         tests/test_dm2_v1_move_075f_1bc2.c
-        src/dm2/dm2_v1_move_075f_1bc2.c
-        src/dm2/dm2_v1_perform_move.c
-        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
-        src/dm2/dm2_v1_move_record_to_pc34_compat.c
-        src/dm2/dm2_v1_dungeon_loader.c
-        src/dm2/dm2_v1_asset_loader.c
-        src/dm2/dm2_v1_skproject_core.c
     )
     target_include_directories(test_dm2_v1_move_075f_1bc2 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_dm2_v1_move_075f_1bc2 PRIVATE firestaff_dm2 firestaff_m10 firestaff_dm2)
+    if(UNIX)
+        target_link_libraries(test_dm2_v1_move_075f_1bc2 PRIVATE m)
+    endif()
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_move_075f_1bc2 PRIVATE -Wall -Wextra -O2)
     endif()

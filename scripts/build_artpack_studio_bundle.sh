@@ -77,7 +77,10 @@ fi
 LOCALE_DIR="$ROOT/po/locale"
 ADD_DATA_ARGS=()
 if [[ -d "$LOCALE_DIR" ]]; then
-  ADD_DATA_ARGS+=(--add-data "$LOCALE_DIR:po/locale")
+  case "$(uname -s)" in
+    MINGW*|MSYS*) ADD_DATA_ARGS+=(--add-data "$LOCALE_DIR;po/locale") ;;
+    *)            ADD_DATA_ARGS+=(--add-data "$LOCALE_DIR:po/locale") ;;
+  esac
 fi
 
 case "$(uname -s)" in

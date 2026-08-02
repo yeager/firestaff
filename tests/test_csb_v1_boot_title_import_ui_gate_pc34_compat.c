@@ -67,6 +67,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#define mkdir(path, mode) _mkdir(path)
+#endif
 
 static int passed;
 static int failed;
