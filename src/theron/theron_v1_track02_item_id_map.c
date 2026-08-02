@@ -107,3 +107,25 @@ const Theron_WallOrnament *theron_v1_track02_akutuba_wall_ornaments(
         default: return NULL;
     }
 }
+
+static const Theron_FloorOrnament g_floor_square_pad[] = {
+    { 0, 0x01, "Square Pad" },
+};
+
+static const Theron_FloorOrnament g_demon_l2_floors[] = {
+    { 0, 0x05, "Fire Pot" },
+    { 1, 0x01, "Square Pad" },
+};
+
+const Theron_FloorOrnament *theron_v1_track02_floor_ornaments(
+    unsigned int dungeon_index, unsigned int level, unsigned int *count)
+{
+    if (!count) return NULL;
+    if (level == 0) { *count = 0; return NULL; }
+    if (dungeon_index == 6 && level == 2) {
+        *count = 2;
+        return g_demon_l2_floors;
+    }
+    *count = 1;
+    return g_floor_square_pad;
+}

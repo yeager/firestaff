@@ -29,4 +29,7 @@ unsigned int theron_v1_track02_akutuba_wall_ornament_count(unsigned int level);
 const Theron_WallOrnament *theron_v1_track02_akutuba_wall_ornaments(
     unsigned int level, unsigned int *count);
 
+const Theron_FloorOrnament *theron_v1_track02_floor_ornaments(
+    unsigned int dungeon_index, unsigned int level, unsigned int *count);
+
 #endif

@@ -49,11 +49,34 @@ static void test_akutuba_wall_ornaments(void) {
     printf("  AKUTUBA wall ornaments OK\n");
 }
 
+static void test_floor_ornaments(void) {
+    unsigned int count;
+    const Theron_FloorOrnament *floors;
+
+    floors = theron_v1_track02_floor_ornaments(0, 0, &count);
+    assert(!floors && count == 0);
+
+    floors = theron_v1_track02_floor_ornaments(0, 1, &count);
+    assert(floors && count == 1);
+    assert(floors[0].dm1_ornament_id == 0x01);
+
+    floors = theron_v1_track02_floor_ornaments(3, 2, &count);
+    assert(floors && count == 1);
+
+    floors = theron_v1_track02_floor_ornaments(6, 2, &count);
+    assert(floors && count == 2);
+    assert(floors[0].dm1_ornament_id == 0x05);
+    assert(floors[1].dm1_ornament_id == 0x01);
+
+    printf("  Floor ornaments OK\n");
+}
+
 int main(void) {
     printf("test_theron_v1_track02_item_id_map\n");
     test_item_id_translations();
     test_item_id_map_table();
     test_akutuba_wall_ornaments();
+    test_floor_ornaments();
     printf("PASS\n");
     return 0;
 }
