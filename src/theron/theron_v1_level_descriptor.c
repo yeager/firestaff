@@ -1,7 +1,7 @@
 #include "theron_v1_level_descriptor.h"
 
 /* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
- * UD offset 0x619900, 43 records x 6 bytes. */
+ * UD offset 0x619900, 53 records x 6 bytes. */
 static const Theron_LevelDescriptor g_descriptors[THERON_LEVEL_DESCRIPTOR_COUNT] = {
     { 1,  2, 0x0876, 0,   2 }, /*  0 — UD 0x619900 */
     { 1, 10, 0x49E0, 0,  14 }, /*  1 — UD 0x619906 */
@@ -46,6 +46,16 @@ static const Theron_LevelDescriptor g_descriptors[THERON_LEVEL_DESCRIPTOR_COUNT]
     { 1,  1, 0x0280, 0, 230 }, /* 40 — UD 0x6199F0 */
     { 1,  1, 0x0280, 0, 231 }, /* 41 — UD 0x6199F6 */
     { 1,  1, 0x0280, 0, 232 }, /* 42 — UD 0x6199FC */
+    { 1,  1, 0x0280, 0, 233 }, /* 43 — UD 0x619A02 */
+    { 1,  1, 0x0280, 0, 234 }, /* 44 — UD 0x619A08 */
+    { 1,  1, 0x032A, 0, 237 }, /* 45 — UD 0x619A0E */
+    { 1,  1, 0x040D, 0, 240 }, /* 46 — UD 0x619A14 */
+    { 1,  1, 0x03B0, 0, 243 }, /* 47 — UD 0x619A1A */
+    { 1,  1, 0x049A, 0, 246 }, /* 48 — UD 0x619A20 */
+    { 1,  1, 0x0368, 0, 249 }, /* 49 — UD 0x619A26 */
+    { 1,  1, 0x02C9, 0, 252 }, /* 50 — UD 0x619A2C */
+    { 1,  1, 0x0544, 0, 255 }, /* 51 — UD 0x619A32 */
+    { 1,  1, 0x023D, 0,   2 }, /* 52 — UD 0x619A38 */
 };
 
 const Theron_LevelDescriptor *theron_v1_level_descriptor(unsigned int index) {

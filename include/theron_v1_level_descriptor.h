@@ -7,7 +7,7 @@
 /* Level descriptor table from Track 02 BIN UD 0x619900.
  * 43 records of 6 bytes each describing dungeon level geometry. */
 
-#define THERON_LEVEL_DESCRIPTOR_COUNT 43u
+#define THERON_LEVEL_DESCRIPTOR_COUNT 53u
 
 typedef struct {
     uint8_t  flags;
