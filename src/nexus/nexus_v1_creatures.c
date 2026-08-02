@@ -19,17 +19,41 @@ static uint64_t creatures_fnv1a64(const uint8_t *data, long size) {
     return h;
 }
 
-/* Known Nexus creature types from MNS files */
-static const struct { const char *name; const char *mns; int hp; int atk; int def; int spd; int xp; } g_creature_defs[] = {
-    {"Scorpion",     "SCORPION.MNS",  30, 15, 5,  3, 25},
-    {"Mummy",        "MUMMY.MNS",     50, 20, 8,  2, 40},
-    {"Dragon",       "DRAGON.MNS",   200, 60, 30, 4, 200},
-    {"Skeleton",     "SKELETON.MNS",  35, 18, 6,  3, 30},
-    {"Ghost",        "GHOST.MNS",     25, 12, 2,  5, 20},
-    {"Worm",         "WORM.MNS",      80, 25, 10, 2, 60},
-    {"Golem",        "GOLEM.MNS",    120, 35, 20, 1, 100},
-    {"Spider",       "SPIDER.MNS",    20, 10, 3,  4, 15},
-    {NULL, NULL, 0, 0, 0, 0, 0}
+/* Real Nexus creature roster — 30 MNS filenames from DM.BIN 0x0385F0.
+ * Stats are placeholder; real stats come from MNS file headers and
+ * DGN actor records. Source: yam\monsobj.c filename table. */
+static const struct { const char *name; const char *mns; } g_creature_defs[] = {
+    {"Ant Man",       "ANTMAN.MNS"},
+    {"Mummy",         "MUMMY.MNS"},
+    {"Ghost",         "GHOST.MNS"},
+    {"Vexirk",        "VEXIRK.MNS"},
+    {"Giggler",       "GIGGLER.MNS"},
+    {"Golem",         "GOLEM.MNS"},
+    {"Hell Hound",    "H_HOUND.MNS"},
+    {"Gold Dragon",   "D_GOLD.MNS"},
+    {"Silver Dragon", "D_SILVER.MNS"},
+    {"Red Dragon",    "D_RED.MNS"},
+    {"Last Monster",  "LAS_MON.MNS"},
+    {"Oitu",          "OITU.MNS"},
+    {"Rat",           "RAT.MNS"},
+    {"Rock Pile",     "ROCKPILE.MNS"},
+    {"Screamer",      "SCREAMER.MNS"},
+    {"Scorpion",      "SCORPION.MNS"},
+    {"Floor Snake",   "SN_FLOOR.MNS"},
+    {"Wall Snake",    "SN_WALL.MNS"},
+    {"Skeleton Sword","S_SWORD.MNS"},
+    {"Skeleton Shield","S_SHIELD.MNS"},
+    {"Worm",          "WORM.MNS"},
+    {"Green Dragon",  "GRN_DRA.MNS"},
+    {"Red Drake",     "RED_DRA.MNS"},
+    {"Dragon Zombie", "DRA_ZOM.MNS"},
+    {"Mini Dragon",   "MINI_DRA.MNS"},
+    {"Borketh",       "BORKETH.MNS"},
+    {"Chaos",         "CHAOS.MNS"},
+    {"Lord Rib",      "LORD_RIB.MNS"},
+    {"Big Worm",      "BIGWORM.MNS"},
+    {"Obake",         "OBAKE.MNS"},
+    {NULL, NULL}
 };
 
 void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
@@ -40,15 +64,7 @@ void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
         Nexus_CreatureType *t = &mgr->types[i];
         strncpy(t->name, g_creature_defs[i].name, 31);
         strncpy(t->model_file, g_creature_defs[i].mns, 31);
-        t->health = g_creature_defs[i].hp;
-        t->attack = g_creature_defs[i].atk;
-        t->defense = g_creature_defs[i].def;
-        t->speed = g_creature_defs[i].spd;
-        t->experience_value = g_creature_defs[i].xp;
         t->model_index = -1;
-        t->mns_bound = 0;
-        t->mns_size = 0;
-        t->mns_fnv1a64 = 0;
         mgr->type_count++;
     }
 }
