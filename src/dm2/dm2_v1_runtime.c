@@ -4646,7 +4646,21 @@ static int dm2_runtime_process_0c_timer(void *user,
                                         const DM2_V1_SourceTimer *timer,
                                         uint16_t source_index,
                                         DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    int ci;
+    DM2_ChampionRecord *champ;
+    (void)source_index;
+    (void)receipt;
+
+    if (!rt || !rt->session_snapshot_valid)
+        return 1;
+    ci = (int)(timer->actor & 0xff);
+    if (ci < 0 || ci >= rt->session_snapshot.champion_count || ci >= 4)
+        return 1;
+    champ = (DM2_ChampionRecord *)rt->session_snapshot.champion_data[ci];
+    champ->timer_index = 0xff;
+    if (champ->cur_hp != 0)
+        champ->hero_flag |= 0x08;
     return 1;
 }
 
