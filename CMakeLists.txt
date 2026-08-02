@@ -38820,6 +38820,19 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(NAME theron_v1_track02_experience_table
         COMMAND test_theron_v1_track02_experience_table)
 
+    add_executable(test_theron_v1_track02_class_base_stats
+        tests/test_theron_v1_track02_class_base_stats.c
+        src/theron/theron_v1_track02_class_base_stats.c
+    )
+    target_include_directories(test_theron_v1_track02_class_base_stats PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_class_base_stats PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME theron_v1_track02_class_base_stats
+        COMMAND test_theron_v1_track02_class_base_stats)
+
     add_executable(test_theron_v1_track02_dungeon_lore
         tests/test_theron_v1_track02_dungeon_lore.c
         src/theron/theron_v1_track02_dungeon_lore.c
