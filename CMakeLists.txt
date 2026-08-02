@@ -44234,6 +44234,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_item_categor
     )
 endif()
 
+# Theron Track 02 creature spawn (category-based combat formulas)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature_spawn.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_creature_spawn.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_creature_spawn.h")
+    add_executable(test_theron_v1_track02_creature_spawn
+        tests/test_theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_creature_spawn.c
+    )
+    target_include_directories(test_theron_v1_track02_creature_spawn PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_creature_spawn PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_creature_spawn
+        COMMAND test_theron_v1_track02_creature_spawn
+    )
+endif()
+
 # Theron Track 02 dungeon text (stories, treasures, retrieval messages)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_text.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_text.c"
@@ -45229,6 +45248,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_champion_portrait_gdat.
     add_test(
         NAME dm2_v1_champion_portrait_gdat
         COMMAND test_dm2_v1_champion_portrait_gdat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_i18n.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_i18n.c")
+    add_executable(test_dm2_v1_i18n
+        tests/test_dm2_v1_i18n.c
+        src/dm2/dm2_v1_i18n.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_i18n PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_i18n PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_i18n
+        COMMAND test_dm2_v1_i18n
     )
 endif()
 

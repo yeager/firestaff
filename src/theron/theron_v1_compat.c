@@ -28,9 +28,9 @@
 
 /* ── Internal creature stat table ─────────────────────────────────── */
 /* 7 real creature types from Track 02 UD 0x2741EF, one per dungeon.
- * Combat stats are placeholder until the real stat table is located
- * in the ROM code banks (brute-force search of UD 0x000000-0x090000
- * was inconclusive — needs targeted HuC6280 disassembly). */
+ * Theron has NO per-type stat table (unlike DM1 G0243). Stats come from
+ * category-based formulas at spawn (see theron_v1_track02_creature_spawn.h).
+ * Values below are runtime approximations for the combat system. */
 typedef struct {
     Theron_CreatureType type;
     int base_hp;
