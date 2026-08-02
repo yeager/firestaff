@@ -120,6 +120,23 @@ int theron_v1_track02_dungeon_map_load(
         out->maps[m].header.door_type2 = ud_data[door_off++];
     }
 
+    /* Two 16-bit data lists per map, after door types.
+     * List 1: creature graphics bank (0x0003 = standard, 0x0000 = FORMICIA).
+     * List 2: cumulative column item counts. */
+    size_t list_off = door_off;
+    for (unsigned int m = 0; m < nmaps; m++) {
+        if (list_off + 2 > ud_size) return 0;
+        out->creature_gfx_bank[m] = (uint16_t)ud_data[list_off] |
+            ((uint16_t)ud_data[list_off + 1] << 8);
+        list_off += 2;
+    }
+    for (unsigned int m = 0; m < nmaps; m++) {
+        if (list_off + 2 > ud_size) return 0;
+        out->cumulative_column_items[m] = (uint16_t)ud_data[list_off] |
+            ((uint16_t)ud_data[list_off + 1] << 8);
+        list_off += 2;
+    }
+
     size_t map_abs = UD_BASE + qb->map_data_offset;
     if (map_abs >= ud_size) return 0;
 

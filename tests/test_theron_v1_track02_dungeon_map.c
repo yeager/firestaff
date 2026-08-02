@@ -114,6 +114,10 @@ static void test_akutuba_maps(const uint8_t *ud, size_t ud_size) {
     assert(dd.maps[3].header.creature_count == 1);
     assert(dd.maps[3].header.xp_modifier == 5);
 
+    assert(dd.creature_gfx_bank[0] == 0x0003);
+    assert(dd.cumulative_column_items[0] == 0x0000);
+    assert(dd.cumulative_column_items[1] == 0x000A);
+
     printf("  AKUTUBA: 4 maps OK\n");
 }
 

@@ -42,6 +42,8 @@ typedef struct {
     uint8_t      dungeon_index;
     uint8_t      map_count;
     uint16_t     object_counts[16];
+    uint16_t     creature_gfx_bank[THERON_TRACK02_MAX_MAPS];
+    uint16_t     cumulative_column_items[THERON_TRACK02_MAX_MAPS];
     Theron_Map   maps[THERON_TRACK02_MAX_MAPS];
 } Theron_DungeonData;
 
