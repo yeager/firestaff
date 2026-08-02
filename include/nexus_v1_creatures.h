@@ -115,6 +115,12 @@ int nexus_v1_creature_distance(int ax, int ay, int bx, int by);
 int nexus_v1_creature_attack(Nexus_V1_CreatureManager *mgr, int creature_idx,
                                int champion_defense, int *out_damage);
 
+/* Apply damage to all creatures at (x,y).  Dead creatures are removed.
+ * Returns number of creatures killed.
+ * Source: DM1 CREATURE.C F0190 group damage application. */
+int nexus_v1_creature_manager_damage_at(Nexus_V1_CreatureManager *mgr,
+                                        int x, int y, int damage);
+
 /* ═══════════════════════════════════════════════════════════════════
  * Real DGN actor-record spawn and type binding
  * ═══════════════════════════════════════════════════════════════════ */

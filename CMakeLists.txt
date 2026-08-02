@@ -86,6 +86,22 @@ target_link_libraries(test_nexus_v1_hud_layout PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_hud_layout COMMAND test_nexus_v1_hud_layout)
 set_tests_properties(nexus_v1_hud_layout PROPERTIES LABELS "nexus;hud;tier4")
 
+add_executable(test_nexus_v1_spell_cast_mechanics
+    tests/test_nexus_v1_spell_cast_mechanics.c)
+target_include_directories(test_nexus_v1_spell_cast_mechanics PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_spell_cast_mechanics PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_spell_cast_mechanics COMMAND test_nexus_v1_spell_cast_mechanics)
+set_tests_properties(nexus_v1_spell_cast_mechanics PROPERTIES LABELS "nexus;spell;tier4")
+
+add_executable(test_nexus_v1_shop_prices
+    tests/test_nexus_v1_shop_prices.c)
+target_include_directories(test_nexus_v1_shop_prices PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_shop_prices PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_shop_prices COMMAND test_nexus_v1_shop_prices)
+set_tests_properties(nexus_v1_shop_prices PROPERTIES LABELS "nexus;shop;tier4")
+
 add_executable(test_nexus_v1_prs3
     tests/test_nexus_v1_prs3.c)
 target_include_directories(test_nexus_v1_prs3 PRIVATE
@@ -3588,7 +3604,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.253 LANGUAGES C)
+project(Firestaff VERSION 3.0.254 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -13837,6 +13853,55 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_asset_loader_be
         COMMAND test_dm2_v1_asset_loader_be
+    )
+
+    add_executable(test_dm2_v1_asset_loader_pc9821
+        tests/test_dm2_v1_asset_loader_pc9821.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_asset_loader_pc9821 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_asset_loader_pc9821 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_asset_loader_pc9821
+        COMMAND test_dm2_v1_asset_loader_pc9821
+    )
+
+    add_executable(test_dm2_v1_asset_loader_mac_fr
+        tests/test_dm2_v1_asset_loader_mac_fr.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_asset_loader_mac_fr PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_asset_loader_mac_fr PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_asset_loader_mac_fr
+        COMMAND test_dm2_v1_asset_loader_mac_fr
+    )
+
+    add_executable(test_dm2_v1_dungeon_loader_mac_fr
+        tests/test_dm2_v1_dungeon_loader_mac_fr.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_dungeon_loader_mac_fr PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dungeon_loader_mac_fr PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_dungeon_loader_mac_fr
+        COMMAND test_dm2_v1_dungeon_loader_mac_fr
     )
 
     add_executable(test_dm2_v1_c_map_tile_access

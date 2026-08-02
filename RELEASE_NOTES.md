@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.254
+- Nexus: spell casting wired into mechanics tick (rune lookup → mana → damage)
+- Nexus: creature_manager_damage_at for spell/area damage
+- Nexus: shop item price table from DM.BIN (8 entries, 350-1400 gold)
+
 # Firestaff v3.0.253
 - Nexus: HUD layout table from DM.BIN yam\menuctrl.c (80 entries, 9 groups)
 - Nexus: creature AI detection range from CRET field instead of hardcoded 3

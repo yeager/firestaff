@@ -1,3 +1,11 @@
+- ✅ 2026-08-02 v3.0.254 Nexus: spell casting integration + shop price table
+  Spell system wired into mechanics tick: NEXUS_CMD_CAST_SPELL resolves rune
+  combination via DM.BIN lookup table, deducts mana from caster, and applies
+  damage to adjacent creatures via new nexus_v1_creature_manager_damage_at().
+  nexus_v1_cast_spell() now returns computed damage instead of void-casting it.
+  Added nexus_v1_spell_damage() for preview. Shop item price table (8 entries)
+  decoded from DM.BIN yam\item.c at 0x037210 with lookup API. Tests:
+  nexus_v1_spell_cast_mechanics + nexus_v1_shop_prices.
 - ✅ 2026-08-02 v3.0.253 Nexus: HUD layout table + CRET detection range AI
   HUD element layout table (80 entries, 9 groups) decoded from DM.BIN
   yam\menuctrl.c at 0x0376D0. Covers viewport, portraits, HP bars, spell panel,

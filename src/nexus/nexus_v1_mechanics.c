@@ -9,6 +9,7 @@
 #include "nexus_v1_script_vm.h"
 #include "nexus_v1_sound.h"
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_magic.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -64,6 +65,10 @@ void nexus_mechanics_init(Nexus_MechanicsState *st,
     st->input_tail = 0;
     st->input_count = 0;
     st->use_item_slot = -1;
+    st->spell_power = -1;
+    st->spell_element = -1;
+    st->spell_form = -1;
+    st->spell_align = -1;
 }
 
 int nexus_mechanics_push_command(Nexus_MechanicsState *st, int command) {
@@ -128,6 +133,23 @@ void nexus_mechanics_change_level(Nexus_MechanicsState *st, int target_level,
 void nexus_mechanics_set_use_item_slot(Nexus_MechanicsState *st, int slot) {
     if (!st) return;
     st->use_item_slot = slot;
+}
+
+void nexus_mechanics_set_spell_runes(Nexus_MechanicsState *st,
+                                     int power, int element, int form, int align) {
+    if (!st) return;
+    st->spell_power = power;
+    st->spell_element = element;
+    st->spell_form = form;
+    st->spell_align = align;
+}
+
+void nexus_mechanics_clear_spell(Nexus_MechanicsState *st) {
+    if (!st) return;
+    st->spell_power = -1;
+    st->spell_element = -1;
+    st->spell_form = -1;
+    st->spell_align = -1;
 }
 
 static uint64_t mechanics_fnv1a64_bytes(const uint8_t *data, size_t size) {
@@ -788,6 +810,28 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     attacked = mechanics_attack_adjacent_creature(engine, st);
                     if (attacked) needs_redraw = 1;
                 }
+            }
+        } else if (cmd == NEXUS_CMD_CAST_SPELL) {
+            /* Cast a spell using the buffered rune selection.
+             * Resolves the rune combination via the spell lookup table,
+             * deducts mana, and applies damage to the nearest adjacent creature.
+             * Source: DM1 COMMAND.C F0412 spell cast dispatch. */
+            int leader_idx = mechanics_party_leader_index(engine);
+            if (leader_idx >= 0 && st->spell_power >= 0 && st->spell_element >= 0 &&
+                st->spell_form >= 0) {
+                Nexus_V1_Champion *leader = &engine->champions.champions[leader_idx];
+                int damage = nexus_v1_cast_spell(leader, st->spell_power,
+                                                 st->spell_element, st->spell_form,
+                                                 st->spell_align);
+                if (damage > 0) {
+                    int fx, fy;
+                    nexus_target_square(st->party_x, st->party_y, st->party_dir,
+                                        1, 0, 0, &fx, &fy);
+                    nexus_v1_creature_manager_damage_at(&engine->creatures, fx, fy, damage);
+                    nexus_sound_play(&engine->audio, NEXUS_SFX_SPELL_CAST);
+                    needs_redraw = 1;
+                }
+                nexus_mechanics_clear_spell(st);
             }
         } else {
             /* Step movement */

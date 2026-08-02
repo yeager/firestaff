@@ -310,6 +310,23 @@ int nexus_v1_creature_attack(Nexus_V1_CreatureManager *mgr, int creature_idx,
     return (roll < 70 + dmg / 4) ? 1 : 0;
 }
 
+int nexus_v1_creature_manager_damage_at(Nexus_V1_CreatureManager *mgr,
+                                        int x, int y, int damage) {
+    int i, killed = 0;
+    if (!mgr || damage <= 0) return 0;
+    for (i = 0; i < mgr->active_count; i++) {
+        Nexus_Creature *c = &mgr->active[i];
+        if (!c->alive || c->x != x || c->y != y) continue;
+        c->health -= damage;
+        if (c->health <= 0) {
+            c->alive = 0;
+            c->health = 0;
+            killed++;
+        }
+    }
+    return killed;
+}
+
 void nexus_v1_creatures_reset_active(Nexus_V1_CreatureManager *mgr) {
     if (!mgr) return;
     /* ReDMCSB: GROUP.C F0183 — the active-group pool is per-map; roster

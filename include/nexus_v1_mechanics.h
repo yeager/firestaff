@@ -67,6 +67,14 @@ struct Nexus_MechanicsState {
      * UI sets this before pushing the use-item command.
      * Source: DM1 CLIKMENU.C item click -> command dispatch. */
     int use_item_slot;
+
+    /* Spell casting state — rune selection buffer.
+     * UI pushes runes one at a time; NEXUS_CMD_CAST_SPELL resolves
+     * and casts.  Source: DM1 COMMAND.C rune entry + F0412 cast. */
+    int spell_power;       /* selected power rune (0-5), or -1 */
+    int spell_element;     /* selected element rune (0-3), or -1 */
+    int spell_form;        /* selected form rune (0-3), or -1 */
+    int spell_align;       /* alignment (0-1), or -1 */
 };
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -120,6 +128,14 @@ void nexus_mechanics_change_level(Nexus_MechanicsState *st, int target_level,
 /* Set the inventory slot that NEXUS_CMD_USE_ITEM will consume.
  * slot is an index into the party leader's inventory[30]. */
 void nexus_mechanics_set_use_item_slot(Nexus_MechanicsState *st, int slot);
+
+/* Set spell runes before pushing NEXUS_CMD_CAST_SPELL.
+ * Source: DM1 COMMAND.C rune entry sequence. */
+void nexus_mechanics_set_spell_runes(Nexus_MechanicsState *st,
+                                     int power, int element, int form, int align);
+
+/* Clear the spell rune buffer. */
+void nexus_mechanics_clear_spell(Nexus_MechanicsState *st);
 
 /* Load real Track 1 mechanics data for the current engine level.
  * Resets and repopulates door/teleporter/stair/pit/altar/floor-item registries

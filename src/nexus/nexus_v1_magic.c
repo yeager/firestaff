@@ -118,8 +118,14 @@ int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int element,
     caster->mana -= cost;
 
     damage = params[power][1] + nexus_v1_combat_random(params[power][1] / 2 + 1);
-    (void)damage;
     (void)align;
 
-    return cost;
+    return damage;
+}
+
+int nexus_v1_spell_damage(int power, Nexus_SpellClass cls) {
+    const int (*params)[2];
+    if (power < 0 || power >= NEXUS_POWER_RUNE_COUNT) return 0;
+    params = (cls == NEXUS_SPELL_CLASS_PRIEST) ? g_param_priest : g_param_wizard;
+    return params[power][1];
 }
