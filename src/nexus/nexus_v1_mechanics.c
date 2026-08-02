@@ -813,23 +813,46 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             }
         } else if (cmd == NEXUS_CMD_CAST_SPELL) {
             /* Cast a spell using the buffered rune selection.
-             * Resolves the rune combination via the spell lookup table,
-             * deducts mana, and applies damage to the nearest adjacent creature.
-             * Source: DM1 COMMAND.C F0412 spell cast dispatch. */
+             * Resolves rune combination, deducts mana, and dispatches
+             * by spell category: party buffs heal/shield the caster,
+             * attack spells damage adjacent creatures.
+             * Source: DM1 COMMAND.C F0412 spell cast dispatch;
+             *         DM.BIN 0x0383AC spell handler vtable. */
             int leader_idx = mechanics_party_leader_index(engine);
             if (leader_idx >= 0 && st->spell_power >= 0 && st->spell_element >= 0 &&
                 st->spell_form >= 0) {
                 Nexus_V1_Champion *leader = &engine->champions.champions[leader_idx];
-                int damage = nexus_v1_cast_spell(leader, st->spell_power,
-                                                 st->spell_element, st->spell_form,
-                                                 st->spell_align);
-                if (damage > 0) {
-                    int fx, fy;
-                    nexus_target_square(st->party_x, st->party_y, st->party_dir,
-                                        1, 0, 0, &fx, &fy);
-                    nexus_v1_creature_manager_damage_at(&engine->creatures, fx, fy, damage);
-                    nexus_sound_play(&engine->audio, NEXUS_SFX_SPELL_CAST);
-                    needs_redraw = 1;
+                Nexus_SpellClass cls = (leader->wizard_level >= leader->priest_level)
+                    ? NEXUS_SPELL_CLASS_WIZARD : NEXUS_SPELL_CLASS_PRIEST;
+                Nexus_SpellLookup sp = nexus_v1_spell_lookup(st->spell_power,
+                    st->spell_element, st->spell_form, cls);
+                if (!sp.valid) {
+                    cls = (cls == NEXUS_SPELL_CLASS_PRIEST)
+                        ? NEXUS_SPELL_CLASS_WIZARD : NEXUS_SPELL_CLASS_PRIEST;
+                    sp = nexus_v1_spell_lookup(st->spell_power,
+                        st->spell_element, st->spell_form, cls);
+                }
+                if (sp.valid) {
+                    int effect = nexus_v1_cast_spell(leader, st->spell_power,
+                                                     st->spell_element, st->spell_form,
+                                                     st->spell_align);
+                    if (effect > 0) {
+                        Nexus_SpellCategory cat = nexus_v1_spell_category(sp.spell_type);
+                        if (cat == NEXUS_SPELL_CAT_PARTY) {
+                            if (sp.spell_type == NEXUS_SPELL_EFFECT_HEAL) {
+                                leader->health += effect;
+                                if (leader->health > leader->max_health)
+                                    leader->health = leader->max_health;
+                            }
+                        } else {
+                            int fx, fy;
+                            nexus_target_square(st->party_x, st->party_y, st->party_dir,
+                                                1, 0, 0, &fx, &fy);
+                            nexus_v1_creature_manager_damage_at(&engine->creatures, fx, fy, effect);
+                        }
+                        nexus_sound_play(&engine->audio, NEXUS_SFX_SPELL_CAST);
+                        needs_redraw = 1;
+                    }
                 }
                 nexus_mechanics_clear_spell(st);
             }
