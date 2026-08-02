@@ -38,6 +38,12 @@ typedef struct {
     uint8_t  ninja_skills[4];  /* Steal, Fight, Throw, Shoot */
     uint8_t  priest_skills[4]; /* Identify, Heal, Influence, Defend */
     uint8_t  wizard_skills[4]; /* Fire, Air, Earth, Water */
+    /* Starting equipment: track02 item indices + equip slot assignments.
+     * Source: DMWeb encyclopaedia (dmweb.free.fr/?q=node/201).
+     * -1 terminates the list. */
+    int8_t   start_equip_slot[12];  /* equip slot (Theron_EquipSlot) or -1 for inventory */
+    int8_t   start_equip_item[12];  /* track02 item index, -1 = end sentinel */
+    uint8_t  start_equip_count;     /* number of valid entries */
 } Theron_ChampionRecord;
 
 const Theron_ChampionRecord *theron_v1_track02_us_champion(unsigned int index);

@@ -85,7 +85,22 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
     c->attributes = 0;
     memset(c->inventory, 0, sizeof(c->inventory));
     for (int i = 0; i < THERON_EQUIP_SLOT_COUNT; i++) c->slots[i] = -1;
-    c->load     = 0;
+
+    /* Starting equipment from DMWeb roster */
+    int inv_next = 0;
+    for (int i = 0; i < (int)rec->start_equip_count && i < 12; i++) {
+        int8_t item = rec->start_equip_item[i];
+        int8_t eslot = rec->start_equip_slot[i];
+        if (item < 0) break;
+        if (eslot >= 0 && eslot < THERON_EQUIP_SLOT_COUNT) {
+            c->slots[eslot] = (int16_t)item;
+        }
+        if (inv_next < THERON_INVENTORY_SLOTS) {
+            c->inventory[inv_next++] = (uint8_t)item;
+        }
+    }
+
+    c->load     = (int16_t)inv_next;
     c->max_load = (int16_t)((rec->strength << 3) + 100);
     c->food     = 0;
     c->water    = 0;

@@ -70,6 +70,34 @@ int main(void) {
         assert(hexa->wizard_skills[i]  == 4);
     }
 
+    /* Starting equipment from DMWeb */
+    assert(theron->start_equip_count == 3);
+    assert(theron->start_equip_item[0] == 20); /* LEATHER JERKIN */
+    assert(theron->start_equip_item[1] == 29); /* GHI TROUSERS */
+    assert(theron->start_equip_item[2] == 37); /* LEATHER BOOTS */
+
+    assert(tiran->start_equip_count == 5);
+    assert(tiran->start_equip_item[0] == 33); /* BASINET */
+    assert(tiran->start_equip_item[4] == 9);  /* MORNINGSTAR */
+
+    assert(pentai->start_equip_count == 10);
+    assert(pentai->start_equip_item[0] == 1);  /* ILLUMULET */
+    assert(pentai->start_equip_item[8] == 4);  /* DAGGER */
+    assert(pentai->start_equip_item[9] == 41); /* ROPE */
+
+    /* Verify party init wires equipment into champion slots */
+    {
+        Theron_V1_Party p;
+        theron_v1_party_init(&p, 0);
+        /* Theron: Leather Jerkin in armor slot */
+        assert(p.champions[0].slots[1] == 20); /* ESLOT_ARMOR = LEATHER JERKIN */
+        assert(p.champions[0].slots[4] == 37); /* ESLOT_BOOTS = LEATHER BOOTS */
+        assert(p.champions[0].inventory[0] == 20);
+        assert(p.champions[0].inventory[1] == 29);
+        assert(p.champions[0].inventory[2] == 37);
+        assert(p.champions[0].load == 3);
+    }
+
     /* Party init uses real roster data */
     {
         Theron_V1_Party party;
