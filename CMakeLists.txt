@@ -15122,6 +15122,26 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_save_write_record_checkcode
     )
 
+    add_executable(test_dm2_v1_save_read_record_checkcode
+        tests/test_dm2_v1_save_read_record_checkcode.c
+        src/dm2/dm2_v1_save_read_record_checkcode_pc34_compat.c
+        src/dm2/dm2_v1_save_write_record_checkcode_pc34_compat.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_save_read_record_checkcode PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_save_read_record_checkcode PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_read_record_checkcode PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_read_record_checkcode
+        COMMAND test_dm2_v1_save_read_record_checkcode
+    )
+
     add_executable(test_dm2_v1_save_store_extra_dungeon_data
         tests/test_dm2_v1_save_store_extra_dungeon_data.c
         src/dm2/dm2_v1_save_store_extra_dungeon_data_pc34_compat.c
@@ -15192,6 +15212,25 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_save_suppress_masks
         COMMAND test_dm2_v1_save_suppress_masks
+    )
+
+    add_executable(test_dm2_v1_save_suppress_roundtrip
+        tests/test_dm2_v1_save_suppress_roundtrip.c
+        src/dm2/dm2_v1_save_suppress_masks_pc34_compat.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_save_suppress_roundtrip PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_save_suppress_roundtrip PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_suppress_roundtrip PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_suppress_roundtrip
+        COMMAND test_dm2_v1_save_suppress_roundtrip
     )
 
     add_executable(test_dm2_v1_suppress_bit_ops
