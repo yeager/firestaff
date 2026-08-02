@@ -96,9 +96,19 @@ static uint16_t rd16le(const uint8_t *p) {
 static uint16_t rd16be(const uint8_t *p) {
     return ((uint16_t)p[0] << 8) | (uint16_t)p[1];
 }
-static DM2_MAYBE_UNUSED uint32_t rd32le(const uint8_t *p) {
+static uint32_t rd32le(const uint8_t *p) {
     return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
            ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+static uint32_t rd32be(const uint8_t *p) {
+    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+           ((uint32_t)p[2] << 8) | (uint32_t)p[3];
+}
+static uint16_t gdat_rd16(const DM2_V1_AssetLoader *l, const uint8_t *p) {
+    return l->big_endian ? rd16be(p) : rd16le(p);
+}
+static uint32_t gdat_rd32(const DM2_V1_AssetLoader *l, const uint8_t *p) {
+    return l->big_endian ? rd32be(p) : rd32le(p);
 }
 
 static uint32_t dm2_gdat_file_receipt_hash(uint32_t a,
@@ -152,7 +162,7 @@ static int dm2_gdat_parse_raw_table(DM2_V1_AssetLoader *loader,
     if (raw_count == 0) return -1;
     if (loader->data_size < 8u + ((size_t)raw_count - 1u) * 2u) return -1;
 
-    raw0_size = rd32le(loader->data + 4);
+    raw0_size = gdat_rd32(loader, loader->data + 4);
     offset = 6u + ((uint32_t)raw_count * 2u);
     if ((uint64_t)offset + raw0_size > loader->data_size) return -1;
 
@@ -164,7 +174,7 @@ static int dm2_gdat_parse_raw_table(DM2_V1_AssetLoader *loader,
     loader->raw_sizes[0] = raw0_size;
     offset += raw0_size;
     for (i = 1; i < raw_count; ++i) {
-        uint32_t sz = rd16le(loader->data + 8u + ((uint32_t)(i - 1u) * 2u));
+        uint32_t sz = gdat_rd16(loader, loader->data + 8u + ((uint32_t)(i - 1u) * 2u));
         loader->raw_offsets[i] = offset;
         loader->raw_sizes[i] = sz;
         if ((uint64_t)offset + sz > loader->data_size) return -1;
@@ -308,17 +318,22 @@ static int dm2_img3_bits_per_pixel(uint16_t cy, uint16_t bpp_word,
     return 0;
 }
 
+static uint16_t img_rd16(const uint8_t *p, int be) {
+    return be ? rd16be(p) : rd16le(p);
+}
+
 static int dm2_img3_raw_bits_per_pixel(const uint8_t *raw,
                                        size_t raw_size,
-                                       uint16_t *out_bpp) {
+                                       uint16_t *out_bpp,
+                                       int be) {
     uint16_t cy;
 
     if (out_bpp) *out_bpp = 0u;
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return 0;
-    cy = rd16le(raw + 2u);
-    if (dm2_img3_bits_per_pixel(cy, rd16le(raw + 4u), out_bpp)) return 1;
+    cy = img_rd16(raw + 2u, be);
+    if (dm2_img3_bits_per_pixel(cy, img_rd16(raw + 4u, be), out_bpp)) return 1;
     if (dm2_img3_signed_offset(cy) == -32) {
-        return dm2_img3_bits_per_pixel(cy, rd16le(raw + 6u), out_bpp);
+        return dm2_img3_bits_per_pixel(cy, img_rd16(raw + 6u, be), out_bpp);
     }
     return 0;
 }
@@ -393,9 +408,9 @@ static int dm2_v1_asset_load_image_metadata(
                                 DM2_GDAT_ENTRY_TYPE_IMAGE, field);
     raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return 0;
-    cy = rd16le(raw + 2u);
-    if (!dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp)) return 0;
-    out_metadata->width = (uint16_t)(rd16le(raw) & 0x03ffu);
+    cy = img_rd16(raw + 2u, loader->big_endian);
+    if (!dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp, loader->big_endian)) return 0;
+    out_metadata->width = (uint16_t)(img_rd16(raw, loader->big_endian) & 0x03ffu);
     out_metadata->height = (uint16_t)(cy & 0x03ffu);
     if (out_metadata->width == 0u || out_metadata->height == 0u) {
         memset(out_metadata, 0, sizeof(*out_metadata));
@@ -437,12 +452,12 @@ static int dm2_v1_asset_load_image_local_palette(
                                 DM2_GDAT_ENTRY_TYPE_IMAGE, field);
     raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE + DM2_IMG_LOCAL_PALETTE_SIZE ||
-        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp) ||
+        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp, loader->big_endian) ||
         bpp != 4u) {
         return 0;
     }
-    width = (uint16_t)(rd16le(raw) & 0x03ffu);
-    height = (uint16_t)(rd16le(raw + 2u) & 0x03ffu);
+    width = (uint16_t)(img_rd16(raw, loader->big_endian) & 0x03ffu);
+    height = (uint16_t)(img_rd16(raw + 2u, loader->big_endian) & 0x03ffu);
     if (width == 0u || height == 0u) return 0;
     payload_bytes = (size_t)(((width + 1u) & 0xfffeu) >> 1) * (size_t)height;
     palette_offset = DM2_IMG3_HEADER_SIZE + payload_bytes;
@@ -801,10 +816,22 @@ int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
 
     if (!data || size < DM2_GDAT_HEADER_SIZE + 4) return -1;
 
-    uint16_t first_word = rd16le(data + 0);
-    uint16_t raw_count = rd16le(data + 2);
+    uint16_t first_word_le = rd16le(data + 0);
+    uint16_t first_word_be = rd16be(data + 0);
+    int be = 0;
+    uint16_t first_word;
+    uint16_t raw_count;
 
-    if ((first_word & 0x8000u) == 0) return -1;
+    /* Detect endianness: Mac/Amiga 68k store words in big-endian order */
+    if ((first_word_le & 0x8000u) != 0) {
+        first_word = first_word_le;
+    } else if ((first_word_be & 0x8000u) != 0) {
+        first_word = first_word_be;
+        be = 1;
+    } else {
+        return -1;
+    }
+
     if ((first_word & 0x7fffu) != 5u &&
         (first_word & 0x7fffu) != 4u &&
         (first_word & 0x7fffu) != 2u) {
@@ -816,12 +843,16 @@ int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
     int is_fmtowns = (first_word == DM2_FMTOWNS_GDAT_CONTAINER_WORD &&
                       size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE &&
                       size <= DM2_FMTOWNS_GRAPHICS_MAX_SIZE);
-    if (!is_pc && !is_fmtowns) return -1;
+    int is_be = (be && (first_word == DM2_PC_GDAT_CONTAINER_WORD) &&
+                 size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE);
+    if (!is_pc && !is_fmtowns && !is_be) return -1;
 
     loader->data = data;
     loader->data_size = size;
+    loader->big_endian = be;
     loader->category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
     loader->gdat_version = (uint16_t)(first_word & 0x7fffu);
+    raw_count = be ? rd16be(data + 2) : rd16le(data + 2);
     loader->raw_data_count = raw_count;
     if (dm2_gdat_parse_raw_table(loader, raw_count) != 0 ||
         dm2_gdat_parse_ent1(loader) != 0) {
@@ -1885,11 +1916,11 @@ int dm2_v1_extract_gdat_image_receipt(
     raw = dm2_v1_load_gdat_raw_data(loader, raw_index, &raw_size);
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return 0;
 
-    cy = rd16le(raw + 2);
-    receipt.width = (uint16_t)(rd16le(raw) & 0x03ffu);
+    cy = img_rd16(raw + 2, loader->big_endian);
+    receipt.width = (uint16_t)(img_rd16(raw, loader->big_endian) & 0x03ffu);
     receipt.height = (uint16_t)(cy & 0x03ffu);
     if (receipt.width == 0u || receipt.height == 0u ||
-        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp)) {
+        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp, loader->big_endian)) {
         return 0;
     }
 
@@ -2134,12 +2165,12 @@ int dm2_v1_query_gdat_image_entry_buff_receipt(
     }
     raw = dm2_gdat_raw_from_entry(loader, selected, &raw_size);
     if (!selected || !raw || raw_size < DM2_IMG3_HEADER_SIZE ||
-        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp)) {
+        !dm2_img3_raw_bits_per_pixel(raw, raw_size, &bpp, loader->big_endian)) {
         return 0;
     }
 
-    receipt.width = (uint16_t)(rd16le(raw) & 0x03ffu);
-    receipt.height = (uint16_t)(rd16le(raw + 2u) & 0x03ffu);
+    receipt.width = (uint16_t)(img_rd16(raw, loader->big_endian) & 0x03ffu);
+    receipt.height = (uint16_t)(img_rd16(raw + 2u, loader->big_endian) & 0x03ffu);
     if (receipt.width == 0u || receipt.height == 0u ||
         (bpp != 4u && bpp != 8u)) {
         return 0;
@@ -3836,9 +3867,9 @@ uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
     raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return NULL;
 
-    cx = rd16le(raw + 0);
-    cy = rd16le(raw + 2);
-    bpp = rd16le(raw + 4);
+    cx = img_rd16(raw + 0, loader->big_endian);
+    cy = img_rd16(raw + 2, loader->big_endian);
+    bpp = img_rd16(raw + 4, loader->big_endian);
     width = (int)(cx & 0x03ffu);
     height = (int)(cy & 0x03ffu);
     offset_y = dm2_img3_signed_offset(cy);
@@ -3918,7 +3949,7 @@ int dm2_v1_asset_loader_verify(const DM2_V1_AssetLoader *loader) {
      * This loader is initialized from memory and does not own a filename, so
      * the scanner performs exact hash gating before launch; here we enforce
      * the real DOS GDAT marker plus the locked PC size window. */
-    uint16_t w0 = rd16le(loader->data);
+    uint16_t w0 = gdat_rd16(loader, loader->data);
     if (loader->data_size >= DM2_PC_GRAPHICS_MIN_SIZE &&
         loader->data_size <= DM2_PC_GRAPHICS_MAX_SIZE &&
         w0 == DM2_PC_GDAT_CONTAINER_WORD) {
@@ -3927,6 +3958,10 @@ int dm2_v1_asset_loader_verify(const DM2_V1_AssetLoader *loader) {
     if (loader->data_size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE &&
         loader->data_size <= DM2_FMTOWNS_GRAPHICS_MAX_SIZE &&
         w0 == DM2_FMTOWNS_GDAT_CONTAINER_WORD) {
+        return 1;
+    }
+    if (loader->big_endian && w0 == DM2_PC_GDAT_CONTAINER_WORD &&
+        loader->data_size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE) {
         return 1;
     }
     return 0;

@@ -157,6 +157,7 @@ typedef struct {
     size_t         data_size; /* GRAPHICS.DAT size */
     int            category_count;
     int            loaded;    /* 1 if successfully loaded */
+    int            big_endian; /* 1 if Mac/Amiga 68k BE format */
     uint32_t       md5_hash;  /* Low 32 bits of MD5 (for verification) */
     uint16_t       gdat_version;
     uint16_t       raw_data_count;
