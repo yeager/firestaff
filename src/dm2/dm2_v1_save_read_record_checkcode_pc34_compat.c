@@ -1,0 +1,188 @@
+/* DM2 READ_RECORD_CHECKCODE — recursive record-chain SUPPRESS reader.
+ * Source: sksvgame.cpp:1476-1738.
+ *
+ * Inverse of WRITE_RECORD_CHECKCODE. Reads SUPPRESS-encoded record
+ * data and reconstructs records via callbacks. Variable names match
+ * the writer's skproject locals for cross-reference. */
+
+#include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
+#include <string.h>
+
+void dm2_v1_read_record_session_init(
+    DM2_ReadRecordSession *session,
+    const uint8_t *in_buf, size_t in_size)
+{
+    if (!session) return;
+    memset(session, 0, sizeof(*session));
+    dm2_suppress_reader_init(&session->reader, in_buf, in_size);
+    session->in_buf = in_buf;
+    session->in_size = in_size;
+}
+
+static int read_bit(DM2_ReadRecordSession *s, int *out)
+{
+    return dm2_suppress_reader_read_bit(&s->reader, out);
+}
+
+static int read_suppress(DM2_ReadRecordSession *s,
+    uint8_t *data, const uint8_t *mask, size_t count)
+{
+    return dm2_suppress_reader_read(&s->reader, mask, count, data, 0x00);
+}
+
+int dm2_v1_read_record_checkcode(
+    DM2_ReadRecordSession *session,
+    const DM2_ReadRecordCallbacks *cb,
+    int read_sub_chain_info,
+    int follow_chain)
+{
+    if (!session || !cb || !cb->alloc_record || !cb->set_data)
+        return -1;
+
+    for (;;) {
+        int bit = 0;
+        int record_type;
+        const uint8_t *mask;
+        uint8_t rec_data[16];
+        uint16_t record_link;
+        int is_map_or_nested = 0;
+
+        /* Read continuation bit. 0 = end of chain. */
+        if (read_bit(session, &bit)) return 1;
+        if (bit == 0) return 0;
+
+        /* Read 4-bit record type.
+         * Source: sksvgame.cpp:1489-1500. */
+        {
+            uint8_t type_byte = 0;
+            uint8_t type_mask = 0x0f;
+            if (read_suppress(session, &type_byte, &type_mask, 1)) return 1;
+            record_type = type_byte & 0x0f;
+        }
+
+        /* Source: sksvgame.cpp:839-851 */
+        if (read_sub_chain_info == 0) {
+            /* no sub_chain_info field */
+        } else if (record_type == 4) {
+            /* creature: skip sub_chain_info */
+        } else {
+            uint8_t sub_byte = 0;
+            uint8_t sub_mask = 3;
+            if (read_suppress(session, &sub_byte, &sub_mask, 1)) return 1;
+        }
+
+        /* Type 0xF with nested_type_0e: read 7-bit link and return.
+         * Source: sksvgame.cpp:852-861. */
+        if (record_type == 0xf && session->nested_type_0e) {
+            uint8_t link_bytes[2] = {0, 0};
+            uint8_t link_mask[2] = {0x7f, 0x00};
+            if (read_suppress(session, link_bytes, link_mask, 2)) return 1;
+            return 0;
+        }
+
+        /* Get mask for this record type. */
+        mask = dm2_v1_save_record_mask_for_type(record_type);
+        if (mask == NULL) {
+            if (!follow_chain) break;
+            continue;
+        }
+
+        /* Allocate the record. */
+        record_link = cb->alloc_record(cb->ctx, record_type);
+        if (record_link == 0xFFFE) {
+            session->error = 1;
+            return -1;
+        }
+
+        memset(rec_data, 0, sizeof(rec_data));
+
+        /* Type-specific pre-read processing.
+         * Source: sksvgame.cpp:1508-1560. */
+        if (record_type < 4) {
+            if (record_type == 3) {
+                /* Weapon: check for extended sub-type via initial mask read. */
+            }
+        } else if (record_type == 4) {
+            /* Creature: read b_04 with 7-bit mask. */
+            uint8_t b04 = 0;
+            uint8_t b04_mask = 0x7f;
+            if (read_suppress(session, &b04, &b04_mask, 1)) return 1;
+            rec_data[4] = b04;
+            session->creatures_read++;
+        } else if (record_type == 9) {
+            /* Container: read 2-bit field. */
+            uint8_t cont_byte = 0;
+            uint8_t cont_mask = 3;
+            if (read_suppress(session, &cont_byte, &cont_mask, 1)) return 1;
+            session->containers_read++;
+        } else if (record_type == 0xe) {
+            if (session->nested_creature) {
+                mask = dm2_v1_save_record_mask_type_0e_nested();
+                is_map_or_nested = 1;
+            }
+        }
+
+        /* Read the record body through SUPPRESS. */
+        {
+            const uint8_t *sizes = dm2_v1_save_record_sizes();
+            size_t rec_size = sizes[record_type];
+            if (rec_size > 0 && rec_size <= sizeof(rec_data)) {
+                if (read_suppress(session, rec_data, mask, rec_size)) return 1;
+            }
+        }
+
+        /* Store the decoded record. */
+        {
+            const uint8_t *sizes = dm2_v1_save_record_sizes();
+            if (cb->set_data(cb->ctx, record_link,
+                             rec_data, sizes[record_type]) != 0) {
+                session->error = 1;
+                return -1;
+            }
+        }
+
+        session->records_read++;
+
+        /* Type-specific post-read processing (recursive).
+         * Source: sksvgame.cpp:1600-1720. */
+        if (record_type == 4) {
+            /* Creature: recurse into possession chain. */
+            int saved = session->nested_creature;
+            session->nested_creature = 1;
+            int rc = dm2_v1_read_record_checkcode(session, cb, 0, 1);
+            session->nested_creature = saved;
+            if (rc) return rc;
+        } else if (record_type == 9) {
+            if (!is_map_or_nested) {
+                /* Normal container: recurse into contents. */
+                int rc = dm2_v1_read_record_checkcode(session, cb, 0, 1);
+                if (rc) return rc;
+            } else {
+                /* Map container: read 1-bit has-contents. */
+                int has = 0;
+                if (read_bit(session, &has)) return 1;
+            }
+        } else if (record_type == 0xe) {
+            if (!is_map_or_nested) {
+                int saved = session->nested_type_0e;
+                session->nested_type_0e = 1;
+                int rc = dm2_v1_read_record_checkcode(session, cb, 0, 0);
+                session->nested_type_0e = saved;
+                if (rc) return rc;
+            }
+        } else if (record_type == 0xf) {
+            /* Type 0xF: read timer match bit. */
+            int found = 0;
+            if (read_bit(session, &found)) return 1;
+            if (found) {
+                uint8_t idx_bytes[2] = {0, 0};
+                uint8_t idx_mask[2] = {0xff, 0x03};
+                if (read_suppress(session, idx_bytes, idx_mask, 2)) return 1;
+            }
+        }
+
+        if (!follow_chain) break;
+    }
+
+    return 0;
+}
