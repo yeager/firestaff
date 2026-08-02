@@ -1269,7 +1269,9 @@ int dm1_v1_startup_full_graphics_runtime_handoff_receipt_pc34(
     receipt.status = outcome->status;
     receipt.return_to_launcher =
         (outcome->action == DM1_V1_STARTUP_HANDOFF_ACTION_QUIT_PC34 ||
-         host_result->quit_requested)
+         host_result->quit_requested ||
+         (outcome->action == DM1_V1_STARTUP_HANDOFF_ACTION_RESUME_GAME_PC34 &&
+          !host_result->resume_loaded))
             ? 1
             : 0;
     receipt.hoc_runtime_ready =
