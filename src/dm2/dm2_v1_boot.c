@@ -33,6 +33,8 @@
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_sound.h"
+#include "dm2_v1_music_map.h"
+#include "dm2_v1_cdda_cd_dat.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -608,6 +610,22 @@ static const char *const g_dm2_songlist_hashes[] = {
     NULL
 };
 
+/* Mac/Amiga 176-byte music map (CD.DAT or md.dat).
+ * Amiga CD.DAT and Mac md.dat use the same 44×4-byte format but
+ * differ in content (Amiga references MOD tracks, Mac references HMP). */
+static const char *const g_dm2_music_map_hashes[] = {
+    "a1692c182344952b6bffcb82e2e2f06e",  /* Mac EN/FR md.dat */
+    "941f7d5450d9a6d448b69f1d8f9b59c8",  /* Amiga EN CD.DAT */
+    NULL
+};
+
+/* FM Towns / Mega CD / PC-9821 40-byte CDDA coordinate trigger CD.DAT.
+ * All three platform variants are byte-identical. */
+static const char *const g_dm2_cdda_cd_dat_hashes[] = {
+    "f09f14379326d7d4544b266790e2f84e",
+    NULL
+};
+
 /* ── Platform label table ────────────────────────────────────────────── */
 
 static const char *const g_platform_labels[DM2_PLATFORM_COUNT] = {
@@ -809,6 +827,16 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     profile->songlist_size = 0U;
     memset(profile->songlist_map, 0, sizeof(profile->songlist_map));
     profile->songlist_verified = 0;
+    profile->music_map_path[0] = '\0';
+    profile->music_map_md5[0] = '\0';
+    profile->music_map_size = 0U;
+    memset(profile->music_map_data, 0, sizeof(profile->music_map_data));
+    profile->music_map_verified = 0;
+    profile->cdda_cd_dat_path[0] = '\0';
+    profile->cdda_cd_dat_md5[0] = '\0';
+    profile->cdda_cd_dat_size = 0U;
+    memset(profile->cdda_cd_dat_data, 0, sizeof(profile->cdda_cd_dat_data));
+    profile->cdda_cd_dat_verified = 0;
     profile->assets_verified = 0;
     profile->use_dm2_filenames = 0;
 
@@ -938,6 +966,65 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         }
     }
 
+    /* Mac/Amiga 176-byte music map (CD.DAT or md.dat). */
+    if (profile->assets_verified) {
+        DM2_MusicSystem msys = dm2_v1_platform_music_system(profile->platform);
+        if (msys == DM2_MUSIC_SYSTEM_HMP_MAP176 ||
+            msys == DM2_MUSIC_SYSTEM_MOD_MAP176) {
+            size_t hi;
+            for (hi = 0; g_dm2_music_map_hashes[hi]; hi++) {
+                if (asset_find_by_md5(profile->asset_root,
+                                      g_dm2_music_map_hashes[hi],
+                                      profile->music_map_path,
+                                      (int)sizeof(profile->music_map_path), 4) &&
+                    path_md5_hex(profile->music_map_path,
+                                 profile->music_map_md5) &&
+                    md5_matches(profile->music_map_md5,
+                                g_dm2_music_map_hashes[hi])) {
+                    uint8_t *mm_bytes = NULL;
+                    size_t mm_size = 0u;
+                    if (dm2_v1_boot_read_asset_bytes(
+                            profile->music_map_path, 176L,
+                            &mm_bytes, &mm_size) &&
+                        mm_size == 176u) {
+                        memcpy(profile->music_map_data, mm_bytes, 176u);
+                        profile->music_map_size = mm_size;
+                        profile->music_map_verified = 1;
+                    }
+                    free(mm_bytes);
+                    break;
+                }
+            }
+        }
+
+        if (msys == DM2_MUSIC_SYSTEM_CDDA_COORD) {
+            size_t ci;
+            for (ci = 0; g_dm2_cdda_cd_dat_hashes[ci]; ci++) {
+                if (asset_find_by_md5(profile->asset_root,
+                                      g_dm2_cdda_cd_dat_hashes[ci],
+                                      profile->cdda_cd_dat_path,
+                                      (int)sizeof(profile->cdda_cd_dat_path), 4) &&
+                    path_md5_hex(profile->cdda_cd_dat_path,
+                                 profile->cdda_cd_dat_md5) &&
+                    md5_matches(profile->cdda_cd_dat_md5,
+                                g_dm2_cdda_cd_dat_hashes[ci])) {
+                    uint8_t *cd_bytes = NULL;
+                    size_t cd_size = 0u;
+                    if (dm2_v1_boot_read_asset_bytes(
+                            profile->cdda_cd_dat_path, 40L,
+                            &cd_bytes, &cd_size) &&
+                        cd_size == 40u) {
+                        memcpy(profile->cdda_cd_dat_data, cd_bytes, 40u);
+                        profile->cdda_cd_dat_size = cd_size;
+                        profile->cdda_cd_dat_verified = 1;
+                    }
+                    free(cd_bytes);
+                    break;
+                }
+            }
+        }
+    }
+
     /* Determine if we found both required files */
     if (profile->graphics_path[0] && profile->dungeon_path[0]) {
         return 0;  /* success */
@@ -955,6 +1042,55 @@ int dm2_v1_boot_songlist_track_for_map(const DM2_V1_BootProfile *profile,
     if (track == 0xffu || track >= 29u) return 0;
     if (out_track) *out_track = (int)track;
     return 1;
+}
+
+int dm2_v1_boot_music_track_for_level(const DM2_V1_BootProfile *profile,
+                                       int level_index,
+                                       int x, int y,
+                                       int *out_track) {
+    DM2_MusicSystem msys;
+    if (out_track) *out_track = -1;
+    if (!profile) return 0;
+
+    msys = dm2_v1_platform_music_system(profile->platform);
+    switch (msys) {
+    case DM2_MUSIC_SYSTEM_HMP_SONGLIST:
+        return dm2_v1_boot_songlist_track_for_map(profile, level_index,
+                                                   out_track);
+
+    case DM2_MUSIC_SYSTEM_HMP_MAP176:
+    case DM2_MUSIC_SYSTEM_MOD_MAP176:
+        if (profile->music_map_verified) {
+            DM2_V1_MusicMap mm;
+            DM2_MusicKind kind = (msys == DM2_MUSIC_SYSTEM_MOD_MAP176)
+                ? DM2_MUSIC_KIND_MOD : DM2_MUSIC_KIND_HMP;
+            if (dm2_v1_music_map_parse(&mm, profile->music_map_data,
+                                        profile->music_map_size, kind)) {
+                int track_id = dm2_v1_music_map_track_for_map(&mm, level_index);
+                if (track_id >= 0) {
+                    if (out_track) *out_track = track_id;
+                    return 1;
+                }
+            }
+        }
+        return 0;
+
+    case DM2_MUSIC_SYSTEM_CDDA_COORD:
+        if (profile->cdda_cd_dat_verified) {
+            DM2_V1_CddaCdDat cd;
+            if (dm2_v1_cdda_cd_dat_parse(&cd, profile->cdda_cd_dat_data,
+                                          profile->cdda_cd_dat_size)) {
+                int track_id = dm2_v1_cdda_cd_dat_track_at(
+                    &cd, (uint8_t)level_index, (uint8_t)x, (uint8_t)y);
+                if (track_id >= 0) {
+                    if (out_track) *out_track = track_id;
+                    return 1;
+                }
+            }
+        }
+        return 0;
+    }
+    return 0;
 }
 
 /* ── Init defaults ────────────────────────────────────────────────────── */

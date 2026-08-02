@@ -157,6 +157,20 @@ typedef struct {
     uint8_t songlist_map[44]; /* original PC map 0..43 music selectors */
     int     songlist_verified;
 
+    /* ── Music map (Mac/Amiga 176-byte CD.DAT/md.dat) ──────── */
+    char    music_map_path[512];
+    char    music_map_md5[33];
+    size_t  music_map_size;
+    uint8_t music_map_data[176];
+    int     music_map_verified;
+
+    /* ── CDDA coordinate table (FM Towns/Mega CD/PC-9821) ──── */
+    char    cdda_cd_dat_path[512];
+    char    cdda_cd_dat_md5[33];
+    size_t  cdda_cd_dat_size;
+    uint8_t cdda_cd_dat_data[40];
+    int     cdda_cd_dat_verified;
+
     /* ── Deterministic config ──────────────────────────────── */
     DM2_V1_DeterministicConfig deterministic;
 
@@ -1264,6 +1278,16 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
  * for a hash-verified original PC SONGLIST.DAT selector. */
 int dm2_v1_boot_songlist_track_for_map(const DM2_V1_BootProfile *profile,
                                        int map_index, int *out_track);
+
+/* Unified music track lookup: dispatches to the correct music system
+ * (songlist, music_map, or cdda) based on the detected platform.
+ * For CDDA platforms, x/y are the party's tile coordinates.
+ * For songlist/music_map platforms, x/y are ignored.
+ * Returns 1 if a track was resolved, 0 otherwise. */
+int dm2_v1_boot_music_track_for_level(const DM2_V1_BootProfile *profile,
+                                       int level_index,
+                                       int x, int y,
+                                       int *out_track);
 
 /* Probe a data_dir for DM2 assets without full verification.
  * Used by the launcher menu to determine DM2 availability.

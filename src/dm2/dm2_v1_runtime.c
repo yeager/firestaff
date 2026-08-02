@@ -1480,8 +1480,8 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
     receipt.selected_track = -1;
     if (!rt || !rt->boot) return;
     receipt.source_songlist_verified = rt->boot->songlist_verified ? 1 : 0;
-    if (!dm2_v1_boot_songlist_track_for_map(rt->boot, rt->dungeon_level,
-                                             &track)) {
+    if (!dm2_v1_boot_music_track_for_level(rt->boot, rt->dungeon_level,
+                                            0, 0, &track)) {
         rt->music_map_receipt = receipt;
         return;
     }

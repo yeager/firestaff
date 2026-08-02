@@ -150,6 +150,22 @@ target_link_libraries(test_nexus_v1_light PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_light COMMAND test_nexus_v1_light)
 set_tests_properties(nexus_v1_light PROPERTIES LABELS "nexus;light;tier4")
 
+add_executable(test_nexus_v1_status
+    tests/test_nexus_v1_status.c)
+target_include_directories(test_nexus_v1_status PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_status PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_status COMMAND test_nexus_v1_status)
+set_tests_properties(nexus_v1_status PROPERTIES LABELS "nexus;status;tier4")
+
+add_executable(test_nexus_v1_triggers
+    tests/test_nexus_v1_triggers.c)
+target_include_directories(test_nexus_v1_triggers PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_triggers PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_triggers COMMAND test_nexus_v1_triggers)
+set_tests_properties(nexus_v1_triggers PROPERTIES LABELS "nexus;triggers;tier4")
+
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
@@ -15067,6 +15083,21 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_platform_music_system
         COMMAND test_dm2_v1_platform_music_system
+    )
+
+    add_executable(test_dm2_v1_boot_music_dispatch
+        tests/test_dm2_v1_boot_music_dispatch.c
+    )
+    target_include_directories(test_dm2_v1_boot_music_dispatch PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_boot_music_dispatch PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_boot_music_dispatch PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_boot_music_dispatch
+        COMMAND test_dm2_v1_boot_music_dispatch
     )
 
     add_executable(test_dm2_v1_i18n_real_data
