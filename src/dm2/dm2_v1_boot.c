@@ -593,12 +593,19 @@ static const char *const g_dm2_graphics_hashes[] = {
     "b4d733576ea60c41737f79f212faf528",  /* PC French */
     "e52ab5e01715042b16a4dcff02052e5d",  /* PC German/English JewelCase */
     "027ff3b8ddc2c4c4cdda7ada0b0bc46c",  /* FM Towns Japanese (HME-242) */
+    "5cab25f6b975957eae4a203174e7f2a6",  /* Mac EN/FR (identical) */
+    "1c940ea95703eaea0ecdf84d17e954b9",  /* Amiga EN */
+    "a654ba19e9a6919f46818ecd23d7ea9d",  /* Mega CD Japanese */
+    "a80c555a858ef7770e1d7f3d2e37fec3",  /* PC-9821 Japanese */
     NULL
 };
 
 static const char *const g_dm2_dungeon_hashes [] = {
-    "6caccd7875009e82fe2e28e7f6d6adc0",  /* PC English + all variants */
-    "74c7549f174574201988bf936385841a",  /* FM Towns Japanese (HME-242) */
+    "6caccd7875009e82fe2e28e7f6d6adc0",  /* PC EN/FR/DE (all identical, LE) */
+    "719ae78bc124027806c65491a256827d",  /* Mac EN/FR + Amiga EN (BE, identical) */
+    "74c7549f174574201988bf936385841a",  /* FM Towns Japanese (LE) */
+    "92f83c251fec69e01c594bc01ce5cd51",  /* Mega CD Japanese (BE) */
+    "fa644b2451af197874ee7dc3951e7033",  /* PC-9821 Japanese (LE) */
     NULL
 };
 
