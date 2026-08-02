@@ -127,11 +127,12 @@
   source-less facade path; the save-resume structured-receipt contract is now
   green at `325/325`.
 
-- **THERON-CREATURE-COMBAT-REAL-DATA:** *(Partially resolved v3.0.236)*
-  Disassembly confirmed Theron has NO DM1-style G0243 per-type stat table.
-  Uses category-based formula system (4 categories, random multipliers at
-  spawn, HP capped at 900). Spawn zones and creature pointer table decoded.
-  Remaining: `theron_v1_compat.c` runtime template values still approximate;
+- **THERON-CREATURE-COMBAT-REAL-DATA:** *(Resolved v3.0.240)*
+  Category-based formula system wired into combat runtime via
+  `theron_v1_track02_compute_spawn_stats()`. 4 categories with real
+  param1/param2 from spawn zone descriptors. HP capped at 900.
+  THIEF/DEMON use template fallback (scripted, no spawn zones).
+  Remaining: exact PCE rand() sequence verification;
   wire category formulas into the spawn path. Drop tables unverified.
 
 - **THERON-SHOP-REAL-DATA:** The shop price-table helper has no identified
