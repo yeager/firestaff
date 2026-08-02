@@ -211,7 +211,7 @@ static int theron_v1_startup_runtime_inspect_track02_initial_level(
     if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap,
-                     "Track 02 initial loader route only proves Hall of Records level 0; selected stage has no source-locked record");
+                     "Track 02 initial loader route only proves AKUTUBA level 0; selected stage has no source-locked record");
         }
         return 0;
     }

@@ -17,7 +17,7 @@
  *       chapter label.
  *   4.  Boot profile with assets_verified == 1 + a fresh
  *       progression at dungeon 1 produces OK_PROGRESSION_ONLY
- *       with the canonical "Chapter 1: Hall of Records" label.
+ *       with the canonical "Chapter 1: AKUTUBA" label.
  *   5.  Mid-progression (3 items collected) projects the right
  *       "next: Taza Boots" hint and chapter 4 label.
  *   6.  Quest complete (7/7) flips verdict to OK_QUEST_COMPLETE.
@@ -234,8 +234,8 @@ static void check_fresh_profile(void) {
     CHECK(m.boot_assets_verified == 1,
           "fresh: boot_assets_verified copied to marker");
     CHECK(strstr(m.chapter_label, "Chapter 1") != NULL &&
-          strstr(m.chapter_label, "Hall of Records") != NULL,
-          "fresh: chapter label == Chapter 1: Hall of Records");
+          strstr(m.chapter_label, "AKUTUBA") != NULL,
+          "fresh: chapter label == Chapter 1: AKUTUBA");
     CHECK(strstr(m.quest_summary, "0/7") != NULL,
           "fresh: quest summary shows 0/7 collected");
     CHECK(strstr(m.next_dungeon_hint, "UNAVAILABLE") != NULL,

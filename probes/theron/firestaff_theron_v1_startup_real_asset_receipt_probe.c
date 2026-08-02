@@ -56,7 +56,7 @@
  *
  *  12. Startup chapter/progression contract is present in the receipt:
  *      placeholder rows are clearly no-profile/no-progression, while
- *      real Track 02 receipts expose Chapter 1 / Hall of Records and a
+ *      real Track 02 receipts expose Chapter 1 / AKUTUBA and a
  *      0/7 quest-item summary without entering M11.
  *
  *  13. Staged, hash-verified Track 02 media also yields a read-only
@@ -253,10 +253,10 @@ static void check_startup_chapter_real(
     const char *prefix) {
     char name[160];
 
-    snprintf(name, sizeof(name), "%s chapter label starts at Hall of Records",
+    snprintf(name, sizeof(name), "%s chapter label starts at AKUTUBA",
              prefix);
     check_str_contains(r->startup_chapter_label,
-                       "Chapter 1: Hall of Records",
+                       "Chapter 1: AKUTUBA",
                        name);
     snprintf(name, sizeof(name), "%s quest total == 7", prefix);
     check(r->startup_quest_item_total == 7u, name);

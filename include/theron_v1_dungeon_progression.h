@@ -47,7 +47,7 @@ typedef enum {
 /* Dungeon metadata — read from dungeon header (THQUEST.ASM T560) */
 typedef struct {
     Theron_DungeonID  id;
-    char              name[32];             /* e.g. "Hall of Records" */
+    char              name[32];             /* e.g. "AKUTUBA" */
     uint8_t           level_count;          /* 1–3 levels */
     uint8_t           quest_item_count;    /* 1 quest item per dungeon */
     uint8_t           quest_item_bit;       /* 1 << (id-1) — tracks collected */
@@ -68,14 +68,15 @@ typedef struct {
 typedef enum {
     THERON_QUEST_ITEM_NONE = 0,
 
-    /* Real names from Track 02 retrieval messages (UD 0x27715B-0x277272) */
-    THERON_QUEST_ITEM_1_SHIELD_DEFIANT = (1 << 0), /* Dungeon 1 */
-    THERON_QUEST_ITEM_2_TAZA_BOOTS     = (1 << 1), /* Dungeon 2 — AKUTUBA */
-    THERON_QUEST_ITEM_3_TAZA_POLEYN    = (1 << 2), /* Dungeon 3 — DRATOR */
-    THERON_QUEST_ITEM_4_SOULCAGE       = (1 << 3), /* Dungeon 4 — FORMIC */
-    THERON_QUEST_ITEM_5_TAZA_ARMOUR    = (1 << 4), /* Dungeon 5 — SARMON */
-    THERON_QUEST_ITEM_6_TAZAHELM       = (1 << 5), /* Dungeon 6 — SHADO */
-    THERON_QUEST_ITEM_7_RETALIATOR     = (1 << 6), /* Dungeon 7 — THIEF/DEMON */
+    /* Real names from Track 02 retrieval messages (UD 0x27715B-0x277272).
+     * Creature-region names at UD 0x2741EF map 1:1 to dungeons 1-7. */
+    THERON_QUEST_ITEM_1_SHIELD_DEFIANT = (1 << 0), /* Dungeon 1 — AKUTUBA */
+    THERON_QUEST_ITEM_2_TAZA_BOOTS     = (1 << 1), /* Dungeon 2 — DRATOR */
+    THERON_QUEST_ITEM_3_TAZA_POLEYN    = (1 << 2), /* Dungeon 3 — FORMIC */
+    THERON_QUEST_ITEM_4_SOULCAGE       = (1 << 3), /* Dungeon 4 — SARMON */
+    THERON_QUEST_ITEM_5_TAZA_ARMOUR    = (1 << 4), /* Dungeon 5 — SHADO */
+    THERON_QUEST_ITEM_6_TAZAHELM       = (1 << 5), /* Dungeon 6 — THIEF */
+    THERON_QUEST_ITEM_7_RETALIATOR     = (1 << 6), /* Dungeon 7 — DEMON */
 
     /* All 7 collected — quest complete */
     THERON_QUEST_ALL_ITEMS = 0x7F,  /* 0b01111111 */

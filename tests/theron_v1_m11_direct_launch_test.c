@@ -410,7 +410,7 @@ int main(void) {
     expect_true(strstr(view.inspectDetail, "SAVE ") != NULL,
                 "M11 Theron startup inspect readout reports save/resume claim");
     expect_true(strstr(view.inspectDetail, "Chapter 1") != NULL &&
-                strstr(view.inspectDetail, "Hall of Records") != NULL,
+                strstr(view.inspectDetail, "AKUTUBA") != NULL,
                 "M11 Theron startup inspect readout reports chapter marker");
     expect_true(view.theronState.startup_text_prompt_count == 1 &&
                 strcmp(view.theronState.startup_text_prompt,
@@ -458,7 +458,7 @@ int main(void) {
         &view, startup_rows, 16);
     expect_true(startup_row_count >= 3 &&
                 startup_rows_contain(startup_rows, startup_row_count,
-                                     "Chapter 1: Hall of Records") &&
+                                     "Chapter 1: AKUTUBA") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "PRESS ENTER TO START"),
                 "M11 Theron startup render rows expose title gate");
@@ -479,13 +479,13 @@ int main(void) {
         &view, startup_rows, 16);
     expect_true(startup_row_count >= 5 &&
                 startup_rows_contain(startup_rows, startup_row_count,
-                                     "Chapter 1: Hall of Records") &&
+                                     "Chapter 1: AKUTUBA") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "CHOOSE A STAGE") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "CONTINUE  TQSV SLOT 5") &&
                 startup_rows_contain(startup_rows, startup_row_count,
-                                     "> 1  Hall of Records"),
+                                     "> 1  AKUTUBA"),
                 "M11 Theron startup render rows expose stage selection state");
     view.theronState.startup_roster_name_count = 8;
     snprintf(view.theronState.startup_roster_names[0],
@@ -701,7 +701,7 @@ int main(void) {
         &view, startup_rows, 16);
     expect_true(startup_row_count >= 12 &&
                 startup_rows_contain(startup_rows, startup_row_count,
-                                     "Chapter 1: Hall of Records") &&
+                                     "Chapter 1: AKUTUBA") &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "SOUL ROOM") &&
                 startup_rows_contain(startup_rows, startup_row_count,

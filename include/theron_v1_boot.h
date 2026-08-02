@@ -97,7 +97,7 @@ typedef struct Theron_V1_BootProfile {
     uint32_t max_party_members;     /* 4 */
 
     /* Quest: 7 mini-dungeons. No outdoor / day-night cycle.
-     * Start is dungeon 1 in the Hall of Records. */
+     * Start is dungeon 1 in the AKUTUBA. */
     uint32_t dungeon_count;         /* 7 mini-dungeons */
     uint32_t max_levels;           /* ~3 levels per mini-dungeon max */
 
@@ -268,7 +268,7 @@ int theron_v1_boot_runtime_trace_files_match_declared_hashes(
 int theron_v1_boot_track02_runtime_trace_allows_soul_room_handoff(
     const Theron_V1_BootProfile *profile);
 
-/* Revalidates the capture-authorized Hall of Records level-0 route against
+/* Revalidates the capture-authorized AKUTUBA level-0 route against
  * the exact Track 02 bytes about to enter the dungeon runtime. This is an
  * admission check only: it compares the existing loader route receipt and
  * does not assign object-tail, bitmap, palette, or broader map semantics. */

@@ -90,7 +90,7 @@ typedef struct {
 
     /* ── Chapter label ─────────────────────────────────── */
     char     chapter_label[THERON_CHAPTER_MARKER_LABEL_MAX];
-    /* e.g. "Chapter 1: Hall of Records"
+    /* e.g. "Chapter 1: AKUTUBA"
      *      "Chapter 7: Tower of Epilogue (final)"
      *      "Quest Complete (7/7 items)"
      *      "Chapter unavailable (no verified progression)"

@@ -6760,7 +6760,7 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
     }
 
     /* The only positive level record currently correlated with the original
-     * loader is the Hall of Records entry record.  The shared 32x27 envelope
+     * loader is the AKUTUBA entry record.  The shared 32x27 envelope
      * is not evidence for a different dungeon merely because callers can
      * supply another dungeon id to the generic level loader. */
     if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS ||

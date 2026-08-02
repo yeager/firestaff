@@ -1134,7 +1134,7 @@ typedef struct {
 } Theron_Track02InitialLevelLoaderSemanticReceipt;
 
 /* The first positive Track 02 dungeon route. It owns only the authenticated
- * Hall of Records level-0 grid accepted by the existing level loader. */
+ * AKUTUBA level-0 grid accepted by the existing level loader. */
 typedef struct {
     int valid;
     int dungeon_id;
@@ -1303,7 +1303,7 @@ theron_v1_track02_decode_initial_level_loader_semantics(
     const char *md5_hex,
     Theron_Track02InitialLevelLoaderSemanticReceipt *out_receipt);
 
-/* Historical compatibility entry point for the former Hall of Records route.
+/* Historical compatibility entry point for the former AKUTUBA route.
  * It remains fail-closed until the original game-owned post-$3800 consumer
  * proves a dungeon-record grammar and ownership relation. */
 Theron_Track02SignalStatus theron_v1_track02_load_initial_level_loader_route(
@@ -2197,7 +2197,7 @@ theron_v1_track02_compare_nonstartup_level_layout_variants(
  *
  * This is the narrowest promoted Track 02 startup path: it first composes the
  * semantic startup handoff above, then loads only that handoff's
- * hash/anchor-gated Hall of Records level-0 32x27 candidate through
+ * hash/anchor-gated AKUTUBA level-0 32x27 candidate through
  * theron_v1_level_load().
  * The caller gets both the semantic handoff (seed table + user-data offsets)
  * and the level-load handoff (header + map loader status).  It does not scan

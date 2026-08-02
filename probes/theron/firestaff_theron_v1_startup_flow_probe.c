@@ -429,7 +429,7 @@ int main(void) {
         layout_state.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
         snprintf(layout_state.chapter_label,
                  sizeof(layout_state.chapter_label),
-                 "Chapter 1: Hall of Records");
+                 "Chapter 1: AKUTUBA");
         element_count = theron_v1_startup_layout_build(
             &layout_state, elements, 16);
         check_int("startup title render plan builds",
@@ -768,7 +768,7 @@ int main(void) {
         layout_state.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
         snprintf(layout_state.chapter_label,
                  sizeof(layout_state.chapter_label),
-                 "Chapter 1: Hall of Records");
+                 "Chapter 1: AKUTUBA");
         layout_state.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
         layout_state.progression = &progression;
         element_count = theron_v1_startup_layout_build(
@@ -2210,7 +2210,7 @@ int main(void) {
             layout_state.tqsv_slot = 2;
             snprintf(layout_state.chapter_label,
                      sizeof(layout_state.chapter_label),
-                     "Chapter 1: Hall of Records");
+                     "Chapter 1: AKUTUBA");
             layout_count = theron_v1_startup_layout_build(
                 &layout_state,
                 elements,
@@ -2259,13 +2259,13 @@ int main(void) {
             check_int("layout stage rows count", row_count, 12);
             check_contains("layout stage rows chapter",
                            rows[1],
-                           "Chapter 1: Hall of Records");
+                           "Chapter 1: AKUTUBA");
             check_contains("layout stage rows continue",
                            rows[3],
                            "CONTINUE  TQSV SLOT 2");
             check_contains("layout stage rows cursor",
                            rows[4],
-                           "> 1  Hall of Records");
+                           "> 1  AKUTUBA");
             check_int("layout stage render plan rc",
                       theron_v1_startup_render_plan_build(
                           &layout_state,
@@ -2317,7 +2317,7 @@ int main(void) {
             layout_state.soul_cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
             snprintf(layout_state.chapter_label,
                      sizeof(layout_state.chapter_label),
-                     "Chapter 1: Hall of Records");
+                     "Chapter 1: AKUTUBA");
             snprintf(layout_state.startup_text_prompt,
                      sizeof(layout_state.startup_text_prompt),
                      "GO AWAY AND RESURRECT THERON");

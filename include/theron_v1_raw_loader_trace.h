@@ -830,7 +830,7 @@ typedef struct {
  * complete-sector later $e009 receipt and the one authenticated initial-level
  * envelope. It accepts only an observed one-sector read of record 0x0b52,
  * the record containing that envelope in both known raw Track 02 variants.
- * This proves a loader/CD admission for the existing Hall of Records level-0
+ * This proves a loader/CD admission for the existing AKUTUBA level-0
  * route; it does not prove a destination RAM address, a game transition,
  * object-tail ownership, bitmap, or palette behavior. */
 typedef struct {

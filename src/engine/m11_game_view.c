@@ -19859,7 +19859,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     m11_theron_bind_track01_cdda_handoff(state, cdda_cue_path, verifiedMd5);
     m11_theron_update_track01_cdda_lifecycle(state);
     if (raw_track02_bypass) {
-        /* Auto-load the initial Hall of Records level for raw MODE1/2352
+        /* Auto-load the initial AKUTUBA level for raw MODE1/2352
          * media that bypasses the capture-required gate. This produces the
          * same TQR level load marker the interactive title -> stage select
          * -> soul room -> forcefield path would have emitted, without

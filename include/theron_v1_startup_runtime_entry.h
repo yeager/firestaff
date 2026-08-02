@@ -61,7 +61,7 @@ int theron_v1_startup_runtime_consume_boot_profile_initial_payload(
     size_t hucard_rom_size,
     Theron_V1StartupRuntimeInitialPayloadReceipt *out_receipt);
 
-/* Receives the one source-locked Hall of Records level-0 route retained in a
+/* Receives the one source-locked AKUTUBA level-0 route retained in a
  * completed boot handoff. It re-derives the route from the supplied original
  * Track 02 bytes before publishing it to a candidate world. Object-tail,
  * bitmap, palette, and broader transition semantics stay unavailable. */
