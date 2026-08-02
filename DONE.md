@@ -1,3 +1,10 @@
+- ✅ 2026-08-02 v3.0.228 Theron data table extraction:
+  Extend level descriptor table from 43 to 53 records (10 additional
+  corridor/transition levels with cumulative index wrapping at 255).
+  Extract 42-record sector allocation table from UD 0x619800 mapping
+  dungeon levels to disc sectors (data_size, sector_start, sector_count).
+  Extract 16-word class base stat parameter table from UD 0x1DA870.
+  Confirmed JP vs US versions have different data offsets throughout.
 - ✅ 2026-08-02 v3.0.227 Theron Track 02 full item name table and CI fix:
   Extract 79-item per-bank runtime item name table from UD 0x09951F with
   23 items not in Track 19 (TORCH, FLAMITT, FALCHION, SWORD, GHI,

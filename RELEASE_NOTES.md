@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.228
+- Extend level descriptor table from 43 to 53 records (10 additional corridor/transition levels)
+- Extract 42-record sector allocation table from UD 0x619800 mapping dungeon levels to disc sectors
+- Extract 16-word class base stat parameter table from UD 0x1DA870
+
 # Firestaff v3.0.227
 - Extract 79-item per-bank runtime item name table from Track 02 UD 0x09951F
 - 23 items not in Track 19: TORCH, FLAMITT, FALCHION, SWORD, GHI, *OF LYTE equipment, SHIELD DEFIANT, GOLD COIN, BOULDER, RABBIT'S FOOT, TAZAHELM, CHEST, OPEN CHEST, food items, GOLD KEY, RA KEY
