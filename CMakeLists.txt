@@ -37494,6 +37494,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_mechanics_playability_probe
         probes/theron/firestaff_theron_v1_mechanics_playability_probe.c
+        src/theron/theron_v1_compat.c
     )
     target_link_libraries(firestaff_theron_v1_mechanics_playability_probe PRIVATE
         firestaff_theron
