@@ -31,6 +31,8 @@ SHA256 checksums for known-good original game data files.
 | dm2-pc-de | DUNGEON.DAT | `cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef` | 39,437 |
 | dm2-mac-en | GRAPHICS.DAT | `aa642a6e617b6fbf47ac0c9dde7aea3ef0fcfbded07c03c57c54c4f3fa5640b2` | 8,157,169 |
 | dm2-mac-en | DUNGEON.DAT | `68e51fddf4d6c664db172f7aa4c6ffacba936dcc6ccdd7f7c0a6167066613714` | 39,411 |
+| dm2-fmtowns-ja | GRAPHICS.DAT | `634e70044d7ee8e845221b444c04061f0d9ff7c1493feb0f0426303f23733624` | 2,783,791 |
+| dm2-fmtowns-ja | DUNGEON.DAT | `d1d608a1d59aaba683a381f52613fa42af5a4be61d287f56fa3a4cdd4d8234b4` | 37,954 |
 | nexus | DM.BIN | `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124` | 555,144 |
 
 ## All Files
@@ -49,6 +51,8 @@ SHA256 checksums for known-good original game data files.
 - `dm2-pc-de/DUNGEON.DAT` (39,437 bytes): `cfadfd40f7a0b84c7e25b17166f1f0f608547654967daac897c50ed3e3a617ef`
 - `dm2-mac-en/Graphics.dat` (8,157,169 bytes): `aa642a6e617b6fbf47ac0c9dde7aea3ef0fcfbded07c03c57c54c4f3fa5640b2`
 - `dm2-mac-en/Dungeon.dat` (39,411 bytes): `68e51fddf4d6c664db172f7aa4c6ffacba936dcc6ccdd7f7c0a6167066613714`
+- `dm2-fmtowns-ja/GRAPHICS.DAT` (2,783,791 bytes): `634e70044d7ee8e845221b444c04061f0d9ff7c1493feb0f0426303f23733624`
+- `dm2-fmtowns-ja/DUNGEON.DAT` (37,954 bytes): `d1d608a1d59aaba683a381f52613fa42af5a4be61d287f56fa3a4cdd4d8234b4`
 - `dm1-multilingual/DUNGEON.DAT` (33,357 bytes): `d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85`
 - `dm1-multilingual/DUNGEONF.DAT` (33,687 bytes): `290543621ae7c465fee9651c4d3c44f5dc268f5e16fffc75da82a440274c0571`
 - `dm1-multilingual/DUNGEONG.DAT` (33,705 bytes): `b2478d5cc3213725329cb42684f0309e5e95fd6789dc2cb0c3377b178ad75817`
