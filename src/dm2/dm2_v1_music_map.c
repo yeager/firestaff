@@ -29,12 +29,12 @@ int dm2_v1_music_map_parse(DM2_V1_MusicMap *out,
         ? DM2_MUSIC_TRACK_MAX_MOD
         : DM2_MUSIC_TRACK_MAX_HMP;
 
-    for (int i = 0; i < (int)DM2_MUSIC_MAP_COUNT; ++i) {
+    for (int i = 0; i < (int)DM2_MUSIC_MAP_FILE_ENTRIES; ++i) {
         const uint8_t *entry = data + i * DM2_MUSIC_MAP_ENTRY_SIZE;
         uint8_t map_idx = entry[2];
         uint8_t track = entry[3];
 
-        if (map_idx >= DM2_MUSIC_MAP_COUNT) continue;
+        if (map_idx >= DM2_MUSIC_MAP_FILE_ENTRIES) continue;
         if (track >= max_tracks) continue;
 
         out->map_to_track[map_idx] = track;
@@ -50,7 +50,7 @@ int dm2_v1_music_map_track_for_map(const DM2_V1_MusicMap *mm,
                                    int map_index)
 {
     if (!mm || !mm->valid) return -1;
-    if (map_index < 0 || map_index >= (int)DM2_MUSIC_MAP_COUNT)
+    if (map_index < 0 || map_index >= (int)DM2_MUSIC_MAP_FILE_ENTRIES)
         return -1;
 
     uint8_t track = mm->map_to_track[map_index];

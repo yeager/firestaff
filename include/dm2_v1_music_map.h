@@ -23,7 +23,7 @@ extern "C" {
 
 #define DM2_MUSIC_MAP_FILE_SIZE   176u
 #define DM2_MUSIC_MAP_ENTRY_SIZE  4u
-#define DM2_MUSIC_MAP_COUNT       44u
+#define DM2_MUSIC_MAP_FILE_ENTRIES 44u
 #define DM2_MUSIC_TRACK_NONE      0xFFu
 
 #define DM2_MUSIC_TRACK_MAX_MOD   10u
@@ -38,7 +38,7 @@ typedef struct {
     int valid;
     DM2_MusicKind kind;
     uint8_t max_tracks;
-    uint8_t map_to_track[DM2_MUSIC_MAP_COUNT];
+    uint8_t map_to_track[DM2_MUSIC_MAP_FILE_ENTRIES];
 } DM2_V1_MusicMap;
 
 int dm2_v1_music_map_parse(DM2_V1_MusicMap *out,

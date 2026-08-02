@@ -68,14 +68,16 @@ Nexus_SquareInfo nexus_square_info(int type);
 #define NEXUS_DOOR_ANIMATION_STEPS        4
 #define NEXUS_DOOR_PASSABLE_STEP_THRESHOLD 2
 
+#ifndef NEXUS_MAX_DOORS
 #define NEXUS_MAX_DOORS 64
+#endif
 
 typedef struct {
     int x, y;
     uint8_t door_state;  /* NEXUS_DOOR_STATE_* — open/closed/locked/animating */
     int key_required;     /* item_id of key, or -1 */
     int animation_step;   /* 0..NEXUS_DOOR_ANIMATION_STEPS */
-} Nexus_Door;
+} Nexus_SquareDoor;
 
 void nexus_doors_init(void);
 int nexus_doors_open(int x, int y);

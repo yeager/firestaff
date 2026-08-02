@@ -53,7 +53,7 @@ static void test_music_map(const char *label, const char *path,
     printf("  PASS: parsed (%s, max %u tracks)\n",
            kind == DM2_MUSIC_KIND_MOD ? "MOD" : "HMP", mm.max_tracks);
 
-    for (int i = 0; i < (int)DM2_MUSIC_MAP_COUNT; i++) {
+    for (int i = 0; i < (int)DM2_MUSIC_MAP_FILE_ENTRIES; i++) {
         int track = dm2_v1_music_map_track_for_map(&mm, i);
         if (track >= 0) mapped++;
         else unmapped++;

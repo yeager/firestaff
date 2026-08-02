@@ -77,14 +77,14 @@
       "id": "firestaff-nearest-center-blocker",
       "file": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "needle": "m11_dm1_nearest_blocking_center_depth_index",
-      "line": 30700,
+      "line": 30749,
       "ok": true
     },
     {
       "id": "firestaff-front-wall-depth-collapse",
       "file": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "needle": "m11_draw_dm1_front_walls",
-      "line": 30709,
+      "line": 30758,
       "ok": true
     },
     {
@@ -98,14 +98,14 @@
       "id": "firestaff-side-content-center-blocker",
       "file": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "needle": "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
-      "line": 34548,
+      "line": 34597,
       "ok": true
     },
     {
       "id": "firestaff-side-door-occlusion",
       "file": "/Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c",
       "needle": "m11_draw_dm1_side_doors",
-      "line": 32678,
+      "line": 32727,
       "ok": true
     },
     {

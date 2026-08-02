@@ -85,7 +85,7 @@
  * type 3 (dtHMP). SONGLIST.DAT maps dungeon maps to track numbers. */
 
 #define DM2_MUSIC_TRACK_COUNT          29  /* 00-1c inclusive */
-#define DM2_MUSIC_MAP_COUNT             64  /* tMusicMaps[64] lookup table */
+#define DM2_MUSIC_RUNTIME_MAP_SIZE      64  /* tMusicMaps[64] lookup table */
 
 typedef enum {
     DM2_V1_MUSIC_FORMAT_UNKNOWN = 0,

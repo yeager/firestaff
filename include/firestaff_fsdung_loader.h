@@ -17,6 +17,8 @@
 #define FSDUNG_MAX_MAPS         32
 #define FSDUNG_MAX_MAP_DIM      64
 #define FSDUNG_MAX_NAME_LEN    128
+#define FSDUNG_MAX_GFX_SLOTS    16
+#define FSDUNG_MAX_GFX_KEY_LEN  32
 
 #define FSDUNG_TILE_WALL        0
 #define FSDUNG_TILE_CORRIDOR    1
@@ -61,12 +63,20 @@ typedef struct {
 } FsdungMap;
 
 typedef struct {
+    char     key[FSDUNG_MAX_GFX_KEY_LEN + 1];
+    uint8_t  *data;
+    uint32_t dataSize;
+} FsdungGfx;
+
+typedef struct {
     uint16_t version;
     uint8_t  mapCount;
     uint16_t partyX;
     uint16_t partyY;
     uint16_t partyDir;
     FsdungMap maps[FSDUNG_MAX_MAPS];
+    FsdungGfx gfx[FSDUNG_MAX_GFX_SLOTS];
+    uint16_t gfxCount;
 } FsdungDungeon;
 
 static inline uint16_t fsdung_read_u16(const uint8_t *p) {
@@ -152,6 +162,33 @@ static bool fsdung_load(const uint8_t *data, size_t dataSize, FsdungDungeon *out
         }
     }
 
+    /* Graphics section (optional) */
+    out->gfxCount = 0;
+    if (off + 2 <= dataSize) {
+        uint16_t gfxCount = fsdung_read_u16(data + off);
+        off += 2;
+        if (gfxCount > FSDUNG_MAX_GFX_SLOTS) gfxCount = FSDUNG_MAX_GFX_SLOTS;
+        for (int g = 0; g < gfxCount && off + 2 <= dataSize; g++) {
+            uint16_t keyLen = fsdung_read_u16(data + off);
+            off += 2;
+            if (keyLen > FSDUNG_MAX_GFX_KEY_LEN) keyLen = FSDUNG_MAX_GFX_KEY_LEN;
+            if (off + keyLen > dataSize) break;
+            memcpy(out->gfx[g].key, data + off, keyLen);
+            out->gfx[g].key[keyLen] = '\0';
+            off += keyLen;
+            if (off + 4 > dataSize) break;
+            uint32_t dLen = (uint32_t)(data[off] | (data[off+1]<<8) | (data[off+2]<<16) | (data[off+3]<<24));
+            off += 4;
+            if (off + dLen > dataSize) break;
+            out->gfx[g].data = (uint8_t *)malloc(dLen);
+            if (!out->gfx[g].data) break;
+            memcpy(out->gfx[g].data, data + off, dLen);
+            out->gfx[g].dataSize = dLen;
+            off += dLen;
+            out->gfxCount++;
+        }
+    }
+
     return true;
 }
 
@@ -162,6 +199,10 @@ static void fsdung_free(FsdungDungeon *d) {
         free(d->maps[i].things);
         d->maps[i].tileData = NULL;
         d->maps[i].things = NULL;
+    }
+    for (int i = 0; i < d->gfxCount; i++) {
+        free(d->gfx[i].data);
+        d->gfx[i].data = NULL;
     }
 }
 

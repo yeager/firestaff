@@ -1741,4 +1741,14 @@ void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 const char *dm2_v1_DM2_ARRANGE_DUNGEON_source_evidence(void);
 
+/* Return a pointer to the raw tile data for a given level, plus its
+ * width and height.  Returns NULL if the level is out of range or the
+ * dungeon has no raw data.  The pointer points into d->raw_data.
+ * Used by GET_TELEPORTER_DETAIL and other cross-map queries. */
+const uint8_t *dm2_v1_dungeon_level_tile_data(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int16_t *out_width,
+    int16_t *out_height);
+
 #endif

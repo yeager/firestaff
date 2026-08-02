@@ -1,10 +1,10 @@
 {
   "schema": "pass451_dm1_v1_hall_original_capture_storage_policy.v1",
-  "timestampUtc": "2026-08-01T17:18:59.970129+00:00",
+  "timestampUtc": "2026-08-02T16:18:42.816617+00:00",
   "status": "PASS_PASS451_EXTERNAL_CAPTURE_STORAGE_POLICY_READY",
   "repo": "/Volumes/Extern-disk/firestaff-claude",
   "branch": "main",
-  "head": "1377d14687fbf7c317a7d27827fe31908271d16d",
+  "head": "f77500351278effe431042db3d4673130ceb2234",
   "target": "tools/pass173_source_portrait_route_gate_probe.py",
   "externalArtifactRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/pass173_source_portrait_route_gate_probe",
   "externalParentExists": true,

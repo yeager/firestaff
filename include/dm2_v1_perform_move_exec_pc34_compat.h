@@ -26,6 +26,7 @@
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_timeline.h"
+#include "dm2_v1_skproject_core.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,7 +51,8 @@ typedef enum {
     DM2_MOVE_CLASS_DOOR_ATTACK  = 2,
     DM2_MOVE_CLASS_CREATURE     = 3,
     DM2_MOVE_CLASS_BLOCKED      = 4,
-    DM2_MOVE_CLASS_TELEPORTER   = 5
+    DM2_MOVE_CLASS_TELEPORTER   = 5,
+    DM2_MOVE_CLASS_STAIR_DOWN   = 6
 } DM2_V1_MoveClassification;
 
 typedef struct {
@@ -106,6 +108,8 @@ typedef struct {
     int is_creature_displacement;
     int outdoor;
     uint32_t game_tick;
+    const DM2_V1_SkprojectMapDescriptor *map_descriptors;
+    uint16_t map_descriptor_count;
 } DM2_V1_PerformMoveExecRequest;
 
 /* Execute a planned move.

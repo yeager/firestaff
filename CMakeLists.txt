@@ -166,6 +166,54 @@ target_link_libraries(test_nexus_v1_triggers PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_triggers COMMAND test_nexus_v1_triggers)
 set_tests_properties(nexus_v1_triggers PROPERTIES LABELS "nexus;triggers;tier4")
 
+add_executable(test_nexus_v1_item_use
+    tests/test_nexus_v1_item_use.c)
+target_include_directories(test_nexus_v1_item_use PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_item_use PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_item_use COMMAND test_nexus_v1_item_use)
+set_tests_properties(nexus_v1_item_use PROPERTIES LABELS "nexus;item;tier4")
+
+add_executable(test_nexus_v1_rest
+    tests/test_nexus_v1_rest.c)
+target_include_directories(test_nexus_v1_rest PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_rest PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_rest COMMAND test_nexus_v1_rest)
+set_tests_properties(nexus_v1_rest PROPERTIES LABELS "nexus;rest;tier4")
+
+add_executable(test_nexus_v1_messages
+    tests/test_nexus_v1_messages.c)
+target_include_directories(test_nexus_v1_messages PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_messages PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_messages COMMAND test_nexus_v1_messages)
+set_tests_properties(nexus_v1_messages PROPERTIES LABELS "nexus;messages;tier4")
+
+add_executable(test_nexus_v1_throw
+    tests/test_nexus_v1_throw.c)
+target_include_directories(test_nexus_v1_throw PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_throw PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_throw COMMAND test_nexus_v1_throw)
+set_tests_properties(nexus_v1_throw PROPERTIES LABELS "nexus;throw;tier4")
+
+add_executable(test_nexus_v1_hunger
+    tests/test_nexus_v1_hunger.c)
+target_include_directories(test_nexus_v1_hunger PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_hunger PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_hunger COMMAND test_nexus_v1_hunger)
+set_tests_properties(nexus_v1_hunger PROPERTIES LABELS "nexus;hunger;tier4")
+
+add_executable(test_nexus_v1_spell_effects
+    tests/test_nexus_v1_spell_effects.c)
+target_include_directories(test_nexus_v1_spell_effects PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_spell_effects PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_spell_effects COMMAND test_nexus_v1_spell_effects)
+set_tests_properties(nexus_v1_spell_effects PROPERTIES LABELS "nexus;spell_effects;tier4")
+
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
@@ -14288,6 +14336,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
@@ -14369,6 +14419,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
@@ -14450,6 +14502,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
@@ -14994,6 +15048,40 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_save_dungeon_data
     )
 
+    add_executable(test_dm2_v1_save_record_masks
+        tests/test_dm2_v1_save_record_masks.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_save_record_masks PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_record_masks PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_record_masks
+        COMMAND test_dm2_v1_save_record_masks
+    )
+
+    add_executable(test_dm2_v1_save_write_record_checkcode
+        tests/test_dm2_v1_save_write_record_checkcode.c
+        src/dm2/dm2_v1_save_write_record_checkcode_pc34_compat.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_save_write_record_checkcode PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_save_write_record_checkcode PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_write_record_checkcode PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_write_record_checkcode
+        COMMAND test_dm2_v1_save_write_record_checkcode
+    )
+
     add_executable(test_dm2_v1_suppress_bit_ops
         tests/test_dm2_v1_suppress_bit_ops.c
     )
@@ -15194,6 +15282,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_save_load.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_creature_animation_gdat.c
         src/dm2/dm2_v1_dialogue_gdat.c
@@ -15374,6 +15464,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
@@ -15455,6 +15547,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
@@ -15536,6 +15630,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
@@ -15617,6 +15713,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
@@ -15698,6 +15796,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
@@ -15781,6 +15881,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
@@ -15859,6 +15961,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
@@ -15958,6 +16062,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
@@ -17898,6 +18004,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_save_load.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_creature_animation_gdat.c
         src/dm2/dm2_v1_dialogue_gdat.c
@@ -46489,6 +46597,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_music_map.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c

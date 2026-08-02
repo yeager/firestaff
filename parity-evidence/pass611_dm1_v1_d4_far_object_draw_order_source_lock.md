@@ -64,7 +64,7 @@ Claim: ReDMCSB F0128 draws D4L, D4R, and D4C as direct far-object F0115 passes w
 - PASS far-object-evidence (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
 
 ## Verification
-- /Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /tmp/firestaff-build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c

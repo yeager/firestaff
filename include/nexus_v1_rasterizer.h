@@ -2,6 +2,7 @@
 #define NEXUS_V1_RASTERIZER_H
 
 #include "nexus_v1_math3d.h"
+#include "nexus_v1_doors.h"
 #include <stdint.h>
 
 /* Nexus V1 Software Rasterizer
@@ -155,7 +156,7 @@ void nexus_draw_wall_tex_mapped(Nexus_Framebuffer *fb,
  *   CLOSED: full-height quad
  *   OPEN:   narrowed side-offset quad (gap visible)
  *   LOCKED: full-height + color brighten (gold tint, key indicator)  */
-enum { NEXUS_DOOR_CLOSED = 0, NEXUS_DOOR_OPEN = 1, NEXUS_DOOR_LOCKED = 2 };
+/* Door state values from nexus_v1_doors.h: NEXUS_DOOR_CLOSED/OPEN enum */
 void nexus_draw_door(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z, int facing, int door_state,
     int texture_id, const uint8_t *tex_data, int tex_w, int tex_h,

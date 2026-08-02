@@ -1,6 +1,6 @@
 # DM1 V2 runtime presentation smoke
 
-Status: `PASS`
+Status: `SKIP`
 
 This gate runs the real Firestaff CLI with a temporary launcher config
 for launchable DM1 enhanced presentation modes. It records M11 runtime
@@ -11,12 +11,8 @@ pixel-parity or finished V2.2 art claim.
 
 | Mode | Status | Runtime source | Presentation mode | Source BMP | Presented BMP |
 |---|---:|---|---:|---:|---:|
-| V2.0 filtered | PASS | `dm1` | `1` | `1` | `1` |
-| V2.1 enhanced 2D | PASS | `dm1` | `2` | `1` | `1` |
 
-Presented-frame hashes differ across configured modes, so this gate
-covers the post-palette/post-filter buffer and not only the source
-indexed framebuffer.
+Skipped: missing DM1 data in /Users/bosse/.firestaff/data/dm1
 
 ## Non-claims
 

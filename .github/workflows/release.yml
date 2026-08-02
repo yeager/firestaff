@@ -140,6 +140,9 @@ jobs:
       - name: Bundle Artpack Studio
         run: FIRESTAFF_ARTPACK_PYTHON="$(brew --prefix python@3.13)/bin/python3.13" ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
 
+      - name: Bundle Dungeon Studio
+        run: FIRESTAFF_DUNGEON_PYTHON="$(brew --prefix python@3.13)/bin/python3.13" ./scripts/build_dungeon_studio_bundle.sh "$PWD/build/dungeon-studio-bundle"
+
       - name: Smoke probes
         shell: bash
         run: |
@@ -176,6 +179,7 @@ jobs:
           SHORT_VERSION="$FIRESTAFF_VERSION" \
           PACKAGE_SUFFIX="-macos-$FIRESTAFF_ARCH" \
           ARTPACK_STUDIO_APP_SRC="$PWD/build/artpack-studio-bundle/dist/Firestaff Artpack Studio.app" \
+          DUNGEON_STUDIO_APP_SRC="$PWD/build/dungeon-studio-bundle/dist/Firestaff Dungeon Studio.app" \
           RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
           ./scripts/package_macos_preview.sh
 
@@ -239,6 +243,9 @@ jobs:
       - name: Bundle Artpack Studio
         run: ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
 
+      - name: Bundle Dungeon Studio
+        run: ./scripts/build_dungeon_studio_bundle.sh "$PWD/build/dungeon-studio-bundle"
+
       - name: Smoke probes
         run: |
           set -euo pipefail
@@ -284,6 +291,7 @@ jobs:
           set -euo pipefail
           VERSION="$FIRESTAFF_VERSION" \
           ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio.exe" \
+          DUNGEON_STUDIO_BIN_SRC="$PWD/build/dungeon-studio-bundle/dist/firestaff_dungeon_studio.exe" \
           RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
           ./scripts/package_windows_preview.sh
           VERSION="$FIRESTAFF_VERSION" ./scripts/package_windows_installer_preview.sh
@@ -376,6 +384,9 @@ jobs:
       - name: Bundle Artpack Studio
         run: ./scripts/build_artpack_studio_bundle.sh "$PWD/build/artpack-studio-bundle"
 
+      - name: Bundle Dungeon Studio
+        run: ./scripts/build_dungeon_studio_bundle.sh "$PWD/build/dungeon-studio-bundle"
+
       - name: Smoke probes
         run: |
           set -euo pipefail
@@ -410,6 +421,7 @@ jobs:
           ARCH_DEB="$DEB_ARCH" \
           ARCH_RPM="$RPM_ARCH" \
           ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio" \
+          DUNGEON_STUDIO_BIN_SRC="$PWD/build/dungeon-studio-bundle/dist/firestaff_dungeon_studio" \
           RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
           ./scripts/package_linux_preview.sh
 
@@ -423,6 +435,7 @@ jobs:
             cd "$GITHUB_WORKSPACE"
             VERSION="$FIRESTAFF_VERSION" \
             ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio" \
+            DUNGEON_STUDIO_BIN_SRC="$PWD/build/dungeon-studio-bundle/dist/firestaff_dungeon_studio" \
             RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
             ./scripts/package_steamdeck_preview.sh
 
@@ -432,6 +445,7 @@ jobs:
             chmod 0755 /tmp/appimagetool-x86_64.AppImage
             VERSION="$FIRESTAFF_VERSION" \
             ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio" \
+            DUNGEON_STUDIO_BIN_SRC="$PWD/build/dungeon-studio-bundle/dist/firestaff_dungeon_studio" \
             RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
             APPIMAGETOOL=/tmp/appimagetool-x86_64.AppImage \
             ./scripts/package_steamdeck_appimage.sh

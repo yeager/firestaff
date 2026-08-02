@@ -26,6 +26,15 @@ typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
 #include "nexus_v1_champions.h"
 #include "nexus_v1_creatures.h"
 #include "nexus_v1_projectiles.h"
+#include "nexus_v1_automap.h"
+#include "nexus_v1_light.h"
+#include "nexus_v1_status.h"
+#include "nexus_v1_triggers.h"
+#include "nexus_v1_rest.h"
+#include "nexus_v1_item_use.h"
+#include "nexus_v1_messages.h"
+#include "nexus_v1_throw.h"
+#include "nexus_v1_hunger.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
@@ -2545,7 +2554,15 @@ struct Nexus_V1_Engine {
 
     /* Projectile manager */
     Nexus_ProjectileManager projectiles;
-
+    Nexus_Automap automap;
+    Nexus_LightState light;
+    Nexus_StatusEffects champion_status[4];
+    Nexus_Experience champion_xp[4];
+    Nexus_TriggerManager triggers;
+    Nexus_RestState rest;
+    Nexus_MessageQueue messages;
+    Nexus_ThrownItemManager thrown;
+    Nexus_HungerState hunger;
     /* Mechanics state — opaque pointer, allocated in nexus_v1_init().
      * Defined in nexus_v1_mechanics.c (source-locked DM1 game loop).
      * Source: DM1 CLIKMENU.C F0366, MOVESENS.C F0267. */

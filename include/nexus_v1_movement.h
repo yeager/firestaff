@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_doors.h"
 
 /* Nexus V1 party movement — DM1-compatible grid movement on Nexus maps.
  * Source: DM1 CLIKMENU.C / MOVESENS.C movement pipeline;
@@ -80,10 +81,7 @@
 #define NEXUS_SQF_SECRET        0x40
 #define NEXUS_SQF_3D_ONLY       0x80
 
-/* Door state bits (used with NEXUS_SQUARE_DOOR) */
-#define NEXUS_DOOR_CLOSED       0
-#define NEXUS_DOOR_OPEN         1
-#define NEXUS_DOOR_LOCKED       2
+/* Door state values from nexus_v1_doors.h: NEXUS_DOOR_CLOSED/OPEN enum */
 
 /* Movement result structure */
 typedef struct {
