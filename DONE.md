@@ -1,3 +1,13 @@
+- ✅ 2026-08-02 v3.0.232 FM Towns DM1 support + CSB FM Towns GRAPHICS.DAT
+  classifier + D0C alcove item viewport bug fix:
+  DM1 GRAPHICS.DAT classifier (legacy format, 575 uncompressed graphics),
+  ISO 9660 data track extractor (HMA-240, DATA/JDATA directories),
+  CD audio mapping (19 CDDA tracks, map-to-track table),
+  DUNGEON.DAT classifier (EN 33423 / JP 33931 bytes).
+  CSB FM Towns GRAPHICS.DAT classifier (legacy format probe/receipt).
+  Fixed D0C view square collision in alcove item material plan
+  (relative_forward == 0 early rejection). Data validator hashes.
+  26 new tests, 4 new modules.
 - ✅ 2026-08-02 v3.0.231 Theron's Quest real data extraction batch:
   Level labels (16 entries from UD 0x274230), save file strings
   (UD 0x27519B), dungeon intro stories (7 dungeons, UD 0x27613E),

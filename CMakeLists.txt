@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.231 LANGUAGES C)
+project(Firestaff VERSION 3.0.232 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -4081,6 +4081,8 @@ set(M11_SOURCES
     src/csb/csb_v1_atari_st_animation_discovery.c
     src/csb/csb_v1_animation_script.c
     src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
+    src/csb/csb_v1_fmtowns_graphics_dat.c
+    src/csb/csb_v1_fmtowns_cd.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/csb_v1_startup_sequence_pc34_compat.c
@@ -46636,6 +46638,29 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0691_draw_compressed_
         target_compile_options(test_redmcsb_f0691_draw_compressed_img3_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0691_draw_compressed_img3_pc34_compat COMMAND test_redmcsb_f0691_draw_compressed_img3_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_cd.c")
+    add_executable(test_csb_v1_fmtowns_cd
+        tests/test_csb_v1_fmtowns_cd.c
+        src/csb/csb_v1_fmtowns_cd.c
+        src/csb/csb_v1_fmtowns_graphics_dat.c)
+    target_include_directories(test_csb_v1_fmtowns_cd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_fmtowns_cd PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_fmtowns_cd COMMAND test_csb_v1_fmtowns_cd)
+    set_tests_properties(csb_v1_fmtowns_cd PROPERTIES LABELS "csb;fmtowns" TIMEOUT 60)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_graphics_dat.c" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_fmtowns_graphics_dat.c")
+    add_executable(test_csb_v1_fmtowns_graphics_dat tests/test_csb_v1_fmtowns_graphics_dat.c src/csb/csb_v1_fmtowns_graphics_dat.c)
+    target_include_directories(test_csb_v1_fmtowns_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_fmtowns_graphics_dat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_fmtowns_graphics_dat COMMAND test_csb_v1_fmtowns_graphics_dat)
+    set_tests_properties(csb_v1_fmtowns_graphics_dat PROPERTIES LABELS "csb;fmtowns")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_img3_decode_pc34_compat.c" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_startup_img3_decode_pc34_compat.c")

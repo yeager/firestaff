@@ -218,7 +218,7 @@ int dm1_v1_f0115_alcove_item_material_plan_pc34(
     unsigned int graphic_info;
 
     if (!out_plan || !dm1_v1_thing_type_is_floor_item_pc34(thing_type) ||
-        relative_cell != 2) {
+        relative_cell != 2 || relative_forward == 0) {
         return 0;
     }
     memset(&plan, 0, sizeof(plan));

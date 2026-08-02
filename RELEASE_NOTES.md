@@ -1,6 +1,16 @@
 
 # Unreleased
 
+# Firestaff v3.0.232
+- FM Towns DM1 GRAPHICS.DAT classifier: legacy format, 575 uncompressed graphics, EN 396970 / JP 396407 bytes
+- FM Towns DM1 ISO 9660 data track extractor: MODE1/2048 BIN/CUE, system ID "HMA-240", extracts from DATA/ and JDATA/
+- FM Towns DM1 CD audio: 19 CDDA tracks (02-20), map-to-track table, event lookup
+- FM Towns DM1 DUNGEON.DAT classifier: EN 33423 / JP 33931 bytes, 99-map format
+- CSB FM Towns GRAPHICS.DAT classifier and receipt
+- Fix: D0C alcove item material plan rejected view square collision (relative_forward == 0)
+- Data validator: FM Towns DM1 EN/JP DUNGEON.DAT + PC 3.4 DUNGEON.DAT hashes
+- 26 new tests across 5 test files
+
 # Firestaff v3.0.231
 - Theron's Quest real data: level labels (16 entries), save file management strings, dungeon intro stories (7 dungeons), treasure names, quest retrieval messages, GAME SPEED label
 - Theron's Quest real data: file cabinet management strings (no space, choose delete, sure, thank you, not saved), boot/copy-protection screen text (Super CD-ROM2 System)
