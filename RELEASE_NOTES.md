@@ -1,5 +1,19 @@
 
-# Unreleased
+# Firestaff v3.0.256
+- Dungeon Studio: full .fsdung dungeon editor with V1 + V2.x high-res graphics slots
+- Artpack Studio: Settings dialog with secure API key storage (keyring/Keychain)
+- Studios: 19-language i18n (gettext PO/MO), macOS AppleLanguages auto-detection
+- Studios: PyInstaller bundling added to GitHub Actions release packaging
+- DM2: SUPPRESS codec round-trip verification across all save mask families
+- DM2: invoke message dispatch, map tile access, move record serialization
+- Nexus: door state machine with animation, key/bash, toggle, and tick runtime
+- Nexus: action timer, damage indicator, formation, spawner modules
+- CSB: XOR pad classification, runtime tick accumulator fixes
+- Parity evidence updates for DM1 viewport, inventory, spell area
+
+# Firestaff v3.0.255
+- DM2: SUPPRESS codec round-trip verification across all save mask families
+- Nexus: door state machine with animation, key/bash, toggle, and tick runtime
 
 # Firestaff v3.0.254
 - Nexus: spell casting wired into mechanics tick (rune lookup → mana → damage)
