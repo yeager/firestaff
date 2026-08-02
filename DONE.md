@@ -1,3 +1,9 @@
+- ✅ 2026-08-02 v3.0.235 Theron parity: spell/action names, skill levels, HUD strings
+  41 action/spell names from UD 0x09EEA3 (BLOCK through THROW, incl. FIREBALL,
+  LIGHTNING, HEAL, SPELLSHIELD). 15 skill level names from UD 0x089B6B
+  (NEOPHYTE through ARCHMASTER). HUD strings: flask levels, compass directions,
+  6 stat names, 3 vital names, 6 spell feedback messages, weight/facing labels.
+  Soul Room companion selection wired to real roster.
 - ✅ 2026-08-02 v3.0.234 Theron parity: real champion stats, real creature types
   Wire real champion roster (8 champions from Track 02 UD 0x09D1D6) into
   party init, replacing synthetic hp=10/sta=10 defaults. Replace 16 bogus

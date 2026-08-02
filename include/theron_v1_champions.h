@@ -203,6 +203,13 @@ void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index);
  * original champion records are decoded. */
 void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party);
 
+/* Set companion slot (1-3) to a champion from the roster (index 1-7).
+ * Index 0 (Theron) cannot be placed as a companion.
+ * Returns 0 on success, -1 on invalid slot/index. */
+int theron_v1_party_set_companion(Theron_V1_Party *party,
+                                  int slot,
+                                  unsigned int roster_index);
+
 /* Dungeon entry: apply per-dungeon inventory reset for companions.
  * Call on dungeon entry after level load.
  *   - selected companions (slots 1-3): clear inventory + equipment

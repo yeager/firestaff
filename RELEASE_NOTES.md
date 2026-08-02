@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.235
+- 41 combat action + spell names from Track 02 UD 0x09EEA3 (FIREBALL, LIGHTNING, HEAL, SPELLSHIELD, FIRESHIELD, etc.)
+- 15 skill level names from UD 0x089B6B (NEOPHYTE through ARCHMASTER, matching DM1)
+- HUD strings: flask levels, compass directions, stat/vital names, spell feedback messages, weight/facing labels
+- Soul Room companion selection: theron_v1_party_set_companion() wired to real roster data
+- Note: "DANE" potion (not "DAIN") is a Theron-specific spelling difference from DM1
+
 # Firestaff v3.0.234
 - Wire real champion roster into party init: Theron hp=175/sta=1500/mana=50, real stats for all 8 champions replace synthetic hp=10 defaults
 - Replace 16 synthetic creature types (GOBLIN, ORC, DRAGON) with 7 real types from Track 02 (AKUTUBA, DRATOR, FORMIC, SARMON, SHADO, THIEF, DEMON)

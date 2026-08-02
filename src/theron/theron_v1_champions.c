@@ -134,6 +134,20 @@ void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party) {
     party->gold = 0;
 }
 
+/* ── Soul Room companion selection ──────────────────────────────────── */
+
+int theron_v1_party_set_companion(Theron_V1_Party *party,
+                                  int slot,
+                                  unsigned int roster_index) {
+    if (!party) return -1;
+    if (slot < 1 || slot > 3) return -1;
+    if (roster_index >= theron_v1_track02_us_champion_count()) return -1;
+    if (roster_index == 0) return -1;
+    init_champion_from_roster(&party->champions[slot],
+                              slot, roster_index);
+    return 0;
+}
+
 /* ── Dungeon entry/exit reset ─────────────────────────────────────────── */
 
 void theron_v1_party_dungeon_entry_reset(Theron_V1_Party *party) {

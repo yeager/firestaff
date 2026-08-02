@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.234 LANGUAGES C)
+project(Firestaff VERSION 3.0.235 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -44145,6 +44145,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_champion_ros
     add_executable(test_theron_v1_track02_champion_roster
         tests/test_theron_v1_track02_champion_roster.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_champions.c
     )
     target_include_directories(test_theron_v1_track02_champion_roster PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -44154,6 +44155,44 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_champion_ros
     add_test(
         NAME theron_v1_track02_champion_roster
         COMMAND test_theron_v1_track02_champion_roster
+    )
+endif()
+
+# Theron Track 02 spell/action names + skill levels (real data from UD 0x09EEA3/0x089B6B)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_spell_action_names.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_spell_action_names.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_spell_action_names.h")
+    add_executable(test_theron_v1_track02_spell_action_names
+        tests/test_theron_v1_track02_spell_action_names.c
+        src/theron/theron_v1_track02_spell_action_names.c
+    )
+    target_include_directories(test_theron_v1_track02_spell_action_names PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_spell_action_names PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_spell_action_names
+        COMMAND test_theron_v1_track02_spell_action_names
+    )
+endif()
+
+# Theron Track 02 HUD strings (flask levels, directions, stat names, messages)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_hud_strings.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_hud_strings.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_hud_strings.h")
+    add_executable(test_theron_v1_track02_hud_strings
+        tests/test_theron_v1_track02_hud_strings.c
+        src/theron/theron_v1_track02_hud_strings.c
+    )
+    target_include_directories(test_theron_v1_track02_hud_strings PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_hud_strings PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_hud_strings
+        COMMAND test_theron_v1_track02_hud_strings
     )
 endif()
 
