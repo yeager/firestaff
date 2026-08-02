@@ -1,6 +1,9 @@
 
 # Unreleased
 
+# Firestaff v3.0.233
+- Theron's Quest champion roster: all 8 champions with real stats from DM1 5-bit packed text at UD 0x09D1D6 — THERON, MARA, LINOS, HEXA, HAKAR, TIRAN, DOTAN, PENTAI with HP/STA/MANA and 6 base attributes
+
 # Firestaff v3.0.232
 - FM Towns DM1 GRAPHICS.DAT classifier: legacy format, 575 uncompressed graphics, EN 396970 / JP 396407 bytes
 - FM Towns DM1 ISO 9660 data track extractor: MODE1/2048 BIN/CUE, system ID "HMA-240", extracts from DATA/ and JDATA/

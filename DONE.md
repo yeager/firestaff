@@ -8,6 +8,12 @@
   Fixed D0C view square collision in alcove item material plan
   (relative_forward == 0 early rejection). Data validator hashes.
   26 new tests, 4 new modules.
+- ✅ 2026-08-02 v3.0.233 Theron's Quest champion roster (real data):
+  All 8 champions extracted from DM1 5-bit packed text at UD 0x09D1D6:
+  THERON (175hp/50str), MARA (250hp/70wis, F), LINOS (300hp/70vit),
+  HEXA (350hp, all 50), HAKAR (400hp/70am), TIRAN (450hp/70str/0mana),
+  DOTAN (200hp/70dex/180mana), PENTAI (550hp/70af, F). Names, titles,
+  sex, HP/STA/MANA, STR/DEX/WIS/VIT/AM/AF all binary-verified.
 - ✅ 2026-08-02 v3.0.231 Theron's Quest real data extraction batch:
   Level labels (16 entries from UD 0x274230), save file strings
   (UD 0x27519B), dungeon intro stories (7 dungeons, UD 0x27613E),
