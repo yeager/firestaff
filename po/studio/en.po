@@ -1,0 +1,727 @@
+# Firestaff Studio English translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-02 18:54+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: scripts/firestaff_dungeon_studio.py:411
+#: scripts/firestaff_artpack_studio.py:1674
+msgid "Game"
+msgstr "Game"
+
+#: scripts/firestaff_dungeon_studio.py:418
+msgid "New"
+msgstr "New"
+
+#: scripts/firestaff_dungeon_studio.py:419
+#: scripts/firestaff_dungeon_studio.py:995
+msgid "Open .fsdung"
+msgstr "Open .fsdung"
+
+#: scripts/firestaff_dungeon_studio.py:420
+#: scripts/firestaff_dungeon_studio.py:1024
+msgid "Save .fsdung"
+msgstr "Save .fsdung"
+
+#: scripts/firestaff_dungeon_studio.py:421
+msgid "Save As..."
+msgstr "Save As..."
+
+#: scripts/firestaff_dungeon_studio.py:425
+msgid "Add Level"
+msgstr "Add Level"
+
+#: scripts/firestaff_dungeon_studio.py:426
+#: scripts/firestaff_dungeon_studio.py:1047
+msgid "Map Settings"
+msgstr "Map Settings"
+
+#: scripts/firestaff_dungeon_studio.py:427
+msgid "Statistics"
+msgstr "Statistics"
+
+#: scripts/firestaff_dungeon_studio.py:428
+#: scripts/firestaff_artpack_studio.py:1682
+msgid "Validate"
+msgstr "Validate"
+
+#: scripts/firestaff_dungeon_studio.py:430
+#: scripts/firestaff_dungeon_studio.py:1191
+msgid "Test View"
+msgstr "Test View"
+
+#: scripts/firestaff_dungeon_studio.py:452
+msgid "Tools"
+msgstr "Tools"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Select"
+msgstr "Select"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Paint"
+msgstr "Paint"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Place Thing"
+msgstr "Place Thing"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Erase"
+msgstr "Erase"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Fill"
+msgstr "Fill"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Set Party Start"
+msgstr "Set Party Start"
+
+#: scripts/firestaff_dungeon_studio.py:463
+msgid "Tile Types"
+msgstr "Tile Types"
+
+#: scripts/firestaff_dungeon_studio.py:474
+msgid "Thing Type"
+msgstr "Thing Type"
+
+#: scripts/firestaff_dungeon_studio.py:481
+msgid "View"
+msgstr "View"
+
+#: scripts/firestaff_dungeon_studio.py:483
+msgid "Show Grid"
+msgstr "Show Grid"
+
+#: scripts/firestaff_dungeon_studio.py:485
+msgid "Show Things"
+msgstr "Show Things"
+
+#: scripts/firestaff_dungeon_studio.py:489
+msgid "Zoom"
+msgstr "Zoom"
+
+#: scripts/firestaff_dungeon_studio.py:492
+msgid "Fit"
+msgstr "Fit"
+
+#: scripts/firestaff_dungeon_studio.py:518
+msgid "Map Properties"
+msgstr "Map Properties"
+
+#: scripts/firestaff_dungeon_studio.py:522
+msgid "Name"
+msgstr "Name"
+
+#: scripts/firestaff_dungeon_studio.py:525
+msgid "Size"
+msgstr "Size"
+
+#: scripts/firestaff_dungeon_studio.py:531
+msgid "Wall Set"
+msgstr "Wall Set"
+
+#: scripts/firestaff_dungeon_studio.py:534
+msgid "Floor Set"
+msgstr "Floor Set"
+
+#: scripts/firestaff_dungeon_studio.py:537
+msgid "Difficulty"
+msgstr "Difficulty"
+
+#: scripts/firestaff_dungeon_studio.py:543
+msgid "Tile"
+msgstr "Tile"
+
+#: scripts/firestaff_dungeon_studio.py:547
+msgid "Position"
+msgstr "Position"
+
+#: scripts/firestaff_dungeon_studio.py:549
+#: scripts/firestaff_dungeon_studio.py:572
+msgid "Type"
+msgstr "Type"
+
+#: scripts/firestaff_dungeon_studio.py:553
+msgid "Things at Tile"
+msgstr "Things at Tile"
+
+#: scripts/firestaff_dungeon_studio.py:565
+msgid "Delete Thing"
+msgstr "Delete Thing"
+
+#: scripts/firestaff_dungeon_studio.py:568
+msgid "Thing Properties"
+msgstr "Thing Properties"
+
+#: scripts/firestaff_dungeon_studio.py:574
+msgid "Cell"
+msgstr "Cell"
+
+#: scripts/firestaff_dungeon_studio.py:581
+msgid "Graphics Override"
+msgstr "Graphics Override"
+
+#: scripts/firestaff_dungeon_studio.py:587
+#, python-brace-format
+msgid "Import {}..."
+msgstr "Import {}..."
+
+#: scripts/firestaff_dungeon_studio.py:624
+#: scripts/firestaff_dungeon_studio.py:982
+#: scripts/firestaff_dungeon_studio.py:1038
+msgid "Coming soon"
+msgstr "Coming soon"
+
+#: scripts/firestaff_dungeon_studio.py:653
+msgid "New Level"
+msgstr "New Level"
+
+#: scripts/firestaff_dungeon_studio.py:653
+msgid "Level name:"
+msgstr "Level name:"
+
+#: scripts/firestaff_dungeon_studio.py:975
+#: scripts/firestaff_artpack_studio.py:1803
+msgid "Language"
+msgstr "Language"
+
+#: scripts/firestaff_dungeon_studio.py:976
+#: scripts/firestaff_artpack_studio.py:1804
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"Language set to {}.\n"
+"Restart app for full effect."
+
+#: scripts/firestaff_dungeon_studio.py:982
+#: scripts/firestaff_dungeon_studio.py:1038
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "{} support coming in a future update"
+
+#: scripts/firestaff_dungeon_studio.py:991
+msgid "New dungeon created"
+msgstr "New dungeon created"
+
+#: scripts/firestaff_dungeon_studio.py:996
+#: scripts/firestaff_dungeon_studio.py:1026
+#: scripts/firestaff_artpack_studio.py:1987
+#: scripts/firestaff_artpack_studio.py:1997
+#: scripts/firestaff_artpack_studio.py:2010
+#: scripts/firestaff_artpack_studio.py:2249
+#: scripts/firestaff_artpack_studio.py:2264
+msgid "All files"
+msgstr "All files"
+
+#: scripts/firestaff_dungeon_studio.py:1008
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "Opened: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1010
+#: scripts/firestaff_dungeon_studio.py:1020
+#: scripts/firestaff_dungeon_studio.py:1148
+#: scripts/firestaff_dungeon_studio.py:1153
+msgid "Error"
+msgstr "Error"
+
+#: scripts/firestaff_dungeon_studio.py:1018
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "Saved: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1059
+msgid "Width (1-64)"
+msgstr "Width (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1061
+msgid "Height (1-64)"
+msgstr "Height (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1083
+msgid "Apply"
+msgstr "Apply"
+
+#: scripts/firestaff_dungeon_studio.py:1101
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "Maps: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1102
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "Current: {} ({}×{})"
+
+#: scripts/firestaff_dungeon_studio.py:1104
+msgid "Tiles:"
+msgstr "Tiles:"
+
+#: scripts/firestaff_dungeon_studio.py:1108
+#, python-brace-format
+msgid "Things: {}"
+msgstr "Things: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1113
+msgid "Dungeon Statistics"
+msgstr "Dungeon Statistics"
+
+#: scripts/firestaff_dungeon_studio.py:1122
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "Map {} \"{}\": all walls"
+
+#: scripts/firestaff_dungeon_studio.py:1128
+msgid "Party start is inside a wall"
+msgstr "Party start is inside a wall"
+
+#: scripts/firestaff_dungeon_studio.py:1130
+msgid "Party start is outside map bounds"
+msgstr "Party start is outside map bounds"
+
+#: scripts/firestaff_dungeon_studio.py:1133
+#: scripts/firestaff_dungeon_studio.py:1135
+msgid "Validation"
+msgstr "Validation"
+
+#: scripts/firestaff_dungeon_studio.py:1133
+msgid "Issues found:"
+msgstr "Issues found:"
+
+#: scripts/firestaff_dungeon_studio.py:1135
+msgid "Dungeon is valid!"
+msgstr "Dungeon is valid!"
+
+#: scripts/firestaff_dungeon_studio.py:1142
+#, python-brace-format
+msgid "Import {}"
+msgstr "Import {}"
+
+#: scripts/firestaff_dungeon_studio.py:1143
+msgid "All"
+msgstr "All"
+
+#: scripts/firestaff_dungeon_studio.py:1148
+msgid "Pillow is required for graphics import"
+msgstr "Pillow is required for graphics import"
+
+#: scripts/firestaff_dungeon_studio.py:1153
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "Could not load image: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1156
+msgid "Resize?"
+msgstr "Resize?"
+
+#: scripts/firestaff_dungeon_studio.py:1157
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+
+#: scripts/firestaff_dungeon_studio.py:1169
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{} imported from {}"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "North"
+msgstr "North"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "East"
+msgstr "East"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "South"
+msgstr "South"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "West"
+msgstr "West"
+
+#: scripts/firestaff_dungeon_studio.py:1210
+msgid "Turn L"
+msgstr "Turn L"
+
+#: scripts/firestaff_dungeon_studio.py:1212
+msgid "Fwd"
+msgstr "Fwd"
+
+#: scripts/firestaff_dungeon_studio.py:1214
+msgid "Back"
+msgstr "Back"
+
+#: scripts/firestaff_dungeon_studio.py:1216
+msgid "Turn R"
+msgstr "Turn R"
+
+#: scripts/firestaff_artpack_studio.py:1646
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+#: scripts/firestaff_artpack_studio.py:1656
+msgid "Ready"
+msgstr "Ready"
+
+#: scripts/firestaff_artpack_studio.py:1657
+msgid "No game data imported"
+msgstr "No game data imported"
+
+#: scripts/firestaff_artpack_studio.py:1678
+msgid "Pack"
+msgstr "Pack"
+
+#: scripts/firestaff_artpack_studio.py:1680
+#: scripts/firestaff_artpack_studio.py:1714
+msgid "Browse"
+msgstr "Browse"
+
+#: scripts/firestaff_artpack_studio.py:1681
+msgid "Open/Create"
+msgstr "Open/Create"
+
+#: scripts/firestaff_artpack_studio.py:1683
+msgid "Build Runtime Cache"
+msgstr "Build Runtime Cache"
+
+#: scripts/firestaff_artpack_studio.py:1684
+msgid "Write Receipt"
+msgstr "Write Receipt"
+
+#: scripts/firestaff_artpack_studio.py:1685
+msgid "Import .fsart"
+msgstr "Import .fsart"
+
+#: scripts/firestaff_artpack_studio.py:1686
+msgid "Export .fsart"
+msgstr "Export .fsart"
+
+#: scripts/firestaff_artpack_studio.py:1708
+msgid "V1 assets / V2.2 targets"
+msgstr "V1 assets / V2.2 targets"
+
+#: scripts/firestaff_artpack_studio.py:1709
+msgid "Rescan"
+msgstr "Rescan"
+
+#: scripts/firestaff_artpack_studio.py:1712
+msgid "V1 root"
+msgstr "V1 root"
+
+#: scripts/firestaff_artpack_studio.py:1717
+msgid "Import game data"
+msgstr "Import game data"
+
+#: scripts/firestaff_artpack_studio.py:1718
+#: scripts/firestaff_artpack_studio.py:2043
+msgid "Warnings"
+msgstr "Warnings"
+
+#: scripts/firestaff_artpack_studio.py:1736
+msgid "Current asset"
+msgstr "Current asset"
+
+#: scripts/firestaff_artpack_studio.py:1738
+msgid "Category"
+msgstr "Category"
+
+#: scripts/firestaff_artpack_studio.py:1741
+msgid "Asset id"
+msgstr "Asset id"
+
+#: scripts/firestaff_artpack_studio.py:1743
+msgid "Generator"
+msgstr "Generator"
+
+#: scripts/firestaff_artpack_studio.py:1749
+msgid "Load V1/ref"
+msgstr "Load V1/ref"
+
+#: scripts/firestaff_artpack_studio.py:1750
+msgid "Load V2.2 target"
+msgstr "Load V2.2 target"
+
+#: scripts/firestaff_artpack_studio.py:1751
+msgid "Import target to pack"
+msgstr "Import target to pack"
+
+#: scripts/firestaff_artpack_studio.py:1752
+msgid "Save edited target"
+msgstr "Save edited target"
+
+#: scripts/firestaff_artpack_studio.py:1754
+msgid "AI generation hook"
+msgstr "AI generation hook"
+
+#: scripts/firestaff_artpack_studio.py:1758
+msgid "Write prompt"
+msgstr "Write prompt"
+
+#: scripts/firestaff_artpack_studio.py:1759
+msgid "Run AI command"
+msgstr "Run AI command"
+
+#: scripts/firestaff_artpack_studio.py:1762
+msgid "AI selected"
+msgstr "AI selected"
+
+#: scripts/firestaff_artpack_studio.py:1763
+msgid "AI missing/all"
+msgstr "AI missing/all"
+
+#: scripts/firestaff_artpack_studio.py:1793
+msgid "Drag-and-drop enabled"
+msgstr "Drag-and-drop enabled"
+
+#: scripts/firestaff_artpack_studio.py:1816
+#: scripts/firestaff_artpack_studio.py:2271
+#, python-brace-format
+msgid "Imported .fsart: {}"
+msgstr "Imported .fsart: {}"
+
+#: scripts/firestaff_artpack_studio.py:1821
+#, python-brace-format
+msgid "Loaded dropped target: {}"
+msgstr "Loaded dropped target: {}"
+
+#: scripts/firestaff_artpack_studio.py:1852
+msgid "Select V2.2 modern artpack directory"
+msgstr "Select V2.2 modern artpack directory"
+
+#: scripts/firestaff_artpack_studio.py:1858
+msgid "Select V1/reference asset root"
+msgstr "Select V1/reference asset root"
+
+#: scripts/firestaff_artpack_studio.py:1870
+#, python-brace-format
+msgid "Opened {} artpack: {}"
+msgstr "Opened {} artpack: {}"
+
+#: scripts/firestaff_artpack_studio.py:1872
+msgid "Open artpack failed"
+msgstr "Open artpack failed"
+
+#: scripts/firestaff_artpack_studio.py:1919
+#, python-brace-format
+msgid "Scanned {} V1/reference assets"
+msgstr "Scanned {} V1/reference assets"
+
+#: scripts/firestaff_artpack_studio.py:1986
+msgid "Load V1/reference image"
+msgstr "Load V1/reference image"
+
+#: scripts/firestaff_artpack_studio.py:1987
+#: scripts/firestaff_artpack_studio.py:1997
+#: scripts/firestaff_artpack_studio.py:2009
+msgid "Images"
+msgstr "Images"
+
+#: scripts/firestaff_artpack_studio.py:1992
+#, python-brace-format
+msgid "Loaded reference: {}"
+msgstr "Loaded reference: {}"
+
+#: scripts/firestaff_artpack_studio.py:1996
+msgid "Load V2.2 target image"
+msgstr "Load V2.2 target image"
+
+#: scripts/firestaff_artpack_studio.py:2002
+#, python-brace-format
+msgid "Loaded target: {}"
+msgstr "Loaded target: {}"
+
+#: scripts/firestaff_artpack_studio.py:2006
+msgid "Import original game data"
+msgstr "Import original game data"
+
+#: scripts/firestaff_artpack_studio.py:2008
+msgid "Game data"
+msgstr "Game data"
+
+#: scripts/firestaff_artpack_studio.py:2035
+#, python-brace-format
+msgid "Imported game data: {} ({})"
+msgstr "Imported game data: {} ({})"
+
+#: scripts/firestaff_artpack_studio.py:2037
+#, python-brace-format
+msgid "Warnings: {}"
+msgstr "Warnings: {}"
+
+#: scripts/firestaff_artpack_studio.py:2039
+msgid "Game data import failed"
+msgstr "Game data import failed"
+
+#: scripts/firestaff_artpack_studio.py:2043
+msgid "No game data imported."
+msgstr "No game data imported."
+
+#: scripts/firestaff_artpack_studio.py:2048
+msgid "No warnings."
+msgstr "No warnings."
+
+#: scripts/firestaff_artpack_studio.py:2049
+msgid "Game data warnings"
+msgstr "Game data warnings"
+
+#: scripts/firestaff_artpack_studio.py:2074
+msgid "No target image"
+msgstr "No target image"
+
+#: scripts/firestaff_artpack_studio.py:2074
+msgid "Load or generate a V2.2 target first."
+msgstr "Load or generate a V2.2 target first."
+
+#: scripts/firestaff_artpack_studio.py:2089
+#, python-brace-format
+msgid "Imported {}/{}"
+msgstr "Imported {}/{}"
+
+#: scripts/firestaff_artpack_studio.py:2091
+#: scripts/firestaff_artpack_studio.py:2273
+msgid "Import failed"
+msgstr "Import failed"
+
+#: scripts/firestaff_artpack_studio.py:2104
+#, python-brace-format
+msgid "Saved edited image: {}"
+msgstr "Saved edited image: {}"
+
+#: scripts/firestaff_artpack_studio.py:2132
+#, python-brace-format
+msgid "Wrote AI prompt: {}"
+msgstr "Wrote AI prompt: {}"
+
+#: scripts/firestaff_artpack_studio.py:2138
+#: scripts/firestaff_artpack_studio.py:2178
+msgid "AI command not configured"
+msgstr "AI command not configured"
+
+#: scripts/firestaff_artpack_studio.py:2139
+msgid "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."
+msgstr "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."
+
+#: scripts/firestaff_artpack_studio.py:2169
+msgid "AI command generated target image"
+msgstr "AI command generated target image"
+
+#: scripts/firestaff_artpack_studio.py:2171
+msgid "AI generation failed"
+msgstr "AI generation failed"
+
+#: scripts/firestaff_artpack_studio.py:2178
+msgid "Enter an AI command template first."
+msgstr "Enter an AI command template first."
+
+#: scripts/firestaff_artpack_studio.py:2186
+msgid "AI batch"
+msgstr "AI batch"
+
+#: scripts/firestaff_artpack_studio.py:2187
+#, python-brace-format
+msgid "Generate how many assets? {} available."
+msgstr "Generate how many assets? {} available."
+
+#: scripts/firestaff_artpack_studio.py:2210
+#, python-brace-format
+msgid "AI batch generated/imported {} assets"
+msgstr "AI batch generated/imported {} assets"
+
+#: scripts/firestaff_artpack_studio.py:2217
+msgid "Validation failed:"
+msgstr "Validation failed:"
+
+#: scripts/firestaff_artpack_studio.py:2218
+msgid "Validation failed"
+msgstr "Validation failed"
+
+#: scripts/firestaff_artpack_studio.py:2220
+msgid "Validation passed for required slots"
+msgstr "Validation passed for required slots"
+
+#: scripts/firestaff_artpack_studio.py:2221
+msgid "Validation passed"
+msgstr "Validation passed"
+
+#: scripts/firestaff_artpack_studio.py:2221
+msgid "Required slots are complete."
+msgstr "Required slots are complete."
+
+#: scripts/firestaff_artpack_studio.py:2228
+#, python-brace-format
+msgid "Built V2.2 runtime cache: {} ({} bytes)"
+msgstr "Built V2.2 runtime cache: {} ({} bytes)"
+
+#: scripts/firestaff_artpack_studio.py:2229
+msgid "Runtime cache"
+msgstr "Runtime cache"
+
+#: scripts/firestaff_artpack_studio.py:2229
+#, python-brace-format
+msgid ""
+"Built {}\n"
+"{} bytes"
+msgstr ""
+"Built {}\n"
+"{} bytes"
+
+#: scripts/firestaff_artpack_studio.py:2231
+msgid "Runtime cache failed"
+msgstr "Runtime cache failed"
+
+#: scripts/firestaff_artpack_studio.py:2236
+msgid "Reviewer"
+msgstr "Reviewer"
+
+#: scripts/firestaff_artpack_studio.py:2236
+msgid "Reviewer name:"
+msgstr "Reviewer name:"
+
+#: scripts/firestaff_artpack_studio.py:2239
+#, python-brace-format
+msgid "Wrote receipt: {}"
+msgstr "Wrote receipt: {}"
+
+#: scripts/firestaff_artpack_studio.py:2241
+msgid "Receipt failed"
+msgstr "Receipt failed"
+
+#: scripts/firestaff_artpack_studio.py:2247
+msgid "Export Firestaff artpack"
+msgstr "Export Firestaff artpack"
+
+#: scripts/firestaff_artpack_studio.py:2249
+#: scripts/firestaff_artpack_studio.py:2264
+msgid "Firestaff artpack"
+msgstr "Firestaff artpack"
+
+#: scripts/firestaff_artpack_studio.py:2255
+#, python-brace-format
+msgid "Exported .fsart: {}"
+msgstr "Exported .fsart: {}"
+
+#: scripts/firestaff_artpack_studio.py:2257
+msgid "Export failed"
+msgstr "Export failed"
+
+#: scripts/firestaff_artpack_studio.py:2263
+msgid "Import Firestaff artpack"
+msgstr "Import Firestaff artpack"

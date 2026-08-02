@@ -1,0 +1,727 @@
+# Firestaff Studio Romanian translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-02 18:54+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Romanian\n"
+"Language: ro\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: scripts/firestaff_dungeon_studio.py:411
+#: scripts/firestaff_artpack_studio.py:1674
+msgid "Game"
+msgstr "Joc"
+
+#: scripts/firestaff_dungeon_studio.py:418
+msgid "New"
+msgstr "Nou"
+
+#: scripts/firestaff_dungeon_studio.py:419
+#: scripts/firestaff_dungeon_studio.py:995
+msgid "Open .fsdung"
+msgstr "Deschide .fsdung"
+
+#: scripts/firestaff_dungeon_studio.py:420
+#: scripts/firestaff_dungeon_studio.py:1024
+msgid "Save .fsdung"
+msgstr "Salvează .fsdung"
+
+#: scripts/firestaff_dungeon_studio.py:421
+msgid "Save As..."
+msgstr "Salvează ca..."
+
+#: scripts/firestaff_dungeon_studio.py:425
+msgid "Add Level"
+msgstr "Adaugă nivel"
+
+#: scripts/firestaff_dungeon_studio.py:426
+#: scripts/firestaff_dungeon_studio.py:1047
+msgid "Map Settings"
+msgstr "Setări hartă"
+
+#: scripts/firestaff_dungeon_studio.py:427
+msgid "Statistics"
+msgstr "Statistici"
+
+#: scripts/firestaff_dungeon_studio.py:428
+#: scripts/firestaff_artpack_studio.py:1682
+msgid "Validate"
+msgstr "Validează"
+
+#: scripts/firestaff_dungeon_studio.py:430
+#: scripts/firestaff_dungeon_studio.py:1191
+msgid "Test View"
+msgstr "Vizualizare test"
+
+#: scripts/firestaff_dungeon_studio.py:452
+msgid "Tools"
+msgstr "Instrumente"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Select"
+msgstr "Selectează"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Paint"
+msgstr "Pictează"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Place Thing"
+msgstr "Plasează obiect"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Erase"
+msgstr "Șterge"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Fill"
+msgstr "Umple"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Set Party Start"
+msgstr "Setează start grup"
+
+#: scripts/firestaff_dungeon_studio.py:463
+msgid "Tile Types"
+msgstr "Tipuri de dale"
+
+#: scripts/firestaff_dungeon_studio.py:474
+msgid "Thing Type"
+msgstr "Tip obiect"
+
+#: scripts/firestaff_dungeon_studio.py:481
+msgid "View"
+msgstr "Vizualizare"
+
+#: scripts/firestaff_dungeon_studio.py:483
+msgid "Show Grid"
+msgstr "Afișează grila"
+
+#: scripts/firestaff_dungeon_studio.py:485
+msgid "Show Things"
+msgstr "Afișează obiectele"
+
+#: scripts/firestaff_dungeon_studio.py:489
+msgid "Zoom"
+msgstr "Zoom"
+
+#: scripts/firestaff_dungeon_studio.py:492
+msgid "Fit"
+msgstr "Potrivește"
+
+#: scripts/firestaff_dungeon_studio.py:518
+msgid "Map Properties"
+msgstr "Proprietăți hartă"
+
+#: scripts/firestaff_dungeon_studio.py:522
+msgid "Name"
+msgstr "Nume"
+
+#: scripts/firestaff_dungeon_studio.py:525
+msgid "Size"
+msgstr "Dimensiune"
+
+#: scripts/firestaff_dungeon_studio.py:531
+msgid "Wall Set"
+msgstr "Set pereți"
+
+#: scripts/firestaff_dungeon_studio.py:534
+msgid "Floor Set"
+msgstr "Set podea"
+
+#: scripts/firestaff_dungeon_studio.py:537
+msgid "Difficulty"
+msgstr "Dificultate"
+
+#: scripts/firestaff_dungeon_studio.py:543
+msgid "Tile"
+msgstr "Dală"
+
+#: scripts/firestaff_dungeon_studio.py:547
+msgid "Position"
+msgstr "Poziție"
+
+#: scripts/firestaff_dungeon_studio.py:549
+#: scripts/firestaff_dungeon_studio.py:572
+msgid "Type"
+msgstr "Tip"
+
+#: scripts/firestaff_dungeon_studio.py:553
+msgid "Things at Tile"
+msgstr "Obiecte pe dală"
+
+#: scripts/firestaff_dungeon_studio.py:565
+msgid "Delete Thing"
+msgstr "Șterge obiect"
+
+#: scripts/firestaff_dungeon_studio.py:568
+msgid "Thing Properties"
+msgstr "Proprietăți obiect"
+
+#: scripts/firestaff_dungeon_studio.py:574
+msgid "Cell"
+msgstr "Celulă"
+
+#: scripts/firestaff_dungeon_studio.py:581
+msgid "Graphics Override"
+msgstr "Suprascriere grafică"
+
+#: scripts/firestaff_dungeon_studio.py:587
+#, python-brace-format
+msgid "Import {}..."
+msgstr "Importă {}..."
+
+#: scripts/firestaff_dungeon_studio.py:624
+#: scripts/firestaff_dungeon_studio.py:982
+#: scripts/firestaff_dungeon_studio.py:1038
+msgid "Coming soon"
+msgstr "În curând"
+
+#: scripts/firestaff_dungeon_studio.py:653
+msgid "New Level"
+msgstr "Nivel nou"
+
+#: scripts/firestaff_dungeon_studio.py:653
+msgid "Level name:"
+msgstr "Nume nivel:"
+
+#: scripts/firestaff_dungeon_studio.py:975
+#: scripts/firestaff_artpack_studio.py:1803
+msgid "Language"
+msgstr "Limbă"
+
+#: scripts/firestaff_dungeon_studio.py:976
+#: scripts/firestaff_artpack_studio.py:1804
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"Limba setată la {}.\n"
+"Reporniți aplicația pentru efect complet."
+
+#: scripts/firestaff_dungeon_studio.py:982
+#: scripts/firestaff_dungeon_studio.py:1038
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "Suport {} într-o actualizare viitoare"
+
+#: scripts/firestaff_dungeon_studio.py:991
+msgid "New dungeon created"
+msgstr "Temniță nouă creată"
+
+#: scripts/firestaff_dungeon_studio.py:996
+#: scripts/firestaff_dungeon_studio.py:1026
+#: scripts/firestaff_artpack_studio.py:1987
+#: scripts/firestaff_artpack_studio.py:1997
+#: scripts/firestaff_artpack_studio.py:2010
+#: scripts/firestaff_artpack_studio.py:2249
+#: scripts/firestaff_artpack_studio.py:2264
+msgid "All files"
+msgstr "Toate fișierele"
+
+#: scripts/firestaff_dungeon_studio.py:1008
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "Deschis: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1010
+#: scripts/firestaff_dungeon_studio.py:1020
+#: scripts/firestaff_dungeon_studio.py:1148
+#: scripts/firestaff_dungeon_studio.py:1153
+msgid "Error"
+msgstr "Eroare"
+
+#: scripts/firestaff_dungeon_studio.py:1018
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "Salvat: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1059
+msgid "Width (1-64)"
+msgstr "Lățime (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1061
+msgid "Height (1-64)"
+msgstr "Înălțime (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1083
+msgid "Apply"
+msgstr "Aplică"
+
+#: scripts/firestaff_dungeon_studio.py:1101
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "Hărți: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1102
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "Curentă: {} ({}×{})"
+
+#: scripts/firestaff_dungeon_studio.py:1104
+msgid "Tiles:"
+msgstr "Dale:"
+
+#: scripts/firestaff_dungeon_studio.py:1108
+#, python-brace-format
+msgid "Things: {}"
+msgstr "Obiecte: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1113
+msgid "Dungeon Statistics"
+msgstr "Statistici temniță"
+
+#: scripts/firestaff_dungeon_studio.py:1122
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "Harta {} \"{}\": toți pereții"
+
+#: scripts/firestaff_dungeon_studio.py:1128
+msgid "Party start is inside a wall"
+msgstr "Startul grupului este într-un perete"
+
+#: scripts/firestaff_dungeon_studio.py:1130
+msgid "Party start is outside map bounds"
+msgstr "Startul grupului este în afara limitelor hărții"
+
+#: scripts/firestaff_dungeon_studio.py:1133
+#: scripts/firestaff_dungeon_studio.py:1135
+msgid "Validation"
+msgstr "Validare"
+
+#: scripts/firestaff_dungeon_studio.py:1133
+msgid "Issues found:"
+msgstr "Probleme găsite:"
+
+#: scripts/firestaff_dungeon_studio.py:1135
+msgid "Dungeon is valid!"
+msgstr "Temnița este validă!"
+
+#: scripts/firestaff_dungeon_studio.py:1142
+#, python-brace-format
+msgid "Import {}"
+msgstr "Importă {}"
+
+#: scripts/firestaff_dungeon_studio.py:1143
+msgid "All"
+msgstr "Toate"
+
+#: scripts/firestaff_dungeon_studio.py:1148
+msgid "Pillow is required for graphics import"
+msgstr "Pillow este necesar pentru importul grafic"
+
+#: scripts/firestaff_dungeon_studio.py:1153
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "Nu s-a putut încărca imaginea: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1156
+msgid "Resize?"
+msgstr "Redimensionare?"
+
+#: scripts/firestaff_dungeon_studio.py:1157
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"Imaginea este {}×{}, așteptat {}×{}.\n"
+"Redimensionare?"
+
+#: scripts/firestaff_dungeon_studio.py:1169
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{} importat din {}"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "North"
+msgstr "Nord"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "East"
+msgstr "Est"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "South"
+msgstr "Sud"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "West"
+msgstr "Vest"
+
+#: scripts/firestaff_dungeon_studio.py:1210
+msgid "Turn L"
+msgstr "Stânga"
+
+#: scripts/firestaff_dungeon_studio.py:1212
+msgid "Fwd"
+msgstr "Înainte"
+
+#: scripts/firestaff_dungeon_studio.py:1214
+msgid "Back"
+msgstr "Înapoi"
+
+#: scripts/firestaff_dungeon_studio.py:1216
+msgid "Turn R"
+msgstr "Dreapta"
+
+#: scripts/firestaff_artpack_studio.py:1646
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+#: scripts/firestaff_artpack_studio.py:1656
+msgid "Ready"
+msgstr "Pregătit"
+
+#: scripts/firestaff_artpack_studio.py:1657
+msgid "No game data imported"
+msgstr "Niciun fișier de joc importat"
+
+#: scripts/firestaff_artpack_studio.py:1678
+msgid "Pack"
+msgstr "Pachet"
+
+#: scripts/firestaff_artpack_studio.py:1680
+#: scripts/firestaff_artpack_studio.py:1714
+msgid "Browse"
+msgstr "Răsfoiește"
+
+#: scripts/firestaff_artpack_studio.py:1681
+msgid "Open/Create"
+msgstr "Deschide/Creează"
+
+#: scripts/firestaff_artpack_studio.py:1683
+msgid "Build Runtime Cache"
+msgstr "Construiește cache-ul de rulare"
+
+#: scripts/firestaff_artpack_studio.py:1684
+msgid "Write Receipt"
+msgstr "Scrie chitanță"
+
+#: scripts/firestaff_artpack_studio.py:1685
+msgid "Import .fsart"
+msgstr "Importă .fsart"
+
+#: scripts/firestaff_artpack_studio.py:1686
+msgid "Export .fsart"
+msgstr "Exportă .fsart"
+
+#: scripts/firestaff_artpack_studio.py:1708
+msgid "V1 assets / V2.2 targets"
+msgstr "Resurse V1 / Ținte V2.2"
+
+#: scripts/firestaff_artpack_studio.py:1709
+msgid "Rescan"
+msgstr "Rescanează"
+
+#: scripts/firestaff_artpack_studio.py:1712
+msgid "V1 root"
+msgstr "Rădăcină V1"
+
+#: scripts/firestaff_artpack_studio.py:1717
+msgid "Import game data"
+msgstr "Importă datele jocului"
+
+#: scripts/firestaff_artpack_studio.py:1718
+#: scripts/firestaff_artpack_studio.py:2043
+msgid "Warnings"
+msgstr "Avertismente"
+
+#: scripts/firestaff_artpack_studio.py:1736
+msgid "Current asset"
+msgstr "Resursă curentă"
+
+#: scripts/firestaff_artpack_studio.py:1738
+msgid "Category"
+msgstr "Categorie"
+
+#: scripts/firestaff_artpack_studio.py:1741
+msgid "Asset id"
+msgstr "ID resursă"
+
+#: scripts/firestaff_artpack_studio.py:1743
+msgid "Generator"
+msgstr "Generator"
+
+#: scripts/firestaff_artpack_studio.py:1749
+msgid "Load V1/ref"
+msgstr "Încarcă V1/ref"
+
+#: scripts/firestaff_artpack_studio.py:1750
+msgid "Load V2.2 target"
+msgstr "Încarcă țintă V2.2"
+
+#: scripts/firestaff_artpack_studio.py:1751
+msgid "Import target to pack"
+msgstr "Importă țintă în pachet"
+
+#: scripts/firestaff_artpack_studio.py:1752
+msgid "Save edited target"
+msgstr "Salvează ținta editată"
+
+#: scripts/firestaff_artpack_studio.py:1754
+msgid "AI generation hook"
+msgstr "Hook generare AI"
+
+#: scripts/firestaff_artpack_studio.py:1758
+msgid "Write prompt"
+msgstr "Scrie prompt"
+
+#: scripts/firestaff_artpack_studio.py:1759
+msgid "Run AI command"
+msgstr "Rulează comanda AI"
+
+#: scripts/firestaff_artpack_studio.py:1762
+msgid "AI selected"
+msgstr "AI selectat"
+
+#: scripts/firestaff_artpack_studio.py:1763
+msgid "AI missing/all"
+msgstr "AI lipsă/toate"
+
+#: scripts/firestaff_artpack_studio.py:1793
+msgid "Drag-and-drop enabled"
+msgstr "Glisare și plasare activată"
+
+#: scripts/firestaff_artpack_studio.py:1816
+#: scripts/firestaff_artpack_studio.py:2271
+#, python-brace-format
+msgid "Imported .fsart: {}"
+msgstr ".fsart importat: {}"
+
+#: scripts/firestaff_artpack_studio.py:1821
+#, python-brace-format
+msgid "Loaded dropped target: {}"
+msgstr "Țintă plasată încărcată: {}"
+
+#: scripts/firestaff_artpack_studio.py:1852
+msgid "Select V2.2 modern artpack directory"
+msgstr "Selectează directorul artpack V2.2 modern"
+
+#: scripts/firestaff_artpack_studio.py:1858
+msgid "Select V1/reference asset root"
+msgstr "Selectează rădăcina resurselor V1/referință"
+
+#: scripts/firestaff_artpack_studio.py:1870
+#, python-brace-format
+msgid "Opened {} artpack: {}"
+msgstr "Deschis {} artpack: {}"
+
+#: scripts/firestaff_artpack_studio.py:1872
+msgid "Open artpack failed"
+msgstr "Deschiderea artpack-ului a eșuat"
+
+#: scripts/firestaff_artpack_studio.py:1919
+#, python-brace-format
+msgid "Scanned {} V1/reference assets"
+msgstr "{} resurse V1/referință scanate"
+
+#: scripts/firestaff_artpack_studio.py:1986
+msgid "Load V1/reference image"
+msgstr "Încarcă imaginea V1/referință"
+
+#: scripts/firestaff_artpack_studio.py:1987
+#: scripts/firestaff_artpack_studio.py:1997
+#: scripts/firestaff_artpack_studio.py:2009
+msgid "Images"
+msgstr "Imagini"
+
+#: scripts/firestaff_artpack_studio.py:1992
+#, python-brace-format
+msgid "Loaded reference: {}"
+msgstr "Referință încărcată: {}"
+
+#: scripts/firestaff_artpack_studio.py:1996
+msgid "Load V2.2 target image"
+msgstr "Încarcă imaginea țintă V2.2"
+
+#: scripts/firestaff_artpack_studio.py:2002
+#, python-brace-format
+msgid "Loaded target: {}"
+msgstr "Țintă încărcată: {}"
+
+#: scripts/firestaff_artpack_studio.py:2006
+msgid "Import original game data"
+msgstr "Importă datele originale ale jocului"
+
+#: scripts/firestaff_artpack_studio.py:2008
+msgid "Game data"
+msgstr "Date de joc"
+
+#: scripts/firestaff_artpack_studio.py:2035
+#, python-brace-format
+msgid "Imported game data: {} ({})"
+msgstr "Date de joc importate: {} ({})"
+
+#: scripts/firestaff_artpack_studio.py:2037
+#, python-brace-format
+msgid "Warnings: {}"
+msgstr "Avertismente: {}"
+
+#: scripts/firestaff_artpack_studio.py:2039
+msgid "Game data import failed"
+msgstr "Importul datelor de joc a eșuat"
+
+#: scripts/firestaff_artpack_studio.py:2043
+msgid "No game data imported."
+msgstr "Niciun fișier de joc importat."
+
+#: scripts/firestaff_artpack_studio.py:2048
+msgid "No warnings."
+msgstr "Niciun avertisment."
+
+#: scripts/firestaff_artpack_studio.py:2049
+msgid "Game data warnings"
+msgstr "Avertismente date de joc"
+
+#: scripts/firestaff_artpack_studio.py:2074
+msgid "No target image"
+msgstr "Nicio imagine țintă"
+
+#: scripts/firestaff_artpack_studio.py:2074
+msgid "Load or generate a V2.2 target first."
+msgstr "Încărcați sau generați mai întâi o țintă V2.2."
+
+#: scripts/firestaff_artpack_studio.py:2089
+#, python-brace-format
+msgid "Imported {}/{}"
+msgstr "Importat {}/{}"
+
+#: scripts/firestaff_artpack_studio.py:2091
+#: scripts/firestaff_artpack_studio.py:2273
+msgid "Import failed"
+msgstr "Importul a eșuat"
+
+#: scripts/firestaff_artpack_studio.py:2104
+#, python-brace-format
+msgid "Saved edited image: {}"
+msgstr "Imagine editată salvată: {}"
+
+#: scripts/firestaff_artpack_studio.py:2132
+#, python-brace-format
+msgid "Wrote AI prompt: {}"
+msgstr "Prompt AI scris: {}"
+
+#: scripts/firestaff_artpack_studio.py:2138
+#: scripts/firestaff_artpack_studio.py:2178
+msgid "AI command not configured"
+msgstr "Comanda AI neconfigurată"
+
+#: scripts/firestaff_artpack_studio.py:2139
+msgid "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."
+msgstr "Setați FIRESTAFF_ARTPACK_AI_COMMAND sau introduceți mai întâi un șablon de comandă."
+
+#: scripts/firestaff_artpack_studio.py:2169
+msgid "AI command generated target image"
+msgstr "Comanda AI a generat imaginea țintă"
+
+#: scripts/firestaff_artpack_studio.py:2171
+msgid "AI generation failed"
+msgstr "Generarea AI a eșuat"
+
+#: scripts/firestaff_artpack_studio.py:2178
+msgid "Enter an AI command template first."
+msgstr "Introduceți mai întâi un șablon de comandă AI."
+
+#: scripts/firestaff_artpack_studio.py:2186
+msgid "AI batch"
+msgstr "Lot AI"
+
+#: scripts/firestaff_artpack_studio.py:2187
+#, python-brace-format
+msgid "Generate how many assets? {} available."
+msgstr "Câte resurse să se genereze? {} disponibile."
+
+#: scripts/firestaff_artpack_studio.py:2210
+#, python-brace-format
+msgid "AI batch generated/imported {} assets"
+msgstr "Lot AI a generat/importat {} resurse"
+
+#: scripts/firestaff_artpack_studio.py:2217
+msgid "Validation failed:"
+msgstr "Validarea a eșuat:"
+
+#: scripts/firestaff_artpack_studio.py:2218
+msgid "Validation failed"
+msgstr "Validarea a eșuat"
+
+#: scripts/firestaff_artpack_studio.py:2220
+msgid "Validation passed for required slots"
+msgstr "Validare trecută pentru sloturile necesare"
+
+#: scripts/firestaff_artpack_studio.py:2221
+msgid "Validation passed"
+msgstr "Validare trecută"
+
+#: scripts/firestaff_artpack_studio.py:2221
+msgid "Required slots are complete."
+msgstr "Sloturile necesare sunt complete."
+
+#: scripts/firestaff_artpack_studio.py:2228
+#, python-brace-format
+msgid "Built V2.2 runtime cache: {} ({} bytes)"
+msgstr "Cache de rulare V2.2 construit: {} ({} octeți)"
+
+#: scripts/firestaff_artpack_studio.py:2229
+msgid "Runtime cache"
+msgstr "Cache de rulare"
+
+#: scripts/firestaff_artpack_studio.py:2229
+#, python-brace-format
+msgid ""
+"Built {}\n"
+"{} bytes"
+msgstr ""
+"Construit {}\n"
+"{} octeți"
+
+#: scripts/firestaff_artpack_studio.py:2231
+msgid "Runtime cache failed"
+msgstr "Cache-ul de rulare a eșuat"
+
+#: scripts/firestaff_artpack_studio.py:2236
+msgid "Reviewer"
+msgstr "Recenzor"
+
+#: scripts/firestaff_artpack_studio.py:2236
+msgid "Reviewer name:"
+msgstr "Numele recenzorului:"
+
+#: scripts/firestaff_artpack_studio.py:2239
+#, python-brace-format
+msgid "Wrote receipt: {}"
+msgstr "Chitanță scrisă: {}"
+
+#: scripts/firestaff_artpack_studio.py:2241
+msgid "Receipt failed"
+msgstr "Chitanța a eșuat"
+
+#: scripts/firestaff_artpack_studio.py:2247
+msgid "Export Firestaff artpack"
+msgstr "Exportă artpack Firestaff"
+
+#: scripts/firestaff_artpack_studio.py:2249
+#: scripts/firestaff_artpack_studio.py:2264
+msgid "Firestaff artpack"
+msgstr "Artpack Firestaff"
+
+#: scripts/firestaff_artpack_studio.py:2255
+#, python-brace-format
+msgid "Exported .fsart: {}"
+msgstr ".fsart exportat: {}"
+
+#: scripts/firestaff_artpack_studio.py:2257
+msgid "Export failed"
+msgstr "Exportul a eșuat"
+
+#: scripts/firestaff_artpack_studio.py:2263
+msgid "Import Firestaff artpack"
+msgstr "Importă artpack Firestaff"

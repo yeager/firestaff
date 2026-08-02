@@ -1,0 +1,727 @@
+# Firestaff Studio Chinese (Simplified) translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-02 18:54+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: scripts/firestaff_dungeon_studio.py:411
+#: scripts/firestaff_artpack_studio.py:1674
+msgid "Game"
+msgstr "游戏"
+
+#: scripts/firestaff_dungeon_studio.py:418
+msgid "New"
+msgstr "新建"
+
+#: scripts/firestaff_dungeon_studio.py:419
+#: scripts/firestaff_dungeon_studio.py:995
+msgid "Open .fsdung"
+msgstr "打开 .fsdung"
+
+#: scripts/firestaff_dungeon_studio.py:420
+#: scripts/firestaff_dungeon_studio.py:1024
+msgid "Save .fsdung"
+msgstr "保存 .fsdung"
+
+#: scripts/firestaff_dungeon_studio.py:421
+msgid "Save As..."
+msgstr "另存为..."
+
+#: scripts/firestaff_dungeon_studio.py:425
+msgid "Add Level"
+msgstr "添加关卡"
+
+#: scripts/firestaff_dungeon_studio.py:426
+#: scripts/firestaff_dungeon_studio.py:1047
+msgid "Map Settings"
+msgstr "地图设置"
+
+#: scripts/firestaff_dungeon_studio.py:427
+msgid "Statistics"
+msgstr "统计"
+
+#: scripts/firestaff_dungeon_studio.py:428
+#: scripts/firestaff_artpack_studio.py:1682
+msgid "Validate"
+msgstr "验证"
+
+#: scripts/firestaff_dungeon_studio.py:430
+#: scripts/firestaff_dungeon_studio.py:1191
+msgid "Test View"
+msgstr "测试视图"
+
+#: scripts/firestaff_dungeon_studio.py:452
+msgid "Tools"
+msgstr "工具"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Select"
+msgstr "选择"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Paint"
+msgstr "绘制"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Place Thing"
+msgstr "放置物品"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Erase"
+msgstr "擦除"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Fill"
+msgstr "填充"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Set Party Start"
+msgstr "设置队伍起点"
+
+#: scripts/firestaff_dungeon_studio.py:463
+msgid "Tile Types"
+msgstr "地砖类型"
+
+#: scripts/firestaff_dungeon_studio.py:474
+msgid "Thing Type"
+msgstr "物品类型"
+
+#: scripts/firestaff_dungeon_studio.py:481
+msgid "View"
+msgstr "视图"
+
+#: scripts/firestaff_dungeon_studio.py:483
+msgid "Show Grid"
+msgstr "显示网格"
+
+#: scripts/firestaff_dungeon_studio.py:485
+msgid "Show Things"
+msgstr "显示物品"
+
+#: scripts/firestaff_dungeon_studio.py:489
+msgid "Zoom"
+msgstr "缩放"
+
+#: scripts/firestaff_dungeon_studio.py:492
+msgid "Fit"
+msgstr "适配"
+
+#: scripts/firestaff_dungeon_studio.py:518
+msgid "Map Properties"
+msgstr "地图属性"
+
+#: scripts/firestaff_dungeon_studio.py:522
+msgid "Name"
+msgstr "名称"
+
+#: scripts/firestaff_dungeon_studio.py:525
+msgid "Size"
+msgstr "大小"
+
+#: scripts/firestaff_dungeon_studio.py:531
+msgid "Wall Set"
+msgstr "墙壁集"
+
+#: scripts/firestaff_dungeon_studio.py:534
+msgid "Floor Set"
+msgstr "地板集"
+
+#: scripts/firestaff_dungeon_studio.py:537
+msgid "Difficulty"
+msgstr "难度"
+
+#: scripts/firestaff_dungeon_studio.py:543
+msgid "Tile"
+msgstr "地砖"
+
+#: scripts/firestaff_dungeon_studio.py:547
+msgid "Position"
+msgstr "位置"
+
+#: scripts/firestaff_dungeon_studio.py:549
+#: scripts/firestaff_dungeon_studio.py:572
+msgid "Type"
+msgstr "类型"
+
+#: scripts/firestaff_dungeon_studio.py:553
+msgid "Things at Tile"
+msgstr "地砖上的物品"
+
+#: scripts/firestaff_dungeon_studio.py:565
+msgid "Delete Thing"
+msgstr "删除物品"
+
+#: scripts/firestaff_dungeon_studio.py:568
+msgid "Thing Properties"
+msgstr "物品属性"
+
+#: scripts/firestaff_dungeon_studio.py:574
+msgid "Cell"
+msgstr "单元格"
+
+#: scripts/firestaff_dungeon_studio.py:581
+msgid "Graphics Override"
+msgstr "图形覆盖"
+
+#: scripts/firestaff_dungeon_studio.py:587
+#, python-brace-format
+msgid "Import {}..."
+msgstr "导入{}..."
+
+#: scripts/firestaff_dungeon_studio.py:624
+#: scripts/firestaff_dungeon_studio.py:982
+#: scripts/firestaff_dungeon_studio.py:1038
+msgid "Coming soon"
+msgstr "即将推出"
+
+#: scripts/firestaff_dungeon_studio.py:653
+msgid "New Level"
+msgstr "新关卡"
+
+#: scripts/firestaff_dungeon_studio.py:653
+msgid "Level name:"
+msgstr "关卡名称:"
+
+#: scripts/firestaff_dungeon_studio.py:975
+#: scripts/firestaff_artpack_studio.py:1803
+msgid "Language"
+msgstr "语言"
+
+#: scripts/firestaff_dungeon_studio.py:976
+#: scripts/firestaff_artpack_studio.py:1804
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"语言已设置为{}。\n"
+"重启应用以完全生效。"
+
+#: scripts/firestaff_dungeon_studio.py:982
+#: scripts/firestaff_dungeon_studio.py:1038
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "{}支持将在未来更新中提供"
+
+#: scripts/firestaff_dungeon_studio.py:991
+msgid "New dungeon created"
+msgstr "已创建新地牢"
+
+#: scripts/firestaff_dungeon_studio.py:996
+#: scripts/firestaff_dungeon_studio.py:1026
+#: scripts/firestaff_artpack_studio.py:1987
+#: scripts/firestaff_artpack_studio.py:1997
+#: scripts/firestaff_artpack_studio.py:2010
+#: scripts/firestaff_artpack_studio.py:2249
+#: scripts/firestaff_artpack_studio.py:2264
+msgid "All files"
+msgstr "所有文件"
+
+#: scripts/firestaff_dungeon_studio.py:1008
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "已打开: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1010
+#: scripts/firestaff_dungeon_studio.py:1020
+#: scripts/firestaff_dungeon_studio.py:1148
+#: scripts/firestaff_dungeon_studio.py:1153
+msgid "Error"
+msgstr "错误"
+
+#: scripts/firestaff_dungeon_studio.py:1018
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "已保存: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1059
+msgid "Width (1-64)"
+msgstr "宽度 (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1061
+msgid "Height (1-64)"
+msgstr "高度 (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1083
+msgid "Apply"
+msgstr "应用"
+
+#: scripts/firestaff_dungeon_studio.py:1101
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "地图数: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1102
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "当前: {} ({}×{})"
+
+#: scripts/firestaff_dungeon_studio.py:1104
+msgid "Tiles:"
+msgstr "地砖:"
+
+#: scripts/firestaff_dungeon_studio.py:1108
+#, python-brace-format
+msgid "Things: {}"
+msgstr "物品: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1113
+msgid "Dungeon Statistics"
+msgstr "地牢统计"
+
+#: scripts/firestaff_dungeon_studio.py:1122
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "地图 {} \"{}\": 全是墙壁"
+
+#: scripts/firestaff_dungeon_studio.py:1128
+msgid "Party start is inside a wall"
+msgstr "队伍起点在墙壁内"
+
+#: scripts/firestaff_dungeon_studio.py:1130
+msgid "Party start is outside map bounds"
+msgstr "队伍起点在地图范围外"
+
+#: scripts/firestaff_dungeon_studio.py:1133
+#: scripts/firestaff_dungeon_studio.py:1135
+msgid "Validation"
+msgstr "验证"
+
+#: scripts/firestaff_dungeon_studio.py:1133
+msgid "Issues found:"
+msgstr "发现的问题:"
+
+#: scripts/firestaff_dungeon_studio.py:1135
+msgid "Dungeon is valid!"
+msgstr "地牢有效！"
+
+#: scripts/firestaff_dungeon_studio.py:1142
+#, python-brace-format
+msgid "Import {}"
+msgstr "导入{}"
+
+#: scripts/firestaff_dungeon_studio.py:1143
+msgid "All"
+msgstr "全部"
+
+#: scripts/firestaff_dungeon_studio.py:1148
+msgid "Pillow is required for graphics import"
+msgstr "图形导入需要Pillow"
+
+#: scripts/firestaff_dungeon_studio.py:1153
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "无法加载图像: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1156
+msgid "Resize?"
+msgstr "调整大小？"
+
+#: scripts/firestaff_dungeon_studio.py:1157
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"图像为{}×{}，预期{}×{}。\n"
+"是否调整大小以适配？"
+
+#: scripts/firestaff_dungeon_studio.py:1169
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{}已从{}导入"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "North"
+msgstr "北"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "East"
+msgstr "东"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "South"
+msgstr "南"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "West"
+msgstr "西"
+
+#: scripts/firestaff_dungeon_studio.py:1210
+msgid "Turn L"
+msgstr "左转"
+
+#: scripts/firestaff_dungeon_studio.py:1212
+msgid "Fwd"
+msgstr "前进"
+
+#: scripts/firestaff_dungeon_studio.py:1214
+msgid "Back"
+msgstr "后退"
+
+#: scripts/firestaff_dungeon_studio.py:1216
+msgid "Turn R"
+msgstr "右转"
+
+#: scripts/firestaff_artpack_studio.py:1646
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+#: scripts/firestaff_artpack_studio.py:1656
+msgid "Ready"
+msgstr "就绪"
+
+#: scripts/firestaff_artpack_studio.py:1657
+msgid "No game data imported"
+msgstr "未导入游戏数据"
+
+#: scripts/firestaff_artpack_studio.py:1678
+msgid "Pack"
+msgstr "包"
+
+#: scripts/firestaff_artpack_studio.py:1680
+#: scripts/firestaff_artpack_studio.py:1714
+msgid "Browse"
+msgstr "浏览"
+
+#: scripts/firestaff_artpack_studio.py:1681
+msgid "Open/Create"
+msgstr "打开/创建"
+
+#: scripts/firestaff_artpack_studio.py:1683
+msgid "Build Runtime Cache"
+msgstr "构建运行时缓存"
+
+#: scripts/firestaff_artpack_studio.py:1684
+msgid "Write Receipt"
+msgstr "写入收据"
+
+#: scripts/firestaff_artpack_studio.py:1685
+msgid "Import .fsart"
+msgstr "导入 .fsart"
+
+#: scripts/firestaff_artpack_studio.py:1686
+msgid "Export .fsart"
+msgstr "导出 .fsart"
+
+#: scripts/firestaff_artpack_studio.py:1708
+msgid "V1 assets / V2.2 targets"
+msgstr "V1 资源 / V2.2 目标"
+
+#: scripts/firestaff_artpack_studio.py:1709
+msgid "Rescan"
+msgstr "重新扫描"
+
+#: scripts/firestaff_artpack_studio.py:1712
+msgid "V1 root"
+msgstr "V1 根目录"
+
+#: scripts/firestaff_artpack_studio.py:1717
+msgid "Import game data"
+msgstr "导入游戏数据"
+
+#: scripts/firestaff_artpack_studio.py:1718
+#: scripts/firestaff_artpack_studio.py:2043
+msgid "Warnings"
+msgstr "警告"
+
+#: scripts/firestaff_artpack_studio.py:1736
+msgid "Current asset"
+msgstr "当前资源"
+
+#: scripts/firestaff_artpack_studio.py:1738
+msgid "Category"
+msgstr "类别"
+
+#: scripts/firestaff_artpack_studio.py:1741
+msgid "Asset id"
+msgstr "资源 ID"
+
+#: scripts/firestaff_artpack_studio.py:1743
+msgid "Generator"
+msgstr "生成器"
+
+#: scripts/firestaff_artpack_studio.py:1749
+msgid "Load V1/ref"
+msgstr "加载 V1/ref"
+
+#: scripts/firestaff_artpack_studio.py:1750
+msgid "Load V2.2 target"
+msgstr "加载 V2.2 目标"
+
+#: scripts/firestaff_artpack_studio.py:1751
+msgid "Import target to pack"
+msgstr "将目标导入包"
+
+#: scripts/firestaff_artpack_studio.py:1752
+msgid "Save edited target"
+msgstr "保存已编辑的目标"
+
+#: scripts/firestaff_artpack_studio.py:1754
+msgid "AI generation hook"
+msgstr "AI 生成钩子"
+
+#: scripts/firestaff_artpack_studio.py:1758
+msgid "Write prompt"
+msgstr "写入提示词"
+
+#: scripts/firestaff_artpack_studio.py:1759
+msgid "Run AI command"
+msgstr "运行 AI 命令"
+
+#: scripts/firestaff_artpack_studio.py:1762
+msgid "AI selected"
+msgstr "AI 已选择"
+
+#: scripts/firestaff_artpack_studio.py:1763
+msgid "AI missing/all"
+msgstr "AI 缺失/全部"
+
+#: scripts/firestaff_artpack_studio.py:1793
+msgid "Drag-and-drop enabled"
+msgstr "拖放已启用"
+
+#: scripts/firestaff_artpack_studio.py:1816
+#: scripts/firestaff_artpack_studio.py:2271
+#, python-brace-format
+msgid "Imported .fsart: {}"
+msgstr "已导入 .fsart: {}"
+
+#: scripts/firestaff_artpack_studio.py:1821
+#, python-brace-format
+msgid "Loaded dropped target: {}"
+msgstr "已加载拖放的目标: {}"
+
+#: scripts/firestaff_artpack_studio.py:1852
+msgid "Select V2.2 modern artpack directory"
+msgstr "选择 V2.2 现代 artpack 目录"
+
+#: scripts/firestaff_artpack_studio.py:1858
+msgid "Select V1/reference asset root"
+msgstr "选择 V1/参考资源根目录"
+
+#: scripts/firestaff_artpack_studio.py:1870
+#, python-brace-format
+msgid "Opened {} artpack: {}"
+msgstr "已打开 {} artpack: {}"
+
+#: scripts/firestaff_artpack_studio.py:1872
+msgid "Open artpack failed"
+msgstr "打开 artpack 失败"
+
+#: scripts/firestaff_artpack_studio.py:1919
+#, python-brace-format
+msgid "Scanned {} V1/reference assets"
+msgstr "已扫描 {} 个 V1/参考资源"
+
+#: scripts/firestaff_artpack_studio.py:1986
+msgid "Load V1/reference image"
+msgstr "加载 V1/参考图像"
+
+#: scripts/firestaff_artpack_studio.py:1987
+#: scripts/firestaff_artpack_studio.py:1997
+#: scripts/firestaff_artpack_studio.py:2009
+msgid "Images"
+msgstr "图像"
+
+#: scripts/firestaff_artpack_studio.py:1992
+#, python-brace-format
+msgid "Loaded reference: {}"
+msgstr "已加载参考: {}"
+
+#: scripts/firestaff_artpack_studio.py:1996
+msgid "Load V2.2 target image"
+msgstr "加载 V2.2 目标图像"
+
+#: scripts/firestaff_artpack_studio.py:2002
+#, python-brace-format
+msgid "Loaded target: {}"
+msgstr "已加载目标: {}"
+
+#: scripts/firestaff_artpack_studio.py:2006
+msgid "Import original game data"
+msgstr "导入原始游戏数据"
+
+#: scripts/firestaff_artpack_studio.py:2008
+msgid "Game data"
+msgstr "游戏数据"
+
+#: scripts/firestaff_artpack_studio.py:2035
+#, python-brace-format
+msgid "Imported game data: {} ({})"
+msgstr "已导入游戏数据: {} ({})"
+
+#: scripts/firestaff_artpack_studio.py:2037
+#, python-brace-format
+msgid "Warnings: {}"
+msgstr "警告: {}"
+
+#: scripts/firestaff_artpack_studio.py:2039
+msgid "Game data import failed"
+msgstr "游戏数据导入失败"
+
+#: scripts/firestaff_artpack_studio.py:2043
+msgid "No game data imported."
+msgstr "未导入游戏数据。"
+
+#: scripts/firestaff_artpack_studio.py:2048
+msgid "No warnings."
+msgstr "无警告。"
+
+#: scripts/firestaff_artpack_studio.py:2049
+msgid "Game data warnings"
+msgstr "游戏数据警告"
+
+#: scripts/firestaff_artpack_studio.py:2074
+msgid "No target image"
+msgstr "无目标图像"
+
+#: scripts/firestaff_artpack_studio.py:2074
+msgid "Load or generate a V2.2 target first."
+msgstr "请先加载或生成 V2.2 目标。"
+
+#: scripts/firestaff_artpack_studio.py:2089
+#, python-brace-format
+msgid "Imported {}/{}"
+msgstr "已导入 {}/{}"
+
+#: scripts/firestaff_artpack_studio.py:2091
+#: scripts/firestaff_artpack_studio.py:2273
+msgid "Import failed"
+msgstr "导入失败"
+
+#: scripts/firestaff_artpack_studio.py:2104
+#, python-brace-format
+msgid "Saved edited image: {}"
+msgstr "已保存编辑的图像: {}"
+
+#: scripts/firestaff_artpack_studio.py:2132
+#, python-brace-format
+msgid "Wrote AI prompt: {}"
+msgstr "已写入 AI 提示词: {}"
+
+#: scripts/firestaff_artpack_studio.py:2138
+#: scripts/firestaff_artpack_studio.py:2178
+msgid "AI command not configured"
+msgstr "AI 命令未配置"
+
+#: scripts/firestaff_artpack_studio.py:2139
+msgid "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."
+msgstr "请设置 FIRESTAFF_ARTPACK_AI_COMMAND 或先输入命令模板。"
+
+#: scripts/firestaff_artpack_studio.py:2169
+msgid "AI command generated target image"
+msgstr "AI 命令已生成目标图像"
+
+#: scripts/firestaff_artpack_studio.py:2171
+msgid "AI generation failed"
+msgstr "AI 生成失败"
+
+#: scripts/firestaff_artpack_studio.py:2178
+msgid "Enter an AI command template first."
+msgstr "请先输入 AI 命令模板。"
+
+#: scripts/firestaff_artpack_studio.py:2186
+msgid "AI batch"
+msgstr "AI 批处理"
+
+#: scripts/firestaff_artpack_studio.py:2187
+#, python-brace-format
+msgid "Generate how many assets? {} available."
+msgstr "生成多少个资源？{} 个可用。"
+
+#: scripts/firestaff_artpack_studio.py:2210
+#, python-brace-format
+msgid "AI batch generated/imported {} assets"
+msgstr "AI 批处理已生成/导入 {} 个资源"
+
+#: scripts/firestaff_artpack_studio.py:2217
+msgid "Validation failed:"
+msgstr "验证失败:"
+
+#: scripts/firestaff_artpack_studio.py:2218
+msgid "Validation failed"
+msgstr "验证失败"
+
+#: scripts/firestaff_artpack_studio.py:2220
+msgid "Validation passed for required slots"
+msgstr "必需槽位验证通过"
+
+#: scripts/firestaff_artpack_studio.py:2221
+msgid "Validation passed"
+msgstr "验证通过"
+
+#: scripts/firestaff_artpack_studio.py:2221
+msgid "Required slots are complete."
+msgstr "必需槽位已完成。"
+
+#: scripts/firestaff_artpack_studio.py:2228
+#, python-brace-format
+msgid "Built V2.2 runtime cache: {} ({} bytes)"
+msgstr "已构建 V2.2 运行时缓存: {} ({} 字节)"
+
+#: scripts/firestaff_artpack_studio.py:2229
+msgid "Runtime cache"
+msgstr "运行时缓存"
+
+#: scripts/firestaff_artpack_studio.py:2229
+#, python-brace-format
+msgid ""
+"Built {}\n"
+"{} bytes"
+msgstr ""
+"已构建 {}\n"
+"{} 字节"
+
+#: scripts/firestaff_artpack_studio.py:2231
+msgid "Runtime cache failed"
+msgstr "运行时缓存失败"
+
+#: scripts/firestaff_artpack_studio.py:2236
+msgid "Reviewer"
+msgstr "审核人"
+
+#: scripts/firestaff_artpack_studio.py:2236
+msgid "Reviewer name:"
+msgstr "审核人姓名:"
+
+#: scripts/firestaff_artpack_studio.py:2239
+#, python-brace-format
+msgid "Wrote receipt: {}"
+msgstr "已写入收据: {}"
+
+#: scripts/firestaff_artpack_studio.py:2241
+msgid "Receipt failed"
+msgstr "收据失败"
+
+#: scripts/firestaff_artpack_studio.py:2247
+msgid "Export Firestaff artpack"
+msgstr "导出 Firestaff artpack"
+
+#: scripts/firestaff_artpack_studio.py:2249
+#: scripts/firestaff_artpack_studio.py:2264
+msgid "Firestaff artpack"
+msgstr "Firestaff artpack"
+
+#: scripts/firestaff_artpack_studio.py:2255
+#, python-brace-format
+msgid "Exported .fsart: {}"
+msgstr "已导出 .fsart: {}"
+
+#: scripts/firestaff_artpack_studio.py:2257
+msgid "Export failed"
+msgstr "导出失败"
+
+#: scripts/firestaff_artpack_studio.py:2263
+msgid "Import Firestaff artpack"
+msgstr "导入 Firestaff artpack"

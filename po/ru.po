@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02\n"
+"Language: ru\n"
+"Language-Team: Русский\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "File"
+msgstr "Файл"
+
+msgid "Edit"
+msgstr "Редактирование"
+
+msgid "Window"
+msgstr "Окно"
+
+msgid "Help"
+msgstr "Справка"
+
+msgid "New"
+msgstr "Новый"
+
+msgid "Open .fsdung"
+msgstr "Открыть .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Сохранить .fsdung"
+
+msgid "Save As..."
+msgstr "Сохранить как..."
+
+msgid "Add Level"
+msgstr "Добавить уровень"
+
+msgid "Map Settings"
+msgstr "Настройки карты"
+
+msgid "Statistics"
+msgstr "Статистика"
+
+msgid "Validate"
+msgstr "Проверить"
+
+msgid "Test View"
+msgstr "Тестовый вид"
+
+msgid "Game"
+msgstr "Игра"
+
+msgid "Tools"
+msgstr "Инструменты"
+
+msgid "Select"
+msgstr "Выбрать"
+
+msgid "Paint"
+msgstr "Рисовать"
+
+msgid "Place Thing"
+msgstr "Разместить объект"
+
+msgid "Erase"
+msgstr "Стереть"
+
+msgid "Fill"
+msgstr "Заполнить"
+
+msgid "Set Party Start"
+msgstr "Установить начало отряда"
+
+msgid "Tile Types"
+msgstr "Типы клеток"
+
+msgid "Wall"
+msgstr "Стена"
+
+msgid "Corridor"
+msgstr "Коридор"
+
+msgid "Pit"
+msgstr "Яма"
+
+msgid "Stairs"
+msgstr "Лестница"
+
+msgid "Door"
+msgstr "Дверь"
+
+msgid "Teleporter"
+msgstr "Телепортер"
+
+msgid "Fake Wall"
+msgstr "Фальшивая стена"
+
+msgid "Thing Type"
+msgstr "Тип объекта"
+
+msgid "Text"
+msgstr "Текст"
+
+msgid "Sensor"
+msgstr "Датчик"
+
+msgid "Group"
+msgstr "Группа"
+
+msgid "Weapon"
+msgstr "Оружие"
+
+msgid "Armour"
+msgstr "Доспехи"
+
+msgid "Scroll"
+msgstr "Свиток"
+
+msgid "Potion"
+msgstr "Зелье"
+
+msgid "Container"
+msgstr "Контейнер"
+
+msgid "Junk"
+msgstr "Хлам"
+
+msgid "Creature"
+msgstr "Существо"
+
+msgid "View"
+msgstr "Вид"
+
+msgid "Show Grid"
+msgstr "Показать сетку"
+
+msgid "Show Things"
+msgstr "Показать объекты"
+
+msgid "Zoom"
+msgstr "Масштаб"
+
+msgid "Fit"
+msgstr "По размеру"
+
+msgid "Map Properties"
+msgstr "Свойства карты"
+
+msgid "Name"
+msgstr "Имя"
+
+msgid "Size"
+msgstr "Размер"
+
+msgid "Wall Set"
+msgstr "Набор стен"
+
+msgid "Floor Set"
+msgstr "Набор полов"
+
+msgid "Difficulty"
+msgstr "Сложность"
+
+msgid "Tile"
+msgstr "Клетка"
+
+msgid "Position"
+msgstr "Позиция"
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "Things at Tile"
+msgstr "Объекты на клетке"
+
+msgid "Delete Thing"
+msgstr "Удалить объект"
+
+msgid "Thing Properties"
+msgstr "Свойства объекта"
+
+msgid "Cell"
+msgstr "Ячейка"
+
+msgid "Graphics Override"
+msgstr "Переопределение графики"
+
+msgid "Import Entrance Screen..."
+msgstr "Импорт экрана входа..."
+
+msgid "Import Door Animation..."
+msgstr "Импорт анимации двери..."
+
+msgid "Import Champion Portraits..."
+msgstr "Импорт портретов героев..."
+
+msgid "Import Wall Ornaments..."
+msgstr "Импорт настенных украшений..."
+
+msgid "Import Floor Ornaments..."
+msgstr "Импорт напольных украшений..."
+
+msgid "Turn L"
+msgstr "Повор. Л"
+
+msgid "Fwd"
+msgstr "Вперёд"
+
+msgid "Back"
+msgstr "Назад"
+
+msgid "Turn R"
+msgstr "Повор. П"
+
+msgid "North"
+msgstr "Север"
+
+msgid "East"
+msgstr "Восток"
+
+msgid "South"
+msgstr "Юг"
+
+msgid "West"
+msgstr "Запад"
+
+msgid "facing"
+msgstr "направление"
+
+msgid "Coming soon"
+msgstr "Скоро"
+
+msgid "support coming in a future update"
+msgstr "поддержка появится в будущем обновлении"
+
+msgid "Ready"
+msgstr "Готово"
+
+msgid "Resize?"
+msgstr "Изменить размер?"
+
+msgid "Image is"
+msgstr "Изображение"
+
+msgid "expected"
+msgstr "ожидается"
+
+msgid "Resize to fit?"
+msgstr "Изменить размер для соответствия?"
+
+msgid "Zoom:"
+msgstr "Масштаб:"
+
+msgid "Map:"
+msgstr "Карта:"
+
+msgid "Tiles:"
+msgstr "Клетки:"
+
+msgid "Things:"
+msgstr "Объекты:"
+
+msgid "Tool:"
+msgstr "Инструмент:"
+
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "Пакет"
+
+msgid "Browse"
+msgstr "Обзор"
+
+msgid "Open/Create"
+msgstr "Открыть/Создать"
+
+msgid "Build Runtime Cache"
+msgstr "Построить кеш выполнения"
+
+msgid "Write Receipt"
+msgstr "Записать квитанцию"
+
+msgid "Import .fsart"
+msgstr "Импорт .fsart"
+
+msgid "Export .fsart"
+msgstr "Экспорт .fsart"
+
+msgid "V1 assets / V2.2 targets"
+msgstr "Ресурсы V1 / цели V2.2"
+
+msgid "Rescan"
+msgstr "Пересканировать"
+
+msgid "V1 root"
+msgstr "Корень V1"
+
+msgid "Import game data"
+msgstr "Импорт данных игры"
+
+msgid "Warnings"
+msgstr "Предупреждения"
+
+msgid "Current asset"
+msgstr "Текущий ресурс"
+
+msgid "Category"
+msgstr "Категория"
+
+msgid "Asset id"
+msgstr "ID ресурса"
+
+msgid "Generator"
+msgstr "Генератор"
+
+msgid "Load V1/ref"
+msgstr "Загрузить V1/ref"
+
+msgid "Load V2.2 target"
+msgstr "Загрузить цель V2.2"
+
+msgid "Import target to pack"
+msgstr "Импорт цели в пакет"
+
+msgid "Save edited target"
+msgstr "Сохранить отредактированную цель"
+
+msgid "Source (V1/ref)"
+msgstr "Источник (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "Цель (V2.2)"
+
+msgid "Error"
+msgstr "Ошибка"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Отмена"
+
+msgid "Yes"
+msgstr "Да"
+
+msgid "No"
+msgstr "Нет"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

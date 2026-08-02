@@ -3436,6 +3436,67 @@ static int tqr_level_candidate_header_matches(const uint8_t *bytes,
     return 1;
 }
 
+static int tqr_level_grid_validates(const uint8_t *bytes, size_t available,
+                                     uint16_t *out_width,
+                                     uint16_t *out_height,
+                                     size_t *out_payload_size) {
+    uint16_t width;
+    uint16_t height;
+    size_t grid_size;
+
+    if (out_width) *out_width = 0u;
+    if (out_height) *out_height = 0u;
+    if (out_payload_size) *out_payload_size = 0u;
+    if (!bytes || available < 12u) {
+        return 0;
+    }
+
+    width = rd16be(bytes + 0);
+    height = rd16be(bytes + 2);
+    if (width < 10u || width > 64u || height < 10u || height > 64u) {
+        return 0;
+    }
+
+    grid_size = (size_t)width * (size_t)height;
+    if (grid_size > available - 12u) {
+        return 0;
+    }
+
+    {
+        const uint8_t *grid = bytes + 12u;
+        size_t walls = 0u;
+        size_t floors = 0u;
+        size_t features = 0u;
+        unsigned int type_seen = 0u;
+        size_t i;
+        for (i = 0u; i < grid_size; ++i) {
+            unsigned int t = grid[i] & 0x1Fu;
+            if (t == 0u) ++walls;
+            else if (t == 1u) ++floors;
+            if (t >= 2u && t <= 8u) type_seen |= (1u << t);
+        }
+        for (i = 2u; i <= 8u; ++i) {
+            if (type_seen & (1u << i)) ++features;
+        }
+        if (walls < grid_size * 40u / 100u) return 0;
+        if (floors < 5u) return 0;
+        if (features < 3u) return 0;
+    }
+
+    if (out_width) *out_width = width;
+    if (out_height) *out_height = height;
+    if (out_payload_size) *out_payload_size = 12u + grid_size;
+    return 1;
+}
+
+static int tqr_is_initial_level_header(const uint8_t *bytes, size_t available) {
+    if (!bytes || available < 12u) return 0;
+    return rd16be(bytes + 0) == TQR_RAW_INITIAL_LEVEL_WIDTH &&
+           rd16be(bytes + 2) == TQR_RAW_INITIAL_LEVEL_HEIGHT &&
+           rd32be(bytes + 4) == TQR_RAW_INITIAL_LEVEL_SEED &&
+           rd16be(bytes + 8) == TQR_RAW_INITIAL_LEVEL_INDEX;
+}
+
 Theron_Track02LevelHandoffStatus theron_v1_track02_scan_level_candidates(
     const uint8_t *track02_data,
     size_t track02_size,

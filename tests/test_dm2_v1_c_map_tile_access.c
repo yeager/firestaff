@@ -308,6 +308,21 @@ int main(void)
               change_map_receipt.blocked_map_range,
           "CHANGE_CURRENT_MAP_TO rejects out-of-range map index");
 
+    /* ── dm2_v1_dungeon_level_tile_data ────────────────────────────── */
+    {
+        int16_t tw = 0, th = 0;
+        const uint8_t *tiles = dm2_v1_dungeon_level_tile_data(
+            &dungeon, 0, &tw, &th);
+        CHECK(tiles != NULL,
+              "level_tile_data returns non-NULL for valid level");
+        CHECK(tw == 2 && th == 3,
+              "level_tile_data returns correct width/height");
+        CHECK(dm2_v1_dungeon_level_tile_data(&dungeon, 1, &tw, &th) == NULL,
+              "level_tile_data returns NULL for out-of-range level");
+        CHECK(dm2_v1_dungeon_level_tile_data(NULL, 0, &tw, &th) == NULL,
+              "level_tile_data returns NULL for NULL dungeon");
+    }
+
     dm2_v1_dungeon_free(&dungeon);
     printf("%d passed, %d failed\n", passed, failed);
     return failed != 0;

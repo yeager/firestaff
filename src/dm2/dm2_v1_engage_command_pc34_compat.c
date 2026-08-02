@@ -162,18 +162,31 @@ int dm2_v1_engage_command(
         receipt->fail_closed = 1;
         break;
 
-    case 35: /* HEAL_SELF: convert MP to HP */
+    case 35: /* HEAL_SELF: convert MP to HP.
+            * skengage.cpp:740-779: heal_amount = min(power_base, 10),
+            * loop: heal up to heal_amount HP costing 2 MP each. */
     {
         int16_t hp_deficit = request->hero_max_hp - request->hero_hp;
-        if (hp_deficit <= 0 || request->hero_mp <= 0) {
+        int16_t mp_avail = request->hero_mp;
+        int16_t heal_amount;
+        int16_t healed = 0;
+        int16_t mp_spent = 0;
+
+        if (hp_deficit <= 0 || mp_avail <= 0) {
             receipt->success = 0;
             break;
         }
+        heal_amount = request->cmd.power_base;
+        if (heal_amount > 10) heal_amount = 10;
+        if (heal_amount < 1) heal_amount = 1;
+
+        while (healed < heal_amount && healed < hp_deficit && mp_avail >= 2) {
+            healed++;
+            mp_avail -= 2;
+            mp_spent += 2;
+        }
         receipt->healed_self = 1;
-        /* The heal loop converts 2 MP per heal_amount HP.
-         * heal_amount = min(skill_level, 10).
-         * Actual HP/MP changes require live hero data. */
-        receipt->fail_closed = 1;
+        receipt->success = (healed > 0) ? 1 : 0;
         break;
     }
 

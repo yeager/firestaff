@@ -17580,6 +17580,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_move_record_to_pc34_compat
     )
 
+    # ── DM2: INVOKE_MESSAGE timer queuing ──
+    add_executable(test_dm2_v1_invoke_message_pc34_compat
+        tests/test_dm2_v1_invoke_message_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_invoke_message_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_invoke_message_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_invoke_message_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_invoke_message_pc34_compat
+        COMMAND test_dm2_v1_invoke_message_pc34_compat
+    )
+
     # ── DM2: ENGAGE_COMMAND hand action dispatcher ──
     add_executable(test_dm2_v1_engage_command_pc34_compat
         tests/test_dm2_v1_engage_command_pc34_compat.c
@@ -21242,13 +21260,12 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_perform_move_receipt
         tests/test_dm2_v1_perform_move_receipt.c
-        src/dm2/dm2_v1_perform_move.c
-        src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
-        src/dm2/dm2_v1_move_record_to_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_perform_move_receipt PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_link_libraries(test_dm2_v1_perform_move_receipt
+        PRIVATE firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_perform_move_receipt PRIVATE -Wall -Wextra -O2)
     endif()

@@ -11,6 +11,10 @@
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_magic.h"
+#include "nexus_v1_automap.h"
+#include "nexus_v1_light.h"
+#include "nexus_v1_status.h"
+#include "nexus_v1_rest.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -862,6 +866,11 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 }
                 nexus_mechanics_clear_spell(st);
             }
+        } else if (cmd == NEXUS_CMD_REST) {
+            if (nexus_v1_rest_is_resting(&engine->rest))
+                nexus_v1_rest_stop(&engine->rest);
+            else
+                nexus_v1_rest_start(&engine->rest);
         } else {
             /* Step movement */
             int forward = (cmd == NEXUS_CMD_FORWARD) ? 1 : 0;
@@ -1013,6 +1022,11 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
         }
     }
 
+    /* Automap — reveal party position and adjacent squares each tick */
+    nexus_v1_automap_reveal_radius(&engine->automap, st->map_index,
+                                    st->party_x, st->party_y, 1);
+    nexus_v1_automap_set_level(&engine->automap, st->map_index);
+
     /* Creature AI tick */
     if (engine->creatures.type_count > 0 && engine->level_loaded) {
         nexus_v1_creatures_tick(&engine->creatures,
@@ -1062,6 +1076,20 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                                     &engine->champions, target_idx);
                             }
                             nexus_sound_play(&engine->audio, NEXUS_SFX_CHAMPION_HURT);
+                            nexus_v1_rest_interrupt(&engine->rest);
+                            {
+                                int psn = engine->creatures.types[c->type_index].poison;
+                                if (psn > 0) {
+                                    int pi;
+                                    for (pi = 0; pi < engine->champions.party_count && pi < 4; pi++) {
+                                        if (engine->champions.party[pi] == target_idx) {
+                                            nexus_v1_status_apply(&engine->champion_status[pi],
+                                                NEXUS_STATUS_POISON, psn * 10, psn);
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
                         }
                         nexus_sound_play(&engine->audio, NEXUS_SFX_CREATURE_ATTACK);
                     }
@@ -1118,7 +1146,18 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                         &engine->creatures,
                         proj_hits[i].hit_x, proj_hits[i].hit_y,
                         proj_hits[i].damage);
-                    if (killed > 0) needs_redraw = 1;
+                    if (killed > 0) {
+                        needs_redraw = 1;
+                        if (proj_hits[i].source_champion >= 0 &&
+                            proj_hits[i].source_champion < 4) {
+                            nexus_v1_xp_add(
+                                &engine->champion_xp[proj_hits[i].source_champion],
+                                NEXUS_XP_CLASS_WIZARD, killed * 50);
+                            nexus_v1_xp_check_levelup(
+                                &engine->champion_xp[proj_hits[i].source_champion],
+                                NEXUS_XP_CLASS_WIZARD);
+                        }
+                    }
                 } else if (proj_hits[i].hit_x == st->party_x &&
                            proj_hits[i].hit_y == st->party_y) {
                     int target_idx = -1, pi;
@@ -1156,6 +1195,29 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             st->game_over_reason = 2; /* all_dead */
         }
     }
+
+    /* Light tick — decay ambient light, burn torches/FUL spells */
+    nexus_v1_light_tick(&engine->light);
+
+    /* Status effect tick — poison damage, buff expiry */
+    for (i = 0; i < engine->champions.party_count && i < 4; i++) {
+        int ci = engine->champions.party[i];
+        if (ci < 0 || ci >= engine->champions.champion_count) continue;
+        if (!engine->champions.champions[ci].alive) continue;
+        nexus_v1_status_tick(&engine->champion_status[i]);
+        {
+            int pdmg = nexus_v1_status_poison_damage(&engine->champion_status[i]);
+            if (pdmg > 0) {
+                int was_alive = engine->champions.champions[ci].alive;
+                int died = nexus_v1_take_damage(&engine->champions.champions[ci], pdmg);
+                if (died && was_alive)
+                    nexus_v1_champion_on_death_update_leader(&engine->champions, ci);
+            }
+        }
+    }
+
+    /* Rest tick — regenerate stamina/mana/health while resting */
+    nexus_v1_rest_tick(&engine->rest, &engine->champions);
 
     /* Resource drain — every FOOD_DRAIN_TICKS ticks, drain 1 food from
      * each living party champion. When food reaches 0, stamina drains
@@ -1244,6 +1306,7 @@ int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
 
     switch (event_type) {
     case NEXUS_UI_EVENT_MAP:
+        nexus_v1_automap_toggle(&engine->automap);
         return 0;
     case NEXUS_UI_EVENT_SPELL:
         nexus_mechanics_push_command(st, NEXUS_CMD_CAST_SPELL);

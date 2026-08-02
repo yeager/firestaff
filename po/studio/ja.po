@@ -1,0 +1,727 @@
+# Firestaff Studio Japanese translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-02 18:54+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: scripts/firestaff_dungeon_studio.py:411
+#: scripts/firestaff_artpack_studio.py:1674
+msgid "Game"
+msgstr "ゲーム"
+
+#: scripts/firestaff_dungeon_studio.py:418
+msgid "New"
+msgstr "新規"
+
+#: scripts/firestaff_dungeon_studio.py:419
+#: scripts/firestaff_dungeon_studio.py:995
+msgid "Open .fsdung"
+msgstr ".fsdungを開く"
+
+#: scripts/firestaff_dungeon_studio.py:420
+#: scripts/firestaff_dungeon_studio.py:1024
+msgid "Save .fsdung"
+msgstr ".fsdungを保存"
+
+#: scripts/firestaff_dungeon_studio.py:421
+msgid "Save As..."
+msgstr "名前を付けて保存..."
+
+#: scripts/firestaff_dungeon_studio.py:425
+msgid "Add Level"
+msgstr "レベルを追加"
+
+#: scripts/firestaff_dungeon_studio.py:426
+#: scripts/firestaff_dungeon_studio.py:1047
+msgid "Map Settings"
+msgstr "マップ設定"
+
+#: scripts/firestaff_dungeon_studio.py:427
+msgid "Statistics"
+msgstr "統計"
+
+#: scripts/firestaff_dungeon_studio.py:428
+#: scripts/firestaff_artpack_studio.py:1682
+msgid "Validate"
+msgstr "検証"
+
+#: scripts/firestaff_dungeon_studio.py:430
+#: scripts/firestaff_dungeon_studio.py:1191
+msgid "Test View"
+msgstr "テストビュー"
+
+#: scripts/firestaff_dungeon_studio.py:452
+msgid "Tools"
+msgstr "ツール"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Select"
+msgstr "選択"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Paint"
+msgstr "ペイント"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Place Thing"
+msgstr "オブジェクト配置"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Erase"
+msgstr "消去"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Fill"
+msgstr "塗りつぶし"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Set Party Start"
+msgstr "パーティ開始位置を設定"
+
+#: scripts/firestaff_dungeon_studio.py:463
+msgid "Tile Types"
+msgstr "タイルタイプ"
+
+#: scripts/firestaff_dungeon_studio.py:474
+msgid "Thing Type"
+msgstr "オブジェクトタイプ"
+
+#: scripts/firestaff_dungeon_studio.py:481
+msgid "View"
+msgstr "表示"
+
+#: scripts/firestaff_dungeon_studio.py:483
+msgid "Show Grid"
+msgstr "グリッド表示"
+
+#: scripts/firestaff_dungeon_studio.py:485
+msgid "Show Things"
+msgstr "オブジェクト表示"
+
+#: scripts/firestaff_dungeon_studio.py:489
+msgid "Zoom"
+msgstr "ズーム"
+
+#: scripts/firestaff_dungeon_studio.py:492
+msgid "Fit"
+msgstr "フィット"
+
+#: scripts/firestaff_dungeon_studio.py:518
+msgid "Map Properties"
+msgstr "マップ属性"
+
+#: scripts/firestaff_dungeon_studio.py:522
+msgid "Name"
+msgstr "名前"
+
+#: scripts/firestaff_dungeon_studio.py:525
+msgid "Size"
+msgstr "サイズ"
+
+#: scripts/firestaff_dungeon_studio.py:531
+msgid "Wall Set"
+msgstr "壁セット"
+
+#: scripts/firestaff_dungeon_studio.py:534
+msgid "Floor Set"
+msgstr "床セット"
+
+#: scripts/firestaff_dungeon_studio.py:537
+msgid "Difficulty"
+msgstr "難易度"
+
+#: scripts/firestaff_dungeon_studio.py:543
+msgid "Tile"
+msgstr "タイル"
+
+#: scripts/firestaff_dungeon_studio.py:547
+msgid "Position"
+msgstr "位置"
+
+#: scripts/firestaff_dungeon_studio.py:549
+#: scripts/firestaff_dungeon_studio.py:572
+msgid "Type"
+msgstr "タイプ"
+
+#: scripts/firestaff_dungeon_studio.py:553
+msgid "Things at Tile"
+msgstr "タイルのオブジェクト"
+
+#: scripts/firestaff_dungeon_studio.py:565
+msgid "Delete Thing"
+msgstr "オブジェクト削除"
+
+#: scripts/firestaff_dungeon_studio.py:568
+msgid "Thing Properties"
+msgstr "オブジェクト属性"
+
+#: scripts/firestaff_dungeon_studio.py:574
+msgid "Cell"
+msgstr "セル"
+
+#: scripts/firestaff_dungeon_studio.py:581
+msgid "Graphics Override"
+msgstr "グラフィック上書き"
+
+#: scripts/firestaff_dungeon_studio.py:587
+#, python-brace-format
+msgid "Import {}..."
+msgstr "{}をインポート..."
+
+#: scripts/firestaff_dungeon_studio.py:624
+#: scripts/firestaff_dungeon_studio.py:982
+#: scripts/firestaff_dungeon_studio.py:1038
+msgid "Coming soon"
+msgstr "近日公開"
+
+#: scripts/firestaff_dungeon_studio.py:653
+msgid "New Level"
+msgstr "新規レベル"
+
+#: scripts/firestaff_dungeon_studio.py:653
+msgid "Level name:"
+msgstr "レベル名:"
+
+#: scripts/firestaff_dungeon_studio.py:975
+#: scripts/firestaff_artpack_studio.py:1803
+msgid "Language"
+msgstr "言語"
+
+#: scripts/firestaff_dungeon_studio.py:976
+#: scripts/firestaff_artpack_studio.py:1804
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"言語を{}に設定しました。\n"
+"完全に反映するにはアプリを再起動してください。"
+
+#: scripts/firestaff_dungeon_studio.py:982
+#: scripts/firestaff_dungeon_studio.py:1038
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "{}サポートは今後のアップデートで対応予定"
+
+#: scripts/firestaff_dungeon_studio.py:991
+msgid "New dungeon created"
+msgstr "新しいダンジョンを作成しました"
+
+#: scripts/firestaff_dungeon_studio.py:996
+#: scripts/firestaff_dungeon_studio.py:1026
+#: scripts/firestaff_artpack_studio.py:1987
+#: scripts/firestaff_artpack_studio.py:1997
+#: scripts/firestaff_artpack_studio.py:2010
+#: scripts/firestaff_artpack_studio.py:2249
+#: scripts/firestaff_artpack_studio.py:2264
+msgid "All files"
+msgstr "すべてのファイル"
+
+#: scripts/firestaff_dungeon_studio.py:1008
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "開きました: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1010
+#: scripts/firestaff_dungeon_studio.py:1020
+#: scripts/firestaff_dungeon_studio.py:1148
+#: scripts/firestaff_dungeon_studio.py:1153
+msgid "Error"
+msgstr "エラー"
+
+#: scripts/firestaff_dungeon_studio.py:1018
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "保存しました: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1059
+msgid "Width (1-64)"
+msgstr "幅 (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1061
+msgid "Height (1-64)"
+msgstr "高さ (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1083
+msgid "Apply"
+msgstr "適用"
+
+#: scripts/firestaff_dungeon_studio.py:1101
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "マップ数: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1102
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "現在: {} ({}×{})"
+
+#: scripts/firestaff_dungeon_studio.py:1104
+msgid "Tiles:"
+msgstr "タイル:"
+
+#: scripts/firestaff_dungeon_studio.py:1108
+#, python-brace-format
+msgid "Things: {}"
+msgstr "オブジェクト: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1113
+msgid "Dungeon Statistics"
+msgstr "ダンジョン統計"
+
+#: scripts/firestaff_dungeon_studio.py:1122
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "マップ {} \"{}\": すべて壁"
+
+#: scripts/firestaff_dungeon_studio.py:1128
+msgid "Party start is inside a wall"
+msgstr "パーティ開始位置が壁の中にあります"
+
+#: scripts/firestaff_dungeon_studio.py:1130
+msgid "Party start is outside map bounds"
+msgstr "パーティ開始位置がマップ範囲外です"
+
+#: scripts/firestaff_dungeon_studio.py:1133
+#: scripts/firestaff_dungeon_studio.py:1135
+msgid "Validation"
+msgstr "検証"
+
+#: scripts/firestaff_dungeon_studio.py:1133
+msgid "Issues found:"
+msgstr "問題が見つかりました:"
+
+#: scripts/firestaff_dungeon_studio.py:1135
+msgid "Dungeon is valid!"
+msgstr "ダンジョンは有効です！"
+
+#: scripts/firestaff_dungeon_studio.py:1142
+#, python-brace-format
+msgid "Import {}"
+msgstr "{}をインポート"
+
+#: scripts/firestaff_dungeon_studio.py:1143
+msgid "All"
+msgstr "すべて"
+
+#: scripts/firestaff_dungeon_studio.py:1148
+msgid "Pillow is required for graphics import"
+msgstr "グラフィックのインポートにはPillowが必要です"
+
+#: scripts/firestaff_dungeon_studio.py:1153
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "画像を読み込めませんでした: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1156
+msgid "Resize?"
+msgstr "サイズ変更？"
+
+#: scripts/firestaff_dungeon_studio.py:1157
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"画像は{}×{}、期待値は{}×{}。\n"
+"サイズを変更しますか？"
+
+#: scripts/firestaff_dungeon_studio.py:1169
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{}を{}からインポートしました"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "North"
+msgstr "北"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "East"
+msgstr "東"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "South"
+msgstr "南"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "West"
+msgstr "西"
+
+#: scripts/firestaff_dungeon_studio.py:1210
+msgid "Turn L"
+msgstr "左回転"
+
+#: scripts/firestaff_dungeon_studio.py:1212
+msgid "Fwd"
+msgstr "前進"
+
+#: scripts/firestaff_dungeon_studio.py:1214
+msgid "Back"
+msgstr "後退"
+
+#: scripts/firestaff_dungeon_studio.py:1216
+msgid "Turn R"
+msgstr "右回転"
+
+#: scripts/firestaff_artpack_studio.py:1646
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+#: scripts/firestaff_artpack_studio.py:1656
+msgid "Ready"
+msgstr "準備完了"
+
+#: scripts/firestaff_artpack_studio.py:1657
+msgid "No game data imported"
+msgstr "ゲームデータ未インポート"
+
+#: scripts/firestaff_artpack_studio.py:1678
+msgid "Pack"
+msgstr "パック"
+
+#: scripts/firestaff_artpack_studio.py:1680
+#: scripts/firestaff_artpack_studio.py:1714
+msgid "Browse"
+msgstr "参照"
+
+#: scripts/firestaff_artpack_studio.py:1681
+msgid "Open/Create"
+msgstr "開く/作成"
+
+#: scripts/firestaff_artpack_studio.py:1683
+msgid "Build Runtime Cache"
+msgstr "ランタイムキャッシュを構築"
+
+#: scripts/firestaff_artpack_studio.py:1684
+msgid "Write Receipt"
+msgstr "レシートを書き込み"
+
+#: scripts/firestaff_artpack_studio.py:1685
+msgid "Import .fsart"
+msgstr ".fsartをインポート"
+
+#: scripts/firestaff_artpack_studio.py:1686
+msgid "Export .fsart"
+msgstr ".fsartをエクスポート"
+
+#: scripts/firestaff_artpack_studio.py:1708
+msgid "V1 assets / V2.2 targets"
+msgstr "V1アセット / V2.2ターゲット"
+
+#: scripts/firestaff_artpack_studio.py:1709
+msgid "Rescan"
+msgstr "再スキャン"
+
+#: scripts/firestaff_artpack_studio.py:1712
+msgid "V1 root"
+msgstr "V1ルート"
+
+#: scripts/firestaff_artpack_studio.py:1717
+msgid "Import game data"
+msgstr "ゲームデータをインポート"
+
+#: scripts/firestaff_artpack_studio.py:1718
+#: scripts/firestaff_artpack_studio.py:2043
+msgid "Warnings"
+msgstr "警告"
+
+#: scripts/firestaff_artpack_studio.py:1736
+msgid "Current asset"
+msgstr "現在のアセット"
+
+#: scripts/firestaff_artpack_studio.py:1738
+msgid "Category"
+msgstr "カテゴリ"
+
+#: scripts/firestaff_artpack_studio.py:1741
+msgid "Asset id"
+msgstr "アセットID"
+
+#: scripts/firestaff_artpack_studio.py:1743
+msgid "Generator"
+msgstr "ジェネレーター"
+
+#: scripts/firestaff_artpack_studio.py:1749
+msgid "Load V1/ref"
+msgstr "V1/refを読み込み"
+
+#: scripts/firestaff_artpack_studio.py:1750
+msgid "Load V2.2 target"
+msgstr "V2.2ターゲットを読み込み"
+
+#: scripts/firestaff_artpack_studio.py:1751
+msgid "Import target to pack"
+msgstr "ターゲットをパックにインポート"
+
+#: scripts/firestaff_artpack_studio.py:1752
+msgid "Save edited target"
+msgstr "編集済みターゲットを保存"
+
+#: scripts/firestaff_artpack_studio.py:1754
+msgid "AI generation hook"
+msgstr "AI生成フック"
+
+#: scripts/firestaff_artpack_studio.py:1758
+msgid "Write prompt"
+msgstr "プロンプトを書き込み"
+
+#: scripts/firestaff_artpack_studio.py:1759
+msgid "Run AI command"
+msgstr "AIコマンドを実行"
+
+#: scripts/firestaff_artpack_studio.py:1762
+msgid "AI selected"
+msgstr "AI選択済み"
+
+#: scripts/firestaff_artpack_studio.py:1763
+msgid "AI missing/all"
+msgstr "AI不足/すべて"
+
+#: scripts/firestaff_artpack_studio.py:1793
+msgid "Drag-and-drop enabled"
+msgstr "ドラッグ＆ドロップ有効"
+
+#: scripts/firestaff_artpack_studio.py:1816
+#: scripts/firestaff_artpack_studio.py:2271
+#, python-brace-format
+msgid "Imported .fsart: {}"
+msgstr ".fsartをインポート済み: {}"
+
+#: scripts/firestaff_artpack_studio.py:1821
+#, python-brace-format
+msgid "Loaded dropped target: {}"
+msgstr "ドロップされたターゲットを読み込み: {}"
+
+#: scripts/firestaff_artpack_studio.py:1852
+msgid "Select V2.2 modern artpack directory"
+msgstr "V2.2モダンartpackディレクトリを選択"
+
+#: scripts/firestaff_artpack_studio.py:1858
+msgid "Select V1/reference asset root"
+msgstr "V1/リファレンスアセットルートを選択"
+
+#: scripts/firestaff_artpack_studio.py:1870
+#, python-brace-format
+msgid "Opened {} artpack: {}"
+msgstr "{} artpackを開きました: {}"
+
+#: scripts/firestaff_artpack_studio.py:1872
+msgid "Open artpack failed"
+msgstr "artpackのオープンに失敗"
+
+#: scripts/firestaff_artpack_studio.py:1919
+#, python-brace-format
+msgid "Scanned {} V1/reference assets"
+msgstr "{} V1/リファレンスアセットをスキャン済み"
+
+#: scripts/firestaff_artpack_studio.py:1986
+msgid "Load V1/reference image"
+msgstr "V1/リファレンス画像を読み込み"
+
+#: scripts/firestaff_artpack_studio.py:1987
+#: scripts/firestaff_artpack_studio.py:1997
+#: scripts/firestaff_artpack_studio.py:2009
+msgid "Images"
+msgstr "画像"
+
+#: scripts/firestaff_artpack_studio.py:1992
+#, python-brace-format
+msgid "Loaded reference: {}"
+msgstr "リファレンスを読み込み: {}"
+
+#: scripts/firestaff_artpack_studio.py:1996
+msgid "Load V2.2 target image"
+msgstr "V2.2ターゲット画像を読み込み"
+
+#: scripts/firestaff_artpack_studio.py:2002
+#, python-brace-format
+msgid "Loaded target: {}"
+msgstr "ターゲットを読み込み: {}"
+
+#: scripts/firestaff_artpack_studio.py:2006
+msgid "Import original game data"
+msgstr "オリジナルゲームデータをインポート"
+
+#: scripts/firestaff_artpack_studio.py:2008
+msgid "Game data"
+msgstr "ゲームデータ"
+
+#: scripts/firestaff_artpack_studio.py:2035
+#, python-brace-format
+msgid "Imported game data: {} ({})"
+msgstr "ゲームデータをインポート済み: {} ({})"
+
+#: scripts/firestaff_artpack_studio.py:2037
+#, python-brace-format
+msgid "Warnings: {}"
+msgstr "警告: {}"
+
+#: scripts/firestaff_artpack_studio.py:2039
+msgid "Game data import failed"
+msgstr "ゲームデータのインポートに失敗"
+
+#: scripts/firestaff_artpack_studio.py:2043
+msgid "No game data imported."
+msgstr "ゲームデータ未インポート。"
+
+#: scripts/firestaff_artpack_studio.py:2048
+msgid "No warnings."
+msgstr "警告なし。"
+
+#: scripts/firestaff_artpack_studio.py:2049
+msgid "Game data warnings"
+msgstr "ゲームデータの警告"
+
+#: scripts/firestaff_artpack_studio.py:2074
+msgid "No target image"
+msgstr "ターゲット画像なし"
+
+#: scripts/firestaff_artpack_studio.py:2074
+msgid "Load or generate a V2.2 target first."
+msgstr "先にV2.2ターゲットを読み込むか生成してください。"
+
+#: scripts/firestaff_artpack_studio.py:2089
+#, python-brace-format
+msgid "Imported {}/{}"
+msgstr "インポート済み {}/{}"
+
+#: scripts/firestaff_artpack_studio.py:2091
+#: scripts/firestaff_artpack_studio.py:2273
+msgid "Import failed"
+msgstr "インポート失敗"
+
+#: scripts/firestaff_artpack_studio.py:2104
+#, python-brace-format
+msgid "Saved edited image: {}"
+msgstr "編集済み画像を保存: {}"
+
+#: scripts/firestaff_artpack_studio.py:2132
+#, python-brace-format
+msgid "Wrote AI prompt: {}"
+msgstr "AIプロンプトを書き込み: {}"
+
+#: scripts/firestaff_artpack_studio.py:2138
+#: scripts/firestaff_artpack_studio.py:2178
+msgid "AI command not configured"
+msgstr "AIコマンド未設定"
+
+#: scripts/firestaff_artpack_studio.py:2139
+msgid "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."
+msgstr "FIRESTAFF_ARTPACK_AI_COMMANDを設定するか、先にコマンドテンプレートを入力してください。"
+
+#: scripts/firestaff_artpack_studio.py:2169
+msgid "AI command generated target image"
+msgstr "AIコマンドがターゲット画像を生成しました"
+
+#: scripts/firestaff_artpack_studio.py:2171
+msgid "AI generation failed"
+msgstr "AI生成に失敗"
+
+#: scripts/firestaff_artpack_studio.py:2178
+msgid "Enter an AI command template first."
+msgstr "先にAIコマンドテンプレートを入力してください。"
+
+#: scripts/firestaff_artpack_studio.py:2186
+msgid "AI batch"
+msgstr "AIバッチ"
+
+#: scripts/firestaff_artpack_studio.py:2187
+#, python-brace-format
+msgid "Generate how many assets? {} available."
+msgstr "何個のアセットを生成しますか？ {} 利用可能。"
+
+#: scripts/firestaff_artpack_studio.py:2210
+#, python-brace-format
+msgid "AI batch generated/imported {} assets"
+msgstr "AIバッチが {} アセットを生成/インポートしました"
+
+#: scripts/firestaff_artpack_studio.py:2217
+msgid "Validation failed:"
+msgstr "検証失敗:"
+
+#: scripts/firestaff_artpack_studio.py:2218
+msgid "Validation failed"
+msgstr "検証失敗"
+
+#: scripts/firestaff_artpack_studio.py:2220
+msgid "Validation passed for required slots"
+msgstr "必須スロットの検証に合格"
+
+#: scripts/firestaff_artpack_studio.py:2221
+msgid "Validation passed"
+msgstr "検証合格"
+
+#: scripts/firestaff_artpack_studio.py:2221
+msgid "Required slots are complete."
+msgstr "必須スロットは完了しています。"
+
+#: scripts/firestaff_artpack_studio.py:2228
+#, python-brace-format
+msgid "Built V2.2 runtime cache: {} ({} bytes)"
+msgstr "V2.2ランタイムキャッシュを構築: {} ({} バイト)"
+
+#: scripts/firestaff_artpack_studio.py:2229
+msgid "Runtime cache"
+msgstr "ランタイムキャッシュ"
+
+#: scripts/firestaff_artpack_studio.py:2229
+#, python-brace-format
+msgid ""
+"Built {}\n"
+"{} bytes"
+msgstr ""
+"構築 {}\n"
+"{} バイト"
+
+#: scripts/firestaff_artpack_studio.py:2231
+msgid "Runtime cache failed"
+msgstr "ランタイムキャッシュ失敗"
+
+#: scripts/firestaff_artpack_studio.py:2236
+msgid "Reviewer"
+msgstr "レビュアー"
+
+#: scripts/firestaff_artpack_studio.py:2236
+msgid "Reviewer name:"
+msgstr "レビュアー名:"
+
+#: scripts/firestaff_artpack_studio.py:2239
+#, python-brace-format
+msgid "Wrote receipt: {}"
+msgstr "レシートを書き込み: {}"
+
+#: scripts/firestaff_artpack_studio.py:2241
+msgid "Receipt failed"
+msgstr "レシート失敗"
+
+#: scripts/firestaff_artpack_studio.py:2247
+msgid "Export Firestaff artpack"
+msgstr "Firestaff artpackをエクスポート"
+
+#: scripts/firestaff_artpack_studio.py:2249
+#: scripts/firestaff_artpack_studio.py:2264
+msgid "Firestaff artpack"
+msgstr "Firestaff artpack"
+
+#: scripts/firestaff_artpack_studio.py:2255
+#, python-brace-format
+msgid "Exported .fsart: {}"
+msgstr ".fsartをエクスポート済み: {}"
+
+#: scripts/firestaff_artpack_studio.py:2257
+msgid "Export failed"
+msgstr "エクスポート失敗"
+
+#: scripts/firestaff_artpack_studio.py:2263
+msgid "Import Firestaff artpack"
+msgstr "Firestaff artpackをインポート"

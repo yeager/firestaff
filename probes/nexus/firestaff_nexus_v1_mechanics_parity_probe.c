@@ -299,7 +299,7 @@ static PROBE_NOINLINE void probe_movement(void)
     CHECK(NEXUS_CMD_TURN_RIGHT  == 4,  "NEXUS_CMD_TURN_RIGHT  = 4");
     CHECK(NEXUS_CMD_STRAFE_LEFT == 5,  "NEXUS_CMD_STRAFE_LEFT = 5");
     CHECK(NEXUS_CMD_STRAFE_RIGHT== 6,  "NEXUS_CMD_STRAFE_RIGHT= 6");
-    CHECK(NEXUS_CMD_COUNT == 12,       "NEXUS_CMD_COUNT = 12");
+    CHECK(NEXUS_CMD_COUNT == 13,       "NEXUS_CMD_COUNT = 13");
 
     /* Movement result codes */
     CHECK(NEXUS_MOVE_OK            == 0, "NEXUS_MOVE_OK            = 0");

@@ -1,0 +1,274 @@
+# Firestaff Studio Danish translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-02 18:49+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Danish\n"
+"Language: da\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Game"
+msgstr "Spil"
+
+msgid "New"
+msgstr "Nyt"
+
+msgid "Open .fsdung"
+msgstr "Åbn .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Gem .fsdung"
+
+msgid "Save As..."
+msgstr "Gem som..."
+
+msgid "Add Level"
+msgstr "Tilføj niveau"
+
+msgid "Map Settings"
+msgstr "Kortindstillinger"
+
+msgid "Statistics"
+msgstr "Statistik"
+
+msgid "Validate"
+msgstr "Validér"
+
+msgid "Test View"
+msgstr "Testvisning"
+
+msgid "Tools"
+msgstr "Værktøjer"
+
+msgid "Select"
+msgstr "Vælg"
+
+msgid "Paint"
+msgstr "Mal"
+
+msgid "Place Thing"
+msgstr "Placér objekt"
+
+msgid "Erase"
+msgstr "Slet"
+
+msgid "Fill"
+msgstr "Fyld"
+
+msgid "Set Party Start"
+msgstr "Angiv gruppestart"
+
+msgid "Tile Types"
+msgstr "Felttyper"
+
+msgid "Thing Type"
+msgstr "Objekttype"
+
+msgid "View"
+msgstr "Visning"
+
+msgid "Show Grid"
+msgstr "Vis gitter"
+
+msgid "Show Things"
+msgstr "Vis objekter"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Tilpas"
+
+msgid "Map Properties"
+msgstr "Kortegenskaber"
+
+msgid "Name"
+msgstr "Navn"
+
+msgid "Size"
+msgstr "Størrelse"
+
+msgid "Wall Set"
+msgstr "Vægsæt"
+
+msgid "Floor Set"
+msgstr "Gulvsæt"
+
+msgid "Difficulty"
+msgstr "Sværhedsgrad"
+
+msgid "Tile"
+msgstr "Felt"
+
+msgid "Position"
+msgstr "Position"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Things at Tile"
+msgstr "Objekter på felt"
+
+msgid "Delete Thing"
+msgstr "Slet objekt"
+
+msgid "Thing Properties"
+msgstr "Objektegenskaber"
+
+msgid "Cell"
+msgstr "Celle"
+
+msgid "Graphics Override"
+msgstr "Grafiktilsidesættelse"
+
+#, python-brace-format
+msgid "Import {}..."
+msgstr "Importér {}..."
+
+msgid "Coming soon"
+msgstr "Kommer snart"
+
+msgid "New Level"
+msgstr "Nyt niveau"
+
+msgid "Level name:"
+msgstr "Niveaunavn:"
+
+msgid "Language"
+msgstr "Sprog"
+
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"Sprog indstillet til {}.\n"
+"Genstart appen for fuld effekt."
+
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "{}-understøttelse kommer i en fremtidig opdatering"
+
+msgid "New dungeon created"
+msgstr "Ny dungeon oprettet"
+
+msgid "All files"
+msgstr "Alle filer"
+
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "Åbnet: {}"
+
+msgid "Error"
+msgstr "Fejl"
+
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "Gemt: {}"
+
+msgid "Width (1-64)"
+msgstr "Bredde (1-64)"
+
+msgid "Height (1-64)"
+msgstr "Højde (1-64)"
+
+msgid "Apply"
+msgstr "Anvend"
+
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "Kort: {}"
+
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "Nuværende: {} ({}×{})"
+
+msgid "Tiles:"
+msgstr "Felter:"
+
+#, python-brace-format
+msgid "Things: {}"
+msgstr "Objekter: {}"
+
+msgid "Dungeon Statistics"
+msgstr "Dungeon-statistik"
+
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "Kort {} \"{}\": alle vægge"
+
+msgid "Party start is inside a wall"
+msgstr "Gruppestart er inde i en væg"
+
+msgid "Party start is outside map bounds"
+msgstr "Gruppestart er uden for kortets grænser"
+
+msgid "Validation"
+msgstr "Validering"
+
+msgid "Issues found:"
+msgstr "Problemer fundet:"
+
+msgid "Dungeon is valid!"
+msgstr "Dungeon er gyldig!"
+
+#, python-brace-format
+msgid "Import {}"
+msgstr "Importér {}"
+
+msgid "All"
+msgstr "Alle"
+
+msgid "Pillow is required for graphics import"
+msgstr "Pillow kræves til grafikimport"
+
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "Kunne ikke indlæse billede: {}"
+
+msgid "Resize?"
+msgstr "Ændr størrelse?"
+
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"Billedet er {}×{}, forventet {}×{}.\n"
+"Ændr størrelse for at passe?"
+
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{} importeret fra {}"
+
+msgid "North"
+msgstr "Nord"
+
+msgid "East"
+msgstr "Øst"
+
+msgid "South"
+msgstr "Syd"
+
+msgid "West"
+msgstr "Vest"
+
+msgid "Turn L"
+msgstr "Venstre"
+
+msgid "Fwd"
+msgstr "Frem"
+
+msgid "Back"
+msgstr "Tilbage"
+
+msgid "Turn R"
+msgstr "Højre"
+

@@ -1,0 +1,375 @@
+# Swedish translations for Firestaff Studio.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Svenska\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Dungeon Studio - Menu Bar
+msgid "File"
+msgstr "Arkiv"
+
+msgid "Edit"
+msgstr "Redigera"
+
+msgid "Window"
+msgstr "Fönster"
+
+msgid "Help"
+msgstr "Hjälp"
+
+msgid "New"
+msgstr "Ny"
+
+msgid "Open .fsdung"
+msgstr "Öppna .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Spara .fsdung"
+
+msgid "Save As..."
+msgstr "Spara som..."
+
+msgid "Add Level"
+msgstr "Lägg till nivå"
+
+msgid "Map Settings"
+msgstr "Kartinställningar"
+
+msgid "Statistics"
+msgstr "Statistik"
+
+msgid "Validate"
+msgstr "Validera"
+
+msgid "Test View"
+msgstr "Testvy"
+
+msgid "Game"
+msgstr "Spel"
+
+#. Dungeon Studio - Tools
+msgid "Tools"
+msgstr "Verktyg"
+
+msgid "Select"
+msgstr "Markera"
+
+msgid "Paint"
+msgstr "Måla"
+
+msgid "Place Thing"
+msgstr "Placera objekt"
+
+msgid "Erase"
+msgstr "Radera"
+
+msgid "Fill"
+msgstr "Fyll"
+
+msgid "Set Party Start"
+msgstr "Ange gruppstart"
+
+#. Dungeon Studio - Tile Types
+msgid "Tile Types"
+msgstr "Ruttyper"
+
+msgid "Wall"
+msgstr "Vägg"
+
+msgid "Corridor"
+msgstr "Korridor"
+
+msgid "Pit"
+msgstr "Grop"
+
+msgid "Stairs"
+msgstr "Trappa"
+
+msgid "Door"
+msgstr "Dörr"
+
+msgid "Teleporter"
+msgstr "Teleportör"
+
+msgid "Fake Wall"
+msgstr "Falsk vägg"
+
+#. Dungeon Studio - Thing Types
+msgid "Thing Type"
+msgstr "Objekttyp"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Sensor"
+msgstr "Sensor"
+
+msgid "Group"
+msgstr "Grupp"
+
+msgid "Weapon"
+msgstr "Vapen"
+
+msgid "Armour"
+msgstr "Rustning"
+
+msgid "Scroll"
+msgstr "Skriftrulle"
+
+msgid "Potion"
+msgstr "Trolldryck"
+
+msgid "Container"
+msgstr "Behållare"
+
+msgid "Junk"
+msgstr "Skräp"
+
+msgid "Creature"
+msgstr "Varelse"
+
+#. Dungeon Studio - View Menu
+msgid "View"
+msgstr "Visa"
+
+msgid "Show Grid"
+msgstr "Visa rutnät"
+
+msgid "Show Things"
+msgstr "Visa objekt"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Anpassa"
+
+#. Dungeon Studio - Map Properties
+msgid "Map Properties"
+msgstr "Kartegenskaper"
+
+msgid "Name"
+msgstr "Namn"
+
+msgid "Size"
+msgstr "Storlek"
+
+msgid "Wall Set"
+msgstr "Vägguppsättning"
+
+msgid "Floor Set"
+msgstr "Golvuppsättning"
+
+msgid "Difficulty"
+msgstr "Svårighetsgrad"
+
+msgid "Tile"
+msgstr "Ruta"
+
+msgid "Position"
+msgstr "Position"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Things at Tile"
+msgstr "Objekt vid ruta"
+
+msgid "Delete Thing"
+msgstr "Ta bort objekt"
+
+msgid "Thing Properties"
+msgstr "Objektegenskaper"
+
+msgid "Cell"
+msgstr "Cell"
+
+#. Dungeon Studio - Graphics Override
+msgid "Graphics Override"
+msgstr "Grafiköverskrivning"
+
+msgid "Import Entrance Screen..."
+msgstr "Importera ingångsskärm..."
+
+msgid "Import Door Animation..."
+msgstr "Importera dörranimation..."
+
+msgid "Import Champion Portraits..."
+msgstr "Importera hjälteporträtt..."
+
+msgid "Import Wall Ornaments..."
+msgstr "Importera väggornament..."
+
+msgid "Import Floor Ornaments..."
+msgstr "Importera golvornament..."
+
+#. Dungeon Studio - Test View Controls
+msgid "Turn L"
+msgstr "Sväng V"
+
+msgid "Fwd"
+msgstr "Fram"
+
+msgid "Back"
+msgstr "Bak"
+
+msgid "Turn R"
+msgstr "Sväng H"
+
+msgid "North"
+msgstr "Norr"
+
+msgid "East"
+msgstr "Öst"
+
+msgid "South"
+msgstr "Syd"
+
+msgid "West"
+msgstr "Väst"
+
+msgid "facing"
+msgstr "riktning"
+
+#. Dungeon Studio - Status Messages
+msgid "Coming soon"
+msgstr "Kommer snart"
+
+msgid "support coming in a future update"
+msgstr "stöd kommer i en framtida uppdatering"
+
+msgid "Ready"
+msgstr "Redo"
+
+msgid "Resize?"
+msgstr "Ändra storlek?"
+
+msgid "Image is"
+msgstr "Bilden är"
+
+msgid "expected"
+msgstr "förväntat"
+
+msgid "Resize to fit?"
+msgstr "Ändra storlek för att passa?"
+
+#. Dungeon Studio - Status Bar
+msgid "Zoom:"
+msgstr "Zoom:"
+
+msgid "Map:"
+msgstr "Karta:"
+
+msgid "Tiles:"
+msgstr "Rutor:"
+
+msgid "Things:"
+msgstr "Objekt:"
+
+msgid "Tool:"
+msgstr "Verktyg:"
+
+#. Artpack Studio
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "Paket"
+
+msgid "Browse"
+msgstr "Bläddra"
+
+msgid "Open/Create"
+msgstr "Öppna/Skapa"
+
+msgid "Build Runtime Cache"
+msgstr "Bygg runtime-cache"
+
+msgid "Write Receipt"
+msgstr "Skriv kvitto"
+
+msgid "Import .fsart"
+msgstr "Importera .fsart"
+
+msgid "Export .fsart"
+msgstr "Exportera .fsart"
+
+#. Artpack Studio - V1 Assets
+msgid "V1 assets / V2.2 targets"
+msgstr "V1-tillgångar / V2.2-mål"
+
+msgid "Rescan"
+msgstr "Skanna om"
+
+msgid "V1 root"
+msgstr "V1-rot"
+
+msgid "Import game data"
+msgstr "Importera speldata"
+
+msgid "Warnings"
+msgstr "Varningar"
+
+#. Artpack Studio - Current Asset
+msgid "Current asset"
+msgstr "Aktuell tillgång"
+
+msgid "Category"
+msgstr "Kategori"
+
+msgid "Asset id"
+msgstr "Tillgångs-id"
+
+msgid "Generator"
+msgstr "Generator"
+
+#. Artpack Studio - Asset Actions
+msgid "Load V1/ref"
+msgstr "Ladda V1/ref"
+
+msgid "Load V2.2 target"
+msgstr "Ladda V2.2-mål"
+
+msgid "Import target to pack"
+msgstr "Importera mål till paket"
+
+msgid "Save edited target"
+msgstr "Spara redigerat mål"
+
+#. Artpack Studio - Source/Target
+msgid "Source (V1/ref)"
+msgstr "Källa (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "Mål (V2.2)"
+
+#. Shared
+msgid "Error"
+msgstr "Fel"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "No"
+msgstr "Nej"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

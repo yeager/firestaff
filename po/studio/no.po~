@@ -1,0 +1,274 @@
+# Firestaff Studio Norwegian translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-02 18:49+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Norwegian\n"
+"Language: no\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Game"
+msgstr "Spill"
+
+msgid "New"
+msgstr "Nytt"
+
+msgid "Open .fsdung"
+msgstr "Åpne .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Lagre .fsdung"
+
+msgid "Save As..."
+msgstr "Lagre som..."
+
+msgid "Add Level"
+msgstr "Legg til nivå"
+
+msgid "Map Settings"
+msgstr "Kartinnstillinger"
+
+msgid "Statistics"
+msgstr "Statistikk"
+
+msgid "Validate"
+msgstr "Valider"
+
+msgid "Test View"
+msgstr "Testvisning"
+
+msgid "Tools"
+msgstr "Verktøy"
+
+msgid "Select"
+msgstr "Velg"
+
+msgid "Paint"
+msgstr "Mal"
+
+msgid "Place Thing"
+msgstr "Plasser objekt"
+
+msgid "Erase"
+msgstr "Slett"
+
+msgid "Fill"
+msgstr "Fyll"
+
+msgid "Set Party Start"
+msgstr "Angi gruppestart"
+
+msgid "Tile Types"
+msgstr "Ruttyper"
+
+msgid "Thing Type"
+msgstr "Objekttype"
+
+msgid "View"
+msgstr "Visning"
+
+msgid "Show Grid"
+msgstr "Vis rutenett"
+
+msgid "Show Things"
+msgstr "Vis objekter"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Tilpass"
+
+msgid "Map Properties"
+msgstr "Kartegenskaper"
+
+msgid "Name"
+msgstr "Navn"
+
+msgid "Size"
+msgstr "Størrelse"
+
+msgid "Wall Set"
+msgstr "Veggsett"
+
+msgid "Floor Set"
+msgstr "Gulvsett"
+
+msgid "Difficulty"
+msgstr "Vanskelighetsgrad"
+
+msgid "Tile"
+msgstr "Rute"
+
+msgid "Position"
+msgstr "Posisjon"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Things at Tile"
+msgstr "Objekter på rute"
+
+msgid "Delete Thing"
+msgstr "Slett objekt"
+
+msgid "Thing Properties"
+msgstr "Objektegenskaper"
+
+msgid "Cell"
+msgstr "Celle"
+
+msgid "Graphics Override"
+msgstr "Grafikkoverstyring"
+
+#, python-brace-format
+msgid "Import {}..."
+msgstr "Importer {}..."
+
+msgid "Coming soon"
+msgstr "Kommer snart"
+
+msgid "New Level"
+msgstr "Nytt nivå"
+
+msgid "Level name:"
+msgstr "Nivånavn:"
+
+msgid "Language"
+msgstr "Språk"
+
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"Språk satt til {}.\n"
+"Start appen på nytt for full effekt."
+
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "{}-støtte kommer i en fremtidig oppdatering"
+
+msgid "New dungeon created"
+msgstr "Ny dungeon opprettet"
+
+msgid "All files"
+msgstr "Alle filer"
+
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "Åpnet: {}"
+
+msgid "Error"
+msgstr "Feil"
+
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "Lagret: {}"
+
+msgid "Width (1-64)"
+msgstr "Bredde (1-64)"
+
+msgid "Height (1-64)"
+msgstr "Høyde (1-64)"
+
+msgid "Apply"
+msgstr "Bruk"
+
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "Kart: {}"
+
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "Nåværende: {} ({}×{})"
+
+msgid "Tiles:"
+msgstr "Ruter:"
+
+#, python-brace-format
+msgid "Things: {}"
+msgstr "Objekter: {}"
+
+msgid "Dungeon Statistics"
+msgstr "Dungeon-statistikk"
+
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "Kart {} \"{}\": alle vegger"
+
+msgid "Party start is inside a wall"
+msgstr "Gruppestart er inne i en vegg"
+
+msgid "Party start is outside map bounds"
+msgstr "Gruppestart er utenfor kartgrensene"
+
+msgid "Validation"
+msgstr "Validering"
+
+msgid "Issues found:"
+msgstr "Problemer funnet:"
+
+msgid "Dungeon is valid!"
+msgstr "Dungeon er gyldig!"
+
+#, python-brace-format
+msgid "Import {}"
+msgstr "Importer {}"
+
+msgid "All"
+msgstr "Alle"
+
+msgid "Pillow is required for graphics import"
+msgstr "Pillow kreves for grafikimport"
+
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "Kunne ikke laste bilde: {}"
+
+msgid "Resize?"
+msgstr "Endre størrelse?"
+
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"Bildet er {}×{}, forventet {}×{}.\n"
+"Endre størrelse for å tilpasse?"
+
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{} importert fra {}"
+
+msgid "North"
+msgstr "Nord"
+
+msgid "East"
+msgstr "Øst"
+
+msgid "South"
+msgstr "Sør"
+
+msgid "West"
+msgstr "Vest"
+
+msgid "Turn L"
+msgstr "Venstre"
+
+msgid "Fwd"
+msgstr "Frem"
+
+msgid "Back"
+msgstr "Tilbake"
+
+msgid "Turn R"
+msgstr "Høyre"
+

@@ -273,6 +273,93 @@ static void test_perform_move_exec_teleporter(void)
     printf("  PASS: perform_move_exec_teleporter\n");
 }
 
+static void test_perform_move_exec_stair_up(void)
+{
+    DM2_V1_PerformMoveExecRequest req;
+    DM2_V1_PerformMoveExecReceipt exec_receipt;
+    DM2_V1_PerformMoveReceipt plan;
+
+    memset(&req, 0, sizeof(req));
+    memset(&plan, 0, sizeof(plan));
+    plan.valid = 1;
+    plan.accepted = 1;
+    plan.current_level = 2;
+    plan.from_x = 5; plan.from_y = 5;
+    plan.to_x = 5; plan.to_y = 4;
+    plan.to_dir = 0;
+    plan.target_square_type = 6; /* DM2_SQUARE_STAIRS_UP */
+    req.plan = plan;
+
+    /* Without map descriptors: fail_closed */
+    int r = dm2_v1_perform_move_exec(NULL, NULL, NULL, &req, &exec_receipt);
+    assert(exec_receipt.classification == DM2_MOVE_CLASS_STAIR_UP);
+    assert(exec_receipt.fail_closed == 1);
+    assert(exec_receipt.stair_level_changed == 0);
+
+    /* With map descriptors: resolve stair destination.
+     * All maps share same world origin so coordinates overlap. */
+    DM2_V1_SkprojectMapDescriptor maps[3];
+    memset(maps, 0, sizeof(maps));
+    maps[0].map_id = 0; maps[0].world_x = 0; maps[0].world_y = 0;
+    maps[0].width = 10; maps[0].height = 10;
+    maps[1].map_id = 1; maps[1].world_x = 0; maps[1].world_y = 0;
+    maps[1].width = 10; maps[1].height = 10;
+    maps[2].map_id = 2; maps[2].world_x = 0; maps[2].world_y = 0;
+    maps[2].width = 10; maps[2].height = 10;
+    req.map_descriptors = maps;
+    req.map_descriptor_count = 3;
+
+    r = dm2_v1_perform_move_exec(NULL, NULL, NULL, &req, &exec_receipt);
+    assert(exec_receipt.classification == DM2_MOVE_CLASS_STAIR_UP);
+    assert(exec_receipt.stair_level_changed == 1);
+    /* locate_other_level finds first candidate that contains the world
+     * coords — with all maps at same origin, that's map 0 or 1 (any
+     * map except the source map 2). */
+    assert(exec_receipt.stair_dest_level >= 0);
+    assert(exec_receipt.stair_dest_level != 2);
+    assert(exec_receipt.final_level == exec_receipt.stair_dest_level);
+    (void)r;
+    printf("  PASS: perform_move_exec_stair_up\n");
+}
+
+static void test_perform_move_exec_stair_down(void)
+{
+    DM2_V1_PerformMoveExecRequest req;
+    DM2_V1_PerformMoveExecReceipt exec_receipt;
+    DM2_V1_PerformMoveReceipt plan;
+
+    memset(&req, 0, sizeof(req));
+    memset(&plan, 0, sizeof(plan));
+    plan.valid = 1;
+    plan.accepted = 1;
+    plan.current_level = 1;
+    plan.from_x = 3; plan.from_y = 3;
+    plan.to_x = 3; plan.to_y = 4;
+    plan.to_dir = 2;
+    plan.target_square_type = 7; /* DM2_SQUARE_STAIRS_DOWN */
+    req.plan = plan;
+
+    DM2_V1_SkprojectMapDescriptor maps[3];
+    memset(maps, 0, sizeof(maps));
+    maps[0].map_id = 0; maps[0].world_x = 0; maps[0].world_y = 0;
+    maps[0].width = 10; maps[0].height = 10;
+    maps[1].map_id = 1; maps[1].world_x = 0; maps[1].world_y = 0;
+    maps[1].width = 10; maps[1].height = 10;
+    maps[2].map_id = 2; maps[2].world_x = 0; maps[2].world_y = 0;
+    maps[2].width = 10; maps[2].height = 10;
+    req.map_descriptors = maps;
+    req.map_descriptor_count = 3;
+
+    int r = dm2_v1_perform_move_exec(NULL, NULL, NULL, &req, &exec_receipt);
+    assert(exec_receipt.classification == DM2_MOVE_CLASS_STAIR_DOWN);
+    assert(exec_receipt.stair_level_changed == 1);
+    assert(exec_receipt.stair_dest_level >= 0);
+    assert(exec_receipt.stair_dest_level != 1);
+    assert(exec_receipt.final_level == exec_receipt.stair_dest_level);
+    (void)r;
+    printf("  PASS: perform_move_exec_stair_down\n");
+}
+
 int main(void)
 {
     printf("test_dm2_v1_move_record_to_pc34_compat:\n");
@@ -287,6 +374,8 @@ int main(void)
     test_perform_move_exec_accepted();
     test_perform_move_exec_blocked();
     test_perform_move_exec_teleporter();
+    test_perform_move_exec_stair_up();
+    test_perform_move_exec_stair_down();
     printf("All move record/exec tests passed.\n");
     return 0;
 }

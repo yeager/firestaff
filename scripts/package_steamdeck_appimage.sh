@@ -8,6 +8,7 @@ RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 APPIMAGETOOL="${APPIMAGETOOL:-appimagetool}"
 BIN_SRC="$BUILD_DIR/firestaff"
 ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio}"
+DUNGEON_STUDIO_BIN_SRC="${DUNGEON_STUDIO_BIN_SRC:-$BUILD_DIR/dungeon-studio-bundle/dist/firestaff_dungeon_studio}"
 OUT_DIR="$ROOT/release"
 APPDIR="$OUT_DIR/steamdeck-appimage-stage/AppDir"
 APPIMAGE_PATH="$OUT_DIR/Firestaff-${VERSION}-steamdeck-x86_64.AppImage"
@@ -18,6 +19,10 @@ if [[ ! -x "$BIN_SRC" ]]; then
 fi
 if [[ ! -x "$ARTPACK_STUDIO_BIN_SRC" ]]; then
   echo "Missing built Artpack Studio launcher: $ARTPACK_STUDIO_BIN_SRC" >&2
+  exit 1
+fi
+if [[ ! -x "$DUNGEON_STUDIO_BIN_SRC" ]]; then
+  echo "Missing built Dungeon Studio launcher: $DUNGEON_STUDIO_BIN_SRC" >&2
   exit 1
 fi
 if ! command -v "$APPIMAGETOOL" >/dev/null 2>&1; then
@@ -46,9 +51,11 @@ mkdir -p \
 
 cp "$BIN_SRC" "$APPDIR/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$APPDIR/usr/bin/firestaff_artpack_studio"
+cp "$DUNGEON_STUDIO_BIN_SRC" "$APPDIR/usr/bin/firestaff_dungeon_studio"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$APPDIR/usr/share/firestaff/firestaff-startup-intro.ppm"
 chmod 0755 "$APPDIR/usr/bin/firestaff"
 chmod 0755 "$APPDIR/usr/bin/firestaff_artpack_studio"
+chmod 0755 "$APPDIR/usr/bin/firestaff_dungeon_studio"
 cp -L "$SDL3_LIB" "$APPDIR/usr/lib/firestaff/libSDL3.so.0"
 chmod 0755 "$APPDIR/usr/lib/firestaff/libSDL3.so.0"
 if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then

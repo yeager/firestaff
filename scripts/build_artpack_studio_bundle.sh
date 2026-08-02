@@ -70,33 +70,41 @@ fi
 if [[ "$IS_MSYS" == "true" ]]; then
   "$PYTHON" -c 'import PIL, PyInstaller'
 else
-  "$PYTHON" -m pip install --upgrade Pillow pyinstaller
+  "$PYTHON" -m pip install --upgrade Pillow pyinstaller keyring
 fi
 "$PYTHON" -c 'import tkinter; from PIL import ImageTk'
+
+LOCALE_DIR="$ROOT/po/locale"
+ADD_DATA_ARGS=()
+if [[ -d "$LOCALE_DIR" ]]; then
+  ADD_DATA_ARGS+=(--add-data "$LOCALE_DIR:po/locale")
+fi
 
 case "$(uname -s)" in
   Darwin)
     # A real .app appears in Finder and Launchpad alongside Firestaff.
-    if [[ -f "$ROOT/assets/icons/firestaff.icns" ]]; then
-      "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onedir \
-        --collect-all tkinter --hidden-import tkinter.ttk --hidden-import PIL.ImageTk \
-        --name "Firestaff Artpack Studio" \
-        --icon "$ROOT/assets/icons/firestaff.icns" \
-        --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
-        "$SCRIPT"
-    else
-      "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onedir \
-        --collect-all tkinter --hidden-import tkinter.ttk --hidden-import PIL.ImageTk \
-        --name "Firestaff Artpack Studio" \
-        --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
-        "$SCRIPT"
+    ICON_ARG=()
+    if [[ -f "$ROOT/assets/icons/firestaff_artpack_studio.icns" ]]; then
+      ICON_ARG=(--icon "$ROOT/assets/icons/firestaff_artpack_studio.icns")
+    elif [[ -f "$ROOT/assets/icons/firestaff.icns" ]]; then
+      ICON_ARG=(--icon "$ROOT/assets/icons/firestaff.icns")
     fi
+    "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onedir \
+      --collect-all tkinter --hidden-import tkinter.ttk --hidden-import PIL.ImageTk \
+      --collect-all keyring \
+      --name "Firestaff Artpack Studio" \
+      "${ICON_ARG[@]}" \
+      "${ADD_DATA_ARGS[@]}" \
+      --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
+      "$SCRIPT"
     ;;
   *)
     # One executable carries Python, Pillow, Tk and the studio source.
     "$PYTHON" -m PyInstaller --noconfirm --clean --windowed --onefile \
       --collect-all tkinter --hidden-import tkinter.ttk --hidden-import PIL.ImageTk \
+      --collect-all keyring \
       --name firestaff_artpack_studio \
+      "${ADD_DATA_ARGS[@]}" \
       --distpath "$OUT_DIR/dist" --workpath "$WORK_DIR" --specpath "$SPEC_DIR" \
       "$SCRIPT"
     ;;

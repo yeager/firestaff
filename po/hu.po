@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02\n"
+"Language: hu\n"
+"Language-Team: Magyar\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "File"
+msgstr "Fájl"
+
+msgid "Edit"
+msgstr "Szerkesztés"
+
+msgid "Window"
+msgstr "Ablak"
+
+msgid "Help"
+msgstr "Súgó"
+
+msgid "New"
+msgstr "Új"
+
+msgid "Open .fsdung"
+msgstr ".fsdung megnyitása"
+
+msgid "Save .fsdung"
+msgstr ".fsdung mentése"
+
+msgid "Save As..."
+msgstr "Mentés másként..."
+
+msgid "Add Level"
+msgstr "Szint hozzáadása"
+
+msgid "Map Settings"
+msgstr "Térkép beállításai"
+
+msgid "Statistics"
+msgstr "Statisztikák"
+
+msgid "Validate"
+msgstr "Ellenőrzés"
+
+msgid "Test View"
+msgstr "Teszt nézet"
+
+msgid "Game"
+msgstr "Játék"
+
+msgid "Tools"
+msgstr "Eszközök"
+
+msgid "Select"
+msgstr "Kijelölés"
+
+msgid "Paint"
+msgstr "Festés"
+
+msgid "Place Thing"
+msgstr "Tárgy elhelyezése"
+
+msgid "Erase"
+msgstr "Törlés"
+
+msgid "Fill"
+msgstr "Kitöltés"
+
+msgid "Set Party Start"
+msgstr "Csapat kezdőpont beállítása"
+
+msgid "Tile Types"
+msgstr "Mezőtípusok"
+
+msgid "Wall"
+msgstr "Fal"
+
+msgid "Corridor"
+msgstr "Folyosó"
+
+msgid "Pit"
+msgstr "Verem"
+
+msgid "Stairs"
+msgstr "Lépcső"
+
+msgid "Door"
+msgstr "Ajtó"
+
+msgid "Teleporter"
+msgstr "Teleportáló"
+
+msgid "Fake Wall"
+msgstr "Hamis fal"
+
+msgid "Thing Type"
+msgstr "Tárgytípus"
+
+msgid "Text"
+msgstr "Szöveg"
+
+msgid "Sensor"
+msgstr "Érzékelő"
+
+msgid "Group"
+msgstr "Csoport"
+
+msgid "Weapon"
+msgstr "Fegyver"
+
+msgid "Armour"
+msgstr "Páncél"
+
+msgid "Scroll"
+msgstr "Tekercs"
+
+msgid "Potion"
+msgstr "Bájital"
+
+msgid "Container"
+msgstr "Tároló"
+
+msgid "Junk"
+msgstr "Lom"
+
+msgid "Creature"
+msgstr "Lény"
+
+msgid "View"
+msgstr "Nézet"
+
+msgid "Show Grid"
+msgstr "Rács megjelenítése"
+
+msgid "Show Things"
+msgstr "Tárgyak megjelenítése"
+
+msgid "Zoom"
+msgstr "Nagyítás"
+
+msgid "Fit"
+msgstr "Igazítás"
+
+msgid "Map Properties"
+msgstr "Térkép tulajdonságai"
+
+msgid "Name"
+msgstr "Név"
+
+msgid "Size"
+msgstr "Méret"
+
+msgid "Wall Set"
+msgstr "Falkészlet"
+
+msgid "Floor Set"
+msgstr "Padlókészlet"
+
+msgid "Difficulty"
+msgstr "Nehézség"
+
+msgid "Tile"
+msgstr "Mező"
+
+msgid "Position"
+msgstr "Pozíció"
+
+msgid "Type"
+msgstr "Típus"
+
+msgid "Things at Tile"
+msgstr "Tárgyak a mezőn"
+
+msgid "Delete Thing"
+msgstr "Tárgy törlése"
+
+msgid "Thing Properties"
+msgstr "Tárgy tulajdonságai"
+
+msgid "Cell"
+msgstr "Cella"
+
+msgid "Graphics Override"
+msgstr "Grafika felülírása"
+
+msgid "Import Entrance Screen..."
+msgstr "Bejárati képernyő importálása..."
+
+msgid "Import Door Animation..."
+msgstr "Ajtóanimáció importálása..."
+
+msgid "Import Champion Portraits..."
+msgstr "Hős portrék importálása..."
+
+msgid "Import Wall Ornaments..."
+msgstr "Faldíszek importálása..."
+
+msgid "Import Floor Ornaments..."
+msgstr "Padlódíszek importálása..."
+
+msgid "Turn L"
+msgstr "Ford. B"
+
+msgid "Fwd"
+msgstr "Előre"
+
+msgid "Back"
+msgstr "Hátra"
+
+msgid "Turn R"
+msgstr "Ford. J"
+
+msgid "North"
+msgstr "Észak"
+
+msgid "East"
+msgstr "Kelet"
+
+msgid "South"
+msgstr "Dél"
+
+msgid "West"
+msgstr "Nyugat"
+
+msgid "facing"
+msgstr "irány"
+
+msgid "Coming soon"
+msgstr "Hamarosan"
+
+msgid "support coming in a future update"
+msgstr "támogatás egy jövőbeli frissítésben érkezik"
+
+msgid "Ready"
+msgstr "Kész"
+
+msgid "Resize?"
+msgstr "Átméretezés?"
+
+msgid "Image is"
+msgstr "A kép"
+
+msgid "expected"
+msgstr "elvárt"
+
+msgid "Resize to fit?"
+msgstr "Átméretezés az illeszkedéshez?"
+
+msgid "Zoom:"
+msgstr "Nagyítás:"
+
+msgid "Map:"
+msgstr "Térkép:"
+
+msgid "Tiles:"
+msgstr "Mezők:"
+
+msgid "Things:"
+msgstr "Tárgyak:"
+
+msgid "Tool:"
+msgstr "Eszköz:"
+
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "Csomag"
+
+msgid "Browse"
+msgstr "Tallózás"
+
+msgid "Open/Create"
+msgstr "Megnyitás/Létrehozás"
+
+msgid "Build Runtime Cache"
+msgstr "Futásidejű gyorsítótár építése"
+
+msgid "Write Receipt"
+msgstr "Nyugta írása"
+
+msgid "Import .fsart"
+msgstr ".fsart importálása"
+
+msgid "Export .fsart"
+msgstr ".fsart exportálása"
+
+msgid "V1 assets / V2.2 targets"
+msgstr "V1 erőforrások / V2.2 célok"
+
+msgid "Rescan"
+msgstr "Újraszkennelés"
+
+msgid "V1 root"
+msgstr "V1 gyökér"
+
+msgid "Import game data"
+msgstr "Játékadatok importálása"
+
+msgid "Warnings"
+msgstr "Figyelmeztetések"
+
+msgid "Current asset"
+msgstr "Jelenlegi erőforrás"
+
+msgid "Category"
+msgstr "Kategória"
+
+msgid "Asset id"
+msgstr "Erőforrás-azonosító"
+
+msgid "Generator"
+msgstr "Generátor"
+
+msgid "Load V1/ref"
+msgstr "V1/ref betöltése"
+
+msgid "Load V2.2 target"
+msgstr "V2.2 cél betöltése"
+
+msgid "Import target to pack"
+msgstr "Cél importálása a csomagba"
+
+msgid "Save edited target"
+msgstr "Szerkesztett cél mentése"
+
+msgid "Source (V1/ref)"
+msgstr "Forrás (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "Cél (V2.2)"
+
+msgid "Error"
+msgstr "Hiba"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Mégse"
+
+msgid "Yes"
+msgstr "Igen"
+
+msgid "No"
+msgstr "Nem"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

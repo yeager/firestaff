@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02\n"
+"Language: ko\n"
+"Language-Team: 한국어\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "File"
+msgstr "파일"
+
+msgid "Edit"
+msgstr "편집"
+
+msgid "Window"
+msgstr "창"
+
+msgid "Help"
+msgstr "도움말"
+
+msgid "New"
+msgstr "새로 만들기"
+
+msgid "Open .fsdung"
+msgstr ".fsdung 열기"
+
+msgid "Save .fsdung"
+msgstr ".fsdung 저장"
+
+msgid "Save As..."
+msgstr "다른 이름으로 저장..."
+
+msgid "Add Level"
+msgstr "레벨 추가"
+
+msgid "Map Settings"
+msgstr "맵 설정"
+
+msgid "Statistics"
+msgstr "통계"
+
+msgid "Validate"
+msgstr "검증"
+
+msgid "Test View"
+msgstr "테스트 보기"
+
+msgid "Game"
+msgstr "게임"
+
+msgid "Tools"
+msgstr "도구"
+
+msgid "Select"
+msgstr "선택"
+
+msgid "Paint"
+msgstr "칠하기"
+
+msgid "Place Thing"
+msgstr "오브젝트 배치"
+
+msgid "Erase"
+msgstr "지우기"
+
+msgid "Fill"
+msgstr "채우기"
+
+msgid "Set Party Start"
+msgstr "파티 시작 위치 설정"
+
+msgid "Tile Types"
+msgstr "타일 유형"
+
+msgid "Wall"
+msgstr "벽"
+
+msgid "Corridor"
+msgstr "복도"
+
+msgid "Pit"
+msgstr "함정"
+
+msgid "Stairs"
+msgstr "계단"
+
+msgid "Door"
+msgstr "문"
+
+msgid "Teleporter"
+msgstr "텔레포터"
+
+msgid "Fake Wall"
+msgstr "가짜 벽"
+
+msgid "Thing Type"
+msgstr "오브젝트 유형"
+
+msgid "Text"
+msgstr "텍스트"
+
+msgid "Sensor"
+msgstr "센서"
+
+msgid "Group"
+msgstr "그룹"
+
+msgid "Weapon"
+msgstr "무기"
+
+msgid "Armour"
+msgstr "갑옷"
+
+msgid "Scroll"
+msgstr "두루마리"
+
+msgid "Potion"
+msgstr "물약"
+
+msgid "Container"
+msgstr "용기"
+
+msgid "Junk"
+msgstr "잡동사니"
+
+msgid "Creature"
+msgstr "크리처"
+
+msgid "View"
+msgstr "보기"
+
+msgid "Show Grid"
+msgstr "격자 표시"
+
+msgid "Show Things"
+msgstr "오브젝트 표시"
+
+msgid "Zoom"
+msgstr "확대/축소"
+
+msgid "Fit"
+msgstr "맞추기"
+
+msgid "Map Properties"
+msgstr "맵 속성"
+
+msgid "Name"
+msgstr "이름"
+
+msgid "Size"
+msgstr "크기"
+
+msgid "Wall Set"
+msgstr "벽 세트"
+
+msgid "Floor Set"
+msgstr "바닥 세트"
+
+msgid "Difficulty"
+msgstr "난이도"
+
+msgid "Tile"
+msgstr "타일"
+
+msgid "Position"
+msgstr "위치"
+
+msgid "Type"
+msgstr "유형"
+
+msgid "Things at Tile"
+msgstr "타일의 오브젝트"
+
+msgid "Delete Thing"
+msgstr "오브젝트 삭제"
+
+msgid "Thing Properties"
+msgstr "오브젝트 속성"
+
+msgid "Cell"
+msgstr "셀"
+
+msgid "Graphics Override"
+msgstr "그래픽 재정의"
+
+msgid "Import Entrance Screen..."
+msgstr "입구 화면 가져오기..."
+
+msgid "Import Door Animation..."
+msgstr "문 애니메이션 가져오기..."
+
+msgid "Import Champion Portraits..."
+msgstr "챔피언 초상화 가져오기..."
+
+msgid "Import Wall Ornaments..."
+msgstr "벽 장식 가져오기..."
+
+msgid "Import Floor Ornaments..."
+msgstr "바닥 장식 가져오기..."
+
+msgid "Turn L"
+msgstr "좌회전"
+
+msgid "Fwd"
+msgstr "전진"
+
+msgid "Back"
+msgstr "후퇴"
+
+msgid "Turn R"
+msgstr "우회전"
+
+msgid "North"
+msgstr "북"
+
+msgid "East"
+msgstr "동"
+
+msgid "South"
+msgstr "남"
+
+msgid "West"
+msgstr "서"
+
+msgid "facing"
+msgstr "방향"
+
+msgid "Coming soon"
+msgstr "곧 출시"
+
+msgid "support coming in a future update"
+msgstr "향후 업데이트에서 지원 예정"
+
+msgid "Ready"
+msgstr "준비 완료"
+
+msgid "Resize?"
+msgstr "크기 조정?"
+
+msgid "Image is"
+msgstr "이미지는"
+
+msgid "expected"
+msgstr "예상"
+
+msgid "Resize to fit?"
+msgstr "맞게 크기 조정?"
+
+msgid "Zoom:"
+msgstr "확대/축소:"
+
+msgid "Map:"
+msgstr "맵:"
+
+msgid "Tiles:"
+msgstr "타일:"
+
+msgid "Things:"
+msgstr "오브젝트:"
+
+msgid "Tool:"
+msgstr "도구:"
+
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "팩"
+
+msgid "Browse"
+msgstr "찾아보기"
+
+msgid "Open/Create"
+msgstr "열기/만들기"
+
+msgid "Build Runtime Cache"
+msgstr "런타임 캐시 빌드"
+
+msgid "Write Receipt"
+msgstr "영수증 쓰기"
+
+msgid "Import .fsart"
+msgstr ".fsart 가져오기"
+
+msgid "Export .fsart"
+msgstr ".fsart 내보내기"
+
+msgid "V1 assets / V2.2 targets"
+msgstr "V1 에셋 / V2.2 대상"
+
+msgid "Rescan"
+msgstr "다시 스캔"
+
+msgid "V1 root"
+msgstr "V1 루트"
+
+msgid "Import game data"
+msgstr "게임 데이터 가져오기"
+
+msgid "Warnings"
+msgstr "경고"
+
+msgid "Current asset"
+msgstr "현재 에셋"
+
+msgid "Category"
+msgstr "카테고리"
+
+msgid "Asset id"
+msgstr "에셋 ID"
+
+msgid "Generator"
+msgstr "생성기"
+
+msgid "Load V1/ref"
+msgstr "V1/ref 불러오기"
+
+msgid "Load V2.2 target"
+msgstr "V2.2 대상 불러오기"
+
+msgid "Import target to pack"
+msgstr "대상을 팩으로 가져오기"
+
+msgid "Save edited target"
+msgstr "편집된 대상 저장"
+
+msgid "Source (V1/ref)"
+msgstr "소스 (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "대상 (V2.2)"
+
+msgid "Error"
+msgstr "오류"
+
+msgid "OK"
+msgstr "확인"
+
+msgid "Cancel"
+msgstr "취소"
+
+msgid "Yes"
+msgstr "예"
+
+msgid "No"
+msgstr "아니오"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

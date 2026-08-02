@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02\n"
+"Language: zh\n"
+"Language-Team: 中文\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "File"
+msgstr "文件"
+
+msgid "Edit"
+msgstr "编辑"
+
+msgid "Window"
+msgstr "窗口"
+
+msgid "Help"
+msgstr "帮助"
+
+msgid "New"
+msgstr "新建"
+
+msgid "Open .fsdung"
+msgstr "打开 .fsdung"
+
+msgid "Save .fsdung"
+msgstr "保存 .fsdung"
+
+msgid "Save As..."
+msgstr "另存为..."
+
+msgid "Add Level"
+msgstr "添加层级"
+
+msgid "Map Settings"
+msgstr "地图设置"
+
+msgid "Statistics"
+msgstr "统计"
+
+msgid "Validate"
+msgstr "验证"
+
+msgid "Test View"
+msgstr "测试视图"
+
+msgid "Game"
+msgstr "游戏"
+
+msgid "Tools"
+msgstr "工具"
+
+msgid "Select"
+msgstr "选择"
+
+msgid "Paint"
+msgstr "绘制"
+
+msgid "Place Thing"
+msgstr "放置物体"
+
+msgid "Erase"
+msgstr "擦除"
+
+msgid "Fill"
+msgstr "填充"
+
+msgid "Set Party Start"
+msgstr "设置队伍起点"
+
+msgid "Tile Types"
+msgstr "地块类型"
+
+msgid "Wall"
+msgstr "墙壁"
+
+msgid "Corridor"
+msgstr "走廊"
+
+msgid "Pit"
+msgstr "陷阱"
+
+msgid "Stairs"
+msgstr "楼梯"
+
+msgid "Door"
+msgstr "门"
+
+msgid "Teleporter"
+msgstr "传送器"
+
+msgid "Fake Wall"
+msgstr "假墙"
+
+msgid "Thing Type"
+msgstr "物体类型"
+
+msgid "Text"
+msgstr "文本"
+
+msgid "Sensor"
+msgstr "传感器"
+
+msgid "Group"
+msgstr "组"
+
+msgid "Weapon"
+msgstr "武器"
+
+msgid "Armour"
+msgstr "护甲"
+
+msgid "Scroll"
+msgstr "卷轴"
+
+msgid "Potion"
+msgstr "药水"
+
+msgid "Container"
+msgstr "容器"
+
+msgid "Junk"
+msgstr "杂物"
+
+msgid "Creature"
+msgstr "生物"
+
+msgid "View"
+msgstr "视图"
+
+msgid "Show Grid"
+msgstr "显示网格"
+
+msgid "Show Things"
+msgstr "显示物体"
+
+msgid "Zoom"
+msgstr "缩放"
+
+msgid "Fit"
+msgstr "适配"
+
+msgid "Map Properties"
+msgstr "地图属性"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Size"
+msgstr "大小"
+
+msgid "Wall Set"
+msgstr "墙壁集"
+
+msgid "Floor Set"
+msgstr "地板集"
+
+msgid "Difficulty"
+msgstr "难度"
+
+msgid "Tile"
+msgstr "地块"
+
+msgid "Position"
+msgstr "位置"
+
+msgid "Type"
+msgstr "类型"
+
+msgid "Things at Tile"
+msgstr "地块上的物体"
+
+msgid "Delete Thing"
+msgstr "删除物体"
+
+msgid "Thing Properties"
+msgstr "物体属性"
+
+msgid "Cell"
+msgstr "单元格"
+
+msgid "Graphics Override"
+msgstr "图形覆盖"
+
+msgid "Import Entrance Screen..."
+msgstr "导入入口画面..."
+
+msgid "Import Door Animation..."
+msgstr "导入门动画..."
+
+msgid "Import Champion Portraits..."
+msgstr "导入冠军肖像..."
+
+msgid "Import Wall Ornaments..."
+msgstr "导入墙壁装饰..."
+
+msgid "Import Floor Ornaments..."
+msgstr "导入地板装饰..."
+
+msgid "Turn L"
+msgstr "左转"
+
+msgid "Fwd"
+msgstr "前进"
+
+msgid "Back"
+msgstr "后退"
+
+msgid "Turn R"
+msgstr "右转"
+
+msgid "North"
+msgstr "北"
+
+msgid "East"
+msgstr "东"
+
+msgid "South"
+msgstr "南"
+
+msgid "West"
+msgstr "西"
+
+msgid "facing"
+msgstr "朝向"
+
+msgid "Coming soon"
+msgstr "即将推出"
+
+msgid "support coming in a future update"
+msgstr "将在未来的更新中支持"
+
+msgid "Ready"
+msgstr "就绪"
+
+msgid "Resize?"
+msgstr "调整大小？"
+
+msgid "Image is"
+msgstr "图像为"
+
+msgid "expected"
+msgstr "预期"
+
+msgid "Resize to fit?"
+msgstr "调整大小以适配？"
+
+msgid "Zoom:"
+msgstr "缩放:"
+
+msgid "Map:"
+msgstr "地图:"
+
+msgid "Tiles:"
+msgstr "地块:"
+
+msgid "Things:"
+msgstr "物体:"
+
+msgid "Tool:"
+msgstr "工具:"
+
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "包"
+
+msgid "Browse"
+msgstr "浏览"
+
+msgid "Open/Create"
+msgstr "打开/创建"
+
+msgid "Build Runtime Cache"
+msgstr "构建运行时缓存"
+
+msgid "Write Receipt"
+msgstr "写入回执"
+
+msgid "Import .fsart"
+msgstr "导入 .fsart"
+
+msgid "Export .fsart"
+msgstr "导出 .fsart"
+
+msgid "V1 assets / V2.2 targets"
+msgstr "V1资源 / V2.2目标"
+
+msgid "Rescan"
+msgstr "重新扫描"
+
+msgid "V1 root"
+msgstr "V1根目录"
+
+msgid "Import game data"
+msgstr "导入游戏数据"
+
+msgid "Warnings"
+msgstr "警告"
+
+msgid "Current asset"
+msgstr "当前资源"
+
+msgid "Category"
+msgstr "类别"
+
+msgid "Asset id"
+msgstr "资源ID"
+
+msgid "Generator"
+msgstr "生成器"
+
+msgid "Load V1/ref"
+msgstr "加载V1/ref"
+
+msgid "Load V2.2 target"
+msgstr "加载V2.2目标"
+
+msgid "Import target to pack"
+msgstr "将目标导入包"
+
+msgid "Save edited target"
+msgstr "保存编辑后的目标"
+
+msgid "Source (V1/ref)"
+msgstr "源 (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "目标 (V2.2)"
+
+msgid "Error"
+msgstr "错误"
+
+msgid "OK"
+msgstr "确定"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Yes"
+msgstr "是"
+
+msgid "No"
+msgstr "否"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

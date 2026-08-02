@@ -2695,6 +2695,36 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         nexus_v1_creatures_load_cret(&engine->creatures, cret_path);
     }
 
+    /* Init projectile manager */
+    nexus_v1_projectiles_init(&engine->projectiles);
+
+    /* Init automap */
+    nexus_v1_automap_init(&engine->automap);
+
+    /* Init light */
+    nexus_v1_light_init(&engine->light);
+
+    /* Init status effects and experience */
+    {
+        int si;
+        for (si = 0; si < 4; si++) {
+            nexus_v1_status_init(&engine->champion_status[si]);
+            nexus_v1_xp_init(&engine->champion_xp[si]);
+        }
+    }
+
+    /* Init triggers */
+    nexus_v1_triggers_init(&engine->triggers);
+
+    /* Init rest */
+    nexus_v1_rest_init(&engine->rest);
+    nexus_v1_messages_init(&engine->messages);
+    nexus_v1_throw_init(&engine->thrown);
+    nexus_v1_hunger_init(&engine->hunger);
+    nexus_v1_action_timers_init(&engine->action_timers);
+    nexus_v1_spawners_init(&engine->spawners);
+    nexus_v1_damage_display_init(&engine->damage_display);
+    nexus_v1_formation_init(&engine->formation, engine->champions.party_count);
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
     (void)nexus_v1_level_aux_source_receipt(

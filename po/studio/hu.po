@@ -1,0 +1,727 @@
+# Firestaff Studio Hungarian translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-08-02 18:54+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Hungarian\n"
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: scripts/firestaff_dungeon_studio.py:411
+#: scripts/firestaff_artpack_studio.py:1674
+msgid "Game"
+msgstr "Játék"
+
+#: scripts/firestaff_dungeon_studio.py:418
+msgid "New"
+msgstr "Új"
+
+#: scripts/firestaff_dungeon_studio.py:419
+#: scripts/firestaff_dungeon_studio.py:995
+msgid "Open .fsdung"
+msgstr ".fsdung megnyitása"
+
+#: scripts/firestaff_dungeon_studio.py:420
+#: scripts/firestaff_dungeon_studio.py:1024
+msgid "Save .fsdung"
+msgstr ".fsdung mentése"
+
+#: scripts/firestaff_dungeon_studio.py:421
+msgid "Save As..."
+msgstr "Mentés másként..."
+
+#: scripts/firestaff_dungeon_studio.py:425
+msgid "Add Level"
+msgstr "Szint hozzáadása"
+
+#: scripts/firestaff_dungeon_studio.py:426
+#: scripts/firestaff_dungeon_studio.py:1047
+msgid "Map Settings"
+msgstr "Térkép beállításai"
+
+#: scripts/firestaff_dungeon_studio.py:427
+msgid "Statistics"
+msgstr "Statisztikák"
+
+#: scripts/firestaff_dungeon_studio.py:428
+#: scripts/firestaff_artpack_studio.py:1682
+msgid "Validate"
+msgstr "Ellenőrzés"
+
+#: scripts/firestaff_dungeon_studio.py:430
+#: scripts/firestaff_dungeon_studio.py:1191
+msgid "Test View"
+msgstr "Teszt nézet"
+
+#: scripts/firestaff_dungeon_studio.py:452
+msgid "Tools"
+msgstr "Eszközök"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Select"
+msgstr "Kijelölés"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Paint"
+msgstr "Festés"
+
+#: scripts/firestaff_dungeon_studio.py:454
+msgid "Place Thing"
+msgstr "Tárgy elhelyezése"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Erase"
+msgstr "Törlés"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Fill"
+msgstr "Kitöltés"
+
+#: scripts/firestaff_dungeon_studio.py:455
+msgid "Set Party Start"
+msgstr "Csoport indulás beállítása"
+
+#: scripts/firestaff_dungeon_studio.py:463
+msgid "Tile Types"
+msgstr "Mezőtípusok"
+
+#: scripts/firestaff_dungeon_studio.py:474
+msgid "Thing Type"
+msgstr "Tárgytípus"
+
+#: scripts/firestaff_dungeon_studio.py:481
+msgid "View"
+msgstr "Nézet"
+
+#: scripts/firestaff_dungeon_studio.py:483
+msgid "Show Grid"
+msgstr "Rács megjelenítése"
+
+#: scripts/firestaff_dungeon_studio.py:485
+msgid "Show Things"
+msgstr "Tárgyak megjelenítése"
+
+#: scripts/firestaff_dungeon_studio.py:489
+msgid "Zoom"
+msgstr "Nagyítás"
+
+#: scripts/firestaff_dungeon_studio.py:492
+msgid "Fit"
+msgstr "Igazítás"
+
+#: scripts/firestaff_dungeon_studio.py:518
+msgid "Map Properties"
+msgstr "Térkép tulajdonságai"
+
+#: scripts/firestaff_dungeon_studio.py:522
+msgid "Name"
+msgstr "Név"
+
+#: scripts/firestaff_dungeon_studio.py:525
+msgid "Size"
+msgstr "Méret"
+
+#: scripts/firestaff_dungeon_studio.py:531
+msgid "Wall Set"
+msgstr "Falkészlet"
+
+#: scripts/firestaff_dungeon_studio.py:534
+msgid "Floor Set"
+msgstr "Padlókészlet"
+
+#: scripts/firestaff_dungeon_studio.py:537
+msgid "Difficulty"
+msgstr "Nehézség"
+
+#: scripts/firestaff_dungeon_studio.py:543
+msgid "Tile"
+msgstr "Mező"
+
+#: scripts/firestaff_dungeon_studio.py:547
+msgid "Position"
+msgstr "Pozíció"
+
+#: scripts/firestaff_dungeon_studio.py:549
+#: scripts/firestaff_dungeon_studio.py:572
+msgid "Type"
+msgstr "Típus"
+
+#: scripts/firestaff_dungeon_studio.py:553
+msgid "Things at Tile"
+msgstr "Tárgyak a mezőn"
+
+#: scripts/firestaff_dungeon_studio.py:565
+msgid "Delete Thing"
+msgstr "Tárgy törlése"
+
+#: scripts/firestaff_dungeon_studio.py:568
+msgid "Thing Properties"
+msgstr "Tárgy tulajdonságai"
+
+#: scripts/firestaff_dungeon_studio.py:574
+msgid "Cell"
+msgstr "Cella"
+
+#: scripts/firestaff_dungeon_studio.py:581
+msgid "Graphics Override"
+msgstr "Grafika felülírás"
+
+#: scripts/firestaff_dungeon_studio.py:587
+#, python-brace-format
+msgid "Import {}..."
+msgstr "{} importálása..."
+
+#: scripts/firestaff_dungeon_studio.py:624
+#: scripts/firestaff_dungeon_studio.py:982
+#: scripts/firestaff_dungeon_studio.py:1038
+msgid "Coming soon"
+msgstr "Hamarosan"
+
+#: scripts/firestaff_dungeon_studio.py:653
+msgid "New Level"
+msgstr "Új szint"
+
+#: scripts/firestaff_dungeon_studio.py:653
+msgid "Level name:"
+msgstr "Szint neve:"
+
+#: scripts/firestaff_dungeon_studio.py:975
+#: scripts/firestaff_artpack_studio.py:1803
+msgid "Language"
+msgstr "Nyelv"
+
+#: scripts/firestaff_dungeon_studio.py:976
+#: scripts/firestaff_artpack_studio.py:1804
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"Nyelv beállítva: {}.\n"
+"Indítsa újra az alkalmazást."
+
+#: scripts/firestaff_dungeon_studio.py:982
+#: scripts/firestaff_dungeon_studio.py:1038
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "{} támogatás egy jövőbeli frissítésben"
+
+#: scripts/firestaff_dungeon_studio.py:991
+msgid "New dungeon created"
+msgstr "Új kazamata létrehozva"
+
+#: scripts/firestaff_dungeon_studio.py:996
+#: scripts/firestaff_dungeon_studio.py:1026
+#: scripts/firestaff_artpack_studio.py:1987
+#: scripts/firestaff_artpack_studio.py:1997
+#: scripts/firestaff_artpack_studio.py:2010
+#: scripts/firestaff_artpack_studio.py:2249
+#: scripts/firestaff_artpack_studio.py:2264
+msgid "All files"
+msgstr "Minden fájl"
+
+#: scripts/firestaff_dungeon_studio.py:1008
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "Megnyitva: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1010
+#: scripts/firestaff_dungeon_studio.py:1020
+#: scripts/firestaff_dungeon_studio.py:1148
+#: scripts/firestaff_dungeon_studio.py:1153
+msgid "Error"
+msgstr "Hiba"
+
+#: scripts/firestaff_dungeon_studio.py:1018
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "Mentve: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1059
+msgid "Width (1-64)"
+msgstr "Szélesség (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1061
+msgid "Height (1-64)"
+msgstr "Magasság (1-64)"
+
+#: scripts/firestaff_dungeon_studio.py:1083
+msgid "Apply"
+msgstr "Alkalmaz"
+
+#: scripts/firestaff_dungeon_studio.py:1101
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "Térképek: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1102
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "Jelenlegi: {} ({}×{})"
+
+#: scripts/firestaff_dungeon_studio.py:1104
+msgid "Tiles:"
+msgstr "Mezők:"
+
+#: scripts/firestaff_dungeon_studio.py:1108
+#, python-brace-format
+msgid "Things: {}"
+msgstr "Tárgyak: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1113
+msgid "Dungeon Statistics"
+msgstr "Kazamata statisztikák"
+
+#: scripts/firestaff_dungeon_studio.py:1122
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "Térkép {} \"{}\": mind falak"
+
+#: scripts/firestaff_dungeon_studio.py:1128
+msgid "Party start is inside a wall"
+msgstr "A csoport indulása falon belül van"
+
+#: scripts/firestaff_dungeon_studio.py:1130
+msgid "Party start is outside map bounds"
+msgstr "A csoport indulása a térkép határain kívül van"
+
+#: scripts/firestaff_dungeon_studio.py:1133
+#: scripts/firestaff_dungeon_studio.py:1135
+msgid "Validation"
+msgstr "Ellenőrzés"
+
+#: scripts/firestaff_dungeon_studio.py:1133
+msgid "Issues found:"
+msgstr "Talált problémák:"
+
+#: scripts/firestaff_dungeon_studio.py:1135
+msgid "Dungeon is valid!"
+msgstr "A kazamata érvényes!"
+
+#: scripts/firestaff_dungeon_studio.py:1142
+#, python-brace-format
+msgid "Import {}"
+msgstr "{} importálása"
+
+#: scripts/firestaff_dungeon_studio.py:1143
+msgid "All"
+msgstr "Mind"
+
+#: scripts/firestaff_dungeon_studio.py:1148
+msgid "Pillow is required for graphics import"
+msgstr "A Pillow szükséges a grafika importálásához"
+
+#: scripts/firestaff_dungeon_studio.py:1153
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "Nem sikerült betölteni a képet: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1156
+msgid "Resize?"
+msgstr "Átméretezés?"
+
+#: scripts/firestaff_dungeon_studio.py:1157
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"A kép {}×{}, várt {}×{}.\n"
+"Átméretezés?"
+
+#: scripts/firestaff_dungeon_studio.py:1169
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{} importálva innen: {}"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "North"
+msgstr "Észak"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "East"
+msgstr "Kelet"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "South"
+msgstr "Dél"
+
+#: scripts/firestaff_dungeon_studio.py:1204
+msgid "West"
+msgstr "Nyugat"
+
+#: scripts/firestaff_dungeon_studio.py:1210
+msgid "Turn L"
+msgstr "Balra"
+
+#: scripts/firestaff_dungeon_studio.py:1212
+msgid "Fwd"
+msgstr "Előre"
+
+#: scripts/firestaff_dungeon_studio.py:1214
+msgid "Back"
+msgstr "Hátra"
+
+#: scripts/firestaff_dungeon_studio.py:1216
+msgid "Turn R"
+msgstr "Jobbra"
+
+#: scripts/firestaff_artpack_studio.py:1646
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+#: scripts/firestaff_artpack_studio.py:1656
+msgid "Ready"
+msgstr "Kész"
+
+#: scripts/firestaff_artpack_studio.py:1657
+msgid "No game data imported"
+msgstr "Nincs játékadat importálva"
+
+#: scripts/firestaff_artpack_studio.py:1678
+msgid "Pack"
+msgstr "Csomag"
+
+#: scripts/firestaff_artpack_studio.py:1680
+#: scripts/firestaff_artpack_studio.py:1714
+msgid "Browse"
+msgstr "Tallózás"
+
+#: scripts/firestaff_artpack_studio.py:1681
+msgid "Open/Create"
+msgstr "Megnyitás/Létrehozás"
+
+#: scripts/firestaff_artpack_studio.py:1683
+msgid "Build Runtime Cache"
+msgstr "Futásidejű gyorsítótár építése"
+
+#: scripts/firestaff_artpack_studio.py:1684
+msgid "Write Receipt"
+msgstr "Nyugta írása"
+
+#: scripts/firestaff_artpack_studio.py:1685
+msgid "Import .fsart"
+msgstr "Importálás .fsart"
+
+#: scripts/firestaff_artpack_studio.py:1686
+msgid "Export .fsart"
+msgstr "Exportálás .fsart"
+
+#: scripts/firestaff_artpack_studio.py:1708
+msgid "V1 assets / V2.2 targets"
+msgstr "V1 eszközök / V2.2 célok"
+
+#: scripts/firestaff_artpack_studio.py:1709
+msgid "Rescan"
+msgstr "Újraszkennelés"
+
+#: scripts/firestaff_artpack_studio.py:1712
+msgid "V1 root"
+msgstr "V1 gyökér"
+
+#: scripts/firestaff_artpack_studio.py:1717
+msgid "Import game data"
+msgstr "Játékadat importálás"
+
+#: scripts/firestaff_artpack_studio.py:1718
+#: scripts/firestaff_artpack_studio.py:2043
+msgid "Warnings"
+msgstr "Figyelmeztetések"
+
+#: scripts/firestaff_artpack_studio.py:1736
+msgid "Current asset"
+msgstr "Aktuális eszköz"
+
+#: scripts/firestaff_artpack_studio.py:1738
+msgid "Category"
+msgstr "Kategória"
+
+#: scripts/firestaff_artpack_studio.py:1741
+msgid "Asset id"
+msgstr "Eszköz-azonosító"
+
+#: scripts/firestaff_artpack_studio.py:1743
+msgid "Generator"
+msgstr "Generátor"
+
+#: scripts/firestaff_artpack_studio.py:1749
+msgid "Load V1/ref"
+msgstr "V1/ref betöltése"
+
+#: scripts/firestaff_artpack_studio.py:1750
+msgid "Load V2.2 target"
+msgstr "V2.2 cél betöltése"
+
+#: scripts/firestaff_artpack_studio.py:1751
+msgid "Import target to pack"
+msgstr "Cél importálása csomagba"
+
+#: scripts/firestaff_artpack_studio.py:1752
+msgid "Save edited target"
+msgstr "Szerkesztett cél mentése"
+
+#: scripts/firestaff_artpack_studio.py:1754
+msgid "AI generation hook"
+msgstr "AI-generálási hook"
+
+#: scripts/firestaff_artpack_studio.py:1758
+msgid "Write prompt"
+msgstr "Prompt írása"
+
+#: scripts/firestaff_artpack_studio.py:1759
+msgid "Run AI command"
+msgstr "AI-parancs futtatása"
+
+#: scripts/firestaff_artpack_studio.py:1762
+msgid "AI selected"
+msgstr "AI kiválasztva"
+
+#: scripts/firestaff_artpack_studio.py:1763
+msgid "AI missing/all"
+msgstr "AI hiányzó/mind"
+
+#: scripts/firestaff_artpack_studio.py:1793
+msgid "Drag-and-drop enabled"
+msgstr "Húzd és ejtsd engedélyezve"
+
+#: scripts/firestaff_artpack_studio.py:1816
+#: scripts/firestaff_artpack_studio.py:2271
+#, python-brace-format
+msgid "Imported .fsart: {}"
+msgstr "Importált .fsart: {}"
+
+#: scripts/firestaff_artpack_studio.py:1821
+#, python-brace-format
+msgid "Loaded dropped target: {}"
+msgstr "Betöltött elejtett cél: {}"
+
+#: scripts/firestaff_artpack_studio.py:1852
+msgid "Select V2.2 modern artpack directory"
+msgstr "V2.2 modern artpack könyvtár kiválasztása"
+
+#: scripts/firestaff_artpack_studio.py:1858
+msgid "Select V1/reference asset root"
+msgstr "V1/referencia eszköz gyökér kiválasztása"
+
+#: scripts/firestaff_artpack_studio.py:1870
+#, python-brace-format
+msgid "Opened {} artpack: {}"
+msgstr "Megnyitva {} artpack: {}"
+
+#: scripts/firestaff_artpack_studio.py:1872
+msgid "Open artpack failed"
+msgstr "Artpack megnyitása sikertelen"
+
+#: scripts/firestaff_artpack_studio.py:1919
+#, python-brace-format
+msgid "Scanned {} V1/reference assets"
+msgstr "{} V1/referencia eszköz átvizsgálva"
+
+#: scripts/firestaff_artpack_studio.py:1986
+msgid "Load V1/reference image"
+msgstr "V1/referencia kép betöltése"
+
+#: scripts/firestaff_artpack_studio.py:1987
+#: scripts/firestaff_artpack_studio.py:1997
+#: scripts/firestaff_artpack_studio.py:2009
+msgid "Images"
+msgstr "Képek"
+
+#: scripts/firestaff_artpack_studio.py:1992
+#, python-brace-format
+msgid "Loaded reference: {}"
+msgstr "Referencia betöltve: {}"
+
+#: scripts/firestaff_artpack_studio.py:1996
+msgid "Load V2.2 target image"
+msgstr "V2.2 célkép betöltése"
+
+#: scripts/firestaff_artpack_studio.py:2002
+#, python-brace-format
+msgid "Loaded target: {}"
+msgstr "Cél betöltve: {}"
+
+#: scripts/firestaff_artpack_studio.py:2006
+msgid "Import original game data"
+msgstr "Eredeti játékadat importálás"
+
+#: scripts/firestaff_artpack_studio.py:2008
+msgid "Game data"
+msgstr "Játékadat"
+
+#: scripts/firestaff_artpack_studio.py:2035
+#, python-brace-format
+msgid "Imported game data: {} ({})"
+msgstr "Importált játékadat: {} ({})"
+
+#: scripts/firestaff_artpack_studio.py:2037
+#, python-brace-format
+msgid "Warnings: {}"
+msgstr "Figyelmeztetések: {}"
+
+#: scripts/firestaff_artpack_studio.py:2039
+msgid "Game data import failed"
+msgstr "Játékadat importálás sikertelen"
+
+#: scripts/firestaff_artpack_studio.py:2043
+msgid "No game data imported."
+msgstr "Nincs játékadat importálva."
+
+#: scripts/firestaff_artpack_studio.py:2048
+msgid "No warnings."
+msgstr "Nincs figyelmeztetés."
+
+#: scripts/firestaff_artpack_studio.py:2049
+msgid "Game data warnings"
+msgstr "Játékadat figyelmeztetések"
+
+#: scripts/firestaff_artpack_studio.py:2074
+msgid "No target image"
+msgstr "Nincs célkép"
+
+#: scripts/firestaff_artpack_studio.py:2074
+msgid "Load or generate a V2.2 target first."
+msgstr "Először töltsön be vagy generáljon egy V2.2 célt."
+
+#: scripts/firestaff_artpack_studio.py:2089
+#, python-brace-format
+msgid "Imported {}/{}"
+msgstr "Importálva {}/{}"
+
+#: scripts/firestaff_artpack_studio.py:2091
+#: scripts/firestaff_artpack_studio.py:2273
+msgid "Import failed"
+msgstr "Importálás sikertelen"
+
+#: scripts/firestaff_artpack_studio.py:2104
+#, python-brace-format
+msgid "Saved edited image: {}"
+msgstr "Szerkesztett kép mentve: {}"
+
+#: scripts/firestaff_artpack_studio.py:2132
+#, python-brace-format
+msgid "Wrote AI prompt: {}"
+msgstr "AI-prompt megírva: {}"
+
+#: scripts/firestaff_artpack_studio.py:2138
+#: scripts/firestaff_artpack_studio.py:2178
+msgid "AI command not configured"
+msgstr "AI-parancs nincs konfigurálva"
+
+#: scripts/firestaff_artpack_studio.py:2139
+msgid "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."
+msgstr "Állítsa be a FIRESTAFF_ARTPACK_AI_COMMAND-ot vagy adjon meg először egy parancssablont."
+
+#: scripts/firestaff_artpack_studio.py:2169
+msgid "AI command generated target image"
+msgstr "Az AI-parancs célképet generált"
+
+#: scripts/firestaff_artpack_studio.py:2171
+msgid "AI generation failed"
+msgstr "AI-generálás sikertelen"
+
+#: scripts/firestaff_artpack_studio.py:2178
+msgid "Enter an AI command template first."
+msgstr "Először adjon meg egy AI-parancssablont."
+
+#: scripts/firestaff_artpack_studio.py:2186
+msgid "AI batch"
+msgstr "AI-köteg"
+
+#: scripts/firestaff_artpack_studio.py:2187
+#, python-brace-format
+msgid "Generate how many assets? {} available."
+msgstr "Hány eszközt generáljon? {} elérhető."
+
+#: scripts/firestaff_artpack_studio.py:2210
+#, python-brace-format
+msgid "AI batch generated/imported {} assets"
+msgstr "AI-köteg generált/importált {} eszközt"
+
+#: scripts/firestaff_artpack_studio.py:2217
+msgid "Validation failed:"
+msgstr "Érvényesítés sikertelen:"
+
+#: scripts/firestaff_artpack_studio.py:2218
+msgid "Validation failed"
+msgstr "Érvényesítés sikertelen"
+
+#: scripts/firestaff_artpack_studio.py:2220
+msgid "Validation passed for required slots"
+msgstr "Érvényesítés sikeres a szükséges slotokhoz"
+
+#: scripts/firestaff_artpack_studio.py:2221
+msgid "Validation passed"
+msgstr "Érvényesítés sikeres"
+
+#: scripts/firestaff_artpack_studio.py:2221
+msgid "Required slots are complete."
+msgstr "A szükséges slotok teljesek."
+
+#: scripts/firestaff_artpack_studio.py:2228
+#, python-brace-format
+msgid "Built V2.2 runtime cache: {} ({} bytes)"
+msgstr "V2.2 futásidejű gyorsítótár felépítve: {} ({} bájt)"
+
+#: scripts/firestaff_artpack_studio.py:2229
+msgid "Runtime cache"
+msgstr "Futásidejű gyorsítótár"
+
+#: scripts/firestaff_artpack_studio.py:2229
+#, python-brace-format
+msgid ""
+"Built {}\n"
+"{} bytes"
+msgstr ""
+"Felépítve {}\n"
+"{} bájt"
+
+#: scripts/firestaff_artpack_studio.py:2231
+msgid "Runtime cache failed"
+msgstr "Futásidejű gyorsítótár sikertelen"
+
+#: scripts/firestaff_artpack_studio.py:2236
+msgid "Reviewer"
+msgstr "Véleményező"
+
+#: scripts/firestaff_artpack_studio.py:2236
+msgid "Reviewer name:"
+msgstr "Véleményező neve:"
+
+#: scripts/firestaff_artpack_studio.py:2239
+#, python-brace-format
+msgid "Wrote receipt: {}"
+msgstr "Nyugta megírva: {}"
+
+#: scripts/firestaff_artpack_studio.py:2241
+msgid "Receipt failed"
+msgstr "Nyugta sikertelen"
+
+#: scripts/firestaff_artpack_studio.py:2247
+msgid "Export Firestaff artpack"
+msgstr "Firestaff artpack exportálás"
+
+#: scripts/firestaff_artpack_studio.py:2249
+#: scripts/firestaff_artpack_studio.py:2264
+msgid "Firestaff artpack"
+msgstr "Firestaff artpack"
+
+#: scripts/firestaff_artpack_studio.py:2255
+#, python-brace-format
+msgid "Exported .fsart: {}"
+msgstr "Exportált .fsart: {}"
+
+#: scripts/firestaff_artpack_studio.py:2257
+msgid "Export failed"
+msgstr "Exportálás sikertelen"
+
+#: scripts/firestaff_artpack_studio.py:2263
+msgid "Import Firestaff artpack"
+msgstr "Firestaff artpack importálás"

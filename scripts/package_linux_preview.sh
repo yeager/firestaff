@@ -10,6 +10,7 @@ RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 README_SRC="$ROOT/README.md"
 BIN_SRC="$BUILD_DIR/firestaff"
 ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio}"
+DUNGEON_STUDIO_BIN_SRC="${DUNGEON_STUDIO_BIN_SRC:-$BUILD_DIR/dungeon-studio-bundle/dist/firestaff_dungeon_studio}"
 OUT_DIR="$ROOT/release"
 PKG_NAME="firestaff"
 SUMMARY="Firestaff preview Dungeon Master engine"
@@ -23,6 +24,10 @@ if [[ ! -x "$ARTPACK_STUDIO_BIN_SRC" ]]; then
   echo "Missing built Artpack Studio launcher: $ARTPACK_STUDIO_BIN_SRC" >&2
   exit 1
 fi
+if [[ ! -x "$DUNGEON_STUDIO_BIN_SRC" ]]; then
+  echo "Missing built Dungeon Studio launcher: $DUNGEON_STUDIO_BIN_SRC" >&2
+  exit 1
+fi
 
 mkdir -p "$OUT_DIR"
 
@@ -32,9 +37,11 @@ rm -rf "$DEB_ROOT"
 mkdir -p "$DEB_ROOT/DEBIAN" "$DEB_ROOT/usr/bin" "$DEB_ROOT/usr/share/doc/$PKG_NAME" "$DEB_ROOT/usr/share/pixmaps" "$DEB_ROOT/usr/share/applications" "$DEB_ROOT/usr/share/firestaff/scripts"
 cp "$BIN_SRC" "$DEB_ROOT/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
+cp "$DUNGEON_STUDIO_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_dungeon_studio"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$DEB_ROOT/usr/share/firestaff/firestaff-startup-intro.ppm"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
+chmod 0755 "$DEB_ROOT/usr/bin/firestaff_dungeon_studio"
 cp "$README_SRC" "$DEB_ROOT/usr/share/doc/$PKG_NAME/README.md"
 cp "$RELEASE_NOTES_SRC" "$DEB_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
 if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
@@ -56,6 +63,16 @@ Type=Application
 Name=Firestaff Artpack Studio
 Comment=Create and edit Firestaff V2.2 artpacks
 Exec=firestaff_artpack_studio
+Icon=firestaff
+Categories=Graphics;Game;RolePlaying;
+Terminal=false
+DESKTOP
+cat > "$DEB_ROOT/usr/share/applications/firestaff-dungeon-studio.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Firestaff Dungeon Studio
+Comment=Create and edit Firestaff dungeon data
+Exec=firestaff_dungeon_studio
 Icon=firestaff
 Categories=Graphics;Game;RolePlaying;
 Terminal=false
@@ -83,9 +100,11 @@ mkdir -p "$RPM_TOP/BUILD" "$RPM_TOP/RPMS" "$RPM_TOP/SOURCES" "$RPM_TOP/SPECS" "$
 mkdir -p "$RPM_ROOT/usr/bin" "$RPM_ROOT/usr/share/doc/$PKG_NAME" "$RPM_ROOT/usr/share/pixmaps" "$RPM_ROOT/usr/share/applications" "$RPM_ROOT/usr/share/firestaff/scripts"
 cp "$BIN_SRC" "$RPM_ROOT/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
+cp "$DUNGEON_STUDIO_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_dungeon_studio"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$RPM_ROOT/usr/share/firestaff/firestaff-startup-intro.ppm"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
+chmod 0755 "$RPM_ROOT/usr/bin/firestaff_dungeon_studio"
 cp "$README_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/README.md"
 cp "$RELEASE_NOTES_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
 RPM_ICON_ENTRY=""
@@ -95,6 +114,7 @@ if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
 fi
 cp "$DEB_ROOT/usr/share/applications/firestaff.desktop" "$RPM_ROOT/usr/share/applications/firestaff.desktop"
 cp "$DEB_ROOT/usr/share/applications/firestaff-artpack-studio.desktop" "$RPM_ROOT/usr/share/applications/firestaff-artpack-studio.desktop"
+cp "$DEB_ROOT/usr/share/applications/firestaff-dungeon-studio.desktop" "$RPM_ROOT/usr/share/applications/firestaff-dungeon-studio.desktop"
 cat > "$RPM_TOP/SPECS/firestaff.spec" <<SPEC
 Name:           $PKG_NAME
 Version:        ${VERSION//-/_}
@@ -110,10 +130,12 @@ $DESCRIPTION
 %files
 /usr/bin/firestaff
 /usr/bin/firestaff_artpack_studio
+/usr/bin/firestaff_dungeon_studio
 /usr/share/doc/$PKG_NAME/README.md
 /usr/share/doc/$PKG_NAME/RELEASE_NOTES.md
 /usr/share/applications/firestaff.desktop
 /usr/share/applications/firestaff-artpack-studio.desktop
+/usr/share/applications/firestaff-dungeon-studio.desktop
 /usr/share/firestaff/firestaff-startup-intro.ppm
 $RPM_ICON_ENTRY
 SPEC

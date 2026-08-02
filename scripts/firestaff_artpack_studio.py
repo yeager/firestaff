@@ -45,6 +45,75 @@ except Exception as exc:  # pragma: no cover - exercised by startup path
         f"Import error: {exc}"
     )
 
+import gettext
+import locale
+
+LANG_META = [
+    ("sv", "\U0001f1f8\U0001f1ea", "Svenska"),
+    ("en", "\U0001f1ec\U0001f1e7", "English"),
+    ("de", "\U0001f1e9\U0001f1ea", "Deutsch"),
+    ("fr", "\U0001f1eb\U0001f1f7", "Français"),
+    ("es", "\U0001f1ea\U0001f1f8", "Español"),
+    ("it", "\U0001f1ee\U0001f1f9", "Italiano"),
+    ("pt", "\U0001f1f5\U0001f1f9", "Português"),
+    ("nl", "\U0001f1f3\U0001f1f1", "Nederlands"),
+    ("da", "\U0001f1e9\U0001f1f0", "Dansk"),
+    ("no", "\U0001f1f3\U0001f1f4", "Norsk"),
+    ("fi", "\U0001f1eb\U0001f1ee", "Suomi"),
+    ("pl", "\U0001f1f5\U0001f1f1", "Polski"),
+    ("cs", "\U0001f1e8\U0001f1ff", "Čeština"),
+    ("hu", "\U0001f1ed\U0001f1fa", "Magyar"),
+    ("ro", "\U0001f1f7\U0001f1f4", "Română"),
+    ("ja", "\U0001f1ef\U0001f1f5", "日本語"),
+    ("ko", "\U0001f1f0\U0001f1f7", "한국어"),
+    ("zh", "\U0001f1e8\U0001f1f3", "中文"),
+    ("ru", "\U0001f1f7\U0001f1fa", "Русский"),
+]
+
+if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+    _LOCALE_DIR = Path(sys._MEIPASS) / "po" / "locale"
+else:
+    _LOCALE_DIR = Path(__file__).resolve().parent.parent / "po" / "locale"
+_current_lang = "en"
+
+def _detect_system_lang() -> str:
+    for env_var in ("LANG", "LC_ALL", "LC_MESSAGES", "LANGUAGE"):
+        val = os.environ.get(env_var, "")
+        if val:
+            code = val.split(".")[0].split("_")[0].lower()
+            if any(lc == code for lc, _, _ in LANG_META):
+                return code
+    if sys.platform == "darwin":
+        try:
+            import subprocess as _sp
+            result = _sp.run(["defaults", "read", "-g", "AppleLanguages"],
+                             capture_output=True, text=True, timeout=2)
+            for line in result.stdout.splitlines():
+                code = line.strip().strip('",').split("-")[0].lower()
+                if any(lc == code for lc, _, _ in LANG_META):
+                    return code
+        except Exception:
+            pass
+    try:
+        loc = locale.getlocale()[0] or locale.getdefaultlocale()[0] or ""
+        code = loc.split("_")[0].lower()
+        if any(lc == code for lc, _, _ in LANG_META):
+            return code
+    except Exception:
+        pass
+    return "en"
+
+def _load_translations(lang):
+    try:
+        return gettext.translation("firestaff_studio", localedir=str(_LOCALE_DIR),
+                                   languages=[lang], fallback=True)
+    except Exception:
+        return gettext.NullTranslations()
+
+_current_lang = _detect_system_lang()
+_trans = _load_translations(_current_lang)
+_ = _trans.gettext
+
 def require_supported_tk(tk_module: Any) -> None:
     """Reject the Apple-supplied Tk 8.5 runtime before it can paint a blank UI."""
     version = tuple(int(part) for part in str(tk_module.TkVersion).split(".")[:2])
@@ -1585,10 +1654,61 @@ class PixelCanvas(ttk.Frame):
             stack.extend(((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)))
 
 
+_CONFIG_DIR = Path.home() / ".firestaff"
+_CONFIG_FILE = _CONFIG_DIR / "studio_settings.json"
+_KEYRING_SERVICE = "FirestaffStudio"
+
+try:
+    import keyring as _keyring
+    _HAS_KEYRING = True
+except ImportError:
+    _HAS_KEYRING = False
+
+
+def _keyring_get(key: str) -> str:
+    if _HAS_KEYRING:
+        try:
+            val = _keyring.get_password(_KEYRING_SERVICE, key)
+            if val:
+                return val
+        except Exception:
+            pass
+    cfg = _load_config()
+    return cfg.get(key, "")
+
+
+def _keyring_set(key: str, value: str) -> None:
+    if _HAS_KEYRING:
+        try:
+            if value:
+                _keyring.set_password(_KEYRING_SERVICE, key, value)
+            else:
+                _keyring.delete_password(_KEYRING_SERVICE, key)
+            return
+        except Exception:
+            pass
+    cfg = _load_config()
+    cfg[key] = value
+    _save_config(cfg)
+
+
+def _load_config() -> dict:
+    try:
+        return json.loads(_CONFIG_FILE.read_text())
+    except Exception:
+        return {}
+
+
+def _save_config(cfg: dict) -> None:
+    _CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    _CONFIG_FILE.write_text(json.dumps(cfg, indent=2))
+
+
 class ArtpackStudio(tk.Tk):
     def __init__(self, initial_game: str, initial_root: Path | None):
         super().__init__()
-        self.title("Firestaff V2.2 Artpack Studio")
+        self._config = _load_config()
+        self.title(_("Firestaff V2.2 Artpack Studio"))
         self.geometry("1280x820")
         self.minsize(1000, 680)
         self.game = tk.StringVar(value=initial_game)
@@ -1597,9 +1717,13 @@ class ArtpackStudio(tk.Tk):
         self.category = tk.StringVar(value="wall_shapes")
         self.asset_id = tk.StringVar(value="wall_d3_carved_hero_01")
         self.generator = tk.StringVar(value="operator_import")
-        self.ai_command = tk.StringVar(value=os.environ.get("FIRESTAFF_ARTPACK_AI_COMMAND", ""))
-        self.status = tk.StringVar(value="Ready")
-        self.stats = tk.StringVar(value="No game data imported")
+        ai_cmd = self._config.get("ai_command", "") or os.environ.get("FIRESTAFF_ARTPACK_AI_COMMAND", "")
+        self.ai_command = tk.StringVar(value=ai_cmd)
+        stored_key = _keyring_get("ai_api_key")
+        if stored_key and not os.environ.get("FIRESTAFF_AI_API_KEY"):
+            os.environ["FIRESTAFF_AI_API_KEY"] = stored_key
+        self.status = tk.StringVar(value=_("Ready"))
+        self.stats = tk.StringVar(value=_("No game data imported"))
         self.pack: Artpack | None = None
         self.reference_assets: list[ReferenceAsset] = []
         self.game_data_result: GameDataImportResult | None = None
@@ -1616,19 +1740,30 @@ class ArtpackStudio(tk.Tk):
     def _build_ui(self) -> None:
         top = ttk.Frame(self, padding=8)
         top.pack(fill="x")
-        ttk.Label(top, text="Game").pack(side="left")
+        ttk.Label(top, text=_("Game")).pack(side="left")
         game_box = ttk.Combobox(top, textvariable=self.game, values=GAMES, width=8, state="readonly")
         game_box.pack(side="left", padx=4)
         game_box.bind("<<ComboboxSelected>>", lambda _e: self.on_game_changed())
-        ttk.Label(top, text="Pack").pack(side="left", padx=(12, 2))
+        ttk.Label(top, text=_("Pack")).pack(side="left", padx=(12, 2))
         ttk.Entry(top, textvariable=self.root, width=70).pack(side="left", fill="x", expand=True)
-        ttk.Button(top, text="Browse", command=self.browse_pack).pack(side="left", padx=4)
-        ttk.Button(top, text="Open/Create", command=self.open_pack).pack(side="left")
-        ttk.Button(top, text="Validate", command=self.validate_pack).pack(side="left", padx=4)
-        ttk.Button(top, text="Build Runtime Cache", command=self.build_runtime_cache).pack(side="left")
-        ttk.Button(top, text="Write Receipt", command=self.write_receipt).pack(side="left")
-        ttk.Button(top, text="Import .fsart", command=self.import_fsart_dialog).pack(side="left", padx=(10, 4))
-        ttk.Button(top, text="Export .fsart", command=self.export_fsart_dialog).pack(side="left")
+        ttk.Button(top, text=_("Browse"), command=self.browse_pack).pack(side="left", padx=4)
+        ttk.Button(top, text=_("Open/Create"), command=self.open_pack).pack(side="left")
+        ttk.Button(top, text=_("Validate"), command=self.validate_pack).pack(side="left", padx=4)
+        ttk.Button(top, text=_("Build Runtime Cache"), command=self.build_runtime_cache).pack(side="left")
+        ttk.Button(top, text=_("Write Receipt"), command=self.write_receipt).pack(side="left")
+        ttk.Button(top, text=_("Import .fsart"), command=self.import_fsart_dialog).pack(side="left", padx=(10, 4))
+        ttk.Button(top, text=_("Export .fsart"), command=self.export_fsart_dialog).pack(side="left")
+        ttk.Button(top, text=_("Settings"), command=self.show_settings).pack(side="left", padx=(10, 4))
+
+        lang_frame = ttk.Frame(top)
+        lang_frame.pack(side="right")
+        self._lang_var = tk.StringVar(value=_current_lang)
+        lang_menu = ttk.Menubutton(lang_frame, textvariable=self._lang_var, width=4)
+        lang_menu.pack(side="right")
+        lm = tk.Menu(lang_menu, tearoff=0)
+        for lc, flag, name in LANG_META:
+            lm.add_command(label=f"{flag} {name}", command=lambda c=lc: self._switch_lang(c))
+        lang_menu["menu"] = lm
 
         main = ttk.PanedWindow(self, orient="horizontal")
         main.pack(fill="both", expand=True, padx=8, pady=8)
@@ -1640,23 +1775,23 @@ class ArtpackStudio(tk.Tk):
         self.load_watermark()
         asset_header = ttk.Frame(left)
         asset_header.pack(fill="x", padx=6, pady=(6, 2))
-        ttk.Label(asset_header, text="V1 assets / V2.2 targets").pack(side="left")
-        ttk.Button(asset_header, text="Rescan", command=self.rescan_reference_assets).pack(side="right")
+        ttk.Label(asset_header, text=_("V1 assets / V2.2 targets")).pack(side="left")
+        ttk.Button(asset_header, text=_("Rescan"), command=self.rescan_reference_assets).pack(side="right")
         ref = ttk.Frame(left)
         ref.pack(fill="x", padx=6, pady=(0, 4))
-        ttk.Label(ref, text="V1 root").pack(side="left")
+        ttk.Label(ref, text=_("V1 root")).pack(side="left")
         ttk.Entry(ref, textvariable=self.reference_root, width=28).pack(side="left", fill="x", expand=True, padx=4)
-        ttk.Button(ref, text="Browse", command=self.browse_reference_root).pack(side="left")
+        ttk.Button(ref, text=_("Browse"), command=self.browse_reference_root).pack(side="left")
         data_buttons = ttk.Frame(left)
         data_buttons.pack(fill="x", padx=6, pady=(0, 4))
-        ttk.Button(data_buttons, text="Import game data", command=self.import_game_data_dialog).pack(side="left", fill="x", expand=True)
-        ttk.Button(data_buttons, text="Warnings", command=self.show_game_data_warnings).pack(side="left", padx=(4, 0))
+        ttk.Button(data_buttons, text=_("Import game data"), command=self.import_game_data_dialog).pack(side="left", fill="x", expand=True)
+        ttk.Button(data_buttons, text=_("Warnings"), command=self.show_game_data_warnings).pack(side="left", padx=(4, 0))
         ttk.Label(left, textvariable=self.stats, background="#101214", foreground="#b8c6ca", wraplength=330).pack(
             fill="x", padx=6, pady=(0, 4)
         )
         self.asset_list = tk.Listbox(
             left,
-            height=22,
+            height=8,
             font=("Menlo", 11),
             background="#15191d",
             foreground="#d9e4e6",
@@ -1668,34 +1803,34 @@ class ArtpackStudio(tk.Tk):
         self.asset_list.pack(fill="both", expand=True, padx=6, pady=(0, 6))
         self.asset_list.bind("<<ListboxSelect>>", lambda _e: self.on_asset_selected())
 
-        form = ttk.LabelFrame(left, text="Current asset", padding=6)
-        form.pack(fill="x", pady=8)
-        ttk.Label(form, text="Category").grid(row=0, column=0, sticky="w")
+        form = ttk.LabelFrame(left, text=_("Current asset"), padding=6)
+        form.pack(fill="x", padx=6, pady=(0, 4))
+        ttk.Label(form, text=_("Category")).grid(row=0, column=0, sticky="w")
         self.category_box = ttk.Combobox(form, textvariable=self.category, values=categories_for_game(self.game.get()), width=28)
         self.category_box.grid(row=0, column=1, sticky="ew")
-        ttk.Label(form, text="Asset id").grid(row=1, column=0, sticky="w")
+        ttk.Label(form, text=_("Asset id")).grid(row=1, column=0, sticky="w")
         ttk.Entry(form, textvariable=self.asset_id).grid(row=1, column=1, sticky="ew")
-        ttk.Label(form, text="Generator").grid(row=2, column=0, sticky="w")
+        ttk.Label(form, text=_("Generator")).grid(row=2, column=0, sticky="w")
         ttk.Entry(form, textvariable=self.generator).grid(row=2, column=1, sticky="ew")
         form.columnconfigure(1, weight=1)
 
         buttons = ttk.Frame(left)
-        buttons.pack(fill="x")
-        ttk.Button(buttons, text="Load V1/ref", command=self.load_source).pack(fill="x", pady=2)
-        ttk.Button(buttons, text="Load V2.2 target", command=self.load_target).pack(fill="x", pady=2)
-        ttk.Button(buttons, text="Import target to pack", command=self.import_target).pack(fill="x", pady=2)
-        ttk.Button(buttons, text="Save edited target", command=self.save_edited_target).pack(fill="x", pady=2)
+        buttons.pack(fill="x", padx=6)
+        ttk.Button(buttons, text=_("Load V1/ref"), command=self.load_source).pack(fill="x", pady=2)
+        ttk.Button(buttons, text=_("Load V2.2 target"), command=self.load_target).pack(fill="x", pady=2)
+        ttk.Button(buttons, text=_("Import target to pack"), command=self.import_target).pack(fill="x", pady=2)
+        ttk.Button(buttons, text=_("Save edited target"), command=self.save_edited_target).pack(fill="x", pady=2)
 
-        ai = ttk.LabelFrame(left, text="AI generation hook", padding=6)
-        ai.pack(fill="x", pady=8)
+        ai = ttk.LabelFrame(left, text=_("AI generation hook"), padding=6)
+        ai.pack(fill="x", padx=6, pady=(4, 6))
         ttk.Entry(ai, textvariable=self.prompt_extra).pack(fill="x", pady=(0, 2))
         ttk.Entry(ai, textvariable=self.ai_command).pack(fill="x")
-        ttk.Button(ai, text="Write prompt", command=self.write_prompt_only).pack(fill="x", pady=2)
-        ttk.Button(ai, text="Run AI command", command=self.run_ai_command).pack(fill="x", pady=2)
+        ttk.Button(ai, text=_("Write prompt"), command=self.write_prompt_only).pack(fill="x", pady=2)
+        ttk.Button(ai, text=_("Run AI command"), command=self.run_ai_command).pack(fill="x", pady=2)
         batch_ai = ttk.Frame(ai)
         batch_ai.pack(fill="x")
-        ttk.Button(batch_ai, text="AI selected", command=self.run_ai_command).pack(side="left", fill="x", expand=True)
-        ttk.Button(batch_ai, text="AI missing/all", command=self.run_ai_batch).pack(side="left", fill="x", expand=True, padx=(4, 0))
+        ttk.Button(batch_ai, text=_("AI selected"), command=self.run_ai_command).pack(side="left", fill="x", expand=True)
+        ttk.Button(batch_ai, text=_("AI missing/all"), command=self.run_ai_batch).pack(side="left", fill="x", expand=True, padx=(4, 0))
 
         right = ttk.PanedWindow(main, orient="vertical")
         main.add(right, weight=1)
@@ -1725,9 +1860,74 @@ class ArtpackStudio(tk.Tk):
             for widget in (self, self.asset_list, self.target_canvas.canvas):
                 widget.tk.call("tkdnd::drop_target", "register", widget, "DND_Files")
                 widget.bind("<<Drop>>", self.on_drop_file)
-            self.log_line("Drag-and-drop enabled")
+            self.log_line(_("Drag-and-drop enabled"))
         except Exception:
             pass
+
+    def _switch_lang(self, lang_code: str) -> None:
+        global _, _trans, _current_lang
+        _current_lang = lang_code
+        _trans = _load_translations(lang_code)
+        _ = _trans.gettext
+        self._lang_var.set(lang_code)
+        messagebox.showinfo(_("Language"),
+                            _("Language set to {}.\nRestart app for full effect.").format(lang_code))
+
+    def show_settings(self) -> None:
+        dlg = tk.Toplevel(self)
+        dlg.title(_("Settings"))
+        dlg.geometry("560x380")
+        dlg.transient(self)
+        dlg.grab_set()
+
+        f = ttk.Frame(dlg, padding=16)
+        f.pack(fill="both", expand=True)
+
+        row = 0
+        ttk.Label(f, text=_("AI Command Template"), font=("", 12, "bold")).grid(
+            row=row, column=0, columnspan=2, sticky="w", pady=(0, 4)); row += 1
+        ttk.Label(f, text=_("Placeholders: {prompt_file} {output} {source} {game} {category} {asset_id} {width} {height}"),
+                  wraplength=500).grid(row=row, column=0, columnspan=2, sticky="w", pady=(0, 8)); row += 1
+
+        cmd_var = tk.StringVar(value=self._config.get("ai_command", ""))
+        ttk.Label(f, text=_("Command")).grid(row=row, column=0, sticky="w", pady=4)
+        ttk.Entry(f, textvariable=cmd_var, width=60).grid(row=row, column=1, sticky="ew", pady=4); row += 1
+
+        ttk.Label(f, text=_("API Key"), font=("", 12, "bold")).grid(
+            row=row, column=0, columnspan=2, sticky="w", pady=(16, 4)); row += 1
+
+        stored_key = _keyring_get("ai_api_key")
+        key_hint = _("Stored securely in system keychain") if _HAS_KEYRING else _("Stored in ~/.firestaff/studio_settings.json")
+        ttk.Label(f, text=key_hint).grid(
+            row=row, column=0, columnspan=2, sticky="w", pady=(0, 8)); row += 1
+
+        key_var = tk.StringVar(value=stored_key)
+        ttk.Label(f, text=_("Key")).grid(row=row, column=0, sticky="w", pady=4)
+        key_entry = ttk.Entry(f, textvariable=key_var, width=60, show="*")
+        key_entry.grid(row=row, column=1, sticky="ew", pady=4); row += 1
+
+        ttk.Label(f, text=_("API Provider")).grid(row=row, column=0, sticky="w", pady=4)
+        provider_var = tk.StringVar(value=self._config.get("ai_provider", ""))
+        ttk.Entry(f, textvariable=provider_var, width=60).grid(row=row, column=1, sticky="ew", pady=4); row += 1
+
+        f.columnconfigure(1, weight=1)
+
+        def save_and_close():
+            self._config["ai_command"] = cmd_var.get()
+            self._config["ai_provider"] = provider_var.get()
+            _keyring_set("ai_api_key", key_var.get())
+            _save_config(self._config)
+            if cmd_var.get():
+                self.ai_command.set(cmd_var.get())
+            if key_var.get():
+                os.environ["FIRESTAFF_AI_API_KEY"] = key_var.get()
+            dlg.destroy()
+            self.status.set(_("Settings saved"))
+
+        btn_row = ttk.Frame(f)
+        btn_row.grid(row=row, column=0, columnspan=2, pady=(16, 0))
+        ttk.Button(btn_row, text=_("Save"), command=save_and_close).pack(side="left", padx=4)
+        ttk.Button(btn_row, text=_("Cancel"), command=dlg.destroy).pack(side="left", padx=4)
 
     def on_drop_file(self, event: tk.Event) -> None:
         raw = getattr(event, "data", "")
@@ -1739,12 +1939,12 @@ class ArtpackStudio(tk.Tk):
             if self.pack:
                 self.pack.import_fsart(path)
                 self.refresh_asset_list()
-                self.log_line(f"Imported .fsart: {path}")
+                self.log_line(_("Imported .fsart: {}").format(path))
             return
         if path.suffix.lower() in IMAGE_EXTENSIONS:
             self.target_path = path
             self.target_canvas.load(path)
-            self.log_line(f"Loaded dropped target: {path}")
+            self.log_line(_("Loaded dropped target: {}").format(path))
             return
         self.import_game_data(path)
 
@@ -1775,13 +1975,13 @@ class ArtpackStudio(tk.Tk):
             self.watermark_photo = None
 
     def browse_pack(self) -> None:
-        selected = filedialog.askdirectory(title="Select V2.2 modern artpack directory")
+        selected = filedialog.askdirectory(title=_("Select V2.2 modern artpack directory"))
         if selected:
             self.root.set(selected)
             self.open_pack()
 
     def browse_reference_root(self) -> None:
-        selected = filedialog.askdirectory(title="Select V1/reference asset root")
+        selected = filedialog.askdirectory(title=_("Select V1/reference asset root"))
         if selected:
             self.reference_root.set(selected)
             self.rescan_reference_assets()
@@ -1793,9 +1993,9 @@ class ArtpackStudio(tk.Tk):
             self.pack.save()
             self.rescan_reference_assets(log=False)
             self.refresh_asset_list()
-            self.log_line(f"Opened {self.pack.game} artpack: {self.pack.root}")
+            self.log_line(_("Opened {} artpack: {}").format(self.pack.game, self.pack.root))
         except Exception as exc:
-            messagebox.showerror("Open artpack failed", str(exc), parent=self)
+            messagebox.showerror(_("Open artpack failed"), str(exc), parent=self)
 
     def refresh_asset_list(self) -> None:
         self.asset_list.delete(0, "end")
@@ -1842,7 +2042,7 @@ class ArtpackStudio(tk.Tk):
         self.reference_assets = scan_reference_assets(self.game.get(), Path(self.reference_root.get()))
         self.refresh_asset_list()
         if log:
-            self.log_line(f"Scanned {len(self.reference_assets)} V1/reference assets")
+            self.log_line(_("Scanned {} V1/reference assets").format(len(self.reference_assets)))
 
     def on_asset_selected(self) -> None:
         if not self.pack:
@@ -1909,31 +2109,31 @@ class ArtpackStudio(tk.Tk):
 
     def load_source(self) -> None:
         path = filedialog.askopenfilename(
-            title="Load V1/reference image",
-            filetypes=[("Images", "*.png *.bmp *.gif *.jpg *.jpeg *.tga *.webp"), ("All files", "*.*")],
+            title=_("Load V1/reference image"),
+            filetypes=[(_("Images"), "*.png *.bmp *.gif *.jpg *.jpeg *.tga *.webp"), (_("All files"), "*.*")],
         )
         if path:
             self.source_path = Path(path)
             self.source_canvas.load(self.source_path)
-            self.log_line(f"Loaded reference: {self.source_path}")
+            self.log_line(_("Loaded reference: {}").format(self.source_path))
 
     def load_target(self) -> None:
         path = filedialog.askopenfilename(
-            title="Load V2.2 target image",
-            filetypes=[("Images", "*.png *.bmp *.gif *.jpg *.jpeg *.tga *.webp"), ("All files", "*.*")],
+            title=_("Load V2.2 target image"),
+            filetypes=[(_("Images"), "*.png *.bmp *.gif *.jpg *.jpeg *.tga *.webp"), (_("All files"), "*.*")],
         )
         if path:
             self.target_path = Path(path)
             self.target_canvas.load(self.target_path)
-            self.log_line(f"Loaded target: {self.target_path}")
+            self.log_line(_("Loaded target: {}").format(self.target_path))
 
     def import_game_data_dialog(self) -> None:
         path = filedialog.askopenfilename(
-            title="Import original game data",
+            title=_("Import original game data"),
             filetypes=[
-                ("Game data", "*.dat *.DAT *.bin *.BIN *.iso *.ISO *.cue *.CUE"),
-                ("Images", "*.png *.bmp *.gif *.jpg *.jpeg *.tga *.webp"),
-                ("All files", "*.*"),
+                (_("Game data"), "*.dat *.DAT *.bin *.BIN *.iso *.ISO *.cue *.CUE"),
+                (_("Images"), "*.png *.bmp *.gif *.jpg *.jpeg *.tga *.webp"),
+                (_("All files"), "*.*"),
             ],
         )
         if path:
@@ -1958,21 +2158,21 @@ class ArtpackStudio(tk.Tk):
                 f"{result.detected_variant}: {len(result.assets)} assets, "
                 f"{warning_count} warnings, {result.file_size:,} bytes"
             )
-            self.log_line(f"Imported game data: {result.path} ({result.detected_variant})")
+            self.log_line(_("Imported game data: {} ({})").format(result.path, result.detected_variant))
             if result.warnings:
-                self.log_line("Warnings: " + "; ".join(result.warnings[:4]))
+                self.log_line(_("Warnings: {}").format("; ".join(result.warnings[:4])))
         except Exception as exc:
-            messagebox.showerror("Game data import failed", str(exc), parent=self)
+            messagebox.showerror(_("Game data import failed"), str(exc), parent=self)
 
     def show_game_data_warnings(self) -> None:
         if not self.game_data_result:
-            messagebox.showinfo("Warnings", "No game data imported.", parent=self)
+            messagebox.showinfo(_("Warnings"), _("No game data imported."), parent=self)
             return
         lines = list(self.game_data_result.warnings)
         lines.extend(f"{asset.asset_id}: {asset.warning}" for asset in self.game_data_assets if asset.warning)
         if not lines:
-            lines = ["No warnings."]
-        messagebox.showwarning("Game data warnings", "\n".join(lines[:80]), parent=self)
+            lines = [_("No warnings.")]
+        messagebox.showwarning(_("Game data warnings"), "\n".join(lines[:80]), parent=self)
 
     def decode_game_data_asset(self, asset: GameDataAsset) -> Image.Image | None:
         return decode_game_data_asset(asset)
@@ -1997,7 +2197,7 @@ class ArtpackStudio(tk.Tk):
         if not self.pack:
             return
         if self.target_canvas.image is None:
-            messagebox.showwarning("No target image", "Load or generate a V2.2 target first.", parent=self)
+            messagebox.showwarning(_("No target image"), _("Load or generate a V2.2 target first."), parent=self)
             return
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
             tmp_path = Path(tmp.name)
@@ -2012,9 +2212,9 @@ class ArtpackStudio(tk.Tk):
             )
             self.target_path = self.pack.asset_path(entry)
             self.refresh_asset_list()
-            self.log_line(f"Imported {entry.category}/{entry.asset_id}")
+            self.log_line(_("Imported {}/{}").format(entry.category, entry.asset_id))
         except Exception as exc:
-            messagebox.showerror("Import failed", str(exc), parent=self)
+            messagebox.showerror(_("Import failed"), str(exc), parent=self)
         finally:
             tmp_path.unlink(missing_ok=True)
 
@@ -2027,7 +2227,7 @@ class ArtpackStudio(tk.Tk):
                 return
             self.target_path = Path(path)
         self.target_canvas.image.save(self.target_path)
-        self.log_line(f"Saved edited image: {self.target_path}")
+        self.log_line(_("Saved edited image: {}").format(self.target_path))
 
     def current_prompt(self) -> str:
         source_note = str(self.source_path) if self.source_path else "no reference image loaded"
@@ -2055,14 +2255,14 @@ class ArtpackStudio(tk.Tk):
         if not path:
             return
         Path(path).write_text(self.current_prompt(), encoding="utf-8")
-        self.log_line(f"Wrote AI prompt: {path}")
+        self.log_line(_("Wrote AI prompt: {}").format(path))
 
     def run_ai_command(self) -> None:
         command = self.ai_command.get().strip()
         if not command:
             messagebox.showinfo(
-                "AI command not configured",
-                "Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first.",
+                _("AI command not configured"),
+                _("Set FIRESTAFF_ARTPACK_AI_COMMAND or enter a command template first."),
                 parent=self,
             )
             return
@@ -2092,16 +2292,16 @@ class ArtpackStudio(tk.Tk):
                 self.target_canvas.load(output)
                 self.target_path = None
                 self.generator.set("ai_command")
-                self.log_line("AI command generated target image")
+                self.log_line(_("AI command generated target image"))
             except Exception as exc:
-                messagebox.showerror("AI generation failed", str(exc), parent=self)
+                messagebox.showerror(_("AI generation failed"), str(exc), parent=self)
 
     def run_ai_batch(self) -> None:
         if not self.pack:
             return
         command = self.ai_command.get().strip()
         if not command:
-            messagebox.showinfo("AI command not configured", "Enter an AI command template first.", parent=self)
+            messagebox.showinfo(_("AI command not configured"), _("Enter an AI command template first."), parent=self)
             return
         rows = [row for row in self.asset_rows if isinstance(row, (ReferenceAsset, GameDataAsset))]
         target_keys = {(entry.category, entry.asset_id) for entry in self.pack.entries()}
@@ -2109,8 +2309,8 @@ class ArtpackStudio(tk.Tk):
         if not missing:
             missing = rows
         limit = simpledialog.askinteger(
-            "AI batch",
-            f"Generate how many assets? {len(missing)} available.",
+            _("AI batch"),
+            _("Generate how many assets? {} available.").format(len(missing)),
             initialvalue=min(10, len(missing)),
             minvalue=1,
             maxvalue=max(1, len(missing)),
@@ -2133,70 +2333,70 @@ class ArtpackStudio(tk.Tk):
             if self.target_canvas.image is not None:
                 self.import_target()
                 generated += 1
-        self.log_line(f"AI batch generated/imported {generated} assets")
+        self.log_line(_("AI batch generated/imported {} assets").format(generated))
 
     def validate_pack(self) -> None:
         if not self.pack:
             return
         errors = self.pack.validate_required()
         if errors:
-            self.log_line("Validation failed:\n" + "\n".join(errors))
-            messagebox.showwarning("Validation failed", "\n".join(errors), parent=self)
+            self.log_line(_("Validation failed:") + "\n" + "\n".join(errors))
+            messagebox.showwarning(_("Validation failed"), "\n".join(errors), parent=self)
         else:
-            self.log_line("Validation passed for required slots")
-            messagebox.showinfo("Validation passed", "Required slots are complete.", parent=self)
+            self.log_line(_("Validation passed for required slots"))
+            messagebox.showinfo(_("Validation passed"), _("Required slots are complete."), parent=self)
 
     def build_runtime_cache(self) -> None:
         if not self.pack:
             return
         try:
             cache = self.pack.build_v22_runtime_cache()
-            self.log_line(f"Built V2.2 runtime cache: {cache} ({cache.stat().st_size:,} bytes)")
-            messagebox.showinfo("Runtime cache", f"Built {cache.name}\n{cache.stat().st_size:,} bytes", parent=self)
+            self.log_line(_("Built V2.2 runtime cache: {} ({} bytes)").format(cache, f"{cache.stat().st_size:,}"))
+            messagebox.showinfo(_("Runtime cache"), _("Built {}\n{} bytes").format(cache.name, f"{cache.stat().st_size:,}"), parent=self)
         except Exception as exc:
-            messagebox.showerror("Runtime cache failed", str(exc), parent=self)
+            messagebox.showerror(_("Runtime cache failed"), str(exc), parent=self)
 
     def write_receipt(self) -> None:
         if not self.pack:
             return
-        reviewer = simpledialog.askstring("Reviewer", "Reviewer name:", parent=self) or os.environ.get("USER", "operator")
+        reviewer = simpledialog.askstring(_("Reviewer"), _("Reviewer name:"), parent=self) or os.environ.get("USER", "operator")
         try:
             path = self.pack.write_finish_receipt(reviewer)
-            self.log_line(f"Wrote receipt: {path}")
+            self.log_line(_("Wrote receipt: {}").format(path))
         except Exception as exc:
-            messagebox.showerror("Receipt failed", str(exc), parent=self)
+            messagebox.showerror(_("Receipt failed"), str(exc), parent=self)
 
     def export_fsart_dialog(self) -> None:
         if not self.pack:
             return
         path = filedialog.asksaveasfilename(
-            title="Export Firestaff artpack",
+            title=_("Export Firestaff artpack"),
             defaultextension=FSART_SUFFIX,
-            filetypes=[("Firestaff artpack", f"*{FSART_SUFFIX}"), ("All files", "*.*")],
+            filetypes=[(_("Firestaff artpack"), f"*{FSART_SUFFIX}"), (_("All files"), "*.*")],
         )
         if not path:
             return
         try:
             out = self.pack.export_fsart(Path(path))
-            self.log_line(f"Exported .fsart: {out}")
+            self.log_line(_("Exported .fsart: {}").format(out))
         except Exception as exc:
-            messagebox.showerror("Export failed", str(exc), parent=self)
+            messagebox.showerror(_("Export failed"), str(exc), parent=self)
 
     def import_fsart_dialog(self) -> None:
         if not self.pack:
             return
         path = filedialog.askopenfilename(
-            title="Import Firestaff artpack",
-            filetypes=[("Firestaff artpack", f"*{FSART_SUFFIX}"), ("All files", "*.*")],
+            title=_("Import Firestaff artpack"),
+            filetypes=[(_("Firestaff artpack"), f"*{FSART_SUFFIX}"), (_("All files"), "*.*")],
         )
         if not path:
             return
         try:
             self.pack.import_fsart(Path(path))
             self.refresh_asset_list()
-            self.log_line(f"Imported .fsart: {path}")
+            self.log_line(_("Imported .fsart: {}").format(path))
         except Exception as exc:
-            messagebox.showerror("Import failed", str(exc), parent=self)
+            messagebox.showerror(_("Import failed"), str(exc), parent=self)
 
 
 def self_test() -> int:

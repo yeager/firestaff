@@ -1,0 +1,375 @@
+# Italian translations for Firestaff Studio.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Italiano\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Dungeon Studio - Menu Bar
+msgid "File"
+msgstr "File"
+
+msgid "Edit"
+msgstr "Modifica"
+
+msgid "Window"
+msgstr "Finestra"
+
+msgid "Help"
+msgstr "Aiuto"
+
+msgid "New"
+msgstr "Nuovo"
+
+msgid "Open .fsdung"
+msgstr "Apri .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Salva .fsdung"
+
+msgid "Save As..."
+msgstr "Salva con nome..."
+
+msgid "Add Level"
+msgstr "Aggiungi livello"
+
+msgid "Map Settings"
+msgstr "Impostazioni mappa"
+
+msgid "Statistics"
+msgstr "Statistiche"
+
+msgid "Validate"
+msgstr "Convalida"
+
+msgid "Test View"
+msgstr "Vista di prova"
+
+msgid "Game"
+msgstr "Gioco"
+
+#. Dungeon Studio - Tools
+msgid "Tools"
+msgstr "Strumenti"
+
+msgid "Select"
+msgstr "Seleziona"
+
+msgid "Paint"
+msgstr "Dipingi"
+
+msgid "Place Thing"
+msgstr "Posiziona oggetto"
+
+msgid "Erase"
+msgstr "Cancella"
+
+msgid "Fill"
+msgstr "Riempi"
+
+msgid "Set Party Start"
+msgstr "Imposta partenza del gruppo"
+
+#. Dungeon Studio - Tile Types
+msgid "Tile Types"
+msgstr "Tipi di casella"
+
+msgid "Wall"
+msgstr "Muro"
+
+msgid "Corridor"
+msgstr "Corridoio"
+
+msgid "Pit"
+msgstr "Fossa"
+
+msgid "Stairs"
+msgstr "Scala"
+
+msgid "Door"
+msgstr "Porta"
+
+msgid "Teleporter"
+msgstr "Teletrasportatore"
+
+msgid "Fake Wall"
+msgstr "Muro finto"
+
+#. Dungeon Studio - Thing Types
+msgid "Thing Type"
+msgstr "Tipo di oggetto"
+
+msgid "Text"
+msgstr "Testo"
+
+msgid "Sensor"
+msgstr "Sensore"
+
+msgid "Group"
+msgstr "Gruppo"
+
+msgid "Weapon"
+msgstr "Arma"
+
+msgid "Armour"
+msgstr "Armatura"
+
+msgid "Scroll"
+msgstr "Pergamena"
+
+msgid "Potion"
+msgstr "Pozione"
+
+msgid "Container"
+msgstr "Contenitore"
+
+msgid "Junk"
+msgstr "Cianfrusaglie"
+
+msgid "Creature"
+msgstr "Creatura"
+
+#. Dungeon Studio - View Menu
+msgid "View"
+msgstr "Visualizza"
+
+msgid "Show Grid"
+msgstr "Mostra griglia"
+
+msgid "Show Things"
+msgstr "Mostra oggetti"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Adatta"
+
+#. Dungeon Studio - Map Properties
+msgid "Map Properties"
+msgstr "Proprietà della mappa"
+
+msgid "Name"
+msgstr "Nome"
+
+msgid "Size"
+msgstr "Dimensione"
+
+msgid "Wall Set"
+msgstr "Set di muri"
+
+msgid "Floor Set"
+msgstr "Set di pavimenti"
+
+msgid "Difficulty"
+msgstr "Difficoltà"
+
+msgid "Tile"
+msgstr "Casella"
+
+msgid "Position"
+msgstr "Posizione"
+
+msgid "Type"
+msgstr "Tipo"
+
+msgid "Things at Tile"
+msgstr "Oggetti nella casella"
+
+msgid "Delete Thing"
+msgstr "Elimina oggetto"
+
+msgid "Thing Properties"
+msgstr "Proprietà dell'oggetto"
+
+msgid "Cell"
+msgstr "Cella"
+
+#. Dungeon Studio - Graphics Override
+msgid "Graphics Override"
+msgstr "Sostituzione grafica"
+
+msgid "Import Entrance Screen..."
+msgstr "Importa schermata d'ingresso..."
+
+msgid "Import Door Animation..."
+msgstr "Importa animazione della porta..."
+
+msgid "Import Champion Portraits..."
+msgstr "Importa ritratti dei campioni..."
+
+msgid "Import Wall Ornaments..."
+msgstr "Importa ornamenti murali..."
+
+msgid "Import Floor Ornaments..."
+msgstr "Importa ornamenti del pavimento..."
+
+#. Dungeon Studio - Test View Controls
+msgid "Turn L"
+msgstr "Gira S"
+
+msgid "Fwd"
+msgstr "Avanti"
+
+msgid "Back"
+msgstr "Indietro"
+
+msgid "Turn R"
+msgstr "Gira D"
+
+msgid "North"
+msgstr "Nord"
+
+msgid "East"
+msgstr "Est"
+
+msgid "South"
+msgstr "Sud"
+
+msgid "West"
+msgstr "Ovest"
+
+msgid "facing"
+msgstr "direzione"
+
+#. Dungeon Studio - Status Messages
+msgid "Coming soon"
+msgstr "In arrivo"
+
+msgid "support coming in a future update"
+msgstr "supporto in un futuro aggiornamento"
+
+msgid "Ready"
+msgstr "Pronto"
+
+msgid "Resize?"
+msgstr "Ridimensionare?"
+
+msgid "Image is"
+msgstr "L'immagine è"
+
+msgid "expected"
+msgstr "previsto"
+
+msgid "Resize to fit?"
+msgstr "Ridimensionare per adattare?"
+
+#. Dungeon Studio - Status Bar
+msgid "Zoom:"
+msgstr "Zoom:"
+
+msgid "Map:"
+msgstr "Mappa:"
+
+msgid "Tiles:"
+msgstr "Caselle:"
+
+msgid "Things:"
+msgstr "Oggetti:"
+
+msgid "Tool:"
+msgstr "Strumento:"
+
+#. Artpack Studio
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "Pacchetto"
+
+msgid "Browse"
+msgstr "Sfoglia"
+
+msgid "Open/Create"
+msgstr "Apri/Crea"
+
+msgid "Build Runtime Cache"
+msgstr "Crea cache di runtime"
+
+msgid "Write Receipt"
+msgstr "Scrivi ricevuta"
+
+msgid "Import .fsart"
+msgstr "Importa .fsart"
+
+msgid "Export .fsart"
+msgstr "Esporta .fsart"
+
+#. Artpack Studio - V1 Assets
+msgid "V1 assets / V2.2 targets"
+msgstr "Asset V1 / Obiettivi V2.2"
+
+msgid "Rescan"
+msgstr "Riscansiona"
+
+msgid "V1 root"
+msgstr "Radice V1"
+
+msgid "Import game data"
+msgstr "Importa dati di gioco"
+
+msgid "Warnings"
+msgstr "Avvisi"
+
+#. Artpack Studio - Current Asset
+msgid "Current asset"
+msgstr "Asset corrente"
+
+msgid "Category"
+msgstr "Categoria"
+
+msgid "Asset id"
+msgstr "ID asset"
+
+msgid "Generator"
+msgstr "Generatore"
+
+#. Artpack Studio - Asset Actions
+msgid "Load V1/ref"
+msgstr "Carica V1/rif"
+
+msgid "Load V2.2 target"
+msgstr "Carica obiettivo V2.2"
+
+msgid "Import target to pack"
+msgstr "Importa obiettivo nel pacchetto"
+
+msgid "Save edited target"
+msgstr "Salva obiettivo modificato"
+
+#. Artpack Studio - Source/Target
+msgid "Source (V1/ref)"
+msgstr "Sorgente (V1/rif)"
+
+msgid "Target (V2.2)"
+msgstr "Obiettivo (V2.2)"
+
+#. Shared
+msgid "Error"
+msgstr "Errore"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Annulla"
+
+msgid "Yes"
+msgstr "Sì"
+
+msgid "No"
+msgstr "No"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

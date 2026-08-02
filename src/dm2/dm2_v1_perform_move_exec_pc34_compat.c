@@ -22,6 +22,8 @@
 
 #include "dm2_v1_perform_move_exec_pc34_compat.h"
 #include "dm2_v1_move_record_to_pc34_compat.h"
+#include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_skproject_core.h"
 
 #include <string.h>
 
@@ -147,8 +149,10 @@ int dm2_v1_perform_move_exec(
      * which classifies the target tile into one of 6 cases.
      * The plan receipt already computed blocking, so we map
      * the plan's target_square_type to a classification. */
-    if (plan->target_square_type == 4) {
+    if (plan->target_square_type == 6) {
         receipt->classification = DM2_MOVE_CLASS_STAIR_UP;
+    } else if (plan->target_square_type == 7) {
+        receipt->classification = DM2_MOVE_CLASS_STAIR_DOWN;
     } else if (plan->target_is_door && plan->target_door_state != 0) {
         receipt->classification = DM2_MOVE_CLASS_DOOR_ATTACK;
     } else if (plan->target_square_type == 8) {
@@ -182,17 +186,54 @@ int dm2_v1_perform_move_exec(
         break;
 
     case DM2_MOVE_CLASS_STAIR_UP:
-        /* Stair: MOVE_RECORD_TO to destination, then 12b4_00af
-         * for level change.  skmove.cpp:420-521 */
+    case DM2_MOVE_CLASS_STAIR_DOWN: {
+        /* Stair: locate destination level via map descriptors, then
+         * 12b4_00af for level change.  skmove.cpp:420-521 */
+        int enter_forward = (receipt->classification == DM2_MOVE_CLASS_STAIR_UP);
+        int16_t locate_delta = enter_forward ? -1 : 1;
+
         receipt->final_x = (int16_t)plan->to_x;
         receipt->final_y = (int16_t)plan->to_y;
         receipt->position_updated = 1;
 
-        /* 12b4_00af stair level change is receipted but fail-closed
-         * until the map stack and stair-type data are bound. */
-        receipt->stair_level_changed = 0;
-        receipt->fail_closed = 1;
+        if (request->map_descriptors && request->map_descriptor_count > 0) {
+            int16_t loc_x = (int16_t)plan->to_x;
+            int16_t loc_y = (int16_t)plan->to_y;
+            DM2_V1_SkprojectLocateOtherLevelReceipt loc_receipt;
+            uint16_t resume_off = 0;
+            uint8_t candidates[DM2_V1_MAX_LEVELS];
+            uint16_t cand_count = 0;
+            for (uint16_t m = 0; m < request->map_descriptor_count; m++) {
+                if ((int16_t)m != (int16_t)plan->current_level)
+                    candidates[cand_count++] = request->map_descriptors[m].map_id;
+            }
+            int dest_map = dm2_v1_skproject_locate_other_level(
+                request->map_descriptors, request->map_descriptor_count,
+                (int16_t)plan->current_level, locate_delta,
+                &loc_x, &loc_y, candidates, cand_count, 0, &resume_off, &loc_receipt);
+            if (dest_map >= 0) {
+                DM2_V1_SkprojectOtherLevelReceipt stair_receipt;
+                dm2_v1_skproject_move_12b4_00af(
+                    enter_forward,
+                    (int16_t)plan->current_level,
+                    (int16_t)plan->to_x, (int16_t)plan->to_y,
+                    (int16_t)dest_map, loc_x, loc_y,
+                    (int16_t)plan->to_dir,
+                    &stair_receipt);
+                if (stair_receipt.valid) {
+                    receipt->stair_level_changed = 1;
+                    receipt->stair_dest_level = dest_map;
+                    receipt->final_x = loc_x;
+                    receipt->final_y = loc_y;
+                    receipt->final_level = (int16_t)dest_map;
+                }
+            }
+        }
+        if (!receipt->stair_level_changed) {
+            receipt->fail_closed = 1;
+        }
         break;
+    }
 
     case DM2_MOVE_CLASS_DOOR_ATTACK:
         /* Door attack: select front champions, compute attack power,
@@ -210,19 +251,52 @@ int dm2_v1_perform_move_exec(
     case DM2_MOVE_CLASS_BLOCKED:
         break;
 
-    case DM2_MOVE_CLASS_TELEPORTER:
+    case DM2_MOVE_CLASS_TELEPORTER: {
         /* Teleporter: GET_TELEPORTER_DETAIL + map_3BF83.
          * skmove.cpp:559-576 */
+        DM2_V1_SkprojectTeleporterDetail detail;
+        DM2_V1_SkprojectGetTeleporterDetailReceipt tp_receipt;
+        const uint8_t *src_tiles;
+        const uint8_t *dst_tiles;
+        int16_t sw, sh, dw, dh;
+        int tp_ok = 0;
+
         receipt->final_x = (int16_t)plan->to_x;
         receipt->final_y = (int16_t)plan->to_y;
         receipt->position_updated = 1;
 
-        /* Teleporter resolution requires live dungeon data
-         * (sensor records on the tile).  Fail-closed until
-         * the teleporter sensor walk is bound. */
-        receipt->teleporter_resolved = 0;
-        receipt->fail_closed = 1;
+        if (dungeon && pool_set) {
+            src_tiles = dm2_v1_dungeon_level_tile_data(
+                dungeon, plan->current_level, &sw, &sh);
+            if (src_tiles) {
+                dst_tiles = src_tiles;
+                dw = sw;
+                dh = sh;
+                tp_ok = dm2_v1_skproject_get_teleporter_detail(
+                    (int16_t)plan->to_x, (int16_t)plan->to_y,
+                    src_tiles, sw, sh, pool_set,
+                    (uint8_t)plan->current_level,
+                    dst_tiles, dw, dh,
+                    &detail, &tp_receipt);
+                if (tp_ok) {
+                    receipt->teleporter_resolved = 1;
+                    receipt->teleporter_dest_x = (int)detail.b_02;
+                    receipt->teleporter_dest_y = (int)detail.b_03;
+                    receipt->teleporter_dest_map = (int)detail.b_04;
+                    receipt->final_x = (int16_t)detail.b_02;
+                    receipt->final_y = (int16_t)detail.b_03;
+                    if (detail.b_04 != (uint8_t)plan->current_level) {
+                        receipt->final_level = (int16_t)detail.b_04;
+                    }
+                }
+            }
+        }
+        if (!tp_ok) {
+            receipt->teleporter_resolved = 0;
+            receipt->fail_closed = 1;
+        }
         break;
+    }
     }
 
     return receipt->position_updated ? 1 : 0;

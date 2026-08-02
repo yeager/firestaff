@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02\n"
+"Language: cs\n"
+"Language-Team: Čeština\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "File"
+msgstr "Soubor"
+
+msgid "Edit"
+msgstr "Úpravy"
+
+msgid "Window"
+msgstr "Okno"
+
+msgid "Help"
+msgstr "Nápověda"
+
+msgid "New"
+msgstr "Nový"
+
+msgid "Open .fsdung"
+msgstr "Otevřít .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Uložit .fsdung"
+
+msgid "Save As..."
+msgstr "Uložit jako..."
+
+msgid "Add Level"
+msgstr "Přidat úroveň"
+
+msgid "Map Settings"
+msgstr "Nastavení mapy"
+
+msgid "Statistics"
+msgstr "Statistiky"
+
+msgid "Validate"
+msgstr "Ověřit"
+
+msgid "Test View"
+msgstr "Testovací pohled"
+
+msgid "Game"
+msgstr "Hra"
+
+msgid "Tools"
+msgstr "Nástroje"
+
+msgid "Select"
+msgstr "Vybrat"
+
+msgid "Paint"
+msgstr "Malovat"
+
+msgid "Place Thing"
+msgstr "Umístit objekt"
+
+msgid "Erase"
+msgstr "Smazat"
+
+msgid "Fill"
+msgstr "Vyplnit"
+
+msgid "Set Party Start"
+msgstr "Nastavit start družiny"
+
+msgid "Tile Types"
+msgstr "Typy dlaždic"
+
+msgid "Wall"
+msgstr "Zeď"
+
+msgid "Corridor"
+msgstr "Chodba"
+
+msgid "Pit"
+msgstr "Jáma"
+
+msgid "Stairs"
+msgstr "Schody"
+
+msgid "Door"
+msgstr "Dveře"
+
+msgid "Teleporter"
+msgstr "Teleporter"
+
+msgid "Fake Wall"
+msgstr "Falešná zeď"
+
+msgid "Thing Type"
+msgstr "Typ objektu"
+
+msgid "Text"
+msgstr "Text"
+
+msgid "Sensor"
+msgstr "Senzor"
+
+msgid "Group"
+msgstr "Skupina"
+
+msgid "Weapon"
+msgstr "Zbraň"
+
+msgid "Armour"
+msgstr "Brnění"
+
+msgid "Scroll"
+msgstr "Svitek"
+
+msgid "Potion"
+msgstr "Lektvar"
+
+msgid "Container"
+msgstr "Nádoba"
+
+msgid "Junk"
+msgstr "Haraburdí"
+
+msgid "Creature"
+msgstr "Stvoření"
+
+msgid "View"
+msgstr "Zobrazení"
+
+msgid "Show Grid"
+msgstr "Zobrazit mřížku"
+
+msgid "Show Things"
+msgstr "Zobrazit objekty"
+
+msgid "Zoom"
+msgstr "Přiblížení"
+
+msgid "Fit"
+msgstr "Přizpůsobit"
+
+msgid "Map Properties"
+msgstr "Vlastnosti mapy"
+
+msgid "Name"
+msgstr "Název"
+
+msgid "Size"
+msgstr "Velikost"
+
+msgid "Wall Set"
+msgstr "Sada zdí"
+
+msgid "Floor Set"
+msgstr "Sada podlah"
+
+msgid "Difficulty"
+msgstr "Obtížnost"
+
+msgid "Tile"
+msgstr "Dlaždice"
+
+msgid "Position"
+msgstr "Pozice"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Things at Tile"
+msgstr "Objekty na dlaždici"
+
+msgid "Delete Thing"
+msgstr "Smazat objekt"
+
+msgid "Thing Properties"
+msgstr "Vlastnosti objektu"
+
+msgid "Cell"
+msgstr "Buňka"
+
+msgid "Graphics Override"
+msgstr "Přepsání grafiky"
+
+msgid "Import Entrance Screen..."
+msgstr "Importovat vstupní obrazovku..."
+
+msgid "Import Door Animation..."
+msgstr "Importovat animaci dveří..."
+
+msgid "Import Champion Portraits..."
+msgstr "Importovat portréty hrdinů..."
+
+msgid "Import Wall Ornaments..."
+msgstr "Importovat ozdoby zdí..."
+
+msgid "Import Floor Ornaments..."
+msgstr "Importovat ozdoby podlah..."
+
+msgid "Turn L"
+msgstr "Otočit L"
+
+msgid "Fwd"
+msgstr "Vpřed"
+
+msgid "Back"
+msgstr "Vzad"
+
+msgid "Turn R"
+msgstr "Otočit P"
+
+msgid "North"
+msgstr "Sever"
+
+msgid "East"
+msgstr "Východ"
+
+msgid "South"
+msgstr "Jih"
+
+msgid "West"
+msgstr "Západ"
+
+msgid "facing"
+msgstr "směr"
+
+msgid "Coming soon"
+msgstr "Již brzy"
+
+msgid "support coming in a future update"
+msgstr "podpora přijde v budoucí aktualizaci"
+
+msgid "Ready"
+msgstr "Připraveno"
+
+msgid "Resize?"
+msgstr "Změnit velikost?"
+
+msgid "Image is"
+msgstr "Obrázek je"
+
+msgid "expected"
+msgstr "očekáváno"
+
+msgid "Resize to fit?"
+msgstr "Změnit velikost pro přizpůsobení?"
+
+msgid "Zoom:"
+msgstr "Přiblížení:"
+
+msgid "Map:"
+msgstr "Mapa:"
+
+msgid "Tiles:"
+msgstr "Dlaždice:"
+
+msgid "Things:"
+msgstr "Objekty:"
+
+msgid "Tool:"
+msgstr "Nástroj:"
+
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "Balíček"
+
+msgid "Browse"
+msgstr "Procházet"
+
+msgid "Open/Create"
+msgstr "Otevřít/Vytvořit"
+
+msgid "Build Runtime Cache"
+msgstr "Sestavit mezipaměť"
+
+msgid "Write Receipt"
+msgstr "Zapsat potvrzení"
+
+msgid "Import .fsart"
+msgstr "Importovat .fsart"
+
+msgid "Export .fsart"
+msgstr "Exportovat .fsart"
+
+msgid "V1 assets / V2.2 targets"
+msgstr "V1 prostředky / V2.2 cíle"
+
+msgid "Rescan"
+msgstr "Znovu prohledat"
+
+msgid "V1 root"
+msgstr "V1 kořen"
+
+msgid "Import game data"
+msgstr "Importovat herní data"
+
+msgid "Warnings"
+msgstr "Varování"
+
+msgid "Current asset"
+msgstr "Aktuální prostředek"
+
+msgid "Category"
+msgstr "Kategorie"
+
+msgid "Asset id"
+msgstr "ID prostředku"
+
+msgid "Generator"
+msgstr "Generátor"
+
+msgid "Load V1/ref"
+msgstr "Načíst V1/ref"
+
+msgid "Load V2.2 target"
+msgstr "Načíst V2.2 cíl"
+
+msgid "Import target to pack"
+msgstr "Importovat cíl do balíčku"
+
+msgid "Save edited target"
+msgstr "Uložit upravený cíl"
+
+msgid "Source (V1/ref)"
+msgstr "Zdroj (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "Cíl (V2.2)"
+
+msgid "Error"
+msgstr "Chyba"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Zrušit"
+
+msgid "Yes"
+msgstr "Ano"
+
+msgid "No"
+msgstr "Ne"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

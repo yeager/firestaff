@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02\n"
+"Language: ja\n"
+"Language-Team: 日本語\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "File"
+msgstr "ファイル"
+
+msgid "Edit"
+msgstr "編集"
+
+msgid "Window"
+msgstr "ウィンドウ"
+
+msgid "Help"
+msgstr "ヘルプ"
+
+msgid "New"
+msgstr "新規"
+
+msgid "Open .fsdung"
+msgstr ".fsdungを開く"
+
+msgid "Save .fsdung"
+msgstr ".fsdungを保存"
+
+msgid "Save As..."
+msgstr "名前を付けて保存..."
+
+msgid "Add Level"
+msgstr "レベルを追加"
+
+msgid "Map Settings"
+msgstr "マップ設定"
+
+msgid "Statistics"
+msgstr "統計"
+
+msgid "Validate"
+msgstr "検証"
+
+msgid "Test View"
+msgstr "テストビュー"
+
+msgid "Game"
+msgstr "ゲーム"
+
+msgid "Tools"
+msgstr "ツール"
+
+msgid "Select"
+msgstr "選択"
+
+msgid "Paint"
+msgstr "ペイント"
+
+msgid "Place Thing"
+msgstr "オブジェクトを配置"
+
+msgid "Erase"
+msgstr "消去"
+
+msgid "Fill"
+msgstr "塗りつぶし"
+
+msgid "Set Party Start"
+msgstr "パーティ開始位置を設定"
+
+msgid "Tile Types"
+msgstr "タイルの種類"
+
+msgid "Wall"
+msgstr "壁"
+
+msgid "Corridor"
+msgstr "通路"
+
+msgid "Pit"
+msgstr "落とし穴"
+
+msgid "Stairs"
+msgstr "階段"
+
+msgid "Door"
+msgstr "ドア"
+
+msgid "Teleporter"
+msgstr "テレポーター"
+
+msgid "Fake Wall"
+msgstr "偽の壁"
+
+msgid "Thing Type"
+msgstr "オブジェクトの種類"
+
+msgid "Text"
+msgstr "テキスト"
+
+msgid "Sensor"
+msgstr "センサー"
+
+msgid "Group"
+msgstr "グループ"
+
+msgid "Weapon"
+msgstr "武器"
+
+msgid "Armour"
+msgstr "防具"
+
+msgid "Scroll"
+msgstr "巻物"
+
+msgid "Potion"
+msgstr "ポーション"
+
+msgid "Container"
+msgstr "容器"
+
+msgid "Junk"
+msgstr "ガラクタ"
+
+msgid "Creature"
+msgstr "クリーチャー"
+
+msgid "View"
+msgstr "表示"
+
+msgid "Show Grid"
+msgstr "グリッドを表示"
+
+msgid "Show Things"
+msgstr "オブジェクトを表示"
+
+msgid "Zoom"
+msgstr "ズーム"
+
+msgid "Fit"
+msgstr "フィット"
+
+msgid "Map Properties"
+msgstr "マップのプロパティ"
+
+msgid "Name"
+msgstr "名前"
+
+msgid "Size"
+msgstr "サイズ"
+
+msgid "Wall Set"
+msgstr "壁セット"
+
+msgid "Floor Set"
+msgstr "床セット"
+
+msgid "Difficulty"
+msgstr "難易度"
+
+msgid "Tile"
+msgstr "タイル"
+
+msgid "Position"
+msgstr "位置"
+
+msgid "Type"
+msgstr "タイプ"
+
+msgid "Things at Tile"
+msgstr "タイル上のオブジェクト"
+
+msgid "Delete Thing"
+msgstr "オブジェクトを削除"
+
+msgid "Thing Properties"
+msgstr "オブジェクトのプロパティ"
+
+msgid "Cell"
+msgstr "セル"
+
+msgid "Graphics Override"
+msgstr "グラフィックの上書き"
+
+msgid "Import Entrance Screen..."
+msgstr "入口画面をインポート..."
+
+msgid "Import Door Animation..."
+msgstr "ドアアニメーションをインポート..."
+
+msgid "Import Champion Portraits..."
+msgstr "チャンピオンの肖像をインポート..."
+
+msgid "Import Wall Ornaments..."
+msgstr "壁の装飾をインポート..."
+
+msgid "Import Floor Ornaments..."
+msgstr "床の装飾をインポート..."
+
+msgid "Turn L"
+msgstr "左回転"
+
+msgid "Fwd"
+msgstr "前進"
+
+msgid "Back"
+msgstr "後退"
+
+msgid "Turn R"
+msgstr "右回転"
+
+msgid "North"
+msgstr "北"
+
+msgid "East"
+msgstr "東"
+
+msgid "South"
+msgstr "南"
+
+msgid "West"
+msgstr "西"
+
+msgid "facing"
+msgstr "方向"
+
+msgid "Coming soon"
+msgstr "近日公開"
+
+msgid "support coming in a future update"
+msgstr "今後のアップデートで対応予定"
+
+msgid "Ready"
+msgstr "準備完了"
+
+msgid "Resize?"
+msgstr "リサイズしますか？"
+
+msgid "Image is"
+msgstr "画像は"
+
+msgid "expected"
+msgstr "期待値"
+
+msgid "Resize to fit?"
+msgstr "サイズを合わせますか？"
+
+msgid "Zoom:"
+msgstr "ズーム:"
+
+msgid "Map:"
+msgstr "マップ:"
+
+msgid "Tiles:"
+msgstr "タイル:"
+
+msgid "Things:"
+msgstr "オブジェクト:"
+
+msgid "Tool:"
+msgstr "ツール:"
+
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "パック"
+
+msgid "Browse"
+msgstr "参照"
+
+msgid "Open/Create"
+msgstr "開く/作成"
+
+msgid "Build Runtime Cache"
+msgstr "ランタイムキャッシュを構築"
+
+msgid "Write Receipt"
+msgstr "レシートを書き込み"
+
+msgid "Import .fsart"
+msgstr ".fsartをインポート"
+
+msgid "Export .fsart"
+msgstr ".fsartをエクスポート"
+
+msgid "V1 assets / V2.2 targets"
+msgstr "V1アセット / V2.2ターゲット"
+
+msgid "Rescan"
+msgstr "再スキャン"
+
+msgid "V1 root"
+msgstr "V1ルート"
+
+msgid "Import game data"
+msgstr "ゲームデータをインポート"
+
+msgid "Warnings"
+msgstr "警告"
+
+msgid "Current asset"
+msgstr "現在のアセット"
+
+msgid "Category"
+msgstr "カテゴリ"
+
+msgid "Asset id"
+msgstr "アセットID"
+
+msgid "Generator"
+msgstr "ジェネレーター"
+
+msgid "Load V1/ref"
+msgstr "V1/refを読み込み"
+
+msgid "Load V2.2 target"
+msgstr "V2.2ターゲットを読み込み"
+
+msgid "Import target to pack"
+msgstr "ターゲットをパックにインポート"
+
+msgid "Save edited target"
+msgstr "編集したターゲットを保存"
+
+msgid "Source (V1/ref)"
+msgstr "ソース (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "ターゲット (V2.2)"
+
+msgid "Error"
+msgstr "エラー"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "キャンセル"
+
+msgid "Yes"
+msgstr "はい"
+
+msgid "No"
+msgstr "いいえ"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

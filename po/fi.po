@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02\n"
+"Language: fi\n"
+"Language-Team: Suomi\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "File"
+msgstr "Tiedosto"
+
+msgid "Edit"
+msgstr "Muokkaa"
+
+msgid "Window"
+msgstr "Ikkuna"
+
+msgid "Help"
+msgstr "Ohje"
+
+msgid "New"
+msgstr "Uusi"
+
+msgid "Open .fsdung"
+msgstr "Avaa .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Tallenna .fsdung"
+
+msgid "Save As..."
+msgstr "Tallenna nimellä..."
+
+msgid "Add Level"
+msgstr "Lisää taso"
+
+msgid "Map Settings"
+msgstr "Kartan asetukset"
+
+msgid "Statistics"
+msgstr "Tilastot"
+
+msgid "Validate"
+msgstr "Vahvista"
+
+msgid "Test View"
+msgstr "Testinäkymä"
+
+msgid "Game"
+msgstr "Peli"
+
+msgid "Tools"
+msgstr "Työkalut"
+
+msgid "Select"
+msgstr "Valitse"
+
+msgid "Paint"
+msgstr "Maalaa"
+
+msgid "Place Thing"
+msgstr "Aseta esine"
+
+msgid "Erase"
+msgstr "Pyyhi"
+
+msgid "Fill"
+msgstr "Täytä"
+
+msgid "Set Party Start"
+msgstr "Aseta aloituspaikka"
+
+msgid "Tile Types"
+msgstr "Ruututyypit"
+
+msgid "Wall"
+msgstr "Seinä"
+
+msgid "Corridor"
+msgstr "Käytävä"
+
+msgid "Pit"
+msgstr "Kuoppa"
+
+msgid "Stairs"
+msgstr "Portaat"
+
+msgid "Door"
+msgstr "Ovi"
+
+msgid "Teleporter"
+msgstr "Teleporttaaja"
+
+msgid "Fake Wall"
+msgstr "Valeseinä"
+
+msgid "Thing Type"
+msgstr "Esinetyyppi"
+
+msgid "Text"
+msgstr "Teksti"
+
+msgid "Sensor"
+msgstr "Sensori"
+
+msgid "Group"
+msgstr "Ryhmä"
+
+msgid "Weapon"
+msgstr "Ase"
+
+msgid "Armour"
+msgstr "Haarniska"
+
+msgid "Scroll"
+msgstr "Käärö"
+
+msgid "Potion"
+msgstr "Juoma"
+
+msgid "Container"
+msgstr "Säiliö"
+
+msgid "Junk"
+msgstr "Romu"
+
+msgid "Creature"
+msgstr "Otus"
+
+msgid "View"
+msgstr "Näkymä"
+
+msgid "Show Grid"
+msgstr "Näytä ruudukko"
+
+msgid "Show Things"
+msgstr "Näytä esineet"
+
+msgid "Zoom"
+msgstr "Lähennä"
+
+msgid "Fit"
+msgstr "Sovita"
+
+msgid "Map Properties"
+msgstr "Kartan ominaisuudet"
+
+msgid "Name"
+msgstr "Nimi"
+
+msgid "Size"
+msgstr "Koko"
+
+msgid "Wall Set"
+msgstr "Seinäsarja"
+
+msgid "Floor Set"
+msgstr "Lattiasarja"
+
+msgid "Difficulty"
+msgstr "Vaikeustaso"
+
+msgid "Tile"
+msgstr "Ruutu"
+
+msgid "Position"
+msgstr "Sijainti"
+
+msgid "Type"
+msgstr "Tyyppi"
+
+msgid "Things at Tile"
+msgstr "Esineet ruudussa"
+
+msgid "Delete Thing"
+msgstr "Poista esine"
+
+msgid "Thing Properties"
+msgstr "Esineen ominaisuudet"
+
+msgid "Cell"
+msgstr "Solu"
+
+msgid "Graphics Override"
+msgstr "Grafiikan ohitus"
+
+msgid "Import Entrance Screen..."
+msgstr "Tuo sisäänkäyntinäyttö..."
+
+msgid "Import Door Animation..."
+msgstr "Tuo ovianimaatio..."
+
+msgid "Import Champion Portraits..."
+msgstr "Tuo sankarien muotokuvat..."
+
+msgid "Import Wall Ornaments..."
+msgstr "Tuo seinäkoristeet..."
+
+msgid "Import Floor Ornaments..."
+msgstr "Tuo lattiakoristeet..."
+
+msgid "Turn L"
+msgstr "Käänny V"
+
+msgid "Fwd"
+msgstr "Eteen"
+
+msgid "Back"
+msgstr "Taakse"
+
+msgid "Turn R"
+msgstr "Käänny O"
+
+msgid "North"
+msgstr "Pohjoinen"
+
+msgid "East"
+msgstr "Itä"
+
+msgid "South"
+msgstr "Etelä"
+
+msgid "West"
+msgstr "Länsi"
+
+msgid "facing"
+msgstr "suunta"
+
+msgid "Coming soon"
+msgstr "Tulossa pian"
+
+msgid "support coming in a future update"
+msgstr "tuki tulossa tulevassa päivityksessä"
+
+msgid "Ready"
+msgstr "Valmis"
+
+msgid "Resize?"
+msgstr "Muuta kokoa?"
+
+msgid "Image is"
+msgstr "Kuva on"
+
+msgid "expected"
+msgstr "odotettu"
+
+msgid "Resize to fit?"
+msgstr "Muuta koko sopivaksi?"
+
+msgid "Zoom:"
+msgstr "Zoom:"
+
+msgid "Map:"
+msgstr "Kartta:"
+
+msgid "Tiles:"
+msgstr "Ruudut:"
+
+msgid "Things:"
+msgstr "Esineet:"
+
+msgid "Tool:"
+msgstr "Työkalu:"
+
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "Paketti"
+
+msgid "Browse"
+msgstr "Selaa"
+
+msgid "Open/Create"
+msgstr "Avaa/Luo"
+
+msgid "Build Runtime Cache"
+msgstr "Rakenna ajonaikainen välimuisti"
+
+msgid "Write Receipt"
+msgstr "Kirjoita kuitti"
+
+msgid "Import .fsart"
+msgstr "Tuo .fsart"
+
+msgid "Export .fsart"
+msgstr "Vie .fsart"
+
+msgid "V1 assets / V2.2 targets"
+msgstr "V1-resurssit / V2.2-kohteet"
+
+msgid "Rescan"
+msgstr "Skannaa uudelleen"
+
+msgid "V1 root"
+msgstr "V1-juuri"
+
+msgid "Import game data"
+msgstr "Tuo pelidata"
+
+msgid "Warnings"
+msgstr "Varoitukset"
+
+msgid "Current asset"
+msgstr "Nykyinen resurssi"
+
+msgid "Category"
+msgstr "Kategoria"
+
+msgid "Asset id"
+msgstr "Resurssi-ID"
+
+msgid "Generator"
+msgstr "Generaattori"
+
+msgid "Load V1/ref"
+msgstr "Lataa V1/ref"
+
+msgid "Load V2.2 target"
+msgstr "Lataa V2.2-kohde"
+
+msgid "Import target to pack"
+msgstr "Tuo kohde pakettiin"
+
+msgid "Save edited target"
+msgstr "Tallenna muokattu kohde"
+
+msgid "Source (V1/ref)"
+msgstr "Lähde (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "Kohde (V2.2)"
+
+msgid "Error"
+msgstr "Virhe"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Peruuta"
+
+msgid "Yes"
+msgstr "Kyllä"
+
+msgid "No"
+msgstr "Ei"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

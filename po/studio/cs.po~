@@ -1,0 +1,274 @@
+# Firestaff Studio Czech translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-02 18:49+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Czech\n"
+"Language: cs\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Game"
+msgstr "Hra"
+
+msgid "New"
+msgstr "Nový"
+
+msgid "Open .fsdung"
+msgstr "Otevřít .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Uložit .fsdung"
+
+msgid "Save As..."
+msgstr "Uložit jako..."
+
+msgid "Add Level"
+msgstr "Přidat úroveň"
+
+msgid "Map Settings"
+msgstr "Nastavení mapy"
+
+msgid "Statistics"
+msgstr "Statistiky"
+
+msgid "Validate"
+msgstr "Ověřit"
+
+msgid "Test View"
+msgstr "Testovací pohled"
+
+msgid "Tools"
+msgstr "Nástroje"
+
+msgid "Select"
+msgstr "Vybrat"
+
+msgid "Paint"
+msgstr "Malovat"
+
+msgid "Place Thing"
+msgstr "Umístit objekt"
+
+msgid "Erase"
+msgstr "Smazat"
+
+msgid "Fill"
+msgstr "Vyplnit"
+
+msgid "Set Party Start"
+msgstr "Nastavit start skupiny"
+
+msgid "Tile Types"
+msgstr "Typy dlaždic"
+
+msgid "Thing Type"
+msgstr "Typ objektu"
+
+msgid "View"
+msgstr "Zobrazení"
+
+msgid "Show Grid"
+msgstr "Zobrazit mřížku"
+
+msgid "Show Things"
+msgstr "Zobrazit objekty"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Přizpůsobit"
+
+msgid "Map Properties"
+msgstr "Vlastnosti mapy"
+
+msgid "Name"
+msgstr "Název"
+
+msgid "Size"
+msgstr "Velikost"
+
+msgid "Wall Set"
+msgstr "Sada zdí"
+
+msgid "Floor Set"
+msgstr "Sada podlah"
+
+msgid "Difficulty"
+msgstr "Obtížnost"
+
+msgid "Tile"
+msgstr "Dlaždice"
+
+msgid "Position"
+msgstr "Pozice"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Things at Tile"
+msgstr "Objekty na dlaždici"
+
+msgid "Delete Thing"
+msgstr "Smazat objekt"
+
+msgid "Thing Properties"
+msgstr "Vlastnosti objektu"
+
+msgid "Cell"
+msgstr "Buňka"
+
+msgid "Graphics Override"
+msgstr "Přepsání grafiky"
+
+#, python-brace-format
+msgid "Import {}..."
+msgstr "Importovat {}..."
+
+msgid "Coming soon"
+msgstr "Již brzy"
+
+msgid "New Level"
+msgstr "Nová úroveň"
+
+msgid "Level name:"
+msgstr "Název úrovně:"
+
+msgid "Language"
+msgstr "Jazyk"
+
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"Jazyk nastaven na {}.\n"
+"Restartujte aplikaci."
+
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "Podpora {} v budoucí aktualizaci"
+
+msgid "New dungeon created"
+msgstr "Nový dungeon vytvořen"
+
+msgid "All files"
+msgstr "Všechny soubory"
+
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "Otevřeno: {}"
+
+msgid "Error"
+msgstr "Chyba"
+
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "Uloženo: {}"
+
+msgid "Width (1-64)"
+msgstr "Šířka (1-64)"
+
+msgid "Height (1-64)"
+msgstr "Výška (1-64)"
+
+msgid "Apply"
+msgstr "Použít"
+
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "Mapy: {}"
+
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "Aktuální: {} ({}×{})"
+
+msgid "Tiles:"
+msgstr "Dlaždice:"
+
+#, python-brace-format
+msgid "Things: {}"
+msgstr "Objekty: {}"
+
+msgid "Dungeon Statistics"
+msgstr "Statistiky dungeonu"
+
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "Mapa {} \"{}\": samé zdi"
+
+msgid "Party start is inside a wall"
+msgstr "Start skupiny je uvnitř zdi"
+
+msgid "Party start is outside map bounds"
+msgstr "Start skupiny je mimo hranice mapy"
+
+msgid "Validation"
+msgstr "Ověření"
+
+msgid "Issues found:"
+msgstr "Nalezené problémy:"
+
+msgid "Dungeon is valid!"
+msgstr "Dungeon je platný!"
+
+#, python-brace-format
+msgid "Import {}"
+msgstr "Importovat {}"
+
+msgid "All"
+msgstr "Vše"
+
+msgid "Pillow is required for graphics import"
+msgstr "Pillow je vyžadován pro import grafiky"
+
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "Nelze načíst obrázek: {}"
+
+msgid "Resize?"
+msgstr "Změnit velikost?"
+
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"Obrázek je {}×{}, očekáváno {}×{}.\n"
+"Změnit velikost?"
+
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{} importováno z {}"
+
+msgid "North"
+msgstr "Sever"
+
+msgid "East"
+msgstr "Východ"
+
+msgid "South"
+msgstr "Jih"
+
+msgid "West"
+msgstr "Západ"
+
+msgid "Turn L"
+msgstr "Vlevo"
+
+msgid "Fwd"
+msgstr "Vpřed"
+
+msgid "Back"
+msgstr "Vzad"
+
+msgid "Turn R"
+msgstr "Vpravo"
+

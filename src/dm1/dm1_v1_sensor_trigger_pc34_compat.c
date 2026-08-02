@@ -911,6 +911,7 @@ int F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
     triggerSetEffect = (currentMask == referenceMask) != sensor->revertEffect;
 
     outResult->sensorDataAfter = data;
+    outResult->sensorDataChanged = (data != ((int)sensor->sensorData & 0x01FF));
     outResult->gateBitMask = bitMask;
     outResult->gateCurrentMask = currentMask;
     outResult->gateReferenceMask = referenceMask;

@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02\n"
+"Language: no\n"
+"Language-Team: Norsk\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "File"
+msgstr "Fil"
+
+msgid "Edit"
+msgstr "Rediger"
+
+msgid "Window"
+msgstr "Vindu"
+
+msgid "Help"
+msgstr "Hjelp"
+
+msgid "New"
+msgstr "Ny"
+
+msgid "Open .fsdung"
+msgstr "Åpne .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Lagre .fsdung"
+
+msgid "Save As..."
+msgstr "Lagre som..."
+
+msgid "Add Level"
+msgstr "Legg til nivå"
+
+msgid "Map Settings"
+msgstr "Kartinnstillinger"
+
+msgid "Statistics"
+msgstr "Statistikk"
+
+msgid "Validate"
+msgstr "Valider"
+
+msgid "Test View"
+msgstr "Testvisning"
+
+msgid "Game"
+msgstr "Spill"
+
+msgid "Tools"
+msgstr "Verktøy"
+
+msgid "Select"
+msgstr "Velg"
+
+msgid "Paint"
+msgstr "Mal"
+
+msgid "Place Thing"
+msgstr "Plasser objekt"
+
+msgid "Erase"
+msgstr "Slett"
+
+msgid "Fill"
+msgstr "Fyll"
+
+msgid "Set Party Start"
+msgstr "Angi startposisjon"
+
+msgid "Tile Types"
+msgstr "Rutetyper"
+
+msgid "Wall"
+msgstr "Vegg"
+
+msgid "Corridor"
+msgstr "Korridor"
+
+msgid "Pit"
+msgstr "Fallgrop"
+
+msgid "Stairs"
+msgstr "Trapp"
+
+msgid "Door"
+msgstr "Dør"
+
+msgid "Teleporter"
+msgstr "Teleporter"
+
+msgid "Fake Wall"
+msgstr "Falsk vegg"
+
+msgid "Thing Type"
+msgstr "Objekttype"
+
+msgid "Text"
+msgstr "Tekst"
+
+msgid "Sensor"
+msgstr "Sensor"
+
+msgid "Group"
+msgstr "Gruppe"
+
+msgid "Weapon"
+msgstr "Våpen"
+
+msgid "Armour"
+msgstr "Rustning"
+
+msgid "Scroll"
+msgstr "Skriftrull"
+
+msgid "Potion"
+msgstr "Eliksir"
+
+msgid "Container"
+msgstr "Beholder"
+
+msgid "Junk"
+msgstr "Skrot"
+
+msgid "Creature"
+msgstr "Skapning"
+
+msgid "View"
+msgstr "Vis"
+
+msgid "Show Grid"
+msgstr "Vis rutenett"
+
+msgid "Show Things"
+msgstr "Vis objekter"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Tilpass"
+
+msgid "Map Properties"
+msgstr "Kartegenskaper"
+
+msgid "Name"
+msgstr "Navn"
+
+msgid "Size"
+msgstr "Størrelse"
+
+msgid "Wall Set"
+msgstr "Veggsett"
+
+msgid "Floor Set"
+msgstr "Gulvsett"
+
+msgid "Difficulty"
+msgstr "Vanskelighetsgrad"
+
+msgid "Tile"
+msgstr "Rute"
+
+msgid "Position"
+msgstr "Posisjon"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Things at Tile"
+msgstr "Objekter på rute"
+
+msgid "Delete Thing"
+msgstr "Slett objekt"
+
+msgid "Thing Properties"
+msgstr "Objektegenskaper"
+
+msgid "Cell"
+msgstr "Celle"
+
+msgid "Graphics Override"
+msgstr "Grafikkoverstyring"
+
+msgid "Import Entrance Screen..."
+msgstr "Importer inngangsskjerm..."
+
+msgid "Import Door Animation..."
+msgstr "Importer døranimasjon..."
+
+msgid "Import Champion Portraits..."
+msgstr "Importer heltportretter..."
+
+msgid "Import Wall Ornaments..."
+msgstr "Importer veggornament..."
+
+msgid "Import Floor Ornaments..."
+msgstr "Importer gulvornament..."
+
+msgid "Turn L"
+msgstr "Snu V"
+
+msgid "Fwd"
+msgstr "Frem"
+
+msgid "Back"
+msgstr "Tilbake"
+
+msgid "Turn R"
+msgstr "Snu H"
+
+msgid "North"
+msgstr "Nord"
+
+msgid "East"
+msgstr "Øst"
+
+msgid "South"
+msgstr "Sør"
+
+msgid "West"
+msgstr "Vest"
+
+msgid "facing"
+msgstr "retning"
+
+msgid "Coming soon"
+msgstr "Kommer snart"
+
+msgid "support coming in a future update"
+msgstr "støtte kommer i en fremtidig oppdatering"
+
+msgid "Ready"
+msgstr "Klar"
+
+msgid "Resize?"
+msgstr "Endre størrelse?"
+
+msgid "Image is"
+msgstr "Bildet er"
+
+msgid "expected"
+msgstr "forventet"
+
+msgid "Resize to fit?"
+msgstr "Endre størrelse for å passe?"
+
+msgid "Zoom:"
+msgstr "Zoom:"
+
+msgid "Map:"
+msgstr "Kart:"
+
+msgid "Tiles:"
+msgstr "Ruter:"
+
+msgid "Things:"
+msgstr "Objekter:"
+
+msgid "Tool:"
+msgstr "Verktøy:"
+
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "Pakke"
+
+msgid "Browse"
+msgstr "Bla gjennom"
+
+msgid "Open/Create"
+msgstr "Åpne/Opprett"
+
+msgid "Build Runtime Cache"
+msgstr "Bygg runtime-hurtigbuffer"
+
+msgid "Write Receipt"
+msgstr "Skriv kvittering"
+
+msgid "Import .fsart"
+msgstr "Importer .fsart"
+
+msgid "Export .fsart"
+msgstr "Eksporter .fsart"
+
+msgid "V1 assets / V2.2 targets"
+msgstr "V1-ressurser / V2.2-mål"
+
+msgid "Rescan"
+msgstr "Skann på nytt"
+
+msgid "V1 root"
+msgstr "V1-rot"
+
+msgid "Import game data"
+msgstr "Importer spilldata"
+
+msgid "Warnings"
+msgstr "Advarsler"
+
+msgid "Current asset"
+msgstr "Gjeldende ressurs"
+
+msgid "Category"
+msgstr "Kategori"
+
+msgid "Asset id"
+msgstr "Ressurs-ID"
+
+msgid "Generator"
+msgstr "Generator"
+
+msgid "Load V1/ref"
+msgstr "Last V1/ref"
+
+msgid "Load V2.2 target"
+msgstr "Last V2.2-mål"
+
+msgid "Import target to pack"
+msgstr "Importer mål til pakke"
+
+msgid "Save edited target"
+msgstr "Lagre redigert mål"
+
+msgid "Source (V1/ref)"
+msgstr "Kilde (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "Mål (V2.2)"
+
+msgid "Error"
+msgstr "Feil"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Avbryt"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "No"
+msgstr "Nei"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

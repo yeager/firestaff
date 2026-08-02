@@ -1,0 +1,274 @@
+# Firestaff Studio Japanese translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-02 18:49+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Game"
+msgstr "ゲーム"
+
+msgid "New"
+msgstr "新規"
+
+msgid "Open .fsdung"
+msgstr ".fsdungを開く"
+
+msgid "Save .fsdung"
+msgstr ".fsdungを保存"
+
+msgid "Save As..."
+msgstr "名前を付けて保存..."
+
+msgid "Add Level"
+msgstr "レベルを追加"
+
+msgid "Map Settings"
+msgstr "マップ設定"
+
+msgid "Statistics"
+msgstr "統計"
+
+msgid "Validate"
+msgstr "検証"
+
+msgid "Test View"
+msgstr "テストビュー"
+
+msgid "Tools"
+msgstr "ツール"
+
+msgid "Select"
+msgstr "選択"
+
+msgid "Paint"
+msgstr "ペイント"
+
+msgid "Place Thing"
+msgstr "オブジェクト配置"
+
+msgid "Erase"
+msgstr "消去"
+
+msgid "Fill"
+msgstr "塗りつぶし"
+
+msgid "Set Party Start"
+msgstr "パーティ開始位置を設定"
+
+msgid "Tile Types"
+msgstr "タイルタイプ"
+
+msgid "Thing Type"
+msgstr "オブジェクトタイプ"
+
+msgid "View"
+msgstr "表示"
+
+msgid "Show Grid"
+msgstr "グリッド表示"
+
+msgid "Show Things"
+msgstr "オブジェクト表示"
+
+msgid "Zoom"
+msgstr "ズーム"
+
+msgid "Fit"
+msgstr "フィット"
+
+msgid "Map Properties"
+msgstr "マップ属性"
+
+msgid "Name"
+msgstr "名前"
+
+msgid "Size"
+msgstr "サイズ"
+
+msgid "Wall Set"
+msgstr "壁セット"
+
+msgid "Floor Set"
+msgstr "床セット"
+
+msgid "Difficulty"
+msgstr "難易度"
+
+msgid "Tile"
+msgstr "タイル"
+
+msgid "Position"
+msgstr "位置"
+
+msgid "Type"
+msgstr "タイプ"
+
+msgid "Things at Tile"
+msgstr "タイルのオブジェクト"
+
+msgid "Delete Thing"
+msgstr "オブジェクト削除"
+
+msgid "Thing Properties"
+msgstr "オブジェクト属性"
+
+msgid "Cell"
+msgstr "セル"
+
+msgid "Graphics Override"
+msgstr "グラフィック上書き"
+
+#, python-brace-format
+msgid "Import {}..."
+msgstr "{}をインポート..."
+
+msgid "Coming soon"
+msgstr "近日公開"
+
+msgid "New Level"
+msgstr "新規レベル"
+
+msgid "Level name:"
+msgstr "レベル名:"
+
+msgid "Language"
+msgstr "言語"
+
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"言語を{}に設定しました。\n"
+"完全に反映するにはアプリを再起動してください。"
+
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "{}サポートは今後のアップデートで対応予定"
+
+msgid "New dungeon created"
+msgstr "新しいダンジョンを作成しました"
+
+msgid "All files"
+msgstr "すべてのファイル"
+
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "開きました: {}"
+
+msgid "Error"
+msgstr "エラー"
+
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "保存しました: {}"
+
+msgid "Width (1-64)"
+msgstr "幅 (1-64)"
+
+msgid "Height (1-64)"
+msgstr "高さ (1-64)"
+
+msgid "Apply"
+msgstr "適用"
+
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "マップ数: {}"
+
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "現在: {} ({}×{})"
+
+msgid "Tiles:"
+msgstr "タイル:"
+
+#, python-brace-format
+msgid "Things: {}"
+msgstr "オブジェクト: {}"
+
+msgid "Dungeon Statistics"
+msgstr "ダンジョン統計"
+
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "マップ {} \"{}\": すべて壁"
+
+msgid "Party start is inside a wall"
+msgstr "パーティ開始位置が壁の中にあります"
+
+msgid "Party start is outside map bounds"
+msgstr "パーティ開始位置がマップ範囲外です"
+
+msgid "Validation"
+msgstr "検証"
+
+msgid "Issues found:"
+msgstr "問題が見つかりました:"
+
+msgid "Dungeon is valid!"
+msgstr "ダンジョンは有効です！"
+
+#, python-brace-format
+msgid "Import {}"
+msgstr "{}をインポート"
+
+msgid "All"
+msgstr "すべて"
+
+msgid "Pillow is required for graphics import"
+msgstr "グラフィックのインポートにはPillowが必要です"
+
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "画像を読み込めませんでした: {}"
+
+msgid "Resize?"
+msgstr "サイズ変更？"
+
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"画像は{}×{}、期待値は{}×{}。\n"
+"サイズを変更しますか？"
+
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{}を{}からインポートしました"
+
+msgid "North"
+msgstr "北"
+
+msgid "East"
+msgstr "東"
+
+msgid "South"
+msgstr "南"
+
+msgid "West"
+msgstr "西"
+
+msgid "Turn L"
+msgstr "左回転"
+
+msgid "Fwd"
+msgstr "前進"
+
+msgid "Back"
+msgstr "後退"
+
+msgid "Turn R"
+msgstr "右回転"
+

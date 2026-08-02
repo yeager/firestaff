@@ -5510,3 +5510,26 @@ const char *dm2_v1_DM2_ARRANGE_DUNGEON_source_evidence(void) {
         "record-graph completion state. PC G1 partial graphs remain marked "
         "incomplete instead of receiving fabricated c_record semantics.";
 }
+
+const uint8_t *dm2_v1_dungeon_level_tile_data(
+    const DM2_V1_DungeonData *d,
+    int level,
+    int16_t *out_width,
+    int16_t *out_height)
+{
+    int offset;
+
+    if (!d || !d->raw_data || level < 0 || level >= d->level_count)
+        return NULL;
+    if (out_width) *out_width = (int16_t)d->level_widths[level];
+    if (out_height) *out_height = (int16_t)d->level_heights[level];
+
+    if (d->square_bytes == 1) {
+        offset = d->raw_map_data_base + d->level_offsets[level];
+    } else {
+        offset = DM2_TILE_DATA_START + d->level_offsets[level];
+    }
+    if (offset < 0 || offset >= d->raw_size)
+        return NULL;
+    return d->raw_data + offset;
+}

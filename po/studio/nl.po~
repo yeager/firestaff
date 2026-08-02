@@ -1,0 +1,274 @@
+# Firestaff Studio Dutch translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-02 18:49+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Dutch\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Game"
+msgstr "Spel"
+
+msgid "New"
+msgstr "Nieuw"
+
+msgid "Open .fsdung"
+msgstr ".fsdung openen"
+
+msgid "Save .fsdung"
+msgstr ".fsdung opslaan"
+
+msgid "Save As..."
+msgstr "Opslaan als..."
+
+msgid "Add Level"
+msgstr "Niveau toevoegen"
+
+msgid "Map Settings"
+msgstr "Kaartinstellingen"
+
+msgid "Statistics"
+msgstr "Statistieken"
+
+msgid "Validate"
+msgstr "Valideren"
+
+msgid "Test View"
+msgstr "Testweergave"
+
+msgid "Tools"
+msgstr "Gereedschap"
+
+msgid "Select"
+msgstr "Selecteren"
+
+msgid "Paint"
+msgstr "Tekenen"
+
+msgid "Place Thing"
+msgstr "Object plaatsen"
+
+msgid "Erase"
+msgstr "Wissen"
+
+msgid "Fill"
+msgstr "Vullen"
+
+msgid "Set Party Start"
+msgstr "Groepsstart instellen"
+
+msgid "Tile Types"
+msgstr "Tegeltypen"
+
+msgid "Thing Type"
+msgstr "Objecttype"
+
+msgid "View"
+msgstr "Weergave"
+
+msgid "Show Grid"
+msgstr "Raster tonen"
+
+msgid "Show Things"
+msgstr "Objecten tonen"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Inpassen"
+
+msgid "Map Properties"
+msgstr "Kaarteigenschappen"
+
+msgid "Name"
+msgstr "Naam"
+
+msgid "Size"
+msgstr "Grootte"
+
+msgid "Wall Set"
+msgstr "Muurset"
+
+msgid "Floor Set"
+msgstr "Vloerset"
+
+msgid "Difficulty"
+msgstr "Moeilijkheid"
+
+msgid "Tile"
+msgstr "Tegel"
+
+msgid "Position"
+msgstr "Positie"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Things at Tile"
+msgstr "Objecten op tegel"
+
+msgid "Delete Thing"
+msgstr "Object verwijderen"
+
+msgid "Thing Properties"
+msgstr "Objecteigenschappen"
+
+msgid "Cell"
+msgstr "Cel"
+
+msgid "Graphics Override"
+msgstr "Grafische overschrijving"
+
+#, python-brace-format
+msgid "Import {}..."
+msgstr "{} importeren..."
+
+msgid "Coming soon"
+msgstr "Binnenkort"
+
+msgid "New Level"
+msgstr "Nieuw niveau"
+
+msgid "Level name:"
+msgstr "Niveaunaam:"
+
+msgid "Language"
+msgstr "Taal"
+
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"Taal ingesteld op {}.\n"
+"Herstart de app voor volledig effect."
+
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "{}-ondersteuning komt in een toekomstige update"
+
+msgid "New dungeon created"
+msgstr "Nieuwe dungeon aangemaakt"
+
+msgid "All files"
+msgstr "Alle bestanden"
+
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "Geopend: {}"
+
+msgid "Error"
+msgstr "Fout"
+
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "Opgeslagen: {}"
+
+msgid "Width (1-64)"
+msgstr "Breedte (1-64)"
+
+msgid "Height (1-64)"
+msgstr "Hoogte (1-64)"
+
+msgid "Apply"
+msgstr "Toepassen"
+
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "Kaarten: {}"
+
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "Huidig: {} ({}×{})"
+
+msgid "Tiles:"
+msgstr "Tegels:"
+
+#, python-brace-format
+msgid "Things: {}"
+msgstr "Objecten: {}"
+
+msgid "Dungeon Statistics"
+msgstr "Dungeon-statistieken"
+
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "Kaart {} \"{}\": allemaal muren"
+
+msgid "Party start is inside a wall"
+msgstr "Groepsstart is in een muur"
+
+msgid "Party start is outside map bounds"
+msgstr "Groepsstart is buiten de kaartgrenzen"
+
+msgid "Validation"
+msgstr "Validatie"
+
+msgid "Issues found:"
+msgstr "Problemen gevonden:"
+
+msgid "Dungeon is valid!"
+msgstr "Dungeon is geldig!"
+
+#, python-brace-format
+msgid "Import {}"
+msgstr "{} importeren"
+
+msgid "All"
+msgstr "Alle"
+
+msgid "Pillow is required for graphics import"
+msgstr "Pillow is vereist voor grafische import"
+
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "Kan afbeelding niet laden: {}"
+
+msgid "Resize?"
+msgstr "Formaat wijzigen?"
+
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"Afbeelding is {}×{}, verwacht {}×{}.\n"
+"Formaat aanpassen?"
+
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{} geïmporteerd van {}"
+
+msgid "North"
+msgstr "Noord"
+
+msgid "East"
+msgstr "Oost"
+
+msgid "South"
+msgstr "Zuid"
+
+msgid "West"
+msgstr "West"
+
+msgid "Turn L"
+msgstr "Links"
+
+msgid "Fwd"
+msgstr "Vooruit"
+
+msgid "Back"
+msgstr "Terug"
+
+msgid "Turn R"
+msgstr "Rechts"
+

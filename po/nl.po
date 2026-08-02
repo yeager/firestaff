@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02\n"
+"Language: nl\n"
+"Language-Team: Nederlands\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "File"
+msgstr "Bestand"
+
+msgid "Edit"
+msgstr "Bewerken"
+
+msgid "Window"
+msgstr "Venster"
+
+msgid "Help"
+msgstr "Help"
+
+msgid "New"
+msgstr "Nieuw"
+
+msgid "Open .fsdung"
+msgstr ".fsdung openen"
+
+msgid "Save .fsdung"
+msgstr ".fsdung opslaan"
+
+msgid "Save As..."
+msgstr "Opslaan als..."
+
+msgid "Add Level"
+msgstr "Niveau toevoegen"
+
+msgid "Map Settings"
+msgstr "Kaartinstellingen"
+
+msgid "Statistics"
+msgstr "Statistieken"
+
+msgid "Validate"
+msgstr "Valideren"
+
+msgid "Test View"
+msgstr "Testweergave"
+
+msgid "Game"
+msgstr "Spel"
+
+msgid "Tools"
+msgstr "Gereedschappen"
+
+msgid "Select"
+msgstr "Selecteren"
+
+msgid "Paint"
+msgstr "Schilderen"
+
+msgid "Place Thing"
+msgstr "Object plaatsen"
+
+msgid "Erase"
+msgstr "Wissen"
+
+msgid "Fill"
+msgstr "Vullen"
+
+msgid "Set Party Start"
+msgstr "Startpositie instellen"
+
+msgid "Tile Types"
+msgstr "Tegeltypen"
+
+msgid "Wall"
+msgstr "Muur"
+
+msgid "Corridor"
+msgstr "Gang"
+
+msgid "Pit"
+msgstr "Put"
+
+msgid "Stairs"
+msgstr "Trap"
+
+msgid "Door"
+msgstr "Deur"
+
+msgid "Teleporter"
+msgstr "Teleporter"
+
+msgid "Fake Wall"
+msgstr "Schijnmuur"
+
+msgid "Thing Type"
+msgstr "Objecttype"
+
+msgid "Text"
+msgstr "Tekst"
+
+msgid "Sensor"
+msgstr "Sensor"
+
+msgid "Group"
+msgstr "Groep"
+
+msgid "Weapon"
+msgstr "Wapen"
+
+msgid "Armour"
+msgstr "Pantser"
+
+msgid "Scroll"
+msgstr "Boekrol"
+
+msgid "Potion"
+msgstr "Drankje"
+
+msgid "Container"
+msgstr "Houder"
+
+msgid "Junk"
+msgstr "Rommel"
+
+msgid "Creature"
+msgstr "Wezen"
+
+msgid "View"
+msgstr "Beeld"
+
+msgid "Show Grid"
+msgstr "Raster tonen"
+
+msgid "Show Things"
+msgstr "Objecten tonen"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Passend maken"
+
+msgid "Map Properties"
+msgstr "Kaarteigenschappen"
+
+msgid "Name"
+msgstr "Naam"
+
+msgid "Size"
+msgstr "Grootte"
+
+msgid "Wall Set"
+msgstr "Muurset"
+
+msgid "Floor Set"
+msgstr "Vloerset"
+
+msgid "Difficulty"
+msgstr "Moeilijkheidsgraad"
+
+msgid "Tile"
+msgstr "Tegel"
+
+msgid "Position"
+msgstr "Positie"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Things at Tile"
+msgstr "Objecten op tegel"
+
+msgid "Delete Thing"
+msgstr "Object verwijderen"
+
+msgid "Thing Properties"
+msgstr "Objecteigenschappen"
+
+msgid "Cell"
+msgstr "Cel"
+
+msgid "Graphics Override"
+msgstr "Grafische overschrijving"
+
+msgid "Import Entrance Screen..."
+msgstr "Ingangsscherm importeren..."
+
+msgid "Import Door Animation..."
+msgstr "Deuranimatie importeren..."
+
+msgid "Import Champion Portraits..."
+msgstr "Kampioensportretten importeren..."
+
+msgid "Import Wall Ornaments..."
+msgstr "Muurornamenten importeren..."
+
+msgid "Import Floor Ornaments..."
+msgstr "Vloerornamenten importeren..."
+
+msgid "Turn L"
+msgstr "Draai L"
+
+msgid "Fwd"
+msgstr "Vooruit"
+
+msgid "Back"
+msgstr "Achteruit"
+
+msgid "Turn R"
+msgstr "Draai R"
+
+msgid "North"
+msgstr "Noord"
+
+msgid "East"
+msgstr "Oost"
+
+msgid "South"
+msgstr "Zuid"
+
+msgid "West"
+msgstr "West"
+
+msgid "facing"
+msgstr "richting"
+
+msgid "Coming soon"
+msgstr "Binnenkort beschikbaar"
+
+msgid "support coming in a future update"
+msgstr "ondersteuning volgt in een toekomstige update"
+
+msgid "Ready"
+msgstr "Gereed"
+
+msgid "Resize?"
+msgstr "Formaat wijzigen?"
+
+msgid "Image is"
+msgstr "Afbeelding is"
+
+msgid "expected"
+msgstr "verwacht"
+
+msgid "Resize to fit?"
+msgstr "Formaat aanpassen?"
+
+msgid "Zoom:"
+msgstr "Zoom:"
+
+msgid "Map:"
+msgstr "Kaart:"
+
+msgid "Tiles:"
+msgstr "Tegels:"
+
+msgid "Things:"
+msgstr "Objecten:"
+
+msgid "Tool:"
+msgstr "Gereedschap:"
+
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "Pakket"
+
+msgid "Browse"
+msgstr "Bladeren"
+
+msgid "Open/Create"
+msgstr "Openen/Aanmaken"
+
+msgid "Build Runtime Cache"
+msgstr "Runtime-cache bouwen"
+
+msgid "Write Receipt"
+msgstr "Ontvangstbewijs schrijven"
+
+msgid "Import .fsart"
+msgstr ".fsart importeren"
+
+msgid "Export .fsart"
+msgstr ".fsart exporteren"
+
+msgid "V1 assets / V2.2 targets"
+msgstr "V1-assets / V2.2-doelen"
+
+msgid "Rescan"
+msgstr "Opnieuw scannen"
+
+msgid "V1 root"
+msgstr "V1-bron"
+
+msgid "Import game data"
+msgstr "Speldata importeren"
+
+msgid "Warnings"
+msgstr "Waarschuwingen"
+
+msgid "Current asset"
+msgstr "Huidig asset"
+
+msgid "Category"
+msgstr "Categorie"
+
+msgid "Asset id"
+msgstr "Asset-ID"
+
+msgid "Generator"
+msgstr "Generator"
+
+msgid "Load V1/ref"
+msgstr "V1/ref laden"
+
+msgid "Load V2.2 target"
+msgstr "V2.2-doel laden"
+
+msgid "Import target to pack"
+msgstr "Doel naar pakket importeren"
+
+msgid "Save edited target"
+msgstr "Bewerkt doel opslaan"
+
+msgid "Source (V1/ref)"
+msgstr "Bron (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "Doel (V2.2)"
+
+msgid "Error"
+msgstr "Fout"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Annuleren"
+
+msgid "Yes"
+msgstr "Ja"
+
+msgid "No"
+msgstr "Nee"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

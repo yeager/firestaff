@@ -35,6 +35,10 @@ typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
 #include "nexus_v1_messages.h"
 #include "nexus_v1_throw.h"
 #include "nexus_v1_hunger.h"
+#include "nexus_v1_action_timer.h"
+#include "nexus_v1_spawner.h"
+#include "nexus_v1_damage_indicator.h"
+#include "nexus_v1_formation.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
@@ -2563,6 +2567,10 @@ struct Nexus_V1_Engine {
     Nexus_MessageQueue messages;
     Nexus_ThrownItemManager thrown;
     Nexus_HungerState hunger;
+    Nexus_ActionTimers action_timers;
+    Nexus_SpawnerManager spawners;
+    Nexus_DamageDisplay damage_display;
+    Nexus_Formation formation;
     /* Mechanics state — opaque pointer, allocated in nexus_v1_init().
      * Defined in nexus_v1_mechanics.c (source-locked DM1 game loop).
      * Source: DM1 CLIKMENU.C F0366, MOVESENS.C F0267. */

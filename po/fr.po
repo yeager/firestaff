@@ -1,0 +1,375 @@
+# French translations for Firestaff Studio.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02 00:00+0000\n"
+"Last-Translator: Automatically generated\n"
+"Language-Team: Français\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#. Dungeon Studio - Menu Bar
+msgid "File"
+msgstr "Fichier"
+
+msgid "Edit"
+msgstr "Édition"
+
+msgid "Window"
+msgstr "Fenêtre"
+
+msgid "Help"
+msgstr "Aide"
+
+msgid "New"
+msgstr "Nouveau"
+
+msgid "Open .fsdung"
+msgstr "Ouvrir .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Enregistrer .fsdung"
+
+msgid "Save As..."
+msgstr "Enregistrer sous..."
+
+msgid "Add Level"
+msgstr "Ajouter un niveau"
+
+msgid "Map Settings"
+msgstr "Paramètres de carte"
+
+msgid "Statistics"
+msgstr "Statistiques"
+
+msgid "Validate"
+msgstr "Valider"
+
+msgid "Test View"
+msgstr "Vue de test"
+
+msgid "Game"
+msgstr "Jeu"
+
+#. Dungeon Studio - Tools
+msgid "Tools"
+msgstr "Outils"
+
+msgid "Select"
+msgstr "Sélectionner"
+
+msgid "Paint"
+msgstr "Peindre"
+
+msgid "Place Thing"
+msgstr "Placer un objet"
+
+msgid "Erase"
+msgstr "Effacer"
+
+msgid "Fill"
+msgstr "Remplir"
+
+msgid "Set Party Start"
+msgstr "Définir le départ du groupe"
+
+#. Dungeon Studio - Tile Types
+msgid "Tile Types"
+msgstr "Types de cases"
+
+msgid "Wall"
+msgstr "Mur"
+
+msgid "Corridor"
+msgstr "Couloir"
+
+msgid "Pit"
+msgstr "Fosse"
+
+msgid "Stairs"
+msgstr "Escalier"
+
+msgid "Door"
+msgstr "Porte"
+
+msgid "Teleporter"
+msgstr "Téléporteur"
+
+msgid "Fake Wall"
+msgstr "Faux mur"
+
+#. Dungeon Studio - Thing Types
+msgid "Thing Type"
+msgstr "Type d'objet"
+
+msgid "Text"
+msgstr "Texte"
+
+msgid "Sensor"
+msgstr "Capteur"
+
+msgid "Group"
+msgstr "Groupe"
+
+msgid "Weapon"
+msgstr "Arme"
+
+msgid "Armour"
+msgstr "Armure"
+
+msgid "Scroll"
+msgstr "Parchemin"
+
+msgid "Potion"
+msgstr "Potion"
+
+msgid "Container"
+msgstr "Conteneur"
+
+msgid "Junk"
+msgstr "Bric-à-brac"
+
+msgid "Creature"
+msgstr "Créature"
+
+#. Dungeon Studio - View Menu
+msgid "View"
+msgstr "Affichage"
+
+msgid "Show Grid"
+msgstr "Afficher la grille"
+
+msgid "Show Things"
+msgstr "Afficher les objets"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Ajuster"
+
+#. Dungeon Studio - Map Properties
+msgid "Map Properties"
+msgstr "Propriétés de la carte"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Size"
+msgstr "Taille"
+
+msgid "Wall Set"
+msgstr "Jeu de murs"
+
+msgid "Floor Set"
+msgstr "Jeu de sols"
+
+msgid "Difficulty"
+msgstr "Difficulté"
+
+msgid "Tile"
+msgstr "Case"
+
+msgid "Position"
+msgstr "Position"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Things at Tile"
+msgstr "Objets sur la case"
+
+msgid "Delete Thing"
+msgstr "Supprimer l'objet"
+
+msgid "Thing Properties"
+msgstr "Propriétés de l'objet"
+
+msgid "Cell"
+msgstr "Cellule"
+
+#. Dungeon Studio - Graphics Override
+msgid "Graphics Override"
+msgstr "Remplacement graphique"
+
+msgid "Import Entrance Screen..."
+msgstr "Importer l'écran d'entrée..."
+
+msgid "Import Door Animation..."
+msgstr "Importer l'animation de porte..."
+
+msgid "Import Champion Portraits..."
+msgstr "Importer les portraits de héros..."
+
+msgid "Import Wall Ornaments..."
+msgstr "Importer les ornements muraux..."
+
+msgid "Import Floor Ornaments..."
+msgstr "Importer les ornements de sol..."
+
+#. Dungeon Studio - Test View Controls
+msgid "Turn L"
+msgstr "Tourner G"
+
+msgid "Fwd"
+msgstr "Avancer"
+
+msgid "Back"
+msgstr "Reculer"
+
+msgid "Turn R"
+msgstr "Tourner D"
+
+msgid "North"
+msgstr "Nord"
+
+msgid "East"
+msgstr "Est"
+
+msgid "South"
+msgstr "Sud"
+
+msgid "West"
+msgstr "Ouest"
+
+msgid "facing"
+msgstr "direction"
+
+#. Dungeon Studio - Status Messages
+msgid "Coming soon"
+msgstr "Bientôt disponible"
+
+msgid "support coming in a future update"
+msgstr "prise en charge dans une future mise à jour"
+
+msgid "Ready"
+msgstr "Prêt"
+
+msgid "Resize?"
+msgstr "Redimensionner ?"
+
+msgid "Image is"
+msgstr "L'image est"
+
+msgid "expected"
+msgstr "attendu"
+
+msgid "Resize to fit?"
+msgstr "Redimensionner pour ajuster ?"
+
+#. Dungeon Studio - Status Bar
+msgid "Zoom:"
+msgstr "Zoom :"
+
+msgid "Map:"
+msgstr "Carte :"
+
+msgid "Tiles:"
+msgstr "Cases :"
+
+msgid "Things:"
+msgstr "Objets :"
+
+msgid "Tool:"
+msgstr "Outil :"
+
+#. Artpack Studio
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "Paquet"
+
+msgid "Browse"
+msgstr "Parcourir"
+
+msgid "Open/Create"
+msgstr "Ouvrir/Créer"
+
+msgid "Build Runtime Cache"
+msgstr "Créer le cache d'exécution"
+
+msgid "Write Receipt"
+msgstr "Écrire le reçu"
+
+msgid "Import .fsart"
+msgstr "Importer .fsart"
+
+msgid "Export .fsart"
+msgstr "Exporter .fsart"
+
+#. Artpack Studio - V1 Assets
+msgid "V1 assets / V2.2 targets"
+msgstr "Assets V1 / Cibles V2.2"
+
+msgid "Rescan"
+msgstr "Rescanner"
+
+msgid "V1 root"
+msgstr "Racine V1"
+
+msgid "Import game data"
+msgstr "Importer les données de jeu"
+
+msgid "Warnings"
+msgstr "Avertissements"
+
+#. Artpack Studio - Current Asset
+msgid "Current asset"
+msgstr "Asset actuel"
+
+msgid "Category"
+msgstr "Catégorie"
+
+msgid "Asset id"
+msgstr "ID d'asset"
+
+msgid "Generator"
+msgstr "Générateur"
+
+#. Artpack Studio - Asset Actions
+msgid "Load V1/ref"
+msgstr "Charger V1/réf"
+
+msgid "Load V2.2 target"
+msgstr "Charger la cible V2.2"
+
+msgid "Import target to pack"
+msgstr "Importer la cible dans le paquet"
+
+msgid "Save edited target"
+msgstr "Enregistrer la cible modifiée"
+
+#. Artpack Studio - Source/Target
+msgid "Source (V1/ref)"
+msgstr "Source (V1/réf)"
+
+msgid "Target (V2.2)"
+msgstr "Cible (V2.2)"
+
+#. Shared
+msgid "Error"
+msgstr "Erreur"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Yes"
+msgstr "Oui"
+
+msgid "No"
+msgstr "Non"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

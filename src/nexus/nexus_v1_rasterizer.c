@@ -13,6 +13,7 @@
  * Missing or unproven texture material is no-draw. */
 
 #include "nexus_v1_rasterizer.h"
+#include "nexus_v1_doors.h"
 #include <string.h>
 #include <math.h>
 #include <stdio.h>

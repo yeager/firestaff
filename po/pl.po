@@ -1,0 +1,354 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"PO-Revision-Date: 2026-08-02\n"
+"Language: pl\n"
+"Language-Team: Polski\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "File"
+msgstr "Plik"
+
+msgid "Edit"
+msgstr "Edycja"
+
+msgid "Window"
+msgstr "Okno"
+
+msgid "Help"
+msgstr "Pomoc"
+
+msgid "New"
+msgstr "Nowy"
+
+msgid "Open .fsdung"
+msgstr "Otwórz .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Zapisz .fsdung"
+
+msgid "Save As..."
+msgstr "Zapisz jako..."
+
+msgid "Add Level"
+msgstr "Dodaj poziom"
+
+msgid "Map Settings"
+msgstr "Ustawienia mapy"
+
+msgid "Statistics"
+msgstr "Statystyki"
+
+msgid "Validate"
+msgstr "Sprawdź"
+
+msgid "Test View"
+msgstr "Widok testowy"
+
+msgid "Game"
+msgstr "Gra"
+
+msgid "Tools"
+msgstr "Narzędzia"
+
+msgid "Select"
+msgstr "Zaznacz"
+
+msgid "Paint"
+msgstr "Maluj"
+
+msgid "Place Thing"
+msgstr "Umieść obiekt"
+
+msgid "Erase"
+msgstr "Wymaż"
+
+msgid "Fill"
+msgstr "Wypełnij"
+
+msgid "Set Party Start"
+msgstr "Ustaw start drużyny"
+
+msgid "Tile Types"
+msgstr "Typy pól"
+
+msgid "Wall"
+msgstr "Ściana"
+
+msgid "Corridor"
+msgstr "Korytarz"
+
+msgid "Pit"
+msgstr "Zapadnia"
+
+msgid "Stairs"
+msgstr "Schody"
+
+msgid "Door"
+msgstr "Drzwi"
+
+msgid "Teleporter"
+msgstr "Teleporter"
+
+msgid "Fake Wall"
+msgstr "Fałszywa ściana"
+
+msgid "Thing Type"
+msgstr "Typ obiektu"
+
+msgid "Text"
+msgstr "Tekst"
+
+msgid "Sensor"
+msgstr "Czujnik"
+
+msgid "Group"
+msgstr "Grupa"
+
+msgid "Weapon"
+msgstr "Broń"
+
+msgid "Armour"
+msgstr "Zbroja"
+
+msgid "Scroll"
+msgstr "Zwój"
+
+msgid "Potion"
+msgstr "Mikstura"
+
+msgid "Container"
+msgstr "Pojemnik"
+
+msgid "Junk"
+msgstr "Rupiecie"
+
+msgid "Creature"
+msgstr "Stworzenie"
+
+msgid "View"
+msgstr "Widok"
+
+msgid "Show Grid"
+msgstr "Pokaż siatkę"
+
+msgid "Show Things"
+msgstr "Pokaż obiekty"
+
+msgid "Zoom"
+msgstr "Powiększenie"
+
+msgid "Fit"
+msgstr "Dopasuj"
+
+msgid "Map Properties"
+msgstr "Właściwości mapy"
+
+msgid "Name"
+msgstr "Nazwa"
+
+msgid "Size"
+msgstr "Rozmiar"
+
+msgid "Wall Set"
+msgstr "Zestaw ścian"
+
+msgid "Floor Set"
+msgstr "Zestaw podłóg"
+
+msgid "Difficulty"
+msgstr "Trudność"
+
+msgid "Tile"
+msgstr "Pole"
+
+msgid "Position"
+msgstr "Pozycja"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Things at Tile"
+msgstr "Obiekty na polu"
+
+msgid "Delete Thing"
+msgstr "Usuń obiekt"
+
+msgid "Thing Properties"
+msgstr "Właściwości obiektu"
+
+msgid "Cell"
+msgstr "Komórka"
+
+msgid "Graphics Override"
+msgstr "Nadpisanie grafiki"
+
+msgid "Import Entrance Screen..."
+msgstr "Importuj ekran wejścia..."
+
+msgid "Import Door Animation..."
+msgstr "Importuj animację drzwi..."
+
+msgid "Import Champion Portraits..."
+msgstr "Importuj portrety bohaterów..."
+
+msgid "Import Wall Ornaments..."
+msgstr "Importuj ornamenty ścienne..."
+
+msgid "Import Floor Ornaments..."
+msgstr "Importuj ornamenty podłogowe..."
+
+msgid "Turn L"
+msgstr "Obróć L"
+
+msgid "Fwd"
+msgstr "Naprzód"
+
+msgid "Back"
+msgstr "Wstecz"
+
+msgid "Turn R"
+msgstr "Obróć P"
+
+msgid "North"
+msgstr "Północ"
+
+msgid "East"
+msgstr "Wschód"
+
+msgid "South"
+msgstr "Południe"
+
+msgid "West"
+msgstr "Zachód"
+
+msgid "facing"
+msgstr "kierunek"
+
+msgid "Coming soon"
+msgstr "Wkrótce"
+
+msgid "support coming in a future update"
+msgstr "wsparcie pojawi się w przyszłej aktualizacji"
+
+msgid "Ready"
+msgstr "Gotowe"
+
+msgid "Resize?"
+msgstr "Zmienić rozmiar?"
+
+msgid "Image is"
+msgstr "Obraz jest"
+
+msgid "expected"
+msgstr "oczekiwany"
+
+msgid "Resize to fit?"
+msgstr "Zmienić rozmiar, aby dopasować?"
+
+msgid "Zoom:"
+msgstr "Powiększenie:"
+
+msgid "Map:"
+msgstr "Mapa:"
+
+msgid "Tiles:"
+msgstr "Pola:"
+
+msgid "Things:"
+msgstr "Obiekty:"
+
+msgid "Tool:"
+msgstr "Narzędzie:"
+
+msgid "Firestaff V2.2 Artpack Studio"
+msgstr "Firestaff V2.2 Artpack Studio"
+
+msgid "Pack"
+msgstr "Paczka"
+
+msgid "Browse"
+msgstr "Przeglądaj"
+
+msgid "Open/Create"
+msgstr "Otwórz/Utwórz"
+
+msgid "Build Runtime Cache"
+msgstr "Zbuduj pamięć podręczną"
+
+msgid "Write Receipt"
+msgstr "Zapisz potwierdzenie"
+
+msgid "Import .fsart"
+msgstr "Importuj .fsart"
+
+msgid "Export .fsart"
+msgstr "Eksportuj .fsart"
+
+msgid "V1 assets / V2.2 targets"
+msgstr "Zasoby V1 / cele V2.2"
+
+msgid "Rescan"
+msgstr "Przeskanuj ponownie"
+
+msgid "V1 root"
+msgstr "Katalog główny V1"
+
+msgid "Import game data"
+msgstr "Importuj dane gry"
+
+msgid "Warnings"
+msgstr "Ostrzeżenia"
+
+msgid "Current asset"
+msgstr "Bieżący zasób"
+
+msgid "Category"
+msgstr "Kategoria"
+
+msgid "Asset id"
+msgstr "ID zasobu"
+
+msgid "Generator"
+msgstr "Generator"
+
+msgid "Load V1/ref"
+msgstr "Wczytaj V1/ref"
+
+msgid "Load V2.2 target"
+msgstr "Wczytaj cel V2.2"
+
+msgid "Import target to pack"
+msgstr "Importuj cel do paczki"
+
+msgid "Save edited target"
+msgstr "Zapisz edytowany cel"
+
+msgid "Source (V1/ref)"
+msgstr "Źródło (V1/ref)"
+
+msgid "Target (V2.2)"
+msgstr "Cel (V2.2)"
+
+msgid "Error"
+msgstr "Błąd"
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Cancel"
+msgstr "Anuluj"
+
+msgid "Yes"
+msgstr "Tak"
+
+msgid "No"
+msgstr "Nie"
+
+msgid "Firestaff Dungeon Studio"
+msgstr "Firestaff Dungeon Studio"
+
+msgid "Firestaff Artpack Studio"
+msgstr "Firestaff Artpack Studio"

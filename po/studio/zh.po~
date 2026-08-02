@@ -1,0 +1,274 @@
+# Firestaff Studio Chinese (Simplified) translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-02 18:49+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Chinese (Simplified)\n"
+"Language: zh\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Game"
+msgstr "游戏"
+
+msgid "New"
+msgstr "新建"
+
+msgid "Open .fsdung"
+msgstr "打开 .fsdung"
+
+msgid "Save .fsdung"
+msgstr "保存 .fsdung"
+
+msgid "Save As..."
+msgstr "另存为..."
+
+msgid "Add Level"
+msgstr "添加关卡"
+
+msgid "Map Settings"
+msgstr "地图设置"
+
+msgid "Statistics"
+msgstr "统计"
+
+msgid "Validate"
+msgstr "验证"
+
+msgid "Test View"
+msgstr "测试视图"
+
+msgid "Tools"
+msgstr "工具"
+
+msgid "Select"
+msgstr "选择"
+
+msgid "Paint"
+msgstr "绘制"
+
+msgid "Place Thing"
+msgstr "放置物品"
+
+msgid "Erase"
+msgstr "擦除"
+
+msgid "Fill"
+msgstr "填充"
+
+msgid "Set Party Start"
+msgstr "设置队伍起点"
+
+msgid "Tile Types"
+msgstr "地砖类型"
+
+msgid "Thing Type"
+msgstr "物品类型"
+
+msgid "View"
+msgstr "视图"
+
+msgid "Show Grid"
+msgstr "显示网格"
+
+msgid "Show Things"
+msgstr "显示物品"
+
+msgid "Zoom"
+msgstr "缩放"
+
+msgid "Fit"
+msgstr "适配"
+
+msgid "Map Properties"
+msgstr "地图属性"
+
+msgid "Name"
+msgstr "名称"
+
+msgid "Size"
+msgstr "大小"
+
+msgid "Wall Set"
+msgstr "墙壁集"
+
+msgid "Floor Set"
+msgstr "地板集"
+
+msgid "Difficulty"
+msgstr "难度"
+
+msgid "Tile"
+msgstr "地砖"
+
+msgid "Position"
+msgstr "位置"
+
+msgid "Type"
+msgstr "类型"
+
+msgid "Things at Tile"
+msgstr "地砖上的物品"
+
+msgid "Delete Thing"
+msgstr "删除物品"
+
+msgid "Thing Properties"
+msgstr "物品属性"
+
+msgid "Cell"
+msgstr "单元格"
+
+msgid "Graphics Override"
+msgstr "图形覆盖"
+
+#, python-brace-format
+msgid "Import {}..."
+msgstr "导入{}..."
+
+msgid "Coming soon"
+msgstr "即将推出"
+
+msgid "New Level"
+msgstr "新关卡"
+
+msgid "Level name:"
+msgstr "关卡名称:"
+
+msgid "Language"
+msgstr "语言"
+
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"语言已设置为{}。\n"
+"重启应用以完全生效。"
+
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "{}支持将在未来更新中提供"
+
+msgid "New dungeon created"
+msgstr "已创建新地牢"
+
+msgid "All files"
+msgstr "所有文件"
+
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "已打开: {}"
+
+msgid "Error"
+msgstr "错误"
+
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "已保存: {}"
+
+msgid "Width (1-64)"
+msgstr "宽度 (1-64)"
+
+msgid "Height (1-64)"
+msgstr "高度 (1-64)"
+
+msgid "Apply"
+msgstr "应用"
+
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "地图数: {}"
+
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "当前: {} ({}×{})"
+
+msgid "Tiles:"
+msgstr "地砖:"
+
+#, python-brace-format
+msgid "Things: {}"
+msgstr "物品: {}"
+
+msgid "Dungeon Statistics"
+msgstr "地牢统计"
+
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "地图 {} \"{}\": 全是墙壁"
+
+msgid "Party start is inside a wall"
+msgstr "队伍起点在墙壁内"
+
+msgid "Party start is outside map bounds"
+msgstr "队伍起点在地图范围外"
+
+msgid "Validation"
+msgstr "验证"
+
+msgid "Issues found:"
+msgstr "发现的问题:"
+
+msgid "Dungeon is valid!"
+msgstr "地牢有效！"
+
+#, python-brace-format
+msgid "Import {}"
+msgstr "导入{}"
+
+msgid "All"
+msgstr "全部"
+
+msgid "Pillow is required for graphics import"
+msgstr "图形导入需要Pillow"
+
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "无法加载图像: {}"
+
+msgid "Resize?"
+msgstr "调整大小？"
+
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"图像为{}×{}，预期{}×{}。\n"
+"是否调整大小以适配？"
+
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{}已从{}导入"
+
+msgid "North"
+msgstr "北"
+
+msgid "East"
+msgstr "东"
+
+msgid "South"
+msgstr "南"
+
+msgid "West"
+msgstr "西"
+
+msgid "Turn L"
+msgstr "左转"
+
+msgid "Fwd"
+msgstr "前进"
+
+msgid "Back"
+msgstr "后退"
+
+msgid "Turn R"
+msgstr "右转"
+

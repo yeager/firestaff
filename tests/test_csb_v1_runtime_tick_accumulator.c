@@ -3068,8 +3068,8 @@ static void test_c37_group_approach_teleporter_rotation(void)
     test_put_le16(raw, 122, 0xfffeu);
     test_put_le16(raw, 124, 0xfffeu);
     test_put_le16(raw, 152, 0xfffeu);
-    test_put_le16(raw, 154, 0u);
-    raw[156] = 9u;
+    test_put_le16(raw, 154, 0xfffeu);
+    raw[156] = 5u;
     raw[157] = 0u;
     test_put_le16(raw, 158, 1u);
     test_put_le16(raw, 160, 0u);
@@ -3427,6 +3427,8 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     profile.dungeon_seed = 0xC5B10740u;
     profile.dungeon_handle = &dungeon;
     profile.current_level = 0;
+    profile.party_x = 1;
+    profile.party_y = 0;
     profile.active_group_state_count = 1;
     profile.active_group_state[0].valid = 1;
     profile.active_group_state[0].group_thing = (uint16_t)(4u << 10);
@@ -3577,6 +3579,8 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     profile.dungeon_seed = 0xC5B10738u;
     profile.dungeon_handle = &dungeon;
     profile.current_level = 0;
+    profile.party_x = 1;
+    profile.party_y = 0;
     queue_future_creature_event(
         &profile,
         DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE,
@@ -6398,6 +6402,8 @@ static void test_csbwin_resume_file_applies_runtime_handoff(void)
         fclose(fp);
     }
 
+    fprintf(stderr, "DBG fixture tq at 4048: [%02x %02x %02x %02x %02x %02x] size=%zu\n",
+            bytes[4048], bytes[4049], bytes[4050], bytes[4051], bytes[4052], bytes[4053], size);
     csb_v1_runtime_init(&profile, NULL);
     CHECK(csb_v1_runtime_apply_csbwin_resume_file(
               &profile, path, 0u) == 0,

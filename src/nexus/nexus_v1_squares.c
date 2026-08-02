@@ -11,7 +11,7 @@
  * ═══════════════════════════════════════════════════════════════════ */
 
 /* Door registry */
-static Nexus_Door g_doors[NEXUS_MAX_DOORS];
+static Nexus_SquareDoor g_doors[NEXUS_MAX_DOORS];
 static int g_door_count = 0;
 
 /* Teleporter registry */
@@ -221,7 +221,7 @@ int nexus_doors_tick_animation(void) {
     int i;
     int changed = 0;
     for (i = 0; i < g_door_count; i++) {
-        Nexus_Door *d = &g_doors[i];
+        Nexus_SquareDoor *d = &g_doors[i];
         if (d->door_state == NEXUS_DOOR_STATE_OPENING) {
             if (d->animation_step < NEXUS_DOOR_ANIMATION_STEPS) {
                 d->animation_step++;

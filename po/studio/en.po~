@@ -1,0 +1,274 @@
+# Firestaff Studio English translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-02 18:49+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Game"
+msgstr "Game"
+
+msgid "New"
+msgstr "New"
+
+msgid "Open .fsdung"
+msgstr "Open .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Save .fsdung"
+
+msgid "Save As..."
+msgstr "Save As..."
+
+msgid "Add Level"
+msgstr "Add Level"
+
+msgid "Map Settings"
+msgstr "Map Settings"
+
+msgid "Statistics"
+msgstr "Statistics"
+
+msgid "Validate"
+msgstr "Validate"
+
+msgid "Test View"
+msgstr "Test View"
+
+msgid "Tools"
+msgstr "Tools"
+
+msgid "Select"
+msgstr "Select"
+
+msgid "Paint"
+msgstr "Paint"
+
+msgid "Place Thing"
+msgstr "Place Thing"
+
+msgid "Erase"
+msgstr "Erase"
+
+msgid "Fill"
+msgstr "Fill"
+
+msgid "Set Party Start"
+msgstr "Set Party Start"
+
+msgid "Tile Types"
+msgstr "Tile Types"
+
+msgid "Thing Type"
+msgstr "Thing Type"
+
+msgid "View"
+msgstr "View"
+
+msgid "Show Grid"
+msgstr "Show Grid"
+
+msgid "Show Things"
+msgstr "Show Things"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Fit"
+
+msgid "Map Properties"
+msgstr "Map Properties"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Size"
+msgstr "Size"
+
+msgid "Wall Set"
+msgstr "Wall Set"
+
+msgid "Floor Set"
+msgstr "Floor Set"
+
+msgid "Difficulty"
+msgstr "Difficulty"
+
+msgid "Tile"
+msgstr "Tile"
+
+msgid "Position"
+msgstr "Position"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Things at Tile"
+msgstr "Things at Tile"
+
+msgid "Delete Thing"
+msgstr "Delete Thing"
+
+msgid "Thing Properties"
+msgstr "Thing Properties"
+
+msgid "Cell"
+msgstr "Cell"
+
+msgid "Graphics Override"
+msgstr "Graphics Override"
+
+#, python-brace-format
+msgid "Import {}..."
+msgstr "Import {}..."
+
+msgid "Coming soon"
+msgstr "Coming soon"
+
+msgid "New Level"
+msgstr "New Level"
+
+msgid "Level name:"
+msgstr "Level name:"
+
+msgid "Language"
+msgstr "Language"
+
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"Language set to {}.\n"
+"Restart app for full effect."
+
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "{} support coming in a future update"
+
+msgid "New dungeon created"
+msgstr "New dungeon created"
+
+msgid "All files"
+msgstr "All files"
+
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "Opened: {}"
+
+msgid "Error"
+msgstr "Error"
+
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "Saved: {}"
+
+msgid "Width (1-64)"
+msgstr "Width (1-64)"
+
+msgid "Height (1-64)"
+msgstr "Height (1-64)"
+
+msgid "Apply"
+msgstr "Apply"
+
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "Maps: {}"
+
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "Current: {} ({}×{})"
+
+msgid "Tiles:"
+msgstr "Tiles:"
+
+#, python-brace-format
+msgid "Things: {}"
+msgstr "Things: {}"
+
+msgid "Dungeon Statistics"
+msgstr "Dungeon Statistics"
+
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "Map {} \"{}\": all walls"
+
+msgid "Party start is inside a wall"
+msgstr "Party start is inside a wall"
+
+msgid "Party start is outside map bounds"
+msgstr "Party start is outside map bounds"
+
+msgid "Validation"
+msgstr "Validation"
+
+msgid "Issues found:"
+msgstr "Issues found:"
+
+msgid "Dungeon is valid!"
+msgstr "Dungeon is valid!"
+
+#, python-brace-format
+msgid "Import {}"
+msgstr "Import {}"
+
+msgid "All"
+msgstr "All"
+
+msgid "Pillow is required for graphics import"
+msgstr "Pillow is required for graphics import"
+
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "Could not load image: {}"
+
+msgid "Resize?"
+msgstr "Resize?"
+
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{} imported from {}"
+
+msgid "North"
+msgstr "North"
+
+msgid "East"
+msgstr "East"
+
+msgid "South"
+msgstr "South"
+
+msgid "West"
+msgstr "West"
+
+msgid "Turn L"
+msgstr "Turn L"
+
+msgid "Fwd"
+msgstr "Fwd"
+
+msgid "Back"
+msgstr "Back"
+
+msgid "Turn R"
+msgstr "Turn R"
+

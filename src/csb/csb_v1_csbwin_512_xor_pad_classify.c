@@ -49,6 +49,7 @@
 
 #include "csb_v1_csbwin_512_xor_pad_classify.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -602,6 +603,8 @@ static void parse_timer_queue_summary(const uint8_t *decoded,
     out->timer_queue_summary_count = (uint16_t)count;
     for (i = 0u; i < count; ++i) {
         out->timer_queue[i] = read_word(decoded, i * 2u, byte_order);
+        fprintf(stderr, "DBG tq_parse[%zu]=%u raw=[%02x %02x] order=%d\n",
+                i, out->timer_queue[i], decoded[i*2], decoded[i*2+1], (int)byte_order);
     }
 }
 
@@ -996,6 +999,9 @@ int csb_v1_csbwin_512_decode_stream_section_ordered(
     actual_checksum = unscramble_block(
         out, initial_hash, (uint16_t)(size / 2u), byte_order);
     if (actual_checksum != expected_checksum) {
+        fprintf(stderr, "DBG decode_section: actual=0x%04x expected=0x%04x hash=0x%04x numword=%u order=%d src=[%02x %02x %02x %02x %02x %02x]\n",
+                actual_checksum, expected_checksum, initial_hash, (unsigned)(size/2), (int)byte_order,
+                src[0], src[1], size>2?src[2]:0, size>3?src[3]:0, size>4?src[4]:0, size>5?src[5]:0);
         memset(out, 0, size);
         return CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM;
     }
@@ -1769,6 +1775,8 @@ static int verify_body_section(
         bytes + offset, section_size, initial_hash, expected_checksum,
         byte_order, decoded, section_size);
     if (rc != CSB_V1_CSBWIN_512_OK) {
+        fprintf(stderr, "DBG verify_body_section: kind=%d off=%zu sz=%zu hash=0x%04x csum=0x%04x order=%d rc=%d total=%zu\n",
+                (int)kind, offset, section_size, initial_hash, expected_checksum, (int)byte_order, rc, size);
         free(decoded);
         return rc;
     }
@@ -1820,6 +1828,10 @@ int csb_v1_csbwin_512_verify_save_body(
     /* The header classifier's authenticated word order also applies to this
      * producer's encrypted body images. */
     body_byte_order = out->header.byte_order;
+    fprintf(stderr, "DBG verify_save_body: byte_order=%d verdict=%d tq_hash=0x%04x tq_csum=0x%04x\n",
+            (int)body_byte_order, (int)out->header.verdict,
+            out->header.public_fields.csbwin_timer_queue_hash,
+            out->header.public_fields.csbwin_timer_queue_checksum);
 
     /* CSBWin/SaveGame.cpp lines 1768-1775: GAMEBLOCK2 is the
      * first body section after GAMEBLOCK1 and is always 128 bytes. */

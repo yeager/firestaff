@@ -682,9 +682,18 @@ static int populate_explosion_on_impact(
     memset(out, 0, sizeof(*out));
     out->slotIndex             = -1;        /* caller assigns */
     out->explosionType         = explType;
-    out->mapIndex              = digest->destMapIndex;
-    out->mapX                  = digest->destMapX;
-    out->mapY                  = digest->destMapY;
+    /* ReDMCSB PROJEXPL.C F0213 creates the explosion at the projectile's
+     * current Thing position, not the blocked destination square. */
+    if (digest->destIsMapBoundary ||
+        digest->destSquareType == PROJECTILE_ELEMENT_WALL) {
+        out->mapIndex          = digest->sourceMapIndex;
+        out->mapX              = digest->sourceMapX;
+        out->mapY              = digest->sourceMapY;
+    } else {
+        out->mapIndex          = digest->destMapIndex;
+        out->mapX              = digest->destMapX;
+        out->mapY              = digest->destMapY;
+    }
     out->cell                  = (explType == C007_EXPLOSION_POISON_CLOUD)
                                   ? EXPLOSION_CELL_CENTERED : (in->cell & 3);
     out->centered              = (out->cell == EXPLOSION_CELL_CENTERED) ? 1 : 0;

@@ -21,6 +21,7 @@ README_SRC="$ROOT/README.md"
 RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 BIN_SRC="$BUILD_DIR/firestaff"
 ARTPACK_STUDIO_APP_SRC="${ARTPACK_STUDIO_APP_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/Firestaff Artpack Studio.app}"
+DUNGEON_STUDIO_APP_SRC="${DUNGEON_STUDIO_APP_SRC:-$BUILD_DIR/dungeon-studio-bundle/dist/Firestaff Dungeon Studio.app}"
 SDL_DYLIB="$(otool -L "$BIN_SRC" | awk '/libSDL3.*dylib/ {print $1; exit}')"
 
 if [[ ! -x "$BIN_SRC" ]]; then
@@ -29,6 +30,10 @@ if [[ ! -x "$BIN_SRC" ]]; then
 fi
 if [[ ! -d "$ARTPACK_STUDIO_APP_SRC/Contents/MacOS" ]]; then
   echo "Missing bundled Artpack Studio app: $ARTPACK_STUDIO_APP_SRC" >&2
+  exit 1
+fi
+if [[ ! -d "$DUNGEON_STUDIO_APP_SRC/Contents/MacOS" ]]; then
+  echo "Missing bundled Dungeon Studio app: $DUNGEON_STUDIO_APP_SRC" >&2
   exit 1
 fi
 
@@ -43,6 +48,7 @@ mkdir -p "$RESOURCES_DIR/scripts"
 
 cp "$BIN_SRC" "$MACOS_DIR/Firestaff"
 cp -R "$ARTPACK_STUDIO_APP_SRC" "$STAGE_DIR/Firestaff Artpack Studio.app"
+cp -R "$DUNGEON_STUDIO_APP_SRC" "$STAGE_DIR/Firestaff Dungeon Studio.app"
 cp "$SDL_DYLIB" "$FRAMEWORKS_DIR/$(basename "$SDL_DYLIB")"
 cp "$README_SRC" "$STAGE_DIR/README.md"
 cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"

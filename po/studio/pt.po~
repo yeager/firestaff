@@ -1,0 +1,274 @@
+# Firestaff Studio Portuguese translation.
+# Copyright (C) 2026 Firestaff
+# This file is distributed under the same license as the Firestaff Studio package.
+msgid ""
+msgstr ""
+"Project-Id-Version: Firestaff Studio 3.0\n"
+"Report-Msgid-Bugs-To: daniel@danielnylander.se\n"
+"POT-Creation-Date: 2026-08-02 18:49+0200\n"
+"PO-Revision-Date: 2026-08-02 18:49+0200\n"
+"Last-Translator: Firestaff Team\n"
+"Language-Team: Portuguese\n"
+"Language: pt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Game"
+msgstr "Jogo"
+
+msgid "New"
+msgstr "Novo"
+
+msgid "Open .fsdung"
+msgstr "Abrir .fsdung"
+
+msgid "Save .fsdung"
+msgstr "Salvar .fsdung"
+
+msgid "Save As..."
+msgstr "Salvar como..."
+
+msgid "Add Level"
+msgstr "Adicionar nível"
+
+msgid "Map Settings"
+msgstr "Configurações do mapa"
+
+msgid "Statistics"
+msgstr "Estatísticas"
+
+msgid "Validate"
+msgstr "Validar"
+
+msgid "Test View"
+msgstr "Vista de teste"
+
+msgid "Tools"
+msgstr "Ferramentas"
+
+msgid "Select"
+msgstr "Selecionar"
+
+msgid "Paint"
+msgstr "Pintar"
+
+msgid "Place Thing"
+msgstr "Colocar objeto"
+
+msgid "Erase"
+msgstr "Apagar"
+
+msgid "Fill"
+msgstr "Preencher"
+
+msgid "Set Party Start"
+msgstr "Definir início do grupo"
+
+msgid "Tile Types"
+msgstr "Tipos de ladrilho"
+
+msgid "Thing Type"
+msgstr "Tipo de objeto"
+
+msgid "View"
+msgstr "Vista"
+
+msgid "Show Grid"
+msgstr "Mostrar grade"
+
+msgid "Show Things"
+msgstr "Mostrar objetos"
+
+msgid "Zoom"
+msgstr "Zoom"
+
+msgid "Fit"
+msgstr "Ajustar"
+
+msgid "Map Properties"
+msgstr "Propriedades do mapa"
+
+msgid "Name"
+msgstr "Nome"
+
+msgid "Size"
+msgstr "Tamanho"
+
+msgid "Wall Set"
+msgstr "Conjunto de paredes"
+
+msgid "Floor Set"
+msgstr "Conjunto de pisos"
+
+msgid "Difficulty"
+msgstr "Dificuldade"
+
+msgid "Tile"
+msgstr "Ladrilho"
+
+msgid "Position"
+msgstr "Posição"
+
+msgid "Type"
+msgstr "Tipo"
+
+msgid "Things at Tile"
+msgstr "Objetos no ladrilho"
+
+msgid "Delete Thing"
+msgstr "Excluir objeto"
+
+msgid "Thing Properties"
+msgstr "Propriedades do objeto"
+
+msgid "Cell"
+msgstr "Célula"
+
+msgid "Graphics Override"
+msgstr "Substituição gráfica"
+
+#, python-brace-format
+msgid "Import {}..."
+msgstr "Importar {}..."
+
+msgid "Coming soon"
+msgstr "Em breve"
+
+msgid "New Level"
+msgstr "Novo nível"
+
+msgid "Level name:"
+msgstr "Nome do nível:"
+
+msgid "Language"
+msgstr "Idioma"
+
+#, python-brace-format
+msgid ""
+"Language set to {}.\n"
+"Restart app for full effect."
+msgstr ""
+"Idioma definido para {}.\n"
+"Reinicie o aplicativo para efeito completo."
+
+#, python-brace-format
+msgid "{} support coming in a future update"
+msgstr "Suporte a {} em uma atualização futura"
+
+msgid "New dungeon created"
+msgstr "Nova masmorra criada"
+
+msgid "All files"
+msgstr "Todos os arquivos"
+
+#, python-brace-format
+msgid "Opened: {}"
+msgstr "Aberto: {}"
+
+msgid "Error"
+msgstr "Erro"
+
+#, python-brace-format
+msgid "Saved: {}"
+msgstr "Salvo: {}"
+
+msgid "Width (1-64)"
+msgstr "Largura (1-64)"
+
+msgid "Height (1-64)"
+msgstr "Altura (1-64)"
+
+msgid "Apply"
+msgstr "Aplicar"
+
+#, python-brace-format
+msgid "Maps: {}"
+msgstr "Mapas: {}"
+
+#, python-brace-format
+msgid "Current: {} ({}×{})"
+msgstr "Atual: {} ({}×{})"
+
+msgid "Tiles:"
+msgstr "Ladrilhos:"
+
+#, python-brace-format
+msgid "Things: {}"
+msgstr "Objetos: {}"
+
+msgid "Dungeon Statistics"
+msgstr "Estatísticas da masmorra"
+
+#, python-brace-format
+msgid "Map {} \"{}\": all walls"
+msgstr "Mapa {} \"{}\": tudo paredes"
+
+msgid "Party start is inside a wall"
+msgstr "O início do grupo está dentro de uma parede"
+
+msgid "Party start is outside map bounds"
+msgstr "O início do grupo está fora dos limites do mapa"
+
+msgid "Validation"
+msgstr "Validação"
+
+msgid "Issues found:"
+msgstr "Problemas encontrados:"
+
+msgid "Dungeon is valid!"
+msgstr "A masmorra é válida!"
+
+#, python-brace-format
+msgid "Import {}"
+msgstr "Importar {}"
+
+msgid "All"
+msgstr "Todos"
+
+msgid "Pillow is required for graphics import"
+msgstr "Pillow é necessário para importação gráfica"
+
+#, python-brace-format
+msgid "Could not load image: {}"
+msgstr "Não foi possível carregar a imagem: {}"
+
+msgid "Resize?"
+msgstr "Redimensionar?"
+
+#, python-brace-format
+msgid ""
+"Image is {}×{}, expected {}×{}.\n"
+"Resize to fit?"
+msgstr ""
+"A imagem é {}×{}, esperado {}×{}.\n"
+"Redimensionar para ajustar?"
+
+#, python-brace-format
+msgid "{} imported from {}"
+msgstr "{} importado de {}"
+
+msgid "North"
+msgstr "Norte"
+
+msgid "East"
+msgstr "Leste"
+
+msgid "South"
+msgstr "Sul"
+
+msgid "West"
+msgstr "Oeste"
+
+msgid "Turn L"
+msgstr "Esq."
+
+msgid "Fwd"
+msgstr "Frente"
+
+msgid "Back"
+msgstr "Trás"
+
+msgid "Turn R"
+msgstr "Dir."
+
