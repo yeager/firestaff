@@ -267,6 +267,7 @@ int main(void) {
     /* creature_ai_tick is safe with empty world */
     {
         Theron_V1_World w2;
+        memset(&w2, 0, sizeof(w2));
         theron_v1_creature_ai_tick(&w2);
         CHECK(1);
     }
