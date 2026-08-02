@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.243
+- Nexus event dispatch system with all 61 event types from DM.BIN yam\event.c
+- Movement events advance game tick; inventory/spell/rest/save events accepted
+- Fixed firestaff_nexus library link (added asset_find_by_hash.c)
+
 # Firestaff v3.0.242
 - Located 7 dungeon level data blocks in Track 02 via signature scan (UD 0x09F000-0x21F000)
 - Level data block module with per-level metadata extraction

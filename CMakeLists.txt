@@ -46,6 +46,14 @@ target_link_libraries(test_nexus_v1_magic PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_magic COMMAND test_nexus_v1_magic)
 set_tests_properties(nexus_v1_magic PROPERTIES LABELS "nexus;magic;tier4")
 
+add_executable(test_nexus_v1_event
+    tests/test_nexus_v1_event.c)
+target_include_directories(test_nexus_v1_event PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_event PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_event COMMAND test_nexus_v1_event)
+set_tests_properties(nexus_v1_event PROPERTIES LABELS "nexus;event;tier4")
+
 add_executable(test_nexus_v1_multi_level_capture_campaign_launcher
     tests/test_nexus_v1_multi_level_capture_campaign_launcher.c
     src/nexus/nexus_v1_multi_level_capture_campaign_launcher.c
@@ -3540,7 +3548,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.242 LANGUAGES C)
+project(Firestaff VERSION 3.0.243 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -3975,7 +3983,8 @@ set(NEXUS_M11_RUNTIME_SOURCES
     src/nexus/nexus_v2_touch_runtime.c
 )
 if(NEXUS_SOURCES)
-    add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES})
+    add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES}
+        src/shared/asset_find_by_hash.c)
     target_include_directories(firestaff_nexus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(firestaff_nexus PUBLIC m)
     if(NOT MSVC)

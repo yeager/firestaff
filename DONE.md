@@ -1,3 +1,9 @@
+- ✅ 2026-08-02 v3.0.243 Nexus: event dispatch system with 61 DM.BIN event types
+  Added Nexus_EventType enum and event dispatcher from yam\event.c string table
+  at DM.BIN 0x036D04-0x037024. Movement, inventory, spell, rest/pause, and
+  save/load event categories handled. Fixed firestaff_nexus library link by
+  adding asset_find_by_hash.c dependency. Test verifies all 61 event names
+  and dispatch behavior.
 - ✅ 2026-08-02 v3.0.241 Nexus: real DM.BIN spell table magic system
   Rewrote nexus_v1_magic.c with the 32-entry spell lookup table extracted from
   DM.BIN offset 0x038368 (yam\spell.c). 4 elements × 4 forms × 2 classes

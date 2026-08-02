@@ -166,6 +166,83 @@ int nexus_v1_game_load_level(Nexus_V1_GameState *state, int level) {
 /* Map dungeon levels to CD audio tracks (Track 2-9).
  * 8 audio tracks for 16 levels — each track covers 2 levels. */
 int nexus_v1_cd_track_for_level(int level) {
-    if (level < 0 || level > 15) return 2; /* default: track 2 */
-    return 2 + (level / 2);  /* Track 2-9 */
+    if (level < 0 || level > 15) return 2;
+    return 2 + (level / 2);
+}
+
+/* Event name table — matches DM.BIN string table at 0x036D04-0x037024.
+ * Source: yam\event.c */
+static const char *const g_event_names[NEXUS_EV_COUNT] = {
+    "EV_NO_EVENT", "EV_SOFT_RESET", "EV_DEBUG",
+    "EV_GO_FORWARD", "EV_GO_BACKWARD", "EV_GO_RIGHT", "EV_GO_LEFT",
+    "EV_TURN_LEFT", "EV_TURN_RIGHT", "EV_CHG_VIEW",
+    "EV_GET_ITEM", "EV_CANCEL", "EV_INVENTORY", "EV_EXIT_INV",
+    "EV_CHG_EXTINFO", "EV_LEV_BOX", "EV_SET_LEAD",
+    "EV_GO_3DVIEW", "EV_SELECT_3DVIEW", "EV_EXIT_3DVIEW",
+    "EV_FINDNEXT_3DVIEW",
+    "EV_GO_SPELL", "EV_EXIT_SPELL", "EV_MODE_CHG", "EV_GO_MAP",
+    "EV_REST_PARTY", "EV_WAKE_UP", "EV_PAUSE_GAME", "EV_RESUME_GAME",
+    "EV_DYNAMIC", "EV_GETITEM", "EV_SPELL", "EV_DO_SPELL",
+    "EV_SPELL_CMD", "EV_INV_SLOT", "EV_CHG_PLAYER", "EV_LOCKON",
+    "EV_INV_SEL", "EV_OK", "EV_RING_SELECT", "EV_LIST_BOX",
+    "EV_SUBSQ", "EV_MOUSE_EXIT", "EV_MOTION_CHG", "EV_INV_EQUIP",
+    "EV_PBOX", "EV_MOUSE_CLICK", "EV_EXIT", "EV_CHG_SPD",
+    "EV_WIN_OK",
+    "EV_ANL_MOV", "EV_ANL_MOV2", "EV_ANL_RING", "EV_ANL_LOOK",
+    "EV_PLRSET", "EV_SAVE", "EV_SAVELOAD", "EV_WAIT",
+    "EV_SEMI_AUTO", "EV_TITLE", "EV_CONFIG"
+};
+
+const char *nexus_v1_event_name(Nexus_EventType ev) {
+    if (ev < 0 || ev >= NEXUS_EV_COUNT) return "EV_UNKNOWN";
+    return g_event_names[ev];
+}
+
+int nexus_v1_event_dispatch(Nexus_V1_GameState *state, const Nexus_Event *ev) {
+    if (!state || !ev) return -1;
+
+    switch (ev->type) {
+    case NEXUS_EV_NO_EVENT:
+        return 0;
+
+    case NEXUS_EV_GO_FORWARD:
+    case NEXUS_EV_GO_BACKWARD:
+    case NEXUS_EV_GO_RIGHT:
+    case NEXUS_EV_GO_LEFT:
+    case NEXUS_EV_TURN_LEFT:
+    case NEXUS_EV_TURN_RIGHT:
+        state->tick_count++;
+        return 1;
+
+    case NEXUS_EV_GET_ITEM:
+    case NEXUS_EV_GETITEM:
+        return 1;
+
+    case NEXUS_EV_INVENTORY:
+    case NEXUS_EV_EXIT_INV:
+    case NEXUS_EV_INV_SLOT:
+    case NEXUS_EV_INV_SEL:
+    case NEXUS_EV_INV_EQUIP:
+        return 1;
+
+    case NEXUS_EV_GO_SPELL:
+    case NEXUS_EV_EXIT_SPELL:
+    case NEXUS_EV_SPELL:
+    case NEXUS_EV_DO_SPELL:
+    case NEXUS_EV_SPELL_CMD:
+        return 1;
+
+    case NEXUS_EV_REST_PARTY:
+    case NEXUS_EV_WAKE_UP:
+    case NEXUS_EV_PAUSE_GAME:
+    case NEXUS_EV_RESUME_GAME:
+        return 1;
+
+    case NEXUS_EV_SAVE:
+    case NEXUS_EV_SAVELOAD:
+        return 1;
+
+    default:
+        return 0;
+    }
 }

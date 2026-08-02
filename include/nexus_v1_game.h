@@ -69,4 +69,81 @@ const char *nexus_v1_dungeon_start_status_name(
 /* CD Audio track mapping (Track 2-9 = game music) */
 int nexus_v1_cd_track_for_level(int level);
 
+/* Event system — 61 event types from DM.BIN yam\event.c.
+ * String table at DM.BIN 0x036D04-0x037024. */
+typedef enum {
+    NEXUS_EV_NO_EVENT = 0,
+    NEXUS_EV_SOFT_RESET,
+    NEXUS_EV_DEBUG,
+    NEXUS_EV_GO_FORWARD,
+    NEXUS_EV_GO_BACKWARD,
+    NEXUS_EV_GO_RIGHT,
+    NEXUS_EV_GO_LEFT,
+    NEXUS_EV_TURN_LEFT,
+    NEXUS_EV_TURN_RIGHT,
+    NEXUS_EV_CHG_VIEW,
+    NEXUS_EV_GET_ITEM,
+    NEXUS_EV_CANCEL,
+    NEXUS_EV_INVENTORY,
+    NEXUS_EV_EXIT_INV,
+    NEXUS_EV_CHG_EXTINFO,
+    NEXUS_EV_LEV_BOX,
+    NEXUS_EV_SET_LEAD,
+    NEXUS_EV_GO_3DVIEW,
+    NEXUS_EV_SELECT_3DVIEW,
+    NEXUS_EV_EXIT_3DVIEW,
+    NEXUS_EV_FINDNEXT_3DVIEW,
+    NEXUS_EV_GO_SPELL,
+    NEXUS_EV_EXIT_SPELL,
+    NEXUS_EV_MODE_CHG,
+    NEXUS_EV_GO_MAP,
+    NEXUS_EV_REST_PARTY,
+    NEXUS_EV_WAKE_UP,
+    NEXUS_EV_PAUSE_GAME,
+    NEXUS_EV_RESUME_GAME,
+    NEXUS_EV_DYNAMIC,
+    NEXUS_EV_GETITEM,
+    NEXUS_EV_SPELL,
+    NEXUS_EV_DO_SPELL,
+    NEXUS_EV_SPELL_CMD,
+    NEXUS_EV_INV_SLOT,
+    NEXUS_EV_CHG_PLAYER,
+    NEXUS_EV_LOCKON,
+    NEXUS_EV_INV_SEL,
+    NEXUS_EV_OK,
+    NEXUS_EV_RING_SELECT,
+    NEXUS_EV_LIST_BOX,
+    NEXUS_EV_SUBSQ,
+    NEXUS_EV_MOUSE_EXIT,
+    NEXUS_EV_MOTION_CHG,
+    NEXUS_EV_INV_EQUIP,
+    NEXUS_EV_PBOX,
+    NEXUS_EV_MOUSE_CLICK,
+    NEXUS_EV_EXIT,
+    NEXUS_EV_CHG_SPD,
+    NEXUS_EV_WIN_OK,
+    NEXUS_EV_ANL_MOV,
+    NEXUS_EV_ANL_MOV2,
+    NEXUS_EV_ANL_RING,
+    NEXUS_EV_ANL_LOOK,
+    NEXUS_EV_PLRSET,
+    NEXUS_EV_SAVE,
+    NEXUS_EV_SAVELOAD,
+    NEXUS_EV_WAIT,
+    NEXUS_EV_SEMI_AUTO,
+    NEXUS_EV_TITLE,
+    NEXUS_EV_CONFIG,
+    NEXUS_EV_COUNT
+} Nexus_EventType;
+
+typedef struct {
+    Nexus_EventType type;
+    int param1;
+    int param2;
+} Nexus_Event;
+
+const char *nexus_v1_event_name(Nexus_EventType ev);
+int nexus_v1_event_dispatch(Nexus_V1_GameState *state, const Nexus_Event *ev);
+
 #endif
+
