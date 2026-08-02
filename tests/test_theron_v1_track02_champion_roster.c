@@ -49,6 +49,26 @@ int main(void) {
         assert(c->stamina > 0);
     }
 
+    /* Skill levels: Theron has Apprentice in all 4 classes */
+    assert(theron->fighter_skills[0] == 3); /* Swing 3 */
+    assert(theron->ninja_skills[3]   == 3); /* Shoot 3 */
+    assert(theron->priest_skills[1]  == 3); /* Heal 3 */
+    assert(theron->wizard_skills[3]  == 3); /* Water 3 */
+
+    /* Tiran is pure Fighter (Master), no other skills */
+    assert(tiran->fighter_skills[0] == 9); /* Swing 9 */
+    assert(tiran->ninja_skills[0] == 0 && tiran->ninja_skills[1] == 0);
+    assert(tiran->priest_skills[0] == 0 && tiran->priest_skills[1] == 0);
+    assert(tiran->wizard_skills[0] == 0 && tiran->wizard_skills[1] == 0);
+
+    /* Hexa is perfectly balanced: all 4s */
+    for (int i = 0; i < 4; i++) {
+        assert(hexa->fighter_skills[i] == 4);
+        assert(hexa->ninja_skills[i]   == 4);
+        assert(hexa->priest_skills[i]  == 4);
+        assert(hexa->wizard_skills[i]  == 4);
+    }
+
     /* Party init uses real roster data */
     {
         Theron_V1_Party party;
@@ -59,10 +79,15 @@ int main(void) {
         assert(party.champions[0].max_health == 175);
         assert(party.champions[0].stamina == 1500);
         assert(party.champions[0].strength == 50);
+        assert(party.champions[0].primary_class == THERON_CLASS_FIGHTER);
+        assert(party.champions[0].fighter_level == 3);
         assert(strcmp(party.champions[1].name, "MARA") == 0);
         assert(party.champions[1].wisdom == 70);
+        assert(party.champions[1].primary_class == THERON_CLASS_PRIEST);
         assert(strcmp(party.champions[2].name, "LINOS") == 0);
+        assert(party.champions[2].primary_class == THERON_CLASS_NINJA);
         assert(strcmp(party.champions[3].name, "HEXA") == 0);
+        assert(party.champions[3].primary_class == THERON_CLASS_FIGHTER);
     }
 
     /* Soul Room companion selection */
