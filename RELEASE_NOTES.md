@@ -1,6 +1,10 @@
 
 # Unreleased
 
+# Firestaff v3.0.246
+- Theron: 120 real font glyphs from Track 02 UD 0x09A000 (text alphabet + ASCII + UI decoration)
+- Font enables real text rendering for UI chrome (partially resolves THERON-V1-UI-CHROME-REAL-DATA)
+
 # Firestaff v3.0.245
 - Amiga platform GRAPHICS.DAT classifiers for DM1 (legacy 575-graphic format) and CSB (DMCSB2 container)
 - MD5-based receipt identification: 6 DM1 Amiga variants, 4 CSB Amiga variants

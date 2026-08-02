@@ -3548,7 +3548,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.245 LANGUAGES C)
+project(Firestaff VERSION 3.0.246 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -44409,6 +44409,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature_spa
     add_test(
         NAME theron_v1_track02_creature_spawn
         COMMAND test_theron_v1_track02_creature_spawn
+    )
+endif()
+
+# Theron Track 02 font glyphs (8x6 monochrome bitmap font from UD 0x09A000)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_font_glyphs.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_font_glyphs.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_font_glyphs.h")
+    add_executable(test_theron_v1_track02_font_glyphs
+        tests/test_theron_v1_track02_font_glyphs.c
+        src/theron/theron_v1_track02_font_glyphs.c
+    )
+    target_include_directories(test_theron_v1_track02_font_glyphs PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_font_glyphs PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_font_glyphs
+        COMMAND test_theron_v1_track02_font_glyphs
     )
 endif()
 

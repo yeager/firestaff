@@ -42,11 +42,14 @@
   payloads before validating descriptor sectors; no semantic level/object
   promotion is implied by this transport fix.
 
-- **THERON-V1-UI-CHROME-REAL-DATA:** The inferred bar/text/champion-slot
-  implementation is now fixture-only. Production exposes a no-op API until
-  the original Track 02 UI chrome bank and font records are decoded. The
-  startup menu also withholds fixture portrait/class metadata; decoded names
-  alone do not authorize inferred portraits or classes.
+- **THERON-V1-UI-CHROME-REAL-DATA:** *(Partially resolved v3.0.246)*
+  Font glyphs decoded: 120 monochrome 8×6 glyphs from UD 0x09A000
+  (text alphabet + ASCII + UI decoration). The inferred bar/champion-slot
+  implementation remains fixture-only. Production exposes a no-op API until
+  the original Track 02 UI chrome bank is decoded. The startup menu also
+  withholds fixture portrait/class metadata; decoded names alone do not
+  authorize inferred portraits or classes. Remaining: HUD tile bank,
+  bar/slot layout coordinates, portrait graphics.
 
   The V2 procedural overlay is now likewise excluded from the production
   archive; production exposes only a no-op seam until the real HUD bank is

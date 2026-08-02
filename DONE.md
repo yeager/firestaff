@@ -1,3 +1,9 @@
+- ✅ 2026-08-02 v3.0.246 Theron: real font glyph table from Track 02
+  120 monochrome 8×6 bitmap glyphs extracted from UD 0x09A000 (720 bytes).
+  Indices 0-32: 5-bit text codec alphabet. Indices 33-95: ASCII '!' through '_'.
+  Indices 96-119: UI decoration glyphs (diamonds, arrows, borders, box frames).
+  Font serves both the compressed text renderer and direct ASCII display.
+  Enables real text rendering for UI chrome once the HUD bank is decoded.
 - ✅ 2026-08-02 v3.0.245 Amiga platform GRAPHICS.DAT classifiers for DM1 and CSB
   DM1 Amiga: legacy format (no 0x8001 marker), 575 graphics, big-endian,
   all uncompressed. 6 known variants (2.0 EN/FR/DE, 2.1/2.2 EN, 3.6 Multi, Demo).
