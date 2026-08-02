@@ -1,3 +1,8 @@
+- ✅ 2026-08-02 v3.0.224 Theron Track 02 binary string extraction: Add 4
+  object/shield action names (BLOCK/CHOP/BLOW HORN/FLIP) from UD 0x1DEEA5.
+  Add 5 save/delete file cabinet strings from UD 0x243081 (FILE CABINET
+  space error, CHOOSE A FILE TO DELETE, SURE?, THANK YOU, GAME WILL NOT
+  BE SAVED).
 - ✅ 2026-08-02 v3.0.223 Theron dungeon name and quest item parity: Replace
   synthetic dungeon names with binary-verified creature names from Track 02
   UD 0x2741EF (AKUTUBA/DRATOR/FORMIC/SARMON/SHADO/THIEF). Fix quest item

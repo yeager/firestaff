@@ -25,4 +25,7 @@ const char *theron_v1_track02_us_wake_up(void);
 const char *theron_v1_track02_us_game_frozen(void);
 const char *theron_v1_track02_us_resurrected(void);
 
+#define THERON_TRACK02_SAVE_DELETE_STRING_COUNT 5u
+const char *theron_v1_track02_us_save_delete_string(unsigned int index);
+
 #endif

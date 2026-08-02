@@ -1,6 +1,10 @@
 
 # Unreleased
 
+# Firestaff v3.0.224
+- Add 4 object/shield action names from Track 02 UD 0x1DEEA5: BLOCK, CHOP, BLOW HORN, FLIP
+- Add 5 save/delete file cabinet strings from Track 02 UD 0x243081
+
 # Firestaff v3.0.223
 - Replace synthetic dungeon names with binary-verified creature names from Track 02 UD 0x2741EF
 - Fix quest item ordering to match retrieval message order (UD 0x27713D)

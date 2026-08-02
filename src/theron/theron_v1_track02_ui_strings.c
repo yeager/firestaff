@@ -65,3 +65,17 @@ const char *theron_v1_track02_us_game_frozen(void) { return "GAME FROZEN"; }
 
 /* UD 0x1C6E72 */
 const char *theron_v1_track02_us_resurrected(void) { return "RESURRECTED."; }
+
+/* UD 0x243081: save/delete file cabinet strings */
+static const char *const g_save_delete_strings[THERON_TRACK02_SAVE_DELETE_STRING_COUNT] = {
+    "YOU DON'T HAVE ENOUGH SPACE IN THE FILE CABINET!", /* 0 — UD 0x243081 */
+    "CHOOSE A FILE TO DELETE.",                         /* 1 — UD 0x2430BE */
+    "SURE?",                                           /* 2 — UD 0x2430DD */
+    "THANK YOU.",                                      /* 3 — UD 0x24311B */
+    "THIS GAME WILL NOT BE SAVED!",                    /* 4 — UD 0x24313A */
+};
+
+const char *theron_v1_track02_us_save_delete_string(unsigned int index) {
+    if (index >= THERON_TRACK02_SAVE_DELETE_STRING_COUNT) return NULL;
+    return g_save_delete_strings[index];
+}

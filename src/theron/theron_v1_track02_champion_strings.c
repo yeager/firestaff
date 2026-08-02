@@ -40,6 +40,14 @@ static const char *const g_skill_levels[THERON_TRACK02_SKILL_LEVEL_COUNT] = {
     "ARCHMASTER",  /* 15 — guard entry */
 };
 
+/* UD 0x1DEEA5: 4 object/shield actions (precede hand actions in binary) */
+static const char *const g_object_actions[THERON_TRACK02_OBJECT_ACTION_COUNT] = {
+    "BLOCK",     /* 0 — UD 0x1DEEA5 */
+    "CHOP",      /* 1 — UD 0x1DEEAB */
+    "BLOW HORN", /* 2 — UD 0x1DEEB2 */
+    "FLIP",      /* 3 — UD 0x1DEEBC */
+};
+
 /* UD 0x1DEEC1: 5 hand-to-hand/movement actions */
 static const char *const g_hand_actions[THERON_TRACK02_HAND_ACTION_COUNT] = {
     "PUNCH",       /* 0 */
@@ -101,6 +109,11 @@ const char *theron_v1_track02_us_resource_name(unsigned int index) {
 const char *theron_v1_track02_us_skill_level_name(unsigned int index) {
     if (index >= THERON_TRACK02_SKILL_LEVEL_COUNT) return NULL;
     return g_skill_levels[index];
+}
+
+const char *theron_v1_track02_us_object_action_name(unsigned int index) {
+    if (index >= THERON_TRACK02_OBJECT_ACTION_COUNT) return NULL;
+    return g_object_actions[index];
 }
 
 const char *theron_v1_track02_us_hand_action_name(unsigned int index) {

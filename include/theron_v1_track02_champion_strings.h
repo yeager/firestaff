@@ -11,14 +11,16 @@
 #define THERON_TRACK02_STAT_COUNT         6u
 #define THERON_TRACK02_RESOURCE_COUNT     3u
 #define THERON_TRACK02_SKILL_LEVEL_COUNT 16u
-#define THERON_TRACK02_HAND_ACTION_COUNT  5u
-#define THERON_TRACK02_ACTION_COUNT      30u
+#define THERON_TRACK02_OBJECT_ACTION_COUNT 4u
+#define THERON_TRACK02_HAND_ACTION_COUNT   5u
+#define THERON_TRACK02_ACTION_COUNT       30u
 #define THERON_TRACK02_UI_MESSAGE_COUNT   7u
 
 const char *theron_v1_track02_us_class_name(unsigned int index);
 const char *theron_v1_track02_us_stat_name(unsigned int index);
 const char *theron_v1_track02_us_resource_name(unsigned int index);
 const char *theron_v1_track02_us_skill_level_name(unsigned int index);
+const char *theron_v1_track02_us_object_action_name(unsigned int index);
 const char *theron_v1_track02_us_hand_action_name(unsigned int index);
 const char *theron_v1_track02_us_action_name(unsigned int index);
 
