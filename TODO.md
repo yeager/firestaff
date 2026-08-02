@@ -135,10 +135,10 @@
   Remaining: exact PCE rand() sequence verification;
   wire category formulas into the spawn path. Drop tables unverified.
 
-- **THERON-SHOP-REAL-DATA:** The shop price-table helper has no identified
-  THQUEST.ASM price-table source and remains a fixture contract. It is now
-  excluded from the production archive; do not promote its inferred item
-  range or prices until Track 02 object/shop records are bound.
+- **THERON-SHOP-REAL-DATA:** *(Closed v3.0.242)* No shop/vendor mechanic
+  exists in Theron's Quest. Full Track 02 scan found zero BUY/SELL/SHOP
+  strings and no price array near item properties or elsewhere. The shop
+  helper fixture is permanently excluded from production.
 
 - **THERON-V22-CELL-RECTS:** The V2.2 shape-cache rectangle table still uses
   placeholder 1920×1080 cell coordinates. It is now excluded from the

@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.242
+- Located 7 dungeon level data blocks in Track 02 via signature scan (UD 0x09F000-0x21F000)
+- Level data block module with per-level metadata extraction
+- Confirmed no shop/price table exists — Theron has no vendor mechanic
+
 # Firestaff v3.0.241
 - Nexus magic system rewritten with real DM.BIN spell lookup table (32 entries at 0x038368)
 - 4 elements × 4 forms × 2 classes yield 8 unique spell types from Saturn binary

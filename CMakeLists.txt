@@ -3540,7 +3540,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.241 LANGUAGES C)
+project(Firestaff VERSION 3.0.242 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -44390,6 +44390,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_text_alphabe
     add_test(
         NAME theron_v1_track02_text_alphabet
         COMMAND test_theron_v1_track02_text_alphabet
+    )
+endif()
+
+# Theron Track 02 level data blocks (7 dungeon level UD offsets + metadata)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_level_data_blocks.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_level_data_blocks.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_level_data_blocks.h")
+    add_executable(test_theron_v1_track02_level_data_blocks
+        tests/test_theron_v1_track02_level_data_blocks.c
+        src/theron/theron_v1_track02_level_data_blocks.c
+    )
+    target_include_directories(test_theron_v1_track02_level_data_blocks PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_level_data_blocks PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_level_data_blocks
+        COMMAND test_theron_v1_track02_level_data_blocks
     )
 endif()
 

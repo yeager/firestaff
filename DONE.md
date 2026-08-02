@@ -5,6 +5,12 @@
   0x038320/0x038340 for per-power-level mana cost and damage. 8 unique spell
   types (0,1,2,3,5,7,10,12). Auto-selects caster class with fallback. Test
   verifies all table entries match binary data.
+- ✅ 2026-08-02 v3.0.242 Theron: 7 dungeon level data blocks located in Track 02
+  Full-track signature scan found 7 identical 232-byte prologues at UD offsets
+  0x09F000 through 0x21F000. Each has shared resource table + 8-byte per-level
+  metadata + compressed level data. Compression under investigation (not standard
+  LZSS). Item names confirmed as plain ASCII at UD 0x99517. No shop/price table
+  exists — Theron has no vendor mechanic.
 - ✅ 2026-08-02 v3.0.240 Theron: wire category-based spawn stat formulas into combat runtime
   Added theron_v1_track02_compute_spawn_stats() implementing real category 0-3
   formulas from disassembly at UD 0x0870E5. Creature spawn now uses real
