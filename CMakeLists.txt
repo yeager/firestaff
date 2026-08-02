@@ -134,6 +134,14 @@ target_link_libraries(test_nexus_v1_creature_ranged PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_creature_ranged COMMAND test_nexus_v1_creature_ranged)
 set_tests_properties(nexus_v1_creature_ranged PROPERTIES LABELS "nexus;creature;tier4")
 
+add_executable(test_nexus_v1_automap
+    tests/test_nexus_v1_automap.c)
+target_include_directories(test_nexus_v1_automap PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_automap PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_automap COMMAND test_nexus_v1_automap)
+set_tests_properties(nexus_v1_automap PROPERTIES LABELS "nexus;automap;tier4")
+
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
@@ -15007,6 +15015,21 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_mac_md_dat
         COMMAND test_dm2_v1_mac_md_dat
+    )
+
+    add_executable(test_dm2_v1_cdda_cd_dat
+        tests/test_dm2_v1_cdda_cd_dat.c
+        src/dm2/dm2_v1_cdda_cd_dat.c
+    )
+    target_include_directories(test_dm2_v1_cdda_cd_dat PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_cdda_cd_dat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_cdda_cd_dat
+        COMMAND test_dm2_v1_cdda_cd_dat
     )
 
     add_executable(test_dm2_v1_i18n_real_data
