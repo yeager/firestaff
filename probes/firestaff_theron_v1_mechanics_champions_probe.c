@@ -126,7 +126,7 @@ int main(void) {
         CHECK(leader != NULL);
         if (leader) {
             int original_hp = leader->health;
-            theron_v1_modify_champion_hp(leader, -100);  /* floor at 0 */
+            theron_v1_modify_champion_hp(leader, -10000);  /* floor at 0 */
             CHECK(leader->health == 0);
             theron_v1_modify_champion_hp(leader, 1000); /* ceiling at max */
             CHECK(leader->health == leader->max_health);
@@ -305,9 +305,9 @@ int main(void) {
         Theron_V1_Champion *leader = theron_v1_party_getChampion(&p2, 0);
         CHECK(leader != NULL);
         if (leader) {
-            theron_v1_modify_champion_stamina(leader, -1000);
+            theron_v1_modify_champion_stamina(leader, -100000);
             CHECK(leader->stamina == 0);
-            theron_v1_modify_champion_stamina(leader, 1000);
+            theron_v1_modify_champion_stamina(leader, 100000);
             CHECK(leader->stamina == leader->max_stamina);
         }
     }
@@ -319,9 +319,9 @@ int main(void) {
         Theron_V1_Champion *leader = theron_v1_party_getChampion(&p2, 0);
         CHECK(leader != NULL);
         if (leader) {
-            theron_v1_modify_champion_mana(leader, -1000);
+            theron_v1_modify_champion_mana(leader, -100000);
             CHECK(leader->mana == 0);
-            theron_v1_modify_champion_mana(leader, 1000);
+            theron_v1_modify_champion_mana(leader, 100000);
             CHECK(leader->mana == leader->max_mana);
         }
     }

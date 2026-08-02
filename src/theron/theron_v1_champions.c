@@ -17,6 +17,7 @@
  */
 
 #include "theron_v1_champions.h"
+#include "theron_v1_track02_champion_roster.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -28,62 +29,65 @@ size_t theron_v1_champion_block_size(void) {
 
 /* ── Party initialisation ────────────────────────────────────────────── */
 
-static void init_champion_slot(Theron_V1_Champion *c,
-                                int slot,
-                                const char *name,
-                                Theron_ChampionClass cls) {
+static void init_champion_from_roster(Theron_V1_Champion *c,
+                                      int slot,
+                                      unsigned int roster_index) {
     if (!c) return;
     memset(c, 0, sizeof(*c));
 
-    if (name) {
-        size_t len = strlen(name);
-        if (len > 23) len = 23;
-        memcpy(c->name, name, len);
-        c->name[23] = '\0';
-    }
+    const Theron_ChampionRecord *rec = theron_v1_track02_us_champion(roster_index);
+    if (!rec) return;
+
+    size_t len = strlen(rec->name);
+    if (len > 23) len = 23;
+    memcpy(c->name, rec->name, len);
+    c->name[23] = '\0';
 
     c->portrait_index = (uint8_t)(slot);
-    c->primary_class  = cls;
-    c->alive           = 1;
+    c->primary_class  = THERON_CLASS_FIGHTER;
+    c->alive          = 1;
 
-    c->health      = 10;  c->max_health  = 10;
-    c->stamina     = 10;  c->max_stamina = 10;
-    c->mana        =  0;  c->max_mana    =  0;
+    c->health      = (int16_t)rec->hp;
+    c->max_health  = (int16_t)rec->hp;
+    c->stamina     = (int16_t)rec->stamina;
+    c->max_stamina = (int16_t)rec->stamina;
+    c->mana        = (int16_t)rec->mana;
+    c->max_mana    = (int16_t)rec->mana;
 
-    c->strength    = 10;
-    c->dexterity   = 10;
-    c->wisdom      = 10;
-    c->vitality    = 10;
-    c->anti_magic  =  0;
-    c->anti_fire   =  0;
+    c->strength    = (int16_t)rec->strength;
+    c->dexterity   = (int16_t)rec->dexterity;
+    c->wisdom      = (int16_t)rec->wisdom;
+    c->vitality    = (int16_t)rec->vitality;
+    c->anti_magic  = (int16_t)rec->anti_magic;
+    c->anti_fire   = (int16_t)rec->anti_fire;
 
-    c->fighter_level = (cls == THERON_CLASS_FIGHTER) ? 1 : 0;
-    c->ninja_level   = (cls == THERON_CLASS_NINJA)   ? 1 : 0;
-    c->priest_level  = (cls == THERON_CLASS_PRIEST)  ? 1 : 0;
-    c->wizard_level  = (cls == THERON_CLASS_WIZARD)  ? 1 : 0;
+    c->fighter_level = 0;
+    c->ninja_level   = 0;
+    c->priest_level  = 0;
+    c->wizard_level  = 0;
 
     c->wounds     = 0;
     c->attributes = 0;
     memset(c->inventory, 0, sizeof(c->inventory));
     for (int i = 0; i < THERON_EQUIP_SLOT_COUNT; i++) c->slots[i] = -1;
     c->load     = 0;
-    c->max_load = 180;   /* (10 << 3) + 100 */
+    c->max_load = (int16_t)((rec->strength << 3) + 100);
     c->food     = 0;
     c->water    = 0;
-    /* padding[6] already zeroed by memset */
 }
 
 void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index) {
-    (void)dungeon_index;   /* unused — dungeon_index for future Phase 2 seed */
+    (void)dungeon_index;
     if (!party) return;
     memset(party, 0, sizeof(*party));
 
-    /* Slot 0: Theron */
-    init_champion_slot(&party->champions[0], 0, "Theron", THERON_CLASS_FIGHTER);
-    /* Slot 1-3: companions (blank until player-named) */
-    init_champion_slot(&party->champions[1], 1, "Companion 1", THERON_CLASS_FIGHTER);
-    init_champion_slot(&party->champions[2], 2, "Companion 2", THERON_CLASS_PRIEST);
-    init_champion_slot(&party->champions[3], 3, "Companion 3", THERON_CLASS_WIZARD);
+    /* Slot 0: THERON (roster index 0) — always in party */
+    init_champion_from_roster(&party->champions[0], 0, 0);
+    /* Slots 1-3: default to MARA/LINOS/HEXA (roster 1/2/3);
+     * actual selection happens via Soul Room mirrors per dungeon. */
+    init_champion_from_roster(&party->champions[1], 1, 1);
+    init_champion_from_roster(&party->champions[2], 2, 2);
+    init_champion_from_roster(&party->champions[3], 3, 3);
 
     party->champion_count = 4;
     party->active_slot    = 0;

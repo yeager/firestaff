@@ -43,30 +43,38 @@ extern "C" {
 #define THERON_CREATURE_SLOT_SUICIDER  4   /* kamikaze bomb creature */
 #define THERON_CREATURE_SLOT_COUNT      5
 
-/* ── Creature type IDs (TQ "light" subset of DM1 monster IDs) ─────── */
+/* ── Creature type IDs — 7 real creature types from Track 02 UD 0x2741EF ── */
 typedef enum {
     THERON_CREATURE_NONE          = 0,
-    THERON_CREATURE_FIREBALL      = 1,   /* Suicider explosion */
-    THERON_CREATURE_GOBLIN        = 2,
-    THERON_CREATURE_ORC          = 3,
-    THERON_CREATURE_SKELETON      = 4,
-    THERON_CREATURE_ZOMBIE       = 5,
-    THERON_CREATURE_KOBOLD       = 6,
-    THERON_CREATURE_TROLL        = 7,
-    THERON_CREATURE_WRAITH       = 8,
-    THERON_CREATURE_DEMON        = 9,
-    THERON_CREATURE_DRAGON       = 10,  /* Final boss creature */
-    THERON_CREATURE_BODYGUARD    = 11,  /* Protects quest item */
-    /* Quest dungeon bosses (one per dungeon) */
-    THERON_CREATURE_BOSS_1       = 12,  /* Dungeon 1 Hall of Records boss */
-    THERON_CREATURE_BOSS_2       = 13,
-    THERON_CREATURE_BOSS_3       = 14,
-    THERON_CREATURE_BOSS_4       = 15,
-    THERON_CREATURE_BOSS_5       = 16,
-    THERON_CREATURE_BOSS_6       = 17,
-    THERON_CREATURE_BOSS_7       = 18,
-    THERON_CREATURE_SUICIDER     = 19,  /* Kamikaze bomb creature */
+    THERON_CREATURE_AKUTUBA       = 1,   /* Dungeon 0 creature */
+    THERON_CREATURE_DRATOR        = 2,   /* Dungeon 1 creature */
+    THERON_CREATURE_FORMIC        = 3,   /* Dungeon 2 creature */
+    THERON_CREATURE_SARMON        = 4,   /* Dungeon 3 creature */
+    THERON_CREATURE_SHADO         = 5,   /* Dungeon 4 creature */
+    THERON_CREATURE_THIEF         = 6,   /* Dungeon 5 creature */
+    THERON_CREATURE_DEMON         = 7,   /* Dungeon 6 creature (final) */
+    THERON_CREATURE_TYPE_COUNT    = 8,
 } Theron_CreatureType;
+
+/* Backward compatibility aliases for synthetic names used in tests */
+#define THERON_CREATURE_GOBLIN    THERON_CREATURE_AKUTUBA
+#define THERON_CREATURE_ORC       THERON_CREATURE_DRATOR
+#define THERON_CREATURE_SKELETON  THERON_CREATURE_FORMIC
+#define THERON_CREATURE_ZOMBIE    THERON_CREATURE_SARMON
+#define THERON_CREATURE_KOBOLD    THERON_CREATURE_SHADO
+#define THERON_CREATURE_TROLL     THERON_CREATURE_THIEF
+#define THERON_CREATURE_WRAITH    THERON_CREATURE_DEMON
+#define THERON_CREATURE_DRAGON    THERON_CREATURE_DEMON
+#define THERON_CREATURE_BODYGUARD THERON_CREATURE_AKUTUBA
+#define THERON_CREATURE_FIREBALL  THERON_CREATURE_AKUTUBA
+#define THERON_CREATURE_BOSS_1    THERON_CREATURE_AKUTUBA
+#define THERON_CREATURE_BOSS_2    THERON_CREATURE_DRATOR
+#define THERON_CREATURE_BOSS_3    THERON_CREATURE_FORMIC
+#define THERON_CREATURE_BOSS_4    THERON_CREATURE_SARMON
+#define THERON_CREATURE_BOSS_5    THERON_CREATURE_SHADO
+#define THERON_CREATURE_BOSS_6    THERON_CREATURE_THIEF
+#define THERON_CREATURE_BOSS_7    THERON_CREATURE_DEMON
+#define THERON_CREATURE_SUICIDER  THERON_CREATURE_AKUTUBA
 
 /* ── Creature state flags ────────────────────────────────────────── */
 #define THERON_CF_ACTIVE          (1U << 0)   /* alive on map */

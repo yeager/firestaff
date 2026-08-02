@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.233 LANGUAGES C)
+project(Firestaff VERSION 3.0.234 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -4084,6 +4084,7 @@ set(M11_SOURCES
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_fmtowns_cd.c
     src/csb/csb_v1_fmtowns_portrait.c
+    src/csb/csb_v1_fmtowns_anm.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/csb_v1_startup_sequence_pc34_compat.c
@@ -4580,6 +4581,7 @@ add_executable(firestaff_theron_v1_mechanics_champions_probe
     probes/firestaff_theron_v1_mechanics_champions_probe.c
     src/theron/theron_v1_mechanics.c
     src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     src/theron/theron_v1_compat.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_asset_loader.c
@@ -4645,6 +4647,7 @@ add_executable(firestaff_theron_v1_startup_flow_probe
     src/theron/theron_v1_startup_media.c
     src/theron/theron_v1_startup_runtime_entry.c
     src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     src/theron/theron_v1_dungeon_progression.c
     src/theron/theron_v1_track02.c
     src/theron/theron_v1_world.c
@@ -4764,6 +4767,7 @@ add_executable(firestaff_theron_v1_chapter_marker_probe
     src/theron/theron_v1_dungeon_progression.c
     src/theron/theron_v1_save_load.c
     src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
 )
 target_include_directories(firestaff_theron_v1_chapter_marker_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -4888,6 +4892,7 @@ add_executable(firestaff_theron_v1_shop_purchase_gate_probe
     probes/firestaff_theron_v1_shop_purchase_gate_probe.c
     src/theron/theron_v1_shop.c
     src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
 )
 target_include_directories(firestaff_theron_v1_shop_purchase_gate_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -5757,6 +5762,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(firestaff_data_dir_picker_platform_matrix_probe
         PRIVATE firestaff_v2)
@@ -6859,6 +6865,7 @@ add_executable(firestaff_theron_v2_hud_launch_mode_probe
     src/theron/theron_v1_palette.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     src/dm1v2/dm1_v2_presentation_mode_pc34.c
     src/csb/csb_v2_presentation_mode_pc34.c
     src/csb/csb_v22_shapes.c
@@ -7054,6 +7061,7 @@ add_executable(firestaff_theron_v1_first_room_runtime_probe
     src/theron/theron_v1_track02.c
     src/theron/theron_v1_mechanics.c
     src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     src/theron/theron_v1_compat.c
     src/theron/theron_v1_dungeon_progression.c
     src/theron/theron_v1_palette.c
@@ -8728,6 +8736,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
         )
         target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE
             firestaff_v2
@@ -19940,6 +19949,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_asset_status_zip_cache_nested_deflate PRIVATE
         firestaff_v2
@@ -19977,6 +19987,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_asset_status_zip_cache_materialization PRIVATE
         firestaff_v2
@@ -20010,6 +20021,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_dm1_pc34_archive_media_receipt PRIVATE
         firestaff_v2
@@ -20047,6 +20059,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_asset_status_dm1_zip_required_materialization PRIVATE
         firestaff_v2
@@ -20086,6 +20099,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_csb_archive_required_split PRIVATE
         firestaff_v2
@@ -20122,6 +20136,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_asset_status_dm2_iso_required_cache_gate PRIVATE
         firestaff_v2
@@ -20155,6 +20170,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_dm1_pc34_multilanguage_required_gate PRIVATE
         firestaff_v2
@@ -20179,6 +20195,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_asset_status_nexus_bpk_trailer_metadata PRIVATE
         firestaff_v2
@@ -20211,6 +20228,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_nexus_v1_availability_profile_gate PRIVATE
         firestaff_v2
@@ -24094,6 +24112,7 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_theron_v22_shapes_pc34 PRIVATE firestaff_m12 firestaff_theron)
     add_executable(test_theron_v22_inplace_draw_pc34
@@ -35069,6 +35088,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_firestaff_data_validator_hash_scan PRIVATE firestaff_v2)
     target_include_directories(test_firestaff_data_validator_hash_scan PRIVATE
@@ -35102,6 +35122,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_firestaff_asset_pipeline_hash_scan PRIVATE firestaff_v2)
     target_include_directories(test_firestaff_asset_pipeline_hash_scan PRIVATE
@@ -35136,6 +35157,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_theron_v1_availability PRIVATE firestaff_v2)
     # Local asset_status_m12.c references asset_find_by_md5 etc, which live
@@ -37849,6 +37871,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_theron_v1_direct_launch_stale_rejection PRIVATE
         firestaff_theron
@@ -37931,6 +37954,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
+        src/theron/theron_v1_track02_champion_roster.c
     )
     target_link_libraries(test_asset_status_data_dir_change_cache_invalidation PRIVATE
         firestaff_v2
@@ -46670,6 +46694,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_portrait.c")
     endif()
     add_test(NAME csb_v1_fmtowns_portrait COMMAND test_csb_v1_fmtowns_portrait)
     set_tests_properties(csb_v1_fmtowns_portrait PROPERTIES LABELS "csb;fmtowns")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_anm.c")
+    add_executable(test_csb_v1_fmtowns_anm
+        tests/test_csb_v1_fmtowns_anm.c
+        src/csb/csb_v1_fmtowns_anm.c)
+    target_include_directories(test_csb_v1_fmtowns_anm PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_fmtowns_anm PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_fmtowns_anm COMMAND test_csb_v1_fmtowns_anm)
+    set_tests_properties(csb_v1_fmtowns_anm PROPERTIES LABELS "csb;fmtowns")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_cd.c")

@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.234
+- Wire real champion roster into party init: Theron hp=175/sta=1500/mana=50, real stats for all 8 champions replace synthetic hp=10 defaults
+- Replace 16 synthetic creature types (GOBLIN, ORC, DRAGON) with 7 real types from Track 02 (AKUTUBA, DRATOR, FORMIC, SARMON, SHADO, THIEF, DEMON)
+- Backward-compat defines for existing test coverage
+
 # Firestaff v3.0.233
 - Theron's Quest champion roster: all 8 champions with real stats from DM1 5-bit packed text at UD 0x09D1D6 — THERON, MARA, LINOS, HEXA, HAKAR, TIRAN, DOTAN, PENTAI with HP/STA/MANA and 6 base attributes
 

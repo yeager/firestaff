@@ -1,3 +1,9 @@
+- ✅ 2026-08-02 v3.0.234 Theron parity: real champion stats, real creature types
+  Wire real champion roster (8 champions from Track 02 UD 0x09D1D6) into
+  party init, replacing synthetic hp=10/sta=10 defaults. Replace 16 bogus
+  creature type enums (GOBLIN, ORC, DRAGON, etc.) with 7 real types from
+  Track 02 UD 0x2741EF (AKUTUBA, DRATOR, FORMIC, SARMON, SHADO, THIEF,
+  DEMON). Backward-compat defines preserved for existing test coverage.
 - ✅ 2026-08-02 v3.0.232 FM Towns DM1 support + CSB FM Towns GRAPHICS.DAT
   classifier + D0C alcove item viewport bug fix:
   DM1 GRAPHICS.DAT classifier (legacy format, 575 uncompressed graphics),
