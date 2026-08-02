@@ -1,3 +1,22 @@
+- ✅ 2026-08-02 v3.0.231 Theron's Quest real data extraction batch:
+  Level labels (16 entries from UD 0x274230), save file strings
+  (UD 0x27519B), dungeon intro stories (7 dungeons, UD 0x27613E),
+  treasure names and retrieval messages (UD 0x27713F), GAME SPEED
+  label, file cabinet management strings (UD 0x26107B), boot/
+  copy-protection screen text (UD 0x26C348), tile descriptor format
+  header (32-byte record from disassembly of $4914 tile renderer).
+  All data binary-verified against US Track 02 BIN. 4 new tests.
+- ✅ 2026-08-02 v3.0.230 FM Towns DM1 support infrastructure:
+  GRAPHICS.DAT classifier and receipt (legacy format, 575 graphics,
+  uncompressed, embedded w/h, EN 396970 bytes / JP 396407 bytes).
+  ISO 9660 data track extractor (system ID HMA-240, volume DUNGEON,
+  extracts DATA/ and JDATA/ game files from MODE1/2048 BIN/CUE).
+  CD audio track mapping (19 CDDA tracks 02-20, map-to-track table
+  for all 16 dungeon levels, event tracks for title/hall/game-over/
+  game-won). DUNGEON.DAT classifier (EN 33423 / JP 33931 bytes, same
+  99-map format as PC 3.4 with minor thing count differences).
+  Data validator updated with FM Towns DM1 DUNGEON.DAT MD5 hashes
+  plus PC 3.4 English DUNGEON.DAT hash. 4 new modules, 4 tests.
 - ✅ 2026-08-02 v3.0.229 FM Towns DM2 support infrastructure:
   GRAPHICS.DAT classifier and receipt (GDAT version 4, 0x8004, 2.78 MB,
   3407 raw entries vs DOS 5624). CD.DAT parser (40-byte CDDA track mapping,

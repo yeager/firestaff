@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.229 LANGUAGES C)
+project(Firestaff VERSION 3.0.231 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -17314,7 +17314,7 @@ if(BUILD_TESTING)
     endif()
     add_test(
         NAME dm2_v1_dungeon
-        COMMAND probe_dm2_v1_dungeon_loader "$ENV{HOME}/.firestaff/data/dm2/DUNGEON.DAT"
+        COMMAND probe_dm2_v1_dungeon_loader "$ENV{HOME}/.firestaff/data/dm2/data/dungeon.dat"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
@@ -17338,7 +17338,7 @@ if(BUILD_TESTING)
     endif()
     add_test(
         NAME dm2_v1_object
-        COMMAND probe_dm2_v1_object_model "$ENV{HOME}/.firestaff/data/dm2/DUNGEON.DAT"
+        COMMAND probe_dm2_v1_object_model "$ENV{HOME}/.firestaff/data/dm2/data/dungeon.dat"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
@@ -17419,7 +17419,7 @@ if(BUILD_TESTING)
     endif()
     add_test(
         NAME dm2_v1_world
-        COMMAND probe_dm2_v1_world_state "$ENV{HOME}/.firestaff/data/dm2/DUNGEON.DAT"
+        COMMAND probe_dm2_v1_world_state "$ENV{HOME}/.firestaff/data/dm2/data/dungeon.dat"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
@@ -17437,7 +17437,7 @@ if(BUILD_TESTING)
     endif()
     add_test(
         NAME dm2_v1_asset
-        COMMAND probe_dm2_v1_asset_loader "$ENV{HOME}/.firestaff/data/dm2/GRAPHICS.DAT"
+        COMMAND probe_dm2_v1_asset_loader "$ENV{HOME}/.firestaff/data/dm2/data/graphics.dat"
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
@@ -44073,6 +44073,82 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_touch_click_zone_matrix
     )
 endif()
 
+# Theron Track 02 level labels (real data from UD 0x274230)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_level_labels.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_level_labels.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_level_labels.h")
+    add_executable(test_theron_v1_track02_level_labels
+        tests/test_theron_v1_track02_level_labels.c
+        src/theron/theron_v1_track02_level_labels.c
+    )
+    target_include_directories(test_theron_v1_track02_level_labels PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_level_labels PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_level_labels
+        COMMAND test_theron_v1_track02_level_labels
+    )
+endif()
+
+# Theron Track 02 save strings (real data from UD 0x27519B)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_save_strings.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_save_strings.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_save_strings.h")
+    add_executable(test_theron_v1_track02_save_strings
+        tests/test_theron_v1_track02_save_strings.c
+        src/theron/theron_v1_track02_save_strings.c
+    )
+    target_include_directories(test_theron_v1_track02_save_strings PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_save_strings PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_save_strings
+        COMMAND test_theron_v1_track02_save_strings
+    )
+endif()
+
+# Theron Track 02 dungeon text (stories, treasures, retrieval messages)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_text.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_text.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_dungeon_text.h")
+    add_executable(test_theron_v1_track02_dungeon_text
+        tests/test_theron_v1_track02_dungeon_text.c
+        src/theron/theron_v1_track02_dungeon_text.c
+    )
+    target_include_directories(test_theron_v1_track02_dungeon_text PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_dungeon_text PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_dungeon_text
+        COMMAND test_theron_v1_track02_dungeon_text
+    )
+endif()
+
+# Theron Track 02 file cabinet strings (real data from UD 0x26107B)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_file_cabinet.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_file_cabinet.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_file_cabinet.h")
+    add_executable(test_theron_v1_track02_file_cabinet
+        tests/test_theron_v1_track02_file_cabinet.c
+        src/theron/theron_v1_track02_file_cabinet.c
+    )
+    target_include_directories(test_theron_v1_track02_file_cabinet PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_file_cabinet PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_file_cabinet
+        COMMAND test_theron_v1_track02_file_cabinet
+    )
+endif()
+
 # firestaff_touch.c live bridge: verifies that runtime gesture decisions
 # are the only path from swipe / edge-strafe candidates into FS_InputQueue.
 # Data-free; stubs fs_g_input_queue_get() locally.
@@ -49419,6 +49495,43 @@ add_executable(test_dm2_v1_fmtowns_cd_dat
 )
 target_include_directories(test_dm2_v1_fmtowns_cd_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_fmtowns_cd_dat COMMAND test_dm2_v1_fmtowns_cd_dat)
+
+add_executable(test_dm2_v1_fmtowns_disc
+    tests/test_dm2_v1_fmtowns_disc.c
+    src/dm2/dm2_v1_fmtowns_disc.c
+    src/dm2/dm2_v1_fmtowns_graphics_dat.c
+    src/dm2/dm2_v1_fmtowns_cd_dat.c
+)
+target_include_directories(test_dm2_v1_fmtowns_disc PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm2_v1_fmtowns_disc COMMAND test_dm2_v1_fmtowns_disc)
+
+add_executable(test_dm1_v1_fmtowns_graphics_dat
+    tests/test_dm1_v1_fmtowns_graphics_dat.c
+    src/dm1/dm1_v1_fmtowns_graphics_dat.c
+)
+target_include_directories(test_dm1_v1_fmtowns_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_graphics_dat COMMAND test_dm1_v1_fmtowns_graphics_dat)
+
+add_executable(test_dm1_v1_fmtowns_iso9660
+    tests/test_dm1_v1_fmtowns_iso9660.c
+    src/dm1/dm1_v1_fmtowns_iso9660.c
+)
+target_include_directories(test_dm1_v1_fmtowns_iso9660 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_iso9660 COMMAND test_dm1_v1_fmtowns_iso9660)
+
+add_executable(test_dm1_v1_fmtowns_cd_audio
+    tests/test_dm1_v1_fmtowns_cd_audio.c
+    src/dm1/dm1_v1_fmtowns_cd_audio.c
+)
+target_include_directories(test_dm1_v1_fmtowns_cd_audio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_cd_audio COMMAND test_dm1_v1_fmtowns_cd_audio)
+
+add_executable(test_dm1_v1_fmtowns_dungeon_dat
+    tests/test_dm1_v1_fmtowns_dungeon_dat.c
+    src/dm1/dm1_v1_fmtowns_dungeon_dat.c
+)
+target_include_directories(test_dm1_v1_fmtowns_dungeon_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_dungeon_dat COMMAND test_dm1_v1_fmtowns_dungeon_dat)
 
 add_executable(test_dm1_v1_viewport_planar_fill_material_pc34_compat tests/test_dm1_v1_viewport_planar_fill_material_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_planar_fill_material_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

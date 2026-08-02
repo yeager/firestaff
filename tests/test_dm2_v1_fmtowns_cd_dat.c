@@ -23,14 +23,27 @@ static void test_parse_reference(void) {
     assert(r.data_entries == 1);
     assert(r.audio_entries == 9);
 
-    assert(r.entries[0].type_flag == 0x06);
-    assert(r.entries[1].type_flag == 0x03);
-    assert(r.entries[2].type_flag == 0x02);
+    assert(r.entries[0].type_flag == DM2_FMTOWNS_CD_TYPE_DATA);
+    assert(r.entries[1].type_flag == DM2_FMTOWNS_CD_TYPE_AUDIO_FIRST);
+    assert(r.entries[2].type_flag == DM2_FMTOWNS_CD_TYPE_AUDIO);
 
-    assert(r.entries[0].byte0 == 0x06);
-    assert(r.entries[1].byte0 == 0x23);
+    assert(r.entries[0].tbios_param0 == 0x06);
+    assert(r.entries[1].tbios_param0 == 0x23);
+    assert(r.entries[1].tbios_param2 == 0x06);
 
     assert(dm2_v1_fmtowns_cd_dat_audio_track_count(&r) == 9);
+}
+
+static void test_disc_track_mapping(void) {
+    DM2_V1_FmtownsCdDatReceipt r;
+    assert(dm2_v1_fmtowns_cd_dat_parse(cd_dat_ref, 40, &r) == 0);
+
+    assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 0) == 2);
+    assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 1) == 3);
+    assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 6) == 8);
+    assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, 7) == 0);
+    assert(dm2_v1_fmtowns_cd_dat_disc_track(&r, -1) == 0);
+    assert(dm2_v1_fmtowns_cd_dat_disc_track(NULL, 0) == 0);
 }
 
 static void test_parse_null(void) {
@@ -50,6 +63,7 @@ static void test_audio_count_null(void) {
 
 int main(void) {
     test_parse_reference();
+    test_disc_track_mapping();
     test_parse_null();
     test_parse_short();
     test_audio_count_null();

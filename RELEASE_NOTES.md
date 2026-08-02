@@ -1,6 +1,19 @@
 
 # Unreleased
 
+# Firestaff v3.0.231
+- Theron's Quest real data: level labels (16 entries), save file management strings, dungeon intro stories (7 dungeons), treasure names, quest retrieval messages, GAME SPEED label
+- Theron's Quest real data: file cabinet management strings (no space, choose delete, sure, thank you, not saved), boot/copy-protection screen text (Super CD-ROM2 System)
+- Theron's Quest tile descriptor format header: 32-byte record with flip/animation flags, stream header with 4 relative-offset pointers (from HuC6280 disassembly of $4914)
+- 4 new tests: level labels, save strings, dungeon text, file cabinet
+
+# Firestaff v3.0.230
+- FM Towns DM1 GRAPHICS.DAT classifier and receipt: legacy format (no 0x8001 marker), 575 uncompressed graphics with embedded width/height, EN 396970 / JP 396407 bytes
+- FM Towns DM1 ISO 9660 data track extractor: parses MODE1/2048 data track from BIN/CUE, system ID "HMA-240", volume "DUNGEON", extracts GRAPHICS.DAT and DUNGEON.DAT from DATA/ and JDATA/ subdirectories
+- FM Towns DM1 CD audio track mapping: 19 CDDA audio tracks (02-20), map-to-track table for 16 dungeon levels, event track lookup (title/hall/game-over/game-won), track info with unused flags
+- FM Towns DM1 DUNGEON.DAT classifier: EN 33423 / JP 33931 bytes, 99-map format identical to PC 3.4 with minor thing count differences at header offsets 2, 10, 18
+- Data validator: added FM Towns DM1 EN/JP DUNGEON.DAT and PC 3.4 English DUNGEON.DAT MD5 hashes
+
 # Firestaff v3.0.229
 - FM Towns DM2 support: GRAPHICS.DAT classifier (GDAT version 4, container 0x8004, 2.78 MB / 3407 raw entries)
 - FM Towns DM2 CD.DAT parser (40-byte CDDA track mapping, 10 entries, 7 audio tracks)
