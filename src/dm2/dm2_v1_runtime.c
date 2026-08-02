@@ -40,6 +40,7 @@
 #include "dm2_v1_shop.h"
 #include "dm2_v1_trigger.h"
 #include "dm2_v1_world_model.h"
+#include "dm2_v1_i18n.h"
 #include "fs_portable_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -258,6 +259,8 @@ typedef struct {
     int last_spell_failure_class;
     DM2_V1_SpellTimerHandlerContext spell_timer_ctx;
     int spell_timer_ctx_ready;
+    DM2_V1_I18nContext i18n;
+    int i18n_ready;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -2176,6 +2179,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     if (g_dm2_runtime.caii_ready) {
         dm2_v1_caii_array_free(&g_dm2_runtime.caii);
     }
+    if (g_dm2_runtime.i18n_ready) {
+        dm2_v1_i18n_destroy(&g_dm2_runtime.i18n);
+    }
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
     /* DM2-003: source-order timer queue (skproject c_timer.cpp heap). */
@@ -2257,6 +2263,36 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         field_runtime.read_door = dm2_runtime_creature_read_door;
         field_runtime.user = &g_dm2_runtime;
         dm2_v1_creature_set_field_runtime(&field_runtime);
+    }
+    /* i18n: when running FM Towns, load English text overlay from PC GDAT */
+    dm2_v1_i18n_init(&g_dm2_runtime.i18n);
+    if (boot_profile->platform == DM2_PLATFORM_FMTOWNS_JA) {
+        const char *home = getenv("HOME");
+        if (home) {
+            char pc_path[512];
+            FILE *f;
+            snprintf(pc_path, sizeof(pc_path),
+                     "%s/.firestaff/data/dm2/GRAPHICS.DAT", home);
+            f = fopen(pc_path, "rb");
+            if (f) {
+                long sz;
+                fseek(f, 0, SEEK_END);
+                sz = ftell(f);
+                if (sz > 0) {
+                    uint8_t *buf = malloc((size_t)sz);
+                    if (buf) {
+                        fseek(f, 0, SEEK_SET);
+                        if (fread(buf, 1, (size_t)sz, f) == (size_t)sz) {
+                            g_dm2_runtime.i18n_ready =
+                                dm2_v1_i18n_load_english_overlay(
+                                    &g_dm2_runtime.i18n, buf, (size_t)sz);
+                        }
+                        free(buf);
+                    }
+                }
+                fclose(f);
+            }
+        }
     }
 }
 
@@ -4666,14 +4702,33 @@ static int dm2_runtime_process_0c_timer(void *user,
 
 /*
  * dm2_runtime_resurrection_timer — 0x0D timer handler.
- * Source: c_tim_proc.cpp:4032 DM2_PROCESS_TIMER_RESURRECTION.
- * Fail-closed: requires champion revival + DB record ownership.
+ * Source: c_tim_proc.cpp:39-124 DM2_PROCESS_TIMER_RESURRECTION.
+ * Three phases (yB countdown):
+ *   yB==2: create cloud effect at position (fail-closed: needs CREATE_CLOUD)
+ *   yB==1: walk tile records, dealloc tombstone (fail-closed: needs record walk)
+ *   yB==0: final phase — call BRING_CHAMPION_TO_LIFE(actor) — LIVE
  */
 static int dm2_runtime_resurrection_timer(void *user,
                                           const DM2_V1_SourceTimer *timer,
                                           uint16_t source_index,
                                           DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    int ci;
+    uint8_t phase;
+    (void)source_index;
+    (void)receipt;
+
+    if (!rt || !rt->session_snapshot_valid || !timer)
+        return 1;
+
+    ci = (int)(timer->actor & 0xff);
+    phase = (uint8_t)(timer->value_b & 0xff);
+
+    if (phase == 0) {
+        /* TODO: wire dm2_v1_bring_champion_to_life once DM2_ChampionRecord
+           has weight/ench_aura/ench_power fields (Q-DM2 champion lifecycle) */
+        (void)ci;
+    }
     return 1;
 }
 
@@ -9377,6 +9432,19 @@ int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y) {
      * square-local fixture before that owner is ported.
      * Source: SKWINSPX/src/v5/c_tim_proc.cpp::DM2_INVOKE_ACTUATOR. */
     return 0;
+}
+
+/* ── i18n text overlay ────────────────────────────────────────────── */
+
+const uint8_t *dm2_v1_runtime_i18n_text(int category, int index, int field,
+                                        size_t *out_size) {
+    if (!g_dm2_runtime.i18n_ready) return NULL;
+    return dm2_v1_i18n_query_text(&g_dm2_runtime.i18n, category, index, field,
+                                  out_size);
+}
+
+int dm2_v1_runtime_i18n_ready(void) {
+    return g_dm2_runtime.i18n_ready;
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */

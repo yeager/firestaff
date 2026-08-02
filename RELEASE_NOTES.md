@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.239
+- Fixed 3 incorrect MD5 hashes in game data fingerprint registry (DMII PC Demo, CSB PC-98 ENTER.SNG, CSB Amiga 3.5 ML GRAPHICS.DAT)
+- Added regression test cases for corrected fingerprint hashes
+- Fixed DM2 runtime build error: stubbed BringChampionToLife pending champion record field additions
+
 # Firestaff v3.0.238
 - Combat messages: item conditions (CONSUMABLE/POISONED/BROKEN/CURSED), coin flip (HEADS/TAILS), CAN'T REACH, NEED AMMO
 - System messages: WAKE UP, GAME FROZEN, RESURRECTED, PASS, "GO AWAY AND RESURRECT THERON"

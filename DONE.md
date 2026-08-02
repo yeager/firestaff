@@ -1,3 +1,7 @@
+- ✅ 2026-08-02 v3.0.239 Fix 3 MD5 fingerprint hashes, DM2 build error
+  Corrected DMII PC Demo 19950112, CSB PC-98 ENTER.SNG, CSB Amiga 3.5 ML
+  GRAPHICS.DAT hashes against authoritative registry. Added regression tests.
+  Fixed DM2 runtime build error (BringChampionToLife stub needs champion fields).
 - ✅ 2026-08-02 v3.0.238 Theron parity: combat messages, text alphabet, spawn zones
   Item condition adjectives (CONSUMABLE/POISONED/BROKEN/CURSED) from UD 0x0865D4.
   Combat feedback (HEADS/TAILS coin flip, CAN'T REACH, NEED AMMO) from UD 0x089A32.
