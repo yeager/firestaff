@@ -74,8 +74,23 @@ not present in Track 02's table: WATERSKIN, WATER, STORMRING, MACE,
 TORSO PLATE, LEG PLATE, ARMET, FOOT PLATE, SOUL CAGE, SARMON'S BONES,
 IRON KEY, SKELETON KEY, EMERALD KEY, LOCK PICKS.
 
+## Level Descriptor Table (UD 0x619900)
+
+43 records x 6 bytes. Structure per record:
+- Byte 0: flags (always 1)
+- Byte 1: map width (columns)
+- Bytes 2-3: data size (LE u16)
+- Byte 4: reserved (always 0)
+- Byte 5: cumulative column index
+
+## Save Menu Font (UD 0x242E00)
+
+80 glyphs, 8x8 1bpp, 8 bytes per glyph. Covers ASCII 0x2B ('+')
+through 0x7A ('z'). Top-to-bottom row order, MSB-left bit order.
+
 ## Versions
 
 - v3.0.223: Dungeon names, quest item ordering, viewport wiring
 - v3.0.224: Object action names, save/delete strings
 - v3.0.225: Track 19 runtime item name table (69 items)
+- v3.0.226: Level descriptor table, save menu font
