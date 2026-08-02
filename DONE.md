@@ -1,3 +1,12 @@
+- ✅ 2026-08-02 v3.0.247 Nexus: DGN Structure1F parsing + PRS3 decompressor + format docs (v3.0.247)
+  DGN level decoder now parses all Structure1F sub-structures: floor items, floor
+  decorations, floor sensors, alcoves, wall decorations, wall sensors. All 16 DGN
+  levels validated against DMWeb documentation counts. Wall decoration/sensor
+  structs corrected to face-relative layout per DMWeb (face number, Structure1A
+  ref, aspect disabled/enabled). PRS3 decompression module created for FACE.BIN
+  and DM.BIN compressed images. Alcove struct added with item slot support.
+  Collision descriptor count extracted from Structure1C. Comprehensive test
+  validates all 16 levels match expected content counts from real game data.
 - ✅ 2026-08-02 v3.0.246 Theron: real font glyph table from Track 02
   120 monochrome 8×6 bitmap glyphs extracted from UD 0x09A000 (720 bytes).
   Indices 0-32: 5-bit text codec alphabet. Indices 33-95: ASCII '!' through '_'.

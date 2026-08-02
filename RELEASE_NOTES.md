@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.247
+- Nexus: DGN Structure1F full parsing — floor items, decorations, sensors, alcoves, wall decorations, wall sensors
+- Nexus: wall decoration/sensor structs corrected to face-relative layout per DMWeb docs
+- Nexus: PRS3 decompression module for FACE.BIN and DM.BIN compressed images
+- Nexus: collision descriptor count from Structure1C
+- Nexus: comprehensive 16-level DGN content validation test
+
 # Firestaff v3.0.246
 - Theron: 120 real font glyphs from Track 02 UD 0x09A000 (text alphabet + ASCII + UI decoration)
 - Font enables real text rendering for UI chrome (partially resolves THERON-V1-UI-CHROME-REAL-DATA)

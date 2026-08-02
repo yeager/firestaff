@@ -54,6 +54,22 @@ target_link_libraries(test_nexus_v1_event PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_event COMMAND test_nexus_v1_event)
 set_tests_properties(nexus_v1_event PROPERTIES LABELS "nexus;event;tier4")
 
+add_executable(test_nexus_v1_dgn_level_content
+    tests/test_nexus_v1_dgn_level_content.c)
+target_include_directories(test_nexus_v1_dgn_level_content PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_dgn_level_content PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_dgn_level_content COMMAND test_nexus_v1_dgn_level_content)
+set_tests_properties(nexus_v1_dgn_level_content PROPERTIES LABELS "nexus;dgn;tier4")
+
+add_executable(test_nexus_v1_prs3
+    tests/test_nexus_v1_prs3.c)
+target_include_directories(test_nexus_v1_prs3 PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_prs3 PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_prs3 COMMAND test_nexus_v1_prs3)
+set_tests_properties(nexus_v1_prs3 PROPERTIES LABELS "nexus;prs3;tier4")
+
 add_executable(test_nexus_v1_multi_level_capture_campaign_launcher
     tests/test_nexus_v1_multi_level_capture_campaign_launcher.c
     src/nexus/nexus_v1_multi_level_capture_campaign_launcher.c
@@ -3548,7 +3564,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.246 LANGUAGES C)
+project(Firestaff VERSION 3.0.247 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries

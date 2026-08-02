@@ -13,6 +13,13 @@
 #define NEXUS_DGN_MAX_TEXTURES    128
 #define NEXUS_DGN_MAX_MODELS      128
 #define NEXUS_DGN_MAX_DOORS       128
+#define NEXUS_DGN_MAX_FLOOR_ITEMS 256
+#define NEXUS_DGN_MAX_FLOOR_DECORS 128
+#define NEXUS_DGN_MAX_FLOOR_SENSORS 64
+#define NEXUS_DGN_MAX_ALCOVES     64
+#define NEXUS_DGN_MAX_WALL_DECORS 256
+#define NEXUS_DGN_MAX_WALL_SENSORS 128
+#define NEXUS_DGN_MAX_COLLISION   128
 
 typedef struct {
     uint16_t floor_word;
@@ -83,6 +90,14 @@ typedef struct {
     int      wall_cell_count;
     int      open_cell_count;
 
+    int      floor_item_count;
+    int      floor_decor_count;
+    int      floor_sensor_count;
+    int      alcove_count;
+    int      wall_decor_count;
+    int      wall_sensor_count;
+    int      collision_count;
+
     uint32_t grid_hash;
     uint32_t s2_hash;
 } Nexus_V1_DgnDecodeResult;
@@ -135,36 +150,53 @@ typedef struct {
     uint8_t  dest_orientation;
 } Nexus_V1_DgnFloorSensor;
 
-/* Structure1Fe: wall decoration (DMWeb: 12 bytes) */
+/* Structure1Fd: alcove (DMWeb: 12 bytes) */
 typedef struct {
-    uint8_t  marker;       /* always 0x14 */
-    uint8_t  x;
-    uint8_t  y;
-    uint8_t  wall_side;    /* 0=N 1=E 2=S 3=W */
-    uint8_t  model_index;
-    int8_t   offset_x;
-    int8_t   offset_y;
-    uint8_t  rotation;
+    uint8_t  marker;          /* always 0x20 */
+    uint8_t  face_number;     /* face in model where item is drawn */
+    uint16_t model_ref;       /* index in Structure1A */
+    uint8_t  rotation_y;
+    uint8_t  horiz_pos;       /* 0x00=left, 0xFF=right on face */
+    uint8_t  vert_pos;        /* 0x00=top, 0xFF=bottom on face */
+    uint8_t  item_id;         /* item index, 0xFF=empty */
     uint8_t  byte8;
     uint8_t  byte9;
     uint8_t  byte10;
     uint8_t  byte11;
+} Nexus_V1_DgnAlcove;
+
+/* Structure1Fe: wall decoration (DMWeb: 12 bytes) */
+typedef struct {
+    uint8_t  marker;          /* always 0x21 */
+    uint8_t  face_number;     /* face in model */
+    uint16_t model_ref;       /* index in Structure1A */
+    uint8_t  rotation_y;
+    uint8_t  horiz_pos;       /* 0x00=left, 0xFF=right on face */
+    uint8_t  vert_pos;        /* 0x00=top, 0xFF=bottom on face */
+    uint8_t  aspect;          /* model index or texture delta */
+    uint8_t  decor_type;
+    uint8_t  tex_width;
+    uint8_t  tex_height;
+    uint8_t  byte11;          /* always 0x00 */
 } Nexus_V1_DgnWallDecor;
 
-/* Structure1Ff: wall sensor (DMWeb: 12 bytes) */
+/* Structure1Ff: wall sensor (DMWeb: 16 bytes) */
 typedef struct {
-    uint8_t  marker;       /* always 0x15 */
-    uint8_t  x;
-    uint8_t  y;
-    uint8_t  wall_side;
-    uint8_t  tex_index;    /* wall texture for sensor */
-    uint8_t  sensor_type;
-    uint8_t  dest_x;
-    uint8_t  dest_y;
-    uint8_t  dest_orientation;
-    uint8_t  byte9;
-    uint8_t  byte10;
-    uint8_t  byte11;
+    uint8_t  marker;          /* always 0x22 */
+    uint8_t  face_number;     /* face in model */
+    uint16_t model_ref;       /* index in Structure1A */
+    uint8_t  rotation_y;
+    uint8_t  horiz_pos;
+    uint8_t  vert_pos;
+    uint8_t  aspect_disabled; /* model index or texture delta when off */
+    uint8_t  aspect_enabled;  /* model index or texture delta when on */
+    uint8_t  sensor_type;     /* 0x10/0x13=door button, 0x60/0x63=champion, 0x8B=inscription */
+    uint8_t  tex_width;
+    uint8_t  tex_height;
+    uint8_t  trigger_item;    /* item index that triggers sensor */
+    uint8_t  byte13;
+    uint8_t  byte14;
+    uint8_t  byte15;          /* always 0x00 */
 } Nexus_V1_DgnWallSensor;
 
 int nexus_v1_dgn_decode(const uint8_t *data, int data_size,

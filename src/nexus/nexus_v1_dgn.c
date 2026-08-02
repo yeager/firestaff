@@ -107,6 +107,29 @@ int nexus_v1_dgn_decode(const uint8_t *data, int data_size,
         out->door_count = dc;
     }
 
+    /* Structure1C: collision descriptors */
+    if (out->s1c_offset) {
+        uint32_t s1c_abs = s1_abs + out->s1c_offset;
+        if (s1c_abs + 4 <= (uint32_t)data_size) {
+            int count_plus_1 = data[s1c_abs];
+            out->collision_count = (count_plus_1 > 1) ? count_plus_1 - 1 : 0;
+        }
+    }
+
+    /* Structure1F: sub-structures (items, decorations, sensors, alcoves) */
+    if (out->s1f_offset) {
+        uint32_t s1f_abs = s1_abs + out->s1f_offset;
+        if (s1f_abs + 16 <= (uint32_t)data_size) {
+            const uint8_t *s1f = data + s1f_abs;
+            out->floor_item_count   = read_be16(s1f + 0x04);
+            out->floor_decor_count  = read_be16(s1f + 0x06);
+            out->floor_sensor_count = read_be16(s1f + 0x08);
+            out->alcove_count       = read_be16(s1f + 0x0A);
+            out->wall_decor_count   = read_be16(s1f + 0x0C);
+            out->wall_sensor_count  = read_be16(s1f + 0x0E);
+        }
+    }
+
     out->valid = 1;
     return 1;
 }
