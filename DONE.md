@@ -1,3 +1,12 @@
+- ✅ 2026-08-02 v3.0.236 Theron parity: dungeon descriptors, item categories, creature combat model
+  Dungeon pointer table (8 records from UD 0x274018) and descriptor headers
+  (7 entries from UD 0x274058-0x274150): AKUTUBA/DRATOR/FORMIC/SARMON/SHADO
+  have descriptors, THIEF/DEMON have null pointers. Item category table
+  (66 bytes from UD 0x21A046): 1 compass + 17 weapons + 24 armor + 24
+  consumables. Creature combat model analysis: Theron uses category-based
+  formula system (NOT DM1-style G0243 per-type stat table). 3-4 combat
+  categories with random multipliers at spawn (cat1: HP=rand*21, cat2:
+  HP=rand*25*1.5, cat3: HP=rand(5)*scaling+1.5*adj). HP capped at 900.
 - ✅ 2026-08-02 v3.0.235 Theron parity: spell/action names, skill levels, HUD strings
   41 action/spell names from UD 0x09EEA3 (BLOCK through THROW, incl. FIREBALL,
   LIGHTNING, HEAL, SPELLSHIELD). 15 skill level names from UD 0x089B6B

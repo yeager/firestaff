@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.236
+- Dungeon pointer table (8 records from UD 0x274018) and descriptor headers (7 entries) — THIEF/DEMON have null descriptor pointers
+- Item category table (66 bytes from UD 0x21A046): 1 compass, 17 weapons, 24 armor, 24 consumables
+- Creature combat model discovery: Theron uses category-based formulas (NOT DM1-style G0243 per-type stat table); 3-4 categories with random multipliers, HP capped at 900
+
 # Firestaff v3.0.235
 - 41 combat action + spell names from Track 02 UD 0x09EEA3 (FIREBALL, LIGHTNING, HEAL, SPELLSHIELD, FIRESHIELD, etc.)
 - 15 skill level names from UD 0x089B6B (NEOPHYTE through ARCHMASTER, matching DM1)

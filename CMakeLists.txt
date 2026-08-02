@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.235 LANGUAGES C)
+project(Firestaff VERSION 3.0.236 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -44196,6 +44196,44 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_hud_strings.
     )
 endif()
 
+# Theron Track 02 dungeon descriptors (pointer table + headers from UD 0x274018)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_descriptor.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_descriptor.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_dungeon_descriptor.h")
+    add_executable(test_theron_v1_track02_dungeon_descriptor
+        tests/test_theron_v1_track02_dungeon_descriptor.c
+        src/theron/theron_v1_track02_dungeon_descriptor.c
+    )
+    target_include_directories(test_theron_v1_track02_dungeon_descriptor PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_dungeon_descriptor PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_dungeon_descriptor
+        COMMAND test_theron_v1_track02_dungeon_descriptor
+    )
+endif()
+
+# Theron Track 02 item categories (66-byte type table from UD 0x21A046)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_item_categories.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_item_categories.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_item_categories.h")
+    add_executable(test_theron_v1_track02_item_categories
+        tests/test_theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_item_categories.c
+    )
+    target_include_directories(test_theron_v1_track02_item_categories PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_item_categories PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_item_categories
+        COMMAND test_theron_v1_track02_item_categories
+    )
+endif()
+
 # Theron Track 02 dungeon text (stories, treasures, retrieval messages)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_text.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_text.c"
@@ -45191,6 +45229,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_champion_portrait_gdat.
     add_test(
         NAME dm2_v1_champion_portrait_gdat
         COMMAND test_dm2_v1_champion_portrait_gdat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_text_catalog.c")
+    add_executable(test_dm2_v1_gdat_text_catalog
+        tests/test_dm2_v1_gdat_text_catalog.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_gdat_text_catalog PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_gdat_text_catalog PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gdat_text_catalog
+        COMMAND test_dm2_v1_gdat_text_catalog
     )
 endif()
 
