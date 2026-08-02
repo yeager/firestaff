@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.240
+- Theron creature spawn now uses real category-based stat formulas from Track 02 disassembly
+- Added theron_v1_track02_compute_spawn_stats() for categories 0-3 with HP cap at 900
+- Combat runtime wired to spawn zone descriptors (param1/param2/category)
+
 # Firestaff v3.0.239
 - Fixed 3 incorrect MD5 hashes in game data fingerprint registry (DMII PC Demo, CSB PC-98 ENTER.SNG, CSB Amiga 3.5 ML GRAPHICS.DAT)
 - Added regression test cases for corrected fingerprint hashes

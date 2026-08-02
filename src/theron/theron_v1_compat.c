@@ -22,6 +22,7 @@
 
 #include "theron_v1_combat.h"
 #include "theron_v1_world.h"
+#include "theron_v1_track02_creature_spawn.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -101,10 +102,24 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
     c->dungeon_id = dungeon_id;
     c->x = x;
     c->y = y;
-    c->hp = tmpl->base_hp;
-    c->max_hp = tmpl->base_hp;
-    c->attack = tmpl->base_attack;
-    c->defense = tmpl->base_defense;
+    /* Use real category-based formulas from Track 02 disassembly */
+    unsigned int creature_idx = (unsigned int)(type - 1);
+    const Theron_SpawnZoneDesc *zone = theron_v1_track02_spawn_zone(creature_idx);
+    if (zone) {
+        Theron_SpawnStats stats;
+        uint16_t seed = (uint16_t)(world->world_tick ^ (unsigned)(x * 31 + y * 17));
+        theron_v1_track02_compute_spawn_stats(
+            zone->category, zone->param1, zone->param2, seed, &stats);
+        c->hp = stats.hp;
+        c->max_hp = stats.hp;
+        c->attack = stats.attack;
+        c->defense = stats.defense;
+    } else {
+        c->hp = tmpl->base_hp;
+        c->max_hp = tmpl->base_hp;
+        c->attack = tmpl->base_attack;
+        c->defense = tmpl->base_defense;
+    }
     c->speed = tmpl->speed;
     c->ai = tmpl->ai;
     c->primary_attack = tmpl->primary;

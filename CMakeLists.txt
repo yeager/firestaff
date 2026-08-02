@@ -38,6 +38,14 @@ target_link_libraries(test_nexus_v1_combat PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_combat COMMAND test_nexus_v1_combat)
 set_tests_properties(nexus_v1_combat PROPERTIES LABELS "nexus;combat;tier4")
 
+add_executable(test_nexus_v1_magic
+    tests/test_nexus_v1_magic.c)
+target_include_directories(test_nexus_v1_magic PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_magic PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_magic COMMAND test_nexus_v1_magic)
+set_tests_properties(nexus_v1_magic PROPERTIES LABELS "nexus;magic;tier4")
+
 add_executable(test_nexus_v1_multi_level_capture_campaign_launcher
     tests/test_nexus_v1_multi_level_capture_campaign_launcher.c
     src/nexus/nexus_v1_multi_level_capture_campaign_launcher.c
@@ -3532,7 +3540,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.239 LANGUAGES C)
+project(Firestaff VERSION 3.0.240 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -3923,6 +3931,7 @@ if(DM2_SOURCES)
     # private copy of the runtime solely for that test with its fixture API.
     add_library(firestaff_dm2_runtime_weather_fixture OBJECT
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -5030,6 +5039,7 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v2_outdoor_enhanced.c
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -5108,6 +5118,7 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -5184,6 +5195,7 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v2_touch_controller_affordance.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -5260,6 +5272,7 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v2_outdoor_enhanced.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -5465,6 +5478,7 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -5548,6 +5562,7 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm2/dm2_v2_lighting_runtime.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -5626,6 +5641,7 @@ add_executable(firestaff_dm2_v2_smooth_movement_probe
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -6378,6 +6394,7 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -13980,6 +13997,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -14058,6 +14076,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -14136,6 +14155,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -14733,6 +14753,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -14804,6 +14825,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_world_model.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -14874,6 +14896,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_weather_seed_regression.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -14952,6 +14975,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_weather_timer_producer_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -15030,6 +15054,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_think_creature_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -15108,6 +15133,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_creature_schedule_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -15186,6 +15212,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_caii_alloc_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -15266,6 +15293,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_caii_reschedule_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -15346,6 +15374,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_caii_free_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -15437,6 +15466,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -17405,6 +17435,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -17936,6 +17967,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_phase_gate.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -45692,10 +45724,12 @@ endif()
 # DISABLED: test references unimplemented runtime scene-frame-selection API
 if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_runtime_static_scene_receipt.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c")
     add_executable(test_dm2_v1_runtime_static_scene_receipt
         tests/test_dm2_v1_runtime_static_scene_receipt.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
@@ -45902,6 +45936,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c

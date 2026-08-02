@@ -61,6 +61,18 @@ typedef struct {
 
 const Theron_CreaturePointerEntry *theron_v1_track02_creature_pointer(unsigned int index);
 
+/* Computed creature stats from category formula + random seed.
+ * The seed replaces rand() for deterministic replay. */
+typedef struct {
+    int16_t hp;
+    int16_t attack;
+    int16_t defense;
+} Theron_SpawnStats;
+
+void theron_v1_track02_compute_spawn_stats(
+    unsigned int category, uint8_t param1, uint8_t param2,
+    uint16_t rand_seed, Theron_SpawnStats *out);
+
 #ifdef __cplusplus
 }
 #endif

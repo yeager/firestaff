@@ -1,3 +1,9 @@
+- ✅ 2026-08-02 v3.0.240 Theron: wire category-based spawn stat formulas into combat runtime
+  Added theron_v1_track02_compute_spawn_stats() implementing real category 0-3
+  formulas from disassembly at UD 0x0870E5. Creature spawn now uses real
+  category/param1/param2 from spawn zone descriptors instead of hardcoded
+  template values. HP capped at 900. THIEF/DEMON keep template fallback
+  (scripted encounters, no spawn zones).
 - ✅ 2026-08-02 v3.0.239 Fix 3 MD5 fingerprint hashes, DM2 build error
   Corrected DMII PC Demo 19950112, CSB PC-98 ENTER.SNG, CSB Amiga 3.5 ML
   GRAPHICS.DAT hashes against authoritative registry. Added regression tests.
