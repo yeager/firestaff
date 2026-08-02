@@ -611,10 +611,15 @@ static const char *const g_dm2_songlist_hashes[] = {
 /* ── Platform label table ────────────────────────────────────────────── */
 
 static const char *const g_platform_labels[DM2_PLATFORM_COUNT] = {
-    [DM2_PLATFORM_PC_EN]    = "PC English",
-    [DM2_PLATFORM_PC_FR]    = "PC French",
-    [DM2_PLATFORM_PC_JEWEL]   = "PC German/English JewelCase",
+    [DM2_PLATFORM_PC_EN]       = "PC English",
+    [DM2_PLATFORM_PC_FR]       = "PC French",
+    [DM2_PLATFORM_PC_JEWEL]    = "PC German/English JewelCase",
     [DM2_PLATFORM_FMTOWNS_JA] = "FM Towns Japanese",
+    [DM2_PLATFORM_MAC_EN]      = "Macintosh English",
+    [DM2_PLATFORM_MAC_FR]      = "Macintosh French",
+    [DM2_PLATFORM_AMIGA_EN]    = "Amiga AGA English",
+    [DM2_PLATFORM_MEGACD_JA]   = "Mega CD Japanese",
+    [DM2_PLATFORM_PC9821_JA]   = "PC-9821 Japanese",
 };
 
 /* ── Path separator ──────────────────────────────────────────────────── */
@@ -852,6 +857,14 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
             profile->platform = DM2_PLATFORM_PC_JEWEL;
         } else if (md5_matches(profile->graphics_md5, "027ff3b8ddc2c4c4cdda7ada0b0bc46c")) {
             profile->platform = DM2_PLATFORM_FMTOWNS_JA;
+        } else if (md5_matches(profile->graphics_md5, "5cab25f6b975957eae4a203174e7f2a6")) {
+            profile->platform = DM2_PLATFORM_MAC_EN;
+        } else if (md5_matches(profile->graphics_md5, "1c940ea95703eaea0ecdf84d17e954b9")) {
+            profile->platform = DM2_PLATFORM_AMIGA_EN;
+        } else if (md5_matches(profile->graphics_md5, "a654ba19e9a6919f46818ecd23d7ea9d")) {
+            profile->platform = DM2_PLATFORM_MEGACD_JA;
+        } else if (md5_matches(profile->graphics_md5, "a80c555a858ef7770e1d7f3d2e37fec3")) {
+            profile->platform = DM2_PLATFORM_PC9821_JA;
         }
     }
     strncpy(profile->platform_label,
@@ -865,6 +878,11 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
         case DM2_PLATFORM_PC_FR:    strncpy(profile->version_id, "pc-fr",   sizeof(profile->version_id) - 1); break;
         case DM2_PLATFORM_PC_JEWEL:   strncpy(profile->version_id, "pc-jewel",    sizeof(profile->version_id) - 1); break;
         case DM2_PLATFORM_FMTOWNS_JA: strncpy(profile->version_id, "fmtowns-ja", sizeof(profile->version_id) - 1); break;
+        case DM2_PLATFORM_MAC_EN:      strncpy(profile->version_id, "mac-en",      sizeof(profile->version_id) - 1); break;
+        case DM2_PLATFORM_MAC_FR:      strncpy(profile->version_id, "mac-fr",      sizeof(profile->version_id) - 1); break;
+        case DM2_PLATFORM_AMIGA_EN:    strncpy(profile->version_id, "amiga-en",    sizeof(profile->version_id) - 1); break;
+        case DM2_PLATFORM_MEGACD_JA:   strncpy(profile->version_id, "megacd-ja",   sizeof(profile->version_id) - 1); break;
+        case DM2_PLATFORM_PC9821_JA:   strncpy(profile->version_id, "pc9821-ja",   sizeof(profile->version_id) - 1); break;
         default:                       strncpy(profile->version_id, "unknown",     sizeof(profile->version_id) - 1); break;
     }
 

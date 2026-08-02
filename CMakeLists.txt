@@ -15055,6 +15055,20 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_gdat_cross_platform
     )
 
+    add_executable(test_dm2_v1_platform_music_system
+        tests/test_dm2_v1_platform_music_system.c
+    )
+    target_include_directories(test_dm2_v1_platform_music_system PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_platform_music_system PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_platform_music_system
+        COMMAND test_dm2_v1_platform_music_system
+    )
+
     add_executable(test_dm2_v1_i18n_real_data
         tests/test_dm2_v1_i18n_real_data.c
     )

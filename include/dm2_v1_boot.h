@@ -50,12 +50,40 @@ struct DM2_V1_StartupIdleReceipt;
 /* DM2 supported platform IDs.
  * Used in diagnostics, save headers, and platform-specific logic. */
 typedef enum {
-    DM2_PLATFORM_PC_EN,      /* PC English — primary reference */
-    DM2_PLATFORM_PC_FR,      /* PC French */
-    DM2_PLATFORM_PC_JEWEL,   /* PC German/English JewelCase */
-    DM2_PLATFORM_FMTOWNS_JA, /* FM Towns Japanese (Victor HME-242, 1994) */
+    DM2_PLATFORM_PC_EN,        /* PC English — primary reference */
+    DM2_PLATFORM_PC_FR,        /* PC French */
+    DM2_PLATFORM_PC_JEWEL,     /* PC German/English JewelCase */
+    DM2_PLATFORM_FMTOWNS_JA,  /* FM Towns Japanese (Victor HME-242, 1994) */
+    DM2_PLATFORM_MAC_EN,       /* Macintosh English */
+    DM2_PLATFORM_MAC_FR,       /* Macintosh French */
+    DM2_PLATFORM_AMIGA_EN,     /* Amiga AGA English */
+    DM2_PLATFORM_MEGACD_JA,    /* Mega CD / Sega CD Japanese */
+    DM2_PLATFORM_PC9821_JA,    /* PC-9821 Japanese */
     DM2_PLATFORM_COUNT
 } DM2_Platform;
+
+/* Music system classification by platform.
+ * PC:           HMP via SONGLIST.DAT (63B, per-map index)
+ * Mac/Amiga:    HMP/MOD via CD.DAT/md.dat (176B, per-map mapping)
+ * FM Towns/Mega CD/PC-9821: CDDA via CD.DAT (40B, coordinate triggers) */
+typedef enum {
+    DM2_MUSIC_SYSTEM_HMP_SONGLIST,   /* PC: SONGLIST.DAT -> GDAT HMP */
+    DM2_MUSIC_SYSTEM_HMP_MAP176,     /* Mac: md.dat -> external HMP files */
+    DM2_MUSIC_SYSTEM_MOD_MAP176,     /* Amiga: CD.DAT -> MOD files */
+    DM2_MUSIC_SYSTEM_CDDA_COORD,     /* FM Towns/Mega CD/PC-9821: CD.DAT -> disc tracks */
+} DM2_MusicSystem;
+
+static inline DM2_MusicSystem dm2_v1_platform_music_system(DM2_Platform p) {
+    switch (p) {
+    case DM2_PLATFORM_MAC_EN:
+    case DM2_PLATFORM_MAC_FR:       return DM2_MUSIC_SYSTEM_HMP_MAP176;
+    case DM2_PLATFORM_AMIGA_EN:     return DM2_MUSIC_SYSTEM_MOD_MAP176;
+    case DM2_PLATFORM_FMTOWNS_JA:
+    case DM2_PLATFORM_MEGACD_JA:
+    case DM2_PLATFORM_PC9821_JA:    return DM2_MUSIC_SYSTEM_CDDA_COORD;
+    default:                        return DM2_MUSIC_SYSTEM_HMP_SONGLIST;
+    }
+}
 
 /* DM2 deterministic config.
  * Fixed gameplay constants that ensure reproducible runs.
