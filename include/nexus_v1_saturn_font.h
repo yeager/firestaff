@@ -2,6 +2,7 @@
 #ifndef NEXUS_V1_SATURN_FONT_H
 #define NEXUS_V1_SATURN_FONT_H
 #include <stdint.h>
+#include "nexus_v1_font_s2d.h"
 
 /* SEGA SATURN SCR — Saturn Screen Resource font format.
  * FONT256.S2D contains 256 character glyphs for Japanese text.
@@ -31,6 +32,7 @@ typedef struct {
     int char_count;
     int char_width;
     int char_height;
+    int bytes_per_pixel;
     uint8_t *bitmap_data;
     int bitmap_size;
 } Nexus_V1_Font;
@@ -52,6 +54,9 @@ typedef struct {
 } Nexus_V1_FontSections;
 
 int nexus_v1_font_load(Nexus_V1_Font *font, const uint8_t *data, int size);
+int nexus_v1_font_load_from_s2d(Nexus_V1_Font *font,
+                                const uint8_t *data, int data_size,
+                                const Nexus_V1_FontS2dDecodeResult *decoded);
 void nexus_v1_font_free(Nexus_V1_Font *font);
 const uint8_t *nexus_v1_font_get_glyph(const Nexus_V1_Font *font, int char_index);
 int nexus_v1_font_get_glyph_pixel(const Nexus_V1_Font *font,

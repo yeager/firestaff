@@ -1,5 +1,6 @@
 
 #include "nexus_v1_saturn_font.h"
+#include "nexus_v1_font_s2d.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -39,6 +40,37 @@ int nexus_v1_font_load(Nexus_V1_Font *font, const uint8_t *data, int size) {
     return font->char_count;
 }
 
+int nexus_v1_font_load_from_s2d(Nexus_V1_Font *font,
+                                const uint8_t *data, int data_size,
+                                const Nexus_V1_FontS2dDecodeResult *decoded) {
+    int i, tile_count;
+    if (!font || !data || data_size <= 0 || !decoded || !decoded->valid)
+        return -1;
+
+    memset(font, 0, sizeof(*font));
+
+    tile_count = 242;
+    if (decoded->character_generator_size < 16U + (uint32_t)tile_count * 64U)
+        return -1;
+
+    font->char_count = 256;
+    font->char_width = 8;
+    font->char_height = 8;
+    font->bytes_per_pixel = 1;
+    font->bitmap_size = font->char_count * 64;
+    font->bitmap_data = (uint8_t *)calloc(1, (size_t)font->bitmap_size);
+    if (!font->bitmap_data) return -1;
+
+    for (i = 0; i < tile_count; i++) {
+        nexus_v1_font_s2d_copy_character_generator_tile(
+            data, data_size, decoded, i, font->bitmap_data + i * 64);
+    }
+
+    printf("Saturn font: %d chars (8x8 8bpp from SCR character generator, %d tiles)\n",
+        font->char_count, tile_count);
+    return font->char_count;
+}
+
 void nexus_v1_font_free(Nexus_V1_Font *font) {
     if (font) { free(font->bitmap_data); font->bitmap_data = NULL; }
 }
@@ -63,7 +95,9 @@ static int nexus_v1_font_glyph_layout(const Nexus_V1_Font *font,
     }
 
     glyph_size = font->bitmap_size / font->char_count;
-    row_stride = (font->char_width + 7) / 8;
+    row_stride = (font->bytes_per_pixel == 1)
+        ? font->char_width
+        : (font->char_width + 7) / 8;
     required_bytes = row_stride * font->char_height;
     if (glyph_size < required_bytes) {
         return 0;
@@ -94,6 +128,8 @@ int nexus_v1_font_get_glyph_pixel(const Nexus_V1_Font *font,
     }
 
     row = glyph + y * row_stride;
+    if (font->bytes_per_pixel == 1)
+        return row[x] ? 1 : 0;
     return (row[x / 8] & (uint8_t)(0x80u >> (x & 7))) ? 1 : 0;
 }
 
