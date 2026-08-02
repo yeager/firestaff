@@ -76,15 +76,20 @@
   tile table is now behind an unconditional source-mapping gate. Bind the
   real square-value/depth/material mapping before enabling it.
 
-- **THERON-V1-CHAMPION-STATE-REAL-DATA:** *(Partially resolved v3.0.234-249)*
+- **THERON-V1-CHAMPION-STATE-REAL-DATA:** *(Partially resolved v3.0.234-250)*
   Real champion roster (8 entries from UD 0x09D1D6) now wired into
   `theron_v1_party_init()` with real HP/STA/MANA and 6 base attributes.
   Soul Room companion selection via `theron_v1_party_set_companion()`.
   Skill sub-levels (Fighter/Ninja/Priest/Wizard × 4 sub-skills) added from
   DMWeb encyclopaedia, cross-validated against Track 02 base stats.
   Primary class now derived from highest skill tier per champion.
-  Remaining: portrait graphics from tile banks, save/load serialization
-  with real stat ranges, production startup handoff integration.
+  Starting equipment per champion from DMWeb wired into roster and
+  applied during party init (Track 02 item indices).
+  Dungeon-to-creature-region mapping fixed: AKUTUBA=D1 (not D2),
+  all 7 dungeons now have level_count=3 per DMWeb.
+  Remaining: portrait graphics from tile banks, item ID space
+  unification (THERON_ITEM_* categories vs Track 02 indices),
+  dungeon seeds 2-7 (needs disassembly), DOTAN per-dungeon availability.
 
 - **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
   placeholder labels are now fixture/probe-only. The verified receipt no

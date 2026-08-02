@@ -101,7 +101,10 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
     }
 
     c->load     = (int16_t)inv_next;
-    c->max_load = (int16_t)((rec->strength << 3) + 100);
+    {
+        int ml = ((int)rec->strength * 625 + 12500) / 1000;
+        c->max_load = (int16_t)(ml > 6 ? ml : 6);
+    }
     c->food     = 0;
     c->water    = 0;
 }
@@ -296,9 +299,9 @@ void theron_v1_party_recalculate_loads(Theron_V1_Party *party) {
             if (c->inventory[j] != THERON_ITEM_NONE) load++;
         }
         c->load = (int16_t)load;
-        /* max_load is a property of the champion's body (strength);
-         * simplified: (strength << 3) + 100 */
-        c->max_load = (int16_t)(((int)c->strength << 3) + 100);
+        /* ReDMCSB F0309: max_load = (strength * 625 + 12500) / 1000, min 6 */
+        int ml = ((int)c->strength * 625 + 12500) / 1000;
+        c->max_load = (int16_t)(ml > 6 ? ml : 6);
     }
 }
 
