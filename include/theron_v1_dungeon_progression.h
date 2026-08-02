@@ -33,13 +33,13 @@
 /* Theron's Quest 7-dungeon stage set. Dungeon 1 is first, dungeons 2..6
  * become selectable together, and dungeon 7 is final. */
 typedef enum {
-    THERON_DUNGEON_1_HALL_OF_RECORDS   = 1,  /* Tutorial dungeon — 1 quest item */
-    THERON_DUNGEON_2_CRYPT_OF_SHADOWS  = 2,  /* 1 quest item */
-    THERON_DUNGEON_3_ABYSS_OF_FLAMES   = 3,  /* 1 quest item */
-    THERON_DUNGEON_4_TOMB_OF_WOE       = 4,  /* 1 quest item */
-    THERON_DUNGEON_5_VAULT_OF_SECRETS  = 5,  /* 1 quest item */
-    THERON_DUNGEON_6_CASTLE_OF_FATE    = 6,  /* 1 quest item */
-    THERON_DUNGEON_7_TOWER_OF_EPILOGUE = 7,  /* 1 quest item (final) */
+    THERON_DUNGEON_1_AKUTUBA = 1,  /* Shield Defiant */
+    THERON_DUNGEON_2_DRATOR  = 2,  /* Taza Boots */
+    THERON_DUNGEON_3_FORMIC  = 3,  /* Taza Poleyn */
+    THERON_DUNGEON_4_SARMON  = 4,  /* Soulcage */
+    THERON_DUNGEON_5_SHADO   = 5,  /* Taza Armour */
+    THERON_DUNGEON_6_THIEF   = 6,  /* Tazahelm */
+    THERON_DUNGEON_7_DEMON   = 7,  /* Retaliator (final) */
     THERON_DUNGEON_COUNT = 7,
     THERON_DUNGEON_INVALID = 0,
 } Theron_DungeonID;

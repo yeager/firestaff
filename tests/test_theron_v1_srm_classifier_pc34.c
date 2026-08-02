@@ -508,7 +508,7 @@ static void test_progression_payload_import(void) {
                 "progression payload imports");
     expect_true(receipt.restored == 1, "progression receipt restored");
     expect_true(receipt.version == 1, "progression receipt version");
-    expect_true(receipt.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+    expect_true(receipt.current_dungeon == THERON_DUNGEON_3_FORMIC,
                 "progression receipt current dungeon");
     expect_true(receipt.quest_items_bitmask ==
                     (THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
@@ -521,7 +521,7 @@ static void test_progression_payload_import(void) {
                 receipt.dungeon_seeds[6] == 0x1007u,
                 "progression receipt seed range");
 
-    expect_true(prog.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+    expect_true(prog.current_dungeon == THERON_DUNGEON_3_FORMIC,
                 "progression current dungeon restored");
     expect_true(prog.current_level == 1, "progression level restored");
     expect_true(prog.dungeon_playtime_seconds == 300u,
@@ -605,7 +605,7 @@ static void test_progression_party_payload_import(void) {
     expect_true(receipt.party_gold == 777u, "party gold receipt");
     expect_true(receipt.imported_body_count == THERON_MAX_CHAMPIONS,
                 "party body count receipt");
-    expect_true(prog.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+    expect_true(prog.current_dungeon == THERON_DUNGEON_3_FORMIC,
                 "party import restores progression");
     expect_true(party.champion_count == THERON_MAX_CHAMPIONS,
                 "party champion count restored");
@@ -623,9 +623,12 @@ static void test_progression_party_payload_import(void) {
     expect_true(party.champions[0].inventory[0] == THERON_ITEM_NONE &&
                 party.champions[1].slots[0] == -1,
                 "party import leaves inventory/equipment empty");
-    expect_true(party.champions[0].max_load ==
-                    (int16_t)((party.champions[0].strength << 3) + 100),
-                "party import recalculates body load");
+    {
+        int ml = ((int)party.champions[0].strength * 625 + 12500) / 1000;
+        expect_true(party.champions[0].max_load ==
+                        (int16_t)(ml > 6 ? ml : 6),
+                    "party import recalculates body load");
+    }
 
     status = theron_v1_srm_decode_progression_party_payload(
         (const uint8_t *)"THERON-SRM-PAYLOAD-v1",

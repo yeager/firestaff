@@ -173,7 +173,7 @@ static int apply_startup_level(Theron_V1_World* world) {
     if (!world) return -1;
 
     theron_v1_world_init(world);
-    world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world->current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     world->current_level   = 0;
 
     r = theron_v1_level_load(&world->levels[0][0],
@@ -231,7 +231,7 @@ static void make_state_from_world(M11_GameViewState* state,
     state->theronState.party_y = world->party.leader_y;
     state->theronState.party_dir = world->party.leader_dir;
     state->theronState.tick_count = (int)world->world_tick;
-    state->theronState.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    state->theronState.selected_dungeon = THERON_DUNGEON_1_AKUTUBA;
     state->theronState.startup_phase = THERON_STARTUP_PHASE_IN_DUNGEON;
 }
 

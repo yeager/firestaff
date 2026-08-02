@@ -511,7 +511,7 @@ static void test_tqsv_only_resume_claim(void) {
     uint8_t champion_data[THERON_MAX_CHAMPIONS * sizeof(Theron_V1_Champion)];
     Theron_V1_Party party;
     memset(champion_data, 0, sizeof(champion_data));
-    theron_v1_party_init(&party, THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+    theron_v1_party_init(&party, THERON_DUNGEON_2_DRATOR);
     party.leader_x = 6;
     party.leader_y = 7;
     party.leader_dir = 1;
@@ -523,7 +523,7 @@ static void test_tqsv_only_resume_claim(void) {
     memset(&prog, 0, sizeof(prog));
     /* Init to a valid dungeon so the save_to_slot API does not
      * index dungeon_states[THERON_DUNGEON_INVALID - 1]. */
-    prog.current_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    prog.current_dungeon = THERON_DUNGEON_2_DRATOR;
     prog.dungeon_states[0] = THERON_DUNGEON_STATE_COMPLETE;
     int save_rc = theron_v1_save_to_slot(
         tqsv_root,
@@ -623,7 +623,7 @@ static void test_tqsv_only_resume_claim(void) {
                         strstr(host_receipt.inspect_detail,
                                "chapter=2") != NULL &&
                         state_receipt.flow.selected_dungeon ==
-                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                            THERON_DUNGEON_2_DRATOR &&
                         world.runtime_media.restored &&
                         world.runtime_media.route_mask ==
                             TST_THERON_FULL_START_BITMAP_ROUTES &&
@@ -665,7 +665,7 @@ static void test_tqsv_only_resume_claim(void) {
                         continue_result.track02_level_bank.kind ==
                             THERON_RUNTIME_LEVEL_BANK_SAVE_RESUME &&
                         continue_result.track02_level_bank.dungeon_id ==
-                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                            THERON_DUNGEON_2_DRATOR &&
                         continue_result.track02_level_bank.level_index ==
                             world.current_level &&
                         continue_result.track02_level_bank.route_bit ==
@@ -686,9 +686,9 @@ static void test_tqsv_only_resume_claim(void) {
         world.transition_pending = 1;
         world.transition_type = THERON_TRANSITION_STAIRS;
         world.transition_target_level = 2;
-        world.levels[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][2].width = 16;
-        world.levels[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][2].height = 16;
-        world.level_loaded[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][2] = 1;
+        world.levels[THERON_DUNGEON_2_DRATOR - 1][2].width = 16;
+        world.levels[THERON_DUNGEON_2_DRATOR - 1][2].height = 16;
+        world.level_loaded[THERON_DUNGEON_2_DRATOR - 1][2] = 1;
         expect_true(theron_v1_transition_execute(&world) == 0 &&
                         !world.runtime_media.level_bank.ready,
                     "Track 02 level-bank cache invalidates on runtime level transition");
@@ -696,7 +696,7 @@ static void test_tqsv_only_resume_claim(void) {
         expect_true(theron_v1_world_runtime_media_select_level_bank(
                         &world,
                         THERON_RUNTIME_LEVEL_BANK_SAVE_RESUME,
-                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                        THERON_DUNGEON_2_DRATOR,
                         world.current_level) &&
                         world.runtime_media.level_bank.ready &&
                         world.runtime_media.level_bank.level_index == 2 &&
@@ -766,7 +766,7 @@ static void test_tqsv_only_resume_claim(void) {
                                "after dungeon 2") != NULL &&
                         state_receipt.flow_changed &&
                         state_receipt.flow.selected_dungeon ==
-                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                            THERON_DUNGEON_2_DRATOR,
                     "tqsv-only slot emits host and state receipts");
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
@@ -811,7 +811,7 @@ static void test_tqsv_only_resume_claim(void) {
                                "after dungeon 2") != NULL &&
                         state_receipt.flow_changed &&
                         state_receipt.flow.selected_dungeon ==
-                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                            THERON_DUNGEON_2_DRATOR,
                     "tqsv-only external path emits host and state receipts");
         theron_v1_world_init(&world);
         memset(receipt, 0, sizeof(receipt));
@@ -1031,7 +1031,7 @@ static void test_srm_party_continue_restores_all_champions(void) {
         expect_true(snap.srm_progress_import_status ==
                         THERON_V1_SRM_PROGRESS_IMPORT_OK &&
                         snap.srm_progress_current_dungeon ==
-                            THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                            THERON_DUNGEON_3_FORMIC,
                     "srm party snapshot restores progression receipt");
         expect_true(snap.srm_party_import_ran == 1 &&
                         snap.srm_party_restored == 1 &&
@@ -1132,7 +1132,7 @@ static void test_srm_party_continue_restores_all_champions(void) {
                                                      sizeof(receipt)) == 1,
                 "srm party continue applies");
     expect_true(world.progression.current_dungeon ==
-                    THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                    THERON_DUNGEON_3_FORMIC,
                 "srm party continue restores progression dungeon");
     expect_true(world.party.champion_count == THERON_MAX_CHAMPIONS,
                 "srm party continue keeps all imported champions");
@@ -1186,7 +1186,7 @@ static void test_srm_party_continue_restores_all_champions(void) {
                         sizeof(receipt)) &&
                         strstr(receipt, "fallback visuals blocked") != NULL &&
                         world.progression.current_dungeon ==
-                            THERON_DUNGEON_1_HALL_OF_RECORDS &&
+                            THERON_DUNGEON_1_AKUTUBA &&
                         !world.runtime_media.restored,
                     "srm Continue rejects incomplete Track 02 media before restore");
     }
@@ -1221,7 +1221,7 @@ static void test_srm_party_continue_restores_all_champions(void) {
                         continue_result.srm_import_status ==
                             THERON_V1_SRM_PROGRESS_IMPORT_OK &&
                         continue_result.srm_current_dungeon ==
-                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                            THERON_DUNGEON_3_FORMIC &&
                         continue_result.srm_party_champion_count ==
                             THERON_MAX_CHAMPIONS &&
                         continue_result.srm_party_gold == 777u &&
@@ -1233,13 +1233,13 @@ static void test_srm_party_continue_restores_all_champions(void) {
                                "PROGRESSION_PARTY") != NULL &&
                         state_receipt.flow_changed &&
                         state_receipt.flow.selected_dungeon ==
-                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                            THERON_DUNGEON_3_FORMIC &&
                         state_receipt.set_save_resume &&
                         state_receipt.save_resume_srm_active_slot == 2 &&
                         state_receipt.save_resume_srm_import_status ==
                             THERON_V1_SRM_PROGRESS_IMPORT_OK &&
                         state_receipt.save_resume_srm_current_dungeon ==
-                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                            THERON_DUNGEON_3_FORMIC &&
                         state_receipt.set_runtime_level_route &&
                         state_receipt.runtime_level_source ==
                             THERON_V1_STARTUP_RUNTIME_LEVEL_SAVE_RESUME &&
@@ -1272,14 +1272,14 @@ static void test_srm_party_continue_restores_all_champions(void) {
                         apply_receipt.srm_import_status ==
                             THERON_V1_SRM_PROGRESS_IMPORT_OK &&
                         apply_receipt.srm_current_dungeon ==
-                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                            THERON_DUNGEON_3_FORMIC &&
                         apply_receipt.srm_party_champion_count ==
                             THERON_MAX_CHAMPIONS &&
                         apply_receipt.srm_party_gold == 777u &&
                         state_receipt.set_save_resume &&
                         state_receipt.save_resume_srm_active_slot == 2 &&
                         state_receipt.save_resume_srm_current_dungeon ==
-                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                            THERON_DUNGEON_3_FORMIC &&
                         state_receipt.save_resume_srm_party_gold == 777u,
                     "srm party slot emits apply and state receipts");
         theron_v1_world_init(&world);
@@ -1353,7 +1353,7 @@ static void test_srm_party_continue_restores_all_champions(void) {
                         state_receipt.flow.phase ==
                             THERON_STARTUP_PHASE_STAGE_SELECT &&
                         state_receipt.flow.selected_dungeon ==
-                            THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                            THERON_DUNGEON_3_FORMIC &&
                         state_receipt.set_level_loaded &&
                         state_receipt.level_loaded == 0 &&
                         state_receipt.set_save_resume &&
@@ -1437,7 +1437,7 @@ static void test_dual_resume_claim(void) {
     memset(champion_data, 0, sizeof(champion_data));
     Theron_DungeonProgression prog;
     memset(&prog, 0, sizeof(prog));
-    prog.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    prog.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     prog.dungeon_states[0] = THERON_DUNGEON_STATE_AVAILABLE;
     int save_rc = theron_v1_save_to_slot(
         tqsv_root, 0, champion_data, sizeof(champion_data),
@@ -1792,7 +1792,7 @@ static void test_startup_session_facts_wrappers(void) {
     theron_v1_startup_session_facts_from_runtime(
         &session,
         THERON_STARTUP_PHASE_STAGE_SELECT,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         NULL,
         &world,
         NULL,
@@ -1813,7 +1813,7 @@ static void test_startup_session_facts_wrappers(void) {
         THERON_STARTUP_MAX_COMPANIONS);
     expect_true(session.phase == THERON_STARTUP_PHASE_STAGE_SELECT &&
                     session.selected_dungeon ==
-                        THERON_DUNGEON_1_HALL_OF_RECORDS &&
+                        THERON_DUNGEON_1_AKUTUBA &&
                     session.world == &world &&
                     session.selected_mirrors_mask == 0x03 &&
                     session.companion_count == 2 &&
@@ -1838,13 +1838,13 @@ static void test_startup_session_facts_wrappers(void) {
                     strstr(inspect_receipt.inspect_detail, "STARTUP") != NULL,
                 "session facts chapter inspect wrapper emits inspect receipt");
 
-    world.current_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    world.current_dungeon = THERON_DUNGEON_2_DRATOR;
     world.current_level = 0;
-    world.level_loaded[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][0] = 1;
+    world.level_loaded[THERON_DUNGEON_2_DRATOR - 1][0] = 1;
     world.party.champion_count = 3;
     memset(&snapshot, 0, sizeof(snapshot));
     snapshot.startup_phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-    snapshot.selected_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    snapshot.selected_dungeon = THERON_DUNGEON_2_DRATOR;
     snapshot.world = &world;
     snapshot.startup_cursor = 1;
     snapshot.continue_focus = 1;
@@ -2013,7 +2013,7 @@ static void test_startup_session_facts_wrappers(void) {
     expect_true(theron_v1_boot_startup_view_model_from_runtime_state(
                     &direct_view_model,
                     THERON_STARTUP_PHASE_STAGE_SELECT,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -2066,7 +2066,7 @@ static void test_startup_session_facts_wrappers(void) {
     expect_true(theron_v1_boot_startup_execute_input_from_runtime_state(
                     &legacy_host_receipt,
                     THERON_STARTUP_PHASE_STAGE_SELECT,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -2094,7 +2094,7 @@ static void test_startup_session_facts_wrappers(void) {
     expect_true(theron_v1_boot_startup_execute_pointer_from_runtime_state(
                     &legacy_host_receipt,
                     THERON_STARTUP_PHASE_STAGE_SELECT,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -2144,7 +2144,7 @@ static void test_startup_session_facts_wrappers(void) {
                     &media_view_model,
                     &media_receipt,
                     THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -2244,7 +2244,7 @@ static void test_startup_session_facts_wrappers(void) {
                     &media_receipt,
                     NULL,
                     THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -2286,7 +2286,7 @@ static void test_startup_session_facts_wrappers(void) {
                     &view_model_host_receipt,
                     &media_receipt,
                     THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -2311,7 +2311,7 @@ static void test_startup_session_facts_wrappers(void) {
                     &view_model_host_receipt,
                     &media_receipt,
                     THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -2338,7 +2338,7 @@ static void test_startup_session_facts_wrappers(void) {
                     &host_render_receipt,
                     &media_receipt,
                     THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -2383,7 +2383,7 @@ static void test_startup_session_facts_wrappers(void) {
                     &media_receipt,
                     NULL,
                     THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -2432,7 +2432,7 @@ static void test_startup_session_facts_wrappers(void) {
                     &host_view_receipt,
                     &media_receipt,
                     THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -2506,7 +2506,7 @@ static void test_startup_session_facts_wrappers(void) {
                     state_receipt.flow.phase ==
                         THERON_STARTUP_PHASE_READY &&
                     state_receipt.flow.selected_dungeon ==
-                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                        THERON_DUNGEON_2_DRATOR &&
                     state_receipt.set_level_loaded &&
                     state_receipt.level_loaded == 0 &&
                     state_receipt.set_runtime_level_route &&
@@ -2518,7 +2518,7 @@ static void test_startup_session_facts_wrappers(void) {
                     state_receipt.save_resume_active_slot == 2 &&
                     state_receipt.save_resume_srm_active_slot == 3 &&
                     state_receipt.save_resume_srm_current_dungeon ==
-                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                        THERON_DUNGEON_2_DRATOR &&
                     strcmp(state_receipt.save_resume_srm_root,
                            "/tmp/firestaff-theron-srm") == 0,
                 "boot startup view model emits unified startup route/save state receipt");
@@ -3021,7 +3021,7 @@ static void test_startup_session_facts_wrappers(void) {
                            "THERON UI CALLERS TRACK02 READY") == 0,
                 "boot UI caller receipt consumes Track02 title/menu/bitmap/runtime handoff without fallback visuals");
     world.current_level = 1;
-    world.level_loaded[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][1] = 1;
+    world.level_loaded[THERON_DUNGEON_2_DRATOR - 1][1] = 1;
     semantic_level_snapshot = media_snapshot;
     semantic_level_snapshot.runtime_level_source =
         THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC;
@@ -3108,14 +3108,14 @@ static void test_startup_session_facts_wrappers(void) {
                            "FORCEFIELD RUNTIME HANDOFF") == 0,
                 "boot full-start receipt exposes Track02 semantic nonzero level no-fallback proof");
     world.current_level = 2;
-    world.level_loaded[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][2] = 1;
+    world.level_loaded[THERON_DUNGEON_2_DRATOR - 1][2] = 1;
     memset(&media_graphics_counters, 0, sizeof(media_graphics_counters));
     expect_true(theron_v1_boot_startup_full_start_receipt_from_runtime_route_with_media_receipt(
                     &full_start_receipt,
                     &media_receipt,
                     &media_graphics_executor,
                     THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -3170,7 +3170,7 @@ static void test_startup_session_facts_wrappers(void) {
                     &media_receipt,
                     &media_graphics_executor,
                     THERON_STARTUP_PHASE_READY,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     NULL,
                     &world,
                     NULL,
@@ -3558,7 +3558,7 @@ static void test_startup_session_facts_wrappers(void) {
                         &unpackaged_view_model,
                         &unpackaged_media_receipt,
                         THERON_STARTUP_PHASE_READY,
-                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                        THERON_DUNGEON_2_DRATOR,
                         NULL,
                         &world,
                         NULL,
@@ -3621,7 +3621,7 @@ static void test_startup_session_facts_wrappers(void) {
                         &partial_media_view_model,
                         &partial_media_receipt,
                         THERON_STARTUP_PHASE_READY,
-                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                        THERON_DUNGEON_2_DRATOR,
                         NULL,
                         &world,
                         NULL,
@@ -3680,7 +3680,7 @@ static void test_startup_session_facts_wrappers(void) {
                             &thin_media_view_model,
                             &thin_media_receipt,
                             THERON_STARTUP_PHASE_READY,
-                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                            THERON_DUNGEON_2_DRATOR,
                             NULL,
                             &world,
                             NULL,
@@ -3773,7 +3773,7 @@ static void test_startup_session_facts_wrappers(void) {
                             &iso_media_view_model,
                             &iso_media_receipt,
                             THERON_STARTUP_PHASE_READY,
-                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                            THERON_DUNGEON_2_DRATOR,
                             NULL,
                             &world,
                             NULL,
@@ -3914,7 +3914,7 @@ static void test_startup_session_facts_wrappers(void) {
                         &iso_full_view_model,
                         &iso_full_media_receipt,
                         THERON_STARTUP_PHASE_READY,
-                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                        THERON_DUNGEON_2_DRATOR,
                         NULL,
                         &world,
                         NULL,
@@ -4137,7 +4137,7 @@ static void test_startup_session_facts_wrappers(void) {
     {
         Theron_V1_BootRuntimeStartupSnapshot stage_snapshot = snapshot;
         stage_snapshot.startup_phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-        stage_snapshot.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        stage_snapshot.selected_dungeon = THERON_DUNGEON_1_AKUTUBA;
         stage_snapshot.startup_cursor = 0;
         stage_snapshot.continue_focus = 0;
         stage_snapshot.resume_claim = THERON_V1_STARTUP_RESUME_NONE;
@@ -4262,7 +4262,7 @@ static void test_startup_session_facts_wrappers(void) {
 
     theron_v1_startup_action_plan_init(&plan);
     plan.kind = THERON_STARTUP_PLAN_MOVE_STAGE_CURSOR;
-    plan.cursor = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    plan.cursor = THERON_DUNGEON_2_DRATOR;
     expect_true(theron_v1_startup_execute_flow_plan_from_session_with_host_receipts(
                     &plan,
                     &session,
@@ -4290,7 +4290,7 @@ static void test_startup_session_facts_wrappers(void) {
 
     theron_v1_startup_action_init(&action);
     action.kind = THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR;
-    action.selected_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    action.selected_dungeon = THERON_DUNGEON_2_DRATOR;
     expect_true(theron_v1_startup_execute_action_from_session_with_host_receipt(
                     &action,
                     &session,
@@ -4301,7 +4301,7 @@ static void test_startup_session_facts_wrappers(void) {
                         THERON_STARTUP_INPUT_RESULT_REDRAW &&
                     action_receipt.state_receipt.flow_changed &&
                     action_receipt.state_receipt.flow.selected_dungeon ==
-                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                        THERON_DUNGEON_2_DRATOR,
                 "session facts action wrapper executes startup flow action");
     expect_true(theron_v1_startup_execute_input_from_session_with_host_receipt(
                     &session,
@@ -4322,14 +4322,14 @@ static void test_startup_session_facts_wrappers(void) {
                     !action_receipt.state_receipt_valid,
                 "session facts pointer wrapper preserves panel-consumed redraw");
 
-    world.progression.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
-    world.progression.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] =
+    world.progression.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+    world.progression.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] =
         THERON_DUNGEON_STATE_COMPLETE;
     world.progression.quest_items_collected =
         THERON_QUEST_ITEM_MASK_FROM_DUNGEON(
-            THERON_DUNGEON_1_HALL_OF_RECORDS);
+            THERON_DUNGEON_1_AKUTUBA);
     expect_true(world.progression.dungeon_states[
-                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1] ==
+                    THERON_DUNGEON_1_AKUTUBA - 1] ==
                     THERON_DUNGEON_STATE_COMPLETE,
                 "startup exit wrapper fixture marks dungeon complete");
     world.party.champion_count = 3;
@@ -4348,21 +4348,21 @@ static void test_startup_session_facts_wrappers(void) {
                     state_receipt.flow.phase ==
                         THERON_STARTUP_PHASE_STAGE_SELECT &&
                     state_receipt.flow.selected_dungeon ==
-                        THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                        THERON_DUNGEON_2_DRATOR &&
                     state_receipt.set_level_loaded &&
                     state_receipt.level_loaded == 0 &&
                     state_receipt.set_party_pose &&
                     state_receipt.tick_count == 42 &&
                     strstr(exit_receipt, "dungeon complete") != NULL,
                 "startup exit wrapper emits state receipt without M11 flow ownership");
-    world.progression.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
-    world.progression.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] =
+    world.progression.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+    world.progression.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] =
         THERON_DUNGEON_STATE_COMPLETE;
-    world.progression.dungeon_states[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] =
+    world.progression.dungeon_states[THERON_DUNGEON_2_DRATOR - 1] =
         THERON_DUNGEON_STATE_LOCKED;
     world.progression.quest_items_collected =
         THERON_QUEST_ITEM_MASK_FROM_DUNGEON(
-            THERON_DUNGEON_1_HALL_OF_RECORDS);
+            THERON_DUNGEON_1_AKUTUBA);
     world.party.champion_count = 3;
     world.party.leader_x = 4;
     world.party.leader_y = 5;
@@ -5222,7 +5222,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     track02,
                     track02_size,
                     THERON_TRACK02_MD5_US_BIN,
-                    THERON_DUNGEON_1_HALL_OF_RECORDS,
+                    THERON_DUNGEON_1_AKUTUBA,
                     &plan,
                     &runtime_result,
                     &apply_receipt,
@@ -5322,7 +5322,7 @@ static void test_track02_all_dungeon_runtime_capture_receipt(void) {
                     host_receipt.startup_level_anchor_level_index[0] == 0x0026u,
                 "Theron host receipt carries Track02 per-anchor no-fallback evidence");
 
-    for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    for (dungeon_id = THERON_DUNGEON_1_AKUTUBA;
          dungeon_id <= THERON_DUNGEON_COUNT;
          dungeon_id = (Theron_DungeonID)((int)dungeon_id + 1)) {
         int receipt_index = (int)dungeon_id - 1;
@@ -5943,7 +5943,7 @@ static void test_boot_forcefield_pointer_snapshot_enters_runtime(void) {
 
     memset(&snapshot, 0, sizeof(snapshot));
     snapshot.startup_phase = THERON_STARTUP_PHASE_READY;
-    snapshot.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    snapshot.selected_dungeon = THERON_DUNGEON_1_AKUTUBA;
     snapshot.boot_profile = &profile;
     snapshot.world = &world;
     snapshot.assets = &assets;
@@ -5993,7 +5993,7 @@ static void test_runtime_entry_structured_track02_routes(void) {
                     NULL,
                     0u,
                     NULL,
-                    THERON_DUNGEON_1_HALL_OF_RECORDS,
+                    THERON_DUNGEON_1_AKUTUBA,
                     &plan,
                     &result,
                     &apply_receipt,
@@ -6023,7 +6023,7 @@ static void test_runtime_entry_structured_track02_routes(void) {
                     fake_track02,
                     sizeof(fake_track02),
                     THERON_TRACK02_MD5_US_BIN,
-                    THERON_DUNGEON_1_HALL_OF_RECORDS,
+                    THERON_DUNGEON_1_AKUTUBA,
                     &plan,
                     &result,
                     &apply_receipt,
@@ -6053,7 +6053,7 @@ static void test_runtime_entry_structured_track02_routes(void) {
                     fake_track02,
                     sizeof(fake_track02),
                     THERON_TRACK02_MD5_US_BIN,
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                     &plan,
                     &result,
                     &apply_receipt,

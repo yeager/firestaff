@@ -613,7 +613,7 @@ Theron_V1SrmProgressImportStatus theron_v1_srm_decode_progression_payload(
     }
 
     if (quest_mask == THERON_QUEST_ALL_ITEMS) {
-        if (current_dungeon_raw != (uint8_t)THERON_DUNGEON_7_TOWER_OF_EPILOGUE) {
+        if (current_dungeon_raw != (uint8_t)THERON_DUNGEON_7_DEMON) {
             return THERON_V1_SRM_PROGRESS_IMPORT_NON_MONOTONIC_QUEST_STATE;
         }
     } else {

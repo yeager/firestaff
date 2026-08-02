@@ -332,7 +332,7 @@ static void probe_synthetic_envelope_chain(void) {
                sizeof(payload));
     check_int("synthetic envelope current dungeon",
               envelope.progression.current_dungeon,
-              THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+              THERON_DUNGEON_3_FORMIC);
     check_int("synthetic envelope quest mask",
               envelope.progression.quest_items_bitmask,
               0x03);
@@ -496,7 +496,7 @@ static void probe_real_slot0_when_staged(void) {
               THERON_V1_SRM_ENVELOPE_KIND_PROGRESSION);
     check_int("real-asset slot0 staged current dungeon",
               (int)envelope.progression.current_dungeon,
-              (int)THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+              (int)THERON_DUNGEON_3_FORMIC);
     check_int("real-asset slot0 staged slot_index 0",
               envelope.slot_index,
               0);

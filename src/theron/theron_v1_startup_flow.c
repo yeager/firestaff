@@ -213,7 +213,7 @@ void theron_v1_startup_flow_snapshot_init(Theron_StartupFlowSnapshot *snapshot) 
     }
     memset(snapshot, 0, sizeof(*snapshot));
     snapshot->phase = THERON_STARTUP_PHASE_TITLE;
-    snapshot->selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    snapshot->selected_dungeon = THERON_DUNGEON_1_AKUTUBA;
     for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
         snapshot->selected_mirror_order[i] = -1;
     }
@@ -684,7 +684,7 @@ void theron_v1_startup_layout_state_init(Theron_StartupLayoutState *state) {
     }
     memset(state, 0, sizeof(*state));
     state->phase = THERON_STARTUP_PHASE_TITLE;
-    state->selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    state->selected_dungeon = THERON_DUNGEON_1_AKUTUBA;
     state->soul_cursor = 0;
     state->continue_focus = 0;
     state->tqsv_slot = -1;
@@ -913,9 +913,9 @@ int theron_v1_startup_layout_state_from_facts(
 }
 
 static Theron_DungeonID tqr_startup_clamp_stage(Theron_DungeonID dungeon_id) {
-    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+    if (dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
         dungeon_id > THERON_DUNGEON_COUNT) {
-        return THERON_DUNGEON_1_HALL_OF_RECORDS;
+        return THERON_DUNGEON_1_AKUTUBA;
     }
     return dungeon_id;
 }
@@ -929,7 +929,7 @@ static Theron_DungeonID tqr_startup_move_stage_cursor(
 
     selected = tqr_startup_clamp_stage(selected);
     if (!progression || delta == 0) {
-        if (delta < 0 && selected > THERON_DUNGEON_1_HALL_OF_RECORDS) {
+        if (delta < 0 && selected > THERON_DUNGEON_1_AKUTUBA) {
             return (Theron_DungeonID)(selected - 1);
         }
         if (delta > 0 && selected < THERON_DUNGEON_COUNT) {
@@ -940,7 +940,7 @@ static Theron_DungeonID tqr_startup_move_stage_cursor(
 
     if (delta < 0) {
         for (id = (int)selected - 1;
-             id >= THERON_DUNGEON_1_HALL_OF_RECORDS;
+             id >= THERON_DUNGEON_1_AKUTUBA;
              --id) {
             if (tqr_stage_is_available(progression, (Theron_DungeonID)id)) {
                 return (Theron_DungeonID)id;
@@ -1113,7 +1113,7 @@ int theron_v1_startup_layout_build(
             ++count;
             row_y += 12;
         }
-        for (i = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        for (i = THERON_DUNGEON_1_AKUTUBA;
              i <= THERON_DUNGEON_COUNT && count < max_elements;
              ++i) {
             const Theron_DungeonMeta *meta =

@@ -386,7 +386,7 @@ static void probe_continue_apply_mutates_world(void) {
         return;
     }
 
-    theron_v1_party_init(&party, THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+    theron_v1_party_init(&party, THERON_DUNGEON_2_DRATOR);
     party.leader_x = 7;
     party.leader_y = 8;
     party.leader_dir = 2;
@@ -397,7 +397,7 @@ static void probe_continue_apply_mutates_world(void) {
                                    sizeof(champion_data)) > 0 ? 1 : 0,
               1);
     theron_v1_dungeon_progression_init(&progression);
-    progression.current_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    progression.current_dungeon = THERON_DUNGEON_2_DRATOR;
     progression.current_level = 2;
     progression.quest_items_collected = 1;
     check_int("continue apply write tqsv",
@@ -423,7 +423,7 @@ static void probe_continue_apply_mutates_world(void) {
               1);
     check_int("continue apply tqsv dungeon",
               world.progression.current_dungeon,
-              THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+              THERON_DUNGEON_2_DRATOR);
     check_int("continue apply tqsv level", world.current_level, 1);
     check_int("continue apply tqsv object reset", world.object_count, 0);
     check_int("continue apply tqsv timer reset", world.timer_count, 0);
@@ -464,7 +464,7 @@ static void probe_continue_apply_mutates_world(void) {
               1);
     check_int("continue apply srm dungeon",
               world.progression.current_dungeon,
-              THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+              THERON_DUNGEON_3_FORMIC);
     check_int("continue apply srm object reset", world.object_count, 0);
     check_int("continue apply srm timer reset", world.timer_count, 0);
     check_int("continue apply srm transition reset", world.transition_pending, 0);
@@ -515,13 +515,13 @@ static void probe_continue_apply_mutates_world(void) {
                   0);
         check_int("continue apply srm slot apply dungeon",
                   apply_receipt.srm_current_dungeon,
-                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                  THERON_DUNGEON_3_FORMIC);
         check_int("continue apply srm slot state slot",
                   state_receipt.save_resume_srm_active_slot,
                   0);
         check_int("continue apply srm slot state dungeon",
                   state_receipt.save_resume_srm_current_dungeon,
-                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                  THERON_DUNGEON_3_FORMIC);
         check_int("continue apply srm slot object reset",
                   world.object_count,
                   0);
@@ -565,13 +565,13 @@ static void probe_continue_apply_mutates_world(void) {
                   -1);
         check_int("continue apply external srm apply dungeon",
                   apply_receipt.srm_current_dungeon,
-                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                  THERON_DUNGEON_3_FORMIC);
         check_int("continue apply external srm state slot",
                   state_receipt.save_resume_srm_active_slot,
                   -1);
         check_int("continue apply external srm state dungeon",
                   state_receipt.save_resume_srm_current_dungeon,
-                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                  THERON_DUNGEON_3_FORMIC);
     }
 
     for (int i = 0; i < THERON_SAVE_SLOT_COUNT; ++i) {

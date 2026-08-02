@@ -7,6 +7,7 @@
  */
 
 #include "theron_v1_shop.h"
+#include "theron_v1_champions.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -117,6 +118,8 @@ static void test_purchase_state_is_atomic(void) {
     int i;
 
     theron_v1_party_init(&party, 1);
+    for (i = 0; i < THERON_MAX_CHAMPIONS; i++)
+        theron_v1_champion_reset_inventory(&party.champions[i]);
     party.gold = 100u;
 
     expect_status(theron_v1_shop_parse_price_table(&table,

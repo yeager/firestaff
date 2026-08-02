@@ -297,7 +297,7 @@ int main(void) {
                 "fake Track 02 file with startup prompt written");
     expect_true(test_set_home(temp_dir), "test HOME points at Theron temp root");
 
-    theron_v1_party_init(&saved_party, THERON_DUNGEON_1_HALL_OF_RECORDS);
+    theron_v1_party_init(&saved_party, THERON_DUNGEON_1_AKUTUBA);
     saved_party.champions[0].health = 77;
     saved_party.champions[0].max_health = 88;
     memset(saved_champions, 0, sizeof(saved_champions));
@@ -307,7 +307,7 @@ int main(void) {
                     theron_v1_party_pack_size(),
                 "test packs Theron champion save data");
     theron_v1_dungeon_progression_init(&saved_progression);
-    saved_progression.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    saved_progression.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     saved_progression.current_level = 1;
     saved_progression.dungeon_playtime_seconds = 1234;
     snprintf(save_root, sizeof(save_root),
@@ -393,7 +393,7 @@ int main(void) {
     expect_true(world != NULL && world->level_loaded[0][0] == 0,
                 "M11 waits at Theron stage select before level load");
     expect_true(view.theronState.selected_dungeon ==
-                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                THERON_DUNGEON_1_AKUTUBA,
                 "M11 stage cursor starts on dungeon 1");
     expect_true(view.theronState.companion_count == 0,
                 "M11 startup begins with no companions selected");
@@ -553,7 +553,7 @@ int main(void) {
             find_startup_element(startup_layout,
                                  startup_layout_count,
                                  M11_THERON_STARTUP_ELEMENT_STAGE,
-                                 THERON_DUNGEON_1_HALL_OF_RECORDS);
+                                 THERON_DUNGEON_1_AKUTUBA);
         expect_true(startup_layout_count >= 10 &&
                     title != NULL &&
                     title->enabled == 1 &&
@@ -879,11 +879,11 @@ int main(void) {
                 view.theronState.tick_count == 0,
                 "M11 starts at the deterministic Theron runtime pose");
     expect_true(world->levels[
-                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0].width == 8 &&
+                    THERON_DUNGEON_1_AKUTUBA - 1][0].width == 8 &&
                 world->levels[
-                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0].height == 8 &&
+                    THERON_DUNGEON_1_AKUTUBA - 1][0].height == 8 &&
                 world->progression.dungeon_seeds[
-                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1] == 0x0108e938u,
+                    THERON_DUNGEON_1_AKUTUBA - 1] == 0x0108e938u,
                 "M11 Theron stage 1 fallback room carries the verified initial seed");
 
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_TURN_RIGHT) ==
@@ -962,10 +962,10 @@ int main(void) {
                 strstr(view.inspectDetail, "Crypt of Shadows") != NULL,
                 "M11 Theron exit inspect readout advances chapter marker");
     expect_true(world->progression.dungeon_states[
-                    THERON_DUNGEON_1_HALL_OF_RECORDS - 1] ==
+                    THERON_DUNGEON_1_AKUTUBA - 1] ==
                     THERON_DUNGEON_STATE_COMPLETE &&
                 world->progression.dungeon_states[
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] ==
+                    THERON_DUNGEON_2_DRATOR - 1] ==
                     THERON_DUNGEON_STATE_AVAILABLE,
                 "M11 Theron exit advances progression and unlocks middle stages");
     expect_true(world->party.champion_count == 1 &&
@@ -973,7 +973,7 @@ int main(void) {
                 "M11 Theron exit clears selected companions before next startup");
 
     expect_true(view.theronState.selected_dungeon ==
-                THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                THERON_DUNGEON_2_DRATOR,
                 "M11 Theron stage cursor returns on unlocked dungeon 2");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                 M11_GAME_INPUT_REDRAW,
@@ -983,21 +983,21 @@ int main(void) {
                 "M11 Theron stage 2 forcefield loads selected dungeon");
     expect_true(world->object_count == 0 && world->timer_count == 0,
                 "M11 Theron stage 2 forcefield clears prior dungeon runtime state");
-    expect_true(world->current_dungeon == THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+    expect_true(world->current_dungeon == THERON_DUNGEON_2_DRATOR &&
                 world->progression.current_dungeon ==
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS &&
+                    THERON_DUNGEON_2_DRATOR &&
                 view.theronState.selected_dungeon ==
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                    THERON_DUNGEON_2_DRATOR,
                 "M11 Theron stage 2 forcefield does not fall back to dungeon 1");
     expect_true(world->level_loaded[
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][0] == 1,
+                    THERON_DUNGEON_2_DRATOR - 1][0] == 1,
                 "M11 Theron stage 2 loads the selected dungeon level slot");
     expect_true(world->levels[
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][0].width == 8 &&
+                    THERON_DUNGEON_2_DRATOR - 1][0].width == 8 &&
                 world->levels[
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][0].height == 8 &&
+                    THERON_DUNGEON_2_DRATOR - 1][0].height == 8 &&
                 world->progression.dungeon_seeds[
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] == 0u &&
+                    THERON_DUNGEON_2_DRATOR - 1] == 0u &&
                 theron_v1_world_get_square(world, 6, 4) == THERON_SQUARE_POOL,
                 "M11 Theron stage 2 keeps unresolved seed closed and marker");
     expect_true(theron_v1_world_get_square(world,
@@ -1108,7 +1108,7 @@ theron_fake_track02_runtime_done:
                     "M11 Theron SRM Continue loads decoded envelope");
         expect_true(srm_world != NULL &&
                     srm_world->progression.current_dungeon ==
-                        THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                        THERON_DUNGEON_3_FORMIC &&
                     srm_world->progression.quest_items_collected == 0x03,
                     "M11 Theron SRM Continue applies decoded progression");
         M11_GameView_Shutdown(&srm_view);

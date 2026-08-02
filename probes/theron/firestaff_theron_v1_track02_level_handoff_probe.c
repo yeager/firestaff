@@ -164,7 +164,7 @@ static void probe_synthetic_positive_handoff(void) {
         sizeof(track),
         0x1584u,
         1u,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         2,
         &level,
         &handoff);
@@ -294,7 +294,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
         sizeof(track),
         THERON_TRACK02_MD5_US_ISO,
         descriptor_offset,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &level,
         &handoff);
@@ -363,7 +363,7 @@ static void probe_synthetic_initial_candidate_handoff(void) {
         sizeof(track),
         THERON_TRACK02_MD5_US_ISO,
         descriptor_offset,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &level,
         &handoff);
@@ -426,7 +426,7 @@ static void probe_synthetic_initial_candidate_wrong_anchor_rejected(void) {
         sizeof(track),
         THERON_TRACK02_MD5_US_BIN,
         descriptor_offset,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &level,
         &handoff);
@@ -521,7 +521,7 @@ static void probe_split_raw_initial_candidate_semantic_handoff(void) {
 
         status = theron_v1_track02_load_startup_semantic_level(
             track, sizeof(track), md5s[layout], descriptor_offset,
-            THERON_DUNGEON_1_HALL_OF_RECORDS, 0, &level, &semantic,
+            THERON_DUNGEON_1_AKUTUBA, 0, &level, &semantic,
             &level_handoff);
         check_int("split raw semantic level status", status,
                   THERON_TRACK02_LEVEL_HANDOFF_OK);
@@ -723,7 +723,7 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
         sizeof(track),
         THERON_TRACK02_MD5_US_BIN,
         descriptor_offset,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &loaded_level,
         &loaded_semantic_handoff,
@@ -818,7 +818,7 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                 runtime_track,
                 runtime_track_size,
                 THERON_TRACK02_MD5_US_BIN,
-                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                THERON_DUNGEON_1_AKUTUBA,
                 &runtime_plan,
                 &runtime_result,
                 &runtime_host_receipt,
@@ -945,7 +945,7 @@ static void probe_synthetic_multiple_initial_candidates_rejected(void) {
         sizeof(track),
         THERON_TRACK02_MD5_US_BIN,
         descriptor_offset,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &level,
         &handoff);
@@ -1034,7 +1034,7 @@ static void probe_negative_handoffs(void) {
         sizeof(track),
         0x1584u,
         0u,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &level,
         &handoff);
@@ -1048,7 +1048,7 @@ static void probe_negative_handoffs(void) {
         sizeof(track),
         0x1584u,
         3u,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &level,
         &handoff);
@@ -1064,7 +1064,7 @@ static void probe_negative_handoffs(void) {
         sizeof(track),
         0x1584u,
         THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &level,
         &handoff);
@@ -1077,7 +1077,7 @@ static void probe_negative_handoffs(void) {
         0x1600u,
         0x1584u,
         1u,
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &level,
         &handoff);
@@ -1296,13 +1296,13 @@ static void probe_real_data_initial_candidate(const char *label,
     check_int("real initial loader semantics receipt cleared", semantics.valid, 0);
 
     signal_status = theron_v1_track02_load_initial_level_loader_route(
-        data, size, local_md5, THERON_DUNGEON_1_HALL_OF_RECORDS, 0,
+        data, size, local_md5, THERON_DUNGEON_1_AKUTUBA, 0,
         &loader_route);
     check_int("real initial loader route remains unproven", signal_status,
               THERON_TRACK02_SIGNAL_NOT_FOUND);
     check_int("real initial loader route cleared", loader_route.valid, 0);
     signal_status = theron_v1_track02_load_initial_level_loader_route(
-        data, size, local_md5, THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 0,
+        data, size, local_md5, THERON_DUNGEON_2_DRATOR, 0,
         &loader_route);
     check_int("real initial loader route rejects unproven dungeon",
               signal_status, THERON_TRACK02_SIGNAL_NOT_FOUND);
@@ -1312,7 +1312,7 @@ static void probe_real_data_initial_candidate(const char *label,
         size,
         local_md5,
         signal.descriptor_offsets[0],
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &level,
         &handoff);
@@ -1476,7 +1476,7 @@ static void probe_real_data_handoff(const char *label,
                     size,
                     signal.descriptor_offsets[anchor],
                     entry,
-                    THERON_DUNGEON_1_HALL_OF_RECORDS,
+                    THERON_DUNGEON_1_AKUTUBA,
                     (int)entry,
                     &level,
                     &handoff);
@@ -1610,17 +1610,17 @@ static void probe_media_gated_level_bank_selection(void) {
     check_int("media gate rejects unbound later semantic level",
               theron_v1_world_runtime_media_select_level_bank(
                   &world, THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
-                  THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 0);
+                  THERON_DUNGEON_2_DRATOR, 1), 0);
     check_int("media gate accepts complete Track 02 receipt",
               theron_v1_startup_media_bind_runtime_receipt(&world, &media), 1);
     check_int("forcefield transition is media gated",
               theron_v1_world_runtime_media_select_level_bank(
                   &world, THERON_RUNTIME_LEVEL_BANK_STARTUP_FORCEFIELD,
-                  THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 1);
+                  THERON_DUNGEON_2_DRATOR, 1), 1);
     check_int("stage transition replaces selected bank",
               theron_v1_world_runtime_media_select_level_bank(
                   &world, THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
-                  THERON_DUNGEON_2_CRYPT_OF_SHADOWS, 1), 1);
+                  THERON_DUNGEON_2_DRATOR, 1), 1);
     check_int("stage selection retains real-media receipt",
               world.runtime_media.level_bank.real_media_gate, 1);
 }

@@ -154,11 +154,13 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
         c->ai_timer++;
         dist = nexus_v1_creature_distance(c->x, c->y, party_x, party_y);
 
-        /* Simple AI: chase if close, patrol/wander if far.
-         * Creature speed determines how often it moves.
-         * Source: DM1 F0209_GROUP_ProcessEvents29to41 creature AI timeline;
-         *         CREATURE.C idle wander (small random moves when not alert). */
-        if (dist <= 3) {
+        /* Chase if within CRET detection range, patrol/wander if far.
+         * Detection range from CRET byte 14, scaled to tiles (÷10).
+         * Source: DM1 F0209 creature AI; CRET detection_range field. */
+        {
+        int det = (c->type_index >= 0) ? mgr->types[c->type_index].detection_range / 10 : 3;
+        if (det < 2) det = 2;
+        if (dist <= det) {
             c->state = 2; /* chase */
             if (dist <= 1) c->state = 3; /* attack range */
             c->wander_target_x = -1;
@@ -180,6 +182,7 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
                 c->wander_target_y = wy;
                 c->wander_timer = 20 + (rand() % 20);
             }
+        }
         }
 
         /* Move toward party when chasing — speed-based movement interval.

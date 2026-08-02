@@ -854,7 +854,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
             size,
             expected_md5,
             signal.descriptor_offsets[0],
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             0,
             &initial_level,
             &initial_handoff);

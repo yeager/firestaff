@@ -658,7 +658,7 @@ static void probe_progression_payload_import(void) {
               receipt.restored, 1);
     check_int("progression current dungeon",
               prog.current_dungeon,
-              THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+              THERON_DUNGEON_3_FORMIC);
     check_int("progression quest mask",
               prog.quest_items_collected, 0x03);
     check_int("progression dungeon 1 complete",
@@ -872,7 +872,7 @@ static void probe_gzip_slot_party_body_import(void) {
               THERON_CLASS_NINJA);
     check_int("party-gzip progression dungeon",
               prog.current_dungeon,
-              THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+              THERON_DUNGEON_3_FORMIC);
 #else
     check_int("party-gzip reports zlib unavailable",
               payload_status,

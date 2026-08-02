@@ -201,7 +201,7 @@ static int direction_from_delta(int dx, int dy) {
 static void setup_world_from_level(Theron_V1_World *world,
                                    const Theron_V1_Level *level) {
     memset(world, 0, sizeof(*world));
-    world->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world->current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     world->current_level = 0;
     world->level_loaded[0][0] = 1;
     memcpy(&world->levels[0][0], level, sizeof(*level));
@@ -472,7 +472,7 @@ static void test_object_table_decode_and_apply_real_data(
 
     before = world->object_count;
     rc = theron_v1_world_apply_track02_object_table(
-        world, THERON_DUNGEON_1_HALL_OF_RECORDS, 0, &receipt.object_table);
+        world, THERON_DUNGEON_1_AKUTUBA, 0, &receipt.object_table);
     CHECK_INT("apply empty object table succeeds", rc, 0);
     CHECK_INT("empty object table leaves object count unchanged",
               world->object_count, before);
@@ -629,7 +629,7 @@ static void probe_real_track02(const char *label,
         size,
         local_md5,
         signal.descriptor_offsets[0],
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         0,
         &level,
         &handoff);

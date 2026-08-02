@@ -19873,7 +19873,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
                 assets->hucard_rom,
                 assets->hucard_rom_size,
                 verifiedMd5,
-                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                THERON_DUNGEON_1_AKUTUBA,
                 level_receipt,
                 sizeof(level_receipt))) {
             state->theronState.startup_phase = THERON_STARTUP_PHASE_IN_DUNGEON;

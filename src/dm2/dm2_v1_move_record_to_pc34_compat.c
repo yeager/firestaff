@@ -82,14 +82,39 @@ int dm2_v1_move_record_to(
         return 1;
     }
 
-    /* Departure/arrival actuator triggers (ACTUATE_FLOOR_MECHA) are
-     * fired by the runtime's existing movement path
-     * (dm2_v1_runtime_invoke_square_actuators), not here.
-     *
-     * The record chain cut/append (CUT_RECORD_FROM + APPEND_RECORD_TO)
-     * requires live pool data.  Fail-closed until the record chain
-     * manipulation is bound to the tile linked-list heads. */
-    receipt->fail_closed = 1;
+    /* c_moverec.cpp:392-1100: CUT from source, APPEND to destination.
+     * Party moves (0xFFFF) don't touch the record chain. */
+    if (receipt->is_party_move) {
+        receipt->valid = 1;
+        return 1;
+    }
 
+    /* CUT from source tile (unless from-nowhere). */
+    if (!receipt->is_from_nowhere) {
+        DM2_V1_SkprojectCutRecordReceipt cut_rc;
+        memset(&cut_rc, 0, sizeof(cut_rc));
+        if (dm2_v1_skproject_cut_record_from(
+                dungeon, (uint16_t)record_handle, NULL,
+                current_map, from_x, from_y, &cut_rc)) {
+            receipt->record_cut = 1;
+        } else {
+            receipt->fail_closed = 1;
+        }
+    }
+
+    /* APPEND to destination tile (unless to-nowhere). */
+    if (!receipt->is_to_nowhere && !receipt->fail_closed) {
+        DM2_V1_SkprojectAppendRecordReceipt app_rc;
+        memset(&app_rc, 0, sizeof(app_rc));
+        if (dm2_v1_skproject_append_record_to(
+                dungeon, (uint16_t)record_handle, NULL,
+                current_map, dest_x, dest_y, &app_rc)) {
+            receipt->record_appended = 1;
+        } else {
+            receipt->fail_closed = 1;
+        }
+    }
+
+    receipt->valid = 1;
     return 1;
 }

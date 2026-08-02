@@ -80,7 +80,7 @@ int main(void) {
           "Soul Room route rejects a receipt without the bound full payload witness");
     check(!theron_v1_boot_track02_capture_admission_allows_initial_level(
               &profile, &hucard_byte, 1u,
-              THERON_DUNGEON_1_HALL_OF_RECORDS, 0),
+              THERON_DUNGEON_1_AKUTUBA, 0),
           "dungeon admission rejects an incomplete capture receipt before route load");
     theron_v1_boot_profile_init(&profile);
     /* 341dd6c6a split the forcefield entry by variant: only raw JP/US BIN

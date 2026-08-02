@@ -72,7 +72,7 @@ static int test_init(void) {
     Theron_DungeonProgression prog;
     theron_v1_dungeon_progression_init(&prog);
 
-    ASSERT(prog.current_dungeon == THERON_DUNGEON_1_HALL_OF_RECORDS,
+    ASSERT(prog.current_dungeon == THERON_DUNGEON_1_AKUTUBA,
            "current_dungeon != 1");
     ASSERT(prog.quest_items_collected == 0, "quest_items != 0");
     ASSERT(prog.quest_complete == 0, "quest_complete != 0");
@@ -165,29 +165,29 @@ static int test_item_reset(void) {
     theron_v1_dungeon_progression_init(&prog);
 
     /* Dungeon 1 — reset required on first entry */
-    ASSERT(theron_v1_item_reset_required(&prog, THERON_DUNGEON_1_HALL_OF_RECORDS) == 1,
+    ASSERT(theron_v1_item_reset_required(&prog, THERON_DUNGEON_1_AKUTUBA) == 1,
            "reset not required for dungeon 1");
 
     /* Apply reset */
     theron_v1_item_reset_mark_applied(&prog);
-    ASSERT(theron_v1_item_reset_required(&prog, THERON_DUNGEON_1_HALL_OF_RECORDS) == 0,
+    ASSERT(theron_v1_item_reset_required(&prog, THERON_DUNGEON_1_AKUTUBA) == 0,
            "reset still required after mark_applied");
 
     /* Enter dungeon 1 */
-    int enter_result = theron_v1_dungeon_enter(&prog, THERON_DUNGEON_1_HALL_OF_RECORDS);
+    int enter_result = theron_v1_dungeon_enter(&prog, THERON_DUNGEON_1_AKUTUBA);
     ASSERT(enter_result == 0, "dungeon enter failed");
 
     /* After completing and advancing to dungeon 2, reset needed again */
     prog.dungeon_states[0] = THERON_DUNGEON_STATE_COMPLETE;
     theron_v1_dungeon_advance(&prog);
 
-    ASSERT(theron_v1_item_reset_required(&prog, THERON_DUNGEON_2_CRYPT_OF_SHADOWS) == 1,
+    ASSERT(theron_v1_item_reset_required(&prog, THERON_DUNGEON_2_DRATOR) == 1,
            "reset not required for dungeon 2");
 
     /* Attempt to enter completed dungeon → fails */
     prog.dungeon_states[0] = THERON_DUNGEON_STATE_COMPLETE;
-    prog.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
-    int retry_enter = theron_v1_dungeon_enter(&prog, THERON_DUNGEON_1_HALL_OF_RECORDS);
+    prog.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+    int retry_enter = theron_v1_dungeon_enter(&prog, THERON_DUNGEON_1_AKUTUBA);
     ASSERT(retry_enter == -3, "re-entering complete dungeon should fail");
 
     PASS();
@@ -204,7 +204,7 @@ static int test_dungeon_exit(void) {
 
     /* Attempt to exit before completion → INVALID */
     prog.dungeon_states[0] = THERON_DUNGEON_STATE_IN_PROGRESS;
-    prog.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    prog.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
 
     Theron_DungeonID exit_result = theron_v1_dungeon_exit(&prog);
     ASSERT(exit_result == THERON_DUNGEON_INVALID,
@@ -213,7 +213,7 @@ static int test_dungeon_exit(void) {
     /* After completion, exit succeeds */
     prog.dungeon_states[0] = THERON_DUNGEON_STATE_COMPLETE;
     exit_result = theron_v1_dungeon_exit(&prog);
-    ASSERT(exit_result == THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+    ASSERT(exit_result == THERON_DUNGEON_2_DRATOR,
            "exit returned wrong next dungeon");
 
     PASS();
@@ -236,7 +236,7 @@ static int test_dungeon_exit_transition_gate(void) {
     level->start_x = 1;
     level->start_y = 1;
     level->start_dir = THERON_DIR_NORTH;
-    world.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     world.current_level = 0;
     world.level_loaded[0][0] = 1;
 
@@ -292,7 +292,7 @@ static int test_save_restore(void) {
     }
 
     original.dungeon_states[3] = THERON_DUNGEON_STATE_AVAILABLE;
-    original.current_dungeon = THERON_DUNGEON_4_TOMB_OF_WOE;
+    original.current_dungeon = THERON_DUNGEON_4_SARMON;
 
     /* Serialize only what fits in a between-dungeon save */
     uint8_t quest_items = theron_v1_quest_item_bitmask(&original);
@@ -356,7 +356,7 @@ static int test_quest_complete_detection(void) {
     ASSERT(theron_v1_quest_complete(&prog), "quest not complete after 7 items");
 
     /* Duplicate collection doesn't affect completion */
-    prog.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    prog.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     int r = theron_v1_quest_item_collect(&prog, THERON_QUEST_ITEM_1_SHIELD_DEFIANT);
     ASSERT(r == 0, "duplicate collection should be no-op");
     ASSERT(theron_v1_quest_complete(&prog), "quest complete broken by dup collection");
@@ -371,13 +371,13 @@ static int test_dungeon_names(void) {
     TEST("Dungeon name lookup — all 7 dungeons");
 
     static const char *const expected_names[THERON_DUNGEON_COUNT] = {
-        "Hall of Records",
         "AKUTUBA",
         "DRATOR",
         "FORMIC",
         "SARMON",
         "SHADO",
         "THIEF",
+        "DEMON",
     };
 
     for (int i = 1; i <= THERON_DUNGEON_COUNT; i++) {
@@ -398,11 +398,11 @@ static int test_dungeon_names(void) {
 static int test_dungeon_next(void) {
     TEST("Dungeon next — correct sequence wrapping");
 
-    ASSERT(theron_v1_dungeon_next(THERON_DUNGEON_1_HALL_OF_RECORDS) ==
-           THERON_DUNGEON_2_CRYPT_OF_SHADOWS, "next(1) != 2");
-    ASSERT(theron_v1_dungeon_next(THERON_DUNGEON_6_CASTLE_OF_FATE) ==
-           THERON_DUNGEON_7_TOWER_OF_EPILOGUE, "next(6) != 7");
-    ASSERT(theron_v1_dungeon_next(THERON_DUNGEON_7_TOWER_OF_EPILOGUE) ==
+    ASSERT(theron_v1_dungeon_next(THERON_DUNGEON_1_AKUTUBA) ==
+           THERON_DUNGEON_2_DRATOR, "next(1) != 2");
+    ASSERT(theron_v1_dungeon_next(THERON_DUNGEON_6_THIEF) ==
+           THERON_DUNGEON_7_DEMON, "next(6) != 7");
+    ASSERT(theron_v1_dungeon_next(THERON_DUNGEON_7_DEMON) ==
            THERON_DUNGEON_INVALID, "next(7) != INVALID");
     ASSERT(theron_v1_dungeon_next(THERON_DUNGEON_INVALID) ==
            THERON_DUNGEON_INVALID, "next(INVALID) != INVALID");
@@ -474,7 +474,7 @@ static int test_wrong_dungeon_item_rejection(void) {
     theron_v1_dungeon_progression_init(&prog);
 
     /* We're in dungeon 3, try to collect dungeon 1's item */
-    prog.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    prog.current_dungeon = THERON_DUNGEON_3_FORMIC;
     int result = theron_v1_quest_item_collect(&prog, THERON_QUEST_ITEM_1_SHIELD_DEFIANT);
     ASSERT(result == -2, "wrong-dungeon item should be rejected with -2");
 

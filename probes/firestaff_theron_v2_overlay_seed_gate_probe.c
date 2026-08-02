@@ -72,7 +72,7 @@ static void seed_world(Theron_V1_World *world)
     world->quest_items_in_dungeon = 5;
     world->world_tick = 0x123456789ABCDEF0ULL;
     world->state_hash = 0xC0FFEE1234ULL;
-    world->progression.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    world->progression.current_dungeon = THERON_DUNGEON_3_FORMIC;
     world->progression.quest_items_collected =
         (uint8_t)(THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
                   THERON_QUEST_ITEM_3_TAZA_POLEYN |
@@ -129,7 +129,7 @@ int main(void)
     check("direction seeded from V1 leader_dir",
           hud.compass.direction == 2);
     check("dungeon progress prefers progression.current_dungeon",
-          hud.dungeon_progress.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+          hud.dungeon_progress.current_dungeon == THERON_DUNGEON_3_FORMIC &&
           hud.dungeon_progress.total_dungeons == THERON_DUNGEON_COUNT);
     check("quest item counter seeded from current dungeon progress",
           hud.quest_items.collected == 2 && hud.quest_items.total == 5);

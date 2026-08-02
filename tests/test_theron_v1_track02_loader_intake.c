@@ -2091,7 +2091,7 @@ int main(void) {
     CHECK(!object_gameplay_semantics.fallback_visuals_allowed);
 
     theron_v1_world_init(&world);
-    world.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     world.current_level = 0;
     world.level_loaded[0][0] = 1;
     world.levels[0][0].width = 32;
@@ -2101,12 +2101,12 @@ int main(void) {
     seeded_object.x = 1;
     seeded_object.y = 1;
     seeded_object.level = 0;
-    seeded_object.dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    seeded_object.dungeon_id = THERON_DUNGEON_1_AKUTUBA;
     CHECK(theron_v1_object_place(&world, &seeded_object) == 0);
     seeded_object.level = 1;
     CHECK(theron_v1_object_place(&world, &seeded_object) == 0);
     CHECK(theron_v1_runtime_publish_track02_object_gameplay_state(
-        &world, THERON_DUNGEON_1_HALL_OF_RECORDS, &object_gameplay_semantics,
+        &world, THERON_DUNGEON_1_AKUTUBA, &object_gameplay_semantics,
         &object_table, &object_world_handoff));
     CHECK(object_world_handoff.valid);
     CHECK(object_world_handoff.world_mutated);
@@ -2451,12 +2451,12 @@ int main(void) {
            "00000000000000000000000000000000");
     CHECK(!theron_v1_world_runtime_media_select_level_bank(
         &world, THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
-        THERON_DUNGEON_1_HALL_OF_RECORDS, 1));
+        THERON_DUNGEON_1_AKUTUBA, 1));
     strcpy(world.runtime_media.stage.track02_md5, THERON_TRACK02_MD5_US_BIN);
     world.runtime_media.identity.track02_variant = THERON_TRACK02_VARIANT_JP_BIN;
     CHECK(!theron_v1_world_runtime_media_select_level_bank(
         &world, THERON_RUNTIME_LEVEL_BANK_LATER_LEVEL,
-        THERON_DUNGEON_1_HALL_OF_RECORDS, 1));
+        THERON_DUNGEON_1_AKUTUBA, 1));
     world.runtime_media.identity.track02_variant = THERON_TRACK02_VARIANT_US_BIN;
     CHECK(theron_v1_runtime_bind_track02_m11_soul_room_consumption(
         &decode_vector, &world, 320, 200, 16, 24, 1, 1,

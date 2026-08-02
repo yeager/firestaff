@@ -147,7 +147,7 @@ static int test_save_load_roundtrip(void) {
     Theron_DungeonProgression prog;
     theron_v1_dungeon_progression_init(&prog);
     prog.quest_items_collected = 0x0F; /* items 0-3 collected */
-    prog.current_dungeon = THERON_DUNGEON_4_TOMB_OF_WOE;
+    prog.current_dungeon = THERON_DUNGEON_4_SARMON;
     prog.dungeon_states[0] = THERON_DUNGEON_STATE_COMPLETE;
     prog.dungeon_states[1] = THERON_DUNGEON_STATE_COMPLETE;
     prog.dungeon_states[2] = THERON_DUNGEON_STATE_COMPLETE;
@@ -173,7 +173,7 @@ static int test_save_load_roundtrip(void) {
     ASSERT(r == 0, "load from slot failed");
     ASSERT(slot_info.valid == 1, "loaded slot not valid");
     ASSERT(slot_info.quest_items == 0x0F, "quest_items mismatch");
-    ASSERT(slot_info.current_dungeon == THERON_DUNGEON_4_TOMB_OF_WOE,
+    ASSERT(slot_info.current_dungeon == THERON_DUNGEON_4_SARMON,
            "current_dungeon mismatch");
 
     /* Verify champion data survived */
@@ -183,7 +183,7 @@ static int test_save_load_roundtrip(void) {
 
     /* Verify progression */
     ASSERT(prog_read.quest_items_collected == 0x0F, "restored quest_items mismatch");
-    ASSERT(prog_read.current_dungeon == THERON_DUNGEON_4_TOMB_OF_WOE,
+    ASSERT(prog_read.current_dungeon == THERON_DUNGEON_4_SARMON,
            "restored current_dungeon mismatch");
 
     PASS();
@@ -203,7 +203,7 @@ static int test_slot_enumeration(void) {
     Theron_DungeonProgression prog;
     theron_v1_dungeon_progression_init(&prog);
     prog.quest_items_collected = 0x03;
-    prog.current_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    prog.current_dungeon = THERON_DUNGEON_2_DRATOR;
 
     int r = theron_v1_save_to_slot(g_test_dir, 5, champ_data,
                                     sizeof(champ_data), &prog, "After dungeon 2");
@@ -226,7 +226,7 @@ static int test_slot_enumeration(void) {
     ASSERT(slot5 != NULL, "slot 5 not found in enumeration");
     ASSERT(slot5->valid == 1, "slot 5 not valid");
     ASSERT(slot5->quest_items == 0x03, "slot 5 quest_items wrong");
-    ASSERT(slot5->current_dungeon == THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+    ASSERT(slot5->current_dungeon == THERON_DUNGEON_2_DRATOR,
            "slot 5 current_dungeon wrong");
 
     PASS();
@@ -278,13 +278,13 @@ static int test_progression_marker_roundtrip(void) {
     champ_data[1] = 0xAA;
     champ_data[33] = 0x55;
 
-    prog.current_dungeon = THERON_DUNGEON_5_VAULT_OF_SECRETS;
+    prog.current_dungeon = THERON_DUNGEON_5_SHADO;
     prog.current_level = 2;
-    prog.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] = THERON_DUNGEON_STATE_COMPLETE;
-    prog.dungeon_states[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] = THERON_DUNGEON_STATE_COMPLETE;
-    prog.dungeon_states[THERON_DUNGEON_3_ABYSS_OF_FLAMES - 1] = THERON_DUNGEON_STATE_COMPLETE;
-    prog.dungeon_states[THERON_DUNGEON_4_TOMB_OF_WOE - 1] = THERON_DUNGEON_STATE_COMPLETE;
-    prog.dungeon_states[THERON_DUNGEON_5_VAULT_OF_SECRETS - 1] = THERON_DUNGEON_STATE_AVAILABLE;
+    prog.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] = THERON_DUNGEON_STATE_COMPLETE;
+    prog.dungeon_states[THERON_DUNGEON_2_DRATOR - 1] = THERON_DUNGEON_STATE_COMPLETE;
+    prog.dungeon_states[THERON_DUNGEON_3_FORMIC - 1] = THERON_DUNGEON_STATE_COMPLETE;
+    prog.dungeon_states[THERON_DUNGEON_4_SARMON - 1] = THERON_DUNGEON_STATE_COMPLETE;
+    prog.dungeon_states[THERON_DUNGEON_5_SHADO - 1] = THERON_DUNGEON_STATE_AVAILABLE;
     prog.quest_items_collected = (THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
                                  THERON_QUEST_ITEM_2_TAZA_BOOTS |
                                  THERON_QUEST_ITEM_4_SOULCAGE |
@@ -315,7 +315,7 @@ static int test_progression_marker_roundtrip(void) {
                                       &slot_info);
     ASSERT(r == 0, "load from slot 6 failed");
 
-    ASSERT(slot_info.current_dungeon == THERON_DUNGEON_5_VAULT_OF_SECRETS,
+    ASSERT(slot_info.current_dungeon == THERON_DUNGEON_5_SHADO,
            "slot info current_dungeon mismatch");
     ASSERT(slot_info.dungeon_state == THERON_DUNGEON_STATE_AVAILABLE,
            "slot info dungeon_state mismatch");
@@ -442,14 +442,14 @@ static int test_cross_slot_export_import(void) {
 
     Theron_DungeonProgression prog;
     theron_v1_dungeon_progression_init(&prog);
-    prog.current_dungeon = THERON_DUNGEON_6_CASTLE_OF_FATE;
+    prog.current_dungeon = THERON_DUNGEON_6_THIEF;
     prog.current_level = 3;
     prog.quest_items_collected = (THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
                                   THERON_QUEST_ITEM_2_TAZA_BOOTS |
                                   THERON_QUEST_ITEM_3_TAZA_POLEYN |
                                   THERON_QUEST_ITEM_4_SOULCAGE |
                                   THERON_QUEST_ITEM_5_TAZA_ARMOUR);
-    prog.dungeon_states[THERON_DUNGEON_6_CASTLE_OF_FATE - 1] =
+    prog.dungeon_states[THERON_DUNGEON_6_THIEF - 1] =
         THERON_DUNGEON_STATE_AVAILABLE;
     prog.dungeon_playtime_seconds = 0x01020304u;
     for (int i = 0; i < THERON_DUNGEON_COUNT; ++i) {
@@ -472,7 +472,7 @@ static int test_cross_slot_export_import(void) {
     ASSERT(r == 0, "import failed");
     ASSERT(imported_info.valid == 1, "imported slot info not valid");
     ASSERT(imported_info.slot_index == 4, "imported slot index mismatch");
-    ASSERT(imported_info.current_dungeon == THERON_DUNGEON_6_CASTLE_OF_FATE,
+    ASSERT(imported_info.current_dungeon == THERON_DUNGEON_6_THIEF,
            "imported metadata current_dungeon mismatch");
 
     uint8_t champ_read[sizeof(champ_data)];

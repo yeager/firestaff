@@ -73,7 +73,7 @@ static int save_valid_slot(const char *root, int slot, const char *label) {
 
     theron_v1_dungeon_progression_init(&progression);
     progression.quest_items_collected = (uint8_t)(1U << (slot % 7));
-    progression.current_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    progression.current_dungeon = THERON_DUNGEON_2_DRATOR;
 
     return theron_v1_save_to_slot(root,
                                   slot,

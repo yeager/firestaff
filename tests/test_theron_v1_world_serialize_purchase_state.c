@@ -42,11 +42,11 @@ static size_t world_gold_offset(void) {
 
 static void seed_world(Theron_V1_World *world) {
     theron_v1_world_init(world);
-    world->current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    world->current_dungeon = THERON_DUNGEON_3_FORMIC;
     world->current_level = 1;
     world->quest_items_in_dungeon = 1;
     world->dungeon_complete = 1;
-    world->progression.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    world->progression.current_dungeon = THERON_DUNGEON_3_FORMIC;
     world->progression.current_level = 2;
     world->progression.quest_items_collected = THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
                                                THERON_QUEST_ITEM_2_TAZA_BOOTS;

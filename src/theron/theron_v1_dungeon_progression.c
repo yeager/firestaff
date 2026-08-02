@@ -39,8 +39,8 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
      * Quest items from retrieval messages at UD 0x27715B-0x277272. */
 
     /* Dungeon 1 — AKUTUBA (Ak-Tu-Ba): Shield Defiant. 3 levels (DMWeb). */
-    [THERON_DUNGEON_1_HALL_OF_RECORDS - 1] = {
-        .id                = THERON_DUNGEON_1_HALL_OF_RECORDS,
+    [THERON_DUNGEON_1_AKUTUBA - 1] = {
+        .id                = THERON_DUNGEON_1_AKUTUBA,
         .name              = "AKUTUBA",
         .level_count       = 3,
         .quest_item_count  = 1,
@@ -50,8 +50,8 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .size_bytes        = 0,
     },
     /* Dungeon 2 — DRATOR: Taza Boots. */
-    [THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] = {
-        .id                = THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+    [THERON_DUNGEON_2_DRATOR - 1] = {
+        .id                = THERON_DUNGEON_2_DRATOR,
         .name              = "DRATOR",
         .level_count       = 3,
         .quest_item_count  = 1,
@@ -61,8 +61,8 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .size_bytes        = 0,
     },
     /* Dungeon 3 — FORMIC: Taza Poleyn. */
-    [THERON_DUNGEON_3_ABYSS_OF_FLAMES - 1] = {
-        .id                = THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+    [THERON_DUNGEON_3_FORMIC - 1] = {
+        .id                = THERON_DUNGEON_3_FORMIC,
         .name              = "FORMIC",
         .level_count       = 3,
         .quest_item_count  = 1,
@@ -72,8 +72,8 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .size_bytes        = 0,
     },
     /* Dungeon 4 — SARMON: Soulcage. */
-    [THERON_DUNGEON_4_TOMB_OF_WOE - 1] = {
-        .id                = THERON_DUNGEON_4_TOMB_OF_WOE,
+    [THERON_DUNGEON_4_SARMON - 1] = {
+        .id                = THERON_DUNGEON_4_SARMON,
         .name              = "SARMON",
         .level_count       = 3,
         .quest_item_count  = 1,
@@ -83,8 +83,8 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .size_bytes        = 0,
     },
     /* Dungeon 5 — SHADO: Taza Armour. */
-    [THERON_DUNGEON_5_VAULT_OF_SECRETS - 1] = {
-        .id                = THERON_DUNGEON_5_VAULT_OF_SECRETS,
+    [THERON_DUNGEON_5_SHADO - 1] = {
+        .id                = THERON_DUNGEON_5_SHADO,
         .name              = "SHADO",
         .level_count       = 3,
         .quest_item_count  = 1,
@@ -94,8 +94,8 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .size_bytes        = 0,
     },
     /* Dungeon 6 — THIEF: Tazahelm. */
-    [THERON_DUNGEON_6_CASTLE_OF_FATE - 1] = {
-        .id                = THERON_DUNGEON_6_CASTLE_OF_FATE,
+    [THERON_DUNGEON_6_THIEF - 1] = {
+        .id                = THERON_DUNGEON_6_THIEF,
         .name              = "THIEF",
         .level_count       = 3,
         .quest_item_count  = 1,
@@ -105,8 +105,8 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .size_bytes        = 0,
     },
     /* Dungeon 7 — DEMON (Demon's Gate): Retaliator. Final dungeon. */
-    [THERON_DUNGEON_7_TOWER_OF_EPILOGUE - 1] = {
-        .id                = THERON_DUNGEON_7_TOWER_OF_EPILOGUE,
+    [THERON_DUNGEON_7_DEMON - 1] = {
+        .id                = THERON_DUNGEON_7_DEMON,
         .name              = "DEMON",
         .level_count       = 3,
         .quest_item_count  = 1,
@@ -137,7 +137,7 @@ void theron_v1_dungeon_progression_init(Theron_DungeonProgression *prog) {
     memset(prog, 0, sizeof(*prog));
 
     /* Initial state: dungeon 1 available, rest locked */
-    prog->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    prog->current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     for (int i = 0; i < THERON_DUNGEON_COUNT; i++) {
         prog->dungeon_states[i] = THERON_DUNGEON_STATE_LOCKED;
     }
@@ -175,8 +175,8 @@ static int tqr_dungeon_is_complete(const Theron_DungeonProgression *prog,
 
 static int tqr_first_six_complete(const Theron_DungeonProgression *prog) {
     int id;
-    for (id = THERON_DUNGEON_1_HALL_OF_RECORDS;
-         id <= THERON_DUNGEON_6_CASTLE_OF_FATE;
+    for (id = THERON_DUNGEON_1_AKUTUBA;
+         id <= THERON_DUNGEON_6_THIEF;
          ++id) {
         if (!tqr_dungeon_is_complete(prog, (Theron_DungeonID)id)) {
             return 0;
@@ -191,7 +191,7 @@ static void tqr_unlock_available_dungeons(Theron_DungeonProgression *prog) {
         return;
     }
 
-    if (!tqr_dungeon_is_complete(prog, THERON_DUNGEON_1_HALL_OF_RECORDS)) {
+    if (!tqr_dungeon_is_complete(prog, THERON_DUNGEON_1_AKUTUBA)) {
         return;
     }
 
@@ -199,8 +199,8 @@ static void tqr_unlock_available_dungeons(Theron_DungeonProgression *prog) {
      * the five middle dungeons; the final dungeon stays locked until the
      * other six are complete. Sources: Theron's Quest manual and Dungeon
      * Master forum Theron's Quest RTC thread, post 2006-12-22. */
-    for (id = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
-         id <= THERON_DUNGEON_6_CASTLE_OF_FATE;
+    for (id = THERON_DUNGEON_2_DRATOR;
+         id <= THERON_DUNGEON_6_THIEF;
          ++id) {
         if (prog->dungeon_states[id - 1] == THERON_DUNGEON_STATE_LOCKED) {
             prog->dungeon_states[id - 1] = THERON_DUNGEON_STATE_AVAILABLE;
@@ -208,9 +208,9 @@ static void tqr_unlock_available_dungeons(Theron_DungeonProgression *prog) {
     }
 
     if (tqr_first_six_complete(prog) &&
-        prog->dungeon_states[THERON_DUNGEON_7_TOWER_OF_EPILOGUE - 1] ==
+        prog->dungeon_states[THERON_DUNGEON_7_DEMON - 1] ==
             THERON_DUNGEON_STATE_LOCKED) {
-        prog->dungeon_states[THERON_DUNGEON_7_TOWER_OF_EPILOGUE - 1] =
+        prog->dungeon_states[THERON_DUNGEON_7_DEMON - 1] =
             THERON_DUNGEON_STATE_AVAILABLE;
     }
 }
@@ -221,7 +221,7 @@ static Theron_DungeonID tqr_first_available_dungeon(
     if (!prog) {
         return THERON_DUNGEON_INVALID;
     }
-    for (id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    for (id = THERON_DUNGEON_1_AKUTUBA;
          id <= THERON_DUNGEON_COUNT;
          ++id) {
         if (prog->dungeon_states[id - 1] == THERON_DUNGEON_STATE_AVAILABLE ||

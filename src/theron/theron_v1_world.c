@@ -114,7 +114,7 @@ int _tqw_party_unpack(Theron_V1_Party *p, const void *buf, size_t bufsize) {
 static void theron_v1_world_init_base(Theron_V1_World *world) {
     if (!world) return;
     memset(world, 0, sizeof(*world));
-    world->current_dungeon    = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world->current_dungeon    = THERON_DUNGEON_1_AKUTUBA;
     world->current_level      = 0;
     world->world_tick        = 0;
     world->transition_pending = 0;
@@ -333,7 +333,7 @@ int theron_v1_world_apply_track02_object_table(
     Theron_V1_Level *level;
 
     if (!world || !table) return -1;
-    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+    if (dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
         dungeon_id > THERON_DUNGEON_COUNT) return -1;
     if (level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON)
         return -1;
@@ -395,7 +395,7 @@ int theron_v1_world_apply_track02_object_table_for_dungeon(
     int result = 0;
 
     if (!world || !table) return -1;
-    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+    if (dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
         dungeon_id > THERON_DUNGEON_COUNT) return -1;
 
     for (level_index = 0;
@@ -873,7 +873,7 @@ int theron_v1_world_runtime_media_select_level_bank(
         world->runtime_media.identity.track02_variant !=
             (int)theron_v1_track02_variant_for_md5(
                 world->runtime_media.title.track02_md5) ||
-        dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
         dungeon_id > THERON_DUNGEON_COUNT ||
         level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON) {
         return 0;
@@ -1293,7 +1293,7 @@ size_t theron_v1_startup_fallback_room_synthesize(uint8_t *out_buf,
     int y;
 
     if (!out_buf || !out_level) return 0;
-    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+    if (dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
         dungeon_id > THERON_DUNGEON_COUNT) {
         return 0;
     }

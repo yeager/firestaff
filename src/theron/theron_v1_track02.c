@@ -3470,7 +3470,7 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_scan_level_candidates(
         map_status = theron_v1_level_load(&level,
                                           track02_data + offset,
                                           (int)payload_size,
-                                          THERON_DUNGEON_1_HALL_OF_RECORDS,
+                                          THERON_DUNGEON_1_AKUTUBA,
                                           (int)out_catalog->candidate_count);
         if (map_status != THERON_MAP_OK) {
             continue;
@@ -3639,7 +3639,7 @@ static int tqr_bind_split_initial_level_candidate(
     }
 
     map_status = theron_v1_level_load(&level, payload, (int)decoded_size,
-                                      THERON_DUNGEON_1_HALL_OF_RECORDS, 0);
+                                      THERON_DUNGEON_1_AKUTUBA, 0);
     if (map_status != THERON_MAP_OK) {
         return 0;
     }
@@ -4234,7 +4234,7 @@ Theron_Track02SignalStatus theron_v1_track02_load_initial_level_loader_route(
     if (out_route) memset(out_route, 0, sizeof(*out_route));
     if (!track02_data || track02_size == 0u || !md5_hex || !out_route)
         return THERON_TRACK02_SIGNAL_BAD_INPUT;
-    if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS || sub_level_index != 0)
+    if (dungeon_id != THERON_DUNGEON_1_AKUTUBA || sub_level_index != 0)
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     if (theron_v1_track02_decode_initial_level_loader_semantics(
             track02_data, track02_size, md5_hex, &out_route->semantics) !=
@@ -6763,7 +6763,7 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_load_startup_semantic_level(
      * loader is the AKUTUBA entry record.  The shared 32x27 envelope
      * is not evidence for a different dungeon merely because callers can
      * supply another dungeon id to the generic level loader. */
-    if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS ||
+    if (dungeon_id != THERON_DUNGEON_1_AKUTUBA ||
         sub_level_index != 0) {
         return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
     }

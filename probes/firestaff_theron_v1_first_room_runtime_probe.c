@@ -187,7 +187,7 @@ static void probe_startup_fallback_rooms(void) {
     written = theron_v1_startup_fallback_room_synthesize(
         buf,
         sizeof(buf),
-        THERON_DUNGEON_1_HALL_OF_RECORDS,
+        THERON_DUNGEON_1_AKUTUBA,
         &level);
     CHECK(written == THERON_V1_FIRST_ROOM_HEADER_BYTES + 32 * 27);
     CHECK(level.width == 32 && level.height == 27);
@@ -205,7 +205,7 @@ static void probe_startup_fallback_rooms(void) {
     written = theron_v1_startup_fallback_room_synthesize(
         buf,
         sizeof(buf),
-        THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+        THERON_DUNGEON_2_DRATOR,
         &level);
     CHECK(written == THERON_V1_FIRST_ROOM_HEADER_BYTES + 32 * 27);
     CHECK(level.width == 32 && level.height == 27);
@@ -217,7 +217,7 @@ static void probe_startup_fallback_rooms(void) {
     written = theron_v1_startup_fallback_room_synthesize(
         buf,
         sizeof(buf),
-        THERON_DUNGEON_7_TOWER_OF_EPILOGUE,
+        THERON_DUNGEON_7_DEMON,
         &level);
     CHECK(written == THERON_V1_FIRST_ROOM_HEADER_BYTES + 32 * 27);
     CHECK(level.width == 32 && level.height == 27);
@@ -227,12 +227,12 @@ static void probe_startup_fallback_rooms(void) {
     CHECK(theron_v1_startup_fallback_room_synthesize(
               NULL,
               sizeof(buf),
-              THERON_DUNGEON_1_HALL_OF_RECORDS,
+              THERON_DUNGEON_1_AKUTUBA,
               &level) == 0);
     CHECK(theron_v1_startup_fallback_room_synthesize(
               buf,
               16u,
-              THERON_DUNGEON_7_TOWER_OF_EPILOGUE,
+              THERON_DUNGEON_7_DEMON,
               &level) == 0);
     CHECK(theron_v1_startup_fallback_room_synthesize(
               buf,
@@ -262,7 +262,7 @@ static void probe_first_room_runtime(void) {
 
     /* Load through the existing V1 loader (THQUEST.ASM T560 contract). */
     rc = theron_v1_level_load(&level, buf, (int)written,
-                              THERON_DUNGEON_1_HALL_OF_RECORDS, 0);
+                              THERON_DUNGEON_1_AKUTUBA, 0);
     CHECK(rc == THERON_MAP_OK);
     CHECK(level.width  == THERON_V1_FIRST_ROOM_DEFAULT_WIDTH);
     CHECK(level.height == THERON_V1_FIRST_ROOM_DEFAULT_HEIGHT);
@@ -270,11 +270,11 @@ static void probe_first_room_runtime(void) {
     CHECK(level.start_y == 1);
 
     /* Wire into the world so world_get_square can see the level. */
-    world.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     world.current_level   = 0;
-    memcpy(&world.levels[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+    memcpy(&world.levels[THERON_DUNGEON_1_AKUTUBA - 1][0],
            &level, sizeof(level));
-    world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] = 1;
+    world.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][0] = 1;
 
     /* Party placement (THQUEST.ASM T520).  level_load always sets
      * start_dir = 0 (NORTH default; T520 overrides at runtime).  Use
@@ -339,11 +339,11 @@ static void probe_first_room_runtime(void) {
      * to the same value at the same point in their lifecycle. */
     Theron_V1_World twin;
     theron_v1_world_init(&twin);
-    twin.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    twin.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     twin.current_level   = 0;
-    memcpy(&twin.levels[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+    memcpy(&twin.levels[THERON_DUNGEON_1_AKUTUBA - 1][0],
            &level, sizeof(level));
-    twin.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] = 1;
+    twin.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][0] = 1;
     theron_v1_party_place(&twin, level.start_x, level.start_y,
                            level.start_dir);
     /* world_hash already accounts for world_tick via init to 0; the

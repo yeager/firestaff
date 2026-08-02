@@ -142,7 +142,7 @@ int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
 
     /* ── Progression projection ────────────────────────── */
     uint8_t items = 0;
-    Theron_DungeonID current = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    Theron_DungeonID current = THERON_DUNGEON_1_AKUTUBA;
     int has_progression = (progression != NULL);
 
     if (has_progression) {

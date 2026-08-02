@@ -619,7 +619,7 @@ int main(void)
                 THERON_TRACK02_SIGNAL_NOT_FOUND ||
             direct_semantics.valid ||
             theron_v1_track02_load_initial_level_loader_route(
-                raw, raw_size, md5, THERON_DUNGEON_1_HALL_OF_RECORDS, 0,
+                raw, raw_size, md5, THERON_DUNGEON_1_AKUTUBA, 0,
                 &direct_route) != THERON_TRACK02_SIGNAL_NOT_FOUND ||
             direct_route.valid) {
             free(raw);
@@ -2064,7 +2064,7 @@ int main(void)
     theron_v1_world_init(&world);
     if (theron_v1_startup_runtime_receive_boot_profile_initial_route(
             &profile, &world, raw, raw_size,
-            THERON_DUNGEON_1_HALL_OF_RECORDS, &route_receipt)) {
+            THERON_DUNGEON_1_AKUTUBA, &route_receipt)) {
         free(raw);
         printf("FAIL: loader-executed sector reached runtime as an unproven level\n");
         return 1;
@@ -2107,7 +2107,7 @@ int main(void)
     ++profile.track02_initial_level_handoff.initial_level_route.route_hash;
     if (theron_v1_startup_runtime_receive_boot_profile_initial_route(
             &profile, &world, raw, raw_size,
-            THERON_DUNGEON_1_HALL_OF_RECORDS, &route_receipt)) {
+            THERON_DUNGEON_1_AKUTUBA, &route_receipt)) {
         free(raw);
         printf("FAIL: altered initial-level route reached runtime\n");
         return 1;
@@ -2116,7 +2116,7 @@ int main(void)
     ++profile.track02_initial_level_handoff.loader_level_envelope.envelope[0];
     if (theron_v1_startup_runtime_receive_boot_profile_initial_route(
             &profile, &world, raw, raw_size,
-            THERON_DUNGEON_1_HALL_OF_RECORDS, &route_receipt)) {
+            THERON_DUNGEON_1_AKUTUBA, &route_receipt)) {
         free(raw);
         printf("FAIL: altered record envelope reached runtime\n");
         return 1;
@@ -2125,7 +2125,7 @@ int main(void)
     ++profile.track02_initial_level_handoff.loader_post_envelope.bytes[0];
     if (theron_v1_startup_runtime_receive_boot_profile_initial_route(
             &profile, &world, raw, raw_size,
-            THERON_DUNGEON_1_HALL_OF_RECORDS, &route_receipt)) {
+            THERON_DUNGEON_1_AKUTUBA, &route_receipt)) {
         free(raw);
         printf("FAIL: altered post-envelope source bytes reached runtime\n");
         return 1;

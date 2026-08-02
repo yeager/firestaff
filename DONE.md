@@ -1,3 +1,9 @@
+- ✅ 2026-08-02 v3.0.253 Nexus: HUD layout table + CRET detection range AI
+  HUD element layout table (80 entries, 9 groups) decoded from DM.BIN
+  yam\menuctrl.c at 0x0376D0. Covers viewport, portraits, HP bars, spell panel,
+  inventory grid, equipment slots, combat and spell casting panels, and menu
+  buttons. Creature AI now uses per-type detection_range from CRET byte 14
+  (÷10, min 2) instead of hardcoded dist≤3. Test: nexus_v1_hud_layout.
 - ✅ 2026-08-02 v3.0.252 Nexus: event-to-command mapping + DM.BIN combat tables
   Event dispatch now translates all 61 yam\event.c event types to NEXUS_CMD_*
   commands via nexus_v1_event_to_command(). Movement (6), interaction (2), spell

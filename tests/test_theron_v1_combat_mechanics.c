@@ -45,7 +45,7 @@ static int g_fail = 0;
 
 static void make_world(Theron_V1_World *w) {
     memset(w, 0, sizeof(*w));
-    w->current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    w->current_dungeon = THERON_DUNGEON_1_AKUTUBA;
     w->current_level = 0;
 
     Theron_V1_Level *lvl = &w->levels[0][0];
@@ -488,7 +488,7 @@ static void test_between_dungeon_exit(void) {
     moved = theron_v1_move_party(&w, THERON_DIR_EAST);
     CHECK_INT("exit move returns EXIT", moved, THERON_MOVE_EXIT);
     CHECK_INT("dungeon advanced to Crypt of Shadows",
-              w.current_dungeon, THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+              w.current_dungeon, THERON_DUNGEON_2_DRATOR);
     CHECK_INT("new dungeon starts at level 0", w.current_level, 0);
     CHECK_INT("dungeon_complete reset", w.dungeon_complete, 0);
 }
@@ -501,7 +501,7 @@ static void test_decode_dungeon_level_object_table(void) {
 
     route.valid = 1;
     route.status = THERON_TRACK02_DUNGEON_ROUTE_OK;
-    route.dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    route.dungeon_id = THERON_DUNGEON_1_AKUTUBA;
     route.level_index = 1;
     route.objects.record_count = 2u;
 

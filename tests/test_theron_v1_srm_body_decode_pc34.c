@@ -383,7 +383,7 @@ static void test_decode_envelope_progression_when_zlib(void) {
     expect_true(envelope.progression.restored == 1,
                 "envelope progression.restored=1");
     expect_true(envelope.progression.current_dungeon ==
-                    THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                    THERON_DUNGEON_3_FORMIC,
                 "envelope progression current dungeon");
     expect_true(envelope.progression.quest_items_bitmask == 0x03,
                 "envelope progression quest mask");
@@ -431,7 +431,7 @@ static void test_decode_envelope_party_when_zlib(void) {
                     envelope.body_evidence.gzip_trailer_verified == 1,
                 "party envelope carries neutral verified body fingerprint");
     expect_true(envelope.progression.current_dungeon ==
-                    THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                    THERON_DUNGEON_3_FORMIC,
                 "party envelope progression current dungeon");
 #else
     skip_test("party inflate path needs zlib (ZLIB_UNAVAILABLE)");
@@ -813,7 +813,7 @@ static void test_decode_path_slot_file_roundtrip(void) {
     expect_true(envelope.decode_status == THERON_V1_SRM_PROGRESS_IMPORT_OK,
                 "slot file roundtrip decode_status OK");
     expect_true(envelope.progression.current_dungeon ==
-                    THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                    THERON_DUNGEON_3_FORMIC,
                 "slot file roundtrip current dungeon");
     expect_true(envelope.slot_index == 0,
                 "slot file roundtrip slot_index preserved");
@@ -867,7 +867,7 @@ static void test_probe_slot0_envelope_via_env_override(void) {
     expect_true(envelope.decode_status == THERON_V1_SRM_PROGRESS_IMPORT_OK,
                 "probe_slot0_envelope decode_status OK");
     expect_true(envelope.progression.current_dungeon ==
-                    THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                    THERON_DUNGEON_3_FORMIC,
                 "probe_slot0_envelope current dungeon");
 
     cleanup_root_with_slot0(root);
@@ -940,7 +940,7 @@ static void test_runtime_export_continue_roundtrip(void) {
         return;
     }
     theron_v1_world_init(&source);
-    source.progression.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    source.progression.current_dungeon = THERON_DUNGEON_3_FORMIC;
     source.progression.current_level = 2u;
     source.progression.quest_items_collected = 0x03u;
     source.progression.dungeon_playtime_seconds = 987u;
@@ -957,7 +957,7 @@ static void test_runtime_export_continue_roundtrip(void) {
     for (size_t i = sizeof(span); i < 160u; ++i) track[0x3000u + i] = (uint8_t)(0x21u + i);
     theron_v1_world_init(&restored);
     expect_true(theron_v1_srm_runtime_continue_path(&restored, path, track, sizeof(track), THERON_TRACK02_MD5_US_ISO, &receipt) == THERON_V1_SRM_RUNTIME_OK &&
-                    restored.progression.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES &&
+                    restored.progression.current_dungeon == THERON_DUNGEON_3_FORMIC &&
                     restored.progression.current_level == 2u &&
                     restored.progression.quest_items_collected == 0x03u &&
                     restored.party.gold == 444u && restored.party.champion_count == THERON_MAX_CHAMPIONS &&

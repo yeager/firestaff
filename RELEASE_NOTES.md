@@ -1,6 +1,10 @@
 
 # Unreleased
 
+# Firestaff v3.0.253
+- Nexus: HUD layout table from DM.BIN yam\menuctrl.c (80 entries, 9 groups)
+- Nexus: creature AI detection range from CRET field instead of hardcoded 3
+
 # Firestaff v3.0.252
 - Nexus: event-to-command mapping (nexus_v1_event_to_command)
 - Nexus: 13 additional UI events accepted by dispatch

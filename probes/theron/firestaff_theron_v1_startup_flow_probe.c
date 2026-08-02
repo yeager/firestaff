@@ -291,7 +291,7 @@ int main(void) {
         Theron_StartupFlowSnapshotRequest request;
         memset(&request, 0, sizeof(request));
         request.phase = THERON_STARTUP_PHASE_SOUL_ROOM;
-        request.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        request.selected_dungeon = THERON_DUNGEON_1_AKUTUBA;
         request.selected_mirrors_mask = (1 << 2) | (1 << 4) | (1 << 1);
         request.companion_count = 99;
         request.selected_mirror_order = order;
@@ -305,7 +305,7 @@ int main(void) {
                   THERON_STARTUP_PHASE_READY);
         check_int("rebuild from request selected dungeon",
                   flow.selected_dungeon,
-                  THERON_DUNGEON_1_HALL_OF_RECORDS);
+                  THERON_DUNGEON_1_AKUTUBA);
         check_int("rebuild from request companion clamp",
                   flow.companion_count,
                   THERON_STARTUP_MAX_COMPANIONS);
@@ -406,12 +406,12 @@ int main(void) {
     check_int("startup availability stage 1",
               theron_v1_startup_stage_available(
                   &progression,
-                  THERON_DUNGEON_1_HALL_OF_RECORDS),
+                  THERON_DUNGEON_1_AKUTUBA),
               1);
     check_int("startup availability locked stage 2",
               theron_v1_startup_stage_available(
                   &progression,
-                  THERON_DUNGEON_2_CRYPT_OF_SHADOWS),
+                  THERON_DUNGEON_2_DRATOR),
               0);
     check_int("startup availability invalid stage",
               theron_v1_startup_stage_available(
@@ -426,7 +426,7 @@ int main(void) {
 
         theron_v1_startup_layout_state_init(&layout_state);
         layout_state.phase = THERON_STARTUP_PHASE_TITLE;
-        layout_state.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        layout_state.selected_dungeon = THERON_DUNGEON_1_AKUTUBA;
         snprintf(layout_state.chapter_label,
                  sizeof(layout_state.chapter_label),
                  "Chapter 1: AKUTUBA");
@@ -477,7 +477,7 @@ int main(void) {
             memset(titles, 0, sizeof(titles));
             theron_v1_world_init(&world);
             world.progression.current_dungeon =
-                THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+                THERON_DUNGEON_2_DRATOR;
             names[0] = "THERON";
             titles[0] = "APPRENTICE";
             names[1] = "HAKAR";
@@ -506,7 +506,7 @@ int main(void) {
                       1);
             check_int("layout state request clamps dungeon",
                       layout_state.selected_dungeon,
-                      THERON_DUNGEON_1_HALL_OF_RECORDS);
+                      THERON_DUNGEON_1_AKUTUBA);
             check_contains("layout state request chapter",
                            layout_state.chapter_label,
                            "Chapter 2");
@@ -765,7 +765,7 @@ int main(void) {
         }
 
         theron_v1_startup_layout_state_init(&layout_state);
-        layout_state.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        layout_state.selected_dungeon = THERON_DUNGEON_1_AKUTUBA;
         snprintf(layout_state.chapter_label,
                  sizeof(layout_state.chapter_label),
                  "Chapter 1: AKUTUBA");
@@ -808,7 +808,7 @@ int main(void) {
                       THERON_STARTUP_ACTION_CHOOSE_STAGE);
             check_int("startup stage pointer selected dungeon",
                       pointer_action.selected_dungeon,
-                      THERON_DUNGEON_1_HALL_OF_RECORDS);
+                      THERON_DUNGEON_1_AKUTUBA);
             handled = theron_v1_startup_handle_pointer_from_layout_state(
                 &layout_state,
                 0,
@@ -892,14 +892,14 @@ int main(void) {
         int selected = -1;
         result = theron_v1_startup_show_stage_select(
             &flow,
-            THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+            THERON_DUNGEON_2_DRATOR);
         check_int("show stage-select rc", result, THERON_STARTUP_OK);
         check_int("show stage-select phase",
                   flow.phase,
                   THERON_STARTUP_PHASE_STAGE_SELECT);
         check_int("show stage-select selected dungeon",
                   flow.selected_dungeon,
-                  THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                  THERON_DUNGEON_2_DRATOR);
         result = theron_v1_startup_toggle_mirror(&flow, 0, &selected);
         check_int("toggle mirror before choose rejected",
                   result,
@@ -907,7 +907,7 @@ int main(void) {
         result = theron_v1_startup_choose_stage(
             &flow,
             &progression,
-            THERON_DUNGEON_1_HALL_OF_RECORDS);
+            THERON_DUNGEON_1_AKUTUBA);
         check_int("toggle fixture choose rc", result, THERON_STARTUP_OK);
         result = theron_v1_startup_toggle_mirror(&flow, 2, &selected);
         check_int("toggle mirror selects rc", result, THERON_STARTUP_OK);
@@ -957,7 +957,7 @@ int main(void) {
                   0);
 
         snapshot.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
-        snapshot.selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        snapshot.selected_dungeon = THERON_DUNGEON_1_AKUTUBA;
         snapshot.selected_mirrors_mask = 0;
         snapshot.companion_count = 0;
         result = theron_v1_startup_flow_rebuild_from_snapshot(
@@ -978,7 +978,7 @@ int main(void) {
         result = theron_v1_startup_choose_stage(
             &flow,
             &progression,
-            THERON_DUNGEON_1_HALL_OF_RECORDS);
+            THERON_DUNGEON_1_AKUTUBA);
         check_int("snapshot stage choose rc", result, THERON_STARTUP_OK);
         check_int("snapshot select mirror 6 rc",
                   theron_v1_startup_select_mirror(&flow, 6),
@@ -1022,7 +1022,7 @@ int main(void) {
         check_int("facts rebuild rc", result, THERON_STARTUP_OK);
         check_int("facts rebuild clamps dungeon",
                   rebuilt.selected_dungeon,
-                  THERON_DUNGEON_1_HALL_OF_RECORDS);
+                  THERON_DUNGEON_1_AKUTUBA);
         check_int("facts rebuild companion count",
                   rebuilt.companion_count,
                   3);
@@ -1061,7 +1061,7 @@ int main(void) {
 
         theron_v1_world_init(&initial_world);
         initial_world.progression.current_dungeon =
-            THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+            THERON_DUNGEON_3_FORMIC;
         initial_world.party.leader_x = 11;
         initial_world.party.leader_y = 12;
         initial_world.party.leader_dir = 2;
@@ -1077,7 +1077,7 @@ int main(void) {
                   THERON_STARTUP_PHASE_TITLE);
         check_int("initial title flow dungeon",
                   initial_flow.selected_dungeon,
-                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                  THERON_DUNGEON_3_FORMIC);
         check_int("initial title receipt flow changed",
                   initial_receipt.flow_changed,
                   1);
@@ -1116,7 +1116,7 @@ int main(void) {
         Theron_StartupHit hit;
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_TITLE,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             0,
             0,
             0,
@@ -1128,7 +1128,7 @@ int main(void) {
                   THERON_STARTUP_ACTION_SHOW_STAGE_SELECT);
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_STAGE_SELECT,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             0,
             0,
             1,
@@ -1141,7 +1141,7 @@ int main(void) {
         check_int("stage up focuses continue", action.continue_focus, 1);
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_STAGE_SELECT,
-            THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+            THERON_DUNGEON_3_FORMIC,
             0,
             0,
             0,
@@ -1150,10 +1150,10 @@ int main(void) {
         check_int("stage down rc", result, THERON_STARTUP_OK);
         check_int("stage down selected dungeon",
                   action.selected_dungeon,
-                  THERON_DUNGEON_4_TOMB_OF_WOE);
+                  THERON_DUNGEON_4_SARMON);
         result = theron_v1_startup_handle_input_with_progression(
             THERON_STARTUP_PHASE_STAGE_SELECT,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             &progression,
             0,
             0,
@@ -1163,14 +1163,14 @@ int main(void) {
         check_int("initial locked stages skipped rc", result, THERON_STARTUP_OK);
         check_int("initial locked stages keep stage 1",
                   action.selected_dungeon,
-                  THERON_DUNGEON_1_HALL_OF_RECORDS);
+                  THERON_DUNGEON_1_AKUTUBA);
         {
             Theron_DungeonProgression progressed;
             theron_v1_dungeon_progression_init(&progressed);
             (void)theron_v1_dungeon_advance(&progressed);
             result = theron_v1_startup_handle_input_with_progression(
                 THERON_STARTUP_PHASE_STAGE_SELECT,
-                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                THERON_DUNGEON_1_AKUTUBA,
                 &progressed,
                 0,
                 0,
@@ -1180,10 +1180,10 @@ int main(void) {
             check_int("post-first stage down rc", result, THERON_STARTUP_OK);
             check_int("post-first stage down skips complete stage",
                       action.selected_dungeon,
-                      THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                      THERON_DUNGEON_2_DRATOR);
             result = theron_v1_startup_handle_input_with_progression(
                 THERON_STARTUP_PHASE_STAGE_SELECT,
-                THERON_DUNGEON_6_CASTLE_OF_FATE,
+                THERON_DUNGEON_6_THIEF,
                 &progressed,
                 0,
                 0,
@@ -1193,10 +1193,10 @@ int main(void) {
             check_int("locked final stage skipped rc", result, THERON_STARTUP_OK);
             check_int("locked final stage skipped",
                       action.selected_dungeon,
-                      THERON_DUNGEON_6_CASTLE_OF_FATE);
+                      THERON_DUNGEON_6_THIEF);
             result = theron_v1_startup_handle_input_with_progression(
                 THERON_STARTUP_PHASE_STAGE_SELECT,
-                THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                THERON_DUNGEON_2_DRATOR,
                 &progressed,
                 0,
                 0,
@@ -1209,11 +1209,11 @@ int main(void) {
                       1);
             check_int("post-first stage up keeps first available",
                       action.selected_dungeon,
-                      THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                      THERON_DUNGEON_2_DRATOR);
         }
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_STAGE_SELECT,
-            THERON_DUNGEON_4_TOMB_OF_WOE,
+            THERON_DUNGEON_4_SARMON,
             0,
             1,
             1,
@@ -1225,7 +1225,7 @@ int main(void) {
                   THERON_STARTUP_ACTION_CONTINUE_SAVE);
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_STAGE_SELECT,
-            THERON_DUNGEON_4_TOMB_OF_WOE,
+            THERON_DUNGEON_4_SARMON,
             0,
             0,
             0,
@@ -1237,7 +1237,7 @@ int main(void) {
                   THERON_STARTUP_ACTION_CHOOSE_STAGE);
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_SOUL_ROOM,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             0,
             0,
             0,
@@ -1249,7 +1249,7 @@ int main(void) {
                   THERON_STARTUP_HERO_MIRROR_COUNT);
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_READY,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             THERON_STARTUP_HERO_MIRROR_COUNT,
             0,
             0,
@@ -1261,7 +1261,7 @@ int main(void) {
                   THERON_STARTUP_ACTION_ENTER_FORCEFIELD);
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_READY,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             3,
             0,
             0,
@@ -1274,7 +1274,7 @@ int main(void) {
         check_int("ready mirror accept index", action.mirror_index, 3);
         result = theron_v1_startup_handle_input(
             THERON_STARTUP_PHASE_READY,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             3,
             0,
             0,
@@ -1304,7 +1304,7 @@ int main(void) {
 
             theron_v1_startup_action_init(&action);
             action.kind = THERON_STARTUP_ACTION_SHOW_STAGE_SELECT;
-            action.selected_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+            action.selected_dungeon = THERON_DUNGEON_2_DRATOR;
             action.cursor = 1;
             action.continue_focus = 0;
             check_int("plan stage-select rc",
@@ -1315,12 +1315,12 @@ int main(void) {
                       THERON_STARTUP_PLAN_SHOW_STAGE_SELECT);
             check_int("plan stage-select dungeon",
                       plan.selected_dungeon,
-                      THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                      THERON_DUNGEON_2_DRATOR);
             check_str("plan stage-select status", plan.status, "STAGE SELECT");
 
             theron_v1_startup_action_init(&action);
             action.kind = THERON_STARTUP_ACTION_MOVE_STAGE_CURSOR;
-            action.selected_dungeon = THERON_DUNGEON_4_TOMB_OF_WOE;
+            action.selected_dungeon = THERON_DUNGEON_4_SARMON;
             action.continue_focus = 1;
             check_int("plan stage-cursor rc",
                       theron_v1_startup_plan_for_action(&action, &plan),
@@ -1357,7 +1357,7 @@ int main(void) {
                     THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV;
                 continue_result.source_slot_index = 2;
                 continue_result.selected_dungeon =
-                    THERON_DUNGEON_4_TOMB_OF_WOE;
+                    THERON_DUNGEON_4_SARMON;
                 continue_result.party_x = 9;
                 continue_result.party_y = 10;
                 continue_result.party_dir = 2;
@@ -1412,9 +1412,9 @@ int main(void) {
                 continue_result.srm_import_status =
                     THERON_V1_SRM_PROGRESS_IMPORT_OK;
                 continue_result.selected_dungeon =
-                    THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+                    THERON_DUNGEON_3_FORMIC;
                 continue_result.srm_current_dungeon =
-                    THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+                    THERON_DUNGEON_3_FORMIC;
                 continue_result.srm_current_level = 2;
                 continue_result.srm_quest_mask = 0x05;
                 continue_result.srm_party_restored = 1;
@@ -1439,7 +1439,7 @@ int main(void) {
                           THERON_V1_SRM_PROGRESS_IMPORT_OK);
                 check_int("continue srm receipt dungeon",
                           continue_receipt.srm_current_dungeon,
-                          THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                          THERON_DUNGEON_3_FORMIC);
                 check_int("continue srm receipt level",
                           continue_receipt.srm_current_level,
                           2);
@@ -1496,7 +1496,7 @@ int main(void) {
                     THERON_V1_STARTUP_CONTINUE_SOURCE_TQSV;
                 continue_result.source_slot_index = 2;
                 continue_result.selected_dungeon =
-                    THERON_DUNGEON_4_TOMB_OF_WOE;
+                    THERON_DUNGEON_4_SARMON;
                 continue_result.party_x = 9;
                 continue_result.party_y = 10;
                 continue_result.party_dir = 2;
@@ -1514,7 +1514,7 @@ int main(void) {
                           THERON_STARTUP_PHASE_STAGE_SELECT);
                 check_int("continue state receipt dungeon",
                           state_receipt.flow.selected_dungeon,
-                          THERON_DUNGEON_4_TOMB_OF_WOE);
+                          THERON_DUNGEON_4_SARMON);
                 check_int("continue state receipt pose",
                           state_receipt.party_x,
                           9);
@@ -1634,7 +1634,7 @@ int main(void) {
 
             theron_v1_startup_action_init(&action);
             action.kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
-            action.selected_dungeon = THERON_DUNGEON_5_VAULT_OF_SECRETS;
+            action.selected_dungeon = THERON_DUNGEON_5_SHADO;
             check_int("plan choose-stage rc",
                       theron_v1_startup_plan_for_action(&action, &plan),
                       1);
@@ -1698,7 +1698,7 @@ int main(void) {
                 theron_v1_startup_flow_init(&runtime_flow);
                 runtime_flow.phase = THERON_STARTUP_PHASE_IN_DUNGEON;
                 runtime_flow.selected_dungeon =
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+                    THERON_DUNGEON_2_DRATOR;
                 runtime_result.level_loaded = 1;
                 runtime_result.party_x = 3;
                 runtime_result.party_y = 4;
@@ -1781,7 +1781,7 @@ int main(void) {
                 theron_v1_startup_action_init(&action);
                 action.kind = THERON_STARTUP_ACTION_SHOW_STAGE_SELECT;
                 action.selected_dungeon =
-                    THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+                    THERON_DUNGEON_2_DRATOR;
                 action.cursor = 1;
                 check_int("exec stage-select plan rc",
                           theron_v1_startup_plan_for_action(&action, &plan),
@@ -1802,7 +1802,7 @@ int main(void) {
                           THERON_STARTUP_PHASE_STAGE_SELECT);
                 check_int("exec stage-select dungeon",
                           exec_flow.selected_dungeon,
-                          THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                          THERON_DUNGEON_2_DRATOR);
                 check_int("exec stage-select cursor",
                           execution.cursor,
                           1);
@@ -1879,7 +1879,7 @@ int main(void) {
                           theron_v1_startup_execute_flow_plan_from_facts_with_receipts(
                               &plan,
                               THERON_STARTUP_PHASE_TITLE,
-                              THERON_DUNGEON_1_HALL_OF_RECORDS,
+                              THERON_DUNGEON_1_AKUTUBA,
                               0,
                               0,
                               NULL,
@@ -1900,7 +1900,7 @@ int main(void) {
                 theron_v1_startup_action_init(&action);
                 action.kind = THERON_STARTUP_ACTION_CHOOSE_STAGE;
                 action.selected_dungeon =
-                    THERON_DUNGEON_1_HALL_OF_RECORDS;
+                    THERON_DUNGEON_1_AKUTUBA;
                 check_int("exec choose-stage plan rc",
                           theron_v1_startup_plan_for_action(&action, &plan),
                           1);
@@ -1924,7 +1924,7 @@ int main(void) {
                           theron_v1_startup_execute_flow_plan_from_facts_with_receipts(
                               &plan,
                               THERON_STARTUP_PHASE_STAGE_SELECT,
-                              THERON_DUNGEON_1_HALL_OF_RECORDS,
+                              THERON_DUNGEON_1_AKUTUBA,
                               0,
                               0,
                               NULL,
@@ -2054,7 +2054,7 @@ int main(void) {
         hit.kind = THERON_STARTUP_HIT_TITLE;
         result = theron_v1_startup_handle_hit(
             THERON_STARTUP_PHASE_TITLE,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             0,
             0,
             0,
@@ -2069,7 +2069,7 @@ int main(void) {
         hit.kind = THERON_STARTUP_HIT_PANEL;
         result = theron_v1_startup_handle_hit(
             THERON_STARTUP_PHASE_STAGE_SELECT,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             0,
             0,
             1,
@@ -2084,7 +2084,7 @@ int main(void) {
         hit.kind = THERON_STARTUP_HIT_CONTINUE;
         result = theron_v1_startup_handle_hit(
             THERON_STARTUP_PHASE_STAGE_SELECT,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             0,
             0,
             1,
@@ -2098,10 +2098,10 @@ int main(void) {
 
         theron_v1_startup_hit_init(&hit);
         hit.kind = THERON_STARTUP_HIT_STAGE;
-        hit.selected_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+        hit.selected_dungeon = THERON_DUNGEON_3_FORMIC;
         result = theron_v1_startup_handle_hit(
             THERON_STARTUP_PHASE_STAGE_SELECT,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             0,
             1,
             1,
@@ -2113,14 +2113,14 @@ int main(void) {
                   THERON_STARTUP_ACTION_CHOOSE_STAGE);
         check_int("stage hit selected dungeon",
                   action.selected_dungeon,
-                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                  THERON_DUNGEON_3_FORMIC);
 
         theron_v1_startup_hit_init(&hit);
         hit.kind = THERON_STARTUP_HIT_STAGE;
-        hit.selected_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+        hit.selected_dungeon = THERON_DUNGEON_3_FORMIC;
         result = theron_v1_startup_handle_hit_with_progression(
             THERON_STARTUP_PHASE_STAGE_SELECT,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             &progression,
             0,
             0,
@@ -2133,14 +2133,14 @@ int main(void) {
                   THERON_STARTUP_ACTION_NONE);
         check_int("locked stage hit keeps target for status",
                   action.selected_dungeon,
-                  THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                  THERON_DUNGEON_3_FORMIC);
         {
             Theron_DungeonProgression progressed_hit;
             theron_v1_dungeon_progression_init(&progressed_hit);
             (void)theron_v1_dungeon_advance(&progressed_hit);
             result = theron_v1_startup_handle_hit_with_progression(
                 THERON_STARTUP_PHASE_STAGE_SELECT,
-                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                THERON_DUNGEON_1_AKUTUBA,
                 &progressed_hit,
                 0,
                 0,
@@ -2153,7 +2153,7 @@ int main(void) {
                       THERON_STARTUP_ACTION_CHOOSE_STAGE);
             check_int("unlocked stage hit selected dungeon",
                       action.selected_dungeon,
-                      THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                      THERON_DUNGEON_3_FORMIC);
         }
 
         theron_v1_startup_hit_init(&hit);
@@ -2161,7 +2161,7 @@ int main(void) {
         hit.mirror_index = 4;
         result = theron_v1_startup_handle_hit(
             THERON_STARTUP_PHASE_SOUL_ROOM,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             0,
             0,
             0,
@@ -2178,7 +2178,7 @@ int main(void) {
         hit.kind = THERON_STARTUP_HIT_FORCEFIELD;
         result = theron_v1_startup_handle_hit(
             THERON_STARTUP_PHASE_READY,
-            THERON_DUNGEON_1_HALL_OF_RECORDS,
+            THERON_DUNGEON_1_AKUTUBA,
             2,
             0,
             0,
@@ -2204,7 +2204,7 @@ int main(void) {
             theron_v1_startup_layout_state_init(&layout_state);
             layout_state.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
             layout_state.selected_dungeon =
-                THERON_DUNGEON_1_HALL_OF_RECORDS;
+                THERON_DUNGEON_1_AKUTUBA;
             layout_state.progression = &progression;
             layout_state.has_tqsv_continue = 1;
             layout_state.tqsv_slot = 2;
@@ -2313,7 +2313,7 @@ int main(void) {
             theron_v1_startup_layout_state_init(&layout_state);
             layout_state.phase = THERON_STARTUP_PHASE_READY;
             layout_state.selected_dungeon =
-                THERON_DUNGEON_1_HALL_OF_RECORDS;
+                THERON_DUNGEON_1_AKUTUBA;
             layout_state.soul_cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
             snprintf(layout_state.chapter_label,
                      sizeof(layout_state.chapter_label),
@@ -2423,17 +2423,17 @@ int main(void) {
 
     result = theron_v1_startup_choose_stage(&flow,
                                             &progression,
-                                            THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                                            THERON_DUNGEON_2_DRATOR);
     check_int("locked stage rejected", result, THERON_STARTUP_ERR_STAGE_LOCKED);
 
     theron_v1_dungeon_advance(&progression);
     result = theron_v1_startup_choose_stage(&flow,
                                             &progression,
-                                            THERON_DUNGEON_5_VAULT_OF_SECRETS);
+                                            THERON_DUNGEON_5_SHADO);
     check_int("middle stage accepted after first completion", result, THERON_STARTUP_OK);
     result = theron_v1_startup_choose_stage(&flow,
                                             &progression,
-                                            THERON_DUNGEON_7_TOWER_OF_EPILOGUE);
+                                            THERON_DUNGEON_7_DEMON);
     check_int("final stage still locked after first completion",
               result,
               THERON_STARTUP_ERR_STAGE_LOCKED);
@@ -2441,7 +2441,7 @@ int main(void) {
     theron_v1_dungeon_progression_init(&progression);
     result = theron_v1_startup_choose_stage(&flow,
                                             &progression,
-                                            THERON_DUNGEON_1_HALL_OF_RECORDS);
+                                            THERON_DUNGEON_1_AKUTUBA);
     check_int("stage 1 accepted", result, THERON_STARTUP_OK);
     check_int("stage phase soul room", flow.phase, THERON_STARTUP_PHASE_SOUL_ROOM);
     check_int("stage theron present", flow.theron_present, 1);
@@ -2510,7 +2510,7 @@ int main(void) {
         result = theron_v1_startup_choose_stage(
             &flow,
             &progression,
-            THERON_DUNGEON_1_HALL_OF_RECORDS);
+            THERON_DUNGEON_1_AKUTUBA);
         check_int("roster forcefield choose rc", result, THERON_STARTUP_OK);
         check_int("roster forcefield mirror 6 rc",
                   theron_v1_startup_select_mirror(&flow, 6),
@@ -2538,7 +2538,7 @@ int main(void) {
                        party.champions[2].name,
                        "TIRAN-JP");
         theron_v1_world_init(&world);
-        world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] = 1;
+        world.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][0] = 1;
         world.object_count = 7;
         world.timer_count = 3;
         result = theron_v1_startup_enter_world_from_forcefield(
@@ -2549,13 +2549,13 @@ int main(void) {
                   THERON_STARTUP_OK);
         check_int("world entry current dungeon",
                   world.current_dungeon,
-                  THERON_DUNGEON_1_HALL_OF_RECORDS);
+                  THERON_DUNGEON_1_AKUTUBA);
         check_int("world entry current level", world.current_level, 0);
         check_int("world entry progression level",
                   world.progression.current_level,
                   1);
         check_int("world entry clears level-loaded row",
-                  world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                  world.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][0],
                   0);
         check_int("world entry clears objects", world.object_count, 0);
         check_int("world entry clears timers", world.timer_count, 0);
@@ -2570,7 +2570,7 @@ int main(void) {
         result = theron_v1_startup_choose_stage(
             &flow,
             &progression,
-            THERON_DUNGEON_1_HALL_OF_RECORDS);
+            THERON_DUNGEON_1_AKUTUBA);
         check_int("runtime entry choose rc", result, THERON_STARTUP_OK);
         memset(&party, 0, sizeof(party));
         result = theron_v1_startup_enter_forcefield(&flow, &party);
@@ -2591,7 +2591,7 @@ int main(void) {
             check_int("runtime entry rc", result, THERON_STARTUP_OK);
             check_int("runtime entry callback called", called, 1);
             check_int("runtime entry level loaded",
-                      world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                      world.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][0],
                       1);
             check_int("runtime entry party x", world.party.leader_x, 5);
             check_contains("runtime entry receipt",
@@ -2608,20 +2608,20 @@ int main(void) {
                 NULL,
                 0u,
                 NULL,
-                THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                THERON_DUNGEON_3_FORMIC,
                 load_receipt,
                 sizeof(load_receipt));
             check_int("runtime loader fallback rc", result, 1);
             check_int("runtime loader fallback dungeon",
                       world.current_dungeon,
-                      THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+                      THERON_DUNGEON_3_FORMIC);
             check_int("runtime loader fallback level", world.current_level, 0);
             check_int("runtime loader fallback loaded",
-                      world.level_loaded[THERON_DUNGEON_3_ABYSS_OF_FLAMES - 1][0],
+                      world.level_loaded[THERON_DUNGEON_3_FORMIC - 1][0],
                       1);
             check_int("runtime loader fallback party x",
                       world.party.leader_x,
-                      world.levels[THERON_DUNGEON_3_ABYSS_OF_FLAMES - 1][0].start_x);
+                      world.levels[THERON_DUNGEON_3_FORMIC - 1][0].start_x);
             check_contains("runtime loader fallback receipt",
                            load_receipt,
                            "fallback room stage=3");
@@ -2632,14 +2632,14 @@ int main(void) {
                 fake_verified_track02,
                 sizeof(fake_verified_track02),
                 THERON_TRACK02_MD5_US_BIN,
-                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                THERON_DUNGEON_1_AKUTUBA,
                 load_receipt,
                 sizeof(load_receipt));
             check_int("runtime loader verified Track02 blocks fallback rc",
                       result,
                       0);
             check_int("runtime loader verified Track02 no synthetic level",
-                      world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                      world.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][0],
                       0);
             check_contains("runtime loader verified Track02 blocked receipt",
                            load_receipt,
@@ -2671,7 +2671,7 @@ int main(void) {
                               NULL,
                               0u,
                               NULL,
-                              THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                              THERON_DUNGEON_2_DRATOR,
                               &forcefield_plan,
                               &load_result,
                               &load_apply_receipt,
@@ -2705,7 +2705,7 @@ int main(void) {
                               NULL,
                               0u,
                               NULL,
-                              THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                              THERON_DUNGEON_2_DRATOR,
                               &forcefield_plan,
                               &load_result,
                               &load_host_receipt,
@@ -2730,7 +2730,7 @@ int main(void) {
                           THERON_V1_STARTUP_RUNTIME_LEVEL_FALLBACK_ROOM);
                 check_int("runtime load host fallback state dungeon",
                           load_state_receipt.flow.selected_dungeon,
-                          THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                          THERON_DUNGEON_2_DRATOR);
                 check_contains("runtime load host fallback inspect",
                                load_host_receipt.inspect_detail,
                                "fallback room stage=2");
@@ -2745,7 +2745,7 @@ int main(void) {
                               fake_verified_track02,
                               sizeof(fake_verified_track02),
                               THERON_TRACK02_MD5_US_BIN,
-                              THERON_DUNGEON_1_HALL_OF_RECORDS,
+                              THERON_DUNGEON_1_AKUTUBA,
                               &forcefield_plan,
                               &load_result,
                               &load_apply_receipt,
@@ -2776,7 +2776,7 @@ int main(void) {
                                "route=track02-blocked");
                 check_int("runtime load direct verified Track02 no level",
                           world.level_loaded[
-                              THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                              THERON_DUNGEON_1_AKUTUBA - 1][0],
                           0);
                 theron_v1_world_init(&world);
                 load_receipt[0] = '\0';
@@ -2786,7 +2786,7 @@ int main(void) {
                               fake_verified_track02,
                               sizeof(fake_verified_track02),
                               THERON_TRACK02_MD5_US_BIN,
-                              THERON_DUNGEON_1_HALL_OF_RECORDS,
+                              THERON_DUNGEON_1_AKUTUBA,
                               &forcefield_plan,
                               &load_result,
                               &load_host_receipt,
@@ -2817,7 +2817,7 @@ int main(void) {
                                "route=track02-blocked");
                 check_int("runtime load host verified Track02 no level",
                           world.level_loaded[
-                              THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                              THERON_DUNGEON_1_AKUTUBA - 1][0],
                           0);
                 {
                     uint8_t *bitmap_track02;
@@ -2842,7 +2842,7 @@ int main(void) {
                                       bitmap_track02,
                                       bitmap_track02_size,
                                       THERON_TRACK02_MD5_US_BIN,
-                                      THERON_DUNGEON_1_HALL_OF_RECORDS,
+                                      THERON_DUNGEON_1_AKUTUBA,
                                       &forcefield_plan,
                                       &load_result,
                                       &load_host_receipt,
@@ -2880,7 +2880,7 @@ int main(void) {
                                   1);
                         check_int("runtime load host verified bitmap no level",
                                   world.level_loaded[
-                                      THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                                      THERON_DUNGEON_1_AKUTUBA - 1][0],
                                   0);
                         /* The Stage 2/3 physical preflight (efc1bc548)
                          * rejects this synthetic anchored fixture before
@@ -2934,7 +2934,7 @@ int main(void) {
             result = theron_v1_startup_choose_stage(
                 &flow,
                 &progression,
-                THERON_DUNGEON_1_HALL_OF_RECORDS);
+                THERON_DUNGEON_1_AKUTUBA);
             check_int("runtime wrapper choose rc",
                       result,
                       THERON_STARTUP_OK);
@@ -2964,7 +2964,7 @@ int main(void) {
                       runtime_result.level_loaded,
                       1);
             check_int("runtime wrapper world loaded",
-                      world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                      world.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][0],
                       1);
             check_str("runtime wrapper roster name",
                       world.party.champions[1].name,
@@ -2999,7 +2999,7 @@ int main(void) {
                           THERON_STARTUP_PHASE_IN_DUNGEON);
                 check_int("runtime wrapper state receipt dungeon",
                           state_receipt.flow.selected_dungeon,
-                          THERON_DUNGEON_1_HALL_OF_RECORDS);
+                          THERON_DUNGEON_1_AKUTUBA);
                 check_int("runtime wrapper state receipt party x",
                           state_receipt.party_x,
                           runtime_result.party_x);
@@ -3025,7 +3025,7 @@ int main(void) {
                           theron_v1_startup_choose_stage(
                               &flow,
                               &progression,
-                              THERON_DUNGEON_1_HALL_OF_RECORDS),
+                              THERON_DUNGEON_1_AKUTUBA),
                           THERON_STARTUP_OK);
                 check_int("runtime combined mirror rc",
                           theron_v1_startup_select_mirror(&flow, 0),
@@ -3065,7 +3065,7 @@ int main(void) {
                           theron_v1_startup_choose_stage(
                               &flow,
                               &progression,
-                              THERON_DUNGEON_1_HALL_OF_RECORDS),
+                              THERON_DUNGEON_1_AKUTUBA),
                           THERON_STARTUP_OK);
                 check_int("runtime facts mirror rc",
                           theron_v1_startup_select_mirror(&flow, 0),
@@ -3112,7 +3112,7 @@ int main(void) {
                               theron_v1_startup_choose_stage(
                                   &flow,
                                   &progression,
-                                  THERON_DUNGEON_1_HALL_OF_RECORDS),
+                                  THERON_DUNGEON_1_AKUTUBA),
                               THERON_STARTUP_OK);
                     check_int("runtime host blocked mirror rc",
                               theron_v1_startup_select_mirror(&flow, 0),
@@ -3136,7 +3136,7 @@ int main(void) {
                               0);
                     check_int("runtime host verified Track02 no level",
                               world.level_loaded[
-                                  THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                                  THERON_DUNGEON_1_AKUTUBA - 1][0],
                               0);
                     check_int("runtime host verified Track02 result route",
                               runtime_result.runtime_level_source,
@@ -3169,7 +3169,7 @@ int main(void) {
         result = theron_v1_startup_choose_stage(
             &flow,
             &progression,
-            THERON_DUNGEON_1_HALL_OF_RECORDS);
+            THERON_DUNGEON_1_AKUTUBA);
         check_int("runtime fail choose rc", result, THERON_STARTUP_OK);
         memset(&party, 0, sizeof(party));
         result = theron_v1_startup_enter_forcefield(&flow, &party);
@@ -3199,7 +3199,7 @@ int main(void) {
             char exit_receipt[128];
             Theron_StartupStateReceipt state_receipt;
             theron_v1_world_init(&world);
-            world.progression.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] =
+            world.progression.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] =
                 THERON_DUNGEON_STATE_COMPLETE;
             world.party.champion_count = 4;
             world.party.active_slot = 2;
@@ -3207,7 +3207,7 @@ int main(void) {
             world.party.leader_y = 8;
             world.party.leader_dir = 3;
             world.world_tick = 123;
-            world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0] = 1;
+            world.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][0] = 1;
             world.dungeon_complete = 1;
             world.quest_items_in_dungeon = 1;
             theron_v1_startup_flow_init(&flow);
@@ -3222,19 +3222,19 @@ int main(void) {
             check_int("exit return rc", result, THERON_STARTUP_OK);
             check_int("exit return current dungeon",
                       world.progression.current_dungeon,
-                      THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                      THERON_DUNGEON_2_DRATOR);
             check_int("exit return phase",
                       flow.phase,
                       THERON_STARTUP_PHASE_STAGE_SELECT);
             check_int("exit return selected dungeon",
                       flow.selected_dungeon,
-                      THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+                      THERON_DUNGEON_2_DRATOR);
             check_int("exit return party count", world.party.champion_count, 1);
             check_int("exit return active slot",
                       world.party.active_slot,
                       THERON_CHAMPION_SLOT_THERON);
             check_int("exit return clears level",
-                      world.level_loaded[THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
+                      world.level_loaded[THERON_DUNGEON_1_AKUTUBA - 1][0],
                       0);
             check_int("exit return clears dungeon flag",
                       world.dungeon_complete,
@@ -3315,7 +3315,7 @@ int main(void) {
     theron_v1_startup_flow_init(&flow);
     result = theron_v1_startup_choose_stage(&flow,
                                             &progression,
-                                            THERON_DUNGEON_1_HALL_OF_RECORDS);
+                                            THERON_DUNGEON_1_AKUTUBA);
     check_int("stage accepted for Theron-only run", result, THERON_STARTUP_OK);
     memset(&party, 0, sizeof(party));
     result = theron_v1_startup_enter_forcefield(&flow, &party);

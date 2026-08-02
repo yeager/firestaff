@@ -257,7 +257,7 @@ static void check_mid_progression(void) {
      * current dungeon to 4 (Tomb of Woe) so the "next" hint is
      * Taza Boots. */
     prog.quest_items_collected = (uint8_t)((1u << 0) | (1u << 1) | (1u << 2));
-    prog.current_dungeon = THERON_DUNGEON_4_TOMB_OF_WOE;
+    prog.current_dungeon = THERON_DUNGEON_4_SARMON;
 
     theron_v1_chapter_marker_compute(&profile, &prog, NULL, &m);
 
@@ -312,7 +312,7 @@ static void check_save_promotes_verdict(void) {
     memset(&slot, 0, sizeof(slot));
     slot.valid = 1;
     slot.slot_index = 2;
-    slot.current_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    slot.current_dungeon = THERON_DUNGEON_2_DRATOR;
     slot.dungeon_state = THERON_DUNGEON_STATE_COMPLETE;
     slot.quest_items = (uint8_t)(1u << 0);  /* dungeon 1 item only */
     slot.timestamp = 1700000000u;
@@ -389,17 +389,17 @@ static void check_save_compute_populated_root(void) {
      * which is what we want to assert here. */
     CHECK(write_synthetic_slot(save_root, 0,
                                 (uint8_t)(1u << 0),
-                                THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                                THERON_DUNGEON_2_DRATOR,
                                 100u),
           "save compute: slot 0 written");
     CHECK(write_synthetic_slot(save_root, 1,
                                 (uint8_t)((1u << 0) | (1u << 1)),
-                                THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                                THERON_DUNGEON_3_FORMIC,
                                 200u),
           "save compute: slot 1 written");
     CHECK(write_synthetic_slot(save_root, 2,
                                 (uint8_t)((1u << 0) | (1u << 1) | (1u << 2)),
-                                THERON_DUNGEON_4_TOMB_OF_WOE,
+                                THERON_DUNGEON_4_SARMON,
                                 300u),
           "save compute: slot 2 written");
 
@@ -511,7 +511,7 @@ static void check_determinism(void) {
     profile.assets_verified = 1;
     theron_v1_dungeon_progression_init(&prog);
     prog.quest_items_collected = (uint8_t)((1u << 0) | (1u << 1));
-    prog.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    prog.current_dungeon = THERON_DUNGEON_3_FORMIC;
 
     theron_v1_chapter_marker_compute(&profile, &prog, NULL, &m1);
     h1 = marker_hash(&m1);
@@ -521,7 +521,7 @@ static void check_determinism(void) {
         profile.assets_verified = 1;
         theron_v1_dungeon_progression_init(&prog);
         prog.quest_items_collected = (uint8_t)((1u << 0) | (1u << 1));
-        prog.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+        prog.current_dungeon = THERON_DUNGEON_3_FORMIC;
         theron_v1_chapter_marker_compute(&profile, &prog, NULL, &m2);
         h2 = marker_hash(&m2);
         if (h2 != h1) { mismatch = 1; break; }

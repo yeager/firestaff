@@ -762,7 +762,7 @@ static int write_theron_tqsv_save(const char* root,
     }
     memset(championData, 0x31, sizeof(championData));
     theron_v1_dungeon_progression_init(&progression);
-    progression.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+    progression.current_dungeon = THERON_DUNGEON_3_FORMIC;
     progression.current_level = 1;
     progression.dungeon_playtime_seconds = 4321u;
     progression.quest_items_collected = 0x03u;

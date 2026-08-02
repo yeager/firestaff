@@ -71,7 +71,7 @@ int main(void) {
     {
         Theron_DungeonProgression prog;
         theron_v1_dungeon_progression_init(&prog);
-        CHECK(prog.current_dungeon == THERON_DUNGEON_1_HALL_OF_RECORDS,
+        CHECK(prog.current_dungeon == THERON_DUNGEON_1_AKUTUBA,
               "init: current_dungeon == HoR");
         CHECK(prog.dungeon_states[0] == THERON_DUNGEON_STATE_AVAILABLE,
               "init: dungeon 1 state == AVAILABLE");
@@ -98,7 +98,7 @@ int main(void) {
         int middle_available = 0;
         theron_v1_dungeon_progression_init(&prog);
         Theron_DungeonID next = theron_v1_dungeon_advance(&prog);
-        CHECK(next == THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+        CHECK(next == THERON_DUNGEON_2_DRATOR,
               "advance 1: focus returns dungeon 2");
         CHECK(prog.dungeon_states[0] == THERON_DUNGEON_STATE_COMPLETE,
               "advance 1: dungeon 1 marked COMPLETE");
@@ -122,7 +122,7 @@ int main(void) {
         }
         CHECK(prog.dungeon_states[6] == THERON_DUNGEON_STATE_AVAILABLE,
               "after six advances: dungeon 7 AVAILABLE");
-        CHECK(prog.current_dungeon == THERON_DUNGEON_7_TOWER_OF_EPILOGUE,
+        CHECK(prog.current_dungeon == THERON_DUNGEON_7_DEMON,
               "after six advances: focus moves to dungeon 7");
     }
 
@@ -159,8 +159,8 @@ int main(void) {
         next = theron_v1_dungeon_next(THERON_DUNGEON_COUNT);  /* above range */
         CHECK(next == THERON_DUNGEON_INVALID,
               "dungeon_next(COUNT) -> INVALID (above range)");
-        next = theron_v1_dungeon_next(THERON_DUNGEON_3_ABYSS_OF_FLAMES);
-        CHECK(next == THERON_DUNGEON_4_TOMB_OF_WOE,
+        next = theron_v1_dungeon_next(THERON_DUNGEON_3_FORMIC);
+        CHECK(next == THERON_DUNGEON_4_SARMON,
               "dungeon_next(3) -> 4");
     }
 

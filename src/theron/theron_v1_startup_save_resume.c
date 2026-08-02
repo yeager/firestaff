@@ -945,7 +945,7 @@ void theron_v1_startup_continue_result_init(
     result->source = THERON_V1_STARTUP_CONTINUE_SOURCE_NONE;
     result->source_slot_index = -1;
     result->srm_import_status = THERON_V1_SRM_PROGRESS_IMPORT_BAD_INPUT;
-    result->selected_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    result->selected_dungeon = THERON_DUNGEON_1_AKUTUBA;
     result->startup_cursor = 0;
     result->continue_focus = 0;
     result->srm_current_dungeon = -1;

@@ -208,7 +208,7 @@ static int theron_v1_startup_runtime_inspect_track02_initial_level(
         }
         return 0;
     }
-    if (dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS) {
+    if (dungeon_id != THERON_DUNGEON_1_AKUTUBA) {
         if (receipt && receipt_cap > 0u) {
             snprintf(receipt, receipt_cap,
                      "Track 02 initial loader route only proves AKUTUBA level 0; selected stage has no source-locked record");
@@ -435,7 +435,7 @@ static int theron_v1_startup_runtime_publish_track02_route(
 
     if (!world || !route || !route->valid ||
         route->objects.record_count > THERON_MAX_OBJECTS ||
-        dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
         dungeon_id > THERON_DUNGEON_COUNT) return 0;
 
     world->current_dungeon = dungeon_id;
@@ -607,7 +607,7 @@ int theron_v1_startup_runtime_receive_boot_profile_initial_route(
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!profile || !world || !hucard_rom || !out_receipt ||
-        dungeon_id != THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id != THERON_DUNGEON_1_AKUTUBA ||
         !theron_v1_startup_runtime_consume_boot_profile_initial_payload(
             profile, hucard_rom, hucard_rom_size, &payload_receipt)) {
         return 0;
@@ -732,7 +732,7 @@ int theron_v1_startup_runtime_bind_track02_soul_room_handoff(
     }
     if (!world || !hucard_rom || hucard_rom_size == 0u || !md5_hex ||
         md5_hex[0] == '\0' ||
-        dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
         dungeon_id > THERON_DUNGEON_COUNT ||
         !theron_v1_startup_runtime_has_verified_track02_request(
             hucard_rom, hucard_rom_size, md5_hex) ||
@@ -794,9 +794,9 @@ int theron_v1_startup_runtime_load_initial_level(
     if (!world) {
         return 0;
     }
-    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+    if (dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
         dungeon_id > THERON_DUNGEON_COUNT) {
-        dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+        dungeon_id = THERON_DUNGEON_1_AKUTUBA;
     }
     verified_track02_request =
         theron_v1_startup_runtime_has_verified_track02_request(
@@ -1269,7 +1269,7 @@ static int theron_v1_startup_runtime_level_semantics_exact(
     int dungeon_index;
     uint8_t start_square;
 
-    if (!world || dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+    if (!world || dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
         dungeon_id > THERON_DUNGEON_COUNT) {
         return 0;
     }
@@ -1299,7 +1299,7 @@ static int theron_v1_startup_runtime_object_semantics_exact(
 
     int i;
 
-    if (!world || dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+    if (!world || dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
         dungeon_id > THERON_DUNGEON_COUNT || world->object_count < 0 ||
         world->object_count > THERON_MAX_OBJECTS) {
         return 0;
@@ -1445,8 +1445,8 @@ int theron_v1_startup_runtime_capture_all_dungeon_routes(
         hash *= 16777619u;
     }
 
-    for (dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
-         dungeon_id <= THERON_DUNGEON_1_HALL_OF_RECORDS;
+    for (dungeon_id = THERON_DUNGEON_1_AKUTUBA;
+         dungeon_id <= THERON_DUNGEON_1_AKUTUBA;
          dungeon_id = (Theron_DungeonID)((int)dungeon_id + 1)) {
         Theron_V1_World world;
         char receipt[320];

@@ -105,7 +105,7 @@ static void remove_temp_dir(const char *root) {
 static void populate_party_at_progress(Theron_V1_Party *party) {
     if (!party) return;
 
-    theron_v1_party_init(party, THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+    theron_v1_party_init(party, THERON_DUNGEON_2_DRATOR);
 
     /* Map-level fields — set to distinctive values so we can detect
      * if a future change starts packing them. The pack/unpack stream
@@ -222,11 +222,11 @@ static void populate_progression(Theron_DungeonProgression *prog) {
     if (!prog) return;
     theron_v1_dungeon_progression_init(prog);
 
-    prog->current_dungeon = THERON_DUNGEON_2_CRYPT_OF_SHADOWS;
+    prog->current_dungeon = THERON_DUNGEON_2_DRATOR;
     prog->current_level = 1;
-    prog->dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] =
+    prog->dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] =
         THERON_DUNGEON_STATE_COMPLETE;
-    prog->dungeon_states[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] =
+    prog->dungeon_states[THERON_DUNGEON_2_DRATOR - 1] =
         THERON_DUNGEON_STATE_IN_PROGRESS;
     prog->quest_items_collected = THERON_QUEST_ITEM_1_SHIELD_DEFIANT;
     prog->quest_items_in_current_dungeon = 1;
@@ -333,7 +333,7 @@ int main(void) {
     expect_true(slot_info.slot_index == 4,
                 "loaded slot index matches");
     expect_true(slot_info.current_dungeon ==
-                THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
+                THERON_DUNGEON_2_DRATOR,
                 "loaded slot header: current dungeon");
     expect_true(slot_info.party_gold == party_before.gold,
                 "loaded slot header: party gold round-trips");
@@ -462,10 +462,10 @@ int main(void) {
                 "progression current_dungeon preserved");
     expect_true(prog_read.current_level == prog_before.current_level,
                 "progression current_level preserved");
-    expect_true(prog_read.dungeon_states[THERON_DUNGEON_1_HALL_OF_RECORDS - 1] ==
+    expect_true(prog_read.dungeon_states[THERON_DUNGEON_1_AKUTUBA - 1] ==
                 THERON_DUNGEON_STATE_COMPLETE,
                 "progression dungeon 1 state preserved");
-    expect_true(prog_read.dungeon_states[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] ==
+    expect_true(prog_read.dungeon_states[THERON_DUNGEON_2_DRATOR - 1] ==
                 THERON_DUNGEON_STATE_IN_PROGRESS,
                 "progression dungeon 2 state preserved");
     expect_true(prog_read.quest_items_collected ==
@@ -541,14 +541,14 @@ int main(void) {
 
         memset(&party_v2, 0, sizeof(party_v2));
         memset(&prog_v2, 0, sizeof(prog_v2));
-        theron_v1_party_init(&party_v2, THERON_DUNGEON_3_ABYSS_OF_FLAMES);
+        theron_v1_party_init(&party_v2, THERON_DUNGEON_3_FORMIC);
         party_v2.champions[0].health = 9;
         party_v2.champions[0].max_health = 70;
         party_v2.champions[1].alive = 0;
         populate_progression(&prog_v2);
-        prog_v2.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
+        prog_v2.current_dungeon = THERON_DUNGEON_3_FORMIC;
         prog_v2.current_level = 2;
-        prog_v2.dungeon_states[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] =
+        prog_v2.dungeon_states[THERON_DUNGEON_2_DRATOR - 1] =
             THERON_DUNGEON_STATE_COMPLETE;
         prog_v2.quest_items_collected =
             THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
@@ -598,7 +598,7 @@ int main(void) {
                                            &slot_info);
         expect_true(rc == 0, "re-save load succeeded");
         expect_true(slot_info.current_dungeon ==
-                    THERON_DUNGEON_3_ABYSS_OF_FLAMES,
+                    THERON_DUNGEON_3_FORMIC,
                     "re-save header reflects new dungeon");
         expect_true(slot_info.quest_items ==
                     (THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
