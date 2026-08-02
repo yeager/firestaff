@@ -72,12 +72,12 @@ void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
 
 void nexus_v1_creatures_init_production(Nexus_V1_CreatureManager *mgr) {
     if (!mgr) return;
-    /* MNS admission proves model-container identity only.  It does not
-     * prove the combat-stat owner, so do not seed g_creature_defs into a
-     * live Nexus session.  Explicit fixture tests retain the initializer
-     * above; authenticated actor/stat binding can populate this manager
-     * when its Saturn source is recovered. */
-    memset(mgr, 0, sizeof(*mgr));
+    /* Seed the roster from the fixture table (names, MNS files, AI func
+     * pointers), then override stats from RLOWFIX.BIN CRET section when
+     * the data file is available.  CRET stats are Saturn-owned — the
+     * fixture table health/attack/defense/speed values are only used as
+     * fallback when RLOWFIX.BIN is absent. */
+    nexus_v1_creatures_init(mgr);
 }
 
 int nexus_v1_creature_spawn_on_level(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir, int level) {

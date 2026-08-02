@@ -2687,8 +2687,13 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_load_startup_faces(engine);
     nexus_v1_load_menu_bpk_decode_receipt(engine);
 
-    /* Init creature manager */
+    /* Init creature manager and load real stats from RLOWFIX.BIN CRET. */
     nexus_v1_creatures_init_production(&engine->creatures);
+    {
+        char cret_path[512];
+        snprintf(cret_path, sizeof(cret_path), "%s/RLOWFIX.BIN", engine->data_dir);
+        nexus_v1_creatures_load_cret(&engine->creatures, cret_path);
+    }
 
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
