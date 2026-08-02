@@ -1,6 +1,16 @@
 
 # Unreleased
 
+# Firestaff v3.0.245
+- Amiga platform GRAPHICS.DAT classifiers for DM1 (legacy 575-graphic format) and CSB (DMCSB2 container)
+- MD5-based receipt identification: 6 DM1 Amiga variants, 4 CSB Amiga variants
+- Language and version detection for all known Amiga GRAPHICS.DAT files
+
+# Firestaff v3.0.244
+- Real 30-creature MNS roster from DM.BIN 0x0385F0 (yam\monsobj.c filename table)
+- Removed synthetic creature stats — fail-closed pending MNS header stat decode
+- All 30 MNS model files verified present in game data directory
+
 # Firestaff v3.0.243
 - Nexus event dispatch system with all 61 event types from DM.BIN yam\event.c
 - Movement events advance game tick; inventory/spell/rest/save events accepted

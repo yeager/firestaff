@@ -3548,7 +3548,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.243 LANGUAGES C)
+project(Firestaff VERSION 3.0.245 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -3942,8 +3942,10 @@ if(DM2_SOURCES)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
-        src/dm2/dm2_v1_actuator_event_pc34_compat.c)
+        src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c)
     target_include_directories(firestaff_dm2_runtime_weather_fixture PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_compile_definitions(firestaff_dm2_runtime_weather_fixture PRIVATE
@@ -4110,6 +4112,8 @@ set(M11_SOURCES
     src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_fmtowns_cd.c
+    src/csb/csb_v1_amiga_graphics_dat.c
+    src/dm1/dm1_v1_amiga_graphics_dat.c
     src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_fmtowns_anm.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
@@ -4407,6 +4411,10 @@ if(NOT MSVC)
         COMPILE_OPTIONS "-Wno-switch"
     )
 endif()
+
+    set_source_files_properties(src/dm2/dm2_v1_skproject_core.c PROPERTIES
+        COMPILE_OPTIONS "-Wno-unused-parameter;-Wno-unused-variable;-Wno-unused-function;-Wno-unused-but-set-variable"
+    )
 
 # ── M12 static library ──────────────────────────────────────────────
 set(M12_SOURCES
@@ -5051,6 +5059,7 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -5130,6 +5139,7 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -5207,6 +5217,7 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -5284,6 +5295,7 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -5490,6 +5502,7 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -5574,6 +5587,7 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -5653,6 +5667,7 @@ add_executable(firestaff_dm2_v2_smooth_movement_probe
     src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -6406,6 +6421,7 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -14009,6 +14025,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -14088,6 +14106,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -14167,6 +14187,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -14765,6 +14787,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -14837,6 +14861,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -14908,6 +14934,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -14987,6 +15015,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -15066,6 +15096,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -15145,6 +15177,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -15224,6 +15258,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -15305,6 +15341,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -15386,6 +15424,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
@@ -15478,6 +15517,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -16852,8 +16893,11 @@ if(BUILD_TESTING)
     # ── DM2 actuator event dispatch (ACTUATE_WALL_MECHA / FLOOR_MECHA) ──
     add_executable(test_dm2_v1_actuator_event_pc34_compat
         tests/test_dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
@@ -17447,6 +17491,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -17979,6 +18025,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -45760,6 +45808,7 @@ if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_runtime_stati
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_runtime_static_scene_receipt PRIVATE ${CMAKE_SOURCE_DIR}/include)
@@ -45967,6 +46016,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
+        src/dm2/dm2_v1_skproject_core.c
+        src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
     src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
@@ -49904,6 +49955,20 @@ add_executable(test_dm2_v1_fmtowns_cd_dat
 target_include_directories(test_dm2_v1_fmtowns_cd_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_fmtowns_cd_dat COMMAND test_dm2_v1_fmtowns_cd_dat)
 
+add_executable(test_dm2_v1_fmtowns_cdda_music
+    tests/test_dm2_v1_fmtowns_cdda_music.c
+    src/dm2/dm2_v1_fmtowns_cdda_music.c
+)
+target_include_directories(test_dm2_v1_fmtowns_cdda_music PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm2_v1_fmtowns_cdda_music COMMAND test_dm2_v1_fmtowns_cdda_music)
+
+add_executable(test_dm2_v1_songlist_dat
+    tests/test_dm2_v1_songlist_dat.c
+    src/dm2/dm2_v1_songlist_dat.c
+)
+target_include_directories(test_dm2_v1_songlist_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm2_v1_songlist_dat COMMAND test_dm2_v1_songlist_dat)
+
 add_executable(test_dm2_v1_fmtowns_disc
     tests/test_dm2_v1_fmtowns_disc.c
     src/dm2/dm2_v1_fmtowns_disc.c
@@ -50456,3 +50521,19 @@ foreach(_firestaff_csb_v2_test IN LISTS _firestaff_csb_v2_verification_tests)
 endforeach()
 unset(_firestaff_csb_v2_test)
 unset(_firestaff_csb_v2_verification_tests)
+
+add_executable(test_dm1_v1_amiga_graphics_dat
+    tests/test_dm1_v1_amiga_graphics_dat.c
+    src/dm1/dm1_v1_amiga_graphics_dat.c
+)
+target_include_directories(test_dm1_v1_amiga_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_amiga_graphics_dat COMMAND test_dm1_v1_amiga_graphics_dat)
+set_tests_properties(test_dm1_v1_amiga_graphics_dat PROPERTIES LABELS "dm1;amiga")
+
+add_executable(test_csb_v1_amiga_graphics_dat
+    tests/test_csb_v1_amiga_graphics_dat.c
+    src/csb/csb_v1_amiga_graphics_dat.c
+)
+target_include_directories(test_csb_v1_amiga_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_csb_v1_amiga_graphics_dat COMMAND test_csb_v1_amiga_graphics_dat)
+set_tests_properties(test_csb_v1_amiga_graphics_dat PROPERTIES LABELS "csb;amiga")

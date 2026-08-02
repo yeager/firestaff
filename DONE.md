@@ -1,3 +1,18 @@
+- ✅ 2026-08-02 v3.0.245 Amiga platform GRAPHICS.DAT classifiers for DM1 and CSB
+  DM1 Amiga: legacy format (no 0x8001 marker), 575 graphics, big-endian,
+  all uncompressed. 6 known variants (2.0 EN/FR/DE, 2.1/2.2 EN, 3.6 Multi, Demo).
+  CSB Amiga: DMCSB2 container (0x8001 BE marker), 700-800 items, IMG1 nibble RLE.
+  4 known variants (3.1/3.3 Multi, 3.5 EN, 3.5 Multi, X.X/3.1 EN).
+  Both classifiers include MD5-based receipt identification with lang/version.
+- ✅ 2026-08-02 v3.0.244 Nexus: real 30-creature roster from DM.BIN 0x0385F0
+  Replaced 8-entry synthetic creature table with the real 30 MNS filenames
+  from yam\monsobj.c. All 30 MNS files verified present on disk. Stats left
+  unset (fail-closed) pending MNS header decode — real stats come from MNS
+  files, not hardcoded values. Includes: Ant Man, Mummy, Ghost, Vexirk,
+  Giggler, Golem, Hell Hound, 3 dragons (Gold/Silver/Red), Last Monster,
+  Oitu, Rat, Rock Pile, Screamer, Scorpion, 2 snakes (Floor/Wall),
+  2 skeletons (Sword/Shield), Worm, 3 drakes (Green/Red/Mini), Dragon Zombie,
+  Borketh, Chaos, Lord Rib, Big Worm, Obake.
 - ✅ 2026-08-02 v3.0.243 Nexus: event dispatch system with 61 DM.BIN event types
   Added Nexus_EventType enum and event dispatcher from yam\event.c string table
   at DM.BIN 0x036D04-0x037024. Movement, inventory, spell, rest/pause, and
