@@ -1,3 +1,8 @@
+- ✅ 2026-08-02 v3.0.237 Theron parity: item properties, spell descriptors
+  66 item property records from UD 0x099825 (6 bytes each): category/flags,
+  primary/secondary/tertiary stats. THE RETALIATOR has maxed stats (0xFF).
+  41 action/spell descriptor tables from UD 0x09EFAF: cost table (FIREBALL=42,
+  LIGHTNING=38, HEAL=2) and secondary property table (CONFUSE=96, PARRY=60).
 - ✅ 2026-08-02 v3.0.236 Theron parity: dungeon descriptors, item categories, creature combat model
   Dungeon pointer table (8 records from UD 0x274018) and descriptor headers
   (7 entries from UD 0x274058-0x274150): AKUTUBA/DRATOR/FORMIC/SARMON/SHADO

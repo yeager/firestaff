@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.236 LANGUAGES C)
+project(Firestaff VERSION 3.0.237 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -44234,6 +44234,44 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_item_categor
     )
 endif()
 
+# Theron Track 02 item properties (6-byte records per item)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_item_properties.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_item_properties.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_item_properties.h")
+    add_executable(test_theron_v1_track02_item_properties
+        tests/test_theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_item_properties.c
+    )
+    target_include_directories(test_theron_v1_track02_item_properties PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_item_properties PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_item_properties
+        COMMAND test_theron_v1_track02_item_properties
+    )
+endif()
+
+# Theron Track 02 spell descriptors (cost + secondary tables)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_spell_descriptors.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_spell_descriptors.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_spell_descriptors.h")
+    add_executable(test_theron_v1_track02_spell_descriptors
+        tests/test_theron_v1_track02_spell_descriptors.c
+        src/theron/theron_v1_track02_spell_descriptors.c
+    )
+    target_include_directories(test_theron_v1_track02_spell_descriptors PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_spell_descriptors PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_spell_descriptors
+        COMMAND test_theron_v1_track02_spell_descriptors
+    )
+endif()
+
 # Theron Track 02 creature spawn (category-based combat formulas)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature_spawn.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_creature_spawn.c"
@@ -46836,6 +46874,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_anm.c")
     set_tests_properties(csb_v1_fmtowns_anm PROPERTIES LABELS "csb;fmtowns")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_game_data_fingerprint.c")
+    add_executable(test_firestaff_game_data_fingerprint
+        tests/test_firestaff_game_data_fingerprint.c
+        src/shared/firestaff_game_data_fingerprint.c)
+    target_include_directories(test_firestaff_game_data_fingerprint PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_game_data_fingerprint PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME firestaff_game_data_fingerprint COMMAND test_firestaff_game_data_fingerprint)
+    set_tests_properties(firestaff_game_data_fingerprint PROPERTIES LABELS "shared;fingerprint")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_cd.c")
     add_executable(test_csb_v1_fmtowns_cd
         tests/test_csb_v1_fmtowns_cd.c
@@ -47366,6 +47416,7 @@ if(BUILD_TESTING)
         src/shared/redmcsb_f0777_file_delete_pc34_compat.c
         src/shared/redmcsb_f0778_file_rename_pc34_compat.c
         src/shared/redmcsb_f0779_file_tell_pc34_compat.c
+        src/shared/firestaff_game_data_fingerprint.c
     )
     target_include_directories(test_redmcsb_fio1_file_handle_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)

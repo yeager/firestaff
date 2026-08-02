@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.237
+- 66 item property records from UD 0x099825 (6-byte records: category/flags + 5 stat bytes)
+- 41 action/spell cost table from UD 0x09EFAF (FIREBALL=42, LIGHTNING=38, HEAL=2, PUNCH=1)
+- 41 action/spell secondary table from UD 0x09EFD8 (CONFUSE=96, PARRY=60, HACK=66)
+
 # Firestaff v3.0.236
 - Dungeon pointer table (8 records from UD 0x274018) and descriptor headers (7 entries) — THIEF/DEMON have null descriptor pointers
 - Item category table (66 bytes from UD 0x21A046): 1 compass, 17 weapons, 24 armor, 24 consumables
