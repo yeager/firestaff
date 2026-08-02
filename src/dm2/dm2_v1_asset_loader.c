@@ -844,7 +844,7 @@ int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
                       size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE &&
                       size <= DM2_FMTOWNS_GRAPHICS_MAX_SIZE);
     int is_be = (be && (first_word == DM2_PC_GDAT_CONTAINER_WORD) &&
-                 size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE);
+                 size >= (1U * 1024U * 1024U));
     if (!is_pc && !is_fmtowns && !is_be) return -1;
 
     loader->data = data;
