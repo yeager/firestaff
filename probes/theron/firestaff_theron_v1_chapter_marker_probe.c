@@ -238,8 +238,8 @@ static void check_fresh_profile(void) {
           "fresh: chapter label == Chapter 1: AKUTUBA");
     CHECK(strstr(m.quest_summary, "0/7") != NULL,
           "fresh: quest summary shows 0/7 collected");
-    CHECK(strstr(m.next_dungeon_hint, "UNAVAILABLE") != NULL,
-          "fresh: next hint remains UNAVAILABLE");
+    CHECK(strstr(m.next_dungeon_hint, "DRATOR") != NULL,
+          "fresh: next hint shows DRATOR");
     CHECK(m.freshest_save_present == 0,
           "fresh: freshest_save_present == 0 without save input");
 }
@@ -254,8 +254,7 @@ static void check_mid_progression(void) {
     theron_v1_dungeon_progression_init(&prog);
 
     /* Collect dungeon 1, 2, 3 items (bits 0, 1, 2) and set the
-     * current dungeon to 4 (Tomb of Woe) so the "next" hint is
-     * Taza Boots. */
+     * current dungeon to 4 (SARMON) so the "next" hint is SHADO. */
     prog.quest_items_collected = (uint8_t)((1u << 0) | (1u << 1) | (1u << 2));
     prog.current_dungeon = THERON_DUNGEON_4_SARMON;
 
@@ -264,8 +263,8 @@ static void check_mid_progression(void) {
     CHECK(m.verdict == THERON_MARKER_VERDICT_OK_PROGRESSION_ONLY,
           "mid: verdict == OK_PROGRESSION_ONLY");
     CHECK(strstr(m.chapter_label, "Chapter 4") != NULL &&
-          strstr(m.chapter_label, "UNAVAILABLE") != NULL,
-          "mid: chapter label == Chapter 4: UNAVAILABLE");
+          strstr(m.chapter_label, "SARMON") != NULL,
+          "mid: chapter label == Chapter 4: SARMON");
     CHECK(strstr(m.quest_summary, "3/7") != NULL,
           "mid: quest summary shows 3/7 collected");
     /* Dungeon 4's item is bit 3 (Taza Boots) which is NOT yet

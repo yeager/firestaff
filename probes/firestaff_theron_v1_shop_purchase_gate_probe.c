@@ -95,6 +95,7 @@ int main(void) {
 
         CHECK(parse_fixture(&table));
         theron_v1_party_init(&party, 1);
+        { int _i; for (_i = 0; _i < THERON_MAX_CHAMPIONS; _i++) theron_v1_champion_reset_inventory(&party.champions[_i]); }
         party.gold = 10000u;
 
         /* Stock=3 and 4 buys means: 3 succeed (stock → 0), 4th is
@@ -150,6 +151,7 @@ int main(void) {
 
         CHECK(parse_fixture(&table));
         theron_v1_party_init(&party, 1);
+        { int _i; for (_i = 0; _i < THERON_MAX_CHAMPIONS; _i++) theron_v1_champion_reset_inventory(&party.champions[_i]); }
         party.gold = 10000u;
 
         /* Potion row stock = 3. Buy 3 times successfully, then expect
@@ -191,6 +193,7 @@ int main(void) {
 
         CHECK(parse_fixture(&table));
         theron_v1_party_init(&party, 1);
+        { int _i; for (_i = 0; _i < THERON_MAX_CHAMPIONS; _i++) theron_v1_champion_reset_inventory(&party.champions[_i]); }
 
         /* Key row price = 500, stock = 1. Set gold exactly equal to price. */
         party.gold = 500u;
@@ -215,6 +218,7 @@ int main(void) {
 
         CHECK(parse_fixture(&table));
         theron_v1_party_init(&party, 1);
+        { int _i; for (_i = 0; _i < THERON_MAX_CHAMPIONS; _i++) theron_v1_champion_reset_inventory(&party.champions[_i]); }
         party.gold = 10000u;
 
         /* Pre-fill the leader's inventory slots 0..4 with FOOD, leave
@@ -263,6 +267,7 @@ int main(void) {
         CHECK(table.entries[0].stock == 0xffu);
 
         theron_v1_party_init(&party, 1);
+        { int _i; for (_i = 0; _i < THERON_MAX_CHAMPIONS; _i++) theron_v1_champion_reset_inventory(&party.champions[_i]); }
         /* 255 * 1 = 255 gold, well within uint32_t — exact-budget chain. */
         party.gold = 255u;
         leader = &party.champions[THERON_CHAMPION_SLOT_THERON];

@@ -2484,10 +2484,10 @@ int main(void) {
     check_int("in dungeon phase", flow.phase, THERON_STARTUP_PHASE_IN_DUNGEON);
     check_int("party count theron plus three", party.champion_count, 4);
     check_int("leader slot is Theron", party.active_slot, THERON_CHAMPION_SLOT_THERON);
-    check_contains("slot 0 name", party.champions[0].name, "Theron");
-    check_contains("slot 1 mirror name", party.champions[1].name, "Pental");
-    check_contains("slot 2 mirror name", party.champions[2].name, "Tiran");
-    check_contains("slot 3 mirror name", party.champions[3].name, "Hakar");
+    check_contains("slot 0 name", party.champions[0].name, "THERON");
+    check_contains("slot 1 mirror name", party.champions[1].name, "PENTAI");
+    check_contains("slot 2 mirror name", party.champions[2].name, "TIRAN");
+    check_contains("slot 3 mirror name", party.champions[3].name, "HAKAR");
     check_int("slot 1 portrait", party.champions[1].portrait_index, 7);
     check_int("slot 2 portrait", party.champions[2].portrait_index, 3);
     check_int("slot 3 portrait", party.champions[3].portrait_index, 1);
@@ -3290,10 +3290,10 @@ int main(void) {
         }
     }
 
-    check_contains("mirror 0 meta", theron_v1_startup_mirror_meta(0)->name, "Hakar");
-    check_contains("mirror 1 meta", theron_v1_startup_mirror_meta(1)->name, "Mara");
-    check_contains("mirror 3 meta", theron_v1_startup_mirror_meta(3)->name, "Linos");
-    check_contains("mirror 6 meta", theron_v1_startup_mirror_meta(6)->name, "Pental");
+    check_contains("mirror 0 meta", theron_v1_startup_mirror_meta(0)->name, "HAKAR");
+    check_contains("mirror 1 meta", theron_v1_startup_mirror_meta(1)->name, "MARA");
+    check_contains("mirror 3 meta", theron_v1_startup_mirror_meta(3)->name, "LINOS");
+    check_contains("mirror 6 meta", theron_v1_startup_mirror_meta(6)->name, "PENTAI");
     check_int("mirror 0 roster index", theron_v1_startup_roster_index_for_mirror(0), 4);
     check_int("mirror 1 roster index", theron_v1_startup_roster_index_for_mirror(1), 1);
     check_int("mirror 2 roster index", theron_v1_startup_roster_index_for_mirror(2), 5);

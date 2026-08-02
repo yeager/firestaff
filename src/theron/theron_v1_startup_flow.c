@@ -29,13 +29,13 @@ int theron_v1_startup_stage_available(
 
 #if defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
 static const Theron_StartupMirrorMeta g_tqr_mirror_meta[THERON_STARTUP_HERO_MIRROR_COUNT] = {
-    { "Hakar",  THERON_CLASS_FIGHTER, 1 },
-    { "Mara",   THERON_CLASS_PRIEST,  2 },
-    { "Tiran",  THERON_CLASS_FIGHTER, 3 },
-    { "Linos",  THERON_CLASS_NINJA,   4 },
-    { "Dotan",  THERON_CLASS_WIZARD,  5 },
-    { "Hexa",   THERON_CLASS_FIGHTER, 6 },
-    { "Pental", THERON_CLASS_FIGHTER, 7 }
+    { "HAKAR",  THERON_CLASS_FIGHTER, 1 },
+    { "MARA",   THERON_CLASS_PRIEST,  2 },
+    { "TIRAN",  THERON_CLASS_FIGHTER, 3 },
+    { "LINOS",  THERON_CLASS_NINJA,   4 },
+    { "DOTAN",  THERON_CLASS_WIZARD,  5 },
+    { "HEXA",   THERON_CLASS_FIGHTER, 6 },
+    { "PENTAI", THERON_CLASS_FIGHTER, 7 }
 };
 #endif
 
@@ -46,7 +46,7 @@ static const int g_tqr_mirror_to_track02_roster_index[THERON_STARTUP_HERO_MIRROR
     2, /* Linos -> LINOS */
     6, /* Dotan -> DOTAN */
     3, /* Hexa -> HEXA */
-    7  /* Pental fallback label -> raw Track 02 PENTAI */
+    7  /* PENTAI */
 };
 
 const Theron_StartupMirrorMeta *theron_v1_startup_mirror_meta(int mirror_index) {
