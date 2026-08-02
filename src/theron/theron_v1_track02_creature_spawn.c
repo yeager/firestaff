@@ -23,14 +23,15 @@ static const Theron_SpawnCategoryFormula g_formulas[THERON_CREATURE_SPAWN_CATEGO
     /* cat 3: dice(5) * scaling + 1.5*adj */ { 3, 0, 5, 1 },
 };
 
-static const Theron_CreaturePointerEntry g_pointer_table[7] = {
+static const Theron_CreaturePointerEntry g_pointer_table[8] = {
     /* [0] AKUTUBA */ { 0x0172, 0x278A, 0x0058, 0x016B },
     /* [1] DRATOR  */ { 0x0172, 0x278A, 0x00D7, 0x016B },
     /* [2] FORMIC  */ { 0x0198, 0x278A, 0x0102, 0x016B },
     /* [3] SARMON  */ { 0x0172, 0x278A, 0x0129, 0x016B },
     /* [4] SHADO   */ { 0x01AE, 0x278A, 0x0150, 0x016B },
-    /* [5] THIEF   */ { 0x01C2, 0x278A, 0x0000, 0x016B },
-    /* [6] DEMON   */ { 0x01CF, 0x278A, 0x0000, 0x016B },
+    /* [5] THIEF   */ { 0x01C2, 0x278A, 0x0000, 0x0000 },
+    /* [6] DEMON   */ { 0x01CF, 0x278A, 0x0000, 0x0000 },
+    /* [7] (unused) */ { 0x01DC, 0x278A, 0x0000, 0x0000 },
 };
 
 const Theron_SpawnZoneDesc *theron_v1_track02_spawn_zone(unsigned int creature_index) {
@@ -48,7 +49,7 @@ size_t theron_v1_track02_spawn_zone_count(void) {
 }
 
 const Theron_CreaturePointerEntry *theron_v1_track02_creature_pointer(unsigned int index) {
-    if (index >= 7) return NULL;
+    if (index >= 8) return NULL;
     return &g_pointer_table[index];
 }
 

@@ -25,6 +25,7 @@ typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
 #include "nexus_v1_text.h"
 #include "nexus_v1_champions.h"
 #include "nexus_v1_creatures.h"
+#include "nexus_v1_projectiles.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
@@ -2541,6 +2542,9 @@ struct Nexus_V1_Engine {
 
     /* Creature manager */
     Nexus_V1_CreatureManager creatures;
+
+    /* Projectile manager */
+    Nexus_ProjectileManager projectiles;
 
     /* Mechanics state — opaque pointer, allocated in nexus_v1_init().
      * Defined in nexus_v1_mechanics.c (source-locked DM1 game loop).

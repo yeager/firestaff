@@ -8,10 +8,12 @@
 #include "nexus_v1_drops.h"
 #include "nexus_v1_script_vm.h"
 #include "nexus_v1_sound.h"
+#include "nexus_v1_rasterizer.h"
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_magic.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Nexus V1 mechanics — assembled game loop.
  * Combines: movement, square events, creature AI, combat, resource drain,
@@ -845,10 +847,14 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                                     leader->health = leader->max_health;
                             }
                         } else {
-                            int fx, fy;
-                            nexus_target_square(st->party_x, st->party_y, st->party_dir,
-                                                1, 0, 0, &fx, &fy);
-                            nexus_v1_creature_manager_damage_at(&engine->creatures, fx, fy, effect);
+                            enum Nexus_ProjectileType pt = NEXUS_PROJ_FIREBALL;
+                            if (sp.spell_type == NEXUS_SPELL_EFFECT_LIGHTNING)
+                                pt = NEXUS_PROJ_LIGHTNING;
+                            else if (sp.spell_type == NEXUS_SPELL_EFFECT_POISON)
+                                pt = NEXUS_PROJ_POISON_CLOUD;
+                            nexus_v1_projectile_spawn(&engine->projectiles, pt,
+                                st->party_x, st->party_y, st->party_dir,
+                                effect, 2, leader_idx);
                         }
                         nexus_sound_play(&engine->audio, NEXUS_SFX_SPELL_CAST);
                         needs_redraw = 1;
@@ -1063,6 +1069,86 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             }
         }
 
+        /* Creature ranged attacks — creatures with ranged_type != 0 fire
+         * projectiles when chasing (state==2) and within detection range.
+         * CRET byte 4 ranged_type: 4=fireball, 6=poison, 10=lightning.
+         * Source: DM1 CREATURE.C ranged creature attacks; CRET stat table. */
+        for (i = 0; i < engine->creatures.active_count; i++) {
+            Nexus_Creature *c = &engine->creatures.active[i];
+            int rtype, dir_to_party;
+            enum Nexus_ProjectileType pt;
+            if (!c->alive || c->level != st->map_index) continue;
+            if (c->type_index < 0 || c->hidden) continue;
+            rtype = engine->creatures.types[c->type_index].ranged_type;
+            if (rtype == 0) continue;
+            if (c->state != 2) continue;
+            {
+                int dist = nexus_v1_creature_distance(c->x, c->y,
+                    st->party_x, st->party_y);
+                if (dist <= 1 || dist > 6) continue;
+            }
+            if (c->ai_timer % 8 != 0) continue;
+            if (abs(st->party_x - c->x) > abs(st->party_y - c->y))
+                dir_to_party = (st->party_x > c->x) ? 1 : 3;
+            else
+                dir_to_party = (st->party_y > c->y) ? 2 : 0;
+            switch (rtype) {
+                case 6:  pt = NEXUS_PROJ_POISON; break;
+                case 10: pt = NEXUS_PROJ_LIGHTNING; break;
+                default: pt = NEXUS_PROJ_FIREBALL; break;
+            }
+            nexus_v1_projectile_spawn(&engine->projectiles, pt,
+                c->x, c->y, dir_to_party,
+                engine->creatures.types[c->type_index].attack / 2,
+                2, -1);
+            nexus_sound_play(&engine->audio, NEXUS_SFX_CREATURE_ATTACK);
+        }
+
+        /* Projectile tick — move active projectiles and apply damage.
+         * Source: DM1 OBJECTMAN.C F0258 projectile movement,
+         *         PROJECTIL.C F0218 collision resolution. */
+        {
+            Nexus_ProjectileHit proj_hits[NEXUS_MAX_PROJECTILES];
+            int n_hits = nexus_v1_projectiles_tick(&engine->projectiles,
+                engine->current_level.squares, proj_hits, NEXUS_MAX_PROJECTILES);
+            for (i = 0; i < n_hits; i++) {
+                if (proj_hits[i].hit_wall) continue;
+                if (proj_hits[i].source_champion >= 0) {
+                    int killed = nexus_v1_creature_manager_damage_at(
+                        &engine->creatures,
+                        proj_hits[i].hit_x, proj_hits[i].hit_y,
+                        proj_hits[i].damage);
+                    if (killed > 0) needs_redraw = 1;
+                } else if (proj_hits[i].hit_x == st->party_x &&
+                           proj_hits[i].hit_y == st->party_y) {
+                    int target_idx = -1, pi;
+                    if (engine->champions.leader_index >= 0 &&
+                        engine->champions.leader_index < engine->champions.party_count) {
+                        int li = engine->champions.party[engine->champions.leader_index];
+                        if (li >= 0 && li < engine->champions.champion_count &&
+                            engine->champions.champions[li].alive)
+                            target_idx = li;
+                    }
+                    for (pi = 0; target_idx < 0 && pi < engine->champions.party_count; pi++) {
+                        int ci = engine->champions.party[pi];
+                        if (ci >= 0 && ci < engine->champions.champion_count &&
+                            engine->champions.champions[ci].alive)
+                            target_idx = ci;
+                    }
+                    if (target_idx >= 0) {
+                        int was_alive = engine->champions.champions[target_idx].alive;
+                        int died = nexus_v1_take_damage(
+                            &engine->champions.champions[target_idx],
+                            proj_hits[i].damage);
+                        if (died && was_alive)
+                            nexus_v1_champion_on_death_update_leader(
+                                &engine->champions, target_idx);
+                        nexus_sound_play(&engine->audio, NEXUS_SFX_CHAMPION_HURT);
+                    }
+                }
+            }
+        }
+
         /* Check for total party death.
          * Source: DM1 CLIKMENU.C F0366 — game ends when all champions die. */
         if (!nexus_mechanics_party_alive(st, engine)) {
@@ -1148,4 +1234,30 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     }
 
     return needs_redraw || (st->pending_level_change >= 0);
+}
+
+int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
+                                   Nexus_V1_Engine *engine,
+                                   int event_type, int param)
+{
+    if (!st || !engine) return -1;
+
+    switch (event_type) {
+    case NEXUS_UI_EVENT_MAP:
+        return 0;
+    case NEXUS_UI_EVENT_SPELL:
+        nexus_mechanics_push_command(st, NEXUS_CMD_CAST_SPELL);
+        return 0;
+    case NEXUS_UI_EVENT_INVENTORY:
+        nexus_mechanics_set_use_item_slot(st, param);
+        nexus_mechanics_push_command(st, NEXUS_CMD_USE_ITEM);
+        return 0;
+    case NEXUS_UI_EVENT_REST:
+        nexus_mechanics_push_command(st, NEXUS_CMD_REST);
+        return 0;
+    case NEXUS_UI_EVENT_SAVE:
+        return 0;
+    default:
+        return -1;
+    }
 }

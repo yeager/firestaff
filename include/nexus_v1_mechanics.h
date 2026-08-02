@@ -145,4 +145,19 @@ void nexus_mechanics_clear_spell(Nexus_MechanicsState *st);
  *         ReDMCSB DUNGEON.C / COMMAND.C. */
 int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index);
 
+/* ═══════════════════════════════════════════════════════════════════
+ * UI event dispatch — routes panel actions to mechanics commands
+ * Source: DM1 CLIKMENU.C F0366 click→command dispatch
+ * ═══════════════════════════════════════════════════════════════════ */
+
+#define NEXUS_UI_EVENT_MAP       0x01
+#define NEXUS_UI_EVENT_SPELL     0x02
+#define NEXUS_UI_EVENT_INVENTORY 0x03
+#define NEXUS_UI_EVENT_REST      0x04
+#define NEXUS_UI_EVENT_SAVE      0x05
+
+int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
+                                   Nexus_V1_Engine *engine,
+                                   int event_type, int param);
+
 #endif /* NEXUS_V1_MECHANICS_H */

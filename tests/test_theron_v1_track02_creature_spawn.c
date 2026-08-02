@@ -63,14 +63,22 @@ int main(void) {
     assert(theron_v1_track02_creature_pointer(5)->spawn_data_offset == 0x0000);
     assert(theron_v1_track02_creature_pointer(6)->spawn_data_offset == 0x0000);
 
-    /* All entries share constants */
-    for (unsigned i = 0; i < 7; i++) {
+    /* Entries 0-4 share constant_016b = 0x016B; 5-7 have 0x0000 */
+    for (unsigned i = 0; i < 5; i++) {
         const Theron_CreaturePointerEntry *p = theron_v1_track02_creature_pointer(i);
         assert(p->constant_278a == 0x278A);
         assert(p->constant_016b == 0x016B);
     }
+    for (unsigned i = 5; i < 8; i++) {
+        const Theron_CreaturePointerEntry *p = theron_v1_track02_creature_pointer(i);
+        assert(p->constant_278a == 0x278A);
+        assert(p->constant_016b == 0x0000);
+    }
 
-    assert(theron_v1_track02_creature_pointer(7) == NULL);
+    /* Entry 7 exists (unused slot) */
+    assert(theron_v1_track02_creature_pointer(7) != NULL);
+    assert(theron_v1_track02_creature_pointer(7)->sprite_desc_offset == 0x01DC);
+    assert(theron_v1_track02_creature_pointer(8) == NULL);
 
     /* HP cap constant */
     assert(THERON_CREATURE_HP_CAP == 900);

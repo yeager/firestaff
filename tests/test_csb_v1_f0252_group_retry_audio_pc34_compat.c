@@ -66,6 +66,8 @@ static void run_retry(int audible)
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
+    profile.party_x = 0;
+    profile.party_y = 0;
     memset(&event, 0, sizeof(event));
     event.type = audible ? DM1_EVENT_MOVE_GROUP_AUDIBLE
                          : DM1_EVENT_MOVE_GROUP_SILENT;

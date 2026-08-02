@@ -66,4 +66,11 @@ Nexus_ClickResult nexus_click_route_dispatch(Nexus_MechanicsState *st,
                                              Nexus_V1_Engine *engine,
                                              const Nexus_ClickTarget *target);
 
+/* Resolve a raw screen-coordinate click into a click target using
+ * the decoded HUD hit rects (0x038000) and champion panel rects (0x038428).
+ * Returns NEXUS_CLICK_TARGET_NONE if the click hits no known UI element.
+ * Source: yam\mouse.c, yam\menuctrl.c hit test pipeline. */
+Nexus_ClickTarget nexus_click_route_resolve_screen(int screen_x, int screen_y,
+                                                    int active_champion);
+
 #endif /* NEXUS_V1_CLICK_ROUTE_H */

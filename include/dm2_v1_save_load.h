@@ -50,8 +50,19 @@ int dm2_suppress_writer_flush(DM2_SuppressWriter *writer,
                               uint8_t *out, size_t out_capacity,
                               size_t *out_size);
 
+/* Write a single bit (0 or 1) into the SUPPRESS stream.
+ * Source: sksvgame.cpp DM2_WRITE_1BIT — calls SUPPRESS_WRITER with mask=1. */
+int dm2_suppress_writer_write_bit(DM2_SuppressWriter *writer,
+                                  int bit_value,
+                                  uint8_t *out, size_t out_capacity,
+                                  size_t *out_size);
+
 void dm2_suppress_reader_init(DM2_SuppressReader *reader,
                               const uint8_t *data, size_t size);
+
+/* Read a single bit from the SUPPRESS stream.
+ * Source: sksvgame.cpp DM2_READ_1BIT — calls SUPPRESS_READER with mask=1. */
+int dm2_suppress_reader_read_bit(DM2_SuppressReader *reader, int *out_bit);
 int dm2_suppress_reader_read(DM2_SuppressReader *reader,
                              const uint8_t *mask, size_t count,
                              uint8_t *out, uint8_t fill);

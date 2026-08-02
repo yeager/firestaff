@@ -77,6 +77,17 @@ int dm2_suppress_writer_write(DM2_SuppressWriter *writer,
     return 0;
 }
 
+int dm2_suppress_writer_write_bit(DM2_SuppressWriter *writer,
+                                  int bit_value,
+                                  uint8_t *out, size_t out_capacity,
+                                  size_t *out_size)
+{
+    uint8_t data_byte = (uint8_t)(bit_value & 1);
+    uint8_t mask_byte = 1;
+    return dm2_suppress_writer_write(writer, &data_byte, &mask_byte,
+                                     1, out, out_capacity, out_size);
+}
+
 int dm2_suppress_writer_flush(DM2_SuppressWriter *writer,
                               uint8_t *out, size_t out_capacity,
                               size_t *out_size)
@@ -124,6 +135,17 @@ int dm2_suppress_reader_read(DM2_SuppressReader *reader,
             --reader->bits_remaining;
         }
     }
+    return 0;
+}
+
+int dm2_suppress_reader_read_bit(DM2_SuppressReader *reader, int *out_bit)
+{
+    uint8_t data_byte = 0;
+    uint8_t mask_byte = 1;
+    if (!out_bit) return -1;
+    if (dm2_suppress_reader_read(reader, &mask_byte, 1, &data_byte, 0) != 0)
+        return -1;
+    *out_bit = data_byte & 1;
     return 0;
 }
 

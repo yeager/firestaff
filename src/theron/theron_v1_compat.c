@@ -77,10 +77,6 @@ static int creature_id_for_index(int index) {
     return index + 1;
 }
 
-/* ── Directional helpers for AI movement ──────────────────────────── */
-static const int8_t g_dir_dx[4] = { 0, +1, 0, -1 };
-static const int8_t g_dir_dy[4] = { -1, 0, +1, 0 };
-
 /* ── Creature lifecycle ───────────────────────────────────────────── */
 
 int theron_v1_creature_spawn(Theron_V1_World *world,

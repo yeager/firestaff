@@ -16532,16 +16532,6 @@ static int csb_v1_runtime_append_unmerged_map_timer(
 {
     if (!profile) return -1;
 
-    /* A runtime boot replaces any previous live CSB context.  ReDMCSB's
-     * LOADSAVE.C F0435 enters only after both original media owners and the
-     * dungeon header are available; retaining a previous singleton after a
-     * failed replacement would instead fabricate a new session from stale
-     * state. */
-    csb_v1_runtime_cleanup(profile);
-    profile->dungeon_path = NULL;
-    profile->graphics_path = NULL;
-    memset(&profile->dungeon_asset, 0, sizeof(profile->dungeon_asset));
-    memset(&profile->graphics_asset, 0, sizeof(profile->graphics_asset));
     return csb_v1_runtime_append_unmerged_map_timer_to_queue(
         &profile->timeline_queue, event);
 }

@@ -126,6 +126,14 @@ target_link_libraries(test_nexus_v1_creature_names PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_creature_names COMMAND test_nexus_v1_creature_names)
 set_tests_properties(nexus_v1_creature_names PROPERTIES LABELS "nexus;creature;tier4")
 
+add_executable(test_nexus_v1_creature_ranged
+    tests/test_nexus_v1_creature_ranged.c)
+target_include_directories(test_nexus_v1_creature_ranged PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_creature_ranged PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_creature_ranged COMMAND test_nexus_v1_creature_ranged)
+set_tests_properties(nexus_v1_creature_ranged PROPERTIES LABELS "nexus;creature;tier4")
+
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
@@ -14937,6 +14945,36 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_save_load
         COMMAND test_dm2_v1_save_load
+    )
+
+    add_executable(test_dm2_v1_save_dungeon_data
+        tests/test_dm2_v1_save_dungeon_data.c
+        src/dm2/dm2_v1_save_dungeon_data_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_save_dungeon_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_dungeon_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_dungeon_data
+        COMMAND test_dm2_v1_save_dungeon_data
+    )
+
+    add_executable(test_dm2_v1_suppress_bit_ops
+        tests/test_dm2_v1_suppress_bit_ops.c
+    )
+    target_include_directories(test_dm2_v1_suppress_bit_ops PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_suppress_bit_ops PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_suppress_bit_ops PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_suppress_bit_ops
+        COMMAND test_dm2_v1_suppress_bit_ops
     )
 
     add_executable(test_dm2_v1_music_map
@@ -44719,6 +44757,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_action_param
     add_test(
         NAME theron_v1_track02_action_params
         COMMAND test_theron_v1_track02_action_params
+    )
+endif()
+
+# Theron Track 02 class skill parameters (UD 0x0899C0, skill XP cost table)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_class_skill_params.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_class_skill_params.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_class_skill_params.h")
+    add_executable(test_theron_v1_track02_class_skill_params
+        tests/test_theron_v1_track02_class_skill_params.c
+        src/theron/theron_v1_track02_class_skill_params.c
+    )
+    target_include_directories(test_theron_v1_track02_class_skill_params PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_class_skill_params PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_class_skill_params
+        COMMAND test_theron_v1_track02_class_skill_params
     )
 endif()
 
