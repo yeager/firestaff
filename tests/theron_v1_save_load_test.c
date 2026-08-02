@@ -285,10 +285,10 @@ static int test_progression_marker_roundtrip(void) {
     prog.dungeon_states[THERON_DUNGEON_3_ABYSS_OF_FLAMES - 1] = THERON_DUNGEON_STATE_COMPLETE;
     prog.dungeon_states[THERON_DUNGEON_4_TOMB_OF_WOE - 1] = THERON_DUNGEON_STATE_COMPLETE;
     prog.dungeon_states[THERON_DUNGEON_5_VAULT_OF_SECRETS - 1] = THERON_DUNGEON_STATE_AVAILABLE;
-    prog.quest_items_collected = (THERON_QUEST_ITEM_1_SACRED_AMPLIFIER |
-                                 THERON_QUEST_ITEM_2_SHADOW_KEY |
-                                 THERON_QUEST_ITEM_4_STONE_SIGIL |
-                                 THERON_QUEST_ITEM_5_WAYWARD_RIBBON);
+    prog.quest_items_collected = (THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
+                                 THERON_QUEST_ITEM_2_TAZA_BOOTS |
+                                 THERON_QUEST_ITEM_4_SOULCAGE |
+                                 THERON_QUEST_ITEM_5_TAZA_ARMOUR);
     prog.quest_items_in_current_dungeon = 2;
     prog.item_reset_mode = THERON_ITEM_RESET_MODE_PARTY;
     prog.item_reset_applied = 1;
@@ -444,11 +444,11 @@ static int test_cross_slot_export_import(void) {
     theron_v1_dungeon_progression_init(&prog);
     prog.current_dungeon = THERON_DUNGEON_6_CASTLE_OF_FATE;
     prog.current_level = 3;
-    prog.quest_items_collected = (THERON_QUEST_ITEM_1_SACRED_AMPLIFIER |
-                                  THERON_QUEST_ITEM_2_SHADOW_KEY |
-                                  THERON_QUEST_ITEM_3_FLAME_ORBS |
-                                  THERON_QUEST_ITEM_4_STONE_SIGIL |
-                                  THERON_QUEST_ITEM_5_WAYWARD_RIBBON);
+    prog.quest_items_collected = (THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
+                                  THERON_QUEST_ITEM_2_TAZA_BOOTS |
+                                  THERON_QUEST_ITEM_3_TAZA_POLEYN |
+                                  THERON_QUEST_ITEM_4_SOULCAGE |
+                                  THERON_QUEST_ITEM_5_TAZA_ARMOUR);
     prog.dungeon_states[THERON_DUNGEON_6_CASTLE_OF_FATE - 1] =
         THERON_DUNGEON_STATE_AVAILABLE;
     prog.dungeon_playtime_seconds = 0x01020304u;

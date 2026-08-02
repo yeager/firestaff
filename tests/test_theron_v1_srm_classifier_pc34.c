@@ -511,8 +511,8 @@ static void test_progression_payload_import(void) {
     expect_true(receipt.current_dungeon == THERON_DUNGEON_3_ABYSS_OF_FLAMES,
                 "progression receipt current dungeon");
     expect_true(receipt.quest_items_bitmask ==
-                    (THERON_QUEST_ITEM_1_SACRED_AMPLIFIER |
-                     THERON_QUEST_ITEM_2_SHADOW_KEY),
+                    (THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
+                     THERON_QUEST_ITEM_2_TAZA_BOOTS),
                 "progression receipt quest mask");
     expect_true(receipt.current_level == 1, "progression receipt current level");
     expect_true(receipt.dungeon_playtime_seconds == 300u,

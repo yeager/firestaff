@@ -254,8 +254,8 @@ static int test_dungeon_exit_transition_gate(void) {
     ASSERT(world.transition_pending == 0, "transition should stay unqueued");
 
     /* Collect item for dungeon 1 and verify in-world completion flag flips. */
-    ASSERT(theron_v1_collect_quest_item(&world, THERON_QUEST_ITEM_1_SACRED_AMPLIFIER) ==
-           THERON_QUEST_ITEM_1_SACRED_AMPLIFIER,
+    ASSERT(theron_v1_collect_quest_item(&world, THERON_QUEST_ITEM_1_SHIELD_DEFIANT) ==
+           THERON_QUEST_ITEM_1_SHIELD_DEFIANT,
            "quest item collection should return collected bit");
     ASSERT(world.dungeon_complete == 1, "dungeon_complete flag did not set");
 
@@ -357,7 +357,7 @@ static int test_quest_complete_detection(void) {
 
     /* Duplicate collection doesn't affect completion */
     prog.current_dungeon = THERON_DUNGEON_1_HALL_OF_RECORDS;
-    int r = theron_v1_quest_item_collect(&prog, THERON_QUEST_ITEM_1_SACRED_AMPLIFIER);
+    int r = theron_v1_quest_item_collect(&prog, THERON_QUEST_ITEM_1_SHIELD_DEFIANT);
     ASSERT(r == 0, "duplicate collection should be no-op");
     ASSERT(theron_v1_quest_complete(&prog), "quest complete broken by dup collection");
 
@@ -475,11 +475,11 @@ static int test_wrong_dungeon_item_rejection(void) {
 
     /* We're in dungeon 3, try to collect dungeon 1's item */
     prog.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
-    int result = theron_v1_quest_item_collect(&prog, THERON_QUEST_ITEM_1_SACRED_AMPLIFIER);
+    int result = theron_v1_quest_item_collect(&prog, THERON_QUEST_ITEM_1_SHIELD_DEFIANT);
     ASSERT(result == -2, "wrong-dungeon item should be rejected with -2");
 
     /* Dungeon 3's correct item should be accepted */
-    result = theron_v1_quest_item_collect(&prog, THERON_QUEST_ITEM_3_FLAME_ORBS);
+    result = theron_v1_quest_item_collect(&prog, THERON_QUEST_ITEM_3_TAZA_POLEYN);
     ASSERT(result == 1, "correct dungeon item should be collected");
 
     PASS();

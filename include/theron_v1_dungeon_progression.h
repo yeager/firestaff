@@ -68,27 +68,14 @@ typedef struct {
 typedef enum {
     THERON_QUEST_ITEM_NONE = 0,
 
-    /* Dungeon 1 — Hall of Records */
-    THERON_QUEST_ITEM_1_SACRED_AMPLIFIER = (1 << 0), /* Bit 0 */
-
-    /* Dungeon 2 — name unbound until the real Track 02 header is decoded */
-    THERON_QUEST_ITEM_2_SHADOW_KEY = (1 << 1),        /* Bit 1 */
-
-
-    /* Dungeon 3 — name unbound until the real Track 02 header is decoded */
-    THERON_QUEST_ITEM_3_FLAME_ORBS = (1 << 2),       /* Bit 2 */
-
-    /* Dungeon 4 — name unbound until the real Track 02 header is decoded */
-    THERON_QUEST_ITEM_4_STONE_SIGIL = (1 << 3),      /* Bit 3 */
-
-    /* Dungeon 5 — name unbound until the real Track 02 header is decoded */
-    THERON_QUEST_ITEM_5_WAYWARD_RIBBON = (1 << 4),    /* Bit 4 */
-
-    /* Dungeon 6 — name unbound until the real Track 02 header is decoded */
-    THERON_QUEST_ITEM_6_DESTINYS_THREAD = (1 << 5),   /* Bit 5 */
-
-    /* Dungeon 7 — name unbound until the real Track 02 header is decoded */
-    THERON_QUEST_ITEM_7_COSMIC_SHARD = (1 << 6),      /* Bit 6 */
+    /* Real names from Track 02 retrieval messages (UD 0x27715B-0x277272) */
+    THERON_QUEST_ITEM_1_SHIELD_DEFIANT = (1 << 0), /* Dungeon 1 */
+    THERON_QUEST_ITEM_2_TAZA_BOOTS     = (1 << 1), /* Dungeon 2 — AKUTUBA */
+    THERON_QUEST_ITEM_3_TAZA_POLEYN    = (1 << 2), /* Dungeon 3 — DRATOR */
+    THERON_QUEST_ITEM_4_SOULCAGE       = (1 << 3), /* Dungeon 4 — FORMIC */
+    THERON_QUEST_ITEM_5_TAZA_ARMOUR    = (1 << 4), /* Dungeon 5 — SARMON */
+    THERON_QUEST_ITEM_6_TAZAHELM       = (1 << 5), /* Dungeon 6 — SHADO */
+    THERON_QUEST_ITEM_7_RETALIATOR     = (1 << 6), /* Dungeon 7 — THIEF/DEMON */
 
     /* All 7 collected — quest complete */
     THERON_QUEST_ALL_ITEMS = 0x7F,  /* 0b01111111 */

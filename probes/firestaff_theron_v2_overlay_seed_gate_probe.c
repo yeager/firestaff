@@ -74,9 +74,9 @@ static void seed_world(Theron_V1_World *world)
     world->state_hash = 0xC0FFEE1234ULL;
     world->progression.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
     world->progression.quest_items_collected =
-        (uint8_t)(THERON_QUEST_ITEM_1_SACRED_AMPLIFIER |
-                  THERON_QUEST_ITEM_3_FLAME_ORBS |
-                  THERON_QUEST_ITEM_5_WAYWARD_RIBBON);
+        (uint8_t)(THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
+                  THERON_QUEST_ITEM_3_TAZA_POLEYN |
+                  THERON_QUEST_ITEM_5_TAZA_ARMOUR);
     world->progression.quest_items_in_current_dungeon = 2;
     world->party.champion_count = 2;
     world->party.active_slot = 1;

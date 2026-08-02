@@ -228,7 +228,7 @@ static void populate_progression(Theron_DungeonProgression *prog) {
         THERON_DUNGEON_STATE_COMPLETE;
     prog->dungeon_states[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] =
         THERON_DUNGEON_STATE_IN_PROGRESS;
-    prog->quest_items_collected = THERON_QUEST_ITEM_1_SACRED_AMPLIFIER;
+    prog->quest_items_collected = THERON_QUEST_ITEM_1_SHIELD_DEFIANT;
     prog->quest_items_in_current_dungeon = 1;
     prog->item_reset_mode = THERON_ITEM_RESET_MODE_CHAMPION;
     prog->item_reset_applied = 1;
@@ -267,7 +267,7 @@ int main(void) {
     expect_true(party_before.champions[3].alive == 0,
                 "fixture: companion 3 is downed");
     expect_true(prog_before.quest_items_collected ==
-                THERON_QUEST_ITEM_1_SACRED_AMPLIFIER,
+                THERON_QUEST_ITEM_1_SHIELD_DEFIANT,
                 "fixture: only first quest item collected");
     expect_true(prog_before.dungeon_playtime_seconds == 0x0BADF00Du,
                 "fixture: dungeon playtime sentinel");
@@ -338,7 +338,7 @@ int main(void) {
     expect_true(slot_info.party_gold == party_before.gold,
                 "loaded slot header: party gold round-trips");
     expect_true(slot_info.quest_items ==
-                THERON_QUEST_ITEM_1_SACRED_AMPLIFIER,
+                THERON_QUEST_ITEM_1_SHIELD_DEFIANT,
                 "loaded slot header: quest marker");
     expect_true(strcmp(slot_info.label,
                        "After Crypt of Shadows entrance") == 0,
@@ -551,8 +551,8 @@ int main(void) {
         prog_v2.dungeon_states[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1] =
             THERON_DUNGEON_STATE_COMPLETE;
         prog_v2.quest_items_collected =
-            THERON_QUEST_ITEM_1_SACRED_AMPLIFIER |
-            THERON_QUEST_ITEM_2_SHADOW_KEY;
+            THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
+            THERON_QUEST_ITEM_2_TAZA_BOOTS;
 
         champion_buffer = (uint8_t *)malloc(theron_v1_party_pack_size());
         if (!champion_buffer) {
@@ -601,8 +601,8 @@ int main(void) {
                     THERON_DUNGEON_3_ABYSS_OF_FLAMES,
                     "re-save header reflects new dungeon");
         expect_true(slot_info.quest_items ==
-                    (THERON_QUEST_ITEM_1_SACRED_AMPLIFIER |
-                     THERON_QUEST_ITEM_2_SHADOW_KEY),
+                    (THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
+                     THERON_QUEST_ITEM_2_TAZA_BOOTS),
                     "re-save header reflects two quest items");
         expect_true(strcmp(slot_info.label,
                            "Abyss of Flames level 2") == 0,

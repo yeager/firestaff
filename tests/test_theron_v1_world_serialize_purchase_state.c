@@ -48,8 +48,8 @@ static void seed_world(Theron_V1_World *world) {
     world->dungeon_complete = 1;
     world->progression.current_dungeon = THERON_DUNGEON_3_ABYSS_OF_FLAMES;
     world->progression.current_level = 2;
-    world->progression.quest_items_collected = THERON_QUEST_ITEM_1_SACRED_AMPLIFIER |
-                                               THERON_QUEST_ITEM_2_SHADOW_KEY;
+    world->progression.quest_items_collected = THERON_QUEST_ITEM_1_SHIELD_DEFIANT |
+                                               THERON_QUEST_ITEM_2_TAZA_BOOTS;
     world->progression.dungeon_states[0] = THERON_DUNGEON_STATE_COMPLETE;
     world->progression.dungeon_states[1] = THERON_DUNGEON_STATE_COMPLETE;
     world->progression.dungeon_states[2] = THERON_DUNGEON_STATE_AVAILABLE;
