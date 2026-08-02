@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.227
+- Extract 79-item per-bank runtime item name table from Track 02 UD 0x09951F
+- 23 items not in Track 19: TORCH, FLAMITT, FALCHION, SWORD, GHI, *OF LYTE equipment, SHIELD DEFIANT, GOLD COIN, BOULDER, RABBIT'S FOOT, TAZAHELM, CHEST, OPEN CHEST, food items, GOLD KEY, RA KEY
+- Fix Windows CI: unused variable warnings in NDEBUG assert builds (dungeon lore, experience table tests)
+
 # Firestaff v3.0.226
 - Extract 43-record level descriptor table from Track 02 UD 0x619900
 - Extract 80-glyph 8x8 1bpp save menu font from Track 02 UD 0x242E00 (ASCII '+' through 'z')

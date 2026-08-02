@@ -1,3 +1,10 @@
+- ✅ 2026-08-02 v3.0.227 Theron Track 02 full item name table and CI fix:
+  Extract 79-item per-bank runtime item name table from UD 0x09951F with
+  23 items not in Track 19 (TORCH, FLAMITT, FALCHION, SWORD, GHI,
+  PLATE/POLEYN/HELM/GREAVE OF LYTE, WOODEN SHIELD, SHIELD DEFIANT,
+  GOLD COIN, BOULDER, RABBIT'S FOOT, TAZAHELM, CHEST, OPEN CHEST,
+  CORN, BREAD, CHEESE, SCREAMER SLICE, GOLD KEY, RA KEY). Fix Windows
+  CI -Werror failures from unused variables in NDEBUG assert builds.
 - ✅ 2026-08-02 v3.0.226 Theron level descriptor table and save menu font:
   Extract 43-record level descriptor table from Track 02 UD 0x619900 (map width,
   data size, cumulative column index per level). Extract 80-glyph 8x8 1bpp save

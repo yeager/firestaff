@@ -28,6 +28,7 @@ static void test_monotonic(void)
     for (unsigned int i = 1; i < THERON_TRACK02_EXPERIENCE_ENTRY_COUNT; i++) {
         unsigned int prev = theron_v1_track02_us_experience_threshold(i - 1);
         unsigned int curr = theron_v1_track02_us_experience_threshold(i);
+        (void)prev; (void)curr;
         assert(curr >= prev);
     }
     printf("  PASS: monotonic\n");

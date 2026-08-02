@@ -12,6 +12,7 @@ static void test_dungeon_count(void)
 static void test_lore_akutuba(void)
 {
     const char *lore = theron_v1_track02_us_dungeon_lore(0);
+    (void)lore;
     assert(lore != NULL);
     assert(strstr(lore, "Ak-Tu-Ba") != NULL);
     assert(strstr(lore, "Shield Defiant") != NULL);
@@ -22,6 +23,7 @@ static void test_lore_akutuba(void)
 static void test_lore_drator(void)
 {
     const char *lore = theron_v1_track02_us_dungeon_lore(1);
+    (void)lore;
     assert(lore != NULL);
     assert(strstr(lore, "Drator") != NULL);
     assert(strstr(lore, "Taza Boots") != NULL);
@@ -32,6 +34,7 @@ static void test_lore_drator(void)
 static void test_lore_formic(void)
 {
     const char *lore = theron_v1_track02_us_dungeon_lore(2);
+    (void)lore;
     assert(lore != NULL);
     assert(strstr(lore, "Formicia") != NULL);
     assert(strstr(lore, "Taza Poleyn") != NULL);
@@ -42,6 +45,7 @@ static void test_lore_formic(void)
 static void test_lore_sarmon(void)
 {
     const char *lore = theron_v1_track02_us_dungeon_lore(3);
+    (void)lore;
     assert(lore != NULL);
     assert(strstr(lore, "Sarmon") != NULL);
     assert(strstr(lore, "Soulcage") != NULL);
@@ -51,6 +55,7 @@ static void test_lore_sarmon(void)
 static void test_lore_shado(void)
 {
     const char *lore = theron_v1_track02_us_dungeon_lore(4);
+    (void)lore;
     assert(lore != NULL);
     assert(strstr(lore, "Shadodan") != NULL);
     assert(strstr(lore, "Taza Armour") != NULL);
@@ -60,6 +65,7 @@ static void test_lore_shado(void)
 static void test_lore_thief(void)
 {
     const char *lore = theron_v1_track02_us_dungeon_lore(5);
+    (void)lore;
     assert(lore != NULL);
     assert(strstr(lore, "Gigglers") != NULL);
     assert(strstr(lore, "Tazahelm") != NULL);
@@ -70,6 +76,7 @@ static void test_lore_thief(void)
 static void test_lore_demon(void)
 {
     const char *lore = theron_v1_track02_us_dungeon_lore(6);
+    (void)lore;
     assert(lore != NULL);
     assert(strstr(lore, "Sargoth") != NULL);
     assert(strstr(lore, "Retaliator") != NULL);
