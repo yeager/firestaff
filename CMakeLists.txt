@@ -142,6 +142,14 @@ target_link_libraries(test_nexus_v1_automap PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_automap COMMAND test_nexus_v1_automap)
 set_tests_properties(nexus_v1_automap PROPERTIES LABELS "nexus;automap;tier4")
 
+add_executable(test_nexus_v1_doors
+    tests/test_nexus_v1_doors.c)
+target_include_directories(test_nexus_v1_doors PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_doors PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_doors COMMAND test_nexus_v1_doors)
+set_tests_properties(nexus_v1_doors PROPERTIES LABELS "nexus;doors;tier4")
+
 add_executable(test_nexus_v1_light
     tests/test_nexus_v1_light.c)
 target_include_directories(test_nexus_v1_light PRIVATE
