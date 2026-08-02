@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.227 LANGUAGES C)
+project(Firestaff VERSION 3.0.228 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -37183,6 +37183,26 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_level_descriptor
         COMMAND test_theron_v1_level_descriptor
+    )
+endif()
+
+# ── Theron V1 — Sector Allocation Table Tests ───────────────────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_sector_alloc
+        tests/test_theron_v1_sector_alloc.c
+    )
+    target_link_libraries(test_theron_v1_sector_alloc PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_sector_alloc PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_sector_alloc PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_sector_alloc
+        COMMAND test_theron_v1_sector_alloc
     )
 endif()
 
