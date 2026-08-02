@@ -53,6 +53,7 @@ typedef enum {
     DM2_PLATFORM_PC_EN,      /* PC English — primary reference */
     DM2_PLATFORM_PC_FR,      /* PC French */
     DM2_PLATFORM_PC_JEWEL,   /* PC German/English JewelCase */
+    DM2_PLATFORM_FMTOWNS_JA, /* FM Towns Japanese (Victor HME-242, 1994) */
     DM2_PLATFORM_COUNT
 } DM2_Platform;
 

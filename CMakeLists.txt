@@ -4083,6 +4083,7 @@ set(M11_SOURCES
     src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_fmtowns_cd.c
+    src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/csb_v1_startup_sequence_pc34_compat.c
@@ -44113,6 +44114,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_save_strings
     )
 endif()
 
+# Theron Track 02 champion roster (8 champions with real stats from UD 0x09D1D6)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_champion_roster.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_champion_roster.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_champion_roster.h")
+    add_executable(test_theron_v1_track02_champion_roster
+        tests/test_theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_champion_roster.c
+    )
+    target_include_directories(test_theron_v1_track02_champion_roster PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_champion_roster PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_champion_roster
+        COMMAND test_theron_v1_track02_champion_roster
+    )
+endif()
+
 # Theron Track 02 dungeon text (stories, treasures, retrieval messages)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_text.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_text.c"
@@ -46638,6 +46658,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0691_draw_compressed_
         target_compile_options(test_redmcsb_f0691_draw_compressed_img3_pc34_compat PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
     endif()
     add_test(NAME redmcsb_f0691_draw_compressed_img3_pc34_compat COMMAND test_redmcsb_f0691_draw_compressed_img3_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_portrait.c")
+    add_executable(test_csb_v1_fmtowns_portrait
+        tests/test_csb_v1_fmtowns_portrait.c
+        src/csb/csb_v1_fmtowns_portrait.c)
+    target_include_directories(test_csb_v1_fmtowns_portrait PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_fmtowns_portrait PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_fmtowns_portrait COMMAND test_csb_v1_fmtowns_portrait)
+    set_tests_properties(csb_v1_fmtowns_portrait PROPERTIES LABELS "csb;fmtowns")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_cd.c")

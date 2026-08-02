@@ -590,11 +590,13 @@ static const char *const g_dm2_graphics_hashes[] = {
     "25247ede4dabb6a71e5dabdfbcd5907d",  /* PC English */
     "b4d733576ea60c41737f79f212faf528",  /* PC French */
     "e52ab5e01715042b16a4dcff02052e5d",  /* PC German/English JewelCase */
+    "027ff3b8ddc2c4c4cdda7ada0b0bc46c",  /* FM Towns Japanese (HME-242) */
     NULL
 };
 
 static const char *const g_dm2_dungeon_hashes [] = {
     "6caccd7875009e82fe2e28e7f6d6adc0",  /* PC English + all variants */
+    "74c7549f174574201988bf936385841a",  /* FM Towns Japanese (HME-242) */
     NULL
 };
 
@@ -611,7 +613,8 @@ static const char *const g_dm2_songlist_hashes[] = {
 static const char *const g_platform_labels[DM2_PLATFORM_COUNT] = {
     [DM2_PLATFORM_PC_EN]    = "PC English",
     [DM2_PLATFORM_PC_FR]    = "PC French",
-    [DM2_PLATFORM_PC_JEWEL] = "PC German/English JewelCase",
+    [DM2_PLATFORM_PC_JEWEL]   = "PC German/English JewelCase",
+    [DM2_PLATFORM_FMTOWNS_JA] = "FM Towns Japanese",
 };
 
 /* ── Path separator ──────────────────────────────────────────────────── */
@@ -847,6 +850,8 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
             profile->platform = DM2_PLATFORM_PC_FR;
         } else if (md5_matches(profile->graphics_md5, "e52ab5e01715042b16a4dcff02052e5d")) {
             profile->platform = DM2_PLATFORM_PC_JEWEL;
+        } else if (md5_matches(profile->graphics_md5, "027ff3b8ddc2c4c4cdda7ada0b0bc46c")) {
+            profile->platform = DM2_PLATFORM_FMTOWNS_JA;
         }
     }
     strncpy(profile->platform_label,
@@ -858,8 +863,9 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     switch (profile->platform) {
         case DM2_PLATFORM_PC_EN:    strncpy(profile->version_id, "pc-en",   sizeof(profile->version_id) - 1); break;
         case DM2_PLATFORM_PC_FR:    strncpy(profile->version_id, "pc-fr",   sizeof(profile->version_id) - 1); break;
-        case DM2_PLATFORM_PC_JEWEL: strncpy(profile->version_id, "pc-jewel",sizeof(profile->version_id) - 1); break;
-        default:                    strncpy(profile->version_id, "unknown", sizeof(profile->version_id) - 1); break;
+        case DM2_PLATFORM_PC_JEWEL:   strncpy(profile->version_id, "pc-jewel",    sizeof(profile->version_id) - 1); break;
+        case DM2_PLATFORM_FMTOWNS_JA: strncpy(profile->version_id, "fmtowns-ja", sizeof(profile->version_id) - 1); break;
+        default:                       strncpy(profile->version_id, "unknown",     sizeof(profile->version_id) - 1); break;
     }
 
     /* Build asset root from the actual resolved file location.  The

@@ -5060,13 +5060,37 @@ static int dm2_runtime_actuate_teleporter(void *user,
                                           DM2_V1_ProceedTimersReceipt *receipt)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    (void)timer;
+    DM2_V1_DungeonData *dungeon;
+    int x, y, raw, current_type;
+
     (void)source_index;
     (void)receipt;
 
     rt->actuator_tile_timers++;
     rt->actuator_tile_teleporter++;
-    /* CCM tail unbound: timer is consumed, no mutation performed. */
+
+    if (timer == NULL || rt->boot == NULL || rt->boot->dungeon_data == NULL)
+        return 1;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, rt->dungeon_level, x, y);
+    if (raw < 0) return 1;
+
+    current_type = raw & DM2_SQUARE_TYPE_MASK;
+
+    /* Teleporter actuation toggles the teleporter's active state.
+     * The full source (c_tim_proc.cpp:3832) reads the teleporter thing
+     * record to resolve target map/x/y and performs the actual entity
+     * transport.  For now, toggle the teleporter open/closed bit in the
+     * tile raw word (bit 5 in the raw word controls visibility/passability
+     * for teleporters on DM2). */
+    if (current_type == DM2_SQUARE_TELEPORTER) {
+        uint16_t new_raw = (uint16_t)(raw ^ DM2_SQUARE_WALL_MASK);
+        dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level, x, y, new_raw);
+    }
     return 1;
 }
 
@@ -5089,13 +5113,37 @@ static int dm2_runtime_actuate_trickwall(void *user,
                                          DM2_V1_ProceedTimersReceipt *receipt)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    (void)timer;
+    DM2_V1_DungeonData *dungeon;
+    int x, y, raw, current_type, target_type;
+    uint16_t new_raw;
+
     (void)source_index;
     (void)receipt;
 
     rt->actuator_tile_timers++;
     rt->actuator_tile_trickwall++;
-    /* CCM tail unbound: timer is consumed, no mutation performed. */
+
+    if (timer == NULL || rt->boot == NULL || rt->boot->dungeon_data == NULL)
+        return 1;
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, rt->dungeon_level, x, y);
+    if (raw < 0) return 1;
+
+    current_type = raw & DM2_SQUARE_TYPE_MASK;
+    if (current_type == DM2_SQUARE_FAKE_WALL)
+        target_type = DM2_SQUARE_FLOOR;
+    else if (current_type == DM2_SQUARE_FLOOR)
+        target_type = DM2_SQUARE_FAKE_WALL;
+    else
+        return 1;
+
+    new_raw = (uint16_t)((raw & (uint16_t)~DM2_SQUARE_TYPE_MASK) |
+                         (target_type & DM2_SQUARE_TYPE_MASK));
+    dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level, x, y, new_raw);
     return 1;
 }
 
@@ -5169,8 +5217,8 @@ void dm2_v1_runtime_tick(void) {
          * Class 1 (floor mecha) gates on the record-pool/CAII think binding
          * because it walks DB records; classes 2 and 4 perform bounded
          * square-state mutations without record-pool ownership; classes 0,
-         * 5 and 6 are consumed fail-closed until their CCM tails are
-         * source-bound. */
+         * 5 toggles the teleporter active bit; 6 toggles trickwall
+         * between FAKE_WALL and FLOOR. */
         dispatcher.tile_class_at = dm2_runtime_tile_class_at;
         dispatcher.actuator_tile[0] = dm2_runtime_actuate_wall_mecha;
         dispatcher.actuator_tile[2] = dm2_runtime_actuate_pitfall;
