@@ -659,6 +659,12 @@
   fully wired: resolves the actuator record from the timer's ObjectID via
   the record pool, handles ActionType==3 toggle mode and OnceOnly re-queue.
   Periodic actuator events (tick generators) now fire correctly.
+  **2026-08-02 update:** floor-mecha CROSS_SCENE (0x27) now implements
+  TOGGLE_ACTUATOR_MESSAGE on the once_only field. CREATURE_AI_STATE (0x28)
+  shares the CREATURE_KILLER dispatch (both fail-closed pending creature
+  runtime). CREATURE_DIRECTION (0x42) recognized as a skproject TODO/no-op.
+  Remaining: PARTY_TELEPORTER (0x2E floor), CREATURE_ANIMATOR (0x3A),
+  CREATURE_KILLER/AI_STATE body (needs GET_CREATURE_AT + creature commands).
 
 - **DM2-SHOP-GLASS-OWNER-HANDOFF:** The fixed-coordinate catalog path is
   closed. SKProject `DRAW_WALL_ORNATE` passes the live wall actuator into

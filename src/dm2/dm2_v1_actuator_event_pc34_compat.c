@@ -1231,10 +1231,30 @@ static int floor_mecha_visitor(void *context,
         r->relay2_invoked++;
         break;
 
-    /* ── CREATURE_KILLER (0x0b) skevent.cpp:2129-2141 ─────────── */
+    /* ── CROSS_SCENE (0x27) skevent.cpp:2112-2115 ────────────── */
+    case DM2_ACTU_CROSS_SCENE:
+        if (record_mut) {
+            dm2_actu_set_once_only(record_mut,
+                dm2_toggle_actuator_message(ctx->action_type,
+                    dm2_actu_once_only(record)));
+        }
+        r->cross_scene_invoked++;
+        break;
+
+    /* ── CREATURE_KILLER (0x0b) + CREATURE_AI_STATE (0x28)
+     *    skevent.cpp:2129-2141 — both call ACTIVATE_CREATURE_KILLER.
+     *    Needs GET_CREATURE_AT + creature command/attack dispatch;
+     *    fail-closed until creature runtime is wired. ─────────── */
     case DM2_ACTU_CREATURE_KILLER:
+    case DM2_ACTU_CREATURE_AI_STATE:
         r->creature_killer_invoked++;
         r->fail_closed++;
+        break;
+
+    /* ── CREATURE_DIRECTION (0x42) skevent.cpp:2234-2236 ─────── */
+    /* Source: _3a15_0d5c is a TODO/no-op in skproject. */
+    case DM2_ACTU_CREATURE_DIRECTION:
+        r->creature_direction_invoked++;
         break;
 
     /* ── ORNATE_ANIMATOR_2 (0x32) skevent.cpp:2206-2209 ──────────── */

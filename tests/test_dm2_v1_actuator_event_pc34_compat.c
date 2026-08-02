@@ -192,6 +192,39 @@ static void test_handle_helpers(void)
     printf("  PASS: handle_helpers\n");
 }
 
+/* ── New actuator type constants ──────────────────────────────────── */
+
+static void test_new_actuator_types(void)
+{
+    assert(DM2_ACTU_CROSS_SCENE == 0x27);
+    assert(DM2_ACTU_CREATURE_AI_STATE == 0x28);
+    assert(DM2_ACTU_CREATURE_ANIMATOR == 0x3A);
+    assert(DM2_ACTU_CREATURE_DIRECTION == 0x42);
+
+    /* TOGGLE_ACTUATOR_MESSAGE on an actuator record's once_only field:
+     * this is what CROSS_SCENE does via dm2_toggle_actuator_message */
+    uint8_t rec[8];
+    memset(rec, 0, sizeof(rec));
+    rec[2] = DM2_ACTU_CROSS_SCENE;
+
+    dm2_actu_set_once_only(rec, 0);
+    assert(dm2_actu_once_only(rec) == 0);
+    dm2_actu_set_once_only(rec,
+        dm2_toggle_actuator_message(0, dm2_actu_once_only(rec)));
+    assert(dm2_actu_once_only(rec) == 1);
+
+    dm2_actu_set_once_only(rec,
+        dm2_toggle_actuator_message(2, dm2_actu_once_only(rec)));
+    assert(dm2_actu_once_only(rec) == 0);
+
+    dm2_actu_set_once_only(rec, 1);
+    dm2_actu_set_once_only(rec,
+        dm2_toggle_actuator_message(1, dm2_actu_once_only(rec)));
+    assert(dm2_actu_once_only(rec) == 0);
+
+    printf("  PASS: new_actuator_types\n");
+}
+
 /* ── Main ──────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -204,6 +237,7 @@ int main(void)
     test_activate_relay1();
     test_null_safety();
     test_handle_helpers();
+    test_new_actuator_types();
     printf("All actuator event tests passed.\n");
     return 0;
 }

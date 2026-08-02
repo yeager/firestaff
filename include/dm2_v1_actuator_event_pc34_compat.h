@@ -146,6 +146,8 @@ static inline uint8_t dm2_toggle_actuator_message(int action_type,
 #define DM2_ACTU_RELAY_1             0x20
 #define DM2_ACTU_ARRIVAL_DEPARTURE   0x21
 #define DM2_ACTU_SWITCH_SIGN_CREATURE 0x26
+#define DM2_ACTU_CROSS_SCENE         0x27
+#define DM2_ACTU_CREATURE_AI_STATE   0x28
 #define DM2_ACTU_ORNATE_ANIMATOR     0x2C
 #define DM2_ACTU_FINITE_RELAY        0x2D
 #define DM2_ACTU_CREATURE_GENERATOR  0x2E
@@ -161,7 +163,9 @@ static inline uint8_t dm2_toggle_actuator_message(int action_type,
 #define DM2_ACTU_RELAY_2             0x3D
 #define DM2_ACTU_SHOP_PANEL          0x3F
 #define DM2_ACTU_ITEM_RECYCLER       0x40
+#define DM2_ACTU_CREATURE_ANIMATOR   0x3A
 #define DM2_ACTU_ORNATE_STEP_ANIMATOR 0x41
+#define DM2_ACTU_CREATURE_DIRECTION  0x42
 #define DM2_ACTU_INVERSE_FLAG        0x43
 #define DM2_ACTU_TEST_FLAG           0x44
 #define DM2_ACTU_RELAY_3             0x45
@@ -225,6 +229,8 @@ typedef struct {
     int test_flag_invoked;
     int push_button_invoked;
     int creature_killer_invoked;
+    int cross_scene_invoked;
+    int creature_direction_invoked;
     int door_bit13_toggled;
     int the_end_triggered;
     int unknown_type_skipped;
