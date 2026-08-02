@@ -25,7 +25,7 @@ typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;
  * timers, object database, and deterministic world-state hashing.
  *
  * Key design constraints (from TQR provenance):
- *   - 7 mini-dungeons, 1-3 levels each (matching THQUEST.ASM).
+ *   - 7 mini-dungeons, 3-8 levels each (matching Track 02 quest blocks).
  *   - Between-dungeon saves only (no in-dungeon save).
  *   - Theron persists fully across dungeons.
  *   - Champions reset inventories each dungeon, keep stats/skills.
@@ -48,7 +48,7 @@ extern "C" {
 #endif
 
 /* ── Map / level constants ─────────────────────────────────────────── */
-#define THERON_MAX_LEVELS_PER_DUNGEON  3
+#define THERON_MAX_LEVELS_PER_DUNGEON  8
 #define THERON_MAX_MAP_SIZE            32
 #define THERON_MAX_OBJECTS_PER_LEVEL  128
 #define THERON_MAX_TIMERS              16
@@ -406,6 +406,16 @@ int theron_v1_world_apply_track02_object_table_for_dungeon(
     Theron_V1_World *world,
     int dungeon_id,
     const Theron_Track02ObjectTable *table);
+
+/* Load all maps from a decoded Track 02 quest block into the world model.
+ * Converts Track 02 tile types to world square types and sets level geometry.
+ * dungeon_id is 1-based (THERON_DUNGEON_1_AKUTUBA..THERON_DUNGEON_7_DEMON).
+ * Returns the number of levels loaded, or -1 on error. */
+struct Theron_DungeonData;
+int theron_v1_world_load_track02_dungeon(
+    Theron_V1_World *world,
+    int dungeon_id,
+    const struct Theron_DungeonData *dd);
 
 /* ── Timer API ───────────────────────────────────────────────────── */
 int  theron_v1_timer_add(Theron_V1_World *world,

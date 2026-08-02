@@ -4,7 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define THERON_TRACK02_DUNGEON_COUNT  7
+#ifndef THERON_TRACK02_DUNGEON_COUNT
+#define THERON_TRACK02_DUNGEON_COUNT  7u
+#endif
 #define THERON_TRACK02_MAX_MAPS       8
 #define THERON_TRACK02_MAX_MAP_DIM    32
 
@@ -38,7 +40,7 @@ typedef struct {
     uint8_t tiles[THERON_TRACK02_MAX_MAP_DIM][THERON_TRACK02_MAX_MAP_DIM];
 } Theron_Map;
 
-typedef struct {
+typedef struct Theron_DungeonData {
     uint8_t      dungeon_index;
     uint8_t      map_count;
     uint16_t     object_counts[16];
@@ -70,8 +72,14 @@ int theron_v1_track02_dungeon_map_load(
 
 uint16_t theron_v1_track02_dungeon_text_data_size(unsigned int dungeon_index);
 
-Theron_TileType theron_tile_type(uint8_t tile_byte);
-int theron_tile_has_things(uint8_t tile_byte);
-uint8_t theron_tile_attributes(uint8_t tile_byte);
+static inline Theron_TileType theron_tile_type(uint8_t tile_byte) {
+    return (Theron_TileType)(tile_byte >> 5);
+}
+static inline int theron_tile_has_things(uint8_t tile_byte) {
+    return (tile_byte >> 4) & 1;
+}
+static inline uint8_t theron_tile_attributes(uint8_t tile_byte) {
+    return tile_byte & 0x0F;
+}
 
 #endif

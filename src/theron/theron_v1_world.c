@@ -17,6 +17,7 @@
 
 #include "theron_v1_world.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_dungeon_map.h"
 #include <string.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -228,6 +229,68 @@ Theron_MapLoadResult theron_v1_level_load(Theron_V1_Level *level,
     (void)dungeon_id;
     (void)has_exit;
     return THERON_MAP_OK;
+}
+
+/* ── Track 02 quest block → world bridge ───────────────────────── */
+
+static uint8_t track02_tile_to_square(uint8_t tile_byte) {
+    Theron_TileType tt = theron_tile_type(tile_byte);
+    switch (tt) {
+        case THERON_TILE_WALL:       return THERON_SQUARE_WALL;
+        case THERON_TILE_OPEN:       return THERON_SQUARE_FLOOR;
+        case THERON_TILE_PIT:        return THERON_SQUARE_PIT;
+        case THERON_TILE_STAIRS:     return THERON_SQUARE_STAIRS_DOWN;
+        case THERON_TILE_DOOR:       return THERON_SQUARE_DOOR;
+        case THERON_TILE_TELEPORTER: return THERON_SQUARE_TELEPORTER;
+        case THERON_TILE_FAKEWALL:   return THERON_SQUARE_SECRET;
+        case THERON_TILE_TYPE7:      return THERON_SQUARE_WALL;
+    }
+    return THERON_SQUARE_WALL;
+}
+
+int theron_v1_world_load_track02_dungeon(
+    Theron_V1_World *world,
+    int dungeon_id,
+    const Theron_DungeonData *dd)
+{
+    if (!world || !dd) return -1;
+    if (dungeon_id < 1 || dungeon_id > THERON_DUNGEON_COUNT) return -1;
+
+    int slot = dungeon_id - 1;
+    int loaded = 0;
+
+    for (unsigned int m = 0; m < dd->map_count && m < THERON_MAX_LEVELS_PER_DUNGEON; m++) {
+        const Theron_Map *tm = &dd->maps[m];
+        Theron_V1_Level *lv = &world->levels[slot][m];
+        memset(lv, 0, sizeof(*lv));
+
+        unsigned int w = (unsigned int)tm->header.x_dim + 1;
+        unsigned int h = (unsigned int)tm->header.y_dim + 1;
+        lv->level_index = (int)m;
+        lv->width  = (int)w;
+        lv->height = (int)h;
+        lv->dungeon_seed = 0;
+        lv->source_header_level_index = tm->header.map_id;
+        lv->start_dir = 0;
+
+        int has_entrance = 0;
+        for (unsigned int x = 0; x < w && x < THERON_MAX_MAP_SIZE; x++) {
+            for (unsigned int y = 0; y < h && y < THERON_MAX_MAP_SIZE; y++) {
+                uint8_t sq = track02_tile_to_square(tm->tiles[x][y]);
+                lv->squares[y][x] = sq;
+                if (sq == THERON_SQUARE_FLOOR && !has_entrance) {
+                    lv->start_x = (int16_t)x;
+                    lv->start_y = (int16_t)y;
+                    has_entrance = 1;
+                }
+            }
+        }
+
+        lv->thing_count = 0;
+        world->level_loaded[slot][m] = 1;
+        loaded++;
+    }
+    return loaded;
 }
 
 /* ── Square query ─────────────────────────────────────────────────── */

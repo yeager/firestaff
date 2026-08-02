@@ -157,14 +157,3 @@ int theron_v1_track02_dungeon_map_load(
     return 1;
 }
 
-Theron_TileType theron_tile_type(uint8_t tile_byte) {
-    return (Theron_TileType)(tile_byte >> 5);
-}
-
-int theron_tile_has_things(uint8_t tile_byte) {
-    return (tile_byte >> 4) & 1;
-}
-
-uint8_t theron_tile_attributes(uint8_t tile_byte) {
-    return tile_byte & 0x0F;
-}
