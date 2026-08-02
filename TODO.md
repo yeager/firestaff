@@ -73,22 +73,12 @@
   tile table is now behind an unconditional source-mapping gate. Bind the
   real square-value/depth/material mapping before enabling it.
 
-- **THERON-V1-CHAMPION-STATE-REAL-DATA:** `theron_v1_party_init()` still
-  seeds default names, classes and 10-point stats for fixture/save flows.
-  Track 02 champion records and the real startup-selected party must be
-  decoded before these defaults can populate a production session. Verified
-  handoff now clears the fixture roster identity and count as well as numeric
-  state. The production roster handoff now avoids the fixture initializer and
-  admits only decoded names; portrait/class/stat records remain unavailable.
-  Production world allocation also uses a zero-party initializer until that
-  handoff succeeds.
-
-  The production startup API now returns no mirror portrait/class/name
-  metadata at all; the seven-entry table is compiled only for the explicit
-  fixture startup probe.
-
-  The unused synthetic companion template has also been removed from the
-  production world module.
+- **THERON-V1-CHAMPION-STATE-REAL-DATA:** *(Partially resolved v3.0.234-235)*
+  Real champion roster (8 entries from UD 0x09D1D6) now wired into
+  `theron_v1_party_init()` with real HP/STA/MANA and 6 base attributes.
+  Soul Room companion selection via `theron_v1_party_set_companion()`.
+  Remaining: portrait/class graphics from tile banks, save/load serialization
+  with real stat ranges, production startup handoff integration.
 
 - **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
   placeholder labels are now fixture/probe-only. The verified receipt no
@@ -137,11 +127,12 @@
   source-less facade path; the save-resume structured-receipt contract is now
   green at `325/325`.
 
-- **THERON-CREATURE-COMBAT-REAL-DATA:** `theron_v1_compat.c` still contains
-  inferred creature stats, attack values and drops. It is now excluded from
-  the production archive; production symbols fail closed until Track 02
-  creature records are decoded. Keep replacing the fixture implementation
-  only after matching source records, not by promoting its estimates.
+- **THERON-CREATURE-COMBAT-REAL-DATA:** *(Partially resolved v3.0.236)*
+  Disassembly confirmed Theron has NO DM1-style G0243 per-type stat table.
+  Uses category-based formula system (4 categories, random multipliers at
+  spawn, HP capped at 900). Spawn zones and creature pointer table decoded.
+  Remaining: `theron_v1_compat.c` runtime template values still approximate;
+  wire category formulas into the spawn path. Drop tables unverified.
 
 - **THERON-SHOP-REAL-DATA:** The shop price-table helper has no identified
   THQUEST.ASM price-table source and remains a fixture contract. It is now
