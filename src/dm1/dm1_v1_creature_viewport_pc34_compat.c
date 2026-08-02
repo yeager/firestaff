@@ -17,13 +17,8 @@ void DM1_V1_CreatureViewport_InitPc34Compat(DM1_V1_CreatureViewportStatePc34* st
 void DM1_V1_CreatureViewport_SetupSpriteTablePc34Compat(DM1_V1_CreatureViewportStatePc34* state) {
     if (!state) return;
 
-    /* Default sprite info — gfx_index values are placeholder GRAPHICS.DAT
-     * bitmap indices from GROUP.C G0217_as_Graphic559_CreatureInfo.
-     * These indices match DM1 PC 3.4 English GRAPHICS.DAT (MD5
-     * fa6b1aa29e191418713bf2cda93d962e) and are consistent with
-     * ReDMCSB GROUP.C G0217_as_Graphic559_CreatureInfo.
-     * Other versions (Amiga, Atari ST) use the same indices since
-     * the creature graphic layout is standardized across platforms. */
+    /* ReDMCSB GROUP.C G0217_as_Graphic559_CreatureInfo.
+     * gfx_index = first GRAPHICS.DAT bitmap, w/h = display pixels. */
     static const struct { uint16_t gfx; uint16_t frames; uint16_t w; uint16_t h; bool mirror; } defaults[] = {
         /* DM1_V1_CREATURE_VIEWPORT_MUMMY_PC34 */            { 225, 4, 32, 48, true },
         /* DM1_V1_CREATURE_VIEWPORT_SCREAMER_PC34 */         { 229, 2, 24, 24, false },
