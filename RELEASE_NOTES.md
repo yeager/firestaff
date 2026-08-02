@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.250
+- Nexus: 30 creature stat records decoded from RLOWFIX.BIN CRET section (96 bytes each)
+- Nexus: HP, attack, defense, speed wired from real Saturn data into creature roster
+- Nexus: nexus_v1_creatures_load_cret() loads stats at runtime from RLOWFIX.BIN
+- Nexus: Full 96-byte raw CRET record preserved in cret_raw[] for future field mapping
+
 # Firestaff v3.0.249
 - DM2: tick generator timer handler (CONTINUE_TICK_GENERATOR) — periodic actuator events now fire
 - DM2: ActionType==3 toggle mode and OnceOnly re-queue from skproject skevent.cpp:2764

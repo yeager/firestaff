@@ -17,6 +17,8 @@ typedef struct {
     int health, attack, defense, speed;
     int experience_value;
     int model_index;      /* index into engine->models[] */
+    int cret_bound;       /* 1 when CRET stats loaded from RLOWFIX.BIN */
+    uint8_t cret_raw[96]; /* raw CRET record from RLOWFIX.BIN (96 bytes per creature) */
     /* Real *.MNS model metadata binding.  Set only after the named file has
      * been opened from the configured Nexus data directory and authenticated
      * as a DMDF container; stays 0 (fail-closed) when the file is absent or
@@ -156,5 +158,25 @@ int nexus_v1_creature_spawn_actor(Nexus_V1_CreatureManager *mgr,
 /* Re-resolve the type of every unbound actor through the binding
  * registry.  Returns the number of actors that gained a proven type. */
 int nexus_v1_creature_rebind_unbound(Nexus_V1_CreatureManager *mgr);
+
+/* Load creature stats from RLOWFIX.BIN CRET section.  Reads the 30-entry
+ * CRET table (96 bytes per creature) and wires HP/attack/defense/speed
+ * into the roster types.  Returns the number of creatures bound.
+ * Source: RLOWFIX.BIN CRET section at offset 0xF2B4. */
+int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
+                                 const char *rlowfix_path);
+
+/* CRET record field offsets (96-byte record from RLOWFIX.BIN). */
+#define NEXUS_CRET_OFF_HP          7
+#define NEXUS_CRET_OFF_ATTACK_BASE 8
+#define NEXUS_CRET_OFF_DEXTERITY   9
+#define NEXUS_CRET_OFF_STRENGTH   10
+#define NEXUS_CRET_OFF_DAMAGE     11
+#define NEXUS_CRET_OFF_ARMOR      12
+#define NEXUS_CRET_OFF_POISON     13
+#define NEXUS_CRET_OFF_INDEX      15
+#define NEXUS_CRET_OFF_SPEED      49
+#define NEXUS_CRET_RECORD_SIZE    96
+#define NEXUS_CRET_COUNT          30
 
 #endif

@@ -1,3 +1,9 @@
+- ✅ 2026-08-02 v3.0.250 Nexus: CRET creature stats from RLOWFIX.BIN
+  30 creature stat records (96 bytes each) decoded from RLOWFIX.BIN CRET section.
+  HP (byte 7), attack damage (byte 11), armor (byte 12), speed (byte 49) wired
+  into Nexus_CreatureType. Full 96-byte raw record preserved in cret_raw[] for
+  future field mapping. All 30 creatures validated against real RLOWFIX.BIN data.
+  Source: RLOWFIX.BIN CRET[0] at offset 0xF2B4.
 - ✅ 2026-08-02 v3.0.249 DM2: tick generator timer handler (CONTINUE_TICK_GENERATOR)
   Wired the 0x56 tick generator timer from stub to full implementation.
   Resolves actuator record from timer ObjectID via record pool, handles
