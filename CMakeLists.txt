@@ -110,6 +110,37 @@ target_link_libraries(test_nexus_v1_hud_hit_rects PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_hud_hit_rects COMMAND test_nexus_v1_hud_hit_rects)
 set_tests_properties(nexus_v1_hud_hit_rects PROPERTIES LABELS "nexus;hud;tier4")
 
+add_executable(test_nexus_v1_champion_panel
+    tests/test_nexus_v1_champion_panel.c)
+target_include_directories(test_nexus_v1_champion_panel PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_champion_panel PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_champion_panel COMMAND test_nexus_v1_champion_panel)
+set_tests_properties(nexus_v1_champion_panel PROPERTIES LABELS "nexus;hud;tier4")
+
+add_executable(test_nexus_v1_creature_names
+    tests/test_nexus_v1_creature_names.c)
+target_include_directories(test_nexus_v1_creature_names PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_creature_names PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_creature_names COMMAND test_nexus_v1_creature_names)
+set_tests_properties(nexus_v1_creature_names PROPERTIES LABELS "nexus;creature;tier4")
+
+add_executable(test_nexus_v1_projectiles
+    tests/test_nexus_v1_projectiles.c)
+target_include_directories(test_nexus_v1_projectiles PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_projectiles PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_projectiles COMMAND test_nexus_v1_projectiles)
+set_tests_properties(nexus_v1_projectiles PROPERTIES LABELS "nexus;projectiles;tier4")
+
+add_executable(test_firestaff_fsdung_loader
+    tests/test_firestaff_fsdung_loader.c)
+target_include_directories(test_firestaff_fsdung_loader PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME firestaff_fsdung_loader COMMAND test_firestaff_fsdung_loader)
+set_tests_properties(firestaff_fsdung_loader PROPERTIES LABELS "firestaff;fsdung;tier4")
+
 add_executable(test_nexus_v1_prs3
     tests/test_nexus_v1_prs3.c)
 target_include_directories(test_nexus_v1_prs3 PRIVATE
@@ -4062,7 +4093,6 @@ endif()
 file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/theron/theron_v2_*.c" "src/theron/theron_v22_*.c")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_compat\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_combat_runtime_noop\\.c$")
-list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_shop\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shape_cache_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shapes\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_widget_assets_pc34\\.c$")
@@ -4075,7 +4105,7 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_overlay_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_viewport\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
-        src/theron/theron_v1_combat_runtime_noop.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v22_shapes_runtime_noop.c
         src/theron/theron_v2_hud_widget_assets_runtime_noop.c
         src/theron/theron_v1_ui_chrome_runtime_noop.c
@@ -14907,6 +14937,38 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_save_load
         COMMAND test_dm2_v1_save_load
+    )
+
+    add_executable(test_dm2_v1_i18n_real_data
+        tests/test_dm2_v1_i18n_real_data.c
+    )
+    target_include_directories(test_dm2_v1_i18n_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_i18n_real_data PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_i18n_real_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_i18n_real_data
+        COMMAND test_dm2_v1_i18n_real_data
+    )
+
+    add_executable(test_dm2_v1_save_load_real_data
+        tests/test_dm2_v1_save_load_real_data.c
+    )
+    target_include_directories(test_dm2_v1_save_load_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_save_load_real_data PRIVATE firestaff_dm2 firestaff_m10 m)
+    target_compile_definitions(test_dm2_v1_save_load_real_data PRIVATE
+        FIRESTAFF_DM2_SAVE_LOAD_TESTING=1)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_load_real_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_load_real_data
+        COMMAND test_dm2_v1_save_load_real_data
     )
 
     # ── DM2-009: savegame timer payload materialisation (GAME_LOAD order) ──
@@ -44606,6 +44668,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature_spa
     add_test(
         NAME theron_v1_track02_creature_spawn
         COMMAND test_theron_v1_track02_creature_spawn
+    )
+endif()
+
+# Theron Track 02 action params (action/spell parameter table from UD)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_action_params.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_action_params.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_action_params.h")
+    add_executable(test_theron_v1_track02_action_params
+        tests/test_theron_v1_track02_action_params.c
+        src/theron/theron_v1_track02_action_params.c
+    )
+    target_include_directories(test_theron_v1_track02_action_params PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_action_params PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_action_params
+        COMMAND test_theron_v1_track02_action_params
     )
 endif()
 
