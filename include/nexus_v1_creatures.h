@@ -179,4 +179,30 @@ int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
 #define NEXUS_CRET_RECORD_SIZE    96
 #define NEXUS_CRET_COUNT          30
 
+/* DM.BIN yam\cresub.c combat data tables (0x03B5A0-0x03B5F0).
+ * These are extracted from the real Saturn binary; no synthetic values. */
+
+/* Attack type permutation (8 entries, DM.BIN 0x03B5A0).
+ * Maps creature attack category to stat lookup index. */
+#define NEXUS_COMBAT_ATTACK_PERM_COUNT 8
+
+/* Experience level thresholds (8 entries, DM.BIN 0x03B5D8).
+ * Creature level boundaries: 40, 80, 120, 160, 200, 240, 277. */
+#define NEXUS_COMBAT_XP_THRESHOLD_COUNT 8
+
+/* Stat bitmask table (6 entries, DM.BIN 0x03B5C6).
+ * Powers of 2: 1, 2, 4, 8, 16, 32. Used for wound/stat category flags. */
+#define NEXUS_COMBAT_STAT_BITS_COUNT 6
+
+/* Special combat item IDs (3 entries, DM.BIN 0x03B5D2). */
+#define NEXUS_COMBAT_SPECIAL_ITEM_COUNT 3
+
+/* Retrieve DM.BIN creature combat tables.  Returns pointers to static
+ * tables extracted from the real Saturn binary.
+ * Source: DM.BIN yam\cresub.c data region 0x03B5A0-0x03B5F0. */
+const uint8_t *nexus_v1_combat_attack_perm(void);
+const uint8_t *nexus_v1_combat_xp_thresholds(void);
+const uint8_t *nexus_v1_combat_stat_bits(void);
+const uint16_t *nexus_v1_combat_special_items(void);
+
 #endif

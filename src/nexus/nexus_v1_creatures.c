@@ -525,3 +525,27 @@ int nexus_v1_creature_rebind_unbound(Nexus_V1_CreatureManager *mgr) {
     }
     return resolved;
 }
+
+/* DM.BIN yam\cresub.c combat data tables at 0x03B5A0-0x03B5F0.
+ * Extracted from the real Saturn SH-2 binary. */
+
+static const uint8_t g_attack_perm[NEXUS_COMBAT_ATTACK_PERM_COUNT] = {
+    0x02, 0x03, 0x01, 0x04, 0x07, 0x05, 0x00, 0x06
+};
+
+static const uint8_t g_xp_thresholds[NEXUS_COMBAT_XP_THRESHOLD_COUNT] = {
+    0x28, 0x50, 0x78, 0xA0, 0xC8, 0xF0, 0x01, 0x15
+};
+
+static const uint8_t g_stat_bits[NEXUS_COMBAT_STAT_BITS_COUNT] = {
+    0x01, 0x02, 0x04, 0x08, 0x10, 0x20
+};
+
+static const uint16_t g_special_items[NEXUS_COMBAT_SPECIAL_ITEM_COUNT] = {
+    0x0095, 0x0098, 0x0097
+};
+
+const uint8_t *nexus_v1_combat_attack_perm(void) { return g_attack_perm; }
+const uint8_t *nexus_v1_combat_xp_thresholds(void) { return g_xp_thresholds; }
+const uint8_t *nexus_v1_combat_stat_bits(void) { return g_stat_bits; }
+const uint16_t *nexus_v1_combat_special_items(void) { return g_special_items; }
