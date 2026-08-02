@@ -110,6 +110,7 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         int item_id;
         int inventory_slot = -1;
         if (!o || (o->flags & THERON_OBJ_F_PICKED_UP)) return -1;
+        if (o->type == THERON_OBJTYPE_CHEST) return 0;
         item_id = object_item_id(o);
         if (item_id == THERON_ITEM_NONE) return -1;
         champion = theron_v1_party_getChampion(&world->party,
