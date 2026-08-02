@@ -14939,6 +14939,38 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_save_load
     )
 
+    add_executable(test_dm2_v1_music_map
+        tests/test_dm2_v1_music_map.c
+        src/dm2/dm2_v1_music_map.c
+    )
+    target_include_directories(test_dm2_v1_music_map PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_music_map PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_music_map
+        COMMAND test_dm2_v1_music_map
+    )
+
+    add_executable(test_dm2_v1_mac_md_dat
+        tests/test_dm2_v1_mac_md_dat.c
+        src/dm2/dm2_v1_amiga_cd_dat.c
+    )
+    target_include_directories(test_dm2_v1_mac_md_dat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_mac_md_dat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_mac_md_dat
+        COMMAND test_dm2_v1_mac_md_dat
+    )
+
     add_executable(test_dm2_v1_i18n_real_data
         tests/test_dm2_v1_i18n_real_data.c
     )
