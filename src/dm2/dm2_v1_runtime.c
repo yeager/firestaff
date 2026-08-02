@@ -32,6 +32,7 @@
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
+#include "dm2_v1_spell_timer_handlers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -255,6 +256,8 @@ typedef struct {
     const char *last_spell_status_scope;
     const char *last_spell_status;
     int last_spell_failure_class;
+    DM2_V1_SpellTimerHandlerContext spell_timer_ctx;
+    int spell_timer_ctx_ready;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -4687,30 +4690,25 @@ static int dm2_runtime_process_sound_timer(void *user,
 }
 
 /*
- * dm2_runtime_process_cloud_timer — 0x19 timer handler.
- * Source: c_tim_proc.cpp:4062 DM2_PROCESS_CLOUD(timer).
- * Fail-closed: requires cloud DB4 record + movement ownership.
+ * dm2_runtime_spell_timer_delegate — shared handler for timer types that have
+ * proven implementations in dm2_v1_spell_timer_handlers_pc34_compat.c.
+ * Forwards to dm2_v1_spell_timer_dispatch() which routes by timer->type.
+ * Types handled: 0x46 light, 0x47 hero ench flag, 0x48 ench power,
+ * 0x4B poison, 0x19 cloud, 0x1E missile, 0x5E summon.
  */
-static int dm2_runtime_process_cloud_timer(void *user,
-                                           const DM2_V1_SourceTimer *timer,
-                                           uint16_t source_index,
-                                           DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
-    return 1;
+static int dm2_runtime_spell_timer_delegate(void *user,
+                                            const DM2_V1_SourceTimer *timer,
+                                            uint16_t source_index,
+                                            DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    if (!rt || !rt->spell_timer_ctx_ready)
+        return 1;
+    return dm2_v1_spell_timer_dispatch(&rt->spell_timer_ctx, timer,
+                                       source_index, receipt);
 }
 
-/*
- * dm2_runtime_step_missile_timer — 0x1D/0x1E timer handler.
- * Source: c_tim_proc.cpp:4071 DM2_STEP_MISSILE(timer).
- * Fail-closed: requires missile record + movement + collision ownership.
- */
-static int dm2_runtime_step_missile_timer(void *user,
-                                          const DM2_V1_SourceTimer *timer,
-                                          uint16_t source_index,
-                                          DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
-    return 1;
-}
+/* 0x19 cloud and 0x1D/0x1E missile — delegated to spell timer handlers via
+ * dm2_runtime_spell_timer_delegate. */
 
 /*
  * dm2_runtime_process_3d_timer — 0x3C/0x3D timer handler.
@@ -4725,61 +4723,8 @@ static int dm2_runtime_process_3d_timer(void *user,
     return 1;
 }
 
-/*
- * dm2_runtime_light_timer — 0x46 timer handler.
- * Source: c_tim_proc.cpp:4100 DM2_PROCESS_TIMER_LIGHT + DM2_RECALC_LIGHT_LEVEL.
- * Fail-closed: requires light-level state + hero light source ownership.
- */
-static int dm2_runtime_light_timer(void *user,
-                                   const DM2_V1_SourceTimer *timer,
-                                   uint16_t source_index,
-                                   DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
-    return 1;
-}
-
-/*
- * dm2_runtime_hero_ench_flag_timer — 0x47 timer handler.
- * Source: c_tim_proc.cpp:4112-4122.
- * Decrements savegames1.b_02; if zero and v1e0976 != 0, sets hero flag 0x4000.
- * Fail-closed: requires champion state ownership.
- */
-static int dm2_runtime_hero_ench_flag_timer(void *user,
-                                            const DM2_V1_SourceTimer *timer,
-                                            uint16_t source_index,
-                                            DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
-    return 1;
-}
-
-/*
- * dm2_runtime_ench_power_timer — 0x48 timer handler.
- * Source: c_tim_proc.cpp:4131-4162.
- * Loops over party heroes, decrements ench_power by timer.getA() for each
- * matching hero (bitmask in timer.actor), clamps to zero.
- * Fail-closed: requires champion state ownership.
- */
-static int dm2_runtime_ench_power_timer(void *user,
-                                        const DM2_V1_SourceTimer *timer,
-                                        uint16_t source_index,
-                                        DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
-    return 1;
-}
-
-/*
- * dm2_runtime_poison_timer — 0x4B timer handler.
- * Source: c_tim_proc.cpp:4166-4177 DM2_PROCESS_POISON.
- * Decrements hero poisoned/poison, then calls DM2_PROCESS_POISON.
- * Fail-closed: requires champion state + poison damage ownership.
- */
-static int dm2_runtime_poison_timer(void *user,
-                                    const DM2_V1_SourceTimer *timer,
-                                    uint16_t source_index,
-                                    DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
-    return 1;
-}
+/* 0x46 light, 0x47 hero ench flag, 0x48 ench power, 0x4B poison —
+ * delegated to spell timer handlers via dm2_runtime_spell_timer_delegate. */
 
 /*
  * dm2_runtime_ornate_noise_timer — 0x5A timer handler.
@@ -4808,18 +4753,8 @@ static int dm2_runtime_move_record_rotate_timer(void *user,
     return 1;
 }
 
-/*
- * dm2_runtime_alloc_new_creature_timer — 0x5E timer handler.
- * Source: c_tim_proc.cpp:4253-4275 DM2_ALLOC_NEW_CREATURE.
- * Fail-closed: requires creature DB + allocation ownership.
- */
-static int dm2_runtime_alloc_new_creature_timer(void *user,
-                                                const DM2_V1_SourceTimer *timer,
-                                                uint16_t source_index,
-                                                DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
-    return 1;
-}
+/* 0x5E alloc new creature — delegated to spell timer handlers via
+ * dm2_runtime_spell_timer_delegate. */
 
 /*
  * dm2_runtime_ornate_animator_timer — 0x55 timer handler.
@@ -5260,30 +5195,57 @@ void dm2_v1_runtime_tick(void) {
             dm2_runtime_process_0e_timer;
         dispatcher.handlers[DM2_V1_TIMER_PROCESS_SOUND] =
             dm2_runtime_process_sound_timer;
-        dispatcher.handlers[DM2_V1_TIMER_PROCESS_CLOUD] =
-            dm2_runtime_process_cloud_timer;
-        dispatcher.handlers[DM2_V1_TIMER_STEP_MISSILE] =
-            dm2_runtime_step_missile_timer;
         dispatcher.handlers[DM2_V1_TIMER_PROCESS_3D] =
             dm2_runtime_process_3d_timer;
-        dispatcher.handlers[DM2_V1_TIMER_LIGHT] =
-            dm2_runtime_light_timer;
-        dispatcher.handlers[DM2_V1_TIMER_HERO_ENCH_FLAG] =
-            dm2_runtime_hero_ench_flag_timer;
-        dispatcher.handlers[DM2_V1_TIMER_ENCH_POWER] =
-            dm2_runtime_ench_power_timer;
-        dispatcher.handlers[DM2_V1_TIMER_POISON] =
-            dm2_runtime_poison_timer;
         dispatcher.handlers[DM2_V1_TIMER_ORNATE_NOISE] =
             dm2_runtime_ornate_noise_timer;
         dispatcher.handlers[DM2_V1_TIMER_MOVE_RECORD_ROTATE] =
             dm2_runtime_move_record_rotate_timer;
+        /* Spell-effect timer delegation: 0x46 light, 0x47 hero ench flag,
+         * 0x48 ench power, 0x4B poison, 0x19 cloud, 0x1E missile, 0x5E summon.
+         * These route through the proven dm2_v1_spell_timer_dispatch() which
+         * owns the source-named handler bodies.  Context is rebuilt each tick
+         * from the session snapshot champion records. */
+        if (rt->session_snapshot_valid &&
+            rt->session_snapshot.champion_count > 0 &&
+            rt->session_snapshot.champion_count <= 4) {
+            DM2_ChampionRecord spell_champions[4];
+            int sc = rt->session_snapshot.champion_count;
+            for (int ci = 0; ci < sc; ++ci)
+                spell_champions[ci] = *(const DM2_ChampionRecord *)
+                    rt->session_snapshot.champion_data[ci];
+            dm2_v1_spell_timer_handler_context_init_ex(
+                &rt->spell_timer_ctx,
+                spell_champions, sc,
+                &rt->timer_queue,
+                (uint32_t)rt->tick_count,
+                rt->session_snapshot.party_level,
+                rt->record_pools_valid ? &rt->record_pools : NULL,
+                rt->boot ? (struct DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL,
+                rt->caii_ready ? &rt->caii : NULL);
+            rt->spell_timer_ctx_ready = 1;
+        } else {
+            rt->spell_timer_ctx_ready = 0;
+        }
+        dispatcher.handlers[DM2_V1_TIMER_LIGHT] =
+            dm2_runtime_spell_timer_delegate;
+        dispatcher.handlers[DM2_V1_TIMER_HERO_ENCH_FLAG] =
+            dm2_runtime_spell_timer_delegate;
+        dispatcher.handlers[DM2_V1_TIMER_ENCH_POWER] =
+            dm2_runtime_spell_timer_delegate;
+        dispatcher.handlers[DM2_V1_TIMER_POISON] =
+            dm2_runtime_spell_timer_delegate;
+        dispatcher.handlers[DM2_V1_TIMER_PROCESS_CLOUD] =
+            dm2_runtime_spell_timer_delegate;
+        dispatcher.handlers[DM2_V1_TIMER_STEP_MISSILE] =
+            dm2_runtime_spell_timer_delegate;
         dispatcher.handlers[DM2_V1_TIMER_ALLOC_NEW_CREATURE] =
-            dm2_runtime_alloc_new_creature_timer;
+            dm2_runtime_spell_timer_delegate;
         (void)dm2_v1_proceed_timers(&rt->timer_queue,
                                     (uint32_t)rt->tick_count,
                                     &dispatcher,
                                     &rt->proceed_timers);
+        rt->spell_timer_ctx_ready = 0;
     }
 
     /* After any 0x54 weather timer has stepped the v1e14xx chain, run the
