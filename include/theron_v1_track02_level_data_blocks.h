@@ -10,10 +10,14 @@ extern "C" {
 
 /* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
  *
- * 7 dungeon level data blocks identified by byte-exact 232-byte shared
- * prologue signature (resource table). Each block starts with a 0xF0-byte
- * prologue (0xE8 bytes identical + 8 bytes per-level metadata), followed
- * by compressed level-specific data.
+ * 7 per-level graphics/tile banks (~256KB each = one PCE HuCard bank).
+ * Identified by byte-exact 232-byte shared prologue signature.
+ * Each block starts with a 0xF0-byte prologue (0xE8 bytes shared resource
+ * table + 8 bytes per-level metadata), followed by level-specific tile
+ * pattern data for the PCE VDC (4bpp 8x8 tiles).
+ *
+ * These are NOT the dungeon map layout (wall/floor topology) — that data
+ * format is still unidentified within Track 02.
  *
  * UD offsets discovered via full-track signature scan. */
 
