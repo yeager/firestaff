@@ -70,6 +70,9 @@ static const uint8_t DM2_PC_EN_GRAPHICS_MD5[16] DM2_MAYBE_UNUSED = {
 #define DM2_PC_GRAPHICS_MIN_SIZE (8U * 1024U * 1024U)
 #define DM2_PC_GRAPHICS_MAX_SIZE (10U * 1024U * 1024U)
 #define DM2_PC_GDAT_CONTAINER_WORD 0x8005u
+#define DM2_FMTOWNS_GRAPHICS_MIN_SIZE (2U * 1024U * 1024U)
+#define DM2_FMTOWNS_GRAPHICS_MAX_SIZE (4U * 1024U * 1024U)
+#define DM2_FMTOWNS_GDAT_CONTAINER_WORD 0x8004u
 #define DM2_PC_GDAT_ENT1_WORD 0x8001u
 #define DM2_GDAT_ENTRY_TYPE_MAX 0x0e
 #define DM2_IMG3_HEADER_SIZE 10u
@@ -807,9 +810,13 @@ int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
         (first_word & 0x7fffu) != 2u) {
         return -1;
     }
-    if (first_word != DM2_PC_GDAT_CONTAINER_WORD ||
-        size < DM2_PC_GRAPHICS_MIN_SIZE ||
-        size > DM2_PC_GRAPHICS_MAX_SIZE) return -1;
+    int is_pc = (first_word == DM2_PC_GDAT_CONTAINER_WORD &&
+                 size >= DM2_PC_GRAPHICS_MIN_SIZE &&
+                 size <= DM2_PC_GRAPHICS_MAX_SIZE);
+    int is_fmtowns = (first_word == DM2_FMTOWNS_GDAT_CONTAINER_WORD &&
+                      size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE &&
+                      size <= DM2_FMTOWNS_GRAPHICS_MAX_SIZE);
+    if (!is_pc && !is_fmtowns) return -1;
 
     loader->data = data;
     loader->data_size = size;
@@ -3911,10 +3918,16 @@ int dm2_v1_asset_loader_verify(const DM2_V1_AssetLoader *loader) {
      * This loader is initialized from memory and does not own a filename, so
      * the scanner performs exact hash gating before launch; here we enforce
      * the real DOS GDAT marker plus the locked PC size window. */
+    uint16_t w0 = rd16le(loader->data);
     if (loader->data_size >= DM2_PC_GRAPHICS_MIN_SIZE &&
         loader->data_size <= DM2_PC_GRAPHICS_MAX_SIZE &&
-        rd16le(loader->data) == DM2_PC_GDAT_CONTAINER_WORD) {
-        return 1; /* plausible DM2 GRAPHICS.DAT size */
+        w0 == DM2_PC_GDAT_CONTAINER_WORD) {
+        return 1;
+    }
+    if (loader->data_size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE &&
+        loader->data_size <= DM2_FMTOWNS_GRAPHICS_MAX_SIZE &&
+        w0 == DM2_FMTOWNS_GDAT_CONTAINER_WORD) {
+        return 1;
     }
     return 0;
 }

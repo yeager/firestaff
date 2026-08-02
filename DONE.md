@@ -1,3 +1,9 @@
+- ✅ 2026-08-02 v3.0.229 FM Towns DM2 support infrastructure:
+  GRAPHICS.DAT classifier and receipt (GDAT version 4, 0x8004, 2.78 MB,
+  3407 raw entries vs DOS 5624). CD.DAT parser (40-byte CDDA track mapping,
+  10 entries with MSF-like fields and type flags). Extended DM2 asset loader
+  to accept both DOS version 5 (8-10 MB) and FM Towns version 4 (2-4 MB).
+  Same 241-category GDAT structure, different asset count and resolution.
 - ✅ 2026-08-02 v3.0.228 Theron data table extraction:
   Extend level descriptor table from 43 to 53 records (10 additional
   corridor/transition levels with cumulative index wrapping at 255).

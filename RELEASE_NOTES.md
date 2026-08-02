@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.229
+- FM Towns DM2 support: GRAPHICS.DAT classifier (GDAT version 4, container 0x8004, 2.78 MB / 3407 raw entries)
+- FM Towns DM2 CD.DAT parser (40-byte CDDA track mapping, 10 entries, 7 audio tracks)
+- Extend DM2 asset loader to accept both DOS (version 5, 8-10 MB) and FM Towns (version 4, 2-4 MB) GRAPHICS.DAT
+- Files extracted from FM Towns disc image (HME-242, Victor 1994): DUNGEON.DAT, GRAPHICS.DAT, CD.DAT, SKULL.EXP, TITLE, END, SWOOSH, TWANIM.EXP, VICTOR.DOC
+
 # Firestaff v3.0.228
 - Extend level descriptor table from 43 to 53 records (10 additional corridor/transition levels)
 - Extract 42-record sector allocation table from UD 0x619800 mapping dungeon levels to disc sectors
