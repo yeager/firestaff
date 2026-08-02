@@ -104,7 +104,9 @@ dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
  * Mac/Amiga:  0x313b = big-endian 68k build; reads as 0x3b31 via LE RD16 */
 #define DM2_DUNGEON_MAGIC_PC       0x3147u
 #define DM2_DUNGEON_MAGIC_FMTOWNS  0x3094u
-#define DM2_DUNGEON_MAGIC_BE_LE    0x3b31u
+#define DM2_DUNGEON_MAGIC_PC9821   0x3093u  /* PC-9821 JP (LE) */
+#define DM2_DUNGEON_MAGIC_BE_LE    0x3b31u  /* Mac/Amiga 68k */
+#define DM2_DUNGEON_MAGIC_MEGACD_BE_LE 0x9330u  /* Mega CD 68k */
 
 static uint16_t rd16be(const uint8_t *p) {
     return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
@@ -367,7 +369,8 @@ static int dm2_v1_try_load_pc_g1_byte_layout(DM2_V1_DungeonData *out,
     if (!out || !dat || size < DM2_DUNGEON_HEADER_SIZE) return 0;
     {
         uint16_t magic = RD16(dat + 2);
-        if (magic != DM2_DUNGEON_MAGIC_PC && magic != DM2_DUNGEON_MAGIC_FMTOWNS)
+        if (magic != DM2_DUNGEON_MAGIC_PC && magic != DM2_DUNGEON_MAGIC_FMTOWNS &&
+            magic != DM2_DUNGEON_MAGIC_PC9821)
             return 0;
     }
     if (RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
@@ -566,8 +569,12 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
     long pool_bytes_total = 0;
 
     if (!out || !dat || size < DM2_DUNGEON_HEADER_SIZE) return 0;
-    if (RD16(dat + 2) != DM2_DUNGEON_MAGIC_BE_LE)
-        return 0;
+    {
+        uint16_t be_magic = RD16(dat + 2);
+        if (be_magic != DM2_DUNGEON_MAGIC_BE_LE &&
+            be_magic != DM2_DUNGEON_MAGIC_MEGACD_BE_LE)
+            return 0;
+    }
     if (RD16(dat + 4) != DM2_DUNGEON_HEADER_SIZE)
         return 0;
 

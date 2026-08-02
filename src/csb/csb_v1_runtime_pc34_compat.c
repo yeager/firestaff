@@ -20514,6 +20514,10 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         if (timer_index >= profile->csbwin_timer_summary_count) {
             return -1;
         }
+        if (queue_index > 0u &&
+            timer_index <= profile->csbwin_timer_queue[queue_index - 1u]) {
+            return -1;
+        }
         timer = &profile->csbwin_timers[timer_index];
         if (!timer->valid || timer->function == DM1_EVENT_NONE) {
             return -1;

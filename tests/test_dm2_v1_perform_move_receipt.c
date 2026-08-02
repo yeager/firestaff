@@ -6,9 +6,22 @@
 
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_world_model.h"
+#include "dm2_v1_dungeon_loader.h"
 
 #include <stdio.h>
 #include <string.h>
+
+int dm2_v1_skproject_append_record_to(
+    DM2_V1_DungeonData *d, uint16_t record, uint16_t *parent,
+    int level, int x, int y, DM2_V1_SkprojectAppendRecordReceipt *out)
+{ (void)d;(void)record;(void)parent;(void)level;(void)x;(void)y;
+  if (out) memset(out, 0, sizeof(*out)); return 1; }
+
+int dm2_v1_skproject_cut_record_from(
+    DM2_V1_DungeonData *d, uint16_t record, uint16_t *parent,
+    int level, int x, int y, DM2_V1_SkprojectCutRecordReceipt *out)
+{ (void)d;(void)record;(void)parent;(void)level;(void)x;(void)y;
+  if (out) memset(out, 0, sizeof(*out)); return 1; }
 
 static int passed;
 static int failed;

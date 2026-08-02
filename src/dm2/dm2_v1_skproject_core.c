@@ -13160,7 +13160,7 @@ int dm2_v1_skproject_query_4da3(
     receipt.timer_word_after = timer_receipt.timer_word_after;
     receipt.interval = interval;
 
-    offset = 8u * ((uint32_t)interval + addend & 0xffffu);
+    offset = 8u * (((uint32_t)interval + addend) & 0xffffu);
     receipt.offset = offset;
     if (offset > gdat_size || gdat_size - offset < 8u) {
         receipt.blocked_out_of_bounds = 1;
@@ -24870,25 +24870,25 @@ int dm2_v1_skproject_query_cls2_from_record(
             if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
             { uint8_t cls2 = rec[4];
               out_receipt->valid = 1; out_receipt->cls2 = cls2;
-              if (out_cls2) *out_cls2 = cls2; return 1; }
+              if (out_cls2) { *out_cls2 = cls2; } return 1; }
 
         case 5: case 6: case 10: case 15:
             if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
             { uint16_t w1 = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
               uint8_t cls2 = (uint8_t)(w1 & 0x7f);
               out_receipt->valid = 1; out_receipt->cls2 = cls2;
-              if (out_cls2) *out_cls2 = cls2; return 1; }
+              if (out_cls2) { *out_cls2 = cls2; } return 1; }
 
         case 7:
             out_receipt->valid = 1; out_receipt->cls2 = 0;
-            if (out_cls2) *out_cls2 = 0; return 1;
+            if (out_cls2) { *out_cls2 = 0; } return 1;
 
         case 8:
             if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
             { uint16_t w1 = (uint16_t)rec[2] | ((uint16_t)rec[3] << 8);
               uint8_t cls2 = (uint8_t)((w1 * 2) >> 9);
               out_receipt->valid = 1; out_receipt->cls2 = cls2;
-              if (out_cls2) *out_cls2 = cls2; return 1; }
+              if (out_cls2) { *out_cls2 = cls2; } return 1; }
 
         case 9:
             if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }
@@ -24899,7 +24899,7 @@ int dm2_v1_skproject_query_cls2_from_record(
               uint8_t lo = (uint8_t)(w2 >> 13);
               uint8_t cls2 = lo | hi;
               out_receipt->valid = 1; out_receipt->cls2 = cls2;
-              if (out_cls2) *out_cls2 = cls2; return 1; }
+              if (out_cls2) { *out_cls2 = cls2; } return 1; }
 
         case 14:
             if (!rec) { out_receipt->cls2 = 0xff; if (out_cls2) *out_cls2 = 0xff; return 1; }

@@ -48,7 +48,6 @@ int dm2_v1_move_record_to(
     DM2_V1_MoveRecordToReceipt *receipt)
 {
     (void)queue;
-    (void)current_map;
     (void)game_tick;
 
     if (!receipt) return 0;

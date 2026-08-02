@@ -13789,6 +13789,40 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_dungeon_loader_mac_amiga
     )
 
+    add_executable(test_dm2_v1_dungeon_loader_mega_cd
+        tests/test_dm2_v1_dungeon_loader_mega_cd.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_dungeon_loader_mega_cd PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dungeon_loader_mega_cd PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_dungeon_loader_mega_cd
+        COMMAND test_dm2_v1_dungeon_loader_mega_cd
+    )
+
+    add_executable(test_dm2_v1_dungeon_loader_pc9821
+        tests/test_dm2_v1_dungeon_loader_pc9821.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_dungeon_loader_pc9821 PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dungeon_loader_pc9821 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_dungeon_loader_pc9821
+        COMMAND test_dm2_v1_dungeon_loader_pc9821
+    )
+
     add_executable(test_dm2_v1_asset_loader_be
         tests/test_dm2_v1_asset_loader_be.c
         src/dm2/dm2_v1_asset_loader.c
@@ -20702,7 +20736,6 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_perform_move_receipt.c
         src/dm2/dm2_v1_perform_move.c
         src/dm2/dm2_v1_perform_move_exec_pc34_compat.c
-        src/dm2/dm2_v1_move_record_to_pc34_compat.c
         src/dm2/dm2_v1_move_record_to_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_perform_move_receipt PRIVATE
@@ -50078,6 +50111,13 @@ add_executable(test_dm2_v1_songlist_dat
 )
 target_include_directories(test_dm2_v1_songlist_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_songlist_dat COMMAND test_dm2_v1_songlist_dat)
+
+add_executable(test_dm2_v1_amiga_cd_dat
+    tests/test_dm2_v1_amiga_cd_dat.c
+    src/dm2/dm2_v1_amiga_cd_dat.c
+)
+target_include_directories(test_dm2_v1_amiga_cd_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm2_v1_amiga_cd_dat COMMAND test_dm2_v1_amiga_cd_dat)
 
 add_executable(test_dm2_v1_fmtowns_disc
     tests/test_dm2_v1_fmtowns_disc.c

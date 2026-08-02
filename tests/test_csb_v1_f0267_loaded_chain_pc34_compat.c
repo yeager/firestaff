@@ -21,6 +21,7 @@ int main(void)
     struct DungeonTeleporter_Compat teleporters[1];
     unsigned char raw_weapon[4];
     unsigned char raw_projectile[8];
+    unsigned char raw_teleporter[6];
     struct F0267ThingMoveRequestPc34Compat request;
     struct F0267ThingMoveResultPc34Compat result;
     unsigned short weapon = (unsigned short)(THING_TYPE_WEAPON << 10);
@@ -40,6 +41,7 @@ int main(void)
     memset(teleporters, 0, sizeof(teleporters));
     memset(raw_weapon, 0, sizeof(raw_weapon));
     memset(raw_projectile, 0, sizeof(raw_projectile));
+    memset(raw_teleporter, 0, sizeof(raw_teleporter));
 
     for (i = 0; i < 4; ++i) {
         maps[i].width = 3;
@@ -69,6 +71,9 @@ int main(void)
     raw_weapon[0] = 0xfe;
     raw_weapon[1] = 0xff;
     raw_weapon[2] = 1;
+    raw_teleporter[0] = 0xfe; raw_teleporter[1] = 0xff; /* next = THING_ENDOFLIST */
+    raw_teleporter[2] = 0x21; raw_teleporter[3] = 0x40; /* fields: mapX=1,mapY=1,scope=2 */
+    raw_teleporter[4] = 0x00; raw_teleporter[5] = 0x01; /* dest: targetMapIndex=1 */
 
     dungeon.header.mapCount = 4;
     dungeon.maps = maps;
@@ -86,6 +91,8 @@ int main(void)
     things.thingCounts[THING_TYPE_WEAPON] = 1;
     things.rawThingData[THING_TYPE_PROJECTILE] = raw_projectile;
     things.thingCounts[THING_TYPE_PROJECTILE] = 1;
+    things.rawThingData[THING_TYPE_TELEPORTER] = raw_teleporter;
+    things.thingCounts[THING_TYPE_TELEPORTER] = 1;
     things.loaded = 1;
     world.dungeon = &dungeon;
     world.things = &things;
@@ -124,6 +131,8 @@ int main(void)
     teleporters[0].rotation = 1;
     teleporters[0].absoluteRotation = 0;
     teleporters[0].scope = 2;
+    raw_teleporter[2] = 0x22; raw_teleporter[3] = 0x44; /* mapX=2,mapY=1,rot=1,scope=2 */
+    raw_teleporter[4] = 0x00; raw_teleporter[5] = 0x03; /* targetMapIndex=3 */
     projectile |= (unsigned short)(0u << 14);
     first_things[0] = projectile;
     projectiles[0].next = THING_ENDOFLIST;
@@ -156,6 +165,7 @@ int main(void)
      * the ordinary object on that square instead of following its target. */
     teleporters[0].scope = 1;
     teleporters[0].rotation = 0;
+    raw_teleporter[2] = 0x22; raw_teleporter[3] = 0x20; /* mapX=2,mapY=1,rot=0,scope=1 */
     first_things[0] = weapon;
     weapons[0].next = THING_ENDOFLIST;
     raw_weapon[0] = 0xfe;

@@ -145,6 +145,13 @@ int main(void) {
              home);
     test_be_gdat(mac_path, "Mac");
 
+    {
+        char megacd_path[512];
+        snprintf(megacd_path, sizeof(megacd_path),
+                 "%s/.firestaff/data/dm2-extras/mega-cd-jp-extracted/GRAPHICS.DAT", home);
+        test_be_gdat(megacd_path, "Mega CD");
+    }
+
     snprintf(pc_path, sizeof(pc_path),
              "%s/.firestaff/data/dm2/GRAPHICS.DAT", home);
     test_pc_still_works(pc_path);
