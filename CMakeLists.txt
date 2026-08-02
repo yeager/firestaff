@@ -3524,7 +3524,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.225 LANGUAGES C)
+project(Firestaff VERSION 3.0.226 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -37163,6 +37163,46 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_dungeon_progression
         COMMAND test_theron_v1_dungeon_progression
+    )
+endif()
+
+# ── Theron V1 — Level Descriptor Tests ──────────────────────────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_level_descriptor
+        tests/test_theron_v1_level_descriptor.c
+    )
+    target_link_libraries(test_theron_v1_level_descriptor PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_level_descriptor PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_level_descriptor PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_level_descriptor
+        COMMAND test_theron_v1_level_descriptor
+    )
+endif()
+
+# ── Theron V1 — Save Menu Font Tests ────────────────────────────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_save_menu_font
+        tests/test_theron_v1_save_menu_font.c
+    )
+    target_link_libraries(test_theron_v1_save_menu_font PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_save_menu_font PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_save_menu_font PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_save_menu_font
+        COMMAND test_theron_v1_save_menu_font
     )
 endif()
 

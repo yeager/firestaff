@@ -1,3 +1,7 @@
+- ✅ 2026-08-02 v3.0.226 Theron level descriptor table and save menu font:
+  Extract 43-record level descriptor table from Track 02 UD 0x619900 (map width,
+  data size, cumulative column index per level). Extract 80-glyph 8x8 1bpp save
+  menu font from UD 0x242E00 covering ASCII 0x2B-0x7A ('+' through 'z').
 - ✅ 2026-08-02 v3.0.225 Theron Track 19 runtime item name table: Extract 69
   item names from ISO offset 0x0E9271 including 14 dungeon-specific items not
   on Track 02 (WATERSKIN, STORMRING, MACE, TORSO PLATE, LEG PLATE, ARMET,
